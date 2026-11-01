@@ -16,17 +16,15 @@ import type { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import { formatPlainNumber } from '@/lib/numbers'
 import { formatDisplay } from '@/lib/dates'
 
-/** The intro's week strip: a week's days inside a card, `WEEK.pad` in. */
 export const WEEK = { days: 7, pad: 14, width: 320 }
 export const DAY_W = (WEEK.width - WEEK.pad * 2) / WEEK.days
-/** Where a day's square sits, from the strip's top, under its weekday letter. */
+
 export const DATE_Y = 18
-/** The Schedule's day square (`CalendarDay`). */
+
 export const DATE_SIZE = 40
-/** The Schedule's ring around the selected day, flush outside its square. */
+
 export const SELECTED_RING = 2
 
-/** This week's days, so the sketch matches the User's calendar. */
 export const thisWeek = () => {
   const start = moment().startOf('week')
   return Array.from({ length: WEEK.days }, (_, i) =>
@@ -34,13 +32,11 @@ export const thisWeek = () => {
   )
 }
 
-/** The center of day `index`'s column, from the card's left edge. */
 export const dayX = (index: number) => {
   'worklet'
   return WEEK.pad + DAY_W * (index + 0.5)
 }
 
-/** A day's number, as the Schedule's square prints it. */
 export function DayNumber({
   day,
   color,
@@ -58,11 +54,6 @@ export function DayNumber({
   )
 }
 
-/**
- * A week of weekday letters over the Schedule's day squares. `renderDate` fills
- * a day's square in place of its plain number, for marks like a Plan's time or
- * a kept check.
- */
 export function WeekStrip({
   palette,
   renderDate,
@@ -102,7 +93,6 @@ export function WeekStrip({
   )
 }
 
-/** The Schedule's ring around the selected day, for a square at `x`, `top`. */
 export function SelectedRing({
   x,
   top,
@@ -133,13 +123,11 @@ export function SelectedRing({
   )
 }
 
-/** A flame and a count that rolls from one number to the next. */
 export function FlameCount({
   steps,
   max,
   size = 28,
 }: {
-  /** 0→`max`: the count shown, between whole numbers mid-roll. */
   steps: DerivedValue<number>
   max: number
   size?: number
@@ -218,7 +206,6 @@ function RollingDigit({
   )
 }
 
-/** A person, as a coloured circle — the sketch never shows real names. */
 export function Face({
   color,
   size,

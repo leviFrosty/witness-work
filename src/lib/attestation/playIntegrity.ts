@@ -15,29 +15,13 @@ import {
   type AttestationRepairReport,
 } from '@/lib/attestation/appAttest'
 
-/**
- * Android's device attestation (ADR 0017): Google Play Integrity standard
- * requests instead of App Attest.
- *
- * There is no device key, so there is nothing to register, journal, enroll, or
- * recover. Each attested request asks ww-api for a one-time challenge bound to
- * the request, then asks Play for a token whose `requestHash` is the SHA-256 of
- * the client data below. ww-api decodes that token with Google and checks the
- * binding, a Play-recognized app, and the device verdict.
- */
-
 const PROVIDER = 'play-integrity'
 const PROTOCOL = 'witnesswork.play-integrity'
 const PROTOCOL_VERSION = 1 as const
-/**
- * Google's backoff for retryable token errors: 5 s, then 10 s. Each wait is
- * stretched by up to half again at random, so devices that failed together (a
- * Play services outage) don't all retry in the same second.
- */
+
 const TOKEN_RETRY_DELAYS_MS = [5_000, 10_000] as const
 const TOKEN_RETRY_JITTER = 0.5
 
-/** The jittered wait before token retry `attempt` (0-based), or undefined. */
 export const tokenRetryDelayMs = (
   attempt: number,
   random: () => number = Math.random
@@ -49,7 +33,6 @@ export const tokenRetryDelayMs = (
 
 type PlayPurpose = typeof ATTESTATION_VERIFY_PURPOSE | AttestationPurpose
 
-/** Mirrors `modules/play-integrity`'s taxonomy without importing native code. */
 export type PlayIntegrityNativeFailureCode =
   | 'unsupported'
   | 'invalidArgument'
@@ -83,7 +66,7 @@ export interface PlayIntegrityDependencies {
   }
   identity: {
     getOrCreateUuid(): string
-    /** Read only for the snapshot's `accountIdentity`; nothing attests it. */
+
     getAccountId(): string
   }
   crypto: {
@@ -102,7 +85,7 @@ export interface PlayIntegrityDependencies {
   baseUrl: string
   now(): number
   sleep(ms: number): Promise<void>
-  /** Jitter source for token retries; defaults to Math.random. */
+
   random?(): number
 }
 
@@ -117,23 +100,18 @@ export interface PlayIntegritySnapshot {
 }
 
 export interface PlayIntegrityAuthorizer {
-  /** Another feature's request, attested with a Play Integrity token. */
   assert<T>(request: AttestedRequest<T>): Promise<T>
-  /**
-   * Warms Play's token provider, which fails without Google Play. Spends no
-   * token and no ww-api decode.
-   */
+
   checkSupport(): Promise<AttestationSupport>
-  /** Nothing to recover without a device key; kept for interface parity. */
+
   prepareRecovery(): Promise<void>
   getSnapshot(): PlayIntegritySnapshot
-  /** The attested no-op verify through the full protected path. */
+
   runDiagnostics(): Promise<AttestationDebugReport>
-  /** Same as diagnostics: there is no key to rotate. */
+
   runRepair(): Promise<AttestationRepairReport>
 }
 
-/** Where an attested request asks for its challenge and sends its request. */
 type ProtectedChannel<T> = {
   challenge: NonNullable<AttestedRequest<T>['challenge']>
   submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
@@ -142,10 +120,6 @@ type ProtectedChannel<T> = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/**
- * Byte-for-byte the client data ww-api rebuilds. MUST stay identical to
- * `buildPlayIntegrityClientData` in ww-api `src/playIntegrity/protocol.ts`.
- */
 export const buildPlayIntegrityClientData = (input: {
   purpose: PlayPurpose
   operationId: string
@@ -162,8 +136,7 @@ export const buildPlayIntegrityClientData = (input: {
     input.operationId,
     input.challenge,
     input.uuid,
-    // The optional account id slot; nothing attested here sends one, and
-    // ww-api reads it as ''.
+
     '',
     input.contentHash,
     input.requestHash,
@@ -197,7 +170,7 @@ const nativeFailureToErrorCode = (
     case 'playServicesOutdated':
     case 'cannotBindToService':
       return 'playServicesUnavailable'
-    // App cloners and virtual environments run the app under another UID.
+
     case 'appNotInstalled':
     case 'appUidMismatch':
       return 'deviceIneligible'
@@ -226,7 +199,6 @@ const RETRYABLE_NATIVE_FAILURES = new Set<PlayIntegrityNativeFailureCode>([
   'internal',
 ])
 
-/** Server reasons answered by retrying once under a fresh operation. */
 const RESTART_REASONS = new Set([
   'challenge_not_found',
   'challenge_expired',
@@ -241,11 +213,6 @@ const metadata = (error: AttestationHttpError) => ({
   action: error.action,
 })
 
-/**
- * Maps ww-api's Play Integrity reasons to the shared auth taxonomy. Returns
- * null for everything else (Update Required, a route's own refusals) so those
- * reach the caller as the server's own codes.
- */
 const playHttpAuthError = (
   error: AttestationHttpError
 ): AttestationError | null => {
@@ -305,7 +272,6 @@ export const createPlayIntegrityAuthorizer = (
     }
   }
 
-  /** The advertised Cloud project number; cached for the session on success. */
   const cloudProjectNumber = (): Promise<string> => {
     if (capabilityPromise) return capabilityPromise
     const pending = dependencies.transport
@@ -317,7 +283,7 @@ export const createPlayIntegrityAuthorizer = (
       })
       .catch((error: unknown) => {
         if (error instanceof AttestationError) throw error
-        // Offline or cancelled is not an outage; say so.
+
         if (error instanceof AttestationHttpError && error.kind !== 'http') {
           throw playHttpAuthError(error) ?? error
         }
@@ -334,9 +300,7 @@ export const createPlayIntegrityAuthorizer = (
     try {
       const uuid = dependencies.identity.getOrCreateUuid()
       if (uuid) return uuid
-    } catch {
-      // Fall through to the shared storage failure.
-    }
+    } catch {}
     throw new AttestationError('storageFailure')
   }
 
@@ -344,9 +308,7 @@ export const createPlayIntegrityAuthorizer = (
     try {
       const hash = await dependencies.crypto.sha256Hex(value)
       if (/^[a-f0-9]{64}$/.test(hash)) return hash
-    } catch {
-      // Fall through to the shared system failure.
-    }
+    } catch {}
     throw new AttestationError('systemFailure')
   }
 
@@ -374,7 +336,6 @@ export const createPlayIntegrityAuthorizer = (
     }
   }
 
-  /** Optional per-step trace for the diagnostics report. */
   type Trace = (step: AttestationDebugStep) => void
 
   const traced = async <T>(
@@ -410,14 +371,13 @@ export const createPlayIntegrityAuthorizer = (
     project: string
     signal?: AbortSignal
     trace?: Trace
-    /** The submit step's name in `trace`; the purpose by default. */
+
     submitStep?: string
     validate?: (data: unknown, operationId: string) => boolean
   }): Promise<T> => {
     const uuid = installUuid()
     let operationId = dependencies.crypto.randomUuid()
-    // Warm the token provider while the challenge round-trips. Failures surface
-    // from the token request itself, which prepares again when needed.
+
     void dependencies.playIntegrity.prepare(input.project).catch(() => {})
 
     for (let attempt = 0; ; attempt += 1) {
@@ -478,7 +438,6 @@ export const createPlayIntegrityAuthorizer = (
     }
   }
 
-  /** `POST /attestation/v1/challenge`. */
   const postChallenge = (
     body: Record<string, unknown>,
     signal?: AbortSignal
@@ -503,7 +462,6 @@ export const createPlayIntegrityAuthorizer = (
     const trace: Trace = (step) => report.steps.push(step)
     try {
       if (dependencies.devBypass.enabled) {
-        // Mirrors the App Attest bypass probe: the server accepts the v2 shape.
         await traced(trace, 'verify', async () => {
           const data = await dependencies.transport.post<unknown>(
             'verify',
@@ -546,8 +504,6 @@ export const createPlayIntegrityAuthorizer = (
       })
       report.ok = true
     } catch (error) {
-      // Traced steps record their own failures; keep untraced ones (identity,
-      // hashing, a malformed challenge response) visible too.
       if (report.steps.every((step) => step.ok)) {
         const mapped = toAuthError(error)
         report.steps.push({
@@ -602,7 +558,6 @@ export const createPlayIntegrityAuthorizer = (
       try {
         project = await cloudProjectNumber()
       } catch {
-        // The worker can't say which project to ask Play about right now.
         return 'unknown'
       }
       try {

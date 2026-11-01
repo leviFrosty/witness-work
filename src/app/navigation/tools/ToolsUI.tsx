@@ -30,11 +30,6 @@ const useToneColor = (tone: Tone) => {
       : theme.colors.text
 }
 
-/**
- * Collapsible card for one tool area. The header stays one line — long
- * explanations go in `info` (InfoPopover) and live state goes in `summary` so
- * the page scans without expanding anything.
- */
 export const ToolSection = ({
   title,
   icon,
@@ -122,7 +117,6 @@ export const ToolSection = ({
   )
 }
 
-/** Small uppercase label that splits a section into sub-groups. */
 export const ToolSubheading = ({
   title,
   info,
@@ -150,11 +144,6 @@ export const ToolSubheading = ({
   )
 }
 
-/**
- * One line in a tool list. With `onPress` it's an action (tinted label);
- * otherwise it's a read-only stat whose `value` renders mono + selectable.
- * `trailing` replaces the value with a control (Switch, picker, input).
- */
 export const ToolRow = ({
   label,
   info,
@@ -233,7 +222,6 @@ export const ToolRow = ({
   )
 }
 
-/** Stacks rows with hairline dividers between them. */
 export const ToolList = ({ children }: { children: ReactNode }) => {
   const items = Children.toArray(children).filter(isValidElement)
   return (
@@ -248,7 +236,6 @@ export const ToolList = ({ children }: { children: ReactNode }) => {
   )
 }
 
-/** Big tap target for the actions reached for most often. */
 export const QuickTile = ({
   icon,
   label,

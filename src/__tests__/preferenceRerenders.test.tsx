@@ -28,7 +28,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 
 let renders = 0
-// The preference reads App and Home make on every launch.
+
 const Harness = () => {
   renders++
   usePreferences((s) => s.colorScheme)

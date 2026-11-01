@@ -10,12 +10,11 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 
 type Props = {
   items: FollowUpCardItem[]
-  /** Play the check animation: the last one was just answered. */
+
   celebrate: boolean
   onDone: () => void
 }
 
-/** Shown once every Follow-up on the card is answered. */
 export default function FollowUpCardCaughtUp({
   items,
   celebrate,

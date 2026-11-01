@@ -6,18 +6,11 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/**
- * Renders a mock iOS-style notification banner that teases the exact
- * notification the user will receive if they grant permission. Borrows the
- * Centr pattern — show the reward before asking for the permission — to lift
- * opt-in rates. Purely presentational; no real notification is scheduled.
- */
 const NotificationPreview = () => {
   const theme = useTheme()
 
   return (
     <View
-      // One picture to a screen reader, not the banner's pieces one by one.
       accessible
       accessibilityRole='image'
       accessibilityLabel={i18n.t('notificationPreview_accessibilityLabel', {
@@ -25,8 +18,6 @@ const NotificationPreview = () => {
         body: i18n.t('notificationPreview_body'),
       })}
       style={{
-        // Tuned to mimic the iOS banner look rather than an in-app card:
-        // lighter background, smaller radius, and a more pronounced shadow.
         borderRadius: theme.numbers.borderRadiusLg,
         backgroundColor: theme.colors.backgroundLighter,
         borderWidth: 1,

@@ -8,14 +8,6 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 
-/**
- * Opens what a local reminder is about: the Follow-up's Visit (its Contact when
- * only the Visit is gone), the Plan or Recurring Plan instance, the returning
- * Contact, Add Time for a planned day, where a streak about to end is kept, the
- * month's Service Report, or the Schedule at the week to plan, where the
- * Assistant offers days. False when the record is gone (deleted on this or
- * another device), the day has time logged, or navigation isn't ready.
- */
 export function openReminderTarget(target: ReminderData): boolean {
   if (!navigationRef.isReady()) return false
   const contacts = useContacts.getState().contacts

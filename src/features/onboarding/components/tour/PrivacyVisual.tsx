@@ -37,11 +37,6 @@ interface Promise {
   color: string
 }
 
-/**
- * Privacy, by design: the four promises from the privacy sketches — works
- * offline, encrypted or anonymous, shares by link, exports anytime — popping in
- * as tiles, each acting out its promise.
- */
 const PrivacyVisual = ({
   palette,
   active,
@@ -91,7 +86,6 @@ const PrivacyVisual = ({
           index={index}
           intro={intro}
           palette={palette}
-          // Only the page on screen plays its sketches.
           still={reduceMotion || !active}
         />
       ))}

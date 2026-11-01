@@ -23,7 +23,6 @@ type Props = {
   onToday: () => void
 }
 
-/** Day / Week / Month / Year selector with previous/next arrows. */
 export default function PeriodNavigator({
   period,
   isCurrent,
@@ -39,7 +38,7 @@ export default function PeriodNavigator({
     paddingHorizontal: 15,
     paddingVertical: 8,
   }
-  // The bordered arrow is 33pt tall; its frame grows to the full target.
+
   const navFrame = [
     touchTargetFrame(15 + 2 * 15 + 2, 15 + 2 * 8 + 2),
     { borderRadius: theme.numbers.borderRadiusLg },

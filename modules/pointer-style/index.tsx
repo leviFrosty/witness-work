@@ -6,12 +6,10 @@ export type PointerAccessory = 'left' | 'right' | 'up' | 'down'
 
 type Props = PropsWithChildren<
   ViewProps & {
-    /** Arrows shown beside the iPad pointer while it's over this view. */
     accessories?: PointerAccessory[]
   }
 >
 
-// Older binaries and other platforms render a plain View.
 const NativeView =
   Platform.OS === 'ios' && requireOptionalNativeModule('PointerStyle')
     ? requireNativeView<Props>('PointerStyle')

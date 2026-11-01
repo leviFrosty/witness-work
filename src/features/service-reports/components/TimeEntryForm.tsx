@@ -61,49 +61,34 @@ import useDraftChanged from '@/hooks/useDraftChanged'
 import usePublisher from '@/hooks/usePublisher'
 import { timeSavedProgress } from '@/features/service-reports/lib/timeSavedProgress'
 
-/** What a new entry starts with, e.g. a Plan's length and Type to log. */
 export type TimeEntryPrefill = {
   date?: Date
   hours?: number
   minutes?: number
-  /** Seeds a new entry's Type, when that Category still exists. */
+
   categoryId?: string
   note?: string
   noteDoc?: RichText
 }
 
-/** Reads a new entry's form as it stands, to carry it to Add Time. */
 export type TimeEntryDraft = {
   params: () => NonNullable<RootStackParamList['Add Time']>
 }
 
 type Props = TimeEntryPrefill & {
-  /** The entry to change. A new one is made when absent. */
   existingReport?: TimeEntry
-  /**
-   * Where the form is, for analytics: the Add Time screen, or a day's split
-   * sheet (Schedule, Home, Progress).
-   */
+
   source: 'time_entry_form' | 'day_sheet'
-  /** The entry was submitted, saved, or deleted. */
+
   onDone: () => void
-  /** Whether the entry now differs from what the form opened with. */
+
   onChangedChange?: (changed: boolean) => void
-  /**
-   * `inline` sits within a page, e.g. a day's list with no time logged yet: the
-   * Time pill, then Note and Type, then Submit, for that day only.
-   */
+
   layout?: 'docked' | 'inline'
-  /** Set to read the form's new entry as it stands, e.g. to expand it. */
+
   draftRef?: Ref<TimeEntryDraft>
 }
 
-/**
- * Add Time's form: a Details list (Note, Type) above a dock with the Date and
- * Time pills and Submit. The Add Time screen hosts it, and so does a day's
- * split sheet, so time for a day is entered without leaving it; a day with no
- * time yet shows it inline.
- */
 const TimeEntryForm = (props: Props) => {
   const theme = useTheme()
   const {
@@ -126,25 +111,17 @@ const TimeEntryForm = (props: Props) => {
   } = useServiceReport()
   const existingServiceReport = getReport(serviceReports, props.existingReport)
 
-  // A new entry seeded with a Type (e.g. logging a Plan as time) — only when
-  // that Category still exists.
   const prefillCategory =
     !existingServiceReport && props.categoryId
       ? categories.find((c) => c.id === props.categoryId)
       : undefined
 
-  // Initial picker value: the referenced Category id (post-migration), else
-  // fall back to legacy `tag` string for unmigrated entries, else Standard.
-  // LDC is no longer special-cased — entries that point at the LDC builtin
-  // Category id pick it up here like any other Category.
   const initialPickerValue: string = (() => {
     if (prefillCategory) return prefillCategory.id
     if (existingServiceReport?.report.categoryId) {
       return existingServiceReport.report.categoryId
     }
     if (existingServiceReport?.report.tag) {
-      // Try to resolve by name — entries that pre-date the migration but the
-      // user added a Category with the same name will collapse onto it.
       const match = categories.find(
         (c) => c.name === existingServiceReport.report.tag
       )
@@ -181,14 +158,11 @@ const TimeEntryForm = (props: Props) => {
     },
     'time_entry'
   )
-  // The entry's month decides whose goal its confirmation counts toward.
+
   const { hasAnnualGoal, annualGoalHours } = usePublisher(
     calendarMonthOf(serviceReport.date)
   )
 
-  // Maps the Type row's report back onto the in-progress entry. The row owns
-  // the Category-store side (create/delete/credit-flip + global re-stamp);
-  // the entry only records the reference and the legacy `credit` stamp.
   const handleTypeChange = ({ value, category }: TypeSelection) => {
     setSelectedValue(value)
     setServiceReport({
@@ -214,10 +188,9 @@ const TimeEntryForm = (props: Props) => {
     })
   }
 
-  // Functional: the note editor calls this after other fields may have moved.
   const setNote = (note: NoteUpdate) =>
     setServiceReport((current) => ({ ...current, ...note }))
-  /** The entry as it saves, with its note normalized. */
+
   const savedEntry = (): TimeEntry => ({
     ...serviceReport,
     ...noteFields(getNoteDoc(serviceReport)),
@@ -254,18 +227,11 @@ const TimeEntryForm = (props: Props) => {
       Haptics.success()
     }, CONFETTI_DELAY_MS + 100)
 
-    // Multi-burst Skia fireworks on the Progress month tab are reserved for
-    // *crossing* the monthly goal — the moment the report's target month
-    // goes from below goal to at-or-above goal. Adding more time after the
-    // goal is already met (or adding time that doesn't reach goal) doesn't
-    // queue anything, so the fireworks don't fire on every submission. The
-    // queue is keyed by `(month, year)` so it only pops when the user is
-    // actually viewing the month they crossed.
     const reportMoment = moment(serviceReport.date)
     const reportMonth = reportMoment.month()
     const reportYear = reportMoment.year()
     const goalTarget = { month: reportMonth, year: reportYear }
-    // The entry's month is judged by the role that applied then.
+
     const role = roleForMonth(roleHistory, currentRole, goalTarget)
     const effectiveGoalHours = resolveMonthlyGoalHours(
       publisherHours[role],
@@ -288,8 +254,7 @@ const TimeEntryForm = (props: Props) => {
       role,
       creditOverride
     ).value
-    // Month math reads stored anchors; the form holds a local day, which at
-    // UTC+12 (local midnight == noon UTC) would read as the prior day.
+
     const afterMinutes = adjustedMinutesForSpecificMonth(
       [
         ...beforeReports,
@@ -314,9 +279,6 @@ const TimeEntryForm = (props: Props) => {
       useCelebrationQueue.getState().queue(reportMonth, reportYear)
     }
 
-    // The confirmation counts toward the Annual Goal when the User has one,
-    // else the month's goal. Only the entry's month changes, so the Service
-    // Year moves by the month's capped difference.
     const yearly = hasAnnualGoal && annualGoalHours > 0
     const yearBeforeMinutes = yearly
       ? getTotalMinutesForServiceYear(
@@ -399,10 +361,8 @@ const TimeEntryForm = (props: Props) => {
     ])
   }
 
-  // Custom is a transient picker state — until the user names the Category,
-  // we don't have anything to attach the entry to.
   const hasSelectedCategory = selectedValue !== CUSTOM_TYPE_VALUE
-  // A timer stopped before a minute passed hands over less than a minute.
+
   const providedLessThanOneMinute =
     !props.hours &&
     props.minutes !== undefined &&
@@ -446,7 +406,6 @@ const TimeEntryForm = (props: Props) => {
     />
   )
 
-  // Keyed rows rather than a fragment: Section lays out each child as a row.
   const detailRows = [
     <NoteFormRow
       key='note'
@@ -481,8 +440,7 @@ const TimeEntryForm = (props: Props) => {
       dock={dock}
       contentContainerStyle={{
         flexGrow: 1,
-        // The details sit just above the dock, near the thumb, rather
-        // than at the top of a tall screen.
+
         justifyContent: 'flex-end',
         gap: 12,
         paddingTop: 10,

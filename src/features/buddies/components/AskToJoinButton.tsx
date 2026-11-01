@@ -10,11 +10,6 @@ import type { BuddyCardDay } from '@/features/buddies/lib/schemas'
 import type { Buddy } from '@/features/buddies/lib/state'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
-/**
- * Ask to Join for one of a buddy's Plans, then Asked (tap to withdraw), or
- * Waiting to Send until the request reaches them. Nothing once they've invited
- * this User that day or the Plan is about to start.
- */
 export default function AskToJoinButton({
   buddy,
   d,
@@ -25,7 +20,7 @@ export default function AskToJoinButton({
   buddy: Buddy
   d: string
   plan: BuddyCardDay['p'][number]
-  /** The Plan as read aloud, e.g. "Thu, Oct 8, 9:00 AM · 2 Hrs". */
+
   label: string
   askToJoin: ReturnType<typeof useAskToJoin>
 }) {

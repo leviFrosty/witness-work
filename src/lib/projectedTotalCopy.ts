@@ -42,11 +42,6 @@ export type StatusCopy = {
   params: { period: string; projected: string; gap: string; over: string }
 }
 
-/**
- * The status line under a projection, or null when there's nothing worth
- * saying. "Over goal" counts logged time only (plans haven't happened yet), and
- * the plans sentence is left out when nothing is planned.
- */
 export const getStatusCopy = (
   result: Pick<
     ProjectedTotalResult,
@@ -62,8 +57,7 @@ export const getStatusCopy = (
   format: (minutes: number) => string
 ): StatusCopy | null => {
   const hasPlanned = result.plannedMinutes > 0
-  // Without plans, the "planned hours would put you at…" copy is misleading;
-  // the legend already shows nothing planned.
+
   if (
     !hasPlanned &&
     (result.state === 'reachable_gap' ||
@@ -121,7 +115,7 @@ export const getPeriodTense = (
   today: Date
 ): PeriodTense => {
   const { start, end } = periodBounds(scope)
-  // Bounds are UTC-mode days; compare today's _local_ day in the same mode.
+
   const t = momentStoredDate(normalizeDateForStorage(today))
   if (t.isBefore(start, 'day')) return 'future'
   if (t.isAfter(end, 'day')) return 'past'

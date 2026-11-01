@@ -7,7 +7,7 @@ import type { PublishingState } from '../../../modules/calendar-bridge'
 
 const runtime = vi.hoisted(() => ({
   platform: 'ios',
-  /** Android binaries before Calendar Sync lack the native module. */
+
   androidModule: true,
   appState: 'active',
   foreground: () => {},
@@ -326,7 +326,7 @@ describe('foreground calendar maintenance', () => {
     await mount()
     await act(async () => runtime.foreground())
     await advance(300_000)
-    // No ownership to release: the iOS check-in would fail on Android.
+
     expect(publishing.action).not.toHaveBeenCalled()
   })
 

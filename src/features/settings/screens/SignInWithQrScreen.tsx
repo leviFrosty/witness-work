@@ -38,22 +38,11 @@ const LINK_PROBLEM = {
   damaged: 'handoff_scanDamaged',
 } as const
 
-/**
- * Failures scanning again or a recovery key can't fix: the device can't be
- * verified, or the app needs an update.
- */
 const FINAL = new Set<HandoffFailure | 'replace_failed'>([
   'unverified',
   'updateRequired',
 ])
 
-/**
- * Sign In with QR Code, on the new phone: scan the other phone's code (or open
- * its link), compare the code both show, and once the other phone allows it,
- * this phone uses the account. A recovery key is the way in without the other
- * phone. A device that can never attest is told so first, before it claims the
- * other phone's code.
- */
 const SignInWithQrScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -61,10 +50,10 @@ const SignInWithQrScreen = () => {
     useRoute<RouteProp<RootStackParamList, 'Sign In With QR Code'>>()
   const entry = route.params?.entry ?? 'settings'
   const support = useAttestationSupport()
-  // The account's buddies, once Buddies started here and synced them.
+
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
   const unverifiable = support === 'unsupported'
-  // An opened link waits until it's known this device can sign in.
+
   const { session, state, linkProblem, completion, scanned, retry, reset } =
     useClaimHandoff(
       entry,
@@ -124,8 +113,7 @@ const SignInWithQrScreen = () => {
     if (completion !== 'idle' && completion !== 'running') {
       if (completion.outcome === 'done') {
         const restored = completion.restore.outcome === 'restored'
-        // Cloud Sync is bringing the data down (ADR 0030): like a restore,
-        // the remaining onboarding steps would only set up what it replaces.
+
         const synced = completion.restore.outcome === 'synced'
         return (
           <HandoffStatus
@@ -152,10 +140,6 @@ const SignInWithQrScreen = () => {
             primary={{
               label: i18n.t(entry === 'onboarding' ? 'continue' : 'done'),
               onPress: () => {
-                // The restored records replace what the remaining steps
-                // would set up, as a backup file's restore does.
-                // A link opened from the welcome screen arrives as `link`,
-                // still during onboarding.
                 if (
                   (restored || synced) &&
                   !usePreferences.getState().onboardingComplete
@@ -178,7 +162,7 @@ const SignInWithQrScreen = () => {
             testID='handoff-replace-declined'
           />
         )
-      // The key is here; only signing in with it failed for now.
+
       if (completion.retryable && completion.reason !== 'replace_failed')
         return (
           <HandoffStatus

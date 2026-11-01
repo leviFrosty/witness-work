@@ -17,20 +17,14 @@ import type { ServiceYearPaceData } from '@/features/progress/hooks/useServiceYe
 import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
 
-/** Differences under this read as even. */
 const EVEN_MINUTES = 30
 
 type Props = {
   data: ServiceYearPaceData
-  /** Milestone hours (ending with the Annual Goal) to mark on the chart. */
+
   milestones: number[]
 }
 
-/**
- * Year-tab card charting the Service Year's running total against the Annual
- * Goal, with Plans and last year for context. Replaces the year's Projected
- * Total card: the status line under the chart carries the same projection.
- */
 const ServiceYearPaceCard = ({ data, milestones }: Props) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()

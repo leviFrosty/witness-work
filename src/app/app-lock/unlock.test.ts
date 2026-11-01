@@ -66,7 +66,7 @@ it('asks at launch on iOS and opens the app on success', async () => {
   expect(authenticateAppLock).toHaveBeenCalledTimes(1)
   expect(useAppLockSession.getState().locked).toBe(false)
   expect(wasAskedAtLaunch()).toBe(true)
-  // Shows the app without waiting out Face ID's success animation.
+
   expect(runtime.reveals).toBe(1)
 })
 

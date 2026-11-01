@@ -37,10 +37,6 @@ const parseWindow = (value: unknown): UsageWindowWire | null => {
   }
 }
 
-/**
- * A usage snapshot off the wire (`done.meter`, transcribe `usage`, the
- * `limit_reached` body, `GET /usage`), or null when it isn't one.
- */
 export function parseUsageSnapshot(value: unknown): UsageSnapshotWire | null {
   if (!isRecord(value)) return null
   if (value.plan !== 'free' && value.plan !== 'supporter') return null
@@ -58,7 +54,6 @@ export function parseUsageSnapshot(value: unknown): UsageSnapshotWire | null {
   }
 }
 
-/** The windows that limit each plan, shortest first. */
 const PLAN_WINDOWS: Record<ScribeUsage['plan'], ScribeUsageWindowId[]> = {
   free: ['monthly'],
   supporter: ['session', 'weekly'],
@@ -67,12 +62,6 @@ const PLAN_WINDOWS: Record<ScribeUsage['plan'], ScribeUsageWindowId[]> = {
 const hasEnded = (resetsAt: number | null, now: number) =>
   resetsAt !== null && resetsAt <= now
 
-/**
- * The snapshot as the server would answer at `now`: a window past its reset
- * reads as unused and not started, and the limit lifts once `resetsAt` (the
- * last full window's reset) has passed. A saved snapshot stays truthful until
- * the next read, even offline or with the screen left open.
- */
 export function currentUsageSnapshot(
   snapshot: UsageSnapshotWire,
   now: number
@@ -100,10 +89,6 @@ export function currentUsageSnapshot(
   }
 }
 
-/**
- * The next time `snapshot` changes on its own (a window resets, or the limit
- * lifts), or null when nothing is waiting to reset.
- */
 export function nextUsageChange(
   snapshot: UsageSnapshotWire | null,
   now: number
@@ -116,10 +101,6 @@ export function nextUsageChange(
   return upcoming.length ? Math.min(...upcoming) : null
 }
 
-/**
- * What the app shows at `now`: percent and reset time per window, never units.
- * Windows a plan isn't limited by are left out, in the plan's order.
- */
 export function toScribeUsage(
   saved: UsageSnapshotWire,
   now = Date.now()
@@ -144,7 +125,6 @@ export function toScribeUsage(
   }
 }
 
-/** The full window when limited: the one that resets last. */
 export function fullWindow(
   snapshot: UsageSnapshotWire
 ): ScribeUsageWindowId | null {

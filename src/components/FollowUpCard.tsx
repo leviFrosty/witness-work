@@ -8,20 +8,8 @@ import { mix, withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/**
- * Where a Follow-up stands, as its card shows it. Until a visit keeps it, it's
- * an outline, sketched in dashes: gray while `planned` (with only a teal pill
- * saying how far off it is), amber once `missed`, and dimmer still once
- * dismissed or past (`quiet`). Going fills it in: `done` is the only filled,
- * teal card, so color comes from something the User did.
- */
 export type FollowUpCardTone = 'planned' | 'missed' | 'done' | 'quiet'
 
-/**
- * A Follow-up card's colors: its `fill` (none for an outline), the opaque
- * `surface` behind its content (so avatar rings can match it), its `border`,
- * `accent` for the pill, and `detail` for small text and icons.
- */
 export function useFollowUpCardColors(tone: FollowUpCardTone) {
   const theme = useTheme()
   const outline = {
@@ -67,10 +55,6 @@ export function useFollowUpCardColors(tone: FollowUpCardTone) {
   }
 }
 
-/**
- * The Follow-up's topic in its own labeled box, so it never has to fit a
- * sentence.
- */
 export function FollowUpTopic({
   topic,
   tone,
@@ -114,12 +98,6 @@ export function FollowUpTopic({
   )
 }
 
-/**
- * A Follow-up as a card: a pill saying how far off it is ("In 2 days", "A day
- * ago"), then whatever the host puts in it, outlined until a visit keeps it and
- * filled in once one does. The User's own (Visit Details) and a buddy's
- * invitation share it.
- */
 export default function FollowUpCard({
   tone,
   pill,

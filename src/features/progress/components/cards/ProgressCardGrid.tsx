@@ -27,60 +27,45 @@ import AddProgressCardSheet from '@/features/progress/components/cards/AddProgre
 
 const SIZE_ORDER: ProgressCardSize[] = ['small', 'compact', 'wide', 'full']
 
-/** Space between cards. */
 export const PROGRESS_CARD_GAP = 12
-/**
- * Narrower than this (a tablet's side column), two small cards can't fit their
- * titles, so every card takes the full width. At accessibility text sizes it
- * grows with the text, so a phone shows one card a row.
- */
+
 const TWO_COLUMN_MIN_WIDTH = 340
 
 export type ProgressCardEditStart = 'card' | 'add' | 'footer'
 
 type CardMeta<Group extends string> = ProgressCardMeta<Group> & {
-  /** Where tapping the card goes. */
   destination?: ProgressCardDestination
 }
 
 type Props<Id extends string, Group extends string> = {
   cards: ProgressCardsModel<Id>
-  /** Every card the tab has, in the Add Cards sheet's order. */
+
   ids: readonly Id[]
   sizes: Record<Id, readonly ProgressCardSize[]>
   meta: Record<Id, CardMeta<Group>>
   groups: { group: Group; title: () => string }[]
-  /** A card's content, at its size. */
+
   renderContent: (item: ProgressCardLayoutItem<Id>) => ReactNode
-  /**
-   * The whole cell for a card that handles its own pressing and lifting (the
-   * Days list); `undefined` for the rest.
-   */
+
   renderOwn?: (item: ProgressCardLayoutItem<Id>) => ReactNode | undefined
-  /** A card full of rows with menus of their own lifts by its header. */
+
   liftsByZone?: (id: Id) => boolean
-  /** The height a card has at a size, where the size fixes one. */
+
   sizeHeight?: (id: Id, size: ProgressCardSize) => number | undefined
   editing: boolean
   onStartEditing: (source: ProgressCardEditStart) => void
-  /** Tapping empty space ends editing, as Done does. */
+
   onFinishEditing: () => void
-  /** The Add Cards sheet is open (from here or the header's Add Cards). */
+
   adding: boolean
   onAddingChange: (adding: boolean) => void
   onNavigate: (destination: ProgressCardDestination) => void
   scroller: ReorderScroller
   onDragChange: (dragging: boolean) => void
-  /** Cards this layout shows elsewhere, e.g. Days beside the cards. */
+
   exclude?: Id[]
 }
 
-/**
- * A Progress tab's cards under its summary. Outside edit mode they're just
- * cards; holding one (or Edit Cards) starts editing, as on the Home Screen: the
- * cards jiggle, the minus removes one, its corner handle resizes it, and
- * holding one drags it. More come from Add Cards.
- */
 export default function ProgressCardGrid<
   Id extends string,
   Group extends string,
@@ -107,8 +92,7 @@ export default function ProgressCardGrid<
   const theme = useTheme()
   const { fontScale } = useWindowDimensions()
   const largeText = useAccessibilityTextSize()
-  // Laid out afresh when editing ends (see `layoutKey`), but not when it
-  // starts: a card held to start editing is still under the finger.
+
   const [layoutGeneration, setLayoutGeneration] = useState(0)
   const [wasEditing, setWasEditing] = useState(editing)
   if (wasEditing !== editing) {
@@ -150,7 +134,6 @@ export default function ProgressCardGrid<
       ) : null}
 
       {!items.length ? (
-        // With no cards, Add Cards in the header is easy to miss.
         <Button
           onPress={() => {
             if (!editing) onStartEditing('add')
@@ -206,7 +189,7 @@ export default function ProgressCardGrid<
                       label: i18n.t('progressCards.resizeA11y', {
                         card: title,
                       }),
-                      // Smallest first.
+
                       options: [...sizes]
                         .sort(
                           (a, b) =>
@@ -236,7 +219,6 @@ export default function ProgressCardGrid<
                 { name: 'remove', label: i18n.t('progressCards.removeCard') },
               ],
               onAccessibilityAction: (name) => {
-                // Among the cards here; on iPad Days may sit beside them.
                 if (name === 'earlier') cards.step(item.id, -1, shownIds)
                 else if (name === 'later') cards.step(item.id, 1, shownIds)
                 else if (name === 'remove') cards.remove(item.id)
@@ -254,8 +236,6 @@ export default function ProgressCardGrid<
       ) : null}
 
       {!editing && items.length ? (
-        // Long press is invisible; this says it in words where the cards end.
-        // Well clear of the last card's own controls.
         <View style={{ paddingTop: 12 }}>
           <EditLayoutButton
             label={i18n.t('progressCards.editCards')}

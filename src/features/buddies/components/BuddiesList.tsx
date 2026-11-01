@@ -16,19 +16,15 @@ import PendingInviteRow from '@/features/buddies/components/PendingInviteRow'
 import { MAX_BUDDIES } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Requests that need my OK first, then buddies, then requests I'm waiting on,
- * then unused invite links. Empty sections are hidden.
- */
 export default function BuddiesList({
   onInvite,
   inviting,
   loading,
 }: {
   onInvite: () => void
-  /** An invite is being made. */
+
   inviting?: boolean
-  /** The first sync is still bringing buddies in; nothing to call empty yet. */
+
   loading?: boolean
 }) {
   const theme = useTheme()

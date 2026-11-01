@@ -12,15 +12,10 @@ import { formatDisplay } from '@/lib/dates'
 
 type Props = CalendarMonth & {
   onPress: () => void
-  /** Long-press shortcut; absent when the month's goal can't change. */
+
   onEditGoal?: () => void
 }
 
-/**
- * The focused month's goal at a glance above the Schedule's calendar: logged
- * time and the month's Plans against the Monthly Goal, and whether logged time
- * keeps up with the Plans so far, which the day colors show too.
- */
 export default function MonthGoalMeter({
   year,
   month,
@@ -36,8 +31,7 @@ export default function MonthGoalMeter({
   const schedule = useScheduleStatus({ month, year })
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  // Unlike the Projected Total elsewhere, Schedule shows every Plan in the
-  // month, including days already past.
+
   const plannedMinutes = plannedMinutesThroughDayForMonth(
     month,
     year,

@@ -88,13 +88,13 @@ interface MonthReportProps {
   monthsReports: TimeEntry[] | null
   month: number
   year: number
-  /** Show the report-view trigger icon. */
+
   showReportButton?: boolean
   title?: string
   hideTitle?: boolean
   noDetails?: boolean
   highlightAsCurrentMonth?: boolean
-  /** Exposes the selected month's goal editor on the Progress Month screen. */
+
   allowGoalEditing?: boolean
 }
 
@@ -130,7 +130,7 @@ const MonthReport = ({
     effectiveGoalHours: goalHours,
     isOverridden,
   } = useMonthlyGoal({ month, year })
-  // The role that applied this month (Role History), not today's role.
+
   const { type: role } = usePublisher({ month, year })
   const monthStatus = useMonthStatus({ month, year })
   const [editing, setEditing] = useState<MonthEditTarget | null>(null)
@@ -207,10 +207,6 @@ const MonthReport = ({
     lastMonthMinutes !== null &&
     lastMonthMinutes / 60 >= previousMonthGoalHours
 
-  // Pace vs plan — the same Schedule Status the Schedule screen's pace card
-  // shows: logged (credit-capped) time through today against Plans through
-  // today. Hidden when there's no plan to compare against, or when viewing a
-  // non-current month (the concept of "month-to-date" only applies now).
   const scheduleStatus = useScheduleStatus({ month, year })
   const aheadBehindMinutes =
     isCurrentMonth && scheduleStatus.plannedMinutes > 0
@@ -277,8 +273,6 @@ const MonthReport = ({
       credit: true,
     },
     ...(otherMinutes ?? []).map((report, i) => {
-      // Resolve the user-visible label live from the Categories store so a
-      // rename propagates without re-running the month aggregation.
       const liveCategory = report.categoryId
         ? categories.find((c) => c.id === report.categoryId)
         : undefined
@@ -325,17 +319,11 @@ const MonthReport = ({
     customCreditLimitHours,
   ])
   const tier = hasMetGoal ? resolveTier(percentOfGoal, isPersonalBest) : null
-  // Past/future months: suppress the celebration palette. See
-  // GoalProgressStats + the UX rationale in the plan doc.
+
   const celebratingTier = isCurrentMonth ? tier : null
-  // Amber is the personal-best palette — reserve it for `record` so a
-  // high-percent month that *isn't* a 12-month best (e.g. 286% behind a
-  // bigger prior month) doesn't masquerade as one.
+
   const cardTone = celebratingTier === 'record' ? 'amber' : 'default'
 
-  // One-time crossing animation: scale/glow pulse on the seal, a haptic, and
-  // (record-only) confetti. Persisted per-month-per-tier so re-opening the
-  // screen doesn't re-fire.
   const sealScale = useSharedValue(1)
   const sealAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sealScale.value }],
@@ -346,13 +334,9 @@ const MonthReport = ({
     (celebratedTiers[monthKey] ?? []).includes(celebratingTier)
   const shouldCelebrate = celebratingTier !== null && !alreadyCelebrated
   const fireworks = useFireworks()
-  // Tab preloading mounts this screen before the user navigates to it. Gate
-  // the celebration burst on actual focus so haptics/fireworks don't fire
-  // (and get marked as celebrated) while the tab is sitting offscreen.
+
   const isFocused = useIsFocused()
 
-  // Track scheduled fireworks timers so a quick unmount (tab swap, screen
-  // pop) doesn't leave them firing into a torn-down Skia canvas.
   const pendingFireworksTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   )
@@ -395,13 +379,6 @@ const MonthReport = ({
     fireFireworks,
   ])
 
-  // Pop any pending fireworks queued by AddTimeScreen.submit() for THIS
-  // specific month/year. The queue is keyed per-month so adding time that
-  // crosses March's goal doesn't fire on April — the fireworks wait until
-  // the user actually navigates to March. If the user submitted from this
-  // very screen, the global Lottie + chime is mid-play — delay the Skia
-  // bursts until after it finishes so the two celebrations don't visually
-  // overlap.
   useFocusEffect(
     useCallback(() => {
       const queuedAt = useCelebrationQueue.getState().consume(month, year)
@@ -453,8 +430,6 @@ const MonthReport = ({
           date: moment().month(month).year(year).toISOString(),
         })
 
-  // Long-press on the card's hero (the Progress → Month card). Every item is
-  // also a visible control on the card or the report screen.
   const editable = monthEditTargets({ month, year, baseGoalHours })
   const editFromMenu = (target: MonthEditTarget) => {
     setEditing(target)
@@ -494,8 +469,6 @@ const MonthReport = ({
     ],
   ]
 
-  // The month's Sent marker rides beside the report button; Mark as Not Sent
-  // is in the card's long-press menu.
   const reportButton = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       {sentLabel !== null && <ReportSentLabel label={sentLabel} />}
@@ -503,8 +476,6 @@ const MonthReport = ({
     </View>
   )
 
-  // Hero ("8 of 30 Hrs") → bar → one meta line: what's left on the leading
-  // edge, pace against the plan on the trailing edge.
   const hero = noDetails ? (
     <MonthServiceReportProgressBar month={month} year={year} />
   ) : (
@@ -513,9 +484,7 @@ const MonthReport = ({
       goalHours={goalHours}
       hasMetGoal={hasMetGoal}
       periodState={isCurrentMonth ? 'current' : isPastMonth ? 'past' : 'future'}
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       remainingLabel={i18n.t('daysLeftCount', { count: daysRemaining })}
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       totalLabel={i18n.t('daysCount', { count: daysInMonth })}
       achievementTier={celebratingTier}
       sealAnimatedStyle={sealAnimatedStyle}
@@ -546,10 +515,6 @@ const MonthReport = ({
                   textAlign: alignText('end'),
                   fontSize: theme.fontSize('xs'),
                   color: toneColor(
-                    // When both months cleared goal, a downward delta
-                    // isn't a warning — it just means a very strong
-                    // prior month. Keep it neutral so the celebration
-                    // card stays coherent.
                     bothMonthsMetGoal
                       ? 'neutral'
                       : momDeltaMinutes > 0
@@ -641,10 +606,7 @@ const MonthReport = ({
         }}
       >
         <View style={{ gap: noDetails ? 10 : 15 }}>
-          {/* Title row — when the parent provides section context
-            (e.g. Progress screen header + eyebrow already name the month),
-            the title is suppressed and the export icon rides in the hero
-            row instead. */}
+          {}
           {!hideTitle && (
             <View
               style={{
@@ -666,9 +628,7 @@ const MonthReport = ({
             </View>
           )}
 
-          {/* Status · goal on the leading edge, report on the trailing edge.
-            Plain text + icon rather than chips so the hero stays the loudest
-            thing on the card. */}
+          {}
           {allowGoalEditing || (hideTitle && showReportButton) ? (
             <View
               style={{
@@ -683,14 +643,14 @@ const MonthReport = ({
             </View>
           ) : null}
 
-          {/* Long-pressing the hero opens the month's menu on Progress. */}
+          {}
           {allowGoalEditing ? (
             <ContextMenu actions={cardMenu}>{hero}</ContextMenu>
           ) : (
             hero
           )}
 
-          {/* The color key doubles as the way into the category breakdown. */}
+          {}
           {!noDetails && hasCategorySegments && (
             <CategoriesSection segments={categorySegments} trigger='legend' />
           )}
@@ -704,8 +664,7 @@ const MonthReport = ({
           )}
         </View>
 
-        {/* Footer — a subdued action (the tab-bar "+" is the primary path to
-          logging) with recency on the trailing edge. */}
+        {}
         {!noDetails && (
           <View
             style={{
@@ -714,8 +673,7 @@ const MonthReport = ({
               borderTopWidth: 1,
               borderTopColor: theme.colors.border,
               flexDirection: 'row',
-              // At large text sizes the recency note wraps under the action
-              // instead of running off the card.
+
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -773,12 +731,7 @@ const MonthReport = ({
         )}
       </Card>
 
-      {/* Inline rollover affordance: shown only when (a) viewing the current
-        month, (b) there's a fractional source month available, and (c) the
-        parent isn't asking for the compact `noDetails` layout. Stays subdued
-        on purpose — the takeover screen is the primary path; this is a
-        recovery surface for users who pressed "Not now" or deleted the
-        rollover pair. */}
+      {}
       {isCurrentMonth && !noDetails && rollover.availablePending.length > 0 && (
         <Button
           onPress={() => navigation.navigate('Rollover')}
@@ -829,10 +782,7 @@ const MonthReport = ({
         </Button>
       )}
 
-      {/* Credit-only fraction: the previous month has a partial hour but it
-        comes entirely from credit time, which isn't eligible for rollover.
-        Plain notice (not a button) so the user knows why no rollover is
-        offered; the advanced publisher preference can re-include credit. */}
+      {}
       {isCurrentMonth &&
         !noDetails &&
         rollover.availablePending.length === 0 &&

@@ -37,12 +37,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Log Visit'>
 
 type Picked = { contact: Contact; pickedFrom: LogVisitPickedFrom }
 
-/**
- * Log Visit, from the + menu: pick a Contact (suggested first), then say how it
- * went. Had a Conversation continues to the Visit Form, which returns to where
- * the User started; Not at Home logs right away with an Undo toast. Data
- * protection mode has no Not at Home, so picking goes straight to the form.
- */
 export default function LogVisitScreen({ navigation }: Props) {
   const theme = useTheme()
   const contacts = useContacts((s) => s.contacts)
@@ -53,7 +47,7 @@ export default function LogVisitScreen({ navigation }: Props) {
   const nearby = useLocationSnapshot()
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState<Picked | null>(null)
-  /** Set once the flow logs or hands off, so closing isn't a dismissal. */
+
   const handedOff = useRef(false)
   const step = useRef<'pick_contact' | 'choose_outcome'>('pick_contact')
 
@@ -61,7 +55,6 @@ export default function LogVisitScreen({ navigation }: Props) {
     step.current = picked ? 'choose_outcome' : 'pick_contact'
   }, [picked])
 
-  // Android's back returns to the list from the outcome step.
   useEffect(() => {
     if (!picked) return
     const subscription = BackHandler.addEventListener(
@@ -108,7 +101,7 @@ export default function LogVisitScreen({ navigation }: Props) {
 
   const openVisitForm = ({ contact, pickedFrom }: Picked) => {
     handedOff.current = true
-    // Replaces the picker, so saving goes back to where the User started.
+
     navigation.replace('Visit Form', {
       contactId: contact.id,
       returnOnSave: true,
@@ -118,7 +111,7 @@ export default function LogVisitScreen({ navigation }: Props) {
 
   const addContact = (name?: string) => {
     handedOff.current = true
-    // Its form continues to the Visit Form, then back to where they started.
+
     navigation.replace('Contact Form', {
       id: Crypto.randomUUID(),
       name,
@@ -138,7 +131,6 @@ export default function LogVisitScreen({ navigation }: Props) {
     close()
   }
 
-  // The picked Contact can be deleted elsewhere (e.g. sync) mid-flow.
   const pickedContact = picked
     ? actives.find((c) => c.id === picked.contact.id)
     : undefined

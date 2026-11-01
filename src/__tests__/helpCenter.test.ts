@@ -198,7 +198,7 @@ describe('visibility', () => {
     expect(isEntryVisible(entry, 'ios', '4.11.9')).toBe(false)
     expect(isEntryVisible(entry, 'ios', '4.12.0')).toBe(true)
     expect(isEntryVisible(entry, 'ios', '5.0.0')).toBe(true)
-    // An unknown app version hides nothing.
+
     expect(isEntryVisible(entry, 'ios', null)).toBe(true)
   })
 

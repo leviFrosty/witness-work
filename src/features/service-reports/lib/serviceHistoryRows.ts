@@ -15,26 +15,17 @@ import { entryMinutes } from '@/lib/entryMinutes'
 import type { Publisher } from '@/types/publisher'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
-/** One month in the Service History editor's unsaved form. */
 export type ServiceHistoryRow = {
   target: CalendarMonth
   savedStatus: MonthStatus
   status: MonthStatus
-  /**
-   * Raw logged minutes, Time Rollovers included; `null` when the month has no
-   * ministry logged (a Time Rollover alone isn't ministry), so it can be filled
-   * in.
-   */
+
   loggedMinutes: number | null
   hours: string
   creditHours: string
   shared: boolean
 }
 
-/**
- * The saved state of every finished month of a Service Year, with nothing
- * entered yet.
- */
 export const buildServiceHistoryRows = ({
   serviceYear,
   role,
@@ -77,10 +68,6 @@ export const buildServiceHistoryRows = ({
     })
 }
 
-/**
- * Row `index` with the previous month's status and, when neither month has
- * logged time, its entered hours / credit / participation.
- */
 export const copiedFromPreviousRow = (
   rows: ServiceHistoryRow[],
   index: number
@@ -103,7 +90,6 @@ export const copiedFromPreviousRow = (
   }
 }
 
-/** The row back to its saved status with nothing entered. */
 export const clearedRow = (row: ServiceHistoryRow): ServiceHistoryRow => ({
   ...row,
   status: row.savedStatus,
@@ -112,7 +98,6 @@ export const clearedRow = (row: ServiceHistoryRow): ServiceHistoryRow => ({
   shared: false,
 })
 
-/** Whether two versions of a row differ in anything the user can edit. */
 export const rowsDiffer = (a: ServiceHistoryRow, b: ServiceHistoryRow) =>
   a.status !== b.status ||
   a.hours !== b.hours ||

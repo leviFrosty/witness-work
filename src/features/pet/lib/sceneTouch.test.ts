@@ -8,13 +8,11 @@ import {
   startsOnPet,
 } from '@/features/pet/lib/sceneTouch'
 
-/** The card's view of the scene, at 2 points per scene pixel. */
 const VIEW: Viewport = [22, 8, 146, 90]
 const SCALE = 2
 const PET: Viewport = [55, 54, 26, 30]
 const GIFT: Viewport = [93, 79, 16, 14]
 
-/** View points for scene pixel (`sx`, `sy`). */
 const at = (sx: number, sy: number) => ({
   x: (sx - VIEW[0]) * SCALE,
   y: (sy - VIEW[1]) * SCALE,
@@ -35,7 +33,7 @@ describe('scene taps', () => {
     expect(target(55 - PET_TAP_PAD, 70)).toBe('pet')
     expect(target(55 - PET_TAP_PAD - 1, 70)).toBe('room')
     expect(target(68, 54 - PET_TAP_PAD - 1)).toBe('room')
-    // The window, the lamp, the wall sign: the room.
+
     expect(target(30, 20)).toBe('room')
     expect(target(150, 70)).toBe('room')
   })
@@ -49,7 +47,7 @@ describe('scene taps', () => {
     const base = { scale: SCALE, viewport: VIEW, petBox: PET, giftBox: null }
     expect(sceneTapTarget({ ...base, x: -4, y: 40 })).toBe('room')
     expect(sceneTapTarget({ ...base, x: 40, y: 90 * SCALE + 2 })).toBe('room')
-    // Before the first frame there is no box: nothing pats.
+
     expect(sceneTapTarget({ ...base, petBox: null, ...at(68, 70) })).toBe(
       'room'
     )

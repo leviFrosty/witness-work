@@ -57,11 +57,6 @@ interface Props {
   reduceMotion: boolean
 }
 
-/**
- * One page: the illustration, as large as its stage allows, over a title and
- * caption that rise in the first time the page arrives. Laid out like the
- * update reveal's tour.
- */
 export default function ScheduleIntroPage({
   page,
   index,
@@ -98,7 +93,7 @@ export default function ScheduleIntroPage({
       )
     : 1
   const drift = reduceMotion ? 0 : 1
-  // `scrollX` runs in reading order; the drift is physical.
+
   const sign = forwardSign()
 
   const visualStyle = useAnimatedStyle(() => {
@@ -143,8 +138,6 @@ export default function ScheduleIntroPage({
         {stage && (
           <Animated.View
             style={[
-              // Illustrations are drawn with hand-placed coordinates and
-              // transforms that don't mirror, so they keep their LTR layout.
               { width: VISUAL.width, height: VISUAL.height, direction: 'ltr' },
               visualStyle,
             ]}

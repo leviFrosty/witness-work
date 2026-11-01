@@ -17,23 +17,19 @@ import {
 } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
 
-/**
- * A docked form's Note: a "+" row that opens the note editor, and shows the
- * start of the note once there is one.
- */
 const NoteFormRow = (props: {
   note: NoteFields
   onChange: (note: NoteUpdate) => void
   surface: NoteSurface
   first?: boolean
-  /** Most characters of text the note may hold. */
+
   maxLength?: number
   allowImages?: boolean
-  /** Names the row and its editor; "Note" by default. */
+
   label?: string
-  /** Shown in the empty editor; "Optional" by default. */
+
   placeholder?: string
-  /** Prefixes the row's testIDs, e.g. `plan-note-row`. */
+
   testID: string
 }) => {
   const theme = useTheme()

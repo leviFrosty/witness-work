@@ -2,9 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import moment from 'moment'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-// `migrateLdcToCategory` doesn't call expo-crypto, but `lib/categories.ts`
-// imports `Crypto.randomUUID` at module scope (used by the tag → Category
-// migration); stub it so the import resolves under vitest.
+
 vi.mock('expo-crypto', () => ({
   randomUUID: vi.fn(() => 'mock-uuid'),
 }))
@@ -133,7 +131,7 @@ describe('migrateLdcToCategory', () => {
     const reports = buildReports([
       { id: 'r-ldc', month: 0, year: 2026, hours: 2 },
     ])
-    // Hand-craft a "post-migration" entry pointing at the builtin id.
+
     reports[2026][0][0] = {
       ...reports[2026][0][0],
       categoryId: LDC_BUILTIN_CATEGORY_ID,
@@ -159,8 +157,6 @@ describe('migrateLdcToCategory', () => {
   })
 
   it('keeps an existing non-LDC categoryId when ldc:true coexists (explicit wins)', () => {
-    // Data corruption shape: legacy ldc: true alongside a real user Category.
-    // The Category wins; the ldc flag is dropped; counted under conflicts.
     const reports = buildReports([
       {
         id: 'r-mixed',
@@ -230,14 +226,11 @@ describe('migrateLdcToCategory', () => {
   })
 
   it('preserves cap-math output for the same input as the legacy shape', () => {
-    // The brief calls this out as the regression to guard against: the cap
-    // math must produce identical output for an LDC entry before and after
-    // the collapse migration. Pioneer with no override → 55h cap.
     const month = 0
     const year = 2026
     const before = buildReports([
       { id: 'a', month, year, hours: 30, ldc: true },
-      { id: 'b', month, year, hours: 30 }, // standard
+      { id: 'b', month, year, hours: 30 },
     ])
     const beforeMinutes = adjustedMinutesForSpecificMonth(
       before[year][month] as LegacyTimeEntry[],
@@ -264,7 +257,6 @@ describe('migrateLdcToCategory', () => {
     expect(afterMinutes.credit).toBe(beforeMinutes.credit)
     expect(afterMinutes.creditOverage).toBe(beforeMinutes.creditOverage)
 
-    // And the LDC slice of the breakdown should still report LDC minutes.
     expect(
       ldcMinutesForSpecificMonth(
         result.serviceReports[year][month],

@@ -7,12 +7,6 @@ import { useUsageClock } from '@/features/scribe/hooks/useUsageClock'
 
 const refresh = () => void refreshUsage({ force: true })
 
-/**
- * The account's usage windows. Reads `GET /usage` on mount (at most every 30
- * s); every step and page read updates it too, and a window that resets while
- * it's shown reads as reset. `open: false` reads only with an existing session,
- * for screens that show usage in passing.
- */
 export function useScribeUsage({ open = true } = {}): ScribeUsageState {
   const snapshot = useScribeUsageStore((state) => state.snapshot)
   const loading = useScribeUsageStore((state) => state.loading)

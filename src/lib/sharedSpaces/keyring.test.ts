@@ -8,10 +8,6 @@ import {
 
 const key = (fill: number) => new Uint8Array(32).fill(fill)
 
-/**
- * Storage whose reads fail until `unlock()`, as the Keychain before first
- * unlock.
- */
 function lockedStorage(stored: string | null) {
   let locked = true
   const writes: (string | null)[] = []
@@ -71,7 +67,7 @@ describe('the space keyring', () => {
     expect(errors).toHaveLength(1)
     keyring.trust('new', 1, key(3))
     await keyring.flushed()
-    // The stored epochs aren't overwritten with what's in memory.
+
     expect(locked.writes).toEqual([])
     expect(keyring.key('new', 1)).toEqual(key(3))
 
@@ -117,8 +113,6 @@ describe('the space keyring', () => {
     expect(locked.writes).toEqual([null])
     expect(locked.stored()).toBeNull()
 
-    // A read that works afterwards brings nothing back, and what's trusted
-    // since is kept.
     keyring.trust('next', 1, key(5))
     await keyring.flushed()
     locked.unlock()

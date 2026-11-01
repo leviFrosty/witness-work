@@ -15,22 +15,13 @@ import type { GainPulse } from '@/features/pet/hooks/usePetReveal'
 import usePetDark from '@/features/pet/hooks/usePetDark'
 import { coinsText, signedAmountText } from '@/features/pet/lib/roomLabels'
 
-/** A "+N" starts this far down over its count's top, then rises `RISE`. */
 const START_OVERLAP = 6
 const RISE = 14
-/** Room on each side of a count for its "+N", which can be wider. */
+
 const FLOAT_SPREAD = 40
 
-/** A gain's gold, readable on the card in light and dark. */
 const GAIN_COLOR = { light: '#8a5a00', dark: '#f5c542' }
 
-/**
- * The coins left to spend, as `usePetReveal` shows them: a "+N" rises over the
- * count as it changes, and the coin pops each time it ticks up. One
- * accessibility element. `iconRef` lets coins fly to the icon. `surface` is the
- * colour behind the count: the "+N" sits on it, so it reads over whatever it
- * rises across (the hearts, the card's edge).
- */
 export default function PetWalletCounts({
   coins,
   pulse,
@@ -43,12 +34,12 @@ export default function PetWalletCounts({
   coins: number
   pulse: GainPulse | null
   fontSize: number
-  /** Points per icon pixel; the Shop's by default. */
+
   iconScale?: number
   iconRef?: RefObject<View | null>
-  /** The card's colour by default. */
+
   surface?: string
-  /** The count's colour; the theme's text by default. */
+
   color?: string
 }) {
   const theme = useTheme()
@@ -99,7 +90,6 @@ export default function PetWalletCounts({
   )
 }
 
-/** "+20" rising over the count, and fading; a loss is muted and quick. */
 function GainFloat({ pulse, surface }: { pulse: GainPulse; surface: string }) {
   const theme = useTheme()
   const dark = usePetDark()
@@ -121,7 +111,7 @@ function GainFloat({ pulse, surface }: { pulse: GainPulse; surface: string }) {
       style={[
         {
           position: 'absolute',
-          // Just over the count, wide enough for any amount.
+
           bottom: '100%',
           start: -FLOAT_SPREAD,
           end: -FLOAT_SPREAD,

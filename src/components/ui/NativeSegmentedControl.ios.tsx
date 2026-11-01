@@ -9,7 +9,6 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import type { NativeSegmentedControlProps } from '@/components/ui/NativeSegmentedControl.types'
 
-/** SwiftUI `Picker` with the segmented style (`UISegmentedControl`). */
 export default function NativeSegmentedControl<T extends string = string>({
   options,
   value,
@@ -19,7 +18,7 @@ export default function NativeSegmentedControl<T extends string = string>({
   testID,
 }: NativeSegmentedControlProps<T>) {
   const colorScheme = usePreferences((s) => s.colorScheme)
-  // Tags are indexes; -1 matches no tag, so no segment shows selected.
+
   const selection = options.findIndex((option) => option.key === value)
   const modifiers: ModifierConfig[] = [pickerStyle('segmented')]
   if (disabled) modifiers.push(disabledModifier())

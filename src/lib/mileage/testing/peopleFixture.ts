@@ -3,16 +3,6 @@ import type { SharedCar, SharedCarMember } from '@/types/sharedCars'
 import type { Trip, Vehicle } from '@/types/mileage'
 import { carMember, sharedCar } from '@/lib/mileage/testing/sharedCars'
 
-/**
- * Two Shared Cars and a car of the User's own, for tests of who's who:
- *
- * - The User's own Civic, with trip `mine`.
- * - The Family Minivan (`van-space`), which the User shared: on it are the User,
- *   Ana (a buddy, by the nickname "Annie") and Ben (not a buddy). Cal was on it
- *   and left; his trip stays.
- * - The Mazda (`mazda-space`), which Ana shared with the User.
- */
-
 const trip = (
   id: string,
   vehicleId: string,
@@ -93,7 +83,7 @@ export const peopleFixture = () => {
     VAN,
     MAZDA,
     trips,
-    /** Every trip, as the combined mileage view lists them. */
+
     allTrips: Object.values(trips),
     vehicles,
     cars,

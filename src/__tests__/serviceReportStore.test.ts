@@ -8,8 +8,6 @@ import {
 } from '@/lib/serviceReport'
 import { normalizeDateForStorage } from '@/lib/normalizeDate'
 
-// Stored overrides have their `date` normalized to noon UTC. Compare against
-// this normalized shape rather than the raw input the test passed in.
 const normalizedOverride = (
   o: RecurringPlanOverride
 ): RecurringPlanOverride => ({
@@ -17,7 +15,6 @@ const normalizedOverride = (
   date: normalizeDateForStorage(o.date),
 })
 
-// Type for the result of getRecurringPlanForDate
 type RecurringPlanWithOverrideInfo = RecurringPlan &
   (
     | { isOverride: false }
@@ -33,7 +30,6 @@ vi.mock(
 
 describe('TimeEntry Store - Override Functionality', () => {
   beforeEach(() => {
-    // Reset the store state before each test
     useServiceReport.getState()._WARNING_forceDeleteRecurringPlans()
   })
 
@@ -42,7 +38,6 @@ describe('TimeEntry Store - Override Functionality', () => {
       const { addRecurringPlan, addRecurringPlanOverride } =
         useServiceReport.getState()
 
-      // First create a recurring plan
       const basePlan = {
         id: 'test-plan-1',
         startDate: moment('2024-01-01').toDate(),
@@ -56,7 +51,6 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       addRecurringPlan(basePlan)
 
-      // Add an override
       const override: RecurringPlanOverride = {
         date: moment('2024-01-08').toDate(),
         minutes: 180,
@@ -92,7 +86,6 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       const testDate = moment('2024-01-08').toDate()
 
-      // Add first override
       const firstOverride: RecurringPlanOverride = {
         date: testDate,
         minutes: 180,
@@ -100,7 +93,6 @@ describe('TimeEntry Store - Override Functionality', () => {
       }
       addRecurringPlanOverride('test-plan-2', firstOverride)
 
-      // Add second override on same date
       const secondOverride: RecurringPlanOverride = {
         date: testDate,
         minutes: 240,
@@ -265,7 +257,7 @@ describe('TimeEntry Store - Override Functionality', () => {
       )
 
       expect(firstOverride).toEqual(normalizedOverride(updatedOverride))
-      expect(secondOverride).toEqual(normalizedOverride(override2)) // Unchanged
+      expect(secondOverride).toEqual(normalizedOverride(override2))
     })
   })
 
@@ -298,12 +290,10 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       addRecurringPlanOverride('test-plan-5', override)
 
-      // Verify override was added
       let updatedPlans = useServiceReport.getState().recurringPlans
       let updatedPlan = updatedPlans.find((p) => p.id === 'test-plan-5')
       expect(updatedPlan!.overrides).toHaveLength(1)
 
-      // Remove the override
       removeRecurringPlanOverride('test-plan-5', moment('2024-01-08').toDate())
 
       updatedPlans = useServiceReport.getState().recurringPlans
@@ -347,7 +337,6 @@ describe('TimeEntry Store - Override Functionality', () => {
       addRecurringPlanOverride('test-plan-6', override1)
       addRecurringPlanOverride('test-plan-6', override2)
 
-      // Remove only the first override
       removeRecurringPlanOverride('test-plan-6', moment('2024-01-08').toDate())
 
       const updatedPlans = useServiceReport.getState().recurringPlans
@@ -392,18 +381,18 @@ describe('TimeEntry Store - Override Functionality', () => {
       const result = getRecurringPlanForDate('test-plan-7', testDate)
 
       expect(result).toBeDefined()
-      expect(result!.minutes).toBe(180) // Override minutes
-      expect(result!.note).toBe('Override note') // Override note
+      expect(result!.minutes).toBe(180)
+      expect(result!.note).toBe('Override note')
       expect(result!.isOverride).toBe(true)
       if (result!.isOverride) {
         expect(
           (result as RecurringPlanWithOverrideInfo & { isOverride: true })
             .originalMinutes
-        ).toBe(120) // Original minutes
+        ).toBe(120)
         expect(
           (result as RecurringPlanWithOverrideInfo & { isOverride: true })
             .originalNote
-        ).toBe('Original note') // Original note
+        ).toBe('Original note')
       }
     })
 
@@ -429,8 +418,8 @@ describe('TimeEntry Store - Override Functionality', () => {
       const result = getRecurringPlanForDate('test-plan-8', testDate)
 
       expect(result).toBeDefined()
-      expect(result!.minutes).toBe(120) // Original minutes
-      expect(result!.note).toBe('Original note') // Original note
+      expect(result!.minutes).toBe(120)
+      expect(result!.note).toBe('Original note')
       expect(result!.isOverride).toBe(false)
       expect('originalMinutes' in result!).toBe(false)
       expect('originalNote' in result!).toBe(false)
@@ -456,7 +445,7 @@ describe('TimeEntry Store - Override Functionality', () => {
         id: 'test-plan-9',
         startDate: moment('2024-01-01').toDate(),
         minutes: 120,
-        // note is undefined
+
         recurrence: {
           frequency: RecurringPlanFrequencies.WEEKLY,
           interval: 1,
@@ -470,7 +459,6 @@ describe('TimeEntry Store - Override Functionality', () => {
       const override: RecurringPlanOverride = {
         date: testDate,
         minutes: 180,
-        // note is undefined
       }
 
       addRecurringPlanOverride('test-plan-9', override)
@@ -517,10 +505,8 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       const testDate = moment('2024-01-08').toDate()
 
-      // Delete an instance
       deleteSingleEventFromRecurringPlan('restore-test-plan', testDate)
 
-      // Verify it's deleted
       let updatedPlans = useServiceReport.getState().recurringPlans
       let updatedPlan = updatedPlans.find((p) => p.id === 'restore-test-plan')
       expect(updatedPlan!.deletedDates).toHaveLength(1)
@@ -528,10 +514,8 @@ describe('TimeEntry Store - Override Functionality', () => {
         normalizeDateForStorage(testDate)
       )
 
-      // Restore the instance
       restoreRecurringPlanInstance('restore-test-plan', testDate)
 
-      // Verify it's restored
       updatedPlans = useServiceReport.getState().recurringPlans
       updatedPlan = updatedPlans.find((p) => p.id === 'restore-test-plan')
       expect(updatedPlan!.deletedDates).toHaveLength(0)
@@ -560,19 +544,15 @@ describe('TimeEntry Store - Override Functionality', () => {
       const date1 = moment('2024-01-08').toDate()
       const date2 = moment('2024-01-15').toDate()
 
-      // Delete multiple instances
       deleteSingleEventFromRecurringPlan('restore-test-plan-2', date1)
       deleteSingleEventFromRecurringPlan('restore-test-plan-2', date2)
 
-      // Verify both are deleted
       let updatedPlans = useServiceReport.getState().recurringPlans
       let updatedPlan = updatedPlans.find((p) => p.id === 'restore-test-plan-2')
       expect(updatedPlan!.deletedDates).toHaveLength(2)
 
-      // Restore only the first instance
       restoreRecurringPlanInstance('restore-test-plan-2', date1)
 
-      // Verify only the first is restored, second remains deleted
       updatedPlans = useServiceReport.getState().recurringPlans
       updatedPlan = updatedPlans.find((p) => p.id === 'restore-test-plan-2')
       expect(updatedPlan!.deletedDates).toHaveLength(1)
@@ -618,11 +598,9 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       const testDate = moment('2024-01-08').toDate()
 
-      // Delete instance from both plans
       deleteSingleEventFromRecurringPlan('restore-test-plan-3a', testDate)
       deleteSingleEventFromRecurringPlan('restore-test-plan-3b', testDate)
 
-      // Restore instance only from first plan
       restoreRecurringPlanInstance('restore-test-plan-3a', testDate)
 
       const updatedPlans = useServiceReport.getState().recurringPlans
@@ -633,7 +611,6 @@ describe('TimeEntry Store - Override Functionality', () => {
         (p) => p.id === 'restore-test-plan-3b'
       )
 
-      // First plan should be restored, second should remain deleted
       expect(updatedPlan1!.deletedDates).toHaveLength(0)
       expect(updatedPlan2!.deletedDates).toHaveLength(1)
     })
@@ -657,10 +634,8 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       const testDate = moment('2024-01-08').toDate()
 
-      // Try to restore a date that was never deleted
       restoreRecurringPlanInstance('restore-test-plan-4', testDate)
 
-      // Should not cause any issues (may initialize as empty array)
       const updatedPlans = useServiceReport.getState().recurringPlans
       const updatedPlan = updatedPlans.find(
         (p) => p.id === 'restore-test-plan-4'
@@ -693,7 +668,6 @@ describe('TimeEntry Store - Override Functionality', () => {
 
       addRecurringPlan(basePlan)
 
-      // Add multiple overrides
       const dates = [
         moment('2024-01-08').toDate(),
         moment('2024-01-15').toDate(),
@@ -710,7 +684,6 @@ describe('TimeEntry Store - Override Functionality', () => {
         addRecurringPlanOverride('integration-test-plan', override)
       })
 
-      // Verify all overrides exist
       dates.forEach((date, index) => {
         const result = getRecurringPlanForDate('integration-test-plan', date)
         expect(result!.isOverride).toBe(true)
@@ -718,7 +691,6 @@ describe('TimeEntry Store - Override Functionality', () => {
         expect(result!.note).toBe(overrides[index].note)
       })
 
-      // Update middle override
       const updatedOverride: RecurringPlanOverride = {
         date: dates[1],
         minutes: 150,
@@ -734,7 +706,6 @@ describe('TimeEntry Store - Override Functionality', () => {
       expect(updatedResult!.minutes).toBe(150)
       expect(updatedResult!.note).toBe('Updated second override')
 
-      // Remove last override
       removeRecurringPlanOverride('integration-test-plan', dates[2])
 
       const removedResult = getRecurringPlanForDate(
@@ -742,9 +713,8 @@ describe('TimeEntry Store - Override Functionality', () => {
         dates[2]
       )
       expect(removedResult!.isOverride).toBe(false)
-      expect(removedResult!.minutes).toBe(120) // Back to original
+      expect(removedResult!.minutes).toBe(120)
 
-      // Verify other overrides still exist
       const firstResult = getRecurringPlanForDate(
         'integration-test-plan',
         dates[0]
@@ -822,7 +792,7 @@ describe('TimeEntry Store - Rollover pair deletion', () => {
       rollover: true,
       rolloverGroupId: groupId,
     }
-    // Unrelated rollover pair that must NOT be touched.
+
     const otherNeg = {
       id: 'other-neg',
       hours: 0,
@@ -847,7 +817,6 @@ describe('TimeEntry Store - Rollover pair deletion', () => {
 
     deleteRolloverPair(positive)
 
-    // Negative + positive of group-1 are both gone; group-2 is intact.
     const all = useServiceReport.getState().serviceReports
     const allFlat = Object.values(all).flatMap((y) =>
       Object.values(y).flat()
@@ -859,13 +828,12 @@ describe('TimeEntry Store - Rollover pair deletion', () => {
     const ids = (allFlat as { id: string }[]).map((r) => r.id).sort()
     expect(ids).toEqual(['other-neg', 'other-pos'])
 
-    // Both deleted ids land in the tombstone list.
     const tombstones = useServiceReport
       .getState()
       .deletedServiceReports.map((t) => t.id)
       .sort()
     expect(tombstones).toEqual(['rollover-neg', 'rollover-pos'])
-    void serviceReports // silence unused destructure
+    void serviceReports
   })
 
   it('falls back to deleting just the passed report when no group id is set', () => {
@@ -877,7 +845,6 @@ describe('TimeEntry Store - Rollover pair deletion', () => {
       minutes: -10,
       date: moment('2026-03-31').toDate(),
       rollover: true,
-      // No rolloverGroupId — legacy entry from before grouping existed.
     }
     addServiceReport(orphan)
 
@@ -909,7 +876,6 @@ describe('TimeEntry Store - Service year deletion', () => {
     const { addServiceReport, deleteServiceYearReports } =
       useServiceReport.getState()
 
-    // Service year ending 2025 = Sep 1 2024 → Aug 31 2025.
     const inSep = {
       id: 'in-sep',
       hours: 1,
@@ -922,7 +888,7 @@ describe('TimeEntry Store - Service year deletion', () => {
       minutes: 30,
       date: moment('2025-08-20').toDate(),
     }
-    // Boundary neighbors in adjacent service years — must survive.
+
     const beforeYear = {
       id: 'before-year',
       hours: 2,

@@ -46,12 +46,10 @@ describe('bars hidden by scrolling', () => {
       renderer = create(<Screen />)
     })
 
-    // Swipe down through the content.
     act(() => bars().scrollProps.onScrollBeginDrag(frame(100)))
     act(() => bars().onScroll(frame(200)))
     expect(bars().hidden).toBe(true)
 
-    // Opening iPhone Duo keeps the chrome; closing it puts things back.
     layout.isWide = true
     act(() => renderer!.update(<Screen />))
     expect(bars().hidden).toBe(false)
@@ -76,7 +74,7 @@ describe('bars hidden by scrolling', () => {
     act(() => bars().scrollProps.onScrollEndDrag())
     layout.isWide = true
     act(() => renderer!.update(<Screen />))
-    // Keeping its place in the wide layout lands it at the top.
+
     act(() => bars().onScroll(frame(0)))
     layout.isWide = false
     act(() => renderer!.update(<Screen />))

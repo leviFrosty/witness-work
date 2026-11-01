@@ -20,11 +20,6 @@ import { dueFollowUpLabel } from '@/lib/suggestedContacts'
 import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 
-/**
- * The outcome step: who was picked, the due Follow-up's topic so it's fresh
- * before talking, and the two outcomes. Had a Conversation opens the Visit
- * Form; Not at Home logs it right away.
- */
 export default function LogVisitOutcome({
   contact,
   dueFollowUp,
@@ -32,7 +27,7 @@ export default function LogVisitOutcome({
   onNotAtHome,
 }: {
   contact: Contact
-  /** The Contact's due Follow-up, if any. */
+
   dueFollowUp?: Visit
   onConversation: () => void
   onNotAtHome: () => void

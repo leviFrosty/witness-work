@@ -16,12 +16,10 @@ export type WatchEntryPlan =
       status: 'add'
       entry: TimeEntry
       origin: WatchOrigin
-      /** The chosen Category was deleted before the entry arrived. */
+
       categoryRemoved: boolean
     }
-  /** Already saved — a repeated delivery. */
   | { id: string; status: 'duplicate' }
-  /** Deleted on this or another device before it arrived; not restored. */
   | { id: string; status: 'deleted' }
   | { id: string; status: 'invalid' }
 
@@ -59,16 +57,6 @@ function isValidDraft(draft: WatchEntryDraft): boolean {
   )
 }
 
-/**
- * Decides what to do with each Time Entry made on the watch (Apple Watch or
- * Wear OS) or with Siri on this device. The draft's id becomes the entry's id,
- * so a delivery that repeats — or that iCloud Sync already brought in from
- * another device — is recognized, and an entry deleted before it arrived stays
- * deleted.
- *
- * A Category deleted in the meantime is dropped rather than losing the time;
- * the entry then counts as Standard.
- */
 export function planWatchEntries(
   drafts: WatchEntryDraft[],
   existing: Existing
@@ -100,8 +88,7 @@ export function planWatchEntries(
         id: draft.id,
         hours: draft.hours,
         minutes: draft.minutes,
-        // Local midnight of the watch's day; the store anchors it to that
-        // calendar day.
+
         date: moment(draft.date, 'YYYY-MM-DD', true).toDate(),
         categoryId: category?.id,
         credit: category?.isCredit ?? false,

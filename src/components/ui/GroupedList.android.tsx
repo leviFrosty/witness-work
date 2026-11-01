@@ -63,8 +63,6 @@ type Position = 'only' | 'first' | 'middle' | 'last'
 
 const RowPosition = createContext<Position>('only')
 
-// Material 3's connected list: fully rounded at a group's ends, slightly
-// rounded between its rows.
 const OUTER_RADIUS = 20
 const INNER_RADIUS = 4
 
@@ -98,10 +96,6 @@ function useRowStyle() {
   }
 }
 
-/**
- * A Material 3 grouped list (a `LazyColumn` that owns the scroll), in the app's
- * colors and fonts.
- */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const style = useRowStyle()
@@ -150,7 +144,6 @@ export function GroupedList({ children, title, testID }: GroupedListProps) {
   )
 }
 
-/** Rows must be direct children, so the group can round its ends. */
 export function GroupedListSection({
   title,
   footer,
@@ -201,7 +194,6 @@ export function GroupedListSection({
   )
 }
 
-/** A Lucide icon hosted at its own size, so Compose doesn't stretch it. */
 function RowIcon({
   icon,
   color,
@@ -249,7 +241,6 @@ function RowText({ label, sublabel }: { label: string; sublabel?: string }) {
 }
 
 function rowModifiers(position: Position, ...rest: ModifierConfig[]) {
-  // Clip first so the ripple stays inside the row's shape.
   return [
     fillMaxWidth(),
     clip(Shapes.RoundedCorner(corners(position))),
@@ -257,10 +248,6 @@ function rowModifiers(position: Position, ...rest: ModifierConfig[]) {
   ]
 }
 
-/**
- * A row that opens a screen, a website or an action. Long press opens its menu,
- * anchored to the row.
- */
 export function GroupedListRow({
   label,
   sublabel,
@@ -312,8 +299,7 @@ export function GroupedListRow({
           selected
             ? selectable(true, press)
             : checked !== undefined
-              ? // One of a list of choices: TalkBack says if it's the one.
-                selectable(checked, press, 'radioButton')
+              ? selectable(checked, press, 'radioButton')
               : clickable(press),
         ]
       : []
@@ -447,10 +433,6 @@ export function GroupedListRow({
   )
 }
 
-/**
- * Only the switch toggles: an info button can't sit inside a row that toggles
- * without a tap on it doing both.
- */
 export function GroupedListSwitchRow({
   label,
   icon,
@@ -473,7 +455,7 @@ export function GroupedListSwitchRow({
           </Text>
           {info ? (
             <RNHostView matchContents>
-              {/* One native child: the popover mounts its own Modal beside the button. */}
+              {}
               <View>
                 <InfoPopover title={label} description={info} />
               </View>
@@ -503,7 +485,6 @@ export function GroupedListSwitchRow({
   )
 }
 
-/** Opens a menu of choices anchored to the row, which shows the current one. */
 export function GroupedListPickerRow({
   label,
   sublabel,
@@ -535,8 +516,7 @@ export function GroupedListPickerRow({
             ...(testID ? [testTag(testID)] : [])
           )}
         >
-          {/* The current choice goes under the label, as in Android's list
-              settings, so a long one doesn't squeeze the label. */}
+          {}
           <RowText
             label={label}
             sublabel={[current?.label, sublabel].filter(Boolean).join('\n')}

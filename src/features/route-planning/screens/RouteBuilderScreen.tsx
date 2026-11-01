@@ -46,23 +46,14 @@ import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 import type { SavedPlaceKind } from '@/features/route-planning/lib/routeBuilder'
 import useContacts from '@/stores/contactsStore'
 
-/** The list beside the map on wide windows. */
 const PANEL_WIDTH = 420
 
-/** What the app's buddies row needs: invitations travel with a Plan. */
 export type RouteBuddiesSlot = {
-  /** The one-time Plan the route belongs to, whose invitations show. */
   dayPlanId?: string
-  /** Makes a Plan from the route, to invite buddies to it. */
+
   onCreatePlan: () => void
 }
 
-/**
- * The route builder: a day's stops on a map with when you'd reach each, and the
- * same day as a timeline to reorder, add to, and annotate. The map sits above
- * the timeline, or beside it on wide windows. `renderBuddies` is the app's row
- * for the buddies invited to the route's Plan.
- */
 export default function RouteBuilderScreen({
   renderBuddies,
 }: {
@@ -74,7 +65,7 @@ export default function RouteBuilderScreen({
   const { isWide } = useAdaptiveLayout()
   const params = useRoute<RouteProp<RootStackParamList, 'TodayRoute'>>().params
   const navigation = useNavigation<RootStackNavigation>()
-  // Fixed for the visit, so a screen left open past midnight keeps its day.
+
   const [day, setDay] = useState(() =>
     params?.date ? moment(params.date, 'YYYY-MM-DD').toDate() : new Date()
   )
@@ -87,14 +78,13 @@ export default function RouteBuilderScreen({
     mode: AddRouteStopMode
     saving?: SavedPlaceKind
   } | null>(null)
-  // On narrow screens the map sits above the timeline at a height the User
-  // can drag; it starts at a bit over a third of the window.
+
   const [splitWidth, setSplitWidth] = useState(0)
   const [divisions, setDivisions] = useState<DisplayDivision[]>([])
   const mapMin = 160
   const mapMax = Math.max(mapMin, height * 0.7)
   const mapHeight = useSharedValue(Math.max(240, Math.min(440, height * 0.38)))
-  // Wide, the map fills the space beside the timeline.
+
   const mapStyle = useAnimatedStyle(() =>
     isWide ? { flex: 1, height: '100%' } : { flex: 0, height: mapHeight.value }
   )
@@ -104,7 +94,6 @@ export default function RouteBuilderScreen({
     setSelectedKey(null)
   }
 
-  // Opened from a Plan, or back from making one: the route belongs to it.
   const linkFromParams = useEffectEvent((planId: string, newPlan: boolean) => {
     if (builder.linkedPlan?.id !== planId) {
       builder.linkPlan(planId, newPlan ? 'new_plan' : 'plan')
@@ -115,8 +104,6 @@ export default function RouteBuilderScreen({
     if (params?.planId) linkFromParams(params.planId, !!params.newPlan)
   }, [params?.planId, params?.newPlan])
 
-  // Contacts picked on the Map join today's route after its stops; say so
-  // when some didn't fit.
   const addFromParams = useEffectEvent((ids: string[]) => {
     const { contacts } = useContacts.getState()
     const { leftOff } = builder.addContactStops(
@@ -150,7 +137,6 @@ export default function RouteBuilderScreen({
     destination: coordinateText(pin.coordinate),
   })
 
-  // A Recurring Plan's dates don't carry invitations.
   const buddies = builder.linkedPlan?.recurring
     ? undefined
     : renderBuddies?.({
@@ -225,8 +211,6 @@ export default function RouteBuilderScreen({
     <RouteActionBar builder={builder} bottomInset={insets.bottom} />
   ) : null
 
-  // While iPhone Duo is partly folded, the panel ends at the fold and the map
-  // starts past it.
   const panel =
     isWide && splitWidth > 0
       ? getFoldSplit({
@@ -242,9 +226,7 @@ export default function RouteBuilderScreen({
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* One tree either way, so opening or closing iPhone Duo keeps the
-          map's camera and the timeline's place: the map above the timeline,
-          or beside it when wide. */}
+      {}
       <View
         style={{ flex: 1, flexDirection: isWide ? 'row-reverse' : 'column' }}
         onLayout={(e) => setSplitWidth(e.nativeEvent.layout.width)}

@@ -33,7 +33,6 @@ import {
   useRewardStack,
 } from '@/stores/rewardStack'
 
-/** The beats of the celebration, in ms from opening. */
 const T = {
   backdrop: 260,
   flame: 120,
@@ -46,18 +45,18 @@ const T = {
   exit: 320,
 }
 const STAGE = 220
-/** Room kept below the count for a reward stack playing here. */
+
 const STACK_ROOM = 190
-/** The least room under that stack, for a system bar the insets miss. */
+
 const STACK_FLOOR = 16
-/** How often it checks whether the stack is done with it, once it's time. */
+
 const HOLD_CHECK_MS = 400
-/** The soft light behind the flame. */
+
 const GLOW = 210
 const NUMBER_HEIGHT = 88
 const EASE_OUT = Easing.out(Easing.cubic)
 const EMBER_COLORS = ['#FDE047', '#FB923C', '#F97316', '#FACC15']
-/** Sparks thrown out of the flame, fixed so every celebration matches. */
+
 const EMBERS = Array.from({ length: 16 }, (_, i) => ({
   angle: (i / 16) * Math.PI * 2 + (i % 2 ? 0.18 : -0.12),
   distance: 88 + ((i * 37) % 64),
@@ -65,24 +64,16 @@ const EMBERS = Array.from({ length: 16 }, (_, i) => ({
   color: EMBER_COLORS[i % EMBER_COLORS.length],
 }))
 
-// Always over a dark backdrop, whatever the theme.
 const TEXT = '#FFFFFF'
 const TEXT_DIM = 'rgba(255, 255, 255, 0.78)'
 
 interface Props {
   count: number
   kind: StreakKind
-  /** Gone from screen; unmount. */
+
   onDone: () => void
 }
 
-/**
- * The Service Streak reaching a milestone: the flame flares, sparks fly, and
- * the count rolls over to its new number. Tap anywhere to move on; it leaves on
- * its own after a few seconds. When the save that reached it earned the pet
- * thread, the milestone's line stomps onto that reward stack here, and the
- * celebration lifts as the total drops back into the toast.
- */
 export default function StreakCelebrationOverlay({
   count,
   kind,
@@ -100,7 +91,7 @@ export default function StreakCelebrationOverlay({
   const caption = useSharedValue(0)
   const leaving = useRef(false)
   const insets = useSafeAreaInsets()
-  // A reward line waits to play here: room for it below the count.
+
   const [stacked] = useState(() => {
     const { run } = useRewardStack.getState()
     return !!run?.lines.slice(run.played).some((line) => line.celebration)
@@ -120,7 +111,7 @@ export default function StreakCelebrationOverlay({
   const leave = () => {
     if (leaving.current) return
     leaving.current = true
-    // Done even if the fade is cut short, so it can't stay on screen.
+
     backdrop.value = withTiming(0, { duration: T.exit }, () => {
       scheduleOnRN(onDone)
     })
@@ -134,11 +125,9 @@ export default function StreakCelebrationOverlay({
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       i18n.t('streakCelebrationAnnouncement', { headline, count })
     )
-    // In, then out on its own unless a tap sends it off sooner, or a reward
-    // stack playing here holds it until it drops back into the toast.
+
     backdrop.value = withTiming(1, { duration: T.backdrop, easing: EASE_OUT })
     title.value = withDelay(T.title, withTiming(1, { duration: 420 }))
     caption.value = withDelay(T.caption, withTiming(1, { duration: 420 }))
@@ -186,7 +175,6 @@ export default function StreakCelebrationOverlay({
       )
     }
     return () => timers.forEach(clearTimeout)
-    // The host remounts it for each milestone, so this plays once.
   }, [
     backdrop,
     burst,
@@ -232,7 +220,6 @@ export default function StreakCelebrationOverlay({
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={() => {
-            // A tap skips everything, the reward dropping back included.
             skipReward()
             leave()
           }}
@@ -305,7 +292,6 @@ export default function StreakCelebrationOverlay({
         </FoldPane>
         <RewardStackLayer
           slot='celebration'
-          // Android's modal reads no inset for its gesture bar: keep clear.
           anchor={{ bottom: Math.max(insets.bottom, STACK_FLOOR) + 48 }}
         />
       </Animated.View>
@@ -313,7 +299,6 @@ export default function StreakCelebrationOverlay({
   )
 }
 
-/** The count, rolling up from the one before like an odometer. */
 function Odometer({
   from,
   to,
@@ -332,7 +317,7 @@ function Odometer({
     opacity: roll.value,
     transform: [
       { translateY: (1 - roll.value) * NUMBER_HEIGHT * 0.8 },
-      // A pop as it lands.
+
       { scale: 1 + Math.sin(Math.PI * roll.value) * 0.18 },
     ],
   }))
@@ -351,7 +336,6 @@ function Odometer({
   )
 }
 
-/** A ring of light spreading out from the flame. */
 function Ring({
   progress,
   delay,
@@ -369,7 +353,6 @@ function Ring({
   return <Animated.View style={[styles.ring, style]} />
 }
 
-/** One spark, flying out and falling away as it fades. */
 function Ember({
   angle,
   distance,

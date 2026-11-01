@@ -9,13 +9,6 @@ import {
 } from '@/features/buddies/lib/shareAnswerAnalytics'
 import { noteUserAction } from '@/lib/userAction'
 
-/**
- * Answers a buddy's invitation. The answer is saved at once; Going is sent
- * right away, Can't Make It after a short wait so it can still change
- * (`replyHoldMs`, counted down by `useReplyDelivery`). One that can't be sent
- * goes out on a later sync. Going then offers to replace the User's own Plans
- * at that time.
- */
 export default function useAnswerShare(source: ShareAnswerSource) {
   const [busy, setBusy] = useState(false)
   const answer = async (
@@ -24,7 +17,7 @@ export default function useAnswerShare(source: ShareAnswerSource) {
     reply: ShareReply
   ) => {
     trackShareAnswer(source, type, reply)
-    // Going can earn Two by Two; it's the User's own answer.
+
     if (reply === 'going') noteUserAction('going')
     setBusy(true)
     try {

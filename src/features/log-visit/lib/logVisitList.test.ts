@@ -48,7 +48,6 @@ const dueVisit = (contactId: string, daysOverdue: number): Visit => ({
   },
 })
 
-/** Compact view of the items: headers by section, rows as `from:id[detail]`. */
 const describeItems = (items: LogVisitListItem[]) =>
   items.map((item) => {
     switch (item.type) {

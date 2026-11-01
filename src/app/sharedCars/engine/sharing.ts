@@ -45,28 +45,10 @@ import type {
   SharedCarSeeding,
 } from '@/types/sharedCars'
 
-/**
- * Sharing one of the User's own cars (docs/shared-cars-protocol.md, "Sharing a
- * car"): make the space, put every record (in rounds, while the User keeps
- * changing them), then move the car out of their own store in one step, so no
- * change made here falls between the two. What landed is saved after every put,
- * so a share that stopped part-way picks up there. A refusal retrying can't fix
- * (`too_large`, `limit`, or a `bad_request` a clock refresh didn't cure) ends
- * the share: the space goes, and the car stays the User's own.
- */
-
-/** Rounds of putting what changed while seeding. */
 const MAX_ROUNDS = 4
 
-/** Refusals that end a share for good. */
 const GIVE_UP = new Set<string>(['too_large', 'limit', 'bad_request'])
 
-/**
- * Refusals of `create` that say it made nothing of this User's, so the share
- * stops. Any other failure may follow an earlier try whose answer was lost and
- * that made the space, so the share stays, to send the identical request again
- * later.
- */
 const CREATE_REFUSED = new Set<string>([
   'bad_request',
   'forbidden',
@@ -78,7 +60,6 @@ const CREATE_REFUSED = new Set<string>([
 export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
   const { deps, client, store, keyring } = ctx
 
-  /** The share as saved now; it went if `forgetAll` or a give-up cleared it. */
   function current(spaceId: string): SharedCarSeeding {
     const seeding = store.getState().seeding[spaceId]
     if (!seeding) throw new SpaceError('cancelled')
@@ -88,7 +69,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
   const save = (seeding: SharedCarSeeding) =>
     ctx.engineWrite(() => store.getState().saveSeeding(seeding))
 
-  /** Seeding stopped for good: forget it, and the space if it was made. */
   async function abandonSeeding(spaceId: string, deleteSpace: boolean) {
     if (deleteSpace && store.getState().seeding[spaceId]?.created) {
       ctx.engineWrite(() => store.getState().setPendingEnd(spaceId, 'delete'))
@@ -100,11 +80,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     parts.keys.forget(spaceId)
   }
 
-  /**
-   * The share gave up for good on `reason`: the space goes and the car stays
-   * the User's own. In the background, the User is told (`onShareFailed`) and
-   * analytics hear why; their own Share Car gets the error and reports it.
-   */
   async function giveUp(
     spaceId: string,
     reason: string,
@@ -124,11 +99,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     })
   }
 
-  /**
-   * Epoch 1's key, which this device made: held here, or opened from the wrap
-   * `create` sent, which this device saved, not the server's. Null when neither
-   * has it.
-   */
   function firstKey(
     seeding: SharedCarSeeding,
     member: SpaceMemberKeys
@@ -149,14 +119,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     }
   }
 
-  /**
-   * Makes the space, unless an earlier try did. The wrap is saved before the
-   * first try, so a retry after a lost answer is the identical request the
-   * server answers again. `conflict` is checked by the sync that follows. A
-   * refusal that says nothing was made (`CREATE_REFUSED`) stops the share (the
-   * car stays the User's own); anything else, an answer lost or a refusal for
-   * now, keeps it to try again.
-   */
   async function createSpace(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -202,11 +164,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     })
   }
 
-  /**
-   * The seed's records as they stand in the User's own store now, each stamped
-   * as calibrated (a stamp made before the synced clock was), with the User's
-   * member record.
-   */
   function buildWires(
     spaceId: string,
     memberId: string,
@@ -220,7 +177,7 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
       deps.randomUUID
     )
     if (!built) return null
-    // New copies' ids are kept before anything is put under them.
+
     if (
       Object.keys(built.fuelCopies).length !==
         Object.keys(seeding.fuelCopies).length ||
@@ -259,11 +216,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     return { collections, wires }
   }
 
-  /**
-   * The space's lists after `create`: that it's this User's, and their
-   * `joinedAt`. Its own wrap is checked against the key this device made; a
-   * different one is reported and never used.
-   */
   async function head(
     spaceId: string,
     member: SpaceMemberKeys
@@ -283,7 +235,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     ctx.noteAnswered()
     current(spaceId)
     if (page.ownerId !== member.memberId) {
-      // Someone else's space with this id: nothing of the User's is there.
       await abandonSeeding(spaceId, false)
       throw new SpaceError('conflict')
     }
@@ -291,7 +242,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     return page
   }
 
-  /** Puts one batch of the seed, and saves what landed. */
   async function putBatch(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -319,13 +269,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     save({ ...seeding, landed, seq: Math.max(seeding.seq, result.seq) })
   }
 
-  /**
-   * Puts the seed's records, in rounds, until nothing new is left to put.
-   * Records stamped too far ahead are held for the car's own puts. A
-   * `bad_request` (a stamp the server's clock refused) calibrates the clock and
-   * builds the seed again, once; past that, and on a record too large or a car
-   * past its caps, the share gives up.
-   */
   async function putRounds(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -368,11 +311,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     }
   }
 
-  /**
-   * Shares a car: makes the space, puts every record, then switches the car
-   * over in one step with no wait, so nothing changed in the User's own store
-   * falls between the two.
-   */
   async function seed(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -388,15 +326,13 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     }
     const first = firstKey(started, member)
     if (!first) {
-      // Its key went with a reset of this device: nothing can finish it.
       await abandonSeeding(spaceId, started.created)
       throw new SharedCarsError('not_ready')
     }
     if (!started.created) await createSpace(spaceId, member, first)
 
     const page = await head(spaceId, member)
-    // Only the key this device made seals the car's first records: another
-    // epoch's, from a wrap alone, would be a key the server chose.
+
     const key = keyring.key(spaceId, page.epoch)
     if (!key) throw new SharedCarsError('key_unverified')
     const joinedAt =
@@ -435,8 +371,7 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     const unsent = final.wires
       .filter((wire) => done.landed[wire.recordId]?.stamp !== wire.stamp)
       .map((wire) => wire.recordId)
-    // A record that landed and was deleted before the switch is deleted on
-    // the car too.
+
     const present = new Set(final.wires.map((wire) => wire.recordId))
     const personalTombstones = new Map(
       deps.personal
@@ -460,21 +395,19 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
         myMemberId: member.memberId,
         ownerId: page.ownerId,
         epoch: page.epoch,
-        // The User is the only member yet: nothing past this is anyone else's.
+
         seq: done.seq,
         spaceMembers: page.members,
         spaceInvites: page.invites,
         memberRecords: [own],
-        // This device wrote it, with its key check.
+
         ownRecordChecked: true,
         writtenName: memberData.name,
         writtenAvatar: memberData.avatar ?? null,
         pendingPuts: [...unsent, ...tombstones.map((t) => t.id)],
       })
     )
-    // The User's own versions go just past their stamps, not now: an edit
-    // another of their devices made before the share still wins when it
-    // syncs here, and moves into the car (`movePersonalRecords`).
+
     const moved = tombstonesPast(
       deps.personal.snapshot(),
       matchVehicle(done.vehicleId)
@@ -487,8 +420,7 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
       state.clearSeeding(spaceId)
     })
     deps.onOutcome?.({ type: 'shared', resumed: options.resumed })
-    // What changed in the last moments goes now; the share itself is done,
-    // so a failure here leaves it pending for the next sync.
+
     try {
       await parts.sync.push(spaceId, member)
     } catch (error) {
@@ -498,11 +430,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     }
   }
 
-  /**
-   * The User's member record as the share puts it: stamped once, and again only
-   * when what it says changed, so a share that resumes puts it again only then.
-   * Saved with the share.
-   */
   function ownRecord(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -520,7 +447,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     return own
   }
 
-  /** Resumes a share that stopped part-way. */
   function resumeShare(
     spaceId: string,
     options: { resumed: boolean; background: boolean }
@@ -532,11 +458,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     })
   }
 
-  /**
-   * Shares one of the User's own cars: makes its space and key, seeds every
-   * record, then moves the car out of their own store. A share that stopped
-   * part-way resumes from what landed (also on the next `sync`).
-   */
   async function shareCar(vehicleId: string): Promise<{ spaceId: string }> {
     const seeding = Object.values(store.getState().seeding).find(
       (s) => s.vehicleId === vehicleId
@@ -561,7 +482,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     return resumeShare(spaceId, { resumed: false, background: false })
   }
 
-  /** Resumes every share still seeding, in the background. */
   async function resumeShares(): Promise<void> {
     await Promise.all(
       Object.keys(store.getState().seeding).map((spaceId) =>
@@ -576,10 +496,6 @@ export function createSharing(ctx: EngineContext, parts: EngineParts): Sharing {
     )
   }
 
-  /**
-   * Stops every share still seeding, deleting its space if it was made: the car
-   * stays the User's own. For when this device lets go of the account.
-   */
   async function abandonShares(): Promise<void> {
     await Promise.all(
       Object.keys(store.getState().seeding).map((spaceId) =>

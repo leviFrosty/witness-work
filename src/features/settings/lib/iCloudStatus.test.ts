@@ -104,11 +104,11 @@ describe('buildICloudStatus', () => {
     expect(text({ offline: true, lastPulledAt: 900 })).toBe(
       'iCloudStatusOffline'
     )
-    // Offline beats a pending push and a stale failure alike.
+
     expect(
       text({ offline: true, pendingPush: true, issue: 'push-failed' })
     ).toBe('iCloudStatusOffline')
-    // Still below what blocks sync outright.
+
     expect(text({ offline: true, needsReconnect: true })).toBe(
       'googleDriveStatusNeedsReconnect'
     )
@@ -123,7 +123,6 @@ describe('buildICloudStatus', () => {
   })
 
   it('says a Cloud Sync server failure needs another attempt, not offline', () => {
-    // ww-api answered 5xx: the phone is online.
     for (const error of [
       new HttpError('server', 500),
       new HttpError('server', 503, 'unavailable', 30_000),

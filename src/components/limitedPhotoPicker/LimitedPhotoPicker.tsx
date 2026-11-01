@@ -22,7 +22,7 @@ import { copyLibraryPhoto } from '@/lib/photoLibrary/copyLibraryPhoto'
 import type { SharedPhotoRequest } from '@/lib/photoLibrary/pickLibraryImages'
 
 const GAP = 2
-/** Cells stay about this wide, so wider sheets get more columns. */
+
 const CELL_TARGET = 110
 const MIN_COLUMNS = 3
 
@@ -30,17 +30,12 @@ type Props = {
   request: SharedPhotoRequest
   onCancel: () => void
   onPicked: (assets: ImagePickerAsset[]) => void
-  /** The User opened the system's selection of shared photos. */
+
   onManage: () => void
-  /** A picked photo couldn't be copied (often an iCloud download). */
+
   onFailed: () => void
 }
 
-/**
- * Picks from just the photos the User shared with the app (iOS limited access),
- * with Manage to change which ones those are. A single pick happens on tap;
- * several are numbered in the order tapped, then added together.
- */
 export default function LimitedPhotoPicker({
   request,
   onCancel,
@@ -62,7 +57,7 @@ export default function LimitedPhotoPicker({
     Math.floor((width + GAP) / (CELL_TARGET + GAP))
   )
   const cellSize = width ? (width - GAP * (columns - 1)) / columns : 0
-  // Photos unshared in Manage leave the selection.
+
   const shared = new Set(photos?.map((photo) => photo.id))
   const picked = selected.filter((id) => shared.has(id))
 

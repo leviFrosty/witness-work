@@ -37,34 +37,28 @@ import TimeEntryForm, {
 import CollapsibleCard from '@/components/ui/CollapsibleCard'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 
-/** Reads a new Plan's form as it stands, to carry it to the Plan screen. */
 export type PlanFormDraft = { params: () => RootStackParamList['PlanDay'] }
 
-/** What a day's Plan form is shown with, by the screen that provides it. */
 export type PlanFormSlot = {
   date: Date
   layout: 'docked' | 'inline'
-  /** The Plan to edit, as PlanDay takes it; a new Plan for `date` without. */
+
   params?: RootStackParamList['PlanDay']
-  /** Saved, with where Plan Details shows the Plan now; or deleted. */
+
   onDone: (target?: RootStackParamList['Plan Details']) => void
-  /** Reads the new Plan as it stands, for an inline form to expand. */
+
   draftRef?: RefObject<PlanFormDraft | null>
 }
 
-/**
- * What a day's sheet shows one of its Plans with, in place of the day, by the
- * screen that provides Plan Details.
- */
 export type PlanDetailsSlot = {
   plan: RootStackParamList['Plan Details']
-  /** Opens the Plan form for this Plan in the sheet. */
+
   onEdit: (params: RootStackParamList['PlanDay']) => void
-  /** Shows another Plan instead, e.g. a date split off a Recurring Plan. */
+
   onOpenPlan: (target: RootStackParamList['Plan Details']) => void
-  /** The Plan is gone (deleted here or elsewhere), so the day comes back. */
+
   onGone: () => void
-  /** Runs a navigation from the Plan's menu, closing the sheet first. */
+
   onNavigate: (navigate: () => void) => void
 }
 
@@ -74,32 +68,26 @@ interface DayHistoryViewProps {
   showHeader?: boolean
   onTimeReportPress?: (report: TimeEntry) => void
   onAddTime?: () => void
-  /** A Plan's Log as Time, for hosts that log time in place. */
+
   onLogTime?: (prefill: LogTimePrefill) => void
   onPlanDay?: () => void
-  /**
-   * Runs a navigation from a row or its context menu. A host sheet passes one
-   * that closes itself first.
-   */
+
   onNavigate?: (navigate: () => void) => void
-  /** Extra lines under a one-time Plan's row, e.g. who the Plan is with. */
+
   renderDayPlanFooter?: (plan: DayPlan) => ReactNode
-  /**
-   * A day with no time or no Plans yet keeps the time or Plan form in its list,
-   * folded under Add Time or Plan Day, instead of a button that opens it.
-   */
+
   inlineForms?: boolean
-  /** The Plan form, for `inlineForms`, from the screen: it lives in Plans. */
+
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
-  /** A folded form was opened, so its host can scroll it into view. */
+
   onFormOpen?: (card: View) => void
-  /** Shows a Plan in place, for hosts that show Plan Details themselves. */
+
   onPlanOpen?: (target: RootStackParamList['Plan Details']) => void
-  /** Edits a Plan in place, for hosts that show the Plan form themselves. */
+
   onPlanEdit?: (params: RootStackParamList['PlanDay']) => void
-  /** Opens an inline time form full screen, with what's entered so far. */
+
   onExpandTime?: (params: RootStackParamList['Add Time']) => void
-  /** Opens an inline Plan form full screen, with what's entered so far. */
+
   onExpandPlan?: (params: RootStackParamList['PlanDay']) => void
 }
 
@@ -150,7 +138,6 @@ const EmptyActionButton = (props: {
   )
 }
 
-/** Beside an inline form's chevron: opens the form full screen. */
 const ExpandButton = (props: { onPress: () => void; testID?: string }) => {
   const theme = useTheme()
   return (
@@ -194,9 +181,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
 }) => {
   const theme = useTheme()
   const { showsTimeEntry } = usePublisher()
-  // Regular Publishers who haven't opted into logging hours never see an
-  // "Add Time" affordance — hours entered here would be invisible to them
-  // (no Progress tab, and the report only says whether they shared).
+
   const onAddTime = showsTimeEntry ? onAddTimeProp : undefined
   const { dayPlans, recurringPlans } = useServiceReport()
 
@@ -228,7 +213,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const planCard = useRef<View>(null)
   const timeDraft = useRef<TimeEntryDraft>(null)
   const planDraft = useRef<PlanFormDraft>(null)
-  // The inline draft goes full screen, and the card folds away behind it.
+
   const expand =
     <P,>(
       draft: RefObject<{ params: () => P } | null>,
@@ -256,7 +241,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
       )}
 
       <View style={{ gap: 8 }}>
-        {/* The heading wraps before it pushes + against the sheet's edge. */}
+        {}
         <XView style={{ justifyContent: 'space-between', gap: 12 }}>
           <Text
             style={{
@@ -310,7 +295,6 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               layout='inline'
               date={date}
               source='day_sheet'
-              // Once saved, the entry takes the card's place in the list.
               onDone={() => setTimeFormOpen(false)}
             />
           </CollapsibleCard>
@@ -412,7 +396,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               date,
               layout: 'inline',
               draftRef: planDraft,
-              // Once saved, the Plan takes the card's place in the list.
+
               onDone: () => setPlanFormOpen(false),
             })}
           </CollapsibleCard>

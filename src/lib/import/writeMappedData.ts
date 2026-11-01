@@ -12,20 +12,11 @@ import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Publisher } from '@/types/publisher'
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
 
-/**
- * Ids the user deleted. An import skips them, so a newer export of the same
- * data doesn't bring back what the user removed. Tombstones an import's Undo
- * left don't count: running that import again restores its records.
- */
 const userDeletedIds = (
   tombstones: { id: string; importUndone?: true }[]
 ): string[] =>
   tombstones.filter((t) => !t.importUndone).map((tombstone) => tombstone.id)
 
-/**
- * Marks the tombstones `ids` just got as left by an import's Undo. They still
- * carry the Undo to the user's other devices.
- */
 const markImportUndone = <T extends { id: string; importUndone?: true }>(
   tombstones: T[],
   ids: Set<string>
@@ -34,7 +25,6 @@ const markImportUndone = <T extends { id: string; importUndone?: true }>(
     ids.has(tombstone.id) ? { ...tombstone, importUndone: true } : tombstone
   )
 
-/** Flattens every TimeEntry id already in the service-report store. */
 const existingServiceReportIds = (reports: TimeEntriesByYear): Set<string> => {
   const ids = new Set<string>()
   for (const year of Object.values(reports)) {
@@ -45,49 +35,28 @@ const existingServiceReportIds = (reports: TimeEntriesByYear): Set<string> => {
   return ids
 }
 
-/**
- * How the import should treat the user's Publisher role + Tenure Start Date:
- *
- * - `'overwrite'` — onboarding, a fresh user; always apply the imported values.
- * - `'fillIfUnset'` — Settings; only fill a pristine profile, never clobber a
- *   role or tenure the user already chose (decision 4).
- */
 export type PublisherImportMode = 'overwrite' | 'fillIfUnset'
 
 export interface WriteMappedDataOptions {
   publisherMode: PublisherImportMode
 }
 
-/** The prior publisher state captured so an undo can restore it. */
 export interface PublisherUndo {
   prevRole: Publisher
   prevTenure: Date | null
   prevRoleHistory: RoleHistory | null
 }
 
-/**
- * Exactly what a single {@link writeMappedDataToStores} call NEW-inserted, so an
- * undo can delete precisely that set (and nothing the user already had).
- * Records the import skipped as already-present are intentionally absent here.
- */
 export interface ImportCommitResult {
   insertedContactIds: string[]
   insertedVisitIds: string[]
-  /**
-   * Stored (date-normalized) TimeEntry objects, so undo can locate + delete
-   * them.
-   */
+
   insertedTimeEntries: TimeEntry[]
   insertedCategoryIds: string[]
   insertedCustomFieldDefIds: string[]
   publisherChange: PublisherUndo | null
 }
 
-/**
- * Applies the imported Publisher role + Tenure Start Date per decision 4 and
- * returns the prior state if it changed anything (for undo). `setRole` owns the
- * tenure-reset semantics, so it always runs before the tenure write.
- */
 const applyPublisher = (
   publisher: MappedPublisher | null,
   mode: PublisherImportMode
@@ -103,8 +72,6 @@ const applyPublisher = (
   const roleIsUnset = prevRole === PREFERENCE_DEFAULTS.role
   let effectiveRole = prevRole
   if ((mode === 'overwrite' || roleIsUnset) && prevRole !== publisher.role) {
-    // A recorded Role History describes past months the import knows nothing
-    // about, so the imported role only takes over from this month.
     prefs.setRole(
       publisher.role,
       prevRoleHistory ? { from: calendarMonthOf() } : undefined
@@ -127,14 +94,6 @@ const applyPublisher = (
   return changed ? { prevRole, prevTenure, prevRoleHistory } : null
 }
 
-/**
- * Persists a mapped import into the WitnessWork Zustand stores. Every record
- * carries a deterministic id, so a re-run is idempotent. Returns the set of ids
- * it NEW-inserted (and the prior publisher state) so the caller can offer an
- * exact undo.
- *
- * Shared by every import source (MyTime, Notes).
- */
 export const writeMappedDataToStores = (
   mapped: MappedImport,
   opts: WriteMappedDataOptions
@@ -144,7 +103,6 @@ export const writeMappedDataToStores = (
   const serviceReport = useServiceReport.getState()
   const categories = useCategories.getState()
 
-  // Categories (addCategory skips existing ids; mirror that to track insertions).
   const existingCategoryIds = new Set(categories.categories.map((c) => c.id))
   const insertedCategoryIds: string[] = []
   for (const category of mapped.categories) {
@@ -154,14 +112,11 @@ export const writeMappedDataToStores = (
     insertedCategoryIds.push(category.id)
   }
 
-  // Custom field defs: mergeIncomingCustomFieldDefs adds only unknown ids.
   const existingDefIds = new Set(contacts.customFieldDefs.map((d) => d.id))
   if (mapped.customFieldDefs.length) {
     contacts.mergeIncomingCustomFieldDefs(mapped.customFieldDefs)
   }
-  // Track only definitions actually admitted by the store. A permanently
-  // deleted definition may be present in stale import data and is rejected by
-  // mergeIncomingCustomFieldDefs; undo must not create a new tombstone for it.
+
   const insertedCustomFieldDefIds = useContacts
     .getState()
     .customFieldDefs.filter(
@@ -171,18 +126,13 @@ export const writeMappedDataToStores = (
     )
     .map((d) => d.id)
 
-  // Contacts. Mirrors addContacts: it skips ids that are active or still in
-  // Recover Contacts, but replaces a redacted tombstone (left by a permanent
-  // delete or an earlier Undo), so an undone import can be run again.
   const existingContactIds = new Set(
     [
       ...contacts.contacts,
       ...contacts.deletedContacts.filter((c) => !isRedactedContactTombstone(c)),
     ].map((c) => c.id)
   )
-  // Each store is written once for the whole batch: a write per record
-  // re-serializes the store and notifies every subscriber, which is quadratic
-  // over a large MyTime import.
+
   const contactsToAdd = mapped.contacts.filter((contact) => {
     if (existingContactIds.has(contact.id)) return false
     existingContactIds.add(contact.id)
@@ -191,7 +141,6 @@ export const writeMappedDataToStores = (
   if (contactsToAdd.length) contacts.addContacts(contactsToAdd)
   const insertedContactIds = contactsToAdd.map((c) => c.id)
 
-  // Visits (addConversations skips existing ids), and ones the user deleted.
   const existingVisitIds = new Set([
     ...conversations.conversations.map((v) => v.id),
     ...userDeletedIds(conversations.deletedConversations),
@@ -204,10 +153,6 @@ export const writeMappedDataToStores = (
   if (visitsToAdd.length) conversations.addConversations(visitsToAdd)
   const insertedVisitIds = visitsToAdd.map((v) => v.id)
 
-  // `addServiceReports` appends unconditionally (no id dedup), so we guard
-  // idempotency here — against prior imports, entries the user deleted, and
-  // dupes within this batch. We record the STORED (date-normalized) entry so
-  // undo's `deleteServiceReport` resolves the same month/year bucket.
   const seenEntryIds = existingServiceReportIds(serviceReport.serviceReports)
   for (const id of userDeletedIds(serviceReport.deletedServiceReports))
     seenEntryIds.add(id)
@@ -224,8 +169,6 @@ export const writeMappedDataToStores = (
 
   const publisherChange = applyPublisher(mapped.publisher, opts.publisherMode)
 
-  // Badges the imported history reaches are filed quietly with one summary,
-  // not celebrated one by one or announced to buddies.
   usePreferences.getState().set({ badgesBackfilledAt: null })
 
   return {
@@ -238,39 +181,12 @@ export const writeMappedDataToStores = (
   }
 }
 
-/**
- * Reverses a {@link writeMappedDataToStores} commit: deletes exactly the records
- * it inserted and restores the prior Publisher role + tenure. Safe to call once
- * per commit. A builtin Category (LDC) the import seeded cannot be deleted (the
- * store hard-blocks it) and is intentionally left in place — it is shared
- * infra, not user data.
- *
- * Reference-aware (F44): Notes Import's Accept-time reconcile (before Scribe
- * AI) dedupes a NEW import's contacts/categories against CURRENT local data BY
- * NAME, so a later sibling import can be re-pointed onto a contact/category
- * THIS commit inserted — its own visit/time-entry record then references our
- * inserted id while its own id stays out of our commit. Blindly deleting every
- * inserted id would orphan that sibling's live record (a visit pointing at a
- * deleted contact, a time entry pointing at a deleted category). So before
- * deleting we scan the stores for any visit/time entry that (a) references one
- * of our inserted contacts/ categories and (b) is NOT itself part of this
- * commit — those inserted records are KEPT, leaving the sibling's data intact.
- *
- * Accepted trade-off: if BOTH imports that share such a record are later
- * undone, the shared contact/category survives both undos (each kept it for the
- * other's record, but those records are gone by the time the second undo's
- * keep-check ran). That is a benign leak the user can delete manually —
- * strictly better than orphaning live data while a sibling import is still in
- * place.
- */
 export const undoImport = (commit: ImportCommitResult): void => {
   const contacts = useContacts.getState()
   const conversations = useConversations.getState()
   const serviceReport = useServiceReport.getState()
   const categories = useCategories.getState()
 
-  // Contacts referenced by a visit that is NOT part of this commit (a sibling
-  // import's, or the user's own) — deleting them would orphan that visit.
   const ownVisitIds = new Set(commit.insertedVisitIds)
   const externallyReferencedContactIds = new Set<string>()
   for (const v of conversations.conversations) {
@@ -278,11 +194,6 @@ export const undoImport = (commit: ImportCommitResult): void => {
     externallyReferencedContactIds.add(v.contact.id)
   }
 
-  // Categories referenced by a time entry that is NOT part of this commit.
-  // Time entries are the ONLY import-inserted record that carries `categoryId`
-  // (Visit has no category; Plans do, but imports never create Plans), so
-  // scanning time entries fully covers what reconcile can re-point onto a
-  // category.
   const ownTimeEntryIds = new Set(commit.insertedTimeEntries.map((e) => e.id))
   const externallyReferencedCategoryIds = new Set<string>()
   for (const year of Object.values(serviceReport.serviceReports)) {
@@ -296,17 +207,13 @@ export const undoImport = (commit: ImportCommitResult): void => {
   }
 
   for (const id of commit.insertedContactIds) {
-    // Kept: a sibling import (or the user) still has a visit on this contact.
     if (externallyReferencedContactIds.has(id)) continue
     contacts.deleteContact(id)
-    // Redact the recycle-bin copy too, so no householder data survives the
-    // Undo. The tombstone carries the Undo to the user's other devices, and a
-    // re-import replaces it (see addContact). The store leaves photo files to
-    // its callers; one may have been added since the import.
+
     contacts.removeDeletedContact(id)
     void deleteAvatarFiles(id)
   }
-  // Only the records still here: one the user deleted since stays deleted.
+
   const liveVisitIds = new Set(conversations.conversations.map((v) => v.id))
   const undoneVisitIds = new Set(
     commit.insertedVisitIds.filter((id) => liveVisitIds.has(id))
@@ -334,7 +241,6 @@ export const undoImport = (commit: ImportCommitResult): void => {
     ),
   }))
   for (const id of commit.insertedCategoryIds) {
-    // Kept: a sibling import still has a time entry pointing at this category.
     if (externallyReferencedCategoryIds.has(id)) continue
     categories.deleteCategory(id)
   }

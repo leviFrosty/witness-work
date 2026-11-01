@@ -6,12 +6,6 @@ import PointerHover from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
-/**
- * Curated colors offered wherever the app lets the User pick one, after that
- * picker's own default. Hex values are committed explicitly rather than pulled
- * from the active theme so the choice the user sees matches what gets stored —
- * independent of light/dark mode.
- */
 export const COLOR_PRESETS: {
   value: string
   label: string
@@ -71,11 +65,6 @@ const Swatch = ({
   )
 }
 
-/**
- * The app's color choice: the caller's default, the curated presets, and an
- * eyedropper for any other color. `value` is `null` while the default is in
- * use; choosing the default (or removing a custom color) reports `null`.
- */
 export default function ColorSwatchPicker({
   value,
   defaultColor,
@@ -84,10 +73,10 @@ export default function ColorSwatchPicker({
   size = 36,
 }: {
   value: string | null
-  /** What `null` looks like, e.g. the theme accent. */
+
   defaultColor: string
   onChange: (next: string | null) => void
-  /** Shown above the custom color sheet. */
+
   title: string
   size?: number
 }) {

@@ -23,21 +23,9 @@ import {
 import { PersistStorage } from '@/stores/mmkv'
 import { stripPlaceholderFollowUp } from '@/lib/conversations'
 
-/**
- * V0 → v1: the visit form gained a Follow Up switch, so a Visit only carries
- * `followUp` when the user actually wants one. Before that, every Visit was
- * saved with an auto-filled placeholder follow-up and intent was inferred from
- * notify/topic. Strip those placeholders so `isAppointment` can trust the
- * presence of `followUp` without flooding "Missed Conversations". `updatedAt`
- * is left alone on purpose: a peer that hasn't upgraded yet holds the same
- * timestamp, so neither side overwrites the other, and `parsePayload` strips
- * whatever placeholders still arrive from it.
- */
 export const migrateConversationsPersistedState = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   persistedState: any,
   version: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any => {
   if (version >= 1) return persistedState
   const conversations = (persistedState?.conversations ?? []) as Visit[]
@@ -48,35 +36,14 @@ export const migrateConversationsPersistedState = (
 }
 
 const initialState = {
-  // Persisted key kept as `conversations` for backward compatibility with
-  // existing on-disk data and the iCloud sync wire payload. The type is the
-  // canonical `Visit` (renamed from `Conversation`); see `@/types/visit`.
   conversations: [] as Visit[],
-  /**
-   * Tombstones for deleted Visits. Populated by `deleteConversation` so iCloud
-   * sync can propagate deletions across devices. Never pruned: the merge keeps
-   * every one (`mergeTombstones` in `src/app/sync/merge.ts`). Adding a Visit
-   * under the id drops its tombstone here.
-   *
-   * Persisted key kept as `deletedConversations` for backward compatibility.
-   */
+
   deletedConversations: [] as VisitTombstone[],
-  /**
-   * Definitions for the user-customizable conversation fields (e.g.
-   * "Publication"). Same shape and lifecycle as the contact fields in
-   * `contactsStore.customFieldDefs`, but a separate list: Visit `customFields`
-   * records reference these ids.
-   */
+
   conversationFieldDefs: [] as CustomFieldDefinition[],
   deletedConversationFieldDefs: [] as CustomFieldTombstone[],
 }
 
-/**
- * The store changes that add each of `incoming` whose id isn't taken yet, in
- * order. Pure: never mutates `state`. A deleted id can come back (an import run
- * again after its Undo), so each Visit is stamped past its tombstone and the
- * tombstone is dropped.
- */
 const withAddedConversations = (
   {
     conversations,
@@ -119,10 +86,7 @@ export const useConversations = create(
       set,
       addConversation: (conversation: Visit) =>
         set((state) => withAddedConversations(state, [conversation])),
-      /**
-       * `addConversation` for many Visits in one write, so an import persists
-       * and notifies subscribers once instead of once per Visit.
-       */
+
       addConversations: (conversations: Visit[]) =>
         set((state) => withAddedConversations(state, conversations)),
       deleteConversation: (id: string) =>
@@ -171,7 +135,7 @@ export const useConversations = create(
           }
         })
       },
-      /** See `addCustomFieldDefinition`. */
+
       addConversationFieldDef: (
         label: string
       ): CustomFieldDefinition | null => {
@@ -219,10 +183,7 @@ export const useConversations = create(
           ),
         }))
       },
-      /**
-       * Permanently removes an archived conversation field AND every visit's
-       * value for it. Destructive; expose only from a confirmation flow.
-       */
+
       purgeConversationFieldDef: (id: string) => {
         set(
           ({

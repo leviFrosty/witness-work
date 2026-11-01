@@ -91,7 +91,6 @@ const LAST = [
   'Park',
 ]
 
-/** `count` Contacts with everyday names, created a day apart. */
 const manyContacts = (count: number): Contact[] =>
   Array.from({ length: count }, (_, index) => ({
     id: `contact-${String(index).padStart(4, '0')}`,
@@ -99,7 +98,6 @@ const manyContacts = (count: number): Contact[] =>
     createdAt: new Date(2025, 0, 1 + index),
   }))
 
-/** `count` Day Plans spread over the next 20 days, some with titles. */
 const manyPlans = (count: number): DayPlan[] =>
   Array.from({ length: count }, (_, index) => {
     const day = new Date(Date.UTC(2026, 9, 21 + (index % 20), 12))
@@ -179,8 +177,7 @@ describe('buildScribeContext', () => {
       monthlyGoalMinutes: 3000,
       creditCapMinutes: 3300,
     })
-    // 2 h + 1 h 30 standard and 1 h Bethel credit; Thu 2 h, Sat 3 h and
-    // Monday's 1 h still planned this month.
+
     expect(month).toEqual({
       month: '2026-10',
       loggedMinutes: 270,
@@ -203,8 +200,6 @@ describe('buildScribeContext', () => {
   })
 
   it('logs hours as said during setup, before the User picks a role', () => {
-    // Setup asks the role after Pick up where you left off, so a pioneer
-    // bringing over a log of hours mustn't get "shared" marks instead.
     const { publisher } = build(
       fixtureStores({
         preferences: {
@@ -268,7 +263,6 @@ describe('buildScribeContext', () => {
       fixtureStores({
         buddies: [...buddies].reverse(),
         dayPlans: [
-          // A buddy who isn't confirmed anymore is left out.
           { ...DAY_PLANS[0], buddies: ['inbox-sam', 'inbox-gone'] },
           {
             ...DAY_PLANS[1],
@@ -278,7 +272,7 @@ describe('buildScribeContext', () => {
         ],
       })
     )
-    // Buddies keep their pairing order, whichever Plan names them first.
+
     expect(listed).toEqual(['b1 Ana', 'b2 Sam'])
     expect(plans.slice(0, 2)).toEqual([
       'p1 2026-10-22 120m 09:00 k0 with b2',
@@ -289,7 +283,7 @@ describe('buildScribeContext', () => {
   it('orders Contacts by their latest Visit, then by creation', () => {
     const stores = fixtureStores()
     const { contacts } = build(stores)
-    // Ben was visited on the 19th, Maria Lopez on the 14th; Maria Chen never.
+
     expect(contacts).toEqual([
       'c1 Ben Okafor',
       'c2 Maria Lopez',
@@ -389,7 +383,7 @@ describe('buildScribeContext', () => {
     expect(tomorrow.now.startsWith('2026-10-22T07:00:00')).toBe(true)
     expect(tomorrow.contacts).toEqual(today.contacts)
     expect(tomorrow.categories).toEqual(today.categories)
-    // Thursday's plan is still p1; a newly visible Monday gets the next r Ref.
+
     expect(tomorrow.plans).toEqual([
       'p1 2026-10-22 120m 09:00 k0',
       'p2 2026-10-24 180m anytime k0 "Group witnessing"',

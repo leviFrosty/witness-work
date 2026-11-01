@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   brightness: 0.4,
   appState: 'active',
   listeners: new Set<(state: string) => void>(),
-  /** Holds `getBrightnessAsync` until released. */
+
   read: null as null | (() => void),
 }))
 

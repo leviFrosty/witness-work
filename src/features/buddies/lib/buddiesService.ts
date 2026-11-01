@@ -63,13 +63,8 @@ import { deviceInviteSecrets } from '@/lib/sharedSpaces/deviceInviteSecrets'
 import { deviceSpaceKeyring } from '@/lib/sharedSpaces/deviceKeyring'
 import useSharedCars from '@/stores/sharedCars'
 
-/** How long reports of invitations not sent gather before the User is told. */
 const NOT_SENT_ALERT_DELAY_MS = 500
 
-/**
- * Invitations not sent, told once a burst: a sync that finds several buddies
- * gone reports each, and the User gets one alert per reason naming them all.
- */
 const sharesNotSent = (() => {
   const pending = new Map<UnsentShareReason, Set<string>>()
   const flush = () => {
@@ -98,10 +93,6 @@ const sharesNotSent = (() => {
   }
 })()
 
-/**
- * The Service Streak buddies see, from its first day, with the last day it
- * lasts unless more service is logged. None while streaks are hidden.
- */
 export function currentBuddyStreak(
   now: Date = new Date()
 ): BuddyStreak | undefined {
@@ -111,10 +102,6 @@ export function currentBuddyStreak(
   return n > 0 ? { n, until: streakLastsThrough(streak, now) } : undefined
 }
 
-/**
- * The Pet Companion buddies can see (species, coat, and name), before the
- * engine drops it while the User doesn't share it. None until one is adopted.
- */
 export function currentBuddyPet(): BuddyPet | undefined {
   const pet = usePet.getState().pet
   if (!pet) return undefined
@@ -125,43 +112,33 @@ export function currentBuddyPet(): BuddyPet | undefined {
   }
 }
 
-/** What this device's Buddies engine knows of its Shared Cars. */
 const carsLink = createBuddiesCarsLink(useSharedCars, {
   now: Date.now,
   forgetKeys: () => deviceSpaceKeyring.forgetAll(),
 })
 
-/**
- * The Shared Cars engine's side of `car.*` events and the roster's cars, set by
- * the app (`carInvitationsService`).
- */
 export const setBuddiesCarsHandler = carsLink.setHandler
 
 const engine = createBuddiesEngine({
   relay: createRelayClient({
     baseUrl: apis.buddies,
     randomBytes,
-    // Every relay call carries the account session (ADR 0027); its account
-    // key is the root seed, read from the Keychain as the engine reads it.
+
     authorize: (run, { signal }) =>
       accountSessions.withSession(run, { signal }),
-    // The relay refuses a signed call more than 5 minutes off its clock, so a
-    // device clock that's wrong would otherwise fail every call for good.
+
     now: syncNow,
     recalibrate: () => refreshSyncClock({ force: true }),
-    // Reinstated: the notice clears and the live signal comes back now, not
-    // on the next sync.
+
     onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
   }),
   store: useBuddies,
   randomBytes,
-  // Revs, expiries, and lastSyncAt stay on the device clock, as before: a
-  // calibration mid-session must never make a newer rev look older.
+
   now: Date.now,
   getRootSeed: async () =>
     fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
-  // The seed is the account key: its session ends first, and none opens for
-  // it while it's deleted (ADR 0027).
+
   deleteRootSeed: async () => {
     const seed = await BuddiesKeychain.peekRootSeed()
     await serverAccount.changeKey(() => BuddiesKeychain.deleteRootSeed(), {
@@ -200,7 +177,7 @@ const engine = createBuddiesEngine({
       visits: useConversations.getState().conversations,
     }),
   platform: Platform.OS === 'android' ? 'android' : 'ios',
-  // One per completed pairing on each side; `role: inviter` counts pairings.
+
   onPaired: ({ role, buddyPlatform }) =>
     analytics.capture('buddy_paired', {
       role,
@@ -223,10 +200,6 @@ const engine = createBuddiesEngine({
   inviteSecrets: deviceInviteSecrets,
 })
 
-/**
- * A buddy's Profile photo at full size, as the file it's kept in: downloaded
- * the first time it's opened. Null when the relay no longer has it.
- */
 export async function loadBuddyPhoto(
   inboxId: string,
   photo: ProfilePhoto
@@ -237,8 +210,6 @@ export async function loadBuddyPhoto(
   return bytes ? saveBuddyPhoto(photo.blob, bytes) : null
 }
 
-// A buddy's photos download with their invitation, before any Plan of this
-// User's refers to them; keep them until the invitation lapses.
 addNoteImageReferences(() => {
   const now = Date.now()
   return Object.values(useBuddies.getState().incomingShares)
@@ -250,7 +221,6 @@ addNoteImageReferences(() => {
     )
 })
 
-/** Counts a send while its first try is on its way. */
 function sending<Args extends unknown[]>(
   send: (...args: Args) => Promise<void>
 ) {
@@ -264,14 +234,9 @@ function sending<Args extends unknown[]>(
   }
 }
 
-/**
- * The app's single Buddies engine: Keychain seed + relay + local stores. Every
- * sync's outcome is recorded for the screens that show it.
- */
 export const buddiesEngine: typeof engine = {
   ...engine,
   sync: (options?: BuddiesSyncOptions) =>
-    // Waiting out the relay's back-off isn't a sync, and says nothing new.
     options?.automatic && engine.coolingDown()
       ? engine.sync(options)
       : trackSync(() => engine.sync(options), {
@@ -288,10 +253,6 @@ export const buddiesEngine: typeof engine = {
   askToJoin: sending(engine.askToJoin),
 }
 
-/**
- * Runs the relay check (see `runRelayCheck`) and keeps its report for Tools and
- * the verify harness. One at a time.
- */
 export async function checkBuddiesRelay() {
   const setCheck = (
     relayCheck: Partial<

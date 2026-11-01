@@ -22,11 +22,9 @@ import { undoable, useScribeLedger } from '@/features/scribe/stores/ledger'
 
 const NO_COUNTS = { selected: 0, ready: 0, needsChoice: 0, needsConsent: 0 }
 
-/** A Proposal's review: cards, choices, consent, Add and Dismiss. */
 export function useScribeProposal(
   proposalId: string
 ): ScribeProposalController {
-  // A running turn's draft is newer than what's stored (a retried turn's).
   const drafting = useScribeRuns((state) =>
     draftingProposal(state.drafting, proposalId)
   )
@@ -34,7 +32,7 @@ export function useScribeProposal(
     findProposal(state.conversations, proposalId)
   )
   const stored = drafting ?? saved
-  // Previews name Contacts and Categories as they are now.
+
   const record = useScribeLedger((state) => state.records[proposalId])
   const proposal: ScribeProposal | null = stored
     ? toScribeProposal(stored, readScribeStores(), record?.effects)

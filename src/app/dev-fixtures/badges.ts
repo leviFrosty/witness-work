@@ -20,14 +20,6 @@ import {
 } from '@/types/timeEntry'
 import { Visit } from '@/types/visit'
 
-/**
- * Dev-only badge fixtures for Tools and the verification harness.
- *
- * Pure on purpose — no store access, no `Date.now()`; every date derives from
- * `now` — so ids stay stable and re-running a generator upserts the same
- * records instead of piling up duplicates.
- */
-
 export const BADGE_FIXTURE_ID_PREFIX = 'dev-badges-'
 
 const id = (suffix: string) => `${BADGE_FIXTURE_ID_PREFIX}${suffix}`
@@ -39,33 +31,15 @@ export type BadgeHistoryFixture = {
   visits: Visit[]
   timeEntries: TimeEntry[]
   recurringPlans: RecurringPlan[]
-  /** `YYYY-MM` months whose report counts as sent. */
+
   submittedReportMonths: string[]
 }
 
-/** Gold Sharing the Good News needs 24 months; stay one short of it. */
 const MAX_SHARED_MONTHS_AGO = 22
 
-/** Start of the September-to-August Service Year containing `now`. */
 const serviceYearStart = (now: moment.Moment) =>
   serviceYearBounds(getServiceYearFromDate(now)).start
 
-/**
- * Just enough history to earn a spread of badges on any day:
- *
- * - Sharing the Good News, Silver: a Time Entry every month from the start of the
- *   previous Service Year (13 to 23 months).
- * - Year Round, Bronze: that whole previous Service Year.
- * - Reports Sent, Silver: the last six finished months' reports sent.
- * - Ready to Go, Bronze: a weekly Recurring Plan since three months ago.
- * - Kind Words, Keeping in Touch, Return Visits, Silver: one Contact visited
- *   every month for eight months, in person each time.
- * - Next Time, Bronze: follow-up topics on the last three of those visits.
- * - First Bible Study: the visits from five months ago on are studies.
- *
- * Return Visits and Reports Sent reach Silver last month, so a non-quiet
- * evaluation celebrates those two and files the rest as history.
- */
 export const buildBadgeHistoryFixture = ({
   now: nowInput,
 }: {
@@ -74,7 +48,7 @@ export const buildBadgeHistoryFixture = ({
   const now = moment(nowInput)
   const monthStart = (monthsAgo: number) =>
     now.clone().startOf('month').subtract(monthsAgo, 'months')
-  /** A day in that month, never later than `now`. */
+
   const dayIn = (monthsAgo: number, day: number, hour: number) =>
     moment.min(monthStart(monthsAgo).date(day).hour(hour), now.clone())
 
@@ -137,8 +111,7 @@ export const buildBadgeHistoryFixture = ({
   const recurringPlans: RecurringPlan[] = [
     {
       id: id('recurring-saturday'),
-      // The first Saturday of the month three months ago (`day(6)` stays in
-      // the 1st's Sunday-to-Saturday week), so every month since has one.
+
       startDate: monthStart(3).day(6).toDate(),
       minutes: 120,
       startTimeInMinutes: 9 * 60 + 30,
@@ -166,7 +139,6 @@ export const buildBadgeHistoryFixture = ({
 
 export type FixtureEarnedBadge = { key: BadgeKey; record: EarnedBadge }
 
-/** Service Years for Year Round, months for every other collection. */
 const monthsPerStep = (spec: BadgeCollectionSpec) =>
   spec.id === 'yearRound' ? 12 : 1
 
@@ -183,10 +155,6 @@ const monthRecord = (
   }
 }
 
-/**
- * Every badge the catalog can award, as history, with each level reached a
- * plausible number of months after the one before it.
- */
 export const buildEveryBadgeRecords = ({
   now: nowInput,
 }: {
@@ -220,7 +188,6 @@ export const buildEveryBadgeRecords = ({
   return records
 }
 
-/** Chance of reaching no level, then Bronze, Silver, Gold, and Pearl. */
 const LEVEL_ODDS = [0.2, 0.35, 0.28, 0.13, 0.04]
 const RARE_LEVEL_ODDS = [0.45, 0.35, 0.15, 0.05, 0]
 
@@ -233,12 +200,6 @@ const pickLevel = (random: () => number, odds: number[]): BadgeLevel | 0 => {
   return 0
 }
 
-/**
- * A realistic mixed collection: most collections at Bronze or Silver, the odd
- * Gold or Pearl, rarer Year Round and Two by Two, and sometimes the One-time
- * Badges. `recent` of them were earned just now (no `history`), so they read as
- * new; everything else is history from past months.
- */
 export const buildRandomBadgeRecords = ({
   now: nowInput,
   random = Math.random,
@@ -254,7 +215,7 @@ export const buildRandomBadgeRecords = ({
     const rare = spec.id === 'yearRound' || spec.id === 'together'
     levels.set(spec.id, pickLevel(random, rare ? RARE_LEVEL_ODDS : LEVEL_ODDS))
   }
-  // Always earn at least one collection, so the set is never empty.
+
   if ([...levels.values()].every((level) => level === 0))
     levels.set('monthsShared', 1)
   const oneTime: BadgeArtId[] = []

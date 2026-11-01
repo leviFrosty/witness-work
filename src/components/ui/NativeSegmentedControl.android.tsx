@@ -14,7 +14,6 @@ import { usePreferences } from '@/stores/preferences'
 import ChoiceChips from '@/components/ui/ChoiceChips'
 import type { NativeSegmentedControlProps } from '@/components/ui/NativeSegmentedControl.types'
 
-/** Material 3 single-choice segmented buttons, seeded from the accent color. */
 export default function NativeSegmentedControl<T extends string = string>({
   options,
   value,
@@ -27,9 +26,6 @@ export default function NativeSegmentedControl<T extends string = string>({
   const colorScheme = usePreferences((s) => s.colorScheme)
   const largeText = useAccessibilityTextSize()
 
-  // Material's segments can neither shrink a label nor wrap it between words,
-  // so at accessibility text sizes "Month" broke into "Mont / h". The same
-  // choices show as chips there, which wrap onto as many rows as they need.
   if (largeText && !disabled) {
     return (
       <ChoiceChips
@@ -61,8 +57,6 @@ export default function NativeSegmentedControl<T extends string = string>({
             selected={option.key === value}
             onClick={() => onChange(option.key)}
             enabled={!disabled}
-            // The seeded `surface` tints the unselected segments; let the
-            // screen's own background show through instead.
             colors={{
               inactiveContainerColor: 'transparent',
               disabledInactiveContainerColor: 'transparent',
@@ -72,7 +66,7 @@ export default function NativeSegmentedControl<T extends string = string>({
             }
           >
             <SegmentedButton.Label>
-              {/* Long translations wrap rather than truncate. */}
+              {}
               <Text maxLines={2} style={{ textAlign: 'center' }}>
                 {option.label}
               </Text>

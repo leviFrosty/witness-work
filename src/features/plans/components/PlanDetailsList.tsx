@@ -35,34 +35,27 @@ import type { NoteFields } from '@/types/richText'
 import type { PlanLocation } from '@/types/timeEntry'
 
 type Props = {
-  /**
-   * `hidden` for a Plan that follows a buddy's invitation: its title, place,
-   * and note are the organizer's, so only the User's own rows show.
-   */
   organizerFields?: 'editable' | 'hidden'
   title: string
   setTitle: (title: string) => void
-  /** Omitted when this binary has no place search. */
+
   location?: {
     value?: PlanLocation
     onChange: (location?: PlanLocation) => void
   }
   note: NoteFields
   setNote: (note: NoteUpdate) => void
-  /**
-   * Opens a picker of confirmed buddies, or, before there are any, sends the
-   * User to set Buddies up. Omitted where Buddies doesn't apply.
-   */
+
   buddies?: InviteBuddiesRowContent
   notifyMe?: {
     on: boolean
     onToggle: (on: boolean) => void
-    /** Explains a switch that's off because notifications aren't allowed. */
+
     description?: string
     offset: ReactNode
     notice?: ReactNode
   }
-  /** Only for recurring plans. */
+
   end?: {
     willEnd: boolean
     onToggle: () => void
@@ -72,7 +65,7 @@ type Props = {
   type: {
     value: string
     onChange: (selection: TypeSelection) => void
-    /** Shown under the Type row, e.g. which field needs completing. */
+
     invalid?: boolean
     hint?: string
   }
@@ -118,12 +111,10 @@ const LocationSearch = (props: {
         query={query}
         onChangeQuery={setQuery}
         onSelect={(selected) => {
-          // Picking a place swaps this field out without a blur event.
           layout.fieldBlurred()
           props.onSelect(toPlanLocation(selected))
           setQuery('')
         }}
-        // Suggestions open under the field, so keep it near the top.
         onFocus={() => layout.fieldFocused({ pinToTop: true })}
         onBlur={layout.fieldBlurred}
         placeholder={i18n.t('planLocation_placeholder')}
@@ -198,8 +189,6 @@ const NotifyMeRow = (
       containerRef={row}
       first={props.first}
       trailing={
-        // The native switch draws above its frame when centered in a taller
-        // row; giving it the row's height keeps it level with the label.
         <View style={{ height: FORM_ROW_MIN_HEIGHT, justifyContent: 'center' }}>
           <Switch
             accessibilityLabel={i18n.t('notifyMe')}
@@ -234,8 +223,6 @@ const EndDateRow = (props: NonNullable<Props['end']>) => (
   <FormRow
     icon={FlagIcon}
     trailing={
-      // The native picker's popover leaves the field focused; without this
-      // the keyboard comes back for it once the popover closes.
       <View
         onTouchStart={() => Keyboard.dismiss()}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
@@ -260,11 +247,6 @@ const EndDateRow = (props: NonNullable<Props['end']>) => (
   </FormRow>
 )
 
-/**
- * The optional half of the Plan form. Each row behaves like its data: Title and
- * Type edit in place, Location searches in place, Note opens the note editor,
- * and Invite Buddies and Notify Me open under their row.
- */
 const PlanDetailsList = (props: Props) => {
   const organizer = props.organizerFields !== 'hidden'
   return (

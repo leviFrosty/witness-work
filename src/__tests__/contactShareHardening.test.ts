@@ -63,7 +63,7 @@ const SCHEME = `witnesswork://${CONTACT_SHARE_LINK.SCHEME_HOST}/`
 
 const base64Url = (bytes: Uint8Array) =>
   Buffer.from(bytes).toString('base64url')
-/** A share link carrying `payload` exactly as given (JSON text or object). */
+
 const linkFor = (payload: unknown) =>
   SCHEME +
   base64Url(
@@ -72,7 +72,6 @@ const linkFor = (payload: unknown) =>
     )
   )
 
-/** Gzips `bytes` of spaces without holding them all in memory. */
 const gzipSpaces = (bytes: number) => {
   const parts: Uint8Array[] = []
   const stream = new Gzip({ level: 9 }, (chunk) => {
@@ -86,7 +85,6 @@ const gzipSpaces = (bytes: number) => {
   return Uint8Array.from(Buffer.concat(parts))
 }
 
-// Deterministic made-up prose, so notes compress like real ones.
 const WORDS =
   'we talked about the hope of a better future and read a passage together she asked why there is so much suffering and we agreed to discuss it next week her husband listened for a while they have two children and a garden she works nights so mornings are best'.split(
     ' '
@@ -117,7 +115,6 @@ const fieldDefs: CustomFieldDefinition[] = Array.from(
   })
 )
 
-/** The largest realistic contact: every shared field filled in. */
 const makeLargeContact = (fieldCount = 20, fieldLength = 300): Contact => ({
   id: '6f1c2a34-9b1e-4c55-8d2a-1f0e9c3b7a42',
   name: 'Sample Person Longname-Example',
@@ -140,7 +137,7 @@ const makeLargeContact = (fieldCount = 20, fieldLength = 300): Contact => ({
       .slice(0, fieldCount)
       .map((def, i) => [def.id, prose(fieldLength, i + 1)])
   ),
-  // Device-local state that must never travel or be accepted.
+
   consentGivenAt: '2026-01-01T00:00:00.000Z',
   isFavorite: true,
   avatar: { type: 'emoji', value: '🌱' },
@@ -176,15 +173,14 @@ const makeVisits = (
         { id: `n${i}`, date: new Date(Date.UTC(2016, 2, 8) + i * 7 * 86e6) },
       ],
       reminderOffsetMinutes: 60,
-      // Never travels:
+
       buddies: ['buddy-inbox-id'],
     },
-    // Never travels:
+
     customFields: { 'conversation-field': 'Publication' },
     updatedAt: 1_790_000_000_000,
   }))
 
-/** What a recipient should receive for `contact`: the shared fields only. */
 const sharedContact = (contact: Contact) => {
   const {
     consentGivenAt: _c,
@@ -231,7 +227,6 @@ const storeCallbacks = (): ImportHandlerCallbacks => {
   }
 }
 
-/** Runs the confirmed import, pressing `choice` if a conflict is offered. */
 const runImport = async (
   data: ContactImportData,
   choice?: 'replace' | 'keep'
@@ -712,7 +707,6 @@ describe('size limits', () => {
     CONTACT_SHARE_LIMITS
 
   it('refuses a link payload over the length limit before decoding it', () => {
-    // Valid in every other way: random text barely compresses.
     let seed = 1
     const note = Buffer.from(
       Array.from({ length: 70_000 }, () => {
@@ -749,7 +743,6 @@ describe('size limits', () => {
   })
 
   it('stops inflating once the output passes the limit', () => {
-    // Inflating everything would reach the corrupt tail and fail differently.
     const bomb = gzipSpaces(64 * 1024 * 1024)
     bomb.fill(0xff, bomb.length - 4096)
     expect(() => gunzipWithLimit(bomb, MAX_LINK_JSON_BYTES)).toThrow(
@@ -765,7 +758,6 @@ describe('size limits', () => {
   })
 
   it('reads at most one byte past the file limit', async () => {
-    // A valid share padded past the limit is still refused.
     const valid = JSON.stringify(share(validContact))
     vi.mocked(FileSystem.readAsStringAsync).mockResolvedValue(
       valid.padEnd(MAX_FILE_BYTES + 1)

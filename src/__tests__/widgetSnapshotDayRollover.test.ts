@@ -103,7 +103,7 @@ describe('widget snapshot day rollover', () => {
     const { nextMonth } = buildWidgetSnapshot(args())
 
     expect(nextMonth.builtOn).toBe('2026-11-01')
-    // Next month's role, from Role History.
+
     expect(nextMonth.report.mode).toBe('checkbox')
     expect(nextMonth.report.publisherState).toBe('unreported')
     expect(nextMonth.report.monthMinutes).toBe(0)
@@ -123,10 +123,9 @@ describe('widget snapshot day rollover', () => {
 
     expect(report.goalHours).toBe(30)
     expect(nextMonth.report.goalHours).toBe(50)
-    // The Daily Pace card's 50 hours over the 29 days after Nov 1, for the
-    // watch too.
+
     expect(nextMonth.report.hoursPerDayNeeded).toBe(1.8)
-    // The Daily Pace card's 50 hours over the 29 days after Nov 1.
+
     expect(nextMonth.report.hoursPerDayToGoalByDay['2026-11-01']).toBe(
       '1.8h per day to goal!'
     )
@@ -142,14 +141,12 @@ describe('builders as of a given day', () => {
   }
 
   it('counts the days left as the Daily Pace card does', () => {
-    // 2 of 50 hours logged; 48 left over the 11 days after Oct 20.
     const report = buildReport(reportArgs(), moment(new Date(2026, 9, 20, 12)))
     expect(report.hoursPerDayNeeded).toBe(4.4)
 
-    // From midnight on, too: 10 days after Oct 21 (it counted 11), rounded up.
     const midnight = moment(new Date(2026, 9, 21))
     expect(buildReport(reportArgs(), midnight).hoursPerDayNeeded).toBe(4.8)
-    // One day after Oct 30 (it counted 2: half the pace), and all on the 31st.
+
     for (const day of [30, 31]) {
       const at = moment(new Date(2026, 9, day))
       expect(buildReport(reportArgs(), at).hoursPerDayNeeded).toBe(48)
@@ -157,7 +154,6 @@ describe('builders as of a given day', () => {
   })
 
   it('writes the pace line for each day left, as the Daily Pace card does', () => {
-    // 48 of 50 hours to go, built on Oct 21.
     const { hoursPerDayToGoalByDay } = buildReport(
       reportArgs(),
       moment(new Date(2026, 9, 21, 12))
@@ -166,11 +162,11 @@ describe('builders as of a given day', () => {
     expect(Object.keys(hoursPerDayToGoalByDay)).toEqual(
       Array.from({ length: 11 }, (_, i) => `2026-10-${21 + i}`)
     )
-    // 10 days after Oct 21 (the widget counted 11 from its midnight).
+
     expect(hoursPerDayToGoalByDay['2026-10-21']).toBe('4.8h per day to goal!')
-    // One day after Oct 30 (the widget counted 2: half the pace).
+
     expect(hoursPerDayToGoalByDay['2026-10-30']).toBe('48h per day to goal!')
-    // All of it on the last day.
+
     expect(hoursPerDayToGoalByDay['2026-10-31']).toBe('48h per day to goal!')
   })
 
@@ -181,7 +177,7 @@ describe('builders as of a given day', () => {
     )
 
     expect(hoursPerDayToGoalByDay['2026-10-21']).toBe('4h 48m per day to goal!')
-    // 2880 minutes over 9 days: 320, which decimal rounds up to 5.4h.
+
     expect(hoursPerDayToGoalByDay['2026-10-22']).toBe('5h 20m per day to goal!')
   })
 

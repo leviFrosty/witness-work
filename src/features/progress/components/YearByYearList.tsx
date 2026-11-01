@@ -49,23 +49,7 @@ const useFlatServiceReports = (): TimeEntry[] => {
   }, [serviceReports])
 }
 
-/**
- * "Year by Year" list for the All-time tab. Renders one row per service year in
- * the continuous span from the earliest report's service year to the current
- * one, most-recent first. Each row:
- *
- * - `{startYear}—{endYearShort}` label on the left (e.g. `2024—25`).
- * - A proportional fill bar in the middle (year's hours ÷ current annual goal,
- *   capped at 100%). If the user has no annual goal, the bar's divisor falls
- *   back to the max-hours year so rows still render comparatively.
- * - `{hours}{hoursCompact}` on the right (localized hour abbreviation).
- *
- * Tapping a row navigates to the Progress > Year tab for that service year;
- * long-pressing previews the year and offers View Year, Edit Service History,
- * and Delete This Year's Time (also at the bottom of Service History).
- */
 interface YearByYearListProps {
-  /** Invoked when the user taps a year row — parent switches to Year tab. */
   onYearPress: (endYear: number) => void
 }
 
@@ -88,7 +72,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
         reportCount: totals.get(endYear)?.reportCount ?? 0,
       }
     })
-    // Most-recent first.
+
     data.sort((a, b) => b.endYear - a.endYear)
     return data
   }, [endYears, reports])
@@ -119,7 +103,7 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
 
   const divisor = useMemo(() => {
     if (annualGoalHours > 0) return annualGoalHours
-    // Fallback so bars remain meaningful when the user has no annual goal.
+
     const max = rows.reduce((m, r) => Math.max(m, r.hours), 0)
     return max > 0 ? max : 1
   }, [annualGoalHours, rows])
@@ -160,7 +144,6 @@ const YearByYearList = ({ onYearPress }: YearByYearListProps) => {
               timeDisplayFormat
             ).formatted
 
-            // Service History covers finished months only.
             const hasFinishedMonths = moment({
               year: startYear,
               month: 8,

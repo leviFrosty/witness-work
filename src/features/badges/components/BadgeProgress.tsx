@@ -7,10 +7,6 @@ import { badgeHowTo } from '@/lib/badges/display'
 import type { BadgeCollectionId, BadgeLevel } from '@/types/badges'
 import { alignText } from '@/lib/direction'
 
-/**
- * A slim bar toward one level of a collection, "4 of 6 months", and how to grow
- * it. Only ever about the User's own records.
- */
 export default function BadgeProgress({
   art,
   count,
@@ -19,11 +15,11 @@ export default function BadgeProgress({
   showHow = true,
 }: {
   art: BadgeCollectionId
-  /** Months (or Service Years) counted so far. */
+
   count: number
-  /** The level to measure against. */
+
   level: BadgeLevel
-  /** E.g. "Next: Gold"; left out where the level is already named. */
+
   heading?: string
   showHow?: boolean
 }) {
@@ -43,7 +39,7 @@ export default function BadgeProgress({
           style={{
             flexDirection: 'row',
             alignItems: 'baseline',
-            // Without a heading it sits under centered text, e.g. a detail.
+
             justifyContent: heading ? 'space-between' : 'center',
             gap: 8,
           }}

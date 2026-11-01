@@ -60,8 +60,7 @@ vi.mock('@/stores/householderData', () => ({
 vi.mock('@/hooks/useIsSupporter', () => ({
   default: () => ({ isSupporter: false, since: null }),
 }))
-// Platform-bound sources with narrow selectors of their own; they'd only add
-// native mocks here.
+
 vi.mock('@/app/notifications/useAnnouncementNotification', () => ({
   default: () => null,
 }))

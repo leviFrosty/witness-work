@@ -19,10 +19,6 @@ interface Props {
   renderSupporterCta?: RenderSupporterCta
 }
 
-/**
- * Settings → Scribe AI usage: the plan, each usage window as a percent with
- * when it resets (never raw units), and the Supporter upsell for free.
- */
 const ScribeUsageScreen = ({ renderSupporterCta }: Props) => {
   const foldColumn = useFoldColumn(640)
   const theme = useTheme()
@@ -53,8 +49,7 @@ const ScribeUsageScreen = ({ renderSupporterCta }: Props) => {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       contentContainerStyle={{ padding: 20 }}
     >
-      {/* Capped inside the content, not on it: in a right-to-left layout iOS
-          pins a narrower content container to the right edge. */}
+      {}
       <View
         style={[
           { width: '100%', maxWidth: 640, alignSelf: 'center', gap: 18 },

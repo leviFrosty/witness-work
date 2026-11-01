@@ -14,13 +14,9 @@ type Props = {
   trips: readonly Trip[]
 }
 
-/**
- * One bar per day of the period, scaled to its busiest day. Decorative: the
- * totals beside it carry the same information for screen readers.
- */
 export default function MileageDailyChart({ period, trips }: Props) {
   const theme = useTheme()
-  // A date key too (`YYYY-MM-DD`), moving on at midnight.
+
   const today = useLocalDay()
   const milesByDay = new Map<string, number>()
   for (const trip of trips) {

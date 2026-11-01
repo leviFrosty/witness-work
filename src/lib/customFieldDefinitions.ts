@@ -5,17 +5,6 @@ import {
   CustomFieldTombstone,
 } from '@/types/customField'
 
-/**
- * Pure definition-list operations shared by every store that owns custom fields
- * (contact fields in `contactsStore`, conversation fields in
- * `conversationStore`). Each returns the next list; callers write it back.
- */
-
-/**
- * Appends a definition for `label` (trimmed). Returns the existing active
- * definition for a case-sensitive duplicate label, or `null` for an empty one,
- * with the list unchanged.
- */
 export function addCustomFieldDefinition(
   defs: CustomFieldDefinition[],
   label: string
@@ -49,12 +38,6 @@ export function renameCustomFieldDefinition(
   )
 }
 
-/**
- * Reorders the active (non-archived) defs. `orderedIds` is the new active
- * sequence; archived defs keep their existing relative order, slotted after the
- * active list. `order` is rewritten on every active def so sync merges have a
- * clean per-def timestamp + position to compare.
- */
 export function reorderCustomFieldDefinitions(
   defs: CustomFieldDefinition[],
   orderedIds: string[]
@@ -73,7 +56,7 @@ export function reorderCustomFieldDefinitions(
       updatedAt: def.order === idx ? def.updatedAt : now,
     })
   })
-  // Preserve archived defs as-is, ordered after active.
+
   const archived = defs
     .filter((d) => d.archived)
     .map((d, i) => ({
@@ -95,7 +78,6 @@ export function archiveCustomFieldDefinition(
   )
 }
 
-/** Slots a restored def at the end of the active list. */
 export function restoreCustomFieldDefinition(
   defs: CustomFieldDefinition[],
   id: string
@@ -111,10 +93,6 @@ export function restoreCustomFieldDefinition(
   )
 }
 
-/**
- * Tombstones an archived definition. Returns `null` when `id` isn't an archived
- * definition, so live fields can't be destroyed in one step.
- */
 export function purgeCustomFieldDefinition(
   defs: CustomFieldDefinition[],
   tombstones: CustomFieldTombstone[],

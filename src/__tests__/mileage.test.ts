@@ -169,7 +169,6 @@ describe('effective-dated history', () => {
 
 describe('mileage periods', () => {
   it('builds weeks from the start-of-week preference', () => {
-    // Wednesday, March 11 2026.
     const sunday = periodContaining('week', moment('2026-03-11'), 0)
     expect(toDateKey(sunday.start)).toBe('2026-03-08')
     expect(toDateKey(sunday.end)).toBe('2026-03-14')

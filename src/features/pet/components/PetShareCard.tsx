@@ -18,18 +18,16 @@ import { petShareImage, type PetShareStats } from '@/features/pet/lib/share'
 import { bufferToPngBase64 } from '@/features/pet/render/skiaImage'
 
 const PAD = 16
-/** The hearts' height in points, before snapping to whole device pixels. */
+
 const HEARTS_H = 14
-/** At most this many image pixels per scene pixel. */
+
 const MAX_ROOM_SCALE = 12
 
-/** A pixel picture as an image source, `scale` times larger, sharp. */
 const pngSource = (buffer: PixelBuffer, scale: number) => {
   const png = bufferToPngBase64(scaleNearest(buffer, scale))
   return png ? { uri: `data:image/png;base64,${png}` } : null
 }
 
-/** One fact under the name: an icon, a number and what it counts. */
 function Stat({
   icon,
   value,
@@ -68,13 +66,6 @@ function Stat({
   )
 }
 
-/**
- * The card a pet's share picture is taken from, as the share sheet previews it:
- * the room, the name and hearts, a few facts (the Service Streak while it
- * shows, days together, hats opened up) and the app's name. The pixel art is
- * drawn as plain images, whole device pixels per scene pixel, so a snapshot of
- * the view stays sharp on both platforms.
- */
 export default function PetShareCard({
   input,
   name,
@@ -90,9 +81,9 @@ export default function PetShareCard({
   hearts: number
   gold: boolean
   stats: PetShareStats
-  /** Draws the wall sign, with the User's records on it. */
+
   showSign: boolean
-  /** The widest the card may be; the room snaps to whole pixels within it. */
+
   maxWidth: number
   ref?: Ref<View>
 }) {
@@ -107,8 +98,7 @@ export default function PetShareCard({
   )
   const roomWidth = (VIEW_CARD[2] * roomScale) / ratio
   const heartsScale = Math.max(1, Math.round((HEARTS_H * ratio) / HEART_ICON_H))
-  // Drawn once: the picture is a still of the room as the sheet opened, with
-  // and without the sign.
+
   const [images] = useState(() => {
     const row = heartsRow(hearts, gold)
     return {

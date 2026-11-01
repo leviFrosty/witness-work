@@ -1,17 +1,7 @@
-// Reads the iOS simulator's accessibility tree with AXe (`axe describe-ui`)
-// for the half of agent-device that needs one: snapshots, refs, selectors,
-// find and wait. On iPad simulators agent-device 0.21 reads only the app node
-// for the sidebar shell (its XCTest query sweep times out and its private-AX
-// fallback stops at three nodes), while AXe reads the whole tree through
-// CoreSimulator. ww-verify resolves targets here; on iPad it taps them with
-// AXe too, at the element's window position plus the window's place on screen.
-//
-// Everything in this file is pure; ww-verify.mjs runs AXe and agent-device.
-
 const PRESSABLE =
   /^(Button|Link|Cell|Switch|CheckBox|Toggle|Tab|MenuItem|RadioButton|SegmentedControl|PopUpButton|Slider|Stepper|Incrementor)$/
 const EDITABLE = /^(TextField|SecureTextField|SearchField|TextView|TextArea)$/
-// Scroll indicators and the app itself say nothing about the screen.
+
 const NOISE = /^(Vertical|Horizontal) scroll bar\b/
 
 const TYPE_NAMES = {
@@ -32,10 +22,6 @@ const typeName = (type) =>
     .replace(/([a-z])([A-Z])/g, '$1-$2')
     .toLowerCase()
 
-/**
- * How sure we are a tap on this element does something: 3 control, 2 other, 1
- * text.
- */
 function rank(element) {
   if (PRESSABLE.test(element.axType) || EDITABLE.test(element.axType)) return 3
   if (element.axType === 'GenericElement') return 2
@@ -50,12 +36,6 @@ const contains = (outer, inner) =>
 
 const area = (e) => e.width * e.height
 
-/**
- * Flattens `axe describe-ui` JSON into the elements an agent can see and act
- * on: labeled or interactive, with a center inside the app's frame. React
- * Native repeats a label on a container and its text; of two nested elements
- * with the same label and value, the one more likely to take a tap stays.
- */
 export function flatten(tree) {
   const roots = Array.isArray(tree) ? tree : [tree]
   const app = roots.find((r) => r.type === 'Application')?.frame
@@ -116,12 +96,6 @@ export const center = (e) => ({
   y: Math.round(e.y + e.height / 2),
 })
 
-/**
- * The app window's top-left corner on screen, from an `axe describe-ui --point`
- * read that landed on SpringBoard: its app switcher lists each window as a
- * `card:<bundle id>:sceneID:…` element framed in screen coordinates. Null when
- * the read has no card for the app (the point landed in the app itself).
- */
 export function windowOrigin(tree, bundleId) {
   const prefix = `card:${bundleId}:`
   const find = (node) => {
@@ -140,10 +114,6 @@ export function windowOrigin(tree, bundleId) {
   return null
 }
 
-/**
- * A point from AXe's window coordinates in screen coordinates, where taps and
- * `--point` reads land. They differ once an iPad window is resized.
- */
 export const toScreen = (point, origin) => ({
   x: Math.round(point.x + origin.x),
   y: Math.round(point.y + origin.y),
@@ -151,7 +121,6 @@ export const toScreen = (point, origin) => ({
 
 const quoted = (text) => JSON.stringify(String(text))
 
-/** One element without its ref, so two snapshots can be compared. */
 function describe(e) {
   const parts = [`[${e.type}]`]
   if (e.label) parts.push(quoted(e.label))
@@ -170,7 +139,6 @@ export function formatSnapshot(elements, note) {
   ].join('\n')
 }
 
-/** The same shape as `agent-device snapshot --json`, for the monkey. */
 export function snapshotJson(elements) {
   return JSON.stringify({
     success: true,
@@ -190,10 +158,6 @@ export function snapshotJson(elements) {
   })
 }
 
-/**
- * Parses an agent-device selector (`label="Save" role=button editable=true`)
- * into the keys we can match, or null when it uses anything else.
- */
 export function parseSelector(text) {
   const selector = {}
   const pattern = /\s*([a-z]+)=("(?:[^"\\]|\\.)*"|'[^']*'|\S+)/gy
@@ -224,7 +188,7 @@ export function matchesSelector(e, selector) {
     if (e.editable !== (selector.editable === 'true')) return false
   if (selector.role !== undefined) {
     const role = selector.role.toLowerCase()
-    // AXe reports a UISwitch as a CheckBox; agent-device calls it a switch.
+
     const roles =
       e.type === 'checkbox'
         ? [e.type, 'switch']
@@ -234,27 +198,18 @@ export function matchesSelector(e, selector) {
   return true
 }
 
-/**
- * Case-insensitive substring match on label or value, like `find` and `wait
- * text`.
- */
 export function matchesText(e, text) {
   const needle = String(text).toLowerCase()
-  // AXe reports a switch's value as a number.
+
   return [e.label, e.value].some(
     (v) => v != null && String(v).toLowerCase().includes(needle)
   )
 }
 
-/**
- * The match most likely to be the control meant: a control over text, then the
- * smallest.
- */
 export function best(elements) {
   return [...elements].sort((a, b) => rank(b) - rank(a) || area(a) - area(b))[0]
 }
 
-/** Lines added and removed between two snapshots, ignoring ref numbers. */
 export function diffSnapshots(before, after, limit = 40) {
   const count = (list) => {
     const counts = new Map()

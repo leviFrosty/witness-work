@@ -6,14 +6,6 @@ export type ZoomTransform = {
   translateY: number
 }
 
-/**
- * The transform, applied about `frame`'s center, that carries rect `from`
- * `progress` of the way onto rect `to`. Scale moves geometrically (equal ratios
- * per step, how a zoom reads) while `from`'s center travels in a straight line,
- * so two layers zooming through the same pair of rects stay in register. Rects
- * are in one shared coordinate space; `frame` is the transformed view's
- * untransformed layout in that space.
- */
 export function zoomTransform(
   frame: Rect,
   from: Rect,
@@ -38,7 +30,6 @@ export function zoomTransform(
   }
 }
 
-/** Applies a {@link ZoomTransform} to a point, for tests and hit checks. */
 export function applyZoom(
   frame: Rect,
   transform: ZoomTransform,

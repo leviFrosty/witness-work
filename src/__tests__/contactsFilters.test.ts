@@ -246,7 +246,6 @@ describe('lib/contactsFilters', () => {
     })
 
     it('falls back to lexicographic when values are non-numeric', () => {
-      // 'banana' > 'apple' lexicographically, and neither parses as number
       const a = baseContact({
         id: 'a',
         name: 'A',
@@ -262,7 +261,7 @@ describe('lib/contactsFilters', () => {
         [{ kind: 'customField', defId: 'age', op: 'gt', value: 'avocado' }],
         emptyCtx({ customFieldDefs: [numDef] })
       )
-      // 'banana' > 'avocado', 'apple' < 'avocado'
+
       expect(result).toEqual([a])
     })
 

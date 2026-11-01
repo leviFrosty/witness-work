@@ -12,7 +12,6 @@ import type { MinuteDisplayFormat } from '@/types/timeEntry'
 
 const METERS_PER_MILE = KM_PER_MILE * 1000
 
-/** "42 min · 18.2 mi", honoring the Duration Format and distance unit. */
 export const formatRouteSummary = (
   summary: { distanceMeters: number; durationSeconds: number },
   prefs: { timeDisplayFormat: MinuteDisplayFormat; distanceUnit?: DistanceUnit }
@@ -26,7 +25,6 @@ export const formatRouteSummary = (
   })
 }
 
-/** "18.2 mi" in the User's distance unit, or the region's. */
 export const formatRouteDistance = (
   meters: number,
   distanceUnit?: DistanceUnit

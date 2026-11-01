@@ -86,7 +86,7 @@ it('leaves the Credit switch to stamp the entries it flips', async () => {
   act(() => {
     renderer = create(<Harness />)
   })
-  // As TypeSelectorRow does: flip the Category, then restamp its entries.
+
   useCategories.getState().updateCategory({ id: 'bethel', isCredit: false })
   const restamped = restampTimeEntriesCredit(
     useServiceReport.getState().serviceReports,

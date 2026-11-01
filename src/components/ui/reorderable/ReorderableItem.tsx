@@ -36,63 +36,44 @@ export type { ReorderableSizeOption }
 
 export type ReorderableResize<Size extends string> = {
   size: Size
-  /** Smallest first. */
+
   options: ReorderableSizeOption<Size>[]
   onResize: (size: Size) => void
-  /** E.g. "Resize Daily Pace". */
+
   label: string
 }
 
 type Props<Size extends string> = {
   id: string
   children: ReactNode
-  /** The cell around the item, e.g. its width in a grid. */
+
   style?: StyleProp<ViewStyle>
-  /** Stretch to the cell's height, as an item beside a taller one does. */
+
   fill?: boolean
-  /** The item's corner radius, for the badge and the resize handle. */
+
   radius?: number
-  /** Can be dragged to another place (default true). */
+
   movable?: boolean
-  /** Rests, dimmed, while editing: not moved, removed or moved onto. */
+
   locked?: boolean
-  /**
-   * Holding it outside edit mode starts editing with it lifted (default true,
-   * when the container has `onLiftToEdit`). `zone` lifts only from a
-   * `ReorderableLiftZone` inside it, for items full of rows with menus of their
-   * own. Turn it off for items whose own long press opens a menu.
-   */
+
   liftOutsideEditing?: boolean | 'zone'
   onRemove?: () => void
-  /** E.g. "Remove Daily Pace". */
+
   removeLabel?: string
   resize?: ReorderableResize<Size>
-  /** While editing, the item is one element with these. */
+
   accessibilityLabel?: string
   accessibilityActions?: AccessibilityActionInfo[]
   onAccessibilityAction?: (name: string) => void
-  /** The cell, e.g. to measure where the item is. */
+
   viewRef?: Ref<View>
-  /**
-   * The space the layout puts between items (a column's `gap`). Content that
-   * draws nothing (a section with nothing to show today) gives it back, so the
-   * item leaves no hole.
-   */
+
   gap?: number
-  /**
-   * Shown while editing in place of content that draws nothing, so the item can
-   * still be moved or removed.
-   */
+
   emptyPlaceholder?: ReactNode
 }
 
-/**
- * One rearrangeable thing inside a `ReorderableContainer`: a card, a section.
- * While the container is editing it jiggles; a gray minus at its top leading
- * corner removes it (`onRemove`) and a curved handle at its bottom trailing
- * corner resizes it (`resize`), as on Home Screen widgets. Only give it the
- * sizes that make sense; without `resize` it has no handle.
- */
 export default function ReorderableItem<Size extends string>({
   id,
   children,
@@ -161,7 +142,6 @@ export default function ReorderableItem<Size extends string>({
     )
   }
 
-  // Kept current after every render: the container reads it in gestures.
   useEffect(() => {
     Object.assign(entry.current, {
       render: () => (
@@ -184,7 +164,6 @@ export default function ReorderableItem<Size extends string>({
   const register = container?.register
   useEffect(() => register?.(id, entry.current), [register, id])
 
-  // The resize in progress: the frame and size it started from.
   const resizeStart = useRef<{
     width: number
     height: number
@@ -234,9 +213,6 @@ export default function ReorderableItem<Size extends string>({
     current.onResize(current.options[(at + 1) % current.options.length].size)
   }
 
-  // Outside edit mode the item lifts with its own gesture (the container's
-  // runs only while editing). It stays on through the drag it started, which
-  // starts editing.
   const lift = container?.lift
   const liftGesture = () =>
     !container?.canLiftToEdit || locked || !lift

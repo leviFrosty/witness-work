@@ -8,7 +8,7 @@ import useTheme from '@/contexts/theme'
 export type ProfileCardDetail = {
   icon: AppIcon
   tint: string
-  /** Fills the icon too, e.g. the Supporter heart. */
+
   filled?: boolean
   text: string
 }
@@ -16,10 +16,6 @@ export type ProfileCardDetail = {
 const CARD_PADDING_V = 14
 const CARD_PADDING_H = 16
 
-/**
- * The profile card's look: avatar, name, a subtitle, and small icon lines
- * underneath. Used for the User's own Profile and for a buddy.
- */
 export default function ProfileCardLayout({
   avatar,
   title,
@@ -29,13 +25,13 @@ export default function ProfileCardLayout({
   footer,
 }: {
   avatar: ReactNode
-  /** A string renders as the name; pass a node for an editable name. */
+
   title: ReactNode
   subtitle?: string
-  /** Trails the name, e.g. the Service Streak. */
+
   trailing?: ReactNode
   details: ProfileCardDetail[]
-  /** Below the detail lines, e.g. a row of badges. */
+
   footer?: ReactNode
 }) {
   const theme = useTheme()

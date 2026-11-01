@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
 import { Alert } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -26,7 +25,6 @@ interface Options {
   entryPoint?: string
 }
 
-/** Why a locked file gave no backup: `import_failed`'s `error_code`. */
 type UnlockProblem =
   | 'invalid_file'
   | 'newer_version'
@@ -56,7 +54,6 @@ const problemOf = (error: unknown): UnlockProblem => {
   return error.problem === 'newer' ? 'newer_version' : 'invalid_file'
 }
 
-/** Opens an `account` file with this device's key. */
 async function unlockToAccount(file: LockedBackupFile): Promise<Unlocked> {
   try {
     const opened = await unlockWithThisAccount(file)
@@ -69,14 +66,6 @@ async function unlockToAccount(file: LockedBackupFile): Promise<Unlocked> {
   }
 }
 
-/**
- * Picks a WitnessWork JSON backup and restores it over the local stores. The
- * same flow backs Settings → Backup and the onboarding "Pick up where you left
- * off" chooser. A locked file (`backupFileLock.ts`) opens with this device's
- * account key, or asks for its password in `unlockSheet`, which the caller
- * renders. Resolves `true` only when the backup was restored; cancel and
- * failures (already alerted) resolve `false`.
- */
 export function useBackupImport({ source, entryPoint }: Options) {
   const [importing, setImporting] = useState(false)
   const [passwordFile, setPasswordFile] = useState<{
@@ -107,7 +96,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
         protection: 'password',
         wrongPasswords,
       }
-    // The import's own catch reports it, as for any other failure.
+
     if (result.problem === 'unexpected')
       throw new Error("Couldn't unlock the backup file")
     return {
@@ -206,7 +195,6 @@ export function useBackupImport({ source, entryPoint }: Options) {
       }
       stage = 'restore'
 
-      // Records it can't read drop one by one; a broken frame stops it all.
       const restore = restoreBackupFile(data)
       if (!restore.ok && restore.problem === 'newer') {
         analytics.capture('import_failed', {
@@ -234,7 +222,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
       if (restore.droppedRecords > 0)
         Alert.alert(
           i18n.t('importPartial_title'),
-          // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+
           i18n.t('importPartial_description', {
             count: restore.droppedRecords,
           })

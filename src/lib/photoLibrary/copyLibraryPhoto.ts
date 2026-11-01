@@ -3,7 +3,6 @@ import { randomUUID } from 'expo-crypto'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { Asset } from 'expo-media-library'
 
-/** Where the system picker leaves its copies, so both pickers share a cache. */
 const PICKED_DIR = `${FileSystem.cacheDirectory}ImagePicker/`
 
 const MIME_TYPES: Record<string, string> = {
@@ -18,10 +17,6 @@ const MIME_TYPES: Record<string, string> = {
   tiff: 'image/tiff',
 }
 
-/**
- * The system picker's EXIF shape: the `{Exif}` tags, with `{TIFF}` (camera,
- * date) beside them and `{GPS}` tags prefixed with `GPS`.
- */
 function pickerExif(
   properties: Record<string, unknown>
 ): Record<string, unknown> {
@@ -34,12 +29,6 @@ function pickerExif(
   return exif
 }
 
-/**
- * Copies a photo the app can read (limited library access) into the cache, in
- * the shape the system picker returns, so callers treat both pickers alike:
- * they own the copy and may move or delete it. A photo kept only in iCloud
- * downloads first.
- */
 export async function copyLibraryPhoto(
   id: string,
   options: { exif: boolean }

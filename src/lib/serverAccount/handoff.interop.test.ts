@@ -21,10 +21,6 @@ import {
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-/**
- * Opt-in contract check of Set Up Another Device against a real worker (see
- * `interopSessions`). Skipped by default.
- */
 const relayUrl = interopRelayUrl
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
@@ -84,7 +80,7 @@ describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
     if (fresh.state.step !== 'received') return
     expect(toB64u(fresh.state.received.accountKey)).toBe(toB64u(old.accountKey))
     expect(fresh.state.received.accountId).toBe(old.accountId)
-    // The new phone opens its own session with the key it received.
+
     const received = fresh.state.received.accountKey
     const opened = await interopSessions(random).openDetached(received)
     expect(opened.accountId).toBe(old.accountId)
@@ -93,7 +89,7 @@ describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
     expect(fresh.debug().events.at(-1)?.outcome).toBe('ok')
     await old.session.poll()
     expect(old.session.state.step).toBe('done')
-    // `cancel` after `done` is ok, and the status stays done.
+
     expect(
       await code(() => cancelHandoffAsOffer(old.session.channelId, old.options))
     ).toBe('ok')
@@ -105,13 +101,13 @@ describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
   it('answers the documented codes', async () => {
     const old = await oldPhone()
     const channelId = old.session.channelId
-    // `send` before a claim is a conflict.
+
     expect(
       await code(() =>
         sendHandoffKey({ channelId, key: toB64u(random(64)) }, old.options)
       )
     ).toBe('409 conflict')
-    // A wrong claim token is bad_signature.
+
     const wrong = { channelId, claimToken: toB64u(random(16)) }
     const plain = (op: string, json: object) =>
       code(() =>
@@ -122,7 +118,7 @@ describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
         })
       )
     expect(await plain('handoff/receive', wrong)).toBe('401 bad_signature')
-    // A hello over its cap is too_large.
+
     expect(
       await plain('handoff/claim', {
         channelId,
@@ -131,12 +127,12 @@ describe.skipIf(!interopEnabled)('handoff against a real worker', () => {
         hello: 'A'.repeat(4096),
       })
     ).toBe('413 too_large')
-    // Another account can't read it.
+
     const stranger = await oldPhone()
     expect(await code(() => handoffStatus(channelId, stranger.options))).toBe(
       '403 forbidden'
     )
-    // `done` before `sent` is a conflict.
+
     const fresh = newPhone(old.offer)
     await fresh.claim()
     expect(

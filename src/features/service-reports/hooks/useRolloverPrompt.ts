@@ -4,20 +4,12 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 import useICloudPullSettled from '@/hooks/useICloudPullSettled'
 
-/** Markers already brought up this session, so an undecided exit can't loop. */
 const prompted = new Set<string>()
 
-/** Forgets which prompts came up, as a relaunch does (the dev harness's seed). */
 export function forgetRolloverPrompts() {
   prompted.clear()
 }
 
-/**
- * Brings up a pending rollover where the User is looking at their numbers,
- * since it isn't shown at launch: on Progress, and before a Service Report for
- * the month it changes (pass that month). Once per month per session; the tray
- * item covers the rest.
- */
 export default function useRolloverPrompt(forMonth?: {
   month: number
   year: number
@@ -25,8 +17,7 @@ export default function useRolloverPrompt(forMonth?: {
   const navigation = useNavigation<RootStackNavigation>()
   const focused = useIsFocused()
   const { pending, markerKey, apply, autoEnabled } = useRollover()
-  // Opened right after launch, the screen holds off until iCloud has caught up
-  // (see `HomeTabStack`), so it never offers what another device already did.
+
   const iCloudSettled = useICloudPullSettled()
   const due = pending.some(
     (source) =>

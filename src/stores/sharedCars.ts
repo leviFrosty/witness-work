@@ -40,36 +40,23 @@ import type {
 } from '@/types/sharedCars'
 
 const initialState = {
-  /** Every Shared Car the User is on, by `spaceId`. */
   cars: {} as Record<string, SharedCar>,
-  /**
-   * The spaces the User is on and has left, which the Buddies roster carries to
-   * their other devices (`cars`, `leftCars`).
-   */
+
   memberships: { cars: {}, leftCars: {} } as SharedCarMemberships,
-  /** Cars being shared that haven't finished seeding, by `spaceId`. */
+
   seeding: {} as Record<string, SharedCarSeeding>,
-  /** Leaving or deleting a space the server hasn't heard yet, by `spaceId`. */
+
   pendingEnds: {} as Record<string, SharedCarPendingEnd>,
-  /** Joins started whose answer hasn't been seen yet, by `spaceId`. */
+
   joining: {} as Record<string, SharedCarJoining>,
-  /**
-   * Invitations being closed that the server hasn't heard yet: `spaceId` →
-   * `inviteId` → how. Tried on every sync of the car until it has.
-   */
+
   closingInvites: {} as Record<string, Record<string, SharedCarClosingInvite>>,
 }
 
 type State = typeof initialState
 
-/** A change to a car's records, and the ids of the records it touched. */
 type CarChange = { changes: Partial<SharedCar>; ids: string[] }
 
-/**
- * `state` with `change` made to the car in `spaceId` and the records it touched
- * marked pending. The same state for a car this device doesn't have, or a
- * change that touched nothing.
- */
 function changeCar(
   state: State,
   spaceId: string,
@@ -91,15 +78,8 @@ function changeCar(
   }
 }
 
-/** Fields one edit replaces together: a note's plain text and its doc. */
 const NOTE_FIELDS = ['note', 'noteDoc']
 
-/**
- * The car's kept fields (`extraFields`) once the User saved `record` over
- * `previous`. A field the record sets goes out over the one kept for it anyway;
- * a note they edited also replaces a doc this version couldn't read, which
- * would otherwise go back out beside it.
- */
 function keptAfterEdit(
   car: SharedCar,
   previous: MileageRecord | undefined,
@@ -133,10 +113,6 @@ const upsert =
     ids: [record.id],
   })
 
-/**
- * Removes the matching records and tombstones them, each tombstone naming the
- * kind it was: its deletion is sealed with that kind.
- */
 const remove =
   (match: MileageMatch) =>
   (car: SharedCar): CarChange => {
@@ -165,7 +141,6 @@ const remove =
     }
   }
 
-/** Trip `id` as another of the User's Shared Cars holds it, if one does. */
 function tripElsewhere(
   state: State,
   spaceId: string,
@@ -186,12 +161,12 @@ type Set = (
 const actions = (set: Set) => ({
   saveVehicle: (spaceId: string, vehicle: Vehicle) =>
     set((state) => changeCar(state, spaceId, upsert('vehicles', vehicle))),
-  /** Deletes the car with its fuel setups and trips. */
+
   deleteVehicle: (spaceId: string, id: string) =>
     set((state) => changeCar(state, spaceId, remove(matchVehicle(id)))),
   saveFuel: (spaceId: string, fuel: Fuel) =>
     set((state) => changeCar(state, spaceId, upsert('fuels', fuel))),
-  /** Deletes the fuel and its prices. */
+
   deleteFuel: (spaceId: string, id: string) =>
     set((state) => changeCar(state, spaceId, remove(matchFuel(id)))),
   saveFuelPrice: (spaceId: string, price: FuelPrice) =>
@@ -206,11 +181,7 @@ const actions = (set: Set) => ({
     set((state) =>
       changeCar(state, spaceId, remove(matchRecord('vehicleSetups', id)))
     ),
-  /**
-   * Saves a trip with who logged it, or who last edited it. A trip moving from
-   * another Shared Car is saved here before it leaves that one, so it keeps who
-   * logged it.
-   */
+
   saveTrip: (spaceId: string, trip: Trip) =>
     set((state) =>
       changeCar(state, spaceId, (car) =>
@@ -222,17 +193,10 @@ const actions = (set: Set) => ({
     ),
   deleteTrip: (spaceId: string, id: string) =>
     set((state) => changeCar(state, spaceId, remove(matchRecord('trips', id)))),
-  /**
-   * Adds a car, or replaces one, exactly as given: for sharing, joining, and
-   * merging a sync, whose records keep the stamps they came with.
-   */
+
   saveSharedCar: (car: SharedCar) =>
     set((state) => ({ cars: { ...state.cars, [car.spaceId]: car } })),
-  /**
-   * Replaces a car with what `update` makes of it now, in one step, so nothing
-   * changed between reading and writing it is lost. Nothing for a car this
-   * device doesn't have, or an update that returns the same car.
-   */
+
   updateSharedCar: (spaceId: string, update: (car: SharedCar) => SharedCar) =>
     set((state) => {
       const car = state.cars[spaceId]
@@ -240,10 +204,7 @@ const actions = (set: Set) => ({
       const next = update(car)
       return next === car ? state : { cars: { ...state.cars, [spaceId]: next } }
     }),
-  /**
-   * Forgets a car on this device, e.g. once its personal copy is made, with the
-   * invitations it was closing: the server closes those with the car.
-   */
+
   removeSharedCar: (spaceId: string) =>
     set((state) => {
       if (!state.cars[spaceId] && !state.closingInvites[spaceId]) return state
@@ -251,11 +212,7 @@ const actions = (set: Set) => ({
       const { [spaceId]: _closing, ...closingInvites } = state.closingInvites
       return { cars, closingInvites }
     }),
-  /**
-   * Clears the pending marks a `put` settled: each record it sent, stored or
-   * already superseded on the server, unless it changed here again after the
-   * stamp it was sent with. Linear in the car and the put.
-   */
+
   settlePendingPuts: (
     spaceId: string,
     sent: readonly { recordId: string; stamp: number }[]
@@ -275,11 +232,7 @@ const actions = (set: Set) => ({
       if (pendingPuts.length === car.pendingPuts.length) return state
       return { cars: { ...state.cars, [spaceId]: { ...car, pendingPuts } } }
     }),
-  /**
-   * The User joined or shared `spaceId` at `at` (the synced clock). A leave
-   * this device still owed the server goes: sent now, it would take them off
-   * the car they're on again.
-   */
+
   noteJoined: (spaceId: string, at: number) =>
     set((state) => {
       const current = state.memberships.cars[spaceId]
@@ -296,7 +249,7 @@ const actions = (set: Set) => ({
         ...(owed && { pendingEnds }),
       }
     }),
-  /** The User left `spaceId` at `at` (or was removed, or it ended). */
+
   noteLeft: (spaceId: string, at: number) =>
     set((state) => {
       const current = state.memberships.leftCars[spaceId]
@@ -308,7 +261,7 @@ const actions = (set: Set) => ({
         },
       }
     }),
-  /** Records or updates a share that's seeding. */
+
   saveSeeding: (seeding: SharedCarSeeding) =>
     set((state) => ({
       seeding: { ...state.seeding, [seeding.spaceId]: seeding },
@@ -319,7 +272,7 @@ const actions = (set: Set) => ({
       const { [spaceId]: _done, ...seeding } = state.seeding
       return { seeding }
     }),
-  /** Records a join about to go out, until its answer is seen. */
+
   saveJoining: (joining: SharedCarJoining) =>
     set((state) => ({
       joining: { ...state.joining, [joining.spaceId]: joining },
@@ -342,7 +295,7 @@ const actions = (set: Set) => ({
       const { [spaceId]: _done, ...pendingEnds } = state.pendingEnds
       return { pendingEnds }
     }),
-  /** Starts closing an invitation, until the server has heard. */
+
   addClosingInvite: (
     spaceId: string,
     inviteId: string,
@@ -350,7 +303,7 @@ const actions = (set: Set) => ({
   ) =>
     set((state) => {
       const current = state.closingInvites[spaceId]?.[inviteId]
-      // The User's own cancel (no tag) needs no one's word for it.
+
       if (current && (current.tag === undefined || current.tag === close.tag))
         return state
       return {
@@ -360,7 +313,7 @@ const actions = (set: Set) => ({
         },
       }
     }),
-  /** The server closed it, or there was nothing to close. */
+
   clearClosingInvite: (spaceId: string, inviteId: string) =>
     set((state) => {
       const closing = state.closingInvites[spaceId]
@@ -374,12 +327,7 @@ const actions = (set: Set) => ({
             : others,
       }
     }),
-  /**
-   * An invitation this device sent whose `car.invite` can't go any more (its
-   * secrets are gone): its car owes it again, keeping its record, and sends it
-   * under a new id on a later sync, as after a rekey. Nothing for a car that
-   * isn't here, or an invitation it holds no record of.
-   */
+
   oweInvite: (spaceId: string, inviteId: string) =>
     set((state) => {
       const car = state.cars[spaceId]
@@ -400,10 +348,7 @@ const actions = (set: Set) => ({
         },
       }
     }),
-  /**
-   * Forgets every car and everything about them on this device, telling no one:
-   * it signed out of the account, or its account key was replaced.
-   */
+
   reset: () => set(() => ({ ...initialState })),
 })
 
@@ -411,27 +356,13 @@ const initializer = combine(initialState, (set) => actions(set as Set))
 
 export type SharedCarsState = ReturnType<typeof initializer>
 
-/**
- * This device's copy of each Shared Car (ADR 0037), keyed by `spaceId`, and the
- * engine's bookkeeping: which spaces the User is on and has left, shares still
- * seeding, and ends the server hasn't heard. Its mileage mutations work like
- * `useMileage`'s, stamping `updatedAt` and leaving tombstones, and also mark
- * the records they touch pending until a `put` stores them.
- *
- * Device-local: the cars aren't in the iCloud, Google Drive, or Cloud Sync
- * payload, or in backups, since each space on ww-api is their source. No key or
- * invitation secret is ever kept here: those live in the keyring. Read through
- * `@/stores/mileageView` and write through `@/stores/mileageWrites`, which
- * route each change to the store its car lives in. The engine
- * (`src/app/sharedCars`) syncs it.
- */
 export const useSharedCars = create(
   persist(initializer, {
     name: 'sharedCars',
     storage: createJSONStorage(() => PersistStorage),
     version: 0,
     migrate: keepPersistedState,
-    // Cars saved before a field existed read it as its default.
+
     merge: (persisted, current) => {
       const restored = (persisted ?? {}) as Partial<State>
       return {
@@ -454,13 +385,8 @@ export const useSharedCars = create(
   })
 )
 
-/**
- * A store like `useSharedCars` held in memory only: each headless member of a
- * test or the interop check gets its own.
- */
 export const createSharedCarsMemoryStore = () => createStore(initializer)
 
-/** The store the engine reads and writes: `useSharedCars`, or a memory one. */
 export type SharedCarsStore = Pick<
   StoreApi<SharedCarsState>,
   'getState' | 'setState' | 'subscribe'

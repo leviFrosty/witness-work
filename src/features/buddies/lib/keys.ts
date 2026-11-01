@@ -7,11 +7,8 @@ import {
 } from '@/features/buddies/lib/crypto'
 import { toB64u } from '@/features/buddies/lib/bytes'
 
-/** Key schedule from docs/buddies-protocol.md. Labels are wire-stable. */
-
 const EMPTY = new Uint8Array(0)
 
-/** The AAD each sealed blob is bound to (docs/buddies-protocol.md). */
 export const aad = {
   inviteCard: (inviteId: string) => `ww-buddies/v1/invite-card|${inviteId}`,
   claim: (inviteId: string) => `ww-buddies/v1/invite-claim|${inviteId}`,
@@ -23,10 +20,9 @@ export const aad = {
 }
 
 export type BuddyIdentity = {
-  /** Ed25519 seed that signs owner ops on the relay. */
   ownerSeed: Uint8Array
   ownerPub: string
-  /** X25519 private key used only for pairing. */
+
   dhPrivate: Uint8Array
   dhPub: string
   inboxId: string
@@ -65,7 +61,6 @@ export function deriveInvite(secret: Uint8Array): InviteSecrets {
   }
 }
 
-/** Both people derive the same pair secret regardless of who invited whom. */
 export function derivePairSecret(
   myDhPrivate: Uint8Array,
   theirDhPub: Uint8Array,
@@ -89,7 +84,6 @@ export type DirectionKeys = {
   contentKey: Uint8Array
 }
 
-/** Keys for messages flowing into `recipientInboxId`. */
 export function deriveDirection(
   pairSecret: Uint8Array,
   recipientInboxId: string

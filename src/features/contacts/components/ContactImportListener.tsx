@@ -17,26 +17,9 @@ import { redactLink } from '@/lib/redactLink'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * Handles two kinds of incoming contact URLs:
- *
- * 1. `https://ww-proxy.leviwilkerson.com/c#<payload>` — Universal Link from a
- *    shared contact (decoded via `parseContactShareLink`, which also accepts
- *    the legacy `/c/<payload>` and `witnesswork://import-contact/<payload>`
- *    forms).
- * 2. `file://…/<name>.witnesswork` — file attachment tapped from Files / iMessage
- *    / AirDrop (registered via `CFBundleDocumentTypes`).
- *
- * Both go through `importContactFromIncomingUrl`, which validates them the same
- * way, then show a confirm dialog, run the existing import flow, and navigate
- * to the imported contact.
- */
 export default function ContactImportListener() {
-  // `getInitialURL` keeps returning the launch URL for the app's lifetime, so
-  // handle it once — otherwise a re-run of the effect re-prompts the import.
   const handledInitialUrl = useRef(false)
-  // Links wait for onboarding and for whatever is taking over the screen (the
-  // update reveal) before asking to import (ADR 0021).
+
   const [pendingUrls, setPendingUrls] = useState<string[]>([])
   const onboarded = usePreferences((s) => s.onboardingComplete)
   const takingOver = useIsTakingOver()
@@ -100,8 +83,6 @@ export default function ContactImportListener() {
             text: i18n.t('import'),
             onPress: async () => {
               try {
-                // Read the stores at tap time so the effect doesn't depend on
-                // (and re-run with) contact state.
                 const {
                   contacts,
                   deletedContacts,

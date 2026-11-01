@@ -9,17 +9,11 @@ import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { LogVisitAttribution } from '@/types/rootStack'
 
-/** Where a one-tap Not at Home was logged from (analytics). */
 export type NotAtHomeAttribution =
   | { source: 'follow_up_card' }
   | { source: 'contact_details' }
   | LogVisitAttribution
 
-/**
- * One-tap Not at Home, with an undo: from Home's Follow-up card, the Log Visit
- * quick action, or Contact Details' + Add. The Visit has no Follow-up of its
- * own; rescheduling moves the original one instead.
- */
 export default function useLogNotAtHome() {
   const addConversation = useConversations((s) => s.addConversation)
   const deleteConversation = useConversations((s) => s.deleteConversation)
@@ -51,7 +45,6 @@ export default function useLogNotAtHome() {
     deleteConversation(visit.id)
   }
 
-  /** Logs it, then shows an Undo toast. */
   const logWithUndo = (
     contact: Pick<Contact, 'id' | 'name'>,
     attribution: NotAtHomeAttribution

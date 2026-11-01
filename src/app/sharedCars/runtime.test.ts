@@ -49,9 +49,9 @@ import {
 } from '@/app/sharedCars/testing/headlessMember'
 
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
-/** A moment for what shouldn't happen to have had its chance. */
+
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
-/** Waits for what the runtime does next: syncing and sealing take a while. */
+
 const eventually = (assertion: () => void) =>
   vi.waitFor(assertion, { timeout: 3000, interval: 5 })
 const openSockets = (count: number, spaceId?: string) =>
@@ -152,7 +152,7 @@ describe('startSharedCarsRuntime', () => {
       createdAt: 1,
     })
     await anna.engine.syncCar(spaceId)
-    // The live signal's own debounce, then the sync.
+
     await eventually(() =>
       expect(joe.car(spaceId).trips.map((t) => t.id)).toEqual(['trip-1'])
     )
@@ -178,11 +178,10 @@ describe('startSharedCarsRuntime', () => {
         calls.push(`reconcile:${sync.mock.calls.length}`),
       onMembershipsChanged: () => calls.push('changed'),
     })
-    // Before the first sync, so cars the roster brought sync with it.
+
     expect(calls).toEqual(['reconcile:0'])
     await openSockets(1)
 
-    // A trip isn't a membership.
     joe.store.getState().saveTrip(spaceId, {
       id: 'trip-1',
       vehicleId: 'car-1',
@@ -231,7 +230,7 @@ describe('startSharedCarsRuntime', () => {
     const { joe, spaceId } = await sharedPair()
     run(joe)
     await openSockets(1)
-    // A socket from before the User joined again closes so, for instance.
+
     server.closeLive(spaceId, 4001)
     expect(server.openSockets()).toBe(0)
     await openSockets(1)
@@ -279,7 +278,7 @@ describe('startSharedCarsRuntime', () => {
     server = createFakeSpacesServer({ now: Date.now, androidSockets: true })
     const { joe } = await sharedPair()
     run(joe)
-    // Gone and back while the first one is still connecting.
+
     toBackground()
     toForeground()
     toBackground()
@@ -296,7 +295,7 @@ describe('startSharedCarsRuntime', () => {
     run(joe)
     await settle()
     expect(server.openSockets()).toBe(0)
-    // Its first wait (0.8 s here), then a sync, then the socket.
+
     await openSockets(1)
     expect(sync).toHaveBeenCalledWith(spaceId, expect.anything())
     expect(joe.status.getState().live[spaceId]?.status).toBe('open')
@@ -307,7 +306,7 @@ describe('startSharedCarsRuntime', () => {
     const anna = person('Anna')
     anna.savePersonal('vehicles', { id: 'car-1', name: 'Mazda', createdAt: 1 })
     const { spaceId } = await anna.engine.shareCar('car-1')
-    // Five of Anna's devices, past the space's four sockets.
+
     const devices = [anna]
     for (let n = 1; n < 5; n++) {
       const device = createHeadlessMember({

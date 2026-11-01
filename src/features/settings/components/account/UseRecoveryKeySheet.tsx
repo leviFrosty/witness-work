@@ -29,23 +29,16 @@ import useAttestationSupport from '@/features/settings/hooks/useAttestationSuppo
 type Props = {
   open: boolean
   onClose: () => void
-  /** The key was used: this device's account changed (or already matched). */
+
   onDone: () => void
-  /** The account's backup was restored afterwards. */
+
   onRestored?: () => void
 }
 
-/**
- * Enter a recovery key to make its account this device's. Checks the key as
- * it's typed; when the key differs from this device's and Buddies has data
- * here, a destructive confirmation names what's lost first. Closing the sheet
- * cancels. A device that can never attest can't use the account, so it's told
- * that instead of replacing anything.
- */
 export default function UseRecoveryKeySheet(props: Props) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
-  // Told once the sheet has closed, so the alert doesn't land mid-dismiss.
+
   const finished = useRef<ReplaceAccountKeyResult['outcome'] | null>(null)
   return (
     <Sheet
@@ -64,7 +57,6 @@ export default function UseRecoveryKeySheet(props: Props) {
             i18n.t('account_sameKeyBody')
           )
         else
-          // Then the account's backup, when it has one.
           Alert.alert(
             i18n.t('account_replacedTitle'),
             i18n.t('account_replacedBody'),
@@ -99,7 +91,6 @@ export default function UseRecoveryKeySheet(props: Props) {
   )
 }
 
-/** This device can never attest: the account wouldn't work here. */
 function Unverifiable() {
   const theme = useTheme()
   useEffect(() => {
@@ -141,7 +132,6 @@ function RecoveryKeyForm({
   const parsed = parseRecoveryKey(value)
   const typed = normalizeRecoveryKey(value).length
 
-  // Android can't focus a field in a sheet that's still opening.
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const timer = setTimeout(() => input.current?.focus(), 300)
@@ -182,8 +172,7 @@ function RecoveryKeyForm({
         (current.length !== newKey.length ||
           current.some((byte, i) => byte !== newKey[i]))
       const loss = await accountKey.lossIfReplaced(newKey)
-      // On iOS the key reaches every Apple device on the same iCloud
-      // Keychain, so replacing one there always asks.
+
       if (
         differs &&
         (losesSomething(loss) || Platform.OS === 'ios') &&
@@ -203,7 +192,7 @@ function RecoveryKeyForm({
       analytics.capture('recovery_key_used', { outcome: 'failed' })
       Alert.alert(
         i18n.t('account_replaceFailedTitle'),
-        // Says what Delete Buddies still waits on: a buddy, or a Shared Car.
+
         error instanceof BuddyRemovalPendingError
           ? buddiesErrorMessage(error)
           : i18n.t('account_replaceFailedBody')

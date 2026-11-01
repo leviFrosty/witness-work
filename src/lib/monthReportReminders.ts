@@ -1,25 +1,22 @@
 import moment from 'moment'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
-/** 9:00 AM, as minutes after midnight. */
 export const DEFAULT_MONTH_REPORT_REMINDER_TIME = 9 * 60
 
 export type MonthReportSources = {
   serviceReports: TimeEntriesByYear
-  /** `YYYY-MM` months whose report was sent or marked submitted. */
+
   submittedReportMonths: readonly string[]
-  /** Local minutes after midnight on the 1st the reminder goes out. */
+
   remindAt: number
 }
 
-/** The Preferences that turn on and time the month's report reminder. */
 export type MonthReportPreferences = {
   monthReportReminders: boolean
   monthReportReminderTime: number
   submittedReportMonths: string[]
 }
 
-/** What the report reminder is built from; undefined when it's off. */
 export function monthReportSources(
   records: { serviceReports: TimeEntriesByYear },
   prefs: MonthReportPreferences
@@ -36,11 +33,6 @@ export function monthReportSources(
   }
 }
 
-/**
- * Whether month `YYYY-MM` still has a report to send: something was logged in
- * it and it isn't marked submitted. The same rules as last month's report in
- * the notifications tray.
- */
 export function monthReportDue(
   monthKey: string,
   sources: Pick<MonthReportSources, 'serviceReports' | 'submittedReportMonths'>
@@ -48,8 +40,7 @@ export function monthReportDue(
   const month = moment(monthKey, 'YYYY-MM', true)
   if (!month.isValid() || sources.submittedReportMonths.includes(monthKey))
     return false
-  // Logged time, rollovers aside (`isCountableEntry`); a month logged with no
-  // hours still has a report.
+
   return (sources.serviceReports[month.year()]?.[month.month()] ?? []).some(
     (entry) =>
       entry.rollover !== true &&
@@ -57,10 +48,6 @@ export function monthReportDue(
   )
 }
 
-/**
- * The next report reminder after `now`: `remindAt` on the 1st, for the month
- * that just ended. Null when that month has nothing to send.
- */
 export function nextMonthReportReminder(
   sources: MonthReportSources,
   now: number

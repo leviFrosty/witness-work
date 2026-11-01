@@ -33,7 +33,6 @@ import {
   type PetWidgetPlan,
 } from '@/app/widgets/petWidget'
 
-/** The Pet widget's inputs, read from the stores as of `now`. */
 export function readPetWidgetInput(
   now: Date,
   deviceRegion: string | null
@@ -47,7 +46,6 @@ export function readPetWidgetInput(
   const records = { serviceReports, dayPlans, recurringPlans }
   const digits = digitSystemFor(appLanguage())
 
-  // The sign for each day the timeline asks about, worked out once per day.
   const signs = new Map<string, PetSignValues>()
   const signAt = (at: Date): PetSignValues => {
     const key = localDayKey(at)
@@ -101,10 +99,6 @@ export function readPetWidgetInput(
   }
 }
 
-/**
- * The date of the sign's next Plan, which `buildSignData` gives as a day of the
- * month: the first day from today with that day number and a Plan on it.
- */
 function planDateFor(
   planDay: number | null,
   now: Date,
@@ -126,10 +120,6 @@ function planDateFor(
   return null
 }
 
-/**
- * The Pet widget's slice worked out from the stores without drawing it (see
- * `planPetWidget`). Null without a companion.
- */
 export function planPetWidgetSnapshot(
   now: Date,
   options: { deviceRegion: string | null }
@@ -138,10 +128,6 @@ export function planPetWidgetSnapshot(
   return planPetWidget(readPetWidgetInput(now, options.deviceRegion), now)
 }
 
-/**
- * The Pet widget's snapshot slice and its PNGs, from the stores. The snapshot
- * is null without a companion.
- */
 export function buildPetWidgetSnapshot(
   now: Date,
   options: { encode: PetWidgetEncoder; deviceRegion: string | null }

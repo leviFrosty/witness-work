@@ -29,21 +29,11 @@ import {
 const initialState = {
   contacts: [] as Contact[],
   deletedContacts: [] as Contact[],
-  /**
-   * Definitions for the user-customizable contact fields. Identified by stable
-   * UUIDs — contact `customFields` records reference these ids, so rename /
-   * reorder / archive operations don't touch contact data.
-   */
+
   customFieldDefs: [] as CustomFieldDefinition[],
   deletedCustomFieldDefs: [] as CustomFieldTombstone[],
 }
 
-/**
- * Moves the `ids` contacts to their tombstones in one update; the single and
- * Select-mode deletes share it. Every tombstone gets one stamp, strictly newer
- * than the newest of them, so iCloud's merge sees the delete win. Unknown ids
- * are skipped, and a delete of none leaves the state untouched.
- */
 function withContactsDeleted(
   {
     contacts,
@@ -75,7 +65,6 @@ function withContactsDeleted(
   }
 }
 
-/** Snoozes each listed contact until its `dismissedUntil`. */
 function withContactsDismissed(
   contacts: Contact[],
   updates: {
@@ -97,7 +86,6 @@ function withContactsDismissed(
   })
 }
 
-/** Brings each listed contact back from being dismissed. */
 function withContactsUndismissed(contacts: Contact[], ids: string[]) {
   const targets = new Set(ids)
   return contacts.map((c) => {
@@ -109,10 +97,6 @@ function withContactsUndismissed(contacts: Contact[], ids: string[]) {
   })
 }
 
-/**
- * The store changes that add `incoming` in order, applying `addContact`'s rules
- * to each one (see there). Pure: never mutates `state`.
- */
 const withAddedContacts = (
   {
     contacts,
@@ -145,8 +129,7 @@ const withAddedContacts = (
         {
           ...fields,
           updatedAt,
-          // Only this store marks a re-add; an imported file's marker
-          // describes another device's history.
+
           ...(foundDeleteContact ? { readdedAt: updatedAt } : {}),
         },
         deletedCustomFieldDefs
@@ -169,51 +152,17 @@ export const useContacts = create(
   persist(
     combine(initialState, (set) => ({
       set,
-      /**
-       * Adds a contact unless an active contact, or one still waiting in
-       * Recover Contacts, already has its id.
-       *
-       * A redacted tombstone (Delete permanently, an import Undo, data
-       * protection, or details expired after 90 days) holds nothing to recover,
-       * so it doesn't block the id. The contact replaces it, which keeps
-       * deterministic imports re-runnable. The new record is stamped strictly
-       * newer than the tombstone, because the iCloud merge keeps an active
-       * contact only when it is newer than its deleted copy
-       * (`reconcileActiveAndDeletedContacts`), and it carries `readdedAt` so a
-       * stale copy of the tombstone can't redact it once it is archived again
-       * (`mergeDeletedContacts`).
-       */
+
       addContact: (contact: Contact) =>
         set((state) => withAddedContacts(state, [contact])),
-      /**
-       * `addContact` for many contacts in one write, so an import persists and
-       * notifies subscribers once instead of once per contact.
-       */
+
       addContacts: (contacts: Contact[]) =>
         set((state) => withAddedContacts(state, contacts)),
-      /**
-       * Archives a contact.
-       *
-       * Normally the tombstone _is_ the archive — the whole record is kept so
-       * Recover Contacts can restore it. Pass `redact` to make the delete
-       * permanent instead: the tombstone is stripped to the id and timestamp
-       * iCloud's last-writer-wins merge needs, and nothing about the
-       * householder survives. Nothing is recoverable afterwards.
-       *
-       * The flag is an explicit argument rather than a preference read so this
-       * store stays free of the preferences/expo dependency chain. Callers
-       * deleting on the user's behalf should go through
-       * `stores/householderData.deleteHouseholderContact`, which applies the
-       * data-protection policy and takes the contact's visits and avatar with
-       * it; a bare `deleteContact` is the archive-and-keep path.
-       */
+
       deleteContact: (id: string, options?: { redact?: boolean }) => {
         set((state) => withContactsDeleted(state, [id], options))
       },
-      /**
-       * Batch `deleteContact` for Select mode: one store update (and one
-       * persist) for the whole selection instead of one per contact.
-       */
+
       deleteContacts: (ids: string[], options?: { redact?: boolean }) => {
         set((state) => withContactsDeleted(state, ids, options))
       },
@@ -241,13 +190,7 @@ export const useContacts = create(
           }
         })
       },
-      /**
-       * Adds a new custom field definition. Trims the label and rejects empties
-       *
-       * - Case-sensitive duplicates of existing non-archived defs. Returns the
-       *   new def (or the existing one when a duplicate label is detected) so
-       *   callers can avoid clobbering form state with a stale id.
-       */
+
       addCustomFieldDef: (label: string): CustomFieldDefinition | null => {
         let result: CustomFieldDefinition | null = null
         set(({ customFieldDefs }) => {
@@ -266,7 +209,7 @@ export const useContacts = create(
           ),
         }))
       },
-      /** See `reorderCustomFieldDefinitions`. */
+
       reorderCustomFieldDefs: (orderedIds: string[]) => {
         set(({ customFieldDefs }) => ({
           customFieldDefs: reorderCustomFieldDefinitions(
@@ -285,11 +228,7 @@ export const useContacts = create(
           customFieldDefs: restoreCustomFieldDefinition(customFieldDefs, id),
         }))
       },
-      /**
-       * Permanently removes a custom field definition AND every contact's value
-       * for that field. Destructive; callers should expose it only from a
-       * confirmation flow for an already archived definition.
-       */
+
       purgeCustomFieldDef: (id: string) => {
         set(
           ({
@@ -318,11 +257,7 @@ export const useContacts = create(
           }
         )
       },
-      /**
-       * Removes a definition while undoing an import. Import undo is an
-       * explicit local rollback, so it must not create a sync tombstone that
-       * would block the same deterministic import from being re-run later.
-       */
+
       removeCustomFieldDefForUndo: (id: string) => {
         set(
           ({
@@ -350,13 +285,7 @@ export const useContacts = create(
           }
         )
       },
-      /**
-       * Adds any defs from `incoming` whose id isn't already present locally.
-       * Used by share-link import: the recipient's local defs always win on
-       * label conflicts, but unknown ids referenced by the imported contact
-       * still need a definition so the data renders. Permanently tombstoned ids
-       * remain blocked so stale exports cannot resurrect them.
-       */
+
       mergeIncomingCustomFieldDefs: (incoming: CustomFieldDefinition[]) => {
         if (incoming.length === 0) return
         set(({ customFieldDefs, deletedCustomFieldDefs }) => {
@@ -379,8 +308,7 @@ export const useContacts = create(
       recoverContact: (id: string) => {
         set(({ contacts, deletedContacts, deletedCustomFieldDefs }) => {
           const recoverContact = deletedContacts.find((dC) => dC.id === id)
-          // A redacted tombstone has no content left to restore — recovering it
-          // would resurrect an empty, nameless contact.
+
           if (!recoverContact || recoverContact.redacted) {
             return { contacts, deletedContacts }
           }
@@ -400,26 +328,14 @@ export const useContacts = create(
           }
         })
       },
-      /**
-       * "Delete permanently" in Recover Contacts, and the second half of an
-       * import Undo. Swaps the archived contact for a redacted tombstone
-       * (`stripContactForTombstone`) instead of dropping it. Other devices may
-       * still hold the contact, archived with every householder detail or
-       * active in a stale file, and the iCloud merge brings it back unless a
-       * newer deletion beats it. Nothing about the householder survives, and
-       * Recover Contacts hides the tombstone.
-       *
-       * Photo files, every revision included, are the caller's to erase with
-       * `deleteAvatarFiles`, which keeps this store free of expo dependencies.
-       */
+
       removeDeletedContact: (id: string) => {
         set(({ deletedContacts }) => {
           const archived = deletedContacts.find((dC) => dC.id === id)
           if (!archived || isRedactedContactTombstone(archived)) {
             return { deletedContacts }
           }
-          // Strictly newer than the archived copy, even when both are written
-          // in the same millisecond (an import Undo archives, then redacts).
+
           const deletedAt = syncTimestamp(archived.updatedAt)
           return {
             deletedContacts: deletedContacts.map((dC) =>
@@ -439,10 +355,7 @@ export const useContacts = create(
           ]),
         }))
       },
-      /**
-       * Batch `dismissContact` for Select mode: one store update (and one
-       * persist) for the whole selection instead of one per contact.
-       */
+
       dismissContacts: (
         updates: {
           id: string
@@ -454,13 +367,13 @@ export const useContacts = create(
           contacts: withContactsDismissed(contacts, updates),
         }))
       },
-      /** Batch `undismissContact` for Select mode, in one store update. */
+
       undismissContacts: (ids: string[]) => {
         set(({ contacts }) => ({
           contacts: withContactsUndismissed(contacts, ids),
         }))
       },
-      /** Batch favorite for Select mode; leaves already-matching contacts alone. */
+
       setContactsFavorite: (ids: string[], isFavorite: boolean) => {
         const targets = new Set(ids)
         set(({ contacts }) => ({

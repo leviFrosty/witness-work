@@ -39,18 +39,12 @@ import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * Buddies, opened from Home, Schedule, or the Profile: first-visit onboarding,
- * then the buddies list. The stack header carries the title, Back, and, once
- * onboarded, the buddies code; as the iPad sidebar's tab, a root header does.
- */
 export default function BuddiesScreen({
   profileEditor,
   asTab = false,
 }: {
-  /** The Profile editor for onboarding, composed in by the app tier. */
   profileEditor: (nameInvalid: boolean) => ReactNode
-  /** A destination of its own (the iPad sidebar), with no stack header. */
+
   asTab?: boolean
 }) {
   const theme = useTheme()
@@ -65,8 +59,6 @@ export default function BuddiesScreen({
 
   useLiveBuddiesSync()
 
-  // A pull is a deliberate ask, so say why it didn't work, unless only
-  // publishing failed after everything came in.
   const refresh = async () => {
     setRefreshing(true)
     const startedAt = Date.now()
@@ -135,7 +127,6 @@ export default function BuddiesScreen({
 
   useFocusEffect(
     useCallback(() => {
-      // Ready before the first invite so the photo travels with it.
       void refreshBuddyAvatarThumbnail().catch((error) =>
         logger.warn('[buddies] avatar thumbnail', error)
       )

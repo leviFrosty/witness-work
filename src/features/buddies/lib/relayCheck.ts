@@ -1,6 +1,5 @@
 import { isRelayError, type LiveSocket } from '@/features/buddies/lib/relay'
 
-/** How long each step may take before it counts as failed. */
 const STEP_TIMEOUT_MS = 8 * 1000
 
 export type RelayCheckStepName = 'health' | 'inbox' | 'liveHello' | 'livePing'
@@ -8,7 +7,7 @@ export type RelayCheckStepName = 'health' | 'inbox' | 'liveHello' | 'livePing'
 export type RelayCheckStep = {
   name: RelayCheckStepName
   ok: boolean
-  /** Not run because an earlier step it needs failed. */
+
   skipped?: boolean
   ms: number
   detail: string
@@ -34,7 +33,7 @@ export type RelayCheckDeps = {
   baseUrl: string
   fetchImpl?: typeof fetch
   probeInbox: () => Promise<InboxProbe>
-  /** Opens a separate live socket; the running connection is untouched. */
+
   openLive: () => Promise<LiveSocket>
   now?: () => number
   timeoutMs?: number
@@ -46,7 +45,6 @@ const describeError = (error: unknown): string => {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** Waits for the socket to say something that `accept` takes. */
 function waitFor<T>(
   socket: LiveSocket,
   accept: (data: unknown) => T | undefined,
@@ -98,12 +96,6 @@ const helloSeq = (data: unknown): number | undefined => {
   }
 }
 
-/**
- * Checks each hop between this device and the Buddies relay: the Worker is up,
- * it accepts this device's signed inbox read, and a live socket opens, greets,
- * and answers a ping. Read-only, and it never touches the running live
- * connection. For Tools and the verify harness.
- */
 export async function runRelayCheck(
   deps: RelayCheckDeps
 ): Promise<RelayCheckReport> {

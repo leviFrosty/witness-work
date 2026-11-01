@@ -43,12 +43,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Contact Form'>
 
-/**
- * Max time Save keeps the user on the form (spinner showing) waiting for a
- * geocode before navigating anyway. The geocode keeps running in the background
- * past this (up to its own timeout) and patches the coordinate when it
- * resolves, so a slow lookup never stalls navigation.
- */
 const GEOCODE_NAV_TIMEOUT_MS = 4000
 
 const ContactFormScreen = ({ route, navigation }: Props) => {
@@ -76,11 +70,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   )
   const contactToUpdate = originalContact.current
   const locales = Localization.getLocales()
-  /**
-   * The last address picked from search with the coordinate MapKit returned for
-   * it. Saving that same address reuses the coordinate instead of geocoding it
-   * again.
-   */
+
   const pickedPlace = useRef<{ address: Address; coordinate: Coordinate }>(null)
   const [fetching, setFetching] = useState(false)
   const prefillKeys = prefillAddress.address
@@ -90,12 +80,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     (k) => !!prefillAddress.address?.[k]?.length
   )
 
-  /**
-   * Whether or not address should be prefilled based on state. Never in data
-   * protection mode: the cached address belongs to the previous householder,
-   * and pre-filling it makes it trivially easy to save a record about someone
-   * who was never asked.
-   */
   const prefill =
     !dataProtectionMode &&
     prefillAddress?.enabled &&
@@ -143,14 +127,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     useDraftChanged(contactDraftForChanges(contact, contactToUpdate))
   )
 
-  /**
-   * Consent gate (`docs/gdpr-mode-research.md` §9.5). In data protection mode a
-   * brand-new contact's identity, contact details and address are not rendered
-   * at all until the householder has agreed — the record simply cannot be
-   * started. An existing contact always renders everything: hiding data the
-   * user already holds would only make it harder to review or erase, and the
-   * switch there just reflects (and can withdraw) the recorded consent.
-   */
   const hasConsent = !!contact.consentGivenAt
   const consentRequired = dataProtectionMode && !editMode
   const detailsVisible = !consentRequired || hasConsent
@@ -158,7 +134,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const setConsent = (agreed: boolean) => {
     setContact((current) => ({
       ...current,
-      // Keep an explicit cleared value so updateContact's merge removes it.
+
       consentGivenAt: agreed ? new Date().toISOString() : undefined,
     }))
     if (agreed && errors.consent) {
@@ -301,7 +277,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     return true
   }, [consentRequired, contact.name, hasConsent])
 
-  /** Mutates provided contact */
   const handleFetchCoordinate = useCallback(
     async (c: Contact): Promise<Contact> => {
       setFetching(true)
@@ -318,8 +293,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           }
         }
       } catch (error) {
-        // The contact is already saved; it just has no map pin yet. Look it up
-        // again once the connection is back (`src/app/contacts/geocodeRetry`).
         const kind = classifyNetworkError(error)
         const saved = useContacts
           .getState()
@@ -330,7 +303,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           mayApplyGeocode(c, saved)
         if (queued) useGeocodeRetry.getState().enqueue(saved)
         if (isDeviceOffline(kind)) {
-          // Promise the later lookup only when one is queued.
           Alert.alert(
             i18n.t('internetUnavailable'),
             i18n.t(
@@ -346,14 +318,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     [incrementGeocodeApiCallCount]
   )
 
-  /**
-   * Saves `c` via `commit` immediately so it can never be lost to a slow or
-   * hung geocode, then — when `shouldGeocode` — runs the geocode while showing
-   * the Save spinner. Resolves (which unblocks the caller's navigation) as soon
-   * as the geocode lands OR after {@link GEOCODE_NAV_TIMEOUT_MS}, whichever
-   * comes first. The geocode keeps running past a timeout and patches the
-   * coordinate via `updateContact` once it resolves.
-   */
   const persistThenGeocode = useCallback(
     (
       c: Contact,
@@ -377,10 +341,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         return
       }
       commit(c)
-      // Geocoding posts the full householder address to HERE through the
-      // vendor's proxy. In data protection mode the contact is saved without a
-      // coordinate unless the user dropped a pin themselves in `PinLocation`,
-      // which never leaves the device.
+
       if (!shouldGeocode || dataProtectionMode) {
         resolve(c)
         return
@@ -468,7 +429,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
 
   const handleUpdateContact = useCallback(
     async (resolve: (value: unknown) => void) => {
-      /** This gets mutated in the conditionals below. */
       const newContact = { ...contact }
       const addressChanged = !isEqual(contactToUpdate?.address, contact.address)
       if (
@@ -476,8 +436,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         contact.userDraggedCoordinate &&
         addressChanged
       ) {
-        // Ask the user if they wanna update their coordinate automatically.
-        // This path persists the contact inside the alert handlers.
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
         return
       }
@@ -536,9 +494,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
       } else {
         handleAddContact(resolve)
       }
-      // The cached "same address as last time" convenience is itself a
-      // householder record with no contact attached to consent to it, so a save
-      // in data protection mode is also the moment to drop it.
+
       if (dataProtectionMode) clearPrefillAddress()
     })
   }, [
@@ -550,8 +506,6 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   ])
 
   useEffect(() => {
-    // Saving navigates away mid-geocode on purpose: the lookup keeps going
-    // and patches the saved contact, so only the spinner stops here.
     const unsubscribeFromNavListener = navigation.addListener(
       'transitionStart',
       () => setFetching(false)

@@ -2,7 +2,6 @@ import BuddyPicker from '@/features/buddies/components/BuddyPicker'
 import useShareReplies from '@/features/buddies/hooks/useShareReplies'
 import { followUpShareKey } from '@/features/buddies/lib/shares'
 
-/** "Invite Buddies" for a Follow-up, with answers once it's been shared. */
 export default function FollowUpBuddyPicker({
   visitId,
   value,

@@ -35,7 +35,6 @@ vi.mock('@/contexts/theme', () => ({
 const NOW = vi.hoisted(() => 1_000_000)
 vi.mock('@/hooks/useNow', () => ({ default: () => ({ now: NOW }) }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -162,8 +161,6 @@ describe('the car form’s People section', () => {
     })
     const tree = render('van', { enabled: false })
 
-    // The owner can still leave or stop sharing; nobody can be removed, and
-    // the invitation stays, uncancelable.
     expect(menus(tree)).toEqual([
       { name: 'You', actions: ['leave', 'stop_sharing'] },
       { name: 'Annie', actions: [] },
@@ -321,7 +318,6 @@ describe('the car form’s People section', () => {
     const invite = rows(tree).at(-1)!
     expect(invite.actions.map((action) => action.id)).toEqual(['cancel_invite'])
 
-    // Backing out of the confirmation cancels nothing.
     confirm.mockImplementationOnce(() => {})
     await act(async () => invite.actions[0].onPress?.())
     expect(confirm).toHaveBeenCalledWith(
@@ -376,7 +372,6 @@ describe('the car form’s People section', () => {
       name: 'this person',
     })
 
-    // Someone else's car: they're listed, but only its owner removes them.
     act(() => renderer!.unmount())
     expect(menus(render('mazda'))).toEqual([
       { name: 'Annie', actions: [] },

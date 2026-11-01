@@ -9,7 +9,6 @@ import {
 
 const ADOPTED = '2026-01-01'
 
-/** The pet `day` days after adoption, active and woken on the given days. */
 function lifeOn(
   day: number,
   {
@@ -33,9 +32,8 @@ function lifeOn(
   })
 }
 
-/** Every month at the monthly pace (a Kingdom Publisher). */
 const monthly = (): HeartsPace => 'monthly'
-/** Days from adoption (2026-01-01) to `key`. */
+
 const on = (key: string) => daysBetween(ADOPTED, key)
 
 const range = (from: number, to: number, step = 1) =>
@@ -61,7 +59,6 @@ describe('simulateLife', () => {
     expect(lifeOn(5, { active: range(0, 5) }).hearts).toBe(5)
   })
 
-  // Five hearts on day 1, then nothing logged: quiet day q is day 1 + q.
   it.each([
     [0, 5, 'happy'],
     [9, 5, 'happy'],
@@ -121,7 +118,6 @@ describe('simulateLife', () => {
     })
 
     it('keeps a once-a-month publisher at five hearts, and turns them gold', () => {
-      // The 20th of every month, as the "I shared" checkbox might land.
       const active = range(0, 24).map((i) =>
         on(
           `${2026 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}-20`
@@ -137,7 +133,7 @@ describe('simulateLife', () => {
     it('holds through the next month, then fades from day 10 after it', () => {
       const life = (key: string) =>
         lifeOn(on(key), { active: [on('2026-01-05')], paceOf: monthly })
-      // Nothing in February: the hearts hold until 10 days after it ends.
+
       expect(life('2026-02-28')).toMatchObject({ hearts: 5, quietDays: 0 })
       expect(life('2026-03-09')).toMatchObject({ hearts: 5, quietDays: 9 })
       expect(life('2026-03-10').hearts).toBe(4.5)
@@ -160,16 +156,15 @@ describe('simulateLife', () => {
     })
 
     it('follows each month’s own pace when the role changes', () => {
-      // Monthly in January, daily from February (say, auxiliary pioneering).
       const paceOf = (month: string): HeartsPace =>
         month === '2026-01' ? 'monthly' : 'daily'
       const active = [on('2026-01-05'), on('2026-03-02')]
-      // January's hold still runs through February.
+
       expect(lifeOn(on('2026-03-01'), { active, paceOf }).hearts).toBe(5)
-      // A daily day restarts the quiet count without shortening the hold.
+
       expect(lifeOn(on('2026-03-11'), { active, paceOf }).hearts).toBe(5)
       expect(lifeOn(on('2026-03-12'), { active, paceOf }).hearts).toBe(4.5)
-      // Daily days add one heart at a time again: 3 after fading, then 4.
+
       const later = [on('2026-01-05'), on('2026-03-20')]
       expect(lifeOn(on('2026-03-19'), { active: later, paceOf }).hearts).toBe(3)
       expect(lifeOn(on('2026-03-20'), { active: later, paceOf }).hearts).toBe(4)
@@ -177,7 +172,6 @@ describe('simulateLife', () => {
   })
 
   it('wakes a sleeping pet to 1 heart and restarts the quiet count', () => {
-    // Asleep from quiet day 22 (started at 3).
     const woken = { wakes: [40] }
     expect(lifeOn(40, woken)).toMatchObject({
       hearts: 1,
@@ -187,7 +181,7 @@ describe('simulateLife', () => {
     })
     expect(lifeOn(49, woken).hearts).toBe(1)
     expect(lifeOn(50, woken)).toMatchObject({ hearts: 0.5, asleep: true })
-    // Restarted, so it doesn't die 60 days after the last activity.
+
     expect(lifeOn(99, woken).dead).toBe(false)
     expect(lifeOn(100, woken).dead).toBe(true)
   })
@@ -198,7 +192,7 @@ describe('simulateLife', () => {
       dead: false,
       mood: 'weak',
     })
-    // A wake never lowers hearts.
+
     expect(lifeOn(3, { active: [0, 1, 2], wakes: [3] }).hearts).toBe(5)
   })
 
@@ -208,13 +202,13 @@ describe('simulateLife', () => {
       dead: false,
     })
     expect(lifeOn(71, { active: [70, 71] }).hearts).toBe(2)
-    // Woken then active the same day: the wake, then a heart.
+
     expect(lifeOn(70, { active: [70], wakes: [70] }).hearts).toBe(2)
   })
 
   it('turns gold after 365 days in a row at five, and starts over below five', () => {
     const daily = { active: range(0, 800) }
-    // Five from day 1, so day 365 is the 365th day in a row.
+
     expect(lifeOn(364, daily)).toMatchObject({
       gold: false,
       fullRunDays: 364,
@@ -232,7 +226,7 @@ describe('simulateLife', () => {
     })
 
     const lapse = { active: [...range(0, 400), ...range(411, 900)] }
-    // Quiet day 10 after day 400 drops to 4.5.
+
     expect(lifeOn(409, lapse).gold).toBe(true)
     expect(lifeOn(410, lapse)).toMatchObject({ gold: false, fullRunDays: 0 })
     expect(lifeOn(411, lapse)).toMatchObject({ gold: false, fullRunDays: 1 })
@@ -243,7 +237,6 @@ describe('simulateLife', () => {
   })
 
   it('has a rainbow day when hearts reach five after being asleep', () => {
-    // Asleep from day 22; five active days take ½ back to 5.
     const back = { active: range(30, 40) }
     expect(lifeOn(33, back).hearts).toBe(4.5)
     expect(lifeOn(34, back)).toMatchObject({ hearts: 5, rainbowToday: true })
@@ -252,7 +245,7 @@ describe('simulateLife', () => {
 
   it('has a rainbow day when hearts reach five after the pet died', () => {
     const back = { active: range(70, 80) }
-    // Revived at 1 on day 70: 1, 2, 3, 4, 5.
+
     expect(lifeOn(74, back)).toMatchObject({ hearts: 5, rainbowToday: true })
   })
 
@@ -283,7 +276,6 @@ describe('simulateLife', () => {
   })
 
   it('counts days across DST changes and year ends exactly', () => {
-    // US DST starts 2026-03-08, ends 2026-11-01; adopt across both and a year end.
     const life = (adoptedOn: string, today: string) =>
       simulateLife({ adoptedOn, activeDays: new Set(), wakes: [], today })
     expect(life('2026-02-26', '2026-03-08').hearts).toBe(2.5)
@@ -314,7 +306,7 @@ describe('simulateLife', () => {
 })
 
 const originalTZ = process.env.TZ
-/** The local day of the moment `ms` in `zone`. */
+
 const dayIn = (zone: string, ms: number) => {
   process.env.TZ = zone
   return localDayKey(ms)
@@ -328,7 +320,6 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
       process.env.TZ = originalTZ
     })
 
-    /** The pet's hearts on this device's local day at each moment. */
     const heartsAt = (
       moments: number[],
       input: Omit<Parameters<typeof simulateLife>[0], 'today'>
@@ -339,7 +330,7 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
 
     it('holds five hearts for a month already shared in before adoption', () => {
       process.env.TZ = zone
-      // Shared on the 3rd, adopted on the 20th: the month's one check is done.
+
       const input = {
         adoptedOn: '2026-10-20',
         activeDays: new Set(['2026-10-03']),
@@ -348,7 +339,7 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
       }
       const life = (today: string) => simulateLife({ ...input, today })
       expect(life('2026-10-20')).toMatchObject({ hearts: 5, quietDays: 0 })
-      // As for a pet adopted before the 3rd: held through November.
+
       expect(life('2026-11-30')).toMatchObject({ hearts: 5, quietDays: 0 })
       expect(life('2026-12-09').hearts).toBe(5)
       expect(life('2026-12-10').hearts).toBe(4.5)
@@ -356,7 +347,7 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
         simulateLife({ ...input, adoptedOn: '2026-10-02', today: '2026-12-10' })
           .hearts
       )
-      // Not the month before, and not at the daily pace.
+
       expect(
         simulateLife({
           ...input,
@@ -371,8 +362,6 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
     })
 
     it('counts a synced day the adoption ran ahead of', () => {
-      // Adopted at 09:00 on the 21st in Auckland (10:00 on the 20th in
-      // Honolulu), then shared at noon on the 20th in Honolulu.
       const adoption = Date.UTC(2026, 9, 20, 20)
       const shared = Date.UTC(2026, 9, 20, 22)
       const input = {
@@ -382,8 +371,7 @@ describe.each(['Pacific/Auckland', 'Pacific/Honolulu', 'Europe/London'])(
       }
       expect(input.adoptedOn).toBe('2026-10-21')
       expect([...input.activeDays]).toEqual(['2026-10-20'])
-      // Every 6 hours for three days after, on this device: one heart up, and
-      // it stays.
+
       const moments = Array.from(
         { length: 13 },
         (_, i) => shared + i * 6 * HOUR_MS

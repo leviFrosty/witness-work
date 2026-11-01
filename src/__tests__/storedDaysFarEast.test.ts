@@ -29,9 +29,6 @@ import {
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { getPeriodTense } from '@/lib/projectedTotalCopy'
 
-// Regressions for stored calendar days drifting at UTC+12 and beyond, where
-// noon UTC is already the next local day and local midnight is noon UTC of the
-// prior day.
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
   process.env.TZ = tz
@@ -57,7 +54,6 @@ beforeEach(() => {
 const anchor = (y: number, m: number, d: number) =>
   new Date(Date.UTC(y, m, d, 12))
 
-/** Persisted/synced state is JSON with no reviver: every Date is a string. */
 const asJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 
 const storedState = (): PersistedServiceReportState => ({
@@ -129,8 +125,7 @@ describe('iCloud merge / restore normalization', () => {
 
   it('still reads pre-v2 persisted dates as the local day they were authored on', () => {
     setTZ('Pacific/Auckland')
-    // Pre-normalization data stored raw local midnights — at NZST that's
-    // noon UTC of the prior day, which must not be taken for an anchor.
+
     const legacy = asJson({
       serviceReports: {
         2026: {

@@ -30,7 +30,7 @@ import useAppActive from '@/hooks/useAppActive'
 
 const GOAL_MINUTES = 50 * 60
 const BEFORE_MINUTES = 34 * 60
-// A believable session already under way: 1h 24m.
+
 const SESSION_MINUTES = 84
 const AFTER_MINUTES = BEFORE_MINUTES + SESSION_MINUTES
 
@@ -40,7 +40,6 @@ const RING = { size: 132, stroke: 14, left: 18 }
 const RING_TOP = (MONTH.height - RING.size) / 2
 const SAVE = { right: 16, width: 74, height: 34 }
 
-/** When Save is tapped, the session flies into the ring, and it all resets. */
 const T = { tap: 0.38, fly: [0.44, 0.6], fill: [0.56, 0.74], reset: 0.92 }
 
 const ringPath = (() => {
@@ -54,10 +53,6 @@ const ringPath = (() => {
   return Skia.PathBuilder.Make().addArc(bounds, -90, 359.9).detach()
 })()
 
-/**
- * Tracking time: a timer runs, Save sends the session into the month, and the
- * goal ring fills up to meet it.
- */
 const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const accent = theme.colors.accent
@@ -68,12 +63,11 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     loopMs: 5600,
     restAt: 0.8,
   })
-  // Compact throughout: the sketch is small, like the app's tight spots.
+
   const session = `+${formatMinutesCompact(SESSION_MINUTES)}`
   const toGoBefore = formatMinutesCompact(GOAL_MINUTES - BEFORE_MINUTES)
   const toGoAfter = formatMinutesCompact(GOAL_MINUTES - AFTER_MINUTES)
 
-  // The stopwatch ticks in real time and starts over with each loop.
   const [seconds, setSeconds] = useState(0)
   const appActive = useAppActive()
   const ticking = active && appActive && !reduceMotion
@@ -117,7 +111,7 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     const dip = seg(tap.value, 0, 0.3) * (1 - seg(tap.value, 0.3, 1))
     return { transform: [{ scale: 1 - dip * 0.08 }] }
   })
-  // From the Save button down and across into the ring, on a gentle arc.
+
   const chipStyle = useAnimatedStyle(() => {
     const p = fly.value
     const from = { x: 320 - SAVE.right - SAVE.width, y: TIMER.top + 20 }
@@ -136,13 +130,13 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
       ],
     }
   })
-  // The totals swap quickly as the ring passes halfway, so they never blur.
+
   const swap = useDerivedValue(() =>
     fill.value < 0.45 ? 0 : fill.value > 0.6 ? 1 : (fill.value - 0.45) / 0.15
   )
   const beforeStyle = useAnimatedStyle(() => ({ opacity: 1 - swap.value }))
   const afterStyle = useAnimatedStyle(() => ({ opacity: swap.value }))
-  // Today's bar grows with the saved session.
+
   const todayStyle = useAnimatedStyle(() => ({
     height: 10 + 24 * fill.value,
   }))

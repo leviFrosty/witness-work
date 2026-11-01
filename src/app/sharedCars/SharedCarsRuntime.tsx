@@ -15,22 +15,11 @@ import {
 import { startSharedCarsRuntime } from '@/app/sharedCars/runtime'
 import { sharedCarsEngine } from '@/app/sharedCars/sharedCarsService'
 
-/**
- * Shared Cars' alerts (`car.invite`, `car.reply`) are registered only while it
- * runs, so a device with the flag off is never alerted to a car it can't open.
- */
 const registerPush = () =>
   void registerBuddiesPush().catch((error: unknown) =>
     logger.warn('[sharedCars] push registration', error)
   )
 
-/**
- * The background half of Shared Cars. Renders nothing; runs only while the
- * `shared-cars` flag is on and Buddies is running (the root seed and inbox that
- * Shared Cars builds on), syncing once an account session exists. Its cars
- * reach the User's other devices through the Buddies roster, and its
- * invitations go through Buddies (`carInvitationsService`).
- */
 export default function SharedCarsRuntime() {
   const enabled = useFeatureFlag('shared-cars')
   const buddies = useBuddiesSession((state) => state.running)
@@ -44,7 +33,6 @@ export default function SharedCarsRuntime() {
       status: useSharedCarsSession,
       reconcileMemberships: carInvitations.reconcileMemberships,
       onMembershipsChanged: () => {
-        // What another device's roster brought is in the roster already.
         if (!carInvitations.isMergingRoster())
           buddiesEngine.noteCarMemberships()
       },
@@ -54,7 +42,7 @@ export default function SharedCarsRuntime() {
         !useUpdateRequired.getState().required,
       watchReady: (onChange) => {
         let watching = true
-        // The stored session loads after launch; a new one opens later.
+
         void accountSessions.ready().then(() => {
           if (watching) onChange()
         })

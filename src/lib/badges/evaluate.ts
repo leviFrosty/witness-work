@@ -29,36 +29,33 @@ export type BadgeEvaluationInput = {
   dayPlans: readonly DayPlan[]
   recurringPlans: readonly RecurringPlan[]
   visits: readonly Visit[]
-  /** `YYYY-MM` months whose report the User sent onward. */
+
   submittedReportMonths: readonly string[]
-  /** Stored `badgeLedger` entries (`<collection>:<YYYY-MM>`). */
+
   ledger: readonly string[]
-  /**
-   * `YYYY-MM` months, up to today, that had a Plan or Follow-up a buddy went
-   * along to. Derived in the app tier, which can read Buddies data.
-   */
+
   togetherMonths: readonly string[]
   hasActiveBuddy: boolean
 }
 
 export type CollectionProgress = {
   id: BadgeCollectionId
-  /** Months (or Service Years, or months with one person) counted so far. */
+
   count: number
-  /** Highest level reached, 0 when none yet. */
+
   level: BadgeLevel | 0
-  /** What reaches the next level, null once Pearl is reached. */
+
   next: number | null
-  /** The `YYYY-MM` that reached each level, Bronze first, when known. */
+
   reachedMonths: (string | undefined)[]
 }
 
 export type BadgeEvaluation = {
   collections: Record<BadgeCollectionId, CollectionProgress>
   oneTime: Record<OneTimeBadgeId, { earned: boolean; month?: string }>
-  /** Ledger entries this evaluation found that aren't stored yet. */
+
   ledgerAdditions: string[]
-  /** Every badge the data reaches today, with the month that reached it. */
+
   earned: { key: BadgeKey; month?: string }[]
 }
 
@@ -69,7 +66,6 @@ export const monthKeyOf = (year: number, monthIndex: number) =>
 
 const pad = (value: number) => String(value).padStart(2, '0')
 
-/** Local calendar day and month of an instant, without moment's parsing cost. */
 const localKeys = (date: Date) => {
   const month = `${date.getFullYear()}-${pad(date.getMonth() + 1)}`
   return { month, day: `${month}-${pad(date.getDate())}` }
@@ -77,10 +73,6 @@ const localKeys = (date: Date) => {
 
 const isMonthKey = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value)
 
-/**
- * `YYYY-MM` months with at least one countable entry dated today or earlier. An
- * entry logged ahead of time counts once its day arrives, like a Plan.
- */
 export const sharedMonths = (
   serviceReports: TimeEntriesByYear,
   today: string
@@ -104,17 +96,12 @@ export const sharedMonths = (
   return months.sort()
 }
 
-/** The Service Year a `YYYY-MM` belongs to (September starts it). */
 const serviceYearOfMonth = (month: string) =>
   serviceYearOf({
     year: Number(month.slice(0, 4)),
     month: Number(month.slice(5, 7)) - 1,
   })
 
-/**
- * Service Years with at least `YEAR_ROUND_MONTHS` shared months, each with the
- * month that got it there, oldest first.
- */
 const yearRoundYears = (months: readonly string[]): string[] => {
   const byYear = new Map<number, string[]>()
   for (const month of months) {
@@ -127,10 +114,6 @@ const yearRoundYears = (months: readonly string[]): string[] => {
     .map(([, list]) => list.sort()[YEAR_ROUND_MONTHS - 1])
 }
 
-/**
- * Per Recurring Plan, the months it had a planned occurrence in, memoized on
- * the Plan and today's date so a long-running pattern is walked once a day.
- */
 const recurringMonthsCache = new Map<
   string,
   { stamp: string; months: string[] }
@@ -153,7 +136,7 @@ const recurringPlanMonths = (plan: RecurringPlan, today: string): string[] => {
   const overrides = new Map(
     (plan.overrides ?? []).map((o) => [storedDayKey(o.date), o.minutes])
   )
-  // Pattern matching only; skipped days and overrides are checked above.
+
   const pattern: RecurringPlan = { ...plan, deletedDates: [], overrides: [] }
   const plannedOn = (day: moment.Moment) => {
     const key = day.format('YYYY-MM-DD')
@@ -182,7 +165,6 @@ const recurringPlanMonths = (plan: RecurringPlan, today: string): string[] => {
     const from = month.isBefore(start) ? start : month
     let found = false
     if (stepDays !== null) {
-      // Occurrences fall on start + k × step.
       const k = Math.ceil(from.diff(start, 'days') / stepDays)
       const day = start.clone().add(k * stepDays, 'days')
       while (!found && day.isSameOrBefore(to, 'day')) {
@@ -212,7 +194,6 @@ const recurringPlanMonths = (plan: RecurringPlan, today: string): string[] => {
   return months
 }
 
-/** Months, up to today, with a planned occurrence of any Plan. */
 const preparedMonths = (
   dayPlans: readonly DayPlan[],
   recurringPlans: readonly RecurringPlan[],
@@ -234,16 +215,11 @@ type VisitMonths = {
   conversations: string[]
   returnVisits: string[]
   nextTime: string[]
-  /** Per Contact, the distinct months with a real conversation. */
+
   monthsPerContact: string[][]
   firstStudyMonth?: string
 }
 
-/**
- * A Visit that came with a shared Contact (`receivedAt`) is the sender's, so it
- * counts toward nothing itself. It still dates the Contact's first Visit, so
- * the User's own later Visit to that person is a return visit.
- */
 const visitMonths = (visits: readonly Visit[], now: Date): VisitMonths => {
   const conversations = new Set<string>()
   const returnVisits = new Set<string>()
@@ -332,11 +308,6 @@ const progressFrom = (
   }
 }
 
-/**
- * Works out every badge the User's records reach. Pure: callers pass in the
- * store snapshots, and decide what to store and celebrate with
- * `newlyEarnedBadges`.
- */
 export const evaluateBadges = (
   input: BadgeEvaluationInput
 ): BadgeEvaluation => {
@@ -444,33 +415,18 @@ export const evaluateBadges = (
   return { collections, oneTime, ledgerAdditions, earned }
 }
 
-/**
- * More new badges than this from one evaluation means records arrived in bulk,
- * so they're filed as history instead of celebrated one by one.
- */
 export const MAX_LIVE_AT_ONCE = 4
 
-/** `YYYY-MM` of the month before `now`. */
 const previousMonthKey = (now: Date) =>
   moment(now).subtract(1, 'month').format('YYYY-MM')
 
 export type NewlyEarnedBadge = {
   key: BadgeKey
   record: EarnedBadge
-  /**
-   * Earned by something the User just did (this or last month), rather than
-   * found in history. Only live badges are celebrated one by one and announced
-   * to buddies.
-   */
+
   live: boolean
 }
 
-/**
- * The badges an evaluation reaches that aren't stored yet. The first pass on a
- * device (`backfill`) and anything reached by an old month counts as history,
- * so restoring, importing, or upgrading never sets off a flood of
- * celebrations.
- */
 export const newlyEarnedBadges = ({
   evaluation,
   stored,
@@ -486,7 +442,7 @@ export const newlyEarnedBadges = ({
   const fresh = evaluation.earned.filter(({ key }) => !stored[key])
   const isRecent = (month: string | undefined) =>
     month !== undefined && month >= recent
-  // A burst only comes from a bulk change (an import, a restore, a sync).
+
   const bulk =
     fresh.filter(({ month }) => isRecent(month)).length > MAX_LIVE_AT_ONCE
   return fresh.map(({ key, month }) => {

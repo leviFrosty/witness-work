@@ -1,22 +1,5 @@
 import { Skia } from '@shopify/react-native-skia'
 
-/**
- * A slow, living aurora: soft light pools that drift on Lissajous paths over a
- * base colour, with a brighter bloom pinned to a focal point, optional drifting
- * dust motes, a vignette and per-frame dithering (long dark gradients band
- * badly on 8-bit panels without it).
- *
- * Uniforms (all coordinates in canvas points):
- *
- * - `uSize` — canvas size.
- * - `uTime` — seconds; drives every drift. Hold it still for Reduce Motion.
- * - `uIntensity` — 0–1, fades the light pools in over the base.
- * - `uFocus` / `uPulse` — focal point of the main bloom and its extra strength.
- * - `uShift` — parallax offset applied to the light pools.
- * - `uDark` — 1 adds light onto a dark base; 0 tints a light base instead.
- * - `uBase`, `uGlow`, `uTintA`, `uTintB`, `uFloor` — RGB 0–1 colours.
- * - `uMotes` — 0–1 visibility of the drifting dust.
- */
 const source = `
 uniform float2 uSize;
 uniform float uTime;
@@ -95,5 +78,4 @@ half4 main(float2 xy) {
 }
 `
 
-/** `null` if the shader failed to compile — callers fall back to `uBase`. */
 export const auroraShader = Skia.RuntimeEffect.Make(source)

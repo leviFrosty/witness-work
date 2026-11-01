@@ -9,39 +9,26 @@ import { withAlpha } from '@/lib/color'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
-/**
- * Shared props for every card floating around the hub. The cards are fixed-size
- * illustrations of the app, so their text uses React Native's `Text` with font
- * scaling off rather than `MyText`: scaled copy would burst the sketch, and the
- * real copy on this screen scales normally.
- */
 export interface SatelliteProps {
   palette: WelcomePalette
-  /** 0–1: the headline is on this card's part of the story. */
+
   focus: SharedValue<number>
-  /** True while the headline is on this card's part of the story. */
+
   active: boolean
-  /** Hold every loop still. */
+
   reduceMotion: boolean
-  /**
-   * The scene clock, in seconds. Loops run off it rather than repeating
-   * animations of their own, so they stop whenever the scene does.
-   */
+
   time: SharedValue<number>
 }
 
 interface Props {
   palette: WelcomePalette
   focus: SharedValue<number>
-  /** Colour the card's rim and glow take on while in focus. */
+
   accent: string
   style?: StyleProp<ViewStyle>
 }
 
-/**
- * A frosted card for the welcome constellation. In focus, its rim and glow warm
- * to the card's accent.
- */
 const SatelliteSurface = ({
   palette,
   focus,
@@ -110,7 +97,6 @@ export const IconChip = ({
   </View>
 )
 
-/** A placeholder text bar — the cards sketch the app, they don't quote it. */
 export const Skeleton = ({
   palette,
   width,

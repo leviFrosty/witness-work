@@ -12,11 +12,6 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { type Buddy, ownSettingsCount } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Opens this buddy's settings in Buddies Settings: what they see, the calendar,
- * and alerts, over All Buddies'. Says whether they follow All Buddies or have
- * settings of their own.
- */
 export default function BuddySettingsLink({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -50,8 +45,7 @@ export default function BuddySettingsLink({ buddy }: { buddy: Buddy }) {
         title={i18n.t('buddies_buddySettings')}
         subtitle={
           own > 0
-            ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('buddies_scopeBuddyOwn', {
+            ? i18n.t('buddies_scopeBuddyOwn', {
                 count: own,
                 name: buddyDisplayName(buddy),
               })

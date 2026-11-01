@@ -11,13 +11,8 @@ import i18n from '@/lib/locales'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
 
-// Pushed screens get the system's Back button in iPhone Duo's vertical bar.
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
 
-/**
- * The pet's details and the Shop: a large sheet where the window is compact,
- * full screen where it's regular width or on Android.
- */
 const petLargeScreenOptions = () =>
   petOpensAsSheet()
     ? {
@@ -41,11 +36,6 @@ const RootStackComponent = () => {
 
   return (
     <RootStack.Navigator
-      // The tabs keep their own; the badge viewer places its coin in window
-      // coordinates. A form sheet keeps its own color in the insets, and its
-      // wrapper has to stay a layout-only view: a filled one is a real native
-      // view, so react-native-screens can't find the sheet's scroll view to
-      // size it, and a full-height sheet opens blank on iPhone Duo.
       screenLayout={({ route, options, children }) =>
         route.name === 'Root' || route.name === 'BadgeView' ? (
           children
@@ -68,14 +58,7 @@ const RootStackComponent = () => {
       <RootStack.Group
         navigationKey={onboardingComplete ? 'app' : 'onboarding'}
       >
-        {/* 
-        Cannot render onboarding via Navigator initialRouteName. 
-        This alternative allows for dynamically rendering screen. 
-        Navigating directly between conditional screens causes an error
-        because from each screen's perspective the other screen does not exist. 
-        You must update the variable instead. 
-        See: https://github.com/react-navigation/react-navigation/discussions/10346
-        */}
+        {}
         {onboardingComplete ? (
           <RootStack.Screen
             options={{ header: () => undefined }}
@@ -92,8 +75,6 @@ const RootStackComponent = () => {
           />
         )}
         <RootStack.Screen
-          // Full screen everywhere (iPad too), so the keyboard-pinned toolbar
-          // measures from the window's bottom edge.
           options={{
             presentation: 'fullScreenModal',
             headerShown: false,
@@ -152,8 +133,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // Native iOS form sheet — handles drag-to-dismiss + inner ScrollView
-          // gestures correctly, which the previous Tamagui sheet did not.
           options={{
             presentation: 'modal',
             sheetAllowedDetents: [1],
@@ -168,9 +147,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet on iPhone (full screen on Android); a form sheet in a
-          // regular-width window (iPad, iPhone Duo open), so it isn't a
-          // phone-height list stretched across the screen.
           options={() => {
             const regions = useDisplayRegions.getState().regions
             const formSheet =
@@ -226,7 +202,6 @@ const RootStackComponent = () => {
           />
         ))}
         <RootStack.Screen
-          // Draws its own header, which holds the usage ring and History.
           options={{ header: () => null }}
           name='ScribeConversation'
           getComponent={() =>
@@ -234,7 +209,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet drawn over the screen it opened from.
           options={{
             presentation: 'transparentModal',
             animation: 'fade',
@@ -310,8 +284,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet, so a Visit opens over wherever it's listed. Edit and the
-          // other forms stack over it and return here when saved.
           options={{ presentation: 'modal', header: () => null }}
           name='Visit Details'
           getComponent={() => require('@/app/visits/VisitDetailsRoute').default}
@@ -325,7 +297,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet over the invitation it lists, like the invitation itself.
           options={{ presentation: 'modal', header: () => null }}
           name='Going List'
           getComponent={() =>
@@ -466,7 +437,7 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             presentation: 'modal',
-            // Dismiss back to Buddies; `exit` pops to the root tabs.
+
             header: ({ navigation }) => (
               <Header
                 noInsets
@@ -514,7 +485,7 @@ const RootStackComponent = () => {
         <RootStack.Screen
           options={{
             presentation: 'modal',
-            // Dismiss back to Buddies; `exit` pops to the root tabs.
+
             header: ({ navigation }) => (
               <Header
                 noInsets
@@ -610,8 +581,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A sheet sized to the picker on iOS (a centered form sheet on iPad);
-          // full screen on Android. Pulling it down cancels.
           options={
             Platform.OS === 'ios'
               ? {
@@ -629,20 +598,11 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // The pet's details: a large sheet on iPhone with its name, the room
-          // on top and its hat and parts scrolling below; full screen where
-          // the window is regular width (iPad, iPhone Duo open), the room
-          // beside the items, like the Shop. Full screen on Android. Choices
-          // save as they're made.
           options={petLargeScreenOptions}
           name='PetRoom'
           getComponent={() => require('@/app/pet/PetRoomRoute').default}
         />
         <RootStack.Screen
-          // The Shop, over the pet's details: a large sheet on iPhone, full
-          // screen where the window is regular width (iPad, iPhone Duo open)
-          // so the room and the items sit side by side. Full screen on
-          // Android.
           options={petLargeScreenOptions}
           name='PetShop'
           getComponent={() =>
@@ -650,7 +610,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // Sized to its one field on iOS, like the picker.
           options={
             Platform.OS === 'ios'
               ? {
@@ -668,8 +627,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // A large sheet over the details on iOS, its sections scrolling;
-          // full screen on Android.
           options={
             Platform.OS === 'ios'
               ? {
@@ -685,8 +642,6 @@ const RootStackComponent = () => {
           getComponent={() => require('@/app/pet/PetSettingsScreen').default}
         />
         <RootStack.Screen
-          // Every visiting pet: a large sheet like the details, so a long list
-          // scrolls. Full screen on Android.
           options={
             Platform.OS === 'ios'
               ? {
@@ -702,8 +657,6 @@ const RootStackComponent = () => {
           getComponent={() => require('@/app/pet/PetVisitsRoute').default}
         />
         <RootStack.Screen
-          // The share card, sized to it on iOS like the picker; full screen
-          // on Android. Pulling it down closes it.
           options={
             Platform.OS === 'ios'
               ? {
@@ -736,8 +689,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          // Over everything, transparent, and unanimated: the screen grows
-          // the coin out of the tapped medallion and plays its own close.
           options={{
             presentation: 'transparentModal',
             animation: 'none',

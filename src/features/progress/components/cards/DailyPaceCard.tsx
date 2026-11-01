@@ -13,7 +13,6 @@ import {
 } from '@/features/progress/components/cards/displayMinutes'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** How much a day it takes to reach the Monthly Goal (#775). */
 export default function DailyPaceCard({
   month,
   year,
@@ -50,8 +49,7 @@ export default function DailyPaceCard({
           caption={
             pace.daysLeft === 0
               ? i18n.t('progressCards.dailyPace.lastDay', { goal })
-              : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('progressCards.dailyPace.current', {
+              : i18n.t('progressCards.dailyPace.current', {
                   count: pace.daysLeft,
                   goal,
                 })

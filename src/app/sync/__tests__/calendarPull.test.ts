@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
-  /** When the app last came back to the foreground. */
   since: 0,
   enabled: true,
   readFiles: vi.fn(),
@@ -68,8 +67,6 @@ import { pullAndMerge, pullBeforeCalendarPublish } from '@/app/sync/iCloudSync'
 
 describe('data refresh before calendar publishing', () => {
   beforeEach(async () => {
-    // Each test starts just after a return to the app, a moment after the
-    // previous test's reads.
     await new Promise((resolve) => setTimeout(resolve, 2))
     state.since = Date.now()
     state.enabled = true
@@ -137,7 +134,7 @@ describe('data refresh before calendar publishing', () => {
           })
       )
     const foreground = pullAndMerge('foreground')
-    // That pull began before the app last came back, so it may be stale.
+
     await new Promise((resolve) => setTimeout(resolve, 2))
     state.since = Date.now()
     let ready = false
@@ -181,7 +178,7 @@ describe('data refresh before calendar publishing', () => {
     await pullAndMerge('foreground')
     await pullBeforeCalendarPublish()
     expect(state.readFiles).toHaveBeenCalledTimes(1)
-    // After the next return to the app, it reads again.
+
     await new Promise((resolve) => setTimeout(resolve, 2))
     state.since = Date.now()
     await pullBeforeCalendarPublish()

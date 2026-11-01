@@ -1,17 +1,7 @@
-/**
- * The Scribe AI wire contract, protocol 1 (docs/scribe-ai-protocol.md). Types
- * only: what the app sends to `/scribe/v1/*` and what ww-api answers. Unknown
- * fields are ignored on both sides, so every response type here lists only what
- * the app reads.
- */
-
 export const SCRIBE_PROTOCOL = 1
-
-// ---------------------------------------------------------------- tools
 
 export type ToolAccess = 'read' | 'write' | 'destructive'
 
-/** A JSON Schema object in the protocol's 2020-12 subset. */
 export type JsonSchema = { [keyword: string]: JsonValue }
 export type JsonValue =
   | string
@@ -28,8 +18,6 @@ export interface ToolDefinitionWire {
   inputSchema: JsonSchema
   returnsUntrustedText?: boolean
 }
-
-// ---------------------------------------------------------------- context
 
 export interface ScribeContextWire {
   v: 1
@@ -59,14 +47,9 @@ export interface ScribeContextWire {
   contactsTruncated: boolean
   buddies: string[]
   dataProtection: boolean
-  /**
-   * Scribe AI's memory, one note a line (`lib/memory.ts`); null when the User
-   * turned it off. Absent from contexts pinned before it existed.
-   */
+
   memory?: string[] | null
 }
-
-// ---------------------------------------------------------------- messages
 
 export interface TextBlock {
   type: 'text'
@@ -111,10 +94,7 @@ export interface ProposalOutcomeBlock {
   outcome: ProposalOutcome
   applied: string[]
   notApplied: string[]
-  /**
-   * `applied`/`partially_applied`: the pending Refs (`n1`, `nk1`) that now name
-   * a record, each with the applied call that proposed it.
-   */
+
   created?: { callId: string; ref: string }[]
 }
 
@@ -131,8 +111,6 @@ export type ToolMessage = { role: 'tool'; content: ToolResultBlock[] }
 
 export type WireMessage = UserMessage | AssistantMessage | ToolMessage
 
-// ---------------------------------------------------------------- step
-
 export interface StepRequest {
   protocol: typeof SCRIBE_PROTOCOL
   conversationId: string
@@ -148,7 +126,7 @@ export interface UsageWindowWire {
   id: 'session' | 'weekly' | 'monthly'
   percentUsed: number
   resetsAt: number | null
-  /** Developer Tools only. */
+
   units?: { used: number; limit: number }
 }
 
@@ -164,10 +142,7 @@ export interface UsageSnapshotWire {
 export interface StepUsageWire {
   inputTokens: number
   cachedInputTokens: number
-  /**
-   * Cache writes, part of the uncached input; 0 from servers that don't send
-   * it.
-   */
+
   cacheWriteTokens: number
   outputTokens: number
   reasoningTokens: number
@@ -208,8 +183,6 @@ export type StepTerminalEvent = Extract<
   { type: 'done' } | { type: 'error' }
 >
 
-// ---------------------------------------------------------------- status
-
 export interface ScribeLimitsWire {
   maxInputTokens: number
   maxOutputTokens: number
@@ -234,7 +207,6 @@ export interface ScribeStatusWire {
   limits: ScribeLimitsWire
 }
 
-/** The protocol's defaults, used until the first status read succeeds. */
 export const DEFAULT_SCRIBE_LIMITS: ScribeLimitsWire = {
   maxInputTokens: 48_000,
   maxOutputTokens: 4096,
@@ -250,8 +222,6 @@ export const DEFAULT_SCRIBE_LIMITS: ScribeLimitsWire = {
   transcribe: { maxBytes: 4_194_304, mimeTypes: ['image/jpeg', 'image/png'] },
 }
 
-// ---------------------------------------------------------------- transcribe
-
 export interface TranscribeRequest {
   protocol: typeof SCRIBE_PROTOCOL
   image: string
@@ -264,9 +234,6 @@ export interface TranscribeResponse {
   usage: UsageSnapshotWire | null
 }
 
-// ---------------------------------------------------------------- errors
-
-/** Every `code` the protocol documents for a non-2xx envelope or `error` event. */
 export type ScribeServerCode =
   | 'bad_request'
   | 'invalid_tools'

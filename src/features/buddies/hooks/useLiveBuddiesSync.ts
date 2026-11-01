@@ -7,12 +7,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const warn = (error: unknown) => logger.warn('[buddies] live sync', error)
 
-/**
- * Keeps the visible Buddies list current: syncs when the screen gains focus
- * (within the shared floor; returning to the app is BuddiesRuntime's), and
- * polls while it's open only when the live connection is down. Does nothing
- * before Buddies has started.
- */
 export default function useLiveBuddiesSync() {
   const focused = useIsFocused()
   const hasInbox = useBuddies((state) => state.registeredInboxId !== null)

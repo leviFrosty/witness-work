@@ -30,28 +30,13 @@ import type {
   SharedCarsEngine,
 } from '@/app/sharedCars/engine'
 
-/**
- * Shared Cars' invitations through Buddies (docs/shared-cars-protocol.md,
- * "Invitations"): inviting a buddy, canceling, joining or declining a buddy's
- * invitation, and what each `car.*` event does to a car. Also the rest of what
- * Buddies asks of Shared Cars: the roster's memberships, and leaving every car
- * with Buddies. The Shared Cars engine does the car's side; the Buddies engine
- * sends and keeps the events. `carInvitationsService` wires the app's one.
- */
-
 export type CarInvitationErrorCode =
-  /** No such car here, or no such invitation (answered, canceled, lapsed). */
   | 'not_found'
-  /** Not an active buddy. */
   | 'not_buddy'
-  /** They're on the car already (answering an invitation: the User is). */
   | 'already_on_car'
-  /** Someone on the car already invited them, and it's still open. */
   | 'already_invited'
-  /** An answer to this invitation is already on its way (a second tap). */
   | 'answering'
 
-/** An invitation this device refused before asking anyone. */
 export class CarInvitationError extends Error {
   constructor(readonly code: CarInvitationErrorCode) {
     super(`Shared Car invitation: ${code}`)
@@ -59,15 +44,9 @@ export class CarInvitationError extends Error {
   }
 }
 
-/** One of the User's active buddies, and whether they can be invited. */
 export type CarBuddy =
   | { inboxId: string; status: 'available' }
-  /** On the car, as `memberId`. */
   | { inboxId: string; status: 'onCar'; memberId: string }
-  /**
-   * Invited and not answered yet. `mine` when this User sent it, so it's theirs
-   * to cancel.
-   */
   | {
       inboxId: string
       status: 'invited'
@@ -103,15 +82,12 @@ export type CarInvitationsDeps = {
   >
   buddiesStore: { getState: () => BuddiesState }
   store: SharedCarsStore
-  /**
-   * Shared Cars runs here (its flag on, with Buddies). Until it does, cars the
-   * roster brings are only noted, for the runtime to pick up.
-   */
+
   running: () => boolean
   now: () => number
-  /** Key moments, for analytics. Never names, ids, or car details. */
+
   onEvent?: (event: CarInvitationsEvent) => void
-  /** Something that failed in the background; `context` is an op name. */
+
   onError?: (error: unknown, context: string) => void
 }
 
@@ -125,28 +101,23 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
   const activeBuddies = () =>
     deps.buddiesStore.getState().buddies.filter((b) => b.status === 'active')
 
-  /** The active buddy an invitation on `car` with this `tag` went to. */
   const buddyByTag = (car: SharedCar, tag: string): Buddy | undefined =>
     activeBuddies().find((b) => memberTag(car.spaceId, b.inboxId) === tag)
 
   const openInvites = (car: SharedCar) => openCarInvites(car, deps.now())
 
-  /** The User is on `spaceId`: the car is here, or the roster says so. */
   const isOnCar = (spaceId: string) => {
     const { cars, memberships } = store.getState()
     return cars[spaceId] !== undefined || isOnSharedCar(memberships, spaceId)
   }
 
-  /** Invitations being answered here now, by key: one answer at a time. */
   const answering = new Set<string>()
 
-  /** Starts answering `key`, unless a tap before this one already is. */
   function startAnswering(key: string) {
     if (answering.has(key)) throw new CarInvitationError('answering')
     answering.add(key)
   }
 
-  /** Every active buddy, and where each stands on the car. */
   function carBuddies(spaceId: string): CarBuddy[] {
     const car = store.getState().cars[spaceId]
     if (!car) return []
@@ -167,11 +138,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     })
   }
 
-  /**
-   * Sends `car.invite` for an invitation just opened on the car. One that can't
-   * be saved to send (they stopped being an active buddy meanwhile) closes
-   * again, since nobody would hear of it. Whether it's on its way.
-   */
   async function sendInvite(
     inboxId: string,
     invite: CarInvitePayload
@@ -188,11 +154,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return queued
   }
 
-  /**
-   * Invites a buddy to a Shared Car: opens the invitation on the car (by their
-   * Buddy Card name and inbox, hashed for the car), then sends them
-   * `car.invite`, which is retried until the relay accepts it.
-   */
   async function inviteBuddy(
     spaceId: string,
     inboxId: string
@@ -213,10 +174,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return { inviteId: invite.inviteId }
   }
 
-  /**
-   * Cancels one of this User's open invitations: it closes on the car (now, or
-   * on a later sync), and the buddy's app takes it back (`car.cancel`).
-   */
   async function cancelInvite(
     spaceId: string,
     inviteId: string,
@@ -237,12 +194,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return closed
   }
 
-  /**
-   * A join whose answer was lost turned out, on a later sync, to have landed
-   * after Join gave up: the invitation it used is answered now, as Join would
-   * have (`car.reply`, `joined`), and counted once. A Join still running
-   * answers it itself.
-   */
   function handleJoinConfirmed({ spaceId, inviteId }: SharedCarJoinConfirmed) {
     const key = Object.keys(deps.buddiesStore.getState().carInvites).find(
       (k) => {
@@ -265,7 +216,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     )
   }
 
-  /** Invitation `key`, while it's still to answer. */
   function pendingInvite(key: string) {
     const invite = deps.buddiesStore.getState().carInvites[key]
     if (
@@ -277,11 +227,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return invite
   }
 
-  /**
-   * What joining from invitation `key` takes, while it can be answered: its
-   * secret and the car's key from the device. One whose secrets the device lost
-   * can't be joined from here, and goes.
-   */
   async function joinPayload(key: string): Promise<CarInvitePayload> {
     const invite = pendingInvite(key)
     const secrets = await buddies.carInviteSecrets(key)
@@ -298,12 +243,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     }
   }
 
-  /**
-   * Whether the User is on `spaceId` after a join that failed: the server may
-   * have taken it, with only its answer lost. A joining mark it left is
-   * confirmed now, with a sync as their member; one the server doesn't answer
-   * waits for the next sync.
-   */
   async function joinLanded(spaceId: string): Promise<boolean> {
     if (isOnCar(spaceId)) return true
     if (!store.getState().joining[spaceId]) return false
@@ -311,14 +250,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return isOnCar(spaceId)
   }
 
-  /**
-   * Join: joins the car, then tells the buddy (`car.reply`, `joined`). A join
-   * the server took counts even when what followed it failed (its answer was
-   * lost, say): the User is on the car, which catches up on its next sync. One
-   * that didn't leaves the invitation to answer again. The answer counts once,
-   * on the device that joined: not here when the User was on the car already
-   * (another of their devices joined it, and counted it).
-   */
   async function join(key: string): Promise<{ spaceId: string }> {
     startAnswering(key)
     try {
@@ -340,11 +271,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     }
   }
 
-  /**
-   * Decline: tells the buddy, whose app closes the invitation. Not for a car
-   * the User is on (a join that landed, here or on another of their devices):
-   * that invitation reads as joined.
-   */
   async function decline(key: string): Promise<void> {
     startAnswering(key)
     try {
@@ -362,10 +288,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     }
   }
 
-  /**
-   * A buddy's `car.*` event, once: a reply on one of this User's cars syncs it,
-   * and a decline closes its invitation there (when it went to them).
-   */
   function handleEvent(notice: CarEventNotice) {
     if (notice.kind !== 'car.reply') return
     const { spaceId, inviteId, from, status } = notice
@@ -378,11 +300,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     else background(engine.syncCar(spaceId, { automatic: true }), 'sync')
   }
 
-  /**
-   * A rekey closed an invitation this device sent, and the engine opened its
-   * replacement: the buddy's app takes the old one back and gets the new one.
-   * One to someone who's no longer a buddy can't reach them, so it closes.
-   */
   function handleReissue({
     spaceId,
     previousInviteId,
@@ -410,24 +327,11 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     )
   }
 
-  /**
-   * An invitation this device sent can't go from it any more: its secrets are
-   * gone (a restore onto a new phone, or a binary without device secrets that
-   * restarted), and Buddies dropped its `car.invite`, sending `car.cancel` if
-   * it may have reached them. Its car owes it again (the Buddies link marks
-   * it): the car syncs now, and on every sync until it's sent, it closes and a
-   * new one goes to the same buddy in its place, as after a rekey
-   * (`handleReissue`), so they aren't left waiting for one that never comes.
-   */
   function handleInviteLost({ spaceId }: LostCarInvite) {
     if (!store.getState().cars[spaceId]) return
     background(engine.syncCar(spaceId, { automatic: true }), 'car.invite')
   }
 
-  /**
-   * `inboxId` is no longer a buddy: this User's open invitations to them close
-   * on every car. The cars themselves don't change.
-   */
   function cancelInvitesTo(inboxId: string) {
     const invites = openInvitesTo(
       store.getState().cars,
@@ -445,13 +349,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
 
   let mergingRoster = false
 
-  /**
-   * Another device's memberships, from the roster: cars it joined or shared
-   * start syncing here, and cars it left end here with the same personal copy,
-   * unless the User joined them again since. Only what's newer than this
-   * device's own does anything, so reading the same roster again does nothing.
-   * While Shared Cars doesn't run here they're only noted, for the runtime.
-   */
   function mergeMemberships(remote: SharedCarMemberships) {
     mergingRoster = true
     try {
@@ -467,18 +364,12 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
         background(engine.addCarFromRoster(spaceId, at), 'roster')
       for (const { spaceId, at, ends } of left)
         if (ends) background(engine.dropCarFromRoster(spaceId, at), 'roster')
-        // On it again since: the leave is only kept, for the roster.
         else store.getState().noteLeft(spaceId, at)
     } finally {
       mergingRoster = false
     }
   }
 
-  /**
-   * Brings the cars on this device in line with the memberships, when Shared
-   * Cars starts: a car the roster brought while it wasn't running starts
-   * syncing, and one left elsewhere ends.
-   */
   function reconcileMemberships() {
     const { memberships, cars, seeding } = store.getState()
     for (const spaceId of activeSharedCarIds(memberships))
@@ -494,11 +385,6 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     }
   }
 
-  /**
-   * Closes on the server every invitation the cars here are still closing
-   * (canceled or declined while it couldn't hear): each of those cars syncs.
-   * How many it still couldn't.
-   */
   async function closePendingInvites(): Promise<number> {
     const { closingInvites, cars } = store.getState()
     await Promise.all(
@@ -513,15 +399,13 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     return pendingInviteCloses(store.getState())
   }
 
-  /** What Buddies hands Shared Cars (`setBuddiesCarsHandler`). */
   const buddiesHandler: BuddiesCarsHandler = {
     mergeMemberships,
     onEvent: handleEvent,
     onBuddyGone: cancelInvitesTo,
     onInviteLost: handleInviteLost,
     leaveAll: () => engine.leaveAll(),
-    // Signing out here: what this device owes the server goes first, since
-    // the account's other devices don't know of it.
+
     finishPending: async () => {
       await engine.abandonShares()
       const { pending } = await engine.finishPendingEnds()
@@ -537,7 +421,7 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
       cancelInvite(spaceId, inviteId),
     join,
     decline,
-    /** A Join or Decline for invitation `key` is on its way. */
+
     isAnswering: (key: string) => answering.has(key),
     handleEvent,
     handleReissue,
@@ -546,7 +430,7 @@ export function createCarInvitations(deps: CarInvitationsDeps) {
     cancelInvitesTo,
     mergeMemberships,
     reconcileMemberships,
-    /** A roster merge is writing the memberships (not this device's change). */
+
     isMergingRoster: () => mergingRoster,
     buddiesHandler,
   }

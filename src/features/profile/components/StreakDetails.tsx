@@ -31,7 +31,6 @@ import StreakFlame from '@/features/profile/components/StreakFlame'
 
 const DAY = 'YYYY-MM-DD'
 
-/** The day (or month) the streak started, as short as reads clearly. */
 function startedLabel(streak: ServiceStreak, today: Date): string | null {
   if (!streak.since) return null
   const since = moment(streak.since, DAY)
@@ -81,11 +80,6 @@ function Fact({
   )
 }
 
-/**
- * What the Home streak chip opens: the streak with a lit flame, when it started
- * and the longest it's been, the day due when it's about to end, and `footer`
- * (buddies' streaks) below. "?" opens the Help Center's Streaks section.
- */
 export default function StreakDetails({
   streak,
   count,
@@ -94,9 +88,9 @@ export default function StreakDetails({
   footer,
 }: {
   streak: ServiceStreak
-  /** The count shown, which Developer Tools can override. */
+
   count: number
-  /** The day (or month) due, while the streak is about to end. */
+
   ending: { period: string } | null
   closeThen: PopoverControls['closeThen']
   footer?: ReactNode

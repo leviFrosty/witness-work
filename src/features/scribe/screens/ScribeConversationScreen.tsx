@@ -33,11 +33,9 @@ import ScribeTimeline from '@/features/scribe/components/ScribeTimeline'
 import ScribeVoiceSheet from '@/features/scribe/components/ScribeVoiceSheet'
 import type { RenderSupporterCta } from '@/features/scribe/components/ScribeStateCards'
 
-/** `submitId`s already sent, so a remount can't send a recording twice. */
 const sentSubmitIds = new Set<string>()
 
 interface Props {
-  /** Supporter's upgrade button, from the app tier. */
   renderSupporterCta?: RenderSupporterCta
 }
 
@@ -47,7 +45,7 @@ const Conversation = ({
   onAdopt,
 }: Props & {
   onNewConversation: () => void
-  /** The first message started this conversation; the route takes its id. */
+
   onAdopt: (conversationId: string) => void
 }) => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -61,8 +59,7 @@ const Conversation = ({
   const paper = useScribePaperCapture()
   const [draft, setDraft] = useState('')
   const [draftSource, setDraftSource] = useState<ScribeInputSource>('keyboard')
-  // The voice sheet, drawn over this conversation so it can shrink to a small
-  // orb while the User keeps talking.
+
   const [voice, setVoice] = useState<'conversation' | 'say_a_change' | null>(
     null
   )
@@ -71,14 +68,11 @@ const Conversation = ({
   const { conversationId, run } = controller
   const running = run.phase === 'sending' || run.phase === 'thinking'
 
-  // Once the first message starts the conversation, the route names it, so
-  // Say a change and History come back to it.
   useEffect(() => {
     if (conversationId && conversationId !== params.conversationId)
       onAdopt(conversationId)
   }, [conversationId, params.conversationId, onAdopt])
 
-  // A recording (or onboarding's text) arrives once per submitId.
   const { initialText, submitId } = params
   useEffect(() => {
     if (!initialText || !submitId || sentSubmitIds.has(submitId)) return
@@ -91,7 +85,6 @@ const Conversation = ({
     })
   }, [initialText, submitId, params, navigation, controller])
 
-  // Onboarding's Import from Paper reads the picked pages on open.
   const paperPages = params.paperPages
   const readPages = useRef<typeof paperPages>(undefined)
   useEffect(() => {
@@ -106,8 +99,6 @@ const Conversation = ({
     })
   }, [paperPages, navigation, paper])
 
-  // What a recording heard before Type instead or an interruption waits in
-  // the composer, after anything already typed, for the User to finish.
   const draftText = params.draftText
   useEffect(() => {
     if (!draftText) return
@@ -117,14 +108,11 @@ const Conversation = ({
     )
     setDraftSource('voice')
     forgoScribeResume()
-    // Back in a conversation that already had the keyboard: bring it back.
+
     const timer = setTimeout(() => inputRef.current?.focus(), 450)
     return () => clearTimeout(timer)
   }, [draftText, navigation])
 
-  // Type instead, no on-device speech, onboarding: the keyboard, once the
-  // push has settled (focusing mid-transition is dropped). Once per mount; the
-  // param stays, since clearing it here would cancel the pending focus.
   const focusComposer = params.focusComposer
   useEffect(() => {
     if (!focusComposer) return
@@ -142,9 +130,6 @@ const Conversation = ({
     }
   }, [focusComposer, navigation])
 
-  // Writing another message, or starting a new conversation, moves on from a
-  // turn that stopped offline: it waits for Try again instead of going on by
-  // itself when the connection comes back.
   const editDraft = (text: string) => {
     setDraft(text)
     forgoScribeResume()
@@ -167,8 +152,6 @@ const Conversation = ({
     })
   }
 
-  // Say a change needs a message to go out: not at a limit or a full
-  // conversation, and not while the composer is replaced.
   const canMessage =
     availability.status === 'available' &&
     !availability.limited &&
@@ -176,7 +159,6 @@ const Conversation = ({
     !(run.phase === 'error' && run.error.code === 'context_full')
   const voiceSupported = voiceAvailability !== 'unsupported'
   const listen = (entry: 'conversation' | 'say_a_change') => {
-    // Already listening, minimized: open it again.
     if (voice) {
       setVoiceMinimized(false)
       return
@@ -205,7 +187,7 @@ const Conversation = ({
     closeVoice()
     void controller.send({ text, source: 'voice', entry })
   }
-  // What a recording heard waits in the composer, after anything typed.
+
   const typeVoice = (heard?: string) => {
     closeVoice()
     if (heard) {
@@ -264,7 +246,6 @@ const Conversation = ({
             photo={photo}
             paper={paper}
             onCaptured={(text, source) => {
-              // Paper pages keep the blank line they have between each other.
               const gap = source === 'paper' ? '\n\n' : '\n'
               setDraft((current) =>
                 current ? `${current}${gap}${text}` : text
@@ -282,24 +263,15 @@ const Conversation = ({
   )
 }
 
-/**
- * Scribe AI's conversation: what the User said or typed, Scribe AI's answers,
- * review cards for what it would add, and the composer (text, voice, scan,
- * paper pages). New conversation starts over on the same screen.
- */
 const ScribeConversationScreen = ({ renderSupporterCta }: Props) => {
   const navigation = useNavigation<RootStackNavigation>()
   const { params } =
     useRoute<RouteProp<RootStackParamList, 'ScribeConversation'>>()
   const [session, setSession] = useState(0)
   const [adopted, setAdopted] = useState<string | null>(null)
-  // The composer rides the keyboard's top edge as it animates.
+
   const keyboard = useAnimatedKeyboard()
-  // Reanimated stops watching the keyboard while nothing subscribes, and on
-  // Android a new subscriber gets the keyboard as it was when the last one
-  // went away: still open if this screen closed with the keyboard up. Until
-  // the keyboard moves there, its height counts only if it's really showing.
-  // (iOS starts every subscriber closed, and may report only OPEN.)
+
   const trustKeyboard = useSharedValue(
     Platform.OS !== 'android' || Keyboard.isVisible()
   )
@@ -334,8 +306,7 @@ const ScribeConversationScreen = ({ renderSupporterCta }: Props) => {
     setAdopted(conversationId)
     navigation.setParams({ conversationId })
   }
-  // A conversation picked in History (or opened by id) mounts fresh; one this
-  // screen started keeps its state.
+
   const shown =
     !params.conversationId || params.conversationId === adopted
       ? 'own'

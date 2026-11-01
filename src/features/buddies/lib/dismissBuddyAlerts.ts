@@ -2,10 +2,6 @@ import * as Notifications from 'expo-notifications'
 import { logger } from '@/lib/logger'
 import { buddiesPushData } from '@/lib/notificationData'
 
-/**
- * Removes delivered Buddies alerts about these inbox events from Notification
- * Center (the shade on Android), e.g. an invitation the buddy took back.
- */
 export async function dismissBuddyAlerts(seqs: number[]) {
   try {
     const wanted = new Set(seqs)

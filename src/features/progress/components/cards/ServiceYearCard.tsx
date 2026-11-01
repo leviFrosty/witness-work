@@ -20,10 +20,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import { formatGoalHours } from '@/features/progress/components/cards/displayMinutes'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * The Service Year the shown month belongs to: the Year tab's hero when wide,
- * its total against the Annual Goal when small.
- */
 export default function ServiceYearCard({
   month,
   year,
@@ -63,8 +59,7 @@ export default function ServiceYearCard({
       }
       caption={
         isCurrent
-          ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('daysLeftCount', { count: end.diff(today, 'days') })
+          ? i18n.t('daysLeftCount', { count: end.diff(today, 'days') })
           : `${serviceYear}–${serviceYear + 1}`
       }
       footer={

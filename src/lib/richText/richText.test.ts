@@ -180,7 +180,7 @@ describe('parseRichTextDoc', () => {
         )
       )
     ).toEqual([0.5, 0.33, 0.25, 1, undefined, undefined, undefined, undefined])
-    // An unscaled photo keeps no `scale` key, so it saves unchanged.
+
     expect(parseRichTextDoc(doc(image(null)))!.content[0]).toEqual({
       type: 'image',
       attrs: { id: 'a1b2c3d4', width: 10, height: 10 },

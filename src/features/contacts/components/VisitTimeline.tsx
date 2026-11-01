@@ -31,10 +31,9 @@ import {
   visitOutcome,
 } from '@/features/contacts/lib/visitTimeline'
 
-/** Width of the rail column left of the cards; the line runs at its center. */
 const RAIL = 26
 const NODE = 24
-/** Cards drawn with the screen; older ones follow a batch per frame. */
+
 const FIRST_CARDS = 8
 const CARD_BATCH = 8
 
@@ -86,10 +85,6 @@ const FollowUpNode = ({ state }: { state: FollowUpState }) => {
   )
 }
 
-/**
- * The space between two cards: elapsed time, plus the follow-up the OLDER visit
- * scheduled (kept / missed / dismissed / still upcoming).
- */
 const RailConnector = ({
   visit,
   newer,
@@ -157,7 +152,6 @@ const RailConnector = ({
 }
 
 type Props = {
-  /** Newest first. */
   visits: Visit[]
   upNext: UpNext | null
   highlightedVisitId?: string
@@ -165,11 +159,6 @@ type Props = {
   onPressUpNext: () => void
 }
 
-/**
- * The visit history on a single rail. The soonest upcoming follow-up sits at
- * the head; every other follow-up lives in the connector above the visit that
- * scheduled it.
- */
 const VisitTimeline = ({
   visits,
   upNext,
@@ -180,9 +169,7 @@ const VisitTimeline = ({
   const theme = useTheme()
   const now = new Date()
   const oldest = visits[visits.length - 1]
-  // A long history (a weekly study runs to hundreds of visits) draws its
-  // newest cards with the screen and the older ones a batch per frame after.
-  // The highlighted visit is drawn at once, so a deep link can scroll to it.
+
   const shown = useProgressiveCount(visits.length, {
     first: FIRST_CARDS,
     batch: CARD_BATCH,
@@ -279,7 +266,7 @@ const VisitTimeline = ({
       )}
       {visits.slice(0, shown).map((visit, index) => {
         const raw = followUpState(visit, visits, now)
-        // The Up Next source is already shown at the rail head.
+
         const state =
           raw === 'upcoming' && upNext?.visit.id === visit.id ? null : raw
         const newer = index > 0 ? visits[index - 1] : undefined

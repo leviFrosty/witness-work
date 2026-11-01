@@ -15,13 +15,8 @@ import { planShareKey } from '@/features/buddies/lib/shares'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
-/** Past this many people, the last avatar slot becomes a "+N" count. */
 const MAX_AVATARS = 4
 
-/**
- * Who a Plan is with: the buddies it invites (each badged with their answer),
- * or the buddy whose Plan it follows.
- */
 export default function PlanBuddiesLine({ plan }: { plan: DayPlan }) {
   const theme = useTheme()
   const enabled = useBuddiesEnabled()

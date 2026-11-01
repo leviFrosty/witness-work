@@ -13,15 +13,9 @@ import {
 import { GameIcon, GameToggle } from '@/features/pet/components/GameControls'
 import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
 
-/** A row's least height, and its side padding. */
 const ROW_MIN = 52
 const ROW_PAD = 14
 
-/**
- * A group of rows on a paper panel, the pet screens' settings section: an
- * optional heading over it, a line between rows, and an optional note under
- * it.
- */
 export function GameSection({
   title,
   footer,
@@ -83,7 +77,6 @@ export function GameSection({
   )
 }
 
-/** A row's label and the line under it. */
 function RowText({
   label,
   description,
@@ -123,10 +116,6 @@ const rowStyle = {
   gap: 12,
 }
 
-/**
- * A row that opens something: its label, the value it holds, and a chevron (or
- * `icon`, for a row that does something here, like play a sample).
- */
 export function GameRow({
   label,
   description,
@@ -138,7 +127,7 @@ export function GameRow({
 }: {
   label: string
   description?: string
-  /** What it's set to now, before the chevron. */
+
   value?: string
   icon?: GameIconName
   onPress: () => void
@@ -180,10 +169,6 @@ export function GameRow({
   )
 }
 
-/**
- * A row of choices under a label, the picked one a cloth tab in the accent, as
- * the room's categories are: Reward sounds' Punch, Retro, Soft, Off.
- */
 export function GameChoiceRow<Choice extends string>({
   label,
   choices,
@@ -196,7 +181,7 @@ export function GameChoiceRow<Choice extends string>({
   choices: readonly { key: Choice; label: string }[]
   value: Choice
   onChange: (choice: Choice) => void
-  /** Wraps the choices into rows this many wide; one row when unset. */
+
   columns?: number
   palette: GamePalette
 }) {
@@ -263,10 +248,6 @@ export function GameChoiceRow<Choice extends string>({
   )
 }
 
-/**
- * A row with a switch. The whole row flips it; with `info` the switch alone
- * does, so the info button beside the label stays its own.
- */
 export function GameSwitchRow({
   label,
   description,
@@ -277,7 +258,7 @@ export function GameSwitchRow({
 }: {
   label: string
   description?: string
-  /** Help in a popover after the label. */
+
   info?: string
   value: boolean
   onValueChange: (value: boolean) => void
@@ -309,7 +290,7 @@ export function GameSwitchRow({
   return (
     <View style={[rowStyle, { paddingVertical: 4 }]}>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-        {/* The switch reads the label. */}
+        {}
         <View
           style={{ flexShrink: 1 }}
           importantForAccessibility='no-hide-descendants'

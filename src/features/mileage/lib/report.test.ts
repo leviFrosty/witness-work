@@ -127,7 +127,7 @@ describe('mileage reports on Shared Cars', () => {
   const shared = () => {
     const fixture = peopleFixture()
     const people = buildMileagePeople(fixture.cars, fixture.buddies)
-    // Newest first, as the Mileage screen hands them over.
+
     const trips = [
       fixture.trips.mazdaAna,
       fixture.trips.vanCal,
@@ -247,7 +247,7 @@ describe('mileage reports on Shared Cars', () => {
       '',
     ])
     expect(mine('Levi W.')).toContain('Distance: 30 mi')
-    // Without a Buddy Card name, the one they share on their cars.
+
     expect(mine()[2]).toBe('Logged by: Levi')
   })
 
@@ -270,8 +270,6 @@ describe('mileage reports on Shared Cars', () => {
         .slice(1)
         .map((row) => row[2])
 
-    // With no Buddy Card name, their own car's trip and their trip on a
-    // Shared Car both read as the name they share on their cars.
     expect(loggedBy({ people, ownName: '', filter: EVERYONE })).toEqual([
       'Levi',
       'Levi',
@@ -279,7 +277,7 @@ describe('mileage reports on Shared Cars', () => {
       'Cal',
       'Annie',
     ])
-    // Before their own member record has synced anywhere: "Me" throughout.
+
     const unnamed = Object.fromEntries(
       Object.entries(cars).map(([spaceId, car]) => [
         spaceId,

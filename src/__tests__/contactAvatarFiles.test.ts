@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 
-// Stub expo-file-system so importing contactAvatarFiles.ts doesn't drag in
-// the native module. We only assert pure path / rect math here.
 vi.mock('expo-file-system/legacy', () => ({
   documentDirectory: 'file:///fake/Documents/',
   getInfoAsync: vi.fn(async () => ({ exists: false })),
@@ -17,9 +15,7 @@ vi.mock('expo-image-manipulator', () => ({
   })),
   SaveFormat: { JPEG: 'jpeg' },
 }))
-// `../lib/logger` chains through to the preferences store which imports the
-// react-native MMKV module — not parseable in node. Stub it out for these
-// pure-function tests.
+
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import {
@@ -130,11 +126,11 @@ describe('contactAvatarFiles paths', () => {
     expect(originalSiblingFileName('contact-x-avatar.jpg')).toBe(
       'contact-x-avatar-original.jpg'
     )
-    // Profile avatar uses a different prefix — the helper is generic.
+
     expect(originalSiblingFileName('profile-avatar.jpg')).toBe(
       'profile-avatar-original.jpg'
     )
-    // No extension: append at end so the round-trip is non-destructive.
+
     expect(originalSiblingFileName('foo')).toBe('foo-original')
   })
 })

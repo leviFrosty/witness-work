@@ -6,13 +6,8 @@ const LOOKUP: Record<string, number> = Object.fromEntries(
   ALPHABET.split('').map((char, index) => [char, index])
 )
 
-/** Relay ids: 16 bytes as unpadded base64url. */
 export const RELAY_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/
 
-/**
- * Unpadded base64url: the only binary encoding on the Buddies and accounts
- * wire.
- */
 export function toB64u(bytes: Uint8Array): string {
   let out = ''
   let i = 0
@@ -38,7 +33,6 @@ export function toB64u(bytes: Uint8Array): string {
   return out
 }
 
-/** Throws on any character outside the base64url alphabet or a bad length. */
 export function fromB64u(text: string): Uint8Array {
   if (text.length % 4 === 1) throw new Error('Invalid base64url length')
   const out = new Uint8Array(Math.floor((text.length * 3) / 4))
@@ -66,7 +60,6 @@ export function fromUtf8(bytes: Uint8Array): string {
   return strFromU8(bytes)
 }
 
-/** Whether two byte arrays hold the same bytes. Not constant-time. */
 export const sameBytes = (a: Uint8Array, b: Uint8Array) =>
   a.length === b.length && a.every((byte, i) => byte === b[i])
 

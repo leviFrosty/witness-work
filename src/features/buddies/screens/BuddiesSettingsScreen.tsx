@@ -30,13 +30,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddies Settings'>
 
-/**
- * All Buddies' settings, or one buddy's over them (`inboxId`), picked at the
- * top: what buddies see, their Plans on the calendar, and alerts here. Each row
- * says where its value comes from. Undo in the header takes back this visit's
- * changes, newest first. All Buddies' page also holds the pause, Buddies
- * notifications, feedback, and deleting everything.
- */
 export default function BuddiesSettingsScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const inboxId = route.params?.inboxId ?? null
@@ -51,11 +44,11 @@ export default function BuddiesSettingsScreen({ route, navigation }: Props) {
 
   const select = (next: string | null) =>
     navigation.setParams({ inboxId: next ?? undefined })
-  // A new scope starts at the top.
+
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false })
   }, [inboxId])
-  // This visit's changes only.
+
   useEffect(() => {
     useBuddySettingsUndos.setState({ undos: [] })
     return () => useBuddySettingsUndos.setState({ undos: [] })
@@ -92,7 +85,6 @@ export default function BuddiesSettingsScreen({ route, navigation }: Props) {
           rightElement={
             <View style={{ position: 'absolute', right: 0 }}>
               <BuddySettingsUndoButton
-                // Back to where it was made, so the change is seen going back.
                 onUndone={(where) =>
                   navigation.setParams({ inboxId: where ?? undefined })
                 }

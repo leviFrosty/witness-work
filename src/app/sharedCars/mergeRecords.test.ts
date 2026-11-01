@@ -7,7 +7,6 @@ import {
 } from '@/app/sharedCars/mergeRecords'
 import type { SharedCar } from '@/types/sharedCars'
 
-/** `record` merged into `car` on its own: `car` itself when it didn't apply. */
 function mergeRecord(car: SharedCar, record: OpenedRecord): SharedCar {
   const merge = createCarMerge(car)
   merge.apply(record)
@@ -151,7 +150,7 @@ describe('mergeRecord', () => {
         updatedAt: 3,
       },
     ])
-    // An older build's key in the record is kept, to go back out with it.
+
     expect(car.extraFields).toEqual({
       [`m.${memberId}`]: { dhPub: 'C'.repeat(43) },
     })
@@ -191,7 +190,7 @@ describe('createCarMerge', () => {
       merge.apply({ ...trip(n + 1), recordId: `trip-${n}` })
     const car = merge.finish()
     expect(car.trips).toHaveLength(20_000)
-    // Linear: well under a second, where a list search per record takes many.
+
     expect(performance.now() - started).toBeLessThan(1500)
   })
 })

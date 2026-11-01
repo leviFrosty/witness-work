@@ -1,13 +1,7 @@
-/**
- * Entrances (1–3 s): played on adoption and when the species or coat changes.
- * Each ends at rest (dx 0, dy 0, facing left) with a joyful face, and the pet
- * says hello (`hi`) near the end.
- */
 import type { PetSpeciesId } from '../art/types'
 import { easeOut, lerp } from './ease'
 import type { MotionTable } from './types'
 
-/** Lion: runs in from the left, crouches, pounces, "RAWR!". */
 const lion: MotionTable = {
   durationMs: 2100,
   sayAtMs: 1500,
@@ -34,7 +28,6 @@ const lion: MotionTable = {
   },
 }
 
-/** Pup: dashes in from the right, skids past, comes back, spins, sits, "Woof!". */
 const dog: MotionTable = {
   durationMs: 2500,
   sayAtMs: 1850,
@@ -76,7 +69,6 @@ const dog: MotionTable = {
   },
 }
 
-/** Kitten: drops from the top, lands, small bounce, "Mrrp!". */
 const cat: MotionTable = {
   durationMs: 1900,
   sayAtMs: 1300,
@@ -94,7 +86,6 @@ const cat: MotionTable = {
   },
 }
 
-/** Donkey: trots in from the left, kicks its heels, "Hee-haw!". */
 const donkey: MotionTable = {
   durationMs: 2700,
   sayAtMs: 1950,
@@ -123,7 +114,6 @@ const donkey: MotionTable = {
   },
 }
 
-/** Lamb: three big hops in from the right, wiggles, "Baa!". */
 const lamb: MotionTable = {
   durationMs: 2300,
   sayAtMs: 1850,
@@ -144,7 +134,6 @@ const lamb: MotionTable = {
   },
 }
 
-/** Each species' entrance. */
 export const ENTRANCES: Readonly<Record<PetSpeciesId, MotionTable>> = {
   lion,
   dog,

@@ -38,7 +38,7 @@ describe('requestOrOfferLocationSettings', () => {
     mocks.request.mockResolvedValue({ granted: false, canAskAgain: false })
     await expect(requestOrOfferLocationSettings()).resolves.toBe(false)
     expect(mocks.request).toHaveBeenCalledOnce()
-    // Denying the prompt just now doesn't also send the User to Settings.
+
     expect(mocks.alert).not.toHaveBeenCalled()
   })
 

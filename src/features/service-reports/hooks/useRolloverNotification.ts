@@ -6,11 +6,6 @@ import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 
-/**
- * Last month's partial hour, waiting on a rollover decision. Gone once the User
- * rolls it over or picks "Not now"; `useRolloverPrompt` also brings the
- * decision up on Progress and before that month's report.
- */
 export default function useRolloverNotification(): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
   const { pending, markerKey } = useRollover()

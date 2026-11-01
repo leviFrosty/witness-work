@@ -20,10 +20,6 @@ import InfoPopoverTrigger, {
 
 const PADDING = 16
 
-/**
- * A SwiftUI popover of native text, which sizes to it and scales with Dynamic
- * Type.
- */
 export default function InfoPopover({
   title,
   description,
@@ -47,8 +43,6 @@ export default function InfoPopover({
     <Host
       matchContents
       colorScheme={colorScheme}
-      // Without this, triggers first laid out under the home indicator
-      // measure short.
       ignoreSafeArea='all'
       style={infoPopoverHostStyle(inline)}
     >

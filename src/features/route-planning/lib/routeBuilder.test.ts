@@ -253,7 +253,7 @@ describe('restoring a removed stop', () => {
     const day = [followUp('a', 600), followUp('b', 660), followUp('c', 720)]
     const { stops } = builderStops(
       day,
-      // As restore() saves it: off the removed list and out of the order.
+
       route({ order: ['followUp:a', 'followUp:c'], removed: [] })
     )
     expect(stops.map((s) => s.key)).toEqual([

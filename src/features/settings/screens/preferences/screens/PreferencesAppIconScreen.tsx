@@ -43,8 +43,7 @@ const TILES = [
   {
     variant: 'Seasonal',
     label: 'appIconSeasonal',
-    // Spring stands in as the seasonal preview; the actual rendered icon
-    // rotates with the date once selected.
+
     preview: require('@/assets/icons/SeasonalSpring.png'),
   },
   {

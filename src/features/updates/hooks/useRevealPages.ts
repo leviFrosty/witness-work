@@ -17,19 +17,17 @@ import {
   RevealChipSpec,
 } from '@/features/updates/constants/updateRevealPages'
 
-/** One page of a tour (the update's, or onboarding's). */
 export interface RevealPage {
-  /** Stable; also the page's analytics value. */
   id: string
   icon: AppIcon
   color: string
   title: string
   caption: string
-  /** A Siri phrase to call out beneath the caption, quoted. */
+
   callout?: string
-  /** The page's illustration. */
+
   Visual?: ComponentType<RevealVisualProps>
-  /** A grid of small feature tiles, drawn in place of `Visual`. */
+
   tiles?: RevealMoreTile[]
 }
 
@@ -42,23 +40,13 @@ export interface RevealMoreTile {
   label: string
 }
 
-/** Whether something limited to `platform` shows on this device. */
 export const onThisPlatform = (platform?: 'ios' | 'android') =>
   !platform || platform === Platform.OS
 
-/** Whether this device runs at least iOS `minIos`, when one is required. */
 export const meetsIos = (minIos?: number) =>
   !minIos ||
   (Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= minIos)
 
-/**
- * The tour as this device and role should see it: platform-only pages and tiles
- * dropped, Android copy where it differs, the Year Pace page only for roles
- * that have the card, Buddies (and mentions of it) only where it shows, and the
- * Apple Watch pages only on an iPhone. Whether a watch is paired isn't known
- * until the connection activates, after the reveal has started, so every iPhone
- * sees them.
- */
 const useRevealPages = () => {
   const theme = useTheme()
   const { hasAnnualGoal, showsTimeEntry } = usePublisher()

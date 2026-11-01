@@ -6,13 +6,8 @@ import {
   type RoadLegs,
 } from '@/features/route-planning/lib/roadLegs'
 
-/** Settle before asking, so dragging stops around asks once. */
 const SETTLE_MS = 500
 
-/**
- * Directions by road for each leg of `path` (start, stops, finish), as they
- * arrive. Legs not known yet are missing; they keep their estimates.
- */
 export default function useRoadLegs(path: Coordinate[]): RoadLegs {
   const [legs, setLegs] = useState(knownRoadLegs)
   const signature = path

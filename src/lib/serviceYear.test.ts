@@ -8,8 +8,6 @@ import {
   serviceYearOf,
 } from '@/lib/serviceYear'
 
-// The seams: Aug 31 → Sep 1 (Service Year boundary) and Dec 31 → Jan 1
-// (calendar boundary inside a Service Year).
 const cases = [
   { label: 'Aug 31', date: [2025, 7, 31], serviceYear: 2024, index: 11 },
   { label: 'Sep 1', date: [2025, 8, 1], serviceYear: 2025, index: 0 },
@@ -48,7 +46,7 @@ describe('serviceYear helpers', () => {
     ({ date, serviceYear, index }) => {
       const month = { year: date[0], month: date[1] }
       expect(serviceYearMonthIndex(month, serviceYear)).toBe(index)
-      // Unclamped outside the year.
+
       expect(serviceYearMonthIndex(month, serviceYear + 1)).toBe(index - 12)
       expect(serviceYearMonthIndex(month, serviceYear - 1)).toBe(index + 12)
     }

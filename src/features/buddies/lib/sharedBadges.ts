@@ -5,10 +5,8 @@ import {
 } from '@/lib/badges/catalog'
 import type { BadgeKey, SharedBadge } from '@/types/badges'
 
-/** A badge as it arrives, before this build has checked it knows it. */
 type WireBadge = { c: string; l?: number }
 
-/** The key a shared badge stands for, or null when this build doesn't know it. */
 function wireBadgeKey({ c, l }: WireBadge): BadgeKey | null {
   if (c.includes('.')) return null
   const parsed = parseBadgeKey(l === undefined ? c : `${c}.${l}`)
@@ -18,11 +16,6 @@ function wireBadgeKey({ c, l }: WireBadge): BadgeKey | null {
 export const sharedBadgeKey = (badge: SharedBadge): BadgeKey =>
   badgeKey(badge.c, badge.l)
 
-/**
- * The badges this build knows, each once, in the order they came. The same rule
- * as `knownSharedBadges` (`@/lib/badges/display`), kept free of i18n so the
- * engine runs anywhere.
- */
 export function knownBadges(
   badges: readonly WireBadge[] | undefined
 ): SharedBadge[] {
@@ -40,10 +33,6 @@ export function knownBadges(
   return known
 }
 
-/**
- * Whether `held` (one entry per collection at its highest level) includes
- * `badge`. Every level up to the highest is earned, so a lower one counts.
- */
 export function holdsBadge(
   held: readonly SharedBadge[] | undefined,
   badge: SharedBadge
@@ -54,16 +43,11 @@ export function holdsBadge(
   )
 }
 
-/** The badge to name first when several arrive together. */
 export const sortedForAnnouncement = (badges: readonly SharedBadge[]) =>
   [...badges].sort((a, b) =>
     compareBadgeKeysForAnnouncement(sharedBadgeKey(a), sharedBadgeKey(b))
   )
 
-/**
- * A buddy's badges with news of new ones folded in, newest first: each
- * collection at its highest level. The next Buddy Card replaces the lot.
- */
 export function withNewBadges(
   current: readonly SharedBadge[],
   news: readonly SharedBadge[]

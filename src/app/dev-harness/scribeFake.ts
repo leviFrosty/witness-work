@@ -11,14 +11,6 @@ import type { ScribeClient } from '@/features/scribe/lib/scribeClient'
 import { ScribeClientError } from '@/features/scribe/lib/errors'
 import { getOnline, simulateOffline } from '@/lib/http/online'
 
-/**
- * A fake Scribe AI server for the verify harness and Tools (dev builds only):
- * answers status, usage, steps and page reads on the device, so every Scribe
- * state can be reached without ww-api or a model. Steps come from a queue of
- * scripted steps; with the queue empty a step answers in text.
- */
-
-/** One step's events (terminal last), built from the request. */
 export type FakeStep = (body: StepRequest) => StepStreamEvent[]
 
 const DEFAULT_TOKENS = 3_000
@@ -50,13 +42,11 @@ const start = (body: StepRequest): StepStreamEvent => ({
   dropped: [],
 })
 
-/** Today's date as the context names it ("Wed 2026-10-21" → 2026-10-21). */
 const today = (context: ScribeContextWire): string =>
   context.days[7]?.slice(4) ?? context.now.slice(0, 10)
 const dayOffset = (context: ScribeContextWire, offset: number): string =>
   context.days[7 + offset]?.slice(4) ?? today(context)
 
-/** Refs of context contacts whose name starts with `first`. */
 const contactRefsNamed = (
   context: ScribeContextWire,
   first: string
@@ -66,7 +56,6 @@ const contactRefsNamed = (
     .filter(([, name]) => name?.toLowerCase() === first.toLowerCase())
     .map(([ref]) => ref)
 
-/** The ref of the context contact with exactly this name. */
 const contactRefByName = (
   context: ScribeContextWire,
   name: string
@@ -77,16 +66,11 @@ const contactRefByName = (
   return line ? line.slice(0, line.indexOf(' ')) : null
 }
 
-/** The first context line's ref whose text includes `part`. */
 const refIn = (lines: string[], part: string): string | null => {
   const line = lines.find((entry) => entry.includes(part))
   return line ? line.slice(0, line.indexOf(' ')) : null
 }
 
-/**
- * The next pending Ref of a kind (`n`, `nk`): one past the highest the
- * conversation has seen, as the device mints them.
- */
 const nextPending = (body: StepRequest, kind: 'n' | 'nk'): string => {
   const seen = JSON.stringify(body.messages).match(
     new RegExp(`\\b${kind}(\\d+)\\b`, 'g')
@@ -98,20 +82,17 @@ const nextPending = (body: StepRequest, kind: 'n' | 'nk'): string => {
   return `${kind}${highest + 1}`
 }
 
-/** The next `weekday` after today, from the context's days. */
 const nextWeekday = (context: ScribeContextWire, weekday: string): string =>
   context.days
     .slice(8)
     .find((day) => day.startsWith(weekday))
     ?.slice(4) ?? dayOffset(context, 7)
 
-/** A tool call the fake makes. */
 export interface FakeCall {
   name: string
   args: Record<string, unknown>
 }
 
-/** One step that makes `calls` and ends the turn for review. */
 export const callsStep =
   (calls: (body: StepRequest) => FakeCall[], text?: string): FakeStep =>
   (body) => [
@@ -129,7 +110,6 @@ export const callsStep =
 const words = (text: string): StepStreamEvent[] =>
   text.split(/(?<= )/).map((delta) => ({ type: 'text' as const, delta }))
 
-/** The usage snapshot the fake reports. */
 export const fakeUsage = (
   change: Partial<UsageSnapshotWire> = {}
 ): UsageSnapshotWire => ({
@@ -161,12 +141,7 @@ export const fakeStatus = (
   ...change,
 })
 
-/**
- * Canned turns, each a list of steps. Write steps end the turn (writes only),
- * so the Proposal shows for review.
- */
 export const FAKE_SCRIPTS = {
-  /** Plain text. */
   answer: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -174,10 +149,7 @@ export const FAKE_SCRIPTS = {
       done('end', fake.usage),
     ],
   ],
-  /**
-   * A note saved to memory without a word (as the real model does), then the
-   * reply in the step the app takes for it.
-   */
+
   remember: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -195,7 +167,7 @@ export const FAKE_SCRIPTS = {
       done('end', fake.usage),
     ],
   ],
-  /** One write: an hour logged today. */
+
   logTime: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -216,7 +188,7 @@ export const FAKE_SCRIPTS = {
       done('tool_calls', fake.usage),
     ],
   ],
-  /** A read, then two writes: plans_list → plans_create + time_log. */
+
   planAndLog: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -266,10 +238,7 @@ export const FAKE_SCRIPTS = {
       done('tool_calls', fake.usage),
     ],
   ],
-  /**
-   * A Visit with "Maria": a choice card when two context contacts are named
-   * Maria, else a new Contact. Follow-up next week.
-   */
+
   visitMaria: (): FakeStep[] => [
     (body) => {
       const marias = contactRefsNamed(body.context, 'Maria')
@@ -305,14 +274,7 @@ export const FAKE_SCRIPTS = {
       ]
     },
   ],
-  /**
-   * Every kind of write in one Proposal, for the `pioneer` scenario: a credit
-   * Category and time in it, time with a note and in LDC, a timed and an
-   * anytime Plan, a change to the first Plan, a new Contact with a long name
-   * and a Visit with a Follow-up, a change to Ada Reyes, a Bible study with
-   * Bruno Okafor, and a Not at Home for a new "Chen Wei" (a choice, since one
-   * exists).
-   */
+
   everyKind: (): FakeStep[] => [
     callsStep((body) => {
       const { context } = body
@@ -487,7 +449,7 @@ export const FAKE_SCRIPTS = {
       ]
     }, 'Here is everything from your update.'),
   ],
-  /** A call the app refuses, then the model's fix (a failed call → step + 1). */
+
   repair: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -530,7 +492,7 @@ export const FAKE_SCRIPTS = {
       done('tool_calls', fake.usage),
     ],
   ],
-  /** `finish: length`: the "too much at once" notice. */
+
   tooMuch: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -538,11 +500,11 @@ export const FAKE_SCRIPTS = {
       done('length', fake.usage),
     ],
   ],
-  /** `finish: refused`. */
+
   refused: (): FakeStep[] => [
     (body) => [start(body), done('refused', fake.usage)],
   ],
-  /** A full usage window: `limit_reached` with the meter. */
+
   limit: (): FakeStep[] => [
     () => {
       const meter = fakeUsage({
@@ -569,7 +531,7 @@ export const FAKE_SCRIPTS = {
       ]
     },
   ],
-  /** The model failed: an error row with Try again. */
+
   modelError: (): FakeStep[] => [
     (body) => [
       start(body),
@@ -582,17 +544,14 @@ export const FAKE_SCRIPTS = {
       },
     ],
   ],
-  /**
-   * The connection drops during the step: the app reads as offline until
-   * `__WW_DEV__.network.offline(false)`, and the turn ends with `network`.
-   */
+
   dropConnection: (): FakeStep[] => [
     () => {
       simulateOffline(true)
       return []
     },
   ],
-  /** The conversation is over the input cap (413 `context_full`). */
+
   contextFull: (): FakeStep[] => [
     () => [
       {
@@ -609,26 +568,22 @@ export const FAKE_SCRIPTS = {
 export type FakeScriptName = keyof typeof FAKE_SCRIPTS
 export const FAKE_SCRIPT_NAMES = Object.keys(FAKE_SCRIPTS) as FakeScriptName[]
 
-/** The fake's state; the harness edits it directly. */
 export const fake = {
   status: fakeStatus(),
   usage: fakeUsage(),
-  /** Steps still to answer, oldest first. */
+
   queue: [] as FakeStep[],
-  /** Bodies of the steps answered, oldest first (the last 20). */
+
   requests: [] as StepRequest[],
-  /** Text a paper page reads as; null fails the page. */
+
   pageText: 'Maria Lopez · 12 Oak St · came back for the brochure' as
     | string
     | null,
-  /** What the next pages read as, in order, before `pageText`; null fails one. */
+
   pageTexts: [] as (string | null)[],
-  /**
-   * Pages read before the connection drops (the app then reads as offline until
-   * `__WW_DEV__.network.offline(false)`); null never drops.
-   */
+
   dropAfterPages: null as number | null,
-  /** Milliseconds between streamed events, so the run states can be seen. */
+
   delayMs: 250,
 }
 
@@ -648,7 +603,6 @@ const fallbackStep: FakeStep = (body) => [
   done('end', fake.usage),
 ]
 
-/** A ScribeClient that answers from `fake`. */
 export const fakeScribeClient: ScribeClient = {
   status: async () => fake.status,
   usage: async () => fake.usage,
@@ -663,7 +617,7 @@ export const fakeScribeClient: ScribeClient = {
       onEvent(event)
       if (event.type === 'done' || event.type === 'error') return event
     }
-    // A script without a terminal event: the stream dropped.
+
     throw new ScribeClientError('network')
   },
   transcribe: async (_image, signal) => {
@@ -681,7 +635,6 @@ export const fakeScribeClient: ScribeClient = {
   },
 }
 
-/** Queues a canned turn's steps. */
 export function queueScript(name: FakeScriptName): number {
   fake.queue.push(...FAKE_SCRIPTS[name]())
   return fake.queue.length

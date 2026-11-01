@@ -25,7 +25,7 @@ const AppPreferencesSection = () => {
     }
 
     void updateLocationStatus()
-    // Re-read on return from Settings, where location may have been allowed.
+
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') void updateLocationStatus()
     })

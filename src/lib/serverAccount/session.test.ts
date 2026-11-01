@@ -53,7 +53,6 @@ type Session = {
   ended: boolean
 }
 
-/** The worker's routes, by the op names tests use. */
 const ROUTES: Record<string, string> = {
   'POST sessions': 'session/open',
   'POST sessions/refresh': 'session/refresh',
@@ -61,11 +60,6 @@ const ROUTES: Record<string, string> = {
   'GET account': 'account/info',
 }
 
-/**
- * A fake worker with the session routes and one bearer route (reading the
- * account). It checks the self-signed envelope the way ww-api does, and keeps
- * only what it would: token values and expiries.
- */
 function fakeWorker(clock: { now: number }) {
   const accounts = new Map<string, string>()
   const sessions: Session[] = []
@@ -172,10 +166,6 @@ function fakeWorker(clock: { now: number }) {
   return { fetchImpl, calls, sessions, accounts, override, opsCalled }
 }
 
-/**
- * Mirrors `DeviceAttestation.assert`: a challenge (from
- * `/attestation/v1/challenge`, the helper's own) and one submit.
- */
 function fakeAttestation(
   options: { fail?: () => Error | null; devBypass?: boolean } = {}
 ) {
@@ -207,7 +197,7 @@ function memoryStore(
     value: initial,
     writes: [] as (string | null)[],
     staleHash,
-    /** How many writes in a row the keystore refuses next. */
+
     failWrites: 0,
     read: vi.fn(async () => store.value),
     write: vi.fn(async (value: string | null) => {
@@ -228,7 +218,6 @@ function memoryStore(
   return store satisfies SessionStore
 }
 
-/** The next launch, reading what the last one left in both stores. */
 const nextLaunchStore = (store: ReturnType<typeof memoryStore>) =>
   memoryStore(store.value, store.staleHash)
 
@@ -238,7 +227,7 @@ function setup(
     clock?: { now: number }
     worker?: ReturnType<typeof fakeWorker>
     attestation?: ReturnType<typeof fakeAttestation>
-    /** This device's account key, which a test may replace. */
+
     device?: { key: Uint8Array }
     deps?: Partial<AccountSessionDeps>
   } = {}
@@ -304,7 +293,7 @@ describe('account sessions', () => {
     const response = await info()
 
     expect(response.data.accountId).toMatch(/^acct/)
-    // The attestation binds accountPub through both hashes.
+
     const hash = createHash('sha256')
       .update(`ww-account/v1/session\n${PUB_A}`, 'utf8')
       .digest('hex')
@@ -314,7 +303,7 @@ describe('account sessions', () => {
       contentHash: hash,
       requestHash: hash,
     })
-    // The helper gets the challenge from `/attestation/v1/challenge`.
+
     expect(attestation.requests[0].challenge).toBeUndefined()
     expect(Object.keys(worker.opsCalled('session/open')[0].body ?? {})).toEqual(
       ['payload', 'signature']
@@ -333,8 +322,7 @@ describe('account sessions', () => {
     expect(worker.opsCalled('account/info')[0].headers.authorization).toBe(
       'Bearer at-2'
     )
-    // The keystore holds the refresh token and whose it is, never the
-    // access token.
+
     const saved = JSON.parse(store.value!)
     expect(saved).toMatchObject({
       accountPub: PUB_A,
@@ -366,7 +354,7 @@ describe('account sessions', () => {
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
     clock.now += ACCESS_LIFETIME_MS
     await info()
-    // Each refresh sends the newest token, never a replaced one.
+
     expect(worker.opsCalled('session/refresh')[1].body).toEqual({
       refreshToken: 'rt-3',
     })
@@ -441,13 +429,12 @@ describe('account sessions', () => {
         { renew: true }
       )
     await renewed()
-    // Nothing to renew yet: the session was just opened.
+
     expect(worker.opsCalled('session/refresh')).toHaveLength(0)
 
     await renewed()
     expect(worker.opsCalled('session/refresh')).toHaveLength(1)
 
-    // Signed out from another device, with the access token still working.
     worker.sessions[0].ended = true
     worker.override.set('account/info', () =>
       json(200, { ok: true, accountId: worker.sessions[0].accountId })
@@ -486,7 +473,6 @@ describe('account sessions', () => {
     expect(onStatusChange).toHaveBeenCalledWith(PUB_A, 'suspended')
     expect(sessions.snapshot()?.status).toBe('suspended')
 
-    // A Buddies relay error says it with `code`.
     worker.override.delete('account/info')
     await expect(
       sessions.withSession(async () => {
@@ -552,7 +538,7 @@ describe('account sessions', () => {
     const pending = info()
     await vi.waitFor(() => expect(store.write).toHaveBeenCalledTimes(2))
     expect(worker.opsCalled('session/refresh')).toHaveLength(1)
-    // Not a request with the new access token until rt-3 is stored.
+
     expect(worker.opsCalled('account/info')).toHaveLength(1)
 
     release()
@@ -582,19 +568,17 @@ describe('account sessions', () => {
 
     await expect(first.info()).resolves.toBeTruthy()
 
-    // This launch carries on with the new pair…
     expect(
       first.worker.opsCalled('account/info').at(-1)?.headers.authorization
     ).toBe('Bearer at-4')
     expect(first.onStoreFailure).toHaveBeenCalledWith('save', expect.any(Error))
-    // …while the keystore still holds rt-1, marked stale by its hash.
+
     expect(JSON.parse(first.store.value!).refreshToken).toBe('rt-1')
     expect(first.store.staleHash).toBe(staleTokenHash('rt-1'))
     expect(first.store.staleHash).not.toContain('rt-1')
     await first.info()
     expect(first.worker.opsCalled('session/refresh')).toHaveLength(1)
 
-    // Long past the server's grace minute.
     first.clock.now += 60 * 60_000
     const relaunched = setup({
       store: nextLaunchStore(first.store),
@@ -603,7 +587,6 @@ describe('account sessions', () => {
     })
     await relaunched.info()
 
-    // rt-1 is never presented again: a new session, attested.
     expect(
       first.worker.opsCalled('session/refresh').map((call) => call.body)
     ).toEqual([{ refreshToken: 'rt-1' }])
@@ -704,7 +687,7 @@ describe('account sessions', () => {
     expect(openPayload(first.worker, 1).accountPub).toBe(PUB_B)
     expect(JSON.parse(relaunched.store.value!).accountPub).toBe(PUB_B)
     await vi.waitFor(() => expect(first.worker.sessions[0].ended).toBe(true))
-    // B's call carried B's session's token.
+
     const bearer = first.worker
       .opsCalled('account/info')[1]
       .headers.authorization.replace('Bearer ', '')
@@ -743,7 +726,7 @@ describe('account sessions', () => {
     )
     await expect(open.info()).rejects.toMatchObject({ failure: 'upgrade' })
     expect(open.onUpgradeRequired).toHaveBeenCalled()
-    // No more attestations until the app restarts.
+
     await expect(open.info()).rejects.toMatchObject({ failure: 'upgrade' })
     expect(open.attestation.assert).toHaveBeenCalledTimes(1)
   })
@@ -762,7 +745,7 @@ describe('account sessions', () => {
       status: 426,
       serverCode: 'upgrade_required',
     })
-    // Nor a refresh or a new session once the token runs out.
+
     clock.now += ACCESS_LIFETIME_MS
     await expect(info()).rejects.toMatchObject({ failure: 'upgrade' })
     await expect(sessions.withSession(async () => 'ran')).rejects.toMatchObject(
@@ -770,7 +753,7 @@ describe('account sessions', () => {
     )
     expect(worker.calls).toHaveLength(sent)
     expect(attestation.assert).toHaveBeenCalledTimes(1)
-    // The gate is already up; this isn't another 426 from ww-api.
+
     expect(onUpgradeRequired).not.toHaveBeenCalled()
 
     paused = false
@@ -797,17 +780,14 @@ describe('account sessions', () => {
       attestation: 'device',
     })
 
-    // Within the wait, nothing is asked of the device or the server.
     await expect(info()).rejects.toMatchObject({ attestation: 'device' })
     expect(attestation.assert).toHaveBeenCalledTimes(1)
     expect(sessions.lastOpenFailure()).toMatchObject({ attestation: 'device' })
 
-    // After the wait it asks again by itself.
     clock.now += OPEN_RETRY_AFTER_MS.device
     await expect(info()).rejects.toMatchObject({ attestation: 'device' })
     expect(attestation.assert).toHaveBeenCalledTimes(2)
 
-    // The User's Try Again skips the wait.
     error = null
     await expect(sessions.ensure(undefined, { retry: true })).resolves.toEqual(
       expect.objectContaining({ sessionId: 'sid-1' })
@@ -870,8 +850,7 @@ describe('account sessions', () => {
       failure: 'rateLimited',
       retryAfterMs: 120_000,
     })
-    // Every call until then fails at once: no attestation, no request, and
-    // nothing more reported. The User's Try Again included.
+
     clock.now += 30_000
     await expect(info()).rejects.toMatchObject({
       failure: 'rateLimited',
@@ -908,7 +887,7 @@ describe('account sessions', () => {
     clock.now += 29_000
     await expect(info()).rejects.toMatchObject({ failure: 'rateLimited' })
     expect(attestation.assert).toHaveBeenCalledTimes(1)
-    // Another account key isn't held back.
+
     await expect(info(KEY_B)).resolves.toBeTruthy()
     expect(attestation.assert).toHaveBeenCalledTimes(2)
 
@@ -995,7 +974,7 @@ describe('account sessions', () => {
           ended: worker.sessions[0].ended,
           stored: store.value,
         }
-        // Started mid-swap: the device's key, and the old key by name.
+
         waiting = [
           info().then((response) => response.data.accountId),
           info(KEY_A).catch((error: unknown) => error),
@@ -1011,7 +990,7 @@ describe('account sessions', () => {
     expect(duringSwap).toEqual({ ended: true, stored: null })
     const [accountB, oldKey] = await Promise.all(waiting)
     expect(accountB).toBe(worker.accounts.get(PUB_B))
-    // No session for the old key once it's replaced, in this launch.
+
     expect(oldKey).toMatchObject({ failure: 'cancelled' })
     await expect(sessions.ensure(KEY_A)).rejects.toMatchObject({
       failure: 'cancelled',

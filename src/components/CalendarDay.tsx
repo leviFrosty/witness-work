@@ -29,14 +29,13 @@ import { touchTargetFrame } from '@/components/ui/touchTarget'
 
 const boxSize = 40
 
-/** A calendar day, as the Schedule and the week strip describe each cell. */
 export type DateData = {
   year: number
-  /** 1-based. */
+
   month: number
   day: number
   timestamp: number
-  /** `YYYY-MM-DD`. */
+
   dateString: string
 }
 
@@ -46,16 +45,8 @@ type DayProps = {
   onPress?: (date?: DateData) => void
 }
 
-/**
- * The square is a fixed size, so its text grows only this far with the system
- * text size; the day's label reads everything out instead.
- */
 const FONT_SCALE_CAP = 1.15
 
-/**
- * What a day's square counts: its Plans, the time logged, or (`auto`) the time
- * logged once there is some and the Plans until then.
- */
 export type CalendarViewMode = 'planned' | 'actual' | 'auto'
 
 export const getDateStatusColor = (
@@ -90,11 +81,10 @@ const getNoteIndicatorColor = (
   theme: Theme,
   backgroundColor: string
 ): string => {
-  // For light backgrounds (planned/background), use dark indicator
   if (backgroundColor === theme.colors.background) {
     return theme.colors.textAlt
   }
-  // For dark/colored backgrounds (error, warn, accent), use light indicator
+
   return theme.colors.textInverse
 }
 
@@ -103,7 +93,7 @@ const NonPlannedDay = (
     serviceReports: TimeEntry[] | undefined
     viewMode?: CalendarViewMode
     height?: number
-    /** Today's local `YYYY-MM-DD`, from `useLocalDay`. */
+
     today: string
   }
 ) => {
@@ -201,7 +191,7 @@ const PlannedDay = (
     recurringPlans?: RecurringPlan[]
     viewMode?: CalendarViewMode
     height?: number
-    /** Today's local `YYYY-MM-DD`, from `useLocalDay`. */
+
     today: string
   }
 ) => {
@@ -213,8 +203,7 @@ const PlannedDay = (
     ) || 0
 
   const disabled = props.state === 'disabled'
-  // Every Plan on the day adds up: each Day Plan and each recurring instance
-  // (with its override for the day).
+
   const hasDayPlans = !!props.dayPlans?.length
   const plannedMinutes = plannedMinutesForDay(
     moment(props.date!.dateString).toDate(),
@@ -229,7 +218,6 @@ const PlannedDay = (
 
   const hasAPlan = hasDayPlans || !!props.recurringPlans?.length
 
-  // Check for notes from day plans, service reports, and recurring plans (with overrides)
   const recurringPlanHasNote = props.recurringPlans?.some((plan) => {
     const effectiveNote = getEffectiveNoteForRecurringPlan(
       plan,
@@ -336,23 +324,17 @@ const CalendarDay = (
     monthsReports: TimeEntry[] | null
     viewMode?: CalendarViewMode
     height?: number
-    /**
-     * When provided, used in place of the live store. Lets non-app surfaces
-     * (onboarding previews, screenshots) show a planned day without writing to
-     * the user's actual schedule.
-     */
+
     dayPlansOverride?: DayPlan[]
     recurringPlansOverride?: RecurringPlan[]
-    /** Drawn over the cell, positioned within its box, e.g. who a Plan is with. */
+
     overlay?: ReactNode
-    /** What `overlay` shows, read out after the day's own label. */
+
     overlayAccessibilityLabel?: string
-    /** The day the Schedule has open, drawn by the caller; read as selected. */
+
     selected?: boolean
   }
 ) => {
-  // Only the slices a day reads: the Schedule keeps hundreds of days mounted,
-  // and a whole-store subscription re-renders every one on any change.
   const storeDayPlans = useServiceReport((s) => s.dayPlans)
   const storeRecurringPlans = useServiceReport((s) => s.recurringPlans)
   const dayPlans = props.dayPlansOverride ?? storeDayPlans
@@ -377,7 +359,7 @@ const CalendarDay = (
 
   const disabled = props.state === 'disabled'
   const localDay = dateString ? moment(dateString).toDate() : undefined
-  // Adjacent-month cells aren't selectable, so they get no menu either.
+
   const menu = useDayMenuActions(disabled ? undefined : localDay)
 
   if (props.date === undefined || !dateString || !localDay) return null
@@ -411,8 +393,6 @@ const CalendarDay = (
     formatMinutesSpoken
   )
 
-  // The square stays 40pt; the tap reaches into the space around it, which
-  // the Schedule's grid and the week strip leave free.
   const frame = touchTargetFrame(boxSize, props.height ?? boxSize)
   const inset = (frame.width as number) / 2 - boxSize / 2
 
@@ -425,7 +405,6 @@ const CalendarDay = (
   return (
     <ContextMenu
       actions={menu}
-      // The Schedule mounts a hundred days at once.
       deferHost
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: !!props.selected }}
@@ -436,7 +415,6 @@ const CalendarDay = (
           removeHint('howToAddPlan')
         }
       }}
-      // The square only shows totals; the preview lists the day's entries.
       preview={
         !disabled && dayHasPreview(previewData) ? (
           <DayPreview date={localDay} {...previewData} />

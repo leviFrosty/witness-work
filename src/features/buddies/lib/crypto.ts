@@ -3,12 +3,6 @@ import { sha256 as nobleSha256 } from '@noble/hashes/sha2.js'
 import { utf8 } from '@/features/buddies/lib/bytes'
 import { curve25519 } from '@/lib/curve25519'
 
-/**
- * The Buddies primitive set (see docs/buddies-protocol.md, "Client
- * cryptography"): HKDF-SHA256, X25519, Ed25519, ChaCha20-Poly1305. Everything
- * here is pure; callers supply randomness so tests stay deterministic.
- */
-
 export function hkdf(
   ikm: Uint8Array,
   salt: Uint8Array,
@@ -49,5 +43,4 @@ export function ed25519Verify(
   return curve25519().ed25519.verify(signature, message, publicKey)
 }
 
-// The sealed blob moved to the shared tier (accounts use it too).
 export { open, openBytes, seal, sealBytes } from '@/lib/sealedBlob'

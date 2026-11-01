@@ -12,7 +12,6 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 import { reminderOccurrences } from '@/lib/reminderSchedule'
 import { unloggedDayReminderGroups } from '@/lib/unloggedDayReminders'
 
-/** Local wall-clock instant on 2026-03-<day>. */
 const at = (day: number, hours = 0, minutes = 0) =>
   new Date(2026, 2, day, hours, minutes)
 
@@ -74,7 +73,6 @@ describe('anytime Plans', () => {
   })
 
   it('reminds to log time that evening, not the next one', () => {
-    // 5 hours from noon would end at 5 PM; a 10-hour one would pass 8 PM.
     const groups = unloggedDayReminderGroups(
       {
         dayPlans: [anytimePlan({ minutes: 600 })],

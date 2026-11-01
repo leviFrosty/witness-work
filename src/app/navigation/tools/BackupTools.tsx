@@ -33,7 +33,6 @@ import JsonViewer from '@/features/contacts/components/JsonViewer'
 const shortId = (value: string | null | undefined) =>
   value ? `${value.slice(0, 6)}…${value.slice(-4)}` : '—'
 
-/** Slot ids are shown in full only in dev builds. */
 const slotShown = (id: string | null | undefined) =>
   id ? (__DEV__ ? id : shortId(id)) : '—'
 
@@ -47,7 +46,6 @@ const describe = (error: unknown) =>
       ? `${error.serverCode ?? error.kind}${error.status ? ` (${error.status})` : ''}`
       : String(error)
 
-/** A downloaded slot as Tools shows it: counts by default, not the records. */
 const summarize = (inspection: BackupInspection, raw: boolean) => ({
   accountId: slotShown(inspection.accountId),
   slots: inspection.slots.map((slot) => ({
@@ -68,11 +66,6 @@ const summarize = (inspection: BackupInspection, raw: boolean) => ({
   })),
 })
 
-/**
- * Tools → Account → Backup (ADR 0026 §4): this install's slot and schedule, the
- * server's slot list, a log, and the real flows to upload, decrypt, dry-run a
- * restore, delete, and break things on purpose.
- */
 export default function BackupTools() {
   const theme = useTheme()
   const state = useBackupState()

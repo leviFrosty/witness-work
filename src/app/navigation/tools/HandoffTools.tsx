@@ -30,11 +30,9 @@ const shortId = (value: string | null | undefined) =>
 
 const clock = (at: number) => moment(at).format('HH:mm:ss.SSS')
 
-/** The channel id is shown and copied only in dev builds. */
 const channelShown = (id: string | null) =>
   id ? (__DEV__ ? id : shortId(id)) : '—'
 
-/** The snapshot as copied for a bug report: codes and times, no secrets. */
 const dump = (snapshot: HandoffDebugSnapshot, entry: string | null) =>
   JSON.stringify(
     {
@@ -53,19 +51,13 @@ const dump = (snapshot: HandoffDebugSnapshot, entry: string | null) =>
     2
   )
 
-/**
- * Tools → Account → Handoff (ADR 0026): the current or last Set Up Another
- * Device session on this phone, with its request log, plus a self-test, a link
- * parser, and shortcuts into both screens. For debugging a real two-phone
- * attempt: start it from the screens, then come back here on each phone.
- */
 export default function HandoffTools() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const session = useHandoffDebug((state) => state.session)
   const entry = useHandoffDebug((state) => state.entry)
   const startedAt = useHandoffDebug((state) => state.startedAt)
-  // Re-renders on every change of the session.
+
   useHandoffDebug((state) => state.revision)
   const [pasted, setPasted] = useState('')
   const [selfTest, setSelfTest] = useState<SelfTestStep[] | null>(null)

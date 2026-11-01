@@ -16,7 +16,6 @@ import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** Localized on the device; the relay fills pushes with no user content. */
 const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
   'invite.claimed': {
     title: i18n.t('buddies_pushInviteClaimedTitle'),
@@ -56,10 +55,6 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
   },
 })
 
-/**
- * One template per buddy whose requests to join may alert this device, all with
- * the same text; a muted buddy's kind is left out.
- */
 const joinRequestTemplates = async (): Promise<
   Record<JoinRequestPushKind, PushTemplate>
 > => {
@@ -72,10 +67,6 @@ const joinRequestTemplates = async (): Promise<
   ) as Record<JoinRequestPushKind, PushTemplate>
 }
 
-/**
- * The Android channel Buddies alerts are posted in. Created before registering,
- * so it exists before any alert.
- */
 export const BUDDIES_CHANNEL_ID = 'buddies'
 
 export function ensureBuddiesChannel() {
@@ -85,10 +76,6 @@ export function ensureBuddiesChannel() {
   })
 }
 
-/**
- * Buddies' social news (a new badge, a reaction) on Android: low importance, so
- * it lands in the shade without sound or a heads-up banner.
- */
 export const BUDDIES_NEWS_CHANNEL_ID = 'buddies_news'
 
 export async function ensureBuddiesNewsChannel(): Promise<void> {
@@ -98,7 +85,6 @@ export async function ensureBuddiesNewsChannel(): Promise<void> {
   })
 }
 
-/** APNs on iOS; FCM, through Google Play services, on Android. */
 async function pushAddress(): Promise<PushAddress> {
   const token = await Notifications.getDevicePushTokenAsync()
   if (Platform.OS === 'android') {
@@ -107,7 +93,7 @@ async function pushAddress(): Promise<PushAddress> {
     return {
       pushService: 'fcm',
       fcmToken: String(token.data),
-      // This build posts its own named alerts (`postBuddiesAlert`).
+
       appAlerts: true,
     }
   }
@@ -115,24 +101,18 @@ async function pushAddress(): Promise<PushAddress> {
     await Application.getIosPushNotificationServiceEnvironmentAsync()
   return {
     apnsToken: String(token.data),
-    // Dev-client and simulator builds talk to the APNs sandbox. TestFlight and
-    // App Store builds carry no provisioning profile, so they read `null`.
+
     apnsEnvironment:
       environment === 'development' || !Device.isDevice
         ? 'sandbox'
         : 'production',
-    // Beta and production are separate apps with their own APNs topic.
+
     ...(Application.applicationId
       ? { apnsTopic: Application.applicationId }
       : {}),
   }
 }
 
-/**
- * A buddy's new badges, and a buddy's reaction to one of this User's badges,
- * while badge alerts are on here. Generic on purpose: the relay stores this
- * text, so it never names anyone.
- */
 const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
   const templates: Record<BadgePushKind, PushTemplate> = {
     'badge.new': {
@@ -149,11 +129,6 @@ const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
   )
 }
 
-/**
- * A buddy shared a car, and a buddy joined one of this User's, while Shared
- * Cars runs here (its flag on, with Buddies). Generic, like every template:
- * never a name, and never the car's.
- */
 const carTemplates = (): Partial<Record<CarPushKind, PushTemplate>> =>
   useSharedCarsSession.getState().running
     ? {
@@ -168,10 +143,6 @@ const carTemplates = (): Partial<Record<CarPushKind, PushTemplate>> =>
       }
     : {}
 
-/**
- * Every template this device registers while Buddies notifications are on: the
- * relay's alert text, which the app replaces with a named alert.
- */
 export const buddiesPushTemplates = async () => ({
   ...pushTemplates(),
   ...(await joinRequestTemplates()),
@@ -179,17 +150,8 @@ export const buddiesPushTemplates = async () => ({
   ...carTemplates(),
 })
 
-/**
- * Registrations run one after another, so the last change is what the relay
- * keeps.
- */
 let registration: Promise<void> = Promise.resolve()
 
-/**
- * A registration that hangs (the APNs token can, and so can the FCM token
- * without Google Play services) stops holding up the next; its relay call is
- * cancelled.
- */
 const REGISTRATION_TIMEOUT_MS = 30 * 1000
 
 function withTimeout(work: (signal: AbortSignal) => Promise<void>) {
@@ -206,19 +168,9 @@ function withTimeout(work: (signal: AbortSignal) => Promise<void>) {
   )
 }
 
-/**
- * Registers this device for Buddies pushes once Buddies has started and the
- * system allows notifications. With Buddies notifications off here, it
- * registers no templates, so the relay sends this device nothing. An unchanged
- * registration is only re-sent once a day, so calling this often is cheap. Call
- * it again when buddies, join request mutes, badge alerts, Shared Cars running,
- * or the push token change.
- */
 export function registerBuddiesPush(): Promise<void> {
   const run = registration.then(() => withTimeout(register))
-  registration = run.catch(() => {
-    // The caller sees the failure; the next registration still runs.
-  })
+  registration = run.catch(() => {})
   return run
 }
 

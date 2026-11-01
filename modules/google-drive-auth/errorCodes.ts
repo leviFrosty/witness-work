@@ -1,24 +1,9 @@
-/**
- * Native → JS error taxonomy for the Google Drive authorization module.
- *
- * Deliberately free of native imports so the classifier stays unit-testable and
- * the sync transport can import it without loading the native module.
- */
-
 export type GoogleDriveAuthErrorCode =
-  /** Not Android, no Google Play services, or no activity to show UI on. */
   | 'unavailable'
-  /** The user closed Google's account picker or consent screen. */
   | 'canceled'
-  /** A silent request needs the user: never granted, revoked, or expired. */
   | 'consentRequired'
-  /** The user declined the Drive permission on the consent screen. */
   | 'scopeDenied'
   | 'network'
-  /**
-   * No Android OAuth client in the Cloud project matches this package name and
-   * signing certificate (Google's DEVELOPER_ERROR).
-   */
   | 'misconfigured'
   | 'unknown'
 
@@ -32,7 +17,6 @@ export class GoogleDriveAuthError extends Error {
   }
 }
 
-/** The stable tokens `GoogleDriveAuthModule.kt` rejects with. */
 const NATIVE_TOKENS = {
   GOOGLE_DRIVE_AUTH_UNAVAILABLE: 'unavailable',
   GOOGLE_DRIVE_AUTH_CANCELED: 'canceled',
@@ -50,10 +34,6 @@ const tokenCode = (value: string): GoogleDriveAuthErrorCode | null =>
     ? NATIVE_TOKENS[value as keyof typeof NATIVE_TOKENS]
     : null
 
-/**
- * Classifies a rejection by our own constant — from `code`, else from the
- * message. Never inspects a system-localized string.
- */
 export const googleDriveAuthErrorCode = (
   error: unknown
 ): GoogleDriveAuthErrorCode => {

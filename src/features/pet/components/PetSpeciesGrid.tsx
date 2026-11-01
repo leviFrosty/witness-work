@@ -13,11 +13,6 @@ import type { PetChoice } from '@/features/pet/lib/pickerSave'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 import { defaultCoatFor } from '@/types/pet'
 
-/**
- * The five animals in a 3-column grid (2 at accessibility text sizes, where the
- * names shrink to their tile), each idling on a paper card; the chosen one
- * ringed in the accent.
- */
 export default function PetSpeciesGrid({
   choice,
   onSelect,

@@ -4,12 +4,6 @@ import {
   requireOptionalNativeModule,
 } from 'expo-modules-core'
 
-/**
- * How an entry or trip was made, reported to analytics. `shortcut` is Siri or
- * Shortcuts on the Apple Watch; `phoneShortcut` is Siri or Shortcuts on the
- * iPhone or iPad (`targets/intents`). `tile` and `ongoing_activity` are the
- * Wear OS tile and the running timer's notification.
- */
 export type WatchOrigin =
   | 'app'
   | 'shortcut'
@@ -18,11 +12,9 @@ export type WatchOrigin =
   | 'tile'
   | 'ongoing_activity'
 
-/** A Time Entry made on the watch, waiting to be saved. */
 export type WatchEntryDraft = {
-  /** Becomes the Time Entry id, so a repeated delivery is saved once. */
   id: string
-  /** `YYYY-MM-DD` of the watch's local day when the entry was made. */
+
   date: string
   hours: number
   minutes: number
@@ -30,31 +22,24 @@ export type WatchEntryDraft = {
   origin: WatchOrigin
 }
 
-/** A mileage Trip made with Siri, waiting to be saved. */
 export type WatchTripDraft = {
-  /** Becomes the Trip id, so a repeated delivery is saved once. */
   id: string
-  /** `YYYY-MM-DD` of the local day when the trip was logged. */
+
   date: string
-  /** `null` uses the car a new trip would. */
+
   vehicleId: string | null
-  /** Already doubled for a round trip. */
+
   distanceMiles: number
   roundTrip: boolean
   origin: WatchOrigin
 }
 
 export type WatchStatus = {
-  /** IOS: WatchConnectivity. Android: Google Play services' Wearable API. */
   isSupported: boolean
   isPaired: boolean
   isWatchAppInstalled: boolean
   isComplicationEnabled: boolean
-  /**
-   * Widget kinds of the complications on the watch's faces and Smart Stack (and
-   * on Wear OS the tile, `WitnessWorkTile`), as the watch app last reported
-   * them; `null` before it has.
-   */
+
   activeComplications: string[] | null
 }
 
@@ -65,13 +50,13 @@ export type WatchEvent = {
 
 type WatchBridgeNative = {
   getStatus(): WatchStatus
-  /** Android takes `urgent`; iOS takes only the snapshot. */
+
   setSnapshot(json: string, urgent?: boolean): void
   getPendingEntries(): WatchEntryDraft[]
   getPendingTrips(): WatchTripDraft[]
   resolveEntries(ids: string[]): void
   takeEvents(): WatchEvent[]
-  /** Absent from binaries built before it was added. */
+
   takeErrors?(): string[]
   addListener(
     eventName: 'onInboxChange' | 'onStatusChange',
@@ -84,12 +69,6 @@ const native =
     ? requireOptionalNativeModule<WatchBridgeNative>('WatchBridge')
     : null
 
-/**
- * Whether this binary has the module: on iOS it talks to an Apple Watch over
- * WatchConnectivity and receives what Siri made on this device; on Android it
- * talks to the Wear OS app over the Wearable Data Layer
- * (`android/…/WatchSessionCoordinator.kt`).
- */
 export function isAvailable(): boolean {
   return native != null
 }
@@ -106,13 +85,6 @@ export function getStatus(): WatchStatus {
   )
 }
 
-/**
- * Stores the snapshot natively (for Siri on iOS), and sends it to the watch
- * when one is paired with the app installed. Skipped natively when it's what
- * the watch already has. Throws if the native side can't decode it. `urgent`
- * (Android) sends it right away; otherwise Wear OS may batch it to save
- * battery.
- */
 export function setSnapshot(
   json: string,
   { urgent }: { urgent: boolean }
@@ -124,40 +96,30 @@ export function setSnapshot(
   }
 }
 
-/** Entries from the watch or Siri not yet saved, oldest first. */
 export function getPendingEntries(): WatchEntryDraft[] {
   return native?.getPendingEntries() ?? []
 }
 
-/** Trips from Siri not yet saved, oldest first. */
 export function getPendingTrips(): WatchTripDraft[] {
   return native?.getPendingTrips() ?? []
 }
 
-/** Marks entries and trips as handled (saved or refused) and tells the watch. */
 export function resolveEntries(ids: string[]): void {
   if (ids.length) native?.resolveEntries(ids)
 }
 
-/** Returns and clears failures the native layer recorded, newest last. */
 export function takeErrors(): string[] {
   return native?.takeErrors?.() ?? []
 }
 
-/** Returns and clears analytics events recorded by the native layer. */
 export function takeEvents(): WatchEvent[] {
   return native?.takeEvents() ?? []
 }
 
-/** Fires when entries, trips or events arrive while JS is running. */
 export function onInboxChange(listener: () => void): EventSubscription {
   return native?.addListener('onInboxChange', listener) ?? { remove: () => {} }
 }
 
-/**
- * Fires when the connection activates or the paired watch, its app, or its
- * complications change.
- */
 export function onStatusChange(listener: () => void): EventSubscription {
   return native?.addListener('onStatusChange', listener) ?? { remove: () => {} }
 }

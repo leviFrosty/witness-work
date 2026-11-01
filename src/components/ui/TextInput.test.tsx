@@ -106,7 +106,7 @@ describe('TextInput placeholder on Android', () => {
     await act(async () =>
       overlay()[0].props.onLayout({ nativeEvent: { layout: { height: 90 } } })
     )
-    // 90 tall text plus 10 padding and a 1 pt border on each side.
+
     expect(flatten(field().props.style).minHeight).toBe(112)
 
     await act(async () => field().props.onChangeText('Ada'))

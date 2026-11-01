@@ -19,14 +19,6 @@ import type { NotificationItem } from '@/types/notifications'
 
 const KEY_PREFIX = badgeNewsKey('')
 
-/**
- * The User's new badges nobody has settled yet, one tray item each: earned
- * while the app wasn't in front (iCloud Sync, the Watch, Siri, overnight), or a
- * unlock toast that left without being opened or swiped away. View opens the
- * full-screen moment. Leaves out a badge whose toast is on screen or whose
- * moment is waiting its turn, and lets a badge go once the profile or the
- * Badges screen has shown it, or after a month. Nothing with Show badges off.
- */
 export default function useBadgeNotifications(now: number): NotificationItem[] {
   const earned = usePreferences((s) => s.earnedBadges)
   const seenAt = usePreferences((s) => s.badgesSeenAt)

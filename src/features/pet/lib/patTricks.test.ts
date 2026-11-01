@@ -14,7 +14,6 @@ const fakePlayer = (result: PatResult = 'pat') => ({
   playTwirl: vi.fn(),
 })
 
-/** Rub steps every `everyMs` from `fromMs` through `toMs`. */
 const scrub = (
   toucher: ReturnType<typeof createPetToucher>,
   fromMs: number,
@@ -66,7 +65,7 @@ describe('pet touches', () => {
     expect(results[SCRUB_TWIRL_MS / 100]).toBe('twirl')
     expect(player.playTwirl).toHaveBeenCalledTimes(1)
     expect(player.playTwirl).toHaveBeenCalledWith(SCRUB_TWIRL_MS)
-    // Lifting the finger allows another.
+
     toucher.endRub()
     scrub(toucher, 10_000, 10_000 + SCRUB_TWIRL_MS)
     expect(player.playTwirl).toHaveBeenCalledTimes(2)
@@ -98,7 +97,7 @@ describe('pet touches', () => {
     expect(rub.move(100)).toBe(0)
     expect(rub.move(100 + RUB_STEP_PX - 1)).toBe(0)
     expect(rub.move(100 + RUB_STEP_PX)).toBe(1)
-    // Back and forth adds up.
+
     expect(rub.move(100)).toBe(1)
     expect(rub.move(100 + RUB_STEP_PX * 3)).toBe(3)
     rub.end()

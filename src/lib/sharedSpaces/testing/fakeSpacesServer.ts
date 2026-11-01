@@ -13,33 +13,11 @@ import {
   wrapSpaceKey,
 } from '@/lib/sharedSpaces/crypto'
 
-/**
- * An in-memory ww-api implementing docs/shared-cars-protocol.md closely enough
- * to exercise the client and the Shared Cars engine end to end, modeled on
- * ww-api's `SharedSpace` Durable Object: sessions, member tokens and the keys
- * their ids commit to, the newest-stamp rule (an identical resend is stored
- * with no new `seq`), reserved ids (`m.` and `k.` records only their member's
- * and the owner's), key epochs and `stale_key`, invites (made at the current
- * epoch, closed when their inviter goes, their ids never reused), joins at the
- * invitation's epoch and their retries, leaving and the owner's hand-off,
- * removal, rekeying, deletion (whose id stays `gone`), a `seq` that every
- * change advances, the switches (kill switch, suspension, refusals on demand)
- * and the live signal with its socket cap. Its clock can differ from the
- * devices'. It opens, refreshes and closes sessions at `/accounts/v1/sessions`
- * without checking an attestation. Not a substitute for ww-api's own tests;
- * rate limits are left out (`refuseNext` stands in).
- *
- * It can also play a server that turned against its users, as far as a blind
- * server can: wrap a key of its own to a member (`plantWrap`), list a member of
- * its own (`addPhantomMember`), ask for a rekey (`forceRekeyNeeded`), and hand
- * out a record version of its choosing (`plantRecord`).
- */
-
 type Member = {
   tokenHash: string
   dhPub: string
   joinedAt: number
-  /** The current epoch's wrap. */
+
   wrap: string
 }
 
@@ -49,7 +27,7 @@ type Invite = {
   invitedBy: string
   createdAt: number
   wrong: number
-  /** Set once used; kept until it expires, so a retried join is recognized. */
+
   joined?: { memberId: string; dhPub: string; tokenHash: string }
 }
 
@@ -68,19 +46,14 @@ type Space = {
   ownerId: string
   members: Map<string, Member>
   invites: Map<string, Invite>
-  /**
-   * Invites closed before they expired (deleted, burned, or closed by a
-   * removal, a leave or a rekey), by id, with when they'd have expired: their
-   * ids aren't taken again until then.
-   */
+
   closedInvites: Map<string, number>
   records: Map<string, StoredRecord>
   rekeyNeeded: boolean
-  /** What `create` was sent, for recognizing an identical retry. */
+
   created: { memberId: string; dhPub: string; tokenHash: string; wrap: string }
 }
 
-/** A member of the server's own, which only its `sync` lists. */
 type Phantom = { dhPub: string; joinedAt: number }
 
 type FakeLive = LiveSocket & {
@@ -99,11 +72,11 @@ const INVITE_MAX_MS = 7 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000
 const STAMP_AHEAD_MS = 24 * 60 * 60 * 1000
 const BAD_JOINS = 5
 const SPACES_PER_DAY = 20
-/** Live sockets each member place allows (40 at the default cap of 10). */
+
 const SOCKETS_PER_PLACE = 4
-/** Ops a switched-off service still takes, so people can always leave. */
+
 const WHILE_DISABLED = new Set(['leave', 'member/remove', 'delete'])
-/** Ops a suspended account can't make, because they reach other people. */
+
 const REFUSED_WHILE_SUSPENDED = new Set([
   'create',
   'put',
@@ -112,7 +85,7 @@ const REFUSED_WHILE_SUSPENDED = new Set([
 ])
 
 const hashB64u = (text: string) => toB64u(sha256(fromB64u(text)))
-/** SHA-256 of the decoded blob, as hex, so strings compare as the bytes do. */
+
 const blobHash = (blob: string) =>
   Array.from(sha256(fromB64u(blob)), (byte) =>
     byte.toString(16).padStart(2, '0')
@@ -134,19 +107,15 @@ export function createFakeSpacesServer({
   androidSockets = false,
   pageRecords = SYNC_RECORDS,
 }: {
-  /** The server's clock, which may differ from the devices'. */
   now: () => number
   maxMembers?: number
-  /** The most records a `sync` page holds, the server's 1,000 by default. */
+
   pageRecords?: number
-  /**
-   * Sockets behave as React Native's do on Android: one closed while still
-   * connecting opens anyway.
-   */
+
   androidSockets?: boolean
 }) {
   const spaces = new Map<string, Space>()
-  /** Deleted spaces: their ids are `gone` for good. */
+
   const deleted = new Set<string>()
   const accounts = new Map<string, { accountPub: string; suspended: boolean }>()
   const sessions = new Map<
@@ -158,32 +127,31 @@ export function createFakeSpacesServer({
     { accountId: string; sessionId: string }
   >()
   const sockets = new Set<FakeLive>()
-  /** `sync` lists this `dhPub` for a member instead of theirs. */
+
   const forgedKeys = new Map<string, string>()
-  /** `sync` gives a member this epoch and wrap instead of theirs, by space. */
+
   const plantedWraps = new Map<
     string,
     Map<string, { epoch: number; wrap: string }>
   >()
-  /** Members of the server's own, by space. */
+
   const phantoms = new Map<string, Map<string, Phantom>>()
   let issued = 0
   const state = {
-    /** The kill switch (`spaces:enabled`). */
     enabled: true,
-    /** Members plus open invites a space may hold (`spaces:maxMembers`). */
+
     maxMembers,
-    /** Every op, by name only (no ids), for assertions. */
+
     log: [] as string[],
-    /** The next refusals of an op: `[op, status, code, retryAfterSeconds?]`. */
+
     refusals: [] as [string, number, string, number?][],
-    /** The next live upgrades to refuse, by HTTP status. */
+
     refusedSockets: [] as number[],
-    /** Created space count per account, for the daily cap. */
+
     created: new Map<string, number>(),
-    /** Sockets opened, ever. */
+
     socketsOpened: 0,
-    /** Every rekey stored: its epoch, and whom it wrapped the new key to. */
+
     rekeys: [] as { spaceId: string; epoch: number; memberIds: string[] }[],
   }
 
@@ -214,7 +182,6 @@ export function createFakeSpacesServer({
       (socket) => socket.spaceId === spaceId && !socket.closed
     )
 
-  /** `changed` with the head to every socket on the space, the writer's too. */
   function notify(spaceId: string) {
     const space = spaces.get(spaceId)
     if (!space) return
@@ -231,14 +198,12 @@ export function createFakeSpacesServer({
     socket.onclose?.({ code, reason })
   }
 
-  /** `4001 "gone"` to `memberId`'s sockets, or everyone's. */
   function closeSockets(spaceId: string, memberId?: string) {
     for (const socket of openSocketsOf(spaceId))
       if (memberId === undefined || socket.memberId === memberId)
         closeSocket(socket, 4001, 'gone')
   }
 
-  /** Every change advances `seq`; the sockets hear it. */
   function advance(spaceId: string, space: Space) {
     space.seq += 1
     notify(spaceId)
@@ -306,14 +271,12 @@ export function createFakeSpacesServer({
       )
     )
 
-  /** The account an `Authorization` header's token belongs to, or a refusal. */
   function caller(authorization: string | undefined): string | Response {
     if (!authorization?.startsWith('Bearer ')) return fail(401, 'unauthorized')
     const access = accessTokens.get(authorization.slice('Bearer '.length))
     return access ? access.accountId : fail(401, 'unauthorized')
   }
 
-  /** The member a member op proves, or the refusal. */
   function memberOf(fields: {
     spaceId?: unknown
     memberId?: unknown
@@ -338,7 +301,6 @@ export function createFakeSpacesServer({
       ([, invite]) => !invite.joined && invite.expiresAt > now()
     )
 
-  /** Expired invites go, used ones included: a retried join can't outlive them. */
   function prune(space: Space) {
     for (const [inviteId, invite] of space.invites)
       if (invite.expiresAt <= now()) space.invites.delete(inviteId)
@@ -346,7 +308,6 @@ export function createFakeSpacesServer({
       if (expiresAt <= now()) space.closedInvites.delete(inviteId)
   }
 
-  /** Closes an invite before it expires: its id isn't taken again until then. */
   function closeInvite(space: Space, inviteId: string) {
     const invite = space.invites.get(inviteId)
     if (!invite) return
@@ -354,7 +315,6 @@ export function createFakeSpacesServer({
     space.closedInvites.set(inviteId, invite.expiresAt)
   }
 
-  /** Every open invite closes (a removal, a rekey). */
   function closeOpenInvites(space: Space) {
     for (const [inviteId, invite] of space.invites)
       if (!invite.joined) closeInvite(space, inviteId)
@@ -371,11 +331,6 @@ export function createFakeSpacesServer({
     closeSockets(spaceId)
   }
 
-  /**
-   * `memberId` goes (they left, or the owner removed them): their token hash
-   * and wrap, and the invites they made that nobody used. The owner's place
-   * passes to whoever joined first; the last one out deletes the space.
-   */
   function dropMember(spaceId: string, space: Space, memberId: string) {
     space.members.delete(memberId)
     if (space.members.size === 0) {
@@ -392,7 +347,6 @@ export function createFakeSpacesServer({
     advance(spaceId, space)
   }
 
-  /** The space's members as `sync` lists them: phantoms too. */
   const listedMembers = (spaceId: string, space: Space) => [
     ...membersByJoining(space).map(([id, member]) => ({
       memberId: id,
@@ -461,8 +415,7 @@ export function createFakeSpacesServer({
     if (!Array.isArray(records) || records.length < 1)
       return fail(400, 'bad_request')
     if (records.length > PUT_RECORDS) return fail(413, 'too_large')
-    // The body is checked before the space: a stamp that isn't a whole
-    // millisecond, or too far ahead, is malformed whatever its epoch.
+
     if (
       records.some(
         (record) =>
@@ -474,8 +427,7 @@ export function createFakeSpacesServer({
       return fail(400, 'bad_request')
     if (records.some((record) => fromB64u(record.blob).length > BLOB_MAX))
       return fail(413, 'too_large')
-    // Another member's record, or a key chain link from anyone but the owner:
-    // none of the put is stored.
+
     const reserved = (recordId: string) =>
       (recordId.startsWith('m.') && recordId !== `m.${memberId}`) ||
       (recordId.startsWith('k.') && space.ownerId !== memberId)
@@ -522,7 +474,7 @@ export function createFakeSpacesServer({
       }
       return { recordId: record.recordId, stored: verdict !== 'older' }
     })
-    // A put that stores nothing sends no `changed`.
+
     if (space.seq !== before) notify(spaceId)
     return ok({ seq: space.seq, results })
   }
@@ -616,8 +568,6 @@ export function createFakeSpacesServer({
       const secretMatches = hashB64u(joinSecret) === invite.verifier
       const member = space.members.get(memberId)
       if (invite.joined) {
-        // A retry is recognized whatever its epoch, and answered with the
-        // current one.
         const retry =
           secretMatches &&
           invite.joined.memberId === memberId &&
@@ -642,9 +592,9 @@ export function createFakeSpacesServer({
       }
       if (!space.members.has(invite.invitedBy)) return fail(404, 'not_found')
       if (member) return fail(409, 'conflict')
-      // Nobody joins with a key for another epoch.
+
       if (epoch !== space.epoch) return fail(409, 'stale_key')
-      // The invite already holds a place; a lowered cap still applies.
+
       if (space.members.size + openInvites(space).length > state.maxMembers)
         return fail(429, 'limit')
       const joinedAt = now()
@@ -698,7 +648,7 @@ export function createFakeSpacesServer({
           return fail(400, 'bad_request')
         prune(space)
         if (epoch !== space.epoch) return fail(409, 'stale_key')
-        // An id closed before it expired isn't taken again.
+
         if (space.closedInvites.has(inviteId)) return fail(409, 'conflict')
         const existing = space.invites.get(inviteId)
         if (existing)
@@ -740,8 +690,6 @@ export function createFakeSpacesServer({
         if (removeId === memberId) return fail(400, 'bad_request')
         phantoms.get(spaceId)?.delete(removeId)
         if (space.members.has(removeId)) {
-          // Every open invite closes, so they can't come back through
-          // another member's before the rekey.
           closeOpenInvites(space)
           dropMember(spaceId, space, removeId)
         }
@@ -768,7 +716,7 @@ export function createFakeSpacesServer({
         if (epoch !== space.epoch + 1) return fail(409, 'stale_key')
         const named = new Set(wraps.map((w) => w.memberId))
         if (named.size !== wraps.length) return fail(400, 'bad_request')
-        // The members it lists, its own included: that's whom it asks for.
+
         const listed = new Set(
           listedMembers(spaceId, space).map((m) => m.memberId)
         )
@@ -789,8 +737,7 @@ export function createFakeSpacesServer({
         closeOpenInvites(space)
         state.rekeys.push({ spaceId, epoch, memberIds: [...named] })
         const seq = advance(spaceId, space)
-        // The link replaces any version of it, so one planted ahead can't
-        // block it.
+
         space.records.set(linkId, {
           epoch,
           stamp: link.stamp as number,
@@ -824,10 +771,6 @@ export function createFakeSpacesServer({
     )
   }
 
-  /**
-   * Whether a live upgrade would be taken, and as whom: the session, the kill
-   * switch, the headers, and the member's token.
-   */
   function admitSocket(
     headers: Record<string, string>
   ): { space: Space; spaceId: string; memberId: string } | null {
@@ -844,7 +787,7 @@ export function createFakeSpacesServer({
     } catch {
       return null
     }
-    // The token never rides in `x-ww-space-auth`.
+
     if ('token' in fields) return null
     const found = memberOf({
       ...fields,
@@ -858,7 +801,6 @@ export function createFakeSpacesServer({
     }
   }
 
-  /** The live signal, as React Native's WebSocket would open it. */
   function openSocket(
     _url: string,
     headers: Record<string, string>
@@ -875,7 +817,6 @@ export function createFakeSpacesServer({
       },
       close: (code = 1000) => {
         if (!socket.spaceId) {
-          // Still connecting: Android opens it anyway.
           if (!androidSockets) closedEarly = true
           return
         }
@@ -894,7 +835,6 @@ export function createFakeSpacesServer({
       }
       const admitted = admitSocket(headers)
       if (!admitted) {
-        // A refused upgrade: React Native says only that it closed.
         socket.closed = true
         socket.onclose?.({ code: 1006 })
         return
@@ -922,12 +862,12 @@ export function createFakeSpacesServer({
     openSocket,
     state,
     spaces,
-    /** Every access token stops working: the next calls refresh. */
+
     expireAccessTokens: () => accessTokens.clear(),
     suspend: (suspended = true) => {
       for (const account of accounts.values()) account.suspended = suspended
     },
-    /** The next `op` is refused with `code` (and a Retry-After, if given). */
+
     refuseNext(
       op: string,
       status: number,
@@ -936,22 +876,15 @@ export function createFakeSpacesServer({
     ) {
       state.refusals.push([op, status, code, retryAfterSeconds])
     },
-    /** The next live upgrade is refused (React Native sees only a close). */
+
     refuseNextSocket(status = 401) {
       state.refusedSockets.push(status)
     },
-    /**
-     * `sync` lists `dhPub` as `memberId`'s key from now on: a server (or
-     * whoever controls it) trying to swap in a key of its own.
-     */
+
     forgeMemberKey(memberId: string, dhPub: string) {
       forgedKeys.set(memberId, dhPub)
     },
-    /**
-     * `sync` gives `memberId` a wrap of `key`, a key the server chose, for
-     * `epoch` (the space's own when absent) from now on, as any server could: a
-     * wrap is made from public values.
-     */
+
     plantWrap(
       spaceId: string,
       memberId: string,
@@ -972,10 +905,7 @@ export function createFakeSpacesServer({
       planted.set(memberId, { epoch: at, wrap })
       plantedWraps.set(spaceId, planted)
     },
-    /**
-     * `sync` lists a member of the server's own on `spaceId`, with `dhPub` (a
-     * key it holds) and the id that commits to it. Returns that id.
-     */
+
     addPhantomMember(spaceId: string, dhPub: string): string {
       const memberId = memberIdFor(spaceId, dhPub)
       const listed = phantoms.get(spaceId) ?? new Map<string, Phantom>()
@@ -983,11 +913,7 @@ export function createFakeSpacesServer({
       phantoms.set(spaceId, listed)
       return memberId
     },
-    /**
-     * Stores `record` as the space's newest version of it, past every rule (who
-     * may put it, its epoch, its stamp): a version the server made up, or an
-     * older one it kept.
-     */
+
     plantRecord(spaceId: string, record: PutRecordBody) {
       const space = spaces.get(spaceId)!
       const seq = advance(spaceId, space)
@@ -1000,20 +926,17 @@ export function createFakeSpacesServer({
         seq,
       })
     },
-    /** `sync` says the space needs a new key, as if someone had gone. */
+
     forceRekeyNeeded(spaceId: string) {
       spaces.get(spaceId)!.rekeyNeeded = true
     },
-    /** The server tells the truth again: no planted wraps or phantoms. */
+
     honest() {
       forgedKeys.clear()
       plantedWraps.clear()
       phantoms.clear()
     },
-    /**
-     * Closes the space's live sockets (one member's, with `memberId`) with
-     * `code`, as the server does on `4001 "gone"` and `4002 "replaced"`.
-     */
+
     closeLive(spaceId: string, code: number, memberId?: string) {
       for (const socket of openSocketsOf(spaceId))
         if (memberId === undefined || socket.memberId === memberId)
@@ -1025,19 +948,13 @@ export function createFakeSpacesServer({
           !socket.closed &&
           (spaceId === undefined || socket.spaceId === spaceId)
       ).length,
-    /** Whether `spaceId` was deleted (its id stays `gone`). */
+
     isDeleted: (spaceId: string) => deleted.has(spaceId),
   }
 }
 
-/** Where the fake server answers. */
 export const FAKE_SPACES_URL = 'https://spaces.test'
 
-/**
- * A Spaces client for one account on `server`, with a real account session
- * (`createAccountSessions`) opened with the dev bypass, so it refreshes and
- * reopens as the app's does.
- */
 export function fakeSpacesClient(
   server: FakeSpacesServer,
   {

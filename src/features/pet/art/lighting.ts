@@ -1,27 +1,13 @@
-/**
- * Room lighting: the room darkens by time of day and the lamp lights a warm
- * circle around its flame, in five hard bands (pixel-art light). Window panes
- * are never darkened (the sky keeps its own colours; the frame and cross bars
- * are wood and darken with the room), and daytime adds a sunbeam falling from
- * the window across the floor. The pets (the `subject` mask) get only part of
- * the room's darkness, so a dark coat still reads at night with the lamp low.
- *
- * The light radius breathes slightly with the flame. Instead of measuring the
- * distance from the flame for every pixel every frame, each (lamp, level, time,
- * breathing phase) gets a cached per-pixel class map; a frame is then a table
- * lookup per pixel.
- */
 import { createLru, type PixelBuffer, type PixelMask } from '@/lib/pixelArt'
 
 import { SCENE_H, SCENE_W } from './layout'
 import { lampLightOrigin, lampTick, type LampId } from './room/lamp'
 import { isWindowPane, type TimeOfDay } from './room/window'
 
-/** Darkness away from the lamp, by lamp level (a brighter lamp lifts the room). */
 const NIGHT: readonly number[] = [0.74, 0.62, 0.52, 0.4, 0.28, 0.17]
-/** Light radius by lamp level. */
+
 const RADIUS: readonly number[] = [0, 26, 40, 56, 78, 112]
-/** How dark each time of day is, relative to night. */
+
 const TIME_DARKNESS: Readonly<Record<TimeOfDay, number>> = {
   night: 1,
   dusk: 0.82,
@@ -29,28 +15,20 @@ const TIME_DARKNESS: Readonly<Record<TimeOfDay, number>> = {
   day: 0.42,
 }
 
-/** The share of the room's darkness that falls on the pets. */
 const SUBJECT_DARKNESS = 0.5
 
-/** Number of cached breathing phases of the light radius. */
 export const LIGHT_PHASES = 8
 
-/** The breathing phase (0 … LIGHT_PHASES − 1) of the light radius at `tMs`. */
 export function lightPhase(tMs: number): number {
   const turn = 2 * Math.PI
   const angle = (((lampTick(tMs) * 1.3) % turn) + turn) % turn
   return Math.round((angle / turn) * LIGHT_PHASES) % LIGHT_PHASES
 }
 
-/** Pixel classes per map: light band 0–5 × on glass × in the sunbeam. */
 const CLASSES = 6 * 4
-/** Class tables also hold each class on a pet, at `CLASSES + class`. */
+
 const TABLE = CLASSES * 2
 
-/**
- * A cached lighting pass. Each pixel has a class; per class and channel a pixel
- * becomes `c * mul + dark + light` (a pet's pixel uses `CLASSES + class`).
- */
 interface LightMap {
   readonly cls: Uint8Array
   readonly mul: Float64Array
@@ -134,11 +112,6 @@ function lightMap(
   )
 }
 
-/**
- * Lights a 180 × 100 scene in place for `lamp` burning at `level` (0–5) at time
- * of day `time`, with the radius breathing at `tMs`. Pixels flagged in
- * `subject` (the pets) darken less.
- */
 export function applyLighting(
   buf: PixelBuffer,
   lamp: LampId,

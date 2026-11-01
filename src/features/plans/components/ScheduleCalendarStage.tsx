@@ -10,7 +10,6 @@ import type useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar
 import type { ScheduleDayIndex } from '@/features/plans/lib/scheduleDayIndex'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
 
-/** How far a pinch must go before it zooms. */
 const PINCH_OUT = 0.8
 const PINCH_IN = 1.3
 
@@ -19,20 +18,15 @@ type Props = {
   index: ScheduleDayIndex
   buddyMarkers: Record<string, BuddyDayMarker>
   selectedKey?: string
-  /** Room under the content for the floating tab bar. */
+
   bottomInset: number
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
   onPressDay: (date: Date) => void
   editableGoal: (month: CalendarMonth) => boolean
   onEditGoal: (month: CalendarMonth) => void
 }
 
-/**
- * The Month and Year views stacked in one frame. Only the active one takes
- * touches and VoiceOver; the zoom moves both through the same rects so one
- * appears to become the other. Pinching in or out zooms too.
- */
 export default function ScheduleCalendarStage({
   calendar,
   index,
@@ -44,9 +38,6 @@ export default function ScheduleCalendarStage({
   editableGoal,
   onEditGoal,
 }: Props) {
-  // Everything comes out of `calendar` up front. Reading it off `calendar`
-  // in render, after its refs, keeps the React Compiler from compiling this
-  // stage, and closures over `calendar` itself would change with every scroll.
   const {
     view,
     monthLanding,
@@ -79,11 +70,7 @@ export default function ScheduleCalendarStage({
     showCurrentServiceYear,
   } = calendar
   const monthActive = view === 'month'
-  // The Year view stays out until the Month view has drawn: mounted with it,
-  // its twelve months held up Schedule's first open by a few hundred ms. It
-  // then mounts as a transition, so a tap on the month goes first. A zoom out
-  // before then mounts it at once, and the views cross-fade as they do
-  // whenever the tiles aren't laid out yet.
+
   const [yearMounted, setYearMounted] = useState(false)
   const showYear = yearMounted || !monthActive
 
@@ -97,8 +84,6 @@ export default function ScheduleCalendarStage({
 
   const layer = (active: boolean) =>
     ({
-      // Never flattened: otherwise switching these props re-parents the whole
-      // view, every day's native menu included, and stalls the zoom.
       collapsable: false,
       pointerEvents: active ? 'box-none' : 'none',
       accessibilityElementsHidden: !active,
@@ -123,8 +108,6 @@ export default function ScheduleCalendarStage({
             buddyMarkers={buddyMarkers}
             selectedKey={selectedKey}
             bottomInset={bottomInset}
-            // Only the view in front tracks scrolling (and takes the
-            // status-bar tap, which iOS ignores with two takers).
             scrollBars={monthActive ? scrollBars : undefined}
             chromeStyle={zoom.monthChromeStyle}
             zoomStyle={zoom.monthZoomStyle}

@@ -37,7 +37,6 @@ import {
 } from '@/lib/weekPlanReminders'
 
 export type LocalReminder = {
-  /** The OS request id. Stable per record, so reconciling replaces it. */
   id: string
   date: Date
   kind:
@@ -48,31 +47,23 @@ export type LocalReminder = {
     | 'streak'
     | 'monthReport'
     | 'weekPlan'
-  /**
-   * The Visit, Plan, or Contact the reminder opens; for a reminder to log time,
-   * its earliest planned day (`YYYY-MM-DD`); for a streak, the day or month
-   * (its 1st) it waits on; for a report reminder, its month (`YYYY-MM`); to
-   * plan next week, that week's first day.
-   */
+
   targetId: string
-  /** The Visit's Contact. */
+
   contactId?: string
-  /** A Recurring Plan's instance (`YYYY-MM-DD`); `targetId` is the Plan. */
+
   day?: string
-  /**
-   * When the Follow-up or Plan starts, or the planned day's Plans end; when a
-   * streak ends; when the week to plan starts; the Contact's return otherwise.
-   */
+
   anchor: Date
   name?: string
-  /** A Follow-up's topic or a Plan's note. */
+
   note?: string
-  /** A Plan's title and planned minutes (the earliest day's, to log time). */
+
   title?: string
   minutes?: number
-  /** The planned days a reminder to log time covers, earliest first. */
+
   days?: string[]
-  /** The streak about to end. */
+
   streak?: { count: number; kind: StreakKind }
 }
 
@@ -81,11 +72,6 @@ export const reminderRequestId = (
   targetId: string
 ) => `witness-work-${kind}-${targetId}`
 
-/**
- * The minutes ahead of `anchor` a reminder fires, from what the record saved:
- * the chosen offset when it has one, else (records saved before offsets were
- * kept, or by an older app on another device) its saved fire time.
- */
 export function savedReminderOffsetMinutes(
   anchor: Date,
   saved: {
@@ -116,24 +102,17 @@ function reminderDate(
     : reminderFireDate(anchor, minutes)
 }
 
-/** An anytime Plan has no start to count back from: it reminds at 8:00 AM. */
 export const ANYTIME_PLAN_REMINDER_MINUTES = 8 * 60
 
-/** When an anytime Plan on stored day `date` reminds. */
 export const anytimePlanReminderDate = (date: Date | string) =>
   combineDateAndStartTime(date, ANYTIME_PLAN_REMINDER_MINUTES)
 
 const DAY_MS = 24 * 60 * 60_000
-/**
- * How far ahead a Recurring Plan's instances remind. A weekly Plan schedules
- * two or three, a small share of the OS's pending-notification limit; opening
- * the app tops it up.
- */
+
 export const RECURRING_PLAN_REMINDER_HORIZON_MS = 14 * DAY_MS
-/** The longest lead looked ahead for; a longer one reminds that far ahead. */
+
 const MAX_RECURRING_LEAD_MS = 366 * DAY_MS
 
-/** Whether a Recurring Plan still has an instance on `day` (`YYYY-MM-DD`). */
 export function recurringPlanOnDay(plan: RecurringPlan, day: string): boolean {
   const [year, month, date] = day.split('-').map(Number)
   return (
@@ -142,11 +121,6 @@ export function recurringPlanOnDay(plan: RecurringPlan, day: string): boolean {
   )
 }
 
-/**
- * One reminder per instance of a Recurring Plan, from yesterday's (still listed
- * in the tray while it runs) to those that fire within the horizon. Skipped
- * dates, the end date and per-date time, length and note come from the Plan.
- */
 function recurringPlanReminders(
   plan: RecurringPlan,
   fallback: NotificationOffset,
@@ -201,29 +175,20 @@ type ReminderSources = {
   contacts: Contact[]
   visits: Visit[]
   plans: DayPlan[]
-  /** Absent: none. */
+
   recurringPlans?: RecurringPlan[]
   visitOffset: NotificationOffset
   planOffset: NotificationOffset
-  /** Planned days still without time logged; absent when that's off. */
+
   unloggedDays?: UnloggedDaySources
-  /** The Service Streak; absent when its reminders are off. */
+
   streak?: ServiceStreak
-  /** Months with a report to send; absent when its reminder is off. */
+
   monthReport?: MonthReportSources
-  /** Plans for the weeks ahead; absent when inviting to plan them is off. */
+
   weekPlan?: WeekPlanSources
 }
 
-/**
- * Every reminder the records ask for, past or future, in no order. Built from
- * records alone, so it is the same after an edit, sync, or restore. The OS
- * schedule and the notifications tray both read it. Reminders to log time, to
- * plan next week, and a Recurring Plan's are the exception: they run up to two
- * weeks after `now` (the first two from a week or two back, the last from
- * yesterday's instance), and the report reminder is only the next one after
- * `now`.
- */
 export function reminderOccurrences(
   args: ReminderSources & { now?: number }
 ): LocalReminder[] {
@@ -341,7 +306,6 @@ export function reminderOccurrences(
   )
 }
 
-/** The local reminders this device should have scheduled, soonest first. */
 export function buildReminderSchedule(
   args: ReminderSources & { now: number }
 ): LocalReminder[] {

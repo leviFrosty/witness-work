@@ -18,24 +18,14 @@ import type {
   PopoverProps,
 } from '@/components/ui/Popover.types'
 
-// A tap that lands while the keyboard is up waits for it to hide, so the
-// popover anchors to where the trigger settles. Never leave it stranded.
 const KEYBOARD_SETTLE_FALLBACK_MS = 600
 
-/**
- * The state every native popover shares: content that mounts on open and
- * unmounts once dismissed, actions deferred until then, closing when the screen
- * loses focus, holding takeovers off, keeping a tap outside from pressing
- * what's behind, and a height cap that keeps the content on screen on whichever
- * side of the trigger has more room.
- */
 export function usePopoverPresentation({
   edge,
   dismissFallbackMs,
 }: {
-  /** Space the platform keeps between the content and a screen edge. */
   edge: number
-  /** Unmount this long after closing if the platform never reports it. */
+
   dismissFallbackMs: number
 }) {
   const navigation = useNavigation()
@@ -49,10 +39,10 @@ export function usePopoverPresentation({
   const openRef = useRef(false)
   const afterDismiss = useRef<(() => void) | null>(null)
   const request = useRef(0)
-  // Content mounted and waiting for its layout before it presents.
+
   const pendingOpen = useRef(false)
   const holdId = useId()
-  // Nothing takes over the screen while a popover is open or closing.
+
   useTakeoverHold(`popover:${holdId}`, mounted)
   usePopoverTouchShield(`popover:${holdId}`, mounted, contentRef)
 
@@ -96,8 +86,6 @@ export function usePopoverPresentation({
     Keyboard.dismiss()
   }
 
-  // Presents once the content has laid out, so the popover opens at its final
-  // size instead of growing into it.
   const contentLaidOut = () => {
     if (!pendingOpen.current) return
     pendingOpen.current = false
@@ -115,8 +103,6 @@ export function usePopoverPresentation({
     close()
   }
 
-  // Once the platform has dismissed it: unmount the content and run what was
-  // waiting on that, unless the trigger was tapped again meanwhile.
   const dismissed = () => {
     if (openRef.current) return
     if (pendingOpen.current) {
@@ -130,8 +116,6 @@ export function usePopoverPresentation({
     then?.()
   }
 
-  // Presents content that never reported a layout, and settles a dismissal the
-  // platform never reported.
   useEffect(() => {
     if (!mounted || open) return
     const timer = setTimeout(
@@ -152,8 +136,6 @@ export function usePopoverPresentation({
     return () => clearTimeout(timer)
   }, [mounted, open, dismissFallbackMs])
 
-  // A popover left open while its screen navigates away would sit over the
-  // next screen, or take a modal presented on it down with it.
   useEffect(
     () =>
       navigation.addListener('blur', () => {
@@ -172,20 +154,15 @@ export function usePopoverPresentation({
     open,
     maxHeight,
     show,
-    /** The platform reports the popover open or closed (e.g. a tap outside). */
+
     setPresented: (next: boolean) => (next ? setOpen(true) : close()),
     contentLaidOut,
-    /** The platform finished dismissing the popover. */
+
     dismissed,
     controls: { close, closeThen } satisfies PopoverControls,
   }
 }
 
-/**
- * The content's own scroll view, capped to the room beside the trigger. It is
- * also the viewport that visibility checks (supporter gate impressions) measure
- * against.
- */
 export function PopoverContent({
   contentRef,
   width,
@@ -195,7 +172,6 @@ export function PopoverContent({
   onLayout,
   children,
 }: {
-  /** Shared with the popover's state, which tells touches inside it apart. */
   contentRef: RefObject<View | null>
   width: number
   maxHeight?: number

@@ -1,13 +1,5 @@
 #!/usr/bin/env node
-// Helpers for the translate-locales skill (see SKILL.md beside this file).
-//
-//   todo  [--since <ref>] [--locale <name>]... [--chunk <n>] [--out <dir>]
-//   apply <name> <translations.json> [--dry-run]
-//   lint  [--locale <name>]...
-//   prune [--locale <name>]... [--dry-run]
-//   terms <name> <english term>... [--limit <n>]
-//
-// <name> is a file in src/locales without `.json`, e.g. `ru-RU`.
+
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -48,25 +40,8 @@ const isPluralNode = (node) =>
   Object.keys(node).length > 0 &&
   Object.keys(node).every((form) => PLURAL_FORMS.has(form))
 
-/**
- * How `<name>` counts, mirroring `pluralRules` in src/lib/locales.ts: CLDR's
- * rule for the language, European Portuguese apart from Brazilian, and
- * English's for Kinyarwanda, which CLDR doesn't cover.
- *
- * - `forms`: what renders. The app's pluralizer tries `zero` for 0 in every
- *   Language, then the CLDR category, then `other`.
- * - `required`: the categories a whole number from 0 to 1,000 lands on, plus
- *   `other`. Rarer ones (French `many` for millions) fall back to `other`.
- * - `oneIsOne`: whether `one` means exactly 1. In French it also covers 0 and
- *   1.5, in Russian 21 and 31, so there `one` must show the count.
- * - `countOptional`: forms that may leave out the count's placeholder because the
- *   noun says the number itself (`NOUN_CARRIES_COUNT`).
- */
 const pluralRules = new Map()
 
-// Languages whose noun forms carry the number on their own. Arabic's `one` is
-// only 1 and `two` only 2, and Arabic writes them with the singular and dual
-// noun rather than a numeral: «ساعة واحدة» (one hour), «ساعتان» (two hours).
 const NOUN_CARRIES_COUNT = { ar: ['one', 'two'] }
 
 function plurals(name) {
@@ -99,10 +74,6 @@ const sample = (numbers = []) =>
     .slice(0, 6)
     .join(', ')
 
-/**
- * Forms `<name>` needs that English doesn't have (Russian `few` and `many`),
- * for every plural key in English: `[keyPath, form, englishOther]`.
- */
 function* extraPluralForms(en, name, keyPath = []) {
   if (!isObject(en)) return
   if (isPluralNode(en)) {
@@ -114,11 +85,6 @@ function* extraPluralForms(en, name, keyPath = []) {
     yield* extraPluralForms(child, name, [...keyPath, key])
 }
 
-/**
- * Key paths in `strings` that English doesn't have, apart from plural forms of
- * an English plural key (Russian `few`). Nothing reads them, yet every app
- * binary and OTA bundle ships them.
- */
 function* deadKeys(en, strings, keyPath = []) {
   for (const [key, child] of Object.entries(strings)) {
     if (!Object.hasOwn(en, key)) {
@@ -128,7 +94,6 @@ function* deadKeys(en, strings, keyPath = []) {
   }
 }
 
-/** `strings` without its `deadKeys`. */
 function withoutDeadKeys(en, strings) {
   const kept = {}
   for (const [key, child] of Object.entries(strings)) {
@@ -143,7 +108,6 @@ function withoutDeadKeys(en, strings) {
   return kept
 }
 
-/** Nonempty string leaves, the same set `pnpm check:locales` requires. */
 function* leaves(node, keyPath = []) {
   if (typeof node === 'string') {
     if (node.trim()) yield [keyPath, node]
@@ -209,16 +173,12 @@ function shortcutPhraseKeys() {
 const tokens = (text) => (text.match(TOKEN) ?? []).sort().join(' ')
 const braces = (text) => text.replace(TOKEN, '').replace(/[^{}]/g, '').length
 const boldMarkers = (text) => text.split('**').length - 1
-/** `tokens` output with any one placeholder left out (the count's). */
+
 const withoutOne = (list) => {
   const all = list ? list.split(' ') : []
   return all.map((_, i) => all.filter((__, j) => j !== i).join(' '))
 }
 
-/**
- * Problems per dotted key in locale `name`'s `strings`, checked against
- * English.
- */
 function lintStrings(en, strings, name) {
   const issues = new Map()
   const add = (key, problem) =>
@@ -234,7 +194,7 @@ function lintStrings(en, strings, name) {
     let expected = [tokens(english)]
     if (isPluralNode(pluralNode) && typeof pluralNode.other === 'string') {
       const other = tokens(pluralNode.other)
-      // A form may write its number out ("1 match") or show the count.
+
       if (form === 'one' && !rules.oneIsOne) expected = [other]
       else if (form !== 'zero') expected.push(other)
       if (rules.countOptional.has(form)) expected.push(...withoutOne(other))
@@ -267,8 +227,6 @@ function lintStrings(en, strings, name) {
     } else phrases.set(spoken, key)
   }
 
-  // Forms beyond English's must be ones this Language renders, and a
-  // translated plural key needs every form a count up to 1,000 lands on.
   ;(function pluralForms(enNode, node, keyPath) {
     if (!isObject(enNode) || !isObject(node)) return
     if (isPluralNode(enNode)) {
@@ -314,7 +272,6 @@ function lintStrings(en, strings, name) {
   return issues
 }
 
-/** Sets `keyPath` to `value`, inserting new keys beside their English neighbors. */
 function withValue(target, enNode, [key, ...rest], value) {
   const child = rest.length
     ? withValue(
@@ -381,8 +338,7 @@ function todo() {
           problems: issues.get(key),
         }
     }
-    // Plural forms English doesn't have, such as Russian `few`: translate
-    // them from English's `other`.
+
     for (const [keyPath, form, other] of extraPluralForms(en, name)) {
       const key = [...keyPath, form].join('.')
       const current = get(strings, [...keyPath, form])
@@ -486,7 +442,6 @@ function lint() {
   console.log('No problems found.')
 }
 
-/** Deletes the keys English no longer has (`deadKeys`) from each locale. */
 function prune() {
   const en = readLocale(SOURCE)
   let total = 0

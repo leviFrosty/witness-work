@@ -14,19 +14,13 @@ import useConversations from '@/stores/conversationStore'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Visit } from '@/types/visit'
 
-/**
- * Opening a Visit, plus Edit, Reschedule Follow-Up, Open Link, copy, Dismiss
- * Follow-Up, and Delete, wherever it shows: a timeline card (tap, swipe, and
- * long-press menu) and Visit Details' More menu.
- */
 export default function useVisitMenuActions(
   visit: Visit,
   options: {
-    /** Leaves Edit out, for hosts with their own Edit button. */
     withoutEdit?: boolean
-    /** The host is a sheet (Visit Details); forms open over it. */
+
     overSheet?: boolean
-    /** A delete was confirmed and done. */
+
     onDeleted?: () => void
   } = {}
 ) {

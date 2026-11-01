@@ -24,11 +24,6 @@ import { visitOutcome } from '@/features/contacts/lib/visitTimeline'
 
 const NOTE_LINES = 3
 
-/**
- * One visit on the rail. Tap opens Visit Details; swipe left deletes;
- * long-press offers the Visit's menu (Edit, Reschedule Follow-Up, Open Link,
- * copy, Dismiss Follow-Up, Delete).
- */
 const VisitTimelineCard = ({
   visit,
   highlighted,
@@ -37,20 +32,18 @@ const VisitTimelineCard = ({
   highlighted: boolean
 }) => {
   const theme = useTheme()
-  // A line of text is at least its font size tall.
+
   const showMorePadding = (MIN_TOUCH_TARGET - theme.fontSize('sm')) / 2
   const { open, requestDelete, menu } = useVisitMenuActions(visit)
   const [expanded, setExpanded] = useState(false)
   const [truncates, setTruncates] = useState(false)
   const updateConversation = useConversations((s) => s.updateConversation)
   const showsNote = hasNote(visit)
-  // Links show as preview cards below the text, so only the text can clamp.
-  // Photos show only when the note is expanded.
+
   const hasPhotos = richTextImages(getNoteDoc(visit)).length > 0
   const canExpand = showsNote && (truncates || hasPhotos || expanded)
   const dayLabel = visitDayLabel(visit.date)
-  // At accessibility text sizes the day wraps whole, with the time under it,
-  // instead of shrinking to its first letter.
+
   const largeText = useAccessibilityTextSize()
   const fields = activeCustomFieldDefs(
     useConversations((state) => state.conversationFieldDefs)
@@ -82,7 +75,6 @@ const VisitTimelineCard = ({
           note: getNoteText(visit),
           fields,
         })}
-        // Keep Show more / Show less reachable by screen readers.
         accessible={!canExpand}
         actions={menu}
       >
@@ -139,8 +131,7 @@ const VisitTimelineCard = ({
                 />
               ) : (
                 <>
-                  {/* Invisible unclamped copy: iOS only reports the visible
-                    lines of a clamped Text, so measure the full note here. */}
+                  {}
                   <View
                     aria-hidden
                     pointerEvents='none'
@@ -171,8 +162,7 @@ const VisitTimelineCard = ({
               )}
               {canExpand && (
                 <PointerHover effect='highlight'>
-                  {/* A real 44pt-tall frame: the row's swipe takes touches
-                      on slop. The margin keeps the card's layout. */}
+                  {}
                   <Pressable
                     onPress={() => setExpanded((value) => !value)}
                     accessibilityRole='button'

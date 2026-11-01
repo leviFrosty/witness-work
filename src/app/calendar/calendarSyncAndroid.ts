@@ -13,12 +13,6 @@ import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { recoveryProperties } from '@/app/calendar/calendarRecovery'
 
-/**
- * Android Calendar Sync: one device, no ownership protocol. Options and the
- * destination stay in the device-local store, and publishing is an idempotent
- * upsert (see `androidEvents.ts`), so it's always safe to run again.
- */
-
 const LOCAL_SOURCE = 'local'
 
 function labeled(destination: CalendarDestination): CalendarDestination {
@@ -31,7 +25,7 @@ export async function calendarDestinations() {
   const bridge = androidCalendarBridge()
   if (!(await bridge.requestAccess())) throw new Error('CALENDAR_PERMISSION')
   const calendars = (await bridge.destinations()).map(labeled)
-  // Access was just allowed: an earlier permission error no longer applies.
+
   if (
     useCalendarPublishing.getState().error === 'calendarPermissionErrorAndroid'
   )
@@ -39,7 +33,6 @@ export async function calendarDestinations() {
   return calendars
 }
 
-/** Google and most other accounts don't accept new calendars from the device. */
 export function calendarSources(): CalendarSource[] {
   return [{ id: LOCAL_SOURCE, title: i18n.t('calendarThisDeviceAndroid') }]
 }
@@ -56,7 +49,7 @@ export async function connectCalendar(
     failingSince: null,
   })
   await publishCalendar()
-  // Device-only calendars never reach the user's other devices.
+
   analytics.capture('calendar_connected', {
     created: fresh,
     local_calendar: !!destination.local,
@@ -71,7 +64,6 @@ export async function createCalendar() {
   await connectCalendar(labeled(destination), { fresh: true })
 }
 
-/** One-tap setup: reuse a WitnessWork calendar, otherwise create one here. */
 export async function quickConnectCalendar(): Promise<'connected'> {
   const calendars = await calendarDestinations()
   const existing = calendars.filter(
@@ -128,7 +120,7 @@ export async function publishCalendar() {
   })
   if (writes.length || deletes.length)
     await bridge.apply(calendarId, writes, deletes)
-  // Past follow-ups are never backfilled, so only upcoming ones are counted.
+
   useCalendarSync.setState({
     lastSyncedAt: Date.now(),
     upcomingCount: snapshot.entries.filter((entry) => entry.start >= now)

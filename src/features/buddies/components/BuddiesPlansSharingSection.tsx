@@ -23,7 +23,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 type PauseChoice = 'off' | 'week' | 'month' | 'indefinite' | 'current'
 
-/** When a pause chosen now ends. */
 function pauseEnd(choice: 'week' | 'month' | 'indefinite'): number {
   if (choice === 'indefinite') return PAUSED_INDEFINITELY
   return moment()
@@ -32,13 +31,6 @@ function pauseEnd(choice: 'week' | 'month' | 'indefinite'): number {
     .valueOf()
 }
 
-/**
- * How buddies see my Plans, in the current scope: whether they do, and how
- * precisely start times show. Days and lengths are the point, so they go
- * whenever Plans do. All Buddies' settings add a pause that withholds Plans,
- * streak, badges, and the pet from everyone for a while, whatever their own
- * settings.
- */
 export default function BuddiesPlansSharingSection() {
   const { buddy, record } = useBuddySettingsScope()
   const plans = useScopedSetting('plans')
@@ -54,7 +46,7 @@ export default function BuddiesPlansSharingSection() {
 
   const pauseChoices: { value: PauseChoice; label: string }[] = [
     { value: 'off', label: i18n.t('buddies_pauseOff') },
-    // A timed pause shows when it ends; choosing a length again restarts it.
+
     ...(paused && pausedUntil !== PAUSED_INDEFINITELY
       ? [
           {
@@ -75,7 +67,6 @@ export default function BuddiesPlansSharingSection() {
       ? 'indefinite'
       : 'current'
 
-  // Saved at once; a failed republish is retried by the next sync.
   const setPause = (until: number) =>
     void buddiesEngine
       .setSharing({ pausedUntil: until })

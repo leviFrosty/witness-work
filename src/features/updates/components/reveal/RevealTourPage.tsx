@@ -27,9 +27,8 @@ import MoreVisual from '@/features/updates/components/reveal/visuals/MoreVisual'
 import { tracking } from '@/lib/tracking'
 import { forwardSign } from '@/lib/direction'
 
-/** How small or large an illustration may draw to fill its stage. */
 const VISUAL_SCALE = { min: 0.62, max: 1.5 }
-/** Side margin kept clear of the illustration. */
+
 const VISUAL_INSET = 20
 
 interface Props {
@@ -37,18 +36,13 @@ interface Props {
   index: number
   width: number
   height: number
-  /** Horizontal scroll of the tour, for parallax. */
+
   scrollX: SharedValue<number>
   active: boolean
   palette: WelcomePalette
   reduceMotion: boolean
 }
 
-/**
- * One page of the tour: the illustration, as large as its stage allows, over a
- * short title and caption. The illustration trails the swipe a little, so pages
- * feel layered; the copy rises in the first time a page arrives.
- */
 const RevealTourPage = ({
   page,
   index,
@@ -85,13 +79,12 @@ const RevealTourPage = ({
     : 1
 
   const drift = reduceMotion ? 0 : 1
-  // `scrollX` runs in reading order; the drift is physical.
+
   const sign = forwardSign()
   const visualStyle = useAnimatedStyle(() => {
     const offset = (scrollX.value - index * width) / Math.max(1, width)
     const away = Math.min(1, Math.abs(offset))
     return {
-      // Gone by the time it would trail into the next page's space.
       opacity: 1 - Math.min(1, away / 0.6),
       transform: [
         { translateX: sign * offset * width * 0.3 * drift },
@@ -145,8 +138,6 @@ const RevealTourPage = ({
         {stage && (
           <Animated.View
             style={[
-              // Illustrations are drawn with hand-placed coordinates and
-              // transforms that don't mirror, so they keep their LTR layout.
               { width: VISUAL.width, height: VISUAL.height, direction: 'ltr' },
               visualStyle,
             ]}

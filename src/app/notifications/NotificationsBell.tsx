@@ -28,17 +28,13 @@ import usePendingUpdateNotification from '@/features/updates/hooks/usePendingUpd
 import useUpdateRevealNotification from '@/features/updates/hooks/useUpdateRevealNotification'
 import useMissedFollowUpNotifications from '@/features/visits/hooks/useMissedFollowUpNotifications'
 
-/**
- * The Home header bell. Each feature derives its own items; the tray merges
- * them, newest first.
- */
 export default function NotificationsBell() {
   const { now, refresh } = useNow()
   const buddiesEnabled = useBuddiesEnabled()
   const buddiesSync = useBuddyTraySyncStatus()
   const items: (NotificationItem | null)[] = [
     useAnnouncementNotification(),
-    // Ahead of last month's report on the same day: decide the rollover first.
+
     useRolloverNotification(),
     usePreviousReportNotification(now),
     useAuxiliaryMonthNotification(now),

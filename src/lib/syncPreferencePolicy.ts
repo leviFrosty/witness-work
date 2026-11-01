@@ -48,9 +48,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'hasMigratedTagsToCategories',
   'hasMigratedProfileFromPreferences',
   'hasCollapsedLdcIntoCategory',
-  // Legacy field — removed from the schema but may still exist on disk for
-  // installs that pre-date the id-keyed migration. Listed here so the boot
-  // cleanup that wipes it doesn't propagate the deletion through sync.
+
   'customContactFields',
   'devSupporterOverride',
   'devSupporterNudgeForceShow',
@@ -81,7 +79,6 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
 
 export const NON_SYNCABLE_PROFILE_KEYS = new Set(['profileUpdatedAt'])
 
-/** Both onboarding fresh-start paths preserve an explicit device-local choice. */
 export const FRESH_SETUP_PREFERENCES = {
   iCloudFreshSetup: true,
   iCloudSyncEnabled: false,
@@ -89,7 +86,6 @@ export const FRESH_SETUP_PREFERENCES = {
   iCloudSyncNeedsResolution: false,
 }
 
-/** Maps are merged per entry. Missing entries with a stamp represent deletions. */
 export const SYNC_MAP_KEYS = new Set([
   'monthlyGoalOverrides',
   'reportCommentOverrides',
@@ -103,23 +99,13 @@ export const SYNC_SET_KEYS = new Set([
   'submittedReportMonths',
   'badgeLedger',
 ])
-/**
- * Celebrations already shown (`celebratedTiers`, `celebratedMilestones`,
- * `homeChecklistAllDoneCelebrated`). They follow the account, so a second
- * device or a restore doesn't replay fireworks the User saw elsewhere. They
- * arrive in the same payload as the records that reach them, so no Home focus
- * sees one without the other; seeding them after a restore would instead have
- * to guess which ones the User saw. A merge keeps every one either side saw
- * (true wins, lists and maps union): an older copy, or a dev Tools reset, never
- * takes one back.
- */
+
 export const SYNC_UNION_KEYS = new Set([
   'celebratedTiers',
   'celebratedMilestones',
   'homeChecklistAllDoneCelebrated',
 ])
 
-/** Union of two `SYNC_UNION_KEYS` values, in `local`'s order first. */
 export function unionPreference(local: unknown, remote: unknown): unknown {
   if (typeof local === 'boolean' || typeof remote === 'boolean')
     return local === true || remote === true

@@ -10,12 +10,7 @@ interface Props extends ViewProps {
   variant?: GlassCardVariant
   padding?: number
   highlighted?: boolean
-  /**
-   * Semantic color treatment. `amber` is reserved for the month-goal `record`
-   * (12-month personal-best) celebration — tints the glass warm and swaps the
-   * border to the supporter palette. Default keeps the neutral card look used
-   * everywhere else.
-   */
+
   tone?: GlassCardTone
 }
 
@@ -43,7 +38,7 @@ const GlassCard: React.FC<PropsWithChildren<Props>> = ({
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isAmber ? 0.25 : variant === 'elevated' ? 0.18 : 0.1,
           shadowRadius: variant === 'elevated' ? 14 : 8,
-          // iOS squircle — smoother than circular corners.
+
           borderCurve: 'continuous',
         },
         style,

@@ -15,11 +15,11 @@ type Props = {
   summary: Summary
   vehicles: Vehicle[]
   format: MileageFormatter
-  /** List per-car totals when more than one car has trips. */
+
   showBreakdown?: boolean
-  /** Shown between the totals and the per-car breakdown. */
+
   chart?: ReactNode
-  /** Keys each car in the breakdown to its color in `chart`. */
+
   vehicleColors?: VehicleChartColor[]
 }
 
@@ -33,8 +33,7 @@ function Stat({
   info?: string
 }) {
   const theme = useTheme()
-  // At accessibility text sizes the stats stack, each with the full width, so
-  // the label wraps whole instead of truncating.
+
   const largeText = useAccessibilityTextSize()
   return (
     <View style={largeText ? { gap: 2 } : { flex: 1, gap: 2 }}>
@@ -62,7 +61,6 @@ function Stat({
   )
 }
 
-/** Distance, trips, and estimated cost, plus an optional per-car breakdown. */
 export default function MileageSummary({
   summary,
   vehicles,

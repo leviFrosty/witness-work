@@ -23,92 +23,61 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { hasNote as noteExists } from '@/lib/richText/notes'
 import { formatDisplay } from '@/lib/dates'
 
-/** A buddy drawn on the calendar, mirroring the in-app `BuddyAvatar`. */
 export type WidgetCalendarBuddy = {
   id: string
-  /** Drawn when there's no photo or emoji. Empty when the name has none. */
+
   initial: string
   emoji: string | null
-  /** Base64 JPEG thumbnail (at most ~10 KB). */
+
   image: string | null
 }
 
-/** Mirrors `BuddyDayBadge`'s inputs for one day. */
 export type WidgetCalendarDayBuddies = {
-  /**
-   * Ids into `WidgetCalendar.buddies` of who the User goes out with, stacked up
-   * the cell's right edge from the corner (`stackedBuddies`).
-   */
   withIds: string[]
-  /** Buddies left out of `withIds`, counted in a "+N" circle atop the stack. */
+
   more: number
-  /** Other buddies plan to go out; drawn as a dot when `withIds` is empty. */
+
   goingOut: boolean
-  /** Pre-translated VoiceOver label naming the buddies. */
+
   label: string
 }
 
-/** Pre-computed calendar cell mirroring `CalendarDay.tsx`'s render inputs. */
 export type WidgetCalendarDay = {
-  /** ISO date `YYYY-MM-DD` used as a stable id + deep-link parameter. */
   date: string
-  /** 1..31 */
+
   day: number
   isCurrentMonth: boolean
   isToday: boolean
-  /**
-   * True when the date is today or earlier — mirrors `dateInPast` in
-   * CalendarDay.tsx.
-   */
+
   isPast: boolean
   wentInService: boolean
   hasPlan: boolean
-  /**
-   * Pre-formatted compact planned-hours string (e.g. `"1.5h"`, `"30m"`). Empty
-   * string when there is no plan or it would be zero. Matches
-   * `formatMinutesCompact` in-app.
-   */
+
   plannedText: string
-  /**
-   * Sum of service-report minutes for the day. Kept alongside plannedText so
-   * the widget can fall back to worked minutes for non-planned days if we ever
-   * want that UI; currently unused but trivially small.
-   */
+
   workedMinutes: number
   hitGoal: boolean
   hasNote: boolean
-  /** Buddy badge for the day, or `null` when there's nothing to show. */
+
   buddies: WidgetCalendarDayBuddies | null
 }
 
 export type WidgetCalendar = {
-  /**
-   * Publishers don't have plans/hour goals, so the calendar widget is hidden
-   * for them. The Swift side shows a locked placeholder when this is `true`.
-   */
   locked: boolean
-  /** 0-indexed month the snapshot was built for. */
+
   month: number
   year: number
-  /** 0 = Sunday, 1 = Monday, … mirrors preferences.startOfWeek. */
+
   startOfWeek: number
-  /** Localized short weekday labels ordered by `startOfWeek`. Length 7. */
+
   weekdayLabels: string[]
-  /** Localized full month title, e.g. `"April 2026"`. */
+
   monthTitle: string
-  /**
-   * Full 6-week (42 cell) grid starting from the first `startOfWeek` day on or
-   * before the 1st of the month. The widget filters to the current week for
-   * medium size and renders the full array for large.
-   */
+
   days: WidgetCalendarDay[]
-  /**
-   * Index into `days` where the current week starts (multiple of 7), or 0 if
-   * today is not in the displayed month. Lets the medium-sized widget pick a
-   * slice without re-computing dates in Swift.
-   */
+
   currentWeekStart: number
-  /** Every buddy referenced by a day's `buddies.withIds`. */
+
   buddies: WidgetCalendarBuddy[]
 }
 
@@ -117,13 +86,10 @@ export type BuildCalendarArgs = {
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
   publisher: Publisher
-  /** Mirrors `preferences.logsHours` — see `tracksHours`. */
+
   logsHours: boolean
   startOfWeek: number
-  /**
-   * `YYYY-MM-DD` → buddy marker, as on the Schedule calendar. Empty when
-   * Buddies is off.
-   */
+
   buddyMarkers: Record<string, BuddyDayMarker>
 }
 
@@ -132,10 +98,6 @@ const TOTAL_CELLS = 42
 const buddyNames = (buddies: Buddy[]) =>
   buddies.map(buddyDisplayName).join(', ')
 
-/**
- * Mirrors `BuddyDayBadge`: the avatar stack when going out together, else a
- * dot.
- */
 function dayBuddies(
   marker: BuddyDayMarker | undefined
 ): WidgetCalendarDayBuddies | null {
@@ -162,7 +124,6 @@ function dayBuddies(
   }
 }
 
-/** Mirrors `toProfileAvatar` + `Avatar`'s photo → emoji → initial fallback. */
 function widgetBuddy(buddy: Buddy): WidgetCalendarBuddy {
   return {
     id: buddy.inboxId,
@@ -172,7 +133,6 @@ function widgetBuddy(buddy: Buddy): WidgetCalendarBuddy {
   }
 }
 
-/** The grid of `now`'s month; the widget snapshot also builds next month's. */
 export function buildCalendar(
   args: BuildCalendarArgs,
   now: moment.Moment = moment()
@@ -182,15 +142,12 @@ export function buildCalendar(
   const monthStart = now.clone().startOf('month')
   const monthEnd = monthStart.clone().endOf('month')
 
-  // Localized short weekday labels reordered by startOfWeek.
-  const baseShortDays = moment.weekdaysShort() // starts Sunday
+  const baseShortDays = moment.weekdaysShort()
   const weekdayLabels: string[] = []
   for (let i = 0; i < 7; i++) {
     weekdayLabels.push(baseShortDays[(args.startOfWeek + i) % 7])
   }
 
-  // Regular Publishers don't track hours unless they opt in, so the feature
-  // is locked for them.
   if (!tracksHours(args.publisher, args.logsHours)) {
     return {
       locked: true,
@@ -205,14 +162,11 @@ export function buildCalendar(
     }
   }
 
-  // Walk back from the 1st to the previous startOfWeek so the grid always
-  // begins on the user's preferred weekday column.
   const gridStart = monthStart.clone()
   while (gridStart.day() !== args.startOfWeek) {
     gridStart.subtract(1, 'day')
   }
 
-  // Month reports pulled once; per-day filter below is cheap.
   const monthReports = getMonthsReports(args.serviceReports, month, year)
 
   const days: WidgetCalendarDay[] = []
@@ -227,7 +181,6 @@ export function buildCalendar(
     const isToday = d.isSame(now, 'day')
     const isPast = d.isSameOrBefore(now, 'day')
 
-    // Reports only live in the current month bucket; skip the cross-month tail.
     const dayKey = localDayKey(d)
     const reportsForDay = isCurrentMonth
       ? monthReports.filter((r) => storedDayKey(r.date) === dayKey)
@@ -261,7 +214,6 @@ export function buildCalendar(
 
     const hitGoal = wentInService && hasPlan && workedMinutes >= plannedMinutes
 
-    // Like the in-app calendar, other months' days get no buddy badge.
     const marker = isCurrentMonth ? args.buddyMarkers[iso] : undefined
     const badge = dayBuddies(marker)
     for (const buddy of marker?.withBuddies ?? []) {
@@ -289,8 +241,6 @@ export function buildCalendar(
     }
   }
 
-  // Clamp: when today is outside this snapshot's month (rare at month
-  // rollover), point the medium widget at the row containing the 1st.
   if (!now.isBetween(monthStart, monthEnd, 'day', '[]')) {
     currentWeekStart = 0
   }

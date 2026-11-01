@@ -8,14 +8,9 @@ import {
 } from '@/lib/richText/noteImages'
 import type { RichTextImageAttrs } from '@/types/richText'
 
-/** Long edge, in pixels. Keeps sync transfers inside iCloud's read deadline. */
 export const NOTE_IMAGE_MAX_SIDE = 2048
 const JPEG_QUALITY = 0.8
 
-/**
- * Copies a picked photo into the note images folder, downscaled and re-encoded
- * as JPEG (which also drops its location metadata).
- */
 export async function saveNoteImage(
   sourceUri: string,
   size?: { width: number; height: number }

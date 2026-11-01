@@ -201,90 +201,45 @@ import {
   sharedPhotoExpiry,
 } from '@/features/buddies/lib/sharedNotes'
 
-/**
- * Buddies client orchestration: pairing, sync, Buddy Card publishing, and
- * teardown, against the relay contract in docs/buddies-protocol.md. Every
- * dependency is injected so two engines can pair through an in-memory relay in
- * tests.
- */
-
-/** A buddy's `car.*` event, handled once, for the Shared Car it's about. */
 export type CarEventNotice = {
   kind: CarEventKind
-  /** The buddy's inbox id. */
+
   from: string
   spaceId: string
   inviteId: string
-  /** `car.reply`: their answer. */
+
   status?: CarReply
 }
 
-/** An invitation this device sent whose `car.invite` can't go any more. */
 export type LostCarInvite = { to: string; spaceId: string; inviteId: string }
 
-/**
- * What Buddies carries for Shared Cars (docs/shared-cars-protocol.md): their
- * invitations as `car.*` events, and the cars the User is on in the roster. The
- * Shared Cars engine, outside Buddies, acts on them.
- */
 export type BuddiesCarsDeps = {
-  /** The cars the User is on and has left, for the roster. */
   memberships: () => SharedCarMemberships
-  /** Another device's, from the roster: merged in, and each car follows. */
+
   mergeMemberships: (remote: SharedCarMemberships) => void
-  /**
-   * The open invitations to a Shared Car this User sent to `inboxId`'s person,
-   * to cancel when they stop being a buddy.
-   */
+
   openInvitesTo: (inboxId: string) => OpenCarInvite[]
-  /**
-   * Whether a buddy's `car.reply` is about a car this User is on and an
-   * invitation that went to them.
-   */
+
   replyApplies: (reply: {
     from: string
     spaceId: string
     inviteId: string
   }) => boolean
-  /**
-   * The User is on `spaceId`: the car is on this device, or the roster says
-   * they joined it on another. A buddy's invitation to it reads as joined.
-   */
+
   isOnCar?: (spaceId: string) => boolean
-  /**
-   * This User's invitation `inviteId` is still open on `spaceId`, so its
-   * `car.invite` may go. One closed meanwhile (canceled, answered, lapsed, or
-   * closed by a rekey), here or on another of their devices, is dropped.
-   */
+
   inviteOpen?: (spaceId: string, inviteId: string) => boolean
-  /** A buddy's `car.*` event was handled (once): the car follows it. */
+
   onEvent?: (notice: CarEventNotice) => void
-  /**
-   * This User's invitation `inviteId` to `to` can't go from this device: what
-   * it carries is gone from it (a restore onto a new phone, or a binary without
-   * device secrets that restarted). Its `car.invite` is dropped, and taken back
-   * if it may have reached them; the car owes it again, and sends a new one in
-   * its place on its next sync that can.
-   */
+
   onInviteLost?: (invite: LostCarInvite) => void
-  /**
-   * `inboxId` is no longer a buddy: this User's open invitations to them close
-   * on the car.
-   */
+
   onBuddyGone?: (inboxId: string) => void
-  /**
-   * Leaves every car the User is on, keeping a personal copy of each, for
-   * Delete My Buddies Data. `pending` counts the cars the server hasn't heard
-   * leave yet, and `notLeft` names them ('' for one that never synced here).
-   */
+
   leaveAll?: () => Promise<{ pending: number; notLeft?: { name: string }[] }>
-  /**
-   * Finishes the leaves, shares, and invitation closes this device owes, for
-   * signing out of the account here. `pending` counts those the server hasn't
-   * heard yet.
-   */
+
   finishPending?: () => Promise<{ pending: number }>
-  /** Forgets every car on this device, telling no one: its Buddies data went. */
+
   forgetLocal?: () => void
 }
 
@@ -302,170 +257,87 @@ export type BuddiesEngineDeps = {
   store: Store
   randomBytes: (length: number) => Uint8Array
   now: () => number
-  /**
-   * The root seed (iCloud Keychain on iOS, Block Store on Android), created on
-   * first use. Read off the JS thread: on Android a first read can wait on
-   * Block Store for seconds.
-   */
+
   getRootSeed: () => Promise<Uint8Array>
   deleteRootSeed: () => Promise<void>
-  /**
-   * The User's server account (ADR 0024), whose key is the root seed. Every
-   * relay call carries its session (the relay client's `authorize`), and
-   * `inbox/register` its claim on the inbox, so the relay knows which account
-   * owns the inbox and can suspend it.
-   */
+
   account?: {
-    /**
-     * The relay doesn't know the session's account (the server's accounts were
-     * reset, say): forget the session, so the next call opens a new one, which
-     * creates the account again.
-     */
     forget: () => void
   }
   getPlans: () => { dayPlans: DayPlan[]; recurringPlans: RecurringPlan[] }
-  /** Name, avatar, and Tenure as buddies should see them. */
+
   getProfile: () => BuddyProfile
-  /**
-   * The Service Streak, while it's long enough to show. Only Buddy Cards carry
-   * it, never invites: a link can reach someone who isn't a buddy yet.
-   */
+
   getStreak?: () => BuddyStreak | undefined
-  /**
-   * The User's Pet Companion as buddies see it, or none. Only Buddy Cards carry
-   * it, and only while `sharing.pet` is on.
-   */
+
   getPet?: () => BuddyPet | undefined
-  /** The Plans and Follow-ups this User has invited buddies to. */
+
   getShares?: () => OutgoingShareSpec[]
-  /**
-   * A buddy's card thumbnail (base64 JPEG) made small enough for a Plan's guest
-   * list, as base64 JPEG; without it guest lists carry no photos.
-   */
+
   shrinkAvatar?: (jpegBase64: string) => Promise<string | undefined>
-  /**
-   * When a share that's left `getShares` stopped being one (by its spec key):
-   * the Plan or Follow-up's deletion, or the change that took its buddies off.
-   * The same on every device, so their cancels are one event and one alert.
-   */
+
   withdrawnAt?: (key: string) => number | undefined
-  /**
-   * When the Plan or Follow-up behind a spec key ends, while the User still has
-   * it, shared or not (undefined once it's deleted). One whose only invitees
-   * are gone leaves `getShares`, but still says they never got it.
-   */
+
   shareEndsAt?: (key: string) => number | undefined
-  /** This device's platform, told to new buddies for pairing analytics. */
+
   platform?: BuddyPlatform
-  /**
-   * A pairing just completed: the inviter confirmed (`inviter`), or this User's
-   * accepted invite was confirmed (`invitee`). For analytics only.
-   */
+
   onPaired?: (pairing: BuddyPairing) => void
-  /**
-   * The User's master Badges switch (on when absent). Off, no badges are shared
-   * or announced, buddies' badge news isn't listed, and reactions are neither
-   * sent nor kept.
-   */
+
   showBadges?: () => boolean
-  /**
-   * Buddies is shown here and running (on when absent). Off (the `buddies` flag
-   * turned off, say), badge news is neither made nor sent.
-   */
+
   isEnabled?: () => boolean
-  /** Runs `run` after `ms`, e.g. to send what had to wait; skipped when absent. */
+
   later?: (run: () => void, ms: number) => void
-  /**
-   * One of this User's note photos as JPEG bytes to share (made smaller than
-   * the original), or null when its file is gone. Without it, shared notes
-   * carry no photos.
-   */
+
   readSharedPhoto?: (
     image: RichTextImageAttrs
   ) => Promise<{ bytes: Uint8Array; width: number; height: number } | null>
-  /** Whether a buddy's shared photo is on this device already. */
+
   hasSharedPhoto?: (localId: string) => Promise<boolean>
-  /** Keeps a buddy's shared photo (JPEG bytes) as a note photo. */
+
   saveSharedPhoto?: (localId: string, bytes: Uint8Array) => Promise<void>
-  /** Buddies' shared photos were saved, so notes showing them can refresh. */
+
   onSharedPhotosSaved?: () => void
-  /**
-   * The Profile photo as JPEG bytes for buddies to open full size, or null when
-   * there is none. Without it, Buddy Cards carry only the thumbnail.
-   */
+
   readProfilePhoto?: () => Promise<Uint8Array | null>
-  /**
-   * Buddies' full-size Profile photos (by blob id) their cards still link; any
-   * other copy this device downloaded can go.
-   */
+
   keepBuddyPhotos?: (blobIds: string[]) => Promise<void>
-  /** Takes back this device's system alerts for these inbox seqs. */
+
   dismissAlerts?: (seqs: number[]) => void
-  /** Shared Cars; without it, `car.*` events are ignored. */
+
   cars?: BuddiesCarsDeps
-  /**
-   * Where this device keeps what joining from a car invitation takes, its join
-   * secret and the car's key, never in `store`, which is saved unencrypted and
-   * goes into device backups (ADR 0037 §4): for one this User sends, until the
-   * relay takes it; for one they got, until it's answered, canceled, or lapses.
-   * In memory when absent.
-   */
+
   inviteSecrets?: InviteSecretStore
-  /**
-   * Invitations that couldn't be sent and won't be retried as they stand:
-   * refused while the account is suspended, to a buddy whose inbox is gone, or
-   * to one whose pairing ended before they went (found by a send or a sync; not
-   * when the User, or another of their devices, ended it). Their names, as this
-   * User sees them, to tell them.
-   */
+
   onSharesNotSent?: (notSent: {
     reason: UnsentShareReason
     names: string[]
   }) => void
 }
 
-/** See `sync`. */
 export type BuddiesSyncOptions = RelayCallOptions & {
-  /**
-   * Satisfied once this device has read the inbox up to this seq (the live
-   * signal's): a call that finds a sync running then needs no second one if
-   * that sync got there.
-   */
   minSeq?: number
-  /**
-   * The app asked, not the User (a return to the foreground, the live signal, a
-   * poll). Skipped while the relay has asked to back off.
-   */
+
   automatic?: boolean
 }
 
-/**
- * `skipped`: nothing ran (the relay asked to back off, or a sync already got
- * past `minSeq`), so it says nothing about whether Buddies can be reached.
- */
 export type SyncOutcome = 'synced' | 'skipped'
 
-/** Rate limited with no Retry-After: automatic syncs wait this long. */
 const RATE_LIMIT_COOL_DOWN_MS = 60 * 1000
-/**
- * The relay's kill switch is on: automatic syncs wait at least this long, so
- * the app checks back now and then instead of polling a switched-off service.
- */
+
 export const DISABLED_COOL_DOWN_MS = 15 * 60 * 1000
-/**
- * The account is suspended: automatic syncs wait this long. Shorter than the
- * kill switch's, so reinstatement shows within minutes of the next check.
- */
+
 export const SUSPENDED_COOL_DOWN_MS = 60 * 1000
-/** A removal that keeps failing is retried after this, doubling to an hour. */
+
 const REMOVAL_RETRY_BASE_MS = 60 * 1000
 const REMOVAL_RETRY_MAX_MS = 60 * 60 * 1000
-/** Events read by recent syncs, kept so a push's alert needn't fetch again. */
+
 const RECENT_EVENTS = 50
 
 export type BuddyPairing = {
   role: 'inviter' | 'invitee'
-  /** Absent when the buddy's build doesn't send it. */
+
   buddyPlatform?: BuddyPlatform
 }
 
@@ -475,7 +347,6 @@ export type BuddyInviteErrorReason =
   | 'own'
   | 'alreadyBuddies'
   | 'limit'
-  /** The relay's cap on unclaimed invites (`MAX_OPEN_INVITES`). */
   | 'openInvites'
   | 'nameRequired'
 
@@ -486,14 +357,6 @@ export class BuddyInviteError extends Error {
   }
 }
 
-/**
- * A removal (or delete-everything) that couldn't reach the relay. The buddy is
- * already gone on this device and the withdrawal is retried on every sync, but
- * they may keep seeing this User's Plans until it completes. Delete-everything
- * also stops here, before any buddy is removed, while the User is still on a
- * Shared Car the Spaces server hasn't heard them leave: `cars` names those (''
- * for one that never synced here).
- */
 export class BuddyRemovalPendingError extends Error {
   constructor(
     readonly scope: 'buddy' | 'everything',
@@ -504,7 +367,6 @@ export class BuddyRemovalPendingError extends Error {
   }
 }
 
-/** Push kinds the relay may send; devices register a localized template each. */
 export const BUDDY_PUSH_KINDS = [
   'invite.claimed',
   'pair.confirmed',
@@ -518,22 +380,12 @@ export const BUDDY_PUSH_KINDS = [
 ] as const
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
-/**
- * A buddy's new badges, and a buddy's reaction to one of this User's badges.
- * Registered only on devices with badge alerts on, so they sit outside
- * `BUDDY_PUSH_KINDS`.
- */
 export const BADGE_PUSH_KIND = 'badge.new'
 export const BADGE_REACTION_PUSH_KIND = 'badge.reaction'
 export type BadgePushKind =
   | typeof BADGE_PUSH_KIND
   | typeof BADGE_REACTION_PUSH_KIND
 
-/**
- * A buddy shared a car with this User, and a buddy joined one of theirs.
- * Registered only while Shared Cars runs on the device, so they sit outside
- * `BUDDY_PUSH_KINDS`. `car.cancel` and a declining `car.reply` never alert.
- */
 export const CAR_PUSH_KINDS = ['car.invite', 'car.reply'] as const
 export type CarPushKind = (typeof CAR_PUSH_KINDS)[number]
 
@@ -543,49 +395,24 @@ const CAR_EVENT_KINDS: readonly string[] = [
   'car.reply',
 ] satisfies CarEventKind[]
 
-/**
- * `registered`: the relay got a new or changed registration. `refreshed`: an
- * unchanged one was re-sent because it was over a day old, which also repairs a
- * device the relay dropped. `unchanged`: nothing was sent.
- */
 export type PushRegistrationOutcome = 'registered' | 'refreshed' | 'unchanged'
 
-/**
- * An unchanged registration is re-sent this often, so a device the relay
- * evicted or dropped for a rejected token starts receiving pushes again.
- */
 export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000
 
-/** The relay's event cap (8 KB sealed) minus the seal's version, nonce, and tag. */
 const MAX_EVENT_PLAINTEXT_BYTES = 8 * 1024 - 29
 
-/**
- * Share events (invites, changes, cancels, replies) per buddy per rolling hour.
- * The relay allows 60 writes per slot per hour, cards included, so an edit
- * storm on a shared Plan waits instead of crowding out Buddy Cards.
- */
 const SHARE_EVENTS_PER_HOUR = 30
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 
-/** Badge news waiting to go out; older news makes way. */
 const MAX_BADGE_ANNOUNCEMENTS = 20
-/**
- * The relay drops an alert that comes within 60 s of the sender's previous one
- * to that inbox, so a badge alert waits this long (with slack for latency)
- * after any alerting send to that buddy instead of being lost.
- */
+
 const RELAY_ALERT_SPACING_MS = 65 * 1000
-/** The relay keeps events 30 days; handled badge events are kept a bit longer. */
+
 const SEEN_BADGE_EVENT_TTL_MS = 31 * DAY_MS
 
-/** Marks wait this long for more before the roster is written. */
 const ROSTER_SAVE_DELAY_MS = 2000
 
-/**
- * A share `version` below this is a legacy record's backfilled stamp (1), not a
- * time, so it can't order sends.
- */
 const MIN_SHARE_VERSION = Date.UTC(2020, 0, 1)
 
 const SHARE_KIND_PREFIX: Record<ShareType, string> = {
@@ -593,24 +420,15 @@ const SHARE_KIND_PREFIX: Record<ShareType, string> = {
   followUp: 'followup',
 }
 
-/**
- * A join request's kind ends in a tag for the pair (see `joinRequestKind`), so
- * a device can let one buddy's requests alert it and not another's.
- */
 const JOIN_REQUEST_KIND_PREFIX = 'join.request.'
 const JOIN_CANCEL_KIND = 'join.cancel'
-/** Alert seqs kept per incoming share; older alerts have long been seen. */
+
 const MAX_ALERT_SEQS = 10
 export type JoinRequestPushKind = `${typeof JOIN_REQUEST_KIND_PREFIX}${string}`
 
 const toHex = (bytes: Uint8Array) =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 
-/**
- * The kind of a join request written into `slotId`. Both people derive it from
- * the pair's slot, which the relay already knows, so the tag tells the relay
- * nothing new.
- */
 function joinRequestKind(slotId: string): JoinRequestPushKind {
   const tag = sha256(utf8(`ww-buddies/v1/join-kind|${slotId}`)).slice(0, 6)
   return `${JOIN_REQUEST_KIND_PREFIX}${toHex(tag)}`
@@ -624,9 +442,9 @@ function shareTypeOfKind(kind: string): ShareType | null {
 }
 
 type PairKeys = { incoming: DirectionKeys; outgoing: DirectionKeys }
-/** A `car.*` event as it's queued, before it has a time and tries. */
+
 type OutgoingCarEventInput = Omit<OutgoingCarEvent, 'queuedAt' | 'attempted'>
-/** The relay event behind a queue entry. */
+
 type EventSource = { id: string; seq: number }
 type PairParty = Pick<Buddy, 'inboxId' | 'dhPub' | 'inviteSecret'>
 
@@ -635,10 +453,6 @@ function unionBy<T>(local: T[], remote: T[], key: (item: T) => string) {
   return [...local, ...remote.filter((item) => !seen.has(key(item)))]
 }
 
-/**
- * What decides whether two rosters hold the same relationships, choices, and
- * marks.
- */
 function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
   const {
     photo,
@@ -669,13 +483,11 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       .map(([inboxId, removedAt]) => `${inboxId}:${removedAt}`)
       .sort(),
     [photo, tenure, streak, updatedAt],
-    // A roster without badges (an older app's) reads as the default, so it
-    // differs only from a choice this device actually made, which is then
-    // written back once for devices restoring from the roster.
+
     [badges ?? true, badgesUpdatedAt ?? 0],
-    // The pet choice came later still, and reads the same way.
+
     [pet ?? true, petUpdatedAt ?? 0],
-    // Plans, Plan times, the pause, and the calendar, the same way.
+
     [
       plans ?? true,
       planTimes ?? 'exact',
@@ -689,9 +501,9 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       .sort(),
     Object.keys(roster.read).sort(),
     Object.keys(roster.dismissed).sort(),
-    // An older app's roster has none, so a device with one writes it back.
+
     roster.card ? [roster.card.name, roster.card.updatedAt] : null,
-    // And none of these: an older app drops them when it rewrites the roster.
+
     Object.entries(roster.cars)
       .map(([spaceId, { at }]) => `${spaceId}:${at}`)
       .sort(),
@@ -701,16 +513,11 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
   ])
 }
 
-/** When and where a share is: a change to these alerts (see `sendShares`). */
 function shareTiming(details: OutgoingShareSpec['details']) {
   const { d, s, m, location } = details
   return toB64u(sha256(utf8(JSON.stringify({ d, s, m, location }))))
 }
 
-/**
- * A share as another device sent it: its spec and the confirmed buddies it goes
- * to. Any change since, a buddy confirmed since included, is sent.
- */
 function adoptionHash(
   spec: OutgoingShareSpec,
   isActive: (inboxId: string) => unknown
@@ -734,18 +541,10 @@ function adoptionHash(
   )
 }
 
-/**
- * Invites, claims, and events are too small for a photo, so they carry only an
- * emoji avatar; the thumbnail follows in the first Buddy Card.
- */
 function compactAvatar(avatar: BuddyAvatar | undefined) {
   return avatar?.t === 'emoji' ? avatar : undefined
 }
 
-/**
- * Profile fields for payloads without room for a photo. Badges travel only in
- * Buddy Cards (and `badge.new`), never in invites, claims, or the roster.
- */
 function compactProfile<
   T extends { avatar?: BuddyAvatar; badges?: SharedBadge[] },
 >(value: T): T {
@@ -759,13 +558,6 @@ function omitKey<T>(record: Record<string, T>, key: string) {
   )
 }
 
-/**
- * `store`, letting an invitation's secrets go once a change leaves nothing that
- * needs them (`neededInviteSecrets`): a `car.invite` the relay took or that was
- * dropped, an invitation answered, canceled, replaced, or lapsed, a buddy
- * forgotten, a reset. Orphans from an earlier launch, and invitations that
- * lapsed as the store was read back, go when the engine starts.
- */
 function releasingInviteSecrets(
   store: Store,
   secrets: InviteSecretStore
@@ -785,7 +577,6 @@ function releasingInviteSecrets(
   }
 }
 
-/** A car invitation answered: what joining took goes with the question. */
 function answeredCarInvite(
   invite: IncomingCarInvite,
   status: CarReply | 'cancelled',
@@ -799,14 +590,6 @@ function answeredCarInvite(
   }
 }
 
-/**
- * Car invitations with those to a car the User is on read as joined
- * (docs/shared-cars-protocol.md, "Bell entry"): they joined it from another
- * invitation, on another of their devices whose answer hasn't arrived yet, or
- * here with an answer that was lost. Nothing is sent or marked for them: the
- * device that joined answers. `settled` lists the keys that changed; the
- * invitations are the same object when none did.
- */
 function settledCarInvites(
   carInvites: Record<string, IncomingCarInvite>,
   isOnCar: ((spaceId: string) => boolean) | undefined,
@@ -835,10 +618,6 @@ function settledCarInvites(
   }
 }
 
-/**
- * The cars `leaveAll` couldn't leave, by name ('' for one that never synced
- * here): as many as it counts pending, named where it said.
- */
 function carsNotLeft(
   cars:
     | Awaited<ReturnType<NonNullable<BuddiesCarsDeps['leaveAll']>>>
@@ -850,7 +629,6 @@ function carsNotLeft(
   return [...names, ...Array.from({ length: unnamed }, () => '')]
 }
 
-/** `removedBuddies` with this buddy's current pairing recorded as ended. */
 function endedPairing(
   state: BuddiesState,
   inboxId: string,
@@ -863,10 +641,6 @@ function endedPairing(
   })
 }
 
-/**
- * When a new pairing starts: after any removal this device knows of, so that
- * removal can't end it.
- */
 function newPairedAt(state: BuddiesState, inboxId: string, now: number) {
   return Math.max(now, (state.removedBuddies[inboxId] ?? -1) + 1)
 }
@@ -876,58 +650,46 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const inviteSecrets =
     deps.inviteSecrets ?? createInviteSecretStore(memoryInviteSecretStorage())
   const store = releasingInviteSecrets(deps.store, inviteSecrets)
-  // Nothing may change the store for a while (an idle device), and reading it
-  // back drops lapsed invitations without a change here.
+
   inviteSecrets.retain(() => neededInviteSecrets(store.getState()))
   let cachedIdentity: { seed: string; identity: BuddyIdentity } | null = null
-  /** The root seed each identity came from: the account key, for its claim. */
+
   const accountKeys = new WeakMap<BuddyIdentity, Uint8Array>()
   let identityLoad: Promise<BuddyIdentity> | null = null
   let registering: Promise<BuddyIdentity> | null = null
-  /**
-   * Identities whose inbox `deleteEverything` deleted. A sync already under way
-   * with one finds its inbox gone, which isn't the relay's inactivity wipe: it
-   * must not register it again. The same seed coming back later (a handoff, a
-   * recovery key) derives a new identity, which may.
-   */
+
   const deletedIdentities = new WeakSet<BuddyIdentity>()
-  /**
-   * Inboxes this device signed out of (`leaveThisDevice`) while their seed is
-   * still here: nothing starts with one again until the seed is replaced.
-   */
+
   const leftInboxes = new Set<string>()
   const pairCache = new Map<string, PairKeys>()
   let syncInFlight: Promise<SyncOutcome> | null = null
-  /** The one sync queued behind the running one; see `sync`. */
+
   let followUp: {
     promise: Promise<SyncOutcome>
     minSeq: number
     automatic: boolean
   } | null = null
-  /** Automatic syncs wait until then: the relay asked to back off. */
+
   let coolDownUntil = 0
-  /** Removals that failed: how often in a row, and when to try again. */
+
   const removalRetries = new Map<string, { failures: number; at: number }>()
-  /** Events recent syncs read, by seq, for `describePush`. */
+
   const recentEvents = new Map<number, SealedEvent>()
-  /** Settles once the running sync has read the inbox (before it sends). */
+
   let inboxRead: Promise<void> | null = null
-  /** Share events sent per buddy inboxId in the last hour. */
+
   const shareSends = new Map<string, number[]>()
-  /** Slots added while a sync is in flight are missing from its response. */
+
   const slotsAddedDuringSync = new Set<string>()
-  /** Join request deliveries run one after another. */
+
   let joinDelivery: Promise<void> = Promise.resolve()
-  /** So do deliveries of badge news. */
+
   let badgeDelivery: Promise<void> = Promise.resolve()
-  /** When badge news held back by the relay's alert spacing is retried. */
+
   let badgeRetryAt: number | null = null
-  /** And `car.*` events. */
+
   let carDelivery: Promise<void> = Promise.resolve()
-  /**
-   * When this device last sent each buddy an alerting event (any kind), for the
-   * relay's alert spacing. Kept in memory: best effort.
-   */
+
   const lastAlertSentAt = new Map<string, number>()
 
   const json = (value: unknown) => utf8(JSON.stringify(value))
@@ -935,11 +697,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const newId = () => toB64u(deps.randomBytes(16))
   const decode = (bytes: Uint8Array): unknown => JSON.parse(fromUtf8(bytes))
 
-  /**
-   * This User's identity, from the root seed. The seed is read off the JS
-   * thread, once at a time, then kept; `fresh` reads it again, since another
-   * device's seed may have replaced it through iCloud Keychain.
-   */
   function identity({ fresh = false } = {}): Promise<BuddyIdentity> {
     if (!fresh && cachedIdentity)
       return Promise.resolve(cachedIdentity.identity)
@@ -962,18 +719,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return identityLoad
   }
 
-  /**
-   * The account key was replaced (after `deleteEverything` when there was
-   * anything to leave): forget everything derived from the old seed, so the
-   * next call derives the new identity and links its inbox again.
-   */
   function dropIdentity() {
     cachedIdentity = null
     pairCache.clear()
     leftInboxes.clear()
   }
 
-  /** The inbox id, without waiting on the seed: render paths read this. */
   function knownInboxId(): string | null {
     return (
       cachedIdentity?.identity.inboxId ?? store.getState().registeredInboxId
@@ -1035,28 +786,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return keys
   }
 
-  /**
-   * The name every device of this User puts on their Buddy Card (see
-   * `cardName`): the roster's, else this device's Profile name, which this
-   * device has run Buddies longest stands for.
-   */
   function cardName(): CardName {
     const { cardName: known, startedAt } = store.getState()
     return (
       known ?? {
         name: deps.getProfile().name.trim(),
-        // Earlier starts rank higher; any change the User makes ranks above.
+
         updatedAt: -(startedAt ?? 0),
       }
     )
   }
 
-  /**
-   * The card name a roster brings: another device's newer one, or the account's
-   * for a device joining it. While none is kept here and the roster has this
-   * device's own Profile name, none is kept still, so a change to the Profile
-   * name goes on reaching buddies however it's made.
-   */
   function adoptCardName(state: BuddiesState, remote: CardName | undefined) {
     if (!remote) return state.cardName
     const local = cardName()
@@ -1064,20 +804,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return state.cardName === null && remote.name === local.name ? null : remote
   }
 
-  /**
-   * The User changed their Profile name on this device: buddies see it on every
-   * device's card from now on, once the roster reaches them.
-   */
   function setCardName(name: string) {
     store.setState({ cardName: { name: name.trim(), updatedAt: deps.now() } })
     saveRosterSoon()
   }
 
-  /**
-   * The Profile minus what All Buddies don't see: for pairing, before anyone
-   * has settings of their own. Buddy Cards follow each buddy's
-   * (`sendCardsTo`).
-   */
   function profile(): BuddyProfile {
     const current = deps.getProfile()
     const { sharing } = store.getState()
@@ -1092,30 +823,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /** What this buddy sees: their own settings over All Buddies'. */
   function settingsFor(buddy: Pick<Buddy, 'overrides'>): BuddySettings {
     return buddySettings(store.getState().sharing, buddy).settings
   }
 
-  /**
-   * Plans, streak, badges, and the pet are paused for everyone, whatever the
-   * buddy's settings.
-   */
   function sharingPaused(): boolean {
     return isSharingPaused(store.getState().sharing, deps.now())
   }
 
-  /** News of new badges goes to this buddy, unless sharing is paused. */
   function badgesGoTo(buddy: Pick<Buddy, 'overrides'>): boolean {
     return (deps.showBadges?.() ?? true) && settingsFor(buddy).badges
   }
 
-  /** This buddy's alerts on this device. */
   function alertsFor(inboxId: string) {
     return buddyAlertSettings(store.getState(), inboxId).settings
   }
 
-  /** Badges are on, and shared with buddies. */
   function sharesBadges(): boolean {
     return (
       (deps.showBadges?.() ?? true) && store.getState().sharing.badges !== false
@@ -1146,11 +869,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return 0
   }
 
-  /**
-   * `inbox/register`, linking the inbox to the session's account. If the relay
-   * doesn't know that account, a new session (which creates it) tries once
-   * more.
-   */
   async function registerInbox(me: BuddyIdentity, call?: RelayCallOptions) {
     if (deletedIdentities.has(me)) throw new RelayError('cancelled', 0)
     try {
@@ -1162,7 +880,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /** Registers this User's inbox on first use; callers share one attempt. */
   async function ensureInbox(call?: RelayCallOptions): Promise<BuddyIdentity> {
     const me = await identity()
     if (store.getState().registeredInboxId === me.inboxId) return me
@@ -1182,22 +899,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return registering
   }
 
-  /**
-   * Stable per event, so a retry of a send whose answer was lost (or the same
-   * send from another of this User's devices) is the same event, which the
-   * relay stores and alerts once.
-   */
   function eventIdFor(...parts: (string | number)[]): string {
     return toB64u(
       sha256(utf8(`ww-buddies/v1/event|${parts.join('|')}`)).slice(0, 16)
     )
   }
 
-  /**
-   * Card, share and answer sends run one at a time, so two publishes can't send
-   * the same event twice. Each kind is queued at most once behind the one
-   * running, which picks up whatever changed meanwhile.
-   */
   let outboxTail: Promise<void> = Promise.resolve()
   const outboxQueued = new Map<string, Promise<void>>()
   function outbox(kind: string, run: () => Promise<void>): Promise<void> {
@@ -1208,9 +915,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       return run()
     })
     outboxQueued.set(kind, next)
-    outboxTail = next.catch(() => {
-      // The caller sees the failure; the queue moves on.
-    })
+    outboxTail = next.catch(() => {})
     return next
   }
 
@@ -1219,7 +924,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     slotsAddedDuringSync.add(keys.slotId)
   }
 
-  /** What this device's roster holds, lapsed marks left out. */
   function rosterContent(state: BuddiesState): Omit<Roster, 'v' | 'version'> {
     const now = deps.now()
     const marks = mergeNotificationMarks(
@@ -1228,9 +932,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       now
     )
     const content = {
-      // Photos would overflow the roster cap; each device gets them, and
-      // streaks and pets, from cards. `showOnCalendar` is for older apps, which read
-      // and write that alone.
       buddies: state.buddies.map(({ streak, pet, overrides, ...buddy }) =>
         compactProfile({
           ...buddy,
@@ -1249,7 +950,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       dismissed: marks.dismissed,
       ...(cardName().name ? { card: cardName() } : {}),
     }
-    // Shared Cars take what room the rest leaves under the relay's cap.
+
     const room =
       MAX_ROSTER_PLAINTEXT_BYTES -
       json({
@@ -1268,7 +969,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /** Best effort: the next change or sync rewrites it. */
   async function saveRoster(me: BuddyIdentity) {
     const state = store.getState()
     const version = state.rosterVersion + 1
@@ -1278,48 +978,29 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ownerAuth(me),
         seal(me.rosterKey, json(roster), aad.roster(me.inboxId), nonce())
       )
-      // Only a write the relay took counts; otherwise this device could
-      // refuse another device's roster that is in fact newer.
+
       store.setState((current) => ({
         rosterVersion: Math.max(current.rosterVersion, version),
       }))
-    } catch {
-      // Offline or relay hiccup — the next sync that sees a different roster
-      // on the relay writes the merged one back.
-    }
+    } catch {}
   }
 
   let rosterSaveQueued = false
-  /**
-   * Writes the roster shortly, once for a burst of marks (the tray marks every
-   * entry it shows as read), so this User's other devices catch up within
-   * seconds. Without `later`, the next sync writes it.
-   */
+
   function saveRosterSoon() {
     if (rosterSaveQueued || !deps.later) return
     if (store.getState().registeredInboxId === null) return
     rosterSaveQueued = true
     deps.later(() => {
       rosterSaveQueued = false
-      // Buddies data deleted meanwhile: nothing to write, and no inbox (or seed)
-      // to make for it.
+
       if (store.getState().registeredInboxId === null) return
       void ensureInbox()
         .then(saveRoster)
-        .catch(() => {
-          // The next sync writes it.
-        })
+        .catch(() => {})
     }, ROSTER_SAVE_DELAY_MS)
   }
 
-  /**
-   * Also purges everything they shared with this User, and records the pairing
-   * as ended so no roster brings it back. `removedAt` defaults to the pairing's
-   * own `pairedAt`: when the relay says they left, this device may hold an
-   * older pairing than one made since on another device. Unless `quiet` (the
-   * User or another of their devices ended it), invitations that never reached
-   * them are reported to the User.
-   */
   function forgetBuddy(
     inboxId: string,
     removedAt?: number,
@@ -1367,13 +1048,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       alertOverrides: omitKey(state.alertOverrides, inboxId),
       notifications: state.notifications.filter((n) => n.from !== inboxId),
-      // Pairing again later never brings old badge news.
+
       badgeAnnouncements: state.badgeAnnouncements.map((announcement) => ({
         ...announcement,
         recipients: announcement.recipients.filter((id) => id !== inboxId),
       })),
       lastBadgeAlertAt: omitKey(state.lastBadgeAlertAt, inboxId),
-      // Reactions both ways go with them.
+
       sentBadgeReactions: omitKey(state.sentBadgeReactions, inboxId),
       badgeReactions: Object.fromEntries(
         Object.entries(state.badgeReactions)
@@ -1387,7 +1068,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         state.lastBadgeReactionAlertAt,
         inboxId
       ),
-      // Car invitations both ways; the cars themselves don't change.
+
       carInvites: Object.fromEntries(
         Object.entries(state.carInvites).filter(
           ([, invite]) => invite.from !== inboxId
@@ -1402,11 +1083,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     deps.cars?.onBuddyGone?.(inboxId)
   }
 
-  /**
-   * A buddy is going: the User's coming Plans and Follow-ups that invite them
-   * but never reached them say so (a `gone` entry in `unsentShares`). Their
-   * name when there were any.
-   */
   function noteUnsentTo(inboxId: string): string | null {
     const state = store.getState()
     const buddy = state.buddies.find((b) => b.inboxId === inboxId)
@@ -1432,7 +1108,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return entry.name
   }
 
-  /** Records (an entry) or clears (null) invitations that didn't go out. */
   function setUnsent(changes: [string, string, UnsentShare | null][]) {
     store.setState((state) => {
       const unsentShares = { ...state.unsentShares }
@@ -1447,7 +1122,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
   }
 
-  /** Queues a tray entry, stamped now unless it says when it happened. */
   function notify(
     entry: Omit<BuddyNotification, 'at' | 'read'> & { at?: number },
     read = false
@@ -1489,12 +1163,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!displayName()) throw new BuddyInviteError('nameRequired')
   }
 
-  /**
-   * Looks up each invite whose create got no answer (`unconfirmedInvites`): one
-   * the relay holds open joins the outgoing invites, so it can be shared or
-   * cancelled; one it doesn't (or that expired) is forgotten. Stops at the
-   * first lookup that fails, for the next sync. Returns the newest one found.
-   */
   async function confirmUnsureInvites(): Promise<OutgoingInvite | null> {
     let found: OutgoingInvite | null = null
     for (const invite of store.getState().unconfirmedInvites) {
@@ -1526,8 +1194,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (occupiedBuddySpots(store.getState()) >= MAX_BUDDIES)
       throw new BuddyInviteError('limit')
     const me = await ensureInbox()
-    // An earlier try may have created one without hearing back: that's the
-    // one to show, not a second.
+
     const unsure = await confirmUnsureInvites()
     if (unsure) {
       await saveRoster(me)
@@ -1550,7 +1217,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         expiresAt,
       })
     } catch (error) {
-      // No answer: the relay may have created it anyway.
       if (
         isRelayConnectivityError(error) ||
         isRelayError(error, 'cancelled') ||
@@ -1568,8 +1234,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ],
         }))
       if (!isRelayError(error, 'limit')) throw error
-      // Every spot is taken, or (with spots free here) the relay's cap on
-      // invites still waiting to be accepted, some maybe from another device.
+
       throw new BuddyInviteError(
         occupiedBuddySpots(store.getState()) >= MAX_BUDDIES
           ? 'limit'
@@ -1643,7 +1308,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return { secret, invite, card, expiresAt: fetched.expiresAt }
   }
 
-  /** What the pre-accept screen shows. Creates no server state. */
   async function previewInvite(link: string) {
     const { card, expiresAt } = await readInvite(link)
     return {
@@ -1654,7 +1318,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /** Accepting shares nothing until the inviter confirms. */
   async function acceptInvite(link: string) {
     requireName()
     const { secret, invite, card, expiresAt } = await readInvite(link)
@@ -1695,23 +1358,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           expiresAt,
         },
       ],
-      // Pairing again on purpose lifts an earlier removal.
+
       removedBuddies: omitKey(state.removedBuddies, card.inboxId),
-      // Accepting a link is starting Buddies; skip the first-visit intro.
+
       onboardingComplete: true,
     }))
     await saveRoster(me)
     return { name: card.name }
   }
 
-  /**
-   * Claims an invite, finding out what happened when the answer is lost: the
-   * claim may have landed, and claiming isn't repeatable on older relays (a
-   * second try is a `conflict`), while newer ones answer a retry of the same
-   * claim with ok. So it's tried once more, then the invite is read: claimed
-   * means it was this claim, which leaves the slot for the inviter to confirm
-   * into. Throws the connection error when neither answers.
-   */
   async function claimOnce(
     inviteId: string,
     claimSecret: string,
@@ -1741,7 +1396,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       (candidate) => candidate.inviteId === inviteId
     )
     if (!claim) return
-    // Lapsed while still listed: it can't become a pairing anymore.
+
     if (claim.expiresAt <= deps.now()) {
       dropInvite(inviteId)
       throw new BuddyInviteError('unavailable')
@@ -1761,7 +1416,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     const { incoming, outgoing } = pairKeys(me, buddy)
     await addSlot(me, incoming)
-    // One per invite: confirming again after a lost answer alerts them once.
+
     const eventId = eventIdFor('pair', me.inboxId, buddy.inboxId, inviteId)
     try {
       await relay.putEvent(writerAuth(buddy.inboxId, outgoing), {
@@ -1782,7 +1437,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       lastAlertSentAt.set(buddy.inboxId, deps.now())
     } catch (error) {
       if (!isRelayError(error, 'gone')) throw error
-      // Their request lapsed or they cancelled — undo our half of the pairing.
+
       await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
       await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
       dropInvite(inviteId)
@@ -1791,7 +1446,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     store.setState((current) => ({
       buddies: [...current.buddies, buddy],
-      // Pairing again on purpose lifts an earlier removal.
+
       removedBuddies: omitKey(current.removedBuddies, buddy.inboxId),
     }))
     dropInvite(inviteId)
@@ -1802,10 +1457,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishCards().catch(() => {})
   }
 
-  /**
-   * Turns down a request. Fails, keeping it listed, when the relay can't be
-   * told: the other person would otherwise wait on it until it lapses.
-   */
   async function rejectClaim(inviteId: string) {
     const me = await ensureInbox()
     try {
@@ -1817,7 +1468,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await saveRoster(me)
   }
 
-  /** Forgets buddies locally and queues withdrawing their relay slots. */
   function queueRemoval(parties: PendingRemoval[], removedAt?: number) {
     const inboxIds = new Set(parties.map((party) => party.inboxId))
     for (const inboxId of inboxIds)
@@ -1834,12 +1484,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /**
-   * Removes their slot from my inbox and my slot (and last card) from theirs.
-   * Both are idempotent, so a removal stays queued until both succeed. One that
-   * keeps failing waits longer each time (from a minute up to an hour) before
-   * syncs try it again; `force` (the User asking) tries everything now.
-   */
   async function flushRemovals(me: BuddyIdentity, { force = false } = {}) {
     const missing = (error: unknown) =>
       isRelayError(error, 'not_found') || isRelayError(error, 'gone')
@@ -1883,33 +1527,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const isPendingRemoval = (inboxId: string) =>
     store.getState().pendingRemovals.some((p) => p.inboxId === inboxId)
 
-  /**
-   * Ends the connection for both people; neither gets a notification. Shared
-   * Cars stay as they are, but this User's open invitations to them are taken
-   * back first.
-   */
   async function removeBuddy(inboxId: string) {
     const buddy = store.getState().buddies.find((b) => b.inboxId === inboxId)
     if (!buddy) return
     const me = await ensureInbox()
     if (buddy.status === 'active') {
       queueCarCancelsTo(me, inboxId)
-      await deliverCarEvents().catch(() => {
-        // Best effort: the invitations close on the car either way.
-      })
+      await deliverCarEvents().catch(() => {})
     }
-    // Ends every pairing with them up to now, on all this User's devices.
+
     queueRemoval([buddy], deps.now())
     await flushRemovals(me, { force: true })
     await saveRoster(me)
     if (isPendingRemoval(inboxId)) throw new BuddyRemovalPendingError('buddy')
   }
 
-  /**
-   * Changes how this User sees a buddy (nickname, color) or their own settings.
-   * Saved to the roster, stamped, so every one of their devices takes the
-   * latest.
-   */
   function setBuddyPrefs(
     inboxId: string,
     prefs:
@@ -1930,10 +1562,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /**
-   * From the buddy's menu: back to All Buddies' choice when that's the one
-   * asked for, else their own.
-   */
   function setShowOnCalendar(inboxId: string, showOnCalendar: boolean) {
     const followsAll =
       store.getState().sharing.showOnCalendar === showOnCalendar
@@ -1941,31 +1569,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inboxId,
       'showOnCalendar',
       followsAll ? undefined : showOnCalendar
-    ).catch(() => {
-      // Saved here; the next change or sync writes the roster.
-    })
+    ).catch(() => {})
   }
 
-  /**
-   * From a visiting pet's menu or the pet's settings, like
-   * {@link setShowOnCalendar}: All Buddies' choice when it's the one asked for.
-   */
   function setPetVisits(inboxId: string, petVisits: boolean) {
     const followsAll = store.getState().sharing.petVisits === petVisits
     void setBuddySetting(
       inboxId,
       'petVisits',
       followsAll ? undefined : petVisits
-    ).catch(() => {
-      // Saved here; the next change or sync writes the roster.
-    })
+    ).catch(() => {})
   }
 
-  /**
-   * Gives a buddy their own value for a setting, or (`undefined`) has them
-   * follow All Buddies again. A change to what they see republishes their card;
-   * they aren't told.
-   */
   async function setBuddySetting<K extends BuddySettingKey>(
     inboxId: string,
     key: K,
@@ -1976,10 +1591,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Replaces a buddy's own settings at once: `undefined` has them follow All
-   * buddies in everything (Reset All), and Undo puts back what was there.
-   */
   async function setBuddyOverrides(
     inboxId: string,
     change: (overrides: Buddy['overrides']) => Buddy['overrides'] | undefined
@@ -1992,11 +1603,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishCards()
   }
 
-  /**
-   * Gives a buddy their own alert setting on this device, or (`undefined`) has
-   * them follow this device's alert settings again. The Buddies runtime
-   * re-registers this device's push templates.
-   */
   function setBuddyAlert(
     inboxId: string,
     key: BuddyAlertKey,
@@ -2005,7 +1611,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     setBuddyAlerts(inboxId, (alerts) => withOverride(alerts, key, value))
   }
 
-  /** Replaces a buddy's own alert settings at once, like `setBuddyOverrides`. */
   function setBuddyAlerts(
     inboxId: string,
     change: (
@@ -2022,27 +1627,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
   }
 
-  /**
-   * Two buddies may share a color; it's this User's choice. `null` goes back to
-   * the assigned slot color.
-   */
   async function setColor(inboxId: string, color: string | null) {
     setBuddyPrefs(inboxId, { color: color ?? undefined })
     await saveRoster(await ensureInbox())
   }
 
-  /** A blank nickname goes back to the buddy's own name. */
   async function setNickname(inboxId: string, nickname: string) {
     const trimmed = nickname.trim().slice(0, 60) || undefined
     setBuddyPrefs(inboxId, { nickname: trimmed })
     await saveRoster(await ensureInbox())
   }
 
-  /**
-   * Changes All Buddies' settings and republishes, so a withheld photo, Tenure,
-   * streak, badges, or Plans clear from the cards of buddies who follow All
-   * buddies. Before Buddies has started it only records the choice.
-   */
   async function setSharing(
     change: Partial<
       Omit<
@@ -2061,7 +1656,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       sharing: {
         ...state.sharing,
         ...change,
-        // Each choice carries its own stamp (see `mergeSharing`).
+
         ...('photo' in change || 'tenure' in change || 'streak' in change
           ? { updatedAt: now }
           : {}),
@@ -2076,8 +1671,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ...('petVisits' in change ? { petVisitsUpdatedAt: now } : {}),
       },
     }))
-    // Badge news not yet sent stays home too, for buddies who follow All
-    // buddies (`pruneBadgeAnnouncements`).
+
     if (change.badges === false) pruneBadgeAnnouncements()
     if (store.getState().registeredInboxId === null) return
     const me = await ensureInbox()
@@ -2085,11 +1679,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await publishCards({ edited: true })
   }
 
-  /**
-   * Cards that changes made on this device still have to publish: every buddy's
-   * (`all`), or those of buddies paired here. A device without the Profile
-   * photo publishes only these (see `sendCards`).
-   */
   let cardEdits: 'all' | Set<string> = new Set()
 
   function addCardEdits(edits: 'all' | Set<string>) {
@@ -2099,11 +1688,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         : new Set([...cardEdits, ...edits])
   }
 
-  /**
-   * Publishes one Buddy Card per active buddy, skipping unchanged content.
-   * `edited`: for a change made on this device, not one that arrived from
-   * another device or with time.
-   */
   function publishCards({ edited = false } = {}): Promise<void> {
     if (edited) addCardEdits('all')
     return outbox('cards', sendCards)
@@ -2116,10 +1700,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     cardEdits = new Set()
     const active = store.getState().buddies.filter((b) => b.status === 'active')
     if (active.length === 0 || !name) return
-    // Without the Profile photo, this device's card would take it off the
-    // screens of buddies who see it, so cards are left to the device that has
-    // it, except for changes made here (and a buddy paired here, who has no
-    // card yet).
+
     const photoUnavailable =
       current.photoUnavailable && active.some((b) => settingsFor(b).photo)
     const targets = photoUnavailable
@@ -2136,14 +1717,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function sendCardsTo(targets: Buddy[], current: BuddyProfile) {
     const me = await identity()
-    // Every device's card carries the account's name, not this device's.
+
     const { name } = cardName()
     const each = targets.map((buddy) => ({
       buddy,
       settings: settingsFor(buddy),
     }))
-    // One upload serves every buddy who sees the photo; with none left it's
-    // taken down.
+
     const avatar = await withFullPhoto(
       me,
       each.some(({ settings }) => settings.photo) ? current.avatar : undefined
@@ -2161,11 +1741,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const pet = each.some(({ settings }) => settings.pet)
       ? deps.getPet?.()
       : undefined
-    // Left out when there are none, so cards (and their hash) stay as before;
-    // so is a pet that isn't there or isn't shared.
+
     const badges = shared.length > 0 ? shared : undefined
-    // While sharing is paused for everyone, the card keeps who this User is
-    // and drops their Plans, progress, and pet.
+
     const paused = sharingPaused()
     const content = (settings: BuddySettings) => ({
       name,
@@ -2220,20 +1798,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * The card's avatar, linking the Profile photo at full size when it's a
-   * photo: uploaded (encrypted with its own key) under this User's inbox once
-   * per photo, and again before the relay's copy runs out. One upload serves
-   * every buddy. While it can't be uploaded (offline, photos off on the relay)
-   * the card carries the thumbnail alone, and a later publish links it.
-   */
   async function withFullPhoto(
     me: BuddyIdentity,
     avatar: BuddyAvatar | undefined
   ): Promise<BuddyAvatar | undefined> {
     const uploaded = store.getState().profilePhoto
     if (avatar?.t !== 'image') {
-      // Removed, or no longer shared: buddies can't open it any more.
       if (uploaded) await deleteProfilePhoto(me, uploaded)
       return avatar
     }
@@ -2298,10 +1868,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return uploaded
   }
 
-  /**
-   * Kept to try again on the next publish while the relay can't be reached.
-   * With photos off there, the relay deletes it when it expires.
-   */
   async function deleteProfilePhoto(
     me: BuddyIdentity,
     photo: UploadedProfilePhoto
@@ -2320,10 +1886,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     store.setState({ profilePhoto: null })
   }
 
-  /**
-   * A buddy's Profile photo at full size as JPEG bytes, from the link in their
-   * card; null when the relay's copy is gone, or isn't the one linked.
-   */
   async function fetchBuddyPhoto(
     inboxId: string,
     photo: ProfilePhoto,
@@ -2341,7 +1903,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /** Lets go of buddies' full-size photos no card links any more. */
   async function keepBuddyPhotos() {
     const linked = store
       .getState()
@@ -2451,7 +2012,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         seq: event.seq,
       })
       deps.onPaired?.({ role: 'invitee', buddyPlatform: body.platform })
-      // Their first card from this User; the sync publishes it.
+
       addCardEdits(new Set([buddy.inboxId]))
       return true
     } catch {
@@ -2482,8 +2043,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           )
         )
       )
-      // A request for a Plan the buddy moved or dropped can't be seen or
-      // answered anymore; it's taken back on the next delivery.
+
       withdrawJoinRequests(
         Object.values(store.getState().askedToJoin)
           .filter(
@@ -2516,30 +2076,23 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 avatar: parsed.avatar,
                 tenure: parsed.tenure,
                 streak: parsed.streak,
-                // The card is the source of truth: none listed clears them.
+
                 badges: knownBadges(parsed.badges),
-                // None on the card: no pet, or not shared any more.
+
                 pet: parsed.pet,
               }
             : b
         ),
       }))
-    } catch {
-      // Undecryptable or malformed cards are dropped; the next publish replaces them.
-    }
+    } catch {}
   }
 
-  /** Stable per share, so every device of this User sends the same id. */
   function shareIdFor(inboxId: string, key: string): string {
     return toB64u(
       sha256(utf8(`ww-buddies/v1/share|${inboxId}|${key}`)).slice(0, 16)
     )
   }
 
-  /**
-   * Whether a buddy's hourly share-event budget has room; when it doesn't, the
-   * send waits for a later publish. Kept in memory: best effort.
-   */
   function hasShareBudget(inboxId: string): boolean {
     const since = deps.now() - HOUR_MS
     const recent = (shareSends.get(inboxId) ?? []).filter((at) => at > since)
@@ -2547,7 +2100,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return recent.length < SHARE_EVENTS_PER_HOUR
   }
 
-  /** Only events the relay accepted count against the budget. */
   function spendShareBudget(inboxId: string) {
     shareSends.set(inboxId, [...(shareSends.get(inboxId) ?? []), deps.now()])
   }
@@ -2575,10 +2127,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (push) lastAlertSentAt.set(buddy.inboxId, deps.now())
   }
 
-  /**
-   * Fits the invitation in the relay's event cap: leaves photos out (the last
-   * first), then the formatting, then shortens the note.
-   */
   function fitEvent(invite: ShareInvite): ShareInvite {
     let fitted = invite
     const withDetails = (details: Partial<ShareInvite['details']>) => {
@@ -2587,7 +2135,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     for (;;) {
       const over = json(fitted).length - MAX_EVENT_PLAINTEXT_BYTES
       if (over <= 0) return fitted
-      // Guests' photos go first, the last listed first: names still show.
+
       const pictured = fitted.people?.findLastIndex((guest) => guest.a)
       if (fitted.people && pictured !== undefined && pictured >= 0) {
         fitted = {
@@ -2610,7 +2158,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         continue
       }
       if (!note) return fitted
-      // A character is at most 6 bytes of JSON (`\uXXXX`).
+
       const kept = note
         .slice(0, Math.max(0, note.length - Math.ceil(over / 6)))
         .replace(/[\uD800-\uDBFF]$/, '')
@@ -2618,13 +2166,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * A photo in a shared note, uploaded (encrypted with its own key) under this
-   * User's inbox to stay on the relay as long as its share (a month after the
-   * Plan ends), or at most `SHARED_PHOTO_MAX_LIFETIME_MS`. One upload serves
-   * every share of the photo while it lasts; one running short for a Plan
-   * further out is replaced by a new upload, and the old copy deleted.
-   */
   async function uploadSharedPhoto(
     me: BuddyIdentity,
     image: RichTextImageAttrs,
@@ -2677,11 +2218,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return ref(uploaded)
   }
 
-  /**
-   * A share's details with its note's formatting and photos. A photo that can't
-   * be uploaded now (offline, photos off on the relay) is left out, and the
-   * next publish sends it once it can.
-   */
   async function sharedDetails(
     me: BuddyIdentity,
     spec: OutgoingShareSpec
@@ -2701,7 +2237,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             store.setState({ photosAvailable: false })
             break
           }
-          // Only an inbox with a buddy can store photos.
+
           if (isRelayError(error, 'no_buddies')) break
           if (isRelayError(error, 'cancelled')) throw error
         }
@@ -2718,11 +2254,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * Forgets uploads no current share uses (the photo was taken out, or its Plan
-   * deleted or unshared), and asks the relay to delete the ones that haven't
-   * expired. Best effort: the relay deletes them at `expiresAt` anyway.
-   */
   async function pruneSharedPhotos(
     me: BuddyIdentity,
     specs: OutgoingShareSpec[]
@@ -2755,11 +2286,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /**
-   * Brings buddies' shared photos onto this device: those in invitations still
-   * open and in Plans this User follows. Each is checked against its hash and
-   * opened with its key; one that fails is tried again on the next sync.
-   */
   async function downloadSharedPhotos(call: RelayCallOptions) {
     const { hasSharedPhoto, saveSharedPhoto } = deps
     if (!hasSharedPhoto || !saveSharedPhoto) return
@@ -2787,19 +2313,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         saved++
       } catch (error) {
         if (isRelayError(error, 'cancelled')) throw error
-        // Gone, expired, or offline: the next sync tries again.
       }
     }
     if (saved) deps.onSharedPhotosSaved?.()
   }
 
-  /**
-   * The revs one publish of a share sends with. A send left undone keeps its
-   * rev, and so its event id, while the content (`hash`) is the same: sent
-   * again after a lost answer, it's the same event, which the relay keeps once.
-   * Every other send gets a rev newer than any this share has used, so a buddy
-   * never drops it as old, even after the clock moves back.
-   */
   function shareRevs(
     previous: OutgoingShare | undefined,
     hash: string,
@@ -2809,8 +2327,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const kept = previous?.pending?.hash === hash ? previous.pending.revs : {}
     const floor = (previous?.lastRev ?? 0) + 1
     const fresh = Math.max(now, floor)
-    // Every device of this User reaches the same rev for the same change, so
-    // a send that alerts is one event, and one alert, however many send it.
+
     const settled =
       version !== undefined && version >= MIN_SHARE_VERSION
         ? Math.max(version, floor)
@@ -2819,7 +2336,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const undone: Record<string, number> = {}
     return {
       fresh,
-      /** `alerts`: the send pushes, so it takes the rev every device shares. */
+
       take(inboxId: string, kind: string, alerts = false) {
         const rev = kept[`${inboxId}|${kind}`] ?? (alerts ? settled : fresh)
         lastRev = Math.max(lastRev, rev)
@@ -2839,12 +2356,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * Takes shares this device has never sent as sent, without sending: they came
-   * from another of this User's devices, which sent them (they were in the data
-   * at this device's first sync, or `keys` just arrived through iCloud Sync). A
-   * change after that is sent as usual, as an update.
-   */
   function adoptShares(keys?: readonly string[]) {
     const inboxId = knownInboxId()
     if (!inboxId || !deps.getShares || keys?.length === 0) return
@@ -2880,22 +2391,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /**
-   * Brings every buddy's view of this User's shared Plans and Follow-ups in
-   * line with the current data: invites new recipients, updates changed
-   * details, and cancels removed recipients and deleted shares. Content is
-   * hashed per recipient so an unchanged share sends nothing.
-   */
   function publishShares(): Promise<void> {
     return outbox('shares', sendShares)
   }
 
-  /**
-   * Who's going to one of this User's Plans, for the guest list everyone
-   * invited gets: by the name on their card, with their photo or emoji when
-   * they let it show. Someone whose app doesn't list them (`listed`) is counted
-   * only.
-   */
   async function guestList(
     shareId: string,
     going: string[],
@@ -2923,17 +2422,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       })
     }
-    // The same order on every device, whoever answered first.
+
     return list.sort((a, b) =>
       (a.guest?.n ?? '') + a.inboxId < (b.guest?.n ?? '') + b.inboxId ? -1 : 1
     )
   }
 
-  /**
-   * A buddy's photo for a guest list: their emoji as it is, or their card's
-   * thumbnail made small (`shrinkAvatar`), kept until that thumbnail changes so
-   * the list stays the same and isn't sent again.
-   */
   async function guestAvatar(buddy: Buddy): Promise<ShareGuest['a']> {
     const { avatar } = buddy
     if (!avatar) return undefined
@@ -2971,20 +2465,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         .getState()
         .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
     let failure: unknown = null
-    /** Invitations this publish found it can't send, to tell the User. */
+
     const notSent: Record<UnsentShareReason, Set<string>> = {
       suspended: new Set(),
       gone: new Set(),
     }
 
-    /**
-     * Sends one event: `sent`, `retry` on the next publish, or `dropped`, when
-     * it never will be (the pairing ended, the buddy's inbox is gone, or an
-     * invitation the relay refused while the account is suspended: it isn't
-     * held for later). A refused invitation is recorded with `refused`; while
-     * suspended, cancels are retried, since they only take back what buddies
-     * already have.
-     */
     const deliver = async (
       inboxId: string,
       kind: string,
@@ -3008,15 +2494,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(inboxId)
         return 'sent'
       } catch (error) {
-        // Says so itself when an invitation never reached them.
         if (isRelayError(error, 'gone')) {
           forgetBuddy(inboxId)
           return 'dropped'
         }
         const name = buddy.nickname ?? buddy.name
-        // Their inbox is gone (they deleted their Buddies data, or the relay
-        // wiped it), so nothing sent there arrives; the pairing ends here
-        // once their slot leaves this inbox.
+
         if (isRelayError(error, 'not_found')) {
           if (refused) {
             refused('gone', name)
@@ -3050,22 +2533,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const recipients = new Set(spec.recipients.filter(activeBuddy))
       const replies =
         spec.type === 'plan' ? store.getState().shareReplies[shareId] : {}
-      // A Plan's guest list: everyone invited sees who else is going, so
-      // they know who'll be there before they answer.
+
       const going = [...recipients].filter(
         (inboxId) => replies?.[inboxId]?.status === 'going'
       )
       const listed = going.length > 0
-      // Another device sent it, and nothing changed since (`adoptShares`).
-      // With anyone going, its guest lists may have.
+
       if (
         previous?.adopted !== undefined &&
         previous.adopted === adoptionHash(spec, activeBuddy) &&
         !listed
       )
         continue
-      // Once it has happened, a share is history: it goes on, quietly, only to
-      // buddies who already have it, never to anyone new.
+
       const ended = spec.endsAt <= now
       if (ended && !Object.keys(previous?.sent ?? {}).length) continue
       const prefix = SHARE_KIND_PREFIX[spec.type]
@@ -3076,7 +2556,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const guests = listed
         ? await guestList(shareId, going, replies ?? {})
         : []
-      /** What `inboxId` gets: the others going, never themselves. */
+
       const contentFor = (inboxId: string) => {
         if (!listed) return content
         const others = guests.filter((guest) => guest.inboxId !== inboxId)
@@ -3088,7 +2568,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ...(more > 0 ? { more } : {}),
         }
       }
-      // A retry reuses its rev only while everyone's content is the same.
+
       const revs = shareRevs(
         previous,
         listed
@@ -3097,8 +2577,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         now,
         spec.version
       )
-      // Only a change to when or where pushes; a new title or note arrives
-      // quietly, sparing the relay's daily push budget for what matters.
+
       const timing = shareTiming(details)
       const sent = { ...previous?.sent }
       const sentTiming = { ...previous?.sentTiming }
@@ -3115,8 +2594,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const theirs = contentFor(inboxId)
         const theirHash = theirs === content ? hash : hashOf(theirs)
         if (sent[inboxId] === theirHash) continue
-        // Refused (suspended, or their inbox gone): never sent later as it
-        // stands.
+
         if (unsent[inboxId]?.hash === theirHash) continue
         const update = sent[inboxId] !== undefined
         if (ended && !update) continue
@@ -3145,10 +2623,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           if (unsent[inboxId]) unsentChanges.push([spec.key, inboxId, null])
         } else if (outcome === 'retry') revs.leave(inboxId, kind, rev)
       }
-      // No longer invited: nothing more to say about them. A buddy who's gone
-      // is taken off the Plan or Follow-up for them (`forgetBuddiesInData`),
-      // so that one stays, to say it never reached them, until it's over or
-      // they're a buddy again.
+
       for (const [inboxId, entry] of Object.entries(unsent))
         if (
           !spec.recipients.includes(inboxId) &&
@@ -3160,7 +2635,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const kind = `${prefix}.cancel`
         const rev = revs.take(inboxId, kind, !ended)
         const cancel = { v: 1, id: shareId, rev, removed: true }
-        // Taking someone off who hadn't said they're going is no news to them.
+
         const going =
           store.getState().shareReplies[shareId]?.[inboxId]?.status === 'going'
         if (
@@ -3191,7 +2666,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const revs = shareRevs(share, 'deleted', now, deps.withdrawnAt?.(key))
       if (share.expiresAt > now) {
         const kind = `${SHARE_KIND_PREFIX[share.type]}.cancel`
-        // Deleting one that has happened goes quietly.
+
         const ended =
           (share.endsAt ?? share.expiresAt - LEGACY_SHARE_RETENTION_MS) <= now
         for (const inboxId of Object.keys(sent)) {
@@ -3210,10 +2685,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           : null
       )
     }
-    // A Plan or Follow-up that's gone, or over, has nothing left to tell. One
-    // that no longer invites anyone, because the buddies it invited are gone
-    // (`forgetBuddiesInData`), isn't shared any more, but still says it never
-    // reached them, until it's over or they're a buddy again.
+
     const unsentChanges: [string, string, UnsentShare | null][] = []
     for (const [key, recipients] of Object.entries(
       store.getState().unsentShares
@@ -3236,7 +2708,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
-  /** The buddy whose incoming slot delivered an event, if still active. */
   function senderOf(me: BuddyIdentity, slotId: string): Buddy | undefined {
     return store
       .getState()
@@ -3281,9 +2752,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         if (invite.type !== shareTypeOfKind(event.kind)) return
         applyInvite(buddy, source, invite)
       }
-    } catch {
-      // Undecryptable or malformed events are dropped.
-    }
+    } catch {}
   }
 
   function applyInvite(buddy: Buddy, source: EventSource, invite: ShareInvite) {
@@ -3314,7 +2783,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     store.setState((state) => ({
       incomingShares: { ...state.incomingShares, [key]: share },
-      // Being invited that day answers this User's request to join.
+
       askedToJoin:
         invite.type === 'plan'
           ? Object.fromEntries(
@@ -3325,15 +2794,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             )
           : state.askedToJoin,
     }))
-    // A change to a Plan that has happened isn't news: it's history by then.
+
     if (!changed || hasSharedEventEnded(share, deps.now())) return
-    // A change to an invitation not yet seen is still news of an invitation.
+
     const unseenInvite = store
       .getState()
       .notifications.some(
         (n) => n.shareKey === key && n.kind === 'shareInvite' && !n.read
       )
-    // One entry per share: the latest invite or change replaces older ones.
+
     store.setState((state) => ({
       notifications: state.notifications.filter(
         (n) => n.shareKey !== key || n.kind === 'shareReply'
@@ -3356,7 +2825,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   ) {
     const key = incomingShareKey(buddy.inboxId, shareId)
     const existing = store.getState().incomingShares[key]
-    // A cancel wins a tie with the invite it follows.
+
     if (!existing || existing.rev > rev || existing.status === 'cancelled')
       return
     store.setState((state) => ({
@@ -3366,12 +2835,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
     }))
-    // An answer given before doesn't carry over if they invite again, on any
-    // of this User's devices.
+
     if (store.getState().answerMarks[key])
       markAnswer(key, { s: 'none', v: rev, r: 0, x: existing.expiresAt })
-    // Taken off an invitation they hadn't accepted: it just goes away, along
-    // with any alert still showing for it.
+
     if (removed && existing.status !== 'going') {
       if (existing.alertSeqs?.length) deps.dismissAlerts?.(existing.alertSeqs)
       return
@@ -3438,12 +2905,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
   }
 
-  /**
-   * Answers a buddy's invitation; "going" is what adds the linked Plan. The
-   * answer is saved first, so it holds offline, and sent when the relay is
-   * reachable — now or on a later sync. With `holdMs` it waits that long first,
-   * so the User can still change it; answering again restarts the wait.
-   */
   async function replyToShare(
     key: string,
     status: ShareReply,
@@ -3452,7 +2913,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const share = store.getState().incomingShares[key]
     if (!share || share.status === 'cancelled') return
     const now = deps.now()
-    // Over: it can still be looked at, but not answered.
+
     if (hasSharedEventEnded(share, now)) return
     store.setState((state) => ({
       incomingShares: {
@@ -3468,7 +2929,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         n.shareKey === key ? { ...n, read: true } : n
       ),
     }))
-    // This User's other devices show it too; this one sends it.
+
     markAnswer(key, { s: status, v: share.rev, r: now, x: share.expiresAt })
     markNotifications(
       store
@@ -3478,12 +2939,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       'read'
     )
     if (holdMs > 0) return
-    await deliverReplies().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverReplies().catch(() => {})
   }
 
-  /** Sends held answers now, e.g. as the app leaves the foreground. */
   async function sendHeldReplies() {
     store.setState((state) => ({
       incomingShares: Object.fromEntries(
@@ -3498,7 +2956,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await deliverReplies()
   }
 
-  /** Sends the answers that haven't reached their buddy yet and are due. */
   function deliverReplies(): Promise<void> {
     return outbox('replies', sendReplies)
   }
@@ -3515,7 +2972,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const markSent = (key: string, rev: number) =>
       store.setState((state) => {
         const current = state.incomingShares[key]
-        // A newer answer given meanwhile still needs sending.
+
         if (current?.unsentReplyRev !== rev) return state
         return {
           incomingShares: {
@@ -3542,7 +2999,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         markSent(key, rev)
         continue
       }
-      // Stays unsent until the hourly budget allows; retried on every sync.
+
       if (!hasShareBudget(buddy.inboxId)) continue
       try {
         await sendEvent(
@@ -3554,8 +3011,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             id: share.shareId,
             rev,
             status: share.status,
-            // Going puts this User on the others' guest list, with their
-            // photo when All Buddies see it.
+
             ...(share.status === 'going'
               ? {
                   listed: true,
@@ -3564,7 +3020,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
               : {}),
           },
           true,
-          // A retry of this answer is the same event: one alert, however sent.
+
           eventIdFor('reply', me.inboxId, buddy.inboxId, share.shareId, rev)
         )
         spendShareBudget(buddy.inboxId)
@@ -3577,7 +3033,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
-  /** Stable per buddy and Plan, so asking again for the same Plan is a no-op. */
   function joinRequestIdFor(
     me: BuddyIdentity,
     to: string,
@@ -3591,14 +3046,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Asks a buddy to invite this User to their Plan, as seen on their Buddy
-   * Card. Saved first, so it holds offline, and sent now or on a later sync.
-   * The buddy answers by inviting, or not at all: nothing tells this User a
-   * request was passed over, and it lapses when the Plan starts. Only the first
-   * ask for a Plan alerts the buddy; asking again after withdrawing arrives
-   * quietly.
-   */
   async function askToJoin(
     to: string,
     d: string,
@@ -3636,25 +3083,18 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       }
     })
-    await deliverJoinRequests().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverJoinRequests().catch(() => {})
   }
 
-  /** Always newer than the last ask or withdrawal, even within a millisecond. */
   function nextRev(request: OutgoingJoinRequest | undefined) {
     return Math.max(deps.now(), (request?.rev ?? 0) + 1)
   }
 
-  /** Takes back a request; the buddy's tray drops it quietly. */
   async function withdrawJoinRequest(id: string) {
     withdrawJoinRequests([id])
-    await deliverJoinRequests().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverJoinRequests().catch(() => {})
   }
 
-  /** Marks requests withdrawn, keeping them until they lapse. */
   function withdrawJoinRequests(ids: string[]) {
     store.setState((state) => {
       const askedToJoin = { ...state.askedToJoin }
@@ -3671,12 +3111,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
   }
 
-  /**
-   * Whether sending this request alerts the buddy: only its first ask, or a
-   * retry of that same ask, and only `JOIN_REQUEST_ALERTS_PER_DAY` requests per
-   * buddy a day. An ask whose alert may already have landed, then was withdrawn
-   * and asked again, goes quietly.
-   */
   function shouldAlert(request: OutgoingJoinRequest): boolean {
     if (request.pushed) return false
     if (request.alertRev !== undefined) return request.alertRev === request.rev
@@ -3691,15 +3125,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return alerted.length < JOIN_REQUEST_ALERTS_PER_DAY
   }
 
-  /**
-   * Sends requests and withdrawals that haven't reached their buddy yet, one
-   * delivery at a time, so asking, withdrawing, and syncing can't race.
-   */
   function deliverJoinRequests(): Promise<void> {
     const run = joinDelivery.then(sendJoinRequests)
-    joinDelivery = run.catch(() => {
-      // The caller sees the failure; the queue moves on.
-    })
+    joinDelivery = run.catch(() => {})
     return run
   }
 
@@ -3723,7 +3151,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           },
         }
       })
-    // A newer ask or withdrawal made meanwhile still needs sending.
+
     const markSent = (id: string, rev: number) =>
       update(id, (current) => (current.rev === rev ? { sentRev: rev } : {}))
     let failure: unknown = null
@@ -3738,8 +3166,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         }))
         continue
       }
-      // Still unsent this close to the start: too late to be any use, so
-      // it's taken back (quietly, in case an earlier try landed).
+
       if (
         !request.withdrawn &&
         request.expiresAt - deps.now() < JOIN_REQUEST_LEAD_MS
@@ -3747,12 +3174,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         withdrawJoinRequests([request.id])
         request = store.getState().askedToJoin[request.id]
       }
-      // Never reached the relay: there's nothing to take back.
+
       if (request.withdrawn && !request.attempted) {
         markSent(request.id, request.rev)
         continue
       }
-      // Waits for the hourly budget; retried on every sync.
+
       if (!hasShareBudget(buddy.inboxId)) continue
       try {
         if (request.withdrawn) {
@@ -3761,8 +3188,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         } else {
           const alert = shouldAlert(request)
           const eventId = alert ? (request.alertEventId ?? newId()) : newId()
-          // Recorded first: a send that seems to fail may still have landed,
-          // and a retry of the alert reuses its event id.
+
           update(request.id, () => ({
             attempted: true,
             ...(alert ? { alertEventId: eventId, alertRev: request.rev } : {}),
@@ -3808,9 +3234,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const cancel = shareCancelSchema.parse(body)
         const key = incomingJoinRequestKey(buddy.inboxId, cancel.id)
         const existing = store.getState().joinRequests[key]
-        // A withdrawal wins a tie with the request it follows.
+
         if (!existing || existing.rev > cancel.rev) return
-        // Kept until it lapses, so asking again is listed quietly.
+
         store.setState((state) => ({
           joinRequests: {
             ...state.joinRequests,
@@ -3821,9 +3247,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         return
       }
       const request = joinRequestSchema.parse(body)
-      // The Plan's start here, whatever the asker's clock says: a request
-      // lapses by then (a day's slack for time zones) and can't reach past
-      // the Buddy Card's window.
+
       const start = atMinutesOfDay(
         moment(request.d, 'YYYY-MM-DD'),
         request.s ?? DEFAULT_START_TIME_IN_MINUTES
@@ -3850,8 +3274,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           },
         },
       }))
-      // Listed once; a request this User passed over stays quiet, and one
-      // asked again after a withdrawal comes back already read.
+
       if (existing && !existing.withdrawn) return
       if (existing?.dismissed) return
       notify(
@@ -3863,18 +3286,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           name: buddy.name,
           shareKey: key,
         },
-        // Alerts off for this buddy: listed, but it doesn't call for attention.
+
         !!existing || !alertsFor(buddy.inboxId).joinRequests
       )
-    } catch {
-      // Undecryptable or malformed events are dropped.
-    }
+    } catch {}
   }
 
-  /**
-   * Not Now: clears a buddy's request here without telling them. It lapses on
-   * their side when the Plan starts, like any request not answered.
-   */
   function dismissJoinRequest(key: string) {
     const request = store.getState().joinRequests[key]
     if (!request) return
@@ -3892,7 +3309,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotifications(entries, 'dismissed')
   }
 
-  /** A request is answered once this User invites the buddy to a Plan that day. */
   function resolveJoinRequests(specs: OutgoingShareSpec[]) {
     const answered = Object.entries(store.getState().joinRequests)
       .filter(([, request]) =>
@@ -3917,10 +3333,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }))
   }
 
-  /**
-   * Push kinds for join requests from each active buddy whose requests may
-   * alert this device; left out of the push registration otherwise.
-   */
   async function joinRequestPushKinds(): Promise<JoinRequestPushKind[]> {
     const { buddies } = store.getState()
     const alerting = buddies.filter(
@@ -3934,11 +3346,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Stable per buddy and set of badges, so the same news sent again (a retry,
-   * or another of this User's devices) is the same event, which the relay never
-   * alerts for twice.
-   */
   function badgeEventId(
     me: BuddyIdentity,
     to: string,
@@ -3953,16 +3360,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Tells buddies about badges this User just earned: each collection's new
-   * level, batched into one `badge.new` per buddy. One-time Badges stay quiet
-   * (a first Bible study is personal, and a first buddy already knows). Saved
-   * first, so it holds offline, and sent now or on a later sync for up to a
-   * week. Only buddies active now hear about it; anyone paired later sees the
-   * badges on the Buddy Card.
-   */
   async function announceBadges(keys: readonly BadgeKey[]) {
-    // Buddies hidden or stopped here (its flag turned off, say): no news.
     if (!(deps.isEnabled?.() ?? true)) return
     const best = new Map<string, SharedBadge>()
     for (const key of keys) {
@@ -3974,7 +3372,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     if (best.size === 0 || sharingPaused()) return
     const state = store.getState()
-    // Buddies never started here: no one to tell, and no seed to create.
+
     if (state.registeredInboxId === null) return
     const recipients = state.buddies
       .filter((buddy) => buddy.status === 'active' && badgesGoTo(buddy))
@@ -3997,21 +3395,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       ].slice(-MAX_BADGE_ANNOUNCEMENTS),
     }))
-    await deliverBadgeAnnouncements().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverBadgeAnnouncements().catch(() => {})
   }
 
-  /** Forgets badge news not yet sent, once badges or sharing them is off. */
   function dropBadgeAnnouncements() {
     if (store.getState().badgeAnnouncements.length > 0)
       store.setState({ badgeAnnouncements: [] })
   }
 
-  /**
-   * Drops badge news that's delivered, a week old, or no longer shared with
-   * anyone it's still owed to.
-   */
   function pruneBadgeAnnouncements() {
     const now = deps.now()
     const { badgeAnnouncements, buddies } = store.getState()
@@ -4028,31 +3419,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       store.setState({ badgeAnnouncements: kept })
   }
 
-  /** Sends badge news still owed to buddies, one delivery at a time. */
   function deliverBadgeAnnouncements(): Promise<void> {
     const run = badgeDelivery.then(sendBadgeAnnouncements)
-    badgeDelivery = run.catch(() => {
-      // The caller sees the failure; the queue moves on.
-    })
+    badgeDelivery = run.catch(() => {})
     return run
   }
 
-  /**
-   * Delivers badge news and reactions again once `at` passes, if a timer is
-   * available.
-   */
   function retryBadgesAt(at: number) {
     if (!deps.later || (badgeRetryAt !== null && badgeRetryAt <= at)) return
     badgeRetryAt = at
     deps.later(
       () => {
         if (badgeRetryAt === at) badgeRetryAt = null
-        void deliverBadgeAnnouncements().catch(() => {
-          // Retried on the next sync.
-        })
-        void deliverBadgeReactions().catch(() => {
-          // Retried on the next sync.
-        })
+        void deliverBadgeAnnouncements().catch(() => {})
+        void deliverBadgeReactions().catch(() => {})
       },
       Math.max(0, at - deps.now())
     )
@@ -4061,7 +3441,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function sendBadgeAnnouncements() {
     pruneBadgeAnnouncements()
     if (store.getState().badgeAnnouncements.length === 0) return
-    // Kept, but not sent, while Buddies is hidden or stopped here.
+
     if (!(deps.isEnabled?.() ?? true)) return
     const me = await ensureInbox()
     const current = (id: string) =>
@@ -4080,7 +3460,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     let failure: unknown = null
     for (const { id, recipients } of store.getState().badgeAnnouncements) {
       for (const inboxId of recipients) {
-        // Read again each time: a send may have ended a pairing meanwhile.
         const announcement = current(id)
         if (
           !announcement ||
@@ -4091,8 +3470,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         const buddy = store
           .getState()
           .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
-        // Waits for the hourly budget, or the pause to end; retried on every
-        // sync.
+
         if (
           !buddy ||
           !badgesGoTo(buddy) ||
@@ -4105,9 +3483,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           !!announcement.alerted[inboxId] ||
           lastAlert === undefined ||
           deps.now() - lastAlert >= BADGE_ALERT_INTERVAL_MS
-        // Just alerted them about something else (a reply, an invitation):
-        // the relay would drop this alert, so it waits out the spacing rather
-        // than spending the day's badge alert on nothing.
+
         const lastSent = lastAlertSentAt.get(inboxId)
         const sinceLastSent =
           lastSent === undefined ? Infinity : deps.now() - lastSent
@@ -4120,8 +3496,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           continue
         }
         if (alert && !announcement.alerted[inboxId]) {
-          // Recorded first: a send that seems to fail may still have landed,
-          // and its retry keeps the alert under the same event id.
           store.setState((state) => ({
             lastBadgeAlertAt: {
               ...state.lastBadgeAlertAt,
@@ -4151,27 +3525,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
-  /**
-   * A buddy's news of new badges: listed in the tray (already read with badge
-   * alerts off here, and not at all with Badges off) and shown on their page
-   * until their next Buddy Card, which is the source of truth.
-   */
   function applyBadgeEvent(
     me: BuddyIdentity,
     event: RelaySyncResponse['events'][number],
-    /** This device has never synced: everything read is backlog. */
+
     firstSync: boolean
   ) {
     const buddy = senderOf(me, event.slotId)
     if (!buddy) return
-    // A sync that reads the inbox from the start again lists nothing twice.
+
     if (store.getState().seenBadgeEvents[event.eventId] !== undefined) return
     let badges: SharedBadge[]
     try {
       const body = badgeNewSchema.parse(openEvent(me, buddy, event))
       badges = sortedForAnnouncement(knownBadges(body.badges))
     } catch {
-      // Undecryptable or malformed events are dropped.
       return
     }
     const now = deps.now()
@@ -4194,7 +3562,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             ),
     }))
     if (badges.length === 0 || !(deps.showBadges?.() ?? true)) return
-    // Listed when it happened, not when this device first read it.
+
     const at = Number.isFinite(event.createdAt)
       ? Math.min(event.createdAt, now)
       : now
@@ -4208,18 +3576,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         badges,
         at,
       },
-      // Listed, but not calling for attention: badge alerts are off here for
-      // them, or it's old news (a day or more, or a new device's whole
-      // backlog).
+
       !alertsFor(buddy.inboxId).badges || firstSync || at <= now - DAY_MS
     )
   }
 
-  /**
-   * The badge push kinds (new badges, reactions), while badge alerts are on
-   * here, or on for a buddy of their own; the alert stays quiet for buddies
-   * with them off (`pushAlerts`).
-   */
   function badgePushKinds(): BadgePushKind[] {
     return badgeAlertsOn() ? [BADGE_PUSH_KIND, BADGE_REACTION_PUSH_KIND] : []
   }
@@ -4233,11 +3594,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Stable per buddy, badge, and choice, so a retry (or another of this User's
-   * devices sending the same choice) is the same event, which the relay stores
-   * once and never alerts for twice.
-   */
   function badgeReactionEventId(
     me: BuddyIdentity,
     to: string,
@@ -4251,19 +3607,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Reacts to a buddy's badge with one of the preset reactions, replacing this
-   * User's earlier reaction to it. Only for an active buddy whose card shows
-   * that badge (or a higher level of it). Saved first, so the reaction bar
-   * shows it at once and it holds offline, then sent now or on a later sync for
-   * up to a week. Sharing one's own badges isn't needed to react to theirs.
-   */
   async function reactToBadge(
     inboxId: string,
     badge: SharedBadge,
     emoji: BadgeReactionEmoji
   ) {
-    // Buddies hidden or stopped here, or badges off: nothing to react to.
     if (!(deps.isEnabled?.() ?? true) || !(deps.showBadges?.() ?? true)) return
     if (!isBadgeReactionEmoji(emoji)) return
     const [known] = knownBadges([badge])
@@ -4280,7 +3628,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const reaction: SentBadgeReaction = {
         ...existing,
         e: emoji,
-        // Always newer than the last choice, even within a millisecond.
+
         rev: Math.max(now, (existing?.rev ?? 0) + 1),
         at: now,
       }
@@ -4294,20 +3642,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       }))
     }
-    await deliverBadgeReactions().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverBadgeReactions().catch(() => {})
   }
 
-  /**
-   * Sends reactions that haven't reached their buddy yet. Runs in line with
-   * badge news, so the two never race for the relay's alert spacing.
-   */
   function deliverBadgeReactions(): Promise<void> {
     const run = badgeDelivery.then(sendBadgeReactions)
-    badgeDelivery = run.catch(() => {
-      // The caller sees the failure; the queue moves on.
-    })
+    badgeDelivery = run.catch(() => {})
     return run
   }
 
@@ -4324,7 +3664,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           .map(([key]) => ({ inboxId, key }))
     )
     if (waiting.length === 0) return
-    // Kept, but not sent, while Buddies is hidden or stopped here.
+
     if (!(deps.isEnabled?.() ?? true)) return
     const me = await ensureInbox()
     const update = (
@@ -4347,25 +3687,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       })
     let failure: unknown = null
     for (const { inboxId, key } of waiting) {
-      // Read again each time: a send may have ended a pairing meanwhile.
       const reaction = store.getState().sentBadgeReactions[inboxId]?.[key]
       const parsed = parseBadgeKey(key)
       if (!reaction || !parsed || reaction.sentRev === reaction.rev) continue
       const buddy = store
         .getState()
         .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
-      // Waits for the hourly budget; retried on every sync.
+
       if (!buddy || !hasShareBudget(inboxId)) continue
       const { rev } = reaction
-      // Reactions have their own allowance, apart from badge news.
+
       const lastAlert = store.getState().lastBadgeReactionAlertAt[inboxId]
       const alert =
         reaction.alertRev === rev ||
         lastAlert === undefined ||
         deps.now() - lastAlert >= BADGE_ALERT_INTERVAL_MS
-      // Just alerted them about something else: the relay would drop this
-      // alert, so it waits out the spacing rather than spending the day's
-      // reaction alert on nothing.
+
       const lastSent = lastAlertSentAt.get(inboxId)
       const sinceLastSent =
         lastSent === undefined ? Infinity : deps.now() - lastSent
@@ -4378,8 +3715,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         continue
       }
       if (alert && reaction.alertRev !== rev) {
-        // Recorded first: a send that seems to fail may still have landed,
-        // and its retry keeps the alert under the same event id.
         store.setState((state) => ({
           lastBadgeReactionAlertAt: {
             ...state.lastBadgeReactionAlertAt,
@@ -4405,7 +3740,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           badgeReactionEventId(me, inboxId, key, rev)
         )
         spendShareBudget(inboxId)
-        // A newer choice made meanwhile still needs sending.
+
         update(inboxId, key, (current) =>
           current.rev === rev ? { sentRev: rev } : {}
         )
@@ -4417,17 +3752,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
-  /**
-   * A buddy's reaction to one of this User's badges: kept, the newest per buddy
-   * and badge, for that badge's view, and listed in the tray in place of their
-   * earlier reaction to it (already read with badge alerts off here, or when
-   * old). Ignored with badges off here, and for a badge this User doesn't
-   * have.
-   */
   function applyBadgeReactionEvent(
     me: BuddyIdentity,
     event: RelaySyncResponse['events'][number],
-    /** This device has never synced: everything read is backlog. */
+
     firstSync: boolean
   ) {
     const buddy = senderOf(me, event.slotId)
@@ -4439,20 +3767,19 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (!badge) return
       body = { ...parsed, badge }
     } catch {
-      // Undecryptable or malformed events are dropped.
       return
     }
     if (!(deps.showBadges?.() ?? true)) return
     if (!holdsBadge(deps.getProfile().badges, body.badge)) return
     const key = sharedBadgeKey(body.badge)
     const existing = store.getState().badgeReactions[key]?.[buddy.inboxId]
-    // Read before (the inbox read from the start again), or an older choice.
+
     if (existing && existing.rev >= body.rev) return
     const now = deps.now()
     const at = Number.isFinite(event.createdAt)
       ? Math.min(event.createdAt, now)
       : now
-    // The same reaction again (from another of their devices) isn't news.
+
     const same = existing !== undefined && existing.e === body.e
     store.setState((state) => ({
       badgeReactions: {
@@ -4466,7 +3793,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           },
         },
       },
-      // One entry per buddy and badge: a new reaction replaces the last.
+
       notifications: same
         ? state.notifications
         : state.notifications.filter(
@@ -4490,26 +3817,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         reaction: body.e,
         at,
       },
-      // Listed, but not calling for attention: badge alerts are off here for
-      // them, or it's old news (a day or more, or a new device's whole
-      // backlog).
+
       !alertsFor(buddy.inboxId).badges || firstSync || at <= now - DAY_MS
     )
   }
 
-  // --- Shared Cars ---------------------------------------------------------
-
-  /** An active buddy, the only kind a car event goes to or comes from. */
   const activeBuddy = (inboxId: string) =>
     store
       .getState()
       .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
 
-  /**
-   * Saves a `car.*` event to `to` until the relay accepts it. Its id is the
-   * same on every device and every try (`inviteEventId`), so the relay stores
-   * and alerts once.
-   */
   function queueCarEvent(
     me: BuddyIdentity,
     event: Omit<OutgoingCarEventInput, 'eventId'>
@@ -4527,29 +3844,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           ...event,
           eventId,
           queuedAt: deps.now(),
-          // Sent again: it may have reached them already.
+
           ...(state.carEvents[eventId]?.attempted ? { attempted: true } : {}),
         },
       },
     }))
   }
 
-  /**
-   * Sends a buddy the invitation to one of this User's Shared Cars that the
-   * Shared Cars engine just opened (`car.invite`). Saved first, and retried on
-   * every sync until the relay accepts it or the invitation lapses. Whether it
-   * was saved: nothing is for someone who isn't an active buddy, and the caller
-   * then closes the invitation it opened, which nobody would hear of.
-   */
   async function sendCarInvite(
     to: string,
     invite: CarInvitePayload
   ): Promise<boolean> {
     if (!activeBuddy(to)) return false
     const me = await ensureInbox()
-    // Gone while the inbox was read.
+
     if (!activeBuddy(to)) return false
-    // Its secret and key wait on the device, apart from the event.
+
     inviteSecrets.put(sentInviteSecretId(invite.inviteId), {
       joinSecret: invite.joinSecret,
       key: invite.key,
@@ -4572,18 +3882,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       push: true,
       expiresAt: invite.expiresAt,
     })
-    await deliverCarEvents().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverCarEvents().catch(() => {})
     return true
   }
 
-  /**
-   * What joining from a buddy's invitation `key` takes besides what it shows:
-   * its join secret and the car's key, from the device. Null when it isn't to
-   * answer any more, or when the device no longer has them, and then it goes
-   * (`dropUnjoinableCarInvites`). Throws while they can't be read.
-   */
   async function carInviteSecrets(key: string): Promise<InviteSecrets | null> {
     if (!(await inviteSecrets.ready()))
       throw new Error('Car invitation secrets unreadable')
@@ -4594,14 +3896,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return secrets
   }
 
-  /**
-   * Buddies' invitations still to answer whose secrets this device doesn't have
-   * (a restore onto a new phone, or a binary without device secrets that
-   * restarted) can't be joined from here: they go, with their entries and
-   * alerts, as if they'd lapsed. Nothing is sent, since another of the User's
-   * devices may still join, and the invitation lapses on the car. Only once the
-   * secrets have been read: storage that can't be read says nothing.
-   */
   function dropUnjoinableCarInvites() {
     const lost = Object.entries(store.getState().carInvites).filter(
       ([key, invite]) =>
@@ -4622,11 +3916,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (alerts.length > 0) deps.dismissAlerts?.(alerts)
   }
 
-  /**
-   * Takes back an invitation to a Shared Car (`car.cancel`), quietly: the
-   * buddy's app drops it, with its alert. One that never reached the relay is
-   * just dropped.
-   */
   async function sendCarCancel(
     to: string,
     invite: Pick<OpenCarInvite, 'spaceId' | 'inviteId' | 'expiresAt'>
@@ -4634,16 +3923,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!activeBuddy(to)) return
     const me = await ensureInbox()
     if (!queueCarCancel(me, to, invite)) return
-    await deliverCarEvents().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverCarEvents().catch(() => {})
   }
 
-  /**
-   * Queues the cancel of an invitation, dropping its `car.invite` if that's
-   * still waiting: one that never reached the relay needs no cancel, and one
-   * that may have doesn't go again. Whether there's a cancel to send.
-   */
   function queueCarCancel(
     me: BuddyIdentity,
     to: string,
@@ -4672,22 +3954,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return true
   }
 
-  /**
-   * This User's answer to a buddy's invitation to their Shared Car: `joined`
-   * once the Shared Cars engine has joined it, or `declined`. Saved first and
-   * sent now or on a later sync (`car.reply`, alerting only when joined). This
-   * User's other devices show the answer too; only this one sends it. Whether
-   * it was answered here: not when it wasn't open to answer any more (another
-   * of their devices answered it, the buddy canceled it, or it lapsed).
-   */
   async function answerCarInvite(
     key: string,
     answer: CarReply,
     options: { confirmedJoin?: boolean } = {}
   ): Promise<boolean> {
-    // A join this device made whose answer was lost, confirmed later, answers
-    // an invitation that already reads as joined (`settledCarInvites`), unless
-    // another device's answer to it has come.
     const answerable = (invite: IncomingCarInvite | undefined) =>
       invite?.status === 'pending' ||
       (options.confirmedJoin === true &&
@@ -4697,7 +3968,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!answerable(store.getState().carInvites[key])) return false
     const me = await ensureInbox()
     const now = deps.now()
-    // Read again: another device's answer may have come meanwhile.
+
     const answered = store.getState().carInvites[key]
     if (!answered || !answerable(answered)) return false
     store.setState((state) => ({
@@ -4738,27 +4009,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       push: answer === 'joined',
       expiresAt: now + CAR_REPLY_TTL_MS,
     })
-    await deliverCarEvents().catch(() => {
-      // Saved; retried on the next sync.
-    })
+    await deliverCarEvents().catch(() => {})
     return true
   }
 
-  /**
-   * Sends the `car.*` events still waiting, one delivery at a time, in the
-   * order they were made. Each counts against the hourly share budget and waits
-   * for it. A `car.invite` goes only while its invitation is still open on the
-   * car, with its secrets from the device (`dropLostCarInvites`). `gone`
-   * forgets the buddy, as for other events; an inbox that's gone, or an
-   * invitation refused while the account is suspended, won't go as it stands
-   * and is dropped, and the User is told of an invitation that didn't go, as
-   * for Plans.
-   */
   function deliverCarEvents(): Promise<void> {
     const run = carDelivery.then(sendCarEvents)
-    carDelivery = run.catch(() => {
-      // The caller sees the failure; the queue moves on.
-    })
+    carDelivery = run.catch(() => {})
     return run
   }
 
@@ -4778,14 +4035,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       store.setState((state) => ({
         carEvents: omitKey(state.carEvents, eventId),
       }))
-    /** Invitations that won't go, to tell the User, by why. */
+
     const notSent: Record<UnsentShareReason, Set<string>> = {
       suspended: new Set(),
       gone: new Set(),
     }
     let failure: unknown = null
     for (const { eventId } of waiting) {
-      // Read again each time: a cancel may have taken its invitation back.
       const event = store.getState().carEvents[eventId]
       if (!event) continue
       const buddy = activeBuddy(event.to)
@@ -4794,8 +4050,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         continue
       }
       const invitation = event.kind === 'car.invite'
-      // Closed meanwhile, here or on another of this User's devices: there's
-      // nothing to join, and nothing to take back.
+
       if (
         invitation &&
         deps.cars?.inviteOpen?.(event.spaceId, event.inviteId) === false
@@ -4805,15 +4060,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }
       let body = event.body
       if (invitation) {
-        // Its secret and key, from the device; while they can't be read, it
-        // waits for the next sync.
         const secrets = inviteSecrets.get(sentInviteSecretId(event.inviteId))
         if (!secrets) continue
         body = { ...body, ...secrets }
       }
-      // Waits for the hourly budget; retried on every sync.
+
       if (!hasShareBudget(buddy.inboxId)) continue
-      // Recorded first: a send that seems to fail may still have landed.
+
       store.setState((state) => ({
         carEvents: state.carEvents[eventId]
           ? {
@@ -4828,17 +4081,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         drop(eventId)
       } catch (error) {
         const name = buddy.nickname ?? buddy.name
-        // Their pairing ended before it went (their slot is gone here too).
+
         if (isRelayError(error, 'gone')) {
           if (invitation) notSent.gone.add(name)
           forgetBuddy(buddy.inboxId)
         } else if (isRelayError(error, 'not_found')) {
-          // Their inbox is gone, so nothing sent there arrives.
           if (invitation) notSent.gone.add(name)
           drop(eventId)
         } else if (invitation && isRelayError(error, 'suspended')) {
-          // Not held for after a suspension; the car's invitation lapses.
-          // Cancels and replies are retried: they only answer what's there.
           notSent.suspended.add(name)
           drop(eventId)
         } else failure ??= error
@@ -4850,15 +4100,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (failure) throw failure
   }
 
-  /**
-   * This User's `car.invite`s whose secrets are gone from the device (a restore
-   * onto a new phone, or a binary without device secrets that restarted) can't
-   * go as they stand. Each is dropped, with a `car.cancel` when it may have
-   * reached the buddy already, and the car sends a new one in its place
-   * (`onInviteLost`). One that wouldn't go anyway (to someone who isn't an
-   * active buddy, or closed on its car) is left for the send to drop. Nothing
-   * while the secrets can't be read.
-   */
   async function dropLostCarInvites(me: BuddyIdentity) {
     const invites = () =>
       Object.values(store.getState().carEvents).filter(
@@ -4876,11 +4117,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       deps.cars?.onInviteLost?.({ to, spaceId, inviteId })
   }
 
-  /**
-   * A buddy's `car.*` event. Only active buddies' count, and each is handled
-   * once, so reading the inbox from the start again changes nothing. Entries
-   * arrive already read on this device's first sync (its backlog).
-   */
   function applyCarEvent(
     me: BuddyIdentity,
     event: RelaySyncResponse['events'][number],
@@ -4911,7 +4147,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 read: firstSync,
               })
     } catch {
-      // Undecryptable or malformed events are dropped.
       return
     }
     const now = deps.now()
@@ -4928,13 +4163,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (notice) deps.cars.onEvent?.(notice)
   }
 
-  /**
-   * A buddy invited this User to their Shared Car: listed until it's answered,
-   * canceled, or lapses, kept at most 7 days and 5 minutes from now whatever it
-   * says. A newer invitation from them to the same car (a rekey sent it again)
-   * takes the place of one still open, with its alert. One to a car the User is
-   * on already reads as joined.
-   */
   function applyCarInvite(
     buddy: Buddy,
     source: EventSource,
@@ -4949,7 +4177,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (expiresAt <= now) return null
     const key = incomingCarInviteKey(buddy.inboxId, invite.inviteId)
     const state = store.getState()
-    // Seen already (a cancel that came first counts).
+
     if (state.carInvites[key]) return null
     const onCar = deps.cars?.isOnCar?.(invite.id) ?? false
     const replaced = Object.entries(state.carInvites).filter(
@@ -4962,7 +4190,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const wasRead = state.notifications.some(
       (n) => n.shareKey !== undefined && replacedKeys.has(n.shareKey) && n.read
     )
-    // What joining takes waits on the device, apart from the invitation.
+
     if (!onCar)
       inviteSecrets.put(receivedInviteSecretId(key), {
         joinSecret: invite.joinSecret,
@@ -5020,11 +4248,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * A buddy took back their invitation: it goes, with any alert still showing
-   * for it, unless this User already joined. One not seen yet is remembered as
-   * canceled, so it isn't listed if it arrives after all.
-   */
   function applyCarCancel(
     buddy: Buddy,
     cancel: CarCancelEvent
@@ -5052,7 +4275,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
               rev: cancel.rev,
               name: '',
               people: 0,
-              // As long as the invitation it took back could be kept.
+
               expiresAt: now + INCOMING_CAR_INVITE_MAX_MS,
               receivedAt: now,
               status: 'cancelled',
@@ -5064,11 +4287,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return notice
   }
 
-  /**
-   * A buddy answered this User's invitation to one of their Shared Cars.
-   * Joining is listed ("Joe joined Mazda CX-5"); declining isn't, and the
-   * invitation closes on the car.
-   */
   function applyCarReply(
     buddy: Buddy,
     source: EventSource,
@@ -5096,18 +4314,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return { kind: 'car.reply', ...ref, status: reply.status }
   }
 
-  /**
-   * The roster carries the cars this User is on to their other devices: written
-   * shortly after a change here (joining, leaving, sharing).
-   */
   function noteCarMemberships() {
     saveRosterSoon()
   }
 
-  /**
-   * This User's open invitations to a buddy's Shared Cars go before they stop
-   * being one: canceled while they can still be told.
-   */
   function queueCarCancelsTo(me: BuddyIdentity, inboxId: string) {
     for (const invite of deps.cars?.openInvitesTo(inboxId) ?? [])
       queueCarCancel(me, inboxId, invite)
@@ -5127,10 +4337,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotifications(unread, 'read')
   }
 
-  /**
-   * Seen in the tray, here and on this User's other devices. A later change to
-   * a seen invitation then reads as a change rather than a new invitation.
-   */
   function markNotificationRead(id: string) {
     const entry = store.getState().notifications.find((n) => n.id === id)
     if (!entry || entry.read) return
@@ -5142,13 +4348,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotifications([id], 'read')
   }
 
-  /**
-   * Removes a queue entry, here and on this User's other devices, except a
-   * request still waiting on an answer: the tray is where it's answered, and
-   * answering is what clears it.
-   */
   function dismissNotification(id: string) {
-    // An invitation to a car the User is on is answered, though maybe not here.
     settleCarInvites()
     const state = store.getState()
     const entry = state.notifications.find((n) => n.id === id)
@@ -5163,10 +4363,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotifications([id], 'dismissed')
   }
 
-  /**
-   * The id buddies know one of this User's shares by. Renders read it, so it
-   * never waits on the seed; empty before Buddies has started here.
-   */
   function shareIdForKey(key: string): string {
     const inboxId = knownInboxId()
     return inboxId ? shareIdFor(inboxId, key) : ''
@@ -5178,16 +4374,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         decode(open(me.rosterKey, blob, aad.roster(me.inboxId)))
       )
     } catch {
-      // A roster from another identity or a corrupt blob is ignored.
       return null
     }
   }
 
-  /**
-   * A roster older than the newest this device has read or written: a replay,
-   * or a write from a device that hadn't synced. One without a `version` comes
-   * from an older build and is merged; local tombstones still win over it.
-   */
   function isStaleRoster(roster: Roster): boolean {
     return (
       roster.version !== undefined &&
@@ -5195,13 +4385,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
   }
 
-  /**
-   * Folds another device's roster into local state. Relationships union, and
-   * removals win: ended pairings and closed invites carry tombstones, which
-   * union too, and a removed buddy's slot is gone from the inbox. Lapsed
-   * invites and claims are dropped. The later sharing choice wins. Returns the
-   * buddies this device didn't know about.
-   */
   function mergeRoster(me: BuddyIdentity, remote: Roster): string[] {
     const state = store.getState()
     const now = deps.now()
@@ -5233,17 +4416,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const own = rosterOverrides({ showOnCalendar, overrides }, sharing, {})
       added.push({ ...buddy, colorIndex, ...(own && { overrides: own }) })
     }
-    // Another of this User's devices ended these pairings.
+
     const endedHere = state.buddies.filter(ended)
-    // Invitations of this device's that never reached them say so, while
-    // they're still listed to name. Quietly: the User may have ended it there.
+
     for (const buddy of endedHere) noteUnsentTo(buddy.inboxId)
     const buddies = [
       ...state.buddies
         .filter((local) => !ended(local))
         .map((local): Buddy => {
           const theirs = remote.buddies.find((b) => b.inboxId === local.inboxId)
-          // Another device already applied this pairing's confirmation.
+
           const confirmed =
             local.status === 'awaitingConfirm' &&
             theirs?.status === 'active' &&
@@ -5256,8 +4438,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                   expiresAt: undefined,
                 }
               : local
-          // A nickname, color, or setting of their own made later on another
-          // device.
+
           return theirs?.prefsAt !== undefined &&
             theirs.prefsAt > (local.prefsAt ?? 0)
             ? {
@@ -5275,7 +4456,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       !(invite.inviteId in closedInviteIds) && invite.expiresAt > now
     store.setState({
       buddies,
-      // Buddies restored from another device means Buddies is already set up.
+
       onboardingComplete: state.onboardingComplete || buddies.length > 0,
       outgoingInvites: unionBy(
         state.outgoingInvites,
@@ -5291,7 +4472,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           isOpen(claim) && !buddies.some((b) => b.inboxId === claim.inboxId)
       ),
       closedInviteIds,
-      // A tombstone a newer pairing replaced has done its job.
+
       removedBuddies: Object.fromEntries(
         Object.entries(removedBuddies).filter(
           ([inboxId, removedAt]) =>
@@ -5310,24 +4491,17 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         now
       ),
     })
-    // The cars joined, shared, or left on another device follow here.
+
     deps.cars?.mergeMemberships({
       cars: remote.cars,
       leftCars: remote.leftCars,
     })
     applyMarks()
-    // Withdraw their slots from here too, in case that device can't finish.
+
     if (endedHere.length > 0) queueRemoval(endedHere)
     return added.map((b) => b.inboxId)
   }
 
-  /**
-   * Brings this device in line with what this User did on any of their devices:
-   * answers to invitations, and queue entries read or dismissed. A mark can
-   * arrive before what it's about, so this runs again after events. Another
-   * device's answer is sent by that device; one waiting to be sent here is
-   * dropped when the other is newer.
-   */
   function applyMarks() {
     const state = store.getState()
     const { answerMarks, notificationMarks } = state
@@ -5351,10 +4525,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       }
     }
-    // A car invitation another device answered (joined there, or declined),
-    // or answered again since this one did: the newer answer wins, and a
-    // reply still waiting to go from here is dropped. A decline never takes
-    // the place of joining a car the User is on.
+
     const isOnCar = deps.cars?.isOnCar
     let carInvites = state.carInvites
     let carEvents = state.carEvents
@@ -5379,7 +4550,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       )
       if (waiting) carEvents = omitKey(carEvents, waiting.eventId)
     }
-    // One to a car the User is on reads as joined, whichever device joined.
+
     const onCars = settledCarInvites(carInvites, isOnCar, deps.now())
     carInvites = onCars.carInvites
     for (const key of onCars.settled) answered.add(key)
@@ -5390,7 +4561,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       carInvites,
     }
     const now = deps.now()
-    // Not Now on another device: the request stays quiet here too.
+
     const passedOver = new Set(
       state.notifications
         .filter(
@@ -5399,12 +4570,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         .map((n) => n.shareKey!)
     )
     const notifications = state.notifications
-      .filter(
-        (n) =>
-          !(n.id in dismissed) ||
-          // Answering is what clears a request still waiting on an answer.
-          awaitsAnswer(n, answerState, now)
-      )
+      .filter((n) => !(n.id in dismissed) || awaitsAnswer(n, answerState, now))
       .filter((n) => !n.shareKey || !passedOver.has(n.shareKey))
       .map((n) =>
         !n.read &&
@@ -5442,11 +4608,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       })
   }
 
-  /**
-   * Invitations to a car the User is on read as joined, here and now (see
-   * `settledCarInvites`), so they stop holding the bell. Local: nothing is sent
-   * or marked for the User's other devices, which see the car too.
-   */
   function settleCarInvites() {
     const state = store.getState()
     const { carInvites, settled } = settledCarInvites(
@@ -5466,10 +4627,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     })
   }
 
-  /**
-   * Records answers, reads, and dismissals for this User's other devices.
-   * Lapsed marks go, and only as many as the roster carries are kept.
-   */
   function markAnswer(key: string, mark: AnswerMark) {
     const now = deps.now()
     store.setState((state) => ({
@@ -5496,11 +4653,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     saveRosterSoon()
   }
 
-  /**
-   * Wipes lapsed shares, replies, and queue entries, and lists any invitation
-   * still to answer whose entry was lost; needs no network. A car invitation
-   * that lapsed unanswered takes its alert with it.
-   */
   function expireLocal() {
     settleCarInvites()
     const now = deps.now()
@@ -5534,14 +4686,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return lapsed.length > 0
   }
 
-  /**
-   * After the relay wipes an inactive inbox, register it again and re-add every
-   * buddy's slot so the pairings resume. Flagged in state first so a failure
-   * part-way is retried rather than read as buddies having left.
-   */
   async function restoreInbox(me: BuddyIdentity, call?: RelayCallOptions) {
     store.setState({ slotsNeedRestore: true })
-    // A new inbox counts seq from the start again.
+
     recentEvents.clear()
     await registerInbox(me, call)
     store.setState({ syncSeq: 0, pushRegistrationKey: null })
@@ -5562,7 +4709,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     } catch (error) {
       if (!isRelayError(error, 'not_found')) throw error
       if (deletedIdentities.has(me)) throw new RelayError('cancelled', 0)
-      // Wiped for inactivity, or deleted by another of this User's devices.
+
       await restoreInbox(me, call)
       response = await relay.syncInbox(ownerAuth(me), 0, call)
     }
@@ -5594,12 +4741,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     perf.count('buddies:sync')
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
-    // Read again each sync: another device's seed may have synced in.
+
     const current = await identity({ fresh: true })
     const registered = store.getState().registeredInboxId
-    // It replaced this one (iCloud Keychain): what's here is the old
-    // account's, whose devices keep it. This device can't sign for that inbox
-    // any more, so it leaves it as it is and starts over with the new one.
+
     if (registered !== null && registered !== current.inboxId)
       await resetLocalState()
     const me = await ensureInbox(call)
@@ -5611,12 +4756,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const readBack = response.roster
       ? readRoster(me, response.roster.blob)
       : null
-    // A stale roster is ignored, and this device's own is written back over it.
+
     const staleRoster = readBack !== null && isStaleRoster(readBack)
     const remoteRoster = staleRoster ? null : readBack
     if (remoteRoster) {
       const learned = mergeRoster(me, remoteRoster)
-      // This device already synced past the new buddies' cards and events.
+
       if (learned.length > 0 && since > 0)
         response = await fetchInbox(me, 0, call)
     }
@@ -5646,9 +4791,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }
     }
     for (const card of response.cards) applyCard(me, card)
-    // Answers, reads, and dismissals for what the events just brought.
+
     applyMarks()
-    // Invitations whose secrets this device lost can't be joined from here.
+
     if (
       Object.values(store.getState().carInvites).some(
         (invite) => invite.status === 'pending'
@@ -5657,8 +4802,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
       dropUnjoinableCarInvites()
 
-    // A buddy who ended the connection (or a removal on another of this
-    // User's devices) has withdrawn their slot from my inbox.
     const liveSlots = new Set(response.slots.map((slot) => slot.slotId))
     for (const buddy of store.getState().buddies) {
       const { slotId } = pairKeys(me, buddy).incoming
@@ -5669,34 +4812,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
 
     rosterChanged = expireStale() || rosterChanged
-    // Shares already in this User's data were sent by the device that made
-    // them, before this one started.
+
     if (firstSync) adoptShares()
-    // Read and applied: kept even if the sends below are cut short.
+
     store.setState({ syncSeq: response.seq, lastSyncAt: deps.now() })
     onRead()
-    // The relay answered: whatever it asked to wait for is over.
+
     coolDownUntil = 0
     cancelled(call)
     await flushRemovals(me)
     if (await confirmUnsureInvites()) rosterChanged = true
-    await deliverReplies().catch(() => {
-      // Retried on the next sync.
-    })
-    await deliverJoinRequests().catch(() => {
-      // Retried on the next sync.
-    })
-    await deliverBadgeAnnouncements().catch(() => {
-      // Retried on the next sync, for up to a week.
-    })
-    await deliverBadgeReactions().catch(() => {
-      // Retried on the next sync, for up to a week.
-    })
-    await deliverCarEvents().catch(() => {
-      // Retried on the next sync, until the invitation lapses.
-    })
-    // Write the merged roster back when another device's copy lacks
-    // something, which also heals a concurrent last-writer-wins overwrite.
+    await deliverReplies().catch(() => {})
+    await deliverJoinRequests().catch(() => {})
+    await deliverBadgeAnnouncements().catch(() => {})
+    await deliverBadgeReactions().catch(() => {})
+    await deliverCarEvents().catch(() => {})
+
     if (
       remoteRoster &&
       rosterSignature(remoteRoster) !==
@@ -5713,12 +4844,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await keepBuddyPhotos()
   }
 
-  /**
-   * How long the relay asked to be left alone, from a failed call: its
-   * Retry-After, or a default for rate limits and the kill switch. A device
-   * that couldn't be verified waits as long as its session does before
-   * attesting again.
-   */
   function noteBackPressure(error: unknown) {
     if (!(error instanceof RelayError)) return
     const wait =
@@ -5735,19 +4860,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     coolDownUntil = Math.max(coolDownUntil, deps.now() + wait)
   }
 
-  /** The relay asked to back off; automatic syncs wait until it's over. */
   function coolingDown(): boolean {
     return deps.now() < coolDownUntil
   }
 
-  /**
-   * Reads the inbox and sends what's waiting. Concurrent callers share one run.
-   * A call made while a sync runs may announce an event that sync already
-   * fetched past, so it gets one more sync afterwards, shared by everyone who
-   * asked meanwhile, unless every one of them gave a `minSeq` that the running
-   * sync reached. Automatic calls do nothing while the relay asked to back off
-   * (Retry-After, the kill switch); the User's own still go.
-   */
   function sync(options: BuddiesSyncOptions = {}): Promise<SyncOutcome> {
     const { minSeq, automatic = false, ...call } = options
     if (automatic && coolingDown()) {
@@ -5783,9 +4899,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       automatic,
     }
     next.promise = syncInFlight
-      .catch(() => {
-        // The follow-up runs either way; its own outcome is what callers see.
-      })
+      .catch(() => {})
       .then((): Promise<SyncOutcome> | SyncOutcome => {
         followUp = null
         if (reached(next.minSeq)) {
@@ -5798,15 +4912,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return next.promise
   }
 
-  /** Opens this inbox's live signal, which says when to sync. */
   async function openLive() {
     return relay.openLive(ownerAuth(await ensureInbox()))
   }
 
-  /**
-   * Reads the inbox from this device's cursor and applies nothing: proof the
-   * relay accepts this device's session, for Tools' relay check.
-   */
   async function probeInbox() {
     const me = await ensureInbox()
     const since = store.getState().syncSeq
@@ -5821,13 +4930,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * What this device needs to word Buddies pushes itself (see `pushAlerts`):
-   * each buddy's incoming slot, the key that opens it, and their name here;
-   * open invites' keys; and when shared Plans and Follow-ups are, both ways.
-   * Null until Buddies has started here; undefined until the seed has been read
-   * (see `loadIdentity`), which isn't the same as nothing to word.
-   */
   function alertContext(): BuddyAlertContext | null | undefined {
     const state = store.getState()
     if (state.registeredInboxId === null) return null
@@ -5885,12 +4987,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
   }
 
-  /**
-   * Opens the event a push is about and says how to word its alert: from the
-   * push itself when the event fit, or fetched from the inbox by its `seq`.
-   * Reads only; the sync that follows a push applies the event as usual, and an
-   * event that sync (or a recent one) read isn't fetched again.
-   */
   async function describePush(
     marker: BuddiesPushMarker,
     call?: RelayCallOptions
@@ -5908,7 +5004,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (!event && seq !== undefined && seq > 0) {
       event = recentEvents.get(seq)
       if (!event && inboxRead) {
-        // Only the read; the sends after it don't hold up an alert.
         await inboxRead
         event = recentEvents.get(seq)
       }
@@ -5921,15 +5016,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return event ? describeBuddyEvent(context, event) : { failed: 'noEvent' }
   }
 
-  /**
-   * Registers this device for pushes when anything about the registration
-   * changed, or when the last one is a day old: the relay may have dropped the
-   * device since (a rejected token, or evicted for a newer device), and a
-   * re-sent registration keeps an active device from being the one evicted.
-   */
   async function registerPush(
     device: PushAddress & {
-      /** A kind left out is never pushed to this device. */
       templates: Partial<
         Record<BuddyPushKind | BadgePushKind | CarPushKind, PushTemplate>
       > &
@@ -5954,7 +5042,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     try {
       await relay.registerDevice(ownerAuth(me), { deviceId, ...device }, call)
     } catch (error) {
-      // Whatever the relay holds now is unknown; send it again next time.
       store.setState({ pushRegistrationKey: null })
       throw error
     }
@@ -5965,13 +5052,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return unchanged ? 'refreshed' : 'registered'
   }
 
-  /**
-   * The current key's identity, after letting go of Buddies data from a key
-   * this phone no longer has (it went missing, say, and a new one was made):
-   * nothing can be signed for that inbox or its buddies any more, so it's left
-   * as it is on the relay, as a sync does when another seed replaced the one
-   * here.
-   */
   async function currentIdentity(): Promise<BuddyIdentity> {
     const me = await identity({ fresh: true })
     const registered = store.getState().registeredInboxId
@@ -5982,13 +5062,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return me
   }
 
-  /**
-   * Leaves every Shared Car (keeping a personal copy of each) and removes this
-   * User from every buddy, then wipes the relay and the seed. The seed is what
-   * proves membership on a car and the only way to retry a removal, so nothing
-   * is wiped until every car and buddy has been left. It stops before removing
-   * anyone while a car's leave hasn't reached the server, naming those cars.
-   */
   async function deleteEverything() {
     const me = await currentIdentity()
     const cars = await deps.cars?.leaveAll?.()
@@ -5999,14 +5072,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await flushRemovals(me, { force: true })
     if (store.getState().pendingRemovals.length > 0)
       throw new BuddyRemovalPendingError('everything')
-    // Marked before the inbox goes. A failure before the seed is deleted
-    // keeps this identity, so its next sync brings the inbox back.
+
     deletedIdentities.add(me)
     try {
       try {
         await relay.deleteInbox(ownerAuth(me))
       } catch (error) {
-        // None, or another account's, which isn't this device's to delete.
         if (
           !isRelayError(error, 'not_found') &&
           !isRelayError(error, 'forbidden')
@@ -6023,15 +5094,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await resetLocalState()
   }
 
-  /**
-   * Signs this device out of Buddies and leaves the rest to this User's other
-   * devices on the account: the inbox, its slots, and every buddy stay, and
-   * only this device's push registration and Buddies data go. For a device
-   * leaving an account that's still signed in elsewhere; `deleteEverything` is
-   * for the last one. Removals this device still owes are finished first, as
-   * there, and so are leaves of Shared Cars; the cars stay with the account's
-   * other devices and go from this one.
-   */
   async function leaveThisDevice() {
     const me = await currentIdentity()
     const cars = await deps.cars?.finishPending?.()
@@ -6039,25 +5101,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       await flushRemovals(me, { force: true })
     if (store.getState().pendingRemovals.length > 0 || (cars?.pending ?? 0) > 0)
       throw new BuddyRemovalPendingError('everything')
-    // Car invitations, cancels, and replies only this device holds: their
-    // last chance, since the account's other devices don't have them.
-    await deliverCarEvents().catch(() => {
-      // Best effort: what they're about closes on the car, or lapses, either
-      // way.
-    })
-    // Nothing starts again with this seed (a push registration included), and
-    // what a sync under way read lands before the reset clears it.
+
+    await deliverCarEvents().catch(() => {})
+
     leftInboxes.add(me.inboxId)
     const { deviceId, registeredInboxId } = store.getState()
     if (deviceId && registeredInboxId === me.inboxId) {
       try {
         await relay.unregisterDevice(ownerAuth(me), deviceId)
       } catch (error) {
-        // Its pushes would keep coming to whoever uses this device next, so
-        // only a refusal that won't change by trying again is let through: an
-        // inbox that's gone or another account's, a suspended account's
-        // inbox, which refuses owner ops, and the kill switch this one
-        // (nothing is pushed while it's on).
         if (
           !isRelayError(error, 'not_found') &&
           !isRelayError(error, 'forbidden') &&
@@ -6075,10 +5127,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await resetLocalState()
   }
 
-  /**
-   * Forgets everything Buddies kept on this device, but its choices, and the
-   * Shared Cars that its seed is on.
-   */
   async function resetLocalState() {
     deps.cars?.forgetLocal?.()
     inviteSecrets.clear()
@@ -6088,8 +5136,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     recentEvents.clear()
     slotsAddedDuringSync.clear()
     coolDownUntil = 0
-    // Choices about this device and what to share outlive the data; shared
-    // Plans, invitations, replies, and the notification queue don't.
+
     const {
       devOverride,
       flagLastKnown,
@@ -6155,7 +5202,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     carInviteSecrets,
     deliverCarEvents,
     noteCarMemberships,
-    /** The name on this User's Buddy Card, which their Shared Cars show too. */
+
     ownCardName: () => cardName().name,
     expire: expireLocal,
     shareIdForKey,
@@ -6164,7 +5211,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     dismissNotification,
     sync,
     coolingDown,
-    /** Reads the seed (off the JS thread) so `alertContext` can answer. */
+
     loadIdentity: () => identity().then(() => undefined),
     dropIdentity,
     openLive,

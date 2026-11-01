@@ -7,10 +7,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { ShareReply } from '@/features/buddies/lib/schemas'
 
-/**
- * Going / Can't Make It for a buddy's Plan or Follow-up invitation. Under a
- * Plan's, it says that Going shows the User's name to the others going.
- */
 export default function ShareAnswerButtons({
   disabled,
   onAnswer,
@@ -18,7 +14,7 @@ export default function ShareAnswerButtons({
 }: {
   disabled: boolean
   onAnswer: (answer: ShareReply) => void
-  /** A Plan invitation, rather than a Follow-up's. */
+
   plan?: boolean
 }) {
   const theme = useTheme()

@@ -1,12 +1,3 @@
-/**
- * Launch timing and work counters, for before/after profiling.
- *
- * `perf.count` is a map increment, cheap enough to leave at every call site in
- * release builds. Nothing is logged or wrapped unless the probe is on: bundles
- * built with `EXPO_PUBLIC_PERF_PROBE=1` (scripts/perf) print `[ww-perf]` JSON
- * lines that the runner reads from the device log, and dev builds expose
- * `__WW_DEV__.perf()`.
- */
 type Counters = Record<string, number>
 
 export const counters: Counters = {}
@@ -20,7 +11,6 @@ export const now = () => performance.now()
 
 export function startupTiming() {
   try {
-    // React Native's own extension; absent from the DOM typings.
     const timing = (
       performance as unknown as {
         rnStartupTiming: {
@@ -44,7 +34,6 @@ export function startupTiming() {
 }
 
 export const perf = {
-  /** Records the first time a launch milestone is reached. */
   mark(name: string): void {
     if (!(name in marks)) marks[name] = now()
   },

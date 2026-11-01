@@ -21,7 +21,6 @@ function Thumbnail(props: { id: string }) {
   )
 }
 
-/** A row of a note's photos, small, for previews that leave photos out. */
 const NoteThumbnails = (props: { images: RichTextImageAttrs[] }) => {
   const theme = useTheme()
   const shown = props.images.slice(0, MAX_SHOWN)
@@ -31,10 +30,9 @@ const NoteThumbnails = (props: { images: RichTextImageAttrs[] }) => {
     <View
       style={{ flexDirection: 'row', gap: 6 }}
       accessible
-      accessibilityLabel={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('richText_photoCount', { count: props.images.length })
-      }
+      accessibilityLabel={i18n.t('richText_photoCount', {
+        count: props.images.length,
+      })}
     >
       {shown.map((image, index) => (
         <View

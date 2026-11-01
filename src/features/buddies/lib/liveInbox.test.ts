@@ -36,11 +36,6 @@ function fakeSocket(): FakeSocket {
   return socket
 }
 
-/**
- * React Native's WebSocket on Android: closing one that's still connecting does
- * nothing (the native side only knows it once it opens), and it opens anyway
- * when the handshake completes; `accept` plays that. Once open, closing works.
- */
 type AndroidSocket = FakeSocket & { open: boolean; closeCalls: number }
 
 function androidSocket(): AndroidSocket {
@@ -64,7 +59,6 @@ const accept = (socket: AndroidSocket) => {
   socket.onopen?.()
 }
 
-/** React Native's view of a refused handshake: an error, then a 1006 close. */
 const refuse = (socket: FakeSocket) => {
   socket.onerror?.({ message: "Expected HTTP 101 response but was '401'" })
   socket.onclose?.({ code: 1006, reason: 'refused' })
@@ -172,7 +166,6 @@ describe('createLiveInbox', () => {
     await vi.advanceTimersByTimeAsync(25 * 1000)
     expect(sockets[0].closed).toBe(false)
 
-    // The second ping goes unanswered.
     await vi.advanceTimersByTimeAsync(10 * 1000 + 2000)
     expect(sockets[0].closed).toBe(true)
     expect(sockets).toHaveLength(2)
@@ -191,12 +184,11 @@ describe('createLiveInbox', () => {
     live.start()
     await vi.advanceTimersByTimeAsync(0)
     sockets[0].onclose?.({ code: 4003 })
-    // The sync learns the suspension, which keeps the live signal off.
+
     expect(onChange).toHaveBeenCalledTimes(1)
     await vi.advanceTimersByTimeAsync(120 * 1000)
     expect(sockets).toHaveLength(1)
 
-    // A later start (back in the foreground) tries again.
     live.stop()
     live.start()
     await vi.advanceTimersByTimeAsync(0)
@@ -283,7 +275,6 @@ describe('createLiveInbox', () => {
       'verify',
     ])
 
-    // That one opened: its close reconnects without asking again.
     sockets[1].onopen?.()
     sockets[1].onclose?.({ code: 1012 })
     await vi.advanceTimersByTimeAsync(2500)
@@ -322,7 +313,6 @@ describe('createLiveInbox', () => {
     expect(sockets).toHaveLength(2)
     expect(events.map((event) => event.type)).not.toContain('openFailed')
 
-    // Refused again: the next try waits longer, never a tight loop.
     refuse(sockets[1])
     await vi.advanceTimersByTimeAsync(1300)
     expect(sockets).toHaveLength(2)
@@ -340,7 +330,7 @@ describe('createLiveInbox', () => {
     live.start()
     await vi.advanceTimersByTimeAsync(0)
     live.stop()
-    // Android couldn't cancel it while connecting; it opens anyway.
+
     expect(sockets[0].closed).toBe(false)
     accept(sockets[0])
     expect(sockets[0].closed).toBe(true)
@@ -358,7 +348,7 @@ describe('createLiveInbox', () => {
       undefined,
       androidSocket
     )
-    // Home and back, three times, each before the connection opened.
+
     for (let i = 0; i < 3; i++) {
       live.start()
       await vi.advanceTimersByTimeAsync(0)
@@ -369,11 +359,10 @@ describe('createLiveInbox', () => {
     expect(sockets).toHaveLength(4)
     const current = sockets[3]
     accept(current)
-    // The dropped ones open after the current one.
+
     for (const stale of sockets.slice(0, 3)) accept(stale)
     expect(sockets.filter((socket) => !socket.closed)).toEqual([current])
 
-    // One ping stream, and only the current connection's messages count.
     await vi.advanceTimersByTimeAsync(25 * 1000)
     expect(current.sent).toEqual(['ping'])
     for (const stale of sockets.slice(0, 3)) {
@@ -383,7 +372,7 @@ describe('createLiveInbox', () => {
     }
     await vi.advanceTimersByTimeAsync(1000)
     expect(onChange).not.toHaveBeenCalled()
-    // A stale pong didn't answer the current ping: it times out.
+
     await vi.advanceTimersByTimeAsync(10 * 1000)
     expect(current.closed).toBe(true)
   })
@@ -398,7 +387,7 @@ describe('createLiveInbox', () => {
     accept(sockets[0])
     expect(sockets[0].closed).toBe(true)
     expect(sockets[1].closed).toBe(false)
-    // Its close never touches the live connection.
+
     await vi.advanceTimersByTimeAsync(25 * 1000)
     expect(sockets[1].sent).toEqual(['ping'])
     expect(sockets).toHaveLength(2)
@@ -476,7 +465,7 @@ describe('a live connection the relay refused its token', () => {
           authorization: headers.authorization,
         })
         sockets.push(socket)
-        // The relay's handshake checks the token as its routes do.
+
         const accepted = h.fake.acceptsToken(
           headers.authorization.replace(/^Bearer /, '')
         )
@@ -497,8 +486,6 @@ describe('a live connection the relay refused its token', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(events.filter((event) => event.type === 'open')).toHaveLength(1)
 
-    // The relay stops honoring the token long before it expires here, then
-    // drops the connection.
     h.fake.expireAccessTokens()
     sockets[0].onclose?.({ code: 1012 })
     await vi.advanceTimersByTimeAsync(1300)

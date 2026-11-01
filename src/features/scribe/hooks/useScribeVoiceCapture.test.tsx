@@ -88,7 +88,7 @@ afterEach(() => {
 
 it('asks again after a first denial Android still lets the User take back', async () => {
   expect(capture.state).toBe('priming')
-  // Android reports a denial it can still prompt for as undetermined.
+
   speech.requestPermissions.mockResolvedValueOnce(permissions('undetermined'))
   await act(async () => {
     await capture.confirmPermission()

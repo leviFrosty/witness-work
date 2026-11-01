@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 
-// `buddyStreakCount` lives beside the profile helpers and their native deps.
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/stores/preferences', () => ({ usePreferences: {} }))
 vi.mock('expo-image-manipulator', () => ({}))

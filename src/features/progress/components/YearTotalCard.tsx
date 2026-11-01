@@ -25,18 +25,11 @@ import Text from '@/components/ui/MyText'
 import { tracking } from '@/lib/tracking'
 
 interface YearTotalCardProps {
-  /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
   year: number
-  /** Optional category details row beneath the annual total. */
+
   categoriesSlot?: ReactNode
 }
 
-/**
- * Year-tab hero for roles with no Annual Goal (Regular Publisher, Regular
- * Auxiliary, Special Pioneer, …). Mirrors `YearMilestoneCard`'s header and hero
- * number but shows only the credit-capped service-year total — no goal
- * denominator, milestones, or projection. An info popover explains why.
- */
 const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
   const theme = useTheme()
   const largeText = useAccessibilityTextSize()
@@ -113,10 +106,7 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               color: theme.colors.textAlt,
             }}
           >
-            {
-              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('daysLeftCount', { count: daysRemaining })
-            }
+            {i18n.t('daysLeftCount', { count: daysRemaining })}
           </Text>
         ) : null}
       </View>
@@ -130,13 +120,10 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
         }}
       >
         <Text
-          // At accessibility sizes the figure shrinks onto one line rather
-          // than breaking between its digits.
           {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
           style={{
             fontSize: isDecimal ? 64 : 40,
-            // A fixed line height would keep the full-size line around a
-            // shrunk figure.
+
             lineHeight:
               largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
             fontFamily: theme.fonts.bold,
@@ -155,7 +142,7 @@ const YearTotalCard = ({ year, categoriesSlot }: YearTotalCardProps) => {
               color: theme.colors.textAlt,
             }}
           >
-            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {}
             {i18n.t('hoursUnitLabel', { count: totalDisplay.decimalHours })}
           </Text>
         ) : null}

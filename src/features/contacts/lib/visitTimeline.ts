@@ -3,42 +3,22 @@ import { Visit } from '@/types/visit'
 import { localizeDisplayDate } from '@/lib/dates'
 import { followUpAnswer } from '@/lib/conversations'
 
-/**
- * Pure derivations behind the Contact Details timeline. A Visit's outcome and
- * its follow-up's state are never stored — both are derived here from the two
- * outcome booleans, the follow-up date, `dismissed`, and the rest of the
- * contact's history.
- */
-
 export type VisitOutcome = 'study' | 'conversation' | 'notAtHome'
 
-/** Not at Home wins: a visit where no one answered can't have held a study. */
 export const visitOutcome = (
   visit: Pick<Visit, 'notAtHome' | 'isBibleStudy'>
 ): VisitOutcome =>
   visit.notAtHome ? 'notAtHome' : visit.isBibleStudy ? 'study' : 'conversation'
 
-/**
- * - `upcoming` — still in the future, not dismissed, and not yet answered.
- * - `kept` — a later visit to the same contact answered it.
- * - `missed` — its date passed with no answer, and it wasn't dismissed.
- * - `dismissed` — the user dismissed it (data preserved).
- */
 export type FollowUpState = 'upcoming' | 'kept' | 'missed' | 'dismissed'
 
 const ms = (date: Date | string) => new Date(date).getTime()
 
-/** Newest first; ties keep a stable order by id so rows never swap. */
 export const sortVisitsNewestFirst = (visits: Visit[]): Visit[] =>
   [...visits].sort(
     (a, b) => ms(b.date) - ms(a.date) || a.id.localeCompare(b.id)
   )
 
-/**
- * A follow-up is kept once `followUpAnswer` finds the visit that answered it,
- * the rule Home's card, missed Follow-ups and Visit Details use: a later visit
- * on the follow-up's day counts even before its time.
- */
 export const followUpState = (
   visit: Visit,
   contactVisits: Visit[],
@@ -58,10 +38,6 @@ export type UpNext = {
   topic?: string
 }
 
-/**
- * The soonest upcoming follow-up that isn't dismissed or already answered —
- * promoted to the Up Next card.
- */
 export const getUpNext = (
   contactVisits: Visit[],
   now: Date = new Date()
@@ -87,32 +63,26 @@ export const getUpNext = (
 
 export type JourneyDot = { id: string; outcome: VisitOutcome; position: number }
 
-/** How far back the journey rail looks; older visits only count in the totals. */
 export const JOURNEY_WINDOW_MONTHS = 6
-/** Share of the rail given to the past when an upcoming follow-up follows it. */
+
 export const JOURNEY_PAST_SHARE = 0.8
 
 export type Journey = {
   visitCount: number
-  /** Whole-history totals per outcome; together they make the rail's key. */
+
   outcomeCounts: Record<VisitOutcome, number>
-  /** The very first visit, for the "since" caption. */
+
   first: Date
-  /** First visit or six months ago, whichever is later (at most `now`). */
+
   windowStart: Date
-  /** Visits before the window; they only count toward the totals. */
+
   olderCount: number
-  /** Where "today" sits on the 0–1 axis. */
+
   todayPosition: number
-  /** Visits inside the window, placed on the 0–1 axis. */
+
   dots: JourneyDot[]
 }
 
-/**
- * A recent-activity rail: from the first visit up to today, capped at six
- * months, then (when there is one) a short future segment ending at the next
- * follow-up. Totals still cover the whole history.
- */
 export const getJourney = (
   contactVisits: Visit[],
   now: Date = new Date(),
@@ -160,10 +130,6 @@ export const getJourney = (
   }
 }
 
-/**
- * Elapsed time between two visits for the rail's gap pill. `null` when both
- * fall on the same calendar day (the pill then reads "Same day").
- */
 export const gapBetween = (newer: Date, older: Date): string | null =>
   moment(newer).isSame(older, 'day')
     ? null

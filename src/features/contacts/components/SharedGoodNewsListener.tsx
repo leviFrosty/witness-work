@@ -20,23 +20,6 @@ import {
 import { shouldForwardToSystem } from '@/features/contacts/lib/systemLinks'
 import { TimeEntry } from '@/types/timeEntry'
 
-/**
- * Handles widget → app deep links that the React Navigation linking config
- * cannot handle on its own:
- *
- * 1. `witnesswork://shared-good-news` — mirrors the in-app checkbox action from
- *    `PublisherCheckBoxCard`. Logs a 0h0m service report (if not already
- *    reported this month), routes to the Home tab so the confetti is visible,
- *    and plays the animation. It's the User's own action, so a badge or streak
- *    it earns can celebrate (ADR 0021). It waits for onboarding and for
- *    whatever is taking over the screen (the update reveal) to finish first.
- * 2. External URLs (`tel:`, `sms:`, `mailto:`, `http(s):`) — forwarded to the
- *    system handler via `Linking.openURL`. These come from the contacts widget
- *    quick-action buttons.
- *
- * Renders nothing. Must be mounted inside `AnimationViewProvider` so
- * `useAnimation()` can resolve.
- */
 export default function SharedGoodNewsListener() {
   const { playConfetti } = useAnimation()
   const onboarded = usePreferences((s) => s.onboardingComplete)
@@ -49,10 +32,6 @@ export default function SharedGoodNewsListener() {
     const handle = (url: string | null) => {
       if (!url) return
 
-      // Forward external URL schemes (tel:, sms:, http(s):, mailto:) to the
-      // system. They land here because iOS routes widget Link taps through
-      // the host app once the app declares its own scheme. The app's own
-      // links (contact shares, Buddies invites) stay in the app.
       if (shouldForwardToSystem(url)) {
         Linking.openURL(url).catch(() => {})
         return
@@ -61,17 +40,15 @@ export default function SharedGoodNewsListener() {
       if (isSharedGoodNewsUrl(url)) setPending(true)
     }
 
-    // Cold start: widget tap launched the app.
     launchURL().then(handle)
 
-    // Warm start: widget tap foregrounded an already-running app.
     const sub = Linking.addEventListener('url', ({ url }) => handle(url))
     return () => sub.remove()
   }, [])
 
   useEffect(() => {
     if (!pending || !onboarded || takingOver) return
-    // Home has to be on screen so the User actually sees the confetti.
+
     if (!navigationRef.isReady()) {
       const timer = setTimeout(() => setRetry((count) => count + 1), 300)
       return () => clearTimeout(timer)

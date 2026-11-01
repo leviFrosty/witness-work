@@ -25,13 +25,6 @@ import {
   flattenEntries,
 } from '@/__tests__/helpers/dataArbitraries'
 
-// Laws the sync merge (`mergePayload`, through `pullFrom` as `pullAndMerge`
-// runs it) must keep for iCloud, Google Drive and Cloud Sync alike: the order
-// devices pull in can't change what they end up with, pulling the same data
-// again changes nothing, and a tombstone removes exactly the records it's
-// newer than or tied with (#1003). Reproduce a failure with
-// `FC_SEED=<seed> pnpm vitest run src/__tests__/syncMergeProperties.test.ts`.
-
 const runs = { numRuns: 150, seed: fcSeed }
 
 beforeAll(() => {
@@ -44,7 +37,6 @@ afterAll(() => {
 
 const merge = (a: DeviceState, b: DeviceState) => pullFrom(a, b)
 
-/** The tombstone lists each synced record list answers to. */
 const TOMBSTONED_LISTS: [keyof DeviceState, keyof DeviceState][] = [
   ['conversations', 'deletedConversations'],
   ['dayPlans', 'deletedDayPlans'],
@@ -72,14 +64,6 @@ const ALL_LISTS: [keyof DeviceState, keyof DeviceState][] = [
   ['serviceReports', 'deletedServiceReports'],
 ]
 
-/**
- * `device` without its pet's wakes, keepsakes, earned items and purchases. Each
- * merge unions them only over the copies it sees of the companion that wins,
- * newer than any tombstone it sees (`mergePetHistory`). So a copy that first
- * meets a release, or another adoption that wins for now, adds nothing, while
- * meeting the eventual winner first adds its history: the result depends on the
- * order until that copy's file is pulled again.
- */
 const withoutPetHistory = (device: DeviceState): DeviceState => ({
   ...device,
   pets: device.pets.map(
@@ -93,7 +77,6 @@ const withoutPetHistory = (device: DeviceState): DeviceState => ({
   ),
 })
 
-/** Contacts some device permanently deleted (a redacted tombstone). */
 const redactedIds = (devices: DeviceState[]) =>
   new Set(
     devices.flatMap((d) =>
@@ -101,14 +84,6 @@ const redactedIds = (devices: DeviceState[]) =>
     )
   )
 
-/**
- * `device` without the contacts in `ids`. A redacted tombstone meeting an
- * archived copy keeps its own, older stamp, so an edit made between the two
- * brings the contact back when it meets the result, and not when it meets the
- * archived copy first: the outcome depends on the order devices pull in. (An
- * edit newer than the redaction also drops it when they meet first, while an
- * archived copy meeting it first is redacted.)
- */
 const withoutRedacted = (device: DeviceState, ids: Set<string>) => ({
   ...device,
   contacts: device.contacts.filter((c) => !ids.has(c.id)),
@@ -116,7 +91,6 @@ const withoutRedacted = (device: DeviceState, ids: Set<string>) => ({
 })
 
 describe('sync merge laws', () => {
-  // Values only: see `deviceSnapshot` on stamps.
   const values = (device: DeviceState) =>
     deviceSnapshot(device, { stamps: false })
 
@@ -139,16 +113,6 @@ describe('sync merge laws', () => {
   })
 
   it('settles: pulling any file already merged reports no change', () => {
-    // A pull that keeps reporting a change pushes again, and the devices
-    // would trade the same files forever.
-    //
-    // The role's and Role History's stamps are left out. A merge gives both
-    // the newer of the two, where the store stamps only the one that changed,
-    // and adopting another device's history when this one had none takes its
-    // stamp but not its per-month stamps (#1073); the next pull of
-    // that device adds them.
-    // Pet history and permanently deleted contacts are left out too, as in
-    // associativity below.
     const settled = (
       device: DeviceState,
       redacted: Set<string>
@@ -170,7 +134,7 @@ describe('sync merge laws', () => {
             deviceSnapshot(settled(all, redacted))
           )
           expect(changed).toBe(deviceSnapshot(again) !== deviceSnapshot(all))
-          // Pulling that file a second time changes nothing at all.
+
           expect(mergePayload(again, payloadOf(device)).changed).toBe(false)
         }
       }),
@@ -179,18 +143,6 @@ describe('sync merge laws', () => {
   })
 
   it('is associative across three devices', () => {
-    // Three exceptions, each only until the next exchange between the
-    // devices:
-    //
-    // - Pet history (see `withoutPetHistory`).
-    // - A contact one device permanently deleted (see `withoutRedacted`).
-    // - The role and Role History. A history meeting a device without one is
-    //   kept or replaced whole, by the pair's stamps, but two histories merge
-    //   month by month. So a month from an older history is gone if it first
-    //   meets a newer role set without history, and kept if that device has
-    //   since taken another history, which has no stamp for that month.
-    //
-    // Either way, the next pull between the two results agrees.
     const withoutRole = (device: DeviceState): DeviceState => {
       const { role: _r, roleHistory: _h, ...rest } = device.preferencesValues
       return { ...device, preferencesValues: rest }

@@ -3,14 +3,6 @@ import { ContactStaleness } from '@/lib/contactStaleness'
 import { StalenessBreakpoints } from '@/types/staleness'
 import { normalizeStalenessBreakpoints } from '@/constants/staleness'
 
-/**
- * Human-readable criteria line for a staleness bucket ("Last visit within the
- * past 7 days"), reflecting the user's breakpoints so the color key never
- * describes thresholds the classifier isn't actually using.
- *
- * Lives apart from `contactStaleness.ts` so the pure classifier (used by
- * filters, indexes, and tests) doesn't drag in the i18n/native-module graph.
- */
 export function getStalenessCriteriaText(
   staleness: ContactStaleness,
   breakpoints: StalenessBreakpoints

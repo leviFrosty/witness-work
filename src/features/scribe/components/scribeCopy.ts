@@ -16,7 +16,6 @@ type BlockedReason = Extract<
   { status: 'blocked' }
 >['reason']
 
-/** Why Scribe AI can't run here, for the conversation's blocked card. */
 export const blockedCopy = (reason: BlockedReason): TranslationKey => {
   switch (reason) {
     case 'update_required':
@@ -32,7 +31,6 @@ export const blockedCopy = (reason: BlockedReason): TranslationKey => {
   }
 }
 
-/** A blocked reason's short form, for the Settings row. */
 export const blockedStatusCopy = (reason: BlockedReason): TranslationKey => {
   switch (reason) {
     case 'update_required':
@@ -46,10 +44,6 @@ export const blockedStatusCopy = (reason: BlockedReason): TranslationKey => {
   }
 }
 
-/**
- * The error row's message. Null where another surface explains it: the limit
- * card, the full conversation.
- */
 export const errorCopy = (code: ScribeErrorCode): TranslationKey | null => {
   switch (code) {
     case 'network':
@@ -86,7 +80,6 @@ export const USAGE_WINDOW_COPY: Record<ScribeUsageWindowId, TranslationKey> = {
   monthly: 'scribe_usageWindow_monthly',
 }
 
-/** The window closest to its limit. */
 export const fullestWindow = (
   usage: ScribeUsage | null
 ): ScribeUsageWindow | null =>
@@ -96,20 +89,13 @@ export const fullestWindow = (
     null
   ) ?? null
 
-// Under this, a reset reads as a distance ("in 3 hours"); past it, as a day
-// and time ("Friday at 9:00 AM").
 const RELATIVE_UNDER_MS = 12 * 60 * 60 * 1000
 
-/** "in 3 hours", "tomorrow at 9:00 AM", "Fri, Oct 30 at 9:00 AM". */
 export const formatResetTime = (resetsAt: number, now = Date.now()): string =>
   resetsAt - now < RELATIVE_UNDER_MS
     ? localizeDisplayDate(moment(resetsAt).from(moment(now)))
     : whenPhrase(new Date(resetsAt), now)
 
-/**
- * The limit notice a turn left in the conversation: when Scribe AI works again
- * while that's ahead, and that it does once it's passed.
- */
 export const limitNoticeCopy = (
   resetsAt: number | null,
   now = Date.now()

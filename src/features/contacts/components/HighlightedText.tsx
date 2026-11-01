@@ -8,45 +8,19 @@ import { buildSnippet } from '@/lib/contactsSearch'
 import { LTR_ISOLATE, ltrIsolate, POP_ISOLATE } from '@/lib/direction'
 
 type Props = {
-  /**
-   * Fallback text shown when there's no match. When a `match` is provided, the
-   * component prefers `match.value` so the rendered string is guaranteed to
-   * align with the indices Fuse returned.
-   */
   text: string
   match?: FuseResultMatch
-  /**
-   * When set, windows the text to ~`contextChars` characters either side of the
-   * first usable match and prepends/appends an ellipsis when content was
-   * trimmed. Omit for short fields where the entire string should render (e.g.
-   * a contact's name).
-   */
+
   contextChars?: number
   baseStyle?: TextStyle | TextStyle[]
   highlightStyle?: TextStyle
   numberOfLines?: number
-  /**
-   * Shrinks the text when a single word would break across lines (a long name
-   * at accessibility text sizes); see `WholeWordsText`.
-   */
+
   wholeWords?: boolean
-  /**
-   * Keeps Latin-only data (a phone number or email) left to right in a
-   * right-to-left Language, highlight and ellipses included.
-   */
+
   ltr?: boolean
 }
 
-/**
- * Renders text with Fuse match indices bolded inline.
- *
- * Used in two modes:
- *
- * - Whole-field (no `contextChars`) — for contact names where we want the full
- *   string with the matched substring emphasized.
- * - Snippet (`contextChars` set) — for long fields like joined notes, where we
- *   surface a small window around the match with ellipses.
- */
 const HighlightedText: React.FC<Props> = ({
   text,
   match,

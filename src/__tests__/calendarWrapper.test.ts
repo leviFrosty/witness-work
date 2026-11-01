@@ -15,11 +15,9 @@ const LANGUAGES = ['de', 'en', 'fr', 'ar', 'ru']
 const REGIONS = [undefined, 'en', 'de', 'fr', 'en-gb', 'ar']
 const CLOCKS = ['12', '24', undefined] as const
 
-// Thursday 13:30, with a date in every calendar bucket around it.
 const ref = () => moment('2026-06-11T13:30:00')
 const BUCKET_OFFSETS = [0, 1, -1, 3, -3, 30]
 
-/** `updateLocale` layers stacked on `key` in moment's registry. */
 const layers = (key: string) => {
   let depth = 0
   for (
@@ -64,19 +62,17 @@ describe('applyFormatRegion run again and again', () => {
         timeFormatOverride: clock,
       })
 
-      // One overlay at most, whatever ran before.
       expect(layers(language)).toBe(1)
 
       calendarSpy.mockClear()
       const buckets = renderBuckets()
-      // The 12-hour wrapper reads the Language's own calendar once per
-      // bucket; it never reaches another wrapper.
+
       expect(calendarSpy).toHaveBeenCalledTimes(
         BUCKET_OFFSETS.length * (resolved.timeFormat === '12' ? 2 : 1)
       )
 
       for (const { days, date, text } of buckets) {
-        if (days === 30) continue // sameElse is a date, no time
+        if (days === 30) continue
         if (resolved.timeFormat === '12') expect(text).not.toMatch(/Uhr/)
         expect(text, `${language} ${region} ${clock} ${days}`).toContain(
           formatTime(date)
@@ -114,8 +110,6 @@ describe('applyFormatRegion run again and again', () => {
 })
 
 describe('dates.ts evaluated again over the same moment', () => {
-  // Metro's Fast Refresh re-runs a module's code but keeps moment, and with
-  // it the overlay the earlier copy left behind.
   it('replaces the earlier overlay instead of wrapping it', async () => {
     applyFormatRegion({ language: 'de', region: 'en' })
 

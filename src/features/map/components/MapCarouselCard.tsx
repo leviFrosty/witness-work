@@ -33,7 +33,6 @@ interface Props {
   index: ConversationIndex
 }
 
-/** Adds items to the contact menu's second group (open, favorite, edit…). */
 const withSecondaryItems = (
   entries: ContextMenuEntries,
   items: ContextMenuItem[]

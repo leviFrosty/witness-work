@@ -8,7 +8,6 @@ import {
   formatResetTime,
 } from '@/features/scribe/components/scribeCopy'
 
-/** "Resets in 3 hours", or "Not used yet" before a window starts. */
 export const usageResetLine = (window: ScribeUsageWindow, now = Date.now()) =>
   window.resetsAt === null
     ? i18n.t('scribe_usageNotStarted')
@@ -16,7 +15,6 @@ export const usageResetLine = (window: ScribeUsageWindow, now = Date.now()) =>
         when: formatResetTime(window.resetsAt, now),
       })
 
-/** One usage window: its name and percent, a bar, and when it resets. */
 const ScribeUsageWindowRow = ({ window }: { window: ScribeUsageWindow }) => {
   const theme = useTheme()
   const percent = Math.max(0, Math.min(100, window.percentUsed))

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Agent verification harness for WitnessWork. Usage and the proof standards
-// live in .agents/skills/verify-witnesswork/SKILL.md; `ww-verify help` prints
-// the command list.
+
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -66,10 +64,7 @@ const AGENT_DEVICE_VERSION = '0.21.12'
 const METRO_WORKERS = process.env.WW_VERIFY_METRO_WORKERS || '2'
 const GRADLE_WORKERS = process.env.WW_VERIFY_GRADLE_WORKERS || '2'
 const EMULATOR_MEMORY_MB = 2048
-// Emulator GPU mode (`emulator -help-gpu`). Headless, `auto` picks ANGLE on
-// SwiftShader, which renders every frame on the Mac's CPU: an animated screen
-// such as Welcome keeps qemu near 1,200%. `host` renders on the Mac's GPU,
-// headless too, and holds the same screen near 70%.
+
 const EMULATOR_GPU =
   process.env.WW_VERIFY_ANDROID_GPU ||
   (process.platform === 'darwin' ? 'host' : 'auto')
@@ -77,8 +72,7 @@ const ANDROID_HOME =
   process.env.ANDROID_HOME || path.join(os.homedir(), 'Library/Android/sdk')
 const ANDROID_AVD_HOME =
   process.env.ANDROID_AVD_HOME || path.join(os.homedir(), '.android/avd')
-// Cached builds per platform (about 230 MB iOS, 130 MB Android). Worktrees on
-// different native fingerprints evict each other's builds below ~6.
+
 const KEEP_BUILDS = Number(process.env.WW_VERIFY_KEEP_BUILDS) || 6
 
 const slugOf = (root) =>
@@ -87,12 +81,8 @@ const slugOf = (root) =>
     .replace(/[^a-zA-Z0-9]+/g, '-')
     .toLowerCase()
 
-// ---------- small utilities ----------
-
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-// Throws, so `finally` blocks (build slots, build dirs) still clean up; the
-// top-level handler prints the message and exits 1.
 class Failure extends Error {}
 function fail(message) {
   throw new Failure(message)
@@ -102,7 +92,6 @@ function log(message) {
   console.error(`[ww-verify] ${message}`)
 }
 
-/** Logs a wait message when it changes, and at most once a minute otherwise. */
 function waitLogger() {
   let last = ''
   let at = 0
@@ -130,8 +119,6 @@ function run(cmd, args, options = {}) {
   return result
 }
 
-// The newest installed Xcode, so builds target the newest simulator runtime
-// even when xcode-select still points at an older Xcode.
 let developerDir
 function newestDeveloperDir() {
   if (developerDir !== undefined) return developerDir
@@ -255,15 +242,12 @@ function artifactsDir(state) {
   return dir
 }
 
-// ---------- device leases (scripts/verify/leases.mjs) ----------
-
 const idleMin = (lease) => Math.round(lease.idleMs / 60_000)
 
 function describeHolder(lease) {
   return `${path.basename(lease.worktree)} (${lease.legacy ? 'old harness' : `idle ${idleMin(lease)}m`})`
 }
 
-/** The device a lease points at; old-harness locks only carry the key. */
 function leaseDevice(lease) {
   const android = lease.platform === 'android'
   const name =
@@ -278,12 +262,9 @@ function leaseDevice(lease) {
   }
 }
 
-/** Shuts down a warm device a lease or build needs the memory of. */
 function shutdownWarmDevice(warm) {
   log(`shutting down warm ${warm.deviceName} to free memory`)
-  shutdownDevice(
-    leaseDevice({ ...warm, worktree: null }) // same shape as a lease
-  )
+  shutdownDevice(leaseDevice({ ...warm, worktree: null }))
 }
 
 async function takeLease(platform, kind, native, flags) {
@@ -299,7 +280,7 @@ async function takeLease(platform, kind, native, flags) {
       create:
         platform === 'ios' ? (pool) => createIosDevice(kind, pool) : createAvd,
       busyPorts: () => new Set(listeningPorts().keys()),
-      // A device that already runs this build skips the install.
+
       prefer: (d) =>
         !native.stale &&
         installs[d.key]?.fingerprint === native.fingerprint &&
@@ -330,14 +311,11 @@ function startHeartbeat() {
   heartbeatTimer ??= setInterval(() => {
     try {
       heartbeat(ROOT)
-    } catch {
-      // the next command retries
-    }
+    } catch {}
   }, 5 * 60_000)
   heartbeatTimer.unref()
 }
 
-/** Fails unless this worktree still holds the platform's lease; refreshes it. */
 function holdLease(state, platform) {
   const key = state.devices?.[platform]?.lockKey
   if (key && !heartbeat(ROOT).includes(key))
@@ -349,7 +327,6 @@ function holdLease(state, platform) {
 
 const simState = (udid) => simctlDevices().find((d) => d.udid === udid)?.state
 
-/** Polls until the simulator leaves `states`; returns the state it settled in. */
 function waitSimLeaves(udid, states, timeoutMs = 60_000) {
   const deadline = Date.now() + timeoutMs
   let state = simState(udid)
@@ -363,11 +340,6 @@ function waitSimLeaves(udid, states, timeoutMs = 60_000) {
 const sleepSync = (ms) =>
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
 
-/**
- * Agent-device's XCUITest runner (`xcodebuild test-without-building ...
- * id=<UDID>`) can outlive `close` and keep the simulator half-booted. Kills it
- * by the exact UDID in its command line, never by name.
- */
 function killIosRunner(udid) {
   const runners = () =>
     run('ps', ['-axww', '-o', 'pid=,command='], { check: false })
@@ -385,13 +357,10 @@ function killIosRunner(udid) {
     try {
       process.kill(pid, 'SIGTERM')
       log(`stopped agent-device runner ${pid} for ${udid}`)
-    } catch {
-      // already gone
-    }
+    } catch {}
   }
 }
 
-/** Shuts down a harness device; never touches devices outside the pool. */
 function shutdownDevice(device, { keepDevice = false } = {}) {
   if (device.platform === 'ios') {
     const sim = simctlDevices().find((d) => d.udid === device.id)
@@ -400,8 +369,7 @@ function shutdownDevice(device, { keepDevice = false } = {}) {
     if (keepDevice) return
     if (sim.state !== 'Shutdown')
       run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
-    // `simctl shutdown` returns while the device is still Booted, then
-    // "Shutting Down"; a quick `up` would install onto a dying simulator.
+
     const state = waitSimLeaves(device.id, ['Booted', 'Shutting Down'])
     if (state !== 'Shutdown')
       log(`${device.name} is still ${state} after 60 s of shutting down`)
@@ -423,7 +391,6 @@ function localApiInUse(dir, except) {
   })
 }
 
-/** Stops the worktree's local API unless another live lease still uses it. */
 function stopLocalApi(worktree, api) {
   if (!api?.dir) return
   withLock('api', () => {
@@ -435,10 +402,6 @@ function stopLocalApi(worktree, api) {
   })
 }
 
-/**
- * Stops another worktree's Metro (and local API) only when its state recorded
- * the pid and the port's listener runs from that worktree.
- */
 function stopWorktreeServices(worktree, reason) {
   const file = path.join(worktree, '.verify/state.json')
   const state = worktreeState(worktree)
@@ -461,11 +424,6 @@ function stopWorktreeServices(worktree, reason) {
   writeJson(file, state)
 }
 
-/**
- * Closes the session and drops the lease. The device stays booted (warm) for
- * the next `up` when the warm pool has room (`--keep-device` always keeps it,
- * `--shutdown` never does); otherwise it is shut down first.
- */
 function releasePlatform(state, platform, flags) {
   const own = readLeases().filter(
     (l) => l.worktree === ROOT && l.platform === platform
@@ -474,7 +432,7 @@ function releasePlatform(state, platform, flags) {
   if (!device) return
   agentDevice(['close', '--session', sessionName(platform)])
   const lease = own.find((l) => l.key === device.lockKey && !l.legacy)
-  shutdownDevice(device, { keepDevice: true }) // stops the iOS runner
+  shutdownDevice(device, { keepDevice: true })
   const warm =
     !flags.shutdown &&
     lease &&
@@ -487,7 +445,6 @@ function releasePlatform(state, platform, flags) {
   )
 }
 
-/** Releases every lease of this worktree and stops its Metro; keeps state. */
 function standDown(state) {
   const platforms = new Set([
     ...Object.keys(state.devices ?? {}),
@@ -545,7 +502,7 @@ async function reapExpired() {
       '--session',
       sessionName(lease.platform, lease.worktree),
     ])
-    shutdownDevice(device, { keepDevice: true }) // stops the iOS runner
+    shutdownDevice(device, { keepDevice: true })
     if (lease.legacy || !parkWarm(lease)) shutdownDevice(device)
     const others = readLeases().some(
       (l) => l.worktree === lease.worktree && l.key !== lease.key && !l.expired
@@ -553,8 +510,6 @@ async function reapExpired() {
     if (!others && !gone) stopWorktreeServices(lease.worktree, reason)
   })
 }
-
-// ---------- agent-device ----------
 
 function agentDeviceBin() {
   if (process.env.AGENT_DEVICE_BIN) return [process.env.AGENT_DEVICE_BIN]
@@ -579,11 +534,8 @@ function agentDevice(args, options = {}) {
   })
 }
 
-// An accessibility capture that overruns agent-device's iOS watchdog keeps its
-// runner busy for a few seconds, and every command in that window fails.
 const RUNNER_BUSY = /still finishing a previous command/
 
-/** Runs one session command, waiting out a runner still draining an earlier one. */
 function sessionCommand(platform, args) {
   const command = [...args, '--session', sessionName(platform)]
   let result = agentDevice(command)
@@ -591,8 +543,7 @@ function sessionCommand(platform, args) {
     sleepSync(1500)
     result = agentDevice(command)
   }
-  // After a capture overruns, the next XCTest action can fail on the old
-  // session without acting; the retry gets a fresh one.
+
   if (RUNNER_INVALIDATED.test(output(result))) {
     sleepSync(1500)
     result = agentDevice(command)
@@ -604,20 +555,9 @@ const RUNNER_INVALIDATED = /runner session was invalidated/
 
 const output = (result) => `${result.stdout ?? ''}${result.stderr ?? ''}`
 
-// ---------- AXe: accessibility reads agent-device can't do on iPad ----------
-
-// agent-device's snapshot reads only the app node on the iPad layout, and its
-// semantic commands (selectors, find, wait, back, --settle) need that tree, so
-// on iPad they read the screen with AXe (scripts/verify/ax.mjs) and tap through
-// AXe at screen coordinates. iPhone keeps agent-device and falls back to AXe
-// when its tree comes back sparse.
-// "capture was truncated": agent-device can't prove a selector absent over a
-// long tree (Home, the calendar), so `wait absent` asks AXe instead.
 const SPARSE =
   /No snapshot backend could read|sparse accessibility snapshot|snapshot quality verdict is sparse|could not read the current accessibility tree|capture was truncated|could not read the screen/
-// `find` reports its own miss ("find did not match any element") over a tree
-// agent-device read only partly, such as the Help Center's results under the
-// keyboard.
+
 const NO_MATCH =
   /Selector did not match|No element matches|could not find|did not match any element/i
 const BACK_LABELS = ['Go Back', 'Back', 'Close']
@@ -641,7 +581,6 @@ const axRefsFile = (platform) =>
 const axTapFile = (platform) =>
   path.join(STATE_DIR, `ax-last-tap-${platform}.json`)
 
-/** Reads the screen with AXe and saves the elements so `@aN` refs resolve. */
 function axRead(state, platform) {
   const bin = axeBin()
   if (!bin) fail(AXE_MISSING)
@@ -668,14 +607,11 @@ function axRef(state, platform, ref) {
 const done = (stdout, status = 0) => ({ status, stdout, stderr: '' })
 const failed = (message) => ({ status: 1, stdout: '', stderr: `${message}\n` })
 
-// Settling compares positions too: a sheet or a dock riding the keyboard moves
-// without changing a label, and a tap resolved mid-move lands on its old spot.
 const layoutKey = (elements) =>
   elements
     .map((e) => `${formatElement(e)} ${Math.round(e.x)},${Math.round(e.y)}`)
     .join('\n')
 
-/** Polls AXe until two reads match, then lists what changed since `before`. */
 function axSettle(state, platform, before) {
   const start = Date.now()
   sleepSync(300)
@@ -694,13 +630,6 @@ function axSettle(state, platform, before) {
 
 const SCREEN_ORIGIN = { x: 0, y: 0 }
 
-/**
- * Where the app window sits on screen. AXe frames the app's elements relative
- * to its window, while taps and `--point` reads take screen coordinates, so in
- * a resized iPad window every tap at an element adds this. A point outside the
- * window reads SpringBoard, which frames each window (see `windowOrigin`). A
- * window that covers the screen's top-left corner starts there.
- */
 function axWindowOrigin(state, platform) {
   const device = state.devices[platform]
   if (device.kind !== 'ipad') return SCREEN_ORIGIN
@@ -717,13 +646,6 @@ function axWindowOrigin(state, platform) {
   }
 }
 
-/**
- * Taps, or fills, at a screen point through AXe. agent-device's XCTest taps
- * miss once an iPad window is resized (XCTest reports a 391 × 665 window as 70
- * × 367), so iPad taps at a point go through AXe, which taps in the same screen
- * coordinates its `--point` reads use. A fill focuses the field with that tap,
- * then lets agent-device replace the focused field's text.
- */
 function axPointInput(state, platform, verb, x, y, rest) {
   const tapped = run(
     axeBin(),
@@ -737,10 +659,6 @@ function axPointInput(state, platform, verb, x, y, rest) {
   return sessionCommand(platform, ['fill', x, y, ...rest])
 }
 
-/**
- * Runs an input command; with --settle, waits for the screen through AXe. `tap`
- * is where a press or fill lands in window coordinates, for `type`.
- */
 function axInput(state, platform, args, settle, before, tap) {
   const start = settle ? (before ?? axRead(state, platform)) : null
   const [verb, x, y, ...rest] = args
@@ -758,10 +676,6 @@ function axInput(state, platform, args, settle, before, tap) {
   return done(`${result.stdout.trim()}\n${axSettle(state, platform, start)}`)
 }
 
-/**
- * Resolves `@aN`, an agent-device selector, or text into one on-screen element.
- * Returns { element, elements } or { error }.
- */
 function axTarget(
   state,
   platform,
@@ -785,12 +699,6 @@ function axTarget(
   return { element: first ? pool[0] : best(pool), elements }
 }
 
-/**
- * The matches a tap at their center would reach. A sheet or picker leaves the
- * screen under it in the accessibility tree, so the same label (a "5" on the
- * week strip and on a picker wheel) can match twice; hit-testing each center
- * with `axe describe-ui --point` tells which one is in front.
- */
 function onTop(state, platform, matches, origin) {
   const device = state.devices[platform]
   return matches.slice(0, 6).filter((element) => {
@@ -816,10 +724,6 @@ function onTop(state, platform, matches, origin) {
   })
 }
 
-/**
- * Long-presses the element a target resolves to, for a context menu, when
- * agent-device can't find it (its XCTest reads back off after slow screens).
- */
 function axLongPress(state, platform, target, rest) {
   const origin = axWindowOrigin(state, platform)
   const found = axTarget(state, platform, target, { origin })
@@ -849,10 +753,6 @@ function axLongPress(state, platform, target, rest) {
   return done(`Long pressed ${formatElement(found.element)} at (${x}, ${y})`)
 }
 
-/**
- * `scroll <direction> --until <selector>` when agent-device can't read the
- * screen: scrolls a pass at a time until AXe finds the target on screen.
- */
 function axScrollUntil(state, platform, direction, target) {
   for (let pass = 0; pass <= 8; pass++) {
     if (!axTarget(state, platform, target).error)
@@ -865,7 +765,6 @@ function axScrollUntil(state, platform, direction, target) {
   return failed(`${target} didn't come on screen scrolling ${direction} (AXe)`)
 }
 
-/** Taps (or fills) the element a target resolves to. */
 function axAct(state, platform, verb, target, rest, settle, options) {
   const origin = axWindowOrigin(state, platform)
   const found = axTarget(state, platform, target, { ...options, origin })
@@ -897,7 +796,6 @@ function axSnapshot(state, platform, json, note) {
   return done(lines.join('\n'))
 }
 
-/** Polls AXe for `wait text|absent|stable`. */
 function axWait(state, platform, kind, rest) {
   const numbers = rest.filter((a) => /^\d+$/.test(a)).map(Number)
   const subject = rest.find((a) => !/^\d+$/.test(a))
@@ -937,11 +835,6 @@ function axWait(state, platform, kind, rest) {
 
 const isNumber = (value) => /^-?\d+(\.\d+)?$/.test(value ?? '')
 
-/**
- * `type` on iPad: agent-device finds the focused field through the tree it
- * can't read there, so this fills the field the last tap landed in, or the only
- * field on screen. Fill replaces the field's text rather than appending.
- */
 function axType(state, platform, text, settle) {
   const fields = axRead(state, platform).filter((e) => e.editable)
   const tap = readJson(axTapFile(platform), null)
@@ -972,11 +865,6 @@ function axType(state, platform, text, settle) {
   return done(`${formatElement(field)}: ${result.stdout.trim()}`)
 }
 
-/**
- * Runs one agent-device command for this run's session and returns a spawnSync
- * result. `wwv ad`, `wwv flow` and `wwv monkey` all go through here, so the
- * iPad handling applies to each.
- */
 function drive(state, platform, args) {
   const device = state.devices[platform]
   if (platform !== 'ios' || !axeBin()) return sessionCommand(platform, args)
@@ -984,10 +872,7 @@ function drive(state, platform, args) {
   const [command, ...rest] = args
   const settle = rest.includes('--settle')
   const plain = rest.filter((a) => a !== '--settle')
-  // iPhone: agent-device first, AXe only when it can't read the screen. An
-  // action agent-device reports done has landed, even when its settled diff
-  // reads sparse; acting again through AXe would tap twice (Archive, then the
-  // list under the closed alert).
+
   const acts = ['press', 'click', 'fill', 'longpress', 'find'].includes(command)
   const tryAgentDevice = (retry) => {
     if (ipad) return retry()
@@ -1013,7 +898,7 @@ function drive(state, platform, args) {
     case 'click':
     case 'fill': {
       const [target, ...more] = plain
-      // Coordinates are the screen's, as in a screenshot.
+
       if (isNumber(target) && isNumber(more[0])) {
         if (!ipad) return sessionCommand(platform, args)
         const origin = axWindowOrigin(state, platform)
@@ -1056,9 +941,7 @@ function drive(state, platform, args) {
         return sessionCommand(platform, args)
       if (kind === 'stable' || ipad)
         return tryAgentDevice(() => axWait(state, platform, kind, more))
-      // agent-device's reader can stop seeing the app partway through a long
-      // session ("Current surface: WitnessWork Dev"), and its wait then times
-      // out over a screen that shows the text; AXe reads the screen apart.
+
       const result = sessionCommand(platform, args)
       return result.status === 0 ? result : axWait(state, platform, kind, more)
     }
@@ -1112,14 +995,12 @@ function drive(state, platform, args) {
         `No ${BACK_LABELS.join(' / ')} control on screen (AXe); press the screen's own control instead`
       )
     default:
-      // Scroll, swipe, type and the rest are input; only --settle reads.
       return ipad && settle
         ? axInput(state, platform, [command, ...plain], true)
         : sessionCommand(platform, args)
   }
 }
 
-// Commands `wwv ad` sends through drive() rather than straight to agent-device.
 const DRIVEN = new Set([
   'snapshot',
   'press',
@@ -1133,18 +1014,8 @@ const DRIVEN = new Set([
   'scroll',
 ])
 
-// ---------- splash detection ----------
-
-// `#4BD27C`, the native splash's background (app.config.ts).
 const SPLASH_RGB = [0x4b, 0xd2, 0x7c]
 
-/**
- * True when the native splash covers the screen. On Xcode 27 dev builds React
- * Native can put the launch screen back over a running app, where it swallows
- * every tap while the JS and the accessibility tree carry on beneath, so
- * neither CDP nor AXe can tell. A screenshot that is almost all splash green
- * can.
- */
 function splashCovers(state, platform) {
   if (platform !== 'ios') return false
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-verify-splash-'))
@@ -1156,7 +1027,7 @@ function splashCovers(state, platform) {
       check: false,
     })
     if (!fs.existsSync(png)) return false
-    // A 24 × 24 BMP is enough to measure, and Node reads BMP without a decoder.
+
     run('sips', ['-s', 'format', 'bmp', '-z', '24', '24', png, '--out', bmp], {
       check: false,
     })
@@ -1185,7 +1056,6 @@ function splashCovers(state, platform) {
   }
 }
 
-/** Hides a splash left over the running app; false if it stays. */
 async function clearSplash(state, platform) {
   for (let i = 0; i < 4; i++) {
     if (!splashCovers(state, platform)) return true
@@ -1198,8 +1068,6 @@ async function clearSplash(state, platform) {
   }
   return !splashCovers(state, platform)
 }
-
-// ---------- iOS ----------
 
 function simctlDevices() {
   const out = run('xcrun', [
@@ -1229,12 +1097,11 @@ function newerFirstIosRuntimes() {
     )
 }
 
-// Each simulator kind: its device type and its pool's name.
 const IOS_KINDS = {
   iphone: { type: /^iPhone \d+ Pro$/, name: 'iPhone' },
   ipad: { type: /^iPad Pro 13-inch/, name: 'iPad', ipad: true },
   duo: { type: /^iPhone Duo$/, name: 'iPhone Duo' },
-  // The smallest screens: 375 pt wide without a notch, and iPad in portrait.
+
   se: { type: /^iPhone SE \(3rd generation\)$/, name: 'iPhone SE' },
   'ipad-mini': {
     type: /^iPad mini \(A17 Pro\)$/,
@@ -1245,7 +1112,6 @@ const IOS_KINDS = {
 
 const isIpadKind = (kind) => IOS_KINDS[kind]?.ipad === true
 
-/** The newest runtime with this kind's device type, and that type. */
 function pickRuntimeAndType(kind) {
   const pattern = IOS_KINDS[kind].type
   const runtimes = newerFirstIosRuntimes()
@@ -1263,7 +1129,6 @@ function pickRuntimeAndType(kind) {
 const iosPattern = (kind) =>
   new RegExp(`^WW Verify ${IOS_KINDS[kind].name} (\\d+)$`)
 
-/** The fixed-size simulator pool for a kind (see IOS_KINDS). */
 function iosPool(kind) {
   const pattern = iosPattern(kind)
   return simctlDevices()
@@ -1295,8 +1160,7 @@ function createIosDevice(kind, pool) {
 function bootIos(device) {
   if (!simState(device.id))
     fail(`Simulator ${device.name} (${device.id}) no longer exists`)
-  // A device still shutting down from the last `down` looks Booted, then
-  // refuses installs with SimError 405; wait it out before booting again.
+
   const state = waitSimLeaves(device.id, ['Shutting Down'])
   if (state !== 'Booted') {
     log(`booting ${device.name}`)
@@ -1306,10 +1170,6 @@ function bootIos(device) {
     timeout: 300_000,
   })
   if (posterBoardCrashLooping(device.id)) {
-    // A simulator killed mid-write can leave PosterBoard's store with a
-    // descriptor it asserts on at every launch, so it crash-loops and macOS
-    // shows "PosterBoard quit unexpectedly" each time. PosterBoard rebuilds
-    // the store from scratch, so drop it and boot again.
     log(`${device.name}: PosterBoard keeps crashing; resetting its store`)
     run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
     waitSimLeaves(device.id, ['Booted', 'Shutting Down'])
@@ -1329,10 +1189,6 @@ const posterStore = (udid) =>
     'data/Library/Application Support/PRBPosterExtensionDataStore'
   )
 
-/**
- * Whether PosterBoard crashed at least 3 times on this simulator in the last
- * day, counting only crashes since its store was last rebuilt.
- */
 function posterBoardCrashLooping(udid) {
   const reports = path.join(os.homedir(), 'Library/Logs/DiagnosticReports')
   let since = Date.now() - 24 * 60 * 60_000
@@ -1349,7 +1205,6 @@ function posterBoardCrashLooping(udid) {
   }
   let crashes = 0
   for (const name of entries) {
-    // The name holds the crash time; macOS rewrites the mtime of old reports.
     const at = name.name.match(
       /^PosterBoard-(\d{4})-(\d\d)-(\d\d)-(\d\d)(\d\d)(\d\d)\.ips$/
     )
@@ -1375,7 +1230,6 @@ function iosAppInstalled(udid) {
   )
 }
 
-/** Resolves symlinks (Xcode records /private/tmp for /tmp); keeps missing paths. */
 function realPath(p) {
   try {
     return fs.realpathSync(p)
@@ -1384,13 +1238,9 @@ function realPath(p) {
   }
 }
 
-// Builds use a worktree-local DerivedData, so ownership and cleanup are just
-// this folder (and android/app/build). `root` is another checkout only for
-// scripts/perf, which builds a commit's Release app in its own worktree.
 const derivedData = (root = ROOT) => path.join(root, '.verify/DerivedData')
 const androidBuild = (root = ROOT) => path.join(root, 'android/app/build')
 
-/** The app a build produces: Debug is the dev client, Release the perf app. */
 export function buildProduct(
   platform,
   { root = ROOT, configuration = 'Debug' } = {}
@@ -1407,8 +1257,6 @@ const IOS_PRODUCT = buildProduct('ios')
 const ANDROID_PRODUCT = buildProduct('android')
 export const buildDirs = (platform, root = ROOT) =>
   platform === 'ios' ? [derivedData(root)] : [androidBuild(root)]
-
-// ---------- Android ----------
 
 function adbDevices() {
   return run('adb', ['devices'], { check: false })
@@ -1447,7 +1295,6 @@ const AVD_PATTERN = /^ww-verify-(\d+)$/
 const avdNumber = (name) => Number(name.match(AVD_PATTERN)[1])
 const emulatorSerial = (name) => `emulator-${5580 + 2 * (avdNumber(name) - 1)}`
 
-/** The fixed-size `ww-verify-N` AVD pool. */
 function androidPool() {
   return run('emulator', ['-list-avds'], { check: false })
     .stdout.split('\n')
@@ -1483,27 +1330,12 @@ function createAvd(pool) {
   return { key: `avd-${name}`, id: emulatorSerial(name), name, n: next }
 }
 
-/**
- * What an emulator still needs before the app can run in front, from `dumpsys
- * user` and `dumpsys window`: `storage` while the user's storage is locked
- * (every cold boot, until the PIN is entered), then `keyguard` while the lock
- * screen still shows; null when it's unlocked.
- */
 export function androidUnlockStep(users, windows) {
   if (!/State: RUNNING_UNLOCKED\b/.test(users)) return 'storage'
   if (/isKeyguardShowing=true/.test(windows)) return 'keyguard'
   return null
 }
 
-// The shared verify AVDs carry a screen-lock PIN, so every cold boot leaves the
-// user RUNNING_LOCKED: the dev client link doesn't resolve and the app never
-// starts. The lock screen ignores a PIN typed for a while after
-// sys.boot_completed (on API 36 a PIN typed then was lost and the user stayed
-// locked), so the storage is unlocked with `locksettings verify`, which works
-// as soon as the system is up. The lock screen then still covers the app, and
-// it takes the PIN again; each step is retried until it takes. The PIN stays
-// on the AVD (other agents rely on it); override with WW_VERIFY_ANDROID_PIN.
-// `deps` is for tests.
 async function unlockAndroid(serial, deps = {}) {
   const shell =
     deps.shell ??
@@ -1519,7 +1351,6 @@ async function unlockAndroid(serial, deps = {}) {
   for (let attempt = 0; attempt < 12; attempt++) {
     const tried = next
     if (tried === 'storage') {
-      // A wrong PIN fails at once instead of counting towards a lockout.
       if (/didn't match/.test(shell('locksettings', 'verify', '--old', pin)))
         fail(
           `${serial} rejected the screen-lock PIN ${pin}; set WW_VERIFY_ANDROID_PIN to the AVD's PIN`
@@ -1542,7 +1373,6 @@ async function unlockAndroid(serial, deps = {}) {
   )
 }
 
-/** The `-gpu` mode a running AVD's emulator was started with (`auto` if none). */
 function emulatorGpu(name) {
   const command = run('ps', ['-axo', 'command'], { check: false })
     .stdout.split('\n')
@@ -1550,7 +1380,6 @@ function emulatorGpu(name) {
   return command?.match(/ -gpu (\S+)/)?.[1] ?? 'auto'
 }
 
-/** Boots the leased AVD headless and lean; returns its adb serial. */
 async function bootAndroid(device) {
   const name = device.name
   let serial = runningAvds()[name]
@@ -1611,8 +1440,6 @@ function androidAppInstalled(serial) {
   }).stdout.includes('package:')
 }
 
-// ---------- native builds, cached by fingerprint ----------
-
 async function nativeFingerprint(platform) {
   const require = createRequire(path.join(ROOT, 'package.json'))
   const { createFingerprintAsync } = require('@expo/fingerprint')
@@ -1627,10 +1454,6 @@ function cachedBuild(platform, fingerprint) {
   return entry && fs.existsSync(entry.path) ? entry : null
 }
 
-/**
- * Copies the artifact to a temp path, then renames it into the cache and
- * updates the index under the machine mutex.
- */
 function cacheBuild(platform, fingerprint, artifact) {
   assertDevArtifact(artifact)
   fs.mkdirSync(BUILD_DIR, { recursive: true })
@@ -1663,14 +1486,12 @@ function cacheBuild(platform, fingerprint, artifact) {
   return target
 }
 
-/** Frees this worktree's build output (after caching, or after a failure). */
 export function removeBuildDirs(platform, root = ROOT) {
   removeDirs(buildDirs(platform, root), (message) =>
     log(`${message} (keep build dirs with --keep-build-dirs)`)
   )
 }
 
-/** The bundle id (iOS) or application id (Android) an artifact was built with. */
 function artifactId(artifact) {
   if (artifact.endsWith('.app'))
     return run('plutil', [
@@ -1694,7 +1515,6 @@ function artifactId(artifact) {
   ]).stdout.trim()
 }
 
-/** Never cache or install anything but the development variant. */
 export function assertDevArtifact(artifact) {
   const id = artifactId(artifact)
   if (id !== BUNDLE_ID)
@@ -1703,11 +1523,6 @@ export function assertDevArtifact(artifact) {
     )
 }
 
-/**
- * The build steps; run by `_build` inside the detached build process group,
- * never against a device (the artifact is installed after a lease). Release
- * embeds the JS as Hermes bytecode with dev mode off; scripts/perf uses it.
- */
 export function buildSteps(
   platform,
   { root = ROOT, configuration = 'Debug' } = {}
@@ -1723,9 +1538,6 @@ export function buildSteps(
   ]
   if (platform === 'ios')
     return [
-      // A clean development prebuild: without APP_VARIANT=development,
-      // app.config.ts builds the production app, and a stale ios/ would miss
-      // config changes the fingerprint saw.
       [...env('ios'), 'pnpm', 'run', 'prebuild'],
       [
         ...env('ios'),
@@ -1743,8 +1555,7 @@ export function buildSteps(
         `ARCHS=${os.arch() === 'arm64' ? 'arm64' : 'x86_64'}`,
         'ONLY_ACTIVE_ARCH=YES',
         'COMPILER_INDEX_STORE_ENABLE=NO',
-        // RevenueCat crashes a Release build that uses the dev variant's Test
-        // Store key (an alert, then fatalError); its own opt-out flag.
+
         ...(configuration === 'Release'
           ? [
               'SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) BYPASS_SIMULATED_STORE_RELEASE_CHECK',
@@ -1778,11 +1589,9 @@ export function buildSteps(
 function buildEnv(platform) {
   return {
     ...toolEnv(),
-    // with-local-env keeps POSTHOG_DISABLE_UPLOAD: belt and braces, since a
-    // development config never adds PostHog's upload phases.
+
     POSTHOG_DISABLE_UPLOAD: 'true',
     ...(platform === 'android' && {
-      // No resident Gradle or Kotlin daemon (~3 GB) after the build.
       GRADLE_OPTS: [
         process.env.GRADLE_OPTS,
         `-Dorg.gradle.workers.max=${GRADLE_WORKERS}`,
@@ -1795,14 +1604,8 @@ function buildEnv(platform) {
   }
 }
 
-// Set while this `up` runs a build, so a signal can take the group down too.
 let buildGroup = null
 
-/**
- * Runs the build in its own detached process group and records the group with
- * the build slot. If this `up` dies, the reaper (`gc`, or the next `up`) kills
- * the orphaned group and removes its build dirs.
- */
 export async function buildNative(
   platform,
   {
@@ -1848,7 +1651,7 @@ export async function buildNative(
     child.on('exit', (code, signal) => resolve(signal ? 1 : code))
     child.on('error', () => resolve(1))
   })
-  // Anything the steps left behind goes with the build.
+
   killTree(child.pid)
   buildGroup = null
   if (status !== 0) fail(`${platform} build failed; tail ${logPath}`)
@@ -1858,7 +1661,6 @@ export async function buildNative(
   return artifact
 }
 
-/** Kills a build this process started (on a signal), like `up`'s cleanup. */
 export function killOwnBuild() {
   if (!buildGroup) return false
   killTree(buildGroup)
@@ -1866,7 +1668,6 @@ export function killOwnBuild() {
   return true
 }
 
-/** Installs a cached dev artifact; a dying simulator gets one more try. */
 function install(device, artifact) {
   assertDevArtifact(artifact)
   log(`installing ${path.basename(artifact)} on ${device.name}`)
@@ -1898,7 +1699,6 @@ function sha256(files) {
   return hash.digest('hex')
 }
 
-/** The iOS app's main executable plus its debug dylib (where the code is). */
 function appBinaries(app) {
   const exe = run('plutil', [
     '-extract',
@@ -1911,14 +1711,12 @@ function appBinaries(app) {
     .filter((f) => fs.existsSync(f))
 }
 
-/** Identifies an artifact's code, to compare with what a device runs. */
 function artifactHash(artifact) {
   return artifact.endsWith('.app')
     ? sha256(appBinaries(artifact))
     : sha256([artifact])
 }
 
-/** The same hash for what is installed on the device, or null. */
 function installedHash(device) {
   if (device.platform === 'ios') {
     const app = run(
@@ -1950,12 +1748,6 @@ function updateInstalls(fn) {
   })
 }
 
-/**
- * Resolves the artifact for this tree's native fingerprint before any device is
- * leased: the cache, or a build under a machine-wide build slot. A build waiter
- * holds no lease, so two worktrees waiting on each other's memory can't
- * deadlock.
- */
 async function resolveNative(state, platform, flags) {
   if (flags['accept-stale-native']) return { stale: true }
   const fingerprint = await nativeFingerprint(platform)
@@ -1973,7 +1765,7 @@ async function resolveNative(state, platform, flags) {
         `waiting to build ${platform} ${fingerprint.slice(0, 12)} (#${r.position} of ${r.queued} build waiters, holding no device): ${r.wait} (see wwv status)`
       ),
   }
-  // Keep this worktree's devices only if the build can start right now.
+
   let slot = await acquireBuild(options, { ...handlers, waitMs: 0 })
   if (!slot.ok && !slot.cached && !slot.impossible) {
     if (readLeases().some((l) => l.worktree === ROOT && !l.expired)) {
@@ -2005,12 +1797,11 @@ async function resolveNative(state, platform, flags) {
     }
   } finally {
     releaseBuild()
-    // Also after a failure: a failed build leaves several GB of intermediates.
+
     if (!flags['keep-build-dirs']) removeBuildDirs(platform)
   }
 }
 
-/** The newest cached build, for `wwv warm` (which has no tree to fingerprint). */
 function newestCached(platform) {
   const [key, entry] =
     Object.entries(readJson(BUILD_INDEX, {}))
@@ -2021,10 +1812,6 @@ function newestCached(platform) {
     : null
 }
 
-/**
- * Boots one device for `wwv warm`, installs the newest cached build on it, and
- * parks it warm. Returns its name, or null when no device is free.
- */
 async function warmOne(platform) {
   const native = newestCached(platform) ?? { stale: true }
   const kind = platform === 'ios' ? 'iphone' : 'emulator'
@@ -2054,7 +1841,6 @@ async function warmOne(platform) {
   }
 }
 
-/** The newest artifact on hand, for --accept-stale-native. */
 function staleArtifact(platform) {
   const local = platform === 'ios' ? IOS_PRODUCT : ANDROID_PRODUCT
   if (fs.existsSync(local)) return local
@@ -2065,11 +1851,6 @@ function staleArtifact(platform) {
     .sort((a, b) => b[1].builtAt - a[1].builtAt)[0]?.[1].path
 }
 
-/**
- * Installs the resolved artifact unless the device already runs exactly that
- * binary. The install record is cleared first and written only after a
- * successful install, so it never vouches for a binary it didn't put there.
- */
 function ensureApp(device, native, flags) {
   const key = device.lockKey
   if (native.stale) {
@@ -2108,10 +1889,6 @@ function ensureApp(device, native, flags) {
   return 'verified'
 }
 
-/**
- * Clears the device's install record, installs, checks the device now runs the
- * artifact's binary, and only then records the fingerprint.
- */
 export function installRecorded(key, native, io) {
   updateInstalls((i) => delete i[key])
   io.install()
@@ -2129,8 +1906,6 @@ export function installRecorded(key, native, io) {
       })
   )
 }
-
-// ---------- Metro ----------
 
 async function metroRunning(port) {
   return (await httpText(`http://127.0.0.1:${port}/status`)).text.includes(
@@ -2151,7 +1926,6 @@ function portOwner(port) {
   return { pid: Number(pid), cwd }
 }
 
-/** Listening ports in the Metro range, port -> pid (one lsof call). */
 function listeningPorts() {
   const range = `${CONFIG.metroPorts[0]}-${CONFIG.metroPorts.at(-1)}`
   const out = run('lsof', ['-nP', `-iTCP:${range}`, '-sTCP:LISTEN', '-Fpn'], {
@@ -2166,10 +1940,6 @@ function listeningPorts() {
   return ports
 }
 
-/**
- * Runs this worktree's Metro on its leased port. If another process wins the
- * port, it moves to a fresh reservation instead of adopting that server.
- */
 async function ensureMetro(state, api, leasePort) {
   const apiUrl = api?.url
   const current = state.metro
@@ -2237,7 +2007,7 @@ async function startMetro(port, api) {
     if (i > 90) fail(`Metro did not start; tail ${logPath}`)
     await sleep(1000)
   }
-  // Another worktree's Metro may have bound the port first.
+
   if (portOwner(port)?.cwd !== ROOT) {
     stopProcessGroup(child.pid)
     return null
@@ -2256,18 +2026,10 @@ function stopProcessGroup(pid) {
   } catch {
     try {
       process.kill(pid, 'SIGTERM')
-    } catch {
-      // already gone
-    }
+    } catch {}
   }
 }
 
-// ---------- backend ----------
-
-// Every run gets an isolated ww-api (ww-api's scripts/verify/dev.mjs).
-// WW_API_DIR runs a given checkout, such as a backend branch; otherwise it runs
-// from a worktree the harness owns at the ww-api repo's origin/main, so it
-// never depends on what the user's own checkout has checked out.
 function apiRepo() {
   return path.resolve(
     process.env.WW_API_REPO || path.join(os.homedir(), 'dev/ww-api')
@@ -2287,11 +2049,6 @@ function apiDir() {
 
 const quiet = { stdio: ['ignore', 2, 2] }
 
-/**
- * Moves the harness's ww-api worktree to the latest origin/main and installs
- * its dependencies. Skipped while a worker runs from it, so a worktree that
- * shares that worker never has its backend change underneath it.
- */
 function updateApiCheckout(dir) {
   const worker = readJson(path.join(dir, '.verify/state.json'), null)
   if (pidAlive(worker?.pid)) return
@@ -2344,13 +2101,12 @@ function updateApiCheckout(dir) {
   run('pnpm', ['install', '--frozen-lockfile'], {
     cwd: dir,
     timeout: 600_000,
-    env: { CI: 'true' }, // no interactive prompts
+    env: { CI: 'true' },
     ...quiet,
   })
   writeJson(stamp, { hash })
 }
 
-/** Starts (or reuses) the isolated ww-api; returns what the run records. */
 function startLocalApi(dir = apiDir()) {
   return withLock('api', () => {
     if (dir === managedApiDir()) updateApiCheckout(dir)
@@ -2359,8 +2115,7 @@ function startLocalApi(dir = apiDir()) {
       fail(
         `${script} not found; ${dir} must be a ww-api checkout that has the verify-ww-api loop`
       )
-    // Real credentials (an OpenRouter key for Scribe AI) come only from an
-    // env file the user names; a worker already running keeps what it has.
+
     const secrets = process.env.WW_API_SECRETS_FROM
     run(
       'node',
@@ -2378,8 +2133,7 @@ function startLocalApi(dir = apiDir()) {
       mode: 'local',
       url: worker.url,
       port: worker.port,
-      // The isolated worker mints its own dev-bypass token; the bundle must
-      // send it.
+
       devBypass: worker.tokens?.devBypass,
       dir,
       sha: worker.gitSha?.slice(0, 12) ?? null,
@@ -2402,8 +2156,6 @@ function envApiUrl() {
   return result.stdout.trim().split('\n').pop()
 }
 
-// ---------- launch + CDP ----------
-
 async function cdpTargets(port) {
   const { text } = await httpText(`http://127.0.0.1:${port}/json/list`)
   try {
@@ -2413,12 +2165,6 @@ async function cdpTargets(port) {
   }
 }
 
-// Match by platform: Android runtimes report "<model> - <release> - API <n>",
-// and an iOS runtime reports the simulator name, which can lag a rename until
-// reboot. A warm device another worktree left behind can reconnect to this
-// port once its own Metro is gone, so prefer the leased simulator by name, and
-// never take an iOS runtime named for a different pool device: evaluating
-// there would seed or drive someone else's run.
 async function cdpTarget(state, platform) {
   const device = state.devices?.[platform]
   if (!device)
@@ -2441,8 +2187,7 @@ async function cdpTarget(state, platform) {
 
 async function cdpEval(state, platform, expression, timeoutMs = 30_000) {
   let target = await cdpTarget(state, platform)
-  // The app's debugger target can drop off Metro's list for a moment (it
-  // reconnects on its own); a flow's asserts read through here right after.
+
   for (let i = 0; !target && i < 5; i++) {
     await sleep(2000)
     target = await cdpTarget(state, platform)
@@ -2453,8 +2198,7 @@ async function cdpEval(state, platform, expression, timeoutMs = 30_000) {
     )
   const require = createRequire(path.join(ROOT, 'package.json'))
   const WebSocket = require('ws')
-  // Metro rejects debugger sockets without an Origin, and `localhost` can
-  // resolve to ::1 and be dropped, so pin both to 127.0.0.1.
+
   const origin = `http://127.0.0.1:${state.metro.port}`
   const url = target.webSocketDebuggerUrl.replace(
     '//localhost:',
@@ -2538,8 +2282,7 @@ async function launch(state, device, retry = true) {
       ['RCT_jsLocation', '-string', `127.0.0.1:${port}`],
       ['EXDevMenuIsOnboardingFinished', '-bool', 'YES'],
       ['EXDevMenuShowsAtLaunch', '-bool', 'NO'],
-      // The floating dev button overlaps the app's top-right header buttons,
-      // and gestures could open the dev menu mid-drive.
+
       ['EXDevMenuShowFloatingActionButton', '-bool', 'NO'],
       ['EXDevMenuMotionGestureEnabled', '-bool', 'NO'],
       ['EXDevMenuTouchGestureEnabled', '-bool', 'NO'],
@@ -2575,8 +2318,7 @@ async function launch(state, device, retry = true) {
   } else {
     ensureReverse(state, device)
     const prefs = `<?xml version='1.0' encoding='utf-8' standalone='yes' ?><map><boolean name="isOnboardingFinished" value="true" /><boolean name="showsAtLaunch" value="false" /><boolean name="showFab" value="false" /><boolean name="motionGestureEnabled" value="false" /><boolean name="touchGestureEnabled" value="false" /></map>`
-    // Without the network provider, Google Play services interrupts location
-    // requests with a "Location Accuracy" consent dialog outside the app.
+
     run(
       'adb',
       [
@@ -2607,7 +2349,7 @@ async function launch(state, device, retry = true) {
     )
     const local = path.join(STATE_DIR, 'devmenu-prefs.xml')
     fs.writeFileSync(local, prefs)
-    // A running app rewrites its prefs on exit, so stop it before writing.
+
     run('adb', ['-s', device.id, 'shell', 'am', 'force-stop', BUNDLE_ID], {
       check: false,
     })
@@ -2631,9 +2373,7 @@ async function launch(state, device, retry = true) {
       { check: false }
     )
   }
-  // Always open this Metro through the dev-client link. A plain relaunch lets
-  // the dev launcher auto-open its last project, which on Xcode 27 builds
-  // leaves the native splash covering the app.
+
   const target =
     device.platform === 'ios'
       ? ['--platform', 'ios', '--udid', device.id]
@@ -2663,13 +2403,6 @@ async function launch(state, device, retry = true) {
   await launch(state, device, false)
 }
 
-/**
- * Xcode 27 dev builds leave the native splash over a running app after any
- * second JS load, and the dev launcher often loads twice on a relaunch (its
- * last project, then the link), most of all on a simulator that stayed booted.
- * Waits until a marker survives 5 s (no reload), then hides the splash; hiding
- * is a no-op once it's gone.
- */
 async function settleAndHideSplash(state, platform) {
   for (let i = 0; i < 8; i++) {
     const mark = JSON.stringify(`${process.pid}-${Date.now()}`)
@@ -2687,10 +2420,6 @@ async function settleAndHideSplash(state, platform) {
   )
 }
 
-/**
- * Adb reverse rules can vanish (adb restarts, other tools); reapply before
- * driving.
- */
 function ensureReverse(state, device) {
   if (device.platform !== 'android') return
   for (const port of [state.metro?.port, state.api?.port].filter(Boolean)) {
@@ -2700,18 +2429,10 @@ function ensureReverse(state, device) {
   }
 }
 
-/**
- * On Android the dev app starts near 1.05 GB and grows 10 to 15 MB with every
- * seed and remount, mostly screens React DevTools still records after they
- * unmount (dev builds only). Past this much PSS, `wwv flow` relaunches it
- * between flows rather than let the 2 GB emulator kill it mid-flow (near 1.5
- * GB).
- */
 const ANDROID_RELAUNCH_MB = Number(
   process.env.WW_VERIFY_ANDROID_RELAUNCH_MB ?? 1400
 )
 
-/** The app's total PSS in MB on an Android device, or null. */
 function androidPssMb(device) {
   const result = run(
     'adb',
@@ -2722,11 +2443,6 @@ function androidPssMb(device) {
   return Number.isFinite(kb) ? Math.round(kb / 1024) : null
 }
 
-/**
- * Why the app needs relaunching before the next flow, or null: its JS runtime
- * is gone (killed for memory, crashed), or on Android it holds more memory than
- * `WW_VERIFY_ANDROID_RELAUNCH_MB`.
- */
 async function relaunchReason(state, platform) {
   if (!(await cdpTarget(state, platform)))
     return 'its JS runtime is gone (killed or crashed)'
@@ -2737,7 +2453,6 @@ async function relaunchReason(state, platform) {
     : null
 }
 
-/** Re-attaches the run's agent-device session to the running app (no relaunch). */
 function ensureSession(state, platform) {
   ensureReverse(state, state.devices[platform])
   agentDevice([
@@ -2749,13 +2464,8 @@ function ensureSession(state, platform) {
   ])
 }
 
-/** True when an agent-device command targets a snapshot ref (`@e12`, `@e12~s3`). */
 export const actsOnRef = (args) => args.some((a) => /^@e\d+(~s\d+)?$/.test(a))
 
-/**
- * Scripted runs (replay/test) select a device explicitly; session commands
- * don't.
- */
 function deviceArgs(state, platform, command) {
   if (!['replay', 'test'].includes(command)) return []
   const device = state.devices[platform]
@@ -2764,7 +2474,6 @@ function deviceArgs(state, platform, command) {
     : ['--platform', 'android', '--serial', device.id]
 }
 
-/** Resolves the platform and refreshes (or demands) this worktree's lease. */
 function currentPlatform(state, flags) {
   const platforms = Object.keys(state.devices ?? {})
   const platform =
@@ -2788,15 +2497,6 @@ function requireUp() {
   return state
 }
 
-// ---------- evidence ----------
-
-/**
- * Saves a screenshot into the run's artifacts and returns its repo-relative
- * path, or null (with the reason logged) when the device gave no image. The
- * capture lands in a temporary folder first: on iOS the file is written by
- * CoreSimulator, which macOS bars from volumes it has no access to, such as an
- * external drive holding the worktree ("Operation not permitted").
- */
 function screenshot(state, platform, label) {
   const device = state.devices[platform]
   const name = `${Date.now()}-${platform}-${label.replace(/[^a-zA-Z0-9-]+/g, '-')}.png`
@@ -2830,13 +2530,6 @@ function screenshot(state, platform, label) {
   }
 }
 
-/**
- * `ad record start|stop` on iOS. CoreSimulator writes the video itself and
- * can't write to every volume (an external drive holding the worktree fails
- * with "Operation not permitted"), so it records to a temporary file that
- * `record stop` copies to the path asked for, or into the run's artifacts.
- * Other commands, and Android, pass through untouched.
- */
 function iosRecording(state, platform, args) {
   if (platform !== 'ios' || args[0] !== 'record') return null
   if (args[1] === 'start') {
@@ -2874,8 +2567,6 @@ function iosRecording(state, platform, args) {
   }
 }
 
-// ---------- commands ----------
-
 const commands = {
   async up({ flags }) {
     const platform = flags.platform || 'ios'
@@ -2905,15 +2596,14 @@ const commands = {
                 ? 'se'
                 : 'iphone'
         : 'emulator'
-    heartbeat(ROOT) // an idle agent coming back keeps its device
+    heartbeat(ROOT)
     await reapExpired()
-    // Switching iPhone, iPad or iPhone Duo: hand back the other kind's lease first.
+
     const held = readLeases().find(
       (l) => l.worktree === ROOT && l.platform === platform && !l.expired
     )
     if (held?.kind && held.kind !== kind) releasePlatform(state, platform, {})
 
-    // What this `up` took, so a failure or a signal hands it back.
     const took = { lease: null, metroPid: null }
     let done = false
     const cleanup = () => {
@@ -2955,8 +2645,6 @@ const commands = {
 
     let device
     try {
-      // Resolve (or build) the native artifact before leasing: a build needs
-      // no device, and a build waiter must hold none.
       const native = await resolveNative(state, platform, flags)
       const claim = await takeLease(platform, kind, native, flags)
       if (!claim.existing) took.lease = claim.lease
@@ -2965,15 +2653,13 @@ const commands = {
       device = leaseDevice(claim.lease)
       state.devices = { ...state.devices, [platform]: device }
       writeState(state)
-      // A second platform keeps the API the first one runs against.
+
       const shared = readLeases().some(
         (l) => l.worktree === ROOT && l.platform !== platform && !l.expired
       )
       const previous = state.api
       const apiMode = flags.api || (shared && previous?.mode) || 'local'
       if (apiMode === 'local') {
-        // Recorded first, so a worktree that is stopping the shared worker
-        // sees this one still needs it.
         state.api = { mode: 'local', dir: apiDir() }
         writeState(state)
         state.api = startLocalApi(state.api.dir)
@@ -3039,7 +2725,6 @@ const commands = {
     )
   },
 
-  // Internal: the build steps, run detached in their own process group.
   async _build({ positional, flags }) {
     const platform = positional[0]
     const root = flags.worktree || ROOT
@@ -3057,7 +2742,7 @@ const commands = {
   async doctor({ flags }) {
     const state = readState()
     const checks = []
-    // A warning prints but doesn't fail doctor.
+
     const check = (name, ok, detail, warn = false) =>
       checks.push({ name, ok, detail, warn })
     const disk = freeDiskGb()
@@ -3081,8 +2766,7 @@ const commands = {
       const health = await httpText(
         new URL('/health', state.api.url).toString()
       )
-      // The shared `.env` API (--api env) only matters to changes that touch
-      // the backend, which run against the local one; a run's own API must be up.
+
       const shared = state.api.mode !== 'local'
       check(
         'api',
@@ -3140,8 +2824,7 @@ const commands = {
       const record = readJson(INSTALLS, {})[device.lockKey]
       const installed = record?.fingerprint
       const current = await nativeFingerprint(platform)
-      // The record must also match the binary on the device: a build or
-      // install outside this harness can replace it.
+
       const onDevice = record?.hash ? installedHash(device) : null
       const ok =
         installed === current &&
@@ -3302,7 +2985,6 @@ const commands = {
   },
 
   async ad({ raw }) {
-    // Forward agent-device arguments verbatim; only --platform is ours.
     const platformIndex = raw.indexOf('--platform')
     const platformFlag = platformIndex >= 0 ? raw[platformIndex + 1] : undefined
     const args =
@@ -3311,9 +2993,7 @@ const commands = {
         : raw
     const state = requireUp()
     const platform = currentPlatform(state, { platform: platformFlag })
-    // `open` counts as a device action, so it expires every ref the last
-    // snapshot minted. A command that acts on a ref came right after that
-    // snapshot in this session, so the app is already open.
+
     if (!['open', 'close'].includes(args[0]) && !actsOnRef(args))
       ensureSession(state, platform)
     if (DRIVEN.has(args[0]) || args.includes('--settle')) {
@@ -3369,12 +3049,9 @@ const commands = {
         log(`relaunching the app before ${name}: ${relaunch}`)
         await launch(state, state.devices[platform])
       }
-      // Brings the app forward again if a failed flow left another app (a
-      // share sheet's target) in front.
+
       ensureSession(state, platform)
-      // Every flow starts on a freshly seeded, remounted app, whatever the
-      // last one left open; `# setup: <js>` lines then adjust the seeded
-      // state, e.g. clearing a day the scenario fills only on some weekdays.
+
       const start = (strictReader) =>
         startFlow(
           {
@@ -3384,9 +3061,7 @@ const commands = {
           { agentDevice, evalApp, strictReader }
         )
       let started = await start(platform === 'ios')
-      // A render error can leave the app running with no screens (the remount
-      // never comes back), and agent-device can turn its iOS reader off for
-      // the app process; a relaunch clears both.
+
       if (started) {
         log(`relaunching the app before ${name}: ${started.output}`)
         await launch(state, state.devices[platform])
@@ -3401,7 +3076,7 @@ const commands = {
         platform,
         '__WW_DEV__.errors()'
       ).catch((error) => [{ kind: 'harness', message: error.message }])
-      // `# assert: <js>` lines read app state back after the UI steps.
+
       const asserts = [...source.matchAll(/^# assert: (.+)$/gm)].map(
         (m) => m[1]
       )
@@ -3414,7 +3089,7 @@ const commands = {
       }
       const ok =
         result.ok && jsErrors.length === 0 && failedAsserts.length === 0
-      // The screen as the flow left it, whichever check failed.
+
       if (!ok) screenshot(state, platform, `flow-${name}-failed`)
       const seconds = Math.round((Date.now() - startedAt) / 1000)
       results.push({
@@ -3489,8 +3164,6 @@ const commands = {
     log(`stopped Metro; evidence kept in ${evidence ?? '.verify/artifacts'}`)
   },
 
-  // Boots devices until each platform runs WW_VERIFY_WARM_MIN (leased or
-  // warm); run it from launchd to keep the floor after builds and reboots.
   async warm() {
     await reapExpired()
     const below = belowFloor()
@@ -3661,8 +3334,6 @@ const commands = {
   },
 }
 
-// scripts/perf drives Release builds through the same leases, build slots and
-// install records.
 export {
   BUNDLE_ID,
   Failure,
@@ -3701,7 +3372,7 @@ export {
 }
 
 const [command = 'help', ...rest] = process.argv.slice(2)
-// Imported by tests: run a command only when executed directly.
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(realPath(process.argv[1])).href

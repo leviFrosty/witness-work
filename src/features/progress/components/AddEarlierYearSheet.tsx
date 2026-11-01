@@ -10,13 +10,12 @@ import Text from '@/components/ui/MyText'
 import WheelPicker from '@/components/ui/WheelPicker'
 
 interface AddEarlierYearSheetProps {
-  /** Controls visibility. Parent owns this. */
   open: boolean
-  /** Selectable service-year endYears, descending (most-recent first). */
+
   availableEndYears: number[]
-  /** Fired when the user taps the primary "Add Year" button. */
+
   onConfirm: (endYear: number) => void
-  /** Fired when the user dismisses without confirming. */
+
   onClose: () => void
 }
 

@@ -46,7 +46,7 @@ import {
 } from '@/features/scribe/components/reviewCopy'
 
 const RADIUS = 16
-// Nested rows line up with the title, past the check and the kind tile.
+
 const INDENT = 38
 
 type Tone = 'accent' | 'warn'
@@ -132,17 +132,16 @@ const Tag = ({ label, tone }: { label: string; tone: Tone }) => {
   )
 }
 
-/** Meta text, then `from "…"` with the sparkle that marks a resolved value. */
 const MetaLine = ({
   line,
   lines = 2,
 }: {
   line: ReviewLine
-  /** Null for a contact: everything it will be saved with shows. */
+
   lines?: number | null
 }) => {
   const theme = useTheme()
-  // At accessibility sizes two lines hold only a few words; show them all.
+
   const uncapped = useAccessibilityTextSize()
   if (!line.meta.length && !line.spoken) return null
   return (
@@ -287,10 +286,6 @@ const ChoiceChip = ({
   )
 }
 
-/**
- * Data protection mode: the householder agreed to be kept, recorded with the
- * Contact form's switch, and what to ask them in its popover.
- */
 const ConsentRow = ({
   name,
   given,
@@ -341,7 +336,7 @@ const ConsentRow = ({
           description={i18n.t('dataProtectionConsentInfoDesc')}
         />
       </View>
-      {/* iOS's Switch aligns itself to the top; its own View centers it. */}
+      {}
       <View>
         <Switch
           accessibilityLabel={label}
@@ -369,22 +364,16 @@ const effectIcon = (effect: ScribeEffect, index: number): AppIcon | null => {
 
 interface Props {
   card: Card
-  /** Pending: the check, chips and row toggle work. */
+
   editable: boolean
   onToggle: () => void
   onChoose: (choice: ScribeContactChoice) => void
-  /** The householder agreed (or not), on a card that asks. */
+
   onConsent: (agreed: boolean) => void
-  /** Added: opens the record it wrote. */
+
   onOpen?: () => void
 }
 
-/**
- * One review card (V-A): a check, the kind tile, what will be added and where a
- * date came from, nested Visit and Follow-up rows for a contact, the people to
- * pick between when a name matched more than one, and in data protection mode
- * the householder's agreement before a new Contact can be added.
- */
 const ScribeReviewCard = ({
   card,
   editable,
@@ -409,7 +398,6 @@ const ScribeReviewCard = ({
       : null
   const needsLook = card.needsChoice || (choice !== null && !choice.chosen)
 
-  // The header line, its icon and tag; then the nested rows.
   let icon: AppIcon = ClockIcon
   let tone: Tone = 'accent'
   let tag: { label: string; tone: Tone } | null = null
@@ -443,7 +431,7 @@ const ScribeReviewCard = ({
         contact.type === 'new'
           ? { label: i18n.t('scribe_newContact'), tone: 'accent' }
           : null
-      // A new Contact shows everything it will be saved with.
+
       const created = card.effects.find(
         (effect) => effect.preview.kind === 'contact.create'
       )?.preview
@@ -460,7 +448,7 @@ const ScribeReviewCard = ({
       rows = nested.flatMap((effect) =>
         effectLines(effect, format)
           .map((line, i) => ({ icon: effectIcon(effect, i), line }))
-          // The header already names the Contact a change is for.
+
           .filter((_, i) => effect.preview.kind !== 'contact.update' || i > 0)
       )
     }
@@ -468,7 +456,7 @@ const ScribeReviewCard = ({
     const effect = card.effects[0]
     const lines = effect ? effectLines(effect, format) : []
     header = lines[0] ?? { title: '', meta: [], spoken: null }
-    // A new Plan's only other line is who to invite.
+
     rows = lines.slice(1).map((line) => ({
       icon:
         effect?.preview.kind === 'plan.create'
@@ -498,7 +486,7 @@ const ScribeReviewCard = ({
   const warnings = cardWarnings(card)
   const settled = !editable
   const checked = settled ? card.status === 'applied' : card.selected
-  // Skipped or failed is a problem; unchecked before Add was the User's call.
+
   const notAdded =
     settled && (card.status === 'skipped' || card.status === 'failed')
       ? 'warn'
@@ -573,7 +561,6 @@ const ScribeReviewCard = ({
               }}
             >
               <Text
-                // A person's whole name, even at large text sizes.
                 numberOfLines={contact || uncapped ? undefined : 2}
                 style={{
                   fontSize: theme.fontSize('md') + 1,
@@ -652,7 +639,6 @@ const ScribeReviewCard = ({
           />
         ) : null}
         {warnings.map(({ text, severity }) => {
-          // Info (another plan that day) is worth knowing, not a problem.
           const color =
             severity === 'info' ? theme.colors.textAlt : theme.colors.warnText
           return (

@@ -93,7 +93,7 @@ describe('usePetReveal', () => {
   it('plays hearts, then coins, once', () => {
     mount({ now: NOW, visible: false })
     mount({ now: NOW, visible: true, flights: true })
-    // Marked seen at once, so it never plays twice, but still shows the old.
+
     expect(usePetSeen.getState().seen).toMatchObject(NOW)
     expect(latest().shown).toEqual({ coins: 42, hearts: 3.5 })
     expect(runtime.announce).toHaveBeenCalledWith('Earned 20 coins')
@@ -107,7 +107,7 @@ describe('usePetReveal', () => {
 
     act(() => void vi.advanceTimersByTime(200))
     expect(latest().coins).toMatchObject({ delta: 20, tier: 'big' })
-    // The count waits for the first coin to land.
+
     expect(latest().shown.coins).toBe(42)
     act(() => void vi.advanceTimersByTime(5000))
     expect(latest()).toEqual({ shown: NOW, heart: null, coins: null })

@@ -19,7 +19,6 @@ const STATUS_TITLE_KEYS: Record<ScheduleStatusState, TranslationKey> = {
   notStarted: 'scheduleStatus.upcoming',
 }
 
-/** Shared display model for the Schedule pace card and its Home summary. */
 const useScheduleStatusPresentation = (status: ScheduleStatus) => {
   const theme = useTheme()
   const difference = useFormattedMinutes(Math.abs(status.differenceMinutes))

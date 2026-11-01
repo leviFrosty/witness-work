@@ -14,10 +14,6 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Whether the Service Streak and Badges show at all. Streak Reminders sit under
- * Show streak, since none go out while it's off.
- */
 const StreaksAndBadgesPreferencesSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { streakKind } = usePublisher()

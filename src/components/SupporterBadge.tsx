@@ -7,7 +7,6 @@ import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
 interface Props {
-  /** Hides the "Supporter" label — shows only the heart icon chip. */
   iconOnly?: boolean
   size?: 'sm' | 'md' | 'lg'
   style?: ViewStyle

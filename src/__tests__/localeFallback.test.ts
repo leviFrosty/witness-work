@@ -26,7 +26,6 @@ describe('handleLangFallback', () => {
   })
 
   it('matches a tag without a region on its whole language subtag', () => {
-    // `ar` used to slice to `a` and match `ja-jp`.
     expect(handleLangFallback('ar')).toEqual({
       locale: 'ar',
       languageFound: true,

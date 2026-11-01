@@ -8,12 +8,6 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 
-/**
- * Pure Mileage math: effective-dated rate lookup, estimated cost, periods, and
- * summaries. Trips never store a rate — cost is derived at read time from the
- * fuel price and car setup in effect on the trip's date.
- */
-
 export const DATE_KEY_FORMAT = 'YYYY-MM-DD'
 
 export const toDateKey = (input: moment.MomentInput) =>
@@ -30,12 +24,6 @@ const byEffectiveFrom = (a: Dated, b: Dated) =>
       ? -1
       : 1
 
-/**
- * The entry in effect on `date`: the newest whose `effectiveFrom` is on or
- * before it. Dates before the first entry fall back to the first entry, so a
- * car or price added today also covers trips logged retroactively. `sorted`
- * must be ascending by `effectiveFrom`.
- */
 export function effectiveEntry<T extends Dated>(
   sorted: readonly T[] | undefined,
   date: string
@@ -81,10 +69,6 @@ const indexCache = new WeakMap<
   WeakMap<readonly FuelPrice[], MileageIndex>
 >()
 
-/**
- * Sorted per-car and per-fuel histories. Cached by array identity — the store
- * replaces arrays on every write — so screens can call it on every render.
- */
 export function buildMileageIndex(
   vehicleSetups: readonly VehicleSetup[],
   fuelPrices: readonly FuelPrice[]
@@ -109,7 +93,7 @@ export type TripEstimate = {
   fuelId?: string
   milesPerGallon?: number
   price?: FuelPrice
-  /** Estimated cost; undefined when fuel economy or fuel price is missing. */
+
   cost?: number
 }
 
@@ -136,18 +120,12 @@ export function estimateTrip(
   return { setup, fuelId, milesPerGallon, price, cost }
 }
 
-// --- Periods -----------------------------------------------------------------
-
 export type MileagePeriod = {
   kind: MileagePeriodKind
   start: moment.Moment
   end: moment.Moment
 }
 
-/**
- * The Day, Week, Month, or Service Year (Sep 1 – Aug 31) containing `anchor`.
- * Weeks start on `startOfWeek` (0 = Sunday … 6 = Saturday).
- */
 export function periodContaining(
   kind: MileagePeriodKind,
   anchor: moment.MomentInput,
@@ -199,19 +177,14 @@ export const periodContainsDate = (period: MileagePeriod, date: string) =>
   date >= toDateKey(period.start) && date <= toDateKey(period.end)
 
 export type MileageBucket = {
-  /** First day of the bucket. */
   start: string
-  /** The period the bucket opens: a day of a week or month, a month of a year. */
+
   kind: 'day' | 'month'
   distanceMiles: number
-  /** Distance per car id; cars without trips are absent. */
+
   byVehicle: Record<string, number>
 }
 
-/**
- * Splits a period into chart buckets — days for a Week or Month, months for a
- * Service Year, none for a Day — and totals each bucket's trips.
- */
 export function bucketTrips(
   period: MileagePeriod,
   trips: readonly Trip[]
@@ -234,7 +207,7 @@ export function bucketTrips(
   const end = toDateKey(period.end)
   for (const trip of trips) {
     if (trip.date < buckets[0].start || trip.date > end) continue
-    // Buckets are in date order; the trip belongs to the last one it reaches.
+
     let index = buckets.length - 1
     while (buckets[index].start > trip.date) index--
     const bucket = buckets[index]
@@ -245,9 +218,6 @@ export function bucketTrips(
   return buckets
 }
 
-// --- Trips -----------------------------------------------------------------
-
-/** Newest date first; same-day trips newest-created first. */
 export const compareTripsNewestFirst = (a: Trip, b: Trip) =>
   a.date === b.date ? b.createdAt - a.createdAt : a.date < b.date ? 1 : -1
 
@@ -272,11 +242,11 @@ export type VehicleSummary = {
 export type MileageSummary = {
   distanceMiles: number
   tripCount: number
-  /** Sum of the trips that have an estimate; undefined when none do. */
+
   cost?: number
-  /** Some, but not all, trips have an estimated cost. */
+
   costIncomplete: boolean
-  /** Ordered like `vehicles`; only cars with trips in the set. */
+
   byVehicle: VehicleSummary[]
 }
 
@@ -321,10 +291,6 @@ export function summarizeTrips(
   }
 }
 
-/**
- * The car of the most recently logged trip, if still active; else the first
- * active car.
- */
 export function defaultVehicleId(
   trips: readonly Trip[],
   vehicles: readonly Vehicle[]
@@ -338,10 +304,6 @@ export function defaultVehicleId(
   return latest?.vehicleId ?? vehicles.find((v) => !v.archived)?.id
 }
 
-/**
- * The car's latest odometer end reading on or before `date`, to prefill the
- * next trip's start. Ignores `excludeTripId` (the trip being edited).
- */
 export function latestOdometerMiles(
   trips: readonly Trip[],
   vehicleId: string,
@@ -362,19 +324,8 @@ export function latestOdometerMiles(
   return latest?.odometerEndMiles
 }
 
-// --- Effective-dated edits ---------------------------------------------------
-
-/**
- * How an edit to a fuel price or car setup applies: `starting` a date (earlier
- * trips keep the old value) or `correct` the value in effect today (a typo fix
- * that also changes the trips it covered).
- */
 export type HistoryChangeMode = 'starting' | 'correct'
 
-/**
- * Which history entry an edit writes: an existing entry to update in place
- * (`target`), or a new one effective from `effectiveFrom`.
- */
 export function resolveHistoryWrite<T extends Dated & { id: string }>(
   sorted: readonly T[],
   mode: HistoryChangeMode,

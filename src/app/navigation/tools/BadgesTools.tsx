@@ -64,10 +64,6 @@ import {
   ToolSubheading,
 } from '@/app/navigation/tools/ToolsUI'
 
-/**
- * When the session last got an evaluation. The session store keeps no time, so
- * this listens from launch (Tools is imported with the tab navigator).
- */
 let lastEvaluatedAt: number | null = null
 useBadgeSession.subscribe((state, previous) => {
   if (state.evaluation && state.evaluation !== previous.evaluation)
@@ -100,11 +96,6 @@ const describeRecord = (record: EarnedBadge, seenAt: number) =>
     .filter(Boolean)
     .join(' · ')
 
-/**
- * One Badge Collection: the stored level (S, from `earnedBadges`) against what
- * the latest evaluation reaches (L), and count / next threshold. Tap for each
- * level's threshold, reached month, and stored record.
- */
 const CollectionRow = ({
   spec,
   earned,
@@ -194,7 +185,6 @@ type GalleryCell = {
   label: string
 }
 
-/** Every illustration at every level, plus locked, for checking the art. */
 const BadgeGallery = () => {
   const theme = useTheme()
   const lockedCell = (level: BadgeLevel | null): GalleryCell => ({
@@ -265,11 +255,6 @@ const BadgeGallery = () => {
   )
 }
 
-/**
- * Badges tools: the stored and live state of every collection, evaluation and
- * celebration triggers, ways to earn or reset badges, the Buddy Card payload,
- * and a gallery of every medallion.
- */
 export default function BadgesTools() {
   const earnedBadges = usePreferences((s) => s.earnedBadges)
   const badgeLedger = usePreferences((s) => s.badgeLedger)

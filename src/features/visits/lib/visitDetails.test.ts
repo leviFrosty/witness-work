@@ -2,7 +2,6 @@ import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
 import type { Visit } from '@/types/visit'
 
-// The real formatters reach expo-localization.
 vi.mock('@/lib/dates', () => ({
   formatTime: () => '7:30 PM',
   formatWeekdayMonthDayCompact: (m: moment.Moment) => m.format('ddd, MMM D'),
@@ -62,7 +61,7 @@ describe('followUpStatus', () => {
 
   it('is kept once a visit lands on its day or after', () => {
     const v = visit('a', '2026-10-01T10:00:00', { date: '2026-10-07T18:00:00' })
-    // Earlier the same day still counts, as on Home's card.
+
     const answer = visit('b', '2026-10-07T09:00:00')
     expect(followUpStatus(v, [v, answer], NOW)).toBe('kept')
   })

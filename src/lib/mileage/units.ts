@@ -5,19 +5,10 @@ import {
   formatPlainNumber,
 } from '@/lib/numbers'
 
-/**
- * Mileage is stored in canonical units — miles, US mpg, price per US gallon —
- * and converted here for display and input. See
- * `docs/mileage-tracking-prd.md`.
- */
 export const KM_PER_MILE = 1.609344
 export const LITRES_PER_US_GALLON = 3.785411784
 export const LITRES_PER_UK_GALLON = 4.54609
 
-/**
- * Regions that drive in miles: the US and its territories, the UK, Liberia,
- * Myanmar.
- */
 const MILE_REGIONS = new Set([
   'US',
   'AS',
@@ -31,7 +22,7 @@ const MILE_REGIONS = new Set([
   'MM',
 ])
 const US_GALLON_REGIONS = new Set(['US', 'AS', 'GU', 'MP', 'PR', 'VI', 'UM'])
-/** Regions that quote fuel economy as km per litre rather than L/100 km. */
+
 const KM_PER_LITRE_REGIONS = new Set([
   'JP',
   'KR',
@@ -85,7 +76,6 @@ export const milesToDistance = (miles: number, unit: DistanceUnit) =>
 export const distanceToMiles = (value: number, unit: DistanceUnit) =>
   unit === 'km' ? value / KM_PER_MILE : value
 
-/** L/100 km ↔ US mpg is its own inverse: both are this constant ÷ the other. */
 const L100KM_X_MPG = (100 * LITRES_PER_US_GALLON) / KM_PER_MILE
 
 export function mpgToEconomy(mpg: number, unit: FuelEconomyUnit): number {
@@ -114,7 +104,6 @@ export function economyToMpg(value: number, unit: FuelEconomyUnit): number {
   }
 }
 
-/** Fuel is priced per US gallon only alongside US mpg; per litre otherwise. */
 export const fuelVolumeUnit = (unit: FuelEconomyUnit): 'gallon' | 'litre' =>
   unit === 'mpgUS' ? 'gallon' : 'litre'
 
@@ -131,35 +120,19 @@ export const displayToPricePerGallon = (
   unit: FuelEconomyUnit
 ) => (fuelVolumeUnit(unit) === 'gallon' ? price : price * LITRES_PER_US_GALLON)
 
-/**
- * Parses a user-typed decimal in any digit system (`12.5`, `12,5`, `١٢٫٥`).
- * Returns `undefined` for blank or invalid input.
- */
 export const parseDecimal = parseDecimalInput
 
-/**
- * Rounds for display, in the app Language's digits and separators, and strips
- * trailing zeros: 12.50 → "12.5".
- */
 export function formatNumber(value: number, maxDecimals = 1): string {
   const factor = 10 ** maxDecimals
   const rounded = Math.round(value * factor) / factor
   return formatAppNumber(rounded, { maximumFractionDigits: maxDecimals })
 }
 
-/**
- * Plain ASCII value with no grouping separators, for files other apps read (the
- * CSV export).
- */
 export function formatInputNumber(value: number, maxDecimals = 1): string {
   const factor = 10 ** maxDecimals
   return String(Math.round(value * factor) / factor)
 }
 
-/**
- * A value to prefill an input field with: no grouping, in the app Language's
- * digits so it matches what the keyboard types. `parseDecimal` reads it back.
- */
 export function formatEditableNumber(value: number, maxDecimals = 1): string {
   const factor = 10 ** maxDecimals
   return formatPlainNumber(Math.round(value * factor) / factor)
@@ -181,7 +154,6 @@ export function formatCurrency(amount: number, currency?: string | null) {
   }
 }
 
-/** Currency with up to three decimals, for per-unit fuel prices ($3.499). */
 export function formatFuelPrice(amount: number, currency?: string | null) {
   try {
     return formatAppNumber(amount, {

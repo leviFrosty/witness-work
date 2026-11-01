@@ -17,29 +17,17 @@ import { useShallow } from 'zustand/react/shallow'
 
 type RolloverContext = {
   pending: PendingRollover[]
-  /**
-   * Same shape as `pending` but ignores the per-month marker. Inline UI uses
-   * this to keep offering rollover after the user has pressed "Not now" or
-   * deleted the rollover pair — both leave the source month fractional.
-   */
+
   availablePending: PendingRollover[]
   totalMinutes: number
-  /**
-   * Fractional credit minutes in the source month that are excluded from the
-   * rollover (credit isn't eligible unless `rolloverIncludesCredit` is on). UI
-   * shows a "your partial hour is credit time" notice when > 0.
-   */
+
   excludedCreditMinutes: number
   markerKey: string
-  /**
-   * Apply pending rollover entries and stamp the marker. No-op if none. Entry
-   * ids derive from the months (see `rolloverIds`), so applying the same
-   * rollover on two devices leaves one pair after iCloud sync.
-   */
+
   apply: () => void
-  /** Stamp the marker without applying — used for "Not now". */
+
   dismiss: () => void
-  /** Toggle auto-mode for future months. */
+
   setAutoEnabled: (enabled: boolean) => void
   autoEnabled: boolean
 }
@@ -74,7 +62,7 @@ export const useRollover = (): RolloverContext => {
     [overrideMs]
   )
   const markerKey = today.format('YYYY-MM')
-  // Each month is capped by its own role (Role History).
+
   const { hasAnnualGoal, publisher, destinationPublisher } = rolloverRole({
     source: usePublisher(rolloverSourceMonth(today)),
     destination: usePublisher({ year: today.year(), month: today.month() }),

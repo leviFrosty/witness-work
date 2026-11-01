@@ -16,10 +16,9 @@ import {
 const DEFAULT_LIMIT = 5
 const NAME_MAX = 80
 const ADDRESS_MAX = 160
-/** Data protection mode: a few names, matched by their start only. */
+
 const PROTECTED_LIMIT = 3
 
-/** 0 for no match; higher is a better one. */
 function score(query: string, name: string, street: string | null): number {
   const folded = foldText(name)
   if (folded === query) return 5
@@ -52,7 +51,7 @@ export default defineReadTool({
           : score(needle, contact.name, contact.address?.line1 ?? null),
       }))
       .filter((match) => match.score > 0)
-      // Stable: equal scores keep recency order.
+
       .sort((a, b) => b.score - a.score)
     const max = ctx.dataProtection
       ? Math.min(limit ?? DEFAULT_LIMIT, PROTECTED_LIMIT)

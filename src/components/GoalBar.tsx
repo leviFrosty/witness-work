@@ -8,24 +8,17 @@ import { formatMinutes } from '@/lib/minutes'
 import { usePreferences } from '@/stores/preferences'
 
 type Props = {
-  /** Logged minutes after the credit cap. */
   loggedMinutes: number
-  /** The part of `loggedMinutes` that is Credit Time. */
+
   creditMinutes?: number
-  /** What remaining Plans add. */
+
   plannedMinutes: number
-  /** The goal the marker sits on; 0 draws no marker. */
+
   goalMinutes: number
-  /**
-   * What the full width stands for. Bars that sit in a list share one scale so
-   * they compare; defaults to the larger of the total and the goal.
-   */
+
   scaleMinutes?: number
   size?: 'sm' | 'md'
-  /**
-   * Names the goal and the total under the track. Turn off where the numbers
-   * already sit beside the bar, and explain the marks once with `GoalBarKey`.
-   */
+
   labels?: boolean
 }
 
@@ -33,15 +26,9 @@ const SIZES = {
   sm: { track: 4, marker: 10, font: 'xs', stripe: 4, stripeWidth: 1.5 },
   md: { track: 10, marker: 18, font: 'sm', stripe: 7, stripeWidth: 2 },
 } as const
-/** Space kept between the goal and total labels before the total gives way. */
+
 const LABEL_GAP = 8
 
-/**
- * Progress toward a goal: standard time, then counted Credit Time, then Plans
- * (striped), with a marker at the goal. Labels under the track name the goal at
- * its marker and the total at the end of the fill; when they would collide, the
- * goal label wins. Decorative — callers show the numbers as text too.
- */
 const GoalBar = ({
   loggedMinutes,
   creditMinutes = 0,
@@ -70,7 +57,6 @@ const GoalBar = ({
     percent(plannedMinutes)
   )
 
-  // Center a label on its point, kept inside the track.
   const labelLeft = (minutes: number, width: number) =>
     Math.min(
       Math.max((percent(minutes) / 100) * trackWidth - width / 2, 0),
@@ -93,7 +79,7 @@ const GoalBar = ({
     position: 'absolute',
     top: 0,
     fontSize: theme.fontSize(dims.font),
-    // Hidden until measured, so a label never flashes off its point.
+
     opacity: measured ? 1 : 0,
   } as const
 
@@ -133,8 +119,6 @@ const GoalBar = ({
           {plannedPercent > 0 && (
             <View style={{ width: `${plannedPercent}%`, height: '100%' }}>
               <StripedFill
-                // The SVG keeps its first size when the fill grows; remount it
-                // so planned time drawn live (e.g. while planning) stays full.
                 key={plannedPercent}
                 color={theme.colors.accent}
                 size={dims.stripe}
@@ -189,7 +173,7 @@ const GoalBar = ({
                   left: totalLeft,
                   color: theme.colors.text,
                   fontFamily: theme.fonts.semiBold,
-                  // Measured even when it gives way, so it can come back.
+
                   opacity: measured && showTotalLabel ? 1 : 0,
                 },
               ]}
@@ -204,18 +188,13 @@ const GoalBar = ({
 }
 
 type KeyProps = {
-  /** Some bar shows counted Credit Time. */
   credit?: boolean
-  /** Some bar shows Plans. */
+
   planned?: boolean
-  /** Some bar has a goal marker. */
+
   goal?: boolean
 }
 
-/**
- * Explains the marks of a list of unlabeled `GoalBar`s once, instead of on
- * every bar. Pass only the marks the bars actually show.
- */
 export const GoalBarKey = ({ credit, planned, goal }: KeyProps) => {
   const theme = useTheme()
   const swatch = { width: 12, height: 6, borderRadius: 3 } as const

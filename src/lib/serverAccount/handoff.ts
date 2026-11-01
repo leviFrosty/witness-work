@@ -11,21 +11,8 @@ import {
 import { curve25519 } from '@/lib/curve25519'
 import { open, seal } from '@/lib/sealedBlob'
 
-/**
- * Set Up Another Device (ADR 0026, docs/accounts-protocol.md "Handoff"): the QR
- * link, and the keys, code, and sealed blobs both phones derive from it. Pure:
- * callers supply randomness.
- *
- * The old phone shows `channelId ‖ offerPub ‖ secret` in a link fragment the
- * server never sees. The new phone answers with its own temporary X25519 key
- * and a `claimToken` only someone holding the secret can make. Both then derive
- * the same keys and six-digit code from the X25519 secret, salted with the QR's
- * secret and bound to all three public values, so a server that swaps a key
- * gets a different code and blobs that won't open.
- */
-
 export const HANDOFF_LINK_BASE = 'https://ww-proxy.leviwilkerson.com/h'
-/** The fragment's version; a newer one asks the User to update. */
+
 const LINK_VERSION = '1'
 const CHANNEL_BYTES = 16
 const PUBLIC_KEY_BYTES = 32
@@ -33,29 +20,25 @@ const SECRET_BYTES = 16
 const ACCOUNT_KEY_BYTES = 32
 const CLAIM_TOKEN_BYTES = 16
 const NONCE_BYTES = 12
-/** `channelId ‖ offerPub ‖ secret`, 64 bytes: 86 b64u characters. */
+
 const OFFER_CHARS = 86
 
 export const HANDOFF_CODE_DIGITS = 6
-/** Hello strings are cut to this many characters. */
+
 export const HANDOFF_HELLO_MAX = 64
 
 const LABEL = 'ww-account/v1/handoff'
 
-/** What the QR code carries. */
 export type HandoffOffer = {
-  /** 16 random bytes, b64u: the only part the server learns. */
   channelId: string
-  /** The old phone's temporary X25519 public key, b64u. */
+
   offerPub: string
-  /** 16 random bytes. Never leaves the two phones. */
+
   secret: Uint8Array
 }
 
-/** A temporary X25519 key pair, made for one handoff and forgotten after it. */
 export type HandoffKeyPair = { privateKey: Uint8Array; publicKey: string }
 
-/** What the new phone tells the old one, sealed. */
 export type HandoffHello = {
   deviceName: string
   platform: 'ios' | 'android'
@@ -63,17 +46,15 @@ export type HandoffHello = {
   appVersion: string
 }
 
-/** What the old phone sends once the User allows it, sealed. */
 export type HandoffAccountKey = {
   accountKey: Uint8Array
   accountId: string
 }
 
-/** The keys and code both phones derive once the channel is claimed. */
 export type HandoffKeys = {
   helloKey: Uint8Array
   keyKey: Uint8Array
-  /** Six digits, e.g. `"042917"`; show with `formatHandoffCode`. */
+
   code: string
 }
 
@@ -87,7 +68,6 @@ export function createHandoffKeyPair(
   }
 }
 
-/** A new offer for the old phone: a channel, a temporary key, and a secret. */
 export function createHandoffOffer(
   randomBytes: (length: number) => Uint8Array
 ): { offer: HandoffOffer; keyPair: HandoffKeyPair } {
@@ -102,10 +82,6 @@ export function createHandoffOffer(
   }
 }
 
-/**
- * `https://ww-proxy.leviwilkerson.com/h#1<b64u(channelId ‖ offerPub ‖
- * secret)>`.
- */
 export function buildHandoffLink(offer: HandoffOffer): string {
   const bytes = concatBytes(
     fromB64u(offer.channelId),
@@ -119,19 +95,13 @@ export function buildHandoffLink(offer: HandoffOffer): string {
 
 export type ParsedHandoffLink =
   | { ok: true; offer: HandoffOffer }
-  /**
-   * `notHandoff`: some other link or text. `version`: a handoff link from a
-   * newer app. `damaged`: a handoff link with a cut or altered fragment.
-   */
   | { ok: false; problem: 'notHandoff' | 'version' | 'damaged' }
 
 const LINK_PATTERN =
   /^https:\/\/ww-proxy\.leviwilkerson\.com\/h\/?(?:\?[^#]*)?(?:#(.*))?$/i
 
-/** Whether `text` is a Set Up Another Device link at all, valid or not. */
 export const isHandoffLink = (text: string) => LINK_PATTERN.test(text.trim())
 
-/** Reads a scanned or opened link. */
 export function parseHandoffLink(text: string): ParsedHandoffLink {
   const match = LINK_PATTERN.exec(text.trim())
   if (!match) return { ok: false, problem: 'notHandoff' }
@@ -149,7 +119,7 @@ export function parseHandoffLink(text: string): ParsedHandoffLink {
     CHANNEL_BYTES + PUBLIC_KEY_BYTES
   )
   const secret = bytes.slice(CHANNEL_BYTES + PUBLIC_KEY_BYTES)
-  // A key of all zeros has no shared secret; nothing real makes one.
+
   if (offerPub.every((byte) => byte === 0))
     return { ok: false, problem: 'damaged' }
   return {
@@ -162,7 +132,6 @@ export function parseHandoffLink(text: string): ParsedHandoffLink {
   }
 }
 
-/** `HKDF-SHA256(secret, "", "…/claim\n" + channelId, 16)`, b64u. */
 export function deriveClaimToken(
   secret: Uint8Array,
   channelId: string
@@ -178,16 +147,10 @@ export function deriveClaimToken(
   )
 }
 
-/** `b64u(SHA-256(claimToken bytes))`: what the server keeps. */
 export function deriveVerifier(claimToken: string): string {
   return toB64u(sha256(fromB64u(claimToken)))
 }
 
-/**
- * Both phones' keys and code. Each passes its own private key and the other
- * phone's public key; `offerPub` and `claimPub` are always the old and new
- * phone's, so both derive the same transcript.
- */
 export function deriveHandoffKeys({
   privateKey,
   peerPublicKey,
@@ -227,18 +190,15 @@ export function deriveHandoffKeys({
   }
 }
 
-/** `123 456`. */
 export const formatHandoffCode = (code: string) =>
   `${code.slice(0, 3)} ${code.slice(3)}`
 
 const helloAad = (channelId: string) => `${LABEL}/hello\n${channelId}`
 const keyAad = (channelId: string) => `${LABEL}/key\n${channelId}`
 
-/** Cuts to `max` characters without splitting one. */
 const cut = (value: string, max: number) =>
   Array.from(value).slice(0, max).join('')
 
-/** The hello as sent: strings trimmed and cut to the protocol's limits. */
 export function normalizeHello(hello: HandoffHello): HandoffHello {
   return {
     deviceName: cut(hello.deviceName.trim(), HANDOFF_HELLO_MAX),
@@ -262,11 +222,6 @@ export function sealHello(
   )
 }
 
-/**
- * The new phone's hello. Throws when it doesn't open, which means the keys
- * differ: the claim wasn't made with this QR's secret and key, or something
- * swapped one.
- */
 export function openHello(
   keys: HandoffKeys,
   channelId: string,
@@ -313,7 +268,6 @@ export function sealAccountKey(
   )
 }
 
-/** The sealed account key. Throws when it doesn't open or isn't well formed. */
 export function openAccountKey(
   keys: HandoffKeys,
   channelId: string,

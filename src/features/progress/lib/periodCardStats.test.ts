@@ -26,7 +26,6 @@ const entry = (day: string, hours: number, extra: Partial<TimeEntry> = {}) =>
     ...extra,
   }) as TimeEntry
 
-/** Files entries under their calendar month, as the store does. */
 const byMonth = (...entries: TimeEntry[]): TimeEntriesByYear => {
   const out: TimeEntriesByYear = {}
   for (const e of entries) {
@@ -56,7 +55,7 @@ describe('serviceYearMonthTotals', () => {
     expect(totals[0]).toEqual({ year: 2025, month: 8, minutes: 55 * 60 })
     expect(totals[6]).toEqual({ year: 2026, month: 2, minutes: 10 * 60 })
     expect(totals[11]).toEqual({ year: 2026, month: 7, minutes: 0 })
-    // No limit for the role: credit counts in full.
+
     expect(serviceYearMonthTotals(reports, 2025, () => null)[0].minutes).toBe(
       70 * 60
     )
@@ -72,7 +71,6 @@ describe('monthlyAverage', () => {
   ]
 
   it('averages from the first month with time to the last that ended', () => {
-    // December is under way, so it waits.
     expect(monthlyAverage(totals, { year: 2025, month: 11 })).toEqual({
       averageMinutes: 50 * 60,
       months: 2,
@@ -131,7 +129,6 @@ describe('monthsShared', () => {
   )
 
   it('counts shared months, the open month once it is shared', () => {
-    // Today is in March; April on hasn't happened.
     expect(
       monthsShared({
         serviceReports: reports,
@@ -142,7 +139,7 @@ describe('monthsShared', () => {
     ).toEqual({
       shared: 5,
       months: 7,
-      // A Time Rollover isn't sharing.
+
       missed: [
         { year: 2025, month: 10 },
         { year: 2026, month: 0 },
@@ -196,7 +193,7 @@ describe('studyStats', () => {
     visit('ben', '2025-10-05', { isBibleStudy: true }),
     visit('cy', '2026-01-05', { isBibleStudy: true }),
     visit('ben', '2026-01-05'),
-    // A contact deleted since doesn't count, as on the month's report.
+
     visit('gone', '2026-01-06', { isBibleStudy: true }),
   ]
 

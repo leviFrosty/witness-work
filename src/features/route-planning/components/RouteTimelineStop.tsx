@@ -30,10 +30,6 @@ import {
 } from '@/features/route-planning/lib/routeBuilder'
 import type { TimelineEntry } from '@/features/route-planning/lib/routeTimeline'
 
-/**
- * Room on the trailing edge where a touch drags the stop at once: the column
- * with the stop's ⋯ menu over its grip.
- */
 export const STOP_HANDLE_WIDTH = 44
 
 const KIND_ICONS: Record<BuilderStopKind, AppIcon> = {
@@ -43,12 +39,6 @@ const KIND_ICONS: Record<BuilderStopKind, AppIcon> = {
   place: MapPinIcon,
 }
 
-/**
- * One stop on the route timeline: the drive there (and any wait for its set
- * time), then when it starts, the stop, how its time compares with the time
- * it's set for, and how long you'll stay. Drag the grip (or touch and hold) to
- * move it.
- */
 export default function RouteTimelineStop({
   stop,
   entry,
@@ -70,9 +60,9 @@ export default function RouteTimelineStop({
   entry: TimelineEntry | undefined
   position: number
   isLast: boolean
-  /** The line comes in from a start or a stop above. */
+
   showLeg: boolean
-  /** While stops move, drives are about to change; don't show stale ones. */
+
   hideLegDetails: boolean
   selected: boolean
   distanceUnit?: DistanceUnit
@@ -85,7 +75,7 @@ export default function RouteTimelineStop({
   onRemove: () => void
 }) {
   const theme = useTheme()
-  // When the stop begins: on arrival, or at its set time after waiting.
+
   const arrive = entry ? formatStartTime(entry.begin) : ''
   const small = { fontSize: theme.fontSize('sm') }
   const late = entry?.lateMinutes ?? 0
@@ -117,8 +107,7 @@ export default function RouteTimelineStop({
           </Text>
         </RailDot>
 
-        {/* The stop itself is one button; its time chips and menus sit beside
-            it so screen readers reach each on its own. */}
+        {}
         <View
           style={{
             flex: 1,
@@ -247,8 +236,7 @@ export default function RouteTimelineStop({
             </View>
           </View>
 
-          {/* The ⋯ menu over the grip, centered in one column, so both line
-              up on every row whatever its height. */}
+          {}
           <View style={{ width: STOP_HANDLE_WIDTH, alignItems: 'center' }}>
             <PullDownMenu
               accessibilityLabel={i18n.t('routeBuilder_stopOptionsNamed', {

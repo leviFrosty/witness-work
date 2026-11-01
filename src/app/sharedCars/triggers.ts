@@ -1,20 +1,13 @@
 import type { SharedCarsStore } from '@/stores/sharedCars'
 
-/** A local change syncs its car this long after the last one. */
 export const LOCAL_CHANGE_SYNC_DELAY_MS = 2000
 
 export type LocalChangeOptions = {
   delayMs?: number
-  /** The engine is writing the store itself (a sync, not the User's change). */
+
   isEngineWrite: () => boolean
 }
 
-/**
- * Calls `onChange(spaceId)` once a car has gone `delayMs` without a local
- * change: a change made on this device (a trip logged, a car renamed) that left
- * records waiting to be put. Changes the engine makes as it syncs don't count.
- * Returns the stop function, which drops the changes still waiting.
- */
 export function watchLocalChanges(
   store: Pick<SharedCarsStore, 'subscribe'>,
   onChange: (spaceId: string) => void,

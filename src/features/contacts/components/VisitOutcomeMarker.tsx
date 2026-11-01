@@ -14,11 +14,6 @@ const OUTCOME_ICON = {
   notAtHome: DoorClosedIcon,
 } as const
 
-/**
- * The one shape per Visit outcome, shared by the journey rail, its key, and the
- * timeline nodes so each teaches the others: a filled dot for a study, an
- * outlined dot for a conversation, a square when no one answered.
- */
 const VisitOutcomeMarker = ({
   outcome,
   size,
@@ -26,7 +21,7 @@ const VisitOutcomeMarker = ({
 }: {
   outcome: VisitOutcome
   size: number
-  /** Timeline nodes are big enough to carry the outcome's icon too. */
+
   withIcon?: boolean
 }) => {
   const theme = useTheme()
@@ -53,7 +48,7 @@ const VisitOutcomeMarker = ({
         width: size,
         height: size,
         borderRadius: outcome === 'notAtHome' ? size * 0.28 : size / 2,
-        // Thicker on small markers so the outline still reads as hollow.
+
         borderWidth: size < 16 ? 2 : 1.5,
         borderColor: style.borderColor,
         backgroundColor: style.backgroundColor,

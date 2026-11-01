@@ -15,23 +15,11 @@ import {
 } from '@/lib/syncTransport/provider'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * The User's sync option (ADR 0030): Cloud Sync, iCloud/Google Drive
- * (`platform`), or off. One at a time; switching moves this device's data to
- * the new option without losing any, and never touches other devices' data.
- */
 export type SyncOption = SyncProvider | 'off'
 
 export const currentSyncOption = (): SyncOption =>
   usePreferences.getState().iCloudSyncEnabled ? syncProvider() : 'off'
 
-/**
- * Bookkeeping that belongs to one transport's namespace: its reset generation,
- * the devices seen in it, the last remote write, upload status. A switch starts
- * the new namespace fresh, then joins its newest generation when it reads it.
- * Photo bookkeeping stays: Cloud Sync never touches it, and iCloud/Drive
- * re-checks each photo against what's actually in the cloud.
- */
 const NAMESPACE_RESET = {
   iCloudSyncPendingPush: true,
   iCloudSyncIssue: null,
@@ -58,7 +46,6 @@ type RestoredKey =
   | 'iCloudSyncNeedsResolution'
   | 'cloudSyncOffer'
 
-/** The keys a failed switch puts back. */
 const RESTORED_KEYS: RestoredKey[] = [
   ...(Object.keys(NAMESPACE_RESET) as Array<keyof typeof NAMESPACE_RESET>),
   'syncProvider',
@@ -78,31 +65,24 @@ const snapshot = (): Restorable => {
 }
 
 export type SwitchFailure =
-  /** Cloud Sync: the account isn't entitled (not a Supporter). */
   | 'not_entitled'
-  /** Cloud Sync is turned off on the server for now. */
   | 'disabled'
-  /** No account session: offline, accounts off, or the device can't attest. */
   | 'no_session'
-  /** ICloud or Google Drive isn't set up on this device. */
   | 'unavailable'
-  /** The new option's data couldn't be read in full; nothing changed. */
   | 'incomplete'
   | 'offline'
-  /** The account behind the new option changed; turn it on again. */
   | 'account_changed'
 
 export type SwitchOutcome =
   | {
       outcome: 'switched'
-      /** This device's data is still waiting to upload; sync retries it. */
+
       pending: boolean
     }
   | { outcome: 'failed'; reason: SwitchFailure }
 
 export type SwitchSource = 'settings' | 'offer' | 'tools'
 
-/** Longest a switch waits to send the old option this device's last edits. */
 const FLUSH_WAIT_MS = 15_000
 
 const bounded = <T>(work: Promise<T>, ms: number) =>
@@ -122,21 +102,6 @@ const prepareFailure = (
 
 let switching: Promise<SwitchOutcome> | null = null
 
-/**
- * Moves this device to `to`. One switch at a time; a second call joins it.
- *
- * 1. Gets the new option ready first (Cloud Sync's session and entitlement, or
- *    iCloud/Drive being available), so a switch that can't happen changes
- *    nothing.
- * 2. Sends the old option this device's pending edits (bounded), so devices still
- *    on it get them.
- * 3. Stops sync and waits for the running push and pull. Leaving Cloud Sync
- *    deletes this device's own slot; leaving iCloud/Drive leaves its file
- *    there, where it can't bring back anything deleted later (ADR 0030 §4).
- * 4. Points the engine at the new option with that namespace's bookkeeping fresh,
- *    reads its devices, joins their newest reset generation and merges ("Merge
- *    both": nothing is replaced), then pushes.
- */
 export function switchSyncOption(
   to: SyncOption,
   source: SwitchSource
@@ -176,8 +141,7 @@ async function runSwitch(
   await iCloudSync.waitForSyncIdle()
   if (from === 'cloud') {
     await deleteOwnCloudSyncSlot()
-    // Off Cloud Sync, the account it was on stops mattering: turning it on
-    // again records whichever account this device has by then.
+
     usePreferences.setState({ cloudSyncAccountToken: null })
   }
 
@@ -197,12 +161,9 @@ async function runSwitch(
     iCloudSyncSetByUser: true,
     iCloudSyncNeedsResolution: false,
     iCloudAccountChangedAt: null,
-    // Choosing either way answers the one-time offer.
+
     cloudSyncOffer: 'dismissed',
-    // The server account is recorded as it is now (ADR 0030 §4), not compared
-    // with the one this device last synced with: a QR code or a recovery key
-    // may have moved it to another while it was off Cloud Sync, and with no
-    // slot or bookkeeping left there, that's no account change to stop for.
+
     ...(to === 'cloud' && { cloudSyncAccountToken: null }),
   })
   const restore = (pendingPush = false) =>
@@ -210,8 +171,7 @@ async function runSwitch(
       ...previous,
       ...(pendingPush && { iCloudSyncPendingPush: true }),
     })
-  // Records the new option's account, or notices that iCloud's or Drive's
-  // changed since this device last used it.
+
   if (!checkICloudIdentity('initial_enable')) {
     restore(from === 'cloud')
     return fail('account_changed')
@@ -242,12 +202,6 @@ async function runSwitch(
   return { outcome: 'switched', pending: !pushed }
 }
 
-/**
- * A device already syncing through iCloud or Drive when Cloud Sync arrived (its
- * User turned it on, or the Supporter default did) keeps it, and is offered the
- * switch once (ADR 0030 §3). Runs at launch and whenever sync turns on without
- * a recorded option.
- */
 export function settleSyncProvider(): void {
   const prefs = usePreferences.getState()
   if (!prefs.iCloudSyncEnabled || prefs.syncProvider === 'cloud') return
@@ -258,7 +212,6 @@ export function settleSyncProvider(): void {
   })
 }
 
-/** Whether Settings should show the one-time offer to move to Cloud Sync. */
 export const showsCloudSyncOffer = (state = usePreferences.getState()) =>
   state.cloudSyncOffer === 'pending' &&
   state.iCloudSyncEnabled &&

@@ -19,7 +19,6 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { toast } from '@/stores/toasts'
 
-/** Targeted data resets; account-key deletion keeps its existing recovery flow. */
 export default function DangerZoneTools() {
   const rows = [
     {

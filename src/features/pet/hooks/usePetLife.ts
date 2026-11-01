@@ -46,10 +46,6 @@ import {
 import { secretItemsEarnedBy } from '@/features/pet/lib/secretUnlocks'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
-/**
- * Keeps the last result while every argument is the same value or object, so a
- * render with unchanged records skips the work and returns the same objects.
- */
 function lastResult<A extends unknown[], R>(fn: (...args: A) => R) {
   let last: { args: A; result: R } | null = null
   return (...args: A): R => {
@@ -105,10 +101,7 @@ const earnedOf = lastResult(
   ): Earned =>
     petEarned({ daysOut, history, streaks, adoptedOn, today, paceOf })
 )
-/**
- * The secret items earned now (`secretItemsEarnedBy`), the same list while what
- * their rules read is.
- */
+
 const secretsOf = lastResult(
   (
     badges: Readonly<Record<string, unknown>>,
@@ -127,42 +120,35 @@ const secretsOf = lastResult(
         })
 )
 const NOTHING_EARNED = unlockedRoomItems([], [])
-/** The lamp before there's a life to follow: a new pet's hearts. */
+
 const NO_LIFE_LAMP = lampLevel({ hearts: START_HEARTS, dead: false })
 
 export type PetLifeState = {
-  /** The companion, or null before adoption (show the prompt card). */
   pet: PetRecord | null
-  /** The room as shown: stored choices, defaults for the rest. */
+
   room: PetRoomSettings
-  /** Defaults for `updateRoom` while the room was never customized. */
+
   roomDefaults: PetRoomSettings
-  /** Hearts and moments replayed through today; null without a pet. */
+
   life: PetLife | null
-  /** The lamp follows the hearts (ADR 0035). */
+
   lampLevel: LampLevel
-  /** Starters, stored and bought items, and secrets earned now. */
+
   unlockedItems: ReadonlySet<string>
-  /** Coins earned since adoption, by what earned them (ADR 0035). */
+
   earnings: Earned
-  /** The coins they add up to. */
+
   earned: number
-  /** The coins left of them to spend in the Shop. */
+
   wallet: number
-  /** Hearts fill by the month this month (ADR 0031): a monthly reporter. */
+
   monthlyHearts: boolean
-  /** The keepsake waiting on the rug; collect with `collectKeepsake`. */
+
   pendingGift: { kind: GiftKind; on: string } | null
-  /** Today's local day key, for wakes and adoption. */
+
   todayKey: string
 }
 
-/**
- * The Pet Companion as Home shows it, from the pet store and the ministry
- * records it replays (ADR 0030): hearts, and the coins the Shop takes (ADR
- * 0035). Moves on at midnight. Secret items found now are stored on the pet
- * once, so they stay unlocked.
- */
 export default function usePetLife(): PetLifeState {
   const storedPet = usePet((state) => state.pet)
   const storedRoom = usePet((state) => state.room)
@@ -178,7 +164,6 @@ export default function usePetLife(): PetLifeState {
   const today = useToday()
   const todayKey = localDayKey(today)
 
-  // Dev harness: a faked wallet or revealed secrets show without being stored.
   const fakedWallet = usePetSession((s) =>
     __DEV__ ? s.devOverride?.wallet : undefined
   )
@@ -229,19 +214,18 @@ export default function usePetLife(): PetLifeState {
           fakedSecrets
         )
       : []
-  // Joined, so the effect only runs when the list to store changes.
+
   const toStore = fakedSecrets
     ? ''
     : roomItemsToStore(stored, secrets).join(' ')
   useEffect(() => {
     if (!toStore) return
     const { pet: before, earnRoomItems } = usePet.getState()
-    // Home and Decorate Room can both ask; only the first adds anything.
+
     const added = earnRoomItems(toStore.split(' ') as RoomItemId[])
     for (const item of added)
       analytics.capture('pet_room_item_unlocked', { item, by: 'secret' })
-    // A new pet's items are the room it starts with, not news: whatever its
-    // first day opens.
+
     if (
       added.length &&
       before?.earnedRoomItems &&

@@ -48,16 +48,13 @@ export default function PublisherCheckBoxCard() {
       customCreditLimitHours: s.customCreditLimitHours,
     }))
   )
-  // Keyed on the day, so the box clears for the new month at midnight.
+
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const month = today.month()
   const year = today.year()
   const monthReports = getMonthsReports(serviceReports, month, year)
   const hasParticipated = monthReports.some(isCountableEntry)
-  // A publisher who opted into Hours Logging sees their month total under the
-  // checked state. Any logged entry also counts as "shared", so the checkbox
-  // and the hours never disagree. A Time Rollover alone doesn't: it carries
-  // last month's minutes, not ministry.
+
   const loggedMinutes = showsTimeEntry
     ? adjustedMinutesForSpecificMonth(monthReports, month, year, publisher, {
         enabled: overrideCreditLimit,
@@ -107,7 +104,7 @@ export default function PublisherCheckBoxCard() {
           width: '100%',
         }}
       >
-        {/* The inline Undo stays outside so it keeps its own tap. */}
+        {}
         <ContextMenu
           actions={[
             undoReport && {
@@ -198,7 +195,7 @@ export default function PublisherCheckBoxCard() {
         width: '100%',
       }}
     >
-      {/* Participation is a one-time check-in, so keep its checkbox treatment. */}
+      {}
       <View
         pointerEvents='none'
         style={{

@@ -92,11 +92,6 @@ export type UpdateRevealState = {
   status: 'seen' | 'skipped'
 }
 
-/**
- * Built-in (non-custom-field) sort dimensions. Custom-field sorts use the
- * `customField:<defId>` template literal form on `ContactSortKey` and are
- * appended at render time when picking a custom field.
- */
 export const builtInContactSortOptions: {
   label: () => string
   value: ContactSortKey
@@ -127,11 +122,6 @@ export type PlanTimeMode = 'hours' | 'span'
 
 export type DefaultNavigationMapProvider = 'apple' | 'waze' | 'google' | null
 
-/**
- * The ways a monthly service report can be sent onward from the report view
- * screen. Mirrors the `MenuView` share actions on `ServiceReportViewScreen` —
- * keep the two in sync when adding a method.
- */
 export const reportExportMethods = [
   'copy',
   'share',
@@ -145,49 +135,24 @@ interface TimeOffset {
   unit?: moment.unitOfTime.DurationConstructor
 }
 
-/**
- * In-app fallback for `planNotificationOffset` when the user has not chosen
- * one. Consumed by the day-plan form and by the prefs UI so the dropdowns
- * pre-fill with the value the app would actually use.
- */
 export const DEFAULT_PLAN_NOTIFICATION_OFFSET: Required<TimeOffset> = {
   amount: 30,
   unit: 'minutes',
 }
 
-/**
- * In-app fallback for `returnVisitTimeOffset` (how far out a new conversation's
- * follow-up date is set from "now" when the user hasn't picked one).
- */
 export const DEFAULT_RETURN_VISIT_TIME_OFFSET: Required<TimeOffset> = {
   amount: 1,
   unit: 'weeks',
 }
 
-/**
- * In-app fallback for `returnVisitNotificationOffset` (how long before a
- * follow-up's date the notification fires when the user hasn't picked one).
- */
 export const DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET: Required<TimeOffset> = {
   amount: 2,
   unit: 'hours',
 }
 
-/**
- * These hints are enabled if true, and dismissed if false. See
- * `usePreferences.removeHint()` to set a hint to false.
- */
 export const hints = {
   howToAddPlan: true,
 }
-
-// The legacy `serviceReportTags` field + its `ServiceReportTag` /
-// `LegacyServiceReportTag` types lived here until the tag → Category
-// refactor moved category data to `@/stores/categories`. The migration in
-// `@/lib/categories` consumes any remaining persisted-state `serviceReportTags`
-// blob via an `unknown` cast and then drops the field; new code should use
-// `useCategories()` instead. Kept the historical breadcrumb so the migration
-// flag's purpose is greppable.
 
 export const widgetContactSortOptions = [
   'longestContacted',
@@ -214,10 +179,6 @@ export const widgetAppointmentWindowOptions = [
 export type WidgetAppointmentWindow =
   (typeof widgetAppointmentWindowOptions)[number]
 
-/**
- * The sounds a reward plays (`playRewardSound` in `src/lib/audio.ts`), or none:
- * Hex's sound sets, in the order Settings lists them.
- */
 export const rewardSoundSets = [
   'signature',
   'classic',
@@ -232,29 +193,19 @@ export type RewardSoundSet = (typeof rewardSoundSets)[number]
 
 export const DEFAULT_REWARD_SOUND_SET: RewardSoundSet = 'signature'
 
-/**
- * `set` when this build has it, else the default: the sets before Hex's
- * (`punch`, `retro`) and any from a newer build.
- */
 export const knownRewardSoundSet = (set: string): RewardSoundSet =>
   (rewardSoundSets as readonly string[]).includes(set)
     ? (set as RewardSoundSet)
     : DEFAULT_REWARD_SOUND_SET
 
 export type PrefillAddress = {
-  /** Whether or not prefill address is enabled. */
   enabled: boolean
-  /** Most recently entered address from existing contact creation. */
+
   address?: Address
-  /** When an address was last entered */
+
   lastUpdated?: Date
 }
 
-/**
- * User-visible alternate app icon options. `'Seasonal'` is resolved to one of
- * the four bundled `SeasonalXxx` PascalCase plugin names at apply time
- * depending on hemisphere + date — see `lib/appIcon.ts`.
- */
 export type AppIconVariant =
   | 'Default'
   | 'Gold'
@@ -263,13 +214,6 @@ export type AppIconVariant =
   | 'Mono'
   | 'Seasonal'
 
-/**
- * The toggleable home-screen sections that the user can also reorder. Order is
- * persisted in `homeScreenElementsOrder`; visibility is persisted in
- * `homeScreenElements`. Capability gates (tablet, annual goal, timer enabled)
- * are applied at render time, not stored — turning off a capability hides the
- * section without losing the user's saved order.
- */
 export type HomeScreenElementKey =
   | 'approachingConversations'
   | 'together'
@@ -295,13 +239,6 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'didYouKnow',
 ]
 
-/**
- * Returns the user's stored order with any missing keys added in their default
- * position: right after the key that precedes them by default, or at the end
- * when that key isn't placed yet. Tolerates legacy entries (for example,
- * `monthlyRoutine` or the retired `ministryDashboard`) by dropping anything not
- * in the current key set.
- */
 export function getEffectiveHomeScreenOrder(
   stored: string[] | undefined
 ): HomeScreenElementKey[] {
@@ -334,88 +271,29 @@ export const PREFERENCE_DEFAULTS = {
   role: 'publisher' as Publisher,
   publisherHours: publisherHours,
 
-  /**
-   * Per-calendar-month Monthly Goal overrides keyed as `YYYY-MM`. A missing key
-   * means the Publisher-derived regular goal applies. This is syncable user
-   * intent and therefore participates in iCloud's per-preference LWW merge as
-   * one record.
-   */
   monthlyGoalOverrides: {} as MonthlyGoalOverrides,
-  /**
-   * **Role History** — which Publisher role applied to each month. `null` means
-   * every month uses `role`. When set, `role` always equals the role the
-   * timeline ends on (see `standingRole`). Written only through `setRole` /
-   * `setRoleForMonths` so the two never disagree. See
-   * `src/lib/roleHistory.ts`.
-   */
+
   roleHistory: null as RoleHistory | null,
   onboardingComplete: false,
-  // `name`, `avatar`, `customAvatarBackground`, and `hasCompletedProfileSetup`
-  // moved to `@/stores/profile` in preferences v3 — see `src/lib/profileMigration.ts`
-  // and the boot runner in `src/stores/migrations/profile.ts`. Glossary disambiguation: those
-  // four fields are the User's *identity* (Profile), not the User's *settings*
-  // (Preferences).
-  /**
-   * **Tenure Start Date** — the date the User's current consecutive tenure in
-   * their current **Tenure Type** began. Persists across role changes _within_
-   * the same Tenure Type (e.g. regular pioneer → circuit overseer keeps the
-   * clock — both are Full-Time Service). Cleared on any cross-Tenure-Type
-   * transition, including moves to/from Regular Publisher or Custom (which have
-   * no Tenure Type). The reset is enforced by the `setRole` action below.
-   *
-   * Field renamed from `pioneerStartDate` in preferences v3 → v4 (see the
-   * `migratePioneerStartDateToTenureStartDate` migration). The legacy name was
-   * misleading: a regular auxiliary's tenure is also stored here, but auxiliary
-   * service is not called "pioneering" in JW vernacular.
-   *
-   * Display label is role-dependent — see `getStartDateLabels()` in
-   * `src/constants/publisher.ts`. Used by ProfileCard / ProfileDetailOverlay /
-   * the onboarding pioneerDate step / the Preferences Publisher screen.
-   */
+
   tenureStartDate: null as Date | null,
   installedOn: new Date(),
   contactSort: 'suggested' as ContactSortKey,
-  /**
-   * Direction the active sort runs in. `desc` is the default because the
-   * Contacts screen's primary sorts (recent conversation, color-pin staleness)
-   * read most naturally with the most-actionable rows on top.
-   */
+
   contactSortDirection: 'desc' as ContactSortDirection,
-  /**
-   * Persisted advanced filters (AND'd) on the Contacts screen. Survives a tab
-   * switch so the user doesn't lose their filter set when leaving the screen.
-   */
+
   contactsFilters: [] as ActiveFilter[],
-  /**
-   * The User's order for the Contacts last-visit chips, set by dragging them.
-   * Resolved through `getEffectiveStalenessChipOrder` at read time.
-   */
+
   stalenessChipOrder: STALENESS_DISPLAY_ORDER,
-  /**
-   * Supporter-only Saved Views for the Contacts list, keyed by view id.
-   * Preserved when supporter status lapses — `useContactsQuery` stops applying
-   * them until access returns. Syncable, merged per view (`SYNC_MAP_KEYS`).
-   */
+
   savedContactViews: {} as Record<string, SavedContactView>,
-  /**
-   * The Saved View the Contacts list shows on this device, if any. While one is
-   * active the list uses the view instead of `contactsFilters` / `contactSort`,
-   * which keep the User's own ad-hoc choices for when they leave the view.
-   * Device-local, like `contactsView`.
-   */
+
   activeSavedContactView: null as ActiveSavedContactView | null,
-  /**
-   * The Contacts tab's last chosen workspace. Map lives inside Contacts, so a
-   * returning Map user comes back to the map. Device-local: a phone and an iPad
-   * can each keep their own.
-   */
+
   contactsView: 'list' as ContactsView,
-  /** The Map's last chosen imagery. Device-local, like `contactsView`. */
+
   mapLayer: 'standard' as MapLayer,
-  /**
-   * What the Map's pin cards show over each Contact's name. Syncs, so a Custom
-   * Field picked here (by id) shows on every device.
-   */
+
   mapCardDetail: 'nextVisit' as MapCardDetail,
   hasCompletedMapOnboarding: false,
   calledGoecodeApiTimes: 0,
@@ -425,221 +303,91 @@ export const PREFERENCE_DEFAULTS = {
     ? 'google'
     : 'apple') as DefaultNavigationMapProvider,
   lastAppVersion: Constants.expoConfig?.version || null,
-  /**
-   * Set when a passively announced release lands, cleared once the user opens
-   * What's New. Drives the notifications tray's "Updated" item. `since` is the
-   * version the user last saw notes for (so several unread updates stack), `at`
-   * is epoch ms of the latest update, and `cardDismissed` means the tray item
-   * was dismissed. Per-device, like `lastAppVersion`.
-   */
+
   unreadReleaseNotes: null as UnreadReleaseNotes | null,
   returnVisitTimeOffset: null as TimeOffset | null,
   returnVisitNotificationOffset: null as TimeOffset | null,
   returnVisitAlwaysNotify: false,
-  /**
-   * Default amount + unit for "notify me before plan starts" on day plans. Null
-   * means "use the in-app default" (30 minutes).
-   */
+
   planNotificationOffset: null as TimeOffset | null,
-  /**
-   * When true, newly created day plans default `notifyMe` to true. The user can
-   * still flip the per-plan toggle off in the form. Existing plans are not
-   * touched when this preference changes.
-   */
+
   planAlwaysNotify: false,
-  /**
-   * How the last Plan was timed: `hours` (Just hours, no set time) or `span` (a
-   * start and end time). New Plans open in this mode.
-   */
+
   planTimeMode: 'hours' as PlanTimeMode,
-  /**
-   * Remind the User to log time for a planned day that has none, at
-   * `unloggedDayReminderTime` after that day's Plans end. Off by default.
-   */
+
   unloggedDayReminders: false,
-  /** Local minutes after midnight reminders to log time go out. */
+
   unloggedDayReminderTime: DEFAULT_UNLOGGED_DAY_REMINDER_TIME,
-  /**
-   * Epoch ms the reminders to log time were last turned on, so days missed
-   * before then aren't listed in the tray.
-   */
+
   unloggedDayRemindersEnabledAt: null as number | null,
-  /**
-   * Remind the User on the 1st, at `monthReportReminderTime`, that last month's
-   * Service Report is ready, unless nothing was logged in it or it's already
-   * submitted. Off by default.
-   */
+
   monthReportReminders: false,
-  /** Local minutes after midnight the report reminder goes out on the 1st. */
+
   monthReportReminderTime: DEFAULT_MONTH_REPORT_REMINDER_TIME,
-  /**
-   * The report screen's one-time "Remind me next month?" offer was answered,
-   * either way, so it doesn't show again.
-   */
+
   monthReportReminderOfferAnswered: false,
-  /**
-   * Invite the User to plan next week when it has no Plans yet, on
-   * `weekPlanReminderDay` at `weekPlanReminderTime`. Off by default.
-   */
+
   weekPlanReminder: false,
-  /** The weekday (0 = Sunday) the invitation to plan next week goes out. */
+
   weekPlanReminderDay: DEFAULT_WEEK_PLAN_REMINDER_DAY,
-  /** Local minutes after midnight the invitation to plan next week goes out. */
+
   weekPlanReminderTime: DEFAULT_WEEK_PLAN_REMINDER_TIME,
-  /**
-   * Epoch ms the invitation to plan next week was last turned on, so weeks
-   * asked about before then aren't listed in the tray.
-   */
+
   weekPlanReminderEnabledAt: null as number | null,
-  /**
-   * Remind the User when their Service Streak is about to end: 6 PM on the last
-   * day to log a planned day, or three days before the month is out. On by
-   * default; only a streak long enough to show has one.
-   */
+
   streakReminders: true,
-  /**
-   * Whether the Service Streak shows anywhere — Home, profile, Buddy Cards (the
-   * User's and buddies'), celebrations, reminders. Off hides it and stops
-   * sharing it; the streak itself is derived, so nothing is lost. Syncable.
-   */
+
   showStreaks: true,
-  /**
-   * Whether the coins a save earns play as a combo of hits that count into the
-   * pet's wallet (`RewardStack`). Off shows only the "+N". Syncable.
-   */
+
   rewardAnimations: true,
-  /**
-   * The sounds those hits play, or `off`. Plays only while `audioEnabled` is
-   * on, on this device. Syncable.
-   */
+
   rewardSounds: DEFAULT_REWARD_SOUND_SET as RewardSoundSet,
-  /** The Schedule intro has been seen or closed; Schedule won't open it again. */
+
   scheduleIntroSeen: false,
-  /**
-   * Schedule intro pages onboarding already showed (its tour, Plan Month or
-   * Buddies step). The intro leaves them out rather than repeat them.
-   */
+
   scheduleIntroCoveredPages: [] as ScheduleIntroPageId[],
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
-  /**
-   * Epoch ms of the last time the supporter nudge in the notifications tray was
-   * dismissed or its CTA tapped. `null` means never dismissed. Drives the
-   * 365-day cooldown in `isSupporterNudgeEligible`. Syncable — dismissal is
-   * user intent and should follow the user.
-   */
+
   supporterNudgeDismissedAt: null as number | null,
-  /**
-   * Explicit opt-out for the supporter nudge. Separate from `hideDonateHeart`
-   * so a user can keep the heart icon but silence the larger periodic card, or
-   * vice versa. Syncable.
-   */
+
   hideSupporterNudge: false,
-  /**
-   * Epoch ms when the user first launched a build that has the nudge feature.
-   * Stamped lazily by the supporter notification hook when null. Drives the
-   * `introGraceDays` gate in `isSupporterNudgeEligible` so long-tenure users
-   * updating to the nudge-introducing build aren't asked the moment they open
-   * it. Syncable so the grace period persists across devices.
-   */
+
   supporterNudgeAvailableSince: null as number | null,
-  /**
-   * Dev override that bypasses tenure, engagement, and cooldown gates for the
-   * supporter-nudge card. Only honored under `__DEV__` (production reads it but
-   * ignores it, same pattern as `devSupporterOverride`). Non-syncable.
-   */
+
   devSupporterNudgeForceShow: false,
-  /**
-   * Epoch ms the user last redeemed an App Store Supporter Pause, and when
-   * billing resumes. Drive the "Payments paused until" status and the
-   * once-per-12-months limit in `manageSubscriptionState` (ADR 0016). Syncable
-   * — the pause belongs to the shared subscription, so another device must not
-   * offer a second one.
-   */
+
   supporterPauseStartedAt: null as number | null,
   supporterPauseResumesAt: null as number | null,
   ...hints,
   lastBackupDate: null as Date | null,
-  /**
-   * Epoch ms the backup reminder was last dismissed from the notifications
-   * tray. Snoozes it for another `backupNotificationFrequencyAsDays` without
-   * pretending a backup was made. Per-device, like `lastBackupDate`.
-   */
+
   backupReminderSnoozedAt: null as number | null,
-  /**
-   * Whether anonymous usage events may leave this device. Default on; the user
-   * can turn it off in Settings. Only usage analytics are affected: crash
-   * reports, feature flags, and surveys keep working. Per-device (non-syncable)
-   * so a choice on one device is never implicitly extended to another. Enforced
-   * in `src/lib/analyticsPolicy.ts`.
-   */
+
   analyticsEnabled: true,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
   fontSizeOffset: 0,
-  /**
-   * One-shot flag for the legacy-`customContactFields` → `customFieldDefs`
-   * migration. Per-device because the migration runs once per install against
-   * whatever shape happens to be on disk; once flipped to true, the boot runner
-   * skips the migration. Non-syncable.
-   *
-   * The legacy `customContactFields: string[]` field that this migration
-   * replaces was removed from the schema — see `lib/customFieldsMigration.ts`
-   * for the rewrite, and `contactsStore.customFieldDefs` for the new home.
-   */
+
   hasMigratedCustomFieldsToIds: false,
-  /**
-   * One-shot flag for the tag → Category migration. Boot runner gates on this:
-   * when false, it scans the user's ServiceReports + legacy `serviceReportTags`
-   * and seeds the new `useCategories` store, rewriting each tagged TimeEntry to
-   * reference a `categoryId` instead of a free-text `tag`. See
-   * `src/lib/categories.ts` for the transform. Non-syncable — each device
-   * migrates its own persisted state once.
-   */
+
   hasMigratedTagsToCategories: false,
-  /**
-   * One-shot flag for the Profile-store extraction (wave-3). Boot runner gates
-   * on this: when false, it splits the legacy `preferences` blob and seeds the
-   * new `useProfile()` store with the identity-shaped fields (`name`, `avatar`,
-   * `customAvatarBackground`, `hasCompletedProfileSetup`). The preferences
-   * persist `migrate` callback (v2→v3) drops those fields from disk in
-   * parallel. See `src/lib/profileMigration.ts`. Non-syncable — each device
-   * migrates its own persisted state once.
-   */
+
   hasMigratedProfileFromPreferences: false,
-  /**
-   * One-shot flag for the LDC → builtin Category migration. Boot runner gates
-   * on this: when false, it seeds the LDC builtin Category record (stable id
-   * `LDC_BUILTIN_CATEGORY_ID`) and rewrites every TimeEntry with `ldc: true` to
-   * use `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` instead. See
-   * `migrateLdcToCategory` in `src/lib/categories.ts`. Must run AFTER
-   * `hasMigratedTagsToCategories` so the categories list is fully populated
-   * before LDC is folded in. Non-syncable — each device migrates its own
-   * persisted state once.
-   */
+
   hasCollapsedLdcIntoCategory: false,
   hasAttemptedToMigrateToMmkv: false,
-  /**
-   * Hidden dev tools for diagnosing issues. To enable/disable, navigate to
-   * drawer (settings) -> tap version number 5 times.
-   */
+
   developerTools: false,
   prefillAddress: {
     address: undefined,
     enabled: true,
     lastUpdated: undefined,
   } as PrefillAddress,
-  /**
-   * Most recently selected phone region on the contact form, as an ISO 3166-1
-   * alpha-2 code (e.g. `"US"`, `"GB"`, `"DE"`). Format matches what
-   * `react-native-phone-number-input` / `expo-localization` exchange. Used as
-   * the default region for new contacts so the user doesn't re-pick their
-   * country every time. Null until first contact is saved — falls back to the
-   * device locale.
-   */
+
   defaultPhoneRegionCode: null as string | null,
-  // Presentation only: hiding built-in fields never clears contact data.
+
   contactInformationOrder: [] as string[],
   showContactPhone: true,
   showContactEmail: true,
@@ -647,7 +395,7 @@ export const PREFERENCE_DEFAULTS = {
   scheduleScreenElementsOrder: DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER,
   homeScreenElements: {
     approachingConversations: true,
-    // Not shown until the User adds it (Add Sections or Settings).
+
     together: false,
     monthlyRoutine: true,
     tabletServiceYearSummary: true,
@@ -660,118 +408,50 @@ export const PREFERENCE_DEFAULTS = {
     contacts: true,
     didYouKnow: true,
   },
-  /**
-   * User-defined order of the toggleable home-screen sections. Resolved through
-   * `getEffectiveHomeScreenOrder` at read time so newly-added keys (or legacy
-   * keys) don't break the layout.
-   */
+
   homeScreenElementsOrder:
     DEFAULT_HOME_SCREEN_ELEMENTS_ORDER as HomeScreenElementKey[],
-  /**
-   * The cards under the month's report on Progress → Month, in order with their
-   * sizes. `null` until the User customizes them, so they keep the default for
-   * their role; always read through `getEffectiveProgressCards`.
-   */
+
   progressCards: null as ProgressCardLayoutItem[] | null,
-  /** The cards on Progress → Year, like `progressCards`. */
+
   yearProgressCards: null as ProgressCardLayoutItem<YearCardId>[] | null,
-  /** The cards on Progress → All Time, like `progressCards`. */
+
   allTimeProgressCards: null as ProgressCardLayoutItem<AllTimeCardId>[] | null,
-  /**
-   * User-defined order of the navigation tabs. Resolved through
-   * `getEffectiveTabOrder` at read time.
-   */
+
   tabOrder: DEFAULT_TAB_ORDER,
   colorScheme: undefined as 'light' | 'dark' | undefined,
   timeDisplayFormat: 'decimal' as MinuteDisplayFormat,
   locale: undefined as TranslatedLocale | undefined,
-  /**
-   * Format Region — a moment locale key (e.g. `'en-au'`) whose date/time
-   * conventions (date order, 12/24-hour clock, default start of week) are
-   * overlaid onto the Language. `undefined` = Auto (follow the device). See
-   * `docs/adr/0006-format-region-decoupled-from-language.md`.
-   */
+
   formatRegion: undefined as FormatRegion | undefined,
   mapKeyColors: undefined as Partial<MarkerColors> | undefined,
-  /**
-   * User-adjustable day thresholds for the staleness color buckets (map pins,
-   * contact rows, color key, widgets). Always read through
-   * `normalizeStalenessBreakpoints` — synced/imported values may be malformed
-   * or inverted. Edited on the Color Key settings screen.
-   */
+
   stalenessBreakpoints: DEFAULT_STALENESS_BREAKPOINTS as StalenessBreakpoints,
-  /**
-   * Start of week. 0 = Sunday … 6 = Saturday. `undefined` = Auto — follow the
-   * Format Region (or device). Resolved at read time via `resolveStartOfWeek`
-   * in `@/lib/dates`.
-   */
+
   startOfWeek: undefined as number | undefined,
-  /**
-   * 12. Vs 24-hour clock override. `undefined` = Auto — follow the Format Region
-   *     (or device).
-   */
+
   timeFormat: undefined as TimeFormat | undefined,
-  /**
-   * Date order override — governs numeric date forms (`L`/`l`) and the compact
-   * helpers only; textual month-name dates keep Region ordering. `undefined` =
-   * Auto.
-   */
+
   dateOrder: undefined as DateOrder | undefined,
-  /** Whether the user wants to override the default credit limit of 55 hours */
+
   overrideCreditLimit: false,
-  /** Custom credit limit in hours (only used if overrideCreditLimit is true) */
+
   customCreditLimitHours: 55,
-  /** Sort order for the iOS Contacts widget. */
+
   widgetContactSort: 'longestContacted' as WidgetContactSort,
-  /** Quick action shown on each row of the iOS Contacts widget. */
+
   widgetContactAction: 'directions' as WidgetContactAction,
-  /** Time window for the iOS Appointments widget. */
+
   widgetAppointmentWindow: '7days' as WidgetAppointmentWindow,
-  /**
-   * Supporter-only override for the primary accent color. Preserved even when
-   * supporter status lapses so the user's choice isn't lost — the theme applies
-   * it only while supporter status is active.
-   */
+
   customAccentColor: null as string | null,
-  // `customAvatarBackground` moved to `@/stores/profile` in preferences v3
-  // alongside `name` + `avatar` — see glossary: the avatar background is
-  // identity-shaped (it tints the User's avatar), while `customAccentColor`
-  // (theme) and `customAppIcon` (app icon) are settings and stay here.
-  /**
-   * Supporter-only override for the iOS Home Screen app icon. `null` /
-   * `'Default'` use the bundle's primary icon. `'Seasonal'` is resolved at
-   * runtime to one of the four SeasonalXxx variants based on the user's
-   * hemisphere and current date — the value persisted here stays `'Seasonal'`
-   * regardless of which season is currently rendered.
-   *
-   * Preserved even when supporter status lapses so the user's choice isn't lost
-   * — the runtime applies it only while supporter status is active and resets
-   * the Home Screen tile to the default the moment supporter status lapses.
-   * Mirrors `customAccentColor`.
-   */
+
   customAppIcon: null as AppIconVariant | null,
-  /**
-   * Developer override for supporter status. When non-null, forces
-   * `useIsSupporter()` to report the user as a supporter with the given `since`
-   * date, bypassing RevenueCat. Null disables the override. Exposed from the
-   * hidden developer tools screen only.
-   */
+
   devSupporterOverride: null as Date | null,
-  /**
-   * When true, app-icon changes go through the public `setAlternateIconName`
-   * path which fires the iOS "App Icon Updated" system alert. When false
-   * (default), they go through the patched silent selector — same outcome, no
-   * alert. Exposed from the developer tools screen so the alerts can be
-   * re-enabled for debugging without re-patching the native module.
-   * Non-syncable.
-   */
+
   devShowAppIconAlerts: false,
-  /**
-   * ICloud sync (supporter-only). When true, the sync layer writes the backup
-   * payload to the ubiquity container on store changes and pulls remote updates
-   * on foreground / remote-change events. Defaulted to true for supporters on
-   * first launch; off by default for non-supporters.
-   */
+
   iCloudClockOffsetMs: 0,
   iCloudClockCalibrated: false,
   iCloudSyncPendingPush: false,
@@ -781,11 +461,7 @@ export const PREFERENCE_DEFAULTS = {
     | 'read-failed'
     | 'push-failed'
     | null,
-  /**
-   * Why the last failed push or read failed, as the transport classified it
-   * (`SyncTransportErrorCode`). Lets the status tell offline, throttled, full
-   * and signed-out apart. Cleared with `iCloudSyncIssue`.
-   */
+
   iCloudSyncErrorCode: null as
     | 'storage-full'
     | 'unauthorized'
@@ -796,136 +472,50 @@ export const PREFERENCE_DEFAULTS = {
     | 'unknown'
     | null,
   iCloudSyncNeedsResolution: false,
-  /**
-   * The iCloud reset generation this device has adopted; null is generation
-   * zero. Device-local: see `src/lib/syncResetEpoch.ts`.
-   */
+
   iCloudResetEpoch: null as ResetEpoch | null,
-  /** Set when a pull adopted another device's reset, until dismissed. */
+
   iCloudResetAdoptedNotice: null as {
     epochId: string
     deviceName: string | null
     at: number
   } | null,
-  /**
-   * What the last pulls saw of each device's iCloud snapshot file, for the
-   * Settings Devices list. Device-local: see `src/lib/syncDevices.ts`.
-   */
+
   iCloudSyncDevices: {} as SyncDeviceFiles,
   iCloudSyncPausedForLapse: false,
   iCloudFreshSetup: false,
   hasReconciledSyncDefinitions: false,
   iCloudSyncEnabled: false,
-  /**
-   * True once the user has explicitly toggled iCloud sync on or off in
-   * Settings. Before this is set, supporters get sync enabled automatically.
-   * After this is set, the user's explicit choice is respected permanently.
-   */
+
   iCloudSyncSetByUser: false,
-  /**
-   * When true, user-uploaded images (profile + contact avatars) are uploaded to
-   * the iCloud ubiquity container alongside the JSON sync payload and
-   * downloaded on other devices. Default false — images stay on-device unless
-   * the user opts in. Per-device (non-syncable) so consent isn't implicitly
-   * extended to other devices on the same Apple ID.
-   */
+
   iCloudSyncIncludeImages: false,
-  /**
-   * The sync option this device chose (ADR 0030): Cloud Sync (`cloud`) or
-   * iCloud/Google Drive (`platform`); null until anything chose. Whether sync
-   * runs is still `iCloudSyncEnabled`. Read through `syncProvider()`
-   * (`@/lib/syncTransport/provider`), which defaults a device that never chose
-   * to Cloud Sync. Per-device (non-syncable).
-   */
+
   syncProvider: null as 'cloud' | 'platform' | null,
-  /**
-   * The one-time offer to move a device already on iCloud/Drive to Cloud Sync:
-   * `pending` until the User switches or dismisses it. Per-device.
-   */
+
   cloudSyncOffer: null as 'pending' | 'dismissed' | null,
-  /**
-   * A hash of the server account Cloud Sync last ran under, to notice the
-   * device moving to another account (a QR code or a recovery key), as
-   * `iCloudIdentityToken` notices an Apple Account switch. Per-device.
-   */
+
   cloudSyncAccountToken: null as string | null,
-  /**
-   * Cloud Sync's switches as the server last said (`GET /app/v1/config`):
-   * whether it's on, and who it's for. Null until read once. Per-device.
-   */
+
   cloudSyncConfig: null as {
     enabled: boolean
     entitlement: 'supporter' | 'everyone'
   } | null,
-  /**
-   * Whether the server last said this device's account may use Cloud Sync (`GET
-   * /accounts/v1/sync`); null until it answered. Per-device.
-   */
+
   cloudSyncEntitled: null as boolean | null,
-  /**
-   * Data protection mode (EU/EEA, UK, Switzerland). When true the app hides and
-   * disables householder-data features that CJEU C-25/17 and GDPR make risky
-   * without consent: see `docs/gdpr-mode-research.md` section 11. Per-device
-   * (non-syncable) — a compliance choice made on one device is not implicitly a
-   * choice on another.
-   */
+
   dataProtectionMode: false,
-  /**
-   * True once the user has explicitly toggled data protection mode (onboarding
-   * or Settings). Before this is set the mode may be defaulted from the device
-   * region; after, the user's explicit choice is respected.
-   */
+
   dataProtectionModeSetByUser: false,
-  /**
-   * ISO timestamp of the last time the data-protection retention prompt was
-   * shown ("N contacts haven't been visited in 90 days"). Throttles the prompt
-   * to at most once per `DATA_PROTECTION_RETENTION_PROMPT_INTERVAL_DAYS`.
-   * Undefined until the user has been asked once. Per-device because the mode
-   * itself is.
-   */
+
   dataProtectionRetentionPromptedAt: undefined as string | undefined,
-  /**
-   * When false, in-app sounds (e.g. the celebration chime) never play. Read
-   * through `@/lib/audio`, not directly. Per-device (non-syncable) — muting a
-   * shared iPad shouldn't silence the user's phone. Off by default in dev
-   * builds so background verifier simulators stay quiet.
-   */
+
   audioEnabled: typeof __DEV__ === 'undefined' || !__DEV__,
-  /**
-   * When false, haptic feedback never plays. Read through `@/lib/haptics`, not
-   * directly. Per-device (non-syncable), like `audioEnabled`.
-   */
+
   hapticsEnabled: true,
-  /**
-   * When false, the User turned Scribe AI off in Settings: every entry point
-   * hides and nothing is sent to it. Read through `useScribeEnabled`, not
-   * directly. Syncable — choosing not to use Scribe AI is the User's, on every
-   * device.
-   */
+
   scribeAiEnabled: true,
-  /**
-   * Persistent bookkeeping for the image-sync uploader. Keyed by container
-   * filename (e.g. `witness-work-img-contact-<id>.jpg`). Drives the
-   * upload/retry loop across app restarts so an interrupted migration or a
-   * transient network failure automatically resumes on the next push
-   * opportunity — see docs/icloud-image-sync-plan.md and
-   * `src/lib/sync/imageSync.ts`.
-   *
-   * Field semantics:
-   *
-   * - `localMtime`: last-seen modification time of the on-device source file
-   *   (`file://...`). If the user re-picks their avatar, this bumps past
-   *   `uploadedMtime` and the entry becomes dirty.
-   * - `uploadedMtime`: local-file mtime at the point of the last successful
-   *   upload. `null` means "never uploaded" (brand new or bookkeeping lost).
-   * - `lastError` / `errorCode` / `failedAt` / `failures`: the last failed
-   *   upload. A failed file backs off before its next attempt; a full account
-   *   (`storage-full`) retries only on foreground.
-   *
-   * Per-device (non-syncable) — this is purely local queue state and must not
-   * ride the JSON payload, otherwise a stale entry from Device A could cause
-   * Device B to think a file is already uploaded when it isn't.
-   */
+
   iCloudImageSync: {} as Record<
     string,
     {
@@ -938,469 +528,132 @@ export const PREFERENCE_DEFAULTS = {
       failures?: number
     }
   >,
-  /**
-   * Epoch ms of the most recent successful push or pull. Null until first sync.
-   * Retained for back-compat; the granular `lastiCloudPushedAt` /
-   * `lastiCloudPulledAt` / `lastiCloudRemoteWrittenAt` fields are what the sync
-   * settings UI surfaces for debugging.
-   */
+
   lastiCloudSyncAt: null as number | null,
-  /** Epoch ms of the most recent successful push to iCloud. */
+
   lastiCloudPushedAt: null as number | null,
-  /** Epoch ms of the most recent successful pull/read from iCloud. */
+
   lastiCloudPulledAt: null as number | null,
-  /**
-   * Epoch ms when iCloud last confirmed it had uploaded this device's snapshot.
-   * A push only proves a local write; this is what shows the data is off the
-   * device. Never set on a binary without `uploadStatus`.
-   */
+
   lastiCloudUploadedAt: null as number | null,
-  /**
-   * Epoch ms of the oldest write iCloud hasn't confirmed uploading yet, or null
-   * when nothing is waiting. Drives "Uploading to iCloud…" and the upload
-   * checks in `iCloudSync`.
-   */
+
   iCloudUploadPendingSince: null as number | null,
-  /**
-   * The last upload error iCloud reported for this device's snapshot. Kept
-   * apart from `iCloudSyncIssue`, which every pull rewrites, and cleared only
-   * once an upload is confirmed.
-   */
+
   iCloudUploadIssue: null as 'icloud-full' | 'upload-failed' | null,
-  /** Epoch ms from `writtenAt` of the last remote payload this device read. */
+
   lastiCloudRemoteWrittenAt: null as number | null,
-  /** DeviceId of the device that wrote the last remote payload this device read. */
+
   lastiCloudRemoteDeviceId: null as string | null,
-  /**
-   * DeviceName of the device that wrote the last remote payload this device
-   * read.
-   */
+
   lastiCloudRemoteDeviceName: null as string | null,
-  /**
-   * Stable per-install UUID stamped into the payload metadata. Used to
-   * distinguish our own writes from remote-device writes and to attribute
-   * entries in the "recent devices" display in Settings.
-   */
+
   iCloudDeviceId: null as string | null,
-  /**
-   * The Keychain install id `iCloudDeviceId` was created on. Preferences ride
-   * iOS device backups and Quick Start to a new device; the install id does
-   * not, so a mismatch means this is a copy that needs its own device id.
-   */
+
   iCloudDeviceBinding: null as string | null,
-  /**
-   * The archived iCloud identity token (base64) this device last synced with.
-   * Opaque: compared natively with `isEqual:` (`identityTokenMatches`) to
-   * notice the device signing into another Apple Account.
-   */
+
   iCloudIdentityToken: null as string | null,
-  /**
-   * Epoch ms when sync was turned off because the Apple Account changed. Drives
-   * the Settings notice; null once dismissed or sync is turned on.
-   */
+
   iCloudAccountChangedAt: null as number | null,
-  /**
-   * Android: a hash of the Google Account whose Drive app data folder this
-   * device syncs with (ADR 0019), or null when Google Drive isn't connected.
-   * Never the email. Compared with `iCloudIdentityToken`, which on Android
-   * holds the account sync last ran under, to notice an account switch.
-   */
+
   googleDriveAccountId: null as string | null,
-  /**
-   * Android: set when Google no longer grants Drive access silently (revoked,
-   * or consent expired). Sync waits until the user reconnects.
-   */
+
   googleDriveNeedsReconnect: false,
-  /**
-   * Per-key epoch ms of the most recent change for syncable preference keys.
-   * Merged last-writer-wins per key so a theme toggle on device A doesn't
-   * revert a publisher-type change on device B.
-   */
+
   preferenceUpdatedAt: {} as Record<string, number>,
-  /**
-   * Backfill flag for the one-time `updatedAt` stamp migration on records that
-   * predate sync. Set to true after the first boot that ran the backfill so it
-   * never runs twice.
-   */
+
   hasMigratedToSyncSchema: false,
-  /**
-   * Whether the Home-screen onboarding "Get started" checklist has been
-   * dismissed. Once dismissed it should not auto-reappear. Additive flag owned
-   * by the onboarding-overhaul Phase 3 (HomeChecklist).
-   */
+
   homeChecklistDismissed: false,
-  /**
-   * IDs of checklist items the user has manually ticked as complete on the
-   * Home-screen onboarding checklist. Items that auto-complete from other
-   * stores (e.g. `logFirstMinute`, `addFirstContact`) are not tracked here.
-   */
+
   homeChecklistManualCompletions: [] as string[],
-  /**
-   * One-shot flag that flips the first time the Home checklist transitions to
-   * fully complete, so the celebration burst (fireworks + success haptic +
-   * scale-pop) plays once and not on every Home screen mount. Syncable and
-   * merged as a union (`SYNC_UNION_KEYS`), so a second device or a restore
-   * doesn't replay a celebration the User already saw elsewhere.
-   */
+
   homeChecklistAllDoneCelebrated: false,
-  /**
-   * Epoch ms the Home checklist was first completed on this device. Lists the
-   * one-time Supporter note in the notifications tray; `null` for anyone who
-   * finished it before the note moved there. Per-device: the note stays with
-   * the device that showed the celebration.
-   */
+
   homeChecklistCompletedAt: null as number | null,
-  /**
-   * Stable id of the onboarding step the user was last on, so a mid-flow app
-   * reload resumes where they left off instead of throwing them back to the
-   * hero. Stored as an id (not an index) because publisher-conditional steps
-   * (e.g. pioneerDate) shift indices when publisher type changes. Null once
-   * onboarding completes or is reset.
-   */
+
   onboardingStepId: null as string | null,
-  /**
-   * Resolution state for the one-time Onboarding Backfill prompt shown to
-   * annual-goal publishers who installed mid-service-year. (Field name kept as
-   * `serviceYearCatchUpStatus` for persisted-key stability — see
-   * `docs/refactor-log.md`.) Lifecycle:
-   *
-   * - `null` — never engaged / ineligible on older persisted installs.
-   * - `'pending'` — eligible user has not resolved the onboarding step yet.
-   * - `'skipped'` — user hit Skip in the onboarding step. Surfaces the recovery
-   *   banner on the Progress screen.
-   * - `'completed'` — user filled in the form; banner is permanently hidden.
-   * - `'dismissed'` — user tapped the X on the banner; banner is permanently
-   *   hidden without filling in data.
-   *
-   * Syncable so dismissal/completion carries across devices.
-   */
+
   serviceYearCatchUpStatus: null as
     | 'pending'
     | 'skipped'
     | 'completed'
     | 'dismissed'
     | null,
-  /**
-   * Tracks which achievement tiers have already been celebrated per month, so
-   * the one-time confetti / haptic / scale-pulse doesn't re-fire every time the
-   * user reopens the MonthScreen. Keyed `YYYY-MM`; values are the tier names
-   * the user has already been shown the crossing animation for. Syncable and
-   * merged as a union (`SYNC_UNION_KEYS`), so a second device or a restore
-   * doesn't replay a celebration the User already saw elsewhere.
-   */
+
   celebratedTiers: {} as Record<string, string[]>,
-  /**
-   * Year-tab analogue of `celebratedTiers`. Tracks which annual milestones have
-   * already triggered the one-time congrats banner + haptic + seal pulse per
-   * service year, so re-opening the Year tab doesn't re-fire the animation.
-   * Keyed by service-year start year as a string (`"2024"` for the 2024–2025
-   * service year — matches `milestoneCelebrationKey`); values are the milestone
-   * hour values already celebrated. The annual-goal value (= the top rung of
-   * the ladder) is stored here too, so the "You did it!" fireworks only fire on
-   * the first focus after crossing. Syncable and unioned like
-   * `celebratedTiers`.
-   */
+
   celebratedMilestones: {} as Record<string, number[]>,
-  /**
-   * Badges the User has earned, keyed by `BadgeKey` (`monthsShared.2`,
-   * `firstBibleStudy`). Earned badges are keepsakes: never revoked when the
-   * records behind them are deleted. Syncable and merged per badge
-   * (`SYNC_MAP_KEYS`), so every device and the Buddy Card agree.
-   */
+
   earnedBadges: {} as Record<string, EarnedBadge>,
-  /**
-   * Months already counted toward ledger-backed Badge Collections
-   * (`returnVisits:2026-05`, `keepingInTouch:7` for the best months with one
-   * person), so progress survives records the app deletes by design. Holds no
-   * householder data. Syncable and unioned (`SYNC_SET_KEYS`).
-   */
+
   badgeLedger: [] as string[],
-  /**
-   * Whether badges show anywhere — profile, Buddy Card, celebrations. Off hides
-   * and stops sharing them without forgetting what was earned. Syncable.
-   */
+
   showBadges: true,
-  /**
-   * Epoch ms of this device's first badge evaluation. Until then, every badge
-   * the User's history already reaches is stored quietly instead of celebrated.
-   * Non-syncable: each device does its own quiet first pass.
-   */
+
   badgesBackfilledAt: null as number | null,
-  /**
-   * Epoch ms the User last opened their badges; badges earned after it show as
-   * new. Non-syncable.
-   */
+
   badgesSeenAt: 0,
-  /**
-   * The one-time "Your badges are here" screen for history found on this
-   * device's first badge evaluation: `pending` until it's closed, `done` once
-   * it's shown or wasn't needed (no history, badges hidden). Null until that
-   * first evaluation. Later history (imports, restores) gets the summary card
-   * instead, and the evaluation right after onboarding gets neither.
-   * Non-syncable: each device welcomes once.
-   */
+
   badgesWelcome: null as BadgesWelcomeState | null,
-  /**
-   * Badges the Home "New badge" card is done with: dismissed, opened from it,
-   * or already celebrated full screen. The card names new badges that arrived
-   * without a celebration (ADR 0021) and aren't in here. Non-syncable, like
-   * `badgesSeenAt`.
-   */
+
   badgeCardDismissed: [] as string[],
-  /**
-   * User-customized milestone ladder for the Year tab's `YearMilestoneCard` /
-   * `MilestoneAdjustSheet`. `null` means "use the publisher-type default
-   * ladder" from `src/lib/milestones.ts`. When non-null, these hours override
-   * the defaults and persist across publisher-type changes (shared list, not
-   * per-publisher). The final row — the annual goal — is derived from
-   * `publisherHours[role] * 12` at render time and is NOT stored here. "Reset
-   * to defaults" sets this back to `null`.
-   */
+
   milestoneOverrides: null as number[] | null,
-  /**
-   * Most recent `YYYY-MM` for which the Time Rollover prompt has been resolved
-   * (either applied or dismissed). When this matches the current month, no
-   * rollover prompt or auto-rollover runs again until the next month. Syncable
-   * so a second device doesn't re-prompt for the same month.
-   */
+
   lastRolloverYearMonth: null as string | null,
-  /**
-   * When true, fractional minutes are rolled over silently on first app launch
-   * in a new month — no full-screen prompt. Set via the "Automatically handle
-   * for future months" switch on the rollover screen. Syncable.
-   */
+
   autoRolloverEnabled: false,
-  /**
-   * **Hours Logging** — Regular Publisher opt-in to log hours for themselves.
-   * Reveals the Add Time entry points, the timer, the Progress tab, and the
-   * calendar widget, plus an optional Monthly Goal (`publisherHours.publisher`,
-   * default 0). Does not change how the month is _reported_: the congregation
-   * report stays a "shared in ministry" yes/no. Ignored for hours-mode roles,
-   * which always track hours. Resolved via `tracksHours` /
-   * `derivePublisherCapabilities().showsTimeEntry`. Syncable.
-   */
+
   logsHours: false,
-  /**
-   * The User has answered whether to log hours: in onboarding, in the tray
-   * question, or by switching **Hours Logging** in Settings. Retires the tray
-   * question, which asks a Kingdom Publisher once. Syncable, so another device
-   * doesn't ask again.
-   */
+
   hoursLoggingAsked: false,
-  /**
-   * When true, fractional credit minutes are included in the rollover amount
-   * (the pre-v1.44 behavior). Off by default: credit time is not eligible for
-   * rollover, so only standard-time minutes are moved. Syncable.
-   */
+
   rolloverIncludesCredit: false,
-  /**
-   * Dev-only clock override for the Time Rollover system. When set, the
-   * rollover hook uses this date as "today" instead of `moment()`. Lets a
-   * developer simulate opening the app on, say, April 1st with March's
-   * fractional minutes already on disk. Non-syncable — local testing only.
-   */
+
   devRolloverDateOverride: null as Date | null,
-  /**
-   * Developer Tools' Service Streak override: when set, `useServiceStreak`
-   * reports this count instead of the recorded one (Home, Progress, the
-   * profile, and the pet's lamp and unlocks, which aren't stored meanwhile).
-   * Non-syncable — local testing only.
-   */
+
   devStreakOverride: null as number | null,
-  /**
-   * The update reveal (`UPDATE_REVEAL_VERSION`) this device has engaged with.
-   * `skipped` (closed before the tour) keeps a tray item to replay it; `seen`
-   * (the tour was opened, or that tray item dismissed) ends it. A newer reveal
-   * version starts fresh. Per-device — a user upgrading on a second device can
-   * re-experience the reveal there independently.
-   */
+
   updateReveal: null as UpdateRevealState | null,
-  /**
-   * Stable IDs of "Did you know?" tips the user has dismissed from the
-   * home-screen tip card. The card surfaces the first tip in
-   * `DID_YOU_KNOW_TIPS` whose id isn't here; once all are present the card
-   * stops rendering. Syncable so a dismissal on one device doesn't re-surface
-   * the same tip on another.
-   */
+
   seenTipIds: [] as string[],
-  /**
-   * How the user usually submits their monthly report (copy, share sheet,
-   * Hourglass, or NW Publisher). Picked during onboarding and editable from
-   * Preferences → Publisher or the report view screen. Drives the one-tap
-   * submit CTA on `ServiceReportViewScreen`. Syncable — it's user intent.
-   */
+
   defaultExportMethod: 'nwpublisher' as ReportExportMethod,
-  /**
-   * `YYYY-MM` keys of months whose report the user has sent onward via any
-   * export method (copy, share, Hourglass, NW Publisher). Drives the
-   * post-rollover "Review <month>" reminder on the Home screen — only the most
-   * recent completed month is ever checked, so this list is capped rather than
-   * grown forever. Syncable so submitting on one device clears the reminder on
-   * another.
-   */
+
   submittedReportMonths: [] as string[],
-  /**
-   * Per-month manual override of the report Comments text, keyed `YYYY-MM`.
-   * When a key is present its value replaces the auto-generated credit
-   * breakdown everywhere the report is rendered or exported (preview,
-   * copy/share text, Hourglass / NW Publisher remarks) — including an empty
-   * string, which blanks the comments. Removing the key restores the
-   * auto-generated text. Syncable — it's report content the user authored.
-   */
+
   reportCommentOverrides: {} as Record<string, string>,
-  /**
-   * Off Days the user wants the Assistant to treat as a hard exclusion when
-   * generating recommended day plans. Empty by default — no exclusion. Today
-   * stored as weekday numbers (0 = Sunday … 6 = Saturday); the concept covers
-   * any day. The user can override per-day even when a weekday is in this set.
-   */
+
   offDays: [] as number[],
-  /**
-   * Meeting Days — days the user attends a Kingdom Hall meeting. The Assistant
-   * treats these as "busier" days: it prefers other days first and, when a
-   * meeting day is used, caps the proposed session at a lower number of hours
-   * so the user still has time to study and attend. A day listed in both
-   * `offDays` and `meetingDays` is treated as an Off Day — the stricter rule
-   * wins. Today stored as weekday numbers (0 = Sunday … 6 = Saturday); the
-   * concept covers any day.
-   */
+
   meetingDays: [] as number[],
-  /**
-   * One-shot flag for the Availability Onboarding sheet, which surfaces just in
-   * time the first time a recommendation would render. Flipped true when the
-   * user saves OR skips the sheet, so we never re-prompt automatically — but
-   * Settings retains an entry point to revisit.
-   */
+
   hasSeenAvailabilityOnboarding: false,
-  /**
-   * FIFO ring buffer (cap 10) of the user's accept/dismiss actions on Assistant
-   * recommendations. The engine reads this to back off from
-   * repeatedly-dismissed shapes. Insert/eviction happens in the action that
-   * records the event — this store only owns the default empty list.
-   */
+
   assistantHistory: [] as AssistantEvent[],
-  /**
-   * Hash of the engine inputs (logged, plans, conversations, off days, meeting
-   * days) at the time the user last dismissed the Assistant card. While this
-   * hash matches the current inputs, the Assistant section stays hidden —
-   * re-emerging once any input changes.
-   */
+
   hasDismissedRecommendationHash: undefined as string | undefined,
-  /**
-   * Follow-ups showing on the Home follow-up card (`approaching`; `missed` was
-   * the former Missed card, now in the notifications tray) when the user closed
-   * it, as `followUpCardKey`s. The card stays hidden while it would only show
-   * those follow-ups, and returns once a new or rescheduled one enters it.
-   * Syncable — dismissal is user intent.
-   */
+
   dismissedFollowUpCards: {} as Partial<
     Record<'missed' | 'approaching', string[]>
   >,
-  /**
-   * **Mileage Tracking** opt-in. `undefined` = not answered yet, which shows
-   * the Home prompt; `false` hides the prompt and every Mileage entry point.
-   * Turning it off never deletes mileage data. Syncable.
-   */
+
   mileageTrackingEnabled: undefined as boolean | undefined,
-  /** Mileage distance unit. `undefined` = Auto (device region). Syncable. */
+
   distanceUnit: undefined as DistanceUnit | undefined,
-  /** Mileage fuel economy unit. `undefined` = Auto (device region). Syncable. */
+
   fuelEconomyUnit: undefined as FuelEconomyUnit | undefined,
-  /** The trip form's last-used Distance / Odometer mode. Syncable. */
+
   mileageEntryMode: 'distance' as MileageEntryMode,
-  /**
-   * The User closed the Home prompt that offers a Pet Companion. The pet
-   * section shows the prompt while no companion exists and this is false.
-   * Syncable.
-   */
+
   petPromptDismissed: false,
 }
 
-/**
- * Keys that should never be merged across devices (local bookkeeping, dev
- * flags, device-specific state). Everything outside this set participates in
- * per-key last-writer-wins merge when iCloud sync is enabled.
- *
- * `onboardingComplete` stays local so restarting onboarding affects one device.
- * Completion flags (`hasCompletedProfileSetup`, `hasCompletedMapOnboarding`)
- * intentionally DO sync — once the user sets up on one device, the other device
- * shouldn't re-prompt and wipe out their restored profile. Device-specific
- * _install_ bookkeeping (MMKV migration flag, dev tools, geocode counter, etc.)
- * stays local.
- */
 export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'
 
-/**
- * Persisted-shape migrations for the preferences store.
- *
- * Versioning history:
- *
- * - V0 → v1: rename `excludedWeekdays` → `offDays`, `meetingWeekdays` →
- *   `meetingDays`. The underlying data (a set of weekday numbers 0–6) is
- *   identical; only the field names change. We also migrate the
- *   `preferenceUpdatedAt` timestamp map so iCloud last-writer-wins continues to
- *   work across the rename. The legacy fields are dropped from disk.
- * - V1 → v2: rename `publisher` → `role`. The field stores a `Publisher` enum
- *   value (the user's field-ministry role); the new name reads more naturally
- *   (`preferences.role === 'regularPioneer'`) and matches the glossary. The
- *   leaf enum value `'publisher'` (Regular Publisher) is canonical and stays.
- *   The `preferenceUpdatedAt` timestamp map is migrated alongside so iCloud
- *   last-writer-wins continues to work across the rename.
- * - V2 → v3: split the identity-shaped fields (`name`, `avatar`,
- *   `customAvatarBackground`, `hasCompletedProfileSetup`) out into the new
- *   Profile store (`@/stores/profile`). This callback only sees the preferences
- *   blob, so it can drop the fields here — but the cross-store _seeding_ runs
- *   in a boot runner (`src/stores/migrations/profile.ts`) gated on
- *   `hasMigratedProfileFromPreferences`. To avoid losing the values between
- *   `migrate` and the boot runner, the persist callback leaves the fields in
- *   place; the boot runner is the single source of truth for both the seeding
- *   and the drop. The version bump still happens so a downgrade to v2 isn't
- *   silently re-promoted.
- * - V3 → v4: rename `pioneerStartDate` → `tenureStartDate`. The glossary's
- *   **Tenure Start Date** is the canonical name; the legacy `pioneerStartDate`
- *   was misleading because regular auxiliary (not "pioneering" in JW
- *   vernacular) also stored its tenure here. The migration also enforces the
- *   shape rule that a User in a no-Tenure-Type role (Regular Publisher or
- *   Custom) cannot hold a stale tenure date — those land as `null` even if the
- *   legacy field carried a value. The matching key in `preferenceUpdatedAt` is
- *   renamed (or dropped when the value is dropped) so iCloud LWW stays
- *   consistent.
- * - V4 → v5: `startOfWeek` becomes Auto-able for the Format Region feature (ADR
- *   0006). Every install carried `startOfWeek: 0` from the old hardcoded
- *   default, so a stored `0` is converted to Auto (key dropped — Region/device
- *   now drives it; US users see no change, UK/EU users get Monday
- *   automatically). A stored `1–6` was a deliberate choice and is preserved as
- *   an explicit override. The matching `preferenceUpdatedAt` timestamp is
- *   dropped alongside a dropped value so iCloud LWW lets an explicit value from
- *   another device win.
- * - V5 → v6: replace the unused `oneOffGoalHours: { month: Date, hours }[]` shape
- *   with `monthlyGoalOverrides: Record<YYYY-MM, number>`. Date values persisted
- *   as ISO strings are converted without time-zone month drift;
- *   malformed/negative goals are discarded. The matching iCloud LWW timestamp
- *   key is renamed alongside the value.
- * - V6 → v7: remove the retired holographic Profile Card preferences and their
- *   iCloud LWW timestamps.
- * - V9 → v10: remove the retired onboarding intents and their iCloud LWW
- *   timestamp.
- * - V10 → v11: Contacts sort `recentConversation` that was never chosen becomes
- *   `suggested` (see {@link migrateUnchosenContactSortToSuggested}).
- * - V11 → v12: the new Pet Home section starts visible (see
- *   {@link migrateShowPetHomeSection}).
- * - V12 → v13: This Week starts visible on installs from before it existed (see
- *   {@link migrateShowThisWeekHomeSection}).
- * - V13 → v14: remove `displayDetailsOnProgressBarHomeScreen` and its iCloud LWW
- *   timestamp (see {@link migrateDropProgressBarDetailsPreference}).
- * - V14 → v15: the new Quick Actions Home section starts visible (see
- *   {@link migrateShowQuickActionsHomeSection}).
- *
- * Exported for unit testing. Idempotent — re-running on an already-migrated
- * blob is a no-op.
- */
 export const migratePreferencesPersistedState = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   persistedState: any,
   version: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any => {
   let next = persistedState
   if (version < 1) {
@@ -1451,12 +704,6 @@ export const migratePreferencesPersistedState = (
   return next
 }
 
-/**
- * V13 → v14: remove `displayDetailsOnProgressBarHomeScreen`. Its Home progress
- * bar toggle went away with the customizable Home dashboard (8e88f488), and
- * nothing has read it since. A device on an older build may still sync it;
- * `parsePayload` drops preference keys the store no longer has.
- */
 export const migrateDropProgressBarDetailsPreference = (
   state: unknown
 ): unknown => {
@@ -1478,15 +725,6 @@ export const migrateDropProgressBarDetailsPreference = (
   return next
 }
 
-/**
- * Adds `key: true` to a persisted `homeScreenElements` that lacks it. Hydration
- * merges shallowly, so an install's saved visibility map replaces the default
- * one whole and a section added later would otherwise read as hidden. An
- * explicit choice is kept. The stamp is left alone: nobody chose this, so a
- * real choice synced from another device still wins. Readers should still read
- * a missing key as the section's default (`isHomeSectionOn`), since a device on
- * an older build can sync its map without the key.
- */
 const showMissingHomeSection = (
   state: unknown,
   key: HomeScreenElementKey
@@ -1503,50 +741,15 @@ const showMissingHomeSection = (
   }
 }
 
-/**
- * V12 → v13: This Week joined Home in April 2026 (9ad9633f) without a
- * migration, so installs from before then kept a map without it and Home hid it
- * while Settings listed it as shown. See {@link showMissingHomeSection}.
- */
 export const migrateShowThisWeekHomeSection = (state: unknown): unknown =>
   showMissingHomeSection(state, 'thisWeek')
 
-/** V11 → v12: the Pet Home section starts visible. */
 export const migrateShowPetHomeSection = (state: unknown): unknown =>
   showMissingHomeSection(state, 'pet')
 
-/** V14 → v15: the Quick Actions Home section starts visible. */
 export const migrateShowQuickActionsHomeSection = (state: unknown): unknown =>
   showMissingHomeSection(state, 'quickActions')
 
-/**
- * V10 → v11: moves Users who never picked a Contacts sort onto the current
- * default, Suggested. `recentConversation` was the default until April 2026
- * (commit 9cca6421), so installs from before then stored it without anyone
- * choosing it, and the default flip never reached them.
- *
- * "Never chosen" means `preferenceUpdatedAt` has no stamp for `contactSort` or
- * `contactSortDirection`. The store's `set` wrapper stamps every syncable key
- * it writes, so picking a sort or direction in Sort & Filter, Reset, saving a
- * Saved View from the User's own query, and restoring a backup all leave one.
- * Nothing stamps a key the User didn't write: iCloud and Google Drive merges
- * only copy stamps that already exist on some device (`mergePreferences`), and
- * `replaceLocalWithRemote` and the sync-schema backfill don't add any. So no
- * stamp reliably means no device ever wrote the sort; a stamp may be a real
- * choice, so it's kept. The map started with iCloud Sync on 2026-04-17, before
- * the flip; an unstamped `recentConversation` from before that still sorted
- * like today's Suggested (favorites and Bible studies first), so even a choice
- * made then lands where the User had it.
- *
- * The migration deliberately leaves the stamps alone. Without a stamp on either
- * side, a merge is a tie decided by the larger value, and `"suggested"` sorts
- * after `"recentConversation"`, so a device still on an older version can't
- * sync the old value back; both converge on Suggested. Stamping now would
- * instead outrank a real choice of Recent Visit made earlier on another device
- * that hasn't synced yet.
- *
- * Saved Views keep their own sorts: saving one is always a choice.
- */
 export const migrateUnchosenContactSortToSuggested = (
   state: unknown
 ): unknown => {
@@ -1562,10 +765,6 @@ export const migrateUnchosenContactSortToSuggested = (
   return { ...record, contactSort: 'suggested', contactSortDirection: 'desc' }
 }
 
-/**
- * V9 → v10: remove the onboarding intents. The intent picker was replaced by
- * the plan step, and the Home checklist no longer varies by intent.
- */
 export const migrateDropOnboardingIntents = (state: unknown): unknown => {
   if (!state || typeof state !== 'object') return state
   const record = state as Record<string, unknown>
@@ -1585,11 +784,6 @@ export const migrateDropOnboardingIntents = (state: unknown): unknown => {
   return next
 }
 
-/**
- * V8 → v9: remove the never-set Founding Supporter reveal flag. Founding
- * recognition is now derived from the Supporter `since` date. Device-local, so
- * no timestamp.
- */
 export const migrateDropFoundingSupporterRevealPreference = (
   state: unknown
 ): unknown => {
@@ -1600,10 +794,6 @@ export const migrateDropFoundingSupporterRevealPreference = (
   return rest
 }
 
-/**
- * V7 → v8: remove The Milestone Update reveal flags, replaced by the
- * version-keyed `updateReveal`. Both were device-local, so no timestamps.
- */
 export const migrateDropMilestoneRevealPreferences = (
   state: unknown
 ): unknown => {
@@ -1623,7 +813,6 @@ export const migrateDropMilestoneRevealPreferences = (
   return rest
 }
 
-/** V6 → v7: remove the retired holographic Profile Card preferences. */
 export const migrateDropProfileCardShaderPreferences = (
   state: unknown
 ): unknown => {
@@ -1661,11 +850,6 @@ export const migrateDropProfileCardShaderPreferences = (
   return next
 }
 
-/**
- * V5 → v6: migrate the legacy array-based one-off goal placeholder to the
- * canonical calendar-month override map. Exported so the iCloud payload
- * compatibility layer can apply the exact same conversion before merging.
- */
 export const migrateOneOffGoalHoursToMonthlyGoalOverrides = (
   state: unknown
 ): unknown => {
@@ -1689,8 +873,7 @@ export const migrateOneOffGoalHoursToMonthlyGoalOverrides = (
     const timestamps = next.preferenceUpdatedAt as Record<string, unknown>
     const { oneOffGoalHours: legacyTs, ...restTs } = timestamps
     const nextTs: Record<string, unknown> = { ...restTs }
-    // As with earlier field renames, an existing canonical timestamp wins in a
-    // downgrade-then-upgrade payload carrying both keys.
+
     if (legacyTs !== undefined && nextTs.monthlyGoalOverrides === undefined) {
       nextTs.monthlyGoalOverrides = legacyTs
     }
@@ -1700,12 +883,6 @@ export const migrateOneOffGoalHoursToMonthlyGoalOverrides = (
   return next
 }
 
-/**
- * V4 → v5: convert the legacy hardcoded `startOfWeek: 0` default to Auto
- * (absent) so the Format Region / device drives it; preserve `1–6` as an
- * explicit override. See the version history above for the rationale.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migrateStartOfWeekZeroToAuto = (state: any): any => {
   if (!state || typeof state !== 'object') return state
   if (state.startOfWeek !== 0) return state
@@ -1722,13 +899,11 @@ const migrateStartOfWeekZeroToAuto = (state: any): any => {
   return next
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migrateExcludedMeetingWeekdaysToOffMeetingDays = (state: any): any => {
   if (!state || typeof state !== 'object') return state
   const { excludedWeekdays, meetingWeekdays, ...rest } = state
   const next = { ...rest }
-  // If the new key already carries a value, it wins (defensive — a
-  // downgrade-then-upgrade could leave both keys present).
+
   if (excludedWeekdays !== undefined && next.offDays === undefined) {
     next.offDays = excludedWeekdays
   }
@@ -1756,13 +931,11 @@ const migrateExcludedMeetingWeekdaysToOffMeetingDays = (state: any): any => {
   return next
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migratePublisherToRole = (state: any): any => {
   if (!state || typeof state !== 'object') return state
   const { publisher, ...rest } = state
   const next = { ...rest }
-  // If the new key already carries a value, it wins (defensive — a
-  // downgrade-then-upgrade could leave both keys present).
+
   if (publisher !== undefined && next.role === undefined) {
     next.role = publisher
   }
@@ -1780,45 +953,8 @@ const migratePublisherToRole = (state: any): any => {
   return next
 }
 
-/**
- * V2 → v3: the persist `migrate` callback is intentionally a no-op for the
- * Profile extraction. The split runs in a boot runner
- * (`src/stores/migrations/profile.ts`, gated on
- * `hasMigratedProfileFromPreferences`) because:
- *
- * 1. The boot runner needs to _seed_ a sibling MMKV store (`@/stores/profile`),
- *    which a Zustand persist `migrate` callback can't do — it only sees its own
- *    blob.
- * 2. Leaving the legacy fields on the persisted preferences blob until the boot
- *    runner copies them avoids any race where the values are lost between
- *    `migrate` and the runner.
- *
- * The version bump still happens so the schema marker on disk advances —
- * preventing a downgrade-then-upgrade from re-triggering this migration
- * accidentally, and giving future migrations (v3 → v4) a stable base. The boot
- * runner then drops the legacy fields from preferences via raw `setState({
- * name: undefined, ... } as any)` and flips `hasMigratedProfileFromPreferences`
- * so the runner is one-shot. See wave-2's `serviceReportTags` cleanup for the
- * exact same pattern.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migrateDropProfileFields = (state: any): any => state
 
-/**
- * V3 → v4: rename `pioneerStartDate` → `tenureStartDate`. Also enforces the "no
- * stale tenure date for a no-Tenure-Type role" rule from the new shape: users
- * currently in `'publisher'` or `'custom'` whose legacy blob still carried a
- * `pioneerStartDate` have that value dropped (the field lands as `null`) — they
- * had no UI surfacing the value anyway.
- *
- * Matching key in `preferenceUpdatedAt` is renamed when the value carries over,
- * or dropped when the value is dropped (so iCloud LWW stops tracking it for
- * non-tenure-tracking roles).
- *
- * Idempotent: re-running on an already-v4 blob (no `pioneerStartDate` key) is a
- * no-op.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const migratePioneerStartDateToTenureStartDate = (state: any): any => {
   if (!state || typeof state !== 'object') return state
   if (!('pioneerStartDate' in state)) return state
@@ -1829,8 +965,6 @@ const migratePioneerStartDateToTenureStartDate = (state: any): any => {
   const tenureType = role ? getTenureType(role) : null
   const valueShouldCarryOver = tenureType !== null
 
-  // If both keys somehow coexist (downgrade-then-upgrade defensive), prefer
-  // the new key — same precedence as the earlier renames in this module.
   const hasNew = 'tenureStartDate' in next
   if (!hasNew) {
     next.tenureStartDate = valueShouldCarryOver ? pioneerStartDate : null
@@ -1849,19 +983,13 @@ const migratePioneerStartDateToTenureStartDate = (state: any): any => {
     ) {
       nextTs.tenureStartDate = legacyTs
     }
-    // When the value was dropped (no Tenure Type), the matching timestamp is
-    // dropped too — iCloud LWW should stop tracking the field for this peer.
+
     next.preferenceUpdatedAt = nextTs
   }
 
   return next
 }
 
-/**
- * Glossary: the **Tenure Start Date** persists only within the same, non-null
- * Tenure Type. Any cross-type transition (or either side being null) resets
- * it.
- */
 const tenureResetFor = (
   previousRole: Publisher,
   nextRole: Publisher
@@ -1875,15 +1003,6 @@ const tenureResetFor = (
 export const usePreferences = create(
   persist(
     combine(PREFERENCE_DEFAULTS, (rawSet, getState) => {
-      // Wraps the raw zustand setter so every partial update also stamps
-      // per-key timestamps used by the iCloud merge algorithm. Keys in
-      // `NON_SYNCABLE_PREFERENCE_KEYS` are excluded from stamping so local
-      // bookkeeping (e.g. the sync timestamps themselves) doesn't generate
-      // churn on the map.
-      //
-      // Annotated explicitly (not `typeof rawSet`): under zustand v5 the
-      // middleware-mutated setter type doesn't survive re-exposure through
-      // combine's action object — call sites would see `unknown` returns.
       const set: (
         partial:
           | Partial<typeof PREFERENCE_DEFAULTS>
@@ -1896,7 +1015,6 @@ export const usePreferences = create(
         let resolved =
           typeof partial === 'function' ? partial(getState()) : partial
 
-        // Applies to both Settings and onboarding, including the region default.
         if (resolved.dataProtectionMode === true) {
           resolved = {
             ...resolved,
@@ -1916,7 +1034,7 @@ export const usePreferences = create(
         ) {
           const state = getState()
           const keys = Object.keys(resolved) as (keyof typeof state)[]
-          // Nothing changes: skip the notify, and persisting the whole blob.
+
           if (keys.every((key) => Object.is(state[key], resolved[key]))) {
             perf.count('prefs:set:noop')
             return
@@ -1928,9 +1046,7 @@ export const usePreferences = create(
             if (NON_SYNCABLE_PREFERENCE_KEYS.has(key)) continue
             const before = state[key]
             const after = resolved[key]
-            // Only a real change is stamped. Re-stamping an unchanged value
-            // would let this device's stale copy win over a newer edit made on
-            // another device.
+
             if (
               Object.is(before, after) ||
               canonicalJson(before) === canonicalJson(after)
@@ -1977,7 +1093,6 @@ export const usePreferences = create(
             changed = true
           }
           if (changed) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             rawSet({ ...(resolved as any), preferenceUpdatedAt: next })
             return
           }
@@ -1987,27 +1102,11 @@ export const usePreferences = create(
 
       return {
         set,
-        /**
-         * Updates the User's Publisher role, enforcing the glossary's **Tenure
-         * Start Date** reset semantics:
-         *
-         * - Same Tenure Type (e.g. regular pioneer → circuit overseer) → tenure
-         *   clock persists.
-         * - Different Tenure Type (including any move to/from a no-Tenure-Type
-         *   role like Regular Publisher or Custom) → `tenureStartDate` is
-         *   cleared. The user must re-enter a date for the new tenure.
-         *
-         * Why the action owns this rather than UI code: every entry point that
-         * changes the role (settings, onboarding, tools screen) needs the same
-         * behavior; centralizing it in the store action is the only way to keep
-         * the invariant ("tenureStartDate is non-null ⇒ current role tracks
-         * tenure") true regardless of caller.
-         */
+
         setRole: (role: Publisher, options?: { from?: CalendarMonth }) => {
           const state = getState()
           const previousRole = state.role
-          // Without a start month the role applies to every month, so any
-          // recorded Role History is replaced.
+
           const roleHistory = options?.from
             ? setRoleForPeriod(
                 state.roleHistory,
@@ -2019,12 +1118,7 @@ export const usePreferences = create(
             : null
           set({ role, roleHistory, ...tenureResetFor(previousRole, role) })
         },
-        /**
-         * Sets the Publisher role for the months `start` through `end`
-         * (inclusive) without changing the months around them — e.g. one month
-         * of auxiliary pioneering. The standing `role` only changes when the
-         * period reaches past the last recorded change.
-         */
+
         setRoleForMonths: (
           start: CalendarMonth,
           end: CalendarMonth,
@@ -2046,13 +1140,7 @@ export const usePreferences = create(
               : { role: nextRole, ...tenureResetFor(state.role, nextRole) }),
           })
         },
-        /**
-         * Sets one month's status from the month status sheet or the Service
-         * History editor. `'onward'` makes it a standing change from `target`
-         * (e.g. "regular pioneer since March"); `'month'` changes only that
-         * month. The reduced-goal auxiliary status also saves that month's 15h
-         * Monthly Goal; leaving it clears that goal again.
-         */
+
         setMonthStatus: (
           target: CalendarMonth,
           status: MonthStatus,
@@ -2102,23 +1190,12 @@ export const usePreferences = create(
           set({ lastTimeRequestedAReview: new Date() }),
         setDefaultPhoneRegionCode: (defaultPhoneRegionCode: string) =>
           set({ defaultPhoneRegionCode }),
-        /**
-         * Records that the data-protection retention prompt was just shown, so
-         * it stays quiet for the next interval regardless of which button the
-         * user chose.
-         */
+
         markDataProtectionRetentionPrompted: (at: Date = new Date()) =>
           set({ dataProtectionRetentionPromptedAt: at.toISOString() }),
         removeHint: (hint: keyof typeof hints) =>
-          // Pass a partial rather than spreading the full preferences object —
-          // the stamping wrapper iterates `Object.keys(resolved)` and would
-          // otherwise bump `preferenceUpdatedAt` for every syncable key, which
-          // flips last-writer-wins for unrelated prefs during iCloud merges.
           set({ [hint]: false } as Partial<typeof PREFERENCE_DEFAULTS>),
-        /**
-         * Will not update lastUpdated property or address if address param is
-         * undefined.
-         */
+
         updatePrefillAddress: (address?: Address) => {
           if (!address || !Object.keys(address)) {
             return
@@ -2134,12 +1211,7 @@ export const usePreferences = create(
             }
           })
         },
-        /**
-         * Drops the cached last-entered householder address. Data protection
-         * mode calls this on every contact save: a cached address is a
-         * householder record that outlives the form it was typed into, with no
-         * contact attached to consent to it.
-         */
+
         clearPrefillAddress: () => {
           set(({ prefillAddress }) => ({
             prefillAddress: {
@@ -2153,11 +1225,7 @@ export const usePreferences = create(
           set({ overrideCreditLimit }),
         setCustomCreditLimitHours: (customCreditLimitHours: number) =>
           set({ customCreditLimitHours }),
-        /**
-         * Saves a Monthly Goal for one exact calendar month. Entering the
-         * Publisher-derived regular goal clears any existing override so a
-         * future role/custom-goal change naturally flows through that month.
-         */
+
         setMonthlyGoalOverride: (target: CalendarMonth, hours: number) => {
           if (!isValidMonthlyGoalHours(hours)) {
             throw new RangeError(
@@ -2216,10 +1284,7 @@ export const usePreferences = create(
               },
             }
           }),
-        /**
-         * Stores newly earned badges and ledger months from one evaluation.
-         * Never removes or overwrites an earned badge.
-         */
+
         recordBadges: ({
           earned,
           ledger,
@@ -2229,7 +1294,7 @@ export const usePreferences = create(
           earned: { key: string; record: EarnedBadge }[]
           ledger: string[]
           backfilledAt?: number
-          /** Settles the welcome screen on this device's first evaluation. */
+
           welcome?: BadgesWelcomeState
         }) =>
           set(({ earnedBadges, badgeLedger, badgesBackfilledAt }) => {
@@ -2253,7 +1318,7 @@ export const usePreferences = create(
             return patch
           }),
         markBadgesSeen: () => set({ badgesSeenAt: Date.now() }),
-        /** The Home "New badge" card won't name these again. */
+
         dismissBadgeCard: (keys: string[]) =>
           set(({ badgeCardDismissed }) => {
             const additions = keys.filter(
@@ -2264,11 +1329,7 @@ export const usePreferences = create(
               : {}
           }),
         setShowBadges: (showBadges: boolean) => set({ showBadges }),
-        /**
-         * Forgets every earned badge and counted month. The next evaluation
-         * finds what the User's records still reach, quietly, and welcomes them
-         * to it again.
-         */
+
         resetBadges: () =>
           set({
             earnedBadges: {},
@@ -2292,11 +1353,7 @@ export const usePreferences = create(
               },
             }
           }),
-        /**
-         * Records that the report for the given `YYYY-MM` month has been sent
-         * onward via any export method. Capped to the most recent 24 entries —
-         * the reminder logic only ever looks at the previous month.
-         */
+
         markReportSubmitted: (monthKey: string) =>
           set(({ submittedReportMonths }) =>
             submittedReportMonths.includes(monthKey)
@@ -2308,11 +1365,7 @@ export const usePreferences = create(
                   ].slice(-24),
                 }
           ),
-        /**
-         * Undoes `markReportSubmitted` (Mark as Not Sent). `set` stamps the
-         * removed month, so sync carries the removal instead of a peer's older
-         * mark bringing it back.
-         */
+
         unmarkReportSubmitted: (monthKey: string) =>
           set(({ submittedReportMonths }) =>
             submittedReportMonths.includes(monthKey)

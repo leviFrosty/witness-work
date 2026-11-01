@@ -17,7 +17,7 @@ import { dayKeyOf } from '@/features/plans/lib/scheduleRows'
 import { formatDisplay } from '@/lib/dates'
 
 const CELL_GAP = 2
-/** Space between the tile's name, day grid, bar, and amount. */
+
 const SECTION_GAP = 6
 
 type Props = CalendarMonth & {
@@ -25,20 +25,15 @@ type Props = CalendarMonth & {
   startOfWeek: number
   statuses: Map<string, DayStatus>
   todayKey: string
-  /** The month the Month view is on, ringed so the zoom has a home. */
+
   focused: boolean
   loggedMinutes: number
   plannedMinutes: number
   goalMinutes: number
-  // These take the month rather than closing over it, so the Year view can
-  // pass the same functions to every tile and a tile re-renders only when
-  // its own month changes.
+
   onPress: (month: CalendarMonth) => void
   onEditGoal?: (month: CalendarMonth) => void
-  /**
-   * The day grid's frame within the tile (border and padding included): where
-   * the Month view lands.
-   */
+
   onGridLayout: (month: CalendarMonth, frame: LayoutRectangle) => void
 }
 
@@ -58,11 +53,6 @@ export const dayStatusColor = (theme: Theme, status: DayStatus | undefined) => {
   }
 }
 
-/**
- * One month of the Service Year at a glance: each day as a square in its
- * calendar status color, and logged plus planned time against the month's goal.
- * Tapping zooms into the month.
- */
 export default function YearMonthTile({
   year,
   month,
@@ -79,8 +69,7 @@ export default function YearMonthTile({
   onGridLayout,
 }: Props) {
   const theme = useTheme()
-  // At accessibility text sizes the month's short name and its amount shrink
-  // to the tile instead of truncating.
+
   const largeText = useAccessibilityTextSize()
   const fit = largeText ? FIT_ONE_LINE : undefined
   const first = moment({ year, month, day: 1 })
@@ -167,8 +156,7 @@ export default function YearMonthTile({
             </Text>
           ) : null}
         </View>
-        {/* A direct child of the tile's frame, so its layout is measured
-        from the tile's edge rather than from a wrapper's. */}
+        {}
         <View
           style={{ gap: CELL_GAP }}
           onLayout={(e) => onGridLayout({ year, month }, e.nativeEvent.layout)}
@@ -196,8 +184,7 @@ export default function YearMonthTile({
             </View>
           ))}
         </View>
-        {/* Every tile keeps six week rows so the grid lines up; only the
-        month's own weeks are the zoom's landing frame. */}
+        {}
         {weeks.length < 6 ? (
           <View style={{ gap: CELL_GAP, marginTop: CELL_GAP - SECTION_GAP }}>
             {Array.from({ length: 6 - weeks.length }, (_, w) => (

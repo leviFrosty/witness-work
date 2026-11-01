@@ -7,7 +7,6 @@ import { visitStats } from '@/features/progress/lib/periodCardStats'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { AllTimeCardProps } from '@/features/progress/components/cards/types'
 
-/** Every Visit where someone was home, and how many people that's been. */
 export default function AllTimeVisitsCard({ size }: AllTimeCardProps) {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
@@ -19,16 +18,12 @@ export default function AllTimeVisitsCard({ size }: AllTimeCardProps) {
       title={i18n.t('progressCards.visits.title')}
       value={formatNumber(stats.talked)}
       tone={stats.talked ? 'default' : 'muted'}
-      caption={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.allTime.visits.people', { count: stats.people })
-      }
-      detail={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.allTime.visits.notAtHome', {
-          count: stats.notAtHome,
-        })
-      }
+      caption={i18n.t('progressCards.allTime.visits.people', {
+        count: stats.people,
+      })}
+      detail={i18n.t('progressCards.allTime.visits.notAtHome', {
+        count: stats.notAtHome,
+      })}
       info={i18n.t('progressCards.allTime.visits.info')}
       size={size}
     />

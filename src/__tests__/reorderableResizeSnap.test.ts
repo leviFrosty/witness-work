@@ -4,7 +4,6 @@ import {
   snapResize,
 } from '@/components/ui/reorderable/resizeSnap'
 
-// A two-column grid: a small card is 170 wide, a wide one 352.
 const grid = [
   { size: 'small' as const, width: 170 },
   { size: 'wide' as const, width: 352 },
@@ -38,7 +37,6 @@ describe('snapResize', () => {
   })
 
   it('needs to get clearly nearer, not just past halfway', () => {
-    // Halfway is 91 points out; the hysteresis holds it a little longer.
     expect(
       snapResize({
         options: grid,
@@ -68,7 +66,7 @@ describe('snapResize', () => {
       { size: 'compact' as const, width: 352, height: 118 },
       { size: 'full' as const, width: 352, height: 190 },
     ]
-    // Larger text made the compact card 160 tall, not 118.
+
     const start = { width: 352, height: 160, size: 'compact' as const }
     expect(
       snapResize({

@@ -12,7 +12,7 @@ vi.mock('expo-localization', () => ({
   getLocales: () => [{ languageTag: 'en-US' }],
   getCalendars: () => [{ uses24hourClock: false, firstWeekday: 1 }],
 }))
-// The real en-US template, without the store-backed i18n setup.
+
 vi.mock('@/lib/locales', async () => {
   const { default: enUS } = await import('@/locales/en-US.json')
   return {
@@ -29,10 +29,8 @@ vi.mock('@/lib/locales', async () => {
 import { applyFormatRegion } from '@/lib/dates'
 import { formatPlanWhen } from '@/features/plans/lib/planWhen'
 
-// Wednesday, October 14, 2026.
 const date = new Date(2026, 9, 14)
 
-/** Reads the range with its non-breaking spaces as plain ones. */
 const when = (plan: Parameters<typeof formatPlanWhen>[0]) =>
   formatPlanWhen(plan).replace(/\u00A0/g, ' ')
 

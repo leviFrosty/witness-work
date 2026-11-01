@@ -62,7 +62,7 @@ describe('petSliceFromBackup', () => {
       ...pet,
       earnedRoomItems: [UNLOCK_ORDER[0], UNLOCK_ORDER[1], 'floor:marble'],
     })
-    // Unreadable reads as none earned, not a lost pet.
+
     expect(
       petSliceFromBackup({ pet: { ...pet, earnedRoomItems: 'bed:hay' } }).pet
     ).toEqual(pet)

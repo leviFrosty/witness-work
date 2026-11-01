@@ -79,7 +79,6 @@ export default defineReadTool({
       ok: true,
       trust: 'app',
       data: {
-        // Names on their own lines, as in the context's buddies.
         buddies: [...names]
           .filter(([ref]) => listed.has(ref))
           .map(([ref, name]) => `${ref} ${clip(name, NAME_MAX)}`),

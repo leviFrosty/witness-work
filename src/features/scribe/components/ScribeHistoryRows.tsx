@@ -14,7 +14,6 @@ import type {
 
 const ROW_RADIUS = 14
 
-/** A past conversation: its first message, when, and what it added. */
 export const ScribeHistoryRow = ({
   conversation,
   onOpen,
@@ -104,14 +103,12 @@ export const ScribeHistoryRow = ({
   )
 }
 
-/** What a Notes Import added, by kind; plural keys. */
 const LEGACY_COUNTS = [
   ['contacts', 'scribe_legacyContacts'],
   ['visits', 'scribe_legacyVisits'],
   ['timeEntries', 'scribe_legacyTimeEntries'],
 ] as const
 
-/** A Notes Import from before Scribe AI that can still be undone. */
 export const ScribeLegacyImportRow = ({
   entry,
   onUndo,

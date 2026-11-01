@@ -13,7 +13,6 @@ import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { getLocales } from 'expo-localization'
 
-/** The picker's value for following the device's language. */
 const DEVICE_DEFAULT = 'device'
 
 export default function LanguageSelector() {
@@ -32,7 +31,7 @@ export default function LanguageSelector() {
     const locale =
       value === DEVICE_DEFAULT ? undefined : (value as TranslatedLocale)
     set({ locale })
-    // The reload picks up the new Language's layout direction too.
+
     syncLayoutDirection(resolveAppLocale(locale))
     reloadApp().catch((err: unknown) =>
       logger.error('[LanguageSelector] reload failed', err)

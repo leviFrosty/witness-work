@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import fc from 'fast-check'
 
-// The Duration Format module pulls in @/lib/locales → @/stores/mmkv, which
-// reaches for native MMKV / AsyncStorage. Stub those the same way the rest of
-// the suite does so the pure formatting logic can run under node.
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
   Platform: { OS: 'ios' },
@@ -35,15 +32,9 @@ import {
   formatSecondsSpoken,
 } from '@/lib/minutes'
 
-// Property runs print the seed on failure; rerun with
-// `FC_SEED=<seed> pnpm vitest run src/__tests__/minutes.test.ts`.
 const seed = process.env.FC_SEED ? Number(process.env.FC_SEED) : undefined
 const runs = { numRuns: 500, seed }
 
-/**
- * Non-negative durations: raw doubles (which cluster near zero), realistic
- * fractional durations up to ~1,700 hours, and fractions just under an hour.
- */
 const nonNegativeMinutes = fc.oneof(
   fc.double({ min: 0, max: 100_000, noNaN: true }),
   fc.nat({ max: 100_000_000 }).map((thousandths) => thousandths / 1000),
@@ -52,12 +43,6 @@ const nonNegativeMinutes = fc.oneof(
     .map(([hours, under]) => hours * 60 + 59 + under)
 )
 
-/**
- * Byte-for-byte equivalence guard for the Duration Format module. These assert
- * the exact rendered strings (en-US) for representative durations across both
- * display formats and the compact variant, so any change to the formatting
- * pipeline is caught.
- */
 describe('Duration Format (src/lib/minutes.ts)', () => {
   beforeAll(() => {
     _i18n.locale = 'en-us'
@@ -210,7 +195,7 @@ describe('Duration Format (src/lib/minutes.ts)', () => {
 
     it('renders an explicit hours unit verbatim (absorbs former formatHoursCompact)', () => {
       expect(formatMinutesCompact(2, { unit: 'hours' })).toBe('2h')
-      // Unlike the minutes path, the hours path always emits a token for zero.
+
       expect(formatMinutesCompact(0, { unit: 'hours' })).toBe('0h')
     })
   })

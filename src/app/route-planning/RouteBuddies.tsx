@@ -12,11 +12,6 @@ import { planEndsAt, planShareKey } from '@/features/buddies/lib/shares'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import type { RouteBuddiesSlot } from '@/features/route-planning/screens/RouteBuilderScreen'
 
-/**
- * The route's Invite Buddies row, the Plan form's own. Invitations go out with
- * the route's Plan as soon as a buddy is picked, and taking one off cancels
- * theirs. With no Plan yet, the row makes one from the route.
- */
 export default function RouteBuddies({
   dayPlanId,
   onCreatePlan,
@@ -38,8 +33,6 @@ export default function RouteBuddies({
 
   if (availability === 'hidden') return null
 
-  // Before any buddy is confirmed, the row opens Buddies to set it up; not
-  // while Buddies is turned off, which couldn't pair anyone.
   if (active.length === 0) {
     if (availability !== 'enabled') return null
     return (
@@ -66,7 +59,6 @@ export default function RouteBuddies({
     )
   }
 
-  // A Plan that has happened is history: nobody new is invited to it.
   if (planEndsAt(dayPlan) <= Date.now()) return null
 
   const invite = (inboxIds: string[]) => {

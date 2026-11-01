@@ -169,7 +169,6 @@ function harness(
   }
 }
 
-/** Runs a step and collects its events. */
 async function runStep(h: Harness, signal?: AbortSignal) {
   const events: StepStreamEvent[] = []
   const terminal = await h.client.step(BODY, {
@@ -460,7 +459,7 @@ describe('refusals', () => {
     { status: 400, code: 'bad_request', expected: 'unknown', calls: 1 },
     { status: 400, code: 'invalid_tools', expected: 'unknown', calls: 1 },
     { status: 400, code: 'step_limit', expected: 'couldnt_finish', calls: 1 },
-    // The session refreshes once on a 401 and runs again.
+
     {
       status: 401,
       code: 'unauthorized',
@@ -477,7 +476,7 @@ describe('refusals', () => {
       retryAfterMs: 5_400_000,
     },
     { status: 403, code: 'suspended', expected: 'suspended', calls: 1 },
-    // Waits 2 s and retries once.
+
     {
       status: 409,
       code: 'step_in_progress',
@@ -501,7 +500,7 @@ describe('refusals', () => {
       extra: { retryAfter: 30 },
       retryAfterMs: 30_000,
     },
-    // Waits retryAfter and retries once.
+
     {
       status: 429,
       code: 'active_cap',
@@ -768,7 +767,7 @@ describe('usage', () => {
       method: 'GET',
       headers: { authorization: 'Bearer token-1' },
     })
-    // Read-only: never links or charges.
+
     expect(h.links.count).toBe(0)
   })
 

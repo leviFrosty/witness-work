@@ -18,7 +18,7 @@ import type { PlanFields } from '@/features/scribe/proposals/model'
 
 const PAST_DAYS = 31
 const FUTURE_DAYS = 365
-/** Plans an onDate error lists. */
+
 const MAX_LISTED = 6
 
 export default defineWriteTool({
@@ -150,10 +150,6 @@ export default defineWriteTool({
   },
 })
 
-/**
- * The Ref of the only Plan on `date` (local `YYYY-MM-DD`); with none or
- * several, an error that lists the day's Plans so the model can pick or ask.
- */
 function planOnDate(
   ctx: ToolContext,
   date: string

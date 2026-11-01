@@ -28,17 +28,13 @@ const GRID_H = 160
 const ROWS = 4
 const COLUMN_W = (320 - PAD * 2) / COLUMNS
 const ROW_H = GRID_H / ROWS
-// Follow-ups already in the calendar, then the one that syncs in tomorrow.
+
 const EXISTING = [
   { column: 0, row: 1.8, rows: 1 },
   { column: 4, row: 0.3, rows: 0.9 },
 ]
 const NEW = { column: 3, row: 0.7, rows: 1 }
 
-/**
- * Follow-ups in their own calendar: the week around today, and tomorrow's
- * follow-up syncing into place.
- */
 const CalendarVisual = ({
   palette,
   active,

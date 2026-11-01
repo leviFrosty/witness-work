@@ -42,8 +42,6 @@ describe('zoomTransform', () => {
   })
 
   it('keeps two layers zooming through the same rects in register', () => {
-    // The Year layer runs the same pair backwards; at any step, the tile's
-    // position in the Year layer matches the month's in the Month layer.
     const yearFrame: Rect = { x: 0, y: 0, width: 400, height: 800 }
     for (const p of [0.2, 0.5, 0.8]) {
       const monthT = zoomTransform(frame, month, tile, p)

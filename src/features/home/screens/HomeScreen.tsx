@@ -81,8 +81,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const SECTION_GAP = 20
 
-// Pull first so any remote-side changes land before we push ours — avoids a
-// fight between two devices that both just pulled to refresh.
 const pullThenPush = async () => {
   await iCloudSync.pullAndMerge('pull-to-refresh')
   await iCloudSync.push('pull-to-refresh')
@@ -93,7 +91,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
-  // One column (large text) keeps to one side of iPhone Duo's fold.
+
   const foldColumn = useFoldColumn(isWide ? null : 720)
   const {
     homeChecklistDismissed,
@@ -113,7 +111,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     }))
   )
   const hasPet = usePet((s) => s.pet !== null)
-  // A buddy's pet visiting today, from Buddies and today's Plans.
+
   const petVisits = usePetVisits()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const [refreshing, setRefreshing] = useState(false)
@@ -130,13 +128,11 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
   const effectiveOrder = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
-  // Anchor the "Did you know" tip card to the bottom of the scroll view only
-  // when the user has it in its default trailing position. Once they reorder
-  // it inline, drop the auto-margin so it flows with surrounding sections.
+
   const isDidYouKnowLast =
     effectiveOrder[effectiveOrder.length - 1] === 'didYouKnow'
   const navigation = useNavigation<HomeTabStackNavigation>()
-  // Keyed on the day so the compiled screen moves on at midnight.
+
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const serviceYear = getServiceYearFromDate(today)
   const currentMonth = today.month()
@@ -160,15 +156,9 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
       tab: 'year',
     })
 
-  // Legacy upgrade flow is now subsumed by the boot-time tag → Category
-  // migration (`src/lib/categories.ts`). Categories carry their own
-  // `isCredit` invariant, so the user no longer needs to retroactively
-  // classify free-text tag strings. The state remains hard-wired to false so
-  // the sheet stays mounted-but-inert for one release window; removing the
-  // component entirely is deferred to a follow-up.
   const [upgradeReportsSheet, setUpgradeReportSheet] = useState(false)
   const weekStrip = useRevealAboveSheet()
-  // Home's jiggle mode: sections move, hide and come back.
+
   const buddiesAvailable = useBuddiesEnabled()
   const homeEditing = useHomeEditing({ lifecycle: true, buddiesAvailable })
   const { editing } = homeEditing
@@ -181,23 +171,20 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     (key) => !sections.hidden.includes(key)
   )
 
-  // A day's sheet holds the bars as they are: it keeps the day it opened on
-  // in view above itself, measured with the header where it is. Editing keeps
-  // them, since the header holds Done.
   const bars = useHideBarsOnScroll({
     enabled: !editing,
     paused: selectedDateSheet.open,
   })
-  // The header floats over the content, which starts below it.
+
   const [headerHeight, setHeaderHeight] = useState(0)
-  // Opening or closing iPhone Duo keeps the section being read in view.
+
   const anchor = useScrollAnchor(isWide)
   const anchorScroll = anchor.scroll(
     'home',
     weekStrip.scrollRef,
     scroll.frameRef
   )
-  // Tapping Home again heads back to the top.
+
   useTabReselect(() => {
     anchor.reset()
     weekStrip.scrollRef.current?.scrollToPosition(0, 0, true)
@@ -249,16 +236,12 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         }}
         scrollEnabled={!dragging}
         contentContainerStyle={{
-          // The room under the sections is inside them (see AdaptiveColumns),
-          // where holding it still starts editing.
           paddingHorizontal: isWide ? 24 : 15,
           paddingTop: headerHeight + 15,
           width: '100%',
           maxWidth: isWide ? contentMaxWidth : 720,
           alignSelf: 'center',
-          // flexGrow lets the inner View's `flex: 1` actually fill the
-          // viewport when the user's home sections are short, which the tip
-          // card's `marginTop: 'auto'` relies on to anchor to the bottom.
+
           flexGrow: 1,
           ...foldColumn,
         }}
@@ -284,11 +267,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         }
       >
         {anchorScroll.origin}
-        {/* Like empty space, tapping these while editing ends it. */}
+        {}
         <Pressable
           disabled={!editing}
           onPress={homeEditing.finish}
-          // The greeting reads as text and the card's controls stay reachable.
           accessible={false}
           focusable={false}
           importantForAccessibility='no'
@@ -325,13 +307,11 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           <AdaptiveColumns
             wide={isWide}
             sectionRef={(key) => anchor.anchorRef(key, 'home')}
-            // The tip card sits at the bottom while it's last.
             bottomAnchorLast={
               isDidYouKnowLast && homeScreenElements.didYouKnow !== false
             }
           >
             {!homeChecklistDismissed && (
-              // Getting started stays put; holding it doesn't edit Home.
               <ReorderableItem id='checklist' locked gap={SECTION_GAP}>
                 <HomeChecklist />
               </ReorderableItem>
@@ -340,7 +320,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               const section = (() => {
                 switch (key) {
                   case 'approachingConversations':
-                    // Missed Follow-ups live in the notifications tray.
                     if (!homeScreenElements.approachingConversations)
                       return null
                     return (
@@ -375,7 +354,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                         >
                           {i18n.t('serviceYearSummary')}
                         </Text>
-                        {/* The badge goes on the card, not the heading. */}
+                        {}
                         <ReorderableItemBox>
                           <HomeSectionMenu
                             onPress={viewServiceYear}
@@ -405,7 +384,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     if (!homeScreenElements.serviceReport) return null
                     return <ServiceReportSection key={key} />
                   case 'mileage':
-                    // Until answered, the opt-in prompt holds Mileage's slot.
                     if (mileageTrackingEnabled === undefined)
                       return <MileagePromptCard key={key} />
                     if (
@@ -436,8 +414,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     return <QuickActionsCard key={key} />
                   case 'thisWeek':
                     if (homeScreenElements.thisWeek === false) return null
-                    // Its item is measured to keep the week above the day's
-                    // sheet (see `viewRef` below).
+
                     return (
                       <WeekStripTeaser
                         key={key}
@@ -454,10 +431,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     return <TimerSection key={key} />
                   case 'didYouKnow':
                     if (homeScreenElements.didYouKnow === false) return null
-                    return (
-                      // Its cell takes the bottom anchor (`bottomAnchorLast`).
-                      <DidYouKnowTipCard key={key} />
-                    )
+                    return <DidYouKnowTipCard key={key} />
                   default:
                     return null
                 }
@@ -466,8 +440,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               const isPrompt =
                 key === 'mileage' && mileageTrackingEnabled === undefined
               const title = homeSectionTitle(key)
-              // Screen readers can't drag: they move a section past the next
-              // shown one instead.
+
               const at = shownSections.indexOf(key)
               const before = shownSections[at - 1]
               const after = shownSections[at + 1]
@@ -475,9 +448,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                 <ReorderableItem
                   key={key}
                   id={key}
-                  // Holding a section opens its menu, which has Edit Home Screen.
                   liftOutsideEditing={false}
-                  // The mileage question stays until it's answered.
                   onRemove={isPrompt ? undefined : () => hideHomeSection(key)}
                   removeLabel={i18n.t('homeEdit.removeA11y', {
                     section: title,
@@ -502,7 +473,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                       moveHomeSectionTo(key, after)
                   }}
                   viewRef={key === 'thisWeek' ? weekStrip.targetRef : undefined}
-                  // Sections with nothing to show today leave no gap.
                   gap={SECTION_GAP}
                   emptyPlaceholder={
                     <HomeEmptySectionPlaceholder title={title} />
@@ -513,8 +483,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               )
             })}
           </AdaptiveColumns>
-          {/* Holding empty space or a section's menu is the shortcut; this
-          says it in words where the sections end. */}
+          {}
           {editing ? null : (
             <View style={{ paddingTop: 32 }}>
               <EditLayoutButton
@@ -572,10 +541,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   )
 }
 
-/**
- * The pet's slot draws with Skia. Its cards are required the first time the
- * slot shows one, so a Home without the pet doesn't set Skia up at launch.
- */
 function PetPromptCard() {
   const Card: typeof PetPromptCardComponent =
     require('@/features/pet/components/PetPromptCard').default
@@ -588,7 +553,6 @@ function PetHomeSection(props: ComponentProps<typeof PetHomeSectionComponent>) {
   return <Section {...props} />
 }
 
-/** Quick Actions' Scribe AI orb draws with Skia too; required the same way. */
 function QuickActionsCard() {
   const Card: typeof ScribeQuickActionsCardComponent =
     require('@/features/scribe/components/ScribeQuickActionsCard').default

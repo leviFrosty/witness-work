@@ -13,11 +13,6 @@ import { usePreferences } from '@/stores/preferences'
 import type { SharedBadge } from '@/types/badges'
 import type { RootStackParamList } from '@/types/rootStack'
 
-/**
- * Hands the badge view what lives in Buddies: whose badge it is, and its
- * reactions (received on the User's own badge, a reaction bar on a buddy's).
- * Reactions show only where Buddies does and with badges shown.
- */
 export default function BadgeViewRouteScreen() {
   const { params } = useRoute<RouteProp<RootStackParamList, 'BadgeView'>>()
   const buddiesEnabled = useBuddiesEnabled()
@@ -47,7 +42,7 @@ export default function BadgeViewRouteScreen() {
   }
 
   const name = buddy ? buddyDisplayName(buddy) : null
-  // Bell news can name a level they've grown past since; it's still theirs.
+
   const parsed = parseBadgeKey(params.badgeKey)
   const shown: SharedBadge | null = parsed
     ? parsed.level

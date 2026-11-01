@@ -108,7 +108,7 @@ describe('buildContactsList', () => {
       contacts,
       suggested: suggestedOf([
         { key: 'nearby', contacts: [a, b] },
-        // A repeat across sections would be a bug upstream; still shown once.
+
         { key: 'recent', contacts: [b, c] },
       ]),
     })
@@ -174,7 +174,7 @@ describe('buildContactsList', () => {
       tone: 'due',
     })
     expect(detail('c').detail).toEqual({ text: '9 Elm Ave', tone: 'default' })
-    // Pin-only Contact: no street to show, so the row keeps its usual line.
+
     expect(detail('d').detail).toBeUndefined()
     expect(detail('e').detail).toEqual({
       text: 'suggested_followUpOverdue:3',

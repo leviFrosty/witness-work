@@ -94,7 +94,7 @@ describe('Saved View merge', () => {
         savedContactViews: 200,
         'savedContactViews:a': 200,
         'savedContactViews:b': 200,
-        // `c` was deleted on the peer after this device last changed it.
+
         'savedContactViews:c': 200,
       },
       NON_SYNCABLE_PREFERENCE_KEYS

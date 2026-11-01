@@ -227,7 +227,7 @@ describe('planAndroidPublish', () => {
       ],
       { removed: ['visit-1'], deletedContactIds: ['contact-2'] }
     )
-    // An event this device has no data for is left alone.
+
     expect(deletes).toEqual(['1', '2'])
     expect(writes).toEqual([])
   })
@@ -242,7 +242,7 @@ describe('planAndroidPublish', () => {
     const { writes, deletes } = plan(events, { entries: [current] })
     expect(writes).toEqual([])
     expect(deletes.sort()).toEqual(['5', '9'])
-    // Same result in another order, as another device would read them.
+
     expect(
       plan([...events].reverse(), { entries: [current] }).deletes.sort()
     ).toEqual(['5', '9'])

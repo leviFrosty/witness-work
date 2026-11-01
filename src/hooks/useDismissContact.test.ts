@@ -60,8 +60,6 @@ beforeEach(() => {
   mocks.granted = true
 })
 
-// The OS reminder itself is scheduled and replaced by
-// `useReconciledReminders` from `dismissedUntil`; these hooks only save it.
 describe('useDismissContact', () => {
   it('saves the new duration without touching OS reminders', async () => {
     await useDismissContact()(

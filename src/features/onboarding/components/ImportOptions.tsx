@@ -28,7 +28,6 @@ export type ImportType =
   | 'backup_json'
   | 'other_phone'
 
-/** The options whose destination depends on where the chooser is shown. */
 export type HostedImportType = Extract<
   ImportType,
   'mytime' | 'icloud' | 'backup_json'
@@ -36,7 +35,7 @@ export type HostedImportType = Extract<
 
 interface Props {
   source: 'onboarding' | 'settings'
-  /** The sync option's copy and state, or null to leave it out. */
+
   cloud: {
     titleKey: TranslationKey
     descKey: TranslationKey
@@ -47,13 +46,6 @@ interface Props {
   onSelect: (importType: HostedImportType) => void
 }
 
-/**
- * The places data can come in from: another phone, Notes and Paper (both read
- * by Scribe AI), MyTime, the device's sync, and a backup file. Onboarding's
- * "Pick up where you left off" and Settings → Import Data both list them.
- * Another phone, Notes and Paper open the same screens from either; the rest go
- * where the opener sends them.
- */
 export default function ImportOptions({
   source,
   cloud,

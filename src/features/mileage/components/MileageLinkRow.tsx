@@ -15,13 +15,12 @@ type Props = {
   label: string
   value?: string
   leftIcon?: AppIcon
-  /** A Shared Car's: how many people are on it, beside a shared icon. */
+
   people?: number
   onPress: () => void
   lastInSection?: boolean
 }
 
-/** A tappable settings row with an optional trailing value and chevron. */
 export default function MileageLinkRow({
   label,
   value,
@@ -32,8 +31,7 @@ export default function MileageLinkRow({
 }: Props) {
   const theme = useTheme()
   const [hovered, setHovered] = useState(false)
-  // At accessibility sizes the value sits under the label with the row's
-  // width, so it wraps whole instead of truncating.
+
   const largeText = useAccessibilityTextSize()
   const shared =
     people === undefined
@@ -56,7 +54,6 @@ export default function MileageLinkRow({
           leftIcon={leftIcon}
           lastInSection={lastInSection}
           controlWidth='auto'
-          // A lone chevron fits beside any label; a value moves under it.
           inlineAtLargeText={!value && people === undefined}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

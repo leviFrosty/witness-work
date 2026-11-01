@@ -119,14 +119,14 @@ describe('sortRowDetail', () => {
     it('says when no follow-up is planned', () => {
       const none = { text: 'contacts_sortDetail_noFollowUp' }
       expect(detailFor('nextFollowUp', contact('a'))).toEqual(none)
-      // Answered by a later visit.
+
       expect(
         detailFor('nextFollowUp', contact('a'), [
           visit('a', 9, { followUpInDays: -3 }),
           visit('a', 1),
         ])
       ).toEqual(none)
-      // Missed longer ago than the missed reminders look back.
+
       expect(
         detailFor('nextFollowUp', contact('a'), [
           visit('a', 60, { followUpInDays: -45 }),

@@ -2,7 +2,6 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-// Hoisted with the mocks; React is only read once a slot renders.
 const { slot } = vi.hoisted(() => ({
   slot: (name: string) => (props: React.PropsWithChildren) =>
     React.createElement(name, props),

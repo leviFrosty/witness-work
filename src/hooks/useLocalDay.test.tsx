@@ -23,7 +23,7 @@ vi.mock('react-native', () => ({
     },
   },
 }))
-// Like Hermes: `Date` keeps the old zone's offset until it's refreshed.
+
 vi.mock('@/lib/deviceTimeZone', () => ({
   refreshLocalTimeOffset: vi.fn(() => {
     process.env.TZ = runtime.zone
@@ -76,7 +76,7 @@ describe('useLocalDay', () => {
   it('moves to the new zone’s day when the app comes back after travel', () => {
     process.env.TZ = 'America/New_York'
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
-    // 2:15 AM on Oct 21 in New York; 8:15 PM on Oct 20 in Honolulu.
+
     vi.setSystemTime(new Date('2026-10-21T06:15:00Z'))
     mount()
     expect(latest().day).toBe('2026-10-21')
@@ -107,7 +107,7 @@ describe('useLocalDay', () => {
   it('moves on at midnight, in the zone the device is in by then', () => {
     process.env.TZ = 'America/New_York'
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
-    // 11:59 PM on Oct 20 in New York.
+
     vi.setSystemTime(new Date('2026-10-21T03:59:00Z'))
     mount()
     expect(latest().day).toBe('2026-10-20')
@@ -115,8 +115,6 @@ describe('useLocalDay', () => {
     advance(2 * 60_000)
     expect(latest().day).toBe('2026-10-21')
 
-    // Travelling with the app open: New York's midnight is 6 PM in Honolulu,
-    // so the tick checks the zone first and waits for Honolulu's midnight.
     travelTo('Pacific/Honolulu')
     advance(24 * 60 * 60_000)
     expect(latest().day).toBe('2026-10-21')
@@ -125,14 +123,12 @@ describe('useLocalDay', () => {
   })
 
   it.each([
-    // Clocks fall back: Nov 1 has 25 hours.
     ['America/New_York', '2026-11-01T03:59:00Z', '2026-10-31', 25],
     ['Europe/London', '2026-10-24T22:59:00Z', '2026-10-24', 25],
-    // Clocks spring forward: Mar 8 and Oct 4 have 23 hours.
+
     ['America/New_York', '2026-03-08T04:59:00Z', '2026-03-07', 23],
     ['Australia/Sydney', '2026-10-03T13:59:00Z', '2026-10-03', 23],
-    // Clocks change at midnight: Mar 8 and Sep 6 start at 1:00; Nov 1's
-    // midnight happens twice.
+
     ['America/Havana', '2026-03-08T04:59:00Z', '2026-03-07', 23],
     ['America/Havana', '2026-11-01T03:59:00Z', '2026-10-31', 25],
     ['America/Santiago', '2026-09-06T03:59:00Z', '2026-09-05', 23],
@@ -142,7 +138,7 @@ describe('useLocalDay', () => {
       runtime.zone = zone
       process.env.TZ = zone
       vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
-      // 11:59 PM the evening before the change.
+
       vi.setSystemTime(new Date(start))
       mount()
       expect(latest().day).toBe(eve)
@@ -154,7 +150,7 @@ describe('useLocalDay', () => {
 
       advance(2 * 60_000)
       expect(latest().day).toBe(next(1))
-      // 11:01 PM on the change day, however long it is.
+
       advance((hours - 1) * 60 * 60_000)
       expect(latest().day).toBe(next(1))
       expect(new Date().getHours()).toBe(23)

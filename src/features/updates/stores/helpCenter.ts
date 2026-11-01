@@ -13,29 +13,18 @@ import type {
 export type HelpBundleSource = 'snapshot' | 'cache' | 'network'
 
 type HelpCenterStore = {
-  /** The Help Center locale the screen asked for. */
   locale: HelpLocale | null
   bundle: HelpBundle | null
   source: HelpBundleSource | null
-  /**
-   * Shows the best Help Center for `locale` at once (the last download, else
-   * the bundled snapshot) and then checks the website for a newer one in the
-   * background. Call when the Help Center opens.
-   */
+
   open: (locale: HelpLocale) => void
 }
 
-// The open/refresh in flight, per locale, so remounts don't repeat it.
 const inFlight = new Map<HelpLocale, Promise<void>>()
 
-/** Whether `a` was published after `b` (ISO timestamps compare as text). */
 const isNewer = (a: HelpBundle, b: HelpBundle | null) =>
   !b || a.generatedAt > b.generatedAt
 
-/**
- * The newest copy on this device: the last download, unless the app's snapshot
- * is newer (an app update after that download).
- */
 async function newestLocal(locale: HelpLocale): Promise<HelpBundle> {
   const snapshot = readSnapshot(locale)
   const cached = await readCachedBundle(locale)
@@ -47,7 +36,6 @@ export const useHelpCenterStore = create<HelpCenterStore>((set, get) => ({
   bundle: null,
   source: null,
   open: (locale) => {
-    // Shows `bundle` if `locale` is still on screen and it's another version.
     const show = (bundle: HelpBundle, source: HelpBundleSource) => {
       const state = get()
       if (state.locale === locale && state.bundle?.hash !== bundle.hash)
@@ -60,7 +48,7 @@ export const useHelpCenterStore = create<HelpCenterStore>((set, get) => ({
 
     if (get().locale !== locale || !get().bundle)
       set({ locale, bundle: readSnapshot(locale), source: 'snapshot' })
-    // Back on a language whose refresh is still running: show what it leaves.
+
     const running = inFlight.get(locale)
     if (running) {
       void running.then(showNewestLocal)
@@ -69,7 +57,7 @@ export const useHelpCenterStore = create<HelpCenterStore>((set, get) => ({
     const run = (async () => {
       const newest = await newestLocal(locale)
       if (newest.hash !== readSnapshot(locale).hash) show(newest, 'cache')
-      // Compared with this language's newest copy, not whatever is on screen.
+
       const result = await refreshHelpBundle(locale, newest.hash)
       const fresh = result.outcome === 'unchanged' ? null : result.bundle
       if (fresh) show(fresh, 'network')

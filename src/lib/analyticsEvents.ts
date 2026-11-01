@@ -1,10 +1,6 @@
 import { scribeAnalyticsEventNames } from '@/lib/scribeAnalyticsEvents'
 
-// Every permanent usage event needs a concrete product question. Register new
-// feature outcomes here; temporary experiment details need an explicit expiry.
-// Cosmetic UI actions and background maintenance successes are deliberately absent.
 export const analyticsEventNames = [
-  // Core service activity and planning.
   'assistant_preview_opened',
   'assistant_recommendation_accepted',
   'assistant_recommendation_dismissed',
@@ -53,7 +49,7 @@ export const analyticsEventNames = [
   'visit_details_action',
   'week_plan_reminder_changed',
   'visit_field_suggestion_used',
-  // Import and backup outcomes.
+
   'backup_export_cancelled',
   'backup_export_failed',
   'backup_export_started',
@@ -71,7 +67,7 @@ export const analyticsEventNames = [
   'import_type_selected',
   'import_undone',
   ...scribeAnalyticsEventNames,
-  // Feature adoption and actionable outcomes.
+
   'account_activity_viewed',
   'account_backup_changed',
   'account_backup_deleted',
@@ -145,9 +141,7 @@ export const analyticsEventNames = [
   'mileage_tracking_changed',
   'mileage_trip_added',
   'mileage_vehicle_added',
-  // Shared Cars: a car shared (started, failed, done), joined, someone
-  // removed, and how each one ends; invitations through Buddies sent,
-  // answered, and canceled (no names, ids, or car details).
+
   'shared_car_ended',
   'shared_car_invite_answered',
   'shared_car_invite_canceled',
@@ -158,8 +152,7 @@ export const analyticsEventNames = [
   'shared_car_share_started',
   'shared_car_shared',
   'shared_car_sync_failed',
-  // Pet Companion adoption, its intro, decorating, unlocks, sharing and its
-  // hidden moments (no names).
+
   'pet_adopted',
   'pet_appearance_changed',
   'pet_details_opened',
@@ -176,7 +169,7 @@ export const analyticsEventNames = [
   'pet_shared',
   'pet_sharing_changed',
   'pet_woken',
-  // The reward stack: what a save earns the pet, played as a combo.
+
   'reward_animations_changed',
   'reward_sounds_changed',
   'reward_stack_skipped',
@@ -192,36 +185,36 @@ export const analyticsEventNames = [
   'saved_view_applied',
   'saved_view_created',
   'schedule_year_view_opened',
-  // Siri and Shortcuts on the iPhone, iPad and Apple Watch.
+
   'siri_action_completed',
   'siri_action_failed',
   'tab_order_changed',
   'update_reveal_closed',
   'update_reveal_opened',
-  // Apple Watch and Wear OS adoption and sync outcomes, captured on the phone.
+
   'watch_app_status',
   'watch_entry_adjusted',
   'watch_entry_skipped',
   'watch_timer_action_completed',
-  // Route planning entry and Supporter outcomes.
+
   'route_plan_entry_opened',
   'route_plan_created',
   'route_plan_failed',
   'route_plan_navigation_started',
-  // Route builder: which hands-on tools Supporters use.
+
   'route_buddy_invited',
   'route_finish_set',
   'route_plan_linked',
   'route_saved_place_set',
   'route_stop_added',
   'route_stops_reordered',
-  // Cloud Sync (ADR 0030): which option devices use, defaults, and switches.
+
   'cloud_sync_account_changed',
   'cloud_sync_default_outcome',
   'cloud_sync_offer_answered',
   'cloud_sync_option_changed',
   'cloud_sync_switch_failed',
-  // Supporter cloud sync (iCloud; Google Drive on Android) adoption and recovery.
+
   'icloud_account_changed',
   'icloud_restore_images_prompted',
   'icloud_restore_images_requested',
@@ -248,21 +241,21 @@ export const analyticsEventNames = [
   'icloud_sync_reset_started',
   'icloud_sync_upload_failed',
   'icloud_sync_upload_recovered',
-  // Android Google Drive Sync (ADR 0019); sync outcomes reuse the iCloud events.
+
   'google_drive_access_lost',
   'google_drive_connect_outcome',
   'google_drive_disconnected',
-  // Help Center (ADR 0033): remote search reach and content refresh health.
+
   'help_center_refreshed',
   'help_center_search_completed',
-  // App-wide Update Required (ADR 0027 §6).
+
   'update_required_shown',
   'update_required_store_opened',
-  // A downloaded OTA update applied from the tray instead of the next launch.
+
   'pending_update_applied',
-  // Expected device state kept out of error tracking.
+
   'device_storage_full',
-  // Onboarding and activation.
+
   'onboarding_backfill_completed',
   'onboarding_buddies_invite_result',
   'onboarding_calendar_setup_result',
@@ -281,7 +274,7 @@ export const analyticsEventNames = [
   'onboarding_step_skipped',
   'onboarding_step_viewed',
   'onboarding_tour_closed',
-  // Supporter conversion and purchase outcomes.
+
   'paywall_closed',
   'paywall_offerings_empty',
   'paywall_offerings_failed',
@@ -322,15 +315,13 @@ const retainedEvents = new Set<string>([
   'Application Became Active',
 ])
 
-/** Covers SDK events as well as the app contract, including restored queues. */
 export function isRetainedAnalyticsEvent(
   event: string,
   properties?: unknown
 ): boolean {
   if (!retainedEvents.has(event)) return false
   if (event !== 'timer_action_completed') return true
-  // This outcome name formerly also covered pauses/resets. Enforce adoption
-  // semantics on old queues as well as new captures, without reapplying caps.
+
   return (
     properties !== null &&
     typeof properties === 'object' &&

@@ -22,7 +22,6 @@ import { getNoteText } from '@/lib/richText/notes'
 import { tracking } from '@/lib/tracking'
 
 type Props = {
-  /** Local day. */
   date: Date
   reports: TimeEntry[]
   dayPlans: DayPlan[]
@@ -31,16 +30,11 @@ type Props = {
 
 type Line = { key: string; primary: string; secondary?: string }
 
-/** True when a day has anything for `DayPreview` to show. */
 export const dayHasPreview = (props: Omit<Props, 'date'>) =>
   props.reports.length > 0 ||
   props.dayPlans.length > 0 ||
   props.recurringPlans.length > 0
 
-/**
- * Read-only summary of one day — its Time Entries and Plans — shown above a
- * calendar day's context menu, where the day itself is only a small square.
- */
 export default function DayPreview({
   date,
   reports,
@@ -89,7 +83,7 @@ export default function DayPreview({
         plan.title || getNoteText(getEffectiveNoteForRecurringPlan(plan, date)),
     })),
   ]
-    // Anytime Plans first, like all-day events.
+
     .sort((a, b) => (a.anytime ? -1 : a.start) - (b.anytime ? -1 : b.start))
     .map(
       (plan): Line => ({

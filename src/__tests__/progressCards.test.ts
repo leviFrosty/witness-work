@@ -90,7 +90,7 @@ describe('progress cards', () => {
       id: 'days',
       size: 'compact',
     })
-    // A size the card doesn't come in is ignored.
+
     expect(
       resizeProgressCard(MONTH_CARDS, layout, 'projected', 'small')
     ).toEqual(layout)
@@ -106,7 +106,6 @@ describe('progress cards', () => {
   })
 
   it('steps over hidden cards, keeping them in place', () => {
-    // `projected` is hidden (e.g. no goal this month).
     const shown = ['dailyPace', 'studies', 'days'] as const
     expect(
       stepProgressCard(layout, [...shown], 'days', -1).map((c) => c.id)
@@ -184,7 +183,6 @@ describe('year and all time cards', () => {
   })
 
   it("keep to their own tab's cards", () => {
-    // A Month card stored on Year (or from a newer version) is dropped.
     expect(
       getEffectiveProgressCards(
         YEAR_CARDS,

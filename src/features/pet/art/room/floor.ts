@@ -1,8 +1,3 @@
-/**
- * Floor (y 62–99): wood planks, flagstones, brick or clay tile, and the secret
- * floors (zellige, azulejo, terrazzo, herringbone, tatami, pebbles, hex,
- * harlequin, chocolate, lily pond).
- */
 import {
   createRng,
   dim,
@@ -20,7 +15,6 @@ import { FLOOR_IDS, type FloorId } from '@/types/pet'
 export { FLOOR_IDS }
 export type { FloorId }
 
-/** Top row of the floor. */
 export const FLOOR_TOP = 62
 
 const WHITE = rgb('#ffffff')
@@ -39,7 +33,6 @@ const C = {
   tileB: rgb('#ead6b4'),
 }
 
-/** Secret floor palettes. */
 const S = {
   zelGrout: rgb('#e4d8bd'),
   zelTeal: rgb('#17656a'),
@@ -83,12 +76,10 @@ const S = {
   lilyHeart: rgb('#f2c94c'),
 }
 
-/** Non-negative remainder. */
 function mod(n: number, m: number): number {
   return ((n % m) + m) % m
 }
 
-/** Blends every floor pixel toward `c`, strongest on the back row. */
 function backGlow(buf: PixelBuffer, c: Rgb, t: number): void {
   const rows = buf.height - FLOOR_TOP
   for (let y = FLOOR_TOP; y < buf.height; y++) {
@@ -151,7 +142,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   zellige(buf) {
-    // Small glossy hand-cut squares: 5 px tiles on a 6 px cream grout grid.
     const W = buf.width
     fillRect(buf, 0, FLOOR_TOP, W, buf.height, S.zelGrout)
     const r = createRng(41)
@@ -165,23 +155,20 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
         else c = r() < 0.5 ? S.zelTeal : S.zelGreen
         c = mix(c, r() < 0.5 ? WHITE : dim(c, 0.6), r() * 0.14)
         fillRect(buf, x, y, x + 5, y + 5, c)
-        // Hand-cut: nick a corner or let one edge wander by a pixel.
+
         const cut = r()
         if (cut < 0.25) plot(buf, x + (r() < 0.5 ? 0 : 4), y + 4, S.zelGrout)
         else if (cut < 0.4)
           fillRect(buf, x + 4, y + 1, x + 5, y + 4, S.zelGrout)
         else if (cut < 0.5)
           fillRect(buf, x + 1, y + 4, x + 4, y + 5, dim(c, 0.85))
-        // Glaze: a lit top edge and a gloss pixel.
+
         fillRect(buf, x, y, x + 4, y + 1, mix(c, WHITE, 0.22))
         plot(buf, x + 1, y + 1, mix(c, WHITE, 0.6))
       }
     }
   },
   azulejo(buf) {
-    // 12 px tin-glazed tiles; quarter motifs at each corner join into a
-    // solid diamond where four tiles meet, each tile with a small diamond
-    // centre.
     const W = buf.width
     const P = 12
     const y0 = FLOOR_TOP - 3
@@ -192,7 +179,7 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
         const u = Math.min(lx, P - lx)
         const v = Math.min(ly, P - ly)
         let c = S.azuWhite
-        // The rosette covers the grout, so it reads as one diamond.
+
         if (u + v <= 3) c = S.azuBlue
         else if (lx === 0 || ly === 0) c = S.azuGrout
         else {
@@ -207,7 +194,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   terrazzo(buf) {
-    // Polished cream slabs with faint seams, scattered with stone chips.
     const W = buf.width
     fillRect(buf, 0, FLOOR_TOP, W, buf.height, S.terBase)
     for (let y = FLOOR_TOP + 18; y < buf.height; y += 19)
@@ -229,11 +215,10 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
         plot(buf, x + 1, y + 1, dim(c, 0.85))
       }
     }
-    // Polish: a soft sheen across the back of the floor.
+
     backGlow(buf, WHITE, 0.2)
   },
   herringbone(buf) {
-    // Parquet: 8×4 and 4×8 planks stepping diagonally in a herringbone.
     const W = buf.width
     const u = 4
     const r = createRng(19)
@@ -264,14 +249,11 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   tatami(buf) {
-    // Straw mats laid in the classic pattern: in each 36×24 block a mat
-    // standing up beside two lying down, the next block mirrored, so no four
-    // corners ever meet. Dark cloth runs along each mat's long edges.
     const mat = (x: number, y: number, w: number, h: number): void => {
       const lying = w > h
       const straw = lying ? S.tatStraw : S.tatStrawB
       fillRect(buf, x, y, x + w, y + h, straw)
-      // Fine weave: faint lines across the mat, parallel to its short edges.
+
       if (lying) {
         for (let wx = x + 2; wx < x + w - 1; wx += 2)
           fillRect(buf, wx, y + 2, wx + 1, y + h - 2, dim(straw, 0.94))
@@ -304,7 +286,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   pebbles(buf) {
-    // Rounded river stones packed in offset rows over dark gaps.
     const W = buf.width
     fillRect(buf, 0, FLOOR_TOP, W, buf.height, S.pebGap)
     const r = createRng(58)
@@ -325,8 +306,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   hex(buf) {
-    // Hexagonal penny tiles (nearest-centre cells, 1 px grout) with a few
-    // sage-and-clay flowers and scattered sage.
     const W = buf.width
     const px = 6
     const py = 5
@@ -386,7 +365,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   harlequin(buf) {
-    // Bold 20×10 diamonds in three warm colours with thin dark lines.
     const W = buf.width
     const L = 20
     for (let y = FLOOR_TOP; y < buf.height; y++) {
@@ -401,7 +379,7 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
           const i = Math.floor(s / L)
           const j = Math.floor(t / L)
           c = S.harTiles[mod(i + 2 * j, 3)]
-          // Light the two upper edges of each diamond.
+
           if (sm < 4 || tm >= L - 2) c = mix(c, WHITE, 0.18)
         }
         plot(buf, x, y, c)
@@ -409,7 +387,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   chocolate(buf) {
-    // A giant chocolate bar: bevelled segments between deep grooves.
     const W = buf.width
     fillRect(buf, 0, FLOOR_TOP, W, buf.height, S.chocGroove)
     const SW = 20
@@ -433,7 +410,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
     }
   },
   lilypond(buf) {
-    // Shallow pond water with lily pads around a calm middle under the bed.
     const W = buf.width
     fillRect(buf, 0, FLOOR_TOP, W, buf.height, S.pondWater)
     const r = createRng(64)
@@ -456,7 +432,7 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
       plot(buf, x - 1, y + 1, S.pondRipple)
       plot(buf, x + 4, y + 1, S.pondRipple)
     }
-    // [x, y, radius, notch angle, blossom]
+
     const pads: readonly (readonly [
       number,
       number,
@@ -487,7 +463,7 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
         ry * 0.4,
         S.padLight
       )
-      // The notch: a wedge of water from the centre to the rim.
+
       for (let k = 0; k <= rad * 1.2; k++) {
         const a = notch + (k / (rad * 1.2) - 0.5) * 0.7
         for (let d = 1; d <= rad; d++)
@@ -501,7 +477,7 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
       if (blossom) {
         const bx = cx + 1
         const by = cy - 2
-        // A white water lily: pointed petals around a small yellow heart.
+
         fillRect(buf, bx - 2, by, bx + 3, by + 1, S.lilyPetal)
         plot(buf, bx - 2, by, S.lilyShade)
         plot(buf, bx + 2, by, S.lilyShade)
@@ -515,7 +491,6 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
   },
 }
 
-/** Paints the floor. */
 export function drawFloor(buf: PixelBuffer, floor: FloorId): void {
   FLOORS[floor](buf)
 }

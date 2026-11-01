@@ -50,7 +50,6 @@ vi.mock('@/app/sharedCars/carInvitationsService', () => ({
   carInvitations: { carBuddies: mocks.carBuddies },
 }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -105,7 +104,6 @@ let renderer: ReactTestRenderer | undefined
 const onOpenChange = vi.fn()
 const onInvite = vi.fn()
 
-/** `null` for no car yet: the User has no buddies to share it with. */
 function render(spaceId: string | null = SPACE) {
   act(() => {
     renderer = create(
@@ -148,7 +146,6 @@ const sheet = (tree: ReactTestRenderer) =>
     onClosed: () => void
   }
 
-/** The User shared the van with Ana (on it); Ben is invited, Cal isn't. */
 function seedCar(extraPeople = 0) {
   const members = [
     carMember(SPACE, `me-${SPACE}`, 'Levi'),
@@ -230,7 +227,7 @@ describe('the Invite to <car> sheet', () => {
     const tree = render()
     act(() => choices(tree)[2].props.onPress())
     expect(onOpenChange).toHaveBeenCalledWith(false)
-    // The toast shows over the form, once the sheet has gone.
+
     expect(onInvite).not.toHaveBeenCalled()
     act(() => sheet(tree).onClosed())
     expect(onInvite).toHaveBeenCalledWith({ inboxId: 'inbox-cal', name: 'Cal' })
@@ -238,7 +235,6 @@ describe('the Invite to <car> sheet', () => {
   })
 
   it('offers no one once the car is full, counting open invitations', () => {
-    // Nine people and Ben's open invitation: ten places taken.
     seedCar(7)
     const tree = render()
     expect(texts(tree)).toContain(

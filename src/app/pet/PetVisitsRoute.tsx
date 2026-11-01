@@ -4,7 +4,6 @@ import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
 import PetVisitsScreen from '@/features/pet/screens/PetVisitsScreen'
 
-/** Every buddy's pet visiting today, from Buddies. */
 export default function PetVisitsRoute(
   props: NativeStackScreenProps<RootStackParamList, 'PetVisits'>
 ) {

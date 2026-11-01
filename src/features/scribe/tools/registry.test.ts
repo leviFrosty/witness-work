@@ -47,7 +47,6 @@ const { TOOL_NAME_PATTERN, schemaViolations, toolDefinitions } = await import(
 type JsonValue = import('@/features/scribe/lib/wire').JsonValue
 type ScribeTool = import('@/features/scribe/tools/types').ScribeTool
 
-/** Files in tools/ that aren't tools. */
 const NOT_TOOLS = new Set(['types.ts', 'index.ts', 'shared.ts'])
 
 const toolsDir = fileURLToPath(new URL('.', import.meta.url))
@@ -64,7 +63,6 @@ const toolFiles = readdirSync(toolsDir, { withFileTypes: true })
 const bytes = (value: unknown) =>
   new TextEncoder().encode(JSON.stringify(value)).length
 
-/** Sentences in a description: text ending in . ! or ? */
 const sentences = (text: string) =>
   text.split(/[.!?](?=\s|$)/).filter((part) => part.trim().length > 0).length
 
@@ -73,11 +71,6 @@ const isObject = (
 ): value is Record<string, JsonValue> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/**
- * Every optional value is a union with null, written as a type array of one
- * type and null, or an anyOf with a `{ type: 'null' }` branch; never a bare
- * `null` type or a missing key.
- */
 function nullableProblems(node: JsonValue, path = '$'): string[] {
   if (!isObject(node)) return []
   const problems: string[] = []
@@ -110,9 +103,7 @@ describe('tool registry', () => {
     expect(toolFiles.length).toBeGreaterThan(0)
     const registered = new Set<ScribeTool>(SCRIBE_TOOLS)
     for (const file of toolFiles) {
-      const module = (await import(
-        /* @vite-ignore */ `${toolsDir}${file}`
-      )) as {
+      const module = (await import(`${toolsDir}${file}`)) as {
         default?: ScribeTool
       }
       expect(module.default, `${file} has no default export`).toBeDefined()
@@ -123,7 +114,7 @@ describe('tool registry', () => {
       ).toHaveLength(1)
       registered.delete(module.default!)
     }
-    // Nothing in the registry comes from outside tools/.
+
     expect([...registered].map((tool) => tool.name)).toEqual([])
   })
 
@@ -200,17 +191,14 @@ describe('wire definitions', () => {
     expect(bytes(definitions)).toBeLessThanOrEqual(
       DEFAULT_SCRIBE_LIMITS.maxToolsBytes
     )
-    // ≈ 3,500 tokens at the protocol's bytes / 3... spent on every step.
-    // newCategory and onDate added ≈ 800 bytes to save a step on their turns,
-    // time_update and time_delete ≈ 1,250, and memory_update ≈ 900, so the
-    // User doesn't have to repeat a correction.
+
     expect(bytes(definitions)).toBeLessThanOrEqual(15_500)
   })
 
   it('declares access and untrusted text as the protocol names them', () => {
     for (const definition of definitions) {
       const tool = scribeTool(definition.name)!
-      // Memory edits apply on the device, but still change state.
+
       expect(definition.access).toBe(
         tool.access === 'memory' ? 'write' : tool.access
       )
@@ -225,7 +213,7 @@ describe('wire definitions', () => {
     expect(JSON.stringify(toolDefinitions(SCRIBE_TOOLS))).toBe(
       JSON.stringify(definitions)
     )
-    // Data protection mode refuses visits_read_notes on the device instead.
+
     expect(definitions.map((definition) => definition.name)).toContain(
       'visits_read_notes'
     )

@@ -10,7 +10,6 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/** Signed-In Devices and Account Activity (ADR 0028). */
 export default function AccountSecuritySection() {
   const navigation = useNavigation<RootStackNavigation>()
   return (

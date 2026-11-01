@@ -1,7 +1,6 @@
 import useMileage from '@/stores/mileage'
 import type { MileageSnapshot } from '@/types/mileage'
 
-/** The local mileage store's synced fields. */
 export function localMileageSnapshot(): MileageSnapshot {
   const {
     vehicles,
@@ -21,7 +20,6 @@ export function localMileageSnapshot(): MileageSnapshot {
   }
 }
 
-/** Writes a merged or restored snapshot back, preserving its stamps verbatim. */
 export function applyMileageSnapshot(snapshot: MileageSnapshot): void {
   useMileage.setState({
     vehicles: snapshot.vehicles,

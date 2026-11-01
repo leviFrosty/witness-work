@@ -18,7 +18,6 @@ import {
 } from '@/lib/unloggedDayReminders'
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
 
-/** Local wall-clock instant on 2026-03-<day>. */
 const at = (day: number, hours = 0, minutes = 0) =>
   new Date(2026, 2, day, hours, minutes)
 const now = at(10, 10).getTime()
@@ -81,7 +80,7 @@ describe('unloggedDayReminderGroups', () => {
       }),
       now
     )
-    // Both days land on the 11th at 8 PM, so they share one reminder.
+
     expect(keys(groups)).toEqual([
       { date: at(11, 20), days: ['2026-03-10', '2026-03-11'] },
     ])
@@ -166,14 +165,12 @@ describe('unloggedDayReminderGroups', () => {
     const groups = unloggedDayReminderGroups(
       sources({
         recurringPlans: [weekly],
-        // A zero-minute Day Plan plans nothing, and the recurring one still
-        // counts beside it.
+
         dayPlans: [plan(10, { minutes: 0 })],
       }),
       now
     )
-    // The 17th was skipped. The 24th's reminder
-    // (that evening) is past the two weeks ahead of 10 AM on the 10th.
+
     expect(keys(groups).flatMap(({ days }) => days)).toEqual([
       '2026-03-03',
       '2026-03-10',

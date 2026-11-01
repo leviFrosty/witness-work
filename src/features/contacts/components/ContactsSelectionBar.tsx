@@ -23,17 +23,11 @@ import {
 } from '@/features/contacts/components/ListSelection'
 import type { ListSelection } from '@/features/contacts/hooks/useListSelection'
 
-/**
- * Batch actions for the Contacts list in Select mode: favorite, dismiss for a
- * duration, archive (not in data protection mode), and a red Delete. Each ends
- * Select mode once it runs.
- */
 export default function ContactsSelectionBar({
   contacts,
   selection,
   bottom,
 }: {
-  /** The selected contacts. */
   contacts: Contact[]
   selection: ListSelection
   bottom: number

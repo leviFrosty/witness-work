@@ -145,7 +145,7 @@ describe('request', () => {
         fetchImpl: page({}),
       })
     ).rejects.toMatchObject({ kind: 'offline' })
-    // Anything else that isn't JSON is still a bug to report.
+
     await expect(
       request({
         url: 'https://api.test/x',

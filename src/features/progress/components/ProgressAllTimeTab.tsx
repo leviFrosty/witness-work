@@ -24,39 +24,20 @@ import type { ProgressCardEditStart } from '@/features/progress/components/cards
 import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import { useAllTimeEntries } from '@/features/progress/hooks/usePeriodCardData'
 
-/**
- * Progress screen's "All-time" tab. Aggregates every service report the user
- * has ever logged into:
- *
- * - A hero `LifetimeHoursCard` (raw unadjusted lifetime hours + span metadata).
- * - The User's All Time cards (see `AllTimeProgressCards`).
- * - A `YearByYearList` of every service year in the continuous span from the
- *   earliest report to the current service year.
- *
- * Renders a centered `Empty` state instead when no reports exist.
- */
 interface ProgressAllTimeTabProps {
-  /** Invoked when the user taps a year row — parent switches to Year tab. */
   onYearPress: (endYear: number) => void
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
-  /** The cards are being edited (Edit in the header, or a long press). */
+
   editing: boolean
   onStartEditing: (source: ProgressCardEditStart) => void
   onFinishEditing: () => void
-  /** The Add Cards sheet is open. */
+
   adding: boolean
   onAddingChange: (adding: boolean) => void
   onNavigate: (destination: ProgressCardDestination) => void
 }
 
-/**
- * Whether All Time has nothing to show yet. Keys off reports existing at all —
- * not `getLifetimeHours` alone — so users with only zero-hour entries (e.g.
- * placeholder reports) still see the aggregated view instead of the empty
- * state. Spec also allows hiding when lifetime hours is exactly 0; falling back
- * to length keeps behavior defensive for both cases.
- */
 const useAllTimeIsEmpty = () => {
   const entries = useAllTimeEntries()
   return entries.length === 0 || getLifetimeHours(entries) === 0
@@ -81,7 +62,7 @@ const ProgressAllTimeTab = ({
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const [dragging, setDragging] = useState(false)
-  // Tapping Progress again heads back to the top.
+
   useTabReselect(() => scrollRef.current?.scrollToPosition(0, 0, true))
 
   if (isEmpty) {

@@ -2,22 +2,11 @@ import * as Notifications from 'expo-notifications'
 import { isBuddiesNewsKind } from '@/features/buddies/lib/pushAlerts'
 import { buddiesPushData } from '@/lib/notificationData'
 
-/**
- * Whether a notification is buddies' news (a buddy's new badge, a reaction to
- * the User's badge), by its `ww.kind`, rather than logistics.
- */
 export function isBuddiesNews(notification: Notifications.Notification) {
   const push = buddiesPushData(notification)
   return push !== null && isBuddiesNewsKind(push.kind)
 }
 
-/**
- * How a notification shows while the app is open. Reminders and Buddies
- * logistics show a banner; their sound follows the in-app Audio setting
- * (delivered in the background, the system's settings decide). Buddies' news is
- * quiet (ADR 0021): no banner, no sound, just the list, and the bell has it
- * too. While the app is open, the bell's unread count sets the app icon badge.
- */
 export function foregroundPresentation(
   notification: Notifications.Notification,
   { audioEnabled }: { audioEnabled: boolean }
@@ -33,8 +22,7 @@ export function foregroundPresentation(
     }
   return {
     shouldShowAlert: true,
-    // Android drops the banner of a silent alert, so `SilentForegroundAlerts`
-    // shows one in the app.
+
     shouldPlaySound: audioEnabled,
     shouldSetBadge: false,
     shouldShowBanner: true,

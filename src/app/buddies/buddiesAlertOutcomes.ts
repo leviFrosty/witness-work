@@ -5,13 +5,6 @@ import { analytics } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { mmkvStorage } from '@/stores/mmkv'
 
-/**
- * How Buddies alerts turned out on this device, counted until the app next
- * reports them: `named`, `quiet` (muted here, so not posted), or
- * `fallback.<reason>` (the template text). The iOS extension keeps the same
- * counts in the App Group; Android keeps them here. Counts only: no kinds,
- * names, or ids.
- */
 export type AlertOutcomeKey = 'named' | 'quiet' | `fallback.${string}`
 
 const STORAGE_KEY = 'buddiesAlertOutcomes'
@@ -34,7 +27,6 @@ function readCounts(): Record<string, number> {
   }
 }
 
-/** Android: counts one alert until the next report. */
 export function recordAlertOutcome(key: AlertOutcomeKey) {
   const counts = readCounts()
   counts[key] = (counts[key] ?? 0) + 1
@@ -48,11 +40,6 @@ function takeCounts(): Record<string, number> {
   return counts
 }
 
-/**
- * Sends what happened to Buddies alerts since the last report, then forgets it.
- * Answers whether named alerts work in the field, and why they don't when they
- * fall back to the template.
- */
 export function reportAlertOutcomes() {
   let counts: Record<string, number>
   try {

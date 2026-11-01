@@ -4,14 +4,13 @@ import type { ScribeError, ScribeErrorCode } from '@/features/scribe/types'
 import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 import { parseUsageSnapshot } from '@/features/scribe/lib/usageSnapshot'
 
-/** A failed Scribe AI call; `cancelled` when the caller aborted it. */
 export class ScribeClientError extends Error {
   readonly code: ScribeErrorCode | 'cancelled'
-  /** The protocol's `code` (`transcribe_limit`, `invalid_tools`, …), if any. */
+
   readonly serverCode: string | null
   readonly status: number | null
   readonly retryAfterMs: number | null
-  /** The snapshot on `limit_reached`. */
+
   readonly usage: UsageSnapshotWire | null
 
   constructor(
@@ -35,10 +34,6 @@ export class ScribeClientError extends Error {
   }
 }
 
-/**
- * What each protocol code means for the User
- * ([Errors](docs/scribe-ai-protocol.md#errors)).
- */
 const SERVER_CODES: Record<string, ScribeErrorCode> = {
   bad_request: 'unknown',
   invalid_tools: 'unknown',
@@ -61,7 +56,6 @@ const SERVER_CODES: Record<string, ScribeErrorCode> = {
   unavailable: 'unavailable',
 }
 
-/** Codes Try again can't fix. */
 const FINAL_CODES = new Set<ScribeErrorCode | 'cancelled'>([
   'cancelled',
   'limit_reached',
@@ -75,20 +69,17 @@ const FINAL_CODES = new Set<ScribeErrorCode | 'cancelled'>([
   'disabled',
 ])
 
-/** Server codes that are app bugs: shown as an error, worth a report. */
 export const REPORTED_SERVER_CODES = new Set([
   'bad_request',
   'invalid_tools',
   'step_retry_limit',
 ])
 
-/** Sending the same step again would fail the same way. */
 const NO_RETRY_SERVER_CODES = new Set(['invalid_tools', 'step_retry_limit'])
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** A Scribe AI route's non-2xx envelope (`HttpError` from the session client). */
 function fromHttpError(error: HttpError): ScribeClientError {
   if (error.kind === 'cancelled') return new ScribeClientError('cancelled')
   if (error.status === null)
@@ -117,7 +108,6 @@ function fromHttpError(error: HttpError): ScribeClientError {
   })
 }
 
-/** A session that couldn't be opened or used. */
 function fromSessionError(error: AccountSessionError): ScribeClientError {
   const details = {
     status: error.status,
@@ -146,10 +136,9 @@ function fromSessionError(error: AccountSessionError): ScribeClientError {
   }
 }
 
-/** Any failure of a Scribe AI call, normalized. */
 export function toScribeClientError(error: unknown): ScribeClientError {
   if (error instanceof ScribeClientError) return error
-  // An HttpError too, so first.
+
   if (error instanceof AccountSessionError) return fromSessionError(error)
   if (error instanceof HttpError) return fromHttpError(error)
   if (error instanceof Error && error.name === 'AbortError')
@@ -157,7 +146,6 @@ export function toScribeClientError(error: unknown): ScribeClientError {
   return new ScribeClientError('unknown')
 }
 
-/** A terminal `error` event's code (`model_error`, `model_timeout`, …). */
 export function fromStreamErrorCode(
   code: string,
   meter: UsageSnapshotWire | null
@@ -168,7 +156,6 @@ export function fromStreamErrorCode(
   })
 }
 
-/** The public shape the conversation screen renders. */
 export function toScribeError(error: unknown): ScribeError {
   const failure = toScribeClientError(error)
   const code: ScribeErrorCode =

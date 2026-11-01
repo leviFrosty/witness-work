@@ -5,12 +5,6 @@ import {
   type Pose,
 } from './types'
 
-/**
- * Evaluates `table` `elapsedMs` after it started: the full pose (unset fields
- * at rest), whether it's over, and whether its sound is due. A non-finite
- * elapsed time (a broken clock) ends the motion at its last pose, silently, so
- * it can't play forever.
- */
 export function evaluateMotion(
   table: MotionTable,
   elapsedMs: number

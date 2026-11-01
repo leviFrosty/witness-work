@@ -4,7 +4,6 @@ import { hasSensitiveCustomFieldText } from '@/lib/sensitiveCustomFields'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 
-/** Advisory only: never changes input values or whether the user can save. */
 export default function CustomFieldPrivacyWarning({
   texts,
 }: {

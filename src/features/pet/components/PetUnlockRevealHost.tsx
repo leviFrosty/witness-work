@@ -13,12 +13,6 @@ import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Shows the unlock toasts `announcePetUnlocks` asks for, and hosts a pet item's
- * full-screen reveal, asked for from its unlock toast or tray item. The reveal
- * waits for the takeover arbiter's turn like every takeover (ADR 0021).
- * HomeTabStack mounts the single instance.
- */
 export default function PetUnlockRevealHost() {
   const navigation = useNavigation<RootStackNavigation>()
   const revealing = usePetUnlockNews((s) => s.revealing)
@@ -48,7 +42,6 @@ export default function PetUnlockRevealHost() {
   )
 }
 
-// The reveal's module loads the first time it shows.
 function PetUnlockReveal(
   props: ComponentProps<typeof PetUnlockRevealComponent>
 ) {

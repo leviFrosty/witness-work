@@ -20,16 +20,10 @@ interface Props {
   goNext: () => void
 }
 
-/**
- * The first question, once the tour has shown what the app does: it opens
- * personalizing, so it carries that heading above the question.
- */
 const StepTwo = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { role } = usePreferences()
-  // Reflect the user's just-made selection in the CTA. For 'custom' the role
-  // label would be "Custom" which isn't meaningful as a subject — fall back
-  // to plain "Continue" there.
+
   const ctaLabel =
     role && role !== 'custom'
       ? i18n.t('continueAs', { role: i18n.t(role) })

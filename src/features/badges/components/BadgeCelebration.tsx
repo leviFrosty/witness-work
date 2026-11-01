@@ -49,20 +49,12 @@ const OTHERS_SIZE = 30
 const MAX_OTHERS = 4
 const CONFETTI_DELAY_MS = 380
 
-/**
- * The moment a badge arrives: a dimmed backdrop, the medallion springing in
- * with a sweep of light, a success haptic, and confetti (a full burst for Gold,
- * Pearl, and moments; a small one otherwise). Several new badges show the most
- * notable large and the rest in a row beneath. The history summary fans out up
- * to five of the badges the User's records already reached. Still and
- * confetti-free under Reduce Motion.
- */
 export default function BadgeCelebration({
   content,
   onClose,
 }: {
   content: BadgeCelebrationContent
-  /** The overlay has faded out. */
+
   onClose: (action: BadgeCelebrationAction) => void
 }) {
   const theme = useTheme()
@@ -95,7 +87,6 @@ export default function BadgeCelebration({
       })
     : title
 
-  // Plays once: every dependency is a primitive fixed for this content.
   useEffect(() => {
     Haptics.success().catch(() => {})
     AccessibilityInfo.announceForAccessibility(announcement)
@@ -135,7 +126,7 @@ export default function BadgeCelebration({
     appear.value = withTiming(
       0,
       { duration: 180, easing: Easing.in(Easing.quad) },
-      // Closes even when the fade is interrupted, so the card can't get stuck.
+
       () => scheduleOnRN(onClose, action)
     )
   }

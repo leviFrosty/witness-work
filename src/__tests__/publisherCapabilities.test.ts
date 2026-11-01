@@ -165,11 +165,10 @@ describe('derivePublisherCapabilities', () => {
 
   describe('hasAnnualGoal', () => {
     it("uses the role default when user setting is 'default'", () => {
-      // Roles whose default is true
       expect(derive('regularPioneer').hasAnnualGoal).toBe(true)
       expect(derive('circuitOverseer').hasAnnualGoal).toBe(true)
       expect(derive('custom').hasAnnualGoal).toBe(true)
-      // Roles whose default is false
+
       expect(derive('publisher').hasAnnualGoal).toBe(false)
       expect(derive('regularAuxiliary').hasAnnualGoal).toBe(false)
       expect(derive('specialPioneer').hasAnnualGoal).toBe(false)
@@ -269,7 +268,7 @@ describe('derivePublisherCapabilities', () => {
       const caps = derive('regularPioneer', {
         milestoneOverrides: [100, 200, 300],
       })
-      // overrides are filtered to <= annualGoalHours and the goal is appended
+
       expect(caps.milestones).toContain(100)
       expect(caps.milestones).toContain(200)
       expect(caps.milestones).toContain(300)
@@ -302,9 +301,6 @@ describe('derivePublisherCapabilities', () => {
 
 describe('getTenureType', () => {
   it("maps every Full-Time Service role to 'fullTimeService'", () => {
-    // Glossary: regular pioneer, special pioneer, and circuit overseer share
-    // a single Tenure clock. Moving between any two of these roles keeps the
-    // clock running — they all map to the same Tenure Type.
     expect(getTenureType('regularPioneer')).toBe('fullTimeService')
     expect(getTenureType('specialPioneer')).toBe('fullTimeService')
     expect(getTenureType('circuitOverseer')).toBe('fullTimeService')
@@ -315,8 +311,6 @@ describe('getTenureType', () => {
   })
 
   it('returns null for roles with no Tenure clock', () => {
-    // Regular Publisher (`'publisher'`) and Custom track no tenure — a move
-    // into either should clear the Tenure Start Date.
     expect(getTenureType('publisher')).toBeNull()
     expect(getTenureType('custom')).toBeNull()
   })

@@ -1,7 +1,3 @@
-/**
- * A tiny PNG encoder for tests and the gallery (node only: uses `node:zlib`).
- * Never import this from app code.
- */
 import { deflateSync } from 'node:zlib'
 
 import type { PixelBuffer } from '@/lib/pixelArt'
@@ -33,7 +29,6 @@ function chunk(type: string, data: Uint8Array): Buffer {
   return Buffer.concat([head.subarray(0, 4), body, crc])
 }
 
-/** Encodes an RGBA buffer as a PNG file. */
 export function encodePng(buf: PixelBuffer): Buffer {
   const { width, height, data } = buf
   const raw = Buffer.alloc((width * 4 + 1) * height)
@@ -48,8 +43,8 @@ export function encodePng(buf: PixelBuffer): Buffer {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(width, 0)
   ihdr.writeUInt32BE(height, 4)
-  ihdr[8] = 8 // bit depth
-  ihdr[9] = 6 // RGBA
+  ihdr[8] = 8
+  ihdr[9] = 6
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),

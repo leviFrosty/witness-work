@@ -11,15 +11,9 @@ import ScribeMicOrb from '@/features/scribe/components/ScribeMicOrb'
 import { ScribePill } from '@/features/scribe/components/ScribeBadge'
 
 interface Props {
-  /** Closes the menu it sits in before Scribe AI opens. */
   onAction: () => void
 }
 
-/**
- * "Speak an update" at the top of the "+" menu. Unlike the green manual rows on
- * purpose: a dark surface lit by the same orb the voice sheet opens with.
- * Hidden where Scribe AI is; offline it greys out and explains when tapped.
- */
 const ScribeQuickActionRow = ({ onAction }: Props) => {
   const theme = useTheme()
   const scribe = useOpenScribe()

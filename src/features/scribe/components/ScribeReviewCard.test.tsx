@@ -46,7 +46,6 @@ vi.mock('@/components/ui/PointerHover', () => ({
 vi.mock('@/components/ui/touchTarget', () => ({ MIN_TOUCH_TARGET: 44 }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
-    // Each color reads as its name, so a test can tell them apart.
     colors: new Proxy({}, { get: (_, name) => String(name) }),
     fonts: new Proxy({}, { get: () => 'Font' }),
     fontSize: () => 14,
@@ -298,7 +297,7 @@ describe('ScribeReviewCard', () => {
     expect(check()).toBeUndefined()
     press(opener()!)
     expect(onOpen).toHaveBeenCalledTimes(1)
-    // Pending cards toggle instead.
+
     const pending = render(timeCard(), true, onOpen)
     expect(pending.opener()).toBeUndefined()
     press(pending.check())
@@ -396,7 +395,7 @@ describe('ScribeReviewCard', () => {
       target: null,
     })
     expect(texts()).toContain('42 Oak St · 555-0199 · daniel@example.com')
-    // Nothing is cut off, at any text size.
+
     const capped = root
       .findAllByType('Text' as never)
       .filter((node) =>
@@ -537,7 +536,7 @@ describe('ScribeReviewCard', () => {
       )
       act(() => consentSwitch().props.onValueChange(true))
       expect(onConsent).toHaveBeenCalledWith(true)
-      // The row is its own control; it doesn't toggle the card.
+
       expect(onToggle).not.toHaveBeenCalled()
     })
 

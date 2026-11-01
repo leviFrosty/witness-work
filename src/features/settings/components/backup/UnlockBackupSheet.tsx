@@ -24,16 +24,11 @@ export type PasswordUnlockResult = { wrongPasswords: number } & (
 )
 
 type Props = {
-  /** A password-locked file to open; the sheet shows while there is one. */
   file: LockedBackupFile | null
-  /** Once the sheet has closed: what the file held, or why there's nothing. */
+
   onFinished: (result: PasswordUnlockResult) => void
 }
 
-/**
- * Asks for a locked backup's password and opens it. A wrong password says so
- * and asks again; closing the sheet cancels the restore.
- */
 export default function UnlockBackupSheet({ file, onFinished }: Props) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
@@ -108,13 +103,12 @@ function PasswordForm({
   const [progress, setProgress] = useState(0)
   const input = useRef<RNTextInput>(null)
 
-  // Android can't focus a field in a sheet that's still opening.
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const timer = setTimeout(() => input.current?.focus(), 300)
     return () => clearTimeout(timer)
   }, [])
-  // Back to the field for another try, once it's editable again.
+
   useEffect(() => {
     if (wrong && !busy) input.current?.focus()
   }, [wrong, busy])

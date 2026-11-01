@@ -15,7 +15,6 @@ import {
 } from '@/lib/normalizeDate'
 import { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 
-/** Files entries the way `addServiceReport` does. */
 const reportsFrom = (entries: TimeEntry[]): TimeEntriesByYear => {
   const byYear: TimeEntriesByYear = {}
   for (const entry of entries) {
@@ -61,8 +60,6 @@ const EXPECTED = [
   'firstBibleStudy',
 ]
 
-// Every month of a year, on the 1st early, mid-month, and the last day: Year
-// Round depends on where `now` falls in the Service Year.
 const NOWS = Array.from({ length: 12 }, (_, month) => [
   new Date(2026, month, 1, 0, 30),
   new Date(2026, month, 15, 12),
@@ -101,7 +98,7 @@ describe('buildBadgeHistoryFixture', () => {
     const evaluation = evaluateFixture(date)
     const earned = evaluation.earned.map(({ key }) => key)
     expect(earned.sort()).toEqual([...EXPECTED].sort())
-    // Just enough: nothing reaches Gold.
+
     expect(earned.some((key) => key.endsWith('.3'))).toBe(false)
   })
 
@@ -133,7 +130,6 @@ describe('buildBadgeHistoryFixture', () => {
   })
 })
 
-/** Small seeded PRNG (mulberry32) for repeatable "random" sets. */
 const seeded = (seed: number) => () => {
   seed = (seed + 0x6d2b79f5) | 0
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
@@ -182,7 +178,7 @@ describe('buildRandomBadgeRecords', () => {
         const parsed = parseBadgeKey(key)
         expect(parsed).not.toBeNull()
         expect(record.at).toBeLessThanOrEqual(now.getTime())
-        // Lower levels come along with every earned level.
+
         for (let level = 1; level < (parsed!.level ?? 0); level++)
           expect(keys).toContain(`${parsed!.art}.${level}`)
       }

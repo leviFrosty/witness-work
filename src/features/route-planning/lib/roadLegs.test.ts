@@ -21,12 +21,11 @@ import {
   resetRoadLegs,
 } from '@/features/route-planning/lib/roadLegs'
 
-/** About 1.1 km apart, north of the equator. */
 const north = (km: number) => ({ latitude: km * 0.009, longitude: 0 })
 const A = north(0)
 const B = north(1)
 const C = north(2)
-/** Across the street from B: the same place. */
+
 const B2 = { latitude: B.latitude + 0.0001, longitude: 0 }
 
 const leg = (meters: number) => ({
@@ -57,7 +56,6 @@ describe('loadRoadLegs on iOS', () => {
       ],
     })
 
-    // Reversed, only the new legs are asked about.
     expect(await loadRoadLegs([C, B, A, B], signal())).toBe(true)
     expect(mocks.directions).toHaveBeenCalledTimes(4)
     expect(await loadRoadLegs([A, B, C], signal())).toBe(false)
@@ -126,7 +124,7 @@ describe('loadRoadLegs on Android', () => {
     ])
     const known = knownRoadLegs()
     expect(known.get(legKey(A, B))?.meters).toBe(1000)
-    // The leg from B's twin carries B's directions onward.
+
     expect(known.get(legKey(B2, C))?.meters).toBe(2000)
   })
 

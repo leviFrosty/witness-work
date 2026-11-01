@@ -87,7 +87,6 @@ describe('SupporterSyncDefault', () => {
     expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
     expect(iCloudSync.applyPullEnable).not.toHaveBeenCalled()
 
-    // The download lands and the metadata query reports it.
     await act(async () => {
       runtime.remoteChangeListeners.forEach((listener) => listener())
     })
@@ -97,7 +96,7 @@ describe('SupporterSyncDefault', () => {
       'supporter_default'
     )
     expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
-    // Decided; later remote changes don't re-run it.
+
     expect(runtime.remoteChangeListeners).toHaveLength(0)
     expect(runtime.appStateListeners).toHaveLength(0)
   })
@@ -107,7 +106,7 @@ describe('SupporterSyncDefault', () => {
       './SupporterSyncDefault'
     )
     const { iCloudSync } = await import('@/app/sync/iCloudSync')
-    // A slow initial scan of an empty container: no file will land to report.
+
     vi.mocked(iCloudSync.resolveInitialEnable)
       .mockResolvedValueOnce({ outcome: 'incomplete', reason: 'scan' })
       .mockResolvedValueOnce({ outcome: 'seed' })

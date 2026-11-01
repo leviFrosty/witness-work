@@ -26,24 +26,22 @@ import {
 import { personExportName } from '@/features/mileage/lib/personLabel'
 import type { Fuel, Trip, Vehicle } from '@/types/mileage'
 
-/** Who logged the trips in a report or export, on Shared Cars. */
 export type ReportPeople = {
   people: MileagePeople
-  /** The User's own name, for the trips they logged. */
+
   ownName?: string
 }
 
 export type MileageReportInput = {
   period: MileagePeriod
-  /** Trips in the period, newest first. */
+
   trips: Trip[]
   vehicles: Vehicle[]
   fuels: Fuel[]
   index: MileageIndex
   format: MileageFormatter
-  /** Who logged each trip, once the User is on a Shared Car. */
+
   sharing?: ReportPeople & {
-    /** Whose trips these are: the Mileage screen's person filter. */
     filter: PersonFilter
   }
 }
@@ -51,18 +49,9 @@ export type MileageReportInput = {
 const vehicleName = (vehicles: Vehicle[], id: string) =>
   vehicles.find((v) => v.id === id)?.name ?? i18n.t('mileage.unknownCar')
 
-/**
- * The User as a report names them, the same on every trip of theirs: their own
- * name (`ownName`, their Buddy Card's), else the one they share on their Shared
- * Cars, else "Me".
- */
 const selfName = ({ people, ownName }: ReportPeople) =>
   personExportName({ me: true, name: '' }, ownName || people.nameOnCars)
 
-/**
- * Who logged `trip`, as a report names them; undefined on the User's own cars,
- * and on a Shared Car's trip that doesn't say.
- */
 function loggedByName(trip: Trip, sharing: ReportPeople): string | undefined {
   const { people } = sharing
   if (people.spaceOf(trip) === undefined) return undefined
@@ -71,7 +60,6 @@ function loggedByName(trip: Trip, sharing: ReportPeople): string | undefined {
   return person && personExportName(person)
 }
 
-/** Whose trips a filtered report holds (Me, or one person), by name. */
 function filteredPersonName(
   sharing: ReportPeople & { filter: PersonFilter }
 ): string | undefined {
@@ -81,12 +69,6 @@ function filteredPersonName(
   return person && personExportName(person)
 }
 
-/**
- * Plain-text report for Copy / Share: totals, per-car totals with more than one
- * car, and the trip list for every period shorter than a year. Filtered to the
- * User or one person, it says whose trips these are; showing everyone's, each
- * trip someone else logged on a Shared Car names them.
- */
 export function buildReportText({
   period,
   trips,
@@ -146,10 +128,6 @@ export function buildReportText({
   return lines.join('\n')
 }
 
-/**
- * Plain-text summary of one trip, for its Share and Copy actions. A trip on a
- * Shared Car says who logged it.
- */
 export function buildTripText(
   trip: Trip,
   vehicles: Vehicle[],
@@ -176,19 +154,12 @@ export function buildTripText(
     .join('\n')
 }
 
-/** RFC 4180 field: quoted when it holds a comma, quote, or line break. */
 export function csvField(value: string | number | undefined): string {
   if (value === undefined) return ''
   const text = String(value)
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-/**
- * One row per trip, oldest first, in the user's display units. With a trip on a
- * Shared Car among them, a Logged By column follows the car: every trip of the
- * User's (on their own cars or a Shared Car) by one name, others' by the name
- * they share.
- */
 export function buildReportCsv({
   trips,
   vehicles,

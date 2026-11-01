@@ -111,11 +111,6 @@ const Month = ({
 }
 
 interface MonthlyRoutineProps {
-  /**
-   * Called after the user taps a month but before navigation occurs. Lets a
-   * parent overlay/modal dismiss itself so the destination screen isn't
-   * covered.
-   */
   onBeforeNavigate?: () => void
 }
 
@@ -135,7 +130,6 @@ const MonthlyRoutine = ({ onBeforeNavigate }: MonthlyRoutineProps = {}) => {
   }, [])
 
   return (
-    // Grows past its usual height when large text makes the months taller.
     <View style={{ minHeight: 60 }}>
       <FlashList
         horizontal

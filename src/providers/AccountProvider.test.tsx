@@ -2,21 +2,18 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Drives the account reconcile loop (ADR 0011) against a fake bridge to cover
-// what a claim may overwrite while iCloud is still downloading.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
   files: [] as SyncFile[],
-  // `null` = a binary that can't report downloads (see `readFiles`).
+
   pending: [] as string[] | null,
   remoteChangeListeners: [] as Array<() => void>,
   setCustomer: () => {},
-  /** Runs once as the next identity check's detected Apple Account change. */
+
   appleAccountChange: null as (() => void) | null,
   links: [] as unknown[],
-  /** The Keychain is locked: the install id can't be read yet. */
+
   keychainLocked: false,
 }))
 
@@ -62,8 +59,6 @@ vi.mock('react-native-mmkv', () => ({
   },
 }))
 vi.mock('@/hooks/useCustomer', () => ({
-  // Known, un-entitled customer: this device adopts a foreign claim, and
-  // claims when there is none.
   default: () => ({
     customer: { entitlements: { active: {} } },
     ready: true,
@@ -80,8 +75,7 @@ vi.mock('@/lib/installId', () => {
     },
   }
 })
-// The identity decision itself is covered in `iCloudIdentity.test.ts`; here a
-// detected change only needs its effect on the account id.
+
 vi.mock('@/lib/iCloudIdentity', () => ({
   checkICloudIdentity: () => {
     const change = runtime.appleAccountChange
@@ -154,11 +148,9 @@ describe('account reconcile while iCloud is downloading', () => {
 
     await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalled())
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
-    // Claiming here would overwrite the phone's claim with this device's id.
+
     expect(bridge.write).not.toHaveBeenCalledWith(ACCOUNT_FILE, ownClaim)
 
-    // The download lands; the still-unobserved file makes the metadata query
-    // report it, which re-runs the reconcile.
     runtime.pending = []
     runtime.files = [phoneClaim]
     await act(async () => {
@@ -195,13 +187,13 @@ describe('account reconcile while iCloud is downloading', () => {
     )
     expect(Purchases.logIn).toHaveBeenCalledWith('ipad')
     expect(Purchases.logIn).not.toHaveBeenCalledWith('phone')
-    // The previous account's shared id never claims the new account's file.
+
     expect(bridge.write).not.toHaveBeenCalledWith(
       ACCOUNT_FILE,
       expect.stringContaining('"accountId":"phone"')
     )
     expect(account.getOrCreateAccountId()).toBe('ipad')
-    // Another RevenueCat customer: linked to the server account (ADR 0029).
+
     expect(runtime.links).toContainEqual({ force: true, reason: 'adopted' })
   })
 
@@ -214,7 +206,7 @@ describe('account reconcile while iCloud is downloading', () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
     expect(Purchases.logIn).not.toHaveBeenCalled()
     expect(bridge.write).not.toHaveBeenCalled()
-    // `installId` reports it, once.
+
     expect(errorTracking.captureException).not.toHaveBeenCalled()
 
     runtime.keychainLocked = false

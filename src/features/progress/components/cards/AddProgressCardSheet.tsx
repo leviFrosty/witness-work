@@ -5,20 +5,16 @@ import type { ProgressCardMeta } from '@/features/progress/components/cards/prog
 type Props<Id extends string, Group extends string> = {
   open: boolean
   onClose: () => void
-  /** Every card the tab has, in the sheet's order. */
+
   ids: readonly Id[]
   cards: Record<Id, ProgressCardMeta<Group>>
   groups: { group: Group; title: () => string }[]
-  /** Cards on the screen now. */
+
   added: Id[]
   isAvailable: (id: Id) => boolean
   onAdd: (id: Id) => void
 }
 
-/**
- * Every card the User can put on a Progress tab, by what it covers. Cards
- * already there show a check; the rest add with one tap, at the top.
- */
 export default function AddProgressCardSheet<
   Id extends string,
   Group extends string,

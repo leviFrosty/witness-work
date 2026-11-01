@@ -6,7 +6,6 @@ import Button from '@/components/ui/Button'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 
-/** One place to bring data in from, in the import chooser. */
 const ImportOptionCard = ({
   icon,
   color,

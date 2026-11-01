@@ -4,39 +4,13 @@ import type { ReleaseAnnounce } from '@/features/updates/lib/evaluateRevealOnLau
 import { UPDATE_REVEAL_NAME } from '@/features/updates/constants/updateReveal'
 
 export type ReleaseNote = {
-  /** Semantic version number in format `x.y.z` */
   version: string
   date: Date
-  /**
-   * I18n translation key array
-   *
-   * @example
-   *   You're adding release notes for version 1.20.0.
-   *
-   *
-   *   File `en.json` has the following content in `"1200"` key:
-   *   ```json
-   *   {
-   *   "c1": "Content 1",
-   *   "c2": "Content 2",
-   *   }
-   *   ```
-   *   Then the `content` array should be `['c1', 'c2']`
-   */
+
   content: string[]
-  /**
-   * A named release — a Reveal update, like The Milestone Update (1.38.2) —
-   * wears its name as a badge in the What's New list. The launch reveal is
-   * configured separately in `constants/updateReveal.ts`; its release takes
-   * `name: UPDATE_REVEAL_NAME`.
-   */
+
   name?: TranslationKey
-  /**
-   * How loudly to announce this release on first launch after updating.
-   * Defaults to `'passive'` (a notifications tray item). Use `'silent'` for
-   * fix-only releases and reserve `'sheet'` for big releases worth interrupting
-   * the user's quick "open app, add time" flow.
-   */
+
   announce?: ReleaseAnnounce
 }
 
@@ -293,5 +267,4 @@ export const releaseNotes: ReleaseNote[] = [
     date: moment('2023-11-15').toDate(),
     content: ['c1', 'c2', 'c3'],
   },
-  // Older versions are omitted because they were released before the release notes version tracking feature was added.
 ]

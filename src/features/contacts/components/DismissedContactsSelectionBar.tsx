@@ -14,17 +14,11 @@ import {
 } from '@/features/contacts/components/ListSelection'
 import type { ListSelection } from '@/features/contacts/hooks/useListSelection'
 
-/**
- * Batch actions for Dismissed Contacts in Select mode: undismiss, archive (not
- * in data protection mode), and a red Delete, with the same confirmations as
- * the Contacts list. Each ends Select mode once it runs.
- */
 export default function DismissedContactsSelectionBar({
   contacts,
   selection,
   bottom,
 }: {
-  /** The selected contacts. */
   contacts: Contact[]
   selection: ListSelection
   bottom: number

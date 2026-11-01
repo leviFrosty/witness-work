@@ -6,17 +6,6 @@ import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
 export type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
-/**
- * A native menu that opens on tap: a SwiftUI `Menu` on iOS
- * (`PullDownMenu.ios.tsx`) and a Material dropdown menu on Android
- * (`PullDownMenu.android.tsx`). Other platforms render the trigger without a
- * menu.
- *
- * Use it for a visible "More" button in headers, for selection menus (give
- * actions `checked`), and for rows whose content can't host a long-press
- * `ContextMenu` (e.g. rows with text inputs). Everything else should put
- * secondary actions in a `ContextMenu`.
- */
 export default function PullDownMenu({
   accessibilityLabel,
   accessibilityHint,

@@ -13,7 +13,7 @@ export type AuxiliaryMonthSource = 'home' | 'settings' | 'notifications_tray'
 
 export type AuxiliaryMonth = {
   target: CalendarMonth
-  /** 0 = this month, 1 = next month. */
+
   offset: 0 | 1
   status: MonthStatus
   isAuxiliary: boolean
@@ -21,11 +21,6 @@ export type AuxiliaryMonth = {
 
 export type AuxiliaryGoal = 'regularAuxiliary' | 'regularAuxiliaryReduced'
 
-/**
- * A Kingdom Publisher's one-month auxiliary pioneering for this month and next
- * — the most common Role History change, surfaced without Settings or the
- * Progress tab. Months not auxiliary pioneering return to the standing role.
- */
 const useAuxiliaryMonths = () => {
   const { role, roleHistory, monthlyGoalOverrides, setMonthStatus } =
     usePreferences(
@@ -58,7 +53,6 @@ const useAuxiliaryMonths = () => {
     goal: AuxiliaryGoal | null,
     source: AuxiliaryMonthSource
   ) => {
-    // `null` ends it: the month returns to the User's standing role.
     const next: MonthStatus = goal ?? role
     if (next === month.status) return
     setMonthStatus(month.target, next, 'month')

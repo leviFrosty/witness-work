@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
 
-/**
- * How many of a long list's `total` items to draw: `first` with the screen,
- * then `batch` more each frame until all are drawn, so a screen with hundreds
- * of rich rows opens without waiting for every one. Never fewer than `atLeast`,
- * for an item the screen has to show at once (a deep link's).
- */
 export default function useProgressiveCount(
   total: number,
   {

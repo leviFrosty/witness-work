@@ -32,14 +32,8 @@ import {
   useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 
-/** Whether the tray's remote sources (Buddies) are being checked. */
 export type TraySyncState = 'idle' | 'syncing' | 'failed'
 
-/**
- * The bell's popover, newest first, with buddies' news grouped at the bottom
- * under "From your buddies". An item counts as read once it's been on screen:
- * it gets its `onView` then, and is marked read when the tray closes.
- */
 export default function NotificationsList({
   entries,
   closeThen,
@@ -48,7 +42,7 @@ export default function NotificationsList({
   onRetrySync,
 }: {
   entries: TrayEntry[]
-  /** Closes the popover, then runs the action (e.g. navigating). */
+
   closeThen: (action: () => void) => void
   onOpen?: () => void
   syncState?: TraySyncState
@@ -57,13 +51,12 @@ export default function NotificationsList({
   const theme = useTheme()
   const { height } = useWindowDimensions()
   const opened = useRef(onOpen)
-  /** Row positions in the scroll content, by item id. */
+
   const layouts = useRef<Record<string, RowLayout>>({})
   const viewport = useRef({ offset: 0, height: 0 })
-  /** Shown on screen during this opening. */
+
   const viewed = useRef(new Set<string>())
 
-  // Runs once per opening, with what was listed as it opened.
   useEffect(() => {
     const shown = viewed.current
 
@@ -75,7 +68,6 @@ export default function NotificationsList({
     }
   }, [])
 
-  /** Marks rows that just came on screen as viewed. */
   const reveal = () => {
     for (const id of visibleIds(layouts.current, viewport.current)) {
       if (viewed.current.has(id)) continue
@@ -99,7 +91,6 @@ export default function NotificationsList({
     reveal()
   }
 
-  // Rows that left the tray no longer count toward what's on screen.
   const ids = entries.map(({ item }) => item.id).join('\n')
   useEffect(() => {
     const current = new Set(ids.split('\n'))
@@ -126,8 +117,7 @@ export default function NotificationsList({
   }
 
   const { main, news } = trayGroups(entries)
-  // Rows stay direct children of the scroll content, so their layout `y` is
-  // their place in it.
+
   const renderEntry = (entry: TrayEntry, last: boolean) => {
     const { item } = entry
     return (
@@ -231,8 +221,6 @@ export default function NotificationsList({
           reveal()
         }}
         onScroll={scrolled}
-        // A fling's last scroll event can be throttled away (Android), so the
-        // resting place counts too: buddies' news sits at the bottom.
         onScrollEndDrag={scrolled}
         onMomentumScrollEnd={scrolled}
       >

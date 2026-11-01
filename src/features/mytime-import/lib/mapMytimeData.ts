@@ -18,48 +18,26 @@ import {
   coreDataRefToDateOrNull,
 } from '@/features/mytime-import/lib/coreDataDate'
 
-// MappedImport / MappedPublisher are shared infrastructure (both MyTime and
-// Notes import produce them). Imported for local use and re-exported so existing
-// `@/features/mytime-import/lib/mapMytimeData` importers keep resolving.
 import type { MappedImport, MappedPublisher } from '@/lib/import/types'
 import { splitMinutes } from '@/lib/entryMinutes'
 export type { MappedImport, MappedPublisher }
 
 export const callContactId = (zpk: number) => `mytime-call-${zpk}`
 export const returnVisitId = (zpk: number) => `mytime-rv-${zpk}`
-/**
- * Id of the visit synthesized to carry a contact note when the contact has no
- * real visit.
- */
+
 export const noteVisitId = (zpk: number) => `mytime-call-${zpk}-note`
 export const infoTypeFieldId = (zpk: number) => `mytime-infotype-${zpk}`
 export const timeEntryId = (zpk: number) => `mytime-time-${zpk}`
 export const timeTypeCategoryId = (zpk: number) => `mytime-timetype-${zpk}`
-/**
- * Id of the TimeEntry synthesized for a month's residual Hours adjustment (key
- * = `YYYYMM`).
- */
+
 export const hoursAdjustmentId = (yyyymm: number) => `mytime-hours-${yyyymm}`
 
-/**
- * Converts a MyTime `YYYYMM` integer to local noon on the 1st — the local day
- * the service-report store expects and anchors itself.
- */
 const yyyymmToDate = (yyyymm: number): Date => {
   const year = Math.floor(yyyymm / 100)
   const month = yyyymm % 100
   return new Date(year, month - 1, 1, 12)
 }
 
-/**
- * Resolves the WitnessWork category a MyTime time entry belongs to, seeding the
- * `Category` record (deduped by id) as a side effect:
- *
- * - `"Hours"` (and an unknown/missing type) → the standard bucket, no category.
- * - `"LDC"` / `"RBC"` → the builtin LDC credit category — both are credit hours.
- * - Any other user-defined type → a named category, credit iff the MyTime type
- *   was flagged `ZDIRECTCREDIT`.
- */
 const resolveTimeCategory = (
   type: MytimeTimeTypeRow | undefined,
   categoriesById: Map<string, Category>,
@@ -91,11 +69,6 @@ const resolveTimeCategory = (
   return { categoryId: id, credit: isCredit }
 }
 
-/**
- * Translates a MyTime `ZRETURNVISIT.ZTYPE` string into WitnessWork's two visit
- * flags. The `"Transfered "` prefix (sic — MyTime's own spelling) marks a visit
- * moved from another publisher and is stripped before classifying.
- */
 const parseVisitType = (
   type: string | null
 ): { isBibleStudy: boolean; notAtHome: boolean } => {
@@ -106,19 +79,11 @@ const parseVisitType = (
   }
 }
 
-/** Trim, treating null/blank as absent. */
 const clean = (s: string | null | undefined): string | undefined => {
   const t = s?.trim()
   return t ? t : undefined
 }
 
-/**
- * Composes a WitnessWork `Address` from a call's free-text parts. House number
- * and street collapse into `line1`; apartment becomes `line2`. Every piece is
- * omitted when blank, and the whole address is `undefined` when nothing
- * survives — `ZSTATE` in particular is dirty free-text (country names, etc.)
- * and is carried verbatim, never validated.
- */
 const buildAddress = (c: {
   ZHOUSENUMBER: string | null
   ZSTREET: string | null
@@ -140,15 +105,6 @@ const buildAddress = (c: {
   return Object.keys(address).length > 0 ? address : undefined
 }
 
-/**
- * Folds a contact's additional-information rows onto the `Contact`. Phone- and
- * email-typed attributes populate the native fields (first non-blank value
- * wins, since `Contact` holds a single phone/email). Any user-defined type is
- * preserved as a custom field, registering a shared `CustomFieldDefinition`
- * (deduped by id) the first time it's seen. `"Notes"` is handled separately by
- * note seeding. Returns the contact's `"Notes"` values plus the earliest date
- * stamped on a Notes attribute (used to date a synthesized note-visit).
- */
 const applyInfoToContact = (
   contact: Contact,
   rows: MytimeAdditionalInfoRow[],
@@ -188,11 +144,6 @@ const applyInfoToContact = (
   return { notes, noteDate }
 }
 
-/**
- * Maps a MyTime `ZUSER.ZPUBLISHERTYPE` string to a WitnessWork role. MyTime's
- * own (mis)spelling `"Auxilliary Pioneer"` is matched verbatim. An unknown or
- * absent type defaults to the base `'publisher'` role rather than guessing.
- */
 const mapPublisherType = (ztype: string | null): Publisher => {
   switch ((ztype ?? '').trim()) {
     case 'Publisher':
@@ -210,17 +161,10 @@ const mapPublisherType = (ztype: string | null): Publisher => {
   }
 }
 
-/**
- * Pure translation of raw MyTime tables into WitnessWork records. No I/O, no
- * store access, no clock — `importedAt` is threaded in so any synthesized
- * fallback dates are deterministic.
- */
 export const mapMytimeData = (
   tables: MytimeRawTables,
   importedAt: Date
 ): MappedImport => {
-  // Join: additional-information rows reference their label by FK
-  // (`ZTYPE` → `ZADDITIONALINFORMATIONTYPE.Z_PK`); resolve to the human name.
   const infoTypeName = new Map<number, string>()
   for (const t of tables.additionalInfoTypes) {
     if (t.ZNAME != null) infoTypeName.set(t.Z_PK, t.ZNAME)
@@ -236,22 +180,18 @@ export const mapMytimeData = (
   const importedAtMs = importedAt.getTime()
   const contacts: Contact[] = []
   const customFieldDefsById = new Map<string, CustomFieldDefinition>()
-  // MyTime has no contact-level note field of our own, so contact "Notes"
-  // attributes are seeded onto a visit (decision 3). We carry the note text and
-  // two date candidates for the no-visit synthesize case.
+
   const notesByCallPk = new Map<
     number,
     { notes: string[]; noteDate: number | null; mostRecent: number | null }
   >()
-  // Z_PK of every call that survives the import (soft-deleted calls and their
-  // visits are dropped entirely — decision 2).
+
   const liveCallPks = new Set<number>()
 
   for (const c of tables.calls) {
     if (c.ZDELETEDCALL === 1) continue
     liveCallPks.add(c.Z_PK)
-    // MyTime has no gender field, so leave it unset rather than guessing
-    // 'unknown' — an absent value reads differently from a deliberate one.
+
     const contact: Contact = {
       id: callContactId(c.Z_PK),
       name: c.ZNAME ?? '',
@@ -273,8 +213,7 @@ export const mapMytimeData = (
         mostRecent: c.ZMOSTRECENTRETURNVISITDATE,
       })
     }
-    // MyTime writes 0/0 (and null) for "no location"; only a real fix becomes
-    // a coordinate.
+
     if (
       c.ZLATTITUDE != null &&
       c.ZLONGITUDE != null &&
@@ -293,7 +232,6 @@ export const mapMytimeData = (
   const visitsByCallPk = new Map<number, Visit[]>()
 
   for (const v of tables.returnVisits) {
-    // Skip orphans and visits belonging to a soft-deleted call.
     if (v.ZCALL == null || !liveCallPks.has(v.ZCALL)) continue
     const { isBibleStudy, notAtHome } = parseVisitType(v.ZTYPE)
     const visit: Visit = {
@@ -311,8 +249,6 @@ export const mapMytimeData = (
     else visitsByCallPk.set(v.ZCALL, [visit])
   }
 
-  // Seed contact notes (decision 3): append to the earliest existing visit, or
-  // synthesize one dated to the earliest available activity if there is none.
   for (const [callPk, { notes, noteDate, mostRecent }] of notesByCallPk) {
     const noteText = notes.join('\n\n')
     const callVisits = visitsByCallPk.get(callPk)
@@ -362,9 +298,6 @@ export const mapMytimeData = (
     timeEntries.push(entry)
   }
 
-  // Synthesize one TimeEntry per month for the residual "Hours" adjustment so
-  // monthly totals match MyTime exactly (decision 1). Adjustments are signed
-  // minute deltas; non-"Hours" types (study/visit counts) have no equivalent.
   for (const a of tables.statisticsAdjustments) {
     if (a.ZTYPE !== 'Hours' || a.ZTIMESTAMP == null) continue
     const delta = a.ZADJUSTMENT ?? 0
@@ -376,7 +309,6 @@ export const mapMytimeData = (
     })
   }
 
-  // A backup normally holds exactly one user; take the first.
   const firstUser = tables.users[0]
   const publisher: MappedPublisher | null = firstUser
     ? {

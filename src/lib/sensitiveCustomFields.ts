@@ -1,5 +1,3 @@
-// Advisory English phrase list, not a classifier or validation rule. Add common
-// terms here as needed; unmatched text is not necessarily free of sensitive data.
 const sensitiveCustomFieldPatterns = [
   /\b(religion|religious|faith|beliefs?|church|denomination|catholic|protestant|christian|muslim|islam|jewish|judaism|hindu|buddhist|atheist|agnostic)\b/i,
   /\b(health|medical|diagnosis|diagnoses|disability|disabled|illness|disease|medication|mental health|depression|cancer|diabetes|pregnant|pregnancy)\b/i,

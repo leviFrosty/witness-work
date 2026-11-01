@@ -6,8 +6,6 @@ import type {
   HelpLocale,
 } from '@/features/updates/types/helpCenter'
 
-// The Help Center as of this build (`pnpm sync:help`), for a first open with no
-// connection. Each loads only when its language is the one shown.
 const snapshots: Record<HelpLocale, () => unknown> = {
   'en-US': () => require('../../../../assets/help-center/en-US.json'),
   ar: () => require('../../../../assets/help-center/ar.json'),
@@ -40,7 +38,6 @@ type Snapshot = Record<string, unknown> & {
   entries: SnapshotEntry[]
 }
 
-/** An entry's page, by the contract's URL pattern (English is unprefixed). */
 export const helpEntryURL = (
   locale: HelpLocale,
   category: string,
@@ -50,11 +47,6 @@ export const helpEntryURL = (
     locale === DEFAULT_HELP_LOCALE ? '' : `${locale}/`
   }${category}/${slug}`
 
-/**
- * Restores what `pnpm sync:help` leaves out of a snapshot: each entry's URL,
- * and, outside English, the English entries this locale has no translation of
- * (in English order, marked `fallback`).
- */
 export function expandSnapshot(
   snapshot: Snapshot,
   english: Snapshot | null
@@ -77,7 +69,6 @@ export function expandSnapshot(
 
 const parsed = new Map<HelpLocale, HelpBundle | null>()
 
-/** The bundled Help Center for `locale`, or English when it has none. */
 export function readSnapshot(locale: HelpLocale): HelpBundle {
   const bundle = readSnapshotFor(locale) ?? readSnapshotFor(DEFAULT_HELP_LOCALE)
   if (!bundle) throw new Error('[HelpCenter] English snapshot is missing')

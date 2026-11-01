@@ -150,7 +150,7 @@ describe('Decorate Room options', () => {
     const { room, references } = silhouetteRooms(night, 'hat', 'duck')
     expect(room.hat).toBe('duck')
     expect(room.window).toEqual({ time: 'day', season: 'winter' })
-    // An object: itself over another wall and floor, then the other options.
+
     expect(references.map((ref) => ref.hat)).toEqual(['duck', 'none'])
     expect(references[0]).toMatchObject({
       wallColor: 'indigo',
@@ -166,14 +166,14 @@ describe('Decorate Room options', () => {
     ])
     expect(shelf[0].wallColor).not.toBe(night.wallColor)
     expect(shelf[0].floor).not.toBe(night.floor)
-    // Over an indigo lily pond, the backdrop is another one.
+
     const pond = { ...night, wallColor: 'indigo', floor: 'lilypond' } as const
     expect(silhouetteRooms(pond, 'bed', 'clam').references[0]).toMatchObject({
       wallColor: 'cream',
       floor: 'brick',
       bed: 'clam',
     })
-    // A wall: plain, and in another colour. A floor: two others.
+
     const wall = silhouetteRooms(night, 'wallPattern', 'waves').references
     expect(wall.map((ref) => [ref.wallColor, ref.wallPattern])).toEqual([
       ['sand', 'plain'],
@@ -199,7 +199,6 @@ describe('Decorate Room options', () => {
       ['hat', 'tam'],
     ] as const
     for (const [part, option] of secrets) {
-      // A few scenes to draw for each locked thumbnail.
       const shapes = silhouetteRooms(night, part, option)
       expect(shapes.references.length).toBeLessThanOrEqual(5)
       expect(shapes.references.every((ref) => ref.window.time === 'day')).toBe(

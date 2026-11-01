@@ -16,7 +16,6 @@ vi.mock('@/lib/analytics', () => ({
 
 const { errorTracking } = await import('@/lib/errorTracking')
 
-/** What a rejected native module call looks like in JavaScript. */
 const nativeRejection = (code: string, message: string) =>
   Object.assign(new Error(message), { code })
 

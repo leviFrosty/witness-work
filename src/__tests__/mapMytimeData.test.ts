@@ -69,7 +69,6 @@ const info = (
   ...over,
 })
 
-// The four built-in additional-information types every backup ships with.
 const BUILTIN_INFO_TYPES: MytimeAdditionalInfoTypeRow[] = [
   infoType(1, 'Email'),
   infoType(2, 'Notes'),
@@ -81,7 +80,6 @@ const timeType = (
   over: Partial<MytimeTimeTypeRow> & { Z_PK: number; ZNAME: string }
 ): MytimeTimeTypeRow => ({ ZDIRECTCREDIT: null, ...over })
 
-// The two built-in time types in a real backup.
 const HOURS_TYPE = timeType({ Z_PK: 1, ZNAME: 'Hours' })
 const LDC_TYPE = timeType({ Z_PK: 2, ZNAME: 'LDC' })
 
@@ -127,7 +125,7 @@ describe('mapMytimeData — contacts', () => {
       id: 'mytime-call-42',
       name: 'Jane Doe',
     })
-    // MyTime carries no gender, so the field is left unset, not 'unknown'.
+
     expect(result.contacts[0].gender).toBeUndefined()
   })
 
@@ -256,10 +254,10 @@ describe('mapMytimeData — visits', () => {
         call({ Z_PK: 2, ZNAME: 'Deleted', ZDELETEDCALL: 1 }),
       ],
       returnVisits: [
-        rv({ Z_PK: 1, ZCALL: 1 }), // kept
-        rv({ Z_PK: 2, ZCALL: 2 }), // call soft-deleted
-        rv({ Z_PK: 3, ZCALL: 99 }), // no such call
-        rv({ Z_PK: 4, ZCALL: null }), // orphan
+        rv({ Z_PK: 1, ZCALL: 1 }),
+        rv({ Z_PK: 2, ZCALL: 2 }),
+        rv({ Z_PK: 3, ZCALL: 99 }),
+        rv({ Z_PK: 4, ZCALL: null }),
       ],
     })
     expect(result.visits.map((v) => v.id)).toEqual(['mytime-rv-1'])
@@ -352,8 +350,8 @@ describe('mapMytimeData — contact notes (decision 3)', () => {
         info({ Z_PK: 1, ZCALL: 1, ZTYPE: 2, ZVALUE: 'Door code 1234' }),
       ],
       returnVisits: [
-        rv({ Z_PK: 1, ZCALL: 1, ZDATE: 100000000 }), // later
-        rv({ Z_PK: 2, ZCALL: 1, ZDATE: 0 }), // earliest
+        rv({ Z_PK: 1, ZCALL: 1, ZDATE: 100000000 }),
+        rv({ Z_PK: 2, ZCALL: 1, ZDATE: 0 }),
       ],
     })
 
@@ -361,7 +359,7 @@ describe('mapMytimeData — contact notes (decision 3)', () => {
     const later = result.visits.find((v) => v.id === 'mytime-rv-1')
     expect(earliest?.note).toBe('Door code 1234')
     expect(later?.note).toBeUndefined()
-    // The Notes attribute must not leak into custom fields.
+
     expect(result.customFieldDefs).toHaveLength(0)
     expect(result.contacts[0].customFields).toBeUndefined()
   })
@@ -451,7 +449,7 @@ describe('mapMytimeData — time entries', () => {
     expect(result.timeEntries[0].date.toISOString()).toBe(
       '2001-01-01T00:00:00.000Z'
     )
-    // "Hours" is the standard bucket — it must not seed a Category.
+
     expect(result.categories).toHaveLength(0)
   })
 
@@ -548,7 +546,7 @@ describe('mapMytimeData — synthesized monthly residual (decision 1)', () => {
       minutes: 0,
     })
     expect(result.timeEntries[0].categoryId).toBeUndefined()
-    // Buckets into September 2025 as a local day for the store to anchor.
+
     expect(moment(result.timeEntries[0].date).format('YYYY-MM-DD')).toBe(
       '2025-09-01'
     )
@@ -620,7 +618,7 @@ describe('mapMytimeData — publisher', () => {
       map({ users: [user({ Z_PK: 1, ZPUBLISHERTYPE: ztype })] }).publisher?.role
 
     expect(roleFor('Publisher')).toBe('publisher')
-    expect(roleFor('Auxilliary Pioneer')).toBe('regularAuxiliary') // MyTime's spelling
+    expect(roleFor('Auxilliary Pioneer')).toBe('regularAuxiliary')
     expect(roleFor('Pioneer')).toBe('regularPioneer')
     expect(roleFor('Special Pioneer')).toBe('specialPioneer')
     expect(roleFor('Traveling Servant')).toBe('circuitOverseer')
@@ -677,14 +675,14 @@ describe('mapMytimeData — realistic backup shape', () => {
       additionalInfo: [
         info({ Z_PK: 1, ZCALL: 1, ZTYPE: 4, ZVALUE: '555-1212' }),
         info({ Z_PK: 2, ZCALL: 1, ZTYPE: 2, ZVALUE: 'Leave by side gate' }),
-        info({ Z_PK: 3, ZCALL: 2, ZTYPE: 4, ZVALUE: 'gone' }), // on deleted call
+        info({ Z_PK: 3, ZCALL: 2, ZTYPE: 4, ZVALUE: 'gone' }),
       ],
       returnVisits: [
         rv({ Z_PK: 1, ZCALL: 1, ZDATE: 0, ZTYPE: 'Initial Visit' }),
-        rv({ Z_PK: 2, ZCALL: 2, ZDATE: 0 }), // belongs to deleted call
+        rv({ Z_PK: 2, ZCALL: 2, ZDATE: 0 }),
       ],
       timeTypes: [HOURS_TYPE, LDC_TYPE],
-      timeEntries: [timeEntry({ Z_PK: 1, ZMINUTES: 120, ZTYPE: 2 })], // LDC
+      timeEntries: [timeEntry({ Z_PK: 1, ZMINUTES: 120, ZTYPE: 2 })],
       statisticsAdjustments: [
         adjustment({
           Z_PK: 1,
@@ -701,13 +699,12 @@ describe('mapMytimeData — realistic backup shape', () => {
       ],
     })
 
-    // One live contact, its deleted neighbor (and that neighbor's visit/info) gone.
     expect(result.contacts.map((c) => c.id)).toEqual(['mytime-call-1'])
     expect(result.contacts[0].phone).toBe('555-1212')
     expect(result.visits.map((v) => v.id)).toEqual(['mytime-rv-1'])
-    // Contact note seeded onto its only visit.
+
     expect(result.visits[0].note).toBe('Leave by side gate')
-    // LDC entry + the 50h residual; the Return Visits adjustment is ignored.
+
     expect(result.timeEntries.map((e) => e.id).sort()).toEqual([
       'mytime-hours-202509',
       'mytime-time-1',

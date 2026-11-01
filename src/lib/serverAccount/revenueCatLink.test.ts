@@ -166,7 +166,7 @@ describe('ensure', () => {
     await expect(
       link.ensure({ force: true, reason: 'entitlements' })
     ).resolves.toEqual({ result: 'backoff' })
-    // The User's own try; it's refused again, so the wait starts over.
+
     await link.ensure({ reason: 'tools' })
     expect(requests).toHaveLength(2)
     now += 30_001

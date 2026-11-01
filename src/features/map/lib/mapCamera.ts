@@ -16,7 +16,6 @@ export function fitMapToCoordinates(
         coordinate.longitude === first.longitude
     )
   ) {
-    // A single-point bounding box zooms Google Maps all the way into a building.
     map.animateToRegion(
       { ...first, latitudeDelta: 0.005, longitudeDelta: 0.005 },
       animated ? 225 : 0
@@ -24,6 +23,5 @@ export function fitMapToCoordinates(
     return
   }
 
-  // Coordinates do not depend on native marker children having mounted yet.
   map.fitToCoordinates(coordinates, { animated })
 }

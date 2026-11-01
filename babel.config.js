@@ -27,9 +27,7 @@ module.exports = function (api) {
           logTimings: true,
         },
       ],
-      // Loads DOM components (the note editor) from the applied OTA update's
-      // www.bundle; without it they look in the binary's, which lacks the
-      // update's content-hashed HTML.
+
       '@hot-updater/expo/babel-plugin',
     ],
   }

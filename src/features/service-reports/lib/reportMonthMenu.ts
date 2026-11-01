@@ -6,12 +6,10 @@ import type {
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 import { formatDisplay } from '@/lib/dates'
 
-/** Months listed flat at the top of the menu, newest first. */
 const RECENT_MONTH_COUNT = 12
 
 export type ReportMonth = { month: number; year: number }
 
-/** `YYYY-MM` menu id; `month` is 0-indexed like Moment. */
 export const reportMonthId = ({ month, year }: ReportMonth): string =>
   moment({ year, month }).format('YYYY-MM')
 
@@ -20,7 +18,6 @@ export const parseReportMonthId = (id: string): ReportMonth => {
   return { month: m.month(), year: m.year() }
 }
 
-/** Oldest month holding at least one Time Entry, or null when there are none. */
 export const getEarliestReportMonth = (
   serviceReports: TimeEntriesByYear
 ): ReportMonth | null => {
@@ -41,12 +38,6 @@ export const getEarliestReportMonth = (
   return earliest
 }
 
-/**
- * Native menu for jumping the report screen to any month. The last 12 months
- * are listed flat (the common case); anything older, back to the earliest month
- * with Time Entries or the selected month, nests under a submenu per year so
- * the menu stays short. Returns those two groups.
- */
 export const buildReportMonthMenu = ({
   now,
   earliest,

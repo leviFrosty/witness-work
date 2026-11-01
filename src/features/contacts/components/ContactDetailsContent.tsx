@@ -56,7 +56,6 @@ import {
 } from '@/features/contacts/lib/visitTimeline'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-// The details stay readable on wide screens; the hero's color goes edge to edge.
 const CONTENT_MAX_WIDTH = 760
 
 type Props = {
@@ -64,9 +63,9 @@ type Props = {
   highlightedVisitId?: string
   navigation: ContactDetailsNavigation
   embedded?: boolean
-  /** Opens scrolled this far, e.g. as it was read in another layout. */
+
   scrollY?: number
-  /** Where the user's scrolling came to rest. */
+
   onScrollY?: (y: number) => void
 }
 
@@ -81,23 +80,19 @@ const ContactDetailsContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const bleed = useHorizontalBleed()
-  // As its own screen, one side of iPhone Duo's fold; beside the list, the
-  // split already meets it.
+
   const foldColumn = useFoldColumn(CONTENT_MAX_WIDTH)
-  // Beside the list, the pane's end corner is a windowed iPad app's top corner
-  // when the app reads right to left on a left-to-right system, or the reverse.
+
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
   const { developerTools, defaultNavigationMapProvider } = usePreferences()
   const { contacts, customFieldDefs } = useContacts()
   const { conversations } = useConversations()
   const contact = contacts.find((c) => c.id === id)
   const heroBackground = useContactHeroBackground(contact)
-  // Hero tint is user-controllable per contact, so pick a contrasting
-  // foreground from the resolved background for the hero and header chrome.
+
   const heroForeground = getReadableTextColor(heroBackground)
   const heroIsDark = relativeLuminance(heroBackground) <= 0.45
-  // At accessibility text sizes the Conversation History heading takes the
-  // whole row and Add moves under it, instead of being pushed off the screen.
+
   const stackHistoryHeader = useAccessibilityTextSize()
 
   const contactVisits = sortVisitsNewestFirst(
@@ -107,15 +102,13 @@ const ContactDetailsContent = ({
   const journey = getJourney(contactVisits, new Date(), upNext?.date)
 
   const scrollViewRef = useRef<ScrollView>(null)
-  // Once the content is tall enough to hold it.
+
   const scrolledToStart = useRef(!scrollY)
   const highlightedRowRef = useRef<View>(null)
   const hasHighlightedVisit = contactVisits.some(
     (visit) => visit.id === highlightedVisitId
   )
 
-  // Opened from the widget deep link (`witnesswork://contact/:id/:convId`):
-  // scroll the highlighted visit into view once the rail has laid out.
   useEffect(() => {
     if (!highlightedVisitId || !hasHighlightedVisit) return
     const timer = setTimeout(() => {
@@ -123,8 +116,7 @@ const ContactDetailsContent = ({
       const row = highlightedRowRef.current
       if (!scrollView || !row) return
       row.measureLayout(
-        // @ts-expect-error — RN accepts a host component ref here.
-        scrollView,
+        scrollView as unknown as View,
         (_x, y) =>
           scrollView.scrollTo({ y: Math.max(0, y - 100), animated: true }),
         () => {}
@@ -200,7 +192,6 @@ const ContactDetailsContent = ({
       (def) => !def.archived && !!contact.customFields?.[def.id]?.trim()
     )
 
-  // Push forms over the details so Back and Save both return here.
   const editContact = () =>
     navigation.navigate('Contact Form', {
       id: contact.id,
@@ -260,8 +251,6 @@ const ContactDetailsContent = ({
       {!embedded && <StatusBar style={heroIsDark ? 'light' : 'dark'} />}
       <ScrollView
         ref={scrollViewRef}
-        // Full width, out under the side insets too, so the hero's color runs
-        // edge to edge like the header's; the content keeps its column.
         style={{ marginLeft: -bleed.left, marginRight: -bleed.right }}
         contentContainerStyle={{
           paddingBottom: embedded ? 24 : insets.bottom + 60,
@@ -282,7 +271,7 @@ const ContactDetailsContent = ({
             : undefined
         }
       >
-        {/* Keeps overscroll above the hero tinted. */}
+        {}
         <View
           style={{
             position: 'absolute',
@@ -371,8 +360,7 @@ const ContactDetailsContent = ({
                   paddingHorizontal: 2,
                 }}
               >
-                {/* The count and info button wrap under a heading that fills
-                  its row, so a long word never has to break. */}
+                {}
                 <XView
                   style={{
                     alignItems: 'center',
@@ -381,8 +369,6 @@ const ContactDetailsContent = ({
                   }}
                 >
                   <XView
-                    // One heading with its count ("Conversation History,
-                    // 2"), not a title and a loose number.
                     accessible
                     accessibilityRole='header'
                     style={{

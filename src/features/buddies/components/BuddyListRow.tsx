@@ -7,11 +7,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
-/**
- * One row in a Buddies list section: avatar, two lines, trailing controls.
- * Long-press opens `actions`; interactive `trailing` controls sit outside the
- * long-press target so they keep their own taps.
- */
 export default function BuddyListRow({
   leading,
   title,
@@ -26,23 +21,19 @@ export default function BuddyListRow({
   leading: ReactNode
   title: string
   subtitle?: string
-  /**
-   * Non-interactive trailing content inside the row's tap target, e.g. a
-   * chevron.
-   */
+
   accessory?: ReactNode
-  /** Interactive trailing controls (buttons), kept out of the tap target. */
+
   trailing?: ReactNode
   onPress?: () => void
-  /** Long-press menu for the row. */
+
   actions?: ContextMenuEntries
   last: boolean
-  /** Fades the avatar and title for rows nobody has acted on yet. */
+
   muted?: boolean
 }) {
   const theme = useTheme()
-  // At accessibility sizes the name and line under it wrap in full instead of
-  // cutting off.
+
   const largeText = useAccessibilityTextSize()
   return (
     <View

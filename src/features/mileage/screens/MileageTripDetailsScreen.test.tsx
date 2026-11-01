@@ -64,7 +64,6 @@ vi.mock('@/stores/preferences', async () => {
   }
 })
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -118,7 +117,6 @@ function render(tripId: string) {
   return renderer!
 }
 
-/** The detail rows as label → value. */
 function details(tree: ReactTestRenderer): Record<string, string> {
   const rows = tree.root.findAll(
     (node) => node.type === ('InputRowContainer' as never)
@@ -153,7 +151,6 @@ afterEach(() => {
 
 describe('Trip Details on a Shared Car', () => {
   it('says who logged a trip, and who changed it when that’s someone else', () => {
-    // Ana logged it; the User changed it since.
     const rows = details(render('van-ana'))
     expect(rows['Car']).toBe('Family Minivan')
     expect(rows['Logged By']).toBe('Annie')
@@ -181,7 +178,7 @@ describe('Trip Details on a Shared Car', () => {
 
   it('shares text that says who logged the trip', async () => {
     const tree = render('van-ana')
-    // The header's buttons, as it's handed them.
+
     const header = tree.root.find((node) => node.type === ('Header' as never))
     const buttons = React.Children.toArray(
       (header.props.rightElement as React.ReactElement<{ children: ReactNode }>)

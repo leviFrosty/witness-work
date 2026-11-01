@@ -36,19 +36,8 @@ import type {
   SharedCarJoining,
 } from '@/types/sharedCars'
 
-/**
- * Invitations and joins (docs/shared-cars-protocol.md, "Inviting and joining"):
- * opening an invite at the current epoch (syncing for the new key when a rekey
- * got there first), sending again the ones a rekey closed or whose `car.invite`
- * was lost, closing the ones canceled or declined, and joining from one, with a
- * mark saved first so a join whose answer was lost is confirmed by the next
- * sync.
- */
-
-/** How many times an invite is opened again after the key changed under it. */
 const INVITE_ATTEMPTS = 3
 
-/** Failures with no answer, after which `invite/create` goes once more. */
 const UNANSWERED = new Set<string>(['network', 'timeout', 'unknown'])
 
 export function createInvitations(
@@ -57,19 +46,6 @@ export function createInvitations(
 ): Invitations {
   const { deps, client, store, keyring } = ctx
 
-  // --- Inviting -----------------------------------------------------------
-
-  /**
-   * Opens an invite on the server at the car's current epoch and adds its
-   * record (pending), replacing `replaces` when a rekey closed it. A
-   * `stale_key` (a rekey this device hasn't seen) syncs, trusts the new key,
-   * and opens it again with that; a `bad_request` (an expiry the server's clock
-   * refused) calibrates the clock and tries once more. One that got no answer
-   * goes once more, identical, which the server answers `ok` if the first
-   * landed. Still without one, it may be open on the server with nothing here
-   * to send it, so it goes to closing (`invite/delete` takes an invite that was
-   * never made too). Returns what `car.invite` carries.
-   */
   async function openInvite(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -81,12 +57,12 @@ export function createInvitations(
       const car = ctx.cars()[spaceId]
       if (!car) throw new SharedCarsError('not_found')
       const { epoch } = car
-      // Only the key the car seals under goes in an invitation.
+
       const key = parts.keys.sealingKey(car)
       if (!key) throw new SharedCarsError('key_unverified')
       const inviteId = toB64u(deps.randomBytes(16))
       const joinSecret = deps.randomBytes(32)
-      // The server's clock caps it, so the synced clock sets it.
+
       const expiresAt = Math.min(
         options.expiresAt ?? Infinity,
         deps.syncNow() + SPACE_LIMITS.inviteLifetimeMs
@@ -143,7 +119,6 @@ export function createInvitations(
     }
   }
 
-  /** The invite's record, open and pending, in place of the one it replaces. */
   function added(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -198,15 +173,6 @@ export function createInvitations(
     })
   }
 
-  /**
-   * The inviter's device sends again each of its invitations a rekey closed
-   * (made before the current epoch, no longer open) or whose `car.invite` was
-   * lost (`owed`, closed first if it's still open), while not expired and
-   * nobody on the car has its tag. It doesn't wait for anyone's member record:
-   * an invitation sent again to someone who already joined closes once their
-   * record arrives. One that fails stays owed, with its record, so it goes on a
-   * later sync and the car isn't taken for the last one left meanwhile.
-   */
   async function reissueInvites(spaceId: string, member: SpaceMemberKeys) {
     const car = ctx.cars()[spaceId]
     if (!car) return
@@ -226,7 +192,6 @@ export function createInvitations(
       )
         continue
       try {
-        // Closed first, so the new one doesn't need a second place on the car.
         if (open.has(inviteId)) {
           await client.deleteInvite(ctx.auth(member), inviteId, ctx.call())
           ctx.noteAnswered()
@@ -245,7 +210,6 @@ export function createInvitations(
     }
   }
 
-  /** The car without invitation `inviteId`: its record goes, with a tombstone. */
   function withoutInvite(car: SharedCar, inviteId: string): SharedCar {
     const recordId = inviteRecordId(inviteId)
     const record = car.inviteRecords.find(
@@ -269,14 +233,6 @@ export function createInvitations(
     })
   }
 
-  /**
-   * Closes each invitation this device is closing (`closingInvites`): the
-   * server first (`invite/delete`), then its record. One the server no longer
-   * has is closed already. A close the server refused (`forbidden`: neither
-   * this User's invitation nor their car) stops; one that didn't get an answer
-   * waits for the next sync. A decline (`tag`) counts only when the invitation
-   * went to whoever sent it. With `only`, just those of them.
-   */
   async function closePendingInvites(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -318,11 +274,6 @@ export function createInvitations(
     }
   }
 
-  /**
-   * Closes an invitation from the inviter's (or owner's) side: saved first, so
-   * a close the server didn't hear is tried again on every sync until it has
-   * (`closePendingInvites`). `pending` while it hasn't.
-   */
   async function closeInvite(
     spaceId: string,
     inviteId: string,
@@ -347,12 +298,6 @@ export function createInvitations(
     }
   }
 
-  /**
-   * Invites a person, with the current key, after any rekey this owner owes:
-   * what the `car.invite` event carries. Once the server opened the invite,
-   * `car.invite` goes: its record goes out now, or stays pending for the next
-   * sync when that put fails.
-   */
   function createInvite(
     spaceId: string,
     invitee: { name: string; tag: string }
@@ -361,7 +306,7 @@ export function createInvitations(
       if (!ctx.cars()[spaceId]) throw new SharedCarsError('not_found')
       const member = await ctx.memberFor(spaceId)
       const outcome = await parts.sync.runSteps(spaceId, member)
-      // Nothing vouches for the car's key here yet: nothing to invite with.
+
       if (outcome === 'waiting') throw new SharedCarsError('key_unverified')
       if (outcome !== 'synced') throw new SharedCarsError('not_found')
       const invite = await openInvite(spaceId, member, invitee)
@@ -380,16 +325,6 @@ export function createInvitations(
     })
   }
 
-  // --- Joining ------------------------------------------------------------
-
-  /**
-   * The car, here, for a join the server took: empty until it syncs, at `epoch`
-   * (the server's, as an answer or a sync gave it; 0 until the first sync
-   * otherwise), with the User's member record (when the join answered with
-   * their `joinedAt`) ready to go out first, so everyone sees who joined before
-   * the whole history syncs. The roster notes it, which also drops a leave of
-   * the car this device still owed.
-   */
   async function joined(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -409,7 +344,7 @@ export function createInvitations(
         memberRecords: [
           { memberId: member.memberId, ...data, updatedAt: deps.stamp() },
         ],
-        // This device wrote it, with its key check.
+
         ownRecordChecked: true,
         writtenName: data.name,
         writtenAvatar: data.avatar ?? null,
@@ -424,7 +359,6 @@ export function createInvitations(
     })
   }
 
-  /** A join that didn't land: its mark goes, with any key it trusted. */
   function notJoined(spaceId: string) {
     ctx.engineWrite(() => store.getState().clearJoining(spaceId))
     if (!ctx.cars()[spaceId]) {
@@ -433,11 +367,6 @@ export function createInvitations(
     }
   }
 
-  /**
-   * Whether the User is on `spaceId`, by syncing with their member values: for
-   * a join answered `conflict`, or one whose answer was lost. With the space's
-   * epoch and the User's own wrap for it. Null when the server didn't say.
-   */
   async function isMember(
     spaceId: string,
     member: SpaceMemberKeys
@@ -462,7 +391,6 @@ export function createInvitations(
     }
   }
 
-  /** The key a joining mark's wrap holds: the one its `join` sent. */
   function markedKey(
     mark: SharedCarJoining,
     member: SpaceMemberKeys
@@ -481,30 +409,6 @@ export function createInvitations(
     }
   }
 
-  /**
-   * Joins a car from its invitation (docs/shared-cars-protocol.md, "Inviting
-   * and joining"): saves a joining mark, registers this User's own key, token
-   * and a wrap of the invitation's key at its epoch, puts their member record,
-   * and syncs from the start.
-   *
-   * - The invitation's key is trusted for its epoch once `join` took this
-   *   invitation: a fresh join, or an identical retry of one. A different key
-   *   this device already trusts for the epoch stays, reported, and is the one
-   *   wrapped. Nothing is sealed before then.
-   * - `conflict`: the User is on the car already (another of their devices
-   *   joined, perhaps from another invitation), which counts as joined. The
-   *   invitation's key is trusted only when the User's own wrap for its epoch
-   *   holds the same key, since anyone on the car could send an invitation with
-   *   a key of their own; otherwise the wrap is verified as any other.
-   * - An answer at a later epoch than the invitation's is an identical retry of a
-   *   join that landed before a rekey (a rekey closes open invites), so it
-   *   counts as joined too. The next sync trusts the new key through the key
-   *   chain back to the invitation's.
-   * - A refusal after an earlier try whose answer was lost (the invite expired or
-   *   was used since) syncs first, which shows whether that try landed, and
-   *   trusts the key as for `conflict`.
-   * - No answer keeps the mark, and the next sync finds out.
-   */
   function joinCar(
     payload: CarInvitePayload,
     profile?: SharedCarProfile
@@ -523,9 +427,7 @@ export function createInvitations(
         epoch: invite.epoch,
         key: fromB64u(invite.key),
       }
-      // Device-only, like every key: the mark holds only the wrap `join`
-      // sends, which opens with the User's own key alone. A key this device
-      // already trusts for the epoch stays the one it wraps.
+
       const wrap = ctx.wrapTo(
         keyring.key(spaceId, invite.epoch) ?? invited.key,
         member.dhPub,
@@ -557,7 +459,7 @@ export function createInvitations(
           ctx.call()
         )
         ctx.noteAnswered()
-        // `join` took this invitation.
+
         parts.keys.trust(spaceId, invited)
         epoch = answer.epoch
         joinedAt = answer.joinedAt
@@ -572,18 +474,17 @@ export function createInvitations(
           notJoined(spaceId)
           throw error
         }
-        // Whether that earlier try landed is still unknown: the mark stays.
+
         if (landed === null && !conflict) throw error
         if (landed) {
           parts.keys.trustInvited(spaceId, invited, landed, member)
           epoch = landed.epoch
-          // That earlier try landed, with the wrap it sent.
+
           if (!conflict) joinedAt = landed.joinedAt
         }
       }
       await joined(spaceId, member, epoch, joinedAt, profile)
-      // The join landed; what follows only catches up, and a failure there
-      // waits for the next sync.
+
       try {
         await parts.sync.push(spaceId, member)
         await parts.sync.runSteps(spaceId, member)
@@ -598,13 +499,6 @@ export function createInvitations(
     })
   }
 
-  /**
-   * Confirms each join whose answer never came (`joining`): a sync with the
-   * User's member values shows whether it landed. One that did gets its car
-   * here, trusting the key its join sent when the User's wrap on the car holds
-   * the same one, and the sync that follows catches it up; one that didn't
-   * goes. No answer keeps the mark for the next sync.
-   */
   async function confirmJoins(): Promise<void> {
     await Promise.all(
       Object.keys(store.getState().joining).map((spaceId) =>

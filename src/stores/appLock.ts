@@ -3,7 +3,6 @@ import { createJSONStorage } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 
-/** Seconds away from the app before it asks to unlock again. */
 export const APP_LOCK_DELAYS = [0, 60, 300, 900] as const
 export type AppLockDelay = (typeof APP_LOCK_DELAYS)[number]
 
@@ -15,11 +14,6 @@ type AppLockSettings = {
   ) => void
 }
 
-/**
- * Face ID / Touch ID protection for opening the app. Device-local: excluded
- * from sync and ministry backups, since another device may not have the same
- * biometrics or passcode.
- */
 export const useAppLockSettings = create<AppLockSettings>()(
   persist(
     (set) => ({
@@ -37,16 +31,11 @@ export const useAppLockSettings = create<AppLockSettings>()(
 )
 
 type AppLockSession = {
-  /** The lock screen covers the app. */
   locked: boolean
-  /**
-   * A system authentication prompt is up. On Android the passcode fallback
-   * opens its own activity, which backgrounds the app; that must not lock it.
-   */
+
   authenticating: boolean
 }
 
-/** Runtime lock state; starts locked whenever the lock is on at launch. */
 export const useAppLockSession = create<AppLockSession>(() => ({
   locked: useAppLockSettings.getState().enabled,
   authenticating: false,

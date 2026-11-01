@@ -10,15 +10,8 @@ vi.mock('@/lib/locales', () => ({
 }))
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 
-/**
- * ADR 0024 and ADR 0027: every relay call carries the User's account session,
- * registering links the inbox to that account, an inbox from before accounts is
- * linked when the relay says `not_linked`, and a suspension stops the sync.
- */
-
 type Harness = ReturnType<typeof setup>
 
-/** Counts Buddies requests by op from here on. */
 function countOps(h: Harness) {
   const ops: string[] = []
   h.setAfterOp(async (op) => {
@@ -48,14 +41,14 @@ describe('linking the inbox to the server account', () => {
     const h = setup()
     const ann = h.user('Ann')
     await ann.engine.sync()
-    // As registered by an app version before accounts.
+
     h.fake.inboxAccounts.delete(ann.inboxId)
     ann.store.setState({ accountLinkedInboxId: null })
 
     const sent = countOps(h)
     await expect(ann.engine.sync()).resolves.toBe('synced')
     expect(sent('inbox/register')).toBe(1)
-    // The refused read, then the same read once linked.
+
     expect(sent('inbox/sync')).toBe(2)
     expect(h.fake.inboxAccounts.get(ann.inboxId)).toBe(accountIdOf(h, ann.seed))
     expect(ann.store.getState().accountLinkedInboxId).toBe(ann.inboxId)
@@ -78,7 +71,7 @@ describe('linking the inbox to the server account', () => {
     const h = setup()
     const ann = h.user('Ann')
     const { accountId: stale } = await ann.sessions.ensure()
-    // The server's accounts were reset; the access token still names one.
+
     h.fake.accounts.clear()
     await ann.engine.sync()
     const fresh = accountIdOf(h, ann.seed)
@@ -128,7 +121,7 @@ describe('a session for every request', () => {
     h.fake.expireAccessTokens()
     const sent = countOps(h)
     await expect(ann.engine.sync()).resolves.toBe('synced')
-    // Refused once for the token, then sent with the refreshed one.
+
     expect(sent('inbox/sync')).toBe(2)
     expect(h.fake.sessions.size).toBe(1)
   })

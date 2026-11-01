@@ -8,7 +8,6 @@ const { default: getThemeFromColorScheme } = await import('@/constants/theme')
 type Colors = ReturnType<typeof getThemeFromColorScheme>['colors']
 type Token = keyof Colors
 
-/** A `#RRGGBBAA` tint as it renders over an opaque surface. */
 const tinted = (tint: string, surface: string) =>
   mix(surface, tint.slice(0, 7), parseInt(tint.slice(7, 9), 16) / 255)
 
@@ -17,11 +16,6 @@ const NON_TEXT = 3
 
 const surfaces: Token[] = ['background', 'backgroundLighter', 'card', 'sheet']
 
-/**
- * Foreground tokens and the surfaces they're drawn on, with the WCAG 2.2 AA
- * minimum. A pair that fails here makes text or icons hard to read for low
- * vision users, so fix the token rather than loosen the check.
- */
 const pairs: {
   fg: Token
   on: (colors: Colors) => { name: string; color: string }[]
@@ -32,7 +26,7 @@ const pairs: {
     on: (c) => surfaces.map((s) => ({ name: s, color: c[s] })),
     min: TEXT,
   },
-  // Secondary text, input placeholders, inactive tabs.
+
   {
     fg: 'textAlt',
     on: (c) => surfaces.map((s) => ({ name: s, color: c[s] })),
@@ -89,9 +83,6 @@ describe.each(['light', 'dark'] as const)('%s theme contrast', (scheme) => {
   }
 })
 
-// The light theme's brand green (`accent`) is below AA, both as text on light
-// surfaces and under white button labels. Darkening it changes the brand look,
-// so it waits on a design decision; dark mode is held to AA meanwhile.
 describe('dark theme accent contrast', () => {
   const { colors } = getThemeFromColorScheme('dark')
 

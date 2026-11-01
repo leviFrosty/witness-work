@@ -66,7 +66,7 @@ describe('createSpaceLive', () => {
     message(sockets[0], { type: 'hello', seq: 9 })
     await vi.advanceTimersByTimeAsync(1000)
     expect(onChange).toHaveBeenLastCalledWith(9)
-    // Every change advances a space's seq: a sync past it is enough.
+
     message(sockets[0], { type: 'changed', seq: 10 })
     message(sockets[0], { type: 'changed', seq: 11 })
     await vi.advanceTimersByTimeAsync(1000)
@@ -110,7 +110,7 @@ describe('createSpaceLive', () => {
     expect(onGone).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(SPACE_REPLACED_WAIT_MS - 1)
     expect(sockets).toHaveLength(1)
-    // Reconnect jitter adds up to 20% on top of the floor.
+
     await vi.advanceTimersByTimeAsync(SPACE_REPLACED_WAIT_MS * 0.2 + 1)
     expect(sockets).toHaveLength(2)
     live.stop()
@@ -125,11 +125,11 @@ describe('createSpaceLive', () => {
       socket.onopen?.()
       socket.onclose?.({ code: SPACE_CLOSE_REPLACED, reason: 'replaced' })
       await vi.advanceTimersByTimeAsync(SPACE_REPLACED_WAIT_MS / 2)
-      // Nothing comes back within the minute.
+
       expect(sockets).toHaveLength(minute + 1)
       await vi.advanceTimersByTimeAsync(SPACE_REPLACED_WAIT_MS * 3)
     }
-    // At most one socket a minute, however long it lasts.
+
     expect(sockets.length).toBeLessThanOrEqual(11)
     live.stop()
   })

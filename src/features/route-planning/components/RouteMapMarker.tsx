@@ -8,10 +8,8 @@ import type { Coordinate } from '@/types/contact'
 import MapMarkerCard from '@/components/map/MapMarkerCard'
 import useMarkerRedraw from '@/hooks/useMarkerRedraw'
 
-/** A route pin's diameter. */
 export const MARKER_PIN = 26
 
-/** A stop's numbered pin on the route map, or the start's or finish's. */
 export function RouteMapPin({
   id,
   coordinate,
@@ -24,9 +22,9 @@ export function RouteMapPin({
 }: {
   id: string
   coordinate: Coordinate
-  /** 1-based stop number, for a stop. */
+
   position?: number
-  /** The start's or finish's pin, for an end of the route. */
+
   end?: 'start' | 'finish'
   selected: boolean
   zIndex: number
@@ -86,10 +84,6 @@ export function RouteMapPin({
   )
 }
 
-/**
- * The card beside a pin: when you'd be there and the stop's name, pointing at
- * its pin from above or below.
- */
 export function RouteMapCard({
   id,
   coordinate,
@@ -107,7 +101,7 @@ export function RouteMapCard({
   time: string
   title: string
   selected: boolean
-  /** Arriving after the stop's set time. */
+
   late?: boolean
   zIndex: number
   onPress: () => void

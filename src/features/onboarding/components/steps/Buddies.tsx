@@ -40,7 +40,6 @@ interface Props {
   goNext: () => void
 }
 
-/** A bounded analytics value for a failed invite; never its message. */
 const inviteFailureReason = (error: unknown) => {
   if (error instanceof BuddyInviteError) {
     if (error.reason === 'nameRequired') return 'name_required'
@@ -49,7 +48,6 @@ const inviteFailureReason = (error: unknown) => {
   return buddiesFailureReason(error)
 }
 
-/** A short line with a leading icon; `**` bolds a phrase. */
 const Note = ({
   icon,
   color,
@@ -90,31 +88,23 @@ const Note = ({
   )
 }
 
-/**
- * Explains Buddies and offers a first invite through the share sheet. Many
- * people set up alone, so moving on is always one equal tap away, and the step
- * says where Buddies lives afterwards. Only shown where Buddies is available
- * (see `Onboarding`).
- */
 const Buddies = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const [working, setWorking] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  /** An invite went out from here. */
+
   const [sent, setSent] = useState(false)
-  /** An invite was made here, sent or not. */
+
   const [invited, setInvited] = useState(false)
-  // Offered again until it's sent, so dismissing the sheet doesn't use up
-  // another of the five spots.
+
   const [unsentInviteId, setUnsentInviteId] = useState<string | null>(null)
   const mounted = useRef(true)
-  // An invite carries the inviter's name, which setup otherwise asks for last.
-  // It's asked for here only once someone sets out to invite.
+
   const name = useProfile((state) => state.name)
   const setProfile = useProfile((state) => state.set)
   const [askName, setAskName] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
-  // The field lands at the bottom of the step; keep it in view.
+
   const revealNameField = () =>
     requestAnimationFrame(() =>
       scrollRef.current?.scrollToEnd({ animated: true })
@@ -127,7 +117,6 @@ const Buddies = ({ goBack, goNext }: Props) => {
     }
   }, [])
 
-  // Schedule's intro won't introduce Buddies again.
   const markScheduleIntroCovered = usePreferences(
     (state) => state.markScheduleIntroCovered
   )
@@ -148,7 +137,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
       const { inviteId, link } = await startBuddiesInvite(unsentInviteId)
       setInvited(true)
       setUnsentInviteId(inviteId)
-      // Continue may have been tapped while the invite was being made.
+
       if (!mounted.current) return
       const { action } = await shareInviteLink(link)
       const shared = action === Share.sharedAction
@@ -236,7 +225,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
               description={i18n.t('onboardingBuddies_private_info')}
             />
           </Note>
-          {/* Where Buddies lives, which the sent note also says. */}
+          {}
           {sent ? (
             <Note
               icon={CircleCheckIcon}
@@ -272,7 +261,6 @@ const Buddies = ({ goBack, goNext }: Props) => {
                 maxLength={40}
                 enterKeyHint='done'
                 textAlign='start'
-                // Keeps the field in view as the step grows back.
                 onBlur={revealNameField}
               />
             </View>
@@ -290,8 +278,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
           )}
         </View>
       </OnboardingScrollView>
-      {/* Inviting and moving on stay the same size and one tap away. Once an
-          invite has gone out, Continue takes the lead. */}
+      {}
       <OnboardingFooter style={{ gap: 10 }}>
         {sent ? (
           <>

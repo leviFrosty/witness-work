@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Prints a before/after table of two scripts/perf results:
-//   node scripts/perf/compare.mjs docs/perf/baseline-<sha>.json docs/perf/after.json [--all] [--out file.md]
+
 import fs from 'node:fs'
 import { compareResults, renderComparison } from './stats.mjs'
 

@@ -57,11 +57,6 @@ function Fact({
   )
 }
 
-/**
- * Home's Mileage section: this month's distance, a per-day chart, and a Log
- * Trip action. Deliberately shaped unlike the Service Report card (icon badge,
- * chart, compact action) so the two don't read as the same section.
- */
 export default function MileageHomeSection() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -69,7 +64,7 @@ export default function MileageHomeSection() {
   const index = useMileageIndex()
   const format = useMileageFormatter()
   const logTrip = useLogTrip('home_section')
-  // Keyed on the day, so the section moves to the new month at midnight.
+
   const month = periodContaining('month', moment(useLocalDay(), 'YYYY-MM-DD'))
   const monthTrips = tripsInPeriod(trips, month)
   const summary = summarizeTrips(monthTrips, index, vehicles)

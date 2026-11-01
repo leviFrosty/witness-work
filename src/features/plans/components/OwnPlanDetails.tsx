@@ -32,10 +32,6 @@ const trackFor = (item: PlanListItem) => (action: PlanDetailsAction) =>
     linked: item.type === 'day' && !!item.plan.buddyShare,
   })
 
-/**
- * "Anna planned 3 Hrs" for a Plan that follows Anna's invitation while the User
- * has set their own hours, else nothing.
- */
 function useOrganizerHours(item: PlanListItem): string | undefined {
   const link = item.type === 'day' ? item.plan.buddyShare : undefined
   const invitation = useBuddies((state) =>
@@ -58,19 +54,15 @@ function useOrganizerHours(item: PlanListItem): string | undefined {
   })
 }
 
-/**
- * Edit and More for the User's own Plan, in Plan Details' header or a day
- * sheet's.
- */
 export function OwnPlanDetailsActions({
   item,
   onEdit,
   onNavigate,
 }: {
   item: PlanListItem
-  /** Edits in place, instead of opening the Plan screen. */
+
   onEdit?: (params: RootStackParamList['PlanDay']) => void
-  /** Runs a navigation from the menu; a host sheet closes itself first. */
+
   onNavigate?: (navigate: () => void) => void
 }) {
   const { edit, menu } = usePlanMenuActions(item, {
@@ -82,10 +74,6 @@ export function OwnPlanDetailsActions({
   return <DetailsHeaderActions onEdit={edit} menu={menu} />
 }
 
-/**
- * The User's own Plan (or one date of a Recurring Plan), then its buddies, or
- * the invitation it follows.
- */
 export function OwnPlanDetailsBody({
   item,
   share,
@@ -94,11 +82,11 @@ export function OwnPlanDetailsBody({
   onOpenPlan,
 }: {
   item: PlanListItem
-  /** The buddy's invitation this Plan follows, while it can be answered. */
+
   share?: IncomingShare
   now: number
   answering: ShareAnswering
-  /** Shows another Plan in place, instead of opening its Plan Details. */
+
   onOpenPlan?: (target: RootStackParamList['Plan Details']) => void
 }) {
   const categories = useCategories((state) => state.categories)
@@ -129,8 +117,6 @@ export function OwnPlanDetailsBody({
         }
         location={plan.location}
         note={effective.note}
-        // Ticking off a checklist item edits a Day Plan. A Recurring Plan's
-        // note covers every date, and a linked Plan's is the organizer's.
         onNoteChange={
           item.type === 'day' && !item.plan.buddyShare
             ? (fields) => updateDayPlan({ id: item.plan.id, ...fields })
@@ -141,16 +127,13 @@ export function OwnPlanDetailsBody({
             <InvitationAnswerSection
               from={item.plan.buddyShare.from}
               share={share}
-              // The linked Plan is here, so it's "Going" (maybe said on another
-              // device) until "Can't make it" removes it.
               status={share?.status === 'declined' ? 'declined' : 'going'}
               answering={answering}
             />
           ) : undefined
         }
       />
-      {/* Nothing for a Plan that follows an invitation: only its organizer
-          invites people. */}
+      {}
       <PlanDetailsBuddies
         item={item}
         now={now}
@@ -161,10 +144,6 @@ export function OwnPlanDetailsBody({
   )
 }
 
-/**
- * The User's own Plan (or one date of a Recurring Plan) with Edit and More in
- * the header, then its buddies, or the invitation it follows.
- */
 export default function OwnPlanDetails({
   item,
   share,
@@ -172,7 +151,7 @@ export default function OwnPlanDetails({
   answering,
 }: {
   item: PlanListItem
-  /** The buddy's invitation this Plan follows, while it can be answered. */
+
   share?: IncomingShare
   now: number
   answering: ShareAnswering

@@ -1,8 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-// Exercises the real `@/stores/mmkv` migration against in-memory stand-ins for
-// AsyncStorage and MMKV.
-
 const asyncStore = new Map<string, string>()
 const mmkvStore = new Map<string, string | boolean>()
 
@@ -23,7 +20,6 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
 
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
-    // An open file with data in it, so the launch check doesn't write.
     size = 1
     getBoolean(k: string) {
       const value = mmkvStore.get(k)

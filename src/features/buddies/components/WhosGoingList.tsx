@@ -23,12 +23,6 @@ import type { WhosGoing } from '@/features/buddies/lib/guests'
 import type { ShareGuest } from '@/features/buddies/lib/schemas'
 import type { Buddy, IncomingShareStatus } from '@/features/buddies/lib/state'
 
-/**
- * Everyone on a buddy's Plan or Follow-up, one per line: the organizer, the
- * User with their answer, then the others going (the User's buddies as they
- * know them, anyone else as the organizer listed them) and a count of those
- * whose apps don't list them.
- */
 export default function WhosGoingList({
   organizer,
   going,
@@ -55,7 +49,6 @@ export default function WhosGoingList({
         buddy={organizer}
         subtitle={i18n.t('planDetails_organizer')}
         action={
-          // The icon's edge lines up with the statuses below it.
           <View style={{ marginRight: -14 }}>
             <InfoPopover
               centered
@@ -93,7 +86,6 @@ export default function WhosGoingList({
 
 const rowStyle = { gap: 12, paddingVertical: 10, paddingHorizontal: 15 }
 
-/** The User, with their answer; they answer it on the invitation's page. */
 function YouRow({
   status,
   last,
@@ -137,11 +129,6 @@ function YouRow({
   )
 }
 
-/**
- * Someone going who isn't the User's buddy: their name and photo as the
- * organizer listed them. Tapping says how to become buddies: in person, with a
- * Buddies Code, never through the Plan.
- */
 function GuestRow({
   guest,
   status,
@@ -194,7 +181,6 @@ function GuestRow({
   )
 }
 
-/** People going whose apps don't list them yet: counted, never named. */
 function MoreGoingRow({ count }: { count: number }) {
   const theme = useTheme()
   return (

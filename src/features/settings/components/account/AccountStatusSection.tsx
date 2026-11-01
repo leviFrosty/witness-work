@@ -44,22 +44,16 @@ const FOOTER: Partial<Record<AccountOverview['state'], TranslationKey>> = {
   unreachable: 'account_footerUnreachable',
 }
 
-/**
- * The account number and whether it's active, suspended, unreachable, or out of
- * reach because this device couldn't prove it's WitnessWork.
- */
 export default function AccountStatusSection({
   overview,
   onRetry,
 }: {
   overview: AccountOverview
-  /** Verify this device again now (Try Again). */
+
   onRetry?: () => void
 }) {
   const theme = useTheme()
-  // The account number is one long unbreakable word. Beside the label it
-  // leaves the label no room once text is enlarged ("Accou / nt / Numb / er"),
-  // so from there it goes under the label.
+
   const numberUnderLabel = useWindowDimensions().fontScale > 1
   const accountId =
     ('accountId' in overview ? overview.accountId : null) ?? null

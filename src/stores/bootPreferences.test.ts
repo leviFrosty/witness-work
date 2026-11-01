@@ -26,7 +26,6 @@ describe('readBootPreferences', () => {
   })
 
   it('reads nothing before the first unlock', async () => {
-    // A simulated locked launch can still read the file; a real one can't.
     storage.locked = true
     const { readBootPreferences } = await import('./bootPreferences')
     expect(readBootPreferences()).toBeNull()

@@ -3,7 +3,6 @@ import type { AccountOverview } from '@/features/settings/hooks/useAccountOvervi
 import type { TranslationKey } from '@/lib/locales'
 import type { BackupFailure } from '@/lib/serverAccount/backupScheduler'
 
-/** The backup's status line after a failed upload. */
 export const BACKUP_FAILURE_STATUS: Record<BackupFailure, TranslationKey> = {
   offline: 'backup_statusOffline',
   unavailable: 'backup_statusUnavailable',
@@ -17,7 +16,6 @@ export const BACKUP_FAILURE_STATUS: Record<BackupFailure, TranslationKey> = {
   update: 'backup_statusUpdate',
 }
 
-/** What the User can do about it, under the section. */
 export const BACKUP_FAILURE_DETAIL: Record<BackupFailure, TranslationKey> = {
   offline: 'backup_errorOffline',
   unavailable: 'backup_errorUnavailable',
@@ -31,7 +29,6 @@ export const BACKUP_FAILURE_DETAIL: Record<BackupFailure, TranslationKey> = {
   update: 'account_updateRequired',
 }
 
-/** The Account section's state whose footer already explains a failure. */
 const EXPLAINED_BY_ACCOUNT: Partial<
   Record<BackupFailure, AccountOverview['state']>
 > = {
@@ -40,12 +37,6 @@ const EXPLAINED_BY_ACCOUNT: Partial<
   update: 'updateRequired',
 }
 
-/**
- * What the User can do about a failed backup, under the section. Null when the
- * Account section just above already says it (this device can't be verified, or
- * the app needs an update), but not for a failure the account has since got
- * past.
- */
 export const backupFailureDetail = (
   failure: BackupFailure,
   accountState: AccountOverview['state']
@@ -54,7 +45,6 @@ export const backupFailureDetail = (
     ? null
     : BACKUP_FAILURE_DETAIL[failure]
 
-/** Why turning backup on didn't work. */
 export const backupTurnOnFailure = (code: BackupFailure): TranslationKey => {
   switch (code) {
     case 'offline':

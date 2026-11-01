@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Release-build profiling runner. Usage and the meaning of every metric live
-// in docs/perf/README.md; `node scripts/perf/run.mjs help` prints the flags.
+
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -85,7 +84,7 @@ async function profilePlatform(platform, build, sha, api, flags, state) {
       updateLeases(ROOT, { deviceId: device.id }, [device.lockKey])
       writeState(state)
     }
-    // Recorded like a dev install, so the next `wwv up` reinstalls its build.
+
     updateInstalls((installs) => {
       installs[device.lockKey] = {
         fingerprint: native.fingerprint,
@@ -138,7 +137,6 @@ async function main() {
   if (ref === 'HEAD' && dirty.trim())
     log('the working tree has uncommitted changes; they are not profiled')
 
-  // Builds first: a build waiter holds no device (as with wwv up).
   const builds = {}
   for (const platform of platforms)
     builds[platform] = await resolvePerfBuild(platform, sha, flags)

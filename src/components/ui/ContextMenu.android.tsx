@@ -17,10 +17,6 @@ import type {
 import { useInReorderableGhost } from '@/components/ui/reorderable/context'
 import useHostedContentWidth from '@/components/ui/useHostedContentWidth'
 
-/**
- * Material dropdown menu anchored to the content, opened by long press. Android
- * has no lifted preview, so `preview` is ignored.
- */
 export default function ContextMenu({
   actions,
   children,
@@ -43,21 +39,18 @@ export default function ContextMenu({
   const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
   const [submenu, setSubmenu] = useState<ContextMenuSubmenu | null>(null)
-  // Hosted RN content sizes to its own content, so pass the width the
-  // surrounding layout gives us down to it explicitly, unless the content is
-  // meant to keep its own width.
+
   const { width, overflowed, onLayout, onContentLayout } =
     useHostedContentWidth(fitContent)
-  // The dragged copy of a rearranged section draws without the native host.
+
   const ghost = useInReorderableGhost()
   const groups = ghost ? [] : menuGroups(actions)
-  // Android has no system pointer effects, so mouse hover always tints.
+
   const [hovered, setHovered] = useState(false)
   const onHoverChange =
     onPress && pointerEffect !== 'none' ? setHovered : undefined
   const tint = <HoverTint visible={hovered} borderRadius={hoverRadius} />
 
-  // With `deferHost`, whether the first long press has mounted the host.
   const [hostMounted, setHostMounted] = useState(false)
 
   const open = () => {
@@ -100,9 +93,6 @@ export default function ContextMenu({
     return hosted ? <RNHostView matchContents>{content}</RNHostView> : content
   }
 
-  // Content that holds its own controls leaves the trigger out of TalkBack
-  // entirely: a focusable Pressable is an element anyway, and one that only
-  // has a state still reads the content's loose text around those controls.
   const a11y = !accessible
     ? transparentToScreenReaders
     : disabled
@@ -121,13 +111,9 @@ export default function ContextMenu({
   )
 
   if (deferHost && !hosted) {
-    // The host stays mounted once it is, so the menu's exit plays out and
-    // later long presses open it as fast as a host made up front would.
     return (
       <View style={style}>
         {hostMounted ? (
-          // Behind the content and filling it: the menu's anchor, the same
-          // rectangle a host around the content would give it.
           <Host style={StyleSheet.absoluteFill} colorScheme={colorScheme}>
             <DropdownMenu
               expanded={expanded}
@@ -166,8 +152,7 @@ export default function ContextMenu({
     >
       <DropdownMenu.Trigger>
         <RNHostView matchContents>
-          {/* Compose click modifiers never see touches on hosted RN
-            views, so the RN side owns both gestures. */}
+          {}
           <PointerHover onHoverChange={onHoverChange}>
             <Pressable
               style={({ pressed }) => [
@@ -198,8 +183,6 @@ export default function ContextMenu({
   return (
     <View style={style} onLayout={onLayout}>
       <Host
-        // Content that ran wider than the width before it arrived keeps that
-        // layout; remount it at the width.
         key={overflowed ? width : undefined}
         matchContents
         colorScheme={colorScheme}

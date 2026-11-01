@@ -8,11 +8,6 @@ import {
 import { routePlanOptions } from '@/features/route-planning/lib/routePlanOptions'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 
-/**
- * How many stops `day`'s route has, as its entry points say: the route built
- * for the day (`planned`), or the day's stops ready to plan, as the route
- * builder would open them. `stops` are those stops.
- */
 export default function useDayRouteStopCount(day: Date) {
   const dayKey = moment(day).format('YYYY-MM-DD')
   const { stops: dayStops } = useDayRouteStops(day)

@@ -12,7 +12,6 @@ import {
   isBuddiesNews,
 } from '@/app/notifications/foregroundPresentation'
 
-/** A Buddies push as iOS delivers it: the marker rides on the trigger. */
 const push = (kind: string) =>
   ({
     request: {
@@ -22,7 +21,6 @@ const push = (kind: string) =>
     },
   }) as unknown as Notifications.Notification
 
-/** The same on Android, in the content's data. */
 const androidPush = (kind: string) =>
   ({
     request: {

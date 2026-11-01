@@ -24,10 +24,6 @@ import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Who the Visit was with, as the same card the Contacts list shows (opening
- * Contact Details), with Call, Text, and Navigate beside them.
- */
 export default function VisitDetailsContact({
   contact,
   onOpen,
@@ -96,8 +92,7 @@ export default function VisitDetailsContact({
         gap: 0,
       }}
     >
-      {/* The Button owns taps on the Contact; the actions sit beside it so the
-          two never compete. */}
+      {}
       <Button
         onPress={onOpen}
         accessibilityRole='button'

@@ -40,7 +40,6 @@ const fresh = helpBundle({
   generatedAt: '2026-10-20T00:00:00.000Z',
 })
 
-/** Lets the store's background open run to completion. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 beforeEach(() => {
@@ -71,12 +70,11 @@ describe('Help Center store', () => {
       bundle: cached,
       source: 'cache',
     })
-    // The refresh compares against what's shown, not the snapshot.
+
     expect(mocks.refreshHelpBundle).toHaveBeenCalledWith('en-US', 'cached')
   })
 
   it('keeps a newer snapshot over an older download', async () => {
-    // The app was updated after its last download.
     mocks.readCachedBundle.mockResolvedValue({
       ...cached,
       generatedAt: '2026-09-01T00:00:00.000Z',

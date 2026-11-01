@@ -158,10 +158,6 @@ const parseMockContactCount = (value: string) => {
     : DEFAULT_MOCK_CONTACT_COUNT
 }
 
-/**
- * Middle-elide long opaque ids so rows stay one line; full value is selectable
- * via the JSON viewers.
- */
 const shortId = (value: string | null | undefined): string =>
   !value
     ? '—'
@@ -169,7 +165,6 @@ const shortId = (value: string | null | undefined): string =>
       ? `${value.slice(0, 8)}…${value.slice(-6)}`
       : value
 
-/** Dev-tools destructive actions all share the same warning copy. */
 const confirmDevAction = (title: string, onConfirm: () => void) =>
   confirmDestructive({
     title,
@@ -223,13 +218,13 @@ export default function ToolsScreen() {
   } = preferences
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
   const appVersion = Constants.expoConfig?.version ?? '0.0.0'
-  // The release before the update reveal's, for replaying its trigger.
+
   const beforeUpdateReveal =
     semver.minor(UPDATE_REVEAL_VERSION) > 0
       ? `${semver.major(UPDATE_REVEAL_VERSION)}.${semver.minor(UPDATE_REVEAL_VERSION) - 1}.0`
       : `${semver.major(UPDATE_REVEAL_VERSION) - 1}.0.0`
   const mileage = useMileage()
-  // Profile-shaped fields live in the dedicated Profile store after wave-3.
+
   const { hasCompletedProfileSetup, name, set: setProfile } = useProfile()
   const celebrationQueue = useCelebrationQueue()
   const { isSupporter, since: supporterSince } = useIsSupporter()
@@ -240,12 +235,10 @@ export default function ToolsScreen() {
   )
   const mockContactCount = parseMockContactCount(mockContactCountInput)
 
-  // --- Attestation and supporter-sync debug ------------------------------
   const { accountId, iCloudSharingAvailable } = useAccount()
   const { customer } = useCustomer()
   const entitled = supporterSinceDate(customer) !== null
-  // Cheap MMKV/Keychain reads; recomputed per render so recent lifecycle state
-  // changes are reflected immediately.
+
   const authSnapshot = getAttestationSnapshot()
   const [authBusy, setAuthBusy] = useState(false)
   const [authReport, setAuthReport] = useState<AttestationDebugReport | null>(
@@ -326,8 +319,7 @@ export default function ToolsScreen() {
   const inspectAccountFile = async () => {
     try {
       const { file, pending } = await readAccountFile()
-      // The same pure decision AccountProvider's reconcile pass would make
-      // right now — shows WHY the device is claiming/adopting/idle.
+
       const action = decideAccountAction({
         accountId: getOrCreateAccountId(),
         entitled,
@@ -335,21 +327,18 @@ export default function ToolsScreen() {
       })
       setAccountFileInspection({
         file,
-        // AccountProvider defers every action while this is true.
+
         pending,
         action,
         readAt: new Date().toISOString(),
       })
     } catch (e) {
-      // Rejection means iCloud unavailable (signed out / Drive disabled).
       setAccountFileInspection({ error: (e as Error).message })
     }
   }
 
   const showDone = (label: string) => toast.info(label)
 
-  // Mock history reaches badges. Evaluate right away, not quietly, so levels
-  // reached this or last month celebrate and older ones show the summary.
   const generatedWithBadges = () => {
     const { added, live } = evaluateBadgesNow()
     toast.success(i18n.t('generated'), {
@@ -363,20 +352,10 @@ export default function ToolsScreen() {
       timeoutMs: 15_000,
     })
     if (Array.isArray(data) && data.length > 0) {
-      // customFields is id-keyed against contactsStore.customFieldDefs (see
-      // customFieldsMigration.ts) — writing the raw company object would
-      // produce label-keyed values that no renderer can resolve. Create defs
-      // up-front and key by their ids. addCustomFieldDef returns the existing
-      // def on label collision, so re-running stays a no-op for the def list.
       const companyDef = addCustomFieldDef('Company')
       const catchphraseDef = addCustomFieldDef('Catchphrase')
       const bsDef = addCustomFieldDef('BS')
 
-      // Apple's default simulator location (San Francisco, near the Embarcadero).
-      // Spread across ~7 miles so contacts cover most of SF rather than piling
-      // up in one neighborhood. xmur3-style hash on the index gives a flatter
-      // distribution than Math.imul(index, knuth) % 1000, which clusters badly
-      // at low index counts.
       const SF_LAT = 37.785834
       const SF_LNG = -122.406417
       const SPREAD = 0.1
@@ -388,9 +367,6 @@ export default function ToolsScreen() {
         return (h % 10000) / 10000 - 0.5
       }
 
-      // First N contacts hit explicit staleness buckets so every "age band" is
-      // represented; remaining contacts get a deterministic pseudo-random age
-      // up to ~3 years so the list isn't all clustered around one date.
       const stalenessBuckets: {
         value: number
         unit: moment.unitOfTime.DurationConstructor
@@ -493,11 +469,6 @@ export default function ToolsScreen() {
     }
   }
 
-  // Creates a single contact whose stripped JSON, even with zero conversations,
-  // exceeds CONTACT_SHARE_LINK.MAX_URL_BYTES (4 KB) after gzip + base64. Lets us
-  // exercise the "use file export" fallback path end-to-end. High-entropy
-  // random values defeat gzip — a handful of KB of Math.random().toString(36)
-  // reliably blows past the cap.
   const generateOversizedShareContact = () => {
     const randomString = (len: number) => {
       let s = ''
@@ -520,9 +491,6 @@ export default function ToolsScreen() {
   }
 
   const generateServiceReports = () => {
-    // Seed a handful of named Categories if none exist yet; dev fixtures
-    // reference them by id so the generator exercises the new Category-keyed
-    // path rather than legacy `tag` strings.
     const seedNames = ['Special', 'Campaign', 'Memorial', 'Convention']
     const ensureCategory = (name: string): string => {
       const existing = categories.find((c) => c.name === name)
@@ -544,9 +512,7 @@ export default function ToolsScreen() {
         const hours = Math.floor(Math.pow(r, 2.5) * 17)
         const minutes = (seed * 7) % 12 === 0 ? 0 : ((seed * 7) % 12) * 5
         if (hours === 0 && minutes === 0) continue
-        // LDC is now a builtin Category (`LDC_BUILTIN_CATEGORY_ID`); the
-        // generator sprinkles LDC entries by setting categoryId on every
-        // fifth seed slot.
+
         const isLdc = seed % 5 === 0
         addServiceReport({
           date: moment().subtract(i, 'day').toDate(),
@@ -628,9 +594,6 @@ export default function ToolsScreen() {
     })
   }
 
-  // One contact whose visit history hits every Contact Details rendering
-  // branch; data lives in the pure builder. Opens the contact afterwards with
-  // a highlighted visit. Stable ids keep re-runs idempotent.
   const generateUniqueContact = () => {
     const labels = UNIQUE_CONTACT_CUSTOM_FIELD_LABELS
     const defId = (label: string) => addCustomFieldDef(label)?.id ?? label
@@ -670,9 +633,6 @@ export default function ToolsScreen() {
   }
 
   const generateServicePlans = () => {
-    // Realistic field-service start times (minutes since midnight): 8:00, 9:30,
-    // 10:00, 13:00, 14:00, 15:30, 18:00, 19:00. Cycled deterministically so
-    // repeated runs produce the same spread.
     const startTimePool = [480, 570, 600, 780, 840, 930, 1080, 1140]
     const pickStartTime = (i: number) =>
       startTimePool[(i * 2654435761) % startTimePool.length]
@@ -710,8 +670,6 @@ export default function ToolsScreen() {
     }
   }
 
-  // Today's stops for "Plan today's route". Re-running the same day is a
-  // no-op; a later day adds that day's stops.
   const generateTodayRoute = () => {
     const fixture = buildTodayRouteFixture({ now: moment() })
     fixture.contacts.forEach((contact) => {
@@ -725,8 +683,6 @@ export default function ToolsScreen() {
     fixture.recurringPlans.forEach((plan) => addRecurringPlan(plan))
   }
 
-  // Upserts the fixture under stable ids, so re-running refreshes it rather
-  // than duplicating. Opts in so every Mileage entry point is visible.
   const generateMileage = () => {
     const fixture = buildMileageFixture({ now: moment() })
     fixture.fuels.forEach(mileage.saveFuel)
@@ -738,8 +694,6 @@ export default function ToolsScreen() {
     return fixture
   }
 
-  // One trip on today's date with the first active car, to check live
-  // summaries and the Home card without regenerating everything.
   const addTodayMileageTrip = () => {
     const vehicle = mileage.vehicles.find((v) => !v.archived)
     if (!vehicle) {
@@ -760,7 +714,7 @@ export default function ToolsScreen() {
   const deleteFixtureMileage = () => {
     const isFixture = (record: { id: string }) =>
       record.id.startsWith(MILEAGE_FIXTURE_ID_PREFIX)
-    // Deleting a car also tombstones its setups and trips.
+
     mileage.vehicles
       .filter(isFixture)
       .forEach((v) => mileage.deleteVehicle(v.id))
@@ -772,9 +726,6 @@ export default function ToolsScreen() {
     Notifications.NotificationRequest[]
   >([])
 
-  // Asks for notification permission if not yet granted. Returns true if the
-  // app may schedule, false otherwise. The dev tool helpers below all funnel
-  // through this so the user gets one consistent prompt path.
   const ensureNotificationPermission = async (): Promise<boolean> => {
     const { granted } = await Notifications.getPermissionsAsync()
     if (granted) return true
@@ -788,18 +739,12 @@ export default function ToolsScreen() {
     return true
   }
 
-  // Snapshot of what's actually in the OS queue right now — useful for
-  // confirming that creating/editing/deleting plans keeps storage and the OS
-  // queue in sync. Returns the count so callers can include it in toasts.
   const refreshScheduledNotifications = async (): Promise<number> => {
     const all = await Notifications.getAllScheduledNotificationsAsync()
     setScheduledNotifications(all)
     return all.length
   }
 
-  // Smallest possible end-to-end check: schedules a generic notification 10s
-  // out, plus a matching tray item that lands as it fires. Tapping the push
-  // opens the tray, like a Buddies push.
   const scheduleTestNotificationIn10s = async () => {
     if (!(await ensureNotificationPermission())) return
     const fireAt = new Date(Date.now() + 10_000)
@@ -826,10 +771,6 @@ export default function ToolsScreen() {
     })
   }
 
-  // Exercises the real plan path: creates a day plan starting 3 minutes from
-  // now with a 1-minute notify offset, so the notification fires in ~2 min.
-  // Stores the OS notification id on the plan exactly like PlanDayScreen does
-  // so deletion via the normal UI cancels it.
   const generateImminentDayPlanWithNotification = async () => {
     const planStart = new Date(Date.now() + 3 * 60_000)
     const fireAt = new Date(planStart.getTime() - 60_000)
@@ -895,8 +836,6 @@ export default function ToolsScreen() {
     showDone(label)
   }
 
-  // Mock data must never reach the real calendar: Calendar Sync goes off
-  // before anything is written.
   const withMockData = (generate: () => unknown) => async () => {
     const calendarWasOn = useCalendarSync.getState().enabled
     await stopCalendarSyncForMockData()
@@ -918,7 +857,6 @@ export default function ToolsScreen() {
     generatedWithBadges()
   })
 
-  /** The reset forgets the connection, so its events go first. */
   const removeCalendarEventsBeforeReset = async () => {
     try {
       await removeConnectedCalendarEvents()
@@ -981,7 +919,6 @@ export default function ToolsScreen() {
 
   const cacheSize = Object.keys(dailyMinutes?.daily ?? {}).length
 
-  // Month-goal celebrations key off the calendar month.
   const now = moment()
   const prevMonthMoment = moment().subtract(1, 'month')
   const thisMonthKey = monthCelebrationKey(now.month(), now.year())
@@ -991,9 +928,6 @@ export default function ToolsScreen() {
   )
   const pendingCelebrations = Object.keys(celebrationQueue.pending).length
 
-  // Service-year start = current year if we're past Sep 1, otherwise the prior
-  // calendar year. Matches the Sep→Aug window used by YearMilestoneCard /
-  // MilestoneProgressBar.
   const currentServiceYear = getServiceYearFromDate(now)
   const prevServiceYear = currentServiceYear - 1
   const currentYearKey = milestoneCelebrationKey(currentServiceYear)
@@ -1048,7 +982,7 @@ export default function ToolsScreen() {
           </Text>
         </View>
 
-        {/* ---- Quick actions: the handful of things reached for daily ---- */}
+        {}
         <Card style={{ padding: 12, gap: 10 }}>
           <XView style={{ flexWrap: 'wrap', gap: 10 }}>
             <QuickTile
@@ -1117,7 +1051,7 @@ export default function ToolsScreen() {
 
         {__DEV__ && <LayoutDirectionTools />}
 
-        {/* ---- Data ---- */}
+        {}
         <ToolSection
           title={i18n.t('generateMockData')}
           icon={DatabaseIcon}
@@ -1239,7 +1173,7 @@ export default function ToolsScreen() {
 
         <DangerZoneTools />
 
-        {/* ---- App state ---- */}
+        {}
         <ToolSection
           title='Mileage'
           icon={CarIcon}
@@ -1923,7 +1857,7 @@ export default function ToolsScreen() {
           </View>
         </ToolSection>
 
-        {/* ---- Integrations ---- */}
+        {}
         <ToolSection
           title='Supporter sync'
           icon={CloudIcon}
@@ -2072,7 +2006,7 @@ export default function ToolsScreen() {
           </View>
         </ToolSection>
 
-        {/* ---- Device & raw data ---- */}
+        {}
         <ToolSection title={i18n.t('metadata')} icon={SmartphoneIcon}>
           <ToolList>
             <ToolRow

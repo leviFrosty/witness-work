@@ -1,7 +1,3 @@
-/**
- * The service's own error code from a failed response body (`code`, else
- * `error` when it holds a code), for errors that carry the parsed body.
- */
 export function errorBodyCode(error: unknown): string | null {
   const body = (error as { body?: unknown } | null)?.body as
     | { code?: unknown; error?: unknown }

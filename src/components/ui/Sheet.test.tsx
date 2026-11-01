@@ -63,7 +63,7 @@ describe('Sheet', () => {
       backgroundColor: '#sheet',
       colorScheme: 'dark',
     })
-    // ADR 0021: nothing takes over a sheet the User is using.
+
     expect(holds()).toEqual([expect.stringMatching(/^sheet:/)])
 
     render({ open: false })

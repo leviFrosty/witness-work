@@ -71,7 +71,7 @@ describe('member values', () => {
     )
     expect(memberIdFor(spaceId, member.dhPub)).toBe(member.memberId)
     expect(memberOwnsKey(spaceId, member.memberId, member.dhPub)).toBe(true)
-    // Someone else's key under this member's id, or this key on another space.
+
     const someone = deriveSpaceMember(random(32), spaceId)
     expect(memberOwnsKey(spaceId, member.memberId, someone.dhPub)).toBe(false)
     expect(
@@ -151,7 +151,7 @@ describe('key wraps', () => {
         })
       )
     ).toBe('key')
-    // A wrap whose ephemeral key is low order doesn't open, the same way.
+
     const bytes = fromB64u(wrap())
     bytes.set(new Uint8Array(32), 0)
     expect(problem(() => unwrapSpaceKey(toB64u(bytes), member, address))).toBe(

@@ -118,8 +118,6 @@ describe('lib/contactsSort', () => {
     })
 
     it('recentConversation asc keeps oldest first even if a newer contact is a study', () => {
-      // Reproduces the bug: with explicit "Recent Visit" asc, a 2-day-old
-      // bible study should NOT jump above a 9-day-old non-study.
       const studyRecent = c({ id: 'study', name: 'Study' })
       const oldRegular = c({ id: 'old', name: 'Old' })
       const conversations: Visit[] = [
@@ -147,8 +145,6 @@ describe('lib/contactsSort', () => {
   })
 
   describe('pinStaleness', () => {
-    // ranks: month=3, week=2, recent=1, never=0
-    // desc => highest rank first => month, week, recent, never
     it('desc orders most-stale to least: month, week, recent, never', () => {
       const monthContact = c({ id: 'month', name: 'M' })
       const weekContact = c({ id: 'week', name: 'W' })
@@ -241,8 +237,7 @@ describe('lib/contactsSort', () => {
       const a = c({ id: 'a', name: 'Alice' })
       const b = c({ id: 'b', name: 'Bob' })
       const cc = c({ id: 'c', name: 'Charlie' })
-      // 'za' compareKey returns reverse; desc multiplies by -1, so result is asc
-      // The simpler invariant: 'za' asc reverses alphabetical
+
       const result = sortContacts([a, b, cc], 'za', 'asc')
       expect(result.map((x) => x.id)).toEqual(['c', 'b', 'a'])
     })
@@ -299,7 +294,6 @@ describe('lib/contactsSort', () => {
     })
 
     it('reads rehydrated date strings, to the second, with unreadable ones last', () => {
-      // As the store hands them back after a relaunch: JSON date strings.
       const contacts = JSON.parse(
         JSON.stringify([
           c({
@@ -317,7 +311,7 @@ describe('lib/contactsSort', () => {
             name: 'A',
             createdAt: new Date('2020-01-01T00:00:00Z'),
           }),
-          // Same second as `b`: a tie, so the two keep their order.
+
           c({
             id: 'b2',
             name: 'B2',
@@ -344,7 +338,7 @@ describe('lib/contactsSort', () => {
         c({
           id: `c${i}`,
           name: `Contact ${i}`,
-          // Many contacts share a day, as an import does.
+
           createdAt: moment('2021-01-01')
             .add((i * 37) % 90, 'days')
             .toISOString() as unknown as Date,
@@ -373,7 +367,7 @@ describe('lib/contactsSort', () => {
       const b = c({ id: 'b', name: 'B', address: { city: 'Boston' } })
       const noCity = c({ id: 'n', name: 'N' })
       const result = sortContacts([noCity, a, b], 'city', 'desc')
-      // Undefined sentinels stay last; only the defined values flip
+
       expect(result.map((x) => x.id)).toEqual(['b', 'a', 'n'])
     })
 
@@ -479,7 +473,6 @@ describe('lib/contactsSort', () => {
       )
       expect(result.map((x) => x.id)).toEqual(['x', 'z', 'y', 'w', 'none'])
 
-      // A value moment can't read compares as text against the others.
       const mixed = sortContacts(
         [birthday('date', '2021-05-01'), birthday('text', 'spring')],
         'customField:birthday',

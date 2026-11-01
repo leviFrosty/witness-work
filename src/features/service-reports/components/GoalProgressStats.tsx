@@ -24,26 +24,13 @@ type GoalProgressStatsProps = {
   periodState: PeriodState
   remainingLabel?: string
   totalLabel?: string
-  /**
-   * When provided and periodState is 'current', a small tier seal renders above
-   * the hero (icon + accent palette by default; gold/amber reserved for the
-   * `record` personal-best tier). Past/future months ignore this prop and keep
-   * the subdued historical rendering — see docs/month-year-analytics-plan.md
-   * for rationale.
-   */
+
   achievementTier?: AchievementTier | null
-  /**
-   * Reanimated style applied to the achievement seal icon. Exposed so the
-   * parent can orchestrate a one-time scale/glow pulse when a new tier is
-   * crossed without pushing animation state down into this component.
-   */
+
   sealAnimatedStyle?: Parameters<typeof Animated.View>[0]['style']
-  /** Rendered between the hero and the meta line (the progress bar). */
+
   bar?: ReactNode
-  /**
-   * Trailing edge of the meta line under the bar — pace and month-over-month
-   * deltas ride here so remaining and pace read as one line.
-   */
+
   metaTrailing?: ReactNode
 }
 
@@ -86,10 +73,6 @@ const GoalProgressStats = ({
   const remainingDisplay = useFormattedMinutes(remainingMinutes)
   const beyondDisplay = useFormattedMinutes(beyondMinutes)
 
-  // No goal to measure against (e.g. a Regular Publisher who opted into Hours
-  // Logging without setting a Monthly Goal). Still surface the logged total —
-  // just without the goal-relative pill, suffix, or celebration palette. A
-  // future month has nothing logged and no goal to preview, so stay hidden.
   const hasGoal = goalHours > 0
   if (!hasGoal && periodState === 'future') return null
 
@@ -106,28 +89,19 @@ const GoalProgressStats = ({
         ? theme.colors.textAlt
         : theme.colors.text
 
-  // iOS Health-style hero split: gigantic numeric headline + small suffix
-  // baseline-aligned. With a goal the suffix carries it ("/ 30 hours",
-  // matching the Service Year card), so the goal never needs its own label.
-  // For decimal preference the headline is a bare number; for short
-  // preference the formatter already emits "Xh Ym".
   const isDecimal = timeDisplayFormat === 'decimal'
   const showsGoalInHero = hasGoal && periodState !== 'future'
   const heroSource = periodState === 'future' ? goalDisplay : completedDisplay
   const heroBig = isDecimal
     ? formatPlainNumber(heroSource.decimalHours)
     : heroSource.formatted
-  // Goal hours are user-entered, so they render verbatim (as the year card's
-  // Annual Goal does) rather than through the minutes formatter.
+
   const heroSuffix = showsGoalInHero
-    ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      i18n.t('goalHoursSuffix', { count: goalHours })
+    ? i18n.t('goalHoursSuffix', { count: goalHours })
     : isDecimal
-      ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('hoursUnitLabel', { count: heroSource.decimalHours })
+      ? i18n.t('hoursUnitLabel', { count: heroSource.decimalHours })
       : ''
 
-  // Read as one phrase ("18 hours of 50 hours"), not "18, / 50 hours".
   const heroSpoken = showsGoalInHero
     ? i18n.t('durationSpoken.ofGoal', {
         value: formatMinutesSpoken(completedMinutes),
@@ -137,8 +111,6 @@ const GoalProgressStats = ({
         periodState === 'future' ? goalMinutes : completedMinutes
       )
 
-  // Meta line under the bar: the actionable figure (left/short) leads in the
-  // primary color, the calendar context trails in the secondary color.
   let metaLead: string | null = null
   let metaContext: string | null = null
   if (!hasGoal) {
@@ -179,7 +151,6 @@ const GoalProgressStats = ({
       {tierBadge}
       <View
         accessibilityLabel={heroSpoken}
-        // A label alone doesn't keep the view, and the card reads its label.
         collapsable={false}
         style={{
           flexDirection: 'row',
@@ -189,17 +160,10 @@ const GoalProgressStats = ({
         }}
       >
         <Text
-          // At accessibility sizes the figure shrinks onto one line rather
-          // than breaking between its digits.
           {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
-          // Short preference renders "0 Hrs 10 Mins" — three tokens that
-          // don't fit at 64pt on a single card row. Drop one size class so
-          // the line wraps gracefully (or stays single-line) without the
-          // auto-shrink turning the hero into fine print.
           style={{
             fontSize: isDecimal ? 64 : 40,
-            // A fixed line height would keep the full-size line around a
-            // shrunk figure.
+
             lineHeight:
               largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
             fontFamily: theme.fonts.bold,

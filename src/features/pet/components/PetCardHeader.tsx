@@ -7,12 +7,6 @@ import PixelHearts from '@/features/pet/components/PixelHearts'
 import type { HeartPulse } from '@/features/pet/hooks/usePetReveal'
 import type { PetCardLife } from '@/features/pet/lib/sceneInput'
 
-/**
- * The pet card's header: the name, then its hearts or what's wrong. Gold's
- * first day adds a one-line note. `heartPulse` pops or crumbles the heart that
- * just changed (`usePetReveal`). `ink` colours the words on the pet screens'
- * paper; `wrapHearts` puts the hearts in a button (the details' info).
- */
 export default function PetCardHeader({
   name,
   life,
@@ -23,10 +17,10 @@ export default function PetCardHeader({
 }: {
   name: string
   life: PetCardLife
-  /** The name's size: `lg` on the card, `xl` as a sheet's title. */
+
   size?: 'lg' | 'xl'
   heartPulse?: HeartPulse | null
-  /** The words' colours; the theme's by default. */
+
   ink?: { text: string; alt: string }
   wrapHearts?: (hearts: ReactElement) => ReactElement
 }) {

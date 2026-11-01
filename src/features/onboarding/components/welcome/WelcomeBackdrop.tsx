@@ -28,9 +28,9 @@ interface OrbitProps {
   cx: number
   cy: number
   r: number
-  /** Angle (degrees) the orbit starts drawing in from. */
+
   from: number
-  /** Radians per second; negative orbits counter-clockwise. */
+
   speed: number
   palette: WelcomePalette
   time: SharedValue<number>
@@ -38,10 +38,6 @@ interface OrbitProps {
   reveal: SharedValue<number>
 }
 
-/**
- * A faint orbit around the hub that draws itself in, then carries a small light
- * with a fading tail — the "everything revolves around your ministry" motif.
- */
 const Orbit = ({
   cx,
   cy,
@@ -56,7 +52,7 @@ const Orbit = ({
   const clockwise = speed > 0
   const bounds = Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2)
   const ring = Skia.PathBuilder.Make().addArc(bounds, from, 359.9).detach()
-  // The tail trails the light, which sits at 0° before rotation.
+
   const tail = Skia.PathBuilder.Make()
     .addArc(bounds, clockwise ? -COMET_TAIL : 0, COMET_TAIL)
     .detach()
@@ -64,7 +60,7 @@ const Orbit = ({
   const rotation = useDerivedValue(() => [
     { rotate: (from * Math.PI) / 180 + time.value * speed },
   ])
-  // The light only sets off once its orbit has nearly finished drawing.
+
   const lightOpacity = useDerivedValue(
     () => Math.max(0, (drawn.value - 0.7) / 0.3) * reveal.value
   )
@@ -119,7 +115,6 @@ interface RingProps {
   palette: WelcomePalette
 }
 
-/** The month's progress, filling around the app tile as the story plays. */
 const HubRing = ({
   cx,
   cy,
@@ -182,27 +177,23 @@ interface Props {
   width: number
   height: number
   hub: { x: number; y: number }
-  /** Constellation scale — design units to points. */
+
   scale: number
   palette: WelcomePalette
   time: SharedValue<number>
   tilt: Tilt
-  /** 0–1 reveal of the whole scene. */
+
   reveal: SharedValue<number>
-  /** 0–1 draw-in of the orbits. */
+
   orbits: SharedValue<number>
   ringStart: SharedValue<number>
   ringEnd: SharedValue<number>
-  /** Extra bloom behind the hub. */
+
   pulse: SharedValue<number>
-  /** Opacity of the orbits and ring, to clear them off the aurora. */
+
   chrome?: SharedValue<number>
 }
 
-/**
- * The welcome scene's backdrop, drawn in one Skia canvas: the aurora shader,
- * the orbits, and the progress ring around the hub.
- */
 const WelcomeBackdrop = ({
   width,
   height,

@@ -35,160 +35,83 @@ import {
   sanitizeProfileAvatar,
 } from '@/app/sync/avatarPayload'
 
-/**
- * Bumped whenever the payload shape changes in a breaking way. Consumers reject
- * unknown versions rather than corrupt local state. Mirrors the pattern used by
- * the widget snapshot.
- */
 export const PAYLOAD_VERSION = 1
 
 export type SyncPayload = {
   version: number
   writtenAt: number
-  /**
-   * New writers use a calibrated clock, so replication delays need no
-   * translation.
-   */
+
   calibratedClock?: boolean
   deviceId: string
   deviceName?: string
-  /**
-   * The writer's reset generation; absent is generation zero. Receivers ignore
-   * payloads from an older generation and adopt a newer one. Additive, so
-   * `PAYLOAD_VERSION` stays put: older builds drop the key and merge as before.
-   * See `src/lib/syncResetEpoch.ts`.
-   */
+
   resetEpoch?: ResetEpoch
   contactStore: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     contacts: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     deletedContacts: any[]
-    /**
-     * Custom field definitions. Optional in the wire shape because pre-id
-     * payloads (written by clients before this feature shipped) won't include
-     * them; consumers default to `[]` when absent. Merged by id with per-def
-     * `updatedAt` last-writer-wins.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     customFieldDefs?: any[]
     deletedCustomFieldDefs?: CustomFieldTombstone[]
   }
   conversationStore: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     conversations: any[]
     deletedConversations?: { id: string; deletedAt: number }[]
-    /**
-     * Conversation field definitions and their tombstones. Absent from payloads
-     * written before conversation fields shipped; consumers default to `[]`.
-     * Merged like `contactStore.customFieldDefs`.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     conversationFieldDefs?: any[]
     deletedConversationFieldDefs?: CustomFieldTombstone[]
-    /**
-     * `true` when written by a build with the visit form's Follow Up switch,
-     * where a Visit carries `followUp` only if the user wants one. Absent on
-     * payloads from older builds, which attached a placeholder follow-up to
-     * every Visit; `parsePayload` strips those on read. Additive so older
-     * builds keep accepting our payloads. See `payloadFollowUps.ts`.
-     */
+
     explicitFollowUps?: boolean
   }
   serviceReportStore: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     serviceReports: Record<string, Record<string, any[]>>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     dayPlans: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     recurringPlans: any[]
     deletedServiceReports?: { id: string; deletedAt: number }[]
-    /**
-     * Plan tombstones. Optional because payloads from builds before Plan
-     * deletions synced lack them; receivers treat that as none. Additive, so
-     * `PAYLOAD_VERSION` stays put and older builds keep accepting our payloads
-     * (their validation drops the unknown keys).
-     */
+
     deletedDayPlans?: { id: string; deletedAt: number }[]
     deletedRecurringPlans?: { id: string; deletedAt: number }[]
-    /**
-     * `true` when written by a build where every Plan on a day adds up. Absent
-     * on payloads from older builds, where a Day Plan hid that day's recurring
-     * instances; `parsePayload` skips those instances on read. Additive so
-     * older builds keep accepting our payloads. See `payloadAdditivePlans.ts`.
-     */
+
     additivePlans?: boolean
   }
-  /**
-   * User-defined Category records (the first-class shape that replaces the
-   * legacy `preferences.serviceReportTags`). Optional in the wire shape because
-   * pre-Category payloads from older app versions won't include it — consumers
-   * default to `[]` when absent.
-   */
+
   categoryStore?: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categories: any[]
     deletedCategories?: { id: string; deletedAt: number }[]
   }
-  /**
-   * Mileage Tracking cars, fuels, histories, and trips, plus one shared
-   * tombstone list. Optional in the wire shape because older app versions don't
-   * write it — consumers default every collection to `[]`.
-   */
+
   mileageStore?: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vehicles: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     fuels: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     fuelPrices: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     vehicleSetups: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     trips: any[]
     deletedMileageRecords?: { id: string; deletedAt: number }[]
   }
-  /**
-   * The Pet Companion and its room (one record each, as lists so they merge by
-   * id) plus their tombstones. Optional because older app versions don't write
-   * it; consumers default every list to `[]`. Hearts aren't here: they're
-   * replayed from the records above (ADR 0030).
-   */
+
   petStore?: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pets: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     petRooms: any[]
     deletedPetRecords?: { id: string; deletedAt: number }[]
   }
   preferencesStore: {
-    // Partial because we only sync the allow-listed, cross-device-safe keys.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     values: Record<string, any>
     updatedAt: Record<string, number>
   }
-  /**
-   * Identity-shaped fields (name, avatar, avatar background, profile-setup
-   * completion). Split out of `preferencesStore` in wave-3 of the
-   * store-narrowing series. Optional in the wire shape because older clients
-   * write profile fields _inside_ `preferencesStore.values`; on read we rewrite
-   * those into this slice via `normalizeLegacyPayloadFieldNames`.
-   */
+
   profileStore?: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     values: Record<string, any>
     updatedAt: Record<string, number>
   }
 }
 
-/**
- * Builds the iCloud payload by snapshotting each zustand store. Intentionally
- * reads state synchronously so the caller (sync layer) can diff and push
- * without waiting on React.
- *
- * Avatar references are sanitized by `./avatarPayload`. Per-device consent
- * controls only binary uploads/downloads.
- */
 export function buildPayload(args: {
   deviceId: string
   deviceName?: string
@@ -205,9 +128,6 @@ export function buildPayload(args: {
   const includeImages = prefs.iCloudSyncIncludeImages === true
   const avatarOpts = { includeImages }
 
-  // Allow-list of preference keys that participate in sync. Anything in
-  // NON_SYNCABLE_PREFERENCE_KEYS is explicitly device-local.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const syncablePrefs: Record<string, any> = {}
   for (const [key, value] of Object.entries(prefs)) {
     if (typeof value === 'function') continue
@@ -215,14 +135,6 @@ export function buildPayload(args: {
     syncablePrefs[key] = value
   }
 
-  // Profile slice — same allow-list pattern. The avatar field is sanitized
-  // identically to how it used to be inside `preferencesStore.values`, just
-  // routed through the new slice so the wire shape matches the on-device
-  // store split. Older clients still pre-wave-3 will receive these values
-  // back in their `preferencesStore.values` because the receiving side keeps
-  // the legacy shape; the sync-time translation on read folds them back into
-  // `profileStore`. See `payloadFieldRenames.ts`.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const syncableProfile: Record<string, any> = {}
   for (const [key, value] of Object.entries(profile)) {
     if (typeof value === 'function') continue
@@ -299,10 +211,6 @@ import { normalizeLegacyFollowUps } from '@/app/sync/payloadFollowUps'
 import { normalizeLegacyPlans } from '@/app/sync/payloadAdditivePlans'
 import { sanitizeNoteDocs } from '@/app/sync/payloadNotes'
 
-/**
- * Why `parsePayload` rejected a file, for diagnostics. Field paths, codes and
- * error names only, never values.
- */
 export type PayloadRejection = {
   reason:
     | 'invalid-json'
@@ -310,20 +218,16 @@ export type PayloadRejection = {
     | 'newer-version'
     | 'invalid-frame'
     | 'threw'
-  /** Frame problems as `path.field:code`, de-duplicated and capped. */
+
   issues?: string[]
-  /** The parse step that threw. */
+
   step?: string
-  /** The thrown error's name, without its message. */
+
   error?: string
 }
 
 const MAX_REJECTION_ISSUES = 5
 
-/**
- * Frame problems as `path.field:code`. Record keys that aren't field names,
- * such as years, months and ids, read as `*`.
- */
 function frameIssues(issues: z.ZodIssue[]): string[] {
   const problems = new Set<string>()
   for (const issue of issues) {
@@ -340,22 +244,6 @@ function hasNewerVersion(data: unknown): boolean {
   return typeof version === 'number' && version > PAYLOAD_VERSION
 }
 
-/**
- * Parses and validates a JSON-encoded payload. Returns null if the JSON is
- * malformed or the shape is unrecognizable — the caller should treat that as
- * "leave local state alone, surface a sync error in settings" — and names why
- * to `onRejected`. Records, settings and profile values this build can't read
- * are dropped instead and named to `onDropped`.
- *
- * Also translates legacy preference field names from older app versions so the
- * merge step sees the canonical schema, strips placeholder follow-ups from
- * payloads written before the visit form's Follow Up switch existed, and skips
- * recurring instances that older builds hid behind a Day Plan. The wire payload
- * version (`PAYLOAD_VERSION`) is intentionally NOT bumped for either —
- * receivers normalize on read. See `payloadFieldRenames.ts` for the rename
- * table, `payloadFollowUps.ts` for the follow-up rule, and
- * `payloadAdditivePlans.ts` for the Plan rule.
- */
 export function parsePayload(
   json: string,
   onDropped?: (fields: string[]) => void,
@@ -378,8 +266,7 @@ export function parsePayload(
       onRejected?.({ reason: 'newer-version' })
       return null
     }
-    // Unreadable records and settings drop one by one; only a file without
-    // the payload frame is unreadable as a whole.
+
     step = 'schema'
     const dropped: string[] = []
     let result = payloadSchema.safeParse(data)
@@ -444,11 +331,6 @@ export function parsePayload(
   }
 }
 
-/**
- * Whether `parsePayload` rejected `json` for coming from a newer app version.
- * Unlike a malformed file, it holds real data this build can't merge, so
- * callers treat the remote as unreadable rather than absent.
- */
 export function isNewerPayloadVersion(json: string): boolean {
   try {
     return hasNewerVersion(JSON.parse(json))

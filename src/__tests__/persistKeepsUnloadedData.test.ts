@@ -3,10 +3,6 @@ import { create } from 'zustand'
 import { createJSONStorage, type PersistOptions } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
 
-// Saved data that a launch couldn't load (unreadable, a migration that throws,
-// or a blob from a newer build) must stay on disk instead of being replaced by
-// the store's defaults on the next change.
-
 const disk = vi.hoisted(() => new Map<string, string>())
 const captureException = vi.hoisted(() => vi.fn())
 
@@ -59,7 +55,6 @@ const createNotes = (options: Partial<PersistOptions<Notes, Saved>> = {}) =>
     )
   )
 
-/** The error reports, once the on-demand report has been sent. */
 const reports = async () => {
   await vi.waitFor(() => expect(captureException).toHaveBeenCalled())
   return captureException.mock.calls

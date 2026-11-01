@@ -1,7 +1,6 @@
 import type { Contact } from '@/types/contact'
 import { canonicalJson } from '@/lib/canonicalJson'
 
-/** Late geocodes apply only while the requested address and pin are current. */
 export function mayApplyGeocode(
   requested: Contact,
   current: Contact | undefined
@@ -14,7 +13,6 @@ export function mayApplyGeocode(
   )
 }
 
-/** Patch only fields the user changed while a form was open. */
 export function contactEditPatch(
   original: Contact,
   edited: Contact,

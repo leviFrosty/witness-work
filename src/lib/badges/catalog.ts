@@ -7,22 +7,13 @@ import {
   OneTimeBadgeId,
 } from '@/types/badges'
 
-/**
- * One Badge Collection. Every threshold counts calendar months (Year Round:
- * Service Years; Keeping in Touch: months with one person), so no collection
- * can move more than one step per month and no role earns faster than another.
- */
 export type BadgeCollectionSpec = {
   id: BadgeCollectionId
-  /** What reaches Bronze, Silver, Gold, and Pearl. */
+
   thresholds: readonly [number, number, number, number]
-  /**
-   * The counted months are also kept in `badgeLedger`, so progress survives
-   * records the app deletes by design (data protection retention, a buddy's
-   * reply expiring, report-month history being capped).
-   */
+
   ledger: boolean
-  /** Hidden, not even shown as a next step, until Buddies is available. */
+
   requiresBuddies?: boolean
 }
 
@@ -45,7 +36,7 @@ export const BADGE_COLLECTIONS: readonly BadgeCollectionSpec[] = [
 
 export type OneTimeBadgeSpec = {
   id: OneTimeBadgeId
-  /** Hidden until earned, so it never reads as a target. */
+
   hiddenUntilEarned: true
   requiresBuddies?: boolean
 }
@@ -55,7 +46,6 @@ export const ONE_TIME_BADGES: readonly OneTimeBadgeSpec[] = [
   { id: 'firstBuddy', hiddenUntilEarned: true, requiresBuddies: true },
 ]
 
-/** Shared-in-a-Service-Year months Year Round needs (two grace months). */
 export const YEAR_ROUND_MONTHS = 10
 
 export const collectionSpec = (id: BadgeCollectionId): BadgeCollectionSpec =>
@@ -66,7 +56,6 @@ export const badgeKey = (
   level?: BadgeLevel | null
 ): BadgeKey => (level ? `${art}.${level}` : art) as BadgeKey
 
-/** Splits a stored key back into its art id and level. */
 export const parseBadgeKey = (
   key: string
 ): { art: BadgeArtId; level: BadgeLevel | null } | null => {
@@ -85,7 +74,6 @@ export const parseBadgeKey = (
 export const isCollectionId = (id: string): id is BadgeCollectionId =>
   BADGE_COLLECTIONS.some((spec) => spec.id === id)
 
-/** Every key the catalog can award, in display order. */
 export const ALL_BADGE_KEYS: readonly BadgeKey[] = [
   ...BADGE_COLLECTIONS.flatMap((spec) =>
     BADGE_LEVELS.map((level) => badgeKey(spec.id, level))
@@ -93,10 +81,6 @@ export const ALL_BADGE_KEYS: readonly BadgeKey[] = [
   ...ONE_TIME_BADGES.map((badge) => badgeKey(badge.id)),
 ]
 
-/**
- * Which earned badge to name when several arrive together: the rarer collection
- * first, then the higher level.
- */
 export const ANNOUNCE_ORDER: readonly BadgeArtId[] = [
   'yearRound',
   'monthsShared',

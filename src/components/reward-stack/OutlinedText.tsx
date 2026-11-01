@@ -2,7 +2,6 @@ import { Text, View, type TextStyle } from 'react-native'
 import { fonts } from '@/constants/theme'
 import { tracking } from '@/lib/tracking'
 
-/** Around each glyph, in tenths of the font size, plus a drop below. */
 const OUTLINE = [
   [1, 0],
   [-1, 0],
@@ -15,11 +14,6 @@ const OUTLINE = [
   [0, 2],
 ] as const
 
-/**
- * Chunky game text: `text` in `color` over a hard dark outline and a drop
- * shadow, readable over anything. React Native draws one shadow at most, so the
- * outline is copies of the text behind it.
- */
 export default function OutlinedText({
   text,
   size,

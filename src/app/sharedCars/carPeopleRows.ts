@@ -6,16 +6,6 @@ import {
 import type { CarInvitee, CarPerson, MileagePeople } from '@/lib/mileage/people'
 import type { SharedCar, SharedCarInvite } from '@/types/sharedCars'
 
-/**
- * What the car form's People section lists for a Shared Car, and what each row
- * lets the User do (docs/mileage-tracking-prd.md, "Shared Cars"). Every person
- * can leave; only the owner removes others (someone whose join never finished
- * too) or stops sharing. Whoever sent an invitation, or the owner, can cancel
- * it. While Shared Cars is off on this device, the car still lists its people,
- * and the only thing left to do is leave it (or stop sharing it, for the
- * owner). Pure, for tests.
- */
-
 export type CarPersonAction = 'leave' | 'stopSharing' | 'remove'
 
 export type CarPeopleRow =
@@ -26,14 +16,10 @@ export type CarPeopleRow =
       actions: CarPersonAction[]
     }
   | {
-      /**
-       * Someone on the car whose member record never synced (a join that didn't
-       * finish): "Someone who joined".
-       */
       kind: 'unnamed'
       key: string
       memberId: string
-      /** The User, whose own record hasn't synced yet. */
+
       me: boolean
       actions: CarPersonAction[]
     }
@@ -46,12 +32,8 @@ export type CarPeopleRow =
     }
 
 export type CarPeopleList = {
-  /**
-   * The people on the car in the order they joined, then anyone whose join
-   * didn't finish, then open invitations.
-   */
   rows: CarPeopleRow[]
-  /** People and open invitations fill the car: no one more can be invited. */
+
   full: boolean
 }
 
@@ -62,7 +44,6 @@ export function carPeopleList(
   {
     sharing = true,
   }: {
-    /** Shared Cars runs on this device; off, only the way off the car stays. */
     sharing?: boolean
   } = {}
 ): CarPeopleList {

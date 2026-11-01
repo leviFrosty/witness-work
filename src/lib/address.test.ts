@@ -48,7 +48,6 @@ beforeEach(() => {
 })
 
 describe('navigateTo', () => {
-  // Made-up address.
   const contact = {
     id: 'c1',
     name: 'Sam Sample',
@@ -138,7 +137,7 @@ describe('fetchCoordinateFromAddress', () => {
     await expect(
       fetchCoordinateFromAddress(vi.fn(), address)
     ).rejects.toMatchObject({ kind: 'server' })
-    // Retried once before giving up.
+
     expect(mocks.fetch).toHaveBeenCalledTimes(2)
     expect(mocks.capture).not.toHaveBeenCalled()
   })

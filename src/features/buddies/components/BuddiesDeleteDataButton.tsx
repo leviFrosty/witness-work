@@ -15,13 +15,6 @@ import {
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 
-/**
- * Leaves every buddy and erases this User's Buddies data, after confirming.
- * That deletes the account key, so the account's backup (ADR 0026 §4) is
- * deleted first, signed with the key: if that fails, nothing else happens and
- * the User is told. With backup on, it continues under the new account, and the
- * User is told their recovery key changed.
- */
 export default function BuddiesDeleteDataButton() {
   const theme = useTheme()
   const backupOn = useBackupState((state) => state.enabled)
@@ -32,8 +25,7 @@ export default function BuddiesDeleteDataButton() {
     if (seed) {
       try {
         await deleteBackupsBeforeKeyLoss(fromB64u(seed))
-        // Cloud Sync's slots too (ADR 0030 §5); best effort, the server's
-        // retention deletes what's left.
+
         await deleteCloudSyncBeforeKeyLoss(fromB64u(seed))
       } catch (error) {
         logger.warn('[buddies] deleting the backup first failed', error)
@@ -51,7 +43,7 @@ export default function BuddiesDeleteDataButton() {
       return
     }
     if (!useBackupState.getState().enabled) return
-    // Uploads under the new account, which makes the new key.
+
     requestBackupSoon()
     Alert.alert(
       i18n.t('buddies_deletedNewKeyTitle'),

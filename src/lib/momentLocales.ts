@@ -1,11 +1,5 @@
 import moment from 'moment'
 
-/**
- * Moment locales the app can use, loaded on first use instead of at launch.
- * Every Format Region in `FORMAT_REGIONS` and every Language's base must be
- * here: moment's own fallback, a dynamic `require('./locale/<key>')`, is an
- * uncatchable fatal under Metro. `'en'` ships inside moment itself.
- */
 const loaders: Record<string, () => void> = {
   ar: () => {
     require('moment/locale/ar')
@@ -45,11 +39,6 @@ const loaders: Record<string, () => void> = {
 
 export const loadableMomentLocales = Object.keys(loaders)
 
-/**
- * Arabic months the way Jehovah's Witnesses publish them (jw.org/ar,
- * wol.jw.org/ar): the Levantine name with the Egyptian one in parentheses,
- * `تشرين الأول (أكتوبر)`. moment's `ar` has only the Egyptian names.
- */
 export const JW_ARABIC_MONTHS = [
   'كانون الثاني (يناير)',
   'شباط (فبراير)',
@@ -65,7 +54,6 @@ export const JW_ARABIC_MONTHS = [
   'كانون الأول (ديسمبر)',
 ]
 
-/** The Levantine names alone, for `MMM`: chart axes, calendar headers. */
 export const JW_ARABIC_MONTHS_SHORT = JW_ARABIC_MONTHS.map((month) =>
   month.replace(/ \(.*\)$/, '')
 )
@@ -75,13 +63,6 @@ type MutableLocale = moment.Locale & {
   set(config: moment.LocaleSpecification): void
 }
 
-/**
- * Puts the JW month names into moment's `ar` itself, keeping its weekdays,
- * relative times, meridiem and plural rules. Changing the base locale in place,
- * rather than through `moment.updateLocale`, matters: `applyFormatRegion`
- * resets its own overlay with `updateLocale('ar', null)`, which would also drop
- * an `updateLocale` made here.
- */
 function applyJwArabicMonths(): void {
   const locale = moment.localeData('ar') as MutableLocale
   locale.set({
@@ -94,25 +75,12 @@ function applyJwArabicMonths(): void {
 const ASCII_PROBE = '0123456789,'
 const keepAscii = (text: string) => text
 
-/**
- * Drops a locale's `postformat`, which rewrites the digits of EVERY
- * `moment.format()` (moment's `ar` turns `YYYY-MM-DD` into `٢٠٢٦-١٠-١٤`). Store
- * keys, notification ids, buddy payloads and widget dates are all built with
- * `format`, so it has to stay ASCII. Screens get their digits from the display
- * helpers in `src/lib/dates.ts` (`formatDate`, `formatDisplay`, …) instead.
- * `preparse` stays, so parsing still accepts either digit set.
- */
 function keepAsciiDigits(key: string): void {
   const locale = moment.localeData(key) as MutableLocale
   if (locale.postformat(ASCII_PROBE) === ASCII_PROBE) return
   locale.set({ ...locale._config, postformat: keepAscii })
 }
 
-/**
- * Loads the moment locale for `key` and for its base language, when the app
- * ships them. Keeps the active global locale: defining a locale also switches
- * moment to it.
- */
 export function loadMomentLocale(key: string | undefined): void {
   if (!key) return
   const tag = key.toLowerCase()

@@ -11,8 +11,7 @@ import { useThisMonthStudies } from '@/features/service-reports/hooks/useThisMon
 
 export default function StudiesCard() {
   const theme = useTheme()
-  // At accessibility text sizes the figure and its label shrink to fit the
-  // half-width column instead of breaking mid-word.
+
   const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const studies = useThisMonthStudies()
 

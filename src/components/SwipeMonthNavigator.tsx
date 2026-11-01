@@ -14,16 +14,10 @@ interface SwipeMonthNavigatorProps {
   onSwipeBack: () => void
   children: ReactNode
   style?: ViewStyle
-  /** Off while the content needs horizontal drags, e.g. moving a card. */
+
   enabled?: boolean
 }
 
-/**
- * Detects a horizontal fling and calls forward/back so users can swipe to
- * change months. Fling (not Pan) avoids fighting child Swipeables and vertical
- * scroll — it only fires on a quick flick. Flicking toward the reading start
- * (left in LTR, right in RTL) brings the next month in from the end.
- */
 const SwipeMonthNavigator = ({
   onSwipeForward,
   onSwipeBack,

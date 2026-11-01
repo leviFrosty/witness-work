@@ -30,45 +30,22 @@ export type SharedCarsRuntimeDeps = {
   engine: SharedCarsEngine
   store: SharedCarsStore
   status: SharedCarsSessionStore
-  /** Whether the server can be reached now: a session, no Update Required. */
+
   ready: () => boolean
-  /** Calls back when `ready` may have changed. Returns the unsubscribe. */
+
   watchReady: (onChange: () => void) => () => void
-  /**
-   * Brings the cars here in line with the memberships (the Buddies roster's
-   * cars), which it may have brought while this didn't run. Runs on start.
-   */
+
   reconcileMemberships?: () => void
-  /**
-   * The cars the User is on, or has left, changed: the roster takes them to
-   * their other devices.
-   */
+
   onMembershipsChanged?: () => void
-  /**
-   * Calls back when what the User's member record says may have changed (their
-   * Buddy Card's name or photo). Returns the unsubscribe.
-   */
+
   watchProfile?: (onChange: () => void) => () => void
 }
 
-/** A profile change waits this long for more before every car syncs. */
 const PROFILE_SYNC_DELAY_MS = 2000
 
-/**
- * After a `4001`, how long before the sync that confirms it is tried again when
- * one fails, longer each time in a row.
- */
 export const GONE_RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 300_000]
 
-/**
- * Keeps the User's Shared Cars in step while the app runs
- * (docs/shared-cars-protocol.md, "When it syncs"): syncs every car on start, on
- * every return to the app, and when a session opens; one car 2 s after a change
- * made here, and when its live signal says another device changed it
- * (`changed`, or a `hello` past this device's cursor). Each car has its own
- * live signal while the app is in the foreground, off while the server's kill
- * switch is on. Returns the stop function.
- */
 export function startSharedCarsRuntime({
   engine,
   store,
@@ -80,7 +57,7 @@ export function startSharedCarsRuntime({
   watchProfile,
 }: SharedCarsRuntimeDeps): () => void {
   const lives = new Map<string, LiveSignal>()
-  /** Confirming syncs to try again after a `4001`, by car. */
+
   const goneRetries = new Map<string, ReturnType<typeof setTimeout>>()
   const automatic = { automatic: true } as const
 
@@ -93,8 +70,7 @@ export function startSharedCarsRuntime({
       open: () => engine.openLive(spaceId),
       syncedSeq: () => store.getState().cars[spaceId]?.seq ?? 0,
       onChange: (seq) => void syncCar(spaceId, seq),
-      // After a refused handshake: a sync's 401 refreshes the session's token
-      // before the next connection sends it.
+
       verify: () => syncCar(spaceId),
       onEvent: (event) =>
         status.setState((state) => ({
@@ -110,12 +86,6 @@ export function startSharedCarsRuntime({
       onGone: () => confirmGone(spaceId),
     })
 
-  /**
-   * After a `4001`: only a sync's answer ends a car, and one still here after
-   * it gets its signal back (a socket from before the User joined again closes
-   * so). A sync that fails is tried again, waiting longer each time, while the
-   * car's signal is wanted.
-   */
   const confirmGone = (spaceId: string, attempt = 0) => {
     const live = lives.get(spaceId)
     void engine.carGone(spaceId).then(
@@ -142,7 +112,6 @@ export function startSharedCarsRuntime({
     )
   }
 
-  /** One live signal per car, while in the foreground and not switched off. */
   const reconcileLive = () => {
     const wanted =
       AppState.currentState === 'active' &&
@@ -175,7 +144,6 @@ export function startSharedCarsRuntime({
   syncAll()
   reconcileLive()
 
-  // A real return from the background; Control Center and Face ID aren't.
   const foreground = addForegroundListener(() => {
     syncAll()
     reconcileLive()
@@ -188,17 +156,17 @@ export function startSharedCarsRuntime({
       isEngineWrite: engine.isWriting,
     }
   )
-  // Joined, shared, or left: the User's other devices follow.
+
   const memberships = store.subscribe((state, previous) => {
     if (state.memberships !== previous.memberships) onMembershipsChanged?.()
   })
-  // Each car's next sync rewrites the User's member record.
+
   let profileTimer: ReturnType<typeof setTimeout> | undefined
   const profile = watchProfile?.(() => {
     clearTimeout(profileTimer)
     profileTimer = setTimeout(syncAll, PROFILE_SYNC_DELAY_MS)
   })
-  // A car shared, joined, or ended gets (or loses) its live signal.
+
   const cars = store.subscribe((state, previous) => {
     if (state.cars === previous.cars) return
     const before = Object.keys(previous.cars)
@@ -209,12 +177,11 @@ export function startSharedCarsRuntime({
     )
       reconcileLive()
   })
-  // The kill switch turned on: the signals go; off again (a call worked):
-  // they come back.
+
   const switched = status.subscribe((state, previous) => {
     if (state.disabled !== previous.disabled) reconcileLive()
   })
-  // A session opened, or the account changed: every car again.
+
   const readiness = watchReady(() => {
     syncAll()
     reconcileLive()

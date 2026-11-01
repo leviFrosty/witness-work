@@ -56,12 +56,6 @@ import type { MileageEntryMode, Trip } from '@/types/mileage'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageTripForm'>
 
-/**
- * Log a trip, edit one (`tripId`), or log one again (`duplicateOf`). On a
- * Shared Car the note says who it's shared with, and has to fit what a Shared
- * Car can hold. Odometer readings that overlap another trip on the car get a
- * gentle warning.
- */
 export default function MileageTripFormScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -75,9 +69,6 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const template =
     existing ?? trips.find((t) => t.id === route.params?.duplicateOf)
 
-  // Deleted here, on another device, or its Shared Car ended (its copy has
-  // new ids): there's nothing left to edit. This is also how the form's own
-  // Delete closes it, so it closes once.
   const gone = editing && !existing
   useEffect(() => {
     if (gone && navigation.canGoBack()) navigation.goBack()
@@ -91,8 +82,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const [date, setDate] = useState(() =>
     existing ? fromDateKey(existing.date).toDate() : new Date()
   )
-  // The car the User last logged a trip on, not whoever logged last on a car
-  // they share.
+
   const [chosenVehicleId, setVehicleId] = useState(
     () =>
       template?.vehicleId ??
@@ -101,8 +91,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
         vehicles
       )
   )
-  // A car deleted meanwhile, or a Shared Car that ended, is no car to save
-  // on: the User picks another.
+
   const vehicleId = vehicles.some((v) => v.id === chosenVehicleId)
     ? chosenVehicleId
     : undefined
@@ -123,7 +112,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
         )
       : ''
   )
-  // Odometer Start follows the car's latest reading until the user types one.
+
   const [odometerStart, setOdometerStart] = useState<string | null>(() =>
     existing?.odometerStartMiles !== undefined
       ? toInput(existing.odometerStartMiles)
@@ -160,7 +149,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
             systemImage: 'person.2' as const,
           }
     })
-  // Everyone else on the chosen car sees its trips' notes.
+
   const chosenSpace = vehicles.find((v) => v.id === vehicleId)?.spaceId
   const sharedWith =
     chosenSpace === undefined
@@ -188,7 +177,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
     : startMiles !== undefined && endMiles !== undefined && !odometerError
       ? endMiles - startMiles
       : undefined
-  // Not a mistake to stop for: the User may mean it, so it only says so.
+
   const overlap =
     vehicleId &&
     startMiles !== undefined &&
@@ -202,7 +191,6 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
         })
       : undefined
 
-  /** The trip as the form would save it, with `id` and its car. */
   const tripWith = (id: string, onVehicle: string): Trip => ({
     id,
     vehicleId: onVehicle,
@@ -215,8 +203,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
     createdAt: existing?.createdAt ?? Date.now(),
     updatedAt: existing?.updatedAt,
   })
-  // A Shared Car's trip is shared whole or not at all, and nothing is ever
-  // cut from it, so a note too long to share has to be shortened first.
+
   const tooLargeToShare =
     chosenSpace !== undefined &&
     vehicleId !== undefined &&
@@ -236,7 +223,7 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const save = () => {
     if (!validation.validate() || !vehicleId || !distanceMiles) return
     const trip = tripWith(existing?.id ?? Crypto.randomUUID(), vehicleId)
-    // Its car went between this render and the tap.
+
     if (!saveTrip(trip)) {
       toast.error(i18n.t('mileage.carUnavailable'))
       return

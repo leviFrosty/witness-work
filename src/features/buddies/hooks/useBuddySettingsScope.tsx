@@ -14,17 +14,11 @@ import {
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** A change made on Buddies Settings, and how to take it back. */
 export type BuddySettingsUndo = {
-  /** Where it was made: a buddy's inboxId, or null for All Buddies. */
   inboxId: string | null
   revert: () => void
 }
 
-/**
- * This visit's changes on Buddies Settings, newest last, for the header's Undo.
- * Not saved: leaving the screen clears it.
- */
 export const useBuddySettingsUndos = create<{ undos: BuddySettingsUndo[] }>(
   () => ({ undos: [] })
 )
@@ -33,7 +27,6 @@ export function recordBuddySettingsUndo(undo: BuddySettingsUndo) {
   useBuddySettingsUndos.setState(({ undos }) => ({ undos: [...undos, undo] }))
 }
 
-/** Takes back the newest change; returns where it was made. */
 export function undoBuddySettings(): BuddySettingsUndo | undefined {
   const last = useBuddySettingsUndos.getState().undos.at(-1)
   if (!last) return undefined
@@ -46,19 +39,14 @@ export function undoBuddySettings(): BuddySettingsUndo | undefined {
 }
 
 type Scope = {
-  /** The buddy whose settings these are, or null for All Buddies. */
   buddy: Buddy | null
   record: (undo: BuddySettingsUndo) => void
-  /** Shows a buddy's settings (null: All Buddies'). */
+
   select?: (inboxId: string | null) => void
 }
 
 const ScopeContext = createContext<Scope>({ buddy: null, record: () => {} })
 
-/**
- * Which settings the rows below show and change: All Buddies', or one buddy's
- * over them. `record` keeps each change for the header's Undo.
- */
 export function BuddySettingsScope({
   buddy,
   record,
@@ -76,21 +64,19 @@ export function useBuddySettingsScope(): Scope {
 
 const warn = (error: unknown) => logger.warn('[buddies] settings', error)
 
-/** One setting as a row shows it, in the current scope. */
 export type ScopedSetting<T> = {
   value: T
-  /** In a buddy's scope: their own value, or All Buddies'. */
+
   source: BuddySettingSource
-  /** All Buddies' value. */
+
   inherited: T
-  /** In All Buddies' scope: buddies with their own value, and what it is. */
+
   overriddenBy: { buddy: Buddy; value: T }[]
   set: (value: T) => void
-  /** In a buddy's scope, with their own value: follow All Buddies again. */
+
   reset?: () => void
 }
 
-/** Analytics names for the settings, as `buddies_sharing_changed` sends them. */
 const SETTING_NAMES: Record<BuddySettingKey, string> = {
   photo: 'photo',
   tenure: 'tenure',
@@ -108,7 +94,6 @@ function captureChange(
   value: string | boolean | undefined,
   scope: 'all' | 'buddy'
 ) {
-  // Badges and the pet keep the events they've always had.
   if (setting === 'badges' && typeof value === 'boolean')
     return analytics.capture('badges_setting_changed', {
       setting: 'share',
@@ -128,10 +113,6 @@ function captureChange(
   )
 }
 
-/**
- * A synced setting (what buddies see, the calendar) in the current scope: All
- * buddies' value, or the buddy's own over it.
- */
 export function useScopedSetting<K extends BuddySettingKey>(
   key: K
 ): ScopedSetting<BuddySettings[K]> {
@@ -196,11 +177,6 @@ const ALL_ALERTS = {
   badges: 'badgeNotifications',
 } as const
 
-/**
- * An alert on this device in the current scope: this device's alert setting, or
- * the buddy's own over it. The Buddies runtime re-registers this device's push
- * templates.
- */
 export function useScopedAlert(key: BuddyAlertKey): ScopedSetting<boolean> {
   const { buddy, record } = useBuddySettingsScope()
   const buddies = useBuddies((s) => s.buddies)

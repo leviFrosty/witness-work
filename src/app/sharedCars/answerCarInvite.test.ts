@@ -121,7 +121,6 @@ describe('joining from the bell', () => {
       { enabled: true, source: 'shared_car_joined' }
     )
 
-    // Already on: nothing changes, and nothing more is counted.
     await joinCarInvite(KEY)
     expect(usePreferences.getState().mileageTrackingEnabled).toBe(true)
     expect(analytics.capture).toHaveBeenCalledTimes(1)
@@ -167,7 +166,7 @@ describe('why joining failed', () => {
       'forbidden',
       'gone',
       'conflict',
-      // An invitation for another epoch than the car's.
+
       'stale_key',
     ] satisfies SpaceErrorCode[])
       expect(carJoinErrorMessage(new SpaceError(code, 400))).toBe(closed)

@@ -6,19 +6,12 @@ import { getReadableTextColor } from '@/lib/color'
 import i18n from '@/lib/locales'
 
 interface Props {
-  /** The surface behind the control, so the badge reads as cut out of it. */
   ringColor: string
   size?: number
-  /** Distance from the control's bottom-right corner (negative overhangs). */
+
   offset?: number
 }
 
-/**
- * The no-internet marker on a disabled Scribe AI entry: a small disc at the
- * control's bottom-right. Decorative to touch (the control keeps its full
- * target); screen readers hear it as part of the control's label, so it only
- * announces itself when focused on its own.
- */
 const ScribeOfflineBadge = ({ ringColor, size = 24, offset = -5 }: Props) => {
   const theme = useTheme()
   return (

@@ -11,7 +11,6 @@ import type { MapCardDetail } from '@/types/map'
 import useMapCardDetail from '@/features/map/hooks/useMapCardDetail'
 import { CARD_DETAIL_CHOICES } from '@/features/map/lib/contactPins'
 
-/** Settings → Map: what the Map's pin cards show over each name. */
 const PreferencesMapScreen = () => {
   const theme = useTheme()
   const { detail: current, fields, choose } = useMapCardDetail('settings')

@@ -1,17 +1,15 @@
 import { type Ref, type RefObject, useRef } from 'react'
 import { ScrollView, type ScrollViewProps, TextInput } from 'react-native'
 
-/** Room left between the focused field and the view's bottom edge. */
 const REVEAL_MARGIN = 16
 
 type RevealHandles = {
   scroll: RefObject<ScrollView | null>
   scrollY: RefObject<number>
-  /** Whether the focused field is inside this view. */
+
   hasFocus: RefObject<boolean>
 }
 
-/** Scrolls the focused field up just far enough to clear the view's bottom. */
 const revealFocusedField = (handles: RevealHandles, animated: boolean) =>
   requestAnimationFrame(() => {
     const view = handles.scroll.current
@@ -30,12 +28,6 @@ const revealFocusedField = (handles: RevealHandles, animated: boolean) =>
 
 type Props = ScrollViewProps & { ref?: Ref<ScrollView> }
 
-/**
- * A step's scroll view, for steps whose footer rides on the keyboard
- * (`OnboardingFooter`). The keyboard shrinks this view instead of covering it,
- * so while a field in it has focus, every resize scrolls the field back above
- * the view's new bottom edge, frame by frame as the keyboard comes up.
- */
 const OnboardingScrollView = ({
   ref,
   onScroll,
@@ -66,7 +58,6 @@ const OnboardingScrollView = ({
         revealFocusedField(handles, false)
         onLayout?.(event)
       }}
-      // A field's focus and blur bubble up to its scroll view.
       onFocus={(event) => {
         hasFocus.current = true
         revealFocusedField(handles, true)

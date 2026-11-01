@@ -3,17 +3,12 @@ import { Contact } from '@/types/contact'
 
 const present = (value?: string) => (value?.trim() ? value.trim() : undefined)
 
-/** Whether the contact has anything the maps app can navigate to. */
 export const canNavigateTo = (contact: Contact): boolean =>
   Boolean(
     Object.values(contact.address ?? {}).some((value) => present(value)) ||
       (contact.coordinate?.latitude && contact.coordinate?.longitude)
   )
 
-/**
- * Full address as display lines: street, unit, `City, ST ZIP`, country. Falls
- * back to the coordinate when there is no written address.
- */
 export const contactAddressLines = (contact: Contact): string[] => {
   const address = contact.address ?? {}
   const region = [present(address.state), present(address.zip)]

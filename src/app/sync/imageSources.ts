@@ -4,13 +4,6 @@ import { AvatarSource, DownloadedAvatar } from '@/app/sync/imageSync'
 import { parseContactMarker, isProfileMarker } from '@/app/sync/imageNames'
 import { isManagedAvatarPath } from '@/lib/avatarFilePolicy'
 
-/**
- * Conventional local filename for a contact's avatar image inside
- * `FileSystem.documentDirectory`. Mirrors the filename constructed by
- * `AvatarPickerContent` when the user picks an image for a contact — keeping
- * the two in lockstep is what lets the pull path infer the local target path
- * without negotiating over the wire.
- */
 export function localAvatarPathForContact(
   documentDirectory: string,
   id: string
@@ -18,33 +11,15 @@ export function localAvatarPathForContact(
   return `${documentDirectory}contact-${id}-avatar.jpg`
 }
 
-/**
- * Conventional local filename for the user's profile avatar. Also mirrors
- * `AvatarPickerContent`.
- */
 export function localAvatarPathForProfile(documentDirectory: string): string {
   return `${documentDirectory}profile-avatar.jpg`
 }
 
-/**
- * Strips the cache-buster query string the avatar picker appends (`?t=<ts>`) so
- * the raw `file://` path can be handed to `writeBinary`, which wants a real
- * filesystem location.
- */
 function stripCacheBuster(value: string): string {
   const q = value.indexOf('?')
   return q < 0 ? value : value.slice(0, q)
 }
 
-/**
- * Walks the local state and returns every avatar whose value is a local
- * `file://` URI — these are the ones the device has in
- * `FileSystem.documentDirectory` and needs to UPLOAD on the next push.
- *
- * Intentionally ignores avatars whose value is already an `icloud://` marker
- * (those came from a foreign device's push; this device doesn't own the bytes)
- * and non-image avatars (emoji/none — nothing to upload).
- */
 export function collectLocalAvatarSources(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
@@ -81,12 +56,6 @@ export function collectLocalAvatarSources(args: {
   return sources
 }
 
-/**
- * Walks the local state and returns every avatar whose value is an `icloud://`
- * marker — these records arrived via pull-and-merge but the binary has never
- * been downloaded on this device. Paths are the expected
- * `FileSystem.documentDirectory` destinations the downloader will write to.
- */
 export function collectExpectedMarkerSources(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
@@ -157,16 +126,6 @@ export function collectExpectedMarkerSources(args: {
   return sources
 }
 
-/**
- * Takes the set of identities whose binaries just finished downloading and
- * returns new contact / profile values with their `avatar.value` rewritten to
- * the freshly-written local URI (with cache-buster included).
- *
- * **Does not bump `updatedAt`** on any rewritten record: the rewrite is a
- * display-layer fix-up, not a user edit. Bumping would cause the next push to
- * advertise the marker→file:// flip and trigger a no-op churn loop across
- * devices — see Q3 design notes.
- */
 export function applyDownloadedAvatars(args: {
   contacts: Contact[]
   profileAvatar: ProfileAvatar | undefined
@@ -229,7 +188,6 @@ export function applyDownloadedAvatars(args: {
   return { contacts: nextContacts, profileAvatar: nextProfile }
 }
 
-/** Keep useful bytes for a still-current revision, even after a text edit. */
 export function obsoleteDownloadPaths(args: {
   contacts: Contact[]
   deletedContacts?: Contact[]

@@ -9,15 +9,8 @@ import {
 } from '@/features/updates/lib/helpCenter/remoteSearch'
 import type { HelpEntry, HelpLocale } from '@/features/updates/types/helpCenter'
 
-/** Typing pause before asking the search service (queries are billed). */
 const REMOTE_DEBOUNCE_MS = 600
 
-/**
- * Searches the Help Center. Results come from this device at once (Fuse.js, so
- * it works offline); when the search service answers in time for the same
- * query, its order (keyword + meaning) replaces them. While it hasn't,
- * `isWaitingForRemote` lets an empty list say it's still searching.
- */
 export default function useFAQSearch(
   search: string,
   entries: HelpEntry[],
@@ -63,7 +56,6 @@ export default function useFAQSearch(
     }
   }, [query, entries, locale])
 
-  // Remote results count only for the query (and entry list) they answered.
   const settled =
     remote !== null && remote.query === query && remote.entries === entries
   const current = settled ? remote.slugs : null
@@ -72,7 +64,7 @@ export default function useFAQSearch(
     matches: query ? results : entries,
     source,
     isSearching: query.length > 0,
-    /** The search service hasn't answered this query yet. */
+
     isWaitingForRemote: query.length > 0 && !settled,
   }
 }

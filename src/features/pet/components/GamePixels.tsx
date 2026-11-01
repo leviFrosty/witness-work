@@ -28,28 +28,22 @@ import { bufferToSkImage } from '@/features/pet/render/skiaImage'
 
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 
-/** About how big one of the Shop's pixels is, in points. */
 const SHOP_PIXEL_PT = 2.4
 
-/** Points per Shop pixel, a whole number of device pixels. */
 export const gamePixelScale = (): number =>
   crispScale(SHOP_PIXEL_PT, 1, PixelRatio.get())
 
-// Frames come in a few sizes per screen; icons and backgrounds in fewer.
 const images = createLru<SkImage | null>(96)
 
-/** `make()` as a Skia image, kept under `key`. */
 const cachedImage = (key: string, make: () => PixelBuffer): SkImage | null =>
   images.getOrCreate(key, () => bufferToSkImage(make()))
 
-/** A pixel image drawn at the Shop's scale. */
 export function GamePixelImage({
   cacheKey,
   make,
   scale = gamePixelScale(),
   style,
 }: {
-  /** Names the image, so it's drawn once. */
   cacheKey: string
   make: () => PixelBuffer
   scale?: number
@@ -75,14 +69,13 @@ export function GamePixelImage({
   )
 }
 
-/** The currency's pixel icon: a gold coin. */
 export function CoinIcon({
   size = 'small',
   scale,
   style,
 }: {
   size?: CoinIconSize
-  /** Points per pixel; the Shop's by default. */
+
   scale?: number
   style?: StyleProp<ViewStyle>
 }) {
@@ -96,7 +89,6 @@ export function CoinIcon({
   )
 }
 
-/** The pixel size of a measured box, and the points it covers. */
 function useMeasured(scale: number) {
   const [size, setSize] = useState({ w: 0, h: 0 })
   const onLayout = (event: LayoutChangeEvent) => {
@@ -108,7 +100,6 @@ function useMeasured(scale: number) {
   return { ...size, onLayout }
 }
 
-/** A pixel image filling the top-left of its parent, behind its siblings. */
 function Backdrop({
   image,
   w,
@@ -144,17 +135,12 @@ function Backdrop({
   )
 }
 
-/**
- * A view with pixel art behind its children, drawn by `make` to the view's size
- * whatever it is, the way a 9-slice frame stretches.
- */
 export function GameArtBox({
   cacheKey,
   make,
   style,
   children,
 }: {
-  /** Names the art apart from its size. */
   cacheKey: string
   make: (w: number, h: number) => PixelBuffer
   style?: StyleProp<ViewStyle>
@@ -174,7 +160,6 @@ export function GameArtBox({
   )
 }
 
-/** A view with one of the Shop's pixel frames behind its children. */
 export function GameFrame({
   kind,
   palette,
@@ -197,7 +182,6 @@ export function GameFrame({
   )
 }
 
-/** The Shop's washi paper, filling the view behind its children. */
 export function GamePaper({
   palette,
   style,
@@ -209,7 +193,7 @@ export function GamePaper({
 }) {
   const scale = gamePixelScale()
   const { w, h, onLayout } = useMeasured(scale)
-  // Covers the leftover sliver past the last whole pixel too.
+
   const image =
     w > 0 && h > 0
       ? cachedImage(`paper|${palette.dark ? 1 : 0}|${w + 1}|${h + 1}`, () =>

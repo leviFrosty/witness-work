@@ -47,13 +47,13 @@ describe('hidden moments', () => {
     const counter = createPatCounter()
     for (let i = 0; i < 14; i++) expect(counter.pat(i * 300)).toBe(false)
     expect(counter.pat(14 * 300)).toBe(true)
-    // Counting starts over after a trick.
+
     expect(counter.pat(14 * 300 + 10)).toBe(false)
   })
 
   it('needs the pats close together', () => {
     const counter = createPatCounter()
-    // 15 pats over 7 s: never 15 inside any 5 s.
+
     for (let i = 0; i < 15; i++) expect(counter.pat(i * 500)).toBe(false)
     counter.reset()
     for (let i = 0; i < 14; i++) counter.pat(i)

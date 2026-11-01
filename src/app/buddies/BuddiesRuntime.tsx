@@ -62,31 +62,16 @@ import {
 import type { DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 
-/**
- * Push registration is checked at most this often; the engine only re-sends an
- * unchanged one once a day.
- */
 const PUSH_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000
 const PUBLISH_DEBOUNCE_MS = 30 * 1000
-/**
- * While the account is suspended and the app is open, it checks back after this
- * long, doubling after each refusal (see `startFallbackPoll`).
- */
+
 const SUSPENDED_CHECK_MS = 60 * 1000
 
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
 
-/** `syncLinkedPlans` is changing Plans: following buddies, not the User's edit. */
 let reconcilingLinkedPlans = false
 
-/**
- * Adds, updates, and removes the Plans that follow buddies' invitations.
- * `answered` holds the invitations just answered "Going" here, the only ones
- * whose deleted Plan comes back. With `updatesOnly` it only brings linked Plans
- * up to the invitations this device has, adding and removing none: for Plans
- * that just arrived from another device, whose answers may not have yet.
- */
 function syncLinkedPlans(
   answered?: ReadonlySet<string>,
   { updatesOnly = false } = {}
@@ -103,7 +88,6 @@ function syncLinkedPlans(
   )
   reconcilingLinkedPlans = true
   try {
-    // Only a Plan added for "Going" answered here is the User's own save.
     for (const plan of updatesOnly ? [] : add)
       report.addDayPlan(plan, {
         automatic: !(
@@ -120,13 +104,8 @@ function syncLinkedPlans(
   }
 }
 
-/** A store change the User made here, not one from another device or Buddies. */
 const isLocalEdit = () => !isApplyingRemoteData() && !reconcilingLinkedPlans
 
-/**
- * Shared Plans and Follow-ups that just arrived from another device: that
- * device sent them, so this one takes them as sent (`adoptShares`).
- */
 function adoptArrivedShares(
   previous: { dayPlans: DayPlan[]; visits: Visit[] },
   current: { dayPlans: DayPlan[]; visits: Visit[] }
@@ -138,29 +117,17 @@ function adoptArrivedShares(
   buddiesEngine.adoptShares(arrived)
 }
 
-/**
- * Deleting a Plan that follows a buddy's invitation means "Can't make it" —
- * otherwise the buddy's next change would bring it back. Removing a duplicate
- * while another Plan still follows the invitation doesn't. The caller skips
- * remote mutations (restores, imports, and Plans another device deleted): the
- * device where the user deleted the Plan answers for them.
- */
 function declineDeletedLinkedPlans(previous: DayPlan[], current: DayPlan[]) {
   for (const key of sharesLeftUnlinked(previous, current)) {
     const share = useBuddies.getState().incomingShares[key]
-    // Deleting a Plan that has happened is tidying history, not an answer.
+
     if (share?.status !== 'going' || hasSharedEventEnded(share, Date.now()))
       continue
-    // Saved at once, so reconciling won't bring the Plan back; sent when online.
+
     void buddiesEngine.replyToShare(key, 'declined').catch(logFailure)
   }
 }
 
-/**
- * A buddy who is gone (removed, left, or delete-all) is taken off this User's
- * Plans and Follow-ups, so pairing again later never re-sends old invitations,
- * and Plans that followed their invitations become ordinary Plans.
- */
 function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
   const remaining = new Set(current.map((buddy) => buddy.inboxId))
   const removed = new Set(
@@ -179,46 +146,22 @@ function forgetRemovedBuddies(previous: Buddy[], current: Buddy[]) {
   for (const visit of changes.visits) visits.updateConversation(visit)
 }
 
-/**
- * A Buddies push arrived while the app is open: pull the event it announced
- * (unless a sync already got past it), and report failures through
- * diagnostics.
- */
 function syncAfterPush(seq: number | undefined) {
   void buddiesEngine.sync({ minSeq: seq, automatic: true }).catch(logFailure)
 }
 
-/** Who this User has invited to what; see `shareRecipientsKey`. */
 const currentRecipients = () =>
   shareRecipientsKey(
     useServiceReport.getState().dayPlans,
     useConversations.getState().conversations
   )
 
-/**
- * The background half of Buddies. Renders nothing; runs only once the User has
- * started using Buddies (an inbox exists), so everyone else pays no network or
- * battery cost. Pulls on launch, on every return to the app, and whenever the
- * relay's live signal says the inbox changed while the app is open (polling the
- * open notifications tray only while that signal is down). While the relay's
- * kill switch is on, the live signal stays off and only returns to the app
- * check back, every 15 minutes at most. While the account is suspended it stays
- * off too, and the app checks back minutes apart, so a reinstatement brings it
- * back without a relaunch. Publishes a Buddy Card and shared Plans after the
- * data behind them changes: at once when who's invited changes, so a buddy sees
- * an invitation as it's sent, otherwise debounced.
- */
 export default function BuddiesRuntime() {
   const enabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const running = enabled && started
   useBuddiesAlertContext()
 
-  // Buddies started on another of this User's devices starts here too, once
-  // iCloud Sync has brought this device's Plans in (see `joinBuddiesHere`):
-  // at launch, when sync turns on, first pulls, or Supporter access returns,
-  // and, on iOS, where iCloud Keychain can bring the seed in while the app
-  // runs, on returning to it.
   useEffect(() => {
     if (!enabled || started) return
     const join = () => void joinBuddiesHere().catch(logFailure)
@@ -243,7 +186,6 @@ export default function BuddiesRuntime() {
     }
   }, [enabled, started])
 
-  // What the engine checks before making or sending badge news.
   useEffect(() => {
     useBuddiesSession.setState({ running })
     return () => useBuddiesSession.setState({ running: false })
@@ -258,7 +200,7 @@ export default function BuddiesRuntime() {
     let stopSuspendedCheck: (() => void) | null = null
     let lastPushCheck = 0
     let recipients = currentRecipients()
-    /** A change behind the Buddy Card was made here (see `publishCards`). */
+
     let edited = false
     const noteEdit = () => {
       if (isLocalEdit()) edited = true
@@ -287,10 +229,7 @@ export default function BuddiesRuntime() {
           })
         : null
     }
-    /**
-     * The live signal is off while suspended, so nothing else would notice a
-     * reinstatement while the app stays open.
-     */
+
     const checkWhileSuspended = (suspended: boolean) => {
       stopSuspendedCheck?.()
       stopSuspendedCheck = suspended
@@ -305,7 +244,7 @@ export default function BuddiesRuntime() {
       if (publishTimer) clearTimeout(publishTimer)
       publishTimer = setTimeout(publishNow, PUBLISH_DEBOUNCE_MS)
     }
-    /** Plans or Follow-ups changed: invitations go now, edits can wait. */
+
     const publishSharesChange = () => {
       const next = currentRecipients()
       if (next === recipients) {
@@ -315,15 +254,12 @@ export default function BuddiesRuntime() {
       recipients = next
       publishNow()
     }
-    /**
-     * Sends each held answer when its wait ends (see `replyHoldMs`), and tries
-     * one that failed once more (see `nextReplyAttempt`).
-     */
+
     const scheduleHeldReplies = () => {
       if (replyTimer) clearTimeout(replyTimer)
       replyTimer = null
       const now = Date.now()
-      // After that one retry, syncs and Try Again send it, not a loop here.
+
       const next = nextReplyAttempt(
         Object.values(useBuddies.getState().incomingShares),
         now
@@ -338,20 +274,16 @@ export default function BuddiesRuntime() {
     const live = createLiveInbox({
       open: () => buddiesEngine.openLive(),
       syncedSeq: () => useBuddies.getState().syncSeq,
-      // A sync already running that reaches `seq` covers this change too.
+
       onChange: (seq) =>
         void buddiesEngine
           .sync({ minSeq: seq, automatic: true })
           .catch(logFailure),
-      // After a refused handshake: a sync's 401 refreshes the session's token
-      // before the next connection sends it.
+
       verify: () => buddiesEngine.sync({ automatic: true }).catch(logFailure),
       onEvent: recordLiveEvent,
     })
-    /**
-     * Off while the relay's kill switch is on or the account is suspended: it
-     * would only be refused.
-     */
+
     const liveRefused = (state: {
       relayDisabled: boolean
       accountSuspended: boolean
@@ -376,7 +308,7 @@ export default function BuddiesRuntime() {
     checkPushRegistration()
     reportAlertOutcomes()
     if (AppState.currentState === 'active') startLive()
-    // A real return from the background; Control Center and Face ID aren't.
+
     const foreground = addForegroundListener(() => {
       buddiesEngine.expire()
       syncNow()
@@ -387,11 +319,10 @@ export default function BuddiesRuntime() {
     const background = addBackgroundListener(() => {
       live.stop()
       if (publishTimer) publishNow()
-      // A held answer goes out now; the app may not run again for a while.
+
       void buddiesEngine.sendHeldReplies().catch(logFailure)
     })
-    // The kill switch turned on or the account was suspended: stop the live
-    // signal. Cleared again (a sync or another call worked): start it.
+
     checkWhileSuspended(useBuddiesSession.getState().accountSuspended)
     const session = useBuddiesSession.subscribe((state, previous) => {
       if (state.accountSuspended !== previous.accountSuspended)
@@ -401,9 +332,7 @@ export default function BuddiesRuntime() {
       if (refused) live.stop()
       else if (AppState.currentState === 'active') startLive()
     })
-    // A new push token (restore, or the system rotating it) must reach the
-    // relay, or pushes stop until the daily refresh. Every token read fires
-    // this too, registering included, so only a different token registers.
+
     let lastToken: string | null = null
     const pushToken = Notifications.addPushTokenListener((token) => {
       const value = String(token.data)
@@ -427,9 +356,7 @@ export default function BuddiesRuntime() {
           { dayPlans: previous.dayPlans, visits },
           { dayPlans: state.dayPlans, visits }
         )
-        // A linked Plan from another device may hold the organizer's details
-        // from before a change this device has; once the sync has applied,
-        // it gets this device's. One holding a newer change is kept.
+
         followTimer ??= setTimeout(() => {
           followTimer = null
           syncLinkedPlans(undefined, { updatesOnly: true })
@@ -438,7 +365,7 @@ export default function BuddiesRuntime() {
       noteEdit()
       publishSharesChange()
     })
-    // The streak travels in Buddy Cards too; time logged can move it.
+
     let streak = JSON.stringify(currentBuddyStreak() ?? null)
     const timeEntries = useServiceReport.subscribe((state, previous) => {
       if (state.serviceReports === previous.serviceReports) return
@@ -448,20 +375,18 @@ export default function BuddiesRuntime() {
       noteEdit()
       schedulePublish()
     })
-    // Name, photo, and Tenure travel in Buddy Cards too.
+
     const profile = useProfile.subscribe((state, previous) => {
       if (state.name !== previous.name || state.avatar !== previous.avatar)
         noteEdit()
-      // Renamed here: every device of this account's cards take the new name.
+
       if (state.name !== previous.name && isLocalEdit())
         buddiesEngine.setCardName(currentBuddyProfile().name)
       if (state.name !== previous.name) schedulePublish()
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)
     })
-    // The Pet Companion too: adopting, Change Pet, renaming, or releasing it.
-    // Wakes, keepsakes and earned room items restamp the record without
-    // changing the card.
+
     let pet = JSON.stringify(currentBuddyPet() ?? null)
     const petStore = usePet.subscribe((state, previous) => {
       if (state.pet === previous.pet) return
@@ -471,9 +396,7 @@ export default function BuddiesRuntime() {
       noteEdit()
       schedulePublish()
     })
-    // So do Tenure, the streak (counted by the role), and earned badges;
-    // streaks or badges switched off withdraws them, and badges off this
-    // device's badge alerts too.
+
     const preferences = usePreferences.subscribe((state, previous) => {
       if (
         state.role !== previous.role ||
@@ -489,12 +412,11 @@ export default function BuddiesRuntime() {
       }
       if (state.showBadges !== previous.showBadges)
         void registerBuddiesPush().catch(logFailure)
-      // Badges off: news not yet sent stays home, even if they come back on.
+
       if (!state.showBadges && previous.showBadges)
         buddiesEngine.dropBadgeAnnouncements()
     })
-    // Follow-up invitations carry the Visit's date and topic and the
-    // Contact's first name and address.
+
     const visits = useConversations.subscribe((state, previous) => {
       if (state.conversations === previous.conversations) return
       if (isApplyingRemoteData()) {
@@ -511,7 +433,7 @@ export default function BuddiesRuntime() {
     })
     syncLinkedPlans()
     scheduleHeldReplies()
-    /** Whose requests to join, and whether new badges, may alert this device. */
+
     const pushAlerts = (state: ReturnType<typeof useBuddies.getState>) =>
       JSON.stringify([
         state.joinRequestNotifications,
@@ -524,14 +446,10 @@ export default function BuddiesRuntime() {
     const buddies = useBuddies.subscribe((state, previous) => {
       if (state.buddies !== previous.buddies)
         forgetRemovedBuddies(previous.buddies, state.buddies)
-      // A new buddy's requests need their own push template, and a muted
-      // buddy's template is dropped; so is the badge one with alerts off for
-      // every buddy.
+
       if (pushAlerts(state) !== pushAlerts(previous))
         void registerBuddiesPush().catch(logFailure)
-      // Entries that arrive already read (alerts off for them here), or that
-      // were read on another of this User's devices, don't count toward the
-      // bell.
+
       if (state.notifications !== previous.notifications) {
         const wasRead = new Map(
           previous.notifications.map((n) => [n.id, n.read])
@@ -550,7 +468,6 @@ export default function BuddiesRuntime() {
     })
     const received = Notifications.addNotificationReceivedListener(
       (notification) => {
-        // Pushes only: Android's own alert for one carries the same marker.
         const trigger = notification.request.trigger as {
           type?: string
         } | null

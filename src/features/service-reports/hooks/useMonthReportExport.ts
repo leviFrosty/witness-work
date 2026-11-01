@@ -18,10 +18,6 @@ import {
   type ReportExportSource,
 } from '@/features/service-reports/lib/monthReportExport'
 
-/**
- * Mark as Sent: for a report sent another way, or shared from Android, where
- * the share sheet can't tell whether it was sent. Same as Already Submitted.
- */
 export function markReportSent(
   month: number,
   year: number,
@@ -38,10 +34,6 @@ export function markReportSent(
   })
 }
 
-/**
- * Mark as Not Sent: undoes a month marked sent by an export or Already
- * Submitted, so last month's reminder comes back.
- */
 export function markReportNotSent(
   month: number,
   year: number,
@@ -63,16 +55,9 @@ const monthsAgo = (monthKey: string) =>
     moment().startOf('month').diff(moment(monthKey, 'YYYY-MM'), 'months')
   )
 
-/**
- * Copy / share / submit a month's Service Report from outside the report screen
- * (context menus on month cards and rows). Same report text, export links, and
- * `service_report_export*` analytics as the report screen's Submit button, and
- * a sent report counts as submitted there too.
- */
 const useMonthReportExport = () => {
   const defaultExportMethod = usePreferences((s) => s.defaultExportMethod)
-  // Subscribed so menus built from `reportMenuItems` switch between Mark as
-  // Sent and Mark as Not Sent as soon as a month's mark changes.
+
   const submittedReportMonths = usePreferences((s) => s.submittedReportMonths)
 
   const submitReport = async (
@@ -96,19 +81,12 @@ const useMonthReportExport = () => {
     }
   }
 
-  /**
-   * "Send report" menu items: the user's default submission method first, named
-   * for what it does ("Submit to Hourglass", "Copy Report"), then the other
-   * methods under "Send Another Way", then Mark as Sent or Mark as Not Sent.
-   * Matches the report screen's Submit button, whose tap uses the same
-   * default.
-   */
   const reportMenuItems = (month: number, year: number): ContextMenuItem[] => {
     const lastMonth = moment().subtract(1, 'month')
     const methods = availableExportMethods({
       isLastMonth: lastMonth.month() === month && lastMonth.year() === year,
     })
-    // NW Publisher only takes last month's report; fall back to copying.
+
     const primary = methods.includes(defaultExportMethod)
       ? defaultExportMethod
       : 'copy'

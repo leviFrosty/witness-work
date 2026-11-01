@@ -1,9 +1,3 @@
-/**
- * Generic pixel-art engine: colour math, a shape rasterizer with shading and
- * automatic outlines, RGBA buffers and transforms, pattern stamps, a digit font
- * and seeded randomness. Pure TypeScript with no platform dependencies; knows
- * nothing about what it draws.
- */
 export * from './buffer'
 export * from './color'
 export * from './draw'

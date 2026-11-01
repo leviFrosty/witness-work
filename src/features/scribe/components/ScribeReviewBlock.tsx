@@ -22,8 +22,7 @@ import ScribeReviewCard from '@/features/scribe/components/ScribeReviewCard'
 
 interface Props {
   proposalId: string
-  /** Say a change: speak (or type, without on-device speech) a correction. */
-  /** Absent while the conversation can't take a message (limit, full, offline). */
+
   onSayAChange?: () => void
 }
 
@@ -66,12 +65,6 @@ const Note = ({
   )
 }
 
-/**
- * What Scribe AI understood from a turn, as review cards in the conversation:
- * "Here's what I got", the cards, and Say a change. Add lives in the footer
- * above the composer (`ScribeReviewFooter`) while it's pending. Applied blocks
- * keep an Undo; replaced, dismissed and undone ones collapse to one line.
- */
 const ScribeReviewBlock = ({ proposalId, onSayAChange }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -170,8 +163,7 @@ const ScribeReviewBlock = ({ proposalId, onSayAChange }: Props) => {
 
   return (
     <View style={{ gap: 10 }}>
-      {/* At accessibility text sizes, Say a change goes under the title;
-          beside it, it would squeeze the title to a sliver. */}
+      {}
       <View
         style={
           stacked

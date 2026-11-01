@@ -1,17 +1,5 @@
 #!/usr/bin/env node
-// Checks the Apple Watch ↔ Wear OS feature registry, docs/watch/features.json
-// (see docs/watch/README.md):
-//
-// - every feature has a stable id, a description, and an entry for both
-//   watches with a known status;
-// - an implemented or partial feature names where it's implemented on that
-//   watch, and anything short of implemented says why;
-// - every referenced file exists, and a `path#text` reference still contains
-//   that text (a type or function name), so renames can't go unnoticed;
-// - every source file of either watch app (and of src/app/watch) belongs to
-//   some feature, so a new file means a registry update.
-//
-// Runs in vitest (scripts/check-watch-parity.test.ts) and pre-commit.
+
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -26,7 +14,6 @@ const NEEDS_PATHS = ['implemented', 'partial']
 const NEEDS_NOTES = ['partial', 'gap', 'not-applicable']
 const ID = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
-/** Files matching `dir/*.ext`, `dir/*` or `dir/**\/*.ext`, relative to `root`. */
 export function expand(root, pattern) {
   const recursive = pattern.includes('/**/')
   const [base, rest] = recursive
@@ -43,7 +30,6 @@ export function expand(root, pattern) {
     .sort()
 }
 
-/** `path#text` → the file and the text it must contain. */
 function parse(reference) {
   const index = reference.indexOf('#')
   return index < 0
@@ -51,7 +37,6 @@ function parse(reference) {
     : { file: reference.slice(0, index), text: reference.slice(index + 1) }
 }
 
-/** What's wrong with `registry`, read against the files under `root`. */
 export function checkRegistry(registry, root = repo) {
   const problems = []
   const referenced = new Set()

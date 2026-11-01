@@ -6,10 +6,6 @@ import type {
 } from '@/features/scribe/lib/wire'
 import type { ScribeTool } from '@/features/scribe/tools/types'
 
-/**
- * The protocol's keyword allowlist ([Tool
- * definitions](docs/scribe-ai-protocol.md#tool-definitions)).
- */
 export const ALLOWED_SCHEMA_KEYWORDS = new Set([
   'type',
   'properties',
@@ -39,12 +35,6 @@ const isObject = (value: JsonValue | undefined): value is JsonSchema =>
 
 const PRIMITIVES = new Set(['string', 'number', 'integer', 'boolean'])
 
-/**
- * Shrinks zod's output to what the model needs, in the protocol's subset: drops
- * `$schema` and keywords outside the allowlist, drops a `pattern` beside a
- * `format` (the device validates the exact rule), and writes a nullable
- * primitive as `"type": [T, "null"]` instead of an `anyOf`.
- */
 function compact(node: JsonValue): JsonValue {
   if (Array.isArray(node)) return node.map(compact)
   if (!isObject(node)) return node
@@ -85,7 +75,6 @@ function compact(node: JsonValue): JsonValue {
   return out
 }
 
-/** A tool's input schema on the wire: JSON Schema 2020-12, strict shape. */
 export function toWireSchema(input: z.ZodObject): JsonSchema {
   const generated = z.toJSONSchema(input, {
     target: 'draft-2020-12',
@@ -96,11 +85,6 @@ export function toWireSchema(input: z.ZodObject): JsonSchema {
   return schema
 }
 
-/**
- * Every protocol rule a server applies to one schema; empty when it passes: the
- * keyword allowlist, `additionalProperties: false` and every property required
- * on every object, nullable optionals, and depth ≤ 8.
- */
 export function schemaViolations(schema: JsonSchema): string[] {
   const problems: string[] = []
   const walk = (node: JsonValue, path: string, depth: number) => {
@@ -134,14 +118,13 @@ export function schemaViolations(schema: JsonSchema): string[] {
 
 const definitionCache = new WeakMap<ScribeTool, ToolDefinitionWire>()
 
-/** One tool's definition, generated once. */
 export function toolDefinition(tool: ScribeTool): ToolDefinitionWire {
   const cached = definitionCache.get(tool)
   if (cached) return cached
   const definition: ToolDefinitionWire = {
     name: tool.name,
     description: tool.description,
-    // Memory edits are applied on the device, but they still change state.
+
     access: tool.access === 'memory' ? 'write' : tool.access,
     inputSchema: toWireSchema(tool.input),
     ...(tool.returnsUntrustedText ? { returnsUntrustedText: true } : {}),
@@ -150,11 +133,6 @@ export function toolDefinition(tool: ScribeTool): ToolDefinitionWire {
   return definition
 }
 
-/**
- * The definitions sent with every step, in registry order: every tool, in every
- * mode, so every User and every step shares one cached prefix. A tool that's
- * off in data protection mode stays listed; the device refuses its calls.
- */
 export function toolDefinitions(
   tools: readonly ScribeTool[]
 ): ToolDefinitionWire[] {

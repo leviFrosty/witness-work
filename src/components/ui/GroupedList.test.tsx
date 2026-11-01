@@ -357,7 +357,7 @@ describe('iOS grouped list', () => {
     const button = find('SwiftButton')
     expect(named(button, 'listRowBackground')?.args).toEqual(['#row'])
     const chevron = find('Image')
-    // `forward` points left in a right-to-left Language.
+
     expect(chevron.props.systemName).toBe('chevron.forward')
     expect(named(chevron, 'accessibilityHidden')?.args).toEqual([true])
     button.props.onPress()

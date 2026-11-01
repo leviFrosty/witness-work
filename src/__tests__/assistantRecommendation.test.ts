@@ -12,12 +12,10 @@ import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
 const baseInput = {
   year: 2026,
-  month: 4, // May
+  month: 4,
   today: normalizeDateForStorage('2026-05-01'),
   monthlyGoalHours: 50,
-  // Mirror-capped standard gap the caller (AssistantSection) derives from
-  // computeProjectedTotal — the engine no longer re-derives a raw
-  // logged+planned sum. Tests state the gap directly.
+
   standardGapMinutes: 50 * 60,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
@@ -44,8 +42,6 @@ describe('generateRecommendation', () => {
   })
 
   it('returns null when the projection (logged + planned) already meets the goal', () => {
-    // 30h logged + 20h planned → the caller's projection reaches the 50h
-    // goal, so it hands the engine a zero gap.
     expect(
       generateRecommendation({
         ...baseInput,
@@ -63,8 +59,6 @@ describe('generateRecommendation', () => {
 
   describe('shape selection', () => {
     it("emits 'distributed' with the fewest days needed at stretchCap and totals the gap exactly", () => {
-      // Today=May 22, 10 eligible days. Gap = 20h.
-      // Fewest days at stretchCap (6h) = ceil(20/6) = 4. 4 × 5h = 20h.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
@@ -84,9 +78,6 @@ describe('generateRecommendation', () => {
     })
 
     it('biases distributed picks toward the end of the month when there is slack', () => {
-      // The user-reported bug: today=May 14 with 8h gap and 18 eligible days
-      // used to suggest a single 8h plan TODAY. New behavior: 2x4h spaced
-      // toward the end of the month so the user gets breathing room.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-14'),
@@ -97,8 +88,7 @@ describe('generateRecommendation', () => {
       expect(rec!.shape).toBe('distributed')
       expect(rec!.plans).toHaveLength(2)
       expect(rec!.plans.every((p) => p.minutes === 4 * 60)).toBe(true)
-      // Both proposed days must sit comfortably in the back half of the month,
-      // and never on today.
+
       for (const p of rec!.plans) {
         const d = momentStoredDate(p.date)
         expect(d.isAfter(momentStoredDate('2026-05-14'), 'day')).toBe(true)
@@ -106,7 +96,7 @@ describe('generateRecommendation', () => {
           true
         )
       }
-      // And the very last proposed day should hug the end of the month.
+
       const last = rec!.plans[rec!.plans.length - 1]
       expect(momentStoredDate(last.date).format('YYYY-MM-DD')).toBe(
         '2026-05-31'
@@ -114,8 +104,6 @@ describe('generateRecommendation', () => {
     })
 
     it('proposes 2x5h for a 10h gap mid-month (fewer medium days, spread out)', () => {
-      // Frontloaded user: 40h logged, 10h to go, plenty of month left.
-      // ceil(10/6) = 2 days at 10/2 = 5h each.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-10'),
@@ -126,7 +114,7 @@ describe('generateRecommendation', () => {
       expect(rec!.shape).toBe('distributed')
       expect(rec!.plans).toHaveLength(2)
       expect(rec!.plans.every((p) => p.minutes === 5 * 60)).toBe(true)
-      // Both days should sit in the back half of the month.
+
       for (const p of rec!.plans) {
         expect(
           momentStoredDate(p.date).isSameOrAfter(
@@ -138,8 +126,6 @@ describe('generateRecommendation', () => {
     })
 
     it("emits 'recurring' when the gap exceeds sustainable pace but fits within stretch over a 14+ day horizon", () => {
-      // Today=May 18 (Mon) → 14 days remain. Goal 60h, logged 0 → gap 60h.
-      // 14×softCap=56 < 60 ≤ 84=14×stretchCap, days ≥ 14 ⇒ recurring.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-18'),
@@ -161,9 +147,6 @@ describe('generateRecommendation', () => {
     })
 
     it('sizes a recurring pattern to the weeks left, not the eligible-day count', () => {
-      // Oct 5–31, 2026 spans four weeks. With Sun/Thu/Fri off, only 16 days
-      // are eligible — counting those as 16/7 → 3 weeks oversized every
-      // session (6h × 12 = 72h for a 50h gap).
       const rec = generateRecommendation({
         ...baseInput,
         year: 2026,
@@ -178,13 +161,11 @@ describe('generateRecommendation', () => {
       expect(rec!.headline.values.weeks).toBe(4)
       const total = rec!.plans.reduce((s, p) => s + p.minutes, 0)
       expect(total).toBeGreaterThanOrEqual(50 * 60)
-      // Whole-hour sessions can overshoot by under an hour each, no more.
+
       expect(total - 50 * 60).toBeLessThan(rec!.plans.length * 60)
     })
 
     it('excludes weekdays in offDays from the eligible pool', () => {
-      // May 22, 2026 is a Friday. Marking Friday as an Off Day means the first
-      // eligible day must not be a Friday.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
@@ -224,9 +205,6 @@ describe('generateRecommendation', () => {
     })
 
     it('emits the rest_recommended_then_resume rationale when the tiredness signal triggers', () => {
-      // 13h logged in the prior 3 days exceeds the default 12h threshold.
-      // The proposal is already scheduled at the end of the month (which gives
-      // plenty of rest); the rationale tag is what changes.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
@@ -245,10 +223,6 @@ describe('generateRecommendation', () => {
     })
 
     it('falls back to another viable shape when the primary has negative history', () => {
-      // Today=May 22 (10 eligible days, < recurring horizon), gap=7h.
-      // Primary shape = distributed (gap > stretchCap=6h, eligibleLen < 14).
-      // Concentrated is also viable (gap ≤ absoluteCap=8h). With distributed
-      // dismissed ≥3 times, engine should fall back to concentrated.
       const now = Date.now()
       const dismissed = (i: number) => ({
         shape: 'distributed' as const,
@@ -268,8 +242,6 @@ describe('generateRecommendation', () => {
     })
 
     it('falls through to best-effort distributed at stretch cap when the goal is unreachable', () => {
-      // May 27 → 5 days remain. Gap 40h > 5*6h=30h ⇒ unreachable. Best-effort
-      // proposal: 5 days at stretch cap (6h).
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-27'),
@@ -285,8 +257,6 @@ describe('generateRecommendation', () => {
     })
 
     it('skips days that already have a DayPlan', () => {
-      // May 15 has an existing 1h plan. Engine must propose on a different day.
-      // Gap: 50h goal − 44h logged − 1h planned = 5h.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-15'),
@@ -308,7 +278,6 @@ describe('generateRecommendation', () => {
     })
 
     it("emits 'concentrated' (single plan) when the gap is at or below 2× softCap", () => {
-      // Gap = 6h ≤ softCap*2 (8h). Today=May 15, no exclusions, no plans.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-15'),
@@ -327,9 +296,6 @@ describe('generateRecommendation', () => {
 
   describe('meeting days', () => {
     it('does not propose a concentrated plan on a meeting weekday when a non-meeting weekday is available', () => {
-      // May 22, 2026 is a Friday. Mark Friday as a meeting day so the last
-      // eligible day (the natural concentrated pick) is skipped in favor of
-      // the previous non-meeting day.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
@@ -344,8 +310,6 @@ describe('generateRecommendation', () => {
     })
 
     it('keeps distributed picks off meeting days when non-meeting capacity is sufficient', () => {
-      // 20h gap, lots of eligible days, mark Wed (3) + Sun (0) as meeting
-      // days. Engine should pick only non-meeting days.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-10'),
@@ -362,8 +326,6 @@ describe('generateRecommendation', () => {
     })
 
     it('treats Off Day as winning over Meeting Day when both flags overlap', () => {
-      // Friday (5) is both an Off Day and a Meeting Day. The engine should
-      // exclude Friday entirely (no proposal on a Friday at any cap).
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-22'),
@@ -379,10 +341,6 @@ describe('generateRecommendation', () => {
     })
 
     it('caps meeting-day sessions at the meeting absolute cap when no non-meeting days remain', () => {
-      // Today=May 28 (Thu), end-of-month horizon: May 28–31. Goal 50h logged
-      // 47h ⇒ gap 3h. Mark every remaining weekday (Thu, Fri, Sat, Sun) as a
-      // meeting day so all eligible days are meeting days. Engine must pick a
-      // meeting day with at most meetingAbsoluteCap = 3h.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
@@ -393,15 +351,11 @@ describe('generateRecommendation', () => {
       expect(rec).not.toBeNull()
       expect(rec!.shape).toBe('concentrated')
       expect(rec!.plans).toHaveLength(1)
-      // 3h gap fits inside meeting absolute cap (3h), so the engine schedules
-      // it. The cap protects against ever proposing more than 3h here.
+
       expect(rec!.plans[0].minutes).toBeLessThanOrEqual(3 * 60)
     })
 
     it('returns null from concentrated when only meeting days remain and the gap exceeds the meeting cap', () => {
-      // 6h gap with only meeting days available exceeds the 3h meeting
-      // absolute cap. Concentrated must fail; the engine should fall back to
-      // distributed (which then spreads across meeting days at their cap).
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-28'),
@@ -410,16 +364,13 @@ describe('generateRecommendation', () => {
       })
 
       expect(rec).not.toBeNull()
-      // Engine falls back to distributed across the meeting days. Each
-      // proposed plan must respect the meeting absolute cap.
+
       for (const p of rec!.plans) {
         expect(p.minutes).toBeLessThanOrEqual(3 * 60)
       }
     })
 
     it('does not pick a recurring pattern that lands on meeting days', () => {
-      // Recurring scenario from the existing test (May 18, gap 60h ≥ 14d
-      // horizon). Mark Mon (1) as a meeting day. The pattern should skip Mon.
       const rec = generateRecommendation({
         ...baseInput,
         today: normalizeDateForStorage('2026-05-18'),
@@ -429,8 +380,7 @@ describe('generateRecommendation', () => {
       })
 
       expect(rec).not.toBeNull()
-      // Engine may pick recurring (without Mon) or fall back to distributed.
-      // Either way, no proposal should land on Mon.
+
       for (const p of rec!.plans) {
         expect(momentStoredDate(p.date).day()).not.toBe(1)
       }
@@ -442,8 +392,6 @@ describe('generateRecommendation', () => {
       rec!.plans.map((p) => p.minutes)
 
     it('spreads the gap across every picked day instead of front-loading 6h days', () => {
-      // Oct 13, 2026 (Tue), out Sun/Tue/Thu/Sat → 11 days left. Without the
-      // flag this was 8×6h and a 2h last day, skipping two picked days.
       const rec = generateRecommendation({
         ...baseInput,
         year: 2026,
@@ -471,14 +419,12 @@ describe('generateRecommendation', () => {
         spreadEvenly: true,
       })
 
-      // Oct 1–31 has 18 Sun/Tue/Thu/Sat days.
       expect(rec!.plans).toHaveLength(18)
       expect(minutes(rec).every((m) => m === 2 * 60 || m === 3 * 60)).toBe(true)
       expect(minutes(rec).reduce((s, m) => s + m, 0)).toBe(50 * 60)
     })
 
     it('leaves skipped days alone', () => {
-      // Onboarding plans from the 1st but skips days that have time logged.
       const rec = generateRecommendation({
         ...baseInput,
         year: 2026,

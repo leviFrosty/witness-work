@@ -20,8 +20,6 @@ describe('milestoneLabelRows', () => {
   })
 
   it('leaves out a value that would crowd both rows', () => {
-    // Large text needs about three times the room: 50 and 100 can't share the
-    // second row, so 100 is left out instead of drawn over 50.
     expect(milestoneLabelRows(positions, 0.18)).toEqual([0, 1, null, 0, 0, 0])
   })
 })
@@ -55,7 +53,6 @@ describe('Service Year total after an entry moves months', () => {
     ...(credit ? { categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true } : {}),
   })
 
-  // How YearMilestoneCard computes its total.
   const cardTotal = (reports: TimeEntriesByYear) =>
     getTotalMinutesForServiceYear(
       getServiceYearReports(reports, 2026),
@@ -67,10 +64,8 @@ describe('Service Year total after an entry moves months', () => {
     const standard = entry('std', new Date(2026, 9, 10), 50)
     const ldc = entry('ldc', new Date(2026, 9, 20), 10, true)
 
-    // October: 50h standard + 10h LDC, capped at 55h.
     expect(cardTotal({ 2026: { 9: [standard, ldc] } })).toBe(55 * 60)
 
-    // Same entry (same id, hours, credit) moved to November 1.
     const moved = { ...ldc, date: new Date(2026, 10, 1) }
     expect(cardTotal({ 2026: { 9: [standard], 10: [moved] } })).toBe(60 * 60)
   })

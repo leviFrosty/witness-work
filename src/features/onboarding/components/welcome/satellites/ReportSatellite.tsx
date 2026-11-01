@@ -18,7 +18,6 @@ import SatelliteSurface, {
   Skeleton,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
 
-/** The month's service report, sent off with a tap. */
 const ReportSatellite = ({
   palette,
   focus,
@@ -30,7 +29,6 @@ const ReportSatellite = ({
   const flight = useSharedValue(0)
   const sent = useSharedValue(0)
 
-  // The report flies off and comes back confirmed as the story reaches it.
   useEffect(() => {
     if (reduceMotion) {
       sent.value = active ? 1 : 0

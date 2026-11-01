@@ -29,15 +29,14 @@ const ServiceReportSection = () => {
   const theme = useTheme()
   const { entryMode, showsTimeEntry } = usePublisher()
   const navigation = useNavigation<RootStackNavigation>()
-  // Keyed on the day, so the card moves to the new month at midnight.
+
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const month = today.month()
   const year = today.year()
 
   const { reportMenuItems } = useMonthReportExport()
   const { label: sentLabel } = useReportSentState(month, year)
-  // Send items target last month while its report is unsent, never this
-  // month's partial one.
+
   const due = useDueReportMonth()
 
   const viewReport = () =>
@@ -58,8 +57,7 @@ const ServiceReportSection = () => {
         overflow: 'hidden',
       }}
     >
-      {/* Only the header long-presses: the card body is full of controls
-        with their own menus. */}
+      {}
       <HomeSectionMenu
         accessibilityLabel={i18n.t('viewReport')}
         onPress={viewReport}

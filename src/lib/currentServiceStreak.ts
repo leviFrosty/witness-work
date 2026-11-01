@@ -15,7 +15,6 @@ import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { Publisher } from '@/types/publisher'
 
-/** The Service Streak, counted the way this month's role counts it. */
 export function serviceStreakFor(
   prefs: { role: Publisher; roleHistory: RoleHistory | null },
   records: StreakRecords,
@@ -25,7 +24,6 @@ export function serviceStreakFor(
   return serviceStreak(getStreakKind(role), records, now)
 }
 
-/** The Service Streak's history (`streakHistory`), by this month's role. */
 export function streakHistoryFor(
   prefs: { role: Publisher; roleHistory: RoleHistory | null },
   records: StreakRecords,
@@ -35,10 +33,6 @@ export function streakHistoryFor(
   return streakHistory(getStreakKind(role), records, now)
 }
 
-/**
- * The Service Streak as of `now`, read from the stores, for callers outside
- * React (Buddy Cards, reminders).
- */
 export function currentServiceStreak(now: Date = new Date()): ServiceStreak {
   const { serviceReports, dayPlans, recurringPlans } =
     useServiceReport.getState()

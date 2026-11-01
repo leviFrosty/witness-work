@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Platform } from 'react-native'
 import { AppLockAvailability, getAppLockAvailability } from '@/lib/appLock'
 
-/** Null until the device answers. */
 export function useAppLockAvailability() {
   const [availability, setAvailability] = useState<AppLockAvailability | null>(
     null

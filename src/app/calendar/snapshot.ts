@@ -3,16 +3,9 @@ import type { CalendarSnapshot } from '../../../modules/calendar-bridge'
 
 type CalendarContact = { id: string; name: string; address?: string }
 
-// Match the native bridge's supported range before sending a batch to EventKit.
 const CALENDAR_END_LIMIT = Date.parse('2100-01-01T00:00:00Z')
 const DURATION_MINUTES = 30
 
-/**
- * Every open follow-up is published: Calendar Sync is all or nothing. Only
- * explicit domain deletions remove events; partial cloud loads cannot. Removals
- * are limited to published keys, so the payload doesn't grow with every Visit
- * ever recorded.
- */
 export function buildCalendarSnapshot({
   visits,
   deletedVisits,
@@ -29,7 +22,7 @@ export function buildCalendarSnapshot({
   deletedContactIds: string[]
   publishedKeys: string[]
   includeDetails: boolean
-  /** Visit id → minutes before the follow-up its Notify Me reminder fires. */
+
   alertMinutes: Map<string, number>
   title: string
 }): CalendarSnapshot {
@@ -53,8 +46,7 @@ export function buildCalendarSnapshot({
     if (!contact) continue
     const start = new Date(followUp.date).getTime()
     const end = start + DURATION_MINUTES * 60_000
-    // One malformed Visit (e.g. from an old sync payload) must not block every
-    // other follow-up. Its existing event, if any, is left untouched.
+
     if (!Number.isFinite(start) || start < 0 || end >= CALENDAR_END_LIMIT)
       continue
     const alert = alertMinutes.get(visit.id)

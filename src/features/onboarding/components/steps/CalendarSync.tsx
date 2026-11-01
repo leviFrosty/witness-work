@@ -34,11 +34,8 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
   const [working, setWorking] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Either answer here means the tray invitation for updaters never shows.
   const answer = () => useCalendarSync.setState({ promptAnswered: true })
 
-  // Skipping after a failed attempt must not leave updates running, or the
-  // error that made them skip, behind.
   const skip = async () => {
     answer()
     if (useCalendarSync.getState().enabled) {
@@ -70,7 +67,6 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
     }
   }
 
-  // Back from Settings with access allowed: finish setting up.
   const resume = useEffectEvent(() => void connect('open_settings'))
   useEffect(() => {
     const subscription = resumeWhenCalendarAllowed(resume)

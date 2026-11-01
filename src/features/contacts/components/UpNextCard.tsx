@@ -20,21 +20,16 @@ import { tracking } from '@/lib/tracking'
 
 type Props = {
   upNext: UpNext
-  /** Pull the card up over the hero. */
+
   overlap: boolean
-  /** Opens the Follow-up's Visit. */
+
   onOpen: () => void
   onLogVisit: () => void
   onReschedule: () => void
-  /** Omitted when the contact has no address or coordinate. */
+
   onNavigate?: () => void
 }
 
-/**
- * The soonest upcoming follow-up, promoted above everything else. Tapping it
- * opens the Visit it belongs to; the buttons log a visit, navigate, or
- * reschedule.
- */
 const UpNextCard = ({
   upNext,
   overlap,
@@ -44,9 +39,7 @@ const UpNextCard = ({
   onNavigate,
 }: Props) => {
   const theme = useTheme()
-  // At accessibility text sizes the countdown wraps whole, and Log Visit takes
-  // its own row with Navigate and Reschedule under it, so nothing runs off the
-  // card.
+
   const largeText = useAccessibilityTextSize()
   const wrap = largeText ? 'wrap' : 'nowrap'
   const background = theme.colors.accent3

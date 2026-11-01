@@ -20,10 +20,6 @@ import useTheme from '@/contexts/theme'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 type Props = ViewProps & {
-  /**
-   * Rows added or removed after mount expand and collapse in place. Turn off
-   * for a single child that must fill the Section, like a virtualized list.
-   */
   animateRows?: boolean
 }
 
@@ -33,14 +29,10 @@ type Entry = {
   key: string
   element: ReactElement | undefined
   present: boolean
-  /** Added after the Section mounted, so it expands in. */
+
   animateIn: boolean
 }
 
-/**
- * Lines up this render's rows with the last ones, keeping removed rows in place
- * (not present) so they can collapse out.
- */
 function mergeRows(previous: Entry[], current: ReactElement[]): Entry[] {
   const currentKeys = new Set(current.map((element) => String(element.key)))
   const merged: Entry[] = []
@@ -75,7 +67,6 @@ const sameRows = (a: Entry[], b: Entry[]) =>
       entry.key === b[index].key && entry.present === b[index].present
   )
 
-/** Expands in when added and collapses out when removed. */
 function SectionRow({
   rowKey,
   present,
@@ -89,15 +80,13 @@ function SectionRow({
   onExited: (key: string) => void
   children: ReactNode
 }) {
-  // Keeps showing the last content while collapsing out.
   const [lastChildren, setLastChildren] = useState(children)
   if (present && children !== lastChildren) setLastChildren(children)
   const reduceMotion = useReducedMotion()
   const progress = useSharedValue(animateIn ? 0 : 1)
   const height = useSharedValue(0)
   const [measured, setMeasured] = useState(!animateIn)
-  // While expanding in, the content sits out of flow so it can be measured
-  // at full height; once it has, it rejoins the flow and sizes the row.
+
   const [inFlow, setInFlow] = useState(!animateIn)
   const autoHeight = useSharedValue(!animateIn)
 
@@ -134,7 +123,7 @@ function SectionRow({
   const onLayout = (event: LayoutChangeEvent) => {
     const measuredHeight = event.nativeEvent.layout.height
     height.value = measuredHeight
-    // The first pass can report 0 before the content has laid out.
+
     if (!measured && measuredHeight > 0) setMeasured(true)
   }
 
@@ -150,10 +139,6 @@ function SectionRow({
   )
 }
 
-/**
- * Rows added or removed after mount expand and collapse in place. Section does
- * this for its own rows; wrap rows a component adds inside a Section with it.
- */
 export function SectionRows({ children }: { children: ReactNode }) {
   const current = Children.toArray(children).filter(isValidElement)
   const [rows, setRows] = useState<Entry[]>(() =>

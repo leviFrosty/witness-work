@@ -325,7 +325,7 @@ describe('Wear OS strings', () => {
     expect(spanish).toContain(
       '<string name="sharedTheGoodNews" formatted="false">Compartió</string>'
     )
-    // Its `watchSetUp` says iPhone; the Android wording isn't translated yet.
+
     expect(spanish).not.toContain('watchSetUp')
   })
 

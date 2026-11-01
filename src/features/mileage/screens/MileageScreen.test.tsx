@@ -61,7 +61,6 @@ vi.mock('@/features/mileage/hooks/useMileageExport', () => ({
   default: () => ({ exportReport }),
 }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -69,7 +68,7 @@ const host = vi.hoisted(() => (name: string) => async () => {
       ReactModule.createElement(name, props, props.children),
   }
 })
-// Draws its buttons, so the share menu can be read.
+
 vi.mock('@/components/ui/layout/Header', async () => {
   const ReactModule = await import('react')
   return {
@@ -120,7 +119,6 @@ import MileageScreen from '@/features/mileage/screens/MileageScreen'
 import { peopleFixture } from '@/lib/mileage/testing/peopleFixture'
 import type { Trip } from '@/types/mileage'
 
-/** March 2026, which holds every trip in the fixture (March 2). */
 const NOW = new Date(2026, 2, 15, 12)
 
 let renderer: ReactTestRenderer | undefined
@@ -152,7 +150,6 @@ const one = (tree: ReactTestRenderer, type: string) => {
   return node
 }
 
-/** What the summary, its chart, the trip list, and an export each hold. */
 function shown(tree: ReactTestRenderer) {
   const summary = one(tree, 'MileageSummary').props as {
     summary: MileageSummary
@@ -179,7 +176,6 @@ function shown(tree: ReactTestRenderer) {
   }
 }
 
-/** Runs the share menu's Export CSV and returns the report it was given. */
 async function exportInput(tree: ReactTestRenderer) {
   const menu = one(tree, 'PullDownMenu').props as {
     actions: { id: string; onPress: () => void }[]
@@ -230,7 +226,7 @@ describe('the Mileage screen’s person filter', () => {
       tripCount: 6,
       chart: ['mazda-ana', 'mine', 'van-ana', 'van-ben', 'van-cal', 'van-mine'],
       rows: ['mazda-ana', 'mine', 'van-ana', 'van-ben', 'van-cal', 'van-mine'],
-      // Not the User's own: theirs name no one.
+
       loggedBy: {
         'van-ana': 'Annie',
         'van-ben': 'Ben',
@@ -293,7 +289,6 @@ describe('the Mileage screen’s person filter', () => {
       { filter: 'person' }
     )
 
-    // Back to everyone's.
     choose(tree, EVERYONE)
     expect(shown(tree).tripCount).toBe(6)
   })
@@ -353,7 +348,7 @@ describe('the Mileage screen with Shared Cars', () => {
     expect(one(tree, 'MileagePersonFilter')).toBeDefined()
     expect(shown(tree).loggedBy['van-ana']).toBe('Annie')
     expect(one(tree, 'ScrollView').props.refreshControl).toBeUndefined()
-    // The notice says changes aren't being shared.
+
     expect(one(tree, 'SharedCarsNotice').props.hasSharedCars).toBe(true)
     choose(tree, ME)
     expect(shown(tree).rows).toEqual(['mine', 'van-mine'])

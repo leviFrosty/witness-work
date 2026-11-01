@@ -38,7 +38,6 @@ type Props = {
   onNotAtHome: (item: FollowUpCardItem) => void
 }
 
-/** One Follow-up on Home's card: who, when, and what happened. */
 export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -89,7 +88,6 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
     })
   }
 
-  // The tap action (the Follow-up's Visit) isn't repeated in the menu.
   const actions: ContextMenuEntries = [
     [
       phone && {
@@ -139,8 +137,6 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
       <Text
         numberOfLines={1}
         style={{
-          // Inside the iOS ContextMenu's hosted view, `flex: 1` alone keeps
-          // the text's full width and overflows the card.
           flex: 1,
           flexShrink: 1,
           fontSize: theme.fontSize('sm'),
@@ -232,7 +228,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
             {i18n.t('followUpCard_talked')}
           </Text>
         </Button>
-        {/* Data protection mode drops not-at-home records entirely. */}
+        {}
         {!dataProtectionMode && (
           <Button
             onPress={() => onNotAtHome(item)}
@@ -276,7 +272,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
       }}
     >
       <View style={{ flexDirection: 'row', gap: 4 }}>
-        {/* The buttons stay outside so the long press has no rivals. */}
+        {}
         <ContextMenu
           actions={actions}
           onPress={openVisit}

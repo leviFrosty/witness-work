@@ -26,12 +26,6 @@ interface Props {
 
 type Answer = 'yes' | 'no'
 
-/**
- * Asks a Kingdom Publisher whether to log hours (**Hours Logging**). Their
- * report is only "shared in ministry", so the hours surfaces stay hidden unless
- * they say yes. Nothing is chosen until they pick, so no one gets hours they
- * didn't want, or loses them, by accepting a default.
- */
 const StepHoursLogging = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -41,7 +35,7 @@ const StepHoursLogging = ({ goBack, goNext }: Props) => {
       hoursLoggingAsked: s.hoursLoggingAsked,
     }))
   )
-  // Coming back to the step (or a restore that answered it) shows the answer.
+
   const [answer, setAnswer] = useState<Answer | null>(
     hoursLoggingAsked ? (logsHours ? 'yes' : 'no') : null
   )

@@ -44,22 +44,12 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddyTraySync } from '@/features/buddies/stores/buddyTraySync'
 
-/**
- * Why the tray checked: it opened, the User tapped Try Again, or a periodic
- * refresh while it's open (which stays quiet unless it changes the outcome).
- */
 export type BuddyTraySyncTrigger = 'open' | 'retry' | 'poll'
 
-/**
- * Pulls new buddy events for the tray, tracking how the check went. A poll is
- * automatic, so it waits out the relay's back-off; opening the tray and Try
- * Again don't. `minSeq` (a tapped push's event) skips a sync already past it.
- */
 export async function syncBuddyNotifications(
   trigger: BuddyTraySyncTrigger = 'open',
   minSeq?: number
 ): Promise<void> {
-  // Opening the tray never starts Buddies; that's the Buddies screen's job.
   if (useBuddies.getState().registeredInboxId === null) return
   const startedAt = Date.now()
   if (trigger !== 'poll') useBuddyTraySync.setState({ syncing: true })
@@ -68,14 +58,13 @@ export async function syncBuddyNotifications(
       automatic: trigger === 'poll',
       minSeq,
     })
-    // Nothing ran (waiting out the relay's back-off): nothing new to say.
+
     useBuddyTraySync.setState(
       outcome === 'skipped'
         ? { syncing: false }
         : { syncing: false, failedAt: null }
     )
   } catch (error) {
-    // Publishing can fail after the inbox was read; the tray is still current.
     if (useBuddies.getState().lastSyncAt >= startedAt) {
       useBuddyTraySync.setState({ syncing: false, failedAt: null })
       return
@@ -90,10 +79,6 @@ export async function syncBuddyNotifications(
   }
 }
 
-/**
- * The tray's Buddies check: `syncing` while one it asked for runs, `failed`
- * until any sync succeeds, and a Try Again action.
- */
 export function useBuddyTraySyncStatus() {
   const enabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
@@ -112,11 +97,6 @@ export function useBuddyTraySyncStatus() {
   return { state, retry }
 }
 
-/**
- * The tray entry and buddy a `badge.new` push (by its relay event, `ww.seq`) is
- * about, once the event has synced and while they're still a buddy; marks the
- * entry read. Null otherwise, so the caller can fall back to the tray.
- */
 export function openBadgePush(
   seq: number | undefined
 ): { id: string; inboxId: string } | null {
@@ -130,12 +110,6 @@ export function openBadgePush(
   return { id: entry.id, inboxId }
 }
 
-/**
- * The tray entry and badge a `badge.reaction` push (by its relay event,
- * `ww.seq`) is about, once the event has synced; marks the entry read. Null
- * otherwise (a newer reaction replaced it, say), so the caller can fall back to
- * the tray.
- */
 export function openBadgeReactionPush(
   seq: number | undefined
 ): { id: string; badgeKey: string } | null {
@@ -149,13 +123,6 @@ export function openBadgeReactionPush(
   return { id: entry.id, badgeKey: sharedBadgeKey(badge) }
 }
 
-/**
- * The buddy notification queue as tray items: invitations, changes,
- * cancellations, replies, requests to join, and new pairings, then buddies'
- * news (their new badges, and reactions to this User's badges) while badges are
- * on. News is social: it's grouped apart and never counts (ADR 0021), and only
- * an active buddy's shows. Only once the User has started using Buddies.
- */
 export default function useBuddyNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
   const enabled = useBuddiesEnabled()
@@ -173,10 +140,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
   const { now } = useNow()
   if (!enabled || !started) return []
 
-  /**
-   * The Plan or Follow-up a reply is about: what the bell shows of it (without
-   * its note), and opening it.
-   */
   const replySubject = (shareId: string) => {
     const plan = dayPlans.find(
       (candidate) =>
@@ -210,7 +173,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return undefined
   }
 
-  /** A request to join opens the Plan it's about. */
   const planTarget = (match: PlannedDayContribution, d: string) =>
     match.source === 'day'
       ? () => navigation.navigate('Plan Details', { dayPlanId: match.plan.id })
@@ -220,10 +182,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
             date: moment(d, 'YYYY-MM-DD').hour(12).toISOString(),
           })
 
-  /**
-   * A buddy's Plan invitation opens it, answered or not, while it's kept: a
-   * month after the Plan. A Follow-up invitation opens while it's open.
-   */
   const invitationTarget = (shareKey: string) => {
     const share = incomingShares[shareKey]
     if (isShownPlanShare(share, now)) {
@@ -239,25 +197,20 @@ export default function useBuddyNotifications(): NotificationItem[] {
     return undefined
   }
 
-  /** A new pairing opens that buddy, while they're still a buddy. */
   const buddyTarget = (inboxId: string) =>
     buddies.some((b) => b.inboxId === inboxId)
       ? () => navigation.navigate('Buddy', { inboxId })
       : undefined
 
-  // Entries keep the name they arrived with; a nickname given since applies.
   const buddyName = (entry: BuddyNotification) => {
     const buddy = buddies.find((b) => b.inboxId === entry.from)
     return buddy ? buddyDisplayName(buddy) : entry.name
   }
 
-  // Shared Cars' entries are the app's to list (`useSharedCarNotifications`).
   const listed = listedNotifications(queue, { showBadges }).filter(
     (entry) => !isCarNotification(entry)
   )
 
-  // Buddies' news opens the badge it's about: theirs, or the one of this
-  // User's they reacted to. "New" while the row was unread.
   const news = buddyNews(listed).flatMap(
     ({ entry, ids }): NotificationItem[] => {
       const buddy = buddies.find(
@@ -290,7 +243,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
                   navigation.navigate('BadgeView', {
                     badgeKey: sharedBadgeKey(lead),
                     owner: theirs ? { inboxId: buddy.inboxId } : 'me',
-                    // The tray closes behind the view, taking the coin along.
+
                     origin: origin && { ...origin, returns: false },
                     isNew: theirs && unread,
                   })
@@ -336,7 +289,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
       entry.kind !== 'shareReply' && entry.shareKey
         ? incomingShares[entry.shareKey]
         : undefined
-    // Answered on another device: the linked Plan already exists.
+
     const answered =
       !!share && effectiveShareStatus(share, dayPlans) !== 'pending'
     const needsAnswer =
@@ -344,7 +297,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
     const invite = joinRequest
       ? joinRequestInvite(joinRequest, dayPlans, recurringPlans)
       : undefined
-    // Inviting the buddy to a Plan that day answers the request.
+
     const invited =
       !!joinRequest &&
       dayPlans.some(
@@ -360,8 +313,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
       sticky: needsAnswer,
       onView: () => buddiesEngine.markNotificationRead(entry.id),
       onDismiss: () => {
-        // X, Not Now, and Clear All all pass on a request to join that could
-        // have been answered with Invite.
         if (invite?.kind === 'invite' && !invited)
           analytics.capture('buddy_join_request_answered', {
             action: 'not_now',
@@ -372,7 +323,6 @@ export default function useBuddyNotifications(): NotificationItem[] {
         <BuddyNotificationRow
           entry={entry}
           unread={unread}
-          // Answering is what clears a request; it can't be dismissed.
           onDismiss={needsAnswer ? undefined : dismiss}
           onPress={target ? () => closeThen(target) : undefined}
           ownPlan={ownPlan?.plan}

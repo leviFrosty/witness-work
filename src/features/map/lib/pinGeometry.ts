@@ -1,16 +1,10 @@
 import { distanceMeters } from '@/lib/geo'
 import type { Coordinate } from '@/types/contact'
 
-/** A point on the map, in points from its top left. */
 export type MapPoint = { x: number; y: number }
 
 export type ScreenPin = MapPoint & { id: string }
 
-/**
- * Gathers pins that sit on top of each other on screen into groups. `pins` come
- * most pressing first; each one not yet in a group starts one and takes in
- * every free pin within `radius`. A grid keeps it linear in the pin count.
- */
 export const groupOverlappingPins = <P extends ScreenPin>(
   pins: P[],
   radius: number
@@ -46,10 +40,8 @@ export const groupOverlappingPins = <P extends ScreenPin>(
   return groups
 }
 
-/** Within this, a group is one place (a building) rather than a crowd. */
 export const SAME_PLACE_M = 40
 
-/** Every member sits within `SAME_PLACE_M` of the first. */
 export const isSamePlace = (coordinates: Coordinate[]) =>
   coordinates.every(
     (coordinate) => distanceMeters(coordinates[0]!, coordinate) <= SAME_PLACE_M

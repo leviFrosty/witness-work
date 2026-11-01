@@ -1,12 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import type { NativeSegmentedControlProps } from '@/components/ui/NativeSegmentedControl.types'
 
-/**
- * Platform segmented control: SwiftUI's segmented `Picker` on iOS
- * (`NativeSegmentedControl.ios.tsx`) and Material 3 segmented buttons on
- * Android (`NativeSegmentedControl.android.tsx`). Other platforms get a plain
- * row of choices.
- */
 export default function NativeSegmentedControl<T extends string = string>({
   options,
   value,

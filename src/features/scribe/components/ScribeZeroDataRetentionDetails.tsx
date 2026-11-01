@@ -36,7 +36,6 @@ const POINTS = [
   },
 ] as const
 
-/** The Zero Data Retention title and intro, for a sheet's header. */
 export function ScribeZeroDataRetentionHeading() {
   const theme = useTheme()
   return (
@@ -64,11 +63,6 @@ export function ScribeZeroDataRetentionHeading() {
   )
 }
 
-/**
- * How Scribe AI handles what the User sends, in plain words, and OpenRouter's
- * policy. The copy is load-bearing (ADR 0008): it must match ww-api's routing
- * and logging (docs/scribe-ai-protocol.md → Logging and privacy).
- */
 export default function ScribeZeroDataRetentionDetails() {
   const theme = useTheme()
   return (

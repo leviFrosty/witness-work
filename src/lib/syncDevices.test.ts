@@ -137,7 +137,7 @@ describe('syncDeviceRemoval', () => {
     expect(syncDeviceRemoval(entry({ status: 'unreadable' }), incomplete)).toBe(
       'allowed'
     )
-    // Not read by that pull: it may since be a current snapshot.
+
     expect(
       syncDeviceRemoval(
         entry({ status: 'pre-reset', seenAt: NOW - 1 }),

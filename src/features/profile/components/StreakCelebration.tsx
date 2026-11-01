@@ -9,24 +9,10 @@ import type StreakCelebrationOverlayComponent from '@/features/profile/component
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { usePreferences } from '@/stores/preferences'
 
-/** Lets Add Time close before anything plays. */
 const AFTER_SAVE_MS = 900
 
-/**
- * The overlay closes itself after about 4 s; if it somehow doesn't, the
- * takeover arbiter lets the screen go after this long.
- */
 const MAX_ON_SCREEN_MS = 15_000
 
-/**
- * Watches the Service Streak and marks it growing, once per device. A milestone
- * the User's own action just reached (Add Time, the timer, the checkbox) plays
- * the full celebration when the takeover arbiter gives it a turn (ADR 0021).
- * Any other growth, a milestone from elsewhere (Siri, the Watch, another
- * device), or one whose moment passed while it waited, flares the Home chip
- * instead. With streaks hidden, growth is only marked seen, so turning them
- * back on doesn't celebrate the past. HomeTabStack mounts the single instance.
- */
 export default function StreakCelebration() {
   const { kind, count, latest } = useServiceStreak()
   const celebrating = useStreakCelebration((state) => state.celebrating)
@@ -78,8 +64,6 @@ export default function StreakCelebration() {
     if (!showStreaks) useStreakCelebration.setState({ celebrating: null })
   }, [showStreaks])
 
-  // Its moment passed while it waited (or another celebration of the same
-  // action went first): the chip flares instead.
   useEffect(() => {
     if (turn.status !== 'expired') return
     useStreakCelebration.setState({ celebrating: null, grewAt: Date.now() })
@@ -96,7 +80,6 @@ export default function StreakCelebration() {
   )
 }
 
-/** The celebration's module (and Skia) loads the first time it plays. */
 function StreakCelebrationOverlay(
   props: ComponentProps<typeof StreakCelebrationOverlayComponent>
 ) {

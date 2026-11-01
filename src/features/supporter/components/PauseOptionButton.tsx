@@ -12,7 +12,6 @@ interface Props {
   disabled?: boolean
 }
 
-/** One pause choice in the Manage Subscription sheet. */
 const PauseOptionButton = ({
   title,
   detail,

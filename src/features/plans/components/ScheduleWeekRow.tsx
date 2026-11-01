@@ -20,10 +20,9 @@ import {
   type ScheduleWeekRow as WeekRow,
 } from '@/features/plans/lib/scheduleRows'
 
-/** Room above each square, under the week's rule. */
 export const WEEK_ROW_GUTTER = 10
 export const WEEK_ROW_HEIGHT = WEEK_ROW_GUTTER + 40 + 10
-/** How far days outside the focused month fade back. */
+
 const DIMMED_OPACITY = 0.5
 const DIM_DURATION = 220
 const SELECTED_RING = 2
@@ -32,7 +31,7 @@ const NO_DAY_PLANS: DayPlan[] = []
 
 type Props = {
   row: WeekRow
-  /** The focused month's {@link monthOrdinal}. */
+
   focusedOrdinal: SharedValue<number>
   selectedKey?: string
   index: ScheduleDayIndex
@@ -41,12 +40,6 @@ type Props = {
   onPressDay: (date: Date) => void
 }
 
-/**
- * One week of one month in the Schedule's calendar. A rule runs over the week's
- * own days (the month's first week sits under its name's rule instead), and
- * weeks outside the focused month fade back so the month being read stands
- * out.
- */
 export default function ScheduleWeekRow({
   row,
   focusedOrdinal,
@@ -60,8 +53,6 @@ export default function ScheduleWeekRow({
     <View style={{ flexDirection: 'row', height: WEEK_ROW_HEIGHT }}>
       {row.days.map((day, column) =>
         day ? (
-          // By column, not by date: the list recycles week rows, and a day keyed
-          // by date would rebuild its square and native menu each time.
           <DayCell
             key={column}
             day={day}
@@ -77,19 +68,12 @@ export default function ScheduleWeekRow({
           <View key={`empty-${column}`} style={{ flex: 1 }} />
         )
       )}
-      {/* Keyed by week, so a recycled row shows its new week's dimming at once
-      instead of fading from the last one's. */}
+      {}
       <FocusVeil key={row.key} row={row} focusedOrdinal={focusedOrdinal} />
     </View>
   )
 }
 
-/**
- * Fades the week's days back by veiling them in the background color, which
- * reads the same as fading the days themselves. It runs on the UI thread, so
- * crossing into another month re-renders no week. The rules above the days stay
- * sharp.
- */
 function FocusVeil({
   row,
   focusedOrdinal,
@@ -99,7 +83,7 @@ function FocusVeil({
 }) {
   const theme = useTheme()
   const month = monthOrdinal(row.month)
-  // Only the week's own days: the empty columns of a split week stay bare.
+
   const first = row.days.findIndex((day) => day !== null)
   const last = row.days.findLastIndex((day) => day !== null)
   const veil = useAnimatedStyle(() => ({
@@ -138,7 +122,7 @@ function DayCell({
   onPressDay,
 }: {
   day: ScheduleDay
-  /** Draws the week's rule over this day. */
+
   rule: boolean
   selected: boolean
   reports: TimeEntry[]

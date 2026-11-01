@@ -6,22 +6,15 @@ import {
   type PetSpecies,
 } from '@/types/pet'
 
-/** How the picker opened: adopting a first pet, or Change Pet. */
 export type PetPickerMode = 'adopt' | 'change'
 
-/** What's picked in the picker. */
 export type PetChoice = { species: PetSpecies; coat: string }
 
-/** The store action the picker's primary button runs. */
 export type PetPickerSave =
   | { kind: 'adopt'; species: PetSpecies; coat: string; name?: string }
   | { kind: 'change'; species: PetSpecies; coat: string }
   | { kind: 'none' }
 
-/**
- * The picker's first choice: the animal it was opened with (`species`, from the
- * Home offer), else the pet as it is, or a lion cub.
- */
 export function initialPetChoice(
   current: Pick<PetRecord, 'species' | 'coat'> | null,
   species?: PetSpecies
@@ -35,7 +28,6 @@ export function initialPetChoice(
   return { species: 'lion', coat: defaultCoatFor('lion') }
 }
 
-/** Picking a species: the pet's own coat when it's its species, else default. */
 export function choiceForSpecies(
   species: PetSpecies,
   current: Pick<PetRecord, 'species' | 'coat'> | null
@@ -45,11 +37,6 @@ export function choiceForSpecies(
   return { species, coat: defaultCoatFor(species) }
 }
 
-/**
- * What saving does. With no companion yet it adopts (whatever the mode); with
- * one it changes the appearance, or nothing when it's unchanged. The name only
- * applies to an adoption.
- */
 export function petPickerSave(
   choice: PetChoice & { name?: string },
   current: Pick<PetRecord, 'species' | 'coat'> | null

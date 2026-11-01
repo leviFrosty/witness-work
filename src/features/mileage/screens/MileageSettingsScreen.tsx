@@ -58,7 +58,6 @@ function SectionTitle({ children }: { children: string }) {
   )
 }
 
-/** Cars, fuels, units, and delete-all for Mileage Tracking. */
 export default function MileageSettingsScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -111,8 +110,6 @@ export default function MileageSettingsScreen() {
   const economyLabel = (unit: FuelEconomyUnit) =>
     i18n.t(`mileage.unitNames.${unit}`)
 
-  // Leaving each Shared Car syncs it first, so it can take a moment: the toast
-  // says it's going, then how it went.
   const deleteAll = async () => {
     const key = 'mileage-delete-all'
     if (hasSharedCars) toast.info(i18n.t('mileage.deletingAll'), { key })
@@ -127,7 +124,7 @@ export default function MileageSettingsScreen() {
       toast.success(i18n.t('success'), { key, message: i18n.t('deleted') })
       return
     }
-    // Named when it's one car that has a name.
+
     const [car, ...more] = notLeft.map(({ name }) => name)
     toast.error(
       car && more.length === 0
@@ -215,8 +212,7 @@ export default function MileageSettingsScreen() {
         <View style={{ gap: 8 }}>
           <SectionTitle>{i18n.t('mileage.units.title')}</SectionTitle>
           <Section>
-            {/* The units' names are the point, so they take the room they
-                need, e.g. German «Automatisch (Meilen)». */}
+            {}
             <InputRowSelect
               label={i18n.t('mileage.distanceUnit')}
               controlWidth='auto'

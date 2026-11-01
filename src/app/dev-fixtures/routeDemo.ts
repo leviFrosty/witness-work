@@ -3,15 +3,6 @@ import type { Contact } from '@/types/contact'
 import type { DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 
-/**
- * Dev-only fixture: one tidy service day in a single San Francisco
- * neighborhood, for showing the route builder. A morning meeting for field
- * service with a place, five Follow-ups through the late morning and early
- * afternoon, and an Anytime cart Plan. Names and places are made up.
- *
- * Pure, with stable ids per day: running it again for the same day changes
- * nothing.
- */
 export const ROUTE_DEMO_ID_PREFIX = 'dev-route-demo-'
 
 type Call = {

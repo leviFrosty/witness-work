@@ -4,14 +4,8 @@ import i18n from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 
-/** Where a share of the app started. Bounded, safe as an analytics value. */
 export type ShareAppSource = 'settings'
 
-/**
- * Opens the system share sheet with links to WitnessWork on both stores, so one
- * message works for a friend on either platform. Android's share sheet doesn't
- * say whether anything was sent, so there every completion reads as `shared`.
- */
 export const shareApp = async (source: ShareAppSource) => {
   analytics.capture('app_share_tapped', { source })
   try {

@@ -8,7 +8,6 @@ import { visitStats } from '@/features/progress/lib/periodCardStats'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** This month's Visits where someone was home, and the new Contacts. */
 export default function VisitsCard({ month, year, size }: ProgressCardProps) {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
@@ -25,14 +24,10 @@ export default function VisitsCard({ month, year, size }: ProgressCardProps) {
       title={i18n.t('progressCards.visits.title')}
       value={formatNumber(talked)}
       tone={talked ? 'default' : 'muted'}
-      caption={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.visits.notAtHome', { count: notAtHome })
-      }
-      detail={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.visits.newContacts', { count: newContacts })
-      }
+      caption={i18n.t('progressCards.visits.notAtHome', { count: notAtHome })}
+      detail={i18n.t('progressCards.visits.newContacts', {
+        count: newContacts,
+      })}
       info={i18n.t('progressCards.visits.info')}
       size={size}
     />

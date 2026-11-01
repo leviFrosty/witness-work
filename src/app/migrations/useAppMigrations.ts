@@ -17,24 +17,15 @@ export function useAppMigrations() {
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {
-      // Deferred to idle so the migration doesn't jank the launch animation
-      // (InteractionManager is deprecated as of RN 0.86).
       requestIdleCallback(async () => {
         try {
-          // Legacy data was copied: reload so hydrated stores re-read MMKV.
-          // Fresh installs skip this; reloading mid-launch strands dev clients
-          // on the splash screen ("app context has been lost").
           if (await migrateFromAsyncStorage()) await reloadApp()
-        } catch {
-          // Falls back to async storage
-        }
-        setHasMigrated(true) // Allows app to continue regardless
+        } catch {}
+        setHasMigrated(true)
       })
     }
   }, [])
 
-  // Keep separate, ordered effects: LDC needs the migrated categories, and
-  // every store migration must precede widget/iCloud subscription installation.
   useEffect(() => {
     if (hasMigrated) runCustomFieldsMigration()
   }, [hasMigrated])

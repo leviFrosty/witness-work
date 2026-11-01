@@ -32,7 +32,6 @@ const ReminderFrequency = () => {
   return (
     <InputRowContainer
       label={i18n.t('daysSinceLastBackup')}
-      // At least 80 wide, and wider when enlarged text needs it ("1…").
       controlStyle={{ width: 'auto', minWidth: 80, flexShrink: 0 }}
       description={i18n.t('daysSinceLastBackup_description')}
       lastInSection

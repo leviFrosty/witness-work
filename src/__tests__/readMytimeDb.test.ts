@@ -1,8 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 
-// The reader module imports native-only packages at the top level. The pure
-// core (`readMytimeTables`) never touches them; `readMytimeDb` only gets as far
-// as the file-kind check, so the file system stubs just serve the file's head.
 const native = vi.hoisted(() => ({
   readAsStringAsync: vi.fn<() => Promise<string>>(),
   openDatabaseAsync: vi.fn(),
@@ -25,12 +22,6 @@ import {
   type MytimeTableSource,
 } from '@/features/mytime-import/lib/readMytimeDb'
 
-/**
- * A fake table source backed by plain objects. `tables` maps a table name to
- * its rows; a row's keys are its available columns, so omitting a key from
- * every row models a missing column. A table absent from the map models a
- * missing table.
- */
 const fakeSource = (
   tables: Record<string, Array<Record<string, unknown>>>
 ): MytimeTableSource => ({
@@ -52,7 +43,6 @@ const fakeSource = (
   },
 })
 
-// The minimum that passes validation: both core tables present.
 const withCoreTables = (
   extra: Record<string, Array<Record<string, unknown>>> = {}
 ): Record<string, Array<Record<string, unknown>>> => ({
@@ -139,7 +129,6 @@ describe('readMytimeTables — reading', () => {
   })
 
   it('degrades a missing column to undefined rather than failing', async () => {
-    // A schema-drifted backup whose ZCALL lacks the coordinate columns.
     const tables = await readMytimeTables(
       fakeSource(
         withCoreTables({
@@ -155,7 +144,6 @@ describe('readMytimeTables — reading', () => {
     const tables = await readMytimeTables(
       fakeSource(
         withCoreTables({
-          // No Z_PK column at all — every id would be `mytime-time-undefined`.
           ZTIMEENTRY: [{ ZMINUTES: 60 }],
         })
       )
@@ -216,7 +204,7 @@ describe('classifyFileHead', () => {
     expect(classifyFileHead(binary(0x50, 0x4b, 0x03, 0x04, 0x14, 0x00))).toBe(
       'zip'
     )
-    // An empty archive is only its end record.
+
     expect(classifyFileHead(binary(0x50, 0x4b, 0x05, 0x06, 0x00))).toBe('zip')
     expect(classifyFileHead(bytes('%PDF-1.7\n%\xe2\xe3'))).toBe('pdf')
     expect(classifyFileHead(bytes('bplist00\xd4\x01'))).toBe('bplist')
@@ -234,7 +222,6 @@ describe('classifyFileHead', () => {
   })
 
   it('calls other binary data unknown', () => {
-    // A PNG's signature.
     expect(
       classifyFileHead(binary(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
     ).toBe('unknown')

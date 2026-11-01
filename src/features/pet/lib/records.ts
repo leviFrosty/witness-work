@@ -13,33 +13,17 @@ import {
 } from '@/types/pet'
 import type { PublisherCapabilities } from '@/lib/publisherCapabilities'
 
-/**
- * Synced pet records keep values this build may not know (a coat, room option
- * or gift from a newer version) so they round-trip. These read them for
- * display, falling back to defaults.
- */
-
 const CHECKBOX_DEFAULT_ROOM: PetRoomSettings = {
   ...DEFAULT_ROOM,
   sign: CHECKBOX_DEFAULT_SIGN,
 }
 
-/**
- * The room a companion starts with. A Kingdom Publisher's sign shows shared
- * months (checkbox entry mode). The same object each time, so callers can
- * compare it.
- */
 export function defaultRoomFor(
   entryMode: PublisherCapabilities['entryMode']
 ): PetRoomSettings {
   return entryMode === 'checkbox' ? CHECKBOX_DEFAULT_ROOM : DEFAULT_ROOM
 }
 
-/**
- * The pet with its coat checked against its species, unknown gifts dropped, and
- * missing wake or keepsake lists (a hand-edited or damaged record) read as
- * empty. The same object when nothing needed fixing.
- */
 export function readPet(pet: PetRecord): PetRecord {
   const coat = resolveCoat(pet.species, pet.coat)
   const storedWakes: unknown = pet.wakes
@@ -75,7 +59,6 @@ const pick = <T extends string>(
     ? (value as T)
     : fallback
 
-/** The room's choices, each unknown one replaced by its default. */
 export function readRoom(
   room: PetRoomRecord | null,
   defaults: PetRoomSettings

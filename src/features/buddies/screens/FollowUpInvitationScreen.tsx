@@ -15,12 +15,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Follow-Up Invitation'>
 
-/**
- * A buddy's Follow-up invitation, read-only, in a sheet: what it is and when,
- * then who organized it and the User's answer. Going or Can't Make It can
- * change while it's open. Leaves once the invitation is cancelled, wiped (a day
- * after the visit), or its buddy is gone.
- */
 export default function FollowUpInvitationScreen({ route, navigation }: Props) {
   const { from, shareId } = route.params
   const { now } = useNow()

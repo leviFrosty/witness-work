@@ -1,18 +1,3 @@
-/**
- * Hats: small pixel hats the pet can wear, drawn with the same shape rasterizer
- * as the pets so they get the same shading and outlines. The first twelve are
- * here; the secret ones are in `hatsWorld.ts` (folk hats from around the world)
- * and `hatsWhimsy.ts` (the playful ones).
- *
- * A hat is drawn in its own {@link HAT_W} × {@link HAT_H} canvas, centred on x
- * {@link HAT_CX}; its lowest brim row is {@link HAT_BRIM_ROW}. The scene puts
- * that row on the species' {@link HAT_ANCHOR_Y} row of the sprite (moved down
- * with the head's bob), centred on the sprite, so a hat can rise above the
- * sprite's 32 × 32 box. The first twelve are drawn {@link HAT_LIFT} rows lower
- * in a {@link HAT_SHORT_H}-row canvas and moved up into it, so their numbers
- * stay as they were drawn. A pet lying down (rolling over, or one that died)
- * has no hat.
- */
 import {
   blit,
   createBuffer,
@@ -52,11 +37,6 @@ export {
   HAT_W,
 } from './hatShapes'
 
-/**
- * The sprite row each species' hat brim sits on with no bob: just below the top
- * of the head, between the ears. The lamb's sits over its tuft of wool, so the
- * hat doesn't float on top of it.
- */
 export const HAT_ANCHOR_Y: Readonly<Record<PetSpeciesId, number>> = {
   lion: 5,
   dog: 4,
@@ -65,12 +45,6 @@ export const HAT_ANCHOR_Y: Readonly<Record<PetSpeciesId, number>> = {
   lamb: 9,
 }
 
-/**
- * Species whose ears stand up through the hat, as through holes in it: the
- * sprite's pixels left of the first column and right of the second, above the
- * brim, are drawn again over the hat. Otherwise only the ear tips poke out
- * beside the crown.
- */
 export const HAT_EARS_THROUGH: Readonly<
   Partial<Record<PetSpeciesId, readonly [left: number, right: number]>>
 > = {
@@ -145,12 +119,10 @@ const P = rgbPalette({
   tophatBand: '#a8323a',
 })
 
-/** A flower of the flower crown: five petals round a centre pixel. */
 function flower(x: number, y: number, petal: Rgb): Shape {
   return { t: 'e', x, y, rx: 1.7, ry: 1.6, c: petal, g: 'crown' }
 }
 
-/** The first twelve hats, in {@link HAT_SHORT_H}-row coordinates. */
 const SHORT_SPECS = {
   bow: {
     shapes: [
@@ -449,10 +421,6 @@ const SHORT_SPECS = {
 
 type ShortHatId = keyof typeof SHORT_SPECS
 
-/**
- * Every hat but `none`. Secret hats are drawn in the full {@link HAT_W} ×
- * {@link HAT_H} canvas with the brim on {@link HAT_BRIM_ROW}.
- */
 const TALL_SPECS: Readonly<
   Record<Exclude<HatId, 'none' | ShortHatId>, ShapeSpec>
 > = { ...WORLD_HAT_SPECS, ...WHIMSY_HAT_SPECS }
@@ -460,7 +428,6 @@ const TALL_SPECS: Readonly<
 const isShortHat = (hat: string): hat is ShortHatId =>
   Object.hasOwn(SHORT_SPECS, hat)
 
-/** Rasterizes a hat into the full canvas. */
 function drawHat(hat: Exclude<HatId, 'none'>): PixelBuffer {
   if (!isShortHat(hat))
     return rasterize(TALL_SPECS[hat as keyof typeof TALL_SPECS], HAT_W, HAT_H)
@@ -471,11 +438,6 @@ function drawHat(hat: Exclude<HatId, 'none'>): PixelBuffer {
 
 const cache = createLru<PixelBuffer>(64)
 
-/**
- * The hat's {@link HAT_W} × {@link HAT_H} picture, mirrored and greyed as asked;
- * memoized, so callers must not change it. Null for `none` or an id this build
- * doesn't know.
- */
 export function hatSprite(
   hat: string,
   opts: { readonly flip?: boolean; readonly grey?: GreyMode } = {}
@@ -489,10 +451,6 @@ export function hatSprite(
   })
 }
 
-/**
- * Where the hat canvas' top-left goes for a pet sprite at `origin` with its
- * head bobbed down `bob` pixels.
- */
 export function hatOrigin(
   species: PetSpeciesId,
   origin: readonly [number, number],

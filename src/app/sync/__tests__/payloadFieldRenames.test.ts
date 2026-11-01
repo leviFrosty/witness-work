@@ -92,8 +92,6 @@ describe('normalizeLegacyPayloadFieldNames', () => {
   })
 
   it('preserves the canonical leaf value `publisher` when carried under the legacy publisher field', () => {
-    // The field name renames, but the *value* `'publisher'` (= Regular
-    // Publisher role) stays as-is.
     const d = makePayload({ publisher: 'publisher' }, {})
 
     normalizeLegacyPayloadFieldNames(d)
@@ -117,8 +115,6 @@ describe('normalizeLegacyPayloadFieldNames', () => {
   })
 
   it('renames pioneerStartDate → tenureStartDate on values and updatedAt (legacy peer payload)', () => {
-    // Glossary: Tenure Start Date (canonical) supersedes pioneerStartDate
-    // (legacy). Older peers that pre-date wave-4 still write the legacy key.
     const d = makePayload(
       {
         role: 'regularPioneer',
@@ -221,8 +217,6 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
 
     normalizeLegacyPayloadFieldNames(d)
 
-    // Profile slice was created and populated.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = (d as any).profileStore
     expect(profile).toBeDefined()
     expect(profile.values.name).toBe('Bob')
@@ -233,13 +227,11 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
     expect(profile.updatedAt.name).toBe(1700000001000)
     expect(profile.updatedAt.avatar).toBe(1700000002000)
 
-    // Legacy fields dropped from preferencesStore.
     expect(d.preferencesStore.values).not.toHaveProperty('name')
     expect(d.preferencesStore.values).not.toHaveProperty('avatar')
     expect(d.preferencesStore.updatedAt).not.toHaveProperty('name')
     expect(d.preferencesStore.updatedAt).not.toHaveProperty('avatar')
 
-    // Non-profile prefs survive untouched.
     expect(d.preferencesStore.values.role).toBe('regularPioneer')
     expect(d.preferencesStore.updatedAt.role).toBe(1700000000000)
   })
@@ -258,7 +250,6 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
 
     normalizeLegacyPayloadFieldNames(d)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile = (d as any).profileStore
     expect(profile.values.customAvatarBackground).toBe('#AABBCC')
     expect(profile.values.hasCompletedProfileSetup).toBe(true)
@@ -273,8 +264,6 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
   })
 
   it('prefers an existing profileStore slice when both schemas are present', () => {
-    // Defensive: a hybrid payload (post-wave-3 device that somehow re-included
-    // legacy fields) routes nothing — the canonical slice wins.
     const d = {
       version: 1,
       preferencesStore: {
@@ -298,7 +287,7 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
   it('leaves a payload without profile fields untouched (no synthesized profileStore)', () => {
     const d = makePayload({ role: 'publisher' }, { role: 1 })
     normalizeLegacyPayloadFieldNames(d)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     expect((d as any).profileStore).toBeUndefined()
   })
 
@@ -314,15 +303,9 @@ describe('normalizeLegacyPayloadFieldNames — profile-field routing (wave-3)', 
   })
 })
 
-// Kept in sync with `src/constants/categories.ts`'s `LDC_BUILTIN_CATEGORY_ID`.
-// `payloadFieldRenames.ts` inlines it for the no-imports rule; the test
-// inlines it for the same reason.
 const LDC_BUILTIN = 'ldc-builtin-3f9c4a1d'
 
-const makeReportsPayload = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  reports: any[]
-) => ({
+const makeReportsPayload = (reports: any[]) => ({
   version: 1,
   preferencesStore: { values: {}, updatedAt: {} },
   serviceReportStore: {
@@ -349,8 +332,6 @@ describe('normalizeLegacyPayloadFieldNames — TimeEntry.ldc collapse', () => {
   })
 
   it('keeps an existing non-LDC categoryId; drops the stray ldc flag', () => {
-    // Data corruption shape: ldc: true coexisting with a real user Category.
-    // Explicit Category wins, same precedence as `migrateLdcToCategory`.
     const d = makeReportsPayload([
       {
         id: 'r1',

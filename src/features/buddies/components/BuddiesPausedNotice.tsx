@@ -16,10 +16,6 @@ import {
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * A slim line while sharing is paused for every buddy, so a pause isn't
- * forgotten, with a way to resume.
- */
 export default function BuddiesPausedNotice() {
   const theme = useTheme()
   const pausedUntil = useBuddies((state) => state.sharing.pausedUntil)

@@ -16,11 +16,6 @@ import {
   type RewardRun,
 } from '@/stores/rewardStack'
 
-/**
- * The wallet on a save's toast: dim at what it held until the reward stack
- * (`startReward`) drops its total in, then counting up to the new total with a
- * pop on each tick. Once the run ends, or is skipped, it shows the new total.
- */
 export default function RewardTally({
   runId,
   count,
@@ -33,7 +28,7 @@ export default function RewardTally({
   const theme = useTheme()
   const ref = useRef<View>(null)
   const run = useRewardStack((s) => (s.run?.id === runId ? s.run : null))
-  // A combo's later saves end it on their total.
+
   const [latest, setLatest] = useState(count.to)
   useEffect(() => {
     if (run) setLatest(run.count.to)

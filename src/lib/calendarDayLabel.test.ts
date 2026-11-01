@@ -7,8 +7,7 @@ const { i18n } = vi.hoisted(() => ({
 vi.mock('@/lib/locales', async () => {
   const { I18n } = await import('i18n-js')
   const { default: enUS } = await import('@/locales/en-US.json')
-  // A made-up Language that puts the value first, to show each part is a
-  // template rather than English pasted together.
+
   i18n.current = new I18n({
     'en-us': enUS,
     xx: {

@@ -20,7 +20,6 @@ import {
 let last: unknown = null
 let locked: LockedBackupFile | null = null
 
-/** Starts `work`; its result (or `{ error }`) lands in `backupFile.last`. */
 const tracked = (work: () => Promise<unknown>) => {
   last = null
   void work()
@@ -56,13 +55,6 @@ async function writeTestFile(kind: TestFile): Promise<string> {
   return uri
 }
 
-/**
- * Locked backup files for the verify harness: `bench()` times Argon2id on this
- * device; `lock('account')` or `lock('password', '…')` locks the stores as they
- * are, `unlock()` opens that file again, and `save()` or `share()` hands a file
- * to the restore; each puts its result in `last` a moment later. Results are
- * timings, headers and store names, never records.
- */
 export const backupFileHarness = {
   bench: (kdf: Partial<PasswordKdf> = {}) =>
     tracked(async () => {
@@ -101,14 +93,10 @@ export const backupFileHarness = {
         stores: storeNames(opened.file),
       }
     }),
-  /**
-   * Writes a file for the restore to pick: `locked` (the last `lock()`),
-   * `plain` (an unlocked backup, as builds before locking wrote) or
-   * `otherAccount` (locked to a random account key, not this device's).
-   */
+
   save: (kind: TestFile = 'locked') =>
     tracked(async () => ({ uri: await writeTestFile(kind) })),
-  /** `save(kind)`, then the share sheet, to save the file to Files. */
+
   share: (kind: TestFile = 'locked') =>
     tracked(async () => {
       const uri = await writeTestFile(kind)

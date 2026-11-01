@@ -8,16 +8,12 @@ import i18n from '@/lib/locales'
 import { SelectionTextButton } from '@/features/contacts/components/ListSelection'
 import type { ListSelection } from '@/features/contacts/hooks/useListSelection'
 
-/**
- * Title card for Dismissed Contacts, laid out like the Contacts list's: large
- * title with its help behind an info button, and the Select mode controls.
- */
 export default function DismissedContactsHeader({
   selection,
   canSelect,
 }: {
   selection: ListSelection
-  /** False when there's nothing to select. */
+
   canSelect: boolean
 }) {
   const theme = useTheme()
@@ -45,8 +41,7 @@ export default function DismissedContactsHeader({
             numberOfLines={1}
           >
             {selection.selecting
-              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('selectedCount', { count: selection.ids.length })
+              ? i18n.t('selectedCount', { count: selection.ids.length })
               : title}
           </Text>
           {!selection.selecting && (

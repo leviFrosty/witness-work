@@ -14,7 +14,7 @@ describe('planTargetMonth', () => {
       year: 2026,
       month: 9,
     })
-    // Oct 25 → 7 days left, counting today.
+
     expect(planTargetMonth(new Date(2026, 9, 25))).toEqual({
       year: 2026,
       month: 9,
@@ -55,7 +55,6 @@ describe('orderedWeekdays', () => {
 
 describe('monthWeeks', () => {
   it('pads the first and last weeks to seven cells', () => {
-    // October 2026 starts on a Thursday.
     const weeks = monthWeeks({ year: 2026, month: 9 }, 0)
     expect(weeks.every((week) => week.length === 7)).toBe(true)
     expect(weeks[0].slice(0, 4)).toEqual([null, null, null, null])

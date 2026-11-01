@@ -190,7 +190,7 @@ describe('urgency, badges and due', () => {
 
   it("keeps an earlier day's follow-up off today just after midnight", () => {
     const afterMidnight = at('2026-10-21T00:30')
-    // Last night's, not missed yet: its weekday, not "Today".
+
     const lastNight = index({
       nextFollowUpMs: new Map([['late', at('2026-10-20T23:30')]]),
     })

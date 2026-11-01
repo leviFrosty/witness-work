@@ -72,8 +72,6 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
 
     expect(migrated).not.toHaveProperty('excludedWeekdays')
     expect(migrated).not.toHaveProperty('meetingWeekdays')
-    // Defaults are filled at hydration time by combine(), so absence here is
-    // fine — the migration just shouldn't *introduce* the legacy fields.
   })
 
   it('is idempotent — re-running on an already-v1 state is a no-op', () => {
@@ -88,8 +86,6 @@ describe('preferences persist migrate v0 → v1 (excluded/meeting weekdays → o
   })
 
   it('does not overwrite an existing offDays value if both old and new exist (new wins)', () => {
-    // Defensive: if a downgrade-then-upgrade somehow leaves both keys present,
-    // the migrated/new name should win. Old gets dropped.
     const mixedState = {
       excludedWeekdays: [1, 2],
       offDays: [4, 5],
@@ -120,8 +116,6 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
   })
 
   it('preserves the canonical leaf enum value `publisher` when stored under the publisher field', () => {
-    // The field name renames, but the *value* `'publisher'` (= Regular
-    // Publisher role) is canonical and unchanged.
     const v1State = {
       publisher: 'publisher',
     }
@@ -160,8 +154,6 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
   })
 
   it('does not overwrite an existing role value if both publisher and role exist (new wins)', () => {
-    // Defensive: if a downgrade-then-upgrade leaves both keys present, the
-    // new field wins and the legacy key is dropped.
     const mixedState = {
       publisher: 'publisher',
       role: 'specialPioneer',
@@ -180,7 +172,6 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
   })
 
   it('chains cleanly through v0 → v2 when called with version 0', () => {
-    // A v0 blob being read on the v2 schema should get both renames applied.
     const v0State = {
       excludedWeekdays: [0, 6],
       meetingWeekdays: [3],
@@ -201,17 +192,10 @@ describe('preferences persist migrate v1 → v2 (publisher → role)', () => {
     const migrated = migratePreferencesPersistedState({}, 1)
 
     expect(migrated).not.toHaveProperty('publisher')
-    // The `role` default is filled at hydration time by combine(), so absence
-    // here is fine — the migration just shouldn't *introduce* the legacy field.
   })
 })
 
 describe('preferences persist migrate v2 → v3 (Profile extraction marker)', () => {
-  // The v2 → v3 step is intentionally a no-op inside the persist `migrate`
-  // callback — the actual split into the new Profile store runs in a boot
-  // runner (`src/app/App.tsx`) so the legacy fields stay readable until that
-  // runner has copied them. See the doc comment on
-  // `migratePreferencesPersistedState`.
   it('passes the profile-shaped fields through unchanged so the boot runner can read them', () => {
     const v2State = {
       role: 'regularPioneer',
@@ -258,7 +242,7 @@ describe('preferences persist migrate v2 → v3 (Profile extraction marker)', ()
     expect(migrated.meetingDays).toEqual([3])
     expect(migrated.role).toBe('regularPioneer')
     expect(migrated).not.toHaveProperty('publisher')
-    // Profile fields survive — the boot runner is responsible for moving them.
+
     expect(migrated.name).toBe('Alice')
     expect(migrated.avatar).toEqual({ type: 'image', value: 'avatar://x' })
   })
@@ -303,9 +287,6 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
   })
 
   it('drops a stale start date when the current role has no Tenure Type (publisher)', () => {
-    // Data inconsistency case: user set a pioneer date then switched to
-    // regular publisher without clearing it. The new shape forbids holding
-    // a tenure date for a role that doesn't track one.
     const v3State = {
       role: 'publisher',
       pioneerStartDate: '2020-01-01T00:00:00.000Z',
@@ -418,9 +399,7 @@ describe('preferences persist migrate v3 → v4 (pioneerStartDate → tenureStar
     const v3State = { role: 'regularPioneer' }
     const migrated = migratePreferencesPersistedState(v3State, 3)
     expect(migrated).not.toHaveProperty('pioneerStartDate')
-    // The field default is filled at hydration time by combine(); the
-    // migration doesn't need to introduce the new key when no legacy value
-    // exists.
+
     expect(migrated).not.toHaveProperty('tenureStartDate')
   })
 })
@@ -435,8 +414,7 @@ describe('preferences persist migrate v4 → v5 (startOfWeek 0 → Auto)', () =>
     const migrated = migratePreferencesPersistedState(v4State, 4)
 
     expect(migrated).not.toHaveProperty('startOfWeek')
-    // The timestamp is dropped too so iCloud LWW lets an explicit value from
-    // another device win.
+
     expect(migrated.preferenceUpdatedAt).not.toHaveProperty('startOfWeek')
     expect(migrated.preferenceUpdatedAt.role).toBe(1700000001000)
   })
@@ -771,7 +749,6 @@ describe('preferences persist migrate v10 → v11 (unchosen Recent Visit sort �
     }) as Record<string, unknown>
     const unmigrated = { contactSort: 'recentConversation' }
 
-    // Both directions of the merge settle on Suggested.
     expect(
       mergePreferences(
         { contactSort: migrated.contactSort },
@@ -821,7 +798,7 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
       thisWeek: true,
       quickActions: true,
     })
-    // Nobody chose it, so the stamp stays and a real choice still wins.
+
     expect(migrated.preferenceUpdatedAt).toEqual({
       homeScreenElements: 1700000000000,
     })
@@ -851,7 +828,6 @@ describe('preferences persist migrate v11 → v12 (Pet Home section starts visib
 
 describe('preferences persist migrate v12 → v13 (This Week starts visible)', () => {
   it('adds This Week to a visibility map saved before it existed', () => {
-    // An April 2026 install: every section it knew about, no `thisWeek`.
     const migrated = migratePreferencesPersistedState(
       {
         homeScreenElements: {
@@ -945,7 +921,7 @@ describe('preferences persist migrate v14 → v15 (Quick Actions starts visible)
       timer: true,
       quickActions: true,
     })
-    // Nobody chose it, so the stamp stays and a real choice still wins.
+
     expect(migrated.preferenceUpdatedAt).toEqual({
       homeScreenElements: 1700000000000,
     })

@@ -14,10 +14,8 @@ import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 
-/** Everything `mergePayload` folds: the stores' synced data. */
 export type LocalMergeState = Omit<MergeResult, 'changed'>
 
-/** This device's synced data, as the merge reads it. */
 export function localMergeState(): LocalMergeState {
   const contactsState = useContacts.getState()
   const conversationsState = useConversations.getState()
@@ -26,13 +24,12 @@ export function localMergeState(): LocalMergeState {
   const preferencesState = usePreferences.getState()
   const profileState = useProfile.getState()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localPrefValues: Record<string, any> = {}
   for (const [key, value] of Object.entries(preferencesState)) {
     if (typeof value === 'function') continue
     localPrefValues[key] = value
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const localProfileValues: Record<string, any> = {}
   for (const [key, value] of Object.entries(profileState)) {
     if (typeof value === 'function') continue
@@ -66,7 +63,6 @@ export function localMergeState(): LocalMergeState {
   }
 }
 
-/** Folds each payload into `local` with the LWW merge. Writes nothing. */
 export function mergePayloadsInto(
   local: LocalMergeState,
   payloads: SyncPayload[]
@@ -82,12 +78,6 @@ export function mergePayloadsInto(
   return { changed, merged: acc }
 }
 
-/**
- * Writes a merge result to the stores. A peer device could have written
- * un-normalized dates, so they're re-anchored first. A Plan another device
- * deleted leaves as a remote mutation: that device already answered any buddy's
- * invitation, and the reminder hook drops its reminder.
- */
 export function applyMergedState(acc: LocalMergeState): void {
   useContacts.getState().set({
     contacts: acc.contacts,
@@ -123,12 +113,10 @@ export function applyMergedState(acc: LocalMergeState): void {
   applyMileageSnapshot(acc)
   applyPetSnapshot(acc)
   usePreferences.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...(acc.preferencesValues as any),
     preferenceUpdatedAt: acc.preferenceUpdatedAt,
   })
   useProfile.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...(acc.profileValues as any),
     profileUpdatedAt: acc.profileUpdatedAt,
   })

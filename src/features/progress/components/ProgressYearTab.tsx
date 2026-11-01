@@ -56,19 +56,18 @@ import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
 
 interface ProgressYearTabProps {
-  /** End year of the service year (Sep 1 of `year - 1` → Aug 31 of `year`). */
   year: number
-  /** Invoked when the user taps "adjust milestones" on the hero card. */
+
   onAdjustMilestones: () => void
-  /** Invoked when the user taps a month row — parent switches to Month tab. */
+
   onMonthPress: (month: number, year: number) => void
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
-  /** The cards are being edited (Edit in the header, or a long press). */
+
   editing: boolean
   onStartEditing: (source: ProgressCardEditStart) => void
   onFinishEditing: () => void
-  /** The Add Cards sheet is open. */
+
   adding: boolean
   onAddingChange: (adding: boolean) => void
   onNavigate: (destination: ProgressCardDestination) => void
@@ -126,11 +125,6 @@ const RowBadge = ({ label }: { label: string }) => {
   )
 }
 
-/**
- * One row per month in the service year: `{MMM} {hours}h {+delta}` over a bar
- * drawn on the year's shared scale. Tap → Month tab for that month; long-press
- * → the month's report preview and actions.
- */
 const MonthRow = ({
   month,
   year,
@@ -145,7 +139,7 @@ const MonthRow = ({
   year: number
   isCurrent: boolean
   isFuture: boolean
-  /** What remaining Plans add to the month after its credit cap. */
+
   plannedMinutes: number
   barScaleMinutes: number
   onPress: () => void
@@ -153,8 +147,7 @@ const MonthRow = ({
 }) => {
   const theme = useTheme()
   const cardStyle = useCardStyle()
-  // At accessibility sizes the numbers move under the month, which then has
-  // the row's width; in a third of it the month and "Hrs" broke mid-word.
+
   const stacked = useAccessibilityTextSize()
   const numericColumn = stacked ? styles.stackedColumn : styles.numericColumn
   const navigation = useNavigation<RootStackNavigation>()
@@ -202,13 +195,9 @@ const MonthRow = ({
   const deltaMinutes = completedMinutes - goalMinutes
   const deltaDisplay = useFormattedMinutes(Math.abs(deltaMinutes))
 
-  // Only show delta when there's a meaningful goal and at least some activity,
-  // or when the month is in the past (so an all-zero past month reads as a
-  // miss). Future months with no activity should stay visually quiet.
   const hasActivity = completedMinutes > 0
   const showDelta = goalHours > 0 && hasActivity
-  // Future months haven't happened yet — surface planned hours instead of a
-  // bare "0h", styled with textAlt so the eye still reads it as upcoming.
+
   const showFuturePlanned = isFuture && !hasActivity && plannedMinutes > 0
 
   const deltaLabel =
@@ -367,9 +356,7 @@ const MonthRow = ({
             {figures}
           </XView>
         )}
-        {/* Every row shares one scale, so the bars compare down the list. The
-          columns above carry the numbers; the key under the header explains
-          the marks. */}
+        {}
         <GoalBar
           loggedMinutes={completedMinutes}
           creditMinutes={adjusted.credit}
@@ -383,13 +370,6 @@ const MonthRow = ({
   )
 }
 
-/**
- * Service-year tab body. Renders the milestone hero card at the top, the User's
- * Year cards under it (see `YearProgressCards`), and then an "ALL MONTHS" list
- * — one compact row per month across the service year. Service years run Sep →
- * Aug (12 months), so month order here is `[8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6,
- * 7]`.
- */
 const ProgressYearTab = ({
   year,
   onAdjustMilestones,
@@ -410,10 +390,9 @@ const ProgressYearTab = ({
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const [dragging, setDragging] = useState(false)
-  // Tapping Progress again heads back to the top.
+
   useTabReselect(() => scrollRef.current?.scrollToPosition(0, 0, true))
 
-  // One pair of status/goal sheets for every row; `target` null = closed.
   const [editing, setEditing] = useState<{
     month: number
     year: number
@@ -423,14 +402,13 @@ const ProgressYearTab = ({
   const currentMonth = now.month()
   const currentYear = now.year()
 
-  // Pairs of (monthIndex, calendarYear) for the service year span.
   const months = useMemo(() => {
     const list: { month: number; year: number }[] = []
-    // Aug(7) → Jan(0) of year
+
     for (let m = 7; m >= 0; m--) {
       list.push({ month: m, year })
     }
-    //  Dec(11) → Sep(8) of year - 1
+
     for (let m = 11; m >= 8; m--) {
       list.push({ month: m, year: year - 1 })
     }
@@ -441,8 +419,7 @@ const ProgressYearTab = ({
     serviceYearFocusMonth(year - 1)
   )
   const showDeltaColumn = monthlyGoalHours > 0
-  // Stacked rows (see `MonthRow`) show their numbers in two halves under the
-  // month, so the headings do too, without one for the month.
+
   const stacked = useAccessibilityTextSize()
   const numericColumn = stacked ? styles.stackedColumn : styles.numericColumn
   const paceData = useServiceYearPace(year - 1)
@@ -456,8 +433,7 @@ const ProgressYearTab = ({
       leadingReorder={{ scrollRef, scroller, scrollEnabled: !dragging }}
       leading={
         <View style={{ gap: 24 }}>
-          {/* Roles without an Annual Goal get a raw service-year total instead
-            of the milestone hero. Their pace and projection are cards. */}
+          {}
           <RestWhileEditing
             editing={editingCards}
             onFinishEditing={onFinishEditing}

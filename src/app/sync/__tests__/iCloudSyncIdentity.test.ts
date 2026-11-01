@@ -4,11 +4,6 @@ vi.mock('@/lib/syncClock', async (importOriginal) => ({
 }))
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Drives `installiCloudSync` against a fake bridge to cover which device and
-// which Apple Account sync speaks for: a different account must stop sync
-// before its container is read or written, and a device restored from another
-// device's backup must stop treating that device's snapshot as its own.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -232,8 +227,7 @@ describe('Apple Account changes', () => {
       outcome: 'unavailable',
     })
     expect(bridge.readFiles).not.toHaveBeenCalled()
-    // Sync was never on, so nothing of the previous account is in iCloud: the
-    // Supporter default keeps applying, against the new account, next time.
+
     expect(usePreferences.getState().iCloudSyncSetByUser).toBe(false)
   })
 
@@ -242,7 +236,6 @@ describe('Apple Account changes', () => {
     const { canSync, resolveInitialEnable, usePreferences } = await load()
     expect(canSync()).toBe(false)
 
-    // Settings: the user chooses to enable again.
     const decision = await resolveInitialEnable()
 
     expect(decision.outcome).toBe('pull')
@@ -265,7 +258,7 @@ describe('a device restored from another device’s backup', () => {
   it('reads the original device’s snapshot and writes its own', async () => {
     const { installiCloudSync, bridge, usePreferences, useContacts } =
       await load()
-    // The phone's preferences, restored onto this iPad.
+
     usePreferences.setState({
       iCloudDeviceId: 'phone',
       iCloudDeviceBinding: 'install-a',

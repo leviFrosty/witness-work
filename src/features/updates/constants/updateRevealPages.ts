@@ -29,7 +29,6 @@ import type { TranslationKey } from '@/lib/locales'
 
 export type RevealColor = keyof Theme['colors']
 
-/** One page of the tour. Its id is also its analytics value. */
 export type RevealPageId =
   | 'navigation'
   | 'map'
@@ -51,25 +50,24 @@ export interface RevealPageSpec {
   color: RevealColor
   titleKey: TranslationKey
   captionKey: TranslationKey
-  /** Only on this platform. */
+
   platform?: 'ios' | 'android'
-  /** Only for roles with an Annual Goal (the Year Pace card's own gate). */
+
   annualGoalOnly?: boolean
-  /** Only where Buddies shows: its flag, on a binary that supports it. */
+
   buddiesOnly?: boolean
-  /** Only on an iPhone that can pair an Apple Watch. */
+
   watchOnly?: boolean
-  /** Only for roles that log hours (`showsTimeEntry`). */
+
   timeEntryOnly?: boolean
-  /** Caption for roles that report with the checkbox instead of hours. */
+
   checkboxCaptionKey?: TranslationKey
-  /** Caption where Buddies doesn't show (Android, or before its rollout). */
+
   noBuddiesCaptionKey?: TranslationKey
-  /** A Siri phrase to call out beneath the caption. */
+
   siriPhraseKey?: TranslationKey
 }
 
-/** The tour, in order. `useRevealPages` drops the ones that don't apply. */
 export const REVEAL_PAGES: RevealPageSpec[] = [
   {
     id: 'navigation',
@@ -164,7 +162,7 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
     siriPhraseKey: 'siriShortcutStartTimer',
     platform: 'ios',
     watchOnly: true,
-    // Every Siri action adds or times hours.
+
     timeEntryOnly: true,
   },
   {
@@ -176,16 +174,15 @@ export const REVEAL_PAGES: RevealPageSpec[] = [
   },
 ]
 
-/** One tile on the "And so much more" page. */
 export interface RevealMoreItem {
   id: string
   icon: AppIcon
   color: RevealColor
   labelKey: TranslationKey
   platform?: 'ios' | 'android'
-  /** Only on tablets. */
+
   tabletOnly?: boolean
-  /** Lowest iOS major version it needs. */
+
   minIos?: number
 }
 
@@ -240,7 +237,7 @@ export const REVEAL_MORE_ITEMS: RevealMoreItem[] = [
     labelKey: 'updateReveal_more_shortcuts',
     platform: 'ios',
     tabletOnly: true,
-    // The iPad menu bar and its shortcuts need iOS 26.
+
     minIos: 26,
   },
   {
@@ -259,11 +256,6 @@ export const REVEAL_MORE_ITEMS: RevealMoreItem[] = [
   },
 ]
 
-/**
- * A feature chip orbiting the tile in the intro. Positions are in the
- * onboarding welcome's stage units, relative to the hub; the list order is the
- * order they burst out, clockwise from the top left.
- */
 export interface RevealChipSpec {
   id: string
   icon: AppIcon
@@ -271,9 +263,9 @@ export interface RevealChipSpec {
   dx: number
   dy: number
   size: number
-  /** 0–1: how far forward it floats — drives parallax and bob. */
+
   depth: number
-  /** Resting tilt, in degrees. */
+
   tilt: number
 }
 

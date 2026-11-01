@@ -6,10 +6,6 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 import { shareInviteLink } from '@/features/buddies/lib/shareInvite'
 
-/**
- * Copy, share, and cancel for one unused invite — shared by its row in the
- * Buddies list and the Buddies Code screen that shows it.
- */
 export default function useInviteLinkActions(inviteId: string | null) {
   const link = () => (inviteId ? buddiesEngine.inviteLinkFor(inviteId) : null)
 

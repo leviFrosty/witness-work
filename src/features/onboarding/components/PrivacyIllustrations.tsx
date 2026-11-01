@@ -23,24 +23,15 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import { withAlpha } from '@/lib/color'
 
-/**
- * Small looping sketches for the onboarding privacy screen. Each one acts out a
- * promise (works offline, stays on the device, shares by link, exports anytime)
- * so the screen can show it instead of explaining it. Purely presentational.
- */
 export interface PrivacyIllustrationProps {
   color: string
-  /** Hold the loop still at a representative frame. */
+
   reduceMotion: boolean
 }
 
 const PHONE_WIDTH = 38
 const PHONE_HEIGHT = 64
 
-/**
- * Drives a 0→1 clock that repeats forever, or sits at `still` when motion is
- * reduced.
- */
 const useLoop = (reduceMotion: boolean, duration: number, still = 1) => {
   const t = useSharedValue(reduceMotion ? still : 0)
 
@@ -112,7 +103,6 @@ const Badge = ({ icon, color }: { icon: AppIcon; color: string }) => {
   )
 }
 
-/** The phone keeps working with no signal: a progress bar fills on repeat. */
 export const OfflineIllustration = ({
   color,
   reduceMotion,
@@ -215,7 +205,6 @@ const Record = ({
   )
 }
 
-/** Contacts, reports, and notes live inside the locked phone. */
 export const OnDeviceIllustration = ({
   color,
   reduceMotion,
@@ -238,7 +227,6 @@ export const OnDeviceIllustration = ({
 
 const SHARE_GAP = 46
 
-/** A contact travels phone to phone inside the link itself. */
 export const ShareLinkIllustration = ({
   color,
   reduceMotion,
@@ -308,7 +296,6 @@ export const ShareLinkIllustration = ({
 
 const EXPORT_GAP = 30
 
-/** A full backup slides out of the phone into a folder the user keeps. */
 export const ExportIllustration = ({
   color,
   reduceMotion,

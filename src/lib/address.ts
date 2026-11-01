@@ -17,15 +17,8 @@ import { addressToString } from '@/lib/addressToString'
 
 export { addressToString }
 
-/** HERE answers in about a second; past this the lookup is stuck. */
 const GEOCODE_TIMEOUT_MS = 10_000
 
-/**
- * The coordinate for `address`, or null when there's nothing to look up or HERE
- * finds no match. Throws an `HttpError` when the lookup itself fails (offline,
- * timed out, cancelled, rate limited, a server error), so each caller decides
- * what to tell the publisher. Only failures that look like bugs are reported.
- */
 export const fetchCoordinateFromAddress = async (
   incrementGeocodeApiCallCount: () => void,
   address?: Address,
@@ -39,9 +32,7 @@ export const fetchCoordinateFromAddress = async (
     const addressString = addressToString(address)
 
     incrementGeocodeApiCallCount()
-    // One retry that honours Retry-After (60 s on a 429), which paces the map
-    // onboarding batch under ww-api's per-IP limit instead of failing every
-    // contact after the 60th.
+
     const { data } = await request<HereGeocodeResponse>({
       url: `${apis.geocode}?q=${encodeURIComponent(addressString)}&limit=1`,
       timeoutMs: GEOCODE_TIMEOUT_MS,
@@ -63,7 +54,6 @@ export const fetchCoordinateFromAddress = async (
       longitude: position.lng,
     }
   } catch (error) {
-    // ww-api passes HERE's 404 through: no match, same as an empty list.
     if (errorBodyCode(error) === 'not_found') return null
     const kind = classifyNetworkError(error)
     if (kind === 'unknown' || kind === 'client') {
@@ -90,8 +80,6 @@ export const navigateTo = (
     }
   }
 
-  // Encoded whole, so a `#` or `&` in the address (an apartment number) stays
-  // in the search instead of cutting it short.
   const query = encodeURIComponent(
     contact.userDraggedCoordinate
       ? coordinateAsString(contact)
@@ -104,7 +92,7 @@ export const navigateTo = (
       title: i18n.t('couldNotOpenMaps'),
       description: i18n.t('couldNotOpenMaps_description'),
     },
-    // Apple Maps can be deleted or restricted; Google Maps' web link still opens.
+
     fallbackUrl:
       base === links.appleMapsBase
         ? `${links.googleMapsBase}${query}`

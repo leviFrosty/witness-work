@@ -59,7 +59,6 @@ describe('Text font', () => {
   })
 
   it('keeps the theme font when a style sets the family to undefined', async () => {
-    // Merged last, an undefined family would drop Inter for the system font.
     expect(await fontFamilyOf({ fontFamily: undefined, color: 'red' })).toBe(
       'Regular'
     )

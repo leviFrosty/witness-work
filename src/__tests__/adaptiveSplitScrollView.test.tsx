@@ -38,7 +38,6 @@ vi.mock('@/components/ui/layout/FoldSplit', () => ({
 
 import AdaptiveSplitScrollView from '@/components/ui/layout/AdaptiveSplitScrollView'
 
-// Wrapper views (the anchors that keep a place across layouts) left out.
 const renderLayout = () =>
   renderToStaticMarkup(
     createElement(AdaptiveSplitScrollView, {

@@ -15,12 +15,9 @@ export const GENDER_COLORS = {
 type Props = {
   gender: NonNullable<Contact['gender']>
   size?: number
-  /**
-   * 0..1 — applied on top of the gender color. Lower values produce a more
-   * subtle hint; full-strength reads as a label.
-   */
+
   opacity?: number
-  /** Override color (e.g. on top of an accent-tinted hero). */
+
   color?: string
 }
 

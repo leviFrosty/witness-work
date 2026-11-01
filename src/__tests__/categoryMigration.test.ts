@@ -2,9 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import moment from 'moment'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
-// expo-crypto pulls in react-native through the expo runtime; stub it before
-// importing the migration module so the test runner doesn't try to parse RN's
-// flow-typed entry point.
+
 vi.mock('expo-crypto', () => ({
   randomUUID: vi.fn(() => 'mock-uuid'),
 }))
@@ -54,7 +52,6 @@ const buildReports = (inputs: ReportInput[]): TimeEntriesByYear => {
   return out
 }
 
-// Predictable uuid generator for stable test assertions.
 const makeUuid = (): (() => string) => {
   let i = 0
   return () => `uuid-${++i}`
@@ -106,9 +103,6 @@ describe('migrateTagsToCategories', () => {
   })
 
   it('resolves isCredit by majority across entries with the same tag', () => {
-    // Two `credit: true` Hospital entries, one `credit: false` Hospital entry.
-    // Majority is `true` — the Category should land as credit-bearing, and
-    // the dissenting entry contributes to `reconciledCreditMismatches`.
     const reports = buildReports([
       { month: 0, year: 2026, tag: 'Hospital', credit: true },
       { month: 1, year: 2026, tag: 'Hospital', credit: true },
@@ -145,9 +139,6 @@ describe('migrateTagsToCategories', () => {
   })
 
   it('reconciles per-entry `credit` boolean to the Category isCredit value', () => {
-    // After migration, the entry that disagreed should be re-stamped so
-    // every entry on a credit-bearing Category reads `credit: true`, and
-    // vice versa — the Category record becomes the single source of truth.
     const reports = buildReports([
       { id: 'a', month: 0, year: 2026, tag: 'Hospital', credit: true },
       { id: 'b', month: 1, year: 2026, tag: 'Hospital', credit: false },
@@ -172,9 +163,6 @@ describe('migrateTagsToCategories', () => {
   })
 
   it('absorbs unused preferences.serviceReportTags entries (object form)', () => {
-    // The user defined "Bethel" as credit in their saved tag list but never
-    // attached a TimeEntry to it. The Category should still be created
-    // with isCredit: true so the user's intent isn't lost.
     const reports = buildReports([])
     const result = migrateTagsToCategories({
       serviceReports: reports,
@@ -220,8 +208,7 @@ describe('migrateTagsToCategories', () => {
     const ldcReport = result.serviceReports[2026][1][0]
     expect(standard.categoryId).toBeUndefined()
     expect(ldcReport.categoryId).toBeUndefined()
-    // `migrateTagsToCategories` leaves the legacy LDC flag alone — the
-    // LDC → builtin Category collapse runs as a separate migration step.
+
     expect((ldcReport as LegacyTimeEntry).ldc).toBe(true)
   })
 

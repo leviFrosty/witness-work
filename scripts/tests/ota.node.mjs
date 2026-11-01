@@ -107,8 +107,6 @@ test('authored module and target inputs are covered by the actual fingerprint co
   const tracked = trackedResult.stdout.trim().split('\n')
   assert.ok(tracked.length > 50, 'Native input inventory must not be empty')
   const uncovered = tracked.filter((file) => {
-    // Wear OS ships separately; generated target icons derive from the
-    // fingerprinted source icon. Fixtures, docs and TS config do not ship native.
     if (
       file.startsWith('targets/wear-os/') ||
       file.startsWith('targets/widgets/Assets.xcassets/') ||
@@ -157,8 +155,7 @@ test('Expo signing validates the selected trust anchor and still refuses a misma
       return { value: oldKey, paths: ['previous-variant'] }
     }
   }
-  // Execute the pinned CLI's actual validation with generated-file readers
-  // stubbed. Its private helper has no public import suitable for this probe.
+
   const validate = vm.runInNewContext(section + '\nvalidateSigningConfig', {
     crypto,
     IosConfigParser: GeneratedProject,

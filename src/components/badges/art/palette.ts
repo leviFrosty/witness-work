@@ -1,11 +1,3 @@
-/**
- * Colors for badge medallions. Dependency-free (type imports only) so the React
- * Native renderer and `scripts/badges/preview-badges.mjs` share it.
- *
- * Every level keeps one illustration; only the frame metal, the field tint and
- * the role colors change. One-time Badges use a teal enamel frame so they never
- * read as a level, and locked levels drop all color.
- */
 import type { BadgeLevel } from '@/types/badges'
 import type { EmblemRole } from './emblems'
 
@@ -15,32 +7,31 @@ export type BadgeArtState = 'earned' | 'locked'
 export type GradientStop = { offset: number; color: string; opacity?: number }
 
 export type BadgePalette = {
-  /** Outer rim, lit from the top-left. `null` = no rim fill (locked). */
   rim: GradientStop[] | null
-  /** Thin inner bevel between rim and field, lit from the opposite side. */
+
   bevel: GradientStop[] | null
-  /** Radial field gradient, center → edge. `null` = transparent. */
+
   field: GradientStop[] | null
-  /** Hairline around the outer rim. */
+
   outline: string
-  /** Dashed outline instead of a metal rim (locked). */
+
   dashed: boolean
-  /** Colors for each emblem role. */
+
   roles: Record<EmblemRole, string>
-  /** Fill colors that differ from `roles` (locked keeps fills faint). */
+
   fills?: Partial<Record<EmblemRole, string>>
   pip: { fill: string; stroke: string }
-  /** Soft light sweep across the rim (Gold and Pearl). */
+
   sheen: GradientStop[] | null
-  /** Fine engraved ring just inside the field edge (Gold and Pearl). */
+
   innerRing: string | null
-  /** Opacity of the whole emblem group. */
+
   emblemOpacity: number
 }
 
 type LevelColors = {
   rim: [string, string, string]
-  /** Optional iridescent stop for Pearl, placed between rim mid and dark. */
+
   rimSheen?: string
   bevel: [string, string]
   field: [string, string]
@@ -56,7 +47,6 @@ type LevelColors = {
 
 const LEVELS: Record<BadgeScheme, Record<BadgeLevel, LevelColors>> = {
   light: {
-    // Bronze
     1: {
       rim: ['#EDBE8E', '#D79A62', '#9C5B2E'],
       bevel: ['#8F522A', '#EBB988'],
@@ -70,7 +60,7 @@ const LEVELS: Record<BadgeScheme, Record<BadgeLevel, LevelColors>> = {
       pipStroke: '#6E3B19',
       rich: false,
     },
-    // Silver
+
     2: {
       rim: ['#F1F4F6', '#D5DBE1', '#8D97A1'],
       bevel: ['#7D8893', '#E9EDF0'],
@@ -84,7 +74,7 @@ const LEVELS: Record<BadgeScheme, Record<BadgeLevel, LevelColors>> = {
       pipStroke: '#56616C',
       rich: false,
     },
-    // Gold (muted antique, never the flat Supporter yellow)
+
     3: {
       rim: ['#F6E3A2', '#E9C766', '#A9821F'],
       bevel: ['#9A7518', '#F4DE92'],
@@ -98,7 +88,7 @@ const LEVELS: Record<BadgeScheme, Record<BadgeLevel, LevelColors>> = {
       pipStroke: '#6E520D',
       rich: true,
     },
-    // Pearl
+
     4: {
       rim: ['#FDFBFF', '#E9E1F6', '#B4A4D9'],
       rimSheen: '#D3ECE8',
@@ -171,7 +161,6 @@ const LEVELS: Record<BadgeScheme, Record<BadgeLevel, LevelColors>> = {
   },
 }
 
-/** One-time Badges: teal enamel rim, ivory field. */
 const ONE_TIME: Record<BadgeScheme, LevelColors> = {
   light: {
     rim: ['#1B7F8C', '#0B5560', '#063A42'],
@@ -201,11 +190,6 @@ const ONE_TIME: Record<BadgeScheme, LevelColors> = {
   },
 }
 
-/**
- * Locked levels: neutral line and motif colors from the app theme. `base` is
- * the card color, used as an opaque fill so hidden lines stay hidden once the
- * whole motif is faded.
- */
 const LOCKED: Record<
   BadgeScheme,
   { line: string; motif: string; base: string }
@@ -216,7 +200,6 @@ const LOCKED: Record<
 
 const hex = (c: string) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16))
 
-/** Mixes two `#RRGGBB` colors; `t` = share of `b`. */
 const mix = (a: string, b: string, t: number) =>
   `#${hex(a)
     .map((v, i) => Math.round(v + (hex(b)[i] - v) * t))
@@ -289,7 +272,6 @@ const lockedPalette = (scheme: BadgeScheme): BadgePalette => {
   }
 }
 
-/** The palette for one medallion. `level: null` is a One-time Badge. */
 export const badgePalette = (
   level: BadgeLevel | null,
   scheme: BadgeScheme,

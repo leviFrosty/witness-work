@@ -9,24 +9,13 @@ import {
   type Earned,
 } from '@/features/pet/lib/currency'
 
-/**
- * What earned what, line by line, for the reward stack (ADR 0035): "+1 Time
- * added", "+1 Planned day kept", "+10 Streak milestone · 10".
- */
-
-/**
- * What a save was, to name its day out: Add Time, a visit, the "shared"
- * checkbox. `elsewhere`: earned away from this screen (the Watch, Siri, another
- * device), shown as totals on the pet's card.
- */
 export type RewardSource = 'time' | 'visit' | 'checkbox' | 'elsewhere'
 
-/** What `earned` held, as the seen ledger keeps it. */
 export type EarnedCounts = {
   daysOut: number
   plansKept: number
   shared: number
-  /** How many milestones; the newest are the last in `Earned.milestones`. */
+
   milestones: number
 }
 
@@ -37,12 +26,6 @@ export const earnedCounts = (earned: Earned): EarnedCounts => ({
   milestones: earned.milestones.length,
 })
 
-/**
- * The lines for what went up from `before` to `after`, smallest first so the
- * combo builds: the day out (with what a monthly least added to it), planned
- * days kept, then each new milestone. Nothing for what went down: an edit that
- * moved a day out earns nothing new.
- */
 export function rewardLines(
   before: EarnedCounts,
   after: Earned,
@@ -89,10 +72,6 @@ export function rewardLines(
   return lines
 }
 
-/**
- * Whether reaching a milestone on `on` gets the full celebration now: only a
- * recent one does (`nextSeenStreak`), from yesterday on, or last month on.
- */
 function celebratesNow(kind: StreakKind, on: string, now: Date): boolean {
   const unit = kind === 'plans' ? 'day' : 'month'
   return on >= moment(now).subtract(1, unit).startOf(unit).format('YYYY-MM-DD')

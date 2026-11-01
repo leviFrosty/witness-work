@@ -3,16 +3,8 @@ import { shownStreak, type ServiceStreak } from '@/lib/serviceStreak'
 import { composeScene, VIEW_CARD, type PlayerInput } from '@/features/pet/art'
 import { daysBetween } from '@/features/pet/lib/dayKeys'
 
-/** How many image pixels each scene pixel becomes in a shared picture. */
 export const PET_SHARE_SCALE = 4
 
-/**
- * The Home card's room as a still picture, `scale` times larger with nearest
- * scaling so the pixels stay sharp. The pet sits at rest; particles and motions
- * are left out. The wall sign is left off unless `showSign`: every sign shows
- * the User's records (hours, goal, plans, visits), so the picture shares them
- * only when the User asks.
- */
 export function petShareImage(
   input: PlayerInput,
   scale = PET_SHARE_SCALE,
@@ -23,17 +15,14 @@ export function petShareImage(
   return scaleNearest(crop(frame, VIEW_CARD), scale)
 }
 
-/** The fun facts on the share card. */
 export type PetShareStats = {
-  /** The Service Streak as people see it; null while hidden or too short. */
   streak: Pick<ServiceStreak, 'kind' | 'count'> | null
-  /** Days since adoption, the adoption day itself counting as the first. */
+
   daysTogether: number
-  /** Hats opened up so far, not counting No hat. */
+
   hats: number
 }
 
-/** What the share card says about the pet and its User. */
 export function petShareStats({
   adoptedOn,
   today,
@@ -59,11 +48,6 @@ export function petShareStats({
   }
 }
 
-/**
- * The shared picture's file name: the pet's shown name and the day, e.g.
- * `Ari-2026-10-18.png`. Letters and digits of any script stay; anything else
- * becomes a dash.
- */
 export function petShareFileName(name: string, dayKey: string): string {
   const safe = name
     .normalize('NFC')

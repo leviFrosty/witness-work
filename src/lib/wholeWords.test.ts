@@ -10,7 +10,6 @@ describe('splitWordShare', () => {
   })
 
   it('finds a word broken across two lines', () => {
-    // "Mornin" of "Morning" fit: shrinking to 6/7 about fits it whole.
     expect(splitWordShare(['Mornin', 'g ministr', 'y'])).toBeCloseTo(6 / 7)
     expect(splitWordShare(['Conversatio', 'n History'])).toBeCloseTo(11 / 12)
   })

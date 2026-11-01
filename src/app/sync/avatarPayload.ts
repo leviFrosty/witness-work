@@ -2,7 +2,6 @@ import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
 import { markerForContact, MARKER_PROFILE } from '@/app/sync/imageNames'
 
-/** Send immutable photo references regardless of local transfer consent. */
 export function sanitizeContactAvatar(
   contact: Contact,
   _opts: { includeImages: boolean }
@@ -19,7 +18,6 @@ export function sanitizeContactAvatar(
   }
 }
 
-/** Profile photo references use the same consent-independent rule. */
 export function sanitizeProfileAvatar(
   avatar: ProfileAvatar | undefined,
   _opts: { includeImages: boolean }

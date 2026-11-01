@@ -15,7 +15,6 @@ type Props = {
   setOpen: (open: boolean) => void
 }
 
-/** Settings → Scribe AI → Zero Data Retention's Learn more. */
 const ScribeZeroDataRetentionSheet = ({ open, setOpen }: Props) => {
   useEffect(() => {
     if (open) trackPrivacyViewed('settings')

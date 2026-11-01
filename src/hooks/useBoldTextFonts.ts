@@ -5,11 +5,6 @@ import { fonts, type Fonts } from '@/constants/theme'
 import { boldTextFonts, EXTRA_BOLD_FONT } from '@/lib/boldTextFonts'
 import useBoldTextEnabled from '@/hooks/useBoldTextEnabled'
 
-/**
- * The theme's faces, one weight heavier while the system's bold text setting is
- * on. Loads the extra bold face the first time it's needed, so launch never
- * pays for it.
- */
 export default function useBoldTextFonts(): Fonts {
   const boldText = useBoldTextEnabled()
   const [extraBoldLoaded, setExtraBoldLoaded] = useState(() =>
@@ -20,7 +15,7 @@ export default function useBoldTextFonts(): Fonts {
     if (!boldText || extraBoldLoaded) return
     Font.loadAsync({ [EXTRA_BOLD_FONT]: Inter_800ExtraBold }).then(
       () => setExtraBoldLoaded(true),
-      // Bold keeps standing in for extra bold.
+
       () => {}
     )
   }, [boldText, extraBoldLoaded])

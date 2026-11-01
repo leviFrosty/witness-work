@@ -14,18 +14,13 @@ import { speciesName } from '@/features/pet/lib/names'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetRename'>
 
-/**
- * Renames the companion: one field with the species name as its placeholder.
- * Saving an empty name removes it, so the card shows the species name. The
- * sheet's own dismissal cancels.
- */
 export default function PetRenameScreen({ navigation }: Props) {
   const palette = useGamePalette()
   const pet = usePet((s) => s.pet)
   const [name, setName] = useState(pet?.name ?? '')
 
   const hasPet = pet !== null
-  // Closes once it's on top again, so it never pops a screen above it.
+
   const focused = useIsFocused()
   useEffect(() => {
     if (!hasPet && focused) navigation.goBack()

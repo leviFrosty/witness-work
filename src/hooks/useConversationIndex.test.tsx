@@ -21,7 +21,6 @@ const HOUR_MS = 60 * 60 * 1000
 const START = new Date('2026-06-12T09:00:00').getTime()
 const DUE = START + HOUR_MS
 
-// One array for the whole test: only the clock moves.
 const conversations: Visit[] = [
   {
     id: 'c1',
@@ -63,7 +62,6 @@ describe('useConversationIndex', () => {
     expect(latest().nextFollowUpMs.get('soon')).toBe(DUE)
     expect(latest().missedFollowUpMs.has('soon')).toBe(false)
 
-    // Just short of the threshold nothing has changed.
     act(() => {
       vi.advanceTimersByTime(
         DUE + MISSED_FOLLOW_UP_AFTER_HOURS * HOUR_MS - START - 1
@@ -79,7 +77,6 @@ describe('useConversationIndex', () => {
   })
 
   it('catches up when the app comes back after the threshold', () => {
-    // Timers don't fire while the app is suspended: jump the clock only.
     vi.setSystemTime(DUE + MISSED_FOLLOW_UP_AFTER_HOURS * HOUR_MS + HOUR_MS)
     expect(latest().missedFollowUpMs.has('soon')).toBe(false)
 

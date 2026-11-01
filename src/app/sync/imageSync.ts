@@ -2,11 +2,6 @@ import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 import { isStorageFullError } from '@/lib/errorTrackingPolicy'
 
-/**
- * Dependencies injected by the caller (`iCloudSync.ts`). Keeping the module
- * pure of react-native / expo-file-system / ICloudBridge imports makes it
- * trivially unit-testable and leaves a single integration seam.
- */
 export type ImageSyncDeps = {
   bridge: {
     writeBinary(filename: string, sourcePath: string): Promise<number>
@@ -15,18 +10,13 @@ export type ImageSyncDeps = {
     deleteBinaryFile(filename: string): Promise<void>
   }
   fs: {
-    /** Returns the file's mtime in epoch ms, or null when missing. */
     getModifiedAt(path: string): Promise<number | null>
   }
   now: () => number
-  /** Recheck consent/access before starting each operation, after awaits. */
+
   canTransfer?: () => boolean
 }
 
-/**
- * An identity's avatar source on disk. The orchestrator turns these into
- * deterministic container filenames via `imageNames.ts`.
- */
 export type AvatarSource =
   | {
       kind: 'profile'
@@ -46,21 +36,6 @@ export type AvatarSource =
       fallbackPath?: string
     }
 
-/**
- * Persistent bookkeeping keyed by container filename. Mirrors the
- * `iCloudImageSync` preference shape — see `stores/preferences.ts` for the full
- * semantic documentation. Fields:
- *
- * - `localMtime` / `uploadedMtime`: on-device file mtime at the point of the last
- *   successful upload — drives "do I need to re-upload?" on the push side.
- * - `containerMtime`: container (iCloud) mtime observed at the point of the last
- *   successful download — drives "do I need to re-download?" on the pull side.
- *   Independent of the upload fields because the container mtime is
- *   server-assigned and has no relation to the local file's mtime.
- * - `lastError` / `failedAt`: last failure message and timestamp.
- * - `errorCode`: the transport's classification of it (`storage-full`, …).
- * - `failures`: consecutive failed uploads of this file, for `uploadBackoffMs`.
- */
 export type ImageSyncBookkeeping = Record<
   string,
   {
@@ -75,26 +50,18 @@ export type ImageSyncBookkeeping = Record<
 >
 
 export type PushImagesResult = {
-  /** Updated bookkeeping — caller persists this to preferences. */
   bookkeeping: ImageSyncBookkeeping
   uploaded: number
   failed: number
   skipped: number
 }
 
-/** Maps an `AvatarSource` identity to its deterministic container filename. */
 export function filenameForSource(source: AvatarSource): string {
   return source.kind === 'profile'
     ? filenameForProfile(source.revision)
     : filenameForContact(source.id, source.revision)
 }
 
-/**
- * Whether a failed upload hit a full account. Those retry only on foreground,
- * so the debounced push on every store edit doesn't thrash the network. The
- * transport's code decides (Drive's 403 `storageQuotaExceeded`); entries
- * recorded before codes existed fall back to the message.
- */
 function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
   if (entry.errorCode) return entry.errorCode === 'storage-full'
   const message = entry.lastError ?? ''
@@ -104,22 +71,10 @@ function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
   )
 }
 
-/** Waits after 1, 2, 3… failed uploads of one file: 30 s, 2 min, 8 min… 1 h. */
 export function uploadBackoffMs(failures: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
 }
 
-/**
- * Walks the provided avatar sources and uploads any whose local file has
- * changed since its last recorded upload (or has never been uploaded). The
- * caller is responsible for reading sources out of the zustand stores — this
- * module stays store-agnostic.
- *
- * The `trigger` argument distinguishes routine store-edit push cycles from
- * explicit foreground-driven retries: quota-failed entries are skipped on
- * store-edit pushes (to avoid thrashing every time the user types) and only
- * re-attempted on foreground.
- */
 export async function pushAllImages(args: {
   sources: AvatarSource[]
   bookkeeping: ImageSyncBookkeeping
@@ -149,10 +104,7 @@ export async function pushAllImages(args: {
       skipped++
       continue
     }
-    // A file that failed backs off before it's tried again, unless the user
-    // picked a new photo. A full account retries only on foreground: routine
-    // store-edit pushes mustn't spam the network, and by then the user may
-    // have freed up space.
+
     if (entry?.lastError && entry.localMtime === localMtime) {
       const waiting =
         deps.now() - (entry.failedAt ?? 0) <
@@ -215,44 +167,15 @@ export type DownloadedAvatar =
     }
 
 export type PullImagesResult = {
-  /**
-   * Identities whose binaries were just materialized on disk. The caller
-   * rewrites `avatar.value` on the corresponding record to `localUri` so the
-   * display layer swaps the marker out for a real path.
-   */
   downloaded: DownloadedAvatar[]
-  /**
-   * Identities whose binaries are absent from the container — the sender
-   * deleted them, or image sync isn't enabled on the other device. Caller
-   * should leave the marker in place; the Avatar component treats it as "fall
-   * back to initials."
-   */
+
   missing: Array<{ kind: 'profile' } | { kind: 'contact'; id: string }>
-  /**
-   * Binaries that failed to download this pass (removed since the listing,
-   * still downloading at the deadline). Left out of `bookkeeping`, so the next
-   * pull tries them again.
-   */
+
   failed: number
-  /**
-   * Updated per-filename bookkeeping. Currently just echoes the input — the
-   * pull path doesn't own the upload-mtime field — but reserved here for a
-   * future per-filename "last downloaded container mtime" once we want to
-   * short-circuit cross-device redundant downloads.
-   */
+
   bookkeeping: ImageSyncBookkeeping
 }
 
-/**
- * Mirror of `pushAllImages` for the inbound direction. Given a list of
- * identities whose synced record currently carries an icloud:// marker in
- * `avatar.value`, this function downloads any missing binaries and returns the
- * resulting local URIs the caller should write back onto the records.
- *
- * Missing-in-container is not an error — see Q3 in the design doc. A sender
- * that turns image sync off deletes its binaries; receivers fall back to
- * initials gracefully via the Avatar component's marker-aware rendering.
- */
 export async function pullMissingImages(args: {
   expectedSources: AvatarSource[]
   bookkeeping: ImageSyncBookkeeping
@@ -329,9 +252,6 @@ export async function pullMissingImages(args: {
         source.localPath
       )
     } catch {
-      // One unreadable binary mustn't strand every photo after it — or the
-      // ones already downloaded this pass, which the caller only applies
-      // once this returns.
       failed++
       return
     }
@@ -357,35 +277,16 @@ export async function pullMissingImages(args: {
   return { downloaded, missing, failed, bookkeeping }
 }
 
-/** An active identity the caller wants to keep in the container. */
 export type ActiveIdentity =
   | { kind: 'profile'; revision?: string }
   | { kind: 'contact'; id: string; revision?: string }
 
 export type GcResult = {
-  /** Filenames removed from the container. */
   deleted: string[]
-  /** `shouldStop` ended the sweep before every orphan was deleted. */
+
   stopped: boolean
 }
 
-/**
- * Deletes container binaries that no longer correspond to any active local
- * identity — the Phase-2 equivalent of tombstone cleanup. Only safe when
- * `activeIdentities` reflects every device's records: a binary whose owner
- * hasn't reached this device yet looks orphaned, and its uploader never
- * re-uploads an unchanged photo. `shouldStop` is checked before each delete so
- * the caller can end the sweep when that set may have changed.
- *
- * Concrete cases this catches:
- *
- * - Contact deleted on Device A while Device B was offline. Device B's push path
- *   sees the resurrected tombstone and the next GC sweep on A removes the
- *   now-orphaned binary.
- * - Profile avatar changed from image → emoji on Device A, leaving
- *   `witness-work-img-profile.jpg` unreferenced by anyone's record.
- * - Historical drift from pre-Phase-2 installs once we enable image sync.
- */
 export async function gcOrphanImages(args: {
   activeIdentities: ActiveIdentity[]
   deletions: Array<{ identity: ActiveIdentity; deletedAt: number }>

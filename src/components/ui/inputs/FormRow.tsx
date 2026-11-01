@@ -17,7 +17,6 @@ export const FORM_ROW_ICON_SIZE = 20
 export const FORM_ROW_PADDING_X = 14
 const ROW_GAP = 12
 
-/** Borderless input styling for a field that sits directly in a row. */
 export const formRowInputStyle = {
   flex: 1,
   minWidth: 0,
@@ -26,11 +25,6 @@ export const formRowInputStyle = {
   paddingHorizontal: 0,
 }
 
-/**
- * One line of a docked form's details list: an icon, the row's content, and an
- * optional trailing control. `expanded` content opens under the row, indented
- * to line up with the label.
- */
 const FormRow = (props: {
   icon: AppIcon
   first?: boolean
@@ -38,15 +32,14 @@ const FormRow = (props: {
   accessibilityLabel?: string
   accessibilityExpanded?: boolean
   testID?: string
-  /** For scrolling the row into view once it opens. */
+
   containerRef?: RefObject<View | null>
   children: ReactNode
   trailing?: ReactNode
   expanded?: ReactNode
 }) => {
   const theme = useTheme()
-  // Icon and trailing control line up with the first line of the content, so
-  // they stay put when the content grows (a long note, place suggestions).
+
   const headerStyle = {
     flexDirection: 'row' as const,
     alignItems: 'flex-start' as const,
@@ -139,10 +132,6 @@ export const FormRowLabel = (props: { children: string }) => {
   )
 }
 
-/**
- * Muted value at the end of a collapsed row's content, beside its label; it
- * takes the room the label leaves.
- */
 export const FormRowValue = (props: { children?: string }) => {
   const theme = useTheme()
   if (!props.children) return null
@@ -161,7 +150,6 @@ export const FormRowValue = (props: { children?: string }) => {
   )
 }
 
-/** The round "+" on an empty row that opens when tapped. */
 export const FormRowAddBadge = () => {
   const theme = useTheme()
   return (
@@ -191,7 +179,6 @@ export const FormRowChevron = (props: { open: boolean }) => {
   )
 }
 
-/** Trailing chevron for a filled row that opens its own screen. */
 export const FormRowDisclosure = () => {
   const theme = useTheme()
   return (

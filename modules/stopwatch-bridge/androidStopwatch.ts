@@ -67,10 +67,6 @@ const pause = (): StopwatchState => {
   })
 }
 
-/**
- * Returns the state this fallback kept and forgets it, so the native store can
- * take it over once (`androidNativeStopwatch.ts`).
- */
 export const takeLegacyState = (): StopwatchState | null => {
   if (!getStorage().getString('state')) return null
   const state = getState()
@@ -78,11 +74,6 @@ export const takeLegacyState = (): StopwatchState | null => {
   return state
 }
 
-/**
- * The fallback for a binary without the native module. The persisted timestamp
- * is the clock, so process termination and Android suspending JS do not lose
- * time. No background task or interval is needed.
- */
 export const androidStopwatch = {
   getState,
   start,

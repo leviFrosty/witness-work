@@ -54,30 +54,21 @@ describe('normalizeDateForStorage', () => {
   })
 
   it('preserves the author-local calendar day in UTC components, stable across TZ changes', () => {
-    // The stored Date is a calendar-day token, not an instant. Reads use UTC
-    // components. So the assertion is: the UTC year/month/day of the stored
-    // value matches the calendar day the user typed in, and that triple stays
-    // identical after any device TZ change.
-
-    // Authored in PST as May 1, 2026.
     setTZ('America/Los_Angeles')
     const authoredInPST = moment('2026-05-01').toDate()
     const normalized = normalizeDateForStorage(authoredInPST)
 
-    // Cover the full IANA span: UTC-12 (Baker Is.) through UTC+14
-    // (Kiritimati). NZDT (+13) and Apia (+13) are the cases that break a
-    // local-mode read.
     const tzs = [
-      'Etc/GMT+12', // UTC-12
-      'Pacific/Honolulu', // UTC-10
-      'America/Los_Angeles', // UTC-8/-7
-      'America/New_York', // UTC-5/-4
+      'Etc/GMT+12',
+      'Pacific/Honolulu',
+      'America/Los_Angeles',
+      'America/New_York',
       'UTC',
-      'Europe/Berlin', // UTC+1/+2
-      'Asia/Tokyo', // UTC+9
-      'Pacific/Auckland', // UTC+12/+13
-      'Pacific/Apia', // UTC+13
-      'Pacific/Kiritimati', // UTC+14
+      'Europe/Berlin',
+      'Asia/Tokyo',
+      'Pacific/Auckland',
+      'Pacific/Apia',
+      'Pacific/Kiritimati',
     ]
     for (const tz of tzs) {
       setTZ(tz)
@@ -85,7 +76,7 @@ describe('normalizeDateForStorage', () => {
       expect({ tz, y: m.year(), mo: m.month(), d: m.date() }).toEqual({
         tz,
         y: 2026,
-        mo: 4, // May (0-indexed)
+        mo: 4,
         d: 1,
       })
     }
@@ -102,16 +93,11 @@ describe('normalizeDateForStorage', () => {
   })
 
   it('is NOT idempotent across TZ changes when the input is interpreted as fresh local input (by design — see preserveOrNormalizeStoredDate)', () => {
-    // `normalizeDateForStorage` is the write-path function: every call extracts
-    // the local Y/M/D. That's the contract. The migration / iCloud-merge path
-    // uses a different function that preserves already-anchored values.
     setTZ('America/Los_Angeles')
     const once = normalizeDateForStorage(moment('2026-05-01').toDate())
-    setTZ('Pacific/Auckland') // NZST = UTC+12 in May, so noon UTC → midnight local
+    setTZ('Pacific/Auckland')
     const twice = normalizeDateForStorage(once)
-    // In NZST, the noon-UTC anchor reads as midnight on May 2, so re-extracting
-    // local parts produces May 2 — not May 1. This is the expected unsafe
-    // behavior for the write-path function on already-stored input.
+
     expect(momentStoredDate(twice).format('YYYY-MM-DD')).toBe('2026-05-02')
   })
 })
@@ -144,7 +130,7 @@ describe('preserveOrNormalizeStoredDate', () => {
 
   it('falls through to local extraction for non-anchored (pre-fix) inputs', () => {
     setTZ('America/Los_Angeles')
-    // A pre-fix Date — captured as midnight local PST = 07:00 UTC.
+
     const preFix = moment('2026-05-01').toDate()
     expect(preFix.getUTCHours()).not.toBe(12)
     const out = preserveOrNormalizeStoredDate(preFix)
@@ -181,9 +167,6 @@ describe('momentStoredDate', () => {
   })
 
   it('reads an un-anchored instant as the local calendar day it falls on, not its UTC day', () => {
-    // 03:29 UTC on Sep 1 is still the evening of Aug 31 west of UTC. Reading
-    // the UTC day would move a report logged "now" into September — the
-    // month-boundary failure this guards against.
     const lateEveningWest = new Date('2026-09-01T03:29:00.000Z')
     setTZ('America/New_York')
     expect(momentStoredDate(lateEveningWest).format('YYYY-MM-DD')).toBe(
@@ -194,7 +177,6 @@ describe('momentStoredDate', () => {
       '2026-09-01'
     )
 
-    // 20:30 UTC on Aug 31 is already the morning of Sep 1 east of UTC.
     const earlyMorningEast = new Date('2026-08-31T20:30:00.000Z')
     setTZ('Asia/Tokyo')
     expect(momentStoredDate(earlyMorningEast).format('YYYY-MM-DD')).toBe(
@@ -232,9 +214,6 @@ describe('momentStoredDate', () => {
 
 describe('original bug repro: plans/reports moving on TZ change', () => {
   it('keeps a May 1 plan authored in JST as May 1 after the device switches to PST', () => {
-    // Pre-fix bug: a date authored at midnight JST (= late-evening UTC of the
-    // PRIOR day) would render as April 30 once the user switched to PST,
-    // jumping the plan into the previous month entirely.
     setTZ('Asia/Tokyo')
     const authoredInJST = moment('2026-05-01').toDate()
     const stored = normalizeDateForStorage(authoredInJST)
@@ -243,15 +222,12 @@ describe('original bug repro: plans/reports moving on TZ change', () => {
     const m = momentStoredDate(stored)
     expect({ y: m.year(), mo: m.month(), d: m.date() }).toEqual({
       y: 2026,
-      mo: 4, // May
+      mo: 4,
       d: 1,
     })
   })
 
   it('keeps a March 1 plan authored in PST as March 1 after the device switches to JST', () => {
-    // Mirror direction: midnight PST (= mid-morning UTC of the same day) read
-    // back in JST as a local instant moves the date forward by hours but —
-    // crucially — should not move the calendar day forward into March 2.
     setTZ('America/Los_Angeles')
     const authoredInPST = moment('2026-03-01').toDate()
     const stored = normalizeDateForStorage(authoredInPST)
@@ -260,7 +236,7 @@ describe('original bug repro: plans/reports moving on TZ change', () => {
     const m = momentStoredDate(stored)
     expect({ y: m.year(), mo: m.month(), d: m.date() }).toEqual({
       y: 2026,
-      mo: 2, // March
+      mo: 2,
       d: 1,
     })
   })
@@ -274,22 +250,11 @@ describe('original bug repro: plans/reports moving on TZ change', () => {
     const m = momentStoredDate(stored)
     expect({ y: m.year(), mo: m.month(), d: m.date() }).toEqual({
       y: 2026,
-      mo: 0, // January
+      mo: 0,
       d: 1,
     })
   })
 })
-
-// ----------------------------------------------------------------------------
-// normalizeRecurringPlan / normalizePartialRecurringPlan
-//
-// These are the pieces of the persisted shape with the most date fields,
-// nested in non-trivial ways: `startDate`, optional `recurrence.endDate`,
-// optional `deletedDates[]`, and optional `overrides[].date`. Each of those
-// branches must be normalized — and the *non-date* fields must pass through
-// untouched, including nested config like `monthlyByWeekdayConfig`. Tests
-// cover every branch.
-// ----------------------------------------------------------------------------
 
 const basePlan = (overrides: Partial<RecurringPlan> = {}): RecurringPlan => ({
   id: 'plan-1',
@@ -331,7 +296,7 @@ describe('normalizeRecurringPlan', () => {
   })
 
   it('preserves recurrence.endDate as null when null', () => {
-    const plan = basePlan() // endDate: null
+    const plan = basePlan()
     const out = normalizeRecurringPlan(plan)
     expect(out.recurrence.endDate).toBeNull()
   })
@@ -438,11 +403,6 @@ describe('normalizeRecurringPlan', () => {
   })
 
   it('locks in the author-local calendar day; subsequent reads in any TZ see the same Y-M-D', () => {
-    // The write-path contract: when called once on fresh input in TZ X, the
-    // stored shape encodes X's local Y-M-D. Later reads in any TZ via
-    // `momentStoredDate` (UTC components) yield the same calendar day. This
-    // is what makes plans stop drifting on TZ change — readers don't depend
-    // on local mode.
     setTZ('Asia/Tokyo')
     const planJST: RecurringPlan = basePlan({
       startDate: moment('2026-05-01').toDate(),

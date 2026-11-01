@@ -118,7 +118,6 @@ describe('backup blob', () => {
     )
   })
 
-  /** Seals arbitrary bytes the way `sealBackup` would. */
   const sealRaw = (key: Uint8Array, contents: Uint8Array) => {
     const nonce = random(24)
     return concatBytes(
@@ -152,7 +151,6 @@ describe('backup blob', () => {
   it('makes 16-byte slot ids and the digest the server checks', async () => {
     expect(newBackupSlotId(random)).toMatch(/^[A-Za-z0-9_-]{22}$/)
     expect(await backupBlobDigest(new Uint8Array([1, 2, 3]))).toBe(
-      // SHA-256 of 01 02 03, b64u.
       'A5BYxvLAy0ksUzsKTRTvd8wPeKvMztUofYShogEc-4E'
     )
   })

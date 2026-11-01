@@ -164,7 +164,7 @@ describe('sprites', () => {
     const closing = hash('dog', 'happy', true)
     expect(closing).not.toBe(hash('dog', 'happy'))
     expect(closing).not.toBe(hash('dog', 'joy'))
-    // An open mouth stays open; species without one ignore it.
+
     expect(hash('dog', 'joy', true)).toBe(hash('dog', 'joy'))
     expect(hash('cat', 'happy', true)).toBe(hash('cat', 'happy'))
   })

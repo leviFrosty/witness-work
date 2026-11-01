@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The Devices list against a fake container: pulls record each device's file
-// from the reads they already make, and removal deletes another device's file
-// only once this device holds its data.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -214,12 +210,12 @@ describe('recording device files during a pull', () => {
     expect(recorded['witness-work-phone.json']).toMatchObject({
       deviceId: 'phone',
       deviceName: 'iPhone',
-      // An uncalibrated writer's stamps are anchored to the file's date.
+
       writtenAt: NOW - 2 * DAY,
       modifiedAt: NOW - 2 * DAY,
       status: 'ok',
     })
-    // Generation zero, older than this device's reset.
+
     expect(recorded['witness-work-old.json'].status).toBe('pre-reset')
     expect(recorded['witness-work-future.json']).toMatchObject({
       deviceId: 'future',
@@ -250,7 +246,6 @@ describe('recording device files during a pull', () => {
     runtime.files = [OWN_FILE, peerFile('phone', 'iPhone', E1), peerFile('old')]
     await pullAndMerge('test')
 
-    // `phone` is still downloading and `old` is gone: keep both entries.
     runtime.files = [OWN_FILE, peerFile('phone', 'iPhone', E1)]
     runtime.pending = ['witness-work-phone.json']
     await pullAndMerge('test')
@@ -360,7 +355,7 @@ describe('removing a device', () => {
     const { pullAndMerge, removeSyncDevice, bridge } = await load()
     runtime.files = [OWN_FILE, peerFile('old', 'Old iPhone')]
     await pullAndMerge('test')
-    // The device adopted the reset and is uploading a current snapshot.
+
     runtime.files = [OWN_FILE, peerFile('old', 'Old iPhone', E1)]
     runtime.pending = ['witness-work-old.json']
 

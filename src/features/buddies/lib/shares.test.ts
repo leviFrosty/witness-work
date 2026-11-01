@@ -109,7 +109,7 @@ describe('a share on every device of the User', () => {
     expect(shareEndsAt('followUp:v1', data)).toBe(
       new Date(2026, 2, 3).getTime()
     )
-    // Deleted, dismissed, or someone else's Plan: nothing of the User's to tell.
+
     expect(shareEndsAt('plan:deleted', data)).toBeUndefined()
     expect(shareEndsAt('plan:linked', data)).toBeUndefined()
     expect(shareEndsAt('followUp:v2', data)).toBeUndefined()

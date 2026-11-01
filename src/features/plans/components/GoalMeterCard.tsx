@@ -18,25 +18,19 @@ import type { ScheduleStatus } from '@/lib/scheduleStatus'
 import GoalSplitBar from '@/features/plans/components/GoalSplitBar'
 
 type Props = {
-  /** The period, e.g. the month's name. */
   title: string
   goalMinutes: number
   loggedMinutes: number
-  /** Every Plan in the period, including days already past. */
+
   plannedMinutes: number
   tense: PeriodTense
-  /** Logged time against the Plans so far. */
+
   schedule: ScheduleStatus
   onPress?: () => void
-  /** Long-press shortcut; absent when the goal can't change here. */
+
   editGoal?: { title: string; onPress: () => void }
 }
 
-/**
- * A period's goal at a glance above the Schedule: logged time and Plans against
- * the goal, and whether logged time keeps up with the Plans so far. The Month
- * view shows the focused month's; the Year view shows the Service Year's.
- */
 export default function GoalMeterCard({
   title,
   goalMinutes,
@@ -48,8 +42,7 @@ export default function GoalMeterCard({
   editGoal,
 }: Props) {
   const theme = useTheme()
-  // At accessibility text sizes each row wraps its parts onto lines of their
-  // own, and the figures wrap whole instead of truncating.
+
   const largeText = useAccessibilityTextSize()
   const wrap = largeText ? 'wrap' : 'nowrap'
   const oneLine = largeText ? undefined : 1
@@ -76,7 +69,6 @@ export default function GoalMeterCard({
           ? i18n.t('scheduleCalendar.onPlan')
           : undefined
 
-  // A past period shows what was logged instead.
   const total =
     formatMinutesCompact(tense === 'past' ? loggedMinutes : plannedMinutes) ||
     formatPlainNumber(0)
@@ -94,7 +86,6 @@ export default function GoalMeterCard({
         { value: total }
       )
 
-  // The same facts in words, so "6h / 50h" isn't read as "6 h slash 50 h".
   const spokenTotal = formatMinutesSpoken(
     tense === 'past' ? loggedMinutes : plannedMinutes
   )
@@ -278,7 +269,6 @@ export default function GoalMeterCard({
   )
 }
 
-/** Keys a label to the bar: solid for logged time, striped for planned. */
 function Swatch({ striped = false }: { striped?: boolean }) {
   const theme = useTheme()
   return (

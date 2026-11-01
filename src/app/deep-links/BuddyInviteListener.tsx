@@ -7,12 +7,6 @@ import { isInviteLink } from '@/features/buddies/lib/inviteLink'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * Routes `https://ww-proxy.leviwilkerson.com/b#1…` invite links to the
- * pre-accept screen. A cold-start link waits until the feature flag resolves
- * and navigation is ready instead of being dropped, and until onboarding is
- * done and nothing is taking over the screen (ADR 0021).
- */
 export default function BuddyInviteListener() {
   const enabled = useBuddiesEnabled()
   const onboarded = usePreferences((s) => s.onboardingComplete)

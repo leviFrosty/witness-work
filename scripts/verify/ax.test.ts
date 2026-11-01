@@ -23,8 +23,6 @@ const node = (
   children,
 })
 
-// The shape of `axe describe-ui --point 1,1` outside a resized window: the
-// SpringBoard app switcher, with the window's card framed on screen.
 const springboard = node(
   { x: 0, y: 0, width: 1032, height: 1376 },
   { AXUniqueId: 'AppSwitcherContentView' },
@@ -75,7 +73,6 @@ describe('windowOrigin', () => {
 
 describe('toScreen', () => {
   it("moves an element's window position by the window's origin", () => {
-    // The Contacts tab in a 391 × 665 window at (321, 298).
     const tab = { x: 96, y: 610, width: 58, height: 38 }
     expect(toScreen(center(tab), { x: 321, y: 298 })).toEqual({
       x: 446,

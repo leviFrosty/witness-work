@@ -27,12 +27,6 @@ import { coatName, speciesName } from '@/features/pet/lib/names'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetSettings'>
 
-/**
- * The pet's settings, from the cog in its details: its name and look, whether
- * its card shows on Home, the reward animations and sounds (the same settings
- * as Settings → Rewards), and (with Buddies) whether buddies' pets visit, for
- * everyone and per buddy.
- */
 export default function PetSettingsScreen({ navigation }: Props) {
   const palette = useGamePalette()
   const sheetInsets = usePetSheetInsets()
@@ -42,7 +36,6 @@ export default function PetSettingsScreen({ navigation }: Props) {
   const pet = usePet((s) => s.pet)
   useGameSheetBackground(palette)
 
-  // Released on another device while open.
   const hasPet = pet !== null
   const focused = useIsFocused()
   useEffect(() => {
@@ -61,7 +54,7 @@ export default function PetSettingsScreen({ navigation }: Props) {
       contentContainerStyle={{
         paddingHorizontal: 20,
         paddingTop: sheetInsets.top - 8,
-        // iOS adds the bottom inset below the sheet itself.
+
         paddingBottom: Platform.OS === 'ios' ? 24 : sheetInsets.bottom + 8,
         gap: 20,
       }}

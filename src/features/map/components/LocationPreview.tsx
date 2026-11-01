@@ -19,11 +19,6 @@ const FAKE_USER_LOCATION = {
 
 const USER_DOT_COLOR = '#4285F4'
 
-/**
- * Illustrates what sharing location gets you: a pulsing "you are here" dot
- * among contact markers. Uses a fake location so the preview never needs the
- * permission it's asking for.
- */
 const LocationPreview = () => {
   const theme = useTheme()
   const markerColors = useMarkerColors()
@@ -103,9 +98,7 @@ const LocationPreview = () => {
           </Marker>
         ))}
       </MapView>
-      {/* The region is centered on the fake location, so the dot is drawn as
-          a centered overlay instead of a Marker — animated views inside map
-          markers don't reliably re-render. */}
+      {}
       <View
         style={{
           position: 'absolute',

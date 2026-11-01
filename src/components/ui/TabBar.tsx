@@ -53,34 +53,20 @@ const SIDEBAR_INSET = 12
 const SIDEBAR_RADIUS = 28
 const SIDEBAR_PADDING = 12
 const SIDEBAR_CONTROL_RADIUS = SIDEBAR_RADIUS - SIDEBAR_PADDING
-/** Clears the bar's shadow too as it slides away. */
+
 const HIDDEN_OVERSHOOT = 24
-/**
- * The capsule keeps its height, so its small labels stop growing with large
- * text sizes here instead of spilling out of it.
- */
+
 const CAPSULE_LABEL_FONT_SCALE_CAP = 1.3
 
-/**
- * Vertical space reserved above the safe-area bottom inset for the floating tab
- * bar — use in screens that need to pad content away from the bar.
- */
 export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT
 
 const liquidGlass = isLiquidGlassAvailable()
 
 type Props = BottomTabBarProps & {
-  /** Only supplied while hardware Command is held and shortcuts are active. */
   shortcutHints?: Record<string, string>
-  /**
-   * A row above the "+" actions (Scribe AI's Speak an update), given the
-   * function that closes the sheet or menu.
-   */
+
   renderQuickActionLeading?: (close: () => void) => ReactNode
-  /**
-   * The account at the sidebar's foot, above Settings; `compact` while the
-   * sidebar shows icons only.
-   */
+
   renderSidebarAccount?: (compact: boolean) => ReactNode
 }
 
@@ -108,19 +94,17 @@ const TabBar = ({
     navigationRail,
   } = useAdaptiveLayout({ liveResize: true })
   const rail = navigationRail !== null
-  // Like the system's vertical bar, the rail shows icons without titles.
+
   const iconOnly = sidebarCompact || rail
-  // Toward the content. PointerTooltip mirrors `left` and `right` in RTL, and
-  // the rail's side is physical.
+
   const railTooltipPlacement =
     (navigationRail === 'right') !== isRtlLayout()
       ? ('left' as const)
       : ('right' as const)
-  // Scrolling down or exploring the map slides the floating bar away; the
-  // sidebar always stays.
+
   const hidden = useTabBarHidden()
   const reduceMotion = useReducedMotion()
-  // Drags write this on the UI thread; React only sets it from saved changes.
+
   const liveSidebarWidth = useSharedValue(sidebarWidth)
   const sidebarWidthStyle = useAnimatedStyle(() => ({
     width: liveSidebarWidth.value,
@@ -128,7 +112,7 @@ const TabBar = ({
 
   useEffect(() => {
     if (sidebarWidth === 0) return
-    // Animate accessibility steps; appear at full width when a sidebar first fits.
+
     liveSidebarWidth.value =
       liveSidebarWidth.value > 0
         ? withTiming(sidebarWidth, { duration: 200 })
@@ -188,8 +172,6 @@ const TabBar = ({
         key={route.key}
         label={i18n.t(labelKey)}
         placement={railTooltipPlacement}
-        // Labels are visible unless the sidebar is narrowed to icons; the rail
-        // shows icons only, as the system's vertical bar does.
         enabled={(hasSidebar && sidebarCompact) || rail}
         style={{
           flex: hasSidebar || rail ? undefined : 1,
@@ -369,7 +351,6 @@ const TabBar = ({
     overflow: 'hidden' as const,
   }
 
-  // An action, not a destination: it never shows a selected state.
   const plusButton = (
     <Button
       noTransform
@@ -426,9 +407,6 @@ const TabBar = ({
 
   if (hasSidebar && !sidebarVisible) return null
 
-  // Each layout gets its own key. Otherwise React reuses the sidebar's view
-  // for the floating bar, and Reanimated leaves the sidebar's animated width
-  // on it, squeezing the bar into the corner after a window resize.
   if (hasSidebar) {
     return (
       <Animated.View
@@ -457,8 +435,7 @@ const TabBar = ({
               : theme.colors.backgroundLighter,
           }}
         >
-          {/* One regular glass surface holds the navigation hierarchy. UIKit
-              adapts its material to contrast and transparency preferences. */}
+          {}
           {liquidGlass && (
             <GlassView
               pointerEvents='none'
@@ -475,7 +452,7 @@ const TabBar = ({
             contentInsetAdjustmentBehavior='never'
             contentContainerStyle={{
               flexGrow: 1,
-              // Safe areas belong to the floating panel's outer frame.
+
               paddingTop: SIDEBAR_PADDING,
               paddingBottom: SIDEBAR_PADDING,
               paddingHorizontal: sidebarCompact ? 8 : SIDEBAR_PADDING,
@@ -520,8 +497,6 @@ const TabBar = ({
                 )}
               </View>
               <AnchoredPopover
-                // Wide enough that Speak an update's title, badge and subtitle
-                // each keep to one line at iPad text sizes.
                 contentWidth={400}
                 accessibilityFocusRef={quickActionFocusRef}
                 contentStyle={{ gap: 12 }}
@@ -560,7 +535,6 @@ const TabBar = ({
                       <Button
                         noTransform
                         onPress={() => {
-                          // Warms Log Visit's Nearby; never prompts.
                           if (!expanded) void refreshCurrentLocation()
                           onPress()
                         }}
@@ -634,8 +608,6 @@ const TabBar = ({
   }
 
   if (navigationRail) {
-    // The vertical status bar's safe area, which the system's own vertical
-    // bar shares; screens keep clear of it (see HomeTabStack).
     const sideInset = navigationRail === 'right' ? insets.right : insets.left
     const railShape = {
       width: RAIL_ITEM_SIZE + RAIL_PADDING * 2,
@@ -655,7 +627,7 @@ const TabBar = ({
           style={{
             width: Math.max(sideInset, NAVIGATION_RAIL_MIN_WIDTH),
             alignItems: 'center',
-            // Tab bars come after the toolbar's items, low on the side.
+
             justifyContent: 'flex-end',
             gap: 12,
             paddingTop: insets.top + 12,
@@ -683,8 +655,7 @@ const TabBar = ({
               {railTabs}
             </View>
           )}
-          {/* Settings has no tab here, as on a phone; the rail keeps it in
-          reach where the sidebar would. */}
+          {}
           <PointerTooltip
             label={i18n.t('settings')}
             placement={railTooltipPlacement}

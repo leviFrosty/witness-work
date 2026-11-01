@@ -33,23 +33,19 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { shopThumbView } from '@/features/pet/lib/shopEntries'
 
-/** A card's picture is this tall for its width. */
 const THUMB_RATIO = 0.6
-/** The scene's height, in pixels: no picture is taller. */
+
 const SCENE_H = 100
-/** The name row's least height. */
+
 const NAME_ROW = 22
 
-/** A card's picture size, in Shop pixels, for a card `width` points wide. */
 function thumbPixels(width: number, scale: number) {
   const inset = GAME_FRAME_INSET.card * scale
   const w = Math.max(1, Math.floor((width - 2 * inset) / scale))
   return { inset, w, h: Math.min(SCENE_H, Math.round(w * THUMB_RATIO)) }
 }
 
-/** Where the card grid's columns fall, for a grid `gridWidth` points wide. */
 export function itemGridColumns(gridWidth: number, gap: number) {
-  /** About how wide a card is before another column fits. */
   const minWidth = 160
   const columns = Math.max(
     2,
@@ -60,7 +56,6 @@ export function itemGridColumns(gridWidth: number, gap: number) {
   return { columns, cardWidth }
 }
 
-/** The "New" tag over a picture's corner, white on red. */
 function NewTag({ palette }: { palette: GamePalette }) {
   const theme = useTheme()
   const scale = gamePixelScale()
@@ -89,10 +84,6 @@ function NewTag({ palette }: { palette: GamePalette }) {
   )
 }
 
-/**
- * Over an owned item's picture in the Shop: the picture faded under paper, and
- * a big check stamped in the middle.
- */
 function OwnedStamp({ palette }: { palette: GamePalette }) {
   return (
     <View
@@ -126,7 +117,6 @@ function OwnedStamp({ palette }: { palette: GamePalette }) {
   )
 }
 
-/** A card's note after its name: a check and a word ("Wearing", "Owned"). */
 export function CheckNote({
   label,
   palette,
@@ -160,7 +150,6 @@ export function CheckNote({
   )
 }
 
-/** A card's price after its name, muted while it's more than the wallet. */
 export function PriceNote({
   price,
   short,
@@ -188,13 +177,6 @@ export function PriceNote({
   )
 }
 
-/**
- * One item as the pet screens show it, in the Shop and in the pet's details:
- * its picture from the room, its name, and a note after the name (its price, or
- * that it's worn). An owned item not picked yet says "New"; a secret not found
- * yet is only a silhouette. In the Shop, an owned one is stamped with a check
- * and can't be pressed.
- */
 export default function GameItemCard({
   part,
   option,
@@ -216,16 +198,16 @@ export default function GameItemCard({
 }: {
   part: RoomChoicePart
   option: string
-  /** A secret not found yet: its silhouette, named `???`. */
+
   secret?: boolean
   name: string
   note?: ReactNode
-  /** Ringed in the accent: picked in the Shop, or in use. */
+
   picked: boolean
   isNew?: boolean
-  /** In the Shop: already owned, so stamped with a check and off. */
+
   owned?: boolean
-  /** The card's width in points. */
+
   width: number
   palette: GamePalette
   room: PetRoomSettings
@@ -310,17 +292,12 @@ export default function GameItemCard({
   )
 }
 
-/**
- * The last card of a part in the pet's details: the Shop's sign over how many
- * more there are to buy, the size of the cards beside it. It opens the Shop.
- */
 export function MoreInShopCard({
   count,
   width,
   palette,
   onPress,
 }: {
-  /** How many the Shop sells that aren't owned yet. */
   count: number
   width: number
   palette: GamePalette

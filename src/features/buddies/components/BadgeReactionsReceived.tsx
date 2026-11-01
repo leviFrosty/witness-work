@@ -11,11 +11,6 @@ const MAX_SHOWN = 8
 const AVATAR = 34
 const BUBBLE = 20
 
-/**
- * Buddies' reactions to one of the User's badges: each buddy's avatar wearing
- * the emoji they picked, newest first, up to eight and then "+N". Nothing shows
- * until someone reacts.
- */
 export default function BadgeReactionsReceived({
   badgeKey,
 }: {

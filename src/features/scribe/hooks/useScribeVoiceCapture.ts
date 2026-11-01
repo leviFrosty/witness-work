@@ -28,13 +28,9 @@ import {
 } from '@/features/scribe/lib/voiceLevel'
 import { trackCaptureFinished } from '@/features/scribe/analytics'
 
-/** Contact names bias recognition toward people the User visits. On-device only. */
 const MAX_CONTEXTUAL_NAMES = 100
 const ELAPSED_TICK_MS = 250
-/**
- * The start cue rings into the open microphone; levels in this window would
- * pulse the orb and set the gain's peak, so they're dropped.
- */
+
 const CUE_LEVEL_HOLD_MS = 500
 
 const wait = (ms: number) =>
@@ -62,19 +58,11 @@ const voiceError = (code: Speech.SpeechErrorCode): ScribeVoiceErrorCode =>
     ? code
     : 'failed'
 
-/** Remaining time once the countdown starts, else null. */
 export const voiceRemainingMs = (elapsedMs: number): number | null =>
   elapsedMs >= SCRIBE_VOICE_MAX_MS - SCRIBE_VOICE_COUNTDOWN_MS
     ? Math.max(0, SCRIBE_VOICE_MAX_MS - elapsedMs)
     : null
 
-/**
- * Voice input (ADR 0018): records the microphone, transcribes on-device, and
- * hands the final text to `onFinished` for the conversation. Audio never leaves
- * the device. Ends at `SCRIBE_VOICE_MAX_MS` (`cap`), on leaving the app or an
- * interruption (`interrupted`, keeping what was heard), on Type instead
- * (`typed`), or on done.
- */
 export function useScribeVoiceCapture(
   options: ScribeVoiceCaptureOptions
 ): ScribeVoiceCapture {
@@ -83,7 +71,7 @@ export function useScribeVoiceCapture(
   const [elapsedMs, setElapsedMs] = useState(0)
   const [quiet, setQuiet] = useState(false)
   const [error, setError] = useState<ScribeVoiceErrorCode | null>(null)
-  // UI thread: the orb reads this, never React state per sample.
+
   const level = useSharedValue(0)
 
   const stateRef = useRef<ScribeVoiceState>('idle')
@@ -98,8 +86,6 @@ export function useScribeVoiceCapture(
   const onFinished = useRef(options.onFinished)
   onFinished.current = options.onFinished
 
-  // Bumped when a capture is torn down or the screen goes, so a permission
-  // answer that lands after either starts nothing (no listeners to leak).
   const generation = useRef(0)
 
   const moveTo = (next: ScribeVoiceState) => {
@@ -193,7 +179,7 @@ export function useScribeVoiceCapture(
             progress == null ? null : Math.round(progress * 100)
           )
         }),
-        // A call, a route change or the recognizer ended it: keep what was heard.
+
         Speech.addListener('onEnd', ({ text }) => {
           if (stateRef.current === 'listening') finish(text, 'interrupted')
         }),
@@ -202,7 +188,7 @@ export function useScribeVoiceCapture(
         localeCandidates: speechLocaleCandidates(),
         contextualStrings: contactNames(),
       })
-      // Discarded while the recognizer was starting.
+
       if (stateRef.current !== 'preparing') {
         void Speech.cancel()
         return
@@ -211,14 +197,14 @@ export function useScribeVoiceCapture(
       const early = readyAt - Date.now()
       if (early > 0) {
         await wait(early)
-        // Discarded while the spinner finished.
+
         if (stateRef.current !== 'preparing') return
       }
       startedAt.current = Date.now()
       holdLevelsUntil.current = startedAt.current + CUE_LEVEL_HOLD_MS
       setPreparingPercent(null)
       moveTo('listening')
-      // Ready: the snap and the start cue land with the orb's pop.
+
       void Haptics.rigid()
       playCue('scribeVoiceStart')
     } catch (thrown) {
@@ -266,9 +252,9 @@ export function useScribeVoiceCapture(
     const at = generation.current
     try {
       const permissions = await Speech.requestPermissions()
-      // Discarded or left while the system asked.
+
       if (generation.current !== at) return
-      // Android can still ask after a first denial: offer to ask again.
+
       if (permissions.status === 'undetermined') {
         moveTo('priming')
         return
@@ -320,13 +306,11 @@ export function useScribeVoiceCapture(
     teardown()
   }
 
-  // Effects that outlive a render call the latest handlers.
   const stopRef = useRef(stopWith)
   stopRef.current = stopWith
   const discardRef = useRef(discard)
   discardRef.current = discard
 
-  // The clock, the cap and leaving the app.
   useEffect(() => {
     if (state !== 'listening') return
     const tick = setInterval(() => {
@@ -345,7 +329,6 @@ export function useScribeVoiceCapture(
     }
   }, [state])
 
-  // Leaving the screen discards an unfinished recording.
   useEffect(
     () => () => {
       generation.current++

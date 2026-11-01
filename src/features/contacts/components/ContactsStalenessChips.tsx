@@ -28,30 +28,13 @@ import StalenessColorKey from '@/components/StalenessColorKey'
 import { RootStackNavigation } from '@/types/rootStack'
 
 export type ContactsStalenessChipsProps = {
-  /**
-   * The contacts the chips count: active (not dismissed) ones, and on the map
-   * only those with a location, so the counts match the pins.
-   */
   contacts: Contact[]
-  /** Shared per-contact conversation index; staleness is an O(1) lookup. */
+
   index: ConversationIndex
-  /**
-   * Where the chips sit, for analytics. The map has its own legend button, so
-   * the chips leave theirs out there.
-   */
+
   surface: 'list' | 'map'
 }
 
-/**
- * Swipeable row of quick filters by time since the last visit: Filters, which
- * opens Sort & Filter and counts the filters set there, then All and each
- * staleness bucket with its count, most stale first until the User drags them
- * into their own order. A chip swaps any `pinStaleness` filter for its own and
- * leaves other filters alone, so the Sort & Filter sheet still shows (and can
- * clear) what a chip set. With a Saved View showing, the chips edit that view's
- * filters. On the list, the trailing info button explains the colors and links
- * to their settings.
- */
 const ContactsStalenessChips = ({
   contacts,
   index,
@@ -128,7 +111,7 @@ const ContactsStalenessChips = ({
       onReorder={(next) => setPreferences({ stalenessChipOrder: next })}
       leading={
         <>
-          {/* Counts only what the row can't show itself. */}
+          {}
           <StalenessChip
             label={i18n.t('contacts_filtersChip')}
             icon={SlidersHorizontalIcon}
@@ -167,11 +150,11 @@ const StalenessChip = ({
   onPress,
 }: {
   label: string
-  /** Left out when there's nothing to count. */
+
   count?: number
-  /** Staleness dot; omitted for All. */
+
   color?: string
-  /** Leads the label instead of a dot. */
+
   icon?: AppIcon
   active: boolean
   onPress: () => void
@@ -187,7 +170,7 @@ const StalenessChip = ({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        // Grows with large text sizes instead of clipping the label.
+
         minHeight: 32,
         paddingVertical: 6,
         paddingHorizontal: 12,
@@ -198,7 +181,7 @@ const StalenessChip = ({
         backgroundColor: active
           ? theme.colors.accentTranslucent
           : theme.colors.backgroundLighter,
-        // Empty buckets stay tappable but recede.
+
         opacity: count === 0 && !active ? 0.55 : 1,
       }}
     >

@@ -108,7 +108,7 @@ export default defineWriteTool({
         phone: input.newContact.phone?.trim() || null,
         email: null,
         askBetween: null,
-        // The householder's consent, confirmed on the card.
+
         ...(ctx.dataProtection ? { needsConsent: true } : {}),
       })
       contact = { type: 'pending', ref: contactRef }
@@ -131,7 +131,7 @@ export default defineWriteTool({
           ok: false,
           error: 'askBetween needs at least two different contacts.',
         }
-      // The New option, created only if the User picks it.
+
       contactRef = ctx.draft.mintRef('n')
       effects.push({
         kind: 'contact.create',

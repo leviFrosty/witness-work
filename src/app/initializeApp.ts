@@ -25,17 +25,15 @@ import * as BuddiesKeychain from '../../modules/buddies-keychain'
 export function initializeApp() {
   perf.mark('initializeApp')
   installPerfProbe()
-  // First, so App Lock's Face ID runs while the first screen renders.
+
   promptUnlockAtLaunch()
   configureLogger(() => usePreferences.getState().developerTools)
-  // Before anything syncs: Android syncs through Google Drive (ADR 0019).
-  // iOS keeps iCloud, and its copy keeps naming iCloud.
+
   if (Platform.OS === 'android')
     registerAndroidSyncTransport(googleDriveTransport)
-  // Cloud Sync (ADR 0030) needs the account key, so only binaries that can
-  // hold one offer it.
+
   if (BuddiesKeychain.isAvailable()) registerCloudSync()
-  // What a save earns the pet rides on the toast that confirms it (ADR 0035).
+
   registerRewardProbe(petRewardProbe)
   registerRewardSample(playPetRewardSample)
 
@@ -44,7 +42,6 @@ export function initializeApp() {
       foregroundPresentation(notification, { audioEnabled: isAudioEnabled() }),
   })
 
-  // Suppress the known Tamagui animated-listener warning.
   LogBox.ignoreLogs([
     'Sending `onAnimatedValueUpdate` with no listeners registered.',
   ])
@@ -59,17 +56,11 @@ export function initializeApp() {
     updateBundleId: hotUpdater.getBundleId(),
   })
 
-  // A launch that reloads for its layout direction leaves the download to the
-  // reloaded launch, so the reload can't pick up a bundle staged meanwhile.
   if (!isLayoutDirectionReloadDue()) void downloadUpdateOnLaunch()
 
-  // Verification hooks (scripts/verify). The require keeps them out of release
-  // bundles because Metro drops the dead branch before resolving it.
   if (__DEV__) {
     require('@/app/dev-harness/installDevHarness').installDevHarness()
   } else if (process.env.EXPO_PUBLIC_PERF_PROBE === '1') {
-    // Profiling builds (scripts/perf). The env var is inlined, so the branch
-    // is dead in every other release bundle too.
     require('@/app/dev-harness/perfSetup').installPerfSetup()
   }
 }

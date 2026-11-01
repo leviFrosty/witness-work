@@ -5,7 +5,6 @@ import type {
   CalendarDestination,
 } from '../../../modules/calendar-bridge'
 
-/** An in-memory CalendarContract: one calendar's events and reminders. */
 const provider = vi.hoisted(() => {
   const state = {
     granted: true,

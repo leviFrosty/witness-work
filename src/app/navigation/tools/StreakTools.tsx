@@ -8,15 +8,10 @@ import { toAsciiDigits } from '@/lib/digits'
 import { usePreferences } from '@/stores/preferences'
 import { ToolList, ToolRow, ToolSection } from '@/app/navigation/tools/ToolsUI'
 
-/** Counts worth a tap (one row): milestones and long runs. */
 const PRESETS = ['off', '0', '3', '5', '9', '30', '120'] as const
-/** Longer than any streak the tools need to fake. */
+
 const MAX_DIGITS = 4
 
-/**
- * Developer Tools: sets the Service Streak count the app shows, for testing the
- * streak chip and card without logging real days.
- */
 export default function StreakTools() {
   const theme = useTheme()
   const recorded = useRecordedServiceStreak()

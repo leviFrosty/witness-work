@@ -31,7 +31,6 @@ import type {
   ScribeWarningCode,
 } from '@/features/scribe/types'
 
-// Far from today, so `reviewDate` shows only the compact date.
 const DAY = '2020-01-15'
 const NO_SPOKEN = { date: null, time: null }
 

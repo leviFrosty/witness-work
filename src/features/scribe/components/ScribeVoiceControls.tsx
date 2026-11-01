@@ -7,7 +7,6 @@ import useTheme from '@/contexts/theme'
 import { localizeDisplayDate } from '@/lib/dates'
 import { formatSecondsSpoken } from '@/lib/minutes'
 
-/** A round icon control with its label under it, like the Phone app's. */
 export const RoundButton = ({
   size,
   icon,
@@ -30,16 +29,10 @@ export const RoundButton = ({
   label: string
   labelColor?: string
   onPress: () => void
-  /**
-   * The ring's color: "you can finish now". The room it needs stays reserved so
-   * the row doesn't shift when `showHalo` turns it on.
-   */
+
   halo?: string
   showHalo?: boolean
-  /**
-   * The square the circle centers in: its size, plus the halo's room. Buttons
-   * of different sizes given the same room share a center and a label line.
-   */
+
   room?: number
   disabled?: boolean
 }) => {
@@ -120,7 +113,6 @@ export const RoundButton = ({
   )
 }
 
-/** The recording dot and how long it has been recording, `m:ss`. */
 export const Elapsed = ({ ms }: { ms: number }) => {
   const theme = useTheme()
   const seconds = Math.floor(ms / 1000)

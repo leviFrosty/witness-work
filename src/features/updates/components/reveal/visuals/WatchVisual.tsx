@@ -44,14 +44,14 @@ import {
 import { tracking } from '@/lib/tracking'
 
 const LOOP_MS = 11000
-// A tenth of an hour divides both, so the total climbs in clean steps.
+
 const MONTH_BEFORE = 32 * 60 + 12
 const ADDED = 90
 const GOAL_HOURS = 50
-// The timer runs in real time, from 1:29:57 until it's paused on 1:30:00.
+
 const TIMER_FROM_S = ADDED * 60 - 3
 const PAUSE_AT = 3000 / LOOP_MS
-/** Moments in the loop, 0–1. */
+
 const T = {
   pause: PAUSE_AT,
   openSave: 0.38,
@@ -59,7 +59,7 @@ const T = {
   save: 0.55,
   pop: 0.68,
   count: 0.75,
-  // The screen dims, and comes back on the first frame.
+
   dim: 0.93,
   restart: 0.97,
 }
@@ -91,15 +91,8 @@ const formatTimer = (seconds: number) => {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`
 }
 
-/** The watch's string for a one-line spot, like `L10n.line`. */
 const line = (key: TranslationKey) => i18n.t(key).replace(/\n/g, ' ')
 
-/**
- * The Apple Watch app, live: the timer ticks, is paused and saved from the
- * wrist, and the month's total — and the Monthly Progress complications beside
- * the watch — move up with it. Roles that don't log hours see the check-off
- * instead.
- */
 const WatchVisual = (props: RevealVisualProps) => {
   const { showsTimeEntry } = usePublisher()
   return showsTimeEntry ? (
@@ -109,7 +102,6 @@ const WatchVisual = (props: RevealVisualProps) => {
   )
 }
 
-/** The loop's own clock: holds its first frame while the screen comes back. */
 const useScene = (loop: DerivedValue<number>) => {
   const scene = useDerivedValue(() =>
     loop.value >= T.restart ? 0 : loop.value
@@ -147,7 +139,6 @@ export const HoursWatch = ({
     reduceMotion ? MONTH_BEFORE + ADDED : MONTH_BEFORE
   )
 
-  // The month's added share, 0–1.
   const added = useDerivedValue(() => seg(scene.value, T.count, T.count + 0.1))
   useAnimatedReaction(
     () =>
@@ -160,7 +151,6 @@ export const HoursWatch = ({
     }
   )
   useAnimatedReaction(
-    // In tenths of an hour, so the total climbs in steps the eye can follow.
     () => Math.round((MONTH_BEFORE + ADDED * added.value) / 6) * 6,
     (now, before) => {
       if (now !== before) scheduleOnRN(setMonth, now)
@@ -173,7 +163,7 @@ export const HoursWatch = ({
   const pauseTap = useTap(scene, T.pause - 0.02)
   const openTap = useTap(scene, T.openSave - 0.02)
   const saveTap = useTap(scene, T.save - 0.02)
-  // 1 while Add Time is pushed over Home.
+
   const nav = useDerivedValue(
     () =>
       seg(scene.value, T.push, T.push + 0.06) -
@@ -192,7 +182,7 @@ export const HoursWatch = ({
   const pausedStyle = useAnimatedStyle(() => ({
     opacity: scene.value < T.pause ? 0 : 1,
   }))
-  // Save Time… stands in for Add Time while there's paused time to save.
+
   const saveRowStyle = useAnimatedStyle(() => ({
     opacity:
       seg(scene.value, T.pause, T.pause + 0.03) *
@@ -550,10 +540,6 @@ export const HoursWatch = ({
   )
 }
 
-/**
- * Regular Publishers who don't log hours check off sharing the good news; the
- * complications swap their dashed circle for a check.
- */
 const CheckboxWatch = ({
   palette,
   active,
@@ -772,7 +758,6 @@ const centered = {
   justifyContent: 'center',
 } as const
 
-/** A small grey heading, like the watch app's section labels. */
 const Caption = ({ children }: { children: string }) => {
   const theme = useTheme()
   return (
@@ -795,7 +780,6 @@ interface RowContent {
   label: string
 }
 
-/** A watch row whose content crossfades between two states. */
 const Swap = ({
   first,
   second,
@@ -837,7 +821,6 @@ const Swap = ({
   </WatchRow>
 )
 
-/** A Digital Crown wheel resting on its value, with its neighbours dimmed. */
 const Wheel = ({
   label,
   values,
@@ -883,7 +866,6 @@ const Wheel = ({
   )
 }
 
-/** A complication on a black watch face, lit as its value changes. */
 const Complication = ({
   accent,
   glowStyle,
@@ -911,7 +893,6 @@ const Complication = ({
       ]}
     >
       {round ? (
-        // Sized to the outer edge, so the ring centers on the border too.
         <View style={{ position: 'absolute', top: -1, left: -1 }}>
           {children}
         </View>

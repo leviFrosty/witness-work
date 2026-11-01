@@ -16,7 +16,6 @@ import { GIFT_KINDS } from '@/types/pet'
 const ADOPTED = '2026-01-01'
 const SEED = petGiftSeed({ seed: 'k3x9q2', adoptedOn: ADOPTED })
 
-/** Every day's life for a pet active every day for `days` days. */
 function dailyLives(days: number, giftSeed = SEED) {
   const activeDays = new Set(
     Array.from({ length: days + 1 }, (_, d) => addDays(ADOPTED, d))
@@ -94,7 +93,7 @@ describe('gifts', () => {
     expect(petGiftSeed({ adoptedOn: '2026-01-02' })).not.toBe(
       petGiftSeed({ adoptedOn: ADOPTED })
     )
-    // An older caller passing only the record id draws from the adoption day.
+
     const activeDays = new Set(
       Array.from({ length: 300 }, (_, d) => addDays(ADOPTED, d))
     )
@@ -133,7 +132,7 @@ describe('gifts', () => {
     )
     expect(ahead).toHaveLength(101)
     expect(ahead).toEqual(lives.slice(300))
-    // Kept while the inputs are the same objects.
+
     const input = {
       adoptedOn: ADOPTED,
       activeDays,
@@ -152,7 +151,7 @@ describe('gifts', () => {
     const index = dayNumber(first.on) - dayNumber(ADOPTED)
     const today = lives[index]
     expect(pendingGift({ life: today, keepsakes: [] })).toEqual(first)
-    // Still there the next day, until the next gift replaces it.
+
     expect(pendingGift({ life: lives[index + 1], keepsakes: [] })).toEqual(
       first
     )
@@ -163,7 +162,7 @@ describe('gifts', () => {
       })
     ).toBeNull()
     expect(pendingGift({ life: null, keepsakes: [] })).toBeNull()
-    // Before 30 days at five there's nothing.
+
     expect(pendingGift({ life: lives[20], keepsakes: [] })).toBeNull()
   })
 
@@ -180,7 +179,7 @@ describe('gifts', () => {
         giftSeed: SEED,
       })
     expect(life(199).gift).not.toBeNull()
-    // Quiet day 10 drops to 4.5.
+
     expect(life(209).gift).toBeNull()
   })
 

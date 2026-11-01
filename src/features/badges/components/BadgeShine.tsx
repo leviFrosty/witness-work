@@ -9,14 +9,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 
-/** The medallion's metal reaches 48% of its box on every side. */
 const RIM_INSET = 0.02
 const BAND_WIDTH = 0.42
 
-/**
- * One soft light sweep across a medallion's metal, clipped to its circle. Lay
- * it over an earned medallion of the same `size`; skip it under Reduce Motion.
- */
 export default function BadgeShine({
   size,
   delay = 0,

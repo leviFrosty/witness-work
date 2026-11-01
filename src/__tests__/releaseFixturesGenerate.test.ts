@@ -1,30 +1,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 
-// Writes this build's release fixture for `releaseUpgrade.test.ts`: the
-// scenario's records saved through the stores' own actions, as every persisted
-// store's MMKV blob (`stores.json`), as Settings → Export writes them
-// (`backup.json`), as sync writes this device's file to iCloud (`icloud.json`)
-// and to Google Drive (`google-drive.json`), and the MMKV instances of their own
-// that hold the User's work (`mmkv.json`). Skipped unless RELEASE_FIXTURE names
-// the version being cut:
-//
-//   RELEASE_FIXTURE=1.45.0 pnpm vitest run src/__tests__/releaseFixturesGenerate.test.ts
-//
-// See `docs/upgrade-fixtures.md`.
-
 const RELEASE = process.env.RELEASE_FIXTURE
 
 const disk = vi.hoisted(() => {
-  // The time zone the scenario's dates are in.
   process.env.TZ = 'America/Chicago'
   return {
     data: new Map<string, string | boolean>(),
     uuid: 0,
-    /** MMKV instances other than the default (`data`), by id. */
+
     instances: new Map<string, Map<string, string | boolean>>(),
     os: 'ios' as 'ios' | 'android',
-    /** Files sync wrote to the cloud, by name. */
+
     cloud: new Map<string, string>(),
   }
 })
@@ -105,8 +92,6 @@ vi.mock('react-native', () => ({
   },
 }))
 
-// Sync's cloud: iCloud's ubiquity container on iOS (here), the Google Drive app
-// data folder on Android (`googleDrive` below).
 vi.mock('../../modules/icloud-bridge', () => ({
   isAvailable: () => true,
   supportsUploadStatus: () => false,
@@ -179,9 +164,7 @@ import type {
   StepTerminalEvent,
 } from '@/features/scribe/lib/wire'
 
-/** The MMKV keys of the persisted stores. */
 const PERSISTED_STORES = [
-  // The User's data.
   'preferences',
   'contacts',
   'conversations',
@@ -190,7 +173,7 @@ const PERSISTED_STORES = [
   'profile',
   'mileage',
   'petCompanion',
-  // This device's settings and bookkeeping.
+
   'app-lock',
   'buddies',
   'calendar-sync',
@@ -203,20 +186,14 @@ const PERSISTED_STORES = [
   'sidebar-layout',
   'split-sheet-layout',
   'streakCelebration',
-  // Scribe AI's conversations, undo records and usage, on this device only.
+
   'scribe-conversations',
   'scribe-ledger',
   'scribe-usage',
 ]
 
-/**
- * MMKV instances of their own that hold more than a cache. Notes Import's
- * ledger (`notes-import-ledger`) is only read now, for Undo; releases before
- * Scribe AI wrote it.
- */
 const MMKV_INSTANCES: string[] = []
 
-/** Android's sync transport, holding its files where iCloud's would be. */
 const googleDrive: SyncTransport = {
   kind: 'google-drive',
   writeConfirmsUpload: true,
@@ -242,11 +219,6 @@ const googleDrive: SyncTransport = {
   addAvailabilityChangeListener: () => ({ remove: () => {} }),
 }
 
-/**
- * Ww-api, answering each Scribe AI turn's one step with what the scenario's
- * model said: its answer, then its write calls, which name records by the Refs
- * the request's context lists.
- */
 const scribeServer: ScribeClient = {
   status: async () => {
     throw new Error('Not read by the fixture')
@@ -293,10 +265,6 @@ const scribeServer: ScribeClient = {
   },
 }
 
-/**
- * The file this device writes when the User turns sync on, on `os`: the
- * per-device snapshot every other device reads.
- */
 async function firstSyncFile(os: 'ios' | 'android') {
   vi.resetModules()
   disk.os = os
@@ -305,7 +273,7 @@ async function firstSyncFile(os: 'ios' | 'android') {
   const { registerAndroidSyncTransport } = await import('@/lib/syncTransport')
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
   if (os === 'android') registerAndroidSyncTransport(googleDrive)
-  // A Supporter turning sync on, with nothing in the cloud yet.
+
   useSupporter.getState().setSupporter(true)
   await applySeedEnable()
   const files = [...disk.cloud].filter(([name]) =>
@@ -334,7 +302,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     const { LDC_BUILTIN_CATEGORY_ID } = await import('@/constants/categories')
     const { createBackupFile } = await import('@/lib/backupFile')
 
-    // A fresh install runs its boot migrations first (`useAppMigrations`).
     const { runCustomFieldsMigration } = await import(
       '@/features/contacts/lib/runCustomFieldsMigration'
     )
@@ -346,7 +313,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     runProfileMigration()
     runLdcCategoryMigration()
 
-    // --- Preferences, changed from their defaults
     const prefs = usePreferences.getState()
     prefs.set({
       onboardingComplete: true,
@@ -399,7 +365,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
       .getState()
       .setMonthlyGoalOverride({ year: 2025, month: 11 }, 30)
 
-    // --- Profile
     useProfile.getState().set({
       name: 'Sam Rivera',
       hasCompletedProfileSetup: true,
@@ -407,7 +372,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
       customAvatarBackground: '#3A7D44',
     })
 
-    // --- Categories
     for (const category of Object.values(CATEGORIES))
       useCategories.getState().addCategory(category)
     useCategories
@@ -415,7 +379,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
       .addCategory({ id: 'cat-gone', name: 'Old category', isCredit: false })
     useCategories.getState().deleteCategory('cat-gone')
 
-    // --- Contacts
     const field = useContacts.getState().addCustomFieldDef(CUSTOM_FIELD.label)
     for (const contact of CONTACTS) {
       useContacts.getState().addContact({
@@ -435,7 +398,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
       )
     useContacts.getState().deleteContact(DELETED_CONTACT_ID)
 
-    // --- Visits
     const toVisit = ({ contactId, ...visit }: { contactId: string }) => ({
       ...visit,
       contact: { id: contactId },
@@ -445,7 +407,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     useConversations.getState().addConversation(toVisit(DELETED_VISIT) as never)
     useConversations.getState().deleteConversation(DELETED_VISIT.id)
 
-    // --- Time entries
     const toEntry = ({ kind, ...entry }: ScenarioEntry) => ({
       ...entry,
       ...(kind === 'ldc'
@@ -462,7 +423,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     useServiceReport.getState().addServiceReport(toEntry(DELETED_ENTRY))
     useServiceReport.getState().deleteServiceReport(toEntry(DELETED_ENTRY))
 
-    // --- Plans
     for (const plan of DAY_PLANS) {
       useServiceReport.getState().addDayPlan({
         ...plan,
@@ -495,7 +455,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
         RECURRING_DELETED_DATE.date
       )
 
-    // --- Mileage
     const mileage = useMileage.getState()
     const created = (date: Date) => date.getTime()
     mileage.saveVehicle({
@@ -555,7 +514,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     })
     useMileage.getState().deleteTrip('trip-gone')
 
-    // --- Pet
     usePet.getState().adopt({
       species: 'dog',
       coat: 'liver',
@@ -566,7 +524,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     usePet.getState().recordWake('2025-09-03')
     usePet.getState().collectKeepsake('olive', '2025-09-03')
 
-    // --- This device's settings and bookkeeping
     const { useAppLockSettings } = await import('@/stores/appLock')
     const { useSidebarPreferences } = await import('@/stores/sidebar')
     const { useSplitSheetPreferences } = await import('@/stores/splitSheet')
@@ -645,8 +602,6 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     useSavedPlaces.getState().set('home', SAVED_PLACES.home)
     useSavedRoutes.getState().save({ ...SAVED_ROUTE, updatedAt: Date.now() })
 
-    // --- Scribe AI: a conversation's two turns, the first one's Proposal added
-    // and the second's waiting with a card unchecked
     const { sendScribeMessage } = await import(
       '@/features/scribe/runtime/turnLoop'
     )
@@ -720,10 +675,9 @@ describe.skipIf(!RELEASE)('release fixture', () => {
         1
       ) + '\n'
     )
-    // What Settings → Export writes.
+
     writeFileSync(`${out}/backup.json`, JSON.stringify(createBackupFile()))
 
-    // What sync writes to the cloud, from the same records.
     const saved = new Map(disk.data)
     for (const [os, file] of [
       ['ios', 'icloud.json'],

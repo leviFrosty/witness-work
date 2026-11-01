@@ -21,11 +21,7 @@ import { tracking } from '@/lib/tracking'
 type Props = {
   segments: CategorySegment[]
   description?: string
-  /**
-   * `header` is the "Categories ›" section header. `legend` renders the
-   * segments as a color key (dot, name, time) that opens the same breakdown —
-   * for sitting directly under a bar that already carries those colors.
-   */
+
   trigger?: 'header' | 'legend'
 }
 

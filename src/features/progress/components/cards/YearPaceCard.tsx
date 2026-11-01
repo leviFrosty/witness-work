@@ -15,7 +15,6 @@ import {
 } from '@/features/progress/components/cards/displayMinutes'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** How much a month it takes to reach the Annual Goal (#358). */
 export default function YearPaceCard({
   month,
   year,
@@ -53,13 +52,10 @@ export default function YearPaceCard({
           {...common}
           value={formatNeededMinutes(pace.perMonthMinutes, timeDisplayFormat)}
           suffix={i18n.t('progressCards.perMonth')}
-          caption={
-            // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('progressCards.yearPace.current', {
-              count: pace.monthsLeft,
-              goal,
-            })
-          }
+          caption={i18n.t('progressCards.yearPace.current', {
+            count: pace.monthsLeft,
+            goal,
+          })}
           detail={i18n.t('progressCards.yearPace.soFar', {
             value: format(total),
             goal,

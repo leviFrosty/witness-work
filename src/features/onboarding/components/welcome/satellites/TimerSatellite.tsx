@@ -10,12 +10,10 @@ import SatelliteSurface, {
 import { tracking } from '@/lib/tracking'
 import useAppActive from '@/hooks/useAppActive'
 
-// A believable session already under way: 1h 24m 07s.
 const STARTED_MS = (84 * 60 + 7) * 1000
-// Seconds per beat of the recording dot.
+
 const PULSE_SECONDS = 1.6
 
-/** A running stopwatch, ticking in real time. */
 const TimerSatellite = ({
   palette,
   focus,
@@ -24,7 +22,7 @@ const TimerSatellite = ({
 }: SatelliteProps) => {
   const theme = useTheme()
   const [elapsed, setElapsed] = useState(STARTED_MS)
-  // Paused while a screen covers Welcome or the app is in the background.
+
   const focused = useIsFocused()
   const appActive = useAppActive()
   const ticking = focused && appActive && !reduceMotion

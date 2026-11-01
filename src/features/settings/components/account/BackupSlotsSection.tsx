@@ -18,11 +18,6 @@ import { logger } from '@/lib/logger'
 import type { BackupSlot } from '@/lib/serverAccount/backupClient'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 
-/**
- * The account's backups, one per device: "This phone" or "Another device"
- * (names are inside the ciphertext), each deletable, plus Restore from Backup
- * and Delete Backup for all of them. Hidden while the account has none.
- */
 export default function BackupSlotsSection({
   slots,
   mySlotId,

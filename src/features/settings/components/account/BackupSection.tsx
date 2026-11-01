@@ -28,22 +28,16 @@ import { formatBytes } from '@/lib/formatBytes'
 import i18n from '@/lib/locales'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 
-/**
- * Settings → Account → Backup: the opt-in switch, when it last backed up (or
- * why it couldn't), and Back Up Now.
- */
 export default function BackupSection({
   accountState,
   onChanged,
 }: {
-  /** The Account section's state, just above: it may already explain a failure. */
   accountState: AccountOverview['state']
-  /** Backup was turned on or off: list the slots again. */
+
   onChanged: () => void
 }) {
   const theme = useTheme()
-  // At accessibility sizes the status sits under its label, so it reads
-  // from the label's edge rather than ragged against the far one.
+
   const largeText = useAccessibilityTextSize()
   const enabled = useBackupState((state) => state.enabled)
   const uploading = useBackupState((state) => state.uploading)

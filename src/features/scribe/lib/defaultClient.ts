@@ -19,7 +19,7 @@ const buildDefaultClient = (): ScribeClient =>
       step: apis.scribeStep,
       transcribe: apis.scribeTranscribe,
     },
-    // React Native's own fetch can't read a streaming body.
+
     streamFetch: expoFetch as unknown as typeof fetch,
     sessions: {
       withSession: (run, call) =>
@@ -30,16 +30,11 @@ const buildDefaultClient = (): ScribeClient =>
     linkBeforePaidCall,
   })
 
-/** The client every Scribe AI call uses: ww-api, or a dev fake. */
 export function scribeClient(): ScribeClient {
   if (override) return override
   return (defaultClient ??= buildDefaultClient())
 }
 
-/**
- * Dev builds: answer every Scribe AI call from `client` (a fake step server for
- * the verification harness), or null to go back to ww-api.
- */
 export function setScribeClientOverride(client: ScribeClient | null): void {
   if (!__DEV__) return
   override = client

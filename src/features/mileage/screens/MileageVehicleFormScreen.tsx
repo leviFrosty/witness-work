@@ -50,10 +50,6 @@ import SharedCarsNotice from '@/features/mileage/components/SharedCarsNotice'
 import { carRemoval } from '@/features/mileage/lib/carRemoval'
 import type { RootStackParamList } from '@/types/rootStack'
 
-/**
- * The car form's People section: who's on a Shared Car, or Share Car… for one
- * of the User's own. Shared Cars lives in the app tier, which supplies it.
- */
 export type CarPeopleSlot = (props: { vehicleId: string }) => ReactNode
 
 type Props = NativeStackScreenProps<
@@ -66,11 +62,6 @@ type Props = NativeStackScreenProps<
 const NO_FUEL = '__none__'
 const NEW_FUEL = '__new__'
 
-/**
- * Add or edit a car: name, the people on it (`renderPeople`), fuel, and
- * effective-dated fuel economy. On a Shared Car, says when its changes aren't
- * being shared, and offers archiving but never deleting.
- */
 export default function MileageVehicleFormScreen({
   route,
   navigation,
@@ -85,17 +76,13 @@ export default function MileageVehicleFormScreen({
   const existing = vehicles.find((v) => v.id === route.params?.vehicleId)
   const editing = route.params?.vehicleId !== undefined
 
-  // Deleted here or on another device, or a Shared Car that ended (left,
-  // stopped, removed): its copy has another id, so this form has nothing to
-  // edit. This is also how the form's own Delete closes it, so it closes once.
   const gone = editing && !existing
   useEffect(() => {
     if (!gone) return
     if (navigation.canGoBack()) navigation.goBack()
-    // Opened on its own (from a link, say): the cars, not an empty form.
     else navigation.replace('MileageSettings')
   }, [gone, navigation])
-  // A Shared Car's setups name its own fuels; the User's cars, theirs.
+
   const fuels = fuelsForVehicle(view, existing?.id)
   const history = existing ? (index.setupsByVehicle.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
@@ -109,17 +96,13 @@ export default function MileageVehicleFormScreen({
       ? current.fuelId
       : NO_FUEL
 
-  // What the User typed or picked, null until they do: until then each field
-  // shows the car as it is now, so Save doesn't write back what changed
-  // meanwhile. Someone else on a Shared Car may rename it or change its fuel,
-  // and Share Car… moves its setups onto the car's own copies of its fuels.
   const [typedName, setName] = useState<string | null>(null)
   const [pickedFuel, setFuel] = useState<string | null>(null)
   const [typedEconomy, setEconomy] = useState<string | null>(null)
   const [newFuelName, setNewFuelName] = useState('')
   const [newFuelPrice, setNewFuelPrice] = useState('')
   const name = typedName ?? existing?.name ?? ''
-  // A fuel picked before Share Car… isn't one the car can name anymore.
+
   const fuel =
     pickedFuel !== null &&
     (pickedFuel === NO_FUEL ||
@@ -234,7 +217,6 @@ export default function MileageVehicleFormScreen({
     navigation.goBack()
   }
 
-  // The form closes as the car goes (`gone`).
   const remove = () => {
     if (existing) deleteVehicle(existing.id)
   }
@@ -243,7 +225,7 @@ export default function MileageVehicleFormScreen({
 
   const requestRemove = () => {
     if (!existing || !removal) return
-    // A Shared Car is everyone's: it can be archived for all, not deleted.
+
     if (!removal.delete) {
       Alert.alert(
         i18n.t('mileage.archiveSharedCar_title'),
@@ -429,8 +411,7 @@ export default function MileageVehicleFormScreen({
                 onPress={requestRemove}
                 style={{ alignItems: 'center', paddingVertical: 12 }}
               >
-                {/* Archiving a Shared Car takes nothing away from anyone, so
-                    only the choice that can delete reads as destructive. */}
+                {}
                 <Text
                   style={{
                     color: removal.delete

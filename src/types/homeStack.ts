@@ -1,11 +1,10 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 
-/** The Contacts tab's two workspaces. */
 export type ContactsView = 'list' | 'map'
 
 export type HomeTabStackParamList = {
   Home: undefined
-  /** `view` opens a workspace and remembers it, e.g. the Map from Home. */
+
   Contacts: { view?: ContactsView; focusSearch?: boolean } | undefined
   Tools: undefined
   Progress:
@@ -19,12 +18,12 @@ export type HomeTabStackParamList = {
     | {
         month?: number
         year?: number
-        /** `YYYY-MM-DD`; opens that day's sheet, e.g. from the Calendar widget. */
+
         date?: string
       }
     | undefined
   Settings: undefined
-  /** Beside the iPad sidebar only; elsewhere Buddies is a root stack page. */
+
   Buddies: undefined
 }
 

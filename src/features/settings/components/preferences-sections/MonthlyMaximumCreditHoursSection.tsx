@@ -14,17 +14,16 @@ const MonthlyMaximumCreditHoursSection = () => {
   const theme = useTheme()
   const { creditCapMinutes } = usePublisher('standing')
   const { overrideCreditLimit, set } = usePreferences()
-  // This input is explicitly in hours; 0 is the stored unlimited sentinel.
+
   const limitHours = creditCapMinutes === null ? 0 : creditCapMinutes / 60
   const [draft, setDraft] = useState<string | null>(null)
 
   const changeLimit = (value: string) => {
-    // Any digits the keyboard types: 0-9 or Arabic-Indic.
     if (!isDigitsOnlyInput(value)) return
     const hours = parseIntegerInput(value)
     if (hours !== undefined && hours > 200) return
     setDraft(value)
-    // Clearing the input is an editing step, not a request for unlimited credit.
+
     if (hours === undefined || hours === limitHours) return
     set({ overrideCreditLimit: true, customCreditLimitHours: hours })
   }

@@ -1,15 +1,3 @@
-/**
- * Pixel snapshots: hashes of rendered art. When the port landed, sprites, room
- * bases and t = 0 scenes matched the original design board pixel for pixel. If
- * a hash changes on purpose, look at the gallery (`PET_GALLERY=1`) before
- * updating it.
- */
-
-/**
- * FNV-1a hashes of every species × coat × mood sprite at t = 0 (idle pose, seed
- * 1000). Changed on purpose since the port: the pup is redrawn by hand as a
- * golden retriever, and drops its jaw when it sticks its tongue out.
- */
 export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'lion/default/happy': 'ac26fd80',
   'lion/default/content': 'ac26fd80',
@@ -148,12 +136,6 @@ export const SPRITE_HASHES: Readonly<Record<string, string>> = {
   'lamb/default/wide': '54703b8d',
 }
 
-/**
- * FNV-1a hashes of the sample scenes in `scenes.ts`. Changed on purpose since
- * the port: the window's cross bars darken with the room like its frame (the
- * board lit them like glass), the lamp flicker is rounded to 0.1 px, the pup is
- * redrawn as a golden retriever, and a visitor sits just behind the pet.
- */
 export const SCENE_HASHES: Readonly<Record<string, string>> = {
   winterNight: '4549e407',
   springMorning: 'd206b5f9',

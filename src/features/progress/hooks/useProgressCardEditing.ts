@@ -19,26 +19,18 @@ import { usePreferences } from '@/stores/preferences'
 
 export type ProgressCardEditSource = 'footer' | 'card' | 'add'
 
-/** Each tab edits on its own, so one tab's Done doesn't end another's. */
 const SURFACE: Record<ProgressCardScope, string> = {
   month: 'progress',
   year: 'progressYear',
   allTime: 'progressAllTime',
 }
 
-/** `progress_cards_customized`'s `tab`. */
 const TAB: Record<ProgressCardScope, string> = {
   month: 'month',
   year: 'year',
   allTime: 'all_time',
 }
 
-/**
- * Edit mode for a Progress tab's cards. Changes save as they're made; finishing
- * reports what changed once (`progress_cards_customized`). Leaving the screen
- * finishes editing, and Android's Back finishes it rather than leaving. Call it
- * once per tab, from the screen.
- */
 export default function useProgressCardEditing(scope: ProgressCardScope) {
   const { monthlyGoalHours, hasAnnualGoal, showsTimeEntry } = usePublisher()
 
@@ -85,7 +77,7 @@ export default function useProgressCardEditing(scope: ProgressCardScope) {
       const before = snapshot as ProgressCardLayoutItem<string>[]
       const { stored, layout } = current()
       if (sameProgressCards(before, layout)) return
-      // An edit back to the defaults stores `null` (see useProgressCardLayout).
+
       analytics.capture('progress_cards_customized', {
         tab: TAB[scope],
         source,

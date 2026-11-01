@@ -98,17 +98,11 @@ function GroupDivider() {
   )
 }
 
-/**
- * The note editor's formatting bar. It rides on top of the keyboard (or sits at
- * the bottom when there's none, e.g. with a hardware keyboard). The tools
- * scroll sideways when they don't fit; dismissing the keyboard stays pinned on
- * the right. The same bar on iOS and Android.
- */
 const RichTextToolbar = (props: {
   format: EditorFormatState
   run: (command: EditorCommand) => void
   onLink: () => void
-  /** Hidden when photos can't be added to this note. */
+
   onAddPhoto?: (source: 'camera' | 'library') => void
   onDismissKeyboard: () => void
   keyboardVisible: boolean
@@ -277,7 +271,7 @@ const RichTextToolbar = (props: {
       accessibilityRole='toolbar'
       accessibilityLabel={i18n.t('richText_formatting')}
     >
-      {/* The tools keep to the note's column on a wide screen. */}
+      {}
       <View
         style={{
           flex: 1,

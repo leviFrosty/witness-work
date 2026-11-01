@@ -39,14 +39,13 @@ describe('formatNumber', () => {
     setNumberConventions({ language: 'en-us', deviceRegion: 'DE' })
     expect(formatNumber(1234.5)).toBe('1.234,5')
     setNumberConventions({ language: 'de-de', region: 'de-ch' })
-    // The Swiss apostrophe varies by ICU version.
+
     expect(formatNumber(1234.5)).toMatch(/^1\S234\.5$/)
     setNumberConventions({ language: 'ru-ru', deviceRegion: 'RU' })
     expect(formatNumber(1234.5)).toMatch(/^1\s234,5$/)
   })
 
   it('keeps Latin digits for Latin-digit Languages in an Arabic-digit region', () => {
-    // ICU writes `ar-EG` and `fa` in their own digits unless told otherwise.
     for (const region of ['ar', 'ar-EG', 'ar-SA', 'fa']) {
       setNumberConventions({ language: 'en-us', region })
       expect(formatNumber(1234.5)).toMatch(/^1\D?234\.5$/)

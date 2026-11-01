@@ -24,20 +24,13 @@ import checkIcon from '@/assets/icons/check.xml'
 
 type MenuItemsProps = {
   groups: ContextMenuItem[][]
-  /** The open submenu, whose actions replace the menu's items. */
+
   submenu: ContextMenuSubmenu | null
   onSubmenuChange: (submenu: ContextMenuSubmenu | null) => void
-  /** Closes the menu and runs the action. */
+
   onSelect: (action: ContextMenuAction) => void
 }
 
-/**
- * Material contents shared by `ContextMenu` and `PullDownMenu`: dividers
- * between groups, leading icons for mapped SF Symbols (labels stay aligned when
- * only some have one), and checked actions as radio items with a trailing
- * check. A submenu replaces the menu's items in place, led by an item that goes
- * back.
- */
 export default function MenuItems({
   groups,
   submenu,
@@ -99,7 +92,6 @@ export default function MenuItems({
   const action = (entry: ContextMenuAction) =>
     item(entry.id, entry.title, () => onSelect(entry), entry)
 
-  // Radio items need a selectable group around them for TalkBack.
   const group = (items: ContextMenuItem[]) => {
     const rendered = items.map((entry) =>
       isSubmenu(entry)

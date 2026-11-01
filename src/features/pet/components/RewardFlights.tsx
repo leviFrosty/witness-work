@@ -32,11 +32,6 @@ const measure = (ref: Measurable) =>
     }
   )
 
-/**
- * What a gain brings, pixel coins flying from the pet to its count, more of
- * them the bigger the gain (`REVEAL_FLIGHTS`). Fills its parent, which
- * `containerRef` measures, and takes no touches.
- */
 export default function RewardFlights({
   pulse,
   containerRef,
@@ -47,7 +42,7 @@ export default function RewardFlights({
 }: {
   pulse: GainPulse | null
   containerRef: Measurable
-  /** The pet's scene, showing `viewport`. */
+
   sceneRef: Measurable
   viewport: Viewport
   iconRef: Measurable
@@ -114,7 +109,6 @@ function Burst({
       from={path.from}
       to={path.to}
       delay={i * FLIGHT_STAGGER_MS}
-      // Each leaves a little to the side of the last, so they fan out.
       lean={(i % 2 ? -1 : 1) * Math.ceil(i / 2) * 10}
       iconScale={iconScale}
     />

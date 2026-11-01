@@ -23,11 +23,6 @@ const toHex = (r: number, g: number, b: number) =>
     .join('')
     .toUpperCase()
 
-/**
- * Linearly mix two hex colors in RGB space. `ratio` of 0 returns `hex`, 1
- * returns `target`. Values in between interpolate. Used to derive lighter
- * ("alt") or darker shades from a custom accent.
- */
 export const mix = (hex: string, target: string, ratio: number): string => {
   const [r1, g1, b1] = parseHex(hex)
   const [r2, g2, b2] = parseHex(target)
@@ -38,20 +33,12 @@ export const mix = (hex: string, target: string, ratio: number): string => {
   )
 }
 
-/**
- * Append an 8-bit alpha channel to a 6-char hex color. Matches the `#RRGGBBAA`
- * form used by the existing translucent palette entries.
- */
 export const withAlpha = (hex: string, alpha: number): string => {
   const h = hex.replace('#', '').padEnd(6, '0').slice(0, 6).toUpperCase()
   const a = clamp(alpha).toString(16).padStart(2, '0').toUpperCase()
   return `#${h}${a}`
 }
 
-/**
- * WCAG relative luminance (0 = black, 1 = white). Perceptual, not naive average
- * — green carries far more weight than blue.
- */
 export const relativeLuminance = (hex: string): number => {
   const [r, g, b] = parseHex(hex)
   const channel = (n: number) => {
@@ -61,11 +48,6 @@ export const relativeLuminance = (hex: string): number => {
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
 }
 
-/**
- * WCAG contrast ratio (1–21) of `foreground` over an opaque `background`. A
- * `#RRGGBBAA` foreground is blended over the background first, the way it
- * renders. AA asks 4.5 for text, 3 for large text and for icons and controls.
- */
 export const contrastRatio = (foreground: string, background: string) => {
   const h = foreground.replace('#', '')
   const alpha = h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1
@@ -75,11 +57,6 @@ export const contrastRatio = (foreground: string, background: string) => {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 }
 
-/**
- * Pick a contrasting foreground for a given background. Returns `light` on dark
- * backgrounds and `dark` on light ones so text/icons stay legible regardless of
- * the user-picked hero tint.
- */
 export const getReadableTextColor = (
   background: string,
   {

@@ -18,12 +18,6 @@ const findContact = (id: string) =>
 
 let running: Promise<void> | null = null
 
-/**
- * Looks up the addresses of Contacts saved while the lookup failed (usually
- * offline at the door), so they get their pin on the Map, in Nearby and in
- * route planning. Each retry waits out its backoff, and is dropped once its
- * Contact is gone, gets a hand-placed pin, or changes address.
- */
 export function retryFailedGeocodes(): Promise<void> {
   running ??= run().finally(() => {
     running = null
@@ -36,7 +30,7 @@ async function run() {
   if (queue.queue.length === 0 || isKnownOffline()) return
   const { dataProtectionMode, incrementGeocodeApiCallCount } =
     usePreferences.getState()
-  // Data protection mode never sends householder addresses to the lookup.
+
   if (dataProtectionMode) {
     queue.clear()
     return
@@ -59,7 +53,7 @@ async function run() {
           .getState()
           .updateContact({ id: contact.id, coordinate: position })
       }
-      // Found, or HERE has no match for it: either way, done.
+
       queue.settle(entry, null)
     } catch (error) {
       const kind = classifyNetworkError(error)
@@ -69,13 +63,12 @@ async function run() {
           ? afterFailedGeocodeRetry(entry, Date.now())
           : null
       )
-      // The rest would fail the same way.
+
       if (kind === 'offline') return
     }
   }
 }
 
-/** Retries failed address lookups at launch, on return, and on reconnect. */
 export function useGeocodeRetries(ready: boolean | undefined) {
   useEffect(() => {
     if (!ready) return

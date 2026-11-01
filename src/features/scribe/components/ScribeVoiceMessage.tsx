@@ -19,10 +19,6 @@ interface Props {
   secondary?: Action
 }
 
-/**
- * What the voice sheet shows instead of the orb when it needs something from
- * the User: microphone priming, access turned off, an error, or nothing heard.
- */
 const ScribeVoiceMessage = ({
   icon,
   tone = 'accent',
@@ -36,8 +32,6 @@ const ScribeVoiceMessage = ({
   const bodyFit = useUnbrokenWords(body)
   const color = tone === 'warn' ? theme.colors.warnText : theme.colors.accent
   return (
-    // Scrolls when large text makes it taller than the sheet, so its buttons
-    // stay reachable.
     <ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{

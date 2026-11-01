@@ -41,10 +41,8 @@ describe('getServiceYearTotalsByEndYear', () => {
 
   it('reads rehydrated and unanchored dates on their stored calendar day', () => {
     const totals = getServiceYearTotalsByEndYear([
-      // As JSON brings them back.
       entry('2025-09-01T12:00:00.000Z', 1),
-      // 9 AM on Sep 1 in Auckland is still Aug 31 in UTC; the stored day is
-      // Sep 1, as `momentStoredDate` reads it.
+
       entry(new Date(2025, 8, 1, 9), 2),
     ])
 

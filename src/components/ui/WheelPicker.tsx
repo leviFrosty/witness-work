@@ -28,12 +28,11 @@ interface Props<T extends string | number> {
   data: ReadonlyArray<PickerItem<T>>
   value: T
   onValueChange: (value: T) => void
-  /** What the wheel picks, read by screen readers ("Hours"). */
+
   accessibilityLabel: string
   testID?: string
 }
 
-/** Whether VoiceOver or TalkBack is running, kept current. */
 const useScreenReaderEnabled = () => {
   const [enabled, setEnabled] = useState(false)
   useEffect(() => {
@@ -74,7 +73,6 @@ const SelectionOverlay = ({
   </View>
 )
 
-/** The library's own row text. */
 const WheelItem = (props: {
   value: string | number
   label?: string
@@ -88,11 +86,6 @@ const WheelItem = (props: {
   )
 }
 
-/**
- * The library's row container (its `PickerItemContainer`), plus a testID per
- * value (`<wheel testID>-<value>`) on the tappable row, the element tests see,
- * so a test can pick a value that other numbers on screen also show.
- */
 const WheelItemContainer = <T extends string | number>({
   listRef,
   index,
@@ -121,7 +114,6 @@ const WheelItemContainer = <T extends string | number>({
             extrapolate: 'clamp',
           }),
           transform: [
-            // translateY before rotateX, for the right transformation.
             {
               translateY: offset.interpolate({
                 inputRange,
@@ -136,7 +128,7 @@ const WheelItemContainer = <T extends string | number>({
                 extrapolate: 'extend',
               }),
             },
-            // Without this the rotation doesn't render on Android.
+
             { perspective: 1000 },
           ],
         }}
@@ -147,16 +139,6 @@ const WheelItemContainer = <T extends string | number>({
   )
 }
 
-/**
- * JavaScript-only wheel picker. It preserves the previous 216pt iOS wheel
- * layout without mounting UIPickerView, whose Fabric hit-testing race caused
- * Issue JW-TIME-BK.
- *
- * Screen readers get one adjustable control over the wheel: it reads the
- * selected row, and swiping up or down moves one row. While one runs, the rows
- * leave the accessibility tree; otherwise they stay for Voice Control and UI
- * tests, which press a row by its testID.
- */
 const WheelPicker = <T extends string | number>({
   data,
   value,
@@ -166,7 +148,7 @@ const WheelPicker = <T extends string | number>({
 }: Props<T>) => {
   const theme = useTheme()
   const screenReader = useScreenReaderEnabled()
-  // Quidone shows the first row when the value isn't in the data.
+
   const index = Math.max(
     data.findIndex((item) => item.value === value),
     0
@@ -233,9 +215,6 @@ const WheelPicker = <T extends string | number>({
 
 const styles = StyleSheet.create({
   picker: {
-    // Quidone's transformed, tappable rows intentionally render outside its
-    // ScrollView. Clip them to the wheel so their hitboxes cannot cover sheet
-    // actions after the selected row moves away from the first item.
     overflow: 'hidden',
   },
   overlay: {

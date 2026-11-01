@@ -1,9 +1,3 @@
-/**
- * PNG gallery of every sprite, part and motion, for eyeballing the art. Off by
- * default; run with `PET_GALLERY=1 pnpm vitest run
- * src/features/pet/art/gallery`. Writes to `.verify/pet-gallery/`
- * (gitignored).
- */
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -147,7 +141,6 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
       )
     }
 
-    // Large values (decimals dropped, then capped): `signs-<digits>-large`.
     const BIG_SIGN_DATA = {
       ...DEMO_SIGN_DATA,
       monthMinutes: 80010,
@@ -310,8 +303,6 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
     }
     write('motion/wake-cat.png', motionStrip('cat', 'wake'), 2)
 
-    // Every hat on every species (default coat), and on a bobbing, joyful
-    // pup; one row per species.
     const hatCells: PixelBuffer[] = []
     for (const species of PET_SPECIES_IDS)
       for (const hat of HAT_IDS)

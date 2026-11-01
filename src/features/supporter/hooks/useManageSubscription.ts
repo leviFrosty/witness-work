@@ -43,7 +43,6 @@ class PauseOfferUnavailableError extends Error {
   code = 'offer_unavailable'
 }
 
-/** Errors a user can hit without anything being broken on our side. */
 const EXPECTED_PAUSE_ERRORS = new Set<string>([
   'offer_unavailable',
   PURCHASES_ERROR_CODE.INELIGIBLE_ERROR,
@@ -75,10 +74,6 @@ const statusLabel = (state: ManageSubscriptionState): string | null => {
   }
 }
 
-/**
- * Subscription status for rows and cards. Skips the store-product lookup, so
- * pause options always read as unavailable here.
- */
 export const useSubscriptionStatus = () => {
   const { customer } = useCustomer()
   const pause = usePauseRecord()
@@ -92,7 +87,6 @@ export const useSubscriptionStatus = () => {
   return { state, label: statusLabel(state) }
 }
 
-/** Store data and actions behind the Manage Subscription sheet. */
 const useManageSubscription = (
   open: boolean,
   source: ManageSubscriptionSource
@@ -106,7 +100,7 @@ const useManageSubscription = (
     identifier: string
     attempt: number
     product: PurchasesStoreProduct | null
-    /** Why the lookup failed, if it did. */
+
     error: 'offline' | 'failed' | null
   } | null>(null)
   const [pausingMonths, setPausingMonths] = useState<number | null>(null)
@@ -119,8 +113,7 @@ const useManageSubscription = (
     productIdentifier && lookup?.identifier === productIdentifier
       ? lookup.product
       : null
-  // Without the product, pause options can't be offered; say so with a retry
-  // rather than leaving them out.
+
   const productError = productIdentifier && lookedUp ? lookup.error : null
 
   useEffect(() => {
@@ -165,8 +158,6 @@ const useManageSubscription = (
     store: sub?.store ?? 'none',
   }
 
-  // Once per open, after the product lookup settles so pause availability is
-  // final.
   useEffect(() => {
     if (!open) {
       viewed.current = false
@@ -195,9 +186,7 @@ const useManageSubscription = (
   const refresh = async () => {
     try {
       await Purchases.invalidateCustomerInfoCache()
-    } catch {
-      // Revalidating still fetches; a stale cache only delays the update.
-    }
+    } catch {}
     await revalidate()
   }
 
@@ -249,17 +238,12 @@ const useManageSubscription = (
     }
   }
 
-  /**
-   * Opens the store's own subscription management, where cancelling, changing
-   * the amount, and Google Play pauses happen.
-   */
   const openStore = async (intent: StoreIntent) => {
     analytics.capture('supporter_manage_store_opened', {
       ...eventProperties,
       intent,
     })
     if (storePlatform === 'android') {
-      // Play opens outside the app; refresh once the user comes back.
       const listener = AppState.addEventListener('change', (next) => {
         if (next !== 'active') return
         listener.remove()

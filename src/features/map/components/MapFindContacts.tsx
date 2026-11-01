@@ -38,19 +38,12 @@ const alertOffline = () =>
     i18n.t('couldNotFetchCoordinatesFromAddress')
   )
 
-/**
- * Offers to look up the addresses of active Contacts that have one but no pin
- * (from an import, a restore, or a skipped Map setup), the way the Map's setup
- * does, with progress and a way to stop. Hidden in data protection mode, which
- * never sends householder addresses for lookup.
- */
 export default function MapFindContacts({
   hidden,
   onFound,
 }: {
-  /** Keeps a running lookup going while something covers the row. */
   hidden?: boolean
-  /** Some Contacts got their pin. */
+
   onFound: () => void
 }) {
   const theme = useTheme()
@@ -74,7 +67,6 @@ export default function MapFindContacts({
     ? []
     : contactsToFind(contacts, new Set(skipped))
 
-  // Leaving the Map stops the lookup; pins found so far stay.
   useEffect(() => () => controller.current?.abort(), [])
 
   useEffect(() => {
@@ -106,7 +98,7 @@ export default function MapFindContacts({
     })
     if (controller.current === run) controller.current = null
     const cancelled = run.signal.aborted && !wentOffline
-    // An address the lookup can't match isn't offered again until it changes.
+
     if (notFound.length > 0) skipPinLookups(notFound)
     analytics.capture('map_find_contacts_result', {
       outcome: wentOffline ? 'offline' : cancelled ? 'cancelled' : 'completed',
@@ -236,10 +228,7 @@ export default function MapFindContacts({
     <View style={{ flexDirection: 'row', gap: 8 }}>
       <Button variant='glass' onPress={find} style={pillStyle}>
         {icon(MapPinnedIcon)}
-        {label(
-          // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('map_findContacts', { count: toFind.length })
-        )}
+        {label(i18n.t('map_findContacts', { count: toFind.length }))}
       </Button>
       {closeButton(i18n.t('hide'), hide)}
     </View>

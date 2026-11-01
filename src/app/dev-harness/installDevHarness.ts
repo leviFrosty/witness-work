@@ -102,11 +102,6 @@ import {
   type FakeGoogleDrive,
 } from '@/lib/syncTransport/googleDrive/googleDriveAuth'
 
-/**
- * The fake Google Drive this dev build syncs with, if any (see
- * `scripts/verify/fake-google-drive-server.mjs`). Persisted so it applies from
- * launch, before sync first runs, and kept across seeds.
- */
 const FAKE_GOOGLE_DRIVE_KEY = 'devFakeGoogleDrive'
 
 function applyFakeGoogleDrive(config: FakeGoogleDrive | null) {
@@ -130,12 +125,7 @@ type CapturedError = {
 const MAX_ERRORS = 50
 const errors: CapturedError[] = []
 
-/**
- * Console.error noise that isn't an app failure. Keep each entry justified;
- * fatal and uncaught errors are never filtered.
- */
 const BENIGN_CONSOLE_ERRORS = [
-  // Fabric logs this when a keyboard-aware scroll measures an unmounted view.
   /viewIsDescendantOf\(\) noop: Cannot find view with reactTag/,
 ]
 
@@ -171,19 +161,11 @@ function captureErrors() {
 
 type OpenAlert = { title: string; buttons: string[]; cancel?: string }
 
-/** Alerts on screen now, newest last (`Alert.alert` is native, out of reach). */
 const openAlerts: OpenAlert[] = []
 
-/**
- * Notes each `Alert.alert` until one of its buttons (or Android's tap outside)
- * closes it, so the harness knows which button to press to clear the screen:
- * agent-device's own alert query times out over a busy iOS screen.
- */
 function trackAlerts() {
   const show = Alert.alert
   Alert.alert = (title, message, buttons, options) => {
-    // With no buttons the system shows a lone OK, which reports nothing back;
-    // the entry then stays until the harness forgets it.
     const list: AlertButton[] = buttons ?? []
     const entry: OpenAlert = {
       title,
@@ -202,7 +184,6 @@ function trackAlerts() {
         ...button,
         onPress: (value?: string) => {
           close()
-          // A prompt passes its text; an alert passes nothing.
           ;(button.onPress as ((value?: string) => void) | undefined)?.(value)
         },
       })),
@@ -217,15 +198,9 @@ function trackAlerts() {
   }
 }
 
-/**
- * The navigation container a `remount()` replaces; the new one is ready once
- * `navigationRef` points elsewhere and its first screen is up.
- */
 let remountedFrom: unknown
 
 function remount() {
-  // The remount lands on Home already; a seed's later move there would undo
-  // a screen opened right after it.
   cancelSeedRootReset()
   remountedFrom = navigationRef.current
   triggerDevRemount()
@@ -249,13 +224,13 @@ function summary() {
     dayPlans: reports.dayPlans.length,
     badges: Object.keys(preferences.earnedBadges).length,
     route: route ? { name: route.name, params: route.params } : null,
-    // The root stack's screens, bottom first, to catch a screen pushed twice.
+
     stack: navigationRef.isReady()
       ? (navigationRef.getRootState()?.routes.map((r) => r.name) ?? [])
       : [],
-    // false at the app's root, where Android back would leave the app
+
     canGoBack: navigationRef.isReady() && navigationRef.canGoBack(),
-    // false until the screens a `remount()` asked for have mounted
+
     ready:
       navigationRef.current !== remountedFrom &&
       navigationRef.isReady() &&
@@ -269,21 +244,16 @@ function seed(name: string) {
   const fakeDrive = mmkvStorage.getString(FAKE_GOOGLE_DRIVE_KEY)
   const forceRtl = isDevForceRtl()
   seedScenario(name)
-  // A flow that stopped while the app was gated leaves the next one a clean app.
+
   appUpdateHarness.clear()
   useUpdateRequired.setState({ required: null })
   usePendingUpdate.setState({ bundleId: null })
   if (fakeDrive) mmkvStorage.set(FAKE_GOOGLE_DRIVE_KEY, fakeDrive)
-  // A seed keeps the layout direction it found (Tools → Force Right to Left).
+
   if (forceRtl) setDevForceRtl(true)
   return summary()
 }
 
-/**
- * Dev builds only. Exposes `globalThis.__WW_DEV__` so verification scripts can
- * seed state, flip flags, navigate, and read state back over Hermes CDP
- * (`scripts/verify/ww-verify.mjs eval`). See the verify-witnesswork skill.
- */
 export function installDevHarness() {
   if (!__DEV__) return
   captureErrors()
@@ -295,24 +265,20 @@ export function installDevHarness() {
     seed,
     reset: () => seed('fresh'),
     state: summary,
-    /**
-     * Alerts still on screen (`{ title, buttons, cancel }`); `wwv flow` presses
-     * one of their buttons before each flow.
-     */
+
     alerts: () => [...openAlerts],
-    /** Forgets alerts the harness pressed away. */
+
     forgetAlerts: () => {
       openAlerts.length = 0
       return true
     },
-    /** Launch milestones and work counters since launch (src/lib/perf). */
+
     perf: () => perf.snapshot(),
     errors: () => [...errors],
     clearErrors: () => {
       errors.length = 0
     },
-    // LogBox banners cover the tab bar; errors stay captured above and
-    // warnings stay in the Metro log.
+
     quietLogBox: (quiet = true) => {
       LogBox.ignoreAllLogs(quiet)
       return quiet
@@ -321,64 +287,35 @@ export function installDevHarness() {
       setDevFlagOverride(flag, value)
       return value
     },
-    /** A flag's JSON payload, as PostHog would send it; undefined to clear. */
+
     setFlagPayload: (flag: FeatureFlag, payload: JsonType | undefined) => {
       setDevFlagPayloadOverride(flag, payload)
       return payload
     },
-    /**
-     * Starts the Buddies relay check; read the report afterwards from
-     * `stores.buddiesDiagnostics.getState().relayCheck` (eval doesn't await).
-     */
+
     checkBuddiesRelay: () => {
       void checkBuddiesRelay()
       return 'started'
     },
-    /**
-     * Runs the Buddies known-answer crypto vectors in this runtime (Hermes on
-     * iOS or Android); `{ ok, checked, mismatches }`.
-     */
+
     checkBuddiesCryptoVectors: () => checkCryptoVectors(),
-    /**
-     * Runs the Shared Spaces known-answer vectors in this runtime (Hermes on
-     * iOS or Android); `{ ok, checked, mismatches }`.
-     */
+
     checkSharedSpacesCryptoVectors: () => checkSpaceVectors(),
-    /**
-     * Shared Cars on the app's engine: `state()`, then `shareCar`,
-     * `createInvite`, `joinCar`, `sync`, `leaveCar`, `removeMember`,
-     * `stopSharing`, and `live()` for each car's live signal. Calls return
-     * promises (eval doesn't await); `last()` holds the latest result.
-     */
+
     sharedCars: sharedCarsHarness,
-    /**
-     * The Buddies engine, to pair two devices and sync without tapping through
-     * Buddies: `createInvite()` here, `acceptInvite(link)` on the other device,
-     * then `confirmClaim(inviteId)` here. Calls return promises (eval doesn't
-     * await), so read the store back afterwards.
-     */
+
     buddiesEngine,
-    /**
-     * Android: sync with a local fake Google Drive instead of Google, as the
-     * account `account` (null switches back to real Google).
-     */
+
     fakeGoogleDrive: applyFakeGoogleDrive,
-    /**
-     * Builds the APNs payload the relay would send this device for an inbox
-     * event (`{ seq?, inline? }`); read it a moment later with
-     * `buddiesPushPayload()` and replay it with `xcrun simctl push`.
-     */
+
     prepareBuddiesPush,
     buddiesPushPayload: preparedBuddiesPush,
-    /** This device's push token; `devicePushToken()` a moment later. */
+
     prepareDevicePushToken,
     devicePushToken,
-    /** The sync engine, for reading state back; drive changes through the UI. */
+
     sync: iCloudSync,
-    /**
-     * The route builder's San Francisco stops (Tools → Generate today's route)
-     * on the day `daysFromToday` away; re-running a day changes nothing.
-     */
+
     seedRoute: (daysFromToday = 0) => {
       const fixture = buildTodayRouteFixture({
         now: moment().add(daysFromToday, 'days'),
@@ -399,10 +336,7 @@ export function installDevHarness() {
       )
       return fixture.visits.length + fixture.dayPlans.length
     },
-    /**
-     * A tidy demo day for the route builder (one neighborhood, a meeting for
-     * field service, five Follow-ups) `daysFromToday` away.
-     */
+
     seedRouteDemo: (daysFromToday = 1) => {
       const fixture = buildRouteDemoFixture({
         day: moment().add(daysFromToday, 'days'),
@@ -420,28 +354,14 @@ export function installDevHarness() {
         .set({ devSupporterOverride: on ? new Date() : null })
       return on
     },
-    /**
-     * Marks an action the User took, as Add Time's save does (ADR 0021): for
-     * the next 15 s, a badge or pet item it brings shows an unlock toast and a
-     * streak milestone celebrates full screen. Without it, they arrive quietly
-     * (the notifications tray, the chip flare).
-     */
+
     noteUserAction: (kind: UserActionKind = 'dev') => noteUserAction(kind),
-    /**
-     * The takeover arbiter: `state()` shows what's on screen, waiting, and
-     * holding; `store` is the live zustand store.
-     */
+
     takeover: {
       state: () => takeoverSnapshot(),
       store: useTakeover,
     },
-    /**
-     * Badge controls (see `dev-harness/badges.ts`). `evaluate()` evaluates as
-     * after a change: live badges show unlock toasts only within 15 s of
-     * `noteUserAction()`, and wait in the tray otherwise; `evaluate(true)`
-     * files everything quietly. `celebrate(key)` follows the same rule;
-     * `moment(key)` opens a badge's full-screen celebration directly.
-     */
+
     badges: {
       evaluate: (quiet = false) =>
         evaluateBadgesNow({ quiet, action: recentUserAction() }),
@@ -462,79 +382,32 @@ export function installDevHarness() {
       },
       state: badgeHarnessState,
       simulateBuddyBadge: () => simulateBuddyBadge(),
-      /** A buddy's reaction to one of my badges (`yearRound.2`, `party`). */
+
       simulateBuddyReaction: (badgeKey?: string, emoji?: string) =>
         simulateBuddyReaction(badgeKey, emoji),
     },
-    /**
-     * The account key and server account: `account.read()`, then
-     * `account.last`; `account.randomRecoveryKey()` for a valid key to enter.
-     */
+
     account: accountHarness,
-    /**
-     * Set Up Another Device: `handoff.state()` (role, step, status, code, the
-     * request log), `handoff.link()` (the QR link while one shows), and
-     * `handoff.selfTest()` then `handoff.selfTestResult`.
-     */
+
     handoff: handoffHarness,
-    /**
-     * The account backup: `backup.state()`; `enable()`, `uploadNow()`,
-     * `list()`, `inspect()` (decrypted slots as counts), `dryRun()`,
-     * `offerRestore()`, `deleteAll()`, then `backup.last`.
-     */
+
     backup: backupHarness,
-    /**
-     * Locked backup files: `backupFile.bench()` (Argon2id's time here),
-     * `lock('account' | 'password', password)`, `unlock(password)`,
-     * `save(kind)` or `share(kind)` (`locked`, `plain`, `otherAccount`), then
-     * `backupFile.last`.
-     */
+
     backupFile: backupFileHarness,
-    /**
-     * Cloud Sync (ADR 0030): `cloudSync.state()`; `checkConfig()`, `refresh()`,
-     * `prepare()`, `list()` (the account's slots), `switchTo('cloud' |
-     * 'platform' | 'off')`, `syncNow()`, then `cloudSync.last`.
-     * `simulateUpgradedPlatformDevice()` and `forgetChoice()` set up the
-     * default and the one-time offer.
-     */
+
     cloudSync: cloudSyncHarness,
-    /**
-     * Update Required through this device's own answers (see
-     * `dev-harness/appUpdate.ts`): `minAppVersion('99.0.0')` gates from the
-     * config and `minAppVersion(null)` lifts it; `upgradeRequired(path)`
-     * answers 426 to matching ww-api requests; `requests()` lists what was sent
-     * since; `clear()`.
-     */
+
     appUpdate: appUpdateHarness,
-    /**
-     * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
-     * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,
-     * dead, gold, … })` / `clearOverride()`, `play('entrance' | 'trick' |
-     * 'twirl' | 'wake' | 'cheer')`, `pat(n)`, `scrub(ms)` and `state()`.
-     */
+
     pet: petHarness,
-    /**
-     * Scribe AI (see `dev-harness/scribe.ts`): `enableFake()` answers on the
-     * device; `script(name)` queues a canned turn (`scripts`), `send(text)` or
-     * `injectProposal()` runs it; `latest()`, `conversation(id)`,
-     * `proposal(id)`, `add`/`dismiss`/`toggle`/`choose`/`undo`, `state()`,
-     * `availability()`, `setFakeUsage({ limited })`, `setGate({ … })`,
-     * `contextSize()`, `requests()` and `clear()`.
-     */
+
     scribe: scribeHarness,
-    /**
-     * Connectivity as the app reads it: `offline(true)` reads as offline
-     * whatever the simulator says, `offline(false)` comes back (reconnect
-     * listeners run). Returns the state the app reads now.
-     */
+
     network: {
       offline: (on = true) => simulateOffline(on),
       state: getOnline,
     },
-    /**
-     * The Tools "Force Right to Left" switch, without the reload: relaunch
-     * (`wwv up`) to apply it. Returns the direction the app runs in now.
-     */
+
     layoutDirection: {
       forceRtl: (on: boolean) => {
         setDevForceRtl(on)
@@ -547,35 +420,21 @@ export function installDevHarness() {
         locale: _i18n.locale,
       }),
     },
-    /**
-     * What UIKit reports for the window on iPhone Duo: the fold (`divisions`,
-     * `active` while partly folded), the vertical bar edge and the size class.
-     * Null on devices that never report.
-     */
+
     displayRegions: () => useDisplayRegions.getState().regions,
-    /**
-     * A string in the app Language, as the app renders it (`t('hoursShort', {
-     * count: 2 })`).
-     */
+
     t: (key: string, options?: Record<string, unknown>) =>
       i18n.t(key as TranslationKey, options),
-    /**
-     * Relaunches as if before the device's first unlock: only the splash, with
-     * stores reading and writing nothing, until the app comes back from the
-     * background. `storageLocked()` reads the guard.
-     */
+
     simulateLockedLaunch: () => {
       simulateLockedLaunch()
       void reloadApp()
       return true
     },
     storageLocked: isStorageLocked,
-    /**
-     * Whether the open note editor's web view has loaded; typing before that
-     * goes nowhere (its page builds slowly on a fresh Metro).
-     */
+
     noteEditorLoaded: isNoteEditorLoaded,
-    /** Every screen mounts fresh, as on a cold launch, on Home. */
+
     remount: () => {
       remount()
       return true
@@ -589,56 +448,50 @@ export function installDevHarness() {
       preferences: usePreferences,
       profile: useProfile,
       contacts: useContacts,
-      // Contacts whose address lookup failed on save, waiting to retry.
+
       geocodeRetry: useGeocodeRetry,
-      // Address keys the Map's Find contacts row no longer offers.
+
       mapFindSkips: useMapFindSkips,
-      // The Help Center bundle on screen (`locale`, `source`, `bundle.hash`).
+
       helpCenter: useHelpCenterStore,
       conversations: useConversations,
       serviceReports: useServiceReport,
       mileage: useMileage,
-      // This device's copy of each Shared Car, by `spaceId` (`cars`).
+
       sharedCars: useSharedCars,
-      // Route builder routes by day (`routes['YYYY-MM-DD']`), device-local.
+
       savedRoutes: useSavedRoutes,
       savedPlaces: useSavedPlaces,
-      // The companion and room records (`pet`, `room`) and their tombstones.
+
       pet: usePet,
-      // The reward stack playing now (`run`: `slot`, `phase`, `lines`,
-      // `played`, `shown`), or null.
+
       rewardStack: useRewardStack,
       categories: useCategories,
       buddies: useBuddies,
       buddiesDiagnostics: useBuddiesDiagnostics,
-      // The bell's book (`seen`, `dismissed`) and its counted `unread`.
+
       notificationsTray: useNotificationsTray,
-      // `setState({ celebrating: { count, kind } })` replays a milestone; with
-      // no action behind it, it waits for its takeover turn without expiring.
+
       streakCelebration: useStreakCelebration,
       calendarSync: useCalendarSync,
       calendarPublishing: useCalendarPublishing,
       badgeSession: useBadgeSession,
       takeover: useTakeover,
-      // `open`, and `away` while a badge view opened from it is up.
+
       profileOverlay: useProfileOverlay,
       splitSheet: useSplitSheetPreferences,
-      // `enabled`/`requireAfter`, and the session's `locked`.
+
       appLock: useAppLockSettings,
-      // `setState({ required: { source: 'server', currentVersion, minVersion:
-      // null } })` shows Update Required without a floor on the shared API.
+
       updateRequired: useUpdateRequired,
       appLockSession: useAppLockSession,
-      // `getState().request('dev')` plays the update reveal and its tour.
+
       updateReveal: useUpdateRevealStore,
-      // `setState({ bundleId: 'verify-bundle' })` lists a downloaded OTA update
-      // in the tray, as the launch check does in a release build; Update Now
-      // reloads the JS bundle here.
+
       pendingUpdate: usePendingUpdate,
-      // `getState().request()` replays The Milestone Update's grand reveal.
+
       milestoneReveal: useMilestoneRevealStore,
-      // `toast.undo({ title, onUndo })` shows a toast (also `success`, `info`,
-      // `error`, `news`); `toasts.getState().toasts` lists those showing.
+
       toast,
       toasts: useToasts,
     },

@@ -41,7 +41,7 @@ const visit = (
   ...extra,
 })
 
-const today = new Date(2026, 9, 18, 10) // 18 October 2026, local
+const today = new Date(2026, 9, 18, 10)
 
 describe('pet sign data', () => {
   it('lists the Service Year from September', () => {
@@ -56,7 +56,7 @@ describe('pet sign data', () => {
       entry('a', noon(2026, 8, 3), 10),
       entry('b', noon(2026, 9, 2), 2, 30),
       entry('c', noon(2026, 9, 9), 1),
-      // A 0-minute "shared in ministry" entry still counts as shared.
+
       entry('d', noon(2026, 9, 10), 0),
     ])
     const sign = buildSignData({
@@ -111,7 +111,7 @@ describe('pet sign data', () => {
       visit('5', 'cy', noon(2026, 9, 1), { notAtHome: true }),
       visit('6', 'cy', noon(2026, 9, 8)),
     ]
-    // Conversations: 2, 3, 6. Return visits: 2 (after September), 6.
+
     expect(visitCountsForMonth(visits, today)).toEqual({
       conversations: 3,
       returnVisits: 2,

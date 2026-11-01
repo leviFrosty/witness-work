@@ -4,10 +4,6 @@ import type { PetVisit } from '@/types/pet'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Stops a visiting pet's buddy's pets from visiting (their own Buddies
- * setting), with an Undo that puts back what they had.
- */
 export function hidePetVisits(visit: PetVisit): void {
   const before = useBuddies
     .getState()
@@ -19,9 +15,7 @@ export function hidePetVisits(visit: PetVisit): void {
     onUndo: () => {
       void buddiesEngine
         .setBuddySetting(visit.inboxId, 'petVisits', before)
-        .catch(() => {
-          // Saved here; the next change or sync writes the roster.
-        })
+        .catch(() => {})
     },
   })
 }

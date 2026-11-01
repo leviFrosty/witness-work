@@ -1,23 +1,5 @@
 #!/usr/bin/env node
-// Mirror WitnessWork's in-app purchase catalog onto WitnessWork Beta so
-// TestFlight sandbox purchases look and behave like the App Store app.
-//
-// App Store Connect: every subscription and consumable of the production app
-// is created on the Beta app as `jwtimebeta_<suffix>` (product ids are unique
-// per Apple account), with the same names, localizations, group levels,
-// per-territory prices, availability, review screenshot and pause promotional
-// offers.
-//
-// RevenueCat: the Beta App Store app lives in the production project so
-// ww-api's server-side Supporter checks see Beta purchases. Each Beta product
-// is attached to the same entitlements and offering packages as its
-// production twin, so Beta gets the same offerings.
-//
-// Idempotent: it only fills in what's missing and never edits or deletes, so
-// rerun it after adding products. Price changes to existing products must be
-// mirrored by hand. Needs `asc` and `rc` logged in (see docs/build.md).
-//
-// Usage: node scripts/sync-beta-catalog.mjs
+
 import { execFile } from 'node:child_process'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -33,8 +15,7 @@ const RC_BETA_IOS_APP = 'app6fbb58486d'
 const run = promisify(execFile)
 const tmp = mkdtempSync(join(tmpdir(), 'sync-beta-catalog-'))
 const betaId = (productId) => productId.replace(/^jwtime_/, 'jwtimebeta_')
-// Price point ids are base64url JSON whose `p` code is shared by every product
-// in a territory, so swapping `s` for the Beta product gives the same price.
+
 const encodeId = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const decodeId = (s) => JSON.parse(Buffer.from(s, 'base64url').toString())
 const rel = (type, id) => ({ data: { type, id } })
@@ -111,8 +92,6 @@ async function downloadReviewScreenshot(path, name) {
   writeFileSync(file, Buffer.from(await (await fetch(url)).arrayBuffer()))
   return file
 }
-
-// ---------- App Store Connect: subscriptions ----------
 
 async function syncGroup(prodGroup) {
   const { referenceName } = prodGroup.attributes
@@ -230,7 +209,7 @@ async function syncSubscriptionDetails(prod, beta, screenshot) {
       paginate: true,
       query: ['include=subscriptionPricePoint', 'limit=200'],
     })
-    // Keep the price in effect today per territory (skip scheduled changes).
+
     const now = new Date().toISOString().slice(0, 10)
     const current = new Map()
     for (const price of prodPrices.data) {
@@ -288,7 +267,6 @@ async function syncSubscriptionDetails(prod, beta, screenshot) {
     ])
   }
 
-  // Pause offers are named `supporter_pause_<n>m_<productId>` (ADR 0016).
   const offersPath = (id) => `/v1/subscriptions/${id}/promotionalOffers`
   const [prodOffers, betaOffers] = await Promise.all([
     asc('GET', offersPath(prod.id), { query: ['limit=200'] }),
@@ -374,7 +352,6 @@ async function syncSubscriptions() {
       `subscription-${group.id}.png`
     )
 
-    // Apple returns 500s for concurrent creates in one group: create serially.
     const pairs = []
     for (const prod of prodSubs) {
       const productId = betaId(prod.attributes.productId)
@@ -426,8 +403,6 @@ async function syncSubscriptions() {
   return states
 }
 
-// ---------- App Store Connect: consumables ----------
-
 async function syncInAppPurchase(prod, betaIaps, screenshot) {
   const a = prod.attributes
   const productId = betaId(a.productId)
@@ -476,7 +451,6 @@ async function syncInAppPurchase(prod, betaIaps, screenshot) {
     })
   }
 
-  // Same base territory and manual prices; Apple derives the other territories.
   const betaManual = await ascMaybe(
     'GET',
     `/v1/inAppPurchasePriceSchedules/${I}/manualPrices`,
@@ -610,8 +584,6 @@ async function syncInAppPurchases() {
     syncInAppPurchase(prod, betaIaps, screenshot)
   )
 }
-
-// ---------- RevenueCat ----------
 
 async function syncRevenueCat() {
   const base = `/projects/${RC_PROJECT}`

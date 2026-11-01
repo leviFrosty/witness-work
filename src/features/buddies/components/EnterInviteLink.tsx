@@ -14,12 +14,6 @@ import {
 import { MAX_BUDDIES, occupiedBuddySpots } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * For a Buddies Invite link that arrived by message and didn't open the app. On
- * iOS a prompt the User pastes into avoids the clipboard-read permission
- * banner. Android has no prompt, so tapping reads the clipboard (copying the
- * link was the User's step), finding the link anywhere in a copied message.
- */
 export default function EnterInviteLink() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

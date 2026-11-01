@@ -24,13 +24,12 @@ import { personLabel } from '@/features/mileage/lib/personLabel'
 
 type Props = {
   trip: Trip
-  /** Shown when the user has more than one car. */
+
   vehicleName?: string
-  /** Who logged it, when that's someone else on a Shared Car. */
+
   loggedBy?: CarPerson
 }
 
-/** Tap for details, long-press for actions, swipe to delete. */
 export default function TripRow({ trip, vehicleName, loggedBy }: Props) {
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -76,8 +75,7 @@ export default function TripRow({ trip, vehicleName, loggedBy }: Props) {
           .filter(Boolean)
           .join(', ')}
       >
-        {/* At accessibility sizes the date and details take the row's width,
-            wrapping between words, and the distance and cost sit under them. */}
+        {}
         <View
           style={{
             ...cardStyle,
@@ -93,8 +91,6 @@ export default function TripRow({ trip, vehicleName, loggedBy }: Props) {
               {formatDate(fromDateKey(trip.date), { style: 'medium' })}
             </Text>
             {subtitle.length > 0 && (
-              // Who logged it leads, with their photo, so a glance tells
-              // whose trip it is.
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
               >

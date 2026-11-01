@@ -32,7 +32,7 @@ describe('buffer', () => {
     setPixel(src, 1, 1, 0x00ff00)
     blit(dst, src, -1, -1)
     expect(pixelAt(dst, 0, 0)).toBe(0x00ff00)
-    blit(dst, src, 3, 3) // lands at (4, 4): outside
+    blit(dst, src, 3, 3)
     expect(hashBuffer(dst)).toBe(hashBuffer(dst))
     blit(dst, src, 1, 1, (c) => c & 0xff00ff)
     expect(pixelAt(dst, 2, 2)).toBe(0x000000)
@@ -47,7 +47,7 @@ describe('buffer', () => {
     expect(pixelAt(b, 0.6, 2.5)).toBe(0xabcdef)
     expect(readRgb(b, 1.2, 3.3)).toBe(0xabcdef)
     expect(isOpaque(b, 1.4, 2.6)).toBe(true)
-    setPixel(b, 3.6, 0, 0x111111) // rounds to x 4: outside
+    setPixel(b, 3.6, 0, 0x111111)
     expect(pixelAt(b, 3, 0)).toBeNull()
   })
 

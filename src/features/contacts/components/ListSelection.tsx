@@ -10,7 +10,6 @@ import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 
-/** The checkmark circle a row shows in Select mode. */
 export function SelectionCheck({ checked }: { checked: boolean }) {
   const theme = useTheme()
   return (
@@ -23,10 +22,6 @@ export function SelectionCheck({ checked }: { checked: boolean }) {
   )
 }
 
-/**
- * A plain text button for Select mode chrome ("Select", "Select All", "Done").
- * `emphasized` is the button that ends the mode.
- */
 export function SelectionTextButton({
   label,
   onPress,
@@ -65,10 +60,6 @@ export function SelectionTextButton({
   )
 }
 
-/**
- * Looks of a bottom-bar action. Also the non-interactive trigger for a
- * `PullDownMenu` in the bar (e.g. Dismiss For ▸), which owns the tap itself.
- */
 export function SelectionBarItem({
   icon,
   label,
@@ -108,7 +99,6 @@ export function SelectionBarItem({
   )
 }
 
-/** A tappable bottom-bar action. */
 export function SelectionBarButton({
   onPress,
   ...item
@@ -133,11 +123,6 @@ export function SelectionBarButton({
   )
 }
 
-/**
- * Floating bottom bar of batch actions shown while selecting, like the toolbar
- * iOS swaps in for edit mode. `bottom` clears whatever sits below it (the safe
- * area, the tab bar).
- */
 export function SelectionBar({
   children,
   bottom,
@@ -174,5 +159,4 @@ export function SelectionBar({
   )
 }
 
-/** Height to reserve under a list so its last row clears the bar. */
 export const SELECTION_BAR_HEIGHT = 64

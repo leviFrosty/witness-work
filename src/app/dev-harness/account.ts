@@ -45,11 +45,6 @@ async function readAccount() {
   }
 }
 
-/**
- * The account key for the verify harness. Reads go off the JS thread, and eval
- * doesn't await: `read()` starts one, and `last` holds its result (or `{ error
- * }`) a moment later.
- */
 export const accountHarness = {
   read: () => {
     last = null
@@ -65,17 +60,12 @@ export const accountHarness = {
   get last() {
     return last
   },
-  /** A valid recovery key for a new random account key, to type or paste. */
+
   randomRecoveryKey: () => encodeRecoveryKey(getRandomBytes(32)),
 }
 
 let selfTest: { passed: boolean | null; steps: SelfTestStep[] } | null = null
 
-/**
- * Set Up Another Device for the verify harness: the current or last session on
- * this device, the QR link while one shows (dev only, secret included), and the
- * Tools self-test (`selfTest()`, then `selfTestResult` a moment later).
- */
 export const handoffHarness = {
   state: () => {
     const { session, entry } = useHandoffDebug.getState()
@@ -106,7 +96,6 @@ export const handoffHarness = {
 
 let backupLast: unknown = null
 
-/** Starts `work`; its result (or `{ error }`) lands in `backup.last`. */
 const tracked = (work: () => Promise<unknown>) => {
   backupLast = null
   void work()
@@ -119,12 +108,6 @@ const tracked = (work: () => Promise<unknown>) => {
   return 'started'
 }
 
-/**
- * The account backup for the verify harness. Reads of this device's state are
- * synchronous (`state()`); anything that talks to the server starts and puts
- * its result in `last` a moment later. Decrypted slots come back as counts,
- * never records.
- */
 export const backupHarness = {
   state: () => {
     const state = useBackupState.getState()

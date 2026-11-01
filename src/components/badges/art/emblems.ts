@@ -1,12 +1,3 @@
-/**
- * Badge illustrations as plain data, one per `BadgeArtId`. Dependency-free
- * (type imports only) so React Native and `scripts/badges/preview-badges.mjs`
- * render the same source.
- *
- * Coordinates live in a 64-unit box. Paths use absolute commands only (M L H V
- * C Q A Z). Renderers apply round caps and joins. Colors are roles that each
- * palette maps to its level's ink, metal and face colors.
- */
 import type { BadgeArtId } from '@/types/badges'
 
 export type EmblemRole = 'ink' | 'metal' | 'metalDeep' | 'face'
@@ -24,9 +15,8 @@ export type EmblemPart =
 
 export const EMBLEM_BOX = 64
 
-/** Main line weight (mirrors `EMBLEM_STROKE` in medallion.ts). */
 const S = 4
-/** Lighter weight for small interior details. */
+
 const D = 3
 
 const line = (d: string, strokeWidth = S, stroke: EmblemRole = 'ink') =>
@@ -44,7 +34,6 @@ const dot = (cx: number, cy: number, r: number, role: EmblemRole = 'ink') =>
 const r2 = (n: number) => Math.round(n * 100) / 100
 
 type Placement = {
-  /** Degrees, clockwise, around (cx, cy). */
   rotate?: number
   scale?: number
   cx?: number
@@ -53,10 +42,6 @@ type Placement = {
   dy?: number
 }
 
-/**
- * Moves a part drawn in its own frame into place (rotate and scale around `cx,
- * cy`, then translate). Lets tilted objects be authored level.
- */
 const place = (t: Placement) => {
   const rad = ((t.rotate ?? 0) * Math.PI) / 180
   const cos = Math.cos(rad)
@@ -145,7 +130,6 @@ const place = (t: Placement) => {
   return (parts: EmblemPart[]) => parts.map(part)
 }
 
-/** A small falling droplet, point up, centered on its round end. */
 const drop = (
   x: number,
   y: number,
@@ -157,11 +141,9 @@ const drop = (
     role
   )
 
-/** A rounded rectangle from (x1, y1) to (x2, y2). */
 const roundRect = (x1: number, y1: number, x2: number, y2: number, r: number) =>
   `M${x1 + r},${y1} H${x2 - r} A${r},${r} 0 0 1 ${x2},${y1 + r} V${y2 - r} A${r},${r} 0 0 1 ${x2 - r},${y2} H${x1 + r} A${r},${r} 0 0 1 ${x1},${y2 - r} V${y1 + r} A${r},${r} 0 0 1 ${x1 + r},${y1} Z`
 
-// --- Sharing the Good News: calendar page with a hand-drawn check ---------
 const CAL_PAGE =
   'M12,22 A6,6 0 0 1 18,16 H46 A6,6 0 0 1 52,22 V48 A6,6 0 0 1 46,54 H18 A6,6 0 0 1 12,48 Z'
 const monthsShared: EmblemPart[] = [
@@ -178,7 +160,6 @@ const monthsShared: EmblemPart[] = [
   ),
 ]
 
-// --- Year Round: sunrise under an arc of twelve months ---------------------
 const yearRound: EmblemPart[] = place({ dy: -2 })([
   ...Array.from({ length: 12 }, (_, i) => {
     const a = Math.PI - (i * Math.PI) / 11
@@ -194,7 +175,6 @@ const yearRound: EmblemPart[] = place({ dy: -2 })([
   line('M23,50.5 H41', D),
 ])
 
-// --- Reports Sent: open envelope with a report sheet ----------------------
 const reportSent: EmblemPart[] = place({ dy: -1 })([
   shape('M8,33 H46 V51 A3,3 0 0 1 43,54 H11 A3,3 0 0 1 8,51 Z', 'metalDeep'),
   shape('M8,33 L27,18 L46,33 Z', 'metal'),
@@ -214,9 +194,6 @@ const reportSent: EmblemPart[] = place({ dy: -1 })([
   line('M52.5,44 H57', D),
 ])
 
-// --- Ready to Go: a packed field-service bag ------------------------------
-// A satchel at a slight angle (side panel on the right), books standing up
-// out of it, a carry handle, and a metal clasp on the front flap.
 const prepared: EmblemPart[] = place({ dx: -0.5, dy: -2.5 })([
   line('M31.5,27 C31.5,14.5 48,14.5 48,27'),
   ...place({ rotate: -9, cx: 16, cy: 27 })([
@@ -238,7 +215,6 @@ const prepared: EmblemPart[] = place({ dx: -0.5, dy: -2.5 })([
   shape(roundRect(25.5, 38.5, 32.5, 46.5, 2), 'metal', D),
 ])
 
-// --- Kind Words: two overlapping speech bubbles ---------------------------
 const conversations: EmblemPart[] = [
   shape(
     'M16,11 H30 A8,8 0 0 1 38,19 V25 A8,8 0 0 1 30,33 H22 L13,39.5 L14.5,32.4 A8,8 0 0 1 8,25 V19 A8,8 0 0 1 16,11 Z',
@@ -253,7 +229,6 @@ const conversations: EmblemPart[] = [
   dot(47, 36, 2.8),
 ]
 
-// --- Return Visits: watering can pouring onto a sprout (1 Cor 3:6) --------
 const CAN = place({
   rotate: 30,
   cx: 20,
@@ -289,7 +264,6 @@ const returnVisits: EmblemPart[] = place({ dy: 1.5 })([
   ),
 ])
 
-// --- Next Time: notepad with a pencil ------------------------------------
 const PENCIL = place({ rotate: -45, dx: 42.5, dy: 41 })
 const nextTime: EmblemPart[] = place({ dx: 1 })([
   shape('M9,19 H39 V50 A3,3 0 0 1 36,53 H12 A3,3 0 0 1 9,50 Z', 'face'),
@@ -306,7 +280,6 @@ const nextTime: EmblemPart[] = place({ dx: 1 })([
   ]),
 ])
 
-// --- Keeping in Touch: a mug and a teacup, steam intertwined -------------
 const keepingInTouch: EmblemPart[] = [
   line(
     'M20,25.5 C18.5,21.5 22.5,19.5 22,15.5 C21.7,12.5 24,10.5 27,10.5 C30.5,10.5 33,12.5 34.5,15.5',
@@ -331,14 +304,12 @@ const keepingInTouch: EmblemPart[] = [
   ),
 ]
 
-// --- Two by Two: two people walking out together (Luke 10:1) -------------
 const together: EmblemPart[] = place({ dx: -1, dy: -2.5 })([
-  // The path ahead, narrowing as it curves away.
   fill(
     'M8,50 C30,50 46.5,46 55.6,35.6 A1.7,1.7 0 0 1 58.5,37.3 C49,52 28,57.5 8,57.5 A3.75,3.75 0 0 1 8,50 Z',
     'metal'
   ),
-  // The companion, carrying a bag.
+
   line('M36.5,40.5 L33,50'),
   line('M39.5,40.5 L43.5,49.5'),
   shape(
@@ -352,7 +323,7 @@ const together: EmblemPart[] = place({ dx: -1, dy: -2.5 })([
     'metalDeep',
     3.5
   ),
-  // The nearer walker.
+
   line('M20.5,40.5 L16.5,51'),
   line('M23.5,40.5 L27.5,51'),
   shape(
@@ -362,7 +333,6 @@ const together: EmblemPart[] = place({ dx: -1, dy: -2.5 })([
   dot(22, 18, 5.8),
 ])
 
-// --- First Bible Study: open book with a sprig ---------------------------
 const firstBibleStudy: EmblemPart[] = place({})([
   shape(
     'M5,27 V51 C14.5,49.5 24.5,50.5 32,54.5 C39.5,50.5 49.5,49.5 59,51 V27',
@@ -380,9 +350,6 @@ const firstBibleStudy: EmblemPart[] = place({})([
   shape('M32,17 C32,13 35.5,10 40,10 C40,14 36.5,17 32,17 Z', 'metal', D),
 ])
 
-// --- First Buddy: a handshake --------------------------------------------
-// Forearms rise from cuffs in the lower corners. The near hand's fingers wrap
-// over the other hand, whose thumb rests across the top.
 const SHAKE_TILT = 32
 const SHAKE_ARM = 16.5
 const SHAKE = place({ scale: 1.2, cx: 32, cy: 36, dy: -2 })
@@ -405,14 +372,14 @@ const firstBuddy: EmblemPart[] = SHAKE([
       3.5
     ),
   ]),
-  // The near hand: domed back, three fingertips stepping down over the other.
+
   shape(
     'M21.2,30.8 C22.5,25.8 27,22 33,21.5 C36.8,21.2 40.5,21.8 42.4,23.8 A3.2,3.2 0 0 1 40.6,29.2 C42.8,29 45.2,30.1 45.6,32.3 A3.2,3.2 0 0 1 43,36.4 C44.6,36.8 45.6,38.3 45,40 A3,3 0 0 1 41,41.9 C37,43 31,42.5 26.9,39.1 Z',
     'face'
   ),
   line('M40.6,29.2 C38.6,28.9 36.6,28.2 35,27.4', D),
   line('M43,36.4 C40.8,36 38.6,35.2 36.8,34.2', D),
-  // The other hand's thumb across the top.
+
   shape(
     'M46,27 C42.5,22.2 36,19.5 29.5,19.8 C26.2,20 25.6,24.3 28.6,25.3 C32.5,26.6 36.5,28.6 39.8,31 Z',
     'metal'

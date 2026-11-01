@@ -9,16 +9,11 @@ import useServiceReport from '@/stores/serviceReport'
 import type { TimeEntry } from '@/types/timeEntry'
 import { serviceYearMonthTotals } from '@/features/progress/lib/periodCardStats'
 
-/** Today's calendar month, changing when the month does. */
 export function useTodayMonth(): CalendarMonth {
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   return { year: today.year(), month: today.month() }
 }
 
-/**
- * A Service Year's months (start year), each capped by the credit limit of the
- * role that applied then, as the Year tab's rows count them.
- */
 export function useServiceYearMonthTotals(serviceYear: number) {
   const roleFor = useRoleForMonth()
   const serviceReports = useServiceReport((s) => s.serviceReports)
@@ -36,7 +31,6 @@ export function useServiceYearMonthTotals(serviceYear: number) {
   )
 }
 
-/** Every Time Entry, in no particular order. */
 export function useAllTimeEntries(): TimeEntry[] {
   const serviceReports = useServiceReport((s) => s.serviceReports)
   return Object.values(serviceReports).flatMap((months) =>

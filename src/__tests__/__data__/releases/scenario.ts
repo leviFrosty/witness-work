@@ -1,8 +1,3 @@
-// The made-up records every release fixture in this folder holds, so
-// `releaseUpgrade.test.ts` can check them after an upgrade. Dates are local
-// wall-clock times in America/Chicago, the time zone the fixtures were written
-// in. `releaseFixturesGenerate.test.ts` writes a new release's fixture from
-// them.
 export const at = (y: number, m: number, d: number, h = 0, min = 0) =>
   new Date(y, m - 1, d, h, min)
 
@@ -154,7 +149,6 @@ export const VISITS = [
   },
 ]
 
-/** Created then deleted, where the release keeps visit tombstones. */
 export const DELETED_VISIT = {
   id: 'v-deleted',
   contactId: 'c-dora',
@@ -187,7 +181,7 @@ export const ENTRIES: ScenarioEntry[] = [
     kind: 'plain',
     note: 'Cart witnessing downtown',
   },
-  // Late at night: the next day (and month) in UTC.
+
   {
     id: 'e-03',
     date: at(2025, 7, 31, 23, 30),
@@ -217,7 +211,7 @@ export const ENTRIES: ScenarioEntry[] = [
     minutes: 0,
     kind: 'ldc',
   },
-  // Just after midnight.
+
   {
     id: 'e-07',
     date: at(2025, 9, 1, 0, 15),
@@ -292,7 +286,6 @@ export const DELETED_DAY_PLAN = {
   minutes: 90,
 }
 
-// RecurringPlanFrequencies: WEEKLY 0, BI_WEEKLY 1, MONTHLY 2, MONTHLY_BY_WEEKDAY 3
 export const RECURRING_PLANS = [
   {
     id: 'r-weekly',
@@ -330,9 +323,6 @@ export const RECURRING_DELETED_DATE = {
   date: at(2025, 9, 23, 0, 0),
 }
 
-// Device-local stores: settings and bookkeeping kept on this device only,
-// outside iCloud and Google Drive sync and the backup file.
-
 export const APP_LOCK = { enabled: true, requireAfter: 300 } as const
 export const SIDEBAR = { width: 320, hidden: true }
 export const SPLIT_SHEET_RATIO = 0.4
@@ -355,7 +345,6 @@ export const CALENDAR_SYNC = {
   promptAnswered: true,
 }
 
-/** The bell's bookkeeping, by notification item id. */
 export const TRAY = {
   at: at(2025, 10, 6, 18, 0).getTime(),
   arrivals: ['report:2025-09', 'followUp:v-ada-1', 'buddyBadge:inbox-noor'],
@@ -365,7 +354,6 @@ export const TRAY = {
 
 export const STREAK_SEEN = { kind: 'months', latest: '2025-09' } as const
 
-/** The day → minutes map the Home cards read, cached. */
 export const DAILY_MINUTES = {
   daily: { '2025-09-06': 150, '2025-09-13': 90, '2025-10-04': 120 },
   fingerprint: 'fp-fixture',
@@ -378,10 +366,7 @@ export const BUDDIES = {
   rosterVersion: 7,
   pushRegistrationKey: 'push-key-fixture',
   pushRegisteredAt: at(2025, 10, 1, 9, 0).getTime(),
-  /**
-   * Active. This User hides their Plans from the calendar and mutes their
-   * requests to join on this device.
-   */
+
   noor: {
     inboxId: 'inbox-noor',
     name: 'Noor Haddad',
@@ -393,7 +378,7 @@ export const BUDDIES = {
     colorIndex: 2,
     color: '#7A4FB5',
   },
-  /** Accepted this User's invite; waiting for the confirmation. */
+
   pip: {
     inboxId: 'inbox-pip',
     name: 'Pip Larsen',
@@ -410,21 +395,17 @@ export const BUDDIES = {
     createdAt: at(2025, 10, 4, 10, 0).getTime(),
     expiresAt: at(2025, 10, 11, 10, 0).getTime(),
   },
-  /** Removed; withdrawing its relay slots is still to finish. */
+
   removed: {
     inboxId: 'inbox-old',
     dhPub: 'dh-pub-old-fixture',
     inviteSecret: 'invite-secret-old',
     removedAt: at(2025, 9, 1, 12, 0).getTime(),
   },
-  /** This User stopped showing their photo to buddies. */
+
   sharing: { photo: false, updatedAt: at(2025, 9, 2, 8, 0).getTime() },
 }
 
-/**
- * Notes Import's history (its own MMKV instance): an import read and waiting to
- * be added, and one still being read.
- */
 export const NOTES_IMPORTS = {
   ready: {
     hash: 'hash-ready-fixture',
@@ -464,11 +445,8 @@ export const NOTES_IMPORTS = {
   },
 }
 
-// Device-local stores since 1.45.
-
-/** A pin lookup that failed twice, waiting to retry. */
 export const GEOCODE_RETRY = { contactId: 'c-dora', attempts: 2 }
-/** The Map's Find stopped offering to look up this Contact's address. */
+
 export const MAP_FIND_SKIP = { contactId: 'c-chen' }
 export const SAVED_PLACES = {
   home: {
@@ -489,10 +467,6 @@ export const SAVED_ROUTE = {
   note: 'Start at the Kingdom Hall',
 }
 
-// Scribe AI, since 1.45. Its conversations, the undo records of the Proposals
-// the User added, and its last usage snapshot stay on this device; the records
-// an added Proposal wrote sync like any.
-
 const scribeMeter = (percentUsed: number, asOf: Date) => ({
   plan: 'free' as const,
   supporterCheckFailed: false,
@@ -508,10 +482,8 @@ const scribeMeter = (percentUsed: number, asOf: Date) => ({
   asOf: asOf.getTime(),
 })
 
-/** The Ref the conversation's context lists for a Contact or Category. */
 type ScribeRefOf = (name: string) => string
 
-/** What the User's added Proposal wrote. */
 const scribeVisit: (typeof VISITS)[number] = {
   id: 'v-dora-scribe',
   contactId: 'c-dora',
@@ -528,12 +500,6 @@ const scribeEntry: ScenarioEntry = {
 }
 const scribeUsage = scribeMeter(9, at(2025, 10, 6, 20, 20))
 
-/**
- * One Scribe AI conversation, a turn per message, as ww-api's model answered
- * it: its answer, and the write calls it made, naming records by the Refs the
- * context lists. The User added the first turn's Proposal, and unchecked the
- * second's Plan, which still waits for review.
- */
 export const SCRIBE = {
   turns: [
     {
@@ -635,10 +601,10 @@ export const SCRIBE = {
       meter: scribeUsage,
     },
   ],
-  /** The first turn's Proposal, added. */
+
   added: { at: at(2025, 10, 6, 20, 7), visit: scribeVisit, entry: scribeEntry },
-  /** When the User unchecked the waiting Proposal's Plan card. */
+
   uncheckedAt: at(2025, 10, 6, 20, 21),
-  /** The usage the last step's meter left. */
+
   usage: scribeUsage,
 }

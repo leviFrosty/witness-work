@@ -31,7 +31,7 @@ export default defineReadTool({
       .filter((visit) => visit.followUp && !visit.followUp.dismissed)
       .filter((visit) => names.has(visit.contact.id))
       .map((visit) => ({ visit, date: localDayKey(visit.followUp!.date) }))
-      // Overdue ones are still to do: kept unless the range starts earlier.
+
       .filter(
         ({ date }) =>
           (from === null ||
@@ -48,7 +48,6 @@ export default defineReadTool({
       ok: true,
       trust: 'app',
       data: {
-        // `2026-10-17 c4 John Park overdue: "Paradise earth"`
         followUps: items.map(({ visit, date }) => {
           const topic = visit.followUp!.topic
           return `${date} ${ctx.refs.issue('c', visit.contact.id)} ${oneLine(names.get(visit.contact.id) || '?', NAME_MAX)}${date < ctx.today ? ' overdue' : ''}${topic ? `: ${JSON.stringify(oneLine(topic, 120))}` : ''}`

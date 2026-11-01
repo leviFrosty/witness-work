@@ -8,7 +8,6 @@ import {
 } from '@/features/buddies/lib/buddyColors'
 import type { BuddyAvatar as SharedAvatar } from '@/features/buddies/lib/schemas'
 
-/** A buddy's shared photo or emoji as `Avatar` shows it. */
 export function buddyProfileAvatar(
   avatar: SharedAvatar | undefined
 ): ProfileAvatar {
@@ -18,7 +17,6 @@ export function buddyProfileAvatar(
   return { type: 'none', value: '' }
 }
 
-/** A buddy's shared photo or emoji, else their initial on their color. */
 export default function BuddyAvatar({
   avatar,
   name,
@@ -31,15 +29,15 @@ export default function BuddyAvatar({
 }: {
   avatar?: SharedAvatar
   name: string
-  /** The buddy whose color goes behind an initial or emoji. */
+
   color?: BuddyColorSource
-  /** Replaces the buddy's color behind an initial or emoji. */
+
   background?: string
   size?: number
   focusable?: boolean
-  /** With `focusable`: the photo at full size, see `Avatar`. */
+
   loadFullImage?: () => Promise<string | null>
-  /** E.g. an `AvatarBadge`. */
+
   children?: ReactNode
 }) {
   const theme = useTheme()

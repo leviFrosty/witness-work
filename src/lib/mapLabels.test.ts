@@ -17,7 +17,6 @@ const region: MapRegion = {
 const size = { width: 400, height: 400 }
 const metrics = { cardHeight: 38, gap: 8, pin: 26 }
 
-/** A coordinate at map point (x, y). */
 const point = (x: number, y: number) => ({
   latitude: region.latitude + region.latitudeDelta / 2 - (y / 400) * 0.02,
   longitude: region.longitude - region.longitudeDelta / 2 + (x / 400) * 0.02,
@@ -51,10 +50,9 @@ describe('placeLabels', () => {
   it('moves a card below when a pin is above, and drops it with no room', () => {
     const placements = placeLabels(
       [
-        // A pin sits where its card would go above.
         { key: 'first', coordinate: point(200, 200), width: 80 },
         { key: 'second', coordinate: point(200, 150), width: 80 },
-        // Above is first's card, below is fourth's pin.
+
         { key: 'third', coordinate: point(200, 300), width: 80 },
         { key: 'fourth', coordinate: point(200, 340), width: 80 },
       ],
@@ -89,12 +87,10 @@ describe('estimateCardWidth', () => {
   })
 
   it('counts wide characters about twice', () => {
-    // Two kanji, two kana and a Hangul syllable; then a Han character outside
-    // the Basic Multilingual Plane, which is one character, not two.
     expect(estimateCardWidth(['田中さん김'])).toBe(16 + 6.4 * 10)
     expect(estimateCardWidth(['𠮷'])).toBe(56)
     expect(estimateCardWidth(['𠮷'.repeat(5)])).toBe(16 + 6.4 * 10)
-    // Accented Latin and Arabic stay narrow.
+
     expect(estimateCardWidth(['Zoë Ángel'])).toBe(16 + 6.4 * 9)
     expect(estimateCardWidth(['مريم'])).toBe(56)
   })
@@ -121,7 +117,7 @@ describe('placeProjectedLabels options', () => {
       metrics,
       {
         maxCards: 1,
-        // A control covering everything around `blocked`.
+
         avoid: [{ left: 240, top: 0, right: 400, bottom: 180 }],
       }
     )

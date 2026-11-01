@@ -12,8 +12,7 @@ import { useThisMonthMinutes } from '@/features/service-reports/hooks/useThisMon
 
 export default function HourEntryCard() {
   const theme = useTheme()
-  // At accessibility text sizes the figure and its label shrink to fit the
-  // half-width column instead of breaking mid-word.
+
   const fit = useAccessibilityTextSize() ? FIT_ONE_LINE : undefined
   const time = useFormattedMinutes(useThisMonthMinutes())
 

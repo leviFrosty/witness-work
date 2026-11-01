@@ -33,31 +33,25 @@ import {
   type MapPoint,
 } from '@/features/map/lib/pinGeometry'
 
-/** Where the map draws coordinates right now, and its size in points. */
 export type MapProjection = {
   project: (coordinate: Coordinate) => MapPoint
   size: MapSize
 }
 
-/** One pin on the Map: a Contact, or several drawn on top of each other. */
 export type MapPinItem = {
-  /**
-   * The lead Contact's id, whether the pin stands for one Contact or a group,
-   * so a pin that gathers or spreads keeps its marker.
-   */
   key: string
   coordinate: Coordinate
-  /** Most pressing first; the first leads a group. */
+
   members: ContactMarker[]
-  /** Several Contacts in one pin. */
+
   group: boolean
   label: string
   color: string
   badge?: PinBadge
-  /** The active Contact is here. */
+
   selected: boolean
   zIndex: number
-  /** Empty for a pin off screen; it's worked out once the pin is in view. */
+
   accessibilityLabel: string
   card: {
     placement: 'above' | 'below'
@@ -66,27 +60,17 @@ export type MapPinItem = {
   } | null
 }
 
-/** Pins closer than this on screen gather into one. */
 export const GROUP_RADIUS = 22
 
 export const PIN_LAYOUT_METRICS = {
-  /** A card with two lines; one-line cards pass their own height. */
   cardHeight: MARKER_CARD_HEIGHT,
   singleCardHeight: MARKER_CARD_SINGLE_HEIGHT,
-  /** From the pin's edge to the card, pointer included. */
+
   gap: MARKER_GAP + MARKER_POINTER,
-  /** The pin's footprint other cards keep clear of. */
+
   pin: CONTACT_PIN_FOOTPRINT,
 }
 
-/**
- * Lays the Map's pins out for the current camera: pins that overlap gather into
- * a group, and cards go to the most pressing pins first (the selected one
- * before all), wherever they fit, up to `maxCards`. Without a `projection`
- * (before the map has settled) every Contact is its own pin and no cards show.
- * Cards and screen reader labels are worked out only for pins on screen, so a
- * big map stays cheap to lay out.
- */
 export function layoutContactPins({
   contacts,
   index,
@@ -105,9 +89,9 @@ export function layoutContactPins({
   projection: MapProjection | null
   activeId: string | undefined
   maxCards: number
-  /** Where cards may go, clear of the map's overlays. */
+
   cardBounds: Rect
-  /** Controls over the map that cards keep clear of. */
+
   avoid?: Rect[]
 }): MapPinItem[] {
   const facts = new Map<string, ContactPinFacts>(
@@ -153,7 +137,6 @@ export function layoutContactPins({
     }
   })
 
-  /** The card's lines and the pin's label, for a pin in view. */
   const describe = (item: MapPinItem) => {
     const lead = item.members[0]!
     const active = item.members.find((m) => m.id === activeId)
@@ -183,7 +166,6 @@ export function layoutContactPins({
   }
 
   if (!projection) {
-    // Before the map settles, nothing is known to be off screen.
     for (const item of items) describe(item)
     return items
   }
@@ -195,8 +177,7 @@ export function layoutContactPins({
     point.y >= -margin &&
     point.x <= size.width + margin &&
     point.y <= size.height + margin
-  // A card goes only to a pin in the open: one under the cards or the header
-  // would point at nothing the User can see.
+
   const inOpen = (point: MapPoint) =>
     point.x >= cardBounds.left &&
     point.y >= cardBounds.top &&

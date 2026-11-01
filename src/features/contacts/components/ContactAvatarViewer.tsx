@@ -89,19 +89,6 @@ const ToolbarButton = ({
   )
 }
 
-/**
- * Full-screen contact-avatar viewer.
- *
- * Tap on a contact's image avatar from `ContactDetailsScreen` opens this
- * viewer. Behaviour parallels the iOS Photos full-screen view: pinch + pan +
- * double-tap zoom, plus a toolbar of contact-photo-specific actions (edit crop,
- * save to library, share, reset to default centered crop) and an "i" popover
- * surfacing capture/resolution metadata.
- *
- * The viewer reads the displayed image from `contact.avatar.value`; for the
- * crop editor it prefers the locally-saved original (full quality) and falls
- * back to the displayed image when no original exists (legacy contacts).
- */
 const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -123,8 +110,6 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     return Math.min(horizontalRoom, verticalRoom)
   }, [dims, insets])
 
-  // Gesture state. The cropped avatar is square, so "fit" is just a single
-  // dimension and translate clamps are symmetrical in x and y.
   const scale = useSharedValue(1)
   const savedScale = useSharedValue(1)
   const tx = useSharedValue(0)
@@ -132,9 +117,6 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
   const savedTx = useSharedValue(0)
   const savedTy = useSharedValue(0)
 
-  // Snap shared-value transforms back to fit when the viewer opens. Inlined
-  // so React Compiler can see the writes without us suppressing the
-  // exhaustive-deps rule.
   useEffect(() => {
     if (!visible) return
     scale.value = 1
@@ -158,8 +140,6 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     }
   }
 
-  // Two-finger trackpad scrolls pan too (iPad); trackpad pinches already
-  // reach the pinch.
   const pan = Gesture.Pan()
     .enableTrackpadTwoFingerGesture(true)
     .onUpdate((e) => {
@@ -193,7 +173,6 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      // Toggle between fit (1x) and a comfortable 2.5x magnification.
       const target = scale.value > 1.05 ? 1 : 2.5
       scale.value = withTiming(target, { duration: 220 })
       tx.value = withTiming(0, { duration: 220 })
@@ -229,7 +208,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     >
       <StatusBar barStyle='light-content' />
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000' }}>
-        {/* Header */}
+        {}
         <View
           style={{
             position: 'absolute',
@@ -255,7 +234,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
           />
         </View>
 
-        {/* Image with gestures */}
+        {}
         <GestureDetector gesture={composed}>
           <View
             style={{
@@ -276,12 +255,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
           </View>
         </GestureDetector>
 
-        {/* Toolbar — a floating capsule that sits above the home indicator.
-            Glass material on iOS 26 with a BlurView fallback so the icons
-            stay legible against bright photos on older systems. The rounded
-            shape matches Apple HIG for floating glass surfaces; the GlassView
-            edge highlight reads correctly on a capsule and looks off on a
-            full-width rectangular strip. */}
+        {}
         <View
           style={{
             position: 'absolute',
@@ -354,7 +328,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
           </View>
         )}
 
-        {/* Info popover */}
+        {}
         {infoOpen && (
           <Pressable
             onPress={() => setInfoOpen(false)}
@@ -379,8 +353,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
                 maxWidth: dims.width - 48,
               }}
             >
-              {/* Popover surface — glass on iOS 26, blur fallback elsewhere.
-                  AGENTS.md flags popovers as a primary glass-target surface. */}
+              {}
               <BlurView
                 tint='systemThickMaterialDark'
                 intensity={70}

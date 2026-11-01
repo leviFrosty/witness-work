@@ -7,11 +7,6 @@ const SIDE_SIZE = 70
 const STEP = 46
 const TILT_DEG = 10
 
-/**
- * Up to five medallions fanned like a hand of keepsakes, the first in the
- * middle and on top. Decorative: the summary text says what they are. `scale`
- * grows the whole hand, e.g. for a full-screen moment.
- */
 export default function BadgeHistoryCluster({
   badges,
   scale = 1,
@@ -23,7 +18,7 @@ export default function BadgeHistoryCluster({
   const sideSize = Math.round(SIDE_SIZE * scale)
   const step = STEP * scale
   const shown = badges.slice(0, 5)
-  // Fan out from the middle: first badge centered, then right, left, right…
+
   const slots = shown.map((badge, index) => {
     const side = index === 0 ? 0 : index % 2 === 1 ? 1 : -1
     const distance = Math.ceil(index / 2)

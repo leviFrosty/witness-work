@@ -8,35 +8,21 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import i18n from '@/lib/locales'
 
 interface Props {
-  /** Currently-stored color, or null when nothing custom is set. */
   value: string | null
-  /**
-   * Hex values reserved by sibling preset swatches. When `value` matches one of
-   * these, the eyedropper renders idle so the active state shows on the
-   * matching preset instead of duplicating here.
-   */
+
   presetValues: string[]
-  /** Fires with the chosen hex when the user confirms in the sheet. */
+
   onChange: (hex: string) => void
-  /** Title shown above the reanimated color picker sheet. */
+
   title: string
-  /** Color the sheet opens at when no custom value is active yet. */
+
   sheetInitialColor: string
-  /** Diameter of the swatch; icon and selected border scale with this. */
+
   size?: number
-  /**
-   * Clears the custom color. When set, long-pressing an active custom swatch
-   * offers Edit… and Remove (Remove is also reachable by picking a preset).
-   */
+
   onRemove?: () => void
 }
 
-/**
- * Eyedropper trigger that opens a `ColorPickerSheet` and renders an active
- * state when the stored color isn't one of the sibling presets — i.e. the user
- * picked a hex outside the curated palette. Shared between `AccentColorPicker`
- * and `AvatarPickerContent`'s background row.
- */
 const CustomColorSwatch = ({
   value,
   presetValues,
@@ -54,8 +40,7 @@ const CustomColorSwatch = ({
 
   return (
     <>
-      {/* Only an active custom color that can be removed gets a menu; the
-          idle eyedropper just opens the picker. */}
+      {}
       <ContextMenu
         onPress={() => setOpen(true)}
         accessibilityLabel={title}

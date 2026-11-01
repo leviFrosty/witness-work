@@ -108,7 +108,7 @@ describe('shared note encoding', () => {
         },
       ],
     })
-    // The photo keeps the share of the note it was resized to.
+
     expect(richTextImages(getNoteDoc(fields))).toEqual([
       { id: localSharedPhotoId(blob), width: 40, height: 30, scale: 0.5 },
     ])
@@ -141,7 +141,7 @@ describe('sharing photos with buddies', () => {
     const env = setup()
     const { levi, anna, saved, jpeg, arrived } = users(env)
     await pair(levi, anna)
-    // Sync once so Levi knows the relay takes photos.
+
     await levi.engine.sync()
     levi.setShares([spec([anna.inboxId])])
     await levi.engine.publishShares()
@@ -158,11 +158,10 @@ describe('sharing photos with buddies', () => {
     const [image] = richTextImages(getNoteDoc(fields))
     expect(saved.get(image.id)).toEqual(jpeg)
     expect(arrived()).toBe(1)
-    // The blob is ciphertext, never the photo.
+
     const [stored] = [...env.fake.blobs.values()]
     expect(stored.data).not.toEqual(jpeg)
 
-    // Publishing again reuses the upload and sends nothing new.
     const events = env.fake.inboxes.get(anna.inboxId)!.events.length
     await levi.engine.publishShares()
     expect(env.fake.blobs.size).toBe(1)
@@ -218,16 +217,14 @@ describe('sharing photos with buddies', () => {
     levi.setShares([share])
     await levi.engine.publishShares()
     const [stored] = [...env.fake.blobs.values()]
-    // A month after the Plan, like the share.
+
     expect(stored.expiresAt).toBe(ends + 30 * DAY)
 
-    // The Plan has happened and is still shared; the photo stays.
     env.advance(ends + 2 * DAY - env.now())
     levi.setShares([share])
     await levi.engine.publishShares()
     expect(env.fake.blobs.size).toBe(1)
 
-    // Taken out of the note while the share lasts: deleted at once.
     levi.setShares([
       { ...share, noteDoc: { type: 'doc', content: [doc.content[0]] } },
     ])
@@ -249,15 +246,13 @@ describe('sharing photos with buddies', () => {
     levi.setShares([share])
     await levi.engine.publishShares()
     const first = levi.store.getState().sharedPhotos[PHOTO]
-    // The relay keeps a photo at most 90 days.
+
     expect(first.expiresAt).toBe(env.now() + 89 * DAY)
 
-    // With two months left, the same copy does.
     env.advance(30 * DAY)
     await levi.engine.publishShares()
     expect(levi.store.getState().sharedPhotos[PHOTO].blob).toBe(first.blob)
 
-    // With under a month left, a new copy replaces it and the old one goes.
     env.advance(30 * DAY)
     await levi.engine.publishShares()
     const second = levi.store.getState().sharedPhotos[PHOTO]
@@ -265,7 +260,6 @@ describe('sharing photos with buddies', () => {
     expect(second.expiresAt).toBe(env.now() + 89 * DAY)
     expect(env.fake.blobs.size).toBe(1)
 
-    // Anna's copy of the Plan points at the new photo.
     await anna.engine.sync()
     const shareId = levi.engine.shareIdForKey(planShareKey('sat'))
     const got =

@@ -17,31 +17,21 @@ import type { BadgeArtId, BadgeLevel } from '@/types/badges'
 import type { BadgeViewOrigin, RootStackNavigation } from '@/types/rootStack'
 
 const MEDALLION_SIZE = 44
-/** The overlay's content padding; the row scrolls edge to edge through it. */
+
 const BLEED = 24
-/** Outlines hinting at what's ahead before anything is earned. */
+
 const PREVIEW: readonly BadgeArtId[] = [
   'monthsShared',
   'reportSent',
   'conversations',
 ]
 
-/**
- * The profile overlay's Badges section: the User's earned medallions (highest
- * level per collection, newest first) and a way into the full collection. Lives
- * in the pre-mounted overlay, so it stays static: no mount animations. A
- * medallion opens its badge full screen, flipping out of where it sits.
- */
 export default function ProfileBadgesSection({
   onBeforeNavigate,
   onBeforeOpenBadge,
 }: {
-  /** Closes the overlay first so the destination isn't covered. */
   onBeforeNavigate: () => void
-  /**
-   * Fades the overlay away so the medallion seems to lift out of it, until the
-   * badge view closes.
-   */
+
   onBeforeOpenBadge: () => void
 }) {
   const theme = useTheme()
@@ -67,7 +57,7 @@ export default function ProfileBadgesSection({
     navigation.navigate('BadgeView', {
       badgeKey: badgeKey(art, level),
       owner: 'me',
-      // The overlay fades back in over it as the view closes.
+
       origin: origin && { ...origin, returns: false },
     })
   }
@@ -77,7 +67,7 @@ export default function ProfileBadgesSection({
       <View
         style={{
           flexDirection: 'row',
-          // See All wraps under the count when large text fills the row.
+
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',

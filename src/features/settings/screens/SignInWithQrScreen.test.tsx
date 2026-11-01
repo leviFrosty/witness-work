@@ -98,7 +98,6 @@ const actionsOf = async (testID = 'handoff-failed') => {
   }
 }
 
-/** The claim failed while it talked to the other phone. */
 const claimFailed = (reason: HandoffFailure): Claim => ({
   session: {},
   state: { step: 'failed', reason },
@@ -108,7 +107,6 @@ const claimFailed = (reason: HandoffFailure): Claim => ({
   reset: mocks.reset,
 })
 
-/** The key arrived, then signing in with it failed. */
 const completionFailed = (
   reason: HandoffFailure | 'replace_failed'
 ): Claim => ({

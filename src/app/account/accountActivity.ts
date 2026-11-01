@@ -15,18 +15,7 @@ import {
   type DeviceLabelReader,
 } from '@/lib/serverAccount/activityLabels'
 
-/**
- * Settings → Account → Devices and Activity (ADR 0028), through this device's
- * attested session. Both need the account key already on this device: the
- * screens are only offered once the account is set up.
- */
-
-/** What reading them needs besides the answer: whose session, and labels. */
 export type AccountActivityContext = {
-  /**
-   * Whether a session is this device's: the current one, or one this install
-   * had before it signed in again.
-   */
   isThisDevice: (sessionId: string) => boolean
   readLabel: DeviceLabelReader
 }
@@ -50,7 +39,6 @@ async function connect(signal?: AbortSignal) {
   return { key, options, context }
 }
 
-/** The account's signed-in devices (`readAccountDevices`), and how to read them. */
 export async function loadAccountDevices(
   signal?: AbortSignal
 ): Promise<{ devices: AccountDevice[]; context: AccountActivityContext }> {
@@ -64,7 +52,6 @@ export async function signOutAccountDevice(sessionId: string): Promise<void> {
   await revokeAccountDevice(sessionId, options())
 }
 
-/** Entries per page. */
 export const ACTIVITY_PAGE_SIZE = 50
 
 export async function loadAccountActivity(

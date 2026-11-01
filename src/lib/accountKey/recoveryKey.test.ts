@@ -9,10 +9,7 @@ import {
 } from '@/lib/accountKey/recoveryKey'
 
 const random = () => new Uint8Array(randomBytes(32))
-/**
- * A fixed key for the checksum tests. A 16-bit checksum lets about 1 in 65,536
- * wrong keys through, so a random key made them fail now and then.
- */
+
 const fixedKey = () =>
   Uint8Array.from({ length: 32 }, (_, i) => (i * 37 + 11) % 256)
 const keyOf = (input: string) => {
@@ -22,7 +19,6 @@ const keyOf = (input: string) => {
 }
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 
-/** A different valid character in place of the one at `index` of the body. */
 function typo(recoveryKey: string, index: number) {
   const body = normalizeRecoveryKey(recoveryKey)
   const next = ALPHABET[(ALPHABET.indexOf(body[index]) + 1) % 32]
@@ -39,8 +35,7 @@ describe('encodeRecoveryKey', () => {
   it('matches the protocol: key ‖ first 2 bytes of SHA-256, big-endian base32', () => {
     const zeros = new Uint8Array(32)
     const [c0, c1] = sha256(zeros)
-    // 32 zero bytes are 51 zero characters and 1 bit of a 52nd; the checksum's
-    // 16 bits start in the 52nd character's last 4 bits.
+
     const bits =
       '0'.repeat(256) +
       c0.toString(2).padStart(8, '0') +
@@ -99,7 +94,6 @@ describe('parseRecoveryKey', () => {
   })
 
   it('reads I and L as 1 and O as 0', () => {
-    // Find a key whose characters include 1 and 0, then mistype them.
     let key = random()
     let body = normalizeRecoveryKey(encodeRecoveryKey(key))
     while (!body.includes('1') || !body.includes('0')) {
@@ -116,7 +110,6 @@ describe('parseRecoveryKey', () => {
   })
 
   it('keeps a key whose own characters start with WW1', () => {
-    // W W 1 is 11100 11100 00001: the key's first 15 bits.
     const key = random()
     key[0] = 0b11100111
     key[1] = 0b00000010 | (key[1] & 1)
@@ -173,7 +166,7 @@ describe('parseRecoveryKey', () => {
   it('refuses padding bits that a key never has', () => {
     const body = normalizeRecoveryKey(encodeRecoveryKey(random()))
     const last = ALPHABET.indexOf(body[54])
-    // The last character carries one data bit and three zero bits.
+
     const padded = body.slice(0, 54) + ALPHABET[last | 0b001]
     expect(parseRecoveryKey(padded)).toEqual({
       ok: false,

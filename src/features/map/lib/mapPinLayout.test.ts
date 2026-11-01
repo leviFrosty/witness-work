@@ -32,7 +32,6 @@ const index = (parts: Partial<ConversationIndex> = {}): ConversationIndex => ({
   ...parts,
 })
 
-/** A Contact whose pin lands at map point (x, y). */
 const at = (id: string, x: number, y: number): ContactMarker => ({
   id,
   name: `Contact ${id}`,
@@ -41,7 +40,6 @@ const at = (id: string, x: number, y: number): ContactMarker => ({
   pinColor: '#888',
 })
 
-// Coordinates are map points, so the layout reads like a drawing.
 const projection = {
   project: (c: { latitude: number; longitude: number }) => ({
     x: c.longitude,
@@ -77,7 +75,7 @@ describe('layoutContactPins', () => {
         index: visits,
       }
     )
-    // Keyed by the lead, so the pin keeps its marker as it gathers.
+
     expect(items.map((item) => [item.key, item.group])).toEqual([
       ['b', true],
       ['c', false],

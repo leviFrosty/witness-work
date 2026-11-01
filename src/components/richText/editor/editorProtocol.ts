@@ -1,15 +1,5 @@
-/**
- * Messages between the native note editor screen and the Tiptap editor in its
- * WebView (`RichTextEditorDom`). Everything here crosses the bridge as JSON, so
- * it imports nothing from React Native.
- */
-
-/**
- * The widest the note's column gets, gutters included, like the app's other
- * content on a wide iPad. The editor's text and its toolbar share it.
- */
 export const NOTE_MAX_WIDTH = 720
-/** The note's side gutter while the screen is narrower than its column. */
+
 export const NOTE_GUTTER = 16
 
 export type EditorMark = 'bold' | 'italic' | 'underline' | 'strike'
@@ -33,7 +23,6 @@ export type EditorCommand =
   | { type: 'undo' }
   | { type: 'redo' }
 
-/** What the toolbar shows as active or available, at the cursor. */
 export type EditorFormatState = {
   focused: boolean
   bold: boolean
@@ -43,7 +32,7 @@ export type EditorFormatState = {
   block: EditorBlock
   list: EditorList | null
   link: string | null
-  /** Selected text, for prefilling the link sheet (clipped). */
+
   selection: string
   canIndent: boolean
   canOutdent: boolean
@@ -76,11 +65,10 @@ export type EditorTheme = {
   accent: string
   background: string
   border: string
-  /** Body text size in CSS px (= points), including the user's text size. */
+
   fontSize: number
 }
 
-/** Font files for the editor's `@font-face`s; missing ones use system fonts. */
 export type EditorFonts = {
   regular?: string
   bold?: string
@@ -89,20 +77,16 @@ export type EditorFonts = {
 }
 
 export type EditorSetup = {
-  /** The note as a Tiptap JSON doc. */
   doc: Record<string, unknown>
-  /** Image id → inline data: URL the page can show. */
+
   imageSources: Record<string, string>
   theme: EditorTheme
   fonts: EditorFonts
-  /**
-   * The app's layout direction, for lines without letters (an empty line being
-   * typed). Paragraphs and list items with text take their own direction.
-   */
+
   direction: 'ltr' | 'rtl'
   placeholder: string
   label: string
-  /** Most characters of text the note may hold. */
+
   characterLimit?: number
   autofocus: boolean
 }

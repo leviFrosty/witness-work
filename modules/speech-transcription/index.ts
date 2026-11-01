@@ -1,26 +1,12 @@
 import { requireOptionalNativeModule } from 'expo-modules-core'
 import type { EventSubscription } from 'expo-modules-core'
 
-/**
- * On-device speech-to-text (ADR 0018). This file is the platform-neutral
- * contract: iOS implements it in `ios/` (SpeechAnalyzer, or an on-device
- * SFSpeechRecognizer before iOS 26), and Android in `android/` (Android's
- * on-device SpeechRecognizer, Android 12+). Both register a
- * `SpeechTranscription` module with the same functions and events.
- *
- * The contract forbids server recognition: an implementation must report
- * unavailable rather than send audio off the device. Where `getAvailability`
- * says unavailable (no on-device recognizer, or none for the user's languages),
- * voice input falls back to the keyboard.
- */
-
 export type SpeechPermissionStatus = 'granted' | 'denied' | 'undetermined'
 
 export interface SpeechPermissions {
-  /** Combined status of every permission recording needs. */
   status: SpeechPermissionStatus
   microphone: SpeechPermissionStatus
-  /** IOS 26+ and Android transcribe with microphone access alone. */
+
   speechRecognition: SpeechPermissionStatus | 'notRequired'
 }
 
@@ -28,7 +14,6 @@ export type SpeechEngine =
   | 'speechTranscriber'
   | 'dictationTranscriber'
   | 'legacy'
-  /** Android 12+: SpeechRecognizer.createOnDeviceSpeechRecognizer. */
   | 'androidOnDevice'
 
 export type SpeechAvailability =
@@ -36,9 +21,8 @@ export type SpeechAvailability =
   | { available: false }
 
 export interface StartOptions {
-  /** BCP-47 languages to try in order; the device's languages follow. */
   localeCandidates: string[]
-  /** Words to favor, such as contact names. Used on-device only. */
+
   contextualStrings?: string[]
 }
 
@@ -68,7 +52,7 @@ interface SpeechTranscriptionNative {
   ): Promise<{ locale: string; engine: SpeechEngine }>
   stop(): Promise<string>
   cancel(): Promise<void>
-  /** Version 2+. */
+
   playCue?(uri: string): void
   addListener<E extends keyof Events>(
     event: E,
@@ -89,7 +73,6 @@ const NATIVE_CODES: Record<string, SpeechErrorCode> = {
   ERR_SPEECH_CANCELLED: 'cancelled',
 }
 
-/** Maps a native rejection to a stable code; never inspects localized text. */
 export function speechErrorCode(error: unknown): SpeechErrorCode {
   const code =
     error && typeof error === 'object' && 'code' in error
@@ -98,7 +81,6 @@ export function speechErrorCode(error: unknown): SpeechErrorCode {
   return NATIVE_CODES[code] ?? 'failed'
 }
 
-/** Whether this binary ships the module (false in older builds). */
 export function isSupported(): boolean {
   return !!native?.speechTranscriptionVersion
 }
@@ -122,7 +104,6 @@ export function getPermissions(): Promise<SpeechPermissions> {
   return required().getPermissions()
 }
 
-/** Prompts only for permissions that are still undetermined. */
 export function requestPermissions(): Promise<SpeechPermissions> {
   return required().requestPermissions()
 }
@@ -134,7 +115,6 @@ export function start(options: StartOptions) {
   })
 }
 
-/** Ends the recording and resolves the final transcript ('' when none). */
 export function stop(): Promise<string> {
   return required().stop()
 }
@@ -143,11 +123,6 @@ export function cancel(): Promise<void> {
   return native ? native.cancel() : Promise.resolve()
 }
 
-/**
- * Plays a short sound from a local file URI even while recording (iOS mutes app
- * audio then). Follows the silent switch and ringer mode. A no-op in binaries
- * before version 2.
- */
 export function playCue(uri: string): void {
   if ((native?.speechTranscriptionVersion ?? 0) < 2) return
   void native?.playCue?.(uri)

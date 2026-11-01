@@ -11,15 +11,9 @@ import { GameIcon } from '@/features/pet/components/GameControls'
 import { GameFrame } from '@/features/pet/components/GamePixels'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 
-/** Sprites shown stacked in the row; the count says the rest. */
 const STACKED = 4
 const TILE = 32
 
-/**
- * The pet's details: one row for buddies' pets visiting today, however many,
- * the first few stacked, with how many and whose. It opens the full list
- * (`PetVisits`). Nothing without visitors.
- */
 export default function PetVisitsSummary({
   visits,
   palette,

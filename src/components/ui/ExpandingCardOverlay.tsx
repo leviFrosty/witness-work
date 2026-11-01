@@ -39,11 +39,6 @@ type Props = {
 const MORPH_SPRING = { damping: 20, stiffness: 180, mass: 0.7 }
 const EXPANDED_MARGIN = 16
 
-/**
- * Morphs a measured card into the centered modal treatment used by Schedule
- * insights. The origin remains mounted during close so the card can animate
- * cleanly back into place.
- */
 const ExpandingCardOverlay = ({
   origin,
   open,
@@ -56,7 +51,6 @@ const ExpandingCardOverlay = ({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
   const progress = useSharedValue(0)
 
-  // Clear of iPhone Duo's vertical bar, and to one side of its fold.
   const pane = useWindowFoldPane()
   const targetWidth = pane.width - EXPANDED_MARGIN * 2
   const targetHeight = Math.min(
@@ -78,7 +72,6 @@ const ExpandingCardOverlay = ({
     progress.value = withSpring(open ? 1 : 0, MORPH_SPRING)
   }, [open, origin, progress])
 
-  // Measured in screen coordinates; `left` is mirrored in RTL.
   const originLeft = origin
     ? leftForPhysicalX(origin.x, origin.width, windowWidth)
     : 0

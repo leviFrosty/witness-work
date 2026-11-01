@@ -12,15 +12,8 @@ import {
 } from '@/lib/mapMarkerMetrics'
 import type { Coordinate } from '@/types/contact'
 
-/** Where a pin's card sits: over the pin, under it, or not at all. */
 export type CardPlacement = 'above' | 'below' | 'none'
 
-/**
- * The card beside a map pin: a short colored line (when you'd be there, when a
- * Contact is due) over a title, pointing at its pin from above or below.
- * Selected, it fills with the accent color. Without an `eyebrow`, it's one
- * line.
- */
 export default function MapMarkerCard({
   id,
   coordinate,
@@ -37,11 +30,11 @@ export default function MapMarkerCard({
   coordinate: Coordinate
   placement: 'above' | 'below'
   eyebrow?: string
-  /** The eyebrow's color; the accent color by default. */
+
   eyebrowColor?: string
   title: string
   selected: boolean
-  /** The pin's diameter, which the card keeps clear of. */
+
   pin: number
   zIndex: number
   onPress: () => void
@@ -69,7 +62,7 @@ export default function MapMarkerCard({
     : (eyebrowColor ?? theme.colors.accent)
   const cardHeight = eyebrow ? MARKER_CARD_HEIGHT : MARKER_CARD_SINGLE_HEIGHT
   const height = cardHeight + MARKER_POINTER
-  // From the pin's center to the pointer's tip.
+
   const clearance = pin / 2 + MARKER_GAP
 
   const pointer = (
@@ -84,15 +77,12 @@ export default function MapMarkerCard({
         transform: [{ rotate: '45deg' }],
         backgroundColor: cardColor,
         borderColor: theme.colors.border,
-        // Physical sides: the rotated square's outlined corner is the tip,
-        // which points at the pin in either direction.
+
         ...(selected
           ? {}
           : above
-            ? // eslint-disable-next-line no-restricted-syntax
-              { borderRightWidth: 1, borderBottomWidth: 1 }
-            : // eslint-disable-next-line no-restricted-syntax
-              { borderLeftWidth: 1, borderTopWidth: 1 }),
+            ? { borderRightWidth: 1, borderBottomWidth: 1 }
+            : { borderLeftWidth: 1, borderTopWidth: 1 }),
       }}
     />
   )
@@ -104,13 +94,9 @@ export default function MapMarkerCard({
       onPress={onPress}
       ref={marker.ref}
       tracksViewChanges={marker.tracksViewChanges}
-      // A clear spacer toward the pin keeps the anchor on the view's edge,
-      // which Google Maps needs; a tap there picks the same pin.
       centerOffset={{ x: 0, y: ((above ? -1 : 1) * (height + clearance)) / 2 }}
       anchor={{ x: 0.5, y: above ? 1 : 0 }}
       zIndex={selected ? 1000 : zIndex}
-      // Apple Maps reads every marker, hidden or not, so the card says what it
-      // shows rather than "Map pin". Android's stays hidden; its pin speaks.
       accessibilityLabel={
         Platform.OS === 'ios'
           ? [title, eyebrow].filter(Boolean).join(', ')
@@ -121,10 +107,6 @@ export default function MapMarkerCard({
       stopPropagation
     >
       <View
-        // Android sizes the marker's picture by its first native view, so
-        // this one stays unflattened: otherwise the card's own body is first,
-        // and a restyle crops off the pointer and spacer, dropping the card
-        // onto its pin.
         collapsable={false}
         style={{ alignItems: 'center', height: height + clearance }}
       >

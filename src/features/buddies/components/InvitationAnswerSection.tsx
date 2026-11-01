@@ -29,24 +29,17 @@ import {
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** Answering a buddy's invitation from its page (Plan Details, a Follow-up's). */
 export type ShareAnswering = {
   busy: boolean
   answer: (share: BuddyShareRef, reply: ShareReply) => void
 }
 
-/**
- * Who's going to a buddy's Plan or Follow-up, as one row of stacked photos that
- * opens the full list (the Going List sheet), and (while it can still be
- * answered) the User's answer under it.
- */
 export default function InvitationAnswerSection({
   from,
   share,
   status,
   answering,
 }: {
-  /** The organizer's inbox id. */
   from: string
   share?: IncomingShare
   status: Exclude<IncomingShareStatus, 'cancelled'>
@@ -57,7 +50,7 @@ export default function InvitationAnswerSection({
     state.buddies.find((candidate) => candidate.inboxId === from)
   )
   const buddies = useBuddies((state) => state.buddies)
-  // e.g. "Sending in 12s" while a Can't Make It can still change.
+
   const delivery = useReplyDelivery(
     share ? incomingShareKey(share.from, share.shareId) : undefined
   )
@@ -99,13 +92,8 @@ export default function InvitationAnswerSection({
   )
 }
 
-/** Past this many people, the last avatar slot becomes a "+N" count. */
 const MAX_AVATARS = 4
 
-/**
- * Everyone going at a glance: the others' photos stacked, the organizer first,
- * and how many, the User included. It opens the full list.
- */
 function WhosGoingRow({
   organizer,
   going,
@@ -119,7 +107,7 @@ function WhosGoingRow({
 }) {
   const theme = useTheme()
   const name = buddyDisplayName(organizer)
-  // The User's own photo is on their answer, right below.
+
   const faces = [
     <BuddyAvatar
       key='organizer'
@@ -144,11 +132,11 @@ function WhosGoingRow({
       )
     ),
   ]
-  // Everyone but the User, those whose apps don't list them included.
+
   const others = 1 + going.guests.length + going.more
   const shown = others > MAX_AVATARS ? faces.slice(0, MAX_AVATARS - 1) : faces
   const overflow = others - shown.length
-  // Only the organizer so far, as far as this User can see.
+
   const alone = going.count === 1
   const title = alone
     ? name
@@ -200,11 +188,6 @@ function WhosGoingRow({
   )
 }
 
-/**
- * The User's answer, under who's going: their photo with the answer on it, and
- * the answer as two choices, so switching back is one tap either way. An answer
- * that didn't send says so, with Try Again.
- */
 function YourAnswerRow({
   status,
   delivery,
@@ -227,7 +210,7 @@ function YourAnswerRow({
         gap: 12,
         paddingVertical: 10,
         paddingLeft: 15,
-        // The choices' circles end where the statuses above do.
+
         paddingRight: 9,
       }}
     >
@@ -284,7 +267,6 @@ function YourAnswerRow({
   )
 }
 
-/** Going (a check) or Can't Make It (an X), filled while it's the answer. */
 function AnswerChoice({
   reply,
   selected,

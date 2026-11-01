@@ -22,10 +22,6 @@ const OPTIONS: {
   { key: 'month', icon: CalendarDaysIcon, label: () => i18n.t('month') },
 ]
 
-/**
- * Icon-only Year/Month switch among the Schedule header actions, matching
- * Contacts' List/Map switch. Year sits first: it's the zoomed-out view.
- */
 const ScheduleViewToggle = ({
   value,
   onChange,
@@ -58,8 +54,6 @@ const ScheduleViewToggle = ({
                 onChange(key)
               }}
               noTransform
-              // iOS gives a view no trait for `tab`, so it would read as plain
-              // text there; a selected button is how iOS reads a segment.
               accessibilityRole={Platform.OS === 'ios' ? 'button' : 'tab'}
               accessibilityLabel={label()}
               accessibilityState={{ selected: active }}

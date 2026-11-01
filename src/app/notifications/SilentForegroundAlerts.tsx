@@ -5,19 +5,13 @@ import { toast } from '@/stores/toasts'
 import { isBuddiesNews } from '@/app/notifications/foregroundPresentation'
 import { isAudioEnabled } from '@/lib/audio'
 
-/**
- * With app sounds off, Android posts an alert that arrives while the app is
- * open silently — and a silent Android notification gets no drop-down banner.
- * iOS still shows its banner without sound, so Android shows a toast instead.
- * The alert stays in the notification shade either way.
- */
 export default function SilentForegroundAlerts() {
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const subscription = Notifications.addNotificationReceivedListener(
       (notification) => {
         if (isAudioEnabled()) return
-        // Buddies' badge news is quiet: no banner, in the app or out.
+
         if (isBuddiesNews(notification)) return
         const { title, body } = notification.request.content
         if (!title && !body) return

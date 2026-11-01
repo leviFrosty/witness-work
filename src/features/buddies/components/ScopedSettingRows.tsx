@@ -26,15 +26,9 @@ import {
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
 const MARKER_SIZE = 16
-/**
- * The markers after a setting's label get full frames, pulled back top and
- * bottom so the row keeps its height. The source's frame reaches back over the
- * label, which takes no taps; after that each frame takes its room, so the
- * source's, Reset's and the info icon's meet without overlapping.
- */
+
 const markerFrame = touchTargetFrame(MARKER_SIZE)
 
-/** One level in the source popover: who, their value, and whether it wins. */
 function SourceLayer({
   leading,
   name,
@@ -89,13 +83,6 @@ function SourceLayer({
   )
 }
 
-/**
- * The layers icon after a row's label: where its value comes from. In a buddy's
- * settings it's always there, tinted while the value is the buddy's own; it
- * opens the buddy's value and All Buddies', the one in effect checked. In All
- * Buddies' it's there while some buddies have their own value, and lists them;
- * tapping one opens their settings.
- */
 function SettingSourceButton<T>({
   setting,
   label,
@@ -225,7 +212,6 @@ function SettingSourceButton<T>({
   )
 }
 
-/** The undo arrow after a buddy's own value: follow All Buddies again. */
 function SettingResetButton({ onPress }: { onPress: () => void }) {
   const theme = useTheme()
   const label = i18n.t('buddies_settingResetLabel')
@@ -263,7 +249,6 @@ function SettingMarkers<T>({
 const onOff = (value: boolean) =>
   i18n.t(value ? 'buddies_settingOn' : 'buddies_settingOff')
 
-/** A switch for a setting in the current scope. */
 export function ScopedSwitchRow({
   setting,
   label,
@@ -292,7 +277,6 @@ export function ScopedSwitchRow({
   )
 }
 
-/** A choice for a setting in the current scope. */
 export function ScopedSelectRow<T extends string>({
   setting,
   label,

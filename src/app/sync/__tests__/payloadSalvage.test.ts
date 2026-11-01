@@ -28,9 +28,6 @@ vi.mock('@/app/sync/payloadNotes', async (importOriginal) => {
   return { sanitizeNoteDocs: vi.fn(actual.sanitizeNoteDocs) }
 })
 
-// One unreadable record, setting or profile value used to make the whole file
-// unreadable, so a second device never synced (1.44.0).
-
 const contact = (id: string, extra: Record<string, unknown> = {}) => ({
   id,
   name: `Contact ${id}`,
@@ -48,7 +45,6 @@ const entry = (id: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function payloadWith(edit: (payload: any) => void) {
   const payload = JSON.parse(JSON.stringify(buildPayload({ deviceId: 'peer' })))
   edit(payload)
@@ -135,7 +131,7 @@ describe('parsePayload salvage', () => {
         'publisherHours:publisher': 300,
         showBadges: 300,
         offDays: 300,
-        // A NaN stamp is written as null.
+
         locale: null,
       }
     })
@@ -154,7 +150,6 @@ describe('parsePayload salvage', () => {
   })
 
   it('reads a file from an older build that still has a removed setting', () => {
-    // Removed in preferences v14; older builds still sync it.
     const json = payloadWith((p) => {
       p.preferencesStore.values.displayDetailsOnProgressBarHomeScreen = true
       p.preferencesStore.values.offDays = [0]
@@ -223,8 +218,6 @@ describe('parsePayload salvage', () => {
   })
 })
 
-// A rejected file used to report no reason, so a frame check failing on some
-// devices couldn't be told apart from a partial download (1.44.1).
 describe('parsePayload rejection reasons', () => {
   function reject(json: string) {
     const rejections: PayloadRejection[] = []

@@ -1,24 +1,14 @@
-/**
- * Waking a pet that died (2 s): colour washes back over the lying pet from the
- * feet up (0–800 ms), it pops up surprised (800–1100 ms), then it says hello
- * with a burst of hearts and stays joyful until the end.
- */
 import type { MotionTable } from './types'
 
-/** Length of the colour sweep. */
 const SWEEP_MS = 800
-/** When the pet lands and the hearts burst. */
+
 const BURST_MS = 1100
 
-/** The wake timeline, with the colour sweep. */
 export interface WakeTable extends MotionTable {
   readonly sweepMs: number
-  /** When the heart burst plays (same instant as the sound). */
+
   readonly burstAtMs: number
-  /**
-   * During the sweep, the first sprite row (0–31) that is back in colour; rows
-   * above it are still grey. `null` once the sweep is over.
-   */
+
   colorFromRow(u: number): number | null
 }
 

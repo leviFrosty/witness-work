@@ -3,9 +3,8 @@ import { Theme } from '@/constants/theme'
 import { withAlpha } from '@/lib/color'
 
 export interface WelcomePalette {
-  /** Scene background beneath the aurora. */
   base: string
-  /** Aurora shader inputs: RGB 0–1 colours and the blend mode (1 = dark). */
+
   aurora: {
     dark: number
     base: number[]
@@ -17,23 +16,23 @@ export interface WelcomePalette {
   }
   text: string
   textAlt: string
-  /** Frosted card fill, rim, shadow and placeholder bars. */
+
   surface: string
   surfaceBorder: string
   surfaceShadow: string
   surfaceShadowOpacity: { rest: number; focus: number }
   skeleton: string
-  /** Ring around a badge that sits on a card's edge. */
+
   badgeBorder: string
   mapRoad: string
   orbit: string
   orbitLight: string
   orbitDot: string
-  /** The progress ring's track, gradient and glowing head. */
+
   ringTrack: string
   ring: string[]
   ringHead: string
-  /** Glow beneath the app tile, and the rings it sends out as it lands. */
+
   tileShadow: string
   ripple: string
   ctaGlowOpacity: number
@@ -41,11 +40,6 @@ export interface WelcomePalette {
 
 const rgb = (color: string) => Array.from(Skia.Color(color)).slice(0, 3)
 
-/**
- * Colours for the welcome scene. The scene has its own art direction — a deep,
- * near-black night in dark mode, a bright mint morning in light mode — built
- * from the theme's brand hues so it stays recognisably WitnessWork.
- */
 export const getWelcomePalette = (theme: Theme): WelcomePalette => {
   const { colors } = theme
   const isDark = colors.background === '#121212'

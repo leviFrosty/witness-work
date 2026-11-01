@@ -26,8 +26,7 @@ import {
 import { buildReminderSchedule } from '@/lib/reminderSchedule'
 
 const originalTZ = process.env.TZ
-// A zone with daylight saving time: 2026 springs forward on Sunday, March 8
-// and falls back on Sunday, November 1.
+
 beforeAll(() => {
   process.env.TZ = 'America/Los_Angeles'
 })
@@ -36,7 +35,6 @@ afterAll(() => {
   else process.env.TZ = originalTZ
 })
 
-/** Local wall-clock instant on 2026-<month>-<day>, months 1-based. */
 const at = (month: number, day: number, hours = 0, minutes = 0) =>
   new Date(2026, month - 1, day, hours, minutes)
 
@@ -77,7 +75,6 @@ const sources = (
   ...overrides,
 })
 
-/** Monday, March 9, 2026 at 10 AM. */
 const now = at(3, 9, 10).getTime()
 
 const weeks = (s: WeekPlanSources, from = now) =>
@@ -110,7 +107,7 @@ describe('weekPlanReminderDates', () => {
     expect(weeks(sources({ enabledAt: now, dayPlans: [plan(3, 18)] }))).toEqual(
       ['2026-03-22']
     )
-    // The first and last day of the week count too.
+
     expect(
       weeks(sources({ enabledAt: now, dayPlans: [plan(3, 15), plan(3, 28)] }))
     ).toEqual([])
@@ -131,7 +128,7 @@ describe('weekPlanReminderDates', () => {
     expect(
       weeks(sources({ enabledAt: now, recurringPlans: [recurring()] }))
     ).toEqual([])
-    // A biweekly pattern from Wednesday, January 7 lands on March 18, not 25.
+
     expect(
       weeks(
         sources({
@@ -211,20 +208,19 @@ describe('weekPlanReminderDates', () => {
   })
 
   it('keeps the chosen local time across daylight saving changes', () => {
-    // Saturday, March 7 asks about the week clocks spring forward.
     const spring = weekPlanReminderDates(
       sources({ enabledAt: at(3, 2).getTime() }),
       at(3, 2).getTime()
     )
     expect(spring[0]).toEqual({ date: at(3, 7, 18), week: '2026-03-08' })
     expect(spring[0].date.getHours()).toBe(18)
-    // Saturday, October 31 asks about the week clocks fall back.
+
     const fallNow = at(10, 26, 10).getTime()
     const fall = weekPlanReminderDates(sources({ enabledAt: fallNow }), fallNow)
     expect(fall[0]).toEqual({ date: at(10, 31, 18), week: '2026-11-01' })
     expect(fall[0].date.getHours()).toBe(18)
     expect(fall[1]).toEqual({ date: at(11, 7, 18), week: '2026-11-08' })
-    // Their last day is still part of the week.
+
     expect(
       weeks(sources({ enabledAt: fallNow, dayPlans: [plan(11, 7)] }), fallNow)
     ).toEqual(['2026-11-08'])
@@ -248,8 +244,6 @@ describe('weekPlanReminderDates', () => {
     })
 
     it('asks about the Monday-to-Sunday week after the reminder', () => {
-      // Saturday the 14th asks about Monday the 16th, so Sunday the 15th's
-      // Plan is in the week of the reminder, not the next.
       expect(
         weekPlanReminderDates(
           sources({ enabledAt: now, dayPlans: [plan(3, 15)] }),

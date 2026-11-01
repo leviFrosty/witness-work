@@ -22,11 +22,6 @@ import MytimeImportPreview from '@/features/mytime-import/components/MytimeImpor
 import MytimeFileHint from '@/features/mytime-import/components/MytimeFileHint'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
-/**
- * Settings surface for the MyTime importer. Uses `'fillIfUnset'` so importing
- * here never clobbers a Publisher role / Tenure Start Date the user already set
- * (decision 4) — onboarding uses `'overwrite'` instead.
- */
 const MytimeImportScreen = () => {
   const theme = useTheme()
   const {

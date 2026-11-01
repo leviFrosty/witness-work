@@ -16,7 +16,7 @@ export type QuickActionSheetProps = {
   navigation: RootStackNavigation & HomeTabStackNavigation
   sheetOpen: boolean
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>
-  /** Shown above the actions; see `QuickActionMenu`. */
+
   leading?: ReactNode
 }
 
@@ -28,8 +28,6 @@ export default function QuickActionSheet({
 }: QuickActionSheetProps) {
   const theme = useTheme()
 
-  // Starts reading the location as the menu opens, so Log Visit's Nearby is
-  // usually ready by the time it's picked. Never prompts.
   useEffect(() => {
     if (sheetOpen) void refreshCurrentLocation()
   }, [sheetOpen])

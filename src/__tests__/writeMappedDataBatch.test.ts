@@ -29,8 +29,7 @@ vi.mock('expo-notifications', () => ({
 vi.mock('@/lib/contactAvatarFiles', () => ({
   deleteAvatarFiles: vi.fn(async () => {}),
 }))
-// A counter instead of the clock, so two runs of the same writes stamp the
-// same `updatedAt`s and their stores compare exactly.
+
 const clock = vi.hoisted(() => ({ now: 0 }))
 vi.mock('@/lib/syncClock', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/syncClock')>()),
@@ -76,7 +75,6 @@ const anEntry = (id: string, date: Date): TimeEntry => ({
   date,
 })
 
-/** `count` of each record, spread over two service years. */
 const bigImport = (count: number): MappedImport => ({
   contacts: Array.from({ length: count }, (_, i) => aContact(`c${i}`)),
   visits: Array.from({ length: count }, (_, i) => aVisit(`v${i}`, `c${i}`)),
@@ -88,14 +86,12 @@ const bigImport = (count: number): MappedImport => ({
   publisher: null,
 })
 
-/** Existing data the import has to dedupe against and leave intact. */
 const seedStores = () => {
   useContacts.setState({
     contacts: [{ ...aContact('c0', 'Already here'), updatedAt: 5 }],
     deletedContacts: [
-      // Still in Recover Contacts: blocks its id.
       { ...aContact('c1', 'Archived'), updatedAt: 6 },
-      // Redacted: the import replaces it.
+
       stripContactForTombstone(aContact('c2'), 500),
     ],
     deletedCustomFieldDefs: [{ id: 'field-gone', deletedAt: 1 }],
@@ -118,7 +114,6 @@ const seedStores = () => {
   })
 }
 
-/** The write path before batching: one store action per record. */
 const writePerItem = (mapped: MappedImport) => {
   const existingContactIds = new Set(
     [
@@ -197,7 +192,7 @@ describe('writeMappedDataToStores — batched writes', () => {
 
   it('leaves the stores exactly as one write per record did', () => {
     const mapped = bigImport(40)
-    // Duplicates within the batch are skipped like any other known id.
+
     mapped.contacts.push(aContact('c5', 'Duplicate'))
     mapped.visits.push(aVisit('v5', 'c5'))
     mapped.timeEntries.push(anEntry('t5', AT))
@@ -213,8 +208,7 @@ describe('writeMappedDataToStores — batched writes', () => {
     })
 
     expect(snapshot()).toEqual(perItem)
-    // c0 is active and c1 waits in Recover Contacts; the redacted c2 is
-    // replaced, so it counts as inserted and leaves the recycle bin.
+
     expect(commit.insertedContactIds).toEqual(
       mapped.contacts.slice(2, 40).map((c) => c.id)
     )

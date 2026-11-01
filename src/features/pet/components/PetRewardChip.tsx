@@ -25,13 +25,8 @@ import { petEarningsNow } from '@/features/pet/lib/walletNow'
 import { crispScale } from '@/features/pet/render/crispScale'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 
-/** About 2 pt a pixel: a 10-pixel icon beside the toast's 15 pt text. */
 const ICON_PT = 2
 
-/**
- * What a save earned, after the confirming toast's text, when the reward stack
- * doesn't play: "+2" beside a coin. It pops in once the toast has.
- */
 export default function PetRewardChip({ gain }: { gain: number }) {
   const theme = useTheme()
   const scale = crispScale(ICON_PT, 1, PixelRatio.get())
@@ -64,10 +59,6 @@ export default function PetRewardChip({ gain }: { gain: number }) {
   )
 }
 
-/**
- * The coin about `size` points square, for the reward stack: the large icon
- * from 20 points, kept crisp.
- */
 export function rewardIcon(size: number) {
   const iconSize = size >= 20 ? 'large' : 'small'
   return (
@@ -78,7 +69,6 @@ export function rewardIcon(size: number) {
   )
 }
 
-/** What the Service Streak counts now, which names its milestones. */
 const streakKindNow = () => {
   const { role, roleHistory } = usePreferences.getState()
   return getStreakKind(
@@ -86,14 +76,6 @@ const streakKindNow = () => {
   )
 }
 
-/**
- * Measures what a save of the User's earns the pet (`measureReward`), plays it
- * as the reward stack where they are, line by line ("+1 Time added", "+1
- * Planned day kept"), and returns the toast's tally that its total drops into.
- * With the stack off, the toast shows the "+N" chip instead. Either way the
- * gain is seen, so the pet's card doesn't play it again. Nothing without a pet
- * or a gain.
- */
 export const petRewardProbe: RewardProbe = (action) => {
   const before = petEarningsNow()
   return () => {
@@ -131,11 +113,6 @@ export const petRewardProbe: RewardProbe = (action) => {
   }
 }
 
-/**
- * A sample reward for Settings → Rewards: a planned day kept that reached a
- * streak milestone, counting into the pet's wallet as it is. Nothing is
- * earned.
- */
 export function playPetRewardSample(): boolean {
   const wallet = petEarningsNow()?.wallet ?? 0
   const lines: RewardLine[] = [

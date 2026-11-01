@@ -32,7 +32,7 @@ describe('Buddies errors', () => {
       'buddies_deleteAllCarPending',
       { car: 'Mazda CX-5' },
     ])
-    // One that never synced here has no name; two are counted.
+
     expect(message([''])).toEqual([
       'buddies_deleteAllCarsPending',
       { count: 1 },

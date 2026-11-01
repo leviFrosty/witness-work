@@ -75,7 +75,7 @@ describe('form submission validation', () => {
     expect(validation.invalid('category')).toBe(false)
     await submit()
     expect(saved).toHaveBeenCalledTimes(1)
-    // An inline Add form can reset its draft after a successful submission.
+
     await act(async () =>
       renderer.update(<Form errors={{ duration: true, category: false }} />)
     )

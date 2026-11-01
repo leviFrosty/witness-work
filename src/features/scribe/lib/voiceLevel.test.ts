@@ -5,9 +5,8 @@ import {
   type VoiceLevelRange,
 } from '@/features/scribe/lib/voiceLevel'
 
-// Native levels map -50...0 dB onto 0...1; samples arrive every ~80 ms.
-const ROOM = 0.1 // ~-45 dB
-const QUIET_SPEECH = 0.3 // ~-35 dB
+const ROOM = 0.1
+const QUIET_SPEECH = 0.3
 const COUGH = 0.95
 
 const feed = (range: VoiceLevelRange, levels: number[]) => {
@@ -50,7 +49,7 @@ describe('normalizeVoiceLevel', () => {
       ...repeat(ROOM, 20),
       COUGH,
       COUGH,
-      ...repeat(ROOM, 40), // ~3 s
+      ...repeat(ROOM, 40),
     ])
     const { loudness } = feed(range, repeat(QUIET_SPEECH, 3))
     expect(loudness[0]).toBeGreaterThan(0.5)

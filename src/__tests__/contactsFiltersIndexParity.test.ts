@@ -12,18 +12,11 @@ import { StalenessBreakpoints } from '@/types/staleness'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 
-// Deterministic PRNG so a failure reproduces.
 const rng = (seed: number) => () => {
   seed = (seed * 1664525 + 1013904223) % 4294967296
   return seed / 4294967296
 }
 
-/**
- * Contacts in every staleness bucket, studies this month and earlier, dismissed
- * contacts (still dismissed and expired), visits whose contact is no longer in
- * the list (archived), and Follow-ups that are upcoming, due, missed, missed
- * too long ago, answered, or dismissed.
- */
 const generate = (contactCount: number, visitCount: number) => {
   const rand = rng(42)
   const now = moment()
@@ -41,15 +34,12 @@ const generate = (contactCount: number, visitCount: number) => {
 
   const visits: Visit[] = []
   for (let v = 0; v < visitCount; v++) {
-    // ~1 in 5 contacts never gets a visit; a few visits go to archived ids.
     const archived = rand() < 0.03
     const idx = Math.floor(rand() * contactCount)
     if (!archived && idx % 5 === 4) continue
-    // Whole days plus a quarter day keeps every visit clear of the staleness
-    // thresholds, which `moment` and the index measure in different units.
+
     const daysAgo = Math.floor(rand() * 120)
-    // Follow-ups from ~40 days ago to ~10 days ahead, on the half hour so none
-    // lands exactly on the missed (due + 4h) or lookback boundary.
+
     const followUpHours = Math.floor(rand() * 50 * 24) - 40 * 24 + 0.5
     visits.push({
       id: `v${v}`,
@@ -68,7 +58,6 @@ const generate = (contactCount: number, visitCount: number) => {
     })
   }
 
-  // Studies right at the month edges.
   visits.push(
     {
       id: 'start-of-month',
@@ -113,8 +102,6 @@ const BREAKPOINTS: StalenessBreakpoints[] = [
 ]
 
 describe('applyFilters with a ConversationIndex', () => {
-  // Mid-month, midday, so the generated dataset has studies both this month
-  // and earlier, and no visit lands on a DST change near a threshold.
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-17T12:00:00'))

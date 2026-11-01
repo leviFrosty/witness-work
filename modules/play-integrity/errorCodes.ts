@@ -1,15 +1,5 @@
-/**
- * Native → JS error taxonomy for the Play Integrity module. Mirrors Play's
- * `StandardIntegrityErrorCode` one-to-one; grouping them into lifecycle
- * decisions is `src/lib/attestation/playIntegrity.ts`'s job.
- *
- * Deliberately free of native imports so the classifier stays unit-testable.
- */
-
 export type PlayIntegrityErrorCode =
-  /** Not Android, or the native module isn't in this binary. */
   | 'unsupported'
-  /** This module rejected the arguments before Play saw them. */
   | 'invalidArgument'
   | 'apiNotAvailable'
   | 'playStoreNotFound'
@@ -25,7 +15,6 @@ export type PlayIntegrityErrorCode =
   | 'cloudProjectNumberInvalid'
   | 'requestHashTooLong'
   | 'clientTransient'
-  /** Still invalid after the native side re-prepared the provider once. */
   | 'providerInvalid'
   | 'internal'
   | 'unknown'
@@ -40,7 +29,6 @@ export class PlayIntegrityError extends Error {
   }
 }
 
-/** The stable tokens `PlayIntegrityModule.kt` rejects with. */
 const NATIVE_TOKENS = {
   PLAY_INTEGRITY_INVALID_ARGUMENT: 'invalidArgument',
   PLAY_INTEGRITY_API_NOT_AVAILABLE: 'apiNotAvailable',
@@ -69,11 +57,6 @@ const tokenCode = (value: string): PlayIntegrityErrorCode | null =>
     ? NATIVE_TOKENS[value as keyof typeof NATIVE_TOKENS]
     : null
 
-/**
- * Classifies a rejection from the native module by our own constant — from
- * `code`, else from the message (see `modules/app-attest/errorCodes.ts` for why
- * both channels are read). Never inspects a system-localized string.
- */
 export const codeFromNativeError = (error: unknown): PlayIntegrityErrorCode => {
   if (error instanceof PlayIntegrityError) return error.code
   if (typeof error !== 'object' || error === null) return 'unknown'

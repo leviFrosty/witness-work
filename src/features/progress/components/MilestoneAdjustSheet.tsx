@@ -45,7 +45,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { tracking } from '@/lib/tracking'
 
 const MILESTONE_STEP = 10
-/** The stepper buttons' visible square; each sits in a 44pt frame. */
+
 const STEPPER_SIZE = 28
 
 type Props = {
@@ -53,11 +53,6 @@ type Props = {
   onClose: () => void
 }
 
-/**
- * Sort ascending, drop non-positive and over-ceiling values, dedupe. Used
- * whenever the draft mutates so the preview bar stays monotonic without
- * requiring the user to hand-sort.
- */
 const sanitizeDraft = (values: number[], annualGoalHours: number): number[] => {
   const ceiling = Math.max(0, annualGoalHours - 1)
   const cleaned: number[] = []
@@ -73,7 +68,7 @@ const sanitizeDraft = (values: number[], annualGoalHours: number): number[] => {
 
 const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   const theme = useTheme()
-  // Set by the no-goal shortcut: Settings opens once the sheet has closed.
+
   const openSettings = useRef(false)
   const navigation = useNavigation<RootStackNavigation>()
   const {
@@ -93,23 +88,16 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   )
   const { serviceReports } = useServiceReport()
 
-  // This month's role and the current Service Year's Annual Goal (prorated
-  // when the Role History changes mid-year) — same values the Year tab shows.
   const { type: role, annualGoalHours } = usePublisher()
   const roleFor = useRoleForMonth()
 
-  // Seed / re-seed the local draft whenever the sheet opens or the persisted
-  // list changes (e.g. Reset to Defaults). We keep a local copy so the user
-  // can freely type / reorder without stomping preferences until they tap Done.
   const [draft, setDraft] = useState<number[]>(() =>
     sanitizeDraft(
       milestoneOverrides ?? DEFAULT_MILESTONES_BY_PUBLISHER[role],
       annualGoalHours
     )
   )
-  // Per-row input buffer so typing doesn't immediately reorder the list — we
-  // only sort/dedupe on blur. Keyed by the numeric milestone value at the time
-  // the row was rendered.
+
   const [inputBuffers, setInputBuffers] = useState<Record<number, string>>({})
   const [lockedRowHovered, setLockedRowHovered] = useState(false)
 
@@ -124,9 +112,6 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     setInputBuffers({})
   }, [visible, milestoneOverrides, role, annualGoalHours])
 
-  // Live hours completed for the current service year — same math the rest of
-  // the app uses. Must filter to just this service year first; passing the raw
-  // store sums every year ever logged.
   const completedMinutes = useMemo(() => {
     if (annualGoalHours <= 0) return 0
     const serviceYearStart = getServiceYearFromDate(new Date())
@@ -196,11 +181,6 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     )
   }
 
-  /**
-   * Single confirmation gate for every path that drops a rung — the X button
-   * and typing a non-positive value into a rung's input both land here so a
-   * milestone never disappears without the user agreeing to it.
-   */
   const confirmRemoveMilestone = (value: number) => {
     confirmDestructive({
       title: i18n.t('removeMilestone_title', { hours: value }),
@@ -242,9 +222,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
     })
     if (!isFinite(parsed)) return
     const next = validateMilestoneValue(parsed, annualGoalHours)
-    // Typing the value down to nothing is a removal — route it through the
-    // same confirm as the X button instead of silently dropping the rung. The
-    // buffer was already cleared above, so cancelling restores the old value.
+
     if (next <= 0) {
       if (draft.includes(value)) confirmRemoveMilestone(value)
       return
@@ -320,8 +298,6 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
       onOpenChange={(o) => {
         if (!o) handleClose()
       }}
-      // Settings is a pushed screen; opened while the sheet is still on its way
-      // out, it would land underneath it.
       onClosed={() => {
         if (!openSettings.current) return
         openSettings.current = false
@@ -338,7 +314,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
           gap: 18,
         }}
       >
-        {/* Header */}
+        {}
         <View
           style={{
             flexDirection: 'row',
@@ -406,7 +382,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
             contentContainerStyle={{ gap: 18, paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
           >
-            {/* Intro copy */}
+            {}
             <Text
               style={{
                 color: theme.colors.textAlt,
@@ -417,7 +393,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               {i18n.t('milestonesOrderHint')}
             </Text>
 
-            {/* Preview bar + subtitle */}
+            {}
             <View style={{ gap: 8 }}>
               <MilestoneProgressBarPreview
                 milestones={milestonesWithGoal}
@@ -434,7 +410,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               </Text>
             </View>
 
-            {/* Editable rows */}
+            {}
             <View style={{ gap: 10 }}>
               {draft.map((value) => {
                 const isHit = hitState.hit.includes(value)
@@ -456,12 +432,12 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       backgroundColor: theme.colors.background,
                     }}
                   >
-                    {/* Hit indicator */}
+                    {}
                     <HitIndicator
                       state={isHit ? 'hit' : isNext ? 'next' : 'future'}
                     />
 
-                    {/* Stepper */}
+                    {}
                     <PointerHover effect='lift'>
                       <Pressable
                         onPress={() => handleStep(value, -1)}
@@ -479,7 +455,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       </Pressable>
                     </PointerHover>
 
-                    {/* Numeric input */}
+                    {}
                     <View
                       style={{
                         minWidth: 56,
@@ -494,8 +470,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                         onChangeText={(text) =>
                           setInputBuffers((prev) => ({
                             ...prev,
-                            // Keep the digits, typed 0-9 or Arabic-Indic, and
-                            // show them in the app Language's.
+
                             [value]: localizeAppDigits(
                               toAsciiDigits(text).replace(/[^0-9]/g, '')
                             ),
@@ -545,7 +520,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                       {i18n.t('hours_lowercase')}
                     </Text>
 
-                    {/* Remove */}
+                    {}
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <IconButton
                         noTransform
@@ -560,7 +535,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
                 )
               })}
 
-              {/* Locked annual-goal row */}
+              {}
               <PointerHover onHoverChange={setLockedRowHovered}>
                 <Pressable
                   onPress={handleNavigateToSettings}
@@ -628,7 +603,7 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               </PointerHover>
             </View>
 
-            {/* Footer actions */}
+            {}
             <View style={{ gap: 10 }}>
               <Button
                 noTransform
@@ -673,11 +648,6 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
   )
 }
 
-/**
- * Small visual indicator mirroring the three milestone-row states from the
- * wireframe: hit (filled accent circle with check), next (hollow ring), and
- * future (subdued dot). Pure presentational — state is computed upstream.
- */
 const HitIndicator = ({ state }: { state: 'hit' | 'next' | 'future' }) => {
   const theme = useTheme()
   const size = 22

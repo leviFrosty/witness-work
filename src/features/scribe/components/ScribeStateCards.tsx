@@ -129,11 +129,6 @@ const PanelButton = ({
   )
 }
 
-/**
- * Under free usage: why Supporter helps, with its button. Never the upsell to
- * someone who may already be a Supporter: when ww-api couldn't check, it says
- * so, and when this device knows it's a Supporter, Check again links again.
- */
 export const ScribeSupporterNote = ({
   plan,
   supporterCheckFailed,
@@ -195,7 +190,6 @@ export const ScribeSupporterNote = ({
   )
 }
 
-/** In place of the composer at a usage limit, with the upsell for free. */
 export const ScribeLimitCard = ({
   plan,
   supporterCheckFailed = false,
@@ -237,7 +231,6 @@ type BlockedReason = Extract<
   { status: 'blocked' }
 >['reason']
 
-/** In place of the composer when this device or account can't use it. */
 export const ScribeBlockedCard = ({ reason }: { reason: BlockedReason }) => (
   <Panel icon={CircleAlertIcon} tone='warn' body={i18n.t(blockedCopy(reason))}>
     {reason === 'update_required' ? (
@@ -249,7 +242,6 @@ export const ScribeBlockedCard = ({ reason }: { reason: BlockedReason }) => (
   </Panel>
 )
 
-/** Scribe AI went away while open (turned off, no provider). */
 export const ScribeUnavailableCard = () => (
   <Panel
     icon={CircleAlertIcon}
@@ -258,7 +250,6 @@ export const ScribeUnavailableCard = () => (
   />
 )
 
-/** In place of the composer once the conversation can't take more. */
 export const ScribeFullCard = ({
   onNewConversation,
 }: {
@@ -336,7 +327,6 @@ const Banner = ({
   )
 }
 
-/** Over the composer while the conversation nears its context budget. */
 export const ScribeNearFullBanner = ({
   onNewConversation,
 }: {
@@ -352,7 +342,6 @@ export const ScribeNearFullBanner = ({
   />
 )
 
-/** Over the composer while offline. */
 export const ScribeOfflineBanner = () => (
   <Banner icon={WifiOffIcon} text={i18n.t('scribe_offlineBadge')} />
 )

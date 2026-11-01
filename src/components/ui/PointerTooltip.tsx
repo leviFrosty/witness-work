@@ -13,7 +13,6 @@ import PointerHover, { type PointerEffect } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import { isRtlLayout } from '@/lib/direction'
 
-/** `left`/`right` are the start/end sides: they swap in RTL. */
 type Placement = 'right' | 'left' | 'top' | 'bottom'
 type Rect = { x: number; y: number; width: number; height: number }
 type Tip = { id: number; label: string; anchor: Rect; placement: Placement }
@@ -21,7 +20,7 @@ type Tip = { id: number; label: string; anchor: Rect; placement: Placement }
 const useTooltip = create<{ tip: Tip | null }>(() => ({ tip: null }))
 
 const SHOW_DELAY_MS = 500
-// Moving straight to a neighbouring control shows its label at once.
+
 const WARM_MS = 600
 const GAP = 8
 const EDGE = 8
@@ -30,24 +29,16 @@ let nextId = 0
 let lastHiddenAt = 0
 
 type Props = {
-  /** Visible name of the control; screen readers keep its own label. */
   label: string
   children: ReactElement
   placement?: Placement
-  /** E.g. only while a sidebar shows icons without labels. */
+
   enabled?: boolean
   effect?: PointerEffect
-  /**
-   * Style for the measured wrapper: pass layout the child relied on (e.g.
-   * `flex: 1`) and its `borderRadius`, which shapes the pointer effect.
-   */
+
   style?: StyleProp<ViewStyle>
 }
 
-/**
- * Names an icon-only control when a pointer rests on it. Skip it where the
- * label is already visible, and never put instructions in it.
- */
 export default function PointerTooltip({
   label,
   children,
@@ -99,7 +90,7 @@ export default function PointerTooltip({
           : undefined
       }
     >
-      {/* A click means the label did its job; get out of the way. */}
+      {}
       <View
         ref={anchorRef}
         collapsable={false}
@@ -112,12 +103,10 @@ export default function PointerTooltip({
   )
 }
 
-/** Mount once near the app root; draws whichever tooltip is showing. */
 export function PointerTooltipLayer() {
   const tip = useTooltip((s) => s.tip)
   if (!tip) return null
-  // Mounted only while visible: an idle window-level overlay can interfere
-  // with native sheets (see AnimationViewProvider).
+
   return (
     <FullWindowOverlay>
       <PlacedTooltip key={tip.id} tip={tip} />
@@ -129,8 +118,7 @@ function PlacedTooltip({ tip }: { tip: Tip }) {
   const window = useWindowDimensions()
   const [size, setSize] = useState<Size>()
   const { anchor } = tip
-  // `left` and `right` name the side toward the content, so they swap with
-  // the layout: a sidebar's labels open leftward when it sits on the right.
+
   const placement = isRtlLayout()
     ? (({ left: 'right', right: 'left' } as const)[
         tip.placement as 'left' | 'right'
@@ -154,12 +142,10 @@ function PlacedTooltip({ tip }: { tip: Tip }) {
   })()
 
   return (
-    // Repeats the control's own accessibility label, so screen readers skip it.
     <View
       pointerEvents='none'
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
-      // Placed in window coordinates, which don't mirror in RTL.
       style={{
         position: 'absolute',
         top: 0,
@@ -176,11 +162,6 @@ function PlacedTooltip({ tip }: { tip: Tip }) {
 
 type Size = { width: number; height: number }
 
-/**
- * The tooltip's look, for labels placed by their own rules (e.g. map pins).
- * Stays invisible until `position` arrives, which callers derive from the size
- * reported by `onSize`.
- */
 export function TooltipBubble({
   label,
   position,

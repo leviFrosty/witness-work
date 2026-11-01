@@ -75,7 +75,7 @@ describe('the app config check', () => {
     config.fail = true
     await check()
     expect(useUpdateRequired.getState().required).toBeNull()
-    // The connection came back within the minute.
+
     config.fail = false
     await check()
     expect(fetchConfig).toHaveBeenCalledTimes(2)

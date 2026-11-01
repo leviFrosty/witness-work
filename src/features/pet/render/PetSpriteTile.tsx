@@ -28,7 +28,6 @@ import useSceneActive from '@/features/pet/render/useSceneActive'
 
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
 
-// A handful of idle frames per species and coat; kept, not re-uploaded.
 const images = createLru<SkImage | null>(160)
 
 function spriteImage(
@@ -41,7 +40,6 @@ function spriteImage(
   )
 }
 
-// One clock for every tile on screen.
 const tiles = new Set<(tMs: number) => void>()
 let clock: ReturnType<typeof setInterval> | null = null
 function subscribe(tick: (tMs: number) => void): () => void {
@@ -64,10 +62,6 @@ function frameKey(mood: PetMood, tMs: number, seed: number): SpriteKey {
   return { ...idle, lie: idle.lie, flip: false }
 }
 
-/**
- * One pet's 32 × 32 sprite, idling (bob, wag, blink), at a size that keeps its
- * pixels square. Still with Reduce Motion or off screen.
- */
 export default function PetSpriteTile({
   species,
   coat,
@@ -78,11 +72,11 @@ export default function PetSpriteTile({
 }: {
   species: PetSpecies
   coat: string
-  /** Target width in points; snapped to whole device pixels. */
+
   size: number
   mood?: PetMood
   seed?: number
-  /** Holds still, e.g. while scrolled out of view. */
+
   paused?: boolean
 }) {
   const reduceMotion = useReducedMotion()
@@ -94,7 +88,6 @@ export default function PetSpriteTile({
   const shownMood = useRef(mood)
 
   useEffect(() => {
-    // An open mouth closing (deselected) shows half shut for a frame first.
     const closing =
       !reduceMotion &&
       active &&

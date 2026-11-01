@@ -45,19 +45,18 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const DAY = 24 * 60 * 60 * 1000
 const id = () => toB64u(random(16))
 
-/** What a Buddies engine is told of Shared Cars, recorded. */
 function carsStub() {
   const notices: CarEventNotice[] = []
   const gone: string[] = []
-  /** Invitations this device sent that it couldn't send any more. */
+
   const lost: LostCarInvite[] = []
   const state = {
     memberships: { cars: {}, leftCars: {} } as SharedCarMemberships,
     openInvites: [] as OpenCarInvite[],
     replyApplies: true,
-    /** Cars the User is on, by space. */
+
     onCars: new Set<string>(),
-    /** Invitations closed on their car, by id. */
+
     closedInvites: new Set<string>(),
     pending: 0,
     notLeft: [] as { name: string }[],
@@ -96,7 +95,7 @@ async function paired() {
   const env = setup()
   const annaCars = carsStub()
   const joeCars = carsStub()
-  /** What each was told didn't go. */
+
   const notSent = {
     anna: [] as { reason: string; names: string[] }[],
     joe: [] as { reason: string; names: string[] }[],
@@ -110,7 +109,7 @@ async function paired() {
     onSharesNotSent: (report) => notSent.joe.push(report),
   })
   await pair(anna, joe)
-  /** The relay's account for a person, to suspend it. */
+
   const account = (who: { seed: Uint8Array }) =>
     [...env.fake.accounts.values()].find(
       (candidate) =>
@@ -129,7 +128,7 @@ async function paired() {
   })
   const keyOf = (invite: CarInvitePayload) =>
     incomingCarInviteKey(anna.inboxId, invite.inviteId)
-  /** Events stored in an inbox, by kind. */
+
   const stored = (inboxId: string, kind: string) =>
     env.fake.inboxes.get(inboxId)!.events.filter((e) => e.kind === kind)
   const pushed = (inboxId: string, kind: string) =>
@@ -173,7 +172,7 @@ describe('sending car events', () => {
     offlineOps.clear()
     await anna.engine.sync()
     expect(anna.store.getState().carEvents).toEqual({})
-    // Stable, so a retry or another device's send is the same event.
+
     expect(stored(joe.inboxId, 'car.invite')).toEqual([
       expect.objectContaining({
         eventId: inviteEventId(
@@ -197,11 +196,9 @@ describe('sending car events', () => {
     expect(waiting).toMatchObject({ inviteId: invites[30].inviteId })
     expect(waiting.attempted).toBeUndefined()
 
-    // Canceled before it went: there's nothing to take back.
     await anna.engine.sendCarCancel(joe.inboxId, invites[30])
     expect(anna.store.getState().carEvents).toEqual({})
 
-    // A cancel waits for room in the next hour, like any share event.
     await anna.engine.sendCarCancel(joe.inboxId, invites[0])
     expect(stored(joe.inboxId, 'car.cancel')).toEqual([])
     advance(60 * 60 * 1000 + 1)
@@ -222,7 +219,7 @@ describe('sending car events', () => {
   it('sends nothing to someone who isn’t an active buddy, and says so', async () => {
     const { user, anna, invitation, fake } = await paired()
     const cal = user('Cal')
-    // The caller closes the invitation it opened: nobody would hear of it.
+
     await expect(
       anna.engine.sendCarInvite(cal.inboxId, invitation())
     ).resolves.toBe(false)
@@ -236,7 +233,7 @@ describe('sending car events', () => {
     const invite = invitation()
     offlineOps.add('event/put')
     await anna.engine.sendCarInvite(joe.inboxId, invite)
-    // Canceled on another of Anna's devices, say, which this one's car shows.
+
     annaCars.state.closedInvites.add(invite.inviteId)
     offlineOps.clear()
     await anna.engine.sync()
@@ -249,11 +246,10 @@ describe('sending car events', () => {
       await paired()
     account(anna).status = 'suspended'
     await anna.engine.sendCarInvite(joe.inboxId, invitation())
-    // Not held for after the suspension; the car's invitation lapses.
+
     expect(anna.store.getState().carEvents).toEqual({})
     expect(notSent.anna).toEqual([{ reason: 'suspended', names: ['Joe'] }])
 
-    // A cancel only takes back what Joe has, so it waits.
     await anna.engine.sendCarCancel(joe.inboxId, invitation())
     expect(Object.values(anna.store.getState().carEvents)).toEqual([
       expect.objectContaining({ kind: 'car.cancel', attempted: true }),
@@ -273,7 +269,6 @@ describe('sending car events', () => {
     await anna.engine.sendCarInvite(joe.inboxId, invite)
     await joe.engine.sync()
 
-    // Each one's inbox goes (wiped by the relay, say) before the next send.
     fake.inboxes.delete(joe.inboxId)
     await anna.engine.sendCarInvite(joe.inboxId, invitation())
     await anna.engine.sendCarCancel(joe.inboxId, invite)
@@ -303,7 +298,7 @@ describe('receiving car events', () => {
       status: 'pending',
       join: { epoch: 1 },
     })
-    // What joining takes is kept on the device, apart from the invitation.
+
     await expect(joe.engine.carInviteSecrets(keyOf(invite))).resolves.toEqual({
       joinSecret: invite.joinSecret,
       key: invite.key,
@@ -347,8 +342,7 @@ describe('receiving car events', () => {
   it('ignores events from anyone but an active buddy', async () => {
     const { anna, joe, joeCars, invitation } = await paired()
     await anna.engine.sendCarInvite(joe.inboxId, invitation())
-    // Anna's confirmation not applied here yet; the relay's roster, which
-    // says otherwise, is older than this device's.
+
     joe.store.setState((state) => ({
       buddies: state.buddies.map((b) => ({
         ...b,
@@ -399,7 +393,7 @@ describe('receiving car events', () => {
     expect(carInvites[keyOf(first)].status).toBe('cancelled')
     expect(carInvites[keyOf(first)].join).toBeUndefined()
     expect(joe.dismissed).toContainEqual(firstSeqs)
-    // Joined already: the cancel came too late to matter.
+
     expect(carInvites[keyOf(second)].status).toBe('joined')
     expect(carEntries(notifications).map((n) => n.shareKey)).toEqual([
       keyOf(second),
@@ -414,7 +408,6 @@ describe('receiving car events', () => {
     joe.engine.markNotificationsRead()
     const firstSeqs = joe.store.getState().carInvites[keyOf(first)].alertSeqs
 
-    // The new invitation landed first (its cancel was retried).
     const again = invitation({ spaceId: first.spaceId })
     await anna.engine.sendCarInvite(joe.inboxId, again)
     await anna.engine.sendCarCancel(joe.inboxId, first)
@@ -423,12 +416,11 @@ describe('receiving car events', () => {
     expect(state.carInvites[keyOf(first)].status).toBe('cancelled')
     expect(state.carInvites[keyOf(again)].status).toBe('pending')
     expect(joe.dismissed).toContainEqual(firstSeqs)
-    // Seen once already: the replacement doesn't call for attention again.
+
     expect(carEntries(state.notifications)).toEqual([
       expect.objectContaining({ shareKey: keyOf(again), read: true }),
     ])
 
-    // The usual order, cancel first: the alert goes, and the new one alerts.
     const third = invitation({ spaceId: first.spaceId })
     await anna.engine.sendCarCancel(joe.inboxId, again)
     await anna.engine.sendCarInvite(joe.inboxId, third)
@@ -453,7 +445,6 @@ describe('receiving car events', () => {
     const now = state().lastSyncAt
     expect(awaitsAnswer(entry, state(), now)).toBe(true)
 
-    // Not dismissed, and not evicted by a full queue.
     joe.engine.dismissNotification(entry.id)
     expect(carEntries(state().notifications)).toHaveLength(1)
     const older = Array.from(
@@ -470,7 +461,6 @@ describe('receiving car events', () => {
       cappedQueue([...older, entry], state(), now).map((n) => n.id)
     ).toContain(entry.id)
 
-    // An entry that was lost is listed again while it can be answered.
     joe.store.setState({ notifications: [] })
     joe.engine.expire()
     expect(carEntries(state().notifications)).toEqual([
@@ -480,7 +470,6 @@ describe('receiving car events', () => {
       }),
     ])
 
-    // It lapses: the invitation and its entry go, with its alert.
     const { alertSeqs } = state().carInvites[keyOf(invite)]
     advance(3 * DAY)
     joe.engine.expire()
@@ -523,7 +512,7 @@ describe('receiving car events', () => {
   it('never lists an invitation whose cancel came first', async () => {
     const { user, anna, joe, invitation, keyOf } = await paired()
     const invite = invitation()
-    // Anna's iPad cancels the invitation before her phone's goes out.
+
     const annasIpad = user('Anna', undefined, anna.seed, {
       cars: carsStub().deps,
     })
@@ -537,7 +526,6 @@ describe('receiving car events', () => {
     })
     expect(listed()).toEqual({ status: 'cancelled', entries: [] })
 
-    // Nor when the inbox is read from the start again.
     joe.store.setState({ syncSeq: 0, seenCarEvents: {} })
     await joe.engine.sync()
     expect(listed()).toEqual({ status: 'cancelled', entries: [] })
@@ -550,8 +538,6 @@ describe('receiving car events', () => {
     await joe.engine.sync()
     const [entry] = carEntries(joe.store.getState().notifications)
 
-    // The roster brought the car (joined on another of Joe's devices) before
-    // that device's answer.
     joeCars.state.onCars.add(first.spaceId)
     joe.engine.expire()
     expect(joe.store.getState().carInvites[keyOf(first)]).toMatchObject({
@@ -561,11 +547,10 @@ describe('receiving car events', () => {
     expect(carEntries(joe.store.getState().notifications)).toEqual([
       expect.objectContaining({ id: entry.id, read: true }),
     ])
-    // Answered, so it no longer holds the bell.
+
     joe.engine.dismissNotification(entry.id)
     expect(carEntries(joe.store.getState().notifications)).toEqual([])
 
-    // One that arrives for it is listed as joined, already read.
     const again = invitation({ spaceId: first.spaceId })
     await anna.engine.sendCarInvite(joe.inboxId, again)
     await joe.engine.sync()
@@ -575,7 +560,7 @@ describe('receiving car events', () => {
     expect(carEntries(joe.store.getState().notifications)).toEqual([
       expect.objectContaining({ shareKey: keyOf(again), read: true }),
     ])
-    // The device that joined answers; this one sends nothing.
+
     expect(joe.store.getState().carEvents).toEqual({})
     expect(stored(anna.inboxId, 'car.reply')).toEqual([])
   })
@@ -652,7 +637,6 @@ describe('answering a car invitation', () => {
     await joesIpad.engine.sync()
     await joe.engine.sync()
 
-    // Joe's phone declines while it can't send; then his iPad joins.
     offlineOps.add('event/put')
     await joe.engine.answerCarInvite(keyOf(invite), 'declined')
     expect(Object.values(joe.store.getState().carEvents)).toEqual([
@@ -671,7 +655,7 @@ describe('answering a car invitation', () => {
       'joined'
     )
     expect(joesIpad.store.getState().carEvents).toEqual({})
-    // Anna hears once, that Joe joined.
+
     await anna.engine.sync()
     expect(stored(anna.inboxId, 'car.reply')).toHaveLength(1)
     expect(carEntries(anna.store.getState().notifications)).toEqual([
@@ -685,14 +669,11 @@ describe('answering a car invitation', () => {
     await anna.engine.sendCarInvite(joe.inboxId, invite)
     await joe.engine.sync()
 
-    // The join landed with its answer lost: once the car is here, the
-    // invitation reads as joined, with nothing sent.
     joeCars.state.onCars.add(invite.spaceId)
     await joe.engine.sync()
     expect(joe.store.getState().carInvites[keyOf(invite)].status).toBe('joined')
     expect(pushed(anna.inboxId, 'car.reply')).toEqual([])
 
-    // Only the device's own confirmed join answers it, and only once.
     expect(await joe.engine.answerCarInvite(keyOf(invite), 'joined')).toBe(
       false
     )
@@ -728,7 +709,6 @@ describe('answering a car invitation', () => {
     for (const { run } of joe.timers.splice(0)) run()
     await joe.engine.sync()
 
-    // The iPad gets the answer, then its own lost join is confirmed.
     joesIpadCars.state.onCars.add(invite.spaceId)
     await joesIpad.engine.sync()
     expect(
@@ -749,7 +729,7 @@ describe('answering a car invitation', () => {
     await joesIpad.engine.sync()
     await joe.engine.sync()
     await joe.engine.answerCarInvite(keyOf(invite), 'joined')
-    // The roster carries the answer.
+
     for (const { run } of joe.timers.splice(0)) run()
     await joe.engine.sync()
     await joesIpad.engine.sync()
@@ -769,7 +749,7 @@ describe('Shared Cars and the end of Buddies', () => {
     annaCars.state.openInvites = [{ ...invite, tag: 'T'.repeat(22) }]
     const sent = fake.requests.length
     await anna.engine.removeBuddy(joe.inboxId)
-    // Told while they could still be: before the pairing ended.
+
     expect(
       fake.requests
         .slice(sent)
@@ -788,8 +768,7 @@ describe('Shared Cars and the end of Buddies', () => {
 
   it('leaves every car before Delete My Buddies Data, and waits for them', async () => {
     const { fake, anna, joe, annaCars } = await paired()
-    // One the server hasn't heard leave, and one it can't name (never synced
-    // here).
+
     annaCars.state.pending = 2
     annaCars.state.notLeft = [{ name: 'Mazda CX-5' }]
     const refused = await anna.engine.deleteEverything().catch((e) => e)
@@ -799,7 +778,7 @@ describe('Shared Cars and the end of Buddies', () => {
       cars: ['Mazda CX-5', ''],
     })
     expect(annaCars.state.leftAll).toBe(1)
-    // It stopped there: no buddy removed, nothing wiped, the seed kept.
+
     expect(anna.store.getState().buddies).toEqual([
       expect.objectContaining({ inboxId: joe.inboxId, status: 'active' }),
     ])
@@ -830,7 +809,7 @@ describe('Shared Cars and the end of Buddies', () => {
     const invite = invitation()
     await anna.engine.sendCarInvite(joe.inboxId, invite)
     await joe.engine.sync()
-    // Anna takes it back while her cancel can't go.
+
     offlineOps.add('event/put')
     await anna.engine.sendCarCancel(joe.inboxId, invite)
     offlineOps.clear()
@@ -877,7 +856,7 @@ describe('the roster’s cars', () => {
       anna.seed,
       fake.inboxes.get(anna.inboxId)!.roster!.blob
     )
-    // A car left since it was joined has done its job in `cars`.
+
     expect(written.cars).toEqual({ [s1]: { at: 10 } })
     expect(written.leftCars).toEqual({ [s2]: 7 })
 
@@ -891,7 +870,7 @@ describe('the roster’s cars', () => {
       cars: { [s1]: { at: 10 }, [s3]: { at: 20 } },
       leftCars: { [s2]: 7 },
     })
-    // The merge differed from what the relay had, so it's written back.
+
     await anna.engine.sync()
     expect(annaCars.state.memberships.cars).toHaveProperty(s3)
   })
@@ -920,7 +899,7 @@ describe('the roster’s cars', () => {
       Array.from({ length: 300 }, (_, n) => [id(), at - 300 + n])
     )
     annaCars.state.memberships = { cars: active, leftCars: left }
-    // A roster near the cap: most of it already taken.
+
     anna.store.setState({
       closedInviteIds: Object.fromEntries(
         Array.from({ length: 700 }, () => [id(), at + 365 * DAY])
@@ -938,7 +917,7 @@ describe('the roster’s cars', () => {
     const kept = Object.values(written.leftCars)
     expect(kept.length).toBeGreaterThan(0)
     expect(kept.length).toBeLessThan(MAX_ROSTER_LEFT_CARS)
-    // The newest left cars are the ones kept.
+
     expect(Math.min(...kept)).toBe(at - kept.length)
   })
 })
@@ -947,12 +926,6 @@ describe('what stays on the device', () => {
   type Paired = Awaited<ReturnType<typeof paired>>
   type Device = Paired['anna']
 
-  /**
-   * A new engine on what `who`'s device saved, as after a relaunch: its store,
-   * and what its keystore kept of invitations' secrets (`storage`). A new,
-   * empty one is a binary without device secrets, which kept them in memory, or
-   * a restore onto a new phone, which doesn't bring the keystore along.
-   */
   async function relaunch(
     { user }: Paired,
     who: Device,
@@ -968,7 +941,6 @@ describe('what stays on the device', () => {
     return next
   }
 
-  /** Whether what `who`'s store saves holds `invite`'s secret or key. */
   const savesSecrets = (who: Device, invite: CarInvitePayload) => {
     const saved = JSON.stringify(who.store.getState())
     return saved.includes(invite.joinSecret) || saved.includes(invite.key)
@@ -990,8 +962,6 @@ describe('what stays on the device', () => {
       [sentInviteSecretId(invite.inviteId)]: secretsOf(invite),
     })
 
-    // The relay took it, with both: Anna's copy goes, and Joe's app keeps its
-    // own.
     offlineOps.clear()
     await anna.engine.sync()
     await anna.inviteSecrets.flushed()
@@ -1006,7 +976,6 @@ describe('what stays on the device', () => {
       [receivedInviteSecretId(keyOf(invite))]: secretsOf(invite),
     })
 
-    // Answered: they go.
     await joe.engine.answerCarInvite(keyOf(invite), 'declined')
     await joe.inviteSecrets.flushed()
     expect(joe.inviteSecretStorage.value()).toBeNull()
@@ -1049,7 +1018,7 @@ describe('what stays on the device', () => {
       { to: joe.inboxId, spaceId: invite.spaceId, inviteId: invite.inviteId },
     ])
     expect(next.store.getState().carEvents).toEqual({})
-    // Handed to the relay once already, so it may have reached Joe.
+
     expect(stored(joe.inboxId, 'car.invite')).toEqual([])
     expect(stored(joe.inboxId, 'car.cancel')).toHaveLength(1)
     await joe.engine.sync()
@@ -1074,7 +1043,7 @@ describe('what stays on the device', () => {
       annaCars,
       memoryInviteSecretStorage()
     )
-    // Saved, but never handed to the relay (it waited for the hourly budget).
+
     next.store.setState({
       carEvents: {
         [eventId]: {
@@ -1107,7 +1076,6 @@ describe('what stays on the device', () => {
     await joe.engine.sync()
     const seqs = joe.store.getState().carInvites[keyOf(invite)].alertSeqs!
 
-    // Joining asks for them first.
     const next = await relaunch(
       context,
       joe,
@@ -1120,10 +1088,9 @@ describe('what stays on the device', () => {
     expect(next.store.getState().carInvites).toEqual({})
     expect(carEntries(next.store.getState().notifications)).toEqual([])
     expect(next.dismissed).toContainEqual(seqs)
-    // Nothing is sent: another of Joe's devices may still join.
+
     expect(next.store.getState().carEvents).toEqual({})
 
-    // A sync finds the same, with nobody asking.
     const again = await relaunch(
       context,
       joe,
@@ -1139,8 +1106,7 @@ describe('what stays on the device', () => {
     const context = await paired()
     const { anna, annaCars, invitation } = context
     const storage = memoryInviteSecretStorage()
-    // Left by an invitation that lapsed as the store was read back, on a
-    // device where nothing else happens.
+
     await storage.write(
       JSON.stringify({ 'sent|orphan': secretsOf(invitation()) })
     )
@@ -1153,7 +1119,7 @@ describe('what stays on the device', () => {
     const context = await paired()
     const { anna, joe, annaCars, invitation, offlineOps } = context
     const storage = memoryInviteSecretStorage()
-    // Left by an invitation the store no longer has.
+
     await storage.write(
       JSON.stringify({ 'sent|orphan': secretsOf(invitation()) })
     )

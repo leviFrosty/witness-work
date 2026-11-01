@@ -37,12 +37,6 @@ const confirmDevAction = (title: string, onConfirm: () => void) =>
 const done = (label: string) => toast.info(label)
 const onOff = (value: boolean) => (value ? 'On' : 'Off')
 
-/**
- * Developer Tools: everything about the Pet Companion in one place. Adopt or
- * release it; fill or empty its keepsakes and items (synced, like the real
- * thing); see what its wallet holds and what earned it; fake its hearts and
- * wallet on this device; and play every reward and moment.
- */
 export default function PetTools() {
   const pet = usePet((state) => state.pet)
   const tombstones = usePet((state) => state.deletedPetRecords.length)
@@ -52,7 +46,7 @@ export default function PetTools() {
   const showStreaks = usePreferences((state) => state.showStreaks)
   const setPreferences = usePreferences((state) => state.set)
   const override = usePetSession((state) => state.devOverride)
-  // Read on each render: the tools change it, and nothing else here moves.
+
   usePetSeen((state) => state.seen)
   const earnings = pet ? petEarningsNow() : null
   const ownedItems = pet?.earnedRoomItems?.length ?? 0

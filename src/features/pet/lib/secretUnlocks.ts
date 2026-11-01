@@ -1,22 +1,6 @@
 import type { BadgeKey } from '@/types/badges'
 import { SECRET_ROOM_ITEMS, type SecretRoomItemId } from '@/types/pet'
 
-/**
- * Secret room items and hats (`docs/pet-companion.md` → Secret items): rarer
- * options the Shop never sells. Each opens up on its own milestone, and until
- * it does Decorate Room and the Shop show only its silhouette and a question
- * mark, never what opens it.
- *
- * - `badge`: the User has earned that badge (`preferences.earnedBadges`).
- * - `badges`: the User has earned at least this many badges in all.
- * - `keepsakes`: the pet holds at least this many keepsakes.
- * - `gold`: the hearts have turned gold.
- * - `longRun`: this many calendar months with a day out since adoption
- *   (`activeMonths` over `petDaysOut`), so every role gets there at the same
- *   pace, whether it goes out daily or reports by month.
- *
- * Badges count months, never hours (ADR 0019), so no rule favours a role.
- */
 export type SecretUnlock =
   | { by: 'badge'; badge: BadgeKey }
   | { by: 'badges'; count: number }
@@ -24,31 +8,22 @@ export type SecretUnlock =
   | { by: 'gold' }
   | { by: 'longRun'; months: number }
 
-/** What a secret item's rule reads. */
 export type SecretProgress = {
-  /** Keys of every badge earned (`monthsShared.2`, `firstBibleStudy`). */
   badges: ReadonlySet<string>
-  /** Keepsakes the pet holds. */
+
   keepsakes: number
-  /** The hearts are gold now. */
+
   gold: boolean
-  /** Calendar months with a day out since adoption. */
+
   monthsOut: number
 }
 
 const badge = (key: BadgeKey): SecretUnlock => ({ by: 'badge', badge: key })
-/** `months` calendar months with a day out since adoption. */
+
 const longRun = (months: number): SecretUnlock => ({ by: 'longRun', months })
 
-/**
- * Every secret item's rule. Most follow a badge, Bronze through Pearl, so the
- * first ones show up early and the last take years; a badge opens at most two.
- * A few follow how many badges, the keepsakes, gold hearts or a long run. The
- * type checker flags a secret item without a rule.
- */
 export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
   {
-    // Hats
     'hat:duck': badge('monthsShared.1'),
     'hat:teapot': badge('conversations.1'),
     'hat:sailboat': badge('returnVisits.1'),
@@ -63,7 +38,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'hat:fisherman': badge('returnVisits.2'),
     'hat:bush': longRun(15),
     'hat:tam': { by: 'badges', count: 12 },
-    // Wall colours
+
     'wallColor:indigo': badge('monthsShared.3'),
     'wallColor:delft': badge('reportSent.1'),
     'wallColor:turmeric': { by: 'keepsakes', count: 3 },
@@ -76,7 +51,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'wallColor:peach': { by: 'badges', count: 5 },
     'wallColor:paprika': { by: 'badges', count: 8 },
     'wallColor:glacier': longRun(18),
-    // Wall patterns
+
     'wallPattern:waves': badge('returnVisits.1'),
     'wallPattern:chevron': badge('nextTime.3'),
     'wallPattern:gingham': { by: 'badges', count: 3 },
@@ -87,7 +62,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'wallPattern:meadow': badge('monthsShared.2'),
     'wallPattern:honeycomb': { by: 'gold' },
     'wallPattern:fan': badge('reportSent.3'),
-    // Floors
+
     'floor:zellige': badge('reportSent.4'),
     'floor:azulejo': badge('reportSent.2'),
     'floor:terrazzo': { by: 'badges', count: 16 },
@@ -98,7 +73,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'floor:harlequin': badge('conversations.2'),
     'floor:chocolate': badge('keepingInTouch.4'),
     'floor:lilypond': badge('nextTime.4'),
-    // Beds
+
     'bed:teacup': badge('conversations.1'),
     'bed:clam': { by: 'keepsakes', count: 1 },
     'bed:rowboat': badge('returnVisits.2'),
@@ -109,7 +84,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'bed:hammock': badge('keepingInTouch.1'),
     'bed:bread': badge('prepared.4'),
     'bed:bathtub': longRun(36),
-    // Shelves
+
     'shelf:ship': badge('reportSent.1'),
     'shelf:dala': badge('yearRound.1'),
     'shelf:spices': badge('prepared.2'),
@@ -120,7 +95,7 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
     'shelf:robot': badge('nextTime.3'),
     'shelf:telescope': badge('nextTime.2'),
     'shelf:fishbowl': badge('returnVisits.3'),
-    // Lights
+
     'lamp:lighthouse': badge('monthsShared.3'),
     'lamp:pierced': badge('yearRound.3'),
     'lamp:firefly': badge('keepingInTouch.3'),
@@ -136,7 +111,6 @@ export const SECRET_UNLOCKS: Readonly<Record<SecretRoomItemId, SecretUnlock>> =
 export const isSecretItem = (item: string): item is SecretRoomItemId =>
   (SECRET_ROOM_ITEMS as readonly string[]).includes(item)
 
-/** Whether `rule` is met by `progress`. */
 export function secretRuleMet(
   rule: SecretUnlock,
   progress: SecretProgress
@@ -155,7 +129,6 @@ export function secretRuleMet(
   }
 }
 
-/** The secret items `progress` opens up now, in `SECRET_ROOM_ITEMS` order. */
 export const secretItemsEarnedBy = (
   progress: SecretProgress
 ): SecretRoomItemId[] =>

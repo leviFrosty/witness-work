@@ -6,8 +6,6 @@ export function useMarkerColors(): MarkerColors {
   const mapKeyColors = usePreferences((s) => s.mapKeyColors)
   const theme = useTheme()
 
-  // Stable identity so consumers that key memoisation off the returned object
-  // (e.g. MapScreen's contactMarkers useMemo) don't recompute every render.
   return useMemo(
     () => ({
       noConversations: mapKeyColors?.noConversations ?? theme.colors.textAlt,

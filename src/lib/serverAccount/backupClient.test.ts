@@ -24,7 +24,6 @@ type Seen = {
   body: Uint8Array | string | undefined
 }
 
-/** A fake worker: records requests, answers from `respond`. */
 function fakeFetch(respond: (seen: Seen, index: number) => Response) {
   const seen: Seen[] = []
   const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
@@ -60,7 +59,6 @@ const json = (status: number, body: unknown) =>
     headers: { 'content-type': 'application/json' },
   })
 
-/** Checks the envelope's signature the way the worker does; its payload. */
 function verified(op: string, payload: string, signature: string) {
   const payloadBytes = fromB64u(payload)
   expect(
@@ -154,7 +152,7 @@ describe('backup client', () => {
       accountPub: key.publicKey,
       ts: 1_000_000,
     })
-    // Every slot: no slotId at all.
+
     expect(bodies[1]).not.toHaveProperty('slotId')
   })
 

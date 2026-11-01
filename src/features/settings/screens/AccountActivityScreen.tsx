@@ -74,13 +74,6 @@ type Loaded = {
   context: AccountActivityContext
 }
 
-/**
- * Settings → Account → Account Activity (ADR 0028): the account's security
- * history, newest first, 50 entries a page, with device names opened from their
- * sealed labels and "this device" named as such. A reused refresh token is
- * flagged. Reads the first page again on focus, on returning to the app, and on
- * pull to refresh.
- */
 const AccountActivityScreen = () => {
   const theme = useTheme()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
@@ -88,10 +81,9 @@ const AccountActivityScreen = () => {
   const [failure, setFailure] = useState<LoadFailure | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [moreFailed, setMoreFailed] = useState(false)
-  // Pull to refresh, until its first page is in.
+
   const [refreshing, setRefreshing] = useState(false)
-  // Bumped to read the first page again: Try Again, pull to refresh, or a
-  // return to the app.
+
   const [reloads, setReloads] = useState(0)
   const focused = useIsFocused()
   const latest = useRef(0)
@@ -149,7 +141,6 @@ const AccountActivityScreen = () => {
     />
   )
 
-  // Promise chains, not try/finally, which React Compiler can't compile yet.
   const loadMore = ({ retry = false } = {}) => {
     if (!loaded?.nextCursor || loadingMore || (moreFailed && !retry)) return
     setMoreFailed(false)

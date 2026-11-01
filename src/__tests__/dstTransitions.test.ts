@@ -1,10 +1,5 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
-// Daylight saving sweep: each surface that turns a calendar day or a time of
-// day into a moment, on the days clocks change. On a fall-back day 1:00–1:59
-// happens twice (the day has 25 hours); on a spring-forward day 2:00–2:59
-// never happens (23 hours). Tokyo has no daylight saving and is the control.
-
 const units = vi.hoisted<Record<string, string>>(() => ({
   hoursCompact: 'h',
   minutesCompact: 'm',
@@ -77,13 +72,12 @@ import type { Visit } from '@/types/visit'
 
 type Transition = {
   zone: string
-  /** The transition day, `YYYY-MM-DD`. */
+
   day: string
-  /** Hours in that day. */
+
   hours: 23 | 24 | 25
 }
 
-// Clocks change in the small hours; each day is a Sunday.
 const TRANSITIONS: Transition[] = [
   { zone: 'America/New_York', day: '2026-11-01', hours: 25 },
   { zone: 'America/New_York', day: '2026-03-08', hours: 23 },
@@ -92,8 +86,6 @@ const TRANSITIONS: Transition[] = [
   { zone: 'Asia/Tokyo', day: '2026-11-01', hours: 24 },
 ]
 
-// Clocks change at midnight. Springing forward, the day starts at 1:00 (there
-// is no midnight); falling back, midnight happens twice.
 const MIDNIGHT_TRANSITIONS: Transition[] = [
   { zone: 'America/Havana', day: '2026-03-08', hours: 23 },
   { zone: 'America/Havana', day: '2026-11-01', hours: 25 },
@@ -115,7 +107,7 @@ afterAll(() => {
 
 const onTransition = ({ zone, day }: Transition) => {
   const [y, m, d] = day.split('-').map(Number)
-  /** Local wall-clock time on the transition day (or `days` from it). */
+
   const at = (hour: number, minute = 0, days = 0) =>
     new Date(y, m - 1, d + days, hour, minute)
   return {
@@ -124,14 +116,13 @@ const onTransition = ({ zone, day }: Transition) => {
     d,
     at,
     stored: (days = 0) => normalizeDateForStorage(at(12, 0, days)),
-    /** `YYYY-MM-DD`, `days` from the transition day. */
+
     key: (days = 0) => moment(day).add(days, 'days').format('YYYY-MM-DD'),
     setNow: (date: Date) => {
       vi.useFakeTimers({ toFake: ['Date'] })
       vi.setSystemTime(date)
     },
-    // Set the zone before each test body (describe.each bodies run at
-    // collection time, so zone-dependent values are built inside `it`).
+
     inZone: (fn: () => void) => () => {
       process.env.TZ = zone
       fn()
@@ -164,7 +155,7 @@ describe.each(TRANSITIONS)(
         expect(elapsed).toBe((4 + extra) * 60 * 60_000)
         expect(splitElapsed(elapsed)).toEqual({ hours: 4 + extra, minutes: 0 })
         const began = sessionStartMs(state, now.getTime())!
-        // Add Time's route date, as TimerSection hands it over.
+
         const routeDate = moment(new Date(began).toISOString()).toDate()
         expect(storedDayKey(normalizeDateForStorage(routeDate))).toBe(day)
       })
@@ -234,7 +225,7 @@ describe.each(TRANSITIONS)(
         const keys: string[] = []
         const weeklyDays: string[] = []
         const nthDays: string[] = []
-        // Walk local midnights, as calendars and the watch do.
+
         const cursor = moment(at(0)).subtract(7, 'days')
         for (let i = 0; i <= 14; i++, cursor.add(1, 'day')) {
           const key = cursor.format('YYYY-MM-DD')
@@ -250,7 +241,7 @@ describe.each(TRANSITIONS)(
         expect(keys[7]).toBe(day)
         const week = (days: number) =>
           moment(day).add(days, 'days').format('YYYY-MM-DD')
-        // Each matched twice: once from midnight, once from noon.
+
         expect(weeklyDays).toEqual([
           week(-7),
           week(-7),
@@ -306,7 +297,7 @@ describe.each(TRANSITIONS)(
           date.getMinutes(),
         ]
         expect(byId('p130').map((r) => clock(r.date))).toEqual([[day, 1, 30]])
-        // Fall back: the first 1:30, before clocks change.
+
         if (hours === 25)
           expect(byId('p130')[0].date.getTime()).toBeLessThan(
             at(3).getTime() - 2 * 60 * 60_000
@@ -316,7 +307,7 @@ describe.each(TRANSITIONS)(
         expect(
           byId(`${recurring.id}-${day}`).map((r) => clock(r.date))
         ).toEqual([twoThirty])
-        // #864: whole days count on the wall clock.
+
         expect(byId('p10').map((r) => clock(r.date))).toEqual([
           [moment(day).subtract(1, 'day').format('YYYY-MM-DD'), 10, 0],
         ])
@@ -470,9 +461,9 @@ describe.each(MIDNIGHT_TRANSITIONS)(
     const { day } = transition
     const { y, m, d, at, stored, key, setNow, inZone } =
       onTransition(transition)
-    /** The start of a day, as `moment` reads its date. */
+
     const startOf = (days: number) => moment(key(days)).toDate()
-    /** Around the day: each day's first minute, small hours, noon, and night. */
+
     const nows = () =>
       [-1, 0, 1].flatMap((days) => [
         startOf(days),
@@ -480,7 +471,7 @@ describe.each(MIDNIGHT_TRANSITIONS)(
         at(12, 0, days),
         at(23, 30, days),
       ])
-    /** `days` from `now`'s date, at `hour`:30. */
+
     const daysFrom = (now: Date, days: number, hour: number) =>
       new Date(
         now.getFullYear(),

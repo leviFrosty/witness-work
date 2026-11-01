@@ -27,12 +27,6 @@ interface Props {
   onChoose: (choice: FirstEnableChoice) => void
 }
 
-/**
- * Shown when the user toggles iCloud Sync on and we detect that BOTH this
- * device and iCloud already hold user data. Forces a conscious choice instead
- * of silently letting last-writer-wins overwrite the user's
- * carefully-configured device.
- */
 const FirstEnableSheet: React.FC<Props> = ({
   open,
   setOpen,

@@ -18,17 +18,11 @@ import HomeStreakChip from '@/features/profile/components/HomeStreakChip'
 import { pickGreeting } from '@/features/profile/lib/greeting'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * A one-line welcome at the top of Home that reads the clock and progress, with
- * the Service Streak's badge at its end. The streak lives here rather than in
- * the header: it's the User's own news, like the greeting.
- */
 const HomeGreeting = ({
   buddyStreaks,
 }: Pick<ComponentProps<typeof HomeStreakChip>, 'buddyStreaks'>) => {
   const theme = useTheme()
-  // The shared minute clock: a Home left open since morning doesn't still say
-  // "Good morning" in the evening, or last month's goal after midnight.
+
   const now = new Date(useNow().now)
   const month = now.getMonth()
   const year = now.getFullYear()

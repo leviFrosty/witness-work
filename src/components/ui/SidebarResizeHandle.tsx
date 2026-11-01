@@ -25,11 +25,6 @@ import {
 import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
 import PointerStyleView from '../../../modules/pointer-style'
 
-/**
- * Drags run on the UI thread and write `liveWidth` directly, so the sidebar
- * resizes without a React render per frame. JS only hears about the start,
- * icon/label threshold crossings, and the release.
- */
 export default function SidebarResizeHandle({
   width,
   liveWidth,
@@ -43,7 +38,7 @@ export default function SidebarResizeHandle({
   const compact = useSharedValue(width < SIDEBAR_LABEL_MIN_WIDTH)
   const dragging = useSharedValue(false)
   const hovered = useSharedValue(false)
-  // 0 idle, 1 hovered (pointer or Pencil), 2 dragging.
+
   const emphasis = useDerivedValue(() =>
     withTiming(dragging.value ? 2 : hovered.value ? 1 : 0, { duration: 160 })
   )
@@ -53,7 +48,6 @@ export default function SidebarResizeHandle({
   useEffect(
     () => () => {
       if (dragActive.current) {
-        // Queued native frames must not revive a drag after unmount/refresh.
         dragActive.current = false
         dragging.value = false
         liveWidth.value = useSidebarPreferences.getState().width
@@ -78,7 +72,7 @@ export default function SidebarResizeHandle({
     dragActive.current = false
     commitWidth(nextWidth)
   }
-  // The sidebar sits on the reading start, so in RTL it widens leftward.
+
   const sign = forwardSign()
   const rtl = isRtlLayout()
 
@@ -117,7 +111,6 @@ export default function SidebarResizeHandle({
       scheduleOnRN(endDrag, nextWidth)
     })
     .onFinalize(() => {
-      // Still dragging here means the gesture was interrupted.
       if (dragging.value) {
         liveWidth.value = withTiming(startWidth.value, { duration: 220 })
         dragging.value = false
@@ -197,7 +190,7 @@ export default function SidebarResizeHandle({
           justifyContent: 'center',
         }}
       >
-        {/* iPad pointer shows which ways the sidebar can still resize. */}
+        {}
         <PointerStyleView
           accessories={[
             ...(width > SIDEBAR_MIN_WIDTH

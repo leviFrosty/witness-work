@@ -9,22 +9,12 @@ import {
   type ReceivedReply,
 } from '@/features/buddies/lib/state'
 
-/** What the calendar shows about buddies on one day. */
 export type BuddyDayMarker = {
-  /**
-   * Who the User goes out with that day: buddies on the User's Plans (minus any
-   * who declined) and buddies whose Follow-ups the User is joining.
-   */
   withBuddies: Buddy[]
-  /** Other buddies shown on the calendar who plan to go out. */
+
   goingOut: Buddy[]
 }
 
-/**
- * `YYYY-MM-DD` → buddy marker, from `today` on. A buddy's own Plans count only
- * while the User shows that buddy on the calendar; the User's Plans with a
- * buddy always do.
- */
 export function buildBuddyDayMarkers({
   buddies,
   sharing,
@@ -36,11 +26,11 @@ export function buildBuddyDayMarkers({
   today,
 }: {
   buddies: Buddy[]
-  /** All Buddies' settings, for buddies who follow them on the calendar. */
+
   sharing: BuddySharing
   cards: Record<string, ReceivedCard | undefined>
   dayPlans: DayPlan[]
-  /** Buddies' answers to the User's invitation to `plan`, by inbox id. */
+
   repliesFor: (plan: DayPlan) => Record<string, ReceivedReply> | undefined
   incomingShares: IncomingShare[]
   now: number
@@ -59,8 +49,7 @@ export function buildBuddyDayMarkers({
 
   for (const plan of dayPlans) {
     const day = storedDayKey(plan.date)
-    // A Plan that follows an invitation is with the inviter only; who else
-    // they invited isn't shared.
+
     if (plan.buddyShare) {
       addWith(day, byId(plan.buddyShare.from))
       continue
@@ -73,7 +62,6 @@ export function buildBuddyDayMarkers({
     }
   }
 
-  // Accepted Plan invitations are already Plans above; Follow-ups aren't.
   for (const share of incomingShares) {
     if (share.type !== 'followUp' || share.status !== 'going') continue
     if (share.expiresAt <= now) continue
@@ -93,13 +81,8 @@ export function buildBuddyDayMarkers({
   return markers
 }
 
-/** At most this many circles run up a calendar day's right edge. */
 export const MAX_STACKED_BUDDIES = 3
 
-/**
- * The avatars a calendar day shows for who the User goes out with, bottom
- * first. When they don't all fit, the top circle counts the rest instead.
- */
 export function stackedBuddies(withBuddies: Buddy[]): {
   shown: Buddy[]
   more: number

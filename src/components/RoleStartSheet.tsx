@@ -15,11 +15,9 @@ import { monthlyGoalKey, type CalendarMonth } from '@/lib/monthlyGoals'
 import type { Publisher } from '@/types/publisher'
 import { formatDisplay } from '@/lib/dates'
 
-/** Sentinel select value: the new role applies to every month. */
 const ALL_MONTHS = 'all'
 
 export type RoleStartChoice = {
-  /** `null` = every month (the old role was a mistake). */
   from: CalendarMonth | null
   resetFutureGoals: boolean
 }
@@ -28,18 +26,13 @@ export interface RoleStartSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   role: Publisher
-  /** Most recent month first; the first entry is the default. */
+
   months: CalendarMonth[]
-  /** Offer to reset custom goals saved for this month and later. */
+
   hasFutureGoalOverrides: boolean
   onSave: (choice: RoleStartChoice) => void
 }
 
-/**
- * Asks which month a Publisher role change starts from, so earlier months keep
- * the role that applied then (Role History). "All months" corrects a role that
- * was set wrongly to begin with.
- */
 const RoleStartSheet = ({
   open,
   onOpenChange,

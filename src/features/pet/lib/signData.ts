@@ -13,7 +13,6 @@ import type { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 import type { SignData } from '@/features/pet/art'
 
-/** How far ahead the sign looks for the next Plan. */
 export const NEXT_PLAN_LOOKAHEAD_DAYS = 60
 
 export type SignDataInput = {
@@ -22,15 +21,14 @@ export type SignDataInput = {
   dayPlans: readonly DayPlan[]
   recurringPlans: readonly RecurringPlan[]
   visits: readonly Visit[]
-  /** This month's role, whose credit cap applies. */
+
   publisher: Publisher
   creditLimit: { enabled: boolean; customLimitHours: number }
-  /** This month's goal in hours; 0 hides the progress fill. */
+
   monthGoalHours: number
   digits: DigitSystem
 }
 
-/** Months of the Service Year that contains `today`, September first. */
 export function serviceYearMonths(
   today: Date
 ): { month: number; year: number }[] {
@@ -41,7 +39,6 @@ export function serviceYearMonths(
   })
 }
 
-/** The next day with planned minutes, from today on, within 60 days. */
 export function nextPlannedDay(
   today: Date,
   dayPlans: readonly DayPlan[],
@@ -65,11 +62,6 @@ export function nextPlannedDay(
   return null
 }
 
-/**
- * This month's conversations (Visits where someone was home) and return visits
- * (Visits to a Contact on a later day than their first Visit). A Visit that
- * came with a shared Contact is the sender's: it only dates that first Visit.
- */
 export function visitCountsForMonth(
   visits: readonly Visit[],
   today: Date
@@ -92,7 +84,6 @@ export function visitCountsForMonth(
   return { conversations, returnVisits }
 }
 
-/** The values the room's wall sign can show, from the User's records. */
 export function buildSignData(input: SignDataInput): SignData {
   const { serviceReports, publisher, creditLimit } = input
   const minutesIn = ({ month, year }: { month: number; year: number }) =>

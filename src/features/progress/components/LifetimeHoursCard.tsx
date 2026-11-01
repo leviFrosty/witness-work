@@ -25,11 +25,6 @@ import Text from '@/components/ui/MyText'
 import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
 
-/**
- * Flattens the store's `TimeEntriesByYear` shape into a single `TimeEntry[]`.
- * Kept inline so the component stays a one-stop-shop for the All-time tab's
- * hero card.
- */
 const useFlatServiceReports = (): TimeEntry[] => {
   const { serviceReports } = useServiceReport()
   return useMemo(() => {
@@ -45,18 +40,6 @@ const useFlatServiceReports = (): TimeEntry[] => {
   }, [serviceReports])
 }
 
-/**
- * Big-hero lifetime hours card for the Progress > All-time tab. Renders:
- *
- * - An eyebrow label ("LIFETIME HOURS").
- * - The raw unadjusted lifetime total, thousands-separated.
- * - A subtitle ("since MMM YYYY · N service years").
- * - A tappable info chip that toggles a short explainer about how the number is
- *   computed (unadjusted for credit caps).
- *
- * The parent (`ProgressAllTimeTab`) handles the zero-data empty state, so this
- * card assumes at least one report exists.
- */
 const LifetimeHoursCard = () => {
   const theme = useTheme()
   const largeText = useAccessibilityTextSize()
@@ -70,7 +53,6 @@ const LifetimeHoursCard = () => {
 
   const isDecimal = timeDisplayFormat === 'decimal'
 
-  // The decimal hero's number, which the unit after it agrees with.
   const heroHours =
     lifetimeHours >= 100
       ? Math.floor(lifetimeHours)
@@ -78,13 +60,9 @@ const LifetimeHoursCard = () => {
 
   const formattedLifetime = useMemo(() => {
     if (!isDecimal) {
-      // Short format owns its own unit and includes minutes, so render the full
-      // formatter output (e.g. "1,234h 30m") and suppress the trailing unit.
       return formatMinutes(lifetimeMinutes, timeDisplayFormat).formatted
     }
-    // Decimal: keep the existing hero treatment (thousands-separated, trim
-    // sub-decimal noise once we cross 3 digits) and let the unit suffix
-    // render alongside.
+
     if (lifetimeHours >= 100) {
       return formatNumber(heroHours)
     }
@@ -95,15 +73,11 @@ const LifetimeHoursCard = () => {
     })
   }, [lifetimeMinutes, lifetimeHours, heroHours, isDecimal, timeDisplayFormat])
 
-  // Decimal hero renders a bare number; pair it with the long-form unit
-  // (compact "h" at 100k+ to keep the row from wrapping). Short hero output
-  // already carries its own unit — suppress the trailing label.
   const hoursLabel = !isDecimal
     ? ''
     : lifetimeHours >= 100000
       ? i18n.t('hoursCompact')
-      : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('hoursUnitLabel', { count: heroHours })
+      : i18n.t('hoursUnitLabel', { count: heroHours })
 
   const subtitle = useMemo(() => {
     if (!earliestDate) return null
@@ -136,15 +110,10 @@ const LifetimeHoursCard = () => {
           }}
         >
           <Text
-            // At accessibility sizes the figure shrinks onto one line rather
-            // than breaking between its digits.
             {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
-            // "Short" mode emits e.g. "1,234h 30m" — at 64pt that's too wide
-            // for a single card row. Drop a tier instead of auto-shrinking.
             style={{
               fontSize: isDecimal ? 64 : 40,
-              // A fixed line height would keep the full-size line around a
-              // shrunk figure.
+
               lineHeight:
                 largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,

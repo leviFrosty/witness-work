@@ -1,17 +1,8 @@
 import { compareTripsNewestFirst } from '@/lib/mileage/calc'
 import type { Trip } from '@/types/mileage'
 
-/** Readings converted between units differ by less than this, in miles. */
 const SAME_READING = 1e-6
 
-/**
- * Another trip on the car whose odometer readings overlap `startMiles` to
- * `endMiles`, the newest when there are several: the same drive logged twice,
- * or a reading typed wrong. On a Shared Car someone else may have logged it
- * (docs/shared-cars-protocol.md, "Odometer"). Readings that only meet, one trip
- * ending where the next starts, don't overlap. Leaves out `excludeTripId` (the
- * trip being edited) and trips logged by distance.
- */
 export function overlappingOdometerTrip(
   trips: readonly Trip[],
   {

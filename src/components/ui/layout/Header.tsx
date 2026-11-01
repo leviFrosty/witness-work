@@ -33,11 +33,7 @@ import { useLocalFoldPane } from '@/components/ui/layout/FoldPane'
 type Props = {
   backgroundColor?: string
   inverseTextAndIconColor?: boolean
-  /**
-   * Hard override for the chevron + title color. Wins over
-   * `inverseTextAndIconColor` so callers can react to a dynamic background
-   * (e.g. a contact's hero tint) and keep contrast.
-   */
+
   foregroundColor?: string
   title?: string
   buttonType?: 'exit' | 'settings' | 'back' | 'none'
@@ -46,30 +42,19 @@ type Props = {
   rightElement?: React.ReactNode
   noBottomBorder?: boolean
   noInsets?: boolean
-  /**
-   * Optional long-press handler on the title. Used for hidden dev affordances
-   * (e.g. resetting the milestone-reveal flags from the home header). Pure
-   * pass-through — Header doesn't add visual chrome to indicate it's
-   * long-pressable. Keeps an invisible target when there's no title.
-   */
+
   onLongPressTitle?: () => void
 }
 
-/** Room between the title and the buttons beside it. */
 const TITLE_GAP = 8
 
 const Header = (props: Props) => {
-  // Where the navigation bar draws Back (iPhone Duo's vertical bar), ours
-  // steps aside.
   const systemBack = useSystemBackButton(
     props.buttonType === 'back' && !props.leftElement && !props.onPressLeftIcon
   )
-  // The window's insets, as the bar's own (in the screen's safe area) would
-  // push the header below it. Pushed screens are never in a sheet.
+
   if (systemBack) return <HeaderContent {...props} systemBack />
 
-  // The nested provider measures the header's own safe area, so a screen pushed
-  // inside an iOS modal sheet gets no status-bar inset instead of the window's.
   return (
     <SafeAreaProvider style={{ flex: 0 }}>
       <HeaderContent {...props} systemBack={false} />
@@ -94,13 +79,9 @@ const HeaderContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
-  // A windowed iPad app keeps its window controls over a top corner: the back
-  // button's, or the end buttons' when the app and the system read in
-  // different directions (Arabic on an English iPad, or the reverse).
+
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
-  // While iPhone Duo is partly folded, the title and buttons keep to the
-  // leading side of the fold, above the content they belong to; the bar's
-  // background still spans the window.
+
   const { onRegionsChange, pane } = useLocalFoldPane()
   const rtl = isRtlLayout()
   const startInset = Math.max(
@@ -111,9 +92,7 @@ const HeaderContent = ({
     rtl ? insets.left : insets.right,
     (rtl ? pane?.left : pane?.right) ?? 0
   )
-  // The buttons float over the header's ends. The title keeps clear of the
-  // wider side on both sides, so it stays centered and a title that wraps
-  // (large text, long translations) never runs under them.
+
   const [leftWidth, setLeftWidth] = useState(0)
   const [rightWidth, setRightWidth] = useState(0)
   const titleInset = Math.max(
@@ -123,8 +102,7 @@ const HeaderContent = ({
   const widthSetter =
     (set: (width: number) => void) => (e: LayoutChangeEvent) =>
       set(Math.round(e.nativeEvent.layout.width))
-  // At accessibility text sizes the title wraps between words and shrinks
-  // rather than breaking a word that doesn't fit between the buttons.
+
   const largeText = useAccessibilityTextSize()
   const unbroken = useUnbrokenWords(title ?? '', largeText)
   const titleFit = largeText
@@ -191,8 +169,7 @@ const HeaderContent = ({
         style={{
           position: 'relative',
           flexGrow: 1,
-          // Stack headers sit outside the screen's horizontal safe area. Insets
-          // are physical; React Native mirrors left and right margins in RTL.
+
           marginLeft: 15 + startInset,
           marginRight: 15 + endInset,
           flexDirection: 'row',
@@ -243,8 +220,6 @@ const HeaderContent = ({
             },
             onLongPressTitle && !title && { minWidth: 120, minHeight: 24 },
           ]}
-          // Without a long press the title itself is the heading, rather
-          // than a disabled element around it.
           {...(onLongPressTitle
             ? { accessibilityRole: 'header' as const }
             : transparentToScreenReaders)}
@@ -267,8 +242,7 @@ const HeaderContent = ({
             {title}
           </Text>
         </Pressable>
-        {/* Callers pin their buttons to the end (`right: 0`); this keeps
-            that end clear of the window controls. */}
+        {}
         <View
           pointerEvents='box-none'
           style={{

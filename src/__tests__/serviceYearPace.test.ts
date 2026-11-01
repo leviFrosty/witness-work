@@ -7,7 +7,6 @@ import { serviceYearMonths } from '@/lib/roleHistory'
 
 const H = 60
 
-/** Twelve projection months for Service Year 2025, September first. */
 const projected = (logged: number[], planned: number[] = []) =>
   serviceYearMonths(2025).map((m, i) => ({
     ...m,
@@ -19,7 +18,6 @@ const pioneerGoal = Array(12).fill(50 * H)
 
 describe('buildServiceYearPace', () => {
   it('runs logged time up to today and Plans from today on', () => {
-    // Today: Nov 16, 2025 — the third month of Service Year 2025.
     const pace = buildServiceYearPace({
       serviceYear: 2025,
       today: new Date(2025, 10, 16),
@@ -45,7 +43,7 @@ describe('buildServiceYearPace', () => {
 
     expect(pace.loggedMinutes).toBe(120 * H)
     expect(pace.projectedMinutes).toBe(195 * H)
-    // Two full months of goal plus 15.5 of November's 30 days.
+
     expect(pace.goalToDateMinutes).toBeCloseTo((100 + 50 * (15.5 / 30)) * H)
   })
 
@@ -147,12 +145,12 @@ describe('paceScale', () => {
   it('compresses totals above the goal into the top fifth', () => {
     const scale = paceScale(goal, 900 * H)
     expect(scale.compressed).toBe(true)
-    // The goal sits at 80% of the height; the highest total at the top.
+
     expect(scale.toChart(goal) / scale.top).toBeCloseTo(0.8)
     expect(scale.toChart(900 * H)).toBeCloseTo(scale.top)
-    // Below the goal, totals keep their true proportions.
+
     expect(scale.toChart(300 * H)).toBe(300 * H)
-    // Above it, equal steps take less and less room.
+
     const first = scale.toChart(700 * H) - scale.toChart(600 * H)
     const last = scale.toChart(900 * H) - scale.toChart(800 * H)
     expect(last).toBeLessThan(first)

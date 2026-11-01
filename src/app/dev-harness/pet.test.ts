@@ -81,7 +81,7 @@ describe('__WW_DEV__.pet', () => {
     petHarness.setAppearance('donkey')
     expect(usePet.getState().pet?.species).toBe('donkey')
     expect(usePetSession.getState().command).toMatchObject({ kind: 'entrance' })
-    // Pending until the card takes it, which keeps the pet out of the room.
+
     expect(usePetSession.getState().entrance).toBe('donkey')
   })
 })

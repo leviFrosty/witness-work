@@ -27,11 +27,6 @@ const SOUND_LABELS: Record<RewardSoundSet, () => string> = {
   off: () => i18n.t('rewardSounds_off'),
 }
 
-/**
- * Pet Settings' rewards part, the same settings as Settings → Rewards: whether
- * what the User earns plays as the reward stack, its sounds (each previews when
- * picked), and a sample.
- */
 export default function PetRewardsSection({
   palette,
 }: {

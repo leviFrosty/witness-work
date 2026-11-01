@@ -1,16 +1,10 @@
-// Machine-wide coordination for ww-verify: a crash-safe mutex, device leases
-// with caps and a FIFO wait queue, native build slots, and a memory budget.
-// State is plain JSON in WW_VERIFY_HOME (default ~/.ww-verify). Lease files
-// keep the old `{ worktree, at }` lock shape so older harness copies still
-// treat leased devices as taken.
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
 const env = process.env
-// Machines with 16 GB or less get a tighter policy (see SKILL.md). Env vars
-// always win; POLICY records where each value came from for `status`.
+
 export const RAM_GB = Number(env.WW_VERIFY_RAM_GB) || os.totalmem() / 2 ** 30
 const SMALL = RAM_GB <= 16
 export const POLICY = {}
@@ -37,30 +31,23 @@ export const CONFIG = {
   },
   maxBuilds: num('WW_VERIFY_MAX_BUILDS', 1),
   idleMin: num('WW_VERIFY_LEASE_IDLE_MIN', 30, 15),
-  // Idle devices per platform kept booted after `down` for the next `up`.
+
   warm: num('WW_VERIFY_WARM', 2, 1),
-  // An idle booted device still costs CPU, so a small machine keeps it briefly.
+
   warmHours: num('WW_VERIFY_WARM_HOURS', 12, 2),
-  // Devices per platform kept running (leased or warm); `wwv warm` boots up to
-  // it. Only a native build, which can't fit otherwise, goes below it.
+
   warmMin: num('WW_VERIFY_WARM_MIN', 0),
-  // The estimates are full footprints, but an idle device compresses to about
-  // a third of its estimate, so a small machine budgets its whole RAM and
-  // leaves the real limit to the live check below.
+
   budgetGb: num(
     'WW_VERIFY_MEMORY_BUDGET_GB',
     Math.round(RAM_GB * 0.7),
     Math.round(RAM_GB)
   ),
-  // Live check on top of the budget (macOS): a boot or build starts only while
-  // the kernel's free-memory level (kern.memorystatus_level) is at least this
-  // many percent and pressure is normal, and once the previous boot or build
-  // has had `settleSec` to show up in that level.
+
   minFreePct: num('WW_VERIFY_MIN_FREE_PCT', 25),
   minFreePctBuild: num('WW_VERIFY_MIN_FREE_PCT_BUILD', 35),
   settleSec: num('WW_VERIFY_SETTLE_SEC', 60),
-  // GB per item, measured on a 16 GB Mac Mini (footprint, not RSS); calibrate
-  // with the env vars on a new machine.
+
   est: {
     ios: num('WW_VERIFY_EST_IOS_GB', 3.4),
     android: num('WW_VERIFY_EST_ANDROID_GB', 3.2),
@@ -73,10 +60,10 @@ export const CONFIG = {
 
 const LEGACY_STALE_MS = 24 * 60 * 60 * 1000
 const MUTEX_STALE_MS = 2 * 60 * 1000
-// A named lock covers a dependency install and a server start.
+
 const NAMED_LOCK_STALE_MS = 15 * 60 * 1000
 const REAPER_STALE_MS = 10 * 60 * 1000
-// A build refreshes `seenAt` every minute, so a reused pid can't hold a slot.
+
 const BUILD_STALE_MS = 5 * 60 * 1000
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -110,8 +97,6 @@ function writeJsonAtomic(file, value) {
 
 const round = (gb) => Math.round(gb * 10) / 10
 
-// ---------- mutex ----------
-
 let mutexDepth = 0
 
 function breakStaleLock(dir, staleMs) {
@@ -132,14 +117,11 @@ function breakStaleLock(dir, staleMs) {
   } catch {
     return
   }
-  // Another process may have broken and retaken it between our read and the
-  // rename; if we moved a live lock, hand it back.
+
   if (readText(path.join(grave, 'owner')) !== owner) {
     try {
       fs.renameSync(grave, dir)
-    } catch {
-      // someone holds a newer one; theirs wins
-    }
+    } catch {}
     return
   }
   fs.rmSync(grave, { recursive: true, force: true })
@@ -180,7 +162,6 @@ function holdLock(dir, staleMs, fn) {
   }
 }
 
-/** Runs `fn` (synchronous, short) while holding the machine-wide mutex. */
 export function withMutex(fn) {
   if (mutexDepth) return fn()
   return holdLock(MUTEX, MUTEX_STALE_MS, () => {
@@ -193,15 +174,9 @@ export function withMutex(fn) {
   })
 }
 
-/**
- * Runs `fn` (synchronous, may take minutes) while holding the lock `name`.
- * Never take the mutex inside it, or call it while holding the mutex.
- */
 export function withLock(name, fn) {
   return holdLock(path.join(HOME, `${name}.lock`), NAMED_LOCK_STALE_MS, fn)
 }
-
-// ---------- leases ----------
 
 export function lockFile(key) {
   return path.join(LOCK_DIR, `${key.replace(/[^a-zA-Z0-9-]/g, '_')}.json`)
@@ -211,7 +186,7 @@ function load(file, now) {
   const raw = readJson(file, null)
   if (!raw?.worktree) return null
   const key = raw.key ?? path.basename(file, '.json')
-  // Old-harness locks are `{ worktree, at }` and stay held for 24 h.
+
   const legacy = !raw.platform
   const beat = raw.heartbeatAt ?? raw.at ?? 0
   const limit = legacy ? LEGACY_STALE_MS : CONFIG.idleMin * 60_000
@@ -235,15 +210,12 @@ export function readLeases(now = Date.now()) {
   let files = []
   try {
     files = fs.readdirSync(LOCK_DIR).filter((f) => f.endsWith('.json'))
-  } catch {
-    // no locks yet
-  }
+  } catch {}
   return files.map((f) => load(path.join(LOCK_DIR, f), now)).filter(Boolean)
 }
 
 const DERIVED = ['file', 'legacy', 'idleMs', 'expired', 'reaping', 'reaper']
 
-/** Writes a lease, dropping derived fields and any reaper mark. */
 function save(lease) {
   const raw = Object.fromEntries(
     Object.entries(lease).filter(([field]) => !DERIVED.includes(field))
@@ -251,10 +223,6 @@ function save(lease) {
   writeJsonAtomic(lease.file ?? lockFile(raw.key), raw)
 }
 
-/**
- * Live leases, warm devices and builds, plus the Metro each leasing worktree
- * runs, in GB.
- */
 export function usage(leases, builds, warm = []) {
   const live = leases.filter((l) => !l.expired)
   const worktrees = new Set(live.map((l) => l.worktree))
@@ -266,13 +234,6 @@ export function usage(leases, builds, warm = []) {
   )
 }
 
-// ---------- live memory ----------
-
-/**
- * The kernel's free-memory level in percent and its pressure level (1 normal, 2
- * warn, 4 critical), or null where the kernel has neither (not macOS).
- * `WW_VERIFY_MEMORY_LEVEL=<free>[,<pressure>]` overrides both, for tests.
- */
 export function memoryLevel() {
   const fake = env.WW_VERIFY_MEMORY_LEVEL
   const out = fake
@@ -292,10 +253,6 @@ export function memoryLevel() {
   return Number.isFinite(free) && out.trim() ? { free, pressure } : null
 }
 
-/**
- * Why a boot or build can't start yet on live memory, as `{ reason, blockedOn
- * }`, or null when it can.
- */
 function liveBlock(kind, now) {
   const [minFree, knob] =
     kind === 'build'
@@ -322,15 +279,9 @@ function liveBlock(kind, now) {
   return null
 }
 
-/** Starts the settle window after a boot, build or shutdown. */
 const admitted = (label, now = Date.now()) =>
   writeJsonAtomic(LAST_ADMIT, { at: now, label })
 
-/**
- * Marks the oldest of `warm` for shutdown because live memory is short; the
- * settle window then keeps the next try from shutting down another before the
- * freed memory shows.
- */
 function evictForPressure(warm, pid) {
   const victim = [...warm].sort((a, b) => a.since - b.since).slice(0, 1)
   if (!victim.length) return null
@@ -338,18 +289,8 @@ function evictForPressure(warm, pid) {
   return mark(victim, pid)
 }
 
-// ---------- warm devices ----------
-
-// A warm device is a booted pool device no lease holds, kept for the next
-// `up`. Its memory counts toward the budget until a lease takes it or a lease
-// or build that needs the room evicts it (marks it, shuts it down, drops it).
 const evicting = (w) => Boolean(w.evicting && pidAlive(w.evicting))
 
-/**
- * Warm devices no lease has taken; an eviction whose owner died is dropped.
- * `persist` (under the mutex) forgets the rest for good, since an older harness
- * that leases a warm device shuts it down without updating this file.
- */
 function readWarm(leases, { persist = false } = {}) {
   const leased = new Set(leases.map((l) => l.key))
   const all = readJson(WARM, [])
@@ -360,10 +301,8 @@ function readWarm(leases, { persist = false } = {}) {
   return warm
 }
 
-/** Warm devices that still hold memory, i.e. not being shut down. */
 const idleWarm = (leases) => readWarm(leases).filter((w) => !evicting(w))
 
-/** Running devices (live leases and idle warm ones) per platform. */
 function running(leases, warm) {
   const count = { ios: 0, android: 0 }
   for (const l of leases) if (!l.expired) count[l.platform]++
@@ -371,11 +310,6 @@ function running(leases, warm) {
   return count
 }
 
-/**
- * Keeps `candidates` (oldest first) only while shutting each down leaves its
- * platform at `WW_VERIFY_WARM_MIN` or more; `count` is what runs afterwards
- * without them.
- */
 function aboveFloor(candidates, count) {
   const left = { ...count }
   return [...candidates]
@@ -383,10 +317,6 @@ function aboveFloor(candidates, count) {
     .filter((w) => left[w.platform] > CONFIG.warmMin && left[w.platform]--)
 }
 
-/**
- * Marks warm devices for shutdown, oldest first, until `fits(freedGb)`; returns
- * them, or null (nothing marked) when even all of them aren't enough.
- */
 function markEvictions(warm, fits, pid) {
   const victims = []
   let freed = 0
@@ -410,13 +340,6 @@ function mark(victims, pid) {
   return victims
 }
 
-/**
- * Hands a lease back but keeps its device booted for the next `up`, if the warm
- * pool has room for it (`WW_VERIFY_WARM` per platform) under the memory budget.
- * `force`, or a platform below `WW_VERIFY_WARM_MIN`, skips both checks. Returns
- * false, leaving the lease in place, when it doesn't fit: the caller shuts the
- * device down and releases.
- */
 export function parkWarm(lease, { force = false } = {}) {
   return withMutex(() => {
     const now = Date.now()
@@ -452,10 +375,6 @@ export function parkWarm(lease, { force = false } = {}) {
   })
 }
 
-/**
- * Marks warm devices for shutdown that match `filter` (e.g. too old), keeping
- * `WW_VERIFY_WARM_MIN` running per platform.
- */
 export function evictWarm(filter, pid = process.pid) {
   return withMutex(() => {
     const leases = readLeases()
@@ -464,10 +383,6 @@ export function evictWarm(filter, pid = process.pid) {
   })
 }
 
-/**
- * Platforms with fewer running devices than `WW_VERIFY_WARM_MIN`, and by how
- * many.
- */
 export function belowFloor() {
   return withMutex(() => {
     const leases = readLeases()
@@ -480,7 +395,6 @@ export function belowFloor() {
   })
 }
 
-/** Forgets warm devices this process marked and has now shut down. */
 export function dropWarm(victims, pid = process.pid) {
   const keys = new Set(victims.map((w) => w.key))
   withMutex(() =>
@@ -491,11 +405,9 @@ export function dropWarm(victims, pid = process.pid) {
   )
 }
 
-/** Warm devices older than `WW_VERIFY_WARM_HOURS`, marked for shutdown. */
 export const evictStaleWarm = (now = Date.now()) =>
   evictWarm((w) => now - w.since > CONFIG.warmHours * 3600_000)
 
-/** Who holds the budgeted memory, for wait messages. */
 function describeUse(leases, now = Date.now()) {
   const held = leases
     .filter((l) => !l.expired)
@@ -508,14 +420,12 @@ function describeUse(leases, now = Date.now()) {
   return `held by ${all.join(', ') || 'nobody'}`
 }
 
-// A waiter polls every ~12 s; one silent for 2 min is gone (or its pid reused).
 const fresh = (now) => (w) => pidAlive(w.pid) && now - w.seenAt < 2 * 60_000
 const liveWaiters = (now = Date.now()) =>
   readJson(WAITERS, []).filter(fresh(now))
 const liveBuildWaiters = (now = Date.now()) =>
   readJson(BUILD_WAITERS, []).filter(fresh(now))
 
-/** True while any process of the group runs. */
 export function groupAlive(pgid) {
   if (!pgid) return false
   try {
@@ -526,14 +436,9 @@ export function groupAlive(pgid) {
   }
 }
 
-// The `up` that owns a build beats every minute; a reused pid stops beating.
 const ownerAlive = (b, now) =>
   pidAlive(b.pid) && now - (b.seenAt ?? b.startedAt) < BUILD_STALE_MS
 
-/**
- * Builds holding a slot: the owning `up` is alive, or the build's process group
- * still runs (an orphan, until `reapBuilds` kills it).
- */
 export function liveBuilds(now = Date.now()) {
   return readJson(BUILDS, []).filter(
     (b) => ownerAlive(b, now) || groupAlive(b.pgid)
@@ -542,10 +447,6 @@ export function liveBuilds(now = Date.now()) {
 
 export const isOrphan = (b, now = Date.now()) => !ownerAlive(b, now)
 
-/**
- * What the builds file keeps: live builds, plus dead ones whose build dirs
- * still need the reaper.
- */
 const storedBuilds = (now = Date.now()) =>
   readJson(BUILDS, []).filter(
     (b) =>
@@ -567,11 +468,6 @@ function pickPort(leases, worktree, busy, exclude = []) {
   )
 }
 
-/**
- * One attempt to lease a device. `pool()` lists existing devices as `{ key, id,
- * name }`; `create(pool)` makes one more (only while the pool is under the
- * cap). Returns `{ lease }` or `{ wait, holders, position, queued }`.
- */
 export function tryClaim({
   worktree,
   platform,
@@ -637,7 +533,7 @@ export function tryClaim({
       return wait(
         `all ${cap} ${platform} leases are held (WW_VERIFY_MAX_${platform.toUpperCase()})`
       )
-    // Prefer a warm device (no boot), then one that already runs the build.
+
     const devices = pool()
     const warm = readWarm(leases, { persist: true })
     const taken = new Set([
@@ -649,11 +545,10 @@ export function tryClaim({
     let device = devices
       .filter((d) => !taken.has(d.key))
       .sort((a, b) => score(b) - score(a))[0]
-    // A warm device this lease takes over is already counted in `need`.
+
     const others = warm.filter((w) => !evicting(w) && w.key !== device?.key)
     const used = usage(leases, liveBuilds(now), others)
     if (used + need > CONFIG.budgetGb) {
-      // A lease on a device that isn't warm adds a running device.
       const after = running(leases, warm)
       if (!warm.some((w) => w.key === device?.key)) after[platform]++
       const evict = markEvictions(
@@ -662,15 +557,14 @@ export function tryClaim({
         pid
       )
       if (evict) {
-        writeJsonAtomic(WAITERS, waiters) // keeps this waiter's place
+        writeJsonAtomic(WAITERS, waiters)
         return { evict }
       }
       return wait(
         `memory budget: ${used} GB in use + ${need} GB > ${CONFIG.budgetGb} GB (WW_VERIFY_MEMORY_BUDGET_GB); ${describeUse(leases, now)}`
       )
     }
-    // A build that queued earlier and waits only for memory goes first, or a
-    // steady stream of device leases would starve it.
+
     const since = waiters.find((w) => w.pid === pid).since
     const build = liveBuildWaiters(now).find(
       (w) =>
@@ -683,7 +577,7 @@ export function tryClaim({
       return wait(
         `yielding memory to an earlier ${build.platform} build for ${path.basename(build.worktree)}`
       )
-    // Taking a warm device boots nothing, so only a cold one checks live memory.
+
     const cold = !warm.some((w) => w.key === device?.key)
     const blocked = cold && liveBlock('device', now)
     if (blocked) {
@@ -726,7 +620,6 @@ export function tryClaim({
   })
 }
 
-/** Polls `tryClaim` until it succeeds or `waitMs` passes. */
 export async function claimLease(
   options,
   {
@@ -762,7 +655,6 @@ export async function claimLease(
   }
 }
 
-/** Refreshes this worktree's leases; returns the keys it still holds. */
 export function heartbeat(worktree) {
   return withMutex(() => {
     const now = Date.now()
@@ -787,7 +679,6 @@ export function updateLeases(worktree, patch, keys) {
   })
 }
 
-/** Moves this worktree's Metro to a port no other lease or listener uses. */
 export function reservePort(worktree, exclude, busyPorts) {
   return withMutex(() => {
     const leases = readLeases()
@@ -813,10 +704,6 @@ export function release(worktree, filter = () => true) {
   )
 }
 
-/**
- * Reaps expired leases: marks them under the mutex (so no one else reaps or
- * claims them), runs `cleanup(lease)` outside it, then deletes the lease.
- */
 export async function gc(cleanup) {
   const victims = withMutex(() =>
     readLeases()
@@ -844,7 +731,6 @@ export async function gc(cleanup) {
   return victims
 }
 
-/** Shuts marked warm devices down, then forgets them (even if one failed). */
 export async function shutdownWarm(victims, shutdown, pid = process.pid) {
   try {
     for (const w of victims) await shutdown(w)
@@ -853,13 +739,6 @@ export async function shutdownWarm(victims, shutdown, pid = process.pid) {
   }
 }
 
-// ---------- native builds ----------
-
-/**
- * One attempt at a build slot. Build waiters queue first-come among themselves,
- * and must not hold a device lease (ww-verify releases its own before waiting),
- * so a waiter can never block the memory it waits for.
- */
 export function tryAcquireBuild({
   worktree,
   platform,
@@ -906,7 +785,6 @@ export function tryAcquireBuild({
     const warm = readWarm(leases, { persist: true }).filter((w) => !evicting(w))
     const used = usage(leases, builds, warm)
     if (used + need > CONFIG.budgetGb) {
-      // A build may go below WW_VERIFY_WARM_MIN; `wwv warm` restores it.
       const evict = markEvictions(
         [...warm].sort((a, b) => a.since - b.since),
         (freed) => used - freed + need <= CONFIG.budgetGb,
@@ -923,7 +801,6 @@ export function tryAcquireBuild({
     }
     const blocked = liveBlock('build', now)
     if (blocked) {
-      // A build may go below WW_VERIFY_WARM_MIN here too.
       const evict =
         blocked.blockedOn === 'pressure' && evictForPressure(warm, pid)
       if (evict) {
@@ -954,21 +831,12 @@ function updateBuild(pid, patch) {
   )
 }
 
-/**
- * Records the build's detached process group and output dirs, so the reaper can
- * kill an orphaned build and free its disk.
- */
 export function setBuildGroup(pgid, dirs, pid = process.pid) {
   updateBuild(pid, { pgid, dirs })
 }
 
 let buildTimer
 
-/**
- * Waits for a build slot. `ready()` is checked before every attempt, so a
- * waiter whose artifact appears (another worktree built it) stops waiting and
- * gets `{ cached }` back instead of a slot.
- */
 export async function acquireBuild(
   options,
   {
@@ -995,9 +863,7 @@ export async function acquireBuild(
         buildTimer = setInterval(() => {
           try {
             updateBuild(pid, { seenAt: Date.now() })
-          } catch {
-            // the next beat retries
-          }
+          } catch {}
         }, 60_000)
         buildTimer.unref()
       }
@@ -1042,28 +908,18 @@ function processTable() {
     }))
 }
 
-/** Whether a live process of the group runs something from the worktree. */
 function groupOwnedBy(pgid, worktree) {
   return processTable().some(
     (p) => p.pgid === pgid && p.command.includes(worktree)
   )
 }
 
-/**
- * Kills a build's process group and every descendant. Xcode runs its build
- * service and each compiler in process groups of their own, so the group alone
- * would leave compilers writing into the build dirs. The tree is frozen
- * (SIGSTOP) until no new descendant appears, so nothing spawns or reparents
- * away mid-kill, then killed.
- */
 export function killTree(pgid) {
   const tree = new Set()
   const signal = (pid, name) => {
     try {
       process.kill(pid, name)
-    } catch {
-      // already gone
-    }
+    } catch {}
   }
   for (let pass = 0; pass < 20; pass++) {
     const table = processTable()
@@ -1090,7 +946,6 @@ export function killTree(pgid) {
   return tree.size
 }
 
-/** Removes build dirs; a just-killed writer can race the first attempt. */
 export function removeDirs(dirs, log = () => {}) {
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue
@@ -1108,12 +963,6 @@ export function removeDirs(dirs, log = () => {}) {
   }
 }
 
-/**
- * Kills builds whose owning `up` died (killed, crashed, or its pid reused):
- * their detached process group, then their build dirs. The group must run
- * something from that worktree, so a reused process group id is never killed.
- * Returns the reaped entries.
- */
 export async function reapBuilds({ log = () => {} } = {}) {
   const now = Date.now()
   const victims = readJson(BUILDS, []).filter((b) => isOrphan(b, now))
@@ -1134,7 +983,7 @@ export async function reapBuilds({ log = () => {} } = {}) {
     if (left.length !== all.length) writeJsonAtomic(BUILDS, left)
     return all.filter(gone).map((b) => ({
       ...b,
-      // Another build of the same worktree may be using the same dirs.
+
       removeDirs: !left.some((l) => l.worktree === b.worktree),
     }))
   })
@@ -1142,7 +991,6 @@ export async function reapBuilds({ log = () => {} } = {}) {
   return reaped
 }
 
-/** Read-only view for `ww-verify status`. */
 export function snapshot() {
   const now = Date.now()
   const leases = readLeases(now)

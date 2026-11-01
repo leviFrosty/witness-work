@@ -23,7 +23,6 @@ const room = (w: number, h: number, wall = WALL): PixelBuffer => {
 
 const channels = (c: number) => [(c >> 16) & 255, (c >> 8) & 255, c & 255]
 
-/** The shadow's pixels as a string per row (`#` shadow, `.` room). */
 function shape(out: PixelBuffer, ink: number): string[] {
   const rows: string[] = []
   for (let y = 0; y < out.height; y++) {
@@ -37,7 +36,6 @@ function shape(out: PixelBuffer, ink: number): string[] {
 
 describe('silhouetteOf', () => {
   it('shades an object’s own pixels, not the bare room the others cover', () => {
-    // The option covers x 1–3; every other option covers x 1–5.
     const shown = room(7, 1)
     fillRect(shown, 1, 0, 4, 1, RED)
     const backdrop = room(7, 1, OTHER_WALL)
@@ -49,7 +47,7 @@ describe('silhouetteOf', () => {
     })
     const out = silhouetteOf(shown, [backdrop, ...others], 'object')
     expect(shape(out, pixelAt(out, 1, 0)!)).toEqual(['.###...'])
-    // No colour survives.
+
     for (const x of [0, 1, 4]) {
       const [r, , b] = channels(pixelAt(out, x, 0)!)
       expect(Math.abs(r - b)).toBeLessThan(24)
@@ -57,8 +55,6 @@ describe('silhouetteOf', () => {
   })
 
   it('keeps out what every option has, even lit by another lamp', () => {
-    // A table at x 5–7 in every room; the other options' lamps light the room
-    // a band brighter.
     const shown = room(8, 1)
     fillRect(shown, 1, 0, 4, 1, RED)
     fillRect(shown, 5, 0, 8, 1, TABLE)
@@ -81,7 +77,6 @@ describe('silhouetteOf', () => {
   })
 
   it('fills glass and flames, keeps gaps the room shows through', () => {
-    // A 9 × 5 frame around a 5 × 1 middle.
     const frame = (wall: number, middle: number) => {
       const buf = room(9, 5, wall)
       fillRect(buf, 1, 1, 8, 4, RED)
@@ -100,7 +95,7 @@ describe('silhouetteOf', () => {
       const out = silhouetteOf(shown, [backdrop, ...others], 'object')
       return shape(out, pixelAt(out, 1, 1)!)
     }
-    // The wall shows through, as in the other options' rooms.
+
     expect(ring(frame(WALL, WALL), frame(OTHER_WALL, OTHER_WALL))).toEqual([
       '.........',
       '.#######.',
@@ -115,10 +110,10 @@ describe('silhouetteOf', () => {
       '.#######.',
       '.........',
     ]
-    // Glass tints what's behind it.
+
     const glass = frame(WALL, rgb('#a0d0e0'))
     expect(ring(glass, frame(OTHER_WALL, rgb('#5070a0')))).toEqual(solid)
-    // A flame that matches another option's.
+
     const flame = rgb('#ffd040')
     const others = [0, 1, 2].map((k) => {
       const buf = room(9, 5)
@@ -146,8 +141,6 @@ describe('silhouetteOf', () => {
   })
 
   it('shows a wall pattern as two shadow tones', () => {
-    // A stripe pattern over the wall; the references are the plain wall and
-    // the pattern in another colour.
     const shown = room(4, 2)
     fillRect(shown, 1, 0, 2, 2, rgb('#f0e0c0'))
     const plain = room(4, 2)
@@ -162,7 +155,6 @@ describe('silhouetteOf', () => {
   })
 
   it('shows a floor’s lines as two tones, not its sunbeam', () => {
-    // 12 × 1 boards with a dark seam every 4 pixels; a sunbeam lifts x ≥ 6.
     const shown = room(12, 1, rgb('#a07040'))
     for (const x of [3, 7, 11]) fillRect(shown, x, 0, x + 1, 1, rgb('#503018'))
     for (let x = 6; x < 12; x++) {

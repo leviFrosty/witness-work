@@ -44,36 +44,17 @@ import { useShallow } from 'zustand/react/shallow'
 import { tracking } from '@/lib/tracking'
 
 interface YearMilestoneCardProps {
-  /**
-   * The end year of the service year being displayed. A service year runs Sep 1
-   * of `year - 1` to Aug 31 of `year`; passing `2025` renders the 2024–2025
-   * service year.
-   */
   year: number
-  /**
-   * Called when the user taps the "adjust milestones" affordance. Passing this
-   * prop is what makes the affordance render — HomeScreen omits it so the
-   * affordance stays hidden there (milestone editing lives on the Progress
-   * screen's Year tab).
-   */
+
   onAdjustMilestones?: () => void
-  /**
-   * Opens this service year on Progress. With `onAdjustMilestones`, it's
-   * offered in the hero's long-press menu.
-   */
+
   onViewYear?: () => void
-  /** Optional category details row between the annual total and progress bar. */
+
   categoriesSlot?: ReactNode
-  /** Show milestone details in a second card on the Year screen. */
+
   separateMilestones?: boolean
 }
 
-/**
- * Year-tab hero card. Shows the service-year span header, days remaining, big
- * hours / goal number, a milestone progress bar (added in Phase 2B),
- * milestones-hit chip, and a "next milestone" hint with an optional "adjust
- * milestones" affordance.
- */
 const YearMilestoneCard = ({
   year,
   onAdjustMilestones,
@@ -139,13 +120,6 @@ const YearMilestoneCard = ({
     [milestones, totalMinutesForServiceYear]
   )
 
-  // One-time crossing celebration. Mirrors MonthReport: pulse a seal, fire a
-  // haptic, and (annual-goal only) trigger the fireworks burst — but only the
-  // first time the user lands on the Year tab after the milestone was crossed.
-  // Persisted via `celebratedMilestones` so re-opening the screen, or switching
-  // between Year and other tabs, doesn't re-fire. We celebrate every milestone
-  // the user has hit but not yet been shown the animation for. Derived from the
-  // live preference so a refocus after marking finds nothing left to celebrate.
   const serviceYearKey = milestoneCelebrationKey(serviceYear)
   const celebratedForYear = celebratedMilestones[serviceYearKey] ?? []
   const justHitMilestones = hitState.hit.filter(
@@ -157,9 +131,7 @@ const YearMilestoneCard = ({
     annualGoalHours > 0 && totalMinutesForServiceYear >= annualGoalHours * 60
   const isJustHitAnnualGoal =
     justHitTop !== null && justHitTop === annualGoalHours
-  // The largest milestone this visit celebrated drives the inline banner. Held
-  // in state because marking it celebrated clears `justHitTop` straight away;
-  // dropped on blur so a re-visit no longer shows it.
+
   const [bannerMilestone, setBannerMilestone] = useState<number | null>(null)
 
   const sealScale = useSharedValue(1)
@@ -167,7 +139,6 @@ const YearMilestoneCard = ({
     transform: [{ scale: sealScale.value }],
   }))
 
-  // Service-year span: Sep 1 of `serviceYear` → Aug 31 of `serviceYear + 1`.
   const { start: serviceYearStart, end: serviceYearEnd } = useMemo(
     () => serviceYearBounds(serviceYear),
     [serviceYear]
@@ -187,11 +158,6 @@ const YearMilestoneCard = ({
       ? 0
       : Math.max(0, serviceYearEnd.diff(serviceYearStart, 'days'))
 
-  // Reserve the active crossing animation for the in-progress service year —
-  // past years that the user simply met still get the persistent glow + "You
-  // did it!" badge below, but no haptic / fireworks burst on visit. Future
-  // service years can't have unhit milestones (no reports yet), so they're
-  // naturally excluded by `justHitTop === null`.
   useEffect(() => {
     if (!isFocused) {
       setBannerMilestone(null)
@@ -251,8 +217,7 @@ const YearMilestoneCard = ({
   )
   const completedHeroDisplay = useFormattedMinutes(totalMinutesForServiceYear)
   const isDecimal = timeDisplayFormat === 'decimal'
-  // Read as one phrase ("43 hours 30 minutes of 600 hours"), not "43.5, / 600
-  // hours".
+
   const heroSpoken =
     annualGoalHours > 0
       ? i18n.t('durationSpoken.ofGoal', {
@@ -261,11 +226,6 @@ const YearMilestoneCard = ({
         })
       : formatMinutesSpoken(totalMinutesForServiceYear)
 
-  // Mirror the month card's `record` tier treatment: amber border + translucent
-  // supporter background reads as celebratory without overpowering the chart.
-  // We apply it for any service year that hit the annual goal — past, present,
-  // or future (future can't actually hit goal yet, but the check is safe). The
-  // active crossing animation upstream is the gated one.
   const showCompletionTreatment = isGoalComplete && annualGoalHours > 0
 
   const milestoneCount =
@@ -282,8 +242,6 @@ const YearMilestoneCard = ({
       </View>
     ) : null
 
-  // Keeps the link at the trailing edge, also when a long translation wraps it
-  // below the text beside it.
   const adjustLink = onAdjustMilestones ? (
     <View style={{ flexGrow: 1, alignItems: 'flex-end' }}>
       <PointerHover effect='highlight'>
@@ -291,7 +249,6 @@ const YearMilestoneCard = ({
           onPress={onAdjustMilestones}
           accessibilityRole='button'
           hitSlop={8}
-          // Room for the pointer highlight; the margin keeps the layout.
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -326,11 +283,7 @@ const YearMilestoneCard = ({
     <>
       <MilestoneProgressBar year={year} />
 
-      {/* Transient "just hit a milestone" banner — only renders when the user
-        lands on the tab right after crossing a non-final rung. Marked as
-        celebrated in the focus effect above, which also drops the banner on
-        blur. For the annual goal itself we suppress it (the top-row "You did
-        it!" badge already carries that message). */}
+      {}
       {bannerMilestone !== null ? (
         <View
           style={{
@@ -428,8 +381,7 @@ const YearMilestoneCard = ({
 
   const hero = (
     <View style={{ gap: 15 }}>
-      {/* The days left wrap under the Service Year when they don't fit beside
-          it, as at large text sizes. */}
+      {}
       <View
         style={{
           flexDirection: 'row',
@@ -482,10 +434,7 @@ const YearMilestoneCard = ({
               color: theme.colors.textAlt,
             }}
           >
-            {
-              // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-              i18n.t('daysLeftCount', { count: daysRemaining })
-            }
+            {i18n.t('daysLeftCount', { count: daysRemaining })}
             {minutesToGoal > 0
               ? ` · ${i18n.t('hoursToGoLabel', { value: minutesToGoalDisplay.formatted })}`
               : ''}
@@ -496,7 +445,6 @@ const YearMilestoneCard = ({
       <View style={{ gap: 10 }}>
         <View
           accessibilityLabel={heroSpoken}
-          // A label alone doesn't keep the view, and the card reads its label.
           collapsable={false}
           style={{
             flexDirection: 'row',
@@ -506,15 +454,10 @@ const YearMilestoneCard = ({
           }}
         >
           <Text
-            // At accessibility sizes the figure shrinks onto one line rather
-            // than breaking between its digits.
             {...(largeText && isDecimal ? FIT_ONE_LINE : {})}
-            // Drop a tier in "short" mode so "234h 56m / 600 hours" fits the
-            // card without auto-shrinking the hero to fine print.
             style={{
               fontSize: isDecimal ? 64 : 40,
-              // A fixed line height would keep the full-size line around a
-              // shrunk figure.
+
               lineHeight:
                 largeText && isDecimal ? undefined : isDecimal ? 68 : 44,
               fontFamily: theme.fonts.bold,
@@ -531,7 +474,7 @@ const YearMilestoneCard = ({
               color: theme.colors.textAlt,
             }}
           >
-            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {}
             {i18n.t('goalHoursSuffix', { count: annualGoalHours })}
           </Text>
         </View>
@@ -554,8 +497,7 @@ const YearMilestoneCard = ({
           : {}),
       }}
     >
-      {/* The hero long-presses for the year's actions where the card has
-          them (Progress); both stay reachable from the visible links. */}
+      {}
       {onAdjustMilestones ? (
         <ContextMenu
           actions={[
@@ -587,8 +529,6 @@ const YearMilestoneCard = ({
 
   if (!separateMilestones) return card
 
-  // Its own View: a fragment's two cards would sit flush wherever a wrapper
-  // (Progress's RestWhileEditing) keeps the parent's gap from reaching them.
   return (
     <View style={{ gap: 12 }}>
       {card}

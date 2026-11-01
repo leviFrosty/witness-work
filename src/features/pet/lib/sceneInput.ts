@@ -18,7 +18,6 @@ import { moodOf, type PetLife } from '@/features/pet/lib/life'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 import type { PetDevOverride } from '@/features/pet/stores/petSession'
 
-/** The life facts the Home card shows. */
 export type PetCardLife = {
   hearts: number
   dead: boolean
@@ -29,7 +28,6 @@ export type PetCardLife = {
   rainbowToday: boolean
 }
 
-/** `life` with any dev override on top. */
 export function cardLife(
   life: PetLife,
   override?: PetDevOverride | null
@@ -67,11 +65,9 @@ export function cardLife(
   }
 }
 
-/** A stable per-pet seed for the blink clock and particles. */
 export const petSeed = (pet: Pick<PetRecord, 'id' | 'adoptedOn'>): number =>
   hashString(`${pet.id}:${pet.adoptedOn}`) % 100_000
 
-/** Hidden moments rolled once per Home visit. */
 export type PetVisitRoll = { paradise: boolean; star: boolean }
 
 export type PetSceneArgs = {
@@ -83,13 +79,12 @@ export type PetSceneArgs = {
   sign: SignData
   pendingGift: { kind: GiftKind; on: string } | null
   keepsakes: readonly PetKeepsake[]
-  /** Buddies' pets visiting today, the dev override already applied. */
+
   visits: readonly PetVisit[]
   roll: PetVisitRoll
   override?: PetDevOverride | null
 }
 
-/** Which hidden moments show, for the scene and analytics. */
 export type PetMomentsShown = {
   rainbow: boolean
   paradise: boolean
@@ -99,11 +94,9 @@ export type PetMomentsShown = {
   visitor: boolean
 }
 
-/** Newest keepsakes for the window sill, oldest of them on the left. */
 export const sillOf = (keepsakes: readonly PetKeepsake[]): GiftKind[] =>
   keepsakes.slice(-5).map((keepsake) => keepsake.kind)
 
-/** The scene player's input for the Home card, and the moments in it. */
 export function petSceneInput(args: PetSceneArgs): {
   input: PlayerInput
   shown: PetMomentsShown
@@ -125,7 +118,6 @@ export function petSceneInput(args: PetSceneArgs): {
   }
   return {
     input: {
-      // A faked window shows whatever the room's window is set to.
       room: { ...resolveRoom(args.room, window), ...o.window },
       sign: args.sign,
       lampLevel: o.lampLevel ?? args.lampLevel,
@@ -149,10 +141,6 @@ export function petSceneInput(args: PetSceneArgs): {
   }
 }
 
-/**
- * `life` with the hearts a surface shows while it plays what changed
- * (`usePetReveal`), and the mood they give.
- */
 export function withShownHearts<Life extends PetCardLife | null>(
   life: Life,
   hearts: number

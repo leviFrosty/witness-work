@@ -3,7 +3,6 @@ import type { RootStackParamList } from '@/types/rootStack'
 import usePetVisits from '@/app/pet/usePetVisits'
 import PetRoomScreen from '@/features/pet/screens/PetRoomScreen'
 
-/** The pet's details, with today's visiting buddy pets from Buddies. */
 export default function PetRoomRoute(
   props: NativeStackScreenProps<RootStackParamList, 'PetRoom'>
 ) {

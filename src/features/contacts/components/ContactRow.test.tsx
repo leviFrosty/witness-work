@@ -129,7 +129,7 @@ describe('ContactRow', () => {
     expect(menu.props.accessibilityLabel).toBe(
       'Jane Doe, 3 weeks ago, Springfield, Bible study this month, Favorite'
     )
-    // The icons the label describes don't get their own stops.
+
     const icons = root.findAllByType('IconButton' as never)[0].parent!
     expect(
       icons.findAllByType('IconButton' as never).map((b) => b.props.icon)
@@ -164,7 +164,7 @@ describe('ContactRow', () => {
         .find((t) => t.props.text === value)!.props
     expect(snippetFor('contact.phone', '+1 415 555 0134').ltr).toBe(true)
     expect(snippetFor('contact.email', 'ada@example.com').ltr).toBe(true)
-    // An address can be written in a right-to-left script; it keeps its own.
+
     expect(snippetFor('contact.address.line1', '12 Oak Street').ltr).toBe(false)
   })
 

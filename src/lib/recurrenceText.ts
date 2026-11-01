@@ -12,7 +12,6 @@ const WEEK_OF_MONTH_KEYS: Record<number, TranslationKey> = {
   [-1]: 'planRepeats_lastWeekday',
 }
 
-/** How often a Recurring Plan happens, e.g. "Every Saturday". */
 const describePattern = (plan: RecurringPlan): string => {
   const { frequency, interval, monthlyByWeekdayConfig } = plan.recurrence
   const start = momentStoredDate(plan.startDate)
@@ -43,10 +42,6 @@ const describePattern = (plan: RecurringPlan): string => {
   }
 }
 
-/**
- * A Recurring Plan's pattern in words, with its last date when it has one:
- * "Every other Saturday until December 5, 2026".
- */
 export function describeRecurrence(plan: RecurringPlan): string {
   const pattern = describePattern(plan)
   const { endDate } = plan.recurrence

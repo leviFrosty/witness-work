@@ -11,12 +11,6 @@ import AccountSecuritySection from '@/features/settings/components/account/Accou
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
 import useBackupSlots from '@/features/settings/hooks/useBackupSlots'
 
-/**
- * Settings → Account: the anonymous server account (ADR 0024), its end-to-end
- * encrypted backup, moving it to another phone, its recovery key (ADR 0026),
- * once it's set up, its devices and activity (ADR 0028), and a way into Device
- * Sync.
- */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
   const backups = useBackupSlots()

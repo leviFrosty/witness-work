@@ -7,7 +7,6 @@ import useServiceYearTotals from '@/features/progress/components/cards/allTime/u
 import { serviceYearLabel } from '@/features/progress/components/cards/allTime/serviceYearLabel'
 import type { AllTimeCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year with the most time logged. */
 export default function BestYearCard({ size }: AllTimeCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const best = useServiceYearTotals().reduce<{

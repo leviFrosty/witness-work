@@ -57,25 +57,19 @@ function Feature({
   )
 }
 
-/**
- * First visit to Buddies: what it is and how it's protected, then the profile
- * buddies will see and what of it to share. The one place that spells out what
- * buddies see; Buddies Settings changes it later. The list that follows offers
- * the first invite.
- */
 export default function BuddiesOnboarding({
   onDone,
   profileEditor,
 }: {
   onDone: () => void
-  /** The Profile editor, composed in by the app tier. */
+
   profileEditor: (nameInvalid: boolean) => ReactNode
 }) {
   const foldColumn = useFoldColumn(560)
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const profileName = useProfile((state) => state.name.trim())
-  // The account's card name, when another device already set it.
+
   const accountName = useBuddies((state) => state.cardName?.name)
   const hasName = profileName.length > 0 || !!accountName
   const [step, setStep] = useState(0)
@@ -108,7 +102,7 @@ export default function BuddiesOnboarding({
             paddingHorizontal: 15,
             minHeight: 40,
           },
-          // Over the content when it keeps to one side of iPhone Duo's fold.
+
           foldColumn,
         ]}
       >

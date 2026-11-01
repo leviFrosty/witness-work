@@ -12,15 +12,14 @@ const BADGE_SIZE = 24
 type Props = {
   photo: AssetMetadata
   size: number
-  /** Where it falls in the selection, from 1; null when it isn't selected. */
+
   order: number | null
-  /** Tapping picks it right away rather than toggling it. */
+
   single: boolean
   disabled: boolean
   onPress: () => void
 }
 
-/** One shared photo in the limited-access picker's grid. */
 export default function SharedPhotoCell({
   photo,
   size,

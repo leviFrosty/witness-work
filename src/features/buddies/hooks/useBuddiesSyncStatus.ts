@@ -5,11 +5,6 @@ import { buddiesSyncNotice } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 
-/**
- * How Buddies' syncs are going, for the Buddies screen: why the latest one
- * failed, whether one is running, and whether the first one after starting
- * Buddies is still on its way.
- */
 export default function useBuddiesSyncStatus() {
   const hasInbox = useBuddies((state) => state.registeredInboxId !== null)
   const lastSyncAt = useBuddies((state) => state.lastSyncAt)
@@ -26,8 +21,6 @@ export default function useBuddiesSyncStatus() {
     syncing,
     firstLoad: hasInbox && lastSyncAt === 0 && syncing,
     retry: async () => {
-      // The User asked: verify this device again now, without the session's
-      // wait after a failed attempt. A failure shows on the sync below.
       if (notice === 'unverified' || notice === 'verifyLater')
         await accountSessions
           .ensure(undefined, { retry: true })

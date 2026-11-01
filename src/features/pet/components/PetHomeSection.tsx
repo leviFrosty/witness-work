@@ -27,28 +27,16 @@ import {
 import { crispScale } from '@/features/pet/render/crispScale'
 import PetSceneView from '@/features/pet/render/PetSceneView'
 
-/** The card's padding; the room takes taps in it too. */
 const PAD = 16
-/** Points per pixel of the wallet's coin: a 10-pixel coin beside 15 pt. */
+
 const WALLET_ICON_PT = 2
 
-/**
- * Home's Pet Companion card: the pet's name and hearts above its room. Tap the
- * pet to pat it (or wake it), drag across it to rub; tap anywhere else on the
- * card to open its details (hats and decorating). Long-press the header to
- * rename it, change it, decorate its room or open its share card. Buddies' pets
- * visiting today sit in the room: once a pat's hearts float off, each says who
- * it came with, and a long press on one opens what the User does with its buddy
- * today. A red "New" chip shows while an owned Shop item was never picked.
- * Renders nothing without a companion.
- */
 export default function PetHomeSection({
   visits,
   onHideVisit,
 }: {
-  /** Buddies' pets visiting today. */
   visits: readonly PetVisit[]
-  /** Hides a visiting pet's buddy's pets (the Buddies setting). */
+
   onHideVisit?: (visit: PetVisit) => void
 }) {
   const theme = useTheme()
@@ -58,7 +46,7 @@ export default function PetHomeSection({
   const sceneBoxRef = useRef<View>(null)
   const coinRef = useRef<View>(null)
   const scene = usePetHomeScene(visits, headerRef)
-  // What was earned elsewhere plays over the room, and lands on the coins.
+
   useEffect(() => {
     const releaseScene = registerRewardTarget('cardScene', sceneBoxRef)
     const releaseCount = registerRewardTarget('card', coinRef)

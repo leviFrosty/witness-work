@@ -9,8 +9,6 @@ import {
   resolvePluginIcon,
 } from '@/features/settings/lib/appIcon'
 
-// Wait for RevenueCat to avoid a false lapse on launch. Reapply on foreground
-// to pick up seasonal changes and lapses; applyAppIcon skips unchanged icons.
 export default function AppIconSync() {
   const { customer } = useCustomer()
   const { isSupporter } = useIsSupporter()
@@ -30,10 +28,7 @@ export default function AppIconSync() {
       if (cancelled) return
       try {
         await applyAppIcon(target)
-      } catch {
-        // The system "App Icon Updated" alert is the user-visible failure
-        // mode anyway; swallow so a transient glitch doesn't crash boot.
-      }
+      } catch {}
     }
 
     void apply()

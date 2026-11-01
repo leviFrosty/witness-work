@@ -15,11 +15,6 @@ const QR_SIZE = 220
 
 type Store = 'android' | 'ios'
 
-/**
- * A code a friend can scan to find WitnessWork in their phone's store — Google
- * Play first, since the app is newly back on Android — and a link to share for
- * anyone who isn't standing beside you.
- */
 const ShareAppScreen = () => {
   const theme = useTheme()
   const [store, setStore] = useState<Store>('android')

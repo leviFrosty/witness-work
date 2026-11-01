@@ -22,7 +22,6 @@ const entry = (
   date: normalizeDateForStorage(new Date(year, month, day)),
 })
 
-/** Files entries the way the serviceReport store does: year → month → list. */
 const byYear = (entries: TimeEntry[]): TimeEntriesByYear => {
   const result: TimeEntriesByYear = {}
   for (const e of entries) {
@@ -47,10 +46,6 @@ const plan = (
   minutes: hours * H,
 })
 
-/**
- * A regular pioneer in November of Service Year 2025, with last year to
- * compare.
- */
 const input = (overrides: Partial<ServiceYearPaceInput> = {}) =>
   ({
     serviceYear: 2025,
@@ -94,7 +89,7 @@ describe('computeServiceYearPace', () => {
     expect(pace.tense).toBe('present')
     expect(pace.loggedMinutes).toBe(120 * H)
     expect(pace.projectedMinutes).toBe(128 * H)
-    // Last year's September and October, and 15.5 of November's 30 days.
+
     expect(pace.lastYearToDateMinutes).toBe(100.5 * H)
     expect(projection.months.map((m) => m.loggedMinutes / H)).toEqual([
       52, 48, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -118,7 +113,7 @@ describe('sharedServiceYearPace', () => {
   it('computes once for callers with the same stores on the same day', () => {
     const shared = input()
     const first = sharedServiceYearPace(shared)
-    // Another caller mounted later that day, with the same store values.
+
     const second = sharedServiceYearPace({
       ...shared,
       today: new Date(2025, 10, 16, 21, 5),

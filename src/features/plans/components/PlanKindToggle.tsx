@@ -12,14 +12,12 @@ import useAccessibilityTextSize, {
 } from '@/hooks/useAccessibilityTextSize'
 import i18n from '@/lib/locales'
 
-/** One Time / Recurring, at the top of the Plan form's dock. */
 const PlanKindToggle = (props: {
   oneTime: boolean
   setOneTime: (oneTime: boolean) => void
 }) => {
   const theme = useTheme()
-  // At accessibility text sizes each half is too narrow for its icon and
-  // label: the decorative icon goes, and the label shrinks onto one line.
+
   const largeText = useAccessibilityTextSize()
   const option = (oneTime: boolean, icon: AppIcon, label: string) => {
     const active = props.oneTime === oneTime

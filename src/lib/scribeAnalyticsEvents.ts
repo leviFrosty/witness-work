@@ -1,7 +1,3 @@
-/**
- * Scribe AI events; spread into analyticsEventNames. Properties:
- * docs/analytics.md → Scribe AI.
- */
 export const scribeAnalyticsEventNames = [
   'scribe_entry_tapped',
   'scribe_turn_started',

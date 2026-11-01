@@ -4,7 +4,6 @@ import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
-/** A slim notice that the tray couldn't check for new items, with a retry. */
 export default function TraySyncFailed({ onRetry }: { onRetry: () => void }) {
   const theme = useTheme()
 

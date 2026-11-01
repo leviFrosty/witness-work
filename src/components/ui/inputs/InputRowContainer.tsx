@@ -24,10 +24,7 @@ export interface InputRowContainerProps {
   noHorizontalPadding?: boolean
   label?: string
   description?: ReactNode
-  /**
-   * Right after the label (and its info), e.g. where a setting's value comes
-   * from.
-   */
+
   labelTrailing?: ReactNode
   info?: string
   justifyContent?:
@@ -41,33 +38,19 @@ export interface InputRowContainerProps {
   gap?: number
   required?: boolean
   style?: StyleProp<ViewStyle>
-  /**
-   * Focuses or opens the control, which must carry `label` as its own
-   * accessibility label: screen readers skip the label's text.
-   */
+
   onLabelPress?: () => void
-  /**
-   * The control carries `label` as its own accessibility label (a switch), so
-   * screen readers skip the label's text instead of reading the name twice.
-   */
+
   labelReadByControl?: boolean
-  /**
-   * The control reads `description` too, as its accessibility hint, so screen
-   * readers skip its text rather than reading it before the control it's for.
-   */
+
   descriptionReadByControl?: boolean
   controlStyle?: StyleProp<ViewStyle>
-  /** Override the settings control width for multiline or compound controls. */
+
   controlWidth?: 'compact' | 'full' | 'auto'
-  /**
-   * Keeps a small control (a switch inside a wrapper) beside the label at
-   * accessibility text sizes. A row whose only control is a `Switch` already
-   * does.
-   */
+
   inlineAtLargeText?: boolean
 }
 
-/** Whether a row's control is a lone `Switch`, which fits beside any label. */
 const isSwitch = (children: ReactNode) => {
   const only = Children.toArray(children)
   return only.length === 1 && isValidElement(only[0]) && only[0].type === Switch
@@ -99,9 +82,7 @@ const InputRowContainer: React.FC<
   const theme = useTheme()
   const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
-  // At accessibility text sizes a field, picker or value beside the label
-  // leaves it too little room, and words break mid-way; the control moves
-  // under the label and takes the row's width instead.
+
   const stack =
     useAccessibilityTextSize() &&
     hasLabelContent &&
@@ -127,8 +108,6 @@ const InputRowContainer: React.FC<
         />
       )}
       {label && (
-        // A long compound word (German «Kraftstoffverbrauch») shrinks to fit
-        // the label's column instead of breaking in two.
         <WholeWordsText
           style={{
             flexDirection: 'column',
@@ -161,7 +140,6 @@ const InputRowContainer: React.FC<
         onPress={onLabelPress}
         style={hasInfo ? { flexShrink: 1 } : undefined}
         hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
-        // A shortcut to the control, which reads the label itself.
         {...hiddenFromScreenReaders}
       >
         {labelCluster}
@@ -177,7 +155,7 @@ const InputRowContainer: React.FC<
           style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}
         >
           {labelTitle}
-          {/* Before the info icon, whose tap target reaches past it. */}
+          {}
           {labelTrailing}
           {info && <InfoPopover title={label} description={info} inline />}
         </View>
@@ -249,7 +227,7 @@ const InputRowContainer: React.FC<
                 ? '100%'
                 : inputLayout.controlMaxWidth,
             flexShrink: 1,
-            // A value under its label starts where the label does.
+
             ...(stack &&
               controlWidth === 'auto' && { alignItems: 'flex-start' }),
           },

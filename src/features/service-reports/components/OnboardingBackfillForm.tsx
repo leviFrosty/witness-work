@@ -40,11 +40,6 @@ interface Props {
   setSkippedStatusOnSkip?: boolean
 }
 
-/**
- * Builds one row per month from September of the current service year through
- * the calendar month immediately before `installedOn`. Returns [] if the user
- * installed in September itself (no missed months).
- */
 export const buildCatchUpRows = (installedOn: Date): MonthRow[] => {
   const installMoment = moment(installedOn)
   const sy = getServiceYearFromDate(installMoment)
@@ -64,12 +59,6 @@ export const buildCatchUpRows = (installedOn: Date): MonthRow[] => {
   return rows
 }
 
-/**
- * True if any service report exists in the catch-up window (Sept of the current
- * service year through the month before `installedOn`). Used to suppress the
- * catch-up prompt when an iCloud restore (or other prior data) already
- * populated those months.
- */
 export const hasReportsInCatchUpWindow = (
   serviceReports: TimeEntriesByYear,
   installedOn: Date
@@ -252,12 +241,6 @@ const OnboardingBackfillForm = ({
         })
       }
       if (creditHours > 0) {
-        // Attach to the LDC builtin Category so the cap pipeline counts it as
-        // credit time (see `getTotalMinutesForServiceYear` — LDC entries fold
-        // into the credit bucket alongside any other credit-bearing
-        // Category). LDC is the most-frequent credit category for backfill,
-        // and routing onboarding credit through it avoids inventing a
-        // synthetic category name.
         addServiceReport({
           id: Crypto.randomUUID(),
           date,

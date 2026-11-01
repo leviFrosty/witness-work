@@ -22,7 +22,7 @@ vi.mock('@expo/ui', () => ({ Host: 'Host' }))
 vi.mock('@expo/ui/swift-ui', () => ({
   Button: 'Button',
   Divider: 'Divider',
-  // Renders a custom label (the trigger) into a slot of its own.
+
   Menu: ({
     label,
     children,
@@ -99,7 +99,6 @@ import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
 const noop = () => {}
 
-// Contact Details' More menu: Share…, Edit | Dismiss For ▸, Archive.
 const contactMore: ContextMenuEntries = [
   [
     {
@@ -154,7 +153,6 @@ const render = async (
 
 const all = (type: string) => root.root.findAllByType(type as never)
 
-/** The SwiftUI menu's own items, in order: `[type, label]`. */
 const swiftItems = (parent: ReactTestInstance): [string, string][] =>
   parent.children.flatMap((child) => {
     if (typeof child === 'string' || (child.type as unknown) === 'MenuLabel')
@@ -193,7 +191,7 @@ describe('iOS PullDownMenu', () => {
       systemImage: 'archivebox',
       role: 'destructive',
     })
-    // No symbol, no image.
+
     expect(week.props.systemImage).toBeUndefined()
   })
 
@@ -260,9 +258,9 @@ describe('iOS PullDownMenu', () => {
       { accessibilityHint: 'Shows layers' },
       { accessibilityIdentifier: 'layers' },
     ])
-    // The hosted trigger stays out of the way of the menu's own element.
+
     expect(all('View')[1].props.accessibilityElementsHidden).toBe(true)
-    // Taps on the label reach React Native at the outer view.
+
     all('View')[0].props.onTouchStart()
     expect(onOpen).toHaveBeenCalledOnce()
   })
@@ -426,7 +424,7 @@ describe('Android PullDownMenu', () => {
     const [back, edit, custom] = items()
     expect(leadingIcon(edit).source).toContain('ww_menu_edit')
     expect(leadingIcon(custom)).toBeUndefined()
-    // Items without an icon keep its space, so the labels line up.
+
     for (const item of [back, custom])
       expect(
         leading(item).findByType('Spacer' as never).props.modifiers

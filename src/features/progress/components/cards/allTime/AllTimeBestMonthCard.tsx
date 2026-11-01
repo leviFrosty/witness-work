@@ -11,7 +11,6 @@ import {
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { AllTimeCardProps } from '@/features/progress/components/cards/types'
 
-/** The month with the most time logged, ever. */
 export default function AllTimeBestMonthCard({ size }: AllTimeCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const serviceReports = useServiceReport((s) => s.serviceReports)

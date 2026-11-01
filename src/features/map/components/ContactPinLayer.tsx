@@ -6,10 +6,6 @@ import ContactMapPin from '@/features/map/components/ContactMapPin'
 import { cardToneColor } from '@/features/map/lib/contactPins'
 import type { MapPinItem } from '@/features/map/lib/mapPinLayout'
 
-/**
- * The Map's Contact pins and their cards, as children of the `MapView`. A
- * single Contact's pin drags to move them.
- */
 export default function ContactPinLayer({
   items,
   onPress,
@@ -17,7 +13,7 @@ export default function ContactPinLayer({
   onDragEnd,
 }: {
   items: MapPinItem[]
-  /** A pin or its card was tapped. */
+
   onPress: (item: MapPinItem) => void
   onDragStart: () => void
   onDragEnd: (contactId: string, coordinate: LatLng) => void
@@ -30,12 +26,7 @@ export default function ContactPinLayer({
         const avatar = item.members[0]!.avatar
         return (
           <ContactMapPin
-            // Keyed by the lead Contact, so a pin that gathers into a group or
-            // spreads out restyles in place. A new badge (a Follow-up due, a
-            // favorite) changes its icon, so it gets a fresh marker; see
-            // ContactMapPin. So does a new avatar.
             key={`${item.key}|${item.badge ?? ''}|${avatar?.type ?? ''}:${avatar?.value ?? ''}`}
-            // A group's identifier isn't a Contact's, so hovering it names no one.
             identifier={item.group ? `group:${item.key}` : item.key}
             coordinate={item.coordinate}
             label={item.label}
@@ -59,8 +50,6 @@ export default function ContactPinLayer({
         if (!card) return null
         return (
           <MapMarkerCard
-            // iOS keeps a marker view's first size: a card that moves or
-            // changes gets a fresh view, so it stays over its pin.
             key={`${item.key}|${card.placement}|${card.line?.text}|${card.title}`}
             id={item.key}
             coordinate={item.coordinate}

@@ -7,7 +7,6 @@ const {
 } = require('./with-android-text-input-direction')
 const { AndroidConfig, XML } = require('expo/config-plugins')
 
-// Expo's template `styles.xml`.
 const template = () =>
   XML.parseXMLAsync(
     [
@@ -32,7 +31,7 @@ it('reads a field with no letters left to right', async () => {
   expect(item(xml, style, 'android:textDirection')).toBe('firstStrongLtr')
   const theme = AndroidConfig.Styles.getAppThemeGroup()
   expect(item(xml, theme, 'editTextStyle')).toBe('@style/TextInputDirection')
-  // The template's own items stay.
+
   expect(item(xml, theme, 'android:editTextBackground')).toBe(
     '@drawable/rn_edit_text_material'
   )

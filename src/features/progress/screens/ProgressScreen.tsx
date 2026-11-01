@@ -63,14 +63,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const [month, setMonth] = useState(route.params?.month ?? currentMonth)
   const [year, setYear] = useState(route.params?.year ?? currentYear)
 
-  // The Year tab is available to every role. Roles without an Annual Goal see
-  // raw service-year totals there (see `ProgressYearTab`).
   const [activeTab, setActiveTab] = useState<ProgressTab>(
     route.params?.tab ?? 'month'
   )
 
   const [milestoneSheetOpen, setMilestoneSheetOpen] = useState(false)
-  // Each tab edits its own cards.
+
   const tabEditing = {
     month: useProgressCardEditing('month'),
     year: useProgressCardEditing('year'),
@@ -80,7 +78,7 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   const daysBeside = useDaysBeside(month, year)
   const headerInColumn = activeTab === 'month' && daysBeside
   const { finish: finishEditing } = cardEditing
-  // Leaving a tab ends its editing.
+
   const changeTab = (tab: ProgressTab) => {
     finishEditing()
     setActiveTab(tab)
@@ -89,16 +87,12 @@ const ProgressScreen = ({ route, navigation }: Props) => {
     if (destination === 'mileage') rootNavigation.navigate('Mileage')
     else changeTab(destination)
   }
-  // The title and its report button tuck away as a tab scrolls; the tab and
-  // month pickers stay, since they say what's showing.
-  // A tab that opens at its top can't be scrolled up to bring them back.
-  // Editing the cards keeps them, since the header holds Done.
+
   const bars = useHideBarsOnScroll({
     enabled: !cardEditing.editing,
     resetKey: activeTab,
   })
 
-  // Sync route params → local state when navigation updates them.
   useEffect(() => {
     if (route.params?.month !== undefined) setMonth(route.params.month)
     if (route.params?.year !== undefined) setYear(route.params.year)
@@ -111,9 +105,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
   )
   const isCurrentMonth = month === currentMonth && year === currentYear
 
-  // Service-year convention: Jan–Aug rolls up into the prior year's service
-  // year, Sep–Dec into the following service year. `serviceYear` here is the
-  // END year (matches how YearMilestoneCard / ProgressYearTab expect it).
   const serviceYear = useMemo(
     () => serviceYearOf({ month, year }) + 1,
     [month, year]
@@ -149,8 +140,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
     navigation.setOptions({ header: () => null })
   }, [navigation])
 
-  // Beside the Days list, the header and its controls sit above the cards they
-  // belong to, as in Mail, and Days runs the full height.
   const renderHeader = (inColumn: boolean) => (
     <View style={{ overflow: 'hidden' }}>
       <BlurView
@@ -185,8 +174,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           }
           actions={
             cardEditing.editing ? (
-              // As on the Home Screen: add on one side of the header, Done on
-              // the other.
               <>
                 <HeaderPillButton
                   icon={PlusIcon}
@@ -201,8 +188,6 @@ const ProgressScreen = ({ route, navigation }: Props) => {
                 />
               </>
             ) : (
-              // Editing the cards starts from the button after them, or a
-              // long press on one, as on Home.
               <HeaderPillButton
                 icon={FileTextIcon}
                 label={i18n.t('viewReport')}
@@ -380,23 +365,16 @@ const navButtonStyle = (theme: ReturnType<typeof useTheme>) => ({
 
 const NAV_GAP = 5
 
-/**
- * The month title between its previous and next buttons. When the title can't
- * fit between them (a large text size, a long month name, a narrow screen), it
- * moves to its own row above them instead of running off the screen.
- */
 const MonthNav = ({
   back,
   renderTitle,
   forward,
 }: {
   back: ReactNode
-  /** Stacked, the title has the row to itself and may wrap. */
+
   renderTitle: (stacked: boolean) => ReactNode
   forward: ReactNode
 }) => {
-  // Each part keeps its own width in either layout (the title up to the
-  // row's), so whether it fits doesn't depend on which layout is showing.
   const [widths, setWidths] = useState({
     row: 0,
     back: 0,
@@ -431,12 +409,6 @@ const MonthNav = ({
   )
 }
 
-/**
- * Stack of the current section's title (e.g. "April 2026" or "2025–2026") with
- * an optional "Today" badge directly beneath. When the badge is absent the
- * title alone sits centered in the row alongside the nav buttons; when present,
- * the title + badge group is centered as a unit by the parent's alignItems.
- */
 const TodayTitleStack = ({
   title,
   showTodayBadge,
@@ -446,7 +418,7 @@ const TodayTitleStack = ({
   title: string
   showTodayBadge: boolean
   onPressToday: () => void
-  /** Centers the title's lines when it wraps. */
+
   centerLines?: boolean
 }) => {
   const theme = useTheme()

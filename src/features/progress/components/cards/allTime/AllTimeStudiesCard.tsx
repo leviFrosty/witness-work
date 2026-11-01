@@ -4,7 +4,6 @@ import { formatNumber } from '@/lib/numbers'
 import PeopleStudiedStatCard from '@/features/progress/components/cards/PeopleStudiedStatCard'
 import type { AllTimeCardProps } from '@/features/progress/components/cards/types'
 
-/** Everyone the User has studied with, and their busiest month of studies. */
 export default function AllTimeStudiesCard({ size }: AllTimeCardProps) {
   return (
     <PeopleStudiedStatCard

@@ -187,7 +187,7 @@ describe.each(['ios', 'android'])('supporter gate on %s', (platform) => {
     })
     expect(events('supporter_gate_clicked')).toHaveLength(1)
     expect(events('paywall_opened')).toEqual([])
-    // The Paywall waits for the sheet to finish closing.
+
     expect(runtime.navigate).not.toHaveBeenCalled()
     act(() => renderer!.root.findByType('Sheet' as never).props.onClosed())
     expect(runtime.navigate).toHaveBeenCalledExactlyOnceWith('Paywall', {
@@ -220,7 +220,7 @@ it('does not count an offscreen gate until its header scrolls into view', () => 
     vi.advanceTimersByTime(500)
   })
   expect(events('supporter_feature_gate_viewed')).toHaveLength(0)
-  runtime.rect.y = 790 // Less than half of the header is visible.
+  runtime.rect.y = 790
   act(() => {
     vi.advanceTimersByTime(500)
   })

@@ -41,9 +41,8 @@ const PADDING = 15
 const GAP = 8
 
 export type ScheduleYearViewHandle = {
-  /** A month's day grid in the view's own coordinates, scroll included. */
   monthRect: (month: CalendarMonth) => Rect | undefined
-  /** Scrolls, without animating, so the month's tile is on screen. */
+
   reveal: (month: CalendarMonth) => void
 }
 
@@ -54,7 +53,7 @@ type Props = {
   index: ScheduleDayIndex
   bottomInset: number
   zoomStyle: AnimatedStyle<ViewStyle>
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
   onChangeServiceYear: (serviceYear: number) => void
   onPressMonth: (month: CalendarMonth) => void
@@ -64,12 +63,6 @@ type Props = {
 
 const columnsFor = (width: number) => (width >= 900 ? 6 : width >= 560 ? 4 : 3)
 
-/**
- * The Schedule's Year view: the twelve months of a Service Year, each a
- * miniature calendar with its goal, under the year's goal card, which is the
- * Month view's card with the year's numbers. Months are where the Month view
- * zooms out to and back into.
- */
 export default function ScheduleYearView({
   ref,
   serviceYear,
@@ -100,7 +93,7 @@ export default function ScheduleYearView({
   const dayGridFrames = useRef(new Map<number, LayoutRectangle>())
 
   const months = serviceYearMonths(serviceYear)
-  // Like the Month view's card, every Plan in the year, past days included.
+
   const plannedMinutes = months.reduce(
     (total, { month, year }) =>
       total +
@@ -125,15 +118,12 @@ export default function ScheduleYearView({
     today.getDate()
   )
   const columns = columnsFor(width)
-  // Whole points with a point to spare: a row that fills its width exactly
-  // can still wrap its last tile once layout rounds to pixels.
+
   const tileWidth =
     width > 0
       ? Math.floor((width - PADDING * 2 - GAP * (columns - 1) - 1) / columns)
       : 0
 
-  // By position (September first) rather than by date: every Service Year
-  // lays out the same grid, so a tile can be found while the year changes.
   const indexOf = (month: CalendarMonth) =>
     serviceYearMonthIndex(month, serviceYearOf(month))
 
@@ -146,7 +136,7 @@ export default function ScheduleYearView({
     const tile = tileFrames.current.get(i)
     const days = dayGridFrames.current.get(i)
     if (!grid || !tile || !days) return undefined
-    // The day grid's frame is measured from the tile's edge, past its name.
+
     return {
       x: grid.x + tile.x + days.x,
       y: grid.y + tile.y + days.y,
@@ -161,7 +151,6 @@ export default function ScheduleYearView({
       return rect && { ...rect, y: rect.y - scrollY.current }
     },
     reveal: (month) => {
-      // The whole tile, its name included, not just the days the zoom lands on.
       const grid = gridFrame.current
       const tile = tileFrames.current.get(indexOf(month))
       if (!grid || !tile) return
@@ -184,7 +173,7 @@ export default function ScheduleYearView({
     start: serviceYear,
     end: serviceYear + 1,
   })
-  // The card under it names the Service Year, so the header shows its years.
+
   const spanLabel = i18n.t('scheduleCalendar.serviceYearSpan', {
     start: serviceYear,
     end: serviceYear + 1,
@@ -206,7 +195,6 @@ export default function ScheduleYearView({
         <ScrollView
           ref={scrollRef}
           {...scrollBars}
-          // The Schedule screen ignores status bar taps; see ScheduleMonthView.
           scrollsToTop={false}
           onScroll={(e) => {
             scrollY.current = e.nativeEvent.contentOffset.y

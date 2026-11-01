@@ -47,7 +47,6 @@ import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 
 export type { RoutePlanOption } from '@/features/route-planning/lib/routePlanOptions'
 
-/** Where a stop added by hand came from, for analytics. */
 export type AddedStopSource =
   | 'place'
   | 'contact'
@@ -58,13 +57,8 @@ export type AddedStopSource =
   | 'kingdom_hall'
   | 'contacts_map'
 
-/**
- * How the route came to belong to a Plan: picked in Details, opened from the
- * Plan, or made from the route (to invite buddies).
- */
 export type PlanLinkSource = 'menu' | 'plan' | 'new_plan'
 
-/** For analytics: where the route ends. */
 const finishKey = (finish: RouteFinish) =>
   finish.kind === 'lastStop'
     ? 'last_stop'
@@ -76,11 +70,6 @@ const finishKey = (finish: RouteFinish) =>
           ? 'kingdom_hall'
           : 'place'
 
-/**
- * The route builder for one day: the day's stops in the User's order, the
- * start, estimated times through the day, and the details (note, buddies,
- * linked Plan). Every change saves at once.
- */
 export default function useRouteBuilder(day: Date) {
   const dayKey = moment(day).format('YYYY-MM-DD')
   const isToday = moment(day).isSame(moment(), 'day')
@@ -101,14 +90,13 @@ export default function useRouteBuilder(day: Date) {
   } | null>(null)
   const reorderedOnce = useRef(false)
   const navigatedOnce = useRef(false)
-  /** One stop at a time: the last stop opened, by the handoff's order. */
+
   const [lastOpened, setLastOpened] = useState<{
     order: string
     index: number
   } | null>(null)
   const optimizeAbort = useRef<AbortController>(null)
-  // Shortest Order belongs to the day it was asked for: leaving the day (or
-  // the screen) stops it, so a late answer or error can't land on another day.
+
   useEffect(() => () => optimizeAbort.current?.abort(), [dayKey])
   const [shownDay, setShownDay] = useState(dayKey)
   if (shownDay !== dayKey) {
@@ -140,7 +128,7 @@ export default function useRouteBuilder(day: Date) {
         ? here
         : null
   const finish: RouteFinish = route.finish ?? { kind: 'lastStop' }
-  // Back to the start is back to the first stop when the day starts there.
+
   const finishCoordinate =
     finish.kind === 'place'
       ? finish.coordinate
@@ -148,7 +136,7 @@ export default function useRouteBuilder(day: Date) {
         ? (originCoordinate ?? stops[0]?.coordinate ?? null)
         : null
   const keepSetTimes = route.keepSetTimes ?? true
-  // The day's drive, leg by leg: by road once directions arrive.
+
   const roads = useRoadLegs([
     ...(originCoordinate ? [originCoordinate] : []),
     ...stops.map((stop) => stop.coordinate),
@@ -175,13 +163,11 @@ export default function useRouteBuilder(day: Date) {
 
   const update = (change: Partial<SavedRoute>) => {
     setError(null)
-    // On top of what's saved now, so a change made while Shortest Order or a
-    // note was pending isn't undone.
+
     const latest = useSavedRoutes.getState().routes[route.day] ?? route
     saveRoute({ ...latest, ...change })
   }
 
-  /** Writes the visible order, so new day stops keep the place they showed in. */
   const setOrder = (keys: string[]) => {
     update({ order: keys })
     if (!reorderedOnce.current) {
@@ -202,12 +188,6 @@ export default function useRouteBuilder(day: Date) {
     analytics.capture('route_stop_added', { source })
   }
 
-  /**
-   * Adds Contacts picked elsewhere (the Contacts map) after the route's stops,
-   * skipping any already on it, until the route is full (see
-   * `contactStopsToAdd`). Says how many were added, and how many there wasn't
-   * room for.
-   */
   const addContactStops = (picked: AddedStop[], source: AddedStopSource) => {
     const { added, leftOff } = contactStopsToAdd(stops, picked)
     if (added.length > 0) {
@@ -234,7 +214,6 @@ export default function useRouteBuilder(day: Date) {
     })
   }
 
-  /** Puts a removed day stop back, in its place by time. */
   const restore = (key: string) => {
     if (!canAdd) return
     update({
@@ -250,10 +229,6 @@ export default function useRouteBuilder(day: Date) {
     analytics.capture('route_finish_set', { finish: finishKey(next) })
   }
 
-  /**
-   * Ties the route to one of the day's Plans: it starts when the Plan does,
-   * from the Plan's place when it has one.
-   */
   const linkPlan = (planId: string | null, source: PlanLinkSource = 'menu') => {
     const plan = planOptions.find((option) => option.id === planId)
     if (!plan) {
@@ -279,10 +254,6 @@ export default function useRouteBuilder(day: Date) {
     })
   }
 
-  /**
-   * A new Plan for the day, seeded from the route (its start, place, and
-   * length), so buddies can be invited to it. Invitations travel with Plans.
-   */
   const planPrefill = {
     startTime: atMinutesOfDay(day, startTime).toISOString(),
     ...(stops.length > 0 && {
@@ -304,7 +275,6 @@ export default function useRouteBuilder(day: Date) {
     analytics.capture('route_plan_failed', { error_code: code })
   }
 
-  /** Asks ww-api for the shortest driving order from the start. */
   const optimize = async () => {
     if (optimizing || stops.length < 2) return
     const controller = new AbortController()
@@ -360,8 +330,6 @@ export default function useRouteBuilder(day: Date) {
     }
   }
 
-  // Back to the start goes where the day began: the chosen place, the first
-  // stop, or (from the current location) wherever that was.
   const finishStop =
     stops.length === 0 || !finishCoordinate || finish.kind === 'lastStop'
       ? null
@@ -378,10 +346,6 @@ export default function useRouteBuilder(day: Date) {
                   : coordinateText(finishCoordinate),
           }
 
-  /**
-   * The navigation app's way through the stops: from the chosen place if any,
-   * on to the finish when it's somewhere else.
-   */
   const handoffStops: Pick<
     BuilderStop,
     'title' | 'coordinate' | 'destination'
@@ -406,7 +370,6 @@ export default function useRouteBuilder(day: Date) {
     })
   }
 
-  /** Directions to one stop, e.g. picking up partway through the day. */
   const navigateTo = (key: string) => {
     const stop = stops.find((s) => s.key === key)
     if (!stop) return
@@ -419,7 +382,6 @@ export default function useRouteBuilder(day: Date) {
     )
   }
 
-  // A reorder starts the one-at-a-time hand-off over.
   const handoffOrder = handoffStops.map((stop) => stop.destination).join('|')
   const opened = lastOpened?.order === handoffOrder ? lastOpened.index : null
   const next =
@@ -427,16 +389,12 @@ export default function useRouteBuilder(day: Date) {
       ? Math.min(opened + 1, handoff.links.length - 1)
       : 0
 
-  /**
-   * Opens the route in the navigation app: all of it, or the next stop when the
-   * app takes one stop at a time.
-   */
   const startNavigation = () => {
     const link = handoff.links[next]
     if (!link) return
     openLink(link)
     setLastOpened({ order: handoffOrder, index: next })
-    // One per visit: did the plan turn into a drive?
+
     if (navigatedOnce.current) return
     navigatedOnce.current = true
     analytics.capture('route_plan_navigation_started', {
@@ -451,7 +409,7 @@ export default function useRouteBuilder(day: Date) {
     isToday,
     stops,
     removed,
-    /** Contacts already on the route, as Follow-ups or added. */
+
     contactIds: stops.flatMap((stop) =>
       stop.contactId ? [stop.contactId] : []
     ),
@@ -462,7 +420,7 @@ export default function useRouteBuilder(day: Date) {
     finishCoordinate,
     startTime,
     keepSetTimes,
-    /** Some stop has a set time, so Keep Set Times changes something. */
+
     hasSetTimes: stops.some((stop) => stop.setTime !== undefined),
     timeline,
     roads,
@@ -472,10 +430,10 @@ export default function useRouteBuilder(day: Date) {
     canAdd,
     optimizing,
     error,
-    /** Ww-api's figures, while the stops are still in the order it gave. */
+
     optimized: optimized?.order === keys.join('|') ? optimized : null,
     handoff,
-    /** One stop at a time, after the first: the stop Start Route opens next. */
+
     nextStop:
       opened !== null
         ? { position: next + 1, title: handoffStops[next]!.title }

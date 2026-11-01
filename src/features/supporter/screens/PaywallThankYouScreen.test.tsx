@@ -52,8 +52,6 @@ vi.mock('@/providers/AnimationViewProvider', () => ({
 import { AnimationViewContext } from '@/contexts/AnimationView'
 import PaywallThankYouScreen from '@/features/supporter/screens/PaywallThankYouScreen'
 
-// Like AnimationViewProvider: starting the confetti mounts its overlay, which
-// hands the screen a new `playConfetti`.
 function Animations({ children }: { children: ReactNode }) {
   const [overlayMounted, setOverlayMounted] = useState(false)
   const playConfetti = () => {

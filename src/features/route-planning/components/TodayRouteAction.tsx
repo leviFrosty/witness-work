@@ -8,10 +8,6 @@ import useDayRouteStops from '@/features/route-planning/hooks/useDayRouteStops'
 import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 import useToday from '@/hooks/useToday'
 
-/**
- * Compact "Plan Route" in Home's Follow-up card header, where publishers look
- * at today's calls. Shows once at least two of today's stops have a location.
- */
 export default function TodayRouteAction() {
   const theme = useTheme()
   const open = useOpenRouteBuilder('home_follow_ups')

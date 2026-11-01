@@ -164,7 +164,7 @@ describe('Home sections', () => {
 
     it('waits for the User to add it', () => {
       expect(shown()).toBe(false)
-      // A map saved before Together, or synced from an older build, lacks it.
+
       expect(shown({ serviceReport: true })).toBe(false)
       expect(isHomeSectionOn('timer', { serviceReport: true })).toBe(true)
     })

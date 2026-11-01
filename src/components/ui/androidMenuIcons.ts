@@ -25,12 +25,6 @@ import hideIcon from '@/assets/android-menu-icons/ww_menu_hide.xml'
 import storeIcon from '@/assets/android-menu-icons/ww_menu_store.xml'
 import peopleIcon from '@/assets/android-menu-icons/ww_menu_people.xml'
 
-/**
- * Material icons for the SF Symbols menus use, so Android menus show the same
- * icons. Unmapped symbols show no icon there. To support another symbol, add a
- * `ww_menu_*.xml` drawable to `src/assets/android-menu-icons/` and map it
- * here.
- */
 const androidMenuIcons: Partial<Record<string, ImageSourcePropType>> = {
   'person.crop.circle': profileIcon,
   gearshape: settingsIcon,

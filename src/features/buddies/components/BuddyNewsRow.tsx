@@ -23,10 +23,6 @@ import {
 import type { BuddyNotification } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * The dismiss X's frame, centered on the glyph 10pt down, level with the first
- * line, and taking up the 16 × 26pt it did with that padding.
- */
 const dismissFrame = {
   ...touchTargetFrame(16),
   marginTop: Number(touchTargetFrame(16).marginVertical) + 10,
@@ -42,12 +38,6 @@ const WHEN: Record<NewsWhen, TranslationKey> = {
   earlier: 'buddies_newsEarlier',
 }
 
-/**
- * Buddies' news in the bell: a buddy's new badges, with Encourage right there,
- * or their reaction to one of this User's badges. Says when only as Today, This
- * week, or Earlier. Tapping the row or its coin opens the badge full screen,
- * growing out of the coin; long-press opens or dismisses it.
- */
 export default function BuddyNewsRow({
   entry,
   unread,
@@ -59,10 +49,10 @@ export default function BuddyNewsRow({
   entry: BuddyNotification
   unread: boolean
   now: number
-  /** Opens the row's badge, from the coin's window rect. */
+
   onOpen: (origin: BadgeViewOrigin | undefined) => void
   onDismiss: () => void
-  /** A buddy's badge they still show: Encourage it inline. */
+
   encourage?: { inboxId: string; badge: SharedBadge }
 }) {
   const theme = useTheme()

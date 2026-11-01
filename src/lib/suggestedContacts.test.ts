@@ -22,7 +22,7 @@ import type { Visit } from '@/types/visit'
 const now = new Date('2026-10-09T12:00:00')
 const day = 86_400_000
 const here = { latitude: 40.0, longitude: -75.0 }
-// ~0.0009° latitude ≈ 100 m.
+
 const north = (meters: number) => ({
   latitude: here.latitude + (meters / 100) * 0.0009,
   longitude: here.longitude,

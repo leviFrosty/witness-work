@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const native = vi.hoisted(() => ({
   available: true,
-  /** This device's keystore (`modules/device-secrets`), by name. */
+
   secrets: new Map<string, string>(),
 }))
 
@@ -48,8 +48,7 @@ describe('the device keyring', () => {
     deviceSpaceKeyring.trust('space', 1, key(1))
     await deviceSpaceKeyring.flushed()
     expect(native.secrets.size).toBe(0)
-    // It lasts the launch; the next one starts empty, and rebuilds from the
-    // wraps and the key chain.
+
     const next = createSpaceKeyring(deviceKeyringStorage)
     await next.ready()
     expect(next.key('space', 1)).toEqual(key(1))

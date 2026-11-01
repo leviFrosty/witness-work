@@ -6,10 +6,7 @@ export type SelectMenuItem = {
   id: string
   label: string
   selected: boolean
-  /**
-   * An SF Symbol beside the option; Android shows it where `androidMenuIcons`
-   * maps it.
-   */
+
   systemImage?: ContextMenuAction['systemImage']
 }
 
@@ -18,12 +15,11 @@ export interface SelectMenuProps {
   onSelect: (id: string) => void
   accessibilityLabel?: string
   accessibilityValue: string
-  /** Corner radius of the trigger, for its iPad hover tint. */
+
   hoverRadius?: number
   children: ReactElement
 }
 
-/** A form control's native single-choice menu, checking the current choice. */
 export default function SelectMenu({
   items,
   onSelect,

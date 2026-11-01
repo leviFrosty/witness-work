@@ -11,16 +11,6 @@ import {
   cloudSyncOffered,
 } from '@/lib/syncTransport/provider'
 
-/**
- * Cloud Sync is the default (ADR 0030 §3). A device that never chose a sync
- * option gets it once the server's switch is on and the device is entitled
- * (`everyone`, or a Supporter): it opens the account's session (creating the
- * account key when there's none), then decides like the Supporter auto-enable
- * did for iCloud: seed an empty account, pull everything into a device without
- * records, or leave sync off and ask in Settings when both have records. A
- * device already on iCloud or Drive, or one whose User turned sync off, is left
- * alone. Waits for onboarding to finish.
- */
 export default function CloudSyncDefault() {
   const { isSupporter } = useIsSupporter()
   const {
@@ -42,16 +32,11 @@ export default function CloudSyncDefault() {
 
   useEffect(() => {
     if (!hasSyncTransport()) return
-    // Not during onboarding: a new phone that signs in with a QR code or a
-    // recovery key there gets its account key that way, and iCloud Keychain
-    // or Block Store may still be bringing one. Creating a key first would
-    // start an account of its own.
+
     if (!onboardingComplete) return
     if (!offered || !mayBeEntitled) return
     if (iCloudSyncSetByUser || iCloudSyncEnabled) return
 
-    // Only a retryable outcome decides again; the rest are final here, until
-    // what this effect reads changes.
     let settled = false
     let running = false
     let again = false
@@ -84,9 +69,7 @@ export default function CloudSyncDefault() {
         if (settled) return
         if (prepared.outcome !== 'ready') {
           report(prepared.outcome)
-          // Offline, or attesting failed for now: try again on return. So
-          // does a Supporter the server can't confirm yet (RevenueCat down,
-          // or the purchase not linked to the account yet).
+
           if (
             prepared.outcome === 'no_session' ||
             (prepared.outcome === 'not_entitled' && isSupporter)

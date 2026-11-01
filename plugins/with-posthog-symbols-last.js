@@ -6,9 +6,6 @@ module.exports = function withPostHogSymbolsLast(config) {
   return withPodfile(config, (config) => {
     if (config.modResults.contents.includes(MARKER)) return config
 
-    // apple-targets adds widget embedding after PostHog finalizes xcodeproj.
-    // Waiting for the dSYM before embedding creates an archive dependency cycle.
-    // post_integrate runs after both target generation and CocoaPods integration.
     config.modResults.contents += `
 ${MARKER}
 post_integrate do |installer|

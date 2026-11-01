@@ -57,9 +57,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   useSyncBuddiesOnFocus()
   const openIntro = useScheduleIntro((s) => s.open)
   const isFocused = useIsFocused()
-  // The first visit explains how to get the most from Schedule. It may wait
-  // for its takeover turn (the update reveal first); leaving Schedule before
-  // then takes it back, so it never opens over another tab.
+
   useEffect(() => {
     if (!isFocused || usePreferences.getState().scheduleIntroSeen) return
     openIntro('first_visit')
@@ -83,8 +81,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     initial: routeMonth,
     initialDay: route.params?.date,
   })
-  // Taken out up front: `calendar` itself changes with each month scrolled
-  // into focus, and whatever closes over it would re-render with it.
+
   const {
     view,
     focusedMonth: focused,
@@ -96,7 +93,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     showCurrentServiceYear,
   } = calendar
 
-  // Tapping Schedule again comes back to today, as its Today button does.
   useTabReselect(() => {
     if (view === 'month') jumpToToday()
     else showCurrentServiceYear()
@@ -105,9 +101,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const [selectedDateSheet, setSelectedDateSheet] =
     useState<SelectedDateSheetState>({ open: false, date: new Date() })
 
-  // A wide window shows the day in the inspector instead of its sheet. Opening
-  // iPhone Duo with no day open shows one in the month on screen; closing it
-  // again opens the sheet on the day that was open or picked beside it.
   const dayInView = useRef(false)
   const layoutChanged = useEffectEvent((wide: boolean) => {
     if (wide) {
@@ -139,7 +132,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const [goalMonth, setGoalMonth] = useState<CalendarMonth | null>(null)
   const [goalOpen, setGoalOpen] = useState(false)
 
-  // Links from elsewhere (a month report, the week strip) land on their month.
   const handledRoute = useRef(routeMonth)
   useEffect(() => {
     if (!routeMonth) return
@@ -153,17 +145,11 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     showMonth(routeMonth)
   })
 
-  // The goal editor is modal and this tab stays mounted, so it would cover
-  // whatever screen a widget or tab switch opens next. The day's sheet steps
-  // aside by itself and comes back with the tab.
   useEffect(
     () => navigation.addListener('blur', () => setGoalOpen(false)),
     [navigation]
   )
 
-  // Android's back button closes the goal editor rather than leaving the tab
-  // with it. The day's sheet handles its own: back from its time form returns
-  // to the day.
   useEffect(() => {
     if (Platform.OS !== 'android' || !goalOpen) return
     const subscription = BackHandler.addEventListener(
@@ -176,18 +162,13 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     return () => subscription.remove()
   }, [goalOpen])
 
-  // A Calendar widget day (`witnesswork://schedule/:date`) opens that day the
-  // same way tapping it here does: the sheet, or the inspector when wide.
   const linkedDate = route.params?.date
   useEffect(() => {
     if (!linkedDate) return
     const date = moment(linkedDate, 'YYYY-MM-DD', true)
     navigation.setParams({ date: undefined })
     if (!date.isValid()) return
-    // The sheet brings the day's week into view above it as it opens (or now,
-    // if it's open), which focuses its month. A scroll to the month would land
-    // after that and hide the week again, so it's only for the inspector, the
-    // Year view, and a day the list hasn't loaded.
+
     if (
       isWide ||
       view === 'year' ||
@@ -198,8 +179,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     setSelectedDateSheet({ open: !isWide, date: date.toDate() })
   }, [linkedDate, isWide, view, navigation, showMonth, revealDay])
 
-  // A day's sheet holds the bars as they are: it keeps the day it opened on
-  // in view above itself, measured with the header where it is.
   const bars = useHideBarsOnScroll({ paused: selectedDateSheet.open })
 
   const selectedDate = selectedDateSheet.date
@@ -210,8 +189,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       selectedDate.getFullYear()
     ) ?? []
 
-  // The day's sheet covers the bottom of the calendar. The day picked stays
-  // in view above it, and stays marked while the sheet is open.
   const sheetHeight = useRef(0)
   const pressDay = (date: Date) => {
     if (isWide) dayInView.current = true
@@ -256,8 +233,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
           isWide ? { paddingHorizontal: 0 } : [{ maxWidth: 720 }, foldColumn]
         }
       >
-        {/* In the header's column, which a single one caps and keeps to one
-            side of iPhone Duo's fold. */}
+        {}
         <View
           style={
             isWide
@@ -279,8 +255,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* One tree either way, so opening or closing iPhone Duo keeps the
-          calendar on the month it was showing. */}
+      {}
       <FoldSplit
         style={{
           flex: 1,
@@ -291,8 +266,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         paddingHorizontal={isWide ? 15 : 0}
         gap={20}
         leadingFraction={0.58}
-        // The header's controls are the calendar's, as in Mail, so when wide
-        // it sits above it and the day beside it reaches the top.
         leading={
           <View style={{ flex: 1 }}>
             {header}
@@ -320,8 +293,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
           isWide ? (
             <ScrollView
               style={{ flex: 1 }}
-              // A status bar tap would scroll this column once the calendar
-              // stops taking it; the screen ignores the tap instead.
               scrollsToTop={false}
               contentContainerStyle={{ gap: 16, paddingBottom: bottomInset }}
             >

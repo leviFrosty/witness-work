@@ -8,7 +8,6 @@ import { visitStats } from '@/features/progress/lib/periodCardStats'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year's Visits where someone was home, and the new Contacts. */
 export default function YearVisitsCard({ serviceYear, size }: YearCardProps) {
   const { contacts } = useContacts()
   const { conversations } = useConversations()
@@ -24,18 +23,12 @@ export default function YearVisitsCard({ serviceYear, size }: YearCardProps) {
       title={i18n.t('progressCards.visits.title')}
       value={formatNumber(stats.talked)}
       tone={stats.talked ? 'default' : 'muted'}
-      caption={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.year.visits.notAtHome', {
-          count: stats.notAtHome,
-        })
-      }
-      detail={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('progressCards.visits.newContacts', {
-          count: stats.newContacts,
-        })
-      }
+      caption={i18n.t('progressCards.year.visits.notAtHome', {
+        count: stats.notAtHome,
+      })}
+      detail={i18n.t('progressCards.visits.newContacts', {
+        count: stats.newContacts,
+      })}
       info={i18n.t('progressCards.year.visits.info')}
       size={size}
     />

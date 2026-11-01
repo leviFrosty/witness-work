@@ -63,7 +63,6 @@ function render(
   return renderer!
 }
 
-/** The notice's message and tone, or null when it shows nothing. */
 function notice(tree: ReactTestRenderer): NoticeProps | null {
   const found = tree.root.findAll(
     (node) => node.type === ('InlineNotice' as never)
@@ -146,7 +145,7 @@ describe('the Shared Cars notice', () => {
       tone: 'offline',
     })
     act(() => renderer?.unmount())
-    // A sync that couldn't reach the server reads the same.
+
     device.online = true
     cars({ s1: { syncing: false, lastError: 'network' } })
     expect(notice(render({ hasSharedCars: true }))?.tone).toBe('offline')
@@ -195,12 +194,12 @@ describe('the Shared Cars notice', () => {
     act(() => renderer?.unmount())
     expect(notice(render({ hasSharedCars: true, spaceId: 's4' }))).toBeNull()
     act(() => renderer?.unmount())
-    // A car this session hasn't synced yet.
+
     expect(
       notice(render({ hasSharedCars: true, spaceId: 'unsynced' }))
     ).toBeNull()
     act(() => renderer?.unmount())
-    // Every car's, on Mileage: offline comes before the others.
+
     expect(notice(render({ hasSharedCars: true }))?.tone).toBe('offline')
   })
 

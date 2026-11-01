@@ -1,10 +1,3 @@
-/**
- * Every secret hat and room item as a PNG tile, opened and locked (its
- * silhouette), with a manifest of their unlock rules, for reviewing the set.
- * Off by default; run with `PET_CATALOG=1 pnpm vitest run
- * src/features/pet/art/secretCatalog`. Writes `.verify/pet-catalog/`
- * (gitignored).
- */
 import fs from 'node:fs'
 import path from 'node:path'
 

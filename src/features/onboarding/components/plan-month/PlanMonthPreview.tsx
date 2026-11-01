@@ -37,18 +37,13 @@ type Props = {
   plan: PlanMonth
   serviceDays: readonly number[]
   startOfWeek: number
-  /** The day open in the editor, if any. */
+
   selectedDay: number | null
   onSelectDay: (day: number | null) => void
-  /** Sets a day's plan by hand; 0 clears it. */
+
   onChangeDay: (day: number, minutes: number) => void
 }
 
-/**
- * The month the Assistant just planned: projected total against the goal, then
- * a calendar with each proposed session on its day. Tapping a day opens a
- * slider to change its plan, or to plan a day the Assistant left out.
- */
 const PlanMonthPreview = ({
   target,
   plan,
@@ -135,7 +130,7 @@ const PlanMonthPreview = ({
               const isLogged = plan.loggedDays.has(cell.day)
               const isServiceDay =
                 !isLogged && serviceDays.includes(cell.weekday)
-              // Saved plans are changed on the Schedule tab, not here.
+
               const editable =
                 !isLogged &&
                 !plan.alreadyOnTrack &&
@@ -174,7 +169,6 @@ const PlanMonthPreview = ({
                   >
                     {minutes ? (
                       <Animated.View
-                        // Re-keyed so a changed session pops in again.
                         key={`${cell.day}-${minutes}`}
                         entering={ZoomIn.duration(220)}
                         style={{
@@ -260,7 +254,6 @@ const PlanMonthPreview = ({
             </Text>
           </View>
           <PlanDaySlider
-            // Remounts per day so a drag can't carry over to the next one.
             key={selectedDay}
             minutes={selectedMinutes}
             onChange={(minutes) => onChangeDay(selectedDay, minutes)}

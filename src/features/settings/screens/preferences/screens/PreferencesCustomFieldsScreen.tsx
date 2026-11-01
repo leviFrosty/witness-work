@@ -40,9 +40,6 @@ const PreferencesCustomFieldsScreen = () => {
     'custom_field'
   )
 
-  // Local rename state per def — keyed by id, holds the in-progress edit value
-  // until the user commits via blur. Falls back to the stored label when
-  // unedited so existing labels render correctly on first paint.
   const [edits, setEdits] = useState<Record<string, string>>({})
 
   const { contactInformationOrder, showContactPhone, showContactEmail, set } =
@@ -230,8 +227,7 @@ const PreferencesCustomFieldsScreen = () => {
                           if (trimmed && trimmed !== def.label) {
                             renameCustomFieldDef(def.id, trimmed)
                           }
-                          // Clear local edit so future label changes from
-                          // sync show through.
+
                           setEdits((s) => {
                             const next = { ...s }
                             delete next[def.id]
@@ -245,7 +241,6 @@ const PreferencesCustomFieldsScreen = () => {
                       />
                       <PullDownMenu
                         triggerSize={16}
-                        // Room beside the field for the menu's 44pt frame.
                         style={{ marginStart: 10 }}
                         accessibilityLabel={i18n.t('moreActionsFor', {
                           name: def.label,

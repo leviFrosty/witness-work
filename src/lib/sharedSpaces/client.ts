@@ -5,18 +5,6 @@ import { bearerFailure } from '@/lib/serverAccount/bearerFailure'
 import type { AttestationProblem } from '@/lib/serverAccount/session'
 import { RECORD_ID_PATTERN, SPACE_ID_PATTERN } from '@/lib/sharedSpaces/crypto'
 
-/**
- * Client for ww-api's Shared Spaces (`/spaces/v1/*`,
- * docs/shared-cars-protocol.md). Every op is `POST {BASE}/spaces/v1/{op}` with
- * a JSON body, so ids and secrets never reach a URL, and carries the attested
- * account session's bearer token through `authorize`
- * (`accountSessions.withSession` in the app): a 401 refreshes the token and
- * sends the op once more, and a 426 shows Update Required, exactly as for
- * Buddies and Cloud Sync. Member ops add the member's `spaceId`, `memberId` and
- * `token`. Failures throw `SpaceError` with the server's code; nothing it
- * carries names a space, member or secret.
- */
-
 const SPACE_ERROR_CODES = [
   'bad_request',
   'unauthorized',
@@ -33,11 +21,6 @@ const SPACE_ERROR_CODES = [
   'upgrade_required',
 ] as const
 
-/**
- * The server's codes, plus `network` (never reached it), `timeout` (no answer
- * in time), `cancelled` (the caller gave up), `unverified` (this device
- * couldn't prove it's WitnessWork, so it has no session) and `unknown`.
- */
 export type SpaceErrorCode =
   | (typeof SPACE_ERROR_CODES)[number]
   | 'network'
@@ -50,9 +33,9 @@ export class SpaceError extends Error {
   constructor(
     readonly code: SpaceErrorCode,
     readonly status = 0,
-    /** How long the server asked callers to wait (its Retry-After), if it did. */
+
     readonly retryAfterMs: number | null = null,
-    /** For `unverified`: whether it can't ever, or only couldn't now. */
+
     readonly attestation: AttestationProblem | null = null
   ) {
     super(`Shared Spaces error: ${code}`)
@@ -69,7 +52,6 @@ export function isSpaceError(
   )
 }
 
-/** A failed call, or no session for it, as a `SpaceError`. */
 export function spaceErrorFrom(error: unknown): SpaceError {
   if (error instanceof SpaceError) return error
   const failure = bearerFailure(error, SPACE_ERROR_CODES)
@@ -81,50 +63,37 @@ export function spaceErrorFrom(error: unknown): SpaceError {
   )
 }
 
-/** Most ops answer within a second; a stalled one gives up here. */
 export const SPACES_TIMEOUT_MS = 15 * 1000
-/**
- * A catch-up page (a sync from the start, or any page after one that said
- * `more`) can carry up to a thousand records, about 4 MiB.
- */
+
 export const SPACES_FULL_SYNC_TIMEOUT_MS = 30 * 1000
-/** A put of up to 1 MiB, on a phone connection. */
+
 export const SPACES_PUT_TIMEOUT_MS = 60 * 1000
 
-/** The server's caps (docs/shared-cars-protocol.md, "Limits and retention"). */
 export const SPACE_LIMITS = {
-  /** Records in one `put`. */
   putRecords: 100,
-  /** One `put`'s body. */
+
   putBytes: 1024 * 1024,
-  /** Records in one `sync` page. */
+
   syncPage: 1000,
-  /** How far ahead an invite may expire (7 days, plus 5 minutes of slack). */
+
   inviteLifetimeMs: 7 * 24 * 60 * 60 * 1000,
-  /** How far past the server's clock a stamp may be. */
+
   stampAheadMs: 24 * 60 * 60 * 1000,
 } as const
 
-/** The live signal's headers (docs/shared-cars-protocol.md, "Live signal"). */
 export const SPACE_LIVE_HEADERS = {
-  /**
-   * `b64u(UTF-8 JSON { spaceId, memberId })`. Its name contains "auth", so
-   * Cloudflare's logs redact it.
-   */
   space: 'x-ww-space-auth',
-  /** The member token, `b64u`. */
+
   token: 'x-ww-space-token',
 } as const
 
-/** What a member op proves membership with. */
 export type SpaceMemberAuth = {
   spaceId: string
   memberId: string
-  /** The member token, `b64u`. */
+
   token: string
 }
 
-/** A record as the server holds it. */
 export type SpaceWireRecord = {
   recordId: string
   epoch: number
@@ -134,7 +103,6 @@ export type SpaceWireRecord = {
   seq: number
 }
 
-/** A record as a `put` sends it. */
 export type SpacePutRecord = {
   recordId: string
   epoch: number
@@ -143,13 +111,9 @@ export type SpacePutRecord = {
   blob: string
 }
 
-/**
- * A member as `sync` lists them. Their `memberId` commits to `dhPub`
- * (`memberOwnsKey`), which a device checks before wrapping a key to them.
- */
 export type SpaceMemberEntry = {
   memberId: string
-  /** Their per-space X25519 public key, `b64u`. */
+
   dhPub: string
   joinedAt: number
 }
@@ -160,50 +124,39 @@ export type SpaceInviteEntry = {
   expiresAt: number
 }
 
-/** One `sync` answer. */
 export type SpaceSyncPage = {
-  /** The space's current `seq`. */
   seq: number
-  /** The key epoch new records are sealed under. */
+
   epoch: number
-  /** The caller's own wrap of the current epoch's key. */
+
   wrap: string
   ownerId: string
-  /** Everyone on the space now. */
+
   members: SpaceMemberEntry[]
-  /** The invitations open now. */
+
   invites: SpaceInviteEntry[]
-  /** A member left or was removed since the current epoch began. */
+
   rekeyNeeded: boolean
-  /** The current version of each record past `since`, in `seq` order. */
+
   records: SpaceWireRecord[]
-  /** More records wait past `cursor`. */
+
   more: boolean
-  /**
-   * The `since` to sync from next, and the cursor to keep once this page is
-   * applied: the last record's `seq` while `more`, else the space's `seq`.
-   */
+
   cursor: number
 }
 
 export type SpaceCallOptions = { signal?: AbortSignal }
 
-/** A member's fields on `create` and `join`, which the server checks. */
 export type SpaceNewMember = {
   memberId: string
-  /** Their X25519 public key, `b64u`; `memberId` must commit to it. */
+
   dhPub: string
-  /** `b64u(SHA-256(token))`. */
+
   tokenHash: string
-  /** The current epoch's key wrapped to `dhPub`. */
+
   wrap: string
 }
 
-/**
- * Runs `run` with the account session's `Authorization` header, refreshing the
- * session and running it once more after a 401. `accountSessions.withSession`
- * for the account key, in the app.
- */
 export type SpacesAuthorize = <T>(
   run: (authorization: string) => Promise<T>,
   call: SpaceCallOptions
@@ -213,7 +166,7 @@ export type SpacesClientDeps = {
   baseUrl: string
   authorize: SpacesAuthorize
   fetchImpl?: typeof fetch
-  /** React Native's WebSocket, which can send headers, by default. */
+
   openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
 }
 
@@ -221,7 +174,7 @@ const isInt = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value)
 const isId = (value: unknown): value is string =>
   typeof value === 'string' && SPACE_ID_PATTERN.test(value)
-/** `b64u` of 32 bytes: a public key. */
+
 const isKey = (value: unknown): value is string =>
   typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value)
 
@@ -292,7 +245,6 @@ function readRecord(value: unknown): SpaceWireRecord | null {
   }
 }
 
-/** Parses a `sync` answer; a record this version can't read is skipped. */
 function readSyncPage(
   data: Record<string, unknown>,
   status: number,
@@ -321,8 +273,7 @@ function readSyncPage(
     if (record) parsed.push(record)
   }
   const hasMore = more === true
-  // A page that says there's more must have moved past `since`, or paging
-  // would ask for the same page forever.
+
   if (hasMore && last <= since) throw unexpected(status)
   return {
     seq,
@@ -338,7 +289,6 @@ function readSyncPage(
   }
 }
 
-/** The bytes a `put` body takes on the wire, near enough to stay under 1 MiB. */
 export const putRecordBytes = (record: SpacePutRecord) =>
   record.blob.length + record.recordId.length + 96
 
@@ -360,9 +310,7 @@ export function createSpacesClient(deps: SpacesClientDeps) {
             timeoutMs: transport.timeoutMs ?? SPACES_TIMEOUT_MS,
             signal: call.signal,
             idempotent: transport.idempotent,
-            // Only ops a lost answer can't double: reads, puts (the same
-            // records again change nothing) and join (the server answers a
-            // repeat with ok).
+
             retry: { retries: transport.idempotent ? 1 : 0 },
             fetchImpl: deps.fetchImpl,
           }),
@@ -390,7 +338,7 @@ export function createSpacesClient(deps: SpacesClientDeps) {
     }: {
       since: number
       limit?: number
-      /** A page of a catch-up, which may be full: the longer timeout. */
+
       catchUp?: boolean
     },
     call: SpaceCallOptions = {}
@@ -414,11 +362,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
   }
 
   return {
-    /**
-     * Makes the space at epoch 1 with the caller as its only member and owner.
-     * An identical retry on a space nothing has changed since (a lost answer)
-     * gets the same answer again. `joinedAt` is the server's time.
-     */
     async create(
       fields: SpaceNewMember & { spaceId: string },
       call: SpaceCallOptions = {}
@@ -435,11 +378,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
 
     sync,
 
-    /**
-     * Syncs from `since` until the server has nothing more, handing each page
-     * to `onPage` before asking for the next (so a caller keeps its cursor as
-     * it goes). Resolves the last page.
-     */
     async syncFrom(
       auth: SpaceMemberAuth,
       since: number,
@@ -447,8 +385,7 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       options: SpaceCallOptions & { limit?: number } = {}
     ): Promise<SpaceSyncPage> {
       let cursor = since
-      // From the start, or once a page said there's more, every page may be
-      // full: each gets the catch-up timeout.
+
       let catchUp = since === 0
       for (;;) {
         const page = await sync(
@@ -463,11 +400,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       }
     },
 
-    /**
-     * Stores up to 100 records, each unless the server holds a newer version.
-     * `results` say which it stored, in order; `stored: false` means a newer
-     * version is already there.
-     */
     async put(
       auth: SpaceMemberAuth,
       records: SpacePutRecord[],
@@ -510,10 +442,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       return { seq, results: parsed }
     },
 
-    /**
-     * Opens an invite carrying epoch `epoch`'s key, which must be current
-     * (`stale_key` otherwise). An identical retry is ok.
-     */
     async createInvite(
       auth: SpaceMemberAuth,
       invite: {
@@ -532,7 +460,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       )
     },
 
-    /** The inviter or the owner closes an invite. */
     async deleteInvite(
       auth: SpaceMemberAuth,
       inviteId: string,
@@ -541,13 +468,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       await post('invite/delete', { ...member(auth), inviteId }, call)
     },
 
-    /**
-     * Joins with an invite, registering the caller's own key, token hash and a
-     * wrap to themselves of the invitation's key, for its `epoch`, which must
-     * be current (`stale_key`). A fresh join answers with that epoch. A repeat
-     * after a lost answer is answered ok again, with the original `joinedAt`
-     * and the current epoch; any other join by a member is `conflict`.
-     */
     async join(
       fields: SpaceNewMember & {
         spaceId: string
@@ -593,7 +513,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       await post('leave', member(auth), call)
     },
 
-    /** The owner removes another member. */
     async removeMember(
       auth: SpaceMemberAuth,
       removeId: string,
@@ -602,12 +521,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       await post('member/remove', { ...member(auth), removeId }, call)
     },
 
-    /**
-     * The owner moves the space to `epoch` (current + 1), with a wrap for every
-     * member and `link`, the record `k.<epoch>` sealed under the new key, which
-     * the server stores in the same step. `conflict`: membership changed, so
-     * sync and try again.
-     */
     async rekey(
       auth: SpaceMemberAuth,
       fields: {
@@ -632,7 +545,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       return { seq }
     },
 
-    /** The owner wipes the space. */
     async deleteSpace(
       auth: SpaceMemberAuth,
       call: SpaceCallOptions = {}
@@ -640,14 +552,6 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       await post('delete', member(auth), call)
     },
 
-    /**
-     * The space's live signal (`GET /spaces/v1/live`). The session and the
-     * member ride in headers, never the URL: `x-ww-space-auth` names the space
-     * and member, and the token travels alone in `x-ww-space-token`.
-     * Cloudflare's logs redact both, by their names. Each (re)connect asks the
-     * session for a token, refreshing one close to expiring; an open socket
-     * outlives it.
-     */
     async openLive(auth: SpaceMemberAuth): Promise<LiveSocket> {
       try {
         return await deps.authorize(

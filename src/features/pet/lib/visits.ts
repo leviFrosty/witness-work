@@ -6,10 +6,8 @@ import type { PetVisit, PetVisitActivity } from '@/types/pet'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { speciesName } from '@/features/pet/lib/names'
 
-/** Where a visiting pet was opened from, for analytics. */
 export type PetVisitSurface = 'home' | 'details'
 
-/** Opens what the User does with the visiting pet's buddy today. */
 export function openPetVisitActivity(
   navigation: RootStackNavigation,
   activity: PetVisitActivity
@@ -25,7 +23,6 @@ export function openPetVisitActivity(
     })
 }
 
-/** "View Plan", or "View Follow-up" for a return visit. */
 export const petVisitActivityTitle = (activity: PetVisitActivity): string =>
   i18n.t(
     activity.type === 'plan'
@@ -33,11 +30,9 @@ export const petVisitActivityTitle = (activity: PetVisitActivity): string =>
       : 'pet.visitor.viewFollowUp'
   )
 
-/** The visiting pet's name, or its species'. */
 export const visitingPetName = (visit: PetVisit): string =>
   visit.pet.name || speciesName(visit.pet.species)
 
-/** "Sam's pet · Plan at 9:00 AM". */
 export function petVisitDetail(visit: PetVisit): string {
   const time = formatStartTime(visit.startMinutes)
   return i18n.t('pet.visitor.detail', {
@@ -51,14 +46,9 @@ export function petVisitDetail(visit: PetVisit): string {
   })
 }
 
-/** What the visiting pet says once the User's pet's hearts have floated off. */
 export const petVisitLine = (visit: PetVisit): string =>
   i18n.t('pet.visitor.line', { name: visit.buddyName })
 
-/**
- * A visiting pet's long-press menu: what the User does with its buddy today,
- * the buddy, and (`onHide`) hiding the buddy's pet.
- */
 export function petVisitMenu(
   visit: PetVisit,
   {
@@ -82,7 +72,7 @@ export function petVisitMenu(
       {
         id: 'pet_visitor_activity',
         title: petVisitActivityTitle(visit.activity),
-        // Android has a clock icon and no calendar.
+
         systemImage: 'clock',
         onPress: () => {
           capture('activity')

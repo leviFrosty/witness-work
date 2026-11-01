@@ -27,8 +27,7 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/contactAvatarFiles', () => ({
   deleteAvatarFiles: vi.fn(async () => {}),
 }))
-// The hook's runtime reaches the session client and attestation; the pure
-// function under test needs neither.
+
 vi.mock('@/features/scribe/runtime/status', () => ({
   refreshDeviceGate: vi.fn(async () => {}),
 }))
@@ -81,7 +80,6 @@ const input = (
   ...change,
 })
 
-/** Every gate at once: what's left decides. */
 const EVERYTHING_WRONG = input({
   status: { ...STATUS, minAppVersion: '9.0.0' },
   online: false,

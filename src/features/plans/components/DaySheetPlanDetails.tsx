@@ -6,7 +6,6 @@ import {
 } from '@/features/plans/components/OwnPlanDetails'
 import usePlanDetails from '@/features/plans/hooks/usePlanDetails'
 
-/** Edit and More for the Plan a day's sheet shows, in the sheet's header. */
 const DaySheetPlanDetailsActions = ({ slot }: { slot: PlanDetailsSlot }) => {
   const { item } = usePlanDetails(slot.plan)
   if (!item) return null
@@ -19,10 +18,6 @@ const DaySheetPlanDetailsActions = ({ slot }: { slot: PlanDetailsSlot }) => {
   )
 }
 
-/**
- * Plan Details in a day's sheet, in place of the day. The day comes back once
- * the Plan is gone, including a buddy's Plan after "Can't make it".
- */
 const DaySheetPlanDetailsBody = ({ slot }: { slot: PlanDetailsSlot }) => {
   const { now, item, invitation, answering } = usePlanDetails(slot.plan)
   const { onGone } = slot
@@ -43,7 +38,6 @@ const DaySheetPlanDetailsBody = ({ slot }: { slot: PlanDetailsSlot }) => {
   )
 }
 
-/** Plan Details as a day's sheet shows it: header actions and body. */
 export const daySheetPlanDetails = {
   actions: (slot: PlanDetailsSlot) => (
     <DaySheetPlanDetailsActions slot={slot} />

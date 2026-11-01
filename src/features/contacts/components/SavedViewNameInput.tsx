@@ -13,10 +13,6 @@ import {
   normalizeSavedViewName,
 } from '@/features/contacts/lib/savedViews'
 
-/**
- * Inline name field for a new Saved View. Invalid saves leave the field open
- * for correction; the containing sheet can be dismissed to cancel.
- */
 const SavedViewNameInput = ({ onSave }: { onSave: (name: string) => void }) => {
   const theme = useTheme()
   const [name, setName] = useState('')
@@ -24,7 +20,6 @@ const SavedViewNameInput = ({ onSave }: { onSave: (name: string) => void }) => {
   const validation = useFormValidation({ name: !canSave }, 'saved_view')
   const inputRef = useRef<InputRef>(null)
 
-  // `autoFocus` doesn't take inside the native form sheet; focus once mounted.
   useEffect(() => {
     const frame = requestAnimationFrame(() => inputRef.current?.focus())
     return () => cancelAnimationFrame(frame)

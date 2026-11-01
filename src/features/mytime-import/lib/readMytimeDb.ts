@@ -12,23 +12,8 @@ import type {
   MytimeUserRow,
 } from '@/features/mytime-import/lib/mytimeSchema'
 
-/**
- * Why the import failed in a way the user can act on, as opposed to an
- * unexpected bug. The hook shows a "this isn't a MyTime backup" message for
- * both reasons and does NOT report them to error tracking — picking the wrong
- * file is a user mistake, not a defect.
- *
- * - `notMytime` — the file is a valid SQLite database but lacks MyTime's tables.
- * - `openFailed` — the file could not be opened as a SQLite database at all
- *   (wrong file type, truncated, encrypted, an iCloud placeholder that was
- *   never downloaded, …).
- */
 export type MytimeImportErrorReason = 'notMytime' | 'openFailed'
 
-/**
- * What the picked file looks like from its first bytes, so analytics can tell
- * which wrong files people pick without sending anything from inside them.
- */
 export type MytimeFileKind =
   | 'sqlite'
   | 'zip'
@@ -41,10 +26,7 @@ export type MytimeFileKind =
 
 export class MytimeImportError extends Error {
   readonly reason: MytimeImportErrorReason
-  /**
-   * Defaults to `sqlite`: only the header check rejects other kinds, so every
-   * error raised after it is about a file that starts like a SQLite database.
-   */
+
   readonly fileKind: MytimeFileKind
   constructor(
     reason: MytimeImportErrorReason,
@@ -58,7 +40,6 @@ export class MytimeImportError extends Error {
   }
 }
 
-/** SQLite's result code 26 (`SQLITE_NOTADB`), as `expo-sqlite` reports it. */
 const isNotADatabaseError = (e: unknown): boolean =>
   /file is not a database|error code 26\b/i.test(String(e))
 
@@ -68,28 +49,14 @@ const notADatabase = (e: unknown) =>
     `Could not read the file as a database: ${String(e)}`
   )
 
-/**
- * The narrow slice of a SQLite database the reader needs, expressed as
- * schema-aware operations rather than raw SQL. Keeping the core behind this
- * interface lets us unit-test validation and graceful degradation against a
- * fake without a native SQLite engine.
- */
 export interface MytimeTableSource {
-  /** Names of every table in the database. */
   listTables(): Promise<Set<string>>
-  /** Names of every column on a table. */
+
   listColumns(table: string): Promise<Set<string>>
-  /** All rows for the given columns of a table, keyed by column name. */
+
   selectAll<T>(table: string, columns: readonly string[]): Promise<T[]>
 }
 
-/**
- * The columns the reader pulls per table, mirroring `mytimeSchema.ts` exactly
- * (including MyTime's own `ZLATTITUDE` misspelling). Every column the mapper
- * reads must appear here; anything the table is missing is simply dropped from
- * the `SELECT`, leaving that field `undefined` on the row (the mapper tolerates
- * it — MyTime shipped ~19 schema versions).
- */
 const TABLE_COLUMNS = {
   ZCALL: [
     'Z_PK',
@@ -113,22 +80,9 @@ const TABLE_COLUMNS = {
   ZUSER: ['Z_PK', 'ZPUBLISHERTYPE', 'ZPIONEERSTARTDATE', 'ZNAME'],
 } as const
 
-/**
- * Validates the database is a MyTime store and reads its tables into the raw
- * row shapes the mapper consumes. Pure of any native dependency — see
- * `readMytimeDb` for the `expo-sqlite`-backed entry point.
- *
- * Validation gate: a genuine MyTime backup always has both `ZCALL` and
- * `ZRETURNVISIT`. Their absence means the user picked the wrong file, so we
- * reject up front rather than silently importing nothing. Past that gate every
- * table is optional — a missing table or column degrades to empty/absent so a
- * schema-drifted backup still imports what it can.
- */
 export async function readMytimeTables(
   source: MytimeTableSource
 ): Promise<MytimeRawTables> {
-  // SQLite opens a file lazily, so one that isn't a database opens "fine" and
-  // only fails here, on the first query. Any other failure is a real fault.
   let tables: Set<string>
   try {
     tables = await source.listTables()
@@ -149,8 +103,7 @@ export async function readMytimeTables(
     if (!tables.has(name)) return []
     const available = await source.listColumns(name)
     const present = columns.filter((c) => available.has(c))
-    // Every record's deterministic id is derived from its Core Data PK; without
-    // it the row is unusable, so treat the table as absent.
+
     if (!present.includes('Z_PK')) return []
     return source.selectAll<T>(name, present)
   }
@@ -198,7 +151,6 @@ export async function readMytimeTables(
   }
 }
 
-/** Adapts an open `expo-sqlite` database to the reader's table source. */
 const nativeSource = (db: SQLite.SQLiteDatabase): MytimeTableSource => ({
   async listTables() {
     const rows = await db.getAllAsync<{ name: string }>(
@@ -207,8 +159,6 @@ const nativeSource = (db: SQLite.SQLiteDatabase): MytimeTableSource => ({
     return new Set(rows.map((r) => r.name))
   },
   async listColumns(table) {
-    // Table names come only from our own `TABLE_COLUMNS` keys, never user
-    // input, so interpolating them here is safe (PRAGMA can't be parametrized).
     const rows = await db.getAllAsync<{ name: string }>(
       `PRAGMA table_info("${table}")`
     )
@@ -220,19 +170,10 @@ const nativeSource = (db: SQLite.SQLiteDatabase): MytimeTableSource => ({
   },
 })
 
-// expo-sqlite's default database directory is `${documentDirectory}SQLite`, so
-// copying the picked file there lets us open it by name with no path-encoding
-// surprises (the `file://`-prefixed picker URI is awkward to pass directly).
 const SQLITE_DIR = `${FileSystem.documentDirectory}SQLite`
 const IMPORT_DB_FILENAME = 'mytime-import-source.sqlite'
 const IMPORT_DB_PATH = `${SQLITE_DIR}/${IMPORT_DB_FILENAME}`
 
-/**
- * Copies the picked backup into expo-sqlite's directory under a fixed name. We
- * operate on this disposable copy and delete it afterward — the user's original
- * file is never opened, let alone written, which is the read-only guarantee the
- * ADR calls for.
- */
 const copyIntoSqliteDir = async (uri: string): Promise<void> => {
   await FileSystem.makeDirectoryAsync(SQLITE_DIR, { intermediates: true })
   await FileSystem.deleteAsync(IMPORT_DB_PATH, { idempotent: true })
@@ -243,38 +184,28 @@ const startsWith = (bytes: Uint8Array, prefix: string): boolean =>
   bytes.length >= prefix.length &&
   [...prefix].every((ch, i) => bytes[i] === ch.charCodeAt(0))
 
-/** How many leading bytes `classifyFileHead` needs to tell the kinds apart. */
 const FILE_HEAD_LENGTH = 64
 
-/**
- * Names a file's kind from its first bytes. Only the kind leaves the device;
- * the bytes themselves are never logged or sent.
- */
 export const classifyFileHead = (bytes: Uint8Array): MytimeFileKind => {
   if (bytes.length === 0) return 'empty'
-  // Every SQLite database starts with `SQLite format 3\0`.
+
   if (startsWith(bytes, 'SQLite format 3\0')) return 'sqlite'
-  // Local file header, or the end record of an empty archive.
+
   if (startsWith(bytes, 'PK\x03\x04') || startsWith(bytes, 'PK\x05\x06'))
     return 'zip'
   if (startsWith(bytes, '%PDF-')) return 'pdf'
   if (startsWith(bytes, 'bplist')) return 'bplist'
-  // Text has no control bytes besides tab, newline and carriage return; bytes
-  // from 0x80 up are allowed so UTF-8 text still counts.
+
   const isText = bytes.every(
     (b) => b === 0x09 || b === 0x0a || b === 0x0d || (b >= 0x20 && b !== 0x7f)
   )
   if (!isText) return 'unknown'
-  // Skip a UTF-8 byte order mark and leading whitespace before the first char.
+
   let i = startsWith(bytes, '\xef\xbb\xbf') ? 3 : 0
   while (i < bytes.length && [0x09, 0x0a, 0x0d, 0x20].includes(bytes[i])) i++
   return bytes[i] === 0x7b || bytes[i] === 0x5b ? 'json' : 'text'
 }
 
-/**
- * Reads the copy's first bytes and names its kind, so a wrong file type (a PDF,
- * a text export, a zip) is turned away before SQLite opens it.
- */
 const readFileKind = async (path: string): Promise<MytimeFileKind> => {
   const head = await FileSystem.readAsStringAsync(path, {
     encoding: FileSystem.EncodingType.Base64,
@@ -286,20 +217,6 @@ const readFileKind = async (path: string): Promise<MytimeFileKind> => {
   return classifyFileHead(Uint8Array.from(binary, (c) => c.charCodeAt(0)))
 }
 
-/**
- * Opens a picked `.mytimedb` backup and reads it into raw MyTime rows. The
- * source file is copied to a throwaway location, opened, read, then closed and
- * the copy deleted — even if reading throws. Surfaces a `MytimeImportError` for
- * the two expected failure modes (not a SQLite file / not a MyTime store);
- * anything else propagates as an unexpected error.
- *
- * Read-only safety (per the ADR) is achieved two ways: we only ever touch a
- * disposable copy, never the user's original file, and we set `query_only` on
- * the connection so even the copy can't be mutated. (`expo-sqlite` exposes no
- * read-only open flag.)
- *
- * Requires a dev-client rebuild (`pnpm run ios`) — `expo-sqlite` is native.
- */
 export async function readMytimeDb(uri: string): Promise<MytimeRawTables> {
   await copyIntoSqliteDir(uri)
 

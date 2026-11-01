@@ -25,15 +25,6 @@ import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 
 type Dims = { width: number; height: number }
 
-/**
- * A Contact photo's actions — edit the crop, save to Photos, share, reset the
- * crop — shared by the full-screen viewer's toolbar and the avatar's context
- * menu. Render `editor` wherever the crop editor should present from (inside
- * the viewer's Modal, or beside the avatar).
- *
- * `enabled` gates the check for a saved original, which Reset and the editor's
- * full-quality source depend on.
- */
 export default function useContactAvatarActions(
   contact: Contact,
   enabled: boolean
@@ -66,9 +57,7 @@ export default function useContactAvatarActions(
   }, [enabled, contact.id, contact.avatar?.value, contact.avatar?.revision])
 
   const displayedUri = contact.avatar?.value
-  // The crop editor prefers the locally-saved original (full quality) and
-  // falls back to the displayed image when no original exists (legacy
-  // contacts).
+
   const editableSource = hasOriginal
     ? {
         uri: originalAvatarPath(contact.id, contact.avatar?.revision),
@@ -78,9 +67,6 @@ export default function useContactAvatarActions(
       ? { uri: stripCacheBuster(displayedUri), isOriginal: false }
       : null
 
-  // Probe pixel dimensions of the editable source when the user opens the
-  // editor. Avatar metadata gives us the original's dimensions; for the
-  // fallback (cropped image) we ask the image loader at edit time.
   const ensureEditableDims = async (): Promise<Dims | null> => {
     if (editableDims) return editableDims
     if (!editableSource) return null
@@ -117,8 +103,6 @@ export default function useContactAvatarActions(
     const paths = [uri, croppedAvatarPath(contact.id, revision)]
     if (!draftFiles.claim(paths)) return
     try {
-      // The editor owns this source until it commits or is cancelled. A remote
-      // replacement can safely remove the previously saved photo meanwhile.
       await FileSystem.copyAsync({ from: editableSource.uri, to: uri })
       if (!draftFiles.owns(paths)) {
         draftFiles.release(paths)

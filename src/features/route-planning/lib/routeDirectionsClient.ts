@@ -6,28 +6,20 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
 import type { Coordinate } from '@/types/contact'
 import type { RouteDirectionsLeg } from '../../../../modules/route-directions'
 
-/**
- * Client for ww-api `POST /route-planning/directions` (HERE Routing), as this
- * device's attested account session (ADR 0027), for Android, where there's no
- * MapKit. Any account may ask; no Supporter link is needed. Sends bare
- * coordinates only.
- */
-
 export type RouteDirectionsResult =
   | { ok: true; legs: RouteDirectionsLeg[] }
   | {
       ok: false
-      /** HERE found no road route through the points. */
+
       noRoute?: boolean
-      /** How long to wait before asking again. */
+
       retryAfterMs?: number
     }
 
-/** HERE routes twelve points in about a second. */
 const DIRECTIONS_TIMEOUT_MS = 15_000
-/** After a failure with no `Retry-After`. */
+
 const RETRY_AFTER_MS = 60_000
-/** A device that can't hold a session won't soon. */
+
 const NO_SESSION_RETRY_AFTER_MS = 30 * 60_000
 
 const point = ({ latitude, longitude }: Coordinate) => ({
@@ -76,7 +68,6 @@ export const fetchRouteDirections = async ({
     }
     return { ok: true, legs }
   } catch (error) {
-    // An HttpError too, so first.
     if (error instanceof AccountSessionError) {
       return {
         ok: false,

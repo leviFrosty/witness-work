@@ -68,7 +68,6 @@ import { formatDisplay } from '@/lib/dates'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ServiceReportView'>
 
-/** Lucide icons for the submit segment itself. */
 const exportMethodCtaIcons = {
   copy: CopyIcon,
   share: ShareIcon,
@@ -92,13 +91,11 @@ const RAGGED_SEGMENTS_X = 14
 const RAGGED_SEGMENTS_Y = 20
 const SUBMIT_CONFIRMATION_DURATION_MS = 2000
 
-// Deterministic pseudo-random in [-1, 1] from a seed.
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed * 9999.137) * 43758.5453
   return (x - Math.floor(x)) * 2 - 1
 }
 
-// Build a slightly irregular rectangle path so the paper edge reads as torn.
 function buildRaggedPaperPath(
   width: number,
   height: number,
@@ -109,7 +106,6 @@ function buildRaggedPaperPath(
   const segX = RAGGED_SEGMENTS_X
   const segY = RAGGED_SEGMENTS_Y
 
-  // Top edge, left -> right
   for (let i = 0; i <= segX; i++) {
     const t = i / segX
     points.push({
@@ -117,7 +113,7 @@ function buildRaggedPaperPath(
       y: pseudoRandom(seed + i * 1.3) * jitter,
     })
   }
-  // Right edge, top -> bottom
+
   for (let i = 1; i <= segY; i++) {
     const t = i / segY
     points.push({
@@ -125,7 +121,7 @@ function buildRaggedPaperPath(
       y: height * t,
     })
   }
-  // Bottom edge, right -> left
+
   for (let i = 1; i <= segX; i++) {
     const t = i / segX
     points.push({
@@ -133,7 +129,7 @@ function buildRaggedPaperPath(
       y: height + pseudoRandom(seed + 200 + i * 2.1) * jitter,
     })
   }
-  // Left edge, bottom -> top
+
   for (let i = 1; i < segY; i++) {
     const t = i / segY
     points.push({
@@ -154,7 +150,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { month, year } = route.params
-  // A pending rollover changes this month's hours; decide it before submitting.
+
   useRolloverPrompt({ month, year })
   const data = useMonthReportData(month, year)
   const { name, hasName } = useUser()
@@ -197,11 +193,10 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
   const [isEditingNotes, setIsEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState('')
-  // The method just used, while the CTA briefly confirms it: "Copied!" for
-  // Copy, which only puts the report on the clipboard, else "Report Submitted".
+
   const [confirmedMethod, setConfirmedMethod] =
     useState<ReportExportMethod | null>(null)
-  // Someone who just sent a report here is offered the report reminder.
+
   const [sentHere, setSentHere] = useState(false)
   const isSubmitConfirmed = confirmedMethod !== null
   const sentState = useReportSentState(month, year)
@@ -251,8 +246,6 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
   }, [data.notes])
 
   const handleSaveNotes = useCallback(() => {
-    // Saving text identical to the auto-generated comments is a no-op override
-    // — drop it so the reset affordance doesn't linger for nothing.
     if (notesDraft === data.defaultNotes) {
       clearReportCommentOverride(reportMonthKey)
     } else {
@@ -298,17 +291,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     [confirmSubmission, data, month, year]
   )
 
-  // One-tap submit via the user's default method, always available on any
-  // report. Records the submission (which clears the Home-screen reminder for
-  // the previous month) and leaves the report open. NW Publisher only accepts
-  // the previous month's report, so the CTA disables outside that window.
   const submitDisabled =
     defaultExportMethod === 'nwpublisher' && !data.isLastMonth
   const submitCtaLabel = getSubmitCtaLabel(defaultExportMethod)
 
   const handleSubmitCta = useCallback(() => {
-    // Mid-edit, the first press commits the comment draft (the report data in
-    // this render still holds the pre-edit text); the next press submits.
     if (isEditingNotes) {
       handleSaveNotes()
       return
@@ -316,16 +303,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     handleShareAction(defaultExportMethod)
   }, [isEditingNotes, handleSaveNotes, handleShareAction, defaultExportMethod])
 
-  // Commit any in-progress comment edit before the menu takes over, so a
-  // method switched from the menu submits the fresh text, and drop the
-  // keyboard while the menu is up.
   const handleMenuOpen = useCallback(() => {
     if (isEditingNotes) handleSaveNotes()
     Keyboard.dismiss()
   }, [isEditingNotes, handleSaveNotes])
 
-  // Hourglass / NW Publisher hand off to another app or website — flag that
-  // on the CTA with an external-link icon.
   const submitIsExternal =
     defaultExportMethod === 'hourglass' || defaultExportMethod === 'nwpublisher'
 
@@ -334,7 +316,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-        // Android presents this modal full-screen, edge-to-edge.
+
         paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
         paddingHorizontal: 10,
       }}
@@ -389,13 +371,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             />
           </View>
         </PullDownMenu>
-        {/* Spacer mirroring the close button so the title stays centered */}
+        {}
         <View style={{ width: 18 }} />
       </View>
 
-      {/* Sent / Not Sent status; its menu fixes the mark by hand: undo a
-        mistaken one, or record a report sent another way or shared from
-        Android, whose share sheet can't tell. */}
+      {}
       <View style={{ alignItems: 'center', marginTop: 2 }}>
         <PullDownMenu
           actions={[
@@ -439,13 +419,10 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
       <ScrollView
         automaticallyAdjustKeyboardInsets
-        // Must flex — RN 0.86's Yoga no longer clamps an unflexed ScrollView
-        // to its parent's bounds; without this it sizes to the report paper
-        // and stops scrolling once the content exceeds the screen.
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 18,
-          // Room for the reminder offer above the Submit controls.
+
           paddingBottom: insets.bottom + 190 + (sentHere ? 52 : 0),
           paddingHorizontal: 16,
           alignItems: 'center',
@@ -458,9 +435,9 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             alignItems: 'center',
           }}
         >
-          {/* Sheet behind the main one */}
+          {}
           <BackPaperSheet height={paperHeight} />
-          {/* Main sheet */}
+          {}
           <PaperSheet
             handwritingFont={handwritingFont}
             handwritingFontBold={handwritingFontBold}
@@ -477,7 +454,6 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             notesDraft={notesDraft}
             onChangeNotesDraft={setNotesDraft}
             notesAccessory={
-              // Spaced so the buttons' frames meet without overlapping.
               <View
                 style={{
                   flexDirection: 'row',
@@ -717,7 +693,7 @@ const PaperSheet = ({
             strokeWidth={0.5}
           />
 
-          {/* Subtle paper fibers */}
+          {}
           <G>
             {fibers.map((f, i) => (
               <Circle
@@ -731,7 +707,7 @@ const PaperSheet = ({
             ))}
           </G>
 
-          {/* Soft fold shading */}
+          {}
           <Rect
             x={0}
             y={0}
@@ -740,7 +716,7 @@ const PaperSheet = ({
             fill='url(#foldShade)'
           />
 
-          {/* Inner shadow tint at edges */}
+          {}
           <Path
             d={path}
             fill='none'
@@ -1009,7 +985,7 @@ const HandDrawnCheck = ({ checked }: { checked: boolean }) => {
       }}
     >
       <Svg width={44} height={44} viewBox='0 0 44 44'>
-        {/* Hand-drawn box outline */}
+        {}
         <Path
           d='M 4 6 Q 3 18, 4.5 30 Q 4 36, 6 38 Q 18 38.5, 32 38 Q 34 38, 34 36 Q 34.5 22, 33.5 8 Q 34 5, 32 5 Q 18 4.5, 6 5 Q 4 5, 4 6 Z'
           fill='none'

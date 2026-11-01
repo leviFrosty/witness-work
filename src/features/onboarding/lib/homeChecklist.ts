@@ -3,35 +3,21 @@ import { calendarDaysBetween } from '@/lib/normalizeDate'
 import { isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntriesByYear } from '@/types/timeEntry'
 
-/**
- * Checklist item ids. Stable because manual completions are persisted (and
- * synced) by id. `setMonthlyGoal` keeps its original id but completes on any
- * Plan, and is labeled that way.
- */
 export type HomeChecklistItemId =
   | 'setMonthlyGoal'
   | 'logFirstMinute'
   | 'addFirstContact'
   | 'logThreeDays'
 
-/** Distinct days with a logged entry that complete `logThreeDays`. */
 export const LOGGED_DAYS_GOAL = 3
 
-/**
- * Retired ids whose manual completion carries over to the step that replaced
- * them. `sendFirstReport` waited for the month to end, so it was swapped for
- * `logThreeDays` (October 2026). Read at render time rather than migrated, so a
- * device on an older version that syncs the old id back keeps working.
- */
 const RETIRED_ITEM_IDS: Record<string, HomeChecklistItemId> = {
   sendFirstReport: 'logThreeDays',
 }
 
-/** Manual completions with retired ids mapped to their replacements. */
 export const resolveManualCompletions = (ids: readonly string[]): Set<string> =>
   new Set(ids.map((id) => RETIRED_ITEM_IDS[id] ?? id))
 
-/** Stored ids, including retired ones, that mark `id` as done by hand. */
 export const manualCompletionIdsFor = (id: HomeChecklistItemId): string[] => [
   id,
   ...Object.keys(RETIRED_ITEM_IDS).filter(
@@ -39,10 +25,6 @@ export const manualCompletionIdsFor = (id: HomeChecklistItemId): string[] => [
   ),
 ]
 
-/**
- * Distinct calendar days with a countable Time Entry, counted up to `cap` (Time
- * Rollover entries don't count; see `isCountableEntry`).
- */
 export const countLoggedDays = (
   serviceReports: TimeEntriesByYear,
   cap = LOGGED_DAYS_GOAL
@@ -61,7 +43,6 @@ export const countLoggedDays = (
   return days.size
 }
 
-/** Coarse install age for analytics; exact dates aren't needed. */
 export const daysSinceInstallBucket = (
   installedOn: moment.MomentInput,
   now: moment.MomentInput = new Date()

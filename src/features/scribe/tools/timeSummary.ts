@@ -55,7 +55,6 @@ export default defineReadTool({
     if (ranged && daysBetween(from!, to!) >= MAX_RANGE_DAYS)
       return { ok: false, error: 'A range can cover at most 366 days.' }
 
-    // The capabilities' cap already applies the User's credit-limit override.
     const prefs = ctx.stores.preferences
     const months: CalendarMonth[] =
       month !== null
@@ -155,7 +154,6 @@ export default defineReadTool({
   },
 })
 
-/** Standard and credit minutes of any set of entries, uncapped. */
 function sumRange(entries: TimeEntry[]): { standard: number; credit: number } {
   let standard = 0
   let credit = 0

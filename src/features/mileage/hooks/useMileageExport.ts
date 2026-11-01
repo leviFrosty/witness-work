@@ -16,7 +16,6 @@ import {
 
 export type MileageExportMethod = 'copy' | 'share' | 'csv'
 
-/** Copy, Share, and Export CSV for a Mileage report. */
 export default function useMileageExport() {
   const exportReport = async (
     method: MileageExportMethod,

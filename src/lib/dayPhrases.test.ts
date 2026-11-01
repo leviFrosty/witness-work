@@ -1,7 +1,6 @@
 import moment from 'moment'
 import { describe, expect, it, vi } from 'vitest'
 
-// The real formatters reach expo-localization.
 vi.mock('@/lib/dates', () => ({
   formatTime: () => '7:30 PM',
   formatWeekdayMonthDayCompact: (m: moment.Moment) => m.format('ddd, MMM D'),
@@ -21,11 +20,9 @@ const { dayPhrase, distancePhrase, whenPhrase } = await import(
   '@/lib/dayPhrases'
 )
 
-// A Thursday.
 const NOW = new Date('2026-10-08T15:00:00').getTime()
 
 describe('dayPhrase', () => {
-  // NOW is Thursday, Oct 8.
   const at = (date: string) => dayPhrase(new Date(date), NOW)
 
   it('names nearby days in words', () => {
@@ -56,7 +53,7 @@ describe('distancePhrase', () => {
     expect(distancePhrase(new Date('2026-10-08T18:00:00'), NOW)).toBe(
       'in 3 hours'
     )
-    // 52 hours away, but the day after tomorrow.
+
     expect(
       distancePhrase(
         new Date('2026-10-10T19:30:00'),

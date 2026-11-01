@@ -44,7 +44,6 @@ beforeEach(() => {
   usePetUnlockNews.setState({ unseen: [], revealing: null, toasting: null })
 })
 
-/** Shows what `PetUnlockRevealHost` would, as it does. */
 const showRequested = () => {
   const { toasting } = usePetUnlockNews.getState()
   if (toasting)
@@ -64,7 +63,7 @@ describe('announcePetUnlocks: the action rule', () => {
     const [unlock] = useToasts.getState().toasts
     expect(unlock.intent).toBe('unlock')
     expect(unlock.key).toBe('pet-item:hat:beret')
-    // Still news until it's opened or swiped away.
+
     expect(usePetUnlockNews.getState().unseen).toEqual([
       { item: 'hat:beret', at: NOW },
     ])
@@ -90,7 +89,7 @@ describe('announcePetUnlocks: the action rule', () => {
     const [beret, stone, cap] = useToasts.getState().toasts
     toast.dismiss(beret.id, 'swiped')
     toast.dismiss(stone.id, 'timeout')
-    // Opened: its reveal settles it when it closes.
+
     toast.dismiss(cap.id, 'opened')
     expect(usePetUnlockNews.getState().unseen.map((u) => u.item)).toEqual([
       'floor:stone',

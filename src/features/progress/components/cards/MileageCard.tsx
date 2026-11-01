@@ -14,7 +14,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 import type { ProgressCardSize } from '@/lib/progressCards'
 
-/** The month's distance driven in service, and its estimated cost. */
 export default function MileageCard({ month, year, size }: ProgressCardProps) {
   return (
     <MileageStatCard
@@ -24,7 +23,6 @@ export default function MileageCard({ month, year, size }: ProgressCardProps) {
   )
 }
 
-/** Distance driven in service in `period` (every trip without one). */
 export function MileageStatCard({
   period,
   size,
@@ -44,10 +42,7 @@ export function MileageStatCard({
       title={i18n.t('mileage.title')}
       value={format.distance(summary.distanceMiles)}
       tone={summary.tripCount ? 'default' : 'muted'}
-      caption={
-        // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-        i18n.t('mileage.tripCount', { count: summary.tripCount })
-      }
+      caption={i18n.t('mileage.tripCount', { count: summary.tripCount })}
       detail={
         summary.cost !== undefined
           ? i18n.t('progressCards.mileage.cost', {

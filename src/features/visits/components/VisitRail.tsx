@@ -17,7 +17,6 @@ import { withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/** What a stop on the rail marks. `today` is the Today marker. */
 export type RailNode =
   | 'study'
   | 'conversation'
@@ -32,15 +31,15 @@ export type RailNode =
 export type RailStop = {
   key: string
   node: RailNode
-  /** Later than today, so the rail runs dashed from it. */
+
   ahead?: boolean
-  /** Beside the node; the Today marker brings its own. */
+
   content?: ReactNode
 }
 
 const RAIL = 24
 const NODE = 22
-/** How far the Today tick sits below its row's top, level with its marker. */
+
 const TODAY_TICK_OFFSET = 10
 
 function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
@@ -71,7 +70,7 @@ function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
     ),
     ahead: outlined(theme.colors.accent3, ClockIcon),
     overdue: filled(theme.colors.warn, TriangleAlertIcon, onFill),
-    // Filled in, like its card, once a visit keeps it.
+
     kept: filled(theme.colors.accent3, CheckIcon, onFill),
     dismissed: outlined(theme.colors.textAlt, BellOffIcon),
     empty: outlined(theme.colors.textAlt, PlusIcon),
@@ -94,17 +93,10 @@ function Node({ node }: { node: Exclude<RailNode, 'today'> }) {
   )
 }
 
-/**
- * The line from one stop down to the earlier one below it, dashed out of one
- * that's ahead, in the color of the later stop: teal from a planned visit, gray
- * from an empty or dismissed one. `height` draws a fixed stub instead of
- * filling the row.
- */
 function Line({ from, height }: { from: RailStop; height?: number }) {
   const theme = useTheme()
   const size = height ? { height } : { flex: 1, minHeight: 14 }
   if (from.ahead)
-    // A zero-width box with a dashed border draws a dashed line.
     return (
       <View
         style={{
@@ -161,13 +153,6 @@ function TodayMarker() {
   )
 }
 
-/**
- * A Visit's story down one rail, newest first like Contact Details' timeline:
- * its Follow-up, today, and what happened. Where the Today marker falls says
- * whether the Follow-up is ahead or behind before any date is read; the rail
- * runs dashed from a stop that's still ahead and amber from one that was
- * missed.
- */
 export default function VisitRail({ stops }: { stops: RailStop[] }) {
   const theme = useTheme()
   return (
@@ -180,7 +165,7 @@ export default function VisitRail({ stops }: { stops: RailStop[] }) {
             <View style={{ width: RAIL, alignItems: 'center' }}>
               {stop.node === 'today' ? (
                 <>
-                  {/* Carries the line above down to the tick. */}
+                  {}
                   {prev ? (
                     <Line from={prev} height={TODAY_TICK_OFFSET} />
                   ) : (

@@ -16,11 +16,6 @@ import {
 } from '@/features/pet/lib/visits'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 
-/**
- * One visiting pet: its picture, name, and whose it is with what the User does
- * with them today. Tapping opens that Plan or Follow-up; a long press has the
- * visiting pet's menu.
- */
 export default function PetVisitRow({
   visit,
   seed,
@@ -28,7 +23,7 @@ export default function PetVisitRow({
   palette,
 }: {
   visit: PetVisit
-  /** Its idle timing, so neighbouring rows don't bob in step. */
+
   seed: number
   onHideVisit?: (visit: PetVisit) => void
   palette: GamePalette

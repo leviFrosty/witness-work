@@ -8,23 +8,11 @@ import {
   SPLASH_BACKGROUND_COLOR,
 } from '@/constants/brandMark'
 
-/**
- * Width, in points, at which the native splash draws the mark. iOS aspect-fits
- * the full-device `splash.png` (a 1284 × 2778 composition whose mark is 235 px
- * wide); Android 12+ centres the 160 dp mark from `splash-android.xml`.
- */
 export const splashMarkWidth = (window: { width: number; height: number }) =>
   Platform.OS === 'android'
     ? 160
     : 235 * Math.min(window.width / 1284, window.height / 2778)
 
-/**
- * A pixel match of the native splash screen, shown while the app finishes
- * booting. The system splash hides as soon as React renders its first view, so
- * anything else here (a spinner, a blank frame) flashes between the splash and
- * the first screen — most visibly on a fresh install, right before the
- * onboarding welcome animation picks up from this exact frame.
- */
 const LaunchSplash = () => {
   const window = useWindowDimensions()
   const width = splashMarkWidth(window)

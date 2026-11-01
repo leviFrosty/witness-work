@@ -13,10 +13,6 @@ import type { RouteBuilder } from '@/features/route-planning/hooks/useRouteBuild
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import { routePlanErrorMessage } from '@/features/route-planning/lib/routePlanErrors'
 
-/**
- * The two ways forward: let ww-api put the stops in the shortest order, or open
- * the route, as ordered, in the navigation app.
- */
 export default function RouteActionBar({
   builder,
   bottomInset,

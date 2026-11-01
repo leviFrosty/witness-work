@@ -36,10 +36,8 @@ const SATELLITE_CONTENT: Record<SatelliteId, ComponentType<SatelliteProps>> = {
   report: ReportSatellite,
 }
 
-// Room for each card to lay out at its natural size around its anchor point.
 const SLOT = 320
 
-// Ease-out with a gentle overshoot, so cards settle rather than stop.
 const easeOutBack = (x: number) => {
   'worklet'
   const c1 = 1.25
@@ -84,7 +82,6 @@ const SatelliteSlot = ({
   }, [dimmed, dim])
 
   const style = useAnimatedStyle(() => {
-    // This card's own flight, staggered within the shared burst.
     const flight = clamp(
       (burst.value * BURST_TOTAL_MS - index * INTRO.burstStagger) / BURST_MS,
       0,
@@ -98,7 +95,7 @@ const SatelliteSlot = ({
     const px = tilt.value.x * PARALLAX.satellites * spec.depth
     const py = tilt.value.y * PARALLAX.satellites * spec.depth
     const e = exit.value
-    // Under Reduce Motion the cards only fade on the way out (and back in).
+
     const push = reduceMotion ? 0 : e
     return {
       opacity: clamp(flight * 2.5, 0, 1) * (1 - dim.value * 0.32) * (1 - e),
@@ -145,25 +142,19 @@ const SatelliteSlot = ({
 }
 
 interface Props {
-  /** Hub centre in screen points. */
   hub: { x: number; y: number }
   scale: number
   palette: WelcomePalette
   time: SharedValue<number>
   tilt: Tilt
-  /** 0–1 run of the cards flying out of the hub. */
+
   burst: SharedValue<number>
   exit: SharedValue<number>
-  /** The part of the story the headline is telling, if any. */
+
   activePillar: PillarId | null
   reduceMotion: boolean
 }
 
-/**
- * The cards orbiting the app tile — a glimpse of the app's planning, timer,
- * visits, map and reports. They burst out of the tile, float in parallax, and
- * the one matching the headline steps forward while the rest dim.
- */
 const WelcomeConstellation = ({
   hub,
   scale,

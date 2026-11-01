@@ -8,46 +8,26 @@ import type {
   TimeEntriesByYear,
 } from '@/types/timeEntry'
 
-/**
- * What a Service Streak counts (`getStreakKind`):
- *
- * - `plans`: planned days kept. A day with a Plan counts once it has any time
- *   logged, however short of the Plan. Days without a Plan neither add to it
- *   nor break it.
- * - `months`: months in service, for a role that reports a monthly "shared in the
- *   ministry". Any Time Entry counts, the checkbox included.
- *
- * A day or month can still be kept through the one after it; the streak ends
- * once that passes with nothing logged.
- */
 export type StreakKind = 'plans' | 'months'
 
-/**
- * A streak is celebrated, and its reminders go out, once it's this long. It
- * shows from its first day.
- */
 export const STREAK_MIN = 3
 
 const DAY = 'YYYY-MM-DD'
-/** How far back a streak is counted, so bad data can't loop for long. */
+
 const MAX_LOOKBACK_DAYS = 3650
-/** How far ahead the next Plan is looked for. */
+
 const PLANS_AHEAD_DAYS = 56
-/** A reminder goes out at 6 PM, while there's still time. */
+
 const REMINDER_HOUR = 18
 
 export type ServiceStreak = {
   kind: StreakKind
   count: number
-  /** The newest counted day, or month's 1st (`YYYY-MM-DD`); null at 0. */
+
   latest: string | null
-  /** The oldest counted day, or month's 1st: where it started. Null at 0. */
+
   since: string | null
-  /**
-   * The next planned day (or month) not kept yet, and when the streak ends
-   * unless it's kept: the end of the day (or month) after it. Null with no Plan
-   * ahead.
-   */
+
   due: { period: string; endsAt: Date } | null
 }
 
@@ -57,11 +37,6 @@ export type StreakRecords = {
   recurringPlans: RecurringPlan[]
 }
 
-/**
- * Days with a Time Entry → the minutes logged on them. A 0h entry still marks
- * its day: it's the checkbox "shared" marker. Time Rollover halves only move
- * minutes between months, so they aren't service on their day.
- */
 export function serviceDays(reports: TimeEntriesByYear): Map<string, number> {
   const days = new Map<string, number>()
   for (const year of Object.values(reports)) {
@@ -115,7 +90,6 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
       latest ??= key
       since = key
     } else if (i > 1) break
-    // Today and yesterday can still be logged.
   }
 
   let due: ServiceStreak['due'] = null
@@ -125,8 +99,7 @@ function plansStreak(records: StreakRecords, now: Date): ServiceStreak {
     if (!isPlanned(ahead) || (i <= 0 && isKept(key))) continue
     due = {
       period: key,
-      // Back to the day's start: past a day that starts at 1:00 (clocks skip
-      // midnight), `ahead` keeps that hour.
+
       endsAt: ahead.clone().add(2, 'days').startOf('day').toDate(),
     }
     break
@@ -155,7 +128,6 @@ function monthsStreak(records: StreakRecords, now: Date): ServiceStreak {
       latest ??= cursor.format(DAY)
       since = cursor.format(DAY)
     } else if (i > 1) break
-    // This month and last can still be recorded.
   }
 
   let due: ServiceStreak['due'] = null
@@ -178,10 +150,6 @@ let cached: {
   streak: ServiceStreak
 } | null = null
 
-/**
- * The User's Service Streak as of `now`. Every surface asks for the same one,
- * so the last result is kept until the records or the day change.
- */
 export function serviceStreak(
   kind: StreakKind,
   records: StreakRecords,
@@ -203,36 +171,24 @@ export function serviceStreak(
   return streak
 }
 
-/** The count people see: any streak at all. */
 export const shownStreak = (streak: ServiceStreak): number =>
   Math.max(0, streak.count)
 
-/** Streak Reminders go out only while the streak shows at all. */
 export const streakRemindersOn = (prefs: {
   streakReminders: boolean
   showStreaks: boolean
 }): boolean => prefs.streakReminders && prefs.showStreaks
 
-/**
- * Whether a shown streak ends soon without more service: within a day for Plans
- * (yesterday's still needs time), a week for months.
- */
 export function streakEndsSoon(streak: ServiceStreak, now: Date): boolean {
   if (!shownStreak(streak) || !streak.due) return false
   const { endsAt } = streak.due
-  // Days on the calendar, so a day clocks change in still starts at midnight.
-  // From that day's start: when clocks skip midnight, `endsAt` is 1:00.
+
   const from = moment(endsAt)
     .subtract(streak.kind === 'plans' ? 1 : 7, 'days')
     .startOf('day')
   return now.getTime() >= from.valueOf() && now < endsAt
 }
 
-/**
- * When to remind the User that a streak of `STREAK_MIN` or more is about to
- * end: 6 PM on its last day for Plans, three days before the month is out for
- * months.
- */
 export function streakReminderAt(streak: ServiceStreak): Date | null {
   if (streak.count < STREAK_MIN || !streak.due) return null
   return moment(streak.due.endsAt)
@@ -241,10 +197,6 @@ export function streakReminderAt(streak: ServiceStreak): Date | null {
     .toDate()
 }
 
-/**
- * The last day (`YYYY-MM-DD`) the streak lasts without more service. With no
- * Plan ahead it can't end yet; a new Plan republishes it.
- */
 export function streakLastsThrough(streak: ServiceStreak, now: Date): string {
   return streak.due
     ? moment(streak.due.endsAt).subtract(1, 'day').format(DAY)
@@ -253,29 +205,14 @@ export function streakLastsThrough(streak: ServiceStreak, now: Date): string {
 
 const PLAN_MILESTONES = [3, 5, 10, 15, 20, 25, 30, 40, 50]
 
-/**
- * Whether reaching `count` earns the full celebration. Kept Plans come often,
- * so only milestones do; a month comes once a month, so each one does.
- */
 export function isStreakMilestone(kind: StreakKind, count: number): boolean {
   if (count < STREAK_MIN) return false
   if (kind === 'months') return true
   return PLAN_MILESTONES.includes(count) || (count > 50 && count % 25 === 0)
 }
 
-/** The newest period this device has seen counted, for unlock detection. */
 export type SeenStreak = { kind: StreakKind; latest: string | null }
 
-/**
- * Whether `current` grows the streak since `seen`, and what to remember next.
- * It grows when a newer planned day (or month) is kept than any seen before, so
- * backfilling an old one, more time on the same day, or deleting and re-adding
- * an entry doesn't replay it. Only growth that's still recent counts (yesterday
- * on, or last month on), so a device catching up after a while, or data that
- * arrives by restore, isn't celebrated late. With nothing seen yet (first
- * launch, records still loading) or a new kind (role change), it only starts
- * remembering.
- */
 export function nextSeenStreak(
   seen: SeenStreak | null,
   current: Pick<ServiceStreak, 'kind' | 'count' | 'latest'>,
@@ -300,20 +237,17 @@ export function nextSeenStreak(
   }
 }
 
-/** A streak reaching a milestone (`isStreakMilestone`). */
 export type StreakMilestone = {
   count: number
-  /** The planned day kept that reached it, or the month's first day out. */
+
   on: string
 }
 
-/** What a Service Streak's history holds, replayed from the records. */
 export type StreakHistory = {
-  /** Planned days kept, by the rules a `plans` streak counts, oldest first. */
   kept: readonly string[]
-  /** Every milestone a streak of `kind` reached, oldest first. */
+
   milestones: readonly StreakMilestone[]
-  /** The longest a streak of `kind` has been. */
+
   best: number
 }
 
@@ -322,12 +256,6 @@ const NO_HISTORY: StreakHistory = { kept: [], milestones: [], best: 0 }
 const dayKeyOf = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
-/**
- * Counts a streak forward, as it stood at each period kept: the periods kept
- * back to the last one missed before the period before it, since that one could
- * still be kept then (as `plansStreak` and `monthsStreak` count back from now).
- * So a milestone stays reached when a later miss ends the streak.
- */
 function streakCounter() {
   const kept: string[] = []
   const missed: string[] = []
@@ -335,7 +263,7 @@ function streakCounter() {
   let start = 0
   return {
     miss: (period: string) => missed.push(period),
-    /** Counts `period` kept, the period before it `before`; its streak then. */
+
     keep: (period: string, before: string): number => {
       while (breaks < missed.length && missed[breaks] < before) breaks++
       const ended = breaks ? missed[breaks - 1] : null
@@ -347,7 +275,6 @@ function streakCounter() {
   }
 }
 
-/** Every planned day from the first Plan through `now`, kept or missed. */
 function plansHistory(
   records: StreakRecords,
   now: Date,
@@ -397,7 +324,6 @@ function plansHistory(
   return { kept: streak.kept, milestones: reached, best }
 }
 
-/** Every month from the first one out through `now`'s, out or not. */
 function monthsHistory(
   records: StreakRecords,
   now: Date
@@ -439,12 +365,6 @@ let cachedHistory: {
   history: StreakHistory
 } | null = null
 
-/**
- * The planned days kept, the milestones a streak of `kind` reached, and its
- * longest, from the whole history through `now`. A streak that ends and starts
- * over reaches its milestones again, as it celebrates them again. Kept like
- * `serviceStreak`.
- */
 export function streakHistory(
   kind: StreakKind,
   records: StreakRecords,

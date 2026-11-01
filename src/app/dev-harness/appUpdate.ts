@@ -1,19 +1,6 @@
 import apis from '@/constants/apis'
 import { checkAppConfig, useUpdateRequired } from '@/lib/appUpdate'
 
-/**
- * Update Required for the verify harness, without a floor on the shared local
- * API: this device's `fetch` answers ww-api in its place. `minAppVersion(v)`
- * serves `GET /app/v1/config` with that floor and reads it now, as a foreground
- * return would; `upgradeRequired(path)` answers 426 `upgrade_required` to every
- * ww-api request whose URL contains `path` (`'/accounts/v1/backup/'`,
- * `'/accounts/v1/sync/'`, `'/buddies/v1/'`, `'/notes-import/usage'`; `''` for
- * all). `requests()` lists the ww-api requests sent since, to see what keeps
- * calling while the app is gated. `clear()` hands requests back to the real
- * API. `cloudSync.checkConfig()` reads the config again, as a foreground return
- * or reconnect does.
- */
-
 type Logged = { at: number; method: string; path: string; status: number }
 
 let realFetch: typeof fetch | null = null
@@ -62,22 +49,21 @@ function install() {
 }
 
 export const appUpdateHarness = {
-  /** Serves this floor (null: none) from the config, then reads it. */
   minAppVersion: (version: string | null) => {
     install()
     floor = version
     void checkAppConfig({ force: true })
     return 'started'
   },
-  /** Answers 426 to ww-api requests whose URL contains `path`. */
+
   upgradeRequired: (path: string) => {
     install()
     refusing = path
     return 'ok'
   },
-  /** Ww-api requests since the harness took over `fetch` (or `since`). */
+
   requests: (since = 0) => log.filter((entry) => entry.at >= since),
-  /** Real answers again; Update Required stays until the next check. */
+
   clear: () => {
     if (realFetch) globalThis.fetch = realFetch
     realFetch = null

@@ -22,11 +22,6 @@ import useSavePetChoice from '@/features/pet/hooks/useSavePetChoice'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetPicker'>
 
-/**
- * Adopt a companion or change its look: the five animals, the chosen one's
- * coats, and (adopting) an optional name. One primary action; the sheet's own
- * dismissal cancels. Adopting then shows a short intro in the same sheet.
- */
 export default function PetPickerScreen({ route, navigation }: Props) {
   const palette = useGamePalette()
   const current = usePet((s) => s.pet)
@@ -35,7 +30,7 @@ export default function PetPickerScreen({ route, navigation }: Props) {
   )
   const [name, setName] = useState('')
   const save = useSavePetChoice()
-  // Set once Adopt is pressed, so the intro stays up with the new pet.
+
   const [showIntro, setShowIntro] = useState(false)
   const adopting = route.params?.mode !== 'change' || !current
   const action = petPickerSave({ ...choice, name }, current)

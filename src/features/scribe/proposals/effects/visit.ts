@@ -13,10 +13,6 @@ import type {
 } from '@/features/scribe/proposals/effects/types'
 import type { Visit } from '@/types/visit'
 
-/**
- * `day` at the time of day it is now, as the Visit form's picker keeps the
- * current time when only the day changes.
- */
 const atTimeOfDay = (day: string, now: Date): Date => {
   const time = moment(now)
   return parseDay(day)
@@ -27,7 +23,6 @@ const atTimeOfDay = (day: string, now: Date): Date => {
     .toDate()
 }
 
-/** A Visit with the Visit form's Follow-up defaults (reminder per Preferences). */
 export function applyVisitCreate(
   draft: DraftEffectOf<'visit.create'>,
   ctx: ApplyContext

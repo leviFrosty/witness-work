@@ -8,11 +8,6 @@ import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
 import useDueReportMonth from '@/features/service-reports/hooks/useDueReportMonth'
 
-/**
- * Tray reminder to submit last month's Service Report. Clears once it's sent
- * onward from the report screen, or marked as already submitted for Users who
- * report some other way.
- */
 export default function usePreviousReportNotification(
   now: number
 ): NotificationItem | null {

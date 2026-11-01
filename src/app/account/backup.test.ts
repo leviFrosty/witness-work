@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HttpError } from '@/lib/http/request'
 
-// Delete Backup turns backup off while it deletes, so no upload puts the slot
-// back. One that fails (offline) leaves backup on: nothing was deleted.
-
 const fake = vi.hoisted(() => ({
   deleteError: null as Error | null,
   deletes: [] as (string | undefined)[],

@@ -12,8 +12,6 @@ export default function useLocation() {
       const result = await Location.getCurrentPositionAsync()
       setLocation(result)
     } catch (error) {
-      // Location can be off or temporarily unavailable; don't report those
-      // device states, just leave the previous location in place.
       if (!isExpectedLocationError(error)) {
         errorTracking.captureException(error)
       }

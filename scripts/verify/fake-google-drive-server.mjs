@@ -1,25 +1,5 @@
 #!/usr/bin/env node
-// Serves the in-memory Google Drive fake (fakeGoogleDrive.ts) over HTTP so
-// Android dev builds on emulators can sync through it without a Google
-// Account. Point a dev build at it with
-//
-//   adb -s <serial> reverse tcp:<port> tcp:<port>
-//   wwv eval '__WW_DEV__.fakeGoogleDrive({ origin: "http://localhost:<port>", account: "family" })'
-//
-// then turn on Google Drive Sync in Settings. Each `account` is a separate
-// Google Account with its own app data folder.
-//
-// Inspection endpoints (not part of Drive):
-//   GET  /__fake/files?account=family   names, sizes and modified times
-//   POST /__fake/quota?account=family&bytes=10   (omit bytes to lift it)
-//   POST /__fake/reset
-//   POST /__fake/fail?path=/drive/v3/about&status=403&reason=userRateLimitExceeded&count=5
-//        the next `count` (default 1) requests whose path starts with `path`
-//        (default: any) fail with Drive's error body for `status` and `reason`
-//   POST /__fake/fail?clear=1   drops the faults that haven't fired yet
-//   GET  /__fake/log   requests served since the last reset, by method and path
-//
-// Usage: node scripts/verify/fake-google-drive-server.mjs [port]
+
 import http from 'node:http'
 import { createFakeGoogleDrive } from './fakeGoogleDrive.ts'
 

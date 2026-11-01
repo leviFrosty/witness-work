@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-// The profiling runner's reader, so the split and the reassembly stay in step.
+
 import { createPerfReader } from '../../scripts/perf/stats.mjs'
 
 vi.mock('react-native', () => ({
@@ -50,7 +50,7 @@ describe('reportPerf', () => {
     expect(lines.length).toBeGreaterThan(1)
     expect(lines.every((line) => line.length < 900)).toBe(true)
     const read = createPerfReader()
-    // Interleaved with an unrelated report, as device logs may be.
+
     const results = [
       ...lines.slice(0, 1),
       '[ww-perf] {"type":"active"}',
@@ -64,7 +64,7 @@ describe('reportPerf', () => {
     class FakeXhr {
       open(_method: string, _url: string) {}
     }
-    // React Native's own fetch is built on XMLHttpRequest; Expo's is native.
+
     const fetchViaXhr = vi.fn(async (input: string) => {
       new FakeXhr().open('GET', input)
       return new Response('')

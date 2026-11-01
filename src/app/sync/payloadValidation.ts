@@ -9,7 +9,6 @@ import {
   timestampSchema as timestamp,
 } from '@/lib/recordValidation'
 
-/** Local calendar day, `YYYY-MM-DD`. */
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const record = z
   .object({
@@ -213,9 +212,7 @@ const trip = record.extend({
   note: z.string().optional(),
   createdAt: timestamp,
 })
-// Cosmetic choices (coat, room options, gift kinds) read as strings, so an
-// option from a newer build keeps the record; the pet feature falls back to a
-// default for anything it doesn't know.
+
 const pet = record.extend({
   species: z.enum(PET_SPECIES_IDS),
   coat: z.string(),
@@ -223,11 +220,11 @@ const pet = record.extend({
   adoptedOn: dateKey,
   wakes: z.array(dateKey),
   keepsakes: z.array(z.object({ kind: z.string(), on: dateKey })),
-  // Absent on pets adopted before gift seeds (`petGiftSeed` falls back).
+
   seed: z.string().min(1).max(64).optional(),
-  // Room item ids, kept even when this build doesn't know them.
+
   earnedRoomItems: z.array(z.string()).optional(),
-  // Shop purchases; the merge drops unreadable ones (`keptPurchases`).
+
   purchases: z.array(z.unknown()).optional(),
   updatedAt: timestamp,
 })
@@ -240,7 +237,7 @@ const petRoom = record.extend({
   shelf: z.string(),
   lamp: z.string(),
   sign: z.string(),
-  // Absent on rooms from before hats.
+
   hat: z.string().optional(),
   updatedAt: timestamp,
 })
@@ -255,7 +252,7 @@ export const payloadSchema = z.object({
   writtenAt: timestamp,
   deviceId: z.string().min(1),
   deviceName: z.string().optional(),
-  // Absent from payloads written before reset generations existed.
+
   resetEpoch: z
     .object({
       id,
@@ -282,7 +279,7 @@ export const payloadSchema = z.object({
     dayPlans: z.array(plan),
     recurringPlans: z.array(recurring),
     deletedServiceReports: z.array(tombstone).optional(),
-    // Absent from payloads written before Plan deletions synced.
+
     deletedDayPlans: z.array(tombstone).optional(),
     deletedRecurringPlans: z.array(tombstone).optional(),
     additivePlans: z.boolean().optional(),
@@ -314,7 +311,6 @@ export const payloadSchema = z.object({
   profileStore: values.optional(),
 })
 
-/** Every record list in a payload, by store, with the shape of one entry. */
 const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
   contactStore: {
     contacts: contact,
@@ -350,10 +346,6 @@ const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
 const isMap = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value)
 
-/**
- * Removes the `null` at `path` inside `root` when it sits in an object, which
- * reads the same as an absent optional field.
- */
 function removeNull(root: unknown, path: (string | number)[]): boolean {
   let parent = root
   for (const key of path.slice(0, -1)) {
@@ -366,10 +358,6 @@ function removeNull(root: unknown, path: (string | number)[]): boolean {
   return true
 }
 
-/**
- * Whether `entry` reads as `schema`, after dropping `null`s from optional
- * fields. Returns the remaining problems as `path.field:code`, without values.
- */
 function entryProblems(
   entry: unknown,
   schema: z.ZodTypeAny,
@@ -401,13 +389,6 @@ function readableEntries(
   })
 }
 
-/**
- * Drops the records and setting stamps a payload carries that this build can't
- * read, so one bad record can't hide the rest of a device's data. Merges are by
- * id, so a dropped record only stays on the device that wrote it. Leaves
- * anything that isn't a list for `payloadSchema` to reject. Returns each
- * dropped field as `store.list.field:code`, without values.
- */
 export function dropUnreadableRecords(payload: unknown): string[] {
   const dropped: string[] = []
   if (!isMap(payload)) return dropped
@@ -453,10 +434,6 @@ export function dropUnreadableRecords(payload: unknown): string[] {
   return dropped
 }
 
-/**
- * How many records the lists `dropUnreadableRecords` checks hold, so a caller
- * can count what parsing dropped.
- */
 export function countRecords(payload: unknown): number {
   if (!isMap(payload)) return 0
   let count = 0
@@ -480,10 +457,6 @@ export function countRecords(payload: unknown): number {
   return count
 }
 
-/**
- * Deletes `key` from a synced values slice with its stamp and per-entry stamps,
- * so the merge keeps the local value.
- */
 function dropValue(
   store: { values: Record<string, unknown>; updatedAt: Record<string, number> },
   key: string
@@ -636,7 +609,7 @@ const preferenceShapes = z
     showBadges: z.boolean().optional(),
     showStreaks: z.boolean().optional(),
     rewardAnimations: z.boolean().optional(),
-    // Any string: a set from a newer build plays the default here.
+
     rewardSounds: z.string().optional(),
     mileageTrackingEnabled: z.boolean().optional(),
     distanceUnit: z.enum(['mi', 'km']).optional(),
@@ -648,11 +621,6 @@ const preferenceShapes = z
   })
   .passthrough()
 
-/**
- * Drops Saved Views this build can't read (e.g. one using a filter from a later
- * version) along with their stamps, so the merge leaves the local copy alone
- * rather than rejecting the whole payload or treating them as deleted.
- */
 export function dropUnreadableSavedViews(store: {
   values: Record<string, unknown>
   updatedAt: Record<string, number>
@@ -671,7 +639,6 @@ export function dropUnreadableSavedViews(store: {
   store.values.savedContactViews = readable
 }
 
-/** Whether `value` fits the type of the setting's default. */
 function fitsDefault(key: string, value: unknown, expected: unknown): boolean {
   if (expected === null || expected === undefined) return true
   if (expected instanceof Date)
@@ -687,10 +654,6 @@ function fitsDefault(key: string, value: unknown, expected: unknown): boolean {
   )
 }
 
-/**
- * Drops settings with a bad type, with their stamps, so the merge keeps the
- * local value; future unknown keys stay unused. Returns the dropped keys.
- */
 export function dropUnreadableSettings(
   store: { values: Record<string, unknown>; updatedAt: Record<string, number> },
   defaults: Record<string, unknown>
@@ -716,7 +679,6 @@ const profileShapes: Record<string, z.ZodTypeAny> = {
   hasCompletedProfileSetup: z.boolean().optional(),
 }
 
-/** Drops profile values with a bad shape, with their stamps. */
 export function dropUnreadableProfileValues(store: {
   values: Record<string, unknown>
   updatedAt: Record<string, number>

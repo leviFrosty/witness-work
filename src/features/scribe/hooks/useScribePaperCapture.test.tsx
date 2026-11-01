@@ -5,10 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   deleteAsync: vi.fn(async (_uri: string, _options?: object) => {}),
-  /**
-   * Page image → the code its read fails with; others read as "text of
-   * <image>".
-   */
+
   failures: new Map<string, string>(),
 }))
 
@@ -33,7 +30,6 @@ vi.mock('@/features/scribe/lib/defaultClient', async () => {
     { image }: { image: string },
     signal?: AbortSignal
   ) => {
-    // Let every page of the batch start before any of them ends.
     await new Promise((resolve) => setTimeout(resolve, 0))
     const failure = mocks.failures.get(image)
     if (failure === 'hang')
@@ -104,7 +100,6 @@ it('keeps pages left unread offline, and Try again reads them without picking ag
   mocks.failures.set('p2', 'network')
   mocks.failures.set('p3', 'hang')
 
-  // Page 1 lands and its copy goes; pages 2 and 3 wait, and theirs are kept.
   expect(await read()).toBe('text of p1')
   expect(deleted()).toEqual(['p1'])
   expect(hook.unread).toEqual({ count: 2, total: 3, reason: 'network' })

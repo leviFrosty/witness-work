@@ -1,26 +1,15 @@
-/**
- * Scribe AI's memory: short notes about how the User works (their words for
- * things, corrections, lasting preferences), sent in the context of every
- * conversation (protocol: Context → `memory`). Plain text, one note a line; the
- * User can edit it in Settings, and `memory_update` edits it a note at a time.
- */
-
-/** The whole memory, so it costs a few hundred tokens at most. */
 export const SCRIBE_MEMORY_MAX_CHARS = 1_500
-/** One note the model saves. */
+
 export const SCRIBE_MEMORY_NOTE_MAX_CHARS = 150
 
-/** The notes as the context lists them: non-empty lines, trimmed. */
 export const memoryLines = (text: string): string[] =>
   text
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
 
-/** What one edit did to the memory (analytics counts these). */
 export type ScribeMemoryChange = 'added' | 'changed' | 'removed'
 
-/** One `memory_update` call: `old` null adds `new`; `new` null removes `old`. */
 export interface ScribeMemoryEdit {
   old: string | null
   new: string | null
@@ -37,13 +26,6 @@ const occurrences = (text: string, part: string): number => {
   return count
 }
 
-/**
- * `text` with one edit applied, or an error the model can act on. `old` that is
- * a whole note replaces or removes that note, even when it also appears inside
- * another one. Otherwise `old` is replaced where it appears, which must be
- * exactly once; `wholeNotesOnly` refuses that (replaying onto notes the User
- * changed, a part could now land in a different note).
- */
 export function editMemory(
   text: string,
   edit: ScribeMemoryEdit,
@@ -61,7 +43,6 @@ export function editMemory(
   let next: string
   let change: ScribeMemoryChange
   if (!old) {
-    // Saving a note already there changes nothing.
     if (memoryLines(text).includes(note!))
       return { ok: true, text, change: null }
     next = text.trim() ? `${text.trimEnd()}\n${note}` : note!
@@ -88,7 +69,7 @@ export function editMemory(
           error:
             'The text in old is in more than one note, so copy the whole note from memory.',
         }
-      // A function, so `$&` and the like in a note stay literal.
+
       next = text
         .replace(old, () => note ?? '')
         .replace(/\n{3,}/g, '\n\n')
@@ -99,7 +80,7 @@ export function editMemory(
           : 'changed'
     }
   }
-  // Rewriting a note as it was changes nothing.
+
   if (next === text) return { ok: true, text, change: null }
   if (next.length > SCRIBE_MEMORY_MAX_CHARS)
     return {
@@ -109,11 +90,6 @@ export function editMemory(
   return { ok: true, text: next, change }
 }
 
-/**
- * Edits made during a step, applied again to the memory as it is now, which the
- * User changed in Settings since the step began. Only whole-note edits and
- * additions apply; one that no longer fits is skipped. Returns what applied.
- */
 export function replayMemoryEdits(
   text: string,
   edits: readonly ScribeMemoryEdit[]

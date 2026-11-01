@@ -22,11 +22,6 @@ import {
 } from '@/app/calendar/calendarSync'
 import { addForegroundListener } from '@/lib/appLifecycle'
 
-/**
- * Foreground maintenance only. Pending exports survive because domain state
- * persists. Data edits publish without an iCloud pull; launch and foreground
- * pull first so the snapshot includes other devices' changes.
- */
 export function useCalendarSync(ready: boolean | undefined) {
   useEffect(() => {
     if (!ready || !calendarSyncSupported) return
@@ -61,7 +56,7 @@ export function useCalendarSync(ready: boolean | undefined) {
         useContacts.getState().deletedContacts,
         useCalendarSettings.getState().includeDetails,
         useCalendarSettings.getState().enabled,
-        // Follow-ups without their own reminder offset use this default.
+
         usePreferences.getState().returnVisitNotificationOffset,
       ])
     const run = () => {
@@ -70,20 +65,17 @@ export function useCalendarSync(ready: boolean | undefined) {
       const settings = useCalendarSettings.getState()
       const withPull = pull
       pull = false
-      // Devices that never published have nothing to maintain. Handoff
-      // targets are covered by `sharedCalendar`. A device that declined or
-      // disconnected only finishes interrupted work, then stops.
+
       if (
         !settings.enabled &&
         !settings.registered &&
         (settings.optedOut || !settings.sharedCalendar)
       )
         return
-      // Data edits only matter to a device that publishes. Android has no
-      // other publisher to take over from.
+
       if (!settings.enabled && (!withPull || Platform.OS === 'android')) return
       running = true
-      // Only a publishing device watches data (see `watchData`).
+
       const before = settings.enabled ? fingerprint() : undefined
       let failed = false
       void calendarAction(
@@ -92,9 +84,7 @@ export function useCalendarSync(ready: boolean | undefined) {
             await publishCalendar({ pull: withPull })
             return
           }
-          // Refresh also completes a pending transfer after a previous
-          // interrupted batch, even when this device has disabled its calendar
-          // integration.
+
           if (settings.optedOut) {
             await finishDisconnect()
             return
@@ -103,7 +93,7 @@ export function useCalendarSync(ready: boolean | undefined) {
           const { deviceId } = useCalendarPublishing.getState()
           if (state.primary === deviceId) await reconnectSharedCalendar()
         },
-        // Only a device that publishes reports failures.
+
         { background: true, report: settings.enabled }
       )
         .then(() => {
@@ -114,8 +104,7 @@ export function useCalendarSync(ready: boolean | undefined) {
         })
         .finally(() => {
           running = false
-          // Edits made during a network request must not be dropped. Comparing
-          // content avoids a loop when an iCloud merge replaces equal arrays.
+
           if (stopped) return
           if (
             (before !== undefined && fingerprint() !== before) ||
@@ -137,9 +126,7 @@ export function useCalendarSync(ready: boolean | undefined) {
       clearTimeout(timer)
       timer = setTimeout(run, 1500)
     }
-    // Data edits only matter to a device that publishes, so only it watches
-    // them, and only the slices the snapshot reads: most devices never turn
-    // Calendar Sync on, and preferences change often for other reasons.
+
     let unwatchData: (() => void) | undefined
     const watchData = () => {
       if (!useCalendarSettings.getState().enabled) {
@@ -195,7 +182,7 @@ export function useCalendarSync(ready: boolean | undefined) {
           schedule({ withPull: true })
       }),
     ]
-    // Native ignores the change notifications of this app's own commits.
+
     const calendarChanges = subscribeCalendarChanges(() => {
       noteCalendarChanged()
       calendarChanged = running

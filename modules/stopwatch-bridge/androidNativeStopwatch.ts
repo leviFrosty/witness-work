@@ -17,11 +17,6 @@ type AndroidNative = {
   ): EventSubscription
 }
 
-/**
- * The native Android store (`android/…/StopwatchStore.kt`), which the Wear OS
- * watch also changes while JS isn't running. The first use takes over the timer
- * JS kept in MMKV before, so a running timer survives the update.
- */
 export function androidNativeStopwatch(native: AndroidNative) {
   let migrated = false
   const migrate = () => {
@@ -49,7 +44,7 @@ export function androidNativeStopwatch(native: AndroidNative) {
     pause: command(() => native.pause()),
     stop: command(() => native.stop()),
     reset: command(() => native.reset()),
-    /** Also on foreground, like the iOS module, for changes made meanwhile. */
+
     addListener: (
       eventName: 'onStateChange',
       listener: (state: StopwatchState) => void

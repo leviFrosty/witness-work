@@ -2,11 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import fc from 'fast-check'
 import moment from 'moment'
 
-// Property-based fuzzing of the parsers that read untrusted input (pasted
-// links, shared URLs) and of the verification scenarios. A failure prints the
-// seed and the shrunk counterexample; rerun with `FC_SEED=<seed> pnpm vitest
-// run src/__tests__/fuzz.parsers.test.ts` to reproduce it.
-
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
   Platform: { OS: 'ios' },
@@ -32,7 +27,6 @@ const runs = { numRuns: 300, seed }
 
 const shareOrigin = 'https://ww-proxy.leviwilkerson.com'
 
-/** Strings shaped like the links the app accepts, with hostile payloads. */
 const linkLike = fc.oneof(
   fc.string({ unit: 'binary' }),
   fc
@@ -153,7 +147,7 @@ describe('verification scenarios', () => {
           max: new Date('2035-12-31T00:00:00Z'),
           noInvalidDate: true,
         }),
-        // `stress` is too big to build 300 times; it has its own test.
+
         fc.constantFrom(...SCENARIO_NAMES.filter((name) => name !== 'stress')),
         (now, name) => {
           const scenario = expectConsistent(name, now)

@@ -1,24 +1,16 @@
 export type AxisLabel = {
   key: string
   label: string
-  /** Where the label centers along the plot, 0 (left edge) to 1 (right edge). */
+
   position: number
-  /** The label's rendered width. */
+
   width: number
 }
 
 export type PlacedAxisLabel = AxisLabel & {
-  /** The label's left edge, from the plot's left edge. */
   left: number
 }
 
-/**
- * Places a chart's x-axis labels whose text can be wider than the room between
- * them (large text): every label if they fit, otherwise every second, third…
- * starting from the first, the fewest skipped that keep `gap` between
- * neighbors. Each label centers on its position, nudged inward to stay within
- * the plot plus its insets.
- */
 export const placeAxisLabels = (
   labels: readonly AxisLabel[],
   {

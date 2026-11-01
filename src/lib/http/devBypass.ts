@@ -1,5 +1,3 @@
-// Dev builds talk to the dev worker, which accepts this token in place of
-// device attestation when a session opens. Production builds never send it.
 const DEV_BYPASS_TOKEN = process.env.EXPO_PUBLIC_API_DEV_BYPASS || ''
 
 export const apiDevBypass = {

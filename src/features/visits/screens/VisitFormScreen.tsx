@@ -59,7 +59,6 @@ import useDraftChanged from '@/hooks/useDraftChanged'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/** Inputs for the Follow-up's buddy invitations, supplied by the app tier. */
 export type FollowUpBuddiesSlot = (props: {
   visitId: string
   value: string[]
@@ -67,7 +66,6 @@ export type FollowUpBuddiesSlot = (props: {
 }) => ReactNode
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Visit Form'> & {
-  /** Renders the "Invite Buddies" row in the Follow-up section. */
   renderFollowUpBuddies?: FollowUpBuddiesSlot
 }
 type MomentOffset = {
@@ -104,7 +102,6 @@ const NotificationSection = (props: {
     })
   }
 
-  // Asking here, rather than leaving the switch disabled, matches Buddies.
   const handleNotifyMeChange = async (notifyMe: boolean) => {
     if (notifyMe && !notificationsAllowed && !(await turnOnNotifications()))
       return
@@ -190,16 +187,8 @@ const VisitFormScreen = ({
   const contactId = params.contactId || conversationToUpdate?.contact.id || ''
   const scrollRef = useRef<KeyboardAwareScrollView>(null)
 
-  // The entry points that pass `notAtHome` are hidden in data protection mode
-  // (see `useContactMenuActions`); refusing it here too means a stale deep link
-  // or navigation state can't slip one through. Editing an existing not-at-home
-  // visit still works — its flag comes off the stored record, not from params.
   const notAtHome = dataProtectionMode ? undefined : params.notAtHome
 
-  // When editing, prefer the offset implied by the saved notification so the
-  // form doesn't silently rewrite the user's prior choice with the preference
-  // default. Falls back to the preference (then a hardcoded default) for new
-  // conversations or when no notification was scheduled.
   const initialNotifyMeOffset = (): MomentOffset => {
     const followUp = conversationToUpdate?.followUp
     const savedMinutes =
@@ -220,7 +209,6 @@ const VisitFormScreen = ({
     initialNotifyMeOffset()
   )
 
-  // A new Follow-up's default date: the "Default Follow Up" preference.
   const defaultFollowUpDate = () =>
     moment()
       .add(
@@ -230,7 +218,6 @@ const VisitFormScreen = ({
       )
       .toDate()
 
-  // Starts on when the Contact's last real conversation was a Bible Study.
   const [bibleStudyPrefilled] = useState(
     () =>
       !conversationToUpdate &&
@@ -242,7 +229,6 @@ const VisitFormScreen = ({
       })
   )
 
-  // Opened from a Follow-up: show what the user planned to talk about.
   const plannedTopic = conversationToUpdate
     ? undefined
     : plannedFollowUpTopic({
@@ -259,9 +245,7 @@ const VisitFormScreen = ({
         },
         date: new Date(conversationToUpdate.date),
         isBibleStudy: conversationToUpdate.isBibleStudy,
-        // Always seed a follow-up draft, even when the saved record has none,
-        // so flipping the switch on has the same defaults as a new visit.
-        // `followUpEnabled` decides whether the draft is persisted.
+
         followUp: {
           topic: conversationToUpdate.followUp?.topic,
           date: conversationToUpdate.followUp
@@ -308,10 +292,6 @@ const VisitFormScreen = ({
     getConversationDefaultValue()
   )
 
-  // The Follow Up switch. Off means the saved Visit carries no `followUp` at
-  // all, which hides it from history and every appointment surface. Defaults
-  // off for Not at Home (no one answered, so there is rarely a time to plan)
-  // and on for a real conversation; when editing, mirrors the saved record.
   const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(() =>
     conversationToUpdate
       ? !!conversationToUpdate.followUp || !!params.planFollowUp
@@ -332,8 +312,6 @@ const VisitFormScreen = ({
   const handleFollowUpEnabledChange = (enabled: boolean) => {
     setFollowUpEnabled(enabled)
     if (enabled && conversation.followUp?.dismissed) {
-      // Re-enabling is an explicit commitment to the follow-up again, so a
-      // prior soft-dismissal no longer applies.
       setConversation({
         ...conversation,
         followUp: { ...conversation.followUp, dismissed: false },
@@ -380,13 +358,9 @@ const VisitFormScreen = ({
   }
 
   const submit = useCallback(() => {
-    // Saves only the reminder intent. `useReconciledReminders` schedules (or
-    // cancels) this device's OS reminder from it, once permission allows.
     const buildVisit = (): Visit => {
       const visit = { ...conversation, ...noteFields(getNoteDoc(conversation)) }
       if (!followUpEnabled || !visit.followUp) {
-        // `followUp: undefined` (not an omitted key) so
-        // `updateConversation`'s spread clears a saved one.
         return { ...visit, followUp: undefined }
       }
       const { followUp } = visit
@@ -396,7 +370,7 @@ const VisitFormScreen = ({
         followUp: {
           ...followUp,
           reminderOffsetMinutes: minutes ?? undefined,
-          // The fire time, for older app versions on other devices.
+
           notifications:
             minutes === null
               ? []
@@ -476,7 +450,6 @@ const VisitFormScreen = ({
                 onPress={async () => {
                   const saved = await submit()
                   if (!saved) {
-                    // Failed validation if didn't submit
                     return
                   }
 
@@ -656,13 +629,10 @@ const VisitFormScreen = ({
             }
             placeholder={i18n.t('note_placeholder')}
             note={conversation}
-            // Functional: the note editor calls this after other fields may
-            // have changed.
             onChange={(note) =>
               setConversation((current) => ({ ...current, ...note }))
             }
             surface='visit'
-            // A photo of someone's home is householder data.
             allowImages={!dataProtectionMode}
             lastInSection={notAtHome}
             testID='visit-note'

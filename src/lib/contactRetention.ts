@@ -4,7 +4,6 @@ import { stripContactForTombstone } from '@/lib/dataProtection'
 
 export const DELETED_CONTACT_RETENTION_MS = 90 * 24 * 60 * 60_000
 
-/** Expire recoverable details while retaining deletion evidence for old peers. */
 export function expireDeletedContactDetails(
   contacts: Contact[],
   now = syncNow()

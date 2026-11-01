@@ -14,7 +14,6 @@ export const SAVED_PLACE_SYMBOLS = {
 export const savedPlaceLabel = (kind: SavedPlaceKind) =>
   i18n.t(kind === 'home' ? 'routeBuilder_home' : 'routeBuilder_kingdomHall')
 
-/** A saved place as the route shows it: "Home", over its address. */
 export const savedPlaceOnRoute = (
   kind: SavedPlaceKind,
   place: SavedPlace
@@ -24,10 +23,6 @@ export const savedPlaceOnRoute = (
   subtitle: place.title,
 })
 
-/**
- * Home and Kingdom Hall in a start or finish menu: picks the saved place, or
- * offers to save it first.
- */
 export const savedPlaceActions = ({
   places,
   checked,
@@ -35,9 +30,9 @@ export const savedPlaceActions = ({
   onSet,
 }: {
   places: Partial<Record<SavedPlaceKind, SavedPlace>>
-  /** The saved place in use now. */
+
   checked?: SavedPlaceKind
-  /** With the place as the route shows it (see `savedPlaceOnRoute`). */
+
   onPick: (kind: SavedPlaceKind, place: SavedPlace) => void
   onSet: (kind: SavedPlaceKind) => void
 }): ContextMenuAction[] =>

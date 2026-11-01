@@ -2,20 +2,13 @@ import { MMKV } from 'react-native-mmkv'
 import type { ImportCommitResult } from '@/lib/import/writeMappedData'
 import type { ScribeLegacyImport } from '@/features/scribe/types'
 
-/**
- * Notes Import's ledger (MMKV id `notes-import-ledger`, `entry:<hash>` rows),
- * kept so imports accepted before Scribe AI can still be undone from History.
- * Read-only apart from Undo (undoLegacyImport.ts), which clears a row's commit
- * the way Notes Import did; no new rows are ever written. Only the fields used
- * here are typed.
- */
 interface LegacyLedgerRow {
   hash: string
   state?: 'working' | 'ready' | 'done' | 'stopped'
   summary?: string
   provisionalTitle?: string
   notesText?: string
-  /** Rows from before `summary` kept it only on the result. */
+
   result?: { summary?: unknown } | null
   commit?: ImportCommitResult | null
   acceptedAt?: number | null
@@ -24,7 +17,6 @@ interface LegacyLedgerRow {
   updatedAt?: number
 }
 
-/** Notes Import pruned rows after a year (ADR 0009); so does History. */
 export const LEGACY_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000
 const KEY_PREFIX = 'entry:'
 const TITLE_MAX = 60
@@ -44,7 +36,6 @@ function parseRow(raw: string | undefined): LegacyLedgerRow | null {
   }
 }
 
-/** Rows written before `state` existed: a commit or acceptedAt means Done. */
 const stateOf = (row: LegacyLedgerRow): LegacyLedgerRow['state'] =>
   row.state ??
   (row.acceptedAt != null || row.commit
@@ -86,7 +77,6 @@ function rows(): { key: string; row: LegacyLedgerRow | null }[] {
     .map((key) => ({ key, row: parseRow(mmkv.getString(key)) }))
 }
 
-/** JSON flattened the commit's Dates to strings; undoImport needs them back. */
 const reviveCommit = (commit: ImportCommitResult): ImportCommitResult => ({
   ...commit,
   insertedTimeEntries: commit.insertedTimeEntries.map((entry) => ({
@@ -103,7 +93,6 @@ const reviveCommit = (commit: ImportCommitResult): ImportCommitResult => ({
     : null,
 })
 
-/** Accepted Notes Imports that can still be undone, newest first. */
 export function listLegacyImports(
   now: number = Date.now()
 ): ScribeLegacyImport[] {
@@ -127,10 +116,6 @@ export function listLegacyImports(
     .sort((a, b) => b.acceptedAt - a.acceptedAt)
 }
 
-/**
- * The row's commit, ready for `undoImport`, if History can still undo it. The
- * ledger stays free of the record stores, so the dev reset can clear it.
- */
 export function legacyCommit(
   id: string,
   now: number = Date.now()
@@ -139,7 +124,6 @@ export function legacyCommit(
   return row?.commit && undoableRow(row, now) ? reviveCommit(row.commit) : null
 }
 
-/** After an Undo: back to Ready with no commit, as Notes Import left it. */
 export function clearLegacyCommit(id: string, now: number = Date.now()): void {
   const key = `${KEY_PREFIX}${id}`
   const row = parseRow(store().getString(key))
@@ -156,10 +140,6 @@ export function clearLegacyCommit(id: string, now: number = Date.now()): void {
   )
 }
 
-/**
- * Deletes rows History can't use: anything not an accepted import, and anything
- * older than a year. Notes Import's own rows go with it.
- */
 export function pruneLegacyLedger(now: number = Date.now()): number {
   let removed = 0
   for (const { key, row } of rows()) {
@@ -170,5 +150,4 @@ export function pruneLegacyLedger(now: number = Date.now()): number {
   return removed
 }
 
-/** Forgets every row (dev Reset local data). Records stay. */
 export const clearLegacyLedger = (): void => store().clearAll()

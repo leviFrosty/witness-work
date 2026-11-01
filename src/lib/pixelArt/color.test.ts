@@ -28,7 +28,7 @@ describe('color', () => {
     expect(toHex(mix(rgb('#000000'), rgb('#ffffff'), 0.5))).toBe('#808080')
     expect(toHex(mix(rgb('#3a2620'), rgb('#ffffff'), 0.4))).toBe('#897d79')
     expect(toHex(dim(rgb('#dcbc91'), 0.93))).toBe('#cdaf87')
-    // Outline tone: darker, green pulled down, blue lifted.
+
     expect(toHex(shadeOf(rgb('#f5bd5c'), 0.42))).toBe('#674933')
     expect(toHex(greyOf(rgb('#f2a55c')))).toBe('#b0aeb6')
     expect(greyOf(rgb('#f2a55c'), 0)).toBe(rgb('#f2a55c'))

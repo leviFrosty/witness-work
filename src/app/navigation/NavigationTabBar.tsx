@@ -11,7 +11,6 @@ import ScribeQuickActionRow from '@/features/scribe/components/ScribeQuickAction
 import { errorTracking } from '@/lib/errorTracking'
 import * as SystemMenu from '../../../modules/system-menu'
 
-/** Number only the destinations that this navigator actually exposes. */
 export default function NavigationTabBar(props: BottomTabBarProps) {
   const [commandPressed, setCommandPressed] = useState(false)
   const isFocused = useIsFocused()
@@ -51,7 +50,7 @@ export default function NavigationTabBar(props: BottomTabBarProps) {
             props.navigation.navigate(route.name, route.params)
           }
         }
-        // Only a call inside try/catch, so React Compiler can compile this.
+
         try {
           pressTab()
         } catch (error) {

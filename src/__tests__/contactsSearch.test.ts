@@ -77,13 +77,12 @@ describe('lib/contactsSearch', () => {
       const fuse = buildContactsFuse(contacts, [])
 
       const first = searchContactsFuzzy('jo', fuse, contacts)
-      // A restarted render asks again, with or without the trailing space.
+
       expect(searchContactsFuzzy('jo ', fuse, contacts)).toBe(first)
       expect(first).toEqual(
         searchContactsFuzzy('jo', buildContactsFuse(contacts, []), contacts)
       )
 
-      // A new query or a new list searches again.
       const next = searchContactsFuzzy('john', fuse, contacts)
       expect(next).not.toBe(first)
       expect(next[0].contact.id).toBe('j')
@@ -244,7 +243,6 @@ describe('lib/contactsSearch', () => {
     })
 
     it('splits text into highlighted + non-highlighted segments', () => {
-      // "hello WORLD foo" — highlight "WORLD" (index 6..10 inclusive)
       const result = buildSnippet('hello WORLD foo', [[6, 10]])
       expect(result.segments).toEqual([
         { text: 'hello ', highlighted: false },
@@ -256,7 +254,6 @@ describe('lib/contactsSearch', () => {
     })
 
     it('windows around the first match when contextChars is set', () => {
-      // 80 chars of padding on each side of "Johnson"
       const padding = 'a'.repeat(80)
       const text = `${padding}Johnson${padding}`
       const start = padding.length
@@ -264,16 +261,15 @@ describe('lib/contactsSearch', () => {
       const result = buildSnippet(text, [[start, end]], 12)
       expect(result.truncatedStart).toBe(true)
       expect(result.truncatedEnd).toBe(true)
-      // The highlighted segment should be exactly "Johnson"
+
       const highlighted = result.segments.find((s) => s.highlighted)
       expect(highlighted?.text).toBe('Johnson')
-      // The total snippet should be short (~31 chars: 12 + 7 + 12)
+
       const total = result.segments.map((s) => s.text).join('')
       expect(total.length).toBeLessThanOrEqual(12 + 7 + 12)
     })
 
     it('drops single-character index ranges as noise', () => {
-      // [4, 4] is a 1-char range — should be ignored entirely.
       const result = buildSnippet('hello world', [[4, 4]])
       expect(result.segments).toEqual([
         { text: 'hello world', highlighted: false },
@@ -281,7 +277,6 @@ describe('lib/contactsSearch', () => {
     })
 
     it('handles multiple non-overlapping matches in the same window', () => {
-      // "Johnson and Johnson" — two highlights.
       const text = 'Johnson and Johnson'
       const result = buildSnippet(text, [
         [0, 6],

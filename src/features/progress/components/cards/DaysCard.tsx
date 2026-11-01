@@ -6,10 +6,6 @@ import type { View } from 'react-native'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * Every day of the month, most recent first: all of them (`full`), or a few in
- * a card that scrolls on its own (`compact`).
- */
 export default function DaysCard({
   month,
   year,
@@ -18,9 +14,8 @@ export default function DaysCard({
   dayReveal,
   dayRef,
 }: ProgressCardProps & {
-  /** Keeps a picked day above its sheet in the full list. */
   dayReveal?: RevealAboveSheet
-  /** Each day's row, by its date, e.g. to keep it in view. */
+
   dayRef?: (day: string) => Ref<View>
 }) {
   return (

@@ -19,7 +19,6 @@ import SatelliteSurface, {
   Skeleton,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
 
-/** A contact with a follow-up already on the calendar. */
 const VisitSatellite = ({
   palette,
   focus,
@@ -31,7 +30,6 @@ const VisitSatellite = ({
   const followUp = moment().add(2, 'days').hour(10).minute(0)
   const ring = useSharedValue(0)
 
-  // The follow-up's bell rings as the story reaches visits.
   useEffect(() => {
     if (!active || reduceMotion) return
     const swing = { duration: 140, easing: Easing.inOut(Easing.quad) }

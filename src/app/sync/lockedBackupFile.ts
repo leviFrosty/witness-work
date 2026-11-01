@@ -11,16 +11,10 @@ import {
   unlockWithAccountKey,
 } from '@/lib/backupFileLock'
 
-/**
- * Settings → Backup's file, locked (`backupFileLock.ts`): to this device's
- * account key, for the User's own devices, or with a password, for sharing.
- */
-
 export type BackupFileLockChoice =
   | { lock: 'account' }
   | { lock: 'password'; password: string }
 
-/** Whether this binary can hold an account key to lock a file to. */
 export const accountLockAvailable = () => accountKeyAvailable()
 
 const origin = () => ({
@@ -30,10 +24,6 @@ const origin = () => ({
   createdAt: Date.now(),
 })
 
-/**
- * The backup of the stores as they are now, locked. Locking to the account
- * creates the account key when this device has none yet.
- */
 export async function createLockedBackupFile(
   choice: BackupFileLockChoice,
   onProgress?: (fraction: number) => void
@@ -45,10 +35,6 @@ export async function createLockedBackupFile(
   return lockWithAccountKey(file, await accountKey.getOrCreate(), options)
 }
 
-/**
- * Opens an `account` file with this device's key. Null when this device has no
- * account key; `BackupUnlockError('key')` when it's another account's file.
- */
 export async function unlockWithThisAccount(
   file: LockedBackupFile
 ): Promise<UnlockedBackupFile | null> {

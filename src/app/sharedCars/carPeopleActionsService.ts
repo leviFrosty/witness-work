@@ -8,7 +8,6 @@ import {
   sharedCarsFailureName,
 } from '@/app/sharedCars/sharedCarsService'
 
-/** The car form's People actions, on the app's engine and invitations. */
 export const carPeopleActions = createCarPeopleActions({
   engine: sharedCarsEngine,
   invitations: carInvitations,

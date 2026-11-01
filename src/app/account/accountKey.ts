@@ -16,12 +16,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { leaveCloudSyncAccount } from '@/app/sync/cloudSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 
-/**
- * This device's account key (ADR 0026), wired to the native store, the server
- * account and Buddies. In the app tier because replacing the key has to let go
- * of Buddies first: Delete Buddies on the account's last device, else signing
- * this one out of it.
- */
 export const accountKey = createAccountKeyService({
   store: {
     peek: BuddiesKeychain.peekRootSeed,
@@ -44,7 +38,7 @@ export const accountKey = createAccountKeyService({
       return {
         buddies: buddies.length,
         buddyNames: buddies.map(buddyDisplayName),
-        // Removals still owed to former buddies need the old key too.
+
         inboxRegistered:
           registeredInboxId !== null || pendingRemovals.length > 0,
       }
@@ -61,24 +55,18 @@ export const accountKey = createAccountKeyService({
         iCloudSync.resetPushBackoff()
         if (usePreferences.getState().iCloudSyncPendingPush)
           await iCloudSync.push('leave-account')
-        // Nothing may start against the old account from here.
+
         usePreferences.setState({ iCloudSyncEnabled: false })
         await iCloudSync.waitForSyncIdle()
       }),
   },
 })
 
-/** Whether this binary can store an account key, and replace it. */
 export const accountKeyAvailable = () => BuddiesKeychain.isAvailable()
 export const accountKeyReplaceable = () => BuddiesKeychain.isReplaceAvailable()
 
 export type AccountKeyReplaceSource = 'recovery_key' | 'handoff' | 'tools'
 
-/**
- * Replaces the account key (see `AccountKeyService.replace`), records it, and
- * then lets Buddies start here when the new key already has it elsewhere. A
- * handoff starts Buddies itself once the old phone knows it's done.
- */
 export async function replaceAccountKey(
   newKey: Uint8Array,
   {

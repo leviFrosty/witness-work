@@ -1,6 +1,3 @@
-// The backend for a profiling run. Release bundles bake their API URL in, so
-// the bundle always calls 127.0.0.1:WW_PERF_API_PORT and this relays it to the
-// isolated ww-api that `wwv up` runs too (on whatever port it got).
 import net from 'node:net'
 import path from 'node:path'
 import { pidAlive } from '../verify/leases.mjs'
@@ -24,7 +21,6 @@ async function healthy(url) {
   }
 }
 
-/** Starts (or reuses) the isolated ww-api; returns its URL. */
 function localApi(dir) {
   const before = readJson(path.join(dir, '.verify/state.json'), null)
   const started = !pidAlive(before?.pid)
@@ -61,10 +57,6 @@ function relay(port, target) {
   })
 }
 
-/**
- * The API for a run: `apiUrl` when given (an existing ww-api), else the
- * isolated one from `apiDir`. Returns what to record and a `stop()`.
- */
 export async function startApi({ port, apiUrl, apiDir: dirFlag }) {
   const dir = dirFlag ? path.resolve(dirFlag) : apiDir()
   const api = apiUrl
@@ -80,7 +72,7 @@ export async function startApi({ port, apiUrl, apiDir: dirFlag }) {
     port,
     stop() {
       server.close()
-      // Left running while a `wwv up` lease uses it.
+
       if (api.started) stopLocalApi(null, { dir })
     },
   }

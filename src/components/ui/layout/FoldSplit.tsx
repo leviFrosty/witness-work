@@ -18,21 +18,17 @@ import DisplayRegionsView, {
 import { getFoldSplit } from '@/lib/foldSplit'
 import { FoldHandled, useFoldHandled } from '@/components/ui/layout/FoldPane'
 
-// Close to UIKit's default spring for layout changes, without overshoot.
 const FOLD_SPRING = { duration: 450, dampingRatio: 1 }
 
 type Props = {
   leading: ReactNode
-  /**
-   * Without one, the leading column fills the row. It stays the same view
-   * either way, so a column can come and go without remounting it.
-   */
+
   trailing?: ReactNode
-  /** The leading column's share of the width while the display is flat. */
+
   leadingFraction?: number
-  /** Or its fixed width while flat. */
+
   leadingWidth?: number
-  /** Or the trailing column's fixed width while flat. */
+
   trailingWidth?: number
   paddingHorizontal?: number
   gap?: number
@@ -43,11 +39,6 @@ type Props = {
   leadingRef?: Ref<View>
 }
 
-/**
- * Two columns side by side that meet at iPhone Duo's fold while it's partly
- * folded like a book, as system split views do, and move there with a spring.
- * Elsewhere it's a plain row with its usual proportions.
- */
 export default function FoldSplit({
   leading,
   trailing,
@@ -93,8 +84,7 @@ export default function FoldSplit({
 
   const leadingSize = useSharedValue(-1)
   const gapSize = useSharedValue(gap)
-  // One column just fills the row: no width to chase while the window
-  // resizes, which a list inside would lay its rows out at.
+
   const fill = useSharedValue(single)
   const laidOutWidth = useRef(0)
   const targetLeading = split?.leadingWidth
@@ -102,7 +92,7 @@ export default function FoldSplit({
   useEffect(() => {
     fill.value = single
     if (targetLeading === undefined || targetGap === undefined) return
-    // The first layout and resizes jump; only folding and unfolding animate.
+
     const animate =
       !reduceMotion && leadingSize.value >= 0 && laidOutWidth.current === width
     laidOutWidth.current = width
@@ -128,7 +118,7 @@ export default function FoldSplit({
         ? { width: '100%', flex: 0 }
         : { width: leadingSize.value, flex: 0 }
   )
-  // One column has no gap, from the first frame on.
+
   const gapAnimatedStyle = useAnimatedStyle(() => ({
     width: fill.value ? 0 : gapSize.value,
   }))
@@ -152,14 +142,13 @@ export default function FoldSplit({
               ? { width: leadingWidth }
               : trailingWidth !== undefined
                 ? { flex: 1 }
-                : // Against the trailing column's flex 1, until the first layout.
-                  { flex: leadingFraction / (1 - leadingFraction) },
+                : { flex: leadingFraction / (1 - leadingFraction) },
           { minWidth: 0 },
           leadingStyle,
           leadingAnimatedStyle,
         ]}
       >
-        {/* Two columns already meet the fold; one fills the row as a screen. */}
+        {}
         <FoldHandled value={single ? handled : true}>{leading}</FoldHandled>
       </Animated.View>
       <Animated.View style={gapAnimatedStyle} />

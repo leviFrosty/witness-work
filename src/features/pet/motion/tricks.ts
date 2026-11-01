@@ -1,11 +1,6 @@
-/**
- * Tricks (hidden moment: 15 pats within 5 seconds). Each ends at rest and the
- * pet says hello when it finishes.
- */
 import type { PetSpeciesId } from '../art/types'
 import type { MotionTable } from './types'
 
-/** Lion: rolls over and pops back up. */
 const lion: MotionTable = {
   durationMs: 1900,
   sayAtMs: 1150,
@@ -25,7 +20,6 @@ const lion: MotionTable = {
   },
 }
 
-/** Pup: chases its tail (fast spins). */
 const dog: MotionTable = {
   durationMs: 1900,
   sayAtMs: 1350,
@@ -43,7 +37,6 @@ const dog: MotionTable = {
   },
 }
 
-/** Kitten: zoomies, left and right across the rug. */
 const cat: MotionTable = {
   durationMs: 2100,
   sayAtMs: 1550,
@@ -63,7 +56,6 @@ const cat: MotionTable = {
   },
 }
 
-/** Donkey: a little dance of hops, turning each time. */
 const donkey: MotionTable = {
   durationMs: 2100,
   sayAtMs: 1450,
@@ -82,7 +74,6 @@ const donkey: MotionTable = {
   },
 }
 
-/** Lamb: three high bounces on the spot. */
 const lamb: MotionTable = {
   durationMs: 2100,
   sayAtMs: 1450,
@@ -100,7 +91,6 @@ const lamb: MotionTable = {
   },
 }
 
-/** Each species' trick. */
 export const TRICKS: Readonly<Record<PetSpeciesId, MotionTable>> = {
   lion,
   dog,

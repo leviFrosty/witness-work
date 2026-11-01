@@ -14,9 +14,6 @@ import { isStoredDateAnchored, momentStoredDate } from '@/lib/normalizeDate'
 import { getServiceYearFromDate, serviceYearOf } from '@/lib/serviceYear'
 import { entryMinutes } from '@/lib/entryMinutes'
 
-// Re-exported for backwards compatibility — canonical home is `types/timeEntry`.
-// Recurrence helpers that used to live here now live in `@/lib/recurrence`;
-// Service-Year helpers in `@/lib/serviceYear`.
 export { RecurringPlanFrequencies } from '@/types/timeEntry'
 export type {
   MonthlyByWeekdayConfig,
@@ -24,21 +21,9 @@ export type {
   RecurringPlanOverride,
 } from '@/types/timeEntry'
 
-/**
- * A Time Entry that says the User shared that day. Both halves of a Time
- * Rollover are bookkeeping, not ministry, and a negative entry never is. A 0h
- * entry is the checkbox "shared" marker, so it counts.
- *
- * Only for "did they share?" checks. Hour totals keep every entry, rollovers
- * included.
- */
 export const isCountableEntry = (entry: TimeEntry) =>
   entry.rollover !== true && entryMinutes(entry) >= 0
 
-/**
- * What kind of Time Entry this is, for analytics `entry_mode`: logged time, or
- * the 0h 0m checkbox "shared" marker.
- */
 export const timeEntryMode = (
   entry: Pick<TimeEntry, 'hours' | 'minutes'>
 ): 'hours' | 'checkbox' => (entry.hours || entry.minutes ? 'hours' : 'checkbox')
@@ -56,9 +41,7 @@ export const getTotalMinutesDetailedForSpecificMonth = (
     const m = momentStoredDate(report.date)
     return m.month() === month && m.year() === year
   })
-  // "Other" deliberately excludes LDC entries — LDC has its own visual slice
-  // in the breakdown via `ldcMinutesForSpecificMonth`, and double-counting it
-  // here would inflate the credit total.
+
   const otherWithNonCreditMinutes = reportsForMonth.reduce((prev, report) => {
     if (hasCategory(report) && !isLdcEntry(report) && !report.credit) {
       return prev + entryMinutes(report)
@@ -89,17 +72,6 @@ export const getTotalMinutesDetailedForSpecificMonth = (
   }
 }
 
-/**
- * The monthly credit-cap formula every Service Report total runs through:
- * standard time always counts in full (it can exceed the cap on its own);
- * credit only fills whatever headroom remains under the cap. `null` cap means
- * unlimited (special pioneer / circuit overseer / user override).
- *
- * Single source of the formula — `adjustedMinutesForSpecificMonth`,
- * `getTotalMinutesForServiceYear`, and the Projected Total
- * (`src/lib/projectedTotal.ts`) all defer here so a projection can never
- * disagree with the report it mirrors (ADR 0005).
- */
 export const applyMonthCreditCap = (
   standardMinutes: number,
   creditMinutes: number,
@@ -111,12 +83,6 @@ export const applyMonthCreditCap = (
       ? standardMinutes
       : Math.min(standardMinutes + creditMinutes, creditCapMinutes)
 
-/**
- * A month's credit cap in minutes (`null` = unlimited). Role defaults
- * (specialPioneer/circuitOverseer = unlimited) and the user's override live
- * behind `creditCapMinutesFor`; callers that don't know the publisher keep the
- * legacy 55h default.
- */
 export const monthCreditCapMinutes = (
   publisher?: Publisher,
   creditLimitOverride?: { enabled: boolean; customLimitHours: number }
@@ -126,32 +92,14 @@ export const monthCreditCapMinutes = (
     : monthCreditMaxMinutes
 
 export type AdjustedMinutes = {
-  /**
-   * Total adjusted hours possible to submit to report, including all possible
-   * credit that can be applied.
-   */
   value: number
-  /** The amount of standard time in the value. */
+
   standard: number
-  /** The amount of credit in the value. */
+
   credit: number
   creditOverage: number
 }
 
-/**
- * Returns minutes for specific month, taking into account potential overage
- * that could occur with credit hours.
- *
- * For example, a user has 50 standard hours and 30 credit hours for January.
- * Their adjusted hours would be 55, since they can only have up to 55 hours of
- * time including their credit.
- *
- * If a user has 70 standard hours and 30 credit hours, they will result with 70
- * hours - because standard has higher priority.
- *
- * Special pioneers and circuit overseers have no credit limit applied by
- * default. Users can override the default credit limit through preferences.
- */
 export const adjustedMinutesForSpecificMonth = (
   monthsReports: TimeEntry[],
   targetMonth: number,
@@ -174,8 +122,7 @@ export const adjustedMinutesForSpecificMonth = (
   return {
     value,
     standard,
-    // Credit that made it into the value vs. credit the cap squeezed out.
-    // `value` is always ≥ standard, so both deltas are non-negative.
+
     credit: value - standard,
     creditOverage: standard + credit - value,
   }
@@ -202,19 +149,9 @@ export const ldcMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
-/**
- * Per-Category aggregation row used by the breakdown UI. `categoryId` is the
- * canonical key after the tag → Category refactor; `tag` is the user-visible
- * label sourced from the Category record's `name` (or the legacy `tag` string
- * for unmigrated entries).
- */
 export type OtherReports = {
-  /**
-   * Stable id of the underlying Category record, or undefined for unmigrated
-   * entries.
-   */
   categoryId?: string
-  /** Display label — Category name (post-migration) or legacy tag string. */
+
   tag: string
   minutes: number
   credit?: boolean
@@ -229,19 +166,13 @@ export const otherMinutesForSpecificMonth = (
     const m = momentStoredDate(report.date)
     return m.month() === targetMonth && m.year() === targetYear
   })
-  // LDC entries are surfaced via their own breakdown slice (see
-  // `ldcMinutesForSpecificMonth`); exclude them from "other" so the LDC
-  // builtin doesn't appear as a duplicate row in the user Categories list.
+
   const taggedReports = reportsForMonth.filter(
     (report) => hasCategory(report) && !isLdcEntry(report)
   )
 
   const otherReportsTotalMinutes = taggedReports.reduce<OtherReports>(
     (accumulator, report) => {
-      // Prefer grouping by categoryId so two entries pointing at the same
-      // Category record always collapse into one row even if their stored
-      // labels disagree (e.g. one was edited after the rename). Fall back to
-      // the legacy `tag` string for unmigrated entries.
       const groupKey = report.categoryId ?? report.tag
       if (!groupKey) return accumulator
 
@@ -291,25 +222,14 @@ export const standardMinutesForSpecificMonth = (
   return totalMinutesForMonth
 }
 
-/**
- * Raw standard/credit logged minutes for one calendar month, before any credit
- * cap is applied. Produced by `getServiceYearMonthlyBreakdowns` and consumed by
- * the Projected Total (`src/lib/projectedTotal.ts`), which runs the cap formula
- * per month on the combined logged + planned buckets.
- */
 export type MonthlyLoggedBreakdown = {
   year: number
-  /** 0-indexed month, 0-11. */
+
   month: number
   standard: number
   credit: number
 }
 
-/**
- * Walks a service year's report buckets and returns the raw (uncapped)
- * standard/credit minutes per month. Shared by `getTotalMinutesForServiceYear`
- * and the year-scope Projected Total so both read the months identically.
- */
 export const getServiceYearMonthlyBreakdowns = (
   serviceYearReports: TimeEntriesByYear
 ): MonthlyLoggedBreakdown[] => {
@@ -323,10 +243,6 @@ export const getServiceYearMonthlyBreakdowns = (
         parseInt(year)
       )
 
-      // Trust the bucket key: `monthReports` are already keyed under
-      // (year, month). Re-filtering by `report.date` would also drop entries
-      // whose stored UTC calendar day drifts off its bucket (legacy pre-
-      // normalization data still in the user's store).
       let standardOnly = 0
       let ldc = 0
       let otherWithCredit = 0
@@ -334,8 +250,6 @@ export const getServiceYearMonthlyBreakdowns = (
       for (const report of monthReports) {
         const m = entryMinutes(report)
         if (isLdcEntry(report)) {
-          // LDC keeps its own bucket so visual breakdowns stay separable; the
-          // cap math folds it back into the credit total anyway.
           ldc += m
         } else if (hasCategory(report)) {
           if (report.credit) otherWithCredit += m
@@ -357,14 +271,6 @@ export const getServiceYearMonthlyBreakdowns = (
   return breakdowns
 }
 
-/**
- * Calendar-day keys (`YYYY-MM-DD`, stored-UTC) for every day with at least one
- * logged TimeEntry (`isCountableEntry`; a Time Rollover isn't that day's time).
- * The Projected Total uses this to drop a day's Plans once actual time exists
- * for that day so planned minutes never stack on top of a logged day (issue
- * #366). Keys use the same stored-UTC format the projection's day walk and the
- * Day Plan lookup use, so they line up exactly.
- */
 export const getLoggedDayKeys = (reports: TimeEntry[]): Set<string> =>
   new Set(
     reports
@@ -375,11 +281,7 @@ export const getLoggedDayKeys = (reports: TimeEntry[]): Set<string> =>
 export const getTotalMinutesForServiceYear = (
   serviceYearReports: TimeEntriesByYear,
   _serviceYear: number,
-  /**
-   * The role whose credit cap applies — or, with a **Role History**, a resolver
-   * returning the role for each month so every month is capped by the role that
-   * applied then.
-   */
+
   publisher?: Publisher | ((target: CalendarMonth) => Publisher),
   creditLimitOverride?: { enabled: boolean; customLimitHours: number }
 ) => {
@@ -396,24 +298,11 @@ export const getTotalMinutesForServiceYear = (
   )
 }
 
-/**
- * Annual counterpart of the Month breakdown's Standard/LDC/other split. `other`
- * groups by `categoryId ?? tag` with the same semantics as
- * `otherMinutesForSpecificMonth`, so the Year view's rows collapse identically
- * to the Month view's.
- *
- * All numbers are RAW logged minutes — deliberately unadjusted for the monthly
- * credit cap. The cap applies to a month's combined total, so squeezed-out
- * minutes can't be attributed to any single category; raw sums are the only
- * per-category number that stays truthful (same stance as the lifetime helpers
- * below and their "unadjusted" info affordance).
- */
 export type ServiceYearCategoryBreakdown = {
-  /** Minutes with no category (and not LDC). */
   standard: number
-  /** Minutes on the LDC builtin Category (or legacy `ldc: true`). */
+
   ldc: number
-  /** Per-category minutes for user Categories, excluding LDC. */
+
   other: OtherReports
 }
 
@@ -432,9 +321,6 @@ export const getCategoryBreakdownForServiceYear = (
         parseInt(year)
       )
 
-      // Trust the bucket key, same as `getServiceYearMonthlyBreakdowns` —
-      // re-filtering by `report.date` would drop legacy entries whose stored
-      // UTC calendar day drifted off their bucket.
       for (const report of monthReports) {
         const minutes = entryMinutes(report)
         if (isLdcEntry(report)) {
@@ -465,35 +351,14 @@ export const getCategoryBreakdownForServiceYear = (
   return { standard, ldc, other }
 }
 
-// ---------------------------------------------------------------------------
-// Lifetime / all-time aggregation helpers
-//
-// Used by the Progress screen's "All-time" tab (LifetimeHoursCard +
-// YearByYearList). These helpers operate over a FLAT `TimeEntry[]`
-// (callers flatten the store's `TimeEntriesByYear` before passing it in)
-// so they stay pure and easy to test. Lifetime hours are intentionally the
-// RAW sum of `hours + minutes/60` across every report — i.e. NOT adjusted for
-// the monthly credit cap. The surrounding UI shows an "unadjusted" info
-// affordance so the number's meaning stays clear.
-// ---------------------------------------------------------------------------
-
-/**
- * Raw lifetime hours across every `TimeEntry` — unadjusted for credit caps.
- * Rounded to 1 decimal place.
- */
 export const getLifetimeHours = (serviceReports: TimeEntry[]): number => {
   return round(getLifetimeMinutes(serviceReports) / 60, 1)
 }
 
-/**
- * Raw lifetime minutes across every `TimeEntry` — unadjusted for credit caps.
- * Preferred for rendering, since the display formatter takes minutes.
- */
 export const getLifetimeMinutes = (serviceReports: TimeEntry[]): number => {
   return serviceReports.reduce((sum, report) => sum + entryMinutes(report), 0)
 }
 
-/** Earliest `date` found across all reports, or `null` if none. */
 export const getEarliestReportDate = (
   serviceReports: TimeEntry[]
 ): Date | null => {
@@ -506,24 +371,6 @@ export const getEarliestReportDate = (
   return earliestMs === Infinity ? null : new Date(earliestMs)
 }
 
-// `getServiceYearEndYearsSpan` and friends below feed `report.date` into
-// `getServiceYearFromDate` (which calls `.month()/.year()`). Wrap stored Dates
-// in UTC mode so the calendar day is read consistently across device TZs.
-
-/**
- * Continuous span of service-year END years from the earliest report's service
- * year up to the current service year (inclusive).
- *
- * Service-year convention (matches `getServiceYearFromDate`):
- *
- * - Months Jan–Aug (0–7) roll into the PRIOR service year; its end-year is the
- *   calendar year itself.
- * - Months Sep–Dec (8–11) roll into the NEXT service year; its end-year is `year
- *
- *   - 1`.
- *
- * Returns an empty array when there are no reports.
- */
 export const getServiceYearEndYearsSpan = (
   serviceReports: TimeEntry[],
   nowMoment?: moment.Moment
@@ -536,7 +383,6 @@ export const getServiceYearEndYearsSpan = (
   const now = nowMoment ?? moment()
   const currentStart = getServiceYearFromDate(now)
 
-  // End-year = start-year + 1 (service year Sep `start` → Aug `start+1`).
   const firstEnd = earliestStart + 1
   const lastEnd = currentStart + 1
   if (lastEnd < firstEnd) return []
@@ -552,25 +398,16 @@ const storedYearMonth = (date: Date | string) => {
 }
 
 export type ServiceYearTotal = {
-  /** Raw minutes, unadjusted for credit caps. */
   minutes: number
-  /** Entries, zero-hour placeholders included. */
+
   reportCount: number
 }
 
-/**
- * Each Service Year's raw minutes and entry count, keyed by the year it ends in
- * (August of `endYear`), in one pass over the entries. A year with only
- * zero-hour placeholders still has its entries counted; a year without entries
- * has no key.
- */
 export const getServiceYearTotalsByEndYear = (
   serviceReports: TimeEntry[]
 ): Map<number, ServiceYearTotal> => {
   const totals = new Map<number, ServiceYearTotal>()
   for (const report of serviceReports) {
-    // The stored calendar day, as `momentStoredDate` reads it, without a
-    // moment for the usual noon-UTC anchor.
     const instant = new Date(report.date)
     const stored = isStoredDateAnchored(instant)
       ? { year: instant.getUTCFullYear(), month: instant.getUTCMonth() }
@@ -587,18 +424,6 @@ export const getServiceYearTotalsByEndYear = (
   return totals
 }
 
-/**
- * Compute the list of service-year `endYear`s the user is allowed to backdate
- * into from the All-time tab's "Add earlier year" picker.
- *
- * Range: from `currentEndYear - floorYearsBack` up to (earliest present
- * endYear) - 1, descending. Excludes any year already in `endYears` (defensive;
- * `getServiceYearEndYearsSpan` already returns a continuous span, but we don't
- * want to rely on that contract here).
- *
- * Returns `[]` if `endYears` is empty or if every candidate year is already
- * present / below the floor.
- */
 export const getAvailableEarlierEndYears = (
   endYears: number[],
   currentEndYear: number,
@@ -662,5 +487,5 @@ export const getMonthsReports = (
   if (!year || !year[month]) {
     return []
   }
-  return [...year[month]] // Need to return new array so memoization functions doesn't reference existing array
+  return [...year[month]]
 }

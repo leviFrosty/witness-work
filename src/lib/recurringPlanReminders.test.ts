@@ -12,12 +12,10 @@ import {
   recurringPlanOnDay,
 } from '@/lib/reminderSchedule'
 
-/** Local wall-clock instant on 2026-03-<day> (the 1st is a Sunday). */
 const at = (day: number, hours = 0, minutes = 0) =>
   new Date(2026, 2, day, hours, minutes)
 const stored = (day: number) => normalizeDateForStorage(at(day, 12))
 
-/** Tuesdays from March 3 at 9:00 AM, reminding 30 minutes before. */
 const weekly = (overrides: Partial<RecurringPlan> = {}): RecurringPlan => ({
   id: 'weekly',
   startDate: stored(3),
@@ -111,7 +109,7 @@ describe('Recurring Plan reminders', () => {
       minutes: 60,
       note: 'Bring the new tracts',
     })
-    // An anytime date reminds at 8:00 AM, whatever the offset.
+
     expect(anytime).toMatchObject({
       date: at(10, 8),
       anchor: at(10, 8),
@@ -125,7 +123,6 @@ describe('Recurring Plan reminders', () => {
   })
 
   it('looks past the horizon for a long lead', () => {
-    // Three weeks ahead: the March 24 instance reminds on March 3.
     const plan = weekly({ reminderOffsetMinutes: 3 * 7 * 24 * 60 })
     const days = buildReminderSchedule(
       sources([plan], at(1, 10).getTime())
@@ -151,7 +148,7 @@ describe('Recurring Plan reminders', () => {
     )
     const schedule = buildReminderSchedule(sources(plans, at(1, 10).getTime()))
     expect(schedule).toHaveLength(60)
-    // Soonest first: every March 3 instance before the March 10 ones.
+
     expect(schedule.slice(0, 40).every((r) => r.day === '2026-03-03')).toBe(
       true
     )

@@ -15,10 +15,6 @@ import { monthWeeks } from '@/features/progress/lib/progressCardStats'
 import useMonthProgress from '@/features/progress/hooks/useMonthProgress'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * The month week by week, as bars. The headline is this week's time, or the
- * best week in another month.
- */
 export default function WeeksCard({ month, year, size }: ProgressCardProps) {
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
@@ -33,7 +29,7 @@ export default function WeeksCard({ month, year, size }: ProgressCardProps) {
     null
   )
   const headline = tense === 'current' ? current : best
-  // Another month with no time has no best week to name.
+
   const nothingYet = tense !== 'current' && !best
   const barHeight = wide ? 64 : 36
   const dayLabel = (key: string) =>
@@ -146,7 +142,7 @@ export default function WeeksCard({ month, year, size }: ProgressCardProps) {
                   style={{
                     height: fill,
                     borderRadius: 4,
-                    // An empty week is a grey stub, not data.
+
                     backgroundColor:
                       w.isFuture || w.minutes === 0
                         ? theme.colors.border

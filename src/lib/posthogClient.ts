@@ -22,8 +22,6 @@ const projectToken = extra?.posthogProjectToken
 const host = extra?.posthogHost
 
 function createClient(): PostHog | null {
-  // Keep flags/surveys available in Beta and development without ingesting
-  // their usage, including restored queues and later network retries.
   setAnalyticsProduction(
     extra?.appVariant === 'production' &&
       (typeof __DEV__ === 'undefined' || !__DEV__)
@@ -38,14 +36,12 @@ function createClient(): PostHog | null {
   try {
     const client = new AnonymousPostHog(projectToken, {
       host,
-      // Anonymous usage statistics only: never create person profiles, so
-      // identify/alias/group are no-ops and events are not linked to a person.
+
       personProfiles: 'never',
-      // `FeatureFlagsRuntime` loads flags when the app is in use; the SDK's
-      // own load after remote config would be a second request at launch.
+
       preloadFeatureFlags: false,
       captureAppLifecycleEvents: true,
-      // The native plugin supplies crash capture; push analytics stay opt-in.
+
       capturePushNotificationSubscriptions: false,
       capturePushNotificationOpened: false,
       errorTracking: {
@@ -53,16 +49,14 @@ function createClient(): PostHog | null {
         autocapture: {
           uncaughtExceptions: errorTrackingEnabled,
           unhandledRejections: errorTrackingEnabled,
-          // Handled failures are explicitly reported after logging. Capturing
-          // console.error too would count those failures twice.
+
           console: false,
           nativeCrashes: errorTrackingEnabled,
         },
       },
       before_send: (event) => {
         if (!event) return event
-        // The user's analytics switch. Crash reports and survey responses pass;
-        // feature flag requests do not go through here and are unaffected.
+
         if (!analyticsEventAllowed(event.event, event.properties)) return null
         if (isAnalyticsEvent(event.event)) {
           if (!allowAnalyticsFrequency(event.event, event.properties))
@@ -92,8 +86,7 @@ function createClient(): PostHog | null {
         }
       },
     })
-    // SDK debug output includes automatic events, feature flags, flushes, and
-    // transport errors as well as calls through the analytics adapter.
+
     client.debug(logger.isEnabled())
     if (logger.isEnabled()) {
       logger.debug('[Analytics] Initializing PostHog', {

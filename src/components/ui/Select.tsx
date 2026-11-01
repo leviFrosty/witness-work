@@ -10,7 +10,7 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 export type SelectDataItem<T> = {
   label: string
   value: T
-  /** Beside the option in the menu only (an SF Symbol; see `SelectMenu`). */
+
   systemImage?: SelectMenuItem['systemImage']
 }
 export type SelectData<T> = SelectDataItem<T>[]
@@ -18,11 +18,7 @@ export type SelectData<T> = SelectDataItem<T>[]
 export interface SelectProps<T> {
   data: T[]
   onChange: (item: T) => void
-  /**
-   * Currently selected value. Compared against item values via string coercion
-   * so callers may pass either the raw value or its `.toString()`.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   value: any
   placeholder?: string
   accessibilityLabel?: string
@@ -38,14 +34,10 @@ const Select = <T,>({
   accessibilityLabel,
 }: SelectProps<T>) => {
   const theme = useTheme()
-  // At any enlarged text size a long value wraps between words instead of
-  // truncating ("Auto (Mil…", "Regular Pi…"), and a word too wide for the
-  // control shrinks rather than breaking ("minut / es").
+
   const enlarged = useWindowDimensions().fontScale > 1
   const ValueText = enlarged ? WholeWordsText : Text
 
-  // Native menus key options by string id. Stringify both sides and map back to
-  // the original item on selection so callers receive the untouched object.
   const items = data as unknown as SelectDataItem<unknown>[]
   const isSelected = (itemValue: unknown) => {
     if (itemValue === value) return true

@@ -14,38 +14,33 @@ import type { NoteFields } from '@/types/richText'
 import type { PlanLocation } from '@/types/timeEntry'
 import { formatPlanWhen } from '@/features/plans/lib/planWhen'
 
-/** What a Plan (or a buddy's Plan invitation) shows on Plan Details. */
 export type PlanDetailsFields = {
   title?: string
-  /** Local day. */
+
   date: Date
   startTimeInMinutes?: number
-  /** Just hours, with no set time. */
+
   anytime?: boolean
-  /** Unset for a buddy's invitation that gave no length. */
+
   minutes?: number
-  /** Under the length, e.g. the organizer's when the User set their own. */
+
   minutesDescription?: string
-  /** Own Plans only: a buddy's invitation carries no Type. */
+
   typeLabel?: string
-  /** A Recurring Plan's pattern in words. */
+
   repeats?: string
-  /** This date of a Recurring Plan has its own time, length, or note. */
+
   changedForDate?: boolean
   location?: PlanLocation
   note?: NoteFields
-  /** Saves a ticked checklist item; without it the note is read-only. */
+
   onNoteChange?: (fields: NoteUpdate) => void
-  /**
-   * Shown right under the title, e.g. the answer to a buddy's invitation, so it
-   * stays put when rows below come and go.
-   */
+
   lead?: ReactNode
 }
 
 type Row = { label: string; value: string; description?: string }
 
-/** A Plan's title, when, how long, Type, recurrence, place, and note. */
 export default function PlanDetailsSummary(props: PlanDetailsFields) {
   const theme = useTheme()
   const duration = useFormattedMinutes(props.minutes ?? 0)

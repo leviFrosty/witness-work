@@ -95,7 +95,6 @@ describe('CloudSyncDefault', () => {
     expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
     expect(runtime.appStateListeners).toHaveLength(1)
 
-    // RevenueCat is back by the next foreground.
     await act(async () => {
       runtime.appStateListeners.forEach((listener) => listener('active'))
     })
@@ -105,7 +104,7 @@ describe('CloudSyncDefault', () => {
 
   it('stops asking when a device that isn’t a Supporter isn’t entitled', async () => {
     runtime.isSupporter = false
-    // Entitled when last read, so the default tries once.
+
     runtime.cloudSyncEntitled = true
     const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
     const { prepareCloudSync } = await import('@/app/sync/cloudSync')

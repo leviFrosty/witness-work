@@ -1,13 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Device binding and Apple Account change handling: what a copied device or a
-// different Apple Account resets, and what stays as it was.
-
-// Archived tokens look like `<account>@<encoding>`: one account's archive can
-// change bytes (an iOS update) while `isEqual:` still matches it.
 const runtime = vi.hoisted(() => ({
   identityToken: null as string | null,
-  /** False when a stored archive can't be decoded natively. */
+
   comparable: true,
   installId: 'install-b' as string | Error,
 }))
@@ -87,11 +82,11 @@ describe('decideIdentity', () => {
     expect(decideIdentity('account-a', 'account-b', () => false)).toBe(
       'changed'
     )
-    // The same account archived differently: remember the new bytes.
+
     expect(decideIdentity('account-a@1', 'account-a@2', () => true)).toBe(
       'record'
     )
-    // Can't compare: remember the current account rather than guess.
+
     expect(decideIdentity('account-a', 'account-b', () => null)).toBe('record')
   })
 })
@@ -102,7 +97,7 @@ describe('decideDeviceBinding', () => {
     [{ deviceId: 'id', binding: null, installId: 'b' }, 'bind'],
     [{ deviceId: 'id', binding: 'b', installId: 'b' }, 'keep'],
     [{ deviceId: 'id', binding: 'a', installId: 'b' }, 'rebind'],
-    // A locked Keychain can't prove the id was copied.
+
     [{ deviceId: 'id', binding: 'a', installId: null }, 'keep'],
   ] as const)('%o → %s', async (args, expected) => {
     const { decideDeviceBinding } = await load()
@@ -164,7 +159,7 @@ describe('ensureSyncDeviceId', () => {
     expect(usePreferences.getState()).toMatchObject({
       iCloudDeviceId: id,
       iCloudDeviceBinding: 'install-b',
-      // Still the user's choice; it now syncs as a new participant.
+
       iCloudSyncEnabled: true,
       iCloudIdentityToken: null,
       iCloudClockOffsetMs: 0,
@@ -174,13 +169,13 @@ describe('ensureSyncDeviceId', () => {
       iCloudSyncIssue: null,
       lastiCloudPushedAt: null,
       lastiCloudPulledAt: null,
-      // The original device's upload confirmation isn't this one's.
+
       lastiCloudUploadedAt: null,
       iCloudUploadPendingSince: null,
       iCloudUploadIssue: null,
       lastiCloudRemoteDeviceId: null,
     })
-    // Settled: the next call keeps the new id.
+
     expect(ensureSyncDeviceId()).toBe(id)
   })
 
@@ -296,7 +291,7 @@ describe('checkICloudIdentity', () => {
 
     expect(usePreferences.getState()).toMatchObject({
       iCloudSyncEnabled: false,
-      // Explicit, so the Supporter default can't seed the new account.
+
       iCloudSyncSetByUser: true,
       iCloudIdentityToken: 'account-b',
       iCloudSyncPendingPush: false,
@@ -304,14 +299,14 @@ describe('checkICloudIdentity', () => {
       iCloudSyncPausedForLapse: false,
       iCloudImageSync: {},
       lastiCloudPushedAt: null,
-      // Uploads to the previous account's iCloud say nothing about this one.
+
       lastiCloudUploadedAt: null,
       iCloudUploadPendingSince: null,
       iCloudUploadIssue: null,
       lastiCloudRemoteDeviceName: null,
-      // The device id names a file in each container; it stays.
+
       iCloudDeviceId: 'ipad',
-      // The new account's files are generation zero to this device.
+
       iCloudResetEpoch: null,
       iCloudResetAdoptedNotice: null,
     })
@@ -327,7 +322,7 @@ describe('checkICloudIdentity', () => {
       'icloud_sync_enabled_changed',
       { enabled: false, source: 'icloud_account_change' }
     )
-    // Handled once: the new account is now the recorded one.
+
     expect(checkICloudIdentity('can_sync')).toBe(true)
     expect(clearAdoptedAccountId).toHaveBeenCalledOnce()
   })
@@ -341,8 +336,6 @@ describe('checkICloudIdentity', () => {
     expect(checkICloudIdentity('account_reconcile')).toBe(false)
 
     expect(usePreferences.getState()).toMatchObject({
-      // Never chosen, so the Supporter default still applies to the new
-      // account.
       iCloudSyncSetByUser: false,
       iCloudAccountChangedAt: null,
     })
@@ -363,8 +356,6 @@ describe('checkICloudIdentity', () => {
   })
 
   it('decides nothing while the Keychain cannot verify the binding', async () => {
-    // Possibly a copy restored from another device: its stored token came from
-    // there and says nothing about this device's account.
     runtime.installId = new Error('locked')
     runtime.identityToken = 'account-b'
     const { checkICloudIdentity, usePreferences, clearAdoptedAccountId } =

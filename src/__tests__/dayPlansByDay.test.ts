@@ -34,7 +34,6 @@ afterAll(() => {
   else process.env.TZ = originalTZ
 })
 
-/** Deterministic PRNG, so a failure reproduces. */
 const random = (seed: number) => () => {
   seed = (seed * 1664525 + 1013904223) % 2 ** 32
   return seed / 2 ** 32
@@ -43,12 +42,6 @@ const random = (seed: number) => () => {
 const START = Date.UTC(2023, 8, 1, 12)
 const DAYS = 1100
 
-/**
- * ~1,000 Day Plans the way they reach these helpers: anchored Dates (written
- * this session), anchored ISO strings (rehydrated from JSON), and a few raw
- * instants, as Dates and strings, the persist migration hasn't re-anchored yet.
- * Days repeat, so some days stack several Plans.
- */
 const makeDayPlans = (seed: number): DayPlan[] => {
   const next = random(seed)
   return Array.from({ length: 1000 }, (_, i) => {
@@ -73,7 +66,6 @@ const makeDayPlans = (seed: number): DayPlan[] => {
   })
 }
 
-// The scans the index replaces, kept verbatim as the reference.
 const scanMonthDay = (dayDate: Date, dayPlans: DayPlan[]) =>
   dayPlans.filter((plan) =>
     momentStoredDate(plan.date).isSame(
@@ -106,9 +98,9 @@ describe('dayPlansByDayKey', () => {
     'matches scanning every Day Plan in %s',
     (tz) => {
       setTZ(tz)
-      // A fresh array per zone: raw instants key by the device's local day.
+
       const dayPlans = makeDayPlans(tz.length)
-      // Every 7th day and 4th month: the reference scan is the slow part.
+
       for (let d = -3; d < DAYS + 3; d += 7) {
         const utc = new Date(START + d * 864e5)
         const dayString = utc.toISOString().slice(0, 10)
@@ -157,7 +149,7 @@ describe('dayPlansByDayKey', () => {
       ).toISOString()
       expect(storedDayKey(iso)).toBe(momentStoredDate(iso).format('YYYY-MM-DD'))
     }
-    // Not anchored: read as the local day, not sliced.
+
     setTZ('Pacific/Auckland')
     expect(storedDayKey('2024-06-01T13:00:00.000Z')).toBe('2024-06-02')
   })
@@ -178,7 +170,7 @@ describe('dayPlansByDayKey', () => {
       date: p.date as Date,
       minutes: 60,
     }))
-    // 6-7 AM on June 1 in Los Angeles; 1-2 AM on June 2 in Auckland.
+
     expect(ids(dayPlansOnLocalDay(dayPlans, '2024-06-01'))).toEqual([
       'anchored',
       'raw-string',
@@ -220,7 +212,6 @@ describe('dayPlansByDayKey', () => {
     setTZ('Pacific/Auckland')
     expect(dayPlansByDayKey(dayPlans)).toBe(index)
 
-    // Off-anchor dates in the list: rebuilt only once the zone moves them.
     const mixed = makeDayPlans(4)
     const before = dayPlansByDayKey(mixed)
     expect(dayPlansByDayKey(mixed)).toBe(before)
@@ -241,8 +232,7 @@ describe('dayPlansByDayKey', () => {
         []
       )
     }
-    // Scanning every Plan per day took ~400 ms in Node; the index takes ~10 ms
-    // even rebuilt for each month.
+
     expect(performance.now() - start).toBeLessThan(100)
   })
 })

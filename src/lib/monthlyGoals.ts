@@ -1,16 +1,8 @@
-/** A calendar month using JavaScript's zero-based month index (0 = January). */
 export type CalendarMonth = Readonly<{
   year: number
   month: number
 }>
 
-/**
- * Per-calendar-month Monthly Goal overrides, keyed as `YYYY-MM`.
- *
- * The record is intentionally a single Preferences value: iCloud's per-key
- * last-writer-wins merge treats the set of overrides as one piece of user
- * intent, just like report comment overrides and achievement state.
- */
 export type MonthlyGoalOverrides = Record<string, number>
 
 export const isValidMonthlyGoalHours = (hours: unknown): hours is number =>
@@ -18,7 +10,6 @@ export const isValidMonthlyGoalHours = (hours: unknown): hours is number =>
 
 const MONTHLY_GOAL_KEY_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 
-/** Filters imported/persisted override maps down to canonical keys and goals. */
 export const normalizeMonthlyGoalOverrides = (
   value: unknown
 ): MonthlyGoalOverrides => {
@@ -35,8 +26,6 @@ export const normalizeMonthlyGoalOverrides = (
 
 const legacyMonthToKey = (value: unknown): string | null => {
   if (typeof value === 'string') {
-    // Persisted Date values are ISO strings. Reading the written year/month
-    // avoids shifting a month when the payload crosses time zones.
     const match = /^(\d{4})-(0[1-9]|1[0-2])/.exec(value)
     return match ? `${match[1]}-${match[2]}` : null
   }
@@ -51,11 +40,6 @@ const legacyMonthToKey = (value: unknown): string | null => {
   return null
 }
 
-/**
- * Converts the unused legacy `{ month: Date, hours }[]` preference shape to the
- * canonical override map. When the same month appears more than once, the last
- * valid entry wins, matching the user's most recent array entry.
- */
 export const monthlyGoalOverridesFromLegacy = (
   value: unknown
 ): MonthlyGoalOverrides => {
@@ -71,7 +55,6 @@ export const monthlyGoalOverridesFromLegacy = (
   return overrides
 }
 
-/** Returns the stable `YYYY-MM` key for an exact calendar month. */
 export const monthlyGoalKey = ({ year, month }: CalendarMonth): string => {
   if (!Number.isInteger(year) || year < 0 || year > 9999) {
     throw new RangeError('Monthly Goal year must be an integer from 0 to 9999')
@@ -83,11 +66,6 @@ export const monthlyGoalKey = ({ year, month }: CalendarMonth): string => {
   return `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}`
 }
 
-/**
- * Pure Monthly Goal resolver for widgets and other non-React consumers. Invalid
- * persisted values are ignored defensively so corrupt/imported state cannot
- * turn progress math into `NaN` or a negative target.
- */
 export const resolveMonthlyGoalHours = (
   baseMonthlyGoalHours: number,
   overrides: MonthlyGoalOverrides | undefined,

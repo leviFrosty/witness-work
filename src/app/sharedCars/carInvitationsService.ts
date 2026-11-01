@@ -26,13 +26,6 @@ import {
   sharedCarsFailureName,
 } from '@/app/sharedCars/sharedCarsService'
 
-/**
- * Shared Cars wired to Buddies: the app's invitations (`carInvitations`), the
- * User's profile on every car from their Buddy Card, and what Buddies hands
- * Shared Cars (`car.*` events, the roster's cars, leaving with Buddies). Set up
- * on import; `SharedCarsRuntime` imports it.
- */
-
 const profileDeps: CarProfileDeps = {
   cardName: () => buddiesEngine.ownCardName(),
   inboxId: () => useBuddies.getState().registeredInboxId,
@@ -43,11 +36,6 @@ const profileDeps: CarProfileDeps = {
 
 setSharedCarProfileProvider(createCarProfile(profileDeps))
 
-/**
- * Calls back when what the User's member record says may have changed: the
- * card's name, the photo or emoji, or whether All Buddies see it. Each car's
- * next sync rewrites the record. Returns the unsubscribe.
- */
 export function watchSharedCarProfile(onChange: () => void): () => void {
   let source = carProfileSource(profileDeps)
   const check = () => {

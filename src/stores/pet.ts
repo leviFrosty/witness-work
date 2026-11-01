@@ -27,11 +27,10 @@ import {
 } from '@/types/pet'
 
 const initialState = {
-  /** The User's companion; null until adopted or after it's released. */
   pet: null as PetRecord | null,
-  /** The room's choices; null until first customized (defaults apply). */
+
   room: null as PetRoomRecord | null,
-  /** Tombstones for the pet and room records, so a release syncs. */
+
   deletedPetRecords: [] as PetTombstone[],
 }
 
@@ -39,7 +38,6 @@ type State = typeof initialState
 
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/
 
-/** Trimmed, at most `PET_NAME_MAX_LENGTH` characters; empty is no name. */
 export function cleanPetName(name: string | undefined): string | undefined {
   const trimmed = [...(name ?? '').trim()]
     .slice(0, PET_NAME_MAX_LENGTH)
@@ -48,7 +46,6 @@ export function cleanPetName(name: string | undefined): string | undefined {
   return trimmed || undefined
 }
 
-/** A new pet's gift seed: random, not secret (`PetRecord.seed`). */
 const newPetSeed = (): string =>
   Array.from({ length: 2 }, () =>
     Math.floor(Math.random() * 0x100000000)
@@ -56,15 +53,9 @@ const newPetSeed = (): string =>
       .padStart(7, '0')
   ).join('')
 
-/**
- * A stamp newer than the record's last edit and any tombstone for its id. The
- * tombstone stays: the merge uses it to tell a released companion's history
- * from this one's.
- */
 const stampFor = (state: State, id: string, previous?: number): number =>
   stampPastTombstone(state.deletedPetRecords, id, previous)
 
-/** Applies `change` to the pet and restamps it; no pet, no change. */
 function editPet(
   state: State,
   change: (pet: PetRecord) => PetRecord | null
@@ -77,22 +68,16 @@ function editPet(
   }
 }
 
-/**
- * Persisted store for the Pet Companion: one pet record and one room record.
- * Sync-aware like `mileage`: every mutation stamps `updatedAt`, and releasing
- * the companion leaves tombstones. Hearts are never stored; they're replayed
- * from ministry records (`src/features/pet/lib/life.ts`, ADR 0030).
- */
 export const usePet = create(
   persist(
     combine(initialState, (set, get) => ({
       set,
-      /** Adopts the companion. Does nothing while one already exists. */
+
       adopt: (args: {
         species: PetSpecies
         coat: string
         name?: string
-        /** Local day key of the adoption. */
+
         today: string
       }) =>
         set((state) => {
@@ -112,7 +97,7 @@ export const usePet = create(
             },
           }
         }),
-      /** Change Pet: new species and coat, same companion. */
+
       changeAppearance: ({
         species,
         coat,
@@ -135,7 +120,7 @@ export const usePet = create(
             return cleaned ? { ...rest, name: cleaned } : rest
           })
         ),
-      /** Records a wake tap on `dayKey` (`keptWakes` trims the list). */
+
       recordWake: (dayKey: string) =>
         set((state) =>
           editPet(state, (pet) => {
@@ -143,10 +128,7 @@ export const usePet = create(
             return { ...pet, wakes: keptWakes([...pet.wakes, dayKey]) }
           })
         ),
-      /**
-       * Keeps the gift left on `dayKey` (its gift day). Once per day; the
-       * newest 20 are kept (`keptKeepsakes`).
-       */
+
       collectKeepsake: (kind: GiftKind, dayKey: string) =>
         set((state) =>
           editPet(state, (pet) => {
@@ -164,11 +146,7 @@ export const usePet = create(
             }
           })
         ),
-      /**
-       * Stores room items the pet just earned, so they stay unlocked whatever
-       * the streak does next. Returns the ones that weren't stored yet (none
-       * without a pet), so a second caller with the same items adds nothing.
-       */
+
       earnRoomItems: (items: readonly RoomItemId[]): RoomItemId[] => {
         const { pet } = get()
         if (!pet) return []
@@ -187,11 +165,7 @@ export const usePet = create(
         )
         return added
       },
-      /**
-       * Records buying `item` in the Shop for `price` of `currency` on `dayKey`
-       * (ADR 0035). Whether it's affordable is the caller's to check; an item
-       * already bought or earned isn't bought again. Returns whether it was.
-       */
+
       buyRoomItem: (purchase: PetPurchase): boolean => {
         const { pet } = get()
         if (
@@ -209,11 +183,7 @@ export const usePet = create(
         )
         return true
       },
-      /**
-       * Changes some of the room's choices. `defaults` fills the rest while the
-       * room was never customized; pass the room as shown (its sign default
-       * depends on the Publisher's entry mode).
-       */
+
       updateRoom: (
         partial: Partial<PetRoomSettings>,
         defaults: PetRoomSettings = DEFAULT_ROOM
@@ -238,7 +208,7 @@ export const usePet = create(
             },
           }
         }),
-      /** Releases the companion with its room, on every synced device. */
+
       releaseCompanion: () =>
         set((state) => {
           const released = [state.pet, state.room].filter(
@@ -265,7 +235,7 @@ export const usePet = create(
       name: 'petCompanion',
       storage: createJSONStorage(() => PersistStorage),
       version: 1,
-      // No earlier shapes yet; later versions migrate from here.
+
       migrate: (persistedState) => persistedState as State,
     }
   )

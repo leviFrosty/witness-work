@@ -1,21 +1,5 @@
 import type { NotificationTone } from '@/types/notifications'
 
-/**
- * The `announcement` feature flag's JSON payload, set in PostHog. A new `id`
- * makes a new tray item, so a dismissed announcement never comes back.
- *
- * @example
- *   {
- *     "id": "android-us-2026-10",
- *     "tone": "error",
- *     "title": { "en": "Android isn't available in the US yet" },
- *     "body": {
- *       "en": "Sorry for the confusion. We'll let you know when it is."
- *     },
- *     "platforms": ["ios", "android"],
- *     "link": { "url": "https://…", "label": { "en": "Learn more" } }
- *   }
- */
 export type Announcement = {
   id: string
   tone: NotificationTone
@@ -29,11 +13,6 @@ const TONES: NotificationTone[] = ['accent', 'warn', 'error']
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/**
- * Payload text: one string for every language, or one per language keyed like
- * the app's locales. Picks `locale` (`pt-br`), then its language (`pt`), then
- * English.
- */
 export function localizedText(
   text: unknown,
   locale: string
@@ -49,10 +28,6 @@ export function localizedText(
   return undefined
 }
 
-/**
- * What the tray shows for the payload on this device, or null when there's
- * nothing to show (no payload, a malformed one, or another platform's).
- */
 export function parseAnnouncement(
   payload: unknown,
   { platform, locale }: { platform: string; locale: string }

@@ -30,17 +30,11 @@ import {
 const CARD_TOP = 92
 const CARD_H = 184
 
-/** A button's dip as a tap lands, early in the tap's 0–1 run. */
 const pressDip = (tap: number) => {
   'worklet'
   return Math.sin(Math.PI * Math.min(1, tap * 2.2))
 }
 
-/**
- * A smarter Home: the day's greeting, follow-ups marked done right from the
- * card — Talked, Talked, all caught up — and the bell lighting up for what can
- * wait.
- */
 const HomeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const { intro, loop } = useVisualClock({
@@ -55,7 +49,6 @@ const HomeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const greetingStyle = useRiseStyle(intro, 0.1, 0.5)
   const cardStyle = useRiseStyle(intro, 0.25, 0.8, 22)
 
-  // Two taps on Talked, each moving the next follow-up in.
   const firstTap = useDerivedValue(() => seg(loop.value, 0.08, 0.18))
   const secondTap = useDerivedValue(() => seg(loop.value, 0.36, 0.46))
   const reset = useDerivedValue(() => seg(loop.value, 0.9, 1))

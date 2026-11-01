@@ -1,8 +1,6 @@
 import { MMKV } from 'react-native-mmkv'
 import { logger } from '@/lib/logger'
 
-// Reach, not repeat views. Keep locked-feature placement impressions outside
-// these caps: their visit identifier links the Supporter conversion funnel.
 const dailyEvents = new Set([
   'Application Became Active',
   'app_launch_timed',
@@ -45,8 +43,6 @@ let session: string | undefined
 const sessionSeen = new Set<string>()
 
 function frequencyStorage(): MMKV {
-  // Independent of preferences/storage orchestration: importing those would
-  // introduce a cycle through the provider. No IDs or payloads are persisted.
   return (storage ??= new MMKV({ id: 'analytics-frequency' }))
 }
 
@@ -55,8 +51,7 @@ export function allowAnalyticsFrequency(
   properties: Record<string, unknown> = {}
 ): boolean {
   if (!dailyEvents.has(event) && !sessionEvents.has(event)) return true
-  // These fields are bounded structural context. Different surfaces/variants
-  // and probe/registration outcomes must still get their first observation.
+
   const key = JSON.stringify([
     event,
     properties.source ?? null,
@@ -105,7 +100,6 @@ export function allowAnalyticsFrequency(
       JSON.stringify({ day: today, events: [...daily] })
     )
   } catch {
-    // Keep the in-memory cap when native storage is temporarily unavailable.
     logger.debug('[Analytics] Frequency state could not be persisted')
   }
   return true

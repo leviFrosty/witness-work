@@ -105,8 +105,7 @@ it('hands the tap or link that opened the app to the reloaded launch', async () 
     renderer = create(<Harness />)
   })
   await becomeActive()
-  // The reloaded launch opens what brought the app up; this one only showed
-  // the splash.
+
   expect(runtime.steps).toEqual(['handoff', 'reload'])
   expect(runtime.dropLaunchHandoff).not.toHaveBeenCalled()
 })

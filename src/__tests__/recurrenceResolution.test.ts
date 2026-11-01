@@ -115,7 +115,6 @@ describe('resolvePlannedContributionsForDay', () => {
 
 describe('plannedMinutesThroughEachDayOfMonth', () => {
   it('matches plannedMinutesThroughDayForMonth for every day', () => {
-    // Weekly from Wednesday the 5th, plus a Day Plan on the 12th.
     const dayPlans: DayPlan[] = [
       { id: 'day', date: normalizeDateForStorage('2026-08-12'), minutes: 30 },
     ]

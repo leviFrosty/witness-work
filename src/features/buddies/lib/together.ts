@@ -13,10 +13,6 @@ import {
 } from '@/features/buddies/lib/shares'
 import type { IncomingShare, ReceivedReply } from '@/features/buddies/lib/state'
 
-/**
- * One upcoming Plan or Follow-up that involves a buddy: either they invited
- * this User (`incoming`) or this User invited them (`outgoing`).
- */
 export type TogetherItem = {
   key: string
   type: ShareType
@@ -24,18 +20,18 @@ export type TogetherItem = {
 } & (
   | {
       direction: 'incoming'
-      /** The incoming share key, for answering. */
+
       shareKey: string
       status: 'pending' | 'going' | 'declined'
-      /** The linked Plan going added, if any. */
+
       planId?: string
     }
   | {
       direction: 'outgoing'
-      /** The buddy's answer; `invited` until they reply. */
+
       status: 'invited' | 'going' | 'declined'
       planId?: string
-      /** The Visit whose Follow-up this is. */
+
       visitId?: string
     }
 )
@@ -47,18 +43,13 @@ const byWhen = (a: TogetherItem, b: TogetherItem) =>
       ? -1
       : 1
 
-/**
- * What's planned with one buddy from today on, soonest first. Invitations from
- * them still waiting on this User's answer are split out; cancelled ones are
- * dropped.
- */
 export function buildTogether(input: {
   inboxId: string
   incomingShares: Record<string, IncomingShare>
   dayPlans: DayPlan[]
   visits: Visit[]
   contacts: Pick<Contact, 'id' | 'name' | 'address' | 'coordinate'>[]
-  /** The buddy's answer to one of this User's share keys. */
+
   replyFor: (shareKey: string) => ReceivedReply | undefined
   today: Date
 }): { needsAnswer: TogetherItem[]; together: TogetherItem[] } {
@@ -130,18 +121,12 @@ export function buildTogether(input: {
   }
 }
 
-/** A `TogetherItem` with the buddy it's with. */
 export type BuddyTogetherItem = TogetherItem & { inboxId: string }
 
-/**
- * What's planned with any of `buddies` from today on, soonest first, split as
- * `buildTogether` does. A Plan or Follow-up shared with several buddies shows
- * once, with the first of them.
- */
 export function buildTogetherWithBuddies(
   input: Omit<Parameters<typeof buildTogether>[0], 'inboxId' | 'replyFor'> & {
     buddies: { inboxId: string }[]
-    /** A buddy's answer to one of this User's share keys. */
+
     replyFor: (inboxId: string, shareKey: string) => ReceivedReply | undefined
   }
 ): { needsAnswer: BuddyTogetherItem[]; together: BuddyTogetherItem[] } {

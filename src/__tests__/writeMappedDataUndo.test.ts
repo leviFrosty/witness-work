@@ -127,7 +127,7 @@ describe('undoImport', () => {
     undoImport(commit)
 
     expect(useContacts.getState().contacts).toHaveLength(0)
-    // Only a redacted tombstone remains, so the Undo reaches other devices.
+
     const { deletedContacts } = useContacts.getState()
     expect(deletedContacts.map((c) => c.id)).toEqual(['notes-h-c-c1'])
     expect(isRedactedContactTombstone(deletedContacts[0])).toBe(true)
@@ -181,12 +181,8 @@ const allTimeEntries = () => {
   return Object.values(reports).flatMap((y) => Object.values(y).flat())
 }
 
-// F44: the Accept-time reconcile can re-point import B's visit/time entry onto a
-// contact/category that import A inserted (matched by name). Undoing A must not
-// delete a record B still references — otherwise B's live data is orphaned.
 describe('undoImport — reference-aware retention (F44)', () => {
   it('keeps a contact a sibling import still references on its own visit', () => {
-    // Import A: inserts contact + visit on it.
     const commitA = writeMappedDataToStores(
       {
         ...emptyMapped(),
@@ -203,8 +199,6 @@ describe('undoImport — reference-aware retention (F44)', () => {
       { publisherMode: 'overwrite' }
     )
 
-    // Import B: reconcile already re-pointed B's Maria onto A's contact, so B
-    // inserts NO contact, just a visit referencing the shared id.
     const commitB = writeMappedDataToStores(
       {
         ...emptyMapped(),
@@ -224,18 +218,16 @@ describe('undoImport — reference-aware retention (F44)', () => {
 
     undoImport(commitA)
 
-    // Shared contact kept (B still needs it), A's own visit gone…
     expect(useContacts.getState().contacts.map((c) => c.id)).toEqual([
       'A_maria',
     ])
     const visits = useConversations.getState().conversations
     expect(visits.map((v) => v.id)).toEqual(['B_visit_june8'])
-    // …and B's visit is NOT orphaned — it still resolves to a live contact.
+
     expect(visits[0].contact.id).toBe('A_maria')
   })
 
   it('keeps a category a sibling import still references on its own time entry', () => {
-    // Import A: inserts category + a time entry using it.
     const commitA = writeMappedDataToStores(
       {
         ...emptyMapped(),
@@ -253,8 +245,6 @@ describe('undoImport — reference-aware retention (F44)', () => {
       { publisherMode: 'overwrite' }
     )
 
-    // Import B: reconcile re-pointed B's category onto A's, so B inserts NO
-    // category, just a time entry referencing the shared id.
     const commitB = writeMappedDataToStores(
       {
         ...emptyMapped(),
@@ -275,20 +265,16 @@ describe('undoImport — reference-aware retention (F44)', () => {
 
     undoImport(commitA)
 
-    // Shared category kept, A's own entry gone…
     expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
       'A_cat',
     ])
     const entries = allTimeEntries()
     expect(entries.map((e) => e.id)).toEqual(['B_entry'])
-    // …and B's entry is NOT orphaned.
+
     expect(entries[0].categoryId).toBe('A_cat')
   })
 
   it('still fully deletes when only this commit references its records', () => {
-    // No sibling import — the inserted contact/category are referenced solely by
-    // this commit's own visit/time entry. Guards against a false "externally
-    // referenced" positive from the commit's own records.
     const commit = writeMappedDataToStores(
       {
         ...emptyMapped(),
@@ -391,9 +377,6 @@ describe('undoImport — reference-aware retention (F44)', () => {
   })
 })
 
-// Undo leaves a redacted contact tombstone (plus the visit/time-entry/category
-// tombstones), so it reaches the user's other devices; re-running the same
-// deterministic import afterwards must still work everywhere.
 describe('undoImport — sync and re-import', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -459,7 +442,6 @@ describe('undoImport — sync and re-import', () => {
       expect(device.categories.map((c) => c.id)).toEqual(['notes-h-cat-bethel'])
     }
 
-    // The re-import can be undone in turn.
     minutesLater(3)
     undoImport(second)
     expect(useContacts.getState().contacts).toEqual([])
@@ -476,7 +458,7 @@ describe('undoImport — sync and re-import', () => {
       },
       { publisherMode: 'overwrite' }
     )
-    // The user logs their own visit on one imported contact, so Undo keeps it.
+
     useConversations.getState().addConversation({
       id: 'own-visit',
       contact: { id: 'kept' },
@@ -541,7 +523,7 @@ describe('undoImport — sync and re-import', () => {
       { publisherMode: 'overwrite' }
     )
     minutesLater(1)
-    // The user deletes one imported entry, then undoes the whole import.
+
     useServiceReport
       .getState()
       .deleteServiceReport(first.insertedTimeEntries[1])
@@ -570,7 +552,6 @@ describe('undoImport — sync and re-import', () => {
       'notes-h-t-t1',
     ])
 
-    // Deleting a restored entry by hand makes it the user's deletion again.
     minutesLater(4)
     useServiceReport
       .getState()
@@ -588,7 +569,7 @@ describe('undoImport — sync and re-import', () => {
     minutesLater(1)
     undoImport(first)
     const marked = deviceFromStores()
-    // An older version reads the same tombstones without the marker.
+
     const older = structuredClone(marked)
     older.deletedConversations = older.deletedConversations.map(
       ({ id, deletedAt }) => ({ id, deletedAt })

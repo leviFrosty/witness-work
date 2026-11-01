@@ -52,29 +52,25 @@ import { tracking } from '@/lib/tracking'
 interface AllDaysListProps {
   month: number
   year: number
-  /** Keeps the day picked in view above its sheet. */
+
   dayReveal?: RevealAboveSheet
-  /** Each day's row, by its date (`YYYY-MM-DD`), e.g. to keep it in view. */
+
   dayRef?: (day: string) => Ref<View>
-  /** The Plan form, for planning a day in its sheet. */
+
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
-  /** Plan Details, for showing a day's Plan in its sheet. */
+
   renderPlanDetails?: {
     actions: (slot: PlanDetailsSlot) => ReactNode
     body: (slot: PlanDetailsSlot) => ReactNode
   }
-  /**
-   * `compact` keeps the list to a few days in one card that scrolls on its own,
-   * for a Progress layout that wants the room for other cards.
-   */
+
   variant?: 'full' | 'compact'
-  /** Space on each side of the full list's rows. */
+
   inset?: number
-  /** Wraps the column headings, e.g. to long-press them. */
+
   wrapHeader?: (header: ReactElement) => ReactElement
 }
 
-/** About four and a half compact rows, so the cut-off one says it scrolls. */
 const COMPACT_LIST_HEIGHT = 200
 
 type DayRow = {
@@ -84,7 +80,7 @@ type DayRow = {
   isToday: boolean
   hoursLabel: string
   categoryLabel: string
-  /** The row in words: the day, then its category and time or "No time". */
+
   accessibilityLabel: string
   isEmpty: boolean
   planDotColor: string | null
@@ -93,10 +89,6 @@ type DayRow = {
   recurringPlans: RecurringPlan[]
 }
 
-/**
- * One day in the list: tap opens the day's sheet; long-press offers Add Time /
- * Plan This Day with a preview of the day's entries and plans.
- */
 const DayRowItem = ({
   row,
   onPress,
@@ -106,7 +98,7 @@ const DayRowItem = ({
   row: DayRow
   onPress: () => void
   inset: number
-  /** A divided row inside the compact card rather than a card of its own. */
+
   plain?: boolean
 }) => {
   const theme = useTheme()
@@ -225,9 +217,6 @@ const DayRowItem = ({
         }}
       >
         {stacked ? (
-          // At accessibility sizes the day can't share a line with its
-          // category and hours: the day takes its own line, the rest sits
-          // under it.
           <View style={{ flex: 1, gap: 4 }}>
             {day}
             <View
@@ -238,8 +227,7 @@ const DayRowItem = ({
                 columnGap: 10,
               }}
             >
-              {/* Side by side when they fit; otherwise the hours wrap under
-                  the category, still at the end. */}
+              {}
               <View style={{ flexGrow: 1, flexShrink: 1 }}>{category}</View>
               <View style={{ flexGrow: 1 }}>{hours}</View>
             </View>
@@ -261,18 +249,6 @@ const DayRowItem = ({
   )
 }
 
-/**
- * Flat "ALL DAYS" list for the Month tab. One row per calendar day of the
- * selected month, most-recent first. In the current month, future days are
- * omitted until its first row, "Show all days", brings them in above today.
- * Tapping a row opens `SelectedDateSheet` for that date.
- *
- * Aggregation per day:
- *
- * - Multiple reports with the same tag/type → show that category label.
- * - Multiple categories → show `i18n.t('multiple')`.
- * - Zero reports → em-dash for both category and hours.
- */
 const AllDaysList = ({
   month,
   year,
@@ -366,12 +342,6 @@ const AllDaysList = ({
 
       let categoryLabel = '—'
       if (reportsForDay.length > 0) {
-        // Group by stable identity: prefer categoryId (post-migration), fall
-        // back to the legacy `tag` string for unmigrated entries, with
-        // synthetic keys for rollover / plain-standard. LDC is keyed by its
-        // builtin Category id like any other Category — `isLdcEntry` also
-        // matches legacy `ldc: true` entries so unmigrated installs still
-        // bucket correctly.
         const keyFor = (r: TimeEntry): string => {
           if (r.rollover) return '__rollover__'
           if (isLdcEntry(r)) return '__ldc__'
@@ -391,9 +361,6 @@ const AllDaysList = ({
           } else if (only === '__standard__') {
             categoryLabel = i18n.t('standard')
           } else {
-            // Either `cat:<id>` or `tag:<legacy>`. Resolve via the categories
-            // store so the user-visible label always reflects the Category's
-            // current name, not whatever was stamped at write time.
             categoryLabel =
               getCategoryLabel(reportsForDay[0], categories) ??
               only.replace(/^(cat:|tag:)/, '')
@@ -411,7 +378,7 @@ const AllDaysList = ({
         isToday,
         hoursLabel,
         categoryLabel,
-        // The dashes an empty row shows would be read as "dash, dash".
+
         accessibilityLabel: [
           formatDisplay(day, 'dddd'),
           formatMonthDayCompact(day),
@@ -430,7 +397,6 @@ const AllDaysList = ({
       })
     }
 
-    // Most-recent first
     return entries.sort((a, b) => b.date.getTime() - a.date.getTime())
   }, [
     thisMonthsReports,
@@ -473,7 +439,7 @@ const AllDaysList = ({
       <Text style={{ ...headingStyle, flex: 1 }} numberOfLines={1}>
         {i18n.t('date')}
       </Text>
-      {/* Stacked rows put the category under the day, not in a column. */}
+      {}
       {stacked ? null : (
         <Text style={headingStyle} numberOfLines={1}>
           {i18n.t('category')}
@@ -513,8 +479,6 @@ const AllDaysList = ({
     </View>
   ))
 
-  // The list's own first row: the newest days come in right under it, where
-  // they can be seen, and it stays clear of what follows the list.
   const futureToggle = hasFutureDays ? (
     <Button
       onPress={() => setShowAllDays((v) => !v)}
@@ -562,10 +526,8 @@ const AllDaysList = ({
         >
           {header}
           <ScrollView
-            // Each month starts at its latest day.
             key={`${year}-${month}`}
             nestedScrollEnabled
-            // Grows with larger text so it still shows about four days.
             style={{ maxHeight: COMPACT_LIST_HEIGHT * Math.max(1, fontScale) }}
             contentContainerStyle={{ paddingBottom: 4 }}
           >

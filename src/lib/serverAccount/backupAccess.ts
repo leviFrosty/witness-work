@@ -16,21 +16,12 @@ import {
 } from '@/lib/serverAccount/backupStore'
 import { syncNow } from '@/lib/syncClock'
 
-/**
- * The account a backup op runs as: the account key, its account, and the
- * session (plus the key's signature, for `delete`). Shared by the app's backup
- * service and Delete Buddies, which deletes the backup before the key is gone.
- */
 export type BackupAccess = {
   accountKey: Uint8Array
   accountId: string
   options: BackupClientOptions
 }
 
-/**
- * Opens the account's session when needed (creating the account the first
- * time); `BackupError` when it can't.
- */
 export async function backupAccessFor(
   accountKey: Uint8Array
 ): Promise<BackupAccess> {
@@ -55,7 +46,6 @@ export async function backupAccessFor(
   }
 }
 
-/** A backup request's failure, as the scheduler and Settings name it. */
 export function backupErrorFrom(error: unknown): BackupError {
   if (error instanceof BackupError) return error
   if (error instanceof AccountSessionError) {
@@ -68,7 +58,6 @@ export function backupErrorFrom(error: unknown): BackupError {
       return new BackupError('key')
   }
   if (error instanceof HttpError) {
-    // `Retry-After`, or the body's `retryAfter` (seconds) without one.
     const retryAfter = (error.body as { retryAfter?: unknown } | null)
       ?.retryAfter
     const retryAfterMs =
@@ -96,10 +85,6 @@ export function backupErrorFrom(error: unknown): BackupError {
   return new BackupError('server')
 }
 
-/**
- * Runs a backup op as the account. An account the server no longer knows is
- * forgotten, and its session opened again once.
- */
 export async function withBackupAccess<T>(
   accountKey: Uint8Array,
   op: (access: BackupAccess) => Promise<T>
@@ -122,14 +107,6 @@ export async function withBackupAccess<T>(
   }
 }
 
-/**
- * Deletes every slot of `accountKey`'s account, before Delete Buddies deletes
- * the key: afterwards nothing could sign the deletion, and the backup would sit
- * unreadable until it expired. Throws `BackupError` when it can't, so the
- * caller keeps the key. No account (accounts off) means no backup, and a device
- * that can't open a session never made one. Afterwards this install's backup,
- * if on, uploads under the new key's account.
- */
 export async function deleteBackupsBeforeKeyLoss(
   accountKey: Uint8Array
 ): Promise<void> {

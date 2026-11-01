@@ -1,6 +1,3 @@
-// Drives a leased simulator or emulator through the profiling protocol: a
-// fresh install and seed, cold launches, foreground cycles and inactive blips,
-// reading the app's `[ww-perf]` reports from the device log.
 import os from 'node:os'
 import { spawn } from 'node:child_process'
 import { readLeases, snapshot } from '../verify/leases.mjs'
@@ -16,10 +13,6 @@ import {
 } from '../verify/ww-verify.mjs'
 import { createPerfReader, launchMetrics } from './stats.mjs'
 
-/**
- * A running device-log reader. `mark()` notes the position, and `next()`
- * resolves with the first report of a type that arrived after it.
- */
 class PerfLog {
   constructor(command, args, parse) {
     this.reports = []
@@ -29,7 +22,7 @@ class PerfLog {
     this.child = spawn(command, args, {
       env: toolEnv(),
       stdio: ['ignore', 'pipe', 'ignore'],
-      // Its own group, so stop() takes `script` and its child down together.
+
       detached: true,
     })
     let buffer = ''
@@ -68,7 +61,6 @@ class PerfLog {
     return { reports: this.reports.length, lines: this.lines.length }
   }
 
-  /** The first report of `type` after `mark`, or a rejection on timeout. */
   next(type, mark, timeoutMs) {
     return this.waitFor(
       () => this.reports.slice(mark.reports).find((r) => r.type === type),
@@ -77,7 +69,6 @@ class PerfLog {
     )
   }
 
-  /** The first raw log line after `mark` matching `test`. */
   line(test, mark, timeoutMs) {
     return this.waitFor(
       () => this.lines.slice(mark.lines).find(test),
@@ -108,17 +99,11 @@ class PerfLog {
   stop() {
     try {
       process.kill(-this.child.pid, 'SIGTERM')
-    } catch {
-      // already gone
-    }
+    } catch {}
   }
 }
 
-// ---------- iOS ----------
-
 function iosDriver(device) {
-  // simctl itself rather than `xcrun simctl`, so launch timing doesn't include
-  // xcrun's lookup.
   const simctl = run('xcrun', ['-f', 'simctl']).stdout.trim()
   const sim = (args, options = {}) => run(simctl, args, options)
   return {
@@ -137,7 +122,6 @@ function iosDriver(device) {
         })
     },
     logs() {
-      // Under a pty (`script`), so the stream can't sit in a pipe buffer.
       return new PerfLog(
         'script',
         [
@@ -186,11 +170,7 @@ function iosDriver(device) {
       const out = run('ps', ['-o', 'rss=', '-p', String(pid)], { check: false })
       return Number(out.stdout.trim()) || null
     },
-    /**
-     * Accepts the notification permission alert the first launch's setup
-     * raises, through agent-device's XCUITest runner, until `done()`; then
-     * stops the runner so it doesn't load the measured launches.
-     */
+
     async acceptAlerts(session, done) {
       agentDevice([
         'open',
@@ -210,11 +190,7 @@ function iosDriver(device) {
       agentDevice(['close', '--session', session])
       killIosRunner(device.id)
     },
-    /**
-     * An inactive -> active blip without leaving the app: Control Center pulled
-     * down from the top-right corner, then pushed back up. Points fit the
-     * pool's `iPhone N Pro` simulators.
-     */
+
     async blip(session) {
       agentDevice(['swipe', '360', '12', '360', '420', '--session', session])
       await sleep(1500)
@@ -222,8 +198,6 @@ function iosDriver(device) {
     },
   }
 }
-
-// ---------- Android ----------
 
 function androidDriver(device) {
   const adb = (args, options = {}) =>
@@ -253,7 +227,7 @@ function androidDriver(device) {
       shell(['svc', 'power', 'stayon', 'true'], { check: false })
       shell(['input', 'keyevent', 'KEYCODE_WAKEUP'], { check: false })
       shell(['wm', 'dismiss-keyguard'], { check: false })
-      // As `wwv up` does: no Google "Location Accuracy" dialog over the app.
+
       shell(
         ['settings', 'put', 'secure', 'location_providers_allowed', '+network'],
         { check: false }
@@ -288,7 +262,7 @@ function androidDriver(device) {
       const hostWall = Date.now()
       const out = shell(['am', 'start', '-W', '-n', component]).stdout
       const totalTimeMs = Number(out.match(/TotalTime:\s*(\d+)/)?.[1]) || null
-      // The system's START line, on the device clock like the app's Date.now().
+
       const start = await perfLog
         .line(
           (l) =>
@@ -336,9 +310,6 @@ function androidDriver(device) {
 export const createDriver = (device) =>
   device.platform === 'ios' ? iosDriver(device) : androidDriver(device)
 
-// ---------- machine conditions ----------
-
-/** Load and memory next to every measurement, so noise is visible. */
 export function machineConditions() {
   const level = run('sysctl', ['-n', 'kern.memorystatus_level'], {
     check: false,
@@ -360,15 +331,9 @@ export function machineConditions() {
   }
 }
 
-// ---------- protocol ----------
-
 const LAUNCH_TIMEOUT = 90_000
 const CYCLE_TIMEOUT = 30_000
 
-/**
- * The whole protocol on one leased, booted device with the artifact. Returns
- * the platform's raw results (summaries are added by the caller).
- */
 export async function profileDevice(device, artifact, options) {
   const driver = createDriver(device)
   const session = `wwperf-${device.platform}`
@@ -376,9 +341,8 @@ export async function profileDevice(device, artifact, options) {
   driver.install(artifact)
   if (device.platform === 'android') driver.prepare(options.apiPort)
   const perfLog = driver.logs()
-  await sleep(1500) // let the log stream attach
+  await sleep(1500)
   try {
-    // 1. First launch: the app seeds and turns its paths on (perfSetup.ts).
     log('first launch: seeding and setup')
     let mark = perfLog.mark()
     await driver.launch(perfLog)
@@ -389,9 +353,8 @@ export async function profileDevice(device, artifact, options) {
     const setup = await perfLog.next('setup', mark, 180_000)
     log(`setup: ${JSON.stringify(setup)}`)
     await perfLog.next('launch', mark, LAUNCH_TIMEOUT)
-    await sleep(3000) // let stores persist
+    await sleep(3000)
 
-    // 2. Cold launches; the first is a warm-up and is discarded.
     const runs = []
     for (let i = 0; i <= options.runs; i++) {
       driver.terminate()
@@ -415,7 +378,6 @@ export async function profileDevice(device, artifact, options) {
       )
     }
 
-    // 3. Foreground cycles from the last launch, which is still running.
     const foreground = []
     for (let i = 0; i < options.foreground; i++) {
       await sleep(options.dwellMs)
@@ -432,7 +394,6 @@ export async function profileDevice(device, artifact, options) {
       )
     }
 
-    // 4. Inactive blips (iOS): back to active without the background.
     let active = { skipped: 'Android has no inactive state' }
     if (device.platform === 'ios' && options.blips > 0) {
       active = await measureBlips(device, driver, perfLog, session, options)

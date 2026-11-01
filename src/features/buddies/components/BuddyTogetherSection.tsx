@@ -8,13 +8,8 @@ import BuddyTogetherRow from '@/features/buddies/components/BuddyTogetherRow'
 import useAnswerShare from '@/features/buddies/hooks/useAnswerShare'
 import type { TogetherItem } from '@/features/buddies/lib/together'
 
-/** Past this many, the rest wait behind "See All". */
 const COLLAPSED_COUNT = 3
 
-/**
- * Upcoming Plans and Follow-ups with this buddy, whoever invited whom; hidden
- * when there are none.
- */
 export default function BuddyTogetherSection({
   items,
   buddyName,

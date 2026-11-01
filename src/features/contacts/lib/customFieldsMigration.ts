@@ -2,40 +2,12 @@ import { legacyDefinitionId } from '@/lib/legacyDefinitionId'
 import { Contact } from '@/types/contact'
 import { CustomFieldDefinition } from '@/types/customField'
 
-/**
- * One-time migration from the legacy custom-fields shape (label-keyed) to the
- * id-keyed shape with stable `CustomFieldDefinition` records.
- *
- * Legacy state: `preferences.customContactFields: string[]` held the global
- * list of labels; `contact.customFields: Record<string, string>` was keyed by
- * those same labels. Renaming a label silently orphaned every contact's value;
- * duplicate labels collided invisibly; reorder + sync had no stable identity.
- *
- * This pure function takes the legacy inputs and returns the new shape:
- *
- * - Each unique label (case-sensitive, in legacy array order) becomes a
- *   `CustomFieldDefinition` with a fresh UUID. Duplicates collapse to one.
- * - Every contact's `customFields` keys are rewritten label → id.
- * - **Orphan labels** (keys present on a contact but missing from the global
- *   array) become _archived_ defs with the orphan label, so the data is
- *   preserved. The user can review + restore them from the management screen.
- * - `updatedAt` is bumped only on contacts whose `customFields` actually changed
- *   shape, so untouched records keep their original timestamps and sync merges
- *   remain stable.
- *
- * Idempotent at the call site: the boot runner gates on
- * `preferences.hasMigratedCustomFieldsToIds`, so this function itself does not
- * try to detect already-migrated state.
- */
 export function migrateCustomFieldsToIds(args: {
   legacyLabels: string[]
   contacts: Contact[]
   deletedContacts: Contact[]
   now: number
-  /**
-   * UUID generator. Defaults to `expo-crypto.randomUUID`. Injectable for tests
-   * so assertions can pin specific ids.
-   */
+
   uuid?: () => string
 }): {
   defs: CustomFieldDefinition[]
@@ -48,9 +20,6 @@ export function migrateCustomFieldsToIds(args: {
   const labelToId = new Map<string, string>()
   const defs: CustomFieldDefinition[] = []
 
-  // Pass 1: collapse duplicates in the legacy preference array, preserving
-  // first-occurrence order. Trim once on read; empty/whitespace labels are
-  // dropped because they were already non-functional in the old UI.
   for (const raw of legacyLabels) {
     const label = typeof raw === 'string' ? raw.trim() : ''
     if (!label) continue
@@ -66,10 +35,6 @@ export function migrateCustomFieldsToIds(args: {
     })
   }
 
-  // Pass 2: walk every contact and rewrite customFields keys label → id.
-  // Orphan labels (on a contact but never in the prefs array) become archived
-  // defs so the user's data isn't silently dropped — they can find and
-  // restore them in the management screen.
   const rewrite = (c: Contact): Contact => {
     if (!c.customFields) return c
     const entries = Object.entries(c.customFields)
@@ -81,7 +46,6 @@ export function migrateCustomFieldsToIds(args: {
     for (const [label, value] of entries) {
       const trimmed = label.trim()
       if (!trimmed) {
-        // Empty key was always a bug. Drop it.
         mutated = true
         continue
       }
@@ -99,7 +63,6 @@ export function migrateCustomFieldsToIds(args: {
         })
         mutated = true
       } else if (id !== label) {
-        // Same label, but key is now the id. Always a rewrite.
         mutated = true
       }
       out[id] = value

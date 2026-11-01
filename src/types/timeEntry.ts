@@ -1,132 +1,54 @@
 import type { RichText } from '@/types/richText'
 
-/**
- * A single logged session of field-ministry time on a given date (hours and
- * minutes, optional category, optional note, optional credit flag). The
- * granular record the user adds, edits, or deletes.
- *
- * Distinct from the monthly "Service Report" aggregate — that is derived from a
- * collection of `TimeEntry` records and is not stored directly. See
- * `CONTEXT.md` glossary.
- */
 export type TimeEntry = {
   id: string
   hours: number
   minutes: number
   date: Date
-  /**
-   * Reference to a user-defined `Category` record (`types/category.ts`). When
-   * set, the entry counts as that category and inherits its `isCredit`
-   * attribute. Replaces the legacy `tag: string` field — all writers must use
-   * `categoryId` going forward.
-   *
-   * The LDC builtin Category (`LDC_BUILTIN_CATEGORY_ID`) is what legacy `ldc:
-   * true` entries get rewritten to during the LDC collapse migration. After
-   * that migration there is no longer a separate "LDC" boolean — LDC is just a
-   * credit-bearing Category like Bethel or Hospital.
-   */
+
   categoryId?: string
-  /**
-   * Legacy free-text category name. Retained on the type so the one-time
-   * migration in `src/lib/categories.ts` can read it from persisted state; new
-   * code must not write to this field. Dropped by the migration on first run.
-   *
-   * @deprecated Use `categoryId` and look up the Category record instead.
-   */
+
   tag?: string
-  /**
-   * Per-entry credit flag. Historically authoritative; now derived from the
-   * referenced `Category.isCredit` once `categoryId` is set. Still written by
-   * the LDC path and read by legacy/unmigrated entries during the transition
-   * window. Readers should prefer `Category.isCredit` when `categoryId` is
-   * present.
-   */
+
   credit?: boolean
-  /**
-   * True when the entry was created by the Time Rollover system to move
-   * fractional minutes between months toward an annual goal. Pairs of these
-   * entries cancel out across month boundaries.
-   */
+
   rollover?: boolean
-  /**
-   * Shared id linking the two halves of a rollover (the negative entry on the
-   * source month's last day and the positive entry on the destination month's
-   * first day). Used to delete the pair atomically and keep the math balanced.
-   */
+
   rolloverGroupId?: string
-  /** Optional note for the entry. */
+
   note?: string
-  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+
   noteDoc?: RichText
-  /**
-   * Epoch ms of the most recent change on this record. Populated by store
-   * actions for iCloud merge. Optional for historical records that predate sync
-   * — backfilled lazily.
-   */
+
   updatedAt?: number
 }
 
-/**
- * Pre-LDC-collapse TimeEntry shape. The canonical `TimeEntry` no longer carries
- * the `ldc` boolean — LDC is now a builtin Category (see
- * `src/constants/categories.ts`). This type is used by migration code that
- * needs to read persisted state from before the collapse ran. Keep this narrow:
- * nothing in the runtime should consume `ldc` outside the migration step + the
- * iCloud field-rename shim.
- *
- * @deprecated For migration/sync-renames only. Do not write new code that reads
- *   the `ldc` field.
- */
 export type LegacyTimeEntry = TimeEntry & {
   ldc?: boolean
 }
 
-/**
- * Tombstone written when a time entry is deleted so it propagates across
- * devices.
- */
 export type TimeEntryTombstone = {
   id: string
   deletedAt: number
-  /**
-   * Left by an import's Undo rather than by the user, so running that import
-   * again brings the entry back.
-   */
+
   importUndone?: true
 }
 
-/**
- * Tombstone written when a Day Plan or Recurring Plan is removed, so the
- * deletion propagates across devices instead of another device's copy bringing
- * the Plan back.
- */
 export type PlanTombstone = {
   id: string
   deletedAt: number
 }
 
-/** 0-indexed month key, 0-11 */
 export type TimeEntriesByMonth = {
   [month: string]: TimeEntry[]
 }
 
-/** Time entries grouped by year (January–December months underneath). */
 export type TimeEntriesByYear = {
   [year: string]: TimeEntriesByMonth
 }
 
-/**
- * Choose how to display formatted minutes.
- *
- * @short 13 Hrs 30 Mins
- * @decimal 13.5
- */
 export type MinuteDisplayFormat = 'short' | 'decimal'
 
-/**
- * Where a Plan happens: a place picked from Apple Maps search (a business or
- * landmark carries `name`; a plain street address may not).
- */
 export type PlanLocation = {
   name?: string
   address?: string
@@ -134,25 +56,14 @@ export type PlanLocation = {
   longitude?: number
 }
 
-/** Which buddy invitation a linked Plan follows. */
 export type BuddyShareRef = {
-  /** The inviting buddy's inbox id. */
   from: string
   shareId: string
 }
 
-/**
- * A linked Plan's tie to the invitation it follows. The organizer's details
- * (day, time, title, place, note, and hours) come from the invitation; Type,
- * the reminder, and the User's own hours are theirs.
- */
 export type LinkedShare = BuddyShareRef & {
-  /**
-   * The invitation's `rev` the Plan last took the organizer's details from. A
-   * device with an older copy of the invitation leaves the Plan as it is.
-   */
   rev?: number
-  /** The User set their own hours; the organizer's changes leave them. */
+
   ownMinutes?: true
 }
 
@@ -160,80 +71,36 @@ export type DayPlan = {
   id: string
   date: Date
   minutes: number
-  /**
-   * Reference to a user-defined `Category` record (`types/category.ts`) —
-   * surfaced in the UI as the Plan's "Type". Unlike Time Entries, Plans carry
-   * no stamped `credit` boolean: the Category is the single source of truth for
-   * whether the planned minutes forecast as Credit Time, derived at read time
-   * (`isPlanCreditTime`). Absent or dangling (Category deleted) → forecasts
-   * Standard. See ADR 0005.
-   */
+
   categoryId?: string
-  /**
-   * Local-wall-clock start time as minutes since midnight (0–1439). Independent
-   * of timezone — `date` carries the calendar day, this carries the time. When
-   * undefined, treat as noon (720) via `getStartTimeInMinutes`.
-   */
+
   startTimeInMinutes?: number
-  /**
-   * The Plan is hours for the day with no set time ("Just hours"). Its
-   * `startTimeInMinutes` stays at noon only so older app versions show it as a
-   * noon Plan; don't show or schedule from it while this is set.
-   */
+
   anytime?: boolean
-  /** Optional short name for the Plan, e.g. "Cart witnessing". */
+
   title?: string
   location?: PlanLocation
   note?: string
-  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+
   noteDoc?: RichText
-  /**
-   * Buddies (their inbox ids) invited to this Plan. Each gets the date, time,
-   * title, location, and note end to end encrypted, and follows changes.
-   */
+
   buddies?: string[]
-  /**
-   * Set when this Plan was added by answering "Going" to a buddy's invitation.
-   * It follows the buddy's changes and goes away if they cancel.
-   */
+
   buddyShare?: LinkedShare
-  /**
-   * Whether the user opted this plan into a local notification. Defaults false;
-   * the global preference `planAlwaysNotify` flips the default for newly
-   * created plans.
-   */
+
   notifyMe?: boolean
-  /**
-   * Scheduled local notifications for this plan. IDs are device-local — they
-   * are still synced via iCloud last-writer-wins, but consumers must treat
-   * remote IDs as opaque (they cannot be cancelled from another device).
-   */
+
   notifications?: import('@/types/visit').Notification[]
-  /** Minutes before the start the reminder fires. See `Visit.followUp`. */
+
   reminderOffsetMinutes?: number
-  /**
-   * Origin of this plan. `'recommendation'` is stamped by the Assistant when
-   * the engine inserts plans on the user's behalf; treated as `'manual'` when
-   * unset, including for all plans that predate this field.
-   */
+
   source?: 'manual' | 'recommendation'
-  /**
-   * Local day key (`YYYY-MM-DD`) of the User's first save of this Plan; later
-   * edits keep it. Code that changes a Plan on its own (Buddies) leaves it
-   * alone. The Pet Companion counts it as an active day (ADR 0030). Absent on
-   * Plans not saved since it was added; the User's next edit stamps it.
-   */
+
   savedOn?: string
-  /** Epoch ms of the most recent change. Used for iCloud merge. */
+
   updatedAt?: number
 }
 
-/**
- * Stored on every Recurring Plan and synced as a number, so each value is
- * persisted: never renumber or reorder them. A new frequency takes the next
- * number, and older builds drop a Plan with a number they don't know
- * (`src/app/sync/payloadValidation.ts`).
- */
 export enum RecurringPlanFrequencies {
   WEEKLY = 0,
   BI_WEEKLY = 1,
@@ -241,24 +108,20 @@ export enum RecurringPlanFrequencies {
   MONTHLY_BY_WEEKDAY = 3,
 }
 
-// For monthly by weekday patterns (e.g., "first Monday of the month")
 export type MonthlyByWeekdayConfig = {
-  weekday: number // 0-6 (Sunday-Saturday)
-  weekOfMonth: number // 1-4 for first, second, third, fourth week, or -1 for last week
+  weekday: number
+  weekOfMonth: number
 }
 
 export type RecurringPlanOverride = {
   date: Date
   minutes: number
-  /**
-   * When set, overrides the parent recurring plan's start time for this
-   * instance. Undefined means inherit from the parent plan.
-   */
+
   startTimeInMinutes?: number
-  /** Overrides the parent's `anytime` for this instance; undefined inherits. */
+
   anytime?: boolean
   note?: string
-  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+
   noteDoc?: RichText
 }
 
@@ -266,50 +129,37 @@ export type RecurringPlan = {
   id: string
   startDate: Date
   minutes: number
-  /**
-   * Reference to a user-defined `Category` record — the pattern's "Type".
-   * Pattern-level only: `RecurringPlanOverride` cannot change it (skip the
-   * instance and create a Day Plan instead). Same derive-at-read-time semantics
-   * as `DayPlan.categoryId`. See ADR 0005.
-   */
+
   categoryId?: string
-  /**
-   * Local-wall-clock start time as minutes since midnight (0–1439). Applies to
-   * every instance unless an override sets its own. When undefined, treat as
-   * noon (720) via `getStartTimeInMinutes`.
-   */
+
   startTimeInMinutes?: number
-  /** Every instance is hours with no set time. See `DayPlan.anytime`. */
+
   anytime?: boolean
-  /** Pattern-level, like `categoryId`: overrides can't change these. */
+
   title?: string
   location?: PlanLocation
   recurrence: {
     frequency: RecurringPlanFrequencies
     interval: number
     endDate: Date | null
-    // For MONTHLY_BY_WEEKDAY frequency only
+
     monthlyByWeekdayConfig?: MonthlyByWeekdayConfig
   }
   note?: string
-  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+
   noteDoc?: RichText
   deletedDates?: Date[]
   overrides?: RecurringPlanOverride[]
-  /**
-   * Pattern-level, like `title`: every instance reminds, at its own start (an
-   * override's time) less `reminderOffsetMinutes`. See `DayPlan.notifyMe`.
-   */
+
   notifyMe?: boolean
-  /** Minutes before each instance's start the reminder fires. */
+
   reminderOffsetMinutes?: number
-  /** Local day key of the User's first save; see `DayPlan.savedOn`. */
+
   savedOn?: string
-  /** Epoch ms of the most recent change. Used for iCloud merge. */
+
   updatedAt?: number
 }
 
-/** One Plan on one date, as lists and Plan Details show it. */
 export type PlanListItem =
   | { type: 'day'; date: Date; plan: DayPlan }
   | { type: 'recurring'; date: Date; plan: RecurringPlan }

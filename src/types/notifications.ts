@@ -1,101 +1,67 @@
 import type { ReactNode } from 'react'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 
-/** Where a tray item comes from. Bounded, so it's safe as an analytics value. */
 export type NotificationKind =
   | 'backup'
   | 'icloud_sync'
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'
-  /** A local Follow-up, Plan, or returning Contact reminder that fired. */
   | 'reminder'
   | 'auxiliary_month'
-  /** Asks a Kingdom Publisher once whether to log hours. */
   | 'hours_logging'
   | 'whats_new'
-  /** An OTA update downloaded this launch that a restart applies. */
   | 'pending_update'
   | 'update_reveal'
   | 'supporter_nudge'
   | 'supporter_survey'
-  /** The Supporter note after finishing the Home checklist. */
   | 'supporter_note'
   | 'data_protection_retention'
   | 'buddies'
-  /**
-   * Calendar Sync: the one-time setup invitation for existing users, or updates
-   * that stopped for someone who turned it on.
-   */
   | 'calendar_sync'
-  /** A remote notice set through the `announcement` feature flag. */
   | 'announcement'
-  /** A new badge the User hasn't opened or swiped away yet. */
   | 'badge'
-  /** A pet room item or hat that opened up and hasn't been looked at yet. */
   | 'pet_unlock'
-  /** Test items from the Tools screen. */
   | 'dev_test'
 
 export type NotificationTone = 'accent' | 'warn' | 'error' | 'supporter'
 
 export type NotificationAction = {
-  /** Bounded analytics name, e.g. `submit`. */
   id: string
   label: string
   onPress: () => void
-  /** Runs without closing the tray, for actions that don't navigate. */
+
   inPlace?: boolean
 }
 
 export type NotificationRowProps = {
   unread: boolean
   dismiss: () => void
-  /** Closes the tray, then runs the action (e.g. navigating). */
+
   closeThen: (action: () => void) => void
 }
 
-/**
- * One entry in the Home notifications tray. Features derive these from their
- * own state; an item disappears on its own once its condition clears (report
- * submitted, backup made, Follow-up rescheduled).
- */
 export type NotificationItem = {
-  /**
-   * Stable per occurrence, e.g. `report:2026-08`, so dismissing August's report
-   * doesn't hide September's.
-   */
   id: string
   kind: NotificationKind
-  /** When it came in (epoch ms). Omit to use when the tray first listed it. */
+
   at?: number
   icon?: AppIcon
-  /**
-   * An unlock's picture, drawn `size` points square in place of the icon: the
-   * same preview its unlock toast showed.
-   */
+
   art?: (size: number) => ReactNode
   tone?: NotificationTone
   title: string
   description?: string
-  /** At most two; the first is the primary action and the row's tap target. */
+
   actions?: NotificationAction[]
-  /** Survives "Clear All", e.g. an invitation still waiting on an answer. */
+
   sticky?: boolean
-  /**
-   * Buddies' news (a buddy's new badge, a reaction to one of the User's
-   * badges): listed under "From your buddies", below everything else, and never
-   * counted on the bell or the app icon badge (ADR 0021).
-   */
+
   social?: boolean
-  /** Source-side effects of a dismissal, like a snooze or cooldown stamp. */
+
   onDismiss?: () => void
-  /**
-   * The item was shown on screen in the open tray: runs once per opening, when
-   * it first scrolls into view (including items that arrive while it's open).
-   * What's shown is marked read when the tray closes.
-   */
+
   onView?: () => void
-  /** Replaces the standard row, for items with their own layout. */
+
   render?: (props: NotificationRowProps) => ReactNode
 }

@@ -32,11 +32,10 @@ let server: FakeSpacesServer
 let client: SpacesClient
 let seed: Uint8Array
 let fetched: string[]
-/** How long the fake server takes to answer a `sync`. */
+
 let syncDelayMs: number
 
 beforeEach(() => {
-  // Retries wait no time.
   vi.spyOn(Math, 'random').mockReturnValue(0)
   server = createFakeSpacesServer({ now: Date.now })
   fetched = []
@@ -280,7 +279,7 @@ describe('spaces client', () => {
         space,
         [1, 2, 3].map((n) => record(space, `r${n}`, n))
       )
-      // Each answer takes longer than an ordinary call may (15 s).
+
       syncDelayMs = 20_000
       const pages: number[] = []
       const run = client.syncFrom(
@@ -294,8 +293,7 @@ describe('spaces client', () => {
       await vi.advanceTimersByTimeAsync(4 * 21_000)
       await run
       expect(pages).toEqual([1, 1, 1])
-      // A sync that isn't catching up keeps the ordinary timeout (and tries
-      // once more).
+
       const error = refusal(() => client.sync(space, { since: 3 }))
       await vi.advanceTimersByTimeAsync(60_000)
       expect(isSpaceError(await error, 'timeout')).toBe(true)

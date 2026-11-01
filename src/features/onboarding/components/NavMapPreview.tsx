@@ -32,13 +32,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type ProviderKey = 'apple' | 'google' | 'waze'
 
-// Stylized "poster" map drawn entirely in SVG. We deliberately avoid
-// `react-native-maps` here: a real MapView paints over absolute-positioned
-// siblings on iOS (the chrome / bottom sheet vanish behind it), and Apple's
-// licensing forces a "Maps" watermark + real POI labels (Times Square,
-// Rockefeller Center, etc.) to bleed through, drowning the brand chrome we're
-// trying to render.
-
 const SVG_WIDTH = 320
 const SVG_HEIGHT = 280
 
@@ -142,18 +135,12 @@ interface Props {
   provider: DefaultNavigationMapProvider
 }
 
-/**
- * The map at its poster shape, as wide as the column allows (up to the form
- * width) and shrinking when the step runs out of height: full width on an iPad,
- * it grew taller than the screen and pushed Continue off it.
- */
 const NavMapPreview = ({ provider }: Props) => {
   const [frame, setFrame] = useState<Size | null>(null)
   const size = frame && fitAspectRatio(frame, SVG_WIDTH / SVG_HEIGHT)
   const key: ProviderKey = (provider ?? 'apple') as ProviderKey
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
 
-  // One picture to a screen reader, not a dozen scattered labels.
   return (
     <View
       style={[styles.column, foldColumn]}
@@ -180,11 +167,6 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
   const key: ProviderKey = (provider ?? 'apple') as ProviderKey
   const mt = PROVIDER_THEMES[key]
 
-  // Initialize entrance values to their final state (1). The effect resets
-  // them to 0 and re-animates on mount/provider-change. Defaulting to 1 means
-  // a missed effect, hot reload, or animation cancellation never strands an
-  // element at opacity 0 — the worst-case is the entrance animation just
-  // doesn't play, but everything stays visible.
   const originPin = useSharedValue(1)
   const hallLabel = useSharedValue(1)
   const contactCard = useSharedValue(1)
@@ -195,13 +177,6 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
   const chromeOpacity = useSharedValue(1)
 
   useEffect(() => {
-    // Run the cancel + reset + animation start as a single worklet on the UI
-    // thread. Doing this from JS as `value = 0; value = withTiming(1)` races
-    // across the JS↔UI boundary in Reanimated 4: the withTiming descriptor
-    // can be read against a stale "current value" before the reset lands,
-    // leaving every animated element stranded at 0 (invisible). Inside a
-    // worklet, the three steps execute synchronously on the UI runner so
-    // withTiming/withSpring always start from the freshly-reset 0.
     scheduleOnUI(() => {
       'worklet'
       cancelAnimation(originPin)
@@ -282,9 +257,6 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
     strokeDashoffset: ROUTE_LENGTH * (1 - routeProgress.value),
   }))
 
-  // Animated styles deliberately set ONLY opacity + transform-for-animation.
-  // Static layout offsets (centering on the anchor) live on the outer wrapper
-  // View so the animated `transform` array doesn't replace them.
   const originPinStyle = useAnimatedStyle(() => ({
     opacity: originPin.value,
     transform: [
@@ -686,8 +658,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexShrink: 1,
   },
-  // Asks for the full column width at the map's shape, then gives up height
-  // when the step needs it; the card fits inside whatever it gets.
+
   frame: {
     width: '100%',
     aspectRatio: SVG_WIDTH / SVG_HEIGHT,

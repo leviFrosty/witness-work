@@ -22,12 +22,6 @@ import {
 } from '@/features/supporter/stores/supporterSurveys'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * The feedback survey invitation (found by `SupporterSurveyHost`) or, when
- * there's none, the long-tenure "thank you" nudge. Both interactions with the
- * nudge start its ~365-day cooldown. Plus the Supporter note listed once the
- * Home checklist is done.
- */
 export default function useSupporterNotifications(
   now: number
 ): NotificationItem[] {
@@ -36,7 +30,7 @@ export default function useSupporterNotifications(
   const { isSupporter } = useIsSupporter()
   const serviceReports = useServiceReport((state) => state.serviceReports)
   const contactsCount = useContacts((state) => state.contacts.length)
-  // A shared Contact's Visits are the sender's use of the app, not the User's.
+
   const conversationsCount = useConversations(
     (state) => state.conversations.filter(isOwnVisit).length
   )
@@ -62,17 +56,12 @@ export default function useSupporterNotifications(
     }))
   )
 
-  // First time this build runs on the device, stamp the intro grace start.
-  // The nudge predicate waits `introGraceDays` after this so existing
-  // long-tenure users updating to the nudge-introducing build aren't asked
-  // while WhatsNew and other update surfaces are still landing.
   useEffect(() => {
     if (supporterNudgeAvailableSince === null) {
       set({ supporterNudgeAvailableSince: Date.now() })
     }
   }, [supporterNudgeAvailableSince, set])
 
-  // A one-time thank-you once the Home checklist is done.
   const checklistNote: NotificationItem[] =
     homeChecklistCompletedAt === null || isSupporter || hideDonateHeart
       ? []
@@ -140,7 +129,6 @@ export default function useSupporterNotifications(
   return [
     ...checklistNote,
     {
-      // Each cooldown ends in a new ask.
       id: `supporter_nudge:${supporterNudgeDismissedAt ?? 0}`,
       kind: 'supporter_nudge',
       icon: HeartIcon,

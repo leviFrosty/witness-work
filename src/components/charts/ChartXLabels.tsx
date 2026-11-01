@@ -8,28 +8,20 @@ import { placeAxisLabels } from '@/lib/chartAxisLabels'
 export type ChartXLabel = {
   key: string
   label: string
-  /**
-   * Where the label centers along the plot, 0 (left edge) to 1 (right edge); RN
-   * mirrors it in RTL, as `ChartPlot` mirrors the plot.
-   */
+
   position: number
 }
 
 type Props = {
   labels: ChartXLabel[]
-  /** Space before the plot starts, matching the chart's left padding. */
+
   insetLeft?: number
-  /** Space after the plot ends, matching the chart's right padding. */
+
   insetRight?: number
-  /** Room each label gets, centered on its position. */
+
   labelWidth?: number
 }
 
-/**
- * X-axis labels for a Skia chart, drawn as regular text below the canvas so
- * every locale's script renders with the app's fonts. Decorative: the chart's
- * own accessibility label carries the data.
- */
 const ChartXLabels = (props: Props) =>
   useAccessibilityTextSize() ? (
     <MeasuredChartXLabels {...props} />
@@ -37,7 +29,6 @@ const ChartXLabels = (props: Props) =>
     <FixedChartXLabels {...props} />
   )
 
-/** Each label in its fixed-width slot, on one line. */
 const FixedChartXLabels = ({
   labels,
   insetLeft = 0,
@@ -72,14 +63,8 @@ const FixedChartXLabels = ({
   )
 }
 
-/** Room between two neighboring labels. */
 const LABEL_GAP = 6
 
-/**
- * At accessibility text sizes the labels are wider than their slots, so each is
- * measured at full size and only every second, third… label shows, as many as
- * fit without touching; the row grows as tall as the text.
- */
 const MeasuredChartXLabels = ({
   labels,
   insetLeft = 0,
@@ -108,7 +93,7 @@ const MeasuredChartXLabels = ({
       onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
       style={{ height, marginLeft: insetLeft, marginRight: insetRight }}
     >
-      {/* Measures each label's natural size out of sight. */}
+      {}
       <View
         pointerEvents='none'
         style={{

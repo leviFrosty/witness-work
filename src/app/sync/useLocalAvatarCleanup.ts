@@ -32,7 +32,6 @@ const contactPaths = (contact: Contact) =>
       ]
     : []
 
-/** Remove local photo bytes when a deletion/removal arrives, on either platform. */
 export function useLocalAvatarCleanup(ready: boolean | undefined) {
   useEffect(() => {
     if (!ready || !FileSystem.documentDirectory) return
@@ -100,7 +99,7 @@ export function useLocalAvatarCleanup(ready: boolean | undefined) {
           )
       )
       void remove(removed.flatMap(contactPaths))
-      // Redaction/permanent removal also erases abandoned drafts for that owner.
+
       void scanErasedOwners(
         new Set(
           before
@@ -121,7 +120,7 @@ export function useLocalAvatarCleanup(ready: boolean | undefined) {
         originalPath('profile-avatar.jpg', previous.avatar),
       ])
     })
-    // Recoverable archives keep their files for the same retention window.
+
     const current = useContacts.getState()
     void scanErasedOwners(
       new Set(

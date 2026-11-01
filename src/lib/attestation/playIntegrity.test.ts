@@ -38,10 +38,6 @@ class NativeError extends Error {
   }
 }
 
-/**
- * A transport post, or `submit`: the attested request's own route (the
- * feature's `submit` callback), recorded alongside.
- */
 type Call = AttestationEndpoint | 'submit'
 
 type PostHandler = (
@@ -124,7 +120,7 @@ const createHarness = (
     sleep: vi.fn(async () => {}),
     random: options.random ?? (() => 0),
   }
-  /** The attested request's own route: records the proof's fields. */
+
   const submit = async (proof: AttestationProof) => {
     const body =
       proof.kind === 'attestation' ? proof.fields : { devBypass: proof.token }
@@ -141,7 +137,6 @@ const createHarness = (
   }
 }
 
-/** An account session's attestation, challenged at `/attestation/v1`. */
 const attest = (
   harness: ReturnType<typeof createHarness>,
   signal?: AbortSignal
@@ -176,7 +171,7 @@ describe('buildPlayIntegrityClientData', () => {
     expect(clientData).toBe(
       `witnesswork.play-integrity|1|assert|attestation-verify|play-operation-1|${CHALLENGE}|65A8B00C-DA7A-4E0A-BA5C-8E3D1B8C5F1C||${DIAGNOSTIC_CONTENT_HASH}|${DIAGNOSTIC_CONTENT_HASH}`
     )
-    // ww-api `computePlayIntegrityRequestBinding` for the same request.
+
     await expect(sha256Hex(clientData)).resolves.toBe(
       'c62e4580fc1d9750b190749f1219c67f552a7d7c49e58d42287566f5661698e3'
     )
@@ -663,7 +658,7 @@ describe('Play Integrity for other features (assert)', () => {
       },
     ])
     expect(harness.posts).toEqual([])
-    // Warmed while the challenge round-trips.
+
     expect(harness.dependencies.playIntegrity.prepare).toHaveBeenCalledWith(
       '123456789012'
     )

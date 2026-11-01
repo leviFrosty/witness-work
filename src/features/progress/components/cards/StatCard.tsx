@@ -12,27 +12,23 @@ import type { ProgressCardSize } from '@/lib/progressCards'
 type Props = {
   icon: AppIcon
   title: string
-  /** The headline figure, e.g. "1.3h". */
+
   value: string
-  /** Small text after the value, e.g. "a day". */
+
   suffix?: string
-  /** One line under the value. */
+
   caption?: string
-  /** A second line, shown only when the card is wide. */
+
   detail?: string
-  /** The value's color: the accent for good news, muted for nothing yet. */
+
   tone?: 'default' | 'accent' | 'muted'
-  /** Optional help beside the title. */
+
   info?: string
-  /** Drawn under the text, e.g. a bar. */
+
   footer?: ReactNode
   size: ProgressCardSize
 }
 
-/**
- * The shape most Progress cards share: a titled figure with a line or two of
- * context. Small cards stack it in one column; wide ones add `detail`.
- */
 export default function StatCard({
   icon,
   title,
@@ -47,7 +43,7 @@ export default function StatCard({
 }: Props) {
   const theme = useTheme()
   const wide = size !== 'small'
-  // At accessibility sizes the lines wrap in full rather than cut off.
+
   const lines = useAccessibilityTextSize() ? undefined : 2
   const valueColor =
     tone === 'accent'
@@ -68,7 +64,6 @@ export default function StatCard({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <LucideIcon icon={icon} size={13} color={theme.colors.accent} />
         <Text
-          // Half-width cards in narrow columns wrap rather than truncate.
           numberOfLines={lines}
           style={{
             flexShrink: 1,

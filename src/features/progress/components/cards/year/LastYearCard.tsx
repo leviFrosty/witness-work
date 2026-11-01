@@ -6,13 +6,8 @@ import useServiceYearPace from '@/features/progress/hooks/useServiceYearPace'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** Differences under this read as even, as on the pace chart. */
 const EVEN_MINUTES = 30
 
-/**
- * The Service Year so far against last year at the same point (the whole of
- * both once it's over), as the pace chart's faint line compares them.
- */
 export default function LastYearCard({ serviceYear, size }: YearCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const { pace } = useServiceYearPace(serviceYear)

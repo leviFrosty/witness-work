@@ -29,11 +29,6 @@ import {
 } from '@/lib/serverAccount/session'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
-/**
- * Engines for tests: each `user` is a whole Buddies client with its own store
- * and seed, all talking to one in-memory relay on a shared clock.
- */
-
 export const random = (length: number) =>
   new Uint8Array(nodeRandomBytes(length))
 
@@ -58,11 +53,6 @@ export function memoryStore(initial: Partial<BuddiesState>) {
 
 export const RELAY_URL = 'https://relay.test'
 
-/**
- * One device's account sessions on the fake relay: the app's own
- * `createAccountSessions`, attesting with the dev bypass unless `attestation`
- * names a problem, and kept in memory.
- */
 export function testSessions({
   fetchImpl,
   now,
@@ -99,7 +89,6 @@ export function testSessions({
   })
 }
 
-/** The `OwnerAuth` an engine builds for `seed`'s inbox. */
 export function ownerAuthFor(seed: Uint8Array): OwnerAuth {
   const me = deriveIdentity(seed)
   return {
@@ -118,21 +107,17 @@ export function ownerAuthFor(seed: Uint8Array): OwnerAuth {
   }
 }
 
-/**
- * `start`: when the shared clock starts. Tests whose engines run beside others
- * on the device clock (Shared Cars, say) start it at `Date.now()`.
- */
 export function setup({
   start = Date.parse('2026-09-23T15:00:00Z'),
 }: { start?: number } = {}) {
   let clock = start
   const now = () => clock
   const fake = createFakeRelay(now)
-  /** Ops that fail as if the device were offline. */
+
   const offlineOps = new Set<string>()
-  /** Runs after the relay handled a request, before its response arrives. */
+
   let afterOp: ((op: string) => Promise<void>) | null = null
-  /** Buddies ops reach the relay through this; sessions too, unhooked. */
+
   const fetchImpl = (async (url: string, init?: RequestInit) => {
     const op: string | undefined = String(url).split('/buddies/v1/')[1]
     if (op === undefined) return fake.fetchImpl(url, init)
@@ -170,7 +155,7 @@ export function setup({
     let rootSeed: Uint8Array | null = seed
     const rootSeedNow = async () => (rootSeed ??= random(32))
     let attestation: AttestationProblem | null = null
-    // The session follows the root seed (the account key), as in the app.
+
     const sessions = testSessions({
       fetchImpl,
       now,
@@ -189,11 +174,11 @@ export function setup({
     let pet: BuddyPet | undefined
     let showBadges = true
     let enabled = true
-    /** Work the engine scheduled for later (`later`), run by the test. */
+
     const timers: { run: () => void; ms: number }[] = []
-    /** Seqs whose system alerts the engine took back, per call. */
+
     const dismissed: number[][] = []
-    /** This device's keystore for car invitations' secrets, unless given. */
+
     const inviteSecretStorage = memoryInviteSecretStorage()
     const inviteSecrets =
       extra.inviteSecrets ?? createInviteSecretStore(inviteSecretStorage)
@@ -230,14 +215,14 @@ export function setup({
       profile,
       seed,
       inboxId: deriveIdentity(seed).inboxId,
-      /** This device's relay client, with its session. */
+
       relay,
       sessions,
-      /** Puts a root seed back, as a handoff or a recovery key would. */
+
       setRootSeed: (next: Uint8Array) => {
         rootSeed = next
       },
-      /** Makes this device's next `session/open` fail to attest, or not. */
+
       setAttestation: (problem: AttestationProblem | null) => {
         attestation = problem
       },
@@ -258,9 +243,9 @@ export function setup({
       },
       timers,
       dismissed,
-      /** Where car invitations' secrets are kept on this device. */
+
       inviteSecrets,
-      /** What its keystore holds of them, unless `inviteSecrets` was given. */
+
       inviteSecretStorage,
     }
   }
@@ -280,7 +265,6 @@ export function setup({
   }
 }
 
-/** Invite → accept → confirm, then both sides sync so cards flow. */
 export async function pair(
   inviter: ReturnType<ReturnType<typeof setup>['user']>,
   invitee: ReturnType<ReturnType<typeof setup>['user']>

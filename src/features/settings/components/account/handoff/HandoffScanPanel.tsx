@@ -23,10 +23,6 @@ const PROBLEM: Record<
   damaged: 'handoff_scanDamaged',
 }
 
-/**
- * Scans the other phone's code. Camera access is asked for only once this is
- * open; when it's denied, the panel points to Settings.
- */
 export default function HandoffScanPanel({
   onOffer,
 }: {

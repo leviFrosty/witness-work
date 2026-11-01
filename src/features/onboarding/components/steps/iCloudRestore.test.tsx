@@ -238,7 +238,6 @@ describe('onboarding iCloud restore', () => {
     expect(texts()).toContain('iCloudRestoreRetry')
     expect(texts()).not.toContain('iCloudRestoreNoBackup')
 
-    // The download lands and the metadata query reports it.
     await act(async () => {
       runtime.remoteChangeListeners.forEach((listener) => listener())
     })
@@ -351,7 +350,7 @@ describe('restoring over data already on this device', () => {
       'icloud_restore_replace_confirmed',
       { source: 'onboarding', merge_offered: false, choice: 'replace' }
     )
-    // Not a Supporter: ongoing sync stays off.
+
     expect(runtime.preferencesSet).not.toHaveBeenCalledWith(
       expect.objectContaining({ iCloudSyncEnabled: true })
     )
@@ -391,8 +390,7 @@ describe('restoring over data already on this device', () => {
     await press('iCloudRestoreReplaceConfirm_merge')
 
     expect(iCloudSync.replaceLocalWithRemote).not.toHaveBeenCalled()
-    // Joins iCloud's reset generation first, so the pull merges rather than
-    // adopting it and replacing this device's data.
+
     expect(iCloudSync.joinRemoteResetEpoch).toHaveBeenCalledOnce()
     expect(
       vi.mocked(iCloudSync.joinRemoteResetEpoch).mock.invocationCallOrder[0]

@@ -4,25 +4,12 @@ const { parseSync } = require('@babel/core')
 
 const PACKAGE = 'lucide-react-native'
 
-// `require.resolve` lands on dist/cjs/lucide-react-native.js (package.json
-// itself isn't exported).
 const lucidePackageDir = (root = process.cwd()) =>
   path.resolve(
     path.dirname(require.resolve(PACKAGE, { paths: [root] })),
     '../..'
   )
 
-/**
- * The package's ESM index re-exports every icon (~1,750 modules). Metro doesn't
- * tree-shake, so importing from the index evaluates all of them at launch, and
- * its `exports` map has no per-icon subpaths. Reading the index tells us which
- * file backs each export name.
- *
- * Maps every value export of the index to `{ source, imported }`, where
- * `source` is a package subpath such as
- * `lucide-react-native/dist/esm/icons/plus.mjs` and `imported` is the name that
- * file exports it as (usually `default`).
- */
 const readLucideExports = (packageDir = lucidePackageDir()) => {
   const code = fs.readFileSync(
     path.join(packageDir, 'dist/esm/lucide-react-native.mjs'),
@@ -50,17 +37,6 @@ const readLucideExports = (packageDir = lucidePackageDir()) => {
 
 let cachedExports
 
-/**
- * Rewrites `import { Plus, X as Close } from 'lucide-react-native'` into one
- * import per icon file (`import Close from
- * 'lucide-react-native/dist/esm/icons/x.mjs'`), so only the icons the app names
- * get bundled.
- *
- * Type-only imports are left for the TypeScript transform to strip. Names the
- * index doesn't export (types imported without `type`) stay on the original
- * import. metro.config.js resolves the rewritten subpaths past the `exports`
- * map, so other Babel callers (Jest) keep the original imports.
- */
 const lucideImportsPlugin = (api) => {
   const { types: t } = api
   if (!api.caller((caller) => caller?.name === 'metro')) {

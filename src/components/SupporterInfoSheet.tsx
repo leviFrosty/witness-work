@@ -21,10 +21,7 @@ import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 interface Props {
   open: boolean
   setOpen: (open: boolean) => void
-  /**
-   * Optional key of the specific feature the user tapped. Surfaces slightly
-   * different copy acknowledging what they were trying to customize.
-   */
+
   featureKey?: FeatureKey
   attribution?: SupporterGateAttribution
 }
@@ -40,7 +37,7 @@ const SupporterInfoSheet = ({
   const { priceString } = useCheapestSupporterPrice()
   const afterPopover = useAfterPopover()
   const interactionHandled = useRef(false)
-  // Set by the support button: the Paywall opens once the sheet has closed.
+
   const openPaywall = useRef(false)
 
   useEffect(() => {
@@ -88,10 +85,6 @@ const SupporterInfoSheet = ({
       onOpenChange={(nextOpen) => {
         if (!nextOpen) dismiss('gesture_or_overlay')
       }}
-      // The Paywall is a pushed screen; opened while the sheet is still on its
-      // way out, it would land underneath it. Inside a popover (e.g. the
-      // AvatarPickerPopover's avatar gate), iOS presents the sheet on the
-      // popover, so close the popover too and push once it's gone.
       onClosed={() => {
         if (!openPaywall.current) return
         openPaywall.current = false

@@ -42,10 +42,6 @@ const RecoverContactsScreen = () => {
   const insets = useSafeAreaInsets()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
-  // Tombstones written by a data-protection hard delete keep nothing but an id
-  // and a timestamp, so there is nothing to show and nothing to restore. They
-  // stay in the store (iCloud needs them to propagate the deletion) but are
-  // filtered out here rather than rendered as blank, un-recoverable rows.
   const recoverable = deletedContacts.filter(
     (c) => !isRedactedContactTombstone(c)
   )
@@ -61,10 +57,8 @@ const RecoverContactsScreen = () => {
   const removePermanently = (ids: string[]) => {
     const targets = new Set(ids)
     ids.forEach((id) => {
-      // Leaves a redacted tombstone so other devices drop the contact too.
       removeDeletedContact(id)
-      // The archive kept every photo revision on disk so Recover could restore
-      // it.
+
       void deleteAvatarFiles(id)
     })
     useConversations
@@ -88,8 +82,7 @@ const RecoverContactsScreen = () => {
       title:
         ids.length === 1
           ? i18n.t('permanentlyDelete')
-          : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('deleteContacts_question', { count: ids.length }),
+          : i18n.t('deleteContacts_question', { count: ids.length }),
       description: i18n.t(
         ids.length === 1
           ? 'permanentlyDeleteContact_warning'
@@ -171,7 +164,7 @@ const RecoverContactsScreen = () => {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          // Wide enough for Recover's frame to end where the row's menu starts.
+
           gap: (MIN_TOUCH_TARGET - theme.fontSize()) / 2,
         }}
       >
@@ -241,8 +234,7 @@ const RecoverContactsScreen = () => {
               numberOfLines={1}
             >
               {selection.selecting
-                ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                  i18n.t('selectedCount', { count: selection.ids.length })
+                ? i18n.t('selectedCount', { count: selection.ids.length })
                 : i18n.t('recoverContacts')}
             </Text>
             {selection.selecting ? (

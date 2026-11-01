@@ -13,7 +13,6 @@ import type {
   ScribeWarningCode,
 } from '@/features/scribe/types'
 
-/** "Today · Wed, Oct 21", "Tomorrow · …", else "Wed, Oct 21". */
 export const reviewDate = (date: string, now = moment()): string => {
   const day = moment(date, 'YYYY-MM-DD')
   const compact = formatWeekdayMonthDayCompact(day)
@@ -23,7 +22,6 @@ export const reviewDate = (date: string, now = moment()): string => {
   return compact
 }
 
-/** `from "next Tuesday"`, for a value Scribe AI worked out from a phrase. */
 export const fromSpoken = (spoken: ScribeSpoken | null): string | null => {
   const phrase = [spoken?.date, spoken?.time].filter(Boolean).join(' ')
   return phrase ? i18n.t('scribe_fromSpoken', { phrase }) : null
@@ -46,7 +44,6 @@ const FIELD_LABEL: Record<ScribeFieldChange['field'], TranslationKey> = {
   address: 'scribe_field_address',
 }
 
-/** "Start: 9:00 AM → 10:00 AM". */
 export const changeLine = (
   change: ScribeFieldChange,
   format: MinuteDisplayFormat
@@ -85,7 +82,6 @@ export interface CardWarning {
   severity: ScribeWarning['severity']
 }
 
-/** Warnings to show on a card; `shared_month` is its title instead. */
 export const cardWarnings = (card: ScribeReviewCard): CardWarning[] =>
   card.effects
     .flatMap((effect) => effect.warnings)
@@ -96,16 +92,15 @@ export const cardWarnings = (card: ScribeReviewCard): CardWarning[] =>
 
 export interface ReviewLine {
   title: string
-  /** Shown under the title, joined with " · ". */
+
   meta: string[]
-  /** `from "…"`. */
+
   spoken: string | null
 }
 
 const isSharedMarker = (effect: ScribeEffect) =>
   effect.warnings.some((w) => w.code === 'shared_month')
 
-/** A single-effect card's (or nested row's) lines. */
 export const effectLines = (
   effect: ScribeEffect,
   format: MinuteDisplayFormat
@@ -277,7 +272,6 @@ export const effectLines = (
   }
 }
 
-/** A choice card's subtitle: what will be logged once the person is picked. */
 export const choiceSummary = (
   card: ScribeReviewCard,
   format: MinuteDisplayFormat

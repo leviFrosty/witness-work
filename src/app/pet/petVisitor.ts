@@ -15,14 +15,6 @@ type VisitorBuddy = Pick<
   'inboxId' | 'status' | 'pet' | 'name' | 'nickname' | 'overrides'
 >
 
-/**
- * The buddy pets that visit today: every active buddy who shares a pet and whom
- * the User goes out with today, each once, earliest first. Going out with them
- * is what the calendar counts (`buildBuddyDayMarkers`): a Plan the User invited
- * them to (unless they declined) or one that follows their invitation, and a
- * Follow-up the User invited them to (unless they declined) or one of theirs
- * the User is joining. `showsPet` leaves out buddies whose pets the User hid.
- */
 export function petVisitorsFor({
   buddies,
   dayPlans,
@@ -39,7 +31,7 @@ export function petVisitorsFor({
   incomingShares: readonly IncomingShare[]
   todayKey: string
   now: number
-  /** Buddies' answers to the User's invitation, by share key and inbox id. */
+
   repliesFor: (shareKey: string) => Record<string, ReceivedReply> | undefined
   showsPet?: (buddy: VisitorBuddy) => boolean
 }): PetVisit[] {
@@ -64,9 +56,9 @@ export function petVisitorsFor({
     const { species, coat, name } = buddy.pet
     visitsByInbox.set(inboxId, {
       inboxId,
-      // As `buddyDisplayName`: their nickname, else their own name.
+
       buddyName: buddy.nickname ?? buddy.name,
-      // A coat a newer app sent reads as the species' default.
+
       pet: {
         species,
         coat: resolveCoat(species, coat),
@@ -83,7 +75,7 @@ export function petVisitorsFor({
     if (storedDayKey(plan.date) !== todayKey) continue
     const start = getStartTimeInMinutes(plan)
     const activity = { type: 'plan', planId: plan.id } as const
-    // A Plan that follows an invitation is with the inviter only.
+
     if (plan.buddyShare) {
       add(plan.buddyShare.from, start, activity)
       continue

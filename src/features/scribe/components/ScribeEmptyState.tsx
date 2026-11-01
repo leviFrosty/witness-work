@@ -9,10 +9,6 @@ import {
 } from '@/features/scribe'
 import { ScribePill } from '@/features/scribe/components/ScribeBadge'
 
-/**
- * A new conversation: the question, and examples until the first answer. The
- * examples stay hidden while something else takes the composer's place.
- */
 const ScribeEmptyState = () => {
   const theme = useTheme()
   const titleFit = useUnbrokenWords(i18n.t('scribe_emptyTitle'))

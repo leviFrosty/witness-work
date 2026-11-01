@@ -12,10 +12,6 @@ import type { DayPlan, TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import { dayStatus, type DayStatus } from '@/features/plans/lib/dayStatus'
 import { dayKeyOf } from '@/features/plans/lib/scheduleRows'
 
-/**
- * Time Entries and Day Plans grouped by calendar day (`YYYY-MM-DD`), so a grid
- * of hundreds of days looks each one up instead of scanning every record.
- */
 export type ScheduleDayIndex = {
   reportsByDay: Map<string, TimeEntry[]>
   dayPlansByDay: ReadonlyMap<string, DayPlan[]>
@@ -42,7 +38,6 @@ export function buildScheduleDayIndex(
   return { reportsByDay, dayPlansByDay: dayPlansByDayKey(dayPlans) }
 }
 
-/** Every day of a Service Year (September → August), keyed `YYYY-MM-DD`. */
 export function serviceYearDayStatuses({
   serviceYear,
   index,
@@ -67,7 +62,7 @@ export function serviceYearDayStatuses({
       const date = new Date(year, month, day, 12)
       const dayPlans = index.dayPlansByDay.get(key) ?? []
       const recurring = getPlansIntersectingDay(date, recurringPlans)
-      // A Time Rollover moves time between months; it isn't that day's service.
+
       const reports = (index.reportsByDay.get(key) ?? []).filter(
         isCountableEntry
       )

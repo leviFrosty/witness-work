@@ -1,7 +1,5 @@
 import * as Device from 'expo-device'
 
-// The text colors (text, textAlt, error, warnText, supporterText) meet WCAG AA
-// (4.5:1) on every surface they're drawn on. theme.test.ts checks those pairs.
 export const lightModeColors = {
   text: '#373737',
   textAlt: '#696969',
@@ -11,16 +9,14 @@ export const lightModeColors = {
   accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#B7DDC5',
-  // Solid fill for the user's chat bubble — the opaque equivalent of
-  // accentTranslucent over `background`, so the bubble reads as one flat color.
+
   accentBubble: '#C0E4CD',
   background: '#E9E9E9',
   backgroundLightest: '#F0F0F0',
   border: '#dbdbdb',
   backgroundLighter: '#F8F8F8',
   card: '#FFFFFF',
-  // Bottom sheets: white here, near-black in dark mode, so cards and rows on a
-  // sheet read as raised.
+
   sheet: '#FFFFFF',
   accent2: '#F19389',
   accent2Alt: '#FFF3F2',
@@ -35,14 +31,14 @@ export const lightModeColors = {
   warnAlt: '#FFEAB8',
   warnText: '#92520C',
   shadow: '#000000',
-  // Feature showcase colors
+
   purple: '#8B5CF6',
   purpleAlt: '#EDE9FE',
   teal: '#14B8A6',
   tealAlt: '#F0FDFA',
   orange: '#F97316',
   orangeAlt: '#FFF7ED',
-  // Service Streak flame chip.
+
   orangeTranslucent: '#F9731622',
   pink: '#EC4899',
   pinkAlt: '#FDF2F8',
@@ -55,12 +51,11 @@ export const lightModeColors = {
   limeAlt: '#F7FEE7',
   rose: '#F43F5E',
   roseAlt: '#FFF1F2',
-  // Supporter identity — amber/gold, used for supporter badges, gated rows, and the onboarding intro.
+
   supporter: '#ffc228',
   supporterTranslucent: '#ffc12533',
   supporterAlt: '#FBE9A5',
-  // Supporter-colored text. The gold above is too light to read as text on
-  // light surfaces, so labels use this darker amber (see warnText).
+
   supporterText: '#8A6100',
 }
 
@@ -73,7 +68,7 @@ const darkModeColors: Colors = {
   accentTranslucent: '#1BD15D33',
   accentBackground: '#4BD27C',
   accentAlt: '#99BFA7',
-  // Solid fill for the user's chat bubble (see light mode).
+
   accentBubble: '#143821',
   background: '#121212',
   backgroundLightest: '#0D0D0D',
@@ -94,7 +89,7 @@ const darkModeColors: Colors = {
   warnAlt: '#FFEAB8',
   warnText: '#FCC014',
   shadow: '#000000',
-  // Feature showcase colors
+
   purple: '#A78BFA',
   purpleAlt: '#2D1B69',
   teal: '#5EEAD4',
@@ -113,7 +108,7 @@ const darkModeColors: Colors = {
   limeAlt: '#365314',
   rose: '#FB7185',
   roseAlt: '#881337',
-  // Supporter identity — brighter amber for dark mode legibility.
+
   supporter: '#F4C23A',
   supporterTranslucent: '#F4C23A33',
   supporterAlt: '#5A4310',
@@ -128,10 +123,6 @@ export const numbers = {
   shadowOpacity: 0.1,
 }
 
-/**
- * In reality, these are also used to set the font weight. Setting the font
- * weight directly does not work due to custom font being used.
- */
 export const fonts = {
   regular: 'Inter_400Regular',
   medium: 'Inter_500Medium',
@@ -142,7 +133,7 @@ export const fonts = {
 const fontSize = (size?: ThemeSizes) => {
   const defaultSize = 14
   const isTablet = Device.deviceType === Device.DeviceType.TABLET
-  // Slightly increases default font size for readability on large devices
+
   const deviceTypeOffset = isTablet ? 2 : 0
 
   const sizeFromDefault = (offset: number) => {
@@ -210,7 +201,7 @@ export type Fonts = typeof fonts
 export type Theme = {
   numbers: typeof numbers
   colors: Colors
-  /** Use with `fontFamily` to set Text font weight. */
+
   fonts: Fonts
   fontSize: (size?: ThemeSizes) => number
 }

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RecurringPlanFrequencies } from '@/types/timeEntry'
 
-// Recurring Plans store and sync their frequency as this number. Renumbering or
-// reordering the enum would silently change every saved Plan, here and on the
-// User's other devices.
-
 describe('RecurringPlanFrequencies', () => {
   it('keeps the stored value of each frequency', () => {
     expect({ ...RecurringPlanFrequencies }).toEqual({

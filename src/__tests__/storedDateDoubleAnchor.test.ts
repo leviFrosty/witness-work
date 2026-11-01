@@ -21,9 +21,6 @@ import { reconcileLinkedPlans } from '@/features/buddies/lib/linkedPlans'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 
-// Regressions for a stored noon-UTC anchor handed back to a store action and
-// re-anchored as if it were local input: at UTC+12 and beyond that's the next
-// local day, so the record moved forward a day on every edit.
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
   process.env.TZ = tz
@@ -51,11 +48,9 @@ const reset = () => {
 }
 beforeEach(reset)
 
-/** Persisted/synced state is JSON with no reviver: every Date is a string. */
 const asJson = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 
 describe('Buddies "Going" Plans', () => {
-  // Before the shared Plan (Oct 31, NZDT in Auckland).
   const now = Date.parse('2026-10-19T00:00:00Z')
   const share = (m = 90) => ({
     from: 'buddy',
@@ -142,7 +137,6 @@ describe('updateServiceReport', () => {
       })
       expect(stored().note).toBe('note 2')
 
-      // After a restart the stored date is an ISO string.
       useServiceReport.setState(asJson(useServiceReport.getState()))
       useServiceReport
         .getState()
@@ -159,8 +153,7 @@ describe('updateServiceReport', () => {
       setTZ(tz)
       reset()
       addAug31()
-      // Local midnight of Sep 1 — at NZST that's the instant of Aug 31's
-      // anchor, yet it names Sep 1.
+
       useServiceReport
         .getState()
         .updateServiceReport({ ...stored(), date: new Date(2026, 8, 1) })
@@ -178,8 +171,7 @@ describe('updateServiceReport', () => {
       ...stored(),
       date: new Date(Date.UTC(2026, 7, 31, 12)),
     })
-    // Same instant as the stored date, but a fresh Date: NZST local midnight
-    // Sep 1 is indistinguishable from it, so it's taken as Sep 1.
+
     expect(bucketed()).toEqual(['2026/8: 2026-09-01'])
   })
 })
@@ -277,7 +269,7 @@ describe('hasSharedEventEnded', () => {
         type: 'plan' as const,
         details: { d: '2026-08-31', s: 600, m: 60 },
       }
-      // 10:00–11:00 local on Aug 31.
+
       expect({
         tz,
         before: hasSharedEventEnded(share, new Date(2026, 7, 31, 9).getTime()),

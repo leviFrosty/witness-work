@@ -7,14 +7,7 @@ import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { NotificationItem } from '@/types/notifications'
 
-/**
- * Asks a Kingdom Publisher once whether they want to log hours. New installs
- * answer in onboarding; this reaches everyone set up before that question. Any
- * answer, including dismissing it, retires it on every synced device.
- */
 export default function useHoursLoggingNotification(): NotificationItem | null {
-  // This month's role: an auxiliary month already logs hours, so the question
-  // waits until the Kingdom Publisher's next month.
   const { type: role } = usePublisher()
   const { logsHours, hoursLoggingAsked } = usePreferences(
     useShallow((s) => ({

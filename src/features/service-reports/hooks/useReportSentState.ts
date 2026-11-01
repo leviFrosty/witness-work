@@ -6,7 +6,6 @@ import {
   reportSentState,
 } from '@/features/service-reports/lib/reportSentState'
 
-/** A month's Sent state and its "Sent Oct 3" label (null when not sent). */
 export default function useReportSentState(month: number, year: number) {
   const monthKey = reportMonthKey(month, year)
   const submittedReportMonths = usePreferences((s) => s.submittedReportMonths)

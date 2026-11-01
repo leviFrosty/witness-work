@@ -13,7 +13,6 @@ type Props = {
   style?: StyleProp<ViewStyle>
 }
 
-/** The accent "Log Trip" call to action, matching Home's Add Time button. */
 export default function LogTripButton({
   onPress,
   label = i18n.t('mileage.logTrip'),

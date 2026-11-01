@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
-  // Survives the reload, as MMKV does.
   storage: new Map<string, string>(),
   initialURL: null as string | null,
   lastResponse: null as unknown,
@@ -38,7 +37,6 @@ const tap = {
   },
 }
 
-/** A fresh JS context, as after a reload: module state starts over. */
 const launch = async () => {
   vi.resetModules()
   return {
@@ -61,12 +59,11 @@ it('carries the notification tap that launched the app across the reload', async
   const first = await launch()
   await first.handoff.handOffLaunchBeforeReload()
 
-  // The reloaded context: native no longer has the tap.
   runtime.lastResponse = null
   const reloaded = await launch()
   reloaded.handoff.restoreLaunchAfterReload()
   expect(reloaded.handoff.takeHandedOffNotificationResponse()).toEqual(tap)
-  // Once.
+
   expect(reloaded.handoff.takeHandedOffNotificationResponse()).toBeNull()
   expect(runtime.storage.size).toBe(0)
 })
@@ -86,8 +83,6 @@ it('carries the link that launched the app across the reload', async () => {
 })
 
 it('carries a link that brought a background launch to the front', async () => {
-  // Launched in the background (no launch link); the link comes as an event
-  // while the splash shows, before the storage-unlock reload.
   const first = await launch()
   first.links.recordLaunchLinks()
   runtime.urlListener?.({ url: 'witnesswork://schedule/2026-10-23' })
@@ -143,7 +138,6 @@ it('drops a handoff from a reload that never happened', async () => {
   const first = await launch()
   await first.handoff.handOffLaunchBeforeReload()
 
-  // The app was killed instead; this is a later, ordinary launch.
   vi.setSystemTime(Date.now() + 5 * 60_000)
   runtime.lastResponse = null
   const later = await launch()

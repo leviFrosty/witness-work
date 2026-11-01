@@ -5,7 +5,6 @@ import {
   type PetSnapshot,
 } from '@/types/pet'
 
-/** The local pet store's synced fields, as lists that merge by id. */
 export function localPetSnapshot(): PetSnapshot {
   const { pet, room, deletedPetRecords } = usePet.getState()
   return {
@@ -15,7 +14,6 @@ export function localPetSnapshot(): PetSnapshot {
   }
 }
 
-/** Writes a merged or restored snapshot back, preserving its stamps verbatim. */
 export function applyPetSnapshot(snapshot: PetSnapshot): void {
   usePet.setState({
     pet: snapshot.pets.find((pet) => pet.id === PET_RECORD_ID) ?? null,

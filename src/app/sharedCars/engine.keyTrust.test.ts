@@ -27,23 +27,11 @@ vi.mock(
   () => import('@/__tests__/mocks/asyncStorage')
 )
 
-/**
- * The keys a device trusts (docs/shared-cars-protocol.md, "Trusted keys"): a
- * server that wraps a key of its own to a member, at the car's epoch or past
- * it, rolls the car back to an older one, hands out a member record or link of
- * its choosing, or lists a member of its own and asks for a rekey, gets nothing
- * sealed under its key and no key wrapped to it, and neither does a member who
- * sends the User an invitation with a key of their own. And every way a device
- * of the User's comes to trust the car's real key: through the key chain, an
- * invitation the server took, or their own key check when it trusts none yet.
- */
-
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 let server: FakeSpacesServer
 
 beforeEach(() => {
-  // Retries wait no time.
   vi.spyOn(Math, 'random').mockReturnValue(0)
   server = createFakeSpacesServer({ now: Date.now })
 })
@@ -60,13 +48,11 @@ const { person, ownCar, tripOn, invite, sharedCar } = enginePeople(
 const memberIdOf = (who: TestPerson, spaceId: string) =>
   deriveSpaceMember(who.seed, spaceId).memberId
 
-/** `who`'s member auth on `spaceId`, for calls the engine wouldn't make. */
 function authOf(who: TestPerson, spaceId: string) {
   const member = deriveSpaceMember(who.seed, spaceId)
   return { spaceId, memberId: member.memberId, token: member.token }
 }
 
-/** Whether `record` opens under `key`, at the epoch it was sealed under. */
 function opensUnder(
   spaceId: string,
   record: Pick<SpacePutRecord, 'recordId' | 'epoch' | 'stamp' | 'blob'> & {
@@ -92,7 +78,6 @@ function opensUnder(
   }
 }
 
-/** Every record `who` puts from now on, as sent. */
 function putsOf(who: TestPerson) {
   const puts: SpacePutRecord[] = []
   who.hooks.beforePut = (records) => {
@@ -101,13 +86,11 @@ function putsOf(who: TestPerson) {
   return puts
 }
 
-/** Everything on the server that opens under `key`. */
 const storedUnder = (spaceId: string, key: Uint8Array) =>
   [...server.spaces.get(spaceId)!.records].filter(([recordId, record]) =>
     opensUnder(spaceId, { recordId, ...record }, key)
   )
 
-/** A blob of `recordId`'s, sealed under a key nobody holds. */
 const unopenable = (
   spaceId: string,
   recordId: string,
@@ -121,14 +104,12 @@ const unopenable = (
     random(24)
   )
 
-/** `who`'s puts fail from now on, as if offline; their syncs still pull. */
 function putsOffline(who: TestPerson) {
   who.hooks.beforePut = () => {
     throw new SpaceError('network')
   }
 }
 
-/** `who` edits `trip-1`'s note on the car. */
 const editTrip = (who: TestPerson, spaceId: string, note: string) =>
   who.store
     .getState()
@@ -154,7 +135,7 @@ describe('a key the server chose', () => {
     expect(joe.keyring.key(spaceId, 1)).toEqual(real)
     expect(failures(joe, 'key_mismatch')).toBe(1)
     expect(joe.errors).toContain('keys')
-    // Reported once, not on every sync.
+
     editTrip(joe, spaceId, 'Joe again')
     await joe.engine.syncCar(spaceId)
     expect(failures(joe, 'key_mismatch')).toBe(1)
@@ -185,7 +166,7 @@ describe('a key the server chose', () => {
       waitingForKey: true,
     })
     expect(failures(joe, 'key_unverified')).toBe(1)
-    // The edit stays here, sealed under nothing yet.
+
     expect(joe.car(spaceId).pendingPuts).toContain('trip-1')
     expect(puts).toEqual([])
     await expect(invite(joe, spaceId, person('Cal'))).rejects.toMatchObject({
@@ -197,7 +178,6 @@ describe('a key the server chose', () => {
     expect(puts).toEqual([])
     expect(storedUnder(spaceId, planted)).toEqual([])
 
-    // The car's epoch is the server's, so it doesn't stay at the planted one.
     server.honest()
     expect(await joe.engine.syncCar(spaceId)).toBe('synced')
     expect(joe.car(spaceId).epoch).toBe(1)
@@ -220,7 +200,7 @@ describe('a key the server chose', () => {
     await joe.engine.syncCar(spaceId)
     const second = joe.keyring.key(spaceId, 2)!
     expect(second).toEqual(anna.keyring.key(spaceId, 2))
-    // The server goes back to epoch 1, whose key Cal still holds.
+
     server.spaces.get(spaceId)!.epoch = 1
     server.plantWrap(spaceId, memberIdOf(joe, spaceId), first, 1)
     const puts = putsOf(joe)
@@ -280,7 +260,7 @@ describe('a key the server chose', () => {
     const [spaceId] = Object.keys(anna.store.getState().seeding)
     expect(puts).toEqual([])
     expect(anna.keyring.key(spaceId, 2)).toBeNull()
-    // Still the User's own car, and the share waits to resume.
+
     expect(anna.personal().trips).toHaveLength(2)
 
     server.honest()
@@ -306,7 +286,7 @@ describe('a key the server chose', () => {
     expect(failures(anna, 'member_unverified')).toBe(1)
     await anna.engine.syncCar(spaceId)
     expect(failures(anna, 'member_unverified')).toBe(1)
-    // People shows them as someone who joined, whom the owner can remove.
+
     expect(anna.car(spaceId).unnamedMembers.map((m) => m.memberId)).toEqual([
       phantomId,
     ])
@@ -348,13 +328,10 @@ describe('the real key, on every device of the User', () => {
     const real = anna.keyring.key(spaceId, 1)!
     const at = joe.store.getState().memberships.cars[spaceId].at
 
-    // The keyring outlived the app (iOS keeps it); the store didn't.
     await joe.relaunch({ store: true })
     expect(await joe.engine.addCarFromRoster(spaceId, at)).toBe('synced')
     expect(joe.car(spaceId).trips).toHaveLength(2)
 
-    // A restore brought the store back without the keyring: its own record,
-    // kept as sealed, vouches for the key again.
     editTrip(joe, spaceId, 'Joe')
     await joe.relaunch({ keyring: true })
     expect(joe.keyring.epochs(spaceId)).toEqual([])
@@ -363,7 +340,6 @@ describe('the real key, on every device of the User', () => {
     await anna.engine.syncCar(spaceId)
     expect(tripOn(anna, spaceId, 'trip-1').note).toBe('Joe')
 
-    // Neither.
     await joe.relaunch({ keyring: true, store: true })
     expect(await joe.engine.addCarFromRoster(spaceId, at)).toBe('synced')
     expect(joe.keyring.key(spaceId, 1)).toEqual(real)
@@ -384,14 +360,11 @@ describe('the real key, on every device of the User', () => {
     await anna.engine.syncCar(spaceId)
     expect(server.spaces.get(spaceId)!.epoch).toBe(3)
 
-    // Joe was away for both.
     expect(await joe.engine.syncCar(spaceId)).toBe('synced')
     expect(joe.keyring.key(spaceId, 3)).toEqual(anna.keyring.key(spaceId, 3))
     expect(joe.keyring.key(spaceId, 2)).toEqual(anna.keyring.key(spaceId, 2))
     expect(tripOn(joe, spaceId, 'trip-1').note).toBe('epoch 3')
 
-    // His iPad, which trusts no key yet, follows the chain back to the epoch
-    // his own record was sealed under.
     const joesIpad = person('Joe', { seed: joe.seed })
     const at = joe.store.getState().memberships.cars[spaceId].at
     expect(await joesIpad.engine.addCarFromRoster(spaceId, at)).toBe('synced')
@@ -424,7 +397,7 @@ describe('the real key, on every device of the User', () => {
     const dee = person('Dee')
     const deesIpad = person('Dee', { seed: dee.seed })
     const spaceId = await sharedCar(anna)
-    // Dee joins, but her member record doesn't go out.
+
     dee.hooks.beforePut = () => {
       throw new Error('offline')
     }
@@ -432,7 +405,6 @@ describe('the real key, on every device of the User', () => {
     dee.hooks.beforePut = undefined
     const at = dee.store.getState().memberships.cars[spaceId].at
 
-    // Her iPad trusts no key, and nothing vouches for one yet.
     expect(await deesIpad.engine.addCarFromRoster(spaceId, at)).toBe('waiting')
     expect(deesIpad.keyring.epochs(spaceId)).toEqual([])
     expect(deesIpad.car(spaceId).trips).toEqual([])
@@ -447,7 +419,6 @@ describe('the real key, on every device of the User', () => {
       waitingForKey: false,
     })
 
-    // A second device that comes after the record landed opens it at once.
     const deesMac = person('Dee', { seed: dee.seed })
     expect(await deesMac.engine.addCarFromRoster(spaceId, at)).toBe('synced')
     expect(deesMac.car(spaceId).trips).toHaveLength(2)
@@ -464,7 +435,7 @@ describe('the User’s own member record', () => {
     const own = anna
       .car(spaceId)
       .memberRecords.find((m) => m.memberId === memberIdOf(anna, spaceId))!
-    // Anna's record with another name, and the check it had.
+
     const stamp = (own.updatedAt ?? 0) + 1000
     const sealed = server.spaces.get(spaceId)!.records.get(annaId)!
     const { data } = openRecord(
@@ -489,7 +460,7 @@ describe('the User’s own member record', () => {
         random(24)
       ),
     }
-    // The server keeps Joe from putting it, but it could store it itself.
+
     await expect(
       joe.raw.put(authOf(joe, spaceId), [altered])
     ).rejects.toMatchObject({ code: 'forbidden' })
@@ -519,7 +490,7 @@ describe('the User’s own member record', () => {
       stamp,
       blob: unopenable(spaceId, joeId, 1, stamp),
     })
-    // His phone pulls it, but can't put for now.
+
     putsOffline(joe)
     await expect(joe.engine.syncCar(spaceId)).rejects.toMatchObject({
       code: 'network',
@@ -531,8 +502,6 @@ describe('the User’s own member record', () => {
     expect(mine.updatedAt).toBeGreaterThan(stamp)
     expect(joe.car(spaceId).sealedOwnRecord?.stamp).toBe(matched.stamp)
 
-    // A restore loses his keyring first: the version that matched vouches
-    // for the key again, whatever the space holds.
     await joe.relaunch({ keyring: true })
     joe.hooks.beforePut = undefined
     expect(await joe.engine.syncCar(spaceId)).toBe('synced')
@@ -540,7 +509,7 @@ describe('the User’s own member record', () => {
     const back = server.spaces.get(spaceId)!.records.get(joeId)!
     expect(back.stamp).toBeGreaterThan(stamp)
     expect(opensUnder(spaceId, { recordId: joeId, ...back }, real)).toBe(true)
-    // What it replaced isn't kept to read again.
+
     expect(joe.car(spaceId).unreadRecords).toEqual([])
     await joe.relaunch()
     server.state.log.length = 0
@@ -560,8 +529,7 @@ describe('the key chain', () => {
     const first = anna.keyring.key(spaceId, 1)!
     const second = anna.keyring.key(spaceId, 2)!
     const link = server.spaces.get(spaceId)!.records.get('k.2')!
-    // Joe, at epoch 2, seals k.2 holding a key of his own, stamped later. Only
-    // the owner may put a link, but the server could store his.
+
     const stamp = link.stamp + 1000
     const planted: SpacePutRecord = {
       recordId: 'k.2',
@@ -579,8 +547,6 @@ describe('the key chain', () => {
     ).rejects.toMatchObject({ code: 'forbidden' })
     server.plantRecord(spaceId, planted)
 
-    // Joe's phone pulls it and then loses its keyring: the last version of
-    // the link that counted still leads back to his own record.
     await joe.engine.syncCar(spaceId)
     await joe.relaunch({ keyring: true })
     expect(await joe.engine.syncCar(spaceId)).toBe('synced')
@@ -605,7 +571,6 @@ describe('the key chain', () => {
     )
     expect(readKeysData(opened.data ?? {})).toEqual(first)
 
-    // A device of Joe's that trusts no key yet reads what came before.
     const joesIpad = person('Joe', { seed: joe.seed })
     const at = joe.store.getState().memberships.cars[spaceId].at
     expect(await joesIpad.engine.addCarFromRoster(spaceId, at)).toBe('synced')
@@ -648,7 +613,7 @@ describe('an invitation’s key', () => {
     const spaceId = await sharedCar(anna, joe, cal)
     const real = anna.keyring.key(spaceId, 1)!
     const planted = random(32)
-    // Cal, on the car, invites Joe again with a key of his own: `conflict`.
+
     const bogus = {
       ...(await invite(cal, spaceId, joesIpad)),
       key: toB64u(planted),
@@ -673,7 +638,7 @@ describe('an invitation’s key', () => {
       ...(await invite(cal, spaceId, joesIpad)),
       key: toB64u(planted),
     }
-    // The join never reaches the server; the next sync finds him on the car.
+
     joesIpad.hooks.before = (op) => {
       if (op === 'join') throw new SpaceError('network')
     }
@@ -699,7 +664,7 @@ describe('an invitation’s key', () => {
     await expect(dee.engine.joinCar(invitation)).rejects.toMatchObject({
       code: 'network',
     })
-    // Nothing is trusted, or sealed, until the join is known to have landed.
+
     expect(dee.keyring.epochs(spaceId)).toEqual([])
 
     await dee.relaunch()

@@ -69,7 +69,6 @@ describe('useElapsedMs', () => {
     advance(10_000)
     expect(renders).toBe(before)
 
-    // Back on screen: catches up at once.
     act(() => root!.update(<Readout state={running} live />))
     expect(seen.at(-1)).toBe(18_000)
   })

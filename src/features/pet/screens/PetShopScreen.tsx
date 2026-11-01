@@ -54,14 +54,13 @@ import PetSceneView from '@/features/pet/render/PetSceneView'
 import type { RoomItemId, WallColor } from '@/types/pet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetShop'>
-/** Side padding of the narrow layout. */
+
 const INSET = 16
-/** Between cards, besides the room each card keeps for its ring. */
+
 const CARD_GAP = 4
-/** Between a part's heading, its rows of cards and its colour tray. */
+
 const SECTION_ROW_GAP = 8
 
-/** The category an item from the pet's details (`focus`) belongs to. */
 function tabOf(focus: string | undefined): ShopTab {
   if (!focus) return 'hat'
   const tab = unlockTab(unlockedPart(focus as RoomItemId).part)
@@ -70,14 +69,6 @@ function tabOf(focus: string | undefined): ShopTab {
     : 'hat'
 }
 
-/**
- * The Shop (ADR 0035): where hats and room items are bought with coins, kept
- * apart from the pet's details, which hold what's owned. The room on top tries
- * on whatever's picked; the categories and the items below it scroll, starters
- * left out, owned ones stamped with a check and not pickable. The picked item's
- * button buys it, which puts it on at once. Side by side from 760 points wide,
- * meeting at iPhone Duo's fold.
- */
 export default function PetShopScreen({ navigation, route }: Props) {
   const theme = useTheme()
   const palette = gamePalette(usePetDark())
@@ -86,20 +77,19 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const sheetInsets = usePetSheetInsets()
   const bleed = useHorizontalBleed()
   const window = useWindowDimensions()
-  // As RootStack presented it, when it opened.
+
   const [sheet] = useState(petOpensAsSheet)
   const scene = usePetRoomScene()
   const focus = route.params?.focus
   const [tab, setTab] = useState<ShopTab>(() => tabOf(focus))
   const [pickedItem, setPickedItem] = useState<string | null>(focus ?? null)
-  // The wall pattern picked last, while a colour is picked.
+
   const [lastPattern, setLastPattern] = useState<string | null>(null)
-  // The window's width until the screen is measured, so a wide window starts
-  // in the wide layout.
+
   const [width, setWidth] = useState(window.width)
   const [gridWidth, setGridWidth] = useState(0)
   const [barHeight, setBarHeight] = useState(0)
-  // The items' scroll view, back to the top for each category.
+
   const itemsScroll = useRef<ScrollView>(null)
 
   const from = route.params?.from ?? 'room'
@@ -112,7 +102,6 @@ export default function PetShopScreen({ navigation, route }: Props) {
     navigation.setOptions({ contentStyle: { backgroundColor: paperColor } })
   }, [navigation, paperColor])
 
-  // Released on another device while open.
   const hasPet = scene !== null
   const focused = useIsFocused()
   useEffect(() => {
@@ -124,11 +113,9 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const room = state.room
   const sections = shopEntries(tab, room, state.unlockedItems, state.wallet)
   const entries = sections.flatMap((section) => section.entries)
-  // What was picked, else the first thing still to buy.
+
   const picked = pickedEntry(entries, pickedItem)
 
-  // The wall's colours hang under the pattern picked last, and try on over
-  // it.
   const pattern =
     picked?.part === 'wallPattern'
       ? picked
@@ -152,15 +139,15 @@ export default function PetShopScreen({ navigation, route }: Props) {
     setLastPattern(null)
     itemsScroll.current?.scrollTo({ y: 0, animated: false })
   }
-  // What's owned is worn and placed from the pet's details, not here.
+
   const pick = (entry: ShopEntry) => {
     if (isOwned(entry)) return
     setPickedItem(entry.item)
-    // A colour keeps the pattern on show, even one the Shop opened on.
+
     if (entry.part === 'wallPattern') setLastPattern(entry.item)
     else if (entry.part === 'wallColor' && pattern) setLastPattern(pattern.item)
   }
-  // A bought item goes on at once, so it's never "New".
+
   const putOn = (entry: ShopEntry) => {
     usePet
       .getState()
@@ -190,7 +177,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
       price,
     })
     putOn(entry)
-    // It stays picked, Owned, rather than the next one for sale.
+
     setPickedItem(entry.item)
     Haptics.success()
     const item = roomOptionLabel(entry.part, entry.option)
@@ -216,7 +203,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
       {text}
     </Text>
   )
-  // Hung from the pattern being tried on; with none, on their own first.
+
   const colorTray = (column: number | null) =>
     colors && (
       <GameColorTray
@@ -290,7 +277,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
       onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
       style={{ gap: 14 }}
     >
-      {/* No pattern picked: the colours stand alone, over the room's own. */}
+      {}
       {cardWidth > 0 && !pattern && colorTray(null)}
       {cardWidth > 0 &&
         sections
@@ -301,7 +288,6 @@ export default function PetShopScreen({ navigation, route }: Props) {
               <ShopItemCard
                 key={entry.item}
                 entry={entry}
-                // The pattern a colour tries on over stays ringed with it.
                 picked={entry.item === picked?.item || entry === pattern}
                 width={cardWidth}
                 palette={palette}
@@ -356,7 +342,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
         style={{
           flex: 1,
           paddingTop: insets.top + 8,
-          // Under iPhone Duo's vertical bar too.
+
           marginLeft: -bleed.left,
           marginRight: -bleed.right,
           paddingLeft: bleed.left,
@@ -400,17 +386,13 @@ export default function PetShopScreen({ navigation, route }: Props) {
       </GamePaper>
     )
 
-  // A sheet clears the top itself; full screen clears the status bar.
   const top =
     sheet || Platform.OS === 'android' ? sheetInsets.top - 8 : insets.top + 8
   const bottom =
     Platform.OS === 'ios' ? Math.max(insets.bottom, 12) : sheetInsets.bottom + 8
   return (
     <>
-      {/* One scroll view as the sheet's root, beside only the bar
-      (react-native-screens tracks the sheet's scroll view and takes at most
-      two children); the room and categories stay pinned. The items sit on
-      plain paper: textured as tall as all of them, it'd be one huge image. */}
+      {}
       <ScrollView
         ref={itemsScroll}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
@@ -418,8 +400,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
         stickyHeaderIndices={[0]}
         contentContainerStyle={{ paddingBottom: barHeight + 16 }}
       >
-        {/* A pinned header takes its child's style for itself and drops the
-        child's onLayout, so the paper sits inside a bare view. */}
+        {}
         <View>
           <GamePaper
             palette={palette}
@@ -438,7 +419,6 @@ export default function PetShopScreen({ navigation, route }: Props) {
         <View style={{ paddingHorizontal: INSET }}>{grid}</View>
       </ScrollView>
       <View
-        // The sheet's second child as one view, never flattened into it.
         collapsable={false}
         onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}

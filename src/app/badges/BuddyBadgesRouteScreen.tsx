@@ -11,7 +11,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 
-/** Hands a buddy's shared badges, and their name for the title, to Badges. */
 export default function BuddyBadgesRouteScreen() {
   const navigation = useNavigation<RootStackNavigation>()
   const { params } = useRoute<RouteProp<RootStackParamList, 'BuddyBadges'>>()
@@ -35,7 +34,6 @@ export default function BuddyBadgesRouteScreen() {
     })
   }, [name, navigation])
 
-  // Removed here, from the other side, or by delete-all.
   useEffect(() => {
     if (!buddy) navigation.goBack()
   }, [buddy, navigation])

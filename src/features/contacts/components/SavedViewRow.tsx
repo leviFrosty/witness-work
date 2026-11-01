@@ -17,10 +17,6 @@ import {
   resolveCustomFieldReferences,
 } from '@/features/contacts/lib/savedViews'
 
-/**
- * One Saved View on the manage screen: reorder arrows, its name (renamed in
- * place, committed when editing ends), a summary of what it shows, and delete.
- */
 const SavedViewRow = ({
   view,
   first,
@@ -41,7 +37,7 @@ const SavedViewRow = ({
   onDelete: () => void
 }) => {
   const theme = useTheme()
-  // Cleared once committed, so a rename from another device shows through.
+
   const [draftName, setDraftName] = useState<string | null>(null)
   const name = draftName ?? view.name
   const query = resolveCustomFieldReferences(view, customFieldDefs)
@@ -80,11 +76,9 @@ const SavedViewRow = ({
             }}
           >
             {i18n.t('savedViews_summary', {
-              filters:
-                // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('savedViews_filterCount', {
-                  count: query.filters.length,
-                }),
+              filters: i18n.t('savedViews_filterCount', {
+                count: query.filters.length,
+              }),
               sort: contactSortLabel(query.sort, customFieldDefs),
             })}
           </Text>

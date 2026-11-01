@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { setDevRemountListener } from '@/lib/devRemount'
 
-// Remount navigation without a bundle reload, preserving the profiler session.
 export function useDevRemountKey() {
   const [key, setKey] = useState(0)
   useEffect(() => {

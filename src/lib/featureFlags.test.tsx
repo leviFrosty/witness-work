@@ -236,8 +236,7 @@ it('waits for reset reload, then exposes the new identity and variant after rapi
   const policy = await import('./analyticsPolicy')
   await act(async () => {
     policy.setAnalyticsEventsAllowed(false)
-    // The real SDK reset clears its cache without a featureflags notification,
-    // rotates identity, and starts an asynchronous flags reload.
+
     mocks.cached = {}
     mocks.distinctId = 'installation-two'
     mocks.preferences!.setState({ analyticsEnabled: false })
@@ -255,7 +254,7 @@ it('waits for reset reload, then exposes the new identity and variant after rapi
       distinctId: 'installation-two',
     },
   ])
-  expect(mocks.reload).toHaveBeenCalledOnce() // The SDK owns the reset reload.
+  expect(mocks.reload).toHaveBeenCalledOnce()
 })
 
 it.each(['quota', 'partial'] as const)(
@@ -277,9 +276,9 @@ it('does not record a cached variant that differs from the rendered value', asyn
   await act(async () =>
     mocks.preferences!.setState({ analyticsEnabled: false })
   )
-  // Reload and render A with analytics disabled.
+
   await act(async () => publish({ announcement: 'variant-a' }))
-  // SDK B arrives just before the rendered A's opt-in effect gets to run.
+
   mocks.cached = { announcement: 'variant-b' }
   policy.setAnalyticsEventsAllowed(true)
   await act(async () => mocks.preferences!.setState({ analyticsEnabled: true }))
@@ -392,7 +391,7 @@ describe('keeping flags loaded', () => {
     expect(shownValue()).toBe(true)
     await act(async () => setOnline(true))
     await act(async () => setAppState('active'))
-    // A reload that can't reach PostHog keeps them too.
+
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.now() + 11 * 60_000)
     mocks.failure = 'request'
@@ -410,7 +409,7 @@ describe('keeping flags loaded', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     await mountReader()
     expect(mocks.reload).toHaveBeenCalledOnce()
-    // Control Center and Face ID pass through inactive; not a return.
+
     await act(async () => {
       setAppState('inactive')
       setAppState('active')
@@ -526,7 +525,6 @@ describe('default-on flags', () => {
     expect(shown('data-scribe')).toBe(false)
     expect(shown('data-buddies')).toBe(true)
 
-    // Another identity, whose values haven't loaded yet.
     mocks.distinctId = 'installation-two'
     await act(async () => root!.update(<Enabled />))
     expect(shown('data-scribe')).toBe(true)

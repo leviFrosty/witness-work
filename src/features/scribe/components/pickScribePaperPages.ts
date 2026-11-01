@@ -2,10 +2,6 @@ import type { ImagePickerOptions, ImagePickerResult } from 'expo-image-picker'
 import { SCRIBE_PAPER_MAX_PAGES } from '@/features/scribe/constants'
 import type { ScribePaperPage } from '@/features/scribe/types'
 
-/**
- * Photos of paper pages, in the order picked, for onboarding's Import from
- * Paper (`ScribeConversation { paperPages }`). Null when cancelled.
- */
 export async function pickScribePaperPages(
   pickLibrary: (options: ImagePickerOptions) => Promise<ImagePickerResult>
 ): Promise<ScribePaperPage[] | null> {

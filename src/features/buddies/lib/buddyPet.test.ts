@@ -56,7 +56,7 @@ describe('the pet on a Buddy Card', () => {
         }).pet
       ).toEqual({ species: 'dog', coat: 'gold' })
     }
-    // Twenty characters, however many UTF-16 units they take.
+
     const emoji = '🐱'.repeat(20)
     expect(
       buddyCardSchema.parse({
@@ -74,7 +74,6 @@ describe('the pet on a Buddy Card', () => {
     expect(anna.store.getState().buddies[0].pet).toBeUndefined()
     const before = mom.store.getState().publishedCardHashes[anna.inboxId]
 
-    // Adopting changes the card's content, so it goes out again.
     mom.setPet(kitten)
     await mom.engine.publishCards()
     const adopted = mom.store.getState().publishedCardHashes[anna.inboxId]
@@ -82,11 +81,9 @@ describe('the pet on a Buddy Card', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].pet).toEqual(kitten)
 
-    // Nothing changed, nothing new to publish.
     await mom.engine.publishCards()
     expect(mom.store.getState().publishedCardHashes[anna.inboxId]).toBe(adopted)
 
-    // Change Pet and renaming republish too.
     mom.setPet({ species: 'cat', coat: 'calico', name: 'Pip' })
     await mom.engine.publishCards()
     const recoated = mom.store.getState().publishedCardHashes[anna.inboxId]
@@ -103,7 +100,6 @@ describe('the pet on a Buddy Card', () => {
       name: 'Pippin',
     })
 
-    // Released: the next card clears the buddy's copy.
     mom.setPet(undefined)
     await mom.engine.publishCards()
     await anna.engine.sync()
@@ -142,8 +138,6 @@ describe('the pet on a Buddy Card', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].pet).toBeUndefined()
 
-    // Mom's iPad takes the choice from the roster, and its cards leave the
-    // pet off too.
     const momsIpad = user('Mom', undefined, mom.seed)
     momsIpad.setPet(kitten)
     await momsIpad.engine.sync()
@@ -152,7 +146,6 @@ describe('the pet on a Buddy Card', () => {
     await anna.engine.sync()
     expect(anna.store.getState().buddies[0].pet).toBeUndefined()
 
-    // Back on, and Anna's other device gets it from the card, not the roster.
     advance(1000)
     await mom.engine.setSharing({ pet: true })
     await anna.engine.sync()
@@ -171,7 +164,6 @@ describe('the pet on a Buddy Card', () => {
     await pair(mom, anna)
     await pair(mom, joe)
 
-    // Off for Anna alone; Joe follows All Buddies and keeps seeing it.
     advance(1000)
     await mom.engine.setBuddySetting(anna.inboxId, 'pet', false)
     await anna.engine.sync()
@@ -179,7 +171,6 @@ describe('the pet on a Buddy Card', () => {
     expect(anna.store.getState().buddies[0].pet).toBeUndefined()
     expect(joe.store.getState().buddies[0].pet).toEqual(kitten)
 
-    // A pause holds it back from everyone.
     advance(1000)
     await mom.engine.setSharing({ pausedUntil: Number.MAX_SAFE_INTEGER })
     await joe.engine.sync()
@@ -211,14 +202,14 @@ describe('the pet sharing choice', () => {
     expect(
       rosterSchema.parse(JSON.parse(JSON.stringify(parsed))).sharing
     ).toEqual(sharing)
-    // Written before pets, or by an older app.
+
     const older = rosterSchema.parse({
       ...roster,
       sharing: { photo: true, tenure: true, streak: true, updatedAt: 3 },
     })
     expect(older.sharing.pet).toBeUndefined()
     expect(older.sharing.petUpdatedAt).toBeUndefined()
-    // A value it can't read costs only the choice, not the roster.
+
     expect(
       rosterSchema.parse({ ...roster, sharing: { ...sharing, pet: 'no' } })
         .sharing.pet
@@ -245,7 +236,7 @@ describe('the pet sharing choice', () => {
       petVisitsUpdatedAt: 0,
     }
     const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
-    // An older app's later roster, without the pet fields.
+
     expect(mergeSharing(local, remote)).toMatchObject({
       pet: false,
       petUpdatedAt: 5,
@@ -263,7 +254,7 @@ describe('the pet sharing choice', () => {
         { ...remote, pet: false, petUpdatedAt: 5 }
       )
     ).toMatchObject({ pet: false, petUpdatedAt: 5 })
-    // Badges keep their own stamp beside it.
+
     expect(
       mergeSharing(local, {
         ...remote,
@@ -300,7 +291,7 @@ describe('the pet sharing choice', () => {
       petVisitsUpdatedAt: 5,
     }
     const remote = { photo: true, tenure: true, streak: true, updatedAt: 30 }
-    // An older app's later roster, without it.
+
     expect(mergeSharing(local, remote)).toMatchObject({
       petVisits: false,
       petVisitsUpdatedAt: 5,
@@ -311,7 +302,7 @@ describe('the pet sharing choice', () => {
     expect(
       mergeSharing(local, { ...remote, petVisits: true, petVisitsUpdatedAt: 6 })
     ).toMatchObject({ petVisits: true, petVisitsUpdatedAt: 6 })
-    // Hiding wins a tie.
+
     expect(
       mergeSharing(
         { ...local, petVisits: true },

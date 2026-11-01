@@ -7,11 +7,6 @@ import { analytics } from '@/lib/analytics'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
 
-/**
- * Whether Cloud Sync decides this device's default instead (ADR 0030 §3,
- * `CloudSyncDefault`): it's registered, the device hasn't settled on iCloud or
- * Drive, and the server's switch is on or hasn't been read yet.
- */
 export const cloudSyncDecidesDefault = (state: {
   syncProvider?: 'cloud' | 'platform' | null
   cloudSyncConfig?: { enabled: boolean } | null
@@ -20,9 +15,6 @@ export const cloudSyncDecidesDefault = (state: {
   state.syncProvider !== 'platform' &&
   (state.cloudSyncConfig == null || state.cloudSyncConfig.enabled)
 
-// Auto-enable only before an explicit user choice. Conflicts stay disabled
-// until the user resolves them in Settings through FirstEnableSheet. Without
-// Cloud Sync (its switch off on the server), iCloud or Drive, as before it.
 export default function SupporterSyncDefault() {
   const { isSupporter } = useIsSupporter()
   const {
@@ -43,7 +35,6 @@ export default function SupporterSyncDefault() {
     if (iCloudSyncEnabled) return
     if (cloudDecides) return
 
-    // Only `incomplete` decides again; every other outcome is final here.
     let settled = false
     let running = false
     let again = false
@@ -76,11 +67,6 @@ export default function SupporterSyncDefault() {
             iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
             return
           case 'incomplete':
-            // Seeding now could push this device's onboarding defaults over
-            // a backup still on its way in. Pending files stay unobserved,
-            // so the metadata query reports them once they land — decide
-            // again then, or at the next foreground (a slow initial scan of
-            // an empty container reports nothing).
             if (!retrySubs) {
               analytics.capture('icloud_sync_enable_deferred', {
                 source: 'supporter_default',

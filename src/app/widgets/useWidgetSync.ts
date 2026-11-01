@@ -17,8 +17,7 @@ export function useWidgetSync(storageReady: boolean | undefined) {
 
   useEffect(() => {
     if (!storageReady) return
-    // Flags read as unknown until they first load (e.g. launched offline); the
-    // widget keeps the last known answer rather than dropping buddies.
+
     if (buddiesFlag === undefined && !buddiesEnabled) return
     setWidgetBuddiesEnabled(buddiesEnabled)
   }, [storageReady, buddiesFlag, buddiesEnabled])

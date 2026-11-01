@@ -25,10 +25,6 @@ import {
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 
-/**
- * Opt-in contract check of the backup ops against a real worker (see
- * `interopSessions`). Skipped by default.
- */
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 async function account() {
@@ -93,12 +89,11 @@ describe.skipIf(!interopEnabled)('backup against a real worker', () => {
     expect(
       openBackup(backupKey, fetched, { accountId, slotId: phone }).deviceName
     ).toBe('Phone')
-    // The server can't swap one slot for another unnoticed.
+
     expect(() =>
       openBackup(backupKey, fetched, { accountId, slotId: tablet })
     ).toThrow(BackupOpenError)
 
-    // One put a slot a minute.
     expect(
       code(await putBackup(options, phone, phoneBlob).catch((e) => e))
     ).toBe('rate_limited')
@@ -126,7 +121,6 @@ describe.skipIf(!interopEnabled)('backup against a real worker', () => {
   })
 })
 
-/** Flips a byte of the uploaded body after its digest was taken. */
 const tamperingFetch: typeof fetch = (input, init) => {
   const body: unknown = init?.body
   if (body instanceof Uint8Array) {

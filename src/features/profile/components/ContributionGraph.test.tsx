@@ -81,7 +81,7 @@ describe('ContributionGraph', () => {
     expect(graph.props.accessibilityLabel).toBe(
       'Last 26 weeks: 3 days with service, longest run 2 days'
     )
-    // Everything drawn inside, the cells included, is hidden behind it.
+
     const [content] = graph.children as (typeof graph)[]
     expect(content.props.importantForAccessibility).toBe('no-hide-descendants')
     expect(content.props.accessibilityElementsHidden).toBe(true)
@@ -102,12 +102,10 @@ describe('ContributionGraph', () => {
     })
 
     it('leaves out a month label that would overlap the next one', () => {
-      // The 26 weeks to Sunday 2026-10-25 start on Monday 2026-04-27, so April
-      // gets one column before May.
       vi.useFakeTimers({ toFake: ['Date'] })
       vi.setSystemTime(new Date(2026, 9, 21, 12))
       const root = render(new Map())
-      // 26 columns of 11 pt cells (stride 14).
+
       act(() => {
         root
           .findByProps({ accessibilityRole: 'image' })
@@ -123,7 +121,7 @@ describe('ContributionGraph', () => {
         labels()
           .filter((label) => label.props.style.opacity === 1)
           .map((label) => label.props.children)
-      // Nothing shows until every label is measured.
+
       expect(shown()).toEqual([])
       act(() => {
         for (const label of labels()) label.props.onLayout(layout(20))

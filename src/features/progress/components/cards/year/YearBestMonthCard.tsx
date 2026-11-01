@@ -8,7 +8,6 @@ import { useServiceYearMonthTotals } from '@/features/progress/hooks/usePeriodCa
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year's month with the most time, as its report counts it. */
 export default function YearBestMonthCard({
   serviceYear,
   size,

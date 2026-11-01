@@ -1,5 +1,3 @@
-// Material's date dialog works in UTC days; a zone behind UTC shows whether a
-// picked day lands on the local day.
 const originalTZ = process.env.TZ
 process.env.TZ = 'America/Chicago'
 
@@ -96,7 +94,7 @@ describe('Android', () => {
       'date',
       'time',
     ])
-    // TalkBack reads the value after the part's name, as the button shows it.
+
     expect(buttons().map((b) => b.props.accessibilityValue.text)).toEqual([
       buttons()[0].findByType('Text' as never).props.children,
       buttons()[1].findByType('Text' as never).props.children,
@@ -106,7 +104,6 @@ describe('Android', () => {
 
     press(0)
     expect(dialog('DatePickerDialog')).toMatchObject({
-      // The local day, as the UTC midnight Material's date dialog expects.
       initialDate: '2026-09-23T00:00:00.000Z',
       color: '#accent',
     })
@@ -119,7 +116,7 @@ describe('Android', () => {
   it('lands a picked day on the local day and keeps the time', () => {
     const onChange = mount(AndroidPicker, { iOSMode: 'datetime' })
     press(0)
-    // Material hands back UTC midnight, the evening before in Chicago.
+
     act(() =>
       dialog('DatePickerDialog').onDateSelected(new Date(Date.UTC(2026, 9, 2)))
     )

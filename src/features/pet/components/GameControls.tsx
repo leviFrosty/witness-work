@@ -23,7 +23,6 @@ import {
   gamePixelScale,
 } from '@/features/pet/components/GamePixels'
 
-/** One of the buttons' pixel icons in `color`, mirrored where it points. */
 export function GameIcon({
   name,
   color,
@@ -46,13 +45,8 @@ export function GameIcon({
   )
 }
 
-/** An icon button's tile, in pixels: a full touch target at the pet's scale. */
 const ICON_TILE_PX = 17
 
-/**
- * A square paper button with a pixel icon: Share and Settings beside the pet's
- * name, close on Android. Its frame is a full touch target.
- */
 export function GameIconButton({
   icon,
   label,
@@ -60,7 +54,7 @@ export function GameIconButton({
   onPress,
 }: {
   icon: GameIconName
-  /** What it does, for screen readers and the pointer's tooltip. */
+
   label: string
   palette: GamePalette
   onPress: () => void
@@ -85,11 +79,6 @@ export function GameIconButton({
   )
 }
 
-/**
- * A pixel button: `primary` in the accent (the screen's main action), `soft` in
- * paper beside it. A disabled one greys out. A coin and an amount can follow
- * the label, as the Shop's Buy does.
- */
 export function GameButton({
   label,
   onPress,
@@ -107,13 +96,13 @@ export function GameButton({
   label: string
   onPress?: () => void
   kind?: 'primary' | 'soft'
-  /** An icon before the label. */
+
   icon?: GameIconName
-  /** A coin after the label, and a number after it. */
+
   coin?: boolean
   amount?: number
   disabled?: boolean
-  /** Pressed and working: it can't be pressed again. */
+
   loading?: boolean
   accessibilityLabel?: string
   accessibilityHint?: string
@@ -176,16 +165,10 @@ export function GameButton({
   )
 }
 
-/** A switch's size, in pixels. */
 const TOGGLE_W = 21
 const TOGGLE_H = 12
 const KNOB = 10
 
-/**
- * The pet screens' switch: a pixel track in the accent when on, its knob
- * sliding across. Not a control of its own: the row around it is
- * (`GameSwitchRow`), so a tap anywhere on the row flips it.
- */
 export function GameToggle({
   value,
   palette,
@@ -237,10 +220,6 @@ export function GameToggle({
   )
 }
 
-/**
- * A screen's title on a hinoki sign board, sized to the words. `trailing`
- * (rare) sits after the words on the board.
- */
 export function GamePlaque({
   title,
   palette,

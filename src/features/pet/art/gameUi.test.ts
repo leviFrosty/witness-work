@@ -9,7 +9,6 @@ import {
 } from '@/features/pet/art/gameUi'
 import type { PixelBuffer } from '@/lib/pixelArt'
 
-/** How many pixels wide each row of `b` is drawn. */
 const rowWidths = (b: PixelBuffer): number[] =>
   Array.from({ length: b.height }, (_, y) => {
     let width = 0
@@ -53,7 +52,7 @@ describe('the owned stamp', () => {
       }
       const rgb = (hex: string) =>
         [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
-      // The middle of the check's long arm, and the seal's face beside it.
+
       expect(at(11, 12)).toEqual(rgb(palette.onAccent))
       expect(at(16, 12)).toEqual(rgb(cssColor(palette.accent)))
     }

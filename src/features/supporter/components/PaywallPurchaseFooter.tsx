@@ -11,7 +11,7 @@ interface Props {
   tier: 'supporter' | 'tip'
   ctaLabel: string
   onPurchase: () => unknown
-  /** A purchase is running; the CTA shows a spinner and can't be pressed. */
+
   purchasing?: boolean
 }
 

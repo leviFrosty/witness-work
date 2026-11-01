@@ -13,11 +13,6 @@ import type { RoleHistory } from '@/lib/roleHistory'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 import { buildBadgeHistoryFixture } from '@/app/dev-fixtures/badges'
 
-/**
- * Named app states for agent verification runs (`scripts/verify`). Pure: every
- * date derives from `now`, so a scenario seeded on any day looks "current" and
- * ids stay stable across reseeds.
- */
 export const SCENARIO_NAMES = [
   'fresh',
   'onboarded',
@@ -30,10 +25,9 @@ export const SCENARIO_NAMES = [
 export type ScenarioName = (typeof SCENARIO_NAMES)[number]
 
 export type Scenario = {
-  /** False leaves the app on onboarding (a fresh install). */
   onboarded: boolean
   role: Publisher
-  /** Months with another role; null applies `role` to every month. */
+
   roleHistory: RoleHistory | null
   tenureStartDate: Date | null
   profileName: string
@@ -42,13 +36,12 @@ export type Scenario = {
   timeEntries: TimeEntry[]
   dayPlans: DayPlan[]
   recurringPlans: RecurringPlan[]
-  /** `YYYY-MM` months whose report counts as sent. */
+
   submittedReportMonths: string[]
 }
 
 export const SCENARIO_ID_PREFIX = 'verify-'
 
-// Apple's default simulator location, so map pins land near the device.
 const ORIGIN = { latitude: 37.785834, longitude: -122.406417 }
 
 const CONTACT_NAMES = [
@@ -95,11 +88,6 @@ function buildContacts(now: moment.Moment, count: number): Contact[] {
   })
 }
 
-/**
- * Two visits per contact. The first three are Bible studies; contact 1 has an
- * overdue follow-up and contact 2 one due in two days, so Home's follow-up
- * sections render.
- */
 function buildVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
   return contacts.flatMap((contact, index) =>
     [0, 1].map((visitIndex) => {
@@ -136,10 +124,6 @@ function buildVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
   )
 }
 
-/**
- * Pioneer hours from the start of the service year (September) through
- * yesterday: two entries a week plus one LDC credit entry this month.
- */
 function buildPioneerEntries(
   now: moment.Moment,
   serviceYearStart: moment.Moment
@@ -171,7 +155,6 @@ function buildPioneerEntries(
   return entries
 }
 
-/** A 0h entry is the "shared in the ministry" checkbox for publishers. */
 function buildPublisherEntries(now: moment.Moment): TimeEntry[] {
   return [0, 1, 2].map((monthsAgo) => ({
     id: `${SCENARIO_ID_PREFIX}shared-${monthsAgo}`,
@@ -201,18 +184,9 @@ function buildDayPlans(now: moment.Moment): DayPlan[] {
   }))
 }
 
-/**
- * `stress`: a heavy account for profiling, as a publisher sees it after years
- * of use. 2,000 contacts with about four visits each over six years (8,046; the
- * first contact has 50, for Contact Details), about 300 of them with a long
- * note. Hours on most days for six Service Years, with monthly LDC and
- * quarterly other credit, a Role History (publisher, then auxiliary pioneer
- * months, then regular pioneer), and 420 Plans (400 Day Plans, 20 Recurring
- * Plans with skipped and moved dates).
- */
 const STRESS_CONTACTS = 2000
 const STRESS_YEARS = 6
-/** Extra visits for the first contact, on top of its four. */
+
 const STRESS_LONG_HISTORY_VISITS = 46
 const STRESS_NOTE =
   'Talked about family and how to find peace of mind. Left the brochure and ' +
@@ -261,7 +235,7 @@ function buildStressVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
       }
     })
   )
-  // Contact Details with a long history: a weekly study for most of a year.
+
   const longHistory = Array.from(
     { length: STRESS_LONG_HISTORY_VISITS },
     (_, index) => ({
@@ -275,11 +249,6 @@ function buildStressVisits(now: moment.Moment, contacts: Contact[]): Visit[] {
   return [...visits, ...longHistory]
 }
 
-/**
- * Hours on six days of most weeks from the first Service Year through
- * yesterday, an LDC credit entry each month and another credit entry each
- * quarter.
- */
 function buildStressEntries(
   now: moment.Moment,
   firstYearStart: moment.Moment
@@ -289,7 +258,6 @@ function buildStressEntries(
   const today = now.clone().startOf('day')
   let index = 0
   while (cursor.isBefore(today)) {
-    // Sundays off, and Wednesdays off every third week.
     const weekOff = Math.floor(index / 7) % 3 === 0 && cursor.day() === 3
     if (cursor.day() !== 0 && !weekOff) {
       entries.push({
@@ -331,7 +299,7 @@ function buildStressPlans(now: moment.Moment): {
   const today = now.clone().startOf('day')
   const dayPlans = Array.from({ length: 400 }, (_, index) => ({
     id: `${SCENARIO_ID_PREFIX}stress-plan-${index}`,
-    // Three years back through two months ahead.
+
     date: today
       .clone()
       .add(60 - index * 3, 'days')
@@ -359,7 +327,7 @@ function buildStressPlans(now: moment.Moment): {
         interval: 1,
         endDate: null,
       },
-      // A skipped week about every five weeks, and a moved one every ten.
+
       deletedDates: Array.from({ length: 20 }, (_, skip) =>
         startDate
           .clone()
@@ -378,10 +346,6 @@ function buildStressPlans(now: moment.Moment): {
   return { dayPlans, recurringPlans }
 }
 
-/**
- * A publisher in the first Service Year, auxiliary pioneer for its last three
- * months, and a regular pioneer since.
- */
 function buildStressRoleHistory(firstYearStart: moment.Moment): RoleHistory {
   const month = (offset: number) =>
     firstYearStart.clone().add(offset, 'months').format('YYYY-MM')
@@ -422,7 +386,6 @@ function buildStress(now: moment.Moment): Scenario {
   }
 }
 
-/** Start of the September-to-August service year containing `now`. */
 function serviceYearStartFor(now: moment.Moment): moment.Moment {
   return serviceYearBounds(getServiceYearFromDate(now)).start
 }
@@ -476,9 +439,6 @@ export function buildScenario(
   }
   if (name !== 'badges') return pioneer
 
-  // `pioneer` plus a year and a bit of history (`dev-badges-` ids), so the
-  // Badges screen has a spread of earned levels and progress. Seeding files
-  // them all quietly as history.
   const history = buildBadgeHistoryFixture({ now })
   return {
     ...pioneer,

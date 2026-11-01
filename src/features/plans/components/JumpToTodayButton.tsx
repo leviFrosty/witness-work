@@ -20,7 +20,6 @@ const ICONS = {
   forward: ArrowForwardIcon,
 }
 
-/** Floats over the Schedule while today is out of view, pointing the way back. */
 export default function JumpToTodayButton({
   visible,
   direction,
@@ -28,10 +27,7 @@ export default function JumpToTodayButton({
   onPress,
 }: {
   visible: boolean
-  /**
-   * Where today is from what's on screen: up/down in the month list, backward
-   * (earlier) or forward (later) between service years.
-   */
+
   direction: 'up' | 'down' | 'backward' | 'forward'
   bottom: number
   onPress: () => void

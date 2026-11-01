@@ -18,10 +18,6 @@ interface Props {
   goNext: () => void
 }
 
-/**
- * The last question: a name and a picture, both optional. It comes last because
- * it's the most personal thing setup asks for.
- */
 const ProfileSetup = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = useProfile()
@@ -67,8 +63,7 @@ const ProfileSetup = ({ goBack, goNext }: Props) => {
           >
             {i18n.t('profileSetupNameDesc')}
           </Text>
-          {/* Both answers are optional, so the keyboard waits to be asked
-              for instead of covering the step on arrival. */}
+          {}
           <ProfileCard hideBadges autoFocusName={false} />
         </View>
       </OnboardingScrollView>

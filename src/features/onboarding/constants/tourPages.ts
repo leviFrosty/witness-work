@@ -39,7 +39,6 @@ import TimeVisual from '@/features/onboarding/components/tour/TimeVisual'
 import ReportVisual from '@/features/onboarding/components/tour/ReportVisual'
 import PrivacyVisual from '@/features/onboarding/components/tour/PrivacyVisual'
 
-/** One page of the onboarding tour. Its id is also its analytics value. */
 export type TourPageId =
   | 'track'
   | 'plan'
@@ -59,30 +58,24 @@ export interface TourPageSpec {
   color: RevealColor
   titleKey: TranslationKey
   captionKey: TranslationKey
-  /** Caption for Android, where the iOS wording doesn't fit. */
+
   androidCaptionKey?: TranslationKey
-  /** Caption where Buddies doesn't show. */
+
   noBuddiesCaptionKey?: TranslationKey
-  /** A Siri phrase to call out beneath the caption. */
+
   siriPhraseKey?: TranslationKey
-  /** Unset for "more", which draws its tiles. */
+
   Visual?: ComponentType<RevealVisualProps>
-  /** Only on this platform. */
+
   platform?: 'ios' | 'android'
-  /** Only where Buddies shows. */
+
   buddiesOnly?: boolean
-  /** Only on an iPhone that can pair an Apple Watch. */
+
   watchOnly?: boolean
-  /** Only on a build with the native calendar module. */
+
   calendarOnly?: boolean
 }
 
-/**
- * The tour a new user takes before setting anything up: what WitnessWork does,
- * in the order a month of service unfolds, then what makes it special. Pages
- * borrow the update reveal's illustrations where one already exists. The
- * publisher type isn't chosen yet, so every page shows the hours version.
- */
 export const TOUR_PAGES: TourPageSpec[] = [
   {
     id: 'track',
@@ -181,10 +174,6 @@ export const TOUR_PAGES: TourPageSpec[] = [
   },
 ]
 
-/**
- * The tour's "And so much more" tiles: free for everyone, so Supporter features
- * like cloud sync stay off it.
- */
 export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
   {
     id: 'map',
@@ -252,7 +241,7 @@ export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
     labelKey: 'updateReveal_more_shortcuts',
     platform: 'ios',
     tabletOnly: true,
-    // The iPad menu bar and its shortcuts need iOS 26.
+
     minIos: 26,
   },
 ]

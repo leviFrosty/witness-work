@@ -34,10 +34,6 @@ const weekOfMonthOptions = [
   { label: i18n.t('lastWeek'), value: -1 },
 ]
 
-/**
- * How a recurring plan repeats, compact enough to live in the Plan dock. The
- * Recurring toggle right above names it, so the picker takes the full width.
- */
 const PlanRecurrenceControls = (props: {
   frequency: RecurringPlanFrequencies
   setFrequency: (frequency: RecurringPlanFrequencies) => void

@@ -16,13 +16,6 @@ const MESSAGES = {
   tooLarge: 'mileage.sharedCarsTooLarge',
 } as const
 
-/**
- * A slim line saying why changes to the User's Shared Cars aren't being shared
- * right now, while everything on the device still shows and can be edited: an
- * update needed, suspended, switched off, offline, a car not ready here yet, a
- * clock far ahead, or a change too large to share. With `spaceId`, about that
- * car only (its form).
- */
 export default function SharedCarsNotice({
   hasSharedCars,
   spaceId,

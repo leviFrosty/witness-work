@@ -24,18 +24,6 @@ import {
 } from '@/features/buddies/lib/buddyProfile'
 import useBuddiesCardName from '@/features/buddies/hooks/useBuddiesCardName'
 
-/**
- * How buddies see me: the Profile (edited on its own screen) and switches for
- * the parts I can withhold, in the current scope (All Buddies, or one buddy
- * over them). The name is the point, so it always goes; it's the account's,
- * which every device's card carries (it can differ from this device's Profile
- * name until the User renames here). Plans have their own section. The streak
- * switch shows before there's a streak, so it can be off from the start. Streak
- * and Badges are offered only while each shows at all, and the Pet only once
- * there's a companion. `withoutProfile` leaves out the Profile row, for the
- * Buddies intro that shows the Profile editor above it; a buddy's settings
- * leave it out too.
- */
 export default function BuddiesSharingSection({
   withoutProfile = false,
 }: {
@@ -72,7 +60,6 @@ export default function BuddiesSharingSection({
             ? 'photo'
             : 'profile'
 
-  // Nothing to withhold beyond the Profile.
   if (!profileRow && last === 'profile') return null
 
   return (

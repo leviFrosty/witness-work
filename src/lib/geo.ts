@@ -4,7 +4,6 @@ const EARTH_RADIUS_METERS = 6_371_000
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180
 
-/** Great-circle distance between two points, in meters (haversine). */
 export const distanceMeters = (a: Coordinate, b: Coordinate): number => {
   const dLat = toRadians(b.latitude - a.latitude)
   const dLon = toRadians(b.longitude - a.longitude)

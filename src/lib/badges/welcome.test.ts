@@ -24,7 +24,6 @@ describe('welcomeAfterEvaluation', () => {
   })
 
   it('leaves imports and restores to the summary card', () => {
-    // Their first pass comes after the device's own, so the welcome is set.
     expect(welcomeAfterEvaluation({ ...base, welcome: 'done' })).toBeUndefined()
     expect(
       welcomeAfterEvaluation({ ...base, welcome: 'pending' })

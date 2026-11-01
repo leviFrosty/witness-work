@@ -4,11 +4,6 @@ vi.mock('@/lib/syncClock', async (importOriginal) => ({
 }))
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Drives `installiCloudSync` against a fake bridge to cover when the app
-// catches up with iCloud on its own — the "I have to tap Sync on my iPad"
-// report — retries after a failed read, and what image GC may delete while it
-// does.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -184,8 +179,6 @@ const hasPhoneContact = (
   useContacts: Awaited<ReturnType<typeof load>>['useContacts']
 ) => useContacts.getState().contacts.some((c) => c.id === 'from-phone')
 
-// Every later catch-up step resolves without timers, so one macrotask lets a
-// catch-up finish.
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 let uninstall: () => void = () => {}
@@ -225,8 +218,6 @@ describe('catching up without a manual sync', () => {
       await load()
     uninstall = installiCloudSync()
 
-    // Initial metadata gather reports the phone's file before RevenueCat has
-    // answered, so `canSync` drops it.
     runtime.remoteChangeListeners.forEach((listener) => listener())
     expect(bridge.readFiles).not.toHaveBeenCalled()
 
@@ -274,8 +265,6 @@ describe('catching up without a manual sync', () => {
     useSupporter.getState().setSupporter(true)
     uninstall = installiCloudSync()
 
-    // "Keep this device's data" enables sync, then wipes the remote files; a
-    // pull in between would merge the data the user chose to discard.
     usePreferences.getState().set({ iCloudSyncEnabled: true })
     await Promise.resolve()
 
@@ -369,15 +358,11 @@ describe('image cleanup on catch-up', () => {
     )
     uninstall = installiCloudSync()
 
-    // A remote-change pull is mid-read when the app comes to the foreground,
-    // so the catch-up joins it and queues a follow-up.
     runtime.remoteChangeListeners.forEach((listener) => listener())
     runtime.appState = 'active'
     runtime.appStateListeners.forEach((listener) => listener('active'))
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    // The joined pull saw everything; the follow-up finds the phone's new
-    // file still downloading.
     runtime.pending = [PHONE_FILE]
     finishFirstRead({ files: [], pending: [] })
 
@@ -396,16 +381,12 @@ describe('image cleanup on catch-up', () => {
 
     runtime.appStateListeners.forEach((listener) => listener('active'))
 
-    // The incoming photo downloading means the pull is done; every later
-    // step resolves without timers, so one macrotask lets the catch-up end.
     await vi.waitFor(() => expect(bridge.readBinary).toHaveBeenCalled())
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(bridge.deleteBinaryFile).not.toHaveBeenCalled()
   })
 
   it('stops before deleting a photo whose contact a new pull brings in', async () => {
-    // The phone's contact hasn't been pushed yet, so its photo looks orphaned
-    // to the complete (empty) pull GC runs after.
     runtime.files = []
     runtime.binaries = [
       { filename: ORPHAN_PHOTO, modifiedAt: 1 },
@@ -429,7 +410,6 @@ describe('image cleanup on catch-up', () => {
       expect(bridge.deleteBinaryFile).toHaveBeenCalledWith(ORPHAN_PHOTO)
     )
 
-    // Mid-sweep, the phone's push lands and its remote-change pull starts.
     runtime.files = [phonePayload()]
     runtime.remoteChangeListeners.forEach((listener) => listener())
     finishDelete()
@@ -464,7 +444,6 @@ describe('image cleanup on catch-up', () => {
       expect(bridge.deleteBinaryFile).toHaveBeenCalledWith(ORPHAN_PHOTO)
     )
 
-    // The photo of a contact saved meanwhile is uploaded straight away.
     useContacts.getState().set({
       contacts: [{ id: 'added-here', name: 'Added here' } as never],
     })
@@ -495,7 +474,7 @@ describe('image cleanup on catch-up', () => {
       )
     )
     await settle()
-    // Its contacts can't be merged, so their photos look orphaned.
+
     expect(bridge.deleteBinaryFile).not.toHaveBeenCalled()
   })
 })
@@ -663,7 +642,7 @@ it('keeps healthy peers syncing while surfacing a malformed peer', async () => {
       },
     ],
   ])
-  // Once per launch, however often the same file is pulled.
+
   await iCloudSync.pullAndMerge('remote-change')
   expect(invalid()).toHaveLength(1)
 })
@@ -880,7 +859,7 @@ it('pushes edits made during a slow photo upload without waiting for it', async 
     const push = iCloudSync.push('manual')
     await vi.advanceTimersByTimeAsync(0)
     expect(bridge.writeBinary).toHaveBeenCalledOnce()
-    // The snapshot is published; its photo is still uploading.
+
     expect(await push).toBe(true)
     useContacts.setState({
       contacts: [{ ...localPhoto(), name: 'Edited while uploading' }],
@@ -1125,7 +1104,7 @@ describe('confirming the upload', () => {
       'icloud_sync_upload_failed',
       { reason: 'icloud_full' }
     )
-    // Later checks repeat neither the event nor the write.
+
     await vi.advanceTimersByTimeAsync(10_000)
     expect(bridge.uploadStatus).toHaveBeenCalledTimes(2)
     expect(
@@ -1135,13 +1114,11 @@ describe('confirming the upload', () => {
     ).toHaveLength(1)
     expect(bridge.write).toHaveBeenCalledTimes(writes)
 
-    // A new write doesn't clear the issue on its own...
     expect(await (await import('@/app/sync/iCloudSync')).push('manual')).toBe(
       true
     )
     expect(usePreferences.getState().iCloudUploadIssue).toBe('icloud-full')
 
-    // ...but a confirmed upload does.
     vi.mocked(bridge.uploadStatus).mockResolvedValue({
       uploaded: true,
       uploading: false,

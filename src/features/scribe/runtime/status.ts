@@ -19,7 +19,7 @@ import { noteGate, useScribeStatusStore } from '@/features/scribe/stores/status'
 import { noteUsage, useScribeUsageStore } from '@/features/scribe/stores/usage'
 
 let statusInFlight: Promise<void> | null = null
-/** A forced read was asked for while one already started was running. */
+
 let statusCheckAgain = false
 
 const hasAccountSession = async (): Promise<boolean> => {
@@ -31,15 +31,8 @@ const hasAccountSession = async (): Promise<boolean> => {
   }
 }
 
-/**
- * Reads `GET /scribe/v1/status` (no auth) unless the last answer is under 5
- * minutes old. Fail-open: a failed read keeps the last answer, or none, which
- * the app treats as enabled.
- */
 export function refreshStatus({ force = false } = {}): Promise<void> {
   if (statusInFlight) {
-    // Its answer predates what forced this one (a 503, the connection coming
-    // back), so it reads again once that answer lands.
     if (force) statusCheckAgain = true
     return statusInFlight
   }
@@ -71,18 +64,12 @@ export function refreshStatus({ force = false } = {}): Promise<void> {
 
 let support: Promise<AttestationSupport> | null = null
 
-/**
- * What the session client and earlier calls know about this device, without
- * opening a session or creating an account key: whether it can ever attest,
- * whether the last session open failed for a reason that may pass, and whether
- * the account was seen suspended.
- */
 export async function refreshDeviceGate(): Promise<void> {
   const pending = (support ??= deviceAttestation
     .checkSupport()
     .catch((): AttestationSupport => 'unknown'))
   const supported = await pending
-  // Unknown (offline, Play unreachable) is asked again next time.
+
   if (supported === 'unknown' && support === pending) support = null
   const suspended = await accountSuspended().catch(
     () => useScribeStatusStore.getState().gate.suspended
@@ -97,13 +84,6 @@ export async function refreshDeviceGate(): Promise<void> {
   })
 }
 
-/**
- * Reads `GET /scribe/v1/usage` at most every 30 s (`force` skips the wait).
- * Skipped where Scribe AI can't run, since it needs a session. `open: false`
- * reads only with a session this device already has: a screen that merely shows
- * usage (Settings, a timer, returning to the app) never opens one, which would
- * create the account and attest the device.
- */
 export async function refreshUsage({
   force = false,
   open = true,
@@ -131,38 +111,23 @@ export async function refreshUsage({
   }
 }
 
-/**
- * A RevenueCat link answered the account's Supporter status. When the plan
- * changed on the server (a purchase, a restore, a lapse), the saved usage shows
- * the old plan's windows, so it's read again.
- */
 export function noteSupporterAnswer(supporter: boolean): void {
   const plan = useScribeUsageStore.getState().snapshot?.plan
   if (plan && (plan === 'supporter') !== supporter)
     void refreshUsage({ force: true, open: false })
 }
 
-/** Back in the app while limited: the limit may have lifted meanwhile. */
 export function refreshLimitedUsage(): void {
   if (useScribeUsageStore.getState().snapshot?.limited)
     void refreshUsage({ open: false })
 }
 
-/**
- * This device is a Supporter but ww-api meters the account as free (a link that
- * failed, or the customer moved): links again, then reads usage. True when
- * ww-api now answers Supporter.
- */
 export async function recheckSupporter(): Promise<boolean> {
   const supporter = await relinkAfterSupporterRefusal()
   await refreshUsage({ force: true })
   return supporter
 }
 
-/**
- * A call failed: note what it says about the device or the service, and report
- * the failures that mean the app sent something wrong.
- */
 export function noteScribeFailure(failure: ScribeClientError): void {
   switch (failure.code) {
     case 'update_required':
@@ -181,7 +146,6 @@ export function noteScribeFailure(failure: ScribeClientError): void {
       void refreshStatus({ force: true })
       break
     case 'unavailable':
-      // No healthy provider: status says so, and the entry points hide.
       if (failure.status === 503) void refreshStatus({ force: true })
       break
   }

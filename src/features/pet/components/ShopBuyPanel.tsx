@@ -13,24 +13,17 @@ import {
 import { shortBy } from '@/features/pet/lib/shop'
 import type { ShopEntry } from '@/features/pet/lib/shopEntries'
 
-/** What the button says and does for the picked item. */
 type Action = {
   label: string
-  /** A check before the label: it's owned. */
+
   owned?: boolean
-  /** A coin beside the label, and a number after it. */
+
   coin?: boolean
   amount?: number
   a11y: string
   onPress?: () => void
 }
 
-/**
- * The picked item and what can be done with it here: buy it, or what's missing.
- * One just bought says it's owned and where it's used (the pet's details wear
- * and place things); a secret only says it's found, never sold. With nothing
- * picked, the category is all owned, and it says so.
- */
 export default function ShopBuyPanel({
   entry,
   wallet,
@@ -39,14 +32,13 @@ export default function ShopBuyPanel({
   onBuy,
   layout,
 }: {
-  /** Null once everything in the category is owned. */
   entry: ShopEntry | null
-  /** Coins left to spend. */
+
   wallet: number
   petName: string
   palette: GamePalette
   onBuy: () => void
-  /** `row`: name beside the button (a bar); `stack`: the button under it. */
+
   layout: 'row' | 'stack'
 }) {
   const theme = useTheme()

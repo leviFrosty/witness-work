@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The real `@/stores/mmkv` over a fake MMKV whose file can be closed, as iOS
-// keeps it before the device's first unlock: it reads as empty and every write
-// throws `Failed to set <key>!`.
-
 const disk = vi.hoisted(() => ({
   open: true,
   data: new Map<string, string | boolean>(),
@@ -112,7 +108,6 @@ describe('a launch before the first unlock', () => {
     storage.MmkvStorage.setItem('preferences', '{"state":{}}')
     expect(disk.data.get('preferences')).toBe(USER_DATA)
 
-    // The reloaded launch reads the User's data.
     const reloaded = await launch()
     expect(reloaded.isStorageLocked()).toBe(false)
     expect(reloaded.MmkvStorage.getItem('preferences')).toBe(USER_DATA)

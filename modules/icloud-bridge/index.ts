@@ -13,25 +13,16 @@ export type SyncFile = {
 
 export type SyncRead = {
   files: SyncFile[]
-  /**
-   * Matching files still downloading at the deadline (or present but
-   * unreadable). Skipped this time; the metadata query reports them again once
-   * they land. `null` when the binary can't tell (see `readFiles`).
-   */
+
   pending: string[] | null
 }
 
-/**
- * Whether iCloud has uploaded a sync file's current version. `error` is
- * iCloud's last upload failure as an `NSError` domain and code (no message).
- */
 export type UploadStatus = {
   uploaded: boolean
   uploading: boolean
   error: { domain: string; code: number } | null
 }
 
-/** One entry returned by `listBinaryFiles` — filename + container mtime. */
 export type BinaryFileInfo = {
   filename: string
   modifiedAt: number
@@ -44,13 +35,13 @@ type ICloudBridgeEvents = {
 
 declare class ICloudBridgeNative extends NativeModule<ICloudBridgeEvents> {
   isAvailable(): boolean
-  // Optional: absent on binaries built before they existed.
+
   identityToken?(): string | null
   identityTokenMatches?(stored: string): boolean | null
   getContainerPath(): string | null
   waitForInitialScan(timeoutMs: number): Promise<boolean>
   readAll(): Promise<SyncFile[]>
-  // Optional: absent on binaries built before they existed.
+
   listFiles?(): Promise<string[]>
   readFiles?(filenames: string[]): Promise<SyncRead>
   uploadStatus?(filename: string): Promise<UploadStatus | null>
@@ -71,71 +62,31 @@ export function isAvailable(): boolean {
   return native.isAvailable()
 }
 
-/**
- * The current iCloud identity token, archived and base64-encoded, for storing
- * and later passing to `identityTokenMatches`. Opaque: two archives of one
- * Apple Account's token can differ (an iOS update), so never compare them
- * directly except as a shortcut for "same". Null when signed out, off iOS, or
- * on a binary that predates it — callers treat null as "can't tell" and decide
- * nothing.
- */
 export function identityToken(): string | null {
   if (Platform.OS !== 'ios' || !native?.identityToken) return null
   return native.identityToken()
 }
 
-/**
- * Whether `stored`, an earlier `identityToken`, is the current Apple Account,
- * compared natively with `isEqual:` as Apple documents. Null when signed out,
- * when `stored` can't be decoded, or when the binary predates it.
- */
 export function identityTokenMatches(stored: string): boolean | null {
   if (Platform.OS !== 'ios' || !native?.identityTokenMatches) return null
   return native.identityTokenMatches(stored)
 }
 
-/** Debug helper: absolute filesystem path of the ubiquity container (or null). */
 export function getContainerPath(): string | null {
   if (Platform.OS !== 'ios' || !native) return null
   return native.getContainerPath()
 }
 
-/**
- * Resolves `true` once `NSMetadataQuery` has completed at least one full scan
- * of the ubiquity container, or `false` if `timeoutMs` elapses first.
- *
- * Callers that enumerate files for a "do we have a backup?" decision should
- * await this first on cold launch: `FileManager.contentsOfDirectory` can return
- * an empty list for several seconds after app start even when a remote
- * per-device file already exists, and an unconditional "no backup" verdict
- * during onboarding is what produces the bug where a fresh install's defaults
- * later beat the real remote data in the LWW merge.
- *
- * On non-iOS / no native module, resolves `true` immediately — there's no scan
- * to wait on, and callers should fall through to their own noop path.
- */
 export async function waitForInitialScan(timeoutMs = 5000): Promise<boolean> {
   if (Platform.OS !== 'ios' || !native) return true
   return native.waitForInitialScan(timeoutMs)
 }
 
-/**
- * Reads the `witness-work*.json` files whose names pass `include`, triggering
- * downloads in parallel for any that are still iCloud placeholders. Anything
- * still downloading at the 10s deadline is skipped and listed in `pending`.
- *
- * Reading a file marks its current version observed, which silences the
- * remote-change event for that version — so callers must include only the files
- * they actually consume. Reading everything to find one file (as the account
- * reader once did) swallows the event for data files nobody merged.
- */
 export async function readFiles(
   include: (filename: string) => boolean
 ): Promise<SyncRead> {
   if (Platform.OS !== 'ios' || !native) return { files: [], pending: [] }
-  // Binaries predating `readFiles` (an OTA update onto an older build of the
-  // same app version) can only read everything, and silently skip files still
-  // downloading.
+
   if (!native.listFiles || !native.readFiles) {
     const files = await native.readAll()
     return { files: files.filter((f) => include(f.filename)), pending: null }
@@ -145,13 +96,6 @@ export async function readFiles(
   return native.readFiles(filenames)
 }
 
-/**
- * Writes `json` to `filename` inside the ubiquity container using an atomic,
- * coordinated write. Filename must live in the `witness-work*.json` namespace —
- * anything else is rejected by the native module.
- *
- * Resolves to the file's modification time in epoch ms.
- */
 export async function write(filename: string, json: string): Promise<number> {
   if (Platform.OS !== 'ios' || !native) {
     throw new Error('iCloud bridge is not available on this platform')
@@ -159,17 +103,10 @@ export async function write(filename: string, json: string): Promise<number> {
   return native.write(filename, json)
 }
 
-/** Whether this binary can report upload status (`uploadStatus`). */
 export function supportsUploadStatus(): boolean {
   return Platform.OS === 'ios' && !!native?.uploadStatus
 }
 
-/**
- * Whether iCloud has uploaded the current version of sync file `filename`. A
- * `write` only proves the bytes reached the local container. Null when the file
- * or container is missing, off iOS, or on a binary that predates it (see
- * `supportsUploadStatus`).
- */
 export async function uploadStatus(
   filename: string
 ): Promise<UploadStatus | null> {
@@ -177,29 +114,16 @@ export async function uploadStatus(
   return native.uploadStatus(filename)
 }
 
-/**
- * Coordinated delete of a single sync file. Idempotent — no error if missing.
- * Filename is validated against the sync namespace by the native module.
- */
 export async function deleteFile(filename: string): Promise<void> {
   if (Platform.OS !== 'ios' || !native) return
   await native.deleteFile(filename)
 }
 
-/** Coordinated delete of every `witness-work*.json` in the container. */
 export async function deleteAll(): Promise<void> {
   if (Platform.OS !== 'ios' || !native) return
   await native.deleteAll()
 }
 
-/**
- * Copies a local file at `sourcePath` into the ubiquity container under the
- * validated image filename (`witness-work-img-*.jpg` namespace) and resolves to
- * the resulting file's modification time in epoch ms.
- *
- * File-path transport — the bytes never flow through the JS bridge, so a 5 MB
- * original-quality photo uploads for the price of a stat() + coordinated copy.
- */
 export async function writeBinary(
   filename: string,
   sourcePath: string
@@ -210,17 +134,6 @@ export async function writeBinary(
   return native.writeBinary(filename, sourcePath)
 }
 
-/**
- * Coordinated-read of a container binary into `destinationPath`. Kicks off
- * `startDownloadingUbiquitousItem` if the file is still an iCloud placeholder
- * and polls up to 10s for it to materialize. Resolves to the container file's
- * modification time in epoch ms (used by the sync bookkeeper to skip redundant
- * re-downloads next cycle).
- *
- * Rejects with `ICLOUD_READ_BINARY_MISSING` when the file is absent from the
- * container — callers should treat that as "fall back to initials" rather than
- * a hard error.
- */
 export async function readBinary(
   filename: string,
   destinationPath: string
@@ -231,38 +144,21 @@ export async function readBinary(
   return native.readBinary(filename, destinationPath)
 }
 
-/**
- * Enumerates `witness-work-img-*.jpg` in the container with their container
- * mtimes. Does not trigger downloads. Returns an empty array when the iCloud
- * bridge is unavailable, so callers can treat "no iCloud" and "no binaries"
- * identically for list-style operations.
- */
 export async function listBinaryFiles(): Promise<BinaryFileInfo[]> {
   if (Platform.OS !== 'ios' || !native) return []
   return native.listBinaryFiles()
 }
 
-/**
- * Coordinated delete of a single binary file. Idempotent on the native side —
- * resolves cleanly when the target doesn't exist.
- */
 export async function deleteBinaryFile(filename: string): Promise<void> {
   if (Platform.OS !== 'ios' || !native) return
   await native.deleteBinaryFile(filename)
 }
 
-/** Coordinated delete of every `witness-work-img-*.jpg` in the container. */
 export async function deleteAllBinaries(): Promise<void> {
   if (Platform.OS !== 'ios' || !native) return
   await native.deleteAllBinaries()
 }
 
-/**
- * Fires when NSMetadataQuery observes a modification to any sync file whose
- * content-change date is strictly newer than the most recent write/read this
- * device performed for that filename — typically meaning another device pushed
- * an update.
- */
 export function addRemoteChangeListener(
   listener: ICloudBridgeEvents['onRemoteChange']
 ): EventSubscription {
@@ -272,11 +168,6 @@ export function addRemoteChangeListener(
   return native.addListener('onRemoteChange', listener)
 }
 
-/**
- * Fires when the iCloud identity token changes — e.g. the user signs out or
- * into a different Apple ID while the app is foregrounded. The native side has
- * already restarted its metadata query for the new container.
- */
 export function addAvailabilityChangeListener(
   listener: ICloudBridgeEvents['onAvailabilityChange']
 ): EventSubscription {

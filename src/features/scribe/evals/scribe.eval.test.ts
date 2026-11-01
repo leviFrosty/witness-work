@@ -83,22 +83,6 @@ import {
   type TurnResult,
 } from '@/features/scribe/evals/scenarios'
 
-/**
- * Scribe AI's model eval: every scenario in `scenarios.ts`, through the app's
- * real turn loop, tools, Refs and context, against a local ww-api worker that
- * has the real model. Opt-in and paid (OpenRouter), e.g.
- *
- * SCRIBE_EVAL_WORKER=~/dev/ww-api-worktrees/<branch>\
- * Pnpm exec vitest run src/features/scribe/evals
- *
- * With that worktree's `node scripts/verify/dev.mjs up --secrets-from …`
- * running (its `.verify/state.json` has the URL and dev bypass token).
- * `SCRIBE_EVAL_ONLY=id,id` picks scenarios, `SCRIBE_EVAL_SHARD=2/3` one shard
- * of them, `SCRIBE_EVAL_RUNS=3` repeats each. The report, with every turn's
- * calls, reply, steps and usage, lands in this repo's
- * `.verify/artifacts/scribe-eval-<timestamp>.json`.
- */
-
 const workerDir = process.env.SCRIBE_EVAL_WORKER?.replace(
   /^~/,
   process.env.HOME ?? '~'
@@ -115,7 +99,7 @@ const ENABLED = Boolean(state?.url && state.tokens?.devBypass)
 
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 let ip = Math.floor(Math.random() * 60_000)
-/** A fresh caller IP per request, so the per-IP limits never pace the eval. */
+
 const withIp: typeof fetch = (input, init) => {
   ip = (ip + 1) % 65_536
   const headers = new Headers(init?.headers)
@@ -151,7 +135,7 @@ function seed(stores: ScribeStores) {
     buddies: [...stores.buddies],
     cards: { ...stores.buddyCards },
   })
-  // The Preferences fields Scribe AI reads, as `readScribeStores` reads them.
+
   usePreferences.setState(
     stores.preferences as unknown as Parameters<
       typeof usePreferences.setState
@@ -434,7 +418,7 @@ describe.skipIf(!ENABLED)('Scribe AI on the real model', () => {
             units,
             turns,
           })
-          // A failed scenario is a finding for the report, not a broken test.
+
           expect(turns.length).toBe(scenario.turns.length)
         }
       )

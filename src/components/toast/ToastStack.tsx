@@ -13,14 +13,8 @@ import {
   type ToastPlacement,
 } from '@/stores/toasts'
 
-/** A spread-out stack folds back up this long after the last touch. */
 const COLLAPSE_AFTER_MS = 4000
 
-/**
- * The toasts of one edge, newest in front (Sonner's stack). Their time pauses
- * while the User touches the stack, hovers it with a pointer, or has it spread
- * out.
- */
 export default function ToastStack({
   placement,
   items,
@@ -30,11 +24,11 @@ export default function ToastStack({
   screenReader,
 }: {
   placement: ToastPlacement
-  /** This edge's toasts, oldest first. */
+
   items: Toast[]
-  /** Off screen for now, e.g. while a takeover shows. */
+
   hidden: boolean
-  /** Distance from the edge. */
+
   inset: number
   reduceMotion: boolean
   screenReader: boolean
@@ -49,10 +43,8 @@ export default function ToastStack({
   const present = ordered.filter((item) => !leaving[item.id])
   const frontHeight = present[0] ? (heights[present[0].id] ?? 0) : 0
 
-  // One toast left has nothing to spread out.
   if (expanded && present.length < 2) setExpanded(false)
 
-  // Forgets toasts closed from elsewhere (replaced, or the app went away).
   const ids = items.map((item) => item.id).join(' ')
   useEffect(() => {
     const live = new Set(ids.split(' ').map(Number))
@@ -93,13 +85,11 @@ export default function ToastStack({
     return start
   })
   const behind = Math.min(present.length - 1, VISIBLE_BEHIND)
-  // Covers every toast, so Android delivers their touches.
+
   const span = expanded
     ? Math.max(0, offset - TOAST_GAP)
     : frontHeight + TOAST_PEEK * behind
-  // On both edges older toasts sit above newer ones, so the stack reads oldest
-  // to newest down the screen. A bottom stack grows up from its edge; a top
-  // one keeps its oldest at the edge and grows down.
+
   const stackY = (index: number, id: number) => {
     if (placement === 'bottom')
       return -(expanded ? offsets[index] : index * TOAST_PEEK)

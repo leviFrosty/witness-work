@@ -2,10 +2,6 @@ import { Alert } from 'react-native'
 import { calendarAction, disconnectCalendar } from '@/app/calendar/calendarSync'
 import i18n from '@/lib/locales'
 
-/**
- * Only the primary can remove the events it published, so it asks keep or
- * remove. Elsewhere turning off only stops this device and the events stay.
- */
 export function confirmDisconnectCalendar({
   isPrimary,
   source,

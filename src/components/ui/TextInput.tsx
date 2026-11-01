@@ -19,7 +19,6 @@ export interface TextInputProps
     InputProps,
     'placeholderTextColor' | 'selectionColor' | 'textAlign'
   > {
-  /** Reading-order alignment; `end` (the trailing side) by default. */
   textAlign?: FlowAlign | 'center'
   invalid?: boolean
   error?: string
@@ -29,8 +28,6 @@ export interface TextInputProps
   selectionColor?: InputProps['selectionColor'] | (string & {})
 }
 
-// Sizing that belongs to the box around the input when Android draws its own
-// placeholder (see `drawsPlaceholder`).
 const OUTER_LAYOUT_KEYS = [
   'flex',
   'flexGrow',
@@ -62,7 +59,6 @@ const PLACEHOLDER_ALIGN_VERTICAL = {
   bottom: 'flex-end',
 } as const
 
-// A `textAlign` in a caller's style reads as start/end too.
 const toFlow = (
   align: TextStyle['textAlign'] | FlowAlign | undefined
 ): FlowAlign | 'center' => {
@@ -129,8 +125,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     borderStyle?: 'solid' | 'dotted' | 'dashed'
     fontFamily?: string
   }
-  // A style that sets the family to undefined keeps Inter instead of falling
-  // back to the system font.
+
   resolvedStyle.fontFamily ??= theme.fonts.regular
   const callerProps = rest as InputProps & {
     backgroundColor?: string
@@ -144,10 +139,6 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       ? 1
       : (callerProps.borderWidth ?? resolvedStyle.borderWidth ?? 1)
 
-  // TalkBack names an EditText by its text, and Android reports the hint as
-  // the text of an empty field, so a native placeholder hides the
-  // accessibilityLabel. On Android, draw the placeholder ourselves and hand it
-  // to TalkBack as the hint, the way VoiceOver reads label then placeholder.
   const accessibleLabel = rest.accessibilityLabel ?? rest['aria-label']
   const drawsPlaceholder =
     Platform.OS === 'android' &&
@@ -158,8 +149,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     rest.defaultValue ?? ''
   )
   const isEmpty = !(rest.value ?? uncontrolledText)
-  // A wrapping placeholder drawn over a multiline field is taller than the
-  // empty field; the field grows to hold it.
+
   const [placeholderHeight, setPlaceholderHeight] = useState(0)
 
   const outerStyle: ViewStyle = {}
@@ -208,8 +198,6 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
         letterSpacing: tracking(letterSpacing),
       })}
       textAlign={inputAlign}
-      // Tamagui's native Input reads only `autoFocusNative` and drops
-      // `autoFocus` (web), so a field asking for focus never got it.
       autoFocusNative={rest.autoFocusNative ?? rest.autoFocus}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
@@ -256,8 +244,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
           importantForAccessibility='no-hide-descendants'
           style={{
             ...StyleSheet.absoluteFill,
-            // A multiline placeholder gets its full height to wrap into (a
-            // bottom edge would clamp it to the empty field's height).
+
             ...(rest.multiline && { bottom: undefined, minHeight: '100%' }),
             paddingTop: inset('Top'),
             paddingRight: inset('Right'),
@@ -282,8 +269,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
               fontFamily: innerStyle.fontFamily,
               fontSize: innerStyle.fontSize,
               fontWeight: innerStyle.fontWeight,
-              // Already passed through tracking() above.
-              // eslint-disable-next-line no-restricted-syntax
+
               letterSpacing: innerStyle.letterSpacing,
               textAlign:
                 flowAlign === 'center' ? 'center' : alignText(flowAlign),

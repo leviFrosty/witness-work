@@ -13,13 +13,6 @@ import type { Contact } from '@/types/contact'
 import type { TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 
-/**
- * The figures behind the Year and All Time Progress cards. A Service Year's
- * months are counted as its report counts them (each capped by the credit limit
- * of the role that applied then); All Time counts raw time, as the lifetime
- * total and Year by Year list do.
- */
-
 export type MonthTotal = CalendarMonth & { minutes: number }
 
 const monthIndex = ({ year, month }: CalendarMonth) => year * 12 + month
@@ -27,10 +20,6 @@ const monthIndex = ({ year, month }: CalendarMonth) => year * 12 + month
 const entryMinutes = (entry: TimeEntry) =>
   (entry.hours ?? 0) * 60 + (entry.minutes ?? 0)
 
-/**
- * A Service Year's twelve months, September first, each with its total after
- * that month's credit cap (`capFor`, `null` for no limit).
- */
 export const serviceYearMonthTotals = (
   serviceReports: TimeEntriesByYear,
   serviceYear: number,
@@ -51,7 +40,6 @@ export const serviceYearMonthTotals = (
   }))
 }
 
-/** Every month with Time Entries, oldest first, with its raw total. */
 export const allMonthTotals = (
   serviceReports: TimeEntriesByYear
 ): MonthTotal[] => {
@@ -70,7 +58,6 @@ export const allMonthTotals = (
   return out.sort((a, b) => monthIndex(a) - monthIndex(b))
 }
 
-/** The first month with a Time Entry, or `null` with none. */
 export const firstRecordMonth = (
   serviceReports: TimeEntriesByYear
 ): CalendarMonth | null => {
@@ -78,7 +65,6 @@ export const firstRecordMonth = (
   return first ? { year: first.year, month: first.month } : null
 }
 
-/** The month with the most time, the earliest on a tie; `null` with none. */
 export const bestMonth = (totals: MonthTotal[]): MonthTotal | null =>
   totals.reduce<MonthTotal | null>(
     (best, m) => (m.minutes > 0 && m.minutes > (best?.minutes ?? 0) ? m : best),
@@ -87,15 +73,10 @@ export const bestMonth = (totals: MonthTotal[]): MonthTotal | null =>
 
 export type MonthlyAverage = {
   averageMinutes: number
-  /** How many months it's over. */
+
   months: number
 }
 
-/**
- * The usual month: from the first month with time to the last one that's ended.
- * The month under way counts only while it's the only one, since a month half
- * done would pull the average down.
- */
 export const monthlyAverage = (
   totals: MonthTotal[],
   today: CalendarMonth
@@ -115,24 +96,15 @@ export const monthlyAverage = (
 }
 
 export type MonthsShared = {
-  /** Months the User shared in the ministry. */
   shared: number
-  /**
-   * Months that count: every one that's ended, and the month under way once
-   * it's shared, since it isn't missed yet.
-   */
+
   months: number
-  /** Ended months without any sharing, oldest first. */
+
   missed: CalendarMonth[]
-  /** The most months shared in a row. */
+
   longestRun: number
 }
 
-/**
- * Which of `months` the User shared in the ministry (`isCountableEntry`, so a
- * checkbox month counts the same as one with hours). Months before `since` (the
- * User's first record) aren't counted, since nothing was being kept then.
- */
 export const monthsShared = ({
   serviceReports,
   months,
@@ -173,7 +145,6 @@ export const monthsShared = ({
   return result
 }
 
-/** Every calendar month from `from` through `to`, oldest first. */
 export const monthsBetween = (
   from: CalendarMonth,
   to: CalendarMonth
@@ -185,18 +156,11 @@ export const monthsBetween = (
 }
 
 export type StudyStats = {
-  /** Contacts the User studied with at least once. */
   contactIds: Set<string>
-  /** The month with the most people studied with, the earliest on a tie. */
+
   peak: (CalendarMonth & { count: number }) | null
 }
 
-/**
- * The people the User studied with (Visits marked as a Bible Study) on dates
- * `inRange` accepts, and the month with the most, as each month's report counts
- * its Bible Studies. Only Contacts still on this device count, as on the
- * month's report, and only the User's own Visits (`isOwnVisit`).
- */
 export const studyStats = ({
   contacts,
   conversations,
@@ -234,19 +198,14 @@ export const studyStats = ({
 }
 
 export type VisitStats = {
-  /** Visits where someone was home. */
   talked: number
   notAtHome: number
-  /** Different people talked with. */
+
   people: number
-  /** Contacts added. */
+
   newContacts: number
 }
 
-/**
- * The User's own Visits (`isOwnVisit`) on dates `inRange` accepts, and the
- * Contacts added then.
- */
 export const visitStats = ({
   contacts,
   conversations,
@@ -280,17 +239,12 @@ export const visitStats = ({
 
 export type YearlyAverage = {
   averageMinutes: number
-  /** Service Years it's over. */
+
   years: number
-  /** Only the Service Year under way has time so far. */
+
   currentOnly: boolean
 }
 
-/**
- * The usual Service Year across `years` (end years, oldest first, each with its
- * total): every one that's ended, or the one under way while it's the only
- * one.
- */
 export const yearlyAverage = (
   years: { endYear: number; minutes: number }[],
   currentEndYear: number

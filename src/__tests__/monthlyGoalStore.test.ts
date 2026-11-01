@@ -166,8 +166,7 @@ describe('Role History preference actions', () => {
     usePreferences
       .getState()
       .setRole('regularPioneer', { from: { year: 2025, month: 8 } })
-    // August 2025 was a Regular Publisher month (0h base), so 50h is an
-    // override there rather than the base goal.
+
     usePreferences
       .getState()
       .setMonthlyGoalOverride({ year: 2025, month: 7 }, 50)

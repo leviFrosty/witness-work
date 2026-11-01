@@ -1,12 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Mutable device state the mocked expo-localization reads from.
 const originalTZ = process.env.TZ
 
 const device = {
   languageTag: 'en-US',
   uses24hourClock: false as boolean | null,
-  firstWeekday: 1 as number | null, // expo Weekday enum: SUNDAY = 1
+  firstWeekday: 1 as number | null,
 }
 
 vi.mock('expo-localization', () => ({
@@ -45,10 +44,7 @@ import {
 } from '@/lib/dates'
 import { loadableMomentLocales } from '@/lib/momentLocales'
 
-// Factory, not a constant: moment instances capture the global locale at
-// creation, and importing locale files above moved it. Each test wants the
-// locale applyFormatRegion just configured.
-const sample = () => moment('2026-06-11T13:30:00') // Thursday
+const sample = () => moment('2026-06-11T13:30:00')
 
 afterAll(() => {
   if (originalTZ === undefined) delete process.env.TZ
@@ -59,7 +55,7 @@ beforeEach(() => {
   device.languageTag = 'en-US'
   device.uses24hourClock = false
   device.firstWeekday = 1
-  // Restore a clean US-English baseline between tests.
+
   applyFormatRegion({ language: 'en' })
 })
 
@@ -110,7 +106,7 @@ describe('applyFormatRegion', () => {
 
   it('restores the language defaults when Region returns to Auto', () => {
     applyFormatRegion({ language: 'en', region: 'en-au' })
-    applyFormatRegion({ language: 'en' }) // device mock = en-US, 12h, Sunday
+    applyFormatRegion({ language: 'en' })
     expect(sample().format('L')).toBe('06/11/2026')
     expect(sample().format('LT')).toBe('1:30 PM')
     expect(moment.localeData().firstDayOfWeek()).toBe(0)
@@ -123,10 +119,9 @@ describe('applyFormatRegion', () => {
       dateOrderOverride: 'mdy',
     })
     expect(sample().format('L')).toBe('06/11/2026')
-    // Textual month-name dates keep Region ordering (en-au LL is day-first).
+
     expect(sample().format('LL')).toBe('11 June 2026')
-    // Lowercase `ll` is re-derived by moment from the patched `LL` — lock in
-    // that derivation so call sites migrated to `ll` stay Region-ordered.
+
     expect(sample().format('ll')).toBe('11 Jun 2026')
   })
 
@@ -151,24 +146,17 @@ describe('applyFormatRegion', () => {
   })
 
   it('never lazy-requires an unbundled locale for a region-suffixed language', () => {
-    // Regression for JW-TIME-CH: `moment.locale('ko-kr')` triggered moment's
-    // `require('./locale/ko-kr')`, an uncatchable fatal under Metro. The
-    // language must collapse to a loaded base ('ja' is imported above) or 'en'
-    // without throwing.
     expect(() => applyFormatRegion({ language: 'ja-jp' })).not.toThrow()
     expect(moment.locale()).toBe('ja')
     expect(() => applyFormatRegion({ language: 'ko-kr' })).not.toThrow()
-    // 'ko' isn't imported above; it loads on demand as its base language.
+
     expect(moment.locale()).toBe('ko')
-    // A language moment doesn't ship at all falls back to 'en'.
+
     expect(() => applyFormatRegion({ language: 'rw-rw' })).not.toThrow()
     expect(moment.locale()).toBe('en')
   })
 
   it('never lazy-requires an unbundled region key when reading format data', () => {
-    // Regression for JW-TIME-CH: persisted/device regions like `es-es` are not
-    // separate moment bundles. Reading localeData for the full key can trigger
-    // Metro's fatal dynamic require; use an already-loaded base locale instead.
     expect(() =>
       applyFormatRegion({ language: 'en', region: 'es-es' })
     ).not.toThrow()
@@ -177,7 +165,7 @@ describe('applyFormatRegion', () => {
 
   it('falls back to device calendar settings when Region is Auto', () => {
     device.uses24hourClock = true
-    device.firstWeekday = 2 // expo MONDAY
+    device.firstWeekday = 2
     const resolved = applyFormatRegion({ language: 'en' })
     expect(resolved.timeFormat).toBe('24')
     expect(resolved.startOfWeek).toBe(1)
@@ -191,7 +179,7 @@ describe('resolvers', () => {
     expect(resolveStartOfWeek({ region: 'en-gb' })).toBe(
       moment.localeData('en-gb').firstDayOfWeek()
     )
-    device.firstWeekday = 3 // expo TUESDAY
+    device.firstWeekday = 3
     expect(resolveStartOfWeek({})).toBe(2)
   })
 
@@ -288,7 +276,7 @@ describe('formatDate (full date, honors Format Region)', () => {
 
   it('renders a Scribe reset in the device timezone with independent Language and Format Region', () => {
     process.env.TZ = 'America/Los_Angeles'
-    const reset = '2026-06-11T00:30:00.000Z' // June 10 at 5:30 PM locally
+    const reset = '2026-06-11T00:30:00.000Z'
 
     applyFormatRegion({ language: 'es', region: 'en-au' })
     expect(formatDate(reset)).toBe('10 junio 2026')
@@ -339,7 +327,7 @@ describe('formatCalendar (calendar-relative time)', () => {
 
   it('drops German "Uhr" after a 12-hour time and keeps it after a 24-hour one', () => {
     const ref = sample()
-    // Language German, Format Region United States (12-hour).
+
     applyFormatRegion({ language: 'de', region: 'en' })
     expect(formatCalendar(sample(), { referenceTime: ref })).toBe(
       'heute um 1:30 PM'

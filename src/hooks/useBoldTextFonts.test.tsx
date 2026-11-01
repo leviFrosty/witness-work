@@ -2,9 +2,6 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Fonts } from '@/constants/theme'
 
-// iOS Bold Text can't embolden the app's custom faces, so the theme maps each
-// one a weight heavier while it's on, and follows the setting as it changes.
-
 const a11y = vi.hoisted(() => ({
   os: 'ios',
   boldText: false,

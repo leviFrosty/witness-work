@@ -8,18 +8,13 @@ import {
   type Rect,
 } from '@/features/map/lib/pinHover'
 
-/**
- * Names a hovered contact pin in `PointerTooltip`'s bubble. It shows at once so
- * a pointer can sweep across pins, and only repeats what the pin's card shows,
- * so screen readers skip it.
- */
 export default function MapPinLabel({
   name,
   box,
   bounds,
 }: {
   name: string
-  /** The pin's balloon, in map points. */
+
   box: Rect
   bounds: Bounds
 }) {
@@ -31,7 +26,6 @@ export default function MapPinLabel({
       pointerEvents='none'
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
-      // The label is placed in map points, which don't mirror in RTL.
       style={{
         position: 'absolute',
         top: 0,
@@ -51,10 +45,6 @@ export default function MapPinLabel({
   )
 }
 
-/**
- * Shares the map's frame so hover points are map points. Without a gesture
- * (iPhone, Android) it's a plain view that layout flattens away.
- */
 export function PinHoverArea({
   gesture,
   onTouchStart,

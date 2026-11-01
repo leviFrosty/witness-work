@@ -11,7 +11,6 @@ type ScrollProps = {
 }
 
 const runtime = vi.hoisted(() => ({
-  /** Where the scroll view and the focused field sit in the window. */
   view: { y: 100, height: 400 } as Frame,
   field: { y: 0, height: 40 } as Frame | null,
   props: {} as ScrollProps,
@@ -57,7 +56,7 @@ const render = () =>
 const scrollTo = (y: number) =>
   act(() => runtime.props.onScroll?.({ nativeEvent: { contentOffset: { y } } }))
 const focus = () => act(() => runtime.props.onFocus?.({}))
-/** The footer rode up on the keyboard, leaving the view `height` tall. */
+
 const shrinkTo = (height: number) =>
   act(() => {
     runtime.view = { ...runtime.view, height }
@@ -90,7 +89,7 @@ it('keeps the focused field above the bottom as the view shrinks', () => {
   expect(runtime.scrollTo).not.toHaveBeenCalled()
 
   shrinkTo(150)
-  // 200 + 40 + 16 margin - 250 bottom = 6 more than the 30 scrolled.
+
   expect(runtime.scrollTo).toHaveBeenCalledWith({ y: 36, animated: false })
 })
 

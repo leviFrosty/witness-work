@@ -19,11 +19,6 @@ import timeUpdate from '@/features/scribe/tools/timeUpdate'
 import timeDelete from '@/features/scribe/tools/timeDelete'
 import memoryUpdate from '@/features/scribe/tools/memoryUpdate'
 
-/**
- * Every tool Scribe AI offers, in the order the definitions are sent (the
- * protocol keeps it stable across a conversation's steps). Reads first, then
- * writes, then memory. Adding a tool: see README.md.
- */
 export const SCRIBE_TOOLS: readonly ScribeTool[] = [
   contactsSearch,
   contactsGet,

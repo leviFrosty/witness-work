@@ -4,17 +4,8 @@ import type { AnalyticsEventName } from '@/lib/analyticsEvents'
 import { analyticsEventsAllowed } from '@/lib/analyticsPolicy'
 import { resetAnalyticsFrequency } from '@/lib/analyticsFrequency'
 
-// Surveys use the SDK's renderer and response contract, separate from ordinary
-// structural analytics. Reuse this instance so responses have the same identity.
 export const surveyClient = client
 
-// Feature code depends only on this provider-neutral contract. Keep event payloads
-// structural: no names, notes, addresses, imported text, or raw error messages.
-// Events are anonymous: the provider never creates person profiles and the app
-// never identifies a user. The user can turn usage events off in Settings
-// (`analyticsEnabled`, per device); the provider's before_send hook enforces it
-// for every event, including the SDK's own lifecycle events. Crash reports,
-// feature flags, and surveys keep working with analytics off.
 export type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
@@ -33,7 +24,6 @@ function safely(operation: string, send: () => unknown): void {
       })
     }
   } catch (error) {
-    // Analytics must never interrupt a user's action.
     logger.debug(`[Analytics] ${operation} failed`, error)
   }
 }
@@ -47,9 +37,6 @@ function definedProperties(properties?: AnalyticsProperties) {
   return result
 }
 
-// Screen views are the largest event by volume, mostly tab switches. Send each
-// route once per session: screen reach, DAU and retention stay exact, but
-// repeat visits within a session are not counted.
 let screenSessionId: string | undefined
 const screensSentThisSession = new Set<string>()
 
@@ -72,10 +59,7 @@ export const analytics = {
       return client?.screen(name, definedProperties(properties))
     })
   },
-  /**
-   * Sends queued events now, before something that ends the JS runtime (an
-   * update restart) drops them. Waits at most `timeoutMs`; never throws.
-   */
+
   async flush(timeoutMs = 1500): Promise<void> {
     if (!client) return
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -92,12 +76,7 @@ export const analytics = {
       clearTimeout(timer)
     }
   },
-  /**
-   * Clears the provider's random on-device identifier. Only the analytics
-   * identity is affected; the RevenueCat customer and the account ID are
-   * separate and untouched. Discards pending usage events and preserves survey
-   * history and the SDK's normal retained properties.
-   */
+
   reset(): void {
     safely('reset', () => {
       screenSessionId = undefined

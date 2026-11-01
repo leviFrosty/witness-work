@@ -19,7 +19,6 @@ const native = requireOptionalNativeModule<AppAttestNative>('AppAttest')
 
 export { AppAttestError, type AppAttestErrorCode }
 
-/** Whether this device + build support App Attest (real iOS 14+ device only). */
 export function isSupported(): boolean {
   if (Platform.OS !== 'ios' || !native) return false
   return native.isSupported()
@@ -41,23 +40,14 @@ const invoke = async <T>(operation: () => Promise<T>): Promise<T> => {
   }
 }
 
-/**
- * Stable taxonomy for lifecycle decisions; see `./errorCodes` for how a native
- * rejection is classified. Never inspects localized text.
- */
 export function classifyError(error: unknown): AppAttestErrorCode | null {
   return error instanceof AppAttestError ? error.code : null
 }
 
-/** Generates a new Secure-Enclave key, returning its base64 key identifier. */
 export function generateKey(): Promise<string> {
   return invoke(() => required().generateKey())
 }
 
-/**
- * Produces the attestation for `keyId`. `clientDataHashBase64` must decode to
- * exactly 32 bytes. Returns base64 of the CBOR attestation object.
- */
 export function attestKey(
   keyId: string,
   clientDataHashBase64: string
@@ -65,10 +55,6 @@ export function attestKey(
   return invoke(() => required().attestKey(keyId, clientDataHashBase64))
 }
 
-/**
- * Signs a per-request assertion with `keyId`. `clientDataHashBase64` must
- * decode to exactly 32 bytes. Returns base64 of the CBOR assertion.
- */
 export function generateAssertion(
   keyId: string,
   clientDataHashBase64: string

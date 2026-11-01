@@ -5,10 +5,6 @@ import type { PetVisit } from '@/types/pet'
 import { petVisitDetail, visitingPetName } from '@/features/pet/lib/visits'
 import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 
-/**
- * A visiting pet as iOS lifts it above its long-press menu: the pet, large,
- * with its name and whose it is, so it's clear which one the menu is for.
- */
 export default function PetVisitPreview({ visit }: { visit: PetVisit }) {
   const theme = useTheme()
   return (

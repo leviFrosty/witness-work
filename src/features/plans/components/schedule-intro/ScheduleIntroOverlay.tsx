@@ -49,14 +49,8 @@ import ScheduleIntroPage, {
 } from '@/features/plans/components/schedule-intro/ScheduleIntroPage'
 import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
-/** How the intro was closed. Bounded, safe as an analytics value. */
 type CloseMethod = 'plan' | 'done' | 'close' | 'back'
 
-/**
- * The intro's pages. Streak pages read by what the role's streak counts, and
- * show only while streaks do; the Buddies page shows only where Buddies does.
- * Pages onboarding already showed are left out.
- */
 function introPages(
   colors: ReturnType<typeof useTheme>['colors'],
   kind: StreakKind | null,
@@ -109,12 +103,6 @@ function introPages(
   return pages.filter((page) => !covered.includes(page.id))
 }
 
-/**
- * How to get the most from Schedule, the first time it opens (and again from
- * Schedule's header): plan days, keep them to build a streak, what to do when
- * life happens, and planning with buddies. Paged like the update reveal's tour;
- * it ends on planning a day.
- */
 export default function ScheduleIntroOverlay({
   source,
 }: {
@@ -130,8 +118,7 @@ export default function ScheduleIntroOverlay({
   const buddies = useBuddiesEnabled()
   const close = useScheduleIntro((state) => state.close)
   const set = usePreferences((state) => state.set)
-  // Fixed as it opens: Buddies' flag loads over the network, and a page
-  // appearing mid-tour would shift the ones being swiped.
+
   const showStreaks = usePreferences((state) => state.showStreaks)
   const [pages] = useState(() =>
     introPages(
@@ -161,8 +148,6 @@ export default function ScheduleIntroOverlay({
     if (pageId) viewed.current.add(pageId)
   }, [pageId])
 
-  // Offsets are physical; `scrollX` runs from the reading start, so page
-  // math reads the same in RTL.
   const rtl = isRtlLayout()
   const contentWidth = pages.length * width
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -191,7 +176,7 @@ export default function ScheduleIntroOverlay({
       page_count: pages.length,
     })
     set({ scheduleIntroSeen: true })
-    // Leaves even if the fade is cut short, so the intro can't get stuck.
+
     fade.value = withTiming(0, { duration: 220 }, () => {
       scheduleOnRN(leave, method)
     })
@@ -358,7 +343,6 @@ export default function ScheduleIntroOverlay({
   )
 }
 
-/** One step of the intro's progress, filling as it's reached. */
 function Segment({
   filled,
   palette,

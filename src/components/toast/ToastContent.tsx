@@ -14,7 +14,6 @@ import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 import { type Toast } from '@/stores/toasts'
 
-/** Room for the Undo button: a full 44 pt target. */
 const ACTION_TARGET = 44
 
 const DEFAULT_ICONS = {
@@ -24,7 +23,6 @@ const DEFAULT_ICONS = {
   news: InfoIcon,
 } as const
 
-/** A toast's card: its colour, corners and border, drawn by `ToastView`. */
 export function toastSurface(toast: Toast, theme: ReturnType<typeof useTheme>) {
   const card = toast.intent === 'unlock' || toast.intent === 'news'
   return {
@@ -34,18 +32,13 @@ export function toastSurface(toast: Toast, theme: ReturnType<typeof useTheme>) {
   }
 }
 
-/**
- * What a toast shows. The User's own action answers in a dark bar with an
- * optional button (Undo); an unlock is a card with its art, a View pill and a
- * grabber, since it can be opened or swiped away.
- */
 export default function ToastContent({
   toast,
   onAction,
   hovered,
 }: {
   toast: Toast
-  /** The trailing button (Undo) was pressed. */
+
   onAction: () => void
   hovered: boolean
 }) {
@@ -119,7 +112,6 @@ export default function ToastContent({
           ) : null}
         </View>
         {unlock && toast.onOpen ? (
-          // The whole card opens it; the pill only says so.
           <View
             accessible={false}
             importantForAccessibility='no'
@@ -142,7 +134,7 @@ export default function ToastContent({
             </Text>
           </View>
         ) : null}
-        {/* Says it can be swiped away. */}
+        {}
         <View
           pointerEvents='none'
           style={{

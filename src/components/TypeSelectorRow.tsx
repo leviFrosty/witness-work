@@ -29,53 +29,28 @@ import {
   STANDARD_CATEGORY_ID,
 } from '@/constants/categories'
 
-/**
- * Synthetic select values for the two preset entry types that don't correspond
- * to a real Category record. Real categories use their UUID as the value. LDC
- * is no longer synthetic — it's the LDC builtin Category (see
- * `LDC_BUILTIN_CATEGORY_ID`), surfaced alongside these presets.
- */
 export const STANDARD_TYPE_VALUE = STANDARD_CATEGORY_ID
 export const CUSTOM_TYPE_VALUE = '__custom__'
 
 export type TypeSelection = {
-  /**
-   * Picker value: `STANDARD_TYPE_VALUE`, `CUSTOM_TYPE_VALUE`, or a Category id
-   * (including the LDC builtin).
-   */
   value: string
-  /**
-   * Resolved Category record for the selection, or null for the synthetic
-   * presets. On a Credit-switch flip this carries the updated `isCredit`.
-   */
+
   category: Category | null
 }
 
 type Props = {
-  /** Controlled picker value — see `TypeSelection.value`. */
   value: string
-  /**
-   * Fires on every selection change: picking a preset/Category, creating a
-   * custom Category, deleting the current one, or flipping its Credit switch.
-   */
+
   onChange: (selection: TypeSelection) => void
   invalid?: boolean
   lastInSection?: boolean
-  /** Icon and row style for the Type row, e.g. the Plan form's compact list. */
+
   leftIcon?: AppIcon
   style?: StyleProp<ViewStyle>
-  /** The custom category's name field took focus. */
+
   onCustomNameFocus?: () => void
 }
 
-/**
- * The "Type" form row shared by the Add Time screen and the Plan Day screen: a
- * Standard / LDC / user-Category / Custom picker with inline custom-Category
- * creation, the Credit switch, and Category deletion. The row owns the
- * Category-store mutations; the host screen only maps the reported
- * `TypeSelection` onto whatever record it is editing (a Time Entry's
- * `categoryId` + legacy `credit` stamp, or a Plan's derive-only `categoryId`).
- */
 const TypeSelectorRow = ({
   value,
   onChange,
@@ -97,12 +72,9 @@ const TypeSelectorRow = ({
     value === CUSTOM_TYPE_VALUE
   )
   const customNameInput = useRef<InputRef>(null)
-  // Set while Add waits for the name field to blur.
+
   const addOnBlur = useRef(false)
 
-  // The Category currently in focus. Null when one of the synthetic preset
-  // values (Standard / Custom) is selected; non-null for a real Category id
-  // including the LDC builtin.
   const selectedCategory: Category | null =
     value === STANDARD_TYPE_VALUE || value === CUSTOM_TYPE_VALUE
       ? null
@@ -113,19 +85,12 @@ const TypeSelectorRow = ({
       onChange({ value: nextValue, category: null })
       return
     }
-    // A real Category id (user-created OR the LDC builtin).
+
     const category = categories.find((c) => c.id === nextValue)
     if (!category) return
     onChange({ value: nextValue, category })
   }
 
-  /**
-   * Flips `isCredit` on the currently-selected Category record and re-stamps
-   * `credit` (and `updatedAt`, so iCloud sync carries it) on every TimeEntry
-   * that references it (see `restampTimeEntriesCredit` for the why). Skips the
-   * store write entirely when no entry needs it — flipping a freshly-created
-   * custom Category is a no-op on the reports.
-   */
   const setCategoryIsCredit = (isCredit: boolean) => {
     if (!selectedCategory) return
     updateCategory({ id: selectedCategory.id, isCredit })
@@ -147,8 +112,7 @@ const TypeSelectorRow = ({
   const addCustomCategory = () => {
     const trimmed = customCategoryName.trim()
     if (!validation.validate()) return
-    // Reuse an existing Category if the name matches (case-sensitive, mirrors
-    // the rest of the app); otherwise create a new record.
+
     let target = categories.find((c) => c.name === trimmed)
     if (!target) {
       const newCategory: Category = {
@@ -165,11 +129,9 @@ const TypeSelectorRow = ({
 
   const handleAddCustomCategory = () => {
     if (!validation.validate()) return
-    // The ref is typed for web; on native it's a React Native TextInput.
+
     const input = customNameInput.current as unknown as NativeTextInput | null
-    // Adding removes the name field, and on Android removing a focused field
-    // hands focus and the keyboard to the next one. So blur it first and add
-    // once it has let go.
+
     if (input?.isFocused()) {
       addOnBlur.current = true
       input.blur()
@@ -193,11 +155,7 @@ const TypeSelectorRow = ({
   }
 
   type TypeOption = { label: string; value: string }
-  // LDC is technically a Category record now (the builtin), but we still
-  // surface it as a preset slot above the user's own categories — it's the
-  // most common credit-bearing entry type and worth a stable position in the
-  // picker. Strip it from the user-categories spread so it doesn't appear
-  // twice.
+
   const userCategories = categories.filter(
     (c) => c.id !== LDC_BUILTIN_CATEGORY_ID
   )
@@ -205,8 +163,6 @@ const TypeSelectorRow = ({
     { label: i18n.t('standard'), value: STANDARD_TYPE_VALUE },
     { label: i18n.t('ldc'), value: LDC_BUILTIN_CATEGORY_ID },
     ...userCategories.map((c) => ({
-      // Allow i18n on preset-translatable names (e.g. legacy English-locale
-      // entries seeded from the migration); fall back to the stored name.
       label: i18n.t(c.name as TranslationKey, { defaultValue: c.name }),
       value: c.id,
     })),

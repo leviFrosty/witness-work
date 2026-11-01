@@ -27,10 +27,6 @@ const followUp = (
 })
 
 describe('lib/conversationIndex', () => {
-  // Freeze the clock: the on-threshold assertion builds a visit exactly
-  // `monthDays` old, and with a live clock the builder's `new Date()` runs a
-  // few ms after the visit date is captured, nudging the visit just past the
-  // threshold (flaky 'week' vs 'month').
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-12T12:00:00Z'))
@@ -64,7 +60,7 @@ describe('lib/conversationIndex', () => {
     expect(index.stalenessFor('recent')).toBe('recent')
     expect(index.stalenessFor('week')).toBe('week')
     expect(index.stalenessFor('month')).toBe('month')
-    // No conversations recorded → never.
+
     expect(index.stalenessFor('unknown')).toBe('never')
   })
 
@@ -88,17 +84,14 @@ describe('lib/conversationIndex', () => {
         monthDays: 4,
       }).stalenessFor('a')
     ).toBe('month')
-    // Stale too close to recent: monthDays is raised to weekDays +
-    // MIN_STALENESS_GAP_DAYS (3 + 2 = 5), so a 5-day-old conversation sits on
-    // the threshold and stays 'week' instead of 'month'.
+
     expect(
       buildConversationIndex(conversations, {
         weekDays: 3,
         monthDays: 4,
       }).stalenessFor('a')
     ).toBe('week')
-    // Inverted thresholds normalize the same way, and a 5-day-old
-    // conversation is still within the 7-day recent window.
+
     expect(
       buildConversationIndex(conversations, {
         weekDays: 7,
@@ -118,7 +111,7 @@ describe('lib/conversationIndex', () => {
       id: 'newer',
       date: moment().subtract(1, 'day').toDate(),
     })
-    // Intentionally out of order to prove it picks max, not last-seen.
+
     const index = buildConversationIndex(
       [newer, older],
       DEFAULT_STALENESS_BREAKPOINTS
@@ -185,7 +178,6 @@ describe('lib/conversationIndex', () => {
   })
 
   it('measures "this month" from the given local day', () => {
-    // The clock is frozen on 2026-06-12.
     const conversations: Visit[] = [
       visit({
         contactId: 'june',
@@ -231,35 +223,34 @@ describe('lib/conversationIndex', () => {
   describe('follow-ups', () => {
     const now = () => moment()
     const conversations = (): Visit[] => [
-      // Upcoming in 3 days.
       visit({
         id: 'u1',
         contactId: 'upcoming',
         date: now().subtract(4, 'days').toDate(),
         followUp: followUp(now().add(3, 'days')),
       }),
-      // A sooner one on an older Visit wins for the next Follow-up.
+
       visit({
         id: 'u0',
         contactId: 'upcoming',
         date: now().subtract(10, 'days').toDate(),
         followUp: followUp(now().add(1, 'day')),
       }),
-      // Two hours ago: still on Home's card, not missed yet.
+
       visit({
         id: 'd1',
         contactId: 'due',
         date: now().subtract(7, 'days').toDate(),
         followUp: followUp(now().subtract(2, 'hours')),
       }),
-      // Missed two days ago with no Visit since.
+
       visit({
         id: 'm1',
         contactId: 'missed',
         date: now().subtract(9, 'days').toDate(),
         followUp: followUp(now().subtract(2, 'days')),
       }),
-      // Missed, then answered by a later Visit.
+
       visit({
         id: 'a1',
         contactId: 'answered',
@@ -271,7 +262,7 @@ describe('lib/conversationIndex', () => {
         contactId: 'answered',
         date: now().subtract(1, 'day').toDate(),
       }),
-      // A Visit before the Follow-up's day doesn't answer it.
+
       visit({
         id: 'e1',
         contactId: 'early',
@@ -283,7 +274,7 @@ describe('lib/conversationIndex', () => {
         contactId: 'early',
         date: now().subtract(5, 'days').toDate(),
       }),
-      // Missed too long ago to count.
+
       visit({
         id: 'o1',
         contactId: 'old',

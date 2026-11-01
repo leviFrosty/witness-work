@@ -1,11 +1,6 @@
 import Constants from 'expo-constants'
 import i18n, { TranslationKey } from '@/lib/locales'
 
-/**
- * A Siri phrase (`siriShortcut*`) as the user would say it. The translations
- * keep Apple's `${applicationName}` placeholder, which Siri fills with the
- * app's display name.
- */
 export const siriPhrase = (key: TranslationKey) =>
   i18n
     .t(key)

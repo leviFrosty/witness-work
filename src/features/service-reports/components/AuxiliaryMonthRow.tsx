@@ -18,23 +18,15 @@ import useAuxiliaryMonths, {
   type AuxiliaryMonthSource,
 } from '@/features/service-reports/hooks/useAuxiliaryMonths'
 
-/**
- * Entry point for a Kingdom Publisher's one-month auxiliary pioneering. Renders
- * only when the standing role reports by checkbox; everyone else changes a
- * month's status from the Progress tab.
- */
 const AuxiliaryMonthRow = ({
   source,
   variant = 'inline',
   statusOnly = false,
 }: {
   source: AuxiliaryMonthSource
-  /** `inline` sits in a card (Home); `row` fills a settings Section. */
+
   variant?: 'inline' | 'row'
-  /**
-   * Only show an active or scheduled month. On Home the question itself lives
-   * in the notifications tray.
-   */
+
   statusOnly?: boolean
 }) => {
   const theme = useTheme()
@@ -72,8 +64,6 @@ const AuxiliaryMonthRow = ({
     setOpen(true)
   }
 
-  // Same as the sheet's "Not auxiliary pioneering in …" link, confirmed
-  // because the menu skips the sheet.
   const confirmEnd = () => {
     const month = moment(activeMonth.target).format('MMMM')
     confirmDestructive({

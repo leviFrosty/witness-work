@@ -1,15 +1,3 @@
-/**
- * Particles: hearts (pats, joy), Zzz (asleep), gold sparkles, and dust puffs
- * from running and landing.
- *
- * Hearts, Zzz and sparkles live in pet-relative coordinates (sprite pixels,
- * origin at the sprite's top-left, so they follow the pet as it moves); dust
- * lives in scene coordinates (it stays where it was kicked up).
- *
- * The state is a plain value: every function returns a new state and never
- * mutates its input. Randomness comes from a seed carried in the state, so a
- * run is fully deterministic.
- */
 import {
   nextState,
   rgbPalette,
@@ -24,10 +12,8 @@ import {
 import { PET_X, PET_Y } from './layout'
 import type { PetMood } from './types'
 
-/** Particle kinds: heart, Zzz, sparkle. */
 export type ParticleKind = 'heart' | 'zzz' | 'sparkle'
 
-/** A pet-relative particle. */
 export interface Particle {
   readonly kind: ParticleKind
   readonly x: number
@@ -36,7 +22,6 @@ export interface Particle {
   readonly lifeMs: number
 }
 
-/** A dust puff in scene pixels drifting `vx` (±1) sideways. */
 export interface Dust {
   readonly x: number
   readonly y: number
@@ -45,25 +30,21 @@ export interface Dust {
   readonly lifeMs: number
 }
 
-/** Everything the particle system remembers between frames. */
 export interface ParticleState {
   readonly particles: readonly Particle[]
   readonly dust: readonly Dust[]
-  /** Next time a Zzz / joy heart / sparkle may spawn. */
+
   readonly nextZzzMs: number
   readonly nextHeartMs: number
   readonly nextSparkleMs: number
-  /** RNG state. */
+
   readonly seed: number
 }
 
-/** Ongoing emitters for {@link step}. */
 export interface ParticleFlags {
-  /** Gold hearts: sparkles around the pet. */
   readonly gold?: boolean
 }
 
-/** An empty system seeded with `seed`. */
 export function createParticles(seed = 1): ParticleState {
   return {
     particles: [],
@@ -75,7 +56,6 @@ export function createParticles(seed = 1): ParticleState {
   }
 }
 
-/** `count` random values in [0, 1) after RNG state `seed`, and the new state. */
 function random(seed: number, count: number): [number[], number] {
   let s = seed
   const values: number[] = []
@@ -86,12 +66,6 @@ function random(seed: number, count: number): [number[], number] {
   return [values, s]
 }
 
-/**
- * Advances to `tMs`: spawns Zzz while asleep (every 1.1 s), hearts while joyful
- * (every 0.7 s) and sparkles when gold (every 0.38 s), and drops expired
- * particles and dust. Zzz only float while the pet sleeps: once the mood leaves
- * `nap` (woken, or died) they're gone at once.
- */
 export function step(
   state: ParticleState,
   tMs: number,
@@ -141,7 +115,6 @@ export function step(
   }
 }
 
-/** Adds one heart floating up from the pet's head (a pat or rub). */
 export function emitPatHeart(state: ParticleState, tMs: number): ParticleState {
   const [[r], seed] = random(state.seed, 1)
   return {
@@ -154,7 +127,6 @@ export function emitPatHeart(state: ParticleState, tMs: number): ParticleState {
   }
 }
 
-/** Adds the wake burst: four hearts across the head, 120 ms apart. */
 export function emitHeartBurst(
   state: ParticleState,
   tMs: number
@@ -169,10 +141,6 @@ export function emitHeartBurst(
   return { ...state, particles: [...state.particles, ...burst] }
 }
 
-/**
- * Adds a dust puff behind the pet's feet. `dx` is the pet's motion offset and
- * `flip` whether it faces right; `land` adds a second puff on the other side.
- */
 export function emitDust(
   state: ParticleState,
   tMs: number,
@@ -201,12 +169,10 @@ export function emitDust(
   return { ...state, dust: [...state.dust, ...puffs] }
 }
 
-/** Removes all dust (a new motion starts clean). */
 export function clearDust(state: ParticleState): ParticleState {
   return { ...state, dust: [] }
 }
 
-/** Removes every particle and puff. */
 export function clearParticles(state: ParticleState): ParticleState {
   return { ...state, particles: [], dust: [] }
 }
@@ -244,16 +210,10 @@ function stampAt(
   }
 }
 
-/** Options for {@link draw}. */
 export interface DrawParticleOptions {
-  /** Reduce Motion: particles stay where they spawned instead of drifting. */
   readonly frozen?: boolean
 }
 
-/**
- * Draws particles relative to `origin` (the pet sprite's top-left in scene
- * pixels) and dust in scene pixels. Particles not yet born are skipped.
- */
 export function draw(
   buf: PixelBuffer,
   state: ParticleState,

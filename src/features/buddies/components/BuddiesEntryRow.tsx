@@ -27,26 +27,18 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 const AVATAR_SIZE = 22
 const MAX_AVATARS = 3
 
-/**
- * A way into Buddies from where planning happens (under Schedule's title, on
- * the Profile): the buddies the User plans with and what's next with them, or
- * what waits on the User. A dot shows while requests or invitations wait, a
- * spinner while Buddies is confirmed for the first time this session, and the
- * row dims while Buddies is turned off on the server.
- */
 export default function BuddiesEntryRow({
   source,
   onBeforeNavigate,
   stacked = false,
   style,
 }: {
-  /** For `buddies_opened`. */
   source: 'schedule_row' | 'profile'
-  /** E.g. closing the Profile, which covers the screen. */
+
   onBeforeNavigate?: () => void
-  /** The summary on a line of its own, where the row is narrow. */
+
   stacked?: boolean
-  /** E.g. margins; nothing shows while Buddies is off. */
+
   style?: StyleProp<ViewStyle>
 }) {
   const theme = useTheme()
@@ -76,7 +68,7 @@ export default function BuddiesEntryRow({
           : active.length > 0
             ? i18n.t('buddies_sharingPlans')
             : i18n.t('buddies_emptyTitle')
-  // Requests can't be confirmed while Buddies is off.
+
   const waiting = !disabled && (requests > 0 || needsAnswer.length > 0)
 
   const open = () => {
@@ -85,7 +77,7 @@ export default function BuddiesEntryRow({
       has_requests: requests > 0,
     })
     onBeforeNavigate?.()
-    // Beside the iPad sidebar, Buddies is a tab of its own.
+
     if (hasSidebar) navigation.navigate('Root', { screen: 'Buddies' } as never)
     else navigation.navigate('Buddies')
   }

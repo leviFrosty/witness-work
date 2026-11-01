@@ -18,16 +18,12 @@ import {
 import { trackMemoryManaged } from '@/features/scribe/analytics'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-/**
- * Settings → Scribe AI memory: turn memory on or off, and read, edit or clear
- * the notes Scribe AI keeps (`stores/memory.ts`).
- */
 const ScribeMemoryScreen = () => {
   const foldColumn = useFoldColumn(640)
   const theme = useTheme()
   const enabled = useScribeMemory((s) => s.enabled)
   const text = useScribeMemory((s) => s.text)
-  /** The notes when editing began, to tell an edit from a look. */
+
   const editingFrom = useRef<string | null>(null)
 
   const toggle = (value: boolean) => {
@@ -52,8 +48,7 @@ const ScribeMemoryScreen = () => {
       keyboardShouldPersistTaps='handled'
       keyboardDismissMode='interactive'
     >
-      {/* Capped inside the content, not on it: in a right-to-left layout iOS
-          pins a narrower content container to the right edge. */}
+      {}
       <View
         style={[
           { width: '100%', maxWidth: 640, alignSelf: 'center', gap: 12 },

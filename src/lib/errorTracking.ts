@@ -23,16 +23,14 @@ function safely(send: () => unknown): void {
   try {
     const result = send()
     if (result instanceof Promise) void result.catch(() => {})
-  } catch {
-    // Reporting must never interrupt the action it is diagnosing.
-  }
+  } catch {}
 }
 
 function report(original: unknown, properties?: ErrorProperties): void {
   if (!errorTrackingEnabled) return
-  // Named for their code, so each kind of failure gets its own issue.
+
   const error = toCodedError(toPurchasesError(original))
-  // A full device isn't a bug, but how often it happens is still worth knowing.
+
   if (isStorageFullError(error)) analytics.capture('device_storage_full')
   else if (!shouldIgnoreError(error))
     client?.captureException(error, exceptionProperties(properties))
@@ -47,13 +45,6 @@ function exceptionProperties(properties?: ErrorProperties) {
     : serialized
 }
 
-/**
- * Provider-neutral diagnostics. Context is merged for subsequent JS errors;
- * per-error properties take precedence. Breadcrumbs are bounded in memory and
- * attached to errors (including native crashes), never sent as analytics
- * events. Keep diagnostic properties structural; don't include names, notes or
- * addresses.
- */
 export const errorTracking = {
   captureException(error: unknown, properties?: ErrorProperties): void {
     safely(() => report(error, properties))

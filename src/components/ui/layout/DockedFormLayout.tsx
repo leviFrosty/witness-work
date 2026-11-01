@@ -30,24 +30,16 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import FoldPane from '@/components/ui/layout/FoldPane'
 
-/**
- * A keyboard at most this tall is a hardware keyboard's shortcut bar (or an
- * iPad's), not a full keyboard. The dock rides above it instead of hiding.
- */
 const KEYBOARD_BAR_MAX_HEIGHT = 120
 const REVEAL_MARGIN = 16
 
 type DockedFormLayoutContextValue = {
-  /**
-   * A field took focus. `pinToTop` keeps room under it, e.g. for suggestions;
-   * `container` reveals the whole row around it instead of just the field.
-   */
   fieldFocused: (options?: {
     pinToTop?: boolean
     container?: RefObject<View | null>
   }) => void
   fieldBlurred: () => void
-  /** Scrolls `target` into view once the content it just added has laid out. */
+
   revealAfterLayout: (target: RefObject<View | null>) => void
 }
 
@@ -61,9 +53,9 @@ export const useDockedFormLayout = () => useContext(DockedFormLayoutContext)
 
 type LayoutState = {
   scrollY: number
-  /** The scroll area's height before any space is kept under it. */
+
   areaHeight: number
-  /** How much of the form the keyboard covers once it's up; 0 when down. */
+
   keyboardOverlap: number
   pinFocusedToTop: boolean
   revealContainer: RefObject<View | null> | null
@@ -78,13 +70,6 @@ type LayoutHandles = {
   barMode: SharedValue<boolean>
 }
 
-/**
- * Space kept under the scroll view. A hardware keyboard's bar lifts the dock,
- * so it's both. A full keyboard hides the dock, so it settles at the keyboard
- * (`target` is its final overlap): growing from the dock when the keyboard is
- * taller, or easing down to it when the dock is taller, so no empty band is
- * left above the keyboard.
- */
 const bottomSpace = (
   keyboard: number,
   dock: number,
@@ -112,7 +97,6 @@ const visibleHeight = (handles: LayoutHandles) => {
   )
 }
 
-/** Scrolls so content at `y`…`y + height` sits inside the visible area. */
 const scrollIntoView = (
   handles: LayoutHandles,
   y: number,
@@ -120,8 +104,7 @@ const scrollIntoView = (
   pinToTop: boolean
 ) => {
   const viewport = visibleHeight(handles)
-  // A field taller than the visible area (a long note) is left to the native
-  // scroll-to-caret; chasing its edges would yank the caret out of view.
+
   if (!pinToTop && height + REVEAL_MARGIN * 2 > viewport) return
   const top = handles.state.current.scrollY
   let target = top
@@ -170,18 +153,6 @@ const flushPendingReveal = (handles: LayoutHandles) => {
   )
 }
 
-/**
- * A form's frame: scrolling details above a dock pinned to the bottom, where
- * the thumb already is. The Plan form and Add Time use it.
- *
- * Keyboard avoidance is done by hand: the scroll view ends exactly at the
- * keyboard's top edge, and the focused field is scrolled into view by measuring
- * it against the scroll content itself. Measuring in the scroll view's own
- * coordinates keeps it right inside a sheet, where window-based math lands
- * fields behind the keyboard. A full keyboard covers the dock, so the dock
- * fades out and stops taking touches; a hardware keyboard's short bar lifts the
- * dock instead.
- */
 const DockedFormLayout = (props: {
   children: ReactNode
   dock: ReactNode
@@ -189,7 +160,7 @@ const DockedFormLayout = (props: {
 }) => {
   const insets = useSafeAreaInsets()
   const keyboardOverlap = useSharedValue(0)
-  // The overlap the keyboard is settling at; kept through its hide animation.
+
   const targetOverlap = useSharedValue(0)
   const dockHeight = useSharedValue(0)
   const barMode = useSharedValue(false)
@@ -206,9 +177,6 @@ const DockedFormLayout = (props: {
     pendingReveal: null,
   })
 
-  // Driven by React Native's keyboard events rather than the animated
-  // keyboard frame: on Android that frame goes stale when a native menu takes
-  // focus while the keyboard is up, leaving the form stuck in keyboard layout.
   useEffect(() => {
     const handles = { state, scroll, content, dockHeight, barMode }
     const animateTo = (overlap: number, duration?: number) => {
@@ -222,15 +190,10 @@ const DockedFormLayout = (props: {
       state.current.revealContainer = null
       setDockCovered(false)
       animateTo(0, event?.duration)
-      // Android's back button hides the keyboard but leaves the field
-      // focused, so a later tap elsewhere would bring the keyboard back.
+
       if (Platform.OS === 'android') Keyboard.dismiss()
     }
     const onShow = (event: KeyboardEvent) => {
-      // The form reaches the bottom of the screen (a phone sheet, or Android
-      // edge to edge). iOS measures from the keyboard's top edge, which also
-      // ignores a hardware keyboard's off-screen frame; Android's height
-      // leaves out the navigation bar the keyboard covers too.
       const overlap =
         Platform.OS === 'ios'
           ? Dimensions.get('window').height - event.endCoordinates.screenY
@@ -242,7 +205,7 @@ const DockedFormLayout = (props: {
       state.current.keyboardOverlap = overlap
       setDockCovered(!bar)
       animateTo(overlap, event.duration)
-      // Android only reports the keyboard once it's fully up.
+
       if (Platform.OS === 'android') revealFocusedField(handles)
     }
 
@@ -250,7 +213,7 @@ const DockedFormLayout = (props: {
       Platform.OS === 'ios'
         ? [
             Keyboard.addListener('keyboardWillShow', onShow),
-            // QuickType and the hardware-keyboard bar change size in place.
+
             Keyboard.addListener('keyboardWillChangeFrame', (event) => {
               if (state.current.keyboardOverlap) onShow(event)
             }),
@@ -300,15 +263,14 @@ const DockedFormLayout = (props: {
     },
     revealAfterLayout: (target) => {
       state.current.pendingReveal = target
-      // Content that doesn't change the scroll height never reports a size
-      // change, so don't wait on one forever.
+
       setTimeout(() => flushPendingReveal(handles()), 150)
     },
   }
 
   return (
     <DockedFormLayoutContext.Provider value={context}>
-      {/* A form keeps to one side of iPhone Duo's fold, as a sheet would. */}
+      {}
       <FoldPane pointerEvents='auto'>
         <Animated.View
           style={[{ flex: 1 }, areaStyle]}
@@ -332,9 +294,6 @@ const DockedFormLayout = (props: {
               else if (state.current.keyboardOverlap)
                 revealFocusedField(handles())
             }}
-            // In a right-to-left layout iOS pins a content container narrower
-            // than the scroll view to its right edge, so the container stays
-            // full width and the column (often capped and centered) sits in it.
             contentContainerStyle={{ flexGrow: 1 }}
           >
             <View style={props.contentContainerStyle}>{props.children}</View>

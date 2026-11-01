@@ -10,7 +10,6 @@ import { isInviteLink } from '@/features/buddies/lib/inviteLink'
 
 const VIEWFINDER_SIZE = 280
 
-/** Scans a buddy's code. Camera access is requested only once this is open. */
 export default function BuddyScanPanel({
   onInvite,
 }: {

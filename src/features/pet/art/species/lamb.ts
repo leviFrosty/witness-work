@@ -1,18 +1,16 @@
-/** Lamb: a body of wool puffs, a tan face with a woolly tuft, dark legs. */
 import { rgb, rgbPalette, type Rgb, type Shape } from '@/lib/pixelArt'
 
 import { facePixels } from '../face'
 import { defineSpecies } from './define'
 
 interface LambCoat {
-  /** Wool, shadow, highlight. */
   readonly w: Rgb
   readonly ws: Rgb
   readonly wh: Rgb
-  /** Face and its shadow. */
+
   readonly f: Rgb
   readonly fs: Rgb
-  /** Hooves. */
+
   readonly h: Rgb
 }
 

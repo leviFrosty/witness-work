@@ -34,7 +34,6 @@ const opOf = (url: unknown) => String(url).split('/buddies/v1/')[1]
 const reply = (status: number, body: unknown, headers = {}) =>
   new Response(JSON.stringify(body), { status, headers })
 
-/** A relay client for a new device on `fetchImpl`, with its own session. */
 function clientOn(fetchImpl: typeof fetch, extra: Partial<RelayDeps> = {}) {
   const seed = random(32)
   const sessions = testSessions({
@@ -52,7 +51,6 @@ function clientOn(fetchImpl: typeof fetch, extra: Partial<RelayDeps> = {}) {
   return { client, seed }
 }
 
-/** One engine on a scripted relay: `fetchImpl` decides every answer. */
 function scripted(
   fetchImpl: typeof fetch,
   extra: Partial<BuddiesEngineDeps> = {},
@@ -74,7 +72,6 @@ function scripted(
   return { engine, store, seed, client }
 }
 
-/** A fake relay whose ops can be stalled, or answered with an error, by op. */
 function flakyRelay() {
   const fake = createFakeRelay(Date.now)
   const stalled = new Set<string>()
@@ -83,7 +80,7 @@ function flakyRelay() {
   const fetchImpl = (async (url: string, init?: RequestInit) => {
     const op = opOf(url)
     ops.push(op)
-    // A stalled connection: no answer, ever, until the request is aborted.
+
     if (stalled.has(op))
       return new Promise<Response>((_, reject) =>
         init?.signal?.addEventListener('abort', () =>
@@ -221,12 +218,12 @@ describe("the relay's clock", () => {
           })
         return fake.fetchImpl(url, init)
       }) as typeof fetch,
-      // An hour fast, with nothing to correct it.
+
       { now: () => Date.now() + 60 * 60 * 1000, recalibrate }
     )
     const me = ownerAuthFor(seed)
     await client.registerInbox(me)
-    // Later signed calls are stamped right the first time.
+
     await client.registerInbox(me)
     expect(stamps).toHaveLength(3)
     expect(Math.abs(stamps[2] - Date.now())).toBeLessThan(60 * 1000)
@@ -249,7 +246,6 @@ describe('sync scheduling', () => {
     await Promise.all([anna.engine.sync(), anna.engine.sync({ minSeq: seq })])
     expect(reads).toBe(1)
 
-    // Without a seq, a call made mid-sync still gets its own sync after.
     await Promise.all([anna.engine.sync(), anna.engine.sync()])
     expect(reads).toBe(3)
   })
@@ -273,7 +269,7 @@ describe('sync scheduling', () => {
     expect(reads()).toBe(1)
     await engine.sync()
     expect(reads()).toBe(2)
-    // It worked, so the wait is over.
+
     expect(engine.coolingDown()).toBe(false)
   })
 
@@ -311,7 +307,7 @@ describe('sync scheduling', () => {
       {},
       { onAccountActive }
     )
-    // Registering and syncing are refused for a suspended account.
+
     await engine.ensureInbox()
     expect(onAccountActive).toHaveBeenCalledTimes(1)
     await engine.sync()
@@ -322,7 +318,6 @@ describe('sync scheduling', () => {
     await expect(engine.sync()).rejects.toMatchObject({ code: 'suspended' })
     expect(onAccountActive).toHaveBeenCalledTimes(afterSync)
 
-    // A suspended account may still leave, so these prove nothing.
     const auth = ownerAuthFor(seed)
     onAccountActive.mockClear()
     await client.removeSlot(auth, 'AAAAAAAAAAAAAAAAAAAAAA').catch(() => {})
@@ -407,14 +402,14 @@ describe('publishing', () => {
     const joe = user('Joe')
     await pair(mom, anna)
     await pair(mom, joe)
-    // Joe's copy can't be sent yet, so this publish stays pending.
+
     offlineOps.add('event/put')
     mom.setShares([share([anna.inboxId, joe.inboxId])])
     await mom.engine.publishShares().catch(() => {})
     offlineOps.clear()
     mom.setShares([share([anna.inboxId])])
     await mom.engine.publishShares()
-    // Anna has it; take her off, then invite her back.
+
     mom.setShares([share([joe.inboxId])])
     await mom.engine.publishShares()
     mom.setShares([share([anna.inboxId, joe.inboxId])])

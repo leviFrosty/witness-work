@@ -17,16 +17,6 @@ import {
 } from '@/lib/sharedSpaces/testing/spaceVectors'
 import expected from '@/lib/sharedSpaces/testing/spaceVectors.json'
 
-/*
- * A second implementation of the protocol's bytes, sharing none of the app's
- * cryptography: Node's own X25519, HKDF-SHA256, HMAC-SHA256 and SHA-256, and
- * `@noble`'s XChaCha20-Poly1305 called directly (Node has no XChaCha). Only
- * base64url comes from the app (`@/lib/bytes`). It rebuilds every wrap and blob
- * in `spaceVectors.json` from the protocol's text, checks that the wrong AAD
- * never opens them, and that a key check changes with everything it covers,
- * the app's (`memberCheck`) as its own.
- */
-
 const counting = (length: number, start = 0) =>
   Uint8Array.from({ length }, (_, index) => (start + index) & 0xff)
 
@@ -42,7 +32,6 @@ const bytes = (...parts: Uint8Array[]) => {
 
 const text = (value: string) => new TextEncoder().encode(value)
 
-/** Node's own HKDF-SHA256 with an empty salt. */
 const nodeHkdf = (ikm: Uint8Array, info: string, length: number) =>
   new Uint8Array(hkdfSync('sha256', ikm, new Uint8Array(0), info, length))
 
@@ -51,7 +40,6 @@ const nodeSha256 = (input: string | Uint8Array) =>
 
 const hex = (value: Uint8Array) => Buffer.from(value).toString('hex')
 
-// X25519 keys in Node, from raw bytes (RFC 8410's PKCS #8 and SPKI framing).
 const PKCS8_X25519 = Buffer.from('302e020100300506032b656e04220420', 'hex')
 const SPKI_X25519 = Buffer.from('302a300506032b656e032100', 'hex')
 
@@ -69,7 +57,6 @@ const x25519Public = (raw: Uint8Array): KeyObject =>
     type: 'spki',
   })
 
-/** The raw 32-byte public key of a raw private key. */
 const publicOf = (raw: Uint8Array) =>
   new Uint8Array(
     createPublicKey(x25519Private(raw))
@@ -85,7 +72,6 @@ const agree = (privateRaw: Uint8Array, publicRaw: Uint8Array) =>
     })
   )
 
-/** The protocol's `wrapKey`, from the shared secret and both public keys. */
 const wrapKeyOf = (shared: Uint8Array, ephPub: Uint8Array, memberPub: string) =>
   nodeHkdf(shared, `ww-spaces/v1/wrap|${toB64u(ephPub)}|${memberPub}`, 32)
 
@@ -106,7 +92,6 @@ const recordAadOf = (
 const recordKeyOf = (spaceKey: Uint8Array) =>
   nodeHkdf(spaceKey, 'ww-spaces/v1/record', 32)
 
-/** `0x01 ‖ nonce ‖ XChaCha20-Poly1305(key, nonce, plaintext, aad)`. */
 const sealBlob = (
   key: Uint8Array,
   nonce: Uint8Array,
@@ -121,7 +106,6 @@ const sealBlob = (
     )
   )
 
-/** Opens a blob, or says it failed. */
 function openBlob(key: Uint8Array, blob: string, aad: Uint8Array) {
   const raw = fromB64u(blob)
   try {
@@ -149,7 +133,6 @@ describe('Shared Spaces crypto vectors', () => {
   })
 
   it('anchor XChaCha20-Poly1305 to its draft test vector', () => {
-    // draft-irtf-cfrg-xchacha-03 A.3.1: the ciphertext's end and its tag.
     expect(vectors['rfc.xchacha'].startsWith('bd6d179d3e83d43b')).toBe(true)
     expect(
       vectors['rfc.xchacha'].endsWith('c0875924c1c7987947deafd8780acf49')
@@ -163,7 +146,7 @@ describe('Shared Spaces crypto vectors', () => {
     expect(vectors['member.tokenHash']).toBe(toB64u(nodeSha256(token)))
     const dhPrivate = nodeHkdf(seed, `ww-spaces/v1/member-dh|${spaceId}`, 32)
     expect(vectors['member.dhPrivate']).toBe(hex(dhPrivate))
-    // Node's own X25519 makes the same public key.
+
     const dhPub = toB64u(publicOf(dhPrivate))
     expect(vectors['member.dhPub']).toBe(dhPub)
     const idInput = `ww-spaces/v1/member-id|${spaceId}|${dhPub}`
@@ -186,7 +169,7 @@ describe('Shared Spaces crypto vectors', () => {
         )
       )
     )
-    // One member's id never owns another member's key.
+
     expect(vectors['member.forgedKey']).toBe('refused')
     expect(vectors['member.id']).not.toBe(vectors['member.otherId'])
     expect(vectors['key.record']).toBe(hex(recordKeyOf(spaceKey)))
@@ -215,7 +198,6 @@ describe('Shared Spaces crypto vectors', () => {
     )
     expect(wrap).toBe(vectors['wrap.value'])
 
-    // The member opens it with their own private key.
     const raw = fromB64u(wrap)
     const memberPrivate = fromB64u(
       toB64u(
@@ -284,7 +266,6 @@ describe('Shared Spaces crypto vectors', () => {
       )
     ).toBe(vectors['deletion.blob'])
 
-    // The key chain: `k.2`, sealed under epoch 2's key, holds epoch 1's.
     const nextKey = counting(32, 0xc0)
     const chain = recordAadOf(spaceId, 2, 'k.2', false, 1_790_000_200_000)
     expect(
@@ -373,7 +354,7 @@ describe('Shared Spaces crypto vectors', () => {
             .digest()
         ).subarray(0, 16)
       )
-    /** The app's check, which must agree. */
+
     const appCheck = (key: Uint8Array, variant = fields) =>
       memberCheck(key, {
         ...variant,
@@ -388,7 +369,7 @@ describe('Shared Spaces crypto vectors', () => {
       [checkKey, { ...fields, avatar: '🚙' }],
       [checkKey, { ...fields, tag: toB64u(counting(16, 0x10)) }],
       [checkKey, { ...fields, joinedAt: 1_790_000_000_001 }],
-      // Another User's check key, on the same record.
+
       [counting(32, 0x01), fields],
     ]
     const others = variants.map(([key, variant]) => check(key, variant))
@@ -415,7 +396,7 @@ describe('Shared Spaces crypto vectors', () => {
     const copy = nodeSha256(
       `ww-spaces/v1/copy|${spaceId}|1790000000000|${tripId}`
     )
-    // RFC 9562's name-based SHA-256 UUID: version 8, the RFC variant.
+
     copy[6] = (copy[6] & 0x0f) | 0x80
     copy[8] = (copy[8] & 0x3f) | 0x80
     const id = hex(copy.subarray(0, 16))

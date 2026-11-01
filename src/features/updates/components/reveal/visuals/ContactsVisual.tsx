@@ -46,10 +46,6 @@ const stripX = (at: number) => {
   return STRIP_LEFT + (STRIP_RIGHT - STRIP_LEFT) * at
 }
 
-/**
- * The redesigned contact page: who they are, what's up next, and every visit
- * along the way — the journey strip filling in, the timeline below it.
- */
 const ContactsVisual = ({
   palette,
   active,
@@ -166,8 +162,7 @@ const ContactsVisual = ({
             height={13}
             color={withAlpha(palette.text, 0xcc)}
           />
-          {/* Longer translations shrink both labels a little rather than
-              cutting one off. */}
+          {}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
             <Animated.View style={[{ flexShrink: 1 }, pressStyle]}>
               <View

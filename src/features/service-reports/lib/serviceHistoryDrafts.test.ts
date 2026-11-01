@@ -19,7 +19,6 @@ import {
   type ServiceHistoryWriters,
 } from '@/features/service-reports/lib/serviceHistoryDrafts'
 
-/** Saved rows: every month a Regular Publisher with nothing logged. */
 const build = (serviceYear: number): ServiceHistoryRow[] =>
   serviceYearMonths(serviceYear).map((target) => ({
     target,
@@ -53,7 +52,7 @@ describe('Service History drafts', () => {
   it('keeps each year’s edits when switching between years', () => {
     let drafts: ServiceHistoryDrafts = {}
     drafts = updateDraft(drafts, 2023, build, patchMonth(0, { hours: '12' }))
-    // Move to the next year and edit it too.
+
     drafts = updateDraft(
       drafts,
       2024,
@@ -63,7 +62,7 @@ describe('Service History drafts', () => {
 
     expect(draftRowsFor(drafts, 2023, build)[0].hours).toBe('12')
     expect(draftRowsFor(drafts, 2024, build)[2].status).toBe('regularAuxiliary')
-    // A year never edited is still its saved state.
+
     expect(draftRowsFor(drafts, 2022, build)).toEqual(build(2022))
   })
 
@@ -71,7 +70,7 @@ describe('Service History drafts', () => {
     let drafts: ServiceHistoryDrafts = {}
     drafts = updateDraft(drafts, 2024, build, patchMonth(0, { hours: '3' }))
     drafts = updateDraft(drafts, 2022, build, patchMonth(0, { shared: true }))
-    // Edited back to its saved state: a draft, but nothing to save.
+
     drafts = updateDraft(drafts, 2023, build, patchMonth(0, { hours: '0' }))
 
     expect(dirtyServiceYears(drafts)).toEqual([2022, 2024])
@@ -125,7 +124,7 @@ describe('Service History drafts', () => {
       status: 'regularAuxiliary',
       hours: '30',
     })
-    // Within a year it copies the month before.
+
     drafts = updateDraft(drafts, 2024, build, patchMonth(0, { hours: '4' }))
     expect(copiedFromPreviousMonth(drafts, 2024, 1, build).hours).toBe('4')
   })
@@ -145,7 +144,7 @@ describe('saveServiceHistoryDrafts', () => {
         patchMonth(0, { shared: true })(rows)
       )
     )
-    // Opened and left untouched.
+
     drafts = updateDraft(drafts, 2023, build, (rows) => rows)
 
     const w = writers()
@@ -160,7 +159,6 @@ describe('saveServiceHistoryDrafts', () => {
       [{ year: 2024, month: 8 }, 'regularPioneer', 'month'],
     ])
     expect(w.addServiceReport.mock.calls.map(([r]) => r)).toEqual([
-      // Checkbox month: the 0h "shared" marker.
       { id: 'id-1', date: new Date(2022, 8, 1, 12), hours: 0, minutes: 0 },
       {
         id: 'id-2',

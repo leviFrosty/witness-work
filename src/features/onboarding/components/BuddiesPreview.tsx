@@ -22,19 +22,15 @@ import { formatMinutesCompact } from '@/lib/minutes'
 import { useProfile } from '@/stores/profile'
 import { formatTime } from '@/lib/dates'
 
-/**
- * The sketch is laid out on a fixed stage, centered in a card that stretches,
- * so the buddy's initial always lands on its day.
- */
 const STAGE = { width: 300, height: 184 }
 const CENTER = STAGE.width / 2
 const AVATAR = 44
-/** Ring that lifts each avatar off the card. */
+
 const RING = 3
 const AVATAR_Y = 34
-/** Paired avatars sit this far either side of center... */
+
 const PAIR_DX = 62
-/** ...and drift this much further apart while unpaired. */
+
 const APART = 22
 const LINK_WIDTH = 2 * (PAIR_DX - AVATAR / 2 - RING - 5)
 const LOCK = 24
@@ -44,16 +40,12 @@ const FIRST_COLUMN =
   (STAGE.width - (7 * CELL.width + 6 * CELL.gap)) / 2 + CELL.width / 2
 const columnX = (index: number) =>
   FIRST_COLUMN + index * (CELL.width + CELL.gap)
-/** Your planned days; the buddy goes out with you on the second. */
+
 const PLANNED = [1, 4]
 const SHARED_DAY = 4
-/** Another buddy plans to go out this day: just a dot. */
+
 const DOT_DAY = 2
 
-/**
- * The buddy's initial on a calendar day, at the cell's corner like
- * `BuddyDayBadge`, hanging a little further out so it clears the duration.
- */
 const BADGE = 16
 const BADGE_RING = 2
 const BADGE_OUTER = BADGE + BADGE_RING * 2
@@ -62,19 +54,13 @@ const BADGE_CENTER = {
   x: columnX(SHARED_DAY) + CELL.width / 2 + BADGE_HANG.right - BADGE_OUTER / 2,
   y: CELL.top + CELL.height + BADGE_HANG.bottom - BADGE_OUTER / 2,
 }
-/** It starts as a copy of the buddy's avatar, at the same size. */
+
 const BADGE_FROM = { x: CENTER + PAIR_DX, y: AVATAR_Y, scale: AVATAR / BADGE }
-/** How high it arcs on its way down. */
+
 const HOP = 16
 const CHIP_TOP = CELL.top + CELL.height + 16
 const CHIP_SLOT = 180
 
-/**
- * One pass of the story, in ms: the two pair up and link, a lock settles on the
- * link, the buddy's initial drops onto the day you both plan, a dot marks
- * another buddy's day, and "Going" pops. It holds, then eases back and plays
- * again.
- */
 const LOOP_MS = 7600
 const T = {
   pair: [400, 1200],
@@ -91,12 +77,11 @@ const T = {
   linkOut: [6800, 7150],
   apart: [6900, 7400],
 } as const
-/** Reduce Motion holds here, with everything in place. */
+
 const STILL = 5300 / LOOP_MS
 
 type Span = readonly [number, number]
 
-/** 0–1 progress through a span of the loop. */
 const seg = (t: number, [from, to]: Span) => {
   'worklet'
   return Math.min(1, Math.max(0, (t * LOOP_MS - from) / (to - from)))
@@ -109,24 +94,24 @@ const easeInOut = (x: number) => {
   'worklet'
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
 }
-/** Ease-out with a gentle overshoot, so things settle rather than stop. */
+
 const easeOutBack = (x: number) => {
   'worklet'
   const c1 = 1.4
   const c3 = c1 + 1
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2)
 }
-/** 1 until the span, then eases to 0 through it. */
+
 const leaving = (t: number, span: Span) => {
   'worklet'
   return 1 - easeInOut(seg(t, span))
 }
-/** Never exactly 0, which would make a singular transform. */
+
 const nonZero = (scale: number) => {
   'worklet'
   return Math.max(0.001, scale)
 }
-/** A pop in through `enter` that leaves through `exit`. */
+
 const popStyle = (t: number, enter: Span, exit: Span) => {
   'worklet'
   const pop = seg(t, enter)
@@ -137,12 +122,6 @@ const popStyle = (t: number, enter: Span, exit: Span) => {
   }
 }
 
-/**
- * Two people pair up over a private link, then share a day on the calendar: a
- * looping sketch of Buddies, with the User's own avatar beside a made-up buddy.
- * Purely decorative; the step's title and description say what it means. Under
- * Reduce Motion it rests on a frame with everything in place.
- */
 const BuddiesPreview = () => {
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
@@ -153,8 +132,6 @@ const BuddiesPreview = () => {
   const t = useSharedValue(reduceMotion ? STILL : 0)
 
   useEffect(() => {
-    // Reset and start in one UI-thread step, so every repeat starts from 0
-    // rather than a stale value (see NavMapPreview).
     scheduleOnUI(() => {
       'worklet'
       cancelAnimation(t)
@@ -238,8 +215,7 @@ const BuddiesPreview = () => {
       planned: PLANNED.includes(index),
     }
   })
-  // Fixed-size art: its labels don't scale with Dynamic Type, or they'd burst
-  // the cells. The step's real copy scales normally.
+
   const label = (fontSize: number, color: string, bold = false) => ({
     fontSize,
     color,
@@ -281,7 +257,7 @@ const BuddiesPreview = () => {
         elevation: 4,
       }}
     >
-      {/* A soft pool of light behind the pair. */}
+      {}
       <Svg style={StyleSheet.absoluteFill} width='100%' height='100%'>
         <Defs>
           <RadialGradient
@@ -377,7 +353,6 @@ const BuddiesPreview = () => {
               {day.letter}
             </Text>
             {index === SHARED_DAY && (
-              // Behind the cell, so only its growing edge shows.
               <Animated.View
                 style={[
                   cellBox(index),
@@ -467,8 +442,7 @@ const BuddiesPreview = () => {
           </View>
         </Animated.View>
 
-        {/* Centered under the shared day; the slot keeps the pill's offset
-            out of its animated transform. */}
+        {}
         <View
           style={{
             position: 'absolute',

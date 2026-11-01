@@ -42,7 +42,6 @@ import {
 } from '@/features/scribe/stores/ledger'
 import { trackProposalResolved, trackUndo } from '@/features/scribe/analytics'
 
-/** The conversation holding a Proposal. */
 export function conversationOfProposal(
   conversations: Record<string, StoredConversation>,
   proposalId: string
@@ -63,7 +62,6 @@ function changeProposal(
   proposalId: string,
   change: (proposal: StoredProposal) => StoredProposal
 ): void {
-  // While its turn runs, the choice goes to the draft; the turn keeps it.
   if (changeDrafting(proposalId, change)) return
   const conversation = conversationOfProposal(
     useScribeConversations.getState().conversations,
@@ -115,7 +113,6 @@ function resolvedProps(proposal: StoredProposal, before: StoredProposal) {
   }
 }
 
-/** What the User just did, for a celebration that may follow it. */
 function userActionOf(
   applied: readonly AppliedEffect[],
   now: Date
@@ -140,11 +137,6 @@ const NOTHING_ADDED: ScribeApplyResult = {
   skippedCards: 0,
 }
 
-/**
- * Add: applies the selected cards (the saga in apply.ts), keeps the undo
- * record, binds pending Refs to what they created, and queues the outcome for
- * the next user message.
- */
 export function addScribeProposal(
   proposalId: string,
   deps: { now?: Date; newId?: () => string } = {}
@@ -195,7 +187,6 @@ export function addScribeProposal(
   return run.result
 }
 
-/** Dismiss: nothing is written; the next user message says so. */
 export function dismissScribeProposal(
   proposalId: string,
   now: Date = new Date()
@@ -226,10 +217,6 @@ export function dismissScribeProposal(
   })
 }
 
-/**
- * Undo an applied Proposal within `SCRIBE_UNDO_WINDOW_DAYS`: reverse apply
- * order, leaving records changed since or used by something else (`kept`).
- */
 export function undoScribeProposalNow(
   proposalId: string,
   source: ScribeUndoSource,
@@ -243,7 +230,7 @@ export function undoScribeProposalNow(
   }
   const run = undoApplied(record.effects)
   removeApplyRecord(proposalId)
-  // A record the User already deleted is as good as undone.
+
   const removed = new Set([...run.undone, ...run.gone])
   const conversation = getConversation(record.conversationId)
   if (conversation?.proposals[proposalId])
@@ -267,7 +254,7 @@ export function undoScribeProposalNow(
       )
       const next: StoredProposal = {
         ...proposal,
-        // Everything kept: it stays added, without Undo.
+
         status: removed.size > 0 ? 'undone' : proposal.status,
         effects,
         cards,

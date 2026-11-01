@@ -121,7 +121,6 @@ const PerkRow = ({ icon, title, desc }: PerkProps) => {
 }
 
 interface Props {
-  /** Hides the hero (device sync) row. Useful in narrow contexts. */
   compact?: boolean
 }
 

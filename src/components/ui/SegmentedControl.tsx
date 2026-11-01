@@ -12,9 +12,8 @@ import { tracking } from '@/lib/tracking'
 
 export interface SegmentedOption<T extends string = string>
   extends NativeSegmentedOption<T> {
-  /** Inline secondary text rendered after the label (e.g., "Save 20%"). */
   subLabel?: { text: string; color?: string }
-  /** Trailing element rendered after label/subLabel (icon, badge, etc.). */
+
   trailing?: ReactNode
 }
 
@@ -27,15 +26,12 @@ interface PillVariantProps<T extends string>
   extends Omit<ViewProps, 'children'> {
   variant: 'pill'
   options: ReadonlyArray<SegmentedOption<T>>
-  /** Currently-selected option key. `null`/`undefined` means no selection. */
+
   value: T | null | undefined
   onChange: (key: T) => void
-  /**
-   * `sm` is compact (the paywall's billing toggle). `field` matches a text
-   * field's height, corners, and border, for a switch beside one.
-   */
+
   size?: 'sm' | 'md' | 'field'
-  /** Sizes the control to its labels instead of the width it's given. */
+
   fitContent?: boolean
   disabled?: boolean
 }
@@ -44,18 +40,6 @@ export type SegmentedControlProps<T extends string = string> =
   | NativeVariantProps<T>
   | PillVariantProps<T>
 
-/**
- * Segmented selector for a few mutually exclusive, plain-text choices.
- *
- * - `native` (default): the platform control, SwiftUI's segmented `Picker` on iOS
- *   and Material 3 segmented buttons on Android. Use it for every segmented
- *   choice it can draw.
- * - `pill`: hand-built, only for segments the native control can't show: inline
- *   secondary text (`subLabel`, like the paywall's "Save 20%"), a `trailing`
- *   badge, or a text field's height (`size='field'`; iOS's is 32pt or 49pt).
- *
- * Many or long options (filter fields) belong in `ChoiceChips` instead.
- */
 function SegmentedControl<T extends string = string>(
   props: SegmentedControlProps<T>
 ) {
@@ -119,14 +103,13 @@ function PillSegmentedControl<T extends string>({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              // A field's segments fill its height.
+
               paddingVertical: field ? 0 : size === 'sm' ? 4 : 10,
               paddingHorizontal: field ? 12 : size === 'sm' ? 10 : 16,
-              // Inside the field's border, matching its corners.
+
               borderRadius: field ? radius - inset - 1 : radius,
               backgroundColor: active ? theme.colors.card : 'transparent',
-              // Outlined too, since the card barely differs from the track in
-              // dark mode, and Android draws no shadow.
+
               borderWidth: field ? 1 : 0,
               borderColor:
                 field && active ? theme.colors.border : 'transparent',

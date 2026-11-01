@@ -5,10 +5,6 @@ export type ContactInformationField =
   | { id: 'phone' | 'email'; kind: 'phone' | 'email' }
   | { id: string; kind: 'custom'; definition: CustomFieldDefinition }
 
-/**
- * Resolve saved order against today's definitions, including newly added
- * fields.
- */
 export function getContactInformationFields(
   definitions: CustomFieldDefinition[],
   savedOrder: readonly string[] = [],
@@ -49,11 +45,6 @@ export function hasContactInformationValue(
   )
 }
 
-/**
- * The field the keyboard's Next key moves to after `fields[index]` (pass -1 for
- * the first). Skips phone: the phone-number library's input can't be focused
- * from outside while the form controls its value.
- */
 export function nextKeyboardField(
   fields: readonly ContactInformationField[],
   index: number

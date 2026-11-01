@@ -26,7 +26,6 @@ import { useStreakCelebration } from '@/features/profile/stores/streakCelebratio
 
 const MINUTE = 60_000
 
-/** "5h 12m", "3d 4h", or "8m" until `at`. */
 function timeLeft(at: Date, now: number): string {
   const minutes = Math.max(1, Math.floor((at.getTime() - now) / MINUTE))
   const days = Math.floor(minutes / (24 * 60))
@@ -37,19 +36,12 @@ function timeLeft(at: Date, now: number): string {
   return i18n.t('countdownMinutes', { minutes })
 }
 
-/**
- * The Service Streak at the end of Home's greeting, once it's long enough to
- * show. When it's about to end, a countdown shows how long is left to keep it.
- * Tapping it opens `StreakDetails`: the streak, when it started and its best,
- * the day or month that's due, and buddies' streaks.
- */
 export default function HomeStreakChip({
   streak,
   buddyStreaks,
 }: {
-  /** From `useServiceStreak`, which the greeting reads too. */
   streak: ServiceStreak
-  /** Buddies' streaks, below the User's own; Home passes them in. */
+
   buddyStreaks?: (controls: Pick<PopoverControls, 'closeThen'>) => ReactNode
 }) {
   const { width } = useWindowDimensions()
@@ -60,7 +52,6 @@ export default function HomeStreakChip({
   const flare = useSharedValue(1)
   const mountedAt = useRef(Date.now())
 
-  // Flares when the streak grows short of a milestone.
   useEffect(() => {
     if (grewAt <= mountedAt.current) return
     flare.value = withSequence(
@@ -93,8 +84,6 @@ export default function HomeStreakChip({
             }}
             accessibilityRole='button'
             accessibilityState={{ expanded }}
-            // A full-size target, pulled back so the greeting's line keeps
-            // its height.
             style={({ pressed }) => ({
               minWidth: MIN_TOUCH_TARGET,
               minHeight: MIN_TOUCH_TARGET,

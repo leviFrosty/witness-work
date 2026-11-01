@@ -6,13 +6,6 @@ import type {
   SessionPlatform,
 } from '@/lib/serverAccount/activityClient'
 
-/**
- * The words for Settings → Account → Devices and Activity (ADR 0028). Device
- * names come from sealed labels this device opens; without one, a device is
- * named by its platform.
- */
-
-/** "iPhone or iPad", "Android device", …: a device without a readable label. */
 export function platformDeviceName(platform: SessionPlatform | null): string {
   switch (platform) {
     case 'ios':
@@ -26,7 +19,6 @@ export function platformDeviceName(platform: SessionPlatform | null): string {
   }
 }
 
-/** A device's own name, for a row title: its label, else its platform. */
 export function deviceTitle(
   device: { platform: SessionPlatform | null; device: string | null },
   context: Pick<AccountActivityContext, 'readLabel'>
@@ -35,16 +27,10 @@ export function deviceTitle(
   return name || platformDeviceName(device.platform)
 }
 
-/** What a device row's icon shows. */
 export type DeviceKind = 'phone' | 'tablet' | 'computer'
 
 const TABLET_MODEL = /\b(iPad|tablet)\b/i
 
-/**
- * An iPad or an Android tablet ("Pixel Tablet") by its label's model, or its
- * name when the model is blank; a development build without a label is a
- * computer; anything else is a phone.
- */
 export function deviceKind(
   device: { platform: SessionPlatform | null; device: string | null },
   context: Pick<AccountActivityContext, 'readLabel'>
@@ -55,7 +41,6 @@ export function deviceKind(
   return TABLET_MODEL.test(model) ? 'tablet' : 'phone'
 }
 
-/** A device inside a sentence: "this device", its name, or "an iPhone or iPad". */
 function deviceInSentence(
   session: ActivitySession,
   context: AccountActivityContext
@@ -76,23 +61,13 @@ function deviceInSentence(
   }
 }
 
-/** Entries the User should look at: a refresh token someone else may hold. */
 export const isSuspiciousActivity = (entry: ActivityEntry) =>
   entry.kind === 'session.refresh_reused'
 
-/** One row of Account Activity: an entry, standing for `count` like it. */
 export type ActivityRow = { entry: ActivityEntry; count: number }
 
-/** Downloads this close together are one restore. */
 export const RESTORE_WINDOW_MS = 5 * 60_000
 
-/**
- * The entries as rows. A restore downloads every slot, and the server logs each
- * (`backup.downloaded`, one per slot) with nothing this device can tell apart:
- * slot ids mean nothing to the User and device names are inside the backups. So
- * a session's downloads within `RESTORE_WINDOW_MS` of each other are one row,
- * "2 backups downloaded on this device". The row keeps the newest entry's id.
- */
 export function activityRows(entries: readonly ActivityEntry[]): ActivityRow[] {
   const rows: ActivityRow[] = []
   let previous: ActivityEntry | null = null
@@ -114,10 +89,6 @@ export function activityRows(entries: readonly ActivityEntry[]): ActivityRow[] {
   return rows
 }
 
-/**
- * One entry's title, naming its devices from this device's point of view;
- * `count` entries like it for a merged row (`activityRows`).
- */
 export function activityTitle(
   entry: ActivityEntry,
   context: AccountActivityContext,
@@ -185,7 +156,6 @@ export function activityTitle(
   }
 }
 
-/** A short explanation under the time, for entries that need one. */
 export function activityDetail(entry: ActivityEntry): string | null {
   switch (entry.kind) {
     case 'session.refresh_reused':

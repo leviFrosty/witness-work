@@ -12,21 +12,13 @@ import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 
-/** Writes wait for changes to settle this long. */
 const WRITE_DEBOUNCE_MS = 1000
 
-/**
- * What the iOS Notification Service Extension reads to word Buddies alerts: the
- * alert context (the keys that open buddies' events, their names here, and when
- * shared Plans and Follow-ups are), where to fetch an event too big for the
- * push, and the app's language and date conventions. Null when there's nothing
- * to word: Buddies not started here, or its notifications off.
- */
 export function buddiesAlertSnapshot(): string | null | undefined {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
   if (registeredInboxId === null || !notificationsEnabled) return null
   const context = buddiesEngine.alertContext()
-  // The seed isn't read yet: not "nothing to word", so keep what's there.
+
   if (context === undefined) return undefined
   if (!context) return null
   return JSON.stringify({
@@ -36,10 +28,8 @@ export function buddiesAlertSnapshot(): string | null | undefined {
   })
 }
 
-/** What the Keychain holds now, so an unchanged snapshot isn't written again. */
 let written: string | null | undefined
 
-/** Hands the extension the current snapshot, or clears it. */
 export function writeBuddiesAlertContext() {
   if (!BuddiesKeychain.isAlertContextAvailable()) return
   let snapshot: string | null | undefined
@@ -50,7 +40,6 @@ export function writeBuddiesAlertContext() {
     return
   }
   if (snapshot === undefined) {
-    // Written once the seed has been read off the JS thread.
     void buddiesEngine
       .loadIdentity()
       .then(writeBuddiesAlertContext)
@@ -66,12 +55,6 @@ export function writeBuddiesAlertContext() {
   }
 }
 
-/**
- * Keeps the iOS extension's copy current as buddies, invites, shared Plans,
- * mutes, and the app's language change, a second after the last change and as
- * the app leaves the foreground. It lives in a Keychain item only this app and
- * its extension can read, readable after the first unlock, never synced.
- */
 export function useBuddiesAlertContext() {
   useEffect(() => {
     if (Platform.OS !== 'ios' || !BuddiesKeychain.isAlertContextAvailable())

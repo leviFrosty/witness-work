@@ -6,25 +6,24 @@ import type { MileageSnapshot } from '@/types/mileage'
 import type { PetSnapshot } from '@/types/pet'
 
 type LocalState = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   contacts: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedContacts: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   customFieldDefs: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedCustomFieldDefs: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   conversations: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedConversations: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   serviceReports: Record<string, Record<string, any[]>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   dayPlans: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   recurringPlans: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedServiceReports: any[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
@@ -143,8 +142,6 @@ describe('mergePayload — Role History', () => {
   })
 
   it('keeps per-month stamps when it takes a history this device lacked', () => {
-    // Found by the sync merge property tests. The phone never set a role; the
-    // iPad's history reaches it whole.
     const phone = emptyLocal()
     phone.preferencesValues = { role: 'publisher', roleHistory: null }
     const ipad = {
@@ -166,7 +163,6 @@ describe('mergePayload — Role History', () => {
     const first = mergePayload(phone, makeRemote({ preferencesStore: ipad }))
     expect(first.preferenceUpdatedAt).toMatchObject(ipad.updatedAt)
 
-    // Then the iPad takes March back out, while the phone changes September.
     const ipadLater = makeRemote({
       preferencesStore: {
         values: {
@@ -203,7 +199,6 @@ describe('mergePayload — Role History', () => {
       },
     }
 
-    // March's removal is newer than the phone's March, which it never edited.
     const merged = mergePayload(phoneLater, ipadLater)
     expect(merged.preferencesValues.roleHistory).toEqual({
       initial: 'publisher',

@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Drives "Keep this device's data" / "Rebuild iCloud data" and the pulls that
-// follow against a fake container: a reset must stick on every device instead
-// of being undone by the next full snapshot from a device that still holds the
-// old data.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -258,7 +253,7 @@ describe('a reset', () => {
       'witness-work-ipad.json',
     ])
     expect(bridge.deleteAll).not.toHaveBeenCalled()
-    // The publish lands before any cleanup.
+
     expect(vi.mocked(bridge.write).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(bridge.deleteFile).mock.invocationCallOrder[0]
     )
@@ -267,7 +262,7 @@ describe('a reset', () => {
 
   it("keeps a concurrent newer reset's file", async () => {
     const { overwriteRemoteWithLocal } = await load()
-    // Created after this device's reset starts, as if published meanwhile.
+
     const later = { id: 'later', at: NOW + 3_600_000, deviceId: 'mac' }
     runtime.files = [peerFile('mac', { contacts: [contact('m')] }, later)]
 
@@ -290,7 +285,7 @@ describe('a reset', () => {
     } = await load()
     useContacts.setState({ contacts: [contact('mine')] as never })
     await overwriteRemoteWithLocal()
-    // A device that hasn't synced since pushes its old data again.
+
     runtime.files.push(
       peerFile('phone', {
         contacts: [contact('mine'), contact('theirs')],
@@ -314,7 +309,7 @@ describe('a reset', () => {
     expect(usePreferences.getState().preferenceUpdatedAt).toBe(
       before.preferenceUpdatedAt
     )
-    // Ignored, not an unreadable or incomplete file.
+
     expect(usePreferences.getState().iCloudSyncIssue).toBeNull()
     expect(iCloudSync.isPushScheduled()).toBe(false)
     expect(bridge.write).not.toHaveBeenCalled()
@@ -401,8 +396,7 @@ describe('a reset when the Apple Account changes', () => {
       usePreferences,
     } = await load()
     usePreferences.setState({ iCloudResetEpoch: E1 })
-    // The push's own clock check is where the switch shows up, so the push
-    // turns sync off and returns false.
+
     refreshSyncClock
       .mockImplementationOnce(async () => null)
       .mockImplementationOnce(async () => {
@@ -429,7 +423,7 @@ describe('a reset when the Apple Account changes', () => {
       refreshSyncClock,
       usePreferences,
     } = await load()
-    // "Keep this device's data" from the first-enable sheet: sync is still off.
+
     usePreferences.setState({ iCloudSyncEnabled: false, iCloudResetEpoch: E1 })
     runtime.files = [peerFile('phone', { contacts: [contact('theirs')] }, E1)]
     refreshSyncClock.mockImplementationOnce(async () => {
@@ -463,7 +457,7 @@ describe('pulls during a reset', () => {
 
     clock.resolve(null)
     await reset
-    // The cleanup's read, then the one deferred pull.
+
     await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalledTimes(2))
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(bridge.readFiles).toHaveBeenCalledTimes(2)
@@ -490,8 +484,6 @@ describe('pulls during a reset', () => {
     const clock = deferred<null>()
     refreshSyncClock.mockImplementationOnce(() => clock.promise)
 
-    // A pull already reading when the user taps Rebuild finishes its read
-    // while the reset is still calibrating the clock.
     const pull = pullAndMerge('remote-change')
     const reset = overwriteRemoteWithLocal()
     read.resolve()
@@ -594,7 +586,7 @@ describe('a device that sees a newer generation', () => {
         },
         E2
       ),
-      // Another device still on the old data.
+
       peerFile('phone', { contacts: [contact('stale')] }),
     ]
 
@@ -620,7 +612,6 @@ describe('a device that sees a newer generation', () => {
       { remote_files: 1 }
     )
 
-    // The next pull merges in the same generation instead of adopting again.
     useContacts.setState({
       contacts: [
         ...useContacts.getState().contacts,
@@ -653,7 +644,7 @@ describe('a device that sees a newer generation', () => {
 
   it('converges when two devices reset concurrently', async () => {
     const { pullAndMerge, useContacts, usePreferences } = await load()
-    // This device's reset lost to a later one.
+
     usePreferences.setState({ iCloudResetEpoch: E1 })
     useContacts.setState({ contacts: [contact('from-e1')] as never })
     runtime.files = [peerFile('mac', { contacts: [contact('from-e2')] }, E2)]
@@ -662,8 +653,6 @@ describe('a device that sees a newer generation', () => {
     expect(contactIds(useContacts.getState().contacts)).toEqual(['from-e2'])
     expect(usePreferences.getState().iCloudResetEpoch).toEqual(E2)
 
-    // The winner ignores the loser's file once the loser has published again
-    // with the old generation, and both settle on E2.
     runtime.files.push(peerFile('phone', { contacts: [contact('x')] }, E1))
     expect(await pullAndMerge('remote-change')).toBe(false)
     expect(usePreferences.getState().iCloudResetEpoch).toEqual(E2)
@@ -779,11 +768,10 @@ describe('peek and first enable', () => {
     expect(decision.account).toEqual({ token: 'account-a', changedAt: null })
     expect(confirmICloudAccount(decision.account)).toBe(true)
 
-    // Switched while the sheet was up.
     runtime.identityToken = 'account-b'
     expect(confirmICloudAccount(decision.account)).toBe(false)
     expect(usePreferences.getState().iCloudIdentityToken).toBe('account-b')
-    // Still not once the new account is the recorded one.
+
     expect(confirmICloudAccount(decision.account)).toBe(false)
   })
 

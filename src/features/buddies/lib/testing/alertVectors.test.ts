@@ -20,7 +20,7 @@ const FILE = join(__dirname, 'alertVectors.json')
 describe('named alert vectors', () => {
   it('match the file the iOS extension is tested against', () => {
     const actual = computeAlertVectors()
-    // `WRITE_ALERT_VECTORS=1 pnpm vitest run alertVectors` rewrites it.
+
     if (process.env.WRITE_ALERT_VECTORS)
       writeFileSync(FILE, `${JSON.stringify(actual, null, 2)}\n`)
     expect(JSON.parse(readFileSync(FILE, 'utf8'))).toEqual(actual)

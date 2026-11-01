@@ -17,7 +17,6 @@ describe('shouldForwardToSystem', () => {
 
   it("keeps the app's own links in the app", () => {
     for (const url of [
-      // A Buddies invite: forwarding it reopened the app forever on Android.
       'https://ww-proxy.leviwilkerson.com/b#1AAAAAAAAAAAAAAAAAAAAA',
       'https://ww-proxy.leviwilkerson.com/b',
       'https://WW-PROXY.leviwilkerson.com/c#abc',

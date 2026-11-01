@@ -16,15 +16,8 @@ import type {
   BuddyTimeOfDay,
 } from '@/features/buddies/lib/schemas'
 
-/** Buddies see today through this many days ahead — never the past. */
 export const BUDDY_CARD_HORIZON_DAYS = 56
 
-/**
- * The Plans a Buddy Card shares: for each local day in the window, every Plan
- * that counts for that day (Day Plans and recurring instances alike, skipped
- * instances left out). Only start time and minutes leave the device — never
- * Categories, notes, or Time Entries.
- */
 export function buildBuddyCardDays(
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[],
@@ -66,10 +59,6 @@ export function buildBuddyCardDays(
   return days
 }
 
-/**
- * Undefined when the instance is anytime, or neither the plan nor its override
- * carries a start time.
- */
 function recurringStartTime(
   plan: RecurringPlan,
   date: Date
@@ -80,11 +69,6 @@ function recurringStartTime(
   return effective === DEFAULT_START_TIME_IN_MINUTES ? undefined : effective
 }
 
-/**
- * Where each part of the day starts, in minutes after midnight: the earliest a
- * Plan shown that way is taken to start (morning from 6:00, though earlier
- * Plans count as morning too).
- */
 export const TIME_OF_DAY_START: Record<BuddyTimeOfDay, number> = {
   m: 6 * 60,
   a: 12 * 60,
@@ -97,11 +81,6 @@ export function timeOfDayFor(startTime: number): BuddyTimeOfDay {
   return 'm'
 }
 
-/**
- * The card's days as precisely as the User shares Plan times: exact start
- * times, the part of the day in their place, or neither. Without a start time
- * older apps show a Plan as anytime.
- */
 export function withPlanTimes(
   days: BuddyCardDay[],
   times: BuddyPlanTimes

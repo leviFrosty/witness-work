@@ -5,7 +5,6 @@ import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import type { SwitchProps } from '@/components/ui/Switch'
 
-/** Material 3 switch, tinted with the app's accent color. */
 export default function Switch({
   value = false,
   onValueChange,
@@ -17,13 +16,10 @@ export default function Switch({
 }: SwitchProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
-  // A switch without a handler only mirrors its row's state, so taps and
-  // TalkBack focus belong to the row that wraps it.
+
   const interactive = !!onValueChange && accessible !== false
 
   return (
-    // Compose puts a label on a different node than the toggle, so TalkBack
-    // reads the switch from this view and skips the Compose tree.
     <View
       testID={testID}
       pointerEvents={interactive ? 'auto' : 'none'}
@@ -54,7 +50,7 @@ export default function Switch({
             uncheckedTrackColor: theme.colors.border,
             uncheckedThumbColor: theme.colors.textAlt,
             uncheckedBorderColor: theme.colors.textAlt,
-            // Material fades disabled parts to 38%.
+
             disabledCheckedTrackColor: `${theme.colors.accent}61`,
             disabledCheckedThumbColor: theme.colors.textInverse,
             disabledCheckedBorderColor: 'transparent',

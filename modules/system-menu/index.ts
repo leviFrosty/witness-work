@@ -25,7 +25,6 @@ type SystemMenuEvents = {
   onNavigationShortcut: { input: string }
 }
 
-// Older binaries and Android can safely load the same JavaScript update.
 const native =
   Platform.OS === 'ios'
     ? requireOptionalNativeModule<SystemMenuNative>('SystemMenu')

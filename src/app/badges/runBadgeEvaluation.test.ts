@@ -52,10 +52,6 @@ import { useBadgeSession } from '@/stores/badgeSession'
 const NOW = new Date(2026, 9, 8, 12)
 const thisMonth = moment(NOW).format('YYYY-MM')
 
-/**
- * A device whose User sent this month's report, past its first pass unless
- * `firstPass`.
- */
 function setUp({ showBadges = true, firstPass = false } = {}) {
   const prefs = {
     earnedBadges: {} as Record<string, EarnedBadge>,
@@ -114,7 +110,7 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
       ['reportSent.1'],
       NOW.getTime() + CELEBRATION_WINDOW_MS
     )
-    // Nothing takes over the screen until the User taps the toast.
+
     expect(useBadgeSession.getState().celebrations).toEqual([])
     expect(runtime.capture).toHaveBeenCalledWith('badge_earned', {
       badge: 'reportSent',
@@ -140,18 +136,18 @@ describe('runBadgeEvaluation: the action rule (ADR 0021)', () => {
       'badge_earned',
       expect.objectContaining({ after_action: false })
     )
-    // Buddies still hear about it: only the User's own screen stays quiet.
+
     expect(runtime.announce).toHaveBeenCalledWith(['reportSent.1'])
   })
 
   it('finds no action behind a change long after the User acted', () => {
     const acted = NOW.getTime() - 60_000
     noteUserAction('time', acted)
-    // A sync lands a minute later: not caused by the action.
+
     expect(actionBehind(NOW.getTime() - 1000, NOW.getTime())).toBeNull()
-    // The same action, still within its moment, behind its own change.
+
     expect(actionBehind(acted + 100, acted + 1600)?.kind).toBe('time')
-    // A change that starts seconds after an unrelated save isn't the save's.
+
     expect(actionBehind(acted + 5000, acted + 6600)).toBeNull()
   })
 
@@ -192,7 +188,7 @@ describe('runBadgeEvaluation: right after onboarding', () => {
     expect(prefs.badgesWelcome).toBe('done')
     expect(useBadgeSession.getState().historyCount).toBe(0)
     expect(card(prefs)).toEqual([])
-    // Still counted: how much history people bring.
+
     expect(runtime.capture).toHaveBeenCalledWith('badges_history_found', {
       count: 1,
     })
@@ -222,7 +218,7 @@ describe('homeCardBadges', () => {
           'monthsShared.1': { at: at - 5000 },
           'reportSent.2': { at: at - 5000 },
           'yearRound.1': { at: at - 1000 },
-          // Found in history, already seen, too old, or dismissed: not named.
+
           'prepared.1': { at, history: true },
           'conversations.1': { at: 10 },
           'returnVisits.1': { at: at - 40 * 86_400_000 },

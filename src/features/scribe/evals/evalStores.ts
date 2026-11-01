@@ -15,21 +15,12 @@ import {
   reportsOf,
 } from '@/features/scribe/tools/__fixtures__/stores'
 
-/**
- * A busier made-up Publisher for Scribe AI's model evals: a Regular Pioneer on
- * Wednesday 21 October 2026 with 40 Contacts (two named Maria), Visits with
- * overdue and upcoming Follow-ups, a month of Time, Plans inside and outside
- * the context's two weeks, credit Categories, and two buddies (one whose name
- * tries to give orders). Notes on two Visits try to give orders too. Every
- * name, address and number is made up.
- */
-
 const at = (day: string, hour = 12) =>
   moment(
     `${day} ${String(hour).padStart(2, '0')}:00`,
     'YYYY-MM-DD HH:mm'
   ).toDate()
-/** Stored days are noon UTC. */
+
 const stored = (day: string) => new Date(`${day}T12:00:00.000Z`)
 
 const contact = (
@@ -190,7 +181,6 @@ const entry = (
   ...extra,
 })
 
-/** October so far: 31 h 30 m standard and 2 h of LDC credit. */
 export const EVAL_TIME_ENTRIES: TimeEntry[] = [
   entry('t-0901', '2026-09-28', 180),
   entry('t-1001', '2026-10-01', 150),
@@ -296,7 +286,6 @@ export const EVAL_BUDDY_CARDS: Record<string, ReceivedCard> = {
   'inbox-odd': card([{ d: '2026-10-22', p: [{ t: 'a', m: 60 }] }]),
 }
 
-/** The eval stores, with `change` applied on top. */
 export function evalStores(change: Partial<ScribeStores> = {}): ScribeStores {
   return structuredClone({
     contacts: EVAL_CONTACTS,

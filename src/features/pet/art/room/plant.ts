@@ -1,4 +1,3 @@
-/** The potted plant in the right corner (fixed decor, not swappable). */
 import {
   fillEllipse,
   fillRect,
@@ -15,7 +14,6 @@ const C = rgbPalette({
   leafLight: '#6fae52',
 })
 
-/** Paints the plant. */
 export function drawPlant(buf: PixelBuffer): void {
   fillRect(buf, 160, 70, 178, 73, C.rim)
   fillRect(buf, 162, 73, 176, 88, C.pot)

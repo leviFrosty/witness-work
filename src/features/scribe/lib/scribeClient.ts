@@ -19,21 +19,10 @@ import {
   type UsageSnapshotWire,
 } from '@/features/scribe/lib/wire'
 
-/**
- * The Scribe AI client (docs/scribe-ai-protocol.md): status, usage, one model
- * step over SSE, and page transcription. Every call but status goes through the
- * attested account session (`withSession`), which adds the bearer token,
- * refreshes once on a 401 and reports a 426 as Update Required. Throws
- * `ScribeClientError`.
- */
 export interface ScribeClient {
   status(signal?: AbortSignal): Promise<ScribeStatusWire>
   usage(signal?: AbortSignal): Promise<UsageSnapshotWire>
-  /**
-   * Runs one step and resolves with its terminal event (`done`, or an `error`
-   * event after the stream started). Every event, terminal included, goes to
-   * `onEvent` first.
-   */
+
   step(
     body: StepRequest,
     options: {
@@ -56,27 +45,23 @@ export interface ScribeSessions {
 
 export interface ScribeClientDeps {
   urls: { status: string; usage: string; step: string; transcribe: string }
-  /** Streams the step's body: `expo/fetch` in the app. */
+
   streamFetch: typeof fetch
-  /** Plain requests (status, usage, transcribe); the global fetch by default. */
+
   fetchImpl?: typeof fetch
   sessions: ScribeSessions
-  /** Links the RevenueCat customer to the account (ADR 0029). */
+
   linkBeforePaidCall: () => Promise<void>
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>
   idleTimeoutMs?: number
 }
 
-/**
- * How long a step's stream may stay silent. The server sends a `:` heartbeat
- * every 15 s while the model works, so this is three missed beats.
- */
 export const SCRIBE_SSE_IDLE_TIMEOUT_MS = 45_000
-/** A stream that ended without a terminal event is sent again after these. */
+
 export const STEP_DROP_RETRY_DELAYS_MS = [1_000, 3_000] as const
-/** 409 `step_in_progress`: the same step is still running; wait, once. */
+
 export const STEP_IN_PROGRESS_RETRY_MS = 2_000
-/** 429 `active_cap` without a `retryAfter`. */
+
 export const ACTIVE_CAP_DEFAULT_RETRY_MS = 5_000
 
 const STATUS_TIMEOUT_MS = 10_000
@@ -92,10 +77,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const count = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0
 
-/**
- * One SSE `data` payload as an event, or null for anything this build doesn't
- * know or that's malformed: unknown types are ignored (protocol: Conventions).
- */
 export function parseStepEvent(value: unknown): StepStreamEvent | null {
   if (!isRecord(value)) return null
   switch (value.type) {
@@ -167,10 +148,6 @@ export function parseStepEvent(value: unknown): StepStreamEvent | null {
   }
 }
 
-/**
- * The `data` of one SSE frame. Comment lines (`:` heartbeats) and `event:`
- * lines are ignored: `data` repeats the type.
- */
 export function frameData(frame: string): string | null {
   let data = ''
   for (const line of frame.split('\n')) {
@@ -191,7 +168,6 @@ class StreamIdleError extends Error {
 
 type StreamOutcome =
   | { kind: 'terminal'; event: StepTerminalEvent }
-  /** Ended without a terminal event: dropped, or the watchdog fired. */
   | { kind: 'closed' }
 
 const defaultSleep = (ms: number, signal?: AbortSignal) =>
@@ -208,7 +184,6 @@ const defaultSleep = (ms: number, signal?: AbortSignal) =>
     signal?.addEventListener('abort', onAbort, { once: true })
   })
 
-/** A non-2xx's JSON envelope, thrown so the session client sees 401 and 426. */
 async function refusal(res: Response): Promise<HttpError> {
   let body: unknown = null
   try {
@@ -294,12 +269,10 @@ const parseLimits = (value: unknown): ScribeLimitsWire => {
   }
 }
 
-/** `GET /scribe/v1/status`'s body, with the protocol's defaults filled in. */
 export function parseStatus(value: unknown): ScribeStatusWire {
   const body = isRecord(value) ? value : {}
   const protocol = isRecord(body.protocol) ? body.protocol : {}
   return {
-    // Fail open: only an explicit false turns Scribe AI off.
     enabled: body.enabled !== false,
     reason:
       body.reason === 'disabled' || body.reason === 'no_provider'
@@ -322,24 +295,16 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
   const sleep = deps.sleep ?? defaultSleep
   const idleTimeoutMs = deps.idleTimeoutMs ?? SCRIBE_SSE_IDLE_TIMEOUT_MS
   let linked: Promise<void> | null = null
-  // Once per launch; a link that fails never holds the call up.
+
   const linkOnce = () =>
     (linked ??= deps.linkBeforePaidCall().catch(() => undefined))
 
-  /**
-   * Posts one step and pumps its events until the terminal one. Never calls
-   * `reader.cancel()` after it: the server closes right after, and cancelling
-   * an already-closed `expo/fetch` stream logs an error. A user's Stop aborts
-   * the fetch instead.
-   */
   async function consumeStep(
     authorization: string,
     body: StepRequest,
     onEvent: (event: StepStreamEvent) => void,
     signal?: AbortSignal
   ): Promise<StreamOutcome> {
-    // Our own controller, so the watchdog can drop the connection without
-    // touching the caller's signal. Hermes may lack AbortSignal.any.
     const controller = new AbortController()
     const onCallerAbort = () => controller.abort()
     if (signal?.aborted) controller.abort()
@@ -385,7 +350,7 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
       for (;;) {
         const { value, done } = await Promise.race([reader.read(), idle])
         if (done) return { kind: 'closed' }
-        // Any bytes, heartbeats included, prove the connection is alive.
+
         armIdle()
         buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
         let index = buffer.indexOf('\n\n')
@@ -411,8 +376,7 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
       if (signal?.aborted) throw new ScribeClientError('cancelled')
       if (error instanceof StreamIdleError) return { kind: 'closed' }
       if (error instanceof HttpError) throw error
-      // The connection dropped mid-stream: the same as ending early. Before
-      // any answer, the request may never have arrived: a connection problem.
+
       if (responded) return { kind: 'closed' }
       throw new ScribeClientError('network')
     } finally {
@@ -453,8 +417,7 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
         throw failure
       }
       if (outcome.kind === 'terminal') return outcome.event
-      // Retried with the identical body; each attempt that reached the model
-      // is charged, so at most twice.
+
       if (drops >= STEP_DROP_RETRY_DELAYS_MS.length)
         throw new ScribeClientError('network')
       await sleep(STEP_DROP_RETRY_DELAYS_MS[drops++], signal)

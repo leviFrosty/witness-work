@@ -68,7 +68,7 @@ describe('manual pin without location permission', () => {
           .props.onPress()
       })
     await press('edit')
-    // The map shows once it's known there's no location to open on.
+
     await act(async () => {})
     expect(root.root.findByType(Marker).props.coordinate).toEqual(coordinate)
 

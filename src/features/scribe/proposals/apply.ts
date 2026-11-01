@@ -34,7 +34,6 @@ import { applyVisitCreate } from '@/features/scribe/proposals/effects/visit'
 import { applyCategoryCreate } from '@/features/scribe/proposals/effects/category'
 import { undoApplied } from '@/features/scribe/proposals/undo'
 
-/** One applied effect, as the ledger keeps it. */
 export interface AppliedEffect {
   effectId: string
   kind: StoredEffect['draft']['kind']
@@ -42,16 +41,15 @@ export interface AppliedEffect {
 }
 
 export interface ApplyRun {
-  /** The Proposal with every effect's and card's outcome. */
   proposal: StoredProposal
   result: ScribeApplyResult
-  /** Undo records in apply order; empty when nothing was applied. */
+
   applied: AppliedEffect[]
-  /** Pending Refs now bound to the records they created. */
+
   bindings: { ref: string; id: string }[]
-  /** For the next user message. */
+
   outcome: ProposalOutcomeBlock
-  /** The error that rolled the apply back, when it failed. */
+
   error: unknown
 }
 
@@ -84,7 +82,7 @@ const cardStatus = (
   effects: ReadonlyMap<string, StoredEffect>
 ): StoredCard['status'] => {
   if (!card.selected) return 'dismissed'
-  // A contact.create the User answered with an existing Contact isn't counted.
+
   const counted = card.effectIds
     .map((id) => effects.get(id)!)
     .filter(
@@ -97,7 +95,6 @@ const cardStatus = (
   return 'skipped'
 }
 
-/** `proposal_outcome` for the next user message. */
 export function outcomeBlock(
   proposal: StoredProposal,
   outcome: ProposalOutcomeBlock['outcome']
@@ -116,8 +113,7 @@ export function outcomeBlock(
       if (outcome === 'undone' && effect.status === 'undone')
         applied.add(callId)
     }
-  // A pending Ref names a record once its call is added: the one it created,
-  // or the existing Contact the User picked instead.
+
   const created: { callId: string; ref: string }[] = []
   if (outcome === 'applied' || outcome === 'partially_applied')
     for (const effect of proposal.effects) {
@@ -143,12 +139,6 @@ export function outcomeBlock(
   }
 }
 
-/**
- * The apply saga: the selected cards' effects in kind order, pending Refs bound
- * to new ids as they're created, updates re-checked first (`skipped` when the
- * record changed or vanished). A thrown error undoes everything this apply did,
- * in reverse, and marks the Proposal `failed`.
- */
 export function applyProposal(
   proposal: StoredProposal,
   deps: { now: Date; prefs: ScribePreferences; newId: () => string }
@@ -179,7 +169,6 @@ export function applyProposal(
       card.contact?.type === 'choice' &&
       card.contact.chosen?.type === 'existing'
     ) {
-      // The User picked who it was: its Visits go to that Contact.
       ctx.bound.set(card.contact.newRef, card.contact.chosen.contactId)
       for (const id of card.effectIds) {
         const effect = effects.get(id)!

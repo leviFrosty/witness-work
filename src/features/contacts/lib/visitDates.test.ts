@@ -11,7 +11,7 @@ import { applyFormatRegion, formatDate } from '@/lib/dates'
 import { visitDayLabel } from '@/features/contacts/lib/visitDates'
 
 const NOW = new Date('2026-10-14T12:00:00')
-const LAST_YEAR = '2025-06-05T09:00:00' // Thursday
+const LAST_YEAR = '2025-06-05T09:00:00'
 
 beforeEach(() => applyFormatRegion({ language: 'en' }))
 

@@ -8,15 +8,12 @@ type FAQSearchEntry = {
   answer: string
 }
 
-// Keep each entry list's index across keystrokes and screen visits; a new
-// bundle, language, or platform filter is a new list and gets its own.
 const indexes = new WeakMap<HelpEntry[], Fuse<FAQSearchEntry>>()
 
 const getFAQIndex = (entries: HelpEntry[]): Fuse<FAQSearchEntry> => {
   const cached = indexes.get(entries)
   if (cached) return cached
-  // Indexed folded, like the query, so Arabic matches with or without
-  // harakat and across alef/ta marbuta spellings.
+
   const fuse = new Fuse(
     entries.map((entry) => ({
       entry,
@@ -39,7 +36,6 @@ const getFAQIndex = (entries: HelpEntry[]): Fuse<FAQSearchEntry> => {
   return fuse
 }
 
-/** Searches `entries` on this device; a blank query returns them all. */
 export const searchFAQsFuzzy = (
   query: string,
   entries: HelpEntry[]

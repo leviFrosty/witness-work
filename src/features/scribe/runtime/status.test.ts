@@ -113,7 +113,7 @@ describe('refreshStatus', () => {
       )
       .mockResolvedValue({ enabled: false, reason: 'disabled' })
     const first = refreshStatus({ force: true })
-    // The connection comes back while the first read is out.
+
     void refreshStatus({ force: true })
     expect(mocks.status).toHaveBeenCalledTimes(1)
     answer({ enabled: true })

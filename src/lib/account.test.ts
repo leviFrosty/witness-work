@@ -47,7 +47,6 @@ describe('readAccountFile', () => {
   })
 
   it('leaves the files alone while one is still downloading', async () => {
-    // The canonical file downloading may be newer than the duplicate we read.
     runtime.files = [claim('witness-work-account 2.json', 'phone', 2)]
     runtime.pending = ['witness-work-account.json']
     const { readAccountFile } = await import('./account')

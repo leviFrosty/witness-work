@@ -16,12 +16,6 @@ export type RecommendationInputsHashInput = {
 
 const dayKey = (d: Date) => momentStoredDate(d).format('YYYY-MM-DD')
 
-/**
- * Per-plan fingerprint for the dismissal hash. Lives here, next to the hash
- * version tag, so a format change and its version bump are the same edit.
- * Credit-ness is resolved from the plan's Category (Plan Type) because it moves
- * the projection.
- */
 export const dayPlanFingerprint = (
   plan: DayPlan,
   categories: Category[]
@@ -30,11 +24,6 @@ export const dayPlanFingerprint = (
     isPlanCreditTime(plan, categories) ? 'c' : 's'
   }`
 
-/**
- * Recurring-plan fingerprint — covers the full recurrence pattern plus
- * per-instance overrides and deleted dates, all of which change the planned
- * minutes the engine projects against.
- */
 export const recurringPlanFingerprint = (
   plan: RecurringPlan,
   categories: Category[]
@@ -58,20 +47,6 @@ export const recurringPlanFingerprint = (
   ].join(':')
 }
 
-/**
- * Cheap deterministic fingerprint of every input that should re-arm the
- * Assistant after the user dismissed a recommendation. Two identical input
- * states must produce the same hash regardless of array order — so we sort the
- * set-like fields before stringifying.
- *
- * V3: includes the effective Monthly Goal so a one-month goal change re-arms a
- * previously dismissed recommendation.
- *
- * V2: plan fingerprints carry the plan's resolved credit-ness (Plan Type) —
- * re-typing a plan or flipping its Category's credit setting moves the
- * projection, so it must re-arm — plus the recurring pattern's recurrence,
- * overrides, and deleted dates.
- */
 export const computeRecommendationInputsHash = (
   input: RecommendationInputsHashInput
 ): string => {
@@ -94,11 +69,6 @@ export const computeRecommendationInputsHash = (
   return parts.join('::')
 }
 
-/**
- * Append a new assistant event to history, dropping the oldest entry when the
- * FIFO would exceed `cap`. Pure — caller writes the result back to the
- * preferences store.
- */
 export const appendAssistantEventCapped = (
   history: AssistantEvent[],
   next: AssistantEvent,

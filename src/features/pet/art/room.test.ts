@@ -70,7 +70,7 @@ describe('room registry', () => {
       'autumn',
       'winter',
     ])
-    // Each part's regular options, then its secret ones.
+
     expect(ROOM_PARTS.wallColor.options).toEqual([
       'sand',
       'sage',
@@ -208,13 +208,13 @@ describe('room art', () => {
     for (const [x, y] of slots) {
       expect(x).toBeGreaterThanOrEqual(Math.max(24, viewX))
       expect(x + 4).toBeLessThanOrEqual(58)
-      // The window's vertical cross bar is x 36–37.
+
       expect(x + 4 < 36 || x > 37).toBe(true)
       expect(y).toBe(39)
     }
     for (let i = 1; i < slots.length; i++)
       expect(slots[i][0] - slots[i - 1][0]).toBeGreaterThanOrEqual(6)
-    // Every keepsake actually lands in its slot.
+
     const bare = createBuffer(180, 100)
     paintRoomBase(bare, { ...ROOM, time: 'day' }, DEMO_SIGN_DATA)
     const full = createBuffer(180, 100)
@@ -237,12 +237,11 @@ describe('room art', () => {
   it('caches the base by a stable key', () => {
     const a = drawRoomBase(ROOM, DEMO_SIGN_DATA)
     expect(drawRoomBase({ ...ROOM }, { ...DEMO_SIGN_DATA })).toBe(a)
-    // Sign values don't matter while no sign is shown...
+
     expect(drawRoomBase(ROOM, { ...DEMO_SIGN_DATA, monthMinutes: 5940 })).toBe(
       a
     )
-    // ...and do once it is.
-    // Same objects or equal copies give the same key.
+
     const room = { ...ROOM, sign: 'month' as const }
     const decor = { sill: ['olive', 'fig'] as const, gift: 'lily' as const }
     expect(roomBaseKey(room, DEMO_SIGN_DATA, decor)).toBe(
@@ -301,7 +300,7 @@ describe('room art', () => {
     const W = SIGN_TEXT_WIDTH
     expect(W).toBe(22)
     expect(fitSignNumber(1333.5, 'latn', W)).toBe('1333.5')
-    // ١٣٣٣٫٥ is 28 pixels wide: the decimal goes.
+
     expect(fitSignNumber(1333.5, 'arab', W)).toBe('١٣٣٤')
     expect(fitSignNumber(123456, 'latn', W)).toBe('9999+')
     expect(fitSignNumber(33333, 'arab', W)).toBe('+٩٩٩٩')
@@ -309,7 +308,7 @@ describe('room art', () => {
     expect(fitSignNumber(-123456, 'latn', W)).toBe('-')
     expect(fitSignNumber(Number.NaN, 'latn', W)).toBe('-')
     expect(fitSignNumber(null, 'arab', W)).toBe('-')
-    // The convos slot is 12 pixels wide.
+
     expect(fitSignNumber(8, 'latn', 12)).toBe('8')
     expect(fitSignNumber(999, 'latn', 12)).toBe('999')
     expect(fitSignNumber(1000, 'latn', 12)).toBe('99+')
@@ -344,7 +343,6 @@ describe('room art', () => {
         const buf = drawRoomBase(room, { ...big, digits })
         for (let y = 0; y < 100; y++) {
           for (let x = 0; x < 180; x++) {
-            // Text only ever lands inside the paper's one-pixel margin.
             const text = x > x0 + 1 && x < x1 - 2 && y > y0 + 1 && y < y1 - 2
             if (!text) expect(pixelAt(buf, x, y)).toEqual(pixelAt(demo, x, y))
           }
@@ -381,7 +379,7 @@ describe('room art', () => {
         hashBuffer(lampSprite(lamp, 0, 300))
       )
     }
-    // A burning lamp reuses a handful of sprites (flicker in 0.1 px steps).
+
     const frames = new Set<unknown>()
     for (let t = 0; t < 60_000; t += 100) frames.add(lampSprite('clay', 5, t))
     expect(frames.size).toBeLessThanOrEqual(9)

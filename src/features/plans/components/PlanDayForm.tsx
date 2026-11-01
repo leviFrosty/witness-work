@@ -96,7 +96,6 @@ type NotifyMeOffset = {
 
 type RecurringSaveScope = 'instance' | 'future' | 'all'
 
-/** Where Plan Details shows a saved Plan. */
 export type PlanDetailsTarget = RootStackParamList['Plan Details']
 
 const storedDateFor = (date: Date) => preserveOrNormalizeStoredDate(date)
@@ -385,31 +384,18 @@ const RecurringSaveScopeModal = (props: {
 }
 
 type Props = {
-  /** The day, the Plan to edit, or a new Plan's seeds, as PlanDay takes them. */
   params: RootStackParamList['PlanDay']
-  /**
-   * Where the form is, for analytics: the Plan screen, or a day's split sheet
-   * (Schedule, Home, Progress).
-   */
+
   source: 'plan_form' | 'day_sheet'
-  /** Saved, with where Plan Details shows the Plan now. */
+
   onSaved: (target?: PlanDetailsTarget) => void
   onDeleted: () => void
-  /**
-   * `inline` sits within a page, e.g. a day's list: One Time / Recurring and
-   * How long?, then the details, then Add Plan, for that day only.
-   */
+
   layout?: 'docked' | 'inline'
-  /** Set to read the form's new Plan as it stands, e.g. to expand it. */
+
   draftRef?: Ref<PlanFormDraft>
 }
 
-/**
- * The Plan form: a Details list (title, location, note, buddies, reminder,
- * Type) above a dock with One Time / Recurring, the Date and How long? pills,
- * and Save. The Plan screen hosts it, and so does a day's split sheet, so a day
- * is planned without leaving it.
- */
 const PlanDayForm = ({
   params,
   source,
@@ -454,7 +440,7 @@ const PlanDayForm = ({
     : null
 
   const isEditMode = !!(existingDayPlan || existingRecurringPlan)
-  // Seeds for a new plan (Duplicate, Plan the Same Time); ignored when editing.
+
   const prefill = isEditMode ? undefined : params.prefill
   const prefillStartTime = prefill?.startTime
     ? moment(prefill.startTime).hours() * 60 +
@@ -610,7 +596,7 @@ const PlanDayForm = ({
     return source ? { note: source.note, noteDoc: source.noteDoc } : {}
   }
   const [note, setNote] = useState<NoteFields>(initialNote)
-  /** The note as it saves: normalized, and rebuilt if it went stale. */
+
   const savedNote = noteFields(getNoteDoc(note))
   const [title, setTitle] = useState(
     existingDayPlan?.title ??
@@ -628,8 +614,7 @@ const PlanDayForm = ({
   const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
     initialInvitedBuddies
   )
-  // A Plan that follows a buddy's invitation: the organizer sets its day,
-  // time, title, place, and note, so only the User's own fields show.
+
   const linkedShare = existingDayPlan?.buddyShare
   const linkedInvitation = useBuddies((state) =>
     linkedShare
@@ -663,7 +648,6 @@ const PlanDayForm = ({
     set: setPreferences,
   } = usePreferences()
 
-  // New Plans open in whichever mode the User last picked.
   const initialAnytime = existingDayPlan
     ? !!existingDayPlan.anytime
     : existingRecurringPlan
@@ -813,21 +797,13 @@ const PlanDayForm = ({
     setTypeValue(resolveInitialTypeValue())
     setSaveScopeModalOpen(false)
     setSelectedSaveScope(null)
-    // eslint-disable-next-line react-compiler/react-compiler
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingContext])
 
-  /**
-   * The reminder intent to save. `useReconciledReminders` schedules this
-   * device's OS reminder from it, once permission allows.
-   */
   const planReminderIntent = (
     planId: string,
     planDate: Date,
     startTimeInMinutes: number
   ): Pick<DayPlan, 'notifyMe' | 'reminderOffsetMinutes' | 'notifications'> => {
-    // An anytime Plan reminds the morning of; older app versions read the
-    // saved fire time.
     if (notifyMe && anytime) {
       return {
         notifyMe,
@@ -847,7 +823,7 @@ const PlanDayForm = ({
     return {
       notifyMe,
       reminderOffsetMinutes: minutes,
-      // The fire time, for older app versions on other devices.
+
       notifications: [
         {
           id: reminderRequestId('plan', planId),
@@ -857,10 +833,6 @@ const PlanDayForm = ({
     }
   }
 
-  /**
-   * The picked day and start time. An anytime Plan keeps the noon default, so
-   * older app versions show it as a noon Plan.
-   */
   const splitPickedDate = () => {
     const { date: planDate, startTimeInMinutes } = splitPlanDate(date)
     return {
@@ -873,8 +845,7 @@ const PlanDayForm = ({
 
   const buildRecurringPayload = () => {
     const { planDate, startTimeInMinutes } = splitPickedDate()
-    // Each instance's reminder is worked out from these. An anytime one
-    // reminds the morning of; the offset still applies to dates given a time.
+
     const offsetMinutes = notifyMe ? offsetToMinutes(notifyMeOffset) : null
     return {
       startDate: planDate,
@@ -899,7 +870,6 @@ const PlanDayForm = ({
     }
   }
 
-  /** Saves an edit to a Recurring Plan; returns where the edited date is now. */
   const saveExistingRecurringPlan = (
     scope: RecurringSaveScope
   ): PlanDetailsTarget | undefined => {
@@ -914,8 +884,7 @@ const PlanDayForm = ({
     const categoryChanged =
       (payload.categoryId ?? undefined) !==
       (existingRecurringPlan.categoryId ?? undefined)
-    // Like the Type, title, location and reminder are pattern-level: an
-    // instance that changes them becomes its own Day Plan.
+
     const detailsChanged =
       payload.title !== existingRecurringPlan.title ||
       JSON.stringify(payload.location) !==
@@ -998,8 +967,7 @@ const PlanDayForm = ({
           ...existingRecurringPlan.recurrence,
           endDate: lastOldDate,
         },
-        // The store re-anchors every date it's handed, so pass the kept
-        // stored anchors back as local days.
+
         overrides: existingRecurringPlan.overrides
           ?.filter((override) =>
             storedDay(override.date).isBefore(storedDay(editingDate), 'day')
@@ -1045,8 +1013,7 @@ const PlanDayForm = ({
     const { planDate, startTimeInMinutes } = splitPickedDate()
     const plannedMinutes = hours * 60 + minutes
     const plannedTitle = title.trim() || undefined
-    // A buddy whose pairing ended while the form was open left its summary;
-    // they leave the Plan too, rather than stay invited to nothing.
+
     const { buddies: knownBuddies, removedBuddies } = useBuddies.getState()
     const stillInvited = invitedBuddies.filter(
       (inboxId) =>
@@ -1058,20 +1025,17 @@ const PlanDayForm = ({
     const plannedBuddies =
       !linkedShare && stillInvited.length > 0 ? stillInvited : undefined
 
-    // Where Plan Details shows the saved Plan: an edit can move it, and one
-    // created from Plan Details (Duplicate, Invite) opens next.
     let detailsTarget: PlanDetailsTarget | undefined
     if (isEditMode) {
       if (existingDayPlan && linkedShare) {
         detailsTarget = { dayPlanId: existingDayPlan.id }
-        // The organizer's details come from their invitation, even one that
-        // arrived while the form was open: only the User's own fields save.
+
         const current =
           useServiceReport
             .getState()
             .dayPlans.find((plan) => plan.id === existingDayPlan.id)
             ?.buddyShare ?? linkedShare
-        // Hours set to the organizer's follow theirs again.
+
         const ownMinutes =
           plannedByOrganizer !== undefined
             ? plannedMinutes !== plannedByOrganizer
@@ -1215,7 +1179,7 @@ const PlanDayForm = ({
     (buddy) => buddy.status === 'active'
   )
   const buddyRequests = useBuddies((state) => state.incomingClaims.length)
-  // A Plan that has happened is history: nobody new is invited to it.
+
   const planHasEnded =
     date.getTime() + (hours * 60 + minutes) * 60 * 1000 <= Date.now()
   const invitedBuddyNames = activeBuddies
@@ -1231,8 +1195,6 @@ const PlanDayForm = ({
     navigation.navigate('Buddies')
   }
 
-  // Before any buddy is confirmed, the row opens Buddies to set it up; not
-  // while Buddies is turned off, which couldn't pair anyone.
   const buddiesRow =
     !oneTime || linkedShare || planHasEnded
       ? undefined
@@ -1252,7 +1214,6 @@ const PlanDayForm = ({
           ? { setUp: setUpBuddies }
           : undefined
 
-  // Asking here, rather than leaving the switch disabled, matches Buddies.
   const handleNotifyMeChange = async (on: boolean) => {
     if (on && !notificationsAllowed && !(await turnOnNotifications())) return
     setNotifyMe(on)
@@ -1329,7 +1290,6 @@ const PlanDayForm = ({
           </Text>
         ) : undefined
       }
-      // Only the hours are the User's: the organizer sets when it is.
       timeSpan={
         linkedShare
           ? undefined
@@ -1392,7 +1352,7 @@ const PlanDayForm = ({
             onChange={setNotifyMeOffset}
           />
         ),
-        // A Recurring Plan's later dates still remind.
+
         notice: oneTime && reminderPassed && (
           <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
             {i18n.t('reminderTimePassed')}
@@ -1453,8 +1413,7 @@ const PlanDayForm = ({
         dock={dock}
         contentContainerStyle={{
           flexGrow: 1,
-          // The details sit just above the dock, near the thumb, rather
-          // than at the top of a tall screen.
+
           justifyContent: 'flex-end',
           gap: 12,
           paddingTop: 10,
@@ -1495,7 +1454,6 @@ const PlanDayForm = ({
   )
 }
 
-/** The Plan form a day's sheet shows, folded into its Plans or in its place. */
 export const renderDaySheetPlanForm = ({
   date,
   layout,

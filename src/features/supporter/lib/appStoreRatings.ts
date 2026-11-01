@@ -2,7 +2,6 @@ import { request } from '@/lib/http/request'
 import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
 
-/** Paywall social proof served by ww-api `GET /app-store/ratings`. */
 export interface AppStoreRatings {
   complete: true
   averageRating: number
@@ -16,10 +15,6 @@ interface PersistedAppStoreRatings {
   fetchedAt: number
 }
 
-/**
- * Real App Store totals as of 2026-11-01, shown until the first fetch lands
- * (fresh install offline, or before the API's first sweep completes).
- */
 export const FALLBACK_APP_STORE_RATINGS: AppStoreRatings = {
   complete: true,
   averageRating: 4.89,
@@ -28,10 +23,8 @@ export const FALLBACK_APP_STORE_RATINGS: AppStoreRatings = {
   updatedAt: '2026-11-01T06:00:44.711Z',
 }
 
-// The API refreshes daily; totals move slowly, so ask about once a week.
 export const APP_STORE_RATINGS_REFRESH_MS = 7 * 24 * 60 * 60 * 1000
 
-// Lazy MMKV so importing this module never constructs native storage.
 let _store: MMKV | null = null
 const store = (): MMKV => (_store ??= new MMKV({ id: 'app-store-ratings' }))
 
@@ -81,19 +74,12 @@ const loadPersisted = (): PersistedAppStoreRatings | null => {
   }
 }
 
-/** Last fetched ratings, however old, else the bundled snapshot. */
 export const getAppStoreRatings = (): AppStoreRatings =>
   loadPersisted()?.ratings ?? FALLBACK_APP_STORE_RATINGS
 
 let inFlight: Promise<AppStoreRatings | null> | null = null
 let attemptedThisSession = false
 
-/**
- * Fetches and persists new ratings when the stored copy is at least
- * `APP_STORE_RATINGS_REFRESH_MS` old. Makes at most one attempt per JS session
- * so an offline paywall doesn't retry on every open. Resolves to the new
- * ratings, or null when nothing changed.
- */
 export const refreshAppStoreRatingsIfStale = (
   now = Date.now()
 ): Promise<AppStoreRatings | null> => {
@@ -120,7 +106,6 @@ export const refreshAppStoreRatingsIfStale = (
   return inFlight
 }
 
-/** Test-only: forget the per-session attempt. */
 export const resetAppStoreRatingsSession = () => {
   attemptedThisSession = false
   inFlight = null

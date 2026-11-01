@@ -6,10 +6,6 @@ import {
 } from '@/lib/notifications'
 import { AppState } from 'react-native'
 
-/**
- * The device's notification permission, re-read on return from Settings.
- * `turnOn` asks while the system still can, then falls back to Settings.
- */
 const useNotifications = () => {
   const [allowed, setAllowed] = useState(false)
   const [canAskAgain, setCanAskAgain] = useState(true)

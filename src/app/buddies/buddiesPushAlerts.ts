@@ -20,24 +20,16 @@ import {
 } from '@/features/buddies/lib/pushRegistration'
 import { logger } from '@/lib/logger'
 
-/**
- * A push fetches its event when it was too big to ride along; past this the
- * alert goes out with the template text instead.
- */
 const DESCRIBE_TIMEOUT_MS = 10 * 1000
 
 type AndroidBuddiesPush = {
   marker: BuddiesPushMarker
-  /** The template text, for when the event can't be opened. */
+
   fallback: { title: string; body?: string } | null
-  /**
-   * A relay from before named alerts sends `title` and `message`, which
-   * expo-notifications shows itself (in the background).
-   */
+
   shownBySystem: boolean
 }
 
-/** A Buddies push from FCM's data keys, or null for anything else. */
 export function androidBuddiesPush(
   data: Record<string, unknown> | undefined
 ): AndroidBuddiesPush | null {
@@ -56,7 +48,6 @@ export function androidBuddiesPush(
   }
 }
 
-/** FCM's data keys behind a received Android push. */
 export function remoteMessageData(
   notification: Notifications.Notification
 ): Record<string, unknown> | undefined {
@@ -66,10 +57,6 @@ export function remoteMessageData(
   return trigger?.remoteMessage?.data
 }
 
-/**
- * Runs `work` with a signal that aborts after `ms` or with the caller's; the
- * result rejects then too, even when `work` can't be cancelled.
- */
 function withTimeout<T>(
   work: (signal: AbortSignal) => Promise<T>,
   ms: number,
@@ -94,18 +81,9 @@ function withTimeout<T>(
   })
 }
 
-/**
- * Android: posts the alert for a Buddies push in the `buddies` channel (badge
- * news in the quiet `buddies_news` one). The relay's FCM message has no title,
- * so nothing shows until the app words it: named from the event ("Anna invited
- * you to a Plan"), or with the template text when the event can't be opened.
- * Nothing is posted for a push muted on this device. Runs from the push task in
- * the background and from the received listener in the foreground, where iOS
- * shows alerts too; the same push posted twice replaces itself.
- */
 export async function postBuddiesAlert(
   data: Record<string, unknown> | undefined,
-  /** The background task's: its time is up. */
+
   signal?: AbortSignal
 ) {
   if (Platform.OS !== 'android') return
@@ -129,7 +107,7 @@ export async function postBuddiesAlert(
     'alert' in outcome ? buddyAlertText(outcome.alert) : push.fallback
   if (!content) return
   const { kind, seq, eventId } = push.marker
-  // Badge news goes in its own quiet channel: no sound or heads-up banner.
+
   const news = isBuddiesNewsKind(kind)
   await (news ? ensureBuddiesNewsChannel() : ensureBuddiesChannel())
   await Notifications.scheduleNotificationAsync({
@@ -137,7 +115,7 @@ export async function postBuddiesAlert(
     content: {
       title: content.title,
       ...(content.body ? { body: content.body } : {}),
-      // Taps route by the same marker as the push.
+
       data: { ww: { kind, ...(seq === undefined ? {} : { seq }) } },
     },
     trigger: { channelId: news ? BUDDIES_NEWS_CHANNEL_ID : BUDDIES_CHANNEL_ID },

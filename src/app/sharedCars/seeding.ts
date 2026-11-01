@@ -8,19 +8,9 @@ import type {
 } from '@/types/mileage'
 import type { SharedCarSeeding } from '@/types/sharedCars'
 
-/**
- * What sharing one of the User's own cars puts in its space
- * (docs/shared-cars-protocol.md, "Sharing a car"): the car, its fuel setups, a
- * copy of each fuel its setups name (new ids, with the setups pointed at the
- * copies) and their prices, and every trip, logged by the owner. The car,
- * setups and trips keep their ids and stamps, and move; the User's own fuels
- * stay, since other cars may use them. Pure, so a share that stopped part-way
- * builds the same records again.
- */
-
 export type SeedRecords = {
   collections: MileageCollections
-  /** The copies' ids, with any made for this build added. */
+
   fuelCopies: Record<string, string>
   priceCopies: Record<string, string>
 }
@@ -40,7 +30,6 @@ export function buildSeed(
   const setups: VehicleSetup[] = personal.vehicleSetups
     .filter((setup) => setup.vehicleId === vehicle.id)
     .map((setup) => {
-      // A setup naming a fuel that's gone keeps the id, as it does at home.
       if (!setup.fuelId || !ownFuels.has(setup.fuelId)) return setup
       fuelCopies[setup.fuelId] ??= newId()
       return { ...setup, fuelId: fuelCopies[setup.fuelId] }

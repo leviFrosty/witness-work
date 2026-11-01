@@ -113,10 +113,6 @@ export default function MapOnboarding() {
     goNext()
   }
 
-  // The backfill step posts each of these householder addresses to HERE
-  // through the vendor's proxy. Data protection mode has nothing to offer
-  // here, so the list is empty and the onboarding opens on the next step —
-  // coordinates come from a manually dropped pin or not at all.
   const oldContactsWithAddressWithoutCoordinates = useMemo(() => {
     if (dataProtectionMode) return []
     return contacts.filter(
@@ -199,13 +195,11 @@ export default function MapOnboarding() {
           }))
         },
       })
-      // The Map's Find contacts row won't offer them again.
+
       if (notFound.length > 0) skipPinLookups(notFound)
 
       setFetching(false)
       if (wentOffline) {
-        // Back to the picker, where the contacts still missing a pin can be
-        // fetched again once the connection is back.
         setStatuses({})
         setFetchSnapshot([])
         alertOffline()
@@ -359,8 +353,6 @@ export default function MapOnboarding() {
       insets='none'
       style={[
         {
-          // Bounded to the pane so the step's list/scroll view scrolls instead
-          // of pushing the actions off a short window.
           flex: 1,
           paddingHorizontal: 20,
           width: '100%',
@@ -399,12 +391,9 @@ export default function MapOnboarding() {
             </View>
             {!hasFetched && (
               <Text style={{ color: theme.colors.textAlt }}>
-                {
-                  // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                  i18n.t('contactsMissingCoordinates', {
-                    count: oldContactsWithAddressWithoutCoordinates.length,
-                  })
-                }
+                {i18n.t('contactsMissingCoordinates', {
+                  count: oldContactsWithAddressWithoutCoordinates.length,
+                })}
               </Text>
             )}
           </View>
@@ -501,8 +490,7 @@ export default function MapOnboarding() {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            // Wide panes keep the actions with the content instead of
-            // stranding them at the bottom of a tall window.
+
             justifyContent: isWide ? 'center' : 'space-between',
             gap: isWide ? 32 : 20,
           }}
@@ -576,8 +564,7 @@ export default function MapOnboarding() {
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            // Wide panes keep the actions with the content instead of
-            // stranding them at the bottom of a tall window.
+
             justifyContent: isWide ? 'center' : 'space-between',
             gap: isWide ? 32 : 20,
           }}

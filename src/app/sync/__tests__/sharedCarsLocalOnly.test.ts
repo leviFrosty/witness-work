@@ -24,10 +24,6 @@ import useMileage from '@/stores/mileage'
 import useSharedCars from '@/stores/sharedCars'
 import { sharedCar } from '@/lib/mileage/testing/sharedCars'
 
-// A Shared Car lives in its space on ww-api; the User's iCloud, Google Drive,
-// Cloud Sync, and backup files carry only their own mileage (protocol
-// "Backups").
-
 describe('Shared Cars on this device', () => {
   beforeEach(() => {
     useMileage.getState()._WARNING_forceDeleteMileage()

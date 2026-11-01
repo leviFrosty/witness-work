@@ -1,7 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
-// The Duration Format module pulls in @/lib/locales → @/stores/mmkv; stub the
-// native modules the way minutes.test.ts does.
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
   Platform: { OS: 'ios' },
@@ -25,12 +23,10 @@ vi.mock('expo-device', () => ({
   osName: 'iOS',
 }))
 
-import i18n, { _i18n, setI18nLocale } from '@/lib/locales'
+import i18n, { _i18n, setI18nLocale, type TranslationKey } from '@/lib/locales'
 import { applyFormatRegion } from '@/lib/dates'
 import { formatMinutes, formatMinutesCompact } from '@/lib/minutes'
 
-// The shipped Arabic translation (`src/locales/ar.json`), loaded the way the app
-// loads it, plus one stand-in string for interpolation that isn't plural.
 beforeAll(() => {
   setI18nLocale('ar')
   _i18n.store({
@@ -44,15 +40,14 @@ afterAll(() => {
   applyFormatRegion({ language: 'en-us' })
 })
 
-// @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-const t = (key: string, count: number) => i18n.t(key, { count })
+const t = (key: TranslationKey, count: number) => i18n.t(key, { count })
+const goalLine = 'goalLine' as TranslationKey
 
 describe('i18n numbers in Arabic', () => {
   it('prints interpolated numbers in Arabic-Indic digits', () => {
-    expect(
-      // @ts-expect-error The stand-in key isn't in en-US.json.
-      i18n.t('goalLine', { count: 600, year: 2026, name: 'Ada 2' })
-    ).toBe('هدفك ٦٠٠ ساعة لسنة ٢٠٢٦، اسمك Ada 2')
+    expect(i18n.t(goalLine, { count: 600, year: 2026, name: 'Ada 2' })).toBe(
+      'هدفك ٦٠٠ ساعة لسنة ٢٠٢٦، اسمك Ada 2'
+    )
   })
 
   it('writes 1 and 2 with the singular and dual noun in sentences', () => {
@@ -83,8 +78,7 @@ describe('i18n numbers in Arabic', () => {
 describe('a translation into another Language', () => {
   it("uses that Language's digits, not the app's", () => {
     expect(
-      // @ts-expect-error The stand-in key isn't in en-US.json.
-      i18n.t('goalLine', {
+      i18n.t(goalLine, {
         count: 600,
         year: 2026,
         name: 'Ada',
@@ -94,8 +88,7 @@ describe('a translation into another Language', () => {
     _i18n.locale = 'en-us'
     try {
       expect(
-        // @ts-expect-error The stand-in key isn't in en-US.json.
-        i18n.t('goalLine', {
+        i18n.t(goalLine, {
           count: 600,
           year: 2026,
           name: 'Ada',

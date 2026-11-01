@@ -23,12 +23,6 @@ export type ContactDetailsNavigation = Pick<
   'navigate' | 'replace' | 'popToTop' | 'goBack' | 'setOptions'
 >
 
-/**
- * "+ Add" ("+ Add Visit" in the iPad pane): a pull-down of what to record — a
- * conversation, or a not-at-home, which logs right away with an Undo toast like
- * Log Visit's. Data protection mode drops not-at-home records, leaving one
- * choice, so the button adds a conversation directly.
- */
 export function AddVisitMenu({
   contact,
   navigation,
@@ -40,7 +34,7 @@ export function AddVisitMenu({
   navigation: ContactDetailsNavigation
   color: string
   compact?: boolean
-  /** "Add" beside the history it adds to; elsewhere, say what it adds. */
+
   label?: string
 }) {
   const theme = useTheme()
@@ -48,7 +42,6 @@ export function AddVisitMenu({
   const notAtHome = useLogNotAtHome()
 
   const addConversation = () => {
-    // Push over the details so Back and Save both return here.
     navigation.navigate('Visit Form', {
       contactId: contact.id,
       returnToContacts: true,
@@ -125,11 +118,6 @@ export function AddVisitMenu({
 
 const MORE_SIZE = 22
 
-/**
- * Contact Details' toolbar: More (Share…, Edit | Dismiss For ▸, Archive, Delete
- * Permanently…), the favorite star, and "+ Add" as the primary action. Used by
- * the pushed screen's header and the iPad detail pane.
- */
 export default function ContactDetailsActions({
   contact,
   navigation,
@@ -144,8 +132,7 @@ export default function ContactDetailsActions({
   const theme = useTheme()
   const toggleFavoriteContact = useContacts((s) => s.toggleFavoriteContact)
   const share = useShareContact(contact)
-  // The pushed screen leaves once its contact is hidden; the iPad pane just
-  // moves on to the next contact in the list.
+
   const { dismiss, archive, remove } = useContactRemovalActions(contact, {
     onDismissed: () => {
       if (!embedded) navigation.goBack()
@@ -167,7 +154,7 @@ export default function ContactDetailsActions({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        // Wide enough for More's frame and the star's to meet.
+
         gap: MIN_TOUCH_TARGET - (MORE_SIZE + theme.fontSize()) / 2,
       }}
     >
@@ -203,8 +190,7 @@ export default function ContactDetailsActions({
         frame
         onPress={() => toggleFavoriteContact(contact.id)}
       />
-      {/* In the iPad pane, beside the list's Add Contact and the tab bar's
-      Add, a bare "Add" doesn't say what it adds. */}
+      {}
       <AddVisitMenu
         contact={contact}
         navigation={navigation}

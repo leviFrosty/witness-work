@@ -5,11 +5,6 @@ import type { AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
 
-/**
- * An action row in the car form's People section (Share Car…, Invite Buddy…):
- * an icon and label, a spinner while it runs, dimmed when it can't be used,
- * with `description` saying why.
- */
 export default function CarPeopleActionRow({
   icon,
   label,

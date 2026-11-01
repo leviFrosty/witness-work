@@ -31,14 +31,12 @@ const mount = (total: number, options: Options) => {
   return counts
 }
 
-/** Runs one animation frame and the render it sets off. */
 const nextFrame = () =>
   act(() => {
     vi.advanceTimersByTime(16)
   })
 
 describe('useProgressiveCount', () => {
-  // Node has no animation frames; a frame here is a 16 ms timer.
   beforeEach(() => {
     vi.useFakeTimers()
     vi.stubGlobal('requestAnimationFrame', (run: () => void) =>

@@ -5,13 +5,12 @@ import type { TranslationKey } from '@/lib/locales'
 export type StoreAction = 'purchase' | 'restore'
 
 export type StoreErrorOutcome = {
-  /** The user backed out; say nothing. */
   silent: boolean
-  /** A bug or an outage worth reporting, not a state the user is in. */
+
   report: boolean
   title: TranslationKey
   message: TranslationKey
-  /** Offer Restore Purchases from the alert. */
+
   offerRestore: boolean
 }
 
@@ -27,11 +26,6 @@ const outcome = (
   offerRestore,
 })
 
-/**
- * What to tell the user after RevenueCat rejects a purchase or restore. Being
- * offline, Ask to Buy, purchase restrictions and owning it already are states
- * the user is in, not failures, so they aren't reported to error tracking.
- */
 export function storeErrorOutcome(
   error: unknown,
   action: StoreAction,

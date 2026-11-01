@@ -16,36 +16,23 @@ import links from '@/constants/links'
 export type WidgetContact = {
   id: string
   name: string
-  /**
-   * E.164 phone string (e.g. `+15551234567`) or `null` when the contact has no
-   * valid phone number. E.164 is what `tel:`/`sms:` handlers on iOS expect.
-   */
+
   phone: string | null
-  /** Pre-built `tel:` URL or `null`. */
+
   telUrl: string | null
-  /** Pre-built `sms:` URL or `null`. */
+
   smsUrl: string | null
-  /** Pre-built maps URL using the user's preferred provider, or `null`. */
+
   mapsUrl: string | null
-  /**
-   * Epoch ms of the most recent conversation with this contact, or `null` for
-   * contacts with no conversation history. Used as the secondary sort key.
-   */
+
   lastConversationAt: number | null
-  /**
-   * Pre-translated relative date string (e.g. `"3 days ago"`, `"2 weeks ago"`)
-   * for the most recent conversation, or `null` if there is none. Locale
-   * follows the app locale at write time.
-   */
+
   lastContactedRelative: string | null
-  /** Whether this contact has at least one conversation flagged as a study. */
+
   isBibleStudy: boolean
-  /** True when the user has favorited this contact. */
+
   isFavorite: boolean
-  /**
-   * Staleness bucket for the colored indicator dot. Mirrors the same logic used
-   * by the in-app pin colors so the widget feels consistent.
-   */
+
   staleness: ContactStaleness
 }
 
@@ -53,18 +40,14 @@ export type BuildContactsArgs = {
   contacts: Contact[]
   conversations: Visit[]
   defaultNavigationMapProvider: DefaultNavigationMapProvider
-  /**
-   * Region code (`'US'`, `'GB'`, etc.) used to parse phone numbers that were
-   * stored in national format. Falls back to `''` if unknown.
-   */
+
   defaultPhoneRegionCode: string
-  /** User-selected sort for the Contacts widget. */
+
   sort: WidgetContactSort
-  /** User thresholds for the staleness dot — mirrors the in-app pin colors. */
+
   stalenessBreakpoints: StalenessBreakpoints
 }
 
-/** Cap how many contacts we serialize. The widget renders 1/4/8 per family. */
 const MAX_CONTACTS = 12
 
 function buildPhoneUrls(
@@ -112,19 +95,11 @@ function buildMapsUrl(
   return `${base}${encodeURIComponent(query)}`
 }
 
-/**
- * The subset of fields sorting needs — built for every visible contact, while
- * the expensive display fields are only built for the final slice.
- */
 type SortableContact = Pick<
   WidgetContact,
   'name' | 'lastConversationAt' | 'isBibleStudy' | 'isFavorite'
 >
 
-/**
- * Compare two contacts by the user-selected widget sort. Used as the inner
- * comparator after favorites/studies tiering has been applied.
- */
 function compareBySort(
   a: SortableContact,
   b: SortableContact,
@@ -132,7 +107,6 @@ function compareBySort(
 ): number {
   switch (sort) {
     case 'longestContacted': {
-      // Never-contacted come first (most needy), then oldest contact.
       if (a.lastConversationAt === null && b.lastConversationAt === null)
         return compareText(a.name, b.name)
       if (a.lastConversationAt === null) return -1
@@ -149,7 +123,6 @@ function compareBySort(
     case 'az':
       return compareText(a.name, b.name)
     case 'bibleStudy': {
-      // Studies first, then by recent conversation as tiebreaker.
       if (a.isBibleStudy !== b.isBibleStudy) return a.isBibleStudy ? -1 : 1
       return compareBySort(a, b, 'recentConversation')
     }
@@ -158,15 +131,12 @@ function compareBySort(
 
 export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
   const now = Date.now()
-  // Single O(conversations) pass shared by every per-contact read below —
-  // re-scanning the conversations array per contact made this builder the
-  // dominant cost of the whole snapshot on large accounts.
+
   const index = buildConversationIndex(
     args.conversations,
     args.stalenessBreakpoints
   )
 
-  // Skip contacts the user has dismissed (snoozed) until that date passes.
   const visible = args.contacts.filter((c) => {
     if (!c.dismissedUntil) return true
     return new Date(c.dismissedUntil).getTime() <= now
@@ -180,9 +150,6 @@ export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
     isFavorite: !!contact.isFavorite,
   }))
 
-  // Tier ordering: favorites → bible studies → user-selected sort.
-  // Studies-first only applies *outside* the bibleStudy sort (which already
-  // surfaces studies via its own ordering).
   const studiesAboveOthers = args.sort !== 'bibleStudy'
   sortable.sort((a, b) => {
     if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1
@@ -191,8 +158,6 @@ export function buildContacts(args: BuildContactsArgs): WidgetContact[] {
     return compareBySort(a, b, args.sort)
   })
 
-  // Expensive display enrichment (phone parsing, URL building, relative-date
-  // formatting) only for the contacts the widget can actually render.
   return sortable.slice(0, MAX_CONTACTS).map(({ contact, ...keys }) => {
     const recent = index.mostRecentConvByContact.get(contact.id)
     return {

@@ -89,10 +89,10 @@ describe('syncLayoutDirection', () => {
 describe('applyLayoutDirectionAtLaunch', () => {
   it('reloads once on a mismatch, never in a loop', () => {
     const reload = vi.fn()
-    native.isRTL = true // e.g. an Arabic phone, English UI
+    native.isRTL = true
     expect(applyLayoutDirectionAtLaunch('en-us', reload)).toBe(true)
     expect(reload).toHaveBeenCalledTimes(1)
-    // The reload didn't take: the next launch leaves the app as it is.
+
     expect(applyLayoutDirectionAtLaunch('en-us', reload)).toBe(false)
     expect(reload).toHaveBeenCalledTimes(1)
   })
@@ -101,9 +101,9 @@ describe('applyLayoutDirectionAtLaunch', () => {
     const reload = vi.fn()
     native.isRTL = true
     applyLayoutDirectionAtLaunch('en-us', reload)
-    native.isRTL = false // the reload took
+    native.isRTL = false
     expect(applyLayoutDirectionAtLaunch('en-us', reload)).toBe(false)
-    native.isRTL = true // a later direction change
+    native.isRTL = true
     expect(applyLayoutDirectionAtLaunch('en-us', reload)).toBe(true)
     expect(reload).toHaveBeenCalledTimes(2)
   })

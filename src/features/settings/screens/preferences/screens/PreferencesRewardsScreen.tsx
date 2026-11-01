@@ -29,7 +29,6 @@ const SOUND_LABELS: Record<RewardSoundSet, () => string> = {
   off: () => i18n.t('rewardSounds_off'),
 }
 
-/** What each set sounds like, under its name. */
 const SOUND_DESCRIPTIONS: Record<RewardSoundSet, (() => string) | undefined> = {
   signature: () => i18n.t('rewardSounds_signature_description'),
   classic: () => i18n.t('rewardSounds_classic_description'),
@@ -41,10 +40,6 @@ const SOUND_DESCRIPTIONS: Record<RewardSoundSet, (() => string) | undefined> = {
   off: undefined,
 }
 
-/**
- * Settings → Rewards: whether what the User earns plays as the reward stack,
- * the sounds it plays (each one previews when picked), and a sample.
- */
 export default function PreferencesRewardsScreen() {
   const theme = useTheme()
   const rewardAnimations = usePreferences((state) => state.rewardAnimations)

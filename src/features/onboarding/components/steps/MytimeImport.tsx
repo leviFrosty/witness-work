@@ -26,16 +26,6 @@ interface Props {
   goNext: () => void
 }
 
-/**
- * Onboarding step offering a one-shot import from a MyTime backup. Uses
- * `'overwrite'` mode — this is a fresh user, so imported Publisher role /
- * Tenure Start Date seed the profile the remaining steps build on. Always
- * skippable; skipping just advances with no side effects.
- *
- * Unlike the iCloud restore step, a successful import does NOT complete
- * onboarding — MyTime carries no profile/preferences, so the user still walks
- * the rest of the flow (with their imported role pre-selected).
- */
 const MytimeImport = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const {
@@ -152,8 +142,7 @@ const MytimeImport = ({ goBack, goNext }: Props) => {
                 {i18n.t('mytimeImport_success')}
               </Text>
             </Card>
-            {/* Someone bringing years of records over already knows the
-                value — let them find Supporter without hunting for it. */}
+            {}
             <SupporterNote source='onboarding_mytime_import' />
           </View>
         )}

@@ -5,14 +5,6 @@ import type { BuddiesState } from '@/features/buddies/lib/state'
 import type { DayPlan } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 
-/**
- * `YYYY-MM` months, up to today, in which the User went out with a buddy: a
- * Plan they joined from an invitation, one of their own Plans or Follow-ups a
- * buddy said they're going to, or a buddy's invitation they're going to.
- *
- * Replies and invitations expire, so the Two by Two badge records these months
- * in its ledger as soon as they're seen here.
- */
 export const buddyTogetherMonths = ({
   state,
   dayPlans,

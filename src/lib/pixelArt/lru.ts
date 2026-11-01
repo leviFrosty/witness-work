@@ -1,14 +1,12 @@
-/** A tiny bounded least-recently-used cache for memoizing rasterized art. */
 export interface LruCache<V> {
   get(key: string): V | undefined
   set(key: string, value: V): V
-  /** `get`, or compute, store and return. */
+
   getOrCreate(key: string, create: () => V): V
   clear(): void
   readonly size: number
 }
 
-/** A cache that keeps at most `capacity` entries, evicting the least recent. */
 export function createLru<V>(capacity: number): LruCache<V> {
   const map = new Map<string, V>()
   const cache: LruCache<V> = {

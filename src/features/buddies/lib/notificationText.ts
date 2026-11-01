@@ -3,10 +3,6 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { badgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import type { BuddyNotification } from '@/features/buddies/lib/state'
 
-/**
- * A queue entry's line in the bell, naming the buddy as `entry.name`, and for a
- * Shared Car the car as `car` (without it, "a car").
- */
 export function notificationHeadline(
   entry: BuddyNotification,
   { car }: { car?: string } = {}
@@ -37,14 +33,12 @@ export function notificationHeadline(
     case 'joinRequest':
       return i18n.t('buddies_notifJoinRequest', name)
     case 'badge': {
-      // "Tomás has 2 new badges": those that came together or within a day.
       const count = entry.badges?.length ?? 0
       return count > 1
         ? i18n.t('buddies_notifBadges' as TranslationKey, { ...name, count })
         : i18n.t('buddies_notifBadge', name)
     }
     case 'badgeReaction': {
-      // "Alex reacted 🎉 to Year Round, Gold"
       const [badge] = entry.badges ?? []
       return i18n.t('buddies_notifBadgeReaction', {
         ...name,
@@ -63,10 +57,6 @@ export function notificationHeadline(
   }
 }
 
-/**
- * "Year Round, Gold + 1 more": a buddy's new badges, the one named first
- * leading.
- */
 export function badgeNewsLine(entry: BuddyNotification): string | undefined {
   const [top, ...rest] = entry.badges ?? []
   if (entry.kind !== 'badge' || !top) return undefined

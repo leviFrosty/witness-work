@@ -52,16 +52,9 @@ export function deploymentPlan(
   }
 }
 
-/** The 1Password item holding a channel's private signing key, as its note. */
 export const signingKeyItem = (channel) =>
   `WitnessWork OTA signing (${channel})`
 
-/**
- * How `op` reads a channel's signing key. Production goes through the 1Password
- * app, never the agents' service account, so a person approves each read, and
- * its item can live in a vault the service account can't open. Beta and dev
- * read from Agents, so /beta-build stays hands-free.
- */
 export function signingKeyRead(channel, inherited = process.env) {
   const env = { ...inherited }
   const args = ['item', 'get', signingKeyItem(channel)]
@@ -71,10 +64,6 @@ export function signingKeyRead(channel, inherited = process.env) {
   return { args, env }
 }
 
-/**
- * Runs `run` with the channel's signing key in a private temporary file, then
- * deletes it. The key is never kept on disk between publishes.
- */
 function withSigningKey(channel, run) {
   const { args, env } = signingKeyRead(channel)
   const read = spawnSync('op', args, {
@@ -95,7 +84,7 @@ function withSigningKey(channel, run) {
         : `Couldn't read "${signingKeyItem(channel)}" from the Agents vault`
     )
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-ota-key-'))
-  // An interrupted publish still reaches `finally` and deletes the key.
+
   const interrupted = () => (process.exitCode = 130)
   process.on('SIGINT', interrupted)
   process.on('SIGTERM', interrupted)
@@ -137,10 +126,9 @@ function main() {
       throw new Error('Production OTA code must be on origin/main')
   }
   const { env } = loadLocalEnv(root, variant)
-  // OTA bundles are always Release JS, including the dev test channel.
+
   env.NODE_ENV = 'production'
-  // RevenueCat's Test Store closes non-debuggable Android apps. Dev OTAs are
-  // Release JS too; use the app's purchases-unavailable path for that key.
+
   if (
     variant === 'development' &&
     platform === 'android' &&
@@ -180,8 +168,7 @@ function main() {
     ['rev-parse', '--short', 'HEAD'],
     { cwd: root, encoding: 'utf8' }
   ).stdout.trim()
-  // Hot Updater's config wants the key path whenever it loads for a deploy,
-  // the fingerprint step included.
+
   const result = withSigningKey(plan.channel, (signingKey) => {
     const signing = { ...env, HOT_UPDATER_SIGNING_KEY_PATH: signingKey }
     const fingerprint = spawnSync(

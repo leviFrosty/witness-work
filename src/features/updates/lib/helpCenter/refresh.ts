@@ -25,7 +25,7 @@ export type RefreshResult =
       outcome: 'failed'
       reason: RefreshFailure
       error?: unknown
-      /** A good download that couldn't be saved: show it anyway. */
+
       bundle?: HelpBundle
     }
 
@@ -79,20 +79,13 @@ async function loadManifest(deps: RefreshDeps): Promise<HelpManifest> {
   let manifest: HelpManifest | null = null
   try {
     manifest = parseHelpManifest(JSON.parse(body))
-  } catch {
-    // Reported below as an invalid manifest.
-  }
+  } catch {}
   if (!manifest) throw new RefreshError('invalid')
   if (response.status !== 304)
     deps.writeManifest(response.headers.get('etag'), body)
   return manifest
 }
 
-/**
- * Brings the Help Center for `locale` up to date: reads the manifest and
- * downloads the locale's bundle when its hash differs from `currentHash`. A
- * locale the site doesn't publish gets English. Never throws.
- */
 export async function refreshHelpBundle(
   locale: HelpLocale,
   currentHash: string | undefined,
@@ -109,25 +102,22 @@ export async function refreshHelpBundle(
 
     const response = await request(
       deps,
-      // Bundle paths are relative to the manifest's site.
+
       new URL(published.path, links.helpCenterManifest).toString()
     )
     if (!response.ok) throw new RefreshError('http')
     let bundle: HelpBundle | null = null
     try {
       bundle = parseHelpBundle(await response.json())
-    } catch {
-      // Reported below as an invalid bundle.
-    }
+    } catch {}
     if (!bundle || bundle.locale !== publishedLocale)
       throw new RefreshError('invalid')
-    // The bundle didn't change after all (the manifest was ahead of the CDN).
+
     if (bundle.hash === currentHash) return { outcome: 'unchanged' }
 
     try {
       await deps.writeBundle(bundle)
     } catch (error) {
-      // Still show it this time; the next open downloads it again.
       return { outcome: 'failed', reason: 'storage', error, bundle }
     }
     return { outcome: 'updated', bundle }

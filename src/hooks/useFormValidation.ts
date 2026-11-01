@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
 
-/** Show current field errors after Submit, and guard every submission path. */
 export default function useFormValidation(
   errors: Record<string, boolean>,
   form: string,
@@ -19,7 +18,7 @@ export default function useFormValidation(
       return true
     }
     setAttempted(true)
-    // Once per mounted form: no values, names, notes, or other private data.
+
     if (!reported.current) {
       analytics.capture('form_validation_failed', {
         form,

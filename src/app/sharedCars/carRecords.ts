@@ -10,18 +10,6 @@ import type {
 } from '@/types/mileage'
 import type { SharedCarRecordKind } from '@/types/sharedCars'
 
-/**
- * A Shared Car's mileage records as Shared Spaces records
- * (docs/shared-cars-protocol.md, "Records"): each record's `recordId` is its
- * id, its `stamp` its `updatedAt`, and its `data` the record's own fields
- * without `id` (`mileageRecordData`). Readers take the fields they can use, and
- * keep every other one as it came (`extraFields`): fields they don't know, and
- * known ones holding a value they can't read (a newer note format, say). Those
- * go back out when they write the record, unless they set that field
- * themselves, so an older build never strips what a newer one added. A record
- * that isn't one never fails the sync.
- */
-
 export const SHARED_CAR_KINDS: readonly SharedCarRecordKind[] = [
   'car',
   'setup',
@@ -35,10 +23,6 @@ export const isSharedCarKind = (kind: string): kind is SharedCarRecordKind =>
 
 type AnyRecord = Record<string, unknown>
 
-/**
- * The fields of `data` this version doesn't know (a newer app's), or null when
- * there are none. `known` lists the ones it does.
- */
 export function unknownFields(
   data: AnyRecord,
   known: readonly string[]
@@ -49,11 +33,6 @@ export function unknownFields(
   return extra.length > 0 ? Object.fromEntries(extra) : null
 }
 
-/**
- * The fields of a mileage record's `data` this version didn't read into
- * `record`: ones it doesn't know, and known ones whose value it can't use. Null
- * when it read them all.
- */
 export function unreadMileageFields(
   data: AnyRecord,
   record: MileageRecord
@@ -71,7 +50,6 @@ const isNumber = (value: unknown): value is number =>
 const isDate = (value: unknown): value is string =>
   isString(value) && /^\d{4}-\d{2}-\d{2}$/.test(value)
 
-/** The optional fields of `data` that pass `check`, by name. */
 function optional(
   data: AnyRecord,
   checks: Record<string, (value: unknown) => boolean>
@@ -159,11 +137,6 @@ const READERS: Record<
   trip: readTrip,
 }
 
-/**
- * The mileage record a live record holds, its id the `recordId` and its
- * `updatedAt` the record's stamp (which the AAD binds, unlike `data`). Null
- * when `data` isn't one.
- */
 export function readMileageRecord(
   kind: SharedCarRecordKind,
   recordId: string,
@@ -174,6 +147,5 @@ export function readMileageRecord(
   return record && ({ ...record, updatedAt: stamp } as MileageRecord)
 }
 
-/** The collection a kind's records live in. */
 export const collectionOf = (kind: SharedCarRecordKind) =>
   COLLECTION_OF_KIND[kind]

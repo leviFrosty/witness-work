@@ -124,10 +124,6 @@ describe('lucide-imports babel plugin', () => {
     expect(code).toContain("import { Plus } from 'lucide-react-native';")
   })
 
-  // A barrel import that survives the transform bundles every icon again.
-  // This Babel-transforms every app file that imports an icon (a few hundred),
-  // which is CPU-bound and runs past vitest's 5 s default on a busy machine,
-  // failing pre-push hooks for nothing; give it room.
   it(
     'leaves no app file importing the full icon set',
     { timeout: 30_000 },

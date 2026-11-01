@@ -11,7 +11,6 @@ type SidebarPreferences = {
   toggle: () => void
 }
 
-/** Device-local UI preferences; excluded from sync and ministry backups. */
 export const useSidebarPreferences = create<SidebarPreferences>()(
   persist(
     (set) => ({
@@ -29,10 +28,6 @@ export const useSidebarPreferences = create<SidebarPreferences>()(
   )
 )
 
-/**
- * Label mode while a drag is live. The width itself animates on the UI thread,
- * so React only hears about a drag when it crosses the icon/label threshold.
- */
 export const useSidebarResize = create<{
   compact: boolean | null
   preview: (compact: boolean | null) => void

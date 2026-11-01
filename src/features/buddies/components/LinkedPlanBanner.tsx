@@ -12,11 +12,6 @@ import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
-/**
- * Tells the User a Plan follows a buddy's: the form shows only the fields that
- * are theirs, and the info button says which are the organizer's. Long-press to
- * view the buddy.
- */
 export default function LinkedPlanBanner({ share }: { share: BuddyShareRef }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

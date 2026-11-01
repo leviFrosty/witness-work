@@ -8,11 +8,6 @@ import {
 } from '@/lib/serverAccount/deviceLabel'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
-/**
- * Interop vector for `session/open`'s `device` (docs/accounts-protocol.md),
- * computed independently with Node's HKDF and ChaCha20-Poly1305. Other clients
- * and ww-api's tests can use the same values.
- */
 const ACCOUNT_KEY = Uint8Array.from({ length: 32 }, (_, i) => i)
 const ACCOUNT_PUB = 'aMYrddRdQwf7331YL7k_b8XbbdBwqmKdY9BkBoOv9QE'
 const NONCE = Uint8Array.from({ length: 12 }, (_, i) => 0xa0 + i)

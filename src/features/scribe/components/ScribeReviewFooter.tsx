@@ -7,15 +7,8 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import { undoScribeProposal, useScribeProposal } from '@/features/scribe'
 
-// Pinned above the composer, so the cards keep room to scroll at the
-// largest text sizes; the cards themselves scale fully.
 const FOOTER_FONT_SCALE_CAP = 1.4
 
-/**
- * Add N and the disclaimer, pinned above the composer while a Proposal waits
- * for review. Disabled until every checked "Which …?" card has its person, and
- * every checked new householder's agreement is confirmed.
- */
 const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
   const theme = useTheme()
   const { fontScale } = useWindowDimensions()
@@ -36,8 +29,7 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
 
   const add = async () => {
     const result = await controller.add()
-    // Failed, or everything changed since: the conversation says why, and
-    // there's nothing to undo.
+
     if (result.status === 'failed' || result.appliedCards === 0) {
       void Haptics.error()
       return
@@ -96,8 +88,6 @@ const ScribeReviewFooter = ({ proposalId }: { proposalId: string }) => {
         </Text>
       </Button>
       <Text
-        // Scaled here rather than with `maxFontSizeMultiplier`, which measures
-        // the Text at full size and leaves a gap under it.
         allowFontScaling={false}
         style={{
           textAlign: 'center',

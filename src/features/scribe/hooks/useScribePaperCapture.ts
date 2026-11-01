@@ -26,10 +26,6 @@ import { noteScribeFailure } from '@/features/scribe/runtime/status'
 import { noteUsage } from '@/features/scribe/stores/usage'
 import { trackCaptureFinished } from '@/features/scribe/analytics'
 
-/**
- * Failures that would fail every remaining page the same way, so the batch
- * stops instead of spending more requests.
- */
 const BATCH_STOPPING: ReadonlySet<ScribePaperError> = new Set<ScribePaperError>(
   [
     'limit_reached',
@@ -45,11 +41,6 @@ const BATCH_STOPPING: ReadonlySet<ScribePaperError> = new Set<ScribePaperError>(
   ]
 )
 
-/**
- * Picked pages until each is read or the User skips the rest. `texts[i]` is
- * page i's text once read (null until then); the first `inserted` pages are in
- * the composer already.
- */
 interface PaperBatch {
   pages: readonly ScribePaperPage[]
   texts: (string | null)[]
@@ -88,22 +79,12 @@ async function pick(
     .map(({ uri, width, height }) => ({ uri, width, height }))
 }
 
-/** Text for the composer, with the success haptic, or null when there's none. */
 const landed = (text: string): string | null => {
   if (!text) return null
   void Haptics.success()
   return text
 }
 
-/**
- * Read paper pages (ADR 0025): page photos read into text by ww-api, metered, a
- * few at a time and kept in page order. A failure that would repeat on every
- * page (limits, the device, the connection) stops the batch and keeps what was
- * read. When pages are left unread for a reason that can pass (no connection, a
- * busy service), their copies stay until Try again reads them or the User skips
- * them, so nothing has to be picked again. The text goes to the composer for
- * the User to edit.
- */
 export function useScribePaperCapture(): ScribePaperCapture {
   const [progress, setProgress] = useState<{
     done: number
@@ -115,10 +96,9 @@ export function useScribePaperCapture(): ScribePaperCapture {
   const running = useRef(false)
   const library = useLibraryImagePicker('scribe_paper')
   const controller = useRef<AbortController | null>(null)
-  // The batch waiting on Try again or Skip.
+
   const kept = useRef<PaperBatch | null>(null)
 
-  // Leaving the conversation stops a batch and drops kept pages.
   useEffect(
     () => () => {
       controller.current?.abort()
@@ -128,7 +108,6 @@ export function useScribePaperCapture(): ScribePaperCapture {
     []
   )
 
-  /** The rest of what was read; deletes the copies. */
   const finish = (batch: PaperBatch): string => {
     if (kept.current === batch) kept.current = null
     const text = joinPaperPages(batch.texts.slice(batch.inserted))
@@ -137,7 +116,6 @@ export function useScribePaperCapture(): ScribePaperCapture {
     return text
   }
 
-  /** Reads the batch's unread pages; the text that can go in now. */
   const read = async (batch: PaperBatch, retry: boolean): Promise<string> => {
     const indexes = batch.texts.flatMap((text, index) =>
       text == null ? [index] : []
@@ -146,11 +124,11 @@ export function useScribePaperCapture(): ScribePaperCapture {
     controller.current = abort
     kept.current = null
     setProgress({ done: 0, total: indexes.length })
-    // Written from the page tasks.
+
     const attempt = {
       stop: null as ScribePaperError | null,
       retryAt: null as number | null,
-      /** The first single page's failure that a later attempt may get past. */
+
       passing: null as ScribePaperError | null,
       failed: 0,
     }
@@ -167,7 +145,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
             )
             noteUsage(result.usage)
             batch.texts[index] = result.text
-            // Read: its copy goes now, even while other pages wait.
+
             deletePaperPages([batch.pages[index]])
           } catch (thrown) {
             const failure = toScribeClientError(thrown)
@@ -208,7 +186,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
 
     const pages = indexes.length
     const attemptText = joinPaperPages(indexes.map((i) => batch.texts[i]))
-    // The conversation closed mid-read: nothing goes in the composer.
+
     if (abort.signal.aborted && !attempt.stop) {
       deletePaperPages(batch.pages)
       trackCaptureFinished({
@@ -223,8 +201,6 @@ export function useScribePaperCapture(): ScribePaperCapture {
     const missing = batch.texts.filter((text) => text == null).length
     const cause = attempt.stop ?? attempt.passing
     if (missing && cause && retriesPaperPage(cause)) {
-      // Text up to the first unread page goes in now; the pages after it wait,
-      // so the composer keeps page order.
       const gap = firstUnreadPage(batch.texts, batch.inserted)
       const text = joinPaperPages(batch.texts.slice(batch.inserted, gap))
       batch.inserted = gap
@@ -276,7 +252,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
           ? (given ?? []).slice(0, SCRIBE_PAPER_MAX_PAGES)
           : await pick(source, library.pick)
       if (!pages?.length) return null
-      // New pages end a kept batch; what it read goes in first.
+
       const held = kept.current ? finish(kept.current) : ''
       setUnread(null)
       const text = await read(

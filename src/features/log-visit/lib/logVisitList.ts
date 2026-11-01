@@ -30,17 +30,11 @@ export type LogVisitListItem =
   | { type: 'noMatches'; key: string; query: string }
   | { type: 'addNew'; key: string; name: string }
 
-/** Contacts A–Z by name, ignoring case and accents. */
 export const sortContactsByName = (contacts: Contact[]): Contact[] =>
   [...contacts].sort((a, b) =>
     compareText(a.name, b.name, { sensitivity: 'base', numeric: true })
   )
 
-/**
- * The picker without a search: each suggested section under its header, then
- * everyone A–Z under All Contacts (suggested people again too, so the A–Z list
- * is predictable). Without suggestions the A–Z list stands alone.
- */
 export const buildBrowseItems = ({
   suggested,
   contacts,
@@ -92,10 +86,6 @@ export const buildBrowseItems = ({
   return items
 }
 
-/**
- * The picker while searching: Fuse-ranked matches, then a row that adds what
- * was typed as a new Contact. An empty query has no items.
- */
 export const buildSearchItems = (
   query: string,
   results: ContactSearchMatch[]

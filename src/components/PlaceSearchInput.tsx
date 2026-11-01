@@ -43,10 +43,6 @@ const FAILURE_MESSAGE_KEYS = {
   failed: 'errorFetchingAddress',
 } as const satisfies Record<PlaceSearchFailure, string>
 
-/**
- * Nearby results need location access, but search works without it, so this
- * never prompts on its own. Tapping asks (or opens Settings once declined).
- */
 const LocationStatusControl = ({
   status,
   onRequest,
@@ -151,34 +147,24 @@ const SuggestionRow = ({
 }
 
 interface PlaceSearchInputProps {
-  /** `address` for street addresses only; `all` adds points of interest. */
   scope: PlaceSearchScope
   query: string
   onChangeQuery: (query: string) => void
   onSelect: (place: ResolvedPlace) => void
-  /** False while the query shows a place that was already picked. */
+
   searchEnabled?: boolean
   placeholder: string
   accessibilityLabel: string
-  /** Drops the field's border and fill, for a field that sits in a row. */
+
   borderless?: boolean
   onFocus?: () => void
   onBlur?: () => void
-  /** The search field, for moving focus to it from another field. */
+
   inputRef?: RefObject<TextInput | null>
-  /**
-   * Return while the field shows a picked place (`searchEnabled` false). The
-   * key reads Next instead of Search when this is set.
-   */
+
   onSubmitPicked?: () => void
 }
 
-/**
- * Search field for places and addresses: Apple MapKit on iOS, HERE for
- * addresses elsewhere (see `placeSearchProvider`). Results are biased toward
- * the publisher when they've shared their location; the button beside the field
- * shows whether they have and lets them turn it on.
- */
 export default function PlaceSearchInput({
   scope,
   query,
@@ -200,25 +186,21 @@ export default function PlaceSearchInput({
   const [searchedQuery, setSearchedQuery] = useState<string>()
   const [error, setError] = useState<PlaceSearchFailure>()
   const [resolveError, setResolveError] = useState<PlaceSearchFailure>()
-  // The suggestion being looked up. The pick shows at once, since the lookup
-  // is a network round trip that would otherwise read as a missed tap.
+
   const [picked, setPicked] = useState<PlaceSuggestion>()
-  // Typing during a lookup drops its late answer.
+
   const pickRun = useRef(0)
 
   const trimmed = query.trim()
   const latitude = location?.coords.latitude
   const longitude = location?.coords.longitude
 
-  // Settings is where location access gets turned back on.
   useEffect(() => {
     const subscription = addForegroundListener(refreshStatus)
     return () => subscription.remove()
   }, [refreshStatus])
 
   useEffect(() => {
-    // An old message is about an old query, and the spinner waits for the
-    // debounce so typing doesn't look like loading.
     setError(undefined)
     setResolveError(undefined)
     setSearching(false)
@@ -232,8 +214,7 @@ export default function PlaceSearchInput({
       latitude !== undefined && longitude !== undefined
         ? { latitude, longitude }
         : undefined
-    // Aborting a superseded search keeps it off ww-api's per-IP rate limit,
-    // and drops its late answer.
+
     const controller = new AbortController()
     const timeout = setTimeout(async () => {
       setSearching(true)
@@ -274,13 +255,12 @@ export default function PlaceSearchInput({
     try {
       const resolved = await resolvePlace(suggestion)
       if (run !== pickRun.current) return
-      // Without a match, keep what the publisher picked as a plain address
-      // rather than dropping their choice.
+
       onSelect(resolved ?? { address: suggestionLabel(suggestion) })
       setSuggestions([])
     } catch (failure) {
       if (run !== pickRun.current) return
-      // Bring the suggestions back so they can pick again.
+
       if (isUnexpectedPlaceSearchError(failure)) {
         errorTracking.captureException(failure)
       }

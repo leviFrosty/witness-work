@@ -6,12 +6,11 @@ import type { AppliedEffect } from '@/features/scribe/proposals/apply'
 import { SCRIBE_UNDO_WINDOW_DAYS } from '@/features/scribe/constants'
 const UNDO_WINDOW_MS = SCRIBE_UNDO_WINDOW_DAYS * 24 * 60 * 60 * 1000
 
-/** What one Add wrote, for its Undo. */
 export interface ApplyRecord {
   proposalId: string
   conversationId: string
   appliedAt: number
-  /** In apply order. */
+
   effects: AppliedEffect[]
 }
 
@@ -30,10 +29,6 @@ const withinWindow = (
     Object.entries(records).filter(([, record]) => undoable(record, now))
   )
 
-/**
- * Undo records of applied Proposals (device-only MMKV, like the conversations).
- * Kept for `SCRIBE_UNDO_WINDOW_DAYS`, pruned on launch.
- */
 export const useScribeLedger = create<ScribeLedgerState>()(
   persist<ScribeLedgerState>(() => ({ records: {} }), {
     name: 'scribe-ledger',

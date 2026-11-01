@@ -21,7 +21,6 @@ import type {
   TimeEntry,
 } from '@/types/timeEntry'
 
-// 2026-10-06 is a Tuesday.
 const now = new Date(2026, 9, 6, 15)
 const stored = (key: string) => normalizeDateForStorage(`${key}T09:00:00`)
 
@@ -86,7 +85,7 @@ describe('serviceStreak — plans', () => {
           ['2026-10-03', 30],
           ['2026-10-01', 15],
           ['2026-09-29', 200],
-          // Time without a Plan neither adds nor breaks.
+
           ['2026-09-30', 60]
         ),
         [dayPlan('2026-10-03'), dayPlan('2026-10-01'), dayPlan('2026-09-29')]
@@ -282,9 +281,7 @@ describe('streakEndsSoon', () => {
       else process.env.TZ = originalTZ
     })
 
-    // The last day's start, however long the days before the end are.
     it.each([
-      // Falls back on Nov 1 (25 hours), springs forward on Mar 8 (23 hours).
       ['America/New_York', [2026, 10, 1]],
       ['America/New_York', [2026, 2, 8]],
       ['Europe/London', [2026, 9, 25]],
@@ -300,7 +297,7 @@ describe('streakEndsSoon', () => {
 
     it('warns a week before a month ends across the change', () => {
       process.env.TZ = 'Europe/London'
-      // Clocks fall back on Sunday Oct 25, the week's first day.
+
       const month = streak({
         kind: 'months',
         due: { period: '2026-09-01', endsAt: new Date(2026, 10, 1) },
@@ -493,8 +490,6 @@ describe('streakHistory', () => {
   })
 
   it('keeps a milestone reached the day after a missed planned day', () => {
-    // As of Oct 6, Oct 5 could still be kept: the streak was 3. It still is
-    // once Oct 5 has passed for good.
     const history = streakHistory(
       'plans',
       records(
@@ -600,7 +595,7 @@ describe('streakHistory', () => {
       ),
       now
     )
-    // In July, June could still be shared: 4. By August it couldn't: 2.
+
     expect(history.milestones).toEqual([
       { count: 3, on: '2026-05-01' },
       { count: 4, on: '2026-07-01' },

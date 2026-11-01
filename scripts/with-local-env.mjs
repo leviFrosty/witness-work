@@ -12,8 +12,6 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   }[variant]
   if (!filenames) throw new Error('Expected development, production or beta')
 
-  // Worktrees layer their own files over the main checkout's, so a worktree
-  // that only received a copy of `.env` still sees the main `.env.local`.
   const worktrees = spawnSync('git', ['worktree', 'list', '--porcelain'], {
     cwd: root,
     encoding: 'utf8',
@@ -29,9 +27,6 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
     )
   }
 
-  // App configuration comes only from the selected files. Keep toolchain vars,
-  // but don't inherit app keys or a dev bypass from another shell environment.
-  // POSTHOG_DISABLE_UPLOAD only ever turns uploads off, so it may pass.
   const env = { ...inherited }
   for (const key of Object.keys(env)) {
     if (
@@ -52,12 +47,12 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
       }
     }
   }
-  // `scripts/verify` points a development run at its own isolated ww-api.
+
   if (variant === 'development' && inherited.WW_VERIFY_API_BASE_URL) {
     env.EXPO_PUBLIC_API_BASE_URL = inherited.WW_VERIFY_API_BASE_URL
     env.EXPO_PUBLIC_API_DEV_BYPASS = inherited.WW_VERIFY_API_DEV_BYPASS ?? ''
   }
-  // `scripts/perf` builds a development app with the profiling probe on.
+
   if (variant === 'development' && inherited.WW_PERF_PROBE === '1')
     env.EXPO_PUBLIC_PERF_PROBE = '1'
   Object.assign(env, {
@@ -114,7 +109,6 @@ export function validateLocalEnv(
   return api
 }
 
-/** `expo run` building the Release app instead of the dev client. */
 export function isReleaseRun(command, args) {
   const flag = { 'run:ios': '--configuration', 'run:android': '--variant' }[
     args[0]
@@ -123,14 +117,6 @@ export function isReleaseRun(command, args) {
   return command === 'expo' && args.includes(flag) && /^release$/i.test(value)
 }
 
-/**
- * Release builds of the development app (profiling, and `pnpm ios:ota` /
- * `android:ota` for testing `dev` OTA updates) keep its RevenueCat Test Store
- * key, which RevenueCat answers with an alert and a crash. iOS compiles
- * RevenueCat with its opt-out flag. Android can't opt out (the check is that
- * the app isn't debuggable), so it gets no key and takes the app's existing
- * purchases-unavailable path, as `update:dev` Android bundles do.
- */
 export function applyDevRelease(env, platform, release = false) {
   if (env.EXPO_PUBLIC_PERF_PROBE !== '1' && !release) return env
   if (platform === 'android') env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY = ''
@@ -182,8 +168,7 @@ function main() {
     )
   }
   const release = variant === 'development' && isReleaseRun(command, args)
-  // The Release app checks the `dev` channel on launch and stops at startup
-  // without its client key; fail here instead of after a long native build.
+
   if (release && !env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
     throw new Error(
       'EXPO_PUBLIC_HOT_UPDATER_API_KEY is missing; a development Release build needs the dev update key (docs/ota-updates.md)'
@@ -211,13 +196,11 @@ function main() {
     if (result.signal) process.kill(process.pid, result.signal)
     if (result.status !== 0) process.exit(result.status ?? 1)
   }
-  // expo run skips prebuild when android/ already exists. Refresh config without
-  // --clean so a previous placeholder/key can't remain in the installed binary.
+
   if (command === 'expo' && args[0] === 'run:android') {
     run('expo', ['prebuild', '--platform', 'android', '--no-install'])
   }
-  // Prebuild embeds the update channel and native fingerprint, so a Release
-  // build from a stale ios/ would never match the `dev` OTA catalog.
+
   if (release && platform === 'ios') run('pnpm', ['run', 'prebuild'])
   if (
     platform === 'android' &&

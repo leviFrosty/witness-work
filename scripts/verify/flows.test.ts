@@ -3,7 +3,6 @@ import { readFlow, runSteps, startFlow } from './flows.mjs'
 
 type Result = { status: number; stdout: string; stderr: string }
 
-/** Records agent-device calls; `fail` lists commands (joined) that fail. */
 const fakeDevice = (fail: string[] = []) => {
   const calls: string[] = []
   const agentDevice = (args: string[]): Result => {

@@ -1,20 +1,12 @@
 #!/usr/bin/env node
-/**
- * Synthesizes Scribe AI's voice cues: a soft rising two-note chime when the
- * microphone goes live and its mirror when recording ends. Writes 16-bit mono
- * WAVs to src/assets/audio. iOS plays them as system sounds (which respect the
- * silent switch), so keep them short, linear PCM, and well under 30 s.
- *
- * Usage: node scripts/generate-voice-cues.mjs
- */
+
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const RATE = 44100
 const LENGTH = 0.62
-const PEAK = 0.36 // about -9 dBFS; system sounds play at the ringer volume
+const PEAK = 0.36
 
-/** A sine note with a short glide into pitch and a soft exponential tail. */
 const note = ({ at, from, to, decay, gain }) => {
   const glide = 0.045
   let phase = 0
@@ -23,7 +15,7 @@ const note = ({ at, from, to, decay, gain }) => {
     if (local < 0) return 0
     const f = local < glide ? from + (to - from) * (local / glide) : to
     phase += (2 * Math.PI * f) / RATE
-    // Raised-cosine attack: no click, reads as a fade-in.
+
     const attack =
       local < 0.028 ? 0.5 - 0.5 * Math.cos((Math.PI * local) / 0.028) : 1
     const env = attack * Math.exp(-local / decay)
@@ -44,7 +36,7 @@ const render = (notes) => {
     const t = i / RATE
     dry[i] = notes.reduce((sum, voice) => sum + voice(t), 0)
   }
-  // A small room: three feedback combs, mixed low, for warmth.
+
   const wet = new Float32Array(total)
   for (const [ms, feedback] of [
     [29.7, 0.42],
@@ -61,7 +53,6 @@ const render = (notes) => {
   const out = new Float32Array(total)
   let max = 0
   for (let i = 0; i < total; i++) {
-    // Fade the last 120 ms so the tail never cuts off.
     const left = (total - i) / RATE
     const tail = left < 0.12 ? left / 0.12 : 1
     out[i] = (dry[i] * 0.82 + wet[i] * 0.3) * tail
@@ -80,8 +71,8 @@ const wav = (samples) => {
   header.write('WAVE', 8)
   header.write('fmt ', 12)
   header.writeUInt32LE(16, 16)
-  header.writeUInt16LE(1, 20) // PCM
-  header.writeUInt16LE(1, 22) // mono
+  header.writeUInt16LE(1, 20)
+  header.writeUInt16LE(1, 22)
   header.writeUInt32LE(RATE, 24)
   header.writeUInt32LE(RATE * 2, 28)
   header.writeUInt16LE(2, 32)
@@ -95,12 +86,11 @@ const D5 = 587.33
 const A5 = 880
 
 const cues = {
-  // Up a fifth: the microphone is on.
   'scribe-voice-start.wav': [
     note({ at: 0, from: D5 * 0.96, to: D5, decay: 0.11, gain: 0.8 }),
     note({ at: 0.085, from: A5 * 0.96, to: A5, decay: 0.2, gain: 1 }),
   ],
-  // Down a fifth: the microphone is off.
+
   'scribe-voice-end.wav': [
     note({ at: 0, from: A5 * 1.03, to: A5, decay: 0.1, gain: 0.85 }),
     note({ at: 0.085, from: D5 * 1.03, to: D5, decay: 0.19, gain: 1 }),

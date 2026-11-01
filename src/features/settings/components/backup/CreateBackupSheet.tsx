@@ -21,23 +21,18 @@ import { backupPasswordInputProps } from '@/features/settings/components/backup/
 
 type Props = {
   open: boolean
-  /** Locks the stores as they are now; null when that failed (already told). */
+
   lock: (
     choice: BackupFileLockChoice,
     onProgress: (fraction: number) => void
   ) => Promise<LockedBackupFile | null>
-  /** The User closed the sheet with `protection` chosen, creating nothing. */
+
   onCancel: (protection: BackupFileLock) => void
-  /** The locked file, once the sheet has closed: share it from here. */
+
   onCreated: (file: LockedBackupFile) => void
   onClose: () => void
 }
 
-/**
- * Create Backup: lock the file to the User's account (their own devices, or
- * their recovery key) or with a password (any device, for sharing a copy).
- * Closing the sheet cancels.
- */
 export default function CreateBackupSheet(props: Props) {
   const theme = useTheme()
   const canLockToAccount = accountLockAvailable()
@@ -45,7 +40,7 @@ export default function CreateBackupSheet(props: Props) {
     canLockToAccount ? 'account' : 'password'
   )
   const [busy, setBusy] = useState(false)
-  // Shared once the sheet has closed, so the share sheet doesn't land mid-dismiss.
+
   const created = useRef<LockedBackupFile | null>(null)
   return (
     <Sheet
@@ -137,8 +132,7 @@ function LockForm({
 
   const longEnough = password.length >= MIN_BACKUP_PASSWORD_LENGTH
   const matches = confirmation === password
-  // Only once they've typed as much as the password, so it's not an error
-  // while they're still typing.
+
   const mismatch =
     confirmation.length >= password.length &&
     confirmation.length > 0 &&

@@ -62,7 +62,7 @@ describe('nextReplyAttempt', () => {
   it('tries an answer that failed once more, then leaves it to syncs', () => {
     expect(nextReplyAttempt([held], due + 1)).toBe(due + REPLY_RETRY_MS)
     expect(nextReplyAttempt([held], due + REPLY_RETRY_MS)).toBeUndefined()
-    // Going goes out at once, so its retry counts from the answer.
+
     const going = { unsentReplyRev: answeredAt }
     expect(nextReplyAttempt([going], answeredAt + 5_000)).toBe(
       answeredAt + REPLY_RETRY_MS

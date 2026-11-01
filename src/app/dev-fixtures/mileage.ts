@@ -9,17 +9,6 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 
-/**
- * Dev-only fixture: a Mileage Tracking garage plus months of trips that cover
- * the main rendering cases — effective-dated fuel prices and car setups, an
- * archived car, a car with no fuel (no cost), distance vs odometer entries,
- * round trips, notes, and multiple trips on one day.
- *
- * Pure on purpose — no store access, no `Date.now()`; every date derives from
- * `now` — so ids stay stable and re-running the Tools generator upserts the
- * same records instead of piling up duplicates.
- */
-
 export const MILEAGE_FIXTURE_ID_PREFIX = 'dev-mileage-'
 
 const id = (suffix: string) => `${MILEAGE_FIXTURE_ID_PREFIX}${suffix}`
@@ -35,7 +24,7 @@ export const MILEAGE_FIXTURE_IDS = {
 
 export type MileageFixtureInput = {
   now: moment.Moment | Date
-  /** How many days of trip history to generate, ending today. */
+
   days?: number
 }
 
@@ -58,7 +47,7 @@ export const buildMileageFixture = ({
   const createdAt = (daysAgo: number) =>
     today.clone().subtract(daysAgo, 'days').hour(12).valueOf()
   const ids = MILEAGE_FIXTURE_IDS
-  // Price/setup changes land mid-history so reports cross a rate boundary.
+
   const midpoint = Math.floor(days / 2)
 
   const fuels: Fuel[] = [
@@ -90,7 +79,7 @@ export const buildMileageFixture = ({
   const vehicles: Vehicle[] = [
     { id: ids.sedan, name: 'Toyota Camry', createdAt: createdAt(days + 30) },
     { id: ids.ev, name: 'Tesla Model 3', createdAt: createdAt(days + 30) },
-    // No setup at all → trips have distance but no estimated cost.
+
     { id: ids.borrowed, name: 'Borrowed car', createdAt: createdAt(days + 30) },
     {
       id: ids.oldVan,
@@ -132,10 +121,9 @@ export const buildMileageFixture = ({
   ]
 
   const trips: Trip[] = []
-  // The sedan's odometer climbs across every odometer-mode trip.
+
   let odometer = 48_210
   for (let daysAgo = days - 1; daysAgo >= 0; daysAgo--) {
-    // Deterministic ~3 service days a week, always including today.
     const hash = (daysAgo * 2654435761) >>> 0
     if (daysAgo !== 0 && hash % 7 >= 3) continue
     const tripsForDay = hash % 11 === 0 ? 2 : 1
@@ -150,7 +138,7 @@ export const buildMileageFixture = ({
               ? ids.ev
               : ids.sedan
       const oneWay = 3 + ((seed * 7) % 23) + ((seed * 13) % 10) / 10
-      // Odometer entries are never round trips, matching the trip form.
+
       const useOdometer = vehicleId === ids.sedan && seed % 5 === 0
       const roundTrip = !useOdometer && seed % 4 === 0
       const distanceMiles =

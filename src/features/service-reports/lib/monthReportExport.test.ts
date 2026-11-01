@@ -70,7 +70,7 @@ const august = { month: 7, year: 2026 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  // August is last month.
+
   vi.setSystemTime(new Date('2026-09-04T12:00:00.000Z'))
   mocks.share.mockResolvedValue({ action: 'sharedAction' })
   mocks.openURL.mockResolvedValue(true)

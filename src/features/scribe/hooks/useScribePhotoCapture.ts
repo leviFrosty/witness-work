@@ -10,7 +10,6 @@ import { appLocale } from '@/features/scribe/lib/locale'
 import { layoutRecognizedPages } from '@/features/scribe/lib/recognizedTextLayout'
 import { trackCaptureFinished } from '@/features/scribe/analytics'
 
-/** Photos per pick from the library. */
 export const SCRIBE_PHOTO_MAX_IMAGES = 5
 
 async function cameraAllowed(): Promise<boolean> {
@@ -20,11 +19,6 @@ async function cameraAllowed(): Promise<boolean> {
   return permission.granted
 }
 
-/**
- * Scan notes (ADR 0018): the document camera where there is one (the photo
- * library where there isn't, or the camera is refused), read on-device. Images
- * never leave the device; the library's copies are deleted once read.
- */
 export function useScribePhotoCapture(): ScribePhotoCapture {
   const available = TextRecognition.isSupported()
   const [busy, setBusy] = useState(false)
@@ -51,7 +45,7 @@ export function useScribePhotoCapture(): ScribePhotoCapture {
       !(await cameraAllowed())
     )
       return undefined
-    // Shown beneath the document camera, so reading feels continuous.
+
     setBusy(true)
     const pages = await TextRecognition.scanDocument(options())
     if (!pages) return null
@@ -76,7 +70,6 @@ export function useScribePhotoCapture(): ScribePhotoCapture {
         pages.push(await TextRecognition.recognizeImage(uri, options()))
       return deliver(layoutRecognizedPages(pages), pages.length)
     } finally {
-      // They hold the User's private notes.
       for (const uri of uris)
         void FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {})
     }

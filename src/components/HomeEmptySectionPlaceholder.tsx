@@ -3,10 +3,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
-/**
- * A Home section with nothing to show right now (no follow-ups today), drawn
- * while Home is edited so it can still be moved or hidden.
- */
 export default function HomeEmptySectionPlaceholder({
   title,
 }: {

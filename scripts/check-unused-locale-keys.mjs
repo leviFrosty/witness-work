@@ -1,19 +1,5 @@
 #!/usr/bin/env node
-/**
- * Lists `src/locales/en-US.json` keys that nothing references, so they can be
- * deleted from every locale before the release cut translates them again.
- *
- * A key counts as used when a tracked source or config file (not locales, docs
- * or tests) quotes it (`'total'`, `"total"`), reads it off the English file
- * (`enUS.cameraPermissionPurpose`), or has a template literal that could build
- * it (`faq_${id}_q` keeps `faq_x_q` but not `faq_x_title`). A bare word doesn't
- * count, so a key named like a variable (`sort`, `total`) isn't kept by code
- * that happens to use that name. Plural forms (`_one`, `_other`, …) count
- * through their base key. A key it lists is very likely dead, but check one
- * before deleting it.
- *
- * Usage: `pnpm check:unused-locales` (exits 1 when it finds any).
- */
+
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 
@@ -23,7 +9,6 @@ const SKIP =
 
 const english = JSON.parse(fs.readFileSync('src/locales/en-US.json', 'utf8'))
 
-/** Every leaf key, with plural maps (`{ one, other }`) as one key. */
 const keys = []
 const walk = (object, prefix) => {
   for (const [name, value] of Object.entries(object)) {
@@ -44,7 +29,7 @@ walk(english, '')
 const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
   .split('\n')
   .filter((file) => file && !SKIP.test(file))
-/** Drops `/* … *\/` and `// …` comments, so a key named in prose doesn't count. */
+
 const withoutComments = (text) =>
   text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1')
 const CODE = /\.(m?[jt]sx?|swift|kt)$/
@@ -65,11 +50,6 @@ const mentioned = (key) =>
     `['"\`]${escape(key)}['"\`]|\\benUS\\.${escape(key)}(?![A-Za-z0-9_])`
   ).test(source)
 
-/**
- * Each key-shaped template literal (`faq_${id}_q`) as a pattern, with every
- * `${…}` matching any key segment. Templates with under 3 fixed characters
- * (`${a}${b}`) would match every key, so they don't count.
- */
 const SEGMENT = '[A-Za-z0-9_.-]+'
 const templates = [
   ...new Set(

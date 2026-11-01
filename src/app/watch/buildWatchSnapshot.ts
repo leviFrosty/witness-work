@@ -19,86 +19,58 @@ import { Publisher } from '@/types/publisher'
 import watchStringKeys from '@/app/watch/watchStringKeys.json'
 import type { NativeLocale } from '@/lib/nativeLocale'
 
-/**
- * Bumped when the shape changes in a way the watch's Swift decoder cares about.
- * Mirrors `WatchSnapshot.supportedVersion` in
- * `modules/watch-bridge/ios/WatchProtocol.swift`.
- */
 export const WATCH_SNAPSHOT_VERSION = 1
 
-/**
- * What the watch app and its complications show (Apple Watch, or Wear OS from
- * an Android phone), and what Siri needs on the watch and on this device.
- * Mirrors `WatchSnapshot` in `WatchProtocol.swift` and `WatchProtocol.kt`.
- * Strings are translated into the app's language and durations formatted here,
- * so the watch never formats measured time, except the compact total it adds
- * watch entries to before the iPhone saves them.
- */
 export type WatchSnapshot = {
   version: number
-  /** Epoch ms. */
+
   generatedAt: number
-  /** `YYYY-MM` of the month the progress describes. */
+
   monthKey: string
-  /** Localized name of that month, e.g. `October`. */
+
   monthName: string
-  /** Add Time and the timer are available (hours role or Log my hours). */
+
   showsTimeEntry: boolean
   entryMode: ReportFields['mode']
-  /** The month's total as the phone shows it, e.g. `12.5 Hrs` or `12h 30m`. */
+
   monthFormatted: string
   monthCompact: string
-  /** Credit-capped minutes this month. */
+
   monthMinutes: number
   goalHours: number
   progress: number
-  /**
-   * Planned minutes through each day of the month (index 0 is the 1st), for the
-   * pace mark and ahead/behind; `null` when the month has no plans.
-   */
+
   plannedThroughDay: number[] | null
-  /**
-   * Credit-capped minutes logged through each day of the month, which ahead/
-   * behind compares with `plannedThroughDay` as the phone's schedule status
-   * does; `null` when the month has no plans.
-   */
+
   loggedThroughDay: number[] | null
   publisherState: ReportFields['publisherState']
   paceText: string | null
-  /** Next month, so the watch can start it at zero before the iPhone syncs. */
+
   nextMonth: {
     monthKey: string
     monthName: string
     goalHours: number
     showsTimeEntry: boolean
   }
-  /**
-   * Watch entries this snapshot already counts although the iPhone hasn't
-   * reported them resolved yet, so the watch doesn't count them twice.
-   */
+
   reflectedEntryIds: string[]
   upNext: WatchUpNextItem[]
   categories: { id: string; name: string; isCredit: boolean }[]
-  /** What Siri needs to log a trip. */
+
   mileage: {
-    /** Mileage Tracking isn't turned off. */
     enabled: boolean
     distanceUnit: DistanceUnit
-    /** Cars that aren't archived, the one a new trip uses first. */
+
     vehicles: { id: string; name: string }[]
   }
   strings: Record<string, string>
-  /**
-   * Lay out right to left, as the app is. The watch would follow its own
-   * language instead.
-   */
+
   rtl: NativeLocale['rtl']
-  /** BCP 47 tag for the numbers the watch writes itself (`ar-u-nu-arab`). */
+
   numberLocale: NativeLocale['numberLocale']
 }
 
 export type BuildWatchSnapshotArgs = BuildReportArgs & {
-  /** The phone's platform: an Android phone's watch is a Wear OS watch. */
   platform: 'ios' | 'android'
   showsTimeEntry: boolean
   categories: Category[]
@@ -109,7 +81,7 @@ export type BuildWatchSnapshotArgs = BuildReportArgs & {
   distanceUnit: DistanceUnit
   vehicles: Vehicle[]
   trips: Trip[]
-  /** The app Language's direction and digits (`nativeLocale`). */
+
   nativeLocale: NativeLocale
 }
 
@@ -121,10 +93,6 @@ function activeVehicles(vehicles: Vehicle[], trips: Trip[]) {
     .map(({ id, name }) => ({ id, name }))
 }
 
-/**
- * The watch's strings in the app's language. A Wear OS watch also gets its own
- * few, and wording that says "phone" where the Apple Watch's says "iPhone".
- */
 function watchStrings(platform: BuildWatchSnapshotArgs['platform']) {
   const keys =
     platform === 'android'
@@ -143,7 +111,6 @@ function watchStrings(platform: BuildWatchSnapshotArgs['platform']) {
   )
 }
 
-/** Same pace line as the Report widget's badge. */
 function paceText(report: ReportFields): string | null {
   if (report.goalHours <= 0) return null
   if (report.aheadBehindMinutes != null) {
@@ -185,8 +152,7 @@ export function buildWatchSnapshot(
     monthName: now.format('MMMM'),
     showsTimeEntry: args.showsTimeEntry,
     entryMode: report.mode,
-    // With its unit, unlike the Report widget's figure: the watch shows no
-    // unit beside it.
+
     monthFormatted: formatMinutes(report.monthMinutes, args.timeDisplayFormat)
       .formatted,
     monthCompact:
@@ -230,7 +196,7 @@ export function buildWatchSnapshot(
       categories: args.categories,
       includePlans: args.showsTimeEntry,
     }),
-    // Named as the phone shows them, so LDC is in the app's language.
+
     categories: args.categories.map((category) => ({
       id: category.id,
       name: categoryLabel(category),

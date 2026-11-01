@@ -14,16 +14,12 @@ import { scrubAnalyticsEventProperties } from '@/lib/shareLinkScrub'
 const surveyHistory = [P.SurveysSeen, P.SurveyLastSeenDate]
 const appVersion = [P.InstalledAppBuild, P.InstalledAppVersion]
 
-/** SDK-specific privacy behavior; verify these seams when upgrading PostHog. */
 export class AnonymousPostHog extends PostHog {
   private consentRevision = 0
 
   protected override setupBootstrap(
     options?: Partial<PostHogCoreOptions>
   ): void {
-    // RN calls this after storage loads, before any capture, flags or native
-    // initialization. reset() here would defer until after those requests.
-    // Anonymous clients never persist DistinctId, so clearing it is one-time.
     if (this.getPersistedProperty(P.DistinctId)) {
       resetAnalyticsFrequency()
       const keep = [
@@ -38,8 +34,6 @@ export class AnonymousPostHog extends PostHog {
       for (const key of Object.values(P)) {
         if (!keep.includes(key)) this.setPersistedProperty(key, null)
       }
-      // This also discards old queues: even diagnostic/survey payloads can
-      // contain the old account ID. Never replay them into anonymous analytics.
     }
     const queue = this.getPersistedProperty<PostHogQueueItem[]>(P.Queue) ?? []
     this.setPersistedProperty(
@@ -68,7 +62,7 @@ export class AnonymousPostHog extends PostHog {
     this.consentRevision++
     this.wrap(() => {
       this.discardPendingUsage()
-      // A custom keep-list replaces RN's defaults, so include them explicitly.
+
       super.reset([...appVersion, P.DeviceId, ...surveyHistory])
     })
   }
@@ -79,8 +73,7 @@ export class AnonymousPostHog extends PostHog {
     route?: string
   ): Promise<void> {
     const revision = this.consentRevision
-    // Own the retry loop so each attempt rechecks consent instead of replaying
-    // an already serialized payload. A quick off/on still revokes old usage.
+
     await retriable(
       async () => {
         const allowed = messages.filter(

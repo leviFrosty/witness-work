@@ -24,11 +24,6 @@ import { type Buddy, buddySettings } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * An active buddy opens their detail screen; long-press for its calendar toggle
- * and removal. One still `awaitingConfirm` (I accepted their invite) is muted,
- * with a menu to withdraw the request.
- */
 export default function BuddyRow({
   buddy,
   last,
@@ -56,7 +51,6 @@ export default function BuddyRow({
     },
   ]
 
-  // Everything here is also on the buddy's detail screen.
   const actions: ContextMenuEntries = [
     [
       {
@@ -124,8 +118,6 @@ export default function BuddyRow({
           </View>
         )
       }
-      // A waiting request has no detail screen, so its only action stays
-      // visible too.
       trailing={
         awaiting ? (
           <PullDownMenu

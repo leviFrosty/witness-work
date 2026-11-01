@@ -1,8 +1,6 @@
 import { mmkvStorage } from '@/stores/mmkv'
 import { isHttpUrl } from '@/lib/linkDetection'
 
-// Link detection lives in `linkDetection.ts` (no native imports, so the note
-// code can use it anywhere); re-exported for existing callers.
 export {
   findLinks,
   getHostname,
@@ -21,9 +19,9 @@ export type LinkPreview = {
 const FETCH_TIMEOUT_MS = 6000
 const MAX_BODY_BYTES = 512 * 1024
 const SUCCESS_TTL_MS = 7 * 24 * 60 * 60 * 1000
-/** A page that answered without usable metadata won't grow some soon. */
+
 const FAILURE_TTL_MS = 24 * 60 * 60 * 1000
-/** A 408, 429 or 5xx is the site having a moment; check back shortly. */
+
 const RETRYABLE_FAILURE_TTL_MS = 5 * 60 * 1000
 const CACHE_KEY_PREFIX = 'linkPreview:v1:'
 
@@ -32,13 +30,8 @@ const MAX_DESCRIPTION_LENGTH = 300
 const MAX_SITE_NAME_LENGTH = 100
 const MAX_URL_LENGTH = 2048
 
-// Mobile Safari UA so sites serve the same OG-tagged HTML they give iPhones.
 const USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
-
-// ---------------------------------------------------------------------------
-// OpenGraph parsing
-// ---------------------------------------------------------------------------
 
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
@@ -89,7 +82,6 @@ function cleanText(value: string | undefined, maxLength: number) {
     : cleaned
 }
 
-/** Resolves `href` against `base`. Returns undefined for non-http(s) results. */
 export function resolveUrl(href: string, base: string): string | undefined {
   const value = href.trim()
   if (!value) return undefined
@@ -133,7 +125,6 @@ function parseAttributes(tag: string): Record<string, string> {
   return attributes
 }
 
-/** Parses OpenGraph (then Twitter card, then `<title>`) metadata from HTML. */
 export function parseOpenGraph(html: string, pageUrl: string): LinkPreview {
   const headEnd = html.search(/<\/head\s*>/i)
   const head = headEnd >= 0 ? html.slice(0, headEnd) : html
@@ -186,21 +177,13 @@ export function parseOpenGraph(html: string, pageUrl: string): LinkPreview {
   return preview
 }
 
-// ---------------------------------------------------------------------------
-// Fetching + cache
-// ---------------------------------------------------------------------------
-
 type CacheEntry = {
   fetchedAt: number
   preview: LinkPreview | null
-  /** A failure worth retrying soon (408, 429, 5xx). */
+
   retryable?: boolean
 }
 
-/**
- * Parsed MMKV entries, so a card re-rendering doesn't parse JSON each time.
- * `null` records that MMKV has nothing for the URL.
- */
 const memoryCache = new Map<string, CacheEntry | null>()
 
 const entryTtl = (entry: CacheEntry) =>
@@ -212,10 +195,6 @@ const entryTtl = (entry: CacheEntry) =>
 
 const cacheKey = (url: string) => `${CACHE_KEY_PREFIX}${url}`
 
-/**
- * Returns the cached result for `url` when it's still fresh. `preview: null`
- * means a recent fetch failed; `undefined` means nothing usable is cached.
- */
 export function getCachedLinkPreview(
   url: string
 ): { preview: LinkPreview | null } | undefined {
@@ -225,9 +204,7 @@ export function getCachedLinkPreview(
     memoryCache.set(url, null)
     try {
       mmkvStorage.delete(cacheKey(url))
-    } catch {
-      // Cache is best-effort.
-    }
+    } catch {}
     return undefined
   }
   return { preview: entry.preview }
@@ -239,9 +216,7 @@ function readEntry(url: string): CacheEntry | null {
     const raw = mmkvStorage.getString(cacheKey(url))
     const parsed = raw ? (JSON.parse(raw) as CacheEntry) : null
     if (typeof parsed?.fetchedAt === 'number') entry = parsed
-  } catch {
-    // Unreadable entries count as missing.
-  }
+  } catch {}
   memoryCache.set(url, entry)
   return entry
 }
@@ -255,12 +230,9 @@ function writeCache(url: string, result: PreviewResult) {
   memoryCache.set(url, entry)
   try {
     mmkvStorage.set(cacheKey(url), JSON.stringify(entry))
-  } catch {
-    // Cache is best-effort.
-  }
+  } catch {}
 }
 
-/** Test hook: forget parsed entries so the next read goes to MMKV. */
 export function clearLinkPreviewMemoryCache() {
   memoryCache.clear()
 }
@@ -281,7 +253,7 @@ async function readLimitedText(response: Response): Promise<string> {
       if (done || !value) break
       bytes += value.byteLength
       text += decoder.decode(value, { stream: true })
-      // OG tags live in <head>; no need to download the rest of the page.
+
       if (/<\/head\s*>/i.test(text)) break
     }
   } finally {
@@ -295,10 +267,6 @@ type PreviewResult = { preview: LinkPreview | null; retryable?: boolean }
 const isRetryableStatus = (status: number) =>
   status === 408 || status === 429 || status >= 500
 
-/**
- * Plain fetch rather than `request()`: the body is streamed and cut off after
- * `</head>`, and the timeout covers that read too.
- */
 async function requestPreview(url: string): Promise<PreviewResult> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
@@ -331,12 +299,6 @@ async function requestPreview(url: string): Promise<PreviewResult> {
 
 const inFlight = new Map<string, Promise<LinkPreview | null>>()
 
-/**
- * Fetches and caches OpenGraph metadata for `url`. Resolves `null` when the
- * page can't be fetched or has no usable metadata. Never rejects. Pages without
- * metadata and 4xx answers are cached as failures for a day; 408, 429 and 5xx
- * answers for five minutes.
- */
 export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
   if (!isHttpUrl(url)) return Promise.resolve(null)
 
@@ -351,8 +313,7 @@ export function fetchLinkPreview(url: string): Promise<LinkPreview | null> {
       writeCache(url, result)
       return result.preview
     })
-    // Network errors and timeouts are usually transient (offline, flaky
-    // signal), so they aren't cached as failures; the next mount retries.
+
     .catch(() => null)
     .finally(() => {
       inFlight.delete(url)

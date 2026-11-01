@@ -72,7 +72,7 @@ describe('nextMonthReportReminder', () => {
     expect(
       nextMonthReportReminder(sept, new Date(2026, 9, 1, 8, 59).getTime())
     ).toEqual({ date: new Date(2026, 9, 1, 9), month: '2026-09' })
-    // Once it's gone out, the next one is for October.
+
     expect(
       nextMonthReportReminder(sept, new Date(2026, 9, 1, 9).getTime())
     ).toBeNull()
@@ -94,7 +94,7 @@ describe('nextMonthReportReminder', () => {
     expect(
       nextMonthReportReminder(sources({ serviceReports: {} }), OCT_19)
     ).toBeNull()
-    // A Time Rollover isn't something the User logged.
+
     expect(
       nextMonthReportReminder(
         sources({

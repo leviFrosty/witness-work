@@ -36,11 +36,10 @@ import { formatWeekdayMonthDayCompact } from '@/lib/dates'
 import { noteUserAction } from '@/lib/userAction'
 
 type Row = {
-  /** Local-only id — never persisted; used as React key + stepper target. */
   rowId: string
   date: Date
   minutes: number
-  /** When true, the row is excluded from "Add to Schedule". */
+
   dropped: boolean
 }
 
@@ -55,7 +54,7 @@ type Props = {
 
 const HOUR_STEP_MINUTES = 30
 const ROW_ICON_SIZE = 12
-/** A real 44pt frame per row button, keeping the row's height. */
+
 const rowButtonFrame = {
   ...touchTargetFrame(ROW_ICON_SIZE),
   marginHorizontal: 0,
@@ -87,8 +86,6 @@ const AssistantPreviewSheet = ({
   const [notifyMe, setNotifyMe] = useState<boolean>(planAlwaysNotify)
   const [pendingUndoIds, setPendingUndoIds] = useState<string[] | null>(null)
 
-  // Reset local row state whenever the source recommendation changes (e.g.
-  // user dismissed and re-armed the assistant with new inputs).
   useEffect(() => {
     setRows(buildInitialRows(recommendation))
   }, [recommendation])
@@ -103,9 +100,6 @@ const AssistantPreviewSheet = ({
     [rows]
   )
 
-  // Mirror cap semantics (ADR 0005): proposed standard time can displace
-  // capped credit, so the post-accept total is re-run through the month's
-  // cap formula instead of summed linearly.
   const projectedAfter = projectStandardAddition(
     projection,
     totalProposedMinutes
@@ -158,8 +152,6 @@ const AssistantPreviewSheet = ({
     toast.success(
       i18n.t('assistant.snackbar.addedPlans', { count: survivors.length }),
       {
-        // This toast carries no Undo button; the inline undo affordance below
-        // is the actionable surface, and it closes with the same 5 seconds.
         durationMs: 5000,
       }
     )
@@ -173,9 +165,6 @@ const AssistantPreviewSheet = ({
     recommendation.shape,
   ])
 
-  // After 5 seconds the undo window closes — drop the pending-undo state so
-  // the inline affordance disappears and tapping it after the fact can't
-  // delete plans the user has since edited.
   useEffect(() => {
     if (pendingUndoIds === null) return
     const t = setTimeout(() => setPendingUndoIds(null), 5500)
@@ -258,8 +247,7 @@ const AssistantPreviewSheet = ({
                     {formatMinutes(row.minutes, timeDisplayFormat).formatted}
                   </Text>
                 </View>
-                {/* Side by side, so their 44pt frames touch instead of
-                    overlapping. */}
+                {}
                 <View style={{ flexDirection: 'row' }}>
                   <IconButton
                     icon={MinusIcon}

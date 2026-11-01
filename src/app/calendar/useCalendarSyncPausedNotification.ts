@@ -19,7 +19,6 @@ type Publishing = Pick<
   'error' | 'state' | 'deviceId'
 >
 
-/** Usually clear once the connection or the calendar account catches up. */
 const TRANSIENT_ERRORS = [
   'calendarConnectionError',
   'calendarConnectionErrorAndroid',
@@ -27,11 +26,6 @@ const TRANSIENT_ERRORS = [
 ]
 export const TRANSIENT_ALERT_DELAY_MS = 24 * 60 * 60 * 1000
 
-/**
- * The failure worth interrupting for: only while Calendar Sync is on and this
- * device publishes. Declining or turning it off never alerts. Problems that
- * usually fix themselves wait a day; ones that need the user show at once.
- */
 export function pausedCalendarSync(
   settings: Settings,
   publishing: Publishing,
@@ -41,8 +35,7 @@ export function pausedCalendarSync(
   if (!settings.enabled || settings.optedOut || !settings.destination)
     return null
   if (!error || !settings.failingSince) return null
-  // Another device publishes to this account's calendar; nothing to fix here.
-  // A new iCloud account's record doesn't count: that's the problem itself.
+
   const elsewhere =
     !!state?.primary &&
     state.primary !== deviceId &&
@@ -56,16 +49,11 @@ export function pausedCalendarSync(
   return { error, since: settings.failingSince }
 }
 
-/**
- * Calendar Sync stopped updating for someone who turned it on. Offers the fix
- * and a way out; dismissing it hides it until updates fail again.
- */
 export default function useCalendarSyncPausedNotification(
   now: number
 ): NotificationItem | null {
   const navigation = useNavigation<RootStackNavigation>()
-  // Just the fields the alert reads: every update stamps `lastSyncedAt` and
-  // flips `working`, and the Home bell shouldn't re-render for those.
+
   const settings = useCalendarSync(
     useShallow(
       (s): Settings => ({
@@ -89,7 +77,7 @@ export default function useCalendarSyncPausedNotification(
   if (!calendarBridgeAvailable) return null
   const paused = pausedCalendarSync(settings, publishing, now)
   if (!paused) return null
-  // Android publishes from this device alone.
+
   const isPrimary =
     Platform.OS === 'android' ||
     (!!publishing.deviceId && publishing.state?.primary === publishing.deviceId)

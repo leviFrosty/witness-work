@@ -1,42 +1,26 @@
-/**
- * A locked secret option's thumbnail: its shape as a flat shadow over a dimmed
- * room, so it hints at what's coming without showing its colours or details.
- */
 import { createBuffer, rgb, rgbTuple, type PixelBuffer } from '@/lib/pixelArt'
 
-/** `object`: one flat shadow. `surface`: two tones, so a pattern still reads. */
 export type SilhouetteStyle = 'object' | 'surface'
 
 const INK = rgbTuple(rgb('#2c2834'))
 const INK_LIGHT = rgbTuple(rgb('#4a4357'))
 
-/**
- * How far apart (per channel) two pixels may be and still count as the same
- * thing: the lamp lights each option's room from its own flame, so a table or a
- * plant shifts a light band between references.
- */
 const NEAR = 40
-/** Rounding, per channel, when matching a shift in the lamp's light. */
+
 const SLACK = 3
-/**
- * Gaps a shape encloses, up to this many pixels, are filled unless the room
- * shows through most of them.
- */
+
 const MAX_HOLE = 160
-/** Gaps a surface encloses, up to this many pixels, are filled. */
+
 const MAX_GAP = 12
-/** Loose bits of a shape up to this many pixels are dropped. */
+
 const MAX_SPECK = 2
-/** Pinholes in a shape up to this many pixels are always filled. */
+
 const MAX_PINHOLE = 4
-/**
- * Under another lamp's light, at least this share of the bare room is a shade
- * lighter or darker.
- */
+
 const RELIT_SHARE = 0.03
-/** How far around a floor's pixel its tone looks. */
+
 const TONE_RADIUS = 4
-/** A plain reference matches at least this share of a surface. */
+
 const PLAIN_SHARE = 0.15
 
 const luma = (d: Uint8ClampedArray, i: number) =>
@@ -48,15 +32,9 @@ const sameAt = (a: PixelBuffer, b: PixelBuffer, i: number) =>
   a.data[i + 2] === b.data[i + 2] &&
   a.data[i + 3] === b.data[i + 3]
 
-/** The night tint and the lamp's warm light (`art/lighting.ts`), per channel. */
 const TINT = [16, 14, 40] as const
 const WARM = [255, 150, 40] as const
 
-/**
- * Whether two pixels could be the same thing in a different band of the lamp's
- * light: their difference (at most `NEAR` per channel) is the colour darkened
- * toward the night tint plus some warm light, to within rounding.
- */
 function litAlike(a: PixelBuffer, b: PixelBuffer, i: number): boolean {
   const x = a.data
   const y = b.data
@@ -65,7 +43,7 @@ function litAlike(a: PixelBuffer, b: PixelBuffer, i: number): boolean {
   let dg = x[i + 1] - y[i + 1]
   let db = x[i + 2] - y[i + 2]
   if (Math.max(Math.abs(dr), Math.abs(dg), Math.abs(db)) > NEAR) return false
-  // As a brightening: d ≈ s·u + t·WARM with s, t ≥ 0.
+
   if (dr + dg + db < 0) {
     dr = -dr
     dg = -dg
@@ -93,12 +71,6 @@ function litAlike(a: PixelBuffer, b: PixelBuffer, i: number): boolean {
   return s >= 0 && t >= 0 && fits(s, t)
 }
 
-/**
- * Flips each connected run of `value` in `mask` (4-connected for gaps, 0;
- * 8-connected for bits of shape, 1) to the other value when `flip` says so,
- * given its pixels and whether it reaches the edge of the view. Transparent
- * pixels never change.
- */
 function flipRuns(
   mask: Uint8Array,
   shown: PixelBuffer,
@@ -140,15 +112,6 @@ function flipRuns(
   }
 }
 
-/**
- * An object's own pixels: those it keeps over another backdrop
- * (`references[0]`, so not the bare wall or floor showing around it, even where
- * every other option covers it) that no other option shares (`references[1…]`,
- * so not the pet, the table or anything else that's in each of their rooms;
- * under another lamp, "shares" means two of them have it in another band of
- * light). Then enclosed gaps are filled unless the room shows through them, and
- * loose specks dropped.
- */
 function objectPixels(
   shown: PixelBuffer,
   references: readonly PixelBuffer[]
@@ -156,8 +119,7 @@ function objectPixels(
   const [backdrop, ...others] = references
   const n = shown.width * shown.height
   const own = new Uint8Array(n)
-  // An option lit by its own lamp (the lamp's options) matches the room only
-  // loosely; under the same light the bare wall and floor match exactly.
+
   const loose = others.map((ref) => {
     let bare = 0
     let relit = 0
@@ -169,12 +131,11 @@ function objectPixels(
     }
     return relit > bare * RELIT_SHARE
   })
-  // With one or two others, sharing a pixel with any one means it's the room.
+
   const shared = others.length > 2 ? 2 : 1
   const alikeAt = (k: number, i: number) =>
     sameAt(shown, others[k], i) || (loose[k] && litAlike(shown, others[k], i))
-  // The bare room that another option shows too: a real gap in the shape,
-  // not glass or a flame that happens to match.
+
   const seeThrough = new Uint8Array(n)
   for (let p = 0; p < n; p++) {
     const i = p * 4
@@ -188,7 +149,7 @@ function objectPixels(
       }
       continue
     }
-    // An exact match is the room; a loose one counts only with a second.
+
     let alike = 0
     for (let k = 0; k < others.length && alike < shared; k++) {
       if (sameAt(shown, others[k], i)) alike = shared
@@ -207,11 +168,6 @@ function objectPixels(
   return own
 }
 
-/**
- * Per pixel, whether it's lighter than the average of the `mask` pixels within
- * `radius` (a summed-area table, so the sunbeam and the lamp's light bands
- * don't decide the tone, only what's next to it).
- */
 function lighterThanAround(
   shown: PixelBuffer,
   mask: Uint8Array,
@@ -258,12 +214,6 @@ function lighterThanAround(
   return out
 }
 
-/**
- * A surface's own pixels (those that differ from any reference: the same view
- * with another colour or floor), and which of them take the light tone. When a
- * reference shows the same surface plain, the pixels that differ from it are
- * the pattern; otherwise (floors) the ones lighter than what's around them.
- */
 function surfacePixels(
   shown: PixelBuffer,
   references: readonly PixelBuffer[]
@@ -302,16 +252,6 @@ function surfacePixels(
   return { own, light }
 }
 
-/**
- * `shown` with the option's own pixels as a shadow and the rest of the room
- * greyed and faded. All buffers are the same size; `references` are the same
- * view with other choices (`silhouetteRooms` in `lib/roomOptions.ts`):
- *
- * - `object`: first the option over another backdrop, then other options of its
- *   part. Small gaps inside the shape are filled and loose pixels dropped.
- * - `surface`: the same view with other colours or floors, and (walls) the same
- *   wall plain, whose differences become the light tone.
- */
 export function silhouetteOf(
   shown: PixelBuffer,
   references: readonly PixelBuffer[],
@@ -334,7 +274,6 @@ export function silhouetteOf(
       out.data[i + 1] = ink[1]
       out.data[i + 2] = ink[2]
     } else {
-      // Grey, low contrast, lifted toward the middle so the shadow stands out.
       const grey = Math.round(luma(shown.data, i) * 0.45 + 120)
       out.data[i] = grey
       out.data[i + 1] = grey

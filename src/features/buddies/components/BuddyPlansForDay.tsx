@@ -21,20 +21,12 @@ import { cardPlanLabel } from '@/features/buddies/lib/cardPlanLabel'
 import { buddySettings } from '@/features/buddies/lib/state'
 import { tracking } from '@/lib/tracking'
 
-/**
- * Faded, read-only buddy Plans for one day — they never mix with the User's
- * own. Each can be asked to join; long-press a row to view the buddy or plan
- * the same time. A buddy's Follow-up the User is going on opens its page.
- */
 export default function BuddyPlansForDay({
   date,
   onNavigate,
 }: {
   date: Date
-  /**
-   * Runs a navigation from a row's menu, e.g. once the sheet the rows sit in
-   * has closed. Without it the rows have no menu.
-   */
+
   onNavigate?: (go: () => void) => void
 }) {
   const theme = useTheme()
@@ -48,7 +40,7 @@ export default function BuddyPlansForDay({
   const sharing = useBuddies((state) => state.sharing)
   const incomingShares = useBuddies((state) => state.incomingShares)
   const key = moment(date).format('YYYY-MM-DD')
-  // Buddies the User goes out with show on the User's own Plans instead.
+
   const withBuddies = useBuddyCalendarMarkers()[key]?.withBuddies ?? []
   if (!enabled) return null
 
@@ -64,7 +56,7 @@ export default function BuddyPlansForDay({
         (plan, index) => ({ buddy, plan, key: `${buddy.inboxId}-${index}` })
       )
     )
-  // Follow-ups the User said they'd join; accepted Plans are real Plans.
+
   const followUps = Object.values(incomingShares)
     .filter(
       (share) =>
@@ -81,7 +73,6 @@ export default function BuddyPlansForDay({
 
   const past = key < moment().format('YYYY-MM-DD')
 
-  // Also reachable from the buddy's detail screen and its upcoming plans.
   const viewBuddy = (inboxId: string) =>
     onNavigate && {
       id: 'view_buddy',
@@ -186,7 +177,6 @@ export default function BuddyPlansForDay({
               </Text>
               <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
                 {[
-                  // The householder's name stays hidden in data protection mode.
                   share.details.firstName && !dataProtectionMode
                     ? i18n.t('buddies_followUpWith', {
                         name: share.details.firstName,

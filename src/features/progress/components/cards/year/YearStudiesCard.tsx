@@ -4,10 +4,6 @@ import { getServiceYearFromDate } from '@/lib/serviceYear'
 import PeopleStudiedStatCard from '@/features/progress/components/cards/PeopleStudiedStatCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * Everyone the User studied with in the Service Year, and the most Bible
- * Studies any one month's report had.
- */
 export default function YearStudiesCard({ serviceYear, size }: YearCardProps) {
   return (
     <PeopleStudiedStatCard

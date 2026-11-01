@@ -1,9 +1,3 @@
-/**
- * Secret hats from around the world: everyday work, weather and regional hats,
- * none tied to a religion, a ceremony or an office. Drawn in the full hat
- * canvas (`hatShapes.ts`): {@link HAT_W} × {@link HAT_H}, centred on
- * {@link HAT_CX}, lowest brim pixels on {@link HAT_BRIM_ROW}.
- */
 import {
   rgbPalette,
   type FeaturePixel,
@@ -24,7 +18,7 @@ export type WorldHatId =
   | 'tam'
 
 const C = HAT_CX
-/** The bottom edge of the brim: its lowest pixels are on {@link HAT_BRIM_ROW}. */
+
 const B = HAT_BRIM_ROW + 1
 
 const P = rgbPalette({
@@ -76,7 +70,6 @@ const P = rgbPalette({
   tamPomLight: '#7f9bcb',
 })
 
-/** Whether (x, y) is inside the polygon `pts` (even-odd). */
 function inside(
   pts: readonly (readonly [number, number])[],
   x: number,
@@ -92,7 +85,6 @@ function inside(
   return hit
 }
 
-/** Feature pixels of `c` on every canvas pixel `on` picks. */
 function pattern(
   on: (x: number, y: number) => boolean,
   c: Rgb
@@ -114,7 +106,6 @@ const NONLA = [
   [C - NONLA_W, NONLA_RIM],
 ] as [number, number][]
 
-/** Whether a cone pixel is in its shadow, as the rasterizer shades it. */
 const nonlaInShade = (x: number, y: number) =>
   ((x + 0.5 - C) / NONLA_W) * 0.45 +
     ((y + 0.5 - (NONLA_APEX + NONLA_RIM) / 2) /
@@ -122,7 +113,6 @@ const nonlaInShade = (x: number, y: number) =>
       0.85 >
   0.52
 
-/** A woven ring round the cone, dipping a pixel at the front. */
 const nonlaRing = (ring: number): FeaturePixel[] =>
   pattern((x, y) => {
     const dx = x + 0.5 - C
@@ -138,7 +128,6 @@ const nonlaRing = (ring: number): FeaturePixel[] =>
 const CHULLO = dome(C, B, 6.6, 10, 12)
 CHULLO.splice(6, 1, [C, B - 11.8])
 
-/** An ear flap hanging below the cap, with its tassel. */
 const chulloFlap = (side: 1 | -1) =>
   ({
     t: 'p',
@@ -155,7 +144,6 @@ const chulloFlap = (side: 1 | -1) =>
     g: 'flap',
   }) as const
 
-/** A dome that peaks a little and flares out into the brim, as a bell does. */
 const SALAKOT = Array.from({ length: 19 }, (_, i): [number, number] => {
   const a = (i / 18) * Math.PI
   return [C - 11 * Math.cos(a), B - 0.8 - 8.6 * Math.sin(a) ** 0.75]
@@ -163,10 +151,6 @@ const SALAKOT = Array.from({ length: 19 }, (_, i): [number, number] => {
 
 const STRAW_BRIM = { x: C, y: B - 1.5, rx: 10.8, ry: 1.5 }
 
-/**
- * An outback felt hat's brim: flat across the front, curling down at both ends.
- * Neither side is pinned up.
- */
 const BUSH_BRIM: [number, number][] = [
   [C - 11.2, B],
   [C - 11.4, B - 1],
@@ -182,7 +166,6 @@ const BUSH_BRIM: [number, number][] = [
   [C - 9.6, B - 0.4],
 ]
 
-/** The crown, tapering up to a teardrop pinch with a crease down the middle. */
 const BUSH_CROWN: [number, number][] = [
   [C - 5.4, B - 2.4],
   [C - 5, B - 6.4],
@@ -231,7 +214,7 @@ export const WORLD_HAT_SPECS: Readonly<Record<WorldHatId, ShapeSpec>> = {
       },
       chulloFlap(-1),
       chulloFlap(1),
-      // The tassel at the tip, flopped over to one side.
+
       {
         t: 'e',
         x: C + 4,
@@ -260,7 +243,6 @@ export const WORLD_HAT_SPECS: Readonly<Record<WorldHatId, ShapeSpec>> = {
       },
     ],
     feats: [
-      // A navy zigzag round the cream band.
       ...pattern(
         (x, y) =>
           inside(CHULLO, x + 0.5, y + 0.5) &&
@@ -376,7 +358,7 @@ export const WORLD_HAT_SPECS: Readonly<Record<WorldHatId, ShapeSpec>> = {
     shapes: [
       {
         t: 'p',
-        // A tall crown with a flat top, as Malagasy straw hats have.
+
         pts: [
           [C - 4.8, B - 2],
           [C - 4.5, B - 6.6],
@@ -413,7 +395,7 @@ export const WORLD_HAT_SPECS: Readonly<Record<WorldHatId, ShapeSpec>> = {
         c: P.fisher,
         s: P.fisherShade,
       },
-      // The soft crown, slouched forward over the band.
+
       {
         t: 'p',
         pts: [
@@ -473,15 +455,14 @@ export const WORLD_HAT_SPECS: Readonly<Record<WorldHatId, ShapeSpec>> = {
       },
     ],
     feats: [
-      // The pinch: a dent each side of the front, and the crease on top.
       [C - 2, B - 8, P.bushShade],
       [C - 3, B - 7, P.bushShade],
       [C + 1, B - 8, P.bushShade],
       [C + 2, B - 7, P.bushShade],
-      // The brim's ends curl down: their undersides show.
+
       [C - 11, B - 1, P.bushShade],
       [C + 10, B - 1, P.bushShade],
-      // The band's knot, at the left.
+
       [C - 4, B - 4, P.bushBandLight],
       [C - 3, B - 4, P.bushBandLight],
     ],

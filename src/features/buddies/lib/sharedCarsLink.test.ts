@@ -35,18 +35,16 @@ describe('another device’s memberships', () => {
       { rejoined: 15, ended: 4, left: 7 }
     )
     expect(rosterMembershipChanges(local, remote)).toEqual({
-      // `left` was left here (7) after the join it brings (6).
       joined: [
         { spaceId: 'added', at: 3 },
         { spaceId: 'rejoined', at: 20 },
       ],
       left: [
-        // Joined again (20) since it was left (15): not an end.
         { spaceId: 'rejoined', at: 15, ends: false },
         { spaceId: 'ended', at: 4, ends: true },
       ],
     })
-    // The same roster again changes nothing.
+
     const store = createSharedCarsMemoryStore()
     store.setState({ memberships: local })
     noteRosterMemberships(store, remote)
@@ -61,10 +59,10 @@ describe('another device’s memberships', () => {
       memberships: memberships({ car: 2 }, { car: 6 }),
       pendingEnds: { car: 'leave' },
     })
-    // Another device that hasn't heard of the leave still lists the car.
+
     noteRosterMemberships(store, memberships({ car: 4 }))
     expect(store.getState().pendingEnds).toEqual({ car: 'leave' })
-    // Joined again later: the leave goes, or it'd take them off it.
+
     noteRosterMemberships(store, memberships({ car: 8 }))
     expect(store.getState().pendingEnds).toEqual({})
   })
@@ -150,7 +148,7 @@ describe('the link before Shared Cars sets its handler', () => {
       lost: { epoch: 1, owed: true },
     })
     expect(store.getState().cars.car.inviteRecords).toEqual([record])
-    // Nothing for one it has no record of, or a car that isn't here.
+
     deps.onInviteLost!({ to: 'inbox', spaceId: 'car', inviteId: 'other' })
     deps.onInviteLost!({ to: 'inbox', spaceId: 'gone', inviteId: 'lost' })
     expect(store.getState().cars.car.sentInvites).toEqual({
@@ -165,7 +163,7 @@ describe('the link before Shared Cars sets its handler', () => {
       pendingEnds: { leaving: 'leave' },
       closingInvites: { car: { a: {}, b: { tag: 't' } }, gone: { c: {} } },
     })
-    // A car no longer here takes its closes with it.
+
     await expect(deps.finishPending!()).resolves.toEqual({ pending: 3 })
   })
 })

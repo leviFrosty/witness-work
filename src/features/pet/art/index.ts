@@ -1,10 +1,3 @@
-/**
- * Pet art: species sprites, the room, lighting, particles and the scene
- * composer, all pure TypeScript on top of `@/lib/pixelArt`.
- *
- * Coordinates: a 180 × 100 scene (see `layout.ts`) with 32 × 32 pet sprites
- * resting at (52, 52).
- */
 export * from './hats'
 export * from './hearts'
 export * from './layout'

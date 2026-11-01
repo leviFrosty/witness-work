@@ -19,13 +19,6 @@ import type { Buddy } from '@/features/buddies/lib/state'
 const MEDALLION_SIZE = 60
 const COLUMN_WIDTH = 92
 
-/**
- * Every badge a buddy shares, in one row that scrolls sideways under their
- * profile card: each collection at its highest level and their One-time Badges.
- * See all opens their whole collection. Earned only; never progress, counts, or
- * a comparison with this User's. A coin opens that badge full screen, where the
- * User can react to it.
- */
 export default function BuddyBadgesSection({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

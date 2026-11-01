@@ -8,15 +8,12 @@ describe('splitInReadingOrder', () => {
   })
 
   it('breaks where the columns come out closest in height', () => {
-    // 300 | 100 + 100 + 100
     expect(splitInReadingOrder([300, 100, 100, 100])).toBe(1)
-    // 100 + 100 + 100 | 300
+
     expect(splitInReadingOrder([100, 100, 100, 300])).toBe(3)
   })
 
   it('counts the gap between sections', () => {
-    // 100 + 20 + 100 = 220 against 200: the break after the second wins
-    // over 100 against 100 + 20 + 200 = 320.
     expect(splitInReadingOrder([100, 100, 200], 20)).toBe(2)
   })
 

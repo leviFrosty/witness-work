@@ -3,10 +3,6 @@ import { serviceYearFocusMonth } from '@/lib/roleHistory'
 import YearPaceCard from '@/features/progress/components/cards/YearPaceCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/**
- * How much a month it takes to reach the Annual Goal: the Month tab's Year Pace
- * card, for the Service Year shown.
- */
 export default function YearNeededCard({ serviceYear, size }: YearCardProps) {
   const focus = serviceYearFocusMonth(serviceYear)
   return (

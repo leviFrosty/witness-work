@@ -4,15 +4,6 @@ import {
   buildNwPublisherLink,
 } from '@/features/service-reports/lib/submitLinks'
 
-/**
- * Formats validated against the examples provided by each app's support team:
- *
- * NW Publisher:
- * https://nwpublisher.com/report/sharedInMinistry=true:hours=50:bibleStudies=8:credit=17:remarks=bethel+work
- *
- * Hourglass:
- * https://app.hourglass-app.com/report/submit?month=<m>&year=<y>&minutes=<min>[&studies=][&remarks=]
- */
 describe('buildNwPublisherLink', () => {
   it('matches the exact example format from NW Publisher support', () => {
     expect(
@@ -60,7 +51,7 @@ describe('buildNwPublisherLink', () => {
     expect(link).toBe(
       'https://nwpublisher.com/report/sharedInMinistry=true:remarks=LDC-+5+hours'
     )
-    // Colons only ever appear as the pair delimiter.
+
     const afterPath = link.replace('https://nwpublisher.com/report/', '')
     for (const pair of afterPath.split(':')) {
       expect(pair).toMatch(/^[a-zA-Z]+=[^:]*$/)

@@ -12,21 +12,19 @@ import {
   useNotificationsTray,
 } from '@/features/notifications/stores/notificationsTray'
 
-/** Marks a Tools push whose tap opens the tray. */
 export const DEV_TRAY_PUSH_DATA = { devTray: true }
 
 type DevNotification = {
   id: string
   title: string
   description?: string
-  /** Listed from this time on, so a scheduled push's item lands as it fires. */
+
   at: number
   sticky?: boolean
 }
 
 type DevNotificationsState = { items: DevNotification[] }
 
-/** Test items for the notifications tray, added from the Tools screen. */
 export const useDevNotifications = create<DevNotificationsState>()(
   persist((): DevNotificationsState => ({ items: [] }), {
     name: 'devNotifications',
@@ -55,7 +53,6 @@ function bumpDevNotification(id: string) {
   }))
 }
 
-/** Drops every test item and its tray bookkeeping. */
 export function clearDevNotifications() {
   const withoutDev = (record: Record<string, number>) =>
     Object.fromEntries(
@@ -69,17 +66,12 @@ export function clearDevNotifications() {
   }))
 }
 
-/** Switches to Home and opens the bell, like a tapped Buddies push. */
 export function openNotificationsTray() {
   if (navigationRef.isReady())
     navigationRef.navigate('Root', { screen: 'Home' } as never, { pop: true })
   requestNotificationsTray()
 }
 
-/**
- * Tray items for the Tools screen's tests. Tapping one of its pushes opens the
- * tray.
- */
 export default function useDevNotificationItems(
   now: number
 ): NotificationItem[] {

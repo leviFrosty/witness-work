@@ -25,7 +25,6 @@ import { carInvitations } from '@/app/sharedCars/carInvitationsService'
 
 export type PickedBuddy = { inboxId: string; name: string }
 
-/** Where a buddy stands on the car, under their name. */
 function statusLine(entry: CarBuddy): string | undefined {
   if (entry.status === 'onCar') return i18n.t('mileage.buddyOnCar')
   if (entry.status === 'invited')
@@ -117,13 +116,6 @@ function BuddyChoice({
   )
 }
 
-/**
- * Invite a buddy to a Shared Car: each active buddy with where they stand on it
- * (available, on the car, invited). Picking one closes the sheet and then
- * invites them (`onInvite`), so its progress shows in a toast over the form. A
- * full car (its people and open invitations) offers no one. With no buddies
- * yet, it offers a way to Buddies to invite someone first.
- */
 export default function CarBuddyPickerSheet({
   open,
   onOpenChange,
@@ -133,7 +125,7 @@ export default function CarBuddyPickerSheet({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** The Shared Car; absent while the User has no buddies to share it with. */
+
   spaceId?: string
   carName: string
   onInvite: (buddy: PickedBuddy) => void
@@ -142,7 +134,7 @@ export default function CarBuddyPickerSheet({
   const navigation = useNavigation<RootStackNavigation>()
   const buddies = useBuddies((state) => state.buddies)
   const { now } = useNow()
-  // Re-reads where each buddy stands as invitations open and people join.
+
   const car = useSharedCars((state) =>
     spaceId === undefined ? undefined : state.cars[spaceId]
   )

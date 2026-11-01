@@ -73,22 +73,12 @@ import { SCRIBE_TOOLS, scribeTool } from '@/features/scribe/tools'
 import { NOW, PREFERENCES } from '@/features/scribe/tools/__fixtures__/stores'
 import { evalStores } from '@/features/scribe/evals/evalStores'
 
-/**
- * Golden turns: tool calls the real model made for messages in the eval set
- * (`scenarios.ts`, recorded October 2026 against `evalStores`), replayed
- * through the app's turn loop, tools and cards without a network. They pin what
- * the app does with good model output: which steps it sends, what each tool
- * answers, and the review cards the User sees. If a tool's schema or the
- * context's Refs change, re-record them with `scribe.eval.test.ts`.
- */
-
 type Args = Record<string, unknown>
-/** One step: the calls the model made, in order, and its text. */
+
 type Step = { calls: [name: string, args: Args][]; text?: string }
 
 let seq = 0
 
-/** Ww-api answering each step with the recorded model output. */
 function replay(steps: Step[]) {
   const bodies: StepRequest[] = []
   const client: ScribeClient = {
@@ -450,7 +440,7 @@ describe('golden turns', () => {
       ],
       'log 3 hours of hospital liaison committee work yesterday, that counts as credit'
     )
-    // The Category's Ref waited for a call, so the turn took a second step.
+
     expect(result.bodies.map((body) => body.step)).toEqual([0, 1])
     expect(result.results[0]).toMatchObject({
       name: 'categories_create',
@@ -498,7 +488,7 @@ describe('golden turns', () => {
       ],
       'log 3 hours of hospital liaison committee work yesterday, that counts as credit'
     )
-    // No Ref waits for another call, so the turn ends on the proposal.
+
     expect(result.bodies.map((body) => body.step)).toEqual([0])
     const answered = result.conversation.messages.at(-1)
     expect(answered?.role === 'tool' && answered.content).toEqual([
@@ -550,7 +540,7 @@ describe('golden turns', () => {
       ],
       'Move my plan on November 12 to two in the afternoon'
     )
-    // Past the context's two weeks, so the context doesn't list it.
+
     expect(
       result.bodies[0].context.plans.some((plan) => plan.includes('2026-11-12'))
     ).toBe(false)
@@ -829,7 +819,7 @@ describe('golden turns', () => {
       'I met a new person, Ama, at 5 Hill St, follow up Monday'
     )
     expect(result.bodies[0].context.contacts).toEqual([])
-    // Writes only: one step, ending the turn for review.
+
     expect(result.bodies).toHaveLength(1)
     const proposal = result.proposal!
     const [card] = proposal.cards
@@ -969,7 +959,7 @@ describe('golden turns', () => {
       ],
       'add a new contact Peter Okoye at 15 Birch Road'
     )
-    // The pending Ref came back to the model; nothing waited on it.
+
     expect(first.bodies).toHaveLength(1)
     addScribeProposal(first.proposal!.id, { now: NOW })
     const peter = useContacts

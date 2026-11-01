@@ -38,28 +38,18 @@ import {
 import { syncNow } from '@/lib/syncClock'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 
-/**
- * Set Up Another Device (ADR 0026) for this app: both phones' sessions wired to
- * the account key, the server account, Buddies, and analytics. The screens
- * drive a session; the developer Tools read the latest one from
- * `useHandoffDebug`.
- */
-
-/** Where the User started it. */
 export type HandoffEntry = 'settings' | 'onboarding' | 'link' | 'tools'
 
 export type HandoffSession = OfferSession | ClaimSession
 
-/** Analytics' name for a side: the phone with the account, or the new one. */
 const roleName = (session: HandoffSession) =>
   session.role === 'offer' ? 'old' : 'new'
 
 type HandoffDebugState = {
-  /** The current or last session, for Tools. */
   session: HandoffSession | null
   entry: HandoffEntry | null
   startedAt: number | null
-  /** Bumped on every change of the session, so Tools re-render. */
+
   revision: number
 }
 
@@ -70,20 +60,14 @@ export const useHandoffDebug = create<HandoffDebugState>(() => ({
   revision: 0,
 }))
 
-/** Why the app ended a handoff itself, for `handoff_failed`. */
 export type HandoffEndReason =
-  /** The User left the screen. */
   | 'left'
-  /** The old phone made a new code. */
   | 'new_code'
-  /** The new phone's User declined the replacement warning. */
   | 'replace_declined'
-  /** Replacing the account key failed. */
   | 'replace_failed'
 
 const endReasons = new WeakMap<HandoffSession, HandoffEndReason>()
 
-/** Ends a session the User walked away from, telling the server. */
 export function endHandoff(
   session: HandoffSession,
   reason: HandoffEndReason
@@ -92,7 +76,6 @@ export function endHandoff(
   return session.cancel()
 }
 
-/** Records the session for Tools and reports its milestones. */
 function track(
   session: HandoffSession,
   entry: HandoffEntry,
@@ -115,7 +98,7 @@ function track(
     const before = previous
     previous = state.step
     if (quiet) return
-    // An Allow that didn't get through goes back to `confirm`: not a new claim.
+
     if (
       (session.role === 'offer' &&
         state.step === 'confirm' &&
@@ -148,20 +131,13 @@ const sessionDeps = () => ({
 })
 
 export type OfferStartProblem =
-  /** This binary can't keep an account key. */
   | 'unsupported'
-  /** Accounts are off on the server. */
   | 'unavailable'
-  /** This device couldn't prove it's WitnessWork. */
   | 'unverified'
-  /** Verifying this device failed for now (Apple or Google, or the server). */
   | 'verifyLater'
-  /** The server needs a newer app. */
   | 'updateRequired'
-  /** The account couldn't be reached: offline or the server failed. */
   | 'offline'
 
-/** Why the account's session couldn't be opened, for the old phone. */
 function offerStartProblem(error: unknown): OfferStartProblem {
   const failure = toAccountSessionError(error)
   switch (failure.failure) {
@@ -175,11 +151,6 @@ function offerStartProblem(error: unknown): OfferStartProblem {
   return 'offline'
 }
 
-/**
- * The old phone: makes sure the account key exists and the account's session is
- * open (registering the account the first time), then opens a channel. Resolves
- * the session (opening) or why it can't start.
- */
 export async function startOfferHandoff(
   entry: HandoffEntry,
   { quiet = false }: { quiet?: boolean } = {}
@@ -208,22 +179,14 @@ export async function startOfferHandoff(
   )
   track(session, entry, { quiet })
   void session.open()
-  // The new phone offers the backup as soon as it has the key, so bring it up
-  // to date while the User scans and compares codes.
+
   if (useBackupState.getState().enabled)
     void backUpNow('handoff').catch(() => undefined)
   return { ok: true, session }
 }
 
-/** Offers whose Allow the device's owner already confirmed, and how. */
 const ownerChecks = new WeakMap<OfferSession, 'confirmed' | 'noLock'>()
 
-/**
- * Allow: sends the account key to the new phone once the device's owner
- * confirms it (Face ID, Touch ID, fingerprint, passcode or screen lock), so
- * someone holding the unlocked phone can't sign their own phone in. Tapping
- * Allow again after a send that didn't get through doesn't ask again.
- */
 export async function approveHandoff(
   session: OfferSession,
   { confirmOwner }: { confirmOwner: () => Promise<DeviceOwnerCheck> }
@@ -249,7 +212,6 @@ export async function approveHandoff(
   return 'sent'
 }
 
-/** What the new phone tells the old one about itself. */
 export function handoffHello(): HandoffHello {
   const model = Device.modelName ?? ''
   return {
@@ -260,7 +222,6 @@ export function handoffHello(): HandoffHello {
   }
 }
 
-/** The new phone: claims the channel a scanned or opened link names. */
 export function startClaimHandoff(
   offer: HandoffOffer,
   entry: HandoffEntry,
@@ -276,31 +237,19 @@ export type ClaimCompletion =
   | {
       outcome: 'done'
       buddiesStarted: boolean
-      /** What came of offering the account's backup. */
+
       restore: RestoreOutcome
     }
-  /** The User declined the replacement warning; the channel is cancelled. */
   | { outcome: 'declined' }
   | {
       outcome: 'failed'
       reason: HandoffFailure | 'replace_failed'
-      /**
-       * Delete Buddies is still waiting to tell a buddy, or to take the User
-       * off a Shared Car; its message (`buddiesErrorMessage`) says which.
-       */
+
       removalPending?: BuddyRemovalPendingError
-      /**
-       * Opening the account's session failed for now: the key is still here and
-       * the channel open, so `completeClaimHandoff` can run again.
-       */
+
       retryable?: boolean
     }
 
-/**
- * Failures opening the session with the received key that pass by themselves.
- * The key is already on this phone, so the User tries again instead of making a
- * new code on the other phone.
- */
 const RETRYABLE_OPEN_FAILURES: ReadonlySet<HandoffFailure> = new Set([
   'offline',
   'server',
@@ -308,21 +257,12 @@ const RETRYABLE_OPEN_FAILURES: ReadonlySet<HandoffFailure> = new Set([
   'verifyLater',
 ])
 
-/**
- * The new phone, once the key arrived: opens a session with the key (attesting
- * this phone) and checks it's the account the key came with (a connection
- * dropped while it opens leaves the session `received` to try again), warns
- * when replacing this phone's key loses Buddies data (`confirmReplace`),
- * replaces it and keeps that session, tells the old phone it's done, and starts
- * Buddies when the account uses it.
- */
 export async function completeClaimHandoff(
   session: ClaimSession,
   {
     confirmReplace,
     buddiesEnabled,
   }: {
-    /** Resolves whether to go ahead; shown only when something is lost. */
     confirmReplace: (loss: AccountKeyLoss) => Promise<boolean>
     buddiesEnabled: boolean
   }
@@ -332,8 +272,6 @@ export async function completeClaimHandoff(
     return { outcome: 'failed', reason: 'conflict' }
   const { accountKey: newKey, accountId } = state.received
 
-  // The key must be the account's: the same accountPub always opens a session
-  // for the same accountId.
   let opened: DetachedSession
   try {
     opened = await accountSessions.openDetached(newKey)
@@ -359,15 +297,12 @@ export async function completeClaimHandoff(
   try {
     loss = await accountKey.lossIfReplaced(newKey)
   } catch (error) {
-    // Whether the account's other devices keep its buddies decides what this
-    // phone deletes; nothing is, without knowing.
     logger.warn("[handoff] couldn't check the account's other devices", error)
     await opened.close()
     await endHandoff(session, 'replace_failed')
     return { outcome: 'failed', reason: 'replace_failed' }
   }
-  // On iOS the key reaches every Apple device on the same iCloud Keychain,
-  // so replacing one there always asks, as with a recovery key.
+
   if (
     differs &&
     (losesSomething(loss) || Platform.OS === 'ios') &&
@@ -386,7 +321,7 @@ export async function completeClaimHandoff(
     })
     if (result.outcome === 'replaced' && result.accountId !== accountId)
       logger.warn('[handoff] the new account opened under another id')
-    // Already this phone's key, with its own session: the extra one ends.
+
     await opened.close()
   } catch (error) {
     logger.warn('[handoff] replacing the account key failed', error)
@@ -412,11 +347,6 @@ export async function completeClaimHandoff(
   return { outcome: 'done', buddiesStarted, restore }
 }
 
-/**
- * The account's backup, offered on the phone that just received the account key
- * (ADR 0026 §4): Restore or Not Now, or Replace, Combine or Not Now when this
- * phone already has records. Never fails the handoff.
- */
 export async function offerRestoreAfterHandoff(): Promise<RestoreOutcome> {
   try {
     return await offerRestore('handoff')

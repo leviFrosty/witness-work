@@ -29,7 +29,6 @@ import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
-// Monday, October 5, 2026, 9:00 local.
 const NOW = new Date(2026, 9, 5, 9, 0)
 const at = (day: number, hour: number, minute = 0) =>
   new Date(2026, 9, day, hour, minute)
@@ -188,7 +187,6 @@ describe('buildUpNext', () => {
       })
     )
 
-    // The `ldc` string, not the stored English name, which isn't a key.
     expect(item.title).toBe('ldc')
   })
 
@@ -202,7 +200,7 @@ describe('buildUpNext', () => {
     expect(item).toMatchObject({
       timed: false,
       start: new Date(2026, 9, 6).getTime(),
-      // So the watch keeps it on the 6th in another time zone.
+
       day: '2026-10-06',
       timeText: null,
       clockText: null,

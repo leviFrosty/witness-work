@@ -155,7 +155,6 @@ const suggestionRows = () =>
     .findAllByType('TouchableOpacity' as never)
     .filter((node) => node.props.accessibilityLabel === SUGGESTION_LABEL)
 
-/** Renders with a typed query and waits out the search debounce. */
 const renderWithSuggestion = async (
   handlers: Parameters<typeof render>[1] = {}
 ) => {

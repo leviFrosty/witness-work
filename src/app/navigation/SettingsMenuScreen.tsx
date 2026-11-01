@@ -13,22 +13,18 @@ const settingsPages = new Set<string>(
   settingsDetailScreens.map(({ name }) => name)
 )
 
-/** Settings on compact layouts, pushed from the account menu. */
 const SettingsMenuScreen = () => {
   const navigation = useNavigation()
   const route = useRoute()
   const { hasSidebar } = useAdaptiveLayout()
 
-  // Wide layouts show Settings in the sidebar instead. When the window widens
-  // (Split View, Stage Manager), this page and the settings page open above
-  // it move to the Settings tab, which shows that page in its pane.
   useEffect(() => {
     if (!hasSidebar) return
     const state = navigation.getState()
     const index = state?.routes.findIndex(({ key }) => key === route.key) ?? -1
     if (!state || index < 1) return
     const pages = state.routes.slice(index + 1)
-    // Something other than Settings is open on top; leave it be.
+
     if (pages.some(({ name }) => !settingsPages.has(name))) return
     const page = pages[pages.length - 1]
     navigation.dispatch(
@@ -42,7 +38,7 @@ const SettingsMenuScreen = () => {
       screen: 'Settings',
       params: page && { screen: page.name, params: page.params },
     })
-    // The tab bar adds the Settings tab in this same update; wait for it.
+
     requestAnimationFrame(() => {
       if (navigationRef.isReady()) navigationRef.dispatch(openTab)
     })

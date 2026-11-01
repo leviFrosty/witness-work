@@ -1,16 +1,3 @@
-/**
- * The Pet widget's slice of the widget snapshot (`WidgetSnapshot.pet`),
- * mirrored by `WidgetSnapshot.Pet` in `targets/widgets/Snapshot.swift`. See
- * `docs/pet-companion.md` → "Widgets" and `docs/widgets.md` → "Pet widget".
- *
- * The images are PNGs the app renders and writes into the App Group's `pet/`
- * folder with `WidgetBridge.writeFile`; each entry names its files. Swift draws
- * the hearts and text itself.
- *
- * Everything here is pure: the records come in as {@link PetWidgetInput}
- * (`petWidgetInput.ts` reads them from the stores) and the PNG encoder is
- * injected, so tests run without Skia.
- */
 import moment from 'moment'
 import { hashBuffer, type PixelBuffer } from '@/lib/pixelArt'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -58,115 +45,85 @@ import { readPet, readRoom } from '@/features/pet/lib/records'
 import { petDisplayName, speciesName } from '@/features/pet/lib/names'
 import type { SignData } from '@/features/pet/art'
 
-/** What the widget's text says during one entry. */
 export type PetWidgetEntryStatus = {
-  /** Lamp brightness, 0 to 5, from the hearts (`lib/lamp.ts`). */
   lampLevel: number
-  /** Localized, e.g. "12 days kept". `null` when streaks are hidden or none. */
+
   lampDaysLabel: string | null
-  /** Localized one-liner of the wall sign, e.g. "14.5h of 30h". */
+
   signLine: string | null
-  /** VoiceOver label for the pet and its hearts, localized. */
+
   accessibilityLabel: string
 }
 
-/** One future state of the pet: its images, hearts and text from `date` on. */
 export type PetWidgetEntry = {
-  /** Epoch ms the entry starts showing, like the rest of the snapshot. */
   date: number
-  /**
-   * File names in `pet/` (`^[a-z0-9-]+\.png$`). `small` and `medium` are square
-   * crops of the pet; `large` is the room, 123:100.
-   */
+
   small: string
   medium: string
   large: string
-  /** 0 to 5 in steps of 0.5. */
+
   hearts: number
   dead: boolean
   gold: boolean
-  /** The lamp and sign as of `date`; the top-level fields are the first's. */
+
   status: PetWidgetEntryStatus
 }
 
 export type PetWidgetSnapshot = {
-  /** The pet's name, or its localized species name when it has none. */
   name: string
-  /**
-   * The current entry's hearts, lamp and text. Kept for widget builds older
-   * than `PetWidgetEntry.status`; newer ones read each entry's.
-   */
+
   accessibilityLabel: string
-  /** Hearts now, 0 to 5 in steps of 0.5. Each entry carries its own. */
+
   hearts: number
   dead: boolean
   gold: boolean
   lampLevel: number
   lampDaysLabel: string | null
   signLine: string | null
-  /**
-   * The timeline, oldest first: every hearts, lamp, sign or window time change
-   * over the next 48 hours, then the midnights hearts change on until the pet
-   * would die, and the first of each month, at most 12 in all. The first may be
-   * in the past.
-   */
+
   entries: PetWidgetEntry[]
 }
 
-/** How far ahead the dense part of the timeline reaches. */
 export const PET_TIMELINE_HOURS = 48
-/**
- * How far ahead the sparse part reaches: a pet at five hearts with nothing
- * logged dies on quiet day 60, and monthly hearts hold for up to
- * `MONTHLY_HOLD_MAX_DAYS` before quiet days count.
- */
+
 export const PET_TIMELINE_DAYS =
   MONTHLY_HOLD_MAX_DAYS + QUIET_DAYS_UNTIL_DEATH + 1
-/** At most this many entries (and scene renders) per snapshot. */
+
 export const PET_TIMELINE_MAX_ENTRIES = 12
-/** Hours the Live window changes its time of day (`timeOfDayAt`). */
+
 export const WINDOW_BOUNDARY_HOURS = [6, 9, 17, 20] as const
-/** Keepsakes shown on the window sill. */
+
 const SILL_KEEPSAKES = 5
-/**
- * Bump when the widget's images or snapshot change for the same inputs (new
- * art, a new field), so a pet whose inputs didn't change is drawn again.
- */
+
 export const PET_WIDGET_RENDER_VERSION = 1
 
-/** Encodes a pixel buffer as a base64 PNG (`bufferToPngBase64` in the app). */
 export type PetWidgetEncoder = (buffer: PixelBuffer) => string | null
 
-/** The wall sign's values on a day, and the date of its next Plan. */
 export type PetSignValues = {
-  /** `buildSignData` as of that day. */
   sign: SignData
-  /** The day of `sign.planDay`, for the text line; null without a plan. */
+
   nextPlanDate: Date | null
 }
 
-/** What the Pet widget reads, gathered from the stores (`petWidgetInput.ts`). */
 export type PetWidgetInput = {
-  /** The stored companion; null before adoption. */
   pet: PetRecord | null
-  /** The stored room; null until customized. */
+
   room: PetRoomRecord | null
-  /** Room defaults for the User's entry mode (`defaultRoomFor`). */
+
   roomDefaults: PetRoomSettings
-  /** `petActiveDays` of the ministry records. */
+
   activeDays: ReadonlySet<string>
-  /** Each month's hearts pace (`selectHeartsPace`). */
+
   heartsPace: (month: string) => HeartsPace
-  /** The streak's label replays "no new activity" from these records. */
+
   streakAt: (at: Date) => Pick<ServiceStreak, 'kind' | 'count'>
   showStreaks: boolean
-  /** The wall sign as of a day, with nothing new logged. */
+
   signAt: (at: Date) => PetSignValues
-  /** Device region, for the Live season's hemisphere. */
+
   regionCode: string | null
 }
 
-/** Everything one widget image depends on, plus the hearts Swift draws. */
 export type PetWidgetState = {
   hearts: number
   dead: boolean
@@ -184,25 +141,22 @@ export type PetWidgetState = {
 export type PetTimelineEntry = {
   date: number
   state: PetWidgetState
-  /** The Service Streak then, for the label beside the lamp's flame. */
+
   streak: Pick<ServiceStreak, 'kind' | 'count'>
-  /** The wall sign then; null with no sign on the wall. */
+
   sign: PetSignValues | null
 }
 
-/** A PNG the snapshot names, to write into `pet/`. */
 export type PetWidgetFile = { name: string; base64: string }
 
 export type PetWidgetBuild = {
-  /** `null` without a companion. */
   snapshot: PetWidgetSnapshot | null
-  /** Every file the snapshot names, small and large. */
+
   files: PetWidgetFile[]
-  /** `PetWidgetPlan.hash` of what was built; null without a companion. */
+
   hash: string | null
 }
 
-/** An image failed to encode; the build is incomplete. */
 export class PetWidgetRenderError extends Error {
   constructor(message = 'A pet widget image failed to encode') {
     super(message)
@@ -210,24 +164,13 @@ export class PetWidgetRenderError extends Error {
   }
 }
 
-/**
- * Local midnight `days` after the day of `at`, or the first moment of that day
- * where DST skips midnight. Each day is worked out from its date, so a day that
- * starts at 01:00 doesn't move the ones after it.
- */
 export function localMidnight(at: Date, days = 0): Date {
   return new Date(at.getFullYear(), at.getMonth(), at.getDate() + days)
 }
 
-/** `hour`:00 local on the day `days` after the day of `at`. */
 const localHour = (at: Date, days: number, hour: number): Date =>
   new Date(at.getFullYear(), at.getMonth(), at.getDate() + days, hour)
 
-/**
- * Times the widget could look different: the start of the current period, each
- * local midnight, and, with a Live window, each time-of-day boundary, up to 48
- * hours ahead, ascending.
- */
 export function timelineChangePoints(
   now: Date,
   liveTime: boolean,
@@ -253,7 +196,6 @@ export function timelineChangePoints(
   )
 }
 
-/** The fields of the sign that `kind` draws and describes. */
 function signKey(kind: SignId, values: PetSignValues | null): unknown {
   if (!values) return null
   const { sign } = values
@@ -283,7 +225,6 @@ function signKey(kind: SignId, values: PetSignValues | null): unknown {
   }
 }
 
-/** Everything an entry's images and text depend on, apart from its date. */
 const entryKey = (
   entry: PetTimelineEntry,
   sign: SignId,
@@ -297,7 +238,6 @@ const entryKey = (
     signKey(sign, entry.sign),
   ])
 
-/** Whether the pet looks or counts different from one day to the next. */
 const lifeChanged = (before: PetLife, after: PetLife): boolean =>
   before.hearts !== after.hearts ||
   before.dead !== after.dead ||
@@ -307,7 +247,6 @@ const lifeChanged = (before: PetLife, after: PetLife): boolean =>
   before.rainbowToday !== after.rainbowToday ||
   before.gift?.on !== after.gift?.on
 
-/** How much a later entry is worth keeping when they don't all fit. */
 function sparseRank(entry: PetTimelineEntry, before: PetTimelineEntry): number {
   const { state } = entry
   if (state.dead !== before.state.dead) return 4
@@ -322,21 +261,6 @@ function sparseRank(entry: PetTimelineEntry, before: PetTimelineEntry): number {
   return 0
 }
 
-/**
- * The pet's states ahead, assuming nothing new is logged: hearts replayed for
- * each upcoming day (same active days and wakes), the Service Streak and the
- * wall sign on that day, and the Live window's time and season. Identical
- * consecutive states are merged.
- *
- * - Over the next 48 hours: every change point (`timelineChangePoints`).
- * - After that, until the pet would die: each midnight its hearts, mood, gold or
- *   gift change, and the first of each month (sign and season). These show the
- *   window as at noon, since they stand for whole days.
- *
- * At most {@link PET_TIMELINE_MAX_ENTRIES}: the 48 hours first, then the later
- * days whose change matters most (dying, falling asleep, a new mood, other
- * hearts, the month). Empty without a pet.
- */
 export function petWidgetTimeline(
   input: PetWidgetInput,
   now: Date
@@ -384,7 +308,6 @@ export function petWidgetTimeline(
     return day
   }
 
-  /** The entry from `at`, with the window as at `windowAt`. */
   const entryAt = (at: Date, windowAt: Date): PetTimelineEntry => {
     const life = lifeOn(localDayKey(at))
     const { streak, sign } = dayValues(at)
@@ -397,7 +320,7 @@ export function petWidgetTimeline(
         gold: life.gold,
         mood: life.mood,
         asleep: life.asleep,
-        // The lamp follows the hearts (ADR 0035).
+
         lampLevel: lampLevel(life),
         time: window.time,
         season: window.season,
@@ -424,9 +347,6 @@ export function petWidgetTimeline(
     if (dense.length >= PET_TIMELINE_MAX_ENTRIES) return dense
   }
 
-  // Whole days after the 48 hours, until the pet would have died: the ones
-  // its life changes on, and each first of the month. The lamp and sign are
-  // read only on those days.
   const denseEndMs = now.getTime() + PET_TIMELINE_HOURS * 3_600_000
   const sparse: { entry: PetTimelineEntry; rank: number }[] = []
   let previous = dense[dense.length - 1]
@@ -449,12 +369,11 @@ export function petWidgetTimeline(
   return [...dense, ...kept]
 }
 
-/** Zzz over a sleeping pet, frozen mid-drift (pet-relative, like `step`). */
 const STATIC_ZZZ: readonly Particle[] = [
   { kind: 'zzz', x: 20, y: -3, bornMs: 0, lifeMs: 2200 },
   { kind: 'zzz', x: 25, y: -10, bornMs: -1700, lifeMs: 2200 },
 ]
-/** Gold sparkles around the pet, two as stars and two as dots. */
+
 const STATIC_SPARKLES: readonly Particle[] = [
   { kind: 'sparkle', x: 1, y: 6, bornMs: -450, lifeMs: 900 },
   { kind: 'sparkle', x: 28, y: 3, bornMs: -150, lifeMs: 900 },
@@ -471,10 +390,6 @@ function staticParticles(state: PetWidgetState): ParticleState | null {
   return { ...petParticles.createParticles(1), particles }
 }
 
-/**
- * One still frame of the state: no motion, idle pose at t = 0, no visitor,
- * paradise or shooting star (the widget can't animate them).
- */
 export function petWidgetScene(
   pet: PetRecord,
   room: PetRoomSettings,
@@ -498,17 +413,11 @@ export function petWidgetScene(
   return composeScene(input, 0)
 }
 
-/** `pet-<hash>.png`: the same pixels always get the same name. */
 export const petImageName = (buffer: PixelBuffer): string =>
   `pet-${hashBuffer(buffer).toString(16).padStart(8, '0')}.png`
 
 type RenderedImages = { small: PetWidgetFile; large: PetWidgetFile }
 
-/**
- * Rendered images by their `PetWidgetPlanEntry.imageKey` (a hash of everything
- * they depend on), so an unchanged state isn't composed or encoded again.
- * Bounded; the least recently used goes first.
- */
 export function createPetImageCache(limit = 32) {
   const entries = new Map<string, RenderedImages>()
   return {
@@ -542,7 +451,6 @@ const sharedCache = createPetImageCache()
 const t = (key: string, options?: Record<string, unknown>): string =>
   i18n.t(key as TranslationKey, options)
 
-/** "Biscuit, Lion cub, 4.5 of 5 hearts" for VoiceOver. */
 export function petAccessibilityLabel(
   pet: Pick<PetRecord, 'name' | 'species'>,
   hearts: number
@@ -559,10 +467,6 @@ export function petAccessibilityLabel(
     : t('pet.widget.accessibilityLabelUnnamed', values)
 }
 
-/**
- * The Service Streak beside the lamp's flame, "12 days kept" or "3 months
- * kept". Null with streaks hidden or no streak.
- */
 export function petLampDaysLabel(
   streak: Pick<ServiceStreak, 'kind' | 'count'>,
   showStreaks: boolean
@@ -574,11 +478,9 @@ export function petLampDaysLabel(
   )
 }
 
-/** Minutes as the widget's compact duration, "0h" for none. */
 const compactMinutes = (minutes: number): string =>
   formatMinutesCompact(minutes) || formatMinutesCompact(0, { unit: 'hours' })
 
-/** The wall sign's value as one short line; null for no sign. */
 export function petSignLine(
   kind: SignId,
   sign: SignData,
@@ -624,35 +526,24 @@ export function petSignLine(
   }
 }
 
-/** One planned entry: its snapshot fields and what its images are drawn from. */
 export type PetWidgetPlanEntry = {
   entry: Omit<PetWidgetEntry, 'small' | 'medium' | 'large'>
   state: PetWidgetState
-  /** The sign the room draws; null with no sign on the wall. */
+
   sign: SignData | null
-  /** `contentHash` of everything the images depend on. */
+
   imageKey: string
 }
 
-/** The `pet` slice worked out without drawing anything. */
 export type PetWidgetPlan = {
   pet: PetRecord
   room: PetRoomSettings
   name: string
   entries: PetWidgetPlanEntry[]
-  /**
-   * `contentHash` of the whole slice but its image names: the same hash means
-   * the same snapshot, so a push can skip drawing it again.
-   */
+
   hash: string
 }
 
-/**
- * The `pet` slice as it will be, without rendering: the timeline, each entry's
- * text, and a hash of every input the images and text depend on (life, room,
- * species and coat, sign values, lamp, window time and season, moments). Null
- * without a pet.
- */
 export function planPetWidget(
   input: PetWidgetInput,
   now: Date
@@ -704,11 +595,6 @@ export function planPetWidget(
   return { pet, room, name, entries, hash }
 }
 
-/**
- * Draws a plan: one still frame per entry not already in `cache` (by its image
- * key), cropped and encoded. Throws {@link PetWidgetRenderError} when an image
- * fails to encode, so a half-drawn slice is never written.
- */
 export function renderPetWidget(
   plan: PetWidgetPlan,
   encode: PetWidgetEncoder,
@@ -767,10 +653,6 @@ export function renderPetWidget(
   }
 }
 
-/**
- * The `pet` slice and the PNGs it names (`planPetWidget` then
- * `renderPetWidget`). Null snapshot without a pet.
- */
 export function buildPetWidget(
   input: PetWidgetInput,
   now: Date,

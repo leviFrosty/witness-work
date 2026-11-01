@@ -5,7 +5,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { HelpCategory } from '@/features/updates/types/helpCenter'
 
-/** A category id, or one of the screen's own sections. */
 export type FAQTopic = string
 
 export const faqTopicTitle = (topic: FAQTopic, categories: HelpCategory[]) =>

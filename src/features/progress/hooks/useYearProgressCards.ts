@@ -9,11 +9,6 @@ import { usePreferences } from '@/stores/preferences'
 import { YEAR_PROGRESS_CARDS } from '@/features/progress/components/cards/year/yearCardRegistry'
 import useProgressCardLayout from '@/features/progress/hooks/useProgressCardLayout'
 
-/**
- * Which Year cards make sense for the Service Year shown, by the role that
- * speaks for it: a pace and what's needed only against an Annual Goal, and hour
- * figures only for a User who logs hours.
- */
 export function useYearCardAvailability(serviceYear: number) {
   const { hasAnnualGoal, showsTimeEntry } = usePublisher(
     serviceYearFocusMonth(serviceYear)
@@ -37,9 +32,7 @@ export function useYearCardAvailability(serviceYear: number) {
   }
 }
 
-/** The User's cards on Progress → Year (`serviceYear` is the start year). */
 export default function useYearProgressCards(serviceYear: number) {
-  // Defaults follow today's role so they don't change from year to year.
   const { hasAnnualGoal, showsTimeEntry } = usePublisher()
   return useProgressCardLayout({
     catalog: YEAR_CARDS,

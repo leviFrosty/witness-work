@@ -51,17 +51,11 @@ const ICONS: Record<DeviceKind, AppIcon> = {
   computer: MonitorIcon,
 }
 
-/** "Oct 18", with the year when it isn't this one. */
 const signInDay = (at: number) =>
   moment(at).isSame(moment(), 'year')
     ? formatMonthDayCompact(moment(at))
     : formatDate(at, { style: 'medium' })
 
-/**
- * When a device signed in: its day, and the time too when another row with the
- * same name signed in that day (a phone wiped or reinstalled), so the two can
- * be told apart.
- */
 function signedIn(
   device: AccountDevice,
   devices: { device: AccountDevice; name: string }[],
@@ -82,27 +76,19 @@ function signedIn(
     : i18n.t('accountDevices_signedIn', { date: day })
 }
 
-/**
- * Settings → Account → Signed-In Devices (ADR 0028): the account's live
- * sessions, this device first, each other one signable out. Names come from the
- * sealed labels, opened here. Lists again on focus, on returning to the app,
- * and on pull to refresh, so a device signed out elsewhere drops off.
- */
 const AccountDevicesScreen = () => {
   const theme = useTheme()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [loading, setLoading] = useState(true)
   const [failure, setFailure] = useState<LoadFailure | null>(null)
-  // Pull to refresh, until its listing is in.
+
   const [refreshing, setRefreshing] = useState(false)
-  // Bumped to list again: after a sign-out, Try Again, pull to refresh, or a
-  // return to the app.
+
   const [reloads, setReloads] = useState(0)
   const focused = useIsFocused()
   const latest = useRef(0)
   const reported = useRef(false)
 
-  // Lists the devices each time the screen comes into focus.
   useEffect(() => {
     if (!focused) return
     const run = ++latest.current
@@ -131,7 +117,6 @@ const AccountDevicesScreen = () => {
       })
   }, [focused, reloads])
 
-  // Signing out happens on other devices too, while this one was away.
   useEffect(() => {
     if (!focused) return
     const reload = () => setReloads((count) => count + 1)

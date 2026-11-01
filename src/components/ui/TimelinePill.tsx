@@ -3,10 +3,6 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-/**
- * The small outlined label on a timeline's line, between two of its cards: how
- * much time passed between visits, or the drive between two stops.
- */
 export default function TimelinePill({
   icon,
   label,

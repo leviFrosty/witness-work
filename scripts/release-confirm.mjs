@@ -1,15 +1,5 @@
 #!/usr/bin/env node
-// Production release gate. A production app release (release tag push, App
-// Store upload) runs only with the user's typed go-ahead: the keyword
-// SHIP-PROD-<version>, passed in as WW_RELEASE_CONFIRM. Agents relay it only
-// after the user types it themselves (AGENTS.md → Guardrails, /cut-release).
-//
-//   node scripts/release-confirm.mjs <version>   checks WW_RELEASE_CONFIRM
-//   node scripts/release-confirm.mjs --pre-push  checks the v* tags in a push
-//                                                (refs on stdin, from git)
-//
-// Runs in .husky/pre-push and scripts/build-prod-auto-submit.sh, and in vitest
-// (scripts/release-confirm.test.ts).
+
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -22,9 +12,6 @@ export const isConfirmed = (version, confirmation) =>
 const RELEASE_TAG = /^refs\/tags\/v(\d+\.\d+\.\d+)$/
 const DELETED = /^0+$/
 
-// Versions of the release tags a push creates or moves. git's pre-push stdin
-// has one `<local ref> <local sha> <remote ref> <remote sha>` line per ref;
-// deleting a tag isn't a release.
 export function releaseTagsInPush(refs) {
   return refs
     .split('\n')

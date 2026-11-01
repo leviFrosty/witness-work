@@ -25,18 +25,9 @@ import {
 import { normalizeImageScale, snapImageScale } from '@/lib/richText/imageScale'
 import { textDirection } from '@/lib/textDirection'
 
-/*
- * The note editor's web half: Tiptap in the WebView, driven by the native
- * toolbar through `run`, reporting the doc and the formatting at the cursor
- * back. It imports nothing from React Native or the app's UI kit, because it
- * runs in a browser.
- */
-
-/** A JSON value that crosses the bridge (expo/dom doesn't export its type). */
 export type BridgeValue = Parameters<DOMImperativeFactory[string]>[number]
 
 export type RichTextEditorHandle = DOMImperativeFactory & {
-  /** Takes an `EditorCommand`; typed loosely because it crosses the bridge. */
   run: (command: BridgeValue) => void
 }
 
@@ -47,22 +38,19 @@ type Props = {
   onReady: () => Promise<void>
   onChange: (doc: Record<string, unknown>) => Promise<void>
   onFormatState: (state: EditorFormatState) => Promise<void>
-  /** Where the selected photo's resize handles are: `[x, y, width, height]`. */
+
   onImageHandles: (rects: number[][]) => Promise<void>
 }
 
 const CHANGE_DEBOUNCE_MS = 300
 const SELECTION_PREFILL_CHARS = 200
 
-/** Image id → URL; filled from the setup and as photos are inserted. */
 const imageSources = new Map<string, string>()
 const imageElements = new Map<string, Set<HTMLImageElement>>()
 
-/** How tall a photo that hasn't been resized can be, as the app shows it. */
 const DEFAULT_IMAGE_MAX_HEIGHT = 360
 const CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
 
-/** What a photo's share of the note is a share of: its parent's content box. */
 function contentWidth(element: HTMLElement | null): number {
   if (!element) return 0
   const style = getComputedStyle(element)
@@ -73,7 +61,6 @@ function contentWidth(element: HTMLElement | null): number {
   )
 }
 
-/** A photo's width: its share once resized, else the app's default size. */
 function imageWidth(attrs: Record<string, unknown>): string {
   const scale = normalizeImageScale(attrs.scale)
   if (scale) return `${scale * 100}%`
@@ -83,10 +70,6 @@ function imageWidth(attrs: Record<string, unknown>): string {
     : '100%'
 }
 
-/**
- * The selected photo's resize handles, reported to the native side so Android
- * keeps its back gesture off them near the screen's edges.
- */
 const handles = {
   frame: null as HTMLElement | null,
   report: (_rects: number[][]) => {},
@@ -114,11 +97,6 @@ function reportHandles() {
   })
 }
 
-/**
- * A photo in the editor. Tapping it selects it and shows a handle at each
- * corner; dragging one resizes the photo around its center, keeping its
- * proportions, and saves its new share of the note's width when let go.
- */
 const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
   let current = node
   const id = String(node.attrs.id)
@@ -165,8 +143,6 @@ const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
     let scale: number | null = null
     frame.classList.add('resizing')
     const move = (moved: PointerEvent) => {
-      // Centered, so both sides move by the drag: the corner stays under the
-      // finger.
       const width = startWidth + 2 * side * (moved.clientX - startX)
       scale = snapImageScale(width / available)
       frame.style.width = `${scale * 100}%`
@@ -176,7 +152,7 @@ const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
       handle.removeEventListener('pointerup', end)
       handle.removeEventListener('pointercancel', end)
       frame.classList.remove('resizing')
-      // A tap on a handle isn't a resize.
+
       if (scale !== null) commit(scale)
       reportHandles()
     }
@@ -206,8 +182,7 @@ const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
       frame.style.width = imageWidth(next.attrs)
       return true
     },
-    // Only the class: the default would also make the photo draggable, which
-    // a resize drag would start.
+
     selectNode: () => {
       frame.classList.add('ProseMirror-selectednode')
       handles.frame = frame
@@ -246,7 +221,7 @@ const NoteImage = Image.extend({
       },
     }
   },
-  // Only our own photos: pasted web images (remote URLs, base64) are dropped.
+
   parseHTML() {
     return [{ tag: 'img[data-note-image]' }]
   },
@@ -269,13 +244,6 @@ const NoteImage = Image.extend({
 
 const DIRECTED_NODES = new Set(['paragraph', 'heading', 'listItem', 'taskItem'])
 
-/**
- * Decorates `node`'s paragraphs, headings and list items with their direction
- * and returns `node`'s own. A text block's comes from its text; any other
- * node's from its first child that has one. That's the first letter of its
- * `textContent` (what `RichTextView` reads for a list item), without reading a
- * nested list's text again at every level.
- */
 function collectDirections(
   node: ProseMirrorNode,
   contentStart: number,
@@ -302,14 +270,6 @@ function textDirections(doc: ProseMirrorNode): DecorationSet {
 
 const textDirectionsKey = new PluginKey<DecorationSet>('noteTextDirections')
 
-/**
- * Gives each paragraph, heading and list item the direction of its first letter
- * (`textDirection`, as `RichTextView` does), so an English line in an Arabic
- * note keeps its own side, list marker included. Lines without letters (an
- * empty line being typed) follow the app's direction from the root. Only
- * decorations: nothing is stored in the note. Worked out again only when the
- * text changes, not as the caret or selection moves.
- */
 const TextDirections = Extension.create({
   name: 'noteTextDirections',
   addProseMirrorPlugins() {
@@ -506,11 +466,6 @@ body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-s
 .ProseMirror p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:${t.textAlt};float:${setup.direction === 'rtl' ? 'right' : 'left'};height:0;pointer-events:none;}`
 }
 
-/**
- * A call to the native side. One still pending when the screen closes fails
- * (iOS has removed the page's message handler); the doc was handed over on
- * flush, so there's nothing left to do.
- */
 const send = (call: Promise<void>) => {
   call.catch(() => {})
 }
@@ -519,8 +474,6 @@ const sameState = (a: EditorFormatState | null, b: EditorFormatState) =>
   !!a && JSON.stringify(a) === JSON.stringify(b)
 
 export default function RichTextEditorDom(props: Props) {
-  // Bridged native functions are new objects every time native sends props,
-  // so effects read them from here instead of depending on them.
   const bridge = useRef(props)
   useLayoutEffect(() => {
     bridge.current = props
@@ -579,8 +532,7 @@ export default function RichTextEditorDom(props: Props) {
           role: 'textbox',
           'aria-multiline': 'true',
           'aria-label': setup?.label ?? '',
-          // Lines without letters follow the app; the rest take their own
-          // direction (`TextDirections`).
+
           dir: setup?.direction ?? 'ltr',
           autocapitalize: 'sentences',
           spellcheck: 'true',
@@ -608,7 +560,6 @@ export default function RichTextEditorDom(props: Props) {
         })
       },
       onBlur: ({ editor: current }) => {
-        // Hand the latest doc over now: the screen may close next.
         if (changeTimer.current) {
           clearTimeout(changeTimer.current)
           changeTimer.current = null
@@ -619,7 +570,6 @@ export default function RichTextEditorDom(props: Props) {
     [setup]
   )
 
-  // A tap below the note (it's often short) still starts writing, at the end.
   useEffect(() => {
     if (!editor) return
     const focusEnd = (event: MouseEvent) => {
@@ -631,7 +581,6 @@ export default function RichTextEditorDom(props: Props) {
     return () => document.removeEventListener('click', focusEnd)
   }, [editor])
 
-  // The selected photo's handles move when the note scrolls or reflows.
   useEffect(() => {
     handles.report = (rects) => send(bridge.current.onImageHandles(rects))
     const moved = () => {
@@ -645,7 +594,6 @@ export default function RichTextEditorDom(props: Props) {
     }
   }, [])
 
-  // A smaller viewport (the keyboard came up) can hide the caret.
   useEffect(() => {
     const viewport = window.visualViewport
     if (!viewport || !editor) return

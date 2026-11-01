@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The boot runners' flags are local-only preferences. If they ever read false
-// on an install that already has Categories or custom fields (the preferences
-// blob was lost), running again must not replace them.
-
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'uuid' }))
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))

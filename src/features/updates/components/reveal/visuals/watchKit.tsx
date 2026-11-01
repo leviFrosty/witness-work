@@ -3,7 +3,6 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { withAlpha } from '@/lib/color'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
-/** The watch case, its band stubs and crown, in visual units. */
 export const WATCH = {
   width: 146,
   height: 178,
@@ -11,18 +10,17 @@ export const WATCH = {
   crown: 6,
   bezel: 7,
 }
-/** What the frame takes up, crown and bands included. */
+
 export const WATCH_FRAME = {
   width: WATCH.width + WATCH.crown,
   height: WATCH.height + WATCH.band * 2,
 }
-/** The display inside the bezel. */
+
 export const WATCH_SCREEN = {
   width: WATCH.width - WATCH.bezel * 2,
   height: WATCH.height - WATCH.bezel * 2,
 }
 
-/** The watch draws on black in either appearance; these are its greys. */
 export const WATCH_COLORS = {
   screen: '#000000',
   case: '#1C1C1E',
@@ -33,11 +31,6 @@ export const WATCH_COLORS = {
   track: '#2C2C2E',
 }
 
-/**
- * An Apple Watch drawn around `children`, which fill its display. The case is
- * dark in both appearances, like a midnight aluminium watch; the band follows
- * the scene so it sits back.
- */
 export const WatchFrame = ({
   palette,
   style,
@@ -123,7 +116,6 @@ export const WatchFrame = ({
   )
 }
 
-/** A rounded list row, like a watchOS button. */
 export const WatchRow = ({
   style,
   children,

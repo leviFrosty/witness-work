@@ -9,10 +9,9 @@ import {
 import type { ChartBounds } from 'victory-native'
 
 const DURATION = 300
-/** Segments thinner than this many points draw nothing. */
+
 const MIN_HEIGHT = 0.5
 
-/** Bars in canvas points: segment `[series][bar]` spans `y0` (base) to `y1`. */
 type Geometry = {
   centers: number[]
   width: number
@@ -22,7 +21,6 @@ type Geometry = {
 }
 
 type Props = {
-  /** Distance per bar, then per series in stacking order (bottom first). */
   values: number[][]
   colors: string[]
   chartBounds: ChartBounds
@@ -76,11 +74,6 @@ const toGeometry = ({
   }
 }
 
-/**
- * Lines `from` up with `next` so the two interpolate segment for segment. A
- * series only in `next` grows from its base; one only in `from` shrinks into
- * the top of its bar. A different bar count grows every bar from the axis.
- */
 const alignGeometry = (
   from: Geometry,
   next: Geometry,
@@ -118,16 +111,9 @@ const alignGeometry = (
   return aligned
 }
 
-/**
- * Stacked bars that animate as one: every segment of every bar follows the same
- * clock, and the topmost visible segment of each bar keeps its rounded corners
- * throughout. Victory's `StackedBar` tweens each segment's path on its own, and
- * a segment that gains or loses its rounded top or its height can't be tweened,
- * so it jumped while its neighbors slid.
- */
 const AnimatedStackedBars = ({ radius, ...props }: Props) => {
   const target = toGeometry(props)
-  // Compared by value: the parent rebuilds the arrays on every render.
+
   const targetKey = JSON.stringify(target)
   const baseline = props.chartBounds.bottom
   const from = useSharedValue(target)
@@ -136,10 +122,9 @@ const AnimatedStackedBars = ({ radius, ...props }: Props) => {
 
   useEffect(() => {
     const next: Geometry = JSON.parse(targetKey)
-    // Start from where the bars are now, even mid-animation.
+
     const current = lerpGeometry(from.value, to.value, progress.value)
     if (current.width <= 0) {
-      // The chart hadn't been laid out yet; nothing to animate from.
       from.value = next
       to.value = next
       return
@@ -154,7 +139,7 @@ const AnimatedStackedBars = ({ radius, ...props }: Props) => {
   const geometry = useDerivedValue(() =>
     lerpGeometry(from.value, to.value, progress.value)
   )
-  // Series that just left keep drawing so they can shrink away.
+
   const [drawn, setDrawn] = useState({ key: targetKey, colors: props.colors })
   if (drawn.key !== targetKey) {
     setDrawn({

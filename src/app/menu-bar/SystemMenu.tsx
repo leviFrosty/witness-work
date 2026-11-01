@@ -13,7 +13,6 @@ import { errorTracking } from '@/lib/errorTracking'
 import * as SystemMenuBridge from '../../../modules/system-menu'
 import { menuGroups, runMenuCommand } from './menuCommands'
 
-/** One native menu adapter, with all behavior owned by existing app flows. */
 export default function SystemMenu({ language }: { language: string }) {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
   const { showsTimeEntry } = usePublisher()

@@ -33,7 +33,6 @@ interface PreviousDonationsProps {
   customer: CustomerInfo
 }
 
-/** Why a store call failed, as the notice's tone. */
 type Failure = 'offline' | 'error'
 
 const failure = (error: unknown): Failure => {
@@ -42,17 +41,7 @@ const failure = (error: unknown): Failure => {
   return 'error'
 }
 
-/**
- * The store products behind the customer's purchases, for their prices. Fetches
- * again only when the set of product ids changes or on `retry`.
- */
 const usePurchasedProducts = (customer: CustomerInfo) => {
-  // Union purchase history with the live subscription map so we can always
-  // resolve price + billing period for the active-subscription cards —
-  // including users whose entitlement was granted manually in the RC
-  // dashboard. Their real store subscription still lands in these maps with
-  // its real product identifier, even though the granted entitlement points
-  // at a synthetic promotional product that `getProducts` can't resolve.
   const idsKey = JSON.stringify(
     Array.from(
       new Set([
@@ -162,19 +151,11 @@ const PreviousDonations = ({ customer }: PreviousDonationsProps) => {
       .sort((a, b) => moment(b.purchaseDate).diff(a.purchaseDate))
   }, [customer.nonSubscriptionTransactions, products])
 
-  // Read from `active`, not `all`: a revoked lifetime grant should drop out
-  // entirely rather than appear here as inactive.
   const lifetimeSupporterEntitlement =
     LIFETIME_SUPPORTER_ENTITLEMENT in customer.entitlements.active
       ? customer.entitlements.active[LIFETIME_SUPPORTER_ENTITLEMENT]
       : undefined
 
-  // Drive the recurring-donation cards off the customer's real subscriptions
-  // rather than the entitlement identifier. This is billing-period accurate for
-  // monthly and annual alike, and resolves price even when supporter status was
-  // granted manually in the dashboard — the underlying store subscription still
-  // appears here with its real product identifier. Active subscriptions sort
-  // first, then most-recently purchased.
   const subscriptions = useMemo(() => {
     return Object.values(customer.subscriptionsByProductIdentifier ?? {})
       .map((sub) => {

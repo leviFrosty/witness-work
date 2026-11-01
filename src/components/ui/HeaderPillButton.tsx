@@ -11,29 +11,22 @@ type Props = {
   icon: AppIcon
   label: string
   onPress: () => void
-  /** Defaults to `label`; extend it when the badge carries meaning. */
+
   accessibilityLabel?: string
-  /** A dot for something waiting, e.g. requests to confirm. */
+
   badge?: boolean
-  /** A spinner in the icon's place; not pressable until it's ready. */
+
   loading?: boolean
-  /** Dimmed and not pressable; say why in `accessibilityLabel`. */
+
   disabled?: boolean
-  /**
-   * Icon only, for a header without room for the label. The label still names
-   * it to VoiceOver and as a pointer tooltip. `auto` shows the label only while
-   * the root header's title keeps room for it.
-   */
+
   compact?: boolean | 'auto'
 }
 
-/** ActivityIndicator's `small` size; scaled down to the icon's. */
 const SPINNER_SIZE = 20
 
-/** The icon-only pill's width and height. */
 const COMPACT_SIZE = 36
 
-/** A labeled root-header action, for places and tasks an icon can't name. */
 export default function HeaderPillButton({
   icon,
   label,
@@ -54,8 +47,7 @@ export default function HeaderPillButton({
   useEffect(() => {
     if (room === undefined || needs === undefined) return
     if (labeledWidth === undefined) return
-    // `room` was measured with the pill as it is now, so the room left beside
-    // the label comes out the same either way and the choice can't flip-flop.
+
     setFits((labeled) =>
       labeled ? room >= needs : room - (labeledWidth - COMPACT_SIZE) >= needs
     )
@@ -74,7 +66,7 @@ export default function HeaderPillButton({
     borderWidth: 1,
     borderColor: theme.colors.accent,
     backgroundColor: theme.colors.accentTranslucent,
-    // Set only when dimmed, so it doesn't override the pressed state's.
+
     ...(disabled ? { opacity: 0.5 } : null),
   })
   const pill = pillStyle(iconOnly)
@@ -127,7 +119,6 @@ export default function HeaderPillButton({
     </>
   )
 
-  // The labeled pill's width, measured off-screen while the icon shows.
   const measure = compact === 'auto' && (
     <View
       pointerEvents='none'

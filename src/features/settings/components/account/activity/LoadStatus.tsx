@@ -6,7 +6,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
-/** A spinner while a list loads, or why it didn't and Try Again. */
 export default function LoadStatus({
   loading,
   message,

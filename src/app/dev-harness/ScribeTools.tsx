@@ -32,12 +32,6 @@ import { FAKE_SCRIPT_NAMES, fake } from '@/app/dev-harness/scribeFake'
 const when = (ms: number | null | undefined) =>
   ms ? new Date(ms).toLocaleString() : '—'
 
-/**
- * Developer Tools: Scribe AI's server status and limits, the account's usage
- * windows (with units), the size of this device's context snapshot, the last
- * step's usage, and the on-device fake for trying every state without ww-api.
- * English only.
- */
 export default function ScribeTools() {
   const offered = useScribeOffered()
   const enabled = useScribeEnabled()

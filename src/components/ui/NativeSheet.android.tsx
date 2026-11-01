@@ -29,27 +29,12 @@ import {
   type SheetWindowFrame,
 } from '@/components/ui/sheetWindowFrame'
 
-/** Material 3 caps a bottom sheet's width at 640dp. */
 const SHEET_MAX_WIDTH = 640
-/**
- * The drag handle's bar and the room above and below it. Material's default
- * band is 48dp; this keeps content as close under the handle as it sat before
- * sheets went native.
- */
+
 const DRAG_HANDLE = { top: 10, bar: 4, bottom: 6 }
 const DRAG_HANDLE_HEIGHT =
   DRAG_HANDLE.top + DRAG_HANDLE.bar + DRAG_HANDLE.bottom
 
-/**
- * Material 3's `ModalBottomSheet`, built on `@expo/ui/jetpack-compose` rather
- * than the universal `BottomSheet`, which doesn't report when a sheet closed by
- * the app has finished hiding, and opens a tall sheet at half height even when
- * it should fit its content.
- *
- * Material has only two resting heights, half and full: a sheet whose lowest
- * snap point is half the screen or less opens at half height and drags up to
- * full; any other sheet with snap points opens at full height.
- */
 export default function NativeSheet({
   open,
   onDismiss,
@@ -65,15 +50,13 @@ export default function NativeSheet({
   const window = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const sheet = useRef<ModalBottomSheetRef>(null)
-  // Where the content is on screen, for popovers anchored inside it.
+
   const [windowFrame, setWindowFrame] = useState<SheetWindowFrame | null>(null)
   const latestOnClosed = useRef(onClosed)
   useEffect(() => {
     latestOnClosed.current = onClosed
   })
 
-  // Closed by the app or after the User dismissed it: wait out the hide
-  // animation (already over after a dismissal) before saying it's closed.
   useEffect(() => {
     if (open) return
     let cancelled = false
@@ -119,8 +102,7 @@ export default function NativeSheet({
             />
           </ModalBottomSheet.DragHandle>
         ) : null}
-        {/* A Column reports where the content is: `RNHostView` itself
-            doesn't deliver its modifiers' events. */}
+        {}
         <Column
           modifiers={[
             ...(fit ? [] : [fillMaxSize()]),
@@ -158,7 +140,6 @@ export default function NativeSheet({
   )
 }
 
-/** The share of the screen a snap point covers. */
 const fraction = (point: SheetSnapPoint, screenHeight: number) => {
   if (point === 'half') return 0.5
   if (point === 'full') return 1

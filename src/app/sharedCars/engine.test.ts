@@ -28,7 +28,6 @@ const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 let server: FakeSpacesServer
 
 beforeEach(() => {
-  // Retries wait no time.
   vi.spyOn(Math, 'random').mockReturnValue(0)
   server = createFakeSpacesServer({ now: Date.now })
 })
@@ -56,7 +55,7 @@ describe('sharing a car', () => {
       car.myMemberId,
       car.myMemberId,
     ])
-    // A copy of the fuel, which the setup and the price now name.
+
     const [fuel] = car.fuels
     expect(fuel.id).not.toBe('fuel-1')
     expect(car.vehicleSetups[0].fuelId).toBe(fuel.id)
@@ -118,7 +117,7 @@ describe('sharing a car', () => {
     anna.hooks.beforePut = () => {
       if (!first) return
       first = false
-      // The first batch is on its way; the User deletes a trip meanwhile.
+
       const { trips, deletedMileageRecords } = anna.personal()
       anna.personal().trips = trips.filter((t) => t.id !== 'trip-1')
       deletedMileageRecords.push({ id: 'trip-1', deletedAt: Date.now() + 5 })
@@ -258,7 +257,7 @@ describe('inviting and joining', () => {
       name: 'Joe',
       tag: 'T'.repeat(22),
     })
-    // Another buddy can't decline Joe's invitation.
+
     expect(
       await anna.engine.declineInvite(spaceId, invite.inviteId, 'U'.repeat(22))
     ).toEqual({ pending: false })
@@ -332,7 +331,7 @@ describe('syncing', () => {
     joe.hooks.beforePut = async () => {
       if (raced) return
       raced = true
-      // Anna's newer edit lands between Joe's pull and his put.
+
       await pause(5)
       anna.store
         .getState()
@@ -394,7 +393,7 @@ describe('syncing', () => {
     server.state.log.length = 0
     const running = anna.engine.syncCar(spaceId)
     await started
-    // Asked while one runs: one more afterwards, for both of them.
+
     const later = [anna.engine.syncCar(spaceId), anna.engine.syncCar(spaceId)]
     expect(later[0]).toBe(later[1])
     release()
@@ -443,7 +442,7 @@ describe('rekeying', () => {
     joe.hooks.beforePut = async () => {
       if (rekeyed) return
       rekeyed = true
-      // The rekey lands between Joe's pull and his put.
+
       await anna.engine.removeMember(spaceId, cal.car(spaceId).myMemberId)
     }
     await joe.engine.syncCar(spaceId)
@@ -462,7 +461,7 @@ describe('rekeying', () => {
     const spaceId = await sharedCar(bea, cal, joe)
     await bea.engine.removeMember(spaceId, joe.car(spaceId).myMemberId)
     expect(bea.car(spaceId).epoch).toBe(2)
-    // Everything so far is sealed under the first key.
+
     expect(server.spaces.get(spaceId)!.records.get('trip-1')!.epoch).toBe(1)
     const invite = await bea.engine.createInvite(spaceId, {
       name: 'Dee',
@@ -485,12 +484,12 @@ describe('rekeying', () => {
       tag: tagOf(spaceId, dee),
     })
     await anna.engine.removeMember(spaceId, joe.car(spaceId).myMemberId)
-    // Removing Joe left Anna alone, but an invitation is open again.
+
     expect(anna.reissued).toHaveLength(1)
     const [{ previousInviteId, invite }] = anna.reissued
     expect(previousInviteId).toBe(first.inviteId)
     expect(invite.epoch).toBe(2)
-    // Joe's used invite stays until it expires, so a retried join is known.
+
     const open = [...server.spaces.get(spaceId)!.invites].filter(
       ([, i]) => !i.joined
     )
@@ -552,7 +551,7 @@ describe('endings', () => {
       .getState()
       .saveTrip(spaceId, { ...tripOn(phone, spaceId, 'trip-1'), note: 'Joe' })
     await phone.engine.syncCar(spaceId)
-    // The roster brings the car to Joe's other device.
+
     expect(await tablet.engine.addCarFromRoster(spaceId, Date.now())).toBe(
       'synced'
     )
@@ -682,7 +681,7 @@ describe('Delete All Mileage Data', () => {
     expect(anna.personal().trips.every((t) => t.vehicleId === copy.id)).toBe(
       true
     )
-    // Everyone else keeps the car.
+
     expect(await joe.engine.syncCar(spaceId)).toBe('synced')
     expect(joe.car(spaceId).trips).toHaveLength(2)
     expect(server.spaces.get(spaceId)!.members.size).toBe(2)
@@ -722,7 +721,6 @@ describe('the User’s profile on a car', () => {
     const avatarOn = (member: HeadlessMember) =>
       member.car(spaceId).members[0].avatar
 
-    // Joining from the roster, the tablet put its own.
     await phone.engine.syncCar(spaceId)
     expect(avatarOn(phone)).toBe('🚙')
     const settled = memberPuts.length
@@ -733,7 +731,6 @@ describe('the User’s profile on a car', () => {
     expect(memberPuts).toHaveLength(settled)
     expect(avatarOn(phone)).toBe('🚙')
 
-    // Changed on the phone: the phone's goes, and stays.
     avatars.phone = '🛻'
     await phone.engine.syncCar(spaceId)
     await tablet.engine.syncCar(spaceId)
@@ -777,7 +774,7 @@ describe('letting go on this device', () => {
     expect(joe.store.getState().memberships).toEqual({ cars: {}, leftCars: {} })
     expect(joe.keyring.epochs(spaceId)).toEqual([])
     expect(joe.personal().trips).toEqual([])
-    // Still on the car, for his other devices.
+
     await anna.engine.syncCar(spaceId)
     expect(anna.car(spaceId).members.map((m) => m.name)).toEqual([
       'Anna',
@@ -815,7 +812,7 @@ describe('server switches', () => {
 
     server.suspend(false)
     await joe.engine.syncCar(spaceId)
-    // Held for a minute after the refusal.
+
     expect(joe.car(spaceId).pendingPuts).toEqual(['trip-1'])
     clock += 61_000
     await joe.engine.syncCar(spaceId)
@@ -827,7 +824,7 @@ describe('server switches', () => {
     const anna = person('Anna')
     const spaceId = await sharedCar(anna)
     server.state.enabled = false
-    // A sync tries once more after the server's Retry-After (30 s at most).
+
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const refused = expect(
       anna.engine.syncCar(spaceId, { automatic: true })
@@ -843,7 +840,7 @@ describe('server switches', () => {
       Date.now() + 14 * 60_000
     )
     server.state.enabled = true
-    // The User's own pull to refresh still goes.
+
     expect(await anna.engine.syncCar(spaceId)).toBe('synced')
     expect(anna.status.getState().disabled).toBe(false)
   })

@@ -14,22 +14,16 @@ import { useFormattedMinutes } from '@/lib/minutes'
 type EditTarget = 'status' | 'goal'
 
 type Props = {
-  /** Short status name; null hides status (e.g. future months). */
   statusLabel: string | null
-  /** The month's status differs from the User's standing role. */
+
   isStatusDifferent: boolean
-  /** Null hides the goal (no Monthly Goal for this role). */
+
   goalHours: number | null
   isGoalOverridden: boolean
   onEditStatus: () => void
   onEditGoal: () => void
 }
 
-/**
- * One quiet line — "Auxiliary Pioneer · 30 Hrs goal ›" — replacing separate
- * status and goal chips. The goal follows the status, so they read as one fact;
- * when both are editable, a tap opens a pull-down menu asking which to change.
- */
 const MonthStatusGoalButton = ({
   statusLabel,
   isStatusDifferent,
@@ -39,8 +33,7 @@ const MonthStatusGoalButton = ({
   onEditGoal,
 }: Props) => {
   const theme = useTheme()
-  // At accessibility text sizes the line wraps whole ("Regular Pioneer") rather
-  // than truncating the status.
+
   const largeText = useAccessibilityTextSize()
   const goalDisplay = useFormattedMinutes(Math.round((goalHours ?? 0) * 60))
   const hasGoal = goalHours !== null && goalHours > 0
@@ -65,7 +58,6 @@ const MonthStatusGoalButton = ({
   const content = (
     <>
       <Text
-        // Narrow columns wrap the goal instead of cutting it.
         numberOfLines={largeText ? undefined : 2}
         style={{
           flexShrink: 1,
@@ -83,7 +75,6 @@ const MonthStatusGoalButton = ({
     summary: label,
   })
 
-  // Both editable: a native pull-down asks which to change.
   if (statusLabel && hasGoal) {
     return (
       <PullDownMenu

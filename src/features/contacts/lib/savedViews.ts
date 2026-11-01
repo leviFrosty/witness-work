@@ -19,7 +19,6 @@ export const DEFAULT_CONTACTS_QUERY: ContactsQuery = {
   direction: 'desc',
 }
 
-/** Long enough for "Spanish territory", short enough to keep chips scannable. */
 export const SAVED_VIEW_NAME_MAX_LENGTH = 30
 
 const CUSTOM_FIELD_SORT_PREFIX = 'customField:'
@@ -39,7 +38,6 @@ const sameContactsQuery = (a: ContactsQuery, b: ContactsQuery) =>
 export const normalizeSavedViewName = (name: string): string =>
   name.trim().slice(0, SAVED_VIEW_NAME_MAX_LENGTH)
 
-/** Chip-row order. Ties fall back to creation, then id, so devices agree. */
 export function orderedSavedViews(
   views: SavedContactViews
 ): SavedContactViewEntry[] {
@@ -53,14 +51,6 @@ export function orderedSavedViews(
     )
 }
 
-/**
- * Points every custom-field reference at a field that still exists. Renamed and
- * archived fields keep their id (and archived ones keep their values), so they
- * need nothing. Ids merged by the legacy definition cleanup resolve to their
- * canonical definition. A permanently deleted field's values are gone, so its
- * filters are dropped and a sort on it falls back to Suggested. Returns the
- * same object when nothing changed.
- */
 export function resolveCustomFieldReferences(
   query: ContactsQuery,
   customFieldDefs: CustomFieldDefinition[]
@@ -95,28 +85,24 @@ export function resolveCustomFieldReferences(
 }
 
 type ResolvedContactsQuery = {
-  /** What the Contacts list shows. */
   query: ContactsQuery
-  /** The Saved View being shown, when one is active. */
+
   view: SavedContactViewEntry | null
-  /** The view's filters or sort changed and haven't been saved back to it. */
+
   edited: boolean
 }
 
-/** A view's own filters and sort, with its field references resolved. */
 const savedViewQuery = (
   saved: SavedContactView,
   customFieldDefs: CustomFieldDefinition[]
 ) => resolveCustomFieldReferences(pickContactsQuery(saved), customFieldDefs)
 
-/** The single rule for what the Contacts list applies. */
 export function resolveContactsQuery({
   own,
   views,
   active,
   customFieldDefs,
 }: {
-  /** The User's own filters and sort, used whenever no view applies. */
   own: ContactsQuery
   views: SavedContactViews
   active: ActiveSavedContactView | null
@@ -137,7 +123,6 @@ export function resolveContactsQuery({
   return { query, view, edited: !sameContactsQuery(query, savedQuery) }
 }
 
-/** Records changes to the active view; matching the saved view clears them. */
 export function editActiveSavedView(
   view: SavedContactViewEntry,
   next: ContactsQuery,
@@ -148,7 +133,6 @@ export function editActiveSavedView(
     : { id: view.id, edits: pickContactsQuery(next) }
 }
 
-/** Appends a view at the end of the row. `null` for an empty name. */
 export function addSavedView(
   views: SavedContactViews,
   name: string,
@@ -202,12 +186,6 @@ export function deleteSavedView(
   return rest
 }
 
-/**
- * Puts the views in the order of `ids`, e.g. after a chip is dragged. Ids that
- * no longer exist are skipped and views missing from `ids` keep their place at
- * the end. Rewrites `order` only on views whose position changed, so sync
- * stamps just those entries. Returns the same object when nothing moved.
- */
 export function reorderSavedViews(
   views: SavedContactViews,
   ids: string[]
@@ -227,7 +205,6 @@ export function reorderSavedViews(
   return next
 }
 
-/** Moves a view one place earlier (`-1`) or later (`1`). */
 export function moveSavedView(
   views: SavedContactViews,
   id: string,
@@ -241,7 +218,6 @@ export function moveSavedView(
   return reorderSavedViews(views, ordered)
 }
 
-/** Bounded analytics context: a built-in sort key, or just `customField`. */
 export const savedViewAnalyticsSort = (
   query: ContactsQuery
 ): Exclude<ContactSortKey, `customField:${string}`> | 'customField' =>

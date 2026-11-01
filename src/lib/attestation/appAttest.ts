@@ -1,13 +1,4 @@
-export type AttestationEndpoint =
-  /**
-   * `POST /attestation/v1/challenge`: key registration (bind, enroll) and
-   * assertion challenges for features without a challenge route of their own.
-   */
-  | 'challenge'
-  /** `POST /attestation/v1/register`: binds a key or enrolls its recovery. */
-  | 'registration'
-  /** `POST /attestation/v1/verify`: the attested no-op diagnostics prove. */
-  | 'verify'
+export type AttestationEndpoint = 'challenge' | 'registration' | 'verify'
 
 export type AppAttestNativeFailureCode =
   | 'unsupported'
@@ -36,15 +27,9 @@ export type AttestationErrorCode =
   | 'network'
   | 'cancelled'
   | 'invalidState'
-  /** Android only: Play Integrity says this device or app build isn't genuine. */
   | 'deviceIneligible'
-  /**
-   * Android only: Play Store / Play services are missing, outdated, or
-   * unreachable.
-   */
   | 'playServicesUnavailable'
 
-/** The server's stable answer, carried on an `AttestationError`. */
 interface AttestationServerMetadata {
   status?: number
   serverCode?: string
@@ -75,24 +60,16 @@ export class AttestationError extends Error {
 
 export interface AttestationHttpErrorOptions {
   kind: 'network' | 'http' | 'cancelled'
-  /**
-   * A `network` failure that started but didn't finish in time, rather than one
-   * that never connected. The state machines treat both alike; the message
-   * differs so `classifyNetworkError` reads `timeout` instead of `offline`.
-   */
+
   timedOut?: boolean
   status?: number
   serverCode?: string
   reason?: string
   action?: string
-  /** From the server's Retry-After (or `retryAfter` in the body). */
+
   retryAfterMs?: number
 }
 
-/**
- * Sanitized transport failure. It deliberately carries no request body, raw
- * response, challenge, attestation, assertion, or server-localized message.
- */
 export class AttestationHttpError extends Error {
   readonly kind: 'network' | 'http' | 'cancelled'
   readonly timedOut: boolean
@@ -136,13 +113,12 @@ export interface AppAttestDependencies {
     classifyError(error: unknown): AppAttestNativeFailureCode | null
   }
   secureStore: {
-    /** False for OTA JS running against the original UUID-only native module. */
     supportsRecoveryStorage?(): boolean
     readActiveKeyId(): string | null
     writeActiveKeyId(keyId: string): void
     readRecoveryToken(): string | null
     getOrCreateRecoveryToken(): string
-    /** Opaque key-id + token-hash marker acknowledged by the server. */
+
     readRecoveryEnrollmentKeyId(): string | null
     writeRecoveryEnrollmentKeyId(marker: string): void
   }
@@ -156,7 +132,7 @@ export interface AppAttestDependencies {
   identity: {
     peekUuid(): string | null
     getOrCreateUuid(): string
-    /** Read only for the snapshot's `accountIdentity`; nothing attests it. */
+
     getAccountId(): string
   }
   crypto: {
@@ -177,55 +153,29 @@ export interface AppAttestDependencies {
   now(): number
 }
 
-/** Purposes attested on another feature's routes (`AttestedRequest`). */
 export type AttestationPurpose = 'account-session'
 
-/**
- * The purpose the dev Tools diagnostics and repair sign for `POST
- * /attestation/v1/verify` (ww-api `src/attestation/purposes.ts`).
- */
 export const ATTESTATION_VERIFY_PURPOSE = 'attestation-verify'
 
-/**
- * How an attested request proves the device: the fields ww-api verifies (App
- * Attest assertion or Play Integrity token, with their binding), or, in dev
- * builds, the dev worker's bypass token sent as `x-ww-dev-bypass` instead.
- */
 export type AttestationProof =
   | { kind: 'attestation'; fields: Record<string, unknown> }
   | { kind: 'devBypass'; token: string }
 
-/**
- * A request another feature attests through its own routes (account sessions'
- * `session/open`, ADR 0027), with the `/attestation/v1/challenge` challenge
- * shape. Both callbacks throw `AttestationHttpError` for HTTP failures
- * (`toAttestationHttpError`), so challenge, counter and key failures are
- * retried or recovered here; anything else reaches the caller as that error.
- */
 export interface AttestedRequest<T> {
   purpose: AttestationPurpose
-  /** Lowercase hex SHA-256s the assertion binds. */
+
   contentHash: string
   requestHash: string
-  /**
-   * POSTs the challenge body and resolves the answer's JSON. Defaults to the
-   * API-wide `POST /attestation/v1/challenge`.
-   */
+
   challenge?(
     body: Record<string, unknown>,
     signal?: AbortSignal
   ): Promise<unknown>
-  /** Sends the request with its proof. */
+
   submit(proof: AttestationProof, signal?: AbortSignal): Promise<T>
   signal?: AbortSignal
 }
 
-/**
- * Whether this device can attest, checked before a flow that needs it starts:
- * `unsupported` when it never can (a simulator, App Attest unsupported, Android
- * without Google Play), `unknown` when that can't be told right now (offline).
- * Whether the device and app pass is only known once ww-api checks a proof.
- */
 export type AttestationSupport = 'supported' | 'unsupported' | 'unknown'
 
 const SHA256_HEX = /^[a-f0-9]{64}$/
@@ -240,11 +190,7 @@ export interface AppAttestSnapshot {
   accountIdentity: 'local' | 'adopted' | 'missing' | 'error'
   activeKey: 'keychain' | 'legacyMigrationPending' | 'missing' | 'error'
   recoveryToken: 'present' | 'missing' | 'error'
-  /**
-   * Whether the server-acknowledged recovery-enrollment receipt names the
-   * active key. 'acknowledged' means a dead active key should be repairable by
-   * re-registering under the enrolled recovery credential.
-   */
+
   recoveryEnrollment:
     | 'acknowledged'
     | 'stale'
@@ -273,27 +219,20 @@ export interface AttestationDebugReport {
 }
 
 export interface AttestationRepairReport extends AttestationDebugReport {
-  /** True when the repair replaced the active key via the recovery credential. */
   keyRotated: boolean
 }
 
 export interface AppAttestAuthorizer {
-  /** Another feature's request, asserted with the install's key (protocol v2). */
   assert<T>(request: AttestedRequest<T>): Promise<T>
-  /** Never creates a key or asks Apple for anything. */
+
   checkSupport(): Promise<AttestationSupport>
-  /** Enrolls recovery for an existing key; never creates a first-use key. */
+
   prepareRecovery(): Promise<void>
-  /** Redacted, lifecycle-read-only state for developer diagnostics. */
+
   getSnapshot(): AppAttestSnapshot
-  /** Uses an existing key only; never binds, enrolls, recovers, or promotes. */
+
   runDiagnostics(): Promise<AttestationDebugReport>
-  /**
-   * Attested no-op through the full protected path — the one flow that can
-   * replace a key Apple refuses to sign with. Unlike diagnostics it may bind,
-   * enroll, and recover, exactly as a real attested request would; the verify
-   * route spends nothing.
-   */
+
   runRepair(): Promise<AttestationRepairReport>
 }
 
@@ -301,10 +240,7 @@ const APP_ATTEST_PROTOCOL = 'witnesswork.app-attest'
 const JOURNAL_VERSION = 2 as const
 const JOURNAL_MAX_AGE_MS = 24 * 60 * 60 * 1000
 const JOURNAL_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000
-/**
- * SHA-256 of the empty string. The verify probe has no payload, so it binds
- * this as both its content and request hash (ww-api requires them equal).
- */
+
 export const DIAGNOSTIC_CONTENT_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
@@ -335,10 +271,6 @@ export const throwIfAborted = (signal?: AbortSignal): void => {
   if (signal?.aborted) throw cancellationError()
 }
 
-/**
- * Lets one caller stop waiting for shared work without cancelling that work for
- * every other caller using the same cached promise.
- */
 export const waitForSignal = <T>(
   promise: Promise<T>,
   signal?: AbortSignal
@@ -394,7 +326,6 @@ type ProtocolVersion = 1 | 2
 type ChallengeOperation = 'bind' | 'enroll' | 'assert'
 type ProtectedPurpose = typeof ATTESTATION_VERIFY_PURPOSE | AttestationPurpose
 
-/** Where a protected attempt asks for its challenge and sends its request. */
 type ProtectedChannel<T> = {
   challenge(
     body: Record<string, unknown>,
@@ -403,23 +334,22 @@ type ProtectedChannel<T> = {
   submit(body: Record<string, unknown>, signal?: AbortSignal): Promise<T>
 }
 
-/** One attested request: what it binds, where it goes, and how it's traced. */
 type ProtectedRequest<T> = {
   channel: ProtectedChannel<T>
   protocol: ProtocolVersion
   purpose: ProtectedPurpose
   contentHash: string
-  /** Bound under protocol v2 only. */
+
   requestHash?: string
   operationId: string
   keyId: string
   uuid: string
   signal?: AbortSignal
-  /** Diagnostics' per-step trace. */
+
   trace?: (step: AttestationDebugStep) => void
-  /** The submit step's name in `trace`; the purpose by default. */
+
   submitStep?: string
-  /** Rejects a structurally invalid acknowledgement. */
+
   validate?: (data: unknown, operationId: string) => boolean
 }
 
@@ -432,7 +362,7 @@ type BootstrapJournal = {
   uuid: string
   operationRestartCount: 0 | 1
   recoveryTokenHash?: string
-  /** Written before generateKey; true on restart means its result is unknown. */
+
   generationInFlight: boolean
   updatedAt?: number
 }
@@ -451,9 +381,9 @@ type CandidateJournal = {
   clientData?: string
   clientDataHash?: string
   attestation?: string
-  /** Written before the one-shot Apple call; true on restart is ambiguous. */
+
   attestationInFlight?: boolean
-  /** An observed Apple serverUnavailable permits retrying the exact tuple. */
+
   attestationRetryable?: boolean
   updatedAt?: number
 }
@@ -633,8 +563,6 @@ const parseJournal = (raw: string): LifecycleJournal => {
 }
 
 const protocolVersionFromStatus = (status: unknown): ProtocolVersion => {
-  // Additive capability contract. A deployed status response with no capability
-  // is v1; only an explicit advertised 2 opts this client into recovery/binding.
   if (!isRecord(status)) return 1
   const capabilities = status.capabilities
   if (!isRecord(capabilities)) return 1
@@ -699,18 +627,12 @@ const buildAssertionClientData = (input: {
     input.operationId,
     input.challenge,
     input.uuid,
-    // The optional account id slot; nothing attested here sends one, and
-    // ww-api reads it as ''.
+
     '',
     input.contentHash,
     input.requestHash,
   ].join('|')
 
-/**
- * Protocol v1's assertion client data without an account id (ww-api
- * `buildAssertionClientData`'s three-field form). Only the diagnostics and
- * repair verify probe still asserts under v1.
- */
 const buildV1AssertionClientData = (input: {
   challenge: string
   uuid: string
@@ -733,20 +655,6 @@ const nativeFailureToErrorCode = (
   }
 }
 
-/**
- * Whether a native failure means the locally stored key can no longer produce
- * assertions, so the only way forward is re-registering under the recovery
- * credential.
- *
- * `invalidKey` is Apple naming that outright. `invalidInput` needs the same
- * treatment because the adapter validates both arguments before Apple ever sees
- * them — a non-empty key id and a hash it decoded to exactly 32 bytes — and
- * emits `invalidArgument` when that check fails. So an `invalidInput` reaching
- * here is Apple objecting to arguments we already know are well formed, and the
- * key id is the only one it can be objecting to. `invalidArgument` is
- * deliberately excluded: that is a caller bug, and rotating keys would neither
- * fix it nor stop it recurring.
- */
 const isDeadKeyFailure = (code: AttestationErrorCode): boolean =>
   code === 'invalidKey' || code === 'invalidInput'
 
@@ -898,12 +806,6 @@ const pendingKind = (
   return journal.mode === 'recovery' ? 'recovery' : 'bind'
 }
 
-/**
- * Deep App Attest authorization module (ADR 0017), shared by every feature that
- * attests. Callers provide the hashes to bind and their own submit; this module
- * owns identity injection, protocol negotiation, all key lifecycle transitions,
- * exact-operation journaling, FIFO authorization, and redaction.
- */
 export const createAppAttestAuthorizer = (
   dependencies: AppAttestDependencies
 ): AppAttestAuthorizer => {
@@ -949,8 +851,6 @@ export const createAppAttestAuthorizer = (
       }
       return journal
     } catch {
-      // Corrupt, restored, or obsolete transient state must never permanently
-      // block authorization. It contains no recovery token and is safe to drop.
       storage(() => dependencies.persistence.clearJournal())
       return null
     }
@@ -1013,8 +913,7 @@ export const createAppAttestAuthorizer = (
     if (recoveryStorageSupported()) {
       storage(() => dependencies.secureStore.writeActiveKeyId(keyId))
     }
-    // One rollback window: keep the legacy MMKV slot in sync while v1 clients
-    // may still be installed, but never read it over a Keychain value.
+
     storage(() => dependencies.persistence.mirrorLegacyKeyId(keyId))
     if (protocol === 2) recordRecoveryEnrollment(keyId, tokenHash!)
     clearJournal()
@@ -1064,8 +963,7 @@ export const createAppAttestAuthorizer = (
     } catch (firstError) {
       const firstCode = dependencies.appAttest.classifyError(firstError)
       if (firstCode !== 'serverUnavailable') throw nativeError(firstError)
-      // Apple's required retry for DCError.serverUnavailable is the same key and
-      // exact clientDataHash. The closure captures those immutable inputs.
+
       throwIfAborted(signal)
       try {
         return await operation()
@@ -1104,7 +1002,6 @@ export const createAppAttestAuthorizer = (
     return pending
   }
 
-  /** `POST /attestation/v1/challenge`. */
   const postChallenge = (
     body: Record<string, unknown>,
     signal?: AbortSignal
@@ -1120,10 +1017,7 @@ export const createAppAttestAuthorizer = (
     purpose?: ProtectedPurpose
     contentHash?: string
     requestHash?: string
-    /**
-     * Another feature's challenge route; `/attestation/v1/challenge` by
-     * default.
-     */
+
     post?: ProtectedChannel<unknown>['challenge']
     signal?: AbortSignal
   }): Promise<string> => {
@@ -1236,12 +1130,7 @@ export const createAppAttestAuthorizer = (
       original.attestationInFlight &&
       !original.attestationRetryable
     ) {
-      // The process may have died after Apple's one-shot attestKey succeeded but
-      // before its CBOR response reached durable storage. Repeating that call can
-      // only yield invalidKey, so replace this unpromoted candidate once.
       if (original.operationRestartCount === 1) {
-        // Keep the exhausted journal as a 24-hour tombstone so relaunches cannot
-        // reset the replacement budget and generate Secure Enclave keys forever.
         throw new AttestationError('invalidState')
       }
       return startCandidate({
@@ -1288,7 +1177,7 @@ export const createAppAttestAuthorizer = (
         const clientDataHash =
           await dependencies.crypto.sha256Base64(clientData)
         candidate = { ...candidate, challenge, clientData, clientDataHash }
-        // Persist the exact challenge and exact client data before asking Apple.
+
         writeJournal(candidate)
       }
 
@@ -1315,8 +1204,7 @@ export const createAppAttestAuthorizer = (
             attestationInFlight: false,
             attestationRetryable: false,
           }
-          // Persist Apple's exact CBOR blob before registration. If the process
-          // dies before this write, the in-flight marker burns this candidate.
+
           writeJournal(candidate)
         } catch (error) {
           if (
@@ -1375,8 +1263,6 @@ export const createAppAttestAuthorizer = (
       }
       throwIfAborted(signal)
       if (original.operationRestartCount === 1) {
-        // Preserve the exhausted operation as a TTL-bounded tombstone. Clearing it
-        // would let each user retry reset the budget and generate another key.
         return throwLifecycleError(error)
       }
       return startCandidate({
@@ -1416,8 +1302,6 @@ export const createAppAttestAuthorizer = (
 
     if (bootstrap.generationInFlight) {
       if (bootstrap.operationRestartCount === 1) {
-        // The second generation result was also lost. Keep this marker until its
-        // TTL expires rather than creating an unbounded stream of orphaned keys.
         throw new AttestationError('invalidState')
       }
       bootstrap = {
@@ -1431,8 +1315,7 @@ export const createAppAttestAuthorizer = (
 
     throwIfAborted(signal)
     bootstrap = { ...bootstrap, generationInFlight: true }
-    // No key id exists yet, so this durable marker is the only way to bound the
-    // crash gap between generateKey creating a key and returning its identifier.
+
     writeJournal(bootstrap)
 
     let keyId: string
@@ -1441,7 +1324,6 @@ export const createAppAttestAuthorizer = (
     } catch (error) {
       const classified = nativeError(error)
       if (classified.code === 'serverUnavailable') {
-        // Apple explicitly permits retrying an observed availability failure.
         bootstrap = { ...bootstrap, generationInFlight: false }
         writeJournal(bootstrap)
       }
@@ -1463,8 +1345,7 @@ export const createAppAttestAuthorizer = (
       operationRestartCount: bootstrap.operationRestartCount,
       recoveryTokenHash: bootstrap.recoveryTokenHash,
     }
-    // Persist the returned key before observing cancellation. A canceled caller
-    // can stop, while the next caller resumes this exact candidate.
+
     writeJournal(candidate)
     return completeCandidate(candidate, signal)
   }
@@ -1586,8 +1467,6 @@ export const createAppAttestAuthorizer = (
       }
       throwIfAborted(signal)
       if (original.operationRestartCount === 1) {
-        // Keep the exhausted enrollment receipt until TTL expiry so retries do not
-        // silently reset the one-restart operation budget.
         return throwLifecycleError(error)
       }
       const replacement: EnrollmentJournal = {
@@ -1600,8 +1479,7 @@ export const createAppAttestAuthorizer = (
         operationRestartCount: 1,
         recoveryTokenHash: enrollment.recoveryTokenHash,
       }
-      // A new operation requires a fresh challenge, hash, and assertion, while
-      // retaining the same active key and recovery-token material.
+
       writeJournal(replacement)
       return completeEnrollment(replacement, signal)
     }
@@ -1623,15 +1501,12 @@ export const createAppAttestAuthorizer = (
       keyId,
       operationRestartCount: 0,
     }
-    // This marker closes the crash gap between token creation and enrollment.
+
     writeJournal(enrollment)
     try {
       return await completeEnrollment(enrollment, signal)
     } catch (error) {
       if (error instanceof AttestationError && isDeadKeyFailure(error.code)) {
-        // Enrollment may have committed before its response was lost and the app
-        // was then reinstalled. Try a token that predates this enrollment once;
-        // a token created moments before the local invalidKey was never enrolled.
         if (!recoveryTokenPredatedEnrollment) {
           throw new AttestationError('recoveryUnavailable')
         }
@@ -1684,9 +1559,6 @@ export const createAppAttestAuthorizer = (
         let uuid = storage(() => dependencies.identity.peekUuid())
 
         if (journal && (!uuid || journal.uuid !== uuid)) {
-          // The journal is device/install-bound. A restored Documents container
-          // cannot carry it onto a device where this-device-only Keychain state
-          // is missing or different.
           clearJournal()
           journal = null
         }
@@ -1722,14 +1594,9 @@ export const createAppAttestAuthorizer = (
         if (!keyId) {
           if (desiredProtocol === 1) {
             if (recoveryToken(false)) {
-              // A recovery-capable reinstall must wait for v2; v1 has no token
-              // proof and must never consume this state with a blind bind.
               throw new AttestationError('protocolUnavailable')
             }
-            // Contained v1 first-use compatibility: the deployed server's
-            // first-writer UUID pin accepts only an unbound identity. A reinstall
-            // with an existing owner is rejected, this exact candidate stays
-            // journaled, and no replacement is generated or promoted.
+
             const bootstrap: BootstrapJournal = {
               v: JOURNAL_VERSION,
               kind: 'bootstrap',
@@ -1755,10 +1622,6 @@ export const createAppAttestAuthorizer = (
                 signal,
               })
             } else {
-              // This may be first use on an install whose UUID was created by the
-              // account provider. The server accepts bind only for an unbound UUID;
-              // a pre-v2 reinstall with a legacy owner receives
-              // recovery_not_enrolled and this candidate is never promoted.
               const bootstrap: BootstrapJournal = {
                 v: JOURNAL_VERSION,
                 kind: 'bootstrap',
@@ -1853,7 +1716,6 @@ export const createAppAttestAuthorizer = (
     return nativeError(error).code
   }
 
-  /** Records one redacted repair-report step around an operation, rethrowing. */
   const traced = async <T>(
     trace: ((step: AttestationDebugStep) => void) | undefined,
     name: string,
@@ -2036,9 +1898,7 @@ export const createAppAttestAuthorizer = (
       keyId = await traced(input.trace, 'recover-key', () =>
         recoverKey(input.protocol, keyId, input.uuid, input.signal)
       )
-      // A challenge operation is bound to the old key in v2, so a controlled
-      // recovery retry needs a fresh correlation id rather than conflicting
-      // with that rejected descriptor.
+
       operationId = dependencies.crypto.randomUuid()
       allowRecovery = false
     }
@@ -2104,8 +1964,6 @@ export const createAppAttestAuthorizer = (
         if (!marker) {
           recoveryEnrollment = 'missing'
         } else {
-          // The token-hash half needs async crypto; the key-id half is the
-          // signal that matters for "can a repair rotate the current key".
           const markerKeyId = marker.split('|')[0]
           recoveryEnrollment =
             markerKeyId && activeKeyId && markerKeyId === activeKeyId
@@ -2182,7 +2040,6 @@ export const createAppAttestAuthorizer = (
       }
     }
 
-  /** Attested no-op via the dev bypass header; shared by diagnostics and repair. */
   const runDevBypassVerify = async <R extends AttestationDebugReport>(
     report: R,
     operationId: string
@@ -2228,12 +2085,6 @@ export const createAppAttestAuthorizer = (
       return report
     })
 
-  /**
-   * A diagnostics run is read-only, so it can never demonstrate recovery — but
-   * it can say whether recovery is possible. When the failing step reports a
-   * key the system will no longer sign with, record whether the recovery
-   * credential a repair would re-register under actually exists.
-   */
   const appendRecoverabilityNote = (report: AttestationDebugReport): void => {
     const failed = report.steps.find((entry) => !entry.ok)
     if (
@@ -2382,7 +2233,6 @@ export const createAppAttestAuthorizer = (
       steps: [],
     }
     if (dependencies.devBypass.enabled) {
-      // The bypass path has no device key, so there is nothing to rotate.
       return runDevBypassVerify(report, operationId)
     }
     const step = stepRunner(report.steps)
@@ -2419,9 +2269,6 @@ export const createAppAttestAuthorizer = (
     const protocol = capability.value
     report.protocolVersion = protocol
 
-    // The same readiness pass every attested request runs: it may resume a
-    // journaled operation, enroll recovery, or replace a key that dies during
-    // enrollment — all of which this repair exists to exercise.
     const ready = await step('ensure-ready', () => ensureReady(protocol))
     if (!ready.ok) {
       noteRotation()
@@ -2451,8 +2298,7 @@ export const createAppAttestAuthorizer = (
     } catch (error) {
       const code = diagnosticErrorCode(error)
       const last = report.steps[report.steps.length - 1]
-      // Traced steps already recorded their own failures; this keeps untraced
-      // throws (exhausted recovery, cancellation) visible in the report.
+
       if (!last || last.ok || last.code !== code) {
         report.steps.push({ step: 'protected-verify', ok: false, ms: 0, code })
       }
@@ -2483,7 +2329,7 @@ export const createAppAttestAuthorizer = (
         throw new AttestationError('nativeUnknown')
       }
       if (!supported) throw new AttestationError('unsupported')
-      // Only v2 assertions bind a purpose and a request hash.
+
       if ((await waitForSignal(protocolVersion(), signal)) !== 2) {
         throw new AttestationError('protocolUnavailable')
       }

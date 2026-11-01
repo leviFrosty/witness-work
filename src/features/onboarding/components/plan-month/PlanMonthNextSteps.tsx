@@ -12,7 +12,7 @@ const Row = ({
   text,
 }: {
   icon: AppIcon
-  /** May bold a phrase with `**`. */
+
   text: string
 }) => {
   const theme = useTheme()
@@ -55,10 +55,6 @@ const Row = ({
   )
 }
 
-/**
- * Where planning lives after setup, so this step reads as a preview rather than
- * the only chance to plan. Buddies gets its own step next.
- */
 const PlanMonthNextSteps = () => {
   const theme = useTheme()
 

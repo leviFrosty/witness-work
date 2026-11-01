@@ -44,10 +44,7 @@ import { getNoteText, hasNote } from '@/lib/richText/notes'
 interface TimeReportRowProps {
   report: TimeEntry
   onPress?: () => void
-  /**
-   * Runs a navigation from the row's menu. Hosts that present the row in a
-   * modal sheet pass one that closes the sheet first.
-   */
+
   onNavigate?: (navigate: () => void) => void
 }
 
@@ -73,11 +70,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const go = (navigate: () => void) =>
     onNavigate ? onNavigate(navigate) : navigate()
 
-  /**
-   * The one delete flow for this row — the context menu and the right-swipe
-   * both land here, so the rollover-pair warning can't be reachable from only
-   * one of them.
-   */
   const handleRequestDelete = () => {
     const isRolloverPair =
       report.rollover === true && report.rolloverGroupId !== undefined
@@ -110,8 +102,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   const handleSwipeOpen = (side: SwipeSide, swipeable: Swipeable) => {
     if (side !== 'trailing') return
 
-    // Snap the row back before the confirmation lands — the alert owns the
-    // interaction from here, whichever way the user answers it.
     swipeable.reset()
     handleRequestDelete()
   }
@@ -127,11 +117,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
   }
 
   const handlePress = () => {
-    // Rollover entries are paired and must never be edited — would imbalance
-    // the source/destination math. Block here regardless of whether a caller
-    // passed a custom onPress (their intent is also edit-routing).
-    // Centralizing the rule here means new call sites can't accidentally
-    // bypass it.
     if (isRollover) {
       Alert.alert(
         i18n.t('timeRollover_cantEdit_title'),
@@ -162,7 +147,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
     toast.success(i18n.t('copied'), { durationMs: 2000 })
   }
 
-  /** Re-types the entry in place, as the Add Time screen's Type row would. */
   const changeCategory = (category: Category | null) => {
     updateServiceReport({
       ...report,
@@ -179,8 +163,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
     })
   }
 
-  // Standard, LDC, then the user's Categories — the Type picker's order —
-  // minus the one the entry already has.
   const ldc = categories.find((c) => c.id === LDC_BUILTIN_CATEGORY_ID)
   const categoryChoices: ContextMenuAction[] = [
     !!report.categoryId && {
@@ -207,8 +189,6 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
 
   const actions: ContextMenuEntries = [
     [
-      // Rollover entries are paired and must never be edited — see the press
-      // handler above.
       !isRollover && {
         id: 'edit',
         title: i18n.t('edit'),
@@ -287,8 +267,7 @@ const TimeReportRow = ({ report, onPress, onNavigate }: TimeReportRowProps) => {
                 }
           }
         >
-          {/* At accessibility sizes the date takes the row's width, wrapping
-              between its words, and the time sits under it at the end. */}
+          {}
           <View
             style={{
               flexDirection: largeText ? 'column' : 'row',

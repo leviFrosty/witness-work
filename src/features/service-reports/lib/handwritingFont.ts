@@ -3,19 +3,6 @@ import * as Font from 'expo-font'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 import { fonts } from '@/constants/theme'
 
-/**
- * Handwriting fonts for the printed-style Service Report view.
- *
- * The Latin fallback (Kalam, ~0.9MB) is bundled, and loaded the first time this
- * screen opens rather than at app launch. The CJK handwriting faces are
- * enormous — Klee One ~8.7MB, Ma Shan Zheng ~5.9MB, Gaegu ~3MB each — and only
- * a Korean/Japanese/Chinese user viewing this one screen ever needs them.
- * Bundling all three shipped ~26MB of fonts to every user. Instead we download
- * the matching face (and the small Arabic Ruqʿah one) on demand from Google
- * Fonts' free OFL mirror (github.com/google/fonts) and cache it, falling back
- * to the bundled Latin face while it loads or if the download fails.
- */
-
 const FALLBACK = 'Kalam_400Regular'
 const FALLBACK_BOLD = 'Kalam_700Bold'
 
@@ -27,11 +14,9 @@ const loadBundled = () =>
     [FALLBACK]: Kalam_400Regular,
     [FALLBACK_BOLD]: Kalam_700Bold,
   }).catch(() => {
-    // Try again next time the screen opens.
     bundledLoad = undefined
   }))
 
-/** Remote OFL sources, keyed by the font-family name we register them under. */
 const REMOTE_FONTS: Record<string, string> = {
   Gaegu_400Regular:
     'https://raw.githubusercontent.com/google/fonts/main/ofl/gaegu/Gaegu-Regular.ttf',
@@ -43,7 +28,7 @@ const REMOTE_FONTS: Record<string, string> = {
     'https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-SemiBold.ttf',
   MaShanZheng_400Regular:
     'https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf',
-  // Ruqʿah, the everyday Arabic handwriting style (~0.1MB each).
+
   ArefRuqaa_400Regular:
     'https://raw.githubusercontent.com/google/fonts/main/ofl/arefruqaa/ArefRuqaa-Regular.ttf',
   ArefRuqaa_700Bold:
@@ -52,7 +37,6 @@ const REMOTE_FONTS: Record<string, string> = {
 
 type FontPair = { regular: string; bold: string }
 
-/** The handwriting face a locale wants, ignoring whether it's loaded yet. */
 function targetFontsFor(locale: string): FontPair {
   const lower = locale.toLowerCase()
   if (lower.startsWith('ko'))
@@ -66,11 +50,6 @@ function targetFontsFor(locale: string): FontPair {
   return { regular: FALLBACK, bold: FALLBACK_BOLD }
 }
 
-/**
- * Resolves the handwriting font families to render with for `locale`, lazily
- * downloading a remote CJK face if needed. Returns the bundled Latin fallback
- * until the remote face is ready (or permanently, if the download fails).
- */
 export function useHandwritingFonts(locale: string): FontPair {
   const target = useMemo(() => targetFontsFor(locale), [locale])
 
@@ -108,17 +87,14 @@ export function useHandwritingFonts(locale: string): FontPair {
     let cancelled = false
     Font.loadAsync(remoteToLoad)
       .then(() => !cancelled && setReady(true))
-      .catch(() => {
-        // Keep the bundled Latin fallback — the screen stays legible.
-      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
   }, [remoteToLoad])
 
   if (ready && target.regular !== FALLBACK) return target
-  // The app's own font for the moment Kalam takes to load, rather than a family
-  // the system doesn't know yet.
+
   return bundledReady
     ? { regular: FALLBACK, bold: FALLBACK_BOLD }
     : { regular: fonts.regular, bold: fonts.bold }

@@ -55,7 +55,6 @@ describe('deriveOffsetFromDates', () => {
   })
 
   it('rounds sub-minute drift so DST/clock-skew gaps still snap cleanly', () => {
-    // Half-second short of exactly 30 minutes — should round to 30 min, not 29.
     const notif = new Date(anchor.getTime() - (30 * 60 * 1000 - 500))
     expect(deriveOffsetFromDates(anchor, notif)).toEqual({
       amount: 30,
@@ -107,7 +106,7 @@ describe('reminder offsets', () => {
       plans: [
         {
           id: 'p',
-          // Moved a day later; the saved fire time is for the old start.
+
           date: moment(anchor).add(1, 'day').startOf('day').toDate(),
           startTimeInMinutes: 9 * 60,
           minutes: 60,
@@ -133,7 +132,6 @@ describe('reminders across a daylight saving change', () => {
     process.env.TZ = originalTZ
   })
 
-  /** The reminder for a 10:00 Plan on stored day `day`. */
   const planReminder = (
     day: [number, number, number],
     plan: Pick<DayPlan, 'reminderOffsetMinutes' | 'notifications'>,
@@ -181,7 +179,7 @@ describe('reminders across a daylight saving change', () => {
 
   it('counts minute and hour offsets in elapsed time, as before', () => {
     process.env.TZ = 'America/New_York'
-    // 2:00 AM on Nov 1 happens twice; 3 hours before 10:00 EST is 7:00 EST.
+
     const reminder = planReminder([2026, 10, 1], { reminderOffsetMinutes: 180 })
     expect(reminder.date.getTime()).toBe(
       new Date(2026, 10, 1, 10, 0).getTime() - 180 * 60_000
@@ -190,7 +188,7 @@ describe('reminders across a daylight saving change', () => {
       amount: 3,
       unit: 'hours',
     })
-    // 1:00 AM EST is 2 hours after midnight, across the change.
+
     const night = new Date(Date.UTC(2026, 10, 1, 6))
     const midnight = new Date(night.getTime() - 120 * 60_000)
     expect(midnight.getHours()).toBe(0)
@@ -225,11 +223,10 @@ describe('reminders across a daylight saving change', () => {
   it('reads day offsets older versions saved in elapsed time as days', () => {
     process.env.TZ = 'America/New_York'
     const cases: [Date, number, Date][] = [
-      // 2 days before a 10:00 Plan just after clocks fall back.
       [new Date(2026, 10, 2, 10, 0), 2880, new Date(2026, 9, 31, 10, 0)],
-      // 1 week before it.
+
       [new Date(2026, 10, 2, 10, 0), 10080, new Date(2026, 9, 26, 10, 0)],
-      // 1 day before a 10:00 Plan as clocks spring forward.
+
       [new Date(2027, 2, 14, 10, 0), 1440, new Date(2027, 2, 13, 10, 0)],
     ]
     for (const [anchor, minutes, fireAt] of cases) {

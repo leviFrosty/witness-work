@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const native = vi.hoisted(() => ({
   available: true,
-  /** This device's keystore (`modules/device-secrets`), by name. */
+
   secrets: new Map<string, string>(),
   calls: 0,
 }))
@@ -40,7 +40,6 @@ async function load() {
   return import('@/lib/sharedSpaces/deviceInviteSecrets')
 }
 
-/** Storage whose reads and writes each wait for `release`, one at a time. */
 function slowStorage(initial: string | null = null) {
   let value = initial
   let running = 0
@@ -66,7 +65,7 @@ function slowStorage(initial: string | null = null) {
     storage,
     value: () => value,
     overlapped: () => overlapped,
-    /** Lets every read and write waiting so far finish, until none are left. */
+
     async drain() {
       for (let i = 0; i < 50; i++) {
         await new Promise((resolve) => setTimeout(resolve, 0))
@@ -99,7 +98,7 @@ describe('the device’s invitation secrets', () => {
     relaunched.deviceInviteSecrets.remove('sent|a')
     relaunched.deviceInviteSecrets.remove('received|b')
     await relaunched.deviceInviteSecrets.flushed()
-    // The last one gone takes the item with it.
+
     expect(native.secrets.has('shared-spaces-invites')).toBe(false)
   })
 
@@ -116,7 +115,7 @@ describe('the device’s invitation secrets', () => {
     deviceInviteSecrets.put('sent|a', secrets('a'))
     await deviceInviteSecrets.flushed()
     expect(native.secrets.size).toBe(0)
-    // They last the launch; the next one starts without them.
+
     const again = createInviteSecretStore(deviceInviteSecretStorage)
     expect(await again.ready()).toBe(true)
     expect(again.get('sent|a')).toEqual(secrets('a'))
@@ -128,7 +127,7 @@ describe('the device’s invitation secrets', () => {
   it('writes one change after another, losing none', async () => {
     const slow = slowStorage(JSON.stringify({ old: secrets('o') }))
     const store = createInviteSecretStore(slow.storage)
-    // Made before storage was read, and while each write was under way.
+
     store.put('a', secrets('a'))
     store.remove('old')
     const draining = slow.drain()
@@ -166,7 +165,7 @@ describe('the device’s invitation secrets', () => {
     const store = createInviteSecretStore(storage)
     let needed = new Set<string>()
     store.retain(() => needed)
-    // What's needed when it runs counts, not when it was asked.
+
     store.put('b', secrets('b'))
     needed = new Set(['a', 'b'])
     await store.flushed()

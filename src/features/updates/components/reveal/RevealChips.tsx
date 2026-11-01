@@ -16,7 +16,6 @@ import {
 } from '@/features/updates/constants/updateReveal'
 import { RevealChip } from '@/features/updates/hooks/useRevealPages'
 
-// Ease-out with a gentle overshoot, so chips settle rather than stop.
 const easeOutBack = (x: number) => {
   'worklet'
   const c1 = 1.4
@@ -47,7 +46,6 @@ const Chip = ({
 }: ChipProps) => {
   const size = chip.size
   const style = useAnimatedStyle(() => {
-    // This chip's own flight, staggered within the shared burst.
     const flight = clamp(
       (burst.value * REVEAL_BURST_TOTAL_MS - index * REVEAL_CHIP_STAGGER_MS) /
         REVEAL_CHIP_FLIGHT_MS,
@@ -62,8 +60,7 @@ const Chip = ({
     const px = tilt.value.x * PARALLAX.satellites * chip.depth
     const py = tilt.value.y * PARALLAX.satellites * chip.depth
     const e = exit.value
-    // On the way out the chips scatter past the screen's edge; under Reduce
-    // Motion they only fade.
+
     const push = reduceMotion ? 0 : e
     return {
       opacity: clamp(flight * 3, 0, 1) * (1 - e),
@@ -130,7 +127,6 @@ const Chip = ({
 }
 
 interface Props {
-  /** Hub centre in screen points. */
   hub: { x: number; y: number }
   scale: number
   chips: RevealChip[]
@@ -142,11 +138,6 @@ interface Props {
   reduceMotion: boolean
 }
 
-/**
- * The new features, as icon chips that burst out of the app tile when its ring
- * closes and then float around it in parallax — a glance at everything the tour
- * is about to show.
- */
 const RevealChips = ({
   hub,
   scale,

@@ -63,25 +63,12 @@ import type {
   UnreadSpaceRecord,
 } from '@/types/sharedCars'
 
-/**
- * Keeping one car in step with its space (docs/shared-cars-protocol.md, "When
- * it syncs"): pull and merge what changed, move in what the User's own store
- * holds for the car, keep the User's member record and the invite records
- * right, then put what changed here. Every record that can't be read yet stays
- * on the car to read again; none is ever cut to fit or dropped.
- */
-
-/** A put body's records stay under this, short of the server's 1 MiB. */
 const PUT_BYTES_BUDGET = SPACE_LIMITS.putBytes - 64 * 1024
-/** Rounds of putting what changed while putting, per run. */
+
 const MAX_ROUNDS = 4
-/**
- * A stamp at most this far short of the server's 24 h limit is sent; past it,
- * the record is held back until the clock catches up.
- */
+
 const STAMP_MARGIN_MS = 60 * 60 * 1000
 
-/** Keys records first: each one opens the epoch before it. */
 const keysFirst = (a: SealedSpaceRecord, b: SealedSpaceRecord) =>
   Number(b.recordId.startsWith('k.')) - Number(a.recordId.startsWith('k.')) ||
   a.seq - b.seq
@@ -101,7 +88,6 @@ const unreadProblem = (error: unknown): UnreadSpaceRecord['problem'] => {
   }
 }
 
-/** A live member or invite record's `data` and stamp, when the car has it. */
 function spaceRecordData(
   car: SharedCar,
   kind: 'member' | 'invite',
@@ -111,7 +97,7 @@ function spaceRecordData(
   if (kind === 'member') {
     const record = car.memberRecords.find((m) => m.memberId === id)
     if (!record) return null
-    // Its id is in the record id, and its stamp is the record's.
+
     const { memberId: _id, updatedAt, ...data } = record
     return { data: mileageRecordData(data), stamp: updatedAt ?? 0 }
   }
@@ -121,11 +107,6 @@ function spaceRecordData(
   return { data: mileageRecordData(data), stamp: updatedAt ?? 0 }
 }
 
-/**
- * The User's own member record's `data` as sealed under `epoch`'s `key`: its
- * fields as this version reads them, and the key check over them
- * (`memberCheck`), which only the User's devices can make.
- */
 function withCheck(
   member: SpaceMemberKeys,
   epoch: number,
@@ -156,28 +137,9 @@ function withCheck(
 
 export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
   const { deps, client, store, keyring } = ctx
-  /** Cars whose unread records were read again since the app started. */
+
   const reread = new Set<string>()
 
-  // --- Opening what a sync pulls -----------------------------------------
-
-  /**
-   * Opens every record whose key this device trusts, learning the key chain as
-   * it goes, and merges them in one pass. The own wrap's candidate key is
-   * trusted once the key chain or the User's key check vouches for it, and what
-   * it opens follows. A record whose key isn't trusted waits (`sealedRecords`);
-   * one whose key is but that couldn't be used is kept to read again
-   * (`unreadRecords`), all of them on the first sync since the app started
-   * (`rereadAll`).
-   *
-   * The User's own member record says whether its key check matches
-   * (`ownRecordChecked`): its newest version that doesn't open or can't be
-   * used, other than one from a newer app, doesn't. The last version whose
-   * check matched is kept sealed (`sealedOwnRecord`), and so is the last
-   * version of each key chain link that counted (`keyChain`): a keyring this
-   * device loses is trusted again from them, whatever the server holds now
-   * (docs/shared-cars-protocol.md, "Key check").
-   */
   function openRecords(
     car: SharedCar,
     incoming: readonly SealedSpaceRecord[],
@@ -199,7 +161,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
       else stillUnread.push(record)
     for (const record of incoming) consider(record)
 
-    // A newer version of a record replaces one kept unread, and vice versa.
     const unread: UnreadSpaceRecord[] = []
     for (const record of stillUnread) {
       const newer = candidates.get(record.recordId)
@@ -212,7 +173,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     const chain = new Map(car.keyChain.map((r) => [r.recordId, r]))
     let sealedOwnRecord = car.sealedOwnRecord
     let ownRecordChecked = car.ownRecordChecked
-    /** Kept to read again; the User's own record's doesn't match. */
+
     const keepUnread = (
       record: SealedSpaceRecord,
       problem: UnreadSpaceRecord['problem']
@@ -246,19 +207,11 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
               record.blob
             )
           } catch (error) {
-            // From a newer version, or not under the key trusted: kept, never
-            // the sync's end.
             ctx.report(error, 'open')
             keepUnread(record, unreadProblem(error))
             continue
           }
           if (epochOfKeysRecord(record.recordId) !== null) {
-            // A link counts when it's live, sealed under its own epoch or
-            // later, and holds the key trusted for the epoch before (or one
-            // learned now). One that doesn't (a deletion, one sealed below its
-            // epoch, another key) teaches nothing and is kept unread, so the
-            // owner's device puts the link again past it; the last version
-            // that counted stays in the chain.
             const change = parts.keys.learnLink(spaceId, record, plaintext.data)
             if (change === null || change === 'mismatch') {
               keepUnread(record, 'unknown')
@@ -269,7 +222,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
             if (!held || record.seq >= held.seq)
               chain.set(record.recordId, record)
           }
-          // The User's own record under another kind can't be theirs.
+
           if (record.recordId === ownId && plaintext.kind !== 'member') {
             keepUnread(record, 'unknown')
             continue
@@ -300,7 +253,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
             (!sealedOwnRecord || record.seq >= sealedOwnRecord.seq)
           )
             sealedOwnRecord = record
-          // One older than this device's own (still to go out) says nothing.
+
           if (verdict === 'applied') ownRecordChecked = matches
         }
         waiting = still.sort(keysFirst)
@@ -319,8 +272,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
       ]
       if (!parts.keys.settle(spaceId, links, own, member)) break
     }
-    // Its newest version sealed under a key this device doesn't trust: the
-    // car waits for it, or it's one nobody here could vouch for.
+
     if (waiting.some((r) => r.recordId === ownId)) ownRecordChecked = false
     return {
       ...merge.finish(),
@@ -332,7 +284,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     }
   }
 
-  /** One sync page applied: the space's lists, the caller's wrap, its records. */
   function applyPage(
     car: SharedCar,
     page: SpaceSyncPage,
@@ -344,8 +295,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
       ...car,
       myMemberId: member.memberId,
       ownerId: page.ownerId,
-      // The server's, so a car that waited on a wrap it planted goes on once
-      // it's honest again (`sealingKey` refuses an older one).
+
       epoch: page.epoch,
       spaceMembers: page.members,
       spaceInvites: page.invites,
@@ -358,11 +308,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return withDerivedPeople(openRecords(next, page.records, rereadAll, member))
   }
 
-  /**
-   * Pulls everything past the car's cursor, a page at a time, keeping the
-   * cursor as it goes. The first pull since the app started reads again what
-   * the car couldn't use: an update may read it now.
-   */
   async function pull(spaceId: string, member: SpaceMemberKeys) {
     const car = ctx.cars()[spaceId]
     if (!car) return
@@ -382,15 +327,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     ctx.noteAnswered()
   }
 
-  // --- What goes out ------------------------------------------------------
-
-  /**
-   * What each of `ids` says now, and the ids there's nothing to send for: none
-   * left, or not this member's (`me`) to put. Another member's record, or a key
-   * chain link once the car is someone else's (ownership passed while this
-   * device was away), would have the server refuse the whole put. Unknown
-   * fields a newer app put in a record go back out with it.
-   */
   function wireRecords(car: SharedCar, ids: Iterable<string>, me: string) {
     const wires: WireRecord[] = []
     const nothing: string[] = []
@@ -473,13 +409,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return { wires, nothing }
   }
 
-  /**
-   * Seals `wires` under `epoch`'s key into puts of at most 100 records and
-   * about 1 MiB, the User's own member record with its key check. A record past
-   * the 16 KB cap isn't sealed (`tooLarge`), and neither is one stamped too far
-   * past the server's clock to be taken (`held`): both stay on the device,
-   * never cut or restamped to fit.
-   */
   function seal(
     member: SpaceMemberKeys,
     epoch: number,
@@ -550,11 +479,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return { batches, tooLarge, held }
   }
 
-  /**
-   * After a put refused a stamp (`bad_request`): calibrates the synced clock
-   * against the server, then stamps the car's pending records again, each one
-   * made before calibration taking its calibrated value.
-   */
   async function restamp(spaceId: string) {
     await ctx.refreshClock()
     const correct = deps.correctStamp
@@ -562,7 +486,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     ctx.update(spaceId, (car) => restamped(car, correct))
   }
 
-  /** `car` with each pending record's stamp corrected. */
   function restamped(car: SharedCar, correct: (stamp: number) => number) {
     const pending = new Set(car.pendingPuts)
     let changed = false
@@ -599,16 +522,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return changed ? next : car
   }
 
-  /**
-   * Puts every record changed here since its last put, under the current epoch.
-   * A `stale_key` (a rekey this device hasn't seen) syncs, opens the new wrap,
-   * and seals them again, once. A `bad_request` (a stamp the server's clock
-   * refused) calibrates the clock and stamps them again, once. A `forbidden`
-   * put held a record that isn't this device's to put after all (the car
-   * changed hands meanwhile): those go, and the rest goes again, once.
-   * `suspended` keeps them here, pending, and says so. A pending mark clears
-   * only once the server stored the record or holds a newer version.
-   */
   async function push(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -622,8 +535,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
         ctx.setCarStatus(spaceId, { held: 0, tooLarge: 0 })
         return
       }
-      // Nothing vouches for the current key yet, or it's older than one this
-      // device trusts: the car waits, and nothing is sealed until it's right.
+
       const key = parts.keys.sealingKey(car)
       if (!key) return
       const { wires, nothing } = wireRecords(
@@ -659,9 +571,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
             return push(spaceId, member, { ...tried, restamped: true })
           }
           if (isSpaceError(error, 'forbidden') && !tried.refused) {
-            // Short of a wrong token (which the next sync shows), only another
-            // member's record or a link from someone who isn't the owner makes
-            // a put `forbidden`, and none of it was stored.
             const refused = new Set(
               batch.records
                 .map((record) => record.recordId)
@@ -691,10 +600,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
             })
           )
         )
-        // Past what's been read only when nothing came between this put and
-        // the last sync: each record stored took one `seq` (every seal has a
-        // new nonce, so none is a byte-identical resend that takes none).
-        // Otherwise the next sync reads past it.
+
         const stored = result.results.filter((r) => r.stored).length
         ctx.update(spaceId, (c) =>
           c.seq === before && c.seq + stored === result.seq
@@ -705,13 +611,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     }
   }
 
-  /**
-   * After a put that nothing came between: the cursor moves past it, and the
-   * key chain links and the User's own member record (`ownId`) this device
-   * stored are kept as sealed, since no sync will bring them back here. Older
-   * versions of what it stored, kept sealed or unread, are no longer on the
-   * space.
-   */
   function keepSealed(
     car: SharedCar,
     batch: PutBatch,
@@ -754,16 +653,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     }
   }
 
-  // --- Upkeep after each pull ---------------------------------------------
-
-  /**
-   * What every device keeps right after a pull: its own member record as its
-   * profile says, invite records closed by someone joining, by expiry, or by
-   * their inviter going, and, on the owner's device, the key chain's newest
-   * link. Returns the invitations this device made that closed because their
-   * invitee joined while the server still holds them open (a second invitation
-   * a rekey sent), for closing there too.
-   */
   function tidy(
     car: SharedCar,
     member: SpaceMemberKeys,
@@ -781,10 +670,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
         mine?.joinedAt ??
         now
     )
-    // One of the User's devices wrote it (its key check matched), which may
-    // word their avatar its own way. Anyone else's, one without a check that
-    // matches, or one that doesn't open, is written again, past every version
-    // this device has seen (docs/shared-cars-protocol.md, "Key check").
+
     const wanted =
       mine && car.ownRecordChecked
         ? wantedMemberData(expected, mine, {
@@ -828,7 +714,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     const stillOpen: string[] = []
     const closed = next.inviteRecords.filter((invite) => {
       if (invite.expiresAt <= now) return true
-      // Nobody but its inviter's devices can send it again.
+
       if (onCar.size > 0 && !onCar.has(invite.invitedBy)) return true
       if (!tags.has(invite.tag)) return false
       if (open.get(invite.inviteId)?.invitedBy === me)
@@ -852,12 +738,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
         pendingPuts: withPending(next.pendingPuts, ids),
       }
     }
-    // This device's invitations a removal or a rekey may have closed, to send
-    // again after the rekey: each with its record, and still open, made
-    // before the current epoch, or closed while a rekey is owed (a removal
-    // closes every open invite). One whose `car.invite` was lost is owed
-    // too. One that closed otherwise while its epoch is still current was
-    // used (or closed by someone else), so there's nothing to send again.
+
     const live = new Set(next.inviteRecords.map((invite) => invite.inviteId))
     const openNow = new Set(next.spaceInvites.map((invite) => invite.inviteId))
     const owed = ([inviteId, sent]: [
@@ -877,14 +758,9 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
         ),
       }
 
-    // Someone else's member record says someone else has been on the car.
     if (!next.hadOthers && next.memberRecords.some((m) => m.memberId !== me))
       next = { ...next, hadOthers: true }
 
-    // A key chain link the space lost, one that doesn't count, or one that
-    // holds the wrong key: the owner, trusting both keys, puts it again past
-    // it, so later joiners and the User's other devices can read what came
-    // before.
     if (next.ownerId === me) {
       const owed: number[] = []
       for (let epoch = 2; epoch <= next.epoch; epoch++)
@@ -907,10 +783,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return { car: withDerivedPeople(next), stillOpen }
   }
 
-  /**
-   * `tidy` on the car as it is now; invitations still open go to closing.
-   * Returns those.
-   */
   function tidyCar(
     spaceId: string,
     member: SpaceMemberKeys,
@@ -929,10 +801,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     return stillOpen
   }
 
-  /**
-   * Moves into the car what the User's own store holds for it, and tombstones
-   * the personal versions (`movePersonalRecords`).
-   */
   function movePersonal(spaceId: string) {
     let tombstones: { id: string; deletedAt: number }[] = []
     ctx.update(spaceId, (car) => {
@@ -948,16 +816,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
       deps.personal.mergeRecords({ deletedMileageRecords: tombstones })
   }
 
-  // --- Syncing one car ----------------------------------------------------
-
-  /**
-   * Pull, close the invitations canceled or declined here (which takes no key),
-   * then (once the car's current key is trusted) move in the User's own records
-   * for the car, upkeep, close the invitations upkeep found, the last one left,
-   * rekey, resend closed invitations, and put. A car whose key nothing vouches
-   * for yet waits (`waiting`). `gone` from any of them ends the car here, with
-   * a copy kept.
-   */
   async function runSteps(
     spaceId: string,
     member: SpaceMemberKeys
@@ -997,14 +855,9 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     }
   }
 
-  /**
-   * A sync waiting to start, and how far it must reach: `minSeq` undefined once
-   * any call it covers wants a full one.
-   */
   type QueuedSync = { run: Promise<CarSyncOutcome>; minSeq?: number }
   const queuedSyncs = new Map<string, QueuedSync>()
 
-  /** Whether the car already reached `minSeq` with nothing left to put. */
   function reached(spaceId: string, minSeq: number | undefined) {
     const car = ctx.cars()[spaceId]
     return (
@@ -1015,11 +868,6 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     )
   }
 
-  /**
-   * Syncs one car. One already waiting to start covers this call too, going at
-   * least as far as it asks; a call made while one runs gets one more
-   * afterwards.
-   */
   function syncCar(
     spaceId: string,
     options: CarSyncOptions = {}
@@ -1074,7 +922,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
         throw error
       }
     })
-    // One that never started (a `forgetAll` first) isn't waiting any more.
+
     entry.run.then(settled, settled)
     queuedSyncs.set(spaceId, entry)
     return entry.run
@@ -1087,7 +935,7 @@ export function createCarSync(ctx: EngineContext, parts: EngineParts): CarSync {
     movePersonal,
     runSteps,
     syncCar,
-    /** Forgets what this launch read again of `spaceId`. */
+
     forget: (spaceId: string) => reread.delete(spaceId),
     forgetAll() {
       reread.clear()

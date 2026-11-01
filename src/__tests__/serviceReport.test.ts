@@ -20,13 +20,8 @@ import { LegacyTimeEntry, TimeEntriesByYear } from '@/types/timeEntry'
 import { monthCreditMaxMinutes } from '@/constants/serviceReports'
 import { describe, expect, it, vi } from 'vitest'
 
-// Mock the logger to avoid MMKV dependencies in tests
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-// Tree of LegacyTimeEntry records, used by tests that exercise the cap math
-// against the pre-collapse `ldc: true` shape. `LegacyTimeEntry` extends
-// `TimeEntry` with the deprecated boolean, so it remains assignable to
-// the production helpers' parameter types.
 type LegacyTimeEntriesByYear = {
   [year: string]: { [month: string]: LegacyTimeEntry[] }
 }
@@ -256,8 +251,8 @@ describe('lib/serviceReport', () => {
         'specialPioneer'
       )
 
-      expect(adjustedMinutes.value).toBe(110 * 60) // 80 + 30 = 110 hours total
-      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for special pioneers
+      expect(adjustedMinutes.value).toBe(110 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(0)
       expect(adjustedMinutes.standard).toBe(80 * 60)
       expect(adjustedMinutes.credit).toBe(30 * 60)
     })
@@ -286,8 +281,8 @@ describe('lib/serviceReport', () => {
         'circuitOverseer'
       )
 
-      expect(adjustedMinutes.value).toBe(150 * 60) // 100 + 50 = 150 hours total
-      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for circuit overseers
+      expect(adjustedMinutes.value).toBe(150 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(0)
       expect(adjustedMinutes.standard).toBe(100 * 60)
       expect(adjustedMinutes.credit).toBe(50 * 60)
     })
@@ -316,10 +311,10 @@ describe('lib/serviceReport', () => {
         'regularPioneer'
       )
 
-      expect(adjustedMinutes.value).toBe(55 * 60) // Limited to 55 hours
-      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 30 + 40 - 55 = 15 hours overage
+      expect(adjustedMinutes.value).toBe(55 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60)
       expect(adjustedMinutes.standard).toBe(30 * 60)
-      expect(adjustedMinutes.credit).toBe(25 * 60) // 55 - 30 = 25 credit applied
+      expect(adjustedMinutes.credit).toBe(25 * 60)
     })
 
     it('should still apply credit limit for publishers', () => {
@@ -346,10 +341,10 @@ describe('lib/serviceReport', () => {
         'publisher'
       )
 
-      expect(adjustedMinutes.value).toBe(55 * 60) // Limited to 55 hours
-      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 20 + 50 - 55 = 15 hours overage
+      expect(adjustedMinutes.value).toBe(55 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60)
       expect(adjustedMinutes.standard).toBe(20 * 60)
-      expect(adjustedMinutes.credit).toBe(35 * 60) // 55 - 20 = 35 credit applied
+      expect(adjustedMinutes.credit).toBe(35 * 60)
     })
 
     it('should respect user credit limit override - no limit (0 hours)', () => {
@@ -374,11 +369,11 @@ describe('lib/serviceReport', () => {
         moment().month(),
         moment().year(),
         'custom',
-        { enabled: true, customLimitHours: 0 } // No limit
+        { enabled: true, customLimitHours: 0 }
       )
 
-      expect(adjustedMinutes.value).toBe(100 * 60) // 60 + 40 = 100 hours total
-      expect(adjustedMinutes.creditOverage).toBe(0) // No overage when no limit
+      expect(adjustedMinutes.value).toBe(100 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(0)
       expect(adjustedMinutes.standard).toBe(60 * 60)
       expect(adjustedMinutes.credit).toBe(40 * 60)
     })
@@ -405,13 +400,13 @@ describe('lib/serviceReport', () => {
         moment().month(),
         moment().year(),
         'regularPioneer',
-        { enabled: true, customLimitHours: 70 } // Custom 70-hour limit
+        { enabled: true, customLimitHours: 70 }
       )
 
-      expect(adjustedMinutes.value).toBe(70 * 60) // Limited to 70 hours
-      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 45 + 40 - 70 = 15 hours overage
+      expect(adjustedMinutes.value).toBe(70 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60)
       expect(adjustedMinutes.standard).toBe(45 * 60)
-      expect(adjustedMinutes.credit).toBe(25 * 60) // 70 - 45 = 25 credit applied
+      expect(adjustedMinutes.credit).toBe(25 * 60)
     })
 
     it('should use default behavior when override is disabled', () => {
@@ -436,13 +431,13 @@ describe('lib/serviceReport', () => {
         moment().month(),
         moment().year(),
         'publisher',
-        { enabled: false, customLimitHours: 100 } // Override disabled
+        { enabled: false, customLimitHours: 100 }
       )
 
-      expect(adjustedMinutes.value).toBe(55 * 60) // Default 55-hour limit applies
-      expect(adjustedMinutes.creditOverage).toBe(15 * 60) // 30 + 40 - 55 = 15 hours overage
+      expect(adjustedMinutes.value).toBe(55 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(15 * 60)
       expect(adjustedMinutes.standard).toBe(30 * 60)
-      expect(adjustedMinutes.credit).toBe(25 * 60) // 55 - 30 = 25 credit applied
+      expect(adjustedMinutes.credit).toBe(25 * 60)
     })
 
     it('should still respect special pioneer exemption even with override disabled', () => {
@@ -467,11 +462,11 @@ describe('lib/serviceReport', () => {
         moment().month(),
         moment().year(),
         'specialPioneer',
-        { enabled: false, customLimitHours: 55 } // Override disabled, but special pioneer gets no limit
+        { enabled: false, customLimitHours: 55 }
       )
 
-      expect(adjustedMinutes.value).toBe(130 * 60) // 80 + 50 = 130 hours total (no limit)
-      expect(adjustedMinutes.creditOverage).toBe(0) // No overage for special pioneers
+      expect(adjustedMinutes.value).toBe(130 * 60)
+      expect(adjustedMinutes.creditOverage).toBe(0)
       expect(adjustedMinutes.standard).toBe(80 * 60)
       expect(adjustedMinutes.credit).toBe(50 * 60)
     })
@@ -800,10 +795,7 @@ describe('lib/serviceReport', () => {
           7: [
             {
               minutes: 0,
-              // Anchored noon UTC of Aug 31 — production stores this shape.
-              // The local-mode `endOf('month')` would yield 23:59:59 local,
-              // which on a west-of-UTC device crosses into Sep 1 UTC and gets
-              // re-bucketed to September under UTC-mode reads.
+
               date: new Date(Date.UTC(year + 1, 7, 31, 12)),
               hours: 10,
               id: '0',
@@ -817,9 +809,6 @@ describe('lib/serviceReport', () => {
     })
 
     it('should not cap credit for publishers with an unlimited credit default', () => {
-      // Circuit overseers / special pioneers have no monthly credit cap, so
-      // the year total must mirror the role-aware cap the month report uses
-      // instead of the hardcoded 55h default.
       const year = 2023
       const serviceReports: LegacyTimeEntriesByYear = {
         [year]: {
@@ -924,7 +913,7 @@ describe('lib/serviceReport', () => {
 
       expect(breakdown.standard).toBe(2 * 60 + 30)
       expect(breakdown.ldc).toBe(5 * 60)
-      // Both halves of the service year collapse into a single category row.
+
       expect(breakdown.other).toEqual([
         {
           categoryId: 'cards',
@@ -939,7 +928,6 @@ describe('lib/serviceReport', () => {
       const year = 2023
       const serviceReports: TimeEntriesByYear = {
         [year]: {
-          // Aug 2023 belongs to the PRIOR service year (2022-2023).
           7: [
             {
               minutes: 0,
@@ -1046,8 +1034,6 @@ describe('lib/serviceReport', () => {
         getServiceYearReports(serviceReports, year)
       )
 
-      // 70h > the 55h monthly credit cap — the per-category view reports what
-      // was logged, mirroring the lifetime helpers' unadjusted stance.
       expect(breakdown.ldc).toBe(70 * 60)
     })
   })
@@ -1056,7 +1042,7 @@ describe('lib/serviceReport', () => {
     const baseRecurringPlan: RecurringPlan = {
       id: 'test-plan',
       startDate: moment('2024-01-01').toDate(),
-      minutes: 120, // 2 hours
+      minutes: 120,
       recurrence: {
         frequency: RecurringPlanFrequencies.WEEKLY,
         interval: 1,
@@ -1067,7 +1053,7 @@ describe('lib/serviceReport', () => {
 
     describe('getPlansIntersectingDay with overrides', () => {
       it('should respect deleted dates', () => {
-        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const testDate = moment('2024-01-08').toDate()
         const planWithDeleted: RecurringPlan = {
           ...baseRecurringPlan,
           deletedDates: [testDate],
@@ -1080,7 +1066,7 @@ describe('lib/serviceReport', () => {
       })
 
       it('should return plans without overrides normally', () => {
-        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const testDate = moment('2024-01-08').toDate()
         const intersectingPlans = getPlansIntersectingDay(testDate, [
           baseRecurringPlan,
         ])
@@ -1090,10 +1076,10 @@ describe('lib/serviceReport', () => {
       })
 
       it('should return plans with overrides', () => {
-        const testDate = moment('2024-01-08').toDate() // Next Monday
+        const testDate = moment('2024-01-08').toDate()
         const override: RecurringPlanOverride = {
           date: testDate,
-          minutes: 180, // 3 hours instead of 2
+          minutes: 180,
           note: 'Override note',
         }
 
@@ -1115,30 +1101,27 @@ describe('lib/serviceReport', () => {
     it('should match monthly by weekday plans correctly', () => {
       const plan: RecurringPlan = {
         id: '1',
-        startDate: new Date(2024, 0, 1), // January 1, 2024 (Monday)
+        startDate: new Date(2024, 0, 1),
         minutes: 60,
         recurrence: {
           frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
           interval: 1,
           endDate: null,
           monthlyByWeekdayConfig: {
-            weekday: 1, // Monday
-            weekOfMonth: 1, // First week
+            weekday: 1,
+            weekOfMonth: 1,
           },
         },
       }
 
-      // First Monday of February 2024 is February 5th
       const firstMondayFeb = new Date(2024, 1, 5)
       const plans = getPlansIntersectingDay(firstMondayFeb, [plan])
       expect(plans).toHaveLength(1)
 
-      // February 12th is second Monday, should NOT match
       const secondMondayFeb = new Date(2024, 1, 12)
       const noPlans = getPlansIntersectingDay(secondMondayFeb, [plan])
       expect(noPlans).toHaveLength(0)
 
-      // First Monday of March 2024 is March 4th
       const firstMondayMarch = new Date(2024, 2, 4)
       const marchPlans = getPlansIntersectingDay(firstMondayMarch, [plan])
       expect(marchPlans).toHaveLength(1)
@@ -1147,25 +1130,23 @@ describe('lib/serviceReport', () => {
     it('should match last weekday of month correctly', () => {
       const plan: RecurringPlan = {
         id: '1',
-        startDate: new Date(2024, 0, 29), // January 29, 2024 (last Monday)
+        startDate: new Date(2024, 0, 29),
         minutes: 60,
         recurrence: {
           frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
           interval: 1,
           endDate: null,
           monthlyByWeekdayConfig: {
-            weekday: 1, // Monday
-            weekOfMonth: -1, // Last week
+            weekday: 1,
+            weekOfMonth: -1,
           },
         },
       }
 
-      // Last Monday of February 2024 is February 26th
       const lastMondayFeb = new Date(2024, 1, 26)
       const plans = getPlansIntersectingDay(lastMondayFeb, [plan])
       expect(plans).toHaveLength(1)
 
-      // February 19th is third Monday, should NOT match
       const thirdMondayFeb = new Date(2024, 1, 19)
       const noPlans = getPlansIntersectingDay(thirdMondayFeb, [plan])
       expect(noPlans).toHaveLength(0)
@@ -1174,20 +1155,19 @@ describe('lib/serviceReport', () => {
     it('should handle edge case where fourth week is also last week', () => {
       const plan: RecurringPlan = {
         id: '1',
-        startDate: new Date(2024, 8, 2), // September 2, 2024 (first Monday)
+        startDate: new Date(2024, 8, 2),
         minutes: 60,
         recurrence: {
           frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
           interval: 1,
           endDate: null,
           monthlyByWeekdayConfig: {
-            weekday: 1, // Monday
-            weekOfMonth: 4, // Fourth week
+            weekday: 1,
+            weekOfMonth: 4,
           },
         },
       }
 
-      // Fourth Monday of September 2024 is September 23rd
       const fourthMondaySep = new Date(2024, 8, 23)
       const plans = getPlansIntersectingDay(fourthMondaySep, [plan])
       expect(plans).toHaveLength(1)
@@ -1196,30 +1176,27 @@ describe('lib/serviceReport', () => {
     it('should properly handle last Friday of months with different lengths', () => {
       const plan: RecurringPlan = {
         id: '1',
-        startDate: new Date(2024, 0, 26), // January 26, 2024 (last Friday)
+        startDate: new Date(2024, 0, 26),
         minutes: 60,
         recurrence: {
           frequency: RecurringPlanFrequencies.MONTHLY_BY_WEEKDAY,
           interval: 1,
           endDate: null,
           monthlyByWeekdayConfig: {
-            weekday: 5, // Friday
-            weekOfMonth: -1, // Last week
+            weekday: 5,
+            weekOfMonth: -1,
           },
         },
       }
 
-      // Last Friday of February 2024 is February 23rd
       const lastFridayFeb = new Date(2024, 1, 23)
       const februaryPlans = getPlansIntersectingDay(lastFridayFeb, [plan])
       expect(februaryPlans).toHaveLength(1)
 
-      // Last Friday of March 2024 is March 29th
       const lastFridayMarch = new Date(2024, 2, 29)
       const marchPlans = getPlansIntersectingDay(lastFridayMarch, [plan])
       expect(marchPlans).toHaveLength(1)
 
-      // March 22nd is fourth Friday, should NOT match
       const fourthFridayMarch = new Date(2024, 2, 22)
       const noPlans = getPlansIntersectingDay(fourthFridayMarch, [plan])
       expect(noPlans).toHaveLength(0)
@@ -1233,7 +1210,6 @@ describe('lib/serviceReport', () => {
     })
 
     it('sums multiple day plans and the recurring plan on the same day', () => {
-      // Jan 15, 2024 is a Monday — the weekly plan below also lands on it.
       const dayPlans = [
         {
           id: 'standard',
@@ -1249,7 +1225,7 @@ describe('lib/serviceReport', () => {
       const recurringPlans: RecurringPlan[] = [
         {
           id: 'r1',
-          startDate: moment('2024-01-01').toDate(), // Mondays: 1, 8, 15, 22, 29
+          startDate: moment('2024-01-01').toDate(),
           minutes: 60,
           recurrence: {
             frequency: RecurringPlanFrequencies.WEEKLY,
@@ -1259,7 +1235,6 @@ describe('lib/serviceReport', () => {
         },
       ]
 
-      // 5 recurring Mondays (including the 15th) + 60 + 180.
       const expected = 5 * 60 + 60 + 180
 
       expect(
@@ -1270,7 +1245,7 @@ describe('lib/serviceReport', () => {
           recurringPlans
         )
       ).toBe(expected)
-      // Parity with the unoptimized walk.
+
       expect(
         plannedMinutesThroughDayForMonth(0, 2024, 31, dayPlans, recurringPlans)
       ).toBe(expected)
@@ -1280,8 +1255,8 @@ describe('lib/serviceReport', () => {
   describe('Override calculations', () => {
     const baseRecurringPlan: RecurringPlan = {
       id: 'override-test-plan',
-      startDate: moment('2024-01-01').toDate(), // Monday
-      minutes: 300, // 5 hours
+      startDate: moment('2024-01-01').toDate(),
+      minutes: 300,
       recurrence: {
         frequency: RecurringPlanFrequencies.WEEKLY,
         interval: 1,
@@ -1306,7 +1281,7 @@ describe('lib/serviceReport', () => {
         overrides: [
           {
             date: testDate,
-            minutes: 60, // 1 hour instead of 5
+            minutes: 60,
             note: 'Override note',
           },
         ],
@@ -1364,8 +1339,8 @@ describe('lib/serviceReport', () => {
   describe('plannedMinutesThroughDayForMonth with overrides', () => {
     const baseRecurringPlan: RecurringPlan = {
       id: 'monthly-calc-test-plan',
-      startDate: moment('2024-01-01').toDate(), // Monday
-      minutes: 300, // 5 hours
+      startDate: moment('2024-01-01').toDate(),
+      minutes: 300,
       recurrence: {
         frequency: RecurringPlanFrequencies.WEEKLY,
         interval: 1,
@@ -1374,29 +1349,24 @@ describe('lib/serviceReport', () => {
     }
 
     it('should calculate correct total with overrides applied', () => {
-      // January 2024: Mondays are 1st, 8th, 15th, 22nd, 29th = 5 Mondays
-      // Base plan: 5 * 300 minutes = 1500 minutes (25 hours)
-      // With override on 15th: 4 * 300 + 1 * 60 = 1260 minutes (21 hours)
-
       const planWithOverride: RecurringPlan = {
         ...baseRecurringPlan,
         overrides: [
           {
             date: moment('2024-01-15').toDate(),
-            minutes: 60, // 1 hour instead of 5
+            minutes: 60,
           },
         ],
       }
 
       const totalMinutes = plannedMinutesThroughDayForMonth(
-        0, // January
+        0,
         2024,
-        31, // Through the end of the month
-        [], // No day plans
+        31,
+        [],
         [planWithOverride]
       )
 
-      // Should be 4 * 300 + 1 * 60 = 1260 minutes
       expect(totalMinutes).toBe(1260)
     })
 
@@ -1406,24 +1376,23 @@ describe('lib/serviceReport', () => {
         overrides: [
           {
             date: moment('2024-01-15').toDate(),
-            minutes: 60, // 1 hour instead of 5
+            minutes: 60,
           },
           {
             date: moment('2024-01-22').toDate(),
-            minutes: 120, // 2 hours instead of 5
+            minutes: 120,
           },
         ],
       }
 
       const totalMinutes = plannedMinutesThroughDayForMonth(
-        0, // January
+        0,
         2024,
-        31, // Through the end of the month
-        [], // No day plans
+        31,
+        [],
         [planWithMultipleOverrides]
       )
 
-      // Should be 3 * 300 + 1 * 60 + 1 * 120 = 900 + 60 + 120 = 1080 minutes
       expect(totalMinutes).toBe(1080)
     })
 
@@ -1433,20 +1402,19 @@ describe('lib/serviceReport', () => {
         overrides: [
           {
             date: moment('2024-01-15').toDate(),
-            minutes: 0, // Skip this day
+            minutes: 0,
           },
         ],
       }
 
       const totalMinutes = plannedMinutesThroughDayForMonth(
-        0, // January
+        0,
         2024,
-        31, // Through the end of the month
-        [], // No day plans
+        31,
+        [],
         [planWithZeroOverride]
       )
 
-      // Should be 4 * 300 + 1 * 0 = 1200 minutes
       expect(totalMinutes).toBe(1200)
     })
 
@@ -1480,21 +1448,19 @@ describe('lib/serviceReport', () => {
         overrides: [
           {
             date: moment('2024-01-15').toDate(),
-            minutes: 400, // This should be the highest
+            minutes: 400,
           },
         ],
       }
 
       const totalMinutes = plannedMinutesThroughDayForMonth(
-        0, // January
+        0,
         2024,
-        31, // Through the end of the month
-        [], // No day plans
+        31,
+        [],
         [plan1, plan2]
       )
 
-      // Most Mondays count both plans (300 + 200); on Jan 15th both overrides
-      // count (60 + 400). 4 * 500 + 460 = 2460 minutes.
       expect(totalMinutes).toBe(2460)
     })
   })

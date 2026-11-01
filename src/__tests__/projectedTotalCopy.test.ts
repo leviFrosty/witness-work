@@ -89,8 +89,6 @@ describe('getStatusKey', () => {
   })
 
   it('falls back to present tense when a state+tense combo is unsupported', () => {
-    // past tense has no `reachable_gap` (a goal you missed but could have hit
-    // isn't a status worth narrating) — fall back to present-tense copy.
     expect(getStatusKey('reachable_gap', 'past')).toBe(
       'projectedTotal.status.present.reachable_gap'
     )

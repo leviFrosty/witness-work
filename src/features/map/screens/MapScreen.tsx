@@ -110,45 +110,34 @@ import { isSamePlace } from '@/features/map/lib/pinGeometry'
 
 const liquidGlass = isLiquidGlassAvailable()
 
-// Reserved vertical space above the tab bar (or the safe area, while it's
-// away) for the map's legal/logo attribution, which `mapPadding` lifts up out
-// from behind the carousel.
 const LEGAL_LABEL_HEIGHT = 20
 
-// v4 used the same ease-out curve for gesture settling and ref commands. Its
-// gesture path silently added 100ms to scrollAnimationDuration, so 225ms keeps
-// the previous swipe feel while avoiding v5's much slower 500ms default.
 const CAROUSEL_ANIMATION = {
   type: 'timing' as const,
   duration: 225,
   easing: Easing.bezier(0.25, 1, 0.5, 1),
 }
 
-/** Height of the handle left above the tab bar while the cards are stowed. */
 const STOWED_HANDLE_HEIGHT = 28
 
 const STOW_TIMING = { duration: 280, easing: Easing.inOut(Easing.ease) }
 
 interface FullMapViewProps {
   renderContactRow: MapContactRowRenderer
-  /** The pins the Contacts filters let through, in the list's order. */
+
   contactMarkers: ContactMarker[]
-  /** Any active contact has a location, filtered out or not. */
+
   hasMappedContacts: boolean
   activeContactCount: number
   conversationIndex: ConversationIndex
   topInset: number
   onExplore?: () => void
   onExploreEnd?: () => void
-  /** A contact was saved from a pin dropped on this map. */
+
   onContactCreated: (id: string) => void
   routeActions?: MapRouteActions
 }
 
-/**
- * Sets `flag` while `run` runs. Outside the component: the React Compiler skips
- * a component with a `try … finally` in it.
- */
 function whileFlagged(flag: { current: boolean }, run: () => void) {
   flag.current = true
   try {
@@ -158,12 +147,6 @@ function whileFlagged(flag: { current: boolean }, run: () => void) {
   }
 }
 
-/**
- * The same search as the Contacts list: typos, notes, custom fields and Arabic
- * spellings all match. Built only while there's a query, so logging a visit
- * doesn't rebuild an index nobody is using. A hook of its own, so the React
- * Compiler keeps it apart from the query and typing doesn't rebuild it.
- */
 function useMapSearchIndex(
   contactMarkers: ContactMarker[],
   hasSearch: boolean
@@ -187,11 +170,9 @@ const FullMapView = ({
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
   const { isWide, hasBottomBar, contentWidth: width } = useAdaptiveLayout()
-  // Map runs under the floating Contacts header (`topInset`), so size overlays
-  // to its own frame.
+
   const [height, setHeight] = useState(windowHeight)
-  // Exploring slides the tab bar away (see Contacts), and the cards and
-  // controls drop into its room.
+
   const tabBarHidden = useTabBarHidden()
   const bottomBarHeight = !hasBottomBar || tabBarHidden ? 0 : TAB_BAR_HEIGHT
   const inspectorWidth = 360
@@ -209,8 +190,7 @@ const FullMapView = ({
       set: s.set,
     }))
   )
-  // A string, so editing Contact Fields re-renders the map only when the
-  // field its cards show goes away.
+
   const cardDetail = useContacts((s) =>
     resolveCardDetail(mapCardDetail, s.customFieldDefs)
   )
@@ -219,7 +199,7 @@ const FullMapView = ({
   const [isMapReady, setIsMapReady] = useState(false)
   const [hasMapLayout, setHasMapLayout] = useState(false)
   const insets = useSafeAreaInsets()
-  // Google Maps' logo sits above its padding; keep cards clear of that strip.
+
   const bottomOverlayInset =
     insets.bottom +
     bottomBarHeight +
@@ -227,35 +207,29 @@ const FullMapView = ({
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
-  // The Map stays mounted behind other tabs, pushed screens and the
-  // background, and its blue dot keeps the OS location request running (every
-  // 5 s on Android) while it's shown. Show it only while the Map is in view.
+
   const isFocused = useIsFocused()
   const appActive = useAppActive()
   const [isTrackingUser, setIsTrackingUser] = useState(false)
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
     null
   )
-  // Each start takes a number and each stop bumps it, so a watch that finishes
-  // starting after the user stopped or left the Map is removed, not kept.
+
   const trackingRequestRef = useRef(0)
   const [emptyStateHeight, setEmptyStateHeight] = useState(0)
   const draggingContactRef = useRef(false)
   const [noResultsHeight, setNoResultsHeight] = useState(0)
   const [search, setSearch] = useState('')
   const [searchExpanded, setSearchExpanded] = useState(false)
-  // Stowed cards tuck down to a peek (the wide inspector slides off-screen)
-  // for a full map.
+
   const [cardsStowed, setCardsStowed] = useState(false)
-  // 0 = cards shown, 1 = stowed. Driven by the swipe while dragging, then
-  // animated to rest.
+
   const stowProgress = useSharedValue(0)
   const searchInputRef = useRef<TextInput>(null)
   const searchExpand = useSharedValue(0)
   const appTheme = useTheme()
   const appGlassColorScheme = useGlassColorScheme()
-  // Satellite/hybrid imagery is dark whatever the app theme, so every overlay
-  // on it switches to a dark, higher-contrast palette.
+
   const overImagery = mapLayer !== 'standard'
   const theme = overImagery ? getMapImageryTheme(appTheme) : appTheme
   const glassColorScheme = overImagery ? 'dark' : appGlassColorScheme
@@ -270,14 +244,11 @@ const FullMapView = ({
       )
     : contactMarkers
 
-  // Room the floating inspector takes on the trailing edge, the physical left
-  // in a right-to-left layout. Map padding and pin points are physical.
   const inspectorInset =
     isWide && hasMappedContacts && !cardsStowed ? inspectorWidth + 32 : 0
   const inspectorLeft = isRtlLayout() ? inspectorInset : 0
   const inspectorRight = isRtlLayout() ? 0 : inspectorInset
-  // Pin labels stay on the open map, clear of the floating header, inspector
-  // and bottom bar.
+
   const pinLabelBounds = {
     left: inspectorLeft,
     top: topInset,
@@ -293,28 +264,19 @@ const FullMapView = ({
     pinHover.pin &&
     visibleContactMarkers.find((contact) => contact.id === pinHover.pin?.id)
 
-  // Track the active contact by id rather than carousel index. Indices shift
-  // whenever the source list reorders (dismiss/undismiss, sync inserts, etc.),
-  // which is the primary cause of carousel↔pin desync — using a stable id
-  // means lookups always resolve to the contact the user is actually looking
-  // at, regardless of how the array has been re-keyed since render.
   const [activeContactId, setActiveContactId] = useState<string | undefined>(
     () => contactMarkers[0]?.id
   )
   const lastReconciledIndexRef = useRef<number>(0)
   const pendingMarkerSnapIdRef = useRef<string | undefined>(undefined)
-  // The carousel fires onScrollStart for programmatic scrollTo calls, not
-  // just user swipes. Programmatic scrolls happen while the user is typing
-  // (search narrows results → reconcile effect re-syncs the carousel), and
-  // letting them dismiss the keyboard blurs the search input mid-word.
+
   const programmaticScrollRef = useRef(false)
-  // The Contacts gathered in one pin at one place, listed over the cards.
+
   const [openGroupIds, setOpenGroupIds] = useState<string[] | null>(null)
   const [floatingCardHeight, setFloatingCardHeight] = useState(0)
-  // Each carousel card is as tall as its content; keyed by Contact.
+
   const [cardHeights, setCardHeights] = useState<Record<string, number>>({})
-  // Where the chips along the top end and where the control column sits,
-  // measured so pin cards keep clear of them.
+
   const [chipsBottom, setChipsBottom] = useState(0)
   const [controlsLayout, setControlsLayout] =
     useState<MapControlsLayout | null>(null)
@@ -353,8 +315,7 @@ const FullMapView = ({
         pendingMarkerId: pendingMarkerSnapIdRef.current,
       })
       pendingMarkerSnapIdRef.current = undefined
-      // v5 emits onSnapToItem only after movement settles. Keep this defensive
-      // clear in case callback scheduling ever changes.
+
       programmaticScrollRef.current = false
 
       if (!resolved) return
@@ -371,8 +332,6 @@ const FullMapView = ({
     }
   }, [])
 
-  // Only dismiss the keyboard when the user actually swipes the carousel —
-  // programmatic scrolls (search-driven reconciles) must not steal focus.
   const handleCarouselScrollStart = useCallback(() => {
     if (programmaticScrollRef.current) {
       return
@@ -380,9 +339,6 @@ const FullMapView = ({
     dismissSearchKeyboard()
   }, [dismissSearchKeyboard])
 
-  // v5 removed the public command-level onFinished hook. Its ref commands
-  // invoke onScrollStart synchronously, so the flag only needs to wrap the
-  // command call; onSnapToItem remains the settled-state callback.
   const scrollCarouselTo = useCallback((index: number, animated: boolean) => {
     const carousel = carouselRef.current
     if (!carousel || carousel.getCurrentIndex() === index) return false
@@ -396,17 +352,12 @@ const FullMapView = ({
   const handlePinPress = useCallback(
     (id: string) => {
       dismissSearchKeyboard()
-      // Resolve the index from the *current* contactMarkers rather than a
-      // captured render-time index — otherwise an upstream reorder between
-      // render and tap scrolls the carousel to the wrong card.
+
       const idx = findContactIndexById(visibleContactMarkers, id)
       if (idx < 0) return
 
       lastReconciledIndexRef.current = idx
 
-      // Re-tap on the already-active pin: the carousel is already on this
-      // index so onSnapToItem won't fire — refocus the map directly so the
-      // user gets the same zoom-in behaviour as the first tap.
       if (id === activeContactId) {
         pendingMarkerSnapIdRef.current = undefined
         fitToContactId(id)
@@ -444,12 +395,6 @@ const FullMapView = ({
         .map(({ contact }) => contact)
     : []
 
-  // Reconcile carousel + active id when the underlying list changes.
-  // - If the active contact still exists, ensure the carousel is on its
-  //   current index — covers the case where contacts were inserted/removed
-  //   before it and shifted its position.
-  // - If it disappeared (dismissed, deleted), pick a deterministic neighbour
-  //   based on its previous index rather than snapping back to 0.
   useEffect(() => {
     const { activeId, index } = reconcileActiveContact({
       previousActiveId: activeContactId,
@@ -468,10 +413,6 @@ const FullMapView = ({
 
     lastReconciledIndexRef.current = index
 
-    // getCurrentIndex() is settled-only in v5. While a marker-triggered
-    // animation is in flight it still reports the previous card, so an
-    // immediate reconciliation here would replace the 225ms animation with a
-    // non-animated jump. onSnapToItem performs the settled reconciliation.
     if (pendingMarkerSnapIdRef.current) return
 
     const currentCarouselIndex = carouselRef.current?.getCurrentIndex()
@@ -480,7 +421,6 @@ const FullMapView = ({
     }
   }, [activeContactId, scrollCarouselTo, visibleContactMarkers, isWide])
 
-  // Reselecting the Contacts tab while on the map refits it to every pin.
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', () => {
       if (navigation.isFocused()) fitToMarkers()
@@ -488,7 +428,6 @@ const FullMapView = ({
     return unsubscribe
   }, [fitToMarkers, navigation])
 
-  // Fits every pin once Contacts found by the Find contacts row are on it.
   const [fitRequest, setFitRequest] = useState(0)
   const handledFitRequest = useRef(0)
   useEffect(() => {
@@ -499,11 +438,6 @@ const FullMapView = ({
 
   const hasFitOnMount = useRef(false)
 
-  // Google Maps re-centers on its current camera when the map's padding is
-  // applied, cutting short a fit already under way and leaving the world view.
-  // So on Android the first fit waits until the map has drawn, which is after
-  // its padding, or a moment after it's ready if it never says (offline, say),
-  // and jumps rather than animates, so padding landing later keeps it.
   const [isMapLoaded, setIsMapLoaded] = useState(Platform.OS !== 'android')
   useEffect(() => {
     if (!isMapReady || isMapLoaded) return
@@ -551,9 +485,7 @@ const FullMapView = ({
   const mapContactCreation = useMapContactCreation((id, coordinate) => {
     setCardsStowed(false)
     stowProgress.set(withTiming(0, STOW_TIMING))
-    // Clear the old search before reconciliation so the saved Contact can
-    // become the selected carousel card (or the revealed iPad inspector row).
-    // It stays pinned even if the Contacts filters would hide it.
+
     setSearch('')
     onContactCreated(id)
     pendingMarkerSnapIdRef.current = undefined
@@ -573,23 +505,11 @@ const FullMapView = ({
     }
     if (!granted || isCancelled()) return
 
-    // 0.005 deltas ≈ Google Maps zoom level ~16–17 (street level),
-    // which is what Google/Apple Maps land on when you tap "my location".
-    // Formula: latitudeDelta ≈ 360 / 2^zoom → 360 / 2^16 ≈ 0.0055.
     const ZOOM_DELTA = 0.005
     const PAN_DURATION_MS = 500
 
-    // Track when the initial zoom-in animation was fired. Subsequent
-    // watcher updates must NOT call `animateCamera` while it is still
-    // running — on Apple Maps that interrupts the in-flight region
-    // animation and freezes the camera at whatever mid-interpolation
-    // zoom it had reached, which is the bug that made the "snap" look
-    // like it didn't zoom at all.
     let initialZoomFiredAt = 0
 
-    // Instant initial jump using whatever fix iOS already has cached, so
-    // the button feels responsive even when the GPS is cold. The watcher
-    // below refines this to a live position within a couple of seconds.
     const lastKnown = await Location.getLastKnownPositionAsync({
       maxAge: 60_000,
     })
@@ -610,11 +530,8 @@ const FullMapView = ({
     if (!locationSubscriptionRef.current) {
       const subscription = await Location.watchPositionAsync(
         {
-          // BestForNavigation = highest accuracy with sensor fusion, the
-          // documented choice for continuous "follow-me" tracking.
           accuracy: Location.Accuracy.BestForNavigation,
-          // 5 m → fires while walking, doesn't spam while stationary.
-          // `timeInterval` is Android-only on expo-location, so omitted.
+
           distanceInterval: 5,
         },
         (loc) => {
@@ -625,8 +542,6 @@ const FullMapView = ({
           const now = Date.now()
 
           if (initialZoomFiredAt === 0) {
-            // No cached fix was available — do the initial zoom-in on
-            // the first fresh sample so the user still sees the snap.
             initialZoomFiredAt = now
             mapRef.current?.animateToRegion(
               {
@@ -639,9 +554,6 @@ const FullMapView = ({
             return
           }
 
-          // Initial zoom still in flight — drop this update so we
-          // don't interrupt the in-progress region animation. A small
-          // buffer past PAN_DURATION_MS guards against frame jitter.
           if (now - initialZoomFiredAt < PAN_DURATION_MS + 50) return
 
           mapRef.current?.animateCamera(
@@ -668,10 +580,6 @@ const FullMapView = ({
     }
   }
 
-  // Following runs the GPS at navigation accuracy, so it stops when the Map
-  // leaves view: other tabs and pushed screens keep it mounted. A start still
-  // in flight is left alone in the background, since its own permission and
-  // location-settings prompts pause the app on Android.
   useEffect(() => {
     const unsubscribeBlur = navigation.addListener('blur', stopTrackingUser)
     const appStateSubscription = AppState.addEventListener(
@@ -691,23 +599,19 @@ const FullMapView = ({
 
   const parallaxScrollingScale =
     visibleContactMarkers.length === 1 ? 0.9 : isTablet ? 0.92 : 0.8025
-  // Where the focused card's bottom edge sits: just above the map's legal label.
+
   const cardsBottom = bottomOverlayInset + LEGAL_LABEL_HEIGHT - 5
-  // The parallax layout scales the focused card around its centre, so its
-  // edges sit this far inside the carousel's frame.
+
   const cardTopGap = (CARD_HEIGHT * (1 - parallaxScrollingScale)) / 2
-  // The carousel's frame, dropped by that gap so the card meets cardsBottom.
+
   const mapCardBottom = cardsBottom - cardTopGap
-  // The focused card's height on screen, once it's measured.
+
   const focusedCardHeight =
     ((activeContactId && cardHeights[activeContactId]) || CARD_HEIGHT) *
     parallaxScrollingScale
-  // Stowed cards slide off the bottom of the screen rather than leaving a
-  // clipped sliver above it. They never fade: iOS can stop drawing glass for
-  // good under a view that sat at opacity 0 while the app was backgrounded or
-  // the tab left, so the cards came back see-through.
+
   const stowDistance = cardsBottom + focusedCardHeight
-  /** How far a drag down has to go to stow the cards, short of a flick. */
+
   const stowSwipeDistance = (CARD_HEIGHT - cardTopGap) / 6
 
   const SEARCH_COLLAPSED_WIDTH = 44
@@ -732,8 +636,6 @@ const FullMapView = ({
 
   const clampProgress = (value: number) => Math.min(1, Math.max(0, value))
 
-  // Dragging the cards down follows the finger and stows them past a short
-  // distance or on a flick. Horizontal drags stay with the carousel.
   const cardsStowGesture = Gesture.Pan()
     .runOnJS(true)
     .activeOffsetY(12)
@@ -750,7 +652,6 @@ const FullMapView = ({
     })
 
   const expandSearch = () => {
-    // Results show in the cards, so bring them back.
     if (cardsStowed) toggleCardsStowed()
     if (searchExpanded) {
       searchInputRef.current?.focus()
@@ -776,13 +677,12 @@ const FullMapView = ({
     setSearchExpanded(false)
   }
 
-  /** A pin or its card was tapped. */
   const handlePinItemPress = (item: MapPinItem) => {
     const ids = item.members.map((contact) => contact.id)
     mapContactCreation.cancel()
     if (item.group) {
       const coordinates = item.members.map((contact) => contact.coordinate!)
-      // Several in one building get a list; a crowd zooms in to spread out.
+
       if (isSamePlace(coordinates)) {
         if (cardsStowed) toggleCardsStowed()
         setOpenGroupIds(ids)
@@ -801,7 +701,6 @@ const FullMapView = ({
     handlePinPress(ids[0]!)
   }
 
-  // The stowed handle brings the cards back on a tap or an upward swipe.
   const cardsPeekGesture = Gesture.Exclusive(
     Gesture.Pan()
       .runOnJS(true)
@@ -860,7 +759,6 @@ const FullMapView = ({
     bottom: bottomOverlayInset + 12,
   }
 
-  // A group's list, where the cards were.
   const showsFloatingCard = openGroup.length > 0
   const floatingCardBottom = bottomOverlayInset + (isWide ? 28 : 12)
 
@@ -927,10 +825,9 @@ const FullMapView = ({
     size: { width, height },
     activeId: activeContactId,
     overlays: {
-      // The search button, and the chips beside it.
       top: [topInset + 8 + 44, chipsBottom],
       controls: controlsLayout,
-      // The group list takes the inspector's place.
+
       inspectorLeft: showsFloatingCard ? 0 : inspectorLeft,
       inspectorRight: showsFloatingCard ? 0 : inspectorRight,
       bottom: {
@@ -947,10 +844,6 @@ const FullMapView = ({
     },
   })
 
-  // Sit the location FAB just above whichever bottom UI is on screen:
-  // the empty-state card, the no-search-results card, the floating card, or
-  // the carousel. Heights for the variable cards come from onLayout; the
-  // creation card is fixed at CARD_HEIGHT.
   const locationButtonBottom = mapContactCreation.coordinate
     ? mapCardBottom + CARD_HEIGHT + 8
     : showsFloatingCard
@@ -987,7 +880,6 @@ const FullMapView = ({
                   height: e.nativeEvent.layout.height,
                 })
               }}
-              // Cards and groups are laid out for a north-up, flat map.
               rotateEnabled={false}
               pitchEnabled={false}
               onMapReady={() => setIsMapReady(true)}
@@ -1016,8 +908,6 @@ const FullMapView = ({
                 mapProjection.onRegionChangeComplete(region)
               }}
               mapPadding={
-                // Android calls GoogleMap.setPadding synchronously; the native
-                // map can still be null when Fabric applies initial props.
                 Platform.OS === 'android' && !isMapReady
                   ? undefined
                   : {
@@ -1027,9 +917,7 @@ const FullMapView = ({
                       bottom:
                         Platform.OS === 'android'
                           ? insets.bottom + bottomBarHeight
-                          : // Apple Maps adds the safe area itself, so with
-                            // the tab bar gone its label sits right on it.
-                            tabBarHidden
+                          : tabBarHidden
                             ? 0
                             : insets.bottom + bottomBarHeight / 4,
                     }
@@ -1106,7 +994,7 @@ const FullMapView = ({
                   style={StyleSheet.absoluteFill}
                 />
               )}
-              {/* The expanded field shows its own placeholder. */}
+              {}
               <PointerTooltip
                 label={i18n.t('map_searchContacts')}
                 placement='right'
@@ -1155,8 +1043,7 @@ const FullMapView = ({
                     color: theme.colors.text,
                     fontFamily: theme.fonts.regular,
                     fontSize: theme.fontSize('md'),
-                    // Explicit: an unaligned field follows the app bundle's language on
-                    // iOS, which can be Arabic while the app runs in English.
+
                     textAlign: alignInput('start'),
                     padding: 0,
                   }}
@@ -1176,7 +1063,7 @@ const FullMapView = ({
                 right: isWide ? 16 : undefined,
                 width: isWide ? inspectorWidth : width,
                 height: isWide ? undefined : CARD_HEIGHT,
-                // Match the focused carousel item, including its scaled contents.
+
                 transform: isWide
                   ? undefined
                   : [{ scale: parallaxScrollingScale }],
@@ -1287,7 +1174,7 @@ const FullMapView = ({
                 bottom: bottomOverlayInset + 28,
                 width: inspectorWidth,
                 opacity: cardsStowed ? 0 : 1,
-                // Slides off past the trailing edge (the right in LTR).
+
                 transform: [
                   {
                     translateX: cardsStowed
@@ -1340,8 +1227,6 @@ const FullMapView = ({
                     data={visibleContactMarkers}
                     keyExtractor={(contact) => contact.id}
                     renderItem={({ item }) => (
-                      // Cards sit on the frame's bottom edge, as tall as their
-                      // content.
                       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
                         <View
                           onLayout={(e) => {
@@ -1361,13 +1246,9 @@ const FullMapView = ({
                       </View>
                     )}
                     animation={CAROUSEL_ANIMATION}
-                    // Leave vertical drags to the swipe-down-to-stow gesture.
                     onConfigurePanGesture={(gesture) => {
                       gesture.activeOffsetX([-10, 10])
                     }}
-                    // Only mount the visible card plus a few neighbors on each side —
-                    // without renderWindowSize the v5 renderer mounts every Contact's
-                    // card up front, regressing the map screen's first paint.
                     renderWindowSize={7}
                     layout={{
                       type: 'parallax',
@@ -1391,7 +1272,7 @@ const FullMapView = ({
                         position: 'absolute',
                         bottom: cardTopGap,
                         alignSelf: 'center',
-                        // Wider and taller than the handle so it's an easy target.
+
                         paddingHorizontal: 32,
                         paddingTop: 16,
                       },
@@ -1457,7 +1338,6 @@ const FullMapView = ({
           />
           <MapTopChips
             top={topInset + 8}
-            // Clear of the search button and the controls under it.
             start={72}
             end={
               isWide && hasMappedContacts && !cardsStowed
@@ -1488,7 +1368,7 @@ const FullMapView = ({
               ...STOW_TRANSITION,
             }}
           >
-            {/* Left, so the label stays clear of the inspector beside it. */}
+            {}
             <PointerTooltip
               label={i18n.t(
                 isTrackingUser
@@ -1526,7 +1406,6 @@ const FullMapView = ({
   )
 }
 
-/** `contacts`, then those made from a dropped pin that the filters hide. */
 function withDroppedContacts(
   contacts: Contact[],
   activeContacts: Contact[],
@@ -1547,20 +1426,15 @@ const MapScreen = ({
   onExploreEnd,
   routeActions,
 }: {
-  /**
-   * Active contacts to pin, with the Contacts filters and sort already applied,
-   * so the map and the list show the same people. Those without a location are
-   * left off.
-   */
   contacts: Contact[]
   renderContactRow: MapContactRowRenderer
-  /** Height of any header floating over the top of the map. */
+
   topInset?: number
-  /** The user started exploring: dragged the map or stowed the cards. */
+
   onExplore?: () => void
-  /** The stowed cards came back, so the header and tab bar should too. */
+
   onExploreEnd?: () => void
-  /** Today's route and Plan Route for picked Contacts, from the app. */
+
   routeActions?: MapRouteActions
 }) => {
   const allContacts = useContacts((s) => s.contacts)
@@ -1572,18 +1446,14 @@ const MapScreen = ({
     }))
   )
   const colors = useMarkerColors()
-  // Contacts made from a dropped pin stay on the map for this visit even when
-  // the filters would hide them, so a new pin doesn't vanish once saved.
+
   const [droppedIds, setDroppedIds] = useState<string[]>([])
-  // Single O(conversations) index shared by the pin-color loop and every
-  // carousel card — replaces the per-contact full-array scans that made the
-  // screen take seconds to open (same pattern as the Contacts list).
+
   const conversationIndex = useConversationIndex(
     conversations,
     stalenessBreakpoints
   )
 
-  // After every hook: the React Compiler can't memoize a value across one.
   const activeContacts = filterActivesContacts(allContacts)
   const hasMappedContacts = activeContacts.some((c) => c.coordinate != null)
   const pinnedContacts = withDroppedContacts(

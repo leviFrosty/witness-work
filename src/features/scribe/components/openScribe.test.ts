@@ -90,7 +90,7 @@ describe('Scribe AI entry points', () => {
     expect(scribeEntryState(hidden, 'available')).toBeNull()
     expect(scribeEntryState(offline, 'available')).toBe('offline')
     expect(scribeEntryState(blocked, 'available')).toBe('blocked')
-    // The limit wins over missing speech: the conversation explains it.
+
     expect(scribeEntryState(limited, 'unsupported')).toBe('limited')
     expect(scribeEntryState(available, 'unsupported')).toBe('voice_unsupported')
     expect(scribeEntryState(available, 'checking')).toBe('available')
@@ -128,7 +128,7 @@ describe('Scribe AI entry points', () => {
       mode: 'open',
       next: { route: 'ScribeVoice', params: { entry: 'home_orb' } },
     })
-    // The tap still counts.
+
     expect(runtime.capture).toHaveBeenCalledWith('scribe_entry_tapped', {
       entry: 'home_orb',
       state: 'available',

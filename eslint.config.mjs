@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
+import { noComments } from './scripts/lib/source-comments.mjs'
 
 const soundImports = {
   group: [
@@ -56,16 +57,13 @@ const mileageStoreImports = {
   message:
     'Read mileage through @/stores/mileageView and write it through @/stores/mileageWrites, which include Shared Cars.',
 }
-// The files that use the User's own mileage store directly: the view and
-// write seam, note photo references, sync and backups (which carry only the
-// User's own records), and dev tools.
+
 const mileageStoreFiles = [
   'src/stores/mileageView.ts',
   'src/stores/mileageWrites.ts',
   'src/stores/noteImages.ts',
   'src/app/sync/**',
-  // The Shared Cars engine's wiring: sharing moves a car out of the User's
-  // own store, and an ending leaves its copy there.
+
   'src/app/sharedCars/sharedCarsService.ts',
   'src/lib/backupFile.ts',
   'src/app/dev-harness/**',
@@ -74,10 +72,6 @@ const mileageStoreFiles = [
   'src/**/*.test.{ts,tsx}',
 ]
 
-// Icons that point along the reading direction mirror in right-to-left
-// layouts; `@/components/ui/DirectionalIcon` has a reading-order name for each
-// one the app uses (add one there before using a new name). Not listed, so not
-// mirrored: clocks, media controls, checkmarks, diagonal and trend arrows.
 const directionalIconNames = [
   'ArrowBigLeft',
   'ArrowBigLeftDash',
@@ -143,7 +137,7 @@ const directionalIconMessage =
   'Use the reading-direction icons in @/components/ui/DirectionalIcon (ChevronForwardIcon, ArrowBackwardIcon, …), which mirror in right-to-left layouts.'
 const directionalIconImports = {
   group: ['lucide-react-native', 'lucide-react-native/*'],
-  // lucide exports each icon as `X`, `XIcon` and `LucideX`.
+
   importNames: directionalIconNames.flatMap((name) => [
     name,
     `${name}Icon`,
@@ -151,8 +145,7 @@ const directionalIconImports = {
   ]),
   message: directionalIconMessage,
 }
-// The same icons as default imports of their own files
-// (`lucide-react-native/icons/chevron-right`).
+
 const kebab = (name) =>
   name
     .replace(/([a-z])([A-Z0-9])/g, '$1-$2')
@@ -166,10 +159,9 @@ const directionalIconFiles = {
   ),
   message: directionalIconMessage,
 }
-// Corners React Native never mirrors.
+
 const physicalCornerRadius = '/^border(Top|Bottom)(Left|Right)Radius$/'
-// Side borders React Native draws on the physical side in right-to-left
-// layouts, while the margins and paddings beside them mirror.
+
 const physicalBorderSide = '/^border(Left|Right)(Width|Color)$/'
 
 export default tseslint.config(
@@ -191,7 +183,7 @@ export default tseslint.config(
       'src/locales/**',
       'patches/**',
       'targets/**/build/**',
-      // Gradle output of the local modules' Android code (e.g. unit test reports).
+
       'modules/*/android/build/**',
       '**/*.tar.gz',
     ],
@@ -200,6 +192,13 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx,mjs,mts,cjs,cts}'],
+    linterOptions: { noInlineConfig: true },
+    plugins: { source: { rules: { 'no-comments': noComments } } },
+    rules: {
+      'source/no-comments': 'error',
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
+    },
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
@@ -246,7 +245,7 @@ export default tseslint.config(
             'src/features/plans/**/*',
             'src/features/progress/**/*',
             'src/features/log-visit/**/*',
-            // Scribe AI composes contacts, visits, plans and Buddies.
+
             'src/features/scribe/**/*',
             'src/__tests__/**/*',
           ],
@@ -336,13 +335,7 @@ export default tseslint.config(
       ],
     },
   },
-  // Sounds and haptics go through `@/lib/audio` and `@/lib/haptics` so the
-  // Audio & Haptics settings can't be bypassed, and sheets through
-  // `@/components/ui/Sheet` so they hold takeovers, and stores persist through
-  // `@/stores/persist` so they keep saved data they couldn't load. Mileage goes
-  // through its view and write seam so Shared Cars aren't left out. Flat config
-  // replaces (rather than merges) a rule's options, so each file gets one
-  // combined list.
+
   ...[
     {
       files: undefined,
@@ -423,7 +416,7 @@ export default tseslint.config(
     },
   ].map(({ files, patterns }) => ({
     files: files ?? ['src/**/*.{js,jsx,ts,tsx}'],
-    // `src/__tests__` takes none of these rules.
+
     ignores: files
       ? ['src/__tests__/**']
       : [
@@ -437,17 +430,7 @@ export default tseslint.config(
         ],
     rules: { 'no-restricted-imports': ['error', { patterns }] },
   })),
-  // Right-to-left layouts (Arabic). React Native swaps `left` and `right` for
-  // text, but not for Android inputs, so alignment goes through
-  // `alignText`/`alignInput` (`@/lib/direction`) or a TextInput's
-  // `textAlign='start'|'end'`, which say what they mean. Corner radii are never
-  // mirrored, so a corner that marks a side (a chat bubble's tail, joined
-  // segments) uses `border(Top|Bottom)(Start|End)Radius`. Side borders stay on
-  // their physical side too, apart from the padding next to them, so a divider
-  // or accent bar uses `border(Start|End)(Width|Color)`. Letter spacing breaks
-  // joined scripts, so non-zero values go through `tracking()`
-  // (`@/lib/tracking`). Disable per line, with a reason, where a physical side
-  // or fixed spacing is meant (Latin-only artwork).
+
   {
     files: ['src/**/*.{js,jsx,ts,tsx}'],
     ignores: ['src/__tests__/**', 'src/**/*.test.{ts,tsx}'],

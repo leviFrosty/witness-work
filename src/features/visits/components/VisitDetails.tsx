@@ -24,25 +24,18 @@ import {
   type VisitDetailsAction,
 } from '@/features/visits/lib/visitDetailsAnalytics'
 
-/** The Follow-up's buddies on Visit Details, supplied by the app tier. */
 export type FollowUpDetailsBuddiesSlot = (props: {
   visit: Visit
   now: number
-  /** Invite Buddies added someone. */
+
   onInvited: () => void
-  /** The color behind it, for the rings between stacked avatars. */
+
   surface: string
 }) => ReactNode
 
-/** The rail node for what happened at a Visit. */
 const outcomeNode = (visit: Visit): RailNode =>
   visit.notAtHome ? 'notAtHome' : visit.isBibleStudy ? 'study' : 'conversation'
 
-/**
- * A Visit with Edit and More in the header: who it was with, then its story
- * down a rail, newest first like Contact Details: its Follow-up (with the
- * buddies going), today, and what happened, each told in the right tense.
- */
 export default function VisitDetails({
   visit,
   contact,
@@ -73,7 +66,6 @@ export default function VisitDetails({
     onDeleted: () => track('delete'),
   })
 
-  // Back to the Contact this sheet was opened from, or close it and open them.
   const openContact = () => {
     const state = navigation.getState()
     const opener = state?.routes[state.index - 1]
@@ -97,7 +89,6 @@ export default function VisitDetails({
       overSheet: true,
     })
 
-  // The edit form with Follow Up already on.
   const planFollowUp = () =>
     navigation.navigate('Visit Form', {
       contactId: contact.id,
@@ -107,7 +98,6 @@ export default function VisitDetails({
       planFollowUp: true,
     })
 
-  // Another of the contact's Visits, as a sheet over this one.
   const openVisit = (visitId: string) =>
     navigation.push('Visit Details', { visitId })
 
@@ -121,7 +111,7 @@ export default function VisitDetails({
   ]
   if (visit.followUp && status) {
     const date = new Date(visit.followUp.date)
-    // Kept means done, even if its planned time is later today.
+
     const ahead = status !== 'kept' && date.getTime() > now
     const followUp: RailStop = {
       key: 'followUp',
@@ -138,7 +128,6 @@ export default function VisitDetails({
           status={status}
           answer={answer}
           now={now}
-          // Follow-up invitations are off in data protection mode.
           renderBuddies={
             dataProtectionMode || !renderFollowUpBuddies
               ? undefined
@@ -174,7 +163,7 @@ export default function VisitDetails({
     }
     stops.push(...(later ? [after, today] : [today, after]))
   }
-  // Newest first, like Contact Details' timeline.
+
   stops.reverse()
 
   return (

@@ -3,18 +3,11 @@ import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-/** Pixel speech bubble colours: cream paper, dark brown ink. */
 const PAPER = '#FFFDF6'
 const INK = '#3A2A20'
-/** The border and the hard shadow's offset, in points. */
+
 const EDGE = 2
 
-/**
- * A pet's sound in a square pixel-style bubble with a hard shadow. Position it
- * with `right` (or `left`) and `bottom` so it grows away from the pet. With
- * `left` and `within` (its container's width), it moves left as far as it must
- * to stay inside.
- */
 export default function PetSpeechBubble({
   text,
   right,
@@ -50,7 +43,7 @@ export default function PetSpeechBubble({
         right,
         left: shownLeft,
         bottom,
-        // Hidden for the one layout pass that measures it.
+
         opacity: clamps && bubbleWidth === null ? 0 : 1,
       }}
     >

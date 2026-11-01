@@ -4,14 +4,10 @@ import { persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { TimeEntriesByYear } from '@/types/timeEntry'
 
-/**
- * Pre-flattened day→minutes map for the entire reports history. Serialized as a
- * plain object because `Map` doesn't round-trip through JSON.
- */
 export type DailyMinutesCacheEntry = {
   daily: Record<string, number>
   lastUpdated: number
-  /** Fingerprint of `serviceReports` — see `generateDailyMinutesFingerprint`. */
+
   fingerprint: string
 }
 
@@ -31,11 +27,6 @@ const initialState: TimeCacheState = {
   dailyMinutes: null,
 }
 
-/**
- * V0 → v1: drops the old `cache` slice of Service Year totals. It went stale
- * when an entry moved months (the credit cap is per month), so the Year card
- * now sums the year directly. Only the daily-minutes map survives.
- */
 export const migrateTimeCachePersistedState = (
   persisted: unknown
 ): TimeCacheState => ({
@@ -72,12 +63,6 @@ export const useTimeCache = create<TimeCacheState & TimeCacheActions>()(
   )
 )
 
-/**
- * Light-touch fingerprint for the full reports collection. Iterates once but
- * avoids `moment()` parsing and date formatting, so it's much cheaper than
- * running `flattenDailyMinutes`. Any add/edit/delete changes either the total
- * count or the max `updatedAt`, so this reliably detects mutations.
- */
 export const generateDailyMinutesFingerprint = (
   reports: TimeEntriesByYear
 ): string => {
@@ -91,7 +76,6 @@ export const generateDailyMinutesFingerprint = (
       }
     }
   }
-  // Bump the prefix when `flattenDailyMinutes` changes what it counts, so a
-  // persisted map built the old way is rebuilt.
+
   return `dm2:${count}:${maxUpdated}`
 }

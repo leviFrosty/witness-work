@@ -8,9 +8,6 @@ import {
 import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
 import { createFakeSyncServer } from '@/lib/syncTransport/server/__tests__/fakeSyncServer'
 
-// Cloud Sync's live socket (ADR 0030 §8) against the transport's `lastSeq`:
-// on (re)connecting, `hello {seq}` past what this device pulled pulls at once.
-
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 const ACCOUNT_ID = 'A'.repeat(22)
@@ -41,7 +38,6 @@ function fleet() {
   return { server, a: device('a'), b: device('b') }
 }
 
-/** Device A's live socket; resolves to the `onChange` mock after `hello`. */
 async function reconnect(syncedSeq: () => number, helloSeq: number) {
   vi.useFakeTimers()
   const onChange = vi.fn()
@@ -79,7 +75,7 @@ describe('Cloud Sync live seq', () => {
   it('pulls another device’s put that landed just before our own', async () => {
     const { server, a, b } = fleet()
     await a.readFiles(() => true)
-    // While A's socket is reconnecting: B puts, then A pushes.
+
     await b.write(filenameForSlot(SLOT_B), '{"from":"b"}')
     await a.write(filenameForSlot(SLOT_A), '{"from":"a"}')
 

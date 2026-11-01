@@ -7,11 +7,6 @@ import { tracking } from '@/lib/tracking'
 
 export const SERVICE_YEAR_DIVIDER_HEIGHT = 56
 
-/**
- * Where one Service Year ends and the next begins in the Schedule's week grid.
- * It's the one place the grid breaks, so crossing September reads as crossing
- * into a new year of reports and goals. Tapping it zooms out to that year.
- */
 export default function ServiceYearDivider({
   serviceYear,
   onPress,

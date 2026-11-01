@@ -19,7 +19,7 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('expo-crypto', () => ({ randomUUID: () => `view-${++runtime.nextId}` }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
-// Confirms straight away.
+
 vi.mock('@/lib/confirmDestructive', () => ({
   default: ({ onConfirm }: { onConfirm: () => void }) => onConfirm(),
 }))
@@ -77,7 +77,7 @@ describe('Saved Views', () => {
       direction: 'asc',
     })
     expect(state.activeSavedContactView).toEqual({ id: 'view-1' })
-    // The User's own filters became the view, so leaving it shows everyone.
+
     expect(state.contactsFilters).toEqual([])
     expect(state.contactSort).toBe('suggested')
     expect(current.query.query.filters).toEqual([{ kind: 'hasStudy' }])

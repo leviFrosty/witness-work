@@ -52,8 +52,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
   ) => {
     const theme = useTheme()
     const error = id && errors ? errors[id] : undefined
-    // At accessibility text sizes the field sits under its label, so its text
-    // starts where the label does.
+
     const align = useAccessibilityTextSize() ? 'start' : 'end'
 
     const innerRef = useRef<RNTextInput>(null)
@@ -74,8 +73,7 @@ const TextInputRow: React.ForwardRefExoticComponent<
         }
         onLabelPress={() => innerRef.current?.focus()}
       >
-        {/* Fills the control's width even when a stacked row starts its
-            control at the label's edge, so an empty field isn't a sliver. */}
+        {}
         <View style={{ flexGrow: 1, flex: 1, gap: 5, alignSelf: 'stretch' }}>
           <MyTextInput
             ref={innerRef}

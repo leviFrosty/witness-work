@@ -32,7 +32,6 @@ import type { SharedCar } from '@/types/sharedCars'
 const NOW = 1_000_000
 const SPACE = 'space'
 
-/** The actions over fakes, with what they toasted and reported. */
 function setup(car: SharedCar = sharedCar(SPACE)) {
   const events: CarPeopleEvent[] = []
   const toasts: { intent: string; title: string; options?: object }[] = []

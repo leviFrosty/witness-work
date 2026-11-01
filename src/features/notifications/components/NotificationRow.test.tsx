@@ -105,7 +105,7 @@ describe('NotificationRow', () => {
 
     expect(tree.root.findByType('UnlockArtTile' as never).props.art).toBe(art)
     expect(tree.root.findAllByType('LucideIcon' as never)).toHaveLength(0)
-    // The actions line up with the text after the wider art.
+
     const actions = tree.root
       .findAllByType('XView' as never)
       .find((view) => view.props.style?.paddingLeft !== undefined)

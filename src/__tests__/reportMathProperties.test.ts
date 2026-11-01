@@ -29,12 +29,6 @@ import {
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-// Report math over generated Time Entries: a month's total is the sum of its
-// entries, the credit cap (#825) never lets credit past it, a Service Year is
-// the sum of its months, and a rollover leaves nothing more to roll. Reproduce
-// a failure with `FC_SEED=<seed> pnpm vitest run
-// src/__tests__/reportMathProperties.test.ts`.
-
 const runs = { numRuns: 200, seed: fcSeed }
 
 const ROLES: Publisher[] = [
@@ -54,7 +48,6 @@ const overrideArb = fc.option(
   { nil: undefined }
 )
 
-/** Zones where a stored day is most likely to slip a day or a month. */
 const TIME_ZONES = [
   'UTC',
   'America/Los_Angeles',
@@ -71,7 +64,6 @@ afterEach(() => {
   else process.env.TZ = originalTZ
 })
 
-/** Entries from 2024–2027 with unique ids, plus rollover-shaped halves. */
 const entriesArb = fc
   .tuple(
     fc.uniqueArray(timeEntryArb(fc.uuid()), {
@@ -150,7 +142,7 @@ describe('month totals', () => {
         }
         expect(total).toBeCloseTo(sum, 9)
         expect(count).toBe(entries.length)
-        // Each entry lands in the Service Year its stored day names.
+
         for (const entry of entries) {
           const date = new Date(entry.date)
           const endYear =
@@ -204,7 +196,7 @@ describe('credit cap (#825)', () => {
               expect(adjusted.value).toBeLessThanOrEqual(
                 Math.max(raw.standard, cap) + 1e-9
               )
-              // Credit only fills headroom left under the cap.
+
               expect(adjusted.credit).toBeLessThanOrEqual(
                 Math.max(0, cap - raw.standard) + 1e-9
               )
@@ -260,7 +252,6 @@ describe('Service Year totals', () => {
 })
 
 describe('Time Rollover', () => {
-  /** Adds entries as `addServiceReports` does: anchored, by stored month. */
   const withEntries = (reports: TimeEntriesByYear, added: TimeEntry[]) =>
     bucketEntries([
       ...flattenEntries(reports),
@@ -302,8 +293,7 @@ describe('Time Rollover', () => {
         ) => {
           process.env.TZ = tz
           const today = moment(`${day}T09:00:00`)
-          // Moves the generated entries into last month and this one, the two
-          // months a rollover reads.
+
           const source = today.clone().subtract(1, 'month')
           const placed = entries.map((entry, i) => {
             const month = i % 2 ? today : source
@@ -329,7 +319,7 @@ describe('Time Rollover', () => {
           if (!first) return
           const after = withEntries(input.serviceReports, first.entries)
           applied++
-          // Each half lands in its own month: the source's last day, today's first.
+
           const [out, into] = first.entries.map((e) =>
             moment.utc(normalizeDateForStorage(e.date))
           )
@@ -353,7 +343,7 @@ describe('Time Rollover', () => {
       ),
       runs
     )
-    // Most runs have a fraction to roll, so the property isn't vacuous.
+
     expect(applied).toBeGreaterThan(runs.numRuns / 4)
   })
 })

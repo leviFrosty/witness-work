@@ -6,21 +6,13 @@ import {
   useTimeCache,
 } from '@/stores/timeCache'
 
-/**
- * Returns a `dateStr → minutes` map covering all reports. Reads from the
- * `useTimeCache.dailyMinutes` slot when the fingerprint matches and writes the
- * freshly flattened result back on a miss, so callers across screens
- * (`HomeScreen`, `ProfileDetailOverlay`) share the same memoized flatten.
- */
 const useDailyMinutes = (): Map<string, number> => {
   const { serviceReports } = useServiceReport()
   const setDailyMinutesCache = useTimeCache((s) => s.setDailyMinutesCache)
 
   const { daily, fingerprint, cacheHit } = useMemo(() => {
     const fp = generateDailyMinutesFingerprint(serviceReports)
-    // Imperative read — subscribing would loop the effect below that writes
-    // the cache back. Same pattern the consumers used before this hook existed.
-    // eslint-disable-next-line react-compiler/react-compiler
+
     const cached = useTimeCache.getState().dailyMinutes
     if (cached && cached.fingerprint === fp) {
       return {

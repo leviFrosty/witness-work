@@ -1,27 +1,14 @@
-/**
- * String-row pixel patterns ("stamps"): an array of rows top to bottom, one
- * character per pixel, e.g. a heart is `.r.r.` / `rrrrr` / `.rrr.` / `..r..`.
- * Each character is looked up in a colour map; characters without an entry (by
- * convention `.`) are transparent.
- */
 import type { PixelBuffer } from './buffer'
 import type { Rgb } from './color'
 import { setPixel } from './draw'
 import type { FeaturePixel } from './raster'
 
-/** Rows of characters, top to bottom. */
 export type StampPattern = readonly string[]
 
-/** Character → colour for a {@link StampPattern}. */
 export type StampColors = Readonly<Record<string, Rgb>>
 
-/** Optional clip: return false to skip a destination pixel. */
 export type StampClip = (x: number, y: number) => boolean
 
-/**
- * Draws `pattern` with its top-left character at integer (x, y). Positions are
- * rounded first, so fractional origins snap like {@link plot}.
- */
 export function stamp(
   buf: PixelBuffer,
   pattern: StampPattern,
@@ -43,7 +30,6 @@ export function stamp(
   }
 }
 
-/** The pattern as feature pixels (for {@link rasterize} specs). */
 export function stampPixels(
   pattern: StampPattern,
   x: number,
@@ -61,7 +47,6 @@ export function stampPixels(
   return out
 }
 
-/** Width of a pattern (its longest row). */
 export function stampWidth(pattern: StampPattern): number {
   let w = 0
   for (const row of pattern) w = Math.max(w, row.length)

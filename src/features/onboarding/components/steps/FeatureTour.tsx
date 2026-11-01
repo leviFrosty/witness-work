@@ -20,13 +20,11 @@ import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBac
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
 
-/** Tour pages that show what a Schedule intro page would, so it can skip them. */
 const SCHEDULE_INTRO_PAGES: Partial<Record<string, ScheduleIntroPageId>> = {
   plan: 'plan',
   buddies: 'together',
 }
 
-/** How the tour was left. Bounded, safe as an analytics value. */
 type CloseMethod = 'finished' | 'skipped' | 'back'
 
 interface Props {
@@ -35,12 +33,6 @@ interface Props {
   buddiesAvailable: boolean
 }
 
-/**
- * Right after the welcome, before asking for anything: a tour of what
- * WitnessWork does, in the update reveal's style — a page per feature, mostly
- * picture, over the welcome's aurora. Skip is always one tap away; setup comes
- * after.
- */
 const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
@@ -54,13 +46,10 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
     null
   )
 
-  // Buddies' flag can still be loading as the tour opens. Pages may change
-  // until the first swipe, then hold, so none shifts under the user.
   const livePages = useTourPages(buddiesAvailable)
   const [heldPages, setHeldPages] = useState<RevealPage[] | null>(null)
   const pages = heldPages ?? livePages
 
-  // The welcome fades out to the app's background; the tour fades in from it.
   const veil = useSharedValue(1)
   const scene = useSharedValue(reduceMotion ? 1 : 0)
   const still = useSharedValue(0)

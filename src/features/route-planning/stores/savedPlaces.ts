@@ -13,10 +13,6 @@ type SavedPlacesState = {
   clear: (kind: SavedPlaceKind) => void
 }
 
-/**
- * The User's Home and Kingdom Hall for the route builder. On this device only,
- * like the routes themselves.
- */
 export const useSavedPlaces = create<SavedPlacesState>()(
   persist(
     (set) => ({

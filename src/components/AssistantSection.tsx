@@ -47,26 +47,17 @@ import { useShallow } from 'zustand/react/shallow'
 import { tracking } from '@/lib/tracking'
 
 type Props = {
-  /** Calendar year of the month being shown. */
   year: number
-  /** 0-11 month index. */
+
   month: number
-  /** "Today" — passed in so the parent and child agree. */
+
   today: Date
   monthlyGoalHours: number
-  /**
-   * Projection result the parent already computed — the engine's gap sizing and
-   * the dismissal hash both read from it so the Assistant can never disagree
-   * with the Projected Total it renders beneath.
-   */
+
   projection: ProjectedTotalResult
-  /**
-   * When true, omit the top divider/padding the section uses to separate itself
-   * from sibling content above. Use when the section is the sole occupant of
-   * its container (e.g. its own Card).
-   */
+
   standalone?: boolean
-  /** When provided, the parent owns visibility instead of the saved input hash. */
+
   onDismiss?: () => void
 }
 
@@ -113,8 +104,7 @@ const AssistantSection = ({
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const dayPlans = useServiceReport((s) => s.dayPlans)
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  // Plans derive credit-ness from their referenced Category at read time —
-  // subscribed so the dismissal hash recomputes when a Category flips.
+
   const categories = useCategories((s) => s.categories)
   const { conversations } = useConversations()
 
@@ -125,8 +115,7 @@ const AssistantSection = ({
     const end = momentStoredDate(normalizeDateForStorage(today))
       .clone()
       .subtract(1, 'day')
-    // Use months reports for current month — for early-month boundaries the
-    // few extra reports we'd miss don't materially shift the tiredness signal.
+
     const reports = getMonthsReports(serviceReports, month, year)
     return reports.reduce((sum, r) => {
       const d = momentStoredDate(r.date)
@@ -169,17 +158,12 @@ const AssistantSection = ({
     minutesLoggedInPriorDays,
   ])
 
-  // Stable fingerprint of the inputs that should "re-arm" the Assistant
-  // after a dismissal. When the user logs hours, plans days, edits
-  // availability, etc., the hash changes and the card returns.
   const inputsHash = useMemo(
     () =>
       computeRecommendationInputsHash({
         loggedAdjustedMinutes: projection.loggedMinutes,
         monthlyGoalMinutes: Math.round(monthlyGoalHours * 60),
-        // Resolved credit-ness is part of each plan's fingerprint: a plan's
-        // Type (or its Category's credit flag) changes the projection, so it
-        // must re-arm a dismissed recommendation.
+
         dayPlanFingerprints: dayPlans.map((p) =>
           dayPlanFingerprint(p, categories)
         ),
@@ -188,7 +172,6 @@ const AssistantSection = ({
         ),
         conversationDayKeys: conversations
           .flatMap((c) => [
-            // Visit dates are instants: key by the local day they fall on.
             c.date ? moment(c.date).format('YYYY-MM-DD') : null,
             c.followUp?.date && c.followUp.dismissed !== true
               ? moment(c.followUp.date).format('YYYY-MM-DD')
@@ -248,14 +231,11 @@ const AssistantSection = ({
       action: 'accepted',
       at: Date.now(),
     })
-    // Clear any previous dismissal so a future re-arm-without-accept doesn't
-    // confuse the gating.
+
     setHasDismissedRecommendationHash(undefined)
   }, [recommendation, recordAssistantEvent, setHasDismissedRecommendationHash])
 
   const handleUndo = useCallback(() => {
-    // Rewrite the just-recorded accepted event as a dismissal so history
-    // weighting reflects the user's actual final intent.
     if (!recommendation) return
     replaceLastAssistantEvent({
       shape: recommendation.shape,
@@ -287,11 +267,6 @@ const AssistantSection = ({
     else onDismiss?.()
   }
 
-  /**
-   * On its own card (Schedule), the Assistant's text is a long-press target for
-   * Assistant Settings / Hide This Section — both also in Preferences — in
-   * place of the header's gear. Its buttons stay outside the target.
-   */
   const menuArea = (gap: number, children: ReactNode) =>
     standalone ? (
       <ContextMenu
@@ -321,10 +296,6 @@ const AssistantSection = ({
     />
   )
 
-  // Acceptance collapse — when the user has just accepted and the gap is
-  // closed, show the "you've planned enough" affirmation. Detect this by:
-  // - engine returns null (no gap)
-  // - last history event is `accepted`
   if (!recommendation) {
     const last = assistantHistory[assistantHistory.length - 1]
     const justAccepted =
@@ -350,8 +321,6 @@ const AssistantSection = ({
 
   if (!onDismiss && isDismissedForCurrentInputs) return null
 
-  // Pre-onboarding: show an explicit CTA instead of instantly prompting for
-  // unavailable days. The user opts in by tapping "Set up Assistant".
   if (!hasSeenAvailabilityOnboarding) {
     return (
       <Wrapper gap={10}>
@@ -547,7 +516,6 @@ const AssistantSection = ({
 const AssistantHeader = ({
   onPressSettings,
 }: {
-  /** Shows the gear; left out where a context menu offers Settings. */
   onPressSettings?: () => void
 }) => {
   const theme = useTheme()

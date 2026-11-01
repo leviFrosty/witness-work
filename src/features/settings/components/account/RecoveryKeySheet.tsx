@@ -17,7 +17,6 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
 
-/** `WW1` and the eleven groups, three to a line. */
 function lines(recoveryKey: string): string[] {
   const parts = recoveryKey.split('-')
   const out: string[] = []
@@ -28,17 +27,12 @@ function lines(recoveryKey: string): string[] {
 
 type Props = {
   open: boolean
-  /** Kept until the sheet has closed, so it doesn't empty on its way out. */
+
   recoveryKey: string | null
   onClose: () => void
   onClosed: () => void
 }
 
-/**
- * The recovery key, shown only after the device's own authentication: grouped
- * and monospaced to copy by hand, with Copy and Share, and a warning that
- * whoever has it has the account.
- */
 export default function RecoveryKeySheet({
   open,
   recoveryKey,
@@ -150,9 +144,7 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
             fontFamily: RECOVERY_KEY_FONT,
             fontSize: theme.fontSize('lg'),
             lineHeight: theme.fontSize('lg') * 1.6,
-            // The key is Latin letters and digits in every language, so the
-            // spacing can't break Arabic joining.
-            // eslint-disable-next-line no-restricted-syntax
+
             letterSpacing: 1,
             textAlign: 'center',
             color: theme.colors.text,

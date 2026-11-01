@@ -35,26 +35,16 @@ import {
 type Props = {
   followUp: NonNullable<Visit['followUp']>
   status: FollowUpStatus
-  /** The later Visit that kept it. */
+
   answer?: Visit
   now: number
-  /**
-   * Who's going, inside the card while it's still open. Gets the card's color,
-   * for anything that has to match it (avatar rings).
-   */
+
   renderBuddies?: (surface: string) => ReactNode
   onLogVisit: () => void
   onReschedule: () => void
   onOpenVisit: (visitId: string) => void
 }
 
-/**
- * The Follow-up as the rail's next stop: one sentence in the right tense
- * ("You're going back Saturday at 7:30 PM", "You planned to go back…", "You
- * went back…"), how far off it is, the topic, who's going, the reminder, and
- * what to do now. Quiet while it's days away; it turns teal on its day and
- * amber once missed.
- */
 export default function VisitFollowUpStop({
   followUp,
   status,
@@ -76,7 +66,7 @@ export default function VisitFollowUpStop({
     status === 'overdue' ||
     (status === 'upcoming' && moment(date).isSame(moment(now), 'day'))
   const muted = status === 'dismissed'
-  // Outlined until a visit keeps it; going back fills it in.
+
   const tone: FollowUpCardTone =
     status === 'overdue'
       ? 'missed'

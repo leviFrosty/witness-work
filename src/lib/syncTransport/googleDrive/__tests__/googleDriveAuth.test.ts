@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createFakeGoogleDrive } from './driveTestKit'
 
-// Which Google Account Android sync uses: connecting, silent token refresh,
-// tokens bound to the account an operation started under, noticing a silent
-// account switch, losing consent, and disconnecting.
-
 const native = vi.hoisted(() => ({
   account: 'acct-a',
   authorize: vi.fn(),
@@ -126,8 +122,7 @@ describe('googleDriveAccessToken', () => {
       hashGoogleDriveAccount,
     } = await load()
     await connectGoogleDrive()
-    // The connected account was removed from the phone; Google now answers
-    // silently for another one.
+
     native.account = 'acct-b'
     await expect(
       googleDriveAccessToken({ refresh: true })
@@ -180,7 +175,7 @@ describe('googleDriveAccessToken', () => {
       const { connectGoogleDrive, googleDriveAccessToken, usePreferences } =
         await load()
       await connectGoogleDrive()
-      // Both the first check and the retry with a fresh token.
+
       for (let i = 0; i < 2; i++)
         drive.current!.failNext(
           (r) => r.url.includes('/drive/v3/about'),
@@ -233,7 +228,7 @@ describe('disconnectGoogleDrive', () => {
       }
     )
     await disconnectGoogleDrive()
-    // Revoking would cut off the user's other devices on that account.
+
     expect(requests.some((url) => url.includes('oauth2'))).toBe(false)
     expect(native.clearToken).toHaveBeenCalledWith('fake:acct-a')
     expect(usePreferences.getState().googleDriveAccountId).toBeNull()
@@ -294,7 +289,7 @@ describe('account binding', () => {
     expect(
       await googleDriveAccessToken({ refresh: false, account: accountA })
     ).toBe('fake:acct-a')
-    // The user switches to another account while A's push is queued.
+
     native.account = 'acct-b'
     await connectGoogleDrive({ selectAccount: true })
     await expect(
@@ -332,7 +327,7 @@ describe('account binding', () => {
       async () => `fake:${native.account}#${++issued}`
     )
     await connectGoogleDrive()
-    // Four downloads all got 401 for the first token.
+
     const tokens = await Promise.all(
       [0, 1, 2, 3].map(() =>
         googleDriveAccessToken({ refresh: true, rejected: 'fake:acct-a#1' })
@@ -357,7 +352,7 @@ describe('consent screen', () => {
       native.appState.forEach((listener) => listener('active'))
       await vi.advanceTimersByTimeAsync(3_000)
       expect(await outcome).toBe('canceled')
-      // The screen's result never comes; stop watching for it anyway.
+
       expect(native.appState).toHaveLength(0)
     } finally {
       vi.useRealTimers()

@@ -29,7 +29,6 @@ import YearVisitsCard from '@/features/progress/components/cards/year/YearVisits
 import YearServiceDaysCard from '@/features/progress/components/cards/year/YearServiceDaysCard'
 import YearMileageCard from '@/features/progress/components/cards/year/YearMileageCard'
 
-/** The Add Cards sheet's sections on Progress → Year. */
 export type YearCardGroup = 'time' | 'ministry'
 
 export const YEAR_CARD_GROUPS: { group: YearCardGroup; title: () => string }[] =

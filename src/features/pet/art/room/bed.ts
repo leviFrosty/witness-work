@@ -1,13 +1,3 @@
-/**
- * The pet's bed, centred under the pet at x 68. The back layer is part of the
- * room base (drawn before the pet); the front layer (basket rim, loose straw, a
- * cup's or tub's front wall) is drawn over the pet so it sits _in_ the bed.
- *
- * The pet's sprite covers x 52–84, y 52–84; its face stays above y 76, so no
- * front layer reaches above that near the middle. The gift on the rug sits at x
- * 95–99, y 86–90 (`RUG_GIFT_POS`), drawn over the back layer: front layers stay
- * clear of it.
- */
 import {
   createBuffer,
   createRng,
@@ -49,16 +39,8 @@ const C = {
   strawLight: rgb('#f2d98a'),
 }
 
-// ---------------------------------------------------------------------------
-// Drawing helpers for the secret beds.
-
-/** A pixel's colour, or null to leave it alone. */
 type Paint = (x: number, y: number) => Rgb | null
 
-/**
- * Squared normalized distance of pixel (x, y)'s centre from an ellipse's centre
- * (≤ 1 inside).
- */
 function ell(
   x: number,
   y: number,
@@ -72,7 +54,6 @@ function ell(
   return a * a + b * b
 }
 
-/** Whether pixel (x, y) is inside the ellipse rotated `deg` degrees. */
 function inTilted(
   x: number,
   y: number,
@@ -90,10 +71,6 @@ function inTilted(
   return u * u + v * v <= 1
 }
 
-/**
- * Paints `paint` over the box x0–x1, y0–y1 (inclusive), then `edge` on every
- * unpainted pixel beside a painted one (an outline; return null to skip one).
- */
 function paintBox(
   buf: PixelBuffer,
   x0: number,
@@ -128,7 +105,6 @@ function paintBox(
   }
 }
 
-/** A straight 1 px line. */
 function line(
   buf: PixelBuffer,
   x0: number,
@@ -143,7 +119,6 @@ function line(
   }
 }
 
-/** Whether pixel (x, y)'s centre is within `r` of the segment (x0, y0)–(x1, y1). */
 function nearSegment(
   x: number,
   y: number,
@@ -161,7 +136,6 @@ function nearSegment(
   return Math.hypot(px - t * dx, py - t * dy) <= r
 }
 
-/** Darkens what's already there inside an ellipse: a soft shadow on any floor. */
 function floorShadow(
   buf: PixelBuffer,
   cx: number,
@@ -178,7 +152,6 @@ function floorShadow(
   }
 }
 
-/** A round bubble or pearl of radius `r`: rim, body, and a glint up left. */
 function bubble(
   buf: PixelBuffer,
   cx: number,
@@ -204,9 +177,6 @@ function bubble(
   if (r >= 1.5) plot(buf, cx - r * 0.45, cy - r * 0.45, glint)
 }
 
-// ---------------------------------------------------------------------------
-// Giant teacup: porcelain cup on a saucer, gilt rim, blue band, handle left.
-
 const TEA = rgbPalette({
   china: '#f7f4ee',
   light: '#ffffff',
@@ -223,7 +193,6 @@ const TEA = rgbPalette({
   blueDark: '#294f8c',
 })
 
-/** Cup rim: centre, radii; the bowl reaches `CUP_DEPTH` below the rim. */
 const CUP_Y = 76
 const CUP_RX = 22
 const CUP_RY = 4
@@ -231,14 +200,12 @@ const CUP_DEPTH = 14
 const CUP_IN_RX = 20.5
 const CUP_IN_RY = 3
 
-/** The front of the cup (rim lip, bowl, foot): the front layer. */
 const cupFront: Paint = (x, y) => {
   const fx = x + 0.5 - 68
   const a = fx / CUP_RX
   const inRim = ell(x, y, 68, CUP_Y, CUP_RX, CUP_RY) <= 1
   const inBowl = ell(x, y, 68, CUP_Y, CUP_RX, CUP_DEPTH) <= 1 && y + 0.5 > CUP_Y
   if (!inRim && !inBowl) {
-    // The foot ring under the bowl.
     if (ell(x, y, 68, 89.5, 10, 2) <= 1) return y >= 90 ? TEA.deep : TEA.shade
     return null
   }
@@ -246,14 +213,13 @@ const cupFront: Paint = (x, y) => {
   if (y + 0.5 <= CUP_Y) return null
   if (inRim)
     return a < -0.35 ? TEA.goldLight : a > 0.6 ? TEA.goldDark : TEA.gold
-  // Depth below the front lip, so bands follow the cup's curve.
+
   const d = y + 0.5 - (CUP_Y + CUP_RY * Math.sqrt(Math.max(0, 1 - a * a)))
   if (d >= 3 && d < 5) {
     if (d < 4 && (x & 3) === 1) return TEA.blueLight
     return a > 0.55 ? TEA.blueDark : TEA.blue
   }
   if (d >= 5 && d < 6) {
-    // Scalloped lace under the band.
     return (x & 3) === 1 || (x & 3) === 2
       ? a > 0.55
         ? TEA.blueDark
@@ -270,10 +236,6 @@ function bodyTone(a: number, y: number): Rgb {
   if (a > 0.5 || y >= 88) return TEA.shade
   return TEA.china
 }
-
-// ---------------------------------------------------------------------------
-// Clamshell: a sandy scallop shell, open; its lid stands up behind the pet on
-// a straight hinge with an ear each side, and the pet sits in the lower half.
 
 const CLAM = rgbPalette({
   outline: '#7e5f45',
@@ -294,26 +256,24 @@ const CLAM = rgbPalette({
   pearlGlint: '#ffffff',
 })
 
-/** The lid's hinge point (hidden behind the pet), radius and rib count. */
 const CLAM_HX = 68
 const CLAM_HY = 80
 const CLAM_R = 28
 const CLAM_RIBS = 7
-/** The lid's fan spans these angles (radians) above the hinge. */
+
 const CLAM_A0 = 0.44
 const CLAM_A1 = Math.PI - 0.44
-/** The straight hinge line along the ears' foot. */
+
 const CLAM_EAR_TOP = 70
 const CLAM_EAR_FOOT = 77
 
-/** The lid's inside: a fan of straight ribs up from the hinge, on two ears. */
 const clamUpper: Paint = (x, y) => {
   const dx = x + 0.5 - CLAM_HX
   const yc = y + 0.5
   const dy = CLAM_HY - yc
   const th = Math.atan2(dy, dx)
   const inFan = dy >= 0 && th >= CLAM_A0 && th <= CLAM_A1
-  // The ears: a wedge each side of the hinge, its foot the hinge line.
+
   if (yc >= CLAM_EAR_TOP && yc < CLAM_EAR_FOOT) {
     const reach = 12 + (yc - CLAM_EAR_TOP)
     if (Math.abs(dx) <= reach) {
@@ -327,24 +287,22 @@ const clamUpper: Paint = (x, y) => {
   const span = (th - CLAM_A0) / (CLAM_A1 - CLAM_A0)
   const rib = span * CLAM_RIBS
   const f = rib - Math.floor(rib)
-  // A gently waved rim: one shallow bump per rib.
+
   const edge = 0.96 + 0.04 * Math.sin(Math.PI * f)
   if (r > edge) return null
   if (r > edge - 0.07) return dx < -6 ? CLAM.lipLight : CLAM.lip
-  // Straight grooves between the ribs, from the hinge out to the rim.
+
   if (r > 0.3 && (f < 0.1 || f > 0.92)) return CLAM.groove
   if (dx < -10) return CLAM.insideLight
   return dx > 10 ? CLAM.insideShade : CLAM.inside
 }
 
-/** The lower shell's inside, where the pet sits: a shallow cream bowl. */
 const clamInside: Paint = (x, y) => {
   if (ell(x, y, 68, 81, 27, 4.5) > 1) return null
   if (ell(x, y, 68, 81, 25, 3.3) > 1) return x < 56 ? CLAM.lipLight : CLAM.lip
   return x > 82 ? CLAM.insideShade : CLAM.inside
 }
 
-/** The lower shell's outside: straight ribs fanning down to its hinge below. */
 const clamLower: Paint = (x, y) => {
   const fx = x + 0.5 - 68
   const yc = y + 0.5
@@ -360,10 +318,6 @@ const clamLower: Paint = (x, y) => {
   if (fx < -12) return CLAM.outerLight
   return fx > 14 ? CLAM.outerShade : CLAM.outer
 }
-
-// ---------------------------------------------------------------------------
-// Rowboat: a painted, planked hull, pointed bow left, transom right, and an
-// oar propped in it.
 
 const BOAT = rgbPalette({
   paint: '#3e8f98',
@@ -386,7 +340,6 @@ const BOAT = rgbPalette({
   oarTip: '#c9483a',
 })
 
-/** Hull geometry by u = −1 (bow) … 1 (stern). */
 const boatU = (x: number) => (x + 0.5 - 68) / 31
 const boatGun = (u: number) => 80 - 1.5 * u * u - (u < 0 ? 6 * u ** 4 : 0)
 const boatOpen = (u: number) =>
@@ -395,7 +348,6 @@ const boatOpen = (u: number) =>
     : 5.5 * Math.sqrt(Math.max(0, 1 - (u / 1.15) ** 2))
 const boatKeel = (u: number) => (u < 0 ? 92 - 16 * u ** 4 : 92 - 11 * u ** 4)
 
-/** The near side of the hull (the front layer): gunwale, stripe, planks. */
 const boatHull: Paint = (x, y) => {
   const u = boatU(x)
   if (u < -1 || u > 1) return null
@@ -413,13 +365,11 @@ const boatHull: Paint = (x, y) => {
   return u < -0.5 ? BOAT.paintLight : BOAT.paint
 }
 
-/** Outline below and beside the hull, never across the pet. */
 const boatEdge: Paint = (x, y) => {
   const u = Math.max(-1, Math.min(1, boatU(x)))
   return y + 0.5 > boatGun(u) + 1 ? BOAT.outline : null
 }
 
-/** The inside: far gunwale, inner planks, floorboards and a seat. */
 const boatInside: Paint = (x, y) => {
   const u = boatU(x)
   if (u < -1 || u > 1) return null
@@ -432,9 +382,6 @@ const boatInside: Paint = (x, y) => {
   if (yc < far + 1.5) return BOAT.innerLight
   return yc < far + 3 ? BOAT.inner : BOAT.floor
 }
-
-// ---------------------------------------------------------------------------
-// Donut: pink glaze, rainbow sprinkles, the pet sitting in the hole.
 
 const DONUT = rgbPalette({
   dough: '#e2a864',
@@ -464,11 +411,6 @@ const HOLE_Y = 77
 const HOLE_RX = 13
 const HOLE_RY = 3.2
 
-/**
- * Sprinkles on the glaze, as pixel keys: two-pixel strokes from (x, y), lying
- * flat (`-`), upright (`|`), or slanting down (`\`) or up (`/`) to the right.
- * The glaze clips any pixel that lands off it.
- */
 const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
   const strokes: readonly (readonly [
     number,
@@ -476,7 +418,6 @@ const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
     '-' | '|' | '\\' | '/',
     SprinkleColor,
   ])[] = [
-    // Left of the hole.
     [43, 79, '|', 'yellow'],
     [46, 75, '/', 'blue'],
     [47, 80, '-', 'white'],
@@ -485,10 +426,10 @@ const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
     [45, 83, '-', 'green'],
     [50, 83, '/', 'yellow'],
     [54, 81, '|', 'blue'],
-    // Behind the pet, peeking out at its sides.
+
     [56, 72, '\\', 'yellow'],
     [79, 72, '/', 'white'],
-    // Front, below the hole.
+
     [57, 85, '-', 'white'],
     [61, 83, '/', 'purple'],
     [64, 86, '\\', 'yellow'],
@@ -496,7 +437,7 @@ const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
     [72, 86, '/', 'blue'],
     [75, 83, '\\', 'white'],
     [79, 85, '-', 'purple'],
-    // Right of the hole, short of the bite.
+
     [82, 81, '|', 'yellow'],
     [85, 78, '\\', 'green'],
     [87, 83, '/', 'white'],
@@ -519,12 +460,11 @@ const SPRINKLES: ReadonlyMap<number, Rgb> = (() => {
   return out
 })()
 
-/** A bite out of the donut's far right side: two overlapping round nips. */
 const BITES: readonly (readonly [number, number, number])[] = [
   [88, 73, 4.2],
   [94.5, 78, 4],
 ]
-/** How far pixel (x, y) is into the nearest bite (≤ 1 inside it). */
+
 const biteAt = (x: number, y: number) =>
   Math.min(...BITES.map(([bx, by, r]) => ell(x, y, bx, by, r, r)))
 
@@ -535,7 +475,7 @@ const donutAt: Paint = (x, y) => {
   const inGlaze = ell(x, y, 68, 79.5, DONUT_RX, 9) <= 1
   const inDough = ell(x, y, 68, 83, DONUT_RX, 10) <= 1
   if (!inGlaze && !inDough) return null
-  // The bitten edge shows the soft crumb inside.
+
   const bite = biteAt(x, y)
   if (bite <= 1) return null
   if (bite <= 1.7) return DONUT.crumb
@@ -543,7 +483,7 @@ const donutAt: Paint = (x, y) => {
     return y + 0.5 < HOLE_Y ? DONUT.doughDark : DONUT.hole
   if (ell(x, y, HOLE_X, HOLE_Y, HOLE_RX + 1.6, HOLE_RY + 1.1) <= 1)
     return y + 0.5 < HOLE_Y ? DONUT.doughShade : DONUT.dough
-  // Glaze ends in drips over the dough's side.
+
   const drip = [0, 1, 2, 1, 0, 0, 0][((x % 7) + 7) % 7]
   const glazeEnd = 79.5 + 9 * Math.sqrt(1 - a * a) - 2 + drip
   if (inGlaze && y + 0.5 < glazeEnd) {
@@ -558,16 +498,12 @@ const donutAt: Paint = (x, y) => {
   return a < -0.6 ? DONUT.doughLight : DONUT.dough
 }
 
-/** The front edge of the hole: what lies below it is in front of the pet. */
 function donutCut(x: number): number {
   const a = (x + 0.5 - HOLE_X) / (HOLE_RX + 1.6)
   return Math.abs(a) < 1
     ? HOLE_Y + (HOLE_RY + 1.1) * Math.sqrt(1 - a * a)
     : HOLE_Y
 }
-
-// ---------------------------------------------------------------------------
-// Leather pouf: stitched panels and an embossed band.
 
 const POUF = rgbPalette({
   top: '#c4673b',
@@ -585,7 +521,6 @@ const POUF_RX = 23
 const POUF_TOP = 78
 const POUF_BOTTOM = 92
 
-/** Half-width of the pouf's side at row y: a gentle bulge. */
 const poufW = (y: number) =>
   POUF_RX +
   1.6 *
@@ -599,7 +534,7 @@ const poufAt: Paint = (x, y) => {
   const yc = y + 0.5
   if (ell(x, y, 68, POUF_TOP, POUF_RX, 5) <= 1) {
     if (ell(x, y, 68, POUF_TOP, POUF_RX - 1.3, 4) > 1) return POUF.piping
-    // Seams from the middle, a stitched ring around the medallion.
+
     const ring = ell(x, y, 68, POUF_TOP, 15, 2.8)
     if (ring <= 1 && ell(x, y, 68, POUF_TOP, 13.5, 2) > 1)
       return (x & 1) === 0 ? POUF.stitch : POUF.top
@@ -613,7 +548,7 @@ const poufAt: Paint = (x, y) => {
   const a = fx / w
   if (yc < POUF_TOP || Math.abs(a) > 1) return null
   if (yc > POUF_BOTTOM + 4 * Math.sqrt(Math.max(0, 1 - a * a))) return null
-  // Rows below the top's front edge, so bands follow the curve.
+
   const d = yc - (POUF_TOP + 5 * Math.sqrt(Math.max(0, 1 - a * a)))
   if (d < 1) return POUF.piping
   const tone =
@@ -625,7 +560,6 @@ const poufAt: Paint = (x, y) => {
           ? POUF.shade
           : POUF.leather
   if (d >= 3 && d < 8) {
-    // Embossed band: a stitched zigzag between two darker rules.
     const row = Math.floor(d - 3)
     if (row === 0 || row === 4) return POUF.emboss
     const k = ((x % 6) + 6) % 6
@@ -635,16 +569,13 @@ const poufAt: Paint = (x, y) => {
     }
     return Math.abs(a) > 0.8 ? POUF.dark : POUF.emboss
   }
-  // Panel seams, a shade darker.
+
   for (const s of [-0.75, -0.3, 0.3, 0.75]) {
     if (Math.abs(a - s) * w < 0.5) return a > 0.45 ? POUF.dark : POUF.shade
   }
   if (d >= 11) return a > 0.2 ? POUF.dark : POUF.shade
   return tone
 }
-
-// ---------------------------------------------------------------------------
-// Pebble nest: a ring of smooth stones around moss, two feathers tucked in.
 
 const NEST = rgbPalette({
   moss: '#6f9444',
@@ -676,7 +607,6 @@ interface Pebble {
   front: boolean
 }
 
-/** The ring of pebbles, back to front (fixed by the seed). */
 const PEBBLES: readonly Pebble[] = (() => {
   const r = createRng(11)
   const out: Pebble[] = []
@@ -717,7 +647,6 @@ function drawPebble(buf: PixelBuffer, p: Pebble): void {
   )
 }
 
-/** A feather from its quill (x0, y0) to its tip (x1, y1). */
 function feather(
   buf: PixelBuffer,
   x0: number,
@@ -741,7 +670,7 @@ function feather(
     Math.ceil(Math.max(y0, y1) + 3),
     (x, y) => {
       if (!inTilted(x, y, cx, cy, len * 0.42, 1.9, deg)) return null
-      // Which side of the quill: one side lit, one shaded.
+
       const side = (x + 0.5 - x0) * (y1 - y0) - (y + 0.5 - y0) * (x1 - x0)
       if (barred && (Math.round(x + y) & 3) === 0) return barred
       return side > 0 ? vaneShade : vane
@@ -749,9 +678,6 @@ function feather(
   )
   line(buf, x0, y0, x0 + (x1 - x0) * 0.85, y0 + (y1 - y0) * 0.85, quill)
 }
-
-// ---------------------------------------------------------------------------
-// Cheese wheel: rind, holes, a wedge cut out at the front right.
 
 const CHEESE = rgbPalette({
   top: '#f5d364',
@@ -775,7 +701,6 @@ const WEDGE_TO = (74 * Math.PI) / 180
 
 const inWedge = (th: number) => th >= WEDGE_FROM && th <= WEDGE_TO
 
-/** Angle of a point on the top, in the wheel's own (circular) terms. */
 const wheelAngle = (x: number, y: number) =>
   Math.atan2((y - WHEEL_TOP) / WHEEL_RY, (x - 68) / WHEEL_RX)
 
@@ -787,7 +712,7 @@ const TOP_HOLES: readonly (readonly [number, number, number, number])[] = [
   [60, 75, 1.4, 0.7],
   [76, 74.5, 1.3, 0.6],
 ]
-/** Holes in the cut face, as (t along the face, rows down, radius). */
+
 const CUT_HOLES: readonly (readonly [number, number, number])[] = [
   [0.7, 4.5, 2],
   [0.9, 9, 1.4],
@@ -796,7 +721,6 @@ const CUT_HOLES: readonly (readonly [number, number, number])[] = [
   [0.58, 1.6, 0.9],
 ]
 
-/** The far cut face: centre to rim along WEDGE_FROM, the wheel's height. */
 function cutFace(x: number, y: number): Rgb | null {
   const px = WHEEL_RX * Math.cos(WEDGE_FROM)
   const py = WHEEL_RY * Math.sin(WEDGE_FROM)
@@ -813,10 +737,6 @@ function cutFace(x: number, y: number): Rgb | null {
   return d > WHEEL_H - 2 || t < 0.12 ? CHEESE.cutShade : CHEESE.cut
 }
 
-/**
- * The wheel, nearest surface first: the uncut top, then the uncut rind, then
- * (through the gap) the far cut face; the rest of the gap shows the floor.
- */
 const cheeseAt: Paint = (x, y) => {
   const fx = x + 0.5 - 68
   const a = fx / WHEEL_RX
@@ -838,7 +758,7 @@ const cheeseAt: Paint = (x, y) => {
   if (yc < front || yc > front + WHEEL_H) return null
   const side = Math.atan2(Math.sqrt(1 - a * a), a)
   if (inWedge(side)) return cutFace(x, y)
-  // The cut edge where the rind meets the gap.
+
   if (
     inWedge(
       Math.atan2(
@@ -852,9 +772,6 @@ const cheeseAt: Paint = (x, y) => {
   if (a > 0.55 || yc > front + WHEEL_H - 2) return CHEESE.rindShade
   return CHEESE.rind
 }
-
-// ---------------------------------------------------------------------------
-// Hammock: striped cloth slung between two wooden stands.
 
 const HAMMOCK = rgbPalette({
   red: '#c9483a',
@@ -876,7 +793,7 @@ const HAMMOCK = rgbPalette({
 const HM_X0 = 42
 const HM_X1 = 94
 const hmU = (x: number) => ((x + 0.5 - HM_X0) / (HM_X1 - HM_X0)) * 2 - 1
-/** Back edge, front lip and belly of the cloth by u. */
+
 const hmBack = (u: number) => 72.5 + 5 * (1 - u * u)
 const hmLip = (u: number) => 74 + 6.5 * (1 - u * u)
 const hmBelly = (u: number) => 76.5 + 10 * (1 - u * u)
@@ -919,7 +836,6 @@ const hammockEdge: Paint = (x, y) => {
 }
 
 function hammockStand(buf: PixelBuffer, x: number, side: -1 | 1): void {
-  // Post, a foot along the floor, and a brace.
   fillRect(buf, x, 64, x + 2, 93, HAMMOCK.post)
   fillRect(
     buf,
@@ -934,9 +850,6 @@ function hammockStand(buf: PixelBuffer, x: number, side: -1 | 1): void {
   fillRect(buf, x - 1, 63, x + 3, 65, HAMMOCK.postDark)
   line(buf, x + 1 - side * 4, 91, x + 1 - side * 1, 85, HAMMOCK.postDark)
 }
-
-// ---------------------------------------------------------------------------
-// Bread loaf: a golden bâtard with pale scores.
 
 const BREAD = rgbPalette({
   crust: '#d68d38',
@@ -954,7 +867,6 @@ const LOAF_MID = 86
 const LOAF_UP = 10.5
 const LOAF_DOWN = 5
 
-/** Score marks: centre and length, tilted down to the right. */
 const SCORES: readonly (readonly [number, number, number])[] = [
   [45, 82, 4.4],
   [55, 79, 5],
@@ -963,13 +875,8 @@ const SCORES: readonly (readonly [number, number, number])[] = [
   [91, 82, 4.4],
 ]
 
-/** The loaf's height factor at u = −1…1: full in the middle, pointed ends. */
 const loafS = (a: number) => 1 - Math.abs(a) ** 2.6
 
-/**
- * How far the crust lifts at x: each score's far edge bakes up into a ridge (an
- * "ear"), so the loaf's top is a row of low steps.
- */
 function loafEar(x: number): number {
   for (const [sx, , len] of SCORES) {
     const t = (x + 0.5 - (sx - len * 0.85)) / (len * 1.7)
@@ -988,7 +895,6 @@ const loafAt: Paint = (x, y) => {
   const bottom = LOAF_MID + LOAF_DOWN * Math.sqrt(s)
   if (yc < top || yc > bottom) return null
   for (const [sx, sy, len] of SCORES) {
-    // Each score opens into a pale cut with a dark lip below it.
     const tilt = -32
     if (inTilted(x, y, sx, sy, len, 1.9, tilt))
       return inTilted(x, y + 1, sx, sy, len, 1.9, tilt)
@@ -1004,9 +910,6 @@ const loafAt: Paint = (x, y) => {
   if (a > 0.72) return BREAD.crustShade
   return a < -0.5 ? BREAD.crustLight : BREAD.crust
 }
-
-// ---------------------------------------------------------------------------
-// Bathtub: white clawfoot tub, gold feet and tap, a heap of soap froth.
 
 const TUB = rgbPalette({
   enamel: '#f8f7f3',
@@ -1034,7 +937,6 @@ const TUB_IN_RX = 26
 const TUB_IN_RY = 2.4
 const TUB_DEPTH = 13
 
-/** The tub's plan: a rounded rectangle (superellipse). */
 const tubPlan = (x: number, y: number, rx: number, ry: number) =>
   Math.abs((x + 0.5 - 68) / rx) ** 4 + Math.abs((y + 0.5 - TUB_Y) / ry) ** 2
 
@@ -1053,14 +955,13 @@ const tubFront: Paint = (x, y) => {
   if (yc > TUB_Y + TUB_DEPTH - 2.5 || a > 0.82) return TUB.deep
   if (a > 0.5) return TUB.shade
   if (a < -0.66 && a > -0.84) return TUB.light
-  // A gold pinstripe below the roll top.
+
   const lip = TUB_Y + TUB_RY * Math.sqrt(Math.max(0, 1 - a ** 4))
   if (yc - lip > 1 && yc - lip < 2 && Math.abs(a) < 0.86) return TUB.gold
   return TUB.enamel
 }
 
 function clawFoot(buf: PixelBuffer, x: number, flip: boolean): void {
-  // A gold leg flaring to a ball and three toes.
   const s = flip ? -1 : 1
   paintBox(
     buf,
@@ -1087,10 +988,6 @@ function clawFoot(buf: PixelBuffer, x: number, flip: boolean): void {
   )
 }
 
-/**
- * Froth bubbles: (x, y, r). Back ones heap behind the pet; front ones sit on
- * the rim.
- */
 const FROTH_BACK: readonly (readonly [number, number, number])[] = [
   [44, 75, 2.2],
   [48, 73, 3],
@@ -1118,19 +1015,16 @@ const FROTH_FRONT: readonly (readonly [number, number, number])[] = [
   [86, 81, 1.2],
 ]
 
-/** A froth bubble: white, with a pale blue rim low on the right. */
 function froth(buf: PixelBuffer, cx: number, cy: number, r: number): void {
   bubble(buf, cx, cy, r, TUB.foam, TUB.foamRim, TUB.foam)
 }
 
-/** A few pixels of rainbow sheen on the front froth. */
 const IRIDESCENT: readonly (readonly [number, number])[] = [
   [48, 76],
   [86, 76],
   [53, 77],
 ]
 
-/** Loose bubbles drifting up: rings with a glint. */
 const BUBBLE_RING = ['.oo.', 'og.o', 'o..o', '.oo.']
 const BUBBLE_RING_SMALL = ['.o.', 'o.o', '.o.']
 
@@ -1157,8 +1051,6 @@ function rubberDuck(buf: PixelBuffer, x: number, y: number): void {
   plot(buf, x - 2, y - 1, TUB.eye)
   plot(buf, x + 2, y + 1, TUB.duckShade)
 }
-
-// ---------------------------------------------------------------------------
 
 const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
   rug(buf) {
@@ -1197,7 +1089,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
   },
   teacup(buf) {
     floorShadow(buf, 68, 94.5, 31, 2.6)
-    // Saucer: its underside, then the top with a gilt edge and a blue ring.
+
     fillEllipse(buf, 68, 91, 33, 5.2, TEA.deep)
     paintBox(
       buf,
@@ -1214,7 +1106,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
       },
       (x, y) => (y >= 90 ? TEA.line : null)
     )
-    // Handle, behind the cup's left side.
+
     paintBox(
       buf,
       38,
@@ -1229,7 +1121,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
       },
       () => TEA.line
     )
-    // The inside: the far wall lit, the bottom in shadow; the far rim gilt.
+
     paintBox(buf, 44, 70, 92, 80, (x, y) => {
       if (ell(x, y, 68, CUP_Y, CUP_RX, CUP_RY) > 1) return null
       const yc = y + 0.5
@@ -1253,7 +1145,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
     paintBox(buf, 36, 68, 100, 82, boatInside, (x, y) =>
       y < 78 ? BOAT.outline : null
     )
-    // The oar, resting on the far gunwale and leaning out past the bow.
+
     const deg = (Math.atan2(12, 42) * 180) / Math.PI
     paintBox(
       buf,
@@ -1283,7 +1175,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
   },
   nest(buf) {
     floorShadow(buf, 68, 89, 31, 4.5)
-    // Moss, speckled.
+
     fillEllipse(buf, 68, 84, 25, 5.5, NEST.moss)
     const r = createRng(23)
     for (let i = 0; i < 60; i++) {
@@ -1315,7 +1207,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
     floorShadow(buf, 68, 92, 22, 2.4, 0.84)
     hammockStand(buf, 33, -1)
     hammockStand(buf, 101, 1)
-    // Ropes fan from each post to the cloth's gathered end.
+
     for (const [px, ex] of [
       [34, HM_X0],
       [102, HM_X1],
@@ -1339,10 +1231,10 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
   },
   bathtub(buf) {
     floorShadow(buf, 68, 93.5, 27, 2.4)
-    // Back feet, peeking out behind the front ones.
+
     clawFoot(buf, 55, false)
     clawFoot(buf, 81, true)
-    // Gold gooseneck tap at the left end, with two cross handles.
+
     paintBox(
       buf,
       38,
@@ -1361,7 +1253,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
       },
       (x, y) => (y < 77 ? TUB.goldDark : null)
     )
-    // The rim's far half and the inside.
+
     paintBox(
       buf,
       38,
@@ -1377,7 +1269,7 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
       },
       (x, y) => (y < TUB_Y ? TUB.outline : null)
     )
-    // Froth heaped behind the pet, loose bubbles, and a duck.
+
     for (const [x, y, r] of FROTH_BACK) froth(buf, x, y, r)
     rubberDuck(buf, 90, 68.5)
     ring(buf, 47, 62, BUBBLE_RING)
@@ -1441,7 +1333,7 @@ const FRONT: Readonly<Partial<Record<BedId, (buf: PixelBuffer) => void>>> = {
   },
   hammock(buf) {
     paintBox(buf, HM_X0, 72, HM_X1, 88, hammockFront, hammockEdge)
-    // Fringe along the belly.
+
     for (let x = HM_X0 + 3; x <= HM_X1 - 3; x += 2) {
       const yb = hmBelly(hmU(x)) + 1
       plot(buf, x, yb, HAMMOCK.cream)
@@ -1461,18 +1353,12 @@ const FRONT: Readonly<Partial<Record<BedId, (buf: PixelBuffer) => void>>> = {
   },
 }
 
-/** Paints the part of the bed behind the pet. */
 export function drawBedBack(buf: PixelBuffer, bed: BedId): void {
   BACK[bed](buf)
 }
 
 const frontLayers = new Map<BedId, PixelBuffer | null>()
 
-/**
- * The part of the bed in front of the pet, as a transparent scene-sized sprite
- * to blit over it (null when the bed has none). Cached; the scene also uses it
- * to tell the pet's pixels from the bed's.
- */
 export function bedFrontLayer(bed: BedId): PixelBuffer | null {
   let layer = frontLayers.get(bed)
   if (layer === undefined) {

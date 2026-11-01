@@ -16,10 +16,6 @@ const DIAGNOSTIC_HASH =
   'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 type PostCall = {
-  /**
-   * A transport post, or `submit`: the attested request's own route (the
-   * feature's `submit` callback), recorded alongside.
-   */
   endpoint: AttestationEndpoint | 'submit'
   body: Record<string, unknown>
   headers?: Record<string, string>
@@ -211,7 +207,6 @@ const createHarness = (options: HarnessOptions = {}) => {
     now: options.now ?? (() => 1_000),
   }
 
-  /** The attested request's own route: records the proof's fields. */
   const submit = async (
     proof: AttestationProof,
     signal?: AbortSignal
@@ -247,10 +242,6 @@ const createHarness = (options: HarnessOptions = {}) => {
   }
 }
 
-/**
- * An attested request the way an account session makes one: challenged at
- * `/attestation/v1/challenge`, submitted to the feature's own route.
- */
 const attest = (
   harness: ReturnType<typeof createHarness>,
   options: {
@@ -331,7 +322,6 @@ describe('App Attest key lifecycle', () => {
           : { ok: true },
     })
 
-    // Only repair still runs the lifecycle under v1; assertions need v2.
     const report = await harness.module.runRepair()
 
     expect(report).toMatchObject({ ok: true, protocolVersion: 1 })
@@ -1218,8 +1208,6 @@ describe('App Attest key lifecycle', () => {
   })
 
   it('performs one controlled recovery after native invalidInput', async () => {
-    // The adapter validates the key id and hash before Apple sees them, so an
-    // invalidInput surfacing here means Apple rejected the key id itself.
     const invalidInput = { nativeCode: 'invalidInput' as const }
     let assertions = 0
     const harness = createHarness({
@@ -1245,8 +1233,6 @@ describe('App Attest key lifecycle', () => {
   })
 
   it('never rotates the key for a local invalidArgument failure', async () => {
-    // Our own precondition failure is a caller bug. Rotating keys would not fix
-    // it, and would burn an App Attest key on every attempt.
     const invalidArgument = { nativeCode: 'invalidArgument' as const }
     const harness = createHarness({
       activeKeyId: 'healthy-key',
@@ -1855,7 +1841,6 @@ describe('App Attest diagnostics and repair', () => {
 describe('App Attest for other features (assert)', () => {
   const SESSION_HASH = 'c'.repeat(64)
 
-  /** A feature's own challenge and request routes, recorded. */
   const channel = (
     submit: (proof: unknown, call: number) => unknown = () => ({ ok: true })
   ) => {
@@ -1949,7 +1934,7 @@ describe('App Attest for other features (assert)', () => {
         },
       },
     ])
-    // Nothing went to the shared /attestation/v1 routes.
+
     expect(harness.posts).toEqual([])
   })
 

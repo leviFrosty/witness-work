@@ -6,11 +6,6 @@ import type {
   ContextMenuItem,
 } from '@/components/ui/ContextMenu.types'
 
-/**
- * SwiftUI contents shared by `ContextMenu` and `PullDownMenu`: dividers between
- * groups, submenus as nested menus, and checked actions as toggles, which draw
- * the system checkmark.
- */
 export default function MenuItems({ groups }: { groups: ContextMenuItem[][] }) {
   const action = (item: ContextMenuAction, key: string) =>
     item.checked === undefined ? (

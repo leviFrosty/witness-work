@@ -9,23 +9,19 @@ export type RoutePlannerError =
 
 export type RoutePlannerFailure = {
   code: RoutePlannerError
-  /** How long the server asked to wait, when it said. */
+
   retryAfterMs?: number
 }
 
-/** The rate-limit message with the server's Retry-After, in seconds or minutes. */
 const rateLimitedFor = (retryAfterMs: number): string => {
   const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000))
   return seconds < 60
-    ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      i18n.t('routePlan_error_rateLimitedSeconds', { count: seconds })
-    : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-      i18n.t('routePlan_error_rateLimitedMinutes', {
+    ? i18n.t('routePlan_error_rateLimitedSeconds', { count: seconds })
+    : i18n.t('routePlan_error_rateLimitedMinutes', {
         count: Math.ceil(seconds / 60),
       })
 }
 
-/** What went wrong and what to do next, for the route screen. */
 export const routePlanErrorMessage = ({
   code,
   retryAfterMs,

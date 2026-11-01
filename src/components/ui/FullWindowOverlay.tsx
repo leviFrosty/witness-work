@@ -7,24 +7,12 @@ import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 
 type Props = PropsWithChildren<{
   open?: boolean
-  /**
-   * Makes it a dialog or takeover: modal for screen readers, so they can't
-   * reach the app under it, and Android's back button calls this.
-   */
+
   onClose?: () => void
-  /**
-   * Without `onClose`, the content takes touches and stays readable by screen
-   * readers next to the app (the Undo toast). Otherwise it's decoration that
-   * neither does (confetti, tooltips).
-   */
+
   interactive?: boolean
 }>
 
-/**
- * Draws above navigation and sheets. Dialogs and takeovers pass `onClose`;
- * anything else lets screen readers keep reaching the app underneath, and waits
- * while App Lock covers the app so it can't land on top of the lock.
- */
 export default function FullWindowOverlay({
   children,
   open = true,
@@ -37,7 +25,6 @@ export default function FullWindowOverlay({
 
   if (!modal && (!open || appLocked)) return null
 
-  // Over the whole window, whatever kept the screen beside the fold.
   const content = modal ? (
     <FoldHandled value={false}>{children}</FoldHandled>
   ) : (

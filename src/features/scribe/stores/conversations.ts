@@ -18,16 +18,11 @@ import type {
   StoredProposal,
 } from '@/features/scribe/proposals/model'
 
-/**
- * The turn a step is running for, or that stopped on an error, so Try again
- * re-runs that step. Saved before each step, so a turn the app was closed
- * during can be tried again too.
- */
 export interface SuspendedTurn {
   turnId: string
   step: number
   proposalId: string | null
-  /** The turn's draft effects so far. */
+
   effects: StoredEffect[]
   entry: ScribeEntryPoint
   source: ScribeInputSource
@@ -35,13 +30,12 @@ export interface SuspendedTurn {
   stats: TurnStats
 }
 
-/** Counts for `scribe_turn_finished`. */
 export interface TurnStats {
   steps: number
   readCalls: number
   writeCalls: number
   invalidCalls: number
-  /** Write calls that failed, by tool name, not yet repaired by a later call. */
+
   failedWrites: Record<string, number>
   tainted: boolean
 }
@@ -50,32 +44,31 @@ export interface StoredConversation {
   id: string
   createdAt: number
   updatedAt: number
-  /** The first user message, ≤ 60 chars. */
+
   title: string
-  /** Everything sent to the model, in order. */
+
   messages: WireMessage[]
-  /** Pinned for the conversation; rebuilt when the local day changes. */
+
   context: ScribeContextWire | null
   contextDay: string | null
   refs: RefTable
   items: ScribeTimelineItem[]
   proposals: Record<string, StoredProposal>
   pendingProposalId: string | null
-  /** Outcomes the next user message reports, oldest first. */
+
   outcomes: ProposalOutcomeBlock[]
-  /** `done.usage.inputTokens` of the last step. */
+
   lastInputTokens: number | null
-  /** How many of `messages` the last step's input held. */
+
   messagesAtLastStep: number
-  /** Ww-api said the context is over `maxInputTokens` (413). */
+
   contextFull: boolean
-  /** `scribe_context_full` was sent for this state. */
+
   contextNoticed: { nearFull: boolean; full: boolean }
   suspended: SuspendedTurn | null
   turns: number
 }
 
-/** Newest kept; older ones are deleted on launch. */
 export const MAX_CONVERSATIONS = 50
 export const CONVERSATION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000
 export const TITLE_MAX_CHARS = 60
@@ -116,11 +109,10 @@ export function newConversation(
 
 interface ScribeConversationsState {
   conversations: Record<string, StoredConversation>
-  /** The User has finished a turn on this device (example lines hide). */
+
   hasFinishedTurn: boolean
 }
 
-/** The conversations to keep: the 50 most recently updated within 90 days. */
 export function retainedConversations(
   conversations: Record<string, StoredConversation>,
   now: number
@@ -136,11 +128,6 @@ export function retainedConversations(
   )
 }
 
-/**
- * Scribe AI conversations (ADR 0032): transcripts, pinned contexts, Refs,
- * timelines and Proposals. Device-only MMKV, never in iCloud Sync, Google Drive
- * or a backup file; the records a conversation added sync like any.
- */
 export const useScribeConversations = create<ScribeConversationsState>()(
   persist<ScribeConversationsState>(
     () => ({ conversations: {}, hasFinishedTurn: false }),
@@ -167,14 +154,12 @@ export const useScribeConversations = create<ScribeConversationsState>()(
 export const getConversation = (id: string): StoredConversation | null =>
   useScribeConversations.getState().conversations[id] ?? null
 
-/** Replaces a conversation (or adds it). */
 export function putConversation(conversation: StoredConversation): void {
   useScribeConversations.setState(({ conversations }) => ({
     conversations: { ...conversations, [conversation.id]: conversation },
   }))
 }
 
-/** Applies `change` to a conversation if it still exists. */
 export function updateConversation(
   id: string,
   change: (conversation: StoredConversation) => StoredConversation

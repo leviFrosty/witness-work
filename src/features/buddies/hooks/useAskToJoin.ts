@@ -12,18 +12,11 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 
-/** Where Ask to Join was used, for `buddy_join_requested`. */
 type Source = 'buddy_plans_for_day' | 'buddy_detail'
 
 type CardPlan = BuddyCardDay['p'][number]
 
-/**
- * Asking to join a buddy's Plan: its status, and the actions to ask or take a
- * request back. Withdrawing asks first; asking doesn't, since the buddy can
- * pass on it without a word.
- */
 export default function useAskToJoin(source: Source) {
-  // Ticks, so the cutoff before a Plan closes on a screen left open.
   const { now } = useNow()
   const askedToJoin = useBuddies((state) => state.askedToJoin)
   const incomingShares = useBuddies((state) => state.incomingShares)
@@ -37,7 +30,7 @@ export default function useAskToJoin(source: Source) {
       plan,
       now
     )
-    // Not unsent while its first try is still on its way.
+
     return current.kind === 'asked' && sending
       ? { ...current, unsent: false }
       : current
@@ -71,7 +64,6 @@ export default function useAskToJoin(source: Source) {
       ]
     )
 
-  /** The context menu entry for a buddy's Plan, if there's anything to do. */
   const menuAction = (
     buddy: Buddy,
     d: string,

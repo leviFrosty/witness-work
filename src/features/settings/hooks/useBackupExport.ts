@@ -13,11 +13,6 @@ import i18n from '@/lib/locales'
 import { BACKUP_EXPORT_FILE_NAME } from '@/lib/temporaryCopies'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * Settings → Backup's Create Backup: `start` when the User asks for one (the
- * protection sheet opens), `lock` once they've chosen, then `share` the locked
- * file once the sheet has closed; or `cancel` when they close it.
- */
 export default function useBackupExport(entryPoint: string) {
   const [sharing, setSharing] = useState(false)
   const run = useRef<{ startedAt: number; protection?: BackupFileLock }>({
@@ -55,7 +50,6 @@ export default function useBackupExport(entryPoint: string) {
     })
   }
 
-  /** The stores as they are now, locked; null after a failure it alerted. */
   const lock = async (
     choice: BackupFileLockChoice,
     onProgress: (fraction: number) => void
@@ -88,8 +82,7 @@ export default function useBackupExport(entryPoint: string) {
       await FileSystem.writeAsStringAsync(uri, JSON.stringify(file))
       stage = 'share_sheet'
       await Sharing.shareAsync(uri)
-      // Expo resolves on both sharing and cancellation; this is not proof
-      // that the user saved a backup outside the app.
+
       analytics.capture('backup_exported', {
         ...properties(),
         outcome: 'unknown',

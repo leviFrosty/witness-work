@@ -10,10 +10,6 @@ import useAnswerShare from '@/features/buddies/hooks/useAnswerShare'
 import { shareRefFromKey } from '@/features/buddies/lib/state'
 import type { TogetherItem } from '@/features/buddies/lib/together'
 
-/**
- * The buddy's invitations still waiting on this User, each opening its page;
- * hidden when none.
- */
 export default function BuddyNeedsAnswerSection({
   items,
 }: {

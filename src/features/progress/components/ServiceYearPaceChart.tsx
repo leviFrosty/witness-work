@@ -47,10 +47,10 @@ const Y_GUTTER = 44
 const PADDING = { left: 2, right: Y_GUTTER, top: 8, bottom: 4 }
 const PLOT_TOP = PADDING.top
 const PLOT_BOTTOM = CHART_HEIGHT - PADDING.bottom
-/** Smallest vertical gap between two labels in the right gutter. */
+
 const MIN_LABEL_GAP = 14
 const LABEL_HEIGHT = 16
-/** Press-and-hold before scrubbing, so the Year tab still scrolls. */
+
 const SCRUB_LONG_PRESS_MS = 200
 const ANIMATION = { type: 'timing', duration: 300 } as const
 
@@ -58,21 +58,13 @@ type SeriesKey = 'logged' | 'planned' | 'goal'
 
 type Props = {
   pace: ServiceYearPace
-  /** Running totals, in hours, to mark with labeled gridlines. */
+
   gridHours: number[]
-  /**
-   * Called with the point under the finger or pointer, or null when scrubbing
-   * ends.
-   */
+
   onScrub: (point: PacePoint | null) => void
   accessibilityLabel: string
 }
 
-/**
- * Running totals across the Service Year: the goal (dashed), logged time
- * (filled), Plans from today on (dashed), and last year (faint). Press and hold
- * (or hover a pointer) to scrub month by month; the parent shows the values.
- */
 const ServiceYearPaceChart = ({
   pace,
   gridHours,
@@ -85,17 +77,14 @@ const ServiceYearPaceChart = ({
     y: { goal: 0, logged: 0, planned: 0, lastYear: 0 },
   })
   const lastIndex = useRef(-1)
-  // Victory's own touch handling, reused so a hovering pointer scrubs exactly
-  // like a held finger.
+
   const chartActions = useSharedValue<CartesianActionsHandle<
     typeof state
   > | null>(null)
   const hovering = useSharedValue(false)
-  // Victory rounds the top of its y domain up to a "nice" value, so labels and
-  // gridlines place themselves with its scale rather than re-deriving it.
+
   const [yScale, setYScale] = useState<Scale | null>(null)
 
-  // Victory draws the lines in chart units; readouts keep the real minutes.
   const scale = paceScale(pace.goalMinutes, pace.maxMinutes)
   const toChart = (minutes: number | null) =>
     minutes === null ? null : scale.toChart(minutes)
@@ -112,7 +101,6 @@ const ServiceYearPaceChart = ({
       ? yScale(scale.toChart(minutes))
       : PLOT_BOTTOM - (scale.toChart(minutes) / yMax) * (PLOT_BOTTOM - PLOT_TOP)
 
-  // Last year's total labels the end of its line, ahead of any gridline.
   const lastYearTotal = pace.hasLastYear
     ? (pace.points[pace.points.length - 1].lastYear ?? null)
     : null
@@ -121,8 +109,6 @@ const ServiceYearPaceChart = ({
       ? { y: yFor(lastYearTotal), text: formatMinutesCompact(lastYearTotal) }
       : null
 
-  // Label from the top down, dropping any that would crowd a label already
-  // placed.
   const gridlines: { minutes: number; y: number }[] = []
   for (const hours of [...new Set(gridHours)].sort((a, b) => b - a)) {
     const minutes = hours * 60
@@ -141,7 +127,7 @@ const ServiceYearPaceChart = ({
     Math.min(Math.max(y - LABEL_HEIGHT / 2, 0), CHART_HEIGHT - LABEL_HEIGHT)
 
   const todayIndex = pace.points.findIndex((p) => p.kind === 'today')
-  // The line the scrub dot rides on at each point.
+
   const scrubSeries: SeriesKey[] = pace.points.map((p) =>
     p.logged !== null ? 'logged' : p.planned !== null ? 'planned' : 'goal'
   )
@@ -154,7 +140,7 @@ const ServiceYearPaceChart = ({
       onScrub(null)
       return
     }
-    // Haptics are for touch.
+
     if (!hovered) Haptics.selection()
     onScrub(point)
   }
@@ -166,8 +152,6 @@ const ServiceYearPaceChart = ({
     }
   )
 
-  // A trackpad, mouse, or Pencil hovering over the chart drives the same press
-  // state as a held finger, so the scrub line and readout follow it.
   const hoverTo = (x: number, y: number) => {
     'worklet'
     hovering.value = true
@@ -206,14 +190,12 @@ const ServiceYearPaceChart = ({
     return state.y[key].position.value
   })
 
-  // Each label sits on its month's end — the point that carries its total.
   const allMonthLabels = pace.months.map((m, i) => ({
     key: `${m.year}-${m.month}`,
     label: moment({ year: m.year, month: m.month }).format('MMM'),
     position: (i + 1) / 12,
   }))
-  // Every other month keeps longer month names from colliding; every third
-  // for names with no short form, like Arabic's «تشرين الثاني».
+
   const wideLabels = allMonthLabels.some(({ label }) => label.length > 6)
   const monthLabels = allMonthLabels.filter(
     (_, i) => i % (wideLabels ? 3 : 2) === 0
@@ -234,16 +216,12 @@ const ServiceYearPaceChart = ({
             yKeys={['goal', 'logged', 'planned', 'lastYear']}
             domain={{ x: [0, 12], y: [0, yMax] }}
             padding={PADDING}
-            // The milestone gridlines below replace Victory's default grid.
             yAxis={[{ lineWidth: 0 }]}
             onScaleChange={(_, nextYScale) => setYScale(() => nextYScale)}
             chartPressState={state}
             chartPressConfig={{
               pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
             }}
-            // victory-native types this with Gesture Handler 3's
-            // `ComposedGesture`, but races it with its own pan through the
-            // builder API (`Gesture.Race`), which is what this is.
             customGestures={hoverGesture as ComposedGesture | undefined}
             actionsRef={chartActions}
           >
@@ -344,7 +322,7 @@ const ServiceYearPaceChart = ({
             )}
           </CartesianChart>
         </ChartPlot>
-        {/* Labels wait for Victory's scale so they never land off their line. */}
+        {}
         {yScale && (
           <View
             pointerEvents='none'

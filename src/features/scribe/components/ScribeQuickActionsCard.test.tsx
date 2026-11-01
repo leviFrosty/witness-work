@@ -71,7 +71,7 @@ const render = () => {
   const button = (label: string) =>
     buttons().find((node) => node.props.accessibilityLabel === label)!
   const orb = () => renderer.root.findAllByType('ScribeMicOrb' as never)[0]
-  // The Views wrapping the tiles, which set their widths.
+
   const cellWidths = () =>
     renderer.root
       .findAll(

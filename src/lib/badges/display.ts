@@ -26,7 +26,6 @@ export const badgeName = (art: BadgeArtId) =>
 export const badgeLevelName = (level: BadgeLevel) =>
   i18n.t(`badgeLevel_${level}` as TranslationKey)
 
-/** "Shared the good news in 6 months" — what this level stands for. */
 export const badgeDescription = (art: BadgeArtId, level: BadgeLevel | null) => {
   if (!level || !isCollectionId(art))
     return i18n.t(`badge_${art}_desc` as TranslationKey)
@@ -35,11 +34,9 @@ export const badgeDescription = (art: BadgeArtId, level: BadgeLevel | null) => {
   })
 }
 
-/** How to grow a collection, for its next step on the User's own shelf. */
 export const badgeHowTo = (art: BadgeArtId) =>
   i18n.t(`badge_${art}_how` as TranslationKey)
 
-/** "Sharing the Good News, Silver" — the full spoken name of one badge. */
 export const badgeTitle = (art: BadgeArtId, level: BadgeLevel | null) =>
   level
     ? i18n.t('badges_titleWithLevel', {
@@ -48,7 +45,6 @@ export const badgeTitle = (art: BadgeArtId, level: BadgeLevel | null) =>
       })
     : badgeName(art)
 
-/** The highest earned level per collection, plus earned One-time Badges. */
 export const highestEarned = (
   earned: Readonly<Record<string, EarnedBadge>>
 ): { art: BadgeArtId; level: BadgeLevel | null; at: number }[] => {
@@ -66,10 +62,6 @@ export const highestEarned = (
   return [...best.values()]
 }
 
-/**
- * The badges a profile shows: one per collection at its highest level, newest
- * first so a fresh badge leads the row.
- */
 export const profileBadges = (earned: Readonly<Record<string, EarnedBadge>>) =>
   highestEarned(earned).sort(
     (a, b) =>
@@ -80,10 +72,6 @@ export const profileBadges = (earned: Readonly<Record<string, EarnedBadge>>) =>
       )
   )
 
-/**
- * What the Buddy Card carries: each collection's highest level and every
- * One-time Badge. First Bible Study stays home in data protection mode.
- */
 export const buddyCardBadges = (
   earned: Readonly<Record<string, EarnedBadge>>,
   { dataProtectionMode }: { dataProtectionMode: boolean }
@@ -92,7 +80,6 @@ export const buddyCardBadges = (
     .filter(({ art }) => !(dataProtectionMode && art === 'firstBibleStudy'))
     .map(({ art, level }) => (level ? { c: art, l: level } : { c: art }))
 
-/** Drops shared badges this build doesn't know, e.g. from a newer app. */
 export const knownSharedBadges = (
   badges: readonly SharedBadge[] | undefined
 ): SharedBadge[] => {
@@ -112,7 +99,7 @@ export type BadgeShelfEntry =
       kind: 'collection'
       art: BadgeCollectionId
       progress: CollectionProgress
-      /** Earned levels, with when each was earned. */
+
       earned: { level: BadgeLevel; record: EarnedBadge }[]
     }
   | {
@@ -121,12 +108,6 @@ export type BadgeShelfEntry =
       record: EarnedBadge
     }
 
-/**
- * The User's own collection: every collection that applies (Two by Two only
- * with Buddies, unless already earned) and every earned One-time Badge. Earned
- * levels come from the store, so a badge stays even when the records behind it
- * are gone.
- */
 export const badgeShelf = ({
   evaluation,
   earned,
@@ -167,11 +148,6 @@ export const badgeShelf = ({
   return entries
 }
 
-/**
- * A buddy's collection, from what they share: every collection at its highest
- * shared level (0 for none yet) and their One-time Badges. Shared badges carry
- * no progress or dates, so neither does this.
- */
 export const buddyBadgeShelf = (badges: readonly SharedBadge[] | undefined) => {
   const known = knownSharedBadges(badges)
   return {
@@ -185,29 +161,15 @@ export const buddyBadgeShelf = (badges: readonly SharedBadge[] | undefined) => {
   }
 }
 
-/** How many badges (every level counts) the User has earned. */
 export const earnedBadgeCount = (
   earned: Readonly<Record<string, EarnedBadge>>
 ) => Object.keys(earned).filter((key) => parseBadgeKey(key) !== null).length
 
-/** Earned since the User last opened their badges. */
 export const isNewBadge = (record: EarnedBadge, seenAt: number) =>
   record.at > seenAt
 
-/**
- * How long a badge that arrived without a celebration can still wait in the
- * notifications tray: a badge from a restore or an old sync isn't news.
- */
 export const HOME_BADGE_CARD_MAX_AGE_MS = 31 * 24 * 60 * 60 * 1000
 
-/**
- * The new badges the notifications tray lists, most notable first (ADR 0021,
- * ADR 0034): the User's own badges nobody has settled (nothing they just did
- * earned them, their unlock toast left unopened, or another device or a restore
- * brought them), still new since they last opened their badges, from the last
- * month, and not dismissed. Badges on screen as a toast or waiting for their
- * celebration (`waiting`) aren't listed yet.
- */
 export const homeCardBadges = ({
   earned,
   seenAt,

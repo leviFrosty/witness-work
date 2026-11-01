@@ -55,15 +55,6 @@ const STANDARD_CATEGORY: Category = {
 }
 const categories = [CREDIT_CATEGORY, STANDARD_CATEGORY]
 
-/**
- * Terse builder for a `MonthlyLoggedBreakdown` — the per-month `{ year, month,
- * standard, credit }` shape `computeProjectedTotal` consumes as `loggedMonths`
- * (raw standard/credit minutes, before any cap). Pure data, no logic; it exists
- * only so each test reads as a scenario instead of a wall of object literals.
- * Positional args trim the boilerplate at ~15 call sites, and the `credit = 0`
- * default lets the common standard-only cases omit it — the few that exercise
- * credit pass the 4th arg, e.g. `logged(2026, 4, 30 * 60, 10 * 60)`.
- */
 const logged = (year: number, month: number, standard: number, credit = 0) => ({
   year,
   month,
@@ -99,10 +90,10 @@ describe('computeProjectedTotal', () => {
       goalMinutes: 50 * 60,
       loggedMonths: [logged(2026, 4, 10 * 60)],
       dayPlans: [
-        dayPlan('2026-05-10', 90), // past day in scope month — already accounted for in loggedMonths
-        dayPlan('2026-05-20', 120), // future, in month
-        dayPlan('2026-05-25', 180), // future, in month
-        dayPlan('2026-06-05', 240), // next month, out of scope
+        dayPlan('2026-05-10', 90),
+        dayPlan('2026-05-20', 120),
+        dayPlan('2026-05-25', 180),
+        dayPlan('2026-06-05', 240),
       ],
       recurringPlans: [],
       categories: [],
@@ -114,11 +105,6 @@ describe('computeProjectedTotal', () => {
   })
 
   describe('drops plans for days that already have logged time (issue #366)', () => {
-    // Issue #366: with a 5h entry AND a 5h plan on the *current* day, the
-    // projection showed 10h — the plan stacked on top of the logged time, then
-    // dropped to 5h the next day once the day fell behind the walk. A day with
-    // actual time is fully represented by `loggedMonths`; its plan must not
-    // count again.
     it("ignores the current day's plan when actual time is logged for today", () => {
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 5 },
@@ -137,8 +123,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('still counts the current day plan when no actual time is logged for it', () => {
-      // Same shape, but the day has no logged entry — the plan is the only
-      // signal for the day, so it counts (control for the skip not over-firing).
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 5 },
         today: normalizeDateForStorage('2026-06-07'),
@@ -156,9 +140,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('drops a recurring instance on a logged day but keeps later instances', () => {
-      // Weekly recurring 90 min starting 2026-06-07. From today=2026-06-07 the
-      // June instances are 7, 14, 21, 28. June 7 has a logged entry, so its
-      // instance is dropped; 14/21/28 still count → 270 min on top of 2h logged.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 5 },
         today: normalizeDateForStorage('2026-06-07'),
@@ -177,9 +158,6 @@ describe('computeProjectedTotal', () => {
   })
 
   it('sums recurring plan instances on future days within scope', () => {
-    // Weekly recurring starting Wed 2026-05-06, 90 min.
-    // May 2026 Wednesdays: 6, 13, 20, 27.
-    // From today=2026-05-15, future instances are 20 and 27 → 180 min.
     const result = computeProjectedTotal({
       scope: { kind: 'month', year: 2026, month: 4 },
       today: normalizeDateForStorage('2026-05-15'),
@@ -195,8 +173,6 @@ describe('computeProjectedTotal', () => {
   })
 
   it('day plan adds to a recurring instance on the same day', () => {
-    // Recurring weekly Wed at 90 min, day plan 120 min on 2026-05-20 (a Wed).
-    // Future Wednesdays from 2026-05-15: 20 (both → 120 + 90), 27 (recurring → 90).
     const result = computeProjectedTotal({
       scope: { kind: 'month', year: 2026, month: 4 },
       today: normalizeDateForStorage('2026-05-15'),
@@ -213,8 +189,6 @@ describe('computeProjectedTotal', () => {
 
   describe('mirror cap semantics (ADR 0005)', () => {
     it('does not cap planned standard time — a pure-standard month projects past the credit cap', () => {
-      // Logged 40h standard + 20h planned standard projects to 60h. The 55h
-      // credit cap never touches standard time, so nothing is truncated.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -235,9 +209,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('caps combined credit when standard stays under the cap', () => {
-      // Logged 30h standard + 10h credit (adjusted 40h). Planned 20h standard
-      // brings combined standard to 50h; only 5h of the credit still fits
-      // under the 55h cap → projected 55h, planned effective 15h.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -255,10 +226,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('planned standard pushing combined standard past the cap squeezes out logged credit', () => {
-      // Logged 30h standard + 20h credit (adjusted 50h). Planned 30h standard
-      // makes combined standard 60h > 55h cap, so the report would drop all
-      // logged credit → projected 60h, not naive 50h + 30h = 80h. The 30h of
-      // plans therefore only move the projection by 10h.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -298,8 +265,6 @@ describe('computeProjectedTotal', () => {
 
   describe('planned credit derived from Category (Plan Type)', () => {
     it('planned credit only fills the headroom under the cap', () => {
-      // Logged 50h standard. A 10h plan typed with a credit Category can only
-      // contribute the 5h of headroom left under the 55h cap.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -333,8 +298,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('a dangling categoryId forecasts Standard', () => {
-      // Category was deleted — the plan falls back to Standard, so it pushes
-      // the projection past the cap instead of being squeezed by it.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -351,10 +314,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('a Day Plan and a recurring instance on one day each keep their own Type', () => {
-      // Wed 2026-05-20: recurring 3h credit plus Day Plan 2h standard. The Day
-      // Plan's 2h count as standard on top of 55h logged standard (57h); the
-      // recurring instances on the 20th and 27th forecast credit, which the cap
-      // squeezes to nothing.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -379,9 +338,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('stacks Day Plans and a recurring instance on one day additively, each with its own Type', () => {
-      // Wed 2026-05-20 holds two Day Plans (1h standard + 3h credit) and a 3h
-      // credit recurring instance. Each contributes under its own Type:
-      // standard 45h + 1h = 46h, credit 3h + 3h = 6h fits fully under the cap.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -415,9 +371,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('projects the same total regardless of recurring Plan order', () => {
-      // Two recurring instances of 2h on Wed 2026-05-20, one credit and one
-      // standard. Both count, on BOTH array orders, so two devices holding the
-      // plans in different orders after a sync merge project the same number.
       const credit = weeklyRecurring(
         'rec-credit',
         '2026-05-20',
@@ -446,17 +399,13 @@ describe('computeProjectedTotal', () => {
 
       const a = run([credit, standard])
       const b = run([standard, credit])
-      // 55h logged standard is already at the cap, so the credit instance adds
-      // nothing and the standard one adds its 2h.
+
       expect(a.projectedMinutes).toBe(57 * 60)
       expect(b.projectedMinutes).toBe(a.projectedMinutes)
       expect(b.plannedMinutes).toBe(a.plannedMinutes)
     })
 
     it('every recurring instance on a day counts under its own Type', () => {
-      // Two recurring instances on Wed 2026-05-20 only: 3h credit and 2h
-      // standard. Standard reaches 54h + 2h = 56h, past the cap, so the credit
-      // instance adds nothing.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -490,10 +439,6 @@ describe('computeProjectedTotal', () => {
 
   describe('service-year scope', () => {
     it('applies the cap month by month and sums — there is no annual cap', () => {
-      // Service year 2025 = Sep 2025 → Aug 2026.
-      // Sep 2025: 50h standard + 10h credit → capped at 55h.
-      // Oct 2025: 60h standard → 60h (standard is never capped).
-      // Aug 2026: 10h planned standard → 10h.
       const result = computeProjectedTotal({
         scope: { kind: 'serviceYear', serviceYear: 2025 },
         today: normalizeDateForStorage('2026-08-01'),
@@ -514,9 +459,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it("planned standard re-runs its own month's cap against logged credit", () => {
-      // Aug 2026: logged 50h standard + 5h credit (adjusted 55h). Planned 10h
-      // standard → combined standard 60h > 55h cap squeezes out the credit:
-      // the month projects 60h, so 10h of plans only contribute 5h.
       const result = computeProjectedTotal({
         scope: { kind: 'serviceYear', serviceYear: 2025 },
         today: normalizeDateForStorage('2026-08-01'),
@@ -577,8 +519,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('caps each month by the cap the resolver gives that month', () => {
-      // Sep 2025 under an unlimited cap keeps all 70h; Oct 2025 under 55h
-      // drops the credit above it.
       const result = computeProjectedTotal({
         scope: { kind: 'serviceYear', serviceYear: 2025 },
         today: normalizeDateForStorage('2026-09-01'),
@@ -599,9 +539,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('buckets planned minutes into their own months', () => {
-      // Sep plans cannot eat into October's cap headroom (and vice versa).
-      // Sep 2025: logged 53h standard + planned 4h → 57h (pure standard,
-      // uncapped). Oct 2025: planned 3h → 3h.
       const result = computeProjectedTotal({
         scope: { kind: 'serviceYear', serviceYear: 2025 },
         today: normalizeDateForStorage('2025-09-10'),
@@ -637,16 +574,13 @@ describe('computeProjectedTotal', () => {
 
       expect(result.gapMinutes).toBe(20 * 60)
       expect(result.standardGapMinutes).toBe(20 * 60)
-      // Adding exactly the standard gap reaches the goal.
+
       expect(projectStandardAddition(result, result.standardGapMinutes)).toBe(
         50 * 60
       )
     })
 
     it('exceeds the display gap when the goal is above the cap — added standard first displaces capped credit', () => {
-      // Goal 60h > cap 55h. Logged 50h standard + 10h credit → projected 55h,
-      // display gap 5h. But 5h more standard only displaces 5h of credit
-      // (still 55h); reaching 60h requires combined standard ≥ 60h → 10h.
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 4 },
         today: normalizeDateForStorage('2026-05-15'),
@@ -661,9 +595,9 @@ describe('computeProjectedTotal', () => {
       expect(result.projectedMinutes).toBe(55 * 60)
       expect(result.gapMinutes).toBe(5 * 60)
       expect(result.standardGapMinutes).toBe(10 * 60)
-      // The display gap alone does NOT reach the goal…
+
       expect(projectStandardAddition(result, 5 * 60)).toBe(55 * 60)
-      // …the standard gap does.
+
       expect(projectStandardAddition(result, result.standardGapMinutes)).toBe(
         60 * 60
       )
@@ -727,7 +661,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it("'reachable_gap' when there is some progress and the remaining gap is fillable", () => {
-      // May 1 → 31 days remain, gap 40h ⇒ 1.3h/day, well under stretch cap.
       const r = computeProjectedTotal({
         ...base,
         today: normalizeDateForStorage('2026-05-01'),
@@ -737,7 +670,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it("'unreachable_gap' when filling the gap would require more than the stretch cap per remaining day", () => {
-      // May 27 → 5 days remain (27–31). Gap 45h ⇒ 9h/day > 6h stretch cap.
       const r = computeProjectedTotal({
         ...base,
         today: normalizeDateForStorage('2026-05-27'),
@@ -747,12 +679,6 @@ describe('computeProjectedTotal', () => {
     })
   })
 
-  // The day-walk must probe the same calendar day it buckets, regardless of
-  // device TZ. The walk's cursor is a UTC moment; handing its instant to
-  // getPlansIntersectingDay (which re-extracts the *local* calendar day) shifts
-  // every probe by a day in TZs west of UTC (future scopes start at midnight
-  // UTC = previous local day) or east of UTC+11 (noon-UTC `today` anchor =
-  // next local day).
   describe('day-walk TZ stability', () => {
     const originalTZ = process.env.TZ
     afterEach(() => {
@@ -761,11 +687,6 @@ describe('computeProjectedTotal', () => {
     })
 
     it('a fully future month counts every recurring instance and none from the prior month (US TZ)', () => {
-      // The issue-report scenario: viewed from June 10, July 2026 has five
-      // Friday instances at 8h (3, 10, 17, 24, 31) plus a Tuesday plan that
-      // ends June 30. Expected planned = 40h. The shifted walk instead probed
-      // June 30–July 30: it missed Friday the 31st and leaked the June 30
-      // Tuesday instance into July → 36h, matching the screenshot.
       process.env.TZ = 'America/Los_Angeles'
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 6 },
@@ -785,15 +706,10 @@ describe('computeProjectedTotal', () => {
     })
 
     it("counts today's recurring instance in the current month (UTC+12)", () => {
-      // In NZST the noon-UTC `today` anchor is midnight the *next* local day,
-      // so the shifted walk probed June 11 onward and dropped today's
-      // instance. Weekly Wednesdays 10/17/24 (ends the 24th) from today June
-      // 10 must all count.
       process.env.TZ = 'Pacific/Auckland'
       const result = computeProjectedTotal({
         scope: { kind: 'month', year: 2026, month: 5 },
-        // A live instant (the production input — useProjectedTotal passes
-        // `new Date()`), not a pre-normalized stored date: 9am local NZST.
+
         today: new Date(2026, 5, 10, 9, 0, 0),
         goalMinutes: 50 * 60,
         loggedMonths: [],

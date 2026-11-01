@@ -24,25 +24,6 @@ import {
 } from '@/lib/serverAccount/backupCrypto'
 import { usePreferences } from '@/stores/preferences'
 
-/**
- * The account backup's data (ADR 0026 §4) is the sync payload: `buildPayload`
- * makes it, `parsePayload` validates it (and applies its migrations), and the
- * sync merge folds and applies it. Nothing here forks those.
- *
- * Two things differ from iCloud and Google Drive sync:
- *
- * - **Reset generations stay out.** `resetEpoch` belongs to one cloud's sync
- *   history. A backup leaves it out, and a restore ignores it: folding slots
- *   from devices with different sync histories would otherwise drop every slot
- *   but the newest generation's, and adopting one would make this device's own
- *   sync ignore its cloud's files, or replace the restore with them.
- * - **Sync's own bookkeeping stays this device's.** A restore keeps this device's
- *   reset generation and its "last pulled" and remote-device fields, so its
- *   sync's next pull merges the restored data with its cloud, as it would any
- *   edit.
- */
-
-/** The plaintext for this device's slot: the sync payload and who wrote it. */
 export function buildBackupPlaintext({
   deviceName,
   platform,
@@ -65,11 +46,6 @@ export function buildBackupPlaintext({
   }
 }
 
-/**
- * Identifies a plaintext's contents without its timestamps, so an unchanged
- * snapshot isn't uploaded again. Includes where it goes: a new account or slot
- * uploads even when the data is the same.
- */
 export async function backupPlaintextHash(
   plaintext: BackupPlaintext,
   address: BackupAddress
@@ -88,16 +64,10 @@ export async function backupPlaintextHash(
   )
 }
 
-/** A slot's payload once read, or why it can't be used. */
 export type ReadBackupPayload =
   | { ok: true; payload: SyncPayload }
   | { ok: false; problem: 'newer' | 'unreadable' }
 
-/**
- * Validates an opened slot's payload as a sync pull validates a peer's file,
- * anchoring an uncalibrated writer's stamps to the server's upload time the way
- * a pull anchors them to the file's date.
- */
 export function readBackupPayload(
   plaintext: BackupPlaintext,
   uploadedAt: number
@@ -110,7 +80,6 @@ export function readBackupPayload(
   return { ok: true, payload: alignPayloadClock(payload, uploadedAt) }
 }
 
-/** Every slot's payload folded into one, as a sync restore folds peers. */
 export function foldBackupPayloads(
   payloads: SyncPayload[]
 ): SyncPayload | null {
@@ -119,7 +88,6 @@ export function foldBackupPayloads(
   )
 }
 
-/** The preferences a restore mustn't take from the backup. */
 const SYNC_BOOKKEEPING = [
   'iCloudResetEpoch',
   'lastiCloudSyncAt',
@@ -129,11 +97,6 @@ const SYNC_BOOKKEEPING = [
   'lastiCloudRemoteDeviceName',
 ] as const
 
-/**
- * Replace: this device's records become the backup's, through the same
- * `replaceLocalWithRemote` an iCloud or Google Drive restore uses, keeping this
- * device's sync bookkeeping.
- */
 export function replaceLocalWithBackup(folded: SyncPayload): void {
   const prefs = usePreferences.getState()
   const kept = Object.fromEntries(
@@ -143,17 +106,12 @@ export function replaceLocalWithBackup(folded: SyncPayload): void {
   usePreferences.setState(kept)
 }
 
-/**
- * Combine: merges every slot into this device's records with the sync merge, as
- * a pull merges peers. Resolves whether anything changed.
- */
 export function combineLocalWithBackup(payloads: SyncPayload[]): boolean {
   const { changed, merged } = mergePayloadsInto(localMergeState(), payloads)
   if (changed) applyMergedState(merged)
   return changed
 }
 
-/** Record counts, for Tools and the restore dry run. Never the records. */
 export type BackupCounts = {
   contacts: number
   deletedContacts: number
@@ -208,10 +166,6 @@ const stateCounts = (state: LocalMergeState): BackupCounts => ({
   pets: state.pets.length,
 })
 
-/**
- * What Combine would change, without writing anything: counts before and after,
- * and whether the merge changes anything at all.
- */
 export function previewCombine(payloads: SyncPayload[]): {
   changed: boolean
   before: BackupCounts

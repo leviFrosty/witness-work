@@ -29,17 +29,11 @@ import { AccountSessionError } from '@/lib/serverAccount/session'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-/**
- * What each op class puts on the wire with a session (docs/buddies-protocol.md,
- * "Authentication (sessions)"), read back from the fake relay's request log.
- */
-
 type Harness = ReturnType<typeof setup>
 
 const decode = (b64u: string) =>
   JSON.parse(fromUtf8(fromB64u(b64u))) as Record<string, unknown>
 
-/** The last request for `op` the relay got. */
 function lastRequest(h: Harness, op: string) {
   const found = h.fake.requests.findLast((request) => request.op === op)
   if (!found) throw new Error(`no ${op} request`)
@@ -63,7 +57,6 @@ const verifies = (
     fromB64u(publicKey)
   )
 
-/** Two paired users, and the slot Mom writes into Anna's inbox with. */
 async function paired() {
   const h = setup()
   const mom = h.user('Mom')
@@ -265,7 +258,6 @@ describe('requests with a session', () => {
       inboxId: ann.inboxId,
     })
 
-    // A reconnect after the token's 15 minutes gets a refreshed one.
     h.advance(15 * 60 * 1000)
     await client.openLive(ownerAuthFor(ann.seed))
     expect(opened[1].headers.authorization).toMatch(/^Bearer access-/)

@@ -30,19 +30,15 @@ import { usePreferences } from '@/stores/preferences'
 
 const CARD = { top: 150, height: 110 }
 const STACK = { x: 16, y: CARD.top + 62, size: 30, step: 22 }
-/** You in the middle, a buddy each side, and each one's streak. */
+
 const PEOPLE = [
   { x: 70, y: 48, size: 40, streak: 5 },
   { x: 160, y: 36, size: 50, streak: 12, you: true },
   { x: 250, y: 48, size: 40, streak: 8 },
 ]
-/** The order people join the Plan: you first, then your buddies. */
+
 const JOIN_ORDER = [1, 0, 2]
 
-/**
- * Together: you and two buddies, each with a streak, joining one Plan; then
- * every streak flares at once. Without streaks shown, just the three join.
- */
 const TogetherVisual = ({
   palette,
   active,
@@ -135,7 +131,6 @@ const TogetherVisual = ({
   )
 }
 
-/** "Going" beside the faces gathered in the Plan. */
 function GoingLabel({
   loop,
   reset,
@@ -170,10 +165,6 @@ function GoingLabel({
   )
 }
 
-/**
- * A person with their streak, if shown. They pop in, then a copy of them
- * travels into the Plan's row of faces.
- */
 function Person({
   index,
   color,

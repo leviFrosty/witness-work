@@ -74,7 +74,6 @@ afterEach(() => {
 })
 
 it('refreshes the customer when the connection comes back after an offline launch', async () => {
-  // Offline: logIn fails and the SDK's cache still says Supporter.
   vi.mocked(Purchases.getCustomerInfo).mockResolvedValueOnce(supporter as never)
   await act(async () => {
     renderer = create(
@@ -87,7 +86,6 @@ it('refreshes the customer when the connection comes back after an offline launc
   expect(runtime.customer).toEqual(supporter)
   expect(runtime.reconnect.size).toBe(1)
 
-  // Back online; the subscription lapsed meanwhile.
   vi.mocked(Purchases.getCustomerInfo).mockResolvedValueOnce(lapsed as never)
   await act(async () => runtime.reconnect.forEach((listener) => listener()))
   await settle()

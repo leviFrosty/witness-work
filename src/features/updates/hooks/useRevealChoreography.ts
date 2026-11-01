@@ -28,23 +28,12 @@ import {
   RevealTimeline,
 } from '@/features/updates/constants/updateReveal'
 
-/**
- * - `intro` — the first screen after launch: the splash collapses into the app
- *   tile, exactly as the onboarding welcome does.
- * - `calm` — that same moment under Reduce Motion: the splash simply fades.
- * - `replay` — opened later (the tray, What's New): the scene fades in over the
- *   app and the tile pops into place.
- */
 export type RevealEntrance = 'intro' | 'calm' | 'replay'
 
-/** The greeting, then the news. */
 export type RevealHeadline = 'welcome' | 'news' | null
 
 type Timers = { current: ReturnType<typeof setTimeout>[] }
 
-// As in the onboarding welcome: wait for the UI thread to draw a run of frames
-// on time before the intro plays, so a first-draw stall can't skip it. The
-// splash replica covers the wait.
 const SMOOTH_FRAMES = 6
 const SMOOTH_FRAME_MS = 34
 const SMOOTH_TIMEOUT_MS = 1500
@@ -53,11 +42,6 @@ const schedule = (timers: Timers, ms: number, run: () => void) => {
   timers.current.push(setTimeout(run, ms))
 }
 
-/**
- * Rings spread from the hub while the glow behind it swells and settles, once
- * at each of `times` (ms from now). Built as one sequence per value so a later
- * bloom doesn't cancel an earlier one still playing.
- */
 const bloomAt = (
   ripple: SharedValue<number>,
   pulse: SharedValue<number>,
@@ -77,7 +61,7 @@ const bloomAt = (
       )
     )
     rippleCursor = Math.max(rippleCursor, at) + 1100
-    // The glow settles until the next bloom, however soon that comes.
+
     const settle = Math.max(1, Math.min(1400, next - at - 240))
     pulseSteps.push(
       withDelay(
@@ -108,14 +92,10 @@ interface StoryValues {
 interface StoryCallbacks {
   timers: Timers
   setHeadline: (headline: RevealHeadline) => void
-  /** The intro has played; tapping no longer hurries it. */
+
   onDone: () => void
 }
 
-/**
- * Plays everything after the tile is in place, from `t`'s offsets. `landAt` is
- * when the tile arrives, for its bloom.
- */
 const playStory = (
   v: StoryValues,
   { timers, setHeadline, onDone }: StoryCallbacks,
@@ -130,8 +110,7 @@ const playStory = (
     t.orbitsAt,
     withTiming(1, { duration: t.orbitsFor, easing: EASE_OUT })
   )
-  // The ring closes like an install finishing; the tile swells as it meets
-  // itself, and the new features burst out.
+
   v.ringEnd.value = withDelay(
     t.ringAt,
     withTiming(1, { duration: t.ringFor, easing: Easing.inOut(Easing.cubic) })
@@ -166,18 +145,10 @@ const playStory = (
 
 interface Options {
   entrance: RevealEntrance
-  /** The stage is measured, so the tile knows where to land. */
+
   ready: boolean
 }
 
-/**
- * Sequences the update reveal: the tile arrives (from the splash at launch),
- * its ring closes like an install finishing, the new features burst out around
- * it, and the greeting gives way to the news. Then the hand-off to the tour,
- * and the way out. Like the onboarding welcome, everything time-critical is
- * scheduled on the UI thread from a single moment so launch work on the JS
- * thread can't knock the choreography apart.
- */
 const useRevealChoreography = ({ entrance, ready }: Options) => {
   const [splashVisible, setSplashVisible] = useState(entrance !== 'replay')
   const [headline, setHeadline] = useState<RevealHeadline>(null)
@@ -186,34 +157,33 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
   const [settled, setSettled] = useState(false)
   const [closing, setClosing] = useState(false)
 
-  /** 0 = the full-screen splash, 1 = the settled app tile. */
   const collapse = useSharedValue(entrance === 'intro' ? 0 : 1)
-  /** Opacity of the splash replica laid over everything at launch. */
+
   const splash = useSharedValue(1)
-  /** 0–1 reveal of the aurora behind everything. */
+
   const reveal = useSharedValue(0)
   const orbits = useSharedValue(0)
-  /** Orbits and ring; they clear away for the tour, the aurora stays. */
+
   const chrome = useSharedValue(1)
   const ringStart = useSharedValue(0)
   const ringEnd = useSharedValue(0)
   const pulse = useSharedValue(0)
   const ripple = useSharedValue(0)
-  /** The tile's arrival: a landing squash, or a replay's pop. */
+
   const tileLand = useSharedValue(entrance === 'replay' ? 0.4 : 1)
-  /** The tile's swell as its ring closes. */
+
   const tileSwell = useSharedValue(1)
   const tileScale = useDerivedValue(() => tileLand.value * tileSwell.value)
-  /** 0–1 run of the feature chips flying out of the hub. */
+
   const burst = useSharedValue(0)
   const kicker = useSharedValue(0)
   const cta = useSharedValue(0)
   const link = useSharedValue(0)
-  /** 0–1 the intro clears away for the tour. */
+
   const exit = useSharedValue(0)
-  /** 0–1 the tour settles in. */
+
   const tour = useSharedValue(0)
-  /** 1 = the whole overlay is hidden; a replay fades in from it. */
+
   const veil = useSharedValue(entrance === 'replay' ? 1 : 0)
 
   const smoothFrames = useSharedValue(0)
@@ -241,7 +211,6 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     return () => pending.splice(0).forEach(clearTimeout)
   }, [])
 
-  // Start once the stage is measured — the tile needs to know where to land.
   useEffect(() => {
     if (!ready || started.current) return
     if (entrance === 'intro') {
@@ -250,8 +219,6 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     }
     started.current = true
     if (entrance === 'calm') {
-      // Under Reduce Motion, nothing travels: the scene is in place and the
-      // splash fades off it.
       for (const value of [reveal, orbits, burst, kicker, cta, link]) {
         value.value = 1
       }
@@ -267,7 +234,7 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
       })
       return
     }
-    // A replay fades in over the app, then the tile pops into place.
+
     veil.value = withTiming(0, { duration: 320, easing: EASE_OUT })
     tileLand.value = withDelay(
       120,
@@ -316,20 +283,19 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     splash,
   ])
 
-  // Launch: play the intro once the scene is drawing smoothly.
   useEffect(() => {
     if (!settled || started.current) return
     started.current = true
     settleGate.setActive(false)
     const t = REVEAL_INTRO
     const landAt = t.collapseAt + t.collapseFor - 60
-    // The splash replica hands over to the curtain as it starts to move.
+
     splash.value = withDelay(t.collapseAt, withTiming(0, { duration: 0 }))
     collapse.value = withDelay(
       t.collapseAt,
       withTiming(1, { duration: t.collapseFor, easing: EASE_COLLAPSE })
     )
-    // The tile lands: a squash, a ripple and a bloom (and a tap).
+
     tileLand.value = withDelay(
       landAt,
       withSequence(
@@ -380,7 +346,6 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     ringEnd,
   ])
 
-  /** A tap on the scene hurries the intro to its end state. */
   const skipIntro = () => {
     if (!started.current || introDone) return
     timers.current.splice(0).forEach(clearTimeout)
@@ -398,9 +363,7 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     setIntroDone(true)
   }
 
-  /** Clears the intro away and brings in the tour. */
   const startTour = () => {
-    // A press before the buttons have faded in just hurries the intro.
     if (cta.value < 0.5) {
       skipIntro()
       return
@@ -418,7 +381,6 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     })
   }
 
-  /** Fades the whole overlay out, then hands control back. */
   const close = (then: () => void) => {
     if (closing) return
     setClosing(true)
@@ -450,7 +412,7 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     phase,
     headline,
     splashVisible,
-    /** Tapping the scene can hurry the intro along. */
+
     skippable: phase === 'intro' && !introDone,
     skipIntro,
     startTour,

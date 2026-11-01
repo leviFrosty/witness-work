@@ -10,10 +10,6 @@ import LogTripButton from '@/features/mileage/components/LogTripButton'
 import type { MileageSource, RootStackNavigation } from '@/types/rootStack'
 
 type Props = {
-  /**
-   * `noCars` (default) asks for the first car; `noTrips` fills an empty period;
-   * `costHint` points to fuel setup when trips have no estimated cost.
-   */
   variant?: 'noCars' | 'noTrips' | 'costHint'
   source?: MileageSource
 }

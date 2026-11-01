@@ -18,7 +18,6 @@ import useShownInTab from '@/hooks/useShownInTab'
 import { forwardSign } from '@/lib/direction'
 
 interface ProgressBarSegmentBaseProps extends ViewProps {
-  /** Rounds the corners on the bar's reading-start side. */
   borderRadiusStart?: boolean
   borderRadiusEnd?: boolean
 }
@@ -100,17 +99,9 @@ interface ProgressBarProps {
   month: number
   year: number
   minimal?: boolean
-  /**
-   * Enable pulse/shimmer/glow animation effects
-   *
-   * @default true
-   */
+
   animated?: boolean
-  /**
-   * Duration of pulse animation in milliseconds
-   *
-   * @default 2000
-   */
+
   pulseDuration?: number
   style?: StyleProp<ViewStyle>
 }
@@ -134,8 +125,6 @@ const MonthServiceReportProgressBar = ({
   const { type: role } = usePublisher({ month, year })
   const { effectiveGoalHours: goalHours } = useMonthlyGoal({ month, year })
 
-  // Animation setup. The pulse loops only while its screen shows and the app
-  // is open: each lap wakes JS to start the next.
   const shown = useShownInTab()
   const appActive = useAppActive()
   const pulsing = animated && shown && appActive
@@ -173,16 +162,12 @@ const MonthServiceReportProgressBar = ({
 
   const progress = useMemo(() => Math.min(rawProgress, 1.0), [rawProgress])
 
-  // Calculate scaling factor for individual segments when total exceeds 100%
   const segmentScalingFactor = useMemo(() => {
     return rawProgress > 1.0 ? 1.0 / rawProgress : 1.0
   }, [rawProgress])
 
-  // Animation effect
   useEffect(() => {
     if (!pulsing || progress === 0 || shimmerContainerWidth === 0) {
-      // Stop animation if not animated, hidden, no progress, or no measurement
-      // yet
       if (animationRef.current) {
         animationRef.current.stop()
         animationRef.current = null
@@ -191,7 +176,6 @@ const MonthServiceReportProgressBar = ({
       return
     }
 
-    // Create pulse animation that moves from left to right
     const createPulseAnimation = () => {
       pulseAnimation.setValue(0)
 
@@ -202,15 +186,15 @@ const MonthServiceReportProgressBar = ({
             duration: pulseDuration,
             useNativeDriver: true,
           }),
-          // Add a small pause at the end
+
           Animated.delay(300),
-          // Instant reset to avoid jarring flash
+
           Animated.timing(pulseAnimation, {
             toValue: 0,
-            duration: 0, // Instant reset - no visible movement
+            duration: 0,
             useNativeDriver: true,
           }),
-          // Small pause before next pulse
+
           Animated.delay(200),
         ]),
         { iterations: -1 }
@@ -219,16 +203,13 @@ const MonthServiceReportProgressBar = ({
       return animation
     }
 
-    // Stop existing animation
     if (animationRef.current) {
       animationRef.current.stop()
     }
 
-    // Start new animation
     animationRef.current = createPulseAnimation()
     animationRef.current.start()
 
-    // Cleanup on unmount or dependency change
     return () => {
       if (animationRef.current) {
         animationRef.current.stop()
@@ -237,16 +218,10 @@ const MonthServiceReportProgressBar = ({
     }
   }, [pulsing, progress, pulseDuration, pulseAnimation, shimmerContainerWidth])
 
-  // Calculate pulse position dynamically based on shimmer container width
-  // The shimmer should travel across the entire shimmer container (which is already the filled portion)
-  // Runs along the fill from its reading start (mirrored in RTL).
   const sign = forwardSign()
   const pulseTranslateX = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [
-      sign * -60, // Start hidden before the fill's start
-      sign * Math.max(200, shimmerContainerWidth + 60), // End past the shimmer container
-    ],
+    outputRange: [sign * -60, sign * Math.max(200, shimmerContainerWidth + 60)],
   })
 
   const minutesDetailed = useMemo(
@@ -292,8 +267,6 @@ const MonthServiceReportProgressBar = ({
     segmentScalingFactor,
   ])
 
-  // No goal (a Regular Publisher logging hours, or a 0-hour goal) leaves
-  // nothing to fill toward; `goalProgress` would report it as done.
   if (goalHours <= 0) return null
 
   return (
@@ -326,7 +299,7 @@ const MonthServiceReportProgressBar = ({
             height: 20,
           }}
         >
-          {/* Progress segments with enhanced glow effect */}
+          {}
           <View
             style={{
               width: `${progress * 100}%`,
@@ -357,14 +330,14 @@ const MonthServiceReportProgressBar = ({
             {renderOtherHours()}
           </View>
 
-          {/* Pulse/Shimmer overlay - only visible when animated and has progress */}
+          {}
           {animated && progress > 0 && (
             <View
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                width: `${progress * 100}%`, // Only cover the filled portion
+                width: `${progress * 100}%`,
                 height: '100%',
                 overflow: 'hidden',
               }}
@@ -378,11 +351,11 @@ const MonthServiceReportProgressBar = ({
                   position: 'absolute',
                   top: 0,
                   height: '100%',
-                  width: 60, // Fixed width shimmer that works with pixel-based transform
+                  width: 60,
                   transform: [{ translateX: pulseTranslateX }],
                 }}
               >
-                {/* Shimmer gradient effect using multiple overlays */}
+                {}
                 <View
                   style={{
                     position: 'absolute',

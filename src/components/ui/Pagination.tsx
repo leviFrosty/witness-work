@@ -12,23 +12,17 @@ import i18n from '@/lib/locales'
 import { buildPaginationModel, PAGINATION_ELLIPSIS } from '@/lib/pagination'
 import { MIN_TOUCH_TARGET, touchTargetFrame } from '@/components/ui/touchTarget'
 
-/** Looks 36pt tall; the frames around it reach the full target. */
 const NAV_HEIGHT = 36
 const PAGE_WIDTH = 34
 const GAP = 2
 
 interface Props {
-  /** One-based current page. Out-of-range values are clamped for display. */
   page: number
   pageCount: number
   onPageChange: (page: number) => void
   style?: StyleProp<ViewStyle>
 }
 
-/**
- * Compact numbered pagination with Previous/Next navigation, active state, and
- * automatic ellipses. It renders nothing when there is only one page.
- */
 const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
   const theme = useTheme()
   const model = buildPaginationModel({ page, pageCount })
@@ -128,8 +122,6 @@ const Pagination = ({ page, pageCount, onPageChange, style }: Props) => {
             accessibilityLabel={i18n.t('pagination.page', { page: item })}
             accessibilityState={{ selected: active }}
             style={{
-              // Full height, but only as wide as the gap allows: a wider
-              // frame would overlap the next page and take its taps.
               ...touchTargetFrame(PAGE_WIDTH + GAP, NAV_HEIGHT),
               width: PAGE_WIDTH + GAP,
               marginHorizontal: -GAP / 2,

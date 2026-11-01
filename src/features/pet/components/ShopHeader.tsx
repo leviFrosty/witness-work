@@ -14,7 +14,6 @@ import {
 import GameWallet from '@/features/pet/components/GameWallet'
 import type { GainPulse } from '@/features/pet/hooks/usePetReveal'
 
-/** The Shop's sign: its name on a noren, translated, sized to the word. */
 function ShopSign({ palette }: { palette: GamePalette }) {
   const theme = useTheme()
   const scale = gamePixelScale()
@@ -46,16 +45,10 @@ function ShopSign({ palette }: { palette: GamePalette }) {
   )
 }
 
-/** Pulls the back button's frame out past the screen's padding. */
 const BACK_PULL = 4
-/** The least room between the sign and what's beside it. */
+
 const SIGN_GAP = 8
 
-/**
- * Back, the sign in the middle, the wallet. Where the middle of the row has no
- * room for the sign (a narrow phone, a long translation, a big wallet), the
- * sign sits between the two instead.
- */
 export default function ShopHeader({
   palette,
   wallet,
@@ -64,9 +57,9 @@ export default function ShopHeader({
   onBack,
 }: {
   palette: GamePalette
-  /** Coins left to spend, as shown now. */
+
   wallet: number
-  /** What just changed: a purchase floats its "−N" over the count. */
+
   walletPulse: GainPulse | null
   monthlyHearts: boolean
   onBack: () => void
@@ -75,7 +68,7 @@ export default function ShopHeader({
   const [sign, setSign] = useState(0)
   const [walletWidth, setWalletWidth] = useState(0)
   const back = MIN_TOUCH_TARGET - BACK_PULL
-  // Centered until measured: it fits on most screens.
+
   const centered =
     row === 0 ||
     (row / 2 - sign / 2 >= back + SIGN_GAP &&

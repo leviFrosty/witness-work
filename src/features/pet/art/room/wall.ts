@@ -1,7 +1,3 @@
-/**
- * Back wall (y 0–51): colour, wallpaper pattern, crown moulding (y 0–6) and the
- * wainscot rail (y 52–61).
- */
 import {
   createRng,
   dim,
@@ -23,7 +19,6 @@ import {
 export { WALL_COLOR_IDS, WALL_PATTERN_IDS }
 export type { WallColor, WallPattern }
 
-/** Base colour of each wall. */
 export const WALL_RGB: Readonly<Record<WallColor, Rgb>> = {
   sand: rgb('#dcbc91'),
   sage: rgb('#b7c59f'),
@@ -58,11 +53,9 @@ type PatternPainter = (
   speck: Rgb
 ) => void
 
-/** First and last-plus-one wall rows a pattern paints. */
 const TOP = 7
 const BOTTOM = 52
 
-/** Calls `paint` for every wall pixel a pattern may touch. */
 function eachWallPixel(
   buf: PixelBuffer,
   paint: (x: number, y: number) => Rgb | null
@@ -75,16 +68,8 @@ function eachWallPixel(
   }
 }
 
-/** `n` mod `m`, never negative. */
 const mod = (n: number, m: number): number => ((n % m) + m) % m
 
-/**
- * In a grid of overlapping circles of radius `r` (centres `sx` apart, rows `sy`
- * apart from `y0`, odd rows shifted half a step), the offset of (x, y) from the
- * centre of the circle that shows there. `fans`: each row covers the one above
- * and only the top half of a circle shows (seigaiha, fans); otherwise each row
- * covers the one below and only the bottom half shows (roof scales).
- */
 function overlapOffset(
   x: number,
   y: number,
@@ -188,8 +173,6 @@ const PATTERNS: Readonly<Record<WallPattern, PatternPainter>> = {
     })
   },
   ikat(buf, shade, light) {
-    // Lozenges in rows, outlined, with a light core, their edges
-    // feathered sideways as dyed threads bleed. Mirrored top to bottom.
     const r = createRng(23)
     const feather = Array.from({ length: 10 }, () => Math.floor(r() * 3))
     eachWallPixel(buf, (x, y) => {
@@ -273,30 +256,18 @@ const PATTERNS: Readonly<Record<WallPattern, PatternPainter>> = {
   },
 }
 
-/**
- * How dark a wall colour is, 0 (light, every starter) to 1 (indigo): what's
- * drawn on it is adjusted by this much so it still reads.
- */
 export function wallDarkness(base: Rgb): number {
   const [r, g, b] = rgbTuple(base)
   const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255
   return Math.min(1, Math.max(0, (0.6 - luma) / 0.3))
 }
 
-/**
- * The pattern tones on `base`: a touch darker and a quarter whiter, and the
- * plaster's light specks. A dark wall gets a deeper shade and a softer light,
- * or the shade would vanish and the light would glare, and fainter specks, so
- * they don't read as stars (light walls, every starter included, are
- * unchanged).
- */
 export function patternTones(base: Rgb): [shade: Rgb, light: Rgb, speck: Rgb] {
   const dark = wallDarkness(base)
   const light = mix(base, WHITE, 0.25 - 0.13 * dark)
   return [dim(base, 0.93 - 0.09 * dark), light, mix(light, base, 0.6 * dark)]
 }
 
-/** Paints the wall, its pattern, the moulding and the wainscot. */
 export function drawWall(
   buf: PixelBuffer,
   color: WallColor,

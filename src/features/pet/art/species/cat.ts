@@ -1,9 +1,3 @@
-/**
- * Kitten: pointed ears, curled tail of five segments, eight coats. Patterned
- * coats (tuxedo bib, calico patches, siamese mask, tortoiseshell mottling and
- * blaze) are paint layers clipped to the shapes' kinds (`head`, `ear`, `body`,
- * `muzzle`).
- */
 import {
   dim,
   rgb,
@@ -18,29 +12,28 @@ import { facePixels } from '../face'
 import { defineSpecies } from './define'
 
 interface CatCoat {
-  /** Fur, shadow, highlight. */
   readonly f: Rgb
   readonly fs: Rgb
   readonly fh: Rgb
-  /** Light fur (muzzle, chest, paws). */
+
   readonly l: Rgb
-  /** Inner ear. */
+
   readonly in: Rgb
-  /** Nose. */
+
   readonly n: Rgb
-  /** Whiskers. */
+
   readonly wh: Rgb
-  /** Tabby stripes. */
+
   readonly st?: Rgb
-  /** Tail base and tail tip colours (default: fur, stripes). */
+
   readonly tl?: Rgb
   readonly tt?: Rgb
-  /** Point colour (ears, paws, tail) for siamese. */
+
   readonly pt?: Rgb
   readonly iris?: Rgb
   readonly ec?: Rgb
   readonly mc?: Rgb
-  /** Patches, given the head bob. */
+
   readonly paints?: (bob: number) => Paint[]
 }
 

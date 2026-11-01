@@ -28,7 +28,7 @@ vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
 
-const NOW = new Date(2026, 9, 15, 12) // 15 Oct 2026, local noon
+const NOW = new Date(2026, 9, 15, 12)
 
 const entry = (
   year: number,
@@ -85,14 +85,12 @@ const input = (
   ...overrides,
 })
 
-/** One 0h/0m "shared" entry per month, like a checkbox Kingdom Publisher. */
 const checkboxMonths = (count: number) =>
   Array.from({ length: count }, (_, i) => {
     const d = new Date(2026, 9 - i, 1, 12)
     return entry(d.getFullYear(), d.getMonth(), 3, 0)
   })
 
-/** A pioneer logging two hours every day of each month. */
 const pioneerMonths = (count: number) =>
   Array.from({ length: count }, (_, i) => {
     const d = new Date(2026, 9 - i, 1, 12)
@@ -150,7 +148,6 @@ describe('evaluateBadges', () => {
   })
 
   it('awards Year Round for 10 shared months of a Service Year', () => {
-    // Sep 2025 – Aug 2026 with two months off, then the current year so far.
     const months = [8, 9, 10, 11, 0, 1, 3, 4, 6, 7].map((m) =>
       entry(m >= 8 ? 2025 : 2026, m, 10, 0)
     )
@@ -178,8 +175,8 @@ describe('evaluateBadges', () => {
       visit('v4', 'c2', new Date(2026, 9, 2, 10), { notAtHome: true }),
     ]
     const result = evaluateBadges(input({ visits }))
-    expect(result.collections.conversations.count).toBe(2) // Aug, Oct
-    expect(result.collections.returnVisits.count).toBe(2) // Sep, Oct
+    expect(result.collections.conversations.count).toBe(2)
+    expect(result.collections.returnVisits.count).toBe(2)
     expect(result.collections.nextTime.count).toBe(1)
     expect(result.ledgerAdditions).toEqual(
       expect.arrayContaining([
@@ -203,7 +200,6 @@ describe('evaluateBadges', () => {
     expect(result.earned).toEqual([])
     expect(result.ledgerAdditions).toEqual([])
 
-    // The User's own visit after them is a conversation and a return visit.
     const mine = evaluateBadges(
       input({ visits: [...visits, visit('v', 'c1', new Date(2026, 9, 1))] })
     )
@@ -270,7 +266,7 @@ describe('evaluateBadges', () => {
         ],
       })
     )
-    expect(result.collections.prepared.count).toBe(3) // Jul, Aug, Oct
+    expect(result.collections.prepared.count).toBe(3)
   })
 
   it('honors skipped days, zero-minute overrides, and monthly patterns', () => {
@@ -283,7 +279,7 @@ describe('evaluateBadges', () => {
         interval: 1,
         endDate: normalizeDateForStorage(new Date(2026, 7, 31)),
       },
-      // Every July occurrence is skipped or zeroed; August stays planned.
+
       deletedDates: [1, 8, 15].map((d) =>
         normalizeDateForStorage(new Date(2026, 6, d))
       ),
@@ -319,13 +315,13 @@ describe('evaluateBadges', () => {
     expect(
       evaluateBadges(input({ recurringPlans: [weekly] })).collections.prepared
         .count
-    ).toBe(1) // August only
-    // The 31st: January and March have one; February and April don't.
+    ).toBe(1)
+
     expect(
       evaluateBadges(input({ recurringPlans: [monthly] })).collections.prepared
         .count
     ).toBe(2)
-    // First Saturday of September and October 2026 (Oct 3 ≤ the 15th).
+
     expect(
       evaluateBadges(input({ recurringPlans: [byWeekday] })).collections
         .prepared.count
@@ -526,11 +522,9 @@ describe('Buddy Card badges', () => {
     expect(
       knownSharedBadges([
         { c: 'monthsShared', l: 3 },
-        // @ts-expect-error unknown collection from a newer build
         { c: 'someday', l: 1 },
-        // @ts-expect-error unknown level
         { c: 'yearRound', l: 7 },
-      ])
+      ] as unknown as Parameters<typeof knownSharedBadges>[0])
     ).toEqual([{ c: 'monthsShared', l: 3 }])
   })
 

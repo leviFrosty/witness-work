@@ -4,10 +4,6 @@ import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import { currentBuddyDayMarkers } from '@/features/buddies/lib/currentBuddyDayMarkers'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * `YYYY-MM-DD` → who the User goes out with that day, and which other buddies
- * plan to go out. Past days are dropped even when a buddy's card is stale.
- */
 export default function useBuddyCalendarMarkers(): Record<
   string,
   BuddyDayMarker

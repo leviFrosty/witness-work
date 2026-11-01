@@ -1,7 +1,5 @@
 const { withGradleProperties } = require('expo/config-plugins')
 
-// A release compiles every ABI and runs native lint. Expo's 512 MB metaspace
-// default exhausts the Gradle daemon before this app can finish packaging.
 module.exports = (config) =>
   withGradleProperties(config, (config) => {
     const settings = {

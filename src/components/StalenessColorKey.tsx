@@ -16,22 +16,15 @@ import { RootStackNavigation } from '@/types/rootStack'
 import { useAfterPopover } from '@/components/ui/popoverContext'
 
 type Props = {
-  /** Hide the title/subtitle header — useful when the host already shows one. */
   showHeader?: boolean
 }
 
-/**
- * Read-only legend for the staleness colors. Editing (colors and day
- * thresholds) lives on the Color Key settings screen — the pencil in the header
- * is the way there.
- */
 export default function StalenessColorKey({ showHeader = true }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const colors = useMarkerColors()
   const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
 
-  // Inside a popover (the chips', the map legend's), close it first.
   const afterPopover = useAfterPopover()
 
   const goToSettings = () =>
@@ -47,12 +40,7 @@ export default function StalenessColorKey({ showHeader = true }: Props) {
             gap: 10,
           }}
         >
-          {/*
-            flexShrink (not flex: 1) — inside the stats-header popover the
-            container has no fixed width, so the title's intrinsic width is
-            what sizes the whole popover. flex: 1 zeroes that out and the
-            popover collapses to one character per line.
-          */}
+          {}
           <View style={{ gap: 2, flexShrink: 1, flexGrow: 1 }}>
             <Text
               style={{

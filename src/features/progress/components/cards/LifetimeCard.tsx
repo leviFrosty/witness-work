@@ -10,7 +10,6 @@ import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 import type { TimeEntry } from '@/types/timeEntry'
 
-/** Every hour logged, ever (raw, before credit limits). */
 export default function LifetimeCard({ size }: ProgressCardProps) {
   const timeDisplayFormat = usePreferences((s) => s.timeDisplayFormat)
   const serviceReports = useServiceReport((s) => s.serviceReports)

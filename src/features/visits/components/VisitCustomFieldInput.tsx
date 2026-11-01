@@ -17,10 +17,6 @@ import { CustomFieldDefinition } from '@/types/customField'
 
 const REVEAL_MARGIN = 12
 
-/**
- * Scrolls the form just enough that the suggestions clear the keyboard. The
- * keyboard-aware scroll view only keeps the input itself in view.
- */
 const revealAboveKeyboard = (
   view: RefObject<View | null>,
   scrollBy: (dy: number) => void
@@ -33,11 +29,6 @@ const revealAboveKeyboard = (
   })
 }
 
-/**
- * One custom field on the visit form. While it's focused, values entered for
- * this field on other visits appear as chips to fill it in; below it, the
- * values from this contact's earlier visits show what they already received.
- */
 export default function VisitCustomFieldInput({
   def,
   value,
@@ -60,8 +51,6 @@ export default function VisitCustomFieldInput({
   const [focused, setFocused] = useState(false)
   const suggestionsRef = useRef<View>(null)
 
-  // Focusing renders the suggestions before the keyboard finishes opening, so
-  // reveal them again once it has.
   useEffect(() => {
     if (!focused) return
     const subscription = Keyboard.addListener('keyboardDidShow', () =>
@@ -70,10 +59,6 @@ export default function VisitCustomFieldInput({
     return () => subscription.remove()
   }, [focused, scrollBy])
 
-  // Both walk every visit, so they're kept apart from what's typed: ranked
-  // once per focus, then narrowed on each keystroke. The React Compiler puts
-  // them in the same memo as the typed value here, which re-walked the visits
-  // on every keystroke (about 15 ms each on a dev build with 8,000 visits).
   const valueIndex = useMemo(
     () =>
       focused
@@ -95,8 +80,6 @@ export default function VisitCustomFieldInput({
     [visits, contactId, def.id, visitDate, visitId]
   )
 
-  // The row's divider moves below the chips and history so they read as part
-  // of this field rather than the next row.
   return (
     <View style={{ borderBottomWidth: 1, borderColor: theme.colors.border }}>
       <TextInputRow

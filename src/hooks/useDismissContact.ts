@@ -55,7 +55,6 @@ export const dismissOptions: DismissOption[] = [
   },
 ]
 
-/** A suggestion's quick dismiss: back in 30 days, like "Dismiss For" does. */
 export const notNowDismissOption: DismissOption = {
   key: 'not_now',
   duration: 30,
@@ -91,14 +90,9 @@ export const testDismissOptions: DismissOption[] = [
   },
 ]
 
-/** Localized label for a dismiss duration (test options are dev-only). */
 export const dismissOptionLabel = (option: DismissOption) =>
   option.isTestOption ? option.label : i18n.t(option.label as 'dismissFor1Week')
 
-/**
- * Whether a "available again" reminder will go out. `useReconciledReminders`
- * schedules it from `dismissedUntil` (and removes any earlier one).
- */
 const reminderWillSend = (
   dismissedUntil: Date,
   notificationsAllowed: boolean
@@ -112,17 +106,9 @@ const formatUntil = (option: DismissOption, dismissedUntil: Date) =>
     ? formatTime(dismissedUntil, { withSeconds: true })
     : formatDate(dismissedUntil, { style: 'medium' })
 
-// Read at dismiss time: these hooks run in every list row, so they can't
-// afford a permissions listener per row.
 const notificationsAllowed = async () =>
   (await Notifications.getPermissionsAsync()).granted
 
-/**
- * Hides a Contact until the chosen duration passes, scheduling a "available
- * again" reminder when notifications are allowed, and confirms with a toast.
- * Dismissing is reversible from Dismissed Contacts, so it doesn't ask first.
- * Dismissing an already-dismissed Contact changes its duration.
- */
 export default function useDismissContact() {
   return async (contact: Contact, option: DismissOption) => {
     const dismissedUntil = dismissedUntilFor(option)
@@ -144,20 +130,17 @@ export default function useDismissContact() {
   }
 }
 
-/** Select mode's batch dismiss: one duration, one confirming toast. */
 export function useDismissContacts() {
   return async (contacts: Contact[], option: DismissOption) => {
     if (!contacts.length) return
     const dismissedUntil = dismissedUntilFor(option)
-    // One store update: per-contact updates re-run the whole Contacts
-    // pipeline and persist every contact once per selected contact.
+
     useContacts
       .getState()
       .dismissContacts(
         contacts.map((contact) => ({ id: contact.id, dismissedUntil }))
       )
     toast.success(i18n.t('contactDismissed'), {
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       message: i18n.t('contactsDismissedMessage', {
         count: contacts.length,
         until: formatUntil(option, dismissedUntil),
@@ -166,10 +149,6 @@ export function useDismissContacts() {
   }
 }
 
-/**
- * Puts dismissed Contacts back in the list, which removes their reminders.
- * Nothing is lost, so it runs without confirmation.
- */
 export function useUndismissContacts() {
   return async (contacts: Contact[]) => {
     if (!contacts.length) return
@@ -177,13 +156,11 @@ export function useUndismissContacts() {
     toast.success(
       contacts.length === 1
         ? i18n.t('contactUndismissed', { name: contacts[0].name })
-        : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('contactsUndismissed', { count: contacts.length })
+        : i18n.t('contactsUndismissed', { count: contacts.length })
     )
   }
 }
 
-/** The dismiss durations to offer; developer tools add second-scale ones. */
 export function useDismissDurations() {
   const developerTools = usePreferences((s) => s.developerTools)
   return developerTools

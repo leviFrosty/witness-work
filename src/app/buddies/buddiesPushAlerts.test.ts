@@ -45,7 +45,7 @@ const marker = {
   eventId: 'AAAAAAAAAAAAAAAAAAAAAA',
   blob: 'AQAB',
 }
-/** FCM's data keys, as the relay sends them now. */
+
 const data = (overrides: Record<string, unknown> = {}) => ({
   fallbackTitle: 'New invitation',
   fallbackBody: 'A buddy invited you to a Plan.',
@@ -141,7 +141,6 @@ describe('postBuddiesAlert', () => {
   })
 
   it('leaves alerts the system already showed, and anything not Buddies', async () => {
-    // A relay from before named alerts: expo-notifications shows its title.
     await postBuddiesAlert(
       data({ title: 'New invitation', message: 'A buddy invited you.' })
     )

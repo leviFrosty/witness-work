@@ -19,7 +19,6 @@ const COMPONENTS: Record<DateTimePickerMode, DatePickerComponent[]> = {
   datetime: ['date', 'hourAndMinute'],
 }
 
-/** SwiftUI's `DatePicker`: compact pills, or the whole calendar inline. */
 export default function DateTimePicker({
   value,
   onChange,
@@ -36,9 +35,7 @@ export default function DateTimePicker({
       formatRegion: s.formatRegion,
     }))
   )
-  // The app's Language and Format Region can differ from the device's, and
-  // the picker writes its own dates (ADR 0006). Its clock follows that locale:
-  // `@expo/ui` can't pass the Time Format on.
+
   const locale = appleLocaleIdentifier({
     language: _i18n.locale,
     region: formatRegion,
@@ -69,7 +66,6 @@ export default function DateTimePicker({
   )
 }
 
-/** Android only: iOS pickers sit inline, so there's no dialog to open. */
 export function DateTimeDialog(_props: DateTimeDialogProps) {
   return null
 }

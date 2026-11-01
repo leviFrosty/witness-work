@@ -25,10 +25,6 @@ type LinkProblem = Extract<ParsedHandoffLink, { ok: false }>['problem']
 
 const ACTIVE_STEPS = new Set(['idle', 'claiming', 'waiting'])
 
-/**
- * Cancels a session that's still waiting for the key, or holds one it couldn't
- * use yet (`received` while nothing is completing it).
- */
 function endIfActive(
   session: ClaimSession | null,
   completing: ClaimSession | null
@@ -39,13 +35,6 @@ function endIfActive(
     void endHandoff(session, 'left')
 }
 
-/**
- * The new phone's handoff for Sign In with QR Code: claims the code it's given
- * (scanned, or an opened link), polls until the old phone sends the account,
- * then checks and stores it. Signing in with the key that failed for now
- * (offline, a server error) runs again from Try Again or when the connection
- * comes back. Leaving before the key is stored cancels.
- */
 export default function useClaimHandoff(
   entry: HandoffEntry,
   link: string | undefined
@@ -57,7 +46,7 @@ export default function useClaimHandoff(
     'idle' | 'running' | ClaimCompletion
   >('idle')
   const current = useRef<ClaimSession | null>(null)
-  /** The session `completeClaimHandoff` is running for, if any. */
+
   const completing = useRef<ClaimSession | null>(null)
   const state = useHandoffState(session)
 
@@ -70,7 +59,6 @@ export default function useClaimHandoff(
     setSession(next)
   }
 
-  // An opened link (from the system camera or the Tools) starts at once.
   useEffect(() => {
     if (!link) return
     const parsed = parseHandoffLink(link)
@@ -78,7 +66,7 @@ export default function useClaimHandoff(
       setLinkProblem(parsed.problem)
       return
     }
-    // The same code again (a link opened twice) keeps the claim going.
+
     if (current.current?.channelId === parsed.offer.channelId) return
     endIfActive(current.current, completing.current)
     const next = startClaimHandoff(parsed.offer, entry)
@@ -88,7 +76,6 @@ export default function useClaimHandoff(
     setSession(next)
   }, [link, entry])
 
-  // Leaving the screen before the key arrives cancels the channel.
   useEffect(() => {
     const latest = current
     const running = completing
@@ -112,8 +99,7 @@ export default function useClaimHandoff(
       })
       .then((outcome) => {
         if (completing.current === session) completing.current = null
-        // Another code was opened meanwhile, and the screen follows that one.
-        // A key this one couldn't use yet is let go.
+
         if (current.current !== session) endIfActive(session, null)
         else setCompletion(outcome)
       })
@@ -124,7 +110,6 @@ export default function useClaimHandoff(
     completion.outcome === 'failed' &&
     completion.retryable === true
 
-  /** Signs in with the received key again. */
   const retry = () => {
     if (current.current?.state.step === 'received') setCompletion('idle')
   }
@@ -137,7 +122,6 @@ export default function useClaimHandoff(
     return () => reconnect.remove()
   }, [retryable])
 
-  /** Back to the scanner. */
   const reset = () => {
     endIfActive(current.current, completing.current)
     current.current = null

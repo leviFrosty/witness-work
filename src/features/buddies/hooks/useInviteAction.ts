@@ -7,12 +7,6 @@ import {
   startBuddiesInvite,
 } from '@/features/buddies/lib/shareInvite'
 
-/**
- * Invite a Buddy from the Buddies screen: makes an invite and opens the share
- * sheet. One at a time, so a double tap can't use two of the five spots, and an
- * invite whose sheet was dismissed is offered again instead of making another.
- * `inviting` while the invite is being made.
- */
 export default function useInviteAction() {
   const [inviting, setInviting] = useState(false)
   const busy = useRef(false)

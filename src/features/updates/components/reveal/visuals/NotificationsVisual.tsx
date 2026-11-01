@@ -34,7 +34,7 @@ import {
 
 const BELL = { x: 292, y: 22 }
 const NOTICE = { width: 236, height: 50 }
-/** Notices that used to land on Home, piled up as they would after a while away. */
+
 const NOTICES: {
   icon: AppIcon
   color: 'accent' | 'orange' | 'cyan' | 'pink'
@@ -55,7 +55,7 @@ const NOTICES: {
   { icon: FileOutputIcon, color: 'cyan', x: 20, y: 168, tilt: -2, bar: 140 },
   { icon: CalendarXIcon, color: 'pink', x: 56, y: 206, tilt: 3, bar: 96 },
 ]
-/** When each notice finishes flying into the bell. */
+
 const flyWindow = (i: number) => {
   'worklet'
   return { from: 0.3 + i * 0.06, to: 0.44 + i * 0.06 }
@@ -63,10 +63,6 @@ const flyWindow = (i: number) => {
 const NOTICE_COUNT = NOTICES.length
 const PANEL = { right: 8, top: 48, width: 238 }
 
-/**
- * Nothing piles up: the reminders that used to stack on Home after a while away
- * fly into the bell instead, Home settles, and the bell opens on a tidy list.
- */
 const NotificationsVisual = ({
   palette,
   active,
@@ -83,7 +79,7 @@ const NotificationsVisual = ({
 
   const headerStyle = useRiseStyle(intro, 0, 0.45)
   const greetingStyle = useRiseStyle(intro, 0.15, 0.7)
-  // How many notices have reached the bell, and a pop as each arrives.
+
   const arrived = useDerivedValue(() => {
     let count = 0
     for (let i = 0; i < NOTICE_COUNT; i++) {
@@ -110,7 +106,7 @@ const NotificationsVisual = ({
       const at = flyWindow(i).to
       pop = Math.max(pop, Math.sin(Math.PI * seg(loop.value, at, at + 0.05)))
     }
-    // Opening the tray reads them.
+
     const seen = seg(loop.value, 0.76, 0.82)
     return {
       opacity: Math.min(1, arrived.value) * (1 - seen),
@@ -303,7 +299,6 @@ const NotificationsVisual = ({
   )
 }
 
-/** One of the badge's numbers, shown while it's the count. */
 const BadgeCount = ({
   count,
   arrived,
@@ -332,10 +327,6 @@ const BadgeCount = ({
   )
 }
 
-/**
- * A notice landing on Home, then gathered up into the bell — shrinking along
- * the way so the bell takes it in.
- */
 const Notice = ({
   index,
   icon,
@@ -347,7 +338,7 @@ const Notice = ({
   index: number
   icon: AppIcon
   color: string
-  /** Solid, so the pile reads as cards on top of each other. */
+
   fill: string
   palette: RevealVisualProps['palette']
   loop: DerivedValue<number>
@@ -409,7 +400,6 @@ const Notice = ({
   )
 }
 
-/** A row in the open tray, settling in a beat after the one above. */
 const TrayRow = ({
   index,
   icon,

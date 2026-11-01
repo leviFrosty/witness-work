@@ -48,107 +48,77 @@ import { bufferToSkImage } from '@/features/pet/render/skiaImage'
 import useOnScreen from '@/hooks/useOnScreen'
 import useSceneActive from '@/features/pet/render/useSceneActive'
 
-/** How long a sound's bubble stays up. */
 const BUBBLE_MS = 1400
-/** Between one visitor's bubble and the next. */
+
 const VISITOR_BUBBLE_GAP_MS = 200
-/**
- * After a pat, when to check again that its hearts are gone, in case the clock
- * stopped (Reduce Motion) before they were.
- */
+
 const HEARTS_CHECK_MS = 3200
-/** How long a finger rests on a visitor before it's outlined. */
+
 const TARGET_HOLD_MS = 200
-/** The part of a visitor's sprite its long press covers, in sprite pixels. */
+
 const VISITOR_HIT: Viewport = [4, 6, 24, 26]
-/** The gift on the rug, padded for a finger, in scene pixels. */
+
 const GIFT_HIT: Viewport = [RUG_GIFT_POS[0] - 5, RUG_GIFT_POS[1] - 6, 16, 14]
 const SAMPLING = { filter: FilterMode.Nearest, mipmap: MipmapMode.None }
-/** The screen reader action that keeps the gift, as a tap on it does. */
+
 const GIFT_ACTION = 'pickUpGift'
 
-/** Motions a parent can play on the scene. */
 export type PetSceneHandle = {
-  /** The species' entrance (defaults to the pet's own). */
   playEntrance: (species?: PetSpecies) => void
   playTrick: () => void
-  /** The scratch twirl, as a long scrub would start it. */
+
   playTwirl: () => void
-  /** The wake animation of a pet that died. */
+
   playWake: () => void
-  /** A head pat, as a tap would. */
+
   pat: () => void
-  /** Happy, with a burst of hearts: its hearts went up. */
+
   cheer: () => void
-  /** One rub step, as a drag across the pet makes; `endRub` lifts the finger. */
+
   rub: () => void
   endRub: () => void
-  /** Shows the pet's sound for `moment` in a bubble. */
+
   say: (moment: PetSoundMoment) => void
 }
 
 export type PetSceneViewProps = {
   input: PlayerInput
-  /** The part of the 180 × 100 scene to show; the view keeps its aspect. */
+
   viewport?: Viewport
-  /** Stops the frame clock (besides losing focus or going to the background). */
+
   paused?: boolean
-  /** Also stops it while the view is scrolled fully out of the window. */
+
   pauseOffScreen?: boolean
   accessibilityLabel?: string
   accessibilityHint?: string
   borderRadius?: number
   onSay?: (moment: PetSoundMoment) => void
   onPat?: (kind: 'tap' | 'rub') => void
-  /** 15 pats in 5 s: the species' trick started. */
+
   onTrick?: () => void
-  /** A long scrub on the pet: it twirls (with a success haptic). */
+
   onTwirl?: () => void
-  /** A sleeping pet or one that died was touched. */
+
   onWakeRequest?: () => void
-  /** The gift was tapped, or picked up with a screen reader action. */
+
   onGiftTap?: () => void
-  /**
-   * A tap that missed the pet and the gift: anywhere else in the room, or in
-   * the `touchInset` around it.
-   */
+
   onRoomTap?: () => void
-  /**
-   * Points around the picture that still take its taps (as room taps), so a
-   * card's padding around the room responds too.
-   */
+
   touchInset?: number
-  /**
-   * What each visiting pet says, one after another, once the hearts from
-   * patting the pet have floated away; in `input.visitors` order.
-   */
+
   visitorLines?: readonly string[]
-  /**
-   * Each visiting pet's long-press menu, in `input.visitors` order. While a
-   * finger rests on one and while its menu is open, it's outlined in front of
-   * the others.
-   */
+
   visitorMenus?: readonly ContextMenuEntries[]
-  /** What iOS lifts above each visitor's menu, in `input.visitors` order. */
+
   visitorPreviews?: readonly ReactElement[]
   ref?: Ref<PetSceneHandle>
 }
 
 type Bubble = { moment: PetSoundMoment; id: number }
-/** Which visitor is talking. */
+
 type VisitorBubble = { index: number; id: number }
 
-/**
- * The pet's room, live: a {@link createScenePlayer} driven by a 10 fps clock on
- * the JS thread, drawn with nearest sampling so the pixels stay sharp. Each
- * frame goes to the canvas through a shared value, so frames don't re-render
- * React. Tap the pet to pat it, drag sideways across it to rub (vertical drags
- * still scroll; a long scrub makes it twirl), tap the gift to keep it, and tap
- * anywhere else for `onRoomTap`; screen readers get an action for the gift
- * while it's there, since their tap pats. The clock pauses on other screens, in
- * the background, at rest with Reduce Motion, and (with `pauseOffScreen`) once
- * scrolled out of view.
- */
 export default function PetSceneView({
   input,
   viewport = VIEW_CARD,
@@ -177,12 +147,12 @@ export default function PetSceneView({
   const active = running && (!pauseOffScreen || onScreen)
   const [width, setWidth] = useState(0)
   const [hovered, setHovered] = useState(false)
-  /** Bumped on each pat that has visitors waiting to speak. */
+
   const [hearsVisitors, setHearsVisitors] = useState(0)
   const [bubble, setBubble] = useState<Bubble | null>(null)
   const [visitorBubble, setVisitorBubble] = useState<VisitorBubble | null>(null)
   const image = useSharedValue<SkImage | null>(null)
-  /** The visitor being long-pressed, outlined. */
+
   const [targeted, setTargeted] = useState<number | null>(null)
   const hold = useRef<{
     timer?: ReturnType<typeof setTimeout>
@@ -200,7 +170,7 @@ export default function PetSceneView({
   const [scene] = useState(() => {
     const player = createScenePlayer({ reduceMotion })
     const buffer = createBuffer(SCENE_W, SCENE_H)
-    // Two frames back stays alive: the UI thread may still be drawing it.
+
     const recent: SkImage[] = []
     let bubbleId = 0
     const showBubble = (moment: PetSoundMoment) => {
@@ -208,11 +178,10 @@ export default function PetSceneView({
       setBubble({ moment, id: ++bubbleId })
     }
     const state = {
-      /** Where the pet was last drawn, for telling pats from room taps. */
       petBox: null as Viewport | null,
-      /** The current drag started on the pet, so it rubs. */
+
       rubbing: false,
-      /** The pet was patted: the visitors speak once its hearts are gone. */
+
       visitorsDue: false,
     }
     const loop = createFrameLoop({
@@ -245,7 +214,7 @@ export default function PetSceneView({
         }
         return player.isBusy()
       },
-      // The room stays on its last frame; the rest of Home keeps working.
+
       onError: (error) => {
         if (__DEV__) console.error(error)
         errorTracking.captureException(error, { feature: 'pet' })
@@ -289,7 +258,6 @@ export default function PetSceneView({
     return () => clearTimeout(timer)
   }, [bubble])
 
-  // Each visitor says its line in turn, a short pause between them.
   useEffect(() => {
     if (!visitorBubble) return
     const timer = setTimeout(() => {
@@ -303,7 +271,6 @@ export default function PetSceneView({
     return () => clearTimeout(timer)
   }, [visitorBubble])
 
-  // A check for the hearts' end, kept for a clock that stopped before it.
   useEffect(() => {
     if (!hearsVisitors) return
     const timer = setTimeout(() => scene.loop.kick(), HEARTS_CHECK_MS)
@@ -315,13 +282,12 @@ export default function PetSceneView({
     const pet = latest.current.input.pet
     if (!pet) return
     const result = scene.toucher.touch(now(), pet, { rub, nowMs: Date.now() })
-    // After the touch, so a stopped clock's first frame already shows it.
+
     scene.loop.kick()
     if (result === 'wake') onWakeRequest?.()
     else if (result === 'pat' || result === 'trick')
       onPat?.(rub ? 'rub' : 'tap')
     if (result !== 'wake' && result !== 'busy' && visitorLines?.length) {
-      // Patting again before they've spoken waits for the new hearts.
       scene.state.visitorsDue = true
       setVisitorBubble(null)
       setHearsVisitors((n) => n + 1)
@@ -376,7 +342,6 @@ export default function PetSceneView({
     onGiftTap?.()
   }
 
-  // Gesture points are in the inset view; the picture starts `touchInset` in.
   const tap = Gesture.Tap()
     .runOnJS(true)
     .onEnd((event, success) => {
@@ -426,8 +391,7 @@ export default function PetSceneView({
   const visitors = (input.visitors ?? []).slice(0, VISITOR_SPOTS.length)
   const talking = visitorBubble && visitorLines?.[visitorBubble.index]
   const talkingSpot = visitorBubble && VISITOR_SPOTS[visitorBubble.index]
-  // Front to back as drawn, so a pet in front takes the long press.
-  // Lifting the finger clears the outline, unless the menu took over.
+
   const releaseTarget = () => {
     clearTimeout(hold.current.timer)
     if (!hold.current.menuOpen) setTargeted(null)
@@ -492,7 +456,6 @@ export default function PetSceneView({
                 return (
                   <View
                     key={i}
-                    // A finger that rests on it outlines it, before the menu.
                     onTouchStart={() => {
                       clearTimeout(hold.current.timer)
                       hold.current.timer = setTimeout(
@@ -508,8 +471,7 @@ export default function PetSceneView({
                       top: (y + VISITOR_HIT[1] - viewport[1]) * scale,
                     }}
                   >
-                    {/* Screen readers reach the same actions in the pet's
-                    details, which list today's visitors. */}
+                    {}
                     <ContextMenu
                       actions={visitorMenus![i]}
                       accessible={false}
@@ -541,7 +503,6 @@ export default function PetSceneView({
               <PetSpeechBubble
                 key={visitorBubble.id}
                 text={talking}
-                // From above the visitor's head, kept inside the room.
                 left={(talkingSpot[0] + 10 - viewport[0]) * scale}
                 within={width}
                 bottom={height - (talkingSpot[1] + 6 - viewport[1]) * scale}

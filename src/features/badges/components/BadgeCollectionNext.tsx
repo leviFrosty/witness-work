@@ -6,10 +6,6 @@ import { badgeHowTo, badgeLevelName } from '@/lib/badges/display'
 import i18n from '@/lib/locales'
 import type { BadgeCollectionId, BadgeLevel } from '@/types/badges'
 
-/**
- * Under one of the User's own collections: progress toward the next level, how
- * to grow it until the first evaluation has counted, or that all four are in.
- */
 export default function BadgeCollectionNext({
   art,
   level,
@@ -17,7 +13,7 @@ export default function BadgeCollectionNext({
 }: {
   art: BadgeCollectionId
   level: BadgeLevel | 0
-  /** Counted so far; null until the first evaluation this session. */
+
   count: number | null
 }) {
   const theme = useTheme()

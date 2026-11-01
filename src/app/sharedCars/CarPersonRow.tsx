@@ -10,16 +10,8 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { ProfileAvatar } from '@/types/avatar'
 
-/** The row's action button: its ellipsis, framed to the full target. */
 const ACTIONS_GLYPH = 20
 
-/**
- * One person on a Shared Car, or an open invitation, in the car form's People
- * section: their photo, name, and a line under it ("Owner", "Invited · Expires
- * Nov 5"). What the User can do about them sits in a menu at the end; a spinner
- * takes its place while it runs. A screen reader reads the person as one stop
- * ("Ana, Owner"), and their menu as the next.
- */
 export default function CarPersonRow({
   name,
   avatar,
@@ -29,7 +21,6 @@ export default function CarPersonRow({
   busy,
   last,
 }: {
-  /** As shown: "You" for the User. */
   name: string
   avatar: ProfileAvatar
   color?: string

@@ -2,10 +2,6 @@ import { createElement, type ReactNode } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Accepting an invite can take a while on a slow connection: the button says
-// it's working, a second tap starts nothing, and a User who left meanwhile
-// isn't sent back from the screen they moved on to.
-
 const fake = vi.hoisted(() => ({
   accept: null as null | {
     resolve: (value: { name: string }) => void

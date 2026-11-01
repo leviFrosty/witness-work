@@ -6,7 +6,7 @@ import type { RichTextInline } from '@/types/richText'
 export type SpanOptions = {
   italicsReady: boolean
   linkColor: string
-  /** Links open on tap and copy on long press; off inside other press targets. */
+
   onLinkPress?: (href: string) => void
   onLinkLongPress?: (href: string) => void
 }
@@ -48,10 +48,6 @@ function spanStyle(
   }
 }
 
-/**
- * A paragraph's text as nested `Text` spans. They inherit the size and color of
- * the `Text` they're placed in, and add their marks on top.
- */
 export function RichTextSpans(props: {
   content: RichTextInline[] | undefined
   options: SpanOptions

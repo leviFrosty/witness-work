@@ -1,17 +1,3 @@
-/**
- * One vocabulary for why a request failed, whatever made it: `request()`,
- * axios, React Native's fetch, a native SDK (RevenueCat), or a feature's own
- * error type (Buddies relay, sync transports, Scribe AI).
- *
- * - `offline`: no connection, DNS failure, connection refused or dropped, or a
- *   captive portal's web page where an API's JSON was expected.
- * - `timeout`: started but didn't finish in time.
- * - `cancelled`: the caller aborted it; never an error to report or show.
- * - `rateLimited`: 429, or a service's own throttling code.
- * - `server`: 5xx; the service is having trouble.
- * - `client`: any other 4xx; retrying the same request won't help.
- * - `unknown`: not a recognisable network failure (a bug, a parse error).
- */
 export type NetworkErrorKind =
   | 'offline'
   | 'timeout'
@@ -21,10 +7,6 @@ export type NetworkErrorKind =
   | 'client'
   | 'unknown'
 
-/**
- * Message fragments for connection failures across iOS (NSURLError), Android
- * (OkHttp, java.net), React Native's fetch and axios.
- */
 const OFFLINE_PATTERNS = [
   'internet connection appears to be offline',
   'network connection was lost',
@@ -40,7 +22,7 @@ const OFFLINE_PATTERNS = [
   'software caused connection abort',
   'econnrefused',
   'enotfound',
-  // RevenueCat's NETWORK_ERROR message.
+
   'error performing request',
 ]
 
@@ -51,9 +33,7 @@ const TIMEOUT_PATTERNS = [
   'sockettimeoutexception',
 ]
 
-/** Feature error codes that mean the same as a kind here. */
 const CODE_KINDS: Record<string, NetworkErrorKind> = {
-  // Shared request(), Buddies relay, sync transports, Scribe AI.
   offline: 'offline',
   network: 'offline',
   timeout: 'timeout',
@@ -61,14 +41,13 @@ const CODE_KINDS: Record<string, NetworkErrorKind> = {
   rate_limited: 'rateLimited',
   'rate-limited': 'rateLimited',
   rateLimited: 'rateLimited',
-  // axios
+
   ERR_NETWORK: 'offline',
   ERR_CANCELED: 'cancelled',
   ECONNABORTED: 'timeout',
   ETIMEDOUT: 'timeout',
 }
 
-/** RevenueCat `PURCHASES_ERROR_CODE` values for connection failures. */
 const REVENUECAT_OFFLINE_CODES = new Set(['10', '35'])
 
 type ErrorLike = {
@@ -107,15 +86,12 @@ export function classifyNetworkError(error: unknown): NetworkErrorKind {
   if (typeof error !== 'object') return 'unknown'
   const e = error as ErrorLike
 
-  // HttpError from request() already carries its kind.
   if (typeof e.kind === 'string' && KINDS.has(e.kind as NetworkErrorKind))
     return e.kind as NetworkErrorKind
 
   if (e.name === 'AbortError' || e.name === 'CanceledError') return 'cancelled'
 
   if (typeof e.code === 'string') {
-    // Android's bridge only sets `userInfo.readableErrorCode`; the top-level
-    // copy is deprecated.
     const isRevenueCat =
       e.readableErrorCode !== undefined ||
       e.userInfo?.readableErrorCode !== undefined
@@ -136,7 +112,6 @@ export function classifyNetworkError(error: unknown): NetworkErrorKind {
     typeof e.message === 'string' ? classifyMessage(e.message) : 'unknown'
   if (fromMessage !== 'unknown') return fromMessage
 
-  // axios without a response never reached the server.
   if (e.isAxiosError === true && !e.response) return 'offline'
   return 'unknown'
 }
@@ -150,10 +125,6 @@ function classifyMessage(message: string): NetworkErrorKind {
   return 'unknown'
 }
 
-/**
- * The connection, not the app, failed: offline, timed out, or cancelled. These
- * are expected and never go to error tracking.
- */
 export function isConnectivityError(error: unknown): boolean {
   const kind = classifyNetworkError(error)
   return kind === 'offline' || kind === 'timeout' || kind === 'cancelled'

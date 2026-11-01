@@ -21,7 +21,6 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
 
   return (
     <Button
-      // A screen reader announces it as a button; a caller can say otherwise.
       accessibilityRole='button'
       style={[
         {

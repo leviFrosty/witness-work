@@ -14,10 +14,6 @@ import i18n from '@/lib/locales'
 import type { DroppedPin } from '@/features/route-planning/components/RouteMap'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 
-/**
- * The pin dropped on the route map, offered as a stop, the start, or the
- * finish.
- */
 export default function DroppedPinCard({
   pin,
   canAdd,
@@ -28,7 +24,7 @@ export default function DroppedPinCard({
   style,
 }: {
   pin: DroppedPin
-  /** The route has room for another stop. */
+
   canAdd: boolean
   onAdd: () => void
   onStartHere: () => void
@@ -131,8 +127,7 @@ function PinAction({
 }) {
   const theme = useTheme()
   const color = primary ? theme.colors.textInverse : theme.colors.text
-  // Button animates its own opacity, so a disabled action shows it in its
-  // colors, the way ActionButton does.
+
   const background = primary
     ? disabled
       ? theme.colors.accentAlt

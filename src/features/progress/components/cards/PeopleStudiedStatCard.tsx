@@ -11,10 +11,6 @@ import {
 } from '@/features/progress/lib/periodCardStats'
 import StatCard from '@/features/progress/components/cards/StatCard'
 
-/**
- * The people the User studied with on dates `inRange` accepts, the month with
- * the most, and who they were.
- */
 export default function PeopleStudiedStatCard({
   inRange,
   peakCaption,
@@ -24,7 +20,7 @@ export default function PeopleStudiedStatCard({
 }: {
   inRange?: (date: moment.Moment) => boolean
   peakCaption: (peak: NonNullable<StudyStats['peak']>) => string
-  /** The caption with nobody yet. */
+
   none: string
   info: string
   size: ProgressCardSize
@@ -44,7 +40,6 @@ export default function PeopleStudiedStatCard({
       icon={StudyIcon}
       title={i18n.t('studies')}
       value={formatNumber(count)}
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       suffix={i18n.t('progressCards.studiesPeople.unit', { count })}
       tone={count ? 'default' : 'muted'}
       caption={stats.peak ? peakCaption(stats.peak) : none}

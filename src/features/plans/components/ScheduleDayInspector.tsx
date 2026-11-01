@@ -7,7 +7,6 @@ import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntr
 import { RootStackNavigation } from '@/types/rootStack'
 import { TimeEntry } from '@/types/timeEntry'
 
-/** A persistent day workspace beside the calendar on larger windows. */
 export default function ScheduleDayInspector({
   date,
   reports,

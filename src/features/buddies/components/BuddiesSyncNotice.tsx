@@ -34,14 +34,8 @@ const MESSAGES = {
   error: 'buddies_syncFailed',
 } as const
 
-/** Trying again can help: it verifies this device again too. */
 const RETRYABLE = new Set<Notice>(['error', 'unverified', 'verifyLater'])
 
-/**
- * A slim line saying why Buddies couldn't refresh, while what's saved still
- * shows. A plain failure, or a device that couldn't be verified, can be tried
- * again; a spinner takes its place while a sync runs.
- */
 export default function BuddiesSyncNotice({
   notice,
   syncing,

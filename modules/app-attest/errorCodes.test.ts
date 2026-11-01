@@ -5,16 +5,11 @@ import {
   type AppAttestErrorCode,
 } from './errorCodes'
 
-/** The shape expo-modules-jsi >= 57.0.2 delivers: `code` survives rejection. */
 const codedRejection = (token: string): Error =>
   Object.assign(new Error(`App Attest operation failed (${token})`), {
     code: token,
   })
 
-/**
- * The shape expo-modules-jsi 57.0.1 delivered: `JavaScriptPromise.reject`
- * stringified the `Exception` into a bare `Error`, dropping `code` entirely.
- */
 const uncodedRejection = (token: string): Error =>
   new Error(`App Attest operation failed (${token})`)
 
@@ -40,12 +35,6 @@ describe('codeFromNativeError', () => {
     }
   )
 
-  /**
-   * This shape was captured from a simulator run rather than assumed. Under
-   * expo-modules-jsi >= 57.0.2 the message is `Exception.debugDescription`, so
-   * the leading token comes from the exception name and the Swift `description`
-   * is unused; under 57.0.1 there is no `code` either.
-   */
   it('classifies the 57.0.4 message shape even if the code property regresses away', () => {
     expect(
       codeFromNativeError(

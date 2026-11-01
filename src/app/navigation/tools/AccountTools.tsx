@@ -43,7 +43,6 @@ const shortId = (value: string | null | undefined) =>
 const sameBytes = (a: Uint8Array, b: Uint8Array) =>
   a.length === b.length && a.every((byte, i) => byte === b[i])
 
-/** An error as Tools shows it: the server's code when there is one. */
 const describeError = (error: unknown) =>
   error instanceof HttpError
     ? `${error.serverCode ?? error.kind}${error.status ? ` (${error.status})` : ''}`
@@ -57,17 +56,11 @@ type Lookup =
   | { state: 'ok'; info: ServerAccountInfo; at: number }
   | { state: 'failed'; reason: string; at: number }
 
-/** The key's facts, read off the JS thread. */
 type KeyFacts = {
   key: Uint8Array | null
   error: string | null
 }
 
-/**
- * The account key and server account (ADR 0024, 0026): what this device holds,
- * what the server says, and the real flows to change them, then Set Up Another
- * Device's handoff, then the backup.
- */
 export default function AccountTools() {
   const [facts, setFacts] = useState<KeyFacts>({ key: null, error: null })
   const [revision, setRevision] = useState(0)
@@ -119,7 +112,6 @@ export default function AccountTools() {
 
   const fetchFromServer = () =>
     run('Fetch from server', async () => {
-      // Peek, never create: reading the server mustn't mint an account key.
       if (!key) throw new Error('No account key on this device')
       try {
         const answer = await fetchServerAccountInfo(key)
@@ -147,7 +139,6 @@ export default function AccountTools() {
       )
     })
 
-  // Reads open a session when there's none, as any bearer call does.
   const fetchSupporter = () =>
     run('Read Supporter status', async () => {
       setSupporter({ ...(await revenueCatLink.fetchStatus()), at: Date.now() })
@@ -450,7 +441,6 @@ export default function AccountTools() {
   )
 }
 
-/** Paste a recovery key: what's wrong with it, or whose key it is. */
 function RecoveryKeyValidator({
   currentKey,
 }: {

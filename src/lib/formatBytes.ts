@@ -1,7 +1,6 @@
 import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 
-/** A file or blob size for people: `512 B`, `12.3 KB`, `1.25 MB`. */
 export function formatBytes(bytes?: number | null): string {
   if (bytes === undefined || bytes === null) return '—'
   const fixed = (value: number, digits: number) =>

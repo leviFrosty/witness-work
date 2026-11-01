@@ -10,12 +10,6 @@ import i18n from '@/lib/locales'
 import useConversations from '@/stores/conversationStore'
 import { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * The visit form's user-defined fields (e.g. "Publication"), in the order set
- * in Preferences → Conversation Fields, followed by a row that opens that
- * screen. With no fields yet, only that row is shown. Each field suggests
- * values from other visits and lists the contact's earlier ones.
- */
 export default function VisitCustomFieldsSection({
   customFields,
   setCustomField,
@@ -29,7 +23,7 @@ export default function VisitCustomFieldsSection({
   contactId: string
   visitId: string
   visitDate: Date
-  /** Scrolls the form down by this many points, to reveal suggestions. */
+
   scrollBy: (dy: number) => void
 }) {
   const navigation = useNavigation<RootStackNavigation>()

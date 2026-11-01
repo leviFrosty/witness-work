@@ -23,6 +23,7 @@ import {
 } from '@/features/supporter/lib/appStoreRatings'
 
 const live = {
+  complete: true,
   averageRating: 4.9,
   ratingCount: 800,
   countryCount: 50,
@@ -36,14 +37,18 @@ beforeEach(() => {
 })
 
 describe('normalizeAppStoreRatings', () => {
-  it('keeps the three display fields and rejects malformed bodies', () => {
-    expect(normalizeAppStoreRatings(live)).toEqual({
-      averageRating: 4.9,
-      ratingCount: 800,
-      countryCount: 50,
-    })
+  it('keeps complete, dated snapshots and rejects malformed bodies', () => {
+    expect(normalizeAppStoreRatings(live)).toEqual(live)
     expect(normalizeAppStoreRatings({ ...live, averageRating: 6 })).toBeNull()
     expect(normalizeAppStoreRatings({ ...live, ratingCount: 0 })).toBeNull()
+    expect(normalizeAppStoreRatings({ ...live, ratingCount: 1.5 })).toBeNull()
+    expect(normalizeAppStoreRatings({ ...live, countryCount: 0 })).toBeNull()
+    expect(normalizeAppStoreRatings({ ...live, countryCount: 801 })).toBeNull()
+    expect(normalizeAppStoreRatings({ ...live, countryCount: 4.5 })).toBeNull()
+    expect(
+      normalizeAppStoreRatings({ ...live, updatedAt: 'invalid' })
+    ).toBeNull()
+    expect(normalizeAppStoreRatings({ ...live, complete: false })).toBeNull()
     expect(
       normalizeAppStoreRatings({ error: 'Ratings unavailable' })
     ).toBeNull()
@@ -51,6 +56,38 @@ describe('normalizeAppStoreRatings', () => {
 })
 
 describe('refreshAppStoreRatingsIfStale', () => {
+  it('discards the cached incomplete totals from the old API and refreshes immediately', async () => {
+    storage.set(
+      'ratings',
+      JSON.stringify({
+        ratings: { averageRating: 4.96, ratingCount: 72, countryCount: 4 },
+        fetchedAt: Date.now(),
+      })
+    )
+    expect(getAppStoreRatings()).toEqual(FALLBACK_APP_STORE_RATINGS)
+    get.mockResolvedValue({ data: live })
+    expect(await refreshAppStoreRatingsIfStale()).toEqual(live)
+    expect(get).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not replace a verified snapshot with an unverified API response', async () => {
+    get.mockResolvedValue({ data: live })
+    await refreshAppStoreRatingsIfStale(0)
+    resetAppStoreRatingsSession()
+    get.mockResolvedValue({
+      data: {
+        averageRating: 4.96,
+        ratingCount: 72,
+        countryCount: 4,
+        updatedAt: '2026-11-01T03:17:21.060Z',
+      },
+    })
+    expect(
+      await refreshAppStoreRatingsIfStale(APP_STORE_RATINGS_REFRESH_MS)
+    ).toBeNull()
+    expect(getAppStoreRatings()).toEqual(live)
+  })
+
   it('falls back to the bundled snapshot until a fetch succeeds', async () => {
     get.mockRejectedValue(new Error('offline'))
     expect(getAppStoreRatings()).toEqual(FALLBACK_APP_STORE_RATINGS)

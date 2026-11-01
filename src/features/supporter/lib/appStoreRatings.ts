@@ -4,9 +4,11 @@ import apis from '@/constants/apis'
 
 /** Paywall social proof served by ww-api `GET /app-store/ratings`. */
 export interface AppStoreRatings {
+  complete: true
   averageRating: number
   ratingCount: number
   countryCount: number
+  updatedAt: string
 }
 
 interface PersistedAppStoreRatings {
@@ -15,13 +17,15 @@ interface PersistedAppStoreRatings {
 }
 
 /**
- * Real App Store totals as of 2026-09-24, shown until the first fetch lands
+ * Real App Store totals as of 2026-11-01, shown until the first fetch lands
  * (fresh install offline, or before the API's first sweep completes).
  */
 export const FALLBACK_APP_STORE_RATINGS: AppStoreRatings = {
+  complete: true,
   averageRating: 4.89,
-  ratingCount: 734,
+  ratingCount: 769,
   countryCount: 44,
+  updatedAt: '2026-11-01T06:00:44.711Z',
 }
 
 // The API refreshes daily; totals move slowly, so ask about once a week.
@@ -43,17 +47,25 @@ export const normalizeAppStoreRatings = (
   value: unknown
 ): AppStoreRatings | null => {
   if (!isRecord(value)) return null
-  const { averageRating, ratingCount, countryCount } = value
+  const { complete, averageRating, ratingCount, countryCount, updatedAt } =
+    value
   if (
+    complete !== true ||
+    typeof updatedAt !== 'string' ||
+    !Number.isFinite(Date.parse(updatedAt)) ||
     !isNonNegative(averageRating) ||
     averageRating > 5 ||
     !isNonNegative(ratingCount) ||
     !isNonNegative(countryCount) ||
+    !Number.isSafeInteger(ratingCount) ||
+    !Number.isSafeInteger(countryCount) ||
+    countryCount === 0 ||
+    countryCount > ratingCount ||
     ratingCount === 0
   ) {
     return null
   }
-  return { averageRating, ratingCount, countryCount }
+  return { complete, averageRating, ratingCount, countryCount, updatedAt }
 }
 
 const loadPersisted = (): PersistedAppStoreRatings | null => {
@@ -61,7 +73,7 @@ const loadPersisted = (): PersistedAppStoreRatings | null => {
   if (!raw) return null
   try {
     const value = JSON.parse(raw) as unknown
-    if (!isRecord(value) || typeof value.fetchedAt !== 'number') return null
+    if (!isRecord(value) || !isNonNegative(value.fetchedAt)) return null
     const ratings = normalizeAppStoreRatings(value.ratings)
     return ratings ? { ratings, fetchedAt: value.fetchedAt } : null
   } catch {

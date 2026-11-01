@@ -47,7 +47,7 @@ _Avoid_: "settings" (Preferences is the canonical term used in code, store names
 ### Field activity
 
 **Time Entry**:
-A single logged session of field-ministry time on a given date (hours and minutes, optional tag, optional note, optional LDC / credit flags). The granular record the User adds, edits, or deletes.
+A single logged session of field-ministry time on a given date (hours and minutes, an optional **Category**, an optional note). The granular record the User adds, edits, or deletes. Whether it counts as **Credit Time** comes from its Category.
 _Avoid_: "service report" for the single-entry concept (reserved for the monthly aggregate).
 
 **Service Report**:
@@ -63,7 +63,7 @@ Ministry time that counts toward monthly hours but isn't ordinary house-to-house
 _Avoid_: "credit hours" (use Credit Time), "non-preaching time".
 
 **LDC Time**:
-A specific, common variety of Credit Time: volunteer construction work for Kingdom Halls or Assembly Halls (Local Design / Construction). Pre-flagged on the Time Entry for convenience because it's frequent; otherwise it behaves identically to any other Credit Time and is gated by the same cap.
+A specific, common variety of Credit Time: volunteer construction work for Kingdom Halls or Assembly Halls (Local Design / Construction). Offered as a built-in **Category** for convenience because it's frequent (it can't be renamed or deleted); otherwise it behaves identically to any other Credit Time and is gated by the same cap.
 _Avoid_: treating LDC as a separate bucket from Credit — it isn't.
 
 **Category**:
@@ -506,9 +506,9 @@ _Avoid_: "time display format" (legacy label; the persisted key `timeDisplayForm
 
 ## Example dialogue
 
-> **Dev:** When the **User** logs a **Time Entry** with the LDC flag, does the **Service Report** show that as LDC hours or as **Credit Time**?
+> **Dev:** When the **User** logs a **Time Entry** in the LDC Category, does the **Service Report** show that as LDC hours or as **Credit Time**?
 >
-> **Domain expert:** Both. **LDC Time** is just a kind of Credit Time — the LDC flag lets the Service Report break it out as its own line, but the cap math counts it as Credit. Same goes for **Bethel** — different label, same bucket.
+> **Domain expert:** Both. **LDC Time** is just a kind of Credit Time — the LDC Category lets the Service Report break it out as its own line, but the cap math counts it as Credit. Same goes for **Bethel** — different label, same bucket.
 >
 > **Dev:** What about a **Visit** marked **Not at Home** — does that bump the Service Report's bible-study count?
 >

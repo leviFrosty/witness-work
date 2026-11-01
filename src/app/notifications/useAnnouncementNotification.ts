@@ -10,11 +10,6 @@ import { _i18n } from '@/lib/locales'
 import { parseAnnouncement } from '@/features/notifications/lib/announcement'
 import type { NotificationItem } from '@/types/notifications'
 
-/**
- * A notice set remotely through the `announcement` feature flag's payload (see
- * `parseAnnouncement`), for news that can't wait for a release. Turning the
- * flag off removes it; a new `id` lists it again for people who dismissed it.
- */
 export default function useAnnouncementNotification(): NotificationItem | null {
   const enabled = useFeatureFlag('announcement')
   const payload = useFeatureFlagPayload('announcement')

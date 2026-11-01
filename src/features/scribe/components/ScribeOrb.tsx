@@ -21,60 +21,40 @@ import { orbPalette } from '@/features/scribe/shaders/orbPalette'
 
 export type ScribeOrbState =
   | 'idle'
-  /** A small spinner; leaving it snaps a dot into place that springs open. */
   | 'loading'
   | 'listening'
   | 'organizing'
   | 'disabled'
 
 interface Props {
-  /** Canvas size; the sphere is `core` of it and the rest is glow. */
   size: number
   state: ScribeOrbState
-  /** 0–1 voice level from the capture; drives the orb while listening. */
+
   level?: SharedValue<number>
-  /** Offline: grey and still, like `disabled`. */
+
   offline?: boolean
-  /** Core radius as a fraction of the canvas. */
+
   core?: number
-  /** Makes the orb one accessible element with this (state) label. */
+
   accessibilityLabel?: string
-  /**
-   * In a scroll view (Home): stop drawing while scrolled out of the window.
-   * Elsewhere leave it off; measuring a view that is going away warns.
-   */
+
   pausesOffscreen?: boolean
   style?: StyleProp<ViewStyle>
 }
 
 const CROSSFADE_MS = 450
-// The ready snap: the spinner closes into a dot, which springs open once it
-// has registered.
+
 const POP_MS = 110
 const GROW_DELAY_MS = 160
 const GROW_SPRING = { damping: 13, stiffness: 190, mass: 0.9 }
-// Level smoothing time constants (s). The meter steps every 80 ms; the first
-// stage follows it (quick to rise, slower to fall) and the second rounds off
-// its corners, so the orb glides instead of stepping.
+
 const LEVEL_RISE = 0.06
 const LEVEL_FALL = 0.26
 const LEVEL_GLIDE = 0.07
-// Flow speed (per s) quiet and at full voice. The phase is integrated, so a
-// change in speed never jumps the pattern.
+
 const FLOW_BASE = 0.22
 const FLOW_VOICE = 0.3
 
-/**
- * The Scribe AI orb: a Skia shader on the UI thread that breathes when idle,
- * swells and ripples with the voice level (fast attack, slow release), and
- * shrinks into a circling ring while organizing. `loading` shows a small
- * spinner; leaving it snaps a dot into place that springs open into the orb. It
- * stops drawing while its screen is covered or blurred, the app is in the
- * background, or (with `pausesOffscreen`) it has scrolled out of the window, so
- * Home pays nothing for it when it's out of sight. Reduce Motion swaps it for a
- * still ring whose opacity and width follow the level; a shader that fails to
- * compile falls back to a plain circle.
- */
 const ScribeOrb = ({
   size,
   state,
@@ -134,8 +114,6 @@ const ScribeOrb = ({
     grow.value = withDelay(GROW_DELAY_MS, withSpring(1, GROW_SPRING))
   }, [loading, reduceMotion, load, pop, grow])
 
-  // A still orb (offline, disabled) needs no frames; neither does one nobody
-  // can see.
   const visible = focused && appActive && !muted
   const onScreen = useOnScreen(ref, visible && pausesOffscreen)
   const running = visible && (!pausesOffscreen || onScreen)

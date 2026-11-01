@@ -9,11 +9,6 @@ import PlanDetailsSummary from '@/features/plans/components/PlanDetailsSummary'
 
 const NOT_ANSWERING: ShareAnswering = { busy: false, answer: () => {} }
 
-/**
- * A buddy's Plan invitation with no Plan on the User's schedule: not answered
- * yet, or answered "Can't make it". Going adds the Plan back, and Plan Details
- * shows it. Without `answering` (the Plan has happened) it's only shown.
- */
 export default function InvitationPlanDetails({
   share,
   answering,

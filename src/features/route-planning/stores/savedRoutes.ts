@@ -5,14 +5,12 @@ import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
 import type { SavedRoute } from '@/features/route-planning/lib/routeBuilder'
 
-/** Routes for days this long gone are dropped. */
 const KEEP_PAST_DAYS = 14
 
 type SavedRoutesState = {
-  /** By local day, `YYYY-MM-DD`. */
   routes: Record<string, SavedRoute>
   save: (route: SavedRoute) => void
-  /** Forget the day's route, so it's rebuilt from the day's stops. */
+
   clear: (day: string) => void
 }
 
@@ -23,10 +21,6 @@ const withoutStale = (routes: Record<string, SavedRoute>) => {
   )
 }
 
-/**
- * Routes the User built in the route builder. Device-local for now: not in
- * iCloud or Google Drive sync, or in backups.
- */
 export const useSavedRoutes = create<SavedRoutesState>()(
   persist(
     (set) => ({

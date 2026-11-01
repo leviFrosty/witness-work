@@ -21,17 +21,11 @@ import {
   buildNwPublisherLink,
 } from '@/features/service-reports/lib/submitLinks'
 
-/** Where a report export started, for analytics. */
 export type ReportExportSource = 'report_screen' | 'context_menu'
 
-/** `YYYY-MM`, the key `submittedReportMonths` and comment overrides use. */
 export const reportMonthKey = (month: number, year: number) =>
   moment().month(month).year(year).format('YYYY-MM')
 
-/**
- * Which month an export sends, relative to today, for analytics: `current` is a
- * report sent before its month is over.
- */
 const reportMonthAge = ({ month, year }: { month: number; year: number }) => {
   const sent = moment({ year, month })
   const thisMonth = moment().startOf('month')
@@ -41,11 +35,6 @@ const reportMonthAge = ({ month, year }: { month: number; year: number }) => {
   return 'other'
 }
 
-/**
- * A month's report built from the stores' current state — for exports started
- * outside the report screen (menus), so a list of months doesn't build every
- * report up front.
- */
 export const getMonthReportData = (
   month: number,
   year: number
@@ -70,10 +59,6 @@ export const getMonthReportData = (
   })
 }
 
-/**
- * Export methods that can send this month's report. NW Publisher only accepts
- * the previous month's report.
- */
 export const availableExportMethods = (
   data: Pick<MonthReportData, 'isLastMonth'>
 ): ReportExportMethod[] =>
@@ -81,15 +66,8 @@ export const availableExportMethods = (
     ? ['copy', 'share', 'hourglass', 'nwpublisher']
     : ['copy', 'share', 'hourglass']
 
-/** The hand-off waiting for the user to say whether it sent, if any. */
 let pendingHandOff: { settle: (sent: boolean) => void } | null = null
 
-/**
- * Hourglass and NW Publisher take the report over the internet, so one opened
- * while the device is offline may never have received it. Asks the user once
- * they're back in the app, and resolves whether they say it sent. A newer
- * hand-off replaces one still waiting, which counts as not sent.
- */
 const confirmOfflineHandOff = (
   method: 'hourglass' | 'nwpublisher',
   properties: { source: ReportExportSource; report_month: string }
@@ -131,10 +109,6 @@ const confirmOfflineHandOff = (
     })
   })
 
-/**
- * Opens Hourglass or NW Publisher with the report. Resolves `true` once it
- * opened online; offline, only after the user says it sent.
- */
 const handOffReport = async (
   method: 'hourglass' | 'nwpublisher',
   url: string,
@@ -149,13 +123,6 @@ const handOffReport = async (
   return offline ? confirmOfflineHandOff(method, properties) : true
 }
 
-/**
- * Sends a month's report by `method` and records the export. Resolves `true`
- * when the report was handed off, so the caller can mark it submitted; `false`
- * when the share sheet was dismissed, the app or site didn't open, the method
- * isn't available, (Android Share) there's no telling whether it was sent, or
- * the user says a hand-off opened offline didn't send.
- */
 export const exportMonthReport = async (
   method: ReportExportMethod,
   data: MonthReportData,
@@ -179,13 +146,10 @@ export const exportMonthReport = async (
       shared ? 'service_report_exported' : 'service_report_export_dismissed',
       { method: 'share', source, report_month }
     )
-    // Android resolves `sharedAction` even when the sheet is dismissed, so a
-    // share there leaves the month unmarked; Mark as Sent records it.
+
     return shared && Platform.OS !== 'android'
   }
 
-  // NW Publisher has a separate credit field, so its default remark only
-  // needs the overage. Hourglass carries the credit breakdown in remarks.
   const remarks = data.hasNotesOverride
     ? data.notes || undefined
     : data.creditOverageHours > 0

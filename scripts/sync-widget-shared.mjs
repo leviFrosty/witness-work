@@ -1,19 +1,5 @@
 #!/usr/bin/env node
-// Sync generated sources for the @bacons/apple-targets targets:
-//
-// - Shared Swift from Expo modules (and the watch and Siri targets) into the
-//   targets that compile it. The source is the source of truth; targets get
-//   copies because Xcode/EAS tarball flow does not reliably preserve symlinks
-//   across the local-build project archive.
-// - String catalogs for the watch, Siri (`targets/intents`), the iPhone
-//   widgets (`targets/widgets`), and the Buddies alerts' Notification Service
-//   Extension (`targets/notification-service`) from `src/locales`, so their
-//   bundled strings and Siri phrases use the same translations as the app,
-//   and English where a language has none yet.
-// - The Wear OS app's (`targets/wear-os`) copy of the Kotlin watch protocol,
-//   and its string resources from `src/locales`.
-//
-// `--check` reports drift instead of writing (pre-commit hook).
+
 import {
   readFileSync,
   readdirSync,
@@ -27,7 +13,6 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = join(here, '..')
 
-/** Each entry copies `files` from the `from` directory into each `to` directory. */
 const syncs = [
   {
     from: 'modules/stopwatch-bridge/ios',
@@ -50,8 +35,6 @@ const syncs = [
     files: ['AppGroup.swift'],
   },
   {
-    // Siri changes the timer from its own process. Not the Live Activity
-    // intents: they'd be listed as Siri actions too.
     from: 'modules/stopwatch-bridge/ios',
     to: ['targets/intents/Shared'],
     files: [
@@ -75,13 +58,11 @@ const syncs = [
     files: ['IntentInbox.swift'],
   },
   {
-    // The same Siri actions on the iPhone and the watch.
     from: 'targets/intents',
     to: ['targets/watch/Shared'],
     files: ['ServiceIntents.swift', 'ServiceShortcuts.swift'],
   },
   {
-    // The same messages between the Android phone and the Wear OS watch.
     from: 'modules/watch-bridge/android/src/main/java/com/leviwilkerson/witnesswork/watchprotocol',
     to: [
       'targets/wear-os/src/main/java/com/leviwilkerson/witnesswork/watchprotocol',
@@ -89,15 +70,11 @@ const syncs = [
     files: ['WatchProtocol.kt'],
   },
   {
-    // The phone → watch contract, decoded by both sides' tests
-    // (src/__tests__/watchProtocolContract.test.ts).
     from: 'modules/watch-bridge/android/src/test/resources',
     to: ['targets/wear-os/src/test/resources'],
     files: ['phone-context.json'],
   },
   {
-    // Direction and digits in the app's Language, for the watch and both
-    // widget extensions.
     from: 'targets/watch',
     to: ['targets/watch-widgets/Shared', 'targets/widgets/Shared'],
     files: ['AppLanguage.swift'],
@@ -115,11 +92,6 @@ const syncs = [
   },
 ]
 
-/**
- * Each `src/locales` file's native names (`scripts/native-languages.json`,
- * which `app.config.ts` also reads to declare the app's languages). A file may
- * name a language alone (`ar.json`) or with its region (`es-ES.json`).
- */
 const nativeLanguages = JSON.parse(
   readFileSync(join(here, 'native-languages.json'), 'utf8')
 )
@@ -127,37 +99,25 @@ const languageFiles = Object.keys(nativeLanguages).filter(
   (file) => !file.startsWith('$')
 )
 
-/** `src/locales` file → Apple localization identifier. */
 const appleLanguages = Object.fromEntries(
   languageFiles.map((file) => [file, nativeLanguages[file].apple])
 )
 
-/**
- * `src/locales` file → Android resource qualifier (`values-<qualifier>`).
- * English is the default `values`, which Android falls back to for a missing
- * key.
- */
 const androidQualifiers = Object.fromEntries(
   languageFiles.map((file) => [file, nativeLanguages[file].android])
 )
 
-/** `mileage.car` reads the nested `mileage` object, like i18n does. */
 function lookup(strings, key) {
   if (typeof strings[key] === 'string') return strings[key]
   const value = key.split('.').reduce((node, part) => node?.[part], strings)
   return typeof value === 'string' ? value : undefined
 }
 
-/** The translation of `key`, unless it's missing or blank. */
 function translation(strings, key) {
   const value = lookup(strings, key)
   return value?.trim() ? value : undefined
 }
 
-/**
- * Every `src/locales` file by name (`es-ES`). Fails on a file with no Apple
- * language, so a new language can't be left out of the catalogs.
- */
 export function readLocales(directory) {
   const files = readdirSync(directory)
     .filter((name) => name.endsWith('.json'))
@@ -180,10 +140,6 @@ export function readLocales(directory) {
   )
 }
 
-/**
- * Xcode's String Catalog JSON layout (`"key" : value`, sorted keys), so a build
- * that rewrites the catalog leaves it unchanged.
- */
 function catalogJson(value, indent = '') {
   const next = indent + '  '
   if (Array.isArray(value)) {
@@ -212,12 +168,6 @@ function english(locales, key) {
   return value
 }
 
-/**
- * A string catalog with `keys` in every language. A bundle doesn't fall back to
- * English for a key its language lacks; Siri and the watch would show the key
- * itself. So until a language has a translation it gets the English text,
- * marked for review, as the app does (`enableFallback` in `src/lib/locales`).
- */
 export function stringCatalog(locales, keys) {
   const strings = {}
   for (const key of new Set(keys)) {
@@ -246,7 +196,6 @@ const APP_NAME = '${applicationName}'
 const PLACEHOLDER = /\$\{(\w+)\}/g
 const SWIFT_PLACEHOLDER = /\\\((?:\.applicationName|\\\.\$(\w+))\)/g
 
-/** A phrase as written in Swift: `\(.applicationName)`, `\(\.$parameter)`. */
 const swiftPhrase = (phrase) =>
   phrase.replace(PLACEHOLDER, (placeholder, name) =>
     placeholder === APP_NAME ? '\\(.applicationName)' : `\\(\\.$${name})`
@@ -254,17 +203,6 @@ const swiftPhrase = (phrase) =>
 const placeholders = (phrase) =>
   [...phrase.matchAll(PLACEHOLDER)].map(([placeholder]) => placeholder)
 
-/**
- * Siri phrases, keyed by the English phrase as Apple writes it, with
- * `${applicationName}` and `${parameter}` for Swift's `\(.applicationName)` and
- * `\(\.$parameter)`. A language without a translation has no phrases: Siri
- * listens in one language, so English phrases wouldn't help there, and the
- * actions still appear in the Shortcuts app.
- *
- * Returns the catalog and what's wrong with any phrase. Apple requires the app
- * name in each phrase, phrases can't take numbers (a parameter can, from its
- * `AppEnum`), and two can't be the same.
- */
 export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
   const problems = []
   const englishPhrases = new Set()
@@ -332,11 +270,6 @@ export function shortcutCatalog(locales, phraseKeys, shortcutsSwift) {
   return { catalog: catalog(strings), problems }
 }
 
-/**
- * The watch's strings with the wording for an Android phone: keys listed under
- * `androidVariants` read `<key>Android` (e.g. "your phone" for "your iPhone").
- * `buildWatchSnapshot` sends the same wording from an Android phone.
- */
 export function wearKeys(keys) {
   return [
     ...new Set([...keys.strings, ...keys.widgetStrings, ...keys.wearStrings]),
@@ -348,7 +281,6 @@ export function wearKeys(keys) {
     }))
 }
 
-/** A string resource value, escaped as aapt2 reads it. */
 function androidString(value) {
   const escaped = value
     .replace(/\\/g, '\\\\')
@@ -364,15 +296,9 @@ function androidString(value) {
 const GENERATED_XML =
   '<!-- Generated by scripts/sync-widget-shared.mjs from src/locales. Do not edit. -->'
 
-/**
- * `values-<qualifier>/watch_strings.xml` for the Wear OS app, by resource
- * directory. The default (`values`) has every key in English; a language lists
- * only what it has translated, and Android falls back to English for the rest,
- * as the app does.
- */
 export function wearStringResources(locales, keys) {
   const strings = wearKeys(keys)
-  /** @type {Record<string, string>} */
+
   const resources = {}
   for (const [file, values] of Object.entries(locales)) {
     const qualifier = androidQualifiers[file]
@@ -395,7 +321,6 @@ export function wearStringResources(locales, keys) {
   return resources
 }
 
-/** `BundledStrings.kt`: each key's resource, so `L10n` can look keys up by name. */
 export function wearBundledStrings(keys) {
   const entries = wearKeys(keys)
     .map(({ name }) => `    "${name}" to R.string.${name},`)
@@ -413,10 +338,6 @@ ${entries}
 `
 }
 
-/**
- * Keys Kotlin passes to `L10n.t`, `L10n.line` or a `t` lambda as string
- * literals.
- */
 export function kotlinL10nKeys(kotlin) {
   const keys = new Set()
   for (const [, key] of kotlin.matchAll(
@@ -427,7 +348,6 @@ export function kotlinL10nKeys(kotlin) {
   return keys
 }
 
-/** Keys `swift` passes to `L10n.t` or `L10n.line` as string literals. */
 export function l10nKeys(swift) {
   const keys = new Set()
   for (const [, argument] of swift.matchAll(/L10n\.(?:t|line)\(([^,)]*)/g)) {
@@ -436,10 +356,6 @@ export function l10nKeys(swift) {
   return keys
 }
 
-/**
- * Keys the Notification Service Extension's Swift passes to `t` as string
- * literals, including those in a literal key table (`"invite": "<key>"`).
- */
 export function alertTextKeys(swift) {
   const keys = new Set()
   for (const [, key] of swift.matchAll(/\bt\(\s*"([A-Za-z0-9_.]+)"/g))
@@ -449,7 +365,6 @@ export function alertTextKeys(swift) {
   return keys
 }
 
-/** The source files ending in `extension` in `directory` and below. */
 function readSources(directory, extension) {
   return readdirSync(directory, { recursive: true })
     .filter((name) => name.endsWith(extension))
@@ -485,8 +400,6 @@ function main() {
     }
   }
 
-  // --- Watch and Siri string catalogs ---
-
   const keys = JSON.parse(
     readFileSync(join(repo, 'src/app/watch/watchStringKeys.json'), 'utf8')
   )
@@ -496,7 +409,7 @@ function main() {
     'targets/watch/Localizable.xcstrings',
     stringCatalog(locales, [...keys.strings, ...keys.intentStrings])
   )
-  // The complications bundle only the few strings they show.
+
   const unlisted = [
     ...l10nKeys(readSwift(join(repo, 'targets/watch-widgets'))),
   ].filter((key) => !keys.widgetStrings.includes(key))
@@ -514,8 +427,6 @@ function main() {
     stringCatalog(locales, keys.intentStrings)
   )
 
-  // The iPhone widgets' names and descriptions in the widget gallery, and
-  // labels for before the app's first snapshot.
   const iosWidgetUnlisted = [
     ...l10nKeys(readSwift(join(repo, 'targets/widgets'))),
   ].filter((key) => !keys.iosWidgetStrings.includes(key))
@@ -529,7 +440,6 @@ function main() {
     stringCatalog(locales, keys.iosWidgetStrings)
   )
 
-  // The Notification Service Extension words Buddies alerts from these.
   const alertKeys = new Set(keys.notificationStrings)
   const alertUnlisted = [
     ...alertTextKeys(readSwift(join(repo, 'targets/notification-service'))),
@@ -555,8 +465,6 @@ function main() {
   }
   sync('targets/watch/AppShortcuts.xcstrings', shortcuts.catalog)
   sync('targets/intents/AppShortcuts.xcstrings', shortcuts.catalog)
-
-  // --- Wear OS strings ---
 
   const missingVariants = keys.androidVariants.filter(
     (key) => !translation(locales['en-US'], `${key}Android`)

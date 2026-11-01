@@ -1,9 +1,3 @@
-/**
- * The small square sign on the right of the back wall (frame x 134–159, y
- * 12–37, hung from a nail at x 147, y 8). Muted colours blended with the wall,
- * digits and icons only, so it needs no translation. Digits follow
- * `SignData.digits` (Latin or Eastern Arabic).
- */
 import type { DigitSystem } from '@/lib/digits'
 import { localizeNumeral } from '@/lib/digits'
 import {
@@ -25,36 +19,30 @@ import { WALL_RGB, wallDarkness, type WallColor } from './wall'
 export { SIGN_IDS }
 export type { SignId }
 
-/**
- * Values the sign can show. All counts are for the current month or service
- * year.
- */
 export interface SignData {
-  /** Minutes this month (the sign shows hours to one decimal). */
   readonly monthMinutes: number
-  /** Monthly hour goal; 0 hides the progress fill. */
+
   readonly monthGoal: number
-  /** Hours per month of the service year, September first (12 values). */
+
   readonly yearBars: readonly number[]
-  /** Index into `yearBars` / `sharedMonths` of the current month. */
+
   readonly currentMonthIndex: number
-  /** Minutes this service year. */
+
   readonly yearMinutes: number
-  /** Months of the service year with shared-in-ministry checked (12 values). */
+
   readonly sharedMonths: readonly boolean[]
-  /** Day of month of the next plan, or null when none. */
+
   readonly planDay: number | null
-  /** Minutes of the next plan, or null when none. */
+
   readonly planMinutes: number | null
-  /** Conversations this month. */
+
   readonly conversations: number
-  /** Return visits this month. */
+
   readonly returnVisits: number
-  /** Digits to draw. */
+
   readonly digits: DigitSystem
 }
 
-/** Sample values (the design board's demo data). */
 export const DEMO_SIGN_DATA: SignData = {
   monthMinutes: 870,
   monthGoal: 30,
@@ -82,7 +70,6 @@ export const DEMO_SIGN_DATA: SignData = {
   digits: 'latn',
 }
 
-/** Sign frame bounds (half-open). */
 export const SIGN_BOUNDS = { x0: 134, y0: 12, x1: 160, y1: 38 } as const
 const CX = 147
 
@@ -98,7 +85,6 @@ const CHECK = ['.....x', '....xx', 'x..xx.', 'xxxx..', '.xx...']
 const BUBBLE = ['ooooooo', 'o.k.k.o', 'ooooooo', '.o.....']
 const HOUSE = ['...o...', '..ooo..', '.ooooo.', '..o.o..', '..ooo..']
 
-/** Sign colours for a wall. */
 interface Ink {
   readonly paper: Rgb
   readonly frame: Rgb
@@ -108,7 +94,6 @@ interface Ink {
 }
 
 function inkFor(wall: Rgb): Ink {
-  // On a dark wall the paper takes less of it, so the numbers still read.
   const paper = mix(PAPER, wall, 0.45 - 0.2 * wallDarkness(wall))
   const ink = mix(INK_BASE, paper, 0.38)
   return {
@@ -120,7 +105,6 @@ function inkFor(wall: Rgb): Ink {
   }
 }
 
-/** A number as the sign writes it: at most one decimal, in `digits`. */
 export function signNumber(value: number | null, digits: DigitSystem): string {
   if (value === null || !Number.isFinite(value)) return '-'
   const text = String(Math.round(value * 10) / 10)
@@ -131,26 +115,18 @@ function signText(text: string, digits: DigitSystem): string {
   return digits === 'arab' ? localizeNumeral(text, 'ar') : text
 }
 
-/**
- * A cap such as `99+` with `nines` nines. Arabic puts the plus on the left,
- * where a right-to-left reader sees it.
- */
 function signCap(nines: number, digits: DigitSystem): string {
   const n = signText('9'.repeat(nines), digits)
   return digits === 'arab' ? `+${n}` : `${n}+`
 }
 
-/**
- * {@link signNumber} made to fit `maxWidth` pixels: the decimal goes first, then
- * the number is capped (`999+`, `99+`, …) below its real value.
- */
 export function fitSignNumber(
   value: number | null,
   digits: DigitSystem,
   maxWidth: number
 ): string {
   if (value === null || !Number.isFinite(value)) return '-'
-  // Huge values print in exponent notation (1e+21), which isn't a count.
+
   const plain = Math.abs(value) < 1e15
   const exact = signNumber(value, digits)
   if (plain && textWidth(exact) <= maxWidth) return exact
@@ -166,18 +142,17 @@ export function fitSignNumber(
   return signCap(1, digits)
 }
 
-/** Widest text centred on the sign: the paper less a pixel on each side. */
 export const SIGN_TEXT_WIDTH = SIGN_BOUNDS.x1 - SIGN_BOUNDS.x0 - 4
-/** Widest day number inside the calendar page of the `plan` sign. */
+
 const PLAN_DAY_WIDTH = 9
-/** The `convos` counts: centred between the icons and the paper's margin. */
+
 const COUNT_SLOT = { x0: 146, width: 12 } as const
 
 interface Painter {
   readonly buf: PixelBuffer
   readonly ink: Ink
   readonly data: SignData
-  /** Text centred on the sign. */
+
   centered(text: string, y: number, c?: Rgb): void
 }
 
@@ -247,7 +222,6 @@ const CONTENT: Readonly<Record<Exclude<SignId, 'none'>, (p: Painter) => void>> =
     },
   }
 
-/** Paints the sign (nothing for `none`) in colours blended with `wall`. */
 export function drawSign(
   buf: PixelBuffer,
   sign: SignId,

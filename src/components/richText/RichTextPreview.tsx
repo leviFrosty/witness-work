@@ -94,11 +94,6 @@ function lines(
   })
 }
 
-/**
- * A rich note squeezed into one `Text` so it can be clamped with
- * `numberOfLines`: each block on its own line, list markers inline, and photos
- * left out (a photo-only note says how many photos it has).
- */
 const RichTextPreview = (props: {
   doc: RichTextDoc
   numberOfLines?: number
@@ -123,10 +118,7 @@ const RichTextPreview = (props: {
         style={[props.style, { color: theme.colors.textAlt }]}
         numberOfLines={props.numberOfLines}
       >
-        {
-          // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-          i18n.t('richText_photoCount', { count })
-        }
+        {i18n.t('richText_photoCount', { count })}
       </Text>
     )
   }

@@ -10,11 +10,6 @@ import type { Coordinate } from '@/types/contact'
 
 const ZOOMED_IN = { latitudeDelta: 0.005, longitudeDelta: 0.005 }
 
-/**
- * A map to put one pin on: tap or touch and hold to drop it, drag it to fine
- * tune. Opens on the pin, else `around`, else on the device's location.
- * `otherPins` show in gray for reference, e.g. the User's other Contacts.
- */
 export default function PinPickerMap({
   coordinate,
   onChange,
@@ -27,13 +22,10 @@ export default function PinPickerMap({
 }: {
   coordinate: Coordinate | undefined
   onChange: (coordinate: Coordinate) => void
-  /** The map moved: its center, e.g. to drop the pin there. */
+
   onRegionChange?: (region: Region) => void
   otherPins?: { id: string; coordinate: Coordinate }[]
-  /**
-   * Where to open with no pin yet, e.g. a route's start, before the device's
-   * location.
-   */
+
   around?: Coordinate
   pinId?: string
   mapRef?: Ref<MapView>
@@ -42,7 +34,7 @@ export default function PinPickerMap({
   const theme = useTheme()
   const { colorScheme } = usePreferences()
   const [hasLocationPermission, setHasLocationPermission] = useState(false)
-  // Undefined while looking, null when there's no fix to open on.
+
   const [userLocation, setUserLocation] = useState<Region | null>()
   const [opensOn] = useState(coordinate ?? around)
 

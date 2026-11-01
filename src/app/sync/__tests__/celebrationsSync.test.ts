@@ -66,7 +66,7 @@ describe('celebrations follow the account', () => {
       celebratedMilestones: { '2026': [600] },
       homeChecklistAllDoneCelebrated: true,
     })
-    // The Supporter note in the tray stays with the device that showed it.
+
     expect(synced).not.toHaveProperty('homeChecklistCompletedAt')
     expect(usePreferences.getState().preferenceUpdatedAt).toMatchObject({
       celebratedTiers: expect.any(Number),
@@ -201,7 +201,6 @@ describe('celebrations follow the account', () => {
       homeChecklistAllDoneCelebrated: true,
     })
 
-    // This device has since celebrated more than the backup holds.
     usePreferences.setState({
       celebratedTiers: { '2026-10': ['reached'] },
       celebratedMilestones: { '2025': [600] },

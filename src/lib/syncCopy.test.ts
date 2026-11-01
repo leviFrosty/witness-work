@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Sync copy names iCloud unless the device syncs through Google Drive.
-
 const load = async () => {
   const { syncKey } = await import('@/lib/syncCopy')
   const { registerAndroidSyncTransport } = await import(
@@ -26,7 +24,7 @@ describe('syncKey', () => {
     registerAndroidSyncTransport({ kind: 'google-drive' } as never)
     expect(syncKey('iCloudSync')).toBe('iCloudSyncAndroid')
     expect(syncKey('iCloudEnableLabel')).toBe('iCloudEnableLabelAndroid')
-    // Neutral wording has no variant.
+
     expect(syncKey('iCloudSyncNow')).toBe('iCloudSyncNow')
   })
 
@@ -38,7 +36,7 @@ describe('syncKey', () => {
     registerAndroidSyncTransport({ kind: 'google-drive' } as never)
     registerCloudSyncCopy({ offered: () => true, used: () => true })
     expect(syncKey('iCloudSync')).toBe('iCloudSyncCloud')
-    // No Cloud variant: Drive's, then the base string.
+
     expect(syncKey('iCloudSyncNow')).toBe('iCloudSyncNow')
     const { platformSyncKey } = await import('@/lib/syncCopy')
     expect(platformSyncKey('iCloudSync')).toBe('iCloudSyncAndroid')
@@ -56,7 +54,7 @@ describe('optionSyncKey', () => {
     expect(optionSyncKey('iCloudUnavailable_description', 'platform')).toBe(
       'iCloudUnavailable_descriptionAndroid'
     )
-    // No Cloud variant: the platform's wording.
+
     expect(optionSyncKey('iCloudSyncNow', 'cloud')).toBe('iCloudSyncNow')
   })
 })

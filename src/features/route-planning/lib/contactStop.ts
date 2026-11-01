@@ -3,10 +3,6 @@ import type { Contact, Coordinate } from '@/types/contact'
 import { coordinateText } from '@/features/route-planning/lib/coordinateText'
 import type { AddedStop } from '@/features/route-planning/lib/routeBuilder'
 
-/**
- * A Contact as a stop added by hand. Navigation apps get the address, or the
- * pin when the User moved it or there's no address.
- */
 export const contactStop = (
   contact: Contact & { coordinate: Coordinate }
 ): AddedStop => {

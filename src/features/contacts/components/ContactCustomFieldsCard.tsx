@@ -14,11 +14,6 @@ import { tracking } from '@/lib/tracking'
 const WIDE_LABEL = 22
 const WIDE_VALUE = 36
 
-/**
- * The contact's custom fields in a two-column grid, in the user's field order.
- * Long labels or values get a full row instead of a cramped half cell. Renders
- * nothing when the contact has no custom field values.
- */
 const ContactCustomFieldsCard = ({ contact }: { contact: Contact }) => {
   const theme = useTheme()
   const customFieldDefs = useContacts((state) => state.customFieldDefs)

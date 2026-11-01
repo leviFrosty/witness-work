@@ -22,42 +22,29 @@ import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 export type ContactMenuOptions = {
-  /** Adds "Open Contact" for surfaces whose tap does something else. */
   showOpen?: boolean
-  /** Contact sharing lives in the contacts feature; pass it to offer Share. */
+
   onShare?: () => void
-  /** Overrides the default edit navigation (e.g. the embedded detail pane). */
+
   onEdit?: () => void
-  /** Overrides the default visit-form navigation. */
+
   onAddVisit?: (notAtHome: boolean) => void
-  /**
-   * Runs after the contact is dismissed, archived, or deleted (e.g. leave its
-   * screen).
-   */
+
   onRemoved?: () => void
-  /** Adds "Select", starting the list's Select mode with this contact checked. */
+
   onSelect?: () => void
-  /** Adds "Not Now" ahead of Dismiss For, for a suggestion to step back. */
+
   onNotNow?: () => void
 }
 
-/**
- * The removal half of a Contact's menu: Dismiss For ▸ durations, Archive, and a
- * red Delete Permanently…. Archive keeps the Contact to restore later, so it
- * isn't styled destructive; Delete is, and confirms first (see
- * `useRemoveContacts`). Data protection mode has no Archive. Shared by the
- * contact menu and Contact Details' More menu. Dismissing an already dismissed
- * Contact changes its duration.
- */
 export function useContactRemovalActions(
   contact: Contact | undefined,
   {
     onDismissed,
     onRemoved,
   }: {
-    /** Runs after the contact is dismissed. */
     onDismissed?: () => void
-    /** Runs after an archive or delete is confirmed. */
+
     onRemoved?: () => void
   } = {}
 ): {
@@ -102,11 +89,6 @@ export function useContactRemovalActions(
   }
 }
 
-/**
- * The one menu for a Contact, wherever it appears (list rows, map cards, study
- * rows, follow-ups), so long-pressing a person always offers the same actions.
- * Every item also lives on Contact Details.
- */
 export default function useContactMenuActions(
   contact: Contact | undefined,
   options: ContactMenuOptions = {}
@@ -155,7 +137,7 @@ export default function useContactMenuActions(
         systemImage: 'bubble.left.and.bubble.right',
         onPress: () => addVisit(false),
       },
-      // Data protection mode drops not-at-home records entirely.
+
       !dataProtectionMode && {
         id: 'not_at_home',
         title: i18n.t('notAtHome'),

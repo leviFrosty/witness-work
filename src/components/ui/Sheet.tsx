@@ -8,22 +8,8 @@ import type { SheetProps } from '@/components/ui/Sheet.types'
 
 export type { SheetProps, SheetSnapPoint } from '@/components/ui/Sheet.types'
 
-/** Whether the open sheet sizes to its content (no snap points). */
 const FitsContentContext = createContext(true)
 
-/**
- * A native bottom sheet: SwiftUI's sheet on iOS (a centered form sheet on iPad)
- * and Material 3's modal bottom sheet on Android. It presents above whatever is
- * on screen, native modals and form sheets included, and the system gives it
- * its drag handle, scrim, swipe-to-dismiss and keyboard avoidance.
- *
- * It also holds takeovers off (ADR 0021) while it's open: no celebration or
- * intro lands on top of a sheet the User is using. Sheets don't take focus from
- * the tabs the way a pushed screen does, so they say so themselves.
- *
- * Nothing native is mounted until the sheet first opens, and it unmounts again
- * once it has closed.
- */
 function SheetRoot({
   open,
   onOpenChange,
@@ -63,11 +49,6 @@ function SheetRoot({
   )
 }
 
-/**
- * The sheet's scrolling content. In a sheet that fits its content it's only as
- * tall as what it holds, up to the screen, and scrolls past that; with snap
- * points it fills the rest of the sheet.
- */
 function SheetScrollView({ style, ...props }: ScrollViewProps) {
   const fitsContent = useContext(FitsContentContext)
   return (

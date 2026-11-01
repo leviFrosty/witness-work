@@ -15,11 +15,6 @@ import InfoPopoverTrigger, {
   type InfoPopoverProps,
 } from '@/components/ui/InfoPopoverTrigger'
 
-/**
- * A Material 3 rich tooltip, persistent until a tap outside or Back, which is
- * what Material uses for optional details behind an info icon. Compose doesn't
- * report when it closes, so the trigger carries no expanded state.
- */
 export default function InfoPopover({
   title,
   description,
@@ -31,9 +26,6 @@ export default function InfoPopover({
   const navigation = useNavigation()
   const tooltip = useRef<TooltipBoxRef>(null)
 
-  // The tooltip lives in its own window, which would stay over the next screen.
-  // A tooltip that never opened, or whose view is going away (a Language
-  // change reloads the app), rejects the call; there's nothing to dismiss then.
   useEffect(
     () =>
       navigation.addListener('blur', () => {
@@ -48,13 +40,7 @@ export default function InfoPopover({
       colorScheme={colorScheme}
       style={infoPopoverHostStyle(inline)}
     >
-      <TooltipBox
-        ref={tooltip}
-        isPersistent
-        focusable
-        // The RN trigger owns its touches; Compose never sees them.
-        enableUserInput={false}
-      >
+      <TooltipBox ref={tooltip} isPersistent focusable enableUserInput={false}>
         <TooltipBox.RichTooltip
           containerColor={theme.colors.card}
           contentColor={theme.colors.text}
@@ -73,8 +59,7 @@ export default function InfoPopover({
             {...trigger}
             onPress={() => {
               Keyboard.dismiss()
-              // Rejects when the native view is gone (unmounting, or after a
-              // reload); there's nothing to show then.
+
               Promise.resolve(tooltip.current?.show()).catch(() => {})
             }}
           />

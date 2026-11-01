@@ -25,7 +25,6 @@ import {
 
 type CardPlan = BuddyCardDay['p'][number]
 
-/** When a buddy's Plan starts, as the app reads it: no start time is noon. */
 export function joinRequestExpiry(d: string, s: number | undefined): number {
   return atMinutesOfDay(
     moment(d, 'YYYY-MM-DD'),
@@ -33,22 +32,11 @@ export function joinRequestExpiry(d: string, s: number | undefined): number {
   ).valueOf()
 }
 
-/**
- * What this User can do about a buddy's Plan: ask to join it, take back a
- * request (`asked`, `unsent` until it reaches the buddy), or nothing: once the
- * buddy has invited them that day, the Plan is too close to start, or they
- * already have `MAX_OPEN_JOIN_REQUESTS` waiting with that buddy.
- */
 export type JoinRequestStatus =
   | { kind: 'canAsk'; expiresAt: number }
   | { kind: 'asked'; request: OutgoingJoinRequest; unsent: boolean }
   | { kind: 'none' }
 
-/**
- * Whether the latest ask or withdrawal hasn't reached the buddy yet; it's sent
- * again on every sync. A withdrawal of a request that never reached the relay
- * has nothing to send, though it counts as unsent until delivery next runs.
- */
 export function joinRequestUnsent(
   request: Pick<OutgoingJoinRequest, 'rev' | 'sentRev'>
 ): boolean {
@@ -70,7 +58,7 @@ export function joinRequestStatus(
       share.status !== 'cancelled'
   )
   if (invited) return { kind: 'none' }
-  // Lapsed requests wait for the next cleanup; they no longer count.
+
   const live = Object.values(state.askedToJoin).filter(
     (candidate) => !candidate.withdrawn && candidate.expiresAt > now
   )
@@ -90,12 +78,6 @@ export function joinRequestStatus(
   return { kind: 'canAsk', expiresAt }
 }
 
-/**
- * The owner's Plan a request is about: what counts that day at the requested
- * start, else the day's only Plan, else its only Plan of the requested length.
- * Plans that follow someone else's invitation count too, since they're on the
- * Buddy Card the buddy saw.
- */
 export function findJoinRequestPlan(
   request: Pick<IncomingJoinRequest, 'd' | 's' | 'm'>,
   dayPlans: DayPlan[],
@@ -114,16 +96,10 @@ export function findJoinRequestPlan(
       (contribution) => contributionStart(contribution, day) === request.s
     ) ??
     (contributions.length === 1 ? contributions[0] : undefined) ??
-    // Asked without a start time (this User shares days or the time of day
-    // only): the day's only Plan of that length.
     (sameLength.length === 1 ? sameLength[0] : undefined)
   )
 }
 
-/**
- * Buddies' requests to join one of this User's Plans on `dayKey` that still
- * wait on an answer: not passed on, withdrawn, lapsed, or already invited.
- */
 export function openJoinRequestsForPlan(
   plan: (DayPlan | RecurringPlan) & { buddies?: string[] },
   dayKey: string,
@@ -144,7 +120,6 @@ export function openJoinRequestsForPlan(
   )
 }
 
-/** Every Plan on `dayKey`: its one-time Plans and recurring instances. */
 function plansOnDay(
   dayKey: string,
   dayPlans: DayPlan[],
@@ -166,7 +141,6 @@ function contributionAnytime(
     : isRecurringPlanAnytimeOnDate(contribution.plan, day)
 }
 
-/** Undefined for an anytime Plan, which shares no start time. */
 function contributionStart(
   contribution: PlannedDayContribution,
   day: Date
@@ -177,20 +151,12 @@ function contributionStart(
     : getEffectiveStartTimeInMinutesForRecurringPlan(contribution.plan, day)
 }
 
-/**
- * What Invite does for a request: add the buddy to the owner's one-time Plan at
- * that time, or add a one-time Plan with them, seeded from the recurring
- * instance there and skipping that instance (`skipRecurringPlanId`) so the day
- * isn't counted twice. Nothing when the Plan follows someone else's invitation
- * (only its organizer can invite), or when the owner's Plans that day changed
- * and none match: a new Plan beside them would count twice.
- */
 export type JoinRequestInvite =
   | { kind: 'invite'; update: Pick<DayPlan, 'id' | 'buddies'> }
   | {
       kind: 'invite'
       add: Omit<DayPlan, 'id' | 'notifyMe'>
-      /** The recurring Plan whose instance on that day the new Plan replaces. */
+
       skipRecurringPlanId?: string
     }
   | { kind: 'linked'; organizer: string }
@@ -219,7 +185,7 @@ export function joinRequestInvite(
   if (!match && plansOnDay(request.d, dayPlans, recurringPlans).length > 0)
     return { kind: 'changed' }
   const day = moment(request.d, 'YYYY-MM-DD')
-  // A request with no start time is for an anytime Plan.
+
   const anytime = match
     ? contributionAnytime(match, day.toDate())
     : request.s === undefined
@@ -244,13 +210,6 @@ export function joinRequestInvite(
   }
 }
 
-/**
- * This User's own Plans that overlap a buddy's invitation in time, which
- * "Going" would count twice: one-time Plans and recurring instances that day.
- * One-time Plans that invite buddies themselves or follow another invitation
- * are left alone. An anytime Plan, or an invitation with no start time,
- * overlaps anything that day.
- */
 export function overlappingOwnPlans(
   details: Pick<ShareDetails, 'd' | 's' | 'm'>,
   dayPlans: DayPlan[],

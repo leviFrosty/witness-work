@@ -16,7 +16,6 @@ const native =
 
 export { GoogleDriveAuthError, type GoogleDriveAuthErrorCode }
 
-/** Whether this binary can authorize Google Drive (Android with Play services). */
 export function isSupported(): boolean {
   if (Platform.OS !== 'android' || !native) return false
   return native.isSupported()
@@ -38,12 +37,6 @@ const invoke = async <T>(operation: () => Promise<T>): Promise<T> => {
   }
 }
 
-/**
- * An OAuth access token for `drive.appdata`, valid for about an hour.
- * `interactive` may show Google's account picker and consent screen; silent
- * requests reject with `consentRequired` instead. `selectAccount` always shows
- * the picker, to switch accounts.
- */
 export function authorize(options: {
   interactive: boolean
   selectAccount?: boolean
@@ -53,7 +46,6 @@ export function authorize(options: {
   )
 }
 
-/** Forgets a token Drive rejected, so `authorize` returns a fresh one. */
 export function clearToken(token: string): Promise<void> {
   return invoke(() => required().clearToken(token))
 }

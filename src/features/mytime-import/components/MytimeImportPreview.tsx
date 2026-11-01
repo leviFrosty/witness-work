@@ -24,7 +24,7 @@ interface Props {
   preview: Preview
   selection: MytimeImportSelection
   onToggle: (key: MytimeImportSelectionKey) => void
-  /** Lock the selection switches while the import is being written. */
+
   disabled?: boolean
 }
 
@@ -69,7 +69,7 @@ const Row = ({
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Text style={{ fontFamily: theme.fonts.semiBold }}>{value}</Text>
-        {/* Visual only — the whole row is the tap target. */}
+        {}
         <View pointerEvents='none'>
           <Switch value={checked} disabled={disabled} accessible={false} />
         </View>
@@ -78,15 +78,6 @@ const Row = ({
   )
 }
 
-/**
- * The "here's what will be imported" summary shared by both surfaces. Every
- * piece with data gets a switch (all enabled by default) so the user can
- * deselect pieces they don't want; the caller's confirm action reads the
- * selection from the hook. Counts come straight from the already-mapped backup
- * (array lengths), so what's shown is exactly what gets written. Time is
- * rendered through the minutes formatter so it honors the user's display-format
- * preference.
- */
 const MytimeImportPreview = ({
   preview,
   selection,

@@ -103,7 +103,6 @@ import AndroidNativeSheet from '@/components/ui/NativeSheet.android'
 import { useToWindow } from '@/components/ui/sheetWindowFrame'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 
-/** Reports where a 10×10 view at (20, 40) in the sheet lands in the window. */
 const Probe = () => {
   const toWindow = useToWindow()
   return React.createElement('probe', {
@@ -185,8 +184,6 @@ describe('iOS native sheet', () => {
     render(IOSNativeSheet)
     expect(content()[1].width).toBe(382)
 
-    // Inside a screen the insets no longer show the bar; the sheet still
-    // clears it.
     act(() => root.unmount())
     act(() => {
       root = create(
@@ -222,7 +219,7 @@ describe('iOS native sheet', () => {
   it('keeps content that fits above the keyboard', () => {
     runtime.keyboardMetrics = { screenY: 500 }
     render(IOSNativeSheet)
-    // 800 tall, 50 top inset, 24 gap, 300 of keyboard
+
     expect(content()[1].maxHeight).toBe(426)
 
     act(() => runtime.keyboard.keyboardWillHide({}))
@@ -247,7 +244,7 @@ describe('iOS native sheet', () => {
     const geometry = find('Group').props.modifiers.find(
       (modifier: object) => 'onGeometryChange' in modifier
     ).onGeometryChange
-    // iOS 26 draws a short sheet at 0.96 scale, 8pt in from each side.
+
     act(() => geometry({ x: 8, y: 500, width: 384, height: 200 }))
     expect(probe()).toEqual({
       x: 8 + 20 * 0.96,
@@ -289,7 +286,7 @@ describe('Android native sheet', () => {
       containerColor: '#fff',
     })
     expect(find('RNHostView').props.matchContents).toBe(true)
-    // 800 tall, 50 + 30 insets, and a 20dp handle band instead of Material's 48.
+
     expect(content()).toEqual({ width: 640, maxHeight: 700 })
     expect(find('Box').props.modifiers).toEqual([
       { padding: [0, 10, 0, 6] },

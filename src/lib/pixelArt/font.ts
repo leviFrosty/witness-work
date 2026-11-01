@@ -1,19 +1,9 @@
-/**
- * A 3×5 pixel font with only digits and number punctuation, so it reads the
- * same in every language. Covers Latin digits 0–9 and Eastern Arabic (Arabic-
- * Indic) digits ٠–٩, plus `.` `٫` (Arabic decimal separator) `:` `/` `-` `+`.
- *
- * Glyphs are rows of `1` (ink) and `0` (blank). Most are 3 pixels wide; a few
- * are narrower or wider. One blank column separates glyphs.
- */
 import type { PixelBuffer } from './buffer'
 import type { Rgb } from './color'
 import { fillRect } from './draw'
 
-/** Glyph rows, top to bottom, `1` = ink. */
 export type Glyph = readonly string[]
 
-/** Every glyph the font can draw, by character. */
 export const GLYPHS: Readonly<Record<string, Glyph>> = {
   '0': ['111', '101', '101', '101', '111'],
   '1': ['010', '110', '010', '010', '111'],
@@ -30,7 +20,7 @@ export const GLYPHS: Readonly<Record<string, Glyph>> = {
   '/': ['001', '001', '010', '100', '100'],
   '-': ['000', '000', '111', '000', '000'],
   '+': ['000', '010', '111', '010', '000'],
-  // Eastern Arabic digits, shaped after their printed forms.
+
   '٠': ['000', '010', '101', '010', '000'],
   '١': ['010', '010', '010', '010', '010'],
   '٢': ['101', '111', '100', '100', '100'],
@@ -44,18 +34,12 @@ export const GLYPHS: Readonly<Record<string, Glyph>> = {
   '٫': ['00', '00', '00', '01', '10'],
 }
 
-/** Glyph height in pixels (before scaling). */
 export const GLYPH_HEIGHT = 5
 
-/** Whether the font has a glyph for `ch`. */
 export function hasGlyph(ch: string): boolean {
   return GLYPHS[ch] !== undefined
 }
 
-/**
- * Width in pixels of `text` at `scale`, including the one-column gaps between
- * glyphs but not after the last. Characters without a glyph are skipped.
- */
 export function textWidth(text: string, scale = 1): number {
   let w = 0
   for (const ch of text) {
@@ -65,10 +49,6 @@ export function textWidth(text: string, scale = 1): number {
   return Math.max(0, w - scale)
 }
 
-/**
- * Draws `text` with its top-left at (x, y). Unknown characters are skipped.
- * Returns the x just past the last glyph's gap.
- */
 export function drawText(
   buf: PixelBuffer,
   text: string,

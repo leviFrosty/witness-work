@@ -5,7 +5,6 @@ import useServiceStreak from '@/hooks/useServiceStreak'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Streak as it stands today, whichever month is shown. */
 export default function StreakCard({ size }: ProgressCardProps) {
   const streak = useServiceStreak()
   const count = streak.count

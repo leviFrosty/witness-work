@@ -2,10 +2,6 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The Year card celebrates a crossed milestone once: the first time its
-// screen is focused after the crossing. Leaving and coming back (Home → Add
-// Time → Home) mustn't replay the haptic and fireworks.
-
 const runtime = vi.hoisted(() => ({
   focused: true,
   minutes: 0,
@@ -96,7 +92,6 @@ vi.mock('@/components/MilestoneProgressBar', () => ({
 import YearMilestoneCard from '@/components/YearMilestoneCard'
 import { usePreferences } from '@/stores/preferences'
 
-/** The current service year's end year: Sep–Dec belong to the next one. */
 const currentYear = () => {
   const now = new Date()
   return now.getMonth() >= 8 ? now.getFullYear() + 1 : now.getFullYear()
@@ -174,7 +169,7 @@ describe('YearMilestoneCard celebration', () => {
 
     runtime.focused = false
     rerender()
-    // Time logged from another screen updates the reports and the year total.
+
     runtime.reports = { serviceReports: {} }
     runtime.minutes = 120 * 60
     runtime.focused = true
@@ -187,7 +182,7 @@ describe('YearMilestoneCard celebration', () => {
   it('reads the hero as one phrase against the annual goal', () => {
     runtime.minutes = 90
     render()
-    // Not "1.5, / 600 hours": the hero's figure and suffix share one label.
+
     expect(
       renderer!.root.findAll(
         (node) =>

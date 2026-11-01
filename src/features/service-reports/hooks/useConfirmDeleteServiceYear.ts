@@ -5,16 +5,11 @@ import i18n from '@/lib/locales'
 import { formatPlainNumber, localizeAppDigits } from '@/lib/numbers'
 import useServiceReport from '@/stores/serviceReport'
 
-/**
- * Confirms, then deletes every Time Entry in one Service Year — from the
- * Progress → All-time year row menu or the Service History editor.
- */
 const useConfirmDeleteServiceYear = () => {
   return ({
     endYear,
     onDeleted,
   }: {
-    /** End year of the Service Year (Sep `endYear - 1` → Aug `endYear`). */
     endYear: number
     onDeleted?: () => void
   }) => {

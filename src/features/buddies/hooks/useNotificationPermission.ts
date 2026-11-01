@@ -10,11 +10,6 @@ const register = () =>
     logger.warn('[buddies] push registration', error)
   )
 
-/**
- * The system notification permission, re-read on return from Settings.
- * `granted` is null until known. `turnOn` asks, or opens Settings once the
- * system won't ask.
- */
 export default function useNotificationPermission() {
   const [status, setStatus] =
     useState<Notifications.NotificationPermissionsStatus | null>(null)
@@ -23,7 +18,7 @@ export default function useNotificationPermission() {
     const refresh = () =>
       void Notifications.getPermissionsAsync().then((next) => {
         setStatus(next)
-        // Allowed in Settings: register now rather than on the next sync.
+
         if (next.granted) void register()
       })
     refresh()
@@ -38,7 +33,7 @@ export default function useNotificationPermission() {
       await Linking.openSettings()
       return
     }
-    // Android 13+ asks only once the app has a notification channel.
+
     const next = await registerForPushNotificationsAsync()
     setStatus(next)
     if (next.granted) await register()
@@ -46,7 +41,7 @@ export default function useNotificationPermission() {
 
   return {
     granted: status?.granted ?? null,
-    /** Denied for good: `turnOn` opens the system settings instead. */
+
     needsSettings: status ? !status.granted && !status.canAskAgain : false,
     turnOn,
   }

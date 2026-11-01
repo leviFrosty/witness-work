@@ -4,11 +4,6 @@ import { refreshBackupSlots } from '@/app/account/backup'
 import { logger } from '@/lib/logger'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 
-/**
- * The account's backup slots for the Account screen, listed again each time it
- * comes into view. Lists only ids, sizes and dates: device names are inside the
- * ciphertext, so other devices show as "Another device".
- */
 export default function useBackupSlots() {
   const slots = useBackupState((state) => state.slots)
   const mySlotId = useBackupState((state) => state.slotId)

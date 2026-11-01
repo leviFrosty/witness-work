@@ -35,26 +35,13 @@ const initialState = {
   serviceReports: {} as TimeEntriesByYear,
   dayPlans: [] as DayPlan[],
   recurringPlans: [] as RecurringPlan[],
-  /**
-   * Tombstones for deleted service reports. Populated by `deleteServiceReport`
-   * so iCloud sync can propagate deletions across devices.
-   */
+
   deletedServiceReports: [] as TimeEntryTombstone[],
-  /**
-   * Tombstones for removed Day Plans and Recurring Plans, so iCloud sync
-   * propagates the removal instead of another device's copy bringing the Plan
-   * back. Every action that removes a Plan writes one; adding a Plan with that
-   * id, or updating one that's still here, clears it.
-   */
+
   deletedDayPlans: [] as PlanTombstone[],
   deletedRecurringPlans: [] as PlanTombstone[],
 }
 
-/**
- * `tombstones` with a fresh one for `plan`, replacing any earlier one for its
- * id. Stamped past the Plan's last edit and that earlier deletion, so it beats
- * every copy of the Plan this device has seen.
- */
 const withPlanTombstone = (
   tombstones: PlanTombstone[],
   plan: { id: string; updatedAt?: number }
@@ -71,30 +58,16 @@ const withPlanTombstone = (
   ]
 }
 
-/** `tombstones` without the one for `id`; the same array when there is none. */
 const withoutPlanTombstone = (
   tombstones: PlanTombstone[],
   id: string | undefined
 ): PlanTombstone[] =>
   id === undefined ? tombstones : withoutTombstones(tombstones, new Set([id]))
 
-/** How a Plan change came about. */
 export type PlanSaveOptions = {
-  /**
-   * Made by code following someone else, not the User's own save (Buddies
-   * keeping a linked Plan in step, or taking a removed buddy off a Plan). It
-   * leaves `savedOn` alone, so it doesn't count as a day of ministry for the
-   * Pet Companion.
-   */
   automatic?: boolean
 }
 
-/**
- * `savedOn` for a save the User made today, unless it's `automatic`. A Plan
- * keeps the day it was first saved (`savedOn`): an edit, even ticking a
- * checklist item in its note, would otherwise move it to today and take that
- * day out of the Pet Companion's history (ADR 0030).
- */
 const savedOnStamp = (
   options?: PlanSaveOptions,
   savedOn?: string
@@ -103,12 +76,7 @@ const savedOnStamp = (
     ? {}
     : { savedOn: savedOn ?? moment().format('YYYY-MM-DD') }
 
-/** Migrates legacy service report data: `TimeEntry[]` -> `TimeEntriesByYear` */
-export const migrateServiceReports = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  oldServiceReports: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any => {
+export const migrateServiceReports = (oldServiceReports: any): any => {
   const years: TimeEntriesByYear = {}
 
   for (const report of oldServiceReports) {
@@ -128,40 +96,9 @@ export const migrateServiceReports = (
   return years
 }
 
-/**
- * Persist-middleware migration entry point. Chains:
- *
- * - V0 → v1: reshape `TimeEntry[]` into `TimeEntriesByYear` (legacy).
- * - V1 → v2: anchor every persisted Date to noon UTC so calendar days survive
- *   device timezone changes. See `migrateNormalizeDates`.
- * - V2 → v3: structural bump for the tag → Category refactor. The actual
- *   tag-to-categoryId rewrite happens in a boot-time runner
- *   (`migrateTagsToCategories` in `src/lib/categories.ts`) that needs to
- *   coordinate writes across three stores; this version bump exists so the
- *   TimeEntry store's persisted shape is tagged as post-migration once the
- *   runner has executed. The migration step itself is a no-op at the persist
- *   layer — the boot runner is the source of truth.
- * - V3 → v4: structural bump for the LDC collapse refactor. The actual `ldc:
- *   true` → `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` rewrite happens
- *   in a boot-time runner (`migrateLdcToCategory` in `src/lib/categories.ts`)
- *   for the same multi-store coordination reason. Same no-op pattern — the
- *   version bump tags the on-disk shape as post-collapse.
- * - V4 → v5: Plans on one day now add up, where a Day Plan used to hide that
- *   day's recurring instances. Skips each of those instances
- *   (`skipRecurringInstancesOnDayPlanDates`) so every forecast stays as it
- *   was.
- *
- * Additive fields need no bump: persist's default shallow merge fills any key
- * missing from the saved state from `initialState`, which is how existing
- * installs start with empty `deletedDayPlans` / `deletedRecurringPlans`.
- *
- * Exported for unit testing.
- */
 export const migrateServiceReportPersistedState = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   persistedState: any,
   version: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any => {
   let next = persistedState
   if (version === 0) {
@@ -186,15 +123,7 @@ export const migrateServiceReportPersistedState = (
       recurringPlans: normalized.recurringPlans,
     }
   }
-  // v2 → v3: structural marker for the tag → categoryId rewrite. The rewrite
-  // itself is performed by the boot-time runner in `src/app/App.tsx`; this
-  // hook only exists so the persisted-state version reflects the on-disk
-  // schema once the runner has executed.
-  // v3 → v4: structural marker for the LDC → builtin Category collapse. Same
-  // shape as v2 → v3 — no on-disk rewrite here; the boot runner in
-  // `src/app/App.tsx` (`migrateLdcToCategory`) coordinates the actual change
-  // because it needs to write across the categories + service reports +
-  // preferences stores in one shot.
+
   if (version < 5) {
     next = {
       ...next,
@@ -208,13 +137,6 @@ export const migrateServiceReportPersistedState = (
   return next
 }
 
-/**
- * The store changes that append each of `incoming` to its month, its date
- * normalized for storage. Doesn't dedupe ids. Copies every year and month it
- * touches, so the previous state is never mutated. A deleted id can come back
- * (an import run again after its Undo, a rollover re-applied), so each entry is
- * stamped past its tombstone and the tombstone is dropped.
- */
 const withAddedServiceReports = (
   {
     serviceReports,
@@ -259,10 +181,7 @@ export const useServiceReport = create(
       set,
       addServiceReport: (report: TimeEntry) =>
         set((state) => withAddedServiceReports(state, [report])),
-      /**
-       * `addServiceReport` for many entries in one write, so an import persists
-       * and notifies subscribers once instead of once per entry.
-       */
+
       addServiceReports: (reports: TimeEntry[]) =>
         set((state) => withAddedServiceReports(state, reports)),
       addDayPlan: (dayPlan: DayPlan, options?: PlanSaveOptions) =>
@@ -271,8 +190,7 @@ export const useServiceReport = create(
             ...dayPlan,
             date: normalizeDateForStorage(dayPlan.date),
           }
-          // Multiple Day Plans may coexist on the same calendar day — they
-          // stack additively. Only an identical id is rejected as a duplicate.
+
           const foundDayPlan = dayPlans.find((c) => c.id === normalized.id)
           if (foundDayPlan) {
             return {}
@@ -287,8 +205,7 @@ export const useServiceReport = create(
                 updatedAt: stampPastTombstone(deletedDayPlans, normalized.id),
               },
             ],
-            // A removed id can come back (a buddy's linked Plan has a fixed
-            // id); it's live again.
+
             deletedDayPlans: withoutPlanTombstone(
               deletedDayPlans,
               normalized.id
@@ -317,9 +234,7 @@ export const useServiceReport = create(
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
-            // Only a Plan that's still here: clearing the tombstone of one
-            // removed meanwhile (an edit screen saved after a pull removed
-            // it) would let a stale copy bring it back.
+
             ...(found
               ? {
                   deletedDayPlans: withoutPlanTombstone(
@@ -366,7 +281,7 @@ export const useServiceReport = create(
                 ),
               },
             ],
-            // Same rule as `addDayPlan`.
+
             deletedRecurringPlans: withoutPlanTombstone(
               deletedRecurringPlans,
               normalized.id
@@ -389,9 +304,7 @@ export const useServiceReport = create(
               if (c.id !== normalized.id) {
                 return c
               }
-              // Stamp updatedAt (mirrors the day-plan actions) — iCloud merge
-              // is whole-object last-writer-wins on this timestamp; without
-              // it a remote copy always beats a local edit.
+
               return {
                 ...c,
                 ...normalized,
@@ -399,7 +312,7 @@ export const useServiceReport = create(
                 updatedAt: syncTimestamp(c.updatedAt),
               }
             }),
-            // Same rule as `updateDayPlan`.
+
             ...(found
               ? {
                   deletedRecurringPlans: withoutPlanTombstone(
@@ -433,10 +346,7 @@ export const useServiceReport = create(
                     'day'
                   )
               )
-              // Every occurrence edit stamps the Plan: iCloud merge is
-              // whole-record last-writer-wins on `updatedAt`, so an unstamped
-              // edit never reaches other devices and their next edit
-              // reverts it.
+
               return {
                 ...c,
                 overrides: [...updatedOverrides, normalized],
@@ -640,7 +550,6 @@ export const useServiceReport = create(
             (r) => r.id !== report.id
           )
 
-          // Copy the year before changing it: the previous state shares it.
           reports[year] = { ...reports[year] }
           if (!monthWithRemovedReport.length) {
             delete reports[year][month]
@@ -665,10 +574,6 @@ export const useServiceReport = create(
           const reports: TimeEntriesByYear = {}
           const removed: TimeEntry[] = []
 
-          // Walk the whole tree once. With or without a groupId we always
-          // remove the passed report itself; with a groupId we also drop any
-          // sibling sharing it. Pre-grouping legacy entries hit the no-id
-          // path and just delete the one row.
           for (const yearKey of Object.keys(serviceReports)) {
             const yearMap: TimeEntriesByMonth = {}
             const months = serviceReports[yearKey]
@@ -709,8 +614,6 @@ export const useServiceReport = create(
         }),
       deleteServiceYearReports: (endYear: number) =>
         set(({ serviceReports, deletedServiceReports }) => {
-          // Service year Sep `endYear - 1` → Aug `endYear`; entries carry the
-          // start year, so match on that.
           const startYear = endYear - 1
           const reports: TimeEntriesByYear = {}
           const removed: TimeEntry[] = []

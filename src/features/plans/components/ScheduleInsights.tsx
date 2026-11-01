@@ -250,9 +250,6 @@ const ScheduleInsights = ({
     goal: goal.formatted,
   })
 
-  // With no monthly goal (Regular Publisher, or a 0-hour custom goal) there is
-  // nothing to "cover", so the coverage card would read a permanent 0%. Show
-  // only the pace card in that case.
   const hasGoal = goalMinutes > 0
 
   return (

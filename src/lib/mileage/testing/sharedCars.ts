@@ -6,7 +6,6 @@ import type {
   SharedCarMember,
 } from '@/types/sharedCars'
 
-/** A Shared Car with nothing on it, which `overrides` fill in. */
 export const sharedCar = (
   spaceId: string,
   overrides: Partial<SharedCar> = {}
@@ -18,10 +17,6 @@ export const sharedCar = (
     ...overrides,
   })
 
-/**
- * A person on `spaceId` called `name`. Their tag is the one their Buddies inbox
- * (`inbox`, else `inbox-<memberId>`) has on the car, so they match that buddy.
- */
 export const carMember = (
   spaceId: string,
   memberId: string,
@@ -38,7 +33,6 @@ export const carMember = (
   }
 }
 
-/** An invitation to `spaceId` for the buddy with Buddies inbox `inbox`. */
 export const carInvite = (
   spaceId: string,
   inviteId: string,

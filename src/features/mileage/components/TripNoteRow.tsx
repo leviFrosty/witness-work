@@ -8,14 +8,10 @@ import type { NoteFields } from '@/types/richText'
 type Props = {
   note: NoteFields
   onChange: (note: NoteUpdate) => void
-  /**
-   * On a Shared Car: how many others are on it, who see the note. No photos can
-   * be added there (`tripNoteSharing`).
-   */
+
   sharedWith?: number
 }
 
-/** Optional note, e.g. a destination or territory. */
 export default function TripNoteRow({ note, onChange, sharedWith }: Props) {
   const { allowImages, description } = tripNoteSharing(note, sharedWith)
 

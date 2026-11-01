@@ -39,14 +39,6 @@ import { BackupError } from '@/lib/serverAccount/backupScheduler'
 import { logBackup, useBackupState } from '@/lib/serverAccount/backupStore'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
-/**
- * Restoring the account backup (ADR 0026 §4): every slot is downloaded,
- * decrypted, validated as a sync payload, and folded with the sync merge.
- * Offered after a handoff, after a recovery key, once on a fresh install whose
- * account key came back with iCloud Keychain or Block Store, and from
- * Settings.
- */
-
 export type RestoreSource =
   | 'handoff'
   | 'recovery_key'
@@ -57,13 +49,10 @@ export type RestoreSource =
 export type RestoreFailure =
   | 'offline'
   | 'unavailable'
-  /** Every slot was from a newer app version. */
   | 'newer'
-  /** No slot could be read. */
   | 'unreadable'
   | 'server'
 
-/** One slot after downloading: its payload, or why it was skipped. */
 export type DownloadedSlot = BackupSlot &
   (
     | {
@@ -77,14 +66,8 @@ export type DownloadedSlot = BackupSlot &
   )
 
 export type RestoreOutcome =
-  /** The account has no backup, or this device has no account key. */
   | { outcome: 'none' }
   | { outcome: 'skipped' }
-  /**
-   * Cloud Sync brings the account's data to this device instead (ADR 0030 §3),
-   * so no restore is offered. `combine`: this device has records of its own, so
-   * Cloud Sync asks how to combine them first.
-   */
   | { outcome: 'synced'; combine: boolean }
   | {
       outcome: 'restored'
@@ -104,13 +87,11 @@ const failureFrom = (error: unknown): RestoreFailure => {
   return 'server'
 }
 
-/** Tools: the next download has one byte flipped, as a corrupt slot would. */
 let corruptNextDownload = false
 export function simulateCorruptDownload() {
   corruptNextDownload = true
 }
 
-/** Decrypts and validates one downloaded blob. */
 export function readSlotBlob(
   access: Pick<BackupAccess, 'accountKey' | 'accountId'>,
   slot: BackupSlot,
@@ -143,10 +124,6 @@ export function readSlotBlob(
   }
 }
 
-/**
- * Downloads and reads `slots` (every slot of the account without it). A slot
- * deleted meanwhile is left out; a failed download fails the whole restore.
- */
 export async function downloadBackups(
   access: BackupAccess,
   slots?: BackupSlot[]
@@ -173,7 +150,6 @@ export async function downloadBackups(
   return results
 }
 
-/** Runs `op` as this device's account; null without an account key. */
 async function asAccount<T>(
   op: (access: BackupAccess) => Promise<T>
 ): Promise<T | null> {
@@ -183,7 +159,6 @@ async function asAccount<T>(
   return withBackupAccess(key, op)
 }
 
-/** Applies a choice to downloaded slots. */
 export function applyRestore(
   downloaded: DownloadedSlot[],
   mode: 'replace' | 'combine'
@@ -230,7 +205,6 @@ const ask = (
     )
   )
 
-/** Asks whether to restore, and how when this phone already has records. */
 function askToRestore(
   slots: BackupSlot[],
   localData: boolean
@@ -277,7 +251,6 @@ function showFailure(reason: RestoreFailure) {
   Alert.alert(i18n.t('backup_restoreFailedTitle'), i18n.t(FAILURE_COPY[reason]))
 }
 
-/** Says it's done, what was skipped, and offers backup here when it's off. */
 function showRestored(
   result: Extract<RestoreOutcome, { outcome: 'restored' }>
 ) {
@@ -309,7 +282,6 @@ function showRestored(
   )
 }
 
-/** Remembers that this account's restore was offered on this install. */
 const markOffered = (key: Uint8Array) =>
   useBackupState.setState({
     restoreOfferedFor: deriveAccountSigningKey(key).publicKey,
@@ -317,35 +289,13 @@ const markOffered = (key: Uint8Array) =>
 
 let restoring: Promise<RestoreOutcome> | null = null
 
-/**
- * How much later than another device's Cloud Sync slot the newest backup may be
- * and still hold nothing newer. A device on both writes its slot about 5
- * seconds after an edit and its backup 30 seconds after the edits stop (at most
- * 5 minutes into a steady stream), and both times are the server's, so there's
- * no device clock to skew them.
- */
 export const SYNC_COVERS_BACKUP_GRACE_MS = 10 * 60_000
 
-/**
- * Whether Cloud Sync, whose newest slot from another device was written at
- * `newestSyncAt`, is at least as current as the account's backups. A backup
- * clearly newer (a phone that stayed on iCloud while a rarely used iPad or a
- * retired phone left a stale slot) holds records Cloud Sync never had, so the
- * restore is offered instead.
- */
 export const syncCoversBackups = (newestSyncAt: number, slots: BackupSlot[]) =>
   slots.every(
     (slot) => slot.uploadedAt <= newestSyncAt + SYNC_COVERS_BACKUP_GRACE_MS
   )
 
-/**
- * Offers to restore the account's backup onto this device: lists the slots,
- * asks (Restore or Not Now with no records here; Replace, Combine or Not Now
- * otherwise), downloads and applies them, then offers to turn backup on here.
- * Resolves what happened; alerts say so on the way. With `quietWhenNone`, an
- * account without a backup (or one the server can't be asked about) says
- * nothing.
- */
 export function offerRestore(
   source: RestoreSource,
   { quietWhenNone = true }: { quietWhenNone?: boolean } = {}
@@ -367,10 +317,7 @@ async function runRestore(
     if (!quiet) showFailure(reason)
     return { outcome: 'failed', reason }
   }
-  // A new phone on Cloud Sync gets everything streamed down; asking to
-  // restore a backup as well would only duplicate that, unless the backup is
-  // newer than every other device's slot. Settings and the Tools still offer
-  // it. When the backups can't be listed, Cloud Sync still brings what it has.
+
   const syncedAt =
     source === 'handoff' ||
     source === 'recovery_key' ||
@@ -390,8 +337,6 @@ async function runRestore(
     (!listedBackups.ok ||
       syncCoversBackups(newestSync, listedBackups.listed?.slots ?? []))
   ) {
-    // Cloud Sync's default may already have pulled the account's records in;
-    // a choice is pending only when it found records of this device's own.
     const prefs = usePreferences.getState()
     const combine =
       prefs.iCloudSyncNeedsResolution ||
@@ -460,12 +405,6 @@ async function runRestore(
   return result
 }
 
-/**
- * The fresh-install offer: once per account, after onboarding, when the account
- * key is already here (iCloud Keychain or Block Store brought it back) and this
- * device has no records of its own. Says nothing when there's no backup or the
- * server can't be reached (it asks again next launch).
- */
 export async function offerRestoreOnFreshInstall(): Promise<void> {
   if (!accountKeyAvailable() || useBackupState.getState().enabled) return
   if (hasMeaningfulLocalData()) return
@@ -479,16 +418,11 @@ export async function offerRestoreOnFreshInstall(): Promise<void> {
   await offerRestore('fresh_install')
 }
 
-/** What Tools and the verify harness see of the account's backup. */
 export type BackupInspection = {
   accountId: string
   slots: DownloadedSlot[]
 }
 
-/**
- * Downloads and decrypts the account's slots (or just `slotIds`) without
- * applying anything. Null without an account key.
- */
 export function inspectBackups(
   slotIds?: string[]
 ): Promise<BackupInspection | null> {
@@ -506,10 +440,6 @@ export function inspectBackups(
   })
 }
 
-/**
- * The restore dry run: what Replace would leave on this device and what Combine
- * would change, as record counts. Writes nothing.
- */
 export function dryRunRestore(slots: DownloadedSlot[]) {
   const payloads = slots.flatMap((slot) => (slot.ok ? [slot.payload] : []))
   const folded = foldBackupPayloads(payloads)

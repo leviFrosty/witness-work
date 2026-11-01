@@ -12,10 +12,6 @@ type MonthlyGoalCrossing = {
   target: CalendarMonth
 }
 
-/**
- * True only for the transition from below to at-or-above the target month's
- * goal.
- */
 export const didCrossMonthlyGoal = ({
   beforeMinutes,
   afterMinutes,

@@ -25,7 +25,6 @@ const KeyText = (props: { text: string }) => {
   return <Text style={{ fontSize: theme.fontSize('sm') }}>{props.text}</Text>
 }
 
-/** `showBuddiesOut` adds the "buddies going out" dot's entry. */
 const CalendarKey = ({ showBuddiesOut }: { showBuddiesOut?: boolean }) => {
   const theme = useTheme()
 

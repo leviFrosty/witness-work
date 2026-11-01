@@ -43,7 +43,6 @@ describe('encodeAttachment', () => {
   })
 
   it('splits large payloads into event-sized parts', () => {
-    // Random-ish text barely compresses, so this spans several parts.
     const noise = Array.from({ length: 200_000 }, (_, i) =>
       ((i * 2654435761) >>> 0).toString(36)
     ).join('')

@@ -11,11 +11,6 @@ import {
   type TimeEntry,
 } from '@/types/timeEntry'
 
-// `changed` decides whether a pull rewrites every store and pushes, and each
-// push makes every device pull again. It must mean "the merged state differs
-// from local": a peer's file (a retired device's, say) that still holds records
-// deleted here must not report a change, or devices loop.
-
 type LocalState = Parameters<typeof mergePayload>[0]
 
 const NOW = Date.now()
@@ -58,7 +53,6 @@ const recurringPlan = (id: string, updatedAt: number): RecurringPlan => ({
   updatedAt,
 })
 
-/** A device with one live record of each kind and one deleted record of each. */
 const localState = (): LocalState => ({
   contacts: [contact('c1', OLD)],
   deletedContacts: [contact('c-gone', DELETED_AT)],
@@ -89,10 +83,6 @@ const localState = (): LocalState => ({
   profileUpdatedAt: { name: OLD },
 })
 
-/**
- * A retired device's file, frozen before this device's deletions: the same live
- * records, plus an older copy of everything deleted here.
- */
 const frozenPeer = (): SyncPayload => ({
   version: 1,
   writtenAt: OLD,
@@ -127,7 +117,6 @@ const frozenPeer = (): SyncPayload => ({
   profileStore: { values: { name: 'Levi' }, updatedAt: { name: OLD } },
 })
 
-/** Another active device, in step with this one. */
 const peerInStep = (): SyncPayload => {
   const local = localState()
   return {

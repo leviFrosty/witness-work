@@ -24,8 +24,6 @@ import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
-// A single-screen stack keeps the route named `Dashboard`, which screen
-// analytics has always reported for Home.
 const Stack = createNativeStackNavigator()
 
 const HomeNavigator = () => {
@@ -39,7 +37,7 @@ const HomeNavigator = () => {
     navigationRail,
   } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
-  // A visible sidebar or the iPhone Duo rail already holds Settings.
+
   const showsSettings = !(hasSidebar && sidebarVisible) && !navigationRail
   const requestUpdateReveal = useUpdateRevealStore((s) => s.request)
   const buddiesAvailable = useBuddiesEnabled()
@@ -47,10 +45,6 @@ const HomeNavigator = () => {
   const { hidden } = useAvailableHomeSections({ buddiesAvailable })
   const openSettings = useOpenSettings()
 
-  // Dev-only reset for the update reveal. Long-press the header title to clear
-  // its state and play it again, launch version and all. Wired in __DEV__
-  // only; the prop is undefined in production so production callers see no
-  // behaviour change on long-press.
   const onLongPressTitle = __DEV__
     ? () => {
         set({
@@ -62,10 +56,7 @@ const HomeNavigator = () => {
       }
     : undefined
 
-  // Home renders its own header so scrolling can tuck it away.
   const header = (
-    // Paints the full-width strip; the navigation theme's default background
-    // is near-white even in dark mode.
     <View style={{ backgroundColor: theme.colors.background }}>
       <RootHeader
         title={i18n.t('Home')}
@@ -76,7 +67,6 @@ const HomeNavigator = () => {
         ]}
         actions={
           homeEditing.editing ? (
-            // As on the Home Screen: add on one side, Done on the other.
             <>
               {hidden.length ? (
                 <HeaderPillButton
@@ -99,14 +89,12 @@ const HomeNavigator = () => {
                   icon={RefreshCwIcon}
                   size='xl'
                   hitSlop={12}
-                  // Not "reload JS": agent-device reads that as a LogBox overlay.
                   accessibilityLabel='DEV: remount all screens (hold to restart)'
                   onPress={triggerDevRemount}
                   onLongPress={() => DevSettings.reload()}
                 />
               )}
-              {/* App-wide controls live on Home: Settings here as well as in
-              the avatar's menu, where few look for it. */}
+              {}
               {showsSettings && (
                 <PointerTooltip label={i18n.t('settings')} effect='none'>
                   <IconButton

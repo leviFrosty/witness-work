@@ -7,11 +7,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import type { GamePalette } from '@/features/pet/art/gameUi'
 import { GameSection, GameSwitchRow } from '@/features/pet/components/GameRows'
 
-/**
- * Pet Settings' buddies part: whether buddies' pets visit at all (All Buddies),
- * then each buddy who shares a pet, on or off (their own setting, the same one
- * as in their Buddies settings).
- */
 export default function PetBuddyVisitsSection({
   palette,
 }: {
@@ -41,9 +36,7 @@ export default function PetBuddyVisitsSection({
             scope: 'all',
             enabled: petVisits,
           })
-          void buddiesEngine.setSharing({ petVisits }).catch(() => {
-            // Saved here; the next change or sync writes the roster.
-          })
+          void buddiesEngine.setSharing({ petVisits }).catch(() => {})
         }}
         palette={palette}
       />

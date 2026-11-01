@@ -1,23 +1,5 @@
 const { withEntitlementsPlist, withInfoPlist } = require('@expo/config-plugins')
 
-/**
- * Declares the app's iCloud Drive ubiquity container on iOS so the
- * `icloud-bridge` local module can read/write the shared sync file across
- * devices.
- *
- * Mirrors the App Group split: dev builds point at
- * `iCloud.com.leviwilkerson.jwtimedev`, beta at
- * `iCloud.com.leviwilkerson.jwtimebeta`, prod at
- * `iCloud.com.leviwilkerson.jwtime`, so dev and beta installations never read
- * prod user data.
- *
- * The container identifier must also be registered in the Apple Developer
- * portal under the team configured in `app.config.ts`. EAS will fail
- * provisioning otherwise.
- *
- * @param {import('@expo/config-plugins').ConfigPlugin} config
- * @param {{ containerIdentifier: string; containerDisplayName?: string }} props
- */
 const withICloudContainer = (config, props) => {
   const { containerIdentifier, containerDisplayName = 'WitnessWork' } = props
 
@@ -34,7 +16,7 @@ const withICloudContainer = (config, props) => {
     c.modResults['com.apple.developer.ubiquity-container-identifiers'] = [
       containerIdentifier,
     ]
-    // Document sync and calendar publishing ownership use separate services.
+
     const existingServices = c.modResults['com.apple.developer.icloud-services']
     const services = new Set(
       Array.isArray(existingServices) ? existingServices : []

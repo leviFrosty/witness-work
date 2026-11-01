@@ -53,10 +53,6 @@ function DetailRow({
   )
 }
 
-/**
- * One trip, with Edit, Share, and Delete. On a Shared Car, who logged it and,
- * when it's someone else, who last changed it.
- */
 export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -68,7 +64,6 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
   const foldColumn = useFoldColumn(720)
   const trip = trips.find((t) => t.id === route.params.tripId)
 
-  // Deleted here, from the edit form, or on another device.
   useEffect(() => {
     if (!trip && navigation.canGoBack()) navigation.goBack()
   }, [trip, navigation])

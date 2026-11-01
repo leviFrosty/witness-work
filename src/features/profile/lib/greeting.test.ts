@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { pickGreeting } from '@/features/profile/lib/greeting'
 
-// 2026-10-06 is a Tuesday: no weekday or new-month greeting applies.
 const tuesdayAt = (hour: number, day = 6) => new Date(2026, 9, day, hour, 30)
 const at = (now: Date, streak = 0, goalReached = false) =>
   pickGreeting({ now, streak, goalReached })
@@ -37,7 +36,6 @@ describe('pickGreeting', () => {
   })
 
   it('welcomes a new month over the weekday', () => {
-    // 2026-11-01 is a Sunday.
     expect(at(new Date(2026, 10, 1, 8)).key).toBe('greetingNewMonth')
   })
 

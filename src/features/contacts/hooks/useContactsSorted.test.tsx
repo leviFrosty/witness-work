@@ -120,7 +120,7 @@ describe('useContactsSorted search index', () => {
       useContactsSearchStore.setState({ search: 'grace' })
     })
     expect(runtime.buildFuse).toHaveBeenCalledTimes(builds)
-    // Fuse relevance order: the name match leads.
+
     expect(current.searchSortedAndFilteredContacts[0]?.id).toBe('b')
   })
 })
@@ -143,14 +143,11 @@ describe('useContactsSorted while typing', () => {
     })
     renders.length = 0
 
-    // Outside `act`, so React schedules the transition as it would on a device
-    // instead of flushing everything at once.
     useContactsSearchStore.setState({ search: 'gra' })
     await vi.waitFor(() => expect(renders.at(-1)?.search).toBe('gra'))
 
-    // The first render shows the new letters over the previous results…
     expect(renders[0]).toEqual({ typed: 'gra', search: '', ids: ['a', 'b'] })
-    // …and the results follow, ranked as before.
+
     expect(renders.at(-1)).toEqual({ typed: 'gra', search: 'gra', ids: ['b'] })
   })
 })
@@ -192,7 +189,6 @@ describe('useContactsSorted across a day change', () => {
     const { current } = mount()
     expect(ids(current)).toEqual(['a'])
 
-    // Back from the background two weeks later; no midnight timer ran.
     vi.setSystemTime(new Date(2026, 10, 14, 9, 0))
     act(() => {
       runtime.foreground.forEach((listener) => listener())

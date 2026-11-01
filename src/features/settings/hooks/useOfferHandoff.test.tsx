@@ -7,7 +7,7 @@ type FakeSession = { id: number; state: { step: string; reason?: string } }
 const mocks = vi.hoisted(() => ({
   sessions: [] as FakeSession[],
   ended: [] as [number, string][],
-  /** The focus effect's latest callback, run on each (re)focus. */
+
   focus: null as null | (() => void | (() => void)),
   blur: null as null | (() => void),
   foreground: new Set<() => void>(),
@@ -81,7 +81,7 @@ const blur = async () => {
 const foreground = async () => {
   await act(async () => mocks.foreground.forEach((listener) => listener()))
 }
-/** Ends the current session as `state`, re-rendering. */
+
 const end = async (state: FakeSession['state'], params?: object) => {
   mocks.sessions[mocks.sessions.length - 1].state = state
   await render(params)
@@ -130,7 +130,7 @@ it('starts fresh on returning to the app after a failure, not after success', as
   await end({ step: 'done' })
   await foreground()
   expect(current()).toBe(2)
-  // Nor when a new code can't help.
+
   await end({ step: 'failed', reason: 'updateRequired' })
   await foreground()
   expect(current()).toBe(2)

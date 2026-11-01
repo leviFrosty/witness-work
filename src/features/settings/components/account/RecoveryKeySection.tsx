@@ -15,14 +15,9 @@ import { confirmDeviceOwner } from '@/lib/deviceOwner'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 
-/**
- * Show Recovery Key (after the device's own authentication, creating the
- * account key if there's none yet) and Use a Recovery Key.
- */
 export default function RecoveryKeySection({
   onAccountChanged,
 }: {
-  /** The account key was created or replaced: check the account again. */
   onAccountChanged: () => void
 }) {
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null)

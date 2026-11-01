@@ -20,11 +20,6 @@ import type { Buddy } from '@/features/buddies/lib/state'
 import { usePreferences } from '@/stores/preferences'
 import { formatDate } from '@/lib/dates'
 
-/**
- * A buddy on the same card as the User's own Profile. Under a nickname, their
- * own name stays visible as the subtitle. Their badges get their own section
- * right below (`BuddyBadgesSection`).
- */
 export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
   const theme = useTheme()
   const name = buddyDisplayName(buddy)
@@ -59,7 +54,6 @@ export default function BuddyProfileHeader({ buddy }: { buddy: Buddy }) {
             fullPhoto
               ? () =>
                   loadBuddyPhoto(buddy.inboxId, fullPhoto).catch((error) => {
-                    // Offline, say: the thumbnail stays.
                     logger.warn('[buddies] full photo', error)
                     return null
                   })

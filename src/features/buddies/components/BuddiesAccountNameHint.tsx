@@ -6,11 +6,6 @@ import { useProfile } from '@/stores/profile'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Under a Profile name field: the name buddies see, when the account's Buddy
- * Card carries another one than this device's Profile name (it joined an
- * account named on another device). Editing the field changes it for them.
- */
 export default function BuddiesAccountNameHint({
   style,
 }: {

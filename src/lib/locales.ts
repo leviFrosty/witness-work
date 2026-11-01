@@ -9,8 +9,6 @@ import { digitSystemFor, localizeNumeral } from '@/lib/digits'
 
 type Translations = typeof enUS
 
-// English is the fallback for every missing key, so it always loads. The
-// others (about 3 MB together) load when they become the active language.
 const translationLoaders = {
   'en-us': () => enUS,
   'de-de': () => require('../locales/de-DE.json'),
@@ -24,13 +22,13 @@ const translationLoaders = {
   'pt-pt': () => require('../locales/pt-PT.json'),
   'ru-ru': () => require('../locales/ru-RU.json'),
   'vi-vn': () => require('../locales/vi-VN.json'),
-  'zh-hant-tw': () => require('../locales/zh-TW.json'), // Traditional
-  'zh-hans-cn': () => require('../locales/zh-CN.json'), // Simplified
+  'zh-hant-tw': () => require('../locales/zh-TW.json'),
+  'zh-hans-cn': () => require('../locales/zh-CN.json'),
   'sw-ke': () => require('../locales/sw-KE.json'),
   'uk-ua': () => require('../locales/uk-UA.json'),
-  'bem-zm': () => require('../locales/bem-ZM.json'), // Bemba
+  'bem-zm': () => require('../locales/bem-ZM.json'),
   'rw-rw': () => require('../locales/rw-RW.json'),
-  ar: () => require('../locales/ar.json'), // One Arabic for every country
+  ar: () => require('../locales/ar.json'),
 } as const satisfies Record<string, () => Partial<Translations>>
 export type TranslatedLocale = keyof typeof translationLoaders
 
@@ -60,9 +58,6 @@ export const translationsLabels: { [K in TranslatedLocale]: string } = {
   ar: 'العربية',
 } as const
 
-// CLDR cardinal plural rules: which of zero/one/two/few/many/other a count
-// takes in each Language. The translate-locales lint checks every locale file
-// against the same rules (`.agents/skills/translate-locales/locales.mjs`).
 const pluralRules: { [K in TranslatedLocale]: CardinalRule } = {
   'en-us': cardinals.en,
   'de-de': cardinals.de,
@@ -81,7 +76,7 @@ const pluralRules: { [K in TranslatedLocale]: CardinalRule } = {
   'sw-ke': cardinals.sw,
   'uk-ua': cardinals.uk,
   'bem-zm': cardinals.bem,
-  // CLDR has no Kinyarwanda rules; it counts one/other like English.
+
   'rw-rw': cardinals.en,
   ar: cardinals.ar,
 }
@@ -93,12 +88,6 @@ _i18n.defaultLocale = DEFAULT_LOCALE
 for (const locale of translatedLocales)
   _i18n.pluralization.register(locale, createPluralizer(pluralRules[locale]))
 
-// Numbers passed to `i18n.t` (`count`, `year`, …) print in the digits of the
-// Language being translated into (`options.locale`, else the app's): `{{count}}
-// ساعة` reads `٣ ساعة` in Arabic, and so does a string that falls back to
-// English (`digitsLocale`, set by `i18n.t` below). Strings pass through as
-// given, so names and pre-formatted values aren't touched. i18n-js
-// interpolates array translations without this hook; none of ours are arrays.
 const interpolate = _i18n.interpolate
 _i18n.interpolate = (i18n, message, options) => {
   const requested = options.digitsLocale ?? options.locale
@@ -114,7 +103,6 @@ _i18n.interpolate = (i18n, message, options) => {
 
 const loadedLocales = new Set<TranslatedLocale>([DEFAULT_LOCALE])
 
-/** Makes `locale` the language `i18n.t` answers in, loading it if needed. */
 export function setI18nLocale(locale: TranslatedLocale): void {
   if (!loadedLocales.has(locale)) {
     _i18n.store({ [locale]: translationLoaders[locale]() })
@@ -123,8 +111,6 @@ export function setI18nLocale(locale: TranslatedLocale): void {
   _i18n.locale = locale
 }
 
-// Set up the language and date conventions before anything renders, and for
-// runtimes that never mount the app (widget refresh, background tasks).
 type BootLocalePreferences = {
   locale?: string
   formatRegion?: string
@@ -140,10 +126,7 @@ try {
   const localeOrFallback = resolveAppLocale(state.locale)
   setI18nLocale(localeOrFallback)
   const locale = formatLocaleForMoment(localeOrFallback)
-  // Sets moment.locale to the Language and overlays the Format Region's
-  // conventions (ADR 0006). Reads the raw persisted blob pre-migration, so a
-  // legacy `startOfWeek: 0` may briefly act as an explicit override until
-  // `useUserLocalePrefs` re-applies post-hydration.
+
   applyFormatRegion({
     language: locale,
     region: state.formatRegion ?? undefined,
@@ -164,14 +147,11 @@ export function handleLangFallback(locale: string): {
   const exact = translatedLocales.find((t) => t === tag)
   if (exact) return { locale: exact, languageFound: true, fallback: false }
 
-  // Match on whole subtags: `ar` must not match `ja-jp`, nor `sw` `es-es`.
   const [language, ...rest] = tag.split('-')
   const sameLanguage = translatedLocales.filter(
     (t) => t.split('-')[0] === language
   )
   if (sameLanguage.length) {
-    // Chinese also has to match its script. Without one, Taiwan, Hong Kong
-    // and Macau write Traditional and everywhere else Simplified.
     const script =
       rest.find((subtag) => subtag.length === 4) ??
       (language === 'zh'
@@ -183,64 +163,35 @@ export function handleLangFallback(locale: string): {
       (script &&
         sameLanguage.find((t) => t.split('-').slice(1).includes(script))) ||
       sameLanguage[0]
-    // A translation without a region (`ar`) is the one for every country, so
-    // `ar-eg` isn't falling back to anything.
+
     return { locale: match, languageFound: true, fallback: match !== language }
   }
 
-  // No translation in this language: fall back to English.
   return { locale: DEFAULT_LOCALE, languageFound: false, fallback: true }
 }
 
-/**
- * The Language the app runs in: the user's pick in Settings, else the device's
- * first language, resolved to a translation we ship.
- */
 export function resolveAppLocale(preferred?: string): TranslatedLocale {
   return handleLangFallback(
-    preferred ?? getLocales()[0].languageTag.toLowerCase() // Guaranteed to return at least one element
+    preferred ?? getLocales()[0].languageTag.toLowerCase()
   ).locale
 }
 
 export function formatLocaleForMoment(locale: string) {
-  return locale
-    .replace('zh-hans', 'zh') // moment isn't expecting -han[s/t]
-    .replace('zh-hant', 'zh') // moment isn't expecting -han[s/t]
+  return locale.replace('zh-hans', 'zh').replace('zh-hant', 'zh')
 }
-
-type IsObject<T> = T extends object ? true : false
 
 type DeepKeyOf<T> = T extends object
   ? {
-      [K in keyof T]: `${K & string}${IsObject<T[K]> extends true
-        ? '.'
-        : ''}${DeepKeyOf<T[K]>}`
-    }[keyof T]
+      [K in keyof T & string]: T[K] extends object
+        ?
+            | `${K}.${DeepKeyOf<T[K]>}`
+            | (T[K] extends { one: string; other: string } ? K : never)
+        : K
+    }[keyof T & string]
   : ''
 
-/**
- * Key or deep key of translation object.
- *
- * `en.json`:
- *
- * ```json
- * {
- *   "key1": {
- *     "key2": {
- *       "key3": "Hello World"
- *     },
- *     "foo": "bar"
- *   }
- * }
- * ```
- *
- * @example
- *   i18n.t('key1.key2.key3') // returns "Hello World"
- *   i18n.t('key1.foo') // returns "bar"
- */
 export type TranslationKey = DeepKeyOf<typeof enUS>
 
-/** Whether `locale`'s own translations have `key`, without English fallback. */
 function hasOwnTranslation(locale: string, key: string): boolean {
   let node: unknown = _i18n.translations[locale]
   for (const part of key.split(_i18n.defaultSeparator)) {
@@ -252,9 +203,6 @@ function hasOwnTranslation(locale: string, key: string): boolean {
 
 const i18n = {
   t: (key: TranslationKey, options?: TranslateOptions | undefined) => {
-    // An untranslated plural falls back to the English strings, so it has to
-    // pick among them by English rules too. Russian's `one` for 21 or French's
-    // `one` for 0 would otherwise render "21 photo" and "0 photo".
     if (
       options?.count !== undefined &&
       !('locale' in options) &&
@@ -264,7 +212,7 @@ const i18n = {
       return _i18n.t(key, {
         ...options,
         locale: DEFAULT_LOCALE,
-        // English words, but the app Language's digits.
+
         digitsLocale: _i18n.locale,
       })
     return _i18n.t(key, options)

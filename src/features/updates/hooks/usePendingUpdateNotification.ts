@@ -4,11 +4,6 @@ import { applyPendingUpdate } from '@/features/updates/lib/updates'
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
 import type { NotificationItem } from '@/types/notifications'
 
-/**
- * Offers to restart into an OTA update the launch check downloaded, instead of
- * waiting for the next cold launch. One item per update, so dismissing it
- * doesn't hide a newer one.
- */
 export default function usePendingUpdateNotification(): NotificationItem | null {
   const bundleId = usePendingUpdate((s) => s.bundleId)
   if (!bundleId) return null

@@ -6,9 +6,9 @@ import type { LockedBackupFile } from '@/lib/backupFileLock'
 
 const mocks = vi.hoisted(() => ({
   contents: '',
-  /** This device's account key; null when it has none. */
+
   key: null as Uint8Array | null,
-  /** What the password sheet ends with once it's asked. */
+
   password: null as PasswordUnlockResult | null,
   asked: [] as LockedBackupFile[],
 }))
@@ -45,7 +45,7 @@ vi.mock('@/app/sync/lockedBackupFile', async () => {
       mocks.key ? unlockWithAccountKey(file, mocks.key) : null,
   }
 })
-// The sheet itself is proven on device; here it answers as scripted.
+
 vi.mock('@/features/settings/components/backup/UnlockBackupSheet', () => ({
   default: function UnlockBackupSheet({
     file,
@@ -85,7 +85,6 @@ const passwordFile = JSON.stringify({
   data: 'AQ',
 })
 
-/** Mounts the hook, rendering its sheet, and returns its latest result. */
 const renderImport = () => {
   let latest: Hook | undefined
   const Probe = ({ onResult }: { onResult: (hook: Hook) => void }) => {
@@ -105,10 +104,6 @@ const renderImport = () => {
   return () => latest as Hook
 }
 
-/**
- * Runs an import to the end. It's started, not awaited, inside `act`: the
- * password sheet only renders once that `act` has flushed.
- */
 const runImport = async () => {
   const hook = renderImport()
   let result: boolean | undefined

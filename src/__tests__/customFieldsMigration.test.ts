@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 
-// expo-crypto pulls in react-native through the expo runtime; stub it before
-// importing the migration module so the test runner doesn't try to parse RN's
-// flow-typed entry point.
 vi.mock('expo-crypto', () => ({
   randomUUID: vi.fn(() => 'mock-uuid-from-default'),
 }))
@@ -75,7 +72,7 @@ describe('migrateCustomFieldsToIds', () => {
       [companyDef.id]: 'Acme',
       [deptDef.id]: 'Sales',
     })
-    // Migration preserves the original edit timestamp on every device.
+
     expect(result.contacts[0].updatedAt).toBeUndefined()
   })
 
@@ -94,9 +91,6 @@ describe('migrateCustomFieldsToIds', () => {
   })
 
   it('preserves orphan labels as archived defs', () => {
-    // Contact has a customField key that's NOT in the legacy preferences
-    // array — this is a known bug today (orphaned data after rename/delete).
-    // The migration must preserve it, just hidden, so the user can recover.
     const result = migrateCustomFieldsToIds({
       legacyLabels: ['Company'],
       contacts: [
@@ -176,14 +170,6 @@ describe('migrateCustomFieldsToIds', () => {
   })
 
   it('produces a stable result when run twice on its own output', () => {
-    // The runner gates on a flag, but the pure function should still be safe
-    // to call again — i.e., once everything is id-keyed, a second pass should
-    // not invent more orphan defs from the now-id-shaped customFields.
-    // That said: a true second run is not the contract; the migration is
-    // single-pass. This test documents the expected boot-time pattern: the
-    // first pass produces defs, and the runner won't call again because the
-    // flag is set. We assert the first pass terminates with the expected
-    // shape.
     const first = migrateCustomFieldsToIds({
       legacyLabels: ['Company'],
       contacts: [makeContact({ customFields: { Company: 'Acme' } })],

@@ -1,6 +1,3 @@
-// Release builds of the development app with the profiling probe on, built
-// from a commit in its own worktree under scripts/verify's build slot and
-// cached by SHA in ~/.ww-verify/perf-builds.
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -28,8 +25,7 @@ import {
 
 export const BUILD_DIR = path.join(VERIFY_HOME, 'perf-builds')
 const INDEX = path.join(BUILD_DIR, 'index.json')
-// Source checkouts go next to the repo (`<main checkout>-worktrees/`), on the
-// same volume as the pnpm store so installs hardlink.
+
 function sourceDir(sha) {
   const name = `perf-${sha.slice(0, 12)}`
   if (process.env.WW_PERF_SOURCE_DIR)
@@ -40,12 +36,11 @@ function sourceDir(sha) {
   return path.join(`${main}-worktrees`, name)
 }
 const KEEP = Number(process.env.WW_PERF_KEEP_BUILDS) || 6
-// Bump when the build inputs below change, so cached builds are rebuilt.
+
 const BUILD_VERSION = 2
-// The probe-only setup this runner seeds through (see docs/perf/README.md).
+
 const PROBE_FILE = 'src/app/dev-harness/perfSetup.ts'
 
-/** The API the bundle calls: the runner's relay to the isolated ww-api. */
 export const API_PORT = Number(process.env.WW_PERF_API_PORT) || 8780
 export const API_BASE = `http://127.0.0.1:${API_PORT}`
 
@@ -67,11 +62,6 @@ export function resolveSha(ref) {
   return sha
 }
 
-/**
- * What a build is cached by: the commit's tree without the files that can't
- * change the app (docs, this runner, script tests), so amending the runner or a
- * report reuses the build.
- */
 export function sourceKey(sha) {
   const tree = run('git', ['ls-tree', '-r', sha], { cwd: ROOT }).stdout
   const relevant = tree
@@ -131,7 +121,6 @@ function cache(platform, sha, artifact, details) {
   })
 }
 
-/** A clean checkout of `sha` with dependencies installed. */
 function sourceTree(sha) {
   const dir = sourceDir(sha)
   if (!fs.existsSync(path.join(dir, '.git'))) {
@@ -163,7 +152,6 @@ export function removeSourceTree(sha) {
   fs.rmSync(dir, { recursive: true, force: true })
 }
 
-/** Env for the probe build: the probe on and the bundle calling the relay. */
 export function probeEnv() {
   return {
     WW_PERF_PROBE: '1',
@@ -172,11 +160,6 @@ export function probeEnv() {
   }
 }
 
-/**
- * Bundle sizes for the commit: `expo export` without the probe (what ships),
- * compiled to bytecode with the app's hermesc, and its module count from the
- * source map.
- */
 function bundleStats(dir, platform) {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), `ww-perf-export-`))
   try {
@@ -230,7 +213,6 @@ function bundleStats(dir, platform) {
   }
 }
 
-/** The probe build's embedded bytecode, from the artifact itself. */
 export function embeddedBundleBytes(platform, artifact) {
   if (platform === 'ios') {
     const file = path.join(artifact, 'main.jsbundle')
@@ -243,10 +225,6 @@ export function embeddedBundleBytes(platform, artifact) {
   return line ? Number(line.trim().split(/\s+/)[0]) : null
 }
 
-/**
- * The cached Release build of `sha` for `platform`, building it when missing.
- * Like `wwv up`, it waits for a machine-wide build slot and holds no device.
- */
 export async function resolvePerfBuild(platform, sha, flags) {
   const cached = () => (flags.rebuild ? null : cachedPerfBuild(platform, sha))
   if (cached()) return cached()

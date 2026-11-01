@@ -5,15 +5,6 @@ import { Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter'
 import type { EditorFonts } from '@/components/richText/editor/editorProtocol'
 import { noteImagePath } from '@/lib/richText/noteImages'
 
-/*
- * Files the editor's web page loads. Photos are always sent inline (scaled
- * down): in development the page comes from Metro over http, which can't load
- * file:// URLs, and on an iPhone the web view's sandbox can't read the app's
- * Documents folder even when the page itself loads from a file. Fonts live in
- * the app bundle beside the page, so release builds read those from disk; in
- * development the editor falls back to system fonts.
- */
-
 const IMAGE_SIDE = 1200
 
 async function inlineImage(id: string): Promise<string> {
@@ -30,7 +21,6 @@ async function inlineImage(id: string): Promise<string> {
   return `data:image/jpeg;base64,${scaled.base64}`
 }
 
-/** A URL the editor's page can show the photo from; '' when it's missing. */
 export async function editorImageSource(id: string): Promise<string> {
   try {
     return await inlineImage(id)
@@ -50,7 +40,6 @@ export async function editorImageSources(
 
 let fonts: Promise<EditorFonts> | undefined
 
-/** Inter for the editor, so it reads like the note does everywhere else. */
 export function editorFonts(): Promise<EditorFonts> {
   if (__DEV__) return Promise.resolve({})
   fonts ??= Promise.all(

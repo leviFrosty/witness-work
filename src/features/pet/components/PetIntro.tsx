@@ -25,17 +25,11 @@ import { petDisplayName } from '@/features/pet/lib/names'
 import PetSceneView from '@/features/pet/render/PetSceneView'
 
 const LIVE: RoomWindow = { time: 'live', season: 'live' }
-/** The intro's rooms don't need to be wider than this (iPad, landscape). */
+
 const PREVIEW_MAX_WIDTH = 420
-/** A new pet's hearts, until its life is worked out. */
+
 const NEW_PET_HEARTS = 3
 
-/**
- * The short intro right after adopting: how hearts fill, the coins that buy
- * items in the Shop (with a room that has them all), and tapping the card to
- * decorate. Each step shows the new pet in its room; tapping it pats it here
- * too.
- */
 export default function PetIntro({
   pet,
   onDone,
@@ -53,7 +47,6 @@ export default function PetIntro({
   const last = index === INTRO_STEPS.length - 1
   const name = petDisplayName(pet)
 
-  // Swiping the sheet away counts as leaving the intro at this step.
   const reached = useRef({ step: 1, finished: false })
   useEffect(
     () => () =>
@@ -99,7 +92,6 @@ export default function PetIntro({
       ? i18n.t('pet.intro.shop.body')
       : step === 'hearts'
         ? i18n.t(
-            // Monthly reporters' hearts fill by the month (ADR 0031).
             state.monthlyHearts
               ? 'pet.intro.hearts.bodyMonths'
               : 'pet.intro.hearts.body'
@@ -107,7 +99,6 @@ export default function PetIntro({
         : i18n.t('pet.intro.decorate.body')
 
   return (
-    // Android shows it full screen: Next stays at the bottom.
     <View style={{ gap: 16, flex: Platform.OS === 'android' ? 1 : undefined }}>
       <GameFrame
         kind='preview'

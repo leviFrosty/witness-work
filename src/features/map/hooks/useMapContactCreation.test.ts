@@ -95,8 +95,6 @@ describe('creating a contact from the map', () => {
     await act(async () => state.createContact())
     await act(async () => blur())
 
-    // Save changes the store while the Visit Form / Contact Details are still
-    // covering the map. The saved pin may differ from the original selection.
     const savedCoordinate = { latitude: 0, longitude: -73.123456789 }
     mocks.contacts = [
       {

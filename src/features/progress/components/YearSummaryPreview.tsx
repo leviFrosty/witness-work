@@ -16,11 +16,6 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { tracking } from '@/lib/tracking'
 
-/**
- * Context-menu preview for a Year-by-Year row: the service year's credit-capped
- * total and, for roles with an Annual Goal, the milestone ladder. A static
- * stand-in for the Year tab's hero card (no celebrations or controls).
- */
 const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
   const theme = useTheme()
   const serviceYear = endYear - 1
@@ -88,7 +83,7 @@ const YearSummaryPreview = ({ endYear }: { endYear: number }) => {
               color: theme.colors.textAlt,
             }}
           >
-            {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+            {}
             {i18n.t('goalHoursSuffix', { count: annualGoalHours })}
           </Text>
         ) : null}

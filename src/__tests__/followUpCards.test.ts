@@ -24,7 +24,7 @@ describe('features/visits/lib/followUpCards', () => {
   it('keeps a closed card hidden while it shows the same follow-ups', () => {
     const closed = [a, b].map(followUpCardKey)
     expect(isFollowUpCardDismissed([a, b], closed)).toBe(true)
-    // One was handled since: still nothing new.
+
     expect(isFollowUpCardDismissed([b], closed)).toBe(true)
   })
 

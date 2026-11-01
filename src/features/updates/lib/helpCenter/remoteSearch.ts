@@ -1,8 +1,6 @@
 import links from '@/constants/links'
 import type { HelpEntry, HelpLocale } from '@/features/updates/types/helpCenter'
 
-/** How long remote search may take before the local results stand. */
-// Uncached searches take 1–7 s; local results show meanwhile.
 export const REMOTE_SEARCH_TIMEOUT_MS = 8000
 const LIMIT = 20
 
@@ -13,11 +11,6 @@ export type RemoteSearchParams = {
   appVersion?: string | null
 }
 
-/**
- * Asks the Help Center search service (Cloudflare AI Search) for the slugs
- * matching `query`, best first. Null on any failure, timeout or abort, so the
- * caller keeps its local results.
- */
 export async function searchHelpRemote(
   params: RemoteSearchParams,
   options: {
@@ -58,11 +51,6 @@ export async function searchHelpRemote(
   }
 }
 
-/**
- * The results to show: the remote order mapped onto the entries this device
- * shows, or the local results when remote search failed, found nothing, or
- * returned only entries this device doesn't have.
- */
 export function mergeSearchResults(
   remoteSlugs: string[] | null,
   entries: HelpEntry[],

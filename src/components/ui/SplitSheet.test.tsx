@@ -9,7 +9,7 @@ const runtime = vi.hoisted(() => ({
   storage: new Map<string, string>(),
   keyboard: new Map<string, (event: unknown) => void>(),
   back: null as (() => boolean) | null,
-  /** When set, animations end only when the test says so. */
+
   deferTimings: false,
   timingsDone: [] as ((finished: boolean) => void)[],
   pan: {
@@ -53,7 +53,7 @@ vi.mock('react-native-reanimated', async () => {
   return {
     default: { View: 'AnimatedView' },
     Easing: { bezier: () => () => 0 },
-    // Reads the shared values when the test reads the style.
+
     useAnimatedStyle: (updater: () => Record<string, unknown>) =>
       new Proxy({}, { get: (_target, key: string) => updater()[key] }),
     useSharedValue: <T,>(value: T) => useRef({ value }).current,
@@ -120,8 +120,6 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 import SplitSheet from '@/components/ui/SplitSheet'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
 
-// The window is 1,000 points tall: the sheet rests at 500 and resizes between
-// 300 and 650.
 describe('split sheet', () => {
   let renderer: ReactTestRenderer | undefined
   const onOpenChange = vi.fn()
@@ -185,12 +183,11 @@ describe('split sheet', () => {
     expect(onHeightChange).toHaveBeenLastCalledWith(500)
     setOpen(false)
     expect(onHeightChange).toHaveBeenLastCalledWith(0)
-    // Gone once it has slid out of view.
+
     expect(renderer!.toJSON()).toBeNull()
   })
 
   it('stays open when it opens just as it mounts, before its first close animation ends', () => {
-    // A widget's link mounts the screen and opens the day at once.
     runtime.deferTimings = true
     const { setOpen } = render({ open: false })
     setOpen(true)
@@ -204,11 +201,11 @@ describe('split sheet', () => {
     runtime.os = 'android'
     const { setHidden } = render()
     setHidden(true)
-    // Out of view, but still there, and the screen above has it all back.
+
     expect(sheetStyle().transform[0].translateY).toBe(524)
     expect(JSON.stringify(renderer!.toJSON())).toContain('content')
     expect(onHeightChange).toHaveBeenLastCalledWith(0)
-    // Back belongs to the screen on top now.
+
     expect(runtime.back).toBeNull()
 
     setHidden(false)
@@ -232,7 +229,7 @@ describe('split sheet', () => {
       runtime.pan.start()
       runtime.pan.update({ translationY: -300, velocityY: 0 })
     })
-    // Past the largest size, the drag only gives a little.
+
     expect(sheetStyle().height).toBe(680)
     act(() => {
       runtime.pan.end({ translationY: -300, velocityY: 0 })
@@ -254,7 +251,7 @@ describe('split sheet', () => {
       runtime.pan.start()
       runtime.pan.update({ translationY: 300, velocityY: 0 })
     })
-    // Below its smallest size it slides down whole.
+
     expect(sheetStyle().height).toBe(300)
     expect(sheetStyle().transform[0].translateY).toBe(100)
     act(() => {
@@ -294,7 +291,7 @@ describe('split sheet', () => {
     expect(sheetStyle().height).toBe(850)
     act(() => runtime.keyboard.get('keyboardWillHide')!({}))
     expect(sheetStyle().height).toBe(500)
-    // The keyboard's size is never saved as the User's.
+
     expect(useSplitSheetPreferences.getState().ratio).toBe(0.5)
   })
 

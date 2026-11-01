@@ -6,13 +6,6 @@ import {
   type NetworkErrorKind,
 } from '@/lib/http/networkError'
 
-/**
- * A failed `request()`. `kind` says what went wrong (see `NetworkErrorKind`);
- * `serverCode` is the service's own code from the body (`error` or `code`),
- * which ww-api, the Buddies relay and Scribe AI all send. `body` is the parsed
- * JSON error body (null when there was none or it wasn't JSON), for callers
- * that need more than the code.
- */
 export class HttpError extends Error {
   constructor(
     readonly kind: NetworkErrorKind,
@@ -28,11 +21,10 @@ export class HttpError extends Error {
 }
 
 export type RetryPolicy = {
-  /** Extra attempts after the first. */
   retries: number
-  /** First backoff ceiling; doubles each attempt (full jitter). */
+
   baseDelayMs?: number
-  /** Cap for one wait, including a server's Retry-After. */
+
   maxDelayMs?: number
 }
 
@@ -40,31 +32,21 @@ export type RequestOptions = {
   url: string
   method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   headers?: Record<string, string>
-  /** Sent as JSON with a JSON content type. */
+
   json?: unknown
-  /** Sent as-is; set the content type yourself. */
+
   body?: string | Uint8Array
-  /**
-   * Required: fetch in React Native has no timeout of its own, and Android
-   * waits forever on a stalled connection. Covers reading the body too.
-   */
+
   timeoutMs: number
   signal?: AbortSignal
-  /**
-   * Retries happen only for idempotent requests, and only after offline,
-   * timeout, 408, 429 and 5xx failures. GET and HEAD are idempotent; mark a
-   * POST idempotent only when repeating it can't do anything twice.
-   */
+
   retry?: RetryPolicy
   idempotent?: boolean
-  /**
-   * `json` (default) parses the body; `text` returns it raw, `bytes` as a
-   * `Uint8Array`. Error bodies are always read as JSON.
-   */
+
   responseType?: 'json' | 'text' | 'none' | 'bytes'
-  /** Tests and native-backed transports. */
+
   fetchImpl?: typeof fetch
-  /** Send even when the OS reports no connection (e.g. a local server). */
+
   ignoreOfflineState?: boolean
 }
 
@@ -77,11 +59,6 @@ export type HttpResponse<T> = {
 const DEFAULT_BASE_DELAY_MS = 500
 const DEFAULT_MAX_DELAY_MS = 30_000
 
-/**
- * The app's HTTP client: a timeout that covers the whole exchange, caller
- * cancellation, typed failures, and safe retries with backoff that honour
- * Retry-After.
- */
 export async function request<T = unknown>(
   options: RequestOptions
 ): Promise<HttpResponse<T>> {
@@ -114,7 +91,6 @@ async function attemptRequest<T>(
   if (!options.ignoreOfflineState && isKnownOffline())
     throw new HttpError('offline')
 
-  // Hermes may lack AbortSignal.any, so link the caller's signal by hand.
   const controller = new AbortController()
   let timedOut = false
   const timer = setTimeout(() => {
@@ -136,7 +112,7 @@ async function attemptRequest<T>(
     const response = await (options.fetchImpl ?? fetch)(options.url, {
       method,
       headers,
-      // React Native's fetch sends a Uint8Array's bytes as-is.
+
       body: body as BodyInit | undefined,
       signal: controller.signal,
     })
@@ -167,9 +143,6 @@ async function attemptRequest<T>(
       try {
         data = text ? JSON.parse(text) : null
       } catch {
-        // A web page in place of the API's JSON is the network's, not the
-        // service's: a captive portal (hotel or guest Wi-Fi) answering every
-        // request with its sign-in page. No real connection yet.
         if (isHtml(response.headers, text))
           throw new HttpError(
             'offline',
@@ -206,8 +179,7 @@ async function attemptRequest<T>(
 function toHttpError(error: unknown): HttpError {
   if (error instanceof HttpError) return error
   const kind = classifyNetworkError(error)
-  // fetch only rejects for transport failures, so an unrecognised message is
-  // still a connection problem rather than a server answer.
+
   return new HttpError(
     kind === 'unknown' ? 'offline' : kind,
     null,
@@ -234,14 +206,12 @@ function jsonOrNull(text: string): unknown {
 
 function serverCodeFrom(body: unknown): string | null {
   if (typeof body !== 'object' || body === null) return null
-  // ww-api sends a stable `code`; some routes keep a human `error` message
-  // for older builds, so `error` is only the fallback.
+
   const parsed = body as { error?: unknown; code?: unknown }
   if (typeof parsed.code === 'string') return parsed.code
   return typeof parsed.error === 'string' ? parsed.error : null
 }
 
-/** Seconds or an HTTP date, as servers send it. */
 export function retryAfterMs(header: string | null): number | null {
   if (!header) return null
   const seconds = Number(header)

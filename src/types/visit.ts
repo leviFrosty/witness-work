@@ -5,94 +5,42 @@ export type Notification = {
   id: string
 }
 
-/**
- * Tombstone written when a record is deleted so the deletion propagates across
- * devices.
- */
 export type VisitTombstone = {
   id: string
   deletedAt: number
-  /**
-   * Left by an import's Undo rather than by the user, so running that import
-   * again brings the Visit back.
-   */
+
   importUndone?: true
 }
 
-/**
- * A single field-ministry interaction with a Contact on a given date. May
- * result in a real conversation (someone home, talked) or a not-at-home outcome
- * (no one answered). Carries an optional note, an optional follow-up, and a
- * Bible Study flag for the user to indicate this Visit conducted a Bible
- * study.
- *
- * Renamed from `Conversation` — the legacy name understated the type's actual
- * scope (not every Visit is a conversation; see `notAtHome`).
- */
 export type Visit = {
   id: string
-  /**
-   * Epoch ms of the most recent change. Used by iCloud sync's per-record
-   * last-writer-wins merge. Optional for historical records predating sync
-   * (backfilled on first sync boot).
-   */
+
   updatedAt?: number
   contact: {
     id: string
   }
   date: Date
-  /**
-   * Epoch ms this Visit arrived with a Contact someone shared with the User. It
-   * records the sender's ministry, not the User's, so none of the User's own
-   * figures count it (`isOwnVisit`): the report, Progress, profile, widgets,
-   * pet hearts and badges. Never travels in a share; each recipient stamps
-   * their own copy.
-   */
+
   receivedAt?: number
   note?: string
-  /** The note with formatting, when it has any; see `src/lib/richText/notes.ts`. */
+
   noteDoc?: RichText
-  /**
-   * Present only when the user turned on the Follow Up switch in the visit
-   * form. Absence means "no return visit planned" — history hides the section
-   * and nothing surfaces in Missed/Approaching Conversations or the widget.
-   * Legacy placeholder follow-ups (no reminder, no topic) are stripped by the
-   * conversation store's persist migration and the sync payload parser.
-   */
+
   followUp?: {
     date: Date
     notifyMe: boolean
     topic?: string
-    /**
-     * TODO: Refactor where there is only one notification enabled. Also
-     * simplifies VisitFormScreen submit function.
-     */
-    notifications?: Notification[] // Changing to only one
-    /**
-     * How many minutes before `date` the reminder fires: the reminder intent
-     * that syncs. `notifications` keeps the fire time for older app versions;
-     * each device schedules its own OS reminder from these.
-     */
+
+    notifications?: Notification[]
+
     reminderOffsetMinutes?: number
-    /**
-     * When true, the user has dismissed this follow-up — it should be hidden
-     * from "Missed Conversations" and the widget's overdue list, but the
-     * follow-up's `topic` and any other data are preserved (non-destructive).
-     * Re-enabled by rescheduling, which clears this flag implicitly.
-     */
+
     dismissed?: boolean
-    /**
-     * Buddies (their inbox ids) invited along. They receive only the date and
-     * time, the Contact's first name, the address, and the topic.
-     */
+
     buddies?: string[]
   }
   isBibleStudy: boolean
   notAtHome?: boolean
-  /**
-   * Per-visit custom field values. Keyed by `CustomFieldDefinition.id` from
-   * `conversationFieldDefs` in the conversation store; the renderer joins the
-   * two by id.
-   */
+
   customFields?: Record<string, string>
 }

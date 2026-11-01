@@ -14,11 +14,7 @@ export type CategorySegment = {
 
 type CategorySegmentBarProps = {
   segments: CategorySegment[]
-  /**
-   * When true, render dots + titles in a single wrapping row with no minute
-   * totals. Used as the collapsed summary on the Month screen — full detail
-   * lives in a sheet.
-   */
+
   compact?: boolean
 }
 

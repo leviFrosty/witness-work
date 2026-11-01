@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const device = {
   languageTag: 'en-US',
   uses24hourClock: false as boolean | null,
-  firstWeekday: 1 as number | null, // expo Weekday enum: SUNDAY = 1
+  firstWeekday: 1 as number | null,
 }
 
 vi.mock('expo-localization', () => ({
@@ -31,7 +31,7 @@ import {
 import { JW_ARABIC_MONTHS, JW_ARABIC_MONTHS_SHORT } from '@/lib/momentLocales'
 import { RLM } from '@/lib/digits'
 
-const sample = () => moment('2026-10-14T13:30:00') // Wednesday
+const sample = () => moment('2026-10-14T13:30:00')
 
 beforeEach(() => {
   device.languageTag = 'en-US'
@@ -104,7 +104,7 @@ describe('the Arabic Format Region', () => {
 
   it('keeps Arabic numeric dates reading right to left in any order', () => {
     applyFormatRegion({ language: 'ar', region: 'en' })
-    // US order, still marked so the month stays on the right.
+
     expect(formatDisplay(sample(), 'L')).toBe(`١٠/${RLM}١٤/${RLM}٢٠٢٦`)
     applyFormatRegion({ language: 'ar', region: 'de' })
     expect(formatDisplay(sample(), 'L')).toBe(`١٤.${RLM}١٠.${RLM}٢٠٢٦`)

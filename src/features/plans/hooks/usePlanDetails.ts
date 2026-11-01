@@ -15,16 +15,9 @@ import { incomingShareKey } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { planDayFromRouteDate } from '@/features/plans/lib/planDayDates'
 
-/**
- * The Plan that Plan Details shows, wherever it shows: the User's own Plan (or
- * one date of a Recurring Plan), the buddy's invitation it follows, and
- * answering that invitation. `gone` once neither is left (deleted, or the
- * invitation cancelled).
- */
 export default function usePlanDetails(
   params: RootStackParamList['Plan Details'],
   options: {
-    /** Answering an invitation; "Can't make it" removes its linked Plan. */
     onAnswer?: (target: BuddyShareRef) => void
   } = {}
 ) {
@@ -50,7 +43,7 @@ export default function usePlanDetails(
     !dayPlan && recurringPlanId && day
       ? recurringPlans.find((plan) => plan.id === recurringPlanId)
       : undefined
-  // The Plan's local day: what Log as Time, Duplicate, and Edit are handed.
+
   const item: PlanListItem | undefined = dayPlan
     ? { type: 'day', date: storedDateToLocalDate(dayPlan.date), plan: dayPlan }
     : recurringPlan && day && getPlansIntersectingDay(day, [recurringPlan])[0]
@@ -62,7 +55,7 @@ export default function usePlanDetails(
     : undefined
   const shared =
     enabled && isShownPlanShare(followed, now) ? followed : undefined
-  // A buddy's Plan that has happened can still be looked at, not answered.
+
   const invitation =
     shared && isOpenPlanInvitation(shared, now) ? shared : undefined
 

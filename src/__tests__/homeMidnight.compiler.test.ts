@@ -1,8 +1,6 @@
 import { expect, it } from 'vitest'
 import { cachedClockReads } from '@/__tests__/helpers/cachedClockReads'
 
-// Home stays mounted for days. What it shows for "today" or "this month" comes
-// from `useLocalDay`/`useNow`, so it moves on at midnight and on return.
 it.each([
   'src/features/onboarding/components/HomeChecklist.tsx',
   'src/features/mileage/components/MileageDailyChart.tsx',

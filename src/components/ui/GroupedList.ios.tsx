@@ -60,10 +60,6 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const ICON_GAP = 12
 
-/**
- * Starts a row's separator at its label, as SwiftUI does past a leading SF
- * Symbol. The List reads the guide from the row's outermost view.
- */
 const separatorModifiers = (icon?: AppIcon) =>
   icon
     ? [
@@ -79,7 +75,7 @@ function useRowStyle() {
   const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const size = (step: Parameters<typeof theme.fontSize>[0]) =>
     theme.fontSize(step) + fontSizeOffset
-  // The theme's faces, so rows follow Bold Text like the rest of the app.
+
   const fonts = {
     regular: postScriptName(theme.fonts.regular),
     medium: postScriptName(theme.fonts.medium),
@@ -116,10 +112,6 @@ function useRowStyle() {
   }
 }
 
-/**
- * A SwiftUI inset grouped `List` that owns the scroll, in the app's colors and
- * fonts.
- */
 export function GroupedList({ children, title, testID }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const style = useRowStyle()
@@ -199,7 +191,6 @@ export function GroupedListSection({
   )
 }
 
-/** A Lucide icon hosted at its own size, so SwiftUI doesn't stretch it. */
 function RowIcon({
   icon,
   color,
@@ -266,7 +257,7 @@ function RowLabel({
       <RowText label={label} sublabel={sublabel} />
       {info ? (
         <RNHostView matchContents>
-          {/* One native child: the popover mounts its own Modal beside the button. */}
+          {}
           <View>
             <InfoPopover title={label} description={info} />
           </View>
@@ -304,10 +295,6 @@ const menuItems = (groups: ContextMenuItem[][]) =>
     </Fragment>
   ))
 
-/**
- * A row that opens a screen, a website or an action. Long press lifts the row
- * with its context menu, as rows do in Settings.
- */
 export function GroupedListRow({
   label,
   sublabel,
@@ -373,9 +360,9 @@ export function GroupedListRow({
               textStyle: 'footnote',
               weight: accessory === 'external' ? 'regular' : 'semibold',
             }),
-            // Explicit, since a button's label inherits the accent tint.
+
             foregroundStyle(theme.colors.textAlt),
-            // The row's label already says where it goes.
+
             accessibilityHidden(true),
           ]}
         />
@@ -416,10 +403,6 @@ export function GroupedListRow({
   )
 }
 
-/**
- * The label, its info button and the switch stay separate controls, as in
- * Settings: only the switch toggles.
- */
 export function GroupedListSwitchRow({
   label,
   icon,
@@ -456,7 +439,6 @@ export function GroupedListSwitchRow({
   )
 }
 
-/** A menu of choices; the row shows the current one, as a Settings picker does. */
 export function GroupedListPickerRow({
   label,
   sublabel,
@@ -476,8 +458,7 @@ export function GroupedListPickerRow({
         ...separatorModifiers(icon),
       ]}
     >
-      {/* Outside the picker: SwiftUI also draws a picker's label elsewhere,
-          and a hosted view can only show in one place. */}
+      {}
       {icon ? <RowIcon icon={icon} color={style.theme.colors.textAlt} /> : null}
       <Picker
         testID={testID}

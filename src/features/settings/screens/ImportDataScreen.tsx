@@ -13,11 +13,6 @@ import ImportOptions, {
 import { useBackupImport } from '@/app/sync/useBackupImport'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Settings → Import Data: onboarding's "Pick up where you left off" options,
- * for bringing more in later. MyTime opens its import screen, the sync option
- * opens Device Sync, and a backup file restores here, as on Backup & Restore.
- */
 const ImportDataScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

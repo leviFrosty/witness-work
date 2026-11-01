@@ -116,7 +116,7 @@ describe('backupReminderDueAt', () => {
     expect(backupReminderDueAt({ ...base, accountBackupAt: daysAgo(2) })).toBe(
       null
     )
-    // A stale account backup reminds as usual.
+
     expect(
       backupReminderDueAt({ ...base, accountBackupAt: daysAgo(40) })
     ).not.toBeNull()

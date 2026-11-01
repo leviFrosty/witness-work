@@ -6,11 +6,6 @@ import {
   legacyCommit,
 } from '@/features/scribe/legacy/notesImportLedger'
 
-/**
- * Undo an accepted Notes Import: `undoImport` deletes what it inserted (a
- * Contact another Visit still uses stays, `kept`), then the row returns to
- * Ready with no commit, as Notes Import's own Undo left it.
- */
 export function undoLegacyImport(
   id: string,
   now: number = Date.now()

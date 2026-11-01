@@ -18,13 +18,6 @@ import i18n from '@/lib/locales'
 import { platformSyncKey } from '@/lib/syncCopy'
 import type { SyncOption } from '@/app/sync/syncOption'
 
-/**
- * Settings → Sync's choice (ADR 0030): Cloud Sync, iCloud (Google Drive on
- * Android), or Off, one at a time. Says why Cloud Sync is the more secure one
- * in words that stay true (WitnessWork encrypts Cloud Sync end to end, and
- * doesn't encrypt iCloud or Drive sync), and, on iCloud/Drive, that this device
- * only syncs with devices on the same option.
- */
 export default function SyncOptionSection({
   option,
   busy,
@@ -35,15 +28,15 @@ export default function SyncOptionSection({
   otherDevicesSignedIn,
 }: {
   option: SyncOption
-  /** A switch is running; the rows can't be pressed. */
+
   busy: SyncOption | null
   onSelect: (option: SyncOption) => void
-  /** The offer's Switch: it already says why, so no second confirmation. */
+
   onSwitchFromOffer: () => void
-  /** Show the one-time offer to move to Cloud Sync. */
+
   offer: boolean
   onDismissOffer: () => void
-  /** The account has other signed-in devices (null: unknown). */
+
   otherDevicesSignedIn: boolean | null
 }) {
   const theme = useTheme()
@@ -169,10 +162,6 @@ export default function SyncOptionSection({
   )
 }
 
-/**
- * Whether the account has other signed-in devices, read once when the screen
- * opens; null until known or when it can't be read.
- */
 export function useOtherDevicesSignedIn(
   read: () => Promise<boolean>
 ): boolean | null {

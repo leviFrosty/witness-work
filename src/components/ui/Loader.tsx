@@ -3,11 +3,9 @@ import LottieView, { LottieViewProps } from 'lottie-react-native'
 import i18n from '@/lib/locales'
 
 interface Props extends Omit<LottieViewProps, 'source'> {
-  /** What's loading, read by screen readers. Defaults to "Loading". */
   accessibilityLabel?: string
 }
 
-/** The animated loading mark, announced to screen readers. */
 const Loader = ({ style, accessibilityLabel, ...props }: Props) => {
   return (
     <View

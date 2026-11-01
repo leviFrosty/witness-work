@@ -8,7 +8,7 @@ export interface NativeSegmentedOption<T extends string = string> {
 
 export interface NativeSegmentedControlProps<T extends string = string> {
   options: ReadonlyArray<NativeSegmentedOption<T>>
-  /** Currently-selected option key. `null`/`undefined` selects no segment. */
+
   value: T | null | undefined
   onChange: (key: T) => void
   disabled?: boolean

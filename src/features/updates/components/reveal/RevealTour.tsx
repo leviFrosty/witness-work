@@ -34,26 +34,18 @@ interface Props {
   palette: WelcomePalette
   time: SharedValue<number>
   reduceMotion: boolean
-  /** A page came on screen. */
+
   onPageViewed: (id: string) => void
-  /** The last page's main action, in place of Next. */
+
   finish: TourAction
-  /** A quieter link beneath it on the last page, like Done. */
+
   finishLink?: TourAction
-  /** The way out, top right: a labelled link like Skip, or an X without one. */
+
   exit: { label?: string; onPress: () => void }
-  /**
-   * Android's Back on the first page. On later pages Back turns back a page.
-   * Leave unset where the host handles Back itself.
-   */
+
   onBackFromStart?: () => void
 }
 
-/**
- * A tour of features: a page each, swiped or stepped through with Next. The
- * update reveal's last action takes the user home; onboarding's ends on setting
- * up.
- */
 const RevealTour = ({
   pages,
   palette,
@@ -75,8 +67,6 @@ const RevealTour = ({
   const last = index === pages.length - 1
   const pageId = pages[index]?.id
 
-  // Offsets are physical; `scrollX` runs from the reading start, so page
-  // math reads the same in RTL.
   const rtl = isRtlLayout()
   const contentWidth = pages.length * width
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -87,8 +77,7 @@ const RevealTour = ({
       x: flowScrollX(page * width, contentWidth, width, rtl),
       animated: true,
     })
-  // The page under the middle of the screen is the current one, whether it got
-  // there by a swipe or by Next.
+
   useAnimatedReaction(
     () => (width > 0 ? Math.round(scrollX.value / width) : 0),
     (now, before) => {
@@ -105,7 +94,6 @@ const RevealTour = ({
     scrollToPage(index + 1)
   }
 
-  // Registered again on every render so it reads the current page.
   useEffect(() => {
     if (!onBackFromStart) return
     const subscription = BackHandler.addEventListener(
@@ -272,7 +260,6 @@ const RevealTour = ({
   )
 }
 
-/** One step of the tour's progress, filling as it's reached. */
 const Segment = ({
   filled,
   palette,

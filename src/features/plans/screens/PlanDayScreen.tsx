@@ -9,8 +9,6 @@ import PlanDayForm from '@/features/plans/components/PlanDayForm'
 type PlanDayScreenProps = NativeStackScreenProps<RootStackParamList, 'PlanDay'>
 
 const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
-  // A cold launch from the Calendar widget's "+" (`witnesswork://day`) opens
-  // this screen with no params at all.
   const params = route.params ?? {}
   const isEditMode = !!(
     params.existingDayPlanId || params.existingRecurringPlanId
@@ -29,15 +27,11 @@ const PlanDayScreen = ({ route, navigation }: PlanDayScreenProps) => {
   }, [isEditMode, navigation])
 
   return (
-    // The dock applies the bottom safe area itself.
     <Wrapper insets='none' style={{ flex: 1 }}>
       <PlanDayForm
         params={params}
         source='plan_form'
         onSaved={(detailsTarget) => {
-          // An edit can move the Plan, and one created from Plan Details
-          // (Duplicate, Invite) opens there next. One made from a route
-          // (to invite buddies) goes back to belong to it.
           const { routes } = navigation.getState()
           const opener = routes[routes.length - 2]
           if (detailsTarget && opener?.name === 'Plan Details') {

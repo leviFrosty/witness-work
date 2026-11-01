@@ -14,10 +14,6 @@ import {
   pastSentenceKey,
 } from '@/features/visits/lib/visitDetails'
 
-/**
- * What happened at the Visit, in the past tense: "You held a Bible study with
- * Chen Wei", when, the note as a quote, and its fields as chips.
- */
 export default function VisitPastStop({
   visit,
   contactName,

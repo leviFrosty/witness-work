@@ -1,7 +1,6 @@
 import i18n from '@/lib/locales'
 import type { ReportExportMethod } from '@/stores/preferences'
 
-/** Label for the one-tap submit action of a given method. */
 export const getSubmitCtaLabel = (method: ReportExportMethod): string => {
   switch (method) {
     case 'hourglass':
@@ -16,7 +15,6 @@ export const getSubmitCtaLabel = (method: ReportExportMethod): string => {
   }
 }
 
-/** Menu label for sending a report once by `method` (e.g. "Share Report…"). */
 export const exportMethodMenuTitle = (method: ReportExportMethod): string => {
   switch (method) {
     case 'hourglass':
@@ -31,7 +29,6 @@ export const exportMethodMenuTitle = (method: ReportExportMethod): string => {
   }
 }
 
-/** SF Symbols for export methods in native menus. */
 export const exportMethodSymbols = {
   copy: 'doc.on.doc',
   share: 'square.and.arrow.up',

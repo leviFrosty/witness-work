@@ -86,7 +86,7 @@ describe('buildServiceHistoryRows', () => {
       },
       now: new Date(2025, 11, 15),
     })
-    // September–November; December is still running.
+
     expect(rows.map((r) => r.target)).toEqual([
       { year: 2025, month: 8 },
       { year: 2025, month: 9 },

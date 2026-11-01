@@ -5,26 +5,11 @@ import type { Category } from '@/types/category'
 import type { CustomFieldDefinition } from '@/types/customField'
 import type { Publisher } from '@/types/publisher'
 
-/**
- * The user's Publisher role + Tenure Start Date as produced by an import
- * source. Shared by every import path (MyTime, Notes) so they converge on one
- * persistence layer (`writeMappedDataToStores`).
- */
 export interface MappedPublisher {
   role: Publisher
   tenureStartDate: Date | null
 }
 
-/**
- * The fully-denormalized, WitnessWork-shaped result of an import, ready to
- * write into the stores. Every record carries a deterministic id (`mytime-*` /
- * `notes-*`) so a re-run is idempotent — the stores' `add*` actions skip ids
- * they already hold.
- *
- * This type is shared infrastructure (it lives outside any one feature):
- * `mytime-import` produces it for `writeMappedDataToStores`, and Scribe AI's
- * History undoes Notes Imports from before Scribe AI through `undoImport`.
- */
 export interface MappedImport {
   contacts: Contact[]
   visits: Visit[]

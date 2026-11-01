@@ -9,19 +9,9 @@ import {
 
 export { originalSiblingFileName } from '@/lib/avatarFilePolicy'
 
-/**
- * On-disk layout for a contact's image avatar.
- *
- * Cropped picks and local-only originals have immutable revision paths. A
- * pending draft therefore cannot overwrite another photo's source, and cleanup
- * of a remote replacement cannot delete the pending draft's original. Legacy
- * records without revisions retain their canonical filenames.
- */
-
 const CROPPED_PREFIX = 'contact-'
 const CROPPED_SUFFIX = '-avatar.jpg'
 
-/** New cropped bytes use immutable paths so an upload cannot read a later pick. */
 export function revisionImageFileName(
   fileName: string,
   revision: string
@@ -61,10 +51,6 @@ export function originalAvatarPath(
   return `${FileSystem.documentDirectory}${originalAvatarFileName(contactId, revision)}`
 }
 
-/**
- * Strip the `?t=…` cache-buster off an avatar `value` so it can be passed to
- * filesystem APIs. `<Image>` keeps the buster; `FileSystem` cannot.
- */
 export function stripCacheBuster(uri: string): string {
   const q = uri.indexOf('?')
   return q === -1 ? uri : uri.slice(0, q)
@@ -85,25 +71,15 @@ export async function originalExists(
 }
 
 export interface CropRect {
-  /** Top-left X in the source image's pixel coordinates. */
   originX: number
-  /** Top-left Y in the source image's pixel coordinates. */
+
   originY: number
-  /** Width of the crop in source pixels. */
+
   width: number
-  /** Height of the crop in source pixels. */
+
   height: number
 }
 
-/**
- * Crop a source image to `rect` and persist the result at `destPath`.
- *
- * Generic because the same pipeline serves both contact avatars (`destPath` =
- * `croppedAvatarPath(contactId)`) and the user's profile avatar
- * (`<documentDirectory>/profile-avatar.jpg`). `rect` is in source-image pixel
- * coordinates and is clamped to bounds before being passed to the manipulator
- * (out-of-bounds crops throw on iOS).
- */
 export async function cropAndSaveImage(
   srcUri: string,
   destPath: string,
@@ -133,10 +109,6 @@ export async function cropAndSaveImage(
   return { path: destPath, width: result.width, height: result.height }
 }
 
-/**
- * Contact-specific convenience wrapper around `cropAndSaveImage` that targets
- * the canonical cropped-avatar path for a contact id.
- */
 export function cropAndSaveAvatar(
   srcUri: string,
   contactId: string,
@@ -152,10 +124,6 @@ export function cropAndSaveAvatar(
   )
 }
 
-/**
- * Centered square crop of the given source dimensions. Used by the crop editor
- * as the default frame and by "Reset" to revert to the un-customised state.
- */
 export function defaultCenteredSquareCrop(source: {
   width: number
   height: number
@@ -169,12 +137,6 @@ export function defaultCenteredSquareCrop(source: {
   }
 }
 
-/**
- * Best-effort cleanup of all on-disk avatar files for a contact. Called when a
- * user explicitly erases householder data. Errors are swallowed since the
- * caller cares about the in-memory state, not whether the disk eviction
- * succeeded.
- */
 export async function deleteAvatarFiles(contactId: string): Promise<void> {
   if (!FileSystem.documentDirectory) return
   const paths = new Set([

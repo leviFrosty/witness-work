@@ -3,7 +3,6 @@ import SuggestedSectionHeader, {
   type SuggestedHeaderSection,
 } from '@/components/SuggestedSectionHeader'
 
-/** Small uppercase label above each part of the picker's list. */
 export default function LogVisitSectionHeader({
   title,
   section,

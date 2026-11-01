@@ -8,12 +8,6 @@ import Text from '@/components/ui/MyText'
 import IconButton from '@/components/ui/IconButton'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 
-/**
- * "Log Visit" over both steps. Picking: New Contact on the trailing side.
- * Choosing an outcome: a back chevron to the list. The sheet itself closes the
- * picker on iOS; Android presents it full screen, so it gets a close button
- * too.
- */
 export default function LogVisitHeader({
   onBack,
   onClose,
@@ -48,7 +42,6 @@ export default function LogVisitHeader({
       style={[
         styles.bar,
         {
-          // Android presents this modal full-screen, edge-to-edge.
           paddingTop: Platform.OS === 'android' ? insets.top + 12 : 18,
           borderBottomColor: theme.colors.border,
         },

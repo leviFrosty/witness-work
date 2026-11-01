@@ -5,18 +5,9 @@ import type {
   CalendarSnapshot,
 } from '../../../modules/calendar-bridge'
 
-/**
- * Android identifies its events by a link in the event description, the
- * counterpart of the iOS event URL. CalendarContract has no app-writable field
- * that syncs: `SYNC_DATA*` and extended properties belong to the account's sync
- * adapter, and Google leaves `UID_2445` empty. Descriptions reach the server
- * and every device, so two Android devices publishing into one Google calendar
- * find each other's events and converge on one per Follow-up.
- */
 const MARKER =
   /witnesswork:\/\/contact\/([^/\s?"'<>]+)\/[^\s?"'<>]*\?([^\s"'<>]+)/
 
-/** Whole minutes, at most four weeks ahead; anything else means no alert. */
 function alert(entry: CalendarEntry) {
   const minutes = entry.alertMinutes
   if (minutes === undefined || !Number.isFinite(minutes)) return undefined
@@ -24,11 +15,6 @@ function alert(entry: CalendarEntry) {
   return Math.round(minutes)
 }
 
-/**
- * The alert is part of the marker, as on iOS: a Notify Me change rewrites the
- * event, while reminders a provider adds itself (Google's default
- * notifications) don't cause a rewrite on every sync.
- */
 export function eventDescription(entry: CalendarEntry) {
   return `${entry.url}?followUp=${encodeURIComponent(entry.key)}&alert=${alert(entry) ?? 'none'}`
 }
@@ -41,10 +27,6 @@ function decode(value: string) {
   }
 }
 
-/**
- * Tolerates text around the link and the HTML a provider may turn it into (a
- * link, `&amp;`), so reformatting alone never rewrites an event.
- */
 export function parseEventMarker(description: string) {
   const match = MARKER.exec(description)
   if (!match) return null
@@ -72,10 +54,6 @@ const sameMarker = (current: string, wanted: string) => {
   )
 }
 
-/**
- * Every device must keep the same copy: synced events first (a server id is the
- * same everywhere), then the lowest id.
- */
 function rank(a: AndroidCalendarEvent, b: AndroidCalendarEvent) {
   if (a.syncId !== b.syncId) {
     if (a.syncId === null) return 1
@@ -85,12 +63,6 @@ function rank(a: AndroidCalendarEvent, b: AndroidCalendarEvent) {
   return Number(a.id) - Number(b.id)
 }
 
-/**
- * Upserts by Follow-up key. Like iOS, only explicit removals delete events, so
- * a device missing some data (or another device's Follow-ups) never removes
- * them; past Follow-ups aren't added, but existing events still update. Unlike
- * iOS, a missing upcoming event is simply recreated.
- */
 export function planAndroidPublish({
   events,
   snapshot,
@@ -136,8 +108,6 @@ export function planAndroidPublish({
       !includeDetails &&
       (kept.title !== snapshot.title || kept.location !== '')
     ) {
-      // Its Visit is missing here, but turning off names and addresses must
-      // still redact it.
       writes.push({
         id: kept.id,
         title: snapshot.title,

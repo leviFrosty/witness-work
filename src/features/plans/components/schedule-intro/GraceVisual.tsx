@@ -37,11 +37,6 @@ const STREAK = 12
 const KEEP_AT = 0.32
 const SWIPE_AT = 0.56
 
-/**
- * The grace day: yesterday's Plan with no time yet shows how long is left, and
- * logging it keeps the streak lit. A Plan that can't happen is removed ahead of
- * time, and the streak doesn't mind.
- */
 const GraceVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const { intro, loop } = useVisualClock({

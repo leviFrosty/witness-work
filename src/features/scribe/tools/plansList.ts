@@ -14,7 +14,7 @@ import {
 
 const MAX_PLANS = 60
 const MAX_RANGE_DAYS = 62
-/** As long as plans_create allows. */
+
 const TITLE_MAX = 60
 
 export default defineReadTool({

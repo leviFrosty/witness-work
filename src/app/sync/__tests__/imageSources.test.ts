@@ -68,10 +68,6 @@ describe('collectLocalAvatarSources', () => {
   })
 
   it('skips contact avatars whose file:// path escapes the document directory', () => {
-    // Defense-in-depth: a malicious import that slipped past the validator
-    // could put any sandbox path into avatar.value. The push pipeline must
-    // never accept a source path that lives outside its own document
-    // directory, regardless of what the contact record claims.
     const sources = collectLocalAvatarSources({
       contacts: [
         makeContact({
@@ -90,9 +86,7 @@ describe('collectLocalAvatarSources', () => {
         }),
         makeContact({
           id: 'sibling-prefix',
-          // Tricky: `/Docs2/...` shares a string prefix with `/Docs/` but is
-          // actually a different directory. The `/`-terminated comparison
-          // must reject this.
+
           avatar: {
             type: 'image',
             value: 'file:///Docs2/contact-sibling-prefix-avatar.jpg',
@@ -126,7 +120,6 @@ describe('collectLocalAvatarSources', () => {
         }),
         makeContact({
           id: 'absent',
-          // Never picked an avatar at all.
         }),
       ],
       profileAvatar: { type: 'emoji', value: '🕊️' },
@@ -282,10 +275,6 @@ describe('applyDownloadedAvatars', () => {
       ],
     })
 
-    // updatedAt must stay the same — the avatar.value rewrite is a display
-    // fix-up, not a user edit. If we bumped it, the next push would overwrite
-    // the remote with a marker→file:// flip and trigger a no-op churn loop
-    // across devices.
     expect(result.contacts[0].updatedAt).toBe(12345)
   })
 

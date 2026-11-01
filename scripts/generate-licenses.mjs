@@ -1,11 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Writes the open-source packages WitnessWork ships with, for Settings → About
- * → Open Source Licenses. Run `pnpm licenses:generate` after changing
- * dependencies.
- */
-
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -25,7 +19,7 @@ const raw = execFileSync('pnpm', ['licenses', 'list', '--prod', '--json'], {
 const authorName = (author) => {
   if (!author) return undefined
   if (typeof author === 'object') return author.name
-  // "Name <email> (url)" → "Name"; never ship maintainers' email addresses.
+
   return author
     .replace(/\s*<[^>]*>/g, '')
     .replace(/\s*\([^)]*\)/g, '')

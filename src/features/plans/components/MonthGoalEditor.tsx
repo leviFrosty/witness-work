@@ -3,7 +3,6 @@ import usePublisher from '@/hooks/usePublisher'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import MonthGoalEditorSheet from '@/features/service-reports/components/MonthGoalEditorSheet'
 
-/** The Monthly Goal editor for any month the Schedule shows. */
 export default function MonthGoalEditor({
   target,
   open,

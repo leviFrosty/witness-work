@@ -17,13 +17,6 @@ import SharedCarNotificationRow, {
   type CarInviteAnswer,
 } from '@/app/sharedCars/SharedCarNotificationRow'
 
-/**
- * How an invitation shows in the bell: still to answer (`open`), or answered:
- * `joined`, also when the User is on the car anyway (joined from another
- * invitation, or on another of their devices whose answer hasn't arrived), or
- * `declined`. Null when it isn't listed: canceled, gone, or lapsed unanswered,
- * as the next expiry prunes it.
- */
 export function carInviteAnswer(
   invite: IncomingCarInvite | undefined,
   { onCar, now }: { onCar: boolean; now: number }
@@ -34,14 +27,6 @@ export function carInviteAnswer(
   return invite.expiresAt > now ? 'open' : null
 }
 
-/**
- * Shared Cars' entries in the Buddies queue as tray items, while the
- * `shared-cars` flag is on: buddies' invitations to their cars ("Anna shared
- * Mazda CX-5 with you", with Join and Decline), held in the tray until they're
- * answered, canceled, or lapse; and buddies joining this User's cars. An
- * invitation opens Mileage once the car is on this device; a buddy joining
- * opens the car's People, where they now are.
- */
 export default function useSharedCarNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
   const enabled = useFeatureFlag('shared-cars')
@@ -78,10 +63,9 @@ export default function useSharedCarNotifications(): NotificationItem[] {
             })
           : undefined
       if (answer === null) return []
-      // The invitation's name until the car is here; the car's own after.
+
       const carName = car?.vehicles[0]?.name || invite?.name || undefined
-      // Answering is what clears an invitation; until then it can't be
-      // dismissed, and it survives Clear All.
+
       const awaitsAnswer = answer === 'open'
       const buddy = buddies.find((b) => b.inboxId === entry.from)
       const vehicleId = car?.vehicles[0]?.id

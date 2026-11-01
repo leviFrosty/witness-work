@@ -22,7 +22,6 @@ describe('iCloudPullWaitRemainingMs', () => {
   })
 
   it('waits for the app to come to the foreground before the window opens', () => {
-    // A widget or background task booted the runtime; nobody opened the app.
     expect(
       iCloudPullWaitRemainingMs({
         iCloudSyncOn: true,

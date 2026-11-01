@@ -22,22 +22,13 @@ import {
   joinCarInvite,
 } from '@/app/sharedCars/answerCarInvite'
 
-/** Where a buddy's invitation to their car stands in the bell. */
 export type CarInviteAnswer = 'open' | 'joined' | 'declined'
 
-/** The dismiss X's frame, level with the first line, as Buddies' rows have it. */
 const dismissFrame = {
   ...touchTargetFrame(16),
   marginTop: Number(touchTargetFrame(16).marginVertical) + 10,
 }
 
-/**
- * A Shared Car's entry in the notifications tray: a buddy's invitation to their
- * car, answered in place with Join or Decline, or a buddy joining one of this
- * User's cars. Long-press it to open or dismiss it. An invitation still to
- * answer can't be dismissed: answering is what clears it. One to a car the User
- * is on already reads as joined.
- */
 export default function SharedCarNotificationRow({
   entry,
   answer,
@@ -49,24 +40,23 @@ export default function SharedCarNotificationRow({
   onJoined,
 }: {
   entry: BuddyNotification
-  /** `carInvite`: where the invitation stands (`carInviteAnswer`). */
+
   answer?: CarInviteAnswer
-  /** `carInvite`: how many were on the car when it was sent. */
+
   people?: number
-  /** The car's name, when there is one to show. */
+
   car?: string
   unread: boolean
-  /** Opens the car in Mileage, once it's on this device. */
+
   onPress?: () => void
-  /** Absent while the invitation awaits an answer. */
+
   onDismiss?: () => void
-  /** Joining worked: shows the car. */
+
   onJoined: () => void
 }) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
-  // Set at once, before a re-render could disable the buttons: a fast second
-  // tap answers nothing.
+
   const answering = useRef(false)
   const buddy = useBuddies((state) =>
     entry.from ? state.buddies.find((b) => b.inboxId === entry.from) : undefined

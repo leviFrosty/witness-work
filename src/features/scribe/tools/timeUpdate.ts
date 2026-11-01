@@ -15,7 +15,6 @@ import type {
   TimeFields,
 } from '@/features/scribe/proposals/model'
 
-/** The Time Entry form's limit: 99 hours 59 minutes. */
 const MAX_MINUTES = 99 * 60 + 59
 
 const sameCategory = (a: CategoryTarget, b: CategoryTarget): boolean =>

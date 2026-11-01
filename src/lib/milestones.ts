@@ -1,31 +1,14 @@
 import { Publisher } from '@/types/publisher'
 
-/**
- * Hardcoded sensible milestone ladders per publisher type. Each array lists
- * interior checkpoints _below_ the annual goal; the final rung (annual goal =
- * `publisherHours[publisher] * 12`) is appended dynamically by
- * `getEffectiveMilestones` so the ladder always ends at the real goal even when
- * that goal changes in Settings.
- *
- * `publisher` returns an empty list because that publisher type has no annual
- * goal — the Year tab is hidden from the selector in that state.
- */
 export const DEFAULT_MILESTONES_BY_PUBLISHER: Record<Publisher, number[]> = {
-  publisher: [], // No annual goal
-  regularAuxiliary: [], // No annual goal
+  publisher: [],
+  regularAuxiliary: [],
   regularPioneer: [30, 50, 100, 200, 350],
   circuitOverseer: [100, 200, 300, 400, 500],
-  specialPioneer: [], // No annual goal
-  custom: [], // Unknown amount by user, can't set a cap.
+  specialPioneer: [],
+  custom: [],
 }
 
-/**
- * Resolve the milestone ladder that should render for this user. Returns the
- * user's overrides when non-null, otherwise the publisher-type defaults — then
- * always appends the current `annualGoalHours` as the final rung, sorts
- * ascending, dedupes, and filters out any value `<= 0` or strictly greater than
- * the annual goal. (The annual-goal value itself is always preserved.)
- */
 export const getEffectiveMilestones = (
   publisher: Publisher,
   overrides: number[] | null,
@@ -47,13 +30,6 @@ export const getEffectiveMilestones = (
   return unique
 }
 
-/**
- * Compute which milestones have been hit. A milestone counts as hit once
- * `minutesCompleted` reaches its full value in minutes — compared exactly, so a
- * total that only rounds up to the milestone (599h 57m → "600.0") doesn't count
- * as 600. `next` is the smallest unhit value, or `null` when every rung is
- * already cleared.
- */
 export const getMilestoneHitState = (
   milestones: number[],
   minutesCompleted: number
@@ -80,13 +56,6 @@ export const getMilestoneHitState = (
   }
 }
 
-/**
- * Which row each milestone value sits on under the progress bar, given each
- * divider's place along it (0–1, ascending) and the least room two values on
- * one row need. A value goes on the top row when it clears the top row's last
- * value, else on the second row when it clears that row's, else it's left out
- * (`null`) rather than drawn over a neighbor.
- */
 export const milestoneLabelRows = (
   positions: number[],
   minGap: number
@@ -100,22 +69,9 @@ export const milestoneLabelRows = (
   })
 }
 
-/**
- * Stable key used by the `celebratedMilestones` preference map. Mirrors
- * `monthCelebrationKey` in shape — a single stringified identifier for the
- * service year the milestones live in. We key by the service-year START year
- * (Sep 1 of that year → Aug 31 of the next) because `YearMilestoneCard` and the
- * `MilestoneProgressBar` already work in that frame.
- */
 export const milestoneCelebrationKey = (serviceYear: number): string =>
   String(serviceYear)
 
-/**
- * Clamp a user-entered milestone value into the legal range. Negative numbers
- * become 0 (caller typically drops those). Values above `annualGoalHours - 1`
- * collapse down to `annualGoalHours - 1` because the final row is reserved for
- * the annual goal itself (locked and derived).
- */
 export const validateMilestoneValue = (
   value: number,
   annualGoalHours: number

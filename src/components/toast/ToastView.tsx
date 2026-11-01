@@ -17,58 +17,51 @@ import i18n from '@/lib/locales'
 import { toastDuration } from '@/lib/toastDuration'
 import type { Toast, ToastCloseReason, ToastPlacement } from '@/stores/toasts'
 
-/** How far each toast behind the front one peeks out (Sonner's gap). */
 export const TOAST_PEEK = 10
-/** Space between toasts while the stack is spread out. */
+
 export const TOAST_GAP = 10
-/** Toasts behind the front one that still show while collapsed. */
+
 export const VISIBLE_BEHIND = 2
-/** Sonner's timing, for moving into place and leaving. */
+
 const MOVE = { duration: 400, easing: Easing.bezier(0.21, 1.02, 0.73, 1) }
 const LEAVE = { duration: 220, easing: Easing.in(Easing.quad) }
-/** How far a swipe goes before it lets go (Sonner's threshold). */
+
 const SWIPE_DISTANCE = 45
 const SWIPE_VELOCITY = 600
 
 export type ToastLeave = {
   reason: ToastCloseReason
-  /** Where a swipe was heading, to carry on that way. */
+
   fling?: { x: number; y: number }
 }
 
 type Props = {
   toast: Toast
   placement: ToastPlacement
-  /** 0 for the front toast; null while leaving. */
+
   index: number | null
   expanded: boolean
-  /** The front toast's height: every collapsed toast takes it. */
+
   frontHeight: number
-  /** Where the stack puts it, down from its anchor at the edge. */
+
   y: number
-  /** Its own height, once measured. */
+
   height: number | undefined
-  /** Off screen for now (a takeover is up); its time doesn't run. */
+
   hidden: boolean
-  /** The User is touching or hovering the stack, or it's spread out. */
+
   paused: boolean
   reduceMotion: boolean
   screenReader: boolean
   leaving: ToastLeave | null
   onMeasure: (id: number, height: number) => void
   onLeave: (id: number, leave: ToastLeave) => void
-  /** Finished leaving: closes it in the store. */
+
   onExited: (id: number, reason: ToastCloseReason) => void
   onTouch: (touching: boolean) => void
   onExpand: () => void
 }
 
-/**
- * One toast in a Sonner-style stack. Collapsed, the ones behind the front toast
- * shrink and peek out past it, blank; spread out (tap one behind, or hover with
- * a pointer), each shows in full. Swipe away from the edge it came from, or
- * sideways, to let it go; an unlock opens with a tap.
- */
 export default function ToastView({
   toast,
   placement,
@@ -90,12 +83,11 @@ export default function ToastView({
 }: Props) {
   const theme = useTheme()
   const [hovered, setHovered] = useState(false)
-  // +1 pushes down, -1 up: the way back to its edge is -lift.
+
   const lift = placement === 'top' ? 1 : -1
   const measured = height !== undefined
   const front = index === 0
-  // Collapsed behind the front toast: a blank card peeking out, nothing to
-  // read or press until it comes to the front or the stack spreads out.
+
   const collapsedBehind = !expanded && index !== null && index > 0
   const readable = !hidden && index !== null && !collapsedBehind
 
@@ -108,7 +100,6 @@ export default function ToastView({
   const dragY = useSharedValue(0)
   const entered = useRef(false)
 
-  // Into place: in from its edge the first time, then wherever the stack says.
   useEffect(() => {
     if (!measured || hidden || leaving || index === null) return
     const collapsedBehind = !expanded && index > 0
@@ -149,7 +140,6 @@ export default function ToastView({
     contentOpacity,
   ])
 
-  // Leaving: a swipe carries on its way; anything else goes back to its edge.
   useEffect(() => {
     if (!leaving) return
     const done = () => onExited(toast.id, leaving.reason)
@@ -167,14 +157,11 @@ export default function ToastView({
     opacity.value = withTiming(0, LEAVE, (finished) => {
       if (finished) scheduleOnRN(done)
     })
-    // Closes anyway if the fade is interrupted, so a toast can't get stuck.
+
     const fallback = setTimeout(done, LEAVE.duration + 200)
     return () => clearTimeout(fallback)
-  }, [leaving]) // eslint-disable-line react-hooks/exhaustive-deps -- runs once, when it starts to leave
+  }, [leaving])
 
-  // First readable: say so, with a haptic for an unlock or an error. One whose
-  // moment passed while it waited (behind a takeover, or the app away) goes
-  // to the tray instead.
   const shown = useRef(false)
   useEffect(() => {
     if (!readable || !measured || shown.current) return
@@ -192,7 +179,6 @@ export default function ToastView({
     if (toast.intent === 'error') Haptics.error().catch(() => {})
   }, [readable, measured, toast, onLeave])
 
-  // A toast waiting its turn stops once its moment has passed.
   useEffect(() => {
     if (readable || shown.current || toast.expiresAt === undefined) return
     const timer = setTimeout(
@@ -202,8 +188,6 @@ export default function ToastView({
     return () => clearTimeout(timer)
   }, [readable, toast, onLeave])
 
-  // Its time runs only while it's in front and nobody's touching the stack, so
-  // one behind (an Undo under a newer "Copied") gets its full turn.
   const [duration, setDuration] = useState<number | null>(null)
   useEffect(() => {
     let cancelled = false
@@ -256,7 +240,6 @@ export default function ToastView({
       scheduleOnRN(onTouch, true)
     })
     .onUpdate((event) => {
-      // Away from its edge it follows the finger; toward it, only a little.
       const away =
         lift === 1
           ? Math.min(0, event.translationY)
@@ -295,7 +278,7 @@ export default function ToastView({
     .onEnd(() => {
       scheduleOnRN(open)
     })
-  // Undo is a button of its own, so only an unlock or news card takes a tap.
+
   const takesTap =
     toast.intent === 'unlock' || toast.intent === 'news' || index !== 0
   const gesture = takesTap ? Gesture.Race(pan, tap) : pan
@@ -328,7 +311,6 @@ export default function ToastView({
     <GestureDetector gesture={gesture}>
       <Animated.View
         testID={`toast-${toast.intent}`}
-        // An undo bar leaves its text and button to the screen reader.
         accessible={toast.intent !== 'undo'}
         accessibilityRole={toast.onOpen ? 'button' : 'text'}
         accessibilityLabel={
@@ -367,7 +349,7 @@ export default function ToastView({
             shadowRadius: 14,
             shadowOffset: { width: 0, height: 6 },
             elevation: Math.max(1, 8 - (index ?? 8)),
-            // Shrinks toward its top, so it peeks out above exactly TOAST_PEEK.
+
             transformOrigin: 'top',
           },
           cardStyle,

@@ -26,8 +26,6 @@ export default function useMapContactCreation(
         if (!id) return
         pendingContactId.current = undefined
 
-        // Read the saved record on return: the forms may have changed its pin,
-        // or the user may have abandoned creation or deleted the Contact.
         const contact = useContacts.getState().contacts.find((c) => c.id === id)
         if (!contact?.coordinate || isContactDismissed(contact)) return
         onContactCreated(contact.id, contact.coordinate)

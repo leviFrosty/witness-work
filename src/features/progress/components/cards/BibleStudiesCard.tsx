@@ -7,7 +7,6 @@ import useConversations from '@/stores/conversationStore'
 import StatCard from '@/features/progress/components/cards/StatCard'
 import type { ProgressCardProps } from '@/features/progress/components/cards/types'
 
-/** Contacts with a Bible Study this month: the figure on the report. */
 export default function BibleStudiesCard({
   month,
   year,

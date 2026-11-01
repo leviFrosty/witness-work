@@ -7,9 +7,6 @@ export function runTagsToCategoriesMigration() {
   const prefs = usePreferences.getState()
   if (prefs.hasMigratedTagsToCategories) return
 
-  // The flag is local-only, so it reads false whenever the preferences blob
-  // is lost. Categories that already exist (or were deleted) mean the
-  // migration ran: seeding again would replace them.
   const { categories, deletedCategories } = useCategories.getState()
   if (categories.length > 0 || deletedCategories.length > 0) {
     usePreferences.setState({ hasMigratedTagsToCategories: true })
@@ -29,23 +26,15 @@ export function runTagsToCategoriesMigration() {
     now: Date.now(),
   })
 
-  // Seed the new Categories store. Use raw setState to skip the per-store
-  // stamping (we set updatedAt explicitly inside the migration result).
   useCategories.setState({
     categories: result.categories,
     deletedCategories: [],
   })
 
-  // Apply the rewritten ServiceReports (categoryId + reconciled credit).
-  // Raw setState bypasses the per-store `updatedAt` re-stamp — the
-  // migration intentionally preserves each entry's existing `updatedAt`.
   if (result.categories.length > 0) {
     reports.set({ serviceReports: result.serviceReports })
   }
 
-  // Drop the legacy preferences.serviceReportTags field from in-memory state
-  // so it stops appearing in future persist writes (JSON.stringify drops
-  // undefined). Use raw setState to bypass the syncing wrapper.
   usePreferences.setState({
     hasMigratedTagsToCategories: true,
     ...({ serviceReportTags: undefined } as Record<string, unknown>),
@@ -65,16 +54,10 @@ export function runLdcCategoryMigration() {
     now: Date.now(),
   })
 
-  // Seed the LDC builtin Category record if it wasn't already present.
-  // Raw setState avoids re-stamping `updatedAt` on every existing record —
-  // `migrateLdcToCategory` stamps only the newly-seeded builtin.
   if (result.seededLdcBuiltin) {
     useCategories.setState({ categories: result.categories })
   }
 
-  // Apply rewritten ServiceReports (categoryId + credit on former LDC
-  // entries; `ldc` stripped). Raw setState skips the per-store updatedAt
-  // re-stamp so existing entries keep their last-edit timestamp.
   if (result.rewrittenCount > 0 || result.conflictedCount > 0) {
     reports.set({ serviceReports: result.serviceReports })
   }

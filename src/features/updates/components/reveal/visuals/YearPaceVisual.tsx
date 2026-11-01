@@ -30,8 +30,7 @@ import {
 const CHART = { left: 22, top: 92, width: 276, height: 132 }
 const MONTHS = 12
 const STEP = CHART.width / (MONTHS - 1)
-// Hours ahead of the goal line, month by month; then plans, then last year's
-// shortfall — a believable year that's going well.
+
 const AHEAD = [0, 4, 7, 9, 12, 14, 18, 21]
 const PLANNED_AHEAD = [21, 24, 26]
 const LAST_YEAR_BEHIND = [0, 5, 9, 11, 14, 17, 19, 22, 24, 26, 27, 28]
@@ -76,10 +75,6 @@ const plannedPath = polyline(
   ])
 )
 
-/**
- * Service Year Pace: the dashed goal line draws in, the year so far climbs
- * above it, and a finger scrubs through the months.
- */
 const YearPaceVisual = ({
   palette,
   active,
@@ -109,7 +104,6 @@ const YearPaceVisual = ({
       todayOpacity.value * (0.35 + 0.35 * Math.sin(loop.value * Math.PI * 4))
   )
 
-  // A finger scrubs from the start of the year to today and lets go.
   const scrubOpacity = useDerivedValue(() =>
     pulseWindow(loop.value, 0.12, 0.18, 0.62, 0.7)
   )

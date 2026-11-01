@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { crispScale, pixelsIn } from '@/features/pet/render/crispScale'
 
 describe('pixelsIn', () => {
-  // A box sized to N pixels, as layout reports it: snapped to device pixels.
   const laidOut = (pixels: number, scale: number, ratio: number) =>
     Math.round(pixels * scale * ratio) / ratio
 

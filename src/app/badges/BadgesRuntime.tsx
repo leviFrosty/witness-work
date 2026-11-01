@@ -11,7 +11,6 @@ import { useConversations } from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
 
-/** Settles a burst of edits (an import, a sync) into one evaluation. */
 const EVALUATE_DEBOUNCE_MS = 1500
 
 const localDay = () => new Date().toDateString()
@@ -25,23 +24,14 @@ const hydrated = () =>
   useConversations.persist.hasHydrated() &&
   useBuddies.persist.hasHydrated()
 
-/**
- * Keeps the User's badges current: evaluates after their records change, when
- * the app comes to the foreground (a Plan's day may have arrived), and once on
- * launch. Each evaluation carries the User's action behind its batch of
- * changes, if any, so only what they just did is celebrated full screen (ADR
- * 0021). Renders nothing; waits until onboarding is done so nothing is
- * celebrated mid-setup, then files what onboarding brought in quietly.
- */
 const BadgesRuntime = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
-  // Onboarding finished in this session, and no evaluation has run since.
+
   const justOnboarded = useRef(false)
 
   useEffect(
     () =>
       usePreferences.subscribe((state, previous) => {
-        // Not hydration, which turns it on for a User onboarded long ago.
         if (
           state.onboardingComplete &&
           !previous.onboardingComplete &&
@@ -57,7 +47,7 @@ const BadgesRuntime = () => {
     let timer: ReturnType<typeof setTimeout> | null = null
     let idle: number | null = null
     let evaluatedDay: string | null = null
-    // When this batch's first change came in, to find the action behind it.
+
     let changedAt: number | null = null
 
     const evaluate = () => {
@@ -100,14 +90,13 @@ const BadgesRuntime = () => {
         if (isRecordingBadges()) return
         if (
           state.submittedReportMonths !== previous.submittedReportMonths ||
-          // Ledger months synced from another device.
           state.badgeLedger !== previous.badgeLedger ||
           (state.badgesBackfilledAt === null &&
             previous.badgesBackfilledAt !== null)
         )
           schedule()
       }),
-      // Buddy Cards arrive often; only pairing and replies matter here.
+
       useBuddies.subscribe((state, previous) => {
         if (
           activeBuddies(state) !== activeBuddies(previous) ||
@@ -120,8 +109,7 @@ const BadgesRuntime = () => {
       useServiceReport.persist.onFinishHydration(schedule),
       useConversations.persist.onFinishHydration(schedule),
     ]
-    // Data changes are caught above. Coming back on a new day can still bring
-    // a Plan's day or a new month.
+
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active' && evaluatedDay !== localDay()) schedule()
     })

@@ -52,11 +52,6 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   )
 }
 
-/**
- * The buddy's days and the User's own for the next two weeks, side by side. Tap
- * any day to invite the buddy or plan it; on one of the buddy's days, also to
- * plan the same time or ask to join.
- */
 export default function BuddyTwoWeekStrip({
   buddy,
   card,

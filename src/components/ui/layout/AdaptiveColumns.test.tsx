@@ -88,7 +88,7 @@ describe('adaptive columns', () => {
     })
     expect(mounts).toEqual(['a', 'b', 'c', 'd'])
     act(() => renderer!.update(render(true)))
-    // Only the sections that moved to the trailing column mount again.
+
     expect(mounts.slice(4)).toEqual(['c', 'd'])
   })
 })

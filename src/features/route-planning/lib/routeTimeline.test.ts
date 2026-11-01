@@ -7,7 +7,6 @@ import {
   straightLineMeters,
 } from '@/features/route-planning/lib/routeTimeline'
 
-// About 1.1 km per 0.01° of latitude.
 const north = (offset: number) => ({
   latitude: 37.75 + offset,
   longitude: -122.42,

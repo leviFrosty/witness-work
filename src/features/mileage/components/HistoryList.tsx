@@ -12,15 +12,10 @@ import { fromDateKey } from '@/lib/mileage/calc'
 type Entry = { id: string; effectiveFrom: string; value: string }
 
 type Props = {
-  /** Ascending by `effectiveFrom`. */
   entries: Entry[]
   onDelete: (id: string) => void
 }
 
-/**
- * Past values, newest first. The oldest applies to every earlier trip, so it
- * reads "Initial". Long-press to delete any entry but the last one standing.
- */
 export default function HistoryList({ entries, onDelete }: Props) {
   const theme = useTheme()
   if (entries.length < 2) return null

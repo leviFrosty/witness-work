@@ -24,28 +24,21 @@ export const READ_TIMEOUT_ERROR =
   'The app took too long; try a narrower request.'
 
 export interface ToolRunOutcome {
-  /** One result per call, in call order. */
   results: ToolResultBlock[]
   readCalls: number
   writeCalls: number
-  /** Calls that failed: their names, and whether each was a write. */
+
   failed: { name: string; write: boolean }[]
-  /** Write tools whose call succeeded, in order. */
+
   proposed: string[]
-  /** Areas of the read tools that ran, in call order. */
+
   areas: ScribeActivityArea[]
-  /** A read returned a person's text this step. */
+
   untrusted: boolean
-  /**
-   * A `refForLaterCalls` write returned a pending Ref that no other call in
-   * this step used, so the model needs a step to use it.
-   */
+
   awaitsRef: boolean
   memoryCalls: number
-  /**
-   * Memory edits that changed it, in call order, what each did, and the memory
-   * after them. Saved only when the step is kept.
-   */
+
   memoryEdits: ScribeMemoryEdit[]
   memoryChanges: ScribeMemoryChange[]
   memoryText: string
@@ -59,15 +52,9 @@ export const MEMORY_TAINTED_ERROR =
 export const RESULT_TOO_LARGE_ERROR =
   'That result is too large. Ask for fewer items or a shorter range.'
 
-/** What a result trimmed to fit says, beside `truncated: true`. */
 export const truncatedHint = (shown: number, total: number) =>
   `Only the first ${shown} of ${total} fit. To see the rest, ask for a shorter range or fewer items.`
 
-/**
- * A read result that fits in `maxBytes`: as it is, or with its longest list cut
- * from the end (lists come most relevant first) and `truncated: true` plus a
- * hint. Null when even an empty list doesn't fit.
- */
 export function fitResult(
   block: Extract<ToolResultBlock, { ok: true }>,
   maxBytes: number
@@ -94,7 +81,7 @@ export function fitResult(
       hint: truncatedHint(count, list.length),
     },
   })
-  // The most items that fit: fits(low) holds, fits(high) doesn't.
+
   let low = 0
   let high = list.length
   if (jsonBytes(withCount(0)) > maxBytes) return null
@@ -106,11 +93,9 @@ export function fitResult(
   return withCount(low)
 }
 
-/** What a pending Ref's result says when no call in its step used it. */
 export const unusedRefNote = (ref: string) =>
   `Use ${ref} now in the calls that need it; the User adds them all together.`
 
-/** Whether any string in `args`, at any depth, is exactly `ref`. */
 function mentionsRef(args: unknown, ref: string): boolean {
   if (typeof args === 'string') return args === ref
   if (Array.isArray(args)) return args.some((item) => mentionsRef(item, ref))
@@ -119,7 +104,6 @@ function mentionsRef(args: unknown, ref: string): boolean {
   return false
 }
 
-/** Whether a drafted effect saves into the record a pending Ref creates. */
 const usesPendingRef = (effect: DraftEffect, ref: string): boolean =>
   ((effect.kind === 'time.create' || effect.kind === 'plan.create') &&
     effect.category.type === 'pending' &&
@@ -155,28 +139,18 @@ export interface ToolRunDeps {
   context: ScribeContextWire
   maxResultBytes: number
   readTimeoutMs?: number
-  /** Scribe AI's memory as the step begins. */
+
   memory: { enabled: boolean; text: string }
-  /** The turn read a person's text in an earlier step. */
+
   tainted: boolean
 }
 
-/** A step's tool calls, run as they stream in. */
 export interface ToolCallRun {
-  /** Starts a read, or proposes a write into the draft, as its call arrives. */
   add(call: ToolCallBlock): void
-  /** Waits for the reads; every call's result, in call order. */
+
   finish(): Promise<ToolRunOutcome>
 }
 
-/**
- * Runs one step's tool calls as their `tool_call` events arrive (protocol: What
- * the app does with a step): each read starts at once, with a 5 s timeout, and
- * reads run in parallel; each write proposes effects into the turn's draft, in
- * call order; each memory edit applies to a copy of the memory, in call order.
- * Never writes to a store. The caller keeps the draft's and Refs' checkpoint,
- * since a step that doesn't end in `tool_calls` is discarded.
- */
 export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
   const outcome: ToolRunOutcome = {
     results: [],
@@ -194,7 +168,7 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
   }
   const timeoutMs = deps.readTimeoutMs ?? SCRIBE_READ_TIMEOUT_MS
   const calls: ToolCallBlock[] = []
-  /** Writes that returned a pending Ref for later calls. */
+
   const refWrites: { call: ToolCallBlock; ref: string }[] = []
 
   const settled = new Map<string, ToolResultBlock>()
@@ -252,7 +226,7 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
     if (tool.access === 'memory') {
       outcome.memoryCalls++
       if (!deps.memory.enabled) return fail(call, MEMORY_OFF_ERROR, false)
-      // Text a person wrote mustn't reach every later conversation.
+
       if (deps.tainted) return fail(call, MEMORY_TAINTED_ERROR, false)
       const parsed = tool.edit(call.args)
       if (!parsed.ok) return fail(call, parsed.error, false)
@@ -297,10 +271,8 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
 
   const finish = async (): Promise<ToolRunOutcome> => {
     await Promise.all(reads)
-    // Only now are all of the step's calls known.
+
     for (const { call, ref } of refWrites) {
-      // A pending Ref no other call names, and nothing drafted saves into (a
-      // time_log newCategory of the same name shares it).
       const used =
         calls.some(
           (other) =>
@@ -309,8 +281,7 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
       if (used) continue
       outcome.awaitsRef = true
       const block = settled.get(call.callId)
-      // Without it the model sometimes waits for the User to add the record
-      // before proposing what uses it.
+
       if (block?.ok)
         settled.set(call.callId, {
           ...block,
@@ -324,7 +295,6 @@ export function startToolCalls(deps: ToolRunDeps): ToolCallRun {
   return { add, finish }
 }
 
-/** Runs one step's tool calls at once, as `startToolCalls` does. */
 export async function runToolCalls(
   calls: readonly ToolCallBlock[],
   deps: ToolRunDeps

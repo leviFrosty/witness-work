@@ -44,7 +44,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
 
     const result = extractProfileFromPreferences(prefs)
 
-    // Profile fields land in the new slice with their timestamps.
     expect(result.profile.values).toEqual({
       name: 'Alice',
       avatar: { type: 'image', value: 'file:///avatar.jpg' },
@@ -58,7 +57,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
       hasCompletedProfileSetup: 1700000005000,
     })
 
-    // Preferences no longer carries them.
     expect(result.preferences).not.toHaveProperty('name')
     expect(result.preferences).not.toHaveProperty('avatar')
     expect(result.preferences).not.toHaveProperty('customAvatarBackground')
@@ -66,7 +64,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
     expect(result.preferences.role).toBe('regularPioneer')
     expect(result.preferences.monthlyGoalOverride).toBe(50)
 
-    // Settings-side updatedAt entries for the moved fields are dropped.
     expect(result.preferences.preferenceUpdatedAt).toEqual({
       role: 1700000001000,
       monthlyGoalOverride: 1700000006000,
@@ -88,7 +85,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
   })
 
   it('preserves profile-field values even when their updatedAt entry is missing', () => {
-    // A pre-sync install may have profile data but no timestamp map.
     const prefs = {
       name: 'Bob',
       avatar: { type: 'emoji', value: '🌱' },
@@ -103,8 +99,6 @@ describe('extractProfileFromPreferences (boot-runner one-shot)', () => {
   })
 
   it('moves nothing for profile keys left behind as undefined', () => {
-    // An earlier run in the same session leaves the in-memory keys set to
-    // undefined; copying them would blank the profile's avatar.
     const prefs = {
       role: 'publisher',
       name: undefined,

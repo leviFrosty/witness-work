@@ -15,17 +15,9 @@ import { RootStackNavigation } from '@/types/rootStack'
 import useMonthReportExport from '@/features/service-reports/hooks/useMonthReportExport'
 import { reportMonthKey } from '@/features/service-reports/lib/monthReportExport'
 
-/**
- * Home's pointer to last month's unsent report, so early in a month the Service
- * Report card leads to the report that's due rather than this month's partial
- * one. Same menu as the card header's send items, plus the tray's "Already
- * submitted" for Users who report some other way.
- */
 const DueReportRow = ({ month, year }: { month: number; year: number }) => {
   const theme = useTheme()
-  // At accessibility text sizes the label takes the send icon's and the
-  // chevron's room, so a long month name ("September's") still fits on a line
-  // at the largest size. The tinted, bordered row still reads as tappable.
+
   const largeText = useAccessibilityTextSize()
   const navigation = useNavigation<RootStackNavigation>()
   const markReportSubmitted = usePreferences((s) => s.markReportSubmitted)

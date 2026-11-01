@@ -29,13 +29,11 @@ vi.mock('@/lib/locales', async () => {
 type Env = ReturnType<typeof setup>
 type User = ReturnType<Env['user']>
 
-/** The newest push the relay sent `user`, as its `ww` marker. */
 const lastMarker = (env: Env, user: User): BuddiesPushMarker => {
   const pushes = env.fake.markers.filter((m) => m.inboxId === user.inboxId)
   return pushes[pushes.length - 1].marker
 }
 
-/** The alert `user` would show for their newest push, in English. */
 async function alertFor(env: Env, user: User, marker = lastMarker(env, user)) {
   const outcome = await user.engine.describePush(marker)
   return 'alert' in outcome ? buddyAlertText(outcome.alert) : outcome
@@ -208,7 +206,7 @@ describe('named Buddies alerts', () => {
     anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', undefined)
     anna.store.setState({ joinRequestNotifications: false })
     expect(await alertFor(env, anna)).toEqual({ quiet: true })
-    // Their own setting over this device's.
+
     anna.engine.setBuddyAlert(levi.inboxId, 'joinRequests', true)
     expect(await alertFor(env, anna)).toMatchObject({
       title: 'Levi would like to join you',
@@ -279,7 +277,6 @@ describe('named Buddies alerts', () => {
     await levi.engine.publishShares()
     const marker = lastMarker(env, anna)
 
-    // Sealed for Anna, so Levi has no key that opens it.
     expect(await levi.engine.describePush(marker)).toEqual({
       failed: 'unknownSender',
     })
@@ -294,7 +291,7 @@ describe('named Buddies alerts', () => {
     expect(
       await anna.engine.describePush({ ...marker, kind: 'plan.joined' })
     ).toEqual({ failed: 'unknownKind' })
-    // Buddies never started here.
+
     const stranger = env.user('Stranger')
     expect(await stranger.engine.describePush(marker)).toEqual({
       failed: 'noContext',

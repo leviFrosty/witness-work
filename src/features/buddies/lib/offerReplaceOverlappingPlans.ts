@@ -13,12 +13,6 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { overlappingOwnPlans } from '@/features/buddies/lib/joinRequests'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * "Going" adds the buddy's Plan to this User's; one of their own at the same
- * time, one-time or recurring, would then be counted twice, so offer to replace
- * it. A recurring Plan only loses that day's instance. Runs after every Going
- * answer, wherever it's given.
- */
 export default function offerReplaceOverlappingPlans(
   shareKey: string,
   fallbackName?: string
@@ -59,7 +53,7 @@ export default function offerReplaceOverlappingPlans(
     first.source === 'day'
       ? getStartTimeInMinutes(first.plan)
       : getEffectiveStartTimeInMinutesForRecurringPlan(first.plan, day.toDate())
-  // An anytime Plan has no time to name.
+
   const firstAnytime =
     first.source === 'day'
       ? !!first.plan.anytime

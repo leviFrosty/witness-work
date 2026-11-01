@@ -33,7 +33,7 @@ type Context = {
   showImages: boolean
   onToggleTask?: (index: number) => void
   onImagePress?: (image: RichTextImageAttrs) => void
-  /** Counts checklist items in reading order, matching `toggleRichTextTask`. */
+
   taskIndex: { value: number }
 }
 
@@ -49,10 +49,6 @@ const inlineText = (content: RichTextInline[] | undefined) =>
     .map((node) => (node.type === 'text' ? node.text : ''))
     .join('')
 
-/**
- * All of a list item's text, nested lists included (ProseMirror's
- * `textContent`).
- */
 const blocksText = (blocks: RichTextBlock[]): string =>
   blocks
     .map((block) =>
@@ -64,17 +60,11 @@ const blocksText = (blocks: RichTextBlock[]): string =>
     )
     .join('')
 
-/** Whether `text` reads against the app's direction (English in Arabic). */
 const isAgainstLayout = (text: string) => {
   const direction = textDirection(text)
   return !!direction && direction !== (isRtlLayout() ? 'rtl' : 'ltr')
 }
 
-/**
- * A paragraph or heading reads in the direction of its first letter, as in the
- * editor: an English line in an Arabic note stays left-aligned, and the other
- * way round. Lines without letters follow the app.
- */
 function directionStyle(content: RichTextInline[] | undefined): TextStyle {
   const text = inlineText(content)
   const direction = textDirection(text)
@@ -130,7 +120,7 @@ function renderBlocks(
                     <Text
                       style={[
                         ctx.base,
-                        // Hugs the item's text.
+
                         { textAlign: alignText(against ? 'start' : 'end') },
                       ]}
                     >
@@ -210,11 +200,6 @@ function renderItem(
   return renderBlocks(item.content, itemCtx, depth + 1)
 }
 
-/**
- * A list item: the marker on its text's reading-start side. `against` flips it
- * for an item written against the app's direction (English in Arabic), as the
- * editor does.
- */
 function ListRow(props: {
   marker: ReactNode
   against: boolean
@@ -267,11 +252,6 @@ function TaskBox(props: {
   )
 }
 
-/**
- * A rich note, drawn with native views: headings, lists, checklists, photos and
- * styled text. Read-only, except that checklist items can be ticked when
- * `onToggleTask` is set.
- */
 const RichTextView = (props: {
   doc: RichTextDoc
   style?: StyleProp<TextStyle>

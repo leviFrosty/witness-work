@@ -20,11 +20,6 @@ import useConversations from '@/stores/conversationStore'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 
-/**
- * Manages the custom fields shown on the conversation form (e.g.
- * "Publication"). Mirrors the contact fields screen, without the built-in phone
- * and email rows.
- */
 const PreferencesConversationFieldsScreen = () => {
   const theme = useTheme()
   const {
@@ -43,8 +38,6 @@ const PreferencesConversationFieldsScreen = () => {
     'conversation_field'
   )
 
-  // Local rename state per def — keyed by id, holds the in-progress edit value
-  // until the user commits via blur.
   const [edits, setEdits] = useState<Record<string, string>>({})
 
   const activeDefs = activeCustomFieldDefs(conversationFieldDefs)
@@ -178,8 +171,7 @@ const PreferencesConversationFieldsScreen = () => {
                             if (trimmed && trimmed !== def.label) {
                               renameConversationFieldDef(def.id, trimmed)
                             }
-                            // Clear local edit so future label changes from
-                            // sync show through.
+
                             setEdits((s) => {
                               const next = { ...s }
                               delete next[def.id]
@@ -193,7 +185,6 @@ const PreferencesConversationFieldsScreen = () => {
                         />
                         <PullDownMenu
                           triggerSize={16}
-                          // Room beside the field for the menu's 44pt frame.
                           style={{ marginStart: 10 }}
                           accessibilityLabel={i18n.t('moreActionsFor', {
                             name: def.label,

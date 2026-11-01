@@ -19,14 +19,6 @@ export type PetActivityRecords = {
   recurringPlans: Pick<RecurringPlan, 'savedOn'>[]
 }
 
-/**
- * The pet's active days: local days with a Time Entry (a 0-minute checkbox
- * entry counts, a Time Rollover doesn't), a Visit of any outcome (but not one
- * that came with a shared Contact: that's the sender's), or a Plan or Recurring
- * Plan the User first saved that day (`savedOn`, which later edits keep;
- * Buddies keeping a linked Plan in step never sets it). One active day is one
- * heart, however much was done (ADR 0030).
- */
 export function petActiveDays({
   serviceReports,
   visits,
@@ -50,11 +42,6 @@ export function petActiveDays({
   return days
 }
 
-/**
- * How many calendar months have one of `days` on or after `sinceKey` (the
- * adoption day) and, when given, on or before `untilKey`. Long-run secret items
- * count months with a day out (`secretUnlocks.ts`).
- */
 export function activeMonths(
   days: Iterable<string>,
   sinceKey: string,

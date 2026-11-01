@@ -52,7 +52,6 @@ const confirm = vi.hoisted(() =>
 )
 vi.mock('@/lib/confirmDestructive', () => ({ default: confirm }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -112,7 +111,6 @@ function render(sharing: Partial<MileageSharing> = {}) {
   return renderer!
 }
 
-/** Taps Delete All Mileage Data…, and returns what its alert asks. */
 function requestDeleteAll(tree: ReactTestRenderer) {
   const button = tree.root.find(
     (node) =>
@@ -127,7 +125,6 @@ function requestDeleteAll(tree: ReactTestRenderer) {
   return confirm.mock.lastCall![0]
 }
 
-/** A leave that waits until `finish` is called. */
 function pendingLeave() {
   let finish: (left: SharedCarsLeft) => void = () => {}
   const leaveAll = vi.fn(
@@ -203,14 +200,14 @@ describe('Delete All Mileage Data', () => {
     const options = requestDeleteAll(render({ leaveAll }))
 
     await act(async () => options.onConfirm())
-    // Their own data goes first, on the spot.
+
     expect(useMileage.getState().vehicles).toEqual([])
     expect(useMileage.getState().trips).toEqual([])
     expect(leaveAll).toHaveBeenCalledOnce()
     expect(toasts.info).toHaveBeenCalledWith('Deleting mileage data…', {
       key: 'mileage-delete-all',
     })
-    // Not done until every car is left.
+
     expect(toasts.success).not.toHaveBeenCalled()
 
     await act(async () => finish({ notLeft: [] }))

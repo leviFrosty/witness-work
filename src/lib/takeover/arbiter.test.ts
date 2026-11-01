@@ -82,7 +82,7 @@ describe('takeover arbiter', () => {
     let state = request(start, 'busy', 'update-reveal', 0)
     state = request(state, 'first', 'badges-welcome', 5)
     state = request(state, 'second', 'badges-welcome', 6)
-    // Asking again keeps the original place in line.
+
     state = request(state, 'first', 'badges-welcome', 50)
     state = releaseTakeover(state, 'busy', 100, config)
     state = settleTakeovers(state, 800, config)
@@ -119,7 +119,7 @@ describe('takeover arbiter', () => {
     state = settleTakeovers(state, 15_000, config)
     expect(state.queue).toEqual([])
     expect(state.expired).toEqual(['badge'])
-    // Releasing it (the requester letting go) forgets the expiry.
+
     state = releaseTakeover(state, 'badge', 15_001, config)
     expect(state.expired).toEqual([])
   })
@@ -133,7 +133,7 @@ describe('takeover arbiter', () => {
     state = holdTakeovers(state, 'background', 10, config)
     expect(state.expired).toEqual(['badge'])
     expect(state.queue.map((c) => c.id)).toEqual(['welcome'])
-    // Asked for while already in the background: refused at once.
+
     state = request(state, 'late', 'streak-celebration', 20, {
       expiresOnHold: ['background'],
     })
@@ -152,7 +152,7 @@ describe('takeover arbiter', () => {
     state = settleTakeovers(state, 800, config)
     expect(state.active?.id).toBe('streak')
     expect(state.expired).toEqual(['badge'])
-    // A later claim for the same action is refused; another action's isn't.
+
     state = request(state, 'again', 'badge-celebration', 900, {
       group: 'action:1',
     })
@@ -191,13 +191,6 @@ describe('takeover arbiter', () => {
   })
 })
 
-/**
- * A seeded random walk over requests, releases, holds and time. Whatever the
- * order: never two takeovers at once or one replacing another, nothing new
- * granted while held (unless the User asked for it), the gap respected, the
- * highest-priority eligible claim first, one grant per group, and nothing left
- * waiting forever once holds lift and takeovers close.
- */
 describe('takeover arbiter properties', () => {
   type Op =
     | {
@@ -282,7 +275,7 @@ describe('takeover arbiter properties', () => {
 
         const step = (next: ArbiterState, seeded: boolean) => {
           const before = state
-          // Never replaced: an active takeover only ends by going null.
+
           if (before.active && next.active)
             expect(next.active.id).toBe(before.active.id)
           const fresh =
@@ -291,14 +284,13 @@ describe('takeover arbiter properties', () => {
               : null
           if (fresh) {
             if (!seeded) {
-              // Nothing new while held, unless the User asked.
               if (!fresh.ignoresHolds) expect(next.holds).toEqual([])
-              // The gap after the screen last came free.
+
               if (next.clearedAt !== null)
                 expect(now - next.clearedAt).toBeGreaterThanOrEqual(
                   config.gapMs
                 )
-              // Highest priority among the eligible ones.
+
               for (const other of next.queue)
                 if (other.ignoresHolds || next.holds.length === 0)
                   expect(fresh.priority).toBeLessThanOrEqual(other.priority)
@@ -309,10 +301,10 @@ describe('takeover arbiter properties', () => {
             }
             granted.add(fresh.id)
           }
-          // A group that had its grant never has a claim still waiting.
+
           for (const queued of next.queue)
             if (queued.group) expect(next.groups).not.toContain(queued.group)
-          // At most one entry per id, and never both waiting and on screen.
+
           const ids = next.queue.map((c) => c.id)
           expect(new Set(ids).size).toBe(ids.length)
           if (next.active) expect(ids).not.toContain(next.active.id)
@@ -374,8 +366,6 @@ describe('takeover arbiter properties', () => {
               step(unholdTakeovers(state, o.reason, now, config), false)
               break
             case 'tick': {
-              // Time passes the way the store's timer delivers it: at every
-              // wake on the way.
               const until = now + o.ms
               for (;;) {
                 const wake = nextTakeoverWake(state, now, config)
@@ -390,8 +380,6 @@ describe('takeover arbiter properties', () => {
           }
         }
 
-        // Nothing stuck: once every hold lifts and each takeover closes,
-        // every waiting claim is shown or expires.
         for (const reason of [...state.holds])
           step(unholdTakeovers(state, reason, now, config), false)
         for (let guard = 0; guard < 200; guard++) {

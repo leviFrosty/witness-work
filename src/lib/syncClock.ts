@@ -7,14 +7,13 @@ const uncalibratedStamps = new Set<number>()
 const correctedStamps = new Map<number, number>()
 let calibratedAt = 0
 let calibration: Promise<number | null> | undefined
-/** Consecutive failed calibrations, and when the last one failed. */
+
 let failures = 0
 let failedAt = 0
-/** Waits after 1, 2, 3… failed calibrations: 1, 2, 4… min, at most an hour. */
+
 const FAILURE_BACKOFF_MS = 60_000
 const MAX_FAILURE_BACKOFF_MS = 60 * 60_000
 
-/** How long after a failure before trying again. */
 export const calibrationBackoffMs = (failed: number): number =>
   failed === 0
     ? 0
@@ -22,13 +21,9 @@ export const calibrationBackoffMs = (failed: number): number =>
 
 const elapsedNow = () => globalThis.performance?.now() ?? Date.now()
 
-/** Sync metadata uses a calibrated clock; calendar dates keep the user's clock. */
 export function syncNow(): number {
   if (!anchor) return Date.now() + offsetMs
-  // The monotonic clock ignores wall-clock changes, which is the point, but
-  // it also stops while the device sleeps (iOS and Android). Once the wall
-  // clock has moved further, the device slept, so take its larger step: a
-  // stamp that falls behind would lose to older edits from other devices.
+
   const elapsed = elapsedNow() - anchor.elapsed
   const wall = Date.now() - anchor.wall
   return anchor.time + Math.max(elapsed, wall)
@@ -45,10 +40,6 @@ export function setSyncClockOffset(value: number, calibrated = false): void {
   failedAt = 0
 }
 
-/**
- * A backwards clock adjustment must not make an edit older than its
- * predecessor.
- */
 export function syncTimestamp(previous = 0): number {
   const timestamp = Math.max(
     Math.floor(syncNow()),
@@ -62,16 +53,9 @@ export function syncTimestamp(previous = 0): number {
   return timestamp
 }
 
-/** Correct edits made at cold launch before the first calibration completed. */
 export const correctedSyncTimestamp = (value: number) =>
   correctedStamps.get(value) ?? value
 
-/**
- * Best effort HTTPS Date calibration using the existing public health endpoint.
- * Hourly after a success; after failures (offline, ww-api down) it backs off
- * instead of adding a request, and up to 3 s, to every push. `force` skips both
- * limits, for a server that just refused a timestamp.
- */
 export function refreshSyncClock({ force = false } = {}): Promise<
   number | null
 > {

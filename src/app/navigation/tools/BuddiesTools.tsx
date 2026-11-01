@@ -43,7 +43,6 @@ const stepLabel: Record<RelayCheckStep['name'], string> = {
   livePing: 'Live ping → pong',
 }
 
-/** The live log, newest first, with readable times. */
 const readableLog = (live: LiveDiagnostics) =>
   live.log
     .slice()
@@ -53,11 +52,6 @@ const readableLog = (live: LiveDiagnostics) =>
       ...event,
     }))
 
-/**
- * Buddies tools: visibility and onboarding switches, the live connection's
- * state with controls, and a relay check for when updates don't arrive. The
- * debug dump holds no names or content and only shortened ids.
- */
 export default function BuddiesTools() {
   const { now } = useNow()
   const devOverride = useBuddies((state) => state.devOverride)
@@ -102,7 +96,6 @@ export default function BuddiesTools() {
   }
 
   const reRegisterPush = async () => {
-    // Forget the last registration so it's sent even when unchanged.
     useBuddies.setState({ pushRegistrationKey: null })
     try {
       await registerBuddiesPush()
@@ -146,7 +139,7 @@ export default function BuddiesTools() {
         : null,
       device: shortId(deviceId),
     },
-    // Android: where Block Store keeps the root seed (iOS: iCloud Keychain).
+
     seedBackup: BuddiesKeychain.rootSeedBackup(),
     live: { ...live, log: readableLog(live) },
     relayCheck: relayCheck.report,

@@ -23,7 +23,6 @@ import type { AttestationEndpoint } from '@/lib/attestation/appAttest'
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status })
 
-/** A fetch that never answers until its signal aborts. */
 const stalledFetch = () =>
   vi.fn(
     (_url: string, init?: RequestInit) =>

@@ -23,32 +23,26 @@ import { flowScrollX, isRtlLayout } from '@/lib/direction'
 
 const PADDING = 16
 const GAP = 10
-/** How much of the next Follow-up shows, hinting there's more to swipe to. */
+
 const PEEK = 28
-/** Long enough to see a Follow-up marked done before moving on. */
+
 const ADVANCE_DELAY_MS = 700
 const UNDO_TIMEOUT_MS = 6000
 
-/** The nearest open Follow-up after `from`, else the first open one. */
 const nextOpenIndex = (items: FollowUpCardItem[], from: number) => {
   const after = items.findIndex((item, i) => i > from && !item.answeredBy)
   return after >= 0 ? after : items.findIndex((item) => !item.answeredBy)
 }
 
-/**
- * Home's Follow-up card: today's Follow-ups one at a time, each answered with a
- * tap, with progress toward all caught up.
- */
 const ApproachingConversations = ({
   headerAction,
 }: {
-  /** Trailing action beside the title, e.g. Plan Route. */
   headerAction?: ReactNode
 }) => {
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
   const items = useFollowUpCardItems()
-  // The items' minute clock, so the title turns with them at 5 PM.
+
   const { now: nowMs } = useNow()
   const { dismissed, dismiss } = useFollowUpCardDismissal(
     'approaching',
@@ -68,7 +62,7 @@ const ApproachingConversations = ({
     width - PADDING * 2 - (single ? 0 : PEEK + GAP)
   )
   const interval = entryWidth + GAP
-  // Offsets are physical, so in RTL they count from the far (right) end.
+
   const rtl = isRtlLayout()
   const contentWidth =
     PADDING * 2 +
@@ -82,16 +76,13 @@ const ApproachingConversations = ({
     setIndex(target)
   }
 
-  // When the Follow-up in view gets answered, move on to the next open one.
-  // Tracked as "previous answers" state so swiping back to a done one doesn't
-  // bounce away again.
   const answeredKey = items
     .filter((item) => item.answeredBy)
     .map((item) => item.visit.id)
     .join()
   const [prevAnsweredKey, setPrevAnsweredKey] = useState(answeredKey)
   const [advanceTo, setAdvanceTo] = useState<number>()
-  /** How many were on the card when the last one was answered here. */
+
   const [completedCount, setCompletedCount] = useState<number>()
   if (answeredKey !== prevAnsweredKey) {
     setPrevAnsweredKey(answeredKey)
@@ -130,7 +121,7 @@ const ApproachingConversations = ({
   const handleLayout = (e: LayoutChangeEvent) => {
     const next = e.nativeEvent.layout.width
     if (next === width) return
-    // Open on the first Follow-up still to do.
+
     if (width === 0) setIndex(Math.max(0, nextOpenIndex(items, -1)))
     setWidth(next)
   }
@@ -148,12 +139,12 @@ const ApproachingConversations = ({
     notAtHome.undo(lastNotAtHome)
     setLastNotAtHome(undefined)
     setAdvanceTo(undefined)
-    // Bring the reopened Follow-up back into view.
+
     if (target >= 0) scrollTo(target, !reduceMotion)
   }
 
   const now = moment(nowMs)
-  const isMorning = now.isBefore(now.clone().endOf('day').hour(16)) // 4:59:59 PM
+  const isMorning = now.isBefore(now.clone().endOf('day').hour(16))
   const title = i18n.t(
     isMorning ? 'todaysConversations' : 'upcomingConversations'
   )
@@ -161,7 +152,7 @@ const ApproachingConversations = ({
   return (
     <Card style={{ paddingHorizontal: 0, paddingVertical: 16, gap: 14 }}>
       <View style={{ paddingHorizontal: 20, gap: 10 }}>
-        {/* The action sits outside the menu, whose native wrapper takes taps. */}
+        {}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <HomeSectionMenu
             accessibilityLabel={title}
@@ -221,15 +212,12 @@ const ApproachingConversations = ({
               snapToInterval={interval}
               disableIntervalMomentum
               contentContainerStyle={{ paddingHorizontal: PADDING, gap: GAP }}
-              // Mounts at the start; jump to the Follow-up in focus (also
-              // after Undo brings the list back from all caught up).
               onLayout={() =>
                 scrollRef.current?.scrollTo({
                   x: offsetFor(index),
                   animated: false,
                 })
               }
-              // A swipe overrides a pending move to the next Follow-up.
               onScrollBeginDrag={() => setAdvanceTo(undefined)}
               onMomentumScrollEnd={({ nativeEvent }) =>
                 setIndex(

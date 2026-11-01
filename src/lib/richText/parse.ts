@@ -12,9 +12,8 @@ import type {
 } from '@/types/richText'
 import { normalizeImageScale } from '@/lib/richText/imageScale'
 
-/** Lists nested deeper than this are flattened into paragraphs. */
 const MAX_LIST_DEPTH = 6
-/** Nodes past these limits are dropped, so a hostile doc can't stall a render. */
+
 const MAX_NODES = 5000
 const MAX_TEXT_CHARS = 100_000
 const MAX_IMAGE_SIDE = 20_000
@@ -26,7 +25,6 @@ const IMAGE_ID = /^[A-Za-z0-9-]{8,64}$/
 const SAFE_HREF =
   /^(?:https?:\/\/[^\s/?#]+|mailto:[^\s]+|tel:[+\d][\d\s().-]*$)/i
 
-/** Marks in a fixed order, so equal formatting serializes the same way. */
 const MARK_ORDER: RichTextMark['type'][] = [
   'link',
   'bold',
@@ -89,7 +87,6 @@ const sameMarks = (a: RichTextMark[] = [], b: RichTextMark[] = []) =>
     return true
   })
 
-/** Text from any node and its descendants, for nodes this version can't read. */
 function flattenText(node: unknown, budget: Budget): string {
   if (!isRecord(node) || budget.nodes <= 0) return ''
   budget.nodes--
@@ -111,7 +108,7 @@ function parseInline(value: unknown, budget: Budget): RichTextInline[] {
       inline.push({ type: 'hardBreak' })
       continue
     }
-    // Unknown inline nodes (a mention, say) keep their text.
+
     const text =
       typeof node.text === 'string'
         ? node.text
@@ -159,7 +156,7 @@ function parseItemBlocks(
   depth: number
 ): RichTextBlock[] {
   const blocks = parseBlocks(children(node), budget, depth)
-  // An item starts with a paragraph, like Tiptap's `paragraph block*`.
+
   return blocks[0]?.type === 'paragraph'
     ? blocks
     : [{ type: 'paragraph' }, ...blocks]
@@ -172,7 +169,6 @@ function parseList(
 ): RichTextBlock[] {
   const type = node.type as 'bulletList' | 'orderedList' | 'taskList'
   if (depth >= MAX_LIST_DEPTH) {
-    // Too deep to show sensibly; keep the words.
     return children(node).flatMap((item) =>
       isRecord(item) ? parseBlocks(children(item), budget, depth) : []
     )
@@ -247,7 +243,6 @@ function parseBlocks(
         break
       }
       default: {
-        // A block from a newer version (a quote, a table): keep its words.
         const text = flattenText(node, budget).slice(0, budget.chars)
         budget.chars -= text.length
         for (const line of text.split('\n')) {
@@ -259,11 +254,6 @@ function parseBlocks(
   return blocks
 }
 
-/**
- * Reads a Tiptap JSON doc, keeping only what notes support. Anything else is
- * downgraded (unknown blocks to paragraphs, unsafe links to text) rather than
- * rejected. Returns null when `value` isn't a doc at all.
- */
 export function parseRichTextDoc(value: unknown): RichTextDoc | null {
   if (!isRecord(value) || value.type !== 'doc') return null
   const budget: Budget = { nodes: MAX_NODES, chars: MAX_TEXT_CHARS }
@@ -274,10 +264,6 @@ export function parseRichTextDoc(value: unknown): RichTextDoc | null {
   }
 }
 
-/**
- * Reads a stored Rich Note. Null when it's missing, malformed, or from a newer
- * format version, in which case the record's plain-text note is used.
- */
 export function parseRichText(value: unknown): RichText | null {
   if (!isRecord(value) || value.v !== RICH_TEXT_VERSION) return null
   if (typeof value.textHash !== 'string' || !value.textHash) return null

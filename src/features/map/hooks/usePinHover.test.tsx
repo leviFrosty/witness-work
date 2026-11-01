@@ -70,7 +70,7 @@ beforeEach(async () => {
   mocks.getMarkersFrames.mockResolvedValue({
     a: frame(100, 200),
     b: frame(300, 200),
-    // The dropped pin isn't a contact.
+
     'new-contact-location': frame(500, 500),
   })
   await act(async () => {
@@ -107,7 +107,7 @@ describe('usePinHover', () => {
     mocks.getMarkersFrames.mockResolvedValue({ a: frame(100, 400) })
     await act(async () => result.onRegionChangeComplete?.())
     expect(mocks.getMarkersFrames).toHaveBeenCalledTimes(2)
-    // The pin moved out from under the still pointer.
+
     expect(result.pin).toBeUndefined()
     await hoverAt(100, 380)
     expect(result.pin?.id).toBe('a')
@@ -143,7 +143,7 @@ describe('usePinHover', () => {
   it('points out a linked row’s pin until the row is left', async () => {
     await act(async () => result.linkContact('b', true))
     expect(result.pin?.id).toBe('b')
-    // Entering the next row can arrive before leaving the previous one.
+
     await act(async () => result.linkContact('a', true))
     await act(async () => result.linkContact('b', false))
     expect(result.pin?.id).toBe('a')

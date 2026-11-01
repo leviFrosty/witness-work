@@ -51,11 +51,11 @@ describe('getStartTimeInMinutes', () => {
 
 describe('splitDateAndStartTime / combineDateAndStartTime', () => {
   it('round-trips a local datetime through split → combine, preserving wall-clock time', () => {
-    const local = new Date(2026, 3, 27, 9, 30, 0, 0) // Apr 27 2026 09:30 local
+    const local = new Date(2026, 3, 27, 9, 30, 0, 0)
     const { date, startTimeInMinutes } = splitDateAndStartTime(local)
 
     expect(startTimeInMinutes).toBe(9 * 60 + 30)
-    // The stored date is anchored at noon UTC on the local calendar day.
+
     expect(date.getUTCHours()).toBe(12)
     expect(momentStoredDate(date).format('YYYY-MM-DD')).toBe('2026-04-27')
 
@@ -83,7 +83,7 @@ describe('getEffectiveStartTimeInMinutesForRecurringPlan', () => {
       id: 'p1',
       startDate: baseDate,
       minutes: 60,
-      startTimeInMinutes: 540, // 9:00 AM parent
+      startTimeInMinutes: 540,
       recurrence: {
         frequency: RecurringPlanFrequencies.WEEKLY,
         interval: 1,
@@ -93,7 +93,7 @@ describe('getEffectiveStartTimeInMinutesForRecurringPlan', () => {
         {
           date: baseDate,
           minutes: 90,
-          startTimeInMinutes: 660, // 11:00 AM override
+          startTimeInMinutes: 660,
         },
       ],
     }
@@ -141,7 +141,7 @@ describe('serviceReport store persists startTimeInMinutes', () => {
   beforeEach(() => {
     const state = useServiceReport.getState()
     state._WARNING_forceDeleteRecurringPlans()
-    // dayPlans are kept across tests by default; clear via direct set.
+
     useServiceReport.setState({ dayPlans: [] })
   })
 

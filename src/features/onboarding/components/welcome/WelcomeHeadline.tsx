@@ -24,7 +24,7 @@ const WORD_IN_MS = 620
 const WORD_IN_STAGGER = 55
 const WORD_OUT_MS = 300
 const WORD_OUT_STAGGER = 25
-// A new line waits for most of the old one to clear the slot.
+
 const SWAP_DELAY_MS = 260
 
 interface WordProps {
@@ -39,7 +39,6 @@ interface WordProps {
   reduceMotion: boolean
 }
 
-/** One word rising out of — and later away through — its own slot. */
 const Word = ({
   text,
   index,
@@ -78,8 +77,6 @@ const Word = ({
     }
   })
 
-  // The slot clips the word; its padding leaves room for accents, descenders
-  // and side bearings without changing the line's layout.
   const bleed = lineHeight * 0.14
   return (
     <View
@@ -110,9 +107,9 @@ const Word = ({
 interface LineProps {
   text: string
   current: boolean
-  /** Wait before rising in, to let the previous line clear. */
+
   enterDelay: number
-  /** A word to pick out in the accent colour (the brand name). */
+
   highlight: string
   palette: WelcomePalette
   fontSize: number
@@ -120,11 +117,6 @@ interface LineProps {
   onHeight: (height: number) => void
 }
 
-/**
- * One headline line whose words rise in while `current` and leave once it
- * isn't. Lines share a box and sit on its floor; `onHeight` reports the line's
- * height so the box can reserve the tallest.
- */
 export const HeadlineLine = ({
   text,
   current,
@@ -142,17 +134,16 @@ export const HeadlineLine = ({
   const exit = useSharedValue(0)
   const shown = useRef(false)
   const wasCurrent = useRef(false)
-  // `Text` adds the user's size offset to `fontSize`; the line has to as well.
+
   const lineHeight = Math.round((fontSize + fontSizeOffset) * 1.14)
 
   useEffect(() => {
     if (current) {
       const arriving = !wasCurrent.current
       wasCurrent.current = true
-      // Only the wait changed (the intro was hurried): leave a rise that has
-      // already begun alone.
+
       if (!arriving && enter.value > 0) return
-      // Returning to a line always has another one to make way for.
+
       const delay = arriving && shown.current ? SWAP_DELAY_MS : enterDelay
       shown.current = true
       exit.value = 0
@@ -178,8 +169,6 @@ export const HeadlineLine = ({
   return (
     <View
       onLayout={(e: LayoutChangeEvent) => onHeight(e.nativeEvent.layout.height)}
-      // Lines sit on the box's floor, so a short line stays with the copy
-      // below it and the spare room opens up above.
       style={{
         position: 'absolute',
         bottom: 0,
@@ -253,24 +242,18 @@ const Segment = ({ state, holdMs, palette }: SegmentProps) => {
 type LineId = Exclude<Headline, null>
 
 interface Props {
-  /** The greeting, then one line per part of the story, in order. */
   lines: { id: LineId; text: string }[]
   current: Headline
-  /** Extra wait before the greeting first rises in. */
+
   firstLineDelay: number
   highlight: string
   palette: WelcomePalette
   fontSize: number
-  /** How long each part of the story holds, for its progress segment. */
+
   holdMs: number
   reduceMotion: boolean
 }
 
-/**
- * The welcome's headline: it greets the user, then tells the app's story one
- * line at a time, each word rising through its own slot. Story progress shows
- * as segments above it. Screen readers get every line at once, in order.
- */
 const WelcomeHeadline = ({
   lines,
   current,
@@ -293,7 +276,6 @@ const WelcomeHeadline = ({
 
   const pagerStyle = useAnimatedStyle(() => ({ opacity: pagerOpacity.value }))
 
-  // Reserve the tallest line's height so the copy below never jumps.
   const tallest = Math.max(
     Math.round((fontSize + fontSizeOffset) * 1.14) * 2,
     ...Object.values(heights)
@@ -325,7 +307,6 @@ const WelcomeHeadline = ({
             key={line.id}
             text={line.text}
             current={line.id === current}
-            // Only the greeting arrives without a line to replace.
             enterDelay={line.id === 'welcome' ? firstLineDelay : SWAP_DELAY_MS}
             highlight={highlight}
             palette={palette}

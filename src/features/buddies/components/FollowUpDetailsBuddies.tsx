@@ -22,17 +22,9 @@ import { followUpShareKey } from '@/features/buddies/lib/shares'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const AVATAR = 30
-/** Past this many people, the last avatar slot becomes a "+N" count. */
+
 const MAX_AVATARS = 4
 
-/**
- * Who's going on a Follow-up, inside Visit Details' next stop: the invited
- * buddies' photos stacked with their answers, a sentence per answer ("Anna is
- * going with you. Marco hasn't answered."), and Invite while it's still ahead.
- * Inviting adds the buddy right away; the invitation goes out like saving the
- * visit form would. Taking someone off stays in Edit. Nothing for a dismissed
- * Follow-up, which isn't shared.
- */
 export default function FollowUpDetailsBuddies({
   visit,
   now,
@@ -41,9 +33,9 @@ export default function FollowUpDetailsBuddies({
 }: {
   visit: Visit
   now: number
-  /** Invite added someone. */
+
   onInvited: () => void
-  /** The card's color behind the avatars, for the rings between them. */
+
   surface: string
 }) {
   const theme = useTheme()
@@ -68,7 +60,6 @@ export default function FollowUpDetailsBuddies({
   if (invited.length + uninvited.length === 0) return null
 
   const invite = (inboxId: string) => {
-    // The latest record: a reply or another device may have changed it.
     const latest = useConversations
       .getState()
       .conversations.find((c) => c.id === visit.id)
@@ -183,8 +174,7 @@ export default function FollowUpDetailsBuddies({
               key={answer}
               translate={(marked) =>
                 index > 0
-                  ? // Continues the previous sentence's paragraph.
-                    i18n.t('twoSentences', {
+                  ? i18n.t('twoSentences', {
                       first: '',
                       second: i18n.t(key, marked),
                     })

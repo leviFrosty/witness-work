@@ -2,7 +2,6 @@ import type { Visit } from '@/types/visit'
 
 const DEFAULT_SUGGESTION_LIMIT = 5
 
-/** Values compare case- and whitespace-insensitively. */
 const normalize = (value: string) =>
   value.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 
@@ -10,10 +9,6 @@ const visitTime = (visit: Pick<Visit, 'date'>) => new Date(visit.date).getTime()
 
 type ValueStats = { value: string; count: number; lastUsed: number }
 
-/**
- * Groups one custom field's values across visits, keeping the most recently
- * used spelling of each value.
- */
 function collectValues(visits: readonly Visit[], fieldId: string) {
   const byKey = new Map<string, ValueStats>()
   for (const visit of visits) {
@@ -36,19 +31,12 @@ function collectValues(visits: readonly Visit[], fieldId: string) {
   return [...byKey.values()]
 }
 
-/** One custom field's distinct values, in suggestion order. */
 export type CustomFieldValueIndex = readonly {
   value: string
-  /** `value` normalized, for matching what is typed. */
+
   key: string
 }[]
 
-/**
- * This custom field's values from other visits, most-used first, then most
- * recent, for {@link customFieldSuggestions}. Build it once while the field is
- * focused, so each keystroke filters this short list instead of walking every
- * visit again.
- */
 export function customFieldValueIndex(
   visits: readonly Visit[],
   fieldId: string,
@@ -62,11 +50,6 @@ export function customFieldValueIndex(
     .map(({ value }) => ({ value, key: normalize(value) }))
 }
 
-/**
- * Values the user entered for this custom field on other visits, most-used
- * first, then most recent. Narrowed to those containing `query` (ignoring
- * case); a value that already matches `query` exactly isn't suggested.
- */
 export function customFieldSuggestions(
   index: CustomFieldValueIndex,
   query: string,
@@ -81,10 +64,6 @@ export function customFieldSuggestions(
   return suggestions
 }
 
-/**
- * The distinct values this field had on the contact's visits before `before`,
- * newest first, so the form can show what this person already received.
- */
 export function contactCustomFieldHistory(
   visits: readonly Visit[],
   {

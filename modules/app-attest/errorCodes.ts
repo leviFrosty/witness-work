@@ -1,16 +1,6 @@
-/**
- * Native → JS error taxonomy for the App Attest module.
- *
- * Deliberately free of native imports: the classifier is the one piece of this
- * module that encodes lifecycle-relevant decisions, so it stays unit-testable
- * without an Expo runtime.
- */
-
 export type AppAttestErrorCode =
   | 'unsupported'
-  /** This module rejected the arguments before Apple saw them; never a dead key. */
   | 'invalidArgument'
-  /** Apple returned `DCError.invalidInput` for arguments we already validated. */
   | 'invalidInput'
   | 'invalidKey'
   | 'serverUnavailable'
@@ -27,11 +17,6 @@ export class AppAttestError extends Error {
   }
 }
 
-/**
- * The stable, non-localized tokens `AppAttestModule.swift` rejects with. The
- * Swift side sends each one twice — as the rejection's `code` and inside its
- * message — so `codeFromNativeError` has two independent ways to read it.
- */
 const NATIVE_TOKENS = {
   APP_ATTEST_UNSUPPORTED: 'unsupported',
   APP_ATTEST_INVALID_ARGUMENT: 'invalidArgument',
@@ -49,21 +34,6 @@ const tokenCode = (value: string): AppAttestErrorCode | null =>
     ? NATIVE_TOKENS[value as keyof typeof NATIVE_TOKENS]
     : null
 
-/**
- * Classifies a rejection from the native module.
- *
- * `code` is the intended channel, but expo-modules-jsi before 57.0.2 dropped it
- * whenever an `AsyncFunction` rejected its promise: `JavaScriptPromise.reject`
- * recognized `JavaScriptError` only and never `JavaScriptThrowable`, so the
- * `Exception` carrying the code was stringified into a bare `Error`. Every
- * native failure then collapsed to `unknown`, which erased `invalidKey` — the
- * signal the attestation lifecycle uses to re-register a dead key — and left
- * shipped builds unable to recover.
- *
- * Reading the token back out of the message keeps that class of regression from
- * silently costing us the taxonomy again. It inspects our own constant, never a
- * system-localized string, so lifecycle decisions stay locale-independent.
- */
 export const codeFromNativeError = (error: unknown): AppAttestErrorCode => {
   if (error instanceof AppAttestError) return error.code
   if (typeof error !== 'object' || error === null) return 'unknown'

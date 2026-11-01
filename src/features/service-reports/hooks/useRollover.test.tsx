@@ -21,7 +21,7 @@ import useServiceReport from '@/stores/serviceReport'
 import { useRollover } from '@/features/service-reports/hooks/useRollover'
 
 let renders = 0
-// Home's tab stack and the bell both hold a rollover.
+
 const Harness = () => {
   renders++
   useRollover()

@@ -24,7 +24,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 interface Props {
   navigation: RootStackNavigation
   onAction: () => void
-  /** Shown above the actions (Scribe AI's Speak an update, from the app tier). */
+
   leading?: ReactNode
 }
 
@@ -35,7 +35,6 @@ type QuickActionOption =
   | 'addPlan'
   | 'logTrip'
 
-/** One action set for the compact sheet and the iPad anchored menu. */
 export default function QuickActionMenu({
   navigation,
   onAction,
@@ -62,7 +61,6 @@ export default function QuickActionMenu({
         navigation.navigate('PlanDay', {})
         break
       case 'logTrip':
-        // Without an active car, add one first; its form continues to the trip.
         if (hasActiveCar)
           navigation.navigate('MileageTripForm', { source: 'quick_action' })
         else
@@ -76,7 +74,7 @@ export default function QuickActionMenu({
   return (
     <View style={{ gap: 10 }}>
       {leading}
-      {/* Add Time stays first: people reach for the top row out of habit. */}
+      {}
       {showsTimer && (
         <ActionButton
           text='addTime'

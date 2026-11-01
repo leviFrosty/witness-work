@@ -18,12 +18,10 @@ const entry = (day: string, hours: number, extra: Partial<TimeEntry> = {}) =>
   }) as TimeEntry
 
 describe('dailyPace', () => {
-  // October 2026 has 31 days.
   const month = 9
   const year = 2026
 
   it('spreads what is left over the days after today (#775)', () => {
-    // 25 of 50 hours on the 11th leaves 20 days: 1.25 hours a day.
     const pace = dailyPace({
       loggedMinutes: 25 * 60,
       goalMinutes: 50 * 60,
@@ -147,7 +145,6 @@ describe('serviceDayStats', () => {
 
 describe('monthWeeks', () => {
   it('splits the month into weeks cut to its days', () => {
-    // October 2026 starts on a Thursday.
     const weeks = monthWeeks({
       reports: [entry('2026-10-01', 2), entry('2026-10-04', 1)],
       month: 9,
@@ -182,7 +179,6 @@ describe('monthWeeks', () => {
 
 describe('yearPace', () => {
   it('spreads the rest of the goal over the months left, this one too', () => {
-    // October of the 2026–2027 Service Year leaves Oct–Aug: 11 months.
     expect(
       yearPace({
         loggedMinutes: 600 * 60 - 550 * 60,

@@ -16,18 +16,6 @@ import { petFromPayload } from '@/app/sync/petPayload'
 
 type LocalMergeState = Omit<MergeResult, 'changed'>
 
-/**
- * Folds a list of remote payloads into a single synthesized SyncPayload by
- * merging them pairwise via the LWW merge algorithm. Used for
- * `peekRemotePayload` and the manual "restore from iCloud" flow, where the
- * caller expects one payload-shaped object representing the full remote state
- * across all devices.
- *
- * Only payloads from the newest reset generation are folded: older ones are
- * snapshots a reset replaced. The result carries that generation.
- *
- * Returns null when the input is empty.
- */
 export function foldRemotePayloads(
   allPayloads: SyncPayload[]
 ): SyncPayload | null {
@@ -65,14 +53,11 @@ export function foldRemotePayloads(
     profileUpdatedAt: first.profileStore?.updatedAt ?? {},
   }
 
-  // Normalize the seed too: one-shot restores must apply the same aliases,
-  // tombstones and retention policy even when only one peer file is present.
   for (let i = 0; i < payloads.length; i++) {
     const { changed: _changed, ...next } = mergePayload(acc, payloads[i])
     acc = next
   }
 
-  // Representative metadata: pick the payload with the newest writtenAt.
   let rep = payloads[0]
   for (const p of payloads) {
     if (p.writtenAt > rep.writtenAt) rep = p
@@ -104,9 +89,7 @@ export function foldRemotePayloads(
       deletedDayPlans: acc.deletedDayPlans,
       deletedRecurringPlans: acc.deletedRecurringPlans,
     },
-    // Categories, mileage and the pet come back only when a device wrote
-    // them: a payload without one predates it (mileage arrived in 1.44), which
-    // isn't the same as having none, so a restore keeps the local records.
+
     ...(payloads.some((payload) => payload.categoryStore)
       ? {
           categoryStore: {

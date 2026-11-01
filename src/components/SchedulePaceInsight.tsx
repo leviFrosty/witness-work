@@ -58,7 +58,6 @@ const DetailStat = ({ label, value }: { label: string; value: string }) => {
   )
 }
 
-/** Schedule-pace card and detail overlay for the Schedule screen. */
 const SchedulePaceInsight = ({ month, year }: Props) => {
   const theme = useTheme()
   const status = useScheduleStatus({ month, year })

@@ -55,7 +55,7 @@ describe('the roster’s memberships', () => {
       cars: { on: { at: 500 }, gone: { at: 1 } },
       leftCars: { ...leftCars, gone: 1000 },
     })
-    // Left since it was joined: `leftCars` alone says so.
+
     expect(carried.cars).toEqual({ on: { at: 500 } })
     expect(Object.keys(carried.leftCars)).toHaveLength(MAX_ROSTER_LEFT_CARS)
     expect(carried.leftCars).toHaveProperty('gone', 1000)
@@ -70,7 +70,7 @@ describe('the roster’s memberships', () => {
     }
     const all = rosterSharedCarMemberships(memberships)
     const json = (value: unknown) => JSON.stringify(value).length
-    // What the entries add to a roster with none fits the room they took.
+
     const car = 22 + json({ at: 9 }) + 4
     const left = 22 + json(7) + 4
     expect(json(all) - json({ cars: {}, leftCars: {} })).toBeLessThanOrEqual(
@@ -107,9 +107,9 @@ describe('openInvitesTo', () => {
     const cars = {
       [id22('s')]: car(id22('s'), id22('m'), 'joe-on-s'),
       [id22('t')]: car(id22('t'), id22('m'), 'joe-on-t'),
-      // Someone else on the car sent it: theirs to cancel.
+
       [id22('u')]: car(id22('u'), id22('o'), 'joe-on-u'),
-      // For someone else.
+
       [id22('v')]: car(id22('v'), id22('m'), 'dee-on-v'),
     }
     const tagOn = (spaceId: string) => `joe-on-${spaceId[0]}`
@@ -127,7 +127,7 @@ describe('openInvitesTo', () => {
         expiresAt: 10,
       },
     ])
-    // Lapsed ones need no cancel.
+
     expect(openInvitesTo(cars, tagOn, 10)).toEqual([])
   })
 })
@@ -228,7 +228,7 @@ describe('withDerivedPeople', () => {
             tag: id22('u'),
             joinedAt: 2,
           },
-          // Gone from the car; their trips still name them.
+
           {
             memberId: id22('z'),
             name: 'Zed',
@@ -255,9 +255,9 @@ describe('withDerivedPeople', () => {
       ['Anna', 1],
       ['Joe', 2],
     ])
-    // On the car with no member record yet: "Someone who joined".
+
     expect(car.unnamedMembers).toEqual([{ memberId: id22('c'), joinedAt: 3 }])
-    // The server's expiry wins over the record's.
+
     expect(car.invites.map((i) => [i.name, i.expiresAt])).toEqual([['Dee', 9]])
   })
 })
@@ -321,7 +321,7 @@ describe('mergeMileageRecords', () => {
         ],
       }
     )
-    // A deletion wins a tie; a newer edit outlives an older deletion.
+
     expect(changes.trips).toEqual([trip('b', 7)])
     expect(changes.deletedMileageRecords).toEqual([
       { id: 'c', deletedAt: 9 },

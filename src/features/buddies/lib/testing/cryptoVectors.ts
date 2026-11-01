@@ -26,24 +26,12 @@ import {
 } from '@/features/buddies/lib/keys'
 import expected from '@/features/buddies/lib/testing/cryptoVectors.json'
 
-/**
- * Known-answer vectors for every byte the Buddies wire depends on: base64url,
- * UTF-8, the RFC primitives (SHA-256, HKDF, X25519, Ed25519,
- * ChaCha20-Poly1305), the key schedule, a signed envelope, and a sealed blob.
- * `cryptoVectors.json` holds the expected values; vitest checks them under
- * Node, and the dev harness (`__WW_DEV__.checkBuddiesCryptoVectors()`) checks
- * them in Hermes on iOS and Android, so all three produce identical bytes. A
- * native implementation (e.g. a Notification Service Extension) must match the
- * same file.
- */
-
 const hex = (bytes: Uint8Array): string =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 
 const fromHex = (text: string): Uint8Array =>
   new Uint8Array((text.match(/../g) ?? []).map((pair) => parseInt(pair, 16)))
 
-/** 0, 1, 2, … as bytes, from `start`. */
 const counting = (length: number, start = 0): Uint8Array =>
   Uint8Array.from({ length }, (_, index) => (start + index) & 0xff)
 
@@ -54,20 +42,16 @@ export type CryptoVectors = Record<string, string>
 export function computeCryptoVectors(): CryptoVectors {
   const out: CryptoVectors = {}
 
-  // base64url: every padding length, and the two URL-safe characters.
   for (let length = 0; length <= 5; length++)
     out[`b64u.counting${length}`] = toB64u(counting(length, 0xf8))
   out['b64u.urlSafe'] = toB64u(fromHex('fbefbeffff'))
   out['b64u.roundTrip'] = hex(fromB64u('-_-_AAECAw'))
 
-  // UTF-8 for names and AAD: accents, CJK, and an astral-plane emoji.
   out['utf8.mixed'] = hex(utf8('Zoë 王 🙂'))
   out['utf8.decoded'] = fromUtf8(fromHex('5a6fc3ab20e78e8b20f09f9982'))
 
-  // RFC 6234 / FIPS 180-2: SHA-256("abc").
   out['rfc.sha256Abc'] = hex(sha256(utf8('abc')))
 
-  // RFC 5869 A.1: HKDF-SHA256 (binary info, so straight to the primitive).
   out['rfc.hkdfCase1'] = hex(
     nobleHkdf(
       nobleSha256,
@@ -78,7 +62,6 @@ export function computeCryptoVectors(): CryptoVectors {
     )
   )
 
-  // RFC 7748 6.1: X25519.
   const alice = fromHex(
     '77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a'
   )
@@ -89,7 +72,6 @@ export function computeCryptoVectors(): CryptoVectors {
   out['rfc.x25519BobPub'] = hex(x25519PublicKey(bob))
   out['rfc.x25519Shared'] = hex(x25519SharedSecret(alice, x25519PublicKey(bob)))
 
-  // RFC 8032 7.1 TEST 1 and TEST 2: Ed25519.
   const test1 = fromHex(
     '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60'
   )
@@ -101,7 +83,6 @@ export function computeCryptoVectors(): CryptoVectors {
   out['rfc.ed25519Test2Pub'] = hex(ed25519PublicKey(test2))
   out['rfc.ed25519Test2Sig'] = hex(ed25519Sign(fromHex('72'), test2))
 
-  // RFC 8439 2.8.2: ChaCha20-Poly1305 (binary AAD, so the primitive).
   out['rfc.aead'] = hex(
     chacha20poly1305(
       counting(32, 0x80),
@@ -114,7 +95,6 @@ export function computeCryptoVectors(): CryptoVectors {
     )
   )
 
-  // The Buddies key schedule (docs/buddies-protocol.md).
   const me = deriveIdentity(counting(32, 0x00))
   const them = deriveIdentity(counting(32, 0x20))
   out['identity.ownerPub'] = me.ownerPub
@@ -155,7 +135,6 @@ export function computeCryptoVectors(): CryptoVectors {
   out['pair.toThemSlotId'] = toThem.slotId
   out['pair.toThemWriterPub'] = toThem.writerPub
 
-  // A signed owner envelope over fixed payload bytes, verified back.
   const payload = utf8(
     `{"inboxId":"${me.inboxId}","since":0,"ts":1790000000000,"nonce":"AAAAAAAAAAAAAAAAAAAAAA"}`
   )
@@ -167,7 +146,6 @@ export function computeCryptoVectors(): CryptoVectors {
     ed25519Verify(signature, signed, fromB64u(me.ownerPub))
   )
 
-  // A sealed Buddy Card with a fixed nonce, opened back.
   const aad = `ww-buddies/v1/card|${them.inboxId}|${toThem.slotId}`
   const blob = seal(
     toThem.contentKey,
@@ -183,7 +161,6 @@ export function computeCryptoVectors(): CryptoVectors {
   return out
 }
 
-/** Every vector that doesn't match, by name; empty means all match. */
 export function checkCryptoVectors(): {
   ok: boolean
   checked: number

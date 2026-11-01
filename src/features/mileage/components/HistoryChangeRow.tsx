@@ -15,10 +15,6 @@ type Props = {
   onChangeDate: (date: Date) => void
 }
 
-/**
- * Shown once a price, fuel, or fuel economy is edited: apply the change from a
- * date (earlier trips keep the old value) or correct the current value.
- */
 export default function HistoryChangeRow({
   mode,
   onChangeMode,

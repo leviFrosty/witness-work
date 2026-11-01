@@ -10,10 +10,6 @@ import { ConversationIndex } from '@/lib/conversationIndex'
 import MapCarouselCard from '@/features/map/components/MapCarouselCard'
 import { ContactMarker } from '@/features/map/types/map'
 
-/**
- * App-tier composition supplies the shared Contacts row without a feature
- * dependency.
- */
 export type MapContactRowRenderer = (props: {
   contact: ContactMarker
   index: ConversationIndex
@@ -28,11 +24,10 @@ interface Props {
   revealRequest: number
   index: ConversationIndex
   onSelect: (id: string) => void
-  /** A pointer entered or left a contact's row; points out its pin. */
+
   onHoverContact?: (id: string, hovered: boolean) => void
 }
 
-/** Keep the map visible while browsing and acting on contacts. */
 export default function MapContactInspector({
   contacts,
   activeId,
@@ -63,9 +58,7 @@ export default function MapContactInspector({
     )
       return
     let cancelled = false
-    // FlashList measures variable-height rows while resolving distant targets.
-    // Serialize reveals so a slower previous measurement cannot overwrite the
-    // newest pin selection; queued superseded requests are skipped entirely.
+
     revealQueue.current = revealQueue.current.then(async () => {
       if (cancelled || !listRef.current) return
       try {
@@ -76,7 +69,6 @@ export default function MapContactInspector({
         })
         if (!cancelled) lastRevealedRequest.current = revealRequest
       } catch (error) {
-        // A data removal during measurement must not block later pin reveals.
         logger.warn('[Map] Could not reveal contact row', error)
       }
     })
@@ -129,7 +121,7 @@ export default function MapContactInspector({
               onHoverContact && ((hovered) => onHoverContact(item.id, hovered))
             }
           >
-            {/* Its own view, so this hover never shares one with the row's. */}
+            {}
             <View collapsable={false}>
               {renderContactRow({
                 contact: item,

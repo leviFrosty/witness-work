@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-// Mock all dependencies first before any imports
 vi.mock('expo-document-picker', () => ({
   getDocumentAsync: vi.fn(),
 }))
@@ -24,10 +23,8 @@ vi.mock('@/lib/locales', () => ({
   },
 }))
 
-// Mock the logger to avoid MMKV dependencies in tests
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-// Now import after all mocks are set up
 import {
   validateContactImport,
   processContactImport,
@@ -46,7 +43,6 @@ describe('validateContactImport', () => {
     mockI18n.t.mockImplementation((key: string) => key)
   })
 
-  // Helper to create valid import data, shaped as it arrives: parsed JSON.
   const createValidImportData = (
     contact?: Partial<Contact>,
     conversations?: Visit[]
@@ -212,7 +208,7 @@ describe('validateContactImport', () => {
 
     it('should return error for wrong type field type', () => {
       const invalidData = {
-        type: 12345, // should be string
+        type: 12345,
         contact: {
           id: 'test-id',
           name: 'Test Name',
@@ -256,7 +252,6 @@ describe('validateContactImport', () => {
   describe('invalid contact structure', () => {
     it('should return error for contact missing id', () => {
       const invalidContact = {
-        // id: 'missing-id',
         name: 'Test Name',
         createdAt: new Date(),
       }
@@ -275,7 +270,7 @@ describe('validateContactImport', () => {
     it('should return error for contact missing name', () => {
       const invalidContact = {
         id: 'test-id',
-        // name: 'missing-name',
+
         createdAt: new Date(),
       }
       const invalidData = {
@@ -294,7 +289,6 @@ describe('validateContactImport', () => {
       const invalidContact = {
         id: 'test-id',
         name: 'Test Name',
-        // createdAt: new Date(),
       }
       const invalidData = {
         type: 'witnesswork-contact',
@@ -310,7 +304,7 @@ describe('validateContactImport', () => {
 
     it('should return error for contact with empty string id', () => {
       const invalidContact = {
-        id: '', // empty string
+        id: '',
         name: 'Test Name',
         createdAt: new Date(),
       }
@@ -329,7 +323,7 @@ describe('validateContactImport', () => {
     it('should return error for contact with empty string name', () => {
       const invalidContact = {
         id: 'test-id',
-        name: '', // empty string
+        name: '',
         createdAt: new Date(),
       }
       const invalidData = {
@@ -378,7 +372,6 @@ describe('validateContactImport', () => {
 
   describe('error handling', () => {
     it('should handle unexpected errors gracefully', () => {
-      // Create an object that will cause an error during processing
       const problematicData = {
         type: 'witnesswork-contact',
         contact: {
@@ -413,8 +406,8 @@ describe('validateContactImport', () => {
         [],
         {},
         { type: 'wrong-type' },
-        { type: 'witnesswork-contact' }, // missing contact
-        { type: 'witnesswork-contact', contact: {} }, // missing required contact fields
+        { type: 'witnesswork-contact' },
+        { type: 'witnesswork-contact', contact: {} },
       ]
 
       testCases.forEach((testCase) => {
@@ -423,19 +416,11 @@ describe('validateContactImport', () => {
         expect(result.error).toBe('invalidFile_description')
       })
 
-      // Verify i18n.t was called the expected number of times
       expect(mockI18n.t).toHaveBeenCalledTimes(testCases.length)
     })
   })
 
   describe('avatar sanitization (security)', () => {
-    // The export side never produces an image avatar (CONTACT_POLICY.avatar =
-    // 'omit'). A payload that carries `avatar.type === 'image'` is therefore a
-    // hand-crafted import — its `avatar.value` could point at an arbitrary
-    // sandbox file path, which the iCloud image-sync push would then copy
-    // verbatim into iCloud Drive masquerading as a JPEG. The validator must
-    // strip these on the receive path.
-
     it('strips image avatars from imported contacts', () => {
       const malicious = {
         type: 'witnesswork-contact',
@@ -458,16 +443,12 @@ describe('validateContactImport', () => {
       const result = validateContactImport(malicious)
 
       expect(result.success).toBe(true)
-      // `avatar` and `avatarMeta` must be gone — both are device-local-only
-      // and a foreign value for either has no legitimate origin.
+
       expect(result.data?.contact.avatar).toBeUndefined()
       expect(result.data?.contact.avatarMeta).toBeUndefined()
     })
 
     it('strips image avatars even with an icloud:// marker value', () => {
-      // Markers never leave a receiving device — but `avatar` is `omit` on the
-      // share-link encoder anyway, so any image-typed avatar arriving via
-      // import is illegitimate regardless of its value.
       const payload = {
         type: 'witnesswork-contact',
         version: '1.0',
@@ -521,7 +502,6 @@ describe('validateContactImport', () => {
 
   describe('edge cases', () => {
     it('drops contact fields outside the share format', () => {
-      // Create valid data first, then add extra fields to the contact object directly
       const validData = createValidImportData()
       const contactWithExtraFields = {
         ...validData.contact,
@@ -560,13 +540,12 @@ describe('validateContactImport', () => {
     })
 
     it('should handle different date formats in createdAt', () => {
-      // Create valid data first, then modify the contact to have a string date
       const validData = createValidImportData()
       const dataWithStringDate = {
         ...validData,
         contact: {
           ...validData.contact,
-          createdAt: '2023-01-01T00:00:00.000Z' as unknown as Date, // string instead of Date object
+          createdAt: '2023-01-01T00:00:00.000Z' as unknown as Date,
         },
       }
       const result = validateContactImport(dataWithStringDate)
@@ -597,7 +576,6 @@ describe('processContactImport', () => {
   })
 
   it('imports afresh over a permanently deleted contact', () => {
-    // A redacted tombstone has nothing to recover; addContact replaces it.
     const tombstone = stripContactForTombstone(shared, 1)
     const result = processContactImport(importData, [], [tombstone])
     expect(result.isDeleted).toBe(false)

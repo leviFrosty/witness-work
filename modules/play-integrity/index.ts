@@ -15,7 +15,6 @@ const native = requireOptionalNativeModule<PlayIntegrityNative>('PlayIntegrity')
 
 export { PlayIntegrityError, type PlayIntegrityErrorCode }
 
-/** Whether this binary can request Play Integrity tokens (Android only). */
 export function isSupported(): boolean {
   if (Platform.OS !== 'android' || !native) return false
   return native.isSupported()
@@ -37,23 +36,14 @@ const invoke = async <T>(operation: () => Promise<T>): Promise<T> => {
   }
 }
 
-/** Stable taxonomy for lifecycle decisions; never inspects localized text. */
 export function classifyError(error: unknown): PlayIntegrityErrorCode | null {
   return error instanceof PlayIntegrityError ? error.code : null
 }
 
-/**
- * Warms up the standard-request token provider for `cloudProjectNumber`. Takes
- * a few seconds; call it ahead of the first token request.
- */
 export function prepare(cloudProjectNumber: string): Promise<void> {
   return invoke(() => required().prepare(cloudProjectNumber))
 }
 
-/**
- * Requests a standard integrity token whose verdict carries `requestHash` (at
- * most 500 characters) verbatim. Prepares the provider when needed.
- */
 export function requestToken(
   cloudProjectNumber: string,
   requestHash: string

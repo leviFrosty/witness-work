@@ -11,12 +11,6 @@ import type { RichTextImageAttrs } from '@/types/richText'
 
 const MAX_HEIGHT = 360
 
-/**
- * A photo in a note at its own aspect ratio, centered: its share of the note's
- * width once resized, otherwise full width when landscape and up to
- * `MAX_HEIGHT` tall when portrait. A photo whose file isn't on this device (not
- * synced yet, or photo sync is off) shows a placeholder instead.
- */
 const NoteImage = (props: {
   image: RichTextImageAttrs
   onPress?: () => void

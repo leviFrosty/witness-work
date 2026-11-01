@@ -23,24 +23,15 @@ const SIDEBAR_AVATAR_SIZE = 32
 
 type AccountNavigation = RootStackNavigation & HomeTabStackNavigation
 
-/**
- * The User's avatar and the menu behind it: Profile, Settings, Support, and
- * Help Center. Root headers show the avatar alone; the iPad sidebar shows it
- * with the User's name and Service Streak, the way desktop apps keep the
- * account at the foot of their sidebar.
- */
 export default function AccountMenu({
   variant = 'avatar',
   compact = false,
   navigation: givenNavigation,
 }: {
   variant?: 'avatar' | 'sidebar'
-  /** The sidebar narrowed to icons: the avatar alone. */
+
   compact?: boolean
-  /**
-   * The tab navigator's, for the sidebar: the tab bar sits outside its screens,
-   * where `useNavigation` can't reach the Settings tab.
-   */
+
   navigation?: AccountNavigation
 }) {
   const contextNavigation = useNavigation<AccountNavigation>()
@@ -57,8 +48,6 @@ export default function AccountMenu({
   const avatarRef = useRef<View>(null)
   const inSidebar = variant === 'sidebar'
 
-  // Hands the overlay its origin on idle so it can mount its heavy subtree
-  // before any tap — without this, the open spring snaps content in.
   useEffect(() => {
     if (!hasCompletedProfileSetup) return
     const handle = requestIdleCallback(() => {
@@ -86,7 +75,6 @@ export default function AccountMenu({
         size={inSidebar ? SIDEBAR_AVATAR_SIZE : ROOT_HEADER_AVATAR_SIZE}
       />
       {!hasCompletedProfileSetup && (
-        // Asks for profile setup until it's done.
         <View
           style={{
             position: 'absolute',
@@ -141,7 +129,6 @@ export default function AccountMenu({
   )
 
   return (
-    // The avatar alone doesn't say it holds Settings and Help.
     <PointerTooltip
       label={i18n.t('accountMenu')}
       effect='none'

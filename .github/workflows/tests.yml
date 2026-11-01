@@ -37,6 +37,9 @@ jobs:
       - name: Run tests
         run: pnpm run testFinal
 
+      - name: Check source comment tooling
+        run: pnpm run test:source-comments && pnpm run comments:check
+
       - name: Check OTA and local environment tools
         run: pnpm run test:ota && pnpm run test:local-env
 

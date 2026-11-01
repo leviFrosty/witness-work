@@ -29,7 +29,7 @@ import { tracking } from '@/lib/tracking'
 export type ContactsFilterSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** When editing an existing chip, pass the current filter + its index. */
+
   initial?: ActiveFilter
   initialIndex?: number
   customFieldDefs: CustomFieldDefinition[]
@@ -38,7 +38,7 @@ export type ContactsFilterSheetProps = {
 
 type TextFieldKey = IdentityKind | AddressKind
 type BooleanFieldKey = 'isFavorite' | 'hasStudy' | 'isActiveStudy'
-// One field for the three Follow-up filters, picked by value like Color pin.
+
 type StaticFieldKey =
   | TextFieldKey
   | BooleanFieldKey
@@ -167,11 +167,6 @@ const operatorLabel = (op: TextOperator | ComparableOperator): string => {
   }
 }
 
-/**
- * Returns the operator set valid for the currently selected field. The sheet
- * uses this both to render the operator buttons and to clamp `op` back into the
- * legal set whenever the field changes.
- */
 const operatorsForField = (
   key: FieldKey,
   customFieldDefs: CustomFieldDefinition[]
@@ -205,10 +200,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   const [value, setValue] = useState<string>('')
   const valueInput = useRef<TextInput>(null)
 
-  // Seed local state every time the sheet flips open. We deliberately do NOT
-  // sync on every prop tick — only on the open transition — so user input
-  // isn't stomped if the parent re-renders mid-edit. The ref gates re-runs
-  // triggered by `initial` reference churn while the sheet is already open.
   const prevOpenRef = useRef(false)
   useEffect(() => {
     const wasClosed = !prevOpenRef.current
@@ -254,11 +245,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     }
   }, [open, initial])
 
-  // Whenever `field` changes, clamp `op` to a value that's valid for that
-  // field (or null when the field doesn't take an operator). Without this the
-  // user could leave a `gt` op selected after switching from a custom number
-  // field to a plain text field and then submit something invalid. The body
-  // is idempotent — re-runs from `op` ticking are no-ops once `op` is valid.
   useEffect(() => {
     if (field === null) {
       if (op !== null) setOp(null)
@@ -274,10 +260,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     }
   }, [field, customFieldDefs, op])
 
-  // Reset value when switching between field shapes that don't share value
-  // semantics (e.g. text -> pinStaleness leaving "Phoenix" in the buffer).
-  // Body is idempotent — user typing into a non-boolean field re-triggers
-  // this effect but the guards bail without touching state.
   useEffect(() => {
     if (field === null) {
       if (value !== '') setValue('')
@@ -288,16 +270,12 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
     }
   }, [field, value])
 
-  // Choice values from another field (e.g. Color pin's `week`) don't carry
-  // over to the Follow-up field; this runs only when the field changes.
   useEffect(() => {
     if (field === 'followUp')
       setValue((v) => (isFollowUpFilterKind(v) ? v : ''))
     else setValue((v) => (isFollowUpFilterKind(v) ? '' : v))
   }, [field])
 
-  // An archived field stays listed for the filter on it being edited (e.g. a
-  // Saved View's), so that filter can still be changed.
   const availableFields: Exclude<FieldKey, null>[] = [
     ...TEXT_FIELD_KEYS,
     'pinStaleness',
@@ -435,9 +413,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
       label: i18n.t(`contacts_followUpFilter_${candidate}` as const),
     }))
 
-  // Pick the proper TextInput config for the active field. Custom number/date
-  // fields surface specialised keyboards / placeholders so the user knows what
-  // shape of value the comparator expects.
   const valueInputProps: {
     inputMode?: 'decimal'
     placeholder?: string
@@ -449,8 +424,6 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
   }
 
   return (
-    // A native sheet presents above the Sort & Filter screen, which is itself
-    // a native modal (a form sheet on iPad).
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
@@ -494,7 +467,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
         }}
       >
         <View style={{ gap: 22 }}>
-          {/* Top sections (field/operator/value) share a 14px rhythm. */}
+          {}
           <View style={{ gap: 14 }}>
             <View
               style={{

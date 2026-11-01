@@ -8,7 +8,7 @@ import { usePreferences } from '@/stores/preferences'
 export function useICloudSync(storageReady: boolean | undefined) {
   useEffect(() => {
     if (!storageReady) return
-    // A device already on iCloud or Drive keeps it (ADR 0030 §3).
+
     settleSyncProvider()
     const settle = usePreferences.subscribe((state, previous) => {
       if (state.iCloudSyncEnabled && !previous.iCloudSyncEnabled)

@@ -12,13 +12,6 @@ import {
   vi,
 } from 'vitest'
 
-/**
- * HomeTabStack's takeover hosts with the real arbiter, the real host logic and
- * the real holds, and every takeover's visuals stubbed out as a host element
- * named after it. After every step of fake time, at most one takeover may be
- * mounted (ADR 0021).
- */
-
 const runtime = vi.hoisted(() => ({
   focused: true,
   appState: 'active' as string,
@@ -98,9 +91,6 @@ vi.mock('@/features/notifications/stores/notificationsTray', async () => {
   return { useNotificationsTray: create(() => ({ open: false })) }
 })
 
-// The visuals: each renders a host element named after its takeover. The hosts
-// `require()` them the first time they show, which `vi.mock` doesn't
-// intercept, so stand them in at the loader and note which ones loaded.
 const stub = (name: string) => (props: Record<string, unknown>) =>
   createElement(name, props)
 const stubWhenShown = (name: string) => (props: { show: boolean }) =>
@@ -169,7 +159,6 @@ const TAKEOVERS = [
 
 let renderer: ReactTestRenderer | undefined
 
-/** The takeovers on screen right now; never more than one. */
 const onScreen = () => {
   const mounted = TAKEOVERS.filter(
     (name) => (renderer?.root.findAllByType(name as never).length ?? 0) > 0
@@ -184,7 +173,6 @@ const props = (name: string) =>
     (...args: unknown[]) => void
   >
 
-/** Advances fake time in small steps, checking the one-at-a-time rule. */
 async function advance(ms: number) {
   for (let elapsed = 0; elapsed < ms; elapsed += 100) {
     await act(async () => {
@@ -248,7 +236,6 @@ describe('takeover hosts (ADR 0021)', () => {
     expect(onScreen()).toBeNull()
     expect([...loadedVisuals]).toEqual([])
 
-    // The first turn loads only that takeover's module.
     await act(async () => useMilestoneRevealStore.getState().request())
     expect(onScreen()).toBe('milestone-reveal')
     expect([...loadedVisuals]).toEqual([
@@ -269,7 +256,6 @@ describe('takeover hosts (ADR 0021)', () => {
   })
 
   it('plays an update launch one takeover at a time, in order', async () => {
-    // Everything wants the screen in the first session after the update.
     usePreferences.setState({ badgesWelcome: 'pending' })
     useStreakCelebration.setState({
       celebrating: { count: 10, kind: 'plans' },
@@ -281,7 +267,6 @@ describe('takeover hosts (ADR 0021)', () => {
     await advance(10_000)
     expect(onScreen()).toBe('update-reveal')
 
-    // The reveal closes; after the gap, the Schedule intro.
     await act(async () => props('update-reveal').onClosed())
     expect(onScreen()).toBeNull()
     await advance(600)
@@ -291,13 +276,10 @@ describe('takeover hosts (ADR 0021)', () => {
     await act(async () => useScheduleIntro.getState().close())
     await advance(800)
 
-    // Then the streak (a preview, with no action to expire with).
     expect(onScreen()).toBe('streak-celebration')
     await act(async () => props('streak-celebration').onDone())
     await advance(800)
 
-    // The welcome waits for a launch without the reveal; the summary waits
-    // for the welcome, so nothing else this launch.
     await advance(30_000)
     expect(onScreen()).toBeNull()
     expect(usePreferences.getState().badgesWelcome).toBe('pending')
@@ -309,7 +291,7 @@ describe('takeover hosts (ADR 0021)', () => {
     await mount()
     await advance(800)
     expect(onScreen()).toBe('badges-welcome')
-    // A streak milestone comes in behind it.
+
     await act(async () => {
       useStreakCelebration.setState({
         celebrating: { count: 10, kind: 'plans' },
@@ -318,7 +300,6 @@ describe('takeover hosts (ADR 0021)', () => {
     await advance(2000)
     expect(onScreen()).toBe('badges-welcome')
 
-    // "Take a look" opens the profile in the same tick the welcome closes.
     await act(async () => props('badges-welcome').onClose('look'))
     expect(useProfileOverlay.getState().open).toBe(true)
     await advance(20_000)
@@ -333,13 +314,13 @@ describe('takeover hosts (ADR 0021)', () => {
 
   it("celebrates the User's own action once", async () => {
     await mount()
-    // Add Time: the streak reaches a milestone...
+
     const action = noteUserAction('time')
     runtime.streak = { kind: 'plans', count: 5, latest: '2026-10-08' }
     await rerender()
     await advance(1000)
     expect(onScreen()).toBe('streak-celebration')
-    // ...and the badge the same save earned goes quiet (the Home card).
+
     await act(async () =>
       useBadgeSession.getState().celebrate(['reportSent.1'], {
         group: `action:${action.id}`,
@@ -366,7 +347,7 @@ describe('takeover hosts (ADR 0021)', () => {
       grewAt: 0,
       seen: { kind: 'plans', latest: '2026-10-08' },
     })
-    // Back on, the growth it already saw isn't celebrated late.
+
     usePreferences.setState({ showStreaks: true })
     await rerender()
     await advance(2000)
@@ -375,7 +356,7 @@ describe('takeover hosts (ADR 0021)', () => {
 
   it('flares the chip for growth nobody here caused', async () => {
     await mount()
-    // Another device's entry lands; the User last did something a minute ago.
+
     noteUserAction('visit')
     await advance(60_000)
     runtime.streak = { kind: 'plans', count: 5, latest: '2026-10-08' }
@@ -386,7 +367,7 @@ describe('takeover hosts (ADR 0021)', () => {
   })
 
   it('expires a celebration held past its moment', async () => {
-    runtime.focused = false // Add Time is still on top of the tabs.
+    runtime.focused = false
     await mount()
     const action = noteUserAction('time')
     await act(async () =>
@@ -423,7 +404,7 @@ describe('takeover hosts (ADR 0021)', () => {
     useProfileOverlay.getState().show({ x: 0, y: 0, width: 1, height: 1 })
     await mount()
     await act(async () => useUpdateRevealStore.getState().request('tray'))
-    // The User asked for it: it shows even over a hold.
+
     expect(onScreen()).toBe('update-reveal')
     await act(async () =>
       useBadgeSession.getState().celebrate(['reportSent.1'])

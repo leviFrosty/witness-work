@@ -31,13 +31,6 @@ interface Props {
   goNext: () => void
 }
 
-/**
- * Onboarding's hands-on moment: the publisher taps the days they usually go out
- * and watches the Assistant plan their month toward the goal, then taps any day
- * to change it. Adding the plan saves real Plans and makes the unpicked days
- * Off Days, so the Schedule screen picks up exactly where this leaves off.
- * Leaving it for later is just as fine: planning lives on the Schedule tab.
- */
 const PlanMonth = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
@@ -52,10 +45,10 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
     setHasDismissedRecommendationHash,
     markScheduleIntroCovered,
   } = usePreferences()
-  // Schedule's intro won't explain planning again.
+
   useEffect(() => markScheduleIntroCovered('plan'), [markScheduleIntroCovered])
   const [target] = useState(() => planTargetMonth(new Date()))
-  // Coming back after adding a plan shows the days picked last time.
+
   const [serviceDays, setServiceDays] = useState<number[]>(() =>
     hasSeenAvailabilityOnboarding ? otherWeekdays(offDays) : []
   )
@@ -78,7 +71,6 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
   const setDayMinutes = (day: number, minutes: number) =>
     setEdits((current) => new Map(current).set(day, minutes))
 
-  // Tapping a day with nothing planned plans it, so one tap is enough.
   const selectDay = (day: number | null) => {
     setSelectedDay(day)
     if (day !== null && !plan.plans.some((p) => p.day === day)) {
@@ -93,7 +85,7 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
     let pastPlanCount = 0
     for (const { day, minutes, fromAssistant } of plans) {
       const date = moment({ ...target, day })
-      // Days already gone are there to log time on, not to be reminded of.
+
       const isPast = date.isBefore(today, 'day')
       if (isPast) pastPlanCount++
       addDayPlan({
@@ -104,7 +96,7 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
         source: fromAssistant ? 'recommendation' : 'manual',
       })
     }
-    // Picked weekdays become availability; hand-planned days alone don't.
+
     if (serviceDays.length > 0) {
       setOffDays(otherWeekdays(serviceDays))
       setHasSeenAvailabilityOnboarding(true)
@@ -199,7 +191,6 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
       {plan.alreadyOnTrack ? (
         <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>
       ) : plan.plans.length === 0 ? (
-        // Nothing to add yet: moving on is the main action, not a skip.
         <ActionButton onPress={later}>{i18n.t('planMonth.later')}</ActionButton>
       ) : (
         <View>

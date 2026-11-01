@@ -40,14 +40,6 @@ import type { Contact } from '@/types/contact'
 import type { Visit } from '@/types/visit'
 import type { DayPlan } from '@/types/timeEntry'
 
-/**
- * Removes already-delivered reminders whose record is gone, so an erased
- * Contact's name doesn't stay in Notification Center. A Recurring Plan's goes
- * once that date is deleted from it. A reminder to log time goes once the day
- * has time, its Plans are gone, or the setting is off; a streak's once it's
- * kept or the setting is off; a report's once it's sent or the setting is off;
- * one to plan next week once that week has a Plan or the setting is off.
- */
 async function retractErasedReminders() {
   const presented = await Notifications.getPresentedNotificationsAsync()
   if (!presented.length) return
@@ -95,22 +87,17 @@ async function retractErasedReminders() {
   }
 }
 
-/** Edits, syncs and app returns that arrive together run one pass. */
 export const RECONCILE_DELAY_MS = 250
 const OWN_PREFIX = 'witness-work-'
 const STATE_KEY = 'reminderSchedule'
 
 type ScheduleState = {
-  /** The whole schedule's key after the last completed pass; '' when dirty. */
   key: string
-  /** The local day of that pass. A new day checks the OS schedule again. */
+
   day: string
-  /**
-   * The device's time zone in that pass. Plans and the other reminders set for
-   * a local time move to the same time in a new zone.
-   */
+
   zone?: string
-  /** Each scheduled reminder's content key, by OS request id. */
+
   ids: Record<string, string>
 }
 
@@ -118,16 +105,10 @@ function loadState(): ScheduleState {
   try {
     const stored = mmkvStorage.getString(STATE_KEY)
     if (stored) return JSON.parse(stored) as ScheduleState
-  } catch {
-    // Unreadable: the next pass compares against the OS schedule instead.
-  }
+  } catch {}
   return { key: '', day: '', ids: {} }
 }
 
-/**
- * Best effort: MMKV refuses writes while the device is locked, and the schedule
- * is already in the OS. A later pass compares against the OS schedule.
- */
 function saveState(state: ScheduleState) {
   try {
     mmkvStorage.set(STATE_KEY, JSON.stringify(state))
@@ -140,16 +121,10 @@ function saveState(state: ScheduleState) {
 
 const isLegacyId = (id: string) => !id.startsWith(OWN_PREFIX)
 
-/**
- * Request ids that a record held before this app named them after the record
- * (`reminderRequestId`): an older version, or another device, may have
- * scheduled them on this install.
- */
 function addLegacyIds(into: Set<string>, ids: (string | undefined)[]) {
   for (const id of ids) if (id && isLegacyId(id)) into.add(id)
 }
 
-/** Legacy ids of the records that were added, removed, or changed their ids. */
 function changedLegacyIds<T extends { id: string }>(
   previous: T[],
   next: T[],
@@ -199,19 +174,8 @@ function reminderRequest(
   }
 }
 
-/**
- * OS identifiers belong to this install. Rebuild them from intent after any
- * import/merge.
- *
- * Each pass diffs against what the OS has scheduled: only new or changed
- * reminders are scheduled (re-adding an id replaces it), and then only ids that
- * are no longer wanted are cancelled. A pass the OS suspends partway (a
- * background wake) leaves the previous reminders in place rather than none.
- */
 export function useReconciledReminders(ready: boolean | undefined) {
   useEffect(() => {
-    // Before the device's first unlock the stores hold only defaults; a pass
-    // would cancel every reminder.
     if (!ready || isStorageLocked()) return
     let stopped = false,
       running = false,
@@ -220,13 +184,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
     let retractTimer: ReturnType<typeof setTimeout> | undefined
     let state = loadState()
     let inProgressObsoleteIds: Set<string> | undefined
-    /** Legacy ids from edits; each forces a pass that cancels them. */
+
     const obsoleteIds = new Set<string>()
-    /**
-     * Legacy ids records held at launch. Already cancelled by an earlier pass
-     * unless this version is new here, so they're cancelled whenever a pass
-     * runs but don't force one.
-     */
+
     const launchLegacyIds = new Set<string>()
     const reconcile = async () => {
       queued = true
@@ -235,8 +195,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
       try {
         while (queued && !stopped) {
           queued = false
-          // Travel: OS reminders are fixed instants, and Hermes still computes
-          // local times in the old zone until it checks again.
+
           const zone = deviceTimeZone()
           if (zone !== state.zone) refreshLocalTimeOffset()
           const prefs = usePreferences.getState()
@@ -262,10 +221,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             },
             now: Date.now(),
           })
-          // A fired reminder adds an unread bell item, so each one sets the
-          // app icon badge it would leave if nothing is read before then. The
-          // bell restores the exact count once the app is used again. A new
-          // unread count therefore reschedules every badged reminder.
+
           const unread = supportsAppIconBadge()
             ? useNotificationsTray.getState().unread
             : null
@@ -274,8 +230,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             dataProtectionMode: prefs.dataProtectionMode,
             timeDisplayFormat: prefs.timeDisplayFormat,
           }
-          // Content includes the app language's wording, so a language change
-          // reschedules too.
+
           const wanted = new Map(
             (granted ? schedule : []).map((reminder, index) => {
               const request = reminderRequest(
@@ -289,8 +244,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
               ] as const
             })
           )
-          // The channel name is in the key so a pass renames the Android
-          // channel after a language change or an update that renames it.
+
           const key = contentHash(
             canonicalJson([
               granted,
@@ -311,7 +265,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
           const obsoleteForPass = new Set(obsoleteIds)
           inProgressObsoleteIds = obsoleteForPass
           for (const id of obsoleteForPass) obsoleteIds.delete(id)
-          // Cache only a completed pass.
+
           state = { ...state, key: '' }
           const scheduled =
             await Notifications.getAllScheduledNotificationsAsync()
@@ -329,8 +283,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
             await Notifications.scheduleNotificationAsync(request)
             state.ids = { ...state.ids, [id]: itemKey }
           }
-          // Cancel only after the new schedule is in, so an interrupted pass
-          // never leaves nothing scheduled.
+
           if (!interrupted) {
             for (const { identifier } of scheduled) {
               if (wanted.has(identifier)) continue
@@ -347,11 +300,10 @@ export function useReconciledReminders(ready: boolean | undefined) {
               [...wanted].map(([id, item]) => [id, item.key])
             )
           } else {
-            // Not cancelled yet; the next pass still needs them.
             for (const id of obsoleteForPass) obsoleteIds.add(id)
           }
           inProgressObsoleteIds = undefined
-          // Best effort: a failure here mustn't undo the schedule above.
+
           clearTimeout(retractTimer)
           await retractErasedReminders().catch((error) =>
             errorTracking.captureException(error, {
@@ -396,8 +348,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
       )
       request()
     })
-    // Logging time, removing a Plan, sending a report, or turning reminders
-    // off clears a delivered one, even when nothing ahead changes.
+
     const retract = () => {
       clearTimeout(retractTimer)
       retractTimer = setTimeout(
@@ -461,7 +412,6 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.weekPlanReminderEnabledAt !==
           previous.weekPlanReminderEnabledAt ||
         state.offDays !== previous.offDays ||
-        // Where weeks start decides which week a reminder asks about.
         state.startOfWeek !== previous.startOfWeek ||
         state.formatRegion !== previous.formatRegion ||
         state.role !== previous.role ||
@@ -475,10 +425,9 @@ export function useReconciledReminders(ready: boolean | undefined) {
     const tray = useNotificationsTray.subscribe((state, previous) => {
       if (state.unread !== previous.unread && supportsAppIconBadge()) request()
     })
-    // Time passing, a new permission or language: the pass skips itself when
-    // none of that changed the schedule.
+
     const foreground = addForegroundListener(request)
-    // Remove legacy ids too; a restored device may carry foreign ids.
+
     useConversations
       .getState()
       .conversations.forEach((visit) =>

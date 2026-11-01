@@ -37,11 +37,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   }, [editing, navigation])
 
   return (
-    // The dock applies the bottom safe area itself.
     <Wrapper insets='none' style={{ flex: 1 }}>
       <TimeEntryForm
         existingReport={existingReport}
-        // Moment reads a bare deep-link day (`2026-10-01`) as local, not UTC.
         date={
           route.params?.date ? moment(route.params.date).toDate() : undefined
         }
@@ -53,9 +51,6 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         source='time_entry_form'
         onChangedChange={setChanged}
         onDone={() => {
-          // A timer session has no existing entry, so done means submitted.
-          // Deep links pass params as strings, so only the timer's own values
-          // clear it.
           const sessionStart = route.params?.timerSessionStart
           if (
             route.params?.fromTimer === true &&

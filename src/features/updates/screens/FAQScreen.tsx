@@ -42,7 +42,6 @@ import useHelpCenter from '@/features/updates/hooks/useHelpCenter'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 
-/** Quiet time after the last layout change before scrolling to a category. */
 const LAYOUT_SETTLE_MS = 150
 
 const FAQScreen = () => {
@@ -71,18 +70,15 @@ const FAQScreen = () => {
   const scrollRef = useRef<ScrollView>(null)
   const answersRef = useRef<ScrollView>(null)
   const categoryOffsets = useRef<Partial<Record<string, number>>>({})
-  // Set once the User scrolls: the screen stops following the category.
+
   const userScrolledRef = useRef(false)
-  // Where the screen last scrolled the requested category to.
+
   const placedYRef = useRef<number | null>(null)
-  // Whether the categories below the first screen may build yet.
+
   const [buildRest, setBuildRest] = useState(!targetCategory)
 
   const handleCopyAccountId = useCallback(async () => {
     try {
-      // Live SDK value, not `customer.originalAppUserId` — the dev reset flow
-      // can swap the active user via `logIn`, and the current ID is what
-      // matters for granting a promotional entitlement in the RC dashboard.
       const id = await Purchases.getAppUserID()
       await Clipboard.setStringAsync(id)
 
@@ -103,9 +99,7 @@ const FAQScreen = () => {
     scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
     setBuildRest(true)
   }
-  // Sections measure in several passes after opening, and on Android their
-  // offsets jump around before they settle. So the screen follows the
-  // category, a moment after its offset last changed, until the User scrolls.
+
   const scrollToTargetCategory = () => {
     if (placeTimer.current) clearTimeout(placeTimer.current)
     placeTimer.current = setTimeout(() => {
@@ -132,9 +126,7 @@ const FAQScreen = () => {
     userScrolledRef.current = false
     placedYRef.current = null
     if (isWide || !targetCategory) return
-    // A new route target can have unchanged geometry, so native onLayout and
-    // content-size callbacks may not run. Try cached offsets after commit;
-    // those callbacks still handle first mount and subsequent measurement.
+
     const frame = requestAnimationFrame(() => {
       const y = categoryOffsets.current[targetCategory]
       if (y === undefined || placedYRef.current !== null || !scrollRef.current)
@@ -143,7 +135,7 @@ const FAQScreen = () => {
       scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
       setBuildRest(true)
     })
-    // Never leave the rest of the list unbuilt.
+
     const fallback = setTimeout(() => setBuildRest(true), 1000)
     return () => {
       cancelAnimationFrame(frame)
@@ -206,10 +198,6 @@ const FAQScreen = () => {
     }))
     .filter((group) => group.entries.length > 0)
 
-  // Every answer card is its own native view, and building them all at once
-  // froze the screen as it opened. So the list builds one category a frame.
-  // It pauses after the requested category until that's in place, so the
-  // categories below don't keep moving it.
   const targetSections =
     grouped.findIndex((group) => group.category === targetCategory) + 1
   const [builtSections, setBuiltSections] = useState(1)
@@ -222,8 +210,7 @@ const FAQScreen = () => {
     )
     return () => cancelAnimationFrame(frame)
   }, [isWide, allBuilt, paused, builtSections])
-  // "Still need help?" sits below every category, so jumping there waits for
-  // them.
+
   const scrollToEndPending = useRef(false)
 
   const support = <FAQSupport onCopyAccountId={handleCopyAccountId} />
@@ -264,7 +251,6 @@ const FAQScreen = () => {
   return (
     <Wrapper insets='none' style={{ flex: 1 }}>
       {isWide ? (
-        // Topics beside the answers, meeting iPhone Duo's fold when half-open.
         <FoldSplit
           style={{
             flex: 1,
@@ -355,7 +341,6 @@ const FAQScreen = () => {
             }
             scrollToTargetCategory()
           }}
-          // Once the User scrolls, the screen stops placing the category.
           onScrollBeginDrag={() => {
             userScrolledRef.current = true
             setBuildRest(true)

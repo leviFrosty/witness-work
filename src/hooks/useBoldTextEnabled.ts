@@ -4,12 +4,6 @@ import { getFontWeightAdjustment } from '../../modules/font-weight-adjustment'
 
 const androidBoldText = () => getFontWeightAdjustment() > 0
 
-/**
- * Whether the system's bold text setting is on (iOS Bold Text, Android Bold
- * text), kept current as it's toggled. Android has no change event, but the
- * setting is changed in the Settings app, so it's read again whenever the app
- * comes back to the foreground.
- */
 export default function useBoldTextEnabled() {
   const [enabled, setEnabled] = useState(() =>
     Platform.OS === 'android' ? androidBoldText() : false

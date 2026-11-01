@@ -7,13 +7,9 @@ import { formatDisplay, formatTime } from '@/lib/dates'
 
 const HOURS = [9, 10, 11]
 const ROW_HEIGHT = 44
-/** Half the hour label's height: where its rule line sits in the row. */
+
 const LINE_OFFSET = 8
 
-/**
- * A mock day view: a follow-up sits beside a placeholder for the user's other
- * appointments. Purely presentational; nothing is written to the calendar.
- */
 const CalendarPreview = () => {
   const theme = useTheme()
   const at = (hour: number) => formatTime(moment().hour(hour).minute(0))
@@ -28,7 +24,6 @@ const CalendarPreview = () => {
 
   return (
     <View
-      // One picture to a screen reader, not each hour of the mock day.
       accessible
       accessibilityRole='image'
       accessibilityLabel={i18n.t('calendarPreview_accessibilityLabel', {

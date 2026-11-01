@@ -14,10 +14,6 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import type { SuggestedSectionKey } from '@/lib/suggestedContacts'
 import { tracking } from '@/lib/tracking'
 
-/**
- * Everyone else ('all' or 'other') and search results sit below the
- * suggestions.
- */
 export type SuggestedHeaderSection =
   | SuggestedSectionKey
   | 'all'
@@ -34,10 +30,6 @@ const ICONS: Record<SuggestedHeaderSection, AppIcon> = {
   search: SearchIcon,
 }
 
-/**
- * Small uppercase label with an icon above each part of a suggested Contacts
- * list, shared by the Contacts list and the Log Visit picker.
- */
 export default function SuggestedSectionHeader({
   title,
   section,
@@ -48,7 +40,7 @@ export default function SuggestedSectionHeader({
   testID?: string
 }) {
   const theme = useTheme()
-  // At accessibility sizes the title wraps instead of cutting off.
+
   const largeText = useAccessibilityTextSize()
   return (
     <View

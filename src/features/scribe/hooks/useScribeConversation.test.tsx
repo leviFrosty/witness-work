@@ -43,7 +43,7 @@ vi.mock('@/lib/appUpdate', () => ({ appVersion: () => '1.0.0' }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), captureMessage: vi.fn() },
 }))
-// The app's runtime, with ww-api replaced by a step the test releases.
+
 const { client } = vi.hoisted(() => {
   vi.stubGlobal('__DEV__', false)
   return {
@@ -212,7 +212,6 @@ it('shows the drafting Proposal where the turn will keep it', async () => {
   const drafted = latest.items.map((item) => item.id)
   expect(drafted).toEqual(['t-u', 'pr_1-item'])
 
-  // The turn stores it under the same item id, so nothing remounts.
   await act(async () => {
     putConversation({
       ...getConversation(id)!,
@@ -227,7 +226,6 @@ it('shows the drafting Proposal where the turn will keep it', async () => {
   })
   expect(latest.items.map((item) => item.id)).toEqual(drafted)
 
-  // A retried turn's Proposal already has its item: no second one.
   await act(async () => setDrafting(id, proposal))
   expect(latest.items.map((item) => item.id)).toEqual(drafted)
 })

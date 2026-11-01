@@ -8,7 +8,6 @@ import {
 import usePet from '@/stores/pet'
 import { toast } from '@/stores/toasts'
 
-/** A Home section's name, as in Preferences → Home Screen. */
 export const homeSectionTitle = (key: HomeScreenElementKey): string => {
   switch (key) {
     case 'approachingConversations':
@@ -39,15 +38,10 @@ export type HomeSectionCapabilities = {
   hasAnnualGoal: boolean
   showsTimer: boolean
   mileageTrackingEnabled: boolean | undefined
-  /** Buddies shows for this User (`useBuddiesEnabled`). */
+
   buddiesAvailable: boolean
 }
 
-/**
- * Whether a section can show for this User and device at all, whatever they
- * chose to show. A section that can't stays in the stored order, so it comes
- * back where it was.
- */
 export const isHomeSectionAvailable = (
   key: HomeScreenElementKey,
   {
@@ -65,10 +59,6 @@ export const isHomeSectionAvailable = (
   return true
 }
 
-/**
- * `order` with `key` moved to where `target` is, shifting the sections between
- * them. Sections hidden by capability keep their place among their neighbors.
- */
 export const moveHomeSection = (
   order: HomeScreenElementKey[],
   key: HomeScreenElementKey,
@@ -83,20 +73,11 @@ export const moveHomeSection = (
   return next
 }
 
-/**
- * Whether a section's switch is on: the User's choice, or the section's default
- * if they haven't made one (a map saved before the section existed lacks it).
- * Together starts off, so the User adds it; the rest start on.
- */
 export const isHomeSectionOn = (
   key: HomeScreenElementKey,
   homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
 ) => homeScreenElements[key] ?? PREFERENCE_DEFAULTS.homeScreenElements[key]
 
-/**
- * Whether the User shows a section. Before there's a companion, Pet is the
- * offer to adopt one, which "Not now" hides too.
- */
 export const isHomeSectionShown = (
   key: HomeScreenElementKey,
   {
@@ -112,10 +93,6 @@ export const isHomeSectionShown = (
   isHomeSectionOn(key, homeScreenElements) &&
   !(key === 'pet' && !hasPet && petPromptDismissed)
 
-/**
- * Shows or hides a section; showing Pet brings back an offer answered "Not
- * now".
- */
 export const setHomeSectionShown = (
   key: HomeScreenElementKey,
   shown: boolean
@@ -128,7 +105,6 @@ export const setHomeSectionShown = (
   })
 }
 
-/** Moves a section to where `target` is (dragging it over `target`). */
 export const moveHomeSectionTo = (
   key: HomeScreenElementKey,
   target: HomeScreenElementKey
@@ -143,7 +119,6 @@ export const moveHomeSectionTo = (
   })
 }
 
-/** Hides a section, with an Undo toast that shows it again. */
 export const hideHomeSection = (key: HomeScreenElementKey) => {
   setHomeSectionShown(key, false)
   toast.undo({
@@ -152,7 +127,6 @@ export const hideHomeSection = (key: HomeScreenElementKey) => {
   })
 }
 
-/** Shows a hidden section again, first, where it's easy to see. */
 export const showHomeSection = (key: HomeScreenElementKey) => {
   const { homeScreenElementsOrder, set } = usePreferences.getState()
   const order = getEffectiveHomeScreenOrder(homeScreenElementsOrder)

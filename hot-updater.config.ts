@@ -12,8 +12,7 @@ const variant = process.env.APP_VARIANT
 if (variant !== 'development' && variant !== 'beta' && variant !== 'production')
   throw new Error('Set APP_VARIANT explicitly before using Hot Updater')
 const target = environments[variant]
-// Native prebuild has access only to the public trust anchor. Provider access
-// and signing are supplied by the publishing script, after its release gate.
+
 const deploying = process.env.WW_OTA_DEPLOY === '1'
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version
 if (
@@ -23,8 +22,6 @@ if (
 )
   throw new Error(refusal(version))
 
-// Hash native inputs by platform. Upload-only plugins cannot change native
-// compatibility; the Android Maps key must not move the iOS fingerprint.
 const { exp } = getConfig(process.cwd())
 const plugins = (exp.plugins ?? []).filter((entry) => {
   const name = Array.isArray(entry) ? entry[0] : entry
@@ -88,8 +85,6 @@ export default defineConfig((options) => {
   if (options && options.channel !== target.channel)
     throw new Error(`Channel must be ${target.channel} for ${variant}`)
 
-  // Prebuild reads this config to embed the fingerprint and public key; it
-  // needs no provider credentials. scripts/ota.mjs validates them for deploy.
   return {
     build: expo({ outDir: 'dist/hot-updater-build', sourcemap: true }),
     updateStrategy: 'fingerprint',
@@ -109,17 +104,15 @@ export default defineConfig((options) => {
         'targets/*/Assets.xcassets/**',
         'targets/wear-os/**',
         'src/locales/en-US.json',
-        // Native-extension allowlists otherwise re-include generated Gradle
-        // sources. Ignore outputs after that allowlist, including pnpm paths.
+
         '**/build/**',
         '**/.build/**',
         '**/.gradle/**',
         '**/.cxx/**',
-        // This is authored source despite its directory name.
+
         '!**/react-native/ReactAndroid/src/**',
         '**/react-native-maps/ios/AirMaps/RNMapsDefines.h',
-        // CocoaPods copies the selected implementation here. Hash its vendor
-        // inputs above and the Expo plugin options instead of this build copy.
+
         '**/expo-sqlite/ios/sqlite3.c',
         '**/expo-sqlite/ios/sqlite3.h',
       ],

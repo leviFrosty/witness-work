@@ -10,10 +10,6 @@ import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvail
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * A way into Device Sync from the screens people look for it on (Account,
- * Backup & Restore). Hidden where the device can't sync.
- */
 export default function DeviceSyncLinkSection() {
   const navigation = useNavigation<RootStackNavigation>()
   const available = useDeviceSyncAvailable()

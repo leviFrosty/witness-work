@@ -1,14 +1,8 @@
 import { create } from 'zustand'
 
-/**
- * Ephemeral, non-persisted visibility of the floating bottom tab bar. A focused
- * screen claims it hidden (scrolling down, exploring the map) and releases the
- * claim when it no longer wants that or loses focus, so a screen that never
- * claims always finds the bar showing. The sidebar ignores it.
- */
 type TabBarVisibilityStore = {
   claims: number
-  /** Hides the bar until the returned release is called. */
+
   claim: () => () => void
 }
 

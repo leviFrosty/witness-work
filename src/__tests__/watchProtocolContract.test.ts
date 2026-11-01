@@ -32,14 +32,6 @@ import {
 } from '@/constants/categories'
 import type { Contact } from '@/types/contact'
 
-/**
- * The phone → watch contract. The fixture is a `PhoneContext` that the Kotlin
- * tests on both sides of the Wear OS connection decode
- * (`modules/watch-bridge/android/src/test`, `targets/wear-os/src/test`), and
- * whose snapshot has the shape the Apple Watch's `WatchSnapshot` decodes. A
- * field renamed, added or removed here has to be changed in both protocols
- * (`WatchProtocol.swift`, `WatchProtocol.kt`) and in this fixture.
- */
 const fixture = JSON.parse(
   readFileSync(
     new URL(
@@ -50,7 +42,6 @@ const fixture = JSON.parse(
   )
 )
 
-// Monday, October 5, 2026, 9:00 local.
 const NOW = new Date(2026, 9, 5, 9, 0)
 const at = (day: number, hour: number) => new Date(2026, 9, day, hour)
 
@@ -126,10 +117,6 @@ const args = (
 
 type Shape = string | { [key: string]: Shape } | Shape[]
 
-/**
- * Keys and JSON types, with arrays reduced to the union of their elements'
- * keys.
- */
 function shape(value: unknown): Shape {
   if (Array.isArray(value)) {
     const merged: Record<string, Shape> = {}
@@ -149,7 +136,7 @@ function shape(value: unknown): Shape {
         .map(([key, child]) => [key, shape(child)])
     )
   }
-  // A field that's `null` here may be set elsewhere; compare presence only.
+
   return value === null ? 'present' : 'present'
 }
 
@@ -179,7 +166,7 @@ describe('watch protocol contract', () => {
     expect(snapshot.plannedThroughDay).toEqual(
       fixture.snapshot.plannedThroughDay
     )
-    // 12.5 hours on the 2nd, then 4 LDC hours on the 3rd.
+
     expect(snapshot.loggedThroughDay).toEqual(fixture.snapshot.loggedThroughDay)
   })
 
@@ -190,7 +177,6 @@ describe('watch protocol contract', () => {
   })
 
   it('sends the month total with its unit, as the phone shows it', () => {
-    // 12.5 Standard hours plus the 4 LDC credit hours.
     expect(buildWatchSnapshot(args('ios')).monthFormatted).toBe('16.5 Hrs')
   })
 
@@ -199,7 +185,7 @@ describe('watch protocol contract', () => {
       ...args('android'),
       categories: [makeLdcBuiltinCategory(0)],
     })
-    // The `ldc` string, not the stored English name.
+
     expect(snapshot.categories).toEqual([
       { id: LDC_BUILTIN_CATEGORY_ID, name: 'ldc', isCredit: true },
     ])

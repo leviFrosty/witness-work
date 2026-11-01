@@ -9,12 +9,6 @@ import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
 import { roomOptionLabel, shopItemLabel } from '@/features/pet/lib/roomLabels'
 import { isOwned, type ShopEntry } from '@/features/pet/lib/shopEntries'
 
-/**
- * One item in the Shop: its picture from the room, its name, and its price.
- * Once bought or found it's stamped with a big check, says "Owned", and can't
- * be picked (it's worn and placed from the pet's details). A secret not found
- * yet is only a silhouette.
- */
 export default function ShopItemCard({
   entry,
   picked,
@@ -27,7 +21,7 @@ export default function ShopItemCard({
 }: {
   entry: ShopEntry
   picked: boolean
-  /** The card's width in points. */
+
   width: number
   palette: GamePalette
   room: PetRoomSettings

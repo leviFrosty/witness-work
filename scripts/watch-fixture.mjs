@@ -1,20 +1,5 @@
 #!/usr/bin/env node
-// Prints a `PhoneContext` (the iPhone/Android phone → watch message, see
-// `modules/watch-bridge/ios/WatchProtocol.swift`) with sample data relative to
-// now, so the Apple Watch and Wear OS apps can be shown the same state for
-// screenshots and parity checks without a paired phone.
-//
-//   node scripts/watch-fixture.mjs pioneer            # hours, goal, plans, Up Next
-//   node scripts/watch-fixture.mjs pioneer --running  # with the timer running
-//   node scripts/watch-fixture.mjs publisher          # checkbox report, unreported
-//   node scripts/watch-fixture.mjs publisher --reported
-//   node scripts/watch-fixture.mjs pioneer --platform android
-//   node scripts/watch-fixture.mjs pioneer --rtl      # laid out right to left
-//   node scripts/watch-fixture.mjs pioneer --rtl --number-locale ar-u-nu-arab
-//
-// Seed it where each watch app keeps the phone's context (`phone-context.json`):
-// the watch app's App Group container on watchOS, the app's files directory on
-// Wear OS (`docs/watch/README.md`). Names and places are made up.
+
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -46,7 +31,6 @@ const monthName = (d) => d.toLocaleString('en-US', { month: 'long' })
 const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
 
-/** `buildWatchSnapshot` sends `…Android` wording where a phone is named. */
 const androidKeys = new Set(keys.androidVariants ?? [])
 const strings = Object.fromEntries(
   keys.strings.map((key) => [
@@ -143,7 +127,7 @@ const snapshot = {
   goalHours: hours ? 50 : 0,
   progress: hours ? monthMinutes / (50 * 60) : 0,
   plannedThroughDay: hours ? plannedThroughDay : null,
-  // All of it logged by the 1st.
+
   loggedThroughDay: hours ? plannedThroughDay.map(() => monthMinutes) : null,
   publisherState: reported ? 'reportedToday' : 'unreported',
   paceText: hours

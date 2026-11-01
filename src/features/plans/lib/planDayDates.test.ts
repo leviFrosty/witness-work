@@ -13,7 +13,6 @@ import { getPlansIntersectingDay } from '@/lib/recurrence'
 import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import useServiceReport from '@/stores/serviceReport'
 
-/** A local-mode day, as the Plan form hands days to the store. */
 const day = (iso: string) => new Date(`${iso}T12:00:00`)
 
 describe('allEventsStartDate', () => {

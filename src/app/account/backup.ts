@@ -41,21 +41,11 @@ import {
   useBackupState,
 } from '@/lib/serverAccount/backupStore'
 
-/**
- * The end-to-end encrypted backup kept by ww-api (ADR 0026 §4) for this app:
- * opt-in, free, one slot per install. Uploads the sync payload (photos aren't
- * included) when data changes, when the app leaves the foreground with
- * something pending, and at least daily (`backupScheduler.ts`). Restoring is
- * `backupRestore.ts`.
- */
-
-/** The name a restore shows for this device; only inside the ciphertext. */
 const deviceName = () =>
   Device.modelName || (Platform.OS === 'ios' ? 'iPhone' : 'Android')
 
 const platform = () => (Platform.OS === 'android' ? 'android' : 'ios')
 
-/** The account key, created when `create` (backup on); `BackupError` else. */
 async function readAccountKey(create: boolean): Promise<Uint8Array | null> {
   if (!accountKeyAvailable()) throw new BackupError('key')
   try {
@@ -69,7 +59,6 @@ async function readAccountKey(create: boolean): Promise<Uint8Array | null> {
   }
 }
 
-/** Runs `op` as this device's account; null without an account key yet. */
 async function asAccount<T>(
   op: (access: BackupAccess) => Promise<T>,
   { create = false }: { create?: boolean } = {}
@@ -79,7 +68,6 @@ async function asAccount<T>(
   return withBackupAccess(key, op)
 }
 
-/** A day's worth of failure events at most per reason (`analyticsFrequency`). */
 const reportFailure = (code: BackupFailure) =>
   analytics.capture('account_backup_failed', { reason: code })
 
@@ -113,7 +101,6 @@ const scheduler = createBackupScheduler({
           access.accountKey,
           (current) => {
             if (current.accountId !== access.accountId)
-              // Registered again under a new id: the blob names the old one.
               throw new BackupError('server')
             return putBackup(current.options, slotId, blob)
           }
@@ -135,7 +122,6 @@ const scheduler = createBackupScheduler({
   onRunningChange: (uploading) => useBackupState.setState({ uploading }),
 })
 
-/** Keeps the listed slots current after this phone's own upload. */
 function noteOwnSlot(accountId: string, own: BackupSlot) {
   const { slots, slotsAccountId } = useBackupState.getState()
   if (!slots || slotsAccountId !== accountId) return
@@ -144,22 +130,16 @@ function noteOwnSlot(accountId: string, own: BackupSlot) {
   })
 }
 
-/** Uploads now (Back Up Now, Tools), past the debounce and any backoff. */
 export function backUpNow(reason = 'manual'): Promise<BackupRunOutcome> {
   return scheduler.run(reason, { force: true })
 }
 
-/** When the next automatic attempt runs, and whether one is running. */
 export const backupScheduler = scheduler
 
 export type EnableBackupResult =
   | { ok: true; upload: BackupRunOutcome }
   | { ok: false; code: BackupFailure }
 
-/**
- * Turns backup on: makes the account key if there's none, registers the
- * account, and uploads. Stays off when the account can't be reached.
- */
 export async function enableBackup(
   source: 'settings' | 'restore'
 ): Promise<EnableBackupResult> {
@@ -180,11 +160,6 @@ export async function enableBackup(
   return { ok: true, upload }
 }
 
-/**
- * Turns backup off on this device, deleting this device's slot first when
- * asked. Backup stays off even when the deletion fails; resolves whether it was
- * deleted.
- */
 export async function disableBackup({
   deleteServerCopy,
 }: {
@@ -210,7 +185,6 @@ export async function disableBackup({
   }
 }
 
-/** Forgets what this device uploaded, so the next upload isn't skipped. */
 function forgetUploads() {
   backupSchedule.set({
     lastHash: null,
@@ -220,14 +194,8 @@ function forgetUploads() {
   })
 }
 
-/** Bumped by each listing and deletion, so an older listing can't land last. */
 let slotsVersion = 0
 
-/**
- * The account's slots, listed again; null without an account key. Tells the
- * scheduler whether this device's slot is still there unless `report` is false
- * (its own check).
- */
 export async function refreshBackupSlots({
   report = true,
 }: { report?: boolean } = {}): Promise<BackupSlot[] | null> {
@@ -237,7 +205,7 @@ export async function refreshBackupSlots({
     accountId: access.accountId,
     slots: await listBackups(access.options),
   }))
-  // A newer listing or a deletion since this one started has the newer list.
+
   const latest = listing === slotsVersion
   if (!listed) {
     if (latest) useBackupState.setState({ slots: [], slotsAccountId: null })
@@ -260,11 +228,6 @@ export async function refreshBackupSlots({
 
 export type BackupDeleteSource = 'settings' | 'disable' | 'tools'
 
-/**
- * Turns backup off on this device while a deletion runs, so no upload puts the
- * slot back. A deletion that fails (offline, say) turns it on again: nothing
- * was deleted, and the User didn't ask to stop backing up.
- */
 async function deleteWithBackupOff(
   turnOff: boolean,
   source: BackupDeleteSource,
@@ -291,10 +254,6 @@ async function deleteWithBackupOff(
     })
 }
 
-/**
- * Deletes one slot. Deleting this device's own slot also turns backup off here,
- * or the next upload would put it back.
- */
 export async function deleteBackupSlot(
   slotId: string,
   source: BackupDeleteSource
@@ -314,10 +273,6 @@ export async function deleteBackupSlot(
   }))
 }
 
-/**
- * Delete Backup: every slot of the account, and backup off on this device.
- * Other devices with backup on upload again.
- */
 export async function deleteAllBackups(
   source: BackupDeleteSource
 ): Promise<void> {
@@ -331,7 +286,6 @@ export async function deleteAllBackups(
   useBackupState.setState({ slots: [] })
 }
 
-/** Tools: forget this install's slot, schedule and log. Backup turns off. */
 export function resetBackupState() {
   scheduler.stop()
   useBackupState.setState({
@@ -347,14 +301,13 @@ export function resetBackupState() {
   })
 }
 
-/** Starts the backup's triggers; returns what stops them. */
 export function installAccountBackup(): () => void {
   const unsubscribeData = subscribeToLocalDataChanges(() =>
     scheduler.noteChange()
   )
   const foreground = addForegroundListener(() => scheduler.onForeground())
   const background = addBackgroundListener(() => scheduler.onBackground())
-  // `inactive` counts too: the iOS app switcher can end the app from there.
+
   const appState = AppState.addEventListener('change', (state) => {
     if (state === 'inactive') scheduler.onInactive()
   })

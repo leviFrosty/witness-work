@@ -6,25 +6,24 @@ import type { MileageSnapshot } from '@/types/mileage'
 import type { PetSnapshot } from '@/types/pet'
 
 type LocalState = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   contacts: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedContacts: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   customFieldDefs: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedCustomFieldDefs: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   conversations: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedConversations: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   serviceReports: Record<string, Record<string, any[]>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   dayPlans: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   recurringPlans: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   deletedServiceReports: any[]
   categories: Category[]
   deletedCategories: CategoryTombstone[]
@@ -164,9 +163,7 @@ describe('mergePayload — categoryStore', () => {
   })
 
   it('applies a remote tombstone when it post-dates the local record', () => {
-    // Use timestamps inside the 90-day tombstone retention window so the
-    // tombstone isn't pruned before it can be applied.
-    const recent = Date.now() - 1000 * 60 * 60 * 24 // 1 day ago
+    const recent = Date.now() - 1000 * 60 * 60 * 24
     const local = emptyLocal()
     local.categories = [
       {
@@ -198,7 +195,7 @@ describe('mergePayload — categoryStore', () => {
         updatedAt: 1700000001000,
       },
     ]
-    // No categoryStore on the payload at all — older app version.
+
     const remote = makeRemote({})
 
     const result = mergePayload(local, remote)

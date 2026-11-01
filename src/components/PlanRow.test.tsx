@@ -406,20 +406,18 @@ describe('PlanRow', () => {
         else process.env.TZ = originalTZ
       })
 
-      // Thursday Sep 24 → Thursday Oct 1, 2026: across a month and, in
-      // Auckland, the start of daylight time (UTC+12 → UTC+13).
       it('stores the copy a week later on the calendar, at the same time', async () => {
         const { normalizeDateForStorage } = await vi.importActual<
           typeof import('@/lib/normalizeDate')
         >('@/lib/normalizeDate')
-        // A tapped day's local midnight: at UTC+12 that's noon UTC the day before.
+
         const thursday = new Date(2026, 8, 24)
         const [, params] = duplicateOf({
           type: 'day',
           date: thursday,
           plan: dayPlan('p1'),
         })
-        // The form, like the store, keeps the route date's local calendar day.
+
         expect(
           normalizeDateForStorage(params.date!).toISOString().slice(0, 10)
         ).toBe('2026-10-01')
@@ -427,8 +425,6 @@ describe('PlanRow', () => {
         expect([start.hours(), start.minutes()]).toEqual([9, 0])
       })
 
-      // Onto Sunday Sep 27 (Auckland springs forward) and Sunday Nov 1 (Los
-      // Angeles falls back): 9:00 on the clock, not 9 hours after midnight.
       it('keeps the time when the copy lands on a day clocks change', () => {
         for (const sunday of [new Date(2026, 8, 20), new Date(2026, 9, 25)]) {
           const [, params] = duplicateOf({

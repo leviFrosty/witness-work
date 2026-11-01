@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
   mapViewRenders: 0,
   markerRenders: 0,
 }))
-// Stands in for a rendered overlay and records the appearance it receives.
+
 const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
   const { useContext } = await import('react')
   const { ThemeContext } = await import('@/contexts/theme')
@@ -48,7 +48,7 @@ const appearanceProbe = vi.hoisted(() => (name: string) => async () => {
 })
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => mocks,
-  // Follows the `focus` and `blur` events the tests emit.
+
   useIsFocused: () => {
     const [focused, setFocused] = React.useState(true)
     React.useEffect(() => {
@@ -145,7 +145,6 @@ vi.mock('react-native-reanimated', () => ({
   withTiming: (value: number) => value,
 }))
 vi.mock('react-native-gesture-handler', () => {
-  // Records the handlers so tests can play a gesture's end.
   const gesture = (type: string) => {
     const g: Record<string, unknown> = { type }
     for (const method of [
@@ -285,7 +284,7 @@ vi.mock('@/hooks/useAdaptiveLayout', () => ({
 vi.mock('@/hooks/useGlassColorScheme', () => ({ default: () => 'light' }))
 vi.mock('@/hooks/useMarkerColors', () => ({ useMarkerColors: () => ({}) }))
 vi.mock('@/lib/contactStaleness', () => ({ stalenessToColor: () => '#0f0' }))
-// The test theme has no badge colors to read against.
+
 vi.mock('@/lib/color', () => ({ getReadableTextColor: () => '#000' }))
 vi.mock('@/hooks/useConversationIndex', () => ({
   default: () => ({
@@ -360,7 +359,7 @@ import { Input } from 'tamagui'
 let root: ReturnType<typeof create>
 const stored = () => useContacts.getState().contacts
 const setContacts = (contacts: Contact[]) => useContacts.setState({ contacts })
-// `shown` stands in for the contacts the Contacts filters let through.
+
 const screen = (shown: Contact[] = stored()) => (
   <MapScreen
     contacts={shown}
@@ -754,13 +753,12 @@ type PanGesture = {
   type: string
   handler: (e?: { translationY: number; velocityY: number }) => void
 }
-// The cards' detectors; the map's own (hover) is left out.
+
 const gestureDetectors = () =>
   root.root
     .findAllByType('GestureDetector' as never)
     .filter((detector) => detector.findAllByType(MapView).length === 0)
-// The cards' swipe-down gesture is the first detector; the stowed handle's
-// tap/swipe-up gestures come after it.
+
 const swipeCards = (translationY: number, velocityY = 0) =>
   act(async () =>
     (gestureDetectors()[0].props.gesture as PanGesture).handler({

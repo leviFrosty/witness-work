@@ -23,21 +23,13 @@ const currentLayout = (): Layout => {
   }
 }
 
-/**
- * Edit mode for Home's sections, like the Home Screen's jiggle mode: from a
- * section's Edit Home Screen, the Edit Home Screen button after the sections,
- * or holding empty space. Changes save as they're made; finishing reports what
- * changed once (`home_screen_customized`). Pass `lifecycle` from the screen
- * only (see `useEditMode`), and `buddiesAvailable` wherever editing can
- * finish.
- */
 export default function useHomeEditing({
   lifecycle = false,
   buddiesAvailable = false,
 }: { lifecycle?: boolean; buddiesAvailable?: boolean } = {}) {
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
-  // Sections this device and User can't show stay in the stored order.
+
   const isOnScreen = (key: HomeScreenElementKey) =>
     isHomeSectionAvailable(key, {
       isTablet,

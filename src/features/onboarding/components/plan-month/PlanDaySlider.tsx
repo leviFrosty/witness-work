@@ -19,15 +19,10 @@ type Props = {
   minutes: number
   onChange: (minutes: number) => void
   accessibilityLabel: string
-  /** Read out as the value, e.g. "2 hours" or "Off". */
+
   accessibilityValueText: string
 }
 
-/**
- * Drag or tap to set a day's plan length in half-hour steps, with a tick at
- * every hour. Each step taps a selection haptic. Key it by day: the scale is
- * set from the first value.
- */
 const PlanDaySlider = ({
   minutes,
   onChange,
@@ -35,16 +30,15 @@ const PlanDaySlider = ({
   accessibilityValueText,
 }: Props) => {
   const theme = useTheme()
-  // Fixed when it opens, so the scale doesn't shift under a drag.
+
   const [maxMinutes] = useState(() => planDayMaxMinutes(minutes))
   const width = useSharedValue(0)
-  // The last value sent, so a drag only reports step changes.
+
   const emitted = useSharedValue(minutes)
   useEffect(() => {
     emitted.value = minutes
   }, [emitted, minutes])
 
-  // The track fills from the reading start; touches arrive in physical x.
   const rtl = isRtlLayout()
 
   const step = (next: number) => {
@@ -66,7 +60,6 @@ const PlanDaySlider = ({
     scheduleOnRN(step, next)
   }
 
-  // Horizontal only, so the screen still scrolls vertically over the slider.
   const pan = Gesture.Pan()
     .activeOffsetX([-4, 4])
     .failOffsetY([-12, 12])
@@ -100,7 +93,7 @@ const PlanDaySlider = ({
         }}
         style={{ height: 44, justifyContent: 'center' }}
       >
-        {/* iPad pointer shows the slider moves sideways. */}
+        {}
         <PointerStyleView
           accessories={['left', 'right']}
           style={StyleSheet.absoluteFill}

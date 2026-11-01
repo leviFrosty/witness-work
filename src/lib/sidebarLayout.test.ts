@@ -69,11 +69,10 @@ describe('adaptive sidebar layout', () => {
   })
 
   it('gives iPhone Duo open a second column beside its rail', () => {
-    // The inner display, 951 points wide, keeps columns next to the rail.
     expect(
       getAdaptiveLayout(951, 1, 240, false, { verticalBarEdge: 'right' })
     ).toMatchObject({ isWide: true, contentWidth: 951 - 64 })
-    // The outer display and iPad mini in portrait stay single-column.
+
     expect(
       getAdaptiveLayout(466, 1, 240, false, { verticalBarEdge: 'right' }).isWide
     ).toBe(false)
@@ -92,7 +91,7 @@ describe('adaptive sidebar layout', () => {
       navigationRail: null,
       hasBottomBar: true,
     })
-    // The iPad sidebar wins over the rail.
+
     expect(
       getAdaptiveLayout(1194, 1, 240, false, { verticalBarEdge: 'right' })
     ).toMatchObject({ navigationRail: null, hasBottomBar: false })

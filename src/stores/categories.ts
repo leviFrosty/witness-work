@@ -8,23 +8,10 @@ import { PersistStorage } from '@/stores/mmkv'
 
 const initialState = {
   categories: [] as Category[],
-  /**
-   * Tombstones for deleted Categories. Populated by `deleteCategory` so iCloud
-   * sync can propagate deletions across devices. Mirrors
-   * `serviceReportStore.deletedServiceReports`.
-   */
+
   deletedCategories: [] as CategoryTombstone[],
 }
 
-/**
- * Persisted store for user-defined `Category` records (replaces the legacy
- * `preferences.serviceReportTags` list). Categories are sync-aware: every
- * mutation stamps `updatedAt` so iCloud last-writer-wins merge can resolve
- * cross-device edits the same way it does for ServiceReports.
- *
- * The initial seed is populated by the one-time tag-to-category migration in
- * `src/app/App.tsx`; see `src/lib/categories.ts` for the transform.
- */
 export const useCategories = create(
   persist(
     combine(initialState, (set) => ({
@@ -33,8 +20,7 @@ export const useCategories = create(
         set(({ categories, deletedCategories }) => {
           const existing = categories.find((c) => c.id === category.id)
           if (existing) return {}
-          // A deleted id can come back (an import run again after its Undo):
-          // stamped past its tombstone, which other devices keep.
+
           return {
             categories: [
               ...categories,
@@ -53,10 +39,7 @@ export const useCategories = create(
         set(({ categories }) => ({
           categories: categories.map((c) => {
             if (c.id !== category.id) return c
-            // Builtin Categories (LDC) can have `isCredit` flipped but their
-            // identity (id, name, builtin flag) is immutable. Strip those
-            // fields from the partial update so a misbehaving caller can't
-            // rename the LDC Category to something else.
+
             if (c.builtin) {
               const {
                 name: _dropName,
@@ -73,8 +56,7 @@ export const useCategories = create(
         set(({ categories, deletedCategories }) => {
           const found = categories.find((c) => c.id === id)
           if (!found) return {}
-          // Builtin Categories (LDC) cannot be deleted — they're seeded on
-          // every device and the cap math relies on a stable id.
+
           if (found.builtin) return {}
           const now = syncTimestamp(found.updatedAt)
           return {

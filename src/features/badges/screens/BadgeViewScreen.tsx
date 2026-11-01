@@ -55,40 +55,24 @@ const CLOSE_MS = 420
 const FADE_MS = 220
 const DISMISS_DISTANCE = 140
 const DISMISS_VELOCITY = 900
-/** Whole turns settle with a little wobble: the coin's "tilt". */
+
 const TURN_SPRING = { damping: 13, stiffness: 80, mass: 1 }
 const OWNER_AVATAR = 24
 
-/** Who the badge belongs to, when it's a buddy's. */
 export type BadgeViewBuddy = { name: string; avatar: ReactNode }
 
 type Point = { x: number; y: number }
 type Geometry = {
-  /** Screen coordinates relative to the root, for the flight's transforms. */
   target: Point
-  /** The slot's `left`, which RN mirrors in RTL. */
+
   targetLeft: number
   origin: (Point & { size: number }) | null
 }
 
-/**
- * One badge, full screen and ready for a screenshot: the coin flips out of the
- * medallion that was tapped and settles large with a sweep of light, over what
- * it stands for, whose it is, and the app's name. The User's own badges also
- * show how their collection is growing; a level not reached yet says "Not yet"
- * and how to grow it, as does a level a buddy hasn't reached, opened from their
- * collection. Opened from a buddy's unseen news, whose it is says "New" too.
- * Reduce Motion crossfades instead. Closes with the X, a swipe down, or
- * Android's back, flying back into its medallion when that's still on screen.
- *
- * The app tier passes the buddy (for a buddy's badge) and `footer`, where
- * Buddies reactions go.
- */
 export default function BadgeViewScreen({
   buddy,
   footer,
 }: {
-  /** A buddy's badge: their name and avatar. Null when they're gone. */
   buddy?: BadgeViewBuddy | null
   footer?: ReactNode
 }) {
@@ -188,7 +172,6 @@ function BadgeViewContent({
   const closing = useRef(false)
   const allowRemove = useRef(false)
 
-  // Where the coin settles, and where it starts, both relative to this screen.
   const measure = () =>
     root.current?.measureInWindow((rootX, rootY, rootWidth) =>
       slot.current?.measureInWindow((x, y, width) => {
@@ -212,7 +195,7 @@ function BadgeViewContent({
       return
     }
     turn.value = withSpring(1, TURN_SPRING)
-    // Light sweeps the metal once it lands; a later re-measure can't cancel it.
+
     appear.value = withTiming(
       1,
       { duration: OPEN_MS, easing: Easing.out(Easing.cubic) },
@@ -225,7 +208,7 @@ function BadgeViewContent({
   const close = (then?: () => void) => {
     if (closing.current) return
     closing.current = true
-    // Opened from the profile overlay, which fades back in to keep browsing.
+
     useProfileOverlay.getState().comeBack()
     const finish = () => {
       allowRemove.current = true
@@ -248,13 +231,11 @@ function BadgeViewContent({
     fade.value = withTiming(
       0,
       { duration: FADE_MS, easing: Easing.in(Easing.quad) },
-      // Leaves even when the fade is interrupted, so the view can't get stuck.
+
       () => scheduleOnRN(finish)
     )
   }
 
-  // Android's back and any other way out play the close first. The listener
-  // stays put and calls the latest `close`.
   const latestClose = useRef(close)
   useEffect(() => {
     latestClose.current = close
@@ -337,9 +318,7 @@ function BadgeViewContent({
       ],
     }
   })
-  // The turn lives on an inner view so the flat outer one flattens it: tilted
-  // straight onto the screen's plane, iOS would sink half of the coin behind
-  // the halo while the spring settles.
+
   const spinStyle = useAnimatedStyle(() =>
     reduceMotion
       ? {}

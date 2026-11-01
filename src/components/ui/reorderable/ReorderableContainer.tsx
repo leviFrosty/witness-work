@@ -21,77 +21,60 @@ import { removeBadgeTargetInset } from '@/components/ui/reorderable/RemoveBadge'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
 
-/** How long a finger rests on an item before it lifts. */
 export const LIFT_DELAY_MS = 350
-/** How close to the top or bottom edge a dragged item starts scrolling. */
+
 const AUTOSCROLL_EDGE = 90
-/** How far a lifted item moves before it can scroll the view. */
+
 const AUTOSCROLL_SLOP = 12
-/** Fastest auto-scroll, in points a frame. */
+
 const AUTOSCROLL_SPEED = 14
-/** After an item moves, let the layout settle before it moves again. */
+
 const MOVE_COOLDOWN_MS = 220
 const DROP_MS = 200
 const LIFTED_SCALE = 1.04
-/**
- * Touches this close to a remove badge's frame or resize handle's center are
- * theirs. The badge's frame is square, and its reach takes in the jiggle.
- */
+
 const BADGE_REACH = MIN_TOUCH_TARGET / 2 + 3
 const HANDLE_REACH = 30
-/** Taps this close to an item aren't on empty space. */
+
 const ITEM_SLOP = 4
 
 type Props<Id extends string> = {
   editing: boolean
   children: ReactNode
-  /** Move `id` to where `target` is. Called as the dragged item passes over it. */
+
   onMove: (id: Id, target: Id) => void
-  /**
-   * Holding an item outside edit mode starts editing with it lifted, as on the
-   * Home Screen. Only items with `liftOutsideEditing` (or a
-   * `ReorderableLiftZone`) lift; ones with long-press menus of their own offer
-   * Edit in the menu instead.
-   */
+
   onLiftToEdit?: (id: Id) => void
-  /** Holding empty space between items outside edit mode. */
+
   onBackgroundLongPress?: () => void
-  /** Tapping empty space while editing; usually ends editing, like Done. */
+
   onBackgroundPress?: () => void
-  /** An item was lifted or a resize handle held (true), or let go (false). */
+
   onDragChange?: (dragging: boolean) => void
-  /** Scrolled while an item is held near its edges. */
+
   scroller?: ReorderScroller
   style?: StyleProp<ViewStyle>
 }
 
 type Drag = {
   id: string
-  /** The container's own gesture (editing) or an item's lift (not editing). */
+
   via: 'container' | 'item'
-  /** Where the finger holds the item, from its top-left corner. */
+
   grab: { x: number; y: number }
-  /** The last touch, in the container's coordinates. */
+
   point: { x: number; y: number }
-  /** The scroll offset at that touch. */
+
   pointOffset: number
   absoluteY: number
-  /** Where it was lifted, in the window. */
+
   liftedAt: { x: number; y: number }
-  /** The last touch of an item's own lift, in the window. */
+
   window: WindowPoint | null
-  /**
-   * It's been dragged off that spot: it can move onto other items, and holding
-   * it near an edge scrolls. Until then a layout shifting under the finger (as
-   * editing starts) doesn't move it.
-   */
+
   moved: boolean
   movedAt: number
-  /**
-   * The item it last moved onto. After a move the layout reflows, often leaving
-   * that item under the finger again; it isn't a target until the finger has
-   * left it, or the two would swap back and forth.
-   */
+
   lastTarget: string | null
   frame: number | null
 }
@@ -111,14 +94,9 @@ const contains = (rect: Rect, x: number, y: number, slop = 0) => {
   )
 }
 
-/**
- * Where the items and their badges and handles are, for deciding on the UI
- * thread, as a touch lands, whether the container's gestures should step aside
- * (only a gesture's own worklet can fail it then).
- */
 type TouchZones = {
   items: Rect[]
-  /** Centers of remove badges and resize handles, and how far they reach. */
+
   chrome: { x: number; y: number; reach: number; square: boolean }[]
 }
 
@@ -141,19 +119,6 @@ const onItemAt = (zones: TouchZones, x: number, y: number, slop: number) => {
   return false
 }
 
-/**
- * Makes the `ReorderableItem`s inside it rearrangeable, like apps on the Home
- * Screen: while `editing` they jiggle, and holding one lifts it to drag over
- * the others; near the top or bottom of the scroll view it scrolls. The items
- * can be laid out any way (a grid, columns, a list): the container measures
- * where each one is and owns the drag, so an item that moves to another column,
- * remounting, doesn't drop it.
- *
- * Its own gesture runs only while editing, when items' content takes no
- * touches: outside edit mode a gesture handler over the whole screen keeps the
- * native long-press menus inside it from opening. So outside edit mode items
- * lift with a gesture of their own, and empty space uses a plain long press.
- */
 export default function ReorderableContainer<Id extends string>({
   editing,
   children,
@@ -170,17 +135,16 @@ export default function ReorderableContainer<Id extends string>({
   const entries = useRef(new Map<string, ReorderableEntry>())
   const drag = useRef<Drag | null>(null)
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null)
-  /** Items' last frames, for an item that remounts mid-drag. */
+
   const lastRects = useRef(new Map<string, Rect>())
   const zonesFrame = useRef<number | null>(null)
-  /** The container's place in the window when an item's lift began. */
+
   const liftOrigin = useRef<{ x: number; y: number; offset: number } | null>(
     null
   )
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [resizingId, setResizingId] = useState<string | null>(null)
-  // Redraws the lifted copy when its item changes under it (say editing
-  // started and the item redrew for edit mode).
+
   const [, setGhostVersion] = useState(0)
   const [width, setWidth] = useState(0)
   const ghostX = useSharedValue(0)
@@ -213,7 +177,7 @@ export default function ReorderableContainer<Id extends string>({
   }
 
   const zones = useSharedValue<TouchZones>({ items: [], chrome: [] })
-  /** Mirrors the items' frames to `zones` for the gestures' worklets. */
+
   const syncZones = () => {
     const next: TouchZones = { items: [], chrome: [] }
     for (const entry of entries.current.values()) {
@@ -241,7 +205,7 @@ export default function ReorderableContainer<Id extends string>({
     }
     zones.value = next
   }
-  // Items report changes as they render; mirror them once a frame.
+
   const scheduleSyncZones = () => {
     if (zonesFrame.current !== null) return
     zonesFrame.current = requestAnimationFrame(() => {
@@ -253,7 +217,7 @@ export default function ReorderableContainer<Id extends string>({
   const placeGhost = (x: number, y: number) => {
     const d = drag.current
     const rect = d ? entries.current.get(d.id)?.rect : null
-    // Right to left, `left: 0` lays the copy out against the right edge.
+
     const base = rtl && rect ? width - rect.width : 0
     ghostX.value = x - base
     ghostY.value = y
@@ -292,7 +256,7 @@ export default function ReorderableContainer<Id extends string>({
     if (!d || !scroller) return
     const { top, height } = scroller.viewport()
     let speed = 0
-    // An item lifted near an edge doesn't scroll until it's dragged.
+
     if (!d.moved) {
       d.frame = requestAnimationFrame(autoScroll)
       return
@@ -317,7 +281,6 @@ export default function ReorderableContainer<Id extends string>({
     d.frame = requestAnimationFrame(autoScroll)
   }
 
-  /** Lifts `id` with the finger at `point`, in the container's coordinates. */
   const pickUp = (
     id: string,
     via: Drag['via'],
@@ -327,7 +290,7 @@ export default function ReorderableContainer<Id extends string>({
   ) => {
     const rect = entries.current.get(id)?.rect
     if (!rect || drag.current) return
-    // Lifted while the last one is still settling.
+
     if (settle.current) {
       clearTimeout(settle.current)
       settle.current = null
@@ -372,7 +335,6 @@ export default function ReorderableContainer<Id extends string>({
     follow()
   }
 
-  /** Ends the drag `via` started; the other way's end doesn't. */
   const drop = (via: Drag['via']) => {
     const d = drag.current
     if (!d || d.via !== via) return
@@ -392,23 +354,16 @@ export default function ReorderableContainer<Id extends string>({
     }, DROP_MS)
   }
 
-  /** A point in the window (an item's lift) in the container's coordinates. */
   const fromWindow = ({ absoluteX, absoluteY }: WindowPoint) => {
     const origin = liftOrigin.current
     if (!origin) return null
     return {
       x: absoluteX - origin.x,
-      // The container has moved up by however far the view scrolled since.
+
       y: absoluteY - origin.y + (offset() - origin.offset),
     }
   }
 
-  /**
-   * Measures where the container is in the window again while an item held from
-   * outside edit mode is dragged: starting editing can shift the screen under
-   * the finger (a hint appears, a card shrinks). With `refollow`, puts the item
-   * back under the finger.
-   */
   const remeasureLift = (refollow: boolean) => {
     if (drag.current?.via !== 'item') return
     containerRef.current?.measureInWindow((x, y) => {
@@ -430,7 +385,6 @@ export default function ReorderableContainer<Id extends string>({
   const endDrag = () => drop('container')
   const pressBackground = () => onBackgroundPress?.()
 
-  // Worklets: a touch on a badge or handle has to fail these as it lands.
   const pan = Gesture.Pan()
     .enabled(editing)
     .activateAfterLongPress(LIFT_DELAY_MS)
@@ -474,8 +428,7 @@ export default function ReorderableContainer<Id extends string>({
               left: 0,
               top: 0,
               width: dragged.rect.width,
-              // At least the item's height, as a card stretched beside a
-              // taller one is; a fixed height squeezes some sections' rows.
+
               minHeight: dragged.rect.height,
               zIndex: 100,
               borderRadius: dragged.radius,
@@ -504,8 +457,6 @@ export default function ReorderableContainer<Id extends string>({
         containerRef,
         canLiftToEdit: !!onLiftToEdit,
         register: (id, entry) => {
-          // An item remounted elsewhere (into another column) keeps its frame
-          // until it's measured again, so a lifted copy doesn't vanish.
           entry.rect ??= lastRects.current.get(id) ?? null
           entries.current.set(id, entry)
           scheduleSyncZones()
@@ -535,7 +486,7 @@ export default function ReorderableContainer<Id extends string>({
             const point = fromWindow(at)
             if (!point || drag.current) return
             onLiftToEdit?.(id as Id)
-            // One that can't move (alone in its column) just starts editing.
+
             if (entries.current.get(id)?.movable) {
               pickUp(id, 'item', point, toXY(at), at)
             } else Haptics.medium()
@@ -561,16 +512,10 @@ export default function ReorderableContainer<Id extends string>({
             setWidth(e.nativeEvent.layout.width)
             remeasureLift(true)
           }}
-          // Above what follows it, so the lifted copy passes over it.
           style={[style, draggedId ? { zIndex: 10 } : null]}
         >
           {onBackgroundLongPress ? (
-            // A plain long press: unlike a gesture handler, it doesn't keep
-            // the sections' own long-press menus from opening. Always there,
-            // so editing doesn't remount the items.
             <Pressable
-              // Out of TalkBack too, or it reads the sections' loose text as
-              // one tappable block around their controls.
               accessible={false}
               focusable={false}
               importantForAccessibility='no'

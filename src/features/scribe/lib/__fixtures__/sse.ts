@@ -2,40 +2,22 @@ import { HttpError } from '@/lib/http/request'
 import type { ScribeSessions } from '@/features/scribe/lib/scribeClient'
 import type { StepStreamEvent } from '@/features/scribe/lib/wire'
 
-/**
- * A fake ww-api for Scribe AI's client tests: SSE step responses built from
- * events or raw frames, JSON envelopes, a fetch that answers from a script and
- * records each request, and a session that refreshes once on a 401.
- */
-
-/** Something the stream sends, in order. */
-export type SseItem =
-  /** Sent as one `event: <type>\ndata: <json>\n\n` frame. */
-  | StepStreamEvent
-  /** Sent as-is: raw frames, partial frames, `:\n\n` heartbeats. */
-  | string
-  /** Waits this many ms (real timers) before the next item. */
-  | { wait: number }
+export type SseItem = StepStreamEvent | string | { wait: number }
 
 export interface SseOptions {
   status?: number
-  /** Splits each item's text into reads of this many characters. */
+
   chunkSize?: number
-  /** Frames end in `\r\n` instead of `\n`. */
+
   crlf?: boolean
-  /**
-   * After the last item: `close` (default) ends the body, `stall` keeps it open
-   * until the request is aborted.
-   */
+
   end?: 'close' | 'stall'
-  /** The request's signal: aborting errors the body, as fetch does. */
+
   signal?: AbortSignal | null
 }
 
-/** A `:` comment frame, the server's 15 s heartbeat. */
 export const HEARTBEAT = ':\n\n'
 
-/** One SSE frame for `event`. */
 export const sseFrame = (event: StepStreamEvent, crlf = false): string => {
   const frame = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`
   return crlf ? frame.replace(/\n/g, '\r\n') : frame
@@ -44,7 +26,6 @@ export const sseFrame = (event: StepStreamEvent, crlf = false): string => {
 const abortError = () =>
   Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' })
 
-/** A 2xx `text/event-stream` response that sends `items` in order. */
 export function sseResponse(
   items: readonly SseItem[],
   options: SseOptions = {}
@@ -60,21 +41,17 @@ export function sseResponse(
           finish?.()
           try {
             controller.error(abortError())
-          } catch {
-            // Already closed.
-          }
+          } catch {}
         },
         { once: true }
       )
     },
-    // Each pull sends something (or ends): a pull that enqueues nothing isn't
-    // called again.
+
     async pull(controller) {
       for (;;) {
         const item = queue.shift()
         if (item === undefined) {
           if (options.end === 'stall') {
-            // Open until the request is aborted.
             await new Promise<void>((resolve) => {
               finish = resolve
             })
@@ -102,7 +79,6 @@ export function sseResponse(
   })
 }
 
-/** A JSON response: a ww-api envelope or a 2xx body. */
 export const jsonResponse = (
   status: number,
   body: unknown,
@@ -113,7 +89,6 @@ export const jsonResponse = (
     headers: { 'content-type': 'application/json', ...headers },
   })
 
-/** Ww-api's non-2xx envelope for `code`. */
 export const envelope = (
   code: string,
   extra: Record<string, unknown> = {}
@@ -122,21 +97,19 @@ export const envelope = (
 export interface RecordedRequest {
   url: string
   method: string
-  /** Lower-cased names. */
+
   headers: Record<string, string>
-  /** Parsed JSON, the raw string, or null. */
+
   body: unknown
   signal: AbortSignal | null
 }
 
-/** Answers one request: a response, a thrown error, or a function of it. */
 export type Responder =
   | Response
   | Error
   | ((request: RecordedRequest) => Response | Promise<Response>)
 
 export type FakeFetch = typeof fetch & {
-  /** Every request, in order. */
   calls: RecordedRequest[]
 }
 
@@ -157,10 +130,6 @@ const bodyOf = (init: RequestInit | undefined): unknown => {
   }
 }
 
-/**
- * A fetch that answers from `responders` in order (the last one repeats once
- * they run out) and records each request.
- */
 export function fakeFetch(...responders: Responder[]): FakeFetch {
   const calls: RecordedRequest[] = []
   const handler = async (
@@ -187,17 +156,11 @@ export function fakeFetch(...responders: Responder[]): FakeFetch {
 }
 
 export interface FakeSessions extends ScribeSessions {
-  /** The `Authorization` value each run was given, in order. */
   authorizations: string[]
-  /** Times a 401 made the session refresh. */
+
   refreshes: number
 }
 
-/**
- * The attested session as `withSession` behaves: runs with `Bearer <token>`,
- * and on a 401 refreshes to the next token and runs once more. `fail` throws
- * before running (a session that couldn't open).
- */
 export function fakeSessions(
   options: { tokens?: string[]; fail?: unknown } = {}
 ): FakeSessions {

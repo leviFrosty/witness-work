@@ -13,18 +13,12 @@ import {
   type ScribeMemoryChange,
 } from '@/features/scribe/lib/memory'
 
-/**
- * Scribe AI's events (docs/analytics.md → Scribe AI). Structural only: no text,
- * names, Refs or ids.
- */
-
 export const turnBucket = (turn: number): string =>
   turn <= 1 ? '1' : turn === 2 ? '2' : turn <= 5 ? '3-5' : '6+'
 
 export const turnDurationBucket = (ms: number): string =>
   ms < 5_000 ? '<5s' : ms < 15_000 ? '5-15s' : ms < 30_000 ? '15-30s' : '30s+'
 
-/** Coarse recording length; exact durations aren't needed. */
 export const voiceDurationBucket = (ms: number): string =>
   ms < 15_000 ? '<15s' : ms < 60_000 ? '15-60s' : ms < 120_000 ? '1-2m' : '2m+'
 
@@ -124,9 +118,9 @@ export function trackCaptureFinished(props: {
   pages?: number
   errorCode?: string | null
   engine?: string | null
-  /** Paper: Try again read pages kept from an earlier batch. */
+
   retry?: boolean
-  /** Paper: pages were left unread and kept for Try again. */
+
   retryOffered?: boolean
 }): void {
   analytics.capture('scribe_capture_finished', {
@@ -143,7 +137,6 @@ export function trackCaptureFinished(props: {
   })
 }
 
-/** How full the memory is: `<25%`, `25-50%`, `50-75%` or `75%+`. */
 export const memoryFillBucket = (chars: number): string => {
   const share = chars / SCRIBE_MEMORY_MAX_CHARS
   return share < 0.25
@@ -155,7 +148,6 @@ export const memoryFillBucket = (chars: number): string => {
         : '75%+'
 }
 
-/** Scribe AI changed its memory in one step. Counts only, never the notes. */
 export function trackMemorySaved(
   changes: readonly ScribeMemoryChange[],
   chars: number
@@ -168,17 +160,14 @@ export function trackMemorySaved(
   })
 }
 
-/** The User turned Scribe AI on or off in Settings. */
 export function trackScribeTurnedOnOff(enabled: boolean): void {
   analytics.capture('scribe_setting_changed', { enabled })
 }
 
-/** How Scribe AI handles data was shown: Settings' sheet or the first open. */
 export function trackPrivacyViewed(surface: 'settings' | 'first_open'): void {
   analytics.capture('scribe_privacy_viewed', { surface })
 }
 
-/** How the Terms of Use step ended, the first open or turning it on. */
 export function trackTermsResolved(
   surface: 'first_open' | 'settings',
   outcome: 'accepted' | 'dismissed'
@@ -186,7 +175,6 @@ export function trackTermsResolved(
   analytics.capture('scribe_terms_resolved', { surface, outcome })
 }
 
-/** The User changed the memory in Settings. */
 export function trackMemoryManaged(
   action: 'edited' | 'cleared' | 'turned_off' | 'turned_on',
   chars: number

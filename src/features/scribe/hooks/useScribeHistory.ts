@@ -34,10 +34,9 @@ export function conversationSummary(
   }
 }
 
-/** Past conversations, and Notes Imports that can still be undone. */
 export function useScribeHistory(): ScribeHistoryController {
   const conversations = useScribeConversations((state) => state.conversations)
-  // The legacy ledger isn't a store; re-read it after an Undo.
+
   const [legacyImports, setLegacyImports] =
     useState<ScribeLegacyImport[]>(listLegacyImports)
 

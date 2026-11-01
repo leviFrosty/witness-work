@@ -74,12 +74,10 @@ describe('imageNames', () => {
     })
 
     it('rejects filenames outside the witness-work-img- namespace', () => {
-      // Belongs to the JSON sync namespace — must not be reachable via the
-      // binary-file bridge.
       expect(isValidImageFilename('witness-work-abc.json')).toBe(false)
-      // Binary namespace but wrong outer prefix.
+
       expect(isValidImageFilename('other-img-contact-abc.jpg')).toBe(false)
-      // Close but missing the trailing hyphen.
+
       expect(isValidImageFilename('witness-work-imgcontact-abc.jpg')).toBe(
         false
       )
@@ -96,8 +94,6 @@ describe('imageNames', () => {
     })
 
     it('rejects path separators and traversal components (defence-in-depth)', () => {
-      // Contact id shouldn't ever contain these, but the validator is the last
-      // line of defence at the bridge — reject aggressively.
       expect(
         isValidImageFilename('witness-work-img-contact-../secret.jpg')
       ).toBe(false)

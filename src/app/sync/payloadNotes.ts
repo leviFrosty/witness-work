@@ -1,15 +1,5 @@
 import { parseRichText } from '@/lib/richText/parse'
 
-/**
- * Sync-time check of Rich Note docs (`noteDoc`). Records keep unknown fields
- * through older builds, and the plain `note` is always there, so a doc that
- * doesn't read (a bug, or a newer format) is dropped from its record rather
- * than failing the whole file. Readable docs are kept in their parsed form,
- * which is what this build writes too, so nothing changes on a round trip.
- *
- * Runs inside `parsePayload`, per payload, before any merge; store-free (like
- * `payloadFollowUps.ts`) so it stays cheap to test.
- */
 export function sanitizeNoteDocs(d: Record<string, unknown>): void {
   const conversations = (d.conversationStore as { conversations?: unknown })
     ?.conversations

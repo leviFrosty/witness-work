@@ -12,33 +12,23 @@ import { useDockedFormLayout } from '@/components/ui/layout/DockedFormLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
-/** What the row offers: the buddy chips, or a way to set invitations up. */
 export type InviteBuddiesRowContent = {
-  /** A line under the buddies once the row opens, or under its label. */
   description?: string
 } & (
   | {
-      /** The buddy chips, opened under the row. */
       picker: ReactNode
-      /** Who's invited, shown while the row is closed. */
+
       summary?: string
     }
   | {
-      /** Takes the User where invitations start, e.g. to pair a buddy. */
       setUp: () => void
     }
 )
 
 type Props = InviteBuddiesRowContent & {
-  /** The row's testID, e.g. `plan-buddies-row`. */
   testID: string
 }
 
-/**
- * A details list's Invite Buddies row. It opens to the buddy chips and names
- * who's invited while closed; before invitations can go out, it's a "+" row
- * that sets them up.
- */
 export default function InviteBuddiesFormRow(props: Props) {
   if ('setUp' in props) {
     return (
@@ -95,7 +85,7 @@ function PickerRow(props: {
         )
       }
     >
-      {/* The names take the room the label leaves. */}
+      {}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flexShrink: 1 }}>
           <FormRowLabel>{i18n.t('buddies_inviteBuddies')}</FormRowLabel>

@@ -7,26 +7,6 @@ import {
 } from '@/types/timeEntry'
 import type { Visit } from '@/types/visit'
 
-/**
- * Dev-only fixture: today's stops for "Plan today's route" around San
- * Francisco, near the simulator's default location. Covers every case the route
- * screen handles:
- *
- * - 11 located stops (one past the 10-stop limit, so the last starts removed):
- *   Follow-ups with addresses, one with a hand-placed pin, untitled and titled
- *   Day Plans, and a Recurring Plan.
- * - 2 stops without a map location (a Contact with no pin and a Plan with only a
- *   place name), which the screen counts as missing.
- * - Follow-ups that must not show: a dismissed Contact's, and one already
- *   answered by a Visit today.
- * - A Plan with no place at all, which isn't counted as missing.
- *
- * Pure on purpose: no store access and no `Date.now()`, so it's unit-testable.
- * Contacts keep stable ids; Visits and Plans carry today's date in their ids,
- * so running it again the same day changes nothing and running it on a later
- * day adds that day's stops.
- */
-
 export const TODAY_ROUTE_FIXTURE_ID_PREFIX = 'dev-route-'
 
 type Place = {
@@ -35,12 +15,11 @@ type Place = {
   address: { line1: string; city: string; state: string; zip: string }
   coordinate?: { latitude: number; longitude: number }
   userDraggedCoordinate?: boolean
-  /** Local time of today's Follow-up. */
+
   time: string
   topic: string
 }
 
-// Key order is display order: `addressToString` joins fields as stored.
 const sf = (line1: string, zip: string) => ({
   line1,
   city: 'San Francisco',
@@ -106,7 +85,6 @@ const FOLLOW_UPS: Place[] = [
     topic: 'Lesson 2',
   },
   {
-    // The pin was dragged off the address, so navigation gets coordinates.
     slug: 'pinned',
     name: 'Hal Brennan (hand-placed pin)',
     address: sf('680 Point Lobos Ave', '94121'),
@@ -116,7 +94,6 @@ const FOLLOW_UPS: Place[] = [
     topic: 'Meet at the trailhead',
   },
   {
-    // No pin: counted as a stop missing its location.
     slug: 'no-pin',
     name: 'Nora Vance (no map pin)',
     address: sf('', ''),
@@ -181,7 +158,6 @@ export const buildTodayRouteFixture = ({
 
   FOLLOW_UPS.forEach((place) => addFollowUp(place))
 
-  // Hidden: the Contact is dismissed until next week.
   addFollowUp(
     {
       slug: 'dismissed',
@@ -194,7 +170,6 @@ export const buildTodayRouteFixture = ({
     { dismissedUntil: today.clone().add(7, 'days').toDate() }
   )
 
-  // Hidden: already visited today, which answers the Follow-up.
   addFollowUp({
     slug: 'answered',
     name: 'Priya Hale (already visited)',
@@ -226,7 +201,6 @@ export const buildTodayRouteFixture = ({
       },
     },
     {
-      // Untitled: the place name becomes the stop's title.
       id: dayId('plan-park'),
       date: today.toDate(),
       startTimeInMinutes: minutesOf('17:30'),
@@ -239,7 +213,6 @@ export const buildTodayRouteFixture = ({
       },
     },
     {
-      // A place name with no pin: counted as missing its location.
       id: dayId('plan-unpinned'),
       date: today.toDate(),
       startTimeInMinutes: minutesOf('12:30'),
@@ -248,7 +221,6 @@ export const buildTodayRouteFixture = ({
       location: { name: 'Brother Ames’s house' },
     },
     {
-      // No place at all: not a stop and not counted as missing.
       id: dayId('plan-no-place'),
       date: today.toDate(),
       startTimeInMinutes: minutesOf('19:00'),
@@ -257,7 +229,6 @@ export const buildTodayRouteFixture = ({
     },
   ]
 
-  // Weekly, but ends today, so re-running on later days doesn't stack.
   const recurringPlans: RecurringPlan[] = [
     {
       id: dayId('recurring-twin-peaks'),

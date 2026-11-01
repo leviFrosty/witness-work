@@ -18,11 +18,6 @@ import {
   timeEntriesOf,
 } from '@/__tests__/helpers/syncPeer'
 
-// Re-adding a record under an id that has a tombstone (an import run again
-// after its Undo) must outlive that tombstone on every device, even when the
-// tombstone is stamped ahead of this device's clock. The merge allows up to 5
-// minutes of skew, so a stamp of "now" isn't enough.
-
 const NOW = new Date(2026, 9, 21, 9).getTime()
 const deletedAt = NOW + 4 * 60_000
 
@@ -39,10 +34,6 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-/**
- * Seeds a tombstone, re-adds a record under its id, then syncs this device with
- * a peer that still holds the tombstone, both ways.
- */
 const readdAndSync = (seedTombstone: () => void, readd: () => void) => {
   seedTombstone()
   const peer = deviceFromStores()

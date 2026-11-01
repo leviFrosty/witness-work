@@ -79,20 +79,12 @@ import SyncOptionSection, {
 const formatOrDash = (ts: number | null): string =>
   ts ? formatDateTime(ts, { style: 'medium', withSeconds: true }) : '—'
 
-/**
- * Whether the account has other signed-in devices: the mixed-fleet note on
- * iCloud/Drive (ADR 0030 §6). False without an account key or session.
- */
 async function accountHasOtherDevices(): Promise<boolean> {
   if (!accountSessions.snapshot()) return false
   const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
   return seed ? signedInElsewhere(fromB64u(seed)) : false
 }
 
-/**
- * What to tell the User when a switch to `to` or Cloud Sync's turn-on can't
- * happen. Worded for `to`: the device is back on the option it left.
- */
 const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
   const option = to === 'cloud' ? 'cloud' : 'platform'
   switch (reason) {
@@ -113,7 +105,6 @@ const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
   }
 }
 
-/** Cloud Sync paused by the server, said calmly: nothing failed here. */
 const showCloudSyncPaused = (pause: CloudSyncPause) =>
   Alert.alert(
     i18n.t('cloudSyncPaused_title'),
@@ -124,7 +115,6 @@ const showCloudSyncPaused = (pause: CloudSyncPause) =>
     )
   )
 
-/** A sync that didn't finish, unless Cloud Sync was paused meanwhile. */
 const showSyncFailed = () => {
   const pause = cloudSyncPause()
   if (pause) showCloudSyncPaused(pause)
@@ -158,10 +148,7 @@ const PreferencesiCloudScreenInner = () => {
     syncProvider,
     set,
   } = usePreferences()
-  // Cloud Sync (ADR 0030) is offered once the server's switch is on; the
-  // screen then picks between it, iCloud or Google Drive, and Off.
-  // A device already on Cloud Sync keeps the choice while the server's switch
-  // pauses it, so it can still move to iCloud, Google Drive, or Off.
+
   const cloudOffered =
     registeredCloudSyncTransport() !== null &&
     (cloudSyncConfig?.enabled === true || syncProvider === 'cloud')
@@ -170,11 +157,10 @@ const PreferencesiCloudScreenInner = () => {
   const offer = usePreferences(showsCloudSyncOffer)
   const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
   const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
-  // With Cloud Sync open to everyone the screen isn't gated, but iCloud and
-  // Google Drive sync still are.
+
   const { isSupporter } = useIsSupporter()
   const [platformGateOpen, setPlatformGateOpen] = useState(false)
-  // Android syncs through the connected Google Account's Drive (ADR 0019).
+
   const googleDrive = usesGoogleDriveSync() && syncProvider !== 'cloud'
   const [syncing, setSyncing] = useState(false)
   const [available, setAvailable] = useState(() =>
@@ -182,22 +168,18 @@ const PreferencesiCloudScreenInner = () => {
   )
   const [firstEnableSheetOpen, setFirstEnableSheetOpen] = useState(false)
   const [pendingRemote, setPendingRemote] = useState<SyncPayload | null>(null)
-  // The Apple Account `pendingRemote` was read under.
+
   const [pendingAccount, setPendingAccount] = useState<ICloudAccount | null>(
     null
   )
-  // Optimistic override for the enable switch. Lets the thumb flip immediately
-  // on tap while the async enable flow (availability check, conflict sheet,
-  // seed/pull) resolves in the background. Null when no flip is in flight.
+
   const [pendingEnable, setPendingEnable] = useState<boolean | null>(null)
-  // Optimistic override for the image-sync switch — same pattern as
-  // `pendingEnable` but scoped to the image toggle.
+
   const [pendingImagesEnable, setPendingImagesEnable] = useState<
     boolean | null
   >(null)
   const [migratingImages, setMigratingImages] = useState(false)
-  // Re-renders when an unconfirmed upload passes its grace period, so the
-  // status switches to "Uploading" without another preference change.
+
   const [now, setNow] = useState(() => Date.now())
   const online = useOnline()
   const navigation = useNavigation<RootStackNavigation>()
@@ -217,14 +199,11 @@ const PreferencesiCloudScreenInner = () => {
     return () => clearTimeout(timer)
   }, [iCloudUploadPendingSince])
 
-  // Keeps "Last synced 2 minutes ago" current while the screen is open.
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000)
     return () => clearInterval(timer)
   }, [])
 
-  // Cloud Sync's pause can end while the app stays open; opening the screen
-  // asks again (at most once a minute), so its status and sync come back.
   useEffect(() => {
     if (onCloud) void refreshCloudSyncStatus()
   }, [onCloud])
@@ -232,7 +211,6 @@ const PreferencesiCloudScreenInner = () => {
   const showAccountChangedNotice =
     iCloudAccountChangedAt !== null && !iCloudSyncEnabled
 
-  // Re-check availability on mount and whenever the identity changes.
   useEffect(() => {
     setAvailable(syncTransport().isAvailable())
     const sub = addActiveAvailabilityListener((e) => {
@@ -241,18 +219,7 @@ const PreferencesiCloudScreenInner = () => {
     return () => sub.remove()
   }, [])
 
-  /**
-   * Completes the "enable sync" flow given the user's chosen collision
-   * resolution from `FirstEnableSheet`. The auto-resolved branches (no remote /
-   * fresh device) don't route through here — they use the shared
-   * `applySeedEnable` / `applyPullEnable` helpers in `iCloudSync` so this
-   * screen and the supporter auto-enable effect in `App.tsx` make the same
-   * decisions.
-   */
   const applyFirstEnableChoice = async (choice: FirstEnableChoice) => {
-    // The sheet showed the data of the account it was opened under. After a
-    // switch, every choice would carry that data, or this device's reset, into
-    // the new account's iCloud; turning sync on again asks about that one.
     if (!pendingAccount || !iCloudSync.confirmICloudAccount(pendingAccount)) {
       analytics.capture('icloud_sync_first_enable_outcome', {
         choice,
@@ -270,9 +237,7 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSync.backfillUpdatedAtIfNeeded()
     const wasEnabled = usePreferences.getState().iCloudSyncEnabled
     analytics.capture('icloud_sync_first_enable_chosen', { choice })
-    // Before sync turns on: joining iCloud's newest reset generation makes the
-    // pull merge with it instead of adopting it and replacing this device's
-    // data.
+
     if (choice === 'merge' && pendingRemote)
       iCloudSync.joinRemoteResetEpoch(pendingRemote)
     if (choice !== 'keepLocal')
@@ -399,8 +364,7 @@ const PreferencesiCloudScreenInner = () => {
     }
     set({ iCloudSyncSetByUser: true, iCloudAccountChangedAt: null })
     setPendingEnable(true)
-    // Turning sync on is how Android users first connect Google Drive. Read
-    // now: the option picker may have just chosen it.
+
     if (
       usesGoogleDriveSync() &&
       !usesCloudSync() &&
@@ -422,13 +386,6 @@ const PreferencesiCloudScreenInner = () => {
     setSyncing(true)
     const decision = await iCloudSync.resolveInitialEnable()
 
-    // The `conflict` branch must not flip `syncing` off in a `finally` before
-    // the sheet opens — the sheet itself owns the rest of the flow and will
-    // clear `syncing` in its own `onChoose` / dismiss paths. Handle it first
-    // and return so the try/finally below only scopes the headless branches.
-    // `pendingEnable` also stays set so the switch reads "on" while the sheet
-    // is up; it clears in `applyFirstEnableChoice` (on choose) or the sheet's
-    // dismiss handler (on cancel).
     if (decision.outcome === 'conflict') {
       setPendingRemote(decision.remote)
       setPendingAccount(decision.account)
@@ -449,9 +406,6 @@ const PreferencesiCloudScreenInner = () => {
           toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           break
         case 'incomplete':
-          // Part of the remote is still downloading (or from a newer app
-          // version), so seeding or restoring now could overwrite it. Leave
-          // sync off; toggling again re-checks.
           analytics.capture('icloud_sync_enable_deferred', {
             source: 'settings',
             reason: decision.reason,
@@ -462,9 +416,6 @@ const PreferencesiCloudScreenInner = () => {
           )
           break
         case 'unavailable':
-          // We already checked `isAvailable()` above, so this is the identity
-          // token flipping mid-peek or the container being unreadable
-          // (iCloud Drive off for the app).
           Alert.alert(
             i18n.t(syncKey('iCloudUnavailable_title')),
             i18n.t(syncKey('iCloudUnavailable_description'))
@@ -479,7 +430,6 @@ const PreferencesiCloudScreenInner = () => {
     }
   }
 
-  /** Runs a switch between options, saying how it went. */
   const runSwitch = async (next: SyncOption, source: 'settings' | 'offer') => {
     setSwitchingTo(next)
     try {
@@ -505,12 +455,6 @@ const PreferencesiCloudScreenInner = () => {
     }
   }
 
-  /**
-   * The option picker. From Off it turns sync on through the first-enable flow
-   * (which asks Merge, Replace or Keep when both sides have data); between
-   * Cloud Sync and iCloud/Drive it switches, merging this device's data into
-   * the new option; to Off it pauses.
-   */
   const handleSelect = async (
     next: SyncOption,
     source: 'settings' | 'offer' = 'settings'
@@ -542,7 +486,7 @@ const PreferencesiCloudScreenInner = () => {
           return
         }
       }
-      // A choice made here answers the one-time offer too.
+
       set({
         syncProvider: next === 'cloud' ? 'cloud' : 'platform',
         cloudSyncOffer: 'dismissed',
@@ -569,8 +513,7 @@ const PreferencesiCloudScreenInner = () => {
       )
       return
     }
-    // Turning Drive on is how Android users connect a Google Account, from
-    // Cloud Sync too (where `googleDrive` is false).
+
     if (
       next === 'platform' &&
       usesGoogleDriveSync() &&
@@ -605,10 +548,7 @@ const PreferencesiCloudScreenInner = () => {
 
   const handleFirstEnableChoice = (choice: FirstEnableChoice) => {
     setFirstEnableSheetOpen(false)
-    // `FirstEnableSheet` calls `setOpen(false)` *before* `onChoose`, and our
-    // setOpen handler rolls the optimistic switch back to null. Restore it
-    // here so the switch stays visually on while `applyFirstEnableChoice`
-    // does the async work; its finally clears the override.
+
     setPendingEnable(true)
     void applyFirstEnableChoice(choice)
   }
@@ -631,9 +571,7 @@ const PreferencesiCloudScreenInner = () => {
   const handleSyncNow = async () => {
     if (!iCloudSyncEnabled || syncing) return
     analytics.capture('icloud_sync_manual_started')
-    // Nothing to try until the user reconnects or the connection returns;
-    // say so instead of a generic failure, or a success that only wrote to
-    // this device.
+
     if (googleDrive && usePreferences.getState().googleDriveNeedsReconnect) {
       analytics.capture('icloud_sync_manual_outcome', {
         outcome: 'needs_reconnect',
@@ -650,10 +588,9 @@ const PreferencesiCloudScreenInner = () => {
       return
     }
     setSyncing(true)
-    // The user asked: skip any backoff from earlier failures.
+
     iCloudSync.resetPushBackoff()
     try {
-      // Paused by the server: ask it again, and resume if it's back.
       const pause = await recheckCloudSyncPause()
       if (pause) {
         analytics.capture('icloud_sync_manual_outcome', { outcome: 'paused' })
@@ -663,8 +600,7 @@ const PreferencesiCloudScreenInner = () => {
       const merged = await iCloudSync.pullAndMerge('manual')
       const pullIssue = usePreferences.getState().iCloudSyncIssue
       const pushed = await iCloudSync.push('manual')
-      // One look, without waiting for the upload: a failure iCloud already
-      // reports (storage full) shouldn't read as "No new changes".
+
       if (pushed) await iCloudSync.checkUpload()
       if (
         pullIssue ||
@@ -685,7 +621,7 @@ const PreferencesiCloudScreenInner = () => {
     } catch {
       const prefs = usePreferences.getState()
       const errorCode = prefs.iCloudSyncErrorCode
-      // The server paused Cloud Sync while this ran.
+
       const pause = cloudSyncPause()
       analytics.capture(
         'icloud_sync_manual_outcome',
@@ -730,7 +666,7 @@ const PreferencesiCloudScreenInner = () => {
   const status = buildICloudStatus({
     enabled: iCloudSyncEnabled,
     available,
-    // Cloud Sync's entitlement is the server's (ADR 0030).
+
     paused: onCloud ? cloudSyncEntitled === false : iCloudSyncPausedForLapse,
     pausedBySwitch: onCloud && cloudSyncConfig?.enabled === false,
     needsResolution: iCloudSyncNeedsResolution,
@@ -753,11 +689,6 @@ const PreferencesiCloudScreenInner = () => {
   const storageFull =
     iCloudSyncEnabled && available && iCloudUploadIssue === 'icloud-full'
 
-  /**
-   * Handles photo transfer consent and an explicit shared-file cleanup choice.
-   * The optimistic `pendingImagesEnable` state keeps the switch visually
-   * responsive while `enableImageSync` / `disableImageSync` do their work.
-   */
   const handleImagesToggle = (next: boolean) => {
     if (next) {
       Alert.alert(
@@ -778,10 +709,7 @@ const PreferencesiCloudScreenInner = () => {
                   source: 'settings',
                 })
                 await iCloudSync.enableImageSync()
-                // Surface migration result — imageSync returns counts but
-                // `enableImageSync` awaits the first push internally. The
-                // next foreground will retry any failures; for the toast we
-                // can inspect bookkeeping to spot partial outcomes.
+
                 const book = usePreferences.getState().iCloudImageSync ?? {}
                 const entries = Object.values(book)
                 const failed = entries.filter(
@@ -1306,7 +1234,7 @@ const PreferencesiCloudScreenInner = () => {
                   />
                 </View>
               </InputRowContainer>
-              {/* Advanced Data Protection is Apple's; Drive has no equivalent. */}
+              {}
               {!googleDrive && (
                 <InputRowButton
                   label={i18n.t(syncKey('iCloudImagesLearnADP'))}
@@ -1350,11 +1278,7 @@ const PreferencesiCloudScreenInner = () => {
             analytics.capture('icloud_sync_first_enable_dismissed')
             setPendingRemote(null)
             setSyncing(false)
-            // Dismiss without a choice = user cancelled. Roll the optimistic
-            // switch back off. When a choice *is* made, `handleFirstEnableChoice`
-            // closes the sheet directly (not via `setOpen`), so this branch
-            // doesn't fire and `applyFirstEnableChoice` clears the override on
-            // completion instead.
+
             setPendingEnable(null)
           }
         }}

@@ -3,7 +3,6 @@ import * as Clipboard from 'expo-clipboard'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 
-/** Copies text for a map menu item and confirms it with a toast. */
 export default function useCopyText() {
   return async (text: string) => {
     try {

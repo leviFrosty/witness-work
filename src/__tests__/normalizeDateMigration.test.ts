@@ -39,7 +39,7 @@ describe('migrateNormalizeDates — service reports', () => {
       id: 'r1',
       hours: 1,
       minutes: 0,
-      // Authored as midnight local in PST → mid-morning UTC of same day.
+
       date: moment('2026-05-15').toDate(),
     }
 
@@ -57,36 +57,27 @@ describe('migrateNormalizeDates — service reports', () => {
       mo: 4,
       d: 15,
     })
-    // And it's anchored at noon UTC.
+
     expect(migratedReport.date.getUTCHours()).toBe(12)
   })
 
   it('rebuckets reports whose stored bucket no longer matches their normalized date', () => {
-    // Repro of the original-bug aftermath: a report was authored in JST at
-    // midnight May 1 (so the underlying instant is April 30 ~15:00 UTC).
-    // Then the user switched to PST. Pre-migration the bucket key was
-    // [2026][3] (April) under the user's now-current PST reading, but the
-    // report was originally placed in [2026][4] (May) at JST write time.
-    // After migration the report should sit in whichever bucket matches its
-    // normalized date in the *current* TZ (PST), so it's no longer orphaned.
     setTZ('America/Los_Angeles')
     const reportAuthoredInJST: TimeEntry = {
       id: 'orphan-1',
       hours: 1,
       minutes: 0,
-      // Equivalent of midnight May 1 JST: April 30 15:00 UTC.
+
       date: new Date('2026-04-30T15:00:00.000Z'),
     }
     const state: PersistedServiceReportState = {
       ...emptyState(),
-      // Old bucket reflects what JST author put it in.
+
       serviceReports: { 2026: { 4: [reportAuthoredInJST] } },
     }
 
     const migrated = migrateNormalizeDates(state)
 
-    // In PST the date reads as April 30, so the report should now live in
-    // [2026][3] and the May bucket should be empty (or absent).
     expect(migrated.serviceReports[2026]?.[4]).toBeUndefined()
     expect(migrated.serviceReports[2026][3]).toHaveLength(1)
     expect(migrated.serviceReports[2026][3][0].id).toBe('orphan-1')
@@ -100,7 +91,7 @@ describe('migrateNormalizeDates — service reports', () => {
       minutes: 0,
       date: moment('2026-04-30').toDate(),
     }
-    // Same orphan-style report — should land in [2026][3] alongside `existing`.
+
     const orphan: TimeEntry = {
       id: 'orphan',
       hours: 1,
@@ -137,7 +128,7 @@ describe('migrateNormalizeDates — day plans', () => {
     expect(
       momentStoredDate(migrated.dayPlans[0].date).format('YYYY-MM-DD')
     ).toBe('2026-05-15')
-    // Second one's UTC instant is April 30 — in PST that's still April 30.
+
     expect(
       momentStoredDate(migrated.dayPlans[1].date).format('YYYY-MM-DD')
     ).toBe('2026-04-30')
@@ -194,7 +185,7 @@ describe('migrateNormalizeDates — recurring plans', () => {
     expect(momentStoredDate(out.overrides![0].date).format('YYYY-MM-DD')).toBe(
       '2026-05-08'
     )
-    // Non-date fields preserved.
+
     expect(out.overrides?.[0].minutes).toBe(90)
     expect(out.overrides?.[0].note).toBe('extended')
   })

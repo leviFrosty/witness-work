@@ -3,7 +3,6 @@ import type { HelpLocale } from '@/features/updates/types/helpCenter'
 
 export const DEFAULT_HELP_LOCALE: HelpLocale = 'en-US'
 
-/** The Help Center locale for each app language (its locale file's name). */
 export const helpLocales = {
   'en-us': 'en-US',
   'de-de': 'de-DE',
@@ -26,7 +25,6 @@ export const helpLocales = {
   ar: 'ar',
 } as const satisfies Record<TranslatedLocale, HelpLocale>
 
-/** The Help Center locale for the app's `locale`; English when unknown. */
 export const helpLocaleFor = (locale: string): HelpLocale =>
   (helpLocales as Record<string, HelpLocale>)[locale.toLowerCase()] ??
   DEFAULT_HELP_LOCALE

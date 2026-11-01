@@ -37,7 +37,6 @@ const plaintext = (
   ...overrides,
 })
 
-/** The JS SHA-256 the hash used before it went native. */
 const jsHash = (p: BackupPlaintext, a: BackupAddress) =>
   toB64u(
     sha256(

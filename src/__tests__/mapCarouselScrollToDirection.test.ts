@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-// v5 intentionally exports only its public component API. This test imports
-// the installed package's dependency-free source helpers by file path so it
-// exercises the exact target-page math used by useCarouselController without
-// pretending these helpers are part of the app's production API surface.
 import {
   getLogicalProgress,
   getNearestLogicalPage,
@@ -13,18 +9,6 @@ import {
   positiveModulo,
   reconcileOffsetAfterDataChange,
 } from '../../node_modules/react-native-reanimated-carousel/src/utils/carousel-math'
-
-/**
- * Regression coverage for the map screen's "tap a Marker, show the wrong
- * Contact" bug. In v4, scrollTo({ index }) mirrored its target after a single
- * backward swipe in loop mode. WitnessWork patched that offset formula.
- *
- * V5 models the carousel as continuous logical pages. scrollTo converts the
- * current offset to a page, picks the nearest page whose modulo is the target
- * index, then converts that page back to an offset. This simulation composes
- * those real pure helpers and verifies both the visually centered and settled
- * indices across the same exhaustive sweep that guarded the v4 patch.
- */
 
 const SIZE = 390
 const MARKER_COUNT = 57
@@ -48,8 +32,7 @@ function tapMarker(params: {
     currentPage,
     targetPage,
     settledOffset,
-    // The helper preserves JavaScript's -0 for page zero; normalize it for
-    // identity assertions because carousel index 0 and -0 are equivalent.
+
     visible:
       positiveModulo(getNearestLogicalPage(settledOffset, SIZE), dataLength) ||
       0,
@@ -71,8 +54,6 @@ describe('reanimated-carousel v5 looped scrollTo({ index }) (map Marker taps)', 
   })
 
   it('does not mirror Marker targets after one backward swipe', () => {
-    // Backward from the first card wraps to logical page -1 (raw index 56),
-    // represented by the positive offset that triggered the v4 regression.
     const handlerOffset = SIZE
 
     for (let i = 0; i < MARKER_COUNT; i++) {

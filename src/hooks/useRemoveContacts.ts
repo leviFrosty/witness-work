@@ -10,15 +10,6 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 
-/**
- * Archive and Delete for Contacts, each behind its confirmation.
- *
- * Archive hides a Contact and keeps it and its conversations, restorable from
- * Recover Contacts for 90 days. Delete erases the Contact and its conversations
- * on every synced device with no way back, so its confirmation says so and
- * offers Archive Instead. Data protection mode keeps nothing to recover, so it
- * has no Archive (`canArchive`), only Delete.
- */
 export default function useRemoveContacts() {
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
 
@@ -37,8 +28,7 @@ export default function useRemoveContacts() {
       title:
         count === 1
           ? i18n.t('archiveContact_question')
-          : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('archiveContacts_question', { count }),
+          : i18n.t('archiveContacts_question', { count }),
       description: i18n.t(
         count === 1
           ? 'archiveContact_description'
@@ -65,8 +55,7 @@ export default function useRemoveContacts() {
           ? i18n.t('permanentlyDeleteContact_question', {
               name: contacts[0].name,
             })
-          : // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('deleteContacts_question', { count }),
+          : i18n.t('deleteContacts_question', { count }),
       description: i18n.t(warning),
       confirmLabel: i18n.t('deletePermanently'),
       alternative: dataProtectionMode

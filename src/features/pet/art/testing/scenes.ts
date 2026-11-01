@@ -1,7 +1,3 @@
-/**
- * Sample scenes (the design board's example rooms and hidden moments) for
- * snapshot tests, the PNG gallery and dev tools.
- */
 import { DEMO_SIGN_DATA, type ResolvedRoom, type SceneInput } from '..'
 
 const ROOM: ResolvedRoom = {
@@ -21,7 +17,6 @@ const room = (patch: Partial<ResolvedRoom>): ResolvedRoom => ({
   ...patch,
 })
 
-/** Named sample scenes with the time to render them at. */
 export const SCENES: Readonly<Record<string, readonly [SceneInput, number]>> = {
   winterNight: [
     {

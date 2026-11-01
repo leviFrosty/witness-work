@@ -1,15 +1,6 @@
-/**
- * Immediate-mode drawing on a {@link PixelBuffer}: single pixels, rectangles and
- * filled ellipses, all opaque. Coordinates are buffer pixels (origin top left).
- * Every write is bounds-checked, so callers may draw partly off-canvas.
- */
 import type { PixelBuffer } from './buffer'
 import type { Rgb } from './color'
 
-/**
- * Writes `c` at (x, y) rounded to the nearest pixel, if it is inside the
- * buffer. (Unrounded, a fractional index would silently write nothing.)
- */
 export function setPixel(
   buf: PixelBuffer,
   px: number,
@@ -27,15 +18,10 @@ export function setPixel(
   d[k + 3] = 255
 }
 
-/** Writes `c` at (x, y) rounded to the nearest pixel (same as {@link setPixel}). */
 export function plot(buf: PixelBuffer, x: number, y: number, c: Rgb): void {
   setPixel(buf, x, y, c)
 }
 
-/**
- * Fills the half-open rectangle x0 ≤ x < x1, y0 ≤ y < y1 (stepping one pixel
- * from x0/y0, each position rounded).
- */
 export function fillRect(
   buf: PixelBuffer,
   x0: number,
@@ -49,11 +35,6 @@ export function fillRect(
   }
 }
 
-/**
- * Fills the ellipse centred on (cx, cy) with radii rx, ry. A pixel is inside
- * when its centre is. `topHalf` keeps only pixels whose centre is at or above
- * cy (bowls, domes).
- */
 export function fillEllipse(
   buf: PixelBuffer,
   cx: number,
@@ -74,10 +55,6 @@ export function fillEllipse(
   }
 }
 
-/**
- * The colour at (x, y) rounded to the nearest pixel, ignoring alpha. Out of
- * bounds reads 0.
- */
 export function readRgb(buf: PixelBuffer, px: number, py: number): Rgb {
   const x = Math.round(px)
   const y = Math.round(py)

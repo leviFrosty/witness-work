@@ -11,7 +11,6 @@ import BuddyScanPanel from '@/features/buddies/components/BuddyScanPanel'
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddy Code'>
 type Mode = RootStackParamList['Buddy Code']['mode']
 
-/** In-person pairing: show my single-use code, or scan theirs. */
 export default function BuddyCodeScreen({ route, navigation }: Props) {
   const [mode, setMode] = useState<Mode>(route.params.mode)
 

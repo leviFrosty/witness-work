@@ -8,11 +8,6 @@ import Text from '@/components/ui/MyText'
 
 const CHIP_HEIGHT = 32
 
-/**
- * One Saved View in the Contacts chip row, styled like the staleness chips
- * below it. A small dot marks unsaved edits to the view being shown. Long-press
- * actions live in the row (`SavedViewsBar`).
- */
 const SavedViewChip = ({
   name,
   selected,
@@ -31,8 +26,6 @@ const SavedViewChip = ({
 
   return (
     <ContextMenu
-      // The native menu host keeps the width it first measured, so a renamed
-      // or newly edited chip remounts to fit its new label.
       key={`${name}:${edited}`}
       onPress={onPress}
       actions={actions}

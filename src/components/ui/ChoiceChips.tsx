@@ -10,7 +10,7 @@ import Text from '@/components/ui/MyText'
 export interface ChoiceChip<T extends string = string> {
   key: T
   label: string
-  /** Drawn before the label, in the label's colour. */
+
   icon?: AppIcon
   testID?: string
 }
@@ -20,29 +20,16 @@ export interface ChoiceChipsProps<T extends string = string>
   options: ReadonlyArray<ChoiceChip<T>>
   value: T | null | undefined
   onChange: (key: T) => void
-  /**
-   * `scroll` keeps the chips on one swipeable row of pills, like the Contacts
-   * filters, for a short control that shouldn't grow with the option count.
-   */
+
   layout?: 'wrap' | 'scroll'
-  /**
-   * Scroll only: the parent's horizontal padding. The row bleeds through it to
-   * the parent's edges, so a chip cut off there shows there's more, and the
-   * first and last chips still line up with the content around it.
-   */
+
   bleed?: number
-  /** Scroll only: what the row sits on, for the fades at its edges. */
+
   fadeColor?: string
 }
 
-/** How far the edge fades reach into the row. */
 const FADE_WIDTH = 40
 
-/**
- * Single-choice bordered chips that wrap onto as many rows as they need, or
- * scroll along one. For option sets too large or too long for a segmented
- * control, such as filter fields.
- */
 export default function ChoiceChips<T extends string = string>({
   options,
   value,
@@ -113,7 +100,7 @@ function Chip<T extends string>({
         gap: 6,
         paddingHorizontal: pill ? 14 : 12,
         paddingVertical: 8,
-        // Grows with large text sizes instead of clipping the label.
+
         minHeight: pill ? 36 : undefined,
         borderRadius: pill ? 999 : theme.numbers.borderRadiusSm,
         borderCurve: 'continuous',
@@ -145,10 +132,6 @@ function Chip<T extends string>({
   )
 }
 
-/**
- * One swipeable row. Each edge fades out while chips hide past it, so the row
- * reads as scrollable even when the cut falls between two chips.
- */
 function ChipScroller({
   bleed,
   fadeColor,
@@ -194,10 +177,8 @@ function ChipScroller({
 }
 
 function EdgeFade({ side, color }: { side: 'start' | 'end'; color: string }) {
-  // `useId` adds colons, which `url(#…)` doesn't take.
   const id = `chipFade${useId().replace(/[^a-zA-Z0-9]/g, '')}`
-  // Solid at the row's edge, clear toward the middle. RN mirrors `start` and
-  // `end` in RTL, but not the gradient.
+
   const onLeft = (side === 'start') !== isRtlLayout()
   const fromEdge = onLeft ? ['1', '0'] : ['0', '1']
   return (

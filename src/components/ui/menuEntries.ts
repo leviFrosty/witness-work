@@ -9,10 +9,6 @@ import type {
 export const isSubmenu = (item: ContextMenuItem): item is ContextMenuSubmenu =>
   'actions' in item
 
-/**
- * Resolves menu entries into non-empty groups: drops hidden (falsy) items,
- * empty submenus, and empty groups. Consecutive loose items share a group.
- */
 export function menuGroups(entries: ContextMenuEntries): ContextMenuItem[][] {
   const groups: ContextMenuItem[][] = []
   let loose: ContextMenuItem[] = []
@@ -35,13 +31,12 @@ export function menuGroups(entries: ContextMenuEntries): ContextMenuItem[][] {
 
 export type ChosenAction = {
   action: ContextMenuAction
-  /** VoiceOver/TalkBack label, prefixed with its submenu's title. */
+
   label: string
-  /** Action id, prefixed with its submenu's id. */
+
   key: string
 }
 
-/** Every leaf action in menu order, for screen-reader custom actions. */
 export function flattenMenu(groups: ContextMenuItem[][]): ChosenAction[] {
   return groups.flat().flatMap((item) =>
     isSubmenu(item)
@@ -54,10 +49,6 @@ export function flattenMenu(groups: ContextMenuItem[][]): ChosenAction[] {
   )
 }
 
-/**
- * Screen-reader custom actions mirroring the menu, so VoiceOver's Actions rotor
- * and TalkBack's actions menu reach every item without the gesture.
- */
 export function menuAccessibilityProps(groups: ContextMenuItem[][]) {
   const leaves = flattenMenu(groups)
   if (!leaves.length) return {}

@@ -24,10 +24,9 @@ const spaceId = toB64u(random(16))
 const me = deriveSpaceMember(random(32), spaceId)
 const someoneElse = deriveSpaceMember(random(32), spaceId)
 const keys = [random(32), random(32), random(32), random(32)]
-/** The car's real key for `epoch` (1–3). */
+
 const K = (epoch: number) => keys[epoch]
 
-/** `k.<x>` holding `prev`, sealed under `key` at `epoch`. */
 function link(
   x: number,
   prev: Uint8Array,
@@ -56,7 +55,6 @@ const profile = {
   joinedAt: 1_790_000_000_000,
 }
 
-/** A member record for `member`, sealed under `key` at `epoch`, with `data`. */
 function memberRecord(
   member: { memberId: string },
   epoch: number,
@@ -79,7 +77,6 @@ function memberRecord(
   }
 }
 
-/** The User's own record, with the check their devices make for it. */
 const ownRecord = (epoch: number, key: Uint8Array) =>
   memberRecord(me, epoch, key, {
     ...profile,
@@ -138,17 +135,17 @@ describe('the key check', () => {
     })
     const data = { ...profile, check }
     expect(checkMatches(spaceId, 2, K(2), data, me.checkKey)).toBe(true)
-    // Its contents changed, or a check copied to another version of it.
+
     expect(
       checkMatches(spaceId, 2, K(2), { ...data, name: 'Eve' }, me.checkKey)
     ).toBe(false)
     expect(
       checkMatches(spaceId, 2, K(2), { ...data, avatar: '🚗' }, me.checkKey)
     ).toBe(false)
-    // Another key or epoch than it was sealed under.
+
     expect(checkMatches(spaceId, 3, K(2), data, me.checkKey)).toBe(false)
     expect(checkMatches(spaceId, 2, K(3), data, me.checkKey)).toBe(false)
-    // Anyone else's check key, and no check.
+
     expect(checkMatches(spaceId, 2, K(2), data, someoneElse.checkKey)).toBe(
       false
     )
@@ -160,7 +157,7 @@ describe('the key check', () => {
   it('vouches through the User’s own record only', () => {
     expect(ownRecordVouches(spaceId, ownRecord(2, K(2)), K(2), me)).toBe(true)
     expect(ownRecordVouches(spaceId, ownRecord(2, K(2)), K(3), me)).toBe(false)
-    // Someone else's record, even with a check of their own.
+
     const theirs = memberRecord(someoneElse, 2, K(2), {
       ...profile,
       check: memberCheck(someoneElse.checkKey, {
@@ -257,7 +254,7 @@ describe('verifying a candidate key', () => {
   it('leaves a key nothing vouches for unverified', () => {
     const planted = random(32)
     const earlier = random(32)
-    // The server's own chain, and a record for the User it can't check.
+
     const forged = [
       link(2, earlier, 2, planted),
       link(3, planted, 3, random(32)),
@@ -281,7 +278,7 @@ describe('verifying a candidate key', () => {
       member: me,
     })
     expect(verdict).toEqual({ status: 'unverified' })
-    // Nothing yet: the link or the record may arrive later.
+
     expect(
       verifyCandidate({
         spaceId,
@@ -292,7 +289,7 @@ describe('verifying a candidate key', () => {
         member: me,
       })
     ).toEqual({ status: 'unverified' })
-    // A link sealed below its own epoch never counts.
+
     expect(
       verifyCandidate({
         spaceId,

@@ -16,27 +16,16 @@ import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
 import { withAlpha } from '@/lib/color'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
-/**
- * Every tour illustration is drawn in this design box and scaled to fit its
- * page, the way the onboarding welcome scales its stage.
- */
 export const VISUAL = { width: 320, height: 280 }
 
 export interface RevealVisualProps {
   palette: WelcomePalette
-  /** The page is on screen: build in, then loop. */
+
   active: boolean
-  /** Hold every loop still, on a composed frame. */
+
   reduceMotion: boolean
 }
 
-/**
- * Two clocks for an illustration: `intro` runs 0→1 once, the first time its
- * page arrives, to build the scene; `loop` then repeats 0→1 while the page is
- * on screen. Pages left behind keep their last frame, so swiping back never
- * flashes an empty stage. Under Reduce Motion both rest — `loop` at `restAt`, a
- * frame chosen to show the whole idea.
- */
 export const useVisualClock = ({
   active,
   reduceMotion,
@@ -85,7 +74,6 @@ export const useVisualClock = ({
   return { intro, loop }
 }
 
-/** The plain time-of-day greeting the Home header would show now. */
 export const greetingForNow = () => {
   const hour = new Date().getHours()
   if (hour >= 5 && hour < 12) return 'greetingGoodMorning'
@@ -93,21 +81,18 @@ export const greetingForNow = () => {
   return 'greetingGoodEvening'
 }
 
-/** Eased (cubic out) 0–1 progress of `t` through `[from, to]`. */
 export const seg = (t: number, from: number, to: number) => {
   'worklet'
   const x = clamp((t - from) / (to - from), 0, 1)
   return 1 - Math.pow(1 - x, 3)
 }
 
-/** Eased (cubic in-out) 0–1 progress of `t` through `[from, to]`. */
 export const segInOut = (t: number, from: number, to: number) => {
   'worklet'
   const x = clamp((t - from) / (to - from), 0, 1)
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
 }
 
-/** 0→1 over `[a, b]`, holds, then 1→0 over `[c, d]`. */
 export const pulseWindow = (
   t: number,
   a: number,
@@ -119,7 +104,6 @@ export const pulseWindow = (
   return seg(t, a, b) * (1 - seg(t, c, d))
 }
 
-/** Ease-out with a gentle overshoot, so things settle rather than stop. */
 export const backOut = (x: number) => {
   'worklet'
   const c1 = 1.5
@@ -127,10 +111,6 @@ export const backOut = (x: number) => {
   return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2)
 }
 
-/**
- * Rises into place as `progress` goes 0→1 — the build-in for most pieces of an
- * illustration.
- */
 export const useRiseStyle = (
   progress: DerivedValue<number>,
   from: number,
@@ -145,7 +125,6 @@ export const useRiseStyle = (
     }
   })
 
-/** A frosted card, like the welcome constellation's. */
 export const Surface = ({
   palette,
   style,
@@ -174,7 +153,6 @@ export const Surface = ({
   </View>
 )
 
-/** A placeholder text bar — the illustrations sketch the app. */
 export const Bar = ({
   palette,
   width,
@@ -201,7 +179,6 @@ export const Bar = ({
   />
 )
 
-/** A tinted squircle holding an icon. */
 export const IconTile = ({
   icon,
   color,
@@ -211,7 +188,7 @@ export const IconTile = ({
   icon: AppIcon
   color: string
   size?: number
-  /** Solid colour with a white icon, for a primary action. */
+
   filled?: boolean
 }) => (
   <View
@@ -234,12 +211,6 @@ export const IconTile = ({
   </View>
 )
 
-/**
- * Copy inside an illustration. Font scaling is off: the illustrations are
- * fixed-size sketches, and the page's real copy scales normally. Set
- * `minimumFontScale` to shrink a label that would otherwise be cut off, as a
- * longer translation can be; text that fits keeps its size.
- */
 export const VisualText = ({
   children,
   style,
@@ -265,7 +236,6 @@ export const VisualText = ({
   )
 }
 
-/** A finger's tap: a ring that swells and fades as `tap` goes 0→1. */
 export const TapRipple = ({
   tap,
   color,

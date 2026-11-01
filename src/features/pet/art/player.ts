@@ -1,9 +1,3 @@
-/**
- * A live scene: keeps the per-view state that {@link composeScene} takes as
- * input (the motion playing, pat timers, particles) and turns taps, rubs and
- * motion requests into frames and events. Pure TypeScript: the render layer
- * owns the clock and calls {@link ScenePlayer.frame} on each tick.
- */
 import type { PixelBuffer, Viewport } from '@/lib/pixelArt'
 
 import {
@@ -35,10 +29,8 @@ import {
 import { MOUTH_CLOSING_MS, mouthOpen } from './sprite'
 import type { PetMoment, PetMood, PetSpeciesId } from './types'
 
-/** Kinds of motion a player can play. */
 export type MotionKind = 'entrance' | 'trick' | 'twirl' | 'wake'
 
-/** The companion's lasting state, as the player needs it. */
 export interface PlayerPet {
   readonly species: PetSpeciesId
   readonly coat: string
@@ -46,7 +38,6 @@ export interface PlayerPet {
   readonly seed: number
 }
 
-/** A frame's input without the state the player keeps. */
 export type PlayerInput = Omit<
   SceneInput,
   'pet' | 'particles' | 'reduceMotion'
@@ -54,60 +45,42 @@ export type PlayerInput = Omit<
   readonly pet: PlayerPet | null
 }
 
-/** What happened this frame. */
 export interface PlayerFrame {
   readonly buffer: PixelBuffer
-  /** A sound to play / bubble to show this frame. */
+
   readonly say: PetMoment | null
-  /** A motion that finished this frame. */
+
   readonly ended: MotionKind | null
-  /** The scene pixels the pet (and its hat) covers, or null with no pet. */
+
   readonly petBox: Viewport | null
-  /** A heart is still floating up, or the pet is still happy from a pat. */
+
   readonly hearts: boolean
 }
 
-/** Result of a tap or rub. */
 export type PatResult = 'pat' | 'wake' | 'busy'
 
 const PAT_JOY_MS = 1500
 const SQUISH_MS = 160
 
-/** A stateful driver for one on-screen scene. */
 export interface ScenePlayer {
-  /**
-   * Plays `species`' entrance from `tMs` (skipped with Reduce Motion: the pet
-   * just says hi).
-   */
   playEntrance(species: PetSpeciesId, tMs: number): void
-  /** Plays `species`' trick from `tMs` (skipped with Reduce Motion). */
+
   playTrick(species: PetSpeciesId, tMs: number): void
-  /**
-   * Plays the scratch twirl from `tMs` (with Reduce Motion: just the hearts and
-   * the happy sound).
-   */
+
   playTwirl(tMs: number): void
-  /** Plays the wake animation of a pet that died. */
+
   playWake(tMs: number): void
-  /**
-   * The pet is happy for 1.5 s, says so, and a burst of hearts floats up (its
-   * hearts went up). Ignored during a motion.
-   */
+
   cheer(tMs: number): void
-  /**
-   * A tap (or a rub step, every ~28 px of travel). Asleep or died: returns
-   * `wake` (the caller records the wake, then calls {@link playWake} if it
-   * died). During a motion: `busy`. Otherwise the pet is happy for 1.5 s (a tap
-   * also squishes its head) and a heart floats up.
-   */
+
   pat(tMs: number, mood: PetMood, opts?: { readonly rub?: boolean }): PatResult
-  /** Whether a motion is playing (pats are ignored meanwhile). */
+
   isBusy(): boolean
-  /** Turns Reduce Motion on or off for later frames and motions. */
+
   setReduceMotion(on: boolean): void
-  /** Composes the frame at `tMs`, advancing particles and motions. */
+
   frame(input: PlayerInput, tMs: number, out?: PixelBuffer): PlayerFrame
-  /** Drops motions, timers and particles. */
+
   reset(): void
 }
 
@@ -118,7 +91,6 @@ interface Playing {
   said: boolean
 }
 
-/** A new player; `seed` makes its particle randomness repeatable. */
 export function createScenePlayer(
   opts: { seed?: number; reduceMotion?: boolean } = {}
 ): ScenePlayer {
@@ -128,8 +100,7 @@ export function createScenePlayer(
   let squishUntilMs = 0
   let pendingSay: PetMoment | null = null
   let reduceMotion = opts.reduceMotion ?? false
-  // The pet's mouth was open last frame, and when it last closed: the frames
-  // just after show it half shut.
+
   let mouthWasOpen = false
   let mouthClosedAtMs = -Infinity
 

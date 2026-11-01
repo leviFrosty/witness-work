@@ -2,10 +2,6 @@ import type { ContextMenuItem } from '@/components/ui/ContextMenu.types'
 import { getHostname } from '@/lib/linkPreview'
 import i18n from '@/lib/locales'
 
-/**
- * Open Link for a host whose note shows its links as plain content: one action
- * for a single link, a submenu of hostnames for several.
- */
 export function openLinksMenuItem(
   links: string[],
   open: (url: string) => void

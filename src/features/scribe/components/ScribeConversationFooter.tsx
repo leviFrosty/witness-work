@@ -24,17 +24,13 @@ interface Props {
   controller: ScribeConversationController
   availability: ScribeAvailability
   usage: ScribeUsage | null
-  /** The composer, shown when nothing below takes its place. */
+
   composer: ReactNode
   onNewConversation: () => void
   onUpgrade: () => void
   renderSupporterCta?: RenderSupporterCta
 }
 
-/**
- * Under the conversation: Add while cards wait for review, then the composer,
- * or what takes its place (blocked, limit reached, conversation full).
- */
 const ScribeConversationFooter = ({
   controller,
   availability,
@@ -89,7 +85,6 @@ const ScribeConversationFooter = ({
     <View
       style={[
         {
-          // The composer's field shrinks before anything here is cut off.
           flexShrink: 1,
           width: '100%',
           maxWidth: CONVERSATION_MAX_WIDTH,

@@ -25,7 +25,6 @@ const Probe = ({ reached }: { reached: boolean }) =>
     available: useOnboardingBuddiesAvailable(reached),
   })
 
-/** Renders with `reached` and returns what the hook answered. */
 const render = async (reached: boolean) => {
   await act(() => {
     if (renderer) renderer.update(<Probe reached={reached} />)
@@ -62,7 +61,7 @@ describe('useOnboardingBuddiesAvailable', () => {
     runtime.availability = 'enabled'
     runtime.support = 'unsupported'
     expect(await render(false)).toBe(false)
-    // Still checking, or unsure: Buddies says so if it can't verify later.
+
     runtime.support = 'unknown'
     expect(await render(false)).toBe(true)
   })

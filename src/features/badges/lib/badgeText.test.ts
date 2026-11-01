@@ -60,7 +60,6 @@ describe('nextLevel', () => {
 
 describe('progressToward', () => {
   it('measures against the level threshold', () => {
-    // Sharing the Good News: 1, 6, 24, 60 months.
     expect(progressToward('monthsShared', 4, 2)).toEqual({
       done: 4,
       total: 6,
@@ -81,7 +80,6 @@ describe('progressToward', () => {
   })
 
   it('uses each collection’s own thresholds', () => {
-    // Keeping in Touch: 3, 6, 12, 24.
     expect(progressToward('keepingInTouch', 2, 1).total).toBe(3)
   })
 })

@@ -13,12 +13,6 @@ import {
   keptWakes,
 } from '@/lib/petHistory'
 
-/**
- * The pet store's slice of a JSON backup file, checked before it's restored.
- * Cosmetic values stay strings, like the sync schema, so a coat or room option
- * from a newer build survives; `readPet` / `readRoom` fall back for display.
- */
-
 const dayKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const stamp = z.number().finite().nonnegative()
 
@@ -29,7 +23,7 @@ const petSchema = z
     coat: z.string(),
     name: z.string().optional(),
     adoptedOn: dayKey,
-    // Unreadable entries are dropped, not the pet.
+
     wakes: z.array(z.unknown()).optional().catch(undefined),
     keepsakes: z.array(z.unknown()).optional().catch(undefined),
     earnedRoomItems: z.array(z.unknown()).optional().catch(undefined),
@@ -56,11 +50,6 @@ type PetSlice = {
   deletedPetRecords?: PetTombstone[]
 }
 
-/**
- * The fields of a backup's `petStore` that can be restored: a field that is
- * missing or unreadable is left out, so the local value stays. `null` restores
- * as no pet or no room.
- */
 export function petSliceFromBackup(value: unknown): PetSlice {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   const slice = value as Record<string, unknown>
@@ -73,7 +62,7 @@ export function petSliceFromBackup(value: unknown): PetSlice {
       const { wakes, keepsakes, earnedRoomItems, purchases, seed, ...rest } =
         parsed.data
       const bought = keptPurchases(purchases ?? [])
-      // Ids from a newer build stay, like in sync.
+
       const earned = keptRoomItems(
         (earnedRoomItems ?? []).filter(
           (item): item is string => typeof item === 'string'
@@ -89,7 +78,7 @@ export function petSliceFromBackup(value: unknown): PetSlice {
             (day): day is string => dayKey.safeParse(day).success
           )
         ),
-        // Kinds from a newer build stay, like in sync; `readPet` drops them.
+
         keepsakes: keptKeepsakes(
           (keepsakes ?? []).flatMap((keepsake) => {
             const entry = keepsakeSchema.safeParse(keepsake)

@@ -5,42 +5,25 @@ import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 
 export const REMOVE_BADGE_SIZE = 24
-/**
- * How far the badge's touch frame reaches past the badge, out from its item.
- * The rest of the frame reaches in over the item, not out into the gap toward
- * the neighbors' resize handles.
- */
+
 const OUTSET = 4
 
-/**
- * Where a badge's center sits from the corner of a box with this radius: on the
- * rounded corner itself, as on the Home Screen, rather than out past it.
- */
 export const cornerInset = (radius: number) => radius * (1 - Math.SQRT1_2)
 
-/**
- * Where the center of a badge's touch frame sits from the corner of a box with
- * this radius, along both edges. The frame is `MIN_TOUCH_TARGET` square.
- */
 export const removeBadgeTargetInset = (radius: number) =>
   cornerInset(radius) - REMOVE_BADGE_SIZE / 2 - OUTSET + MIN_TOUCH_TARGET / 2
 
-/**
- * The gray minus at an item's top leading corner while a screen is being
- * edited, as on the Home Screen. It removes the item; the screen offers Undo.
- */
 export default function RemoveBadge({
   label,
   onPress,
   radius,
   top = 0,
 }: {
-  /** E.g. "Remove Daily Pace". */
   label: string
   onPress: () => void
-  /** The item's corner radius. */
+
   radius: number
-  /** Where the item's box starts, below a heading (`ReorderableItemBox`). */
+
   top?: number
 }) {
   const theme = useTheme()
@@ -55,8 +38,7 @@ export default function RemoveBadge({
         zIndex: 2,
       }}
     >
-      {/* A real frame with the badge in its top leading corner: the item's
-          drag can't take a touch on it, as it could on slop. */}
+      {}
       <Button
         onPress={onPress}
         accessibilityLabel={label}
@@ -81,7 +63,7 @@ export default function RemoveBadge({
               borderRadius: REMOVE_BADGE_SIZE / 2,
               alignItems: 'center',
               justifyContent: 'center',
-              // The system's gray fills (gray 4 and gray 3 in dark mode).
+
               backgroundColor: dark ? '#48484A' : '#D1D1D6',
               shadowColor: theme.colors.shadow,
               shadowOpacity: 0.18,

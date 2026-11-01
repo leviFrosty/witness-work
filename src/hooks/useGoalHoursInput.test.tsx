@@ -26,7 +26,7 @@ describe('committedGoalHours', () => {
 
 describe('useGoalHoursInput', () => {
   let renderer: ReactTestRenderer | undefined
-  // Every render's result; the last one is the field as it is now.
+
   const renders: ReturnType<typeof useGoalHoursInput>[] = []
   const field = () => renders[renders.length - 1]
   const onSave = vi.fn()

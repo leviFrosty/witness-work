@@ -25,18 +25,12 @@ import { shareRefFromKey } from '@/features/buddies/lib/state'
 import type { BuddyTogetherItem } from '@/features/buddies/lib/together'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** Rows on Home; the rest wait on the Buddies screen. */
 const MAX_ROWS = 3
-/** How far ahead answered Plans and Follow-ups show. */
+
 const AHEAD_DAYS = 14
 
 const AVATAR_SIZE = 24
 
-/**
- * Home's Together section: buddies' invitations still waiting on an answer,
- * answered in place, then what's planned with buddies over the next two weeks.
- * Shows nothing until there's something, or while Buddies isn't usable.
- */
 export default function BuddiesHomeSection() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

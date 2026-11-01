@@ -1,8 +1,3 @@
-/**
- * A fast, non-cryptographic 53-bit hash (cyrb53) of `text`, for telling whether
- * something already pushed or scheduled has changed. Never use it for
- * security.
- */
 export function contentHash(text: string): string {
   let h1 = 0xdeadbeef
   let h2 = 0x41c6ce57

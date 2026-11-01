@@ -1,4 +1,3 @@
-/** Lays buffers out in a grid (contact sheets for the gallery). */
 import {
   blit,
   createBuffer,
@@ -7,7 +6,6 @@ import {
   type PixelBuffer,
 } from '@/lib/pixelArt'
 
-/** A grid of `cells`, `cols` wide, with `gap` pixels of light grey between. */
 export function contactSheet(
   cells: readonly PixelBuffer[],
   cols: number,

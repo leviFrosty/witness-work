@@ -1,4 +1,3 @@
-/** Restrict photo IO to managed filenames, including decoded URI traversal. */
 export function isManagedAvatarPath(
   uri: string,
   documentDirectory: string
@@ -23,7 +22,6 @@ export function isManagedAvatarPath(
   }
 }
 
-/** Parse the entire managed filename; prefix matching confuses contact IDs. */
 export function avatarFileContactId(filename: string): string | undefined {
   if (/[\\/%]/.test(filename)) return undefined
   return /^contact-(.+)-avatar(?:-original(?:-[a-zA-Z0-9_-]+)?|-(?:picked|synced)(?:-[a-zA-Z0-9_-]+)?)?\.jpg$/.exec(

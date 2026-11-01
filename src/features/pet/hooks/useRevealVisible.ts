@@ -5,21 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useAppActive from '@/hooks/useAppActive'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 
-/** How often it checks where the view is while it waits. */
 const CHECK_MS = 250
-/** Kept clear below the top inset: a screen's title bar drawn over its content. */
+
 const TOP_CLEAR = 64
-/** Kept clear above the bottom edge: a tab bar or the Quick Action button. */
+
 const BOTTOM_CLEAR = 72
 
-/**
- * Whether the User can really see the view: its screen focused, the app in
- * front, and all of it inside the window clear of the bars for two checks in a
- * row (a scroll passing by doesn't count). Checks only while `enabled`, with
- * `measureInWindow`, since scrolling a parent changes no layout to listen to.
- * Scrolling down tucks a root screen's header away with the tab bar
- * (`useHideBarsOnScroll`); then only the safe area is in the way.
- */
 export default function useRevealVisible(
   ref: RefObject<Pick<View, 'measureInWindow'> | null>,
   enabled: boolean

@@ -17,29 +17,11 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 
-/**
- * The one way to change mileage: each write goes to the store its car lives in,
- * a Shared Car's space in `@/stores/sharedCars` or the User's own
- * `@/stores/mileage` (protocol "Client behaviour"). Reads go through
- * `@/stores/mileageView`.
- *
- * A record moved to a car in another store (a trip given another car) leaves
- * its old store with a tombstone, so each id stays live in one store. A
- * deletion removes the record wherever it's live, including a copy of the
- * User's own that a Shared Car hides, which would otherwise show again.
- */
-
-/** The space a record lives in, or `null` for the User's own store. */
 type Home = string | null
 
 const spaceOf = (id: string): Home =>
   sharedRecordSpaces(useSharedCars.getState().cars).get(id) ?? null
 
-/**
- * Runs `remove` on every store with a record matching `match`, except the store
- * `except` names, and only where one matches: a deletion with nothing to delete
- * still notifies the store's subscribers (and Cloud Sync).
- */
 function removeWherever(
   match: MileageMatch,
   remove: { own: () => void; shared: (spaceId: string) => void },
@@ -85,16 +67,13 @@ const removeFuelPrice = (id: string, except?: Home) =>
     except
   )
 
-/** Saves a car where it lives; a new car is the User's own. */
 export function saveVehicle(vehicle: Vehicle): void {
-  // The view marks a Shared Car with its space; that isn't part of the record.
   const { spaceId: _spaceId, ...record } = vehicle as MileageVehicle
   const home = spaceOf(record.id)
   if (home === null) useMileage.getState().saveVehicle(record)
   else useSharedCars.getState().saveVehicle(home, record)
 }
 
-/** Deletes the car with its fuel setups and trips. */
 export function deleteVehicle(id: string): void {
   removeWherever(matchVehicle(id), {
     own: () => useMileage.getState().deleteVehicle(id),
@@ -102,7 +81,6 @@ export function deleteVehicle(id: string): void {
   })
 }
 
-/** Saves a fuel setup to its car's store. */
 export function saveVehicleSetup(setup: VehicleSetup): void {
   const home = spaceOf(setup.vehicleId)
   if (home === null) useMileage.getState().saveVehicleSetup(setup)
@@ -114,10 +92,6 @@ export function deleteVehicleSetup(id: string): void {
   removeVehicleSetup(id)
 }
 
-/**
- * Saves a fuel where it lives. A new fuel made for a car (`vehicleId`, from the
- * car form) goes to that car's store; any other new fuel is the User's own.
- */
 export function saveFuel(
   fuel: Fuel,
   { vehicleId }: { vehicleId?: string } = {}
@@ -133,10 +107,6 @@ export function saveFuel(
   else useSharedCars.getState().saveFuel(home, fuel)
 }
 
-/**
- * Deletes the fuel and its prices. Car setups keep the dangling id and simply
- * stop producing an estimated cost.
- */
 export function deleteFuel(id: string): void {
   removeWherever(matchFuel(id), {
     own: () => useMileage.getState().deleteFuel(id),
@@ -144,7 +114,6 @@ export function deleteFuel(id: string): void {
   })
 }
 
-/** Saves a fuel price to its fuel's store. */
 export function saveFuelPrice(price: FuelPrice): void {
   const home = spaceOf(price.fuelId)
   if (home === null) useMileage.getState().saveFuelPrice(price)
@@ -156,13 +125,6 @@ export function deleteFuelPrice(id: string): void {
   removeFuelPrice(id)
 }
 
-/**
- * Saves a trip to its car's store. On a Shared Car it records who logged it, or
- * who last edited it (`useSharedCars`' `saveTrip`); on the User's own car it
- * carries neither. Refused, returning false, when its car is in neither store
- * (deleted, or a Shared Car that ended, whose copy has another id): saved, it
- * would be a trip on no car.
- */
 export function saveTrip(trip: Trip): boolean {
   const home = spaceOf(trip.vehicleId)
   if (home === null) {
@@ -182,10 +144,6 @@ export function deleteTrip(id: string): void {
   removeTrip(id)
 }
 
-/**
- * Deletes all of the User's own mileage, on every synced device. Shared Cars
- * stay: leaving one, with a copy kept, is part of their own lifecycle.
- */
 export function deleteAllMileageData(): void {
   useMileage.getState().deleteAllMileageData()
 }

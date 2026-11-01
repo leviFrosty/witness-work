@@ -95,14 +95,6 @@ import {
   textArb,
 } from '@/__tests__/helpers/dataArbitraries'
 
-// Export → import for both backups, over generated store contents: the JSON
-// backup file (Settings → Export, `createBackupFile` / `restoreBackupFile`)
-// and the account backup (`buildBackupPlaintext` → sealed slot → opened,
-// `readBackupPayload`, `foldBackupPayloads`, `replaceLocalWithBackup`).
-// Restoring a backup onto an empty install must give back every record and
-// the synced settings as they were. Reproduce a failure with
-// `FC_SEED=<seed> pnpm vitest run src/__tests__/backupRoundtripProperties.test.ts`.
-
 const runs = { numRuns: 60, seed: fcSeed }
 
 beforeAll(() => {
@@ -113,7 +105,6 @@ afterAll(() => {
   vi.useRealTimers()
 })
 
-/** Synced settings the backups carry, varied over their shapes. */
 const settingsArb = fc.record(
   {
     role: fc.constantFrom('publisher', 'regularPioneer', 'specialPioneer'),
@@ -176,7 +167,6 @@ const EMPTY_STORES = {
   pet: { pet: null, room: null, deletedPetRecords: [] },
 }
 
-/** A fresh install: empty stores, default settings. */
 const resetStores = () => {
   useContacts.setState(EMPTY_STORES.contacts)
   useConversations.setState(EMPTY_STORES.conversations)
@@ -191,7 +181,6 @@ const resetStores = () => {
   useProfile.setState({ name: '', hasCompletedProfileSetup: false })
 }
 
-/** Puts `device`'s records and the settings into the stores. */
 const fillStores = (
   device: DeviceState,
   settings: Settings,
@@ -239,7 +228,6 @@ const fillStores = (
   useProfile.setState(structuredClone(profile))
 }
 
-/** `device`'s records alone: settings come from their own generators here. */
 const recordsOf = (device: DeviceState): DeviceState => ({
   ...device,
   preferencesValues: {},
@@ -248,7 +236,6 @@ const recordsOf = (device: DeviceState): DeviceState => ({
   profileUpdatedAt: {},
 })
 
-/** The stores' synced records, as a device. */
 const storesDevice = (): DeviceState => {
   const contacts = useContacts.getState()
   const conversations = useConversations.getState()
@@ -343,7 +330,6 @@ describe('JSON backup file', () => {
 })
 
 describe('account backup', () => {
-  /** This device's slot, sealed, uploaded, downloaded and read back. */
   const throughSlot = (nonceByte: number) => {
     const plaintext = buildBackupPlaintext({
       deviceName: 'iPhone de Zoë 📱',

@@ -33,10 +33,6 @@ import { formatSecondsSpoken } from '@/lib/minutes'
 import useAppActive from '@/hooks/useAppActive'
 import useShownInTab from '@/hooks/useShownInTab'
 
-/**
- * The running time, the only part of the timer that changes every second. Ticks
- * only while Home shows and the app is open.
- */
 const TimerReadout = ({ state }: { state: StopwatchState }) => {
   const theme = useTheme()
   const shown = useShownInTab()
@@ -47,7 +43,6 @@ const TimerReadout = ({ state }: { state: StopwatchState }) => {
     <Text
       numberOfLines={1}
       adjustsFontSizeToFit
-      // "00:12:05" would be read digit group by digit group.
       accessibilityLabel={formatSecondsSpoken(ms / 1000)}
       style={{
         fontSize: theme.fontSize('3xl'),
@@ -65,9 +60,6 @@ export const TimerSection = () => {
   const theme = useTheme()
   const hasTime = useElapsedReached(state, MIN_MS_TO_SAVE)
 
-  // The timer keeps its session until Add Time saves it, so backing out of
-  // Add Time loses nothing. The entry lands on the day the session began,
-  // not the day it's saved.
   const handleSave = () => {
     const now = Date.now()
     const ms = computeElapsedMs(state, now)
@@ -96,10 +88,6 @@ export const TimerSection = () => {
     })
   }
 
-  // The whole card long-presses for the section menu (hiding also lives in
-  // Preferences → Home Screen); the buttons keep their own taps, which win for
-  // touches that land on them. Not one accessibility element, so the buttons
-  // stay individually reachable.
   return (
     <HomeSectionMenu
       accessible={false}

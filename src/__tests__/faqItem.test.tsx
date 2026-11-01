@@ -7,7 +7,6 @@ const native = vi.hoisted(() => ({
   announce: vi.fn(),
 }))
 
-// A declaration, so the hoisted mock factories below can reach it.
 function passthrough({ children }: { children?: ReactNode }) {
   return createElement('view', null, children)
 }
@@ -123,7 +122,6 @@ describe('FAQItem', () => {
     act(() => collapsible().props.onOpenChange(true))
     expect(answers()).toHaveLength(1)
 
-    // Still there while the disclosure animates closed.
     act(() => collapsible().props.onOpenChange(false))
     expect(answers()).toHaveLength(1)
   })

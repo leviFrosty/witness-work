@@ -19,12 +19,6 @@ export type SelfTestStep = {
   ms: number
 }
 
-/**
- * Tools: a whole handoff between two sessions in this app, against the
- * configured server, with this device's own account as the old phone. Nothing
- * on the device changes (the new side only checks the key it got back). Each
- * step's result goes to `onStep` as it finishes; resolves whether all passed.
- */
 export async function runHandoffSelfTest(
   onStep: (step: SelfTestStep) => void
 ): Promise<boolean> {
@@ -139,7 +133,6 @@ export async function runHandoffSelfTest(
       }))
     return passed
   } finally {
-    // A failed run leaves nothing open on the server.
     const freshSession = fresh as ReturnType<typeof createClaimSession> | null
     if (old.state.step !== 'done') await old.cancelOnServerOnly()
     if (freshSession && freshSession.state.step !== 'done')

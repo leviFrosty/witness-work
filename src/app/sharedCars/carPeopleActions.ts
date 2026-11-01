@@ -6,14 +6,6 @@ import type { CarInvitations } from '@/app/sharedCars/carInvitations'
 import type { SharedCarsEngine } from '@/app/sharedCars/engine'
 import { sharedCarErrorMessage } from '@/app/sharedCars/sharedCarErrors'
 
-/**
- * What the car form's People section does (docs/mileage-tracking-prd.md,
- * "Shared Cars"): share a car, invite a buddy, cancel an invitation, leave,
- * remove someone, and stop sharing. Each says how it went in a toast, the error
- * as the User would put it. Confirming comes first, in the section.
- * `carPeopleActionsService` wires the app's one.
- */
-
 export type CarPeopleEvent =
   | { name: 'shared_car_share_started' }
   | { name: 'shared_car_share_failed'; reason: string }
@@ -28,23 +20,17 @@ export type CarPeopleActionsDeps = {
   store: Pick<SharedCarsStore, 'getState'>
   toast: Pick<typeof appToast, 'info' | 'success' | 'error'>
   now: () => number
-  /** Key moments, for analytics. Never names, ids, or car details. */
+
   onEvent?: (event: CarPeopleEvent) => void
-  /** A failure's code, for analytics (`sharedCarsFailureName`). */
+
   failureName: (error: unknown) => string
 }
 
-/** A car as the toasts name it: its name, or "a shared car". */
 const carLabel = (name: string) => name || i18n.t('buddies_aSharedCar')
 
 export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
   const { engine, invitations, toast } = deps
 
-  /**
-   * Shares one of the User's own cars, its whole history moving to its space.
-   * The new space, or null when it failed (a share that stopped part-way
-   * resumes on the next sync, or the next try).
-   */
   async function shareCar(vehicle: {
     id: string
     name: string
@@ -66,10 +52,6 @@ export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
     }
   }
 
-  /**
-   * Invites a buddy to the car, unless it's full (its people and open
-   * invitations). Says it's inviting, then that it did or why it couldn't.
-   */
   async function invite(
     spaceId: string,
     buddy: { inboxId: string; name: string }
@@ -99,7 +81,6 @@ export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
     return true
   }
 
-  /** Takes back an invitation; the buddy's app drops it too. */
   async function cancelInvite(
     spaceId: string,
     inviteId: string
@@ -116,7 +97,6 @@ export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
     return true
   }
 
-  /** Leaves the car, keeping a copy of it and its trips. */
   async function leave(spaceId: string, carName: string): Promise<boolean> {
     const car = carLabel(carName)
     try {
@@ -133,7 +113,6 @@ export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
     return true
   }
 
-  /** The owner stops sharing: everyone keeps a copy. */
   async function stopSharing(
     spaceId: string,
     carName: string
@@ -153,7 +132,6 @@ export function createCarPeopleActions(deps: CarPeopleActionsDeps) {
     return true
   }
 
-  /** The owner removes someone, who keeps a copy as of their last sync. */
   async function remove(
     spaceId: string,
     person: { memberId: string; name: string }

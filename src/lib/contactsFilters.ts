@@ -43,10 +43,6 @@ export type ActiveFilter =
   | { kind: 'isActiveStudy' }
   | { kind: FollowUpFilterKind }
 
-/**
- * Follow-up filters: an upcoming Follow-up, none upcoming, or a missed one (the
- * same set as the missed Follow-up reminders).
- */
 export type FollowUpFilterKind =
   | 'hasFollowUp'
   | 'noFollowUp'
@@ -66,14 +62,9 @@ export const isFollowUpFilterKind = (
 export type FilterContext = {
   conversations: Visit[]
   customFieldDefs: CustomFieldDefinition[]
-  /** User thresholds for the `pinStaleness` filter (see `usePreferences`). */
+
   stalenessBreakpoints: StalenessBreakpoints
-  /**
-   * Per-contact aggregates built from the same `conversations` and
-   * `stalenessBreakpoints`. When given, the staleness, study and Follow-up
-   * filters read it in O(1) instead of scanning every conversation once per
-   * contact.
-   */
+
   conversationIndex?: ConversationIndex
 }
 
@@ -102,13 +93,12 @@ const compareAsNumberOrText = (
   rawB: string,
   op: 'gt' | 'lt'
 ): boolean => {
-  // Numbers typed in any digit system (`12`, `١٢`) compare as numbers.
   const a = Number(normalizeNumericInput(rawA))
   const b = Number(normalizeNumericInput(rawB))
   if (Number.isFinite(a) && Number.isFinite(b)) {
     return op === 'gt' ? a > b : a < b
   }
-  // fallback: lexicographic
+
   const cmp = compareText(norm(rawA), norm(rawB))
   return op === 'gt' ? cmp > 0 : cmp < 0
 }
@@ -144,7 +134,6 @@ const getAddressField = (contact: Contact, kind: AddressKind): string => {
 const contactVisits = (contact: Contact, conversations: Visit[]) =>
   conversations.filter((v) => v.contact.id === contact.id)
 
-/** Scan fallback for `nextFollowUpMs`: an open Follow-up not missed yet. */
 const hasUpcomingFollowUp = (
   contact: Contact,
   conversations: Visit[],
@@ -161,7 +150,6 @@ const hasUpcomingFollowUp = (
   )
 }
 
-/** Scan fallback for `missedFollowUpMs`: the missed Follow-up reminders' set. */
 const hasMissedFollowUp = (
   contact: Contact,
   conversations: Visit[],
@@ -252,10 +240,6 @@ const passesFilter = (
   }
 }
 
-/**
- * Returns the subset of `contacts` matching every filter (logical AND). Empty
- * filter list returns the input unchanged.
- */
 export const applyFilters = (
   contacts: Contact[],
   filters: ActiveFilter[],

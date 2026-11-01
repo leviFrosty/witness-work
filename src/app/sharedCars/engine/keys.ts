@@ -35,30 +35,6 @@ import type {
   UnreadSpaceRecord,
 } from '@/types/sharedCars'
 
-/**
- * The space keys (docs/shared-cars-protocol.md, "Keys"). The keyring holds only
- * keys this device trusts, and never replaces one (`keyTrust`):
- *
- * - **Own wrap.** It gives a candidate for the current epoch. The key already
- *   trusted for it: nothing to do. Another: this device keeps its own and
- *   reports it. None yet: the car waits until the key chain ties the candidate
- *   to a trusted key, or the User's key check vouches for it.
- * - **Invitation.** Its key is trusted once `join` took it. After `conflict`, or
- *   a sync that found the join landed, only when the own wrap for its epoch
- *   holds the same key.
- * - **The car's epoch** is the server's as of the last sync. The car seals only
- *   under that epoch's trusted key, and never at an epoch older than the newest
- *   this device trusts: otherwise it waits.
- * - **Key chain.** `k.<x>` holds `K_{x-1}`, and counts only when it's sealed
- *   under epoch `x` or later. One opened with a trusted key teaches the key it
- *   holds. The last version of each that counted is kept sealed, with the last
- *   version of the User's own member record whose check matched, so a keyring
- *   this device lost is trusted again from them.
- * - **Rekey.** After someone goes, the owner's device makes `K_{e+1}` and wraps
- *   it only to members it can vouch for, with `k.<e+1>` in the same request.
- */
-
-/** How many times a rekey syncs and tries again when membership changed. */
 const REKEY_ATTEMPTS = 3
 
 export function createKeyManagement(
@@ -66,18 +42,14 @@ export function createKeyManagement(
   parts: EngineParts
 ): KeyManagement {
   const { deps, client, keyring } = ctx
-  /**
-   * Each space's own wrap as last opened, and the key it held: opened again
-   * only once the wrap changed. Until the key is trusted, it's the candidate.
-   */
+
   const ownWraps = new Map<
     string,
     { memberId: string; epoch: number; wrap: string; key: Uint8Array | null }
   >()
-  /** What was last reported of each kind on each space: each state once. */
+
   const reported = new Map<string, string>()
 
-  /** Runs `report` unless it already ran for `state` of `kind` on the space. */
   function once(
     spaceId: string,
     kind: 'mismatch' | 'waiting' | 'unvouched',
@@ -90,30 +62,22 @@ export function createKeyManagement(
     report()
   }
 
-  /** A failure the car works around, for Sentry and analytics: no ids. */
   function noteProblem(error: SharedCarsError, context: string) {
     ctx.report(error, context)
     ctx.noteSyncFailed(error)
   }
 
-  /** Something offered another key for an epoch this device trusts. */
   const noteMismatch = (spaceId: string, epoch: number) =>
     once(spaceId, 'mismatch', String(epoch), () =>
       noteProblem(new SharedCarsError('key_mismatch'), 'keys')
     )
 
-  /**
-   * Trusts `key` for its epoch: one made here, an invitation's, or one the key
-   * chain or key check vouched for. Another key already trusted for the epoch
-   * stays, and the mismatch is reported.
-   */
   function trust(spaceId: string, { epoch, key }: EpochKey): KeyringChange {
     const change = keyring.trust(spaceId, epoch, key)
     if (change === 'mismatch') noteMismatch(spaceId, epoch)
     return change
   }
 
-  /** Opens this device's own wrap of epoch `epoch`'s key, against the keyring. */
   function openOwnWrap(
     spaceId: string,
     epoch: number,
@@ -147,11 +111,6 @@ export function createKeyManagement(
     return 'mismatch'
   }
 
-  /**
-   * Learns the key a key chain link opened with a trusted key holds: what the
-   * keyring did with it, or null when the link doesn't count. One sealed below
-   * its own epoch is someone's attempt to plant a key, and is reported.
-   */
   function learnLink(
     spaceId: string,
     record: Pick<SealedSpaceRecord, 'recordId' | 'epoch' | 'deleted'>,
@@ -165,11 +124,6 @@ export function createKeyManagement(
     return null
   }
 
-  /**
-   * Trusts again the keys the kept key chain links to a trusted one, newest
-   * first: a keyring this device lost, or one an earlier sync couldn't reach.
-   * True when it learned one.
-   */
   function rebuildFromChain(
     spaceId: string,
     links: readonly SealedSpaceRecord[]
@@ -188,13 +142,6 @@ export function createKeyManagement(
     return learnedAny
   }
 
-  /**
-   * Trusts the own wrap's candidate once the key chain ties it to a trusted
-   * key, or the User's key check vouches for it, with every key on the way
-   * (`verifyCandidate`). `links` are the space's key chain links as sealed, and
-   * `own` versions of the User's own member record (the last whose check
-   * matched here, and any newer). True when it trusted the candidate.
-   */
   function settle(
     spaceId: string,
     links: readonly SealedSpaceRecord[],
@@ -216,20 +163,13 @@ export function createKeyManagement(
       own,
       member,
     })
-    // Reported at the epoch where the chain met the key trusted for it.
+
     if (verdict.status === 'mismatch') noteMismatch(spaceId, verdict.epoch)
     if (verdict.status !== 'trusted') return false
     for (const key of verdict.keys) trust(spaceId, key)
     return true
   }
 
-  /**
-   * A join answered `conflict`, or one a sync found had landed, doesn't by
-   * itself make its invitation's key trusted, since the User may have been on
-   * the car already: only when the User's own wrap for the invitation's epoch
-   * (`own`, as that sync gave it) opens to the same key. True when it trusted
-   * it. Otherwise the wrap is a candidate like any other, on the next sync.
-   */
   function trustInvited(
     spaceId: string,
     invited: EpochKey,
@@ -244,13 +184,6 @@ export function createKeyManagement(
     return trust(spaceId, invited) !== 'mismatch'
   }
 
-  /**
-   * The key this device seals under on `car` now: the one it trusts for the
-   * car's epoch, the server's as of the last sync. None for a key nothing
-   * vouches for yet, or for an epoch older than the newest one this device
-   * trusts, so a server can't roll the car back to a key someone who left still
-   * holds (docs/shared-cars-protocol.md, "The car's epoch").
-   */
   function sealingKey(car: SharedCar): Uint8Array | null {
     const key = keyring.key(car.spaceId, car.epoch)
     if (!key) return null
@@ -258,37 +191,22 @@ export function createKeyManagement(
     return car.epoch < newest ? null : key
   }
 
-  /** Nothing this device may seal under on `car` yet: the car waits. */
   const waiting = (car: SharedCar) => !sealingKey(car)
 
-  /** The car waits for its key: reported once for each epoch. */
   const noteWaiting = (car: SharedCar) =>
     once(car.spaceId, 'waiting', String(car.epoch), () =>
       noteProblem(new SharedCarsError('key_unverified'), 'keys')
     )
 
-  /**
-   * A new stamp for `k.<epoch>`, past every version of it this device has seen,
-   * ones that don't open or count included: a planted, broken or deleted link
-   * with a later stamp would otherwise hide the owner's.
-   */
   const linkStamp = (car: SharedCar, epoch: number): number =>
     deps.stamp(seenRecordStamp(car, keysRecordId(epoch)))
 
-  /**
-   * Whether the owner's device owes `k.<epoch>` again (docs/shared-cars-
-   * protocol.md, "Links"): it trusts both keys, and the space's newest version
-   * of the link is missing, doesn't open, doesn't count, or holds another key
-   * than `K_{epoch-1}`. One from a newer app is left to it. The link goes again
-   * stamped past every version seen, sealed under the current key.
-   */
   function linkOwed(car: SharedCar, epoch: number): boolean {
     const previous = keyring.key(car.spaceId, epoch - 1)
     if (epoch < 2 || !previous || !keyring.key(car.spaceId, epoch)) return false
     const id = keysRecordId(epoch)
     if (car.pendingPuts.includes(id)) return false
-    // The last version that counted, unless a newer one came since: kept
-    // sealed under a key this device doesn't trust, or unread.
+
     const counted = car.keyChain.find((r) => r.recordId === id)
     let newest: SealedSpaceRecord | UnreadSpaceRecord | undefined = counted
     for (const record of [...car.sealedRecords, ...car.unreadRecords])
@@ -303,26 +221,10 @@ export function createKeyManagement(
     return !link || !sameBytes(link.key, previous)
   }
 
-  /**
-   * Whether this device can vouch for `listed` as a member to wrap a new key
-   * to: their member record opened under a trusted key (every key in the
-   * keyring is), and a `dhPub` their `memberId` commits to.
-   */
   const vouchedFor = (car: SharedCar, listed: SharedCarSpaceMember) =>
     car.memberRecords.some((m) => m.memberId === listed.memberId) &&
     memberOwnsKey(car.spaceId, listed.memberId, listed.dhPub)
 
-  /**
-   * The owner's device makes a new key after someone went, wrapped to every
-   * member it can vouch for (its own derived key for itself), with `k.<e+1>`
-   * holding the current key in the same request. A member it can't vouch for
-   * (no member record, or a key their id doesn't commit to) means no rekey yet,
-   * reported once. The new key is trusted only once the server took it: after a
-   * lost answer, the next sync trusts it through the link. `conflict`
-   * (membership changed meanwhile) and `stale_key` (another of the owner's
-   * devices rekeyed) sync and try again; anything else waits for the next
-   * sync.
-   */
   async function rekeyIfNeeded(
     spaceId: string,
     member: SpaceMemberKeys
@@ -393,16 +295,16 @@ export function createKeyManagement(
       ctx.update(spaceId, (c) =>
         withDerivedPeople({
           ...c,
-          // The server's now.
+
           epoch,
           rekeyNeeded: false,
-          // A rekey closes every open invite.
+
           spaceInvites: [],
           keyRecords: [
             ...c.keyRecords.filter((k) => k.epoch !== epoch),
             { epoch, stamp },
           ],
-          // The server stored the link as sent, in place of any other.
+
           keyChain: [
             ...c.keyChain.filter((r) => r.recordId !== recordId),
             { recordId, epoch, stamp, deleted: false, blob, seq: answer.seq },
@@ -427,7 +329,7 @@ export function createKeyManagement(
     rekeyIfNeeded,
     linkStamp,
     linkOwed,
-    /** Forgets what this device opened and reported for `spaceId`. */
+
     forget(spaceId: string) {
       ownWraps.delete(spaceId)
       for (const name of reported.keys())

@@ -17,14 +17,14 @@ const runtime = vi.hoisted(() => ({
   storageLocked: false,
   appState: new Set<(state: string) => void>(),
   scheduled: [] as { identifier: string }[],
-  /** The zone the device reports. */
+
   zone: 'Test/Zone',
-  /** Like Hermes: `Date` follows a new zone only once it's told to check. */
+
   dateFollowsRefresh: false,
   presented: [] as {
     request: { identifier: string; content: { data: unknown } }
   }[],
-  /** The reminder channel's name in the app language. */
+
   channelName: 'Reminders',
 }))
 vi.mock('react-native', () => ({
@@ -107,7 +107,7 @@ vi.mock('expo-notifications', () => ({
     )
   }),
   getPermissionsAsync: vi.fn(async () => ({ granted: true })),
-  // Like the OS, scheduling an id again replaces it.
+
   scheduleNotificationAsync: vi.fn(async (request: { identifier: string }) => {
     runtime.scheduled = [
       ...runtime.scheduled.filter(
@@ -136,7 +136,7 @@ import { useNotificationsTray } from '@/features/notifications/stores/notificati
 import { errorTracking } from '@/lib/errorTracking'
 import { refreshLocalTimeOffset } from '@/lib/deviceTimeZone'
 import { useReconciledReminders } from './useReconciledReminders'
-/** Runs `change`, then lets the debounced pass run to the end. */
+
 async function act(change: () => unknown) {
   await reactAct(async () => {
     await change()
@@ -368,14 +368,12 @@ it('retains obsolete IDs for retry after the OS fails to list reminders', async 
   })
   expect(runtime.scheduled).toEqual([{ identifier: 'old-uuid' }])
   await act(async () => {
-    // This retry does not re-collect any IDs from contact subscriptions.
     usePreferences.setState({ dataProtectionMode: true })
   })
   expect(runtime.scheduled).toEqual([])
 })
 
 it('leaves reminders alone on a launch before the first unlock', async () => {
-  // The stores hold only their defaults then: no Visits, no plans.
   runtime.storageLocked = true
   useContacts.setState({ contacts: [] })
   runtime.scheduled = [{ identifier: 'witness-work-visit-v' }]
@@ -417,7 +415,7 @@ it('schedules and reports once when the schedule state cannot be saved', async (
     await act(async () => {
       usePreferences.setState({ dataProtectionMode: true })
     })
-    // Let any escaped rejection reach the process.
+
     await new Promise((resolve) => setImmediate(resolve))
   } finally {
     process.off('unhandledRejection', unhandled)
@@ -503,7 +501,6 @@ it('keeps one OS reminder when a Visit is saved again unchanged', async () => {
     renderer = create(<Harness />)
   })
   await act(async () => {
-    // A notes-only edit: a new record with the same reminder intent.
     useConversations.setState({
       conversations: [{ ...visit, note: 'Edited' }],
     })
@@ -638,7 +635,7 @@ it("drops a Plan's reminder once another device's deletion merges in", async () 
       preferencesStore: { values: {}, updatedAt: {} },
     }
   )
-  // What a pull applies to the store.
+
   await act(async () => {
     useServiceReport.setState({ dayPlans: merged.dayPlans })
   })
@@ -745,7 +742,7 @@ it('cancels and clears reminders to log time once the day has time', async () =>
     roleHistory: null,
     logsHours: false,
   })
-  // Yesterday's reminder was already delivered.
+
   runtime.presented = [
     {
       request: {
@@ -905,7 +902,7 @@ it('skips launch and returns to the app while the schedule is unchanged', async 
   await act(comeBack)
   expect(Notifications.getAllScheduledNotificationsAsync).not.toHaveBeenCalled()
   expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
-  // A new permission is a change: everything is cancelled once it's revoked.
+
   vi.mocked(Notifications.getPermissionsAsync).mockResolvedValueOnce({
     granted: false,
   } as Notifications.NotificationPermissionsStatus)
@@ -958,7 +955,6 @@ it('schedules the new reminders before cancelling the old ones', async () => {
     renderer = create(<Harness />)
   })
   vi.mocked(Notifications.scheduleNotificationAsync).mockImplementationOnce(
-    // Suspended mid-pass, as in a background wake.
     () => new Promise(() => {})
   )
   await act(() => useConversations.setState({ conversations: [second] }))
@@ -1024,8 +1020,7 @@ describe('after the time zone changes', () => {
     const day = await renderWithPlan()
     expect(planTrigger()).toEqual([nineAm('America/New_York', day)])
     vi.clearAllMocks()
-    // The device now reports London, but `Date` keeps New York's offset until
-    // something makes it check.
+
     runtime.zone = 'Europe/London'
     await act(comeBack)
     expect(refreshLocalTimeOffset).toHaveBeenCalled()
@@ -1039,7 +1034,6 @@ describe('after the time zone changes', () => {
     expect(Notifications.scheduleNotificationAsync).not.toHaveBeenCalled()
   })
 
-  // A Follow-up is saved as a moment, so its reminder stays put.
   it('keeps a Visit reminder at its moment', async () => {
     useConversations.setState({ conversations: followUps(['v']) })
     await act(async () => {

@@ -9,14 +9,8 @@ import {
 import type { RichTextImageAttrs } from '@/types/richText'
 import { fromB64u, toB64u } from '@/features/buddies/lib/bytes'
 
-/*
- * Note photos as files, for sharing them with buddies: the engine reads a
- * smaller copy to upload and keeps buddies' photos it downloads.
- */
-
-/** Long edge of a shared photo: plenty on a phone, a quarter of the bytes. */
 const SHARED_SIDE = 1600
-/** The relay takes a photo up to 1 MiB, sealed. */
+
 const MAX_SHARED_BYTES = 1024 * 1024 - 64
 const QUALITIES = [0.75, 0.6, 0.45]
 
@@ -28,7 +22,6 @@ export function bytesToBase64(bytes: Uint8Array): string {
   return text + '='.repeat((4 - (text.length % 4)) % 4)
 }
 
-/** The photo as JPEG bytes to share, or null when its file is gone. */
 export async function readSharedPhoto(
   image: RichTextImageAttrs
 ): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
@@ -57,7 +50,6 @@ export async function readSharedPhoto(
 
 export const hasSharedPhoto = (localId: string) => noteImageExists(localId)
 
-/** Keeps a buddy's shared photo where notes look for it. */
 export async function saveSharedPhoto(
   localId: string,
   bytes: Uint8Array

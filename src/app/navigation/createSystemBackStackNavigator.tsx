@@ -22,7 +22,6 @@ import useTheme from '@/contexts/theme'
 import { SystemBackButtonContext } from '@/components/ui/layout/SystemBackButton'
 import { useDisplayRegions } from '@/stores/displayRegions'
 
-/** The navigation bar with nothing but the system's Back button. */
 const backButtonOnly: NativeStackNavigationOptions = {
   headerShown: true,
   headerTransparent: true,
@@ -35,13 +34,6 @@ const backButtonOnly: NativeStackNavigationOptions = {
 const isPush = (options: NativeStackNavigationOptions) =>
   options.presentation === undefined || options.presentation === 'card'
 
-/**
- * A native stack whose pushed screens let the navigation bar draw their Back
- * button where the device has a vertical bar (iPhone Duo), as UIKit's
- * navigation controllers do: the system puts it beside the status bar, and the
- * app's headers keep the title and actions. Elsewhere the bar would sit over
- * those actions and take their taps, so headers keep their own Back button.
- */
 function SystemBackStackNavigator({
   id,
   initialRouteName,
@@ -77,7 +69,7 @@ function SystemBackStackNavigator({
     (s) =>
       Platform.OS === 'ios' && (s.regions?.verticalBarEdge ?? null) !== null
   )
-  // Routes whose header asked for the system's Back button.
+
   const [requested, setRequested] = useState<ReadonlySet<string>>(new Set())
   const [request] = useState(() => (key: string) => {
     setRequested((keys) => (keys.has(key) ? keys : new Set(keys).add(key)))
@@ -109,8 +101,6 @@ function SystemBackStackNavigator({
           },
         ]
 
-      // The app's header moves into the screen, so the native bar can show
-      // without remounting it when the request comes in.
       const { header } = options
       const headerShown = options.headerShown !== false
       const systemBack = requested.has(route.key)

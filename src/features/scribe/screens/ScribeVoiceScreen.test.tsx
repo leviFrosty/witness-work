@@ -194,7 +194,7 @@ describe('ScribeVoiceScreen', () => {
   it('starts listening once when it opens', () => {
     render()
     expect(runtime.capture.start).toHaveBeenCalledTimes(1)
-    // The capture taps when the mic goes live; the sheet doesn't tap again.
+
     expect(runtime.light).not.toHaveBeenCalled()
   })
 
@@ -309,7 +309,7 @@ describe('ScribeVoiceScreen', () => {
         submitId: 'submit-1',
       }
     )
-    // Leaving on its own doesn't ask to discard.
+
     const preventDefault = vi.fn()
     runtime.navigation.beforeRemove?.({ preventDefault })
     expect(preventDefault).not.toHaveBeenCalled()

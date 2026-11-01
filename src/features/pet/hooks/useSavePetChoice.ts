@@ -6,10 +6,6 @@ import { localDayKey } from '@/features/pet/lib/dayKeys'
 import type { PetPickerSave } from '@/features/pet/lib/pickerSave'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
-/**
- * Runs the picker's save: adopts or changes the companion, asks Home to play
- * the species' entrance, and records the choice (never the name).
- */
 export default function useSavePetChoice() {
   const todayKey = localDayKey(useToday())
   return (action: PetPickerSave) => {

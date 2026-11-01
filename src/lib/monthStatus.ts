@@ -2,18 +2,8 @@ import i18n from '@/lib/locales'
 import { publisherChoices } from '@/constants/publisher'
 import type { Publisher } from '@/types/publisher'
 
-/**
- * The reduced Monthly Goal an auxiliary pioneer may choose in some months (e.g.
- * March, April, or the month of the circuit overseer's visit).
- */
 export const AUXILIARY_REDUCED_GOAL_HOURS = 15
 
-/**
- * What the User picks for one month on the month status sheet and the Service
- * History editor: a Publisher role, plus the reduced-goal auxiliary variant
- * (stored as `regularAuxiliary` with a 15h Monthly Goal override). Same order
- * as Settings' `publisherChoices`, with the 15h variant after the full goal.
- */
 export type MonthStatus = Publisher | 'regularAuxiliaryReduced'
 
 export const monthStatuses: readonly MonthStatus[] = publisherChoices.flatMap(
@@ -51,7 +41,6 @@ export const monthStatusLabel = (
   }
 }
 
-/** The month status choices with their labels, for a picker. */
 export const monthStatusItems = (
   publisherHours: Record<Publisher, number>
 ): { label: string; value: MonthStatus }[] =>
@@ -60,10 +49,6 @@ export const monthStatusItems = (
     value: status,
   }))
 
-/**
- * The status name alone, for places that show the goal beside it (the month
- * card's status line) — so "(30 hours)" isn't repeated.
- */
 export const monthStatusShortLabel = (status: MonthStatus): string =>
   status === 'regularAuxiliary' || status === 'regularAuxiliaryReduced'
     ? i18n.t('monthStatus.auxiliaryShort')

@@ -7,10 +7,6 @@ import { formatStartTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { formatMinutesCompact } from '@/lib/minutes'
 
-/**
- * The day's span over the map, labeled so it reads on its own: when the route
- * starts, about when it finishes, and how long that is.
- */
 export default function RouteMapSpan({
   start,
   end,

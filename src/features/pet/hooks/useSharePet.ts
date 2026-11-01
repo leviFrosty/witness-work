@@ -10,12 +10,6 @@ import { logger } from '@/lib/logger'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
 import { petShareFileName } from '@/features/pet/lib/share'
 
-/**
- * Share on the pet's share sheet: a snapshot of its card (`PetShareCard`) at
- * the screen's pixel density, as a PNG in the share sheet. The file goes to the
- * cache folder (the share sheet reads it by reference, so it can't be deleted
- * right away; the OS clears the cache).
- */
 export default function useSharePet() {
   return async (
     card: RefObject<View | null>,

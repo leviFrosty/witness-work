@@ -6,10 +6,6 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buildTogetherWithBuddies } from '@/features/buddies/lib/together'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * What's planned with any active buddy, split into unanswered and everything
- * else; see `useBuddyTogether` for one buddy.
- */
 export default function useBuddiesTogether() {
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const buddies = useBuddies((state) => state.buddies)
@@ -26,7 +22,7 @@ export default function useBuddiesTogether() {
     dayPlans,
     visits,
     contacts,
-    // Deriving a share id reads the identity seed, so only once started.
+
     replyFor: (inboxId, key) =>
       started
         ? shareReplies[buddiesEngine.shareIdForKey(key)]?.[inboxId]

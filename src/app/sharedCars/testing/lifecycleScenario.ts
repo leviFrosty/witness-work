@@ -3,16 +3,6 @@ import { memberTag } from '@/lib/sharedSpaces/crypto'
 import type { HeadlessMember } from '@/app/sharedCars/testing/headlessMember'
 import type { Trip } from '@/types/mileage'
 
-/**
- * A Shared Car's whole life with three people, for the engine's tests (on the
- * fake server) and the interop check (on ww-api): share, invite and join, put
- * and sync, the same trip edited twice (the newest wins), a removal and its
- * rekey, joining again and reading the old records through the key chain,
- * leaving with the owner's hand-off and its rekey, another of a person's
- * devices opening the car with nothing in its keyring, and the last one left
- * getting the car back as their own.
- */
-
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function ownCar(member: HeadlessMember) {
@@ -71,22 +61,20 @@ export async function runSharedCarLifecycle({
   spaceGone,
 }: {
   person: (name: string) => HeadlessMember
-  /** Another device of `of`'s: the same root seed, nothing else. */
+
   device: (of: HeadlessMember) => HeadlessMember
-  /** Whether the server now answers `gone` for `spaceId`. */
+
   spaceGone: (spaceId: string, lastMember: HeadlessMember) => Promise<boolean>
 }) {
   const anna = person('Anna')
   const joe = person('Joe')
   const cal = person('Cal')
 
-  // Share: create the space and seed it.
   const vehicleId = ownCar(anna)
   const { spaceId } = await anna.engine.shareCar(vehicleId)
   expect(anna.car(spaceId).trips).toHaveLength(3)
   expect(anna.personal().vehicles).toEqual([])
 
-  // Invite and join.
   await invite(anna, spaceId, joe)
   await invite(anna, spaceId, cal)
   expect(joe.car(spaceId).trips).toHaveLength(3)
@@ -98,7 +86,6 @@ export async function runSharedCarLifecycle({
   ])
   expect(anna.car(spaceId).invites).toEqual([])
 
-  // Put and sync: Joe logs a trip, everyone gets it.
   joe.store.getState().saveTrip(spaceId, {
     id: crypto.randomUUID(),
     vehicleId: joe.car(spaceId).vehicles[0].id,
@@ -112,7 +99,6 @@ export async function runSharedCarLifecycle({
   expect(anna.car(spaceId).trips).toHaveLength(4)
   expect(cal.car(spaceId).trips).toHaveLength(4)
 
-  // A conflict: the newest edit wins on every device.
   joe.store
     .getState()
     .saveTrip(spaceId, { ...firstTrip(joe, spaceId), note: 'Joe' })
@@ -127,7 +113,6 @@ export async function runSharedCarLifecycle({
     expect(firstTrip(member, spaceId).note).toBe('Cal')
   }
 
-  // Remove Cal: a rekey; Cal's device keeps a copy.
   await anna.engine.removeMember(spaceId, memberIdOf(cal, spaceId))
   expect(anna.car(spaceId).epoch).toBe(2)
   expect(await cal.engine.syncCar(spaceId)).toBe('ended')
@@ -135,15 +120,12 @@ export async function runSharedCarLifecycle({
   await joe.engine.syncCar(spaceId)
   expect(joe.car(spaceId).epoch).toBe(2)
 
-  // Cal comes back under the new key, and reads the old records through
-  // the key chain.
   const again = await invite(anna, spaceId, cal)
   expect(again.epoch).toBe(2)
   expect(cal.car(spaceId).trips).toHaveLength(4)
   expect(cal.keyring.epochs(spaceId)).toEqual([2, 1])
   expect(cal.car(spaceId).sealedRecords).toEqual([])
 
-  // Anna leaves: Joe, who joined first, owns the car and rekeys it.
   expect(await anna.engine.leaveCar(spaceId)).toEqual({ pending: false })
   expect(anna.personal().trips).toHaveLength(4)
   await joe.engine.syncCar(spaceId)
@@ -152,16 +134,12 @@ export async function runSharedCarLifecycle({
   await cal.engine.syncCar(spaceId)
   expect(cal.car(spaceId).epoch).toBe(3)
 
-  // Another of Cal's devices, its keyring empty, takes the car from the
-  // roster: its wrap's key is trusted only once the key chain walks back to
-  // Cal's own key check, and then it reads everything.
   const calsTablet = device(cal)
   await calsTablet.engine.addCarFromRoster(spaceId, Date.now())
   expect(calsTablet.keyring.epochs(spaceId)).toEqual([3, 2, 1])
   expect(calsTablet.car(spaceId).trips).toHaveLength(4)
   expect(calsTablet.car(spaceId).sealedRecords).toEqual([])
 
-  // Cal leaves; the last one left gets the car back as their own.
   await cal.engine.leaveCar(spaceId)
   expect(await joe.engine.syncCar(spaceId)).toBe('ended')
   expect(joe.personal().vehicles).toHaveLength(1)

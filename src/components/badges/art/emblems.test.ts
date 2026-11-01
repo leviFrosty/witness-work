@@ -14,7 +14,6 @@ const SCHEMES: BadgeScheme[] = ['light', 'dark']
 const STATES: BadgeArtState[] = ['earned', 'locked']
 const LEVELS: (BadgeLevel | null)[] = [...BADGE_LEVELS, null]
 
-/** Every coordinate pair a path visits (endpoints and control points). */
 const pathPoints = (d: string) => {
   const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? []
   const points: [number, number][] = []
@@ -89,7 +88,6 @@ describe('badge emblems', () => {
   })
 
   it('stays inside the emblem box and the round field', () => {
-    // The field is a circle, so check distance from the center too.
     const fieldRadius =
       (MEDALLION.fieldR * EMBLEM_BOX) / MEDALLION.emblemSize - 2
     for (const art of ART_IDS) {

@@ -16,24 +16,11 @@ import {
 } from 'lucide-react-native'
 import { Platform } from 'react-native'
 export type DidYouKnowTip = {
-  /**
-   * Stable identifier — never rename existing entries, since dismissals are
-   * persisted by id. New tips can go anywhere: one put first shows next to
-   * everyone who hasn't dismissed it.
-   */
   id: string
   icon: typeof CopyIcon
 }
 
-/**
- * Ordered "Did you know?" tip list surfaced on the home screen. The card picks
- * the first entry whose id isn't in `preferences.seenTipIds` and rotates as the
- * user dismisses each one. Tips are deliberately small/lesser-known features —
- * the marquee items already live in MilestoneShowcaseScreen.
- */
 export const DID_YOU_KNOW_TIPS: DidYouKnowTip[] = [
-  // First, so people who looked for Settings in the header learn where the
-  // rest of the account lives.
   { id: 'accountMenu', icon: CircleUserRoundIcon },
   { id: 'longPressCopy', icon: CopyIcon },
   { id: 'swipeEditConvo', icon: SquarePenIcon },

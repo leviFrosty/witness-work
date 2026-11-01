@@ -43,8 +43,6 @@ export default function CreateContactCard({
   )
 
   useEffect(() => {
-    // The card's content is one long-press target, so VoiceOver/TalkBack land
-    // on it (with its menu as custom actions) rather than on the title alone.
     const handle = findNodeHandle(focusRef.current)
     if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
     AccessibilityInfo.announceForAccessibility(i18n.t('map_droppedPin'))
@@ -87,7 +85,7 @@ export default function CreateContactCard({
         id: 'share',
         title: i18n.t('shareLocationEllipsis'),
         systemImage: 'square.and.arrow.up',
-        // Each platform's own maps app reads its link best.
+
         onPress: () =>
           void shareUrl(Platform.OS === 'ios' ? links.apple : links.google),
       },
@@ -213,7 +211,7 @@ export default function CreateContactCard({
             {i18n.t('map_createContact')}
           </Text>
         </Button>
-        {/* Secondary to Create: outlined and only as wide as its label. */}
+        {}
         <Button
           noTransform
           hitSlop={0}

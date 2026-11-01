@@ -1,4 +1,3 @@
-/** Stable across object key insertion order and Date/JSON representations. */
 export function canonicalJson(value: unknown): string {
   if (value === undefined) return 'undefined'
   if (value instanceof Date) return JSON.stringify(value.toISOString())

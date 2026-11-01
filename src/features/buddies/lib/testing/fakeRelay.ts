@@ -7,17 +7,6 @@ import {
 } from '@/features/buddies/lib/bytes'
 import { ed25519Verify, sha256 } from '@/features/buddies/lib/crypto'
 
-/**
- * In-memory relay implementing docs/buddies-protocol.md closely enough to
- * exercise the client end to end: signatures, slots, caps, invite lifecycle,
- * seq semantics, and push intents. Not a substitute for ww-api's own tests.
- *
- * Bearer-only, as with ww-api's legacy switch off: every op needs a session's
- * access token (426 `upgrade_required` without one), which it opens, refreshes
- * and closes at `/accounts/v1/sessions` (docs/accounts-protocol.md) without
- * checking an attestation.
- */
-
 type StoredEvent = {
   eventId: string
   slotId: string
@@ -51,36 +40,29 @@ export function createFakeRelay(now: () => number) {
   const inboxes = new Map<string, Inbox>()
   const invites = new Map<string, Invite>()
   const pushes: { inboxId: string; kind: string }[] = []
-  /**
-   * The `ww` marker each push carries, as the relay builds it: the event's kind
-   * and `seq`, and the sealed event itself (which the real relay leaves out
-   * when it doesn't fit).
-   */
+
   const markers: {
     inboxId: string
     marker: { kind: string; seq: number; eventId: string; blob: string }
   }[] = []
-  /** Alerts a device would show: only kinds it registered a template for. */
+
   const alerts: { inboxId: string; deviceId: string; kind: string }[] = []
-  /** Card and event writes per `inboxId|slotId` (60 per rolling hour). */
+
   const writes = new Map<string, number[]>()
-  /** Shared photos, by `inboxId|blobId`. */
+
   const blobs = new Map<
     string,
     { data: Uint8Array; tokenHash: string; expiresAt: number }
   >()
-  /** What `inbox/sync` says the relay offers. */
+
   const capabilities = { photos: true }
-  /**
-   * Server accounts the relay knows (accountId → public key and status), and
-   * which account owns each inbox: ADR 0024's Option A.
-   */
+
   const accounts = new Map<
     string,
     { accountPub: string; status: 'active' | 'suspended' }
   >()
   const inboxAccounts = new Map<string, string>()
-  /** Live sessions by id, and the access tokens they handed out. */
+
   const sessions = new Map<
     string,
     { accountId: string; refreshToken: string; expiresAt: number }
@@ -90,7 +72,7 @@ export function createFakeRelay(now: () => number) {
     { accountId: string; sessionId: string }
   >()
   let issued = 0
-  /** Every Buddies request, for tests of what goes on the wire. */
+
   const requests: {
     op: string
     headers: Record<string, string>
@@ -135,10 +117,6 @@ export function createFakeRelay(now: () => number) {
     inbox.events = inbox.events.filter((event) => event.slotId !== slotId)
   }
 
-  /**
-   * An owner op's account check: the inbox must be linked to the caller's
-   * account. Null when it is.
-   */
   function notOwner(inboxId: string, accountId: string) {
     const linked = inboxAccounts.get(inboxId)
     if (linked === undefined) return fail(409, 'not_linked')
@@ -146,7 +124,6 @@ export function createFakeRelay(now: () => number) {
     return null
   }
 
-  /** `blob/put`: the fields ride in a header; the body is the bytes. */
   function putBlob(
     init: RequestInit | undefined,
     headers: Record<string, string>,
@@ -170,7 +147,7 @@ export function createFakeRelay(now: () => number) {
     if (refused) return refused
     const data = init?.body as Uint8Array
     if (data.length > 1024 * 1024) return fail(413, 'too_large')
-    // Like the relay: at most 90 days out, and only from an inbox with a buddy.
+
     if (
       payload.expiresAt <= now() ||
       payload.expiresAt > now() + 90 * 24 * 60 * 60 * 1000
@@ -193,7 +170,6 @@ export function createFakeRelay(now: () => number) {
     return ok({ expiresAt })
   }
 
-  /** Opens a session for `accountPub`'s account, made the first time. */
   function openSession(accountPub: string) {
     let accountId = [...accounts].find(
       ([, account]) => account.accountPub === accountPub
@@ -225,7 +201,6 @@ export function createFakeRelay(now: () => number) {
     }
   }
 
-  /** `/accounts/v1/sessions…`: open, refresh, and close. */
   function sessionRoute(path: string, init: RequestInit | undefined) {
     if (path === 'sessions') {
       const body = JSON.parse(String(init?.body)) as {
@@ -282,10 +257,9 @@ export function createFakeRelay(now: () => number) {
       )
     )
 
-  /** The session a request's bearer token belongs to, or the refusal. */
   function callerOf(headers: Record<string, string>) {
     const authorization = headers.authorization
-    // A request without a token is a legacy one, refused with the switch off.
+
     if (!authorization?.startsWith('Bearer '))
       return fail(426, 'upgrade_required')
     return (
@@ -309,10 +283,10 @@ export function createFakeRelay(now: () => number) {
     const { accountId } = caller
     if (op === 'blob/put') return putBlob(init, headers, accountId)
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
-    /** Envelope ops sign `payload`; capability ops send it unsigned. */
+
     const enveloped = typeof body.payload === 'string'
     const bytes = enveloped ? fromB64u(body.payload as string) : null
-    // Owner ops send their fields as the body itself.
+
     const payload = (bytes ? JSON.parse(fromUtf8(bytes)) : body) as Record<
       string,
       never
@@ -326,7 +300,6 @@ export function createFakeRelay(now: () => number) {
         fromB64u(publicKey)
       )
 
-    // A suspended account's writes into others' inboxes (ww-api #53).
     if (
       ['card/put', 'event/put', 'invite/claim'].includes(op) &&
       accounts.get(accountId)?.status === 'suspended'
@@ -393,7 +366,7 @@ export function createFakeRelay(now: () => number) {
     if (op === 'inbox/register') {
       if (!signedBy(payload.ownerPub)) return fail(401, 'bad_signature')
       if (suspended(payload.inboxId)) return fail(403, 'suspended')
-      // With a session the account's claim is required, for its account.
+
       const proof = payload.account as
         | { accountId: string; signature: string }
         | undefined
@@ -590,9 +563,9 @@ export function createFakeRelay(now: () => number) {
     inboxAccounts,
     sessions,
     requests,
-    /** Ends every access token, as their 15 minutes would: next is a 401. */
+
     expireAccessTokens: () => accessTokens.clear(),
-    /** Whether the relay honors this access token, as the live route checks. */
+
     acceptsToken: (accessToken: string) => accessTokens.has(accessToken),
   }
 }

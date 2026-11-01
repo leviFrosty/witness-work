@@ -34,20 +34,16 @@ import {
 
 const CARD = { top: 24, height: 118 }
 const STRIP_TOP = 42
-/** The days planned, each landing in turn; the last one opens below. */
+
 const PLANS = [
   { day: 1, minutes: 120, start: 9 * 60 + 30 },
   { day: 3, minutes: 90, start: 10 * 60 },
   { day: 5, minutes: 180, start: 9 * 60 },
 ]
 const LAST = PLANS[PLANS.length - 1]
-/** When plan `index`'s day is tapped, as a share of the loop. */
+
 const tapAt = (index: number) => 0.06 + index * 0.17
 
-/**
- * Planning, drawn like the Schedule: days tapped across the week take the
- * selection ring and their Plan's time, and the last one opens to show when.
- */
 const PlanVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const { intro, loop } = useVisualClock({
@@ -184,10 +180,6 @@ function Duration({ minutes, color }: { minutes: number; color: string }) {
   )
 }
 
-/**
- * A planned day's square: its number makes room and the Plan's time drops in
- * under it, as `CalendarDay` prints a planned day.
- */
 function PlannedDate({
   day,
   minutes,
@@ -245,10 +237,6 @@ function PlannedDate({
   )
 }
 
-/**
- * A tap on a day: the Schedule's selection ring lands on it and stays until the
- * next day is tapped.
- */
 function PlanTap({
   index,
   day,

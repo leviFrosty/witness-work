@@ -6,15 +6,12 @@ import type { Contact } from '@/types/contact'
 import type { CustomFieldDefinition } from '@/types/customField'
 import type { MapCardDetail } from '@/types/map'
 
-/** How a card's top line reads: a warning, something coming, or a fact. */
 export type CardTone = 'overdue' | 'due' | 'plain'
 
 export type CardLine = { text: string; tone: CardTone }
 
-/** The small mark on a pin's corner. */
 export type PinBadge = 'overdue' | 'today' | 'favorite'
 
-/** Follow-ups due within this many days count as due this week. */
 const DUE_SOON_DAYS = 7
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -24,23 +21,16 @@ const startOfDayMs = (ms: number) => moment(ms).startOf('day').valueOf()
 const daysFromToday = (ms: number, nowMs: number) =>
   Math.round((startOfDayMs(ms) - startOfDayMs(nowMs)) / DAY_MS)
 
-/** "Tue" within a week either way, else "Oct 3". */
 const shortDay = (ms: number, nowMs: number) =>
   Math.abs(daysFromToday(ms, nowMs)) < 7
     ? formatDisplay(ms, 'ddd')
     : formatMonthDayCompact(moment(ms))
 
-/** A Contact's open Follow-up, and how soon it is. */
 export type FollowUpState = {
   kind: 'overdue' | 'today' | 'soon' | 'later'
   ms: number
 }
 
-/**
- * A Contact's open Follow-up: missed, or the next one coming. Only today's is
- * `today`: one from an earlier day that isn't missed yet (just after midnight)
- * reads with its weekday, as `soon`.
- */
 export const followUpState = (
   contactId: string,
   index: ConversationIndex,
@@ -102,7 +92,6 @@ const followUpLine = (state: FollowUpState, nowMs: number): CardLine =>
           tone: 'due',
         }
 
-/** The topic of the Contact's open Follow-up, if it has one. */
 const followUpTopic = (contactId: string, index: ConversationIndex) => {
   if (
     !index.missedFollowUpMs.has(contactId) &&
@@ -113,7 +102,6 @@ const followUpTopic = (contactId: string, index: ConversationIndex) => {
   return followUp?.topic?.trim() || undefined
 }
 
-/** The built-in choices for what pin cards show, before any Contact Fields. */
 export const CARD_DETAIL_CHOICES: {
   value: MapCardDetail
   label: TranslationKey
@@ -129,15 +117,9 @@ export const CARD_DETAIL_CHOICES: {
   { value: 'nameOnly', label: 'map_cardDetail_nameOnly' },
 ]
 
-/** Contact Fields that pin cards can show, in the User's order. */
 export const cardDetailFields = (defs: CustomFieldDefinition[]) =>
   defs.filter((def) => !def.archived).sort((a, b) => a.order - b.order)
 
-/**
- * Resolves a stored `MapCardDetail` against today's Custom Fields: a field that
- * was deleted or archived, or a value from a newer app, falls back to the
- * default.
- */
 export const resolveCardDetail = (
   detail: string | undefined,
   defs: CustomFieldDefinition[]
@@ -158,11 +140,6 @@ export const resolveCardDetail = (
   return 'nextVisit'
 }
 
-/**
- * The line over a Contact's name on its map card, for the User's chosen detail.
- * None when there's nothing to say (no topic, an empty field), so the card
- * shows the name alone. Pass `followUp` when it's already known.
- */
 export const contactCardLine = (
   contact: Pick<Contact, 'id' | 'customFields'>,
   index: ConversationIndex,
@@ -213,38 +190,29 @@ const urgencyOf = (
   if (isDueState(followUp)) return BAND + followUp.ms
   if (contact.isFavorite) return 2 * BAND
   const last = index.mostRecentConvMs.get(contact.id)
-  // Never visited sits between the stalest and the rest.
+
   return 3 * BAND + (last ?? nowMs - 45 * DAY_MS)
 }
 
-/** The mark on a pin's corner: an overdue or today's Follow-up, or a star. */
 export const pinBadge = (
   contact: Pick<Contact, 'id' | 'isFavorite'>,
   index: ConversationIndex,
   nowMs: number
 ) => badgeOf(contact, followUpState(contact.id, index, nowMs))
 
-/**
- * Ranks Contacts for the map: lower is more pressing. Overdue Follow-ups come
- * first (the longest overdue first), then today's and the rest of the week's by
- * time, then favorites, then by how long since the last visit, longest first.
- * Earlier Contacts get their cards placed first and lead their group.
- */
 export const contactUrgency = (
   contact: Pick<Contact, 'id' | 'isFavorite'>,
   index: ConversationIndex,
   nowMs: number
 ) => urgencyOf(contact, followUpState(contact.id, index, nowMs), index, nowMs)
 
-/** What the Map works out about a Contact, once per layout. */
 export type ContactPinFacts = {
   followUp: FollowUpState | null
-  /** See `contactUrgency`: lower is more pressing. */
+
   urgency: number
   badge?: PinBadge
 }
 
-/** A Contact's Follow-up, urgency and badge, in one go. */
 export const contactPinFacts = (
   contact: Pick<Contact, 'id' | 'isFavorite'>,
   index: ConversationIndex,
@@ -258,7 +226,6 @@ export const contactPinFacts = (
   }
 }
 
-/** Up to two initials for a pin: "Maria Reyes" → "MR". */
 export const pinInitials = (name: string) => {
   const words = name.trim().split(/\s+/).filter(Boolean)
   const first = Array.from(words[0] ?? '')[0] ?? ''
@@ -266,7 +233,6 @@ export const pinInitials = (name: string) => {
   return (first + last).toLocaleUpperCase() || '•'
 }
 
-/** The street every member's address is on, when they share one. */
 const sharedStreet = (members: Pick<Contact, 'address'>[]) => {
   const streets = new Set(
     members.map((m) => m.address?.line1?.trim().toLocaleLowerCase() ?? '')
@@ -275,10 +241,6 @@ const sharedStreet = (members: Pick<Contact, 'address'>[]) => {
   return streets.size === 1 && street ? street : undefined
 }
 
-/**
- * A group's title: how many, and the street when they all share one ("4 · 412
- * Oak St").
- */
 export const groupTitle = (members: Pick<Contact, 'address'>[]) => {
   const street = sharedStreet(members)
   return street
@@ -286,7 +248,6 @@ export const groupTitle = (members: Pick<Contact, 'address'>[]) => {
     : i18n.t('map_group_count' as TranslationKey, { count: members.length })
 }
 
-/** A group's title for screen readers: "4 contacts at 412 Oak St". */
 export const groupAccessibilityLabel = (
   members: Pick<Contact, 'address'>[]
 ) => {
@@ -299,7 +260,6 @@ export const groupAccessibilityLabel = (
     : i18n.t('map_group_count' as TranslationKey, { count: members.length })
 }
 
-/** The color a card line's tone reads in. */
 export const cardToneColor = (
   tone: CardTone,
   colors: { error: string; accent: string; textAlt: string }

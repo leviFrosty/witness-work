@@ -79,7 +79,6 @@ describe('firedReminders', () => {
   })
 
   it('lists a reminder whether or not system alerts were allowed', () => {
-    // Nothing here reads OS permission: the tray mirrors intent.
     expect(firedReminders(args(start - 30 * 60_000))).toHaveLength(1)
   })
 })
@@ -137,7 +136,7 @@ describe('reminders to log time', () => {
 
 describe('invitations to plan next week', () => {
   const DAY = 24 * HOUR
-  // Saturday, May 2 at 6 PM asks about the week of Sunday, May 3.
+
   const remindsAt = new Date(2026, 4, 2, 18).getTime()
   const weekPlan = (
     overrides: Partial<WeekPlanSources> = {}

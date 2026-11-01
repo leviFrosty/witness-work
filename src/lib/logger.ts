@@ -1,17 +1,9 @@
 let developerToolsEnabled = () => false
 
-// App startup supplies the preference reader so logging never initializes stores
-// (and their analytics dependencies) while the logger itself is being imported.
 export function configureLogger(isDeveloperToolsEnabled: () => boolean): void {
   developerToolsEnabled = isDeveloperToolsEnabled
 }
 
-/**
- * Simple logger utility that logs only when:
- *
- * - DeveloperTools is enabled in preferences, OR
- * - Running in development mode (**DEV**)
- */
 const shouldLog = (): boolean => {
   if (
     process.env.EXPO_PUBLIC_SILENT === 'true' ||
@@ -29,9 +21,7 @@ export const logger = {
       if (shouldLog()) {
         console.debug(...args)
       }
-    } catch {
-      // Diagnostic logging must never interrupt startup or a user's action.
-    }
+    } catch {}
   },
   log: (...args: unknown[]) => {
     if (shouldLog()) {

@@ -42,12 +42,6 @@ interface Props {
   onReturningUser: () => void
 }
 
-/**
- * The first onboarding screen. The splash screen collapses into the app tile, a
- * constellation of the app's tools bursts out of it, and the headline greets
- * the user before telling the app's story — plan, track, visits, report,
- * progress — while the matching card steps forward.
- */
 const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
   const foldColumn = useFoldColumn(560)
   const theme = useTheme()
@@ -110,7 +104,6 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
   ]
   const activePillar: PillarId | null = headline === 'welcome' ? null : headline
 
-  // Under Reduce Motion the exit (and its reverse) is a plain fade.
   const drift = reduceMotion ? 0 : 1
   const headlineStyle = useAnimatedStyle(() => ({
     opacity: 1 - exit.value,
@@ -132,7 +125,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
   const linkStyle = useAnimatedStyle(() => ({
     opacity: link.value * (1 - exit.value),
   }))
-  // Fades the scene into the next step's background on the way out.
+
   const veilStyle = useAnimatedStyle(() => ({ opacity: exit.value }))
   const splashStyle = useAnimatedStyle(() => ({ opacity: splash.value }))
 
@@ -289,8 +282,6 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
         </Animated.View>
       )}
       {skippable && stage && (
-        // Tapping the scene hurries the intro along; the copy and buttons
-        // below stay out of its way.
         <Pressable
           style={{
             position: 'absolute',

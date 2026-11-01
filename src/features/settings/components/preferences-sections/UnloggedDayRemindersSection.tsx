@@ -9,7 +9,6 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 
-/** Reminders to log time for planned days that have none. */
 const UnloggedDayRemindersSection = () => {
   const { showsTimeEntry } = usePublisher()
   const enabled = usePreferences((s) => s.unloggedDayReminders)

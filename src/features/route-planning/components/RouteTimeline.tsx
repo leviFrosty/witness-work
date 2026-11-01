@@ -27,14 +27,8 @@ import type { SavedPlaceKind } from '@/features/route-planning/lib/routeBuilder'
 import { MAX_ROUTE_STOPS } from '@/features/route-planning/lib/routeLimits'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 
-/** Which end of the route a place is picked for. */
 export type RouteEnd = 'start' | 'finish'
 
-/**
- * The day as a timeline: the start, each stop with the drive before it, and the
- * finish. Stops reorder by dragging; Add Stop and the stops taken off sit
- * below.
- */
 export default function RouteTimeline({
   builder,
   selectedKey,
@@ -54,9 +48,9 @@ export default function RouteTimeline({
   onDragChange: (dragging: boolean) => void
   onSelect: (key: string) => void
   onAddStop: () => void
-  /** Search for where the day starts or finishes. */
+
   onChoosePlace: (end: RouteEnd) => void
-  /** Save Home or the Kingdom Hall, then use it for that end of the route. */
+
   onSetSavedPlace: (kind: SavedPlaceKind, end: RouteEnd) => void
   onNavigateTo: (key: string) => void
 }) {
@@ -94,7 +88,6 @@ export default function RouteTimeline({
             entry={entries.get(stop.key)}
             position={index + 1}
             isLast={false}
-            // At the first stop the day starts there: no drive in.
             showLeg
             hideLegDetails={dragging || (index === 0 && startsAtFirstStop)}
             selected={selectedKey === stop.key}

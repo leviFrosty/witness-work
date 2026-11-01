@@ -10,20 +10,15 @@ import {
 import { unlockedPart } from '@/features/pet/lib/unlockNews'
 import type { RoomItemId } from '@/types/pet'
 
-/**
- * An unlocked item as Decorate Room's thumbnail draws it, in the pet's own
- * room: the pet wearing the hat, or the room with the new floor. Filled to a
- * `size` square, cropped at the sides.
- */
 export default function PetUnlockArt({
   item,
   size,
   width = size,
 }: {
   item: RoomItemId
-  /** The height it fills. */
+
   size: number
-  /** The width it fills; the picture is cropped to it. */
+
   width?: number
 }) {
   const scene = usePetRoomScene()

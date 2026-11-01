@@ -14,11 +14,6 @@ import type { Address, Contact } from '@/types/contact'
 const findContact = (id: string) =>
   useContacts.getState().contacts.find((contact) => contact.id === id)
 
-/**
- * The Contact form looks an address up on save; here the retry queue does it
- * once the app gets to it. Never in data protection mode, which keeps addresses
- * off the map service.
- */
 function lookUpAddress(
   contact: Pick<Contact, 'id' | 'address' | 'coordinate'>,
   ctx: ApplyContext
@@ -50,11 +45,6 @@ export function applyContactCreate(
   }
 }
 
-/**
- * Deletes a Contact this apply created, unless a Visit outside it now points at
- * the Contact (the User logged one since): `undoImport`'s rule. Redacted like
- * an import's Undo, so no householder detail survives.
- */
 export function undoContactCreate(
   contactId: string,
   ownVisitIds: ReadonlySet<string>
@@ -95,11 +85,6 @@ const sameAddress = (
   b: Address | null | undefined
 ) => ADDRESS_PARTS.every((part) => (a?.[part] ?? '') === (b?.[part] ?? ''))
 
-/**
- * Whether the User changed the Contact since `after`: its name, phone, email,
- * address, or a pin they placed. Not `updatedAt`, or a pin the address lookup
- * moved, since the lookup does that on its own.
- */
 const editedSince = (contact: Contact, after: ContactSnapshot): boolean => {
   const now = snapshotOf(contact)
   return (
@@ -131,7 +116,7 @@ export function applyContactUpdate(
     ...(set.phone !== undefined ? { phone: set.phone ?? undefined } : {}),
     ...(set.email !== undefined ? { email: set.email ?? undefined } : {}),
     ...(set.address !== undefined ? { address } : {}),
-    // A new address needs a new pin, unless the User placed it by hand.
+
     ...(moved && !contact.userDraggedCoordinate
       ? { coordinate: undefined }
       : {}),
@@ -152,10 +137,6 @@ export function applyContactUpdate(
   }
 }
 
-/**
- * Restores the Contact only if the User hasn't changed it since (records from
- * before `after` compare `updatedAt`). A pin the User placed since stays.
- */
 export function undoContactUpdate(
   contactId: string,
   before: ContactSnapshot,

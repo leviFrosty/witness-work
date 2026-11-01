@@ -31,13 +31,6 @@ import {
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
-/**
- * Opt-in contract check against a real relay, e.g.
- * `BUDDIES_RELAY_URL=http://localhost:8787 ACCOUNTS_DEV_BYPASS=… pnpm exec
- * vitest run relay.interop` with ww-api's `wrangler dev` running. Every relay
- * call carries an account session, opened with the dev bypass
- * (`interopSessions`), so it's skipped without both.
- */
 const relayUrl = process.env.BUDDIES_RELAY_URL
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
@@ -46,10 +39,7 @@ function user(name: string, badges?: SharedBadge[]) {
   const sessions = interopSessions(random, seed)
   let shares: OutgoingShareSpec[] = []
   let streak: BuddyStreak | undefined
-  /**
-   * The engine's clock ahead of the relay's, e.g. past the relay's 60 s alert
-   * spacing without waiting. Requests are still signed with the real time.
-   */
+
   let ahead = 0
   let state: BuddiesState = { ...initialBuddiesState }
   const store = {
@@ -70,7 +60,7 @@ function user(name: string, badges?: SharedBadge[]) {
     randomBytes: random,
     authorize: (run, { signal }) =>
       sessions.withSession(run, { accountKey: seed, signal }),
-    // Node's WebSocket takes headers as React Native's does.
+
     openSocket: (url, headers) =>
       new WebSocket(url, { headers } as never) as unknown as LiveSocket,
   })
@@ -116,7 +106,6 @@ function user(name: string, badges?: SharedBadge[]) {
   }
 }
 
-/** Every fixed kind, a join kind per buddy (five at most), and both badge kinds. */
 function allTemplates(engine: ReturnType<typeof user>['engine']) {
   const template = { title: 't', body: 'b' }
   return Object.fromEntries(
@@ -155,7 +144,7 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
 
   it('links an inbox registered before sessions when an owner op says not_linked', async () => {
     const ann = user('Ann')
-    // Registered the legacy way: an owner envelope and no token.
+
     const me = deriveIdentity(ann.seed)
     const payload = utf8(
       JSON.stringify({
@@ -188,7 +177,6 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
     })
     expect(info.inboxIds).toEqual([ann.inboxId])
 
-    // Another account's session can't use the inbox, owner key or not.
     const ben = user('Ben')
     await expect(
       ben.relay.syncInbox(ownerAuthFor(ann.seed), 0)
@@ -292,12 +280,11 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
       endsAt: Date.now() + 2 * 86_400_000,
       expiresAt: Date.now() + 3 * 86_400_000,
       details: {
-        // Tomorrow: an ended Plan can't be answered.
         d: moment().add(1, 'day').format('YYYY-MM-DD'),
         s: 600,
         m: 120,
         title: 'Cart witnessing',
-        // Past the 8 KB event cap until the client shortens it.
+
         note: '\u0001'.repeat(2000),
       },
     })
@@ -343,8 +330,6 @@ describe.skipIf(!interopEnabled)('buddies relay interop', () => {
       { c: 'monthsShared', l: 2 },
     ])
 
-    // Mom's pairing confirmation alerted Anna just now; a badge alert waits
-    // out the relay's 60 s spacing, so step past it.
     mom.advance(65_000)
     await mom.engine.announceBadges(['returnVisits.1'])
     expect(mom.store.getState().badgeAnnouncements).toEqual([])

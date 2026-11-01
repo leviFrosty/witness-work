@@ -10,31 +10,17 @@ import {
   sealPlaintext,
 } from '@/lib/serverAccount/backupCrypto'
 
-/**
- * A locked backup file (docs/backup-files.md): Settings → Backup's JSON backup,
- * sealed in the account backup's blob format (`sealPlaintext`) and wrapped in a
- * small JSON envelope that says how to unlock it. `password` files open
- * anywhere with the password, for sharing; `account` files open only on a
- * device holding the same account key, for the User's own devices.
- */
-
 export const LOCKED_BACKUP_FORMAT = 'witnesswork-encrypted-backup'
 const ENVELOPE_VERSION = 1
 
 export type BackupFileLock = 'account' | 'password'
 
-/** Argon2id's cost, as RFC 9106 names it: `m` in KiB, `t` passes, `p` lanes. */
 export type PasswordKdf = { m: number; t: number; p: number }
 
-/**
- * OWASP's Argon2id minimum (19 MiB, 2 passes). The noble implementation is pure
- * JS, so this is about what a phone can do in a few seconds.
- */
 export const PASSWORD_KDF: PasswordKdf = { m: 19456, t: 2, p: 1 }
 
 export const MIN_BACKUP_PASSWORD_LENGTH = 8
 
-/** What the envelope says before its data: how to unlock it. */
 type LockHeader = {
   format: typeof LOCKED_BACKUP_FORMAT
   v: typeof ENVELOPE_VERSION
@@ -44,31 +30,19 @@ type LockHeader = {
 )
 
 export type LockedBackupFile = LockHeader & {
-  /** B64u `0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(gzip(plaintext))`. */
   data: string
 }
 
-/** What the file says about itself, from inside the ciphertext. */
 export type BackupFileOrigin = {
   deviceName: string
   platform: BackupPlatform
-  /** Epoch ms, on the writing device's clock. */
+
   createdAt: number
 }
 
-/** A locked file, opened: `file` is the backup JSON, still unvalidated. */
 export type UnlockedBackupFile = BackupFileOrigin & { file: unknown }
 
-/** Why a locked file didn't open. */
-export type BackupUnlockProblem =
-  /** Not a locked file this version can read, or a cost it won't pay. */
-  | 'format'
-  /** Locked by a newer app version. */
-  | 'newer'
-  /** The wrong password or account key, or the file was changed. */
-  | 'key'
-  /** Opened, but there's no backup inside. */
-  | 'contents'
+export type BackupUnlockProblem = 'format' | 'newer' | 'key' | 'contents'
 
 export class BackupUnlockError extends Error {
   constructor(readonly problem: BackupUnlockProblem) {
@@ -77,13 +51,11 @@ export class BackupUnlockError extends Error {
   }
 }
 
-/** Whether parsed JSON is a locked backup, of any version. */
 export const isLockedBackupFile = (data: unknown): boolean =>
   typeof data === 'object' &&
   data !== null &&
   (data as { format?: unknown }).format === LOCKED_BACKUP_FORMAT
 
-/** `HKDF-SHA256(accountKey, "", "ww-account/v1/backup-file", 32)`. */
 export function deriveBackupFileKey(accountKey: Uint8Array): Uint8Array {
   if (accountKey.length !== 32) throw new Error('Account key must be 32 bytes')
   return hkdf(
@@ -98,16 +70,8 @@ export function deriveBackupFileKey(accountKey: Uint8Array): Uint8Array {
 const SALT_BYTES = 16
 const NONCE_BYTES = 24
 
-/**
- * The most a file may ask a phone to spend unlocking it. A file is anyone's to
- * write, so one asking for gigabytes is refused, not run.
- */
 const KDF_LIMITS = { m: 65536, t: 8, p: 4 }
 
-/**
- * The envelope's header, bound into the ciphertext: a file whose lock or cost
- * was changed doesn't open.
- */
 const lockAad = (file: LockHeader) =>
   utf8(
     [
@@ -119,7 +83,6 @@ const lockAad = (file: LockHeader) =>
     ].join('\n')
   )
 
-/** Same bytes for the same password, however the keyboard composed it. */
 const passwordBytes = (password: string) => utf8(password.normalize('NFKC'))
 
 const derivePasswordKey = (
@@ -131,8 +94,7 @@ const derivePasswordKey = (
   argon2idAsync(passwordBytes(password), salt, {
     ...kdf,
     dkLen: 32,
-    // Hands the JS thread back a few times a second, so the screen keeps
-    // responding. Each yield costs about a frame, so not more often.
+
     asyncTick: 100,
     maxmem: (KDF_LIMITS.m + 1024) * 1024,
     onProgress,
@@ -160,7 +122,6 @@ const seal = (
   ),
 })
 
-/** Locks `file` to the account key: only the User's devices open it. */
 export function lockWithAccountKey(
   file: unknown,
   accountKey: Uint8Array,
@@ -174,7 +135,6 @@ export function lockWithAccountKey(
   return seal(deriveBackupFileKey(accountKey), header, file, options)
 }
 
-/** Locks `file` with a password: it opens anywhere with the password. */
 export async function lockWithPassword(
   file: unknown,
   password: string,
@@ -205,10 +165,6 @@ const withinLimit = (value: unknown, min: number, max: number) =>
   (value as number) >= min &&
   (value as number) <= max
 
-/**
- * Reads a locked file's envelope. Throws `BackupUnlockError`: `newer` for a
- * later envelope, `format` for anything this version can't or won't open.
- */
 export function readLockedBackupFile(data: unknown): LockedBackupFile {
   if (!isRecord(data) || data.format !== LOCKED_BACKUP_FORMAT)
     throw new BackupUnlockError('format')
@@ -274,7 +230,6 @@ function open(key: Uint8Array, file: LockedBackupFile): UnlockedBackupFile {
   }
 }
 
-/** Opens an `account` file with this device's account key. */
 export function unlockWithAccountKey(
   file: LockedBackupFile,
   accountKey: Uint8Array
@@ -283,7 +238,6 @@ export function unlockWithAccountKey(
   return open(deriveBackupFileKey(accountKey), file)
 }
 
-/** Opens a `password` file. A wrong password is `BackupUnlockError('key')`. */
 export async function unlockWithPassword(
   file: LockedBackupFile,
   password: string,

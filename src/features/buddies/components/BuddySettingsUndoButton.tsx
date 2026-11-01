@@ -10,10 +10,6 @@ import {
   useBuddySettingsUndos,
 } from '@/features/buddies/hooks/useBuddySettingsScope'
 
-/**
- * Buddies Settings' header Undo, once there's a change to take back. Hands back
- * where the change was made, so the screen can show it there.
- */
 export default function BuddySettingsUndoButton({
   onUndone,
 }: {

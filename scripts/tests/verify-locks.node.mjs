@@ -1,7 +1,3 @@
-// Machine-wide coordination in scripts/verify/leases.mjs: mutex, device
-// leases with caps and a queue, reaping, old-harness locks, memory budget and
-// build slots. Every case runs real child processes against a temp
-// WW_VERIFY_HOME, so nothing touches ~/.ww-verify or any device.
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -29,13 +25,13 @@ function sandbox(env = {}) {
     env: {
       ...process.env,
       WW_VERIFY_HOME: home,
-      // The large-machine defaults, whatever this machine has.
+
       WW_VERIFY_RAM_GB: '64',
       WW_VERIFY_MAX_IOS: '2',
       WW_VERIFY_MAX_BUILDS: '1',
       WW_VERIFY_LEASE_IDLE_MIN: '30',
       WW_VERIFY_MEMORY_BUDGET_GB: '100',
-      // Live memory is plentiful and settles at once unless a case says not.
+
       WW_VERIFY_MEMORY_LEVEL: '100',
       WW_VERIFY_SETTLE_SEC: '0',
       ...env,
@@ -61,10 +57,6 @@ function sandbox(env = {}) {
   }
 }
 
-/**
- * Runs `body` in a fresh node process with `L` = leases.mjs; returns its JSON
- * result.
- */
 function child(box, body) {
   const code = `
     import fs from 'node:fs'
@@ -150,7 +142,7 @@ test('a named lock serializes holders and is broken only when its holder died', 
     )
   )
   assert.equal(fs.readFileSync(counter, 'utf8'), '80')
-  // Older than the mutex's limit but within the named lock's: still held.
+
   const lock = path.join(box.home, 'api.lock')
   fs.mkdirSync(lock)
   fs.writeFileSync(
@@ -298,12 +290,12 @@ test('memory budget queues leases and builds; build slots are capped', async () 
   const a = box.worktree('a')
   assert.ok((await child(box, claim(a))).key)
   const b = box.worktree('b')
-  assert.ok((await child(box, claim(b))).key) // 5 GB in use
+  assert.ok((await child(box, claim(b))).key)
   const build = (wt, pid) =>
     `return L.tryAcquireBuild({ worktree: ${JSON.stringify(wt)}, platform: 'ios', fingerprint: 'f', pid: ${pid} })`
   const overBudget = await child(box, build(a, process.pid))
   assert.match(overBudget.wait, /memory budget: 5 GB in use \+ 6 GB/)
-  await child(box, `return L.release(${JSON.stringify(b)}).length`) // 2.5 GB
+  await child(box, `return L.release(${JSON.stringify(b)}).length`)
   assert.deepEqual(await child(box, build(a, process.pid)), { ok: true })
   const second = await child(box, build(b, process.pid + 1))
   assert.match(second.wait, /1 of 1 build slots busy/)
@@ -328,7 +320,7 @@ const build = (pid) =>
 test('a build slot held by a dead or silent pid is free at once', async () => {
   const box = sandbox()
   const now = Date.now()
-  // Dead pid, and a live pid (this runner, as if reused) that stopped beating.
+
   for (const holder of [
     { pid: 999999, startedAt: now, seenAt: now },
     { pid: process.pid, startedAt: now - 3600_000, seenAt: now - 10 * 60_000 },
@@ -382,7 +374,7 @@ test('a cached artifact never waits for a build slot', async () => {
   )
   assert.deepEqual(result, { cached: { path: 'cached.apk' } })
   assert.ok(Date.now() - started < 5000)
-  // Already cached before asking: no slot is taken at all.
+
   const instant = await child(
     box,
     `return L.acquireBuild({ worktree: 'w', platform: 'ios', fingerprint: 'f' },
@@ -457,8 +449,6 @@ test('only the development bundle id may be cached or installed', async () => {
   )
 })
 
-// The `up` ordering: resolve the artifact (cache, or build slot -> build ->
-// cache) before leasing a device. Each child is one `up`.
 const upLike = (box, worktree, cache, builds) => `
   const wt = ${JSON.stringify(worktree)}
   const CACHE = ${JSON.stringify(cache)}
@@ -534,7 +524,7 @@ test('a device claim yields to an earlier build that waits for memory', async ()
     WW_VERIFY_EST_ANDROID_BUILD_GB: '6.5',
   })
   const holder = box.worktree('holder')
-  assert.ok((await child(box, claim(holder))).key) // 4 GB
+  assert.ok((await child(box, claim(holder))).key)
   const builder = child(
     box,
     `return L.acquireBuild(
@@ -556,7 +546,7 @@ const acquire = (worktree, platform = 'ios') =>
 
 test('a boot or build waits while live memory is short or under pressure', async () => {
   const at = (level) => sandbox({ WW_VERIFY_MEMORY_LEVEL: level })
-  // 30% free: enough for a device (25%), not for a build (35%).
+
   const box = at('30')
   assert.ok((await child(box, claim(box.worktree('a')))).key)
   assert.match(
@@ -641,7 +631,7 @@ const park = (worktree, force = false) => `
   const lease = L.readLeases().find((l) => l.worktree === ${JSON.stringify(worktree)})
   return L.parkWarm(lease, { force: ${force} })
 `
-// A warm device outside the test pool, so a claim can't take it over.
+
 const writeWarm = (box, entries) =>
   fs.writeFileSync(
     warmFile(box),
@@ -694,10 +684,10 @@ test('parking refuses a device the memory budget has no room for', async () => {
     { key: 'warm-x', since: Date.now() },
     { key: 'warm-y', since: Date.now() },
   ])
-  assert.equal(await child(box, park(a)), false) // 6 GB warm + 3 > 8
+  assert.equal(await child(box, park(a)), false)
   assert.equal(box.lockFiles().length, 1, 'the caller shuts down and releases')
   writeWarm(box, [{ key: 'warm-x', since: Date.now() }])
-  assert.equal(await child(box, park(a)), true) // 3 GB warm + 3 <= 8
+  assert.equal(await child(box, park(a)), true)
 })
 
 test('a claim short of memory shuts warm devices down, oldest first', async () => {
@@ -759,7 +749,7 @@ test('warm devices past WW_VERIFY_WARM_HOURS are marked for shutdown', async () 
     await child(box, `return L.evictStaleWarm().map((w) => w.key)`),
     ['stale']
   )
-  // Marked by a process that has exited: dropped, never counted again.
+
   assert.deepEqual(
     await child(box, `return L.snapshot().warm.map((w) => w.key)`),
     ['fresh']
@@ -785,11 +775,11 @@ test('WW_VERIFY_WARM_MIN keeps a device per platform running; only builds go bel
   assert.ok((await child(box, claim(a))).key)
   assert.equal(await child(box, park(a)), true, 'parks below the floor')
   assert.deepEqual(await child(box, `return L.belowFloor()`), { android: 1 })
-  // Too old, but the only iOS device running: it stays.
+
   const old = readWarm(box).map((w) => ({ ...w, since: 0 }))
   fs.writeFileSync(warmFile(box), JSON.stringify(old))
   assert.deepEqual(await child(box, `return L.evictStaleWarm()`), [])
-  // An Android claim short of memory can't take the floor device either.
+
   const android = (name) => `
     const r = L.tryClaim({ worktree: ${JSON.stringify(box.worktree(name))}, platform: 'android', kind: 'emulator',
       pool: () => [], create: () => ({ key: 'avd-${name}', id: '${name}', name: '${name}' }) })
@@ -797,7 +787,7 @@ test('WW_VERIFY_WARM_MIN keeps a device per platform running; only builds go bel
   assert.equal(await child(box, android('b')), 'avd-b', '3 warm + 4 <= 8')
   assert.match(await child(box, android('c')), /memory budget/)
   assert.equal(readWarm(box).length, 1)
-  // A build can't fit otherwise, so it may go below the floor.
+
   await child(
     box,
     `return L.release(${JSON.stringify(box.worktree('b'))}).length`
@@ -820,8 +810,7 @@ test('an orphaned build group is killed, its slot freed and its dirs removed', a
   const wt = box.worktree('orphan')
   const dir = path.join(wt, '.verify/DerivedData')
   fs.mkdirSync(dir, { recursive: true })
-  // A detached group running "from" the worktree, with a child in a process
-  // group of its own (as Xcode runs its compilers), and an unrelated group.
+
   const group = spawn(
     '/bin/sh',
     ['-c', `perl -e 'setpgrp(0, 0); sleep 300' & sleep 300; echo ${wt}`],
@@ -866,7 +855,7 @@ test('an orphaned build group is killed, its slot freed and its dirs removed', a
     assert.throws(() => process.kill(Number(compiler), 0), /ESRCH/)
     assert.ok(!fs.existsSync(dir))
     assert.deepEqual(await child(box, build(process.pid)), { ok: true })
-    // A live group that runs nothing from the worktree is never killed.
+
     fs.writeFileSync(
       buildsFile(box),
       JSON.stringify([entry(stranger.pid, wt, [])])
@@ -878,9 +867,7 @@ test('an orphaned build group is killed, its slot freed and its dirs removed', a
     for (const p of [group, stranger])
       try {
         process.kill(-p.pid, 'SIGKILL')
-      } catch {
-        // gone
-      }
+      } catch {}
   }
 })
 
@@ -913,8 +900,6 @@ test('the install record is cleared before installing and set only after', async
   assert.equal(ok.after.hash, 'h')
 })
 
-// A verify emulator boots locked behind a screen-lock PIN; bootAndroid must
-// unlock it unattended and leave an unlocked one alone.
 test('androidUnlockStep: storage first, then the lock screen', async () => {
   const { androidUnlockStep } = await import(VERIFY)
   const showing = 'isKeyguardShowing=true'
@@ -941,11 +926,6 @@ test('actsOnRef: ref commands skip the open that would expire their ref', async 
   assert.equal(actsOnRef(['snapshot', '-i']), false)
 })
 
-/**
- * An emulator for unlockAndroid: `locksettings verify` unlocks the storage; the
- * lock screen drops the first `ignoredPins` PINs typed (as it does right after
- * boot) and takes the PIN only once the storage is unlocked.
- */
 function fakeEmulator({
   storage = true,
   keyguard = true,

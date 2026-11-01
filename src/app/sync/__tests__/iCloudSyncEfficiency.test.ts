@@ -4,12 +4,6 @@ vi.mock('@/lib/syncClock', async (importOriginal) => ({
 }))
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// What sync costs when nothing changed, and how it behaves when the cloud
-// misbehaves: a foreground with no edits uploads nothing, failing pushes back
-// off instead of re-uploading on every edit, a write that never settles can't
-// wedge later pushes, and failures keep their transport error code for the
-// status. Same fake bridge as iCloudSyncCatchUp.test.ts.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -192,8 +186,6 @@ const load = async () => {
   }
 }
 
-// Every later catch-up step resolves without timers, so one macrotask lets a
-// catch-up finish.
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 let uninstall: () => void = () => {}
@@ -229,7 +221,6 @@ afterEach(() => {
   uninstall()
 })
 
-/** A real return from the background (not an iOS `inactive` blip). */
 const comeBack = () => {
   runtime.appState = 'background'
   runtime.appStateListeners.forEach((listener) => listener('background'))
@@ -237,7 +228,6 @@ const comeBack = () => {
   runtime.appStateListeners.forEach((listener) => listener('active'))
 }
 
-/** Installs sync, lets the launch catch-up finish, and returns the rig. */
 const launched = async () => {
   const rig = await load()
   rig.useSupporter.getState().setSupporter(true)
@@ -280,7 +270,7 @@ describe('a foreground with nothing new', () => {
   it('writes this device’s snapshot again when it is missing', async () => {
     runtime.files = [ownFile()]
     const { bridge } = await launched()
-    // Removed from another device's Devices list.
+
     runtime.files = []
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_000)
     comeBack()
@@ -291,12 +281,12 @@ describe('a foreground with nothing new', () => {
   it('ignores iOS inactive blips and quick returns', async () => {
     runtime.files = [ownFile()]
     const { bridge } = await launched()
-    // Control Center or Face ID: inactive, then active again.
+
     runtime.appStateListeners.forEach((listener) => listener('inactive'))
     runtime.appStateListeners.forEach((listener) => listener('active'))
     await settle()
     expect(bridge.readFiles).not.toHaveBeenCalled()
-    // A first real return catches up; another right after doesn't.
+
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_000)
     comeBack()
     await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalledTimes(1))
@@ -309,8 +299,6 @@ describe('a foreground with nothing new', () => {
 })
 
 describe('preference writes', () => {
-  // Each write persists the whole preferences store and notifies every
-  // subscriber, so sync's bookkeeping writes only what changed, together.
   it('an edit burst writes once before its push and once after', async () => {
     runtime.files = [ownFile()]
     const { bridge, useContacts, usePreferences, PersistStorage } =
@@ -322,7 +310,6 @@ describe('preference writes', () => {
       setItem.mock.calls.filter(([name]) => name === 'preferences').length
     vi.useFakeTimers()
     try {
-      // Typing a note: several edits inside the debounce, one pending flag.
       for (let i = 0; i < 3; i++) {
         useContacts.getState().set({
           contacts: [{ id: 'typed', name: `Edit ${i}` } as never],
@@ -338,7 +325,7 @@ describe('preference writes', () => {
         iCloudSyncPendingPush: false,
         iCloudUploadPendingSince: expect.any(Number),
       })
-      // iCloud confirms the upload on its first check.
+
       await vi.advanceTimersByTimeAsync(3_000)
       expect(writes()).toBe(3)
       expect(notified).toHaveBeenCalledTimes(3)
@@ -352,8 +339,6 @@ describe('preference writes', () => {
 
 describe('launching', () => {
   it('catches up when the app reports active only after sync installed', async () => {
-    // iOS can start JS at `unknown`; that first `active` isn't a return from
-    // the background.
     runtime.appState = 'unknown'
     runtime.files = [ownFile()]
     const { installiCloudSync, useSupporter, bridge } = await load()
@@ -381,7 +366,7 @@ describe('failing pushes', () => {
       expect(await iCloudSync.push('store-change')).toBe(false)
       expect(usePreferences.getState().iCloudSyncErrorCode).toBe('network')
       expect(bridge.write).toHaveBeenCalledTimes(1)
-      // Edits during the backoff wait for the retry instead of each pushing.
+
       for (let i = 0; i < 3; i++) {
         useContacts.getState().set({
           contacts: [{ id: `edit-${i}`, name: 'Edit' } as never],
@@ -390,7 +375,7 @@ describe('failing pushes', () => {
       }
       expect(bridge.write).toHaveBeenCalledTimes(1)
       expect(usePreferences.getState().iCloudSyncPendingPush).toBe(true)
-      // The retry carries them.
+
       vi.mocked(bridge.write).mockResolvedValue(1)
       await vi.advanceTimersByTimeAsync(5_000)
       expect(bridge.write).toHaveBeenCalledTimes(2)
@@ -465,7 +450,7 @@ describe('a write that never finishes', () => {
         iCloudSyncIssue: 'push-failed',
         iCloudSyncErrorCode: 'network',
       })
-      // Expected, so not reported as a crash.
+
       expect(errorTracking.captureException).not.toHaveBeenCalled()
       expect(await iCloudSync.push('manual')).toBe(true)
     } finally {

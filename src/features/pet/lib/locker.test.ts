@@ -21,7 +21,7 @@ describe('lockerSections', () => {
     expect(hats.part).toBe('hat')
     expect(hats.current).toBe('none')
     expect(hats.owned).toEqual(['none', 'cap', 'duck'])
-    // Every priced hat but the cap; secrets aren't sold.
+
     expect(hats.forSale).toBe(11)
     expect(hats.nextForSale).toBe('hat:bow')
   })
@@ -69,7 +69,7 @@ describe('New', () => {
     expect(
       hasNewRoomItem(DEFAULT_ROOM, bow, (item) => item === 'hat:bow')
     ).toBe(false)
-    // Wearing it is no news either.
+
     expect(hasNewRoomItem({ ...DEFAULT_ROOM, hat: 'bow' }, bow, never)).toBe(
       false
     )

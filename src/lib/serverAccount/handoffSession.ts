@@ -32,58 +32,35 @@ import {
   attestationProblemFor,
 } from '@/lib/serverAccount/session'
 
-/**
- * One Set Up Another Device attempt on each phone (docs/accounts-protocol.md,
- * "Handoff"), as a small state machine the screens poll and the developer Tools
- * run end to end. The old phone's session **offers** the account; the new
- * phone's **claims** it. Every request and its answer go to an event log with
- * codes but no secrets.
- */
-
 export type HandoffRole = 'offer' | 'claim'
 
-/** Why a handoff stopped, as the screens explain it. */
 export type HandoffFailure =
-  /** No connection, or the request timed out. */
   | 'offline'
-  /** Accounts are off on the server (`disabled`). */
   | 'unavailable'
-  /** The channel expired or never existed (`not_found`). */
   | 'expired'
-  /** Another phone already claimed this code (`conflict` on claim). */
   | 'used'
-  /** An op in the wrong state (`conflict`). */
   | 'conflict'
-  /** The other phone stopped, or five wrong tokens burned the channel. */
   | 'cancelled'
-  /** The claim token was refused (`bad_signature`). */
   | 'badToken'
-  /** A blob didn't open, or the account didn't match: keys were swapped. */
   | 'tampered'
-  /** The server doesn't know this phone's account, or it isn't the opener's. */
   | 'noAccount'
-  /** This phone couldn't prove it's WitnessWork, so it has no session. */
   | 'unverified'
-  /** The same, but only for now: Apple's or Google's check was unavailable. */
   | 'verifyLater'
-  /** Ww-api needs a newer app version (426). */
   | 'updateRequired'
   | 'rateLimited'
-  /** Anything else the server said. */
   | 'server'
 
 export type HandoffEvent = {
   at: number
   op: string
-  /** `ok`, the server's code, or the client's own (`offline`, `tampered`). */
+
   outcome: string
   httpStatus?: number | null
-  /** The channel's status, when the answer carried one. */
+
   status?: HandoffStatus
   ms?: number
 }
 
-/** What the developer Tools show; never a key, secret, token, or blob. */
 export type HandoffDebugSnapshot = {
   role: HandoffRole
   step: string
@@ -136,18 +113,8 @@ export function handoffFailureFor(error: unknown, op: string): HandoffFailure {
   return error.kind === 'rateLimited' ? 'rateLimited' : 'server'
 }
 
-/**
- * Failed status checks in a row, from a busy or restarting server (5xx) or a
- * rate limit, before the attempt fails. Polls run every couple of seconds, so
- * one bad answer mustn't lose a code that's good for minutes.
- */
 export const HANDOFF_POLL_FAILURE_LIMIT = 5
 
-/**
- * Whether a failed status check ends the attempt. A lost connection never does
- * (the next tick tries again); a server error or rate limit does only after
- * `HANDOFF_POLL_FAILURE_LIMIT` in a row; anything else does at once.
- */
 function createPollFailures() {
   let inARow = 0
   return {
@@ -170,15 +137,14 @@ type Listener = () => void
 
 type SessionDeps = {
   baseUrl: string
-  /** Request timestamps (`syncNow` in the app); also the expiry clock. */
+
   now: () => number
   randomBytes: (length: number) => Uint8Array
   fetchImpl?: typeof fetch
-  /** Every request's outcome, as it happens. */
+
   onEvent?: (event: HandoffEvent) => void
 }
 
-/** Keeps the event log and tells subscribers about state changes. */
 function createCore<State extends { step: string }>(
   role: HandoffRole,
   initial: State,
@@ -209,7 +175,7 @@ function createCore<State extends { step: string }>(
       deps.onEvent?.(full)
       for (const listener of listeners) listener()
     },
-    /** Runs one request, logging its outcome. */
+
     async call<T>(
       op: string,
       run: () => Promise<T>,
@@ -240,17 +206,10 @@ function createCore<State extends { step: string }>(
   return core
 }
 
-// --- The old phone ----------------------------------------------------------
-
 export type OfferState =
   | { step: 'idle' }
   | { step: 'opening' }
-  /** The QR is up; nobody has claimed it yet. */
   | { step: 'waiting'; link: string; expiresAt: number }
-  /**
-   * A phone claimed it: the User allows it or not. `sendFailed` after an Allow
-   * that didn't get through, so the User can tap it again.
-   */
   | {
       step: 'confirm'
       hello: HandoffHello
@@ -259,29 +218,21 @@ export type OfferState =
       sendFailed?: boolean
     }
   | { step: 'sending'; hello: HandoffHello; code: string; expiresAt: number }
-  /** Sent; waiting for the new phone to pick it up. */
   | { step: 'sent'; hello: HandoffHello; code: string; expiresAt: number }
   | { step: 'done'; hello: HandoffHello }
-  /** The User said Don't Allow. */
   | { step: 'declined'; hello: HandoffHello | null }
-  /** Left, or made a new code. */
   | { step: 'cancelled' }
   | { step: 'failed'; reason: HandoffFailure }
 
 export type OfferAccount = {
   accountKey: Uint8Array
   accountId: string
-  /** The account's session: the old phone's ops are Bearer. */
+
   authorize: AccountAuthorize
 }
 
 export type OfferSession = ReturnType<typeof createOfferSession>
 
-/**
- * The old phone's side: open a channel and show its link, poll until a phone
- * claims it, open that phone's hello and show the code, then send the sealed
- * account key once the User allows it and wait for `done`.
- */
 export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
   const core = createCore<OfferState>('offer', { step: 'idle' }, deps)
   const created = createHandoffOffer(deps.randomBytes)
@@ -311,7 +262,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     core.set({ step: 'failed', reason })
   }
 
-  /** Ends the channel on the server; best effort. */
   const cancelOnServer = () =>
     core
       .call('handoff/cancel', () =>
@@ -331,7 +281,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
       )
       status = 'open'
       expiresAt = opened.expiresAt
-      // Cancelled while the channel opened: close it again.
+
       if (terminal()) return void (await cancelOnServer())
       core.set({
         step: 'waiting',
@@ -343,7 +293,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     }
   }
 
-  /** One status check. Overlapping calls are skipped. */
   async function poll(): Promise<void> {
     const step = core.state.step
     if (polling || (step !== 'waiting' && step !== 'sent')) return
@@ -376,7 +325,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
         try {
           hello = openHello(keys, offer.channelId, view.hello)
         } catch {
-          // Not sealed with this QR's keys: something swapped claimPub.
           core.log({ op: 'open hello', outcome: 'tampered' })
           fail('tampered')
           void cancelOnServer()
@@ -394,7 +342,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     } catch (error) {
       if (!terminal()) {
         const reason = handoffFailureFor(error, 'handoff/status')
-        // A dropped poll is retried on the next tick.
+
         if (pollFailures.endsAttempt(reason)) fail(reason)
       }
     } finally {
@@ -402,7 +350,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     }
   }
 
-  /** Allow: seals the account key to the new phone and sends it. */
   async function approve(): Promise<void> {
     const current = core.state
     if (current.step !== 'confirm' || !keys) return
@@ -429,11 +376,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     }
   }
 
-  /**
-   * After a send that failed: a lost answer may have delivered the key (and a
-   * repeat of it answers `conflict`), so the channel's status decides. Still
-   * `claimed` after a lost connection, the User can tap Allow again.
-   */
   async function settleSend(
     asked: Extract<OfferState, { step: 'confirm' }>,
     reason: 'offline' | 'conflict'
@@ -461,7 +403,6 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     else fail(reason)
   }
 
-  /** Don't Allow: ends the channel. */
   async function decline(): Promise<void> {
     if (terminal()) return
     const current = core.state
@@ -472,16 +413,14 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     await cancelOnServer()
   }
 
-  /** The screen closed or a new code replaced this one. */
   async function cancel(): Promise<void> {
     if (terminal()) return
     const step = core.state.step
     core.set({ step: 'cancelled' })
-    // While opening, `open` cancels once its answer is in.
+
     if (step !== 'idle' && step !== 'opening') await cancelOnServer()
   }
 
-  /** For the Tools: drops the channel on the server without changing state. */
   const cancelOnServerOnly = () => cancelOnServer()
 
   function debug(): HandoffDebugSnapshot {
@@ -513,7 +452,7 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
     decline,
     cancel,
     cancelOnServerOnly,
-    /** Ends the attempt locally as expired, without a request (Tools). */
+
     expire: () => {
       if (!terminal()) fail('expired')
     },
@@ -521,29 +460,18 @@ export function createOfferSession(account: OfferAccount, deps: SessionDeps) {
   }
 }
 
-// --- The new phone ----------------------------------------------------------
-
 export type ClaimState =
   | { step: 'idle' }
   | { step: 'claiming' }
-  /** Claimed; waiting for the old phone to allow it. */
   | { step: 'waiting'; code: string; expiresAt: number }
-  /** The key arrived; the app checks and stores it, then calls `finish`. */
   | { step: 'received'; code: string; received: HandoffAccountKey }
   | { step: 'finishing'; code: string }
   | { step: 'done' }
-  /** This phone stopped (the User declined replacing, or left). */
   | { step: 'cancelled' }
   | { step: 'failed'; reason: HandoffFailure }
 
 export type ClaimSession = ReturnType<typeof createClaimSession>
 
-/**
- * The new phone's side: claim the channel with a temporary key and a sealed
- * hello, show the code, poll until the old phone sends the key, and open it.
- * The caller checks and stores the key, then calls `finish` (`done`), or
- * `cancel`.
- */
 export function createClaimSession(
   offer: HandoffOffer,
   hello: HandoffHello,
@@ -560,7 +488,7 @@ export function createClaimSession(
     offerPub: offer.offerPub,
     claimPub: keyPair.publicKey,
   })
-  // Sealed once, so a repeated claim (a lost response) has the same body.
+
   const sealedHello = sealHello(keys, offer.channelId, hello, deps.randomBytes)
   let status: HandoffStatus | null = null
   let expiresAt: number | null = null
@@ -602,7 +530,6 @@ export function createClaimSession(
       try {
         claimed = await send()
       } catch (error) {
-        // The same claim again is `ok` if only the answer got lost.
         if (handoffFailureFor(error, 'handoff/claim') !== 'offline') throw error
         claimed = await send()
       }
@@ -619,7 +546,6 @@ export function createClaimSession(
     }
   }
 
-  /** One receive check. Overlapping calls are skipped. */
   async function poll(): Promise<void> {
     if (polling || core.state.step !== 'waiting') return
     if (expiresAt !== null && deps.now() >= expiresAt) return fail('expired')
@@ -656,7 +582,6 @@ export function createClaimSession(
     }
   }
 
-  /** The key is stored: tells the server, which drops the blobs. */
   async function finish(): Promise<void> {
     const current = core.state
     if (current.step !== 'received') return
@@ -671,8 +596,6 @@ export function createClaimSession(
       status = 'done'
       core.set({ step: 'done' })
     } catch (error) {
-      // The key is already this phone's; only the server's tidy-up failed,
-      // and the channel expires on its own.
       core.log({
         op: 'done',
         outcome: handoffFailureFor(error, 'handoff/done'),
@@ -716,7 +639,7 @@ export function createClaimSession(
     poll,
     finish,
     cancel,
-    /** Records a failure the app found after `received` (e.g. a mismatch). */
+
     fail: (reason: HandoffFailure) => {
       if (terminal()) return
       fail(reason)

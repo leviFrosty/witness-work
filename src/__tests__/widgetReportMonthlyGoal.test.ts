@@ -208,7 +208,7 @@ describe('widget month counts', () => {
     args.conversations = [
       visit('june-last', new Date(2026, 5, 30, 23, 59, 59, 999)),
       visit('july-first', new Date(2026, 6, 1, 0, 0, 0, 0)),
-      // Rehydrated state holds ISO strings.
+
       visit('july-mid', new Date(2026, 6, 15, 9).toISOString()),
       visit('july-last', new Date(2026, 6, 31, 23, 59, 59, 999).toISOString()),
       visit('august-first', new Date(2026, 7, 1, 0, 0, 0, 0)),
@@ -219,8 +219,7 @@ describe('widget month counts', () => {
 
   it('counts studies as the Service Report does', () => {
     const args = baseArgs()
-    // `cy` was archived after this month's study; the report no longer counts
-    // it, so the widget doesn't either.
+
     args.contacts = [contact('ada')]
     args.conversations = [
       {

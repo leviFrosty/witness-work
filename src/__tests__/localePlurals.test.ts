@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { I18n } from 'i18n-js'
 import enUS from '@/locales/en-US.json'
 
-// i18n-js only pluralizes `{ one, other }` objects. i18next-style flat
-// suffixes (`key_one`, `key_other`) are never read, so `i18n.t('key')` misses.
 describe('en-US plural keys', () => {
   it('uses { one, other } objects, not i18next suffixes', () => {
     const suffixed = Object.keys(enUS).filter((key) =>

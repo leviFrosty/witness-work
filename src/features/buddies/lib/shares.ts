@@ -9,30 +9,15 @@ import type { OutgoingShareSpec } from '@/features/buddies/lib/state'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-/**
- * Shared Plans stay with buddies, photos included, this long after they end, so
- * a buddy can look back at one.
- */
 export const PLAN_SHARE_RETENTION_MS = 30 * DAY_MS
-/**
- * Shared Follow-ups are wiped this long after they happen: they carry a
- * householder's first name and address.
- */
+
 export const FOLLOW_UP_SHARE_RETENTION_MS = DAY_MS
-/**
- * How long after it happens a share stays with builds from before shared Plans
- * were kept a month: they read `expiresAt` alone, so it stays this, and
- * `keepUntil` carries the month.
- */
+
 export const LEGACY_SHARE_RETENTION_MS = DAY_MS
 
 export const planShareKey = (planId: string) => `plan:${planId}`
 export const followUpShareKey = (visitId: string) => `followUp:${visitId}`
 
-/**
- * When a one-time Plan ends (epoch ms): an anytime Plan at the end of its day,
- * and a Plan with no start time as if it started at noon.
- */
 export const planEndsAt = (plan: DayPlan) =>
   plan.anytime
     ? combineDateAndStartTime(plan.date, 24 * 60).getTime()
@@ -62,14 +47,13 @@ function shareLocation(
   }
 }
 
-/** The details a buddy receives for one of this User's Plans. */
 export function planShareDetails(plan: DayPlan): ShareDetails {
   const location = shareLocation(plan.location)
   const title = clip(plan.title, 100)
   const note = clip(plan.note, 2000)
   return {
     d: storedDayKey(plan.date),
-    // No start time tells buddies (on any app version) it's anytime.
+
     ...(plan.anytime || plan.startTimeInMinutes === undefined
       ? {}
       : { s: plan.startTimeInMinutes }),
@@ -80,11 +64,6 @@ export function planShareDetails(plan: DayPlan): ShareDetails {
   }
 }
 
-/**
- * The minimum a buddy needs to join a Follow-up: when, the householder's first
- * name, where, and the topic. Never the surname, phone, email, notes, or
- * history.
- */
 export function followUpShareDetails(
   followUp: NonNullable<Visit['followUp']>,
   contact: Pick<Contact, 'name' | 'address' | 'coordinate'> | undefined
@@ -117,11 +96,6 @@ export function followUpShareDetails(
   }
 }
 
-/**
- * When a share's buddies wipe it, as its event says: `expiresAt` for builds
- * that keep a share only a day after it happens, `keepUntil` (a month, for
- * Plans) for the rest.
- */
 export function shareEventExpiry(
   spec: Pick<OutgoingShareSpec, 'endsAt' | 'expiresAt'>
 ): { expiresAt: number; keepUntil?: number } {
@@ -134,11 +108,6 @@ export function shareEventExpiry(
     : { expiresAt }
 }
 
-/**
- * Every Plan and Follow-up this User has invited buddies to that hasn't
- * happened yet, or happened in the last month (Plans) or day (Follow-ups).
- * Plans that came from a buddy's invitation are never re-shared.
- */
 export function buildOutgoingShares(input: {
   dayPlans: DayPlan[]
   visits: Visit[]
@@ -172,7 +141,7 @@ export function buildOutgoingShares(input: {
     const endsAt = new Date(followUp.date).getTime()
     const expiresAt = endsAt + FOLLOW_UP_SHARE_RETENTION_MS
     if (expiresAt <= input.now) continue
-    // The householder's first name and address come from the Contact.
+
     const version = Math.max(visit.updatedAt ?? 0, contact.updatedAt ?? 0)
     specs.push({
       key: followUpShareKey(visit.id),
@@ -187,12 +156,6 @@ export function buildOutgoingShares(input: {
   return specs
 }
 
-/**
- * When the Plan or Follow-up behind a share key (`plan:<id>`,
- * `followUp:<visitId>`) stopped being shared: its deletion, or the change that
- * took its buddies off. Both sync, so every device of this User reads the
- * same.
- */
 export function shareWithdrawnAt(
   key: string,
   data: {
@@ -216,13 +179,6 @@ export function shareWithdrawnAt(
   return stamps.length > 0 ? Math.max(...stamps) : undefined
 }
 
-/**
- * When the Plan or Follow-up behind a share key ends, while the User still has
- * it, invited buddies or not: a Plan that no longer invites anyone (the only
- * buddy it invited is gone) still says who it never reached until then.
- * Undefined once it's deleted or dismissed, or for a Plan that follows a
- * buddy's invitation.
- */
 export function shareEndsAt(
   key: string,
   data: { dayPlans: DayPlan[]; visits: Visit[] }
@@ -241,13 +197,11 @@ export function shareEndsAt(
   return undefined
 }
 
-/** A share key's kind (`plan`, `followUp`) and the id of its record. */
 function parseShareKey(key: string) {
   const separator = key.indexOf(':')
   return { kind: key.slice(0, separator), id: key.slice(separator + 1) }
 }
 
-/** The share keys of this User's Plans and Follow-ups that invite buddies. */
 export function sharedKeys(dayPlans: DayPlan[], visits: Visit[]): Set<string> {
   const keys = new Set<string>()
   for (const plan of dayPlans)
@@ -259,11 +213,6 @@ export function sharedKeys(dayPlans: DayPlan[], visits: Visit[]): Set<string> {
   return keys
 }
 
-/**
- * Who is invited to what, comparable as a string. A change here (inviting a
- * buddy, which includes saying yes to a request to join, uninviting one, or
- * deleting a shared Plan) is sent at once; detail edits can wait.
- */
 export function shareRecipientsKey(
   dayPlans: DayPlan[],
   visits: Visit[]

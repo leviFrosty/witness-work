@@ -9,11 +9,6 @@ import useSupporterGateAnalytics from '@/hooks/useSupporterGateAnalytics'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Takes the place of "Find Shortest Route" for non-Supporters. They've just
- * seen their own stops, so this only says what Supporter adds and offers it,
- * without dimming or blocking the rest of the screen.
- */
 export default function RouteSupporterPreview() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()

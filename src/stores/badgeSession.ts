@@ -4,35 +4,23 @@ import type { CelebrationClaim } from '@/lib/userAction'
 import type { BadgeKey } from '@/types/badges'
 
 type BadgeSessionState = {
-  /** The latest evaluation, for progress toward each next level. */
   evaluation: BadgeEvaluation | null
-  /** Badges waiting for their full-screen celebration (a toast was tapped). */
+
   celebrations: BadgeKey[]
-  /**
-   * The action behind `celebrations`: they celebrate full screen only while
-   * it's recent, and only if nothing else celebrated it. Null for a celebration
-   * asked for directly (Developer Tools), which waits for its turn without
-   * expiring.
-   */
+
   claim: CelebrationClaim | null
-  /** Badges found in history since the last summary was shown. */
+
   historyCount: number
   setEvaluation: (evaluation: BadgeEvaluation) => void
   celebrate: (keys: BadgeKey[], claim?: CelebrationClaim | null) => void
   addHistory: (count: number) => void
-  /** Drops what was just shown, or what went quiet. */
+
   clearCelebrations: () => void
   clearHistory: () => void
-  /** Forgets the queue, e.g. after the User resets their badges. */
+
   reset: () => void
 }
 
-/**
- * Ephemeral badge state for this app session. Earned badges themselves live in
- * `preferences.earnedBadges`; this holds only what's derived or pending. A
- * celebration that never gets its turn isn't lost: the badge is already saved
- * and new, so the notifications tray lists it.
- */
 export const useBadgeSession = create<BadgeSessionState>((set) => ({
   evaluation: null,
   celebrations: [],
@@ -45,7 +33,7 @@ export const useBadgeSession = create<BadgeSessionState>((set) => ({
         ...celebrations,
         ...keys.filter((key) => !celebrations.includes(key)),
       ],
-      // Keys joining a waiting celebration ride on its turn.
+
       claim: celebrations.length > 0 ? current : claim,
     })),
   addHistory: (count) =>

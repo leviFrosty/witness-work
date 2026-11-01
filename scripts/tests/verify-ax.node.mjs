@@ -1,5 +1,3 @@
-// scripts/verify/ax.mjs: turning `axe describe-ui` output into the elements,
-// selectors and diffs `ww-verify ad` uses on iPad.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
@@ -72,7 +70,6 @@ test('drops elements whose center is off screen', () => {
 })
 
 test('keeps one of a container and its text with the same label', () => {
-  // React Native repeats a pressable's label on the text inside it.
   const elements = flatten(
     app(
       node('GenericElement', 'Add Time', [600, 290, 450, 60], {
@@ -82,7 +79,7 @@ test('keeps one of a container and its text with the same label', () => {
   )
   assert.equal(elements.length, 1)
   assert.equal(elements[0].type, 'other')
-  // Two controls with the same label in different places both stay.
+
   const both = flatten(
     app(
       node('Button', 'T', [100, 100, 20, 20]),
@@ -106,7 +103,7 @@ test('parses the agent-device selectors flows use', () => {
     label: 'Email',
     editable: 'true',
   })
-  // Plain text and unknown keys aren't selectors we can resolve.
+
   assert.equal(parseSelector('Contacts'), null)
   assert.equal(parseSelector('xpath="//a"'), null)
 })
@@ -127,7 +124,7 @@ test('matches selectors and text like agent-device', () => {
   assert.ok(!matchesSelector(button, { editable: 'true' }))
   assert.ok(matchesText(field, 'search 8'))
   assert.ok(!matchesText(button, 'Open'))
-  // A switch's value comes back as a number.
+
   const [toggle] = flatten(
     app(node('Switch', 'Notify Me', [10, 10, 60, 30], { AXValue: 0 }))
   )

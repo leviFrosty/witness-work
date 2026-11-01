@@ -52,7 +52,6 @@ vi.mock('@/components/ui/Card', () => ({
   useCardStyle: () => ({ borderRadius: 12 }),
 }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -60,7 +59,7 @@ const host = vi.hoisted(() => (name: string) => async () => {
       ReactModule.createElement(name, props, props.children),
   }
 })
-/** How many times each row drew its menu, by the row's accessible name. */
+
 const drawn = vi.hoisted(() => new Map<string, number>())
 vi.mock('@/components/ui/ContextMenu', async () => {
   const ReactModule = await import('react')
@@ -108,10 +107,6 @@ let parentRenders = 0
 let seen: MileagePeople[] = []
 let actions: ReturnType<typeof useTripActions> | undefined
 
-/**
- * The Mileage screen's trip list, as it draws it: who's who once, for the list,
- * and each row named by whoever else logged it.
- */
 function TripList() {
   parentRenders++
   const people = useMileagePeople()
@@ -141,7 +136,7 @@ function render(buddies: readonly MileageBuddy[]) {
         value={{
           ...NO_MILEAGE_SHARING,
           enabled: true,
-          // A new list each render, as the app's provider makes it.
+
           buddies: buddies.map((buddy) => ({ ...buddy })),
           ownName: 'Levi W.',
         }}
@@ -170,14 +165,13 @@ const rows = (tree: ReactTestRenderer) =>
       texts,
     }
   })
-/** The row for a trip of this distance; its date has a comma of its own. */
+
 const rowFor = (tree: ReactTestRenderer, distance: string) =>
   rows(tree).find((row) =>
     row.label.match(new RegExp(`^\\w+ \\d+, \\d{4}, ${distance}(, |$)`))
   )!
 const totalDraws = () => [...drawn.values()].reduce((a, b) => a + b, 0)
 
-/** Replaces a Shared Car, as every store write does. */
 const updateCar = (spaceId: string, update: (car: SharedCar) => SharedCar) =>
   act(() => {
     useSharedCars.setState((state) => ({
@@ -217,7 +211,7 @@ describe('a trip row', () => {
       background: '#ff8800',
     })
     expect(anas.texts).toContain('Annie')
-    // Someone who isn't a buddy, by the name they share.
+
     expect(rowFor(tree, '40 mi').label).toMatch(/, Logged by Ben$/)
   })
 
@@ -255,12 +249,12 @@ describe('trip rows as Shared Cars sync', () => {
 
     expect(parentRenders).toBe(before.parent)
     expect(totalDraws()).toBe(before.rows)
-    // Who's who stays the very same, people and all.
+
     const cars = useSharedCars.getState().cars
     const again = buildMileagePeople(cars, buddies)
     expect(again).toBe(people)
     expect(again.person(VAN, 'ana-van')).toBe(annie)
-    // The app's buddies list is rebuilt whenever Buddies syncs.
+
     expect(
       buildMileagePeople(
         cars,
@@ -286,7 +280,7 @@ describe('trip rows as Shared Cars sync', () => {
     expect(parentRenders).toBeGreaterThan(before)
     expect(seen.at(-1)).not.toBe(people)
     expect(rowFor(tree, '40 mi').label).toMatch(/, Logged by Benjamin$/)
-    // On another car, everyone is who they were.
+
     expect(seen.at(-1)!.person(MAZDA, 'ana-mazda')).toBe(
       people.person(MAZDA, 'ana-mazda')
     )

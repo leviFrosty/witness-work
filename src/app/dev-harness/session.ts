@@ -2,17 +2,6 @@ import { MMKV } from 'react-native-mmkv'
 import { accountSessions } from '@/lib/serverAccount'
 import { toAccountSessionError } from '@/lib/serverAccount/session'
 
-/**
- * This device's account session for the verify harness, never a token.
- * `snapshot()` reads it; `renew()` refreshes it now, as a 401 would.
- * `holdRefreshAnswer(ms)` keeps the next refresh's answer from the session code
- * that long after ww-api sent it (rotating the token), the way a suspended app
- * never reads it; `dropRefreshAnswer()` loses it instead, as a dropped
- * connection does. `markAfter(ms, label)` notes when a JS timer fires. Every
- * step lands in `marks()`, kept in MMKV so a relaunch can read what happened
- * before the app was terminated.
- */
-
 const REFRESH_PATH = '/accounts/v1/sessions/refresh'
 
 let _store: MMKV | null = null
@@ -71,7 +60,7 @@ function install() {
 
 export const sessionHarness = {
   snapshot: () => accountSessions.snapshot(),
-  /** Refreshes the access token now; the outcome lands in `marks()`. */
+
   renew: () => {
     mark('renew started')
     void accountSessions
@@ -104,7 +93,7 @@ export const sessionHarness = {
     store().delete('marks')
     return 'ok'
   },
-  /** Real answers again. */
+
   clear: () => {
     if (realFetch) globalThis.fetch = realFetch
     realFetch = null

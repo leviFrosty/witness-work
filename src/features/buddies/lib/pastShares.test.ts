@@ -29,7 +29,6 @@ import type { Visit } from '@/types/visit'
 
 const DAY = 24 * 60 * 60 * 1000
 
-/** A shared Plan as the sender builds it: kept a month after it ends. */
 const planSpec = (
   recipients: string[],
   details: ShareDetails = { d: '2026-09-26', s: 600, m: 60 }
@@ -84,7 +83,7 @@ describe('a shared Plan after it happens', () => {
 
   it('is never sent to anyone new, as after updating to this version', async () => {
     const { env, levi, anna } = await duo()
-    // Sep 20: before the harness's clock (Sep 23), inside the month.
+
     levi.setShares([
       planSpec([anna.inboxId], { d: '2026-09-20', s: 600, m: 60 }),
     ])
@@ -113,14 +112,13 @@ describe('a shared Plan after it happens', () => {
     const pushes = env.fake.pushes.length
     await levi.engine.publishShares()
     await anna.engine.sync()
-    // A new place would push before the Plan; after it, nothing alerts.
+
     expect(env.fake.pushes.length).toBe(pushes)
     expect(
       anna.store.getState().incomingShares[key()].details.location
     ).toEqual({ name: 'East gate' })
     expect(anna.store.getState().notifications).toHaveLength(notifications)
 
-    // Deleting it then cancels it for her, quietly too.
     levi.setShares([])
     await levi.engine.publishShares()
     await anna.engine.sync()
@@ -133,7 +131,7 @@ describe('a shared Plan after it happens', () => {
     expect(
       shareEventExpiry({ endsAt: ends, expiresAt: ends + 30 * DAY })
     ).toEqual({ expiresAt: ends + DAY, keepUntil: ends + 30 * DAY })
-    // A Follow-up already lasts a day: nothing to add.
+
     expect(shareEventExpiry({ endsAt: ends, expiresAt: ends + DAY })).toEqual({
       expiresAt: ends + DAY,
     })
@@ -201,7 +199,7 @@ describe('the bell and Plan Details after a Plan happens', () => {
       buddyShare: { from: 'levi', shareId: 'share-1' },
     } as DayPlan
     const after = { now: ends + DAY }
-    // Cancelled or declined after the Plan: it's history, not removed.
+
     expect(reconcileLinkedPlans([plan], [share('cancelled')], after)).toEqual({
       add: [],
       update: [],
@@ -214,7 +212,7 @@ describe('the bell and Plan Details after a Plan happens', () => {
         after
       ).update
     ).toEqual([])
-    // Before it, a cancel still removes it.
+
     expect(
       reconcileLinkedPlans([plan], [share('cancelled')], { now: ends - DAY })
         .remove

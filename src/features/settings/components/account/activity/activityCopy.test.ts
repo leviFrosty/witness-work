@@ -10,9 +10,6 @@ import {
 import type { ActivityEntry } from '@/lib/serverAccount/activityClient'
 import type { DeviceLabel } from '@/lib/serverAccount/deviceLabel'
 
-/** How Account Activity names devices and describes each entry (ADR 0028). */
-
-// The en-US strings themselves, without the app's i18n setup (React Native).
 vi.mock('@/lib/locales', async () => {
   const en = (await import('@/locales/en-US.json'))
     .default as unknown as Record<string, string>
@@ -68,7 +65,7 @@ describe('activityTitle', () => {
         context
       )
     expect(opened('me', 'iphone', 'ios')).toBe('Signed in on this device')
-    // This device's session before it signed in again.
+
     expect(opened('me-before', 'iphone', 'ios')).toBe(
       'Signed in on this device'
     )

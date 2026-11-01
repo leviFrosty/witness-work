@@ -5,11 +5,6 @@ import Text from '@/components/ui/MyText'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 
-/**
- * "Edit Cards", "Edit Home": the labeled way into a screen's edit mode, after
- * the last of what it edits. Long press stays the shortcut; this one says it in
- * words, so no header needs an icon for it.
- */
 export default function EditLayoutButton({
   label,
   onPress,

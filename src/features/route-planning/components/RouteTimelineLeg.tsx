@@ -14,11 +14,6 @@ import {
 import { formatRouteDistance } from '@/features/route-planning/lib/routeSummary'
 import type { TimelineLeg } from '@/features/route-planning/lib/routeTimeline'
 
-/**
- * The space between two points on the route, drawn like the space between two
- * visits in a Contact's history: the drive as a pill on the line, then any wait
- * for the next stop's set time.
- */
 export default function RouteTimelineLeg({
   leg,
   wait,
@@ -26,9 +21,9 @@ export default function RouteTimelineLeg({
   distanceUnit,
 }: {
   leg?: TimelineLeg
-  /** Arriving early for a set time: when you'd get there and how long until. */
+
   wait?: { arrive: number; minutes: number }
-  /** While stops move, drives are about to change; don't show stale ones. */
+
   hideDetails?: boolean
   distanceUnit?: DistanceUnit
 }) {

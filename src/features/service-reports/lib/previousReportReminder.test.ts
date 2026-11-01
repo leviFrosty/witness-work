@@ -62,7 +62,7 @@ describe('dueReportMonth', () => {
     minutes: 0,
     ...overrides,
   })
-  // June 2026 holds `entries` (months are 0-indexed).
+
   const june = (...entries: TimeEntry[]): TimeEntriesByYear => ({
     2026: { 5: entries },
   })

@@ -39,14 +39,10 @@ interface Command {
   phraseKey: TranslationKey
   replyKey: TranslationKey
   icon: AppIcon
-  /** Siri asks how long, and the answer is spoken back. */
+
   asksDuration?: boolean
 }
 
-/**
- * The watch's Siri phrases (`targets/intents/ServiceShortcuts.swift`), in a
- * day's order.
- */
 const COMMANDS: Command[] = [
   {
     phraseKey: 'siriShortcutStartTimer',
@@ -68,7 +64,7 @@ const COMMANDS: Command[] = [
 const ASKS = COMMANDS.map((command) => !!command.asksDuration)
 const COUNT = COMMANDS.length
 const SPOKEN_DURATION = 90
-/** Moments in one command, 0–1. */
+
 const T = {
   wordsFrom: 0.05,
   wordsTo: 0.38,
@@ -81,24 +77,17 @@ const T = {
 const BUBBLE_W = 320 - WATCH_FRAME.width - 22
 const ORB = 64
 
-/** Where one command is, 0–1, or -1 while another is playing. */
 const localTime = (loop: number, index: number) => {
   'worklet'
   const l = loop * COUNT - index
   return l >= 0 && l < 1 ? l : -1
 }
 
-/** In and out with its command; 0 while another plays. */
 const presence = (l: number) => {
   'worklet'
   return l < 0 ? 0 : seg(l, 0, 0.05) * (1 - seg(l, T.out, 1))
 }
 
-/**
- * Siri on the Apple Watch: each phrase is spoken a word at a time beside the
- * watch, the orb listens, and the watch answers — starting the timer, pausing
- * it, then adding time after asking how long.
- */
 const SiriVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const { timeDisplayFormat } = usePreferences()
@@ -107,7 +96,7 @@ const SiriVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     reduceMotion,
     introMs: 1100,
     loopMs: 4600 * COUNT,
-    // The first command, answered.
+
     restAt: 0.8 / COUNT,
   })
 
@@ -173,7 +162,6 @@ const SiriVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   )
 }
 
-/** What the user says: the phrase a word at a time, and any answer after. */
 const Spoken = ({
   index,
   loop,
@@ -189,7 +177,7 @@ const Spoken = ({
 }) => {
   const theme = useTheme()
   const local = useDerivedValue(() => localTime(loop.value, index))
-  // Languages written without spaces arrive as one phrase.
+
   const words = phrase.split(' ')
   const style = useAnimatedStyle(() => {
     const p = presence(local.value)
@@ -292,7 +280,6 @@ const Word = ({
   )
 }
 
-/** The watch's answer: Siri's question first when it needs one, then the result. */
 const Reply = ({
   index,
   loop,
@@ -370,10 +357,6 @@ const replyFrame = {
   gap: 5,
 } as const
 
-/**
- * Siri's orb: three glows circling while it listens, settling small at the
- * bottom of the screen while the watch answers.
- */
 const Orb = ({
   loop,
   colors,
@@ -390,7 +373,7 @@ const Orb = ({
       : 0
     return Math.max(first, again) * (1 - seg(l, T.out, 1))
   })
-  // Louder while words are being spoken.
+
   const level = useDerivedValue(() => {
     const l = (loop.value * COUNT) % 1
     const speaking =
@@ -437,7 +420,6 @@ const Orb = ({
   )
 }
 
-/** One of the orb's glows, circling the middle — wider as the voice rises. */
 const Glow = ({
   color,
   angle,

@@ -28,7 +28,7 @@ const buddiesEngine = vi.hoisted(() => ({
   dismissNotification: vi.fn(),
 }))
 vi.mock('@/features/buddies/lib/buddiesService', () => ({ buddiesEngine }))
-// The real one reads photos and Preferences; only the name matters here.
+
 vi.mock('@/features/buddies/lib/buddyProfile', () => ({
   buddyDisplayName: (buddy: { name: string; nickname?: string }) =>
     buddy.nickname ?? buddy.name,
@@ -100,7 +100,7 @@ describe('how an invitation shows in the bell', () => {
     expect(carInviteAnswer(invite('s', { status: 'declined' }), at)).toBe(
       'declined'
     )
-    // Answered, it stays after it would have lapsed.
+
     expect(
       carInviteAnswer(invite('s', { status: 'joined', expiresAt: NOW - 1 }), at)
     ).toBe('joined')
@@ -112,7 +112,7 @@ describe('how an invitation shows in the bell', () => {
     expect(carInviteAnswer(invite('s', { status: 'declined' }), onCar)).toBe(
       'joined'
     )
-    // Canceled is still canceled.
+
     expect(
       carInviteAnswer(invite('s', { status: 'cancelled' }), onCar)
     ).toBeNull()
@@ -133,7 +133,6 @@ type RowProps = {
 let items: NotificationItem[] = []
 let renderer: ReactTestRenderer | undefined
 
-/** The hook's items, as a host element's props. */
 function Probe() {
   return createElement('probe', { items: useSharedCarNotifications() })
 }
@@ -150,7 +149,6 @@ function render() {
 const dismiss = vi.fn()
 const closeThen = vi.fn((action: () => void) => action())
 
-/** What the tray draws for `item`: the row's props. */
 const rowOf = (item: NotificationItem) =>
   (item.render!({ unread: true, dismiss, closeThen }) as ReactElement<RowProps>)
     .props
@@ -188,7 +186,6 @@ afterEach(() => {
   items = []
 })
 
-/** Invitations from Anna, each with its bell entry. */
 function seedInvites(invites: Record<string, IncomingCarInvite>) {
   useBuddies.setState({
     carInvites: invites,
@@ -213,7 +210,7 @@ describe('Shared Cars in the bell', () => {
       car: 'Mazda CX-5',
     })
     expect(row.onDismiss).toBeUndefined()
-    // Not here yet: nothing to open.
+
     expect(row.onPress).toBeUndefined()
   })
 
@@ -246,7 +243,7 @@ describe('Shared Cars in the bell', () => {
           vehicles: [{ id: 'vehicle-here', name: 'Family Van', createdAt: 1 }],
         }),
       },
-      // Joined on another of the User's devices; not synced here yet.
+
       memberships: { cars: { 's-roster': { at: NOW - 1 } }, leftCars: {} },
     })
     render()
@@ -256,7 +253,7 @@ describe('Shared Cars in the bell', () => {
     const hereRow = rowOf(here)
     expect(hereRow).toMatchObject({ answer: 'joined', car: 'Family Van' })
     expect(hereRow.onDismiss).toBe(dismiss)
-    // The car is here: it opens Mileage.
+
     hereRow.onPress!()
     expect(navigation.navigate).toHaveBeenCalledWith('Mileage')
 
@@ -287,7 +284,6 @@ describe('Shared Cars in the bell', () => {
       open: invite('s-open'),
     })
     useBuddies.setState((state) => ({
-      // An entry whose invitation is gone altogether.
       notifications: [...state.notifications, inviteEntry('missing')],
     }))
     render()

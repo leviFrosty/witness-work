@@ -4,16 +4,10 @@ import type { CalendarMonth } from '@/lib/monthlyGoals'
 import type { PeriodTense } from '@/lib/projectedTotalCopy'
 import type { ProjectedTotalMonth } from '@/lib/projectedTotal'
 
-/**
- * One point on the Service Year pace chart. `x` counts months from September 1:
- * `0` is the start of the year, `k` the end of its k-th month, and a fractional
- * value is today. Values are running totals in minutes; `null` leaves the line
- * out at that point.
- */
 export type PacePoint = {
   x: number
   kind: 'start' | 'monthEnd' | 'today'
-  /** The Service Year month (0 = September) the point closes or falls in. */
+
   monthIndex: number
   goal: number
   logged: number | null
@@ -22,11 +16,10 @@ export type PacePoint = {
 }
 
 export type PaceMonth = CalendarMonth & {
-  /** This month's share of the Annual Goal. */
   goalMinutes: number
-  /** Logged minutes after the month's credit cap — what its report counts. */
+
   loggedMinutes: number
-  /** What remaining Plans add to the month after its credit cap. */
+
   plannedMinutes: number
 }
 
@@ -37,49 +30,36 @@ export type ServiceYearPace = {
   goalMinutes: number
   loggedMinutes: number
   projectedMinutes: number
-  /**
-   * Where the running goal stands now: up to today while the year runs, the
-   * whole goal once it's over, nothing before it starts.
-   */
+
   goalToDateMinutes: number
-  /** Last year's running total at the same point, when last year has time. */
+
   lastYearToDateMinutes: number | null
   hasLastYear: boolean
-  /** The largest value any line reaches. */
+
   maxMinutes: number
 }
 
 export type ServiceYearPaceInput = {
-  /** Start year of the Service Year (September of `serviceYear`). */
   serviceYear: number
   today: Date
-  /** Each month's share of the Annual Goal in minutes, September first. */
+
   goalMinutesByMonth: readonly number[]
-  /** The year's months from `computeProjectedTotal`, September first. */
+
   months: readonly ProjectedTotalMonth[]
-  /** Last Service Year's capped logged minutes per month, September first. */
+
   lastYearLoggedByMonth?: readonly number[] | null
 }
 
-/** Share of the chart's height the band above the goal takes once compressed. */
 const OVER_GOAL_BAND = 0.2
 
 export type PaceScale = {
-  /** Maps a running total in minutes to chart units. */
   toChart: (minutes: number) => number
-  /** Chart units at the highest total. */
+
   top: number
-  /** Totals above the goal are drawn on a log scale. */
+
   compressed: boolean
 }
 
-/**
- * The pace chart's vertical scale: linear up to the goal, so the months that
- * matter keep their true proportions, then logarithmic above it once a line
- * runs far past the goal — a 900-hour year can't squash the rest of the chart.
- * Totals only a little over the goal stay linear; the log band would stretch
- * them instead.
- */
 export const paceScale = (
   goalMinutes: number,
   maxMinutes: number
@@ -109,11 +89,6 @@ const runningTotals = (values: readonly number[]): number[] => {
   return totals
 }
 
-/**
- * Builds the Service Year pace series: the running goal, logged time up to
- * today, Plans from today on, and last year's running total for comparison.
- * Today sits mid-day within its month so it never lands on a month boundary.
- */
 export const buildServiceYearPace = ({
   serviceYear,
   today,

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-// Prepare release files deterministically; the invoking agent owns prose and translation.
 const fs = require('node:fs')
 const path = require('node:path')
 const { execFileSync } = require('node:child_process')
@@ -110,7 +109,7 @@ try {
       JSON.stringify(english, null, 2) + '\n'
     )
   }
-  // Validate every input before writing. On failure, preserve partial work for inspection.
+
   for (const [file, contents] of changes)
     fs.writeFileSync(path.join(root, file), contents)
   console.log(

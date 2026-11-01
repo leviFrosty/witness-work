@@ -13,11 +13,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Going List'>
 
-/**
- * Who's going to a buddy's Plan or Follow-up, in a sheet over its page: the
- * full list behind its row of photos. The User answers on the page. Leaves once
- * the invitation is cancelled or wiped, or its buddy is gone.
- */
 export default function GoingListScreen({ route, navigation }: Props) {
   const { from, shareId } = route.params
   const enabled = useBuddiesEnabled()
@@ -29,7 +24,7 @@ export default function GoingListScreen({ route, navigation }: Props) {
   )
   const buddies = useBuddies((state) => state.buddies)
   const dayPlans = useServiceReport((state) => state.dayPlans)
-  // A linked Plan is "Going", maybe answered on another device.
+
   const status = share ? effectiveShareStatus(share, dayPlans) : 'cancelled'
   const open = enabled && !!organizer && status !== 'cancelled'
 

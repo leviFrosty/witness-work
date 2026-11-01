@@ -1,18 +1,3 @@
-/**
- * The takeover arbiter (ADR 0021): one full-screen moment at a time.
- *
- * A **Takeover** is anything that covers the app without being asked for: the
- * update reveal, What's New, the Schedule intro, a celebration, the badges
- * welcome. Each asks for a turn with a claim; the arbiter grants one at a time,
- * in priority order, never interrupts the one showing, leaves a short gap
- * between two, and grants nothing new while something holds the screen (the
- * profile overlay, a sheet, a pushed screen, the app in the background).
- *
- * Pure: every function takes the state and the time and returns the next state,
- * so the rules are unit- and property-tested without React or timers.
- * `src/stores/takeover.ts` keeps the one live state and wakes it on time.
- */
-
 export const TAKEOVER_KINDS = [
   'update-reveal',
   'milestone-reveal',
@@ -28,57 +13,42 @@ export const TAKEOVER_KINDS = [
 export type TakeoverKind = (typeof TAKEOVER_KINDS)[number]
 
 export type TakeoverClaim = {
-  /** Stable per requester, so asking again updates rather than duplicates. */
   id: string
   kind: TakeoverKind
-  /** Lower goes first (`src/app/takeover/policy.ts`). */
+
   priority: number
   requestedAt: number
-  /** Dropped unshown once this time passes (epoch ms). */
+
   expiresAt?: number
-  /** Dropped unshown as soon as one of these holds is placed. */
+
   expiresOnHold?: readonly string[]
-  /**
-   * Granted even while something holds the screen: for takeovers the User just
-   * asked for themselves (a replay, a help button).
-   */
+
   ignoresHolds?: boolean
-  /**
-   * At most one claim per group is ever granted. When one is, the others in the
-   * group expire; later claims in it expire at once.
-   */
+
   group?: string
-  /**
-   * A failsafe for takeovers that close themselves: one still showing after
-   * this long is released (and reported as expired).
-   */
+
   maxActiveMs?: number
 }
 
 export type ActiveTakeover = TakeoverClaim & { grantedAt: number }
 
 export type ArbiterState = {
-  /** The takeover on screen, never interrupted. */
   active: ActiveTakeover | null
-  /** Claims waiting for their turn. */
+
   queue: readonly TakeoverClaim[]
-  /** Reasons nothing new may take over right now. */
+
   holds: readonly string[]
-  /**
-   * When the screen last came free (a takeover released, or the last hold
-   * lifted), for the gap before the next one. Null: never taken over.
-   */
+
   clearedAt: number | null
-  /** Groups that already had their one grant (newest last, capped). */
+
   groups: readonly string[]
-  /** Claims dropped unshown (or timed out), until their requester lets go. */
+
   expired: readonly string[]
-  /** Kinds granted this session, for "has the reveal shown yet". */
+
   shown: readonly TakeoverKind[]
 }
 
 export type ArbiterConfig = {
-  /** The pause between two takeovers, and after the way clears. */
   gapMs: number
 }
 
@@ -108,7 +78,6 @@ const expireIds = (state: ArbiterState, ids: string[]): ArbiterState =>
         expired: ids.reduce(withAdded, state.expired),
       }
 
-/** Whether a queued claim may be granted with these holds. */
 const unheld = (state: ArbiterState, claim: TakeoverClaim) =>
   claim.ignoresHolds === true || state.holds.length === 0
 
@@ -131,7 +100,7 @@ const grant = (
       ? [...state.groups.filter((g) => g !== group), group].slice(-MAX_GROUPS)
       : state.groups,
   }
-  // One grant per group: its other claims go quiet.
+
   return group
     ? expireIds(
         next,
@@ -142,10 +111,6 @@ const grant = (
     : next
 }
 
-/**
- * Applies time: drops expired claims, times out a stuck takeover, and grants
- * the next turn when the screen is free, unheld, and past the gap.
- */
 export function settleTakeovers(
   state: ArbiterState,
   now: number,
@@ -178,7 +143,6 @@ export function settleTakeovers(
   return turn ? grant(next, turn, now) : next
 }
 
-/** Asks for a turn. Asking again with the same id keeps its place in line. */
 export function requestTakeover(
   state: ArbiterState,
   claim: TakeoverClaim,
@@ -216,11 +180,6 @@ export function requestTakeover(
   )
 }
 
-/**
- * Puts a takeover on screen at once, ignoring holds and the gap: the launch
- * reveal, which is already in the first frame. Waits like any other claim if
- * something else is somehow showing.
- */
 export function seedTakeover(
   state: ArbiterState,
   claim: TakeoverClaim,
@@ -233,10 +192,6 @@ export function seedTakeover(
   return grant(state, claim, now)
 }
 
-/**
- * The requester is done: closes its takeover, or withdraws its claim if it
- * hasn't shown yet. Also forgets that it expired.
- */
 export function releaseTakeover(
   state: ArbiterState,
   id: string,
@@ -260,7 +215,6 @@ export function releaseTakeover(
   )
 }
 
-/** Something covers the tabs: nothing new takes over until it's gone. */
 export function holdTakeovers(
   state: ArbiterState,
   reason: string,
@@ -281,7 +235,6 @@ export function holdTakeovers(
   )
 }
 
-/** A hold is gone; once none are left, the gap starts over. */
 export function unholdTakeovers(
   state: ArbiterState,
   reason: string,
@@ -301,11 +254,6 @@ export function unholdTakeovers(
   )
 }
 
-/**
- * The next time `settleTakeovers` would change something with no other event: a
- * claim expiring, a stuck takeover timing out, or the gap ending. Null when
- * only an outside event (a release, a hold lifting) can.
- */
 export function nextTakeoverWake(
   state: ArbiterState,
   now: number,

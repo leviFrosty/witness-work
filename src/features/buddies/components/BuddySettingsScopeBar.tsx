@@ -14,19 +14,11 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { type Buddy, ownSettingsCount } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * The top of Buddies Settings, as breadcrumbs: All Buddies / Grace. All Buddies
- * goes back to the settings every buddy follows; the buddy opens a menu of
- * buddies to switch to (from All Buddies, to pick one). Under them, what the
- * scope means, and for a buddy with settings of their own, an undo arrow that
- * has them follow All Buddies in everything.
- */
 export default function BuddySettingsScopeBar({
   buddy,
   onSelect,
   onResetAll,
 }: {
-  /** The buddy whose settings show, or null for All Buddies. */
   buddy: Buddy | null
   onSelect: (inboxId: string | null) => void
   onResetAll: () => void
@@ -82,8 +74,7 @@ export default function BuddySettingsScopeBar({
               return {
                 id: other.inboxId,
                 title: count
-                  ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                    i18n.t('buddies_scopeChipLabel', {
+                  ? i18n.t('buddies_scopeChipLabel', {
                       name: buddyDisplayName(other),
                       count,
                     })
@@ -115,8 +106,7 @@ export default function BuddySettingsScopeBar({
         <Text style={note}>
           {buddy
             ? own > 0
-              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('buddies_scopeBuddyOwn', {
+              ? i18n.t('buddies_scopeBuddyOwn', {
                   count: own,
                   name: buddyDisplayName(buddy),
                 })
@@ -124,8 +114,7 @@ export default function BuddySettingsScopeBar({
                   name: buddyDisplayName(buddy),
                 })
             : withOwn.length > 0
-              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('buddies_scopeAllSomeOwn', { count: withOwn.length })
+              ? i18n.t('buddies_scopeAllSomeOwn', { count: withOwn.length })
               : i18n.t('buddies_scopeAllEveryone')}
         </Text>
         {buddy && own > 0 && (

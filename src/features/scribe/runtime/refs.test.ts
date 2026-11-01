@@ -77,7 +77,7 @@ describe('RefRegistry', () => {
       ref,
       pending: null,
     })
-    // The created record keeps the pending Ref instead of getting a c Ref.
+
     expect(refs.issue('c', 'contact-new')).toBe(ref)
   })
 

@@ -42,11 +42,6 @@ const PROBLEM: Record<OfferStartProblem, TranslationKey> = {
   offline: 'handoff_problemOffline',
 }
 
-/**
- * Set Up Another Device, on the phone that has the account: a QR code for the
- * new phone, then "Allow … to sign in?" with the code both show. Leaving the
- * screen cancels the code; coming back after it ended shows a new one.
- */
 const SetUpAnotherDeviceScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const route =
@@ -55,9 +50,9 @@ const SetUpAnotherDeviceScreen = () => {
     route.params?.entry ?? 'settings',
     route.params
   )
-  // The other phone gets the account's buddies only when there are any.
+
   const hasBuddies = useBuddies((state) => state.buddies.length > 0)
-  // Allow asks the device's owner first; the key goes only once they confirm.
+
   const [confirming, setConfirming] = useState(false)
 
   const allow = async (offer: OfferSession, device: string) => {

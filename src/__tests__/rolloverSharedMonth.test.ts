@@ -43,7 +43,6 @@ const ministry = (
   minutes,
 })
 
-/** The real pair Time Rollover writes: −30m on Feb 28, +30m on Mar 1. */
 const febToMarRollover = buildRolloverEntries({
   pending: [{ sourceYear: 2026, sourceMonth: FEB, minutes: 30 }],
   today: moment({ year: 2026, month: MAR, day: 1, hour: 12 }),
@@ -51,7 +50,6 @@ const febToMarRollover = buildRolloverEntries({
 })
 const [febRolloverSource, marRolloverDestination] = febToMarRollover
 
-/** February has real ministry; March so far holds only the rolled-over 30m. */
 const rolloverOnlyMarch = (...extraMarch: TimeEntry[]): TimeEntriesByYear => ({
   2026: {
     [FEB]: [ministry(FEB, 10, 10, 30), febRolloverSource],
@@ -141,7 +139,6 @@ describe('a month holding only Time Rollover entries', () => {
   })
 
   it('is not shared when both halves of two rollovers cancel out', () => {
-    // March's 30m rolled on into April: +30m on Mar 1 and −30m on Mar 31.
     const [marRolloverSource] = buildRolloverEntries({
       pending: [{ sourceYear: 2026, sourceMonth: MAR, minutes: 30 }],
       today: moment({ year: 2026, month: MAR + 1, day: 1, hour: 12 }),
@@ -199,8 +196,6 @@ describe('a month holding only Time Rollover entries', () => {
   })
 
   it('does not count the rollover entry as reported today', () => {
-    // Ministry logged ahead for Mar 3; the only entry dated today is the
-    // rolled-over 30m.
     const widget = widgetFor(rolloverOnlyMarch(ministry(MAR, 3, 1)))
 
     expect(widget.publisherState).toBe('reportedThisMonth')
@@ -256,7 +251,6 @@ describe('days with only a Time Rollover entry', () => {
   })
 
   it('neither add to nor break a Profile streak', () => {
-    // 20m on Feb 28 floored by a −30m rollover the same day.
     const lastDayRollover = buildRolloverEntries({
       pending: [{ sourceYear: 2026, sourceMonth: FEB, minutes: 30 }],
       today: moment({ year: 2026, month: MAR, day: 1, hour: 12 }),

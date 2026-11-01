@@ -18,8 +18,6 @@ describe('footerLift', () => {
   })
 
   it('lifts the footer just above a keyboard that covers it', () => {
-    // A 336 pt keyboard reaches 276 pt past the footer's resting bottom edge,
-    // plus the 12 pt gap.
     expect(footerLift(336)).toBe(288)
   })
 })

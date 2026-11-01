@@ -121,7 +121,7 @@ describe('composeScene', () => {
     const dark = composeScene({ ...INPUT, lampLevel: 0 }, 0)
     const bright = composeScene({ ...INPUT, lampLevel: 5 }, 0)
     expect(pixelAt(dark, 20, 13)).toBe(pixelAt(bright, 20, 13))
-    // At night with the lamp out, the bars are as dark as the outer frame.
+
     const night = composeScene(
       { ...INPUT, room: { ...ROOM, time: 'night' }, lampLevel: 0 },
       0
@@ -132,7 +132,7 @@ describe('composeScene', () => {
     expect(pixelAt(night, 30, 26)).toBe(frame)
     expect(pixelAt(night, 50, 27)).toBe(frame)
     expect(pixelAt(night, 37, 26)).toBe(frame)
-    // The floor far from the lamp is darker with the lamp out.
+
     expect(pixelAt(dark, 4, 96)! & 0xff0000).toBeLessThan(
       pixelAt(bright, 4, 96)! & 0xff0000
     )
@@ -148,7 +148,7 @@ describe('composeScene', () => {
     expect(early.sprite.lie).toBe(true)
     const late = petFrame({ ...INPUT.pet!, mood: 'dead', wakeStartMs: 0 }, 1500)
     expect(late).toMatchObject({ colorFromRow: null, mood: 'joy' })
-    // Awake at one heart: the faded look it keeps once the wake ends.
+
     expect(late.sprite.grey).toBe('weak')
     expect(early.sprite.grey).toBe('weak')
   })
@@ -157,7 +157,7 @@ describe('composeScene', () => {
     const bare = hashBuffer(composeScene(INPUT, 0))
     const none = { ...INPUT, room: { ...ROOM, hat: 'none' as const } }
     expect(hashBuffer(composeScene(none, 0))).toBe(bare)
-    // A hat from a newer build draws nothing.
+
     const unknown = {
       ...INPUT,
       room: { ...ROOM, hat: 'crown' },
@@ -174,7 +174,7 @@ describe('composeScene', () => {
   it('boxes the pet, taller in a hat', () => {
     const frame = petFrame(INPUT.pet!, 0)
     const bare = petBox(INPUT.pet!, frame)!
-    // The lion's sprite sits at (52, 52) and fills most of its 32 × 32.
+
     expect(bare[0]).toBeGreaterThanOrEqual(52)
     expect(bare[1]).toBeGreaterThanOrEqual(52)
     expect(bare[0] + bare[2]).toBeLessThanOrEqual(84)
@@ -182,7 +182,7 @@ describe('composeScene', () => {
     const hatted = petBox(INPUT.pet!, frame, 'tophat')!
     expect(hatted[1]).toBeLessThan(bare[1])
     expect(hatted[1] + hatted[3]).toBe(bare[1] + bare[3])
-    // A pat squishes the head down a pixel; the hat follows it.
+
     const squished = petFrame({ ...INPUT.pet!, squishUntilMs: 100 }, 50)
     expect(petBox(INPUT.pet!, squished, 'tophat')![1]).toBe(hatted[1] + 1)
   })
@@ -238,7 +238,7 @@ describe('composeScene', () => {
     const unlit = composeScene({ ...dark, room: { ...ROOM, time: 'day' } }, 0)
     const lum = (c: number | null) =>
       c === null ? 0 : ((c >> 16) & 255) + ((c >> 8) & 255) + (c & 255)
-    // The pet's chest and the wall beside it.
+
     const ratio = (x: number, y: number) =>
       lum(pixelAt(lit, x, y)) / lum(pixelAt(unlit, x, y))
     expect(ratio(68, 72)).toBeGreaterThan(ratio(30, 60) + 0.15)
@@ -259,22 +259,21 @@ describe('composeScene', () => {
       0
     )
     expect(hashBuffer(outlined)).not.toBe(hashBuffer(plain))
-    // The pet's chest is the pet's in both.
+
     expect(pixelAt(outlined, 68, 72)).toEqual(pixelAt(plain, 68, 72))
   })
 
   it("keeps the lamp's stool in front of a visitor sitting behind it", () => {
-    // The 13th seat sits on the stool's top.
     const crowd = Array.from({ length: 13 }, () => ({
       species: 'dog' as const,
       coat: 'black',
     }))
     const alone = composeScene({ ...INPUT, visitors: [] }, 0)
     const visited = composeScene({ ...INPUT, visitors: crowd }, 0)
-    // The visitor shows above the stool and between its legs…
+
     expect(pixelAt(visited, 128, 74)).not.toEqual(pixelAt(alone, 128, 74))
     expect(pixelAt(visited, 124, 80)).not.toEqual(pixelAt(alone, 124, 80))
-    // …and the stool's top and leg are drawn over it.
+
     for (const [x, y] of [
       [116, 77],
       [126, 78],
@@ -287,7 +286,7 @@ describe('composeScene', () => {
     const input: SceneInput = {
       ...INPUT,
       room: { ...ROOM, bed: 'basket', lamp: 'lantern' },
-      // A full day: five buddies' pets visiting.
+
       visitors: [
         { species: 'dog', coat: 'gold' },
         { species: 'cat', coat: 'calico' },
@@ -303,7 +302,7 @@ describe('composeScene', () => {
       particles = P.step(particles, t, 'happy', { gold: true })
       composeScene({ ...input, particles }, t, out)
     }
-    for (let t = 0; t < 2000; t += 100) frame(t) // warm the caches
+    for (let t = 0; t < 2000; t += 100) frame(t)
     const start = performance.now()
     for (let i = 0; i < 50; i++) frame(2000 + i * 100)
     const avg = (performance.now() - start) / 50

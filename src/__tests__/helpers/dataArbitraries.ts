@@ -41,29 +41,14 @@ import type { DeviceState } from '@/__tests__/helpers/syncPeer'
 import { normalizeRoleHistory, standingRole } from '@/lib/roleHistory'
 import { roleHistoryEntries } from '@/lib/syncPreferencePolicy'
 
-/**
- * Fast-check arbitraries for the persisted stores' records, for the data
- * layer's round-trip and merge properties. Values stay inside what the stores
- * write and the sync schema accepts, and lean on edges: 0 minutes, credit,
- * decimal hours, negative rollover halves, unicode/RTL/emoji text, very long
- * notes, and calendar days on DST changes and month and year boundaries.
- *
- * Ids come from small pools so the same record shows up on several devices,
- * deleted on one and re-added on another. Sync stamps come from a small range
- * so ties happen.
- */
-
-/** Every property's seed: fixed, unless `FC_SEED` reruns a failure. */
 export const fcSeed = process.env.FC_SEED
   ? Number(process.env.FC_SEED)
   : 20261022
 
-/** Sync stamps start here; tests pin the clock well after the last one. */
 export const STAMP_BASE = Date.UTC(2026, 9, 1, 12)
-/** The pinned clock: after every generated stamp, so none is clamped. */
+
 export const PINNED_NOW = STAMP_BASE + 10 * 24 * 60 * 60_000
 
-/** Sync stamps a minute apart, few enough that two records often tie. */
 export const stampArb = fc
   .integer({ min: 0, max: 30 })
   .map((n) => STAMP_BASE + n * 60_000)
@@ -71,17 +56,15 @@ export const stampArb = fc
 const idPool = (prefix: string, size = 5) =>
   fc.constantFrom(...Array.from({ length: size }, (_, i) => `${prefix}-${i}`))
 
-/** Days where calendar math tends to break. */
 export const EDGE_DAY_KEYS = [
-  // US and EU DST changes.
   '2026-03-08',
   '2026-03-29',
   '2026-10-25',
   '2026-11-01',
-  // Midnight DST changes (Havana, Santiago).
+
   '2026-03-08',
   '2026-04-05',
-  // Month, service-year and year boundaries, leap day.
+
   '2025-12-31',
   '2026-01-01',
   '2026-02-28',
@@ -96,7 +79,6 @@ export const EDGE_DAY_KEYS = [
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-/** A local calendar day, `YYYY-MM-DD`. */
 export const dayKeyArb = fc.oneof(
   fc.constantFrom(...EDGE_DAY_KEYS),
   fc
@@ -111,10 +93,8 @@ export const dayKeyArb = fc.oneof(
     )
 )
 
-/** A stored calendar day: the noon-UTC anchor, as rehydrated state holds it. */
 export const storedDayArb = dayKeyArb.map((key) => `${key}T12:00:00.000Z`)
 
-/** Names in many scripts: RTL, combining marks, emoji ZWJ sequences. */
 const SAMPLE_TEXT = [
   '',
   'Ana',
@@ -140,7 +120,6 @@ export const textArb = fc.oneof(
   { weight: 1, arbitrary: fc.string({ unit: 'grapheme', maxLength: 12 }) }
 )
 
-/** Notes, now and then very long. */
 export const noteArb = fc.oneof(
   { weight: 4, arbitrary: textArb },
   {
@@ -151,7 +130,6 @@ export const noteArb = fc.oneof(
   }
 )
 
-/** Keeps only the defined keys, as JSON would. */
 const compact = <T extends object>(value: T): T =>
   Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== undefined)
@@ -160,11 +138,8 @@ const compact = <T extends object>(value: T): T =>
 const optional = <T>(arb: fc.Arbitrary<T>, freq = 2) =>
   fc.option(arb, { nil: undefined, freq })
 
-// --- Time Entries -----------------------------------------------------------
-
 export const CATEGORY_IDS = ['cat-0', 'cat-1', 'cat-2', LDC_BUILTIN_CATEGORY_ID]
 
-/** A Time Entry's `{ hours, minutes }`: whole hours, decimals, and 0. */
 export const durationArb = fc.oneof(
   fc.record({
     hours: fc.integer({ min: 0, max: 12 }),
@@ -194,14 +169,13 @@ export const timeEntryArb = (
       compact({
         ...entry,
         ...duration,
-        // Credit is stamped from the Category; Standard entries have none.
+
         credit: entry.categoryId
           ? entry.categoryId === LDC_BUILTIN_CATEGORY_ID || entry.credit
           : undefined,
       } as unknown as TimeEntry)
     )
 
-/** Entries grouped as the store keeps them: by the stored day's year/month. */
 export const bucketEntries = (entries: TimeEntry[]): TimeEntriesByYear => {
   const years: TimeEntriesByYear = {}
   for (const entry of entries) {
@@ -217,8 +191,6 @@ export const bucketEntries = (entries: TimeEntry[]): TimeEntriesByYear => {
 
 export const flattenEntries = (reports: TimeEntriesByYear): TimeEntry[] =>
   Object.values(reports).flatMap((months) => Object.values(months).flat())
-
-// --- Plans ------------------------------------------------------------------
 
 export const dayPlanArb = (ids = idPool('plan', 5)): fc.Arbitrary<DayPlan> =>
   fc
@@ -297,8 +269,6 @@ export const recurringPlanArb = (
         },
       } as unknown as RecurringPlan)
     )
-
-// --- Contacts, Visits, field definitions ------------------------------------
 
 const CONTACT_IDS = ['contact-0', 'contact-1', 'contact-2', 'contact-3']
 
@@ -381,16 +351,13 @@ export const fieldDefArb = (
       type: optional(fc.constantFrom('text', 'number', 'date', 'url')),
       updatedAt: stampArb,
     })
-    // Same-label definitions are one field to the merge (it repairs the old
-    // per-device migrations' duplicates), so each id keeps its own label.
+
     .map((def) =>
       compact({
         ...def,
         label: `${def.id} ${def.label}`,
       } as CustomFieldDefinition)
     )
-
-// --- Categories -------------------------------------------------------------
 
 export const categoryArb = (
   ids: fc.Arbitrary<string> = fc.constantFrom('cat-0', 'cat-1', 'cat-2')
@@ -402,12 +369,10 @@ export const categoryArb = (
       isCredit: fc.boolean(),
       updatedAt: stampArb,
     })
-    // Same-name Categories are one to the merge, like field labels.
+
     .map((category) =>
       compact({ ...category, name: `${category.id} ${category.name}` })
     )
-
-// --- Mileage ----------------------------------------------------------------
 
 const VEHICLE_IDS = ['vehicle-0', 'vehicle-1']
 const FUEL_IDS = ['fuel-0', 'fuel-1']
@@ -471,9 +436,6 @@ export const tripArb = fc
   })
   .map((t) => compact(t as Trip))
 
-// --- Pet --------------------------------------------------------------------
-
-/** Gift kinds follow the seed and day, as `petGiftSeed` makes them. */
 const giftKindOn = (seed: string, day: string) =>
   GIFT_KINDS[
     [...`${seed}${day}`].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) %
@@ -502,14 +464,8 @@ const petVersionArb = fc.record({
   ),
 })
 
-/**
- * The companion as one of its saved versions. Every change to it is stamped
- * (wakes and earned items too), so one adoption's version at one stamp is the
- * same record on every device: its fields come from the adoption and stamp.
- */
 export const petArb: fc.Arbitrary<PetRecord> = fc
   .record({
-    // Two adoptions: one from before gift seeds, one with its own seed.
     adoptedOn: fc.constantFrom('2026-01-01', '2026-03-08'),
     step: fc.integer({ min: 0, max: 30 }),
   })
@@ -567,8 +523,6 @@ export const petRoomArb: fc.Arbitrary<PetRoomRecord> = fc
     } as PetRoomRecord)
   )
 
-// --- Tombstones -------------------------------------------------------------
-
 export const tombstonesArb = (
   ids: fc.Arbitrary<string>,
   maxLength = 3,
@@ -588,8 +542,6 @@ const unique = <T extends { id: string }>(
   maxLength = 4
 ) => fc.uniqueArray(arb, { maxLength, selector: (r) => r.id })
 
-// --- Synced settings --------------------------------------------------------
-
 const ROLES = [
   'publisher',
   'regularAuxiliary',
@@ -601,7 +553,6 @@ const ROLES = [
 const MONTHS = ['2026-03', '2026-09', '2026-10', '2027-01'] as const
 const TIPS = ['tip-a', 'tip-b', 'tip-c'] as const
 
-/** Every synced setting below, untouched: the defaults, without stamps. */
 export const BASE_SETTINGS: Record<string, unknown> = {
   customAccentColor: null,
   offDays: [],
@@ -627,7 +578,6 @@ const MAP_KEYS = new Set([
   'publisherHours',
 ])
 
-/** What the User can do to the settings above, one change at a time. */
 const settingEditArb: fc.Arbitrary<Record<string, unknown>> = fc.oneof(
   fc
     .constantFrom(null, '#3366ff', '#ff0066')
@@ -648,7 +598,7 @@ const settingEditArb: fc.Arbitrary<Record<string, unknown>> = fc.oneof(
     .uniqueArray(fc.constantFrom(...TIPS), { maxLength: 3 })
     .map((tips) => ({ seenTipIds: [...tips].sort() })),
   fc.constant({ homeChecklistAllDoneCelebrated: true }),
-  // A role change, with the history the store keeps alongside it.
+
   fc
     .record({
       initial: fc.constantFrom(...ROLES),
@@ -665,11 +615,6 @@ const settingEditArb: fc.Arbitrary<Record<string, unknown>> = fc.oneof(
     })
 )
 
-/**
- * Applies `change` as the preferences store's `set` does: a key whose value
- * changed is stamped, and so is every entry that changed in a per-entry map,
- * set or the role history (a removed entry keeps its stamp as a removal).
- */
 const applySettingEdit = (
   values: Record<string, unknown>,
   stamps: Record<string, number>,
@@ -707,7 +652,6 @@ const applySettingEdit = (
   }
 }
 
-/** One device's synced settings: the defaults after a few of its own edits. */
 export const settingsArb = fc
   .array(fc.tuple(settingEditArb, stampArb), { maxLength: 5 })
   .map((edits) => {
@@ -718,7 +662,6 @@ export const settingsArb = fc
     return { values, stamps }
   })
 
-/** The profile's synced fields, the same way. */
 export const profileArb = fc
   .option(fc.tuple(textArb, stampArb), { nil: undefined })
   .map((edit) =>
@@ -727,19 +670,12 @@ export const profileArb = fc
       : { values: { name: '' }, stamps: {} as Record<string, number> }
   )
 
-// --- Whole devices ----------------------------------------------------------
-
-/**
- * What one device holds in its synced stores: every id once per list, and no
- * record its own tombstone covers (a store drops the tombstone, or stamps past
- * it, when a record comes back under its id).
- */
 export const deviceArb: fc.Arbitrary<DeviceState> = fc
   .record({
     contacts: unique(
       fc
         .tuple(contactArb(), fc.boolean())
-        // Re-added after a permanent delete: marked with the add's stamp.
+
         .map(([c, readded]) =>
           readded ? { ...c, readdedAt: c.updatedAt } : c
         ),
@@ -748,7 +684,7 @@ export const deviceArb: fc.Arbitrary<DeviceState> = fc
     deletedContacts: unique(
       fc
         .tuple(contactArb(), fc.integer({ min: 0, max: 3 }))
-        // Archived copies, now and then redacted (a permanent delete).
+
         .map(([c, kind]) =>
           kind === 0
             ? (JSON.parse(
@@ -820,7 +756,7 @@ export const deviceArb: fc.Arbitrary<DeviceState> = fc
             (t) => t.id !== record.id || (record.updatedAt ?? 0) > t.deletedAt
           )
         )
-      // A contact is either active or archived on one device, never both.
+
       const archivedIds = new Set(deletedContacts.map((c) => c.id))
       return {
         contacts: contacts.filter((c) => !archivedIds.has(c.id)),
@@ -858,17 +794,6 @@ export const deviceArb: fc.Arbitrary<DeviceState> = fc
     }
   )
 
-/**
- * A device as a comparable value: every list sorted by id, the time entries
- * flattened, as JSON. Two devices with the same records compare equal whatever
- * order the merge left them in.
- *
- * `stamps: false` leaves out the settings' stamps. A merge writes the stamps it
- * compared, so a key or map entry that had none gets one (`0`, or its map's
- * stamp) without any value changing, and the device that pulls first may hold
- * stamps the other doesn't. Values decide what the User sees; stamps get their
- * own property (pulling again changes nothing).
- */
 export const deviceSnapshot = (
   device: DeviceState,
   { stamps = true }: { stamps?: boolean } = {}

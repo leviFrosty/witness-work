@@ -85,9 +85,9 @@ describe('foldArabicWithIndexMap', () => {
   it('maps folded ranges back onto the source, keeping trailing harakat', () => {
     const text = 'مُحَمَّد علي'
     const map = foldArabicWithIndexMap(text)!
-    // "محمد" is folded [0, 3]; in the source it spans "مُحَمَّد" (0-7).
+
     expect(unfoldRange([0, 3], map, text.length)).toEqual([0, 7])
-    // "علي" is folded [5, 7] and has no harakat.
+
     const [start, end] = unfoldRange([5, 7], map, text.length)
     expect(text.slice(start, end + 1)).toBe('علي')
   })

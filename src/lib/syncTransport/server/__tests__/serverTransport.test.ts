@@ -116,7 +116,7 @@ describe('serverTransport', () => {
         },
       }),
     })
-    // A slot sealed by a newer app version.
+
     const newer = sealSyncBlob(
       deriveSyncKey(new Uint8Array(32).fill(1)),
       {
@@ -229,7 +229,6 @@ describe('serverTransport', () => {
   })
 
   it('reads an app too old for the server as needing the User', () => {
-    // Update Required shows; the engine mustn't report it on every retry.
     expect(
       toServerTransportError(new HttpError('client', 426, 'upgrade_required'))
     ).toMatchObject({ code: 'unauthorized' })

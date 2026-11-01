@@ -2,15 +2,6 @@ import type { HttpResponse, RequestOptions } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
 
-/**
- * Client for the account's devices and activity log (ADR 0028,
- * docs/accounts-protocol.md "Activity and devices"): `GET /sessions`, `POST
- * /sessions/revoke`, and `GET /activity`, all Bearer. Answers are checked field
- * by field; an entry of a kind this version doesn't know, or one that doesn't
- * parse, is skipped, so the server can add kinds first.
- */
-
-/** `accountSessions.request`, or a stand-in for tests. */
 export type AuthorizedRequest = <T>(
   options: RequestOptions
 ) => Promise<HttpResponse<T>>
@@ -26,20 +17,18 @@ export type SessionPlatform = 'ios' | 'android' | 'dev'
 const isPlatform = (value: unknown): value is SessionPlatform =>
   value === 'ios' || value === 'android' || value === 'dev'
 
-/** One signed-in device: a live session. */
 export type AccountDevice = {
   sessionId: string
   platform: SessionPlatform
-  /** The sealed device label, when the session sent one. */
+
   device: string | null
-  /** The session the request's token belongs to: this device. */
+
   current: boolean
   createdAt: number
   lastActiveAt: number
   expiresAt: number
 }
 
-/** Kinds this version shows. */
 export const ACTIVITY_KINDS = [
   'account.created',
   'session.opened',
@@ -60,7 +49,6 @@ export type ActivityKind = (typeof ACTIVITY_KINDS)[number]
 const isActivityKind = (value: unknown): value is ActivityKind =>
   (ACTIVITY_KINDS as readonly unknown[]).includes(value)
 
-/** A session an entry names. */
 export type ActivitySession = {
   sessionId: string
   platform: SessionPlatform | null
@@ -71,17 +59,17 @@ export type ActivityEntry = {
   id: string
   kind: ActivityKind
   createdAt: number
-  /** The session the entry is about, or that did it. */
+
   session: ActivitySession | null
-  /** For `session.revoked` and `session.replaced`, the session that ended it. */
+
   actor: ActivitySession | null
-  /** `backup.*`; null on `backup.deleted` means every slot. */
+
   slotId: string | null
 }
 
 export type ActivityPage = {
   entries: ActivityEntry[]
-  /** The next (older) page's cursor; null on the last page. */
+
   nextCursor: string | null
 }
 
@@ -145,7 +133,6 @@ export function parseActivityEntry(value: unknown): ActivityEntry | null {
   }
 }
 
-/** The account's live sessions, newest first (`GET /accounts/v1/sessions`). */
 export async function fetchAccountDevices(
   options: ActivityClientOptions
 ): Promise<AccountDevice[]> {
@@ -161,10 +148,6 @@ export async function fetchAccountDevices(
   return sessions.flatMap((session) => parseDevice(session) ?? [])
 }
 
-/**
- * Signs another device out (`POST /accounts/v1/sessions/revoke`). Repeating it
- * can't do anything twice, so a lost answer is retried once.
- */
 export async function revokeAccountDevice(
   sessionId: string,
   options: ActivityClientOptions
@@ -180,10 +163,6 @@ export async function revokeAccountDevice(
   })
 }
 
-/**
- * One page of the account's activity, newest first (`GET
- * /accounts/v1/activity`).
- */
 export async function fetchAccountActivity(
   page: { before?: string | null; limit?: number },
   options: ActivityClientOptions

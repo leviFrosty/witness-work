@@ -6,35 +6,15 @@ import type { AuthorizedRequest } from '@/lib/serverAccount/activityClient'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 
-/**
- * Links the RevenueCat customer this device is logged in as to its server
- * account (ADR 0029, docs/accounts-protocol.md "Supporter status"), so ww-api
- * answers Supporter status from the account. The server reads the customer from
- * RevenueCat itself; this only names it.
- *
- * Linking never opens a session on its own (`open` asks for one only where the
- * caller needs one anyway, before Scribe AI or route planning). It remembers
- * the last link as a hash of the account id and RevenueCat id plus its time,
- * never the ids, and repeats it at most once a day unless forced (a purchase, a
- * restore, another id). A 503 waits out its `Retry-After`. Never throws: every
- * failure waits for the next trigger.
- */
-
-/** What ww-api accepts as `appUserId`: 8 to 64 of `A-Z a-z 0-9 _ -`. */
 const REVENUECAT_APP_USER_ID = /^[A-Za-z0-9_-]{8,64}$/
 
-/**
- * `id` when ww-api would accept it as a RevenueCat app user id, else undefined.
- * RevenueCat's anonymous ids (`$RCAnonymousID:…`) never match.
- */
 export const toRevenueCatAppUserId = (
   id: string | null | undefined
 ): string | undefined =>
   typeof id === 'string' && REVENUECAT_APP_USER_ID.test(id) ? id : undefined
 
-/** A link repeats at most this often unless forced. */
 export const LINK_REFRESH_MS = 24 * 60 * 60_000
-/** A 503 without `Retry-After` waits this long. */
+
 export const UNAVAILABLE_DEFAULT_MS = 60_000
 
 export type RevenueCatLinkReason =
@@ -45,20 +25,14 @@ export type RevenueCatLinkReason =
   | 'adopted'
   | 'entitlements'
   | 'paid_call'
-  /** The server refused a paid call as not a Supporter. */
   | 'refused'
   | 'tools'
 
 export type RevenueCatLinkOutcome =
-  /** Linked; the account's status as the server answered. */
   | { result: 'linked'; supporter: boolean; expiresAt: number | null }
-  /** The same link was made within a day. */
   | { result: 'skipped' }
-  /** No session on this device, and the caller didn't ask for one. */
   | { result: 'no_session' }
-  /** RevenueCat isn't set up, or its id isn't one ww-api accepts. */
   | { result: 'no_customer' }
-  /** Waiting out a 503's `Retry-After`. */
   | { result: 'backoff' }
   | { result: 'unavailable' }
   | { result: 'offline' }
@@ -72,28 +46,27 @@ export type SupporterStatus = {
 
 export type RevenueCatLinkDeps = {
   baseUrl: string
-  /** `accountSessions.request`. */
+
   request: AuthorizedRequest
-  /** This device's existing session's account, without opening one. */
+
   currentAccount: () => Promise<string | null>
-  /** Opens this device's session when there's none; its account. */
+
   openAccount: () => Promise<string>
-  /** The RevenueCat app user id this device is logged in as, or null. */
+
   appUserId: () => Promise<string | null>
-  /** Device-local: the last link's hash and time. */
+
   storage: { get: () => string | null; set: (value: string | null) => void }
   now: () => number
   onOutcome?: (
     outcome: RevenueCatLinkOutcome,
     reason: RevenueCatLinkReason
   ) => void
-  /** Unexpected failures (never an HTTP answer, never an id). */
+
   onError?: (error: unknown) => void
 }
 
 type StoredLink = { key: string; at: number }
 
-/** The last link's fingerprint: never the ids themselves. */
 export const linkKey = (accountId: string, appUserId: string) =>
   bytesToHex(
     sha256(utf8(`ww-account/v1/revenuecat-link\n${accountId}\n${appUserId}`))
@@ -193,11 +166,6 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     }
   }
 
-  /**
-   * Links this device's RevenueCat customer to its account when that's due.
-   * `force` repeats a link made within the day; `open` opens a session when
-   * there's none. One at a time: a call while one runs gets that one's answer.
-   */
   function ensure(
     options: {
       force?: boolean
@@ -205,8 +173,6 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
       reason: RevenueCatLinkReason
     } = { reason: 'launch' }
   ): Promise<RevenueCatLinkOutcome> {
-    // A forced link (a purchase) mustn't be lost to a routine one already
-    // running: it runs again once that one is done.
     if (flight)
       return options.force ? flight.then(() => ensure(options)) : flight
     const current = run({
@@ -224,11 +190,6 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     return current
   }
 
-  /**
-   * The account's Supporter status as ww-api answers it (`GET
-   * /accounts/v1/supporter`), for the developer Tools. Opens a session when
-   * there's none. Throws.
-   */
   async function fetchStatus(): Promise<SupporterStatus> {
     const response = await deps.request<Record<string, unknown> | null>({
       url: `${deps.baseUrl}/accounts/v1/supporter`,
@@ -249,7 +210,6 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     }
   }
 
-  /** Forgets the last link, so the next trigger links again. */
   function reset() {
     deps.storage.set(null)
     backoffUntil = 0

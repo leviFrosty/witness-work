@@ -50,7 +50,7 @@ vi.mock('@/contexts/theme', () => ({
     fontSize: () => 16,
   }),
 }))
-// US units, without the preferences store and the device modules it reads.
+
 vi.mock('@/features/mileage/hooks/useMileageFormatter', async () => {
   const { createMileageFormatter, resolveMileageUnits } = await import(
     '@/features/mileage/lib/format'
@@ -61,7 +61,6 @@ vi.mock('@/features/mileage/hooks/useMileageFormatter', async () => {
   return { default: () => format }
 })
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -175,7 +174,7 @@ const save = (tree: ReactTestRenderer) =>
   )
 const texts = (node: ReactTestInstance) =>
   node.findAll((child) => child.type === ('Text' as never))
-/** The button whose text reads `label`, and that text's color. */
+
 function button(tree: ReactTestRenderer, label: string) {
   const found = tree.root.findAll(
     (node) =>
@@ -221,11 +220,6 @@ const sharedVan = () =>
     })
   )
 
-/**
- * What Share Car… does once every put has landed: the car, its setups (pointed
- * at copies of their fuels) and its trips move to the car's space, under the
- * same ids, and leave the User's own store.
- */
 function shareCivic() {
   act(() => {
     useSharedCars.getState().saveSharedCar(
@@ -310,8 +304,6 @@ describe('the car form, as the car changes under it', () => {
     expect(input(tree, 'Name').value).toBe('Family Minivan')
     expect(select(tree).value).toBe('gas-copy')
 
-    // Another person on the car renamed it and changed its fuel; a sync
-    // brought both here.
     act(() => {
       useSharedCars.getState().updateSharedCar(SPACE, (car) => ({
         ...car,
@@ -398,7 +390,7 @@ describe('removing a car', () => {
 
     expect(useMileage.getState().vehicles).toEqual([])
     expect(mocks.goBack).toHaveBeenCalledOnce()
-    // A later render (another store write) doesn't go back again.
+
     act(() => {
       useMileage.getState().saveFuel(fuel('ev', 'Electric'))
     })

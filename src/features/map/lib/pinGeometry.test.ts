@@ -11,7 +11,7 @@ describe('groupOverlappingPins', () => {
         { id: 'a', x: 100, y: 100 },
         { id: 'far', x: 300, y: 300 },
         { id: 'b', x: 110, y: 105 },
-        // Close to b, but too far from a, which leads.
+
         { id: 'c', x: 125, y: 115 },
       ],
       22

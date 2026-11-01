@@ -19,17 +19,10 @@ import i18n from '@/lib/locales'
 import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
 interface Props {
-  /** Fixed sheet height; omit to fit the content. */
   height?: number
-  /**
-   * The backdrop was tapped, the sheet was pulled down, or (Android) Back was
-   * pressed. The screen decides whether to close.
-   */
+
   onDismissRequest: () => void
-  /**
-   * Given, a pull down or a tap on the backdrop slides the sheet away and calls
-   * this instead of `onDismissRequest`.
-   */
+
   onMinimizeRequest?: () => void
   children: ReactNode
 }
@@ -37,7 +30,7 @@ interface Props {
 const DISMISS_DISTANCE = 120
 const DISMISS_VELOCITY = 900
 const WIDE_MAX_WIDTH = 520
-// Skipped under Reduce Motion (the system setting).
+
 const SLIDE_IN = SlideInDown.duration(320)
 const FADE_IN = FadeIn.duration(220)
 const SLIDE_OUT_MS = 220
@@ -58,15 +51,6 @@ const Grabber = () => {
   )
 }
 
-/**
- * A bottom sheet drawn over the screen it opened from (a transparent modal
- * route, or a modal over a conversation): dimmed backdrop, grabber, slides up
- * on open, follows a pull down. On wide windows it floats as a centered card
- * instead of spanning the width. At rest its transform is the identity: Android
- * can rebuild the view from its first-render props (after another app's dialog,
- * such as the speech download prompt), and a sheet that started off-screen
- * would vanish.
- */
 const ScribeSheetFrame = ({
   height,
   onDismissRequest,
@@ -77,11 +61,11 @@ const ScribeSheetFrame = ({
   const insets = useSafeAreaInsets()
   const { height: windowHeight, width: windowWidth } = useWindowDimensions()
   const { isWide } = useAdaptiveLayout()
-  // Clear of iPhone Duo's vertical bar, and on one side of its fold.
+
   const pane = useWindowFoldPane()
   const wideWidth = Math.min(WIDE_MAX_WIDTH, pane.width)
   const drag = useSharedValue(0)
-  // Past the window's height, wherever the sheet starts.
+
   const away = windowHeight
 
   const minimize = () => {
@@ -111,7 +95,7 @@ const ScribeSheetFrame = ({
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: drag.value }],
   }))
-  // Clears as the sheet slides away to minimize.
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: onMinimizeRequest ? interpolate(drag.value, [0, away], [1, 0]) : 1,
   }))
@@ -138,8 +122,6 @@ const ScribeSheetFrame = ({
         <Animated.View
           entering={SLIDE_IN}
           accessibilityViewIsModal
-          // VoiceOver's escape gesture (two-finger scrub) can't reach the
-          // backdrop behind a modal view, so it asks to close here.
           onAccessibilityEscape={dismiss}
           style={[
             {

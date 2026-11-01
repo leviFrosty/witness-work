@@ -6,9 +6,6 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { analytics } from '@/lib/analytics'
 
-// Wait for RevenueCat and preserve the sync choice so access can resume safely.
-// ICloud and Google Drive only: Cloud Sync's entitlement is the server's
-// (ADR 0030), and a refusal there records itself.
 export default function SupporterSyncLapseGate() {
   const { customer } = useCustomer()
   const { isSupporter } = useIsSupporter()
@@ -20,8 +17,7 @@ export default function SupporterSyncLapseGate() {
   useEffect(() => {
     if (!hasSyncTransport()) return
     if (!supporterStatusKnown) return
-    // Writes (and reports) only when the pause actually changes, not on every
-    // launch.
+
     const pausedForLapse = usePreferences.getState().iCloudSyncPausedForLapse
     if (isSupporter || onCloud) {
       if (pausedForLapse) set({ iCloudSyncPausedForLapse: false })

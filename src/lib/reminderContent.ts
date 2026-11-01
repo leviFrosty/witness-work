@@ -18,21 +18,15 @@ const LEAD_KEYS = {
   weeks: 'reminderLeadWeeks',
 } as const
 
-/** "30 minutes", "2 hours"; null when the reminder fires at the start. */
 export function reminderLead(anchor: Date, fireAt: Date): string | null {
   const offset = deriveOffsetFromDates(anchor, fireAt)
   if (!offset) return null
   const key =
     LEAD_KEYS[offset.unit as keyof typeof LEAD_KEYS] ?? LEAD_KEYS.minutes
-  // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
+
   return i18n.t(key, { count: offset.amount })
 }
 
-/**
- * The alert text and tap data for a local reminder. One builder for every path
- * (create, edit, reschedule, sync, restore), so the wording matches. Data
- * protection mode keeps householder names and topics off the lock screen.
- */
 export function reminderContent(
   reminder: LocalReminder,
   options: {
@@ -90,8 +84,7 @@ export function reminderContent(
       ).formatted
       const body =
         days > 1
-          ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-            i18n.t('unloggedDayReminderBodyDays', { count: days })
+          ? i18n.t('unloggedDayReminderBodyDays', { count: days })
           : daysAgo === 0
             ? i18n.t('unloggedDayReminderBodyToday', { duration })
             : daysAgo === 1

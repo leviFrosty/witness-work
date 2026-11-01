@@ -14,7 +14,6 @@ const { capture, reset, getState } = vi.hoisted(() => ({
 
 vi.mock('@/lib/analytics', () => ({ analytics: { capture } }))
 
-// Mock the native module so vitest doesn't try to resolve `expo-modules-core`.
 vi.mock('../../modules/stopwatch-bridge', () => ({
   isAvailable: () => false,
   getState,
@@ -66,8 +65,6 @@ describe('computeElapsedMs', () => {
   })
 
   it('adds current segment when running', () => {
-    // startedAt is unix seconds; nowMs is unix ms.
-    // startedAt = 100s, now = 105_000ms → 5000ms segment + accumulated.
     expect(
       computeElapsedMs(
         {
@@ -137,7 +134,6 @@ describe('sessionStartMs', () => {
   })
 
   it('backs a paused session off from when it was paused', () => {
-    // Paused at 22:30 with an hour on it, saved the next morning.
     const pausedAt = new Date(2026, 9, 18, 22, 30).getTime()
     const start = sessionStartMs(
       {
@@ -200,7 +196,6 @@ describe('isSameSession', () => {
 })
 
 describe('resetStopwatchSession', () => {
-  // Saved while running: started at 1,000 s with 30 s from earlier segments.
   const running = {
     startedAt: 1_000,
     accumulatedMs: 30_000,
@@ -226,7 +221,6 @@ describe('resetStopwatchSession', () => {
   })
 
   it('still resets it after a pause', async () => {
-    // Paused at 1,090 s: 120 s in all, so the start is unchanged.
     getState.mockReturnValueOnce({
       startedAt: null,
       accumulatedMs: 120_000,
@@ -240,7 +234,6 @@ describe('resetStopwatchSession', () => {
   })
 
   it('leaves a session started after the save alone', async () => {
-    // Reset and restarted from a Live Activity while Add Time was open.
     getState.mockReturnValueOnce({
       startedAt: 2_000,
       accumulatedMs: 0,

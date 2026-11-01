@@ -17,16 +17,6 @@ import { buddyAlertText } from '@/features/buddies/lib/pushAlertText'
 import { ANNOUNCE_ORDER } from '@/lib/badges/catalog'
 import { ONE_TIME_BADGE_IDS } from '@/types/badges'
 
-/**
- * Known-answer vectors for named alerts: a fixed context and sealed events of
- * every kind, with what `describeBuddyEvent` makes of each and the English
- * alert `buddyAlertText` words from it. `alertVectors.json` holds them; vitest
- * checks the TypeScript against it, and `scripts/tests/buddies-alerts.swift`
- * checks the Notification Service Extension's Swift against the same file, so
- * an alert reads the same on iOS and Android.
- */
-
-/** 0, 1, 2, … as bytes, from `start`. */
 const counting = (length: number, start = 0): Uint8Array =>
   Uint8Array.from({ length }, (_, index) => (start + index) & 0xff)
 
@@ -36,16 +26,16 @@ const toHex = (bytes: Uint8Array) =>
 export type AlertVectorCase = {
   name: string
   event: SealedEvent
-  /** Changes to the shared context for this case only. */
+
   context?: Partial<BuddyAlertContext>
   outcome: BuddyAlertOutcome
-  /** The English alert, for outcomes that alert. */
+
   text?: { title: string; body?: string }
 }
 
 export type AlertVectors = {
   context: BuddyAlertContext
-  /** How the extension formats days and times for these texts. */
+
   display: {
     language: string
     locale: string
@@ -82,7 +72,7 @@ export function computeAlertVectors(): AlertVectors {
     v: 1,
     inboxId: me.inboxId,
     ownerSeed: toB64u(me.ownerSeed),
-    // Sam first, so finding Zoë's events means trying Sam's key and moving on.
+
     buddies: [
       {
         slot: fromSam.slotId,
@@ -110,7 +100,7 @@ export function computeAlertVectors(): AlertVectors {
 
   let nonce = 0
   const eventId = (n: number) => toB64u(counting(16, 0x80 + n))
-  /** `body` sealed by `from`, as the relay stores it. */
+
   const event = (
     n: number,
     kind: string,

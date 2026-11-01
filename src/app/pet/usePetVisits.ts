@@ -11,11 +11,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const NONE: PetVisit[] = []
 
-/**
- * The buddies' pets visiting the User's pet today (`petVisitorsFor`): none
- * while Buddies is hidden, none from buddies whose pets the User hid, and none
- * once the day moves on.
- */
 export default function usePetVisits(): PetVisit[] {
   const enabled = useBuddiesEnabled()
   const buddies = useBuddies((state) => state.buddies)
@@ -35,7 +30,7 @@ export default function usePetVisits(): PetVisit[] {
     incomingShares: Object.values(incomingShares),
     todayKey: moment(today).format('YYYY-MM-DD'),
     now: Date.now(),
-    // Deriving a share id reads the identity seed, so only once Buddies is in use.
+
     repliesFor: (shareKey) =>
       registeredInboxId !== null
         ? shareReplies[buddiesEngine.shareIdForKey(shareKey)]

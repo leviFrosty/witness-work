@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Drives pull and push against a fake container to cover two things: a stale
-// peer file starting an endless push/pull loop, and Plan deletions travelling
-// between devices.
-
 type SyncFile = { filename: string; json: string; modifiedAt: number }
 
 const runtime = vi.hoisted(() => ({
@@ -253,7 +249,7 @@ describe("a peer's file holding records deleted here", () => {
       categories: [category('k1', OLD)],
       deletedCategories: [{ id: 'k-gone', deletedAt: DELETED_AT }],
     })
-    // A retired device's file, frozen before those deletions.
+
     runtime.files = [
       peerFile('retired-iphone', {
         contacts: [contact('c1', OLD), contact('c-gone', OLD)],
@@ -267,7 +263,7 @@ describe("a peer's file holding records deleted here", () => {
         ],
       }),
     ]
-    // Backgrounded, so installing doesn't start a launch catch-up.
+
     runtime.appState = 'background'
     uninstall = installiCloudSync()
     const before = {
@@ -342,7 +338,7 @@ describe('Plan deletions over iCloud', () => {
     expect(useServiceReport.getState().deletedDayPlans).toEqual([
       { id: 'd1', deletedAt: DELETED_AT },
     ])
-    // A deletion is user data: enabling again asks before replacing it.
+
     expect(hasMeaningfulLocalData()).toBe(true)
   })
 
@@ -362,7 +358,6 @@ describe('Plan deletions over iCloud', () => {
     replaceLocalWithRemote(peek.remote)
     expect(usePet.getState().pet).toEqual(pet)
 
-    // A device that knows the pet and has none replaces it.
     replaceLocalWithRemote({
       ...peek.remote,
       petStore: { pets: [], petRooms: [], deletedPetRecords: [] },
@@ -389,7 +384,6 @@ describe('Plan deletions over iCloud', () => {
     expect(useMileage.getState().vehicles).toEqual([vehicle])
     expect(useMileage.getState().trips).toEqual([trip])
 
-    // A device that knows mileage and has none replaces it.
     replaceLocalWithRemote({
       ...peek.remote,
       mileageStore: {

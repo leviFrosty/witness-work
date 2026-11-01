@@ -5,11 +5,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 
-/**
- * The app icon and name, so a screenshot of a badge or a shared picture says
- * where it's from. Decorative for screen readers. `size` is the icon's side;
- * the name scales with it.
- */
 export default function AppWordmark({ size = 20 }: { size?: number }) {
   const theme = useTheme()
   return (

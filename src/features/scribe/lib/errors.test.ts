@@ -23,7 +23,6 @@ const LIMITED: UsageSnapshotWire = {
   asOf: 1_793_831_400_000,
 }
 
-/** A non-2xx as the session client throws it: status, code and JSON body. */
 const refused = (
   status: number,
   code: string | null,

@@ -34,7 +34,6 @@ import useTheme from '@/contexts/theme'
 import { formatRelative } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
-/** Android publishes from this device alone: no primary device or iCloud. */
 const android = Platform.OS === 'android'
 
 export default function CalendarSettings() {
@@ -45,12 +44,12 @@ export default function CalendarSettings() {
   const [sources, setSources] = useState<CalendarSource[]>([])
   const [loaded, setLoaded] = useState(false)
   const isPrimary = android || (!!deviceId && state?.primary === deviceId)
-  // With no primary yet, connecting claims it for this device.
+
   const canPublishHere = android || (!!state && (!state.primary || isPrimary))
   const primaryName = state?.devices.find(
     (device) => device.id === state.primary
   )?.name
-  // The calendar in use across devices wins over one this device used before.
+
   const shared = settings.sharedCalendar
   const local = settings.destination
   const localIsShared =
@@ -62,14 +61,14 @@ export default function CalendarSettings() {
     if (android) return
     void calendarAction(refreshPublishing).catch(() => undefined)
   }, [])
-  // Back from Settings with access allowed: carry on where it stopped.
+
   useEffect(() => {
     const subscription = resumeWhenCalendarAllowed(() => {
       void retryCalendarAction('open_settings').catch(() => undefined)
     })
     return () => subscription.remove()
   }, [])
-  // Back from Settings, maybe with iCloud Calendars on: look again.
+
   useEffect(() => {
     const subscription = addForegroundListener(() => {
       const { error, working } = useCalendarPublishing.getState()
@@ -82,7 +81,7 @@ export default function CalendarSettings() {
     void calendarAction(action).catch(() => undefined)
   }
   const recovery = calendarRecovery(error)
-  // Its own Try Again already shows while iCloud can't be checked.
+
   const checking = !settings.enabled && !canPublishHere && !state
   const showChoices = async () => {
     setLoaded(false)
@@ -124,7 +123,7 @@ export default function CalendarSettings() {
   }
   const reconnect = () => {
     if (localIsShared && local) return adopt(local)
-    // A calendar connected on another device: find it here by name.
+
     run(async () => {
       const calendars = await calendarDestinations()
       const matches = calendars.filter(
@@ -187,7 +186,7 @@ export default function CalendarSettings() {
       }}
     />
   )
-  // Fixed in Settings, by turning on iCloud Calendars.
+
   const noSource = error === 'calendarNoSourceError'
   const note = { fontSize: 12, color: theme.colors.textAlt }
   const padded = { paddingHorizontal: inputLayout.horizontalPadding }

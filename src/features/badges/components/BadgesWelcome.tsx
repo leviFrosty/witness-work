@@ -37,16 +37,9 @@ export type BadgesWelcomeAction = 'look' | 'later'
 
 const CONFETTI_DELAY_MS = 520
 
-/**
- * Once per device, for someone whose records already reached badges before they
- * ever saw one: their best medallions fanned out, how many they have, and that
- * badges count months. "Take a look" leads to their profile, where badges sit
- * at the top. Still and confetti-free under Reduce Motion.
- */
 export default function BadgesWelcome({
   onClose,
 }: {
-  /** The screen has faded out. */
   onClose: (action: BadgesWelcomeAction) => void
 }) {
   const theme = useTheme()
@@ -59,7 +52,7 @@ export default function BadgesWelcome({
   const appear = useSharedValue(reduceMotion ? 1 : 0)
   const earned = usePreferences((s) => s.earnedBadges)
   const count = earnedBadgeCount(earned)
-  // The rarest first, so the hand leads with what took longest.
+
   const best = highestEarned(earned).sort((a, b) =>
     compareBadgeKeysForAnnouncement(
       badgeKey(a.art, a.level),
@@ -69,10 +62,9 @@ export default function BadgesWelcome({
   const title = i18n.t('badges_welcomeTitle')
   const countLine = i18n.t('badges_welcomeCount' as TranslationKey, { count })
   const announcement = `${title}. ${countLine}`
-  // Five fanned coins span 272pt at scale 1; keep a margin on narrow screens.
+
   const scale = Math.min(height < 700 ? 1.2 : 1.45, (width - 48) / 272)
 
-  // Plays once: every dependency is a primitive fixed for this screen.
   useEffect(() => {
     Haptics.success().catch(() => {})
     AccessibilityInfo.announceForAccessibility(announcement)
@@ -103,7 +95,7 @@ export default function BadgesWelcome({
     appear.value = withTiming(
       0,
       { duration: 200, easing: Easing.in(Easing.quad) },
-      // Closes even when the fade is interrupted, so it can't get stuck.
+
       () => scheduleOnRN(onClose, action)
     )
   }

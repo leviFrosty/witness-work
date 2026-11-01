@@ -16,12 +16,6 @@ import {
 import { calendarBridgeAvailable } from '../../../../modules/calendar-bridge'
 import * as WatchBridge from '../../../../modules/watch-bridge'
 
-/**
- * The onboarding tour as this device should see it: platform-only pages and
- * tiles dropped, Buddies (and mentions of it) only where it shows, Calendar
- * where the build can sync it, and the Apple Watch pages on any iPhone that can
- * pair one.
- */
 const useTourPages = (buddies: boolean): RevealPage[] => {
   const theme = useTheme()
   const { isTablet } = useDevice()

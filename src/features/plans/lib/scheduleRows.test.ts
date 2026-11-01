@@ -21,7 +21,7 @@ describe('buildScheduleRows', () => {
   it('splits a week that straddles two months under the new month’s name', () => {
     const schedule = build()
     const october = monthRows(schedule, { year: 2026, month: 9 })!
-    // Oct 1 2026 is a Thursday: Sep 27–30 end September's last week…
+
     expect(days(schedule.rows[october.header - 1])).toEqual([
       27,
       28,
@@ -31,13 +31,13 @@ describe('buildScheduleRows', () => {
       null,
       null,
     ])
-    // …October's name sits over Thursday's column…
+
     expect(schedule.rows[october.header]).toMatchObject({
       kind: 'month',
       month: { year: 2026, month: 9 },
       column: 4,
     })
-    // …and Oct 1–3 open its first week.
+
     expect(october.first).toBe(october.header + 1)
     expect(days(schedule.rows[october.first])).toEqual([
       null,
@@ -71,7 +71,7 @@ describe('buildScheduleRows', () => {
       kind: 'serviceYear',
       serviceYear: 2026,
     })
-    // Aug 30–31 2026 end the previous Service Year's last row.
+
     expect(days(schedule.rows[september.header - 2])).toEqual([
       30,
       31,
@@ -97,7 +97,7 @@ describe('buildScheduleRows', () => {
   it('follows the Start of Week', () => {
     const schedule = build(1)
     const november = monthRows(schedule, { year: 2026, month: 10 })!
-    // Nov 1 2026 is a Sunday: the last column of a Monday-first week.
+
     expect((schedule.rows[november.header] as ScheduleMonthRow).column).toBe(6)
     expect(days(schedule.rows[november.first])).toEqual([
       null,
@@ -115,7 +115,7 @@ describe('row lookups', () => {
   it('finds the rows a month spans and the row of each day', () => {
     const schedule = build()
     const rows = monthRows(schedule, { year: 2026, month: 9 })!
-    // October 2026 (Sunday-first) runs over five week rows.
+
     expect(rows.last - rows.first).toBe(4)
     expect(schedule.dayRow.get('2026-10-01')).toBe(rows.first)
     expect(schedule.dayRow.get('2026-10-31')).toBe(rows.last)

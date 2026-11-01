@@ -28,13 +28,6 @@ export type PetUnlockRevealAction = 'decorate' | 'done'
 const ART_HEIGHT = 150
 const ART_WIDTH = 240
 
-/**
- * The full-screen moment for a room item or hat, when the User taps its unlock
- * toast or tray item: a dimmed backdrop and, on a paper card in the pet
- * screens' game look, the item in the pet's own room springing in, with a
- * success haptic. "Try it on" (a hat) or "Decorate Room" opens the pet's
- * details at the item. Still under Reduce Motion.
- */
 export default function PetUnlockReveal({
   item,
   petName,
@@ -42,7 +35,7 @@ export default function PetUnlockReveal({
 }: {
   item: RoomItemId
   petName: string
-  /** The overlay has faded out. */
+
   onClose: (action: PetUnlockRevealAction) => void
 }) {
   const theme = useTheme()
@@ -76,7 +69,7 @@ export default function PetUnlockReveal({
     appear.value = withTiming(
       0,
       { duration: 180, easing: Easing.in(Easing.quad) },
-      // Closes even when the fade is interrupted, so the card can't get stuck.
+
       () => scheduleOnRN(onClose, action)
     )
   }

@@ -31,31 +31,8 @@ import { InstallIdUnavailableError } from '@/lib/installId'
 
 interface Props {}
 
-/**
- * Foreground reconciles at most this often. A change to the account file fires
- * `remote-change` on its own (iCloud's metadata query, Drive's poll), and
- * entitlement changes re-run it through customer state, so the foreground pass
- * is only a backstop. Each one costs an account-file read, a Drive request on
- * Android.
- */
 const FOREGROUND_RECONCILE_INTERVAL_MS = 15 * 60_000
 
-/**
- * Keeps this device's account id in agreement with the user's other devices
- * (ADR 0011). Runs the reconcile pass — read the account file, then claim /
- * adopt / refresh per `decideAccountAction` — whenever entitlement state, cloud
- * availability, or the remote file changes, and on foreground.
- *
- * This is what makes Supporter multi-device work with no app account: the
- * device that holds the entitlement claims its id; every other device on the
- * same Apple ID adopts it via `Purchases.logIn`, becoming the same RevenueCat
- * customer, so the entitlement (and later its lapse) applies everywhere. On
- * Android the file lives in the Google Drive app data folder (ADR 0019), so
- * devices share it once each has connected the same Google Account.
- *
- * Must live inside `CustomerProvider`: adoption replaces the active RevenueCat
- * user, and the fresh CustomerInfo has to land in customer state immediately.
- */
 const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   const { customer, ready, setCustomer } = useCustomer()
   const [accountId, setAccountIdState] = useState<string | null>(() => {
@@ -63,21 +40,17 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
       return getOrCreateAccountId()
     } catch (error) {
       logger.error('[Account] account id resolution failed', error)
-      // `installId` already reported it.
+
       if (!(error instanceof InstallIdUnavailableError))
         errorTracking.captureException(error)
       return null
     }
   })
-  // Optimistic until the first reconcile probes the container: `isAvailable`
-  // only proves iCloud sign-in (or a connected Google Drive); iCloud Drive
-  // being disabled for the app surfaces as a read rejection and flips this
-  // false.
+
   const [iCloudSharingAvailable, setICloudSharingAvailable] = useState(
     () => hasSyncTransport() && syncTransport().isAvailable()
   )
 
-  // Latest customer state for event-driven reconciles without resubscribing.
   const customerRef = useRef(customer)
   const readyRef = useRef(ready)
   useEffect(() => {
@@ -85,16 +58,12 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     readyRef.current = ready
   }, [customer, ready])
 
-  // What RevenueCat is identified as, read by reconcile: a follow-up queued
-  // behind the pass that changed it still runs with the old render's state.
   const accountIdRef = useRef(accountId)
   const setAccountId = useCallback((id: string) => {
     accountIdRef.current = id
     setAccountIdState(id)
   }, [])
 
-  // True until RevenueCat is logged in as this device's account id. Before
-  // `configure` there's nothing to identify yet.
   const isRevenueCatAnonymous = useCallback(
     async (): Promise<boolean> =>
       readyRef.current &&
@@ -109,24 +78,16 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     async (reason: string): Promise<void> => {
       perf.count('account:reconcile')
       if (!readyRef.current) return
-      // Entitlement truth isn't known until the initial CustomerInfo lands;
-      // acting on the transient "no customer" state could mis-claim.
+
       if (customerRef.current === null) return
 
       if (inFlightRef.current) {
-        // Coalesce: one queued follow-up is enough — it re-reads everything.
         queuedReasonRef.current ??= reason
         return
       }
       inFlightRef.current = true
       try {
         if (await isRevenueCatAnonymous()) {
-          // RevenueCat stayed anonymous: the Keychain refused the id at launch
-          // (before the first unlock), or the launch's logIn failed (a first
-          // launch offline; later launches reuse the SDK's saved user id). This
-          // is the only place that identifies it afterwards; until the id reads
-          // and RevenueCat answers this throws, and the next return to the app
-          // or the connection coming back tries again.
           const id = getOrCreateAccountId()
           const { customerInfo } = await Purchases.logIn(id)
           const changed = id !== accountIdRef.current
@@ -135,13 +96,10 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
           logger.log('[Account] identified after launch', { reason })
           if (changed) {
-            // A follow-up queued meanwhile would still see the anonymous
-            // customer. The new id re-runs reconcile with matching state.
             queuedReasonRef.current = null
             return
           }
-          // Same id, so nothing re-runs this: carry on with the identified
-          // customer.
+
           customerRef.current = customerInfo
         }
 
@@ -151,9 +109,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           return
         }
 
-        // A different Apple Account clears the adopted id. Until RevenueCat
-        // is back on this device's own id, the previous account's id (and
-        // its entitlement) must not claim the new account's file.
         checkICloudIdentity('account_reconcile')
         const current = getOrCreateAccountId()
         if (current !== accountIdRef.current) {
@@ -169,20 +124,16 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             message: `re-identify (${reason})`,
             level: 'info',
           })
-          // The new id re-runs reconcile with matching customer state.
+
           return
         }
 
-        // Don't trust an early empty directory listing — claiming before the
-        // container materializes would shadow another device's real claim.
         const scanned = await syncTransport().waitForInitialScan(5000)
 
         let read
         try {
           read = await readAccountFile()
         } catch (error) {
-          // Signed in but container unreachable (iCloud Drive off for the
-          // app) — expected for a minority of users, not an error.
           logger.warn('[Account] account file unreadable', {
             reason,
             error: (error as Error).message,
@@ -192,10 +143,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         }
         setICloudSharingAvailable(true)
         if (read.pending) {
-          // The file still downloading may be another device's claim, so no
-          // decision is safe yet — a claim would overwrite it. Pending files
-          // stay unobserved, so the metadata query reports the file again
-          // once it lands and `remote-change` re-runs this.
           logger.log('[Account] deferred (account file downloading)', {
             reason,
           })
@@ -210,8 +157,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         switch (action.type) {
           case 'claim': {
             if (!file && !scanned) {
-              // Empty listing before the initial scan finished is not proof
-              // of absence. Skip; the next trigger retries.
               logger.log('[Account] claim deferred (initial scan incomplete)')
               return
             }
@@ -229,7 +174,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             adoptAccountId(action.accountId)
             setAccountId(action.accountId)
             setCustomer(customerInfo)
-            // Another RevenueCat customer: link it to the server account.
+
             void ensureRevenueCatLinked({ force: true, reason: 'adopted' })
             logger.log('[Account] adopted shared account id', { reason })
             errorTracking.addBreadcrumb({
@@ -240,9 +185,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             return
           }
           case 'refresh': {
-            // The file disagrees with our cached entitlement for our own id —
-            // another device purchased or lapsed. Fetch the truth, then
-            // correct the file only if IT was the stale side.
             Purchases.invalidateCustomerInfoCache()
             const info = await Purchases.getCustomerInfo()
             setCustomer(info)
@@ -260,8 +202,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             return
         }
       } catch (error) {
-        // Offline logIn/getCustomerInfo is expected and retried on the next
-        // trigger; anything else is worth a report.
         if (isOfflineError(error)) {
           logger.warn('[Account] reconcile offline', { reason })
         } else if (error instanceof InstallIdUnavailableError) {
@@ -282,8 +222,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     [isRevenueCatAnonymous, setAccountId, setCustomer]
   )
 
-  // A new id (identified, adopted, or reset) re-runs reconcile once customer
-  // state matches it.
   const reconciledIdRef = useRef(accountId)
   useEffect(() => {
     if (reconciledIdRef.current === accountId) return
@@ -291,16 +229,12 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     void reconcile('account-id')
   }, [accountId, reconcile])
 
-  // Boot + entitlement transitions (purchase, restore, lapse, adoption).
   const customerKnown = customer !== null
   const entitled = supporterSinceDate(customer) !== null
   useEffect(() => {
     void reconcile('customer-state')
   }, [reconcile, ready, customerKnown, entitled])
 
-  // Every return to the app and every reconnect until RevenueCat is
-  // identified; the throttled foreground pass below may not run for 15
-  // minutes.
   useEffect(() => {
     const retry = (reason: string) =>
       void isRevenueCatAnonymous().then(
@@ -320,8 +254,6 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   useEffect(() => {
     if (!hasSyncTransport()) return
 
-    // Same echo-burst problem the sync engine has: iCloud re-stamps mtimes as
-    // a write replicates, producing trailing notifications ~500ms apart.
     const debouncedReconcile = debounce(
       (reason: string) => void reconcile(reason),
       500,

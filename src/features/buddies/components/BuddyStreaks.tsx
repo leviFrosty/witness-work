@@ -18,14 +18,9 @@ import {
 } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/** Rows in the popover; the rest are in the Buddies list. */
 const MAX_ROWS = 5
 const AVATAR_SIZE = 24
 
-/**
- * Buddies' streaks under the User's own in the Home streak popover, longest
- * first. Each opens that buddy. Nothing shows until a buddy shares one.
- */
 export default function BuddyStreaks({
   closeThen,
 }: Pick<PopoverControls, 'closeThen'>) {

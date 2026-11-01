@@ -23,13 +23,11 @@ const entry = (day: string, patch: Partial<TimeEntry> = {}): TimeEntry => ({
   ...patch,
 })
 
-/** Days out, every one with a Time Entry unless listed in `visitsOnly`. */
 const daysOut = (days: string[], visitsOnly: string[] = []): DaysOut => ({
   days: new Set([...days, ...visitsOnly]),
   entryDays: new Set(days),
 })
 
-/** Days `from` through `to` of October 2026. */
 const october = (from: number, to: number) =>
   Array.from(
     { length: to - from + 1 },
@@ -43,7 +41,7 @@ describe('petDaysOut', () => {
         2026: {
           9: [
             entry('2026-10-02'),
-            // The "shared" checkbox: a 0-minute entry.
+
             entry('2026-10-03', { hours: 0 }),
             entry('2026-10-04', { rollover: true }),
           ],
@@ -145,12 +143,11 @@ describe('petEarned', () => {
     expect(one).toMatchObject({ daysOut: 1, shared: 7 })
     expect(coinsOf(one)).toBe(8)
     expect(coinsOf(earned({ days: ['2026-10-20'] }))).toBe(1)
-    // A Visit alone isn't a report.
+
     expect(coinsOf(earned({ visitsOnly: ['2026-10-20'], monthly: true }))).toBe(
       1
     )
-    // A check before the adoption day counts for that month's least, not as a
-    // day out; a month before adoption earns nothing.
+
     const before = { days: ['2026-10-03'], adoptedOn: '2026-10-10' }
     expect(coinsOf(earned({ ...before, monthly: true }))).toBe(8)
     expect(coinsOf(earned(before))).toBe(0)
@@ -159,7 +156,7 @@ describe('petEarned', () => {
         earned({ days: ['2026-09-20'], adoptedOn: '2026-10-10', monthly: true })
       )
     ).toBe(0)
-    // More days out count once they earn more than that.
+
     expect(coinsOf(earned({ days: october(1, 31), monthly: true }))).toBe(31)
   })
 
@@ -191,7 +188,7 @@ describe('the wallet', () => {
 
   it('leaves earned minus spent, never below 0', () => {
     expect(walletOf(20, 11)).toBe(9)
-    // Two devices bought offline and overspent.
+
     expect(walletOf(10, 14)).toBe(0)
   })
 

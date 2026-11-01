@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BackupSlot } from '@/lib/serverAccount/backupClient'
 
-// The restore offer on a new phone (ADR 0026 §4, ADR 0030 §3): Cloud Sync
-// skips it only when another device's slot is at least as new as the newest
-// backup. Listings are fakes; the alert answers Not Now.
-
 const fake = vi.hoisted(() => ({
   newestSyncAt: null as number | null,
   backups: [] as BackupSlot[] | Error,
@@ -20,7 +16,7 @@ vi.mock('react-native', () => ({
       buttons: { onPress?: () => void }[]
     ) => {
       fake.alerts.push(title)
-      // Not Now.
+
       buttons[0]?.onPress?.()
     },
   },
@@ -106,7 +102,6 @@ beforeEach(() => {
 
 describe('offerRestore on a new phone Cloud Sync covers', () => {
   it('offers a backup 30 days newer than the newest sync slot', async () => {
-    // A rarely used iPad's slot, and the lost iPhone's backup from iCloud.
     fake.newestSyncAt = T
     fake.backups = [backupAt(T + 30 * DAY)]
 
@@ -135,7 +130,6 @@ describe('offerRestore on a new phone Cloud Sync covers', () => {
   })
 
   it('skips it for a device on both, whose backup trails its slot', async () => {
-    // Its slot 5 s after the edit, its backup after the 30 s debounce.
     fake.newestSyncAt = T
     fake.backups = [backupAt(T + 25_000)]
     expect(await offerRestore('fresh_install')).toEqual({

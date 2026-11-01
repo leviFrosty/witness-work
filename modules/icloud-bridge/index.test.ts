@@ -36,8 +36,6 @@ describe('readFiles', () => {
 
     const read = await readFiles(isAccountFile)
 
-    // Reading marks a file observed natively, so the phone's data file must
-    // never reach native from the account reader.
     expect(readFilesNative).toHaveBeenCalledWith([
       'witness-work-account.json',
       'witness-work-account 2.json',
@@ -69,7 +67,6 @@ describe('readFiles', () => {
     }
     const { readFiles } = await import('./index')
 
-    // Old `readAll` drops still-downloading files without saying so.
     expect(await readFiles(isAccountFile)).toEqual({
       files: [file('witness-work-account.json')],
       pending: null,

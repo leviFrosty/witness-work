@@ -45,10 +45,10 @@ describe('sync clock', () => {
     )
     const clock = await import('@/lib/syncClock')
     await clock.refreshSyncClock()
-    // Asleep for two hours: the monotonic clock stood still.
+
     vi.setSystemTime(trusted + 2 * 60 * 60_000)
     expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000)
-    // A wall clock set back an hour doesn't move sync time backwards.
+
     elapsed += 2 * 60 * 60_000 + 1000
     vi.setSystemTime(trusted + 60 * 60_000)
     expect(clock.syncNow()).toBe(trusted + 2 * 60 * 60_000 + 1000)
@@ -101,7 +101,7 @@ describe('sync clock', () => {
     elapsed += clock.calibrationBackoffMs(1)
     expect(await clock.refreshSyncClock()).toBeNull()
     expect(fetch).toHaveBeenCalledTimes(2)
-    // The second failure waits twice as long.
+
     elapsed += clock.calibrationBackoffMs(1)
     await clock.refreshSyncClock()
     expect(fetch).toHaveBeenCalledTimes(2)

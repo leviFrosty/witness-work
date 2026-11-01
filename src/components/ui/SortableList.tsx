@@ -29,56 +29,41 @@ import {
   rowSlots,
 } from '@/lib/sortableRow'
 
-/**
- * A touch held this long, then moved, drags its row; a quicker move scrolls.
- * Longer than a chip row's, since the list scrolls the same way it drags.
- */
 const HOLD_MS = 350
-/** Movement that ends a hold, as a drag or a scroll. */
+
 const SLOP = 8
-/** Movement on the drag handle that starts a drag. */
+
 const HANDLE_SLOP = 2
-/**
- * How near the scroll view's edge a dragged row starts scrolling it, at most;
- * short scroll views use a smaller share of their height.
- */
+
 const EDGE = 64
-/** Travel toward an edge before it scrolls, so a drag begun there doesn't. */
+
 const EDGE_TRAVEL = 16
-/** Scroll speed, in points per second, with the finger at the very edge. */
+
 const MAX_SCROLL_SPEED = 700
 const SETTLE = { duration: 200 }
 const LIFT_SCALE = 1.02
 
-/** Drag state shared by the list and its rows, on the UI thread. */
 type ListState = {
   order: SharedValue<readonly string[]>
   heights: SharedValue<RowWidths>
   slots: SharedValue<Record<string, number>>
-  /** Every row has been measured, so each sits at its slot. */
+
   placed: SharedValue<boolean>
   active: SharedValue<string | null>
-  /** The dragged row's top edge in the list. */
+
   dragTop: SharedValue<number>
-  /** The dragged row's slot and the scroll offset when the drag began. */
+
   start: SharedValue<{ top: number; scroll: number }>
-  /** How far the finger has moved since then. */
+
   travel: SharedValue<number>
-  /** Scroll offset while dragging, including auto-scroll. */
+
   scroll: SharedValue<number>
-  /** The finger, in window points, for auto-scroll. */
+
   fingerY: SharedValue<number>
-  /** The scroll view's frame and the list's top in its content, at drag start. */
+
   frame: SharedValue<{ top: number; height: number; listTop: number }>
 }
 
-/**
- * A vertical list the User reorders by dragging: touch and hold a row, then
- * drag it, or drag at once from the row's trailing `handleWidth` points (where
- * a grip sits). A quick swipe still scrolls `scrollRef`, which also scrolls
- * while a dragged row nears its edges. A pointer drags without the hold. Screen
- * readers need their own way to move rows; give rows `accessibilityActions`.
- */
 export default function SortableList<T>({
   data,
   keyExtractor,
@@ -92,22 +77,21 @@ export default function SortableList<T>({
   data: T[]
   keyExtractor: (item: T) => string
   renderItem: (item: T, index: number) => ReactElement
-  /** Called once per drop that changed the order. */
+
   onReorder: (next: T[]) => void
-  /** The scroll view holding the list. */
+
   scrollRef: AnimatedRef<Animated.ScrollView>
   enabled?: boolean
-  /** Touches this close to a row's trailing edge drag without the hold. */
+
   handleWidth?: number
-  /** A drag began or ended; e.g. to stop the scroll view scrolling meanwhile. */
+
   onDragChange?: (dragging: boolean) => void
 }) {
   const keys = data.map(keyExtractor)
   const keySignature = keys.join('\n')
   const listRef = useAnimatedRef<Animated.View>()
   const scrollOffset = useScrollOffset(scrollRef)
-  // Rows sit in a normal column until each is measured, then move to absolute
-  // slots, so a drop never waits on a re-layout to land.
+
   const [heights, setHeights] = useState<Record<string, number>>({})
   const [widths, setWidths] = useState<Record<string, number>>({})
   const measured = keys.length > 0 && keys.every((key) => key in heights)
@@ -129,7 +113,6 @@ export default function SortableList<T>({
     frame: useSharedValue({ top: 0, height: 0, listTop: 0 }),
   }
 
-  // The owner's order replaces the list's, except mid-drag.
   useEffect(() => {
     if (list.active.value === null)
       list.order.value = keySignature ? keySignature.split('\n') : []
@@ -250,10 +233,6 @@ export default function SortableList<T>({
   )
 }
 
-/**
- * Keeps the dragged row under the finger as the finger or the list scrolls, and
- * moves it past the rows it crosses. Returns whether the order changed.
- */
 function follow(list: ListState, key: string): boolean {
   'worklet'
   const { top, scroll } = list.start.value
@@ -287,9 +266,9 @@ function SortableRow({
   itemKey: string
   list: ListState
   enabled: boolean
-  /** The row's measured width, 0 until it's laid out. */
+
   width: number
-  /** The drag handle's width, at the row's trailing edge. */
+
   handleWidth: number
   rtl: boolean
   onMeasure: (key: string, height: number, width: number) => void
@@ -299,7 +278,6 @@ function SortableRow({
   onOrderChanged: () => void
   children: ReactElement
 }) {
-  /** Top edge while sliding to a new slot; otherwise the row sits at it. */
   const y = useSharedValue(0)
   const sliding = useSharedValue(false)
   const touch = useSharedValue({ y: 0, at: 0, pointer: false, handle: false })
@@ -308,8 +286,6 @@ function SortableRow({
     withTiming(list.active.value === key ? 1 : 0, SETTLE)
   )
 
-  // Slides aside while another row is dragged past, and into its slot when
-  // dropped. Any other change (measuring, a row added or removed) jumps.
   useAnimatedReaction(
     () => [list.slots.value[key], list.active.value] as const,
     ([slot, active], previous) => {

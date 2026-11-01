@@ -10,10 +10,6 @@ import type { CarInvitePayload, SharedCarMember } from '@/types/sharedCars'
 
 let last: unknown = null
 
-/**
- * Runs `work` and returns its promise; its result (or `{ error }`) also lands
- * in `last`, since eval doesn't await.
- */
 function tracked<T>(work: () => Promise<T>): Promise<T> {
   last = { pending: true }
   const run = work()
@@ -29,20 +25,14 @@ function tracked<T>(work: () => Promise<T>): Promise<T> {
   return run
 }
 
-/** A made-up Shared Car's trip: who logged it (`'me'`, or a name in `people`). */
 type LocalCarTrip = {
   by: string
   distanceMiles: number
-  /** `YYYY-MM-DD`; today when absent. */
+
   date?: string
   note?: string
 }
 
-/**
- * A made-up Shared Car on this device only (`addLocalCar`): the User as `me`,
- * everyone in `people` by name, `owner` as the one who shared it (the User when
- * absent), and `trips`, newest last.
- */
 function addLocalCar({
   name,
   me = 'Me',
@@ -80,8 +70,7 @@ function addLocalCar({
       lastSyncedAt: now,
       members,
       memberRecords: members,
-      // Made up, like the car: its space isn't on the server, so no key is
-      // ever wrapped to anyone on it.
+
       spaceMembers: members.map(({ memberId, joinedAt }) => ({
         memberId,
         dhPub: '',
@@ -106,15 +95,6 @@ function addLocalCar({
   return spaceId
 }
 
-/**
- * Shared Cars (ADR 0037) for the verify harness, on the app's own engine.
- * `state()` reads this device's cars synchronously, without keys or tokens;
- * every other call returns its promise and puts the result in `last()`.
- *
- * Two devices: `shareCar(vehicleId)` here, `createInvite(spaceId, { name,
- * inboxId })` (the other device's `__WW_DEV__.stores.buddies` has its
- * `registeredInboxId`), then `joinCar(invite)` there.
- */
 export const sharedCarsHarness = {
   state: () => {
     const { cars, memberships, seeding, pendingEnds, joining } =
@@ -172,14 +152,10 @@ export const sharedCarsHarness = {
       })),
     }
   },
-  /** Shares one of the User's own cars (resumes one that stopped part-way). */
+
   shareCar: (vehicleId: string) =>
     tracked(() => sharedCarsEngine.shareCar(vehicleId)),
-  /**
-   * Invites a person: `tag` as `memberTag` makes it, or their Buddies `inboxId`
-   * to make it here. Resolves the `car.invite` payload `joinCar` takes on their
-   * device.
-   */
+
   createInvite: (
     spaceId: string,
     invitee: { name: string; tag?: string; inboxId?: string }
@@ -192,7 +168,7 @@ export const sharedCarsHarness = {
     ),
   cancelInvite: (spaceId: string, inviteId: string) =>
     tracked(() => sharedCarsEngine.cancelInvite(spaceId, inviteId)),
-  /** The invitee declined: their `tag`, or their Buddies `inboxId` to make it. */
+
   declineInvite: (
     spaceId: string,
     inviteId: string,
@@ -207,7 +183,7 @@ export const sharedCarsHarness = {
     ),
   joinCar: (invite: CarInvitePayload) =>
     tracked(() => sharedCarsEngine.joinCar(invite)),
-  /** Syncs one car, or every car without `spaceId`. */
+
   sync: (spaceId?: string) =>
     tracked<unknown>(() =>
       spaceId ? sharedCarsEngine.syncCar(spaceId) : sharedCarsEngine.sync()
@@ -218,16 +194,10 @@ export const sharedCarsHarness = {
     tracked(() => sharedCarsEngine.removeMember(spaceId, memberId)),
   stopSharing: (spaceId: string) =>
     tracked(() => sharedCarsEngine.stopSharing(spaceId)),
-  /**
-   * Puts a made-up Shared Car on this device only, for screens that only read
-   * Shared Cars (Mileage's person filter, Logged By, the car form's People).
-   * Returns its `spaceId`. Its space isn't on the server, so a sync ends it:
-   * use it while Buddies hasn't started here (no `registeredInboxId`), which
-   * keeps the Shared Cars runtime off.
-   */
+
   addLocalCar,
-  /** Each car's live signal: status, last `hello`/`changed`, recent events. */
+
   live: () => useSharedCarsSession.getState().live,
-  /** The last call's result, or `{ error: code }`. */
+
   last: () => last,
 }

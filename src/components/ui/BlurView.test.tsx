@@ -1,10 +1,6 @@
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// With iOS Reduce Transparency on, the system drops expo-blur's blur but leaves
-// the view clear, so the wrapper paints it solid instead, and follows the
-// setting as it's toggled.
-
 const a11y = vi.hoisted(() => ({
   reduceTransparency: false,
   listeners: new Set<(value: boolean) => void>(),

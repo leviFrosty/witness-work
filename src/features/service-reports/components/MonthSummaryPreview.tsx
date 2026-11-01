@@ -15,10 +15,6 @@ import { formatDisplay } from '@/lib/dates'
 
 export const MONTH_PREVIEW_WIDTH = 300
 
-/**
- * Context-menu preview for a condensed month row: the month's report at a
- * glance — status and goal, time against the goal, and Bible studies.
- */
 const MonthSummaryPreview = ({
   month,
   year,
@@ -31,10 +27,10 @@ const MonthSummaryPreview = ({
   month: number
   year: number
   completedMinutes: number
-  /** 0 when the month has no Monthly Goal. */
+
   goalMinutes: number
   statusLabel: string
-  /** Hours roles show time; checkbox months show participation. */
+
   showsTime: boolean
   sharedInMinistry: boolean
 }) => {
@@ -128,7 +124,7 @@ const MonthSummaryPreview = ({
             fontSize: theme.fontSize('sm'),
           }}
         >
-          {/* @ts-expect-error TranslationKey doesn't handle keys that contain objects. */}
+          {}
           {i18n.t('studiesCount', { count: studies })}
         </Text>
       </View>

@@ -21,7 +21,7 @@ describe('keptWakes', () => {
     const wakes = Array.from({ length: PET_WAKES_KEPT + 30 }, (_, n) =>
       day(n * 2)
     )
-    // 150 wakes two days apart span under 400 days: all stay.
+
     expect(keptWakes(wakes)).toHaveLength(wakes.length)
   })
 

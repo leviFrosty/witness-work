@@ -156,7 +156,7 @@ describe('mergePayload — conversation fields', () => {
     expect(result.conversationFieldDefs).toEqual([])
     expect(result.deletedConversationFieldDefs).toEqual([tombstone])
     expect(result.conversations[0].customFields).toEqual({})
-    // Cleanup keeps the visit's LWW timestamp.
+
     expect(result.conversations[0].updatedAt).toBe(stale.updatedAt)
   })
 

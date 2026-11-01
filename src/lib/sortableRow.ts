@@ -1,7 +1,5 @@
-/** Item widths by key, as measured. */
 export type RowWidths = Record<string, number>
 
-/** Left edge of each item when laid out in `order`, `gap` apart. */
 export function rowSlots(
   order: readonly string[],
   widths: RowWidths,
@@ -17,7 +15,6 @@ export function rowSlots(
   return slots
 }
 
-/** Every item end to end, with the gaps between them. */
 export function rowLength(
   order: readonly string[],
   widths: RowWidths,
@@ -29,11 +26,6 @@ export function rowLength(
   return length + Math.max(0, order.length - 1) * gap
 }
 
-/**
- * Moves the dragged item past every neighbor whose middle its own middle has
- * crossed, so it takes the place it's held over. `left` is the dragged item's
- * left edge in the row. Returns `order` itself when the item already fits.
- */
 export function reorderForDrag(
   order: readonly string[],
   key: string,
@@ -71,12 +63,6 @@ export function reorderForDrag(
   }
 }
 
-/**
- * Whether a touch `x` points from a row's left edge lands on its drag handle,
- * the trailing `handleWidth` points: the right end, or the left end in RTL.
- * gesture-handler measures `x` from the left in both directions. False until
- * the row has a width.
- */
 export function isInDragHandle(
   x: number,
   width: number,

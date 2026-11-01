@@ -19,14 +19,11 @@ import {
   type SupporterGateSurface,
 } from '@/lib/supporterGateAnalytics'
 
-/** Measures the gate header, including gates inside a scroll view or popover. */
 export default function useSupporterGateAnalytics(
   feature: FeatureKey,
   surface: SupporterGateSurface,
   hasAccess: boolean
 ) {
-  // Gates in a portaled sheet sit outside any screen, where `useRoute` throws;
-  // attribute them to the screen underneath.
   const route = useContext(NavigationRouteContext)
   const root = useContext(NavigationContainerRefContext)
   const sourceScreen = route?.name ?? root?.getCurrentRoute()?.name ?? 'unknown'
@@ -108,9 +105,6 @@ export default function useSupporterGateAnalytics(
       else measureHeader(0, 0, width, height)
     }
 
-    // Layout does not change when a parent scrolls. Sample until the first
-    // visible impression, then stop; background and unfocused screens send
-    // none, so the sampling pauses in the background.
     const watch = (state: AppStateStatus) => {
       if (state !== 'active') return stop()
       measure()
@@ -135,7 +129,6 @@ export default function useSupporterGateAnalytics(
   ])
 
   const recordClick = () => {
-    // A tap proves visibility even if it arrives before the first measurement.
     if (!attribution.current) {
       attribution.current = createSupporterGateAttribution(
         feature,

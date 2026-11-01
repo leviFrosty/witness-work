@@ -28,21 +28,15 @@ const ICONS: Record<InlineNoticeTone, AppIcon> = {
 export type InlineNoticeProps = {
   message: string
   tone?: InlineNoticeTone
-  /** Shows a Try Again action. */
+
   onRetry?: () => void
-  /** A retry is running: the action shows a spinner and can't be pressed. */
+
   retrying?: boolean
-  /** Defaults to "Try Again". */
+
   retryLabel?: string
   style?: StyleProp<ViewStyle>
 }
 
-/**
- * A slim line saying why something couldn't load, beside content that still
- * shows, with an optional Try Again. Screen readers announce it when it
- * appears. For a whole screen that failed, use `Empty` with a Try Again action
- * instead.
- */
 export default function InlineNotice({
   message,
   tone = 'error',
@@ -53,7 +47,6 @@ export default function InlineNotice({
 }: InlineNoticeProps) {
   const theme = useTheme()
 
-  // Android announces through `accessibilityLiveRegion`.
   useEffect(() => {
     if (Platform.OS === 'ios')
       AccessibilityInfo.announceForAccessibility(message)

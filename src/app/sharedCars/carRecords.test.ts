@@ -63,7 +63,7 @@ describe('mileage records on the wire', () => {
   it.each(records)('carry a %s and read it back unchanged', (kind, record) => {
     const data = mileageRecordData(record)
     expect(data).not.toHaveProperty('id')
-    // Through JSON, as the sealed plaintext carries it.
+
     const sent = JSON.parse(JSON.stringify(data)) as Record<string, unknown>
     expect(readMileageRecord(kind, record.id, 5, sent)).toEqual(record)
   })
@@ -115,7 +115,7 @@ describe('mileage records on the wire', () => {
     const [, trip] = records[4]
     const read = (data: Record<string, unknown>) =>
       readMileageRecord('trip', trip.id, 5, data)!
-    // A field a newer version added, and a known one in a newer format.
+
     const noteDoc = { v: 2, doc: { type: 'doc', content: [] }, textHash: 'h' }
     const data = { ...mileageRecordData(trip), future: { level: 2 }, noteDoc }
     expect(unreadMileageFields(data, read(data))).toEqual({
@@ -133,7 +133,7 @@ describe('mileage records on the wire', () => {
     const long = { ...trip, note: 'n'.repeat(RECORD_PLAINTEXT_MAX_BYTES) }
     expect(sharedTripFits(long)).toBe(false)
     expect(sharedRecordFits('trip', mileageRecordData(long))).toBe(false)
-    // Room for who logged and edited it, whatever the trip says now.
+
     const { loggedBy: _l, editedBy: _e, ...unattributed } = trip
     let note = ''
     while (sharedTripFits({ ...unattributed, note: `${note}n` })) note += 'n'

@@ -1,10 +1,3 @@
-/**
- * The lamp follows the pet's hearts: its flame grows with the level 0–5 and an
- * unlit lamp smokes. Each lamp is rasterized in its own small box and placed at
- * (ox, oy) in the scene; (fx, fy) is the wick in box pixels. Lamps with `stool`
- * stand on a stool that is part of the room base. Secret lamps without a flame
- * glow from (fx, fy) instead, dark at level 0 and brighter each level.
- */
 import {
   createBuffer,
   createLru,
@@ -26,44 +19,35 @@ import { SCENE_H, SCENE_W } from '../layout'
 export { LAMP_IDS }
 export type { LampId }
 
-/** Lamp level: 0 (unlit) to 5 (radiant). */
 export type LampLevel = 0 | 1 | 2 | 3 | 4 | 5
 
-/** Flame height and radius by level. */
 export const FLAME_HEIGHT: readonly number[] = [0, 2.4, 3.6, 4.8, 6.2, 7.8]
 const FLAME_RADIUS: readonly number[] = [0, 1.2, 1.6, 2, 2.5, 3]
 
-/** One lamp design. */
 export interface LampDefinition {
-  /** Box size in pixels. */
   readonly width: number
   readonly height: number
-  /** Box top-left in the scene. */
+
   readonly ox: number
   readonly oy: number
-  /** Wick position in box pixels (the light's origin). */
+
   readonly fx: number
   readonly fy: number
-  /** Flame scale. */
+
   readonly k: number
-  /** Stands on the stool. */
+
   readonly stool: boolean
-  /**
-   * Animation frames of a lamp without a flame (a light at (fx, fy) with `k`
-   * 0). Its sprite is cached per frame instead of per flicker step, and `spec`
-   * gets the frame (0 … frames − 1) as `tick` and 0 as `fl`.
-   */
+
   readonly frames?: number
-  /** Lamp ticks per animation frame (default 1; 6 ticks a second). */
+
   readonly frameTicks?: number
-  /** The lamp at `level` on animation tick `tick` with flame flicker `fl`. */
+
   spec(level: number, tick: number, fl: number): ShapeSpec
 }
 
 const FLAME = rgbPalette({ outer: '#ff8f2a', mid: '#ffd04a', core: '#fff6cf' })
 const SMOKE = rgbPalette({ a: '#9a9aa6', b: '#b4b4c0', c: '#c8c8d2' })
 
-/** Three nested flame ellipses on a wick at (cx, by). Flames never get outlines. */
 export function flameShapes(
   cx: number,
   by: number,
@@ -97,7 +81,6 @@ export function flameShapes(
   ]
 }
 
-/** A three-pixel wisp of smoke rising from (cx, by). */
 export function smokePixels(
   cx: number,
   by: number,
@@ -367,14 +350,8 @@ const stand: LampDefinition = {
   },
 }
 
-// --- Secret lamps ------------------------------------------------------------
-// Rarer lamps. Flame lamps (pierced, hurricane) burn and smoke like the others;
-// the rest glow from their own light at (fx, fy) with `k` 0, brightening from
-// dark at level 0 to radiant at 5, and animate through `frames`.
-
 type Pt = [number, number]
 
-/** Corners of the rectangle (x0, y0)–(x1, y1). */
 const rect = (x0: number, y0: number, x1: number, y1: number): Pt[] => [
   [x0, y0],
   [x1, y0],
@@ -382,7 +359,6 @@ const rect = (x0: number, y0: number, x1: number, y1: number): Pt[] => [
   [x0, y1],
 ]
 
-/** Points along an ellipse from angle a0 to a1 (degrees, y down). */
 function arc(
   cx: number,
   cy: number,
@@ -400,7 +376,6 @@ function arc(
   return pts
 }
 
-/** `off` at level 0 to `on` at level 5. */
 const byLevel = (off: Rgb, on: Rgb, L: number): Rgb => mix(off, on, L / 5)
 
 const GLOW = rgbPalette({
@@ -439,7 +414,7 @@ const lighthouse: LampDefinition = {
   frameTicks: 2,
   spec(L, frame) {
     const C = LIGHTHOUSE
-    // The tower tapers from half-width 4 at the gallery to 6.5 at the rocks.
+
     const hw = (y: number): number => 4 + ((y - 17) / 24) * 2.5
     const band = (y0: number, y1: number, red: boolean): Shape[] => {
       const [c, sh, hi] = red
@@ -504,7 +479,7 @@ const lighthouse: LampDefinition = {
       ...band(23, 29, true),
       ...band(29, 35, false),
       ...band(35, 41, true),
-      // Lamp room, its lens and the light sweeping round.
+
       { t: 'p', pts: rect(6, 7, 14, 15), c: glass },
     ]
     if (L) {
@@ -539,7 +514,6 @@ const lighthouse: LampDefinition = {
       })
     }
     shapes.push(
-      // Gallery, roof and vent.
       { t: 'p', pts: rect(3, 15, 17, 17.4), c: C.iron, s: C.ironS, edge: true },
       {
         t: 'p',
@@ -593,7 +567,6 @@ const PIERCED = rgbPalette({
   wax: '#f4ecd6',
 })
 
-/** The pierced lantern's body: a lobed barrel, flat-shouldered under its cap. */
 const PIERCED_BODY: readonly Pt[] = [
   [5.6, 11],
   [16.4, 11],
@@ -607,7 +580,6 @@ const PIERCED_BODY: readonly Pt[] = [
   [4.6, 14],
 ]
 
-/** Whether (x, y) is inside the polygon `pts` (even-odd). */
 function inside(pts: readonly Pt[], x: number, y: number): boolean {
   let hit = false
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -620,11 +592,6 @@ function inside(pts: readonly Pt[], x: number, y: number): boolean {
   return hit
 }
 
-/**
- * The lantern's fretwork: diamond holes between diagonal brass bars, on the
- * body's pixels at least a pixel in from its edge, around the candle window and
- * off the two bands. `[x, y, centre of a diamond]`.
- */
 const PIERCED_HOLES: readonly (readonly [number, number, boolean])[] = (() => {
   const holes: [number, number, boolean][] = []
   const inBody = (x: number, y: number): boolean =>
@@ -668,7 +635,6 @@ const pierced: LampDefinition = {
     const inside = byLevel(C.inside, C.insideLit, L)
     const brass = { c: C.c, s: C.s, h: C.h }
     const shapes: Shape[] = [
-      // Foot.
       {
         t: 'p',
         pts: [
@@ -681,11 +647,11 @@ const pierced: LampDefinition = {
         edge: true,
       },
       { t: 'p', pts: PIERCED_BODY, ...brass, k: 'body', edge: true },
-      // Window onto the candle.
+
       { t: 'p', pts: rect(9, 12, 13, 24), c: inside, g: 'win' },
       { t: 'p', pts: rect(10, 20, 12, 24), c: C.wax },
       ...flameShapes(11, 20, L, 0.55, fl),
-      // Stepped conical cap: a wide eave, a sloped tier and a small top step.
+
       { t: 'p', pts: rect(4, 9.4, 18, 11.4), ...brass, edge: true },
       {
         t: 'p',
@@ -707,7 +673,7 @@ const pierced: LampDefinition = {
     const feats: FeaturePixel[] = PIERCED_HOLES.map(
       ([x, y, mid]): FeaturePixel => [x, y, mid ? holeMid : hole]
     )
-    // A round ring handle on the cap, open in the middle so the wall shows.
+
     feats.push(
       [10, 0, C.c],
       [11, 0, C.s],
@@ -739,7 +705,6 @@ const JAR = rgbPalette({
   flyOff: '#3f4a38',
 })
 
-/** The cloth tied over the jar's neck, its hem ruffled. */
 const JAR_CLOTH: readonly Pt[] = [
   [2.4, 9.4],
   [3.4, 8.4],
@@ -759,10 +724,6 @@ const JAR_CLOTH: readonly Pt[] = [
   [2.4, 6.4],
 ]
 
-/**
- * Gingham checks on the cloth: mid where one stripe runs, light where two
- * cross.
- */
 const JAR_GINGHAM: readonly FeaturePixel[] = (() => {
   const px: FeaturePixel[] = []
   for (let y = 2; y < 10; y++) {
@@ -776,7 +737,6 @@ const JAR_GINGHAM: readonly FeaturePixel[] = (() => {
   return px
 })()
 
-/** Firefly spots in the jar, lit one by one as the level grows. */
 const FIREFLIES: readonly Pt[] = [
   [8, 18],
   [12, 14],
@@ -802,7 +762,6 @@ const firefly: LampDefinition = {
   spec(L, frame) {
     const C = JAR
     const shapes: Shape[] = [
-      // Jar and neck.
       {
         t: 'p',
         pts: [
@@ -849,14 +808,14 @@ const firefly: LampDefinition = {
     }
     const feats: FeaturePixel[] = [
       ...JAR_GINGHAM,
-      // Twine round the neck, tied in a bow.
+
       ...[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(
         (x): FeaturePixel => [x, 9, C.twine]
       ),
       [16, 8, C.twine],
       [16, 10, C.twine],
       [17, 11, C.twine],
-      // Shine on the glass.
+
       [4, 12, C.shine],
       [3, 13, C.shine],
       [3, 14, C.shine],
@@ -865,7 +824,6 @@ const firefly: LampDefinition = {
     ]
     const lit = FIREFLIES_LIT[L]
     FIREFLIES.forEach(([x0, y0], i) => {
-      // Each drifts a pixel now and then and blinks off once a loop.
       const x = x0 + Math.round(Math.sin((frame + i * 5) * 0.39))
       const y = y0 + Math.round(Math.cos((frame + i * 3) * 0.39) * 0.8)
       if (i >= lit) {
@@ -907,7 +865,6 @@ const MUSHROOM = rgbPalette({
   mossH: '#8fae5e',
 })
 
-/** A mushroom: stem, domed cap (kind `k`) and the glowing gills underneath. */
 function mushroomShapes(
   cx: number,
   capY: number,
@@ -997,7 +954,7 @@ const mushroom: LampDefinition = {
       ...mushroomShapes(18.6, 17.4, 3.8, 2.8, 2.2, 23.4, L, 0.7, 'small'),
       ...mushroomShapes(10, 12, 8.8, 6.4, 4, 23.6, L, 1, 'big'),
     ]
-    // The caps' rims catch the light from underneath.
+
     const paints: Paint[] = L
       ? [
           {
@@ -1025,7 +982,7 @@ const mushroom: LampDefinition = {
       [17, 16, C.freckle],
       [19, 15, C.freckle],
       ...[3, 5, 7, 13, 15, 17].map((x): FeaturePixel => [x, 13, gillLine]),
-      // Moss tufts.
+
       [4, 22, C.mossH],
       [5, 21, C.moss],
       [15, 22, C.mossH],
@@ -1062,10 +1019,8 @@ const PEARL = rgbPalette({
   blush: '#f2c6da',
 })
 
-/** Where the pearl sits, and its radius. */
 const PEARL_AT = { x: 13, y: 14.5, r: 3.7 }
 
-/** The open upper valve's scalloped edge at radius `r` around the hinge. */
 function pearlFan(r: number): Pt[] {
   const pts: Pt[] = [[13, 17.5]]
   for (let i = 0; i <= 30; i++) {
@@ -1079,7 +1034,6 @@ function pearlFan(r: number): Pt[] {
   return pts
 }
 
-/** The lower valve: a ribbed bowl with a scalloped lip. */
 const PEARL_BOWL: readonly Pt[] = [
   [1.4, 16.8],
   [3.6, 17.8],
@@ -1099,7 +1053,6 @@ const PEARL_BOWL: readonly Pt[] = [
   [2.8, 19.8],
 ]
 
-/** Ribs fanning up the lower valve, as pixels. */
 const PEARL_RIBS: readonly Pt[] = (() => {
   const ribs = new Map<string, Pt>()
   for (const deg of [222, 242, 260, 280, 298, 318]) {
@@ -1117,7 +1070,6 @@ const PEARL_RIBS: readonly Pt[] = (() => {
   return [...ribs.values()]
 })()
 
-/** Glints round the shell's rim, one at a time. */
 const PEARL_GLINTS: readonly Pt[] = [
   [5, 9],
   [19, 8],
@@ -1139,7 +1091,7 @@ const pearl: LampDefinition = {
   spec(L, frame) {
     const C = PEARL
     const P = PEARL_AT
-    // The pearl takes on its lustre quickly, then the glow around it grows.
+
     const lustre = L ? Math.min(1, 0.4 + L * 0.15) : 0
     const shapes: Shape[] = [
       { t: 'p', pts: pearlFan(11.2), c: C.shell, s: C.shellS, h: C.shellH },
@@ -1201,7 +1153,7 @@ const pearl: LampDefinition = {
     const feats: FeaturePixel[] = PEARL_RIBS.map(
       ([x, y]): FeaturePixel => [x, y, C.rib]
     )
-    // Lustre: a bright highlight and a rosy rim light.
+
     feats.push([11, 12, L ? C.lustreH : C.dullH])
     if (L) feats.push([12, 12, C.lustreH], [11, 13, C.lustreH])
     if (L >= 2) feats.push([16, 15, C.blush], [15, 16, C.blush])
@@ -1233,7 +1185,6 @@ const CACTUS = rgbPalette({
   centreLit: '#fff3a8',
 })
 
-/** Bloom radius by level: a closed bud at 0 that opens as the level grows. */
 const BLOOM: readonly number[] = [0, 1.7, 2.2, 2.7, 3.2, 3.7]
 
 const cactus: LampDefinition = {
@@ -1250,7 +1201,6 @@ const cactus: LampDefinition = {
     const C = CACTUS
     const green = { c: C.green, s: C.greenS, h: C.greenH }
     const shapes: Shape[] = [
-      // Arms.
       {
         t: 'p',
         pts: [
@@ -1279,7 +1229,7 @@ const cactus: LampDefinition = {
         ],
         ...green,
       },
-      // Column.
+
       {
         t: 'p',
         pts: [
@@ -1294,7 +1244,7 @@ const cactus: LampDefinition = {
         ...green,
         edge: true,
       },
-      // Pot.
+
       { t: 'e', x: 10, y: 23.6, rx: 5, ry: 1, c: C.soil },
       {
         t: 'p',
@@ -1407,7 +1357,7 @@ const rocket: LampDefinition = {
     const C = ROCKET
     const red = { c: C.red, s: C.redS, h: C.redH }
     const shapes: Shape[] = []
-    // Exhaust: a little flicker under the nozzle from level 3.
+
     if (L >= 3) {
       const H = [0, 0, 0, 1.4, 2, 2.6][L] + [0, 0.5, 0.2, 0.7, 0.1, 0.4][frame]
       shapes.push(
@@ -1432,7 +1382,6 @@ const rocket: LampDefinition = {
       )
     }
     shapes.push(
-      // Side fins behind the hull.
       {
         t: 'p',
         pts: [
@@ -1454,7 +1403,7 @@ const rocket: LampDefinition = {
         ...red,
       },
       { t: 'p', pts: rect(7.4, 35, 12.6, 38.4), c: C.nozzle, edge: true },
-      // Hull.
+
       {
         t: 'p',
         pts: [
@@ -1476,7 +1425,7 @@ const rocket: LampDefinition = {
         k: 'hull',
         edge: true,
       },
-      // Porthole.
+
       {
         t: 'e',
         x: 10,
@@ -1508,7 +1457,7 @@ const rocket: LampDefinition = {
         no: true,
       })
     }
-    // Front fin.
+
     shapes.push({
       t: 'p',
       pts: [
@@ -1556,7 +1505,6 @@ const hurricane: LampDefinition = {
     const metal = { c: C.c, s: C.s, h: C.h }
     const g = mix(GLASS_DARK, GLASS_LIT, L / 5)
     const shapes: Shape[] = [
-      // Side tubes, the top plate and the fount.
       { t: 'p', pts: rect(2.6, 13, 4.2, 31), ...metal, g: 'frame' },
       { t: 'p', pts: rect(17.8, 13, 19.4, 31), ...metal, g: 'frame' },
       { t: 'p', pts: rect(2.6, 13, 19.4, 14.6), ...metal, g: 'frame' },
@@ -1573,7 +1521,7 @@ const hurricane: LampDefinition = {
         ...metal,
         edge: true,
       },
-      // Globe, flame and burner.
+
       {
         t: 'e',
         x: 11,
@@ -1587,7 +1535,7 @@ const hurricane: LampDefinition = {
       ...flameShapes(11, 25.6, L, 0.55, fl),
       { t: 'p', pts: rect(7.6, 26.4, 14.4, 29), ...metal, edge: true },
       { t: 'e', x: 16.6, y: 28, rx: 1.1, ry: 1.1, c: C.s },
-      // Cap and vent.
+
       {
         t: 'p',
         pts: [
@@ -1602,14 +1550,13 @@ const hurricane: LampDefinition = {
       { t: 'e', x: 11, y: 10.4, rx: 2.6, ry: 1, ...metal, edge: true },
     ]
     const feats: FeaturePixel[] = [
-      // Guard wires in front of the globe.
       ...[17, 18, 19, 20, 21, 22, 23, 24, 25].flatMap((y): FeaturePixel[] => [
         [7, y, C.wire],
         [14, y, C.wire],
       ]),
       [11, 25, rgb('#3b2a14')],
     ]
-    // The bail handle.
+
     for (let i = 0; i <= 24; i++) {
       const a = Math.PI + (Math.PI * i) / 24
       feats.push([
@@ -1671,7 +1618,7 @@ const jellyfish: LampDefinition = {
       },
       { t: 'p', pts: rect(2, 22.6, 22, 27), ...wood, edge: true },
       { t: 'p', pts: rect(2, 4, 22, 6.6), ...wood, edge: true },
-      // The jellyfish's bell.
+
       {
         t: 'p',
         pts: [
@@ -1723,7 +1670,6 @@ const jellyfish: LampDefinition = {
     const armTip = mix(arm, water, 0.5)
     const frill = mix(bell, WHITE, 0.2)
     const feats: FeaturePixel[] = [
-      // Pebbles, the water line and the glass edges.
       ...[4, 6, 8, 10, 12, 14, 16, 18].map(
         (x, i): FeaturePixel => [x, 21, i % 2 ? C.pebbleB : C.pebble]
       ),
@@ -1736,14 +1682,14 @@ const jellyfish: LampDefinition = {
       ),
       [20, 18, mix(water, C.edge, 0.5)],
       [20, 19, mix(water, C.edge, 0.5)],
-      // The bell's frilled rim and its shine.
+
       ...[8, 9, 10, 11, 12, 13, 14, 15].map(
         (x): FeaturePixel => [x, by + 1, x % 2 ? frill : bell]
       ),
       [10, by - 2, mix(bell, WHITE, 0.6)],
       [9, by - 1, mix(bell, WHITE, 0.45)],
     ]
-    // Two frilly arms in the middle and two long, fine tentacles trailing.
+
     const sway = (j: number, i: number): number =>
       Math.round(Math.sin((j + frame * 0.8 + i * 2) * 0.7) * 0.7)
     for (let j = 2; j <= 8; j++) {
@@ -1754,7 +1700,7 @@ const jellyfish: LampDefinition = {
       const c = j > 6 ? armTip : mix(arm, water, 0.2)
       feats.push([8 + sway(j, 2), by + j, c], [15 + sway(j, 3), by + j, c])
     }
-    // Two bubbles rising.
+
     feats.push(
       [5, 20 - ((frame * 2) % 13), C.bubble],
       [18, 20 - ((frame * 2 + 7) % 13), C.bubble]
@@ -1776,7 +1722,6 @@ const LAVA = rgbPalette({
   waxH: '#ffa070',
 })
 
-/** Wax blobs: x offset, phase and radius; one more rises with each level. */
 const LAVA_BLOBS: readonly (readonly [number, number, number])[] = [
   [0, 0, 1.6],
   [-0.6, 0.45, 1.2],
@@ -1801,7 +1746,6 @@ const lava: LampDefinition = {
     const wax = byLevel(C.wax, C.waxLit, L)
     const liquid = byLevel(C.liquid, C.liquidLit, L)
     const shapes: Shape[] = [
-      // Glass vessel, widest low down.
       {
         t: 'p',
         pts: [
@@ -1819,7 +1763,7 @@ const lava: LampDefinition = {
         h: mix(liquid, WHITE, 0.25),
         k: 'glass',
       },
-      // Base and cap.
+
       {
         t: 'p',
         pts: [
@@ -1843,7 +1787,7 @@ const lava: LampDefinition = {
         edge: true,
       },
     ]
-    // A pool of wax at the bottom, and blobs drifting up and down in it.
+
     const paints: Paint[] = [
       {
         t: 'e',
@@ -1876,7 +1820,6 @@ const lava: LampDefinition = {
   },
 }
 
-/** Every lamp design. */
 export const LAMPS: Readonly<Record<LampId, LampDefinition>> = {
   clay: clayLamp,
   lantern,
@@ -1894,27 +1837,19 @@ export const LAMPS: Readonly<Record<LampId, LampDefinition>> = {
   lava,
 }
 
-/** Lamp animation tick (6 per second) at `tMs`. */
 export function lampTick(tMs: number): number {
   return (tMs / 1000) * 6
 }
 
-/** Flicker steps per pixel: finer steps barely move a flame pixel. */
 const FLICKER_STEPS = 10
 
-/**
- * Flame flicker offset at `tick` (0 when unlit), rounded to a tenth of a pixel
- * so a lit lamp has at most nine distinct sprites (−0.4 … 0.4) and the sprite
- * cache hits instead of rasterizing every frame.
- */
 export function lampFlicker(level: number, tick: number): number {
   if (!level) return 0
   const fl = Math.sin(tick * 1.7) * 0.25 + Math.sin(tick * 3.1) * 0.15
-  // `+ 0` turns −0 into 0, so both share one cache key.
+
   return Math.round(fl * FLICKER_STEPS) / FLICKER_STEPS + 0
 }
 
-/** Scene position of the light's origin: the middle of the flame. */
 export function lampLightOrigin(
   lamp: LampId,
   level: number
@@ -1925,11 +1860,6 @@ export function lampLightOrigin(
 
 const sprites = createLru<PixelBuffer>(48)
 
-/**
- * The lamp's own box (width × height) at `tMs`: flame flickering, or smoke when
- * unlit. Memoized per flicker step (or smoke frame), so a burning lamp reuses a
- * handful of sprites instead of rasterizing every frame.
- */
 export function lampSprite(
   lamp: LampId,
   level: number,
@@ -1955,7 +1885,6 @@ export function lampSprite(
 
 const STOOL = rgbPalette({ top: '#8a5a3a', edge: '#6e4529', leg: '#7a4f30' })
 
-/** Paints the stool the small lamps stand on. */
 export function drawStool(buf: PixelBuffer): void {
   fillRect(buf, 116, 76, 152, 79, STOOL.top)
   fillRect(buf, 116, 79, 152, 80, STOOL.edge)
@@ -1965,10 +1894,6 @@ export function drawStool(buf: PixelBuffer): void {
 
 let stoolOnly: PixelBuffer | null = null
 
-/**
- * The stool alone on a clear scene-sized layer, drawn again over the visiting
- * pets so the lamp and what it stands on stay in front of them.
- */
 export function stoolLayer(): PixelBuffer {
   if (!stoolOnly) {
     stoolOnly = createBuffer(SCENE_W, SCENE_H)

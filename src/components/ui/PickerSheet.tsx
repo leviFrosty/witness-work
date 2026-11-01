@@ -6,11 +6,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
-/**
- * A bottom sheet with Cancel and Done, so every picker opens under the thumb.
- * The picker edits a draft that's already on screen, so dismissing the sheet
- * keeps it like Done does, and Cancel is the only way to back out of a change.
- */
 const PickerSheet = (props: {
   open: boolean
   onCancel: () => void

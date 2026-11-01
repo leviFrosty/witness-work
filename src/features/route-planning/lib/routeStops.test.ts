@@ -58,7 +58,7 @@ const contacts = [
   contact('pinned', { userDraggedCoordinate: true }),
   contact('addressed'),
   contact('unlocated', { coordinate: undefined }),
-  // Dismissal is checked against the real clock, so keep it in the future.
+
   contact('dismissed', { dismissedUntil: moment().add(1, 'year').toDate() }),
   contact('answered'),
   contact('noAddress', { address: undefined }),
@@ -70,14 +70,14 @@ const conversations: Visit[] = [
   followUp('v-unlocated', 'unlocated', at(11)),
   followUp('v-dismissed-contact', 'dismissed', at(12)),
   followUp('v-answered', 'answered', at(9, 30)),
-  // The Visit that answers it, earlier today.
+
   {
     id: 'v-answer',
     contact: { id: 'answered' },
     date: at(8),
     isBibleStudy: false,
   },
-  // A second Follow-up for the same Contact today is one stop.
+
   followUp('v-addressed-later', 'addressed', at(16)),
   followUp('v-tomorrow', 'noAddress', at(10, 0, 1)),
   followUp('v-cancelled', 'noAddress', at(13), { dismissed: true }),
@@ -130,7 +130,6 @@ const recurringPlans: RecurringPlan[] = [
 ]
 
 describe('dayRouteStops', () => {
-  // Dismiss periods are read against the clock, so pin it to the fixtures' day.
   vi.setSystemTime(day)
   afterAll(() => {
     vi.useRealTimers()
@@ -154,7 +153,6 @@ describe('dayRouteStops', () => {
   })
 
   it('counts open stops that lack a map location', () => {
-    // The unlocated Contact and the address-only Plan; not the place-less Plan.
     expect(result.missingLocationCount).toBe(2)
   })
 

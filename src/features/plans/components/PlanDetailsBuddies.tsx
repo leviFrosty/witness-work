@@ -35,13 +35,6 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import ShareBuddyRow from '@/features/buddies/components/ShareBuddyRow'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 
-/**
- * Who's invited to the User's own Plan and how each answered (or that it never
- * reached them, and why), buddies asking to join it (with Invite), and Invite
- * Buddies while the Plan is still ahead. Inviting adds the buddy right away;
- * the invitation goes out like saving the Plan would. Taking someone off stays
- * in Edit.
- */
 export default function PlanDetailsBuddies({
   item,
   now,
@@ -50,9 +43,9 @@ export default function PlanDetailsBuddies({
 }: {
   item: PlanListItem
   now: number
-  /** Invite Buddies added someone. */
+
   onInvited: () => void
-  /** Shows another Plan in place, instead of opening its Plan Details. */
+
   onOpenPlan?: (target: RootStackParamList['Plan Details']) => void
 }) {
   const theme = useTheme()
@@ -70,13 +63,12 @@ export default function PlanDetailsBuddies({
   const unsent = useBuddies((state) =>
     dayPlan ? state.unsentShares[planShareKey(dayPlan.id)] : undefined
   )
-  // Only its organizer invites people to a Plan that follows an invitation.
+
   if (!enabled || dayPlan?.buddyShare) return null
 
   const invitedIds = dayPlan?.buddies ?? []
   const invited = buddies.filter((buddy) => invitedIds.includes(buddy.inboxId))
-  // Invited, but no longer a buddy, so the invitation never reached them.
-  // Going takes them off the Plan, so it's the record that says they were.
+
   const former = Object.entries(unsent ?? {}).flatMap(([inboxId, entry]) =>
     !buddies.some((buddy) => buddy.inboxId === inboxId)
       ? [{ inboxId, entry }]
@@ -118,7 +110,7 @@ export default function PlanDetailsBuddies({
     if (invitation.kind !== 'invite') return
     const planId = sendJoinRequestInvite(invitation)
     analytics.capture('buddy_join_request_answered', { action: 'invited' })
-    // A Recurring Plan's date became a one-time Plan carrying the invitation.
+
     if (planId === dayPlan?.id) return
     if (onOpenPlan) onOpenPlan({ dayPlanId: planId })
     else navigation.replace('Plan Details', { dayPlanId: planId })
@@ -255,7 +247,6 @@ function NotSentLabel() {
   )
 }
 
-/** Someone invited who's no longer a buddy: no page to open. */
 function FormerBuddyRow({
   entry,
   last,

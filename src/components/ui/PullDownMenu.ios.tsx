@@ -18,7 +18,6 @@ import { touchTargetFrame } from '@/components/ui/touchTarget'
 import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 import { usePreferences } from '@/stores/preferences'
 
-/** SwiftUI `Menu`: a tap opens the menu from the trigger. */
 export default function PullDownMenu({
   actions,
   accessibilityLabel,
@@ -36,20 +35,17 @@ export default function PullDownMenu({
 }: PullDownMenuProps) {
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
-  // Hosted RN content sizes to its own content, so a filling trigger gets the
-  // width the surrounding layout gives it passed down explicitly.
+
   const [width, setWidth] = useState<number>()
   const [hovered, setHovered] = useState(false)
   const groups = menuGroups(actions)
   if (!groups.length) return null
 
   const tint = pointerEffect === 'tint'
-  // The menu opens only from its label, so no slop can grow the default
-  // ellipsis: it gets a real 44pt frame instead, which the host's negative
-  // margins keep from moving anything.
+
   const target: ViewStyle = children ? {} : touchTargetFrame(triggerSize)
   const { marginHorizontal, marginVertical, ...frame } = target
-  // VoiceOver reads the menu itself, a native pop-up button.
+
   const a11y = [
     labelModifier(accessibilityLabel),
     ...(accessibilityValue === undefined
@@ -62,21 +58,17 @@ export default function PullDownMenu({
   return (
     <View
       style={style}
-      // Taps on the label land in SwiftUI, so React Native reports them here,
-      // on its nearest view. SwiftUI reports no open, but this tap opens it.
       onTouchStart={onOpen}
       onLayout={
         fill ? (event) => setWidth(event.nativeEvent.layout.width) : undefined
       }
     >
-      {/* The pointer, like the tap, never reaches the hosted label, so the
-          host takes the hover. */}
+      {}
       <PointerHover
         effect={tint ? 'none' : pointerEffect}
         onHoverChange={tint ? setHovered : undefined}
       >
-        {/* Without ignoreSafeArea, triggers first laid out under the home
-            indicator measure short. */}
+        {}
         <Host
           matchContents
           colorScheme={colorScheme}

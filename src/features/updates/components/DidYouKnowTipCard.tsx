@@ -12,15 +12,6 @@ import PointerHover from '@/components/ui/PointerHover'
 import HomeSectionMenu from '@/components/HomeSectionMenu'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * Home-screen tip card that drip-feeds lesser-known features one at a time. On
- * mount it captures the first unseen tip and renders until dismissed; the next
- * session shows the next tip. Once the user has dismissed every entry in
- * `DID_YOU_KNOW_TIPS`, the card stops rendering for good.
- *
- * Visually quiet by design — a hairline-divider footer rather than a card — so
- * it doesn't compete with the primary home-screen content.
- */
 const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   const theme = useTheme()
   const { seenTipIds, set } = usePreferences(
@@ -28,10 +19,6 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
   )
   const [dismissed, setDismissed] = useState(false)
 
-  // Lock the chosen tip at mount so dismissal doesn't pop another card into
-  // its place mid-session — the user opted into "one tip per session" pacing.
-  // useState's lazy init captures the value exactly once and ignores later
-  // changes to `seenTipIds`.
   const [tip] = useState(
     () => DID_YOU_KNOW_TIPS.find((t) => !seenTipIds.includes(t.id)) ?? null
   )
@@ -61,8 +48,7 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
         style,
       ]}
     >
-      {/* Only the tip's content is long-pressable; the ✕ stays a sibling so
-          it remains its own tap target. */}
+      {}
       <HomeSectionMenu
         style={{ flex: 1 }}
         actions={[
@@ -119,7 +105,6 @@ const DidYouKnowTipCard = ({ style }: { style?: StyleProp<ViewStyle> }) => {
           onPress={handleDismiss}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('gotIt')}
-          // Takes up the 16pt it did with its old padding.
           style={{ ...touchTargetFrame(16), borderRadius: 999 }}
         >
           <LucideIcon icon={XIcon} size={12} color={theme.colors.textAlt} />

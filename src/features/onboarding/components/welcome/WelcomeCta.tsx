@@ -24,7 +24,7 @@ import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 const RADIUS = 14
 const HEIGHT = 56
 const SHEEN_WIDTH = 72
-// A sheen crosses every few seconds; the arrow nudges forward with it.
+
 const SHEEN_EVERY = 4.2
 const SHEEN_FOR = 1.1
 
@@ -33,15 +33,10 @@ interface Props {
   onPress: () => void
   time: SharedValue<number>
   palette: WelcomePalette
-  /** Skips the sheen. */
+
   reduceMotion: boolean
 }
 
-/**
- * The welcome's primary action: a glowing button with a passing sheen. Built on
- * `Button` rather than `ActionButton` — the hero's call to action is the one
- * place in onboarding that carries this glow and motion.
- */
 const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
   const theme = useTheme()
   const [width, setWidth] = useState(0)
@@ -50,8 +45,7 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
     const p = (time.value % SHEEN_EVERY) / SHEEN_FOR
     return p >= 1 ? -1 : p
   })
-  // Skia doesn't mirror, so the sheen's path is flipped by hand in RTL to
-  // travel forward with the arrow.
+
   const rtl = isRtlLayout()
   const sign = forwardSign()
   const sheen = useDerivedValue(() => {
@@ -99,8 +93,7 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
           justifyContent: 'center',
           gap: 8,
           overflow: 'hidden',
-          // Android has no layer shadow; elevation casts the glow there,
-          // tinted by `shadowColor` on Android 9+.
+
           elevation: 10,
           shadowColor: theme.colors.accent,
         }}

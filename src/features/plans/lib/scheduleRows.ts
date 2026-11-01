@@ -1,12 +1,10 @@
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import { serviceYearBounds } from '@/lib/serviceYear'
 
-/** One day in the Schedule's week grid, in local calendar terms. */
 export type ScheduleDay = {
-  /** Local `YYYY-MM-DD`. */
   key: string
   year: number
-  /** 0 = January. */
+
   month: number
   day: number
 }
@@ -14,11 +12,11 @@ export type ScheduleDay = {
 export type ScheduleWeekRow = {
   kind: 'week'
   key: string
-  /** Seven columns from the Start of Week; `null` outside the month. */
+
   days: (ScheduleDay | null)[]
-  /** Every day in the row is in this month. */
+
   month: CalendarMonth
-  /** The month's first week, right under its name. */
+
   firstOfMonth: boolean
 }
 
@@ -26,16 +24,16 @@ export type ScheduleMonthRow = {
   kind: 'month'
   key: string
   month: CalendarMonth
-  /** The column of the month's 1st, where its name and rule start. */
+
   column: number
 }
 
 export type ScheduleServiceYearRow = {
   kind: 'serviceYear'
   key: string
-  /** Start year: the Service Year runs September `serviceYear` → August. */
+
   serviceYear: number
-  /** September of `serviceYear`, the month the divider opens. */
+
   month: CalendarMonth
 }
 
@@ -46,22 +44,21 @@ export type ScheduleRow =
 
 export type ScheduleRows = {
   rows: ScheduleRow[]
-  /** `YYYY-MM` → index of the month's name row. */
+
   monthHeader: Map<string, number>
-  /** `YYYY-MM` → index of the month's first week row. */
+
   monthStart: Map<string, number>
-  /** `YYYY-MM` → index of the month's last week row. */
+
   monthEnd: Map<string, number>
-  /** `YYYY-MM-DD` → index of the week row holding the day. */
+
   dayRow: Map<string, number>
 }
 
 export type ScheduleRowsInput = {
-  /** First Service Year (start year) in the list. */
   firstServiceYear: number
-  /** Last Service Year (start year) in the list. */
+
   lastServiceYear: number
-  /** 0 = Sunday … 6 = Saturday. */
+
   startOfWeek: number
 }
 
@@ -71,16 +68,9 @@ export const calendarMonthKey = ({ year, month }: CalendarMonth) =>
 export const dayKeyOf = (year: number, month: number, day: number) =>
   `${calendarMonthKey({ year, month })}-${String(day).padStart(2, '0')}`
 
-/** A month as one number, which the UI thread can compare without objects. */
 export const monthOrdinal = ({ year, month }: CalendarMonth) =>
   year * 12 + month
 
-/**
- * The Schedule's continuous week grid, the way Apple's Calendar scrolls months:
- * each month opens with a row naming it, set over the column of its 1st, and a
- * week that straddles two months splits there, so every week row belongs to one
- * month. September also opens a Service Year with a divider.
- */
 export function buildScheduleRows({
   firstServiceYear,
   lastServiceYear,
@@ -114,7 +104,6 @@ export function buildScheduleRows({
     firstOfMonth = false
   }
 
-  // Noon keeps DST shifts from skipping or repeating a day.
   const cursor = serviceYearBounds(firstServiceYear).start.hour(12).toDate()
   const end = serviceYearBounds(lastServiceYear).end.toDate()
   while (cursor <= end) {
@@ -153,7 +142,6 @@ export function buildScheduleRows({
   return { rows, monthHeader, monthStart, monthEnd, dayRow }
 }
 
-/** A month's rows: its name, then its first and last weeks. */
 export function monthRows(
   schedule: ScheduleRows,
   target: CalendarMonth

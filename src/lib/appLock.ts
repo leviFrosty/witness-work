@@ -3,12 +3,11 @@ import * as LocalAuthentication from 'expo-local-authentication'
 import i18n from '@/lib/locales'
 import { useAppLockSession } from '@/stores/appLock'
 
-/** How this device proves it's the owner, for labels and icons. */
 export type AppLockMethod = 'faceId' | 'touchId' | 'passcode' | 'biometrics'
 
 export type AppLockAvailability = {
   method: AppLockMethod
-  /** False when the device has no passcode, so there is nothing to unlock with. */
+
   available: boolean
 }
 
@@ -23,10 +22,6 @@ export async function getAppLockAvailability(): Promise<AppLockAvailability> {
   }
 }
 
-/**
- * Opens Android's Security settings, where the screen lock is set. Falls back
- * to the app's settings page when a device doesn't handle that screen.
- */
 export async function openScreenLockSettings() {
   try {
     await Linking.sendIntent('android.settings.SECURITY_SETTINGS')
@@ -74,10 +69,6 @@ export function appLockUnlockLabel(method: AppLockMethod) {
 
 export type AppLockAuthResult = 'success' | 'cancelled' | 'unavailable'
 
-/**
- * Asks the system to confirm the device owner. Falls back to the device
- * passcode, so a failed Face ID or Touch ID can never lock someone out.
- */
 export async function authenticateAppLock(
   promptMessage: string
 ): Promise<AppLockAuthResult> {
@@ -88,8 +79,7 @@ export async function authenticateAppLock(
       cancelLabel: i18n.t('cancel'),
     })
     if (result.success) return 'success'
-    // Only a device with no passcode at all counts: a busy sensor also
-    // reports `not_available`, and that mustn't open the app.
+
     if (
       ['not_enrolled', 'passcode_not_set', 'not_available'].includes(
         result.error
@@ -106,7 +96,6 @@ export async function authenticateAppLock(
   }
 }
 
-/** Whether coming back after `awayMs` away should ask to unlock again. */
 export function shouldRelock(awayMs: number, requireAfterSeconds: number) {
   return awayMs >= requireAfterSeconds * 1000
 }

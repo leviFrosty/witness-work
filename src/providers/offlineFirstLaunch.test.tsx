@@ -2,16 +2,11 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The real CustomerProvider + AccountProvider on a first-ever launch with no
-// connection: the launch's `Purchases.logIn` fails, so RevenueCat stays
-// anonymous. It must be identified once the connection comes back (or on the
-// next return to the app), exactly once, without waiting for another launch.
-
 const runtime = vi.hoisted(() => ({
   offline: true,
-  /** The SDK has a cached CustomerInfo to fall back to. */
+
   cached: false,
-  /** RevenueCat is logged in as the account id. */
+
   identified: false,
   appStateListeners: [] as Array<(state: string) => void>,
   reconnectListeners: new Set<() => void>(),
@@ -150,7 +145,6 @@ describe('a first launch offline', () => {
     expect(forcedLinks()).toEqual([{ force: true, reason: 'adopted' }])
     expect(errorTracking.captureException).not.toHaveBeenCalled()
 
-    // Identified: later reconnects and returns don't log in again.
     runtime.offline = true
     await reconnect()
     await foreground()
@@ -161,10 +155,9 @@ describe('a first launch offline', () => {
   it('logs in on the next return to the app when the SDK had a cached customer', async () => {
     runtime.cached = true
     const { Purchases, errorTracking } = await mount()
-    // The cached customer lets reconcile run, which tries once more.
+
     expect(Purchases.logIn).toHaveBeenCalledTimes(2)
 
-    // Still offline: the retry fails quietly and the next one tries again.
     await foreground()
     expect(Purchases.logIn).toHaveBeenCalledTimes(3)
     expect(runtime.identified).toBe(false)

@@ -12,21 +12,15 @@ import i18n from '@/lib/locales'
 import ScribeUsageMeter from '@/features/scribe/components/ScribeUsageMeter'
 
 const ICON_SIZE = 20
-// Each icon's real 44pt frame (48dp on Android) overhangs its glyph by half of
-// this on both sides, so this much space between glyphs keeps neighboring
-// frames from overlapping.
+
 const ICON_GAP = MIN_TOUCH_TARGET - ICON_SIZE
 
 interface Props {
   onHistory: () => void
-  /** Hidden until there is a conversation to leave. */
+
   onNewConversation?: () => void
 }
 
-/**
- * Back, "Scribe AI", and on the right the usage ring, History and New
- * conversation.
- */
 const ScribeConversationHeader = ({ onHistory, onNewConversation }: Props) => {
   const theme = useTheme()
   return (

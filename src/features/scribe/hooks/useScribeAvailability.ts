@@ -22,19 +22,15 @@ export interface ScribeAvailabilityInput {
   enabled: boolean
   status: ScribeStatusWire | null
   online: Online
-  /** Ww-api answered 426 this launch (any feature). */
+
   updateRequiredByServer: boolean
   appVersion: string | null
   gate: ScribeDeviceGate
-  /** Dev builds: a fake client answers, so device gates don't apply. */
+
   devClient: boolean
   usage: UsageSnapshotWire | null
 }
 
-/**
- * Precedence, first match wins: flag, server switch (protocol → Status),
- * connection, app version, device, account, then the usage windows.
- */
 export function scribeAvailability(
   input: ScribeAvailabilityInput
 ): ScribeAvailability {
@@ -65,7 +61,6 @@ export function scribeAvailability(
   }
 }
 
-/** Whether Scribe AI can be used now. Never opens a session to decide. */
 export function useScribeAvailability(): ScribeAvailability {
   const enabled = useScribeEnabled()
   const online = useOnline()
@@ -74,11 +69,9 @@ export function useScribeAvailability(): ScribeAvailability {
   const devClient = useScribeStatusStore((state) => state.devClient)
   const usage = useScribeUsageStore((state) => state.snapshot)
   const required = useUpdateRequired((state) => state.required)
-  // A saved limit lifts at its reset, even before usage is read again.
+
   const now = useUsageClock(usage)
 
-  // What the session client learned since the last check (a failed open ends
-  // its wait, a suspension was lifted).
   useEffect(() => {
     if (enabled) void refreshDeviceGate()
   }, [enabled])

@@ -142,7 +142,7 @@ describe('the reward stack', () => {
     expect(runtime.sounds).toContain('heavy')
     expect(runtime.haptics).toContain('heavy')
     advance(1500)
-    // The celebration lifts as the total drops back into the toast.
+
     expect(leave).toHaveBeenCalledTimes(1)
     expect(run()?.slot).toBe('toast')
     release()

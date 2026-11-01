@@ -4,7 +4,6 @@ import { usePreferences } from '@/stores/preferences'
 import type { ScribeVoiceAvailability } from '@/features/scribe/types'
 import { speechLocaleCandidates } from '@/features/scribe/lib/locale'
 
-/** Per launch and app Language; a failed check is asked again next time. */
 const answers = new Map<string, ScribeVoiceAvailability>()
 const checks = new Map<string, Promise<ScribeVoiceAvailability>>()
 
@@ -23,7 +22,6 @@ function check(key: string): Promise<ScribeVoiceAvailability> {
   return pending
 }
 
-/** Whether on-device speech serves the app Language or a device language. */
 export function useScribeVoiceAvailability(): ScribeVoiceAvailability {
   const supported = Speech.isSupported()
   const key = usePreferences((state) => state.locale) ?? 'device'

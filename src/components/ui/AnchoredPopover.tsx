@@ -41,56 +41,27 @@ export type ResolveAnchorPosition = (args: {
   top?: number
   bottom?: number
   left: number
-  /**
-   * Caps the content's height and scrolls any overflow, so a tall popover
-   * anchored near a screen edge stays fully on-screen. Omit to size to content
-   * (the default — unconstrained, no scroll).
-   */
+
   maxHeight?: number
 }
 
 interface Props {
-  /**
-   * Renders the press target. Attach `anchorRef` to the outermost native View
-   * (must have `collapsable={false}` so RN keeps it measurable) and call
-   * `onPress` to open the popover.
-   */
   renderTrigger: (props: {
     onPress: () => void
     expanded: boolean
     anchorRef: React.RefObject<View | null>
   }) => ReactNode
-  /**
-   * Width of the popover content. Used by the default positioner to clamp the
-   * popover horizontally inside the window.
-   */
+
   contentWidth: number
-  /**
-   * `modal` (default) mounts the popover in an RN `Modal`, its own native
-   * window, so it shows over screens presented as a native modal or form sheet.
-   * `portal` mounts it in Tamagui's root portal instead, so a Tamagui `Sheet`
-   * opened from its content lands on top of it rather than behind the Modal.
-   * Use `portal` only on screens that aren't presented natively.
-   */
+
   presentation?: 'modal' | 'portal'
-  /** Optional initial VoiceOver focus; dismissal returns focus to the trigger. */
+
   accessibilityFocusRef?: React.RefObject<View | null>
-  /**
-   * Customize where the content lands relative to the measured anchor. Defaults
-   * to "below the anchor, left-aligned, clamped to a 12pt margin."
-   */
+
   resolvePosition?: ResolveAnchorPosition
-  /**
-   * Optional override for the content container's visual style (padding, gap,
-   * etc.). Width and positioning are managed by the popover.
-   */
+
   contentStyle?: StyleProp<ViewStyle>
-  /**
-   * Popover content. Pass a function form to receive a `close` helper for
-   * in-content dismiss affordances (e.g. selecting an item closes the popover).
-   * Use `closeThen` for actions that present something (share sheet, alert,
-   * navigation): it runs them once the Modal has fully dismissed.
-   */
+
   children:
     | ReactNode
     | ((props: {
@@ -102,19 +73,9 @@ interface Props {
 const ANIMATION_MS = 140
 const NO_FOLDS: FoldDivision[] = []
 const KEYBOARD_SETTLE_FALLBACK_MS = 600
-// While the keyboard animates there is no Modal backdrop yet. Keep rapid taps on
-// separate triggers from preparing two native popovers for the same hide event.
+
 let cancelActivePopoverPreparation: (() => void) | null = null
-/**
- * Hold the Modal mounted past the close animation so any in-flight Reanimated
- * worklet commit lands on a live shadow node. Without this slack, rapid
- * open/close cycles race the Modal teardown — the worklet's next DisplayLink
- * tick clones a shadow node whose `folly::dynamic` props were just freed and
- * the app segfaults during ShadowTree commit (reanimated#9293, #7666; same bug
- * class as the comment in `ColorPickerSheet.tsx`).
- *
- * 250ms = 140ms animation + 110ms slack (>2 frames at 120Hz ProMotion).
- */
+
 const UNMOUNT_DELAY_MS = 250
 
 const defaultResolvePosition: ResolveAnchorPosition = ({
@@ -130,20 +91,6 @@ const defaultResolvePosition: ResolveAnchorPosition = ({
   return { top: anchor.y + anchor.height + 8, left }
 }
 
-/**
- * Hand-built popover positioned relative to its trigger. **Use the native
- * `Popover` instead.** This one remains for content that opens a Tamagui
- * `Sheet` of its own (the month overview's Assistant): a native popover would
- * cover that sheet, while `presentation='portal'` mounts under it. The iPad
- * sidebar's quick actions still use it until the tab bar goes native.
- *
- * Built on RN `Modal` (new UIWindow) rather than tamagui `Popover` so the
- * popover stays visible when the host screen is presented as a native modal /
- * form-sheet — tamagui's Portal mounts behind those presentations and the
- * content is never seen. It owns the safe Modal mount lifecycle that keeps
- * Reanimated worklet commits from racing shadow-tree teardown — see
- * `UNMOUNT_DELAY_MS` for the why.
- */
 const AnchoredPopover = ({
   renderTrigger,
   contentWidth,
@@ -161,7 +108,7 @@ const AnchoredPopover = ({
   const sideInsets = useWindowSideInsets()
   const divisions = useDisplayRegions((s) => s.regions?.divisions ?? NO_FOLDS)
   const anchorRef = useRef<View>(null)
-  // Inside a native sheet the anchor measures from the sheet, not the window.
+
   const toWindow = useToWindow()
   const keyboardRaised = useRef(Keyboard.isVisible())
   const keyboardDidHideSubscription = useRef<ReturnType<
@@ -177,8 +124,7 @@ const AnchoredPopover = ({
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const progress = useSharedValue(0)
-  // Nothing takes over the screen while a popover (the bell's tray, the
-  // streak chip's) is open or closing.
+
   const holdId = useId()
   useTakeoverHold(`popover:${holdId}`, mounted)
 
@@ -193,8 +139,6 @@ const AnchoredPopover = ({
     return () => clearTimeout(t)
   }, [open, progress])
 
-  // Track the keyboard from WILL-show onward: Keyboard.isVisible() does not flip
-  // until DID-show, but the anchor is already moving during that opening window.
   useEffect(() => {
     const markRaised = () => {
       keyboardRaised.current = true
@@ -222,10 +166,6 @@ const AnchoredPopover = ({
     }
   }, [])
 
-  // Close when the host screen loses focus. Without this, a Modal opened
-  // before navigation (e.g. an in-popover supporter gate that pushes the
-  // paywall) leaves its backdrop floating over the screen on return,
-  // blocking every tap.
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
       pendingOpenCancellation.current?.()
@@ -251,15 +191,11 @@ const AnchoredPopover = ({
 
     const keyboardIsRaised = keyboardRaised.current || Keyboard.isVisible()
     if (keyboardIsRaised && !skipKeyboardWait) {
-      // RN Modal moves the popover into a separate native window, which dismisses
-      // the keyboard on iOS. Do that first and wait for the host layout to settle;
-      // otherwise the anchor snapshot points to the keyboard-raised location.
       keyboardDidHideSubscription.current = Keyboard.addListener(
         'keyboardDidHide',
         () => measureAndOpen(requestId)
       )
-      // The event is reliable on iOS, but never leave a tap stranded if native
-      // keyboard state gets out of sync. By this point its animation has settled.
+
       keyboardFallback.current = setTimeout(
         () => measureAndOpen(requestId, true),
         KEYBOARD_SETTLE_FALLBACK_MS
@@ -290,8 +226,7 @@ const AnchoredPopover = ({
         }
 
         setAnchor(toWindow({ x, y, width, height }))
-        // Give a keyboardWillShow that raced the native measurement one final
-        // frame to invalidate the open before the Modal becomes visible.
+
         openFrame.current = requestAnimationFrame(() => {
           openFrame.current = null
           if (requestId !== openRequest.current) return
@@ -346,20 +281,11 @@ const AnchoredPopover = ({
 
   const close = () => setOpen(false)
 
-  // Native sheets (Share.share, pickers) present on the topmost presented view
-  // controller. Opened while this Modal is still up, they land on top of it,
-  // and the Modal's dismissal then takes them down instead of itself, leaving
-  // an invisible Modal swallowing every touch. Wait for `onDismiss`, when the
-  // Modal is really gone.
   const closeThen = (action: () => void) => {
     afterDismiss.current = action
     setOpen(false)
   }
 
-  // RN only fires `onDismiss` on iOS. Android's Modal is gone as soon as it
-  // renders with `visible={false}`, and a portal has no Modal at all, so mirror
-  // `onShow` / `onDismiss` as it mounts and unmounts. Inlined so the
-  // exhaustive-deps lint doesn't need suppressing.
   useEffect(() => {
     if (Platform.OS !== 'android' && !portal) return
     if (mounted) {
@@ -381,7 +307,6 @@ const AnchoredPopover = ({
     if (handle) AccessibilityInfo.setAccessibilityFocus(handle)
   }, [mounted, portal, accessibilityFocusRef, navigation])
 
-  // A Modal closes on Android's back button through `onRequestClose`.
   useEffect(() => {
     if (!portal || !open) return
     const subscription = BackHandler.addEventListener(
@@ -401,8 +326,6 @@ const AnchoredPopover = ({
     maxHeight?: number
   } = anchor
     ? resolvePosition({
-        // Resolvers think in reading order: in RTL the anchor is mirrored, and
-        // the `left` they return is read as the distance from the right edge.
         anchor: {
           ...anchor,
           x: leftForPhysicalX(anchor.x, anchor.width, dims.width),
@@ -412,7 +335,7 @@ const AnchoredPopover = ({
         contentWidth,
       })
     : { top: 0, left: 0 }
-  // Clear of iPhone Duo's vertical bar, and on the anchor's side of its fold.
+
   const positionStyle = anchor
     ? {
         ...resolved,
@@ -432,9 +355,6 @@ const AnchoredPopover = ({
       }
     : resolved
 
-  // When the resolver caps the height, the content scrolls inside the cap so it
-  // never spills off-screen; padding/gap move onto the scroll content so the
-  // bar/sections keep their spacing. Otherwise the popover sizes to content.
   const { maxHeight, ...placement } = positionStyle
   const content =
     typeof children === 'function' ? children({ close, closeThen }) : children
@@ -448,8 +368,6 @@ const AnchoredPopover = ({
     transform: [{ scale: 0.96 + 0.04 * progress.value }],
   }))
 
-  // A Modal is its own native root; gestures inside (including pointer hover on
-  // its buttons) need their own handler root.
   const overlay = (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Animated.View
@@ -486,8 +404,7 @@ const AnchoredPopover = ({
             shadowRadius: 12,
             elevation: 8,
           },
-          // A capped popover clips its scroll content to the rounded corners;
-          // an uncapped one keeps padding on the box and renders children flat.
+
           maxHeight != null
             ? { overflow: 'hidden' }
             : [{ padding: 12 }, contentStyle],
@@ -516,7 +433,7 @@ const AnchoredPopover = ({
     return (
       <>
         {renderTrigger({ onPress: handlePress, anchorRef, expanded: open })}
-        {/* Under Tamagui's sheets, which stack from 100_000. */}
+        {}
         {mounted ? <Portal zIndex={90_000}>{overlay}</Portal> : null}
       </>
     )

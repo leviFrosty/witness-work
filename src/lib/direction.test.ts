@@ -39,7 +39,7 @@ describe('reading direction', () => {
   it('mirrors a measured position for `left` only in RTL', () => {
     expect(leftForPhysicalX(30, 40, 400)).toBe(30)
     layOut('rtl')
-    // 30 from the left edge, 40 wide: its right edge is 330 from the right.
+
     expect(leftForPhysicalX(30, 40, 400)).toBe(330)
   })
 })
@@ -50,7 +50,6 @@ describe('flowScrollX', () => {
   })
 
   it('counts from the far end in RTL, both ways', () => {
-    // A 1000-wide list in a 400 viewport starts at physical offset 600.
     expect(flowScrollX(600, 1000, 400, true)).toBe(0)
     expect(flowScrollX(0, 1000, 400, true)).toBe(600)
     expect(
@@ -106,9 +105,9 @@ describe('textDirection', () => {
 
   it('reads Hebrew and astral right-to-left scripts', () => {
     expect(textDirection('שלום world')).toBe('rtl')
-    // Adlam (Fula)
+
     expect(textDirection('\u{1E900}\u{1E922} hello')).toBe('rtl')
-    // Hanifi Rohingya
+
     expect(textDirection('\u{10D00} hello')).toBe('rtl')
   })
 

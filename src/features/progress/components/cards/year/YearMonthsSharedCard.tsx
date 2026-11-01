@@ -8,7 +8,6 @@ import { useTodayMonth } from '@/features/progress/hooks/usePeriodCardData'
 import MonthsSharedStatCard from '@/features/progress/components/cards/MonthsSharedStatCard'
 import type { YearCardProps } from '@/features/progress/components/cards/types'
 
-/** The Service Year's months the User shared in the ministry. */
 export default function YearMonthsSharedCard({
   serviceYear,
   size,

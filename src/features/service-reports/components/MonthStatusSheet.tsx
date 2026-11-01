@@ -19,17 +19,13 @@ export type MonthStatusScope = 'month' | 'onward'
 export interface MonthStatusSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Zero-based calendar month, matching Moment and JavaScript Date. */
+
   month: number
   year: number
   status: MonthStatus
   onSave: (status: MonthStatus, scope: MonthStatusScope) => void
 }
 
-/**
- * Sets the Publisher status for one month (Role History) — e.g. auxiliary
- * pioneering in March — or, with "onward", a standing change from that month.
- */
 const MonthStatusSheet = ({
   open,
   onOpenChange,

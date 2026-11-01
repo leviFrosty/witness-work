@@ -28,11 +28,6 @@ import {
   useSupporterSurveys,
 } from '@/features/supporter/stores/supporterSurveys'
 
-/**
- * Finds the Supporter or lapse feedback survey the User is invited to (the
- * notifications tray lists it) and presents the survey once they open it.
- * Renders nothing else.
- */
 export default function SupporterSurveyHost() {
   const { accountId } = useAccount()
   if (!surveyClient) return null
@@ -58,7 +53,7 @@ function Host() {
     let cancelled = false
     const refresh = () => {
       void revalidate()
-      // Same readiness gate as PostHogSurveyProvider in pinned SDK 4.68.0.
+
       void client
         .ready()
         .then(() => client._onSurveysReady())
@@ -89,7 +84,6 @@ function Host() {
     ? applySurveyTranslation(candidate, language)
     : null
 
-  // Publishes the invite for the tray, only when it actually changes.
   useEffect(() => {
     const { invite } = useSupporterSurveys.getState()
     if (

@@ -21,13 +21,6 @@ import {
 import { TurnDraft } from '@/features/scribe/proposals/draft'
 import type { ToolContext } from '@/features/scribe/tools/types'
 
-/**
- * Made-up stores for Scribe AI's tests: a Publisher in October 2026 with a few
- * Contacts (two named Maria), Visits, Time, Plans, a credit Category and a
- * Buddy. Every fixture is plain data; tools only read it.
- */
-
-/** Wednesday 21 October 2026, 09:30 local. */
 export const NOW = new Date(2026, 9, 21, 9, 30)
 export const TODAY = '2026-10-21'
 
@@ -36,7 +29,7 @@ const at = (day: string, hour = 12) =>
     `${day} ${String(hour).padStart(2, '0')}:00`,
     'YYYY-MM-DD HH:mm'
   ).toDate()
-/** Stored days are noon UTC. */
+
 const stored = (day: string) => new Date(`${day}T12:00:00.000Z`)
 
 export const PREFERENCES: ScribePreferences = {
@@ -199,7 +192,6 @@ export const BUDDIES: Buddy[] = [
   } as Buddy,
 ]
 
-/** The fixture stores, with `change` applied on top. */
 export function fixtureStores(
   change: Partial<ScribeStores> = {}
 ): ScribeStores {
@@ -226,10 +218,6 @@ export interface FixtureContext {
   stores: ScribeStores
 }
 
-/**
- * A ToolContext over `stores` as a turn would build it: the pinned context
- * issued its Refs first, then the turn's draft.
- */
 export function fixtureContext(
   stores: ScribeStores = fixtureStores(),
   options: { now?: Date; proposalId?: string } = {}
@@ -259,7 +247,6 @@ export function fixtureContext(
   }
 }
 
-/** The Ref the context gave a record. */
 export const refFor = (
   refs: RefRegistry,
   kind: 'c' | 'p' | 'k' | 'b',

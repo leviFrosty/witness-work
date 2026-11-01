@@ -42,11 +42,6 @@ import {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Buddies Feedback'>
 
-/**
- * Explains Alpha, asks before attaching diagnostics, then opens the Buddies
- * feedback survey. Diagnostics only leave the device after a submitted
- * response.
- */
 export default function BuddiesFeedbackScreen({ route }: Props) {
   const theme = useTheme()
   const largeText = useAccessibilityTextSize()
@@ -69,7 +64,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
     const client = surveyClient
     if (!client) return
     let cancelled = false
-    // Same readiness gate as PostHogSurveyProvider in pinned SDK 4.68.0.
+
     void client
       .ready()
       .then(() => client._onSurveysReady())
@@ -103,7 +98,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
     }
 
     const feedbackId = createFeedbackId()
-    // Session-only (never persisted), so it tags just this survey response.
+
     surveyClient?.registerForSession({ feedback_id: feedbackId })
     setOpened({
       ...applySurveyTranslation(survey, language),
@@ -156,8 +151,7 @@ export default function BuddiesFeedbackScreen({ route }: Props) {
         ]}
       >
         <View style={{ gap: 10 }}>
-          {/* At accessibility text sizes the info button and the Alpha pill
-              wrap under the headline rather than squeeze it. */}
+          {}
           <View
             style={{
               flexDirection: 'row',

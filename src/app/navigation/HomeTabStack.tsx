@@ -37,21 +37,16 @@ import {
 type LaunchDecision = {
   action: RevealAction
   currentVersion?: string
-  /** The version the user last saw release notes for. */
+
   notesSince?: string
 }
 
-/**
- * What this launch announces: the update reveal (returning installs crossing
- * `UPDATE_REVEAL_VERSION`), the WhatsNewSheet (releases announced as 'sheet'),
- * the passive tray item (every other transition with notes), or nothing.
- */
 const decideLaunch = (): LaunchDecision => {
   const currentVersion = Constants.expoConfig?.version
   const { lastAppVersion, updateReveal, unreadReleaseNotes } =
     usePreferences.getState()
   if (!currentVersion || !lastAppVersion) return { action: 'none' }
-  // Armed from Developer Tools; holds until that reveal has been closed.
+
   if (isLaunchRevealArmed() && !updateReveal) {
     return { action: 'update-reveal', currentVersion }
   }
@@ -69,7 +64,7 @@ const decideLaunch = (): LaunchDecision => {
     ),
   })
   logger.log('[HomeTabStack] launch reveal action', action)
-  // Earlier unread updates stack onto this one.
+
   return {
     action,
     currentVersion,
@@ -79,8 +74,6 @@ const decideLaunch = (): LaunchDecision => {
 
 const Tab = createBottomTabNavigator<HomeTabStackParamList>()
 
-// Called inline, not rendered as a component: the navigator only reads
-// `Tab.Screen` elements among its direct children.
 const renderTabScreen = (name: TabOrderKey) => {
   switch (name) {
     case 'Home':
@@ -125,10 +118,7 @@ const HomeTabStack = () => {
   const developerTools = usePreferences((s) => s.developerTools)
   const storedTabOrder = usePreferences((s) => s.tabOrder)
   const set = usePreferences((s) => s.set)
-  // The update reveal covers the tabs from inside this view rather than a
-  // window of its own (it has to be there in the first frame). iOS skips them
-  // for its `accessibilityViewIsModal`; Android has no such thing, so TalkBack
-  // would still read and press the tabs beneath it.
+
   const revealShown = useTakeover(
     (s) => s.arbiter.active?.kind === 'update-reveal'
   )
@@ -136,12 +126,9 @@ const HomeTabStack = () => {
   const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
     (name) => name !== 'Progress' || showsYearTabs
   )
-  // Decided during the first render rather than in an effect: the update
-  // reveal has to be on screen in the very first frame to pick up from the
-  // splash.
+
   const [launch] = useState(decideLaunch)
 
-  // Record the launch's version transition once.
   useEffect(() => {
     const { action, currentVersion, notesSince } = launch
     if (action === 'none' || !currentVersion) return
@@ -168,14 +155,9 @@ const HomeTabStack = () => {
 
   const rollover = useRollover()
   const autoRolloverEnabled = usePreferences((s) => s.autoRolloverEnabled)
-  // With iCloud sync on, another device may already have rolled this month
-  // over or dismissed it. Its pair and synced marker only arrive with a pull,
-  // so auto mode waits for one (or a timeout), then decides on fresh data.
+
   const iCloudSettled = useICloudPullSettled()
-  // Auto mode applies a pending rollover silently at launch. Otherwise the
-  // decision waits in the notifications tray and comes up on Progress or before
-  // that month's report (`useRolloverPrompt`) instead of interrupting launch.
-  // Once-per-mount guard so toggling auto mode can't apply twice.
+
   const rolloverHandledRef = useRef(false)
   useEffect(() => {
     if (rolloverHandledRef.current || !iCloudSettled) return
@@ -195,8 +177,7 @@ const HomeTabStack = () => {
           tabBarPosition: hasSidebar
             ? 'left'
             : navigationRail
-              ? // The rail's side is physical; the tab row mirrors in RTL.
-                isRtlLayout() === (navigationRail === 'left')
+              ? isRtlLayout() === (navigationRail === 'left')
                 ? 'right'
                 : 'left'
               : 'bottom',
@@ -212,24 +193,18 @@ const HomeTabStack = () => {
             {children}
           </View>
         )}
-        // The rail sits in the vertical status bar's safe area; content keeps
-        // clear of any other side's.
         screenLayout={({ children }) => (
           <HorizontalSafeArea covered={navigationRail}>
             {children}
           </HorizontalSafeArea>
         )}
       >
-        {/* At most four destinations, in the user's order (Preferences →
-            Tab Order). Features join an existing destination (Map in
-            Contacts, Buddies in Schedule) rather than adding tabs; the iPad
-            sidebar, which has room, lists Buddies too (ADR 0036). */}
+        {}
         {tabOrder.map(renderTabScreen)}
         {hasSidebar && buddiesEnabled && (
           <Tab.Screen
             name='Buddies'
             options={{
-              // Requests waiting for confirmation, as on the Buddies screen.
               tabBarBadge: buddyRequests > 0 ? buddyRequests : undefined,
             }}
             listeners={{
@@ -259,7 +234,7 @@ const HomeTabStack = () => {
           />
         )}
       </Tab.Navigator>
-      {/* One instance for every root header's account menu. */}
+      {}
       <ProfileDetailOverlay
         renderBuddies={(onBeforeNavigate) => (
           <BuddiesEntryRow
@@ -269,7 +244,7 @@ const HomeTabStack = () => {
           />
         )}
       />
-      {/* One takeover at a time, through the takeover arbiter (ADR 0021). */}
+      {}
       <TakeoverHosts
         launchReveal={launch.action === 'update-reveal'}
         whatsNewSince={

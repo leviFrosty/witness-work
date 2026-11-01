@@ -5,7 +5,6 @@ import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
 
 type EmptyProps = ViewProps & {
-  /** Draws a faint dashed outline around the empty surface. */
   dashedOutline?: boolean
 } & (
     | {
@@ -24,31 +23,6 @@ type EmptyProps = ViewProps & {
       }
   )
 
-/**
- * Centered empty surface, with shorthand props or shadcn-style composition.
- *
- * Also the full-screen error state when a screen has nothing to show without
- * the network: an icon (`WifiOff` when offline, `CircleAlert` otherwise), a
- * title saying what couldn't load, a description with the next step, and an
- * `ActionButton` with `loading` that retries:
- *
- * ```tsx
- * const failed = (
- *   <Empty
- *     icon={<LucideIcon icon={WifiOffIcon} size={24} />}
- *     title={i18n.t('common_offlineTitle')}
- *     description={i18n.t('paywall_offline')}
- *     action={
- *       <ActionButton onPress={retry} loading={retrying}>
- *         {i18n.t('common_tryAgain')}
- *       </ActionButton>
- *     }
- *   />
- * )
- * ```
- *
- * When content still shows and only a part failed, use `InlineNotice`.
- */
 const Empty = ({
   icon,
   title,

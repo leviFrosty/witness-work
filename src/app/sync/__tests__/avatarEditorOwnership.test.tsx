@@ -214,7 +214,7 @@ it.each(['ios', 'android'])(
     expect(
       runtime.files.has('file:///Docs/contact-c-avatar-original-a.jpg')
     ).toBe(false)
-    // A cancelled form's files are still included by explicit erasure.
+
     runtime.files.add(editor.props.destPath)
     await deleteAvatarFiles('c')
     expect(runtime.files.has(editor.props.sourceUri)).toBe(false)

@@ -11,6 +11,6 @@ it('includes the Wear OS app in place, once', () => {
   expect(once).toContain(
     "project(':wear').projectDir = new File(rootDir, '../targets/wear-os')"
   )
-  // Repeated prebuilds don't add it again.
+
   expect(addWearModule(once)).toBe(once)
 })

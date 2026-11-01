@@ -9,11 +9,6 @@ import {
 } from '@/components/ui/popoverPresentation'
 import type { PopoverProps } from '@/components/ui/Popover.types'
 
-/**
- * Material 3 menu surface anchored to its trigger, holding arbitrary content.
- * It opens below the trigger, or above it when there's more room there, and
- * closes on a tap outside or Back.
- */
 export default function Popover({
   renderTrigger,
   contentWidth,
@@ -25,9 +20,8 @@ export default function Popover({
   const theme = useTheme()
   const colorScheme = usePreferences((s) => s.colorScheme)
   const popover = usePopoverPresentation({
-    // The menu's 48dp margin from the window edge and its 8dp padding.
     edge: 64,
-    // Compose doesn't report when the exit animation ends.
+
     dismissFallbackMs: 200,
   })
 

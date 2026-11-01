@@ -19,27 +19,20 @@ import type { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NoteEditor'>
 
-/**
- * A note, full screen, for writing with formatting. Changes reach the form that
- * opened it as they're made; the form saves them with the record.
- */
 const NoteEditorScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   const { sessionId } = route.params
-  // Kept from the first render: the session ends when the screen unmounts,
-  // and React may run that cleanup early in development.
+
   const [session] = useState(() => getNoteEditorSession(sessionId))
   const editor = useRef<RichTextEditorRef>(null)
   const closing = useRef(false)
 
   useEffect(() => () => endNoteEditorSession(sessionId), [sessionId])
 
-  // A session doesn't survive the app restarting; there's nothing to edit.
   useEffect(() => {
     if (!session) navigation.goBack()
   }, [session, navigation])
 
-  // Back (Android, or a pointer's Escape) hands over the last edit first.
   useEffect(
     () =>
       navigation.addListener('beforeRemove', (event) => {

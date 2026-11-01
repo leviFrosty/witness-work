@@ -11,9 +11,6 @@ interface Props {
   onMoveDown?: () => void
 }
 
-// Each visible button is a 36pt square in a real 44pt frame (48dp on
-// Android): these sit in rows that drag, where slop loses to the drag. The gap
-// lets the frames touch without overlapping.
 const BUTTON_SIZE = 36
 
 export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {

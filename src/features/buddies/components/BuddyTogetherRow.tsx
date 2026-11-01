@@ -25,11 +25,6 @@ import type { ShareReply } from '@/features/buddies/lib/schemas'
 import { shareRefFromKey } from '@/features/buddies/lib/state'
 import type { TogetherItem } from '@/features/buddies/lib/together'
 
-/**
- * One Plan or Follow-up with a buddy: when, what, and where things stand. Opens
- * this User's own Plan or Contact; a buddy's invitation can be answered again
- * from its menu.
- */
 export default function BuddyTogetherRow({
   item,
   buddyName,
@@ -40,10 +35,7 @@ export default function BuddyTogetherRow({
 }: {
   item: TogetherItem
   buddyName: string
-  /**
-   * Among several buddies' Plans: this buddy's avatar, in place of the icon.
-   * Screen readers hear their name.
-   */
+
   avatar?: ReactNode
   last: boolean
   busy: boolean
@@ -54,7 +46,7 @@ export default function BuddyTogetherRow({
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const { details } = item
   const isFollowUp = item.type === 'followUp'
-  // A Follow-up's first name is householder data.
+
   const title = isFollowUp
     ? details.firstName && !dataProtectionMode
       ? i18n.t('buddies_followUpWith', { name: details.firstName })
@@ -86,8 +78,7 @@ export default function BuddyTogetherRow({
 
   const { planId } = item
   const visitId = item.direction === 'outgoing' ? item.visitId : undefined
-  // A buddy's Plan or Follow-up opens even after a "Can't make it", to change
-  // the answer.
+
   const share =
     item.direction === 'incoming' ? shareRefFromKey(item.shareKey) : undefined
   const open =
@@ -189,7 +180,6 @@ export default function BuddyTogetherRow({
             >
               {status}
               {replyDelivery ? (
-                // Spans don't inherit the line's size.
                 <Text
                   style={{
                     color: theme.colors.textAlt,

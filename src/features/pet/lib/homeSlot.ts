@@ -1,11 +1,5 @@
-/** What Home's `pet` slot shows. */
 export type PetHomeSlot = 'prompt' | 'section' | null
 
-/**
- * The opt-in prompt until a companion exists (unless the User said Not now),
- * then the pet's card. A hidden section (`homeScreenElements.pet === false`)
- * shows neither.
- */
 export function petHomeSlot({
   hasPet,
   promptDismissed,

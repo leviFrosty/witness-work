@@ -1,40 +1,23 @@
-/**
- * Pup: a golden retriever sitting up, four coats, pixelled by hand in the style
- * of game retriever sprites: no outline, soft golden shading with light streaks
- * in the fur, dot eyes and nose, floppy ears, a light ruff down the chest and a
- * plumed tail.
- *
- * Each part is a grid of palette keys (`.` is empty) painted in the coat's
- * colours: the tail (swayed by the wag), the body, the head (moved down by the
- * bob), then the face for the mood.
- */
 import { rgbPalette, type FeaturePixel, type Rgb } from '@/lib/pixelArt'
 
 import { SPRITE_SIZE } from '../layout'
 import type { PetFace } from '../types'
 import { defineSpecies, type SpritePose } from './define'
 
-/**
- * Tone keys in the grids: fur from deep shade to highlight (`D` `S` `M` `L`
- * `H`), the light ruff and muzzle (`C`, shade `c`) and the ears (`E`, shade
- * `e`).
- */
 type Tone = 'D' | 'S' | 'M' | 'L' | 'H' | 'C' | 'c' | 'E' | 'e'
 
 interface DogCoat extends Readonly<Record<Tone, Rgb>> {
-  /** Eyes. */
   readonly k: Rgb
-  /** Nose. */
+
   readonly n: Rgb
-  /** Inside of the open mouth. */
+
   readonly m: Rgb
-  /** Tongue. */
+
   readonly t: Rgb
-  /** Tongue tip, in shade. */
+
   readonly T: Rgb
 }
 
-/** Rows of palette keys from sprite row `top`, each 32 wide. */
 interface Grid {
   readonly top: number
   readonly rows: readonly string[]
@@ -100,20 +83,11 @@ const HEAD: Grid = {
   ],
 }
 
-/**
- * The left eye's left column and the eyes' top row (the right eye mirrors it).
- * Open eyes are a pixel wide, in the inner column.
- */
 const EYE_X = 12
 const EYE_Y = 8
-/** The nose's top row. */
+
 const NOSE_Y = 12
 
-/**
- * The open mouth for a face, under the nose: the jaw drops two rows to show the
- * dark mouth. Joy grins, its corners up, with the tongue hanging past the chin;
- * surprise gapes, the tongue resting on the jaw.
- */
 const MOUTH: Partial<Record<PetFace, Grid>> = {
   joy: {
     top: 13,
@@ -137,7 +111,6 @@ const MOUTH: Partial<Record<PetFace, Grid>> = {
   },
 }
 
-/** The mouth half shut, the jaw a row up, the frame after it was open. */
 const MOUTH_CLOSING: Grid = {
   top: 14,
   rows: [
@@ -147,7 +120,6 @@ const MOUTH_CLOSING: Grid = {
   ],
 }
 
-/** `grid`'s pixels in coat `C`, moved down `dy` and across by `dx(y)`. */
 function paint(
   grid: Grid,
   C: DogCoat,
@@ -165,7 +137,6 @@ function paint(
   return out
 }
 
-/** Both eyes for `face`, their top row on `y`. */
 function eyes(
   face: PetFace,
   blink: boolean,
@@ -173,8 +144,7 @@ function eyes(
   C: DogCoat
 ): FeaturePixel[] {
   const out: FeaturePixel[] = []
-  // Each eye has a box two pixels wide; the right box mirrors the left across
-  // the centre line.
+
   for (const x of [EYE_X, SPRITE_SIZE - 2 - EYE_X]) {
     const d = (dx: number, dy: number, c = C.k) => out.push([x + dx, y + dy, c])
     const inner = x === EYE_X ? 1 : 0
@@ -192,7 +162,6 @@ function eyes(
       d(0, 1)
       d(1, 1)
     } else if (face === 'low') {
-      // Eyes cast down, under brows raised at the middle.
       d(inner, 1)
       d(inner, 2)
       d(inner, -1, C.D)
@@ -209,10 +178,6 @@ function eyes(
   return out
 }
 
-/**
- * The nose and, when joyful or surprised, the open mouth (half shut the frame
- * after), moved down by the bob.
- */
 function muzzle(st: SpritePose, C: DogCoat): FeaturePixel[] {
   const y = NOSE_Y + st.bob
   const mouth = MOUTH[st.face] ?? (st.mouthClosing ? MOUTH_CLOSING : null)
@@ -307,7 +272,7 @@ export const dog = defineSpecies<'dog', DogCoat>({
   },
   build(st, C) {
     const b = st.bob
-    // The wag sways the plume in toward the back, the tip furthest.
+
     const wag = (y: number) =>
       st.tail ? -Math.round(Math.max(0, 18 - y) / 3) : 0
     return {

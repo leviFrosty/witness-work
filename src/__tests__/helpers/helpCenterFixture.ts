@@ -5,7 +5,6 @@ const paragraph = (text: string) => ({
   content: [{ type: 'text' as const, text }],
 })
 
-/** A Help Center entry as the website publishes it. */
 export function helpEntry(
   id: string,
   question: string,
@@ -28,7 +27,6 @@ export function helpEntry(
   }
 }
 
-/** A small English bundle covering pinned, platform and version cases. */
 export function helpBundle(
   overrides: Partial<HelpBundle> = {},
   entries: HelpEntry[] = [

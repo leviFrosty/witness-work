@@ -24,14 +24,10 @@ import UpdateTourCard from '@/features/updates/components/UpdateTourCard'
 import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
 
 interface Props {
-  /** Its takeover turn (ADR 0021): open while the arbiter shows it. */
   show: boolean
-  /** Closed by the User; gives the turn back. */
+
   onClose: () => void
-  /**
-   * Version the user last saw notes for, captured before `lastAppVersion` is
-   * stamped. Only releases newer than this are listed.
-   */
+
   sinceVersion: string
 }
 
@@ -40,11 +36,10 @@ export const WhatsNewContent = ({
   onlyNew,
   showTourCard,
 }: {
-  /** Releases newer than this get the "New" badge. */
   lastVersion: string
-  /** List only the releases newer than `lastVersion`. */
+
   onlyNew?: boolean
-  /** Offer the update reveal's tour above the release that introduced it. */
+
   showTourCard?: boolean
 }) => {
   const theme = useTheme()
@@ -67,8 +62,7 @@ export const WhatsNewContent = ({
             {showTourCard && semver.eq(item.version, UPDATE_REVEAL_VERSION) && (
               <UpdateTourCard />
             )}
-            {/* With large text the release's date wraps under its version and
-            name instead of running off the edge ("13 days" over the pill). */}
+            {}
             <View
               style={{
                 flexDirection: 'row',
@@ -173,11 +167,6 @@ export const WhatsNewContent = ({
   )
 }
 
-/**
- * Displays release notes for the versions the user hasn't seen yet, with a link
- * to the full history. Only used for releases announced as `'sheet'`; the
- * launch gate in `HomeTabStack` owns stamping `lastAppVersion`.
- */
 const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -216,7 +205,7 @@ const WhatsNewSheet: React.FC<Props> = ({ show, onClose, sinceVersion }) => {
       </XStack>
       <Sheet.ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 20, gap: 20 }}>
-          {/* Prevents rendering unneeded components at the home screen to save performance. */}
+          {}
           {show && <WhatsNewContent lastVersion={sinceVersion} onlyNew />}
           <Button onPress={handleSeeAll} style={{ alignSelf: 'center' }}>
             <Text

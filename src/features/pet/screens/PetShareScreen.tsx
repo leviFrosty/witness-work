@@ -17,15 +17,9 @@ import { petShareStats } from '@/features/pet/lib/share'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetShare'>
 
-/** The card doesn't get wider than this (iPad, landscape). */
 const CARD_MAX_WIDTH = 380
 const SIDE_PAD = 20
 
-/**
- * The pet's share sheet: its card (`PetShareCard`) as the picture will look,
- * and Share, which snapshots the card into the share sheet. Pulling the sheet
- * down closes it.
- */
 export default function PetShareScreen({ navigation }: Props) {
   const palette = useGamePalette()
   const scene = usePetRoomScene()
@@ -34,11 +28,10 @@ export default function PetShareScreen({ navigation }: Props) {
   const share = useSharePet()
   const card = useRef<View>(null)
   const [sharing, setSharing] = useState(false)
-  // Off by default: the sign shows the User's records.
+
   const [showSign, setShowSign] = useState(false)
   const { width } = useWindowDimensions()
 
-  // Released on another device while open.
   const hasPet = scene !== null
   const focused = useIsFocused()
   useEffect(() => {

@@ -8,12 +8,6 @@ import { analytics } from '@/lib/analytics'
 import { toast, toastSettlesUnlock } from '@/stores/toasts'
 import type { RoomItemId } from '@/types/pet'
 
-/**
- * Items the User's own action just opened up (`docs/toasts.md`): one unlock
- * toast each, newest in front. Tapping one opens its full-screen reveal;
- * swiping it away settles it. One that times out stays in the notifications
- * tray (`usePetUnlockNotifications`).
- */
 export function showPetUnlockToasts(
   items: readonly RoomItemId[],
   petName: string,

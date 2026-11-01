@@ -48,7 +48,7 @@ describe('Plan savedOn (the Pet Companion counts the User’s saves)', () => {
     expect(useServiceReport.getState().dayPlans[0].savedOn).toBe('2026-10-05')
     vi.setSystemTime(new Date(2026, 9, 7, 23, 30))
     useServiceReport.getState().updateDayPlan({ id: 'a', minutes: 90 })
-    // Ticking a checklist item in the Plan's note is an edit too.
+
     useServiceReport.getState().updateDayPlan({ id: 'a', note: '- [x] Tracts' })
     expect(useServiceReport.getState().dayPlans[0].savedOn).toBe('2026-10-05')
     expect(activeDays()).toEqual(['2026-10-05'])
@@ -70,7 +70,7 @@ describe('Plan savedOn (the Pet Companion counts the User’s saves)', () => {
       .updateDayPlan({ id: 'a', buddies: [] }, { automatic: true })
     useServiceReport.getState().addDayPlan(plan('linked'), { automatic: true })
     const [edited, linked] = useServiceReport.getState().dayPlans
-    // Still restamped for sync, but not a day of ministry.
+
     expect(edited.updatedAt).toBeGreaterThan(before.updatedAt!)
     expect(edited.savedOn).toBe('2026-10-05')
     expect(linked.savedOn).toBeUndefined()

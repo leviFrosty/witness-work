@@ -77,8 +77,6 @@ const JsonViewer = ({
     }
   }, [value])
 
-  // Skip syntax highlighting for very large payloads — the linear tokenizer is
-  // cheap but rendering thousands of nested <Text> nodes can jank the UI.
   const tokens = useMemo(() => {
     if (!expanded) return null
     if (serialized.length > MAX_HIGHLIGHT_CHARS) return null

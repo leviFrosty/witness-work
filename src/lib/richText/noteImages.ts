@@ -1,12 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy'
 import { isImageId } from '@/lib/richText/parse'
 
-/**
- * Photos in notes are JPEGs in `Documents/note-images/<id>.jpg`. Notes store
- * only the id (and size), never a path: paths differ per device and change
- * after a restore. Files are immutable; editing a photo makes a new id.
- */
-
 const DIRECTORY = 'note-images/'
 export const MAX_NOTE_IMAGES = 10
 
@@ -18,16 +12,11 @@ export function noteImagePath(id: string): string {
   return `${noteImageDirectory()}${id}.jpg`
 }
 
-/** The id in a managed file name (`<id>.jpg`), or undefined. */
 export function noteImageFileId(fileName: string): string | undefined {
   const match = /^([A-Za-z0-9-]{8,64})\.jpg$/.exec(fileName)
   return match?.[1]
 }
 
-/**
- * Photos known to be on disk, so sync doesn't check every file on every pull.
- * Files never change once saved; deleting one forgets it.
- */
 const knownLocal = new Set<string>()
 export const isNoteImageKnownLocal = (id: string) => knownLocal.has(id)
 export function markNoteImagesLocal(ids: Iterable<string>) {
@@ -35,7 +24,7 @@ export function markNoteImagesLocal(ids: Iterable<string>) {
 }
 
 let ensured: Promise<void> | undefined
-/** Makes the photos folder (also for sync downloads into it). */
+
 export function ensureNoteImageDirectory(): Promise<void> {
   ensured ??= FileSystem.makeDirectoryAsync(noteImageDirectory(), {
     intermediates: true,
@@ -63,7 +52,6 @@ export async function deleteNoteImages(ids: Iterable<string>): Promise<void> {
   )
 }
 
-/** Every photo file on this device, with when it was written. */
 export async function listNoteImageFiles(): Promise<
   { id: string; modifiedAt: number }[]
 > {

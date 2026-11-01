@@ -18,15 +18,9 @@ import type { Coordinate } from '@/types/contact'
 import type { PinBadge } from '@/features/map/lib/contactPins'
 
 const BADGE = 15
-/** The staleness ring around a Contact's picture or emoji. */
+
 const AVATAR_RING = 3
 
-/**
- * A Contact on the Map: their picture or emoji ringed in their staleness color,
- * else a disc in that color with their initials, or a rounded square counting
- * the Contacts gathered there. A corner badge marks an overdue or today's
- * Follow-up, or a favorite. Selected, it gets an accent ring.
- */
 export default function ContactMapPin({
   identifier,
   coordinate,
@@ -46,14 +40,14 @@ export default function ContactMapPin({
 }: {
   identifier: string
   coordinate: Coordinate
-  /** Initials, or a group's count. */
+
   label: string
   color: string
-  /** A single Contact's avatar; initials show when it's none. */
+
   avatar?: ProfileAvatar
-  /** Behind an emoji avatar, as on the Contact's other avatars. */
+
   avatarBackground?: string | null
-  /** Several Contacts in one pin. */
+
   group?: boolean
   badge?: PinBadge
   selected: boolean
@@ -70,7 +64,7 @@ export default function ContactMapPin({
       ? avatar.value
       : null
   const emoji = avatar?.type === 'emoji' && avatar.value ? avatar.value : null
-  // A group shows its count, but keeps the lead's avatar mounted.
+
   const showAvatar = !!(image || emoji) && !group
   const marker = useMarkerRedraw(
     [
@@ -97,10 +91,6 @@ export default function ContactMapPin({
   const avatarSize = DISC - AVATAR_RING * 2
   const textColor = getReadableTextColor(color)
 
-  // Every view stays mounted and unflattened (`collapsable={false}`), and
-  // state changes only restyle them: Apple Maps doesn't redraw a marker whose
-  // native views are added, removed or moved after it first draws, which left
-  // a blank disc when a pin became selected.
   return (
     <Marker
       identifier={identifier}
@@ -125,7 +115,7 @@ export default function ContactMapPin({
           justifyContent: 'center',
         }}
       >
-        {/* Selected: a filled accent ring. */}
+        {}
         <View
           collapsable={false}
           style={{
@@ -167,7 +157,7 @@ export default function ContactMapPin({
           >
             {label}
           </Text>
-          {/* The parent keys the marker by its avatar, so these never swap. */}
+          {}
           {image || emoji ? (
             <View
               collapsable={false}
@@ -191,7 +181,6 @@ export default function ContactMapPin({
                   style={{ width: avatarSize, height: avatarSize }}
                   contentFit='cover'
                   cachePolicy='memory-disk'
-                  // Android drew the marker's bitmap before the image landed.
                   onLoad={() => {
                     if (Platform.OS === 'android') marker.ref.current?.redraw()
                   }}
@@ -207,14 +196,13 @@ export default function ContactMapPin({
             </View>
           ) : null}
         </View>
-        {/* The parent keys the marker by its badge, so the icon never swaps. */}
+        {}
         <View
           collapsable={false}
           style={{
             position: 'absolute',
             top: (FRAME - DISC) / 2 - 5,
-            // Physical: the badge sits on the disc's top-right in either
-            // writing direction, like a notification badge.
+
             right: (FRAME - DISC) / 2 - 5,
             width: BADGE,
             height: BADGE,

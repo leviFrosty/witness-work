@@ -36,35 +36,26 @@ interface ProgressMonthTabProps {
   year: number
   onSwipeForward: () => void
   onSwipeBack: () => void
-  /** The cards are being edited (Edit in the header, or a long press). */
+
   editing: boolean
   onStartEditing: (source: 'card' | 'add' | 'footer') => void
   onFinishEditing: () => void
-  /** The Add Cards sheet is open. */
+
   adding: boolean
   onAddingChange: (adding: boolean) => void
   onNavigate: (destination: ProgressCardDestination) => void
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
-  /**
-   * The screen's header, shown above the cards while Days sits beside them: its
-   * controls belong to the cards, so Days gets the full height.
-   */
+
   header?: ReactNode
 }
 
-/** Whether the Days list gets its own column beside the month's cards. */
 export function useDaysBeside(month: number, year: number) {
   const { isWide } = useAdaptiveLayout()
   const cards = useProgressCards(month, year)
   return isWide && cards.shown.some((item) => item.id === 'days')
 }
 
-/**
- * Month tab for `ProgressScreen`: the month's report, always first, then the
- * User's Progress cards (see `ProgressCards`). In a wide window the Days list,
- * when it's one of them, sits in its own column beside the rest.
- */
 const ProgressMonthTab = ({
   month,
   year,
@@ -83,7 +74,7 @@ const ProgressMonthTab = ({
   const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const cards = useProgressCards(month, year)
-  // The day picked from the Days list stays in view above that day's sheet.
+
   const dayReveal = useRevealAboveSheet()
   const [dragging, setDragging] = useState(false)
 
@@ -95,15 +86,14 @@ const ProgressMonthTab = ({
   const days = cards.shown.find((item) => item.id === 'days')
   const daysBeside = isWide && days !== undefined
   const foldColumn = useFoldColumn(daysBeside ? null : 720)
-  // With Days in the same column, revealing a picked day scrolls that column.
+
   const ownScrollRef = useRef<KeyboardAwareScrollView>(null)
   const leadingRef = daysBeside ? ownScrollRef : dayReveal.scrollRef
   const leading = useReorderScroller(leadingRef, {
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const paddingBottom = insets.bottom + (hasBottomBar ? 100 : 30)
-  // Opening or closing iPhone Duo keeps what's being read in view, a day of
-  // the Days list too as it moves to its own column and back.
+
   const anchor = useScrollAnchor(daysBeside)
   const trailingFrame = useRef<View>(null)
   const leadingAnchor = anchor.scroll('leading', leadingRef, leading.frameRef)
@@ -114,14 +104,12 @@ const ProgressMonthTab = ({
   )
   const dayRef = (day: string) =>
     anchor.anchorRef(`day:${day}`, daysBeside ? 'trailing' : 'leading')
-  // Tapping Progress again heads back to the top.
+
   useTabReselect(() => {
     anchor.reset()
     leadingRef.current?.scrollToPosition(0, 0, true)
   })
 
-  // The report can't be removed or moved, so it rests while the cards are
-  // edited; tapping it, like any empty space, ends editing.
   const report = (
     <Pressable
       disabled={!editing}
@@ -203,7 +191,7 @@ const ProgressMonthTab = ({
           maxWidth: daysBeside ? undefined : 720,
           alignSelf: 'center',
           ...foldColumn,
-          // Beside Days, just room for the edit buttons past the cards' edges.
+
           paddingHorizontal: daysBeside ? PROGRESS_CARD_GAP / 2 : 15,
           paddingTop: 15,
           paddingBottom:
@@ -226,8 +214,7 @@ const ProgressMonthTab = ({
       enabled={!editing}
       style={{ flex: 1 }}
     >
-      {/* One tree either way, so adding or removing Days beside the cards
-          doesn't remount them (and close the Add Cards sheet). */}
+      {}
       <FoldSplit
         style={{
           flex: 1,
@@ -258,8 +245,6 @@ const ProgressMonthTab = ({
                 keyboardShouldPersistTaps='handled'
                 style={{ flex: 1 }}
                 contentContainerStyle={{
-                  // The grid's cells pad each card by half a gap, which is where
-                  // the edit buttons sit; the list gets the same room.
                   paddingTop: 15 - PROGRESS_CARD_GAP / 2,
                   paddingBottom: paddingBottom + dayReveal.bottomInset,
                 }}
@@ -267,14 +252,12 @@ const ProgressMonthTab = ({
                 {trailingAnchor.origin}
                 <ReorderableContainer
                   editing={editing}
-                  // Beside the cards there's nothing to move it among.
                   onMove={() => {}}
                   onLiftToEdit={() => onStartEditing('card')}
                   onBackgroundPress={onFinishEditing}
                   style={{
                     padding: PROGRESS_CARD_GAP / 2,
-                    // The list's header starts at its edge; keep it clear of the
-                    // remove badge.
+
                     paddingTop: PROGRESS_CARD_GAP / 2 + (editing ? 8 : 0),
                   }}
                 >
@@ -297,7 +280,7 @@ const ProgressMonthTab = ({
                       if (name === 'remove') cards.remove('days')
                     }}
                   >
-                    {/* Beside the cards the list always shows every day. */}
+                    {}
                     <DaysCard
                       month={month}
                       year={year}

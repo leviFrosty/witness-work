@@ -3,11 +3,6 @@ import { TextStyle } from 'react-native'
 import * as Font from 'expo-font'
 import { fonts } from '@/constants/theme'
 
-/**
- * Inter's italic faces, loaded the first time a note with italics renders
- * rather than at launch. iOS can't slant a custom font on its own, so without
- * them italic text would render upright.
- */
 const ITALIC = 'Inter_400Regular_Italic'
 const BOLD_ITALIC = 'Inter_700Bold_Italic'
 
@@ -19,13 +14,11 @@ function loadItalics(): Promise<void> {
     [ITALIC]: require('@/assets/fonts/Inter_400Regular_Italic.ttf'),
     [BOLD_ITALIC]: require('@/assets/fonts/Inter_700Bold_Italic.ttf'),
   }).catch(() => {
-    // Fall back to a synthesized slant; try again next time.
     load = undefined
   })
   return load
 }
 
-/** Whether the italic faces are ready, loading them when `needed`. */
 export function useItalicFonts(needed: boolean): boolean {
   const [ready, setReady] = useState(loaded)
   useEffect(() => {
@@ -41,7 +34,6 @@ export function useItalicFonts(needed: boolean): boolean {
   return ready
 }
 
-/** The text style for a span's marks, given whether italics have loaded. */
 export function markFontStyle(
   bold: boolean,
   italic: boolean,

@@ -19,7 +19,7 @@ const failing = (lastError: SharedCarSyncStatus['lastError']) => ({
 describe('the Shared Cars notice', () => {
   it('says nothing while changes are being shared, or with no Shared Car', () => {
     expect(sharedCarsNotice(calm)).toBeNull()
-    // Not known yet isn't offline.
+
     expect(sharedCarsNotice({ ...calm, online: null })).toBeNull()
     expect(
       sharedCarsNotice({
@@ -87,7 +87,7 @@ describe('the Shared Cars notice', () => {
 
   it('says when Shared Cars is off on this device, with a car still here', () => {
     expect(sharedCarsNotice({ ...calm, sharing: false })).toBe('disabled')
-    // Even offline: nothing would be shared once back online either.
+
     expect(sharedCarsNotice({ ...calm, sharing: false, online: false })).toBe(
       'disabled'
     )
@@ -107,7 +107,7 @@ describe('the Shared Cars notice', () => {
     expect(sharedCarsNotice(status({ held: 2 }))).toBe('held')
     expect(sharedCarsNotice(status({ tooLarge: 1 }))).toBe('tooLarge')
     expect(sharedCarsNotice(status({ held: 0, tooLarge: 0 }))).toBeNull()
-    // Being offline holds back everything, so it says that first.
+
     expect(
       sharedCarsNotice({ ...status({ held: 2, tooLarge: 1 }), online: false })
     ).toBe('offline')
@@ -145,9 +145,9 @@ describe('the Shared Cars notice', () => {
     expect(forCar('a')).toBe('tooLarge')
     expect(forCar('b')).toBe('offline')
     expect(forCar('c')).toBeNull()
-    // One with no status yet this session.
+
     expect(forCar('d')).toBeNull()
-    // What's true of every car still counts.
+
     expect(
       sharedCarsNotice({
         ...calm,

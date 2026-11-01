@@ -311,8 +311,6 @@ describe('JSON backups from older builds', () => {
 })
 
 describe('JSON backups this build cannot fully read', () => {
-  // A Contact with a gender this build doesn't know, as a newer build could
-  // write.
   const fileWith = (version: number | undefined) => ({
     ...(version === undefined ? {} : { version }),
     contactStore: {

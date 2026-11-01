@@ -17,13 +17,12 @@ import { isCountableEntry } from '@/lib/serviceReport'
 import useServiceReport from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 
-/** A day's date, and the time logged against what was planned for it. */
 const DayHistoryHeader = ({
   date,
   serviceReports,
 }: {
   date: Date
-  /** Entries to read the day's from, e.g. its month's. */
+
   serviceReports: TimeEntry[]
 }) => {
   const theme = useTheme()

@@ -38,25 +38,19 @@ const fromHsl = ([h, s, l]: Rgb): Rgb => {
   return [channel(p, q, h + 1 / 3), channel(p, q, h), channel(p, q, h - 1 / 3)]
 }
 
-/** Dark backgrounds get the brighter palette and a stronger glow. */
 export const isDarkTheme = (theme: Theme) =>
   relativeLuminance(theme.colors.background) < 0.2
 
 export interface OrbPalette {
-  /** Accent. */
   a: Rgb
-  /** A second hue about 30° along the wheel (teal for the default green). */
+
   b: Rgb
-  /** Deep shade inside the sphere. */
+
   c: Rgb
-  /** Highlight. */
+
   d: Rgb
 }
 
-/**
- * The orb's colors, all derived from the theme accent so a Supporter's custom
- * accent recolors it too.
- */
 export const orbPalette = (theme: Theme): OrbPalette => {
   const accent = theme.colors.accent
   const dark = isDarkTheme(theme)

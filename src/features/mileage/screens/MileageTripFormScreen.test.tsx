@@ -66,13 +66,12 @@ vi.mock('@/stores/preferences', async () => {
   }))
   return { usePreferences: store }
 })
-// Confirms every destructive alert, as tapping its red button would.
+
 const confirm = vi.hoisted(() =>
   vi.fn((options: { onConfirm: () => void }) => options.onConfirm())
 )
 vi.mock('@/lib/confirmDestructive', () => ({ default: confirm }))
 
-/** Leaf components as host elements, so their props can be read. */
 const host = vi.hoisted(() => (name: string) => async () => {
   const ReactModule = await import('react')
   return {
@@ -186,14 +185,13 @@ const save = (tree: ReactTestRenderer) =>
       )!.props.onPress as () => void
     )()
   )
-/** Host elements only: each mocked leaf also shows as its component. */
+
 const byTestId = (tree: ReactTestRenderer, testID: string) =>
   tree.root.findAll(
     (node) => typeof node.type === 'string' && node.props.testID === testID
   )
 const textOf = (node: Found) => node.props.children as string
 
-/** Every trip in both stores, by id. */
 const allTrips = () => [
   ...useMileage.getState().trips,
   ...Object.values(useSharedCars.getState().cars).flatMap((car) => car.trips),
@@ -231,7 +229,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 beforeEach(() => {
   uuid = 0
   seed()
-  // A save remembers the entry mode it used.
+
   usePreferences.setState({ mileageEntryMode: 'distance' })
   navigation.goBack.mockClear()
   confirm.mockClear()
@@ -264,7 +262,7 @@ describe('the trip form on a Shared Car', () => {
 
   it('says who sees the note, and offers no photos, only on a Shared Car', () => {
     const tree = render()
-    // The User's own Civic, the car they last logged a trip on.
+
     expect(carPicker(tree)!.props.selectProps.value).toBe('civic')
     expect(noteRow(tree).props.allowImages).toBe(true)
     expect(noteRow(tree).props.description).toBeUndefined()
@@ -293,7 +291,6 @@ describe('the trip form on a Shared Car', () => {
     expect(allTrips()).toHaveLength(before)
     expect(navigation.goBack).not.toHaveBeenCalled()
 
-    // The same note fits one of the User's own cars, which share nothing.
     chooseCar(tree, 'civic')
     expect(byTestId(tree, 'trip-note-too-large')).toHaveLength(0)
     save(tree)
@@ -355,7 +352,7 @@ describe('odometer readings that overlap another trip', () => {
     ])
     const tree = render()
     useOdometer(tree)
-    // Starts where the last one ended.
+
     type(tree, 'Odometer Start (mi)', '1020')
     type(tree, 'Odometer End (mi)', '1040')
     expect(byTestId(tree, 'trip-odometer-overlap')).toHaveLength(0)
@@ -381,10 +378,6 @@ describe('odometer readings that overlap another trip', () => {
 })
 
 describe('a trip form whose car goes', () => {
-  /**
-   * The Family Minivan ends here: the car leaves the Shared Cars store, and its
-   * copy, under new ids, joins the User's own.
-   */
   const endVan = () =>
     act(() => {
       const { ['van-space']: van, ...rest } = useSharedCars.getState().cars
@@ -416,7 +409,6 @@ describe('a trip form whose car goes', () => {
     expect(carPicker(tree)!.props.invalid).toBe(true)
     expect(navigation.goBack).not.toHaveBeenCalled()
 
-    // The copy is one of the User's own cars now, and takes the trip.
     chooseCar(tree, 'van-copy')
     save(tree)
     expect(
@@ -427,7 +419,7 @@ describe('a trip form whose car goes', () => {
   it('says so when the car went between drawing the form and Save', () => {
     const tree = render()
     type(tree, 'Distance (mi)', '12')
-    // Save as the User tapped it, from the form drawn while the car was here.
+
     const tapped = all(tree, 'ActionButton').find(
       (button) => button.props.children === 'Save'
     )!.props.onPress as () => void

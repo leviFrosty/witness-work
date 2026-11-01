@@ -21,7 +21,6 @@ type Props = {
   onToggle: (weekday: number) => void
 }
 
-/** One chip per weekday, in Start of Week order. */
 const ServiceDayPicker = ({ selected, startOfWeek, onToggle }: Props) => {
   const theme = useTheme()
 

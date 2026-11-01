@@ -11,80 +11,30 @@ import {
   makeLdcBuiltinCategory,
 } from '@/constants/categories'
 
-/**
- * Shape of the legacy `preferences.serviceReportTags` entry. We accept both the
- * old `string` form and the newer `{value, credit}` object form so the
- * migration can absorb whichever the user happens to have on disk.
- */
 type LegacyTagEntry = string | { value: string; credit?: boolean }
 
-/**
- * Resolution policy when the same legacy tag string was recorded with both
- * `credit: true` and `credit: false` across different ServiceReports.
- *
- * - `'majority'` — counts entries per credit value; ties fall back to `false`.
- *
- * The brief calls this out as the data-inconsistency this refactor exists to
- * close: under the old shape the same Category name could differ in credit
- * attribution per entry. We pick a single value (majority wins, tie ⇒
- * non-credit) and stamp it on the Category record going forward.
- */
 type CreditResolution = 'majority'
 
 export type CategoryMigrationInput = {
   serviceReports: TimeEntriesByYear
-  /** User's saved tag list from `preferences.serviceReportTags`. */
+
   legacyTags: LegacyTagEntry[]
-  /** Now() in epoch ms — stamped onto every newly-created Category. */
+
   now: number
-  /** UUID generator; injectable for tests. Defaults to `expo-crypto.randomUUID`. */
+
   uuid?: () => string
-  /** Credit resolution strategy. See `CreditResolution`. */
+
   creditResolution?: CreditResolution
 }
 
 export type CategoryMigrationResult = {
-  /** The fully-populated Categories list to seed the new store with. */
   categories: Category[]
-  /**
-   * The migrated ServiceReports tree. Each entry that had a legacy `tag` now
-   * has `categoryId` pointing at the corresponding `Category.id`; the legacy
-   * `tag` field is dropped. Entries that had no `tag` are returned unchanged.
-   */
+
   serviceReports: TimeEntriesByYear
-  /**
-   * Count of ServiceReports whose `credit` boolean disagreed with the
-   * majority-resolved Category `isCredit` they were folded into. Surfaced for
-   * the PR description / observability — non-zero means at least one user
-   * historically had inconsistent credit attribution under the same tag name.
-   */
+
   reconciledCreditMismatches: number
 }
 
-/**
- * One-time migration that promotes the legacy free-text `TimeEntry.tag` field +
- * `preferences.serviceReportTags` list into first-class `Category` records.
- *
- * Algorithm:
- *
- * 1. Walk every TimeEntry. Each distinct `tag` string contributes one Category.
- *    Track per-tag counts of `credit: true` vs `credit: false`.
- * 2. Fold the user's saved `legacyTags` into the same map so Categories the user
- *    defined but never used still survive the migration. For object-form
- *    entries the stored `credit` boolean wins the tie when no ServiceReports
- *    reference that tag.
- * 3. Resolve `isCredit` per Category by majority of observed entry credit values;
- *    non-tag-bearing entries are ignored. Ties fall back to `false`
- *    (conservative — non-credit is the publisher's default monthly bucket).
- * 4. Rewrite every TimeEntry: drop `tag`, set `categoryId`. The per-entry `credit`
- *    boolean is left in place for legacy readers but should no longer be
- *    authoritative (callers now read `Category.isCredit`).
- *
- * The migration is pure: no store access, no side effects. The boot runner in
- * `src/stores/migrations/categories.ts` is responsible for gating it on
- * `preferences.hasMigratedTagsToCategories` and writing the result back to the
- * Categories store, TimeEntry store, and Preferences store.
- */
 export function migrateTagsToCategories(
   args: CategoryMigrationInput
 ): CategoryMigrationResult {
@@ -95,7 +45,6 @@ export function migrateTagsToCategories(
     creditResolution = 'majority',
   } = args
 
-  // tag-name → { trueCount, falseCount, seedIsCredit? } accumulator.
   const tagStats = new Map<
     string,
     { trueCount: number; falseCount: number; seedIsCredit?: boolean }
@@ -113,7 +62,6 @@ export function migrateTagsToCategories(
     else if (credit === false) entry.falseCount += 1
   }
 
-  // Pass 1: tags actually attached to ServiceReports.
   for (const year of Object.values(serviceReports)) {
     for (const month of Object.values(year)) {
       for (const report of month) {
@@ -123,10 +71,6 @@ export function migrateTagsToCategories(
     }
   }
 
-  // Pass 2: user-defined tags from preferences (may include entries never
-  // attached to a TimeEntry). Seed `isCredit` from object-form entries
-  // so a tag the user defined as credit-bearing but never used keeps that
-  // intent. String-form entries are treated as non-credit by default.
   for (const raw of legacyTags) {
     if (typeof raw === 'string') {
       recordTag(raw, undefined)
@@ -159,14 +103,12 @@ export function migrateTagsToCategories(
     if (creditResolution === 'majority') {
       if (trueCount > falseCount) return true
       if (falseCount > trueCount) return false
-      // Tie (including 0/0): defer to the seed, then to `false`.
+
       return seedIsCredit ?? false
     }
     return false
   }
 
-  // Build Category records in deterministic name order so test fixtures and
-  // sync payloads are stable across runs.
   const sortedNames = Array.from(tagStats.keys()).sort()
   const nameToId = new Map<string, string>()
   const categories: Category[] = []
@@ -182,9 +124,6 @@ export function migrateTagsToCategories(
     })
   }
 
-  // Pass 3: rewrite ServiceReports. Drop `tag`, set `categoryId`. Track
-  // mismatches between the per-entry `credit` boolean and the resolved
-  // Category `isCredit` for the PR description.
   let reconciledCreditMismatches = 0
   const rebuiltReports: TimeEntriesByYear = {}
   for (const [yearKey, year] of Object.entries(serviceReports)) {
@@ -200,16 +139,14 @@ export function migrateTagsToCategories(
             reconciledCreditMismatches += 1
           }
         }
-        // Strip the legacy `tag` field by destructuring it off.
+
         const { tag: _drop, ...rest } = report as TimeEntry & {
           tag?: string
         }
         return {
           ...rest,
           categoryId: id,
-          // Pin per-entry credit to the resolved Category value so existing
-          // credit-math readers (which still read `report.credit`) agree
-          // with the Category source of truth.
+
           credit: category?.isCredit ?? report.credit,
         }
       })
@@ -224,77 +161,25 @@ export function migrateTagsToCategories(
 }
 
 export type LdcCollapseMigrationInput = {
-  /** Persisted ServiceReports — may still carry the legacy `ldc: true` flag. */
   serviceReports: TimeEntriesByYear
-  /** Existing Category records (post tag-to-Category migration). */
+
   categories: Category[]
-  /** Now() in epoch ms — stamped onto the seeded LDC builtin record. */
+
   now: number
 }
 
 export type LdcCollapseMigrationResult = {
-  /**
-   * Updated Categories list. Includes the LDC builtin record if it wasn't
-   * already present. Existing categories are returned unchanged.
-   */
   categories: Category[]
-  /**
-   * Rewritten ServiceReports tree. Every entry that carried `ldc: true` now has
-   * `categoryId: LDC_BUILTIN_CATEGORY_ID, credit: true` and no `ldc` field.
-   * Entries that already had a non-LDC `categoryId` keep that `categoryId` (the
-   * explicit Category wins per precedence rule); the `ldc` flag is dropped
-   * regardless.
-   */
+
   serviceReports: TimeEntriesByYear
-  /**
-   * Number of entries rewritten from `ldc: true` → LDC builtin Category.
-   * Surfaced for observability — non-zero means the user had at least one LDC
-   * entry that was collapsed onto the builtin.
-   */
+
   rewrittenCount: number
-  /**
-   * Number of entries that had BOTH `ldc: true` AND a non-LDC `categoryId`
-   * already set (data corruption — shouldn't happen but possible). The explicit
-   * Category wins; the `ldc` flag is dropped. Surfaced for the PR description /
-   * observability.
-   */
+
   conflictedCount: number
-  /**
-   * True when the LDC builtin Category had to be seeded as part of this
-   * migration (i.e. it wasn't already present in the categories list). Used by
-   * the boot runner to decide whether to write the categories store.
-   */
+
   seededLdcBuiltin: boolean
 }
 
-/**
- * One-time migration that collapses the legacy `TimeEntry.ldc` boolean into the
- * LDC builtin Category (`LDC_BUILTIN_CATEGORY_ID`). After this migration runs,
- * the `ldc` field is no longer authoritative — LDC entries carry `categoryId:
- * LDC_BUILTIN_CATEGORY_ID, credit: true` and look like any other credit-bearing
- * Category to the cap math.
- *
- * Algorithm:
- *
- * 1. Ensure the LDC builtin Category record exists in the user's categories list.
- *    If absent, seed it (`makeLdcBuiltinCategory(now)`).
- * 2. Walk every TimeEntry:
- *
- *    - If `ldc !== true`: drop the field if present, otherwise return unchanged.
- *    - If `ldc === true` AND `categoryId === undefined`: set `categoryId:
- *         LDC_BUILTIN_CATEGORY_ID, credit: true`; drop `ldc`.
- *    - If `ldc === true` AND `categoryId` is already set to a non-LDC value (data
- *         corruption): keep `categoryId` as-is (explicit Category wins); drop
- *         `ldc`. Count under `conflictedCount`.
- * 3. Idempotent — entries that already have `categoryId: LDC_BUILTIN_CATEGORY_ID`
- *    and no `ldc` field are returned unchanged; the builtin is only seeded if
- *    it wasn't already present.
- *
- * The migration is pure: no store access, no side effects. The boot runner in
- * `src/stores/migrations/categories.ts` gates it on
- * `preferences.hasCollapsedLdcIntoCategory` and is called after tag migration
- * by `src/app/migrations/useAppMigrations.ts`.
- */
 export function migrateLdcToCategory(
   args: LdcCollapseMigrationInput
 ): LdcCollapseMigrationResult {
@@ -315,13 +200,8 @@ export function migrateLdcToCategory(
     rebuiltReports[yearKey] = {}
     for (const [monthKey, month] of Object.entries(year)) {
       rebuiltReports[yearKey][monthKey] = month.map((report) => {
-        // Treat the input as the legacy shape so we can read `ldc` even
-        // though the canonical type no longer exposes it.
         const legacy = report as LegacyTimeEntry
         if (legacy.ldc !== true) {
-          // Defensive: an entry might carry `ldc: false` from older writers.
-          // Strip the field so the on-disk shape matches the canonical type
-          // after migration.
           if ('ldc' in (legacy as Record<string, unknown>)) {
             const { ldc: _drop, ...rest } = legacy as TimeEntry & {
               ldc?: boolean
@@ -330,19 +210,18 @@ export function migrateLdcToCategory(
           }
           return report
         }
-        // `ldc === true` — figure out where the entry should land.
+
         const hasNonLdcCategory =
           typeof legacy.categoryId === 'string' &&
           legacy.categoryId !== LDC_BUILTIN_CATEGORY_ID
         if (hasNonLdcCategory) {
-          // Explicit Category wins; drop the LDC flag. Count under conflicts.
           conflictedCount += 1
           const { ldc: _drop, ...rest } = legacy as TimeEntry & {
             ldc?: boolean
           }
           return rest
         }
-        // Standard LDC entry (no other categoryId): fold onto the builtin.
+
         rewrittenCount += 1
         const { ldc: _drop, ...rest } = legacy as TimeEntry & {
           ldc?: boolean
@@ -366,17 +245,10 @@ export function migrateLdcToCategory(
 }
 
 export type CreditRestampResult = {
-  /** False when no entry needed rewriting — nothing to write back. */
   changed: boolean
   serviceReports: TimeEntriesByYear
 }
 
-/**
- * Rewrites the per-entry `credit` flag of every entry `targetIsCredit` returns
- * a value for, when it differs. Readers treat a missing flag as non-credit, so
- * an unset flag already matches `false`. Untouched month buckets keep their
- * array identity, and nothing in the input tree is mutated.
- */
 const rewriteTimeEntriesCredit = (
   serviceReports: TimeEntriesByYear,
   targetIsCredit: (entry: TimeEntry) => boolean | undefined,
@@ -413,21 +285,6 @@ const rewriteTimeEntriesCredit = (
     : { changed, serviceReports }
 }
 
-/**
- * Re-stamps the per-entry `credit` boolean on every TimeEntry referencing
- * `categoryId` after the Category's `isCredit` flips. The Category record is
- * the source of truth, but Service Report totals still read the per-entry flag.
- * (Plans are never re-stamped — they derive credit-ness from the Category at
- * read time.)
- *
- * Every rewritten entry gets a new `updatedAt`, so the flip reaches devices
- * that sync this entry but haven't pulled the Category yet. Entries whose flag
- * already matches keep their timestamp, so it can't override another device's
- * newer edit. `normalizeTimeEntriesCredit` covers the rest.
- *
- * Pure and identity-preserving: `changed: false` tells the caller to skip the
- * store write entirely.
- */
 export function restampTimeEntriesCredit(
   serviceReports: TimeEntriesByYear,
   categoryId: string,
@@ -440,20 +297,6 @@ export function restampTimeEntriesCredit(
   )
 }
 
-/**
- * Aligns every TimeEntry's `credit` flag with its Category's current
- * `isCredit`, without touching `updatedAt`. Entries with no Category, or whose
- * Category isn't on this device, keep their flag.
- *
- * Totals read the per-entry flag, and an entry can arrive carrying a stale one:
- * logged or edited on a device that hadn't pulled the Category's credit change
- * yet, it is newer than the restamp and wins the merge everywhere. Every device
- * runs this locally after its stores change
- * (`useTimeEntryCreditNormalization`), so totals follow the Category. The
- * rewrite isn't stamped because there is nothing to propagate: each device
- * derives the same flags from the same synced Categories, and a stamp would let
- * a device with a stale Category override the others.
- */
 export function normalizeTimeEntriesCredit(
   serviceReports: TimeEntriesByYear,
   categories: Category[]

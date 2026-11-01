@@ -50,8 +50,7 @@ const PublisherPreferencesSection = () => {
     setRolloverIncludesCredit,
     set,
   } = usePreferences()
-  // `hasCompletedProfileSetup` lives in the Profile store after wave-3 because
-  // it gates Profile data (name + avatar) being filled in.
+
   const { hasCompletedProfileSetup, set: setProfile } = useProfile()
   const {
     type: publisherType,
@@ -66,8 +65,7 @@ const PublisherPreferencesSection = () => {
   const isCheckboxMode = entryMode === 'checkbox'
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [advancedHovered, setAdvancedHovered] = useState(false)
-  // Hours Logging goal input — mirrors the Custom role's goal input in
-  // `PublisherTypeSelector`.
+
   const logHoursGoal = useGoalHoursInput({
     hours: publisherHours.publisher,
     defaultHours: PREFERENCE_DEFAULTS.publisherHours.publisher,
@@ -92,8 +90,7 @@ const PublisherPreferencesSection = () => {
 
   const navigation = useNavigation<RootStackNavigation>()
   const showAdvanced = canAdjustCreditLimit || showsTimeEntry
-  // Hours-mode roles always get the annual-goal row. A publisher logging hours
-  // only gets it once they have a monthly goal to multiply (annual = ×12).
+
   const showAnnualGoal =
     !isCheckboxMode || (showsTimeEntry && monthlyGoalHours > 0)
 

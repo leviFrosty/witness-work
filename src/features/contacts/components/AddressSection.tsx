@@ -66,7 +66,6 @@ const ModeSegment: React.FC<{
         />
         <Text
           style={{
-            // The largest sizes wrap the label rather than clip it.
             ...(stacked && { flexShrink: 1, textAlign: 'center' }),
             color: active ? theme.colors.text : theme.colors.textAlt,
             fontFamily: active ? theme.fonts.semiBold : theme.fonts.regular,
@@ -123,24 +122,16 @@ export default function AddressSection({
         readonly address: undefined
         readonly enabled: false
       }
-  /** A search result was picked; `coordinate` is set when MapKit found it. */
+
   onPlacePicked?: (address: Address, coordinate?: Coordinate) => void
   searchInput: React.RefObject<TextInput | null>
-  /**
-   * Moves the keyboard past the address: Next on Country (the last manual
-   * field), or picking a search result. Without it Country shows Done.
-   */
+
   onSubmitLastField?: () => void
 }) {
   const theme = useTheme()
-  // At accessibility text sizes "Enter Manually" no longer fits half the row,
-  // so the two modes stack.
+
   const stackModes = useAccessibilityTextSize()
-  // Address search is the one entry path that leaves the device (Apple MapKit
-  // on iOS, HERE via the vendor's proxy elsewhere). With data protection mode
-  // on the segmented control is gone and the section is manual-entry only, so
-  // the address the publisher types is never transmitted anywhere. Search
-  // stays unmounted in this mode even if `mode` is still 'search'.
+
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const [query, setQuery] = useState(addressToString(contact.address))
   const [isResult, setIsResult] = useState(!!contact.address)
@@ -187,7 +178,6 @@ export default function AddressSection({
     setQuery(text)
     setIsResult(false)
     if (text === '') {
-      // Clear structured fields too, so stale values cannot survive save.
       setAddress({
         line1: '',
         line2: '',
@@ -217,8 +207,6 @@ export default function AddressSection({
   const switchMode = (next: Mode) => {
     if (next === mode) return
     if (next === 'search') {
-      // Re-derive the search query from the structured address so the two
-      // views stay in sync without copying stale data between them.
       setQuery(addressToString(contact.address))
       setIsResult(true)
     }
@@ -288,8 +276,6 @@ export default function AddressSection({
               placeholder={i18n.t('enterAddress')}
               accessibilityLabel={i18n.t('enterAddress')}
               inputRef={searchInput}
-              // Once the field shows a picked place, return moves on like
-              // Country does in manual entry.
               onSubmitPicked={onSubmitLastField}
             />
           </View>
@@ -382,8 +368,7 @@ export default function AddressSection({
                     submitBehavior: 'submit',
                     onChangeText: (val: string) => setZip(val),
                     value: contact.address?.zip || '',
-                    // Not a number pad: iOS's has no return key, and UK and
-                    // Canadian postcodes have letters.
+
                     keyboardType: 'numbers-and-punctuation',
                     enterKeyHint: 'next',
                     textAlign: 'start',

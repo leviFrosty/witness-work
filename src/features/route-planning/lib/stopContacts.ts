@@ -5,14 +5,8 @@ import {
 } from '@/lib/contactsSearch'
 import type { Contact } from '@/types/contact'
 
-/** How many contacts Add Stop lists at once. */
 export const MAX_STOP_CONTACTS = 30
 
-/**
- * The contacts Add Stop lists: the Contacts list's search while there's a query
- * (best match first), otherwise everyone A to Z. Only the first `limit` show;
- * `more` counts the rest so the sheet can say there are more.
- */
 export const stopContactResults = <C extends Contact>(
   contacts: C[],
   query: string,

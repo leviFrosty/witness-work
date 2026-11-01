@@ -12,7 +12,6 @@ import type { ProgressCardProps } from '@/features/progress/components/cards/typ
 import type { ProgressCardSize } from '@/lib/progressCards'
 import type { TimeEntry } from '@/types/timeEntry'
 
-/** How many days had time this month, and the average day out. */
 export default function ServiceDaysCard({
   month,
   year,
@@ -22,7 +21,6 @@ export default function ServiceDaysCard({
   return <ServiceDaysStatCard reports={reports} size={size} />
 }
 
-/** How many days `reports` have time on, the average day, and the longest. */
 export function ServiceDaysStatCard({
   reports,
   size,
@@ -38,7 +36,6 @@ export function ServiceDaysStatCard({
       icon={CalendarCheckIcon}
       title={i18n.t('progressCards.serviceDays.title')}
       value={formatNumber(stats.days)}
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       suffix={i18n.t('progressCards.serviceDays.unit', { count: stats.days })}
       tone={stats.days ? 'default' : 'muted'}
       caption={

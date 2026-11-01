@@ -44,17 +44,15 @@ interface Props {
 
 type Probe =
   | { state: 'probing' }
-  | { state: 'unavailable' } // iCloud account unavailable on this device
-  | { state: 'needsConnect' } // Android: Google Drive not connected yet
-  | { state: 'noBackup' } // Available but nothing there yet
-  | { state: 'incomplete' } // A backup may exist but isn't fully readable yet
-  | { state: 'offline' } // Couldn't reach the cloud to look
+  | { state: 'unavailable' }
+  | { state: 'needsConnect' }
+  | { state: 'noBackup' }
+  | { state: 'incomplete' }
+  | { state: 'offline' }
   | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
 
-/** Analytics `import_type` for this restore: the service it reads from. */
 const importType = () => (usesGoogleDriveSync() ? 'google_drive' : 'icloud')
 
-/** `merge` is offered only when ongoing sync can be enabled (Supporters). */
 type RestoreMode = 'replace' | 'merge'
 
 const probeFromPeek = (peek: RemotePeek): Probe => {
@@ -64,8 +62,6 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
     case 'none':
       return { state: 'noBackup' }
     case 'incomplete':
-      // "Nothing to restore" here would send the user through onboarding
-      // with fresh defaults that later beat their real data.
       return { state: 'incomplete' }
     case 'offline':
       return { state: 'offline' }
@@ -74,23 +70,13 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
   }
 }
 
-/**
- * Offers a one-shot restore from iCloud (iOS) or Google Drive (Android, ADR
- * 0019) during onboarding. Pulling is not gated by supporter status — the user
- * can import their data now and decide whether to enable ongoing sync (which IS
- * supporter-only) later. Skipping preserves an explicit local off choice before
- * advancing.
- *
- * Android first asks the user to connect Google Drive; connecting also lets
- * this device share Supporter status with their other devices (ADR 0011).
- */
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
   const { set: setProfile } = useProfile()
   const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
-  // Bumped by "Search again" to run the probe effect afresh.
+
   const [search, setSearch] = useState(0)
   const [restoring, setRestoring] = useState(false)
   const [connecting, setConnecting] = useState(false)
@@ -105,14 +91,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     }
   }
 
-  // Breathing animation for the cloud icon while probing. Runs only while
-  // `probe.state === 'probing'` and stops cleanly when the state resolves.
   const pulse = useRef(new Animated.Value(0)).current
 
-  // This step reads iCloud (Google Drive on Android), whatever this device
-  // would sync with by default (ADR 0030): a device that never chose is on
-  // iCloud/Drive while it's open. Leaving without turning sync on hands the
-  // choice back, so Cloud Sync can still be the default.
   useEffect(() => {
     if (usePreferences.getState().syncProvider !== null) return
     usePreferences.setState({ syncProvider: 'platform' })
@@ -165,13 +145,11 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         })
       })
     probeRemote()
-    // A backup that lands after the probe — materializing late on a cold
-    // launch, or finishing its download — upgrades the screen on its own:
-    // the metadata query reports files this device hasn't read yet.
+
     const sub = syncTransport().addRemoteChangeListener(() => {
       if (!cancelled && !found) probeRemote()
     })
-    // Back online after a search that couldn't reach the cloud.
+
     const reconnectSub = addReconnectListener(() => {
       if (!cancelled && !found) probeRemote()
     })
@@ -217,12 +195,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     })
   }, [probe.state])
 
-  /**
-   * Onboarding is reachable with real data (More → Restart onboarding), and the
-   * restore can't see this device's own iCloud file. So when this device has
-   * records of its own, ask before replacing them; Supporters can merge
-   * instead. A fresh install keeps the one-tap restore.
-   */
   const handleRestore = () => {
     if (probe.state !== 'found' || restoring) return
     const { remote, account } = probe
@@ -294,9 +266,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
         elapsed_ms: Date.now() - startedAt,
       })
     }
-    // The backup shown came from the Apple Account it was read under; after a
-    // switch it would land in, or merge with, the new account's iCloud. Look
-    // again instead.
+
     const sameAccount = () => {
       if (iCloudSync.confirmICloudAccount(account)) return true
       failed('account_changed')
@@ -322,8 +292,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       )
       return
     }
-    // Defer the synchronous store replacement one frame so the spinner
-    // actually paints before the setState cascade blocks the JS thread.
+
     requestAnimationFrame(() => {
       if (!sameAccount()) return
       try {
@@ -336,17 +305,9 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     })
   }
 
-  /**
-   * The Settings "Merge both" choice: turns ongoing sync on, merges every other
-   * device's data into this device's, then publishes the result. Throws when
-   * either step didn't finish; sync stays on and retries, and nothing local was
-   * replaced.
-   */
   const merge = async (remote: SyncPayload) => {
     iCloudSync.backfillUpdatedAtIfNeeded()
-    // Before sync turns on: joining iCloud's newest reset generation makes the
-    // pull merge with it instead of adopting it and replacing this device's
-    // data.
+
     iCloudSync.joinRemoteResetEpoch(remote)
     enableSync()
     await iCloudSync.pullAndMerge('onboarding-merge')
@@ -357,19 +318,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       throw new Error('iCloud sync incomplete')
   }
 
-  /**
-   * For Supporters, flips ongoing sync on and marks the choice as user-set so
-   * `SupporterSyncDefault` doesn't second-guess it. The user just explicitly
-   * picked "bring my data from iCloud" — keeping the two sides in sync is the
-   * obvious follow-up, and requiring them to dig into Settings to turn it on is
-   * friction with no upside. Like `applyPullEnable`, a replace enables sync
-   * only after local data was swapped for the backup, so there's nothing left
-   * for this device to resolve.
-   *
-   * Non-supporters leave `iCloudSyncEnabled` off: ongoing sync is
-   * supporter-gated, so enabling it here would be a dead write that the
-   * Settings screen would refuse to expose anyway.
-   */
   const enableSync = () => {
     if (!canEnableICloudSync) return
     const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
@@ -401,14 +349,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     analytics.capture('onboarding_completed', {
       completion_method: 'icloud_restore',
     })
-    // Mark onboarding complete — the user's restored publisher/profile/etc.
-    // replaces the defaults they would've otherwise set in the remaining
-    // steps.
-    //
-    // Also force-set `hasCompletedProfileSetup` + `hasCompletedMapOnboarding`
-    // so the main app doesn't re-prompt the user and overwrite their
-    // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
-    // revision, but an older remote payload may not contain them.)
+
     set({
       onboardingComplete: true,
       onboardingStepId: null,
@@ -417,10 +358,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     if (mode === 'replace') enableSync()
     setProfile({ hasCompletedProfileSetup: true })
 
-    // If the restored payload references images via iCloud markers, prompt
-    // the user to also pull those photos down. Per-device consent means we
-    // can't silently flip `iCloudSyncIncludeImages` on — the user must opt
-    // in explicitly. See Q9 in docs/icloud-image-sync-plan.md.
     if (payloadReferencesPhotos(remote)) {
       analytics.capture('icloud_restore_images_prompted', {
         source: 'onboarding',
@@ -473,7 +410,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
             justifyContent: 'center',
           }}
         >
-          {/* Breathing ring — only visible while probing. */}
+          {}
           {probe.state === 'probing' && (
             <Animated.View
               pointerEvents='none'

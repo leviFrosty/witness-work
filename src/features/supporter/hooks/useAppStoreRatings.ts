@@ -5,10 +5,6 @@ import {
   type AppStoreRatings,
 } from '@/features/supporter/lib/appStoreRatings'
 
-/**
- * Persisted App Store ratings (or the bundled snapshot), refreshed in the
- * background when the stored copy is a week old.
- */
 export const useAppStoreRatings = (): AppStoreRatings => {
   const [ratings, setRatings] = useState(getAppStoreRatings)
   useEffect(() => {

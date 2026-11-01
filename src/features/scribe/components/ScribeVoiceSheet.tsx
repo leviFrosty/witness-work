@@ -54,53 +54,30 @@ const VOICE_ERROR_COPY: Record<ScribeVoiceErrorCode, TranslationKey> = {
   failed: 'scribe_voiceFailed',
 }
 
-/** What screen readers hear as listening changes; never the level. */
 type Cue = 'listening' | 'countdown'
 
-/** Done (76) and its halo: Discard centers in the same room so labels align. */
 const CONTROL_ROOM = 88
-/**
- * The spinner turns at least this long, so a warm start still reads as loading
- * and snaps to ready after the sheet has risen.
- */
+
 const MIN_LOADING_MS = 700
-// Soft ticks while loading; capped so a slow start doesn't buzz on.
+
 const LOADING_TICK_MS = 140
 const LOADING_TICKS_MAX = 24
 
-/** The minimized orb's tap target; its canvas leaves room for the glow. */
 const MINI_BOX = 64
 const MINI_CANVAS = 104
 const MINI_IN = ZoomIn.duration(220)
 
 interface Props {
-  /** What was said, to send. */
   onSend: (text: string) => void
-  /**
-   * Type instead, or an interruption: what was heard (if anything) goes to the
-   * composer, unsent.
-   */
+
   onType: (draftText?: string) => void
-  /** Discarded, or Back: the sheet goes. */
+
   onClose: () => void
-  /**
-   * Over a conversation: pulling the sheet down (or tapping above it) while
-   * listening shrinks it to a small orb over the conversation, still listening,
-   * so the User can read it while they talk. Tapping the orb opens the sheet
-   * again. Without `onMinimizedChange` the sheet only dismisses.
-   */
+
   minimized?: boolean
   onMinimizedChange?: (minimized: boolean) => void
 }
 
-/**
- * Speak an update (V-A): a sheet with the orb that follows the User's voice,
- * Discard and Done. No live transcript; the text goes to the conversation,
- * which shows what Scribe AI understood. Type instead (and an interruption)
- * leaves what was heard in the composer, unsent. The voice route draws it over
- * the screen it opened from; a conversation draws it in a modal over itself,
- * and can minimize it.
- */
 const ScribeVoiceSheet = ({
   onSend,
   onType,
@@ -115,7 +92,7 @@ const ScribeVoiceSheet = ({
   const hasFinishedTurn = useScribeHasFinishedTurn()
   const [example] = useState(pickVoiceExample)
   const [nothingHeard, setNothingHeard] = useState(false)
-  // Set before the sheet closes itself, so `beforeRemove` lets it go.
+
   const leaving = useRef(false)
   const started = useRef(false)
   const announced = useRef<Cue | null>(null)
@@ -143,8 +120,7 @@ const ScribeVoiceSheet = ({
         setNothingHeard(true)
         return
       }
-      // A call or leaving the app cut the User off: keep what was heard to
-      // finish, rather than sending half a thought.
+
       if (reason === 'interrupted') {
         typeInstead(said)
         return
@@ -160,13 +136,10 @@ const ScribeVoiceSheet = ({
     void capture.start()
   }, [capture])
 
-  // The capture snaps when the mic goes live.
   useEffect(() => {
     if (state === 'error') void Haptics.error()
   }, [state])
 
-  // A soft pulse while getting ready, which the snap ends. Not while a
-  // language downloads: that can take minutes.
   const pulsing = state === 'preparing' && capture.preparingPercent === null
   useEffect(() => {
     if (!pulsing) return
@@ -178,9 +151,6 @@ const ScribeVoiceSheet = ({
     return () => clearInterval(timer)
   }, [pulsing])
 
-  // The sheet's text changes silently for VoiceOver, and a live region would
-  // read every second of the countdown, so announce the two moments that
-  // matter once each. Not the pause hint: it would speak into the open mic.
   const cue: Cue | null =
     state !== 'listening'
       ? null
@@ -206,7 +176,7 @@ const ScribeVoiceSheet = ({
     capture.discard()
     onClose()
   }
-  // Short recordings go at once; longer ones ask first.
+
   const requestDiscard = (then?: () => void) => {
     const discard = () => {
       close()
@@ -226,8 +196,6 @@ const ScribeVoiceSheet = ({
     ])
   }
 
-  // Android Back and other ways out follow the same rule as Discard. Over a
-  // conversation, leaving it goes on once the recording is discarded.
   const onBeforeRemove = useEffectEvent((proceed: () => void) =>
     requestDiscard(inline ? proceed : undefined)
   )
@@ -241,8 +209,6 @@ const ScribeVoiceSheet = ({
     [navigation]
   )
 
-  // Only a live recording stays small. The countdown, a message (nothing
-  // heard, an error) and the end of a recording open the sheet again.
   const listening = state === 'listening'
   const canMinimize = inline && listening && capture.remainingMs === null
   const showMini =
@@ -270,8 +236,7 @@ const ScribeVoiceSheet = ({
     announced.current = null
     void capture.start()
   }
-  // While listening, what was heard so far goes along; before that, nothing
-  // was (the recording is discarded as the sheet closes).
+
   const switchToKeyboard = () => {
     if (state === 'listening') capture.switchToKeyboard()
     else typeInstead()
@@ -382,7 +347,6 @@ const ScribeVoiceSheet = ({
 
   const sheet = (
     <ScribeSheetFrame
-      // Large text gets the whole window (the frame caps it under the top).
       height={largeText ? windowHeight : Math.min(640, windowHeight * 0.74)}
       onDismissRequest={() => requestDiscard()}
       onMinimizeRequest={canMinimize ? minimize : undefined}
@@ -489,7 +453,7 @@ const ScribeVoiceSheet = ({
         navigationBarTranslucent
         onRequestClose={() => (canMinimize ? minimize() : requestDiscard())}
       >
-        {/* Android's gestures need their own root inside a Modal. */}
+        {}
         <GestureHandlerRootView style={{ flex: 1 }}>
           {sheet}
         </GestureHandlerRootView>

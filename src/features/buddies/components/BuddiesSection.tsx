@@ -4,10 +4,6 @@ import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 
-/**
- * A group of Buddies rows, titled unless a sheet's header already names it,
- * with an optional footnote.
- */
 export default function BuddiesSection({
   title,
   footer,

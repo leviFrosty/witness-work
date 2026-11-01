@@ -3,7 +3,6 @@ import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
 import type { HandoffHello } from '@/lib/serverAccount/handoff'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
-/** What the old phone (with the account) says when a handoff stops. */
 const OLD: Record<HandoffFailure, TranslationKey> = {
   offline: 'handoff_failOffline',
   unavailable: 'handoff_failUnavailable',
@@ -24,7 +23,6 @@ const OLD: Record<HandoffFailure, TranslationKey> = {
   server: 'handoff_failServer',
 }
 
-/** What the new phone says. */
 const NEW: Record<HandoffFailure, TranslationKey> = {
   offline: 'handoff_failOffline',
   unavailable: 'handoff_failUnavailable',
@@ -50,7 +48,6 @@ export const handoffFailureMessage = (
   reason: HandoffFailure
 ) => i18n.t((role === 'old' ? OLD : NEW)[reason])
 
-/** `Android · Pixel 9`, or just the platform without a model. */
 export const handoffDeviceLine = (hello: HandoffHello) =>
   [
     i18n.t(

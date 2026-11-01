@@ -28,7 +28,7 @@ import { calendarSyncSupported } from '../../../../../modules/calendar-bridge'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
-  // Rewards are what the pet earns: nothing to set without one.
+
   const hasPet = usePet((state) => state.pet !== null)
 
   return (

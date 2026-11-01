@@ -4,24 +4,13 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useEditModeStore } from '@/stores/editMode'
 
 type Options<Source extends string> = {
-  /** Saved when editing starts and handed back to `onFinish`. */
   snapshot?: () => unknown
-  /** Editing ended; report what changed against `snapshot` here. */
+
   onFinish?: (session: { source: Source; snapshot: unknown }) => void
-  /**
-   * This instance belongs to the screen being edited (not, say, its header):
-   * leaving the screen ends editing, and Android's Back ends it rather than
-   * leaving. Pass it from exactly one instance per surface.
-   */
+
   lifecycle?: boolean
 }
 
-/**
- * A screen's edit mode, like the Home Screen's jiggle mode: `start` from Edit,
- * a menu or a long press, `finish` from Done or tapping empty space. Any
- * component can read or end it, so a header and its screen share one mode. Pass
- * the same `onFinish` from each, since whichever ends it reports.
- */
 export default function useEditMode<Source extends string>(
   surface: string,
   { snapshot, onFinish, lifecycle = false }: Options<Source> = {}
@@ -68,7 +57,6 @@ export default function useEditMode<Source extends string>(
     return () => subscription.remove()
   }, [lifecycle, editing])
 
-  /** Opens or closes the screen's gallery of things to add. */
   const setAdding = (next: boolean) =>
     useEditModeStore.setState({ adding: next })
 

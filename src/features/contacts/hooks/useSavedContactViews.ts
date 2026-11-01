@@ -15,10 +15,6 @@ import {
   updateSavedViewQuery,
 } from '@/features/contacts/lib/savedViews'
 
-/**
- * Saved Views: the ordered list plus every way to create, switch, update,
- * rename, reorder and delete them.
- */
 export function useSavedContactViews() {
   const views = usePreferences((s) => s.savedContactViews)
   const setPreferences = usePreferences((s) => s.set)
@@ -26,10 +22,6 @@ export function useSavedContactViews() {
 
   const ordered = orderedSavedViews(views)
 
-  /**
-   * Shows a view, or the User's own filters again for `null`. `source` is the
-   * surface the User switched from, for analytics.
-   */
   const select = (id: string | null, source?: 'list' | 'map') => {
     setPreferences({ activeSavedContactView: id ? { id } : null })
     if (id)
@@ -39,11 +31,6 @@ export function useSavedContactViews() {
       })
   }
 
-  /**
-   * Saves what the list shows now as a new view and switches to it. Coming from
-   * the User's own filters, those reset — they became the view, so leaving it
-   * shows every contact again.
-   */
   const saveCurrent = (name: string): boolean => {
     const added = addSavedView(views, name, query)
     if (!added) return false
@@ -66,7 +53,6 @@ export function useSavedContactViews() {
     return true
   }
 
-  /** Writes the active view's edits back to it. */
   const updateActive = () => {
     if (!activeView || !edited) return
     setPreferences({
@@ -85,7 +71,6 @@ export function useSavedContactViews() {
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
-  /** Puts the views in a new order, e.g. after a chip is dragged. */
   const reorder = (ids: string[]) => {
     const next = reorderSavedViews(views, ids)
     if (next !== views) setPreferences({ savedContactViews: next })
@@ -99,7 +84,6 @@ export function useSavedContactViews() {
     })
   }
 
-  /** Deletes after confirming. Only the view goes; contacts stay as they are. */
   const confirmRemove = (id: string) => {
     const view = views[id]
     if (!view) return

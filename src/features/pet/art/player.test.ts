@@ -123,13 +123,12 @@ describe('scene player', () => {
   })
 
   it('eases the mouth shut over one frame when the joy ends', () => {
-    // Reduce Motion holds the pose still, so only the face changes.
     const p = createScenePlayer({ reduceMotion: true })
     p.pat(0, 'happy')
     const mouth = (t: number) =>
       hashBuffer(crop(p.frame(INPUT, t).buffer, [62, 64, 12, 8]))
     const shapes = [1300, 1400, 1500, 1600, 1700].map(mouth)
-    // Open until the joy ends at 1.5 s, half shut for a frame, then closed.
+
     expect(shapes[0]).toBe(shapes[1])
     expect(shapes[2]).not.toBe(shapes[1])
     expect(shapes[3]).not.toBe(shapes[2])

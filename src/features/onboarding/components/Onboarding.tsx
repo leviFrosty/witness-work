@@ -51,7 +51,7 @@ import { analytics } from '@/lib/analytics'
 interface StepProps {
   goBack: () => void
   goNext: () => void
-  /** Whether Buddies is part of this onboarding, held once its step is reached. */
+
   buddiesAvailable: boolean
 }
 
@@ -85,7 +85,7 @@ const OnBoarding = () => {
   } = usePreferences()
   const { serviceReports } = useServiceReport()
   const hasCompletedProfileSetup = useProfile((s) => s.hasCompletedProfileSetup)
-  // The persisted id tracks the current step (and survives a relaunch).
+
   const buddiesAvailable = useOnboardingBuddiesAvailable(
     reachedStep(onboardingStepId, 'buddies', hasCompletedProfileSetup)
   )
@@ -117,10 +117,6 @@ const OnBoarding = () => {
     [showIfCtx]
   )
 
-  // Lazy-init from persisted step id so a mid-flow reload resumes where the
-  // user left off. OnBoarding is only mounted while `onboardingComplete` is
-  // false (see RootStack), and unmounts on completion/reset, so this runs
-  // exactly once per onboarding session.
   const [stepIndex, setStepIndex] = useState(() =>
     resumeStepIndex(
       onboardingStepId,
@@ -129,20 +125,10 @@ const OnBoarding = () => {
     )
   )
 
-  // Clamp the index if the visible-step list shrinks (e.g. user switches
-  // publisher type from pioneer to non-pioneer mid-flow and the pioneer-date
-  // screen disappears beneath the current index).
   useEffect(() => {
     setStepIndex((idx) => Math.min(idx, Math.max(0, visibleSteps.length - 1)))
   }, [visibleSteps.length])
 
-  // Persist the active step id so reloads resume here. Writing the id (not
-  // the index) keeps the saved state meaningful even when conditional steps
-  // re-order the visible list. Skipped on first mount: when there's no
-  // persisted id, the useState initializer above already lands on step 0, and
-  // writing 'hero' back during the same commit cycle that flipped
-  // onboardingComplete=false races App's preferences subscription and trips
-  // React's "update during render" warning.
   const skipFirstPersist = useRef(true)
   useEffect(() => {
     if (skipFirstPersist.current) {

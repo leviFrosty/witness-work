@@ -23,11 +23,10 @@ interface Props {
   containerStyle?: StyleProp<ViewStyle>
   cardStyle?: StyleProp<ViewStyle>
   expandedHeight?: number
-  /** Stretches the trigger and Card to match a sibling in the same row. */
+
   fill?: boolean
 }
 
-/** A normal Card that expands into a detail popover when pressed. */
 const PopoverCard = ({
   children,
   popoverContent,

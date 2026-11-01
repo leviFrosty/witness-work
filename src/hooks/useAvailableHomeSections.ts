@@ -8,11 +8,6 @@ import {
   usePreferences,
 } from '@/stores/preferences'
 
-/**
- * Home's sections this User and device can show, in Home's order, and which of
- * them the User hid (to offer in Add Sections). Features' own availability
- * comes from the screen, which can read them.
- */
 export default function useAvailableHomeSections({
   buddiesAvailable,
 }: {

@@ -27,7 +27,6 @@ const TODAY = moment(LAUNCH)
 const minutesLater = (minutes: number) =>
   vi.setSystemTime(LAUNCH + minutes * 60_000)
 
-/** Applies the pending rollover the way `useRollover().apply` does. */
 const applyNow = () => {
   const result = applyRollover({
     serviceReports: useServiceReport.getState().serviceReports,
@@ -72,7 +71,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(LAUNCH)
   useServiceReport.getState()._WARNING_forceDeleteServiceReports()
-  // 10h 30m in September: 30 minutes to roll into October.
+
   useServiceReport.getState().addServiceReport(september('sep-1', 630))
 })
 
@@ -86,7 +85,6 @@ describe('rollover across devices', () => {
     applyNow()
     const phone = deviceFromStores()
 
-    // The tablet opens on the same day with the same data, before syncing.
     restore(beforeRollover)
     minutesLater(1)
     applyNow()
@@ -98,14 +96,14 @@ describe('rollover across devices', () => {
         'rollover-2026-09-to-2026-10-dst',
         'rollover-2026-09-to-2026-10-src',
       ])
-      // Floored once, to 10 hours.
+
       expect(septemberMinutes(merged)).toBe(600)
     }
   })
 
   it('never stores two live entries under one id', () => {
     applyNow()
-    // A backdated September entry makes the month fractional again.
+
     useServiceReport.getState().addServiceReport(september('sep-2', 20))
     applyNow()
 
@@ -151,7 +149,6 @@ describe('rollover across devices', () => {
     const beforeUndo = deviceFromStores()
     const [rolled] = timeEntriesOf(beforeUndo).filter((e) => e.rollover)
 
-    // The tablet, three minutes ahead, undoes the pair; this device pulls it.
     const tabletAhead = 3 * 60_000
     vi.setSystemTime(LAUNCH + tabletAhead)
     useServiceReport.getState().deleteRolloverPair(rolled)
@@ -163,8 +160,6 @@ describe('rollover across devices', () => {
       ...deviceFromStores().deletedServiceReports.map((t) => t.deletedAt)
     )
 
-    // Re-applied here a minute later by this device's clock, which is still
-    // earlier than the tablet's tombstones.
     minutesLater(1)
     applyNow()
     const local = deviceFromStores()

@@ -9,12 +9,6 @@ interface StripedFillProps {
   opacity?: number
 }
 
-/**
- * Diagonal stripes filling the parent. The SVG gets the parent's measured size:
- * a percentage-sized SVG keeps its first size when the parent resizes, and in a
- * right-to-left layout it stays pinned to the physical left, so a fill that
- * grew drew short and off its start edge.
- */
 const StripedFill = ({
   color,
   size = 7,

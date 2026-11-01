@@ -2,19 +2,17 @@ import { create } from 'zustand'
 import type { ScribeRun } from '@/features/scribe/types'
 import type { StoredProposal } from '@/features/scribe/proposals/model'
 
-/** The step's assistant text while it streams, kept out of MMKV. */
 export interface StreamingText {
   itemId: string
   at: number
   text: string
 }
 
-/** Developer Tools' readout of a running turn: how long, and about how much. */
 export interface TurnDebug {
   startedAt: number
-  /** Output tokens of the turn's finished steps, reasoning included. */
+
   outputTokens: number
-  /** Text and tool arguments streamed so far in the current step. */
+
   streamedChars: number
 }
 
@@ -22,16 +20,12 @@ interface ScribeRunsState {
   runs: Record<string, ScribeRun>
   streaming: Record<string, StreamingText | null>
   debug: Record<string, TurnDebug>
-  /**
-   * The running turn's Proposal as its calls stream in, until the turn ends and
-   * stores it. The User can already check cards and choose Contacts.
-   */
+
   drafting: Record<string, StoredProposal | null>
 }
 
 export const IDLE_RUN: ScribeRun = { phase: 'idle' }
 
-/** What each conversation's turn is doing now. Memory only. */
 export const useScribeRuns = create<ScribeRunsState>()(() => ({
   runs: {},
   streaming: {},
@@ -87,7 +81,6 @@ export function setDrafting(
   }))
 }
 
-/** The Proposal a running turn is drafting, by id. */
 export const draftingProposal = (
   drafting: ScribeRunsState['drafting'],
   proposalId: string
@@ -95,7 +88,6 @@ export const draftingProposal = (
   Object.values(drafting).find((proposal) => proposal?.id === proposalId) ??
   null
 
-/** A card choice on a drafting Proposal; false when it isn't drafting. */
 export function changeDrafting(
   proposalId: string,
   change: (proposal: StoredProposal) => StoredProposal
@@ -111,7 +103,6 @@ export function changeDrafting(
 
 const controllers = new Map<string, AbortController>()
 
-/** The running turn's abort controller, one per conversation. */
 export function beginTurnSignal(
   conversationId: string
 ): AbortController | null {
@@ -140,26 +131,16 @@ export function abortAllTurns(): void {
   for (const controller of controllers.values()) controller.abort()
 }
 
-/**
- * Turns that ended for a lost connection, each with the run it ended in. Each
- * goes on once when the connection comes back, while that failure is still the
- * latest thing in Scribe AI. Memory only.
- */
 const awaitingConnection = new Map<string, ScribeRun>()
 
 export function awaitConnection(conversationId: string, run: ScribeRun): void {
   awaitingConnection.set(conversationId, run)
 }
 
-/**
- * The User moved on (typed, sent, started a new conversation): no turn goes on
- * by itself; Try again still can.
- */
 export function forgoResume(): void {
   awaitingConnection.clear()
 }
 
-/** The conversations whose turn can go on now; each is handed out once. */
 export function takeAwaitingConnection(): string[] {
   const ready = [...awaitingConnection]
     .filter(([id, run]) => getRun(id) === run && !isTurnRunning(id))

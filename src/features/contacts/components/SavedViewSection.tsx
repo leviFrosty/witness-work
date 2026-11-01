@@ -17,10 +17,6 @@ import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews
 import { isDefaultContactsQuery } from '@/features/contacts/lib/savedViews'
 import SavedViewNameInput from '@/features/contacts/components/SavedViewNameInput'
 
-/**
- * Top of Sort & Filter: save what's set up below as a named view, or — while a
- * view is showing — save changes back to it or as a new one.
- */
 const SavedViewSection = () => {
   const theme = useTheme()
   const { query } = useContactsQuery()

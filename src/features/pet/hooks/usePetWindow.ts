@@ -16,10 +16,6 @@ const deviceRegion = (): string | null => {
   }
 }
 
-/**
- * The room window's time and season right now: the clock for a Live window, and
- * the Format Region's hemisphere for a Live season. Moves on every minute.
- */
 export default function usePetWindow(window: RoomWindow): ResolvedWindow {
   const { now } = useNow()
   const formatRegion = usePreferences((s) => s.formatRegion)

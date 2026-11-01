@@ -16,10 +16,6 @@ type CompilerEvent = {
   detail?: { reason?: string; options?: { reason?: string } }
 }
 
-/**
- * What the React Compiler does with each function in `file`: the names it
- * compiled and the reasons it skipped any.
- */
 function compile(file: string) {
   const filename = path.resolve(__dirname, '../../../..', file)
   const source = readFileSync(filename, 'utf8')
@@ -61,7 +57,6 @@ function compile(file: string) {
   }
 }
 
-// A skipped component re-renders every pin on any render of the map.
 it('compiles the map and its pin hover with the React Compiler', () => {
   const map = compile('src/features/map/screens/MapScreen.tsx')
   expect(map.skipped).toEqual([])

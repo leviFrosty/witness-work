@@ -76,9 +76,6 @@ import {
 } from '@/features/scribe/tools/__fixtures__/stores'
 import type { ScribeStores } from '@/features/scribe/runtime/snapshot'
 
-// ---------------------------------------------------------------- fake model
-
-/** An event, or a probe that runs between events. */
 type FakeEvent = StepStreamEvent | (() => void)
 type FakeStep = (
   body: StepRequest,
@@ -263,12 +260,12 @@ describe('a turn', () => {
     expect(first.turnId).toBe(second.turnId)
     expect(first.protocol).toBe(1)
     expect(first.messages.at(-1)?.role).toBe('user')
-    // Step N > 0 ends with the tool message answering every call.
+
     const last = second.messages.at(-1)!
     expect(last.role).toBe('tool')
     const result = last.role === 'tool' ? last.content[0] : null
     expect(result).toMatchObject({ name: 'plans_list', ok: true, trust: 'app' })
-    // The context is pinned: both steps send the same bytes.
+
     expect(JSON.stringify(second.context)).toBe(JSON.stringify(first.context))
 
     const conversation = getConversation(id)!
@@ -306,7 +303,7 @@ describe('a turn', () => {
 
     expect(useScribeRuns.getState().debug[id]).toEqual({
       startedAt: expect.any(Number),
-      // 50 output tokens a step; streamed chars clear when a step ends.
+
       outputTokens: 100,
       streamedChars: 0,
     })
@@ -339,7 +336,7 @@ describe('a turn', () => {
       'assistant',
       'proposal',
     ])
-    // The tool told the model it was proposed, not saved.
+
     const toolMessage = conversation.messages.at(-1)!
     expect(toolMessage.role === 'tool' && toolMessage.content[0]).toMatchObject(
       {
@@ -395,7 +392,6 @@ describe('a turn', () => {
       'time.create',
     ])
 
-    // Used in the same step: nothing waits, so the turn ends there.
     const together = fakeClient([
       () => [
         start(),
@@ -414,7 +410,6 @@ describe('a turn', () => {
     await send(runtime(together.client), 'Log 3 hours of hospital work today')
     expect(together.bodies).toHaveLength(1)
 
-    // A time_log newCategory of the same name, after it, shares its Ref.
     const named = fakeClient([
       () => [
         start(),
@@ -635,7 +630,7 @@ describe('memory', () => {
     expect(useScribeMemory.getState().text).toBe(
       'Prefers plans at 9:00\nCalls the Saturday group "the car group"'
     )
-    // Nothing in the conversation shows it.
+
     expect(getConversation(id)!.items.map((item) => item.type)).toEqual([
       'user',
       'assistant',
@@ -665,7 +660,7 @@ describe('memory', () => {
         text('Done.'),
         remember('From the model'),
         remember(null, 'Old note'),
-        // Part of a note: applies here, but not over the User's edit.
+
         remember('a', 'the'),
         () => useScribeMemory.setState({ text: 'From Settings\nOld note' }),
         done('tool_calls'),
@@ -676,7 +671,7 @@ describe('memory', () => {
     expect(useScribeMemory.getState().text).toBe(
       'From Settings\nFrom the model'
     )
-    // Counts only what was saved.
+
     expect(events('scribe_memory_saved')).toEqual([
       { added: 1, changed: 0, removed: 1, fill: '<25%' },
     ])
@@ -731,7 +726,7 @@ describe('calls as they stream', () => {
     const conversation = getConversation('conversation-draft')!
     const proposal = conversation.proposals[conversation.pendingProposalId!]
     expect(proposal.cards.map((card) => card.kind)).toEqual(['time', 'plan'])
-    // Stored under the id the draft showed, so the block stays put.
+
     expect(conversation.items.at(-1)).toMatchObject({
       type: 'proposal',
       id: `${proposal.id}-item`,
@@ -797,7 +792,7 @@ describe('calls as they stream', () => {
         start(),
         contactsCreate('Ana Silva'),
         timeLog(60),
-        // The stream dropped; the client sent the step again.
+
         start(),
         contactsCreate('Ana Silva'),
         done('tool_calls'),
@@ -812,7 +807,7 @@ describe('calls as they stream', () => {
     ])
     expect(proposal.cards).toHaveLength(1)
     expect(conversation.refs.byRef.n2).toBeUndefined()
-    // Only the replay's call is in the transcript, answered once.
+
     const [assistant, tool] = conversation.messages.slice(-2)
     expect(assistant.role === 'assistant' && assistant.content).toHaveLength(1)
     expect(tool.role === 'tool' && tool.content).toEqual([
@@ -831,7 +826,7 @@ describe('calls as they stream', () => {
         done('tool_calls'),
       ],
     ])
-    // Step 1 proposes a Contact, then hangs until Cancel.
+
     const client: ScribeClient = {
       ...fake.client,
       step: async (body, options) => {
@@ -974,8 +969,6 @@ describe('across turns', () => {
 
     await send(deps, 'Plan two hours tomorrow at 9', id)
 
-    // The failed message isn't sent again, so the model can't act on it; the
-    // Proposal it withdrew is reported with the new one.
     const messages = fake.bodies[2].messages
     expect(messages.map((message) => message.role)).toEqual([
       'user',
@@ -991,7 +984,7 @@ describe('across turns', () => {
       }),
       { type: 'text', text: 'Plan two hours tomorrow at 9' },
     ])
-    // The timeline still shows what the User wrote.
+
     expect(
       getConversation(id)!
         .items.filter((item) => item.type === 'user')
@@ -1099,7 +1092,7 @@ describe('across turns', () => {
     const [first, second] = fake.bodies
     expect(first.context.days[7]).toBe('Wed 2026-10-21')
     expect(second.context.days[7]).toBe('Thu 2026-10-22')
-    // The same Contacts keep their Refs.
+
     expect(second.context.contacts).toEqual(first.context.contacts)
   })
 
@@ -1168,7 +1161,7 @@ describe('stopping and failures', () => {
       error: { code: 'model_error', retryable: true },
     })
     expect(conversation.suspended).toMatchObject({ step: 1 })
-    // What was proposed before the failure stays reviewable.
+
     const proposalId = conversation.pendingProposalId!
     expect(conversation.proposals[proposalId].effects).toHaveLength(1)
     expect(events('scribe_turn_finished')[0]).toMatchObject({
@@ -1287,7 +1280,6 @@ describe('reconnecting', () => {
 
     await resumeAfterReconnect(deps)
 
-    // The same step of the same turn, as Try again sends it.
     expect(fake.bodies.map((body) => [body.turnId, body.step])).toEqual([
       [fake.bodies[0].turnId, 0],
       [fake.bodies[0].turnId, 0],
@@ -1305,8 +1297,6 @@ describe('reconnecting', () => {
     expect(fake.bodies).toHaveLength(2)
     expect(getRun(id)).toMatchObject({ error: { code: 'network' } })
 
-    // Failing again offline is a new failure, so the next reconnect tries once
-    // more.
     fake.steps.push(() => [start(), text('Done.'), done('end')])
     await resumeAfterReconnect(deps)
     await resumeAfterReconnect(deps)

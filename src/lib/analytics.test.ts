@@ -85,7 +85,6 @@ describe('analytics boundary', () => {
   })
 
   it('drops usage events, but not crash or survey events, when analytics are off', async () => {
-    // Fresh modules: the gate starts closed until the choice is published.
     vi.resetModules()
     const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
     await import('./analytics')

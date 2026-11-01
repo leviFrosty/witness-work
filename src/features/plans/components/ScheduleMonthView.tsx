@@ -28,13 +28,12 @@ import type {
   ScheduleRows,
 } from '@/features/plans/lib/scheduleRows'
 
-/** Side padding of the week grid, so the zoom can find its edges. */
 export const MONTH_GRID_PADDING = 8
 
 type Props = {
   schedule: ScheduleRows
   focusedMonth: CalendarMonth
-  /** `focusedMonth` for the weeks, which dim on the UI thread. */
+
   focusedOrdinal: SharedValue<number>
   initialRowIndex: number
   listRef: RefObject<FlashListRef<ScheduleRow> | null>
@@ -42,20 +41,20 @@ type Props = {
   buddyMarkers: Record<string, BuddyDayMarker>
   selectedKey?: string
   bottomInset: number
-  /** Fades with the zoom; the meters don't scale. */
+
   chromeStyle: AnimatedStyle<ViewStyle>
-  /** Scales with the zoom: the weekday header and the weeks. */
+
   zoomStyle: AnimatedStyle<ViewStyle>
   onScroll: (offsetY: number) => void
-  /** The user starts scrolling the weeks. */
+
   onScrollBeginDrag: () => void
-  /** Tucks the screen's header and tab bar away; see `useHideBarsOnScroll`. */
+
   scrollBars?: HideBarsScrollProps
-  /** The scaled part's frame within the view. */
+
   onZoomFrameLayout: (frame: LayoutRectangle) => void
-  /** The list's frame within the scaled part. */
+
   onListLayout: (frame: LayoutRectangle) => void
-  /** The list has drawn its first rows. */
+
   onListLoad: () => void
   onPressDay: (date: Date) => void
   onPressServiceYear: (serviceYear: number) => void
@@ -65,10 +64,6 @@ type Props = {
   onEndReached: () => void
 }
 
-/**
- * The Schedule's Month view: the focused month's goal over one continuous week
- * grid that scrolls through months without paging.
- */
 export default function ScheduleMonthView({
   schedule,
   focusedMonth,
@@ -97,8 +92,7 @@ export default function ScheduleMonthView({
   const theme = useTheme()
   const startOfWeek = useStartOfWeek()
   const recurringPlans = useServiceReport((s) => s.recurringPlans)
-  // At accessibility text sizes the weekdays take their shortest names and
-  // shrink to their column instead of truncating to a letter.
+
   const largeText = useAccessibilityTextSize()
   const weekdays = largeText ? moment.weekdaysMin() : moment.weekdaysShort()
   const weekdayLabels = weekdays.map(
@@ -122,8 +116,6 @@ export default function ScheduleMonthView({
               : undefined
           }
           renderTrigger={({ onPress, anchorRef }) => (
-            // A row, so the meter's `flex: 1` widens it instead of
-            // collapsing its height.
             <View
               ref={anchorRef}
               collapsable={false}
@@ -146,7 +138,7 @@ export default function ScheduleMonthView({
         style={[{ flex: 1 }, zoomStyle]}
         onLayout={(e) => onZoomFrameLayout(e.nativeEvent.layout)}
       >
-        {/* Each day in the grid already names its weekday. */}
+        {}
         <View
           accessibilityElementsHidden
           importantForAccessibility='no-hide-descendants'
@@ -166,7 +158,7 @@ export default function ScheduleMonthView({
               {...fitWeekday}
               style={{
                 flex: 1,
-                // Keeps shrunk names from running into each other.
+
                 paddingHorizontal: largeText ? 3 : 0,
                 textAlign: 'center',
                 fontSize: theme.fontSize('xs'),
@@ -190,11 +182,8 @@ export default function ScheduleMonthView({
             getItemType={(row) => row.kind}
             initialScrollIndex={initialRowIndex}
             onLoad={onListLoad}
-            // The focused month stays out of here: a new month would
-            // re-render every week on screen mid-scroll.
             extraData={{ selectedKey, index, buddyMarkers }}
             {...scrollBars}
-            // Earlier weeks load above, so the top is far in the past.
             scrollsToTop={false}
             onScroll={(e) => {
               onScroll(e.nativeEvent.contentOffset.y)

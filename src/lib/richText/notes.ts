@@ -8,24 +8,10 @@ import {
 } from '@/lib/richText/plainText'
 import type { NoteFields, RichText, RichTextDoc } from '@/types/richText'
 
-/*
- * A record's note lives in two fields:
- *
- * - `note`: plain text, always written. Search, exports, reminders, Buddies
- *   alerts, and older app versions read only this.
- * - `noteDoc`: the formatted doc, written only when the note has something
- *   plain text can't hold (formatting, lists, photos, labeled links).
- *
- * `noteDoc.textHash` pins the plain text it was saved with. An older app
- * version that edits the note changes `note` without touching (or while
- * dropping) `noteDoc`; the mismatch shows it, and the plain text wins.
- */
-
 const EMPTY_DOC: RichTextDoc = { type: 'doc', content: [{ type: 'paragraph' }] }
 
-/** Parsed `noteDoc`s, so list rows don't re-validate on every render. */
 const parsedDocs = new WeakMap<object, RichText | null>()
-/** Converted plain notes, by text. Small: rows re-render the same notes. */
+
 const convertedText = new Map<string, RichTextDoc>()
 const CONVERTED_TEXT_LIMIT = 200
 
@@ -49,13 +35,11 @@ function docFromText(text: string): RichTextDoc {
   return doc
 }
 
-/** The formatted doc that's current for this record's note, if any. */
 function currentRichText(fields: NoteFields): RichText | null {
   const rich = parsedNoteDoc(fields.noteDoc)
   return rich && rich.textHash === contentHash(fields.note ?? '') ? rich : null
 }
 
-/** The record's note as a doc, converting a plain-text note on the fly. */
 export function getNoteDoc(fields: NoteFields): RichTextDoc {
   const rich = currentRichText(fields)
   if (rich) return rich.doc
@@ -63,34 +47,24 @@ export function getNoteDoc(fields: NoteFields): RichTextDoc {
   return text ? docFromText(text) : EMPTY_DOC
 }
 
-/** The note's doc when it has formatting (or photos), else null. */
 export function getRichNoteDoc(fields: NoteFields): RichTextDoc | null {
   return currentRichText(fields)?.doc ?? null
 }
 
-/** Whether the record has a note with words or photos in it. */
 export function hasNote(fields: NoteFields): boolean {
   const rich = currentRichText(fields)
   return rich ? !isRichTextEmpty(rich.doc) : !!fields.note?.trim()
 }
 
-/** The note as plain text, for search, copying, exports and notifications. */
 export function getNoteText(fields: NoteFields): string {
   return fields.note?.trim() ?? ''
 }
 
-/** Both note fields, set: `undefined` clears one when spread over a record. */
 export type NoteUpdate = {
   note: string | undefined
   noteDoc: RichText | undefined
 }
 
-/**
- * The fields to save for an edited note. Assign both, since a note that's
- * become plain again clears `noteDoc`:
- *
- *     updateVisit({ ...visit, ...noteFields(doc) })
- */
 export function noteFields(doc: RichTextDoc | null | undefined): NoteUpdate {
   if (!doc) return { note: undefined, noteDoc: undefined }
   const compact = compactRichText(doc)

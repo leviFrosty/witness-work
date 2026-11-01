@@ -102,7 +102,7 @@ describe('addDayPlan', () => {
       date: moment('2026-05-15').toDate(),
       minutes: 60,
     })
-    // Same calendar day, different time-of-day → coexists, does not replace.
+
     addDayPlan({
       id: 'd-ldc',
       date: new Date('2026-05-15T22:30:00.000Z'),
@@ -196,13 +196,12 @@ describe('cross-TZ scenario through the store', () => {
       id: 'jst',
       hours: 1,
       minutes: 0,
-      date: moment('2026-05-01').toDate(), // midnight JST
+      date: moment('2026-05-01').toDate(),
     })
 
     setTZ('America/Los_Angeles')
     const state = useServiceReport.getState()
-    // Bucket index is the month chosen at write time (JST: month=4 May).
-    // Reading the stored date in UTC must still say May 1.
+
     const buckets = state.serviceReports[2026]
     const monthsWithReports = Object.keys(buckets).filter(
       (k) => buckets[k].length > 0

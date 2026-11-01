@@ -139,7 +139,7 @@ describe('editMemory', () => {
     expect(error).toBe(
       `That would make memory ${full.length + 121} of 1500 characters, so shorten or remove an outdated note first, in the same step.`
     )
-    // Making room in the same step works.
+
     const room = editMemory(full, { old: `0`.padEnd(135, '.'), new: null })
     expect(room.ok && editMemory(room.text, { old: null, new: 'y' }).ok).toBe(
       true

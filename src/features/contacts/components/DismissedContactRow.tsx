@@ -22,7 +22,6 @@ import useConversations from '@/stores/conversationStore'
 import type { Contact } from '@/types/contact'
 import { SelectionCheck } from '@/features/contacts/components/ListSelection'
 
-/** The long-press preview; mounted lazily, so it can read the store. */
 function DismissedContactPreview({ contact }: { contact: Contact }) {
   const conversations = useConversations((s) => s.conversations)
   return (
@@ -36,12 +35,6 @@ function DismissedContactPreview({ contact }: { contact: Contact }) {
   )
 }
 
-/**
- * A Dismissed Contacts row, styled like the Contacts list's `ContactRow` but
- * with "Dismissed until {date}" as its secondary line. Tap opens the contact;
- * long press offers Undismiss, Archive, and Delete Permanently…. The trailing
- * button undismisses in one tap. In Select mode taps toggle the check.
- */
 export default function DismissedContactRow({
   contact,
   onPress,
@@ -122,8 +115,7 @@ export default function DismissedContactRow({
         alignItems: 'center',
       }}
     >
-      {/* The menu owns taps and long presses on the row's content; the
-          Undismiss button sits beside it so the two never compete. */}
+      {}
       <ContextMenu
         style={{ flex: 1 }}
         onPress={onPress}
@@ -146,8 +138,7 @@ export default function DismissedContactRow({
           {details}
         </View>
       </ContextMenu>
-      {/* Undismissing only puts the contact back in the list — nothing is
-          lost, so it runs immediately rather than behind a confirmation. */}
+      {}
       <IconButton
         onPress={undismissContact}
         icon={UndoIcon}

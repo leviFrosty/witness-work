@@ -14,12 +14,7 @@ import { usePreferences } from '@/stores/preferences'
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /**
-   * When true, both Save and Skip flip `hasSeenAvailabilityOnboarding` to true
-   * so the just-in-time trigger only ever fires once. Settings re-opens the
-   * sheet with `markSeenOnDismiss={false}` so revisiting from Settings doesn't
-   * affect the gate.
-   */
+
   markSeenOnDismiss?: boolean
 }
 
@@ -67,8 +62,6 @@ const AvailabilityOnboardingSheet = ({
   }, [])
 
   const toggleMeeting = useCallback((index: number) => {
-    // A day can be both an Off Day and a Meeting Day — the engine resolves
-    // overlap (Off Day wins) so the UI doesn't need to enforce it.
     setMeetings((prev) =>
       prev.includes(index) ? prev.filter((d) => d !== index) : [...prev, index]
     )

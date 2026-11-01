@@ -95,13 +95,11 @@ import {
 
 let last: unknown = null
 
-/** The saved usage as the app reads it now (past resets aged out). */
 const currentSnapshot = () => {
   const snapshot = useScribeUsageStore.getState().snapshot
   return snapshot ? currentUsageSnapshot(snapshot, Date.now()) : null
 }
 
-/** Starts `work`; its result (or `{ error }`) lands in `scribe.last`. */
 const tracked = (work: () => Promise<unknown>) => {
   last = null
   void work()
@@ -114,7 +112,6 @@ const tracked = (work: () => Promise<unknown>) => {
   return 'started'
 }
 
-/** The current snapshot's size, as a step would send it. */
 export function scribeContextSize() {
   const stores = readScribeStores()
   const context = buildScribeContext(stores, new RefRegistry(emptyRefTable()), {
@@ -133,7 +130,6 @@ export function scribeContextSize() {
   }
 }
 
-/** A conversation as the verify harness reads it: structure, with the text. */
 function conversationView(id: string) {
   const conversation = useScribeConversations.getState().conversations[id]
   if (!conversation) return null
@@ -169,19 +165,13 @@ function conversationView(id: string) {
   }
 }
 
-/**
- * Scribe AI for the verify harness (`__WW_DEV__.scribe`). `enableFake()`
- * answers every call on the device (`fake`): queue a canned turn with
- * `script(name)`, then `send(text)`. Reads are synchronous; `send`, `retry` and
- * `refresh` start and put their result in `last`.
- */
 export const scribeHarness = {
   get last() {
     return last
   },
   scripts: FAKE_SCRIPT_NAMES,
   fake,
-  /** Answer Scribe AI from the on-device fake (true) or ww-api (false). */
+
   enableFake: (on = true) => {
     setScribeClientOverride(on ? fakeScribeClient : null)
     useScribeStatusStore.setState({ fetchedAt: 0 })
@@ -189,12 +179,9 @@ export const scribeHarness = {
     return hasScribeClientOverride()
   },
   usingFake: hasScribeClientOverride,
-  /** Queues a canned turn for the fake; returns the steps waiting. */
+
   script: (name: FakeScriptName) => queueScript(name),
-  /**
-   * Queues one write step whose calls `calls(body)` builds from the step's
-   * request (`body.context` has the Refs), for any Proposal the scripts lack.
-   */
+
   scriptCalls: (calls: (body: StepRequest) => FakeCall[]) => {
     fake.queue.push(callsStep(calls))
     return fake.queue.length
@@ -207,16 +194,13 @@ export const scribeHarness = {
     fake.status = fakeStatus(change)
     return tracked(() => refreshStatus({ force: true }))
   },
-  /** Changes the fake's usage and shows it (`limited`, `windows`, `plan`). */
+
   setFakeUsage: (change: Partial<UsageSnapshotWire>) => {
     fake.usage = fakeUsage(change)
     noteUsage(fake.usage)
     return fake.usage
   },
-  /**
-   * Forces device-gate fields (`ineligible`, `suspended`, …); `{}` re-reads
-   * them.
-   */
+
   setGate: (change: Partial<ScribeDeviceGate>) => {
     if (Object.keys(change).length === 0) {
       noteGate(INITIAL_GATE)
@@ -225,7 +209,7 @@ export const scribeHarness = {
     noteGate(change)
     return useScribeStatusStore.getState().gate
   },
-  /** Sends a message in a conversation (a new one when omitted). */
+
   send: (
     text: string,
     options: {
@@ -244,10 +228,7 @@ export const scribeHarness = {
     )
     return conversationId
   },
-  /**
-   * A Proposal without the model: the fake answers a canned write turn. Returns
-   * the conversation id; the Proposal is pending once `last` is set.
-   */
+
   injectProposal: (
     script: FakeScriptName = 'planAndLog',
     text = 'Plan 2 hours tomorrow at 9 and log an hour and a half for today'
@@ -268,10 +249,9 @@ export const scribeHarness = {
       await refreshUsage({ force: true })
       return { status: useScribeStatusStore.getState().status }
     }),
-  /** What `useScribeAvailability` would return now. */
+
   availability: () =>
     scribeAvailability({
-      // Assumes the `scribe-ai` flag is on; the Settings switch can still be off.
       enabled: usePreferences.getState().scribeAiEnabled,
       status: useScribeStatusStore.getState().status,
       online: getOnline(),
@@ -302,7 +282,7 @@ export const scribeHarness = {
     }
   },
   conversation: conversationView,
-  /** The newest conversation, as `conversation(id)` reads it. */
+
   latest: () => {
     const newest = Object.values(
       useScribeConversations.getState().conversations
@@ -324,7 +304,7 @@ export const scribeHarness = {
     chooseProposalContact(proposalId, cardId, choice)
     return scribeHarness.proposal(proposalId)
   },
-  /** A new householder's agreement on a card (data protection mode). */
+
   agree: (proposalId: string, cardId: string, agreed = true) => {
     setProposalConsent(proposalId, cardId, agreed)
     return scribeHarness.proposal(proposalId)
@@ -338,30 +318,30 @@ export const scribeHarness = {
     undoScribeProposalNow(proposalId, source),
   seedLegacyImport,
   contextSize: scribeContextSize,
-  /** The step bodies the fake answered, newest last (tools, context, messages). */
+
   requests: () => fake.requests,
-  /** Forgets Scribe AI's conversations, undo records and usage on this device. */
+
   clear: () => {
     clearScribeLocalData()
     return 'cleared'
   },
-  /** Scribe AI's memory: `{ enabled, text, updatedAt }`. */
+
   memory: () => useScribeMemory.getState(),
-  /** Seeds the memory (one note a line), and turns it on or off. */
+
   setMemory: (text: string, enabled = true) => {
     setScribeMemoryText(text)
     setScribeMemoryEnabled(enabled)
     return useScribeMemory.getState()
   },
-  /** This device's consent: `{ termsAcceptedAt, privacySeenAt }`. */
+
   consent: () => useScribeConsent.getState(),
-  /** Skips the first-open steps, as if this device had agreed. */
+
   acceptConsent: () => {
     acceptScribeTerms()
     markScribePrivacySeen()
     return useScribeConsent.getState()
   },
-  /** Asks again on the next open, as a fresh install would. */
+
   resetConsent: () => {
     useScribeConsent.setState(useScribeConsent.getInitialState(), true)
     return useScribeConsent.getState()
@@ -377,11 +357,6 @@ export const scribeHarness = {
   },
 }
 
-/**
- * A Notes Import from before Scribe AI, accepted `daysAgo` days ago: a Contact
- * with a Visit, a Time Entry, and the ledger row History's Earlier imports
- * undoes. Returns the row's id.
- */
 function seedLegacyImport(daysAgo = 3): string {
   const acceptedAt = Date.now() - daysAgo * 86_400_000
   const id = `legacy-${acceptedAt}`
@@ -429,7 +404,6 @@ function seedLegacyImport(daysAgo = 3): string {
   return id
 }
 
-/** Tools' Clear Scribe AI local data. Records Scribe AI added stay. */
 export function clearScribeLocalData(): void {
   for (const id of Object.keys(useScribeConversations.getState().conversations))
     abortTurn(id)

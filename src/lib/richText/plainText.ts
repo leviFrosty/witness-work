@@ -18,8 +18,7 @@ function inlineText(content: RichTextInline[] = []): string {
       if (node.type === 'hardBreak') return '\n'
       const link = node.marks?.find((mark) => mark.type === 'link')
       if (!link || link.type !== 'link') return node.text
-      // A labeled link keeps its address in plain text, so exports and older
-      // app versions don't lose it.
+
       const { href } = link.attrs
       const showsAddress =
         findLinks(node.text).length > 0 || /^(?:mailto|tel):/i.test(href)
@@ -76,11 +75,6 @@ function blockLines(block: RichTextBlock, indent: string): string[] {
   }
 }
 
-/**
- * The note as plain text: lines for paragraphs and headings, `•`, `1.` and
- * `☐`/`☑` markers for list items, labeled links followed by their address, and
- * no photos. This is what the record's `note` holds.
- */
 export function richTextToPlainText(doc: RichTextDoc): string {
   return doc.content
     .flatMap((block) => blockLines(block, ''))
@@ -100,10 +94,6 @@ function lineToInline(line: string): RichTextInline[] {
   )
 }
 
-/**
- * A plain-text note as a doc: one paragraph per line, with its links linked.
- * `richTextToPlainText` turns it back into the same (trimmed) text.
- */
 export function plainTextToRichText(text: string): RichTextDoc {
   const lines = text.replace(/\r\n?/g, '\n').trim().split('\n')
   const content: RichTextBlock[] = lines.map((line) => {

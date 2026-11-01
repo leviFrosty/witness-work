@@ -13,7 +13,6 @@ vi.mock('react-native-purchases', () => ({
 
 import { storeErrorOutcome } from '@/features/supporter/lib/purchaseErrors'
 
-// RevenueCat errors carry a numeric string code and a readable name.
 const rc = (code: string, message = 'store said no') => ({
   code,
   message,

@@ -65,7 +65,7 @@ describe("who's who on Shared Cars", () => {
       color: '#ff8800',
     })
     expect(onMazda?.key).toBe(onVan?.key)
-    // Without the buddy, the name they share on the car.
+
     expect(buildMileagePeople(cars, []).person(VAN, 'ana-van')).toMatchObject({
       key: `${VAN}/ana-van`,
       name: 'Ana Pereira',
@@ -141,7 +141,7 @@ describe("who's who on Shared Cars", () => {
     expect(people.mine(trips.vanMine)).toBe(true)
     expect(people.mine(trips.vanAna)).toBe(false)
     expect(people.mine(trips.mazdaAna)).toBe(false)
-    // A Shared Car's trip that doesn't say who logged it isn't theirs.
+
     expect(people.mine({ ...trips.vanMine, loggedBy: undefined })).toBe(false)
     expect(people.nameOnCars).toBe('Levi')
   })
@@ -191,7 +191,6 @@ describe('who’s who, kept between builds', () => {
     const ben = people.person(VAN, 'ben')
     const annieOnMazda = people.person(MAZDA, 'ana-mazda')
 
-    // A new trip changes who's who's trips, not its people.
     const withTrip = {
       ...cars,
       [VAN]: {
@@ -208,7 +207,6 @@ describe('who’s who, kept between builds', () => {
     expect(afterTrip.person(VAN, 'ben')).toBe(ben)
     expect(afterTrip.person(MAZDA, 'ana-mazda')).toBe(annieOnMazda)
 
-    // Ben renamed himself: his car's people are drawn again, the other's kept.
     const renamed = withTrip[VAN].memberRecords.map((member) =>
       member.memberId === 'ben' ? { ...member, name: 'Benjamin' } : member
     )

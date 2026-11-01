@@ -2,19 +2,15 @@ import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// The real CustomerProvider + AccountProvider when the Keychain can't give the
-// account id at launch, e.g. a background launch before the first unlock.
-// RevenueCat must stay anonymous, then be identified exactly once.
-
 const runtime = vi.hoisted(() => ({
   keychainLocked: false,
   appStateListeners: [] as Array<(state: string) => void>,
   links: [] as unknown[],
-  /** Holds `Purchases.logIn` open until the test releases it. */
+
   logInGate: null as Promise<void> | null,
-  /** The account file a claim wrote, as the next read sees it. */
+
   accountFile: null as unknown,
-  /** RevenueCat is logged in as the account id. */
+
   identified: false,
 }))
 
@@ -143,11 +139,9 @@ describe('a launch while the Keychain is locked', () => {
     expect(Purchases.getCustomerInfo).toHaveBeenCalled()
     expect(Purchases.logIn).not.toHaveBeenCalled()
     expect(account.writeAccountFile).not.toHaveBeenCalled()
-    // `installId` reports it, once.
+
     expect(errorTracking.captureException).not.toHaveBeenCalled()
 
-    // Unlocked. The first return fires every foreground listener at once
-    // (the retry and the throttled reconcile) while logIn is still in flight.
     runtime.keychainLocked = false
     let release!: () => void
     runtime.logInGate = new Promise((resolve) => (release = resolve))
@@ -160,14 +154,13 @@ describe('a launch while the Keychain is locked', () => {
 
     expect(Purchases.logIn).toHaveBeenCalledTimes(1)
     expect(Purchases.logIn).toHaveBeenCalledWith('install-a')
-    // The launch link is unforced; the identify forces exactly one.
+
     const forced = runtime.links.filter(
       (link) => (link as { force?: boolean }).force
     )
     expect(forced).toEqual([{ force: true, reason: 'adopted' }])
     expect(account.writeAccountFile).toHaveBeenCalledTimes(1)
 
-    // Identified: later returns don't log in again.
     await foreground()
     await settle()
     expect(Purchases.logIn).toHaveBeenCalledTimes(1)

@@ -3,10 +3,6 @@ import useTheme from '@/contexts/theme'
 
 const HEIGHT = 4
 
-/**
- * A thin progress bar whose track shows on the badge view's page in both
- * themes. Decorative: the text beside it carries the value.
- */
 export default function BadgeViewBar({
   fraction,
   width,

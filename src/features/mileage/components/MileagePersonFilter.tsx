@@ -22,15 +22,10 @@ type Props = {
   value: PersonFilter
   onChange: (filter: PersonFilter) => void
   people: MileagePeople
-  /** The User's cars, to tell apart two people with one name by car. */
+
   vehicles: readonly MileageVehicle[]
 }
 
-/**
- * Whose trips the Mileage screen shows: Everyone, Me, or one person on any of
- * the User's Shared Cars. A menu, so it stays one control however many people
- * there are.
- */
 export default function MileagePersonFilter({
   value,
   onChange,

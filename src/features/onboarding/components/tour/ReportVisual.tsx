@@ -31,13 +31,9 @@ import { formatDisplay } from '@/lib/dates'
 import { formatPlainNumber } from '@/lib/numbers'
 
 const CARD = { top: 6, side: 18, height: 236 }
-/** Share is tapped, the report flies off, comes back confirmed, then resets. */
+
 const T = { tap: 0.34, fly: [0.4, 0.56], confirm: [0.58, 0.7], reset: 0.9 }
 
-/**
- * Reporting: the month's report is already filled in from what was logged; a
- * tap shares it and it comes back confirmed.
- */
 const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
   const color = theme.colors.orange
@@ -61,7 +57,6 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     () => seg(loop.value, T.confirm[0], T.confirm[1]) * (1 - reset.value)
   )
 
-  // Off to the top right like a paper plane, and back when the loop restarts.
   const flightStyle = useAnimatedStyle(() => ({
     opacity: 1 - fly.value,
     transform: [
@@ -227,7 +222,6 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   )
 }
 
-/** A line of the report, rising in as the card builds. */
 const Row = ({
   label,
   value,

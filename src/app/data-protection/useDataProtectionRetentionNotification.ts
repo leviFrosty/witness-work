@@ -13,19 +13,6 @@ import i18n from '@/lib/locales'
 import type { NotificationItem } from '@/types/notifications'
 import { useShallow } from 'zustand/react/shallow'
 
-/**
- * Data protection mode's retention reminder (`docs/gdpr-mode-research.md`
- * §9.4). GDPR Art 5(1)(e) says personal data may be kept only as long as it is
- * needed for the purpose it was collected for; a householder the publisher has
- * not visited in three months is the textbook case of a record that has
- * outlived its purpose.
- *
- * One tray item resolves the whole question: "Delete" (after a confirmation)
- * routes each listed contact through `deleteHouseholderContact`, which in this
- * mode takes its visits and avatar with it and leaves only a redacted
- * tombstone. "Keep" or dismissing resets the clock, so it can't appear again
- * for another interval — it must never become a nag.
- */
 export default function useDataProtectionRetentionNotification(
   now: number
 ): NotificationItem | null {

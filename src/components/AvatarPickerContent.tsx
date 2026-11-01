@@ -39,11 +39,6 @@ export type AvatarMetaCapture = {
   croppedAt?: string
 }
 
-/**
- * Curated grid of emojis. Keeps the picker offline and zero-dep — the native
- * iOS emoji keyboard has no public programmatic invocation, so we ship a small,
- * appropriate set instead of pulling a third-party library.
- */
 const EMOJI_OPTIONS = [
   '😊',
   '😃',
@@ -95,7 +90,6 @@ const EMOJI_OPTIONS = [
   '🌍',
 ]
 
-/** Default filename inside FileSystem.documentDirectory for the user's profile. */
 const DEFAULT_AVATAR_FILENAME = 'profile-avatar.jpg'
 
 const EMOJI_COLS = 8
@@ -103,49 +97,25 @@ const EMOJI_CELL = 36
 const EMOJI_GAP = 2
 const SWATCH_SIZE = 24
 const SWATCH_GAP = 8
-/**
- * Rendered count = 1 ("match accent" pseudo-swatch) + (ACCENT_PRESETS.length -
- *
- * 1. Non-default presets + 1 eyedropper. Kept as a derived constant so the
- *    containing popover sizes itself to fit the row exactly.
- */
+
 const BACKGROUND_SWATCH_COUNT = ACCENT_PRESETS.length + 1
 export const BACKGROUND_SWATCHES_WIDTH =
   BACKGROUND_SWATCH_COUNT * SWATCH_SIZE +
   (BACKGROUND_SWATCH_COUNT - 1) * SWATCH_GAP
 
 interface Props {
-  /** Currently-selected avatar (drives the highlighted state in the grid). */
   value: ProfileAvatar
-  /**
-   * Called with the next avatar after the user picks an emoji, image, or
-   * clears.
-   */
+
   onChange: (next: ProfileAvatar) => void
-  /**
-   * Filename used for the persisted image inside
-   * `FileSystem.documentDirectory`. Each consumer (profile, per-contact) should
-   * pass a unique name so picks don't trample each other's files.
-   */
+
   imageFileName?: string
-  /** Currently-selected background override (null = match accent). */
+
   backgroundValue?: string | null
-  /** Called when the user picks a different swatch. */
+
   onBackgroundChange: (next: string | null) => void
-  /**
-   * Optional callback invoked alongside `onChange` when the user picks an image
-   * — surfaces the metadata (resolution / file size / capture time) needed by
-   * the contact-details "i" popover. Callers that don't track this (e.g. the
-   * user's profile avatar) can omit it.
-   */
+
   onImageMeta?: (meta: AvatarMetaCapture) => void
-  /**
-   * Whether the "choose photo" affordance is offered. Callers turn it off when
-   * an image would be an inappropriate thing to attach to the subject of the
-   * avatar — a photo of a householder has no lawful basis under data protection
-   * mode (`docs/gdpr-mode-research.md` §9.2). Emoji stay available either way;
-   * they describe nobody.
-   */
+
   allowImage?: boolean
 }
 
@@ -154,13 +124,6 @@ interface BackgroundSwatchesProps {
   onChange: (next: string | null) => void
 }
 
-/**
- * Compact horizontal swatch row shown above the emoji grid. The first swatch
- * ("match accent") clears the override and is rendered in the current accent
- * tone so the user can see what matching resolves to. Only rendered when the
- * avatar is a non-image type, since image avatars ignore the background color
- * entirely.
- */
 export const BackgroundSwatches = ({
   value,
   onChange,
@@ -263,11 +226,6 @@ const AvatarPickerContent = ({
   const draftFiles = useAvatarDraftFiles()
   const library = useLibraryImagePicker('avatar')
 
-  /**
-   * Pending pick that's awaiting user crop. Holds enough state to render the
-   * crop editor and to commit metadata after the user finishes cropping. Null
-   * when no pick is in flight (the picker is idle).
-   */
   const [pendingPick, setPendingPick] = useState<{
     revision: string
     sourceUri: string
@@ -278,8 +236,6 @@ const AvatarPickerContent = ({
     capturedAt?: string
   } | null>(null)
 
-  // The caller may be editing an unsaved form. Store cleanup removes the old
-  // files only when this choice is actually committed.
   const pickEmoji = (emoji: string) => {
     onChange({ type: 'emoji', value: emoji })
   }
@@ -288,16 +244,6 @@ const AvatarPickerContent = ({
     onChange({ type: 'none', value: '' })
   }
 
-  /**
-   * Two-stage flow:
-   *
-   * 1. Picker returns the un-cropped source. We persist it as the "original" so
-   *    the user can reframe later from the contact-details viewer without
-   *    quality loss.
-   * 2. Open our crop editor on that original. Initial frame is centered square;
-   *    user can pinch / pan to choose a different framing. The editor's
-   *    `onCropped` writes the final JPEG and we commit the avatar.
-   */
   const pickImage = async () => {
     if (Platform.OS === 'ios') {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -483,12 +429,6 @@ const AvatarPickerContent = ({
   )
 }
 
-/**
- * Best-effort capture-time extraction from EXIF. The picker returns either no
- * EXIF (when iOS denies access or the asset is screen-recorded), or a record
- * with `DateTimeOriginal` / `DateTimeDigitized` in EXIF format `"YYYY:MM:DD
- * HH:MM:SS"`. Anything else returns undefined.
- */
 function pickCapturedAt(exif: unknown): string | undefined {
   if (!exif || typeof exif !== 'object') return undefined
   const e = exif as Record<string, unknown>
@@ -496,7 +436,7 @@ function pickCapturedAt(exif: unknown): string | undefined {
     | string
     | undefined
   if (!raw || typeof raw !== 'string') return undefined
-  // EXIF: "2024:11:30 14:23:01" → ISO "2024-11-30T14:23:01"
+
   const match = raw.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})$/)
   if (!match) return undefined
   const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}`

@@ -74,8 +74,6 @@ describe('followUpState', () => {
     expect(followUpState(self, [self], now)).toBe('missed')
   })
 
-  // Planned for 5 PM, but the user came back that morning. Home's card and
-  // Visit Details call it answered (`followUpAnswer`); so does the timeline.
   const plannedEvening = visit('p', '2026-06-08T09:00', {
     followUp: { date: at('2026-06-09T17:00'), notifyMe: true },
   })
@@ -129,7 +127,7 @@ describe('getUpNext', () => {
     const planned = visit('planned', '2026-06-11T09:00', {
       followUp: { date: at('2026-06-12T17:00'), notifyMe: true },
     })
-    // Came back this morning, ahead of the 5 PM plan.
+
     const came = visit('came', '2026-06-12T10:00')
     expect(getUpNext([came, planned], now)).toBeNull()
   })

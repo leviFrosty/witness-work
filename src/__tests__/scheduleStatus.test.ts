@@ -169,7 +169,7 @@ describe('getScheduleStatusForMonth', () => {
 describe('loggedMinutesThroughEachDayOfMonth', () => {
   const entries = [
     entry('early', '2026-07-02', 120),
-    // Credit Time over the cap counts only up to it.
+
     { ...entry('credit', '2026-07-05', 60 * 60), credit: true },
     entry('later', '2026-07-20', 600),
   ]
@@ -224,9 +224,9 @@ describe('getScheduleStatusForServiceYear', () => {
       dayPlans: [
         dayPlan('sep-plan', '2025-09-10', 60),
         dayPlan('oct-plan', '2025-10-10', 60),
-        // After today: not yet due.
+
         dayPlan('oct-later', '2025-10-20', 120),
-        // A month still to come adds nothing.
+
         dayPlan('nov-plan', '2025-11-05', 120),
       ],
     })

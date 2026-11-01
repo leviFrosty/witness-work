@@ -2,17 +2,11 @@ import * as ICloudBridge from '../../../modules/icloud-bridge'
 import type { SyncTransport } from '@/lib/syncTransport/types'
 import { toICloudTransportError } from '@/lib/syncTransport/iCloudErrors'
 
-/** Rejects with a classified `SyncTransportError`, as Drive does. */
 const classified = <T>(operation: () => Promise<T>): Promise<T> =>
   operation().catch((error: unknown) => {
     throw toICloudTransportError(error)
   })
 
-/**
- * The app's private iCloud Drive ubiquity container on iOS, through
- * `modules/icloud-bridge`. Every method forwards to the bridge when called, so
- * the bridge's own platform and binary-version fallbacks apply unchanged.
- */
 export const iCloudTransport: SyncTransport = {
   kind: 'icloud',
   writeConfirmsUpload: false,

@@ -14,11 +14,6 @@ import {
 
 type Resolve = (assets: ImagePickerAsset[] | null) => void
 
-/**
- * Picks photos from the library (`pickLibraryImages`). Render `host` beside the
- * control that calls `pick`: with limited photo access it shows the app's own
- * picker, and a modal only appears from the screen it's rendered in.
- */
 export default function useLibraryImagePicker(surface: PhotoPickSurface): {
   pick: (options: ImagePickerOptions) => Promise<ImagePickerResult>
   host: ReactNode
@@ -34,7 +29,6 @@ export default function useLibraryImagePicker(surface: PhotoPickSurface): {
     picked.current = null
   }
 
-  // Leaving the screen mid-pick backs out of it.
   useEffect(() => () => settle(null), [])
 
   const chooseShared = (next: SharedPhotoRequest) =>
@@ -54,9 +48,7 @@ export default function useLibraryImagePicker(surface: PhotoPickSurface): {
         open={open}
         onClose={(assets) => {
           setOpen(false)
-          // A pick waits until the sheet is gone, since the caller may present
-          // the next screen (the avatar crop). Backing out ends here: a swipe
-          // has already dismissed it, and no dismissal event follows.
+
           if (assets) picked.current = assets
           else settle(null)
         }}

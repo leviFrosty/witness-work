@@ -12,7 +12,7 @@ const spanish = [
     'Elige el tema en Ajustes.'
   ),
 ]
-// A stand-in Arabic entry with harakat in the text.
+
 const arabic = [
   helpEntry(
     'darkMode',

@@ -80,11 +80,6 @@ const ResetLink = ({ onPress }: { onPress: () => void }) => {
   )
 }
 
-/**
- * The only place the staleness color key is edited: per-bucket color overrides
- * (the swatch with the pencil badge opens a picker) and the day thresholds that
- * move a contact between buckets.
- */
 const ColorKeyPreferencesSection = () => {
   const theme = useTheme()
   const colors = useMarkerColors()
@@ -92,9 +87,7 @@ const ColorKeyPreferencesSection = () => {
   const [activeBucket, setActiveBucket] = useState<ContactStaleness | null>(
     null
   )
-  // The day field being edited: what it shows, so it can be cleared to type a
-  // new number without the stored value snapping back, and the value it held
-  // before the edit, kept while the text isn't a usable day count.
+
   const [draft, setDraft] = useState<{
     key: keyof StalenessBreakpoints
     text: string
@@ -113,10 +106,6 @@ const ColorKeyPreferencesSection = () => {
   const isColorOverridden = (bucket: ContactStaleness) =>
     mapKeyColors?.[stalenessToMarkerKey[bucket]] !== undefined
 
-  // While typing, store any whole number of days ≥ 1 — no upper bound. The
-  // ordering rule (stale at least MIN_STALENESS_GAP_DAYS above recent) is not
-  // enforced mid-keystroke so intermediate values don't fight the keyboard;
-  // it's applied when editing ends, and the classifiers normalize anyway.
   const setBreakpoint = (key: keyof StalenessBreakpoints, text: string) => {
     const daysBeforeEdit =
       draft?.key === key ? draft.daysBeforeEdit : stalenessBreakpoints[key]
@@ -127,9 +116,6 @@ const ColorKeyPreferencesSection = () => {
     set({ stalenessBreakpoints: { ...stalenessBreakpoints, [key]: days } })
   }
 
-  // Drop the draft (a blank field shows the stored value again) and snap the
-  // stored values to the enforced shape so the inputs show what the
-  // classifiers will actually use (e.g. stale raised to recent + 2).
   const commitBreakpoints = () => {
     setDraft(null)
     set({
@@ -192,7 +178,7 @@ const ColorKeyPreferencesSection = () => {
                     borderColor: theme.colors.border,
                   }}
                 />
-                {/* Pencil badge — signals the swatch itself is tappable. */}
+                {}
                 <View
                   style={{
                     position: 'absolute',

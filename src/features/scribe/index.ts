@@ -29,7 +29,6 @@ export {
   SCRIBE_VOICE_QUIET_MS,
 } from '@/features/scribe/constants'
 
-/** Undo an applied Proposal (toast, History, or its conversation). */
 export async function undoScribeProposal(
   proposalId: string,
   source: ScribeUndoSource
@@ -37,7 +36,6 @@ export async function undoScribeProposal(
   return undoScribeProposalNow(proposalId, source)
 }
 
-/** Re-check status and usage now (pull to refresh, returning online). */
 export function refreshScribeStatus(): void {
   void refreshStatus({ force: true })
   void refreshUsage({ force: true })

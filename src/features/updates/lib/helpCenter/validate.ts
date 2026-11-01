@@ -38,8 +38,7 @@ function parseEntry(value: unknown): HelpEntry | null {
   const related = Array.isArray(value.related)
     ? value.related.filter((issue): issue is number => Number.isInteger(issue))
     : []
-  // An unreadable version floor hides the entry rather than showing it to
-  // every version.
+
   if (
     value.minAppVersion !== undefined &&
     value.minAppVersion !== null &&
@@ -61,7 +60,7 @@ function parseEntry(value: unknown): HelpEntry | null {
     ...(minAppVersion && { minAppVersion }),
     question: question as string,
     doc,
-    // The bundled snapshot leaves this out to save space; it's the doc's text.
+
     plainText: isText(value.plainText)
       ? value.plainText
       : richTextToPlainText(doc),
@@ -70,11 +69,6 @@ function parseEntry(value: unknown): HelpEntry | null {
   }
 }
 
-/**
- * Reads a Help Center bundle. Null when it isn't one, or is from another schema
- * version; malformed entries and categories are dropped rather than failing the
- * whole bundle.
- */
 export function parseHelpBundle(value: unknown): HelpBundle | null {
   if (!isRecord(value) || value.schemaVersion !== HELP_SCHEMA_VERSION)
     return null
@@ -84,7 +78,7 @@ export function parseHelpBundle(value: unknown): HelpBundle | null {
   const categories = value.categories
     .map(parseCategory)
     .filter((category): category is HelpCategory => category !== null)
-  // The first entry wins a duplicate id or slug (list keys and links).
+
   const ids = new Set<string>()
   const slugs = new Set<string>()
   const entries = value.entries
@@ -106,7 +100,6 @@ export function parseHelpBundle(value: unknown): HelpBundle | null {
   }
 }
 
-/** Reads the bundle manifest; null when it isn't a schema-1 manifest. */
 export function parseHelpManifest(value: unknown): HelpManifest | null {
   if (!isRecord(value) || value.schemaVersion !== HELP_SCHEMA_VERSION)
     return null

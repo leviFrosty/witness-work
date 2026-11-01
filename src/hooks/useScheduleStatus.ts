@@ -8,7 +8,6 @@ import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { useShallow } from 'zustand/react/shallow'
 
-/** Builds a month's schedule status from the current Plans and Time Entries. */
 const useScheduleStatus = ({
   month,
   year,
@@ -41,7 +40,6 @@ const useScheduleStatus = ({
   })
 }
 
-/** A Service Year's schedule status, its months added up through today. */
 export const useServiceYearScheduleStatus = (serviceYear: number) => {
   const serviceReports = useServiceReport((state) => state.serviceReports)
   const dayPlans = useServiceReport((state) => state.dayPlans)

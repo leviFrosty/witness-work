@@ -22,10 +22,6 @@ export const shouldShowPreviousReportReminder = ({
   return moment(installedOn).isBefore(currentMonth)
 }
 
-/**
- * The month whose Service Report is due: last month while its reminder shows
- * (unsent, see `shouldShowPreviousReportReminder`), otherwise this month.
- */
 export const dueReportMonth = ({
   installedOn,
   now,

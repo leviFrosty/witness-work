@@ -84,8 +84,7 @@ vi.mock('posthog-react-native', async () => {
       },
     },
   }
-  // Execute the installed RN SDK, replacing only native dependencies. Its
-  // initialization, persistence, identity, reset and delivery code stay real.
+
   const sdk = { exports: {} as { PostHog: typeof PostHog } }
   runInThisContext(
     `(function(require, module, exports) {${readFileSync(filename, 'utf8')}\n})`
@@ -261,7 +260,7 @@ describe('PostHog consent with persisted SDK state', () => {
     expect(sentEvents().map((event: { event: string }) => event.event)).toEqual(
       ['$exception', 'survey sent', 'survey dismissed']
     )
-    // A later opt-in must not resurrect the discarded queue.
+
     setAnalyticsEventsAllowed(true)
     await sdk.flush()
     expect(

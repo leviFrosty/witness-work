@@ -13,12 +13,6 @@ export type ContactSearchEntry<C extends Contact = Contact> = {
   customFieldValues: string
 }
 
-/**
- * Result of a fuzzy search. `matches` is populated only for contacts that came
- * back via Fuse (empty queries short-circuit and return all contacts with
- * `matches: undefined`). Per-key match details power the inline highlighting
- * and snippet preview in `ContactRow`.
- */
 export type ContactSearchMatch<C extends Contact = Contact> = {
   contact: C
   matches?: readonly FuseResultMatch[]
@@ -44,11 +38,6 @@ const buildEntries = <C extends Contact>(
   }))
 }
 
-// Weights are relative — Fuse normalizes them internally. Name still leads
-// (it's the primary identifier), but we keep its lead modest so a strong
-// match in a conversation note or a user-curated custom field can outrank a
-// weak fuzzy hit on someone else's name. Custom fields rank just under name
-// because the user typed them by hand — they're high-signal.
 const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
   { name: 'contact.name', weight: 0.35 },
   { name: 'customFieldValues', weight: 0.25 },
@@ -61,11 +50,6 @@ const FUSE_KEYS: IFuseOptions<ContactSearchEntry>['keys'] = [
   { name: 'contact.address.zip', weight: 0.05 },
 ]
 
-/**
- * Fuse reads every searched field folded for Arabic (`foldArabicForSearch`), so
- * `محمد` finds `مُحَمَّد` and `فاطمه` finds `فاطمة`. Other scripts come back
- * unchanged.
- */
 const getFoldedValue: IFuseOptions<ContactSearchEntry>['getFn'] = (
   entry,
   path
@@ -79,10 +63,6 @@ const getFoldedValue: IFuseOptions<ContactSearchEntry>['getFn'] = (
   return value as string
 }
 
-/**
- * Points a match found in folded text back at the stored text, so the highlight
- * and snippet show the contact's own spelling.
- */
 const unfoldMatch = (
   entry: ContactSearchEntry,
   match: FuseResultMatch
@@ -109,43 +89,21 @@ export const buildContactsFuse = <C extends Contact>(
   return new Fuse(entries, {
     keys: FUSE_KEYS,
     getFn: getFoldedValue,
-    // Loose enough to absorb single-letter transpositions ("jhon" → "John")
-    // while still rejecting unrelated terms. With `ignoreLocation: true` and
-    // weighted multi-key search, scores trend higher than fuse's default 0.6,
-    // so we open up to 0.6 to catch typos in short fields like a first name.
+
     threshold: 0.6,
     ignoreLocation: true,
     minMatchCharLength: 2,
     includeScore: false,
-    // Required to power the inline highlighting + preview snippet in the
-    // contacts list. Per-key match indices and the matched value text travel
-    // with each result.
+
     includeMatches: true,
   })
 }
 
-/**
- * Each index's latest search. The Contacts list searches in a background
- * render, and an update elsewhere (the search field's own echo of a keystroke)
- * can restart that render, which would otherwise search the whole list again
- * for the same query.
- */
 const lastSearches = new WeakMap<
   object,
   { query: string; contacts: Contact[]; results: ContactSearchMatch[] }
 >()
 
-/**
- * Returns a fuzzy-matched subset of `contacts` for a free-text query.
- *
- * - Empty/whitespace query short-circuits to the full list (in original order),
- *   wrapped as `{ contact, matches: undefined }` so the caller can treat the
- *   shape uniformly.
- * - Builds a fresh Fuse index per call; callers should memoize against
- *   `[contacts, conversations]` to avoid rebuilding on every keystroke.
- * - Asked again with the same index, query and contacts, it returns the same
- *   results without searching again.
- */
 export const searchContactsFuzzy = <C extends Contact>(
   query: string,
   fuse: Fuse<ContactSearchEntry<C>>,
@@ -165,10 +123,6 @@ export const searchContactsFuzzy = <C extends Contact>(
   return results
 }
 
-/**
- * Logical source of a matched key. Drives the icon + label shown alongside the
- * snippet preview in the contacts list.
- */
 export type MatchSource =
   | 'name'
   | 'note'
@@ -190,10 +144,6 @@ export const matchSourceForKey = (
   return undefined
 }
 
-// Lower number = preferred for the snippet line. Custom fields and notes are
-// the most informative because they carry user-authored prose; phone/email
-// are useful but noisy; address is a last resort because the city already
-// shows on the row's meta line.
 const PREVIEW_PRIORITY: Record<MatchSource, number> = {
   customField: 0,
   note: 1,
@@ -208,11 +158,6 @@ export const findNameMatch = (
 ): FuseResultMatch | undefined =>
   matches?.find((m) => matchSourceForKey(m.key) === 'name')
 
-/**
- * Picks the best non-name match for the snippet preview line. Returns
- * `undefined` when only the name matched (the inline name highlight already
- * covers that case) or when nothing matched at all.
- */
 export const pickPreviewMatch = (
   matches: readonly FuseResultMatch[] | undefined
 ):
@@ -244,22 +189,8 @@ export type SnippetResult = {
   truncatedEnd: boolean
 }
 
-// Fuse's bitap occasionally reports single-character ranges — they're noise
-// when rendered as inline highlights, so we drop them.
 const isUsableRange = ([s, e]: RangeTuple): boolean => e - s + 1 >= 2
 
-/**
- * Builds a renderable snippet from a Fuse match.
- *
- * - Without `contextChars`: returns the full text split into highlighted vs.
- *   non-highlighted segments. Used for short fields like a contact's name.
- * - With `contextChars`: windows the text around the first usable match, keeping
- *   ~`contextChars` characters on either side. Used for long fields like joined
- *   conversation notes.
- *
- * Index ranges shorter than 2 characters are dropped — they read as visual
- * noise in the list row and rarely correspond to a meaningful query token.
- */
 export const buildSnippet = (
   text: string,
   indices: readonly RangeTuple[],

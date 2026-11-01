@@ -20,10 +20,6 @@ import type { NoteFields } from '@/types/richText'
 
 const PREVIEW_LINES = 6
 
-/**
- * A section form's Note: the note as it reads, in a field-like box that opens
- * the note editor.
- */
 const NoteInputRow = (props: {
   label: string
   note: NoteFields
@@ -65,8 +61,6 @@ const NoteInputRow = (props: {
         onPress={open}
         accessibilityRole='button'
         accessibilityLabel={props.label}
-        // The label alone hid the note from screen readers. Always set, since
-        // Android clears the label along with a value that goes away.
         accessibilityValue={{
           text: (filled && getNoteText(props.note)) || props.placeholder,
         }}

@@ -7,16 +7,9 @@ import { deleteNoteImages } from '@/lib/richText/noteImages'
 import { parseRichText } from '@/lib/richText/parse'
 import type { NoteFields } from '@/types/richText'
 
-/**
- * Which note photos are still in use, across every store that holds notes.
- * Lives beside the stores because it reads all of them; photo cleanup (local
- * and in the cloud) keeps exactly these.
- */
-
 function addImages(ids: Set<string>, record: NoteFields | undefined) {
   if (!record?.noteDoc) return
-  // A stale doc (the note was edited by an older app version) still counts:
-  // a device that hasn't caught up may show it.
+
   const rich = parseRichText(record.noteDoc)
   if (!rich) return
   for (const image of richTextImages(rich.doc)) ids.add(image.id)
@@ -24,10 +17,6 @@ function addImages(ids: Set<string>, record: NoteFields | undefined) {
 
 const extraReferences = new Set<() => Iterable<string>>()
 
-/**
- * Keeps photos that aren't in any record yet, e.g. those in a buddy's open
- * invitation. Returns a function that stops.
- */
 export function addNoteImageReferences(
   provider: () => Iterable<string>
 ): () => void {
@@ -35,7 +24,6 @@ export function addNoteImageReferences(
   return () => extraReferences.delete(provider)
 }
 
-/** Photo ids every note on this device refers to. */
 export function referencedNoteImageIds(): Set<string> {
   const ids = new Set<string>()
   for (const provider of extraReferences) {
@@ -56,8 +44,7 @@ export function referencedNoteImageIds(): Set<string> {
     addImages(ids, plan)
     for (const override of plan.overrides ?? []) addImages(ids, override)
   }
-  // Every trip in both stores, not the mileage view: a trip of the User's own
-  // that a Shared Car hides still holds its photos.
+
   for (const trip of useMileage.getState().trips) addImages(ids, trip)
   for (const car of Object.values(useSharedCars.getState().cars)) {
     for (const trip of car.trips) addImages(ids, trip)
@@ -65,7 +52,6 @@ export function referencedNoteImageIds(): Set<string> {
   return ids
 }
 
-/** The photo ids in some records' notes. */
 export function noteImageIdsOf(
   records: (NoteFields | undefined)[]
 ): Set<string> {
@@ -74,11 +60,6 @@ export function noteImageIdsOf(
   return ids
 }
 
-/**
- * Deletes the files of `ids` that no note refers to any more, right away. For
- * erasing householder data, where waiting for cleanup's grace period isn't good
- * enough.
- */
 export async function deleteUnreferencedNoteImages(
   ids: Set<string>
 ): Promise<void> {

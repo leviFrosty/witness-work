@@ -3,7 +3,6 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { tracking } from '@/lib/tracking'
 
-/** The small uppercase heading above each part of the route screen. */
 export default function RouteSectionLabel({
   children,
 }: {

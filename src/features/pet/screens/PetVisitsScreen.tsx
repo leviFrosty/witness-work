@@ -17,17 +17,11 @@ import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 import useShownPetVisits from '@/features/pet/hooks/useShownPetVisits'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetVisits'> & {
-  /** Buddies' pets visiting today. */
   visits: readonly PetVisit[]
-  /** Hides a visiting pet's buddy's pets (the Buddies setting). */
+
   onHideVisit?: (visit: PetVisit) => void
 }
 
-/**
- * Every buddy's pet visiting today, earliest first, on one scrolling panel, so
- * any number fits. A row opens that Plan or Follow-up; a long press has the
- * visiting pet's menu. Closes once nobody is visiting.
- */
 export default function PetVisitsScreen({
   navigation,
   visits: realVisits,
@@ -39,7 +33,6 @@ export default function PetVisitsScreen({
   const paper = cssColor(palette.paper)
   useGameSheetBackground(palette)
 
-  // The last one hidden, or the day moved on: nothing left to list.
   const focused = useIsFocused()
   const empty = visits.length === 0
   useEffect(() => {
@@ -51,10 +44,9 @@ export default function PetVisitsScreen({
       style={{ flex: 1, backgroundColor: paper }}
       contentContainerStyle={{
         paddingHorizontal: 20,
-        // iOS adds the bottom inset below the sheet itself.
+
         paddingBottom: Platform.OS === 'ios' ? 24 : sheetInsets.bottom + 8,
       }}
-      // The title stays put, so rows scroll under it.
       stickyHeaderIndices={[0]}
     >
       <View

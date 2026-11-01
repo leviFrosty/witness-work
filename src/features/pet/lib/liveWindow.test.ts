@@ -56,7 +56,7 @@ describe('live window', () => {
       'WF',
     ])
       expect(isSouthernHemisphere(region)).toBe(true)
-    // Split by the equator, mostly north (by land or people).
+
     for (const region of ['KE', 'UG', 'SO', 'KI', 'MV', 'CO', 'ST'])
       expect(isSouthernHemisphere(region)).toBe(false)
   })

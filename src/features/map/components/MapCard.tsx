@@ -12,11 +12,6 @@ type Props = PropsWithChildren<
   Pick<ViewProps, 'onAccessibilityEscape'> & { fill?: boolean }
 >
 
-/**
- * Glass surface for cards floating over the map. It isn't pressable itself: its
- * content hosts a long-press `ContextMenu` next to inline buttons, and neither
- * may sit inside another touchable.
- */
 export default function MapCard({
   children,
   fill = true,

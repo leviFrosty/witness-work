@@ -21,12 +21,6 @@ import type {
   DateTimePickerProps,
 } from '@/components/ui/DateTimePicker.types'
 
-/**
- * Material 3's date and time dialogs. The date dialog works in UTC days, so it
- * gets the local day as UTC midnight and hands back a UTC day, which lands on
- * `value`'s own clock time. The time dialog keeps `value`'s day. Either result
- * is kept within the limits, since the time dialog can't grey out times.
- */
 export function DateTimeDialog({
   part,
   value,
@@ -43,8 +37,7 @@ export function DateTimeDialog({
     }))
   )
   const pick = (next: Date) => onPick(clampDate(next, minimumDate, maximumDate))
-  // Compose writes the dialog's own words (title, months, OK) in the device's
-  // language, so the buttons keep its labels too rather than mixing languages.
+
   const common = { color: theme.colors.accent, onDismissRequest: onDismiss }
 
   return (
@@ -86,11 +79,6 @@ export function DateTimeDialog({
   )
 }
 
-/**
- * A button for each part showing its value, which opens that part's Material
- * dialog. Material keeps full date and time pickers in dialogs on phones; the
- * inline ones are too tall for a form row.
- */
 export default function DateTimePicker({
   value,
   onChange,
@@ -124,7 +112,6 @@ export default function DateTimePicker({
             noTransform
             accessibilityRole='button'
             accessibilityLabel={i18n.t(part)}
-            // The label alone hid the value from TalkBack ("Date, button").
             accessibilityValue={{ text: shown }}
             testID={testID && `${testID}-${part}`}
             onPress={() => setOpen(part)}

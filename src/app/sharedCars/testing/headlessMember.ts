@@ -24,13 +24,6 @@ import {
 } from '@/app/sharedCars/engine'
 import type { MileageSnapshot } from '@/types/mileage'
 
-/**
- * One person's device running the Shared Cars engine headless, for tests and
- * the interop check: in-memory stores, keyring and personal mileage, a root
- * seed of its own (or a shared one, for a second device of the same User), and
- * a record of what the engine reported.
- */
-
 export const emptyMileage = (): MileageSnapshot => ({
   vehicles: [],
   fuels: [],
@@ -40,7 +33,6 @@ export const emptyMileage = (): MileageSnapshot => ({
   deletedMileageRecords: [],
 })
 
-/** A random version 4 UUID. */
 export function uuidFrom(randomBytes: (length: number) => Uint8Array) {
   const bytes = randomBytes(16)
   bytes[6] = (bytes[6] & 0x0f) | 0x40
@@ -53,19 +45,15 @@ export type HeadlessMemberOptions = {
   name: string
   client: SpacesClient
   randomBytes: (length: number) => Uint8Array
-  /** The User's root seed; pass another device's to be the same User. */
+
   seed?: Uint8Array
-  /** The User's Buddies inbox id; made from the seed when absent. */
+
   inboxId?: string
-  /** The device clock. */
+
   now?: () => number
-  /**
-   * The synced clock, which stamps follow (`syncNow`); the device clock when
-   * absent. A device whose clock runs ahead of the server's before it's
-   * calibrated has this ahead too.
-   */
+
   syncNow?: () => number
-  /** Engine dependencies to replace, e.g. `canSync`. */
+
   overrides?: Partial<SharedCarsEngineDeps>
 }
 
@@ -106,7 +94,7 @@ export function createHeadlessMember(options: HeadlessMemberOptions) {
       randomUUID: () => uuidFrom(randomBytes),
       now,
       syncNow: () => syncNow(),
-      // Monotonic, like `syncTimestamp`.
+
       stamp: (previous = 0) => {
         lastStamp = Math.max(Math.floor(syncNow()), previous + 1, lastStamp + 1)
         return lastStamp
@@ -133,18 +121,18 @@ export function createHeadlessMember(options: HeadlessMemberOptions) {
     shareFailures,
     errors,
     personal: () => personal,
-    /** Saves a record in the User's own store, stamped as the app does. */
+
     savePersonal<K extends MileageCollection>(
       key: K,
       record: MileageRecord<K>
     ) {
       personal = { ...personal, ...upsertMileageRecord(personal, key, record) }
     },
-    /** Merges records into the User's own store, keeping their stamps. */
+
     mergePersonal(records: Partial<MileageSnapshot>) {
       personal = { ...personal, ...mergeMileageRecords(personal, records) }
     },
-    /** Delete All Mileage Data on the User's own store, as the app does. */
+
     deleteAllPersonal() {
       personal = {
         ...personal,
@@ -155,12 +143,7 @@ export function createHeadlessMember(options: HeadlessMemberOptions) {
       name = next
     },
     car: (spaceId: string) => store.getState().cars[spaceId],
-    /**
-     * The app starting again on this device: a new engine, with the stores and
-     * personal mileage as they were, and the keyring read back from its
-     * storage. `lose` starts it without the keyring (a device restored from a
-     * backup) or the Shared Cars store (the app reinstalled), or both.
-     */
+
     async relaunch(lose: { keyring?: boolean; store?: boolean } = {}) {
       member.engine.cancel()
       await keyring.flushed()
@@ -170,7 +153,7 @@ export function createHeadlessMember(options: HeadlessMemberOptions) {
       member.keyring = keyring
       member.engine = makeEngine()
     },
-    /** What this device's keyring keeps in its storage. */
+
     keyringStored: () => keyringStorage.value(),
   }
   return member

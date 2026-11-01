@@ -192,7 +192,7 @@ describe('IconButton frame', () => {
       { borderRadius: 999 },
     ])
     expect(button.props.hitSlop).toBe(0)
-    // The look is drawn inside the frame.
+
     expect(button.findByType('View' as never).props.style).toBe(look)
   })
 })

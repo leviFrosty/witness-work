@@ -1,8 +1,3 @@
-/**
- * Animated hidden moments inside the window: a tiny lion and lamb strolling
- * across the hills (Isaiah 11:6) and a shooting star. Drawn after lighting and
- * only on pane pixels, so they pass behind the window's cross bars.
- */
 import {
   rgbPalette,
   setPixel,
@@ -12,7 +7,6 @@ import {
 
 import { isWindowPane } from './room/window'
 
-/** Two walk frames per walker, 4 rows each. */
 const WALKERS: Readonly<
   Record<'lion' | 'lamb', readonly (readonly string[])[]>
 > = {
@@ -51,7 +45,6 @@ function paneDot(buf: PixelBuffer, x: number, y: number, c: Rgb): void {
   if (isWindowPane(x, y)) setPixel(buf, x, y, c)
 }
 
-/** The lamb (leading) and lion walking left to right on an 8.8 s loop. */
 export function drawParadiseWalkers(buf: PixelBuffer, tMs: number): void {
   const p = (tMs / 110) % 80
   const frame = Math.floor(tMs / 260) % 2
@@ -75,7 +68,6 @@ export function drawParadiseWalkers(buf: PixelBuffer, tMs: number): void {
   }
 }
 
-/** A shooting star crossing the night sky for 650 ms every 2.6 s. */
 export function drawShootingStar(buf: PixelBuffer, tMs: number): void {
   const a = (tMs % 2600) / 650
   if (a >= 1) return

@@ -31,15 +31,15 @@ import {
 
 type BadgeMedallionProps = {
   art: BadgeArtId
-  /** 1 Bronze, 2 Silver, 3 Gold, 4 Pearl. `null` = One-time Badge. */
+
   level: BadgeLevel | null
-  /** Rendered width and height in px. */
+
   size: number
-  /** `locked` draws a faded outline for a level not earned yet. */
+
   state?: BadgeArtState
-  /** Overrides the app's color scheme (e.g. for an always-light share card). */
+
   scheme?: BadgeScheme
-  /** `back` draws the plain metal reverse: the frame with no emblem or pips. */
+
   face?: 'front' | 'back'
   style?: StyleProp<ViewStyle>
 }
@@ -94,16 +94,6 @@ const FrameCircle = ({ circle }: { circle: SceneCircle }) => (
   />
 )
 
-/**
- * A badge medallion: one illustration per badge inside a frame whose metal
- * shows the level (Bronze, Silver, Gold, Pearl; pips repeat it without relying
- * on color). One-time Badges get a teal frame; locked levels a faded outline.
- * Decorative only — callers provide the accessible label.
- *
- * The art lives in `./art` as plain data shared with
- * `scripts/badges/preview-badges.mjs`, which renders the same medallions to
- * HTML for review.
- */
 const BadgeMedallion = ({
   art,
   level,

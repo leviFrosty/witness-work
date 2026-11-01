@@ -9,11 +9,6 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { isSafeHref } from '@/lib/richText/parse'
 
-/**
- * What the user typed as a link address, made into one: bare domains get
- * `https://`, `mailto:`/`tel:` stay, anything else (e.g. `javascript:`) is
- * refused.
- */
 export function normalizeLinkInput(input: string): string | null {
   const value = input.trim()
   if (!value) return null
@@ -28,18 +23,13 @@ export function normalizeLinkInput(input: string): string | null {
 type LinkSheetProps = {
   open: boolean
   currentHref: string | null
-  /** Selected text; a URL-looking selection prefills the address. */
+
   selection: string
   onSave: (href: string, text?: string) => void
   onRemove: () => void
   onClose: () => void
 }
 
-/**
- * Adds or changes the link at the cursor. Asks for the link's text too when
- * nothing is selected, so a link can be inserted without typing it out first.
- * Closing the sheet (swiping it down, tapping outside or Back) cancels.
- */
 const LinkSheet = (props: LinkSheetProps) => {
   const theme = useTheme()
   return (
@@ -55,7 +45,6 @@ const LinkSheet = (props: LinkSheetProps) => {
   )
 }
 
-/** The sheet's fields, mounted afresh each time it opens. */
 const LinkForm = (props: LinkSheetProps) => {
   const theme = useTheme()
   const selectionIsUrl =
@@ -68,8 +57,6 @@ const LinkForm = (props: LinkSheetProps) => {
   const asksForText = !props.currentHref && !props.selection
   const addressInput = useRef<RNTextInput>(null)
 
-  // Android can't focus a field in a sheet that's still opening, so the address
-  // takes focus once the sheet is up. iOS focuses it as the sheet appears.
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const timer = setTimeout(() => addressInput.current?.focus(), 300)

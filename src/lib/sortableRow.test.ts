@@ -28,7 +28,6 @@ describe('reorderForDrag', () => {
   const order = ['a', 'b', 'c']
 
   it('keeps the order until the middle of a neighbor is crossed', () => {
-    // b's middle is at 98; a is 40 wide.
     expect(reorderForDrag(order, 'a', 50, widths, 8)).toBe(order)
     expect(reorderForDrag(order, 'a', 80, widths, 8)).toEqual(['b', 'a', 'c'])
   })
@@ -49,7 +48,6 @@ describe('reorderForDrag', () => {
 })
 
 describe('isInDragHandle', () => {
-  // A 390 pt row with a 44 pt handle at its trailing end.
   it('is the right end in LTR', () => {
     expect(isInDragHandle(346, 390, 44, false)).toBe(true)
     expect(isInDragHandle(389, 390, 44, false)).toBe(true)

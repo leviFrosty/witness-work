@@ -4,7 +4,6 @@ import {
   HelpEntry,
 } from '@/features/updates/types/helpCenter'
 
-/** Compares `x.y.z` versions; missing or non-numeric parts count as 0. */
 export function compareVersions(a: string, b: string): number {
   const left = a.split('.').map((part) => parseInt(part, 10) || 0)
   const right = b.split('.').map((part) => parseInt(part, 10) || 0)
@@ -15,10 +14,6 @@ export function compareVersions(a: string, b: string): number {
   return 0
 }
 
-/**
- * Whether `entry` applies on `platform` and app `version`. An unknown app
- * version shows every entry rather than hiding answers.
- */
 export function isEntryVisible(
   entry: HelpEntry,
   platform: string,
@@ -31,10 +26,6 @@ export function isEntryVisible(
 
 const visible = new WeakMap<HelpBundle, Map<string, HelpEntry[]>>()
 
-/**
- * The entries shown on `platform` and `version`, in bundle order. The same
- * bundle and filter return the same array, so search can keep its index.
- */
 export function visibleEntries(
   bundle: HelpBundle,
   platform: string,
@@ -53,7 +44,6 @@ export function visibleEntries(
   return entries
 }
 
-/** The categories that have at least one of `entries`, in bundle order. */
 export const categoriesFor = (
   bundle: HelpBundle,
   entries: HelpEntry[]

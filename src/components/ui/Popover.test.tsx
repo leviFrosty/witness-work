@@ -9,7 +9,7 @@ const { slot, blur, hold, tooltip } = vi.hoisted(() => ({
   hold: vi.fn(),
   tooltip: {
     show: vi.fn(),
-    // Rejects like the native call once the tooltip has left composition.
+
     dismiss: vi.fn(() => Promise.reject(new Error('No handler registered'))),
   },
 }))
@@ -98,7 +98,6 @@ afterEach(async () => {
   blur.listener = null
 })
 
-// The trigger sits 100pt down a 844pt window.
 const render = async (element: React.ReactElement) => {
   await act(async () => {
     root = create(element, {
@@ -138,7 +137,7 @@ const popover = (Popover: typeof IOSPopover) => (
 
 const open = async () => {
   await press()
-  // The content's viewport reports its layout, and the popover presents.
+
   const viewport = root.root.find(
     (node) => (node.type as unknown) === 'View' && 'onLayout' in node.props
   )
@@ -166,7 +165,7 @@ describe('iOS popover', () => {
 
     await open()
     expect(swift().props.isPresented).toBe(true)
-    // The larger side, below: 844 - 34 inset - 144 bottom of the trigger - 40.
+
     expect(
       root.root.findByType('ScrollView' as never).props.style.maxHeight
     ).toBe(626)

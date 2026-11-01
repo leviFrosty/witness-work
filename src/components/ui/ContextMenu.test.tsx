@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const haptics = vi.hoisted(() => ({ perform: vi.fn() }))
 const analytics = vi.hoisted(() => ({ capture: vi.fn() }))
 
-// Hoisted with the mocks; React is only read once a slot renders.
 const { slot } = vi.hoisted(() => ({
   slot: (name: string) => (props: React.PropsWithChildren) =>
     React.createElement(name, props),
@@ -512,7 +511,6 @@ describe('iOS context menu', () => {
     expect(root.root.findAllByType(PreviewContent)).toHaveLength(0)
     expect(tint().props.visible).toBe(false)
 
-    // A trackpad's secondary click never sends a touch to arm it.
     await act(async () => hover().props.onHoverChange(true))
     expect(root.root.findAllByType(PreviewContent)).toHaveLength(1)
     expect(tint().props.visible).toBe(true)
@@ -543,7 +541,7 @@ describe('iOS context menu', () => {
           <mounts.Probe />
         </IOSContextMenu>
       )
-      // The outer view, then the hosted content before it has a width.
+
       const [outer, content] = laidOut()
       await act(async () => {
         content.props.onLayout(layout(firstPassWidth))
@@ -554,9 +552,8 @@ describe('iOS context menu', () => {
       return mounts.count()
     }
 
-    // Large text laid out on one line, wider than the row: lay it out again.
     expect(await run(520)).toBe(2)
-    // Content that fit grows into the width without a remount.
+
     expect(await run(240)).toBe(1)
     await render(<React.Fragment />)
   })
@@ -578,7 +575,6 @@ function PreviewContent() {
   return null
 }
 
-/** A child that counts how often it mounts, i.e. how often its Host does. */
 function countMounts() {
   let mounts = 0
   function Probe() {

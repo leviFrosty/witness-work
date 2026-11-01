@@ -2,30 +2,19 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import semver from 'semver'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
-// Upgrading from a released build must keep the User's data. Each folder in
-// `__data__/releases/` holds what that release saved: every persisted store as
-// its persist middleware wrote it to MMKV (`stores.json`), the file its
-// Settings → Export wrote (`backup.json`), and the file sync wrote to iCloud
-// (`icloud.json`) and Google Drive (`google-drive.json`), all from the same
-// made-up records (`__data__/releases/scenario.ts`). This suite launches the
-// current build on each one, through the real persist `migrate`/`merge`, the
-// boot migrations, the backup restore and the sync engine's restore and merge,
-// and checks that every record and setting comes through.
-// `docs/upgrade-fixtures.md` says how to add a release.
-
 const disk = vi.hoisted(() => {
   const tz = process.env.TZ
-  // The time zone the fixtures were written in.
+
   process.env.TZ = 'America/Chicago'
   return {
     tz,
     data: new Map<string, string | boolean>(),
-    /** MMKV instances other than the default (`data`), by id. */
+
     instances: new Map<string, Map<string, string | boolean>>(),
     errors: [] as unknown[],
     uuid: 0,
     os: 'ios' as 'ios' | 'android',
-    /** ICloud's container, or the Google Drive app data folder. */
+
     cloud: [] as { filename: string; json: string; modifiedAt: number }[],
   }
 })
@@ -109,11 +98,10 @@ vi.mock('react-native', () => ({
     addEventListener: () => ({ remove: () => {} }),
   },
 }))
-// Native modules behind the Map's address lookups, never reached here.
+
 vi.mock('expo-location', () => ({}))
 vi.mock('expo-linking', () => ({}))
 
-// Sync. iOS reads iCloud through this bridge; Android registers `googleDrive`.
 vi.mock('../../modules/icloud-bridge', () => ({
   isAvailable: () => true,
   supportsUploadStatus: () => false,
@@ -214,7 +202,7 @@ const fixtureStores = (release: string) =>
 type Cloud = 'icloud' | 'google-drive'
 const CLOUDS: Cloud[] = ['icloud', 'google-drive']
 type Payload = { deviceId: string; preferencesStore: { values: object } }
-/** The sync files the release wrote, as each cloud holds them. */
+
 const syncFiles = (release: string) =>
   CLOUDS.filter((cloud) => existsSync(`${DIR}/${release}/${cloud}.json`)).map(
     (cloud) => ({
@@ -225,10 +213,8 @@ const syncFiles = (release: string) =>
 const syncPayloads = (release: string) =>
   syncFiles(release).map(({ json }) => JSON.parse(json) as Payload)
 
-/** Whether `release` (a folder name like `v1.42.0`) is `version` or later. */
 const since = (release: string, version: string) => semver.gte(release, version)
 
-/** Every persisted store's blob, as the next launch would read it. */
 const saved = (): Record<string, Blob> =>
   Object.fromEntries(
     [...disk.data]
@@ -236,15 +222,9 @@ const saved = (): Record<string, Blob> =>
       .map(([key, value]) => [key, JSON.parse(value as string) as Blob])
   )
 
-/** The data a store holds, without its actions. */
 const data = (state: object) =>
   JSON.parse(JSON.stringify(state)) as Record<string, unknown>
 
-/**
- * Starts the current build on what's on `disk`: every persisted store hydrates
- * as it does at import, then the boot migrations run in `useAppMigrations`'
- * order.
- */
 async function launch() {
   vi.resetModules()
   const { usePreferences } = await import('@/stores/preferences')
@@ -257,7 +237,7 @@ async function launch() {
   const { useProfile } = await import('@/stores/profile')
   const { default: useMileage } = await import('@/stores/mileage')
   const { default: usePet } = await import('@/stores/pet')
-  // This device's settings and bookkeeping.
+
   const { useAppLockSettings } = await import('@/stores/appLock')
   const { useBuddies } = await import('@/features/buddies/stores/buddiesStore')
   const { useCalendarSync } = await import('@/stores/calendarSync')
@@ -278,7 +258,7 @@ async function launch() {
   const { useStreakCelebration } = await import(
     '@/features/profile/stores/streakCelebration'
   )
-  // Scribe AI's conversations, undo records and usage, on this device only.
+
   const { useScribeConversations } = await import(
     '@/features/scribe/stores/conversations'
   )
@@ -332,7 +312,6 @@ const SCRIBE_STORES = [
   'scribe-usage',
 ] as const
 
-/** Each store's data, keyed by its storage name. */
 const snapshot = (app: App) =>
   Object.fromEntries(
     Object.entries(app).map(([key, store]) => [key, data(store.getState())])
@@ -368,38 +347,27 @@ const allEntries = (app: App) =>
       )
   )
 
-/**
- * Where the data came from: the release's own storage, its backup file, its
- * sync file restored on a new device, or its storage after merging its sync
- * file on turning sync on.
- */
 type Source = 'storage' | 'backup' | 'sync' | 'merged'
 
-/** What the release saved in `source`, by feature. */
 function coverage(release: string, source: Source) {
-  // The sync file holds Profile and Categories from the start (1.40).
   const inBackupSince = (version: string) =>
     source !== 'backup' || since(release, version)
   return {
-    // 1.37 had no contact favorites, Visit or Time Entry tombstones, Plan
-    // details (time, title, location, Category), Profile or Categories.
     since140: since(release, '1.40.0'),
-    // The backup file holds Profile, Categories and mileage since 1.44.
+
     profile: since(release, '1.40.0') && inBackupSince('1.44.0'),
     categories: since(release, '1.40.0') && inBackupSince('1.44.0'),
     mileage: since(release, '1.44.0'),
     roleHistory: since(release, '1.44.0'),
     pet: since(release, '1.45.0'),
-    // What Scribe AI's added Proposal wrote syncs like any record.
+
     scribe: since(release, '1.45.0'),
   }
 }
 
-/** The scenario's Visits, and the one Scribe AI added where the release ran it. */
 const scenarioVisits = (release: string, source: Source) =>
   coverage(release, source).scribe ? [...VISITS, SCRIBE.added.visit] : VISITS
 
-/** The scenario's Time Entries, and the one Scribe AI added. */
 const scenarioEntries = (release: string, source: Source) =>
   coverage(release, source).scribe ? [...ENTRIES, SCRIBE.added.entry] : ENTRIES
 
@@ -428,8 +396,7 @@ function expectContacts(app: App, release: string, source: Source) {
   if (since140) expect(ada.isFavorite).toBe(true)
   const dismissed = contacts.find(({ id }) => id === DISMISSED.contactId)!
   expect(ms(dismissed.dismissedUntil)).toBe(DISMISSED.until.getTime())
-  // The reminder belongs to the device that scheduled it; sync leaves it out
-  // since 1.44.
+
   if (source !== 'sync')
     expect(dismissed.dismissedNotificationId).toBe(DISMISSED.notificationId)
 }
@@ -454,7 +421,6 @@ function expectVisits(app: App, release: string, source: Source) {
         want.followUp.notifications?.map(({ id }) => id)
       )
     } else {
-      // Older forms attached an empty follow-up to every Visit; it isn't one.
       expect(got.followUp).toBeUndefined()
     }
   }
@@ -469,7 +435,7 @@ function expectTimeEntries(app: App, release: string, source: Source) {
   const { categories } = app.categories.getState()
   for (const want of wanted) {
     const { entry, bucket } = entries.find(({ entry }) => entry.id === want.id)!
-    // On the noon-UTC anchor, so the day survives a time zone change.
+
     expect(isStoredDateAnchored(entry.date), want.id).toBe(true)
     expect(storedDayKey(entry.date), want.id).toBe(localDayKey(want.date))
     expect(bucket, want.id).toBe(
@@ -505,9 +471,7 @@ function expectCategory(
   }
   const want = CATEGORIES[kind]
   expect(entry.credit ?? false, entry.id).toBe(want.isCredit)
-  // A backup file from 1.40–1.43 doesn't hold the Categories its entries point
-  // at, so restored on a new device they keep their credit but not their
-  // Category's name. A known gap.
+
   if (!hasCategories && entry.categoryId) return
   expect(getCategoryLabel(entry, categories), entry.id).toBe(want.name)
   if (entry.categoryId) {
@@ -583,9 +547,7 @@ function expectPlans(app: App, release: string, source: Source) {
       RECURRING_OVERRIDE.note,
     ],
   ])
-  // Before 1.44 a Day Plan hid that day's recurring instances; Plans add up
-  // now, so the upgrade skips the instance under Day Plan p-3 to keep the
-  // forecast as it was.
+
   const additive = since(release, '1.44.0')
   expect(weekly.deletedDates?.map(storedDayKey).sort()).toEqual(
     [
@@ -595,7 +557,6 @@ function expectPlans(app: App, release: string, source: Source) {
   )
   if (since140) expect(weekly.startTimeInMinutes).toBe(10 * 60)
 
-  // The schedule still lands on the same days.
   const on = (day: Date) =>
     getPlansIntersectingDay(day, recurringPlans)
       .map(({ id }) => id)
@@ -609,16 +570,11 @@ function expectPlans(app: App, release: string, source: Source) {
   expect(on(at(2026, 1, 3))).toEqual([])
 }
 
-/**
- * Preferences a migration rewrites on purpose: the sync timestamps follow the
- * preferences renamed since (`oneOffGoalHours` → `monthlyGoalOverrides`).
- */
 const MIGRATED_PREFERENCES = new Set(['preferenceUpdatedAt'])
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** `value` still holds `saved`; an object may have gained keys. */
 const keeps = (value: unknown, saved: unknown): boolean =>
   isPlainObject(value) && isPlainObject(saved)
     ? Object.keys(saved).every((key) => keeps(value[key], saved[key]))
@@ -666,7 +622,7 @@ function expectPreferences(app: App, release: string, source: Source) {
     ...(mileage ? { distanceUnit: 'km', mileageTrackingEnabled: true } : {}),
   }
   const got = data(prefs)
-  // Turning sync on, or restoring onto a new device, keeps that device's own.
+
   const deviceLocal = (key: string) =>
     source !== 'storage' && NON_SYNCABLE_PREFERENCE_KEYS.has(key)
   for (const [key, value] of Object.entries(want)) {
@@ -682,8 +638,6 @@ function expectPreferences(app: App, release: string, source: Source) {
   expect(prefs.homeScreenElements.timer).toBe(false)
   expect(prefs.publisherHours.custom).toBe(40)
 
-  // Every other preference the release saved, under a name this build still
-  // uses, keeps its value.
   const savedPrefs = (
     source === 'backup'
       ? readJson<{ preferencesStore: Record<string, unknown> }>(
@@ -707,8 +661,6 @@ function expectCategories(app: App, release: string, source: Source) {
   const { categories } = app.categories.getState()
   expect(categories.map(({ id }) => id)).toContain(LDC_BUILTIN_CATEGORY_ID)
   if (!coverage(release, source).categories) {
-    // 1.37's tags become Categories at launch. A 1.37 backup file restored
-    // later keeps them as tags on its entries, which still label them.
     if (!since(release, '1.40.0') && source === 'storage') {
       for (const want of Object.values(CATEGORIES)) {
         const got = categories.find(({ name }) => name === want.name)
@@ -787,7 +739,7 @@ function expectBuddies(app: App) {
   expect(state.rosterVersion).toBe(BUDDIES.rosterVersion)
   expect(state.pushRegistrationKey).toBe(BUDDIES.pushRegistrationKey)
   expect(state.pushRegisteredAt).toBe(BUDDIES.pushRegisteredAt)
-  // Each pairing with the keys its messages are sealed with.
+
   expect(state.buddies.map(({ inboxId }) => inboxId)).toEqual([
     noor.inboxId,
     pip.inboxId,
@@ -795,8 +747,7 @@ function expectBuddies(app: App) {
   const [gotNoor, gotPip] = state.buddies
   expect(gotNoor).toMatchObject(noor)
   expect(gotPip).toMatchObject(pip)
-  // Noor's Plans stay off this User's calendar, and her requests to join stay
-  // muted here.
+
   expect(buddySettings(state.sharing, gotNoor)).toMatchObject({
     settings: { showOnCalendar: false },
     sources: { showOnCalendar: 'buddy' },
@@ -830,13 +781,6 @@ function expectBuddies(app: App) {
   })
 }
 
-/**
- * Notes Import's history. Scribe AI replaced Notes Import (ADR 0032), and only
- * accepted imports stay, for Undo in History. The release's two were never
- * accepted (one read and waiting, one still reading), so the old ledger still
- * reads but offers neither, and the launch cleanup drops them.
- */
-/** Notes Import's ledger rows still on the device, by MMKV key. */
 const notesImportRows = () => [
   ...(disk.instances.get('notes-import-ledger')?.keys() ?? []),
 ]
@@ -853,7 +797,6 @@ async function expectNotesImports() {
   expect(listLegacyImports()).toEqual([])
 }
 
-/** The scenario's Scribe AI conversation, and its Proposals in turn order. */
 function scribeConversation(app: App) {
   const conversations = Object.values(
     app['scribe-conversations'].getState().conversations
@@ -866,20 +809,15 @@ function scribeConversation(app: App) {
   return { conversation, added, waiting }
 }
 
-/**
- * Scribe AI's conversation, the undo record of the Proposal the User added, and
- * the last usage snapshot: each as the release saved it, the waiting Proposal
- * still ready to review and add, and the added one still undoable.
- */
 async function expectScribe(app: App, release: string) {
   const stores = fixtureStores(release)
-  // Nothing migrates them yet.
+
   for (const key of SCRIBE_STORES)
     expect(data(app[key].getState()), key).toMatchObject(stores[key].state)
 
   const { conversation, added, waiting } = scribeConversation(app)
   expect(app['scribe-conversations'].getState().hasFinishedTurn).toBe(true)
-  // Every turn finished, so launch offers none to try again.
+
   expect(conversation.suspended).toBeNull()
   expect(
     conversation.items.flatMap((item) =>
@@ -893,7 +831,7 @@ async function expectScribe(app: App, release: string) {
       ['assistant', answer],
     ])
   )
-  // Its Refs still name the same records.
+
   const { refs } = conversation
   expect(refs.byRef[refs.byId['c:c-dora']]).toEqual({ kind: 'c', id: 'c-dora' })
   expect(refs.byRef[refs.byId[`k:${CATEGORIES.letters.id}`]]).toEqual({
@@ -951,17 +889,13 @@ async function expectScribe(app: App, release: string) {
   ])
   const { undoable } = await import('@/features/scribe/stores/ledger')
   expect(undoable(record, Date.now())).toBe(true)
-  // What Undo would take back is still there.
+
   expect(ids(app.conversations.getState().conversations)).toContain(visit.id)
   expect(allEntries(app).map(({ entry }) => entry.id)).toContain(entry.id)
 
   expect(app['scribe-usage'].getState().snapshot).toEqual(SCRIBE.usage)
 }
 
-/**
- * This device's own settings and bookkeeping. Neither sync nor the backup file
- * holds them, so an upgrade that drops one loses it for good.
- */
 async function expectDeviceSettings(app: App, release: string) {
   if (since(release, '1.44.0')) {
     expect(app['calendar-sync'].getState()).toMatchObject(CALENDAR_SYNC)
@@ -981,13 +915,13 @@ async function expectDeviceSettings(app: App, release: string) {
   }
   if (since(release, '1.45.0')) {
     expect(app['app-lock'].getState()).toMatchObject(APP_LOCK)
-    // App Lock still covers the app on its first launch.
+
     const { useAppLockSession } = await import('@/stores/appLock')
     expect(useAppLockSession.getState().locked).toBe(true)
     expect(app['split-sheet-layout'].getState().ratio).toBe(SPLIT_SHEET_RATIO)
     const { contacts } = app.contacts.getState()
     const contact = (id: string) => contacts.find((c) => c.id === id)!
-    // The queued pin lookup still applies to the Contact's address.
+
     expect(app['geocode-retry'].getState().queue).toEqual([
       {
         contactId: GEOCODE_RETRY.contactId,
@@ -1007,7 +941,6 @@ async function expectDeviceSettings(app: App, release: string) {
   }
 }
 
-/** Android's Google Drive app data folder, holding the same files. */
 const googleDrive: SyncTransport = {
   kind: 'google-drive',
   writeConfirmsUpload: true,
@@ -1039,10 +972,6 @@ const googleDrive: SyncTransport = {
   addAvailabilityChangeListener: () => ({ remove: () => {} }),
 }
 
-/**
- * Puts the file `release` wrote to `cloud` there, as another of the User's
- * devices left it, and makes this device one that syncs through `cloud`.
- */
 function installCloud(release: string, cloud: Cloud) {
   const { json } = syncFiles(release).find((file) => file.cloud === cloud)!
   const { deviceId, writtenAt } = JSON.parse(json) as {
@@ -1055,7 +984,6 @@ function installCloud(release: string, cloud: Cloud) {
   ]
 }
 
-/** The sync engine on this platform's transport, for a Supporter. */
 async function syncEngine() {
   const sync = await import('@/app/sync/iCloudSync')
   const { registerAndroidSyncTransport, syncTransport } = await import(
@@ -1070,7 +998,6 @@ async function syncEngine() {
   return sync
 }
 
-/** Every record in a sync file this build wrote, by kind. */
 function syncedRecordIds(json: string) {
   const payload = JSON.parse(json) as {
     contactStore: { contacts: unknown }
@@ -1163,7 +1090,7 @@ describe.each(RELEASES)('restoring a backup file from %s', (release) => {
     app = await launch()
     const { isBackupFile } = await import('@/lib/backupFile')
     const { restoreBackupFile } = await import('@/app/sync/backupFileRestore')
-    // `useBackupImport`: parse, check, restore.
+
     const file: unknown = JSON.parse(
       readFileSync(`${DIR}/${release}/backup.json`, 'utf8')
     )
@@ -1189,9 +1116,6 @@ describe.each(RELEASES)('restoring a backup file from %s', (release) => {
   })
 })
 
-// Launched the morning after the release saved them, as a device updating
-// overnight would be: Buddies and the bell drop what has lapsed by launch, and
-// a year-old bell entry is gone by design.
 describe.each(RELEASES.filter((release) => since(release, '1.44.0')))(
   "upgrading from %s keeps this device's settings",
   (release) => {
@@ -1207,7 +1131,7 @@ describe.each(RELEASES.filter((release) => since(release, '1.44.0')))(
 
     it("keeps them, and reads Notes Import's history", async () => {
       expect(disk.errors).toEqual([])
-      // Releases before Scribe AI wrote Notes Import's ledger.
+
       const { ready, working } = NOTES_IMPORTS
       if (!since(release, '1.45.0'))
         expect(notesImportRows()).toEqual(
@@ -1251,7 +1175,7 @@ describe.each(RELEASES.filter((release) => since(release, '1.44.0')))(
         expect(allEntries(app).map(({ entry }) => entry.id)).not.toContain(
           entry.id
         )
-        // The unchecked Plan stays out.
+
         expect(addScribeProposal(waiting.id)).toEqual({
           status: 'partially_applied',
           appliedCards: 1,
@@ -1296,7 +1220,7 @@ describe.each(SYNC_FILES)(
       installCloud(release, cloud)
       app = await launch()
       const sync = await syncEngine()
-      // Turning sync on with nothing of its own yet takes the cloud's data.
+
       const decision = await sync.resolveInitialEnable()
       expect(decision.outcome).toBe('pull')
       if (decision.outcome === 'pull') sync.applyPullEnable(decision.remote)
@@ -1333,7 +1257,7 @@ describe.each(SYNC_FILES)(
       const decision = await sync.resolveInitialEnable()
       expect(decision.outcome).toBe('conflict')
       if (decision.outcome !== 'conflict') return
-      // "Merge both", as Settings runs it (`PreferencesiCloudScreen`).
+
       sync.backfillUpdatedAtIfNeeded()
       sync.joinRemoteResetEpoch(decision.remote)
       app.preferences.getState().set({

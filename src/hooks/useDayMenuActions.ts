@@ -7,14 +7,7 @@ import usePublisher from '@/hooks/usePublisher'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * The context menu for a calendar day, wherever a day appears (month calendar,
- * Home week strip, the Month tab's day list): Add Time and Plan This Day, the
- * same two actions the day's detail sheet offers, and Plan Route from today
- * on.
- */
 export default function useDayMenuActions(
-  /** Local day. Undefined (or an unavailable cell) yields no menu. */
   date: Date | undefined
 ): ContextMenuEntries {
   const navigation = useNavigation<RootStackNavigation>()
@@ -24,7 +17,6 @@ export default function useDayMenuActions(
 
   const routeDate = date.toISOString()
   return [
-    // Regular Publishers who don't log hours never see Add Time.
     showsTimeEntry && {
       id: 'add_time',
       title: i18n.t('addTime'),

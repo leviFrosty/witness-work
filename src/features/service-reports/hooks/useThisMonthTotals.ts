@@ -12,7 +12,6 @@ import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 
-/** This month's reportable time, after the Credit Time cap, in minutes. */
 export function useThisMonthMinutes() {
   const { type: publisher } = usePublisher()
   const { overrideCreditLimit, customCreditLimitHours } = usePreferences(
@@ -22,8 +21,7 @@ export function useThisMonthMinutes() {
     }))
   )
   const { serviceReports } = useServiceReport()
-  // Keyed on the day, so the total starts over at midnight on the 1st, also on
-  // a Home that stayed open.
+
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const month = today.month()
   const year = today.year()
@@ -40,11 +38,10 @@ export function useThisMonthMinutes() {
   ).value
 }
 
-/** This month's Bible studies: each contact with a study visit counts once. */
 export function useThisMonthStudies() {
   const contacts = useContacts((s) => s.contacts)
   const conversations = useConversations((s) => s.conversations)
-  // Keyed on the day, like the minutes above.
+
   const month = moment(useLocalDay(), 'YYYY-MM-DD').toDate()
   return getStudiesForGivenMonth({ contacts, conversations, month })
 }

@@ -1,7 +1,6 @@
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 
-/** One segment per Follow-up, filled once it's answered. */
 export default function FollowUpCardProgress({
   done,
   total,

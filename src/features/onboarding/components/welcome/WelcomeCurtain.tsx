@@ -38,8 +38,7 @@ import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
 const TILE_TOP = '#5CE291'
 const TILE_BOTTOM = '#12A04A'
-// The corner radius an app window has mid-collapse, before it settles on the
-// tile's own radius.
+
 const WINDOW_RADIUS = 44
 
 const cardPath = Skia.Path.MakeFromSVGString(BRAND_MARK_CARD_PATH)
@@ -49,10 +48,10 @@ const linesPath = Skia.Path.MakeFromSVGString(BRAND_MARK_LINES_PATH)
 interface RippleProps {
   cx: number
   cy: number
-  /** Radius the ring starts from, and how far it spreads. */
+
   from: number
   spread: number
-  /** 0–1 share of the ripple's run before this ring sets off. */
+
   lag: number
   strokeWidth: number
   color: string
@@ -92,30 +91,24 @@ const RippleRing = ({
 interface Props {
   width: number
   height: number
-  /** Where the tile comes to rest; `null` until the stage is measured. */
+
   hub: { x: number; y: number } | null
   scale: number
-  /** Width the native splash drew the mark at, so frame one matches it. */
+
   splashMarkWidth: number
   palette: WelcomePalette
-  /** 0 = the full-screen splash, 1 = the settled app tile. */
+
   collapse: SharedValue<number>
-  /** Landing squash on the settled tile. */
+
   tileScale: DerivedValue<number>
-  /** 0–1 rings that spread from the tile as it lands. */
+
   ripple: SharedValue<number>
   tilt: Tilt
   exit: SharedValue<number>
-  /** The exit (and its reverse) is a plain fade. */
+
   reduceMotion: boolean
 }
 
-/**
- * The welcome's opening move: the splash screen collapses into a tile — the
- * splash in miniature, folding away the way iOS shrinks a closing app into its
- * icon — revealing the scene behind it. The tile then stays on top as the hub
- * of the constellation.
- */
 const WelcomeCurtain = ({
   width,
   height,
@@ -178,7 +171,7 @@ const WelcomeCurtain = ({
   const gradientEnd = useDerivedValue(() =>
     vec(geometry.value.cx, geometry.value.cy + geometry.value.h / 2)
   )
-  // The splash is one flat green; the tile picks up an icon-like light falloff.
+
   const fill = useDerivedValue(() => [
     interpolateColor(
       collapse.value,
@@ -207,7 +200,6 @@ const WelcomeCurtain = ({
   })
 
   const layerStyle = useAnimatedStyle(() => {
-    // Tilt only once collapsed, so the full-screen curtain never shows an edge.
     const settled = Math.pow(collapse.value, 6)
     return {
       opacity: 1 - exit.value,

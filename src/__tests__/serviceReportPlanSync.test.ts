@@ -16,10 +16,6 @@ import { RecurringPlanFrequencies } from '@/lib/serviceReport'
 import { deletePlan } from '@/lib/confirmDeletePlan'
 import type { DayPlan, RecurringPlan } from '@/types/timeEntry'
 
-// What iCloud sync needs from the store's Plan actions: every removal leaves a
-// tombstone (or another device's copy brings the Plan back), and every edit
-// stamps `updatedAt` (or last-writer-wins keeps each device's own copy).
-
 const T0 = Date.parse('2026-09-01T12:00:00Z')
 
 const dayPlan = (id: string): DayPlan => ({
@@ -115,7 +111,6 @@ describe('Plan tombstones', () => {
   })
 
   it('updating a Plan clears a tombstone a merge left beside it', () => {
-    // A merge keeps a tombstone older than the Plan edit that outlived it.
     useServiceReport.setState({
       dayPlans: [{ ...dayPlan('d1'), updatedAt: T0 }],
       recurringPlans: [{ ...recurringPlan('r1'), updatedAt: T0 }],
@@ -136,7 +131,6 @@ describe('Plan tombstones', () => {
     store().addRecurringPlan(recurringPlan('r1'))
     store().deleteRecurringPlan('r1')
 
-    // e.g. saving an edit screen after a pull removed the Plan
     store().updateDayPlan({ id: 'd1', minutes: 30 })
     store().updateRecurringPlan({ id: 'r1', minutes: 30 })
 
@@ -160,7 +154,7 @@ describe('Plan tombstones', () => {
 
     expect(store().deletedDayPlans.map((t) => t.id)).toEqual(['d1'])
     expect(store().deletedRecurringPlans.map((t) => t.id)).toEqual(['r3'])
-    // Occurrence deletes keep the Plan, stamped so the edit wins the merge.
+
     expect(store().recurringPlans.map((p) => [p.id, p.updatedAt])).toEqual([
       ['r1', T0 + 1_000],
       ['r2', T0 + 1_000],
@@ -192,7 +186,6 @@ describe('Plan tombstones', () => {
 describe('Recurring Plan edits stamp updatedAt', () => {
   const date = moment('2026-10-12').toDate()
 
-  // Each edit at T0 + 1s on a Plan last stamped at T0.
   const edits: [string, () => void][] = [
     [
       'addRecurringPlanOverride',
@@ -237,7 +230,7 @@ describe('Recurring Plan edits stamp updatedAt', () => {
 
     const [r1, r2] = store().recurringPlans
     expect(r1.updatedAt).toBe(T0 + 1_000)
-    // Only the edited Plan.
+
     expect(r2.updatedAt).toBe(T0)
   })
 })

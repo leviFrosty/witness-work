@@ -7,7 +7,7 @@ export default {
   appStore: `https://apps.apple.com/us/app/jw-time/id${itunesItemId}`,
   appStoreReview: `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${itunesItemId}?action=write-review`,
   playStore: `https://play.google.com/store/apps/details?id=${androidPackage}`,
-  /** Opens the Play Store app itself; `playStore` is the fallback. */
+
   playStoreApp: `market://details?id=${androidPackage}`,
   githubRepo,
   appleMapsBase: 'https://maps.apple.com/?q=',

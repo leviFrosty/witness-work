@@ -9,15 +9,8 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { splitWordShare } from '@/lib/wholeWords'
 
-/** The smallest the text shrinks to; a word still too wide then breaks. */
 const MIN_SCALE = 0.4
 
-/**
- * A display title that never breaks a word in two. It wraps between words as
- * usual, and only when a single word is wider than the whole line (a long word
- * at the largest text sizes) does it shrink, just enough for that word to fit.
- * At regular sizes it renders exactly like `Text`.
- */
 export default function WholeWordsText({
   style,
   onTextLayout,
@@ -26,7 +19,7 @@ export default function WholeWordsText({
 }: PropsWithChildren<TextProps>) {
   const theme = useTheme()
   const { width, fontScale } = useWindowDimensions()
-  // A new text, window width or text size starts over at full size.
+
   const key = `${width}:${fontScale}:${typeof children === 'string' ? children : ''}`
   const [fit, setFit] = useState({ key, scale: 1 })
   const scale = fit.key === key ? fit.scale : 1

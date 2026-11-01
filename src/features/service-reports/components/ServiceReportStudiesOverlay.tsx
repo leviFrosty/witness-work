@@ -49,7 +49,7 @@ const StudyContactRow = ({
   contact: Contact
   lastVisit: Visit | null
   onPress: () => void
-  /** Closes the overlay, which floats above every screen, then navigates. */
+
   navigateAfterClose: (navigate: () => void) => void
 }) => {
   const theme = useTheme()
@@ -104,7 +104,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
   const navigation = useNavigation<RootStackNavigation>()
   const contacts = useContacts((state) => state.contacts)
   const conversations = useConversations((state) => state.conversations)
-  // Keyed on the day, like the card it opens from.
+
   const now = moment(useLocalDay(), 'YYYY-MM-DD')
   const studyContacts = getStudyContactsForGivenMonth({
     contacts,
@@ -237,12 +237,10 @@ interface Props {
 }
 
 const ServiceReportStudiesOverlay = ({ children, containerStyle }: Props) => {
-  // Reads the month's studies, which a label naming the action alone hid.
   const studies = useThisMonthStudies()
   return (
     <ServiceReportInsightOverlay
       containerStyle={containerStyle}
-      // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
       accessibilityLabel={i18n.t('studiesCount', { count: studies })}
       accessibilityHint={i18n.t('scheduleInsights.tapForDetails')}
       expandedHeight={560}

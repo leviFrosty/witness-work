@@ -7,32 +7,16 @@ import {
   type AttestationEndpoint,
 } from '@/lib/attestation/appAttest'
 
-/**
- * HTTP transport shared by both attestation authorizers (App Attest on iOS,
- * Play Integrity on Android). Everything goes to `/attestation/v1/*`: the
- * install's App Attest key gets its challenges at `challenge` and registers at
- * `register`, other features' assertions get their challenges at `challenge`
- * too, the dev Tools diagnostics prove the whole path at `verify`, and both
- * providers' capabilities come from `status`. Failures become sanitized
- * {@link AttestationHttpError}s carrying only stable metadata.
- */
-
-/** Unauthenticated availability/capability probe. */
 export const STATUS_TIMEOUT_MS = 8_000
-/**
- * Per-endpoint budgets. Every attestation round-trip returns quickly, so a
- * stalled connection fails in seconds instead of hanging.
- */
+
 export const ENDPOINT_TIMEOUT_MS: Record<AttestationEndpoint, number> = {
   challenge: 15_000,
   registration: 15_000,
   verify: 15_000,
 }
 
-/** The shared dev-worker bypass (`@/lib/http/devBypass`). */
 export const attestationDevBypass = apiDevBypass
 
-/** The ww-api base URL the attestation routes live under (dev snapshot). */
 export const attestationBaseUrl = apis.attestationStatus.replace(
   /\/attestation\/v1\/status$/,
   ''
@@ -52,11 +36,6 @@ const endpointUrl = (endpoint: AttestationEndpoint): string => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/**
- * `request()` failures in the shape the authorizers branch on. ww-api's bodies
- * carry the stable code in `code` (`error` is human text), so read it from the
- * body rather than `HttpError.serverCode`.
- */
 export const toAttestationHttpError = (
   error: unknown
 ): AttestationHttpError => {
@@ -73,7 +52,6 @@ export const toAttestationHttpError = (
     return new AttestationHttpError({ kind: 'cancelled' })
   }
   if (error.status === null) {
-    // No response: offline, refused, or the timeout fired.
     return new AttestationHttpError({
       kind: 'network',
       timedOut: error.kind === 'timeout',
@@ -95,11 +73,6 @@ export const toAttestationHttpError = (
 
 let statusInFlight: Promise<unknown> | null = null
 
-/**
- * The one status probe (`GET /attestation/v1/status`). App Attest protocol
- * negotiation and Play Integrity's capability lookup read it; concurrent
- * callers share a single request.
- */
 const getStatus = (): Promise<unknown> => {
   if (statusInFlight) return statusInFlight
   perf.count('attestation:statusProbe')

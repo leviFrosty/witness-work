@@ -26,17 +26,9 @@ import {
 } from '@/features/notifications/stores/notificationsTray'
 
 const POPOVER_WIDTH = 380
-// Room inside the popover's host for the badge, which hangs off the bell's
-// corner, and for most of the bell's hit slop.
+
 const TRIGGER_PADDING = 8
 
-/**
- * Opens the popover when something (a tapped push) asked for it, once nothing
- * is taking over the screen (the update reveal, a celebration). A tap that
- * launched the app asks while Home is still mounting: the bell waits for its
- * own layout and two frames, since a popover presented before the native views
- * settle opens off its anchor, clipped at the screen's edge.
- */
 function useOpenOnRequest(open: () => void, laidOut: boolean) {
   const requested = useNotificationsTray((state) => state.openRequested)
   const takingOver = useIsTakingOver()
@@ -56,14 +48,11 @@ function useOpenOnRequest(open: () => void, laidOut: boolean) {
   }, [requested, takingOver, laidOut])
 }
 
-/** Keeps the app icon badge on the unread count. */
 function useAppIconBadge(unread: number) {
   useEffect(() => {
     setUnreadCount(unread)
   }, [unread])
   useEffect(() => {
-    // A reminder that fired in the background set an estimated badge (see
-    // useReconciledReminders), so restore the exact count on leaving the app.
     const subscription = AppState.addEventListener('change', (state) => {
       const { unread } = useNotificationsTray.getState()
       if (state === 'background' && unread !== null) setAppIconBadge(unread)
@@ -79,7 +68,7 @@ function BellTrigger({
 }: {
   onPress: () => void
   unread: number
-  /** Unread buddies' news, which shows a quiet dot instead of a number. */
+
   news: boolean
 }) {
   const theme = useTheme()
@@ -100,8 +89,7 @@ function BellTrigger({
           testID='notifications-bell'
           accessibilityLabel={
             unread > 0
-              ? // @ts-expect-error TranslationKey doesn't handle keys that contain objects.
-                i18n.t('notifications_a11yUnread', { count: unread })
+              ? i18n.t('notifications_a11yUnread', { count: unread })
               : news
                 ? i18n.t('notifications_a11yNews')
                 : i18n.t('notifications_a11y')
@@ -110,8 +98,6 @@ function BellTrigger({
         />
       </PointerTooltip>
       {unread > 0 && (
-        // The bell's label reads the count, so the badge stays out of the
-        // screen reader's way rather than being a stop of its own.
         <View
           pointerEvents='none'
           {...hiddenFromScreenReaders}
@@ -128,7 +114,7 @@ function BellTrigger({
             backgroundColor: theme.colors.error,
           }}
         >
-          {/* The badge keeps its size beside the icon. */}
+          {}
           <Text
             maxFontSizeMultiplier={1.2}
             style={{
@@ -161,11 +147,6 @@ function BellTrigger({
   )
 }
 
-/**
- * Home header bell over every feature's time- and event-based notices, with an
- * unread badge; buddies' news only adds a quiet dot. Items are derived by the
- * caller; this owns dismissal, read state, and when each item came in.
- */
 export default function NotificationsTray({
   items,
   now,
@@ -176,7 +157,7 @@ export default function NotificationsTray({
   items: NotificationItem[]
   now: number
   onOpen?: () => void
-  /** A remote source (Buddies) being checked, or failing to be. */
+
   syncState?: TraySyncState
   onRetrySync?: () => void
 }) {

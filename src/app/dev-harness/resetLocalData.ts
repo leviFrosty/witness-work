@@ -47,15 +47,9 @@ type ResettableStore = {
   setState: (state: never, replace: true) => void
 }
 
-/**
- * Device-local stores a reset puts back to their initial state, in memory as
- * well: clearing MMKV alone leaves the live state, and the store's next write
- * saves it again (a seed kept another run's buddies, and with them a badge).
- * `resetLocalData.test.ts` lists the persisted stores a reset keeps, and why.
- */
 export const RESET_STORES: readonly ResettableStore[] = [
   useBuddies,
-  // This device's copy of each Shared Car; the car itself stays on ww-api.
+
   useSharedCars,
   useSharedCarsSession,
   useCategories,
@@ -72,13 +66,10 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useSidebarPreferences,
   useAppLockSettings,
   useTimeCache,
-  // A connection left enabled keeps publishing until restart, and its events
-  // are orphaned once the reset forgets the destination.
+
   useCalendarSync,
   useCalendarPublishing,
-  // Scribe AI's conversations, undo records, memory and consent are
-  // device-only, like the records' own stores here; the usage snapshot is
-  // refetched.
+
   useScribeConversations,
   useScribeLedger,
   useScribeMemory,
@@ -87,25 +78,11 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useScribeRuns,
 ]
 
-/**
- * Wipes this device's data back to a fresh install (Tools "Reset all" and the
- * verification harness). Never touches iCloud or the calendar; Tools removes
- * published events first (`removeConnectedCalendarEvents`). The account key and
- * what belongs to it stay, as they do through a reinstall on iOS: the Keychain
- * seed, the server account's session and backup state.
- */
 export function resetLocalData() {
-  // Storage goes first, so the reset state below (the builtin LDC Category,
-  // the migration flags) and whatever a seed writes next are saved. Clearing
-  // last dropped them: a seeded device lost its LDC Category on relaunch.
   clearMmkvStorage()
   void AsyncStorage.clear()
   const setPreferences = usePreferences.getState().set
-  // Lock iCloud sync off + mark setByUser BEFORE wiping local data, otherwise
-  // SupporterSyncDefault (App.tsx) sees a supporter with no local records and
-  // setByUser=false, calls resolveInitialEnable(), gets `pull`, and restores
-  // everything from iCloud — kicking the user back to home instead of
-  // onboarding. Re-applied after the defaults reset so the flag survives.
+
   setPreferences({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
   useContacts.getState()._WARNING_forceDeleteContacts()
   useContacts.getState()._WARNING_clearDeleted()
@@ -122,19 +99,18 @@ export function resetLocalData() {
   abortAllTurns()
   for (const store of RESET_STORES)
     store.setState(store.getInitialState() as never, true)
-  // The defaults also clear earned badges, the ledger and the first-pass
-  // marker; drop any queued celebration or summary with them.
+
   setPreferences({ ...PREFERENCE_DEFAULTS, iCloudSyncSetByUser: true })
-  // Seeds the builtin LDC Category again, as a fresh launch does.
+
   runTagsToCategoriesMigration()
   runLdcCategoryMigration()
   useBadgeSession.getState().reset()
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
   clearLegacyLedger()
   forgetFoundSecrets()
-  // The space keys go with the cars; the member's wraps open them again.
+
   forgetDeviceSpaceKeys()
-  // And car invitations' secrets with the invitations, in the Buddies store.
+
   forgetDeviceInviteSecrets()
   void Stopwatch.reset()
 }

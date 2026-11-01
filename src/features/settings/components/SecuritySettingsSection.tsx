@@ -61,10 +61,7 @@ const SecuritySettingsSection = () => {
   const method = availability?.method ?? 'passcode'
   const label = appLockRequireLabel(method)
 
-  // Turning the lock on or off both ask first, so the lock is known to work
-  // on this device and only its owner can remove it.
   const handleToggle = async (value: boolean) => {
-    // Checked now, not on mount: they may have just set a passcode.
     if (value && !(await getAppLockAvailability()).available) {
       if (Platform.OS === 'android') {
         Alert.alert(

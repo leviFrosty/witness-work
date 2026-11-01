@@ -9,11 +9,9 @@ import useMapProjection from '@/features/map/hooks/useMapProjection'
 const seen: ReturnType<typeof useMapProjection>[] = []
 const latest = () => seen.at(-1)!
 
-/** A map whose answers wait until the test lets them through. */
 const fakeMap = () => {
   const pending: (() => void)[] = []
   const map = {
-    // A map 1 point per 0.001° from 37°N, 122°W.
     pointForCoordinate: (c: { latitude: number; longitude: number }) =>
       new Promise<{ x: number; y: number }>((resolve) =>
         pending.push(() =>
@@ -53,7 +51,7 @@ describe('useMapProjection', () => {
     expect(latest().projection?.size).toEqual({ width: 100, height: 100 })
 
     await act(async () => latest().onLayout({ width: 200, height: 100 }))
-    // Still the old one, not nothing, until the map answers.
+
     expect(latest().projection?.size).toEqual({ width: 100, height: 100 })
     await answer()
     expect(latest().projection?.size).toEqual({ width: 200, height: 100 })

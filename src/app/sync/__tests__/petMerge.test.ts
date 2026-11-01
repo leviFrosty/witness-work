@@ -142,7 +142,7 @@ describe('pet sync merge', () => {
       keepsakes: [{ kind: 'olive', on: '2026-10-02' }],
       updatedAt: 100,
     }
-    // Renamed on another device that hadn't seen the Oct 5 wake, and kept a fig.
+
     const renamed: PetRecord = {
       ...companion,
       seed: 'abc',
@@ -170,13 +170,12 @@ describe('pet sync merge', () => {
     ])
     expect(result.changed).toBe(true)
 
-    // The other device ends up with the same record.
     const back = mergePayload(
       { ...emptyLocal(), pets: [renamed] },
       remote({ ...emptyPet(), pets: result.pets })
     )
     expect(back.pets).toEqual(result.pets)
-    // And merging it again changes nothing.
+
     expect(
       mergePayload(
         { ...emptyLocal(), pets: result.pets },
@@ -192,8 +191,7 @@ describe('pet sync merge', () => {
       earnedRoomItems: [UNLOCK_ORDER[0], UNLOCK_ORDER[1], 'floor:marble'],
       updatedAt: 100,
     }
-    // Renamed on another device, which had earned only the first, plus a third
-    // in the meantime.
+
     const renamed: PetRecord = {
       ...companion,
       seed: 'abc',
@@ -224,7 +222,6 @@ describe('pet sync merge', () => {
       ).changed
     ).toBe(false)
 
-    // A newer copy from a build without the list keeps the earned ones.
     const older = { ...companion, seed: 'abc', updatedAt: 300 }
     expect(
       mergePayload(
@@ -232,7 +229,7 @@ describe('pet sync merge', () => {
         remote({ ...emptyPet(), pets: [older] })
       ).pets[0].earnedRoomItems
     ).toEqual(local.earnedRoomItems)
-    // Neither side earned any: no list is added.
+
     const plain = mergePayload(
       { ...emptyLocal(), pets: [companion] },
       remote({
@@ -259,7 +256,7 @@ describe('pet sync merge', () => {
       ],
       updatedAt: 100,
     }
-    // Offline, the other device bought the cap first, and a floor.
+
     const peer: PetRecord = {
       ...companion,
       seed: 'abc',
@@ -286,7 +283,7 @@ describe('pet sync merge', () => {
         remote({ ...emptyPet(), pets: [peer] })
       ).changed
     ).toBe(false)
-    // A newer copy from a build before the Shop keeps the purchases.
+
     const older = { ...companion, seed: 'abc', updatedAt: 300 }
     expect(
       mergePayload(
@@ -294,7 +291,7 @@ describe('pet sync merge', () => {
         remote({ ...emptyPet(), pets: [older] })
       ).pets[0].purchases
     ).toEqual(local.purchases)
-    // Neither side bought any: no list is added.
+
     expect(
       mergePayload(
         { ...emptyLocal(), pets: [companion] },
@@ -354,7 +351,6 @@ describe('pet sync merge', () => {
     )
     expect(result.pets).toEqual([readopted])
 
-    // Two devices that each adopted on the same day, before syncing.
     const elsewhere: PetRecord = {
       ...companion,
       seed: 'other',
@@ -382,7 +378,7 @@ describe('pet sync merge', () => {
     const valid = remote({ ...emptyPet(), pets: [companion], petRooms: [room] })
     expect(payloadSchema.safeParse(valid).success).toBe(true)
     expect(payloadSchema.safeParse(remote()).success).toBe(true)
-    // Options from a newer build still read.
+
     const newer = remote({
       ...emptyPet(),
       pets: [{ ...companion, coat: 'spotted' }],

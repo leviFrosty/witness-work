@@ -1,19 +1,3 @@
-/**
- * An in-memory stand-in for the slice of the Google Drive REST API (v3) that
- * WitnessWork's Android sync uses (`src/lib/syncTransport/googleDrive`):
- * listing, reading, creating, updating and deleting files in the app data
- * folder, resumable uploads, and `about.get`. Unit tests call `fetch` directly;
- * `fake-google-drive-server.ts` serves it over HTTP so emulators can sync
- * through it without a Google Account.
- *
- * Each access token names an account (`fake:<permissionId>`, optionally
- * `fake:<permissionId>#<n>` to tell tokens apart), and each account has its own
- * app data folder, as Drive gives each Google Account its own. Like Drive,
- * names aren't unique: two creates with one name make two files.
- *
- * Plain, import-free TypeScript so Node can run it with type stripping.
- */
-
 export type FakeDriveFile = {
   id: string
   name: string
@@ -51,7 +35,7 @@ export function createFakeGoogleDrive(
   const revoked = new Set<string>()
   let nextId = 1
   let lastModified = 0
-  /** Requests served, for tests that count calls. */
+
   const log: Array<{ method: string; path: string }> = []
 
   const now = () => (lastModified = Math.max(Date.now(), lastModified + 1))
@@ -105,7 +89,6 @@ export function createFakeGoogleDrive(
     return saved
   }
 
-  /** Splits a `multipart/related` body into its metadata and content. */
   function multipart(body: string, contentType: string) {
     const boundary = /boundary=([^;]+)/.exec(contentType)?.[1]
     if (!boundary) return null
@@ -237,7 +220,7 @@ export function createFakeGoogleDrive(
     fetch: ((input: RequestInfo | URL, init?: RequestInit) =>
       handle(new Request(input, init))) as typeof fetch,
     log,
-    /** The account's files, newest first. */
+
     files(account: string): FakeDriveFile[] {
       return [...folder(account).values()].sort(
         (a, b) => b.modifiedAt - a.modifiedAt
@@ -247,7 +230,7 @@ export function createFakeGoogleDrive(
       const file = this.files(account).find((f) => f.name === name)
       return file ? decoder.decode(file.content) : null
     },
-    /** Adds a file as another client would, e.g. a duplicate name. */
+
     put(account: string, name: string, content: string): FakeDriveFile {
       const saved = store(account, {
         id: `file-${nextId++}`,
@@ -258,7 +241,7 @@ export function createFakeGoogleDrive(
       if (saved instanceof Response) throw new Error('quota')
       return saved
     },
-    /** The next matching request fails with `status` and Drive's `reason`. */
+
     failNext(
       match: (request: Request) => boolean,
       status: number,
@@ -266,7 +249,7 @@ export function createFakeGoogleDrive(
     ) {
       faults.push({ match, status, reason })
     },
-    /** Drops every fault `failNext` queued that hasn't fired yet. */
+
     clearFaults() {
       faults.length = 0
     },
@@ -274,7 +257,7 @@ export function createFakeGoogleDrive(
       if (bytes === undefined) quotas.delete(account)
       else quotas.set(account, bytes)
     },
-    /** Tokens for `account` stop working, as after revoking access. */
+
     revoke(account: string) {
       revoked.add(account)
     },

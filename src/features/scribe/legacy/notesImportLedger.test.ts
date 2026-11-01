@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// In-memory MMKV, one Map per id, so rows can be seeded the way Notes Import
-// wrote them.
 const mmkv = vi.hoisted(() => ({
   stores: new Map<string, Map<string, string>>(),
 }))
@@ -96,7 +94,6 @@ const ledger = () => {
   return store
 }
 
-/** A row as Notes Import saved it: JSON, so the commit's Dates are strings. */
 const seed = (hash: string, row: Record<string, unknown> | string) =>
   ledger().set(
     `entry:${hash}`,
@@ -122,9 +119,7 @@ const commitOf = (
   ...change,
 })
 
-/** One row in every state Notes Import left behind. */
 function seedEveryKind() {
-  // Current format, accepted.
   seed('done-new', {
     state: 'done',
     notesText: 'Maria Lopez\n12 Oak St',
@@ -137,7 +132,7 @@ function seedEveryKind() {
     acceptedAt: NOW - 4 * DAY,
     updatedAt: NOW - 4 * DAY,
   })
-  // Before `state`, `summary` and `updatedAt`: a commit means Done.
+
   seed('done-v1', {
     notesText: 'Ben Okafor came back',
     result: { summary: 'Ben’s visit' },
@@ -149,7 +144,7 @@ function seedEveryKind() {
     parsedAt: NOW - 20 * DAY,
     acceptedAt: NOW - 20 * DAY,
   })
-  // Accepted, only the notes for a title.
+
   seed('done-untitled', {
     state: 'done',
     notesText: '\n  Talked with the Garcias  \nmore',
@@ -184,12 +179,11 @@ function seedEveryKind() {
     updatedAt: NOW - LEGACY_MAX_AGE_MS - DAY,
   })
   seed('corrupt', '{"hash":')
-  // Not a ledger row.
+
   ledger().set('meta:version', '2')
 }
 
 beforeEach(() => {
-  // The ledger holds its instance for the run; empty it in place.
   for (const store of mmkv.stores.values()) store.clear()
   useContacts
     .getState()
@@ -298,7 +292,7 @@ describe('pruneLegacyLedger', () => {
       'entry:done-v1',
       'meta:version',
     ])
-    // The rows themselves are left as Notes Import wrote them.
+
     expect(row('done-v1')).not.toHaveProperty('state')
   })
 })
@@ -361,7 +355,6 @@ describe('undoLegacyImport', () => {
     publisher: null,
   })
 
-  /** Accepts `mapped()` as Notes Import did, and saves its row. */
   const accept = (hash: string) => {
     const commit = writeMappedDataToStores(mapped(), {
       publisherMode: 'overwrite',

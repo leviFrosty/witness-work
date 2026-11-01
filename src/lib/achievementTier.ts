@@ -9,31 +9,9 @@ import { Theme } from '@/types/theme'
 
 export type AchievementTier = 'reached' | 'exceeded' | 'crushed' | 'record'
 
-/**
- * Canonical accent color for each Achievement Tier. Gold (`supporter`) is
- * reserved for the `record` personal-best tier; every other goal-met tier
- * (including `crushed` at 150%+) shares the regular accent palette so all
- * surfaces tell the same color story.
- */
 export const tierColor = (tier: AchievementTier, theme: Theme): string =>
   tier === 'record' ? theme.colors.supporter : theme.colors.accent
 
-/**
- * Resolves the threshold-based celebration tier for a given percent-of-goal.
- * Returns null when the user hasn't met their goal — callers render the normal
- * progress state in that case.
- *
- * The `record` tier is intentionally NOT reachable from this function — it's
- * reserved for actual 12-month personal bests. A monster month at 500% of goal
- * still tops out at `crushed` here; only `resolveTier` can promote to
- * `record`.
- *
- * Thresholds:
- *
- * - Reached: 100-109%
- * - Exceeded: 110-149%
- * - Crushed: 150%+
- */
 export const tierFromPercent = (
   percentOfGoal: number
 ): AchievementTier | null => {
@@ -43,17 +21,6 @@ export const tierFromPercent = (
   return 'crushed'
 }
 
-/**
- * Returns true when `hoursCompleted` strictly exceeds every one of the prior 12
- * months' adjusted hours. "12 months" is a rolling window (not service-year
- * bound) — so a user's best month in the last year earns the record tier even
- * if they've had higher months earlier in their tracking history.
- *
- * Months with no reports (and therefore zero hours) count — they can't beat the
- * current month, so they don't block the record. A user with fewer than 12
- * months of history still qualifies; they just need to beat whatever prior
- * months exist in the window.
- */
 export const isPersonalBest12mo = (
   serviceReports: TimeEntriesByYear,
   currentMonth: number,
@@ -84,14 +51,6 @@ export const isPersonalBest12mo = (
   return true
 }
 
-/**
- * Resolves the final tier a month should display.
- *
- * `record` requires _both_ that the month met its goal _and_ that it's a
- * 12-month personal best — a high percent of goal alone isn't enough. A 286%
- * month with a higher prior month within the last year is `crushed`, not
- * `record`.
- */
 export const resolveTier = (
   percentOfGoal: number,
   isPersonalBest: boolean
@@ -102,6 +61,5 @@ export const resolveTier = (
   return base
 }
 
-/** Stable key used by the `celebratedTiers` preference map. */
 export const monthCelebrationKey = (month: number, year: number): string =>
   `${year}-${String(month + 1).padStart(2, '0')}`

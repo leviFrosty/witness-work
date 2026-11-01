@@ -61,10 +61,6 @@ const bytes = (value: unknown) =>
 const FIRST = ['Maria', 'Ana', 'Joseph', 'Grace', 'Samuel']
 const LAST = ['Lopez', 'Okafor', 'Nguyen', 'Silva', 'Martin', 'Park']
 
-/**
- * A heavy User: 200 Contacts with addresses, 150 Visits (half with a
- * Follow-up), 60 Day Plans over two months and 60 Time Entries in three weeks.
- */
 function heavyStores() {
   const contacts = Array.from({ length: 200 }, (_, index) => ({
     id: `contact-${String(index).padStart(4, '0')}`,
@@ -175,7 +171,7 @@ describe('fitResult', () => {
     expect(data.hint).toBe(
       `Only the first ${data.plans.length} of 50 fit. To see the rest, ask for a shorter range or fewer items.`
     )
-    // As many as fit: one more wouldn't.
+
     expect(data.plans.length).toBeGreaterThan(0)
     expect(
       bytes({
@@ -255,7 +251,7 @@ describe('runToolCalls with a heavy User', () => {
       hint: string
     }
     expect(data.truncated).toBe(true)
-    // The soonest ones, which come first.
+
     expect(data.plans[0]).toMatch(/^p\d+ 2026-10-21 /)
     expect(data.hint).toMatch(
       new RegExp(`^Only the first ${data.plans.length} of 60 fit\\.`)
@@ -313,7 +309,7 @@ describe('memory calls', () => {
       readCalls: 0,
       writeCalls: 0,
     })
-    // Saved only when the step is kept.
+
     expect(fx.stores.memory.text).toBe('Old note')
   })
 

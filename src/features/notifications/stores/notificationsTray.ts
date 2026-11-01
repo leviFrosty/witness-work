@@ -10,21 +10,13 @@ import {
 } from '@/features/notifications/lib/tray'
 
 type NotificationsTrayState = TrayBook & {
-  /** Set by a tapped push; the Home bell opens once it's on screen. */
   openRequested: boolean
-  /** The tray is open on screen right now (not persisted). */
+
   open: boolean
-  /**
-   * Unread items as the Home bell last counted them, shown on the app icon;
-   * null until it has counted this launch (not persisted).
-   */
+
   unread: number | null
 }
 
-/**
- * Tray bookkeeping (MMKV). Per-device and outside iCloud Sync, like the Buddies
- * queue: the items themselves come from each feature's own state.
- */
 export const useNotificationsTray = create<NotificationsTrayState>()(
   persist(
     (): NotificationsTrayState => ({
@@ -77,14 +69,12 @@ export function dismissNotifications(ids: string[], now = Date.now()) {
   if (next !== dismissed) useNotificationsTray.setState({ dismissed: next })
 }
 
-/** Records the bell's unread count and shows it on the app icon. */
 export function setUnreadCount(unread: number) {
   if (useNotificationsTray.getState().unread === unread) return
   useNotificationsTray.setState({ unread })
   setAppIconBadge(unread)
 }
 
-/** Asks the Home bell to open, e.g. after tapping a push. */
 export function requestNotificationsTray() {
   useNotificationsTray.setState({ openRequested: true })
 }

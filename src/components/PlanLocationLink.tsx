@@ -12,28 +12,20 @@ import { openURL } from '@/lib/links'
 import { appleMapsUrl, formatPlanLocation } from '@/lib/placeSearch'
 import type { PlanLocation } from '@/types/timeEntry'
 
-/** A location as copyable text: the place name and address, one per line. */
 export const planLocationText = (location: PlanLocation): string => {
   const { primary, secondary } = formatPlanLocation(location)
   return [primary, secondary].filter(Boolean).join('\n')
 }
 
-/**
- * A Plan's place; tapping opens it in Apple Maps, long-pressing offers Open in
- * Maps / Copy Address / Share….
- */
 export default function PlanLocationLink({
   location,
   compact,
   interactive = true,
 }: {
   location: PlanLocation
-  /** One line: the place name (or address) only. */
+
   compact?: boolean
-  /**
-   * Off when the link sits inside another long-press target (e.g. a Plan row):
-   * it renders as plain content and the host offers the actions in its menu.
-   */
+
   interactive?: boolean
 }) {
   const theme = useTheme()

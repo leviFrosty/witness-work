@@ -35,7 +35,7 @@ describe('the User’s profile on their Shared Cars', () => {
       inboxId: 'AAAAAAAAAAAAAAAAAAAAAA',
       avatar: 'small:big-jpeg',
     })
-    // Made small once, so every sync puts the same one.
+
     await profile()
     expect(shrink).toHaveBeenCalledTimes(1)
   })
@@ -98,7 +98,7 @@ describe('the User’s profile on their Shared Cars', () => {
     state.sharesPhoto = false
     const hidden = carProfileSource(deps)
     expect(hidden).not.toBe(before)
-    // Hidden: a new photo doesn't change the record.
+
     state.avatar = { t: 'emoji', v: '🚗' }
     expect(carProfileSource(deps)).toBe(hidden)
     state.name = 'Anna B.'

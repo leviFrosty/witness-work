@@ -27,9 +27,6 @@ const DataProtection = ({ goBack, goNext }: Props) => {
   const { dataProtectionMode, dataProtectionModeSetByUser, set } =
     usePreferences()
 
-  // Until the user makes an explicit choice, the switch reflects the device
-  // region (EU/EEA, UK, CH default to on). Once they toggle it themselves,
-  // `dataProtectionModeSetByUser` pins their answer and this stops running.
   useEffect(() => {
     if (dataProtectionModeSetByUser) return
     set({

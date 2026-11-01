@@ -9,13 +9,6 @@ import { View, ViewProps } from 'react-native'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 import { splitInReadingOrder } from '@/lib/columnSplit'
 
-/**
- * One column, or two that read in the same order: the first sections fill the
- * leading column and the rest continue in the trailing one, split where the two
- * come out closest in height. Opening iPhone Duo keeps what was on screen in
- * the order it was read, and the columns meet at its fold while it's partly
- * folded.
- */
 export default function AdaptiveColumns({
   children,
   wide,
@@ -28,9 +21,9 @@ export default function AdaptiveColumns({
   ViewProps & {
     wide: boolean
     gap?: number
-    /** In one column, the last section sits at the bottom of the space. */
+
     bottomAnchorLast?: boolean
-    /** Each section's cell, by its key, e.g. to keep it in view. */
+
     sectionRef?: (key: string) => Ref<View>
   }
 >) {
@@ -40,7 +33,7 @@ export default function AdaptiveColumns({
       ? String(section.key)
       : String(index)
   )
-  // Heights as last laid out, in either layout; columns are about as wide.
+
   const [heights, setHeights] = useState<Record<string, number>>({})
   const split = wide
     ? splitInReadingOrder(
@@ -49,14 +42,12 @@ export default function AdaptiveColumns({
       )
     : sections.length
 
-  // Each section in a view of its own, keyed, so the leading column's keep
-  // their place (and state) as the trailing column comes and goes.
   const cells = sections.map((section, index) => {
     const key = keys[index]
     const empty = heights[key] === 0
     const column = index < split ? 0 : 1
     const first = column === 0 ? 0 : split
-    // Sections that draw nothing (nothing to show today) leave no gap.
+
     const spaced =
       !empty && keys.slice(first, index).some((other) => heights[other] !== 0)
     return (

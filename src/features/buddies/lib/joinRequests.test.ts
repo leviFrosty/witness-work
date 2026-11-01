@@ -86,11 +86,11 @@ describe('joinRequestStatus', () => {
     expect(
       joinRequestStatus(empty, 'anna', thursday, nine, at('07:01')).kind
     ).toBe('none')
-    // No start time reads as noon.
+
     expect(
       joinRequestStatus(empty, 'anna', thursday, { m: 60 }, at('09:30')).kind
     ).toBe('canAsk')
-    // Only the time of day reads as that part's start: evening is 5:00 PM.
+
     const evening = { m: 60, t: 'e' as const }
     expect(
       joinRequestStatus(empty, 'anna', thursday, evening, at('14:59')).kind
@@ -191,7 +191,7 @@ describe('joinRequestInvite', () => {
       categoryId: 'cart',
     })
     const invite = joinRequestInvite(request, [], [weekly])
-    // The new Plan takes the instance's place, so the day isn't counted twice.
+
     expect(invite).toMatchObject({ skipRecurringPlanId: 'weekly' })
     const add = addOf(invite)
     expect(add).toMatchObject({
@@ -208,7 +208,7 @@ describe('joinRequestInvite', () => {
     const linked = dayPlan('linked', {
       buddyShare: { from: 'mom', shareId: 's' },
     })
-    // Inviting from a new Plan would count the morning twice.
+
     expect(joinRequestInvite(request, [linked], [])).toEqual({
       kind: 'linked',
       organizer: 'mom',
@@ -224,7 +224,7 @@ describe('joinRequestInvite', () => {
     expect(
       findJoinRequestPlan({ d: thursday, m: 120 }, plans, [])?.plan.id
     ).toBe('evening')
-    // Two the same length: no telling which.
+
     expect(
       findJoinRequestPlan(
         { d: thursday, m: 120 },
@@ -240,7 +240,7 @@ describe('joinRequestInvite', () => {
       dayPlan('three', { startTimeInMinutes: 900 }),
     ]
     expect(joinRequestInvite(request, moved, [])).toEqual({ kind: 'changed' })
-    // Recurring Plans that day count too: a new Plan would add to them.
+
     expect(
       joinRequestInvite(
         request,
@@ -292,7 +292,7 @@ describe('overlappingOwnPlans', () => {
       [
         weeklyPlan('morning', { startTimeInMinutes: 480 }),
         weeklyPlan('evening', { startTimeInMinutes: 1080, minutes: 60 }),
-        // Overridden that day to start after the invitation ends.
+
         weeklyPlan('moved', {
           overrides: [
             {
@@ -334,7 +334,7 @@ describe('joinRequestUnsent', () => {
     expect(
       status(asked({ sentRev: undefined, attempted: false, pushed: false }))
     ).toMatchObject({ kind: 'asked', unsent: true })
-    // Asked again after withdrawing, not yet sent.
+
     expect(status(asked({ rev: 3, sentRev: 2 }))).toMatchObject({
       kind: 'asked',
       unsent: true,

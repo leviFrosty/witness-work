@@ -20,15 +20,13 @@ import { tracking } from '@/lib/tracking'
 
 const FEATURE_ROWS: ReadonlyArray<{
   labelKey: TranslationKey
-  /** Android's wording, where it differs. */
+
   androidLabelKey?: TranslationKey
   iosOnly?: boolean
-  // `true`/`false` render a check/dash; a TranslationKey renders that text.
+
   free: boolean | TranslationKey
   supporter: boolean | TranslationKey
 }> = [
-  // Differentiators lead; the "always free" rows close the table as a
-  // trust signal rather than opening it with reasons not to pay.
   { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
@@ -51,7 +49,6 @@ const FEATURE_ROWS: ReadonlyArray<{
 const resolveCell = (value: boolean | TranslationKey): boolean | string =>
   typeof value === 'boolean' ? value : i18n.t(value)
 
-/** A cell as words: the check and dash are only drawn. */
 const spokenCell = (value: boolean | string) =>
   typeof value === 'string'
     ? value
@@ -119,7 +116,7 @@ export const FounderLetter = ({ spacious = false }: { spacious?: boolean }) => {
         </Text>
       </View>
       <View style={{ marginTop: 12, alignItems: 'flex-start', gap: 2 }}>
-        {/* TODO: replace src/assets/signature.png with actual signature art. */}
+        {}
         <Image
           source={require('@/assets/signature.png')}
           style={{ width: 140, height: 48 }}
@@ -188,8 +185,7 @@ export const SocialProofRow = () => {
 }
 
 const FREE_COL_WIDTH = 80
-// The Supporter column runs flush to the card's right edge, so its tint and
-// its centered cells share one width.
+
 const SUPPORTER_COL_WIDTH = 110
 const ROW_PADDING_HORIZONTAL = 18
 
@@ -209,8 +205,7 @@ const CompareCell = ({
   if (typeof value === 'string') {
     return (
       <View style={{ width, alignItems: 'center' }}>
-        {/* The column has a fixed width, so at large text sizes (iPad at AX3)
-        a word wider than it shrinks instead of breaking ("Unlimit / ed"). */}
+        {}
         <WholeWordsText
           style={{
             fontSize: 13,
@@ -239,7 +234,6 @@ export const ComparisonChart = ({
   scribeAi = false,
   spacious = false,
 }: {
-  /** Adds Scribe AI's row: limited free, generous for Supporters. */
   scribeAi?: boolean
   spacious?: boolean
 }) => {
@@ -265,7 +259,7 @@ export const ComparisonChart = ({
     rows.splice(1, 0, {
       key: 'scribe-ai',
       label: i18n.t('paywallFeatureScribeAi'),
-      // Never "unlimited": Supporters get generous limits.
+
       free: i18n.t('paywallScribeAiFree'),
       supporter: i18n.t('paywallScribeAiSupporter'),
     })
@@ -309,7 +303,7 @@ export const ComparisonChart = ({
             backgroundColor: theme.colors.supporterTranslucent,
           }}
         />
-        {/* Each row names both columns, so the headings aren't read alone. */}
+        {}
         <View
           accessibilityElementsHidden
           importantForAccessibility='no-hide-descendants'
@@ -323,8 +317,7 @@ export const ComparisonChart = ({
         >
           <View style={{ flex: 1 }} />
           <View style={{ width: FREE_COL_WIDTH, alignItems: 'center' }}>
-            {/* Column headings shrink to fit their fixed-width column at large
-            text sizes instead of breaking mid-word ("SUPPORTE / R"). */}
+            {}
             <Text
               {...FIT_ONE_LINE}
               style={{
@@ -363,8 +356,6 @@ export const ComparisonChart = ({
         {rows.map((row, index) => (
           <View
             key={row.key}
-            // One item per feature that says who gets it; the check and dash
-            // cells are drawn, so they read as nothing on their own.
             accessible
             accessibilityLabel={i18n.t('paywallCompareRowA11y', {
               feature: row.label,

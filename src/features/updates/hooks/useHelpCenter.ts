@@ -11,13 +11,7 @@ import {
   visibleEntries,
 } from '@/features/updates/lib/helpCenter/visibility'
 
-/**
- * The Help Center in the app's language: the entries and categories that apply
- * to this platform and app version. Opening it refreshes from the website in
- * the background.
- */
 export default function useHelpCenter() {
-  // Re-render when the language changes; `_i18n.locale` is the resolved one.
   usePreferences((s) => s.locale)
   const locale = helpLocaleFor(_i18n.locale)
   const storeLocale = useHelpCenterStore((s) => s.locale)
@@ -28,7 +22,6 @@ export default function useHelpCenter() {
     open(locale)
   }, [open, locale])
 
-  // Until the store catches up with a new language, show its snapshot.
   const shown = storeLocale === locale && bundle ? bundle : readSnapshot(locale)
   const entries = visibleEntries(
     shown,

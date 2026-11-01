@@ -48,10 +48,6 @@ import {
   resolveManualCompletions,
 } from '@/features/onboarding/lib/homeChecklist'
 
-/**
- * The first week with WitnessWork, in the order it happens. Every step can be
- * done in the first few days; none waits for the month to end.
- */
 const ITEM_IDS: HomeChecklistItemId[] = [
   'setMonthlyGoal',
   'logFirstMinute',
@@ -69,12 +65,12 @@ const LABEL_I18N_KEY: Record<HomeChecklistItemId, TranslationKey> = {
 type ChecklistItem = {
   id: HomeChecklistItemId
   label: string
-  /** "1/3" while a counted step is partway done. */
+
   progress?: string
-  /** Spoken in place of `progress`. */
+
   progressA11y?: string
   onPress: () => void
-  /** Tapping checks off this month instead of opening a screen. */
+
   checksOffMonth: boolean
 }
 
@@ -111,17 +107,9 @@ const HomeChecklist = () => {
   const { playConfetti } = useAnimation()
   const homeNavigation = useNavigation<HomeTabStackNavigation>()
   const rootNavigation = useNavigation<RootStackNavigation>()
-  // Tab preloading mounts HomeScreen before the user navigates to it, and a
-  // checklist item can auto-complete from another screen (e.g. logging time).
-  // Gate the celebration on actual Home focus so the burst is queued — backed
-  // by the persisted `homeChecklistAllDoneCelebrated` flag — until the user
-  // is actually looking at the Home tab.
+
   const isFocused = useIsFocused()
 
-  // Days with a logged TimeEntry (dayPlans/recurringPlans intentionally
-  // excluded — the aha moment is a _logged_ minute, not a planned or
-  // rolled-over one). Coming back on 3 different days in the first week is
-  // what keeps people using the app.
   const loggedDays = useMemo(
     () => countLoggedDays(serviceReports),
     [serviceReports]
@@ -130,7 +118,6 @@ const HomeChecklist = () => {
   const hasAnyContact = contacts.length > 0
   const hasAnyPlan = dayPlans.length > 0 || recurringPlans.length > 0
 
-  // Keyed on the day, so a new month starts unchecked at midnight.
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
   const hasReportThisMonth = getMonthsReports(
     serviceReports,
@@ -172,8 +159,6 @@ const HomeChecklist = () => {
     homeChecklistManualCompletions
   )
 
-  // Checkbox publishers share once a month, so logging on separate days
-  // doesn't apply; checking off the month is their step.
   const itemIds = ITEM_IDS.filter(
     (id) => id !== 'logThreeDays' || showsTimeEntry
   )
@@ -214,16 +199,11 @@ const HomeChecklist = () => {
     }
   })
 
-  // Once celebrated, the checklist stays finished even if its steps change in
-  // a later version.
   const isComplete = (id: HomeChecklistItemId) =>
     homeChecklistAllDoneCelebrated ||
     autoCompletedIds.has(id) ||
     manualCompletions.has(id)
 
-  // Items the app can't detect (or the user did another way) can be checked
-  // off by hand from the step marker or the item's long-press menu.
-  // Auto-completed items stay done.
   const setManuallyDone = (id: HomeChecklistItemId, done: boolean) => {
     const stored = manualCompletionIdsFor(id)
     const others = homeChecklistManualCompletions.filter(
@@ -254,8 +234,6 @@ const HomeChecklist = () => {
     })
   }, [isFocused, homeChecklistDismissed, allDone, items.length])
 
-  // One event per step as it gets done while the checklist is up. Steps that
-  // were already done when it mounted aren't sent again.
   const reportedDoneKey = useRef<string | null>(null)
   useEffect(() => {
     if (homeChecklistDismissed || homeChecklistAllDoneCelebrated) return
@@ -279,10 +257,6 @@ const HomeChecklist = () => {
     installedOn,
   ])
 
-  // One-shot celebration. Only fires when the user is actually focused on the
-  // Home tab — if `allDone` flips while they're elsewhere (or the app is
-  // closed), the burst stays queued via the persisted `celebrated` flag and
-  // plays the next time they land on Home.
   useEffect(() => {
     if (!isFocused || !allDone || homeChecklistAllDoneCelebrated) return
     analytics.capture('onboarding_checklist_completed')
@@ -311,7 +285,6 @@ const HomeChecklist = () => {
     <DismissableCard
       onDismiss={handleDismiss}
       title={
-        // Only the header is long-pressable: the items have their own menus.
         <ContextMenu
           accessibilityRole='header'
           actions={[
@@ -350,7 +323,6 @@ const HomeChecklist = () => {
               }}
             >
               {!isLast && (
-                // The trail to the next step, filled once this one is done.
                 <View
                   style={{
                     position: 'absolute',
@@ -365,9 +337,7 @@ const HomeChecklist = () => {
                 />
               )}
               <PointerHover effect='highlight' enabled={!autoDone}>
-                {/* Screen readers get one element per step: the row beside
-                it, which reads the done state and offers Mark as Done / Not
-                Done as actions. Otherwise each step is read twice. */}
+                {}
                 <Pressable
                   onPress={() => setManuallyDone(item.id, !done)}
                   disabled={autoDone}

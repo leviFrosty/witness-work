@@ -15,16 +15,10 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import { useShallow } from 'zustand/react/shallow'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
-/**
- * One-time Home question: track mileage? Yes turns the feature on and asks for
- * the first car; No Thanks hides the card for good. Renders nothing once
- * answered (on any synced device).
- */
 export default function MileagePromptCard() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  // At accessibility text sizes the buttons stack, so their labels get the
-  // full width instead of breaking mid-word.
+
   const largeText = useAccessibilityTextSize()
   const { mileageTrackingEnabled, set } = usePreferences(
     useShallow((s) => ({

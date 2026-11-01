@@ -1,14 +1,5 @@
 #!/usr/bin/env node
-// Prints the alert the iOS Notification Service Extension would show for a
-// Buddies push, by running the extension's own code inside a booted simulator:
-//
-//   node scripts/verify/buddies-alert-harness.mjs <simulator udid> <payload.json>
-//
-// The payload is what `__WW_DEV__.prepareBuddiesPush()` builds (the relay's
-// APNs payload for an inbox event). The harness gets the extension's
-// entitlements (its Keychain access group and the App Group), so it reads the
-// alert snapshot the app wrote and counts its outcome as the extension does.
-// Verify builds are always the development variant.
+
 import { spawnSync } from 'node:child_process'
 import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -73,8 +64,7 @@ try {
     ),
   ])
   run('codesign', ['-s', '-', '-f', binary])
-  // Inside a copy of the installed extension, so its bundle id and string
-  // catalogs are the ones the extension runs with.
+
   const app = run('xcrun', [
     'simctl',
     'get_app_container',

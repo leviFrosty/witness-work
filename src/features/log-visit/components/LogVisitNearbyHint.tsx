@@ -6,7 +6,6 @@ import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Button from '@/components/ui/Button'
 
-/** Offers Nearby when location hasn't been asked yet. Only a tap asks. */
 export default function LogVisitNearbyHint({
   onTurnOn,
 }: {

@@ -40,7 +40,7 @@ it('keeps a link tapped while the app starts, newest first', async () => {
   const links = await load()
   links.recordLaunchLinks()
   runtime.initialURL = () => Promise.resolve('witnesswork://home')
-  // Nothing else listens yet; React Native would drop these.
+
   runtime.urlListener?.({ url: 'witnesswork://add-time' })
   runtime.urlListener?.({ url: 'witnesswork://schedule/2026-10-23' })
 

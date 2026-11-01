@@ -18,12 +18,6 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-/**
- * Buddies pushes on this device: a switch once iOS allows notifications,
- * otherwise a way to allow them, then one for buddies asking to join and one
- * for buddies' new badges (while badges are on). In a buddy's settings, just
- * those two for them, while notifications are on here.
- */
 export default function BuddiesNotificationsSection() {
   const theme = useTheme()
   const { buddy } = useBuddySettingsScope()
@@ -104,7 +98,7 @@ export default function BuddiesNotificationsSection() {
         value={enabled}
         onValueChange={(notificationsEnabled) => {
           useBuddies.setState({ notificationsEnabled })
-          // Re-registers with or without push templates for this device.
+
           void registerBuddiesPush().catch((error) =>
             logger.warn('[buddies] push registration', error)
           )

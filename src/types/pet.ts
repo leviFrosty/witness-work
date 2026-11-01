@@ -1,18 +1,8 @@
-/**
- * Pet Companion data: species, coats, room options and the synced records. See
- * `docs/pet-companion.md`. Shared by the store, sync, and the pet feature's art
- * and logic, so every id list lives here once.
- *
- * Calendar days are local `YYYY-MM-DD` keys. Only `updatedAt` / `deletedAt` are
- * sync stamps.
- */
-
 export const PET_SPECIES_IDS = ['lion', 'dog', 'cat', 'donkey', 'lamb'] as const
 export type PetSpecies = (typeof PET_SPECIES_IDS)[number]
-/** Alias kept for the art registry's naming. */
+
 export type PetSpeciesId = PetSpecies
 
-/** Every species' coats; the first is its default. */
 export const PET_COAT_IDS = {
   lion: ['default'],
   dog: ['gold', 'white', 'liver', 'black'],
@@ -48,14 +38,11 @@ export const isValidCoat = (species: PetSpecies, coat: unknown): boolean =>
   typeof coat === 'string' &&
   (coatIdsFor(species) as readonly string[]).includes(coat)
 
-/** `coat` when it belongs to `species`, otherwise the species' default coat. */
 export const resolveCoat = (species: PetSpecies, coat: unknown): string =>
   isValidCoat(species, coat) ? (coat as string) : defaultCoatFor(species)
 
-/** The longest name a companion can have, in characters. */
 export const PET_NAME_MAX_LENGTH = 20
 
-/** Moods from hearts (`moodOf`). */
 export const PET_MOODS = [
   'happy',
   'content',
@@ -66,10 +53,9 @@ export const PET_MOODS = [
   'dead',
 ] as const
 export type PetMood = (typeof PET_MOODS)[number]
-/** Short-lived moods motion plays over the hearts mood. */
+
 export type PetTransientMood = 'joy' | 'wide'
 
-/** Moments with a localized sound, `pet.sound.<species>.<moment>`. */
 export const PET_SOUND_MOMENTS = [
   'hi',
   'pat',
@@ -86,24 +72,16 @@ export type GiftKind = (typeof GIFT_KINDS)[number]
 export const isGiftKind = (value: unknown): value is GiftKind =>
   typeof value === 'string' && (GIFT_KINDS as readonly string[]).includes(value)
 
-/**
- * Past this many wakes, the ones more than `PET_WAKES_KEEP_DAYS` before the
- * newest are dropped (`keptWakes` in `src/lib/petHistory.ts`).
- */
 export const PET_WAKES_KEPT = 120
 export const PET_WAKES_KEEP_DAYS = 400
-/** How many keepsakes a pet record keeps, the newest first. */
-export const PET_KEEPSAKES_KEPT = 20
 
-// --- Room ------------------------------------------------------------------
+export const PET_KEEPSAKES_KEPT = 20
 
 export const TIMES_OF_DAY = ['dawn', 'day', 'dusk', 'night'] as const
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number]
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const
 export type Season = (typeof SEASONS)[number]
 
-// Secret options (`SECRET_UNLOCKS` in `src/features/pet/lib/secretUnlocks.ts`)
-// come after each part's regular ones. Append only.
 export const SECRET_WALL_COLORS = [
   'indigo',
   'delft',
@@ -244,10 +222,7 @@ export const LAMP_IDS = [
   ...SECRET_LAMP_IDS,
 ] as const
 export type LampId = (typeof LAMP_IDS)[number]
-/**
- * The pet's hats, `none` first. Worn by the pet, stored with the room's other
- * choices (`PetRoomRecord.hat`) so Decorate Room's model covers them too.
- */
+
 export const HAT_IDS = [
   'none',
   'bow',
@@ -280,7 +255,6 @@ export type RoomWindow = {
   season: 'live' | Season
 }
 
-/** The swappable parts with a fixed option list, by `PetRoomRecord` field. */
 export const ROOM_PART_OPTIONS = {
   wallColor: WALL_COLORS,
   wallPattern: WALL_PATTERNS,
@@ -293,12 +267,11 @@ export const ROOM_PART_OPTIONS = {
 } as const
 
 export type RoomPart = keyof typeof ROOM_PART_OPTIONS
-/** The parts whose options unlock over time; window and sign are all free. */
+
 export type UnlockableRoomPart = Exclude<RoomPart, 'sign'>
 export type RoomOption<P extends RoomPart> =
   (typeof ROOM_PART_OPTIONS)[P][number]
 
-/** One unlockable option, as `part:option` (e.g. `floor:stone`). */
 export type RoomItemId = {
   [P in UnlockableRoomPart]: `${P}:${RoomOption<P>}`
 }[UnlockableRoomPart]
@@ -308,7 +281,6 @@ export const roomItemId = <P extends UnlockableRoomPart>(
   option: RoomOption<P>
 ): RoomItemId => `${part}:${option}` as RoomItemId
 
-/** Free from the start. */
 export const STARTER_ROOM_ITEMS: readonly RoomItemId[] = [
   'wallColor:sand',
   'wallColor:cream',
@@ -321,12 +293,6 @@ export const STARTER_ROOM_ITEMS: readonly RoomItemId[] = [
   'hat:none',
 ]
 
-/**
- * Every non-starter item, cheapest first in the Shop (`ITEM_PRICES` in
- * `src/features/pet/lib/prices.ts`, ADR 0035); before the Shop, the order they
- * unlocked in. Parts take turns so each step changes something different. Hats
- * have their own order, {@link HAT_UNLOCK_ORDER}.
- */
 export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'bed:hay',
   'wallColor:sage',
@@ -347,10 +313,6 @@ export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'floor:tile',
 ]
 
-/**
- * Every hat but `none`, cheapest first in the Shop (`ITEM_PRICES`); before the
- * Shop, the order they unlocked in.
- */
 export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:bow',
   'hat:cap',
@@ -366,7 +328,6 @@ export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:tophat',
 ]
 
-/** Every secret item, as `part:option`, part by part. */
 export type SecretRoomItemId =
   | `wallColor:${(typeof SECRET_WALL_COLORS)[number]}`
   | `wallPattern:${(typeof SECRET_WALL_PATTERNS)[number]}`
@@ -382,11 +343,6 @@ const secretsOf = <P extends UnlockableRoomPart>(
 ): SecretRoomItemId[] =>
   options.map((option) => `${part}:${option}` as SecretRoomItemId)
 
-/**
- * The secret items: rarer options that open up on their own milestones
- * (`SECRET_UNLOCKS`), not in {@link UNLOCK_ORDER} or {@link HAT_UNLOCK_ORDER}.
- * Decorate Room shows a locked one only as a silhouette.
- */
 export const SECRET_ROOM_ITEMS: readonly SecretRoomItemId[] = [
   ...secretsOf('hat', SECRET_HAT_IDS),
   ...secretsOf('wallColor', SECRET_WALL_COLORS),
@@ -397,62 +353,42 @@ export const SECRET_ROOM_ITEMS: readonly SecretRoomItemId[] = [
   ...secretsOf('lamp', SECRET_LAMP_IDS),
 ]
 
-// --- Records ---------------------------------------------------------------
-
-/** The one companion's fixed record id. */
 export const PET_RECORD_ID = 'companion'
-/** The room's fixed record id. */
+
 export const PET_ROOM_RECORD_ID = 'room'
 
 export type PetKeepsake = { kind: GiftKind; on: string }
 
-/** A room item or hat bought in the Shop, at the price in coins it cost then. */
 export type PetPurchase = {
   item: string
   price: number
-  /** Local day key of the purchase. */
+
   on: string
 }
 
 export interface PetRecord {
-  /** Always `PET_RECORD_ID`: one companion per User. */
   id: string
   species: PetSpecies
-  /** A coat of `species`; unknown values read as the default coat. */
+
   coat: string
-  /** User-entered, up to `PET_NAME_MAX_LENGTH` characters; never translated. */
+
   name?: string
-  /** Local day key of the adoption. */
+
   adoptedOn: string
-  /** Day keys of wake taps, ascending (`keptWakes`). */
+
   wakes: string[]
-  /** Collected gifts, by gift day, newest `PET_KEEPSAKES_KEPT` kept. */
+
   keepsakes: PetKeepsake[]
-  /**
-   * Random, set at adoption, so gift days differ from pet to pet
-   * (`petGiftSeed`). Absent on pets adopted before it existed; those use their
-   * adoption day.
-   */
+
   seed?: string
-  /**
-   * Non-starter room items and hats earned so far, once each: room items in
-   * `UNLOCK_ORDER` order, then hats, secret items and ids from a newer build,
-   * sorted (`keptRoomItems`), so an item never locks again. Absent on pets from
-   * before it existed: none.
-   */
+
   earnedRoomItems?: string[]
-  /**
-   * Items bought in the Shop, once each, by day (`keptPurchases`). What they
-   * cost comes off the coins earned (ADR 0035). Absent until the first
-   * purchase.
-   */
+
   purchases?: PetPurchase[]
   updatedAt: number
 }
 
-/** The room's choices. Absent until first customized. */
 export interface PetRoomRecord {
-  /** Always `PET_ROOM_RECORD_ID`. */
   id: string
   window: RoomWindow
   wallColor: WallColor
@@ -462,15 +398,11 @@ export interface PetRoomRecord {
   shelf: ShelfId
   lamp: LampId
   sign: SignId
-  /**
-   * The pet's hat. Absent on rooms from before hats (and from older builds,
-   * which keep the field without knowing it): none.
-   */
+
   hat?: HatId
   updatedAt: number
 }
 
-/** The room's choices without its record id and stamp, the hat always set. */
 export type PetRoomSettings = Omit<
   PetRoomRecord,
   'id' | 'updatedAt' | 'hat'
@@ -490,41 +422,29 @@ export const DEFAULT_ROOM: PetRoomSettings = {
   hat: 'none',
 }
 
-/** The sign a Kingdom Publisher's room starts with (checkbox entry mode). */
 export const CHECKBOX_DEFAULT_SIGN: SignId = 'shared'
 
-/** Deletion marker for the pet or room record. */
 export type PetTombstone = { id: string; deletedAt: number }
 
-/** The pet store's synced fields, as lists so they merge by id. */
 export type PetSnapshot = {
   pets: PetRecord[]
   petRooms: PetRoomRecord[]
   deletedPetRecords: PetTombstone[]
 }
 
-/** What a Buddy Card shares about the User's pet. */
 export type SharedPet = { species: PetSpecies; coat: string; name?: string }
 
-/** What the User does today with a visiting pet's buddy: what it opens. */
 export type PetVisitActivity =
   | { type: 'plan'; planId: string }
-  /** The User's Follow-up, with the buddy invited along. */
   | { type: 'followUp'; visitId: string }
-  /** The buddy's Follow-up the User is joining. */
   | { type: 'followUpInvitation'; from: string; shareId: string }
 
-/**
- * A buddy's pet visiting the User's pet today (the `visitor` hidden moment):
- * the User goes out with the buddy today.
- */
 export type PetVisit = {
-  /** The buddy's inbox id. */
   inboxId: string
-  /** The buddy's name as the User sees it (their nickname, if any). */
+
   buddyName: string
   pet: SharedPet
-  /** The first thing with the buddy today, in minutes after midnight. */
+
   startMinutes: number
   activity: PetVisitActivity
 }

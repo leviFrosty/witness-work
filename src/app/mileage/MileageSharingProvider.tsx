@@ -27,11 +27,6 @@ const sync = async () => {
   )
 }
 
-/**
- * Leaves every Shared Car. It runs whether or not Shared Cars is on here, since
- * the way off a car stays open. When it fails outright, every car still here
- * counts as not left.
- */
 const leaveAll = async (): Promise<SharedCarsLeft> => {
   try {
     return await leaveAllSharedCars()
@@ -45,13 +40,6 @@ const leaveAll = async (): Promise<SharedCarsLeft> => {
   }
 }
 
-/**
- * Hands Mileage what it needs from Shared Cars and Buddies, which it can't
- * import (feature boundary): whether sharing runs (the `shared-cars` flag with
- * Buddies available), the User's buddies as they know them, the name on their
- * Buddy Card, and the engine's sync and leave. Around the whole stack, so every
- * Mileage screen and sheet reads the same.
- */
 export default function MileageSharingProvider({
   children,
 }: {

@@ -28,11 +28,6 @@ const unitOptions: {
   value: value as moment.unitOfTime.DurationConstructor,
 }))
 
-/**
- * How long before a Follow-up or Plan its reminder fires: a few presets, or
- * "Other…" for an amount and unit of the User's choosing. A saved lead time
- * outside the presets opens on "Other…".
- */
 export default function ReminderOffsetSelect(props: {
   value: Partial<NotificationOffset>
   onChange: (offset: NotificationOffset) => void

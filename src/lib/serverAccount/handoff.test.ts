@@ -47,8 +47,6 @@ const HELLO: HandoffHello = {
   appVersion: '3.0.0',
 }
 
-// --- An in-memory ww-api: the handoff Durable Object's rules ----------------
-
 type Channel = {
   accountId: string
   verifier: string
@@ -65,12 +63,12 @@ const LIFETIME_MS = 10 * 60 * 1000
 
 function fakeServer(options: { clock?: () => number } = {}) {
   const clock = options.clock ?? Date.now
-  /** Access tokens, and the account each one's session is for. */
+
   const accounts = new Map<string, string>()
   const bearers: { op: string; authorization: string | null }[] = []
   const channels = new Map<string, Channel>()
   const calls: string[] = []
-  /** Answers the next status call with this claimPub (a hostile server). */
+
   let swapClaimPub: string | null = null
 
   const reply = (status: number, body: object) =>
@@ -204,7 +202,6 @@ function fakeServer(options: { clock?: () => number } = {}) {
 
 type Server = ReturnType<typeof fakeServer>
 
-/** An account with an open session, as the old phone holds it. */
 function registeredAccount(server: Server): OfferAccount {
   const accountKey = random(32)
   const accountId = toB64u(random(16))
@@ -223,8 +220,6 @@ const deps = (server: Server, now: () => number = Date.now) => ({
   randomBytes: random,
   fetchImpl: server.fetchImpl,
 })
-
-// --- The link ----------------------------------------------------------------
 
 describe('handoff link', () => {
   it('round-trips the channel, the offer key, and the secret', () => {
@@ -287,8 +282,6 @@ describe('handoff link', () => {
     expect(isHandoffLink('https://ww-proxy.leviwilkerson.com/b#1x')).toBe(false)
   })
 })
-
-// --- Keys, checked against Node's own crypto ---------------------------------
 
 const PKCS8_X25519 = Buffer.from('302e020100300506032b656e04220420', 'hex')
 const SPKI_X25519 = Buffer.from('302a300506032b656e032100', 'hex')
@@ -357,7 +350,6 @@ describe('handoff keys', () => {
     expect(oldKeys.code).toBe(newKeys.code)
     expect(oldKeys.code).toMatch(/^\d{6}$/)
 
-    // HKDF-Extract(salt = secret, ikm = shared), then one Expand block each.
     const prk = hmac(offer.secret, nodeShared(old.privateKey, fresh.publicKey))
     const transcript = `${offer.channelId}\n${offer.offerPub}\n${fresh.publicKey}`
     const block = (label: string) =>
@@ -400,7 +392,7 @@ describe('handoff keys', () => {
     const opened = openHello(keys, offer.channelId, hello)
     expect(opened.deviceName).toHaveLength(64)
     expect(opened.platform).toBe('android')
-    // Bound to its channel and purpose.
+
     expect(() => openHello(keys, toB64u(random(16)), hello)).toThrow()
     expect(() => openAccountKey(keys, offer.channelId, hello)).toThrow()
 
@@ -416,7 +408,6 @@ describe('handoff keys', () => {
     expect(toB64u(back.accountKey)).toBe(toB64u(accountKey))
     expect(back.accountId).toBe(accountId)
 
-    // A different secret: different keys, nothing opens.
     const wrong = deriveHandoffKeys({
       privateKey: keyPair.privateKey,
       peerPublicKey: fresh.publicKey,
@@ -431,9 +422,6 @@ describe('handoff keys', () => {
   })
 })
 
-// --- Both phones, end to end -------------------------------------------------
-
-/** Runs the offer and claim until both are done. */
 async function handoff(server: Server) {
   const account = registeredAccount(server)
   const old = createOfferSession(account, deps(server))
@@ -481,13 +469,11 @@ describe('handoff sessions', () => {
     await old.poll()
     expect(old.state.step).toBe('done')
 
-    // The server kept no blobs.
     const channel = server.channels.get(old.channelId)
     expect(channel?.status).toBe('done')
     expect(channel?.key).toBeNull()
     expect(channel?.hello).toBeNull()
 
-    // The log has codes, never secrets.
     const log = JSON.stringify([old.debug(), fresh.debug()])
     expect(log).not.toContain(toB64u(account.accountKey))
     expect(old.debug().events.map((e) => e.op)).toEqual([
@@ -530,7 +516,7 @@ describe('handoff sessions', () => {
     }
     await old.poll()
     expect(old.state).toEqual({ step: 'failed', reason: 'cancelled' })
-    // Even the right secret can't claim a burned channel.
+
     const late = createClaimSession(parsed.offer, HELLO, deps(server))
     await late.claim()
     expect(late.state).toEqual({ step: 'failed', reason: 'used' })
@@ -602,13 +588,11 @@ describe('handoff sessions', () => {
     await fresh.claim()
     await old.poll()
 
-    // The server took the key, but the answer never came back.
     mode = 'dropSend'
     await old.approve()
     expect(old.state).toMatchObject({ step: 'confirm', sendFailed: true })
     expect(server.channels.get(old.channelId)?.status).toBe('sent')
 
-    // Back online, Allow again: the key is already there.
     mode = 'online'
     await old.approve()
     expect(old.state.step).toBe('sent')
@@ -641,7 +625,7 @@ describe('handoff sessions', () => {
     const fresh = createClaimSession(parsed.offer, HELLO, deps(server))
     await fresh.claim()
     await old.poll()
-    // The status check right after the lost answer finds the key was sent.
+
     await old.approve()
     expect(old.state.step).toBe('sent')
     await fresh.poll()
@@ -715,7 +699,7 @@ describe('handoff sessions', () => {
     )
     await fresh.claim()
     expect(fresh.state).toEqual({ step: 'failed', reason: 'expired' })
-    // The old phone notices from its own clock, without asking.
+
     const before = server.calls.length
     await old.poll()
     expect(old.state).toEqual({ step: 'failed', reason: 'expired' })
@@ -815,7 +799,7 @@ describe('handoff sessions', () => {
     failing = true
     for (let i = 1; i < HANDOFF_POLL_FAILURE_LIMIT; i++) await old.poll()
     expect(old.state.step).toBe('waiting')
-    // An answer starts the count again.
+
     failing = false
     await old.poll()
     failing = true

@@ -52,7 +52,6 @@ afterEach(() => {
 const creditMinutes = (device: DeviceState) =>
   getTotalMinutesDetailedForSpecificMonth(timeEntriesOf(device), 8, 2026).credit
 
-/** What `useTimeEntryCreditNormalization` does on each device after a pull. */
 const normalized = (device: DeviceState): DeviceState => ({
   ...device,
   serviceReports: normalizeTimeEntriesCredit(
@@ -86,10 +85,10 @@ describe('restampTimeEntriesCredit', () => {
       ['already', true, 5],
       ['standard', undefined, 1],
     ])
-    // Untouched records and month buckets keep their identity.
+
     expect(september[2]).toBe(serviceReports[2026][8][2])
     expect(result.serviceReports[2026][9]).toBe(october)
-    // The input is not mutated.
+
     expect(serviceReports[2026][8][0]).toEqual(entry('off', 'cat-x', false))
   })
 
@@ -120,7 +119,6 @@ describe('restampTimeEntriesCredit', () => {
     }
     const tablet = emptyDevice({ categories: [category], serviceReports })
 
-    // The phone turns Credit on for the Category, as TypeSelectorRow does.
     const phone = emptyDevice({
       categories: [{ ...category, isCredit: true, updatedAt: NOW }],
       serviceReports: restampTimeEntriesCredit(serviceReports, 'cat-x', true)
@@ -194,8 +192,6 @@ describe('normalizeTimeEntriesCredit', () => {
         .serviceReports,
     })
 
-    // Later, the iPad, which hasn't pulled the change yet, edits the entry and
-    // logs another, copying the old flag (as AddTimeScreen does).
     const iPad = emptyDevice({
       categories: [category],
       serviceReports: {

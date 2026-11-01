@@ -46,7 +46,6 @@ const phoneIssueKeys = {
 } as const satisfies Record<PhoneNumberPossibility, TranslationKey>
 
 export type PersonalContactSectionHandle = {
-  /** Moves the keyboard to the first field it can focus. */
   focusFirst: () => void
 }
 
@@ -61,7 +60,7 @@ export default function PersonalContactSection({
   setCustomField,
 }: {
   contact: Contact
-  /** Phone, email and custom fields, in the order and visibility to show. */
+
   fields: ContactInformationField[]
   ref?: Ref<PersonalContactSectionHandle>
   setPhone: (phone: string) => void
@@ -76,11 +75,10 @@ export default function PersonalContactSection({
   const colorScheme = useColorScheme()
   const { colorScheme: preferredColorScheme } = usePreferences()
   const theme = useTheme()
-  /** Each field's text input by field id, for the keyboard's Next key. */
+
   const inputs = useRef<Record<string, TextInput | null>>({})
   const phoneTheme = (preferredColorScheme ?? colorScheme ?? 'light') as ITheme
-  // The phone library fixes its field at 48 pt on one line, which cuts the
-  // placeholder off with enlarged text. There it wraps and the field grows.
+
   const wrapPhone = useWindowDimensions().fontScale > 1
   const largeText = useAccessibilityTextSize()
 
@@ -91,10 +89,6 @@ export default function PersonalContactSection({
 
   useImperativeHandle(ref, () => ({ focusFirst: () => focusAfter(-1) }))
 
-  /**
-   * Return-key props that move the keyboard to the next field, or close it with
-   * Done after the last one. A field that wraps never takes a line break.
-   */
   const keyboardProps = (index: number) => {
     const next = nextKeyboardField(fields, index)
     return next
@@ -111,7 +105,7 @@ export default function PersonalContactSection({
 
   const handleCountryChange = (country: ICountry) => {
     if (!country) {
-      return // Library has some very weird edge-case where it sometimes doesn't return a country.
+      return
     }
     setRegionCode(country.cca2)
   }
@@ -219,8 +213,7 @@ export default function PersonalContactSection({
                         },
                         input: {
                           fontSize: theme.fontSize('lg'),
-                          // The library's input is a plain TextInput. A phone
-                          // number keeps its left-to-right order in RTL.
+
                           textAlign: alignInput('start'),
                           direction: 'ltr',
                           paddingHorizontal: 10,
@@ -280,7 +273,6 @@ export default function PersonalContactSection({
                     inputs.current[field.id] = input
                   }}
                   controlWidth='auto'
-                  // Under its label (accessibility sizes) it takes the row.
                   controlStyle={
                     largeText ? undefined : { width: '76%', minWidth: 0 }
                   }

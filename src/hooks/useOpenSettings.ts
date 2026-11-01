@@ -5,11 +5,6 @@ import type { RootStackNavigation } from '@/types/rootStack'
 
 type SettingsNavigation = RootStackNavigation & HomeTabStackNavigation
 
-/**
- * Opens Settings where the layout keeps it: the sidebar's Settings page beside
- * the open one when wide, the pushed Settings menu otherwise. Outside a screen
- * (the tab bar), pass the tab navigator's `navigation`.
- */
 export default function useOpenSettings(navigation?: SettingsNavigation) {
   const contextNavigation = useNavigation<SettingsNavigation>()
   const { hasSidebar } = useAdaptiveLayout()

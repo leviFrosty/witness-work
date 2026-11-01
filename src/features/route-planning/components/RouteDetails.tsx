@@ -26,11 +26,6 @@ import type {
   RoutePlanOption,
 } from '@/features/route-planning/hooks/useRouteBuilder'
 
-/**
- * Everything about the route besides its stops, in the Plan form's rows: the
- * Plan it belongs to, the buddies invited to it, how set times are treated, and
- * notes. `buddies` is the app's Invite Buddies row, when Buddies is on.
- */
 export default function RouteDetails({
   builder,
   buddies,
@@ -62,8 +57,7 @@ export default function RouteDetails({
     <View style={{ gap: 8 }}>
       <RouteSectionLabel>{i18n.t('routeBuilder_details')}</RouteSectionLabel>
       <Section animateRows={false}>
-        {/* Rows come and go, so the first one's top border is clipped rather
-            than tracked. */}
+        {}
         <View style={{ marginTop: -1 }}>
           <SectionRows>
             {builder.planOptions.length > 0 && (
@@ -136,15 +130,12 @@ export default function RouteDetails({
 
             {buddies && <Fragment key='buddies'>{buddies}</Fragment>}
 
-            {/* Only stops with a set time can be waited for. */}
+            {}
             {builder.hasSetTimes && (
               <FormRow
                 key='setTimes'
                 icon={ClockIcon}
                 trailing={
-                  // The native switch draws above its frame when centered in
-                  // a taller row; the row's height keeps it level with the
-                  // label.
                   <View
                     style={{
                       height: FORM_ROW_MIN_HEIGHT,
@@ -174,8 +165,7 @@ export default function RouteDetails({
               </FormRow>
             )}
 
-            {/* Formatting, lists, and links; no photos, which only records
-                keep. */}
+            {}
             <NoteFormRow
               key='note'
               note={note}
@@ -214,7 +204,6 @@ export default function RouteDetails({
   )
 }
 
-/** A Plan as "Title · 9:00 AM"; an untitled one is named by its time alone. */
 const planText = (plan: RoutePlanOption) => {
   const time = plan.anytime ? i18n.t('planAnytime') : formatStartTime(plan.time)
   return plan.title === time ? time : `${plan.title} · ${time}`

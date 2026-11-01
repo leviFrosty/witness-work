@@ -61,7 +61,7 @@ const describeItems = (items: LogVisitListItem[]) =>
       case 'noMatches':
         return `none:${item.query}`
       case 'addNew':
-        return `add:${item.name}`
+        return item.name === undefined ? 'new' : `add:${item.name}`
     }
   })
 
@@ -103,13 +103,14 @@ describe('buildBrowseItems', () => {
     ]),
   }
 
-  it('lists suggested sections, then everyone A–Z under All Contacts', () => {
+  it('offers a new Contact, then suggested sections, then everyone A–Z under All Contacts', () => {
     const items = buildBrowseItems({
       suggested,
       contacts: [tom, grace, maria, priya, anna],
       currentTime: now,
     })
     expect(describeItems(items)).toEqual([
+      'new',
       '# nearby',
       'nearby:maria [suggested_followUpToday · 412 Oak St|due]',
       'nearby:tom [412 Oak St, Apt 7|default]',
@@ -138,6 +139,7 @@ describe('buildBrowseItems', () => {
       currentTime: now,
     })
     expect(describeItems(items)).toEqual([
+      'new',
       '# nearby',
       'nearby:lone',
       '# all',
@@ -151,7 +153,7 @@ describe('buildBrowseItems', () => {
       contacts: [tom, anna],
       currentTime: now,
     })
-    expect(describeItems(items)).toEqual(['all:anna', 'all:tom'])
+    expect(describeItems(items)).toEqual(['new', 'all:anna', 'all:tom'])
   })
 
   it('is empty without Contacts', () => {

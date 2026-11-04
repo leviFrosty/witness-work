@@ -256,10 +256,11 @@ describe('usePasskeyPromptNotification', () => {
     })
 
     it('asks again once the answer is old', async () => {
-      await render()
-      act(() => renderer!.unmount())
-      vi.useFakeTimers({ now: NOW + 60 * 60 * 1000, toFake: ['Date'] })
+      vi.useFakeTimers({ now: NOW, toFake: ['Date'] })
       try {
+        await render()
+        act(() => renderer!.unmount())
+        vi.setSystemTime(NOW + 60 * 60 * 1000)
         await render()
         expect(checks()).toBe(2)
       } finally {

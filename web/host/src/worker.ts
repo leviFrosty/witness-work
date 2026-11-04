@@ -36,6 +36,12 @@ const WELL_KNOWN_JSON = new Set([
   '/.well-known/webauthn',
 ])
 
+// The service worker's file must be fetched fresh on every update check, so a
+// deploy's new version reaches every tab (docs/web-offline.md). The manifest is
+// typed here because the asset server doesn't know `.webmanifest`.
+const WORKER_FILE = '/sw.js'
+const MANIFEST_FILE = '/manifest.webmanifest'
+
 /**
  * `pathname` as the asset server names its files: each segment decoded, then
  * encoded, as it does itself. It answers any other spelling (`@` rather than
@@ -98,6 +104,10 @@ async function serveFile(request: Request, env: Env): Promise<Response> {
   )
   if (WELL_KNOWN_JSON.has(pathname))
     response.headers.set('Content-Type', 'application/json')
+  if (pathname === WORKER_FILE)
+    response.headers.set('Cache-Control', 'no-cache')
+  if (pathname === MANIFEST_FILE)
+    response.headers.set('Content-Type', 'application/manifest+json')
   return response
 }
 

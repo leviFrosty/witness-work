@@ -435,7 +435,9 @@ async function deploy(target, args) {
   checkAssociationFiles(dist, target)
   // web:build's own checks, again on what uploads: the host's limits, and no
   // value a web build mustn't carry, such as this checkout's dev API bypass.
-  checkExport(dist, loadWebEnv(root, target).excluded)
+  checkExport(dist, loadWebEnv(root, target).excluded, {
+    serviceWorker: true,
+  })
   const missing = missingOrigins(dist, target)
   if (missing.length)
     throw new Error(

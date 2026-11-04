@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
 import { analytics } from '@/lib/analytics'
+import { addWindowFocusListener } from '@/lib/appLifecycle'
 import { HttpError } from '@/lib/http/request'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -27,17 +28,6 @@ type Options = {
   /** This browser's own slot id, which doesn't count as another device. */
   ownSlotId: string | null
   onReady: () => void
-}
-
-/** The browser's own focus event; React Native's AppState covers visibility. */
-const addWindowFocusListener = (listener: () => void): (() => void) => {
-  const target = globalThis as {
-    addEventListener?: (type: string, listener: () => void) => void
-    removeEventListener?: (type: string, listener: () => void) => void
-  }
-  if (Platform.OS !== 'web' || !target.addEventListener) return () => {}
-  target.addEventListener('focus', listener)
-  return () => target.removeEventListener?.('focus', listener)
 }
 
 /**
@@ -117,10 +107,10 @@ export function useWebCloudSync({ client, ownSlotId, onReady }: Options) {
     const appState = AppState.addEventListener('change', (next) => {
       if (next === 'active') onCheck(true)
     })
-    const removeFocus = addWindowFocusListener(() => onCheck(true))
+    const focus = addWindowFocusListener(() => onCheck(true))
     return () => {
       appState.remove()
-      removeFocus()
+      focus.remove()
     }
   }, [client, ownSlotId])
 

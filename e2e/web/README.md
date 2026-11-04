@@ -49,6 +49,27 @@ as a secure context for it (the app needs `crypto.randomUUID`).
 Install the browsers once for the pinned Playwright version with
 `pnpm exec playwright install chromium webkit firefox`.
 
+## Offline, updates and install
+
+`offline.spec.ts` and `install.spec.ts` (docs/web-offline.md) need the web host's
+Worker (`E2E_WORKER=dev`): a service worker has to register under the enforcing
+CSP and Trusted Types. `offline.spec.ts` goes offline with
+`context.setOffline(true)` and reloads from the worker's cache.
+
+Its "second deploy" specs need a second build. They skip unless two folders are
+given: `E2E_PREV_DIST` (a copy of `dist/`) and `E2E_NEXT_DIST` (the next deploy):
+
+```bash
+pnpm web:build
+cp -R dist /tmp/ww-prev
+node e2e/web/next-version.mjs dist /tmp/ww-next   # renames every chunk, rebuilds sw.js
+E2E_WORKER=dev E2E_PREV_DIST=/tmp/ww-prev E2E_NEXT_DIST=/tmp/ww-next \
+  pnpm web:test --project=chromium-desktop e2e/web/offline.spec.ts
+```
+
+The specs copy the next deploy over `dist/` while the Worker serves it (and put the
+previous one back afterwards), so run them alone and on one port.
+
 ## Firefox on macOS 27
 
 Playwright's Firefox builds don't start on macOS 27 ("Could not find profile

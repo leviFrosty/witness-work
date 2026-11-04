@@ -288,7 +288,11 @@ export function unservedReferences(directory) {
 export function checkExport(
   directory,
   excluded,
-  { maxFiles = MAX_FILES, maxBytes = MAX_FILE_BYTES } = {}
+  {
+    maxFiles = MAX_FILES,
+    maxBytes = MAX_FILE_BYTES,
+    serviceWorker = false,
+  } = {}
 ) {
   const leaks = filesContaining(directory, excluded)
   if (leaks.length > 0)
@@ -310,6 +314,31 @@ export function checkExport(
     throw new Error(
       `The export loads files the host wouldn't serve: ${unserved.slice(0, 5).join(', ')}`
     )
+  if (serviceWorker) checkServiceWorker(directory)
+}
+
+/**
+ * Refuses an export whose service worker (`scripts/web-sw.mjs`) is missing or
+ * wouldn't open the app offline: the shell, every entry chunk `index.html`
+ * loads and every packaged asset must be in its precache list.
+ */
+export function checkServiceWorker(directory) {
+  const file = path.join(directory, 'sw.js')
+  if (!fs.existsSync(file)) throw new Error('The export has no sw.js')
+  const worker = fs.readFileSync(file, 'utf8')
+  const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8')
+  const entries = [...html.matchAll(/(?:src|href)="(\/_expo\/[^"]+)"/g)].map(
+    (match) => match[1]
+  )
+  // Every packaged asset too: fonts, images and sounds the screens need offline.
+  const assets = listFiles(path.join(directory, 'assets')).map(
+    (file) => `/assets/${file}`
+  )
+  const missing = ['/index.html', ...entries, ...assets].filter(
+    (url) => !worker.includes(`"${url}"`)
+  )
+  if (missing.length > 0)
+    throw new Error(`sw.js doesn't precache ${missing.slice(0, 5).join(', ')}`)
 }
 
 /**
@@ -412,7 +441,7 @@ export function runBuildSteps(steps, run) {
   for (const step of steps) if (run(step) !== 0) throw new Error(step.failure)
 }
 
-function main() {
+async function main() {
   const [command, ...args] = process.argv.slice(2)
   const envFlag = args.indexOf('--env')
   const profile =
@@ -457,7 +486,13 @@ function main() {
     // Each profile's own association files, never ones from another
     // environment (`config/web-associations.json`).
     writeAssociationFiles(output, profile)
-    checkExport(output, excluded)
+    // Loaded here: only a build needs Workbox and esbuild.
+    const { buildServiceWorker } = await import('./web-sw.mjs')
+    const worker = await buildServiceWorker(output)
+    console.log(
+      `[web] Service worker precaches ${worker.count} files, ${(worker.size / 1024 / 1024).toFixed(1)} MiB`
+    )
+    checkExport(output, excluded, { serviceWorker: true })
   } catch (error) {
     fs.rmSync(output, { recursive: true, force: true })
     throw new Error(`${error.message}; removed dist/`, { cause: error })
@@ -469,10 +504,8 @@ if (
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  try {
-    main()
-  } catch (error) {
+  main().catch((error) => {
     console.error(`[web] ${error.message}`)
     process.exitCode = 1
-  }
+  })
 }

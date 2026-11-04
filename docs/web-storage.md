@@ -171,7 +171,8 @@ tab that hears of it), and signing in as another account (`webAccount.ts`).
 Each first calls `markWipePending()`, which sets `wipe-pending` in `secureKv`;
 the wipe clears it last. When every tab closes mid-wipe, the next active tab
 finds it before the app loads, finishes the wipe, and reloads. It doesn't touch other libraries' own keys (PostHog's and RevenueCat's
-`localStorage` entries) or service worker caches.
+`localStorage` entries) or the service worker's caches (`docs/web-offline.md`: the
+app shell and the languages the browser loaded, no account data).
 
 ## What `localStorage` still holds
 
@@ -180,7 +181,8 @@ empty. PostHog's queue (`.posthog-rn.json`) uses AsyncStorage, so it lands in
 the store database (`async-storage`) too, and `clearAllWebData()` deletes it.
 The purchases SDK may keep its own key there (`revenuecat_user_id`); that's the
 SDK's to manage. `sessionStorage` briefly holds `witnesswork-take-over` during
-Use Here.
+Use Here, and `ww.staleChunkReload` (the build and time of the tab's last reload
+for a missing chunk, so a tab never reloads in a loop).
 
 ## Testing
 

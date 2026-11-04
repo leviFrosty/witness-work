@@ -37,6 +37,8 @@ const sessionEvents = new Set([
   'account_activity_viewed',
   'account_devices_viewed',
   'update_required_shown',
+  'web_update_prompted',
+  'web_install_banner_shown',
   'help_center_search_completed',
 ])
 

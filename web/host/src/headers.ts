@@ -47,7 +47,8 @@ export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com'
  * The Trusted Types policies the page may create, each only once:
  *
  * - `ww-chunks`, the app's own (`CHUNK_POLICY` in
- *   `src/vendor/web/trustedTypes.ts`), for its script chunks.
+ *   `src/vendor/web/trustedTypes.ts`), for its script chunks and its service
+ *   worker (`/sw.js`).
  * - `ProseMirrorClipboard`, which the note editor creates the first time HTML is
  *   pasted, to parse it in a detached document that never renders or runs it;
  *   the editor keeps only the nodes its schema knows.

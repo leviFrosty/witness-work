@@ -19,6 +19,12 @@ const FILES: Record<string, [string | null, string]> = {
   '/index.html': ['text/html; charset=utf-8', '<!doctype html>'],
   [CHUNK]: ['text/javascript; charset=utf-8', 'console.log(1)'],
   '/canvaskit.wasm': ['application/wasm', '\0asm'],
+  '/sw.js': ['text/javascript; charset=utf-8', 'self.skipWaiting'],
+  // The asset server can't type `.webmanifest`.
+  '/manifest.webmanifest': [
+    'application/octet-stream',
+    '{"name":"WitnessWork"}',
+  ],
   '/assets/src/assets/icon.19556d01c4098119ac9127ac2681a68d.png': [
     'image/png',
     'png',
@@ -135,6 +141,24 @@ describe('files the app loads by URL', () => {
     const response = await call(CHUNK, undefined, 'staging')
     expect(response.status).toBe(500)
     expect(await response.text()).toBe('')
+  })
+})
+
+describe('installing and updating', () => {
+  it('serves the service worker with no-cache, so every update check is fresh', async () => {
+    const response = await call('/sw.js')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Type')).toMatch(/javascript/)
+    expect(response.headers.get('Cache-Control')).toBe('no-cache')
+    expectSecurityHeaders(response)
+  })
+
+  it('serves the web app manifest as a manifest', async () => {
+    const response = await call('/manifest.webmanifest')
+    expect(response.headers.get('Content-Type')).toBe(
+      'application/manifest+json'
+    )
+    expect(response.headers.get('Cache-Control')).toBe(REVALIDATE)
   })
 })
 

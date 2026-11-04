@@ -1,11 +1,13 @@
+import { onChunkLoadFailed } from '@/lib/webOffline/staleChunk'
 import { chunkScriptURL } from '@/vendor/web/trustedTypes'
 
 /**
  * Expo's web chunk loader (`expo/build/async-require/fetchThenEval.web.js`) in
  * an exported build, with one change: the script's URL goes through the Trusted
  * Types policy, which takes only this origin's chunks. Expo's assigns a plain
- * string, which the CSP blocks. Development builds keep Expo's fetch-and-eval
- * for its error overlay; the dev server sends no CSP.
+ * string, which the CSP blocks. A chunk that fails to load asks `staleChunk`
+ * whether the tab is stale. Development builds keep Expo's fetch-and-eval for
+ * its error overlay; the dev server sends no CSP.
  */
 
 const currentSrc =
@@ -58,6 +60,9 @@ export function fetchThenEvalAsync(
       error.request = script.src
       script.parentNode?.removeChild(script)
       reject(error)
+      // A tab left open across a deploy: reloads it once if the server no
+      // longer has the chunk (docs/web-offline.md).
+      void onChunkLoadFailed(url)
     }
 
     // Never load and run the entry bundle again.

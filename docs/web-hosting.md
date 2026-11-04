@@ -61,6 +61,9 @@ managed proxy, and uses RevenueCat's browser API.
   - Everything else revalidates (`max-age=0, must-revalidate`, with ETags),
     including `index.html` and `canvaskit.wasm`. Cloudflare serves `.wasm` as
     `application/wasm`.
+  - `/sw.js`, the service worker, is served `no-cache` so every update check is
+    fresh, and `/manifest.webmanifest` as `application/manifest+json`. How the
+    worker caches, and the update flow: [`web-offline.md`](web-offline.md).
   - Only `GET` and `HEAD`.
 - **Not uploaded:** source maps and the build stamp (`.assetsignore`).
 - **Limits:** 25 MiB per file and 20,000 files. The deploy checks both before

@@ -438,3 +438,23 @@ it('releases an uncommitted re-crop source on cancellation', async () => {
     runtime.files.has('file:///Docs/contact-c-avatar-original-a.jpg')
   ).toBe(true)
 })
+
+it.each([
+  ['ios', true],
+  ['android', true],
+  ['web', false],
+])(
+  'offers Choose Photo on %s: %s (the web has no photo sync)',
+  async (platform, offered) => {
+    runtime.platform = platform
+    await act(async () => {
+      renderer = create(<PickerHarness />)
+    })
+    const labels = renderer!.root
+      .findAllByType(Text)
+      .map((text) => text.props.children)
+    expect(labels.includes('choosePhoto')).toBe(offered)
+    // A photo the account already has can still be removed.
+    expect(labels).toContain('remove')
+  }
+)

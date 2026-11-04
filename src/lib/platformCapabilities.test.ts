@@ -24,6 +24,7 @@ const all: PlatformCapability[] = [
   'appLock',
   'photoLibrarySave',
   'otaUpdates',
+  'syncedPhotos',
 ]
 const on = (os: string) => {
   platform.OS = os
@@ -53,6 +54,7 @@ describe('hasCapability', () => {
       'appLock',
       'photoLibrarySave',
       'otaUpdates',
+      'syncedPhotos',
     ])
   })
 

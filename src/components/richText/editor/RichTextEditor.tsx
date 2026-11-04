@@ -39,6 +39,7 @@ import { logger } from '@/lib/logger'
 import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 import { richTextImages } from '@/lib/richText/inspect'
 import { MAX_NOTE_IMAGES } from '@/lib/richText/noteImages'
+import { canAddNotePhotos } from '@/lib/richText/notePhotos'
 import { saveNoteImage } from '@/lib/richText/saveNoteImage'
 import { parseRichTextDoc } from '@/lib/richText/parse'
 import { usePreferences } from '@/stores/preferences'
@@ -185,6 +186,7 @@ const RichTextEditor = (props: {
       direction: isRtlLayout() ? 'rtl' : 'ltr',
       placeholder: props.placeholder,
       label: props.label,
+      photoMissing: i18n.t('richText_photoMissing'),
       characterLimit: props.characterLimit,
       autofocus: true,
     }
@@ -344,7 +346,9 @@ const RichTextEditor = (props: {
             })
           }
           onAddPhoto={
-            props.allowImages ? (source) => void addPhoto(source) : undefined
+            canAddNotePhotos(props.allowImages)
+              ? (source) => void addPhoto(source)
+              : undefined
           }
         />
       </Animated.View>

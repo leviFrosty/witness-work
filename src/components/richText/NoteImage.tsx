@@ -42,7 +42,9 @@ const NoteImage = (props: {
         : { width: '100%' as const }),
   }
 
-  if (failedUri === uri) {
+  // No uri: the web has no such photo (it has no photo sync), and its image
+  // wouldn't report an error for an empty address.
+  if (!uri || failedUri === uri) {
     return (
       <View
         style={[

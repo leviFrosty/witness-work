@@ -25,9 +25,22 @@ works on them in the page.
   photo is at most 1024 px on its long side (quality 0.85) and a note photo at
   most 2048 px (`NOTE_IMAGE_MAX_SIDE`). Images over 120 megapixels or 50 MiB and files that aren't
   images are refused with `photoPicker_unsupported` / `photoPicker_tooLarge`.
-- **Contact photos** are `data:image/jpeg` URLs held in the contact record. They
-  persist with the stores (IndexedDB) and render in `Avatar`, which on the web
-  only accepts `data:`, `blob:` and `http(s):`.
+- **No photo is added on the web yet.** A photo added there would never upload
+  (no photo pass), so the phones would get a reference to nothing and could lose
+  the photo they have. `hasCapability('syncedPhotos')` is off on the web: the
+  avatar picker's Choose Photo (contacts and profile) and a note's photo button
+  are hidden, and the Cloud Sync photo passes don't run there
+  (`photosTravel()`). Choose Photo returns with the photo pass.
+- **Photos from a phone show a placeholder.** A contact or profile avatar whose
+  value is an `icloud://` marker shows initials (`isRenderableImageValue`); a
+  note photo this page doesn't hold shows "This photo isn't on this device."
+  (`NoteImage`) or a plain frame in the editor. The record keeps its reference
+  and revision, so editing the contact or note on the web publishes the phone's
+  photo reference unchanged, and the phones keep the photo.
+- **Never a reference to nothing.** If an avatar's value is a `data:` or `blob:`
+  URL (a photo only this page holds), the sync payload carries no photo for it
+  (`sanitizeContactAvatar`, `sanitizeProfileAvatar`) rather than a reference
+  no phone can fetch.
 - **Note photos** are Blobs in [`webPhotoStore.ts`](../src/lib/files/webPhotoStore.ts),
   in memory for this page load only.
 - **Limited-photo-library UI** is hidden on the web; there is no such state.
@@ -35,10 +48,11 @@ works on them in the page.
 ### Seam for Cloud Sync photos (W4 / ADR 0040)
 
 Photo sync needs the bytes to persist and to arrive from the server. The web
-stand-ins are `webPhotoStore` (note photos) and the avatar `data:` URL. A photo
-added on the web is not yet uploaded, and one downloaded on the web has nowhere
-to live after the tab closes until `putWebPhoto` is called by the photo pass and
-the store is backed by IndexedDB.
+stand-ins are `webPhotoStore` (note photos) and the avatar `data:` URL. When the
+web gets its photo pass: back the store with IndexedDB, `putWebPhoto` what the
+pass downloads, turn `syncedPhotos` on for the web, and let `photosTravel()` run
+there. The same capability lifts the guard in `avatarPayload.ts` that sends a
+`data:` or `blob:` avatar as no photo.
 
 ## Exporting
 

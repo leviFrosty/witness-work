@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, strings, test } from './fixtures'
 import { buildMytimeBackup } from './mytimeFixture'
-import { makePng } from './testFiles'
 
 /**
  * Photos, downloads and imports through the browser's file chooser and
@@ -90,111 +89,11 @@ async function openContacts(page: Page) {
 
 const bytes = (text: string) => Buffer.from(text)
 
-/** Opens Settings → the Profile card's avatar menu on the profile screen. */
-async function openProfilePhotoMenu(page: Page) {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
-  // A phone lists Settings first; a wide window shows the profile beside it.
-  const picture = page.getByRole('button', { name: en.profilePicture }).last()
-  if (!(await picture.isVisible()))
-    await page.getByText('Profile', { exact: true }).first().click()
-  await picture.click()
-  await expect(page.getByText(en.choosePhoto)).toBeVisible()
-}
-
-test.describe('photos', () => {
-  test('a profile photo is picked, cropped, shown and kept', async ({
-    app,
-    shot,
-  }) => {
-    await openProfilePhotoMenu(app)
-    await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [
-      {
-        name: 'me.png',
-        mimeType: 'image/png',
-        buffer: await makePng(1600, 1200),
-      },
-    ])
-    await expect(app.getByText(en.cropPhoto)).toBeVisible()
-    await shot('photo-crop')
-    await app.getByText(en.applyCrop).click()
-    const avatar = app.locator('img[src^="data:image/jpeg"]:visible').first()
-    await expect(avatar).toBeVisible()
-    await shot('photo-profile')
-    // The record carries the photo, so a reload shows it again.
-    await app.reload()
-    await expect(
-      app.locator('img[src^="data:image/jpeg"]:visible').first()
-    ).toBeVisible()
-  })
-
-  test('a contact photo is picked while adding a contact', async ({
-    app,
-    shot,
-  }) => {
-    await app.getByRole('button', { name: en.addContact }).first().click()
-    await app.getByPlaceholder(en.name_placeholder).fill('Maria Santos')
-    await app.getByRole('button', { name: en.profilePicture }).last().click()
-    await expect(app.getByText(en.choosePhoto)).toBeVisible()
-    await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [
-      {
-        name: 'maria.png',
-        mimeType: 'image/png',
-        buffer: await makePng(900, 1400),
-      },
-    ])
-    await app.getByText(en.applyCrop).click()
-    await expect(
-      app.locator('img[src^="data:image/jpeg"]:visible').first()
-    ).toBeVisible()
-    await shot('photo-contact-form')
-    await app.getByRole('button', { name: en.save }).first().click()
-    // Saving a contact offers to log a first conversation.
-    await app.getByText('Skip', { exact: true }).click()
-    await openContacts(app)
-    await expect(app.getByText('Maria Santos').first()).toBeVisible()
-    await expect(
-      app.locator('img[src^="data:image/jpeg"]:visible').first()
-    ).toBeVisible()
-    await shot('photo-contact-list')
-  })
-
-  test('a file that is not a photo is refused with a message', async ({
-    app,
-  }) => {
-    await openProfilePhotoMenu(app)
-    await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [
-      {
-        name: 'notes.pdf',
-        mimeType: 'application/pdf',
-        buffer: bytes('%PDF-1.7 not an image'),
-      },
-    ])
-    await expect(app.getByText(en.photoPicker_unsupported)).toBeVisible()
-    await expect(app.getByText(en.cropPhoto)).toHaveCount(0)
-  })
-
-  test('a photo of 130 million pixels is refused, not opened', async ({
-    app,
-  }) => {
-    await openProfilePhotoMenu(app)
-    await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [
-      {
-        name: 'huge.png',
-        mimeType: 'image/png',
-        buffer: await makePng(13_000, 10_000, { flat: true }),
-      },
-    ])
-    await expect(app.getByText(en.photoPicker_tooLarge)).toBeVisible()
-  })
-
-  test('closing the file chooser changes nothing', async ({ app }) => {
-    await openProfilePhotoMenu(app)
-    await chooseFiles(app, () => app.getByText(en.choosePhoto).click(), [])
-    await expect(app.getByText(en.cropPhoto)).toHaveCount(0)
-    await expect(app.getByText(en.photoPicker_failed)).toHaveCount(0)
-    await expect(app.getByText(en.choosePhoto)).toBeVisible()
-  })
-})
+// Choosing a photo isn't offered on the web (it has no photo sync): see
+// `syncedPhotos.spec.ts`. Picking and downscaling stay covered in
+// `src/lib/files/pickWebImages.test.ts` and `webImages` for other flows.
+// TODO: bring back the photo chooser cases (unsupported file, too large,
+// cancel, crop) with Choose Photo, and `makePng` with them.
 
 test.describe('reports', () => {
   for (const method of ['share', 'copy'] as const) {

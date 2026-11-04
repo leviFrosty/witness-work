@@ -53,6 +53,7 @@ import {
 import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
+import { hasCapability } from '@/lib/platformCapabilities'
 import {
   hasSyncTransport,
   syncTransport as platformSyncTransport,
@@ -562,7 +563,10 @@ export function syncEntitled(): boolean {
  * Whether the active transport moves photo bytes right now (Cloud Sync while
  * the server's photo switch is on).
  */
-const transportHoldsPhotos = () => syncTransport().supportsBinaries !== false
+const transportHoldsPhotos = () =>
+  // The web has no photo pass (docs/web-files.md): its records keep their
+  // references, and the phones keep the photos.
+  hasCapability('syncedPhotos') && syncTransport().supportsBinaries !== false
 
 /**
  * Whether photos travel on this device's sync now. On Cloud Sync always:

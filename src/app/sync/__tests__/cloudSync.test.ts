@@ -14,11 +14,16 @@ import { createFakeSyncServer } from '@/lib/syncTransport/server/__tests__/fakeS
 
 const runtime = vi.hoisted(() => ({
   appState: 'active',
+  os: 'android',
   files: {} as Record<string, Map<string, Uint8Array>>,
 }))
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'android' },
+  Platform: {
+    get OS() {
+      return runtime.os
+    },
+  },
   AppState: {
     get currentState() {
       return runtime.appState
@@ -85,7 +90,7 @@ async function device(
     account = 'family',
     entitled = true,
   }: {
-    os?: 'ios' | 'android'
+    os?: 'ios' | 'android' | 'web'
     option?: Option
     account?: string
     entitled?: boolean
@@ -97,8 +102,15 @@ async function device(
     DeviceType: { PHONE: 1, TABLET: 2 },
     deviceType: 1,
     modelName: name,
-    osName: os === 'ios' ? 'iOS' : 'Android',
+    osName: os === 'ios' ? 'iOS' : os === 'web' ? 'Web' : 'Android',
   }))
+  // The web runs the engine on Cloud Sync alone (ADR 0037 §2). The app doesn't
+  // start it there yet, and these tests are for when it does.
+  if (os === 'web')
+    vi.doMock('@/lib/syncTransport/platform', () => ({
+      hasSyncTransport: () => true,
+    }))
+  else vi.doUnmock('@/lib/syncTransport/platform')
   vi.doMock('@/lib/installId', () => ({
     getOrCreateInstallId: () => `install-${name}`,
     androidDeviceInstallId: () => `install-${name}`,
@@ -262,6 +274,7 @@ async function device(
       }),
     name,
     account,
+    os,
     cloudTransport,
     files,
     photoUsage,
@@ -301,7 +314,19 @@ beforeEach(() => {
   vi.stubGlobal('fetch', drive.fetch)
   runtime.files = {}
   runtime.appState = 'active'
+  runtime.os = 'android'
 })
+
+/** Runs `work` as `d` runs it: a browser tab is `Platform.OS === 'web'`. */
+const running = async <T>(d: Device, work: () => Promise<T>): Promise<T> => {
+  const before = runtime.os
+  runtime.os = d.os === 'web' ? 'web' : before
+  try {
+    return await work()
+  } finally {
+    runtime.os = before
+  }
+}
 
 describe('Cloud Sync between devices', () => {
   it('runs the engine on the server transport', async () => {
@@ -933,6 +958,138 @@ describe('Photos over Cloud Sync', () => {
     // The server only ever saw ciphertext.
     for (const name of server.photoNames('family'))
       expect(server.photoBytes('family', name)![0]).toBe(1)
+  })
+
+  describe('with a browser on the account (it has no photo sync)', () => {
+    /** An iPhone with a contact, a note and a profile photo on the server. */
+    const phoneWithPhotos = async () => {
+      const iphone = await device('iphone', { os: 'ios' })
+      iphone.files.set(picked('c1', 'r1'), new Uint8Array([1, 1, 1]))
+      iphone.files.set(notePath('photo-0001'), new Uint8Array([2, 2]))
+      const profilePath = `${DOCS}profile-avatar-picked-p1.jpg`
+      iphone.files.set(profilePath, new Uint8Array([3]))
+      iphone.useProfile
+        .getState()
+        .setAvatar({ type: 'image', value: profilePath, revision: 'p1' })
+      iphone.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+      })
+      iphone.useConversations.setState({
+        conversations: [visit('v1', 'photo-0001')] as never,
+      })
+      await publish(iphone)
+      return iphone
+    }
+
+    it('never moves photo bytes, so nothing there can fail or delete', async () => {
+      const iphone = await phoneWithPhotos()
+      const stored = server.photoNames('family')
+      expect(stored).toHaveLength(3)
+
+      const web = await device('browser', { os: 'web' })
+      await running(web, async () => {
+        expect(web.iCloudSync.photosTravel()).toBe(false)
+        await web.iCloudSync.pullAndMerge('manual')
+        await web.iCloudSync.imageWorkSettled()
+      })
+      // It has the records and their references, and no photo files.
+      expect(web.contactNames()).toEqual(['Ada'])
+      expect(web.useContacts.getState().contacts[0].avatar).toMatchObject({
+        type: 'image',
+        revision: 'r1',
+      })
+      expect([...web.files.keys()]).toEqual([])
+      expect(web.usePreferences.getState().iCloudImageSync ?? {}).toEqual({})
+      expect(server.photoNames('family')).toEqual(stored)
+      expect(iphone.name).toBe('iphone')
+    })
+
+    it('keeps the phone’s photos when the browser edits the records around them', async () => {
+      const iphone = await phoneWithPhotos()
+      const stored = server.photoNames('family')
+      const web = await device('browser', { os: 'web' })
+      await running(web, () => web.iCloudSync.pullAndMerge('manual'))
+
+      // The browser renames the contact, edits the visit's text and the
+      // profile's name, and publishes (twice, as a User would).
+      await running(web, async () => {
+        web.useContacts.getState().updateContact({ id: 'c1', name: 'Ada R.' })
+        web.useConversations.setState({
+          conversations: web.useConversations
+            .getState()
+            .conversations.map((v) => ({
+              ...v,
+              note: 'Edited on the web',
+              updatedAt: NOW + 10,
+            })) as never,
+        })
+        expect(await web.iCloudSync.push('manual')).toBe(true)
+        await web.iCloudSync.imageWorkSettled()
+        expect(await web.iCloudSync.push('manual')).toBe(true)
+        await web.iCloudSync.imageWorkSettled()
+      })
+
+      const before = iphone.useContacts.getState().contacts[0].avatar!.value
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      const contactNow = iphone.useContacts.getState().contacts[0]
+      expect(contactNow.name).toBe('Ada R.')
+      expect(contactNow.avatar).toMatchObject({ type: 'image', revision: 'r1' })
+      expect(contactNow.avatar!.value.split('?')[0]).toBe(before.split('?')[0])
+      expect([...iphone.files.get(picked('c1', 'r1'))!]).toEqual([1, 1, 1])
+      expect([...iphone.files.get(notePath('photo-0001'))!]).toEqual([2, 2])
+      expect(iphone.useProfile.getState().avatar).toMatchObject({
+        type: 'image',
+        revision: 'p1',
+      })
+      // And nothing was deleted from the account, now or after the phone's
+      // next publish.
+      expect(await iphone.iCloudSync.push('manual')).toBe(true)
+      await iphone.iCloudSync.imageWorkSettled()
+      expect(server.photoNames('family')).toEqual(stored)
+    })
+
+    it('does not send a reference to a photo only the browser has', async () => {
+      const iphone = await phoneWithPhotos()
+      const stored = server.photoNames('family')
+      const web = await device('browser', { os: 'web' })
+      await running(web, () => web.iCloudSync.pullAndMerge('manual'))
+
+      // A contact made on the web with a photo it picked before the picker
+      // was hidden (a data URL).
+      await running(web, async () => {
+        web.useContacts.setState({
+          contacts: [
+            ...web.useContacts.getState().contacts,
+            withPhoto(
+              contact('c2', 'Grace', NOW + 20),
+              'web1',
+              'data:image/jpeg;base64,/9j/AAAA'
+            ),
+          ] as never,
+        })
+        expect(await web.iCloudSync.push('manual')).toBe(true)
+        await web.iCloudSync.imageWorkSettled()
+      })
+
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      const grace = iphone.useContacts
+        .getState()
+        .contacts.find((c) => c.id === 'c2')!
+      expect(grace.avatar?.type ?? 'none').not.toBe('image')
+      // The phone's own photo and the account's photos are as they were, and
+      // the phone has no failed download to retry.
+      expect(
+        iphone.useContacts.getState().contacts.find((c) => c.id === 'c1')!
+          .avatar!.value
+      ).toContain('contact-c1-avatar')
+      expect(server.photoNames('family')).toEqual(stored)
+      const failures = Object.values(
+        iphone.usePreferences.getState().iCloudImageSync ?? {}
+      ).filter((entry) => entry.lastError)
+      expect(failures).toEqual([])
+    })
   })
 
   it('keeps Google Drive behind “Include photos”, unchanged', async () => {

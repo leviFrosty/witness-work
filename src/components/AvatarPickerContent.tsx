@@ -30,6 +30,7 @@ import {
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 
 export type AvatarMetaCapture = {
@@ -254,12 +255,14 @@ export const BackgroundSwatches = ({
 const AvatarPickerContent = ({
   value,
   onChange,
-  allowImage = true,
+  allowImage: imageAllowed = true,
   imageFileName = DEFAULT_AVATAR_FILENAME,
   backgroundValue = null,
   onBackgroundChange,
   onImageMeta,
 }: Props) => {
+  // The web can't sync a photo it picks (`syncedPhotos`): no entry point there.
+  const allowImage = imageAllowed && hasCapability('syncedPhotos')
   const theme = useTheme()
   const draftFiles = useAvatarDraftFiles()
   const library = useLibraryImagePicker('avatar')
@@ -328,8 +331,9 @@ const AvatarPickerContent = ({
     const asset = result.assets[0]
     const revision = Crypto.randomUUID()
     if (Platform.OS === 'web') {
-      // No files: the crop editor reads the picked photo's object URL, and the
-      // cropped JPEG becomes the avatar's value (`cropAndSaveImage`).
+      // Unreached while `syncedPhotos` is off on the web; kept for its photo
+      // pass. No files: the crop editor reads the picked photo's object URL,
+      // and the cropped JPEG becomes the avatar's value (`cropAndSaveImage`).
       setPendingPick({
         revision,
         sourceUri: asset.uri,
@@ -444,42 +448,52 @@ const AvatarPickerContent = ({
       {(allowImage || hasAvatar) && (
         <View style={{ height: 1, backgroundColor: theme.colors.border }} />
       )}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {allowImage && (
-          <Button
-            variant='outline'
-            onPress={pickImage}
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              gap: 8,
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
-            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-              {i18n.t('choosePhoto')}
-            </Text>
-          </Button>
-        )}
-        {hasAvatar && (
-          <Button
-            variant='outline'
-            onPress={clearAvatar}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 14,
-              gap: 8,
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon icon={Trash2Icon} size={13} color={theme.colors.text} />
-            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-              {i18n.t('remove')}
-            </Text>
-          </Button>
-        )}
-      </View>
+      {(allowImage || hasAvatar) && (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {allowImage && (
+            <Button
+              variant='outline'
+              onPress={pickImage}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                gap: 8,
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={CameraIcon}
+                size={13}
+                color={theme.colors.text}
+              />
+              <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                {i18n.t('choosePhoto')}
+              </Text>
+            </Button>
+          )}
+          {hasAvatar && (
+            <Button
+              variant='outline'
+              onPress={clearAvatar}
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                gap: 8,
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={Trash2Icon}
+                size={13}
+                color={theme.colors.text}
+              />
+              <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                {i18n.t('remove')}
+              </Text>
+            </Button>
+          )}
+        </View>
+      )}
       {library.host}
       {pendingPick && (
         <ContactAvatarCropEditor

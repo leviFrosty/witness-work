@@ -176,6 +176,14 @@ export interface SyncTransport {
   deleteFile(filename: string): Promise<void>
   /** Deletes every JSON sync file, including the account file. */
   deleteAll(): Promise<void>
+  /**
+   * Cloud Sync only: deletes other browsers' snapshots whose session ended,
+   * among `merged` (filename → `modifiedAt` a complete pull merged) and only
+   * while they're still that version. Resolves to the filenames deleted.
+   */
+  deleteEndedWebSnapshots?(
+    merged: ReadonlyMap<string, number>
+  ): Promise<string[]>
   /** Uploads a local file as a photo binary; resolves to its mtime. */
   writeBinary(
     filename: string,

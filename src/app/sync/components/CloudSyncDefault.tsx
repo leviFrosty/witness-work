@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AppState } from 'react-native'
 import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
@@ -11,7 +11,16 @@ import {
   cloudSyncDefaultHeld,
   onCloudSyncDefaultReleased,
 } from '@/app/sync/cloudSyncDefaultHold'
-import { hasSyncTransport } from '@/lib/syncTransport'
+import {
+  onFirstSyncRetry,
+  releaseFirstSync,
+  stallFirstSync,
+  type FirstSyncStallReason,
+} from '@/app/sync/webFirstSync'
+import type { SyncPayload } from '@/app/sync/payload'
+import { checkAppConfig } from '@/lib/appUpdate'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
+import { cloudSyncOnly, hasSyncEngine } from '@/lib/syncTransport/platform'
 import { onAccountChange } from '@/lib/serverAccount'
 import {
   addActiveRemoteChangeListener,
@@ -32,6 +41,17 @@ import {
  * account at once, whatever it had settled on or was still reading. It decides
  * nothing while the key is being replaced (`holdCloudSyncDefault`): leaving the
  * old account turns sync off, and a decision then would read that account.
+ *
+ * The web (ADR 0037 §2, ADR 0040 §2) has only Cloud Sync and gets its account
+ * key by signing in, before onboarding, so it decides at once: it brings in the
+ * account's data and skips onboarding, as a phone that restored from its other
+ * phone does, or seeds a web-only account and lets onboarding run. With records
+ * on both sides it merges records, keeping both (it has nowhere else to keep
+ * its own), and keeps the account's preferences and profile; so it does when
+ * another device's slot can't be read here, leaving that slot alone. Onboarding
+ * waits for it (`webFirstSync`): an outcome that tries again later stalls the
+ * wait, whose Retry decides again, and only the server saying the account isn't
+ * entitled releases it.
  */
 export default function CloudSyncDefault() {
   const { isSupporter } = useIsSupporter()
@@ -48,21 +68,46 @@ export default function CloudSyncDefault() {
     syncProvider !== 'platform' &&
     cloudSyncConfig?.enabled === true &&
     cloudSyncOffered()
-  const mayBeEntitled = cloudSyncDefaultMayApply({
-    installedBeforeFreeSync,
-    isSupporter,
-    entitlement: cloudSyncConfig?.entitlement,
-    cloudSyncEntitled,
-  })
+  // The web asks the server until it has answered: onboarding waits on it, and
+  // may run only once the account is known not to be entitled.
+  const mayBeEntitled =
+    cloudSyncDefaultMayApply({
+      installedBeforeFreeSync,
+      isSupporter,
+      entitlement: cloudSyncConfig?.entitlement,
+      cloudSyncEntitled,
+    }) ||
+    (cloudSyncOnly() && cloudSyncEntitled !== false)
+  // Each Retry from the web's onboarding hold decides again.
+  const [retries, setRetries] = useState(0)
 
   useEffect(() => {
-    if (!hasSyncTransport()) return
+    if (!cloudSyncOnly()) return
+    return onFirstSyncRetry(() => {
+      // The server's switch may have been what was missing.
+      void checkAppConfig({ force: true })
+      // Already on (seeded): the account just needs reading in full.
+      if (usePreferences.getState().iCloudSyncEnabled)
+        void iCloudSync.pullAndMerge('enabled').catch(() => stallFirstSync())
+      else setRetries((n) => n + 1)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!hasSyncEngine()) return
+    const web = cloudSyncOnly()
     // Not during onboarding: a new phone that signs in with a QR code or a
     // recovery key there gets its account key that way, and iCloud Keychain
     // or Block Store may still be bringing one. Creating a key first would
-    // start an account of its own.
-    if (!onboardingComplete) return
-    if (!offered || !mayBeEntitled) return
+    // start an account of its own. A browser is signed in already.
+    if (!onboardingComplete && !web) return
+    if (!offered) return
+    if (!mayBeEntitled) {
+      // The server said sync isn't for this account, so there's nothing to
+      // overwrite.
+      if (web) releaseFirstSync()
+      return
+    }
     if (iCloudSyncSetByUser || iCloudSyncEnabled) return
 
     // Only a retryable outcome decides again; the rest are final here, until
@@ -79,7 +124,9 @@ export default function CloudSyncDefault() {
       retrySubs?.forEach((sub) => sub.remove())
       retrySubs = null
     }
-    const retryLater = () => {
+    const retryLater = (reason?: FirstSyncStallReason) => {
+      // The web's onboarding hold offers Retry meanwhile.
+      if (web) stallFirstSync(reason)
       if (retrySubs) return
       retrySubs = [
         addActiveRemoteChangeListener(() => void attempt()),
@@ -102,6 +149,7 @@ export default function CloudSyncDefault() {
       } catch {
         report('failed')
         settle()
+        if (web) stallFirstSync()
       } finally {
         running = false
         if (again) {
@@ -132,7 +180,13 @@ export default function CloudSyncDefault() {
           (prepared.outcome === 'not_entitled' && isSupporter)
         )
           retryLater()
-        else settle()
+        else {
+          settle()
+          // Off on the server for now: Retry asks again. Not entitled:
+          // sync won't run, so nothing can be overwritten.
+          if (web && prepared.outcome === 'disabled') stallFirstSync('paused')
+          else if (web) releaseFirstSync()
+        }
         return
       }
       const tokenBefore = usePreferences.getState().cloudSyncAccountToken
@@ -155,16 +209,37 @@ export default function CloudSyncDefault() {
           settle()
           usePreferences.setState({ syncProvider: 'cloud' })
           await iCloudSync.applySeedEnable('supporter_default')
+          if (web) await readAccount()
           return
         case 'pull':
           settle()
           usePreferences.setState({ syncProvider: 'cloud' })
           iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
+          if (web) {
+            finishOnboarding()
+            await readAccount()
+          }
           return
-        case 'incomplete':
-          retryLater()
+        case 'incomplete': {
+          const unreadable =
+            decision.reason === 'newer-version' ||
+            decision.reason === 'invalid-file'
+          // Another device's slot that this browser can't read (damaged, or
+          // from a newer version) would hold it every time. The rest of the
+          // account is read in full, so merge that as for a conflict; the
+          // slot stays as it is.
+          if (web && unreadable && decision.remote) {
+            await mergeKeepingAccountSettings(decision.remote)
+            return
+          }
+          retryLater(unreadable ? 'unreadable' : undefined)
           return
+        }
         case 'conflict':
+          if (web) {
+            await mergeKeepingAccountSettings(decision.remote)
+            return
+          }
           usePreferences.getState().set({
             syncProvider: 'cloud',
             iCloudSyncNeedsResolution: true,
@@ -175,6 +250,31 @@ export default function CloudSyncDefault() {
           retryLater()
           return
       }
+    }
+    // The web, with records on both sides or a slot it can't read: only
+    // records merge, since this browser's preferences and profile may be
+    // newer only because it was just set up. Onboarding is done.
+    const mergeKeepingAccountSettings = async (remote: SyncPayload) => {
+      settle()
+      usePreferences.setState({ syncProvider: 'cloud' })
+      try {
+        await iCloudSync.applyMergeEnable(remote, 'supporter_default', {
+          keepRemoteSettings: true,
+        })
+      } catch {
+        // Sync stays on and finishes it like any other pull.
+        report('merge_incomplete')
+      }
+      finishOnboarding()
+    }
+    // The browser's first pull: it brings the peers' RevenueCat claims, and
+    // says the account was read in full (`cloudSyncPullSettled`), which the
+    // decision's own read doesn't.
+    const readAccount = () => iCloudSync.pullAndMerge('enabled')
+    // The account's profile and preferences replace what onboarding asks.
+    const finishOnboarding = () => {
+      if (!usePreferences.getState().onboardingComplete)
+        completeOnboardingFromRestore('cloud_sync')
     }
     void attempt()
 
@@ -207,6 +307,7 @@ export default function CloudSyncDefault() {
     isSupporter,
     iCloudSyncSetByUser,
     iCloudSyncEnabled,
+    retries,
   ])
 
   return null

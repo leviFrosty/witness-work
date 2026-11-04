@@ -29,6 +29,7 @@ import {
   sealPhoto,
 } from '@/lib/syncTransport/server/photoCrypto'
 import { useCloudSyncPhotoUsage } from '@/lib/syncTransport/server/photoUsage'
+import { completedPullThisLaunch } from '@/lib/cloudSyncPullSettled'
 import { refreshCloudSyncPhotoUsage } from '@/app/sync/cloudSync'
 import { localAvatarPathForContact } from '@/app/sync/imageSources'
 import { fromB64u } from '@/lib/bytes'
@@ -93,6 +94,8 @@ export const cloudSyncHarness = {
       contacts: useContacts.getState().contacts.length,
       lastSeq: cloudSyncDiagnostics.lastSeq(),
       liveEvents: cloudSyncDiagnostics.liveEvents().slice(-10),
+      /** A complete Cloud Sync pull this launch (`cloudSyncPullSettled`). */
+      completePull: completedPullThisLaunch(),
     }
   },
   /** `GET /app/v1/config` now, for its `sync` switches (`cloudSyncConfig`). */

@@ -1,6 +1,7 @@
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { isInlineImage } from '@/lib/avatarFilePolicy'
 import {
   markerForContact,
   MARKER_PROFILE,
@@ -14,7 +15,7 @@ import {
 const isUnsyncablePhoto = (avatar: ProfileAvatar): boolean =>
   !hasCapability('syncedPhotos') &&
   avatar.type === 'image' &&
-  /^(data|blob):/i.test(avatar.value)
+  isInlineImage(avatar.value)
 
 const NO_AVATAR: ProfileAvatar = { type: 'none', value: '' }
 

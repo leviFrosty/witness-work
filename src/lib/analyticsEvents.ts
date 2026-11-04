@@ -285,6 +285,9 @@ export const analyticsEventNames = [
   'update_required_shown',
   'update_required_store_opened',
   // The server ended a browser's account session (ADR 0038 §8).
+  // The web holding onboarding until its first Cloud Sync pull.
+  'web_account_ready_action',
+  'web_account_ready_stalled',
   'web_session_ended',
   'web_sign_in_again',
   'web_sign_in_failed',

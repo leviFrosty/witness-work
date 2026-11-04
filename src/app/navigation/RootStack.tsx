@@ -10,6 +10,7 @@ import HomeTabStack from '@/app/navigation/HomeTabStack'
 import i18n from '@/lib/locales'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
+import { useWebOnboardingHold } from '@/app/sync/useWebOnboardingHold'
 
 // Pushed screens get the system's Back button in iPhone Duo's vertical bar.
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
@@ -37,6 +38,8 @@ const petLargeScreenOptions = () =>
 
 const RootStackComponent = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
+  // The web brings in the account's data before onboarding asks anything.
+  const holdOnboarding = useWebOnboardingHold() !== 'none'
   const theme = useTheme()
 
   return (
@@ -66,7 +69,13 @@ const RootStackComponent = () => {
       }
     >
       <RootStack.Group
-        navigationKey={onboardingComplete ? 'app' : 'onboarding'}
+        navigationKey={
+          onboardingComplete
+            ? 'app'
+            : holdOnboarding
+              ? 'account-ready'
+              : 'onboarding'
+        }
       >
         {/* 
         Cannot render onboarding via Navigator initialRouteName. 
@@ -81,6 +90,14 @@ const RootStackComponent = () => {
             options={{ header: () => undefined }}
             name='Root'
             component={HomeTabStack}
+          />
+        ) : holdOnboarding ? (
+          <RootStack.Screen
+            options={{ header: () => undefined }}
+            name='Account Ready'
+            getComponent={() =>
+              require('@/app/web-sign-in/AccountReadyScreen').default
+            }
           />
         ) : (
           <RootStack.Screen

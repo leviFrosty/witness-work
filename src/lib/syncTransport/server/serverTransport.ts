@@ -260,6 +260,26 @@ export function toServerTransportError(
   return new SyncTransportError('unknown', message)
 }
 
+/**
+ * The slots `deleteEndedWebSnapshots` deletes: another browser's (`web`) whose
+ * session the server says ended, still at the version a complete pull merged
+ * (`merged`: filename → `modifiedAt`), so this device's own slot already holds
+ * their data. Never this device's own, a phone's, or a live session's.
+ */
+export function endedWebSlots(
+  slots: readonly SyncSlot[],
+  ownSlotId: string,
+  merged: ReadonlyMap<string, number>
+): SyncSlot[] {
+  return slots.filter(
+    (slot) =>
+      slot.slotId !== ownSlotId &&
+      slot.platform === 'web' &&
+      slot.ended &&
+      merged.get(filenameForSlot(slot.slotId)) === slot.updatedAt
+  )
+}
+
 export type ServerTransport = SyncTransport & {
   /** The live socket said another device changed something. */
   notifyRemoteChange: () => void
@@ -525,6 +545,30 @@ export function createServerTransport(
         fail(error)
       }
       cache.delete(slotId)
+    },
+
+    async deleteEndedWebSnapshots(merged) {
+      const own = slotId()
+      if (!own) return []
+      const current = await access()
+      let listing: Awaited<ReturnType<typeof listSyncSlots>>
+      try {
+        listing = await listSyncSlots(current.options)
+      } catch (error) {
+        return fail(error)
+      }
+      const deleted: string[] = []
+      for (const slot of endedWebSlots(listing.slots, own, merged)) {
+        try {
+          await deleteSyncSlot(current.options, slot.slotId)
+        } catch {
+          // Kept for now; the next launch tries again.
+          continue
+        }
+        cache.delete(slot.slotId)
+        deleted.push(filenameForSlot(slot.slotId))
+      }
+      return deleted
     },
 
     async deleteAll() {

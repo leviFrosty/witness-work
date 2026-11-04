@@ -55,8 +55,14 @@ import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { cloudSyncOnly, hasSyncEngine } from '@/lib/syncTransport/platform'
+import {
+  completePullGeneration,
+  markCompletePull,
+} from '@/lib/cloudSyncPullSettled'
 import {
   hasSyncTransport,
+  SyncTransportError,
   syncTransport as platformSyncTransport,
   syncTransportErrorCode,
   type SyncFile,
@@ -301,6 +307,12 @@ type PullOutcome = {
   changed: boolean
   complete: boolean
   /**
+   * Whether the read listed every file and opened every other device's, so the
+   * peers' RevenueCat claims it set are all of them (`cloudSyncPullSettled`).
+   * Unlike `complete`, a photo field a payload dropped doesn't change it.
+   */
+  claimsRead?: boolean
+  /**
    * Whether the read listed this device's own snapshot; null when nothing was
    * read. A snapshot that's missing (deleted from another device, or never
    * written) needs a push even with no edits.
@@ -314,6 +326,26 @@ let lastPullComplete = false
  * scan isn't done yet, so it doesn't release `markCompleteICloudPull` waiters.
  */
 let lastReadFoundFiles = false
+/**
+ * The last read's files, by filename, with their `modifiedAt`: those it merged
+ * whole. One it couldn't open, or merged without a record it couldn't read, is
+ * left out: what it didn't take stays only in that slot.
+ */
+let lastReadModifiedAt: ReadonlyMap<string, number> = new Map()
+/**
+ * The web: the other slots a complete pull merged, until a push of this
+ * browser's own holds them; then `pruneEndedWebSnapshots` deletes the ended
+ * browsers' among them. `generation` is the account's
+ * (`cloudSyncPullSettled`).
+ */
+let mergedForPrune: {
+  files: ReadonlyMap<string, number>
+  generation: number
+} | null = null
+/** Pruned once a launch: new browser slots come only with a sign-in. */
+let prunedThisLaunch = false
+/** The server's `Retry-After` on the last failed push, if it gave one. */
+let lastPushRetryAfterMs: number | null = null
 
 /**
  * Coalesce concurrent pulls. NSMetadataQuery fires in bursts (both
@@ -543,7 +575,7 @@ function setPrefsIfChanged(partial: Partial<PreferencesState>): void {
  * account's container.
  */
 export function canSync(): boolean {
-  if (!hasSyncTransport()) return false
+  if (!hasSyncEngine()) return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
   if (!syncEntitled()) return false
@@ -759,10 +791,8 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
 
     const now = Date.now()
+    writeRemoteSettings(remote)
     setPrefsIfChanged({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...(syncableValues(remote.preferencesStore.values) as any),
-      preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
       lastiCloudSyncAt: now,
       lastiCloudPulledAt: now,
       lastiCloudRemoteWrittenAt: remote.writtenAt,
@@ -770,19 +800,32 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       lastiCloudRemoteDeviceName: remote.deviceName ?? null,
       iCloudResetEpoch: remote.resetEpoch ?? null,
     })
-    // Profile slice — `parsePayload` has already lifted any legacy
-    // profile-shaped fields out of `preferencesStore.values` into
-    // `remote.profileStore` via `normalizeLegacyPayloadFieldNames`, so this
-    // single write covers both fresh-shape and legacy-shape remote payloads.
-    useProfile.setState({
-      ...syncableValues(
-        remote.profileStore?.values ?? {},
-        NON_SYNCABLE_PROFILE_KEYS
-      ),
-      profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
-    })
   })
   rebasePublishedPhotos()
+}
+
+/**
+ * Writes `remote`'s synced preferences and profile over this device's, stamps
+ * and all, so a merge that follows keeps them. Call inside
+ * `withRemoteDataMutation`.
+ */
+function writeRemoteSettings(remote: SyncPayload): void {
+  setPrefsIfChanged({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(syncableValues(remote.preferencesStore.values) as any),
+    preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
+  })
+  // Profile slice — `parsePayload` has already lifted any legacy
+  // profile-shaped fields out of `preferencesStore.values` into
+  // `remote.profileStore` via `normalizeLegacyPayloadFieldNames`, so this
+  // single write covers both fresh-shape and legacy-shape remote payloads.
+  useProfile.setState({
+    ...syncableValues(
+      remote.profileStore?.values ?? {},
+      NON_SYNCABLE_PROFILE_KEYS
+    ),
+    profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
+  })
 }
 
 /**
@@ -809,9 +852,14 @@ export function joinRemoteResetEpoch(remote: SyncPayload): void {
  * settings would sync the new account under the old generation.
  *
  * Pulls wait until it ends (`resetInProgress`), so it publishes this device's
- * data rather than another device's reset adopted meanwhile.
+ * data rather than another device's reset adopted meanwhile. Refused on the
+ * web, as leaving Cloud Sync is (`switchSyncOption`).
  */
 export async function overwriteRemoteWithLocal(): Promise<void> {
+  // The web (ADR 0037 §2) holds what it pulled, maybe not all of it, and has
+  // nowhere else to keep the account's data: publishing its state as a new
+  // generation would replace every phone's.
+  if (cloudSyncOnly()) throw new Error('The web can’t rebuild Cloud Sync data')
   if (resetInProgress) throw new Error('iCloud reset already running')
   resetInProgress = true
   try {
@@ -986,7 +1034,15 @@ export type RemoteIncompleteReason =
 export type RemotePeek =
   | { status: 'found'; remote: SyncPayload; account: ICloudAccount }
   | { status: 'none' }
-  | { status: 'incomplete'; reason: RemoteIncompleteReason }
+  | {
+      status: 'incomplete'
+      reason: RemoteIncompleteReason
+      /**
+       * With `newer-version` or `invalid-file`, the files it could read,
+       * folded, when it read every other one (none still downloading).
+       */
+      readable?: SyncPayload
+    }
   | { status: 'offline' }
   | { status: 'unavailable' }
 
@@ -1002,14 +1058,19 @@ const PEEK_READ_ATTEMPTS = 2
  */
 export const PEEK_DEADLINE_MS = 25_000
 
-function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
+function incompletePeek(
+  reason: RemoteIncompleteReason,
+  readable?: SyncPayload
+): RemotePeek {
   logger.warn(`${tag()} peekRemotePayload: remote incomplete`, { reason })
   errorTracking.addBreadcrumb({
     category: 'iCloudSync',
     message: `peek — remote incomplete (${reason})`,
     level: 'warning',
   })
-  return { status: 'incomplete', reason }
+  return readable
+    ? { status: 'incomplete', reason, readable }
+    : { status: 'incomplete', reason }
 }
 
 /**
@@ -1032,7 +1093,7 @@ function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
  * switched during is `unavailable`.
  */
 export async function peekRemotePayload(): Promise<RemotePeek> {
-  if (!hasSyncTransport()) return { status: 'unavailable' }
+  if (!hasSyncEngine()) return { status: 'unavailable' }
   if (!syncTransport().isAvailable()) return { status: 'unavailable' }
   checkICloudIdentity('initial_enable')
   const account = storedICloudAccount()
@@ -1062,15 +1123,21 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
           filename !== filenameForDevice(ensureDeviceId())
       )
       const payloads: SyncPayload[] = []
+      let unreadable: 'newer-version' | 'invalid-file' | null = null
       for (const file of files) {
         const parsed = parsePayload(file.json)
         if (parsed) payloads.push(alignPayloadClock(parsed, file.modifiedAt))
-        else if (isNewerPayloadVersion(file.json)) {
-          return incompletePeek('newer-version')
-        } else {
-          return incompletePeek('invalid-file')
-        }
+        else if (isNewerPayloadVersion(file.json)) unreadable = 'newer-version'
+        else unreadable ??= 'invalid-file'
       }
+      // The rest, for a caller that can go on without that file (the web).
+      if (unreadable)
+        return incompletePeek(
+          unreadable,
+          pending?.length
+            ? undefined
+            : (foldRemotePayloads(payloads) ?? undefined)
+        )
       // `pending: null` is a binary that can't tell (see `readFiles`); decide
       // on what it read, as before `pending` existed.
       if (!pending?.length) {
@@ -1109,7 +1176,9 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
  * - `incomplete` — the remote couldn't be seen in full (see `RemotePeek`), so
  *   every other outcome could be wrong: `seed` would push this device's
  *   onboarding defaults over a backup still downloading. Caller must leave sync
- *   off and try again later.
+ *   off and try again later. When the rest was read and only a file it can't
+ *   open is missing, `remote` is that rest: the web, which can't wait for an
+ *   update elsewhere, merges it as for `conflict`.
  * - `seed` — no remote file exists. Safe to enable + push this device's state.
  * - `pull` — remote exists, local has no meaningful user records. Safe to
  *   destructively replace local with remote + enable.
@@ -1120,7 +1189,12 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
  */
 export type InitialEnableDecision =
   | { outcome: 'unavailable' }
-  | { outcome: 'incomplete'; reason: RemoteIncompleteReason }
+  | {
+      outcome: 'incomplete'
+      reason: RemoteIncompleteReason
+      /** The part it could read (`RemotePeek`'s `readable`). */
+      remote?: SyncPayload
+    }
   | { outcome: 'seed' }
   | { outcome: 'pull'; remote: SyncPayload }
   | { outcome: 'conflict'; remote: SyncPayload; account: ICloudAccount }
@@ -1137,7 +1211,7 @@ export type InitialEnableDecision =
  * clobbering the old device on the next pull-and-merge.
  */
 export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
-  if (!hasSyncTransport()) return { outcome: 'unavailable' }
+  if (!hasSyncEngine()) return { outcome: 'unavailable' }
   if (!syncTransport().isAvailable()) return { outcome: 'unavailable' }
   // A headless auto-enable must not seed an account it just noticed.
   if (!checkICloudIdentity('initial_enable')) return { outcome: 'unavailable' }
@@ -1147,7 +1221,9 @@ export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
     case 'offline':
       return { outcome: 'unavailable' }
     case 'incomplete':
-      return { outcome: 'incomplete', reason: peek.reason }
+      return peek.readable
+        ? { outcome: 'incomplete', reason: peek.reason, remote: peek.readable }
+        : { outcome: 'incomplete', reason: peek.reason }
     case 'none':
       return { outcome: 'seed' }
     case 'found':
@@ -1200,6 +1276,82 @@ export function applyPullEnable(
   })
   if (!wasEnabled) {
     analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
+  }
+}
+
+/**
+ * Enables sync and merges `remote` with this device's records, keeping both
+ * (the first-enable sheet's "Merge both"): joins its reset generation first, so
+ * the pull merges instead of replacing, then publishes the result. For a caller
+ * that has seen `resolveInitialEnable()` return `conflict` and can't ask (the
+ * web's default), which passes `keepRemoteSettings` so the account's
+ * preferences and profile stay as they are and only records merge. Throws when
+ * the read or the write didn't finish; sync stays on and retries like any
+ * other.
+ */
+export async function applyMergeEnable(
+  remote: SyncPayload,
+  source: 'settings' | 'supporter_default' = 'settings',
+  { keepRemoteSettings = false }: { keepRemoteSettings?: boolean } = {}
+): Promise<void> {
+  backfillUpdatedAtIfNeeded()
+  joinRemoteResetEpoch(remote)
+  // The account's preferences and profile (role, goals, name) first, so only
+  // records merge: this device's own may be newer only because it was just set
+  // up, and would win on every other device.
+  if (keepRemoteSettings)
+    withRemoteDataMutation(() =>
+      writeRemoteSettings(foldRemotePayloads([remote])!)
+    )
+  const wasEnabled = usePreferences.getState().iCloudSyncEnabled
+  usePreferences.getState().set({
+    iCloudSyncEnabled: true,
+    iCloudSyncNeedsResolution: false,
+    iCloudFreshSetup: false,
+  })
+  if (!wasEnabled) {
+    analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
+  }
+  await pullAndMerge('initial-enable-merge')
+  if (
+    usePreferences.getState().iCloudSyncIssue ||
+    !(await push('initial-enable-merge'))
+  )
+    throw new Error('Sync merge incomplete')
+}
+
+/**
+ * Cloud Sync takes one put a slot every 2 seconds (ADR 0030 §5), so an edit
+ * right after a push waits this long to go when the server doesn't say.
+ */
+const SLOT_PUT_INTERVAL_MS = 2_100
+
+/** As long as `WEB_SIGN_OUT_FLUSH_MS`, which bounds the caller's wait. */
+const FLUSH_BUDGET_MS = 5_000
+
+/**
+ * Sends every change still waiting for its push, before the web signs out,
+ * which wipes this browser. A push already going out has an older snapshot, so
+ * it waits for that and pushes again; one the slot's put limit refused goes
+ * again once it allows. It stops at any other failure. The caller bounds how
+ * long it waits.
+ */
+export async function flushPendingPush(
+  reason: string,
+  budgetMs = FLUSH_BUDGET_MS
+): Promise<void> {
+  const deadline = Date.now() + budgetMs
+  for (let attempt = 0; attempt < 3; attempt++) {
+    resetPushBackoff()
+    await waitForSyncIdle()
+    if (!usePreferences.getState().iCloudSyncPendingPush || !canSync()) return
+    if (await push(reason)) continue
+    if (usePreferences.getState().iCloudSyncErrorCode !== 'rate-limited') return
+    // As long as the server asked; not at all past the budget, where the
+    // caller stops waiting anyway.
+    const wait = lastPushRetryAfterMs ?? SLOT_PUT_INTERVAL_MS
+    if (Date.now() + wait > deadline) return
+    await new Promise((resolve) => setTimeout(resolve, wait))
   }
 }
 
@@ -1922,6 +2074,8 @@ async function pushInner(reason: string): Promise<boolean> {
       return false
     }
     const generation = editGeneration
+    // Set only after a complete pull applied, so this snapshot holds it.
+    const prunePlan = mergedForPrune
     const deviceId = ensureDeviceId()
     const filename = filenameForDevice(deviceId)
     const imageSources = collectLocalAvatarSources({
@@ -1992,8 +2146,10 @@ async function pushInner(reason: string): Promise<boolean> {
       restartUploadChecks()
     }
     resetPushBackoff()
+    lastPushRetryAfterMs = null
     publishedThisLaunch = true
     if (!covered) schedulePush()
+    if (prunePlan) void pruneEndedWebSnapshots(prunePlan)
     logger.log(`${tag()} push success`, { reason, filename })
     errorTracking.addBreadcrumb({
       category: 'iCloudSync',
@@ -2010,6 +2166,8 @@ async function pushInner(reason: string): Promise<boolean> {
     return true
   } catch (e) {
     const code = syncTransportErrorCode(e)
+    lastPushRetryAfterMs =
+      e instanceof SyncTransportError ? e.retryAfterMs : null
     if (isExpectedTransportFailure(e)) {
       logger.warn(`${tag()} push failed (${reason})`, e)
       errorTracking.addBreadcrumb({
@@ -2031,6 +2189,41 @@ async function pushInner(reason: string): Promise<boolean> {
     if (code === 'storage-full') recordUploadIssue()
     recordPushFailure(code)
     return false
+  }
+}
+
+/**
+ * The web: every web sign-in opens a slot, and signing out leaves it for the
+ * server's retention, so slots would pile up toward the account's cap (ADR 0030
+ * §5). Once this browser's own slot holds what a complete pull merged, deletes
+ * the slots of browsers whose session ended among them, still at the version
+ * merged (`endedWebSlots`). Never a phone's, a live session's, or one written
+ * since. Once a launch; a failure tries again after the next pull.
+ */
+async function pruneEndedWebSnapshots(plan: {
+  files: ReadonlyMap<string, number>
+  generation: number
+}): Promise<void> {
+  const transport = syncTransport()
+  if (
+    prunedThisLaunch ||
+    mergedForPrune !== plan ||
+    plan.generation !== completePullGeneration() ||
+    !usesCloudSync() ||
+    !transport.deleteEndedWebSnapshots
+  )
+    return
+  prunedThisLaunch = true
+  mergedForPrune = null
+  try {
+    const deleted = await transport.deleteEndedWebSnapshots(plan.files)
+    if (deleted.length)
+      logger.log(`${tag()} removed signed-out browsers' slots`, {
+        count: deleted.length,
+      })
+  } catch (e) {
+    prunedThisLaunch = false
+    logger.warn(`${tag()} couldn't remove signed-out browsers' slots`, e)
   }
 }
 
@@ -2261,6 +2454,9 @@ function pull(reason: string): Promise<PullOutcome> {
   const startedAt = Date.now()
   const started = ++pullsStarted
   pullInFlightStartedAt = startedAt
+  // Only a read of this account's Cloud Sync slots settles its claims.
+  const settledGeneration = completePullGeneration()
+  const onCloudSync = usesCloudSync()
   // Defer execution until the promise is assigned, including a skipped pull.
   pullInFlight = Promise.resolve().then(async () => {
     try {
@@ -2290,6 +2486,16 @@ function pull(reason: string): Promise<PullOutcome> {
         }
       }
       if (outcome.complete && lastReadFoundFiles) markCompleteICloudPull()
+      // After the read set the peers' claims.
+      if (outcome.claimsRead && onCloudSync && usesCloudSync()) {
+        markCompletePull(settledGeneration)
+        // Its result is in the stores now; the next push publishes it.
+        if (cloudSyncOnly() && !prunedThisLaunch)
+          mergedForPrune = {
+            files: lastReadModifiedAt,
+            generation: settledGeneration,
+          }
+      }
       return outcome
     } finally {
       const queued = pullQueuedReason
@@ -2375,6 +2581,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   let issue: 'newer-version' | 'invalid-file' | 'read-failed' | null = null
   const { files, pending } = read
   lastReadFoundFiles = files.length > 0
+  // Set below, once parsing shows which files merged whole.
+  lastReadModifiedAt = new Map()
   // Pending (still downloading) counts as present: it exists, just unread.
   const ownFile =
     files.some((f) => f.filename === ownFilename) ||
@@ -2392,6 +2600,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     pending,
   })
 
+  // Every listed file was read; parsing below may still find one it can't.
+  let claimsRead = complete
   if (files.length === 0) {
     setPeerAccountClaims([])
     usePreferences.getState().set({
@@ -2405,7 +2615,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       message: `pull (${reason}) — no remote`,
       level: 'info',
     })
-    return { changed: false, complete, ownFile }
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   // Parse files independently. Retain legacy sources so an old writer's
@@ -2417,6 +2627,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   }> = []
   const legacyFilenames: string[] = []
   const unparsed: SyncDeviceFiles = {}
+  // Read with records left out: those stay only in the slot that has them.
+  const partlyRead = new Set<string>()
   for (const file of files) {
     if (file.filename === ownFilename) continue
     let dropped: string[] = []
@@ -2427,6 +2639,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       (rejected) => (rejection = rejected)
     )
     if (dropped.length) {
+      partlyRead.add(file.filename)
       reportDroppedFields(file.filename, dropped)
       // GC judges photos by the contacts and profile it read; a dropped one
       // could still own a photo.
@@ -2474,6 +2687,13 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       .map((r) => r.payload.revenueCat)
       .filter((claim): claim is AccountClaim => claim !== undefined)
   )
+  // A slot it couldn't open (newer, or damaged) may hold a claim.
+  claimsRead &&= Object.keys(unparsed).length === 0
+  lastReadModifiedAt = new Map(
+    files
+      .filter((f) => !partlyRead.has(f.filename) && !(f.filename in unparsed))
+      .map((f) => [f.filename, f.modifiedAt])
+  )
 
   // Reset generations: a newer one replaces local data; an older one is a
   // snapshot a reset replaced, and stays out of the merge. Neither makes the
@@ -2494,7 +2714,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   if (compareResetEpochs(newestEpoch, localEpoch) > 0) {
     if (!canApplyPull(reason))
       return { changed: false, complete: false, ownFile }
-    return adoptResetEpoch(
+    const adopted = await adoptResetEpoch(
       reason,
       remotePayloads
         .filter(
@@ -2504,6 +2724,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       complete,
       issue
     )
+    return { ...adopted, claimsRead }
   }
   const preReset = remotePayloads.filter(
     (r) => compareResetEpochs(r.payload.resetEpoch, localEpoch) < 0
@@ -2553,7 +2774,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       skippedOwn: files.some((f) => f.filename === ownFilename),
     })
     // Keep legacy files: another writer may still be updating them.
-    return { changed: false, complete, ownFile }
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   if (!canApplyPull(reason)) return { changed: false, complete: false, ownFile }
@@ -2606,7 +2827,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     // The photo job is cheap and idempotent, so start it on every pull cycle
     // and let its own bookkeeping skip no-op downloads.
     startImagePull()
-    return { changed: false, complete, ownFile }
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   applyMergedState(acc)
@@ -2635,7 +2856,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   // photo arrives. The job is a no-op when image sync is disabled.
   startImagePull()
 
-  return { changed: true, complete, ownFile }
+  return { changed: true, complete, ownFile, claimsRead }
 }
 
 /**
@@ -2978,7 +3199,7 @@ async function catchUp(reason: string): Promise<void> {
  * preference, so nothing runs until the user flips the toggle.
  */
 export function installiCloudSync(): () => void {
-  if (!hasSyncTransport()) return () => {}
+  if (!hasSyncEngine()) return () => {}
   if (installed) return () => {}
   installed = true
   // Before the clock offset is read: a copied device resets it. Also catches
@@ -3235,6 +3456,8 @@ export const iCloudSync = {
   resolveInitialEnable,
   applySeedEnable,
   applyPullEnable,
+  applyMergeEnable,
+  flushPendingPush,
   enableImageSync,
   disableImageSync,
   clearCloudPhotos,

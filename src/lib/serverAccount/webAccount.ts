@@ -32,9 +32,12 @@ import { SIGNED_OUT_DATA } from '@/lib/webStorage/boot'
  *   session without loading the key into this page, and reloads every tab
  *   (`reload` is then true), so nothing acts on the new key while the old
  *   account's data is in memory. The page that loads is signed in.
- * - **Signing out** closes the session (waiting at most `WEB_CLOSE_WAIT_MS`),
- *   then wipes the account key, the session, and every local store, and reloads
- *   every tab.
+ * - **Signing out** first lets what's waiting go out (`beforeSignOut`: Cloud
+ *   Sync's last push, waiting at most `WEB_SIGN_OUT_FLUSH_MS`), closes the
+ *   session (waiting at most `WEB_CLOSE_WAIT_MS`), then wipes the account key,
+ *   the session, and every local store, and reloads every tab. It never deletes
+ *   this browser's Cloud Sync slot: it may be the only copy of the account's
+ *   data and RevenueCat id.
  * - **Signed out by the server:** a refresh refused as `revoked` or `reused`
  *   wipes at once, like signing out, in every tab that hears of it. `expired`,
  *   `replaced` (and any other reason) keep the sealed key and the stores and
@@ -60,6 +63,12 @@ export const WEB_TICKET_LIFETIME_MS = 2 * 60 * 1000
  * close the session before wiping: offline, the server ends it in time.
  */
 export const WEB_CLOSE_WAIT_MS = 2_000
+
+/**
+ * How long signing out waits for what it runs first (`beforeSignOut`): Cloud
+ * Sync sending a change still waiting to go.
+ */
+export const WEB_SIGN_OUT_FLUSH_MS = 5_000
 
 export type WebAccountState =
   /** Not known until `start` read what's stored, or reloading. */
@@ -199,6 +208,8 @@ export type WebAccountDeps = {
   now?: () => number
   /** `WEB_CLOSE_WAIT_MS` by default. */
   closeWaitMs?: number
+  /** `WEB_SIGN_OUT_FLUSH_MS` by default. */
+  flushWaitMs?: number
 }
 
 export function createWebAccount(deps: WebAccountDeps) {
@@ -208,6 +219,8 @@ export function createWebAccount(deps: WebAccountDeps) {
   let started: Promise<WebAccountState> | null = null
   const now = deps.now ?? Date.now
   const closeWaitMs = deps.closeWaitMs ?? WEB_CLOSE_WAIT_MS
+  const flushWaitMs = deps.flushWaitMs ?? WEB_SIGN_OUT_FLUSH_MS
+  const signOutHooks = new Set<() => Promise<unknown>>()
   /**
    * The last `session/open` signed, until its ticket expires: a retry after a
    * lost answer sends it again, which the server answers with the same session
@@ -621,10 +634,29 @@ export function createWebAccount(deps: WebAccountDeps) {
      */
     async signOut(): Promise<void> {
       await deps.markWipePending().catch(() => undefined)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      await Promise.race([
+        Promise.allSettled([...signOutHooks].map((hook) => hook())),
+        new Promise((resolve) => (timer = setTimeout(resolve, flushWaitMs))),
+      ])
+      clearTimeout(timer)
       await deps.sessions.close({ waitMs: closeWaitMs })
       await wipeAndReload()
     },
     decide,
+    /**
+     * Runs `hook` when this browser signs out, while its session is still open
+     * and before anything is wiped: Cloud Sync sends a change still waiting, so
+     * the account keeps it. Waits at most `WEB_SIGN_OUT_FLUSH_MS` for all of
+     * them, and a hook's failure doesn't stop the sign-out. Returns the
+     * unsubscribe.
+     */
+    beforeSignOut(hook: () => Promise<unknown>): () => void {
+      signOutHooks.add(hook)
+      return () => {
+        signOutHooks.delete(hook)
+      }
+    },
     ended,
     /**
      * This browser changed its account key and stored the new one (step 4): the

@@ -1,4 +1,6 @@
 import { openAppSettings } from '@/lib/openAppSettings'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
+import { syncSettingsMode } from '@/features/settings/lib/syncSettingsMode'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
@@ -134,12 +136,21 @@ const PreferencesiCloudScreenInner = () => {
   // Cloud Sync (ADR 0030) is offered once the server's switch is on; the
   // screen then picks between it, iCloud or Google Drive, and Off.
   // A device already on Cloud Sync keeps the choice while the server's switch
-  // pauses it, so it can still move to iCloud, Google Drive, or Off.
-  const cloudOffered =
-    registeredCloudSyncTransport() !== null &&
-    (cloudSyncConfig?.enabled === true || syncProvider === 'cloud')
-  const option = currentSyncOption()
-  const onCloud = option === 'cloud'
+  // pauses it, so it can still move to iCloud, Google Drive, or Off. The web
+  // is always on Cloud Sync and never shows the iCloud toggle.
+  const web = cloudSyncOnly()
+  const option = web ? 'cloud' : currentSyncOption()
+  const {
+    optionPicker: cloudOffered,
+    onCloud,
+    rebuild,
+  } = syncSettingsMode({
+    web,
+    cloudRegistered: registeredCloudSyncTransport() !== null,
+    cloudSyncConfigEnabled: cloudSyncConfig?.enabled,
+    chosenProvider: syncProvider,
+    option,
+  })
   const offer = usePreferences(showsCloudSyncOffer)
   const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
   const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
@@ -1288,7 +1299,7 @@ const PreferencesiCloudScreenInner = () => {
           </View>
         )}
 
-        {iCloudSyncEnabled && (
+        {iCloudSyncEnabled && rebuild && (
           <Section>
             <InputRowButton
               label={i18n.t(syncKey('iCloudReset'))}

@@ -128,6 +128,11 @@ export type SyncSlot = {
   platform: SyncSlotPlatform | null
   /** Whether that session is still live; false when the server doesn't say. */
   live: boolean
+  /**
+   * The server said that session ended (`live: false`). False when it doesn't
+   * say, so nothing reads a missing answer as an ended session.
+   */
+  ended: boolean
 }
 
 export type SyncListing = {
@@ -287,6 +292,7 @@ export async function listSyncSlots(
           ? (platform as SyncSlotPlatform)
           : null,
         live: live === true,
+        ended: live === false,
       })),
   }
 }

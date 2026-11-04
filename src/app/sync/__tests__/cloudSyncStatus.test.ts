@@ -249,4 +249,19 @@ describe('an account change', () => {
     expect(entry()).toEqual({ localMtime: 1, uploadedMtime: null })
     stop()
   })
+
+  it('forgets the complete pull it had read for the old account', async () => {
+    runtime.status = status()
+    const { installCloudSyncRuntime, registerCloudSync } = await load()
+    const settled = await import('@/lib/cloudSyncPullSettled')
+    registerCloudSync()
+    const stop = installCloudSyncRuntime(() => false)
+    settled.markCompletePull()
+    // A new session on the same account: what was read still stands.
+    runtime.accountListener?.('session_opened')
+    expect(settled.completedPullThisLaunch()).toBe(true)
+    runtime.accountListener?.('key_changed')
+    expect(settled.completedPullThisLaunch()).toBe(false)
+    stop()
+  })
 })

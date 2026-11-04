@@ -16,6 +16,7 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { platformSyncKey } from '@/lib/syncCopy'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import type { SyncOption } from '@/app/sync/syncOption'
 
 /**
@@ -23,7 +24,8 @@ import type { SyncOption } from '@/app/sync/syncOption'
  * Android), or Off, one at a time. Says why Cloud Sync is the more secure one
  * in words that stay true (WitnessWork encrypts Cloud Sync end to end, and
  * doesn't encrypt iCloud or Drive sync), and, on iCloud/Drive, that this device
- * only syncs with devices on the same option.
+ * only syncs with devices on the same option. The web has only Cloud Sync (ADR
+ * 0037 §2): it keeps the browser's data, so it's the one row there.
  */
 export default function SyncOptionSection({
   option,
@@ -47,6 +49,7 @@ export default function SyncOptionSection({
   otherDevicesSignedIn: boolean | null
 }) {
   const theme = useTheme()
+  const web = cloudSyncOnly()
 
   const row = (
     value: SyncOption,
@@ -140,28 +143,40 @@ export default function SyncOptionSection({
         </Text>
         <InfoPopover
           title={i18n.t('syncOption_title')}
-          description={i18n.t(platformSyncKey('syncOption_info'))}
+          description={i18n.t(
+            web ? 'syncOption_infoWeb' : platformSyncKey('syncOption_info')
+          )}
         />
       </View>
       <Section>
-        {row('cloud', i18n.t('cloudSync'), i18n.t('syncOption_cloudSublabel'))}
         {row(
-          'platform',
-          i18n.t(platformSyncKey('iCloudSync')),
-          i18n.t(platformSyncKey('syncOption_platformSublabel'))
+          'cloud',
+          i18n.t('cloudSync'),
+          i18n.t(
+            web ? 'syncOption_cloudSublabelWeb' : 'syncOption_cloudSublabel'
+          ),
+          web
         )}
-        {row('off', i18n.t('syncOption_off'), undefined, true)}
+        {!web &&
+          row(
+            'platform',
+            i18n.t(platformSyncKey('iCloudSync')),
+            i18n.t(platformSyncKey('syncOption_platformSublabel'))
+          )}
+        {!web && row('off', i18n.t('syncOption_off'), undefined, true)}
       </Section>
       <View style={{ paddingHorizontal: inputLayout.horizontalPadding }}>
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
           {i18n.t(
-            option === 'cloud'
-              ? 'syncOption_cloudFooter'
-              : option === 'platform'
-                ? otherDevicesSignedIn
-                  ? platformSyncKey('syncOption_platformFooterMixed')
-                  : platformSyncKey('syncOption_platformFooter')
-                : platformSyncKey('syncOption_security')
+            web
+              ? 'syncOption_cloudFooterWeb'
+              : option === 'cloud'
+                ? 'syncOption_cloudFooter'
+                : option === 'platform'
+                  ? otherDevicesSignedIn
+                    ? platformSyncKey('syncOption_platformFooterMixed')
+                    : platformSyncKey('syncOption_platformFooter')
+                  : platformSyncKey('syncOption_security')
           )}
         </Text>
       </View>

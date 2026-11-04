@@ -15,6 +15,7 @@ import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { leaveCloudSyncAccount } from '@/app/sync/cloudSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { holdCloudSyncDefault } from '@/app/sync/cloudSyncDefaultHold'
 
 /**
  * This device's account key (ADR 0026), wired to the native store, the server
@@ -77,7 +78,9 @@ export type AccountKeyReplaceSource = 'recovery_key' | 'handoff' | 'tools'
 /**
  * Replaces the account key (see `AccountKeyService.replace`), records it, and
  * then lets Buddies start here when the new key already has it elsewhere. A
- * handoff starts Buddies itself once the old phone knows it's done.
+ * handoff starts Buddies itself once the old phone knows it's done. Cloud
+ * Sync's default decides nothing until it's over, even if it fails: leaving the
+ * old account turns sync off, and a decision then would run on that account.
  */
 export async function replaceAccountKey(
   newKey: Uint8Array,
@@ -91,7 +94,9 @@ export async function replaceAccountKey(
     session?: OpenedAccountSession
   }
 ): Promise<ReplaceAccountKeyResult> {
-  const result = await accountKey.replace(newKey, { confirmedLoss, session })
+  const result = await holdCloudSyncDefault(() =>
+    accountKey.replace(newKey, { confirmedLoss, session })
+  )
   if (result.outcome === 'replaced') {
     analytics.capture('account_key_replaced', {
       source,

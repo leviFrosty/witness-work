@@ -7,6 +7,8 @@ const runtime = vi.hoisted(() => ({
   cloudSyncEntitled: null as boolean | null,
   entitlement: 'supporter' as 'supporter' | 'everyone',
   installedBeforeFreeSync: true,
+  os: 'ios' as 'ios' | 'web',
+  onboardingComplete: true,
   setState: vi.fn(),
   appStateListeners: [] as Array<(state: string) => void>,
   accountListeners: [] as Array<(change: string) => void>,
@@ -18,7 +20,11 @@ const runtime = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    get OS() {
+      return runtime.os
+    },
+  },
   AppState: {
     addEventListener: (_: string, listener: (state: string) => void) => {
       runtime.appStateListeners.push(listener)
@@ -43,7 +49,7 @@ vi.mock('@/stores/preferences', () => ({
       syncProvider: null,
       cloudSyncConfig: { enabled: true, entitlement: runtime.entitlement },
       cloudSyncEntitled: runtime.cloudSyncEntitled,
-      onboardingComplete: true,
+      onboardingComplete: runtime.onboardingComplete,
       installedBeforeFreeSync: runtime.installedBeforeFreeSync,
     }),
     {
@@ -57,7 +63,12 @@ vi.mock('@/app/sync/iCloudSync', () => ({
     resolveInitialEnable: vi.fn(async () => ({ outcome: 'seed' })),
     applySeedEnable: vi.fn(async () => {}),
     applyPullEnable: vi.fn(),
+    applyMergeEnable: vi.fn(async () => {}),
+    pullAndMerge: vi.fn(async () => false),
   },
+}))
+vi.mock('@/features/settings/lib/completeOnboardingFromRestore', () => ({
+  completeOnboardingFromRestore: vi.fn(),
 }))
 vi.mock('@/app/sync/cloudSync', () => ({ prepareCloudSync: vi.fn() }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
@@ -71,6 +82,7 @@ vi.mock('@/lib/serverAccount', () => ({
     }
   },
 }))
+vi.mock('@/lib/appUpdate', () => ({ checkAppConfig: vi.fn(async () => {}) }))
 vi.mock('@/lib/syncTransport', () => ({ hasSyncTransport: () => true }))
 vi.mock('@/lib/syncTransport/provider', () => ({
   addActiveRemoteChangeListener: () => ({ remove: () => {} }),
@@ -85,14 +97,17 @@ beforeEach(() => {
   runtime.cloudSyncEntitled = null
   runtime.entitlement = 'supporter'
   runtime.installedBeforeFreeSync = true
+  runtime.os = 'ios'
+  runtime.onboardingComplete = true
   runtime.appStateListeners = []
   runtime.accountListeners = []
   runtime.live = {}
 })
 
-afterEach(() => {
+afterEach(async () => {
   act(() => renderer?.unmount())
   renderer = null
+  ;(await import('@/app/sync/webFirstSync')).resetFirstSync()
 })
 
 const notEntitled = {
@@ -530,5 +545,296 @@ describe('CloudSyncDefault', () => {
         'supporter_default'
       )
     })
+  })
+})
+
+describe('CloudSyncDefault on the web', () => {
+  const ready = {
+    outcome: 'ready',
+    status: { ...notEntitled.status, entitled: true, entitlement: 'everyone' },
+  } as const
+  const remote = { deviceId: 'phone' } as never
+
+  beforeEach(() => {
+    runtime.os = 'web'
+    runtime.isSupporter = false
+    runtime.entitlement = 'everyone'
+    runtime.installedBeforeFreeSync = false
+    // Just signed in: onboarding hasn't run.
+    runtime.onboardingComplete = false
+  })
+
+  const render = async () => {
+    const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+    const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+    vi.mocked(prepareCloudSync).mockResolvedValue(ready)
+    await act(async () => {
+      renderer = create(<CloudSyncDefault />)
+    })
+    return {
+      iCloudSync: (await import('@/app/sync/iCloudSync')).iCloudSync,
+      completeOnboarding: (
+        await import('@/features/settings/lib/completeOnboardingFromRestore')
+      ).completeOnboardingFromRestore,
+    }
+  }
+
+  it('brings in the account’s data before onboarding, and skips it', async () => {
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+      outcome: 'pull',
+      remote,
+    })
+    const { completeOnboarding } = await render()
+    expect(runtime.setState).toHaveBeenCalledWith({ syncProvider: 'cloud' })
+    expect(iCloudSync.applyPullEnable).toHaveBeenCalledWith(
+      remote,
+      'supporter_default'
+    )
+    expect(completeOnboarding).toHaveBeenCalledWith('cloud_sync')
+    // The peers' claims come with a pull, which also settles the id.
+    expect(iCloudSync.pullAndMerge).toHaveBeenCalledWith('enabled')
+  })
+
+  it('seeds a web-only account and leaves onboarding to run', async () => {
+    const { iCloudSync, completeOnboarding } = await render()
+    expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith('supporter_default')
+    expect(completeOnboarding).not.toHaveBeenCalled()
+    expect(iCloudSync.pullAndMerge).toHaveBeenCalledWith('enabled')
+  })
+
+  it('merges instead of asking when both sides have records', async () => {
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+      outcome: 'conflict',
+      remote,
+      account: { token: null, changedAt: null },
+    })
+    const { completeOnboarding } = await render()
+    // Only records merge: the account's preferences and profile stay.
+    expect(iCloudSync.applyMergeEnable).toHaveBeenCalledWith(
+      remote,
+      'supporter_default',
+      { keepRemoteSettings: true }
+    )
+    expect(completeOnboarding).toHaveBeenCalledWith('cloud_sync')
+  })
+
+  it('finishes onboarding even when the merge didn’t finish, and reports it once', async () => {
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    const { analytics } = await import('@/lib/analytics')
+    vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+      outcome: 'conflict',
+      remote,
+      account: { token: null, changedAt: null },
+    })
+    vi.mocked(iCloudSync.applyMergeEnable).mockRejectedValueOnce(
+      new Error('Sync merge incomplete')
+    )
+    const { completeOnboarding } = await render()
+    expect(completeOnboarding).toHaveBeenCalledWith('cloud_sync')
+    const outcomes = vi
+      .mocked(analytics.capture)
+      .mock.calls.filter(([event]) => event === 'cloud_sync_default_outcome')
+      .map(([, props]) => (props as { outcome: string }).outcome)
+    expect(outcomes).toEqual(['conflict', 'merge_incomplete'])
+  })
+
+  describe('holding onboarding', () => {
+    const state = async () =>
+      (await import('@/app/sync/webFirstSync')).firstSyncState()
+
+    it.each(['incomplete', 'unavailable'] as const)(
+      'stalls on %s, and decides again on Retry',
+      async (outcome) => {
+        const { iCloudSync } = await import('@/app/sync/iCloudSync')
+        vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+          outcome,
+        } as never)
+        await render()
+        expect(await state()).toBe('stalled')
+        expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
+
+        const { retryFirstSync } = await import('@/app/sync/webFirstSync')
+        const { checkAppConfig } = await import('@/lib/appUpdate')
+        await act(async () => retryFirstSync())
+        expect(checkAppConfig).toHaveBeenCalledWith({ force: true })
+        expect(iCloudSync.resolveInitialEnable).toHaveBeenCalledTimes(2)
+        expect(iCloudSync.applySeedEnable).toHaveBeenCalled()
+      }
+    )
+
+    it('stalls without a session', async () => {
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      vi.mocked(prepareCloudSync).mockResolvedValue({
+        outcome: 'no_session',
+        error: null,
+      })
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(await state()).toBe('stalled')
+    })
+
+    it('stalls when deciding threw', async () => {
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      vi.mocked(iCloudSync.resolveInitialEnable).mockRejectedValueOnce(
+        new Error('offline')
+      )
+      await render()
+      expect(await state()).toBe('stalled')
+    })
+
+    it('reads the account again on Retry once sync is on', async () => {
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      await render()
+      vi.mocked(iCloudSync.pullAndMerge).mockClear()
+      runtime.live = { iCloudSyncEnabled: true }
+      const { retryFirstSync } = await import('@/app/sync/webFirstSync')
+      await act(async () => retryFirstSync())
+      expect(iCloudSync.pullAndMerge).toHaveBeenCalledWith('enabled')
+    })
+
+    it('lets onboarding run for an account sync can’t run for', async () => {
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      vi.mocked(prepareCloudSync).mockResolvedValue(notEntitled)
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(await state()).toBe('released')
+    })
+
+    it('lets onboarding run once the server said the account isn’t entitled', async () => {
+      runtime.entitlement = 'supporter'
+      runtime.cloudSyncEntitled = false
+      const { iCloudSync } = await render()
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      expect(prepareCloudSync).not.toHaveBeenCalled()
+      expect(iCloudSync.resolveInitialEnable).not.toHaveBeenCalled()
+      expect(await state()).toBe('released')
+    })
+
+    it('asks the server before letting onboarding run while Cloud Sync is for Supporters', async () => {
+      runtime.entitlement = 'supporter'
+      runtime.cloudSyncEntitled = null
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      let answer: (outcome: typeof notEntitled) => void = () => {}
+      vi.mocked(prepareCloudSync).mockReturnValue(
+        new Promise((resolve) => (answer = resolve))
+      )
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      expect(prepareCloudSync).toHaveBeenCalled()
+      expect(await state()).toBe('checking')
+      await act(async () => answer(notEntitled))
+      expect(await state()).toBe('released')
+    })
+
+    it('decides once the server says a Supporter-only account is entitled', async () => {
+      runtime.entitlement = 'supporter'
+      runtime.cloudSyncEntitled = null
+      const { iCloudSync } = await render()
+      expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith(
+        'supporter_default'
+      )
+      expect(await state()).toBe('checking')
+    })
+
+    it('says why when the server’s switch is off', async () => {
+      const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
+      const { prepareCloudSync } = await import('@/app/sync/cloudSync')
+      vi.mocked(prepareCloudSync).mockResolvedValue({ outcome: 'disabled' })
+      await act(async () => {
+        renderer = create(<CloudSyncDefault />)
+      })
+      const { firstSyncStallReason } = await import('@/app/sync/webFirstSync')
+      expect(await state()).toBe('stalled')
+      expect(firstSyncStallReason()).toBe('paused')
+    })
+
+    describe('when another device’s slot can’t be read', () => {
+      it.each(['invalid-file', 'newer-version'] as const)(
+        'merges the account’s readable data, keeping its settings, and goes on (%s)',
+        async (reason) => {
+          const { iCloudSync } = await import('@/app/sync/iCloudSync')
+          vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+            outcome: 'incomplete',
+            reason,
+            remote,
+          })
+          // The slot it couldn't read keeps the merge from finishing.
+          vi.mocked(iCloudSync.applyMergeEnable).mockRejectedValueOnce(
+            new Error('Sync merge incomplete')
+          )
+          const { completeOnboarding } = await render()
+          expect(runtime.setState).toHaveBeenCalledWith({
+            syncProvider: 'cloud',
+          })
+          expect(iCloudSync.applyMergeEnable).toHaveBeenCalledWith(
+            remote,
+            'supporter_default',
+            { keepRemoteSettings: true }
+          )
+          expect(completeOnboarding).toHaveBeenCalledWith('cloud_sync')
+          expect(await state()).not.toBe('stalled')
+        }
+      )
+
+      it('stalls, and says why, when no other slot can be read', async () => {
+        const { iCloudSync } = await import('@/app/sync/iCloudSync')
+        vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+          outcome: 'incomplete',
+          reason: 'invalid-file',
+        })
+        const { completeOnboarding } = await render()
+        const { firstSyncStallReason } = await import('@/app/sync/webFirstSync')
+        expect(await state()).toBe('stalled')
+        expect(firstSyncStallReason()).toBe('unreadable')
+        expect(iCloudSync.applySeedEnable).not.toHaveBeenCalled()
+        expect(iCloudSync.applyMergeEnable).not.toHaveBeenCalled()
+        expect(completeOnboarding).not.toHaveBeenCalled()
+      })
+
+      it('waits for a read that’s still going on', async () => {
+        const { iCloudSync } = await import('@/app/sync/iCloudSync')
+        vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+          outcome: 'incomplete',
+          reason: 'downloading',
+          remote,
+        } as never)
+        await render()
+        expect(await state()).toBe('stalled')
+        expect(iCloudSync.applyMergeEnable).not.toHaveBeenCalled()
+      })
+    })
+
+    it('never touches the hold on a phone', async () => {
+      runtime.os = 'ios'
+      runtime.onboardingComplete = true
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      vi.mocked(iCloudSync.resolveInitialEnable).mockResolvedValueOnce({
+        outcome: 'incomplete',
+      } as never)
+      await render()
+      expect(await state()).toBe('checking')
+    })
+  })
+
+  it('still waits for onboarding on a phone', async () => {
+    runtime.os = 'ios'
+    const { iCloudSync } = await render()
+    expect(iCloudSync.resolveInitialEnable).not.toHaveBeenCalled()
+  })
+
+  it('doesn’t pull again after a phone’s default', async () => {
+    runtime.os = 'ios'
+    runtime.onboardingComplete = true
+    const { iCloudSync } = await render()
+    expect(iCloudSync.applySeedEnable).toHaveBeenCalled()
+    expect(iCloudSync.pullAndMerge).not.toHaveBeenCalled()
   })
 })

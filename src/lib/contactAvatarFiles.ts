@@ -4,6 +4,7 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
 import {
   avatarFileContactId,
+  isInlineImage,
   isManagedAvatarPath,
   originalSiblingFileName,
 } from '@/lib/avatarFilePolicy'
@@ -76,10 +77,6 @@ export function withCacheBuster(path: string): string {
   // Inline images (the web's) can't take a query, and never share a URI.
   return isInlineImage(path) ? path : `${path}?t=${Date.now()}`
 }
-
-/** A `data:` or `blob:` URL, which holds its own bytes instead of naming a file. */
-const isInlineImage = (uri: string) =>
-  uri.startsWith('data:') || uri.startsWith('blob:')
 
 export async function originalExists(
   contactId: string,

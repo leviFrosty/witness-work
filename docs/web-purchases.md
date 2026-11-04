@@ -108,8 +108,10 @@ shows on the web.
   on, and only as that id: a browser still logged in to RevenueCat as another
   customer waits. Until then, the price says why ("Sign in to buy on the web",
   or that buying isn't available for the account yet) in place of a working
-  Buy. Until the web pulls sync data, nothing settles the id, so Beta and
-  production have no working Buy. The id must also be one
+  Buy. The web pulls the account's sync data as a Cloud Sync device;
+  `cloudSyncPullSettled` (docs/web-storage.md, "The complete pull") says when
+  this launch has read it in full. Until the paywall waits on that, nothing
+  settles the id, so Beta and production have no working Buy. The id must also be one
   ww-api accepts (`toRevenueCatAppUserId`), never RevenueCat's anonymous
   `$RCAnonymousID:…`: Web Purchase Links need an identified customer.
   - **Development builds** (localhost and `app-dev`) skip both checks and buy

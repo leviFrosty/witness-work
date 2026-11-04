@@ -13,6 +13,7 @@ import { analytics } from '@/lib/analytics'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 import { logger } from '@/lib/logger'
 import { syncTransport as platformSyncTransport } from '@/lib/syncTransport'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import {
   cloudSyncOffered,
   syncProvider,
@@ -176,6 +177,9 @@ async function runSwitch(
     return { outcome: 'failed', reason }
   }
 
+  // The web keeps its data only in Cloud Sync (ADR 0037 §2): leaving would
+  // delete its slot, which may be the account's only copy.
+  if (cloudSyncOnly() && to !== 'cloud') return fail('unavailable')
   if (to === 'cloud') {
     const prepared = await prepareCloudSync()
     if (prepared.outcome !== 'ready') return fail(prepareFailure(prepared))

@@ -1,5 +1,6 @@
 import { usePreferences } from '@/stores/preferences'
 import { syncTransport } from '@/lib/syncTransport'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import { registerCloudSyncCopy } from '@/lib/syncTransport/registry'
 import type {
   SyncTransport,
@@ -44,11 +45,13 @@ export function cloudSyncOffered(): boolean {
 }
 
 /**
- * The option this device's sync runs on. A device that chose has its choice.
- * One that never chose but already syncs through iCloud or Drive (from before
- * Cloud Sync) stays there. Otherwise Cloud Sync, while it's offered.
+ * The option this device's sync runs on. The web has only Cloud Sync. A device
+ * that chose has its choice. One that never chose but already syncs through
+ * iCloud or Drive (from before Cloud Sync) stays there. Otherwise Cloud Sync,
+ * while it's offered.
  */
 export function syncProvider(): SyncProvider {
+  if (cloudSyncOnly()) return cloudTransport ? 'cloud' : 'platform'
   const { syncProvider: chosen, iCloudSyncEnabled } = usePreferences.getState()
   if (chosen === 'cloud') return cloudTransport ? 'cloud' : 'platform'
   if (chosen === 'platform') return 'platform'

@@ -1,6 +1,9 @@
 import { getRandomBytes } from 'expo-crypto'
 import apis from '@/constants/apis'
-import { parseRecoveryKey } from '@/lib/accountKey/recoveryKey'
+import {
+  encodeRecoveryKey,
+  parseRecoveryKey,
+} from '@/lib/accountKey/recoveryKey'
 import { webAccountKey } from '@/lib/accountKey/webAccountKey'
 import { ensureSyncDeviceId } from '@/lib/iCloudIdentity'
 import { syncNow } from '@/lib/syncClock'
@@ -13,7 +16,11 @@ import {
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import { openTicketedSocket } from '@/lib/serverAccount/liveTicket'
 import { createPasskey, getPasskey } from '@/lib/passkeys'
-import { webRecovery } from '@/lib/serverAccount/passkeyClient'
+import {
+  webRecovery,
+  webSignup,
+  webSignupOptions,
+} from '@/lib/serverAccount/passkeyClient'
 import { addPasskeyFlow } from '@/lib/serverAccount/passkeyFlow'
 import { accountPasskeyDeps } from '@/lib/serverAccount/passkeyServer'
 import { webSignIn } from '@/app/web-sign-in/webSignInRuntime'
@@ -72,6 +79,39 @@ const harness = {
       }
     )
     return webAccount.openWebSessionWithTicket(ticket, parsed.accountKey)
+  },
+  /**
+   * Web sign-up's server path without its screen (docs/passkeys-protocol.md,
+   * `web/signup`): Turnstile's test token, a new account key, a passkey from
+   * this browser's authenticator, and the session. No wrap, so the passkey
+   * signs in but can't unlock. For a web-only account in the specs. Answers the
+   * recovery key, as sign-up shows it, for another browser to sign in.
+   */
+  signUp: async (turnstileToken = 'XXXX.DUMMY.TOKEN.XXXX') => {
+    const { challengeToken, options } = await webSignupOptions(
+      { turnstileToken },
+      { baseUrl: apis.accounts }
+    )
+    const accountKey = await webAccountKey.create()
+    const created = await createPasskey(
+      options as unknown as Parameters<typeof createPasskey>[0]
+    )
+    const opened = await webSignup(
+      {
+        challengeToken,
+        response: created.response as unknown as Parameters<
+          typeof webSignup
+        >[0]['response'],
+      },
+      {
+        baseUrl: apis.accounts,
+        key: deriveAccountSigningKey(accountKey),
+        now: syncNow,
+        randomBytes: getRandomBytes,
+      }
+    )
+    const signedIn = await webAccount.adoptSignupSession(accountKey, opened)
+    return { ...signedIn, recoveryKey: encodeRecoveryKey(accountKey) }
   },
   /** A refresh now, as when the access token runs out. */
   refresh: async () => {

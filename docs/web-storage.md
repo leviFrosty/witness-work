@@ -176,6 +176,84 @@ read the stored refresh token again inside it, and share the new access token
 over the `BroadcastChannel` `ww-session` (`webTabs.ts`), which also carries
 sign-in, a wipe and an ended session to every tab.
 
+## Cloud Sync on the web
+
+The browser's data lives in the stores above, and the account's copy in Cloud
+Sync (ADR 0037 §2, ADR 0030). The sync engine (`src/app/sync/iCloudSync.ts`)
+runs on the web like on a phone on Cloud Sync, with its own slot:
+
+- **Cloud Sync only.** `cloudSyncOnly()` (`src/lib/syncTransport/platform.ts`)
+  is true on the web; `hasSyncEngine()` is what lets the engine run there,
+  without iCloud or Drive. The web's option is always `cloud`
+  (`syncProvider()`), it never checks an Apple or Google Account (signing in
+  as another account wipes first), and Settings → Sync shows only Cloud Sync.
+  `switchSyncOption` refuses Off and iCloud there: leaving Cloud Sync deletes
+  the device's slot, which may be the account's only copy.
+- **On by default** once the browser is signed in (ADR 0040 §2;
+  `CloudSyncDefault`), without waiting for onboarding: an account with data
+  pulls it and skips onboarding (`completion_method: cloud_sync`); an empty
+  account (a web-only one) is seeded by this browser, whose RevenueCat claim
+  becomes the account's; records on both sides merge, keeping both, and the
+  account's preferences and profile stay as they are
+  (`applyMergeEnable(…, { keepRemoteSettings: true })`). The entitlement (the
+  session's `sync-everyone`) and Update Required still pause it.
+- **Onboarding waits for it.** Until the first complete pull this launch,
+  the web shows "Getting your account ready…" instead of onboarding
+  (`useWebOnboardingHold`, `webFirstSync.ts`, `AccountReadyScreen`), so a
+  browser signing in to a phone's account never answers onboarding first:
+  its role and goals would be newer and win on every phone. An outcome that
+  retries later (offline, no session, an incomplete read, the server's switch
+  off), a failure, or 20 s without an answer offers Try Again (which reads
+  the config and decides again, or pulls again once sync is on) and Sign Out.
+  An account Cloud Sync isn't for (not entitled) lets onboarding run: nothing
+  syncs, so nothing is overwritten.
+- **Live.** The live socket (a ticket, ADR 0038 §10) runs while the tab is
+  visible, so other devices' changes arrive within seconds.
+- **Photos** keep their references in the payload, but their bytes don't move
+  on the web yet (`photosTravel()` is false): photos from phones show as
+  initials, and the web's photos stay in the browser.
+- **Signing out** sends a push still waiting first (`webAccount.beforeSignOut`,
+  at most 5 s, waiting out the put limit's `Retry-After` when it fits), and
+  never deletes the browser's slot. The server deletes a slot 30 days after
+  its session ended, so a browser-only account keeps its data as long as a
+  browser signs in within that time.
+- **Old browser slots.** Each web sign-in opens a new slot, which would pile
+  up toward the account's 20. Once a launch, after a complete pull and then a
+  successful push of its own slot (which then holds what that pull merged),
+  a browser deletes other `web` slots whose session the server says ended
+  (`live: false`) and that are still at the version it merged
+  (`deleteEndedWebSnapshots`, `endedWebSlots`). Never a phone's slot, a live
+  session's, one a server doesn't say has ended, or one written since.
+
+### The complete pull
+
+[`cloudSyncPullSettled.ts`](../src/lib/cloudSyncPullSettled.ts) says whether
+this launch has read the account's Cloud Sync data in full, for the web's
+RevenueCat id (docs/web-purchases.md). Free of native imports:
+
+```ts
+import {
+  completedPullThisLaunch,
+  onCompletedPull,
+} from '@/lib/cloudSyncPullSettled'
+
+completedPullThisLaunch() // false until a complete pull this launch
+const unsubscribe = onCompletedPull(() => {
+  // After each complete pull, and when it's reset.
+  completedPullThisLaunch()
+})
+```
+
+- The engine calls `markCompletePull()` after a Cloud Sync pull that listed
+  every slot and opened every other device's (none still unreadable or from a
+  newer version), right after it set the peers' claims
+  (`setPeerAccountClaims`). An empty account and one holding only this
+  device's slot count. iCloud and Drive pulls never mark it.
+- `resetCompletePull()` clears it when the account key changes (and when
+  leaving the account or signing out on the web, which then reloads). A pull
+  that started before a reset doesn't count.
+- In memory only: each launch starts unset.
+
 ## Wiping everything
 
 `clearAllWebData()` from [`boot.ts`](../src/lib/webStorage/boot.ts) deletes all of

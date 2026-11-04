@@ -94,6 +94,7 @@ async function device(
     account = 'family',
     entitled = true,
   }: {
+    /** `web`: a browser, which has no iCloud or Drive and never chooses. */
     os?: 'ios' | 'android' | 'web'
     option?: Option
     account?: string
@@ -112,19 +113,23 @@ async function device(
       delete: (key: string) => stored.delete(key),
     },
   }))
+  const web = os === 'web'
+  // Each device's own platform: its modules read it as they load.
+  vi.doMock('react-native', () => ({
+    Platform: { OS: web ? 'web' : 'android' },
+    AppState: {
+      get currentState() {
+        return runtime.appState
+      },
+      addEventListener: () => ({ remove: () => {} }),
+    },
+  }))
   vi.doMock('expo-device', () => ({
     DeviceType: { PHONE: 1, TABLET: 2 },
     deviceType: 1,
     modelName: name,
     osName: os === 'ios' ? 'iOS' : os === 'web' ? 'Web' : 'Android',
   }))
-  // The web runs the engine on Cloud Sync alone (ADR 0037 §2). The app doesn't
-  // start it there yet, and these tests are for when it does.
-  if (os === 'web')
-    vi.doMock('@/lib/syncTransport/platform', () => ({
-      hasSyncTransport: () => true,
-    }))
-  else vi.doUnmock('@/lib/syncTransport/platform')
   vi.doMock('@/lib/installId', () => ({
     getOrCreateInstallId: () => `install-${name}`,
     androidDeviceInstallId: () => `install-${name}`,
@@ -193,6 +198,8 @@ async function device(
   )
   const { useProfile } = await import('@/stores/profile')
   const { useUpdateRequired } = await import('@/lib/appUpdate/updateRequired')
+  const claims = await import('@/lib/accountClaimRegistry')
+  const pullSettled = await import('@/lib/cloudSyncPullSettled')
 
   const driveTransport = createGoogleDriveTransport({
     api: (bound) =>
@@ -209,11 +216,13 @@ async function device(
     addAvailabilityListener: auth.addGoogleDriveAvailabilityListener,
     now: () => (listingClock += 60_000),
   })
-  registerAndroidSyncTransport(driveTransport)
-  auth.setFakeGoogleDrive({ origin: drive.origin, account })
-  expect(await auth.connectGoogleDrive({ selectAccount: false })).toBe(
-    'connected'
-  )
+  if (!web) {
+    registerAndroidSyncTransport(driveTransport)
+    auth.setFakeGoogleDrive({ origin: drive.origin, account })
+    expect(await auth.connectGoogleDrive({ selectAccount: false })).toBe(
+      'connected'
+    )
+  }
 
   // The production transport, against the fake server: the bearer token is
   // the account's name, and every device of an account derives one sync key.
@@ -234,7 +243,7 @@ async function device(
     identityToken: () => `account:${account}`,
     randomBytes: (length) => new Uint8Array(length).fill(++nonce % 256),
     deviceName: () => name,
-    platform: os,
+    platform: web ? 'ios' : os,
     now: () => Date.now(),
     pause: () =>
       cryptoPauseMs
@@ -265,7 +274,8 @@ async function device(
       .catch(() => undefined)
 
   usePreferences.setState({
-    syncProvider: option === 'off' ? null : option,
+    // A browser never records a choice: Cloud Sync is its only option.
+    syncProvider: option === 'off' || web ? null : option,
     iCloudSyncEnabled: option !== 'off',
     cloudSyncConfig: { enabled: true, entitlement: 'supporter' },
     cloudSyncEntitled: entitled,
@@ -301,6 +311,8 @@ async function device(
     useConversations,
     useProfile,
     useUpdateRequired,
+    claims,
+    pullSettled,
     slotId: () => usePreferences.getState().iCloudDeviceId!,
     contactNames: () =>
       useContacts
@@ -1962,3 +1974,599 @@ describe('Photos over Cloud Sync', () => {
     expect(server.photoNames('family')).toHaveLength(1)
   })
 })
+
+describe('The web on Cloud Sync', () => {
+  const phoneClaim = {
+    appUserId: 'phone-customer-0001',
+    entitled: false,
+    claimedAt: 1_000,
+  }
+  const webClaim = {
+    appUserId: 'web-customer-00001',
+    entitled: false,
+    claimedAt: 5_000,
+  }
+
+  it('runs the engine on Cloud Sync, with no platform option or identity check', async () => {
+    const browser = await device('browser', { os: 'web' })
+    expect(browser.usePreferences.getState().syncProvider).toBe(null)
+    expect(browser.syncProvider()).toBe('cloud')
+    expect(browser.activeSyncTransport()).toBe(browser.cloudTransport)
+    expect(browser.currentSyncOption()).toBe('cloud')
+    expect(browser.iCloudSync.canSync()).toBe(true)
+    // Nothing recorded an account: the browser wipes before another signs in.
+    expect(browser.usePreferences.getState().cloudSyncAccountToken).toBe(null)
+  })
+
+  it('still waits for the entitlement and Update Required', async () => {
+    const browser = await device('browser', { os: 'web' })
+    browser.usePreferences.setState({ cloudSyncEntitled: false })
+    expect(browser.iCloudSync.canSync()).toBe(false)
+    browser.usePreferences.setState({ cloudSyncEntitled: true })
+    browser.useUpdateRequired.setState({
+      required: {
+        source: 'config',
+        currentVersion: '1.0.0',
+        minVersion: '99.0.0',
+      },
+    })
+    expect(browser.iCloudSync.canSync()).toBe(false)
+    browser.useUpdateRequired.setState({ required: null })
+    expect(browser.iCloudSync.canSync()).toBe(true)
+  })
+
+  it('shows a phone’s data and claim, and sends its own edits and claim back', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.claims.setOwnAccountClaim(phoneClaim)
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+
+    const browser = await device('browser', { os: 'web', option: 'off' })
+    expect(await browser.iCloudSync.resolveInitialEnable()).toMatchObject({
+      outcome: 'pull',
+    })
+    expect(await browser.iCloudSync.pullAndMerge('manual')).toBe(false)
+    browser.usePreferences.setState({ iCloudSyncEnabled: true })
+    expect(await browser.iCloudSync.pullAndMerge('manual')).toBe(true)
+    expect(browser.contactNames()).toEqual(['Ada Reyes'])
+    expect(browser.claims.peerAccountClaims()).toEqual([phoneClaim])
+
+    browser.claims.setOwnAccountClaim(phoneClaim)
+    browser.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW),
+        contact('c2', 'Ben Ito', NOW + 1),
+      ] as never,
+    })
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    expect(server.slotIds('family').sort()).toEqual(
+      [phone.slotId(), browser.slotId()].sort()
+    )
+    expect(await phone.iCloudSync.pullAndMerge('manual')).toBe(true)
+    expect(phone.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    expect(phone.claims.peerAccountClaims()).toEqual([phoneClaim])
+  })
+
+  it('moves no photo bytes yet, and keeps the photo references', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.useContacts.setState({
+      contacts: [
+        {
+          ...contact('c1', 'Ada', NOW),
+          avatar: {
+            type: 'image',
+            value: 'file:///test/a.jpg',
+            revision: 'r1',
+          },
+        },
+      ] as never,
+    })
+    await phone.iCloudSync.push('manual')
+    const browser = await device('browser', { os: 'web' })
+    expect(browser.iCloudSync.photosTravel()).toBe(false)
+    const before = server.state.log.length
+    await browser.iCloudSync.pullAndMerge('manual')
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    expect(
+      server.state.log.slice(before).filter((op) => op.includes('photos'))
+    ).toEqual([])
+    const [ada] = browser.useContacts.getState().contacts
+    expect(ada.avatar).toMatchObject({ type: 'image', revision: 'r1' })
+  })
+
+  describe('a web-only account', () => {
+    it('is seeded by its first browser, whose claim becomes the account’s', async () => {
+      const first = await device('first', { os: 'web', option: 'off' })
+      expect(await first.iCloudSync.resolveInitialEnable()).toEqual({
+        outcome: 'seed',
+      })
+      first.claims.setOwnAccountClaim(webClaim)
+      first.useContacts.setState({
+        contacts: [contact('c1', 'Ada', NOW)] as never,
+      })
+      await first.iCloudSync.applySeedEnable('supporter_default')
+      expect(server.slotIds('family')).toEqual([first.slotId()])
+
+      const second = await device('second', { os: 'web', option: 'off' })
+      const decision = await second.iCloudSync.resolveInitialEnable()
+      expect(decision.outcome).toBe('pull')
+      if (decision.outcome !== 'pull') return
+      second.iCloudSync.applyPullEnable(decision.remote, 'supporter_default')
+      expect(second.contactNames()).toEqual(['Ada'])
+      await second.iCloudSync.pullAndMerge('manual')
+      expect(second.claims.peerAccountClaims()).toEqual([webClaim])
+    })
+  })
+
+  it('merges, keeping both sides, when the browser and the account both have records', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    await phone.iCloudSync.push('manual')
+    const browser = await device('browser', { os: 'web', option: 'off' })
+    browser.useContacts.setState({
+      contacts: [contact('c2', 'Ben', NOW)] as never,
+    })
+    const decision = await browser.iCloudSync.resolveInitialEnable()
+    expect(decision.outcome).toBe('conflict')
+    if (decision.outcome !== 'conflict') return
+    await browser.iCloudSync.applyMergeEnable(
+      decision.remote,
+      'supporter_default'
+    )
+    expect(browser.usePreferences.getState().iCloudSyncEnabled).toBe(true)
+    expect(browser.contactNames()).toEqual(['Ada', 'Ben'])
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(phone.contactNames()).toEqual(['Ada', 'Ben'])
+  })
+
+  it('keeps the account’s preferences and profile when it merges records', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.usePreferences.getState().setRole('regularPioneer')
+    phone.useProfile.getState().setName('Sam Rivera')
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    await phone.iCloudSync.push('manual')
+    await new Promise((resolve) => setTimeout(resolve, 5))
+
+    // A browser that went through onboarding first: its answers are newer.
+    const browser = await device('browser', { os: 'web', option: 'off' })
+    browser.usePreferences.getState().setRole('regularAuxiliary')
+    browser.useProfile.getState().setName('New User')
+    browser.useContacts.setState({
+      contacts: [contact('c2', 'Ben', NOW)] as never,
+    })
+    const decision = await browser.iCloudSync.resolveInitialEnable()
+    expect(decision.outcome).toBe('conflict')
+    if (decision.outcome !== 'conflict') return
+    await browser.iCloudSync.applyMergeEnable(
+      decision.remote,
+      'supporter_default',
+      { keepRemoteSettings: true }
+    )
+
+    expect(browser.contactNames()).toEqual(['Ada', 'Ben'])
+    expect(browser.usePreferences.getState().role).toBe('regularPioneer')
+    expect(browser.useProfile.getState().name).toBe('Sam Rivera')
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(phone.contactNames()).toEqual(['Ada', 'Ben'])
+    expect(phone.usePreferences.getState().role).toBe('regularPioneer')
+    expect(phone.useProfile.getState().name).toBe('Sam Rivera')
+  })
+
+  it('keeps its own photos when a phone edits their records', async () => {
+    const dataUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ'
+    const browser = await device('browser', { os: 'web' })
+    browser.useContacts.setState({
+      contacts: [
+        {
+          ...contact('c1', 'Ada', NOW),
+          avatar: { type: 'image', value: dataUrl, revision: 'r1' },
+        },
+      ] as never,
+    })
+    browser.useProfile.setState({
+      name: 'Sam',
+      avatar: { type: 'image', value: dataUrl, revision: 'p1' },
+      profileUpdatedAt: { name: NOW, avatar: NOW },
+    })
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+
+    // The phone gets no photo for them: only the browser holds it.
+    const phone = await device('phone', { os: 'ios' })
+    await phone.iCloudSync.pullAndMerge('manual')
+    const [ada] = phone.useContacts.getState().contacts
+    expect(ada.avatar).toEqual({ type: 'none', value: '' })
+    phone.useContacts.setState({
+      contacts: [{ ...ada, name: 'Ada Reyes', updatedAt: NOW + 1_000 }],
+    })
+    phone.useProfile.setState({
+      name: 'Sam Rivera',
+      profileUpdatedAt: { name: NOW + 1_000, avatar: NOW + 1_000 },
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+
+    await browser.iCloudSync.pullAndMerge('manual')
+    expect(browser.contactNames()).toEqual(['Ada Reyes'])
+    expect(browser.useContacts.getState().contacts[0].avatar).toEqual({
+      type: 'image',
+      value: dataUrl,
+      revision: 'r1',
+    })
+    expect(browser.useProfile.getState().name).toBe('Sam Rivera')
+    expect(browser.useProfile.getState().avatar).toEqual({
+      type: 'image',
+      value: dataUrl,
+      revision: 'p1',
+    })
+  })
+
+  describe('old browser slots', () => {
+    /** A browser that pushed `name`, then signed out (its session ended). */
+    const signedOutBrowser = async (label: string, name: string) => {
+      server.state.platform = 'web'
+      const old = await device(label, { os: 'web' })
+      old.useContacts.setState({
+        contacts: [contact(`${label}-c`, name, NOW)] as never,
+      })
+      expect(await old.iCloudSync.push('manual')).toBe(true)
+      server.state.platform = 'ios'
+      server.endSlotSession('family', old.slotId())
+      return old.slotId()
+    }
+
+    const accountWithOldSlots = async () => {
+      const phone = await device('phone', { os: 'ios' })
+      phone.useContacts.setState({
+        contacts: [contact('p-c', 'Ada', NOW)] as never,
+      })
+      expect(await phone.iCloudSync.push('manual')).toBe(true)
+      // A phone that left: never a browser's to remove.
+      const gonePhone = await device('gone-phone', { os: 'ios' })
+      expect(await gonePhone.iCloudSync.push('manual')).toBe(true)
+      server.endSlotSession('family', gonePhone.slotId())
+      // Another browser that's still signed in.
+      server.state.platform = 'web'
+      const open = await device('open-browser', { os: 'web' })
+      expect(await open.iCloudSync.push('manual')).toBe(true)
+      server.state.platform = 'ios'
+      const ended = [
+        await signedOutBrowser('old-1', 'Ben'),
+        await signedOutBrowser('old-2', 'Cy'),
+      ]
+      return {
+        ended,
+        kept: [phone.slotId(), gonePhone.slotId(), open.slotId()],
+      }
+    }
+
+    const newBrowser = async () => {
+      server.state.platform = 'web'
+      const browser = await device('new-browser', { os: 'web' })
+      return browser
+    }
+
+    it('removes signed-out browsers’ slots once its own holds their data', async () => {
+      const { ended, kept } = await accountWithOldSlots()
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.contactNames()).toEqual(['Ada', 'Ben', 'Cy'])
+      expect(server.state.deletedSlots).toEqual([])
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+
+      await vi.waitFor(() =>
+        expect([...server.state.deletedSlots].sort()).toEqual([...ended].sort())
+      )
+      expect(server.slotIds('family')).toEqual(
+        [...kept, browser.slotId()].sort()
+      )
+      // Their data is in this browser's slot now.
+      const reader = await device('reader', { os: 'web' })
+      await reader.iCloudSync.pullAndMerge('manual')
+      expect(reader.contactNames()).toEqual(['Ada', 'Ben', 'Cy'])
+    })
+
+    it('removes nothing when its push failed, until one succeeds', async () => {
+      const { ended } = await accountWithOldSlots()
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      server.state.failPuts = true
+      expect(await browser.iCloudSync.push('manual')).toBe(false)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(server.state.deletedSlots).toEqual([])
+
+      server.state.failPuts = false
+      browser.iCloudSync.resetPushBackoff()
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await vi.waitFor(() =>
+        expect([...server.state.deletedSlots].sort()).toEqual([...ended].sort())
+      )
+    })
+
+    it('removes nothing after a pull that couldn’t open every slot', async () => {
+      const { ended } = await accountWithOldSlots()
+      server.damageSlot('family', ended[0])
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(false)
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(server.state.deletedSlots).toEqual([])
+    })
+
+    it('keeps a slot written after the pull it merged', async () => {
+      await accountWithOldSlots()
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      const late = await signedOutBrowser('old-3', 'Dee')
+      server.state.platform = 'web'
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await vi.waitFor(() => expect(server.state.deletedSlots).toHaveLength(2))
+      expect(server.slotIds('family')).toContain(late)
+    })
+
+    it('keeps a slot whose records it couldn’t all read', async () => {
+      const { ended } = await accountWithOldSlots()
+      // A signed-out browser whose slot holds one visit this build can't read:
+      // the pull drops it and merges the rest.
+      server.state.platform = 'web'
+      const old = await device('old-3', { os: 'web' })
+      old.useContacts.setState({
+        contacts: [contact('old-3-c', 'Dee', NOW)] as never,
+      })
+      expect(await old.iCloudSync.push('manual')).toBe(true)
+      const filename = filenameOf(old.slotId())
+      const { files } = await old.cloudTransport.readFiles(
+        (name) => name === filename
+      )
+      const payload = JSON.parse(files[0].json)
+      payload.conversationStore.conversations.push({ id: 'v-unreadable' })
+      await old.cloudTransport.write(filename, JSON.stringify(payload))
+      server.state.platform = 'ios'
+      server.endSlotSession('family', old.slotId())
+
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.contactNames()).toEqual(['Ada', 'Ben', 'Cy', 'Dee'])
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await vi.waitFor(() =>
+        expect([...server.state.deletedSlots].sort()).toEqual([...ended].sort())
+      )
+      // The record it dropped is only in that slot.
+      expect(server.slotIds('family')).toContain(old.slotId())
+    })
+
+    it('goes on past a slot it can’t open, and leaves it alone', async () => {
+      const { ended } = await accountWithOldSlots()
+      server.damageSlot('family', ended[0])
+      const browser = await newBrowser()
+      browser.usePreferences.setState({ iCloudSyncEnabled: false })
+      const decision = await browser.iCloudSync.resolveInitialEnable()
+      expect(decision).toMatchObject({
+        outcome: 'incomplete',
+        reason: 'invalid-file',
+      })
+      if (decision.outcome !== 'incomplete' || !decision.remote)
+        throw new Error('expected the readable rest of the account')
+      // The slot it can't open keeps the merge from finishing.
+      await expect(
+        browser.iCloudSync.applyMergeEnable(
+          decision.remote,
+          'supporter_default',
+          { keepRemoteSettings: true }
+        )
+      ).rejects.toThrow()
+      expect(browser.contactNames()).toEqual(['Ada', 'Cy'])
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(server.state.deletedSlots).toEqual([])
+      expect(server.slotIds('family')).toContain(ended[0])
+    })
+
+    it('removes nothing where the server doesn’t say a session ended', async () => {
+      await accountWithOldSlots()
+      server.state.listOmitsLive = true
+      const browser = await newBrowser()
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(server.state.deletedSlots).toEqual([])
+    })
+
+    it('leaves a phone’s old slots alone', async () => {
+      await accountWithOldSlots()
+      const phone = await device('another-phone', { os: 'ios' })
+      await phone.iCloudSync.pullAndMerge('manual')
+      expect(await phone.iCloudSync.push('manual')).toBe(true)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(server.state.deletedSlots).toEqual([])
+    })
+  })
+
+  it('waits only as long as the server asks before its last push', async () => {
+    const browser = await device('browser', { os: 'web' })
+    server.state.slotPutIntervalMs = 1_000
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    browser.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    browser.usePreferences.setState({ iCloudSyncPendingPush: true })
+    const started = Date.now()
+    await browser.iCloudSync.flushPendingPush('sign-out')
+    expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+    // `Retry-After: 1`, not a fixed 2.1 s.
+    expect(Date.now() - started).toBeLessThan(2_000)
+    server.state.slotPutIntervalMs = 0
+  })
+
+  it('doesn’t wait past its budget when the server asks for longer', async () => {
+    const browser = await device('browser', { os: 'web' })
+    server.state.slotPutIntervalMs = 30_000
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    browser.usePreferences.setState({ iCloudSyncPendingPush: true })
+    const started = Date.now()
+    await browser.iCloudSync.flushPendingPush('sign-out')
+    expect(Date.now() - started).toBeLessThan(500)
+    expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+    server.state.slotPutIntervalMs = 0
+  })
+
+  it('sends an edit made while a push was going out, before signing out', async () => {
+    const browser = await device('browser', { os: 'web' })
+    const uninstall = browser.installiCloudSync()
+    try {
+      await browser.iCloudSync.waitForSyncIdle()
+      browser.useContacts.setState({
+        contacts: [contact('c1', 'Ada', NOW)] as never,
+      })
+      server.state.putDelayMs = 200
+      const puts = () =>
+        server.state.log.filter((op) => op === 'POST sync/put').length
+      const before = puts()
+      void browser.iCloudSync.push('manual')
+      await vi.waitFor(() => expect(puts()).toBe(before + 1))
+      // An edit while that put is on its way: it isn't in its snapshot.
+      browser.useContacts.setState({
+        contacts: [
+          contact('c1', 'Ada', NOW),
+          contact('c2', 'Ben', NOW + 1),
+        ] as never,
+      })
+      await browser.iCloudSync.flushPendingPush('sign-out')
+      expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(
+        false
+      )
+    } finally {
+      uninstall()
+    }
+    server.state.putDelayMs = 0
+    const reader = await device('reader', { os: 'web' })
+    await reader.iCloudSync.pullAndMerge('manual')
+    expect(reader.contactNames()).toEqual(['Ada', 'Ben'])
+  })
+
+  it('waits out the slot’s put limit to send its last edit before signing out', async () => {
+    const browser = await device('browser', { os: 'web' })
+    server.state.slotPutIntervalMs = 1_000
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    browser.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    browser.usePreferences.setState({ iCloudSyncPendingPush: true })
+    await browser.iCloudSync.flushPendingPush('sign-out')
+    expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+    server.state.slotPutIntervalMs = 0
+    const reader = await device('reader', { os: 'web' })
+    await reader.iCloudSync.pullAndMerge('manual')
+    expect(reader.contactNames()).toEqual(['Ada'])
+  })
+
+  it('never leaves Cloud Sync, which would delete its slot', async () => {
+    const browser = await device('browser', { os: 'web' })
+    await sync(browser)
+    for (const to of ['off', 'platform'] as const)
+      expect(await browser.switchSyncOption(to, 'settings')).toMatchObject({
+        outcome: 'failed',
+      })
+    expect(browser.currentSyncOption()).toBe('cloud')
+    expect(server.slotIds('family')).toEqual([browser.slotId()])
+  })
+
+  it('never rebuilds the account’s data from what it holds', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada', NOW)] as never,
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    const browser = await device('browser', { os: 'web' })
+    expect(await browser.iCloudSync.push('manual')).toBe(true)
+    const epoch = browser.usePreferences.getState().iCloudResetEpoch
+
+    await expect(
+      browser.iCloudSync.overwriteRemoteWithLocal()
+    ).rejects.toThrow()
+    expect(browser.usePreferences.getState().iCloudResetEpoch).toEqual(epoch)
+    expect(server.state.deletedSlots).toEqual([])
+    expect(server.slotIds('family')).toEqual(
+      [phone.slotId(), browser.slotId()].sort()
+    )
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(phone.contactNames()).toEqual(['Ada'])
+  })
+
+  describe('a complete pull', () => {
+    it('is marked for an empty account, after the peers’ claims are set', async () => {
+      const browser = await device('browser', { os: 'web' })
+      browser.claims.setPeerAccountClaims([phoneClaim])
+      const seen: unknown[] = []
+      browser.pullSettled.onCompletedPull(() =>
+        seen.push(browser.claims.peerAccountClaims())
+      )
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(true)
+      expect(seen).toEqual([[]])
+    })
+
+    it('is marked when the only slot is this browser’s own', async () => {
+      const browser = await device('browser', { os: 'web' })
+      await browser.iCloudSync.push('manual')
+      expect(server.slotIds('family')).toEqual([browser.slotId()])
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(true)
+    })
+
+    it('is marked once the peers’ claims are in', async () => {
+      const phone = await device('phone', { os: 'ios' })
+      phone.claims.setOwnAccountClaim(phoneClaim)
+      await phone.iCloudSync.push('manual')
+      const browser = await device('browser', { os: 'web' })
+      const seen: unknown[] = []
+      browser.pullSettled.onCompletedPull(() =>
+        seen.push(browser.claims.peerAccountClaims())
+      )
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(seen).toEqual([[phoneClaim]])
+    })
+
+    it('is not marked when the listing can’t be read', async () => {
+      const browser = await device('browser', { os: 'web' })
+      server.state.enabled = false
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(false)
+    })
+
+    it('is not marked while another device’s slot can’t be opened', async () => {
+      const phone = await device('phone', { os: 'ios' })
+      await phone.cloudTransport.write(
+        filenameOf('0f0e0d0c-0b0a-4908-8706-050403020100'),
+        JSON.stringify({ unreadable: true })
+      )
+      const browser = await device('browser', { os: 'web' })
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(false)
+    })
+
+    it('is not marked on iCloud or Google Drive', async () => {
+      const pixel = await device('pixel', { os: 'android', option: 'platform' })
+      await pixel.iCloudSync.pullAndMerge('manual')
+      expect(pixel.pullSettled.completedPullThisLaunch()).toBe(false)
+    })
+
+    it('doesn’t count a pull that started before the account changed', async () => {
+      const browser = await device('browser', { os: 'web' })
+      server.state.putDelayMs = 0
+      const pulled = browser.iCloudSync.pullAndMerge('manual')
+      browser.pullSettled.resetCompletePull()
+      await pulled
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(false)
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.pullSettled.completedPullThisLaunch()).toBe(true)
+    })
+  })
+})
+
+const filenameOf = (slotId: string) => `witness-work-${slotId}.json`

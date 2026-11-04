@@ -431,6 +431,7 @@ function browser() {
       onSignedIn: (_key, accountId) => {
         disk.lastAccountId = accountId
       },
+      flushWaitMs: 50,
     })
     const info = () =>
       sessions.request<{ accountId: string }>({
@@ -1296,6 +1297,28 @@ describe('web sessions', () => {
     expect(one.reload).toHaveBeenCalled()
     expect(two.reload).toHaveBeenCalled()
     expect(two.wipe).not.toHaveBeenCalled()
+  })
+
+  it('sends what’s waiting before it signs out, and never waits long', async () => {
+    const { tab, worker } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    const seen: Array<string | null> = []
+    one.account.beforeSignOut(async () => {
+      // The session is still open, so the push can go out.
+      seen.push(worker.sessions[0].ended ?? null)
+    })
+    one.account.beforeSignOut(() => new Promise(() => {}))
+    const gone = vi.fn()
+    one.account.beforeSignOut(gone)()
+
+    await one.account.signOut()
+
+    expect(seen).toEqual([null])
+    expect(gone).not.toHaveBeenCalled()
+    expect(worker.sessions[0].ended).toBe('revoked')
+    expect(one.wipe).toHaveBeenCalledTimes(1)
   })
 
   it('signs out offline without waiting on the network', async () => {

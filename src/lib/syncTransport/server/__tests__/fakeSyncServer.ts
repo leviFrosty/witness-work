@@ -63,8 +63,11 @@ export function createFakeSyncServer() {
   const usedEnvelopes = new Set<unknown>()
   /** Accounts whose writing sessions have all ended. */
   const ended = new Set<string>()
+  /** `<account>/<slotId>` whose last writer's session ended. */
+  const endedSlots = new Set<string>()
   let seq = 0
   let clock = 0
+  const lastPutAt = new Map<string, number>()
   const state = {
     enabled: true,
     entitlement: 'supporter' as 'supporter' | 'everyone',
@@ -88,6 +91,11 @@ export function createFakeSyncServer() {
      * on a slow link, without the wait); it stops when the client gives up.
      */
     photoGetGate: null as Promise<void> | null,
+    /**
+     * A slot's puts at most this often (ww-api: one every 2 s); a sooner one is
+     * 429 `rate_limited`. 0: no limit.
+     */
+    slotPutIntervalMs: 0,
     /** Photos' own switch (`sync:photos`). */
     photos: true,
     /** The account's photo storage (`SYNC_PHOTO_LIMIT_BYTES`). */
@@ -120,6 +128,10 @@ export function createFakeSyncServer() {
     now: null as number | null,
     /** The platform of the session a put comes from. */
     platform: 'ios' as SlotPlatform,
+    /** `sync/list` leaves out `live`, as a server from before it does. */
+    listOmitsLive: false,
+    /** Every `sync/put` fails with a 500. */
+    failPuts: false,
     /**
      * The next `sync/request` is taken, then its answer lost (a dropped
      * connection).
@@ -131,6 +143,8 @@ export function createFakeSyncServer() {
     failPhotoDeletes: false,
     /** `sync/request` bodies, with the bearer token they came with. */
     requestBodies: [] as Array<Record<string, unknown>>,
+    /** Every slot id `sync/delete` was asked for, in order. */
+    deletedSlots: [] as string[],
   }
 
   const slotsOf = (account: string) => {
@@ -227,6 +241,7 @@ export function createFakeSyncServer() {
       const { slotId } = JSON.parse(String(init?.body ?? '{}')) as {
         slotId?: string
       }
+      state.deletedSlots.push(...(slotId ? [slotId] : [...slots.keys()]))
       if (slotId) slots.delete(slotId)
       else {
         slots.clear()
@@ -375,11 +390,28 @@ export function createFakeSyncServer() {
         })
       }
       case 'sync/put': {
+        if (state.failPuts) return refuse('internal', 500)
         const slotId = headers.get('x-ww-slot-id')!
         const bytes = new Uint8Array(init!.body as Uint8Array)
         const etag = toB64u(sha256(bytes))
         if (etag !== headers.get('x-ww-sha256'))
           return refuse('bad_request', 400)
+        const putKey = `${account}/${slotId}`
+        const since = Date.now() - (lastPutAt.get(putKey) ?? -Infinity)
+        if (since < state.slotPutIntervalMs)
+          return new Response(
+            JSON.stringify({ ok: false, error: 'rate_limited' }),
+            {
+              status: 429,
+              headers: {
+                'content-type': 'application/json',
+                'retry-after': String(
+                  Math.ceil((state.slotPutIntervalMs - since) / 1000)
+                ),
+              },
+            }
+          )
+        lastPutAt.set(putKey, Date.now())
         if (state.putDelayMs)
           await new Promise((resolve) => setTimeout(resolve, state.putDelayMs))
         // As the worker: a quoted ETag or `*`, and a re-seal needs the ETag.
@@ -419,7 +451,10 @@ export function createFakeSyncServer() {
           updatedAt,
           platform: reseal ? existing!.platform : state.platform,
         })
-        if (!reseal) ended.delete(account)
+        if (!reseal) {
+          ended.delete(account)
+          endedSlots.delete(putKey)
+        }
         return json({
           ok: true,
           etag,
@@ -438,7 +473,10 @@ export function createFakeSyncServer() {
             size: slot.bytes.length,
             updatedAt: slot.updatedAt,
             platform: slot.platform,
-            live: !ended.has(account),
+            ...(!state.listOmitsLive && {
+              live:
+                !ended.has(account) && !endedSlots.has(`${account}/${slotId}`),
+            }),
           })),
         })
       case 'sync/get': {
@@ -460,6 +498,25 @@ export function createFakeSyncServer() {
     seq: () => seq,
     /** Ends every session that wrote an account's slots (`live: false`). */
     endSessions: (account: string) => ended.add(account),
+    /** Replaces a slot's bytes with ones no key opens. */
+    damageSlot: (account: string, slotId: string) => {
+      const slot = slotsOf(account).get(slotId)
+      if (!slot) return
+      slot.bytes = new Uint8Array(slot.bytes.length).fill(7)
+      slot.etag = toB64u(sha256(slot.bytes))
+    },
+    /** Ends the session that last wrote one slot. */
+    endSlotSession: (account: string, slotId: string) =>
+      endedSlots.add(`${account}/${slotId}`),
+    /** Says another platform's session last wrote a slot. */
+    setSlotPlatform: (
+      account: string,
+      slotId: string,
+      platform: SlotPlatform
+    ) => {
+      const slot = slotsOf(account).get(slotId)
+      if (slot) slot.platform = platform
+    },
     /** An account's standing Cloud Sync request, or null. */
     requestedAt: (account: string) => requests.get(account) ?? null,
     /** The slot ids an account holds. */

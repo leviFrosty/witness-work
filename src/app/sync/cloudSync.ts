@@ -52,6 +52,8 @@ import {
   type SyncStatus,
 } from '@/lib/syncTransport/server/syncClient'
 import { analytics } from '@/lib/analytics'
+import { resetCompletePull } from '@/lib/cloudSyncPullSettled'
+import { resetFirstSync } from '@/app/sync/webFirstSync'
 import {
   createLiveInbox,
   type LiveEvent,
@@ -410,6 +412,8 @@ export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
     cloudSyncAccountToken: null,
   })
   cloudSyncTransport.reset()
+  resetCompletePull()
+  resetFirstSync()
 }
 
 /** React Native's WebSocket takes headers; the DOM typings don't know it. */
@@ -508,8 +512,13 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   })
   const account = onAccountChange((change) => {
     resetPhotoUsage()
-    // The photos the last publish referred to were that account's.
-    if (change === 'key_changed') clearPublishedPhotos()
+    if (change === 'key_changed') {
+      // The photos the last publish referred to were that account's.
+      clearPublishedPhotos()
+      // What was read was the old account's; its claims don't settle this one.
+      resetCompletePull()
+      resetFirstSync()
+    }
     // Another account's photos: each is checked against its listing, and a
     // full account there doesn't show here (ADR 0030 §7).
     if (change === 'key_changed' && usesCloudSync()) {

@@ -54,6 +54,7 @@ import {
 import { petHarness } from '@/app/dev-harness/pet'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
 import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
+import { sessionHarness } from '@/app/dev-harness/session'
 import { scribeHarness } from '@/app/dev-harness/scribe'
 import { getOnline, simulateOffline } from '@/lib/http/online'
 import {
@@ -506,6 +507,12 @@ export function installDevHarness() {
      * since; `clear()`.
      */
     appUpdate: appUpdateHarness,
+    /**
+     * The account session (see `dev-harness/session.ts`): `snapshot()`,
+     * `renew()`, `holdRefreshAnswer(ms)` or `dropRefreshAnswer()` for the next
+     * refresh, `markAfter(ms, label)`, `marks()`, `clearMarks()`, `clear()`.
+     */
+    session: sessionHarness,
     /**
      * The Pet Companion (see `dev-harness/pet.ts`): `adopt(species, coat?,
      * name?)`, `setAppearance`, `setRoom`, `release()`, `override({ hearts,

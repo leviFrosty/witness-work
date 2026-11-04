@@ -38,6 +38,14 @@ Steps:
 - **Bad key.** Change one character: the line under the field says "This key has a typo…", and Use Key stays disabled. A `U` says the character doesn't belong.
 - **Different key.** `wwv eval '__WW_DEV__.account.randomRecoveryKey()'` gives a valid key. With Buddies started (and a buddy), Use Key asks "Use this recovery key?", naming the buddies; on iOS it adds the Apple devices line. Confirm: "Recovery key added", `account.last.recoveryKey` is the new key, `registeredInboxId` is null, and the cached account has a new `accountPub`. A paired buddy's roster drops this User on its next sync.
 
+### Account session refresh
+
+`__WW_DEV__.session` drives the session (ADR 0027) without waiting 15 minutes for the access token: `snapshot()` (session id, never a token), `renew()` (refreshes now, as a 401 would), `holdRefreshAnswer(ms)` or `dropRefreshAnswer()` for the next refresh (ww-api still rotates the token; the app reads the answer late, or never), and `markAfter(ms, label)`. Each step lands in `marks()`, kept in MMKV so a relaunch can read what happened before the app was terminated; `clearMarks()` and `clear()` reset it.
+
+- **Suspended mid-refresh (iOS).** `holdRefreshAnswer(8000)`, `renew()`, then at once `xcrun simctl launch <udid> com.apple.Preferences` to background the app. 20 s later `xcrun simctl terminate <udid> com.leviwilkerson.jwtimedev`, wait 70 s (past the server's grace minute), and relaunch with `wwv link 'exp+jw-time://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A<metro port>'`. `marks()` shows the answer delivered about 8 s in, while the app was in the background, and `renew()` keeps the same `snapshot().sessionId`. The control: `markAfter(8000, …)` with no refresh, the same backgrounding, and its mark never lands, since iOS froze the app.
+- **Answer never read.** The same, but terminate 2 s after `renew()`: the next launch presents the replaced token, the session ends as reused, a new one opens, and Account Activity shows "Signed out this device to protect your account".
+- **Lost answer.** `dropRefreshAnswer()`, `renew()`: the app asks again at once with the same token and keeps the session; a `renew()` more than a minute later still does.
+
 ### Set Up Another Device (two devices)
 
 Simulators and emulators can't scan a real camera. The old phone shows the QR, and the new phone gets its link through `wwv link` (the real `/h` deep-link path) or Tools → Account → Handoff → paste → Sign in with this link.

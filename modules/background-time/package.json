@@ -1,0 +1,7 @@
+{
+  "name": "background-time",
+  "version": "0.1.0",
+  "description": "Local Expo module wrapping UIApplication background tasks, so short work started while the app is in the background (an account session refresh and its Keychain write) finishes before iOS suspends the app.",
+  "main": "index.ts",
+  "private": true
+}

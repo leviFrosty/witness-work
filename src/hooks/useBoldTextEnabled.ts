@@ -11,8 +11,8 @@ const androidBoldText = () => getFontWeightAdjustment() > 0
  * comes back to the foreground.
  */
 export default function useBoldTextEnabled() {
-  const [enabled, setEnabled] = useState(() =>
-    Platform.OS === 'android' ? androidBoldText() : false
+  const [enabled, setEnabled] = useState(
+    () => Platform.OS === 'android' && androidBoldText()
   )
 
   useEffect(() => {

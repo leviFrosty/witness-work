@@ -335,7 +335,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         flex: 1,
         backgroundColor: theme.colors.background,
         // Android presents this modal full-screen, edge-to-edge.
-        paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
+        paddingTop: Platform.select({ android: insets.top + 12, default: 20 }),
         paddingHorizontal: 10,
       }}
     >

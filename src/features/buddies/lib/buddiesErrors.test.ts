@@ -10,7 +10,12 @@ import { RelayError } from '@/features/buddies/lib/relay'
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
-const platform = vi.hoisted(() => ({ OS: 'ios' }))
+const platform = vi.hoisted(() => ({
+  OS: 'ios',
+  select(specifics: Record<string, unknown>) {
+    return this.OS in specifics ? specifics[this.OS] : specifics.default
+  },
+}))
 vi.mock('react-native', () => ({ Platform: platform }))
 
 describe('Buddies errors', () => {

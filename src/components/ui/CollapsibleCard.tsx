@@ -9,14 +9,14 @@ import { alignText } from '@/lib/direction'
 import { postScriptName } from '@/lib/postScriptName'
 
 // Compose's Collapsible pads its own header and content (16dp each side).
-const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
+const CARD_PADDING = Platform.select({ android: 4, default: 16 })
 /**
  * From the card's trailing edge to an accessory's 44pt frame, clear of the
  * chevron: SwiftUI's sits at the card's padding, Compose's 16dp inside it.
  */
-const ACCESSORY_END = Platform.OS === 'android' ? 52 : 36
+const ACCESSORY_END = Platform.select({ android: 52, default: 36 })
 const CONTENT_INSET =
-  2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
+  2 + CARD_PADDING * 2 + Platform.select({ android: 32, default: 0 })
 
 type Props = {
   label: string

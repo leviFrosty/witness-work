@@ -28,15 +28,13 @@ type StopwatchBridgeNative = {
 const native =
   requireOptionalNativeModule<StopwatchBridgeNative>('StopwatchBridge')
 
-// Android binaries from before the native store fall back to MMKV.
-const stopwatch =
-  Platform.OS === 'android'
-    ? native
-      ? androidNativeStopwatch(native)
-      : androidStopwatch
-    : Platform.OS === 'ios'
-      ? native
-      : null
+// Android binaries from before the native store fall back to MMKV, and so does
+// the web: a timestamp in storage is the clock there too.
+const stopwatch = (() => {
+  if (Platform.OS === 'ios') return native
+  if (Platform.OS === 'android' && native) return androidNativeStopwatch(native)
+  return androidStopwatch
+})()
 
 /** Whether this platform has a working stopwatch implementation. */
 export function isAvailable(): boolean {

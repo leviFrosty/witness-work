@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import { Linking, Platform, View } from 'react-native'
+import { Platform, View } from 'react-native'
+import { openAppSettings } from '@/lib/openAppSettings'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import CalendarPreview from '@/features/onboarding/components/CalendarPreview'
@@ -111,9 +112,10 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
           <InfoPopover
             title={i18n.t('calendarOnboardingPrivate')}
             description={i18n.t(
-              Platform.OS === 'android'
-                ? 'calendarOnboardingPrivate_infoAndroid'
-                : 'calendarOnboardingPrivate_info'
+              Platform.select<TranslationKey>({
+                android: 'calendarOnboardingPrivate_infoAndroid',
+                default: 'calendarOnboardingPrivate_info',
+              })
             )}
           />
         </View>
@@ -126,14 +128,15 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
           <Button
             style={{ marginTop: 8, alignSelf: 'flex-start' }}
             onPress={() => {
-              void Linking.openSettings()
+              void openAppSettings()
             }}
           >
             <Text style={{ color: theme.colors.accent, fontWeight: '600' }}>
               {i18n.t(
-                Platform.OS === 'android'
-                  ? 'calendarOpenSettingsAndroid'
-                  : 'calendarOpenSettings'
+                Platform.select<TranslationKey>({
+                  android: 'calendarOpenSettingsAndroid',
+                  default: 'calendarOpenSettings',
+                })
               )}
             </Text>
           </Button>

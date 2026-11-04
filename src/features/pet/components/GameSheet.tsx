@@ -109,7 +109,7 @@ export default function GameSheet({
           paddingBottom: sheetInsets.bottom,
           gap: 18,
           // iOS sizes the sheet to this content; Android shows it full screen.
-          flex: Platform.OS === 'android' ? 1 : undefined,
+          flex: Platform.select({ android: 1, default: undefined }),
         },
         style,
       ]}

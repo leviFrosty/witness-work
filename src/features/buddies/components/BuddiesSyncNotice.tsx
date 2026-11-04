@@ -13,7 +13,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import type { BuddiesSyncNotice as Notice } from '@/features/buddies/lib/syncStatus'
 
 const ICONS = {
@@ -86,9 +86,11 @@ export default function BuddiesSyncNotice({
           centered
           title={i18n.t('account_unverifiedTitle')}
           description={i18n.t(
-            Platform.OS === 'android'
-              ? 'buddies_errorUnverifiedAndroid'
-              : 'buddies_errorUnverified'
+            Platform.select<TranslationKey>({
+              android: 'buddies_errorUnverifiedAndroid',
+              web: 'buddies_errorUnverifiedWeb',
+              default: 'buddies_errorUnverified',
+            })
           )}
         />
       )}

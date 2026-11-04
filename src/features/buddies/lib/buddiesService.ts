@@ -1,5 +1,6 @@
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
+import { devicePlatform } from '@/lib/devicePlatform'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
@@ -197,7 +198,7 @@ const engine = createBuddiesEngine({
       dayPlans: useServiceReport.getState().dayPlans,
       visits: useConversations.getState().conversations,
     }),
-  platform: Platform.OS === 'android' ? 'android' : 'ios',
+  platform: devicePlatform(),
   // One per completed pairing on each side; `role: inviter` counts pairings.
   onPaired: ({ role, buddyPlatform }) =>
     analytics.capture('buddy_paired', {

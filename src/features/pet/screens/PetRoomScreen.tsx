@@ -186,7 +186,7 @@ export default function PetRoomScreen({
   // As RootStack presented it, when it opened.
   const [sheet] = useState(petOpensAsSheet)
   // Android shows it full screen: the pinned room stops below the status bar.
-  const statusBar = Platform.OS === 'android' ? insets.top : 0
+  const statusBar = Platform.select({ android: insets.top, default: 0 })
   const scene = usePetRoomScene()
   // Opened from an unlocked item's reveal: its tab first.
   const focus = route.params?.focus

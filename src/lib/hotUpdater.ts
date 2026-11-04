@@ -38,7 +38,7 @@ export const hotUpdater = HotUpdater.init({
 // first-content signal. An in-process reload can leave a valid update pending
 // and cause recovery to discard it on the next launch.
 hotUpdater.setReloadBehavior(
-  Platform.OS === 'android' ? 'processRestart' : 'reload'
+  Platform.select({ android: 'processRestart', default: 'reload' })
 )
 
 // getBundleId() follows the selected update, including one staged after this

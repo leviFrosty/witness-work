@@ -1,5 +1,5 @@
 import { Platform } from 'react-native'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import {
   BuddyInviteError,
   BuddyRemovalPendingError,
@@ -36,9 +36,11 @@ export function buddiesErrorMessage(error: unknown): string {
     return error.attestation === 'temporary'
       ? i18n.t('buddies_errorVerifyLater')
       : i18n.t(
-          Platform.OS === 'android'
-            ? 'buddies_errorUnverifiedAndroid'
-            : 'buddies_errorUnverified'
+          Platform.select<TranslationKey>({
+            android: 'buddies_errorUnverifiedAndroid',
+            web: 'buddies_errorUnverifiedWeb',
+            default: 'buddies_errorUnverified',
+          })
         )
   if (isRelayError(error, 'upgrade_required'))
     return i18n.t('buddies_errorUpdate')

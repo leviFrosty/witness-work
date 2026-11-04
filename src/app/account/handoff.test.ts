@@ -10,7 +10,12 @@ const fake = vi.hoisted(() => ({
   connect: vi.fn(),
 }))
 
-vi.mock('react-native', () => ({ Platform: { OS: 'android' } }))
+vi.mock('react-native', () => ({
+  Platform: {
+    OS: 'android',
+    select: (spec: Record<string, unknown>) => spec.android ?? spec.default,
+  },
+}))
 vi.mock('expo-application', () => ({ nativeApplicationVersion: '3.0.0' }))
 vi.mock('expo-crypto', () => ({ getRandomBytes: vi.fn() }))
 vi.mock('expo-device', () => ({ modelName: 'Pixel 9' }))

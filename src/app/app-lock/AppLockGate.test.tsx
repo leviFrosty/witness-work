@@ -24,6 +24,7 @@ vi.mock('react-native', () => ({
     addEventListener: () => ({ remove: vi.fn() }),
   },
   BackHandler: { exitApp: vi.fn() },
+  Platform: { OS: 'ios' },
 }))
 vi.mock('@/components/ui/FullWindowOverlay', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,

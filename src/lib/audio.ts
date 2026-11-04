@@ -8,6 +8,7 @@ import {
   soundEffectsAvailable,
 } from '../../modules/sound-effects'
 import { usePreferences, type RewardSoundSet } from '@/stores/preferences'
+import { hasUserGesture } from '@/lib/userGesture'
 import successChime from '@/assets/audio/success-chime.mp3'
 import scribeVoiceStart from '@/assets/audio/scribe-voice-start.wav'
 import scribeVoiceEnd from '@/assets/audio/scribe-voice-end.wav'
@@ -45,6 +46,12 @@ export type SoundName = keyof typeof SOUNDS
 export const isAudioEnabled = () => usePreferences.getState().audioEnabled
 
 /**
+ * Whether a sound may start now: sounds are on, and a browser has had the tap
+ * or key press it needs before it lets a page play anything.
+ */
+const canPlaySound = () => isAudioEnabled() && hasUserGesture()
+
+/**
  * Preloads `name` and returns a function that plays it from the start. This and
  * `expo-audio` itself are only imported here (lint-enforced) so the Audio &
  * Haptics setting can't be bypassed.
@@ -53,7 +60,7 @@ export function useSound(name: SoundName) {
   const player = useAudioPlayer(SOUNDS[name])
 
   return () => {
-    if (!isAudioEnabled()) return
+    if (!canPlaySound()) return
     try {
       // No setAudioModeAsync here: the default audio mode keeps the iOS
       // session in the ambient category, so sounds respect the device's
@@ -82,7 +89,7 @@ export function useLazySound(name: SoundName) {
   )
 
   return () => {
-    if (!isAudioEnabled()) return
+    if (!canPlaySound()) return
     try {
       playFromStart(playerRef, name)
     } catch {
@@ -169,7 +176,7 @@ export function playRewardSound(
     set = rewardSoundSet(),
   }: { rate?: number; volume?: number; set?: RewardSoundSet } = {}
 ) {
-  if (!isAudioEnabled() || set === 'off') return
+  if (!canPlaySound() || set === 'off') return
   try {
     const key = rewardKey(set, role)
     const clamped = Math.min(2, Math.max(0.5, rate))
@@ -299,7 +306,7 @@ export async function prepareCues(...names: CueName[]) {
 
 /** Plays a prepared cue; silent when unprepared or sounds are off. */
 export function playCue(name: CueName) {
-  if (!isAudioEnabled()) return
+  if (!canPlaySound()) return
   const uri = cueUris.get(name)
   if (!uri) return
   try {

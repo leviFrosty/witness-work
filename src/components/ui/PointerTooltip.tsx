@@ -251,7 +251,7 @@ export function TooltipBubble({
         shadowOpacity: 0.12,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 2 },
-        elevation: Platform.OS === 'android' ? 4 : undefined,
+        elevation: Platform.select({ android: 4 }),
       }}
     >
       <Text

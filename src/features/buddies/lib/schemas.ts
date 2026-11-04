@@ -114,7 +114,7 @@ const profileFields = {
  * The sender's platform, for pairing analytics only. Optional and lenient: an
  * unknown value reads as absent rather than spoiling the whole card.
  */
-export const BUDDY_PLATFORMS = ['ios', 'android'] as const
+export const BUDDY_PLATFORMS = ['ios', 'android', 'web'] as const
 export type BuddyPlatform = (typeof BUDDY_PLATFORMS)[number]
 const buddyPlatformSchema = z.enum(BUDDY_PLATFORMS).optional().catch(undefined)
 

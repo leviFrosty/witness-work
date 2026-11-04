@@ -14,9 +14,10 @@ import {
  * wide); Android 12+ centres the 160 dp mark from `splash-android.xml`.
  */
 export const splashMarkWidth = (window: { width: number; height: number }) =>
-  Platform.OS === 'android'
-    ? 160
-    : 235 * Math.min(window.width / 1284, window.height / 2778)
+  Platform.select({
+    android: 160,
+    default: 235 * Math.min(window.width / 1284, window.height / 2778),
+  })
 
 /**
  * A pixel match of the native splash screen, shown while the app finishes

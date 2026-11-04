@@ -108,7 +108,12 @@ export default function PetIntro({
 
   return (
     // Android shows it full screen: Next stays at the bottom.
-    <View style={{ gap: 16, flex: Platform.OS === 'android' ? 1 : undefined }}>
+    <View
+      style={{
+        gap: 16,
+        flex: Platform.select({ android: 1, default: undefined }),
+      }}
+    >
       <GameFrame
         kind='preview'
         palette={palette}

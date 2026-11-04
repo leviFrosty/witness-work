@@ -268,7 +268,7 @@ Headers: `Authorization: Bearer …`, `Content-Type: application/json`, `Accept:
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `conversationId` | ULID. Used only for log correlation and turn grace; never stored with content                                                                     |
 | `turnId`, `step` | ULID and `0 ≤ step < maxStepsPerTurn`. `(turnId, step)` is the [idempotency key](#idempotency-and-retries)                                        |
-| `app`            | `version` `x.y.z`, `platform` `ios`/`android`, `locale` BCP-47 (the app Language). Logged as dimensions only                                      |
+| `app`            | `version` `x.y.z`, `platform` `ios`/`android`/`web`, `locale` BCP-47 (the app Language). Logged as dimensions only                                |
 | `tools`          | [Tool definitions](#tool-definitions), in the app's registry order, identical across steps, conversations and modes                               |
 | `context`        | [Context](#context), ≤ `maxContextBytes` (else 413 `too_large`), byte-identical across every step of a conversation unless the local date changed |
 | `messages`       | [Messages](#messages), the whole conversation so far. Step 0's last message is `user`; step N > 0's last message is `tool`                        |

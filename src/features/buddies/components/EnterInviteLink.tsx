@@ -16,8 +16,9 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 /**
  * For a Buddies Invite link that arrived by message and didn't open the app. On
  * iOS a prompt the User pastes into avoids the clipboard-read permission
- * banner. Android has no prompt, so tapping reads the clipboard (copying the
- * link was the User's step), finding the link anywhere in a copied message.
+ * banner. Android and the web have no prompt, so tapping reads the clipboard
+ * (copying the link was the User's step), finding the link anywhere in a copied
+ * message.
  */
 export default function EnterInviteLink() {
   const theme = useTheme()
@@ -61,7 +62,7 @@ export default function EnterInviteLink() {
 
   return (
     <Button
-      onPress={Platform.OS === 'android' ? () => void paste() : prompt}
+      onPress={Platform.OS === 'ios' ? prompt : () => void paste()}
       style={{ alignSelf: 'flex-start', marginTop: -14 }}
     >
       <Text style={{ color: theme.colors.textAlt }}>

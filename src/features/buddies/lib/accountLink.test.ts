@@ -8,7 +8,14 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },
 }))
-vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
+vi.mock('react-native', () => ({
+  Platform: {
+    OS: 'ios',
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
+  },
+}))
 
 /**
  * ADR 0024 and ADR 0027: every relay call carries the User's account session,

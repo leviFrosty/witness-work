@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('expo-constants', () => ({
   default: { expoConfig: { version: '1.0.0' } },
@@ -34,6 +35,8 @@ vi.mock('expo-asset', () => ({
     }),
   },
 }))
+const gesture = vi.hoisted(() => ({ active: true }))
+vi.mock('@/lib/userGesture', () => ({ hasUserGesture: () => gesture.active }))
 const speech = vi.hoisted(() => ({ playCue: vi.fn() }))
 vi.mock('../../modules/speech-transcription', () => speech)
 const effects = vi.hoisted(() => ({
@@ -67,6 +70,7 @@ describe('Audio setting', () => {
     speech.playCue.mockClear()
     effects.loadSoundEffect.mockClear()
     effects.playSoundEffect.mockClear()
+    gesture.active = true
     usePreferences.getState().set({ audioEnabled: true })
   })
 
@@ -172,5 +176,27 @@ describe('Audio setting', () => {
 
   it('stays on this device instead of syncing', () => {
     expect(NON_SYNCABLE_PREFERENCE_KEYS.has('audioEnabled')).toBe(true)
+  })
+})
+
+// Last: playing a sound that isn't loaded yet starts loading it for the rest.
+describe('Audio on a page without a tap yet', () => {
+  beforeEach(() => {
+    player.play.mockClear()
+    effects.playSoundEffect.mockClear()
+    usePreferences.getState().set({ audioEnabled: true })
+  })
+
+  it("waits for the page's first tap before playing, as a browser does", () => {
+    gesture.active = false
+    playRewardSound('hit')
+    expect(effects.playSoundEffect).not.toHaveBeenCalled()
+    expect(player.play).not.toHaveBeenCalled()
+
+    gesture.active = true
+    playRewardSound('hit')
+    expect(
+      player.play.mock.calls.length + effects.playSoundEffect.mock.calls.length
+    ).toBe(1)
   })
 })

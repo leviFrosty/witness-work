@@ -174,7 +174,7 @@ export default function ResizeHandle({
             <Stop offset='1' stopColor={dark ? '#48484A' : '#DCDCE0'} />
           </RadialGradient>
         </Defs>
-        {Platform.OS === 'android' ? (
+        {Platform.OS === 'android' && (
           <Path
             d={path}
             stroke='#000000'
@@ -184,7 +184,7 @@ export default function ResizeHandle({
             fill='none'
             translateY={1}
           />
-        ) : null}
+        )}
         {/* The rim: a hairline around the bean. */}
         <Path
           d={path}

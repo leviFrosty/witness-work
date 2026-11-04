@@ -1,6 +1,7 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
+import type { DevicePlatform } from '@/lib/devicePlatform'
 import { gunzipSync, gzipSync } from 'fflate'
 import { concatBytes, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
 import { sha256Native } from '@/lib/sha256'
@@ -20,7 +21,7 @@ const TAG_LENGTH = 16
 /** The plaintext's own version; a newer one is from a newer app. */
 export const BACKUP_PLAINTEXT_VERSION = 1
 
-export type BackupPlatform = 'ios' | 'android'
+export type BackupPlatform = DevicePlatform
 
 /** What a slot holds, once opened. `payload` is a `SyncPayload` to validate. */
 export type BackupPlaintext = {
@@ -157,7 +158,10 @@ export function openPlaintext(
       typeof plaintext.deviceName === 'string'
         ? plaintext.deviceName.slice(0, 64)
         : '',
-    platform: plaintext.platform === 'android' ? 'android' : 'ios',
+    platform:
+      plaintext.platform === 'android' || plaintext.platform === 'web'
+        ? plaintext.platform
+        : 'ios',
     createdAt: plaintext.createdAt,
     payload: plaintext.payload,
   }

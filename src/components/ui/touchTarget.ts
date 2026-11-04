@@ -1,7 +1,7 @@
 import { Platform, type ViewStyle } from 'react-native'
 
 /** The smallest tap target: Apple's 44pt, and Material's 48dp on Android. */
-export const MIN_TOUCH_TARGET = Platform.OS === 'android' ? 48 : 44
+export const MIN_TOUCH_TARGET = Platform.select({ android: 48, default: 44 })
 
 /**
  * A real minimum-size frame for a control that looks `width` × `height`, pulled

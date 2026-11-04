@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import {
   CircleAlert as CircleAlertIcon,
   Gauge as GaugeIcon,
@@ -12,7 +12,7 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n, { type TranslationKey } from '@/lib/locales'
-import { openStoreListing } from '@/lib/storeListing'
+import { openAppUpdate } from '@/lib/storeListing'
 import { useSupporter } from '@/stores/supporterStatus'
 import type { ScribeAvailability, ScribePlan } from '@/features/scribe/types'
 import { recheckSupporter } from '@/features/scribe/runtime/status'
@@ -242,8 +242,8 @@ export const ScribeBlockedCard = ({ reason }: { reason: BlockedReason }) => (
   <Panel icon={CircleAlertIcon} tone='warn' body={i18n.t(blockedCopy(reason))}>
     {reason === 'update_required' ? (
       <PanelButton
-        label={i18n.t('update')}
-        onPress={() => void openStoreListing()}
+        label={i18n.t(Platform.OS === 'web' ? 'reload' : 'update')}
+        onPress={() => void openAppUpdate()}
       />
     ) : null}
   </Panel>

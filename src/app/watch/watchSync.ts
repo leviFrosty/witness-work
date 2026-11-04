@@ -113,7 +113,8 @@ export function pushWatchSnapshot(
       addCalendarMonths(month, 1)
     )
     const snapshot = buildWatchSnapshot({
-      platform: Platform.OS === 'android' ? 'android' : 'ios',
+      // Phones only: the bridge is unavailable, so this never runs, on the web.
+      platform: Platform.select({ android: 'android', default: 'ios' }),
       serviceReports: sr.serviceReports,
       publisher,
       publisherHours: prefs.publisherHours,

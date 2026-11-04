@@ -4,7 +4,7 @@ import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import FoldPane from '@/components/ui/layout/FoldPane'
 import useTheme from '@/contexts/theme'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import type { UpdateRequired } from '@/lib/appUpdate'
 
 type Props = {
@@ -46,9 +46,11 @@ export default function UpdateRequiredScreen({ required, onUpdate }: Props) {
           }}
         >
           {i18n.t(
-            Platform.OS === 'android'
-              ? 'updateRequired_bodyAndroid'
-              : 'updateRequired_body'
+            Platform.select<TranslationKey>({
+              android: 'updateRequired_bodyAndroid',
+              web: 'updateRequired_bodyWeb',
+              default: 'updateRequired_body',
+            })
           )}
         </Text>
         {currentVersion && minVersion && (
@@ -73,7 +75,12 @@ export default function UpdateRequiredScreen({ required, onUpdate }: Props) {
               fontFamily: theme.fonts.bold,
             }}
           >
-            {i18n.t('updateRequired_action')}
+            {i18n.t(
+              Platform.select<TranslationKey>({
+                web: 'updateRequired_actionWeb',
+                default: 'updateRequired_action',
+              })
+            )}
           </Text>
         </ActionButton>
       </FoldPane>

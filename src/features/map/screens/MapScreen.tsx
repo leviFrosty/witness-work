@@ -223,7 +223,7 @@ const FullMapView = ({
   const bottomOverlayInset =
     insets.bottom +
     bottomBarHeight +
-    (Platform.OS === 'android' ? LEGAL_LABEL_HEIGHT : 0)
+    Platform.select({ android: LEGAL_LABEL_HEIGHT, default: 0 })
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
@@ -504,7 +504,9 @@ const FullMapView = ({
   // So on Android the first fit waits until the map has drawn, which is after
   // its padding, or a moment after it's ready if it never says (offline, say),
   // and jumps rather than animates, so padding landing later keeps it.
-  const [isMapLoaded, setIsMapLoaded] = useState(Platform.OS !== 'android')
+  const [isMapLoaded, setIsMapLoaded] = useState(
+    Platform.select({ android: false, default: true })
+  )
   useEffect(() => {
     if (!isMapReady || isMapLoaded) return
     const timer = setTimeout(() => setIsMapLoaded(true), 1500)
@@ -522,7 +524,7 @@ const FullMapView = ({
       fitMapToCoordinates(
         mapRef.current,
         visibleContactMarkers.map((contact) => contact.coordinate!),
-        { animated: Platform.OS !== 'android' }
+        { animated: Platform.select({ android: false, default: true }) }
       )
       hasFitOnMount.current = true
     }
@@ -1024,14 +1026,14 @@ const FullMapView = ({
                       top: topInset,
                       right: inspectorRight,
                       left: inspectorLeft,
-                      bottom:
-                        Platform.OS === 'android'
-                          ? insets.bottom + bottomBarHeight
-                          : // Apple Maps adds the safe area itself, so with
-                            // the tab bar gone its label sits right on it.
-                            tabBarHidden
-                            ? 0
-                            : insets.bottom + bottomBarHeight / 4,
+                      bottom: Platform.select({
+                        android: insets.bottom + bottomBarHeight,
+                        // Apple Maps adds the safe area itself, so with the tab
+                        // bar gone its label sits right on it.
+                        default: tabBarHidden
+                          ? 0
+                          : insets.bottom + bottomBarHeight / 4,
+                      }),
                     }
               }
               style={{ height: '100%', width: '100%' }}

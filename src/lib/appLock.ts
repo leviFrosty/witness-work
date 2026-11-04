@@ -1,5 +1,6 @@
 import { Linking, Platform } from 'react-native'
 import * as LocalAuthentication from 'expo-local-authentication'
+import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 import { useAppLockSession } from '@/stores/appLock'
 
@@ -31,7 +32,7 @@ export async function openScreenLockSettings() {
   try {
     await Linking.sendIntent('android.settings.SECURITY_SETTINGS')
   } catch {
-    await Linking.openSettings()
+    await openAppSettings()
   }
 }
 

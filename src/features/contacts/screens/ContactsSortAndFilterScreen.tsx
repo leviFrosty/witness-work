@@ -327,7 +327,10 @@ const ContactsSortAndFilterScreen = () => {
           justifyContent: 'space-between',
           paddingHorizontal: 20,
           // Android presents this modal full-screen, edge-to-edge.
-          paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
+          paddingTop: Platform.select({
+            android: insets.top + 12,
+            default: 20,
+          }),
           paddingBottom: 14,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: theme.colors.border,

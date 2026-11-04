@@ -33,10 +33,11 @@ interface Props {
 }
 
 /**
- * On Android the reveal is a Modal, which sits above the app's own confetti
- * layer, so it brings its own to keep the fireworks in front of the backdrop.
+ * On Android and the web the reveal is a Modal, which sits above the app's own
+ * confetti layer, so it brings its own to keep the fireworks in front of the
+ * backdrop.
  */
-const Fireworks = Platform.OS === 'android' ? ConfettiProvider : Fragment
+const Fireworks = Platform.OS === 'ios' ? Fragment : ConfettiProvider
 
 /**
  * Choreographed timings for the grand-reveal sequence. Adjust here rather than

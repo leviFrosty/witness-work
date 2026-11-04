@@ -24,11 +24,8 @@ type Props = ComponentProps<typeof BaseScrollView> & {
  * `automaticallyAdjustKeyboardInsets`), so it gets the library's view as is.
  */
 export default function KeyboardAwareScrollView(props: Props) {
-  return Platform.OS === 'android' ? (
-    <AndroidKeyboardAwareScrollView {...props} />
-  ) : (
-    <BaseScrollView {...props} />
-  )
+  if (Platform.OS !== 'android') return <BaseScrollView {...props} />
+  return <AndroidKeyboardAwareScrollView {...props} />
 }
 
 type RevealHandles = {

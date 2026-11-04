@@ -212,7 +212,7 @@ export const ToolRow = ({
   const rowStyle = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    minHeight: Platform.OS === 'android' ? 48 : 44,
+    minHeight: Platform.select({ android: 48, default: 44 }),
     paddingVertical: 6,
   }
 

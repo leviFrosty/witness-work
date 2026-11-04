@@ -3,7 +3,10 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    OS: 'ios',
+    select: (spec: Record<string, unknown>) => spec.ios ?? spec.default,
+  },
   StyleSheet: {
     flatten: (style: unknown) =>
       Array.isArray(style) ? Object.assign({}, ...style) : style,

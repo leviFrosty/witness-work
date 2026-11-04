@@ -75,12 +75,14 @@ const SupportSection = ({
           onPress={onManageSubscription}
         />
       )}
-      <GroupedListRow
-        icon={Share2Icon}
-        label={i18n.t('shareApp_title')}
-        onPress={() => handleNavigate('ShareApp')}
-        selected={selectedDestination === 'ShareApp'}
-      />
+      {hasCapability('storeListings') && (
+        <GroupedListRow
+          icon={Share2Icon}
+          label={i18n.t('shareApp_title')}
+          onPress={() => handleNavigate('ShareApp')}
+          selected={selectedDestination === 'ShareApp'}
+        />
+      )}
       {hasCapability('storeReview') && (
         <GroupedListRow
           icon={MedalIcon}

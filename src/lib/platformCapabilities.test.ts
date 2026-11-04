@@ -19,6 +19,10 @@ const all: PlatformCapability[] = [
   'calendarBridge',
   'deviceNotifications',
   'storeReview',
+  'storeListings',
+  'haptics',
+  'appLock',
+  'photoLibrarySave',
   'otaUpdates',
 ]
 const on = (os: string) => {
@@ -43,6 +47,10 @@ describe('hasCapability', () => {
       'calendarBridge',
       'deviceNotifications',
       'storeReview',
+      'storeListings',
+      'haptics',
+      'appLock',
+      'photoLibrarySave',
       'otaUpdates',
     ])
   })

@@ -1,6 +1,5 @@
 import { getRandomBytes } from 'expo-crypto'
-import * as Device from 'expo-device'
-import { Platform } from 'react-native'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
 import { createBackupFile } from '@/lib/backupFile'
 import {
@@ -24,9 +23,8 @@ export type BackupFileLockChoice =
 export const accountLockAvailable = () => accountKeyAvailable()
 
 const origin = () => ({
-  deviceName:
-    Device.modelName || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-  platform: Platform.OS === 'android' ? ('android' as const) : ('ios' as const),
+  deviceName: deviceName(),
+  platform: devicePlatform(),
   createdAt: Date.now(),
 })
 

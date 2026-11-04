@@ -1,4 +1,5 @@
 import * as ExpoHaptics from 'expo-haptics'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { usePreferences } from '@/stores/preferences'
 
 /**
@@ -9,12 +10,13 @@ import { usePreferences } from '@/stores/preferences'
 export const isHapticsEnabled = () => usePreferences.getState().hapticsEnabled
 
 /**
- * Skips `play` when the User turned haptics off. `expo-haptics` is only
- * imported here (lint-enforced) so the Audio & Haptics setting can't be
- * bypassed.
+ * Skips `play` when the User turned haptics off, or where there are none: the
+ * web would call `navigator.vibrate`, which a browser refuses before a tap and
+ * logs. `expo-haptics` is only imported here (lint-enforced) so the Audio &
+ * Haptics setting can't be bypassed.
  */
 const whenEnabled = (play: () => Promise<void>) => () =>
-  isHapticsEnabled() ? play() : Promise.resolve()
+  hasCapability('haptics') && isHapticsEnabled() ? play() : Promise.resolve()
 
 const Haptics = {
   light: whenEnabled(() =>

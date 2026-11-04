@@ -4,7 +4,7 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect'
 const liquidGlass = isLiquidGlassAvailable()
 
 /** A chip or button over the map: 44pt on iOS, Material's 48dp on Android. */
-export const MAP_BUTTON_HEIGHT = Platform.OS === 'android' ? 48 : 44
+export const MAP_BUTTON_HEIGHT = Platform.select({ android: 48, default: 44 })
 
 /** The glass pill the Map's chips share. */
 export const mapPillStyle = (cardColor: string): ViewStyle => ({

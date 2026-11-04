@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactCompiler from 'eslint-plugin-react-compiler'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
+import witnessworkPlugin from './eslint-rules/witnesswork.mjs'
 
 const soundImports = {
   group: [
@@ -449,6 +450,26 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  // Platform checks: see `platformMessage`. Files owned by other web
+  // workstreams join this rule when their web branches land: the account
+  // session and attestation (W3: `src/lib/attestation/**`, `attestationCopy.ts`,
+  // `serverAccount/index.ts`) and purchases and the paywall (W6:
+  // `CustomerProvider.tsx`, `src/features/supporter/**`).
+  {
+    files: ['src/**/*.{js,jsx,ts,tsx}', 'modules/**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{ios,android,native}.{js,jsx,ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      'src/__tests__/**',
+      'src/lib/attestation/**',
+      'src/app/account/attestationCopy.ts',
+      'src/lib/serverAccount/index.ts',
+      'src/providers/CustomerProvider.tsx',
+      'src/features/supporter/**',
+    ],
+    plugins: { witnesswork: witnessworkPlugin },
+    rules: { 'witnesswork/platform-android-choice': 'error' },
   },
   {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],

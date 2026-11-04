@@ -11,7 +11,7 @@ import {
   useUpdateRequired,
 } from '@/lib/appUpdate'
 import i18n from '@/lib/locales'
-import { openStoreListing } from '@/lib/storeListing'
+import { openAppUpdate } from '@/lib/storeListing'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import UpdateRequiredScreen from '@/app/update-required/UpdateRequiredScreen'
 
@@ -56,7 +56,7 @@ export default function UpdateRequiredGate() {
     analytics.capture('update_required_store_opened', {
       source: required.source,
     })
-    void openStoreListing({ title: i18n.t('updateRequired_title') })
+    void openAppUpdate({ title: i18n.t('updateRequired_title') })
   }
 
   return (

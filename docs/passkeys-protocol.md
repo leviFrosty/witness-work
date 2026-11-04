@@ -76,6 +76,8 @@ Both are stateless: a payload MAC'd under their own Worker secret (never the acc
 
 ## Routes
 
+`{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-dev.witnesswork.app` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
+
 `{BASE}/accounts/v1/…`, with the error envelope and codes of [`accounts-protocol.md`](./accounts-protocol.md#requests). **Bearer** means an access token from a session; **signed** means the account key's self-signed envelope (`{ payload, signature }`, op as named), whose `accountPub` must be the token's account when both are required. **Signed envelopes work once:** every signed op here, and `backup/delete`, records its `nonce` for the envelope's 5 minutes, so the same envelope again is 409 `replay`; a retry signs a new one. **Step-up** means a web session must have passed a [step-up](#step-up-on-the-web) in the last 5 minutes (`step_up_required` otherwise); phone sessions are exempt, since they attested and check Face ID on the device.
 
 New error codes:

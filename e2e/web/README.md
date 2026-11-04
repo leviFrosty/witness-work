@@ -35,6 +35,27 @@ With `WW_WEB_CSP=<folder>`, each test also saves its violations there, and
 a container, serve the Worker yourself with
 `pnpm web:serve dev --port <port> --ip 0.0.0.0`.
 
+A few specs sign in for real, against a local ww-api
+(`node scripts/verify/dev.mjs up` in ww-api) and the Expo dev server, which
+has the dev harness: `purchases.spec.ts`'s "Buy and the settled id" signs up a
+web-only account in Chromium (a virtual authenticator) and signs every project's
+browser in to it. Point `.env.local`'s `EXPO_PUBLIC_API_BASE_URL` at the
+worker, run `pnpm web`, then:
+
+```bash
+E2E_EXTERNAL=1 E2E_HOST=localhost E2E_PORT=8081 E2E_SELLS_ON_WEB=1 \
+  E2E_API_ORIGIN=http://127.0.0.1:<port> pnpm web:test e2e/web/purchases.spec.ts
+```
+
+`E2E_API_ORIGIN` lets requests to that worker through, and must be
+`localhost`, `127.0.0.1` or `::1`; `E2E_SELLS_ON_WEB=1`
+says `.env.local` has RevenueCat Billing's sandbox key, since there's no export
+to check. ww-api caps sign-ups per caller (3 a day), so a run signs up once for
+every project; `node scripts/verify/dev.mjs down --wipe` in ww-api starts over.
+Specs that reach sign-in from a tab opened without an account use
+`test.use({ withoutAccountOnce: true })`, which opens it that way only on the
+tab's first load.
+
 Each test seeds the app past onboarding by editing the preferences the app
 saved in IndexedDB on its first load, while no tab of the app is open
 (`fixtures.ts`), and fails on any uncaught page error. `storage.spec.ts` covers

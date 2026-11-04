@@ -1,4 +1,6 @@
 import { appVariant } from '@/lib/appVariant'
+import { webSignInLater } from '@/lib/serverAccount/webSignInMark'
+import { reloadPage } from '@/lib/serverAccount/webTabs'
 import { useVisitorLocation } from '@/hooks/useVisitorLocation'
 import { webStores } from '@/lib/webStorage/webStores'
 import { useWebCheckoutCustomer } from '@/features/supporter/hooks/useWebCheckoutCustomer'
@@ -62,6 +64,12 @@ export default function useWebCheckout(): WebCheckout {
       ])
       window.location.assign(url)
       return true
+    },
+    // Only a tab opened without an account has no session here (dev builds,
+    // until web sign-up): forget that choice, and the gate signs in.
+    signIn: () => {
+      webSignInLater.clear()
+      reloadPage()
     },
   }
 }

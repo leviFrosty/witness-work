@@ -46,6 +46,23 @@ export const profile: {
   )
 )[process.env.E2E_WORKER ?? 'dev']
 
+/**
+ * A local ww-api (`node scripts/verify/dev.mjs up` in ww-api) that the app
+ * being served calls, for specs that sign in for real. Requests to it go
+ * through; every other outside request is still answered here. Only ever this
+ * machine's: a run never reaches a shared or production ww-api.
+ */
+export const localApiOrigin = (() => {
+  const origin = process.env.E2E_API_ORIGIN
+  if (!origin) return undefined
+  const { hostname } = new URL(origin)
+  if (!['localhost', '127.0.0.1', '[::1]', '::1'].includes(hostname))
+    throw new Error(
+      `E2E_API_ORIGIN must be a local ww-api (localhost, 127.0.0.1 or ::1), not ${hostname}`
+    )
+  return origin
+})()
+
 /** A language's app strings, by its `src/locales` file name. */
 export const strings = (language: string): Record<string, string> =>
   JSON.parse(
@@ -74,6 +91,12 @@ type Fixtures = {
   }
   /** Signed in to an account (`session.ts`); signed out by default. */
   signedIn: boolean
+  /**
+   * Opens without an account only on a tab's first load, so a tab that forgets
+   * the choice (Sign In, or a spec clearing it) reaches sign-in. Off by
+   * default: every load opens without one.
+   */
+  withoutAccountOnce: boolean
   /** The app on Home, seeded past onboarding. */
   app: Page
   /** Saves a screenshot to `$WW_WEB_SHOTS/<name>-<project>.png`, if set. */
@@ -146,17 +169,28 @@ export async function openBlankOnOrigin(page: Page) {
 
 export const test = base.extend<Fixtures>({
   page: async (
-    { page, baseURL, revenueCatCatalog, revenueCatCustomer },
+    {
+      page,
+      baseURL,
+      revenueCatCatalog,
+      revenueCatCustomer,
+      withoutAccountOnce,
+    },
     provide,
     testInfo
   ) => {
     // Nothing a smoke run does reaches a real service: everything but the
     // app's own server answers 503 here, as a service that's down would.
     const app = new URL(baseURL!).host
+    // A local ww-api a run was pointed at (`E2E_API_ORIGIN`), never a shared one.
+    const api = localApiOrigin && new URL(localApiOrigin).host
     // A `blob:` URL is the page's own object (a picked file, a download), which
     // WebKit reports to the router with no host.
     const isApp = (url: URL) =>
-      url.host === app || url.protocol === 'blob:' || url.protocol === 'data:'
+      url.host === app ||
+      (!!api && url.host === api) ||
+      url.protocol === 'blob:' ||
+      url.protocol === 'data:'
     await page.context().route(
       (url) => !isApp(url),
       (route) =>
@@ -170,14 +204,19 @@ export const test = base.extend<Fixtures>({
         })
     )
     // A run opens the app without an account, which only a dev build allows
-    // (`createAccountOffer.ts`). `signedOut` specs open their own context.
-    await page.context().addInitScript(() => {
+    // (`createAccountOffer.ts`); with `withoutAccountOnce`, only on a tab's
+    // first load. `signedOut` specs open their own context.
+    await page.context().addInitScript((once) => {
       try {
+        if (once) {
+          if (sessionStorage.getItem('ww-e2e-opened')) return
+          sessionStorage.setItem('ww-e2e-opened', '1')
+        }
         sessionStorage.setItem('ww-web-sign-in-later', '1')
       } catch {
         // No session storage: the sign-in screen shows.
       }
-    })
+    }, withoutAccountOnce)
     // A build with RevenueCat Billing's key sees a working RevenueCat.
     await mockRevenueCat(page.context(), revenueCatCatalog, revenueCatCustomer)
     await page.context().routeWebSocket(
@@ -232,6 +271,7 @@ export const test = base.extend<Fixtures>({
   revenueCatCustomer: ['free', { option: true }],
   seed: [{}, { option: true }],
   signedIn: [false, { option: true }],
+  withoutAccountOnce: [false, { option: true }],
   app: async ({ page, language, preferences, seed, signedIn }, provide) => {
     // A first load in a tab of its own saves the app's preferences, which
     // get the seed on top once that tab is closed (it would save over them).

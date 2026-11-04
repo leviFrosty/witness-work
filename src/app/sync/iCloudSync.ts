@@ -2472,7 +2472,7 @@ function pull(reason: string): Promise<PullOutcome> {
         ])
       }
       lastReadFoundFiles = false
-      const outcome = await pullAndMergeInner(reason)
+      const outcome = await pullAndMergeInner(reason, settledGeneration)
       lastPullComplete = outcome.complete
       if (outcome.complete) {
         completePullStartedAt = startedAt
@@ -2542,8 +2542,15 @@ function canApplyPull(reason: string): boolean {
   return canSync()
 }
 
-async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
+async function pullAndMergeInner(
+  reason: string,
+  generation: number
+): Promise<PullOutcome> {
   perf.count('sync:pull')
+  // A pull that started before a reset read another account's claims.
+  const setPeerClaims = (claims: readonly AccountClaim[]) => {
+    if (generation === completePullGeneration()) setPeerAccountClaims(claims)
+  }
   if (!canSync()) {
     logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
     return { changed: false, complete: false }
@@ -2603,7 +2610,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   // Every listed file was read; parsing below may still find one it can't.
   let claimsRead = complete
   if (files.length === 0) {
-    setPeerAccountClaims([])
+    setPeerClaims([])
     usePreferences.getState().set({
       lastiCloudPulledAt: Date.now(),
       iCloudSyncIssue: issue,
@@ -2682,7 +2689,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
 
   // The peers' RevenueCat claims (ADR 0040 §7), for `AccountProvider`. Every
   // device that wrote one counts, whatever its reset generation.
-  setPeerAccountClaims(
+  setPeerClaims(
     remotePayloads
       .map((r) => r.payload.revenueCat)
       .filter((claim): claim is AccountClaim => claim !== undefined)

@@ -2566,6 +2566,19 @@ describe('The web on Cloud Sync', () => {
       await browser.iCloudSync.pullAndMerge('manual')
       expect(browser.pullSettled.completedPullThisLaunch()).toBe(true)
     })
+
+    it('doesn’t hand over the claims of a pull from before the account changed', async () => {
+      const phone = await device('phone', { os: 'ios' })
+      phone.claims.setOwnAccountClaim(phoneClaim)
+      await phone.iCloudSync.push('manual')
+      const browser = await device('browser', { os: 'web' })
+      const pulled = browser.iCloudSync.pullAndMerge('manual')
+      browser.pullSettled.resetCompletePull()
+      await pulled
+      expect(browser.claims.peerAccountClaims()).toEqual([])
+      await browser.iCloudSync.pullAndMerge('manual')
+      expect(browser.claims.peerAccountClaims()).toEqual([phoneClaim])
+    })
   })
 })
 

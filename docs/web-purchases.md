@@ -102,23 +102,43 @@ shows on the web.
 - **Where the id comes from.** A web-only account creates the id, and a
   browser joining an account adopts the one in its sync data, under the same
   rule as phones (ADR 0040 §7, ADR 0011).
-- **Buy waits for a settled id.** Buy is enabled only once this browser has an
-  account session, and the web has pulled the account's sync data and settled
-  its RevenueCat id, so it buys as the customer the account's devices agree
-  on, and only as that id: a browser still logged in to RevenueCat as another
-  customer waits. Until then, the price says why ("Sign in to buy on the web",
-  or that buying isn't available for the account yet) in place of a working
-  Buy. The web pulls the account's sync data as a Cloud Sync device;
-  `cloudSyncPullSettled` (docs/web-storage.md, "The complete pull") says when
-  this launch has read it in full. Until the paywall waits on that, nothing
-  settles the id, so Beta and production have no working Buy. The id must also be one
-  ww-api accepts (`toRevenueCatAppUserId`), never RevenueCat's anonymous
-  `$RCAnonymousID:…`: Web Purchase Links need an identified customer.
-  - **Development builds** (localhost and `app-dev`) skip both checks and buy
-    as the customer the browser is logged in as, so sandbox checkout stays
-    testable before web sync. Beta and production never skip them. On
-    localhost, `?dev_buy_gate=1` keeps both checks, so the web specs can see
-    the production gate.
+- **Buy waits for a settled id.** Buy opens checkout only as the customer the
+  account's devices agree on, and only as that id. The id is settled
+  (`src/lib/settledRevenueCatId.ts`) once all of these hold:
+  - this browser has an account session;
+  - a complete Cloud Sync pull happened this launch (`cloudSyncPullSettled`,
+    docs/web-storage.md "The complete pull"), so the peers' claims it read are
+    all of them. An empty account, or one holding only this browser's slot,
+    counts;
+  - `AccountProvider` reconciled against that pull's claims, after the pull,
+    and finished any adoption it decided, `Purchases.logIn` included;
+  - RevenueCat is logged in as the id it kept, and ww-api would accept that id
+    (`toRevenueCatAppUserId`), never RevenueCat's anonymous
+    `$RCAnonymousID:…`: Web Purchase Links need an identified customer.
+
+  A web-only account settles on its own claim. A browser that adopts another
+  device's claim settles on it once `logIn` succeeds; a failed `logIn` settles
+  nothing. An entitled browser beside an entitled phone keeps its own id (ADR
+  0011), and settles on it. Without a RevenueCat key or SDK nothing settles.
+
+  The id unsettles, until reconcile passes again, when a pull brings other
+  claims, when the account id changes, and on a reset: an account-key change,
+  leaving the account, or signing out. A pull with the same claims keeps it.
+  An incomplete pull's claims, which may miss a slot it couldn't open, never
+  settle it; the next complete pull does. A pull that started before a reset
+  hands over no claims. Only the web reconciles on every complete pull; phones
+  reconcile when the claims change, as before.
+  Until it settles, the price says why in place of a working Buy: "Sign in to
+  buy on the web", with a Sign In button, or that the account is getting ready
+  to buy, while the pull and reconcile run. Only a development tab opened
+  without an account (Create an Account, until web sign-up) can be without a
+  session; Sign In forgets that choice and reloads into web sign-in.
+  - **Development builds** (localhost and `app-dev`) skip the session and
+    settled-id checks and buy as the customer the browser is logged in as, so
+    sandbox checkout stays testable without an account. Beta and production
+    never skip them. On localhost, `?dev_buy_gate=1` keeps both checks, so the
+    web specs can see the production gate.
+
 - **The web links its customer to the account** (ADR 0029), as phones do, and
   again after every checkout return.
 - **The id is never taken from a URL.** The return page's `app_user_id` is

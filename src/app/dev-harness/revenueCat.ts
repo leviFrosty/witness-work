@@ -19,6 +19,7 @@ import {
   peerAccountClaims,
   setPeerAccountClaims,
 } from '@/lib/accountClaimRegistry'
+import { settledRevenueCatId } from '@/lib/settledRevenueCatId'
 import type { AccountClaim } from '@/lib/accountClaim'
 import {
   ensureRevenueCatLinked,
@@ -62,6 +63,7 @@ export const revenueCatHarness = {
       // Not readable yet (a locked Keychain).
     }
     const own = ownAccountClaim()
+    const settled = settledRevenueCatId()
     const server = useServerSupporter.getState()
     const file = devStagedAccountFile()
     return {
@@ -83,6 +85,8 @@ export const revenueCatHarness = {
         id: fingerprint(entry.appUserId),
         account: short(entry.account),
       })),
+      /** The id web Buy buys as (`settledRevenueCatId`), or null. */
+      settled: settled && fingerprint(settled),
       server: {
         active: server.active,
         supporter: server.entry?.supporter ?? null,

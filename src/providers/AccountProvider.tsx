@@ -14,6 +14,7 @@ import { errorTracking } from '@/lib/errorTracking'
 import { toPurchasesError } from '@/lib/purchasesError'
 import debounce from 'lodash/debounce'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import { AccountContext, AccountCtx } from '@/contexts/account'
 import useCustomer from '@/hooks/useCustomer'
 import { supporterSinceDate } from '@/lib/supporterSince'
@@ -47,6 +48,13 @@ import { logInRevenueCat } from '@/lib/revenueCatLogIn'
 import { isOfflineError } from '@/lib/offlineError'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 import { InstallIdUnavailableError } from '@/lib/installId'
+import { onCompletedPull } from '@/lib/cloudSyncPullSettled'
+import {
+  clearSettledRevenueCatId,
+  currentSettledPull,
+  type SettledPull,
+  settleRevenueCatId,
+} from '@/lib/settledRevenueCatId'
 
 interface Props {}
 
@@ -121,8 +129,24 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   // behind the pass that changed it still runs with the old render's state.
   const accountIdRef = useRef(accountId)
   const setAccountId = useCallback((id: string) => {
+    // Web Buy waits for the next pass to settle the new id.
+    if (id !== accountIdRef.current) clearSettledRevenueCatId()
     accountIdRef.current = id
     setAccountIdState(id)
+  }, [])
+
+  // A pass that decided against `pull` and kept this device's id settles it
+  // for web Buy (docs/web-purchases.md "Buy waits for a settled id"), once
+  // RevenueCat is logged in as it. Without RevenueCat nothing settles, and
+  // only the web buys on the web.
+  const settle = useCallback(async (pull: SettledPull | null) => {
+    if (!cloudSyncOnly() || !pull || !readyRef.current) return
+    const id = accountIdRef.current
+    if (id === null) return
+    const loggedInAs = await Purchases.getAppUserID()
+    // Another id meanwhile: its own pass settles it.
+    if (accountIdRef.current !== id || loggedInAs !== id) return
+    settleRevenueCatId(id, pull)
   }, [])
 
   // True until RevenueCat is logged in as this device's account id. Before
@@ -166,6 +190,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           // and RevenueCat answers this throws, and the next return to the app
           // or the connection coming back tries again.
           const id = getOrCreateAccountId()
+          clearSettledRevenueCatId()
           const { customerInfo } = await logIn(id)
           const changed = id !== accountIdRef.current
           setAccountId(id)
@@ -206,6 +231,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           (revenueCatConfigured && !revenueCatIsOwn())
         ) {
           const changed = current !== accountIdRef.current
+          clearSettledRevenueCatId()
           if (revenueCatConfigured) {
             const { customerInfo } = await logIn(current)
             setCustomer(customerInfo)
@@ -271,11 +297,14 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           }
         }
 
+        // The complete pull this pass decides against, if this launch had one:
+        // its claims are the ones decided on.
+        const pull = currentSettledPull()
         const action = decideAccountReconcile({
           own,
           file,
           fileRead,
-          peers: peerAccountClaims(),
+          peers: pull?.peers ?? peerAccountClaims(),
           account,
           dropped: droppedAccountIds(),
         })
@@ -299,6 +328,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             }
             if (!stillOnAccount()) return
             await writeAccountFile(own)
+            await settle(pull)
             logger.log('[Account] claimed account file', { reason, entitled })
             errorTracking.addBreadcrumb({
               category: 'account',
@@ -318,6 +348,8 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             return
           }
           case 'adopt': {
+            // Unsettled until RevenueCat is the adopted customer.
+            clearSettledRevenueCatId()
             if (revenueCatConfigured) {
               const { customerInfo } = await logIn(action.accountId)
               setCustomer(customerInfo)
@@ -365,6 +397,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             ) {
               await writeAccountFile({ ...own, entitled: entitledNow })
             }
+            await settle(pull)
             logger.log('[Account] refreshed entitlement from remote flag', {
               reason,
               entitledNow,
@@ -372,6 +405,9 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
             return
           }
           case 'none':
+            // This device keeps its id: it's the winning claim, or it's
+            // entitled (two entitled ids both stay, ADR 0011).
+            await settle(pull)
             return
         }
       } catch (error) {
@@ -394,7 +430,7 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         if (queued) void reconcile(queued)
       }
     },
-    [isRevenueCatAnonymous, setAccountId, setCustomer]
+    [isRevenueCatAnonymous, setAccountId, setCustomer, settle]
   )
 
   // A new id (identified, adopted, or reset) re-runs reconcile once customer
@@ -426,16 +462,23 @@ const AccountProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     return onDevAccountFileChange(() => void reconcile('dev-account-file'))
   }, [reconcile])
 
-  // Another device's claim arrived in the sync data (ADR 0040 §7).
+  // Another device's claim arrived in the sync data (ADR 0040 §7). On the web,
+  // also each complete pull: it settles the id for web Buy even when the
+  // claims are unchanged (an empty account, or only this browser's own slot).
+  // Phones don't buy on the web, and each pass reads their account file.
   useEffect(() => {
     const debouncedReconcile = debounce(
       () => void reconcile('sync-claims'),
       500,
       { leading: true, trailing: true }
     )
-    const unsubscribe = onPeerAccountClaimsChange(debouncedReconcile)
+    const offClaims = onPeerAccountClaimsChange(debouncedReconcile)
+    const offPull = cloudSyncOnly()
+      ? onCompletedPull(debouncedReconcile)
+      : () => {}
     return () => {
-      unsubscribe()
+      offClaims()
+      offPull()
       debouncedReconcile.cancel()
     }
   }, [reconcile])

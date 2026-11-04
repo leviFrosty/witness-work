@@ -116,6 +116,34 @@ function reportHandles() {
   })
 }
 
+/** What a photo this page doesn't hold says, as the app shows it. */
+let photoMissingText = ''
+
+/**
+ * Shows a photo, or the same placeholder the note shows where this page has no
+ * such photo (the web, which has no photo sync yet): an empty `src` would draw
+ * the browser's broken-image mark, or a plain grey box.
+ */
+function showImage(img: HTMLImageElement, src: string | undefined) {
+  if (src) img.src = src
+  else img.removeAttribute('src')
+  setMissing(img, !src)
+}
+
+function setMissing(img: HTMLImageElement, missing: boolean) {
+  const frame = img.parentElement
+  if (!frame) return
+  frame.classList.toggle('missing', missing)
+  frame.querySelector('.note-image-missing')?.remove()
+  if (!missing) return
+  const label = document.createElement('div')
+  label.className = 'note-image-missing'
+  label.setAttribute('role', 'img')
+  label.setAttribute('aria-label', photoMissingText)
+  label.textContent = photoMissingText
+  frame.insertBefore(label, img.nextSibling)
+}
+
 /**
  * A photo in the editor. Tapping it selects it and shows a handle at each
  * corner; dragging one resizes the photo around its center, keeping its
@@ -130,9 +158,14 @@ const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
   const img = document.createElement('img')
   img.setAttribute('data-note-image', id)
   img.style.aspectRatio = `${node.attrs.width} / ${node.attrs.height}`
-  img.src = imageSources.get(id) ?? ''
   img.draggable = false
   frame.append(img)
+  showImage(img, imageSources.get(id))
+  // A file this device can't read counts as missing too.
+  img.addEventListener('error', () => {
+    if (img.hasAttribute('src')) setMissing(img, true)
+  })
+  img.addEventListener('load', () => setMissing(img, false))
   const set = imageElements.get(id) ?? new Set()
   set.add(img)
   imageElements.set(id, set)
@@ -331,9 +364,45 @@ const TextDirections = Extension.create({
   },
 })
 
+type DocJson = { content?: { type?: string }[] }
+
+/**
+ * `doc` with an empty paragraph after a photo that ends it. A note that ends
+ * with a photo has nowhere for the cursor to go but the photo itself, so
+ * putting the cursor at the end selects the photo, and the first key typed
+ * replaces it (WebKit, which the iOS web view is). Only the editor's copy: the
+ * empty paragraph is dropped again when the note is saved (`compactRichText`).
+ */
+function withTrailingParagraph<T extends DocJson>(doc: T): T {
+  const last = doc.content?.[doc.content.length - 1]
+  if (last?.type !== 'image') return doc
+  return { ...doc, content: [...doc.content!, { type: 'paragraph' }] }
+}
+
+/** Keeps an empty paragraph after a photo that ends the note, as it is above. */
+const TrailingParagraph = Extension.create({
+  name: 'noteTrailingParagraph',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('noteTrailingParagraph'),
+        appendTransaction: (transactions, _old, state) => {
+          if (!transactions.some((tr) => tr.docChanged)) return null
+          const { doc, schema } = state
+          if (doc.lastChild?.type.name !== 'image') return null
+          return state.tr.insert(
+            doc.content.size,
+            schema.nodes.paragraph.create()
+          )
+        },
+      }),
+    ]
+  },
+})
+
 function setImageSource(id: string, src: string) {
   imageSources.set(id, src)
-  for (const img of imageElements.get(id) ?? []) img.src = src
+  for (const img of imageElements.get(id) ?? []) showImage(img, src)
 }
 
 function formatState(editor: Editor): EditorFormatState {
@@ -507,7 +576,9 @@ body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-s
 .ProseMirror a{color:${t.accent};text-decoration:underline;}
 .note-image{position:relative;max-width:100%;margin:6px auto;}
 .note-image img{display:block;width:100%;height:auto;border-radius:10px;background:${t.border};}
-.note-image.ProseMirror-selectednode img{outline:3px solid ${t.accent};}
+.note-image.ProseMirror-selectednode img,.note-image.ProseMirror-selectednode .note-image-missing{outline:3px solid ${t.accent};}
+.note-image.missing img{display:none;}
+.note-image-missing{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:96px;max-height:160px;padding:12px;border-radius:10px;background:${t.border};color:${t.textAlt};font-size:.85em;line-height:1.3;text-align:center;}
 .note-image.resizing img{opacity:.85;}
 .note-image-handle{display:none;position:absolute;z-index:1;width:44px;height:44px;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .note-image.ProseMirror-selectednode .note-image-handle{display:block;}
@@ -550,6 +621,7 @@ export default function RichTextEditorDom(props: Props) {
       for (const [id, src] of Object.entries(value.imageSources)) {
         imageSources.set(id, src)
       }
+      photoMissingText = value.photoMissing
       setSetup(value)
     })
     return () => {
@@ -564,7 +636,7 @@ export default function RichTextEditorDom(props: Props) {
       autofocus: setup?.autofocus ? 'end' : false,
       // Content is always JSON: Tiptap parses a string, even an empty one, as
       // HTML through \`DOMParser\`, which the web's Trusted Types refuse.
-      content: setup?.doc ?? EMPTY_DOC,
+      content: withTrailingParagraph(setup?.doc ?? EMPTY_DOC),
       injectCSS: false,
       editable: !!setup,
       extensions: [
@@ -588,6 +660,7 @@ export default function RichTextEditorDom(props: Props) {
         NoteImage,
         Placeholder.configure({ placeholder: setup?.placeholder ?? '' }),
         TextDirections,
+        TrailingParagraph,
         CharacterCount.configure({ limit: setup?.characterLimit ?? null }),
       ],
       editorProps: {

@@ -41,6 +41,12 @@ export type PlatformCapability =
   | 'photoLibrarySave'
   /** Hot Updater updates; each web page load runs the newest deploy. */
   | 'otaUpdates'
+  /**
+   * Adding photos that sync (a contact's, the profile's, a note's). The web has
+   * no Cloud Sync photo pass yet: a photo added there would never upload, so
+   * the phones would get a reference to nothing.
+   */
+  | 'syncedPhotos'
 
 type OS = typeof Platform.OS
 
@@ -60,6 +66,7 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   appLock: ['ios', 'android', 'web'],
   photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
+  syncedPhotos: ['ios', 'android'],
 }
 
 /** Whether this platform has `capability` at all. */

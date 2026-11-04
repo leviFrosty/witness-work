@@ -81,6 +81,7 @@ The meta is `b64u(0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(photoKey, nonce, UTF
 - **Usage.** Settings → Account shows the account's photo storage (`usage.bytes` of `usage.limit`) while the device is on Cloud Sync.
 - **Changing the account key** (ADR 0039) re-seals every photo under the new key's photo and name keys, as it re-encrypts the slots.
 - **Older app versions** ignore photo references they can't transfer, and show initials as they do today.
+- **The web** has no photo pass yet (`hasCapability('syncedPhotos')`; `docs/web-files.md`): it uploads, downloads and deletes no photo, and can't add one. It keeps each record's photo reference and revision as it came, so its edits leave the phones' photos alone, and shows initials or a placeholder. It never publishes a reference to a photo it holds only as a `data:` or `blob:` URL.
 
 ## The Cloud Sync request
 

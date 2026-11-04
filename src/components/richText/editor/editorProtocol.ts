@@ -102,6 +102,8 @@ export type EditorSetup = {
   direction: 'ltr' | 'rtl'
   placeholder: string
   label: string
+  /** What a photo this device doesn't hold says in the note. */
+  photoMissing: string
   /** Most characters of text the note may hold. */
   characterLimit?: number
   autofocus: boolean

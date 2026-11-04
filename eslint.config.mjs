@@ -165,6 +165,7 @@ export default tseslint.config(
       'android/**',
       'dist/**',
       'web/maps-frame/dist/**',
+      'web/verify-frame/dist/**',
       'build/**',
       'coverage/**',
       'src/assets/lottie/**',

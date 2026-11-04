@@ -14,7 +14,7 @@ import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recove
 import { recoveryKeyStatus } from '@/features/settings/components/account/recoveryKeyStatus'
 import SignInButton from '@/app/web-sign-in/components/SignInButton'
 import SignInPage from '@/app/web-sign-in/components/SignInPage'
-import Turnstile from '@/app/web-sign-in/components/Turnstile'
+import SecurityCheck from '@/app/web-sign-in/components/SecurityCheck'
 import { signInProblemText } from '@/app/web-sign-in/signInCopy'
 
 /** Cloudflare's always-passing test key, for a dev build on an older worker. */
@@ -161,14 +161,12 @@ export default function RecoveryKeySignIn({
             />
           </XView>
           {siteKey.status === 'ready' ? (
-            <Turnstile
+            <SecurityCheck
               siteKey={siteKey.key}
               action='web-recovery'
               resetKey={resetKey}
               onToken={setToken}
-              onError={(reason) =>
-                reason === 'script' && setSiteKey({ status: 'failed' })
-              }
+              testID='web-sign-in'
             />
           ) : siteKey.status === 'loading' ? (
             <Text style={{ color: theme.colors.textAlt }}>

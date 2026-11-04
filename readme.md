@@ -123,6 +123,9 @@ separate dev / beta / prod`"]
     S_MAPSF["`**Maps frame Workers**
 maps.witnesswork.app, maps-dev:
 static page that runs MapKit JS`"]
+    S_VERIFYF["`**Turnstile frame Workers**
+verify.witnesswork.app, verify-dev:
+static page that runs Turnstile`"]
     S_OTA --> D_OTA
     S_OTA -->|"signed downloads"| B_OTA
     subgraph WORKER["ww-api Worker, api.witnesswork.app"]
@@ -259,6 +262,8 @@ the web's map, cdn.apple-mapkit.com`"]
   W_BROWSER -->|"bearer: MapKit JS token; place search"| R_MAPS
   W_BROWSER -->|"bearer: directions"| R_ROUTE
   S_MAPSF -->|"script, tiles, with the app's token"| S_MAPKITJS
+  W_BROWSER -->|"framed check: site key, action; token back"| S_VERIFYF
+  S_VERIFYF -->|"script, widget"| S_TURNSTILE
 
   A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
   A_ACCOUNT -->|"account key"| P_SEED
@@ -342,7 +347,7 @@ the web's map, cdn.apple-mapkit.com`"]
   class A_CORE,A_BUDDIES,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PASSKEY,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_MAPS,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB,S_MAPSF worker
+  class R_BUD,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_MAPS,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB,S_MAPSF,S_VERIFYF worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_APPROVAL,DO_RATE,DO_AA,DO_PI,DO_METER,DO_RPQ,KV,AIS state
   class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_TURNSTILE,S_MAPKITJS,S_EAS external
 ```
@@ -354,6 +359,7 @@ the web's map, cdn.apple-mapkit.com`"]
 - Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
 - Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
 - The website and the Help Center's content are built from this repo's `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app` and `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); development builds use the staging site, `dev.witnesswork.app`, and the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search.witnesswork.app` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
+- The web's Turnstile check, before web sign-up and recovery-key sign-in, runs in a sandboxed frame on its own origin, `verify.witnesswork.app` (`verify-dev.witnesswork.app` for dev), so Cloudflare's script never runs on the app's origin. The frame gets the site key and the action and posts back only the token ([docs/web-turnstile.md](./docs/web-turnstile.md)).
 - The web's map is Apple MapKit JS in a sandboxed frame on its own origin, `maps.witnesswork.app` (`maps-dev.witnesswork.app` for dev), so Apple's script never runs on the app's origin. The app passes the frame coordinates, opaque pin ids, colors and the camera, never names, addresses or notes, and a MapKit JS token ww-api signs for that origin ([docs/web-maps.md](./docs/web-maps.md)).
 - Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
 

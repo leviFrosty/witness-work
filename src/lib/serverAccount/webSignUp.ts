@@ -393,9 +393,6 @@ export type WebSignUpDeps = {
   /** `navigator.onLine`: only then is a failed request "offline". */
   isOnline?: () => boolean
   randomBytes: (length: number) => Uint8Array
-  /** Whether this page loaded Turnstile's script, which signing up reloads away. */
-  pageNeedsReload?: () => boolean
-  reload?: () => void
   onEvent?: (event: WebSignUpEvent) => void
 }
 
@@ -738,11 +735,6 @@ export function createWebSignUp(deps: WebSignUpDeps) {
       // Another account's data was wiped with the mark: once more, while
       // every tab reloads.
       await deps.mark.write(mark).catch(() => undefined)
-      return
-    }
-    if (deps.pageNeedsReload?.()) {
-      // The gate shows after the reload, away from Turnstile's script.
-      deps.reload?.()
       return
     }
     set({

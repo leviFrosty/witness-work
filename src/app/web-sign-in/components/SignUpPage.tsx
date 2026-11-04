@@ -15,7 +15,7 @@ import i18n from '@/lib/locales'
 import type { WebSignUpState } from '@/lib/serverAccount/webSignUp'
 import SignInButton from '@/app/web-sign-in/components/SignInButton'
 import SignInPage from '@/app/web-sign-in/components/SignInPage'
-import Turnstile from '@/app/web-sign-in/components/Turnstile'
+import SecurityCheck from '@/app/web-sign-in/components/SecurityCheck'
 import { signUpProblemText } from '@/app/web-sign-in/signInCopy'
 
 /** Cloudflare's always-passing test key, for a dev build on an older worker. */
@@ -56,9 +56,6 @@ export default function SignUpPage({
   const [loadTry, setLoadTry] = useState(0)
   const [token, setToken] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
-  // A failed check shows Try Again, which makes a new widget.
-  const [checkFailed, setCheckFailed] = useState(false)
-  const [widgetTry, setWidgetTry] = useState(0)
   const problem = state.problem ? signUpProblemText(state.problem) : null
 
   useEffect(() => {
@@ -197,36 +194,13 @@ export default function SignUpPage({
           />
         </XView>
         {config.status === 'ready' ? (
-          <>
-            <Turnstile
-              key={widgetTry}
-              siteKey={config.siteKey}
-              action='web-signup'
-              resetKey={resetKey}
-              onToken={(next) => {
-                setToken(next)
-                if (next) setCheckFailed(false)
-              }}
-              onError={(reason) =>
-                reason === 'script'
-                  ? setConfig({ status: 'failed' })
-                  : setCheckFailed(true)
-              }
-            />
-            {checkFailed && (
-              <View testID='web-sign-up-check-failed'>
-                <InlineNotice
-                  tone='error'
-                  message={i18n.t('webSignUp_checkFailed')}
-                  onRetry={() => {
-                    setCheckFailed(false)
-                    setToken(null)
-                    setWidgetTry((n) => n + 1)
-                  }}
-                />
-              </View>
-            )}
-          </>
+          <SecurityCheck
+            siteKey={config.siteKey}
+            action='web-signup'
+            resetKey={resetKey}
+            onToken={setToken}
+            testID='web-sign-up'
+          />
         ) : config.status === 'loading' ? (
           <Text style={{ color: theme.colors.textAlt }}>
             {i18n.t('webSignIn_recoveryCheckLoading')}

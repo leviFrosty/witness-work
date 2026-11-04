@@ -97,6 +97,18 @@ export default function InlineNotice({
           loading={retrying}
           loadingColor={theme.colors.textAlt}
           accessibilityRole='button'
+          // A full 44pt target around the short label; the negative margins
+          // give back the extra room, so the line keeps its size and the label
+          // stays where it was.
+          style={{
+            minWidth: 44,
+            minHeight: 44,
+            paddingHorizontal: 8,
+            marginHorizontal: -8,
+            marginVertical: -8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Text
             style={{

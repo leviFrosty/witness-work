@@ -215,7 +215,7 @@ Bearer **and** signed (op `passkey/remove`), Step-up: `{ accountPub, ts, nonce, 
 
 **Controls** (no device integrity on the web, ADR 0038 §5):
 
-- **Turnstile:** managed mode, actions `web-signup` and `web-recovery`, the env's web hosts (Cloudflare's test keys skip the host check). Siteverify gets `remoteip` and an `idempotency_key`. The site key comes from `GET /app/v1/config` (`webSignup.turnstileSiteKey`). The dev and local workers use Cloudflare's test keys unless a dev widget's are set.
+- **Turnstile:** managed mode, actions `web-signup` and `web-recovery`. The widget runs in the web app's Turnstile frame on its own origin (`verify.witnesswork.app`, dev `verify-dev.witnesswork.app`), never in the app's page, and the frame posts the app only the token ([`web-turnstile.md`](./web-turnstile.md)). The widget's only hostname is the frame's, and ww-api requires Siteverify to answer it (`TURNSTILE_HOSTNAMES`; Cloudflare's test keys skip the host check). Siteverify gets `remoteip` and an `idempotency_key`. The site key comes from `GET /app/v1/config` (`webSignup.turnstileSiteKey`). The dev and local workers use Cloudflare's test keys unless a dev widget's are set.
 - **Caps** (a Durable Object): `WEB_SIGNUP_PER_IP_DAY` (default 3) per IP a rolling day, IPv6 by /64, and `WEB_SIGNUP_PER_ASN_HOUR` (default 30) per network (ASN) a rolling hour. Over either is 429 `rate_limited` with `Retry-After`. If the counter can't be reached, `web/signup` is 503 `unavailable` with `Retry-After`. Counts are keyed by an HMAC of the IP or ASN under a secret that rotates daily, never the IP.
 - **Kill switch:** KV `accounts:web-signup`, `on` when absent (then the `WEB_SIGNUP` var). `off` refuses both sign-up routes with 503 `disabled`; a failed KV read counts as `on`, since Turnstile and the caps still apply. `GET /app/v1/config` says `webSignup.enabled`, and the web says sign-up is paused.
 
@@ -341,7 +341,7 @@ Every sign-in screen, on the web and in a new phone's "Already use WitnessWork?"
 2. **Use my phone** (a browser): the approval QR. **From your other phone** (a phone): Set Up Another Device's QR.
 3. **Use a recovery key.** A browser asks for a `recovery` ticket right after the key is entered, with Turnstile's token.
    - **After a passkey that signed in but couldn't unlock,** while that passkey's ticket has more than 5 seconds left, the browser opens its session with the passkey's ticket instead, and shows no security check. That's safe: the ticket came from a verified passkey assertion for that account, and the key entered must derive the account's `accountPub` or the browser refuses it before sending anything. The session's `method` is then `passkey`, since the ticket is the passkey's. As the ticket runs out, the screen shows Turnstile and the next try asks for a `recovery` ticket.
-   - A page that loaded Turnstile's script reloads once signed in, so Cloudflare's code doesn't stay in the signed-in app; the sign-in finishes after the reload.
+   - Signing in doesn't reload the page for Turnstile: its script runs only in its own frame ([`web-turnstile.md`](./web-turnstile.md)), never in the app, so nothing of Cloudflare's stays in the signed-in app. Sign-up likewise goes straight on to the recovery key screen.
 
 ### Signing up on the web
 
@@ -420,6 +420,6 @@ One utility asks for a fresh check before showing the recovery key, setting up o
 ## Privacy
 
 - **Passkeys:** the credential id, its public key, counter, transports, backup flags, AAGUID, RP ID, the platform that created it, the sealed label, and times. The user handle is random and names no one. PRF output and the account key never reach the server; wraps are ciphertext under keys only the passkey can make.
-- **Turnstile** sees the request's IP for sign-up and recovery sign-ins. The caps keep counts per HMAC'd IP and network for at most a day.
+- **Turnstile** sees the request's IP for sign-up and recovery sign-ins. It runs in its own frame (`verify.witnesswork.app`), which gets the site key and the action and nothing of the User's. The caps keep counts per HMAC'd IP and network for at most a day.
 - **Approvals:** the channel's Durable Object keeps the browser's coarse location (city, region, country, and Cloudflare's latitude and longitude) for the channel's lifetime (at most 75 seconds unclaimed plus 5 minutes once claimed), drops it at `done` or `cancel`, and never keeps an IP.
 - **Tickets and challenges** are kept only as used ids, until they expire.

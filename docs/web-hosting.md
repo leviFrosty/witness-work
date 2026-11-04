@@ -8,8 +8,8 @@ Worker with Workers Static Assets. There's no server rendering.
   TypeScript graph. Its tests run in `pnpm testFinal`.
 - **Profiles:** `config/web-environments.json` is the one list of web
   profiles: each one's native env files, host, the apps its association files
-  list, Worker, ww-api, PostHog and maps origins, Help Center manifest and
-  search origin, and CSP mode. `web:build` (`scripts/web.mjs`), the deploys and
+  list, Worker, ww-api, PostHog, maps and Turnstile frame origins, Help Center
+  manifest and search origin, and CSP mode. `web:build` (`scripts/web.mjs`), the deploys and
   the Worker all read it.
 - **Deploys:** `scripts/web-host.mjs`, through the `web:*` scripts below.
   Never run `wrangler deploy` by hand.
@@ -17,15 +17,18 @@ Worker with Workers Static Assets. There's no server rendering.
   (`web/maps-frame/`, `scripts/web-maps.mjs`), with the same deploy gates;
   beta shares production's. See `docs/web-maps.md`, which has the production
   maps host's runbook.
+- **Turnstile frame:** a Worker of its own on each profile's verify origin
+  (`web/verify-frame/`, `scripts/web-verify.mjs`); beta shares production's.
+  See `docs/web-turnstile.md`, which has the production host's runbook.
 
 ## Environments
 
-| Profile      | Worker        | Host                       | ww-api                        | Maps frame                 | Help Center and search                                   | CSP         |
-| ------------ | ------------- | -------------------------- | ----------------------------- | -------------------------- | -------------------------------------------------------- | ----------- |
-| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | report-only |
-| `dev`        | `ww-web-dev`  | `app-dev.witnesswork.app`  | `api-dev.witnesswork.app`     | `maps-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | enforce     |
-| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
-| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
+| Profile      | Worker        | Host                       | ww-api                        | Maps frame                 | Turnstile frame              | Help Center and search                                   | CSP         |
+| ------------ | ------------- | -------------------------- | ----------------------------- | -------------------------- | ---------------------------- | -------------------------------------------------------- | ----------- |
+| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-dev.witnesswork.app` | `verify-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | report-only |
+| `dev`        | `ww-web-dev`  | `app-dev.witnesswork.app`  | `api-dev.witnesswork.app`     | `maps-dev.witnesswork.app` | `verify-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | enforce     |
+| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api.witnesswork.app`         | `maps.witnesswork.app`     | `verify.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
+| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`     | `verify.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
 
 Every profile sends PostHog events to `ww-api-r.leviwilkerson.com`, PostHog's
 managed proxy, and uses RevenueCat's browser API.
@@ -107,9 +110,8 @@ set into `dist/_headers` for everything Cloudflare serves directly.
   profile, no profile allows another's hosts (`worker.test.ts`), and the
   deploy refuses a build that never calls them, so the app and its CSP can't
   drift apart unnoticed:
-  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit and SQLite's wasm,
-    plus Cloudflare Turnstile (`challenges.cloudflare.com`), the check before a
-    recovery key signs a browser in (ADR 0038); no inline script and no `eval`;
+  - `script-src 'self' 'wasm-unsafe-eval'`, for CanvasKit and SQLite's wasm;
+    no script from any other host, no inline script and no `eval`;
   - `style-src 'self' 'unsafe-inline'`, because react-native-web writes styles
     into `<style>` tags at runtime;
   - `connect-src`: the profile's ww-api (`https` and `wss`), PostHog's
@@ -119,13 +121,14 @@ set into `dist/_headers` for everything Cloudflare serves directly.
     (`api.revenuecat.com`, `e.revenue.cat`) for web purchases;
   - `media-src 'self' blob:`, for the app's sounds and Scribe AI playing back
     a voice recording;
-  - `frame-src`: the profile's maps frame and Turnstile's widget. MapKit JS
-    loads inside that frame's own origin, never in the app;
+  - `frame-src`: the profile's maps frame and Turnstile frame (`mapsOrigin`,
+    `verifyOrigin`). MapKit JS and Cloudflare Turnstile load inside those
+    frames' own origins, never in the app (`docs/web-maps.md`,
+    `docs/web-turnstile.md`);
   - `frame-ancestors 'none'`, `base-uri 'none'`, `object-src 'none'`,
     `form-action 'self'`, `worker-src 'self'`;
   - Trusted Types: `require-trusted-types-for 'script'` and
-    `trusted-types ww-chunks ProseMirrorClipboard ww-turnstile`, each created
-    once. There's
+    `trusted-types ww-chunks ProseMirrorClipboard`, each created once. There's
     no `default` policy, so every other sink refuses a string.
     - `ww-chunks`: the web entry creates it first
       (`src/app/launch/hardenWeb.web.ts`). It takes only this origin's
@@ -134,8 +137,6 @@ set into `dist/_headers` for everything Cloudflare serves directly.
     - `ProseMirrorClipboard`: the note editor creates it on the first paste
       of HTML, to parse it in a detached document that never renders or runs
       it.
-    - `ww-turnstile`: the sign-in screen creates it to load Turnstile's one
-      script URL (`src/app/web-sign-in/components/Turnstile.tsx`).
     - The entry also turns on zod's `jitless` mode, so zod never builds
       functions from strings, and the note editor gives Tiptap JSON only and
       writes its styles itself (`RichTextEditorDom.tsx`).

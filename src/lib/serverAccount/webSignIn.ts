@@ -53,10 +53,10 @@ import type {
  *    out).
  *
  * Signing in as another account than this browser's data wipes and reloads
- * every tab (`webAccount`), and a page that loaded Turnstile's script reloads
- * too, so it doesn't stay in the signed-in app. What must outlive that (a wrap
- * to save, "Approved by") is written to the tab's mark first, and `resume`
- * finishes it after the reload.
+ * every tab (`webAccount`). What must outlive that (a wrap to save, "Approved
+ * by") is written to the tab's mark first, and `resume` finishes it after the
+ * reload. Turnstile runs in its own frame (docs/web-turnstile.md), so nothing
+ * else reloads.
  */
 
 export type WebSignInMethod = 'passkey' | 'phone' | 'recovery'
@@ -208,9 +208,6 @@ export type WebSignInDeps = {
   now: () => number
   /** Runs `run` in `ms`; returns a cancel. `setTimeout` by default. */
   schedule?: (run: () => void, ms: number) => () => void
-  /** Whether this page loaded Turnstile's script, which signing in reloads away. */
-  pageNeedsReload?: () => boolean
-  reload?: () => void
   onEvent?: (event: WebSignInEvent) => void
 }
 
@@ -487,10 +484,10 @@ export function createWebSignIn(deps: WebSignInDeps) {
   }
 
   /**
-   * Opens the session with a ticket. Returns false when this page is reloading:
-   * into another account (every tab), or away from Turnstile's script. The flow
-   * stops there, and `resume` finishes it. `onStored` runs once the key is
-   * stored, before any reload (an approval's `done`).
+   * Opens the session with a ticket. Returns false when this page is reloading
+   * into another account (every tab). The flow stops there, and `resume`
+   * finishes it. `onStored` runs once the key is stored, before any reload (an
+   * approval's `done`).
    */
   async function open(
     method: WebSignInMethod,
@@ -525,14 +522,13 @@ export function createWebSignIn(deps: WebSignInDeps) {
       throw error
     }
     forgetPasskey()
-    if (reload || deps.pageNeedsReload?.()) {
+    if (reload) {
       emit({
         type: 'succeeded',
         method,
         afterPasskey,
         wrap: wrap ? 'pending' : 'none',
       })
-      if (!reload) deps.reload?.()
       return false
     }
     const saved = await saveMarkedWrap(accountKey, accountId)

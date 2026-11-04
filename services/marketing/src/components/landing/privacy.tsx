@@ -53,10 +53,11 @@ const sections = [
         to your Home Screen on iPhone; changes not yet synced are then lost. Web
         sign-up, and signing in with a recovery key on the web, use Cloudflare
         Turnstile to block automated abuse; Cloudflare processes your IP address
-        and browser information for that check. Maps on the web use Apple MapKit
-        JS in a separate page on maps.witnesswork.app. It receives only
-        coordinates and pin styles, never names or notes. Apple processes map
-        requests and connection data.
+        and browser information for that check. It runs in a separate page on
+        verify.witnesswork.app, which passes back only the check's result. Maps
+        on the web use Apple MapKit JS in a separate page on
+        maps.witnesswork.app. It receives only coordinates and pin styles, never
+        names or notes. Apple processes map requests and connection data.
       </p>
     ),
   },

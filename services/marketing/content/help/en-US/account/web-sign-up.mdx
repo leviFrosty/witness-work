@@ -3,12 +3,37 @@ id: webSignUp
 title: Can I create a WitnessWork account on the web without the phone app?
 category: account
 platforms: [web]
+minAppVersion: '1.47.0'
 ---
 
-Not yet. For now, you create your account in the WitnessWork app on your phone, then sign in on the web.
+Yes, from version 1.47.0. You need a browser that can save passkeys, and you don't need an email address, phone number, or password.
 
-1. Install WitnessWork on your iPhone or Android phone.
-2. Turn on [Cloud Sync](/help/backups/cloud-sync) there (Settings → Device Sync), so your records reach the web. New installs start with it on.
-3. Open [app.witnesswork.app](https://app.witnesswork.app) and sign in with your phone ([How do I sign in on a computer with my phone?](/help/account/sign-in-on-computer)), a passkey, or your recovery key.
+1. Open [app.witnesswork.app](https://app.witnesswork.app) and choose Create an Account on the sign-in screen.
+2. Wait for the security check to pass, then choose Create Account.
+3. Your browser or password manager asks to save a passkey named "WitnessWork" with a 4-character code, such as WitnessWork 7K4Q. Confirm with Face ID, your fingerprint, or your device passcode or screen lock. It may ask a second time: that checks whether the passkey can unlock your account.
+4. Save your recovery key with Download, Print, or Copy, keep it somewhere private, then choose I've Saved My Recovery Key. Until you do, WitnessWork opens on this screen each time.
 
-You need no email address, phone number, or password. Keep your recovery key private: whoever has it can sign in to your account, and no one at WitnessWork can reset it for you ([What is my recovery key?](/help/account/account-recovery-key)).
+**Save the recovery key now.** WitnessWork on the web doesn't show it again later. If you lose your passkey, the recovery key is the only way back into your account, and no one at WitnessWork can reset it ([What is my recovery key?](/help/account/account-recovery-key)).
+
+**Can unlock or Sign-in only.** Where your browser and password manager support it, your passkey can unlock your account, so it's all you need to sign in on another computer. Otherwise it's Sign-in only, and the recovery key screen says so: the passkey signs you in, but on another computer you'll also need your recovery key or a phone signed in to your account ([What is a passkey?](/help/account/passkeys-overview)).
+
+**What's shared.** The security check is Cloudflare Turnstile; Cloudflare sees your IP address and browser details for it. WitnessWork's server stores your passkey's public key and, for a passkey that can unlock, your account key sealed so only that passkey can open it. It never sees your recovery key. Your records are saved in this browser and sync through Cloud Sync.
+
+**If something goes wrong:**
+
+- **You closed the passkey prompt:** no account was made. Choose Create Account again.
+- **The security check didn't finish:** choose Try Again under it. If it keeps failing, turn off extensions that block content on this site, or try another browser.
+- **"Couldn't reach WitnessWork" or "You're offline":** check your connection. The message goes away when your browser is back online.
+- **"An account is being created in another tab":** finish in that tab, or close it and try again.
+- **"Sign-Up Is Paused":** new accounts can't be created on the web right now. Try again later, or create your account in the phone app and sign in on the web.
+- **"Too many new accounts from this network":** WitnessWork limits how many accounts each network can create. Wait for the time shown, then try again.
+- **"Finish Creating Your Account":** your browser didn't hear back after creating the account. Choose Finish with Passkey and pick the passkey it names. Your account may already exist, so until it finishes, Finish is the only way on in this browser: signing in to another account here would replace the new one's key. Then it shows your recovery key. If WitnessWork says your account wasn't created, choose Create Account again.
+- **You deleted the passkey before finishing:** choose I Deleted That Passkey. WitnessWork shows the recovery key this browser holds; save it, then sign in with it. If the account was created, that opens it. If it wasn't, WitnessWork says so and you can start again.
+- **"This Browser Holds an Account Key":** an earlier sign-up here left its key, and this browser can't tell how far it got. Save the key it shows, then sign in with it or with that account's passkey; you can't sign in to another account in this browser until then. If none of that works, clearing this site's data in your browser's settings starts over, but it removes the key from this browser for good, so save it first.
+- **Your browser couldn't save your account:** WitnessWork keeps your account in this browser's storage. Leave private browsing, or allow this site to store data, then try again.
+
+You can't create an account in a browser that still has another account's data, such as after being signed out by the server; sign in to that account instead. Signing out of it erases its data from this browser ([Signing out on the web](/help/account/web-sign-out)).
+
+To use your account on a phone, enter the recovery key you saved in the phone app ([How do I use my recovery key on a new phone?](/help/account/account-recovery-key-use)).
+
+For anything else, use the support link in the Help Center.

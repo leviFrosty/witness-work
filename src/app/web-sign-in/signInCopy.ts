@@ -6,6 +6,7 @@ import type {
   WebSignInFailure,
   WebSignInProblem,
 } from '@/lib/serverAccount/webSignIn'
+import type { WebSignUpProblem } from '@/lib/serverAccount/webSignUp'
 
 type LocaleKey = Parameters<typeof i18n.t>[0]
 
@@ -25,6 +26,8 @@ const PROBLEMS: Record<Exclude<WebSignInFailure, 'cancelled'>, LocaleKey> = {
   unavailable: 'webSignIn_problemUnavailable',
   updateRequired: 'webSignIn_problemUpdateRequired',
   storage: 'webSignIn_problemStorage',
+  signUpPending: 'webSignIn_problemSignUpPending',
+  keyHeld: 'webSignIn_problemKeyHeld',
   failed: 'webSignIn_problemFailed',
 }
 
@@ -60,6 +63,40 @@ export function signInProblemText(
   if (failure === 'otherAccount') return i18n.t('webSignIn_problemOtherAccount')
   if (failure === 'cancelled') return ''
   return i18n.t(PROBLEMS[failure])
+}
+
+const SIGN_UP_PROBLEMS: Record<WebSignUpProblem['failure'], LocaleKey> = {
+  notSupported: 'webSignUp_problemNotSupported',
+  passkeyFailed: 'webSignUp_problemPasskeyFailed',
+  passkeyNotSaved: 'webSignUp_problemPasskeyNotSaved',
+  turnstileFailed: 'webSignIn_problemTurnstile',
+  rateLimited: 'webSignUp_problemRateLimitedLater',
+  paused: 'webSignUp_pausedBody',
+  unavailable: 'webSignUp_problemUnavailable',
+  offline: 'webSignIn_problemOffline',
+  unreachable: 'webSignUp_problemUnreachable',
+  updateRequired: 'webSignIn_problemUpdateRequired',
+  storage: 'webSignUp_problemStorage',
+  otherTab: 'webSignUp_problemOtherTab',
+  wrongPasskey: 'webSignUp_problemWrongPasskey',
+  pickPasskey: 'webSignUp_problemPickPasskey',
+  notCreated: 'webSignUp_problemNotCreated',
+  failed: 'webSignIn_problemFailed',
+}
+
+/** One line for a sign-up that didn't finish. */
+export function signUpProblemText({
+  failure,
+  retryAfterMs,
+  passkeyName,
+}: WebSignUpProblem): string {
+  if (failure === 'pickPasskey' && passkeyName)
+    return i18n.t('webSignUp_problemPickPasskeyNamed', { name: passkeyName })
+  if (failure === 'rateLimited' && retryAfterMs)
+    return i18n.t('webSignUp_problemRateLimited', {
+      time: waitFor(retryAfterMs),
+    })
+  return i18n.t(SIGN_UP_PROBLEMS[failure])
 }
 
 const APPROVAL: Partial<Record<ApprovalFailure, LocaleKey>> = {

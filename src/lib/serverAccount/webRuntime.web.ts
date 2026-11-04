@@ -18,6 +18,11 @@ import {
 } from '@/lib/serverAccount/webAccount'
 import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
 import {
+  createSignUpKeyGuard,
+  createWebSignUpMarkStore,
+  WEB_SIGN_UP_LOCK,
+} from '@/lib/serverAccount/webSignUp'
+import {
   webSignInLater,
   webSignInMark,
 } from '@/lib/serverAccount/webSignInMark'
@@ -78,6 +83,21 @@ export const webRuntime: WebRuntime | null = {
       accountKey: webAccountKey,
       tabs: sessionTabs,
       owner: kvEntry<string>(DATA_OWNER_KEY),
+      signUpKeyHeld: createSignUpKeyGuard({
+        mark: createWebSignUpMarkStore(secureKv),
+        readStoredKey: webAccountKey.readStored,
+        // Free when this tab can take it now: no tab is signing up.
+        lockFree: async () => {
+          const locks =
+            typeof navigator === 'undefined' ? undefined : navigator.locks
+          if (!locks?.request) return true
+          return locks.request(
+            WEB_SIGN_UP_LOCK,
+            { ifAvailable: true },
+            async (lock) => lock !== null
+          )
+        },
+      }),
       hasLocalData: webStorageBoot.hasLocalData,
       open: (ticket, accountKey, signed) => {
         const key = deriveAccountSigningKey(accountKey)

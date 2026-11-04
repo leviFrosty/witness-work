@@ -74,6 +74,69 @@ describe('web account key', () => {
     await expect(accountKey.create()).rejects.toThrow(/already/)
   })
 
+  it('deletes the key a sign-up made when no account came of it', async () => {
+    const { accountKey, store } = setup()
+    const made = await accountKey.create()
+    await accountKey.discard(made)
+    expect(store.has(WEB_ACCOUNT_KEY_NAME)).toBe(false)
+    expect(accountKey.current()).toBeNull()
+    // A new sign-up can make another.
+    expect(await accountKey.create()).toEqual(key(9))
+  })
+
+  it('never deletes a key other than the one it was told to', async () => {
+    const { accountKey, store } = setup(key(3))
+    await accountKey.discard(key(9))
+    expect(store.get(WEB_ACCOUNT_KEY_NAME)).toEqual(key(3))
+    expect(accountKey.current()).toEqual(key(3))
+  })
+
+  describe('beside another tab', () => {
+    /** Two tabs of one browser: one store, a memory each. */
+    function twoTabs() {
+      const one = setup()
+      const two = createWebAccountKey({
+        secrets: one.secrets,
+        randomBytes: (length) => new Uint8Array(length).fill(7),
+      })
+      return { one: one.accountKey, two, store: one.store }
+    }
+
+    it('reads the stored key, not the memory from launch', async () => {
+      const { one, two } = twoTabs()
+      await two.load()
+      const made = await one.create()
+      expect(await two.peek()).toBeNull()
+      expect(await two.readStored()).toEqual(made)
+    })
+
+    it('never makes a key over one another tab stored', async () => {
+      const { one, two, store } = twoTabs()
+      await two.load()
+      const made = await one.create()
+      await expect(two.create()).rejects.toThrow(/already/)
+      expect(store.get(WEB_ACCOUNT_KEY_NAME)).toEqual(made)
+    })
+
+    it('deletes only the key that is stored, whatever memory holds', async () => {
+      const { one, two, store } = twoTabs()
+      const first = await one.create()
+      await two.load()
+      // Tab one's key is replaced in storage behind tab two's memory.
+      await one.discard(first)
+      store.set(WEB_ACCOUNT_KEY_NAME, key(5))
+      await two.discard(first)
+      expect(store.get(WEB_ACCOUNT_KEY_NAME)).toEqual(key(5))
+      expect(two.current()).toBeNull()
+    })
+
+    it('throws when storage can’t be read, instead of answering none', async () => {
+      const { accountKey, secrets } = setup(key(3))
+      secrets.read.mockRejectedValueOnce(new Error('blocked'))
+      await expect(accountKey.readStored()).rejects.toThrow('blocked')
+    })
+  })
+
   it('forgets the key in memory after a wipe', async () => {
     const { accountKey, store } = setup(key(3))
     await accountKey.load()

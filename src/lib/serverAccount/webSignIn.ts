@@ -96,6 +96,10 @@ export type WebSignInFailure =
   | 'updateRequired'
   /** This browser couldn't store the key or the session. */
   | 'storage'
+  /** A sign-up's key, of an account that may exist, is here: Finish first. */
+  | 'signUpPending'
+  /** An earlier sign-up's key, beside a mark that can't be read, is here. */
+  | 'keyHeld'
   | 'failed'
 
 export type WebSignInProblem = {

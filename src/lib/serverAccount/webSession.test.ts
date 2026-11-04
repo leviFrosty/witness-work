@@ -5,6 +5,10 @@ import { HttpError } from '@/lib/http/request'
 import { createWebAccountKey } from '@/lib/accountKey/webAccountKey'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
+  createSignUpKeyGuard,
+  createWebSignUpMarkStore,
+} from '@/lib/serverAccount/webSignUp'
+import {
   ACCESS_LIFETIME_MS,
   AccountSessionError,
   createAccountSessions,
@@ -74,7 +78,9 @@ function fakeWorker(clock: { now: number }, events: string[]) {
   const tickets = new Map([
     ['ticket-a', PUB_A],
     ['ticket-a2', PUB_A],
+    ['ticket-a3', PUB_A],
     ['ticket-b', PUB_B],
+    ['ticket-b2', PUB_B],
   ])
   const sessions: Session[] = []
   const calls: { op: string; body: Record<string, unknown> | null }[] = []
@@ -343,6 +349,17 @@ function browser() {
           fetchImpl: worker.fetchImpl,
         }),
       owner: kvEntry<string>('owner'),
+      signUpKeyHeld: createSignUpKeyGuard({
+        mark: createWebSignUpMarkStore({
+          get: async <T>(name: string) =>
+            (disk.kv.get(name) as T | undefined) ?? null,
+          set: async (name, value) => void disk.kv.set(name, value),
+          delete: async (name) => void disk.kv.delete(name),
+        }),
+        readStoredKey: () => accountKey.readStored(),
+        // Another tab signing up holds `ww-signup`.
+        lockFree: async () => disk.kv.get('ww-signup-held') !== true,
+      }),
       hasLocalData: () => disk.stores.size > 0,
       markWipePending: async () => {
         events.push('wipe-pending')
@@ -724,6 +741,83 @@ describe('web sessions', () => {
     expect(disk.kv.get('owner')).toBe('acct000000000000000001')
   })
 
+  it('names no owner when the session couldn’t be kept', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    one.store.write.mockRejectedValue(new Error('quota'))
+
+    await expect(
+      one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    ).rejects.toMatchObject({ reason: 'storage' })
+
+    expect(disk.kv.has('owner')).toBe(false)
+  })
+
+  it('never replaces the key of an account a sign-up may have made', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    const theirs = new Uint8Array(32).fill(42)
+    disk.secrets.set('account-key', theirs)
+    disk.kv.set('web-signup', {
+      accountId: 'acct000000000000000009',
+      accountPub: deriveAccountSigningKey(theirs).publicKey,
+      stage: 'sent',
+    })
+
+    await expect(
+      one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    ).rejects.toMatchObject({ reason: 'signUpPending' })
+
+    expect(disk.secrets.get('account-key')).toEqual(theirs)
+    expect(disk.kv.has('owner')).toBe(false)
+  })
+
+  it('says storage failed when it can’t tell whose key is here', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    disk.kv.set('web-signup', 'not a mark')
+    one.accountKey.readStored = async () => {
+      throw new Error('blocked')
+    }
+
+    await expect(
+      one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    ).rejects.toMatchObject({ reason: 'storage' })
+  })
+
+  it('keeps the key of the account the sign-up made', async () => {
+    const { tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    disk.secrets.set('account-key', KEY_A)
+    disk.kv.set('web-signup', {
+      accountId: 'acct000000000000000001',
+      accountPub: deriveAccountSigningKey(KEY_A).publicKey,
+      stage: 'created',
+    })
+
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+
+    expect(disk.kv.get('owner')).toBe('acct000000000000000001')
+  })
+
+  it('keeps data made signed out as signed out’s when the session couldn’t be kept', async () => {
+    const { tab, disk } = browser()
+    disk.kv.set('owner', '')
+    const one = tab()
+    await one.account.start()
+    one.store.write.mockRejectedValue(new Error('quota'))
+
+    await expect(
+      one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    ).rejects.toMatchObject({ reason: 'storage' })
+
+    expect(disk.kv.get('owner')).toBe('')
+  })
+
   it('switching accounts closes the old session, wipes, and reloads every tab before the new key is used', async () => {
     const { tab, disk, worker, events } = browser()
     const one = tab()
@@ -963,6 +1057,76 @@ describe('web sessions', () => {
       status: 'signedIn',
       accountId: 'acct000000000000000001',
     })
+  })
+
+  it('refuses with the sign-up guard or Sign In Again’s, each in its own case', async () => {
+    const { tab, disk, worker } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+    const theirs = deriveAccountSigningKey(new Uint8Array(32).fill(9)).publicKey
+    const stillA = () => {
+      expect(disk.secrets.get('account-key')).toEqual(KEY_A)
+      expect(disk.stores.get('contacts')).toBe('A')
+      expect(one.account.state()).toMatchObject({
+        status: 'signedIn',
+        accountId: 'acct000000000000000001',
+      })
+    }
+    const signInAgain = (ticket: string, key: Uint8Array) =>
+      one.account
+        .openWebSessionWithTicket(ticket, key, { keepData: true })
+        .catch((e: unknown) => e)
+
+    // A sign-up that may have made an account: Sign In Again as this
+    // browser's own account, which Sign In Again allows, is refused by the
+    // sign-up guard.
+    disk.kv.set('web-signup', {
+      accountId: 'acct000000000000000009',
+      accountPub: theirs,
+      stage: 'sent',
+    })
+    expect(await signInAgain('ticket-a2', KEY_A)).toMatchObject({
+      reason: 'signUpPending',
+    })
+    stillA()
+
+    // A sign-up's leftover no tab is making: the sign-up guard lets it
+    // through, and Sign In Again refuses another account.
+    disk.kv.set('web-signup', {
+      accountId: 'acct000000000000000009',
+      accountPub: theirs,
+      stage: 'key',
+    })
+    expect(await signInAgain('ticket-b', KEY_B)).toMatchObject({
+      reason: 'otherAccount',
+    })
+    stillA()
+
+    // The same leftover while another tab is still making it: the sign-up
+    // guard refuses first.
+    disk.kv.set('ww-signup-held', true)
+    expect(await signInAgain('ticket-b2', KEY_B)).toMatchObject({
+      reason: 'signUpPending',
+    })
+    stillA()
+    await settle()
+    // Every refused session was closed on the server.
+    expect(
+      worker.sessions.slice(1).every((session) => session.ended !== null)
+    ).toBe(true)
+
+    // Neither applies: Sign In Again as this browser's account goes through.
+    disk.kv.delete('web-signup')
+    disk.kv.delete('ww-signup-held')
+    const again = await one.account.openWebSessionWithTicket(
+      'ticket-a3',
+      KEY_A,
+      { keepData: true }
+    )
+    expect(again.accountId).toBe('acct000000000000000001')
+    stillA()
   })
 
   it('sends the same signed request when the User retries after a lost answer', async () => {

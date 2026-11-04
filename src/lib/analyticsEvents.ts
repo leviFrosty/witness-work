@@ -277,6 +277,11 @@ export const analyticsEventNames = [
   'web_sign_in_that_wasnt_me',
   'web_signed_out',
   'web_step_up',
+  // Signing up on the web (ADR 0038 §8).
+  'web_sign_up_completed',
+  'web_sign_up_failed',
+  'web_sign_up_recovery_key_saved',
+  'web_sign_up_started',
   // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
   'web_storage_failed',
   'web_tab_taken_over',

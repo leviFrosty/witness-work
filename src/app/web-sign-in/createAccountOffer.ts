@@ -1,19 +1,20 @@
 /**
- * Create an Account until web sign-up exists: a placeholder that opens the app
- * in this tab without an account, in dev builds only. Never while this browser
- * keeps an account's data: signing in picks that up, and edits made signed out
- * would sync into the account later. `chosen` when the User picked it in this
- * tab (`webSignInLater`).
+ * Create an Account on the sign-in screen (web sign-up), never while this
+ * browser keeps an account's data: signing in picks that up, and signing up as
+ * someone else would erase it.
+ *
+ * `withoutAccount`: dev builds only, the web smoke tests' way into the app with
+ * no account (`webSignInLater`, set by `e2e/web/fixtures.ts`; nothing on screen
+ * sets it). Never into an account's kept data either.
  */
 export function createAccountOffer({
   dev,
   keptData,
-  chosen,
+  withoutAccount,
 }: {
   dev: boolean
   keptData: boolean
-  chosen: boolean
+  withoutAccount: boolean
 }): { offered: boolean; open: boolean } {
-  const offered = dev && !keptData
-  return { offered, open: offered && chosen }
+  return { offered: !keptData, open: dev && !keptData && withoutAccount }
 }

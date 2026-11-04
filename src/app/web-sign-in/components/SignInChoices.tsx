@@ -37,7 +37,7 @@ export default function SignInChoices({
   onPasskey: () => void
   onPhone: () => void
   onRecoveryKey: () => void
-  /** None until web sign-up: accounts are made in the phone app. */
+  /** None while this browser keeps an account's data. */
   onCreateAccount?: () => void
   /** Back to the app: signing in again while signed in. */
   onBack?: () => void
@@ -106,31 +106,18 @@ export default function SignInChoices({
           testID='web-sign-in-recovery'
         />
       </View>
-      {!state.cantUnlock && (
+      {!state.cantUnlock && onCreateAccount && (
         <View style={{ alignItems: 'center', paddingTop: 12 }}>
           <Text style={{ color: theme.colors.textAlt }}>
             {i18n.t('webSignIn_newHere')}
           </Text>
-          {onCreateAccount ? (
-            <SignInButton
-              kind='text'
-              label={i18n.t('webSignIn_createAccount')}
-              onPress={onCreateAccount}
-              disabled={state.busy !== null}
-              testID='web-sign-in-create-account'
-            />
-          ) : (
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-              testID='web-sign-in-create-in-app'
-            >
-              {i18n.t('webSignIn_createInApp')}
-            </Text>
-          )}
+          <SignInButton
+            kind='text'
+            label={i18n.t('webSignIn_createAccount')}
+            onPress={onCreateAccount}
+            disabled={state.busy !== null}
+            testID='web-sign-in-create-account'
+          />
         </View>
       )}
     </SignInPage>

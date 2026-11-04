@@ -68,9 +68,10 @@ export const webSignInMark: WebSignInMarkStore = {
 const LATER_KEY = 'ww-web-sign-in-later'
 
 /**
- * Dev builds only, until web sign-up: Create an Account opened the app in this
- * tab without an account. Signing in, or the server signing this browser out,
- * clears it, so it never opens an account's kept data.
+ * Dev builds only: the web smoke tests open the app in this tab without an
+ * account (`e2e/web/fixtures.ts`); nothing on screen sets it. Signing in, or
+ * the server signing this browser out, clears it, so it never opens an
+ * account's kept data.
  */
 export const webSignInLater = {
   read: (): boolean => {

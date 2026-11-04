@@ -21,6 +21,7 @@ type TurnstileApi = {
       callback: (token: string) => void
       'expired-callback': () => void
       'error-callback': () => void
+      'timeout-callback': () => void
       theme: 'auto' | 'light' | 'dark'
       size?: 'normal' | 'flexible' | 'compact'
     }
@@ -91,8 +92,11 @@ export default function Turnstile({
   action: string
   resetKey: number
   onToken: (token: string | null) => void
-  /** The script didn't load (offline, or blocked). */
-  onError: () => void
+  /**
+   * The script didn't load (offline, or blocked: `script`), or the check failed
+   * or timed out (`check`; the widget shows it too).
+   */
+  onError: (reason: 'script' | 'check') => void
 }) {
   const container = useRef<View>(null)
   const widget = useRef<{ api: TurnstileApi; id: string } | null>(null)
@@ -110,14 +114,21 @@ export default function Turnstile({
           action,
           callback: (value) => token(value),
           'expired-callback': () => token(null),
-          'error-callback': () => token(null),
+          'error-callback': () => {
+            token(null)
+            failed('check')
+          },
+          'timeout-callback': () => {
+            token(null)
+            failed('check')
+          },
           theme: 'auto',
           size: 'flexible',
         })
         widget.current = { api, id }
       })
       .catch(() => {
-        if (!cancelled) failed()
+        if (!cancelled) failed('script')
       })
     return () => {
       cancelled = true

@@ -13,6 +13,13 @@ const mocks = vi.hoisted(() => ({
   variant: 'production',
 }))
 
+vi.mock('react-native', () => ({
+  Platform: {
+    get OS() {
+      return mocks.platform
+    },
+  },
+}))
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
     getString = (key: string) => mocks.frequency.get(key)

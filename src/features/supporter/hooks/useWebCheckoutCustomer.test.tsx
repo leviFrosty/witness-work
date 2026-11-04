@@ -5,8 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   variant: 'production' as 'development' | 'beta' | 'production',
   session: null as { accountId: string } | null,
-  settled: false,
-  settledId: 'ww_buyer_0123456789',
   devBuyGate: false,
   accountListeners: new Set<() => void>(),
   getAppUserID: vi.fn(async () => 'ww_buyer_0123456789'),
@@ -29,9 +27,6 @@ vi.mock('@/lib/serverAccount', () => ({
     return () => runtime.accountListeners.delete(listener)
   },
 }))
-vi.mock('@/features/supporter/lib/webRevenueCatId', () => ({
-  useSettledWebRevenueCatId: () => (runtime.settled ? runtime.settledId : null),
-}))
 vi.mock('react-native-purchases', () => ({
   default: { getAppUserID: runtime.getAppUserID },
 }))
@@ -43,6 +38,19 @@ import {
   useWebCheckoutCustomer,
   type WebCheckoutCustomer,
 } from '@/features/supporter/hooks/useWebCheckoutCustomer'
+import { setPeerAccountClaims } from '@/lib/accountClaimRegistry'
+import { markCompletePull, resetCompletePull } from '@/lib/cloudSyncPullSettled'
+import {
+  currentSettledPull,
+  settleRevenueCatId,
+} from '@/lib/settledRevenueCatId'
+
+/** A complete pull, then a reconcile pass that settles on `id`. */
+const settle = (id = 'ww_buyer_0123456789') => {
+  setPeerAccountClaims([])
+  markCompletePull()
+  settleRevenueCatId(id, currentSettledPull()!)
+}
 
 const seen: WebCheckoutCustomer[] = []
 let renderer: ReactTestRenderer | undefined
@@ -61,11 +69,13 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   runtime.variant = 'production'
   runtime.session = null
-  runtime.settled = false
-  runtime.settledId = 'ww_buyer_0123456789'
+  // Another account generation: nothing settled carries over.
+  resetCompletePull()
   runtime.devBuyGate = false
   runtime.accountListeners.clear()
-  runtime.getAppUserID.mockClear()
+  runtime.getAppUserID
+    .mockReset()
+    .mockImplementation(async () => 'ww_buyer_0123456789')
   seen.length = 0
 })
 afterEach(() => {
@@ -92,7 +102,7 @@ describe('useWebCheckoutCustomer', () => {
     async (variant) => {
       runtime.variant = variant
       runtime.session = { accountId: 'acct_1' }
-      runtime.settled = true
+      settle()
       await render()
       expect(latest()).toEqual({
         appUserId: 'ww_buyer_0123456789',
@@ -103,10 +113,68 @@ describe('useWebCheckoutCustomer', () => {
 
   it('gives no customer while the browser is logged in as another one', async () => {
     runtime.session = { accountId: 'acct_1' }
-    runtime.settled = true
-    runtime.settledId = 'ww_account_9876543210'
+    settle('ww_account_9876543210')
     await render()
     expect(latest()).toEqual({ appUserId: null, waitingFor: null })
+  })
+
+  it('follows the settled id: waits while it is unsettled, then buys as the new one', async () => {
+    runtime.session = { accountId: 'acct_1' }
+    settle('ww_browser_0123456789')
+    runtime.getAppUserID.mockResolvedValue('ww_browser_0123456789')
+    await render()
+    expect(latest()).toEqual({
+      appUserId: 'ww_browser_0123456789',
+      waitingFor: null,
+    })
+    // A pull brings a phone's entitled claim; reconcile hasn't adopted it yet.
+    await act(async () => {
+      setPeerAccountClaims([
+        { appUserId: 'ww_phone_0123456789', entitled: true, claimedAt: 1 },
+      ])
+      markCompletePull()
+    })
+    expect(latest()).toEqual({ appUserId: null, waitingFor: 'settled_id' })
+    // Adopted: RevenueCat is the phone's customer, and the id settles on it.
+    runtime.getAppUserID.mockResolvedValue('ww_phone_0123456789')
+    await act(async () =>
+      settleRevenueCatId('ww_phone_0123456789', currentSettledPull()!)
+    )
+    expect(latest()).toEqual({
+      appUserId: 'ww_phone_0123456789',
+      waitingFor: null,
+    })
+    // Signing out (or another account key) unsettles it.
+    await act(async () => resetCompletePull())
+    expect(latest()).toEqual({ appUserId: null, waitingFor: 'settled_id' })
+  })
+
+  it('never gives the previous id while it reads the new settled one', async () => {
+    runtime.session = { accountId: 'acct_1' }
+    settle('ww_browser_0123456789')
+    runtime.getAppUserID.mockResolvedValue('ww_browser_0123456789')
+    await render()
+    expect(latest()?.appUserId).toBe('ww_browser_0123456789')
+    // Unsettled by other claims, then settled on the phone's id; the SDK's
+    // answer for it hasn't come back yet.
+    await act(async () => {
+      setPeerAccountClaims([
+        { appUserId: 'ww_phone_0123456789', entitled: true, claimedAt: 1 },
+      ])
+      markCompletePull()
+    })
+    let answer!: (id: string) => void
+    runtime.getAppUserID.mockImplementation(
+      () => new Promise<string>((resolve) => (answer = resolve))
+    )
+    const from = seen.length
+    await act(async () =>
+      settleRevenueCatId('ww_phone_0123456789', currentSettledPull()!)
+    )
+    await act(async () => answer('ww_phone_0123456789'))
+    const given = seen.slice(from).map((s) => s.appUserId)
+    expect(given).not.toContain('ww_browser_0123456789')
+    expect(given.at(-1)).toBe('ww_phone_0123456789')
   })
 
   it('notices a session that opens later', async () => {

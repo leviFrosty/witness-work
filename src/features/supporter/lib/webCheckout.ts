@@ -100,4 +100,6 @@ export type WebCheckout = {
    * Buy isn't available for `pkg`.
    */
   open: (pkg: PurchasesPackage, tier: PurchaseTier) => Promise<boolean>
+  /** Leaves the app for web sign-in, while Buy waits for a session. */
+  signIn: () => void
 }

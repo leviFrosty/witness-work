@@ -29,6 +29,7 @@ const runtime = vi.hoisted(() => {
       waitingFor: 'session' | 'settled_id' | null
       canBuy: ReturnType<typeof vi.fn>
       open: ReturnType<typeof vi.fn>
+      signIn: ReturnType<typeof vi.fn>
     },
   }
 })
@@ -461,6 +462,7 @@ describe('on the web', () => {
       waitingFor: null,
       canBuy: vi.fn(() => true),
       open: vi.fn(async () => true),
+      signIn: vi.fn(),
     }
     return runtime.webCheckout
   }
@@ -510,7 +512,7 @@ describe('on the web', () => {
 
   it.each([
     ['session', 'paywallSignInToBuyWeb'],
-    ['settled_id', 'paywallBuyUnavailableForAccountWeb'],
+    ['settled_id', 'paywallGettingAccountReadyWeb'],
   ] as const)(
     'says why Buy waits for the %s, instead of a dead button',
     async (waitingFor, reason) => {
@@ -524,6 +526,19 @@ describe('on the web', () => {
       })
     }
   )
+
+  it('offers sign-in only while Buy waits for a session', async () => {
+    const checkout = web()
+    checkout.waitingFor = 'session'
+    checkout.canBuy.mockReturnValue(false)
+    await render()
+    expect(footer()[0].props.onSignIn).toBe(checkout.signIn)
+
+    act(() => renderer!.unmount())
+    checkout.waitingFor = 'settled_id'
+    await render()
+    expect(footer()[0].props.onSignIn).toBeUndefined()
+  })
 
   it('gives no reason once Buy can open checkout', async () => {
     web()

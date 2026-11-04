@@ -253,6 +253,9 @@ const unsubscribe = onCompletedPull(() => {
   leaving the account or signing out on the web, which then reloads). A pull
   that started before a reset doesn't count.
 - In memory only: each launch starts unset.
+- `AccountProvider` reconciles after each complete pull, and the id it keeps
+  then settles web Buy's customer (`settledRevenueCatId.ts`,
+  docs/web-purchases.md "Buy waits for a settled id").
 
 ## Wiping everything
 

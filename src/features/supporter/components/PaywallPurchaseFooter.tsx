@@ -18,6 +18,11 @@ interface Props {
    * CTA in place of the reassurance line.
    */
   unavailableReason?: string
+  /**
+   * Web, while Buy waits for an account session: takes the User to sign-in,
+   * shown under `unavailableReason`.
+   */
+  onSignIn?: () => void
 }
 
 export default function PaywallPurchaseFooter({
@@ -27,6 +32,7 @@ export default function PaywallPurchaseFooter({
   onPurchase,
   purchasing = false,
   unavailableReason,
+  onSignIn,
 }: Props) {
   const theme = useTheme()
   const labelColor = tier === 'supporter' ? '#343232' : theme.colors.textInverse
@@ -52,16 +58,41 @@ export default function PaywallPurchaseFooter({
         </Text>
       </SupporterCtaButton>
       {unavailableReason ? (
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-            textAlign: 'center',
-          }}
-        >
-          {unavailableReason}
-        </Text>
+        <View style={{ alignItems: 'center' }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+              textAlign: 'center',
+            }}
+          >
+            {unavailableReason}
+          </Text>
+          {onSignIn && (
+            <Button
+              onPress={onSignIn}
+              accessibilityRole='button'
+              style={{
+                minHeight: 44,
+                minWidth: 44,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.accent,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('paywallSignInToBuyWebAction')}
+              </Text>
+            </Button>
+          )}
+        </View>
       ) : (
         <Text
           style={{

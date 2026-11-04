@@ -102,7 +102,7 @@ const WEB_TOGGLE = { minHeight: 48 } as const
 /** Why web Buy can't open checkout yet, shown in its place. */
 const WEB_BUY_WAITING_KEYS = {
   session: 'paywallSignInToBuyWeb',
-  settled_id: 'paywallBuyUnavailableForAccountWeb',
+  settled_id: 'paywallGettingAccountReadyWeb',
 } as const
 
 const totalPackages = (offerings: PurchasesOfferings) =>
@@ -1031,6 +1031,11 @@ const PaywallScreen = ({
       unavailableReason={
         selectedPackage && webCheckout?.waitingFor
           ? i18n.t(WEB_BUY_WAITING_KEYS[webCheckout.waitingFor])
+          : undefined
+      }
+      onSignIn={
+        selectedPackage && webCheckout?.waitingFor === 'session'
+          ? webCheckout.signIn
           : undefined
       }
       tier={tier}

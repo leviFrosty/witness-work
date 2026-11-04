@@ -26,10 +26,20 @@ const runtime = vi.hoisted(() => ({
   revenueCat: true,
   /** The server account this device is on (`currentSupporterAccount`). */
   account: null as string | null,
+  os: 'ios' as 'ios' | 'web',
+  installId: 'ipad',
+  /** The id RevenueCat is logged in as; the install id until a `logIn`. */
+  revenueCatUser: null as string | null,
+  /** Whether this device's RevenueCat customer is a Supporter. */
+  entitled: false,
 }))
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    get OS() {
+      return runtime.os
+    },
+  },
   AppState: { addEventListener: () => ({ remove: () => {} }) },
 }))
 vi.mock('../../modules/icloud-bridge', () => ({
@@ -49,8 +59,14 @@ vi.mock('../../modules/icloud-bridge', () => ({
 }))
 vi.mock('react-native-purchases', () => ({
   default: {
-    logIn: vi.fn(async () => ({ customerInfo: { entitlements: {} } })),
+    logIn: vi.fn(async (id: string) => {
+      runtime.revenueCatUser = id
+      return { customerInfo: { entitlements: {} } }
+    }),
     isAnonymous: vi.fn(async () => false),
+    getAppUserID: vi.fn(
+      async () => runtime.revenueCatUser ?? runtime.installId
+    ),
     invalidateCustomerInfoCache: vi.fn(),
     getCustomerInfo: vi.fn(async () => ({ entitlements: {} })),
   },
@@ -98,7 +114,7 @@ vi.mock('@/lib/installId', () => {
     InstallIdUnavailableError,
     getOrCreateInstallId: () => {
       if (runtime.keychainLocked) throw new InstallIdUnavailableError()
-      return 'ipad'
+      return runtime.installId
     },
   }
 })
@@ -112,6 +128,20 @@ vi.mock('@/lib/iCloudIdentity', () => ({
     return !change
   },
 }))
+// `runtime.entitled` makes this device's customer a Supporter; otherwise its
+// entitlements decide.
+vi.mock('@/lib/supporterSince', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/supporterSince')>()
+  return {
+    ...actual,
+    supporterSinceDate: (
+      customer: Parameters<typeof actual.supporterSinceDate>[0]
+    ) =>
+      customer && runtime.entitled
+        ? new Date(0)
+        : actual.supporterSinceDate(customer),
+  }
+})
 vi.mock('expo-device', () => ({ modelName: 'iPad' }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
@@ -159,9 +189,13 @@ const mount = async (AccountProvider: React.FC<React.PropsWithChildren>) => {
   })
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules()
   vi.clearAllMocks()
+  // Back to the factory's RevenueCat: a test's own stubs don't leak.
+  const { default: Purchases } = await import('react-native-purchases')
+  vi.mocked(Purchases.logIn).mockReset()
+  vi.mocked(Purchases.getCustomerInfo).mockReset()
   runtime.files = []
   runtime.links = []
   runtime.switched = []
@@ -171,6 +205,10 @@ beforeEach(() => {
   runtime.keychainLocked = false
   runtime.revenueCat = true
   runtime.account = null
+  runtime.os = 'ios'
+  runtime.installId = 'ipad'
+  runtime.revenueCatUser = null
+  runtime.entitled = false
 })
 
 afterEach(() => {
@@ -689,5 +727,180 @@ describe('another server account signs in', () => {
 
     await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith('ipad'))
     expect(identity.revenueCatIsOwn()).toBe(true)
+  })
+})
+
+describe('a complete Cloud Sync pull on a phone', () => {
+  it("doesn't reconcile when the claims didn't change", async () => {
+    const { AccountProvider, bridge, Purchases } = await load()
+    const pull = await import('@/lib/cloudSyncPullSettled')
+    const store = await import('@/lib/settledRevenueCatId')
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(bridge.write).toHaveBeenCalled())
+    await act(() => new Promise((resolve) => setTimeout(resolve, 600)))
+    const reads = vi.mocked(bridge.readFiles).mock.calls.length
+    const scans = vi.mocked(bridge.waitForInitialScan).mock.calls.length
+
+    await act(async () => pull.markCompletePull())
+    await act(() => new Promise((resolve) => setTimeout(resolve, 600)))
+
+    expect(vi.mocked(bridge.readFiles).mock.calls.length).toBe(reads)
+    expect(vi.mocked(bridge.waitForInitialScan).mock.calls.length).toBe(scans)
+    expect(Purchases.getAppUserID).not.toHaveBeenCalled()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+})
+
+describe('the settled RevenueCat id, on the web (docs/web-purchases.md)', () => {
+  const BROWSER = 'ww_browser_0123456789'
+  const PHONE = 'aaaaaaaa-0000-4000-8000-00000000000b'
+  const phoneClaim = { appUserId: PHONE, entitled: true, claimedAt: 9e12 }
+  const wait = { timeout: 3_000 }
+
+  beforeEach(() => {
+    runtime.os = 'web'
+    runtime.installId = BROWSER
+  })
+
+  const loadWeb = async () => {
+    const loaded = await load()
+    const registry = await import('@/lib/accountClaimRegistry')
+    const pull = await import('@/lib/cloudSyncPullSettled')
+    const store = await import('@/lib/settledRevenueCatId')
+    const account = await import('@/lib/account')
+    /** A complete Cloud Sync pull that read `claims` from the peers' slots. */
+    const completePull = async (
+      claims: Parameters<typeof registry.setPeerAccountClaims>[0]
+    ) => {
+      await act(async () => {
+        registry.setPeerAccountClaims(claims)
+        pull.markCompletePull()
+      })
+    }
+    return { ...loaded, registry, pull, store, account, completePull }
+  }
+
+  /** Lets reconcile passes (and their debounced follow-ups) run. */
+  const settleDown = () =>
+    act(() => new Promise((resolve) => setTimeout(resolve, 600)))
+
+  it('settles nothing until a complete pull', async () => {
+    const { AccountProvider, registry, store } = await loadWeb()
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(registry.ownAccountClaim()).not.toBeNull())
+    // An incomplete pull's claims don't settle it either.
+    await act(async () => registry.setPeerAccountClaims([]))
+    await settleDown()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+
+  it('settles a web-only account on its own claim (an empty or own-only pull)', async () => {
+    const { AccountProvider, store, completePull, Purchases } = await loadWeb()
+    await mount(AccountProvider)
+    await completePull([])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(BROWSER),
+      wait
+    )
+    expect(Purchases.logIn).not.toHaveBeenCalled()
+  })
+
+  it("moves to another device's entitled claim that arrives later", async () => {
+    const { AccountProvider, store, completePull, Purchases, account } =
+      await loadWeb()
+    await mount(AccountProvider)
+    await completePull([])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(BROWSER),
+      wait
+    )
+
+    await completePull([phoneClaim])
+    // Not the browser's own id while it adopts.
+    expect(store.settledRevenueCatId()).toBeNull()
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith(PHONE))
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(PHONE),
+      wait
+    )
+    expect(account.getOrCreateAccountId()).toBe(PHONE)
+  })
+
+  it("settles nothing on an incomplete pull's claims", async () => {
+    const { AccountProvider, registry, store, completePull, Purchases } =
+      await loadWeb()
+    await mount(AccountProvider)
+    await completePull([phoneClaim])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(PHONE),
+      wait
+    )
+    expect(Purchases.logIn).toHaveBeenCalledWith(PHONE)
+    // A pull that read a newer device's slot, not the phone's entitled one.
+    await act(async () =>
+      registry.setPeerAccountClaims([
+        { appUserId: 'ww_tablet_0123456789', entitled: false, claimedAt: 9e13 },
+      ])
+    )
+    await settleDown()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+
+  it('keeps an entitled browser on its own id beside an entitled phone (ADR 0011)', async () => {
+    runtime.entitled = true
+    const { AccountProvider, store, completePull, Purchases } = await loadWeb()
+    await mount(AccountProvider)
+    await completePull([phoneClaim])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(BROWSER),
+      wait
+    )
+    expect(Purchases.logIn).not.toHaveBeenCalledWith(PHONE)
+  })
+
+  it('settles nothing when logging in as the adopted id fails', async () => {
+    const { AccountProvider, store, completePull, Purchases } = await loadWeb()
+    vi.mocked(Purchases.logIn).mockRejectedValue(new Error('RevenueCat down'))
+    await mount(AccountProvider)
+    await completePull([phoneClaim])
+    await vi.waitFor(() => expect(Purchases.logIn).toHaveBeenCalledWith(PHONE))
+    await settleDown()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+
+  it('settles nothing without RevenueCat (no key, or no SDK)', async () => {
+    runtime.revenueCat = false
+    const { AccountProvider, registry, store, completePull } = await loadWeb()
+    await mount(AccountProvider)
+    await vi.waitFor(() => expect(registry.ownAccountClaim()).not.toBeNull())
+    await completePull([])
+    await settleDown()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+
+  it('settles nothing while RevenueCat is logged in as another customer', async () => {
+    runtime.revenueCatUser = 'ww_someone_else_0123'
+    const { AccountProvider, store, completePull } = await loadWeb()
+    await mount(AccountProvider)
+    await completePull([])
+    await settleDown()
+    expect(store.settledRevenueCatId()).toBeNull()
+  })
+
+  it('unsettles on a reset, until the next complete pull settles it', async () => {
+    const { AccountProvider, store, pull, completePull } = await loadWeb()
+    await mount(AccountProvider)
+    await completePull([])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(BROWSER),
+      wait
+    )
+    await act(async () => pull.resetCompletePull())
+    expect(store.settledRevenueCatId()).toBeNull()
+    await completePull([])
+    await vi.waitFor(
+      () => expect(store.settledRevenueCatId()).toBe(BROWSER),
+      wait
+    )
   })
 })

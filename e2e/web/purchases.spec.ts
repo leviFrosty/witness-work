@@ -1,16 +1,19 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import type { Page, Request } from '@playwright/test'
+import { chromium, type Page, type Request } from '@playwright/test'
 import type { Catalog } from './revenueCat'
 import { webSalesAllowed } from '../../src/features/supporter/lib/webSalesRegions'
 import { parseDevLocation } from '../../src/lib/visitorLocation'
 import {
   expect,
+  localApiOrigin,
   openBlankOnOrigin,
   readStoreRow,
   strings,
   test,
 } from './fixtures'
+import { mockRevenueCat } from './revenueCat'
 
 /**
  * Web purchases (docs/web-purchases.md): the paywall's Buy, the region notice,
@@ -20,7 +23,9 @@ import {
  * Checkout itself is never followed.
  *
  * Needs a build with RevenueCat Billing's sandbox key and links (`.env.local`,
- * see docs/build.md); without them the web sells nothing and these skip.
+ * see docs/build.md); without them the web sells nothing and these skip. A run
+ * against the Expo dev server (`pnpm web`, `E2E_EXTERNAL=1`) has no export to
+ * check: `E2E_SELLS_ON_WEB=1` says its `.env.local` has them.
  */
 
 const en = strings('en-US')
@@ -31,6 +36,7 @@ const dist = path.join(__dirname, '../../dist')
  * the SDK's own `"rcb_sb_"` prefix check.
  */
 const sellsOnWeb = (() => {
+  if (process.env.E2E_SELLS_ON_WEB === '1') return true
   try {
     const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8')
     const entry = /src="\/(_expo\/static\/js\/web\/index-[^"]+\.js)"/.exec(html)
@@ -219,22 +225,42 @@ test.describe('the web paywall', () => {
     await expect(app.getByText('$0.49')).toHaveCount(0)
   })
 
-  test('says to sign in instead of Buy where the build gates it (dev_buy_gate)', async ({
-    page,
-    app,
-    shot,
-  }) => {
-    // A development build on localhost gating Buy as Beta and production do:
-    // this browser has no account session.
-    await page.goto('/?dev_buy_gate=1')
-    await expect(page).not.toHaveURL(/dev_buy_gate/)
-    await openPaywall(app)
-    await expect(app.getByText('$14.99').first()).toBeVisible()
-    await expect(app.getByText(en.paywallSignInToBuyWeb)).toBeVisible()
-    await expect(
-      app.getByRole('button', { name: /^Become a Supporter — \$14\.99/ })
-    ).toBeDisabled()
-    await shot('paywall-sign-in-to-buy')
+  test.describe('signing in from the paywall', () => {
+    // Sign In forgets the choice and reloads: it must reach sign-in.
+    test.use({ withoutAccountOnce: true })
+
+    test('says to sign in instead of Buy where the build gates it, and signs in (dev_buy_gate)', async ({
+      page,
+      app,
+      shot,
+    }) => {
+      // A development build on localhost gating Buy as Beta and production do:
+      // this browser has no account session.
+      await page.goto('/?dev_buy_gate=1')
+      await expect(page).not.toHaveURL(/dev_buy_gate/)
+      await openPaywall(app)
+      await expect(app.getByText('$14.99').first()).toBeVisible()
+      await expect(app.getByText(en.paywallSignInToBuyWeb)).toBeVisible()
+      await expect(
+        app.getByRole('button', { name: /^Become a Supporter — \$14\.99/ })
+      ).toBeDisabled()
+      const signIn = app.getByRole('button', {
+        name: en.paywallSignInToBuyWebAction,
+        exact: true,
+      })
+      const box = (await signIn.boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      await shot('paywall-sign-in-to-buy')
+
+      // By keyboard: it lands on web sign-in.
+      await signIn.focus()
+      await expect(signIn).toBeFocused()
+      await page.keyboard.press('Enter')
+      await expect(
+        page.getByText(en.webSignIn_title, { exact: true })
+      ).toBeVisible()
+    })
   })
 
   test('gives its controls 44pt targets', async ({ app, shot }) => {
@@ -522,5 +548,199 @@ test.describe('the checkout return page, without a tier', () => {
       app.getByRole('button', { name: en.goBack, exact: true })
     ).toBeVisible()
     await shot('return-not-found')
+  })
+})
+
+/** A RevenueCat id as reports may show it: never the id itself. */
+const fingerprint = (id: string) =>
+  createHash('sha256').update(id).digest('hex').slice(0, 12)
+
+/** The dev harness's RevenueCat view, ids as fingerprints. */
+const revenueCatState = (page: Page) =>
+  page.evaluate(() => {
+    const state = (
+      globalThis as unknown as {
+        __WW_DEV__: {
+          revenueCat: {
+            state: () => {
+              accountId: string | null
+              ownClaim: { id: string } | null
+              settled: string | null
+            }
+          }
+        }
+      }
+    ).__WW_DEV__.revenueCat.state()
+    return {
+      accountId: state.accountId,
+      claim: state.ownClaim?.id ?? null,
+      settled: state.settled,
+    }
+  })
+
+type SessionHarness = {
+  signUp: () => Promise<{ recoveryKey: string }>
+  signInWithRecoveryKey: (recoveryKey: string) => Promise<unknown>
+}
+const harnessReady = (page: Page) =>
+  page.waitForFunction(
+    () => '__WW_WEB_SESSION__' in globalThis && '__WW_DEV__' in globalThis,
+    null,
+    { timeout: 120_000 }
+  )
+
+/**
+ * A web-only account another browser already uses: created with a passkey in
+ * Chromium, whose own pull settled it on its claim, the account's RevenueCat
+ * id. One per run, shared by every project (ww-api caps sign-ups per caller),
+ * through a file in the run's output folder, which each run empties.
+ */
+async function accountInUse(
+  baseURL: string
+): Promise<{ recoveryKey: string; claim: string }> {
+  const folder = test.info().project.outputDir
+  const file = path.join(folder, 'settled-id-account.json')
+  const lock = path.join(folder, 'settled-id-account.lock')
+  fs.mkdirSync(folder, { recursive: true })
+  try {
+    fs.mkdirSync(lock)
+  } catch {
+    await expect
+      .poll(() => fs.existsSync(file), { timeout: 120_000 })
+      .toBe(true)
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  }
+  const first = await chromium.launch()
+  try {
+    const context = await first.newContext({ baseURL })
+    await mockRevenueCat(context, CATALOG, 'free')
+    const other = await context.newPage()
+    const cdp = await context.newCDPSession(other)
+    await cdp.send('WebAuthn.enable')
+    await cdp.send('WebAuthn.addVirtualAuthenticator', {
+      options: {
+        protocol: 'ctap2',
+        transport: 'internal',
+        hasResidentKey: true,
+        hasUserVerification: true,
+        isUserVerified: true,
+        automaticPresenceSimulation: true,
+        hasPrf: true,
+      },
+    })
+    await other.goto('/')
+    await harnessReady(other)
+    const recoveryKey = await other.evaluate(() =>
+      (
+        globalThis as unknown as { __WW_WEB_SESSION__: SessionHarness }
+      ).__WW_WEB_SESSION__
+        .signUp()
+        .then((opened) => opened.recoveryKey)
+    )
+    await expect
+      .poll(async () => (await revenueCatState(other)).settled, {
+        timeout: 60_000,
+      })
+      .not.toBeNull()
+    const state = await revenueCatState(other)
+    expect(state.settled).toBe(state.claim)
+    const account = { recoveryKey, claim: state.claim! }
+    fs.writeFileSync(file, JSON.stringify(account), { mode: 0o600 })
+    return account
+  } finally {
+    await first.close()
+  }
+}
+
+/**
+ * Buy waits for the account's settled RevenueCat id (docs/web-purchases.md "Buy
+ * waits for a settled id"). Signs in for real against a local ww-api
+ * (`E2E_API_ORIGIN`), on the Expo dev server, which has the dev harness.
+ */
+test.describe('Buy and the settled id (dev_buy_gate)', () => {
+  test.skip(!localApiOrigin, 'needs a local ww-api (E2E_API_ORIGIN)')
+  // The tab forgets the choice to reach sign-in.
+  test.use({ withoutAccountOnce: true })
+
+  test("waits for the complete pull, then buys as the account's claim", async ({
+    page,
+    shot,
+  }) => {
+    test.setTimeout(240_000)
+    const { recoveryKey, claim: accountClaim } = await accountInUse(
+      test.info().project.use.baseURL!
+    )
+
+    // This browser signs in to the account and adopts its claim, from the
+    // sign-in screen rather than a tab opened without an account.
+    // Each navigation waits for the page to finish loading: WebKit reports
+    // requests a navigation cancels as page errors.
+    await openBlankOnOrigin(page)
+    await page.evaluate(() => sessionStorage.removeItem('ww-web-sign-in-later'))
+    await page.goto('/')
+    await harnessReady(page)
+    await page.waitForLoadState('networkidle')
+    const ownId = (await revenueCatState(page)).accountId
+    await page.evaluate(
+      (key) =>
+        (
+          globalThis as unknown as { __WW_WEB_SESSION__: SessionHarness }
+        ).__WW_WEB_SESSION__.signInWithRecoveryKey(key),
+      recoveryKey
+    )
+    // Signing in reloads the tab into the account's data.
+    await expect(
+      page.getByRole('button', { name: 'Settings', exact: true })
+    ).toBeVisible({ timeout: 60_000 })
+    await harnessReady(page)
+    await expect
+      .poll(async () => (await revenueCatState(page)).settled, {
+        timeout: 60_000,
+      })
+      .toBe(accountClaim)
+    expect(ownId).not.toBe(accountClaim)
+    await page.waitForLoadState('networkidle')
+
+    // A new launch, with its first pull held: Buy waits for it.
+    let release: () => void = () => {}
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await page.route('**/accounts/v1/sync/list', async (route) => {
+      await held
+      await route.continue()
+    })
+    await page.goto('/?dev_buy_gate=1&dev_country=US')
+    await expect(page).not.toHaveURL(/dev_buy_gate/)
+    await openPaywall(page)
+    await expect(page.getByText('$14.99').first()).toBeVisible()
+    const buy = page.getByRole('button', {
+      name: /^Become a Supporter — \$14\.99/,
+    })
+    await expect(page.getByText(en.paywallGettingAccountReadyWeb)).toBeVisible()
+    await expect(buy).toBeDisabled()
+    expect((await revenueCatState(page)).settled).toBeNull()
+    await shot('paywall-getting-account-ready')
+
+    release()
+    await expect(buy).toBeEnabled({ timeout: 30_000 })
+    await expect(page.getByText(en.paywallGettingAccountReadyWeb)).toHaveCount(
+      0
+    )
+    expect((await revenueCatState(page)).settled).toBe(accountClaim)
+
+    // Checkout is a navigation away, intercepted and never followed.
+    const checkout = page.waitForRequest(
+      (request) =>
+        request.isNavigationRequest() &&
+        new URL(request.url()).host === 'pay.rev.cat'
+    )
+    await page.route('https://pay.rev.cat/**', (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<!doctype html>' })
+    )
+    await buy.click()
+    const url = new URL((await checkout).url())
+    const id = decodeURIComponent(url.pathname.split('/').at(-1)!)
+    expect(fingerprint(id)).toBe(accountClaim)
   })
 })

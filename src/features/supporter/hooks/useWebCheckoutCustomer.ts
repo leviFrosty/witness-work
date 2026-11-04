@@ -75,5 +75,8 @@ export function useWebCheckoutCustomer(): WebCheckoutCustomer {
       current = false
     }
   }, [canAsk, customer, development, settledId])
-  return { appUserId: canAsk ? appUserId : null, waitingFor }
+  // The last answer may be for an earlier settled id, until the effect above
+  // reads the SDK again.
+  const current = development || appUserId === settledId
+  return { appUserId: canAsk && current ? appUserId : null, waitingFor }
 }

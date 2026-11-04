@@ -39,7 +39,8 @@ export const CONFIG = {
   idleMin: num('WW_VERIFY_LEASE_IDLE_MIN', 30, 15),
   // Idle devices per platform kept booted after `down` for the next `up`.
   warm: num('WW_VERIFY_WARM', 2, 1),
-  warmHours: num('WW_VERIFY_WARM_HOURS', 12),
+  // An idle booted device still costs CPU, so a small machine keeps it briefly.
+  warmHours: num('WW_VERIFY_WARM_HOURS', 12, 2),
   // Devices per platform kept running (leased or warm); `wwv warm` boots up to
   // it. Only a native build, which can't fit otherwise, goes below it.
   warmMin: num('WW_VERIFY_WARM_MIN', 0),

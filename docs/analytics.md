@@ -33,7 +33,8 @@ usage, including restored queues. Feature flag requests, surveys, and crash
 reporting retain their independent behavior. This is enforced in `before_send`,
 queue restoration, and every delivery/retry attempt. SDK `$set`, `$identify`,
 `Application Updated`, `Application Backgrounded`, and other unregistered
-automatic events are discarded. Touch/text autocapture and session replay stay off.
+automatic events are discarded. Touch/text autocapture stays off. Session replay
+is the web's alone, masked, and sampled (see [Session replay on the web](#session-replay-on-the-web)).
 
 Every event carries `app_platform`: `ios`, `android` or `web` (ADR 0037 §9).
 The web sends the same events as the phones. Filter on `app_platform` before comparing
@@ -92,6 +93,8 @@ Supporter placement impressions deliberately remain once per visible visit.
 Event properties are structural: bounded sources, feature/variant keys, counts,
 booleans, and error codes. Never send names, notes, imported text, addresses,
 coordinates, contact/Visit IDs, share tokens, URLs, or raw exception messages.
+(Web session replay's `$snapshot` events carry the page's address with its query,
+hash and ids removed; see [Session replay on the web](#session-replay-on-the-web).)
 Screens send route names and the previous route only, never route parameters.
 Diagnostics use `errorTracking` from `@/lib/errorTracking`.
 
@@ -1304,6 +1307,78 @@ and whether they go update.
 | ------------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `update_required_shown`        | Update Required covered the app. Once per session and source.                           | `source: config \| server` (`config`: below `minAppVersion` from `GET /app/v1/config`; `server`: ww-api answered 426), `min_version` (when known). |
 | `update_required_store_opened` | The User tapped Update WitnessWork (Reload WitnessWork on the web, which has no store). | `source`.                                                                                                                                          |
+
+### Session replay on the web
+
+ADR 0043. The web records 10% of sessions as masked replays, to see where the
+new app confuses people. Phones record nothing. Replay runs through the bundled
+`posthog-js` (`src/lib/sessionReplay/`), beside the app's own
+`posthog-react-native` client. The replay client sends only a recording's
+`$snapshot` events (its `before_send` drops everything else), so no event is
+counted twice. The app's client still sends every event, flag, survey and crash
+report, and each event still carries `app_platform: 'web'`. The two clients keep
+separate anonymous ids, so a recording isn't joined to a session's events.
+
+**Who is recorded.** A session is recorded only when every one of these holds,
+and each is checked again on every send, so a change stops the recording
+immediately:
+
+- It drew into the sample: one draw per browser tab session, kept in
+  `sessionStorage`, under 10%. A reload doesn't re-roll it.
+- Usage analytics are on (`analyticsEnabled`, hydrated, unlocked).
+- It's a production build, as for usage events.
+- Data Protection Mode is off.
+- The visitor is outside the EU, the UK and Switzerland (the list Data
+  Protection Mode defaults on in, `DATA_PROTECTION_REGIONS`), or has turned on
+  Share Masked Screen Recordings (`sessionReplayOptIn`, per device, default off).
+  Their country comes from Cloudflare (`readVisitorCountry`). An unknown country,
+  or one not read yet, asks for the opt-in. The control is in Settings →
+  Preferences → Privacy, shown only to those visitors, and only while analytics
+  are on and Data Protection Mode is off.
+
+The recorder loads only for a session that passes all of this, as its own
+chunk from the app's origin. Nothing loads from PostHog (`disable_external_dependency_loading`),
+and the CSP allows only the profile's ingestion host to connect.
+
+**What's masked, before it leaves the browser.**
+
+- Text: all of it, except an exact match for an interface string in the active
+  language only. A string missing from it shows in English and is masked. Names, addresses, notes and any
+  sentence built from them never match, so they stay masked. A string with no
+  letter in it (a number), a placeholder, a sample name from a preview and a color
+  name is never kept. A householder named
+  exactly like an interface string (such as "Home") would show.
+- Inputs: every value, always. So is text in the note editor, which reads as text
+  to the recorder but is typed by the User.
+- Attributes: only those a page can't be drawn without are kept (`class`,
+  `style` with image addresses removed, `dir`, `role`, `type`, `lang`, and SVG
+  shape attributes). `aria-label`, `title`, `alt`, `placeholder`, `href`, `src`,
+  `value`, `id` and every `data-*` are blank.
+- Blocked: images (including any element whose inline style holds a `url(…)`),
+  video, canvases, the map's frame and any other frame. A recording holds an empty box of the same
+  size.
+- Addresses: the page's address loses its query, hash, and any path segment that
+  holds a digit, hyphen, underscore or `%`, or is long.
+- Masked text keeps its length and layout, so a three-word name is still three
+  words of stars, and a field is uploaded as it's typed, in stars.
+- Never recorded: canvas drawing, network requests, headers, bodies, timing, and
+  console output. `$posthog_config` carries no secret.
+- The recorder draws deep pages only to a depth of 50 elements; anything deeper
+  isn't in the recording.
+
+**Events.**
+
+| Event                           | When                                                                                                     | Properties                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `session_replay_opt_in_changed` | A visitor in the EU, the UK, Switzerland, or of unknown country switches Share Masked Screen Recordings. | `enabled`. Never the country. Answers how many of those visitors agree to recordings. |
+
+**Retention and project settings.** PostHog US Cloud keeps recordings 30 days. That's
+a setting of the PostHog project (Replay → Data retention), not of the app. Recording
+also needs the project's Session replay switched on, with no linked feature flag (this
+client evaluates none), and no minimum duration, URL or event trigger the 10% doesn't
+expect; the proxy must forward `/array/*` to PostHog's assets host. The
+project's own replay settings can't loosen the app's masking: the app's local
+values win, field by field.
 
 ### Web local data
 

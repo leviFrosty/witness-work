@@ -27,6 +27,11 @@ export function setAnalyticsProduction(value: boolean): void {
   production = value
 }
 
+/** Whether this build ingests usage at all: a production build, not a dev run. */
+export function analyticsProductionBuild(): boolean {
+  return production
+}
+
 /** Whether usage analytics events may be sent right now. */
 export function analyticsEventsAllowed(): boolean {
   return allowed

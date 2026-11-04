@@ -17,8 +17,9 @@ shows decrypted householder data, and its origin must run only our own code.
 - **Who:** 10% of web sessions.
   - Replay follows the existing analytics setting, and is never recorded in
     Data Protection Mode.
-  - Visitors in the EU and UK are recorded only after they opt in. Their
-    country comes from Cloudflare.
+  - Visitors in the EU, the UK and Switzerland (the same list as Data
+    Protection Mode) are recorded only after they opt in, and so is anyone
+    whose country isn't known. Their country comes from Cloudflare.
 - **What's hidden:**
   - All text, except exact interface strings in the active language. So
     names, addresses, notes and any sentence built from them stay masked.

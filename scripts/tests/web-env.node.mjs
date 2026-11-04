@@ -375,7 +375,7 @@ test('an export whose service worker misses the shell, an entry chunk or an asse
   assert.throws(() => checkServiceWorker(root), /precache \/index\.html/)
 })
 
-test('the worker precaches English and the on-demand chunks, not the other languages', () => {
+test('the worker precaches English and the on-demand chunks, not the other languages or the session replay recorder', () => {
   const root = fixture()
   const hash = (n) => String(n).repeat(32).slice(0, 32)
   const dir = '_expo/static/js/web'
@@ -389,6 +389,7 @@ test('the worker precaches English and the on-demand chunks, not the other langu
     `de-DE-${hash(5)}`,
     `bem-ZM-${hash(6)}`,
     `ar-${hash(7)}`,
+    `module.full.no-external-${hash(8)}`,
   ])
     write(root, `${dir}/${name}.js`, '')
   const chunks = precachePatterns(root)

@@ -34,7 +34,7 @@ it with `updateViaCache: 'none'`, so every update check is fresh.
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
 | `index.html`, the entry and on-demand chunks, English, fonts, images, `*.wasm` | **Precache**, versioned by the build.                                    |
 | Navigations (`/`, any app route)                                               | **Network first**, 4 s; the precached shell when offline, slow or a 5xx. |
-| Chunks that aren't precached (other languages)                                 | **Cache first** once loaded, 120 entries, purged on quota errors.        |
+| Chunks that aren't precached (other languages, the session replay recorder)    | **Cache first** once loaded, 120 entries, purged on quota errors.        |
 | ww-api, PostHog, the Help Center, RevenueCat, any other origin                 | **Never** cached; the worker doesn't touch them.                         |
 | `/_csp-report`, `/.well-known/*`, `/sw.js`                                     | **Never** cached.                                                        |
 

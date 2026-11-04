@@ -69,6 +69,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastBackupDate',
   'backupReminderSnoozedAt',
   'analyticsEnabled',
+  'sessionReplayOptIn',
   'onboardingStepId',
   'onboardingPasskeysOffered',
   'homeChecklistCompletedAt',

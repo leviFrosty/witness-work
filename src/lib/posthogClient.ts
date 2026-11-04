@@ -1,4 +1,5 @@
 import Constants from 'expo-constants'
+import { Platform } from 'react-native'
 import type PostHog from 'posthog-react-native'
 import { AnonymousPostHog } from '@/lib/anonymousPostHog'
 import { logger } from '@/lib/logger'
@@ -88,6 +89,10 @@ function createClient(): PostHog | null {
             ...event.properties,
             app_variant: extra?.appVariant ?? 'unknown',
             development_mode: typeof __DEV__ !== 'undefined' && __DEV__,
+            // ADR 0037 §9: the web sends the same events. PostHog's own `$os`
+            // fields report the browser's system there, not the web. Not
+            // `platform`: some events already send that for another device.
+            app_platform: Platform.OS,
           }),
         }
       },

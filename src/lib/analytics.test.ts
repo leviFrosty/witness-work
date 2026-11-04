@@ -10,6 +10,14 @@ const mocks = vi.hoisted(() => ({
   debug: vi.fn(),
   construct: vi.fn(),
   frequency: new Map<string, string>(),
+  platform: 'ios',
+}))
+vi.mock('react-native', () => ({
+  Platform: {
+    get OS() {
+      return mocks.platform
+    },
+  },
 }))
 vi.mock('react-native-mmkv', () => ({
   MMKV: class {
@@ -37,6 +45,7 @@ beforeEach(async () => {
   vi.resetModules()
   vi.resetAllMocks()
   mocks.frequency.clear()
+  mocks.platform = 'ios'
   const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
   setAnalyticsEventsAllowed(true)
   mocks.config.extra = {
@@ -133,7 +142,43 @@ describe('analytics boundary', () => {
     expect(result.properties).toEqual({
       app_variant: 'development',
       development_mode: false,
+      app_platform: 'ios',
       count: 0,
+    })
+  })
+
+  it('tags web events with the web platform', async () => {
+    mocks.platform = 'web'
+    await import('./analytics')
+    const options = mocks.construct.mock.calls[0][1] as {
+      before_send: (event: {
+        event: string
+        properties: Record<string, unknown>
+      }) => { properties: Record<string, unknown> }
+    }
+    const result = options.before_send({
+      event: 'contact_created',
+      properties: {},
+    })
+    expect(result.properties.app_platform).toBe('web')
+  })
+
+  it("keeps an event's own platform property", async () => {
+    mocks.platform = 'web'
+    await import('./analytics')
+    const options = mocks.construct.mock.calls[0][1] as {
+      before_send: (event: {
+        event: string
+        properties: Record<string, unknown>
+      }) => { properties: Record<string, unknown> }
+    }
+    const result = options.before_send({
+      event: 'account_device_signed_out',
+      properties: { platform: 'android' },
+    })
+    expect(result.properties).toMatchObject({
+      platform: 'android',
+      app_platform: 'web',
     })
   })
 

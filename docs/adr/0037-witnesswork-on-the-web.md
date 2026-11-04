@@ -155,7 +155,7 @@ Users can dismiss it, and it stays dismissed. There's no banner on desktop.
 
 ### 9. Analytics
 
-The same events, with `platform: 'web'`. Masked session replay runs on the
+The same events, with `app_platform: 'web'` (`platform` already names another device's platform on some events). Masked session replay runs on the
 web only (ADR 0043).
 
 ## Considered options

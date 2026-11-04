@@ -11,6 +11,7 @@ import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useEffect, useRef, useState } from 'react'
 import Header from '@/components/ui/layout/Header'
+import { webTextTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Section, { SectionRows } from '@/components/ui/inputs/Section'
@@ -449,6 +450,7 @@ const VisitFormScreen = ({
           leftElement={
             params.fromContactForm ? (
               <Button
+                style={webTextTargetFrame('start')}
                 onPress={() =>
                   params.returnToContacts
                     ? navigation.goBack()
@@ -474,6 +476,7 @@ const VisitFormScreen = ({
               }}
             >
               <Button
+                style={webTextTargetFrame('end')}
                 onPress={async () => {
                   const saved = await submit()
                   if (!saved) {

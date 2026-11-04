@@ -6,7 +6,10 @@ import { expect, openBlankOnOrigin, readStoreRow, test } from './fixtures'
  * (docs/web-storage.md).
  */
 
-test.use({ preferences: { role: 'regularPioneer', roleHistory: null } })
+test.use({
+  preferences: { role: 'regularPioneer', roleHistory: null },
+  signedIn: true,
+})
 
 /** The first visible element with exactly this text. */
 const shown = (page: Page, text: string) =>
@@ -15,7 +18,7 @@ const shown = (page: Page, text: string) =>
 async function addContact(page: Page, name: string) {
   await page.getByRole('button', { name: 'Contacts', exact: true }).click()
   await page.getByRole('button', { name: 'Add Contact' }).first().click()
-  await page.getByRole('textbox', { name: "What's their name?" }).fill(name)
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
   await page.getByRole('button', { name: 'Save' }).click()
   // Saving offers to log the first visit, then shows the new contact.
   await page.getByRole('button', { name: 'Skip' }).click()
@@ -165,12 +168,16 @@ test('says once when the browser is out of space, keeps working, and saves later
 test('runs from memory, and says so, where the browser refuses IndexedDB', async ({
   page,
 }) => {
+  // The signed-in session lives in IndexedDB too (the key store), so only the
+  // data's database is refused; the rest of the app still opens.
   await page.addInitScript(() => {
-    Object.defineProperty(window, 'indexedDB', {
-      get() {
+    const open = IDBFactory.prototype.open
+    IDBFactory.prototype.open = function (name: string, version?: number) {
+      if (name === 'witnesswork-stores') {
         throw new DOMException('Refused', 'SecurityError')
-      },
-    })
+      }
+      return open.call(this, name, version)
+    }
   })
   await page.goto('/')
   await expect(

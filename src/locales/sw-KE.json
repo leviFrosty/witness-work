@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Weka upya maoni?",
   "resetCommentsConfirm_description": "Hii itatupa uhariri wako na kurejesha maoni yanayozalishwa kiotomatiki kwa mwezi huu.",
   "support": "Msaada",
-  "contactNotFoundWithId": "Anwani yenye kitambulisho {{id}} haijapatikana.",
   "internetUnavailable": "Mtandao Haupatikani",
   "couldNotFetchCoordinatesFromAddress": "Haikuweza kuleta viwianishi kutoka kwa anwani. Ikiwa ungependa kutazama anwani kwenye ramani, unaweza kutaka kujaribu tena baadaye.",
   "couldNotFetchCoordinatesFromAddress_retry": "Anwani imehifadhiwa. WitnessWork itapata mahali pa anwani hii kwenye ramani utakaporudi mtandaoni.",

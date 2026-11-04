@@ -194,6 +194,7 @@ export const test = base.extend<Fixtures>({
       revenueCatCustomer,
       withoutAccountOnce,
       tolerateErrors,
+      signedIn,
     },
     provide,
     testInfo
@@ -217,7 +218,11 @@ export const test = base.extend<Fixtures>({
           status: route.request().method() === 'OPTIONS' ? 204 : 503,
           headers: {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': '*',
+            // `*` doesn't cover `Authorization`, which a signed-in app sends:
+            // name what the preflight asks for.
+            'Access-Control-Allow-Headers':
+              route.request().headers()['access-control-request-headers'] ??
+              '*',
             'Access-Control-Allow-Methods': '*',
           },
         })
@@ -273,6 +278,13 @@ export const test = base.extend<Fixtures>({
         })
       )
     )
+    // Signed in first: a release build's sign-in screen keeps a signed-out
+    // tab out of the app (`WebSignInGate.web.tsx`), whichever fixture opens it.
+    if (signedIn) {
+      await answerSessionRefresh(page.context(), profile.apiOrigin)
+      await openBlankOnOrigin(page)
+      await seedSession(page)
+    }
     await provide(page)
     if (cspFolder) {
       const folder = path.join(cspFolder, testInfo.project.name)
@@ -297,21 +309,11 @@ export const test = base.extend<Fixtures>({
   storeState: [{}, { option: true }],
   signedIn: [false, { option: true }],
   withoutAccountOnce: [false, { option: true }],
-  app: async (
-    { page, language, preferences, seed, signedIn, storeState },
-    provide
-  ) => {
+  app: async ({ page, language, preferences, seed, storeState }, provide) => {
     // A first load in a tab of its own saves the app's preferences, which
     // get the seed on top once that tab is closed (it would save over them).
     // Leaving it, rather than reloading, keeps the requests it cancels (which
     // WebKit reports as page errors) out of the tab under test.
-    // Signed in first: a release build's sign-in screen keeps a signed-out
-    // tab out of the app (`WebSignInGate.web.tsx`).
-    if (signedIn) {
-      await answerSessionRefresh(page.context(), profile.apiOrigin)
-      await openBlankOnOrigin(page)
-      await seedSession(page)
-    }
     const seeding = await page.context().newPage()
     await seeding.goto('/')
     await expect

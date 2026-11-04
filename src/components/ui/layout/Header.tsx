@@ -59,6 +59,10 @@ type Props = {
 /** Room between the title and the buttons beside it. */
 const TITLE_GAP = 8
 
+/** The row's vertical padding, and the height of a one-line title. */
+const ROW_PADDING = 12
+const TITLE_HEIGHT = 21
+
 const Header = (props: Props) => {
   // Where the navigation bar draws Back (iPhone Duo's vertical bar), ours
   // steps aside.
@@ -209,7 +213,12 @@ const HeaderContent = ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 12,
+          paddingVertical: ROW_PADDING,
+          // A header with no title (Add Contact, the visit form) has no line
+          // of text to give it height; on the web its absolutely placed
+          // buttons then collapse into a thin strip over the content.
+          ...(Platform.OS === 'web' &&
+            !title && { minHeight: ROW_PADDING * 2 + TITLE_HEIGHT }),
         }}
       >
         {leftElement ? (

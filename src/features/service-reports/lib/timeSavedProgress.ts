@@ -25,14 +25,29 @@ type TimeSavedProgressInput = {
 }
 
 /**
- * A total rounded down to what the format shows (a tenth of an hour, or a
- * minute), so a goal never reads as met before it is.
+ * A total as the format shows it. Decimal hours round to the nearest tenth, as
+ * the entry's own length does, so "1.8 Hrs added" is followed by "1.8 Hrs of 50
+ * Hrs" rather than 1.7. A total still short of its goal rounds down instead
+ * when the nearest tenth would read as the goal, so a goal never reads as met
+ * before it is. Hours and minutes round down to the minute for the same
+ * reason.
  */
-const formatProgressMinutes = (minutes: number, format: MinuteDisplayFormat) =>
-  formatMinutes(
-    format === 'decimal' ? Math.floor(minutes / 6) * 6 : Math.floor(minutes),
-    format
-  ).formatted
+const formatProgressMinutes = (
+  minutes: number,
+  goalMinutes: number,
+  format: MinuteDisplayFormat
+) => {
+  if (format !== 'decimal')
+    return formatMinutes(Math.floor(minutes), format).formatted
+  const nearest = formatMinutes(minutes, format)
+  const readsAsGoal =
+    goalMinutes > 0 &&
+    minutes < goalMinutes &&
+    Math.round(nearest.decimalHours * 60) >= goalMinutes
+  return readsAsGoal
+    ? formatMinutes(Math.floor(minutes / 6) * 6, format).formatted
+    : nearest.formatted
+}
 
 /** The entry's period when it isn't the current one, e.g. "Sep" or "2025–2026". */
 const pastPeriodLabel = (
@@ -78,7 +93,7 @@ export const timeSavedProgress = ({
     value: formatMinutes(addedMinutes, format).formatted,
   })
   const pastPeriod = pastPeriodLabel(period, entryMonth, today)
-  const value = formatProgressMinutes(afterMinutes, format)
+  const value = formatProgressMinutes(afterMinutes, goalMinutes, format)
 
   if (goalMinutes <= 0) {
     return {

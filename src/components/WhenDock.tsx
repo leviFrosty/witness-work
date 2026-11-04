@@ -435,6 +435,19 @@ const WhenDock = (props: Props) => {
             />
           )}
         </View>
+        {props.durationInvalid && (
+          <Text
+            accessibilityRole='alert'
+            accessibilityLiveRegion='polite'
+            style={{
+              color: theme.colors.error,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('whenDock_durationRequired')}
+          </Text>
+        )}
         {props.saveButton}
       </View>
 

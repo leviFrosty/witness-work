@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "重置评论？",
   "resetCommentsConfirm_description": "这样会丢弃你的编辑，恢复本月自动生成的评论。",
   "support": "支持",
-  "contactNotFoundWithId": "找不到 ID 为 {{id}} 的联系人。",
   "internetUnavailable": "互联网不可用",
   "couldNotFetchCoordinatesFromAddress": "无法从地址获取坐标。如果您想在地图上查看联系人，您可能需要稍后再试。",
   "couldNotFetchCoordinatesFromAddress_retry": "联系人已保存。等你重新联网后，WitnessWork 会在地图上查找这个地址。",

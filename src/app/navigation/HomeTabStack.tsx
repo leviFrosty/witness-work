@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import NavigationTabBar from '@/app/navigation/NavigationTabBar'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
+import InertWhenBlurred from '@/app/navigation/InertWhenBlurred'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
@@ -216,7 +217,7 @@ const HomeTabStack = () => {
         // clear of any other side's.
         screenLayout={({ children }) => (
           <HorizontalSafeArea covered={navigationRail}>
-            {children}
+            <InertWhenBlurred>{children}</InertWhenBlurred>
           </HorizontalSafeArea>
         )}
       >

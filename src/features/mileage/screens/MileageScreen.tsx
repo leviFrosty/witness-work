@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -13,6 +13,7 @@ import i18n from '@/lib/locales'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import useMileage from '@/stores/mileage'
 import Header from '@/components/ui/layout/Header'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -95,11 +96,18 @@ export default function MileageScreen() {
               right: 0,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 16,
+              // On the web the two buttons' 44pt frames reach 12pt past
+              // their glyphs, so the gap keeps them from overlapping.
+              gap: Platform.OS === 'web' ? 24 : 16,
             }}
           >
             <PointerTooltip label={i18n.t('mileage.shareReport')} effect='none'>
               <PullDownMenu
+                style={
+                  Platform.OS === 'web'
+                    ? { margin: (20 - MIN_TOUCH_TARGET) / 2 }
+                    : undefined
+                }
                 accessibilityLabel={i18n.t('mileage.shareReport')}
                 actions={[
                   {
@@ -122,8 +130,26 @@ export default function MileageScreen() {
                   },
                 ]}
               >
-                <View>
-                  <IconButton icon={ShareIcon} size={20} />
+                {/* The trigger is this view: on the web, which has no
+                    `hitSlop`, it's a real 44pt frame around the 20pt glyph
+                    (the menu's margin pulls the extra back). */}
+                <View
+                  style={
+                    Platform.OS === 'web'
+                      ? {
+                          width: MIN_TOUCH_TARGET,
+                          height: MIN_TOUCH_TARGET,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }
+                      : undefined
+                  }
+                >
+                  <IconButton
+                    icon={ShareIcon}
+                    size={20}
+                    hitSlop={Platform.OS === 'web' ? 0 : undefined}
+                  />
                 </View>
               </PullDownMenu>
             </PointerTooltip>

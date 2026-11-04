@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Comentários de reset?",
   "resetCommentsConfirm_description": "Isso vai descartar suas edições e restaurar os comentários gerados automaticamente deste mês.",
   "support": "Suporte",
-  "contactNotFoundWithId": "Contato não encontrado para o ID {{id}}.",
   "internetUnavailable": "Internet Indisponível",
   "couldNotFetchCoordinatesFromAddress": "Não foi possível buscar as coordenadas do endereço. Se você quiser ver o contato no mapa, você pode tentar novamente mais tarde.",
   "couldNotFetchCoordinatesFromAddress_retry": "Contato salvo. O WitnessWork vai encontrar este endereço no mapa quando você voltar a ficar on-line.",

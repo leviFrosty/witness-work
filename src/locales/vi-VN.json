@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Đặt lại bình luận?",
   "resetCommentsConfirm_description": "Thao tác này sẽ hủy các chỉnh sửa của bạn và khôi phục các nhận xét được tạo tự động cho tháng này.",
   "support": "Đóng góp",
-  "contactNotFoundWithId": "Không tìm thấy liên hệ có ID {{id}}.",
   "internetUnavailable": "Internet không có sẵn",
   "couldNotFetchCoordinatesFromAddress": "Không thể tìm nhập tọa độ từ địa chỉ. Nếu bạn muốn xem liên hệ trên bản đồ, bạn có thể thử lại sau.",
   "couldNotFetchCoordinatesFromAddress_retry": "Đã lưu liên hệ. WitnessWork sẽ tìm địa chỉ này trên bản đồ khi bạn có mạng trở lại.",

@@ -7,7 +7,10 @@ import { expect, readStoreRow, test } from './fixtures'
  * mouse and by keyboard the way a User would.
  */
 
-test.use({ preferences: { role: 'regularPioneer', roleHistory: null } })
+test.use({
+  preferences: { role: 'regularPioneer', roleHistory: null },
+  signedIn: true,
+})
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768
 
@@ -33,9 +36,7 @@ async function openCreatePlan(page: Page) {
   await page.getByText('Create Plan', { exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Create Plan' })).toBeVisible()
   // The Add menu has finished leaving, so nothing of it takes focus.
-  await expect(
-    page.getByRole('button', { name: /^Speak an update/ })
-  ).toBeHidden()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
 /** Whether the focused element draws a ring, as keyboard focus should. */
@@ -631,7 +632,7 @@ test.describe('at 1024 px and wider', () => {
   test('Plan Details has header buttons a mouse can click', async ({ app }) => {
     const day = daysFromNow(3)
     await openCreatePlan(app)
-    await app.getByRole('textbox', { name: 'Title (Optional)' }).fill('Cart')
+    await app.getByPlaceholder('Title (Optional)').fill('Cart')
     await app.getByRole('button', { name: 'Date', exact: true }).click()
     await app.locator('input[type=date]').fill(day.input)
     await app.getByRole('button', { name: 'Done' }).click()

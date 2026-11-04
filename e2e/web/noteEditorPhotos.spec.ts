@@ -90,6 +90,7 @@ test.describe('the note editor with a photo the page does not hold', () => {
     seed: { contacts: [contact], conversations: [visit] },
     // Seeded records earn badges, whose welcome would cover the page.
     preferences: { badgesWelcome: 'done' },
+    signedIn: true,
   })
 
   test('it shows the missing-photo placeholder, not a blank box', async ({

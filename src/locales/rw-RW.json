@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Reset comments?",
   "resetCommentsConfirm_description": "This will discard your edits and restore the automatically generated comments for this month.",
   "support": "Shyigikira",
-  "contactNotFoundWithId": "Umuntu ufite ID {{id}} ntiyabonetse.",
   "internetUnavailable": "Nta interneti ufite",
   "couldNotFetchCoordinatesFromAddress": "Coordinates ntiziboneka kuri aderesi. Niba ushaka kureba aderesi ye ku ikarita, uragerageza mukanya.",
   "couldNotFetchCoordinatesFromAddress_retry": "Uwo muntu yabitswe. WitnessWork izashakisha iyi aderesi ku ikarita igihe uzaba wongeye kubona interineti.",

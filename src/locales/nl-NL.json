@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Reacties resetten?",
   "resetCommentsConfirm_description": "Dit verwijdert je bewerkingen en herstelt de automatisch gegenereerde reacties voor deze maand.",
   "support": "Steun",
-  "contactNotFoundWithId": "Geen contact gevonden met ID {{id}}.",
   "internetUnavailable": "Internet niet beschikbaar",
   "couldNotFetchCoordinatesFromAddress": "Kon de coördinaten niet ophalen van het adres. Als u de contactpersoon op de kaart wilt bekijken, kunt u het later opnieuw proberen.",
   "couldNotFetchCoordinatesFromAddress_retry": "Contact opgeslagen. WitnessWork zoekt dit adres op de kaart op zodra je weer online bent.",

@@ -189,6 +189,7 @@ const RichTextEditor = (props: {
       photoMissing: i18n.t('richText_photoMissing'),
       characterLimit: props.characterLimit,
       autofocus: true,
+      inline: Platform.OS === 'web',
     }
   }
 

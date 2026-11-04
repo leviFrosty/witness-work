@@ -671,7 +671,6 @@
   "resetCommentsConfirm_title": "إعادة تعيين الملاحظات؟",
   "resetCommentsConfirm_description": "سيؤدي هذا إلى تجاهل تعديلاتك واستعادة الملاحظات المُنشأة تلقائيًا لهذا الشهر.",
   "support": "الدعم",
-  "contactNotFoundWithId": "لم يُعثر على جهة اتصال بالمعرّف {{id}}.",
   "internetUnavailable": "الإنترنت غير متاح",
   "couldNotFetchCoordinatesFromAddress": "تعذّر جلب الإحداثيات من العنوان. إذا أردت عرض جهة الاتصال على الخريطة، فحاول مرة أخرى لاحقًا.",
   "couldNotFetchCoordinatesFromAddress_retry": "تم حفظ جهة الاتصال. سيبحث WitnessWork عن هذا العنوان على الخريطة عندما تعود إلى الاتصال بالإنترنت.",

@@ -563,7 +563,6 @@
   "invalidContactLink_description": "Esta ligação não é um contacto válido do WitnessWork. Peça a quem a enviou que volte a partilhar o contacto.",
   "no": "Não",
   "support": "Suporte",
-  "contactNotFoundWithId": "Contacto não encontrado para o ID {{id}}.",
   "internetUnavailable": "Internet indisponível",
   "couldNotFetchCoordinatesFromAddress": "Não foi possível buscar as coordenadas a partir do endereço. Se quiser visualizar o contacto no mapa, pode tentar novamente mais tarde.",
   "couldNotFetchCoordinatesFromAddress_retry": "Contacto guardado. O WitnessWork vai encontrar esta morada no mapa quando voltar a estar online.",

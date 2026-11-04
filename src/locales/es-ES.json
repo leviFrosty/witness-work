@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "¿Reiniciar comentarios?",
   "resetCommentsConfirm_description": "Esto descartará tus ediciones y restaurará los comentarios generados automáticamente para este mes.",
   "support": "Apoyar",
-  "contactNotFoundWithId": "No se encontró el contacto con el ID {{id}}.",
   "internetUnavailable": "Internet no disponible",
   "couldNotFetchCoordinatesFromAddress": "No se pudieron recuperar las coordenadas de la dirección. Si desea ver el contacto en el mapa, puede volver a intentarlo más tarde.",
   "couldNotFetchCoordinatesFromAddress_retry": "Contacto guardado. WitnessWork encontrará esta dirección en el mapa cuando vuelvas a tener conexión.",

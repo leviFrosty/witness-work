@@ -1,5 +1,8 @@
 import { expect, strings, test } from './fixtures'
 
+/** Past the sign-in screen, as a signed-in browser (`session.ts`). */
+test.use({ signedIn: true })
+
 /**
  * The web app boots and its main screens render, reached the way a User reaches
  * them: the tabs, Settings, and the Add menu.

@@ -8,6 +8,9 @@ import { expect, strings, test } from './fixtures'
 
 const en = strings('en-US')
 
+/** Past the sign-in screen, as a signed-in browser (`session.ts`). */
+test.use({ signedIn: true })
+
 /** What a page must never show a web User: a phone store, or Apple's settings. */
 const PHONE_ONLY_TEXT =
   /App Store|Google Play|iOS Settings|Face ID|Touch ID|iCloud|iPhone/

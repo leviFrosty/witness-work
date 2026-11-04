@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "Réinitialiser les commentaires ?",
   "resetCommentsConfirm_description": "Cela supprimera vos modifications et restaurera les commentaires générés automatiquement pour ce mois-ci.",
   "support": "Soutien",
-  "contactNotFoundWithId": "Contact introuvable pour l’identifiant {{id}}.",
   "internetUnavailable": "Internet indisponible",
   "couldNotFetchCoordinatesFromAddress": "Impossible de récupérer les coordonnées de l'adresse. Si vous souhaitez afficher le contact sur la carte, vous souhaiterez peut-être réessayer plus tard.",
   "couldNotFetchCoordinatesFromAddress_retry": "Contact enregistré. WitnessWork trouvera cette adresse sur la carte quand vous serez de nouveau en ligne.",

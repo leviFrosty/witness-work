@@ -563,7 +563,6 @@
   "invalidContactLink_description": "Link iyi te muntu wa kulanshanya wa WitnessWork. Pusheni uwatumine ukutuma umuntu wa kulanshanya nakabili.",
   "no": "No",
   "support": "Support",
-  "contactNotFoundWithId": "Umuntu wa kulanshanya uwa ID {{id}} tasangilwe.",
   "internetUnavailable": "Internet Unavailable",
   "couldNotFetchCoordinatesFromAddress": "Could not fetch coordinates from address. If you want to view contact on map, you may want to try again later.",
   "couldNotFetchCoordinatesFromAddress_retry": "Umuntu wa kulanshanya asungwa. WitnessWork ikasanga iyi adiresi pa mapu ilyo mwabwela pa intaneti.",

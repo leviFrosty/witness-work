@@ -10,7 +10,7 @@ import {
 } from '@/lib/richText/notes'
 import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import useTheme from '@/contexts/theme'
-import useWideOnWeb from '@/hooks/useWideOnWeb'
+import useFormAtTopOnWeb from '@/hooks/useFormAtTopOnWeb'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -106,7 +106,7 @@ type Props = TimeEntryPrefill & {
  * time yet shows it inline.
  */
 const TimeEntryForm = (props: Props) => {
-  const wideOnWeb = useWideOnWeb()
+  const formAtTop = useFormAtTopOnWeb()
   const theme = useTheme()
   const {
     role: currentRole,
@@ -484,9 +484,9 @@ const TimeEntryForm = (props: Props) => {
       contentContainerStyle={{
         flexGrow: 1,
         // The details sit just above the dock, near the thumb, rather
-        // than at the top of a tall screen. A wide window on the web has
-        // no thumb to be near: they start at the top.
-        justifyContent: wideOnWeb ? 'flex-start' : 'flex-end',
+        // than at the top of a tall screen. A browser with a mouse or a wide
+        // window has no thumb to be near: they start at the top.
+        justifyContent: formAtTop ? 'flex-start' : 'flex-end',
         gap: 12,
         paddingTop: 10,
         paddingBottom: 16,

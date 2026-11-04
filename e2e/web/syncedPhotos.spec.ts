@@ -139,7 +139,7 @@ const storedContact = async (page: Page) => {
 
 test.describe('photos without photo sync', () => {
   // Restored records earn badges, whose welcome would cover the page.
-  test.use({ preferences: { badgesWelcome: 'done' } })
+  test.use({ preferences: { badgesWelcome: 'done' }, signedIn: true })
 
   test('the avatar menus offer emoji but no photo to choose', async ({
     app,

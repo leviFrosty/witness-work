@@ -9,6 +9,9 @@ import { buildMytimeBackup } from './mytimeFixture'
 
 const en = strings('en-US')
 
+/** Past the sign-in screen, as a signed-in browser (`session.ts`). */
+test.use({ signedIn: true })
+
 /** Files a file chooser opened by `open` was given; `[]` closes it. */
 async function chooseFiles(
   page: Page,
@@ -127,6 +130,8 @@ async function createBackup(page: Page, password: string) {
   await page.getByRole('button', { name: 'Settings', exact: true }).click()
   await page.getByText('Backup & Restore').click()
   await page.getByTestId('backup-create-open').click()
+  // A signed-in browser's sheet opens on My Account; lock this one with a password.
+  await page.getByText('Password', { exact: true }).click()
   await page.getByPlaceholder('Password', { exact: true }).fill(password)
   await page.getByPlaceholder('Confirm Password').fill(password)
   const download = page.waitForEvent('download')

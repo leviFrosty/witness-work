@@ -627,7 +627,6 @@
   "resetCommentsConfirm_title": "Скинути коментарі?",
   "resetCommentsConfirm_description": "Це відкине ваші правки і відновить автоматично згенеровані коментарі за цей місяць.",
   "support": "Підтримка",
-  "contactNotFoundWithId": "Контакт з ID {{id}} не знайдено.",
   "internetUnavailable": "Інтернет недоступний",
   "couldNotFetchCoordinatesFromAddress": "Не вдалося отримати координати з адреси. Якщо ви хочете переглянути контакт на карті, ви можете спробувати ще раз пізніше.",
   "couldNotFetchCoordinatesFromAddress_retry": "Контакт збережено. WitnessWork знайде цю адресу на карті, коли ви знову будете в мережі.",

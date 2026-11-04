@@ -107,4 +107,10 @@ export type EditorSetup = {
   /** Most characters of text the note may hold. */
   characterLimit?: number
   autofocus: boolean
+  /**
+   * The editor is part of the app's own page (the web), which is clipped to the
+   * window, not a WebView with a page of its own: the note scrolls in its own
+   * box instead of scrolling the page.
+   */
+  inline: boolean
 }

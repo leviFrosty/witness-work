@@ -540,6 +540,11 @@ function fontFaces(setup: EditorSetup): string {
 
 function styles(setup: EditorSetup): string {
   const t = setup.theme
+  // On the web the note is in the app's own page, which is clipped to the
+  // window: its box scrolls, not the page, so the header and Done stay in view.
+  const inlineScroll = setup.inline
+    ? 'div:has(>.ProseMirror){height:100%;overflow-y:auto;}\n'
+    : ''
   return `${fontFaces(setup)}
 :root{color-scheme:${t.scheme};}
 /* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
@@ -555,10 +560,10 @@ img.ProseMirror-separator{display:inline !important;border:none !important;margi
 .ProseMirror-hideselection *::selection{background:transparent;}
 .ProseMirror-hideselection *{caret-color:transparent;}
 .ProseMirror-focused .ProseMirror-gapcursor{display:block;}
-html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
+${inlineScroll}html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
 body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
 /* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
-.ProseMirror{outline:none;box-sizing:border-box;min-height:100vh;padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
+.ProseMirror{outline:none;box-sizing:border-box;min-height:${setup.inline ? '100%' : '100vh'};padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
 .ProseMirror p{margin:0 0 6px;}
 .ProseMirror h1{font-size:1.43em;font-weight:700;line-height:1.25;margin:4px 0 6px;}
 .ProseMirror h2{font-size:1.15em;font-weight:700;line-height:1.3;margin:4px 0 6px;}
@@ -726,10 +731,11 @@ export default function RichTextEditorDom(props: Props) {
     const moved = () => {
       if (handles.frame) reportHandles()
     }
-    window.addEventListener('scroll', moved, { passive: true })
+    // Capturing, since a scrolling box (the web's) doesn't bubble its scroll.
+    window.addEventListener('scroll', moved, { passive: true, capture: true })
     window.addEventListener('resize', moved)
     return () => {
-      window.removeEventListener('scroll', moved)
+      window.removeEventListener('scroll', moved, { capture: true })
       window.removeEventListener('resize', moved)
     }
   }, [])

@@ -206,7 +206,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     <View
       ref={scroll.frameRef}
       collapsable={false}
-      style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
+      // `flex: 1`, not `flexGrow`: with no shrink and an auto basis the web
+      // sizes this frame to its content, so the scroll view inside never
+      // scrolls and what is below the fold can't be reached.
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
       <ScrollAwayHeader
         hidden={bars.hidden}

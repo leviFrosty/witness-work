@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "コメントをリセットする?",
   "resetCommentsConfirm_description": "これにより編集は破棄され、今月の自動生成コメントが復元されます。",
   "support": "サポート",
-  "contactNotFoundWithId": "ID {{id}}の連絡先が見つかりません。",
   "internetUnavailable": "インターネットが利用できない",
   "couldNotFetchCoordinatesFromAddress": "アドレスから座標を取得できませんでした。地図上で連絡先を表示したい場合は、後でもう一度試してください。",
   "couldNotFetchCoordinatesFromAddress_retry": "連絡先を保存しました。オンラインに戻ったら、WitnessWorkが地図上でこの住所を探します。",

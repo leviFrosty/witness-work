@@ -7,6 +7,7 @@ import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Card from '@/components/ui/Card'
+import { webRowTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import useLocalDay from '@/hooks/useLocalDay'
@@ -265,6 +266,8 @@ const WeekStripTeaser = ({
             accessibilityLabel={i18n.t('viewFullSchedule')}
             accessibilityActions={[{ name: 'activate' }]}
             onAccessibilityAction={openSchedule}
+            // A line of text, 15 high; the web has no `hitSlop` to grow it.
+            style={webRowTargetFrame(15)}
           >
             {header}
           </View>

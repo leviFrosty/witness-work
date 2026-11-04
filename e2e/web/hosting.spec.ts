@@ -6,6 +6,8 @@ import { expect, profile, strings, test } from './fixtures'
  * headers and CSP; every test also fails on a CSP violation (`fixtures.ts`).
  */
 
+test.use({ signedIn: true })
+
 test('the app’s fonts load from its own origin', async ({ app }) => {
   const failed: string[] = []
   const origin = new URL(app.url()).origin

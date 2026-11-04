@@ -19,3 +19,35 @@ export const touchTargetFrame = (width: number, height = width): ViewStyle => {
     justifyContent: 'center',
   }
 }
+
+/**
+ * A text-only button's real minimum-size frame, on the web only
+ * (react-native-web ignores `hitSlop`, and a bare line of text is about 20
+ * high). The text keeps to its `side` of the frame, so a button pinned to a
+ * header's end stays where it was. Native keeps its own sizing and `hitSlop`.
+ */
+export const webTextTargetFrame = (
+  side: 'start' | 'end' = 'start'
+): ViewStyle =>
+  Platform.OS === 'web'
+    ? {
+        minWidth: MIN_TOUCH_TARGET,
+        minHeight: MIN_TOUCH_TARGET,
+        justifyContent: 'center',
+        alignItems: side === 'end' ? 'flex-end' : 'flex-start',
+      }
+    : {}
+
+/**
+ * The same for a full-width row of `height` (a link line, like "View full
+ * schedule"): the row grows to the minimum and its margin pulls the extra back,
+ * so what's around it stays put. Web only; native has `hitSlop`.
+ */
+export const webRowTargetFrame = (height: number): ViewStyle =>
+  Platform.OS === 'web' && height < MIN_TOUCH_TARGET
+    ? {
+        minHeight: MIN_TOUCH_TARGET,
+        justifyContent: 'center',
+        marginVertical: (height - MIN_TOUCH_TARGET) / 2,
+      }
+    : {}

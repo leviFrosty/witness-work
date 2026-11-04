@@ -591,7 +591,6 @@
   "resetCommentsConfirm_title": "重置留言？",
   "resetCommentsConfirm_description": "這會丟棄你的編輯，並恢復本月自動產生的留言。",
   "support": "支持",
-  "contactNotFoundWithId": "找不到 ID 為 {{id}} 的聯絡人。",
   "internetUnavailable": "无法上网",
   "couldNotFetchCoordinatesFromAddress": "无法从地址获取坐标。如果您想在地图上查看联系方式，您可能需要稍后重试。",
   "couldNotFetchCoordinatesFromAddress_retry": "聯絡人已儲存。等你重新連上網路後，WitnessWork 會在地圖上找到這個地址。",

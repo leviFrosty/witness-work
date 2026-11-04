@@ -35,6 +35,11 @@ queue restoration, and every delivery/retry attempt. SDK `$set`, `$identify`,
 `Application Updated`, `Application Backgrounded`, and other unregistered
 automatic events are discarded. Touch/text autocapture and session replay stay off.
 
+Every event carries `app_platform`: `ios`, `android` or `web` (ADR 0037 §9).
+The web sends the same events as the phones. Filter on `app_platform` before comparing
+iOS and Android: on the web the SDK's `$os_name` is the browser's system, so a
+phone browser reports iOS or Android, and `$app_version` is unset.
+
 | Event                                                                             | Retained frequency / interpretation                                                                                                                                                                                                |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$screen`                                                                         | One route per PostHog session; reach rather than repeated navigation. Sessions expire after 30 minutes idle.                                                                                                                       |
@@ -59,6 +64,8 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
 | `web_storage_failed`                                                              | Once per UTC day and reason; which browsers can't save, not how often one retries.                                                                                                                                                 |
+| `cloud_sync_photos_storage_full`                                                  | Once per UTC day per device; how many devices meet a full account's photo storage, not how many photos fail.                                                                                                                       |
+| `cloud_sync_photo_transfer_failed`                                                | Once per UTC day, `source` and `reason`; which photo failures affect people, not how often a phone retries.                                                                                                                        |
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
@@ -101,7 +108,11 @@ before startup requests, rotates linked identifiers, and drops that legacy queue
 including diagnostics/surveys which may carry the account ID. App-version metadata
 and survey history survive. Anonymous installations keep their identifiers on
 later launches; their queued events are pruned by the current retention policy.
-Every delivered batch also scrubs share links and removes launch URLs.
+Every delivered batch also scrubs share links and removes launch URLs. The web
+entry removes the checkout's ids from the address before analytics loads, and
+every delivered batch also removes checkout parameters (ids and return markers) from URL-looking
+properties (top-level, `$set`/`$set_once`, autocaptured links) and cuts
+checkout URLs to their origin.
 
 `analyticsEnabled` (default on, per device, not synced) controls usage only.
 `analyticsConsent.ts` publishes the preference at module load, after hydration,
@@ -193,7 +204,7 @@ just `onboarding_step_completed`. `elapsed_ms` includes background time and time
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
 `publisherType`, `hoursLogging`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,
-`notifications`, `calendarSync`, `defaultNav`, `onboardingBackfill`,
+`passkeys`, `notifications`, `calendarSync`, `defaultNav`, `onboardingBackfill`,
 `profileSetup`, `founderNote`. The flow introduces the app before it asks for
 anything, asks for the name last, and ends on the founder note.
 `intentPicker` and `yourPlanPreview` were retired in October 2026 when `planMonth`
@@ -248,6 +259,13 @@ this device can't be verified, so it has no account session and Buddies sends
 nothing (ADR 0027); `verify_later`, that verifying it failed for now; `update`,
 that ww-api needs a newer app. The step leaves itself out on a device that can
 never be verified.
+
+`passkeys` only appears on phones that make passkeys, once the account exists and
+has none, added with the web launch. Its question is whether offering Save a
+Passkey during setup leads to one. The flow reaching it sends
+`passkey_onboarding_shown` ([Passkeys](#passkeys)); adding sends `passkey_added`
+with `source: onboarding`, and Not Now sends `onboarding_step_skipped` with
+`step_id: passkeys`. Divide `passkey_added` by `passkey_onboarding_shown`.
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
@@ -324,9 +342,9 @@ person opened Device Sync.
 
 Export/restore retains
 bounded `entry_point` (`settings`, `backup_reminder`, or `import_data`), failure stage/error code,
-and wall-clock elapsed time. `backup_exported` means Expo's sharing call resolved
-(or, on the web, the browser download started; `destination: download` rather
-than `share_sheet`); `outcome: unknown` covers both sharing and cancellation and
+wall-clock elapsed time, and `destination` (`share_sheet`, or `download` on the web).
+`backup_exported` means Expo's sharing call resolved
+(or, on the web, the browser download started); `outcome: unknown` covers both sharing and cancellation and
 cannot establish that a backup was saved. Reminder dismissal snoozes without changing `lastBackupDate`.
 
 Restore probe status is `probing`, `found`, `noBackup`, `unavailable`, or
@@ -370,7 +388,7 @@ between turns (`api_scribe_step`) without a person profile; see [`scribe-ai-prot
 Scribe AI runs on the account session (ADR 0027): a device that can't be
 verified sees the blocked message, and its turns end with `error_code`
 `device_ineligible`, `attestation_unavailable` or `suspended`. Break the events
-down by the SDK's `$os_name` to compare iOS and Android, especially
+down by `app_platform` to compare iOS, Android and the web, especially
 `scribe_capture_finished` for voice. Typing a draft, editing captured text,
 checking or unchecking a card, and picking a choice chip send nothing; their
 effect shows up in `scribe_proposal_resolved`.
@@ -414,13 +432,13 @@ same `trigger`. Compare failures by trigger to see whether users recover.
 
 The web sells through RevenueCat's hosted checkout (`docs/web-purchases.md`).
 Its paywall sends the same `paywall_viewed`, `paywall_closed` and offering
-events, which PostHog marks with the web platform, but not the store purchase
+events, with `platform: web`, but not the store purchase
 or restore events. Events never carry the app user id, a checkout link or an
 email.
 
 | Event                                | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supporter_web_checkout_opened`      | Buy left for the hosted checkout. The same properties as `supporter_purchase_started`: `tier`, `billing`, `product_id`, `package_id`, `price`, `currency`, `source` and any gate attribution. Checkout can still be abandoned; compare with `supporter_web_purchase_returned`.                                                                                                                                                                                                                                                                                                                                                      |
+| `supporter_web_checkout_opened`      | Buy left for the hosted checkout. The same properties as `supporter_purchase_started`: `tier`, `billing`, `product_id`, `package_id`, `price`, `currency`, `source`, `feature` and any gate attribution. Checkout can still be abandoned; compare with `supporter_web_purchase_returned`.                                                                                                                                                                                                                                                                                                                                           |
 | `supporter_web_purchase_returned`    | The return page finished checking. `tier` (the confirmed tier, else the address's, or `unknown` when it named none), `outcome` (`confirmed`, `pending` after its retries, `other_customer` when checkout came back for another customer, `signed_out` when this browser has no account session, `not_found` when the address named no tier and customer info shows no purchase), `return_kind` (`returned`: checkout's `app_user_id` came back; `forwarded`: the web entry forwarded the return from another origin, which drops the id; `direct`: neither, as when the page is opened by hand) and `retry` (the User chose Retry). |
 | `supporter_web_region_notice_viewed` | The paywall showed the notice in place of web prices, because the web doesn't sell in the visitor's country. `source` and any gate attribution.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
@@ -519,7 +537,7 @@ paying. No prices, product identifiers, or dates are sent.
 
 Android's Google Drive Sync (ADR 0019) sends the same `icloud_sync_*`,
 `icloud_restore_*`, and `icloud_account_changed` events from the same code;
-split them by the SDK's `$os_name`. On Android, `icloud_sync_upload_failed`
+split them by `app_platform` (the web runs Cloud Sync through the same engine). On Android, `icloud_sync_upload_failed`
 means Google storage is full, and `icloud_account_changed` means a different
 Google Account was connected. Drive adds three events of its own:
 
@@ -591,11 +609,11 @@ they can't, and where people stop on the web's screen. A phone sends at most one
 event per request (and one per retry that fails for now), and the screen one per
 state, so volume stays near one per sign-in.
 
-| Event                         | Interpretation                                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloud_sync_request_answered` | A phone acted on the account's request. `outcome`: `switched` (with `from`: `platform` or `off`), `already_on` (it was on Cloud Sync), or `failed` with `from`, `reason` (a switch failure reason, `failed` when the switch threw, or `chose_other` when the User moved it elsewhere meanwhile) and `final` (it stops for this request; otherwise it tries again at the next foreground). |
-| `cloud_sync_web_gate_state`   | The web's Cloud Sync screen reached a state: `state` is `ready` (it goes on), `turnOn`, `waiting`, or `updatePhone`.                                                                                                                                                                                                                                                                      |
-| `cloud_sync_web_gate_action`  | A tap on that screen. `action`: `turn_on`, with `outcome` (`requested` or `failed`, and as `reason` the server code, the network failure, or `unknown`), or `sign_out`, with the `state` it was in (`null` before the first read).                                                                                                                                                        |
+| Event                         | Interpretation                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloud_sync_request_answered` | A phone acted on the account's request. `outcome`: `switched` (with `from`: `platform` or `off`), `already_on` (it was on Cloud Sync), or `failed` with `from`, `reason` (a switch failure reason, `failed` when the switch threw, or `chose_other` when the User moved it elsewhere meanwhile) and `final` (it stops for this request; otherwise it tries again at the next status read: launch, foreground, or opening Sync settings). |
+| `cloud_sync_web_gate_state`   | The web's Cloud Sync screen reached a state (sent on every change, so a state that flips back sends again): `state` is `ready` (it goes on), `turnOn`, `waiting`, or `updatePhone`.                                                                                                                                                                                                                                                      |
+| `cloud_sync_web_gate_action`  | A tap on that screen. `action`: `turn_on`, with `outcome` (`requested` or `failed`, and as `reason` the server code, the network failure, or `unknown`), or `sign_out`, with the `state` it was in (`null` before the first read).                                                                                                                                                                                                       |
 
 No account ids, slot ids, request times, or app versions are sent.
 
@@ -630,7 +648,7 @@ after the user allowed calendar access in Settings and came back, or came back t
 Calendar Sync settings while it showed `calendarNoSourceError`. Compare them
 to first failures (no `recovery`) to see whether people get past an error. A
 successful retry that only updates an already connected calendar sends no event.
-Android uses the same events (break them down by the SDK's `$os_name`); it never
+Android uses the same events (break them down by `app_platform`); it never
 reports `elsewhere`. Its `calendar_connected` adds `local_calendar`: boolean, true
 for a calendar stored only on the device, to show how many people publish to a
 calendar their other devices can't see. Android's permission and generic errors
@@ -887,7 +905,7 @@ never sent; only counts and the bounded keys above.
 Neither watch app has an analytics client. The phone captures watch events
 (the iPhone for an Apple Watch, the Android phone for a Wear OS watch) when its
 JavaScript next runs, which can be well after the action on the watch. The
-phone's platform (`$os`) tells the two watches apart. Events never carry entry
+phone's platform (`app_platform`) tells the two watches apart. Events never carry entry
 ids, dates, durations, Type names or timer values.
 
 | Event                          | When / properties                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -1034,7 +1052,7 @@ iPhone with Android, Android with Android. Each side records it once, when the
 pairing completes: the inviter after confirming a request (`role: inviter`),
 the invitee when that confirmation arrives (`role: invitee`). Count
 `role: inviter` for pairings; compare both roles to see confirmations that
-never reached the other side. The User's own platform is the event's `$os`.
+never reached the other side. The User's own platform is the event's `app_platform`.
 
 | Event          | When                         | Properties                                                                                                                                                             |
 | -------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1077,7 +1095,7 @@ Keychain access group missing from a production build would show up as
 `noContext`). Alerts are counted on the device: by the iOS Notification Service
 Extension in the App Group, and by the Android push task. The app sends the
 counts once when it next comes to the foreground with Buddies running, then
-clears them. The User's platform is the event's `$os`.
+clears them. The User's platform is the event's `app_platform`.
 
 | Event                  | When                                                       | Properties                                                                                                                                                                                                                                                            |
 | ---------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1212,10 +1230,10 @@ and whether they go update.
 These answer how often a browser can't save WitnessWork's data (ADR 0037 §6),
 and how often people open it in more than one tab. Saves that work send nothing.
 
-| Event                | When                                                                           | Properties                                                                                                                                                             |
-| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason. | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
-| `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one.    | None.                                                                                                                                                                  |
+| Event                | When                                                                                                                          | Properties                                                                                                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason.                                                | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
+| `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one; sent by the tab that took over, after it reloads. | None.                                                                                                                                                                  |
 
 ### Web sessions
 

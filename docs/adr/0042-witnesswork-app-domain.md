@@ -32,6 +32,7 @@ changes (ADR 0038). Links people share should carry the app's name. We now own
 | `dev.witnesswork.app`         | The dev apex: the website's staging copy (`noindex`), plus the dev ww-api Worker's link pages and association files (§3).                            |
 | `help-search.witnesswork.app` | Help Center search: the same Worker as `help-search.leviwilkerson.com`, with `help-search-dev.witnesswork.app` for dev.                              |
 | `maps.witnesswork.app`        | The MapKit JS frame, with `maps-dev.witnesswork.app` for dev.                                                                                        |
+| `verify.witnesswork.app`      | The Cloudflare Turnstile frame (ADR 0037 §5), with `verify-dev.witnesswork.app` for dev.                                                             |
 | `support@witnesswork.app`     | Cloudflare Email Routing to the existing inbox. Replies still come from the old address until a mail host is added.                                  |
 
 ### 2. Old hosts keep working forever

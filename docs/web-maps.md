@@ -250,9 +250,10 @@ both, check the map with a real token, and deploy the frame.
 
 ## Reusing the pattern
 
-Another third-party script that mustn't run on the app's origin (W3's Turnstile
-frame on `verify.witnesswork.app`, for one) can follow the same pattern. The
-pieces, and where the maps frame keeps each:
+Another third-party script that mustn't run on the app's origin can follow the
+same pattern, as the Turnstile frame on `verify.witnesswork.app` does
+([`web-turnstile.md`](./web-turnstile.md)). The pieces, and where the maps frame
+keeps each:
 
 1. **An origin and a Worker per environment.** A static Workers Static Assets
    Worker with one `env` per frame host and a Workers Custom Domain

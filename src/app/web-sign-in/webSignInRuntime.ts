@@ -31,8 +31,6 @@ import {
   type WebSignInEvent,
 } from '@/lib/serverAccount/webSignIn'
 import { webSignInMark } from '@/lib/serverAccount/webSignInMark'
-import { reloadPage } from '@/lib/serverAccount/webTabs'
-import { turnstileLoaded } from '@/app/web-sign-in/components/Turnstile'
 
 /**
  * The web's sign-in flow (`webSignIn.ts`) on the real account, passkeys,
@@ -107,8 +105,6 @@ export function webSignIn(): WebSignIn {
     mark: webSignInMark,
     randomBytes: getRandomBytes,
     now: syncNow,
-    pageNeedsReload: turnstileLoaded,
-    reload: reloadPage,
     onEvent: capture,
   })
   return flow

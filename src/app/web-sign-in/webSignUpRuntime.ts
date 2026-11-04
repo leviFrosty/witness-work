@@ -25,10 +25,8 @@ import {
   createWebSignUpMarkStore,
   WEB_SIGN_UP_LOCK,
 } from '@/lib/serverAccount/webSignUp'
-import { reloadPage } from '@/lib/serverAccount/webTabs'
 import { DATA_OWNER_KEY } from '@/lib/webStorage/boot'
 import { secureKv } from '@/lib/webStorage/secureKv'
-import { turnstileLoaded } from '@/app/web-sign-in/components/Turnstile'
 
 /**
  * The web's sign-up flow (`webSignUp.ts`) on the real account, passkeys and
@@ -163,8 +161,6 @@ export function webSignUp(): WebSignUp {
     appVersion: () => appVersion() ?? undefined,
     mark,
     randomBytes: getRandomBytes,
-    pageNeedsReload: turnstileLoaded,
-    reload: reloadPage,
     onEvent: capture,
   })
   return flow

@@ -131,8 +131,6 @@ function setup(
     saveWrap?: () => Promise<void>
     recovery?: WebSignInDeps['recovery']
     open?: WebSignInDeps['account']['openWebSessionWithTicket']
-    /** The page loaded Turnstile's script. */
-    needsReload?: boolean
   } = {}
 ) {
   let now = NOW
@@ -209,8 +207,6 @@ function setup(
         timer.done = true
       }
     },
-    pageNeedsReload: () => options.needsReload ?? false,
-    reload: vi.fn(),
     onEvent: (event: WebSignInEvent) => events.push(event),
   } satisfies WebSignInDeps
   const flow = createWebSignIn(deps)
@@ -965,39 +961,24 @@ describe('after a reload', () => {
   })
 })
 
-describe('a page that loaded the security check', () => {
-  it('reloads once signed in, then saves the wrap', async () => {
-    const before = setup({ needsReload: true, assert: async () => signIn([]) })
-    await before.flow.signInWithPasskey()
-    before.advance(118_000)
-    await before.flow.signInWithRecoveryKey(KEY, 'turnstile-token')
-    expect(before.opened.map((open) => open.ticket)).toEqual([
-      'recovery-ticket',
-    ])
-    expect(before.deps.reload).toHaveBeenCalledTimes(1)
-    expect(before.saved).toEqual([])
-    expect(before.events.at(-1)).toMatchObject({
-      type: 'succeeded',
-      wrap: 'pending',
+describe('a page that showed the security check', () => {
+  // Turnstile runs in its own frame (docs/web-turnstile.md), never in this
+  // page, so signing in no longer reloads it away.
+  it('stays put once signed in, and saves the wrap at once', async () => {
+    const { flow, advance, opened, saved, events } = setup({
+      assert: async () => signIn([]),
     })
-    const kept = before.mark()
-    expect(kept).toMatchObject({ cloudSync: true, wrap: {} })
-
-    const after = setup()
-    after.deps.mark.write(kept)
-    await after.flow.resume(ACCOUNT)
-    expect(opensToKey(after.saved[0])).toEqual(KEY)
-    expect(after.flow.state()).toMatchObject({
+    await flow.signInWithPasskey()
+    advance(118_000)
+    await flow.signInWithRecoveryKey(KEY, 'turnstile-token')
+    expect(opened.map((open) => open.ticket)).toEqual(['recovery-ticket'])
+    expect(opensToKey(saved[0])).toEqual(KEY)
+    expect(flow.state()).toMatchObject({
+      busy: null,
       cloudSync: true,
       wrapSaved: true,
     })
-  })
-
-  it('stays put when the security check never loaded', async () => {
-    const { flow, deps } = setup()
-    await flow.signInWithRecoveryKey(KEY, 'turnstile-token')
-    expect(deps.reload).not.toHaveBeenCalled()
-    expect(flow.state().cloudSync).toBe(true)
+    expect(events.at(-1)).toMatchObject({ type: 'succeeded' })
   })
 })
 

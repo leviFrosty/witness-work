@@ -7,6 +7,7 @@
     "apiFromEnv": true,
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "verifyOrigin": "https://verify-dev.witnesswork.app",
     "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
     "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
     "csp": "report-only"
@@ -19,6 +20,7 @@
     "apiOrigin": "https://api-dev.witnesswork.app",
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "verifyOrigin": "https://verify-dev.witnesswork.app",
     "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
     "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
     "csp": "enforce"
@@ -31,6 +33,7 @@
     "apiOrigin": "https://api.witnesswork.app",
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps.witnesswork.app",
+    "verifyOrigin": "https://verify.witnesswork.app",
     "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
     "helpSearchOrigin": "https://help-search.witnesswork.app",
     "csp": "enforce"
@@ -43,6 +46,7 @@
     "apiOrigin": "https://api.witnesswork.app",
     "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
     "mapsOrigin": "https://maps.witnesswork.app",
+    "verifyOrigin": "https://verify.witnesswork.app",
     "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
     "helpSearchOrigin": "https://help-search.witnesswork.app",
     "csp": "enforce"

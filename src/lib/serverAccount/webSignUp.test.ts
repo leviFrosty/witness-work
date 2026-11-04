@@ -151,7 +151,6 @@ type Options = {
   signup?: WebSignUpDeps['server']['signup']
   assert?: WebSignUpDeps['server']['assert']
   adopt?: WebSignUpDeps['account']['adoptSignupSession']
-  needsReload?: boolean
   online?: boolean
   /** What an earlier page (or another tab) left. */
   stored?: Partial<Storage>
@@ -308,8 +307,6 @@ function setup(options: Options = {}, shared?: Storage) {
     }),
     isOnline: () => options.online ?? true,
     randomBytes: random,
-    pageNeedsReload: () => options.needsReload ?? false,
-    reload: vi.fn(),
     onEvent: (event: WebSignUpEvent) => events.push(event),
   } satisfies WebSignUpDeps
   const flow = createWebSignUp(deps)
@@ -1615,18 +1612,15 @@ describe('signing up on the web', () => {
       expect(flow.state().recoveryKey).not.toBeNull()
     })
 
-    it('reloads away from Turnstile’s script, onto the recovery key', async () => {
-      const first = setup({ needsReload: true })
-      await first.flow.signUp('token')
-      expect(first.deps.reload).toHaveBeenCalledOnce()
-      expect(first.flow.state()).toMatchObject({
-        busy: true,
-        recoveryKey: null,
+    it('stays on the page, onto the recovery key', async () => {
+      // Turnstile runs in its own frame (docs/web-turnstile.md), so there's
+      // no script to reload away from.
+      const { flow } = setup()
+      await flow.signUp('token')
+      expect(flow.state()).toMatchObject({
+        busy: false,
+        recoveryKey: { signInOnly: false },
       })
-
-      const next = first.reload({ needsReload: false })
-      await next.flow.resume(ACCOUNT)
-      expect(next.flow.state().recoveryKey).toEqual({ signInOnly: false })
     })
   })
 

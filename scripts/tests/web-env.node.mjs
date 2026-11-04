@@ -153,6 +153,10 @@ test('every profile names its host, origins and CSP mode; deployed ones a Worker
     for (const key of ['variant', 'host', 'apiOrigin', 'posthogOrigin'])
       assert.ok(profile[key], `${name}.${key}`)
     assert.match(profile.mapsOrigin, /^https:\/\/maps/)
+    assert.match(
+      profile.verifyOrigin,
+      /^https:\/\/verify(-dev)?\.witnesswork\.app$/
+    )
     assert.ok(['report-only', 'enforce'].includes(profile.csp), name)
     assert.equal(new URL(profile.apiOrigin).origin, profile.apiOrigin)
     assert.equal(Boolean(profile.worker), name !== 'local', name)

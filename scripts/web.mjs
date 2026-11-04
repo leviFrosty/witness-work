@@ -8,9 +8,9 @@ import { loadLocalEnv } from './with-local-env.mjs'
 /**
  * The web profiles, `local|dev|beta|production`: each one's native env files
  * (`variant`), host, the apps its association files list, Worker, ww-api,
- * PostHog and maps frame origins, Help Center manifest, and CSP mode. This
- * script, the web host's deploys (`scripts/web-host.mjs`) and its Worker
- * (`web/host`) all read this one file.
+ * PostHog, maps frame and Turnstile frame origins, Help Center manifest, and
+ * CSP mode. This script, the web host's deploys (`scripts/web-host.mjs`) and
+ * its Worker (`web/host`) all read this one file.
  */
 export const environments = JSON.parse(
   fs.readFileSync(

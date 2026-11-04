@@ -74,6 +74,17 @@ describe('the web maps frame', () => {
   })
 })
 
+describe('the web Turnstile frame', () => {
+  it("is each web profile's own frame, so its CSP lets the app frame it", async () => {
+    const profiles = (await import('../../config/web-environments.json'))
+      .default
+    for (const profile of Object.values(profiles)) {
+      const { links } = await load({ EXPO_PUBLIC_APP_VARIANT: profile.variant })
+      expect(links.turnstileFrame).toBe(profile.verifyOrigin)
+    }
+  })
+})
+
 describe('support email', () => {
   it('is on the app domain', async () => {
     const { email } = await import('@/constants/contactInformation')

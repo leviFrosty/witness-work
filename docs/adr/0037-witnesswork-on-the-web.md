@@ -99,6 +99,13 @@ bundled code:
   - PostHog is bundled (ADR 0043).
   - Purchases use RevenueCat's hosted checkout pages (ADR 0041).
   - Apple MapKit JS runs in a sandboxed frame on its own origin (§8).
+  - Cloudflare Turnstile, the check before web sign-up and recovery-key
+    sign-in (ADR 0038), runs in a sandboxed frame on `verify.witnesswork.app`
+    (`verify-dev.witnesswork.app` for dev). The app's CSP frames that origin
+    but loads no script from it or from Cloudflare. The frame posts the app
+    only the token and the check's outcome, to the app's exact origin, and the
+    app accepts them only from that frame's window and origin
+    (`docs/web-turnstile.md`).
 - **Headers:** HSTS, `nosniff`, `Referrer-Policy: no-referrer` and COOP.
 - **No cross-origin isolation:** nothing in the web build needs
   SharedArrayBuffer. MyTime import reads its file in memory.

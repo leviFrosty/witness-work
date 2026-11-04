@@ -271,7 +271,11 @@ describe('headers', () => {
     ])
     expect(directive(policy('dev'), 'frame-src')).toEqual([
       'https://maps-dev.witnesswork.app',
-      'https://challenges.cloudflare.com',
+      'https://verify-dev.witnesswork.app',
+    ])
+    expect(directive(policy('local'), 'frame-src')).toEqual([
+      'https://maps-dev.witnesswork.app',
+      'https://verify-dev.witnesswork.app',
     ])
     for (const name of ['beta', 'production'] as const) {
       expect(directive(policy(name), 'connect-src')).toEqual([
@@ -286,7 +290,7 @@ describe('headers', () => {
       ])
       expect(directive(policy(name), 'frame-src')).toEqual([
         'https://maps.witnesswork.app',
-        'https://challenges.cloudflare.com',
+        'https://verify.witnesswork.app',
       ])
     }
     expect(directive(policy('local'), 'connect-src')).toContain(
@@ -295,14 +299,12 @@ describe('headers', () => {
   })
 
   it('keeps every profile’s hosts out of the other environment’s CSP', () => {
-    // PostHog's ingestion proxy, RevenueCat and Turnstile serve every
-    // environment.
+    // PostHog's ingestion proxy and RevenueCat serve every environment.
     const shared = new Set([
       "'self'",
       'https://ww-api-r.leviwilkerson.com',
       'https://api.revenuecat.com',
       'https://e.revenue.cat',
-      'https://challenges.cloudflare.com',
     ])
     const hosts = (name: keyof typeof environments) =>
       ['connect-src', 'frame-src']
@@ -333,12 +335,13 @@ describe('headers', () => {
     ) as (keyof typeof environments)[]) {
       const csp = policy(name)
       expect(directive(csp, 'default-src')).toEqual(["'self'"])
-      // Turnstile's script is the only one from elsewhere.
+      // Nothing from elsewhere: Turnstile runs in its own frame, on its own
+      // origin (docs/web-turnstile.md).
       expect(directive(csp, 'script-src')).toEqual([
         "'self'",
         "'wasm-unsafe-eval'",
-        'https://challenges.cloudflare.com',
       ])
+      expect(csp).not.toContain('challenges.cloudflare.com')
       expect(directive(csp, 'worker-src')).toEqual(["'self'"])
       expect(directive(csp, 'media-src')).toEqual(["'self'", 'blob:'])
       expect(directive(csp, 'require-trusted-types-for')).toEqual(["'script'"])
@@ -346,7 +349,6 @@ describe('headers', () => {
       expect(directive(csp, 'trusted-types')).toEqual([
         'ww-chunks',
         'ProseMirrorClipboard',
-        'ww-turnstile',
       ])
       expect(directive(csp, 'frame-ancestors')).toEqual(["'none'"])
       expect(directive(csp, 'object-src')).toEqual(["'none'"])

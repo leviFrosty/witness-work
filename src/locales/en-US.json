@@ -5552,6 +5552,7 @@
   "webSignIn_recoveryCheckInfo": "Cloudflare Turnstile checks that a person is signing in. Cloudflare sees your IP address and browser details for it.",
   "webSignIn_recoveryCheckLabel": "Security check",
   "webSignIn_recoveryCheckLoading": "Loading the security check…",
+  "webSignIn_checkLoadFailed": "The security check couldn't load.",
   "webSignUp_title": "Create an Account",
   "webSignUp_body": "Your account is protected by a passkey on this device, with no email or password.",
   "webSignUp_passkeyInfo": "Your password manager saves the passkey, named WitnessWork and four letters or numbers. You'll use it to sign in, and where your browser supports it, it also unlocks your account so you can see your data.",

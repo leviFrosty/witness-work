@@ -37,11 +37,20 @@ export function adoptPasskeyPromptAccount(account: string | null): void {
 }
 
 /**
- * The User just turned on Cloud Sync or backup, set up another device, or
- * finished onboarding on a new install: the prompt waits in the tray, unless
- * it's backed off or stopped. A prompt already waiting keeps its first moment.
- * Finishing onboarding earns it before the new install's account exists
- * (`account` null); the tray lists it once the account does.
+ * The state for the account registered now. Every answer reads it this way, so
+ * it lands on the account it's about.
+ */
+const forAccountInUse = (): PasskeyPromptState => {
+  adoptPasskeyPromptAccount(passkeyAccountId())
+  return current()
+}
+
+/**
+ * The User just turned on Cloud Sync or backup, set up another device, or went
+ * through onboarding's steps: the prompt waits in the tray, unless it's backed
+ * off or stopped. A prompt already waiting keeps its first moment. Finishing
+ * onboarding earns it before the new install's account exists (`account` null);
+ * the tray lists it once the account does.
  */
 export function earnPasskeyPrompt(
   reason: PasskeyPromptReason,
@@ -71,7 +80,7 @@ export function recordPasskeyPromptTapped(): void {
 
 /** The tray's Not Now: back off 30 days. After the second, it stops for good. */
 export function notNowPasskeyPrompt(now = Date.now()): void {
-  const state = current()
+  const state = forAccountInUse()
   if (!state.earned) return
   const notNows = state.notNows + 1
   const stopped = notNows >= PASSKEY_PROMPT_MAX_NOT_NOWS
@@ -88,7 +97,7 @@ export function notNowPasskeyPrompt(now = Date.now()): void {
  * count toward stopping for good. Only choosing Not Now says "not this".
  */
 export function dismissPasskeyPrompt(now = Date.now()): void {
-  const state = current()
+  const state = forAccountInUse()
   if (!state.earned) return
   update({ ...state, earned: null, notNowAt: now })
   analytics.capture('passkey_prompt_dismissed', {
@@ -100,12 +109,12 @@ export function dismissPasskeyPrompt(now = Date.now()): void {
 
 /** The account has a passkey, so the prompt never comes back. */
 export function stopPasskeyPrompt(): void {
-  const state = current()
+  const state = forAccountInUse()
   if (state.stopped && !state.earned) return
   update({ ...state, earned: null, stopped: true })
 }
 
 /** Onboarding's Not Now: the prompt waits 30 days before a moment can earn it. */
 export function backOffPasskeyPrompt(now = Date.now()): void {
-  update({ ...current(), notNowAt: now })
+  update({ ...forAccountInUse(), notNowAt: now })
 }

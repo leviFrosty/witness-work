@@ -7,6 +7,7 @@ import {
 
 const runtime = vi.hoisted(() => ({
   prefs: { passkeyPrompt: undefined as unknown as PasskeyPromptState },
+  account: 'a' as string | null,
 }))
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
@@ -18,7 +19,9 @@ vi.mock('@/stores/preferences', () => ({
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/serverAccount', () => ({
-  accountSessions: { snapshot: () => ({ accountId: 'a' }) },
+  accountSessions: {
+    snapshot: () => (runtime.account ? { accountId: runtime.account } : null),
+  },
 }))
 
 import {
@@ -38,6 +41,7 @@ const state = () => runtime.prefs.passkeyPrompt
 beforeEach(() => {
   vi.clearAllMocks()
   runtime.prefs.passkeyPrompt = PASSKEY_PROMPT_INITIAL
+  runtime.account = 'a'
 })
 
 describe('the gentle passkey prompt', () => {
@@ -145,5 +149,23 @@ describe('the gentle passkey prompt', () => {
     })
     earnPasskeyPrompt('device', NOW + 1, 'b')
     expect(state().earned).toMatchObject({ reason: 'device' })
+  })
+
+  it('puts onboarding’s Not Now on the account signed in meanwhile', () => {
+    earnPasskeyPrompt('backup', NOW)
+    runtime.account = 'b'
+    backOffPasskeyPrompt(NOW)
+    expect(state()).toMatchObject({ account: 'b', notNowAt: NOW })
+    earnPasskeyPrompt('cloud_sync', NOW + 1)
+    expect(state().earned).toBeNull()
+  })
+
+  it('answers the tray for the account in use', () => {
+    earnPasskeyPrompt('backup', NOW)
+    runtime.account = 'b'
+    notNowPasskeyPrompt(NOW)
+    dismissPasskeyPrompt(NOW)
+    stopPasskeyPrompt()
+    expect(state()).toMatchObject({ account: 'b', earned: null, stopped: true })
   })
 })

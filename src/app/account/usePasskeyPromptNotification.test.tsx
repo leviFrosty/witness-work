@@ -268,6 +268,19 @@ describe('usePasskeyPromptNotification', () => {
       }
     })
 
+    it('asks again after the clock is set back', async () => {
+      vi.useFakeTimers({ now: NOW, toFake: ['Date'] })
+      try {
+        await render()
+        act(() => renderer!.unmount())
+        vi.setSystemTime(NOW - 60 * 60 * 1000)
+        await render()
+        expect(checks()).toBe(2)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
     it('retries a failed check when the connection comes back', async () => {
       runtime.offer = 'unavailable'
       await render()

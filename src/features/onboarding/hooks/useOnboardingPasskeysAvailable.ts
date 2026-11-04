@@ -8,9 +8,11 @@ import { usePreferences } from '@/stores/preferences'
  * Whether onboarding offers its Save a Passkey step: this phone makes passkeys,
  * the account exists, and it has none (`readPasskeyOffer`). New installs have
  * no account yet, as the key waits for onboarding to end, so it shows for those
- * whose account came first: a restore or QR sign-in, or an invite made in the
- * Buddies step (a session opening checks again). New installs get the tray's
- * gentle prompt when onboarding ends instead (`completeGuidedOnboarding`).
+ * whose account came first and whose onboarding goes on: a QR or recovery-key
+ * sign-in that brought back no records, or an invite made in the Buddies step
+ * (a session opening checks again). A restore ends onboarding before the step.
+ * New installs get the tray's gentle prompt when onboarding ends instead
+ * (`completeGuidedOnboarding`).
  *
  * Once they reach the step's place (`reached`), the answer holds for the rest
  * of onboarding, so a check that finishes later never adds or removes a step

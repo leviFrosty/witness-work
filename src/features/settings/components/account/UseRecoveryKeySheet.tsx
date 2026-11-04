@@ -7,7 +7,7 @@ import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { accountKey, replaceAccountKey } from '@/app/account/accountKey'
 import { platformKey } from '@/app/account/attestationCopy'
-import { offerRestore } from '@/app/account/backupRestore'
+import { offerRestore, recordsCameBack } from '@/app/account/backupRestore'
 import { analytics } from '@/lib/analytics'
 import {
   losesSomething,
@@ -26,7 +26,7 @@ type Props = {
   onClose: () => void
   /** The key was used: this device's account changed (or already matched). */
   onDone: () => void
-  /** The account's backup was restored afterwards. */
+  /** The account's records came back afterwards: its backup, or Cloud Sync. */
   onRestored?: () => void
 }
 
@@ -69,7 +69,14 @@ export default function UseRecoveryKeySheet(props: Props) {
                 onPress: () =>
                   void offerRestore('recovery_key')
                     .then((result) => {
-                      if (result.outcome === 'restored') props.onRestored?.()
+                      if (recordsCameBack(result)) props.onRestored?.()
+                      // Records here already: say where to combine them, as
+                      // the QR sign-in does.
+                      if (result.outcome === 'synced' && result.combine)
+                        Alert.alert(
+                          i18n.t('handoff_newDoneTitle'),
+                          i18n.t('handoff_newDoneSyncedCombine')
+                        )
                     })
                     .catch((error: unknown) =>
                       logger.warn('[backup] restore offer failed', error)

@@ -14,6 +14,7 @@ import { Spinner } from 'tamagui'
 import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
@@ -35,7 +36,6 @@ import { usePreferences } from '@/stores/preferences'
 import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { usesCloudSync } from '@/lib/syncTransport/provider'
-import { useProfile } from '@/stores/profile'
 
 interface Props {
   goBack: () => void
@@ -86,7 +86,6 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
-  const { set: setProfile } = useProfile()
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
   // Bumped by "Search again" to run the probe effect afresh.
   const [search, setSearch] = useState(0)
@@ -380,9 +379,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       mode,
       elapsed_ms: Date.now() - startedAt,
     })
-    analytics.capture('onboarding_completed', {
-      completion_method: 'icloud_restore',
-    })
     // Mark onboarding complete — the user's restored publisher/profile/etc.
     // replaces the defaults they would've otherwise set in the remaining
     // steps.
@@ -391,13 +387,8 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     // so the main app doesn't re-prompt the user and overwrite their
     // restored name/avatar. (These sync as of the NON_SYNCABLE_PREFERENCE_KEYS
     // revision, but an older remote payload may not contain them.)
-    set({
-      onboardingComplete: true,
-      onboardingStepId: null,
-      hasCompletedMapOnboarding: true,
-    })
+    completeOnboardingFromRestore('icloud_restore')
     if (mode === 'replace') enableSync()
-    setProfile({ hasCompletedProfileSetup: true })
 
     // If the restored payload references images via iCloud markers, prompt
     // the user to also pull those photos down. Per-device consent means we

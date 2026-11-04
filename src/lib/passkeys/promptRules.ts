@@ -2,8 +2,8 @@
  * When phones ask the User to save a passkey (ADR 0038 §9, passkeys-protocol
  * "Passkeys on phones"). Onboarding offers it once, and one gentle prompt later
  * reaches people who skipped it, or never saw the step: "after turning on Cloud
- * Sync or backup, setting up another device, or finishing onboarding on a new
- * install. It backs off for 30 days and is never forced." Everything works
+ * Sync or backup, setting up another device, or going through onboarding's
+ * steps. It backs off for 30 days and is never forced." Everything works
  * without a passkey.
  */
 
@@ -12,7 +12,10 @@ export type PasskeyPromptReason =
   | 'cloud_sync'
   | 'backup'
   | 'device'
-  /** Finished onboarding on a new install, whose account exists only now. */
+  /**
+   * Went through onboarding's steps: on a new install, whose account exists
+   * only now, or after Restart Onboarding.
+   */
   | 'onboarding'
 
 /** Not Now backs the prompt off this long (onboarding's and the tray's). */

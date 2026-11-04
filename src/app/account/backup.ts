@@ -1,5 +1,4 @@
 import { AppState, Platform } from 'react-native'
-import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
@@ -7,6 +6,7 @@ import {
   backupPlaintextHash,
   buildBackupPlaintext,
 } from '@/app/account/backupData'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { subscribeToLocalDataChanges } from '@/app/sync/localChanges'
 import { analytics } from '@/lib/analytics'
 import {

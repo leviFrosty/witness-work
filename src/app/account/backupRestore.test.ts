@@ -84,9 +84,8 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/dates', () => ({ formatDateTime: () => 'a date' }))
 
-const { offerRestore, SYNC_COVERS_BACKUP_GRACE_MS } = await import(
-  './backupRestore'
-)
+const { offerRestore, recordsCameBack, SYNC_COVERS_BACKUP_GRACE_MS } =
+  await import('./backupRestore')
 const { cloudSyncNewestSlotAt } = await import('@/app/sync/cloudSync')
 
 const T = Date.UTC(2026, 8, 1, 12)
@@ -171,5 +170,25 @@ describe('offerRestore on a new phone Cloud Sync covers', () => {
 
     expect(await offerRestore('settings')).toEqual({ outcome: 'skipped' })
     expect(cloudSyncNewestSlotAt).not.toHaveBeenCalled()
+  })
+})
+
+describe('recordsCameBack', () => {
+  it('counts a restore and Cloud Sync, and nothing else', () => {
+    expect(recordsCameBack({ outcome: 'synced', combine: false })).toBe(true)
+    expect(
+      recordsCameBack({
+        outcome: 'restored',
+        mode: 'replace',
+        slots: 1,
+        skippedNewer: 0,
+        skippedUnreadable: 0,
+      })
+    ).toBe(true)
+    expect(recordsCameBack({ outcome: 'none' })).toBe(false)
+    expect(recordsCameBack({ outcome: 'skipped' })).toBe(false)
+    expect(recordsCameBack({ outcome: 'failed', reason: 'offline' })).toBe(
+      false
+    )
   })
 })

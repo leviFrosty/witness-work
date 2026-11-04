@@ -1,7 +1,6 @@
 import { Alert } from 'react-native'
 import {
   addPhonePasskey,
-  type PasskeyAddSource,
   letPhonePasskeyUnlock,
   removePhonePasskey,
 } from '@/app/account/passkeys'
@@ -15,6 +14,7 @@ import { logger } from '@/lib/logger'
 import type { PasskeySupport } from '@/lib/passkeys'
 import type { Passkey } from '@/lib/serverAccount/passkeyClient'
 import { isLastUnlocking } from '@/lib/serverAccount/passkeyFlow'
+import type { PasskeyAddSource } from '@/lib/serverAccount/passkeyServer'
 import { toast } from '@/stores/toasts'
 
 /**

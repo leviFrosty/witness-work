@@ -391,13 +391,23 @@ function killIosRunner(udid) {
   }
 }
 
-/** Shuts down a harness device; never touches devices outside the pool. */
+/**
+ * Shuts down a harness device; never touches devices outside the pool. With
+ * `keepDevice` it stays booted but the app quits, so an idle warm device
+ * doesn't keep rendering (the next `up` launches the app again).
+ */
 function shutdownDevice(device, { keepDevice = false } = {}) {
   if (device.platform === 'ios') {
     const sim = simctlDevices().find((d) => d.udid === device.id)
     if (!sim || !/^WW Verify /.test(sim.name)) return
     killIosRunner(device.id)
-    if (keepDevice) return
+    if (keepDevice) {
+      if (sim.state === 'Booted')
+        run('xcrun', ['simctl', 'terminate', device.id, BUNDLE_ID], {
+          check: false,
+        })
+      return
+    }
     if (sim.state !== 'Shutdown')
       run('xcrun', ['simctl', 'shutdown', device.id], { check: false })
     // `simctl shutdown` returns while the device is still Booted, then
@@ -405,11 +415,44 @@ function shutdownDevice(device, { keepDevice = false } = {}) {
     const state = waitSimLeaves(device.id, ['Booted', 'Shutting Down'])
     if (state !== 'Shutdown')
       log(`${device.name} is still ${state} after 60 s of shutting down`)
-  } else if (keepDevice) return
-  else if (AVD_PATTERN.test(device.name)) {
+  } else if (AVD_PATTERN.test(device.name)) {
     const serial = runningAvds()[device.name]
-    if (serial) run('adb', ['-s', serial, 'emu', 'kill'], { check: false })
+    if (!serial) return
+    if (keepDevice)
+      run('adb', ['-s', serial, 'shell', 'am', 'force-stop', BUNDLE_ID], {
+        check: false,
+      })
+    else run('adb', ['-s', serial, 'emu', 'kill'], { check: false })
   }
+}
+
+// ---------- background reaper ----------
+
+// Reaping otherwise runs only inside `up`, `gc` and `warm`, so a device whose
+// agent never ran `down` kept running (and using CPU) until another agent came
+// along. Each `up` makes sure one detached reaper runs on the machine. It reaps
+// on a timer and exits once nothing is leased, warm or building.
+const REAPER_FILE = path.join(GLOBAL_DIR, 'reaper.json')
+
+function reaperAlive(pid) {
+  if (!pidAlive(pid)) return false
+  const command = run('ps', ['-o', 'command=', '-p', String(pid)], {
+    check: false,
+  }).stdout
+  return /ww-verify\.mjs _reaper\b/.test(command)
+}
+
+function ensureReaper() {
+  if (process.env.WW_VERIFY_NO_REAPER) return
+  if (reaperAlive(readJson(REAPER_FILE, null)?.pid)) return
+  const out = fs.openSync(path.join(GLOBAL_DIR, 'reaper.log'), 'a')
+  const child = spawn(
+    process.execPath,
+    [fileURLToPath(import.meta.url), '_reaper'],
+    { cwd: ROOT, detached: true, stdio: ['ignore', out, out] }
+  )
+  child.unref()
+  fs.closeSync(out)
 }
 
 const worktreeState = (worktree) =>
@@ -1781,6 +1824,13 @@ function buildEnv(platform) {
     // with-local-env keeps POSTHOG_DISABLE_UPLOAD: belt and braces, since a
     // development config never adds PostHog's upload phases.
     POSTHOG_DISABLE_UPLOAD: 'true',
+    // CocoaPods fails `pod install` (and crashes reporting it) without a
+    // UTF-8 locale, which agent shells don't always set.
+    ...(platform === 'ios' &&
+      !/UTF-8/i.test(process.env.LC_ALL || process.env.LANG || '') && {
+        LANG: 'en_US.UTF-8',
+        LC_ALL: 'en_US.UTF-8',
+      }),
     ...(platform === 'android' && {
       // No resident Gradle or Kotlin daemon (~3 GB) after the build.
       GRADLE_OPTS: [
@@ -3021,6 +3071,7 @@ const commands = {
       for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'])
         process.off(signal, onSignal)
     }
+    ensureReaper()
     console.log(
       JSON.stringify(
         {
@@ -3037,6 +3088,35 @@ const commands = {
         2
       )
     )
+  },
+
+  // Internal: the machine's background reaper, started by `up`.
+  async _reaper() {
+    const other = readJson(REAPER_FILE, null)?.pid
+    if (other !== process.pid && reaperAlive(other)) return
+    writeJson(REAPER_FILE, { pid: process.pid, root: ROOT, since: Date.now() })
+    const everyMs = Math.min(
+      5 * 60_000,
+      Math.max(60_000, (CONFIG.idleMin * 60_000) / 3)
+    )
+    const ours = () => readJson(REAPER_FILE, null)?.pid === process.pid
+    try {
+      for (;;) {
+        await new Promise((resolve) => setTimeout(resolve, everyMs))
+        // A newer reaper took over, or this checkout was deleted (the next
+        // `up` from another one starts a fresh reaper).
+        if (!ours() || !fs.existsSync(ROOT)) return
+        try {
+          await reapExpired()
+        } catch (error) {
+          log(`reaper: ${error.message}`)
+        }
+        const { leases, warm, builds } = snapshot()
+        if (!leases.length && !warm.length && !builds.length) return
+      }
+    } finally {
+      if (ours()) fs.rmSync(REAPER_FILE, { force: true })
+    }
   },
 
   // Internal: the build steps, run detached in their own process group.

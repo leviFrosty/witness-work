@@ -33,11 +33,11 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 
 1. The worktree path, and "read `.agents/skills/verify-witnesswork/SKILL.md` and the matching `features/` file first".
 2. What changed, in a sentence or two, with the files.
-3. The platforms and the exact `wwv up` line. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`.
+3. The one device to use and the exact `wwv up` line. Another device gets its own brief, after this one is down. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`.
 4. Setup (`seed`, `flag`, `nav`), then the user path to drive, with labels or testIDs and the expected result of each step.
 5. The exact `wwv eval` read-backs and the values you expect.
 6. The screens to capture, with `wwv shot <name>`, plus dark mode or iPad where needed.
-7. "Don't edit files, commit or change git state. Leave the device up."
+7. "Don't edit files, commit or change git state. Don't go beyond the brief: report anything else you notice instead of chasing it. Leave the device up." (Then you run `wwv down` once you've read the report and need no re-run.)
 
 **The subagent** follows the brief and doesn't improvise around the harness:
 
@@ -54,7 +54,7 @@ wwv up --platform ios --seed pioneer         # iPhone; add --ipad (or --ipad-min
 wwv up --platform android --seed pioneer     # headless emulator, same Metro
 ```
 
-Start on iOS. Bring up Android for the platform pass once the change works there (see [Evidence](#evidence) and [Concurrency and resources](#concurrency-and-resources)).
+Start on the iPhone, and stay there unless the change could break somewhere else. [Scope](#scope) says when to add Android, an iPad, iPhone Duo or iPhone SE.
 
 What `up` does, in order:
 
@@ -206,25 +206,37 @@ Proof standards:
 - Capture the action and the resulting state: a settled diff or `wait text`, plus a screenshot. A screenshot alone isn't proof of an interaction.
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
-- Prove it on iOS first. Then check Android too for anything touching layout, native APIs, maps, notifications, purchases or permissions. On Android, iOS-only features (listed in `agents.md`) must have no entry point at all, not a broken one.
-- Layout changes need an iPad too (`--ipad`): a sidebar appears from 1,000 pt wide, along with split views and the menu bar. Layouts with columns or bars also need iPhone Duo (`--duo`), closed, open and half-open, and the smallest screens: iPad mini in portrait (`--ipad-mini`, 744 pt: a bottom bar and one column) and iPhone SE (`--se`, 375 pt with no notch or home indicator).
-- New surfaces need light and dark: `wwv ad settings appearance dark` (or `light`), then `wwv shot`.
+- New surfaces and color changes need light and dark: `wwv ad settings appearance dark` (or `light`), then `wwv shot`.
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
-- Report what you verified, on which devices, the artifact paths, and what you couldn't verify and why.
+- Report what you verified, on which devices, the artifact paths, what you couldn't verify, and which devices you skipped on purpose, with the reason.
+
+## Scope
+
+Every device run costs CPU that the other agents on this Mac share, plus tokens. Pick the fewest devices that could show the change failing:
+
+- **No device** when nothing runs differently: docs, tests, types, tooling, and refactors that unit tests cover.
+- **The iPhone** (`wwv up --platform ios`) for everything else. It's the default, and it's where most users are.
+- **Android** (`--platform android`) when the change has Android-specific code: `Platform.OS` branches, `.android.*` files, Android native modules, `android/`, Gradle, or a native API, permission, notification, purchase or map behavior that Android implements separately. It also covers a bug that shows only on Android, and a new entry point that must stay hidden for an iOS-only feature (listed in `agents.md`): no entry point at all, not a broken one. Shared JS UI that works on the iPhone doesn't need it. The emulator is the costliest device here.
+- **iPad** (`--ipad`) when a change reworks a screen's layout or how it adapts to width: a sidebar appears from 1,000 pt wide, with split views and the menu bar. **iPhone Duo** (`--duo`, closed, open and half-open) for layouts with columns, splits or bars. **iPad mini** in portrait (`--ipad-mini`, 744 pt: a bottom bar and one column) and **iPhone SE** (`--se`, 375 pt, no notch or home indicator) for content that could get cramped. Check the one or two sizes the change could break. Keep the full sweep for large layout work.
+- **What the user asks for**, always.
+- **One at a time.** `wwv down` before bringing up the next device, unless the feature needs two at once (Buddies, Shared Cars).
+- **Re-checks stay small.** After a follow-up that changes only copy, spacing or a review nit, rerun the unit tests or take one screenshot. Don't drive the whole flow again, and don't repeat other devices.
+- **Prove the change, not the app.** Note unrelated problems you spot in the report; don't fix or chase them.
 
 ## Concurrency and resources
 
 Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 
 - **Only through `wwv`.** Don't boot, build or serve by hand: no `pnpm run ios`/`android`, `simctl boot`, `emulator -avd`, T3 `device_open`, or Metro on 8081. Those skip the leases and the build cache, and collide with the user's devices and other worktrees. Never run `adb emu kill` or `gradlew --stop`, which hit every worktree's emulator or Gradle.
-- **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof. Use Android only when the change is platform-sensitive.
-- **iOS first.** When you do need a device in the loop, or a change needs only a light pass, use an iOS simulator. An emulator is for the Android pass after the change works on iOS, or for a bug or feature that exists only on Android.
+- **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof.
+- **iPhone first.** When you need a device in the loop, use an iPhone simulator. An emulator is only for what [Scope](#scope) sends there.
 - **Caps.** At most `WW_VERIFY_MAX_IOS` simulators and `WW_VERIFY_MAX_ANDROID` emulators are leased at once, and the pool never grows past the cap. Only `WW_VERIFY_MAX_BUILDS` native builds run at a time. A worktree waiting for a build slot stops waiting as soon as its fingerprint appears in the cache, and a cached artifact never waits.
 - **Builds.** Always the development variant (`com.leviwilkerson.jwtimedev`); the harness refuses to cache or install anything else and never adds PostHog's symbol upload. A build never installs anything; `up` installs the cached artifact after it holds a lease. A failed build's `.verify/DerivedData` or `android/app/build` is deleted too. Android builds run without a Gradle or Kotlin daemon, so nothing stays resident afterwards.
 - **Orphaned builds.** A build runs in its own process group, recorded with its slot. If its `up` dies (killed, crashed), the next `up` or `wwv gc` kills that group and deletes its build dirs; `wwv status` shows it as `orphaned` until then.
 - **Waiting.** When every device is leased, `up` queues first-come and prints the holders and your place. Builds queue first-come too, and a device request waits behind an earlier build that is only short of memory, so builds aren't starved. `up` gives up after `--wait <minutes>` (default 30). Don't kill another worktree's lease; run `wwv status` (it lists who waits for what, and why) and wait, or work without a device.
-- **Idle expiry.** Every command that touches the device refreshes the lease. A lease that is idle for `WW_VERIFY_LEASE_IDLE_MIN`, or whose worktree was deleted, gets reaped by the next `up` or `wwv gc`: the reaper hands the device to the warm pool (or shuts it down if the pool is full) and stops that worktree's Metro. After that, your commands fail with "no longer holds its lease"; run `wwv up` again.
-- **Warm devices.** `down` keeps the device booted, unleased, for the next `up` while there are fewer than `WW_VERIFY_WARM` warm devices of that platform and the budget has room. Warm devices count toward the memory budget. A lease or build that needs the memory shuts the oldest ones down instead of waiting, and any warm device is shut down after `WW_VERIFY_WARM_HOURS`. `wwv status` lists them and the build each one runs. A warm device keeps the last worktree's app data, as a shut-down one always did, so seed state with `--seed` or `wwv seed`.
+- **Idle expiry.** Every command that touches the device refreshes the lease. A lease that is idle for `WW_VERIFY_LEASE_IDLE_MIN`, or whose worktree was deleted, gets reaped: the reaper hands the device to the warm pool (or shuts it down if the pool is full) and stops that worktree's Metro. After that, your commands fail with "no longer holds its lease"; run `wwv up` again.
+- **Background reaper.** `up` makes sure one detached `wwv _reaper` runs on the machine (`~/.ww-verify/reaper.json`, log in `reaper.log`). Every few minutes it reaps expired leases, orphaned builds and stale warm devices, so a forgotten device doesn't run until the next `up`. It exits once nothing is leased, warm or building. `WW_VERIFY_NO_REAPER=1` skips starting it.
+- **Warm devices.** `down` keeps the device booted, with the app quit, unleased, for the next `up` while there are fewer than `WW_VERIFY_WARM` warm devices of that platform and the budget has room. Warm devices count toward the memory budget. A lease or build that needs the memory shuts the oldest ones down instead of waiting, and any warm device is shut down after `WW_VERIFY_WARM_HOURS`. `wwv status` lists them and the build each one runs. A warm device keeps the last worktree's app data, as a shut-down one always did, so seed state with `--seed` or `wwv seed`.
 - **Minimum running devices.** `WW_VERIFY_WARM_MIN` (default 0) keeps that many devices per platform running, leased or warm: `down` and idle reaping always keep a device warm below it, and neither the hours limit nor a lease evicts below it. Only a native build may, because it can't fit otherwise. `wwv warm` boots devices back up to the minimum and installs the newest cached build on them. A machine that sets the minimum runs `wwv warm` from launchd every few minutes.
 - **Memory budget.** A lease or build waits while the estimated total would exceed `WW_VERIFY_MEMORY_BUDGET_GB`; a request bigger than the whole budget fails at once. Emulators boot with 2 GB and 2 cores, and Metro runs with 2 workers.
 - **Emulator GPU.** On macOS, emulators boot with `-gpu host` and render on the Mac's GPU. The AVDs' own `auto` mode picks SwiftShader when headless, which renders every frame on the CPU: an app left on an animated screen such as Welcome then holds qemu near 1,200% of the host's CPU, against about 70% on `host`. `WW_VERIFY_ANDROID_GPU` overrides the mode (`auto`, `swangle`, …; see `emulator -help-gpu`). It applies at boot, so `up` only warns when it reuses an emulator started in another mode; `wwv down --platform android --shutdown` reboots it.
@@ -244,7 +256,7 @@ Defaults depend on the machine's RAM; env vars always win, and `wwv status` prin
 | `WW_VERIFY_MAX_IOS`, `WW_VERIFY_MAX_ANDROID`                   | 2, 2                  | 2, 2                  |
 | `WW_VERIFY_MAX_BUILDS`                                         | 1                     | 1                     |
 | `WW_VERIFY_LEASE_IDLE_MIN`                                     | 15                    | 30                    |
-| `WW_VERIFY_WARM` (per platform), `WW_VERIFY_WARM_HOURS`        | 1, 12                 | 2, 12                 |
+| `WW_VERIFY_WARM` (per platform), `WW_VERIFY_WARM_HOURS`        | 1, 2                  | 2, 12                 |
 | `WW_VERIFY_WARM_MIN` (per platform)                            | 0                     | 0                     |
 | `WW_VERIFY_KEEP_BUILDS` (cached builds per platform)           | 6                     | 6                     |
 | `WW_VERIFY_MEMORY_BUDGET_GB`                                   | all of RAM            | 70% of RAM            |

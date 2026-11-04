@@ -14,7 +14,7 @@ Beta and production app builds release ww-api `main` first (`scripts/release-api
 
 iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). Run, inspect, and test changes on simulators and emulators only through the `verify-witnesswork` skill (see [Verify your own work](#verify-your-own-work)).
 
-- **Test both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too — or be gated with `Platform.OS` and degrade gracefully.
+- **Build for both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too, or be gated with `Platform.OS` and degrade gracefully. Run it on an Android emulator only when it could behave differently there (see [Verify your own work](#verify-your-own-work)).
 - **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
 - **iOS-only features.** iCloud sync/restore, widgets, Live Activities, Siri and Shortcuts, and alternate app icons stay unavailable on Android. Hide their entry points there instead of showing a broken state. Sync and restore run on Android through Google Drive's app data folder in place of iCloud (ADR 0019). Account sessions (and so Scribe AI) use Play Integrity on Android in place of App Attest (ADR 0017). Buddies uses FCM pushes and a Block Store root seed on Android in place of APNs and iCloud Keychain (ADR 0020).
 - **Watch apps.** The Apple Watch app (`targets/watch`, `targets/watch-widgets`) and the Wear OS app (`targets/wear-os`) do the same things, from the same phone-side code (`src/app/watch`, `modules/watch-bridge`). A change to either one updates the parity registry [`docs/watch/features.json`](./docs/watch/features.json) in the same change, and the other watch too or its entry's notes. `pnpm check:watch-parity` enforces it; see [`docs/watch/README.md`](./docs/watch/README.md).
@@ -24,11 +24,20 @@ iOS and Android are both supported and share the same app flows. Setup and build
 
 Prove a change in the running app before calling it done; don't hand verification back to the user. The [`verify-witnesswork`](./.agents/skills/verify-witnesswork/SKILL.md) skill (`node scripts/verify/ww-verify.mjs`) claims an isolated simulator or emulator, seeds state, drives the UI, fuzzes, and saves evidence to `.verify/artifacts/`. Backend changes use `verify-ww-api` in ww-api.
 
+Every agent's simulators, emulators and native builds share one Mac mini, and every device run costs tokens. So check as much as the change needs, and no more.
+
 - **Match the check to the change.** UI → drive the changed flow and read the result back; data → read the store after the action; deep link → `wwv link`; bug → reproduce it first, then show it fixed on the same surface.
-- **iOS first.** Run the development loop (reproduce, fix, re-check) on an iOS simulator, and when a change needs only a light pass, do that pass on iOS. Iterate on an Android emulator only when the bug or feature exists only on Android.
-- **Both platforms** for anything in the Platforms list above: once it works on iOS, add an Android pass. "Not tested on Android" is a gap to close, not a footnote.
+- **No device when nothing runs differently.** Docs, tests, types, tooling, and refactors that unit tests cover are proven by typecheck, lint and vitest.
+- **One iPhone simulator by default.** Most users are on iPhone. Run the development loop (reproduce, fix, re-check) and the proof on one iOS iPhone simulator.
+- **Add a device only where the change could break.** Decide for yourself, and say in the report what you skipped and why. When the user asks for a platform or device, check it.
+  - **Android** when the change has Android-specific code: `Platform.OS` branches, `.android.*` files, Android native modules, `android/`, Gradle, or a native API, permission, notification, purchase, or map behavior implemented separately for Android. It also covers a bug that only shows on Android. Shared JS UI that works on iOS doesn't need an Android pass. The emulator is the costliest device on this Mac.
+  - **iPad, iPhone Duo, iPad mini, iPhone SE** when the change reworks a screen's layout or how it adapts to size: columns, splits, sidebars, bars, `useAdaptiveLayout`, `FoldSplit`, `FoldPane`. Check the one or two sizes the change could break. Keep the full sweep for large layout work.
+  - **Dark mode** for new surfaces and color changes.
+- **One device at a time.** Run `wwv down` on one device before you bring up the next, unless the feature needs two at once (Buddies, Shared Cars).
+- **Prove the change, not the app.** Don't turn verification into an audit. Note unrelated problems you spot in the report instead of fixing them. After a follow-up that only changes copy, spacing, or a review nit, re-check with unit tests or one screenshot, not a full re-drive.
 - **Delegate the driving to a cheaper subagent.** Every tap, snapshot and screenshot re-reads your whole conversation, so driving the app from a long thread is our biggest token cost. Hand the device run to a subagent on the cheapest model your harness offers (for example Claude Haiku). You still decide what to prove and judge the evidence. The skill's [Delegate the drive](./.agents/skills/verify-witnesswork/SKILL.md#delegate-the-drive) says what to hand off, what to keep, and how to brief it.
-- **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits) and why.
+- **`wwv down` as soon as the proof is done.** An idle simulator or emulator keeps using CPU for every other agent.
+- **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits), including devices you chose to skip, and why.
 
 ## Pointer hover (iPad trackpad, mouse, Pencil)
 
@@ -43,7 +52,7 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
   - add decorative effects to non-interactive content;
   - make hover the only way to reach information or an action (touch has no hover);
   - build hover-only UI that behaves differently from touch.
-- **Test:** with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md). Unit tests can't show whether hover actually works.
+- **Test:** when you add or change hover behavior, with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md). Unit tests can't show whether hover actually works.
 
 ## iPhone Duo (foldable)
 
@@ -59,7 +68,7 @@ iPhone Duo has a compact outer display and a regular-width inner one. On both, t
 - **Controls sit above the content they affect.** In a master–detail split, the screen header goes in the leading column and the detail pane runs to the top (see Contacts, Schedule, Progress Month). A header spans both columns only when both hold the same kind of content (Home, Progress Year).
 - **Side safe areas.** Stack screens are already wrapped in `HorizontalSafeArea`. Hero backgrounds bleed under the bar with `useHorizontalBleed()`, while content stays inset.
 - **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.
-- **Test:** run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). Also check `--ipad`, `--ipad-mini` and `--se` for regressions.
+- **Test:** when a change reworks layout or how a screen adapts, run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). After large layout work, also check `--ipad`, `--ipad-mini` and `--se` for regressions. After smaller work, check only the size it could break.
 
 ## Touch targets
 
@@ -88,8 +97,9 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
 
 - **No images in tables in your messages.** T3 Code doesn't render images inside Markdown tables. For a before/after pair in a chat reply, use the same layout twice: `Before:`, blank line, image, blank line, `After:`, blank line, image. Tables of images are for PR bodies only.
 - **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table in the PR body. A brand-new screen has no before; label it "New screen".
-- **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree and capture it there.
-- **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Add dark mode or iPad only where the change looks different there.
+- **Capture on the iPhone simulator.** Add Android, iPad or Duo pairs only for devices you verified anyway, and only where the change looks different there.
+- **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree only when it can reuse a cached native build (a JS-only diff). Otherwise, post AFTER only and say so.
+- **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Add dark mode only where the change looks different there.
 - **Make them readable.** Stage sample data so every changed section has content, since an empty state hides the change. Turn off the floating dev Tools button (dev menu → Tools button). Shrink images to about 1,000 px tall (`sips -Z 1000`). Use made-up names and data; the repo is public.
 - **Uploading PR images.** Reference local files in the body (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them like browser drag-and-drop and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder. Unmatched files get appended to the end instead. Afterwards, check `gh pr view` for leftover local paths. Don't use cookie-based upload tools. For alternatives, see [`docs/research/pr-screenshot-uploads.md`](./docs/research/pr-screenshot-uploads.md).
 - **Say what's missing.** If you can't capture a changed screen (Android-only, missing data, no pointer), say so instead of leaving it out.

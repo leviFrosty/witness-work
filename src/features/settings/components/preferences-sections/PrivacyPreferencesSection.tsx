@@ -14,10 +14,17 @@ import { syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { deleteAllHouseholderData } from '@/stores/householderData'
 import useTheme from '@/contexts/theme'
+import { analytics } from '@/lib/analytics'
+import { useReplayOptInRequired } from '@/lib/sessionReplay/replayCountry'
 
 const PrivacyPreferencesSection = () => {
   const theme = useTheme()
-  const { dataProtectionMode, analyticsEnabled, set } = usePreferences()
+  const { dataProtectionMode, analyticsEnabled, sessionReplayOptIn, set } =
+    usePreferences()
+  // Recordings are the web's, and where people are asked first (ADR 0043).
+  // Data Protection Mode and the usage switch each rule them out.
+  const askReplayOptIn =
+    useReplayOptInRequired() && !dataProtectionMode && analyticsEnabled
 
   // Art 17 erasure affordance: one action that hard-deletes every contact and
   // visit, leaving only redacted sync tombstones.
@@ -112,8 +119,22 @@ const PrivacyPreferencesSection = () => {
           info={i18n.t('anonymousAnalyticsDesc')}
           value={analyticsEnabled}
           onValueChange={(value) => set({ analyticsEnabled: value })}
-          lastInSection
+          lastInSection={!askReplayOptIn}
         />
+        {askReplayOptIn && (
+          <InputRowSwitch
+            label={i18n.t('sessionReplayOptIn')}
+            info={i18n.t('sessionReplayOptInDesc')}
+            value={sessionReplayOptIn}
+            onValueChange={(value) => {
+              set({ sessionReplayOptIn: value })
+              analytics.capture('session_replay_opt_in_changed', {
+                enabled: value,
+              })
+            }}
+            lastInSection
+          />
+        )}
       </Section>
     </View>
   )

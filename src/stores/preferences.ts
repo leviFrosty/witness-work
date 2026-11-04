@@ -558,6 +558,13 @@ export const PREFERENCE_DEFAULTS = {
    * in `src/lib/analyticsPolicy.ts`.
    */
   analyticsEnabled: true,
+  /**
+   * Whether the web may record this browser's sessions (masked, ADR 0043).
+   * Asked only of visitors in the EU, the UK and Switzerland, and of those
+   * whose country isn't known: they're recorded only after turning it on.
+   * Everyone else is sampled under `analyticsEnabled`. Per-device, like it.
+   */
+  sessionReplayOptIn: false,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',

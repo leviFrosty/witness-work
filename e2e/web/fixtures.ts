@@ -36,6 +36,7 @@ const cspFolder = process.env.WW_WEB_CSP
  */
 export const profile: {
   apiOrigin: string
+  posthogOrigin: string
   mapsOrigin: string
   helpManifest: string
   helpSearchOrigin: string
@@ -73,6 +74,13 @@ export const strings = (language: string): Record<string, string> =>
   )
 
 type Fixtures = {
+  /**
+   * Page errors a spec lets pass, by message (one pattern: Playwright reads a
+   * two-item array option as `[value, options]`). WebKit reports a read of
+   * another origin's frame as one (the page can't catch it), as session
+   * replay's recorder does of the map frame.
+   */
+  tolerateErrors: RegExp | null
   /** The app's language, by its `src/locales` file name. */
   language: string
   /** Saved preferences on top of the seed, e.g. a role. */
@@ -185,6 +193,7 @@ export const test = base.extend<Fixtures>({
       revenueCatCatalog,
       revenueCatCustomer,
       withoutAccountOnce,
+      tolerateErrors,
     },
     provide,
     testInfo
@@ -234,7 +243,11 @@ export const test = base.extend<Fixtures>({
       (socket) => socket.close()
     )
     const errors: string[] = []
-    page.on('pageerror', (error) => errors.push(error.stack ?? error.message))
+    page.on('pageerror', (error) => {
+      const text = `${error.message}\n${error.stack ?? ''}`
+      if (tolerateErrors?.test(text)) return
+      errors.push(error.stack ?? error.message)
+    })
     const violations: Violation[] = []
     // Every page in the test's context, across reloads. Report-only
     // violations fire the same event as enforced ones.
@@ -276,6 +289,7 @@ export const test = base.extend<Fixtures>({
     expect(violations, 'CSP violations').toEqual([])
   },
   language: ['en-US', { option: true }],
+  tolerateErrors: [null, { option: true }],
   preferences: [{}, { option: true }],
   revenueCatCatalog: [{}, { option: true }],
   revenueCatCustomer: ['free', { option: true }],

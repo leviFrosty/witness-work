@@ -115,11 +115,13 @@ const sections = [
         On the web, PostHog records about 1 in 10 sessions as masked replays
         that show how the app is used. All text except the app's own labels is
         hidden, every input is hidden, and images, the map, and canvas graphics
-        are blocked. Replays never include network requests or console output.
-        Replay follows your usage statistics setting, never runs in Data
-        protection mode, and in the EU and UK runs only if you opt in. PostHog
-        stores usage statistics and replays in the United States, and deletes
-        replays after 30 days.
+        are blocked, on your device before anything is sent. Replays never
+        include network requests or console output. Replay follows your usage
+        statistics setting and never runs in Data protection mode. In the EU,
+        the UK, and Switzerland, or where we can't tell your country, it runs
+        only if you turn on Share Masked Screen Recordings in Privacy settings.
+        PostHog stores usage statistics and replays in the United States, and
+        deletes replays after 30 days.
       </p>
     ),
   },

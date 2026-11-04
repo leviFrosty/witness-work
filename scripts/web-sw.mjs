@@ -34,6 +34,13 @@ const CHUNK_DIR = '_expo/static/js/web'
 const LOCALE_CHUNK = /^[a-z]{2,3}(?:-[A-Z]{2})?-[0-9a-f]{32}\.js$/
 
 /**
+ * The session replay recorder (ADR 0043). Fetching it is the sign a recording
+ * began, so the worker never precaches it: only a session whose gate opens
+ * downloads it, and the worker keeps it then like any loaded chunk.
+ */
+const RECORDER_CHUNK = /^module\.full\.no-external-[0-9a-f]{32}\.js$/
+
+/**
  * What the worker precaches, as `globPatterns` of `directory`: the shell, the
  * entry chunk(s), every other chunk that isn't a language (the screens that
  * load on demand, such as the database's), the wasm files, fonts and images,
@@ -47,6 +54,7 @@ export function precachePatterns(directory) {
     .filter(
       (file) =>
         file.endsWith('.js') &&
+        !RECORDER_CHUNK.test(file) &&
         (!LOCALE_CHUNK.test(file) || file.startsWith('en-US-'))
     )
     .map((file) => `${CHUNK_DIR}/${file}`)

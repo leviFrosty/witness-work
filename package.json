@@ -152,6 +152,7 @@
     "madge": "8.0.0",
     "make-plural": "7.5.0",
     "moment": "2.31.0",
+    "posthog-js": "1.441.2",
     "posthog-react-native": "4.68.8",
     "react": "19.3.0",
     "react-compiler-runtime": "19.0.0-beta-af1b7da-20250417",

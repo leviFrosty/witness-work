@@ -31,6 +31,7 @@ export const analyticsEventNames = [
   'role_period_set',
   'schedule_intro_closed',
   'service_history_saved',
+  'session_replay_opt_in_changed',
   'service_report_export_dismissed',
   'service_report_export_requested',
   'service_report_exported',

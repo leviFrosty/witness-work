@@ -43,6 +43,7 @@ import CloudSyncDefault from '@/app/sync/components/CloudSyncDefault'
 import AppIconSync from '@/features/settings/components/AppIconSync'
 import { FeatureFlagsRuntime } from '@/lib/featureFlags'
 import '@/lib/analyticsConsent'
+import { useSessionReplay } from '@/lib/sessionReplay/useSessionReplay'
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
@@ -101,6 +102,7 @@ function LaunchWork() {
   useGeocodeRetries(useAfterLaunch('idle'))
   useTimeEntryCreditNormalization(useAfterLaunch('idle'))
   useAccountBackup(useAfterLaunch('idle'))
+  useSessionReplay(useAfterLaunch('idle'))
   return null
 }
 

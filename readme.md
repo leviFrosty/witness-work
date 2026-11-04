@@ -236,7 +236,8 @@ Supporter entitlements, web checkout pages`"]
     S_STRIPE["`**Stripe**
 card payments for web checkout`"]
     S_PH["`**PostHog**
-analytics, flags, surveys, errors`"]
+analytics, flags, surveys, errors,
+masked web session replay`"]
     S_TURNSTILE["`**Cloudflare Turnstile**
 bot check for web sign-up + recovery`"]
     S_MAPKITJS["`**Apple MapKit JS**
@@ -282,7 +283,7 @@ the web's map, cdn.apple-mapkit.com`"]
   A_LINKS -->|"old-host and apex links"| R_LINKS
   A_SUPPORTER -->|"paywall ratings"| R_RATINGS
   A_SUPPORTER -->|"purchases, RevenueCat SDK, web checkout links"| S_RC
-  A_SHELL -->|"events, flags, surveys, errors"| S_PH
+  A_SHELL -->|"events, flags, surveys, errors; masked web replay"| S_PH
   A_HELP -->|"manifest + locale bundle"| S_SITE
   A_HELP -->|"search query, locale, platform"| S_HELPS
 

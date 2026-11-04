@@ -1,0 +1,50 @@
+// The same Workers as wrangler.jsonc, serving the holding bundle that
+// `pnpm web:deploy:<env> --well-known-only` uploads ahead of the web app's
+// release (docs/web-hosting.md): the association files, a holding page at `/`,
+// and a 404 for everything else. Names, routes and vars must match
+// wrangler.jsonc's (scripts/tests/web-host.node.mjs).
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ww-web-local",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "../../dist-well-known",
+    "binding": "ASSETS",
+    // A path with no file goes to the Worker, which answers 404.
+    "not_found_handling": "none",
+    // The Worker types the extensionless AASA file as JSON.
+    "run_worker_first": ["/.well-known/*"],
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "vars": { "WW_WEB_PROFILE": "local" },
+  "env": {
+    "dev": {
+      "name": "ww-web-dev",
+      "vars": { "WW_WEB_PROFILE": "dev" },
+      "routes": [
+        { "pattern": "app-dev.witnesswork.app", "custom_domain": true },
+      ],
+      "workers_dev": false,
+      "preview_urls": true,
+    },
+    "beta": {
+      "name": "ww-web-beta",
+      "vars": { "WW_WEB_PROFILE": "beta" },
+      "routes": [
+        { "pattern": "beta.app.witnesswork.app", "custom_domain": true },
+      ],
+      "workers_dev": false,
+      "preview_urls": false,
+    },
+    "production": {
+      "name": "ww-web",
+      "vars": { "WW_WEB_PROFILE": "production" },
+      "routes": [{ "pattern": "app.witnesswork.app", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+    },
+  },
+}

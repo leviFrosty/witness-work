@@ -178,6 +178,40 @@ describe('/.well-known', () => {
     })
   }
 
+  it('serves the holding bundle’s files and 404s the rest (--well-known-only)', async () => {
+    // wrangler.well-known.jsonc: no single-page-application fallback, so a
+    // path with no file reaches the Worker and the assets answer 404. This
+    // fakes Cloudflare's routing; the runbook's curl checks cover the real one.
+    const holding = {
+      fetch: async (input: Request | string) => {
+        const request = typeof input === 'string' ? new Request(input) : input
+        const { pathname } = new URL(request.url)
+        return pathname.startsWith('/.well-known/') && FILES[pathname]
+          ? assets.fetch(request)
+          : new Response(null, { status: 404 })
+      },
+    } as unknown as Fetcher
+    const fetchHolding = (path: string) =>
+      worker.fetch(new Request(`https://app.witnesswork.app${path}`) as never, {
+        ASSETS: holding,
+        WW_WEB_PROFILE: 'production',
+      })
+    for (const path of [
+      '/.well-known/apple-app-site-association',
+      '/.well-known/assetlinks.json',
+    ]) {
+      const response = await fetchHolding(path)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Type')).toBe('application/json')
+      expect(response.headers.get('Location')).toBeNull()
+    }
+    for (const path of ['/contacts', CHUNK, '/canvaskit.wasm', '/_expo/x']) {
+      const response = await fetchHolding(path)
+      expect(response.status).toBe(404)
+      expect(response.headers.get('Cache-Control')).toBe('no-store')
+    }
+  })
+
   it('serves the WebAuthn related origins as JSON once the export has them', async () => {
     FILES['/.well-known/webauthn'] = [null, '{"origins":[]}']
     try {

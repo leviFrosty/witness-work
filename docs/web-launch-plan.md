@@ -96,10 +96,11 @@ and how it's verified.
 - **Session replay** (ADR 0043).
 - **Deploy scripts** for dev, beta and production, wired into the release and
   beta-build skills. Production deploys are gated.
-- **Passkey association files:** `expo export` copies `public/.well-known/`
-  into the build. The host serves `apple-app-site-association` (no extension)
-  and `assetlinks.json` as `Content-Type: application/json`, over HTTPS with
-  no redirect, on `app.witnesswork.app` and `app-dev.witnesswork.app`.
+- **Passkey association files:** `web:build` writes each profile's own into
+  the export (`docs/web-hosting.md#association-files`). The host serves
+  `apple-app-site-association` (no extension) and `assetlinks.json` as
+  `Content-Type: application/json`, over HTTPS with no redirect, on
+  `app.witnesswork.app` and `app-dev.witnesswork.app`.
 
 ### W3 Accounts and passkeys (`passkeys`)
 

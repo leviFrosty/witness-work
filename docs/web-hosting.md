@@ -7,9 +7,10 @@ Worker with Workers Static Assets. There's no server rendering.
   `tsconfig.json` with Workers types and stays out of the app's Metro and
   TypeScript graph. Its tests run in `pnpm testFinal`.
 - **Profiles:** `config/web-environments.json` is the one list of web
-  profiles: each one's native env files, host, Worker, ww-api, PostHog and maps
-  origins, Help Center manifest and search origin, and CSP mode. `web:build`
-  (`scripts/web.mjs`), the deploys and the Worker all read it.
+  profiles: each one's native env files, host, the apps its association files
+  list, Worker, ww-api, PostHog and maps origins, Help Center manifest and
+  search origin, and CSP mode. `web:build` (`scripts/web.mjs`), the deploys and
+  the Worker all read it.
 - **Deploys:** `scripts/web-host.mjs`, through the `web:*` scripts below.
   Never run `wrangler deploy` by hand.
 - **Maps frame:** a Worker of its own on each profile's maps origin
@@ -51,7 +52,10 @@ managed proxy, and uses RevenueCat's browser API.
     which Cloudflare's asset server answers only with a redirect to `%40`.
   - `/.well-known/apple-app-site-association` and `/.well-known/webauthn`
     have no extension, so the Worker serves them as `application/json`.
-    Nothing under `/.well-known/` falls back to the app.
+    Nothing under `/.well-known/` falls back to the app, and nothing there
+    redirects: a redirect from the assets is a 404. The export's
+    `.well-known/` holds only the association files below, so a new file
+    there (such as `webauthn`) goes into `associationFiles` first.
   - Hashed names (Expo's 32-hex content hash) are cached for a year,
     `immutable`.
   - Everything else revalidates (`max-age=0, must-revalidate`, with ETags),
@@ -62,6 +66,32 @@ managed proxy, and uses RevenueCat's browser API.
 - **Limits:** 25 MiB per file and 20,000 files. The deploy checks both before
   uploading, and that every `/assets/…` and `/_expo/static/…` file the
   export's scripts and HTML load is in the upload.
+
+## Association files
+
+The passkey association files (`docs/passkeys-protocol.md`) are generated per
+profile at build time; nothing under `public/` holds them.
+
+- **Source:** `config/web-associations.json` lists each native app by build
+  variant: its Apple app id and, for Android, its package and signing-key
+  fingerprints. Each profile's `associatedApps` in
+  `config/web-environments.json` picks the apps its host lists.
+- **Per profile:**
+
+  | Profile              | `apple-app-site-association` (`webcredentials`) | `assetlinks.json` (`get_login_creds`)                                                |
+  | -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+  | `production`, `beta` | `jwtime`, `jwtimebeta`                          | `com.leviwilkerson.jwtime`: Play app signing and upload keys                         |
+  | `dev`, `local`       | `jwtime`, `jwtimebeta`, `jwtimedev`             | the same, plus `com.leviwilkerson.jwtimedev`: the debug key and the two release keys |
+
+  Beta's files match production's: Beta phone builds use the production RP
+  ID (ADR 0038 §3). No profile has `applinks`: these hosts are never app-link
+  domains (ADR 0042).
+
+- **Build:** `web:build` replaces the export's `.well-known/` with the
+  profile's files (`associationFiles` in `scripts/web.mjs`). It refuses a
+  release profile whose files would list the development app or its debug
+  key, and each deploy refuses an export whose `.well-known/` isn't exactly its
+  profile's files.
 
 ## Headers
 
@@ -170,6 +200,7 @@ pnpm web:serve [local|dev|beta|production]   # wrangler dev of ./dist
 pnpm web:deploy:dev [--dry-run] [--prebuilt] [--preview]
 pnpm web:deploy:beta [--dry-run] [--prebuilt]
 WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:production [--dry-run] [--prebuilt]
+pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-app]
 ```
 
 - **Each deploy:**
@@ -219,3 +250,74 @@ WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:production [--dry-run] [--pre
 - **Compatibility:** a web release goes live while the native build may still
   be in review, so it must work alongside the previous native version on the
   same account.
+
+## Association files before the first release
+
+iPhones read a host's `apple-app-site-association` through Apple's CDN, which
+refreshes it on its own schedule, and Android verifies on its own too. So the
+association files must be live on `app.witnesswork.app` **at least 7 days
+before release N**, the first release whose apps use passkeys, while the web
+app itself ships only at that release's cut (ADR 0042 §3).
+
+`--well-known-only` deploys a holding bundle to a web host's Worker:
+
+- the profile's two association files, byte for byte what its full build
+  ships (`web-host.node.mjs` checks);
+- a holding `index.html` at `/` with store links and no script, style or
+  image, under a CSP of `default-src 'none'` (`HOLDING_CSP`);
+- a 404 for every other path (`web/host/wrangler.well-known.jsonc` has no
+  app fallback).
+
+It **replaces whatever the host serves**, so it's only for a host that doesn't
+serve the web app yet. Before uploading, it fetches the host's `/` and refuses
+if it answers there with anything but the holding page or an error.
+`--replace-app` overrides that, and is for dev only.
+
+- **Gates:** a clean tree on a commit that's on `origin/main` or
+  `origin/feat/web-device-sign-in`. No release tag is needed. Production still
+  needs the `SHIP-PROD-<package.json version>` keyword and its 1Password
+  token approval, as above; `dev` still deploys only the integration
+  branch's head. It can't be combined with `--prebuilt` or `--preview`.
+- **Output:** it prints every file it uploads with its size and SHA-256, then
+  both association files in full, before it reads a credential or uploads
+  (`--dry-run` prints the same plan and stops).
+
+### Runbook: early association files (owner)
+
+At least 7 days before release N, the project owner runs:
+
+```bash
+git fetch origin
+# origin/main once the web launch has landed there; until then, the
+# integration branch, which is where this script lives.
+git switch --detach origin/feat/web-device-sign-in
+pnpm install --frozen-lockfile
+WW_RELEASE_CONFIRM=SHIP-PROD-<version> pnpm web:deploy:production --well-known-only --dry-run
+WW_RELEASE_CONFIRM=SHIP-PROD-<version> pnpm web:deploy:production --well-known-only
+```
+
+`<version>` is the `package.json` version of the commit you switched to,
+usually a release that has already shipped. The owner types the keyword
+fresh for this deploy, and approves the token read in 1Password, as for any
+production deploy. Beta's host gets its
+full app with the next Beta build, so it needs this only if no Beta web
+deploy has run yet: `pnpm web:deploy:beta --well-known-only`.
+
+Then check it worked:
+
+```bash
+# 200, content-type: application/json, no location header, on both files
+curl -sI https://app.witnesswork.app/.well-known/apple-app-site-association
+curl -sI https://app.witnesswork.app/.well-known/assetlinks.json
+# The holding page answers 200; any other path 404s
+curl -sI https://app.witnesswork.app/
+curl -sI https://app.witnesswork.app/contacts
+# Apple's CDN copy: lists jwtime and jwtimebeta, never jwtimedev. It can lag
+# the host by a day or more; check again until it matches.
+curl -s https://app-site-association.cdn-apple.com/a/v1/app.witnesswork.app
+# Google's view: get_login_creds for com.leviwilkerson.jwtime only
+curl -s 'https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://app.witnesswork.app&relation=delegate_permission/common.get_login_creds'
+```
+
+At the release cut, `web:deploy:production` replaces the holding bundle with
+the web app; its association files are the same bytes.

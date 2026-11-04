@@ -136,3 +136,27 @@ export function headersFile(profile: WebProfile): string {
   )
   return `/*\n${lines.join('\n')}\n`
 }
+
+/**
+ * The holding page's CSP (`web-host.mjs deploy --well-known-only`): it loads
+ * nothing at all, not even a style.
+ */
+export const HOLDING_CSP =
+  "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+
+/**
+ * `_headers` for the holding bundle: the profile's hardening, with a CSP that
+ * allows nothing and no powerful feature for anyone.
+ */
+export function holdingHeadersFile(profile: WebProfile): string {
+  const headers = securityHeaders(profile)
+  delete headers['Content-Security-Policy']
+  delete headers['Content-Security-Policy-Report-Only']
+  const lines = Object.entries({
+    'Content-Security-Policy': HOLDING_CSP,
+    ...headers,
+    'Permissions-Policy':
+      'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=()',
+  }).map(([name, value]) => `  ${name}: ${value}`)
+  return `/*\n${lines.join('\n')}\n`
+}

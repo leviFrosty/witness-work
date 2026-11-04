@@ -22,10 +22,10 @@ A passkey is a credential of an existing server account, never an identity of it
 
 Served by the web app's host with no redirects, `application/json`:
 
-- `/.well-known/apple-app-site-association`: `{ "webcredentials": { "apps": [...] } }` only (the host is never an app-link domain, ADR 0042), listing `Y3KE7B7AHJ.com.leviwilkerson.jwtime`, `….jwtimebeta` and `….jwtimedev`.
-- `/.well-known/assetlinks.json`: `delegate_permission/common.get_login_creds` for `com.leviwilkerson.jwtime` and `com.leviwilkerson.jwtimedev`, with the SHA-256 fingerprints above.
+- `/.well-known/apple-app-site-association`: `{ "webcredentials": { "apps": [...] } }` only (the host is never an app-link domain, ADR 0042), listing `Y3KE7B7AHJ.com.leviwilkerson.jwtime` and `….jwtimebeta`, plus `….jwtimedev` on `app-dev`.
+- `/.well-known/assetlinks.json`: `delegate_permission/common.get_login_creds` for `com.leviwilkerson.jwtime` with its two release keys, plus `com.leviwilkerson.jwtimedev` with the debug key on `app-dev`.
 
-One copy serves every host. The apps claim `webcredentials:app.witnesswork.app` (production and Beta) and `webcredentials:app-dev.witnesswork.app?mode=developer` (development).
+Each web profile generates its own at build time from `config/web-associations.json` (`docs/web-hosting.md#association-files`): `app.witnesswork.app` and `beta.app.witnesswork.app` never list the development app or its debug key. The apps claim `webcredentials:app.witnesswork.app` (production and Beta) and `webcredentials:app-dev.witnesswork.app?mode=developer` (development).
 
 ### The user handle and the name
 

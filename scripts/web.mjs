@@ -7,9 +7,10 @@ import { loadLocalEnv } from './with-local-env.mjs'
 
 /**
  * The web profiles, `local|dev|beta|production`: each one's native env files
- * (`variant`), host, Worker, ww-api, PostHog and maps frame origins, Help
- * Center manifest, and CSP mode. This script, the web host's deploys
- * (`scripts/web-host.mjs`) and its Worker (`web/host`) all read this one file.
+ * (`variant`), host, the apps its association files list, Worker, ww-api,
+ * PostHog and maps frame origins, Help Center manifest, and CSP mode. This
+ * script, the web host's deploys (`scripts/web-host.mjs`) and its Worker
+ * (`web/host`) all read this one file.
  */
 export const environments = JSON.parse(
   fs.readFileSync(
@@ -17,6 +18,120 @@ export const environments = JSON.parse(
     'utf8'
   )
 )
+
+/**
+ * The native apps passkeys may use, by build variant: each one's Apple app id
+ * and, where it has one, its Android package with the SHA-256 fingerprints of
+ * the keys that sign it. A profile's `associatedApps` picks which its host's
+ * association files list (ADR 0038 §3).
+ */
+export const associatedApps = JSON.parse(
+  fs.readFileSync(
+    new URL('../config/web-associations.json', import.meta.url),
+    'utf8'
+  )
+)
+
+export const AASA = '.well-known/apple-app-site-association'
+export const ASSET_LINKS = '.well-known/assetlinks.json'
+
+/**
+ * What only the development app has: its ids and its signing keys, such as
+ * React Native's public debug key. A release profile's files never carry them.
+ */
+export function developmentOnly() {
+  const release = Object.entries(associatedApps)
+    .filter(([variant]) => variant !== 'development')
+    .flatMap(([, app]) => [
+      app.apple,
+      app.android?.package,
+      ...(app.android?.sha256CertFingerprints ?? []),
+    ])
+  const { apple, android } = associatedApps.development
+  return [apple, android.package, ...android.sha256CertFingerprints].filter(
+    (value) => !release.includes(value)
+  )
+}
+
+/**
+ * The passkey association files `profile`'s host serves, by path under the
+ * export: `webcredentials` only for Apple (the host is never an app-link
+ * domain, ADR 0042), and `get_login_creds` for Android. Throws if a release
+ * profile would list the development app.
+ */
+export function associationFiles(profile) {
+  const environment = environments[profile]
+  if (!environment) throw new Error(`Unknown web profile ${profile}`)
+  const apps = environment.associatedApps.map((variant) => {
+    const app = associatedApps[variant]
+    if (!app) throw new Error(`Unknown associated app ${variant}`)
+    return app
+  })
+  const json = (value) => `${JSON.stringify(value, null, 2)}\n`
+  const files = {
+    [AASA]: json({ webcredentials: { apps: apps.map((app) => app.apple) } }),
+    [ASSET_LINKS]: json(
+      apps
+        .filter((app) => app.android)
+        .map(({ android }) => ({
+          relation: ['delegate_permission/common.get_login_creds'],
+          target: {
+            namespace: 'android_app',
+            package_name: android.package,
+            sha256_cert_fingerprints: android.sha256CertFingerprints,
+          },
+        }))
+    ),
+  }
+  if (environment.variant !== 'development') {
+    const leaked = developmentOnly().filter((value) =>
+      Object.values(files).some((contents) => contents.includes(value))
+    )
+    if (leaked.length)
+      throw new Error(
+        `The ${profile} association files would list the development app (${leaked.join(', ')})`
+      )
+  }
+  return files
+}
+
+/**
+ * Replaces `directory`'s `.well-known/` with `profile`'s association files and
+ * nothing else.
+ */
+export function writeAssociationFiles(directory, profile) {
+  const files = associationFiles(profile)
+  fs.rmSync(path.join(directory, '.well-known'), {
+    recursive: true,
+    force: true,
+  })
+  for (const [file, contents] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(directory, file)), { recursive: true })
+    fs.writeFileSync(path.join(directory, file), contents)
+  }
+}
+
+/**
+ * Refuses an export whose `.well-known/` isn't exactly `profile`'s association
+ * files, byte for byte.
+ */
+export function checkAssociationFiles(directory, profile) {
+  const expected = associationFiles(profile)
+  const wellKnown = path.join(directory, '.well-known')
+  const present = fs.existsSync(wellKnown)
+    ? listFiles(wellKnown).map((file) => `.well-known/${file}`)
+    : []
+  const wrong = [...new Set([...present, ...Object.keys(expected)])].filter(
+    (file) =>
+      !present.includes(file) ||
+      expected[file] === undefined ||
+      fs.readFileSync(path.join(directory, file), 'utf8') !== expected[file]
+  )
+  if (wrong.length)
+    throw new Error(
+      `${path.basename(directory)}/ doesn't hold the ${profile} association files: ${wrong.join(', ')}`
+    )
+}
 
 /**
  * Values a native build may carry that a web bundle must not: everyone can read
@@ -339,6 +454,9 @@ function main() {
     )
   )
   try {
+    // Each profile's own association files, never ones from another
+    // environment (`config/web-associations.json`).
+    writeAssociationFiles(output, profile)
     checkExport(output, excluded)
   } catch (error) {
     fs.rmSync(output, { recursive: true, force: true })

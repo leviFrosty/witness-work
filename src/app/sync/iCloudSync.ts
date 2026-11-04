@@ -49,6 +49,7 @@ import { AppState, AppStateStatus } from 'react-native'
 import {
   addBackgroundListener,
   addForegroundListener,
+  addWindowFocusListener,
 } from '@/lib/appLifecycle'
 import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -2895,7 +2896,7 @@ export function installiCloudSync(): () => void {
   // events cover other devices' changes meanwhile.
   let lastForegroundCatchUpAt = 0
   let launchCatchUpStarted = false
-  const foregroundSub = addForegroundListener(() => {
+  const catchUpOnReturn = () => {
     launchCatchUpStarted = true
     // A fresh retry budget.
     resetPushBackoff()
@@ -2909,6 +2910,12 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = now
     // Fire and forget — errors are already handled inside the steps.
     void catchUp('foreground')
+  }
+  const foregroundSub = addForegroundListener(catchUpOnReturn)
+  // The web window getting focus counts too (a click back into a window that
+  // stayed visible), under the same throttle. Never runs on the phones.
+  const focusSub = addWindowFocusListener(() => {
+    if (AppState.currentState === 'active') catchUpOnReturn()
   })
   // A full Cloud Sync account has room again (a photo deleted here or on
   // another device): photos stuck on it retry now, not at the next foreground.
@@ -3026,6 +3033,7 @@ export function installiCloudSync(): () => void {
     unsubUpdateRequired()
     appStateSub.remove()
     foregroundSub.remove()
+    focusSub.remove()
     backgroundSub.remove()
     reconnectSub.remove()
     platformSyncTransport().setShouldPoll?.(() => true)

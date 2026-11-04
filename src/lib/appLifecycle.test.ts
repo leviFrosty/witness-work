@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const appState = vi.hoisted(() => ({
+  os: 'web',
   currentState: 'active',
   handlers: [] as ((state: string) => void)[],
 }))
 vi.mock('react-native', () => ({
+  Platform: {
+    get OS() {
+      return appState.os
+    },
+  },
   AppState: {
     get currentState() {
       return appState.currentState
@@ -26,6 +32,7 @@ describe('appLifecycle', () => {
     vi.resetModules()
     appState.handlers = []
     appState.currentState = 'active'
+    appState.os = 'web'
     refreshLocalTimeOffset.mockReset()
   })
 
@@ -107,5 +114,42 @@ describe('appLifecycle', () => {
     emit('background')
     emit('active')
     expect(zoneRefreshedFirst).toHaveReturnedWith(1)
+  })
+
+  describe('addWindowFocusListener', () => {
+    const windowEvents = () => {
+      const handlers = new Map<string, Set<() => void>>()
+      vi.stubGlobal('addEventListener', (type: string, h: () => void) => {
+        handlers.set(type, (handlers.get(type) ?? new Set()).add(h))
+      })
+      vi.stubGlobal('removeEventListener', (type: string, h: () => void) => {
+        handlers.get(type)?.delete(h)
+      })
+      return (type: string) => handlers.get(type)?.forEach((h) => h())
+    }
+
+    it('runs when the window gets focus, until removed', async () => {
+      const fire = windowEvents()
+      const { addWindowFocusListener } = await import('@/lib/appLifecycle')
+      const listener = vi.fn()
+      const subscription = addWindowFocusListener(listener)
+      fire('focus')
+      expect(listener).toHaveBeenCalledTimes(1)
+      subscription.remove()
+      fire('focus')
+      expect(listener).toHaveBeenCalledTimes(1)
+      vi.unstubAllGlobals()
+    })
+
+    it('does nothing off the web', async () => {
+      const fire = windowEvents()
+      appState.os = 'ios'
+      const { addWindowFocusListener } = await import('@/lib/appLifecycle')
+      const listener = vi.fn()
+      addWindowFocusListener(listener).remove()
+      fire('focus')
+      expect(listener).not.toHaveBeenCalled()
+      vi.unstubAllGlobals()
+    })
   })
 })

@@ -101,14 +101,25 @@ export function setI18nLocale(locale: TranslatedLocale): void {
     const translations = translationLoaders[locale]()
     if (translations instanceof Promise)
       loading.push(
-        translations.then((loaded) => _i18n.store({ [locale]: loaded }))
+        translations.then(
+          (loaded) => _i18n.store({ [locale]: loaded }),
+          () => {
+            // Offline, or the file is gone (a deploy replaced it): English
+            // answers (`enableFallback`) instead of a page that never
+            // renders, and the next try loads it again.
+            loadedLocales.delete(locale)
+          }
+        )
       )
     else _i18n.store({ [locale]: translations })
   }
   _i18n.locale = locale
 }
 
-/** Settles once every language asked for so far has loaded (web only). */
+/**
+ * Settles once every language asked for so far has loaded or failed to (web
+ * only); a language that failed shows in English until it can load.
+ */
 export const translationsLoaded = () => Promise.all(loading)
 
 // Set up the language and date conventions before anything renders, and for

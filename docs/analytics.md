@@ -65,6 +65,8 @@ phone browser reports iOS or Android, and `$app_version` is unset.
 | `account_backup_failed`                                                           | Once per UTC day and reason; which failures affect people, not how often a phone retries.                                                                                                                                          |
 | `account_session_failed`                                                          | Once per UTC day and reason; which devices can't open an account session, not how often one retries.                                                                                                                               |
 | `web_storage_failed`                                                              | Once per UTC day and reason; which browsers can't save, not how often one retries.                                                                                                                                                 |
+| `web_update_prompted`                                                             | Once per session; how many tabs fall behind, not how often the prompt returns after being closed.                                                                                                                                  |
+| `web_install_banner_shown`                                                        | Once per session; reach of the Install App banner, not every reload.                                                                                                                                                               |
 | `cloud_sync_photos_storage_full`                                                  | Once per UTC day per device; how many devices meet a full account's photo storage, not how many photos fail.                                                                                                                       |
 | `cloud_sync_photo_transfer_failed`                                                | Once per UTC day, `source` and `reason`; which photo failures affect people, not how often a phone retries.                                                                                                                        |
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
@@ -1237,6 +1239,22 @@ and how often people open it in more than one tab. Saves that work send nothing.
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason.                                                | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
 | `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one; sent by the tab that took over, after it reloads. | None.                                                                                                                                                                  |
+
+### Web updates and install
+
+These answer whether people take a new version when WitnessWork offers it, how
+often a tab left open falls behind, and whether the Install App banner gets
+Android visitors to install (ADR 0037 §6, §7; [`web-offline.md`](web-offline.md)).
+None carries a property.
+
+| Event                          | When                                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `web_update_prompted`          | The update prompt showed for a new version waiting. Once per session.                                 |
+| `web_update_accepted`          | The User chose Reload on the update prompt.                                                           |
+| `web_stale_chunk_reload`       | A tab open across a deploy asked for a file the new version no longer has, and reloaded itself, once. |
+| `web_install_banner_shown`     | The Install App banner showed on an Android browser that can install the web app. Once per session.   |
+| `web_install_accepted`         | The User chose Install and accepted the browser's own prompt. A prompt they closed sends nothing.     |
+| `web_install_banner_dismissed` | The User closed the banner with its X, and it stays closed.                                           |
 
 ### Web sessions
 

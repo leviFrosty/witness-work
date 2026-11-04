@@ -18,6 +18,8 @@ import SurveyProvider from '@/providers/SurveyProvider'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
+import WebBannersLayout from '@/app/web-banners/WebBannersLayout'
+import WebOfflineRuntime from '@/app/web-offline/WebOfflineRuntime'
 import SystemBars from '@/app/components/SystemBars'
 import DisplayRegionsObserver from '@/components/DisplayRegionsObserver'
 import LaunchSplash from '@/app/launch/LaunchSplash'
@@ -157,68 +159,71 @@ function UnlockedApp() {
                   preload={false}
                   preserveEdgeToEdge
                 >
-                  <NavigationContainer
-                    key={devRemountKey}
-                    ref={navigationRef}
-                    linking={linking}
-                    // Shown while deep links resolve, before the first screen.
-                    fallback={<LaunchSplash />}
-                    onReady={() => {
-                      // Every link listener is up now.
-                      stopRecordingLaunchLinks()
-                      markLaunched()
-                      reportLaunch()
-                      captureLaunchTiming()
-                      const initialScreen =
-                        navigationRef.current?.getCurrentRoute()?.name
-                      routeNameRef.current = initialScreen
-                      if (initialScreen) analytics.screen(initialScreen)
-                    }}
-                    onStateChange={() => {
-                      const previousScreen = routeNameRef.current
-                      const currentScreen =
-                        navigationRef.current?.getCurrentRoute()?.name
-                      if (currentScreen && currentScreen !== previousScreen) {
-                        analytics.screen(currentScreen, {
-                          previous_screen: previousScreen,
-                        })
-                      }
-                      routeNameRef.current = currentScreen
-                    }}
-                  >
-                    <TamaguiProvider
-                      defaultTheme={
-                        colorScheme
-                          ? colorScheme
-                          : systemColorScheme || undefined
-                      }
-                      config={tamaguiConfig}
+                  <WebBannersLayout>
+                    <NavigationContainer
+                      key={devRemountKey}
+                      ref={navigationRef}
+                      linking={linking}
+                      // Shown while deep links resolve, before the first screen.
+                      fallback={<LaunchSplash />}
+                      onReady={() => {
+                        // Every link listener is up now.
+                        stopRecordingLaunchLinks()
+                        markLaunched()
+                        reportLaunch()
+                        captureLaunchTiming()
+                        const initialScreen =
+                          navigationRef.current?.getCurrentRoute()?.name
+                        routeNameRef.current = initialScreen
+                        if (initialScreen) analytics.screen(initialScreen)
+                      }}
+                      onStateChange={() => {
+                        const previousScreen = routeNameRef.current
+                        const currentScreen =
+                          navigationRef.current?.getCurrentRoute()?.name
+                        if (currentScreen && currentScreen !== previousScreen) {
+                          analytics.screen(currentScreen, {
+                            previous_screen: previousScreen,
+                          })
+                        }
+                        routeNameRef.current = currentScreen
+                      }}
                     >
-                      <SystemBars />
-                      <ConfettiProvider>
-                        <AnimationViewProvider>
-                          <SurveyProvider>
-                            <DeepLinkListeners />
-                            <BuddiesRuntime />
-                            <BadgesRuntime />
-                            <NotificationResponseListener />
-                            <SilentForegroundAlerts />
-                            <SystemMenu language={loadedLocale} />
-                            <RootStackComponent />
-                            <ToastHost />
-                            <WebStorageNotices />
-                            <PointerTooltipLayer />
-                            <WebFocusStyles />
-                            <UpdateRequiredGate />
-                            {/* The web's check before sensitive actions. */}
-                            {isWeb && <StepUpSheet />}
-                            {/* Last, so it covers everything else. */}
-                            <AppLockGate />
-                          </SurveyProvider>
-                        </AnimationViewProvider>
-                      </ConfettiProvider>
-                    </TamaguiProvider>
-                  </NavigationContainer>
+                      <TamaguiProvider
+                        defaultTheme={
+                          colorScheme
+                            ? colorScheme
+                            : systemColorScheme || undefined
+                        }
+                        config={tamaguiConfig}
+                      >
+                        <SystemBars />
+                        <ConfettiProvider>
+                          <AnimationViewProvider>
+                            <SurveyProvider>
+                              <DeepLinkListeners />
+                              <BuddiesRuntime />
+                              <BadgesRuntime />
+                              <NotificationResponseListener />
+                              <SilentForegroundAlerts />
+                              <SystemMenu language={loadedLocale} />
+                              <RootStackComponent />
+                              <ToastHost />
+                              <WebStorageNotices />
+                              <WebOfflineRuntime />
+                              <PointerTooltipLayer />
+                              <WebFocusStyles />
+                              <UpdateRequiredGate />
+                              {/* The web's check before sensitive actions. */}
+                              {isWeb && <StepUpSheet />}
+                              {/* Last, so it covers everything else. */}
+                              <AppLockGate />
+                            </SurveyProvider>
+                          </AnimationViewProvider>
+                        </ConfettiProvider>
+                      </TamaguiProvider>
+                    </NavigationContainer>
+                  </WebBannersLayout>
                 </KeyboardProvider>
               </PopoverTouchShield>
             </GestureHandlerRootView>

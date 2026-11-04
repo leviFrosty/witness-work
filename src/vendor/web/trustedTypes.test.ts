@@ -29,6 +29,7 @@ describe('the chunk policy', () => {
       'javascript:alert(1)',
       'blob:https://app.witnesswork.app/0b2c',
       '/assets/evil.js',
+      '/sw.js',
       '/_expo/static/js/web/',
       '/_expo/static/js/web/../../../upload.js',
       '/_expo/static/js/web/%2e%2e/upload.js',
@@ -38,6 +39,23 @@ describe('the chunk policy', () => {
       '/_expo/static/js/web/chunk.json',
     ])
       expect(() => chunkURL(url, APP), url).toThrow(TypeError)
+  })
+
+  it('takes the service worker’s file, and only that one', async () => {
+    const { workerURL, workerScriptURL, createChunkPolicy } = await load()
+    expect(workerURL('/sw.js', APP)).toBe('https://app.witnesswork.app/sw.js')
+    for (const url of [
+      '/sw.js?x=1',
+      '/sw.js#x',
+      '/sw.js/',
+      '/other/sw.js',
+      'https://evil.example/sw.js',
+      CHUNK,
+    ])
+      expect(() => workerURL(url, APP), url).toThrow(TypeError)
+    vi.stubGlobal('location', new URL(APP))
+    createChunkPolicy()
+    expect(workerScriptURL()).toBe('https://app.witnesswork.app/sw.js')
   })
 
   it('has a name the CSP allows, as the note editor’s paste policy does', async () => {

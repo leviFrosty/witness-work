@@ -1,6 +1,7 @@
 import { LoadSkiaWeb } from '@shopify/react-native-skia/lib/module/web'
 import { registerRootComponent } from 'expo'
 import type { WebTabMessage } from '@/lib/serverAccount/webTabs'
+import { startInstallPromptCapture } from '@/lib/webInstall/installPrompt'
 import { webStorageBoot } from '@/lib/webStorage/boot'
 
 /**
@@ -20,6 +21,8 @@ import { webStorageBoot } from '@/lib/webStorage/boot'
  * While WitnessWork is open in another tab, this tab shows that instead.
  */
 export function beforeAppLoads(loadApp: () => void) {
+  // The browser offers its install prompt once, maybe before the app renders.
+  startInstallPromptCapture()
   const storage = webStorageBoot.prepare()
   void Promise.all([
     LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' }),

@@ -8,6 +8,7 @@ import {
   WEB_EXCLUDED_KEYS,
   buildSteps,
   checkExport,
+  checkServiceWorker,
   environments,
   filesContaining,
   loadWebEnv,
@@ -16,6 +17,7 @@ import {
   runBuildSteps,
   unservedReferences,
 } from '../web.mjs'
+import { precachePatterns } from '../web-sw.mjs'
 
 const directories = []
 function fixture() {
@@ -343,4 +345,51 @@ test('the export check finds files the export loads but the host would not serve
   fs.rmSync(path.join(root, 'other.css'))
   write(root, 'other.js', `"/${font.replace('@', '%40')}"`)
   assert.deepEqual(unservedReferences(root), [])
+})
+
+test('an export whose service worker misses the shell, an entry chunk or an asset is refused', () => {
+  const root = fixture()
+  const entry = '_expo/static/js/web/index-1a2b.js'
+  const font = 'assets/node_modules/@expo-google-fonts/inter/Inter.0f.ttf'
+  write(root, 'index.html', `<script src="/${entry}" defer></script>`)
+  write(root, entry, '')
+  write(root, font, 'ttf')
+  assert.throws(() => checkServiceWorker(root), /has no sw\.js/)
+  write(root, 'sw.js', `[{"url":"/index.html"},{"url":"/${entry}"}]`)
+  // The shell and entry are there; the font isn't.
+  assert.throws(() => checkServiceWorker(root), /precache.*google-fonts/)
+  write(
+    root,
+    'sw.js',
+    `[{"url":"/index.html"},{"url":"/${entry}"},{"url":"/${font}"}]`
+  )
+  checkServiceWorker(root)
+  write(root, 'sw.js', `[{"url":"/${entry}"},{"url":"/${font}"}]`)
+  assert.throws(() => checkServiceWorker(root), /precache \/index\.html/)
+})
+
+test('the worker precaches English and the on-demand chunks, not the other languages', () => {
+  const root = fixture()
+  const hash = (n) => String(n).repeat(32).slice(0, 32)
+  const dir = '_expo/static/js/web'
+  const entry = `${dir}/index-${hash(1)}.js`
+  write(root, 'index.html', `<script src="/${entry}" defer></script>`)
+  for (const name of [
+    `index-${hash(1)}`,
+    `index-${hash(2)}`,
+    `sql-wasm-browser-${hash(3)}`,
+    `en-US-${hash(4)}`,
+    `de-DE-${hash(5)}`,
+    `bem-ZM-${hash(6)}`,
+    `ar-${hash(7)}`,
+  ])
+    write(root, `${dir}/${name}.js`, '')
+  const chunks = precachePatterns(root)
+    .filter((pattern) => pattern.startsWith(dir))
+    .map((pattern) => path.basename(pattern).replace(/-[0-9a-f]{32}/, ''))
+  assert.deepEqual([...new Set(chunks)].sort(), [
+    'en-US.js',
+    'index.js',
+    'sql-wasm-browser.js',
+  ])
 })

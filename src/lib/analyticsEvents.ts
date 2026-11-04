@@ -285,6 +285,13 @@ export const analyticsEventNames = [
   // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
   'web_storage_failed',
   'web_tab_taken_over',
+  // Updates and install on the web (docs/web-offline.md).
+  'web_install_accepted',
+  'web_install_banner_dismissed',
+  'web_install_banner_shown',
+  'web_stale_chunk_reload',
+  'web_update_accepted',
+  'web_update_prompted',
   // A downloaded OTA update applied from the tray instead of the next launch.
   'pending_update_applied',
   // Expected device state kept out of error tracking.

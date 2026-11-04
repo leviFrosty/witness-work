@@ -186,6 +186,39 @@ describe('fetchAppConfig', () => {
     })
   })
 
+  it("reads the visitor's country and region", async () => {
+    const read = (body: Record<string, unknown>) =>
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({ ok: true, ...body }) as unknown as typeof fetch
+      ).then((config) => config.location)
+    await expect(read({ country: 'CA', regionCode: 'MB' })).resolves.toEqual({
+      country: 'CA',
+      regionCode: 'MB',
+    })
+    await expect(read({ country: 'us', regionCode: 'tx' })).resolves.toEqual({
+      country: 'US',
+      regionCode: 'TX',
+    })
+    await expect(read({ country: 'CA', regionCode: null })).resolves.toEqual({
+      country: 'CA',
+      regionCode: null,
+    })
+    // Unknown, or nonsense: no region without a country.
+    for (const country of [null, 'XX', 'T1', 'CAN', 7]) {
+      await expect(read({ country, regionCode: 'MB' })).resolves.toEqual({
+        country: null,
+        regionCode: null,
+      })
+    }
+    await expect(read({ country: 'CA', regionCode: 'M B' })).resolves.toEqual({
+      country: 'CA',
+      regionCode: null,
+    })
+    // A worker from before them sends neither.
+    await expect(read({})).resolves.toBeUndefined()
+  })
+
   it('asks for Cloud Sync for everyone', async () => {
     // ww-api answers `everyone` only to an app that says it can take it (ADR
     // 0040 §2); an older app reads `supporter`.

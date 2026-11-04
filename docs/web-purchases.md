@@ -245,12 +245,19 @@ the visitor's country, and Stripe checks the card and billing country.
   of web prices and Buy buttons. It points them to WitnessWork in the App
   Store and on Google Play, where the stores sell and handle tax. The benefits
   still show.
-- **The country** is the visitor's country from Cloudflare (`loc=` in the
-  app origin's `/cdn-cgi/trace`), read once per launch. Session replay's EU
-  and UK opt-in uses the same signal (ADR 0043). On `localhost`, a development
-  build can force a country to test the notice.
+- **The location** is the visitor's country and province as Cloudflare sees
+  them: `country` and `regionCode` in ww-api's `GET /app/v1/config`, read
+  once per launch and shared with the app's own config check. When the config
+  can't be read in 5 seconds, or has no `country` (an older worker), the
+  country comes from `loc=` in the app origin's `/cdn-cgi/trace`, with no
+  province. The app's static Worker stays file-only (ADR 0037 §3). Session
+  replay's EU and UK opt-in uses the same country (ADR 0043). On `localhost`,
+  a development build can force a country or province to test the notice
+  (`?dev_country=GB`, `?dev_country=CA-MB`).
 - **An unknown country** (no answer, Tor's `T1`, or Cloudflare's `XX`) gets
   the prices. Stripe's check still stands behind it.
+- **An unknown province** in a country with blocked provinces (Canada) gets
+  the notice, since Stripe has no province check to stand behind it.
 - **Countries with a registration threshold** stay open. We review sales
   against those thresholds and register or block before reaching one.
 - **Stripe** blocks payments whose card country or billing country is in the
@@ -260,11 +267,12 @@ the visitor's country, and Stripe checks the card and billing country.
   full billing address, so the billing country is known. A blocked checkout
   fails at payment, before any charge. Setup checks in the sandbox that the
   rules also stop a renewal, and a card changed in the customer portal.
-- **The list** is one constant in the app, mirrored by the Radar list and by
-  the terms page's list (`services/marketing/src/lib/noWebSaleCountries.ts`).
-  Change all three together, and bump the Terms' Updated date. Tests in the
-  app and in `services/marketing` (which services CI runs before the site
-  deploys) fail when the two lists differ. It holds:
+- **The list** is two constants in the app, countries and provinces,
+  mirrored by the Radar list (countries only) and by the terms page's list
+  (`services/marketing/src/lib/noWebSaleCountries.ts`). Change them together,
+  and bump the Terms' Updated date. Tests in the app and in
+  `services/marketing` (which services CI runs before the site deploys) fail
+  when the two lists differ. It holds:
   - the EU-27: `AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL
 PT RO SK SI ES SE`;
   - the UK, `GB`;
@@ -274,17 +282,16 @@ PT RO SK SI ES SE`;
   - the countries that tax digital sales from the first sale: `AL AO AM AW BS
 BH BD CM CL CO GE GH GN IN CI KZ KE KG LA MR MX MD ME MA MK OM PE RU SA SN
 RS KR TJ TZ TR AE UY UZ VN`;
-  - Canada, `CA`, for now. Manitoba and Saskatchewan tax from the first
-    sale, and the web's country signal has no province, so all of Canada is
-    blocked.
+  - Manitoba and Saskatchewan, `CA-MB` and `CA-SK`, which tax digital sales
+    from the first sale. The rest of Canada stays open.
 
   Jersey (`JE`) and Guernsey (`GG`) are outside the UK VAT area, and aren't
   in the list.
 
-- **Stripe can't block a province:** Radar blocks card and billing countries
-  only. The web blocks all of Canada until it can see the visitor's province
-  (for example from a same-origin Worker path, or ww-api's app config, reading
-  Cloudflare's `regionCode`), then only Manitoba and Saskatchewan.
+- **Provinces are the paywall's check alone:** Radar blocks card and billing
+  countries only, so Stripe doesn't check Manitoba and Saskatchewan. We
+  accept that limit: the paywall blocks both provinces, and blocks Canada
+  whenever it can't tell the province.
 - **The terms page** names the list from that module: the EU-27 as "the
   European Union", the rest alphabetically.
 

@@ -1,5 +1,5 @@
 import { appVariant } from '@/lib/appVariant'
-import { useVisitorCountry } from '@/hooks/useVisitorCountry'
+import { useVisitorLocation } from '@/hooks/useVisitorLocation'
 import { webStores } from '@/lib/webStorage/webStores'
 import { useWebCheckoutCustomer } from '@/features/supporter/hooks/useWebCheckoutCustomer'
 import {
@@ -21,15 +21,15 @@ const SAVE_TIMEOUT_MS = 1_000
  * Buy on the web opens RevenueCat's hosted checkout in this tab
  * (docs/web-purchases.md "Links"), never `purchasePackage`. It's available once
  * the offering has a link, the customer is settled, and the visitor's country
- * gets web prices.
+ * and province get web prices.
  */
 export default function useWebCheckout(): WebCheckout {
   const { appUserId, waitingFor } = useWebCheckoutCustomer()
-  const visitor = useVisitorCountry()
+  const visitor = useVisitorLocation()
   const region =
     visitor.status === 'loading'
       ? 'loading'
-      : webSalesAllowed(visitor.country)
+      : webSalesAllowed(visitor)
         ? 'allowed'
         : 'blocked'
 

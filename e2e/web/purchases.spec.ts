@@ -2,7 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Page, Request } from '@playwright/test'
 import type { Catalog } from './revenueCat'
-import { NO_WEB_SALES_COUNTRIES } from '../../src/features/supporter/lib/webSalesRegions'
+import { webSalesAllowed } from '../../src/features/supporter/lib/webSalesRegions'
+import { parseDevLocation } from '../../src/lib/visitorLocation'
 import {
   expect,
   openBlankOnOrigin,
@@ -266,49 +267,138 @@ test.describe('the web paywall', () => {
   })
 })
 
+/** The notice in place of prices, with real store links in a new tab. */
+async function expectRegionNotice(app: Page) {
+  await expect(app.getByText(en.paywallRegionTitleWeb)).toBeVisible()
+  for (const [name, href] of [
+    [en.paywallRegionAppStoreWeb, 'https://apps.apple.com/app/id6469723047'],
+    [
+      en.paywallRegionPlayStoreWeb,
+      'https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime',
+    ],
+  ]) {
+    const link = app.getByRole('link', { name })
+    await expect(link).toBeVisible()
+    await expect(link).toHaveAttribute('href', href)
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    const box = await link.boundingBox()
+    expect(box!.height).toBeGreaterThanOrEqual(44)
+  }
+  await expect(app.getByText('$14.99')).toHaveCount(0)
+  await expect(app.getByText(/^Become a Supporter — /)).toHaveCount(0)
+}
+
+async function expectPrices(app: Page) {
+  await expect(app.getByText('$14.99').first()).toBeVisible()
+  await expect(app.getByText(en.paywallRegionTitleWeb)).toHaveCount(0)
+}
+
+/**
+ * Answers ww-api's `GET /app/v1/config` with `body` (the ww-api change that
+ * adds `country` and `regionCode` isn't on the dev worker yet), and the app
+ * origin's `/cdn-cgi/trace` with `loc=<trace>`, then starts a new launch.
+ */
+async function launchWith(
+  page: Page,
+  { config, trace }: { config: Record<string, unknown>; trace: string }
+) {
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': '*',
+  }
+  await page.route('**/app/v1/config*', (route) =>
+    route.request().method() === 'OPTIONS'
+      ? route.fulfill({ status: 204, headers: cors })
+      : route.fulfill({
+          headers: cors,
+          json: { ok: true, minAppVersion: null, sync: null, ...config },
+        })
+  )
+  await page.route('**/cdn-cgi/trace', (route) =>
+    route.fulfill({
+      contentType: 'text/plain',
+      body: `fl=1\nloc=${trace}\ntls=TLSv1.3\n`,
+    })
+  )
+  await page.reload()
+}
+
 test.describe('the region notice', () => {
-  for (const country of ['GB', 'MX']) {
-    test(`follows the sales list for ${country}`, async ({
-      page,
-      app,
-      shot,
-    }) => {
-      await page.goto(`/?dev_country=${country}`)
+  for (const [place, blocked] of [
+    ['GB', true],
+    ['MX', true],
+    ['CA-MB', true],
+    ['CA-SK', true],
+    ['CA-ON', false],
+    ['US', false],
+  ] as const) {
+    test(`follows the sales list for ${place}`, async ({ page, app, shot }) => {
+      expect(webSalesAllowed(parseDevLocation(place))).toBe(!blocked)
+      await page.goto(`/?dev_country=${place}`)
       await expect(page).not.toHaveURL(/dev_country/)
       await openPaywall(app)
-      if (NO_WEB_SALES_COUNTRIES.has(country)) {
-        await expect(app.getByText(en.paywallRegionTitleWeb)).toBeVisible()
-        // Real links, to pages with no ids, in a new tab.
-        for (const [name, href] of [
-          [
-            en.paywallRegionAppStoreWeb,
-            'https://apps.apple.com/app/id6469723047',
-          ],
-          [
-            en.paywallRegionPlayStoreWeb,
-            'https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime',
-          ],
-        ]) {
-          const link = app.getByRole('link', { name })
-          await expect(link).toBeVisible()
-          await expect(link).toHaveAttribute('href', href)
-          await expect(link).toHaveAttribute('target', '_blank')
-          await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
-          const box = await link.boundingBox()
-          expect(box!.height).toBeGreaterThanOrEqual(44)
-        }
-        await expect(app.getByText('$14.99')).toHaveCount(0)
-        await expect(app.getByText(/^Become a Supporter — /)).toHaveCount(0)
+      if (blocked) {
+        await expectRegionNotice(app)
         await app
           .getByRole('link', { name: en.paywallRegionPlayStoreWeb })
           .scrollIntoViewIfNeeded()
-        await shot(`region-notice-${country}`)
+        await shot(`region-notice-${place}`)
       } else {
-        await expect(app.getByText('$14.99').first()).toBeVisible()
-        await expect(app.getByText(en.paywallRegionTitleWeb)).toHaveCount(0)
+        await expectPrices(app)
       }
     })
   }
+
+  test("follows the app config's province (Manitoba)", async ({
+    page,
+    app,
+  }) => {
+    await launchWith(page, {
+      config: { country: 'CA', regionCode: 'MB' },
+      trace: 'US',
+    })
+    await openPaywall(app)
+    await expectRegionNotice(app)
+  })
+
+  test("follows the app config's province (Ontario)", async ({ page, app }) => {
+    await launchWith(page, {
+      config: { country: 'CA', regionCode: 'ON' },
+      trace: 'GB',
+    })
+    await openPaywall(app)
+    await expectPrices(app)
+  })
+
+  test('blocks Canada when the config has no province', async ({
+    page,
+    app,
+  }) => {
+    await launchWith(page, {
+      config: { country: 'CA', regionCode: null },
+      trace: 'US',
+    })
+    await openPaywall(app)
+    await expectRegionNotice(app)
+  })
+
+  test('falls back to the trace for an older worker', async ({ page, app }) => {
+    // No `country` in the config: the trace's Canada, with no province.
+    await launchWith(page, { config: {}, trace: 'CA' })
+    await openPaywall(app)
+    await expectRegionNotice(app)
+  })
+
+  test('falls back to the trace, which can allow, for an older worker', async ({
+    page,
+    app,
+  }) => {
+    await launchWith(page, { config: {}, trace: 'US' })
+    await openPaywall(app)
+    await expectPrices(app)
+  })
 })
 
 test.describe('the checkout return page', () => {

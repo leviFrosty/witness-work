@@ -8,7 +8,10 @@ type LaunchAddress = {
   returnedAppUserId: string | null
   /** The return page came forwarded from another origin, with no id. */
   forwardedReturn: boolean
-  /** `?dev_country=`, honored only in a development build on localhost. */
+  /**
+   * `?dev_country=` (`GB`, or `CA-MB` for a province), honored only in a
+   * development build on localhost.
+   */
   devCountry: string | null
   /** `?dev_buy_gate=1`, honored only in a development build on localhost. */
   devBuyGate: boolean
@@ -39,7 +42,10 @@ export const returnedAppUserId = (): string | null => launch.returnedAppUserId
  */
 export const forwardedReturn = (): boolean => launch.forwardedReturn
 
-/** The country a development build on localhost was asked to pretend. */
+/**
+ * The country, or country and region (`CA-MB`), a development build on
+ * localhost was asked to pretend.
+ */
 export const devCountryOverride = (): string | null => launch.devCountry
 
 /**

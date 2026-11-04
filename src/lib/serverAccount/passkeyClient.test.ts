@@ -569,6 +569,19 @@ describe('passkey failures', () => {
       reason: 'timeout-or-duplicate',
       retryAfterMs: null,
     })
+    expect(
+      await failureOf(403, {
+        error: 'turnstile_failed',
+        reason: 'x'.repeat(500),
+      })
+    ).toMatchObject({ failure: 'turnstileFailed', reason: 'other' })
+    expect(
+      await failureOf(403, { error: 'turnstile_failed', reason: 7 })
+    ).toMatchObject({ failure: 'turnstileFailed', reason: null })
+    expect(await failureOf(403, { error: 'turnstile_failed' })).toMatchObject({
+      failure: 'turnstileFailed',
+      reason: null,
+    })
     expect(await failureOf(403, { error: 'step_up_required' })).toMatchObject({
       failure: 'stepUpRequired',
     })

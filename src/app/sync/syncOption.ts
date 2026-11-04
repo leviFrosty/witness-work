@@ -1,5 +1,5 @@
-import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {

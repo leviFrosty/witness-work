@@ -159,7 +159,7 @@ const SignInWithQrScreen = () => {
                   (restored || synced) &&
                   !usePreferences.getState().onboardingComplete
                 )
-                  completeOnboardingFromRestore()
+                  completeOnboardingFromRestore('account_backup')
                 navigation.goBack()
               },
               testID: 'handoff-done',
@@ -314,7 +314,7 @@ const SignInWithQrScreen = () => {
         onDone={() => navigation.goBack()}
         onRestored={() => {
           if (!usePreferences.getState().onboardingComplete)
-            completeOnboardingFromRestore()
+            completeOnboardingFromRestore('account_backup')
         }}
       />
     </Wrapper>

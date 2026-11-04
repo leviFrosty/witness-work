@@ -3,11 +3,12 @@ import { analytics } from '@/lib/analytics'
 import { usePreferences } from '@/stores/preferences'
 
 /**
- * The User went through every onboarding step. On a new install the server
- * account exists only now, so this is when it can first be offered a passkey:
- * the tray's gentle prompt waits for it (ADR 0038 §9). Someone who already
- * answered the Save a Passkey step (saved one, or said Not Now) isn't asked
- * again; the prompt's own rules see to that.
+ * The User went through every onboarding step, on a new install or after
+ * Restart Onboarding. On a new install the server account exists only now, so
+ * this is when it can first be offered a passkey: the tray's gentle prompt
+ * waits for it (ADR 0038 §9). Someone who already answered the Save a Passkey
+ * step (saved one, or said Not Now) isn't asked again; the prompt's own rules
+ * see to that.
  */
 export function completeGuidedOnboarding(): void {
   usePreferences.getState().set({

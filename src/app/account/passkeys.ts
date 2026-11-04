@@ -122,8 +122,6 @@ export async function loadPasskeys(): Promise<LoadedPasskeys> {
 export const phonePasskeySupport = (): Promise<PasskeySupport> =>
   passkeySupport()
 
-export type { PasskeyAddSource }
-
 /**
  * Tools and the verify harness: the next Add a Passkey ends with this result
  * instead of opening the system's sheet. Cleared once used.

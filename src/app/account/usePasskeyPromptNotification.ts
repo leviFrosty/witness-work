@@ -40,24 +40,22 @@ export const recheckPasskeyOffer = () => {
   recheckListeners.forEach((listener) => listener())
 }
 
+/** A clock set back before the check makes it old, not fresh. */
 const freshCheck = (): OfferCheck | null => {
-  const account = passkeyAccountId()
-  return lastCheck &&
-    lastCheck.account === account &&
-    Date.now() - lastCheck.at < OFFER_CHECK_TTL_MS
-    ? lastCheck
-    : null
+  if (!lastCheck || lastCheck.account !== passkeyAccountId()) return null
+  const age = Date.now() - lastCheck.at
+  return age >= 0 && age < OFFER_CHECK_TTL_MS ? lastCheck : null
 }
 
 /**
  * The gentle prompt to save a passkey (ADR 0038 §9), in the tray: for someone
  * whose account has none, after they turned on Cloud Sync or backup, set up
- * another device, or finished onboarding on a new install. Add a Passkey runs
- * the Settings flow in place; Not Now backs it off for 30 days and counts
- * toward stopping, while dismissing the row only backs it off (`passkeyPrompt`
- * has the rules). It's listed only once the account is known to have no
- * passkey. A check that couldn't tell (offline, no account yet) is made again
- * when the connection returns, the account opens, or the tray opens.
+ * another device, or went through onboarding's steps. Add a Passkey runs the
+ * Settings flow in place; Not Now backs it off for 30 days and counts toward
+ * stopping, while dismissing the row only backs it off (`passkeyPrompt` has the
+ * rules). It's listed only once the account is known to have no passkey. A
+ * check that couldn't tell (offline, no account yet) is made again when the
+ * connection returns, the account opens, or the tray opens.
  */
 export function usePasskeyPromptNotification(
   now: number

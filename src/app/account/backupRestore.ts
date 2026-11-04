@@ -95,6 +95,14 @@ export type RestoreOutcome =
     }
   | { outcome: 'failed'; reason: RestoreFailure }
 
+/**
+ * The account's records reach this device: restored from its backup, or brought
+ * by Cloud Sync. Onboarding ends then, as their profile and settings replace
+ * the remaining steps.
+ */
+export const recordsCameBack = ({ outcome }: RestoreOutcome): boolean =>
+  outcome === 'restored' || outcome === 'synced'
+
 const failureFrom = (error: unknown): RestoreFailure => {
   if (error instanceof BackupError) {
     if (error.code === 'offline' || error.code === 'unavailable')

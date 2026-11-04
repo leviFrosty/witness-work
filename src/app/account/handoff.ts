@@ -1,5 +1,4 @@
 import { Platform } from 'react-native'
-import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
@@ -12,6 +11,7 @@ import {
 } from '@/app/account/accountKey'
 import { backUpNow } from '@/app/account/backup'
 import { offerRestore, type RestoreOutcome } from '@/app/account/backupRestore'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import {
   type AccountKeyLoss,

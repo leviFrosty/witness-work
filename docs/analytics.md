@@ -203,15 +203,15 @@ Once something has been imported there, the button reads Continue and sends
 just `onboarding_step_completed`. `elapsed_ms` includes background time and time on other screens.
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
-`publisherType`, `hoursLogging`, `pioneerDate`, `planMonth`, `dataProtection`, `buddies`,
-`passkeys`, `notifications`, `calendarSync`, `defaultNav`, `onboardingBackfill`,
-`profileSetup`, `founderNote`. The flow introduces the app before it asks for
-anything, asks for the name last, and ends on the founder note.
-`intentPicker` and `yourPlanPreview` were retired in October 2026 when `planMonth`
-replaced them. `privacyFirst` and `badges` were retired in October 2026 when
-their content moved into `featureTour`; `profileSetup` moved from after
-`publisherType` to the end, and `founderNote` from after `hero` to the very
-end. `defaultExportMethod` was retired in October 2026: the report method
+`publisherType`, `hoursLogging`, `pioneerDate`, `planMonth`, `dataProtection`,
+`buddies`, `passkeys`, `notifications`, `calendarSync`, `defaultNav`,
+`onboardingBackfill`, `profileSetup`, `founderNote`. The flow introduces the app
+before it asks for anything, asks for the name last, and ends on the founder
+note. `intentPicker` and `yourPlanPreview` were retired in October 2026 when
+`planMonth` replaced them. `privacyFirst` and `badges` were retired in October
+2026 when their content moved into `featureTour`; `profileSetup` moved from
+after `publisherType` to the end, and `founderNote` from after `hero` to the
+very end. `defaultExportMethod` was retired in October 2026: the report method
 defaults to NW Publisher and is chosen above Submit on the report screen. Its
 `onboarding_step_completed` events carried `selected_option`. Compare funnels
 across these changes by step, not position.
@@ -269,9 +269,10 @@ with `source: onboarding`, and Not Now sends `onboarding_step_skipped` with
 
 Notification permission request/result, import availability/skip, and backfill
 completion distinguish friction from deliberate choices. `completion_method` is
-`guided`, `icloud_restore`, `backup_restore`, or `account_backup` (From your other
-phone restored the account's backup). Measure onboarding drop-off over an
-observation window that allows resumption.
+`guided`, `icloud_restore`, `backup_restore`, or `account_backup` (the account's
+backup or Cloud Sync brought the records back after a QR or recovery-key
+sign-in). Measure onboarding drop-off over an observation window that allows
+resumption.
 
 The Home checklist is meant to be finished in the first week: plan a day of
 service, log time (Regular Publishers without Hours Logging check off the
@@ -1208,9 +1209,9 @@ onboarding's Save a Passkey step, or in the tray's gentle prompt.
 | `passkey_add_failed`       | Adding or Let It Unlock ended without a passkey that can do more than before.                                                                                                                                                                                                                                                                                      | `kind: add \| upgrade`, `step: owner \| options \| create \| save \| get`, `reason`: `cancelled` (at that step), a `sign_in_only` reason for Let It Unlock, or `owner_failed`, `not_supported`, `domain_not_associated`, `already_registered`, `no_credentials`, `limit`, `offline`, `timeout`, `update_required`, `unverified`, `unavailable`, `rate_limited`, `conflict`, `failed`. |
 | `passkey_removed`          | The User confirmed Remove and the server removed it.                                                                                                                                                                                                                                                                                                               | `can_unlock` (the removed passkey could), `last_unlocking` (it was the account's only passkey that could unlock).                                                                                                                                                                                                                                                                     |
 | `passkey_onboarding_shown` | Onboarding offered its Save a Passkey step. Once per onboarding, when the flow reaches the step's place; a relaunch or going back to the step doesn't send it again. It's offered only to an account that exists and has no passkey. Adding sends `passkey_added` with `source: onboarding`, and Not Now sends `onboarding_step_skipped` with `step_id: passkeys`. | None.                                                                                                                                                                                                                                                                                                                                                                                 |
-| `passkey_prompt_shown`     | The notifications tray listed the gentle prompt (ADR 0038 §9). Once for each time something earned it, never per render.                                                                                                                                                                                                                                           | `reason: cloud_sync \| backup \| device \| onboarding` (what the User did: turned on Cloud Sync or backup, set up another device, or finished onboarding on a new install).                                                                                                                                                                                                           |
+| `passkey_prompt_shown`     | The notifications tray listed the gentle prompt (ADR 0038 §9). Once for each time something earned it, never per render.                                                                                                                                                                                                                                           | `reason: cloud_sync \| backup \| device \| onboarding` (what the User did: turned on Cloud Sync or backup, set up another device, or went through onboarding's steps to the end, on a new install or after Restart Onboarding).                                                                                                                                                       |
 | `passkey_prompt_tapped`    | The User tapped Add a Passkey on the prompt. Each tap; a failed or cancelled try leaves the prompt up. `passkey_added` or `passkey_add_failed` with `source: prompt` follows.                                                                                                                                                                                      | `reason` as above.                                                                                                                                                                                                                                                                                                                                                                    |
-| `passkey_prompt_dismissed` | Not Now, dismissing the row, or Clear All. It backs off for 30 days.                                                                                                                                                                                                                                                                                               | `reason` as above, `answer: not_now \| dismissed` (`dismissed`: the row's X or Clear All, which doesn't count toward stopping), `stopped` (the second Not Now: it never returns).                                                                                                                                                                                                     |
+| `passkey_prompt_dismissed` | Not Now, dismissing the row, or Clear All. It backs off for 30 days.                                                                                                                                                                                                                                                                                               | `reason` as above, `answer: not_now \| dismissed` (`dismissed`: the row's X or Clear All, which doesn't count toward stopping), `stopped` (this Not Now reached the phone's limit of 2, which carries across accounts: it never returns).                                                                                                                                             |
 
 Never credential ids, the user handle or tag, AAGUIDs or provider names, device
 labels, PRF output, wraps, or the account id.

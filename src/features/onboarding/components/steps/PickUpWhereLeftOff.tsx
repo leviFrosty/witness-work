@@ -1,5 +1,4 @@
 import { usePreferences } from '@/stores/preferences'
-import { useProfile } from '@/stores/profile'
 import { useContacts } from '@/stores/contactsStore'
 import { useConversations } from '@/stores/conversationStore'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -22,6 +21,7 @@ import i18n from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
 import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 import { useBackupImport } from '@/app/sync/useBackupImport'
 import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
 import { hasSyncTransport } from '@/lib/syncTransport/platform'
@@ -103,17 +103,9 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
   }, [icloudAvailable, scribe.status, paperAvailable, isFocused, mode])
   const restoreBackup = async () => {
     if (!(await importBackup())) return
-    analytics.capture('onboarding_completed', {
-      completion_method: 'backup_restore',
-    })
     // Same as iCloud restore: the restored profile replaces the remaining
     // steps, so don't re-prompt for profile or map setup afterwards.
-    usePreferences.getState().set({
-      onboardingComplete: true,
-      onboardingStepId: null,
-      hasCompletedMapOnboarding: true,
-    })
-    useProfile.getState().set({ hasCompletedProfileSetup: true })
+    completeOnboardingFromRestore('backup_restore')
   }
   const selectImport = (importType: HostedImportType) => {
     if (importType === 'backup_json') void restoreBackup()

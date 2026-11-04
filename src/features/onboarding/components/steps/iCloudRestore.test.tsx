@@ -122,10 +122,15 @@ vi.mock('../../../../../modules/icloud-bridge', () => ({
 }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: Object.assign(() => ({ set: runtime.preferencesSet }), {
-    getState: () => ({ iCloudSyncEnabled: true }),
+    getState: () => ({
+      iCloudSyncEnabled: true,
+      set: runtime.preferencesSet,
+    }),
   }),
 }))
-vi.mock('@/stores/profile', () => ({ useProfile: () => ({ set: vi.fn() }) }))
+vi.mock('@/stores/profile', () => ({
+  useProfile: { getState: () => ({ set: vi.fn() }) },
+}))
 
 let renderer: ReactTestRenderer | null = null
 

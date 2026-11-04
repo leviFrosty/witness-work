@@ -23,6 +23,8 @@ Every feature derives its own keys from the account key with its own HKDF label 
 
 ## Requests
 
+`{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-dev.witnesswork.app` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
+
 `POST {BASE}/accounts/v1/{op}`, except the [session](#sessions) routes and `GET /accounts/v1/account`, which have REST paths. A self-signed op sends the Buddies envelope `{ "payload": b64u(UTF-8 JSON), "signature": b64u(Ed25519) }`, or, where the body is something else, the same two in the `x-ww-payload` and `x-ww-signature` headers. The signature covers `UTF-8("ww-account/v1\n" + op + "\n")` followed by the decoded bytes of `payload`, where `op` is the op's name below (`session/open` for `POST /accounts/v1/sessions`), never its path. The context differs from Buddies' `ww-buddies/v1`, so no signature counts for both. Errors use the Buddies error envelope and codes, including `stale` with `serverTime`.
 
 App versions before ww-api #46 send the short legacy names `p` and `s` (and `x-ww-p`/`x-ww-s`). The server still accepts them; every new or changed call sends the long names.

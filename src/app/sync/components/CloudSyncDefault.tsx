@@ -7,7 +7,12 @@ import { prepareCloudSync } from '@/app/sync/cloudSync'
 import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import { analytics } from '@/lib/analytics'
 import { cloudSyncDefaultMayApply } from '@/app/sync/syncDefaults'
+import {
+  cloudSyncDefaultHeld,
+  onCloudSyncDefaultReleased,
+} from '@/app/sync/cloudSyncDefaultHold'
 import { hasSyncTransport } from '@/lib/syncTransport'
+import { onAccountChange } from '@/lib/serverAccount'
 import {
   addActiveRemoteChangeListener,
   cloudSyncOffered,
@@ -22,7 +27,11 @@ import {
  * like the iCloud auto-enable: seed an empty account, pull everything into a
  * device without records, or leave sync off and ask in Settings when both have
  * records. A device already on iCloud or Drive, or one whose User turned sync
- * off, is left alone. Waits for onboarding to finish.
+ * off, is left alone. Waits for onboarding to finish. When the account key is
+ * replaced (a recovery key, a QR code; ADR 0030 §7) it decides again on the new
+ * account at once, whatever it had settled on or was still reading. It decides
+ * nothing while the key is being replaced (`holdCloudSyncDefault`): leaving the
+ * old account turns sync off, and a decision then would read that account.
  */
 export default function CloudSyncDefault() {
   const { isSupporter } = useIsSupporter()
@@ -61,6 +70,9 @@ export default function CloudSyncDefault() {
     let settled = false
     let running = false
     let again = false
+    // Counts account key changes and replaces; a decision that started before
+    // one read the previous account, so it doesn't apply.
+    let generation = 0
     let retrySubs: Array<{ remove: () => void }> | null = null
     const settle = () => {
       settled = true
@@ -101,14 +113,15 @@ export default function CloudSyncDefault() {
     // Under the lock, so a switch (the account's Cloud Sync request, Settings)
     // never runs beside it; one that ran first may have chosen already.
     const decide = async () => {
-      if (settled) return
+      if (settled || cloudSyncDefaultHeld()) return
+      const started = generation
       const live = usePreferences.getState()
       if (live.iCloudSyncEnabled || live.iCloudSyncSetByUser) {
         settle()
         return
       }
       const prepared = await prepareCloudSync()
-      if (settled) return
+      if (settled || cloudSyncDefaultHeld() || started !== generation) return
       if (prepared.outcome !== 'ready') {
         report(prepared.outcome)
         // Offline, or attesting failed for now: try again on return. So
@@ -122,8 +135,20 @@ export default function CloudSyncDefault() {
         else settle()
         return
       }
+      const tokenBefore = usePreferences.getState().cloudSyncAccountToken
       const decision = await iCloudSync.resolveInitialEnable()
-      if (settled) return
+      if (settled || cloudSyncDefaultHeld() || started !== generation) return
+      // The identity check found this device on another server account than
+      // the one it last synced with, turned sync off and recorded the new one
+      // (a recovery key or QR code just replaced the key). Nothing is wrong
+      // now: decide on the new account, not at the next foreground.
+      if (
+        decision.outcome === 'unavailable' &&
+        usePreferences.getState().cloudSyncAccountToken !== tokenBefore
+      ) {
+        again = true
+        return
+      }
       report(decision.outcome)
       switch (decision.outcome) {
         case 'seed':
@@ -153,7 +178,28 @@ export default function CloudSyncDefault() {
     }
     void attempt()
 
-    return settle
+    // The new account has its own records and entitlement, and the first
+    // decision on it may have found this device's identity check turning sync
+    // off, which only a foreground retried.
+    const accountSub = onAccountChange((change) => {
+      if (change !== 'key_changed') return
+      generation += 1
+      settled = false
+      void attempt()
+    })
+
+    // The key replace is over: decide on the account the device is on now.
+    const releaseSub = onCloudSyncDefaultReleased(() => {
+      generation += 1
+      settled = false
+      void attempt()
+    })
+
+    return () => {
+      accountSub()
+      releaseSub()
+      settle()
+    }
   }, [
     onboardingComplete,
     offered,

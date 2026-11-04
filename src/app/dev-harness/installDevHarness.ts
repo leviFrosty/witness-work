@@ -70,6 +70,7 @@ import {
   approvalHarness,
   passkeyPromptHarness,
 } from '@/app/dev-harness/account'
+import { passkeySignInHarness } from '@/app/dev-harness/passkeySignIn'
 import { backupFileHarness } from '@/app/dev-harness/backupFile'
 import { buddiesKeyChangeHarness } from '@/app/dev-harness/buddiesKeyChange'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
@@ -487,6 +488,7 @@ export function installDevHarness() {
      * then `.offer`.
      */
     passkeyPrompt: passkeyPromptHarness,
+    passkeySignIn: passkeySignInHarness,
     /**
      * The account backup: `backup.state()`; `enable()`, `uploadNow()`,
      * `list()`, `inspect()` (decrypted slots as counts), `dryRun()`,

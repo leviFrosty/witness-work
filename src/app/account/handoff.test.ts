@@ -10,6 +10,7 @@ const fake = vi.hoisted(() => ({
   connect: vi.fn(),
   offerRestore: vi.fn(),
   lastAccountId: null as string | null,
+  passkeyKeyArrived: vi.fn(async () => null),
 }))
 
 vi.mock('react-native', () => ({
@@ -37,6 +38,9 @@ vi.mock('@/app/account/accountKey', () => ({
   replaceAccountKey: fake.replaceAccountKey,
 }))
 vi.mock('@/app/account/passkeyPrompt', () => ({ earnPasskeyPrompt: vi.fn() }))
+vi.mock('@/app/account/passkeySignIn', () => ({
+  passkeyKeyArrived: fake.passkeyKeyArrived,
+}))
 vi.mock('@/app/account/backup', () => ({ backUpNow: vi.fn() }))
 vi.mock('@/app/account/backupRestore', () => ({
   offerRestore: fake.offerRestore,
@@ -195,6 +199,22 @@ describe('completeClaimHandoff', () => {
       expect(session.fail).toHaveBeenCalledWith(reason)
     }
   )
+
+  it("lets a passkey that couldn't unlock save its wrap once the key is here", async () => {
+    const session = received()
+    fake.openDetached.mockResolvedValueOnce(opened())
+    await complete(session)
+    expect(fake.passkeyKeyArrived).toHaveBeenCalledWith(
+      session.state.received.accountKey
+    )
+  })
+
+  it('saves no wrap when the handoff fails', async () => {
+    const session = received()
+    fake.openDetached.mockRejectedValueOnce(new AccountSessionError('offline'))
+    await complete(session)
+    expect(fake.passkeyKeyArrived).not.toHaveBeenCalled()
+  })
 })
 
 // The old phone: Allow sends the account key only once the device's owner

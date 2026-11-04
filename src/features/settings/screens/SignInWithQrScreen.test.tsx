@@ -43,6 +43,13 @@ vi.mock('@/app/account/keyChange/status', () => ({
   useKeyChangeStatus: (select: (state: { stage: string | null }) => unknown) =>
     select({ stage: mocks.keyChangeStage }),
 }))
+vi.mock('@/app/account/passkeySignIn', () => ({
+  holdPasskeySignIn: () => () => undefined,
+}))
+vi.mock('@/app/account/backupRestore', () => ({
+  recordsCameBack: ({ outcome }: { outcome: string }) =>
+    outcome === 'restored' || outcome === 'synced',
+}))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/features/settings/components/account/handoff/HandoffCode', () => ({

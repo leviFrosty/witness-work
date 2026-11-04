@@ -201,6 +201,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('accountSecurity_activity'),
   },
   {
+    name: 'Sign In With Passkey',
+    getComponent: () =>
+      require('@/features/settings/screens/SignInWithPasskeyScreen').default,
+    title: () => i18n.t('passkeySignIn_title'),
+  },
+  {
     name: 'Sign In With QR Code',
     getComponent: () =>
       require('@/features/settings/screens/SignInWithQrScreen').default,

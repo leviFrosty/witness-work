@@ -3,6 +3,7 @@ import {
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
+  UserRoundKey as UserRoundKeyIcon,
   NotebookPen as NotebookPenIcon,
   ScanQrCode as ScanQrCodeIcon,
 } from 'lucide-react-native'
@@ -19,6 +20,7 @@ import { pickScribePaperPages } from '@/features/scribe/components/pickScribePap
 import { navigateToScribe } from '@/features/scribe/components/openScribe'
 import { accountKeyReplaceable } from '@/app/account/accountKey'
 import ImportOptionCard from '@/features/onboarding/components/ImportOptionCard'
+import usePasskeySignInAvailable from '@/features/settings/hooks/usePasskeySignInAvailable'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 export type ImportType =
@@ -28,6 +30,7 @@ export type ImportType =
   | 'icloud'
   | 'backup_json'
   | 'other_phone'
+  | 'passkey'
 
 /** The options whose destination depends on where the chooser is shown. */
 export type HostedImportType = Extract<
@@ -49,11 +52,11 @@ interface Props {
 }
 
 /**
- * The places data can come in from: another phone, Notes and Paper (both read
- * by Scribe AI), MyTime, the device's sync, and a backup file. Onboarding's
- * "Pick up where you left off" and Settings → Import Data both list them.
- * Another phone, Notes and Paper open the same screens from either; the rest go
- * where the opener sends them.
+ * The places data can come in from: a passkey, another phone, Notes and Paper
+ * (both read by Scribe AI), MyTime, the device's sync, and a backup file.
+ * Onboarding's "Pick up where you left off" and Settings → Import Data both
+ * list them. Another phone, Notes and Paper open the same screens from either;
+ * the rest go where the opener sends them.
  */
 export default function ImportOptions({
   source,
@@ -68,6 +71,7 @@ export default function ImportOptions({
   const paper = useScribePaperCapture()
   const paperAvailable = scribeShown && paper.available
   const library = useLibraryImagePicker('scribe_paper')
+  const passkeySignIn = usePasskeySignInAvailable()
 
   const fromPaper = async () => {
     const paperPages = await pickScribePaperPages(library.pick)
@@ -85,7 +89,9 @@ export default function ImportOptions({
           : importType,
       source,
     })
-    if (importType === 'other_phone')
+    if (importType === 'passkey')
+      navigation.navigate('Sign In With Passkey', { entry: source })
+    else if (importType === 'other_phone')
       navigation.navigate('Sign In With QR Code', { entry: source })
     else if (importType === 'notes')
       navigateToScribe(navigation, {
@@ -98,6 +104,15 @@ export default function ImportOptions({
 
   return (
     <View>
+      {passkeySignIn && (
+        <ImportOptionCard
+          icon={UserRoundKeyIcon}
+          color={theme.colors.accent}
+          titleKey='onboardingPickUp_passkey'
+          descKey='onboardingPickUp_passkeyDesc'
+          onPress={() => select('passkey')}
+        />
+      )}
       {accountKeyReplaceable() && (
         <ImportOptionCard
           icon={ScanQrCodeIcon}

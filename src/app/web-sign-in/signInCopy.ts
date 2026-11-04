@@ -33,7 +33,7 @@ const PROBLEMS: Record<Exclude<WebSignInFailure, 'cancelled'>, LocaleKey> = {
 }
 
 /** "10 minutes", "2 hours": how long until a rate limit lets up. */
-function waitFor(ms: number): string {
+export function waitFor(ms: number): string {
   const minutes = Math.max(1, Math.ceil(ms / 60_000))
   if (minutes < 60)
     return localizeAppDigits(

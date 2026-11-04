@@ -1,4 +1,5 @@
 import * as PlaceSearchNative from '../../modules/place-search'
+import { onWeb } from '@/lib/placeSearchWeb'
 import type { PlaceSearchScope } from '../../modules/place-search'
 import apis from '@/constants/apis'
 import { errorBodyCode } from '@/lib/http/errorBody'
@@ -23,20 +24,27 @@ export type PlaceSuggestion = {
 
 export type Coordinate = { latitude: number; longitude: number }
 
-export type PlaceSearchProvider = 'mapkit' | 'here'
+/**
+ * `mapkit`: the native module. `here`: ww-api's address autocomplete. `places`:
+ * ww-api's search for points of interest and addresses.
+ */
+export type PlaceSearchProvider = 'mapkit' | 'here' | 'places'
 
 /**
  * Which service searches `scope` on this binary. MapKit runs on iOS through the
  * native module and costs nothing per request. Address search falls back to
- * HERE (through ww-api) on Android and on iOS binaries that predate the
- * module's address scope. Points of interest need MapKit, so `all` has no
- * fallback.
+ * HERE (through ww-api) on Android, the web and iOS binaries that predate the
+ * module's address scope. Points of interest need MapKit, or on the web,
+ * ww-api's place search (HERE Discover); Android has neither, so `all` has no
+ * provider there.
  */
 export function placeSearchProvider(
-  scope: PlaceSearchScope
+  scope: PlaceSearchScope,
+  web: boolean = onWeb
 ): PlaceSearchProvider | undefined {
   if (scope === 'all') {
-    return PlaceSearchNative.isAvailable ? 'mapkit' : undefined
+    if (PlaceSearchNative.isAvailable) return 'mapkit'
+    return web ? 'places' : undefined
   }
   return PlaceSearchNative.supportsAddressScope ? 'mapkit' : 'here'
 }
@@ -144,6 +152,72 @@ async function searchHere(
   return data.items.filter(isHereItem).map(hereSuggestion)
 }
 
+type PlacesItem = HereAutocompleteItem & {
+  name?: string
+  latitude: number
+  longitude: number
+}
+
+const isPlacesItem = (value: unknown): value is PlacesItem => {
+  const item = value as Partial<PlacesItem> | null
+  return (
+    isHereItem(value) &&
+    optionalString(item?.name) &&
+    Number.isFinite(item?.latitude) &&
+    Number.isFinite(item?.longitude)
+  )
+}
+
+/**
+ * A ww-api place search result as a suggestion that needs no lookup: a point of
+ * interest's name over its address, or an address as the autocomplete shows
+ * one.
+ */
+const placesSuggestion = (item: PlacesItem): PlaceSuggestion => {
+  const address = hereSuggestion(item)
+  const name = item.name?.trim()
+  return {
+    id: item.id,
+    ...(name
+      ? { title: name, subtitle: item.address.label }
+      : { title: address.title, subtitle: address.subtitle }),
+    place: {
+      ...(name && { name }),
+      ...address.place,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    },
+  }
+}
+
+/**
+ * Points of interest and addresses near `near`, through ww-api's place search
+ * (HERE Discover). It ranks around a coordinate, so without one only addresses
+ * are searched.
+ */
+async function searchPlacesApi(
+  query: string,
+  near: Coordinate | undefined,
+  signal: AbortSignal | undefined
+): Promise<PlaceSuggestion[]> {
+  if (!near) return searchHere(query, near, signal)
+  const params = new URLSearchParams({
+    q: query.slice(0, 200),
+    at: `${near.latitude},${near.longitude}`,
+    limit: String(HERE_MAX_SUGGESTIONS),
+  })
+  // No retries, as with the autocomplete: it shares the per-IP limit.
+  const { data } = await request<{ items?: unknown } | null>({
+    url: `${apis.placesSearch}?${params.toString()}`,
+    timeoutMs: SEARCH_TIMEOUT_MS,
+    signal,
+  })
+  if (!Array.isArray(data?.items)) {
+    throw new HttpError('unknown', null, null, null, 'invalid place search')
+  }
+  return data.items.filter(isPlacesItem).map(placesSuggestion)
+}
+
 /**
  * Settles with `promise`, or rejects with a timeout or a cancel first. The
  * native MapKit calls can't be aborted, so their late answers are dropped.
@@ -201,6 +275,8 @@ export async function searchPlaces(
       )
     case 'here':
       return searchHere(query, near, signal)
+    case 'places':
+      return searchPlacesApi(query, near, signal)
     default:
       return []
   }

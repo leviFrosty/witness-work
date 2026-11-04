@@ -33,6 +33,11 @@ export default {
     development: 'https://help-search-dev.witnesswork.app/v1/search',
     release: 'https://help-search.witnesswork.app/v1/search',
   }),
+  // The web's maps frame (docs/web-maps.md): the one origin the web app frames.
+  mapsFrame: forBuild({
+    development: 'https://maps-dev.witnesswork.app',
+    release: 'https://maps.witnesswork.app',
+  }),
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
   openRouterZdr: 'https://openrouter.ai/docs/guides/features/zdr',
 }

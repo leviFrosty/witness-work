@@ -11,7 +11,8 @@
   },
   // expo/tsconfig.base.json's list (an `exclude` here replaces it), plus
   // services/, which has its own workspace and tsconfigs, and the web host
-  // Worker, which has its own runtime types (web/host/tsconfig.json).
+  // Worker and the maps frame, which have their own runtime types
+  // (web/host/tsconfig.json, web/maps-frame/tsconfig.json).
   "exclude": [
     "node_modules",
     "babel.config.js",
@@ -20,6 +21,7 @@
     "android",
     "ios",
     "services",
-    "web/host"
+    "web/host",
+    "web/maps-frame"
   ]
 }

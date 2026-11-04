@@ -6,6 +6,7 @@ import IconButton from '@/components/ui/IconButton'
 import XView from '@/components/ui/layout/XView'
 import Text from '@/components/ui/MyText'
 import { useState } from 'react'
+import { Platform } from 'react-native'
 
 export default function MapWarningLocationSharingDisabled(props: {
   hasLocationPermission: boolean
@@ -39,7 +40,10 @@ export default function MapWarningLocationSharingDisabled(props: {
       <XView style={{ flexWrap: 'wrap' }}>
         <Text>{i18n.t('locationDisabled_description')}</Text>
         <Text style={{ textDecorationLine: 'underline' }}>
-          {i18n.t('locationDisabled_callToAction')}
+          {Platform.select({
+            web: i18n.t('locationDisabled_callToActionWeb'),
+            default: i18n.t('locationDisabled_callToAction'),
+          })}
         </Text>
       </XView>
     </Card>

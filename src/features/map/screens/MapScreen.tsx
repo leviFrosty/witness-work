@@ -366,7 +366,8 @@ const FullMapView = ({
   )
 
   const dismissSearchKeyboard = useCallback(() => {
-    if (searchInputRef.current?.isFocused()) {
+    // The web's text input has no `isFocused`.
+    if (searchInputRef.current?.isFocused?.()) {
       searchInputRef.current.blur()
     }
   }, [])

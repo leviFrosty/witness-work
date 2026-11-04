@@ -21,6 +21,12 @@ const BASE_URL =
 export default {
   geocode: `${BASE_URL}/geocode`,
   autocomplete: `${BASE_URL}/autocomplete`,
+  // Points of interest and addresses near a coordinate (HERE Discover), for
+  // the web's place search; public and per-IP limited like the two above.
+  placesSearch: `${BASE_URL}/places/v1/search`,
+  // A 30-minute MapKit JS token for the web's maps frame, through the account
+  // session (docs/web-maps.md).
+  mapkitTokens: `${BASE_URL}/maps/v1/mapkit-tokens`,
   // Paywall social proof; edge-cached by the worker, persisted 7 days here.
   appStoreRatings: `${BASE_URL}/app-store/ratings`,
   // Unauthenticated worker health probe ({ status, versionId, deployedAt }):

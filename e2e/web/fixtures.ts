@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { expect, test as base, type Page } from '@playwright/test'
 import { mockRevenueCat, type Catalog, type CustomerKind } from './revenueCat'
+import { answerSessionRefresh, seedSession } from './session'
 
 /** The preferences store's row in the store database (docs/web-storage.md). */
 const PREFERENCES = ['mmkv.default', 'preferences'] as const
@@ -34,6 +35,8 @@ const cspFolder = process.env.WW_WEB_CSP
  * Worker's, or `dev`, which `pnpm web:build` builds by default.
  */
 export const profile: {
+  apiOrigin: string
+  mapsOrigin: string
   helpManifest: string
   helpSearchOrigin: string
 } = JSON.parse(
@@ -61,6 +64,16 @@ type Fixtures = {
   revenueCatCatalog: Catalog
   /** What RevenueCat's customer info shows (`revenueCat.ts`); free by default. */
   revenueCatCustomer: CustomerKind
+  /**
+   * Saved before the app opens, as the stores keep it. An object, since
+   * Playwright reads a two-item array option as `[value, options]`.
+   */
+  seed: {
+    contacts?: Record<string, unknown>[]
+    conversations?: Record<string, unknown>[]
+  }
+  /** Signed in to an account (`session.ts`); signed out by default. */
+  signedIn: boolean
   /** The app on Home, seeded past onboarding. */
   app: Page
   /** Saves a screenshot to `$WW_WEB_SHOTS/<name>-<project>.png`, if set. */
@@ -218,16 +231,35 @@ export const test = base.extend<Fixtures>({
   preferences: [{}, { option: true }],
   revenueCatCatalog: [{}, { option: true }],
   revenueCatCustomer: ['free', { option: true }],
-  app: async ({ page, language, preferences }, provide) => {
+  seed: [{}, { option: true }],
+  signedIn: [false, { option: true }],
+  app: async ({ page, language, preferences, seed, signedIn }, provide) => {
     // A first load in a tab of its own saves the app's preferences, which
     // get the seed on top once that tab is closed (it would save over them).
     // Leaving it, rather than reloading, keeps the requests it cancels (which
     // WebKit reports as page errors) out of the tab under test.
+    // Signed in first: a release build's sign-in screen keeps a signed-out
+    // tab out of the app (`WebSignInGate.web.tsx`).
+    if (signedIn) {
+      await answerSessionRefresh(page.context(), profile.apiOrigin)
+      await openBlankOnOrigin(page)
+      await seedSession(page)
+    }
     const seeding = await page.context().newPage()
     await seeding.goto('/')
     await expect
       .poll(() => readStoreRow(seeding, ...PREFERENCES), { timeout: 60_000 })
       .toBeDefined()
+    // Its own empty stores too, or those writes can land over the seed's.
+    // A store with nothing to save may never write one.
+    const seeded = Object.entries(seed).filter(([, items]) => items?.length)
+    for (const [store] of seeded)
+      await expect
+        .poll(() => readStoreRow(seeding, 'mmkv.default', store), {
+          timeout: 5_000,
+        })
+        .toBeDefined()
+        .catch(() => undefined)
     await seeding.close()
     await openBlankOnOrigin(page)
     const saved = JSON.parse(
@@ -237,6 +269,15 @@ export const test = base.extend<Fixtures>({
       locale: language === 'en-US' ? undefined : language.toLowerCase(),
     })
     await writeStoreRow(page, ...PREFERENCES, JSON.stringify(saved))
+    // Each store's list, as `{ state: { [store]: [...] } }`.
+    for (const [store, items] of seeded) {
+      const row = (await readStoreRow(page, 'mmkv.default', store)) as
+        | string
+        | undefined
+      const stored = row ? JSON.parse(row) : { state: {}, version: 0 }
+      stored.state[store] = [...(stored.state[store] ?? []), ...items!]
+      await writeStoreRow(page, 'mmkv.default', store, JSON.stringify(stored))
+    }
     await page.goto('/')
     await expect(
       page.getByRole('button', { name: strings(language).quickAction })

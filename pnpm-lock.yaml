@@ -429,6 +429,9 @@ importers:
       concurrently:
         specifier: 10.0.3
         version: 10.0.3
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       eslint:
         specifier: 10.6.0
         version: 10.6.0(jiti@2.6.1)(supports-color@10.2.2)

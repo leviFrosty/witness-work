@@ -32,6 +32,7 @@ describe('hosts by build', () => {
       expect(links.helpCenterSearch).toBe(
         'https://help-search.witnesswork.app/v1/search'
       )
+      expect(links.mapsFrame).toBe('https://maps.witnesswork.app')
     }
   })
 
@@ -48,6 +49,7 @@ describe('hosts by build', () => {
     expect(links.helpCenterSearch).toBe(
       'https://help-search-dev.witnesswork.app/v1/search'
     )
+    expect(links.mapsFrame).toBe('https://maps-dev.witnesswork.app')
   })
 
   it('lets EXPO_PUBLIC_API_BASE_URL override the API in any build', async () => {
@@ -57,6 +59,17 @@ describe('hosts by build', () => {
         EXPO_PUBLIC_API_BASE_URL: 'http://localhost:8787',
       })
       expect(apis.apiHealth).toBe('http://localhost:8787/health')
+    }
+  })
+})
+
+describe('the web maps frame', () => {
+  it("is each web profile's own frame, so its CSP lets the app frame it", async () => {
+    const profiles = (await import('../../config/web-environments.json'))
+      .default
+    for (const profile of Object.values(profiles)) {
+      const { links } = await load({ EXPO_PUBLIC_APP_VARIANT: profile.variant })
+      expect(links.mapsFrame).toBe(profile.mapsOrigin)
     }
   })
 })

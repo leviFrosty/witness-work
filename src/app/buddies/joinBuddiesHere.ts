@@ -15,8 +15,9 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
  *   reinstall) and iCloud Sync keeps this device's Plans the same as theirs.
  * - `handoff`: the User just moved their account here (Set Up Another Device, ADR
  *   0026), so this is the phone they mean to use Buddies on.
+ * - `passkey`: the same, signing in with a passkey that unlocked (ADR 0038 §6).
  */
-export type JoinBuddiesReason = 'sync' | 'handoff'
+export type JoinBuddiesReason = 'sync' | 'handoff' | 'passkey'
 
 let joining: Promise<boolean> | null = null
 
@@ -28,11 +29,11 @@ let joining: Promise<boolean> | null = null
  *
  * With `sync`, it waits for iCloud Sync's first pull: without it this device's
  * Plans differ, and its Buddy Card would replace the other device's, so it
- * waits for the User to open Buddies here. With `handoff`, the account's own
- * record says whether Buddies is in use: only when the account key's inbox is
- * linked to the account does it start, so a User who never used Buddies doesn't
- * get an inbox. Reading the seed is local; a device without one costs nothing.
- * Resolves whether Buddies started.
+ * waits for the User to open Buddies here. With `handoff` or `passkey`, the
+ * account's own record says whether Buddies is in use: only when the account
+ * key's inbox is linked to the account does it start, so a User who never used
+ * Buddies doesn't get an inbox. Reading the seed is local; a device without one
+ * costs nothing. Resolves whether Buddies started.
  */
 export function joinBuddiesHere(
   reason: JoinBuddiesReason = 'sync'
@@ -55,7 +56,7 @@ async function join(reason: JoinBuddiesReason): Promise<boolean> {
     return false
   const seed = await deviceAccountKey.peek()
   if (!seed || started()) return false
-  if (reason === 'handoff' && !(await usesBuddiesElsewhere(fromB64u(seed))))
+  if (reason !== 'sync' && !(await usesBuddiesElsewhere(fromB64u(seed))))
     return false
   await buddiesEngine.sync({ automatic: true })
   if (!started()) return false

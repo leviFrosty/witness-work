@@ -1,4 +1,4 @@
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, Platform, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -107,7 +107,12 @@ export function HandoffTextButton({
       accessibilityRole='button'
       onPress={onPress}
       testID={testID}
-      style={{ paddingVertical: 10, paddingHorizontal: 16 }}
+      style={{
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        minHeight: Platform.select({ android: 48, default: 44 }),
+        justifyContent: 'center',
+      }}
     >
       <Text
         style={{

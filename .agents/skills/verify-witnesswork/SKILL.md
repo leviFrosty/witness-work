@@ -302,6 +302,7 @@ These are not automatable here. Report them as unverified instead of guessing:
 - Widgets, Live Activities and the Watch app beyond screenshots.
 - APNs push delivery. Android Buddies alerts (FCM) do work against a local relay that has the FCM key; see [`features/buddies.md`](features/buddies.md).
 - Play Integrity.
+- System passkey sheets through `wwv ad`: every `wwv ad` command reopens the app first, which dismisses a passkey sheet (iOS reports `AuthorizationError 1001`, a cancel). The sheets themselves work on the simulator (Passwords is the provider, PRF included). While one is up, tap with `axe tap -x <x> -y <y> --udid <id>`, look with `xcrun simctl io <id> screenshot`, and pass Face ID with `xcrun simctl spawn <id> notifyutil -p com.apple.BiometricKit_Sim.pearl.match` (enroll once: `notifyutil -s com.apple.BiometricKit.enrollmentChanged 1` then `-p` it). Without a sheet, `__WW_DEV__.passkeySignIn` stands in.
 - Visual taste calls.
 
 For Buddies between two people, bring up a second device with `wwv up --platform android` alongside iOS. Then follow [`features/buddies.md`](features/buddies.md).

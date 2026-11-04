@@ -11,6 +11,7 @@ import {
   platformKey,
 } from '@/app/account/attestationCopy'
 import { offerRestore, recordsCameBack } from '@/app/account/backupRestore'
+import { passkeyKeyArrived } from '@/app/account/passkeySignIn'
 import { analytics } from '@/lib/analytics'
 import {
   AccountKeyRetiredError,
@@ -243,6 +244,8 @@ function RecoveryKeyForm({
           accountId: opened?.accountId,
         })
         analytics.capture('recovery_key_used', { outcome: result.outcome })
+        // A passkey that signed in but couldn't unlock can from now on.
+        void passkeyKeyArrived(newKey)
         onFinished({
           outcome: result.outcome,
           sameAccount: result.outcome === 'replaced' && result.sameAccount,

@@ -85,12 +85,17 @@ export const accountKey = createAccountKeyService({
 export const accountKeyAvailable = () => BuddiesKeychain.isAvailable()
 export const accountKeyReplaceable = () => BuddiesKeychain.isReplaceAvailable()
 
-export type AccountKeyReplaceSource = 'recovery_key' | 'handoff' | 'tools'
+export type AccountKeyReplaceSource =
+  | 'recovery_key'
+  | 'handoff'
+  | 'passkey'
+  | 'tools'
 
 /**
  * Replaces the account key (see `AccountKeyService.replace`), records it, and
  * then lets Buddies start here when the new key already has it elsewhere. A
- * handoff starts Buddies itself once the old phone knows it's done. Cloud
+ * handoff starts Buddies itself once the old phone knows it's done, and a
+ * passkey sign-in once the key is adopted, both as a move to this phone. Cloud
  * Sync's default decides nothing until it's over, even if it fails: leaving the
  * old account turns sync off, and a decision then would run on that account.
  */
@@ -125,7 +130,8 @@ export async function replaceAccountKey(
       registered: result.accountId !== null,
       same_account: result.sameAccount,
     })
-    if (source !== 'handoff') void joinBuddiesHere().catch(() => undefined)
+    if (source !== 'handoff' && source !== 'passkey')
+      void joinBuddiesHere().catch(() => undefined)
   }
   return result
 }

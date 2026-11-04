@@ -103,6 +103,8 @@ function browser(passkey?: ReturnType<typeof createSoftwarePasskey>) {
         if (options?.expectAccountId)
           expect(opened.accountId).toBe(options.expectAccountId)
         sessions.push(opened)
+        // As the real one: the key is stored, so the phone's approval finishes.
+        await options?.onStored?.()
         return { ...opened, reload: false }
       },
       signOut: async () => undefined,

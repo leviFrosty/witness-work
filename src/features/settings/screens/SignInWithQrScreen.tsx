@@ -7,7 +7,6 @@ import {
 } from '@react-navigation/native'
 import {
   CircleAlert as CircleAlertIcon,
-  CircleCheckBig as CircleCheckIcon,
   WifiOff as WifiOffIcon,
 } from 'lucide-react-native'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -15,6 +14,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import { platformKey } from '@/app/account/attestationCopy'
 import { useKeyChangeStatus } from '@/app/account/keyChange/status'
+import { holdPasskeySignIn } from '@/app/account/passkeySignIn'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import type { HandoffFailure } from '@/lib/serverAccount/handoffSession'
@@ -25,12 +25,12 @@ import HandoffStatus, {
   HandoffTextButton,
 } from '@/features/settings/components/account/handoff/HandoffStatus'
 import { handoffFailureMessage } from '@/features/settings/components/account/handoff/handoffCopy'
+import SignedInStatus from '@/features/settings/components/account/handoff/SignedInStatus'
 import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 import useClaimHandoff from '@/features/settings/hooks/useClaimHandoff'
 import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 import { usePreferences } from '@/stores/preferences'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 const LINK_PROBLEM = {
   notHandoff: 'handoff_scanNotHandoff',
@@ -61,8 +61,6 @@ const SignInWithQrScreen = () => {
     useRoute<RouteProp<RootStackParamList, 'Sign In With QR Code'>>()
   const entry = route.params?.entry ?? 'settings'
   const support = useAttestationSupport()
-  // The account's buddies, once Buddies started here and synced them.
-  const hasBuddies = useBuddies((state) => state.buddies.length > 0)
   const unverifiable = support === 'unsupported'
   // A key change on this device is continued or discarded before signing in
   // to another account (docs/account-key-change.md).
@@ -75,6 +73,9 @@ const SignInWithQrScreen = () => {
       support === null || blocked ? undefined : route.params?.link
     )
   const [recovering, setRecovering] = useState(false)
+
+  // A passkey that signed in but couldn't unlock waits for this key.
+  useEffect(() => holdPasskeySignIn(), [])
 
   useEffect(() => {
     if (unverifiable)
@@ -151,55 +152,15 @@ const SignInWithQrScreen = () => {
     if (support === null && route.params?.link)
       return <HandoffStatus loading body={i18n.t('handoff_connecting')} />
     if (completion !== 'idle' && completion !== 'running') {
-      if (completion.outcome === 'done') {
-        const restored = completion.restore.outcome === 'restored'
-        // Cloud Sync is bringing the data down (ADR 0030): like a restore,
-        // the remaining onboarding steps would only set up what it replaces.
-        const synced = completion.restore.outcome === 'synced'
+      if (completion.outcome === 'done')
         return (
-          <HandoffStatus
-            icon={CircleCheckIcon}
-            tone='success'
-            title={i18n.t('handoff_newDoneTitle')}
-            body={i18n.t(
-              hasBuddies
-                ? 'handoff_newDoneBody'
-                : 'handoff_newDoneBodyNoBuddies'
-            )}
-            detail={i18n.t(
-              completion.rejoined
-                ? 'handoff_newDoneRejoined'
-                : restored
-                  ? 'handoff_newDoneRestored'
-                  : synced
-                    ? completion.restore.outcome === 'synced' &&
-                      completion.restore.combine
-                      ? 'handoff_newDoneSyncedCombine'
-                      : 'handoff_newDoneSynced'
-                    : completion.restore.outcome === 'none'
-                      ? 'handoff_newDoneData'
-                      : 'handoff_newDoneRestoreLater'
-            )}
-            primary={{
-              label: i18n.t(entry === 'onboarding' ? 'continue' : 'done'),
-              onPress: () => {
-                // The restored records replace what the remaining steps
-                // would set up, as a backup file's restore does.
-                // A link opened from the welcome screen arrives as `link`,
-                // still during onboarding.
-                if (
-                  (restored || synced) &&
-                  !usePreferences.getState().onboardingComplete
-                )
-                  completeOnboardingFromRestore('account_backup')
-                navigation.goBack()
-              },
-              testID: 'handoff-done',
-            }}
-            testID='handoff-new-done'
+          <SignedInStatus
+            restore={completion.restore}
+            rejoined={completion.rejoined}
+            onboarding={entry === 'onboarding'}
+            onDone={() => navigation.goBack()}
           />
         )
-      }
       if (completion.outcome === 'declined')
         return (
           <HandoffStatus

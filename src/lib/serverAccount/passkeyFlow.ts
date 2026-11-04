@@ -230,10 +230,13 @@ export function unlockRequest(
 /**
  * Seals the account key under the PRF output and saves it. A `conflict` means
  * the key epoch moved: read the account again and, while its key is still this
- * device's, try once more at the new epoch.
+ * device's, try once more at the new epoch. Also how a passkey that signed in
+ * but couldn't unlock saves its wrap once the key arrives another way.
  */
-async function saveWrap(
-  deps: PasskeyFlowDeps,
+export async function savePasskeyWrapWith(
+  deps: Pick<PasskeyFlowDeps, 'accountKey' | 'randomBytes'> & {
+    server: Pick<PasskeyServer, 'account' | 'wrap'>
+  },
   credentialId: string,
   prfOutput: Uint8Array
 ): Promise<'saved' | SignInOnlyReason> {
@@ -303,7 +306,7 @@ async function unlockWith(
     return { status: 'failed', reason: 'failed' }
   if (assertion.prf?.length !== PRF_OUTPUT_BYTES)
     return { status: 'signInOnly', signInOnly: 'no_prf' }
-  const saved = await saveWrap(deps, credentialId, assertion.prf)
+  const saved = await savePasskeyWrapWith(deps, credentialId, assertion.prf)
   return saved === 'saved'
     ? { status: 'saved' }
     : { status: 'signInOnly', signInOnly: saved }

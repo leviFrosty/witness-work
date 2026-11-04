@@ -13,6 +13,7 @@ import {
 import { backUpNow } from '@/app/account/backup'
 import { offerRestore, type RestoreOutcome } from '@/app/account/backupRestore'
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
+import { passkeyKeyArrived } from '@/app/account/passkeySignIn'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import {
   type AccountKeyLoss,
@@ -420,6 +421,8 @@ export async function completeClaimHandoff(
   }
 
   await session.finish()
+  // A passkey that signed in but couldn't unlock can from now on.
+  void passkeyKeyArrived(newKey)
   const buddiesStarted = buddiesEnabled
     ? await joinBuddiesHere('handoff').catch((error: unknown) => {
         logger.warn('[handoff] starting Buddies failed', error)

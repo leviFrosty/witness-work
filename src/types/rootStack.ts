@@ -274,6 +274,8 @@ export type RootStackParamList = {
   /** The account's security history (ADR 0028). */
   'Account Activity': undefined
   /** Sign In with QR Code: scan, or open, another phone's handoff link. */
+  /** Sign In with a Passkey, on a new phone (ADR 0038 §6). */
+  'Sign In With Passkey': { entry?: 'settings' | 'onboarding' } | undefined
   'Sign In With QR Code':
     | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }
     | undefined

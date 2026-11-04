@@ -182,6 +182,20 @@ export const accountPasskeySupport = (): Promise<PasskeySupport> =>
   passkeySupport()
 
 /**
+ * The verify harness, in development builds only: sign-ins answer with this get
+ * instead of the system's sheet (a software passkey, or a thrown
+ * `PasskeyError`), until it's cleared with `null`.
+ */
+let simulatedGet: PasskeyCeremonies['get'] | null = null
+export function simulatePasskeyGet(get: PasskeyCeremonies['get'] | null) {
+  if (__DEV__) simulatedGet = get
+}
+
+/** A sign-in's get: the system's sheet, PRF evaluated. */
+export const phonePasskeyGet: PasskeyCeremonies['get'] = (options) =>
+  __DEV__ && simulatedGet ? simulatedGet(options) : ceremonies.get(options)
+
+/**
  * Tools and the verify harness: the next Add a Passkey ends with this result
  * instead of opening the system's sheet. Cleared once used.
  */

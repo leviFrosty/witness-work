@@ -49,6 +49,7 @@ import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
 export type RestoreSource =
   | 'handoff'
+  | 'passkey'
   | 'recovery_key'
   | 'fresh_install'
   | 'settings'
@@ -383,6 +384,7 @@ async function runRestore(
   // it. When the backups can't be listed, Cloud Sync still brings what it has.
   const syncedAt =
     source === 'handoff' ||
+    source === 'passkey' ||
     source === 'recovery_key' ||
     source === 'fresh_install'
       ? cloudSyncNewestSlotAt()

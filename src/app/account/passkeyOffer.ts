@@ -1,6 +1,6 @@
 import { Platform } from 'react-native'
 import { accountKey } from '@/app/account/accountKey'
-import { loadPasskeys, phonePasskeySupport } from '@/app/account/passkeys'
+import { loadPasskeys, accountPasskeySupport } from '@/app/account/passkeys'
 import { logger } from '@/lib/logger'
 import {
   accountHasPasskey,
@@ -35,7 +35,7 @@ export async function readPasskeyOffer(): Promise<PasskeyOffer> {
   }
   if (web) return verdict(facts)
   try {
-    facts.supported = (await phonePasskeySupport()).passkeys
+    facts.supported = (await accountPasskeySupport()).passkeys
     if (!facts.supported) return verdict(facts)
     await accountSessions.ready()
     facts.hasAccount =

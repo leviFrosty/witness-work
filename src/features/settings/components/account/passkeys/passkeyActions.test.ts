@@ -13,12 +13,12 @@ vi.mock('@/stores/toasts', () => ({
 }))
 vi.mock('@/app/account/passkeyPrompt', () => ({ stopPasskeyPrompt: vi.fn() }))
 vi.mock('@/app/account/passkeys', () => ({
-  addPhonePasskey: vi.fn(async () => {
+  addAccountPasskey: vi.fn(async () => {
     if (fake.throws) throw new Error('boom')
     return fake.result
   }),
   letPhonePasskeyUnlock: vi.fn(),
-  removePhonePasskey: vi.fn(),
+  removeAccountPasskey: vi.fn(),
 }))
 vi.mock('@/features/settings/components/account/passkeys/passkeyCopy', () => ({
   passkeyFailureMessage: () => 'failed',

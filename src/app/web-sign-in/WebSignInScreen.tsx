@@ -24,6 +24,8 @@ export default function WebSignInScreen({
   ended,
   keptData,
   onCreateAccount,
+  notice,
+  onLeave,
 }: {
   flow: WebSignIn
   state: WebSignInState
@@ -31,6 +33,10 @@ export default function WebSignInScreen({
   keptData: boolean
   /** Create an Account; none where the app can't open without one. */
   onCreateAccount?: () => void
+  /** Shown in place of why the session ended: Sign In Again's reason. */
+  notice?: string
+  /** Back to the app, from the first page: Sign In Again. */
+  onLeave?: () => void
 }) {
   const [page, setPage] = useState<Page>({ name: 'choices' })
 
@@ -72,7 +78,7 @@ export default function WebSignInScreen({
       return (
         <SignInChoices
           state={state}
-          ended={endedText(ended)}
+          ended={notice ?? endedText(ended)}
           keptData={keptData}
           onPasskey={() => void flow.signInWithPasskey()}
           onPhone={startPhone}
@@ -81,6 +87,7 @@ export default function WebSignInScreen({
             setPage({ name: 'recovery' })
           }}
           onCreateAccount={onCreateAccount}
+          onBack={onLeave}
         />
       )
   }

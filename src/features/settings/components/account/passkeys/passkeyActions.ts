@@ -1,8 +1,8 @@
 import { Alert } from 'react-native'
 import {
-  addPhonePasskey,
+  addAccountPasskey,
   letPhonePasskeyUnlock,
-  removePhonePasskey,
+  removeAccountPasskey,
 } from '@/app/account/passkeys'
 import { stopPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import {
@@ -39,7 +39,7 @@ export async function addPasskeyWithToasts(context: {
   source: PasskeyAddSource
 }): Promise<boolean> {
   const title = i18n.t('passkeys_addFailed')
-  return addPhonePasskey(context)
+  return addAccountPasskey(context)
     .then((result) => {
       if (result.status === 'cancelled') return false
       if (result.status === 'failed') {
@@ -110,7 +110,7 @@ export function removeWithConfirm(
           text: i18n.t('remove'),
           style: 'destructive',
           onPress: () =>
-            void removePhonePasskey(passkey, last)
+            void removeAccountPasskey(passkey, last)
               .then((result) => {
                 if (result.status === 'removed')
                   toast.success(i18n.t('passkeys_removed'), {

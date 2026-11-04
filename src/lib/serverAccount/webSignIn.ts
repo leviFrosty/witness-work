@@ -8,6 +8,7 @@ import type {
   BrowserApproval,
 } from '@/lib/serverAccount/approvalSession'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import { STEP_UP_WINDOW_MS } from '@/lib/serverAccount/stepUp'
 import {
   type PasskeyChallenge,
   type PasskeyFailure,
@@ -72,6 +73,11 @@ export type WebSignInFailure =
   | 'passkeyFailed'
   /** The key is another account's than the one signing in. */
   | 'wrongAccount'
+  /**
+   * Sign In Again (`onlyAccount`) as another account than this browser's:
+   * nothing opened, nothing wiped.
+   */
+  | 'otherAccount'
   /** No account has this recovery key: the web doesn't create one from it. */
   | 'unknownAccount'
   /** The account key changed since (ADR 0039): this one no longer signs in. */
@@ -96,6 +102,8 @@ export type WebSignInProblem = {
   method: WebSignInMethod
   failure: WebSignInFailure
   retryAfterMs: number | null
+  /** `otherAccount`: the account Sign In Again needs. */
+  account?: string
 }
 
 export type WebSignInState = {
@@ -205,8 +213,7 @@ export type WebSignInDeps = {
 /** A passkey's ticket this close to expiring isn't worth trying. */
 const TICKET_MARGIN_MS = 5_000
 
-/** How long opening a web session counts as a step-up (the server's). */
-export const STEP_UP_WINDOW_MS = 5 * 60_000
+export { STEP_UP_WINDOW_MS }
 
 /**
  * The passkey prompt's time: Add a Passkey goes this long before the window
@@ -310,6 +317,8 @@ export function createWebSignIn(deps: WebSignInDeps) {
   /** When Add a Passkey stops (server clock), and its timer. */
   let stepUpUntil = 0
   let cancelStepUpTimer: (() => void) | null = null
+  /** Sign In Again: the only account that may sign in (`onlyAccount`). */
+  let only: string | null = null
 
   const set = (next: Partial<WebSignInState>) => {
     state = { ...state, ...next }
@@ -331,13 +340,25 @@ export function createWebSignIn(deps: WebSignInDeps) {
     return true
   }
 
+  /** A problem to show; `otherAccount` names the account it needs. */
+  const problemOf = (
+    method: WebSignInMethod,
+    failure: WebSignInFailure,
+    retryAfterMs: number | null
+  ): WebSignInProblem =>
+    failure === 'otherAccount' && only !== null
+      ? { method, failure, retryAfterMs, account: only }
+      : { method, failure, retryAfterMs }
+
   function failed(method: WebSignInMethod, error: unknown) {
     const { failure, retryAfterMs, reason } = webSignInFailureFor(error)
     emit({ type: 'failed', method, reason })
     set({
       busy: null,
       problem:
-        failure === 'cancelled' ? null : { method, failure, retryAfterMs },
+        failure === 'cancelled'
+          ? null
+          : problemOf(method, failure, retryAfterMs),
     })
   }
 
@@ -347,8 +368,12 @@ export function createWebSignIn(deps: WebSignInDeps) {
     reason: WebSignInFailureReason = failure
   ) {
     emit({ type: 'failed', method, reason })
-    set({ busy: null, problem: { method, failure, retryAfterMs: null } })
+    set({ busy: null, problem: problemOf(method, failure, null) })
   }
+
+  /** Signing in again, as another account than this browser's. */
+  const notThisAccount = (accountId: string) =>
+    only !== null && accountId !== only
 
   /** The pending passkey's ticket can't open the session any more. */
   function ticketGone() {
@@ -485,7 +510,11 @@ export function createWebSignIn(deps: WebSignInDeps) {
       ;({ reload } = await deps.account.openWebSessionWithTicket(
         ticket,
         accountKey,
-        { expectAccountId: accountId, onStored: phone?.onStored }
+        {
+          expectAccountId: accountId,
+          onStored: phone?.onStored,
+          keepData: only !== null,
+        }
       ))
     } catch (error) {
       deps.mark.write(null)
@@ -530,6 +559,10 @@ export function createWebSignIn(deps: WebSignInDeps) {
       if (signIn.credentialId !== assertion.response.id) {
         assertion.prf?.fill(0)
         return refuse('passkey', 'passkeyFailed', 'credential')
+      }
+      if (notThisAccount(signIn.accountId)) {
+        assertion.prf?.fill(0)
+        return refuse('passkey', 'otherAccount')
       }
       const unlock = openPasskeyWraps({
         prfOutput: assertion.prf,
@@ -616,6 +649,7 @@ export function createWebSignIn(deps: WebSignInDeps) {
         accountKey,
         turnstileToken
       )
+      if (notThisAccount(accountId)) return refuse('recovery', 'otherAccount')
       if (pending && accountId !== pending.accountId)
         return refuse('recovery', 'wrongAccount')
       await open('recovery', ticket, accountKey, accountId)
@@ -631,6 +665,10 @@ export function createWebSignIn(deps: WebSignInDeps) {
     if (step.step !== 'received' || approval !== current) return
     const { accountKey, accountId, deviceName, ticket } = step.received
     set({ busy: 'phone', problem: null })
+    if (notThisAccount(accountId)) {
+      void current.cancel()
+      return refuse('phone', 'otherAccount')
+    }
     if (othersKey(accountKey) || (pending && pending.accountId !== accountId)) {
       void current.cancel()
       return refuse('phone', 'wrongAccount')
@@ -741,6 +779,16 @@ export function createWebSignIn(deps: WebSignInDeps) {
   const clearProblem = () => set({ problem: null })
 
   /**
+   * Sign In Again: only `accountId` may sign in, and this browser's data is
+   * never wiped for another. Null when it's over.
+   */
+  function onlyAccount(accountId: string | null) {
+    if (only === accountId) return
+    only = accountId
+    if (state.problem) set({ problem: null })
+  }
+
+  /**
    * The sign-in screen went: the phone's channels end, the passkey is
    * forgotten.
    */
@@ -768,6 +816,7 @@ export function createWebSignIn(deps: WebSignInDeps) {
     cloudSyncChecked,
     thatWasntMe,
     clearProblem,
+    onlyAccount,
     leave,
   }
 }

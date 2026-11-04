@@ -9,6 +9,7 @@ import {
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { subscribeToLocalDataChanges } from '@/app/sync/localChanges'
 import { analytics } from '@/lib/analytics'
+import { withStepUp } from '@/lib/confirmSensitive'
 import {
   addBackgroundListener,
   addForegroundListener,
@@ -300,7 +301,10 @@ export async function deleteBackupSlot(
   await deleteWithBackupOff(
     mine && useBackupState.getState().enabled && source !== 'disable',
     source,
-    () => asAccount((access) => deleteBackup(access.options, slotId))
+    () =>
+      asAccount((access) =>
+        withStepUp('delete_data', () => deleteBackup(access.options, slotId))
+      )
   )
   if (mine) forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'slot', source })
@@ -319,7 +323,9 @@ export async function deleteAllBackups(
   source: BackupDeleteSource
 ): Promise<void> {
   await deleteWithBackupOff(useBackupState.getState().enabled, source, () =>
-    asAccount((access) => deleteBackup(access.options))
+    asAccount((access) =>
+      withStepUp('delete_data', () => deleteBackup(access.options))
+    )
   )
   forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'all', source })

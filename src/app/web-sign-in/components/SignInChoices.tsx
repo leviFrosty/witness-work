@@ -28,6 +28,7 @@ export default function SignInChoices({
   onPhone,
   onRecoveryKey,
   onCreateAccount,
+  onBack,
 }: {
   state: WebSignInState
   ended: string | null
@@ -38,6 +39,8 @@ export default function SignInChoices({
   onRecoveryKey: () => void
   /** None until web sign-up: accounts are made in the phone app. */
   onCreateAccount?: () => void
+  /** Back to the app: signing in again while signed in. */
+  onBack?: () => void
 }) {
   const theme = useTheme()
   const problem =
@@ -45,7 +48,7 @@ export default function SignInChoices({
       ? signInProblemText(state.problem)
       : null
   return (
-    <SignInPage title={i18n.t('webSignIn_title')}>
+    <SignInPage title={i18n.t('webSignIn_title')} onBack={onBack}>
       {ended && (
         <XView style={{ alignItems: 'center' }}>
           <InlineNotice tone='info' message={ended} style={{ flex: 1 }} />

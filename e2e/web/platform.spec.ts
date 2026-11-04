@@ -42,11 +42,7 @@ test('sends nothing that says iOS to a service, and links to no store', async ({
   // Rows for features a browser doesn't have are hidden, not shown broken,
   // while the rest of the Support section is there.
   await expect(app.getByText(en.becomeSupporter).first()).toBeAttached()
-  for (const hidden of [
-    en.security,
-    en.shareApp_title,
-    en.rateWitnessWorkOnAppStore,
-  ])
+  for (const hidden of [en.shareApp_title, en.rateWitnessWorkOnAppStore])
     await expect(app.getByText(hidden, { exact: true })).toHaveCount(0)
 
   // The Audio & Haptics screen keeps sounds and drops haptics.

@@ -13,7 +13,7 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { platformKey } from '@/app/account/attestationCopy'
 import { approveHandoff, type OfferStartProblem } from '@/app/account/handoff'
-import { confirmDeviceOwner } from '@/lib/deviceOwner'
+import { confirmSensitiveAction } from '@/lib/confirmSensitive'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import type { OfferSession } from '@/lib/serverAccount/handoffSession'
@@ -66,7 +66,10 @@ const SetUpAnotherDeviceScreen = () => {
     try {
       const outcome = await approveHandoff(offer, {
         confirmOwner: () =>
-          confirmDeviceOwner(i18n.t('handoff_unlockPrompt', { device })),
+          confirmSensitiveAction(
+            'set_up_device',
+            i18n.t('handoff_unlockPrompt', { device })
+          ),
       })
       if (outcome === 'failed') toast.error(i18n.t('handoff_unlockFailed'))
     } catch (error) {

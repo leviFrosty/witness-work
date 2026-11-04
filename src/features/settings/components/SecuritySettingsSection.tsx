@@ -23,25 +23,14 @@ import {
   type AppLockDelay,
   useAppLockSettings,
 } from '@/stores/appLock'
+import { appLockDelayLabel } from '@/features/settings/components/appLockDelayLabel'
 
 const METHOD_ICONS = {
   faceId: ScanFaceIcon,
   touchId: FingerprintIcon,
   passcode: LockIcon,
   biometrics: FingerprintIcon,
-}
-
-const delayLabel = (delay: AppLockDelay) => {
-  switch (delay) {
-    case 0:
-      return i18n.t('appLock_immediately')
-    case 60:
-      return i18n.t('appLock_afterOneMinute')
-    case 300:
-      return i18n.t('appLock_afterFiveMinutes')
-    case 900:
-      return i18n.t('appLock_afterFifteenMinutes')
-  }
+  passkey: LockIcon,
 }
 
 const captureChange = (
@@ -123,7 +112,7 @@ const SecuritySettingsSection = () => {
           selectProps={{
             data: APP_LOCK_DELAYS.map((value) => ({
               value,
-              label: delayLabel(value),
+              label: appLockDelayLabel(value),
             })),
             value: requireAfter,
             onChange: ({ value }) => {

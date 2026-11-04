@@ -16,6 +16,7 @@ const native = vi.hoisted(() => ({
 vi.mock('../../../modules/passkeys', () => native)
 
 const { createPasskey, getPasskey } = await import('@/lib/passkeys')
+const { StepUpNotConfirmedError } = await import('@/lib/sensitiveCheck')
 const {
   addPasskeyFlow,
   isLastUnlocking,
@@ -119,6 +120,80 @@ describe('addPasskeyFlow', () => {
     expect(await addPasskeyFlow(deps)).toMatchObject({ canUnlock: true })
     const request = JSON.parse(native.get.mock.calls[0][0] as string)
     expect(request.rpId).toBe('app.witnesswork.app')
+  })
+
+  describe('on the web, before the create', () => {
+    it('waits for the second tap, then caps the prompt to the step-up’s end', async () => {
+      native.create.mockResolvedValue(registration({ enabled: false }))
+      const beforeCreate = vi.fn(async () => ({
+        status: 'go' as const,
+        timeoutMs: 42_000,
+      }))
+      const { deps, server } = setup({ beforeCreate })
+      server.registrationOptions.mockResolvedValueOnce({
+        challengeToken: 'token',
+        userHandle: 'AAEC',
+        options: {
+          challenge: 'Y2hhbGxlbmdl',
+          rp: { id: RP_ID, name: 'WitnessWork' },
+          user: { id: 'AAEC', name: 'WitnessWork KVW7' },
+          timeout: 300_000,
+        } as never,
+      })
+      expect(await addPasskeyFlow(deps)).toMatchObject({ status: 'added' })
+      // The options first, so the tap runs the create straight away.
+      expect(server.registrationOptions).toHaveBeenCalledBefore(beforeCreate)
+      expect(beforeCreate).toHaveBeenCalledBefore(native.create)
+      expect(
+        JSON.parse(native.create.mock.calls[0][0] as string)
+      ).toMatchObject({ timeout: 42_000 })
+    })
+
+    it('never creates once the step-up has run out, and says so', async () => {
+      const create = vi.fn()
+      const { deps, server } = setup({
+        ceremonies: { create, get: getPasskey },
+        beforeCreate: async () => ({ status: 'expired' }),
+      })
+      expect(await addPasskeyFlow(deps)).toEqual({
+        status: 'failed',
+        step: 'create',
+        reason: 'step_up_expired',
+      })
+      expect(create).not.toHaveBeenCalled()
+      expect(server.add).not.toHaveBeenCalled()
+    })
+
+    it('says the passkey wasn’t made when the browser’s create stops', async () => {
+      // A browser answers NotAllowedError for a cancel and for a create it
+      // refused alike (no user activation): never a silent close.
+      native.create.mockRejectedValue(nativeError('cancelled'))
+      const { deps, server } = setup({ createStopIsFailure: true })
+      expect(await addPasskeyFlow(deps)).toEqual({
+        status: 'failed',
+        step: 'create',
+        reason: 'not_created',
+      })
+      expect(server.add).not.toHaveBeenCalled()
+      // Phones keep a cancel quiet.
+      expect(await addPasskeyFlow(setup().deps)).toEqual({
+        status: 'cancelled',
+        step: 'create',
+      })
+    })
+
+    it('stops quietly when the second tap is cancelled', async () => {
+      const create = vi.fn()
+      const { deps } = setup({
+        ceremonies: { create, get: getPasskey },
+        beforeCreate: async () => ({ status: 'cancelled' }),
+      })
+      expect(await addPasskeyFlow(deps)).toEqual({
+        status: 'cancelled',
+        step: 'create',
+      })
+      expect(create).not.toHaveBeenCalled()
+    })
   })
 
   it('adds the passkey at once, then wraps the key with the PRF output', async () => {
@@ -284,6 +359,28 @@ describe('addPasskeyFlow', () => {
       status: 'failed',
       step: 'owner',
       reason: 'owner_failed',
+    })
+  })
+
+  it.each(['offline', 'noPasskey'] as const)(
+    'stops quietly when the web’s step-up ends %s: its sheet said why',
+    async (check) => {
+      const { deps, server } = setup({ confirmOwner: async () => check })
+      expect(await addPasskeyFlow(deps)).toEqual({
+        status: 'cancelled',
+        step: 'owner',
+      })
+      expect(server.registrationOptions).not.toHaveBeenCalled()
+    }
+  )
+
+  it('stops quietly when the web’s step-up before a retry doesn’t pass', async () => {
+    const { deps, server } = setup()
+    native.create.mockResolvedValue(registration({ enabled: false }))
+    server.add.mockRejectedValue(new StepUpNotConfirmedError('cancelled'))
+    expect(await addPasskeyFlow(deps)).toEqual({
+      status: 'cancelled',
+      step: 'save',
     })
   })
 
@@ -508,6 +605,17 @@ describe('removePasskeyFlow', () => {
       expect(server.remove).not.toHaveBeenCalled()
     }
   })
+
+  it.each(['offline', 'noPasskey'] as const)(
+    'removes nothing when the web’s step-up ends %s',
+    async (check) => {
+      const { deps, server } = setup({ confirmOwner: async () => check })
+      expect(await removePasskeyFlow(deps, CREDENTIAL)).toEqual({
+        status: 'cancelled',
+      })
+      expect(server.remove).not.toHaveBeenCalled()
+    }
+  )
 
   it('reports offline, as the remove step', async () => {
     const onError = vi.fn()

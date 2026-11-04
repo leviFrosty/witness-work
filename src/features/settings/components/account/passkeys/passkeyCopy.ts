@@ -2,6 +2,7 @@ import type {
   PasskeyFlowFailure,
   SignInOnlyReason,
 } from '@/lib/serverAccount/passkeyFlow'
+import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { PASSKEYS_MAX } from '@/lib/serverAccount/passkeyFlow'
 
@@ -9,7 +10,11 @@ import { PASSKEYS_MAX } from '@/lib/serverAccount/passkeyFlow'
 export function passkeyFailureMessage(reason: PasskeyFlowFailure): string {
   switch (reason) {
     case 'owner_failed':
-      return i18n.t('passkeys_failedOwner')
+      return i18n.t(
+        Platform.OS === 'web'
+          ? 'passkeys_failedOwnerWeb'
+          : 'passkeys_failedOwner'
+      )
     case 'not_supported':
       return i18n.t('passkeys_failedNotSupported')
     case 'domain_not_associated':
@@ -32,6 +37,10 @@ export function passkeyFailureMessage(reason: PasskeyFlowFailure): string {
       return i18n.t('passkeys_failedRateLimited')
     case 'conflict':
       return i18n.t('passkeys_failedConflict')
+    case 'step_up_expired':
+      return i18n.t('passkeys_failedStepUpExpired')
+    case 'not_created':
+      return i18n.t('passkeys_failedNotCreated')
     case 'unavailable':
     case 'failed':
       return i18n.t('passkeys_failed')

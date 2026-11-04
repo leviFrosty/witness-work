@@ -23,6 +23,11 @@ import { SIGNED_OUT_DATA } from '@/lib/webStorage/boot'
  *   whose it is when a session is kept, and anything else (another account, or
  *   data nobody owns) is wiped first. Whether the old key can be read never
  *   decides it.
+ * - **The same account again** (Sign In Again, while signed in) keeps the data:
+ *   the new session is stored first, then the one it replaces is closed. When
+ *   it can't be stored, the old one stays.
+ * - **Sign In Again never switches** (`keepData`): another account's session is
+ *   closed, and nothing is wiped.
  * - **Another account** closes the old session, wipes, stores the new key and
  *   session without loading the key into this page, and reloads every tab
  *   (`reload` is then true), so nothing acts on the new key while the old
@@ -68,6 +73,11 @@ export class WebSignInError extends Error {
   constructor(
     readonly reason: /** The session opened for another account than the one expected. */
     | 'wrongAccount'
+      /**
+       * Signing in again (`keepData`) as another account than this browser's:
+       * nothing is wiped, and the session it opened is closed.
+       */
+      | 'otherAccount'
       /** The browser couldn't store the key or the session. */
       | 'storage',
     options?: { cause?: unknown }
@@ -239,10 +249,19 @@ export function createWebAccount(deps: WebAccountDeps) {
   async function keep(
     accountKey: Uint8Array,
     opened: OpenedSession,
-    onStored?: () => Promise<void>
+    onStored?: () => Promise<void>,
+    keepData = false
   ): Promise<WebSignIn> {
     lastOpen = null
     const switching = await othersData(opened.accountId)
+    if (keepData && switching) {
+      void deps.closeOpened(opened.accessToken).catch(() => undefined)
+      throw new WebSignInError('otherAccount')
+    }
+    // Signing in again while signed in (Sign In Again): this browser keeps one
+    // session, so the one the new replaces ends, once the new one is stored.
+    const replacing =
+      !switching && deps.sessions.snapshot()?.accountId === opened.accountId
     let wiped = false
     try {
       if (switching) {
@@ -258,7 +277,12 @@ export function createWebAccount(deps: WebAccountDeps) {
       // reload.
       if (switching) await deps.accountKey.seal(accountKey)
       else await deps.accountKey.save(accountKey)
-      if ((await deps.sessions.adopt(accountKey, opened)) === 'failed')
+      const adopted = await deps.sessions.adopt(
+        accountKey,
+        opened,
+        replacing ? { replace: { waitMs: closeWaitMs } } : undefined
+      )
+      if (adopted === 'failed')
         throw new Error('The session could not be saved')
     } catch (error) {
       void deps.closeOpened(opened.accessToken).catch(() => undefined)
@@ -315,9 +339,11 @@ export function createWebAccount(deps: WebAccountDeps) {
      * Opens this browser's web session with a sign-in ticket (a passkey's, an
      * approval's, or a recovery key's) for `accountKey`, then keeps both.
      * `expectAccountId` (an approval's) closes a session for any other account.
-     * Throws `HttpError` when the server refuses (`ticket_invalid`, …),
-     * `WebSignInError` otherwise. Retrying with the same ticket after a failure
-     * sends the same signed request, within the ticket's lifetime.
+     * `keepData` (Sign In Again) never wipes: a session for another account
+     * than this browser's data is closed (`otherAccount`). Throws `HttpError`
+     * when the server refuses (`ticket_invalid`, …), `WebSignInError`
+     * otherwise. Retrying with the same ticket after a failure sends the same
+     * signed request, within the ticket's lifetime.
      *
      * With `reload` true, every tab is already reloading: the sign-in flow
      * stops there, and the page that loads is signed in (`start`). Whatever the
@@ -333,7 +359,12 @@ export function createWebAccount(deps: WebAccountDeps) {
       {
         expectAccountId,
         onStored,
-      }: { expectAccountId?: string; onStored?: () => Promise<void> } = {}
+        keepData = false,
+      }: {
+        expectAccountId?: string
+        onStored?: () => Promise<void>
+        keepData?: boolean
+      } = {}
     ): Promise<WebSignIn> {
       const retry =
         lastOpen?.ticket === ticket &&
@@ -357,7 +388,7 @@ export function createWebAccount(deps: WebAccountDeps) {
         void deps.closeOpened(opened.accessToken).catch(() => undefined)
         throw new WebSignInError('wrongAccount')
       }
-      return keep(accountKey, opened, onStored)
+      return keep(accountKey, opened, onStored, keepData)
     },
     /**
      * Keeps the web session `web/signup` answered with, for the key sign-up

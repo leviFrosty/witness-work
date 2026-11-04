@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
   os: 'ios',
@@ -22,6 +22,20 @@ vi.mock('react-native', () => ({
   },
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+// The web's lock, which phones never use.
+const webLock = vi.hoisted(() => ({ unlock: vi.fn() }))
+const turnOffWebAppLock = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/webAppLockRuntime', () => ({
+  webAppLock: webLock,
+  turnOffWebAppLock,
+  webUnlockFailureMessage: (result: { reason: string }) =>
+    `failure:${result.reason}`,
+}))
+vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
+// Listing the account's passkeys checks the lock's against them.
+const loadPasskeys = vi.hoisted(() => vi.fn(async () => ({ passkeys: [] })))
+vi.mock('@/app/account/passkeys', () => ({ loadPasskeys }))
 vi.mock('@/lib/appLock', () => ({
   authenticateAppLock: vi.fn(() => runtime.authenticate()),
 }))
@@ -44,7 +58,12 @@ vi.mock('../../../modules/app-switcher-privacy', () => ({
 
 import { authenticateAppLock } from '@/lib/appLock'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
-import { promptUnlock, promptUnlockAtLaunch, wasAskedAtLaunch } from './unlock'
+import {
+  promptUnlock,
+  promptUnlockAtLaunch,
+  unlockWebAppLock,
+  wasAskedAtLaunch,
+} from './unlock'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -122,4 +141,70 @@ it('opens a device with no passcode rather than trapping the user', async () => 
   runtime.authenticate = () => Promise.resolve('unavailable')
   await promptUnlock()
   expect(useAppLockSession.getState().locked).toBe(false)
+})
+
+describe('the web’s unlock', () => {
+  beforeEach(() => {
+    runtime.os = 'web'
+    webLock.unlock.mockReset()
+    turnOffWebAppLock.mockClear()
+    loadPasskeys.mockClear()
+    useAppLockSession.setState({ locked: true })
+  })
+
+  it('opens on the account’s passkey', async () => {
+    webLock.unlock.mockResolvedValue({ status: 'unlocked' })
+    expect(await unlockWebAppLock()).toBeNull()
+    expect(useAppLockSession.getState().locked).toBe(false)
+  })
+
+  it('checks the account’s passkeys once unlocked, so one removed elsewhere is noticed then', async () => {
+    webLock.unlock.mockResolvedValue({ status: 'unlocked' })
+    await unlockWebAppLock()
+    await vi.waitFor(() => expect(loadPasskeys).toHaveBeenCalledOnce())
+
+    // Offline or failing, the lock stays as it is.
+    useAppLockSession.setState({ locked: true })
+    loadPasskeys.mockRejectedValueOnce(new Error('offline'))
+    expect(await unlockWebAppLock()).toBeNull()
+    await flush()
+  })
+
+  it('never lists them while it stays locked', async () => {
+    for (const result of [
+      { status: 'cancelled' },
+      { status: 'noCredentials' },
+      { status: 'refused', reason: 'wrong_credential' },
+    ]) {
+      webLock.unlock.mockResolvedValue(result)
+      await unlockWebAppLock()
+    }
+    await flush()
+    expect(loadPasskeys).not.toHaveBeenCalled()
+  })
+
+  it('stays locked when the passkey prompt closes, and says so: a browser can’t tell a cancel from no passkey here', async () => {
+    webLock.unlock.mockResolvedValue({ status: 'cancelled' })
+    expect(await unlockWebAppLock()).toBe('webAppLock_unlockStopped')
+    expect(useAppLockSession.getState().locked).toBe(true)
+  })
+
+  it('stays locked and says why on the lock screen itself', async () => {
+    for (const result of [
+      { status: 'failed', reason: 'no_credentials' },
+      { status: 'refused', reason: 'wrong_credential' },
+    ]) {
+      webLock.unlock.mockResolvedValue(result)
+      expect(await unlockWebAppLock()).toBe(`failure:${result.reason}`)
+      expect(useAppLockSession.getState().locked).toBe(true)
+    }
+  })
+
+  it('never turns itself off with no passkey to unlock with: only Sign Out is left', async () => {
+    webLock.unlock.mockResolvedValue({ status: 'noCredentials' })
+    expect(await unlockWebAppLock()).toBe('webAppLock_noKeptPasskey')
+    expect(useAppLockSession.getState().locked).toBe(true)
+    expect(useAppLockSettings.getState().enabled).toBe(true)
+    expect(turnOffWebAppLock).not.toHaveBeenCalled()
+  })
 })

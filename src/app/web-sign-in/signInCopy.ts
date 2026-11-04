@@ -14,6 +14,7 @@ const PROBLEMS: Record<Exclude<WebSignInFailure, 'cancelled'>, LocaleKey> = {
   noPasskey: 'webSignIn_problemNoPasskey',
   passkeyFailed: 'webSignIn_problemPasskeyFailed',
   wrongAccount: 'webSignIn_problemMismatch',
+  otherAccount: 'webSignIn_problemMismatch',
   unknownAccount: 'webSignIn_problemUnknownAccount',
   keyRetired: 'webSignIn_problemKeyRetired',
   turnstileFailed: 'webSignIn_problemTurnstile',
@@ -56,6 +57,7 @@ export function signInProblemText(
     })
   if (failure === 'wrongAccount' && afterPasskey)
     return i18n.t('webSignIn_problemWrongAccount')
+  if (failure === 'otherAccount') return i18n.t('webSignIn_problemOtherAccount')
   if (failure === 'cancelled') return ''
   return i18n.t(PROBLEMS[failure])
 }

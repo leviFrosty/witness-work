@@ -56,7 +56,8 @@ export default function PasskeyRow({
   readLabel: DeviceLabelReader
   disabled: boolean
   lastInSection: boolean
-  onLetUnlock: () => void
+  /** Left out where Let It Unlock isn't offered (the web). */
+  onLetUnlock?: () => void
   onRemove: () => void
 }) {
   const theme = useTheme()
@@ -77,12 +78,13 @@ export default function PasskeyRow({
       // Kept while another action runs: a menu without actions draws nothing.
       // The screen ignores a second action until the first ends.
       actions={[
-        !passkey.canUnlock && {
-          id: 'let-unlock',
-          title: i18n.t('passkeys_letItUnlock'),
-          systemImage: 'lock.open',
-          onPress: onLetUnlock,
-        },
+        !passkey.canUnlock &&
+          onLetUnlock && {
+            id: 'let-unlock',
+            title: i18n.t('passkeys_letItUnlock'),
+            systemImage: 'lock.open',
+            onPress: onLetUnlock,
+          },
         [
           {
             id: 'remove',

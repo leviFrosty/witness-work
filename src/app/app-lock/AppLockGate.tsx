@@ -1,32 +1,59 @@
-import { useEffect, useRef } from 'react'
-import { AppState, BackHandler } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { AppState, BackHandler, Platform } from 'react-native'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useAppLockAvailability } from '@/hooks/useAppLockAvailability'
 import { shouldRelock } from '@/lib/appLock'
+import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
-import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
+import {
+  appLockDelayFor,
+  useAppLockSession,
+  useAppLockSettings,
+} from '@/stores/appLock'
 import AppLockScreen from '@/app/app-lock/AppLockScreen'
-import { promptUnlock, wasAskedAtLaunch } from '@/app/app-lock/unlock'
+import {
+  promptUnlock,
+  unlockWebAppLock,
+  wasAskedAtLaunch,
+} from '@/app/app-lock/unlock'
+import { confirmWebSignOut } from '@/app/web-sign-in/confirmWebSignOut'
 import { setFirstScreenCovered } from '@/app/launch/useAfterLaunch'
 import { setAppSwitcherHidden } from '../../../modules/app-switcher-privacy'
 
 const unlock = () => useAppLockSession.setState({ locked: false })
 
 /**
+ * The web asks only from the User's tap: browsers want one before a passkey
+ * prompt, and an unasked prompt on every return would be a nuisance.
+ */
+const isWeb = Platform.OS === 'web'
+
+/** The delay that applies here (the web has no Immediately). */
+const requireAfter = () =>
+  appLockDelayFor(useAppLockSettings.getState().requireAfter, isWeb)
+
+/**
  * Asks for Face ID, Touch ID or the device passcode before showing the app, at
- * launch and when it returns after the chosen delay. Above every sheet and
- * screen; navigation, deep links and sync keep running underneath.
+ * launch and when it returns after the chosen delay; on the web, one of the
+ * account's passkeys. Above every sheet and screen; on phones, navigation, deep
+ * links and sync keep running underneath. On the web nothing does: while it's
+ * locked, `WebAppLockBoundary` renders this in place of the app.
  */
 export default function AppLockGate() {
-  // The web has no device owner to prove, whatever a synced setting says.
   return hasCapability('appLock') ? <DeviceAppLockGate /> : null
 }
 
 function DeviceAppLockGate() {
   const enabled = useAppLockSettings((s) => s.enabled)
   const locked = useAppLockSession((s) => s.locked)
+  const authenticating = useAppLockSession((s) => s.authenticating)
   const availability = useAppLockAvailability()
+  // The web's: why the last unlock didn't open the lock, shown on it.
+  const [unlockProblem, setUnlockProblem] = useState<string | null>(null)
+  const canUnlockHere = useAppLockSettings(
+    (s) => (s.webCredentials?.ids.length ?? 0) > 0
+  )
   // A launch in the background (a notification, background sync) counts as
   // away, so the first time it's opened asks to unlock.
   const backgroundedAt = useRef<number | null>(
@@ -55,17 +82,17 @@ function DeviceAppLockGate() {
       if (state === 'background') {
         backgroundedAt.current = Date.now()
         // Cover the app before the system snapshots it for the app switcher.
-        if (useAppLockSettings.getState().requireAfter === 0) {
+        if (requireAfter() === 0) {
           useAppLockSession.setState({ locked: true })
         }
       } else if (state === 'active' && backgroundedAt.current !== null) {
         const awayMs = Date.now() - backgroundedAt.current
         backgroundedAt.current = null
-        if (shouldRelock(awayMs, useAppLockSettings.getState().requireAfter)) {
+        if (shouldRelock(awayMs, requireAfter())) {
           useAppLockSession.setState({ locked: true })
         }
         // Each return asks again, even if the last prompt was cancelled.
-        if (useAppLockSession.getState().locked) promptUnlock()
+        if (useAppLockSession.getState().locked && !isWeb) promptUnlock()
       }
     })
     return () => subscription.remove()
@@ -79,6 +106,7 @@ function DeviceAppLockGate() {
     const launch = mounting.current
     mounting.current = false
     if (launch && wasAskedAtLaunch()) return
+    if (isWeb) return
     if (enabled && locked && AppState.currentState === 'active') {
       promptUnlock()
     }
@@ -91,10 +119,32 @@ function DeviceAppLockGate() {
       // Android's back button leaves the app rather than the lock.
       onClose={() => BackHandler.exitApp()}
     >
-      <AppLockScreen
-        method={availability?.method ?? 'passcode'}
-        onUnlock={promptUnlock}
-      />
+      {isWeb ? (
+        <AppLockScreen
+          method='passkey'
+          onUnlock={() => {
+            setUnlockProblem(null)
+            void unlockWebAppLock().then(setUnlockProblem)
+          }}
+          unlocking={authenticating}
+          canUnlock={canUnlockHere}
+          problem={
+            unlockProblem ??
+            (canUnlockHere ? null : i18n.t('webAppLock_noKeptPasskey'))
+          }
+          onSignOut={() =>
+            confirmWebSignOut({
+              onStarted: () => setUnlockProblem(null),
+              onFailed: () => setUnlockProblem(i18n.t('webSignOut_failed')),
+            })
+          }
+        />
+      ) : (
+        <AppLockScreen
+          method={availability?.method ?? 'passcode'}
+          onUnlock={promptUnlock}
+        />
+      )}
     </FullWindowOverlay>
   )
 }

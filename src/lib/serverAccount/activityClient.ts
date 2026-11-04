@@ -1,6 +1,7 @@
 import type { HttpResponse, RequestOptions } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
+import type { SessionWindow } from '@/lib/serverAccount/stepUp'
 
 /**
  * Client for the account's devices and activity log (ADR 0028,
@@ -194,6 +195,31 @@ export async function fetchAccountDevices(
   const sessions = response.data?.sessions
   if (!Array.isArray(sessions)) throw new Error('Malformed sessions answer')
   return sessions.flatMap((session) => parseDevice(session) ?? [])
+}
+
+/**
+ * The server's clock and when this session's step-up stops counting, both from
+ * `GET /accounts/v1/sessions` (server time): the web's step-up times its window
+ * from these, never the device's clock. No window (null) when the server names
+ * none or an unreadable one.
+ */
+export async function fetchSessionWindow(
+  options: ActivityClientOptions
+): Promise<SessionWindow> {
+  const response = await options.request<{
+    now?: unknown
+    stepUpUntil?: unknown
+  }>({
+    url: `${options.baseUrl}/accounts/v1/sessions`,
+    method: 'GET',
+    timeoutMs: ACCOUNT_TIMEOUT_MS,
+    retry: { retries: 1 },
+    signal: options.signal,
+  })
+  const { now, stepUpUntil } = response.data ?? {}
+  return isTime(now) && isTime(stepUpUntil)
+    ? { now, stepUpUntil }
+    : { now: isTime(now) ? now : Number.NaN, stepUpUntil: null }
 }
 
 /**

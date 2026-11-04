@@ -21,9 +21,9 @@ const isWeb = Platform.OS === 'web'
  * once it's set up, its devices and activity (ADR 0028), a way into Device
  * Sync, and its Cloud Sync photo storage (ADR 0040 §6).
  *
- * On the web: Sign Out. Backup, moving the account and the recovery key wait
- * for the web's step-up (docs/passkeys-protocol.md, "The shared check before
- * sensitive actions"): without it they'd show the key or delete with no check.
+ * On the web: Show Recovery Key behind a step-up (docs/passkeys-protocol.md,
+ * "The shared check before sensitive actions"), and Sign Out. Backup and moving
+ * the account stay on phones.
  */
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
@@ -56,7 +56,7 @@ const AccountScreen = () => {
           <DeviceSyncLinkSection />
           <CloudSyncPhotoStorageSection />
           {overview.state !== 'notSetUp' && <AccountSecuritySection />}
-          {!isWeb && <RecoveryKeySection onAccountChanged={changed} />}
+          <RecoveryKeySection onAccountChanged={changed} />
           {isWeb && <WebSignOutSection />}
         </ScrollView>
       </Wrapper>

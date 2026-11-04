@@ -874,6 +874,97 @@ describe('web sessions', () => {
     expect(disk.stores.get('contacts')).toBe('A')
   })
 
+  it('signs in again while signed in as the same account: keeps the data, and closes the session it replaces', async () => {
+    const { tab, disk, worker } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+    const before = JSON.parse(disk.session!).sessionId
+
+    const again = await one.account.openWebSessionWithTicket('ticket-a2', KEY_A)
+
+    expect(again.reload).toBe(false)
+    expect(again.sessionId).not.toBe(before)
+    expect(one.wipe).not.toHaveBeenCalled()
+    expect(disk.stores.get('contacts')).toBe('A')
+    expect(JSON.parse(disk.session!).sessionId).toBe(again.sessionId)
+    // This browser holds one session, not two.
+    expect(worker.sessions.find((x) => x.sessionId === before)?.ended).toBe(
+      'revoked'
+    )
+    expect(one.account.state()).toMatchObject({ status: 'signedIn' })
+    expect((await one.info()).data.accountId).toBe('acct000000000000000001')
+  })
+
+  it('signing in again keeps the new session before closing the one it replaces', async () => {
+    const { tab, disk, events } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    one.store.write.mockImplementation(async (value: string | null) => {
+      events.push(`store ${value ? JSON.parse(value).sessionId : null}`)
+      disk.session = value
+    })
+
+    await one.account.openWebSessionWithTicket('ticket-a2', KEY_A)
+
+    const stored = events.indexOf('store sid-2')
+    expect(stored).toBeGreaterThan(-1)
+    expect(events.indexOf('DELETE sessions/current')).toBeGreaterThan(stored)
+    expect(events).not.toContain('store null')
+  })
+
+  it('signing in again keeps the session it would replace when the new one can’t be saved', async () => {
+    const { tab, disk, worker } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+    one.store.write.mockRejectedValue(new Error('quota'))
+
+    const error = await one.account
+      .openWebSessionWithTicket('ticket-a2', KEY_A)
+      .catch((e: unknown) => e)
+    await settle()
+
+    expect(error).toMatchObject({ reason: 'storage' })
+    expect(worker.sessions[0].ended).toBeNull()
+    expect(worker.sessions[1].ended).toBe('revoked')
+    expect(one.account.state()).toMatchObject({ status: 'signedIn' })
+    expect(disk.stores.get('contacts')).toBe('A')
+    // Still signed in with a session that works.
+    expect((await one.info()).data.accountId).toBe('acct000000000000000001')
+    expect(worker.sessions[0].ended).toBeNull()
+  })
+
+  it('never wipes for another account when asked to keep the data (Sign In Again)', async () => {
+    const { tab, disk, worker } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+
+    const error = await one.account
+      .openWebSessionWithTicket('ticket-b', KEY_B, { keepData: true })
+      .catch((e: unknown) => e)
+    await settle()
+
+    expect(error).toBeInstanceOf(WebSignInError)
+    expect((error as WebSignInError).reason).toBe('otherAccount')
+    expect(one.wipe).not.toHaveBeenCalled()
+    expect(one.reload).not.toHaveBeenCalled()
+    expect(disk.stores.get('contacts')).toBe('A')
+    expect(disk.secrets.get('account-key')).toEqual(KEY_A)
+    // B's session closes; A's stays.
+    expect(worker.sessions[1].ended).toBe('revoked')
+    expect(worker.sessions[0].ended).toBeNull()
+    expect(one.account.state()).toMatchObject({
+      status: 'signedIn',
+      accountId: 'acct000000000000000001',
+    })
+  })
+
   it('sends the same signed request when the User retries after a lost answer', async () => {
     const { worker, tab } = browser()
     const one = tab()

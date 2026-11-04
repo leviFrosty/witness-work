@@ -1,8 +1,12 @@
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
 import { accountKey } from '@/app/account/accountKey'
 import { analytics } from '@/lib/analytics'
-import { confirmDeviceOwner } from '@/lib/deviceOwner'
+import {
+  confirmSensitiveStepUp,
+  type SensitiveAction,
+  withStepUp,
+} from '@/lib/confirmSensitive'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import {
@@ -12,6 +16,7 @@ import {
   type PasskeySupport,
 } from '@/lib/passkeys'
 import { PASSKEY_RP_ID } from '@/lib/passkeys/rpId'
+import { signalRemovedPasskey } from '@/lib/passkeys/signalUnknown'
 import { bearerOptions } from '@/lib/serverAccount'
 import {
   createDeviceLabelReader,
@@ -34,12 +39,34 @@ import {
   type PasskeyAddSource,
   reportPasskeyAdd,
 } from '@/lib/serverAccount/passkeyServer'
+import type { StepUpResult } from '@/lib/serverAccount/stepUp'
+import { gateWebCreate } from '@/lib/serverAccount/stepUpCreate'
+import {
+  onPasskeyStepUp,
+  pageClock,
+  requestContinue,
+} from '@/lib/serverAccount/stepUpPrompt'
+import { keepListedWebLockPasskeys } from '@/lib/webAppLockRuntime'
 
 /**
- * Settings → Account → Passkeys on phones (ADR 0038 §9): the account's
- * passkeys, adding one, letting a Sign-in-only one unlock, and removing one,
- * through this device's attested session and account key, with analytics.
+ * Settings → Account → Passkeys (ADR 0038 §9): the account's passkeys, adding
+ * one, letting a Sign-in-only one unlock, and removing one, through this
+ * device's session and account key, with analytics.
+ *
+ * Phones check Face ID, Touch ID or the passcode first. The web steps up
+ * instead (`confirmSensitiveAction`), and a server that still asks for one
+ * (`step_up_required`) gets it and the request once more (`withStepUp`). The
+ * web sends no RP ID: the server picks the one its origin pairs with.
  */
+
+const isWeb = Platform.OS === 'web'
+
+/** The RP ID the web's last step-up named: where a removed passkey lives. */
+let webRpId: string | null = null
+if (isWeb)
+  onPasskeyStepUp((result) => {
+    webRpId = result.rpId
+  })
 
 export class PasskeysNotSetUpError extends Error {
   constructor() {
@@ -86,14 +113,42 @@ const ceremonies: PasskeyCeremonies = {
   },
 }
 
-function deps(key: Uint8Array): PasskeyFlowDeps {
-  const { options: _, ...account } = accountPasskeyDeps(key, {
-    rpId: PASSKEY_RP_ID,
-  })
+function deps(key: Uint8Array, action: SensitiveAction): PasskeyFlowDeps {
+  const { options: _, ...account } = accountPasskeyDeps(
+    key,
+    isWeb ? {} : { rpId: PASSKEY_RP_ID }
+  )
+  const { server } = account
+  // The web's check and when the User tapped for it: the create that follows
+  // must start inside its window, from a tap the browser still counts.
+  let stepUp: StepUpResult | null = null
+  let tappedAt = 0
   return {
     ...account,
+    server: {
+      ...server,
+      add: (args) => withStepUp('add_passkey', () => server.add(args)),
+      remove: (credentialId) =>
+        withStepUp('remove_passkey', () => server.remove(credentialId)),
+    },
     ceremonies,
-    confirmOwner: () => confirmDeviceOwner(i18n.t('passkeys_unlockPrompt')),
+    confirmOwner: async () => {
+      tappedAt = isWeb ? pageClock() : 0
+      const confirmed = await confirmSensitiveStepUp(
+        action,
+        i18n.t('passkeys_unlockPrompt')
+      )
+      stepUp = confirmed.stepUp
+      return confirmed.check
+    },
+    ...(isWeb && {
+      beforeCreate: () =>
+        gateWebCreate(stepUp, tappedAt, {
+          elapsed: pageClock,
+          askContinue: (until) => requestContinue(action, until),
+        }),
+      createStopIsFailure: true,
+    }),
     randomBytes: getRandomBytes,
     // PasskeyError carries the platform's message; never secrets.
     onError: (step, error) => logger.warn(`[passkeys] ${step} failed`, error),
@@ -111,6 +166,7 @@ export type LoadedPasskeys = {
 export async function loadPasskeys(): Promise<LoadedPasskeys> {
   const key = await requireKey()
   const list = await listPasskeys(bearerOptions(key))
+  keepListedWebLockPasskeys(list.passkeys.map((p) => p.credentialId))
   return {
     passkeys: list.passkeys,
     name: list.userHandle ? passkeyName(list.userHandle) : null,
@@ -118,8 +174,11 @@ export async function loadPasskeys(): Promise<LoadedPasskeys> {
   }
 }
 
-/** Whether this phone can make passkeys at all, so Add a Passkey shows. */
-export const phonePasskeySupport = (): Promise<PasskeySupport> =>
+/**
+ * Whether this phone or browser can make passkeys at all, so Add a Passkey
+ * shows.
+ */
+export const accountPasskeySupport = (): Promise<PasskeySupport> =>
   passkeySupport()
 
 /**
@@ -132,7 +191,7 @@ export function simulatePasskeyAdd(result: PasskeyAddResult | null) {
 }
 
 /** Add a Passkey, start to end. */
-export async function addPhonePasskey(context: {
+export async function addAccountPasskey(context: {
   count: number
   support: PasskeySupport | null
   source: PasskeyAddSource
@@ -143,7 +202,7 @@ export async function addPhonePasskey(context: {
   })
   const result =
     simulatedAdd ??
-    (await addPasskeyFlow(deps(await requireKey()), {
+    (await addPasskeyFlow(deps(await requireKey(), 'add_passkey'), {
       count: context.count,
       support: context.support ?? undefined,
     }))
@@ -161,7 +220,7 @@ export async function letPhonePasskeyUnlock(
     source: 'settings',
   })
   const result = await letPasskeyUnlockFlow(
-    deps(await requireKey()),
+    deps(await requireKey(), 'add_passkey'),
     credentialId
   )
   reportPasskeyAdd('upgrade', 'settings', result)
@@ -169,14 +228,16 @@ export async function letPhonePasskeyUnlock(
 }
 
 /** Remove, once the User confirmed the warning. */
-export async function removePhonePasskey(
+export async function removeAccountPasskey(
   passkey: Passkey,
   lastUnlocking: boolean
 ): Promise<PasskeyRemoveResult> {
   const result = await removePasskeyFlow(
-    deps(await requireKey()),
+    deps(await requireKey(), 'remove_passkey'),
     passkey.credentialId
   )
+  if (result.status === 'removed' && isWeb && webRpId)
+    signalRemovedPasskey(webRpId, passkey.credentialId)
   if (result.status === 'removed')
     analytics.capture('passkey_removed', {
       can_unlock: passkey.canUnlock,

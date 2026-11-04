@@ -28,7 +28,8 @@ export default function PasskeyListSection({
   canAdd: boolean
   busy: boolean
   onAdd: () => void
-  onLetUnlock: (passkey: Passkey) => void
+  /** Left out where Let It Unlock isn't offered (the web). */
+  onLetUnlock?: (passkey: Passkey) => void
   onRemove: (passkey: Passkey) => void
 }) {
   const theme = useTheme()
@@ -65,7 +66,7 @@ export default function PasskeyListSection({
               readLabel={readLabel}
               disabled={busy}
               lastInSection={!canAdd && index === passkeys.length - 1}
-              onLetUnlock={() => onLetUnlock(passkey)}
+              onLetUnlock={onLetUnlock && (() => onLetUnlock(passkey))}
               onRemove={() => onRemove(passkey)}
             />
           ))}

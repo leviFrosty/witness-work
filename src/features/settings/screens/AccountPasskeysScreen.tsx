@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshControl, ScrollView } from 'react-native'
+import { Platform, RefreshControl, ScrollView } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -18,7 +18,7 @@ import {
 import {
   type LoadedPasskeys,
   loadPasskeys,
-  phonePasskeySupport,
+  accountPasskeySupport,
 } from '@/app/account/passkeys'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import i18n from '@/lib/locales'
@@ -27,10 +27,11 @@ import type { PasskeySupport } from '@/lib/passkeys'
 import type { Passkey } from '@/lib/serverAccount/passkeyClient'
 
 /**
- * Settings → Account → Passkeys on phones (ADR 0038 §9): the account's passkeys
- * with "Can unlock your account" or "Sign-in only", Add a Passkey, Let It
- * Unlock, and Remove. Lists again on focus, on returning to the app, after each
- * action, and on pull to refresh.
+ * Settings → Account → Passkeys (ADR 0038 §9): the account's passkeys with "Can
+ * unlock your account" or "Sign-in only", Add a Passkey, Let It Unlock
+ * (phones), and Remove. On the web, adding and removing each step up first.
+ * Lists again on focus, on returning to the app, after each action, and on pull
+ * to refresh.
  */
 const AccountPasskeysScreen = () => {
   const theme = useTheme()
@@ -46,7 +47,7 @@ const AccountPasskeysScreen = () => {
   const latest = useRef(0)
 
   useEffect(() => {
-    void phonePasskeySupport().then(setSupport)
+    void accountPasskeySupport().then(setSupport)
   }, [])
 
   useEffect(() => {
@@ -126,8 +127,13 @@ const AccountPasskeysScreen = () => {
                   })
                 )
               }
-              onLetUnlock={(passkey: Passkey) =>
-                void act(() => letUnlockWithToasts(passkey))
+              onLetUnlock={
+                // The web's get would need the passkeys' RP ID, which only
+                // a step-up names; Sign-in-only passkeys unlock from a phone.
+                Platform.OS === 'web'
+                  ? undefined
+                  : (passkey: Passkey) =>
+                      void act(() => letUnlockWithToasts(passkey))
               }
               onRemove={(passkey: Passkey) =>
                 void act(() => removeWithConfirm(passkey, passkeys))

@@ -1,4 +1,4 @@
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
   History as HistoryIcon,
@@ -11,10 +11,7 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 
-/**
- * Signed-In Devices and Account Activity (ADR 0028), and Passkeys on phones
- * (ADR 0038 §9; the web's comes later).
- */
+/** Signed-In Devices, Passkeys (ADR 0038 §9) and Account Activity (ADR 0028). */
 export default function AccountSecuritySection() {
   const navigation = useNavigation<RootStackNavigation>()
   return (
@@ -30,13 +27,11 @@ export default function AccountSecuritySection() {
           label={i18n.t('accountSecurity_devices')}
           onPress={() => navigation.navigate('Account Devices')}
         />
-        {Platform.OS !== 'web' && (
-          <InputRowButton
-            leftIcon={UserRoundKeyIcon}
-            label={i18n.t('accountSecurity_passkeys')}
-            onPress={() => navigation.navigate('Account Passkeys')}
-          />
-        )}
+        <InputRowButton
+          leftIcon={UserRoundKeyIcon}
+          label={i18n.t('accountSecurity_passkeys')}
+          onPress={() => navigation.navigate('Account Passkeys')}
+        />
         <InputRowButton
           leftIcon={HistoryIcon}
           label={i18n.t('accountSecurity_activity')}

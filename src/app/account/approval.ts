@@ -8,7 +8,7 @@ import {
   type OfferStartProblem,
 } from '@/app/account/handoff'
 import { analytics } from '@/lib/analytics'
-import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
+import { type SensitiveCheck, stopsQuietly } from '@/lib/sensitiveCheck'
 import { logger } from '@/lib/logger'
 import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { appApprovalOrigins } from '@/lib/serverAccount/approvalRuntime'
@@ -142,14 +142,16 @@ export async function startPhoneApproval(
  */
 export async function approveBrowser(
   session: PhoneApproval,
-  { confirmOwner }: { confirmOwner: () => Promise<DeviceOwnerCheck> }
+  { confirmOwner }: { confirmOwner: () => Promise<SensitiveCheck> }
 ): Promise<'sent' | 'cancelled' | 'failed'> {
   if (!ownerChecks.has(session)) {
     const check = await confirmOwner().catch((error: unknown) => {
       logger.warn("[approval] couldn't confirm the device's owner", error)
       return 'failed' as const
     })
-    if (check === 'cancelled' || check === 'failed') return check
+    // The web's step-up sheet explains offline and no passkey itself.
+    if (stopsQuietly(check)) return 'cancelled'
+    if (check === 'failed') return check
     ownerChecks.set(session, check)
   }
   await session.approve()

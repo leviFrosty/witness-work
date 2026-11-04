@@ -349,7 +349,7 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 - A suspended account keeps syncing.
 - `disabled` (503) also when the worker has no sync bucket or accounts database.
 
-`GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`.
+`GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`. It also carries web sign-up's `webSignup` and the caller's coarse location, `country` and `regionCode` (see [Updates and the legacy switch](#updates-and-the-legacy-switch)).
 
 `entitlement: everyone` applies only to a session whose capabilities include `sync-everyone`, and to a config request with `?capabilities=sync-everyone` (see [Capabilities](#capabilities)). Anyone else is answered as if the entitlement were `supporter`, everywhere above.
 
@@ -431,7 +431,7 @@ The account key and the first 2 bytes of its SHA-256, 34 bytes, in Crockford bas
 
 ## Updates and the legacy switch
 
-`GET {BASE}/app/v1/config[?capabilities=…]` (no authentication) → `{ ok, minAppVersion?, sync? }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. Edge-cached for 60 seconds.
+`GET {BASE}/app/v1/config[?capabilities=…]` (no authentication) → `{ ok, minAppVersion?, sync, webSignup, country, regionCode }`. `minAppVersion` is `major.minor.patch`, from KV `app:min-version` (`{"minVersion":"…"}`), then the `APP_MIN_VERSION` var, else absent. The app reads it at launch and when it returns to the foreground; below it, the app shows a blocking Update Required screen with a store link. `country` is the caller's upper-case ISO 3166-1 alpha-2 code from Cloudflare's `request.cf`, null when unknown; `regionCode` is its ISO 3166-2 subdivision without the country prefix (`MB`), null when unknown and whenever `country` is. The web paywall uses them to choose where it sells ([web purchases](./web-purchases.md#countries-the-web-doesnt-sell-to)). The KV reads are edge-cached for 60 seconds; the response itself is `no-store`, so no caller ever gets another's location.
 
 KV `auth:legacy` (`on` when absent, then the `AUTH_LEGACY` var): while on, every converted route (accounts, backup, handoff, Buddies, and the old Notes Import routes while `scribe:legacy-notes-import` re-allows them) also accepts the way it authenticated before sessions. Set to `off`, those requests are refused with **426 `upgrade_required`** (`Retry-After` absent; updating is the fix), and the app shows Update Required. Edge-cached for 60 seconds. Raising `app:min-version` first means current app versions show the update screen before any request is refused.
 

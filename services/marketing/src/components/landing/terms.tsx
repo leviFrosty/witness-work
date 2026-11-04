@@ -77,7 +77,7 @@ export default function WitnessWorkTerms() {
       eyebrow='Terms'
       title='Terms of Use'
       description='Rules and responsibilities for using WitnessWork.'
-      updated='Updated October 30, 2026'
+      updated='Updated November 4, 2026'
       sections={sections}
     >
       Questions? Email{' '}

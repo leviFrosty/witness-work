@@ -87,7 +87,9 @@ const sections = [
         RevenueCat accounts for receipts, tax, and refunds, and are linked to
         your purchases and your WitnessWork account. They are never stored on
         WitnessWork's servers or in the app, and usage statistics never include
-        them or purchase identifiers.
+        them or purchase identifiers. To check whether web purchases are offered
+        where you are, the web app reads your approximate country and province
+        from your connection, as Cloudflare sees it; this isn't stored.
       </p>
     ),
   },
@@ -169,7 +171,7 @@ export default function WitnessWorkPrivacy() {
       eyebrow='Privacy'
       title='Privacy Policy'
       description='What WitnessWork collects, why, and your choices.'
-      updated='Updated October 30, 2026'
+      updated='Updated November 4, 2026'
       sections={sections}
     />
   )

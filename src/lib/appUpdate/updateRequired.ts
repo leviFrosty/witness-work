@@ -2,6 +2,10 @@ import { create } from 'zustand'
 import { HttpError, request } from '@/lib/http/request'
 import { belowMinVersion } from '@/lib/appUpdate/versionGate'
 import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
+import {
+  parseVisitorLocation,
+  type VisitorLocation,
+} from '@/lib/visitorLocation'
 
 /**
  * Update Required, app-wide (ADR 0027 §6): this app version is below the
@@ -59,6 +63,11 @@ export type AppConfig = {
   sync: AppSyncConfig | null
   /** Absent from a worker before web accounts. */
   webSignup?: AppWebSignupConfig
+  /**
+   * Where Cloudflare places the visitor (the web paywall reads it). Absent from
+   * a worker before it.
+   */
+  location?: VisitorLocation
 }
 
 /**
@@ -75,6 +84,8 @@ export async function fetchAppConfig(
     minAppVersion?: unknown
     sync?: { enabled?: unknown; entitlement?: unknown } | null
     webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
+    country?: unknown
+    regionCode?: unknown
   } | null>({
     url: `${url}?capabilities=${SESSION_CAPABILITIES.join(',')}`,
     timeoutMs: 8_000,
@@ -82,7 +93,7 @@ export async function fetchAppConfig(
   })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion, sync, webSignup } = response.data
+  const { minAppVersion, sync, webSignup, country, regionCode } = response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
     sync:
@@ -104,12 +115,16 @@ export async function fetchAppConfig(
               : null,
         },
       }),
+    ...('country' in response.data && {
+      location: parseVisitorLocation(country, regionCode),
+    }),
   }
 }
 
 /**
- * The worker edge-caches the config for 60 seconds, so asking more often learns
- * nothing.
+ * The worker edge-caches the config's KV values for 60 seconds, so asking more
+ * often learns nothing. The response itself is `no-store`: it carries the
+ * caller's own location, so it must never be cached for anyone else.
  */
 export const APP_CONFIG_MIN_INTERVAL_MS = 60_000
 

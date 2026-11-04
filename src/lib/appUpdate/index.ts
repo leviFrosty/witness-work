@@ -1,6 +1,7 @@
 import Constants from 'expo-constants'
 import apis from '@/constants/apis'
 import { usePreferences } from '@/stores/preferences'
+import { readLaunchAppConfig } from '@/lib/appUpdate/launchConfig'
 import {
   createAppConfigCheck,
   fetchAppConfig,
@@ -11,9 +12,18 @@ import {
 export const appVersion = (): string | null =>
   Constants.expoConfig?.version ?? null
 
-/** At launch and on returning to the foreground; at most once a minute. */
+let launchConfigRead = false
+
+/**
+ * At launch and on returning to the foreground; at most once a minute. The
+ * first read is the launch's shared one (`readLaunchAppConfig`).
+ */
 export const checkAppConfig = createAppConfigCheck({
-  fetchConfig: () => fetchAppConfig(apis.appConfig),
+  fetchConfig: () => {
+    if (launchConfigRead) return fetchAppConfig(apis.appConfig)
+    launchConfigRead = true
+    return readLaunchAppConfig()
+  },
   currentVersion: appVersion,
   now: Date.now,
   // Cloud Sync's switches decide a never-chosen device's default (ADR 0030).

@@ -1,11 +1,11 @@
 /**
- * Where the web doesn't sell Supporter subscriptions or Tips, as ISO 3166-1
- * alpha-2 codes. The terms page lists them. This mirrors the app's
- * src/features/supporter/lib/webSalesRegions.ts and Stripe's Radar list, and a
- * test in the app (webSalesRegions.test.ts) and one here fail when they differ:
- * change all of them together, and bump the Terms' Updated date. Write each
- * group as one quoted, space-separated string, and use no other quoted strings,
- * since the test reads this file as text.
+ * Where the web doesn't sell Supporter subscriptions or Tips: countries as ISO
+ * 3166-1 alpha-2 codes, and provinces by country. The terms page lists them.
+ * This mirrors the app's src/features/supporter/lib/webSalesRegions.ts and
+ * Stripe's Radar list, and a test in the app (webSalesRegions.test.ts) and one
+ * here fail when they differ: change all of them together, and bump the Terms'
+ * Updated date. Write each group as one quoted, space-separated string, and use
+ * no other quoted strings, since the test reads this file as text.
  */
 
 /** The EU-27, shown as "the European Union". */
@@ -26,7 +26,13 @@ export const NO_WEB_SALE_COUNTRIES = [
   ...'AL AO AM AW BS BH BD CM CL CO GE GH GN IN CI KZ KE KG LA MR MX MD ME MA MK OM PE RU SA SN RS KR TJ TZ TR AE UY UZ VN'.split(
     ' '
   ),
-  // All of Canada, for now: Manitoba and Saskatchewan tax from the first sale,
-  // and the country signal has no province.
-  'CA',
 ]
+
+/**
+ * Provinces the web doesn't sell in, by country, as ISO 3166-2 codes without
+ * the country prefix. One country to a line.
+ */
+export const NO_WEB_SALE_REGIONS: Record<string, string[]> = {
+  // Manitoba and Saskatchewan tax digital sales from the first sale.
+  CA: 'MB SK'.split(' '),
+}

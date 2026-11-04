@@ -38,8 +38,10 @@ either yet. So the web doesn't sell to buyers there:
 - Stripe blocks EU and UK card and billing countries.
 
 Countries that tax digital sales from the first sale are blocked the same
-way, and all of Canada until the web can see provinces (Manitoba and
-Saskatchewan tax from the first sale). Countries with a registration threshold
+way. So are Manitoba and Saskatchewan, which do too, though only the paywall
+checks provinces: Stripe sees countries only, and we accept that limit. The
+paywall reads the province from ww-api's app config, and blocks Canada when
+it can't tell the province. Countries with a registration threshold
 stay open; we review sales against those thresholds and register or block
 before reaching one.
 
@@ -72,8 +74,8 @@ servers or the app. The privacy policy says so.
 
 ## Consequences
 
-- Users in the EU, the UK, the other first-sale countries and Canada support
-  WitnessWork through the app stores for now.
+- Users in the EU, the UK, the other first-sale countries, Manitoba and
+  Saskatchewan support WitnessWork through the app stores for now.
 - We owe sales tax only where we reach a country's threshold, and nothing
   where tax applies from the first sale, because we don't sell there on the
   web.

@@ -11,10 +11,10 @@ import { scrubPurchaseReturn } from '@/lib/purchaseReturn'
  *   loads.
  * - Otherwise checkout's ids leave the address, and the `app_user_id` stays in
  *   memory only (`@/lib/launchAddress`).
- * - A development build on localhost reads `?dev_country=` to test the region
- *   notice, and `?dev_buy_gate=1` to make web Buy wait for an account session
- *   and a settled id as Beta and production do. Every build removes both from
- *   the address.
+ * - A development build on localhost reads `?dev_country=` (`GB`, or `CA-MB` for
+ *   a province) to test the region notice, and `?dev_buy_gate=1` to make web
+ *   Buy wait for an account session and a settled id as Beta and production do.
+ *   Every build removes both from the address.
  */
 
 const DEV_COUNTRY = 'dev_country'

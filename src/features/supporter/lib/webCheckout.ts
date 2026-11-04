@@ -77,7 +77,10 @@ export const clearWebCheckoutRecord = () => store().delete(RECORD_KEY)
 
 /** What the web paywall needs to sell; null on phones (`useWebCheckout`). */
 export type WebCheckout = {
-  /** Whether this visitor's country gets web prices (`webSalesAllowed`). */
+  /**
+   * Whether this visitor's country and province get web prices
+   * (`webSalesAllowed`).
+   */
   region: 'loading' | 'allowed' | 'blocked'
   /**
    * Whether an offering has a Web Purchase Link. The web shows no price from an

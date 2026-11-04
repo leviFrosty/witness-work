@@ -247,7 +247,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // and Set Up Another Device. ww-api serves each host's AASA file, which
       // lists every bundle id, so each associated domain works across build
       // variants.
-      // Passkeys (ADR 0038): the RP ID's host serves `public/.well-known`. Dev
+      // Passkeys (ADR 0038): the RP ID's host serves its association files
+      // (`config/web-associations.json`, docs/web-hosting.md). Dev
       // builds use the dev RP ID, and `mode=developer` fetches it straight
       // from the host instead of Apple's CDN.
       associatedDomains: [

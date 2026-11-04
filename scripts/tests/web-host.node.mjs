@@ -3,13 +3,17 @@ import { afterEach, test } from 'node:test'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import util from 'node:util'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { unstable_readConfig } from 'wrangler'
 import {
+  HOLDING_PAGE,
   INTEGRATION_BRANCH,
   PRODUCTION_TOKEN_ITEM,
   STAMP,
+  WELL_KNOWN_CONFIG,
+  WELL_KNOWN_DIR,
   WRANGLER_CONFIG,
   checkStamp,
   deployPlan,
@@ -17,11 +21,22 @@ import {
   deployTokenRead,
   prepareAssets,
   profiles,
+  servesApp,
+  wellKnownBundle,
   wranglerEnv,
   writeStamp,
+  writeWellKnownBundle,
 } from '../web-host.mjs'
-import { environments } from '../web.mjs'
-import { headersFile } from '../../web/host/src/headers.ts'
+import {
+  AASA,
+  ASSET_LINKS,
+  associationFiles,
+  checkAssociationFiles,
+  environments,
+  listFiles,
+  writeAssociationFiles,
+} from '../web.mjs'
+import { HOLDING_CSP, headersFile } from '../../web/host/src/headers.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const version = JSON.parse(
@@ -317,4 +332,242 @@ test('a build must call the ww-api, PostHog and Help Center origins its CSP allo
     'https://witnesswork.app',
     profiles.beta.helpSearchOrigin,
   ])
+})
+
+const PLAY_SIGNING =
+  '4C:13:98:34:37:2C:85:5A:6E:A6:19:CF:AF:03:D4:6B:91:14:14:2D:EB:CB:CB:CB:F1:C1:C7:40:55:3E:1C:AC'
+const UPLOAD =
+  'C5:1E:FF:DC:9B:BF:6B:C0:2B:7B:4C:31:92:90:0B:AC:42:67:BD:6E:05:F4:CF:C5:21:77:E5:36:23:A4:75:EB'
+// React Native's public debug keystore, which signs development builds.
+const DEBUG =
+  'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C'
+const loginCreds = (packageName, fingerprints) => ({
+  relation: ['delegate_permission/common.get_login_creds'],
+  target: {
+    namespace: 'android_app',
+    package_name: packageName,
+    sha256_cert_fingerprints: fingerprints,
+  },
+})
+const RELEASE_AASA = {
+  webcredentials: {
+    apps: [
+      'Y3KE7B7AHJ.com.leviwilkerson.jwtime',
+      'Y3KE7B7AHJ.com.leviwilkerson.jwtimebeta',
+    ],
+  },
+}
+const RELEASE_ASSET_LINKS = [
+  loginCreds('com.leviwilkerson.jwtime', [PLAY_SIGNING, UPLOAD]),
+]
+
+/** Every file under `dir` that mentions the development app or its key. */
+const developmentLeaks = (dir) =>
+  listFiles(dir).filter((file) => {
+    const text = fs.readFileSync(path.join(dir, file), 'utf8')
+    return text.includes('jwtimedev') || text.includes(DEBUG)
+  })
+
+test('production and beta builds never carry the development app or the debug key', () => {
+  for (const target of ['production', 'beta']) {
+    const { dir } = exportFixture()
+    // What `expo export` used to copy into every profile from `public/`.
+    fs.mkdirSync(path.join(dir, '.well-known'))
+    fs.writeFileSync(
+      path.join(dir, ASSET_LINKS),
+      JSON.stringify([loginCreds('com.leviwilkerson.jwtimedev', [DEBUG])])
+    )
+    writeAssociationFiles(dir, target)
+    assert.deepEqual(developmentLeaks(dir), [], target)
+    const holding = fixture()
+    writeWellKnownBundle(holding, target)
+    assert.deepEqual(developmentLeaks(holding), [], target)
+  }
+  const { dir } = exportFixture()
+  writeAssociationFiles(dir, 'dev')
+  assert.deepEqual(developmentLeaks(dir), [AASA, ASSET_LINKS])
+})
+
+test('each profile’s association files are valid JSON listing exactly its apps', () => {
+  for (const target of ['production', 'beta']) {
+    const files = associationFiles(target)
+    assert.deepEqual(Object.keys(files), [AASA, ASSET_LINKS])
+    assert.deepEqual(JSON.parse(files[AASA]), RELEASE_AASA, target)
+    assert.deepEqual(JSON.parse(files[ASSET_LINKS]), RELEASE_ASSET_LINKS)
+  }
+  for (const target of ['dev', 'local']) {
+    const files = associationFiles(target)
+    assert.deepEqual(JSON.parse(files[AASA]), {
+      webcredentials: {
+        apps: [
+          ...RELEASE_AASA.webcredentials.apps,
+          'Y3KE7B7AHJ.com.leviwilkerson.jwtimedev',
+        ],
+      },
+    })
+    assert.deepEqual(JSON.parse(files[ASSET_LINKS]), [
+      ...RELEASE_ASSET_LINKS,
+      loginCreds('com.leviwilkerson.jwtimedev', [DEBUG, PLAY_SIGNING, UPLOAD]),
+    ])
+  }
+})
+
+test('a release profile refuses to list the development app', () => {
+  const apps = profiles.production.associatedApps
+  profiles.production.associatedApps = [...apps, 'development']
+  try {
+    assert.throws(
+      () => associationFiles('production'),
+      /would list the development app.*jwtimedev.*FA:C6:17/
+    )
+  } finally {
+    profiles.production.associatedApps = apps
+  }
+})
+
+test('a deploy refuses an export without exactly its profile’s association files', () => {
+  const { dir, write } = exportFixture()
+  assert.throws(() => checkAssociationFiles(dir, 'production'), /apple-app/)
+  writeAssociationFiles(dir, 'dev')
+  assert.throws(
+    () => checkAssociationFiles(dir, 'production'),
+    /production association files/
+  )
+  writeAssociationFiles(dir, 'production')
+  checkAssociationFiles(dir, 'production')
+  write('.well-known/webauthn', '{}')
+  assert.throws(() => checkAssociationFiles(dir, 'production'), /webauthn/)
+})
+
+test('the holding bundle’s association files are byte-identical to the full build’s', () => {
+  for (const target of ['dev', 'beta', 'production']) {
+    const { dir: full } = exportFixture()
+    writeAssociationFiles(full, target)
+    const holding = fixture()
+    writeWellKnownBundle(holding, target)
+    for (const file of [AASA, ASSET_LINKS])
+      assert.ok(
+        fs
+          .readFileSync(path.join(holding, file))
+          .equals(fs.readFileSync(path.join(full, file))),
+        `${target} ${file}`
+      )
+    assert.deepEqual(listFiles(holding), [
+      '.well-known/apple-app-site-association',
+      '.well-known/assetlinks.json',
+      '_headers',
+      'index.html',
+    ])
+  }
+})
+
+test('the holding page loads nothing, and its headers allow nothing', () => {
+  assert.doesNotMatch(HOLDING_PAGE, /<(script|style|link|img|iframe|form)\b/i)
+  assert.doesNotMatch(HOLDING_PAGE, /\s(src|style|on\w+)=/i)
+  assert.deepEqual(
+    [...HOLDING_PAGE.matchAll(/href="([^"]+)"/g)].map(
+      ([, href]) => new URL(href).origin
+    ),
+    ['https://apps.apple.com', 'https://play.google.com']
+  )
+  for (const target of ['dev', 'beta', 'production']) {
+    const headers = wellKnownBundle(target)._headers
+    assert.match(headers, new RegExp(`Content-Security-Policy: ${HOLDING_CSP}`))
+    assert.doesNotMatch(headers, /Report-Only|'self'|camera=\(self\)/)
+    for (const name of [
+      'Strict-Transport-Security',
+      'X-Content-Type-Options: nosniff',
+      'X-Frame-Options: DENY',
+    ])
+      assert.match(headers, new RegExp(name))
+  }
+  assert.match(HOLDING_CSP, /^default-src 'none'/)
+})
+
+test('--well-known-only needs no release tag, but a clean, landed commit and the keyword', () => {
+  const landed = { ...integration, head: 'b'.repeat(40), onIntegration: true }
+  const onMain = { ...landed, onIntegration: false, onMain: true }
+  const args = ['--well-known-only', '--dry-run']
+  assert.throws(() => plan('production', args, {}, landed), /go-ahead/)
+  for (const target of ['beta', 'production']) {
+    for (const git of [landed, onMain]) {
+      const result = plan(target, args, keyword, git)
+      assert.deepEqual(result.blocked, [], target)
+      assert.equal(result.host, profiles[target].host)
+      assert.deepEqual(result.command.slice(1, 6), [
+        'deploy',
+        '--config',
+        WELL_KNOWN_CONFIG,
+        '--env',
+        target,
+      ])
+      assert.deepEqual(
+        result.uploads.map(({ file }) => file),
+        ['_headers', AASA, ASSET_LINKS, 'index.html']
+      )
+    }
+    const unlanded = plan(target, args, keyword, {
+      ...landed,
+      onIntegration: false,
+    })
+    assert.match(unlanded.blocked.join('\n'), /must have landed/)
+    const dirty = plan(target, args, keyword, { ...landed, clean: false })
+    assert.match(dirty.blocked.join('\n'), /Commit all changes/)
+  }
+  // app-dev still serves only the integration branch's head.
+  assert.match(
+    plan('dev', args, {}, landed).blocked.join('\n'),
+    new RegExp(INTEGRATION_BRANCH)
+  )
+  assert.deepEqual(
+    plan('dev', args, {}, { ...integration, onIntegration: true }).blocked,
+    []
+  )
+  for (const extra of ['--prebuilt', '--preview'])
+    assert.throws(
+      () => plan('dev', ['--well-known-only', extra]),
+      /builds its own bundle/
+    )
+  assert.throws(() => plan('dev', ['--replace-app']), /goes with/)
+  assert.equal(
+    plan('dev', [...args, '--replace-app'], {}, integration).replaceApp,
+    true
+  )
+})
+
+test('--well-known-only refuses to replace a web app the host already serves', () => {
+  assert.equal(servesApp(undefined), false)
+  assert.equal(servesApp({ status: 404, body: 'Not found\n' }), false)
+  assert.equal(servesApp({ status: 522, body: '' }), false)
+  assert.equal(servesApp({ status: 200, body: HOLDING_PAGE }), false)
+  assert.equal(
+    servesApp({ status: 200, body: '<!doctype html><div id="root">' }),
+    true
+  )
+})
+
+test('the well-known-only Workers are the app’s, and 404 anything without a file', () => {
+  for (const target of [undefined, 'dev', 'beta', 'production']) {
+    const read = (config) =>
+      unstable_readConfig({ config: path.join(root, config), env: target })
+    const app = read(WRANGLER_CONFIG)
+    const holding = read(WELL_KNOWN_CONFIG)
+    // Everything but the assets: a binding, var or setting missing here would
+    // vanish from the live Worker with the holding deploy.
+    const differing = [
+      ...new Set([...Object.keys(app), ...Object.keys(holding)]),
+    ].filter((key) => !util.isDeepStrictEqual(app[key], holding[key]))
+    assert.deepEqual(
+      differing.sort(),
+      ['assets', 'configPath', 'userConfigPath'],
+      target
+    )
+    assert.equal(holding.assets.binding, app.assets.binding)
+    assert.equal(
+      path.resolve(root, 'web/host', holding.assets.directory),
+      path.join(root, WELL_KNOWN_DIR)
+    )
+    assert.equal(holding.assets.not_found_handling, 'none')
+    assert.deepEqual(holding.assets.run_worker_first, ['/.well-known/*'])
+  }
 })

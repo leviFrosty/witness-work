@@ -6,6 +6,8 @@ node_modules/
 # Expo
 .expo/
 dist/
+# The holding bundle `web-host.mjs deploy --well-known-only` uploads.
+dist-well-known/
 web-build/
 # Skia's CanvasKit, copied in by scripts/web.mjs
 /public/canvaskit.wasm

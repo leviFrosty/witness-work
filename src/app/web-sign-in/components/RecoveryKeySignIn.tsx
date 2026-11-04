@@ -36,15 +36,18 @@ export default function RecoveryKeySignIn({
   needsCheck,
   onSubmit,
   onBack,
+  initialKey = '',
 }: {
   state: WebSignInState
   /** Whether the security check is needed (`recoveryNeedsCheck`). */
   needsCheck: boolean
+  /** The key to start with: one this browser holds, its passkey gone. */
+  initialKey?: string
   onSubmit: (accountKey: Uint8Array, turnstileToken: string | null) => void
   onBack: () => void
 }) {
   const theme = useTheme()
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialKey)
   const [token, setToken] = useState<string | null>(null)
   const [resetKey, setResetKey] = useState(0)
   const [siteKey, setSiteKey] = useState<SiteKey>({ status: 'loading' })
@@ -163,7 +166,9 @@ export default function RecoveryKeySignIn({
               action='web-recovery'
               resetKey={resetKey}
               onToken={setToken}
-              onError={() => setSiteKey({ status: 'failed' })}
+              onError={(reason) =>
+                reason === 'script' && setSiteKey({ status: 'failed' })
+              }
             />
           ) : siteKey.status === 'loading' ? (
             <Text style={{ color: theme.colors.textAlt }}>

@@ -79,7 +79,17 @@ export class WebSignInError extends Error {
        */
       | 'otherAccount'
       /** The browser couldn't store the key or the session. */
-      | 'storage',
+      | 'storage'
+      /**
+       * A web sign-up's key, of an account that may exist, is here: another
+       * account's would replace it.
+       */
+      | 'signUpPending'
+      /**
+       * A key from an earlier web sign-up is here, beside a mark that can't be
+       * read: it may be an account's.
+       */
+      | 'keyHeld',
     options?: { cause?: unknown }
   ) {
     super(`web sign-in: ${reason}`, options)
@@ -110,8 +120,16 @@ export type WebAccountDeps = {
    */
   owner: {
     read: () => Promise<string | null>
-    write: (accountId: string) => Promise<void>
+    /** Null deletes it. */
+    write: (accountId: string | null) => Promise<void>
   }
+  /**
+   * Whether storing this key would replace a web sign-up's, of an account that
+   * may exist (`createSignUpKeyGuard`). Then nothing is kept.
+   */
+  signUpKeyHeld?: (
+    accountKey: Uint8Array
+  ) => Promise<'signUpPending' | 'keyHeld' | null>
   /** Whether the local stores hold anything. */
   hasLocalData: () => boolean | Promise<boolean>
   /**
@@ -253,6 +271,18 @@ export function createWebAccount(deps: WebAccountDeps) {
     keepData = false
   ): Promise<WebSignIn> {
     lastOpen = null
+    let held: 'signUpPending' | 'keyHeld' | null
+    try {
+      held = (await deps.signUpKeyHeld?.(accountKey)) ?? null
+    } catch (error) {
+      // Storage can't say whose key is here: nothing is kept.
+      void deps.closeOpened(opened.accessToken).catch(() => undefined)
+      throw new WebSignInError('storage', { cause: error })
+    }
+    if (held) {
+      void deps.closeOpened(opened.accessToken).catch(() => undefined)
+      throw new WebSignInError(held)
+    }
     const switching = await othersData(opened.accountId)
     if (keepData && switching) {
       void deps.closeOpened(opened.accessToken).catch(() => undefined)
@@ -263,6 +293,8 @@ export function createWebAccount(deps: WebAccountDeps) {
     const replacing =
       !switching && deps.sessions.snapshot()?.accountId === opened.accountId
     let wiped = false
+    /** The owner before this call wrote it, to put back if nothing is kept. */
+    let before: { owner: string | null } | null = null
     try {
       if (switching) {
         // The old account's session ends while its tokens are still here.
@@ -272,7 +304,10 @@ export function createWebAccount(deps: WebAccountDeps) {
         await deps.wipe()
         wiped = true
       }
+      // After a wipe, nothing is anyone's.
+      const owner = wiped ? null : await deps.owner.read()
       await deps.owner.write(opened.accountId)
+      before = { owner }
       // This page still holds the old data in memory: the key loads after the
       // reload.
       if (switching) await deps.accountKey.seal(accountKey)
@@ -286,6 +321,8 @@ export function createWebAccount(deps: WebAccountDeps) {
         throw new Error('The session could not be saved')
     } catch (error) {
       void deps.closeOpened(opened.accessToken).catch(() => undefined)
+      // No session was kept: the data isn't this account's.
+      if (before) await deps.owner.write(before.owner).catch(() => undefined)
       if (wiped) {
         deps.tabs.publish({ type: 'wiped' })
         deps.reload()

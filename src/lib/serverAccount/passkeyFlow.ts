@@ -38,7 +38,7 @@ import {
 export const PASSKEYS_MAX = 10
 
 /** PRF output that can seal the account key. */
-const PRF_OUTPUT_BYTES = 32
+export const PRF_OUTPUT_BYTES = 32
 
 /** The server's half, bound to this device's account session. */
 export type PasskeyServer = {
@@ -209,9 +209,12 @@ export function passkeyFlowFailure(
 const isConflict = (error: unknown) =>
   error instanceof HttpError && error.serverCode === 'conflict'
 
-/** A get for one credential, with a challenge of its own. */
-function unlockRequest(
-  deps: PasskeyFlowDeps,
+/**
+ * A get for one credential, with a challenge of its own (the server doesn't see
+ * it): what confirms PRF after a passkey is created.
+ */
+export function unlockRequest(
+  deps: Pick<PasskeyFlowDeps, 'randomBytes'>,
   credentialId: string,
   rpId: string | undefined
 ): PublicKeyCredentialRequestOptionsJSON {

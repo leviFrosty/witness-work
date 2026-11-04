@@ -129,38 +129,7 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
           description={i18n.t('account_recoveryKeyInfo')}
         />
       </View>
-      <View
-        style={{
-          paddingVertical: 16,
-          paddingHorizontal: 12,
-          borderRadius: theme.numbers.borderRadiusMd,
-          backgroundColor: theme.colors.backgroundLighter,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          alignItems: 'center',
-        }}
-      >
-        <Text
-          selectable
-          testID='recovery-key'
-          accessibilityLabel={i18n.t('account_recoveryKeyLabel', {
-            key: recoveryKey.split('').join(' '),
-          })}
-          style={{
-            fontFamily: RECOVERY_KEY_FONT,
-            fontSize: theme.fontSize('lg'),
-            lineHeight: theme.fontSize('lg') * 1.6,
-            // The key is Latin letters and digits in every language, so the
-            // spacing can't break Arabic joining.
-            // eslint-disable-next-line no-restricted-syntax
-            letterSpacing: 1,
-            textAlign: 'center',
-            color: theme.colors.text,
-          }}
-        >
-          {lines(recoveryKey).join('\n')}
-        </Text>
-      </View>
+      <RecoveryKeyBox recoveryKey={recoveryKey} />
       <View
         style={{
           flexDirection: 'row',
@@ -183,6 +152,48 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
         {action(i18n.t('copy'), CopyIcon, copy, 'recovery-key-copy')}
         {action(i18n.t('share'), ShareIcon, share, 'recovery-key-share')}
       </View>
+    </View>
+  )
+}
+
+/**
+ * The key, grouped and monospaced to copy by hand: in this sheet, and on the
+ * web after signing up.
+ */
+export function RecoveryKeyBox({ recoveryKey }: { recoveryKey: string }) {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        borderRadius: theme.numbers.borderRadiusMd,
+        backgroundColor: theme.colors.backgroundLighter,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        alignItems: 'center',
+      }}
+    >
+      <Text
+        selectable
+        testID='recovery-key'
+        accessibilityLabel={i18n.t('account_recoveryKeyLabel', {
+          key: recoveryKey.split('').join(' '),
+        })}
+        style={{
+          fontFamily: RECOVERY_KEY_FONT,
+          fontSize: theme.fontSize('lg'),
+          lineHeight: theme.fontSize('lg') * 1.6,
+          // The key is Latin letters and digits in every language, so the
+          // spacing can't break Arabic joining.
+          // eslint-disable-next-line no-restricted-syntax
+          letterSpacing: 1,
+          textAlign: 'center',
+          color: theme.colors.text,
+        }}
+      >
+        {lines(recoveryKey).join('\n')}
+      </Text>
     </View>
   )
 }

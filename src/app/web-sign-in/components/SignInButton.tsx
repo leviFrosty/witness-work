@@ -37,45 +37,47 @@ export default function SignInButton({
         : kind === 'text'
           ? theme.colors.accent
           : theme.colors.text
+  // The dimming sits outside: Button's own press animation sets its opacity.
   return (
-    <Button
-      accessibilityRole='button'
-      onPress={onPress}
-      disabled={disabled}
-      loading={loading}
-      loadingColor={color}
-      variant={kind === 'secondary' ? 'outline' : 'solid'}
-      testID={testID}
-      style={{
-        minHeight: 48,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: theme.numbers.borderRadiusSm,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        opacity: disabled ? 0.5 : 1,
-        backgroundColor:
-          kind === 'primary'
-            ? theme.colors.accent
-            : kind === 'text'
-              ? 'transparent'
-              : undefined,
-        ...(kind === 'secondary' && { borderColor: theme.colors.border }),
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        {Icon && <Icon size={20} color={color} />}
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: theme.fonts.semiBold,
-            color,
-          }}
-        >
-          {label}
-        </Text>
-      </View>
-    </Button>
+    <View style={{ opacity: disabled ? 0.5 : 1 }}>
+      <Button
+        accessibilityRole='button'
+        onPress={onPress}
+        disabled={disabled}
+        loading={loading}
+        loadingColor={color}
+        variant={kind === 'secondary' ? 'outline' : 'solid'}
+        testID={testID}
+        style={{
+          minHeight: 48,
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+          borderRadius: theme.numbers.borderRadiusSm,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'row',
+          backgroundColor:
+            kind === 'primary'
+              ? theme.colors.accent
+              : kind === 'text'
+                ? 'transparent'
+                : undefined,
+          ...(kind === 'secondary' && { borderColor: theme.colors.border }),
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {Icon && <Icon size={20} color={color} />}
+          <Text
+            style={{
+              fontSize: theme.fontSize('md'),
+              fontFamily: theme.fonts.semiBold,
+              color,
+            }}
+          >
+            {label}
+          </Text>
+        </View>
+      </Button>
+    </View>
   )
 }

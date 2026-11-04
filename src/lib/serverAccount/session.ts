@@ -47,13 +47,21 @@ import {
  *
  * Every refresh replaces the refresh token, and presenting a replaced one after
  * the server's grace minute ends the session as a reused token. So a new token
- * is written to the keystore before anything uses it. When that write fails
- * (twice), this launch keeps the session in memory, and the stale token the
- * keystore still holds is marked by its hash in a second store (`stale`): the
- * next launch discards it and opens a new session (reason `unsaved`) instead of
- * presenting it. A later write that works makes the mark moot. A failed delete
- * (closing, forgetting) is marked the same way, and the next launch deletes the
- * token again.
+ * is written to the keystore before anything uses it, and the whole exchange
+ * (refresh, or open, and that write) runs in background time
+ * (`deps.backgroundTime`): iOS often launches the app in the background (a
+ * background task, a Buddies push) and suspends it a moment later, and a
+ * refresh frozen between the server's answer and the write would present the
+ * replaced token hours later. A refresh that gets no answer asks again at once
+ * with the same token (`refreshSession`), which within the minute gets the same
+ * new one. A refresh the server refuses (401) leaves the session ended here and
+ * in the keystore, so no later launch presents its token again. When that write
+ * fails (twice), this launch keeps the session in memory, and the stale token
+ * the keystore still holds is marked by its hash in a second store (`stale`):
+ * the next launch discards it and opens a new session (reason `unsaved`)
+ * instead of presenting it. A later write that works makes the mark moot. A
+ * failed delete (closing, forgetting) is marked the same way, and the next
+ * launch deletes the token again.
  */
 
 /** Why this device couldn't prove it's WitnessWork. */
@@ -299,6 +307,11 @@ export type AccountSessionDeps = {
   now: () => number
   /** The device clock, for the access token's 15 minutes. */
   localNow?: () => number
+  /**
+   * Runs `run` with time to finish when the app is in the background: an iOS
+   * background task (`modules/background-time`). Without it, `run` just runs.
+   */
+  backgroundTime?: <T>(run: () => Promise<T>) => Promise<T>
   randomBytes: (length: number) => Uint8Array
   attestation: { assert<T>(request: AttestedRequest<T>): Promise<T> }
   store: SessionStore
@@ -367,6 +380,11 @@ type Stored = {
   sessionId: string
   refreshToken: string
   sessionExpiresAt: number
+  /**
+   * The server refused its refresh token (401): never presented again; the next
+   * session opens with reason `ended`.
+   */
+  ended?: true
 }
 
 type Live = Stored & {
@@ -418,7 +436,8 @@ function parseStored(raw: string | null): Stored | null {
       isAccountStatus(value.status) &&
       typeof value.sessionId === 'string' &&
       typeof value.refreshToken === 'string' &&
-      typeof value.sessionExpiresAt === 'number'
+      typeof value.sessionExpiresAt === 'number' &&
+      (value.ended === undefined || value.ended === true)
     )
       return value as Stored
   } catch {
@@ -435,6 +454,7 @@ const stored = (live: Live): Stored => ({
   sessionId: live.sessionId,
   refreshToken: live.refreshToken,
   sessionExpiresAt: live.sessionExpiresAt,
+  ...(live.ended && { ended: true }),
 })
 
 const info = (live: Live): AccountSessionInfo => ({
@@ -597,6 +617,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   }
 
   const sessionValid = (session: Live) =>
+    !session.ended &&
     session.sessionExpiresAt - deps.now() > SESSION_RENEW_MARGIN_MS
 
   const accessUsable = (session: Live, rejected?: string) =>
@@ -758,7 +779,10 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accessToken: string | null
     refreshToken: string
     accessUsable: boolean
+    ended?: true
   }) {
+    // The server ended it already.
+    if (session.ended) return
     try {
       let token = session.accessUsable ? session.accessToken : null
       if (!token)
@@ -827,6 +851,10 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         live = null
         void save(null)
         void closeTokens({ ...current, accessUsable: accessUsable(current) })
+      } else if (current?.ended) {
+        // Its refresh was refused already: presenting it again only gets
+        // another 401.
+        reason = 'ended'
       } else if (current && !sessionValid(current)) {
         reason = 'expired'
       } else if (current) {
@@ -861,6 +889,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           )
             throw error
           reason = 'ended'
+          if (!unchanged()) throw new AccountSessionError('cancelled')
+          // Kept (for its account and status) but never presented again, in
+          // this launch or the next, even when opening a new one fails.
+          const ended: Live = { ...current, ended: true, accessToken: null }
+          live = ended
+          void save(stored(ended), () => live === ended)
         }
       }
       if (
@@ -900,7 +934,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     const previous = flight?.promise
     const promise = (previous ?? Promise.resolve())
       .catch(() => undefined)
-      .then(run)
+      // Refreshing (or opening) through to the keystore write, so iOS
+      // suspending the app can't lose the new token in between.
+      .then(() => (deps.backgroundTime ? deps.backgroundTime(run) : run()))
     flight = { pub, promise }
     void promise
       .catch(() => undefined)

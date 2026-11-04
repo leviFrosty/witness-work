@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
 import { MMKV } from 'react-native-mmkv'
+import { withBackgroundTime } from '../../../modules/background-time'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import * as DeviceSecrets from '../../../modules/device-secrets'
 import apis from '@/constants/apis'
@@ -211,6 +212,10 @@ function reportSessionEvent(event: AccountSessionEvent) {
 export const accountSessions = createAccountSessions({
   baseUrl: apis.accounts,
   now: syncNow,
+  // A background launch (a background task, a Buddies push) can end a moment
+  // after it starts a refresh: iOS would suspend the app before the new token
+  // is saved, and the replaced one ends the session when it's presented later.
+  backgroundTime: (run) => withBackgroundTime('AccountSession', run),
   randomBytes: getRandomBytes,
   attestation: deviceAttestation,
   store: sessionStore,

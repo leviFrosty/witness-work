@@ -121,6 +121,8 @@ const KEPT_MMKV: Record<string, string> = {
   'app-store-ratings': 'cached App Store totals for the paywall',
   'help-center': "the website's Help Center manifest, never the User's",
   'analytics-frequency': 'analytics throttling, never shown',
+  'ww-verify-session':
+    "the verify harness's own session marks (dev builds), never the User's",
 }
 
 /** Every zustand `persist` store name and MMKV instance id in the app. */

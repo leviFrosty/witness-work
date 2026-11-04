@@ -127,9 +127,21 @@ export async function sendSessionOpen(
 }
 
 /**
+ * After a refresh that got no answer, the longest wait before asking again: the
+ * server may have replaced the token already, and the replaced one only works
+ * for its grace minute.
+ */
+export const REFRESH_RETRY_MAX_DELAY_MS = 2_000
+
+/**
  * `POST /accounts/v1/sessions/refresh`: replaces the refresh token. A 401 means
  * the session ended or expired, and a new one has to be opened. Failures throw
  * `HttpError`.
+ *
+ * Idempotent within the server's grace minute: the token it just replaced gets
+ * the same new one. So a refresh that got no answer (a dropped connection, a
+ * timeout, a 5xx) asks once more at once, while the token it may have replaced
+ * still works, instead of keeping it until it would end the session.
  */
 export async function refreshSession(
   refreshToken: string,
@@ -139,6 +151,8 @@ export async function refreshSession(
     url: url(options.baseUrl, 'sessions/refresh'),
     json: { refreshToken },
     timeoutMs: ACCOUNT_TIMEOUT_MS,
+    idempotent: true,
+    retry: { retries: 1, maxDelayMs: REFRESH_RETRY_MAX_DELAY_MS },
     signal: options.signal,
     fetchImpl: options.fetchImpl,
   })

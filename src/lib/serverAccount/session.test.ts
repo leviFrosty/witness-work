@@ -51,7 +51,13 @@ type Session = {
   accessTokens: Set<string>
   expiresAt: number
   ended: boolean
+  rotatedAt: number | null
+  /** Ended for a refresh token presented after its grace minute. */
+  reused: boolean
 }
+
+/** As ww-api's `refreshGraceMs`. */
+const GRACE_MS = 60_000
 
 /** The worker's routes, by the op names tests use. */
 const ROUTES: Record<string, string> = {
@@ -133,6 +139,8 @@ function fakeWorker(clock: { now: number }) {
           accessTokens: new Set(),
           expiresAt: clock.now + 90 * DAY,
           ended: false,
+          rotatedAt: null,
+          reused: false,
         }
         sessions.push(session)
         return json(201, {
@@ -144,11 +152,24 @@ function fakeWorker(clock: { now: number }) {
         })
       }
       case 'session/refresh': {
+        const presented = body?.refreshToken
         const session = sessions.find(
-          (entry) => entry.refreshToken === body?.refreshToken
+          (entry) =>
+            entry.refreshToken === presented ||
+            entry.previousRefresh === presented
         )
         if (!session || session.ended || clock.now >= session.expiresAt)
           return failure(401, 'unauthorized')
+        if (session.refreshToken !== presented) {
+          // The token it just replaced: the same new one within the minute;
+          // later, someone kept a copy, and the session ends.
+          if (clock.now - session.rotatedAt! <= GRACE_MS)
+            return json(200, { ok: true, ...tokens(session) })
+          session.ended = true
+          session.reused = true
+          return failure(401, 'unauthorized')
+        }
+        session.rotatedAt = clock.now
         session.previousRefresh = session.refreshToken
         session.refreshToken = `rt-${++issued}`
         return json(200, { ok: true, ...tokens(session) })
@@ -524,14 +545,125 @@ describe('account sessions', () => {
     await info()
     clock.now += ACCESS_LIFETIME_MS
     worker.override.set('session/refresh', (call) => {
-      if (call === 0) throw new TypeError('Network request failed')
+      if (call <= 1) throw new TypeError('Network request failed')
       return null
     })
 
     await expect(info()).rejects.toMatchObject({ failure: 'offline' })
+    // It asked once more before giving up.
+    expect(worker.opsCalled('session/refresh')).toHaveLength(2)
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-1')
     await expect(info()).resolves.toBeTruthy()
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('asks again at once when a refresh’s answer is lost, so the replaced token never ends the session', async () => {
+    const clock = { now: 1_800_000_000_000 }
+    const worker = fakeWorker(clock)
+    // The server rotates, then the answer never arrives (the app was
+    // suspended, or the connection dropped on the way back).
+    let lose = false
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      const response = await worker.fetchImpl(url, init)
+      if (lose && url.endsWith('/sessions/refresh')) {
+        lose = false
+        throw new TypeError('The network connection was lost.')
+      }
+      return response
+    }) as typeof fetch
+    const { store, info } = setup({ clock, worker, deps: { fetchImpl } })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    lose = true
+
+    await expect(info()).resolves.toBeTruthy()
+
+    // The second ask, with the same token, got the token the lost answer had.
+    const refreshes = worker.opsCalled('session/refresh')
+    expect(refreshes.map((call) => call.body?.refreshToken)).toEqual([
+      'rt-1',
+      'rt-1',
+    ])
+    expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
+    // Hours later, the stored token still refreshes the same session.
+    clock.now += 6 * 60 * 60_000
+    await expect(info()).resolves.toBeTruthy()
+    expect(worker.sessions[0]).toMatchObject({ ended: false, reused: false })
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('holds background time from the refresh through the keystore write', async () => {
+    let held = 0
+    let holds = 0
+    const backgroundTime = async <T>(run: () => Promise<T>): Promise<T> => {
+      holds++
+      held++
+      try {
+        return await run()
+      } finally {
+        held--
+      }
+    }
+    const { worker, store, clock, info } = setup({ deps: { backgroundTime } })
+    const heldDuring: number[] = []
+    store.write.mockImplementation(async (value) => {
+      heldDuring.push(held)
+      store.value = value
+    })
+
+    await info()
+    expect(holds).toBe(1)
+    // A usable access token needs no background time.
+    await info()
+    expect(holds).toBe(1)
+
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(holds).toBe(2)
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    // The open's write and the refresh's write, each inside it.
+    expect(heldDuring).toEqual([1, 1])
+    expect(held).toBe(0)
+  })
+
+  it('never presents a refused refresh token again, in this launch or the next', async () => {
+    let error: Error | null = null
+    const attestation = fakeAttestation({ fail: () => error })
+    const { worker, store, clock, info, events } = setup({ attestation })
+    await info()
+    worker.sessions[0].ended = true
+    clock.now += ACCESS_LIFETIME_MS
+    error = new AttestationError('serverUnavailable')
+
+    await expect(info()).rejects.toMatchObject({ failure: 'attestation' })
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    expect(JSON.parse(store.value!)).toMatchObject({ ended: true })
+
+    // Later in the launch: straight to opening, without the dead token.
+    clock.now += OPEN_RETRY_AFTER_MS.temporary
+    await expect(info()).rejects.toMatchObject({ failure: 'attestation' })
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+
+    // The next launch too, and the session it opens says why.
+    error = null
+    const next = setup({
+      clock,
+      worker,
+      attestation,
+      store: nextLaunchStore(store),
+    })
+    await expect(next.info()).resolves.toBeTruthy()
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    expect(next.events.at(-1)).toMatchObject({
+      op: 'session/open',
+      reason: 'ended',
+      outcome: 'ok',
+    })
+    expect(JSON.parse(next.store.value!).ended).toBeUndefined()
+    expect(events.filter((event) => event.op === 'session/refresh')).toEqual([
+      expect.objectContaining({ outcome: 'server' }),
+    ])
   })
 
   it('keeps a rotated refresh token out of use until the keystore has it', async () => {

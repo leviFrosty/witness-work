@@ -36,7 +36,8 @@ describe('hasCapability', () => {
   })
 
   it('hides every feature with no web equivalent on the web', () => {
-    expect(on('web')).toEqual([])
+    // App Lock unlocks with a passkey there.
+    expect(on('web')).toEqual(['appLock'])
   })
 
   it('gives iOS its Apple-only features and Android its Google ones', () => {

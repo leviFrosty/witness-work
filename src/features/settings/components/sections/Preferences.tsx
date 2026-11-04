@@ -6,6 +6,7 @@ import {
   Settings as SettingsIcon,
   User as UserIcon,
 } from 'lucide-react-native'
+import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../../modules/buddies-keychain'
 import { GroupedListRow, GroupedListSection } from '@/components/ui/GroupedList'
 import i18n from '@/lib/locales'
@@ -31,8 +32,9 @@ const PreferencesSection = ({
           onPress={() => handleNavigate('PreferencesPublisher')}
           selected={selectedDestination === 'PreferencesPublisher'}
         />
-        {/* Binaries before the recovery key can't replace the account key. */}
-        {BuddiesKeychain.isReplaceAvailable() && (
+        {/* Binaries before the recovery key can't replace the account key.
+            A browser never replaces it, but it's always signed in. */}
+        {(Platform.OS === 'web' || BuddiesKeychain.isReplaceAvailable()) && (
           <GroupedListRow
             icon={KeyRoundIcon}
             label={i18n.t('account_title')}

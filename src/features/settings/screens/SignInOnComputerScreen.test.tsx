@@ -41,6 +41,11 @@ vi.mock('@/app/account/approval', () => ({
 vi.mock('@/app/account/attestationCopy', () => ({
   platformKey: (ios: string) => ios,
 }))
+// The shared check on a phone: the device owner's, with the same prompt.
+vi.mock('@/lib/confirmSensitive', () => ({
+  confirmSensitiveAction: (_action: string, prompt: string) =>
+    mocks.confirmDeviceOwner(prompt),
+}))
 vi.mock('@/lib/deviceOwner', () => ({
   confirmDeviceOwner: mocks.confirmDeviceOwner,
 }))

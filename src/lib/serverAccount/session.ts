@@ -1474,13 +1474,26 @@ export function createAccountSessions(deps: AccountSessionDeps) {
    * Makes a session opened elsewhere this device's: a handoff's, or a browser's
    * from its sign-in ticket (or `web/signup`). Says whether it was stored; it's
    * this launch's either way.
+   *
+   * `replace` (a browser signing in again): once the new session is stored, the
+   * one it replaces is closed (waiting at most `waitMs`). When it can't be
+   * stored, the replaced one stays this launch's, and the caller closes the new
+   * one.
    */
   async function adopt(
     accountKey: Uint8Array,
-    opened: OpenedSession
+    opened: OpenedSession,
+    { replace }: { replace?: { waitMs?: number } } = {}
   ): Promise<'saved' | 'skipped' | 'failed'> {
     const pub = deriveAccountSigningKey(accountKey).publicKey
     await load()
+    let previous = replace ? live : null
+    // Another tab may have refreshed since: close with the token it stored.
+    if (deps.web && previous) {
+      const saved = parseStored(await deps.store.read().catch(() => null))
+      if (saved?.sessionId === previous.sessionId)
+        previous = { ...previous, refreshToken: saved.refreshToken }
+    }
     const adoptedAt = ++generation
     flight = null
     lastFailure = null
@@ -1489,7 +1502,24 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     if (deps.web) retired.delete(pub)
     live = toLive(pub, opened)
     deps.onThisDeviceSession?.(opened.sessionId)
-    return save(stored(live), () => generation === adoptedAt)
+    const saved = await save(stored(live), () => generation === adoptedAt)
+    if (!previous || previous.sessionId === opened.sessionId) return saved
+    if (saved === 'failed') {
+      if (generation === adoptedAt) {
+        generation++
+        live = previous
+        deps.onThisDeviceSession?.(previous.sessionId)
+      }
+      return saved
+    }
+    const closing = closeTokens({
+      ...previous,
+      accessUsable: accessUsable(previous),
+    })
+    await (replace?.waitMs === undefined
+      ? closing
+      : settleWithin(closing, replace.waitMs))
+    return saved
   }
 
   /**

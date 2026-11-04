@@ -1,9 +1,11 @@
 import { AppState, Platform } from 'react-native'
 import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
 import { authenticateAppLock } from '@/lib/appLock'
 import { isLayoutDirectionReloadDue } from '@/app/launch/layoutDirection'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { isStorageLocked } from '@/stores/mmkv'
+import { webAppLock, webUnlockFailureMessage } from '@/lib/webAppLockRuntime'
 import { revealAfterUnlock } from '../../../modules/app-switcher-privacy'
 
 let prompting = false
@@ -51,3 +53,42 @@ export function promptUnlockAtLaunch() {
  * chose to stay on it.
  */
 export const wasAskedAtLaunch = () => askedAtLaunch
+
+/**
+ * The web's unlock (`webAppLock.ts`): one of the account's passkeys, checked in
+ * this browser, so it works offline. Only from the User's tap: browsers ask for
+ * one before showing the passkey prompt. Answers what the lock screen says when
+ * it stays locked (null once unlocked). It never turns the lock off: with no
+ * passkey to unlock with, only Sign Out is left. Once unlocked, it lists the
+ * account's passkeys, so a lock whose passkeys were all removed elsewhere turns
+ * off then, and says so.
+ */
+export async function unlockWebAppLock(): Promise<string | null> {
+  if (!webAppLock || prompting) return null
+  prompting = true
+  useAppLockSession.setState({ authenticating: true })
+  try {
+    const result = await webAppLock.unlock()
+    switch (result.status) {
+      case 'unlocked':
+        useAppLockSession.setState({ locked: false })
+        void import('@/app/account/passkeys')
+          .then(({ loadPasskeys }) => loadPasskeys())
+          .catch((error: unknown) =>
+            logger.debug('[app-lock] listing passkeys failed', error)
+          )
+        return null
+      // A browser says the same for a cancel as for none of the account's
+      // passkeys being here: say so, and that Sign Out is the way out.
+      case 'cancelled':
+        return i18n.t('webAppLock_unlockStopped')
+      case 'noCredentials':
+        return i18n.t('webAppLock_noKeptPasskey')
+      default:
+        return webUnlockFailureMessage(result)
+    }
+  } finally {
+    useAppLockSession.setState({ authenticating: false })
+    prompting = false
+  }
+}

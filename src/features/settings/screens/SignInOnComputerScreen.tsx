@@ -13,7 +13,7 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import { approveBrowser } from '@/app/account/approval'
-import { confirmDeviceOwner } from '@/lib/deviceOwner'
+import { confirmSensitiveAction } from '@/lib/confirmSensitive'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { appApprovalOrigins } from '@/lib/serverAccount/approvalRuntime'
@@ -59,7 +59,11 @@ const SignInOnComputerScreen = () => {
     setConfirming(true)
     try {
       const outcome = await approveBrowser(approval, {
-        confirmOwner: () => confirmDeviceOwner(i18n.t('approval_unlockPrompt')),
+        confirmOwner: () =>
+          confirmSensitiveAction(
+            'approve_device',
+            i18n.t('approval_unlockPrompt')
+          ),
       })
       if (outcome === 'failed') toast.error(i18n.t('approval_unlockFailed'))
     } catch (error) {

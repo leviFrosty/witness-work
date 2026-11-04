@@ -4,6 +4,7 @@ import {
   type AuthorizedRequest,
   fetchAccountActivity,
   fetchAccountDevices,
+  fetchSessionWindow,
   revokeAccountDevice,
 } from '@/lib/serverAccount/activityClient'
 import {
@@ -26,6 +27,39 @@ const answering = (data: unknown) => {
   }) as unknown as AuthorizedRequest
   return { request, calls }
 }
+
+describe('fetchSessionWindow', () => {
+  it('reads the server’s clock and when this session’s step-up stops counting', async () => {
+    const { request, calls } = answering({
+      ok: true,
+      sessions: [],
+      now: 1_000,
+      stepUpUntil: 301_000,
+    })
+    expect(await fetchSessionWindow({ baseUrl: BASE, request })).toEqual({
+      now: 1_000,
+      stepUpUntil: 301_000,
+    })
+    expect(calls[0]).toMatchObject({
+      url: `${BASE}/accounts/v1/sessions`,
+      method: 'GET',
+    })
+  })
+
+  it('has no window when the server names none, or an unreadable one', async () => {
+    for (const data of [
+      { ok: true, sessions: [], now: 1_000, stepUpUntil: null },
+      { ok: true, sessions: [], now: 1_000 },
+      { ok: true, sessions: [], now: 1_000, stepUpUntil: '301000' },
+      // An older server: no clock at all.
+      { ok: true, sessions: [] },
+    ])
+      expect(
+        (await fetchSessionWindow({ baseUrl: BASE, ...answering(data) }))
+          .stepUpUntil
+      ).toBeNull()
+  })
+})
 
 describe('fetchAccountDevices', () => {
   it('reads live sessions and drops ones that don’t parse', async () => {

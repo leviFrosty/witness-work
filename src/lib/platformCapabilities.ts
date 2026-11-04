@@ -2,9 +2,10 @@ import { Platform } from 'react-native'
 
 /**
  * Platform features some platforms don't have at all. The web has none of these
- * (ADR 0037 §1), and their entry points are hidden there rather than shown
- * broken. A feature that also needs a native module or a newer binary checks
- * that as well.
+ * (ADR 0037 §1) but App Lock, which it unlocks with a passkey instead
+ * (docs/passkeys-protocol.md, "App Lock on the web"), and their entry points
+ * are hidden there rather than shown broken. A feature that also needs a native
+ * module or a newer binary checks that as well.
  *
  * Features that will get a web version (Buddies, Scribe AI, the Map, backups,
  * imports) aren't listed: they check their own availability.
@@ -34,7 +35,7 @@ export type PlatformCapability =
   | 'storeListings'
   /** Haptic feedback; browsers have no reliable vibration. */
   | 'haptics'
-  /** App Lock: Face ID, Touch ID or the device passcode. */
+  /** App Lock: Face ID, Touch ID or the device passcode; a passkey on the web. */
   | 'appLock'
   /** Saving a picture to the phone's photo library. */
   | 'photoLibrarySave'
@@ -56,7 +57,7 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   storeReview: ['ios', 'android'],
   storeListings: ['ios', 'android'],
   haptics: ['ios', 'android'],
-  appLock: ['ios', 'android'],
+  appLock: ['ios', 'android', 'web'],
   photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
 }

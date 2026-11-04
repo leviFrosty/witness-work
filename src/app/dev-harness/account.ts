@@ -19,7 +19,10 @@ import {
 import { useApprovalDebug } from '@/app/account/approval'
 import { useHandoffDebug } from '@/app/account/handoff'
 import { readPasskeyOffer } from '@/app/account/passkeyOffer'
-import { phonePasskeySupport, simulatePasskeyAdd } from '@/app/account/passkeys'
+import {
+  accountPasskeySupport,
+  simulatePasskeyAdd,
+} from '@/app/account/passkeys'
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import {
   runHandoffSelfTest,
@@ -318,7 +321,7 @@ export const passkeyPromptHarness = {
   },
   readOffer: () => {
     passkeyOffer = null
-    void Promise.all([readPasskeyOffer(), phonePasskeySupport()]).then(
+    void Promise.all([readPasskeyOffer(), accountPasskeySupport()]).then(
       ([offer, support]) => {
         passkeyOffer = { offer, support }
       }

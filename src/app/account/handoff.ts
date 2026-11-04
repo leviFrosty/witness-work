@@ -19,7 +19,7 @@ import {
   losesSomething,
 } from '@/lib/accountKey/accountKey'
 import { analytics } from '@/lib/analytics'
-import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
+import { type SensitiveCheck, stopsQuietly } from '@/lib/sensitiveCheck'
 import { logger } from '@/lib/logger'
 import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
@@ -234,7 +234,7 @@ const ownerChecks = new WeakMap<OfferSession, 'confirmed' | 'noLock'>()
  */
 export async function approveHandoff(
   session: OfferSession,
-  { confirmOwner }: { confirmOwner: () => Promise<DeviceOwnerCheck> }
+  { confirmOwner }: { confirmOwner: () => Promise<SensitiveCheck> }
 ): Promise<'sent' | 'cancelled' | 'failed'> {
   let owner = ownerChecks.get(session)
   if (!owner) {
@@ -246,6 +246,8 @@ export async function approveHandoff(
       analytics.capture('handoff_answered', { answer: 'allow', auth: check })
       return check
     }
+    // The web's step-up sheet explains offline and no passkey itself.
+    if (stopsQuietly(check)) return 'cancelled'
     owner = check
     ownerChecks.set(session, owner)
   }

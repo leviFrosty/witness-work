@@ -4,8 +4,16 @@ import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 import { useAppLockSession } from '@/stores/appLock'
 
-/** How this device proves it's the owner, for labels and icons. */
-export type AppLockMethod = 'faceId' | 'touchId' | 'passcode' | 'biometrics'
+/**
+ * How this device proves it's the owner, for labels and icons. The web's is a
+ * passkey (`webAppLock.ts`).
+ */
+export type AppLockMethod =
+  | 'faceId'
+  | 'touchId'
+  | 'passcode'
+  | 'biometrics'
+  | 'passkey'
 
 export type AppLockAvailability = {
   method: AppLockMethod
@@ -58,6 +66,8 @@ export function appLockRequireLabel(method: AppLockMethod) {
       return i18n.t('appLock_requirePasscode')
     case 'biometrics':
       return i18n.t('appLock_requireBiometricsAndroid')
+    case 'passkey':
+      return i18n.t('webAppLock_require')
   }
 }
 
@@ -70,6 +80,8 @@ export function appLockUnlockLabel(method: AppLockMethod) {
     case 'passcode':
     case 'biometrics':
       return i18n.t('appLock_unlock')
+    case 'passkey':
+      return i18n.t('webAppLock_unlock')
   }
 }
 

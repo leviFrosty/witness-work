@@ -43,6 +43,10 @@ vi.mock('@/app/sync/localChanges', () => ({
   subscribeToLocalDataChanges: vi.fn(),
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+// Phones send gated requests once, as before (`sensitiveCheck.test.ts`).
+vi.mock('@/lib/confirmSensitive', () => ({
+  withStepUp: (_action: string, op: () => Promise<unknown>) => op(),
+}))
 vi.mock('@/lib/appLifecycle', () => ({
   addBackgroundListener: vi.fn(),
   addForegroundListener: vi.fn(),

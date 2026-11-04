@@ -35,6 +35,15 @@ vi.mock('@/hooks/useAppLockAvailability', () => ({
   useAppLockAvailability: () => null,
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+// The web's lock; null on phones.
+vi.mock('@/lib/webAppLockRuntime', () => ({
+  webAppLock: null,
+  turnOffWebAppLock: vi.fn(),
+}))
+vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
+vi.mock('@/app/web-sign-in/confirmWebSignOut', () => ({
+  confirmWebSignOut: vi.fn(),
+}))
 vi.mock('@/lib/appLock', () => ({
   authenticateAppLock: vi.fn(() => Promise.resolve('cancelled')),
   shouldRelock: vi.fn(() => false),

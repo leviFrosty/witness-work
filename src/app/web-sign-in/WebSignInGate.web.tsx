@@ -18,6 +18,7 @@ import WebSignInScreen from '@/app/web-sign-in/WebSignInScreen'
 import { addPasskeyWithToasts } from '@/app/web-sign-in/addPasskeyWithToasts'
 import { createAccountOffer } from '@/app/web-sign-in/createAccountOffer'
 import { webSignIn } from '@/app/web-sign-in/webSignInRuntime'
+import { endSignInAgain, useSignInAgain } from '@/app/web-sign-in/signInAgain'
 
 if (!webAccount) throw new Error('The web sign-in gate is web only')
 const account = webAccount
@@ -51,6 +52,19 @@ export default function WebSignInGate({ children }: PropsWithChildren) {
     if (state.wrapSaved) toast.success(i18n.t('webSignIn_passkeyUnlocks'))
   }, [state.wrapSaved])
 
+  // Sign In Again ends once the new session opened: "Approved by …" or the
+  // Cloud Sync screen comes next, as after any sign-in.
+  const signingInAgain = useSignInAgain((s) => s.open)
+  useEffect(() => {
+    if (state.approvedBy !== null || state.cloudSync) endSignInAgain()
+  }, [state.approvedBy, state.cloudSync])
+  // Only this browser's account signs in again: another would wipe its data.
+  const onlyAccount =
+    signingInAgain && accountState.status === 'signedIn'
+      ? accountState.accountId
+      : null
+  useEffect(() => flow.onlyAccount(onlyAccount), [flow, onlyAccount])
+
   if (accountState.status === 'loading') return <LaunchSplash />
 
   if (accountState.status === 'signedIn') {
@@ -74,6 +88,19 @@ export default function WebSignInGate({ children }: PropsWithChildren) {
             accountKey={key}
             onReady={flow.cloudSyncChecked}
             onSignOut={() => void account.signOut()}
+          />
+        </WebSignInRoot>
+      )
+    if (signingInAgain)
+      return (
+        <WebSignInRoot>
+          <WebSignInScreen
+            flow={flow}
+            state={state}
+            ended={null}
+            keptData={false}
+            notice={i18n.t('stepUp_signInAgainNotice')}
+            onLeave={endSignInAgain}
           />
         </WebSignInRoot>
       )

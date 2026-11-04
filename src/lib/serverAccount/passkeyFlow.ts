@@ -1,6 +1,10 @@
 import { toB64u } from '@/lib/bytes'
-import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
 import { PasskeyError } from '@/lib/passkeys/errors'
+import {
+  type SensitiveCheck,
+  StepUpNotConfirmedError,
+  stopsQuietly,
+} from '@/lib/sensitiveCheck'
 import type {
   CreatedPasskey,
   PasskeyAssertion,
@@ -9,6 +13,7 @@ import type {
   PublicKeyCredentialRequestOptionsJSON,
 } from '@/lib/passkeys/types'
 import { HttpError } from '@/lib/http/request'
+import type { CreateGate } from '@/lib/serverAccount/stepUpCreate'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   type Passkey,
@@ -66,8 +71,23 @@ export type PasskeyCeremonies = {
 export type PasskeyFlowDeps = {
   server: PasskeyServer
   ceremonies: PasskeyCeremonies
-  /** Face ID, Touch ID, fingerprint or passcode (`confirmDeviceOwner`). */
-  confirmOwner: () => Promise<DeviceOwnerCheck>
+  /**
+   * The shared check before sensitive actions: Face ID, Touch ID, fingerprint
+   * or passcode on phones (`confirmDeviceOwner`), a step-up on the web.
+   */
+  confirmOwner: () => Promise<SensitiveCheck>
+  /**
+   * The web's last word before the create, once the options are in
+   * (`gateWebCreate`): a second tap when the step-up used the first, and how
+   * long the step-up has left. None on phones.
+   */
+  beforeCreate?: () => Promise<CreateGate>
+  /**
+   * The web: a browser's create answers the same NotAllowedError for a cancel
+   * as for a create it refused (no user activation), so a stopped create is
+   * shown (`not_created`), never closed without a word.
+   */
+  createStopIsFailure?: boolean
   accountKey: Uint8Array
   /**
    * The RP ID this build's passkeys are for. None on the web: the server picks
@@ -105,6 +125,10 @@ export type PasskeyFlowFailure =
   | 'rate_limited'
   /** The passkey is another account's. */
   | 'conflict'
+  /** The web's step-up ran out before the passkey could be made. */
+  | 'step_up_expired'
+  /** The browser's create stopped: cancelled, or refused without a tap. */
+  | 'not_created'
   | 'failed'
 
 /** Why a passkey was added but can only sign in. */
@@ -177,6 +201,8 @@ export function passkeyFlowFailure(
   error: unknown
 ): PasskeyFlowFailure | 'cancelled' {
   if (error instanceof PasskeyError) return NATIVE[error.code] ?? 'failed'
+  // The web's step-up sheet already said why it didn't go ahead.
+  if (error instanceof StepUpNotConfirmedError) return 'cancelled'
   return SERVER[passkeyFailureFor(error).failure] ?? 'failed'
 }
 
@@ -301,7 +327,7 @@ export async function addPasskeyFlow(
     return { status: 'failed', step: 'options', reason: 'limit' }
 
   const owner = await deps.confirmOwner().catch(() => 'failed' as const)
-  if (owner === 'cancelled') return { status: 'cancelled', step: 'owner' }
+  if (stopsQuietly(owner)) return { status: 'cancelled', step: 'owner' }
   if (owner === 'failed')
     return { status: 'failed', step: 'owner', reason: 'owner_failed' }
 
@@ -312,14 +338,36 @@ export async function addPasskeyFlow(
     return fail(deps, 'options', error)
   }
 
+  const gate: CreateGate = deps.beforeCreate
+    ? await deps.beforeCreate().catch(() => ({ status: 'expired' }) as const)
+    : { status: 'go', timeoutMs: Number.POSITIVE_INFINITY }
+  if (gate.status === 'cancelled')
+    return { status: 'cancelled', step: 'create' }
+  if (gate.status === 'expired')
+    return { status: 'failed', step: 'create', reason: 'step_up_expired' }
+
   let created: CreatedPasskey
   try {
-    // The server's options, passed to the platform as they are.
-    created = await deps.ceremonies.create(
+    // The server's options, passed to the platform as they are, but for a
+    // prompt that would outlast the web's step-up.
+    const creation =
       options.options as unknown as PublicKeyCredentialCreationOptionsJSON
+    created = await deps.ceremonies.create(
+      Number.isFinite(gate.timeoutMs)
+        ? {
+            ...creation,
+            timeout: Math.min(
+              creation.timeout ?? gate.timeoutMs,
+              gate.timeoutMs
+            ),
+          }
+        : creation
     )
   } catch (error) {
-    return fail(deps, 'create', error)
+    const stopped = fail(deps, 'create', error)
+    return stopped.status === 'cancelled' && deps.createStopIsFailure
+      ? { status: 'failed', step: 'create', reason: 'not_created' }
+      : stopped
   }
 
   let credentialId: string
@@ -398,7 +446,7 @@ export async function removePasskeyFlow(
   credentialId: string
 ): Promise<PasskeyRemoveResult> {
   const owner = await deps.confirmOwner().catch(() => 'failed' as const)
-  if (owner === 'cancelled') return { status: 'cancelled' }
+  if (stopsQuietly(owner)) return { status: 'cancelled' }
   if (owner === 'failed') return { status: 'failed', reason: 'owner_failed' }
   try {
     await deps.server.remove(credentialId)

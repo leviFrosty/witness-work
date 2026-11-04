@@ -1,4 +1,4 @@
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -6,6 +6,8 @@ import useTheme from '@/contexts/theme'
 import { fromB64u } from '@/lib/bytes'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { StepUpNotConfirmedError } from '@/lib/sensitiveCheck'
+import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { deleteBackupsBeforeKeyLoss } from '@/lib/serverAccount/backupAccess'
 import { deleteCloudSyncBeforeKeyLoss } from '@/lib/syncTransport/server/cloudSyncCleanup'
 import {
@@ -17,12 +19,41 @@ import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
 
 /**
  * Leaves every buddy and erases this User's Buddies data, after confirming.
- * That deletes the account key, so the account's backup (ADR 0026 §4) is
- * deleted first, signed with the key: if that fails, nothing else happens and
- * the User is told. With backup on, it continues under the new account, and the
- * User is told their recovery key changed.
+ * That deletes the account key, so the account's backup (ADR 0026 §4) and its
+ * Cloud Sync slots (ADR 0030 §5) are deleted first, signed with the key: if the
+ * backup's fails, nothing else happens and the User is told. With backup on, it
+ * continues under the new account, and the User is told their recovery key
+ * changed.
+ *
+ * Phones only. A browser can't replace its account key (it signs out instead),
+ * so on the web it would delete the backup and Cloud Sync, which the web's data
+ * lives in, and then fail: it points to the phone app instead.
  */
 export default function BuddiesDeleteDataButton() {
+  return Platform.OS === 'web' ? (
+    <BuddiesDeleteOnPhone />
+  ) : (
+    <PhoneBuddiesDeleteDataButton />
+  )
+}
+
+function BuddiesDeleteOnPhone() {
+  const theme = useTheme()
+  return (
+    <Text
+      style={{
+        color: theme.colors.textAlt,
+        fontSize: theme.fontSize('sm'),
+        textAlign: 'center',
+        paddingHorizontal: 20,
+      }}
+    >
+      {i18n.t('buddies_deleteAllWeb')}
+    </Text>
+  )
+}
+
+function PhoneBuddiesDeleteDataButton() {
   const theme = useTheme()
   const backupOn = useBackupState((state) => state.enabled)
   const hadSlots = useBackupState((state) => (state.slots?.length ?? 0) > 0)
@@ -36,6 +67,8 @@ export default function BuddiesDeleteDataButton() {
         // retention deletes what's left.
         await deleteCloudSyncBeforeKeyLoss(fromB64u(seed))
       } catch (error) {
+        // The step-up sheet already said why it didn't go ahead.
+        if (error instanceof StepUpNotConfirmedError) return
         logger.warn('[buddies] deleting the backup first failed', error)
         Alert.alert(
           i18n.t('buddies_errorDeleteAllTitle'),
@@ -63,9 +96,11 @@ export default function BuddiesDeleteDataButton() {
     Alert.alert(
       i18n.t('buddies_deleteAllTitle'),
       i18n.t(
-        backupOn || hadSlots
-          ? 'buddies_deleteAllBodyBackup'
-          : 'buddies_deleteAllBody'
+        usesCloudSync()
+          ? 'buddies_deleteAllBodyCloudSync'
+          : backupOn || hadSlots
+            ? 'buddies_deleteAllBodyBackup'
+            : 'buddies_deleteAllBody'
       ),
       [
         { text: i18n.t('cancel'), style: 'cancel' },

@@ -21,7 +21,7 @@ vi.mock('@/app/account/accountKey', () => ({
   accountKey: { peek: async () => runtime.key },
 }))
 vi.mock('@/app/account/passkeys', () => ({
-  phonePasskeySupport: async () => ({
+  accountPasskeySupport: async () => ({
     passkeys: runtime.supported,
     prf: 'no',
   }),

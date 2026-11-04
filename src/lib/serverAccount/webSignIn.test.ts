@@ -788,6 +788,101 @@ describe('using my phone', () => {
   })
 })
 
+describe('signing in again (only this browser’s account)', () => {
+  const otherAccount = {
+    method: expect.any(String),
+    failure: 'otherAccount',
+    retryAfterMs: null,
+    account: ACCOUNT,
+  }
+
+  it('opens the same account’s session, keeping the data', async () => {
+    const { flow, deps } = setup()
+    flow.onlyAccount(ACCOUNT)
+    await flow.signInWithPasskey()
+    expect(deps.account.openWebSessionWithTicket).toHaveBeenCalledWith(
+      'passkey-ticket',
+      KEY,
+      expect.objectContaining({ expectAccountId: ACCOUNT, keepData: true })
+    )
+    expect(flow.state().problem).toBeNull()
+  })
+
+  it('refuses another account’s passkey before any session opens', async () => {
+    const prf = random(32)
+    const { flow, opened, events } = setup({
+      prf,
+      assert: async () => ({ ...signIn([]), accountId: OTHER_ACCOUNT }),
+    })
+    flow.onlyAccount(ACCOUNT)
+    await flow.signInWithPasskey()
+    expect(opened).toEqual([])
+    expect(flow.state().problem).toEqual({ ...otherAccount, method: 'passkey' })
+    expect(flow.state().cantUnlock).toBeNull()
+    expect(prf.every((byte) => byte === 0)).toBe(true)
+    expect(events.at(-1)).toEqual({
+      type: 'failed',
+      method: 'passkey',
+      reason: 'otherAccount',
+    })
+  })
+
+  it('refuses another account’s recovery key before any session opens', async () => {
+    const { flow, opened } = setup({
+      recovery: async () => ({
+        accountId: OTHER_ACCOUNT,
+        ticket: 'recovery-ticket',
+        ticketExpiresAt: NOW + 120_000,
+      }),
+    })
+    flow.onlyAccount(ACCOUNT)
+    await flow.signInWithRecoveryKey(OTHER_KEY, 'token')
+    expect(opened).toEqual([])
+    expect(flow.state().problem).toEqual({
+      ...otherAccount,
+      method: 'recovery',
+    })
+  })
+
+  it('refuses another account’s phone approval, and stops it', async () => {
+    const { flow, phone, opened } = setup()
+    flow.onlyAccount(ACCOUNT)
+    flow.startPhone()
+    phone.receive(OTHER_KEY, OTHER_ACCOUNT)
+    await vi.waitFor(() =>
+      expect(flow.state().problem).toEqual({ ...otherAccount, method: 'phone' })
+    )
+    expect(opened).toEqual([])
+    expect(phone.approval.cancel).toHaveBeenCalled()
+  })
+
+  it('passes on the browser’s refusal to switch', async () => {
+    const { flow } = setup({
+      open: async () => {
+        throw new WebSignInError('otherAccount')
+      },
+    })
+    flow.onlyAccount(ACCOUNT)
+    await flow.signInWithRecoveryKey(KEY, 'token')
+    expect(flow.state().problem).toEqual({
+      ...otherAccount,
+      method: 'recovery',
+    })
+  })
+
+  it('signs in as any account again once it’s over', async () => {
+    const { flow, deps } = setup()
+    flow.onlyAccount(ACCOUNT)
+    flow.onlyAccount(null)
+    await flow.signInWithPasskey()
+    expect(deps.account.openWebSessionWithTicket).toHaveBeenCalledWith(
+      'passkey-ticket',
+      KEY,
+      expect.objectContaining({ keepData: false })
+    )
+  })
+})
+
 describe('signing in as another account (every tab reloads)', () => {
   it('finishes the wrap and "Approved by" after the reload', async () => {
     const before = setup({ reload: true, assert: async () => signIn([]) })

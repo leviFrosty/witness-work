@@ -5,7 +5,7 @@ import 'react-native-gesture-handler'
 import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { useColorScheme } from 'react-native'
+import { Platform, useColorScheme } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useNoteImageCleanup } from '@/app/notes/useNoteImageCleanup'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
@@ -67,8 +67,12 @@ import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import ToastHost from '@/components/toast/ToastHost'
 import WebStorageNotices from '@/app/launch/WebStorageNotices'
 import AppLockGate from '@/app/app-lock/AppLockGate'
+import WebAppLockBoundary from '@/app/app-lock/WebAppLockBoundary'
+import StepUpSheet from '@/app/step-up/StepUpSheet'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
 import WebSignInGate from '@/app/web-sign-in/WebSignInGate'
+
+const isWeb = Platform.OS === 'web'
 
 initializeApp()
 
@@ -104,7 +108,9 @@ export default function App() {
   if (!useStorageUnlock()) return <LaunchSplash />
   return (
     <WebSignInGate>
-      <UnlockedApp />
+      <WebAppLockBoundary>
+        <UnlockedApp />
+      </WebAppLockBoundary>
     </WebSignInGate>
   )
 }
@@ -204,6 +210,8 @@ function UnlockedApp() {
                             <PointerTooltipLayer />
                             <WebFocusStyles />
                             <UpdateRequiredGate />
+                            {/* The web's check before sensitive actions. */}
+                            {isWeb && <StepUpSheet />}
                             {/* Last, so it covers everything else. */}
                             <AppLockGate />
                           </SurveyProvider>

@@ -40,8 +40,16 @@ const addWindowFocusListener = (listener: () => void): (() => void) => {
   return () => target.removeEventListener?.('focus', listener)
 }
 
-const failureReason = (error: unknown) =>
-  error instanceof HttpError ? (error.serverCode ?? error.kind) : 'unknown'
+/**
+ * Analytics' `reason`: the network failure, or the server's error code when it
+ * looks like one (`snake_case`, at most 32 characters), else `other`.
+ */
+export const gateFailureReason = (error: unknown): string => {
+  if (!(error instanceof HttpError)) return 'unknown'
+  const code = error.serverCode
+  if (code === null || code === undefined) return error.kind
+  return /^[a-z][a-z0-9_]{0,31}$/.test(code) ? code : 'other'
+}
 
 /**
  * What the web's Cloud Sync screen shows (`decideWebCloudSync`), kept current:
@@ -156,7 +164,7 @@ export function useWebCloudSync({ client, ownSlotId, onReady }: Options) {
       analytics.capture('cloud_sync_web_gate_action', {
         action: 'turn_on',
         outcome: 'failed',
-        reason: failureReason(error),
+        reason: gateFailureReason(error),
       })
       // Cloud Sync off on the server, or the account not entitled: trying
       // again now won't help, unlike a dropped connection.

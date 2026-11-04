@@ -539,8 +539,8 @@ export type PasskeyFailure =
 
 export type PasskeyError = {
   failure: PasskeyFailure
-  /** `passkeyFailed`'s reason, or `turnstileFailed`'s code. */
-  reason: string | null
+  /** `passkeyFailed`'s reason, or `turnstileFailed`'s code (`other` if unknown). */
+  reason: PasskeyErrorReason | null
   retryAfterMs: number | null
 }
 
@@ -559,10 +559,36 @@ const CODES: Record<string, PasskeyFailure> = {
   too_large: 'tooLarge',
 }
 
+/**
+ * The Turnstile codes `turnstile_failed` can carry: Siteverify's error codes,
+ * and ww-api's own. Anything else is `other`, so analytics stays bounded.
+ */
+const TURNSTILE_REASONS = [
+  'missing-input-secret',
+  'invalid-input-secret',
+  'missing-input-response',
+  'invalid-input-response',
+  'invalid-widget-id',
+  'invalid-parsed-secret',
+  'bad-request',
+  'timeout-or-duplicate',
+  'internal-error',
+  'action-mismatch',
+  'hostname-mismatch',
+  'unknown',
+] as const
+
+/** What `PasskeyError.reason` can be: always one of a known set. */
+export type PasskeyErrorReason =
+  | PasskeyFailedReason
+  | 'unknown'
+  | (typeof TURNSTILE_REASONS)[number]
+  | 'other'
+
 export function passkeyFailureFor(error: unknown): PasskeyError {
   const result = (
     failure: PasskeyFailure,
-    reason: string | null = null
+    reason: PasskeyErrorReason | null = null
   ): PasskeyError => ({
     failure,
     reason,
@@ -579,7 +605,12 @@ export function passkeyFailureFor(error: unknown): PasskeyError {
       FAILED_REASONS.find((known) => known === reason) ?? 'unknown'
     )
   if (failure === 'turnstileFailed')
-    return result(failure, typeof reason === 'string' ? reason : null)
+    return result(
+      failure,
+      typeof reason === 'string'
+        ? (TURNSTILE_REASONS.find((known) => known === reason) ?? 'other')
+        : null
+    )
   if (failure) return result(failure)
   return result(error.kind === 'rateLimited' ? 'rateLimited' : 'server')
 }

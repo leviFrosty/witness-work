@@ -142,3 +142,30 @@ describe('useWebCloudSync', () => {
     expect(server.requestedAt).not.toBeNull()
   })
 })
+
+describe('gateFailureReason', () => {
+  it('keeps a code that looks like one, and the network failure', async () => {
+    const { gateFailureReason } = await import(
+      '@/app/web-cloud-sync/useWebCloudSync'
+    )
+    const { HttpError } = await import('@/lib/http/request')
+    expect(
+      gateFailureReason(new HttpError('client', 403, 'supporter_required'))
+    ).toBe('supporter_required')
+    expect(gateFailureReason(new HttpError('offline'))).toBe('offline')
+    expect(gateFailureReason(new Error('boom'))).toBe('unknown')
+  })
+
+  it('bounds anything else the server says', async () => {
+    const { gateFailureReason } = await import(
+      '@/app/web-cloud-sync/useWebCloudSync'
+    )
+    const { HttpError } = await import('@/lib/http/request')
+    expect(
+      gateFailureReason(new HttpError('client', 400, 'Some <html> page'))
+    ).toBe('other')
+    expect(
+      gateFailureReason(new HttpError('client', 400, 'a'.repeat(33)))
+    ).toBe('other')
+  })
+})

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  platform: { OS: 'ios' as 'ios' | 'android' },
+  platform: { OS: 'ios' as 'ios' | 'android' | 'web' },
   directions: vi.fn(),
   fetchRouteDirections: vi.fn(),
 }))
@@ -15,6 +15,7 @@ vi.mock('@/features/route-planning/lib/routeDirectionsClient', () => ({
 }))
 
 import {
+  canLoadRoadLegs,
   knownRoadLegs,
   legKey,
   loadRoadLegs,
@@ -162,5 +163,23 @@ describe('loadRoadLegs on Android', () => {
     expect(sent.map((points) => points.length)).toEqual([12, 4])
     expect(sent[1]![0]).toEqual(path[11])
     expect(knownRoadLegs().size).toBe(14)
+  })
+})
+
+describe('loadRoadLegs on the web', () => {
+  beforeEach(() => {
+    mocks.platform.OS = 'web'
+  })
+
+  it('asks ww-api for the route, never MapKit', async () => {
+    expect(canLoadRoadLegs()).toBe(true)
+    mocks.fetchRouteDirections.mockResolvedValue({
+      ok: true,
+      legs: [leg(1000), leg(2000)],
+    })
+    expect(await loadRoadLegs([A, B, C], signal())).toBe(true)
+    expect(mocks.fetchRouteDirections).toHaveBeenCalledOnce()
+    expect(mocks.directions).not.toHaveBeenCalled()
+    expect(knownRoadLegs().get(legKey(B, C))?.meters).toBe(2000)
   })
 })

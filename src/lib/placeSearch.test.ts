@@ -6,6 +6,13 @@ const native = vi.hoisted(() => ({
   resolve: vi.fn(async () => null),
   fetch: vi.fn(),
   offline: false,
+  platform: { OS: 'ios' },
+}))
+
+vi.mock('@/lib/placeSearchWeb', () => ({
+  get onWeb() {
+    return native.platform.OS === 'web'
+  },
 }))
 
 vi.mock('../../modules/place-search', () => ({
@@ -28,7 +35,10 @@ vi.stubGlobal('fetch', native.fetch)
 const respond = (status: number, body: unknown) =>
   native.fetch.mockResolvedValue(new Response(JSON.stringify(body), { status }))
 vi.mock('@/constants/apis', () => ({
-  default: { autocomplete: 'https://api.test/autocomplete' },
+  default: {
+    autocomplete: 'https://api.test/autocomplete',
+    placesSearch: 'https://api.test/places/v1/search',
+  },
 }))
 
 import {
@@ -46,6 +56,7 @@ beforeEach(() => {
   vi.useRealTimers()
   native.version = 0
   native.offline = false
+  native.platform.OS = 'ios'
 })
 
 describe('placeSearchProvider', () => {
@@ -63,6 +74,122 @@ describe('placeSearchProvider', () => {
       expect(placeSearchProvider(scope)).toBe(provider)
     }
   )
+})
+
+describe('placeSearchProvider on the web', () => {
+  it('searches points of interest through ww-api, addresses through HERE', () => {
+    expect(placeSearchProvider('all', true)).toBe('places')
+    expect(placeSearchProvider('address', true)).toBe('here')
+    expect(placeSearchProvider('all', false)).toBeUndefined()
+  })
+})
+
+describe('searchPlaces on the web', () => {
+  const near = { latitude: 39.1, longitude: -84.5 }
+  beforeEach(() => {
+    native.platform.OS = 'web'
+  })
+
+  it('asks the place search near the publisher and maps its answers', async () => {
+    respond(200, {
+      ok: true,
+      items: [
+        {
+          id: 'here:pds:place:1',
+          name: 'Corner Coffee',
+          category: { id: '100-1100-0010', name: 'Coffee Shop' },
+          address: {
+            label: '580 Example St, Maplecrest, OH 45202, United States',
+            houseNumber: '580',
+            street: 'Example St',
+            city: 'Maplecrest',
+            state: 'Ohio',
+            postalCode: '45202',
+            countryName: 'United States',
+          },
+          latitude: 39.10272,
+          longitude: -84.51096,
+          distanceMeters: 99,
+        },
+        {
+          id: 'here:af:street:2',
+          address: {
+            label: '12 Sample Ave, Maplecrest, OH 45202, United States',
+            houseNumber: '12',
+            street: 'Sample Ave',
+            city: 'Maplecrest',
+          },
+          latitude: 39.1,
+          longitude: -84.5,
+        },
+        { id: 'broken', address: { label: 'No position' } },
+      ],
+    })
+    const results = await searchPlaces('coffee', near, 'all')
+    const url = new URL(native.fetch.mock.calls[0]![0] as string)
+    expect(url.origin + url.pathname).toBe('https://api.test/places/v1/search')
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      q: 'coffee',
+      at: '39.1,-84.5',
+      limit: '5',
+    })
+    expect(results).toEqual([
+      {
+        id: 'here:pds:place:1',
+        title: 'Corner Coffee',
+        subtitle: '580 Example St, Maplecrest, OH 45202, United States',
+        place: {
+          name: 'Corner Coffee',
+          address: '580 Example St, Maplecrest, OH 45202, United States',
+          postalAddress: {
+            line1: '580 Example St',
+            city: 'Maplecrest',
+            state: 'Ohio',
+            zip: '45202',
+            country: 'United States',
+          },
+          latitude: 39.10272,
+          longitude: -84.51096,
+        },
+      },
+      {
+        id: 'here:af:street:2',
+        title: '12 Sample Ave',
+        subtitle: 'Maplecrest, OH 45202, United States',
+        place: {
+          address: '12 Sample Ave, Maplecrest, OH 45202, United States',
+          postalAddress: {
+            line1: '12 Sample Ave',
+            city: 'Maplecrest',
+            state: undefined,
+            zip: undefined,
+            country: undefined,
+          },
+          latitude: 39.1,
+          longitude: -84.5,
+        },
+      },
+    ])
+    // A pick needs no second request.
+    await expect(resolvePlace(results[0]!)).resolves.toBe(results[0]!.place)
+    expect(native.fetch).toHaveBeenCalledOnce()
+  })
+
+  it('searches addresses only without a location to rank around', async () => {
+    respond(200, { items: [] })
+    await searchPlaces('12 Sample', undefined, 'all')
+    expect(native.fetch.mock.calls[0]![0]).toMatch(
+      /^https:\/\/api\.test\/autocomplete\?/
+    )
+  })
+
+  it('says a refused or broken answer failed', async () => {
+    respond(429, { ok: false, error: 'rate_limited' })
+    const busy = await searchPlaces('coffee', near, 'all').catch((e) => e)
+    expect(placeSearchFailure(busy)).toBe('busy')
+    respond(200, { ok: true })
+    await expect(searchPlaces('coffee', near, 'all')).rejects.toThrow()
+  })
 })
 
 describe('searchPlaces', () => {

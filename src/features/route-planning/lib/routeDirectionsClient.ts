@@ -8,8 +8,8 @@ import type { RouteDirectionsLeg } from '../../../../modules/route-directions'
 
 /**
  * Client for ww-api `POST /route-planning/directions` (HERE Routing), as this
- * device's attested account session (ADR 0027), for Android, where there's no
- * MapKit. Any account may ask; no Supporter link is needed. Sends bare
+ * device's attested account session (ADR 0027), for Android and the web, which
+ * have no MapKit. Any account may ask; no Supporter link is needed. Sends bare
  * coordinates only.
  */
 

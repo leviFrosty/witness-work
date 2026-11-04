@@ -9,9 +9,10 @@ import {
 
 /**
  * Driving directions for each leg of a route, by road: MapKit on the device on
- * iOS, ww-api (HERE Routing) on Android. Legs are kept for the app's lifetime,
- * keyed by their ends, so reordering stops only asks about legs it hasn't seen.
- * A leg with no directions yet keeps its straight-line estimate.
+ * iOS, ww-api (HERE Routing) on Android and the web. Legs are kept for the
+ * app's lifetime, keyed by their ends, so reordering stops only asks about legs
+ * it hasn't seen. A leg with no directions yet keeps its straight-line
+ * estimate.
  */
 
 export type RoadLeg = {
@@ -27,7 +28,7 @@ export type RoadLegs = ReadonlyMap<string, RoadLeg | null>
 /** Legs kept; a busy day of planning sees a few dozen. */
 const MAX_LEGS = 300
 /** Ww-api routes up to 12 places (11 legs) per request. */
-const MAX_ANDROID_LEGS = 11
+const MAX_API_LEGS = 11
 /** MapKit throttles bursts; a few legs at a time stays under it. */
 const IOS_CONCURRENCY = 3
 
@@ -69,7 +70,7 @@ const toRoadLeg = (leg: RouteDirections.RouteDirectionsLeg): RoadLeg => ({
 export const canLoadRoadLegs = () =>
   Platform.OS === 'ios'
     ? RouteDirections.isAvailable
-    : Platform.OS === 'android'
+    : Platform.OS === 'android' || Platform.OS === 'web'
 
 /**
  * Asks for the legs of `path` (start, stops, finish) that aren't known yet.
@@ -89,13 +90,14 @@ export const loadRoadLegs = async (
   const missing = legs.filter(({ from, to }) => !cache.has(legKey(from, to)))
   if (missing.length === 0) return false
 
-  if (Platform.OS === 'android') {
+  // Android and the web have no MapKit: ww-api's directions, as the account.
+  if (Platform.OS !== 'ios') {
     // One HERE transaction per run of legs, so every leg in it comes along: the
     // whole route, unless it has more places than one request takes. A place
     // at the same spot as the one before isn't sent again.
     let learned = false
-    for (let i = 0; i < legs.length; i += MAX_ANDROID_LEGS) {
-      const run = legs.slice(i, i + MAX_ANDROID_LEGS)
+    for (let i = 0; i < legs.length; i += MAX_API_LEGS) {
+      const run = legs.slice(i, i + MAX_API_LEGS)
       const runMissing = run.filter(
         ({ from, to }) => !cache.has(legKey(from, to))
       )

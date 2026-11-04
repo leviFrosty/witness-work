@@ -94,9 +94,12 @@ export default function RouteBuilderScreen({
   const mapMin = 160
   const mapMax = Math.max(mapMin, height * 0.7)
   const mapHeight = useSharedValue(Math.max(240, Math.min(440, height * 0.38)))
-  // Wide, the map fills the space beside the timeline.
+  // Wide, the map fills the space beside the timeline. Narrow, it keeps its
+  // height: the web reads `flex: 0` as `0 1 0%`, which shrinks it to nothing.
   const mapStyle = useAnimatedStyle(() =>
-    isWide ? { flex: 1, height: '100%' } : { flex: 0, height: mapHeight.value }
+    isWide
+      ? { flex: 1, height: '100%' }
+      : { flexGrow: 0, flexShrink: 0, height: mapHeight.value }
   )
 
   const changeDay = (next: Date) => {

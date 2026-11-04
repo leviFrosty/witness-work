@@ -12,6 +12,10 @@ Worker with Workers Static Assets. There's no server rendering.
   (`scripts/web.mjs`), the deploys and the Worker all read it.
 - **Deploys:** `scripts/web-host.mjs`, through the `web:*` scripts below.
   Never run `wrangler deploy` by hand.
+- **Maps frame:** a Worker of its own on each profile's maps origin
+  (`web/maps-frame/`, `scripts/web-maps.mjs`), with the same deploy gates;
+  beta shares production's. See `docs/web-maps.md`, which has the production
+  maps host's runbook.
 
 ## Environments
 

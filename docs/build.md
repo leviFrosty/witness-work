@@ -194,7 +194,8 @@ RevenueCat Billing's public key and links from the same files,
 `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY` and
 `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`); for
 development, the sandbox values are in the 1Password Agents item "RevenueCat
-web billing sandbox (W6)", for `.env.local`. Without the key the web sells
+web billing sandbox (Dev project)", which a `dev` web build reads when
+`.env.local` lacks them. Without the key the web sells
 nothing.
 
 Every `web:build` runs `pnpm sync:help` first, from its profile's

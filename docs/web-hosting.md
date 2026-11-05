@@ -241,7 +241,7 @@ pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-a
   build or deploy takes them from the env files (`.env`, `.env.local`) and,
   for whichever is empty, from the 1Password Agents vault item named by
   `revenueCatWebItem` in `config/web-environments.json`
-  (`RevenueCat web billing sandbox (W6)`, one field per variable, labelled with
+  (`RevenueCat web billing sandbox (Dev project)`, one field per variable, labelled with
   its name). So a clean checkout deploys the same paywall as one with the
   files, given `op` signed in as the agents' service account or the 1Password
   app. A dev deploy (`--preview` too) **refuses** when the key or links are

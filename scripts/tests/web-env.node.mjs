@@ -419,7 +419,7 @@ const noOp = () => assert.fail('op must not be called')
 const vault = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
 
 test('only the dev profile names a 1Password item for its sandbox values', () => {
-  assert.equal(item, 'RevenueCat web billing sandbox (W6)')
+  assert.equal(item, 'RevenueCat web billing sandbox (Dev project)')
   for (const name of ['local', 'beta', 'production'])
     assert.equal(environments[name].revenueCatWebItem, undefined, name)
 })
@@ -480,7 +480,10 @@ test('without the values, dev reports what to set, whether op failed or lacks th
   assert.equal(failed.problems.length, 1)
   assert.match(failed.problems[0], new RegExp(KEY))
   assert.match(failed.problems[0], new RegExp(LINKS))
-  assert.match(failed.problems[0], /RevenueCat web billing sandbox \(W6\)/)
+  assert.match(
+    failed.problems[0],
+    /RevenueCat web billing sandbox \(Dev project\)/
+  )
   assert.match(failed.problems[0], /op exited with 1/)
   // The item answers but a field is empty.
   const empty = fillRevenueCatWeb({}, 'dev', {

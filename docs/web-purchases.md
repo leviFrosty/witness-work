@@ -41,7 +41,9 @@ script ever runs on the app's origin (ADR 0037 §5).
 
 ### Products, entitlements and offerings
 
-Every App Store product has a web twin in each RevenueCat Billing config:
+Every App Store product has a web twin in the production RevenueCat Billing
+config. The development config mirrors its own project's catalog instead (see
+[Configs and keys per environment](#configs-and-keys-per-environment)):
 
 | App Store product    | Web product              | Type                                | Offering / package           |
 | -------------------- | ------------------------ | ----------------------------------- | ---------------------------- |
@@ -50,7 +52,7 @@ Every App Store product has a web twin in each RevenueCat Billing config:
 | `jwtime_<n>_oneTime` | `web_jwtime_<n>_oneTime` | Consumable, so a User can tip again | `One Time $x` / `One Time`   |
 
 Each offering holds one package, at the same USD price as its App Store
-product. Like the stores, web products have no trial, introductory offer or
+product (in development, its Test Store product). Like the stores, web products have no trial, introductory offer or
 grace period.
 
 - **Ids.** Web ids differ from store ids because RevenueCat's REST v1
@@ -70,18 +72,28 @@ grace period.
 - **Prices** are USD only for now. Outside the US and Canada, RevenueCat
   Billing prices include tax, like the stores' prices.
 - **Changing the catalog.** A new store product needs its web twin, the same
-  entitlement and the same package, in every RevenueCat Billing config.
+  entitlement and the same package, in the production config, and in the
+  development config for any product WitnessWork Dev's offerings sell.
   RevenueCat Billing can't edit a price: make a new product and swap it into
   the package.
 
 ### Configs and keys per environment
 
-A Stripe sandbox needs its own RevenueCat Billing config, so there are two:
+A Stripe sandbox needs its own RevenueCat Billing config, so there are two,
+each in the RevenueCat project its builds and worker already use:
 
-| Build                              | Config                      | Stripe                        | Key        |
-| ---------------------------------- | --------------------------- | ----------------------------- | ---------- |
-| Development (localhost, `app-dev`) | `WitnessWork Web (Sandbox)` | A Stripe sandbox, test cards  | `rcb_sb_…` |
-| Beta and production                | `WitnessWork Web`           | Our Stripe account, live mode | `rcb_…`    |
+| Build                              | RevenueCat project | Config                          | Stripe                        | Key        |
+| ---------------------------------- | ------------------ | ------------------------------- | ----------------------------- | ---------- |
+| Development (localhost, `app-dev`) | WitnessWork Dev    | `WitnessWork Web (Dev Sandbox)` | A Stripe sandbox, test cards  | `rcb_sb_…` |
+| Beta and production                | WitnessWork        | `WitnessWork Web`               | Our Stripe account, live mode | `rcb_…`    |
+
+- **One project per environment.** A purchase shows on another device, and on
+  ww-api, only inside its own RevenueCat project. Development phone builds
+  (Test Store keys) and the development worker use WitnessWork Dev, so the
+  development web config lives there too, and a sandbox web purchase on
+  `app-dev` reaches a development phone and the development worker. Beta and
+  production phones and the production worker use WitnessWork, with the
+  production web config.
 
 - **Sandbox only in development.** Only development builds carry the sandbox
   key and links. A RevenueCat Billing sandbox subscription counts toward
@@ -91,14 +103,17 @@ A Stripe sandbox needs its own RevenueCat Billing config, so there are two:
 - **Where a development build gets them.** `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY`
   and `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` come from `.env` or
   `.env.local`. When either is empty, a `dev` web build or deploy reads it from
-  the 1Password Agents vault item `RevenueCat web billing sandbox (W6)` (the
+  the 1Password Agents vault item `RevenueCat web billing sandbox (Dev project)` (the
   `revenueCatWebItem` in `config/web-environments.json`), so a clean checkout
   doesn't ship a paywall with no key. A `dev` deploy refuses without both, or
   when the key isn't `rcb_sb_…` or no link is `sandbox/…`; a local build or
   `web:serve` warns and goes on. Beta and production use their own env files
   and never read that item. See `docs/web-hosting.md`.
-- **Both configs hold the same products**, attached to the same entitlements
-  and packages.
+- **Each config mirrors its project's catalog.** The production config has a
+  web twin of every store product. The development config has one for each
+  product WitnessWork Dev's offerings sell, which are Test Store products with
+  their own prices. Every twin is attached to the same entitlement and package
+  as its store product.
 
 ## Which RevenueCat customer the web uses
 

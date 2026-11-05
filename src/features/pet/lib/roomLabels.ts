@@ -5,6 +5,7 @@ import {
   SHARED_MONTH_COINS,
 } from '@/features/pet/lib/currency'
 import type { RoomChoicePart, RoomTab } from '@/features/pet/lib/roomOptions'
+import type { ShopEntry } from '@/features/pet/lib/shopEntries'
 
 /** A Decorate Room tab's name ("Window", "Light"). */
 export const roomTabLabel = (tab: RoomTab): string =>
@@ -68,3 +69,24 @@ export const currencyInfoText = ({
 
 /** A price in words: "12 coins". */
 export const priceText = (price: number): string => coinsText(price)
+
+/** The words a screen reader says for an item: its card or its swatch. */
+export function shopItemLabel(entry: ShopEntry, name: string): string {
+  switch (entry.state) {
+    case 'secret':
+      return i18n.t('pet.room.secret.a11y')
+    case 'current':
+    case 'owned':
+      return i18n.t('pet.shop.itemOwned', { item: name })
+    case 'forSale':
+      return i18n.t('pet.shop.itemPrice', {
+        item: name,
+        price: priceText(entry.price!),
+      })
+    case 'short':
+      return i18n.t('pet.shop.itemNotEnough', {
+        item: name,
+        price: priceText(entry.price!),
+      })
+  }
+}

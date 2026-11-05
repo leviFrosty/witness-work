@@ -6,29 +6,8 @@ import type { SceneInput } from '@/features/pet/art'
 import type { GamePalette } from '@/features/pet/art/gameUi'
 import GameItemCard, { PriceNote } from '@/features/pet/components/GameItemCard'
 import type { ResolvedWindow } from '@/features/pet/lib/liveWindow'
-import { priceText, roomOptionLabel } from '@/features/pet/lib/roomLabels'
+import { roomOptionLabel, shopItemLabel } from '@/features/pet/lib/roomLabels'
 import { isOwned, type ShopEntry } from '@/features/pet/lib/shopEntries'
-
-/** The words a screen reader says for a card. */
-function cardLabel(entry: ShopEntry, name: string): string {
-  switch (entry.state) {
-    case 'secret':
-      return i18n.t('pet.room.secret.a11y')
-    case 'current':
-    case 'owned':
-      return i18n.t('pet.shop.itemOwned', { item: name })
-    case 'forSale':
-      return i18n.t('pet.shop.itemPrice', {
-        item: name,
-        price: priceText(entry.price!),
-      })
-    case 'short':
-      return i18n.t('pet.shop.itemNotEnough', {
-        item: name,
-        price: priceText(entry.price!),
-      })
-  }
-}
 
 /**
  * One item in the Shop: its picture from the room, its name, and its price.
@@ -99,7 +78,7 @@ export default function ShopItemCard({
       onPress={onPress}
       accessibilityRole='button'
       accessibilityState={{ selected: picked }}
-      accessibilityLabel={cardLabel(entry, name)}
+      accessibilityLabel={shopItemLabel(entry, name)}
     />
   )
 }

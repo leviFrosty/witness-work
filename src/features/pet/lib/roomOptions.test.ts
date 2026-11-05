@@ -51,8 +51,8 @@ describe('Decorate Room options', () => {
       },
     ])
     expect(roomTabSections('wall', DEFAULT_ROOM).map((s) => s.part)).toEqual([
-      'wallColor',
       'wallPattern',
+      'wallColor',
     ])
     for (const tab of ['floor', 'bed', 'shelf', 'lamp', 'sign', 'hat'] as const)
       expect(roomTabSections(tab, DEFAULT_ROOM)).toEqual([

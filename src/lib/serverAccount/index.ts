@@ -15,7 +15,7 @@ import {
 } from '@/lib/appUpdate'
 import { deviceAttestation } from '@/lib/attestation'
 import { errorTracking } from '@/lib/errorTracking'
-import { fromB64u } from '@/lib/bytes'
+import { fromB64u, toB64u } from '@/lib/bytes'
 import { logger } from '@/lib/logger'
 import { syncNow } from '@/lib/syncClock'
 import {
@@ -30,6 +30,7 @@ import {
   type AccountSessionEvent,
   createAccountSessions,
   sessionAccountForKey,
+  type SessionOpenReason,
   type SessionStore,
 } from '@/lib/serverAccount/session'
 import {
@@ -46,6 +47,10 @@ import {
   type KeyHistoryKind,
 } from '@/lib/serverAccount/keyHistory'
 import { createKeyHistoryCache } from '@/lib/serverAccount/keyHistoryCache'
+import {
+  createInstallCheck,
+  type InstallCheck,
+} from '@/lib/serverAccount/installToken'
 
 let _store: MMKV | null = null
 // Device-local MMKV, like ADR 0011's account id: never in the sync payload.
@@ -102,7 +107,15 @@ const isWeb = Platform.OS === 'web'
 /** A session opened for this device, or its account key changed. */
 export type AccountChange = 'session_opened' | 'key_changed'
 
-const accountChangeListeners = new Set<(change: AccountChange) => void>()
+/** How a `session_opened` opened: `new` when this device had none for the key. */
+export type AccountChangeDetail = { reason?: SessionOpenReason }
+
+type AccountChangeListener = (
+  change: AccountChange,
+  detail: AccountChangeDetail
+) => void
+
+const accountChangeListeners = new Set<AccountChangeListener>()
 
 /**
  * Calls `listener` whenever this device's account may have changed: a session
@@ -110,16 +123,19 @@ const accountChangeListeners = new Set<(change: AccountChange) => void>()
  * account (`revenueCatLinkRuntime`) re-checks then. Returns an unsubscribe.
  */
 export const onAccountChange = (
-  listener: (change: AccountChange) => void
+  listener: AccountChangeListener
 ): (() => void) => {
   accountChangeListeners.add(listener)
   return () => accountChangeListeners.delete(listener)
 }
 
-const notifyAccountChange = (change: AccountChange) => {
+const notifyAccountChange = (
+  change: AccountChange,
+  detail: AccountChangeDetail = {}
+) => {
   for (const listener of accountChangeListeners) {
     try {
-      listener(change)
+      listener(change, detail)
     } catch (error) {
       errorTracking.captureException(error)
     }
@@ -147,7 +163,12 @@ function thisDeviceSessions(): string[] {
   }
 }
 
+/** Sessions remembered since launch: this phone's, whatever MMKV says. */
+const rememberedThisLaunch: string[] = []
+
 function rememberThisDeviceSession(sessionId: string) {
+  if (!rememberedThisLaunch.includes(sessionId))
+    rememberedThisLaunch.push(sessionId)
   const ids = thisDeviceSessions()
   if (ids.at(-1) === sessionId) return
   const next = [...ids.filter((id) => id !== sessionId), sessionId].slice(
@@ -155,6 +176,48 @@ function rememberThisDeviceSession(sessionId: string) {
   )
   store().set(THIS_DEVICE_SESSIONS_KEY, JSON.stringify(next))
 }
+
+const INSTALL_TOKEN = 'install-token'
+
+const install = createInstallCheck({
+  readLocal: () => store().getString(INSTALL_TOKEN) ?? null,
+  writeLocal: (token) => store().set(INSTALL_TOKEN, token),
+  readKeystore: () => DeviceSecrets.read(INSTALL_TOKEN),
+  writeKeystore: (token) => DeviceSecrets.write(INSTALL_TOKEN, token),
+  newToken: () => toB64u(getRandomBytes(16)),
+  onError: (error) => errorTracking.captureException(error),
+})
+
+// The copy's "this device" sessions are the old phone's: forget them, keeping
+// any this launch opened.
+install.onMoved(() => {
+  logger.warn('[account] device-local data came from another phone')
+  store().set(
+    THIS_DEVICE_SESSIONS_KEY,
+    JSON.stringify(rememberedThisLaunch.slice(-THIS_DEVICE_SESSIONS_MAX))
+  )
+})
+
+/**
+ * Checks once a launch that this device-local MMKV is this phone's own, not a
+ * copy a device backup brought from another phone (`installToken.ts`), and
+ * answers the same for the rest of the launch. Check it before trusting
+ * anything per-device in MMKV. What a move clears is cleared once, through
+ * `onInstallMoved`. `unknown` (no keystore module, as on the web, or it
+ * couldn't be read) changes nothing and is checked again next time.
+ */
+export function checkInstall(): Promise<InstallCheck> {
+  if (isWeb || !DeviceSecrets.isAvailable()) return Promise.resolve('unknown')
+  return install.check()
+}
+
+/**
+ * Calls `listener` once if this launch finds its MMKV came from another phone,
+ * at the move or at once when that was already found, so a feature drops its
+ * own per-device state exactly once. Returns an unsubscribe.
+ */
+export const onInstallMoved = (listener: () => void): (() => void) =>
+  install.onMoved(listener)
 
 /**
  * Whether a session was this install's, now or before it signed in again
@@ -209,7 +272,8 @@ function reportSessionEvent(event: AccountSessionEvent) {
     analytics.capture('account_session_opened', { reason: event.reason })
     // A handoff's session isn't this device's until it's adopted, which
     // changes the key and notifies then.
-    if (event.reason !== 'handoff') notifyAccountChange('session_opened')
+    if (event.reason !== 'handoff')
+      notifyAccountChange('session_opened', { reason: event.reason })
     return
   }
   // Nothing to learn from a dropped connection or a cancelled call.

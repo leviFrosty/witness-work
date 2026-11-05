@@ -63,14 +63,31 @@ export function deviceKind(
   return TABLET_MODEL.test(model) ? 'tablet' : 'phone'
 }
 
+/**
+ * A device an entry names: a session from the log, whose label this device
+ * opens, or one already named (a sign-in notice keeps the opened name).
+ */
+export type SentenceDevice =
+  | ActivitySession
+  | { name: string | null; platform: SessionPlatform | null }
+
+/** What `activityTitle` reads from an entry. */
+export type ActivityTitleEntry = Pick<
+  ActivityEntry,
+  'kind' | 'method' | 'slotId'
+> & { session: SentenceDevice | null; actor: SentenceDevice | null }
+
 /** A device inside a sentence: "this device", its name, or "an iPhone or iPad". */
 function deviceInSentence(
-  session: ActivitySession,
-  context: AccountActivityContext
+  session: SentenceDevice,
+  context?: AccountActivityContext
 ): string {
-  if (context.isThisDevice(session.sessionId))
+  const logged = 'sessionId' in session
+  if (logged && context?.isThisDevice(session.sessionId))
     return i18n.t('accountActivity_thisDevice')
-  const name = context.readLabel(session.device)?.name.trim()
+  const name = (
+    logged ? context?.readLabel(session.device)?.name : session.name
+  )?.trim()
   if (name) return name
   switch (session.platform) {
     case 'ios':
@@ -126,11 +143,12 @@ export function activityRows(entries: readonly ActivityEntry[]): ActivityRow[] {
 
 /**
  * One entry's title, naming its devices from this device's point of view;
- * `count` entries like it for a merged row (`activityRows`).
+ * `count` entries like it for a merged row (`activityRows`). Without a
+ * `context`, only already-named devices have names.
  */
 export function activityTitle(
-  entry: ActivityEntry,
-  context: AccountActivityContext,
+  entry: ActivityTitleEntry,
+  context?: AccountActivityContext,
   count = 1
 ): string {
   const device = entry.session ? deviceInSentence(entry.session, context) : null

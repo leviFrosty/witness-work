@@ -169,6 +169,9 @@ export const analyticsEventNames = [
   'passkey_prompt_shown',
   'passkey_prompt_tapped',
   'passkey_removed',
+  'sign_in_notice_dismissed',
+  'sign_in_notice_shown',
+  'sign_in_notice_tapped',
   // Pet Companion adoption, its intro, decorating, unlocks, sharing and its
   // hidden moments (no names).
   'pet_adopted',

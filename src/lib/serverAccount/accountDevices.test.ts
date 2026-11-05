@@ -11,6 +11,7 @@ vi.mock('@/constants/apis', () => ({
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { request: mocks.request },
   isThisDeviceSession: (sessionId: string) => sessionId === OLD_ME,
+  checkInstall: async () => 'same',
 }))
 
 import { devicesTooOldForKeyChange, signedInElsewhere } from './accountDevices'

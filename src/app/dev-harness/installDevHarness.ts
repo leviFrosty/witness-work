@@ -28,6 +28,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useUpdateRequired } from '@/lib/appUpdate'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useSignInNotices } from '@/app/account/signInNoticesStore'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
@@ -633,6 +634,9 @@ export function installDevHarness() {
       buddiesDiagnostics: useBuddiesDiagnostics,
       // The bell's book (`seen`, `dismissed`) and its counted `unread`.
       notificationsTray: useNotificationsTray,
+      // Sign-in notices (ADR 0038 §9): `account`, the `marker`, `readAt`
+      // (set it back 15 minutes to let the next foreground read), `notices`.
+      signInNotices: useSignInNotices,
       // `setState({ celebrating: { count, kind } })` replays a milestone; with
       // no action behind it, it waits for its takeover turn without expiring.
       streakCelebration: useStreakCelebration,

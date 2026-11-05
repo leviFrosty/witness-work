@@ -32,6 +32,7 @@ import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { useScribeConsent } from '@/features/scribe/stores/consent'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useSignInNotices } from '@/app/account/signInNoticesStore'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
@@ -66,6 +67,8 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useMapFindSkips,
   useGeocodeRetry,
   useNotificationsTray,
+  // A fresh device's first read only sets where its notices start.
+  useSignInNotices,
   usePetUnlockNews,
   usePetSeen,
   useDevNotifications,

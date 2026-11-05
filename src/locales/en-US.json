@@ -4458,6 +4458,28 @@
   "passkeyPrompt_title": "Save a Passkey",
   "passkeyPrompt_description": "A passkey lets you sign in on a computer or a new phone with your face, fingerprint, or screen lock.",
   "passkeyPrompt_adding": "Adding…",
+  "signInNotice_sessionTitle": {
+    "one": "New sign-in",
+    "other": "{{count}} new sign-ins"
+  },
+  "signInNotice_approvalTitle": {
+    "one": "Browser approved",
+    "other": "{{count}} browsers approved"
+  },
+  "signInNotice_passkeyTitle": {
+    "one": "Passkey added",
+    "other": "{{count}} passkeys added"
+  },
+  "signInNotice_overflowTitle": "{{count}}+ changes to your account",
+  "signInNotice_sessionDescription": "{{activity}}. Not you? Sign it out and change your account key.",
+  "signInNotice_sessionLatest": "Latest: {{activity}}. Not you? Sign it out and change your account key.",
+  "signInNotice_passkeyDescription": "{{activity}}. Not you? Remove it and change your account key.",
+  "signInNotice_passkeyLatest": "Latest: {{activity}}. Not you? Remove it and change your account key.",
+  "signInNotice_sessionDescriptionWeb": "{{activity}}. Not you? Sign it out, then change your account key on your phone.",
+  "signInNotice_sessionLatestWeb": "Latest: {{activity}}. Not you? Sign it out, then change your account key on your phone.",
+  "signInNotice_passkeyDescriptionWeb": "{{activity}}. Not you? Remove it, then change your account key on your phone.",
+  "signInNotice_passkeyLatestWeb": "Latest: {{activity}}. Not you? Remove it, then change your account key on your phone.",
+  "signInNotice_overflowDescription": "Too many to list here. Check Account Activity for sign-ins you don't recognize.",
   "onboardingPasskey_title": "Save a Passkey",
   "onboardingPasskey_desc": "A passkey lets you sign in to your account on a computer.",
   "onboardingPasskey_infoTitle": "Passkeys",

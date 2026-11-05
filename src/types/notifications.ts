@@ -9,6 +9,11 @@ export type NotificationKind =
   | 'cloud_sync'
   /** The gentle prompt to save a passkey (ADR 0038 §9). */
   | 'passkey'
+  /**
+   * A new sign-in, browser approval or passkey on another of the account's
+   * devices (ADR 0038 §9).
+   */
+  | 'sign_in'
   | 'previous_report'
   | 'rollover'
   | 'missed_follow_up'

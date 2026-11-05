@@ -5,6 +5,7 @@ import {
   recheckPasskeyOffer,
   usePasskeyPromptNotification,
 } from '@/app/account/usePasskeyPromptNotification'
+import { useSignInNoticeNotifications } from '@/app/account/useSignInNoticeNotifications'
 import useCalendarSyncNotification from '@/app/calendar/useCalendarSyncNotification'
 import useCalendarSyncPausedNotification from '@/app/calendar/useCalendarSyncPausedNotification'
 import type { NotificationItem } from '@/types/notifications'
@@ -52,6 +53,7 @@ export default function NotificationsBell() {
     useSyncResetNotification(),
     useCloudSyncTrayOffer(),
     usePasskeyPromptNotification(now),
+    ...useSignInNoticeNotifications(),
     useCalendarSyncPausedNotification(now),
     useDataProtectionRetentionNotification(now),
     ...useReminderNotifications(now),

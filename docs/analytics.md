@@ -1239,6 +1239,22 @@ whether signing a device out works.
 
 Never session ids, device names or labels, entry contents, or the account id.
 
+#### Sign-in notices
+
+These answer whether people see the tray's notices for new sign-ins on their
+other devices (ADR 0038 §9), and whether they follow them to Signed-In Devices
+or Passkeys or dismiss them. `account_device_signed_out` and `passkey_removed`
+show what they did there.
+
+| Event                      | When                                                                                                                           | Properties                                                                                                                                                                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sign_in_notice_shown`     | The open tray showed a sign-in notice. Once per row; a later sign-in that joins the row makes it a new row and sends it again. | `kind: session \| approval \| passkey \| overflow` (a new sign-in, a browser approved from another phone, a passkey added, or a read that stopped at 250 entries and opens Account Activity), `count: 1 \| 2_4 \| 5_plus` (how many entries the row stands for; a burst is one row). |
+| `sign_in_notice_tapped`    | The User tapped the row, opening Signed-In Devices (Passkeys for `passkey`, Account Activity for `overflow`).                  | `kind`, `count` as above.                                                                                                                                                                                                                                                            |
+| `sign_in_notice_dismissed` | The row's X or Clear All.                                                                                                      | `kind`, `count` as above.                                                                                                                                                                                                                                                            |
+
+Never session ids, entry ids, device names or labels, sign-in methods, or the
+account id.
+
 ### Passkeys
 
 These answer whether people add passkeys on their phones (ADR 0038 §9), how

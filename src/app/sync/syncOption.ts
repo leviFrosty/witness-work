@@ -2,6 +2,7 @@ import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { clearPublishedPhotos } from '@/app/sync/photoBaseline'
 import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
   deleteOwnCloudSyncSlot,
@@ -192,6 +193,8 @@ async function runSwitch(
   // Photo passes outlive the sync idle wait; the old option's must not write.
   endPhotoPasses()
   await iCloudSync.waitForSyncIdle()
+  // What the last publish referred to was on the option being left.
+  clearPublishedPhotos()
   if (from === 'cloud') {
     await deleteOwnCloudSyncSlot()
     // Off Cloud Sync, the account it was on stops mattering: turning it on

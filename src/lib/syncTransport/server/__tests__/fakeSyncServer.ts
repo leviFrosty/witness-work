@@ -125,6 +125,10 @@ export function createFakeSyncServer() {
      * connection).
      */
     dropNextAnswer: false,
+    /** While set, listing and reading slots fail like a dropped connection. */
+    failReads: false,
+    /** While set, deleting photos fails like a dropped connection. */
+    failPhotoDeletes: false,
     /** `sync/request` bodies, with the bearer token they came with. */
     requestBodies: [] as Array<Record<string, unknown>>,
   }
@@ -230,6 +234,10 @@ export function createFakeSyncServer() {
       }
       return json({ ok: true, seq: ++seq })
     }
+    if (state.failReads && (op === 'sync/list' || op === 'sync/get'))
+      throw new TypeError('Network request failed')
+    if (state.failPhotoDeletes && op === 'sync/photos/delete')
+      throw new TypeError('Network request failed')
     if (op === 'sync/photos/delete') {
       const body = JSON.parse(String(init?.body ?? '{}')) as {
         names?: string[]

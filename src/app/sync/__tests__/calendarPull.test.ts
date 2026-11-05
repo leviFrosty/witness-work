@@ -13,6 +13,7 @@ vi.mock('@/lib/appLifecycle', () => ({
 }))
 vi.mock('expo-file-system/legacy', () => ({ documentDirectory: '' }))
 vi.mock('expo-device', () => ({ modelName: 'iPhone' }))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('../../../../modules/icloud-bridge', () => ({
   isAvailable: () => true,
   readFiles: state.readFiles,

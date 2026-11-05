@@ -73,6 +73,9 @@ vi.mock('@/app/account/usePasskeyPromptNotification', () => ({
   usePasskeyPromptNotification: () => null,
   recheckPasskeyOffer: () => {},
 }))
+vi.mock('@/app/account/useSignInNoticeNotifications', () => ({
+  useSignInNoticeNotifications: () => [],
+}))
 vi.mock('@/app/notifications/reminderTargets', () => ({
   openReminderTarget: () => {},
 }))

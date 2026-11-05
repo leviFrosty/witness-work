@@ -191,8 +191,15 @@ the Set Up Another Device QR for a new phone to scan.
     another device. It backs off for 30 days and is never forced.
   - Without a passkey, everything works as it does today.
 - **New sign-ins:** each one, phone or browser, is recorded in the activity
-  log (ADR 0028) and shown in the other devices' notifications trays. The
-  tray notices aren't built yet; they're a follow-up.
+  log (ADR 0028) and shown in the other devices' notifications trays, with
+  passkeys added and browsers approved. Each device reads the newest activity
+  when it comes to the foreground (at most every 15 minutes) and when Settings
+  → Account opens, skips what it did itself, and keeps a per-account marker so
+  its first read only sets where it starts. A burst is one row with a count;
+  it links to Signed-In Devices or Passkeys. Each phone's 90-day session
+  renewal still shows as a new sign-in until ww-api links a renewal to the
+  session it replaces
+  ([passkeys-protocol.md](../passkeys-protocol.md#signed-in-devices-and-new-sign-ins)).
 - **Signed-in devices:** the list includes browsers.
 
 ### 10. Web plumbing in ww-api

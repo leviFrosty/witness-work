@@ -1,6 +1,10 @@
 import semver from 'semver'
 import apis from '@/constants/apis'
-import { accountSessions, isThisDeviceSession } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  checkInstall,
+  isThisDeviceSession,
+} from '@/lib/serverAccount'
 import {
   type AccountDevice,
   type ActivityClientOptions,
@@ -41,6 +45,7 @@ export async function signedInElsewhere(
   accountKey: Uint8Array,
   signal?: AbortSignal
 ): Promise<boolean> {
+  await checkInstall()
   const devices = await readAccountDevices(accountKey, signal)
   return devices.some(
     (device) => !device.current && !isThisDeviceSession(device.sessionId)

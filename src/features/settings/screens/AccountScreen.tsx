@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Platform, ScrollView } from 'react-native'
+import { checkSignInNotices } from '@/app/account/signInNoticesRuntime'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import AccountStatusSection from '@/features/settings/components/account/AccountStatusSection'
@@ -30,6 +32,10 @@ const isWeb = Platform.OS === 'web'
 const AccountScreen = () => {
   const { overview, refresh } = useAccountOverview()
   const backups = useBackupSlots()
+  // New sign-ins elsewhere go to the tray (ADR 0038 §9).
+  useEffect(() => {
+    void checkSignInNotices({ force: true })
+  }, [])
   const changed = () => {
     void refresh()
     void backups.refresh()

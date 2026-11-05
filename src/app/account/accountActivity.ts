@@ -1,5 +1,6 @@
 import { accountKey } from '@/app/account/accountKey'
 import {
+  checkInstall,
   isThisDeviceSession,
   keyHistoryCache,
   serverAccount,
@@ -43,6 +44,9 @@ export class AccountNotSetUpError extends Error {
 }
 
 async function connect(signal?: AbortSignal) {
+  // Which sessions are this device's, after a device backup brought another
+  // phone's list here.
+  await checkInstall()
   const key = await accountKey.peek()
   if (!key) throw new AccountNotSetUpError()
   // Labels sealed before the account key changed open with the key history.

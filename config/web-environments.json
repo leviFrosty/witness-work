@@ -15,6 +15,7 @@
   "dev": {
     "variant": "development",
     "worker": "ww-web-dev",
+    "revenueCatWebItem": "RevenueCat web billing sandbox (W6)",
     "host": "app-dev.witnesswork.app",
     "associatedApps": ["production", "beta", "development"],
     "apiOrigin": "https://api-dev.witnesswork.app",

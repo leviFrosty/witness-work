@@ -202,6 +202,139 @@ export function loadWebEnv(root, profile, inherited = process.env) {
   return { env, files, excluded, api, host: environment.host }
 }
 
+const REVENUECAT_WEB_KEY = 'EXPO_PUBLIC_REVENUECAT_WEB_API_KEY'
+const REVENUECAT_WEB_LINKS = 'EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS'
+/** The only vault an agent's `op` can open, and where the sandbox item lives. */
+const ONE_PASSWORD_VAULT = 'Agents'
+
+/**
+ * The labelled fields of a 1Password Agents item, by label. Throws a message
+ * that never holds a value (nor `op`'s own output, which could).
+ */
+export function readOnePasswordFields(
+  item,
+  labels,
+  { spawn = spawnSync, inherited = process.env } = {}
+) {
+  const values = {}
+  for (const label of labels) {
+    // JSON, because plain output quotes any value holding a comma or quote,
+    // as the purchase links do.
+    const read = spawn(
+      'op',
+      [
+        'item',
+        'get',
+        item,
+        '--vault',
+        ONE_PASSWORD_VAULT,
+        '--fields',
+        `label=${label}`,
+        '--format',
+        'json',
+        '--reveal',
+      ],
+      {
+        env: inherited,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }
+    )
+    if (read.error?.code === 'ENOENT') throw new Error("op isn't installed")
+    if (read.error) throw new Error("op couldn't run")
+    if (read.status !== 0) throw new Error(`op exited with ${read.status}`)
+    let value
+    try {
+      value = JSON.parse(read.stdout).value
+    } catch {
+      throw new Error("op's answer wasn't the field")
+    }
+    values[label] = typeof value === 'string' ? value : ''
+  }
+  return values
+}
+
+/**
+ * What stops a development web build's RevenueCat values from being the
+ * sandbox's: missing, a live key, or links with no sandbox link. Messages name
+ * the variables, never their values.
+ */
+export function revenueCatWebProblems(env) {
+  const key = env[REVENUECAT_WEB_KEY]?.trim()
+  const links = env[REVENUECAT_WEB_LINKS]?.trim()
+  const problems = []
+  if (!key) problems.push(`${REVENUECAT_WEB_KEY} is empty`)
+  else if (!key.startsWith('rcb_sb_'))
+    problems.push(
+      `${REVENUECAT_WEB_KEY} isn't a sandbox key (rcb_sb_…); development builds carry only the sandbox's`
+    )
+  if (!links) problems.push(`${REVENUECAT_WEB_LINKS} is empty`)
+  else {
+    let parsed
+    try {
+      parsed = JSON.parse(links)
+    } catch {
+      problems.push(`${REVENUECAT_WEB_LINKS} isn't valid JSON`)
+    }
+    if (parsed !== undefined) {
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        problems.push(`${REVENUECAT_WEB_LINKS} must be a JSON object`)
+      else if (
+        !Object.values(parsed).some(
+          (link) => typeof link === 'string' && link.startsWith('sandbox/')
+        )
+      )
+        problems.push(
+          `${REVENUECAT_WEB_LINKS} has no sandbox/… link; development builds carry only the sandbox's`
+        )
+    }
+  }
+  return problems
+}
+
+/**
+ * Gives a development web build the RevenueCat sandbox's key and purchase links
+ * when its env files lack them: the dev profile reads them from its 1Password
+ * item (`revenueCatWebItem`), so a clean checkout builds the same paywall as
+ * the one that has the files. Release profiles keep their own files' values and
+ * never ask 1Password. Fills `env`, and returns what's wrong, as one message to
+ * act on, for the caller to warn about or refuse.
+ */
+export function fillRevenueCatWeb(
+  env,
+  profile,
+  { op = readOnePasswordFields, inherited = process.env } = {}
+) {
+  const environment = environments[profile]
+  const result = { fromOnePassword: [], problems: [] }
+  // Only development variants carry the sandbox.
+  if (environment?.variant !== 'development') return result
+  const missing = [REVENUECAT_WEB_KEY, REVENUECAT_WEB_LINKS].filter(
+    (key) => !env[key]?.trim()
+  )
+  let readError
+  if (missing.length > 0 && environment.revenueCatWebItem)
+    try {
+      const values = op(environment.revenueCatWebItem, missing, { inherited })
+      for (const key of missing)
+        if (values[key]?.trim()) {
+          env[key] = values[key].trim()
+          result.fromOnePassword.push(key)
+        }
+    } catch (error) {
+      readError = error.message
+    }
+  result.problems = revenueCatWebProblems(env)
+  if (result.problems.length > 0) {
+    const names = [REVENUECAT_WEB_KEY, REVENUECAT_WEB_LINKS].join(' and ')
+    const source = environment.revenueCatWebItem
+      ? `Set ${names} in .env.local, or in the 1Password Agents item "${environment.revenueCatWebItem}"${readError ? ` (reading it failed: ${readError})` : ''}`
+      : `Set ${names} in .env.local`
+    result.problems = [`${source}: ${result.problems.join('; ')}`]
+  }
+  return result
+}
+
 /** Workers Static Assets limits: bytes per file, and files per version. */
 export const MAX_FILE_BYTES = 25 * 1024 * 1024
 export const MAX_FILES = 20_000
@@ -452,6 +585,12 @@ async function main() {
     )
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files, excluded, api, host } = loadWebEnv(root, profile)
+  const revenueCat = fillRevenueCatWeb(env, profile)
+  // A local build still runs without them; a dev deploy refuses (web-host.mjs).
+  for (const problem of revenueCat.problems)
+    console.warn(
+      `[web] Warning: the paywall can't sell without the sandbox values. ${problem}`
+    )
   console.log(
     `[web] ${profile}: ${files.map((file) => path.relative(root, file)).join(', ')}; API: ${api.origin}; host: ${host}`
   )

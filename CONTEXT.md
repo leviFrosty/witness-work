@@ -273,7 +273,7 @@ A day on which the User does no field-ministry of any kind. The Assistant treats
 _Avoid_: "excluded weekday" (legacy; "Off Day" is broader and clearer), "rest day" (rest is a separate engine concept inserted between work blocks).
 
 **Meeting Day**:
-A day on which the User attends a Kingdom Hall meeting. The Assistant may still propose Plans for Meeting Days but applies tighter per-day caps so the day stays light. Today stored as a set of weekday numbers; the concept covers any day.
+A day on which the User attends a Kingdom Hall meeting. The Assistant may still propose Plans for Meeting Days but applies tighter per-day caps so the day stays light. Today stored as a set of weekday numbers; the concept covers any day. The User sets them on the **Spiritual Routine** page as two choices, the midweek meeting (Monday to Friday) and the weekend meeting (Saturday or Sunday); the Assistant's settings link there and still read the same days, and **Routine Habits** use them to know when each meeting's prep is due.
 _Avoid_: "meeting weekday", "Kingdom Hall day".
 
 ### Sync
@@ -423,20 +423,34 @@ A small gift (olive, fig, pebble, feather or lily) the Pet leaves on its rug on 
 _Avoid_: "reward", "loot", "collectible".
 
 **Coins**:
-The Pet's one currency, gold coins, earned since adoption: 1 for each day out (a Time Entry, the checkbox included, or a Visit the User logged; never a Plan or a Time Rollover), 1 more for each Planned day kept (a day with a Plan for some time and time logged), and 10 for each **Service Streak** milestone it reaches, only while streaks are shown. A month whose role reports only whether it shared earns at least 8 once it has a Time Entry. Replayed from records like **Hearts**, never stored; only what the Shop sold is (ADR 0035). Never sold for money, never granted by Supporter status.
+The Pet's one currency, gold coins, earned since adoption: 10 for each day out (a Time Entry, the checkbox included, or a Visit the User logged; never a Plan or a Time Rollover), 10 more for each Planned day kept (a day with a Plan for some time and time logged), and 100 for each **Service Streak** milestone it reaches, only while streaks are shown. A month whose role reports only whether it shared earns at least 80 once it has a Time Entry. **Spiritual Routine** pays too: 4 for each day of Bible reading, 4 for each day of personal study, 5 for each meeting's prep, 5 for each worship evening, and 500 for a finished **Reading Plan**; a day out is still worth more than any one Routine Habit. Replayed from records like **Hearts**, never stored; only what the Shop sold is (ADR 0035). Every amount was multiplied by 10 at once when Routine arrived (ADR 0038), so nobody lost anything; purchases are still stored at the old price and read ×10, so an older build stays right about ministry coins and only misses what Routine earned. Never sold for money, never granted by Supporter status.
 _Avoid_: "thread" or "dye" (earlier drafts' currencies), "points", "gems", "credits", "money".
 
 **Reward stack**:
-How what a save earned the Pet plays where the User is: a line for each source ("+1 Time added", "+1 Planned day kept", "+10 Streak milestone · 5") stomps in, the total slams and drops into the Pet's coins, which count up. It plays above the confirming toast, inside a streak celebration for a milestone, or over the Pet's Home card for what was earned elsewhere. A tap skips it; Settings → Rewards turns it and its sounds off.
+How what a save earned the Pet plays where the User is: a line for each source ("+10 Time added", "+10 Planned day kept", "+100 Streak milestone · 5", "+4 Bible reading") stomps in, the total slams and drops into the Pet's coins, which count up. It plays above the confirming toast, inside a streak celebration for a milestone, or over the Pet's Home card for what was earned elsewhere. A tap skips it; Settings → Rewards turns it and its sounds off.
 _Avoid_: "combo meter", "loot", "jackpot".
 
 **Shop**:
-Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Nothing in it costs money.
+Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Prices run from 100 to 360 coins. The **Study corner** is a room part with no starter item: it stays empty, and isn't drawn, until the User buys one of its 6–8 pieces, which any Pet owner can buy whether or not **Spiritual Routine** is on. Nothing in it costs money.
 _Avoid_: "store" (that's the App Store or Play Store), "market", "loot", "gacha"; "unlock" for a purchase.
 
 **Locker**:
 The Pet's details, opened from its Home card: its name, **Hearts** and **Coins** beside the **Shop**, then its room and, part by part, only the hats and room items the User owns, put on with a tap. What's for sale or still secret never shows there; that's the Shop's. Its cog opens the Pet's settings. Like the Shop, every Pet screen past the Home card has the game look (washi paper, pixel frames).
 _Avoid_: "inventory" or "bag" in copy (the screen goes by the Pet's name; its menu item is "Hat & Room…"), "Decorate Room" for the whole screen.
+
+### Spiritual Routine
+
+**Spiritual Routine**:
+The User's opt-in daily check-off of personal spiritual activities beside their ministry: five **Routine Habits** shown on a Routine card on Home, with a heat map for each on the Spiritual Routine screen. Free, and set up from a Home invite or Settings. It's private: it stays on the User's devices, sync and backups, and never shows on the **Buddy Card** or the **Service Report**. While a **Pet** is adopted, each check earns **Coins**; it never adds **Hearts**, which stay about the ministry. There's no Routine streak and no Badge for it yet. Turning a habit, or the whole feature, off hides it and stops its reminders, but its history and the coins it earned stay, and come back as they were when it's turned on again. A day can be checked back to the start of the previous week.
+_Avoid_: "habit tracker", "habits" as the feature name, "streak" (Routine has none), "score", "magic".
+
+**Routine Habit**:
+One thing the User checks off in **Spiritual Routine**: Bible reading (each day), personal study (any day; by default once a week, or a number of times a week, or chosen weekdays; every session counts, one a day), midweek meeting prep and weekend meeting prep (once each in a Monday–Sunday week, shown on Home from two days before that **Meeting Day** through it, or all week when no Meeting Days are set), and family worship (once a week, on a chosen evening or any day; called personal worship evening for a User who isn't with family). A daily reminder at a chosen time lists what's still open; it's off by default and skips days with nothing left.
+_Avoid_: "task", "chore", "goal" (that's the monthly hours **Goal**).
+
+**Reading Plan**:
+How the User's Bible reading is set: Read today (the default, a check for the day) or a plan: the Bible in a year in book order, the Bible in a year in order of events (approximate), or their own (a start book and 1–10 chapters a day, around to where it began). Each day's check reads the next portion and also counts as that day's Bible reading; reading ahead is allowed. A plan moves by position, never by date, so time away never puts the User behind: it shows "Day N of M" and waits where they left off. Switching to another plan keeps the old one's progress for when they come back to it. Finishing pays 500 **Coins** and is celebrated once. Plans are the app's own; nothing is pulled from jw.org.
+_Avoid_: "behind schedule", "missed days", "catch up", "streak".
 
 ### Update intros
 

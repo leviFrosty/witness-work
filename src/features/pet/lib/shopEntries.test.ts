@@ -17,14 +17,14 @@ describe('shopEntries', () => {
   it('lists each part of a category with its state and price', () => {
     const room = { ...DEFAULT_ROOM, hat: 'bow' as const }
     const unlocked = unlockedRoomItems(['hat:bow', 'hat:duck'], [])
-    const [hats] = shopEntries('hat', room, unlocked, 12)
+    const [hats] = shopEntries('hat', room, unlocked, 120)
     expect(hats.part).toBe('hat')
     const byItem = new Map(hats.entries.map((entry) => [entry.item, entry]))
 
     expect(byItem.has('hat:none')).toBe(false)
     expect(byItem.get('hat:bow')).toMatchObject({
       state: 'current',
-      price: 10,
+      price: 100,
     })
     expect(byItem.get('hat:cap')?.state).toBe('forSale')
     expect(byItem.get('hat:fedora')?.state).toBe('short')

@@ -23,6 +23,7 @@ import { drawStool, LAMP_IDS, LAMPS, type LampId } from './lamp'
 import { drawPlant } from './plant'
 import { drawShelf, SHELF_IDS, type ShelfId } from './shelf'
 import { drawSign, SIGN_IDS, type SignData, type SignId } from './sign'
+import { drawStudy, STUDY_IDS, type StudyId } from './study'
 import {
   drawWall,
   WALL_COLOR_IDS,
@@ -44,6 +45,7 @@ export * from './keepsakes'
 export * from './lamp'
 export * from './shelf'
 export * from './sign'
+export * from './study'
 export * from './wall'
 export * from './window'
 export { drawPlant } from './plant'
@@ -95,6 +97,7 @@ export const ROOM_PARTS = {
   bed: unlockable<BedId>('bed', BED_IDS),
   shelf: unlockable<ShelfId>('shelf', SHELF_IDS),
   lamp: unlockable<LampId>('lamp', LAMP_IDS),
+  study: unlockable<StudyId>('study', STUDY_IDS),
   sign: free<SignId>(SIGN_IDS),
   hat: unlockable<HatId>('hat', HAT_IDS),
 } as const
@@ -126,6 +129,8 @@ export interface ResolvedRoom {
   readonly sign: SignId
 
   readonly hat?: HatId
+
+  readonly study?: StudyId
 }
 
 export function resolveRoom(
@@ -144,6 +149,7 @@ export function resolveRoom(
     lamp: config.lamp,
     sign: config.sign,
     hat: config.hat,
+    study: config.study,
   }
 }
 
@@ -173,6 +179,7 @@ export function paintRoomBase(
   if (decor.sill?.length) drawSill(buf, decor.sill)
   drawPlant(buf)
   if (LAMPS[room.lamp].stool) drawStool(buf)
+  drawStudy(buf, room.study)
   drawBedBack(buf, room.bed)
   if (decor.gift)
     drawKeepsake(buf, decor.gift, RUG_GIFT_POS[0], RUG_GIFT_POS[1])
@@ -199,6 +206,7 @@ function roomSignKey(room: ResolvedRoom, sign: SignData): string {
       room.bed,
       room.shelf,
       room.lamp,
+      room.study ?? 'none',
       room.sign,
       room.sign === 'none' ? null : sign,
     ])

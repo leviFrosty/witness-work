@@ -240,6 +240,17 @@ export const HAT_IDS = [
   ...SECRET_HAT_IDS,
 ] as const
 export type HatId = (typeof HAT_IDS)[number]
+export const STUDY_IDS = [
+  'none',
+  'stool',
+  'bag',
+  'bookstand',
+  'desk',
+  'bookcase',
+  'table',
+  'armchair',
+] as const
+export type StudyId = (typeof STUDY_IDS)[number]
 export const SIGN_IDS = [
   'none',
   'month',
@@ -262,6 +273,7 @@ export const ROOM_PART_OPTIONS = {
   bed: BED_IDS,
   shelf: SHELF_IDS,
   lamp: LAMP_IDS,
+  study: STUDY_IDS,
   sign: SIGN_IDS,
   hat: HAT_IDS,
 } as const
@@ -290,6 +302,7 @@ export const STARTER_ROOM_ITEMS: readonly RoomItemId[] = [
   'bed:rug',
   'shelf:scrolls',
   'lamp:clay',
+  'study:none',
   'hat:none',
 ]
 
@@ -311,6 +324,16 @@ export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'shelf:fruit',
   'lamp:stand',
   'floor:tile',
+]
+
+export const STUDY_UNLOCK_ORDER: readonly RoomItemId[] = [
+  'study:stool',
+  'study:bag',
+  'study:bookstand',
+  'study:desk',
+  'study:bookcase',
+  'study:table',
+  'study:armchair',
 ]
 
 export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
@@ -400,14 +423,17 @@ export interface PetRoomRecord {
   sign: SignId
 
   hat?: HatId
+
+  study?: StudyId
   updatedAt: number
 }
 
 export type PetRoomSettings = Omit<
   PetRoomRecord,
-  'id' | 'updatedAt' | 'hat'
+  'id' | 'updatedAt' | 'hat' | 'study'
 > & {
   hat: HatId
+  study: StudyId
 }
 
 export const DEFAULT_ROOM: PetRoomSettings = {
@@ -420,6 +446,7 @@ export const DEFAULT_ROOM: PetRoomSettings = {
   lamp: 'clay',
   sign: 'month',
   hat: 'none',
+  study: 'none',
 }
 
 export const CHECKBOX_DEFAULT_SIGN: SignId = 'shared'

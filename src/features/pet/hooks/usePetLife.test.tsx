@@ -231,9 +231,9 @@ describe('usePetLife wallet', () => {
       },
     })
     mount()
-    expect(latest?.earned).toBe(21)
+    expect(latest?.earned).toBe(210)
     expect(latest?.earnings).toMatchObject({ daysOut: 21, plansKept: 0 })
-    expect(latest?.wallet).toBe(11)
+    expect(latest?.wallet).toBe(110)
     expect(latest?.unlockedItems.has('hat:bow')).toBe(true)
   })
 

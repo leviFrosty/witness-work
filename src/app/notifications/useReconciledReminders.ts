@@ -20,6 +20,11 @@ import { reminderData } from '@/lib/notificationData'
 import { unloggedDay, unloggedDaySources } from '@/lib/unloggedDayReminders'
 import { monthReportDue, monthReportSources } from '@/lib/monthReportReminders'
 import { weekNeedsPlan, weekPlanSources } from '@/lib/weekPlanReminders'
+import {
+  openHabitsOn,
+  routineReminderSources,
+} from '@/lib/routine/reminderSchedule'
+import useRoutine from '@/stores/routine'
 import { currentServiceStreak } from '@/lib/currentServiceStreak'
 import { streakRemindersOn } from '@/lib/serviceStreak'
 import {
@@ -61,6 +66,10 @@ async function retractErasedReminders() {
     return !!plan && recurringPlanOnDay(plan, day)
   }
   const monthReport = monthReportSources(records, prefs)
+  const routine = routineReminderSources(
+    useRoutine.getState().routineEntries,
+    prefs
+  )
   for (const notification of presented) {
     const reminder = reminderData(notification)
     if (!reminder) continue
@@ -77,14 +86,26 @@ async function retractErasedReminders() {
                 ? !!monthReport && monthReportDue(reminder.id, monthReport)
                 : reminder.kind === 'weekPlan'
                   ? !!weekPlan && weekNeedsPlan(reminder.id, weekPlan)
-                  : reminder.day
-                    ? recurringPlanExists(reminder.id, reminder.day)
-                    : plans.has(reminder.id)
+                  : reminder.kind === 'routine'
+                    ? !!routine && openHabitsOn(routine, reminder.id).length > 0
+                    : reminder.day
+                      ? recurringPlanExists(reminder.id, reminder.day)
+                      : plans.has(reminder.id)
     if (!exists)
       await Notifications.dismissNotificationAsync(
         notification.request.identifier
       )
   }
+}
+
+const routineSourcesFor = (
+  prefs: ReturnType<typeof usePreferences.getState>
+) => {
+  const sources = routineReminderSources(
+    useRoutine.getState().routineEntries,
+    prefs
+  )
+  return sources ? { ...sources, worshipKind: prefs.worshipKind } : undefined
 }
 
 export const RECONCILE_DELAY_MS = 250
@@ -211,6 +232,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
               : undefined,
             monthReport: monthReportSources(records, prefs),
             weekPlan: weekPlanSources(records, prefs),
+            routine: routineSourcesFor(prefs),
             visitOffset: {
               ...DEFAULT_RETURN_VISIT_NOTIFICATION_OFFSET,
               ...prefs.returnVisitNotificationOffset,
@@ -390,7 +412,10 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.monthReportReminders !== previous.monthReportReminders ||
         state.submittedReportMonths !== previous.submittedReportMonths ||
         state.weekPlanReminder !== previous.weekPlanReminder ||
-        state.offDays !== previous.offDays
+        state.offDays !== previous.offDays ||
+        state.routineEnabled !== previous.routineEnabled ||
+        state.routineReminders !== previous.routineReminders ||
+        state.routineHabits !== previous.routineHabits
       )
         retract()
       if (
@@ -412,6 +437,14 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.weekPlanReminderEnabledAt !==
           previous.weekPlanReminderEnabledAt ||
         state.offDays !== previous.offDays ||
+        state.routineEnabled !== previous.routineEnabled ||
+        state.routineReminders !== previous.routineReminders ||
+        state.routineReminderTime !== previous.routineReminderTime ||
+        state.routineHabits !== previous.routineHabits ||
+        state.meetingDays !== previous.meetingDays ||
+        state.personalStudyGoal !== previous.personalStudyGoal ||
+        state.worshipDay !== previous.worshipDay ||
+        state.worshipKind !== previous.worshipKind ||
         state.startOfWeek !== previous.startOfWeek ||
         state.formatRegion !== previous.formatRegion ||
         state.role !== previous.role ||
@@ -421,6 +454,11 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.timeDisplayFormat !== previous.timeDisplayFormat
       )
         request()
+    })
+    const routine = useRoutine.subscribe((state, previous) => {
+      if (state.routineEntries === previous.routineEntries) return
+      retract()
+      request()
     })
     const tray = useNotificationsTray.subscribe((state, previous) => {
       if (state.unread !== previous.unread && supportsAppIconBadge()) request()
@@ -450,6 +488,7 @@ export function useReconciledReminders(ready: boolean | undefined) {
       visits()
       plans()
       preferences()
+      routine()
       tray()
       foreground.remove()
     }

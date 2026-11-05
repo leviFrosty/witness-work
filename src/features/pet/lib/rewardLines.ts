@@ -2,6 +2,8 @@ import moment from 'moment'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import type { StreakKind } from '@/lib/serviceStreak'
 import type { RewardLine } from '@/stores/rewardStack'
+import { PLAN_FINISHED_COINS, ROUTINE_COINS } from '@/lib/routine/coins'
+import { ROUTINE_HABITS, type RoutineHabit } from '@/types/routine'
 import {
   COINS_PER_DAY,
   COINS_PER_MILESTONE,
@@ -9,7 +11,12 @@ import {
   type Earned,
 } from '@/features/pet/lib/currency'
 
-export type RewardSource = 'time' | 'visit' | 'checkbox' | 'elsewhere'
+export type RewardSource =
+  | 'time'
+  | 'visit'
+  | 'checkbox'
+  | 'routine'
+  | 'elsewhere'
 
 export type EarnedCounts = {
   daysOut: number
@@ -17,6 +24,10 @@ export type EarnedCounts = {
   shared: number
 
   milestones: number
+
+  routine?: Partial<Record<RoutineHabit, number>>
+
+  plansFinished?: number
 }
 
 export const earnedCounts = (earned: Earned): EarnedCounts => ({
@@ -24,6 +35,8 @@ export const earnedCounts = (earned: Earned): EarnedCounts => ({
   plansKept: earned.plansKept,
   shared: earned.shared,
   milestones: earned.milestones.length,
+  routine: { ...earned.routine.habits },
+  plansFinished: earned.routine.plansFinished,
 })
 
 export function rewardLines(
@@ -69,6 +82,26 @@ export function rewardLines(
       celebration:
         source !== 'elsewhere' && celebratesNow(streakKind, on, new Date()),
     })
+  if (before.routine) {
+    for (const habit of ROUTINE_HABITS) {
+      const gained = after.routine.habits[habit] - (before.routine[habit] ?? 0)
+      if (gained > 0)
+        lines.push({
+          amount: gained * ROUTINE_COINS[habit],
+          label: i18n.t(`routine.reward.${habit}` as TranslationKey, {
+            count: gained,
+          }),
+          tone: 'base',
+        })
+    }
+    const finished = after.routine.plansFinished - (before.plansFinished ?? 0)
+    if (finished > 0)
+      lines.push({
+        amount: finished * PLAN_FINISHED_COINS,
+        label: i18n.t('routine.reward.planFinished'),
+        tone: 'milestone',
+      })
+  }
   return lines
 }
 

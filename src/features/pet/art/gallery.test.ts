@@ -248,6 +248,54 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
       ),
       6
     )
+    write(
+      'sheets/parts-study.png',
+      contactSheet(
+        ROOM_PARTS.study.options.map((study) =>
+          crop(
+            scene(
+              { study, time: 'day' },
+              {
+                pet: {
+                  species: 'cat',
+                  coat: 'orange',
+                  mood: 'happy',
+                  seed: 1000,
+                },
+              }
+            ),
+            [0, 30, 100, 70]
+          )
+        ),
+        2
+      ),
+      5
+    )
+    write(
+      'sheets/parts-study-card.png',
+      contactSheet(
+        ROOM_PARTS.study.options
+          .filter((study) => study !== 'none')
+          .map((study) =>
+            crop(
+              scene(
+                { study, time: 'dusk', bed: 'cheese' },
+                {
+                  pet: {
+                    species: 'dog',
+                    coat: 'gold',
+                    mood: 'happy',
+                    seed: 1000,
+                  },
+                }
+              ),
+              VIEW_CARD
+            )
+          ),
+        2
+      ),
+      3
+    )
     const lamps = ROOM_PARTS.lamp.options.flatMap((lamp) =>
       [0, 1, 2, 3, 4, 5].map((level) => lampSprite(lamp, level, 400))
     )

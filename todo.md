@@ -1,6 +1,9 @@
 # TODO
 
 - Add e2e tests
+- Spiritual Routine badges: a Badge collection (counted in months, ADR 0019) and/or Secret pet items for Routine milestones. Deferred from v1.
+- Spiritual Routine: Today's routine widget, watch check-offs, Siri/Shortcuts "Log Bible reading" (fast follow).
+- Reading plan: meeting-workbook weekly Bible reading (needs a yearly data source; we don't pull from jw.org).
 - Add a "pet" feature. To define later.
 - Pet item rarities: give every room item and hat a rarity tier, with a few top-tier items that take years to reach. Higher tiers could unlock special colours or effects per item; effects could also be secret unlocks earned by specific in-app actions. Earned on fixed rules, never by chance drops, and no "god", "halo", "mythic", "magic" or "lucky" naming or imagery (JW sensitivities).
 - Add year wrapped golden present.

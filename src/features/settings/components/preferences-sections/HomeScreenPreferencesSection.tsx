@@ -70,6 +70,7 @@ const HomeElements = () => {
     homeScreenElementsOrder,
     mileageTrackingEnabled,
     petPromptDismissed,
+    routineEnabled,
     set,
   } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
@@ -172,6 +173,7 @@ const HomeElements = () => {
             homeScreenElements,
             petPromptDismissed,
             hasPet,
+            routineEnabled,
           })
           const description = descriptionFor(key)
           return (

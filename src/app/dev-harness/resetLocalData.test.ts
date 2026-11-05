@@ -91,6 +91,7 @@ const RESET_BY_ACTIONS = [
   'serviceReports',
   'mileage',
   'petCompanion',
+  'routine',
   'preferences',
   'profile',
 ]

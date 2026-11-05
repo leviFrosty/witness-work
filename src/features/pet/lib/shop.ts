@@ -11,6 +11,7 @@ export const SHOP_TABS = [
   'bed',
   'shelf',
   'lamp',
+  'study',
 ] as const satisfies readonly RoomTab[]
 export type ShopTab = (typeof SHOP_TABS)[number]
 

@@ -8,6 +8,7 @@ export type ReminderKind =
   | 'streak'
   | 'monthReport'
   | 'weekPlan'
+  | 'routine'
 
 export type ReminderData = {
   kind: ReminderKind
@@ -61,7 +62,8 @@ export function reminderData(
     kind !== 'unloggedDay' &&
     kind !== 'streak' &&
     kind !== 'monthReport' &&
-    kind !== 'weekPlan'
+    kind !== 'weekPlan' &&
+    kind !== 'routine'
   )
     return null
   return {

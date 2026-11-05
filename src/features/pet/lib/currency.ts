@@ -8,12 +8,19 @@ import {
   recordDayKey,
 } from '@/features/pet/lib/dayKeys'
 import type { HeartsPace } from '@/features/pet/lib/life'
+import {
+  NO_ROUTINE_EARNINGS,
+  routineCoinsOf,
+  type RoutineEarned,
+} from '@/lib/routine/coins'
 
-export const COINS_PER_DAY = 1
-export const COINS_PER_PLAN_KEPT = 1
-export const COINS_PER_MILESTONE = 10
+export const COIN_SCALE = 10
 
-export const SHARED_MONTH_COINS = 8
+export const COINS_PER_DAY = 10
+export const COINS_PER_PLAN_KEPT = 10
+export const COINS_PER_MILESTONE = 100
+
+export const SHARED_MONTH_COINS = 80
 
 export type DaysOut = {
   days: ReadonlySet<string>
@@ -46,6 +53,8 @@ export type Earned = {
   shared: number
 
   milestones: readonly StreakMilestone[]
+
+  routine: RoutineEarned
 }
 
 export const NO_EARNINGS: Earned = {
@@ -53,6 +62,7 @@ export const NO_EARNINGS: Earned = {
   plansKept: 0,
   shared: 0,
   milestones: [],
+  routine: NO_ROUTINE_EARNINGS,
 }
 
 export function petEarned({
@@ -62,6 +72,7 @@ export function petEarned({
   adoptedOn,
   today,
   paceOf,
+  routine = NO_ROUTINE_EARNINGS,
 }: {
   daysOut: DaysOut
   history: StreakHistory
@@ -69,6 +80,7 @@ export function petEarned({
   adoptedOn: string
   today: string
   paceOf?: (month: string) => HeartsPace
+  routine?: RoutineEarned
 }): Earned {
   const since = (day: string) => day >= adoptedOn && day <= today
   const months = new Map<string, number>()
@@ -95,6 +107,7 @@ export function petEarned({
     plansKept: history.kept.filter(since).length,
     shared: lifted,
     milestones: streaks ? history.milestones.filter(({ on }) => since(on)) : [],
+    routine,
   }
 }
 
@@ -102,12 +115,16 @@ export const coinsOf = (earned: Earned): number =>
   earned.daysOut * COINS_PER_DAY +
   earned.plansKept * COINS_PER_PLAN_KEPT +
   earned.shared +
-  earned.milestones.length * COINS_PER_MILESTONE
+  earned.milestones.length * COINS_PER_MILESTONE +
+  routineCoinsOf(earned.routine)
+
+export const storedPrice = (price: number): number =>
+  Math.round(price / COIN_SCALE)
 
 export function spentOn(purchases: readonly PetPurchase[] | undefined): number {
   let spent = 0
   for (const { price } of purchases ?? []) spent += price
-  return spent
+  return spent * COIN_SCALE
 }
 
 export const walletOf = (earned: number, spent: number): number =>

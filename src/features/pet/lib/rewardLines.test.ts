@@ -26,6 +26,7 @@ const after = (patch: Partial<Earned>): Earned => ({
   plansKept: 2,
   shared: 0,
   milestones: [{ count: 3, on: '2026-10-02' }],
+  routine: NO_EARNINGS.routine,
   ...patch,
 })
 
@@ -46,16 +47,16 @@ describe('rewardLines', () => {
       'plans'
     )
     expect(lines).toEqual([
-      { amount: 1, label: 'Time added', tone: 'base' },
+      { amount: 10, label: 'Time added', tone: 'base' },
       {
-        amount: 1,
+        amount: 10,
         label: 'Planned day kept',
         tone: 'bonus',
       },
     ])
     expect(
       rewardLines(BEFORE, after({ daysOut: 5 }), 'visit', 'plans')
-    ).toEqual([{ amount: 1, label: 'Visit added', tone: 'base' }])
+    ).toEqual([{ amount: 10, label: 'Visit added', tone: 'base' }])
   })
 
   it('ends on each new milestone, held for a celebration only when recent', () => {
@@ -73,7 +74,7 @@ describe('rewardLines', () => {
       'plans'
     )
     expect(lines.at(-1)).toEqual({
-      amount: 10,
+      amount: 100,
       label: 'Streak milestone · 5',
       tone: 'milestone',
       celebration: true,
@@ -90,24 +91,26 @@ describe('rewardLines', () => {
       'plans'
     )
     expect(backfilled).toEqual([
-      expect.objectContaining({ amount: 10, celebration: false }),
+      expect.objectContaining({ amount: 100, celebration: false }),
     ])
   })
 
   it('names a month shared, with what the monthly least added to its day', () => {
     const lines = rewardLines(
       BEFORE,
-      after({ daysOut: 5, shared: 7 }),
+      after({ daysOut: 5, shared: 70 }),
       'checkbox',
       'months'
     )
-    expect(lines).toEqual([{ amount: 8, label: 'Month shared', tone: 'bonus' }])
+    expect(lines).toEqual([
+      { amount: 80, label: 'Month shared', tone: 'bonus' },
+    ])
   })
 
   it('earns nothing for a day out the monthly least already paid for', () => {
-    const before = { ...BEFORE, shared: 4 }
+    const before = { ...BEFORE, shared: 40 }
     expect(
-      rewardLines(before, after({ daysOut: 5, shared: 3 }), 'visit', 'months')
+      rewardLines(before, after({ daysOut: 5, shared: 30 }), 'visit', 'months')
     ).toEqual([])
   })
 
@@ -126,11 +129,51 @@ describe('rewardLines', () => {
       'months'
     )
     expect(lines.map(({ amount, label }) => `+${amount} ${label}`)).toEqual([
-      '+3 Days out',
-      '+2 Planned days kept',
-      '+10 Streak milestone · 4 months',
+      '+30 Days out',
+      '+20 Planned days kept',
+      '+100 Streak milestone · 4 months',
     ])
     expect(lines.some((line) => line.celebration)).toBe(false)
+  })
+
+  it('names each Spiritual Routine habit and a finished reading plan', () => {
+    const lines = rewardLines(
+      BEFORE,
+      after({
+        routine: {
+          habits: {
+            ...NO_EARNINGS.routine.habits,
+            bibleReading: 1,
+            midweekPrep: 1,
+          },
+          plansFinished: 1,
+        },
+      }),
+      'routine',
+      'plans'
+    )
+    expect(lines.map(({ amount, label }) => `+${amount} ${label}`)).toEqual([
+      '+4 Bible reading',
+      '+5 Midweek meeting prep',
+      '+500 Reading plan finished',
+    ])
+  })
+
+  it('lists no Spiritual Routine lines against counts saved before it existed', () => {
+    const { routine: _routine, plansFinished: _finished, ...old } = BEFORE
+    expect(
+      rewardLines(
+        old,
+        after({
+          routine: {
+            habits: { ...NO_EARNINGS.routine.habits, bibleReading: 30 },
+            plansFinished: 0,
+          },
+        }),
+        'elsewhere',
+        'plans'
+      )
+    ).toEqual([])
   })
 
   it('says nothing for what went down', () => {

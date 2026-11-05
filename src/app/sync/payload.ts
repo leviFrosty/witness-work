@@ -20,6 +20,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
 import { localPetSnapshot } from '@/app/sync/petStoreSync'
+import { localRoutineSnapshot } from '@/app/sync/routineStoreSync'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import {
@@ -100,6 +101,13 @@ export type SyncPayload = {
 
     petRooms: any[]
     deletedPetRecords?: { id: string; deletedAt: number }[]
+  }
+
+  routineStore?: {
+    routineEntries: unknown[]
+
+    readingPlans: unknown[]
+    deletedRoutineRecords?: { id: string; deletedAt: number }[]
   }
   preferencesStore: {
     values: Record<string, any>
@@ -195,6 +203,7 @@ export function buildPayload(args: {
       deletedMileageRecords: mileage.deletedMileageRecords,
     },
     petStore: localPetSnapshot(),
+    routineStore: localRoutineSnapshot(),
     preferencesStore: {
       values: syncablePrefs,
       updatedAt: prefs.preferenceUpdatedAt ?? {},

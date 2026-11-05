@@ -5,6 +5,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
+import useRoutine from '@/stores/routine'
 import { useProfile } from '@/stores/profile'
 import {
   syncableValues,
@@ -20,6 +21,7 @@ export type BackupFile = {
   profileStore?: unknown
   mileageStore?: unknown
   petStore?: unknown
+  routineStore?: unknown
 }
 
 const BACKUP_STORE_KEYS = Object.keys({
@@ -31,6 +33,7 @@ const BACKUP_STORE_KEYS = Object.keys({
   profileStore: true,
   mileageStore: true,
   petStore: true,
+  routineStore: true,
 } satisfies Record<keyof BackupFile, true>) as (keyof BackupFile)[]
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -58,6 +61,7 @@ export function createBackupFile(): BackupFile & { version: number } {
     categoryStore: useCategories.getState(),
     mileageStore: useMileage.getState(),
     petStore: usePet.getState(),
+    routineStore: useRoutine.getState(),
     profileStore: syncableValues(
       useProfile.getState(),
       NON_SYNCABLE_PROFILE_KEYS

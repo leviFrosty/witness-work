@@ -8,6 +8,7 @@ import {
 } from '@/features/pet/lib/unlocks'
 import {
   HAT_UNLOCK_ORDER,
+  STUDY_UNLOCK_ORDER,
   ROOM_PART_OPTIONS,
   SECRET_ROOM_ITEMS,
   STARTER_ROOM_ITEMS,
@@ -34,6 +35,7 @@ describe('room unlocks', () => {
     const listed = [
       ...STARTER_ROOM_ITEMS,
       ...UNLOCK_ORDER,
+      ...STUDY_UNLOCK_ORDER,
       ...HAT_UNLOCK_ORDER,
       ...SECRET_ROOM_ITEMS,
     ]

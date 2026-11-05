@@ -44,6 +44,8 @@ import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
+import RoutineHomeSection from '@/features/routine/components/RoutineHomeSection'
+import RoutinePromptCard from '@/features/routine/components/RoutinePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
 import type PetPromptCardComponent from '@/features/pet/components/PetPromptCard'
 import type PetHomeSectionComponent from '@/features/pet/components/PetHomeSection'
@@ -100,8 +102,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     homeScreenElementsOrder,
     mileageTrackingEnabled,
     petPromptDismissed,
+    routineEnabled,
   } = usePreferences(
     useShallow((s) => ({
+      routineEnabled: s.routineEnabled,
       homeChecklistDismissed: s.homeChecklistDismissed,
       iCloudSyncEnabled: s.iCloudSyncEnabled,
       homeScreenElements: s.homeScreenElements,
@@ -409,6 +413,15 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                       )
                     return null
                   }
+                  case 'routine':
+                    if (routineEnabled === undefined)
+                      return <RoutinePromptCard key={key} />
+                    if (
+                      routineEnabled !== true ||
+                      homeScreenElements.routine === false
+                    )
+                      return null
+                    return <RoutineHomeSection key={key} />
                   case 'quickActions':
                     if (homeScreenElements.quickActions === false) return null
                     return <QuickActionsCard key={key} />
@@ -438,7 +451,8 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               })()
               if (!section) return null
               const isPrompt =
-                key === 'mileage' && mileageTrackingEnabled === undefined
+                (key === 'mileage' && mileageTrackingEnabled === undefined) ||
+                (key === 'routine' && routineEnabled === undefined)
               const title = homeSectionTitle(key)
 
               const at = shownSections.indexOf(key)

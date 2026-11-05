@@ -6,6 +6,9 @@ import { streakHistoryFor } from '@/lib/currentServiceStreak'
 import { petDisplayName } from '@/features/pet/lib/names'
 import { announcePetUnlocks } from '@/features/pet/lib/unlockAnnounce'
 import useConversations from '@/stores/conversationStore'
+import useRoutine from '@/stores/routine'
+import { routineEarned } from '@/lib/routine/coins'
+import type { ReadingPlanRun, RoutineEntry } from '@/types/routine'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
@@ -90,6 +93,14 @@ const historyOf = lastResult(
       now
     )
 )
+const routineOf = lastResult(
+  (
+    entries: RoutineEntry[],
+    plans: ReadingPlanRun[],
+    adoptedOn: string,
+    today: string
+  ) => routineEarned({ entries, plans, adoptedOn, today })
+)
 const earnedOf = lastResult(
   (
     daysOut: ReturnType<typeof petDaysOut>,
@@ -97,9 +108,10 @@ const earnedOf = lastResult(
     streaks: boolean,
     adoptedOn: string,
     today: string,
-    paceOf: ReturnType<typeof selectHeartsPace>
+    paceOf: ReturnType<typeof selectHeartsPace>,
+    routine: ReturnType<typeof routineEarned>
   ): Earned =>
-    petEarned({ daysOut, history, streaks, adoptedOn, today, paceOf })
+    petEarned({ daysOut, history, streaks, adoptedOn, today, paceOf, routine })
 )
 
 const secretsOf = lastResult(
@@ -156,6 +168,8 @@ export default function usePetLife(): PetLifeState {
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const recurringPlans = useServiceReport((state) => state.recurringPlans)
   const visits = useConversations((state) => state.conversations)
+  const routineEntries = useRoutine((state) => state.routineEntries)
+  const readingPlans = useRoutine((state) => state.readingPlans)
   const role = usePreferences((state) => state.role)
   const earnedBadges = usePreferences((state) => state.earnedBadges)
   const showStreaks = usePreferences((state) => state.showStreaks)
@@ -200,7 +214,8 @@ export default function usePetLife(): PetLifeState {
           showStreaks,
           pet.adoptedOn,
           todayKey,
-          paceOf
+          paceOf,
+          routineOf(routineEntries, readingPlans, pet.adoptedOn, todayKey)
         )
       : NO_EARNINGS
   const earned = pet && life ? (fakedWallet ?? coinsOf(earnings)) : 0

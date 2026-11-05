@@ -52,6 +52,14 @@ import type {
 import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import { STALENESS_DISPLAY_ORDER } from '@/lib/contactStaleness'
 import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
+import { DEFAULT_ROUTINE_REMINDER_TIME } from '@/lib/routine/reminders'
+import {
+  DEFAULT_PERSONAL_STUDY_GOAL,
+  DEFAULT_ROUTINE_HABITS,
+  type PersonalStudyGoal,
+  type RoutineHabit,
+  type WorshipKind,
+} from '@/types/routine'
 import { DEFAULT_MONTH_REPORT_REMINDER_TIME } from '@/lib/monthReportReminders'
 import {
   DEFAULT_WEEK_PLAN_REMINDER_DAY,
@@ -221,6 +229,7 @@ export type HomeScreenElementKey =
   | 'serviceReport'
   | 'mileage'
   | 'pet'
+  | 'routine'
   | 'quickActions'
   | 'thisWeek'
   | 'timer'
@@ -231,6 +240,7 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'together',
   'tabletServiceYearSummary',
   'serviceReport',
+  'routine',
   'pet',
   'quickActions',
   'thisWeek',
@@ -403,6 +413,7 @@ export const PREFERENCE_DEFAULTS = {
     serviceReport: true,
     mileage: true,
     pet: true,
+    routine: true,
     quickActions: true,
     timer: true,
     contacts: true,
@@ -647,6 +658,22 @@ export const PREFERENCE_DEFAULTS = {
   mileageEntryMode: 'distance' as MileageEntryMode,
 
   petPromptDismissed: false,
+
+  routineEnabled: undefined as boolean | undefined,
+
+  routineHabits: [...DEFAULT_ROUTINE_HABITS] as RoutineHabit[],
+
+  readingPlanRunId: null as string | null,
+
+  personalStudyGoal: DEFAULT_PERSONAL_STUDY_GOAL as PersonalStudyGoal,
+
+  worshipDay: null as number | null,
+
+  worshipKind: 'family' as WorshipKind,
+
+  routineReminders: false,
+
+  routineReminderTime: DEFAULT_ROUTINE_REMINDER_TIME,
 }
 
 export { NON_SYNCABLE_PREFERENCE_KEYS } from '@/lib/syncPreferencePolicy'

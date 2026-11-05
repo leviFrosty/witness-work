@@ -44,7 +44,7 @@ export const reminderTrayId = (reminder: LocalReminder) =>
   `reminder:${reminder.kind}:${reminder.targetId}:${reminder.date.getTime()}`
 
 type TrayReminder = LocalReminder & {
-  kind: Exclude<LocalReminder['kind'], 'monthReport'>
+  kind: Exclude<LocalReminder['kind'], 'monthReport' | 'routine'>
 }
 
 function listedUntil(reminder: TrayReminder): number {
@@ -79,7 +79,8 @@ export function firedReminders(
 ): TrayReminder[] {
   return reminderOccurrences(args)
     .filter(
-      (reminder): reminder is TrayReminder => reminder.kind !== 'monthReport'
+      (reminder): reminder is TrayReminder =>
+        reminder.kind !== 'monthReport' && reminder.kind !== 'routine'
     )
     .filter(
       (reminder) =>

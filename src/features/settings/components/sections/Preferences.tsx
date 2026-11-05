@@ -1,4 +1,5 @@
 import {
+  BookOpenCheck as BookOpenCheckIcon,
   Cloud as CloudIcon,
   KeyRound as KeyRoundIcon,
   Lock as LockIcon,
@@ -53,6 +54,13 @@ const PreferencesSection = ({
           label={i18n.t('personalization')}
           onPress={() => handleNavigate('PreferencesPersonalization')}
           selected={selectedDestination === 'PreferencesPersonalization'}
+        />
+        <GroupedListRow
+          icon={BookOpenCheckIcon}
+          label={i18n.t('routine.title')}
+          onPress={() => handleNavigate('RoutineSettings')}
+          selected={selectedDestination === 'RoutineSettings'}
+          testID='settings-routine'
         />
         <GroupedListRow
           icon={SettingsIcon}

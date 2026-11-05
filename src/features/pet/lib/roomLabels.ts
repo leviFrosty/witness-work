@@ -1,7 +1,9 @@
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import {
+  COINS_PER_DAY,
   COINS_PER_MILESTONE,
+  COINS_PER_PLAN_KEPT,
   SHARED_MONTH_COINS,
 } from '@/features/pet/lib/currency'
 import type { RoomChoicePart, RoomTab } from '@/features/pet/lib/roomOptions'
@@ -37,20 +39,28 @@ export const gainedText = (gain: number): string | null =>
 export const currencyInfoText = ({
   monthlyHearts,
   streaks,
+  routine = false,
 }: {
   monthlyHearts: boolean
   streaks: boolean
+
+  routine?: boolean
 }): string =>
   [
-    i18n.t(
-      monthlyHearts ? 'pet.currency.infoMonths' : 'pet.currency.infoDays',
-      { floor: formatNumber(SHARED_MONTH_COINS) }
-    ),
+    monthlyHearts
+      ? i18n.t('pet.currency.infoMonths', {
+          floor: formatNumber(SHARED_MONTH_COINS),
+        })
+      : i18n.t('pet.currency.infoDays', {
+          day: coinsText(COINS_PER_DAY),
+          kept: formatNumber(COINS_PER_PLAN_KEPT),
+        }),
     streaks
       ? i18n.t('pet.currency.infoStreak', {
           amount: coinsText(COINS_PER_MILESTONE),
         })
       : null,
+    routine ? i18n.t('pet.currency.infoRoutine') : null,
     i18n.t('pet.currency.infoSpend'),
   ]
     .filter(Boolean)

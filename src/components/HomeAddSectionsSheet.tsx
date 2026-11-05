@@ -1,4 +1,5 @@
 import {
+  BookOpenCheck as BookOpenCheckIcon,
   CalendarDays as CalendarDaysIcon,
   Car as CarIcon,
   FileText as FileTextIcon,
@@ -24,6 +25,7 @@ const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   serviceReport: FileTextIcon,
   mileage: CarIcon,
   pet: PawPrintIcon,
+  routine: BookOpenCheckIcon,
   quickActions: LayoutGridIcon,
   thisWeek: CalendarDaysIcon,
   timer: TimerIcon,

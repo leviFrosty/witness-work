@@ -54,6 +54,7 @@ const SOLD_PARTS: ReadonlySet<RoomChoicePart> = new Set([
   'bed',
   'shelf',
   'lamp',
+  'study',
 ])
 
 export const isNewOption = (

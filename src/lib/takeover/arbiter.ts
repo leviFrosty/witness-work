@@ -8,6 +8,7 @@ export const TAKEOVER_KINDS = [
   'badges-welcome',
   'badges-history',
   'pet-unlock',
+  'reading-plan-finished',
 ] as const
 
 export type TakeoverKind = (typeof TAKEOVER_KINDS)[number]

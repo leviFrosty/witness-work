@@ -3,6 +3,7 @@ import {
   HAT_UNLOCK_ORDER,
   SECRET_ROOM_ITEMS,
   STARTER_ROOM_ITEMS,
+  STUDY_UNLOCK_ORDER,
   UNLOCK_ORDER,
 } from '@/types/pet'
 import { ROOM_TABS } from '@/features/pet/lib/roomOptions'
@@ -16,25 +17,38 @@ import {
 
 describe('Shop prices', () => {
   it('prices every regular item and hat, and no starter or secret', () => {
-    for (const item of [...UNLOCK_ORDER, ...HAT_UNLOCK_ORDER])
+    for (const item of [
+      ...UNLOCK_ORDER,
+      ...STUDY_UNLOCK_ORDER,
+      ...HAT_UNLOCK_ORDER,
+    ])
       expect(priceOf(item)).not.toBeNull()
     for (const item of [...STARTER_ROOM_ITEMS, ...SECRET_ROOM_ITEMS])
       expect(priceOf(item)).toBeNull()
     expect(Object.keys(ITEM_PRICES).sort()).toEqual(
-      [...UNLOCK_ORDER, ...HAT_UNLOCK_ORDER].sort()
+      [...UNLOCK_ORDER, ...STUDY_UNLOCK_ORDER, ...HAT_UNLOCK_ORDER].sort()
     )
   })
 
-  it('asks 10 to 36 coins, the six rare ones at the top of their kind', () => {
+  it('asks 100 to 360 coins, the rare ones at the top of their kind', () => {
     const prices = Object.values(ITEM_PRICES)
     for (const price of prices) {
-      expect(price).toBeGreaterThanOrEqual(10)
-      expect(price).toBeLessThanOrEqual(36)
+      expect(price).toBeGreaterThanOrEqual(100)
+      expect(price).toBeLessThanOrEqual(360)
+      expect(price % 10).toBe(0)
     }
     expect(priceOf('hat:tophat')).toBe(Math.max(...prices))
+    expect(priceOf('study:armchair')).toBe(Math.max(...prices))
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
 
-    expect(prices.reduce((sum, price) => sum + price, 0)).toBe(572)
+    expect(prices.reduce((sum, price) => sum + price, 0)).toBe(5720 + 1480)
+  })
+
+  it('sells the study corner, with nothing in it to start', () => {
+    expect(STARTER_ROOM_ITEMS).toContain('study:none')
+    expect(STUDY_UNLOCK_ORDER.map(priceOf)).toEqual([
+      100, 120, 160, 200, 240, 300, 360,
+    ])
   })
 
   it('says how much more a price needs than the wallet holds', () => {
@@ -44,7 +58,7 @@ describe('Shop prices', () => {
   })
 
   it('tells current, owned, for sale, short and secret apart', () => {
-    const wallet = 12
+    const wallet = 120
     const state = (item: string, owned = false, current = false) =>
       shopItemState({ item, owned, current, wallet })
     expect(state('hat:bow', true, true)).toBe('current')

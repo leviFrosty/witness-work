@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import webEnvironments from '../../config/web-environments.json'
 import {
+  scrubAnalyticsEventProperties,
   scrubShareLinkProperties,
   scrubShareLinkUrl,
 } from '@/lib/shareLinkScrub'
@@ -130,4 +132,32 @@ describe('scrubShareLinkProperties', () => {
       count: 2,
     })
   })
+})
+
+describe('the web app’s link routes (docs/app-links.md "Without the app")', () => {
+  // Every host the web app is deployed on; localhost builds never send
+  // analytics anyone keeps.
+  const hosts = Object.values(webEnvironments)
+    .map((environment) => environment.host)
+    .filter((host) => host !== 'localhost')
+  const fragments = ['H4sIAAAAPAYLOAD', '1AbCdEfGhIjKlMnOpQrStUv']
+
+  it.each(hosts)(
+    'keeps their fragments out of every URL PostHog sends from %s',
+    (host) => {
+      for (const route of ['/contacts', '/c', '/buddies/invite', '/b'])
+        for (const fragment of fragments) {
+          const url = `https://${host}${route}#${fragment}`
+          const sent = scrubAnalyticsEventProperties('$pageview', {
+            $current_url: url,
+            $initial_current_url: url,
+            $session_entry_url: url,
+            $referrer: `https://dev.witnesswork.app${route}#${fragment}`,
+            link: `opened ${encodeURIComponent(url)}`,
+          })
+          expect(JSON.stringify(sent)).not.toContain(fragment)
+          expect(sent.$current_url).toBe(`https://${host}${route}#[redacted]`)
+        }
+    }
+  )
 })

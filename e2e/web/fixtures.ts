@@ -89,6 +89,11 @@ type Fixtures = {
     contacts?: Record<string, unknown>[]
     conversations?: Record<string, unknown>[]
   }
+  /**
+   * Saved before the app opens, merged into each named store's state, e.g. `{
+   * buddies: { flagLastKnown: true } }`.
+   */
+  storeState: Record<string, Record<string, unknown>>
   /** Signed in to an account (`session.ts`); signed out by default. */
   signedIn: boolean
   /**
@@ -136,7 +141,12 @@ export const readStoreRow = (page: Page, id: string, key: string) =>
   )
 
 /** Writes a row of the store database while no tab of the app is open. */
-const writeStoreRow = (page: Page, id: string, key: string, value: string) =>
+export const writeStoreRow = (
+  page: Page,
+  id: string,
+  key: string,
+  value: string
+) =>
   page.evaluate(
     ([id, key, value]) =>
       new Promise<void>((resolve, reject) => {
@@ -270,9 +280,13 @@ export const test = base.extend<Fixtures>({
   revenueCatCatalog: [{}, { option: true }],
   revenueCatCustomer: ['free', { option: true }],
   seed: [{}, { option: true }],
+  storeState: [{}, { option: true }],
   signedIn: [false, { option: true }],
   withoutAccountOnce: [false, { option: true }],
-  app: async ({ page, language, preferences, seed, signedIn }, provide) => {
+  app: async (
+    { page, language, preferences, seed, signedIn, storeState },
+    provide
+  ) => {
     // A first load in a tab of its own saves the app's preferences, which
     // get the seed on top once that tab is closed (it would save over them).
     // Leaving it, rather than reloading, keeps the requests it cancels (which
@@ -315,6 +329,14 @@ export const test = base.extend<Fixtures>({
         | undefined
       const stored = row ? JSON.parse(row) : { state: {}, version: 0 }
       stored.state[store] = [...(stored.state[store] ?? []), ...items!]
+      await writeStoreRow(page, 'mmkv.default', store, JSON.stringify(stored))
+    }
+    for (const [store, state] of Object.entries(storeState)) {
+      const row = (await readStoreRow(page, 'mmkv.default', store)) as
+        | string
+        | undefined
+      const stored = row ? JSON.parse(row) : { state: {}, version: 0 }
+      Object.assign(stored.state, state)
       await writeStoreRow(page, 'mmkv.default', store, JSON.stringify(stored))
     }
     await page.goto('/')

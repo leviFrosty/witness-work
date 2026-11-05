@@ -312,6 +312,9 @@ function browser() {
       disk.kv.clear()
       disk.lastAccountId = null
     })
+    const afterSignInWipe = vi.fn(async () => {
+      events.push('after-sign-in-wipe')
+    })
     const kvEntry = <T>(name: string) => ({
       read: async () => {
         if (disk.unreadable.has(name)) throw new Error(`${name}: unreadable`)
@@ -419,6 +422,7 @@ function browser() {
         disk.kv.set('wipe-pending', true)
       },
       wipe,
+      afterSignInWipe,
       reload,
       onEnded,
       now: () => clock.now,
@@ -445,6 +449,7 @@ function browser() {
       accountKey,
       reload,
       wipe,
+      afterSignInWipe,
       onEnded,
       onKeyRetired,
       info,
@@ -617,6 +622,8 @@ describe('web sessions', () => {
       expect(error).toBeInstanceOf(AccountSessionError)
       expect(error).toMatchObject({ failure: 'signedOut', ended: reason })
       expect(one.wipe).toHaveBeenCalledTimes(1)
+      // A session that ended keeps nothing for after the reload.
+      expect(one.afterSignInWipe).not.toHaveBeenCalled()
       expect(one.onEnded).toHaveBeenCalledWith(reason, 'wiped', {
         fromTab: false,
       })
@@ -914,6 +921,11 @@ describe('web sessions', () => {
       events.indexOf('wipe')
     )
     expect(one.wipe).toHaveBeenCalledTimes(1)
+    // A link not yet opened is saved again after the wipe, before the reload.
+    expect(one.afterSignInWipe).toHaveBeenCalledTimes(1)
+    expect(events.indexOf('after-sign-in-wipe')).toBeGreaterThan(
+      events.indexOf('wipe')
+    )
     expect(disk.stores.size).toBe(0)
     // Nothing in this page saw B's key: it reloads first.
     expect(seen.every((key) => key === null)).toBe(true)
@@ -1292,6 +1304,8 @@ describe('web sessions', () => {
 
     expect(worker.sessions[0].ended).toBe('revoked')
     expect(one.wipe).toHaveBeenCalledTimes(1)
+    // Signing out keeps no link for after the reload.
+    expect(one.afterSignInWipe).not.toHaveBeenCalled()
     expect(disk.secrets.size).toBe(0)
     expect(disk.session).toBeNull()
     expect(one.reload).toHaveBeenCalled()

@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { ed25519 } from '@noble/curves/ed25519.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
-import type { BrowserContext, Page } from '@playwright/test'
+import type { BrowserContext, Page, Request } from '@playwright/test'
 
 /**
  * A signed-in browser for the web smoke tests: an account key and a session,
@@ -34,7 +34,9 @@ const accountPub = (accountKey: Uint8Array) =>
 /**
  * Writes the account key, the session and the data's owner into the browser's
  * key store. Run it on a page of the app's origin while no tab of the app is
- * open (`openBlankOnOrigin`).
+ * open (`openBlankOnOrigin`), or, to sign in again, beside a signed-out tab: it
+ * seals with the wrap key already there, so what the app sealed stays
+ * readable.
  */
 export async function seedSession(page: Page) {
   const accountKey = new Uint8Array(randomBytes(32))
@@ -58,11 +60,20 @@ export async function seedSession(page: Page) {
         request.onsuccess = () => resolve(request.result)
         request.onerror = () => reject(request.error)
       })
-      const wrap = await crypto.subtle.generateKey(
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
+      const existing = await new Promise<CryptoKey | undefined>(
+        (resolve, reject) => {
+          const get = db.transaction('kv').objectStore('kv').get('wrap-key')
+          get.onsuccess = () => resolve(get.result as CryptoKey | undefined)
+          get.onerror = () => reject(get.error)
+        }
       )
+      const wrap =
+        existing ??
+        (await crypto.subtle.generateKey(
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        ))
       const seal = async (name: string, value: Uint8Array<ArrayBuffer>) => {
         const iv = crypto.getRandomValues(new Uint8Array(12))
         const data = await crypto.subtle.encrypt(
@@ -100,6 +111,44 @@ export async function seedSession(page: Page) {
   )
 }
 
+/**
+ * Signs the browser out as a session the server ended would, but keeping the
+ * data's owner, so signing in again keeps the data. Run it while no tab of the
+ * app is open.
+ */
+export async function forgetSession(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('witnesswork-keys', 1)
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const db = request.result
+          const tx = db.transaction('kv', 'readwrite')
+          tx.objectStore('kv').delete('sealed:account-key')
+          tx.objectStore('kv').delete('sealed:session')
+          tx.oncomplete = () => {
+            db.close()
+            resolve()
+          }
+          tx.onerror = () => reject(tx.error)
+        }
+      })
+  )
+}
+
+/**
+ * Tells the browser's tabs it signed in, as a sign-in in another tab does: a
+ * signed-out tab reloads into the session (`webTabs.ts`).
+ */
+export async function announceSignIn(page: Page) {
+  await page.evaluate(() => {
+    const channel = new BroadcastChannel('ww-session')
+    channel.postMessage({ type: 'signedIn', sessionId: 'sess_web_smoke_test' })
+    channel.close()
+  })
+}
+
 /** Ww-api's session refresh, for the seeded session, at `apiOrigin`. */
 export async function answerSessionRefresh(
   context: BrowserContext,
@@ -128,4 +177,16 @@ export const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': '*',
   'Access-Control-Allow-Methods': '*',
+}
+
+/**
+ * `cors` for `request`, naming the headers its preflight asked for: WebKit
+ * doesn't let `*` cover `Authorization`.
+ */
+export async function corsFor(request: Request) {
+  return {
+    ...cors,
+    'Access-Control-Allow-Headers':
+      (await request.headerValue('access-control-request-headers')) ?? '*',
+  }
 }

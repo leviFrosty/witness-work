@@ -226,6 +226,26 @@ test('each environment deploys its own Worker to its own host', () => {
   assert.equal(local.workers_dev, false)
 })
 
+test('every environment serves the app on the link routes "Continue on the web" opens', () => {
+  // docs/app-links.md "Without the app": the asset server's single-page
+  // fallback answers them with index.html, so no pattern that sends a request
+  // to the Worker (a file, or a 404) may catch them.
+  const glob = (pattern) =>
+    new RegExp(
+      `^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`
+    )
+  for (const target of [undefined, 'dev', 'beta', 'production']) {
+    const config = unstable_readConfig({
+      config: path.join(root, WRANGLER_CONFIG),
+      env: target,
+    })
+    assert.equal(config.assets.not_found_handling, 'single-page-application')
+    for (const route of ['/contacts', '/c', '/buddies/invite', '/b'])
+      for (const pattern of config.assets.run_worker_first)
+        assert.equal(glob(pattern).test(route), false, `${pattern} ${route}`)
+  }
+})
+
 test('the production token is read through the 1Password app, never the service account', () => {
   const inherited = { OP_SERVICE_ACCOUNT_TOKEN: 'ops_token', PATH: '/bin' }
   const read = deployTokenRead(inherited)

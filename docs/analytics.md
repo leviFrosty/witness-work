@@ -1315,6 +1315,16 @@ and how often people open it in more than one tab. Saves that work send nothing.
 | `web_storage_failed` | The browser couldn't save, and the User was told. Once per UTC day and reason.                                                | `reason: unavailable \| quotaExceeded \| writeFailed` (`unavailable`: IndexedDB couldn't be opened, so the tab runs from memory), `persisted` (storage is persistent). |
 | `web_tab_taken_over` | The User chose Use Here in a tab while WitnessWork was open in another one; sent by the tab that took over, after it reloads. | None.                                                                                                                                                                  |
 
+### Web links
+
+This answers how many people use "Continue on the web" on a contact or Buddies
+link page, and how many of them first had to sign in, or come from another
+tab, before the link opened (docs/app-links.md "Without the app").
+
+| Event             | When                                                                                                                                                                                       | Properties                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_link_opened` | A contact share or Buddies invite link in the web app's address reached the app, past the sign-in screen and App Lock, which opens Import Contact or the pre-accept screen. Once per link. | `kind: contact \| buddyInvite`, `kept` (it waited across a reload first: signing in, Use Here, or a reload on the sign-in screen). Never the link. |
+
 ### Web updates and install
 
 These answer whether people take a new version when WitnessWork offers it, how

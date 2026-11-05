@@ -70,4 +70,13 @@ The link pages tell someone without the app to install it. Contact and Buddies p
 - `https://app.witnesswork.app/contacts#…`
 - `https://app.witnesswork.app/buddies/invite#…`
 
-The web app's routes read the same fragment the native parsers read. The scrubber redacts fragments on these URLs too, and on every host's links when they're percent-encoded, once or more, inside another URL.
+The web app's routes read the same fragment the native parsers read, and also take the old host's short paths (`/c#…`, `/b#…`), which its pages build. The host Worker's single-page fallback serves the app on all four.
+
+- **The fragment leaves the address first.** The web entry's first step (`scrubLaunchAddress.web.ts`), before analytics, error tracking or anything else that reads the address loads, takes the fragment into memory and replaces the address with `/`, so a reload, a screenshot or the tab's history never has it. A link route without a fragment (reloading the invite screen, whose path is `/buddies/invite`) also goes to `/`.
+- **It waits until the app can open it.** The link opens past the sign-in screen, storage, the one-active-tab check and App Lock, then goes to the same listener as on a phone (`launchLinks.web.ts`, `src/lib/webLinks/`): the Import Contact prompt, or Buddies' pre-accept screen.
+- **It survives a reload before then:** Use Here, a sign-in that wipes another account's data, or a reload on the sign-in screen. Until the app opens it, it's sealed in `secureKv` as `sealed:pending-link` (docs/web-storage.md), never in `localStorage` or `sessionStorage`. It's deleted once its prompt or screen shows (`linkOpened`), so a reload after an import imports nothing, and ignored once it's an hour old. Signing out keeps nothing. Only the tab that runs the app reads or seals it: a tab showing "open in another tab" keeps its link in memory and seals it only for Use Here, so a link never opens in a tab it wasn't opened in.
+- **In a tab already open,** a new fragment on a link route leaves the address the same way and opens at once, or waits as above.
+- **A link that doesn't read** gets the same message as on a phone: the contact's "invalid link" alert, or "This Buddies invite link isn't valid." on the pre-accept screen. Phones ignore a broken invite link, as before.
+- **Buddy Invite's params never reach the address.** React Navigation writes a screen's params into the address on the web unless its path claims them; Buddy Invite's web path (`webLinkingScreens.web.ts`) writes none, since its `link` holds the secret.
+
+The scrubber redacts fragments on these URLs too, and on every host's links when they're percent-encoded, once or more, inside another URL.

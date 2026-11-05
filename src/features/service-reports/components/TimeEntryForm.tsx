@@ -60,6 +60,10 @@ import { serviceYearOf } from '@/lib/serviceYear'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import usePublisher from '@/hooks/usePublisher'
 import { timeSavedProgress } from '@/features/service-reports/lib/timeSavedProgress'
+// PROTOTYPE — throwaway Add Time variants.
+import AddTimeFormPrototype, {
+  useAddTimePrototype,
+} from '@/features/service-reports/components/prototypes/AddTimeFormPrototype'
 
 /** What a new entry starts with, e.g. a Plan's length and Type to log. */
 export type TimeEntryPrefill = {
@@ -106,6 +110,7 @@ type Props = TimeEntryPrefill & {
  */
 const TimeEntryForm = (props: Props) => {
   const theme = useTheme()
+  const protoVariant = useAddTimePrototype((s) => s.variant)
   const {
     role: currentRole,
     roleHistory,
@@ -420,6 +425,36 @@ const TimeEntryForm = (props: Props) => {
   )
 
   const inline = props.layout === 'inline'
+
+  if (__DEV__ && protoVariant !== 'current') {
+    return (
+      <AddTimeFormPrototype
+        variant={protoVariant}
+        inline={inline}
+        editing={!!existingServiceReport}
+        date={serviceReport.date}
+        setDate={setDate}
+        hours={serviceReport.hours}
+        minutes={serviceReport.minutes}
+        setDuration={setDuration}
+        typeValue={selectedValue}
+        onTypeChange={handleTypeChange}
+        note={serviceReport}
+        setNote={setNote}
+        durationInvalid={validation.invalid('duration')}
+        typeInvalid={validation.invalid('category')}
+        notice={
+          providedLessThanOneMinute && (
+            <Text style={{ color: theme.colors.warnText }}>
+              {i18n.t('providedTimeIsLessThanOneMinute')}
+            </Text>
+          )
+        }
+        onSubmit={existingServiceReport ? save : submit}
+        onDelete={existingServiceReport ? handleRequestDelete : undefined}
+      />
+    )
+  }
 
   const dock = (
     <WhenDock

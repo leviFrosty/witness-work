@@ -68,6 +68,11 @@ type Props = {
    * screen above can keep what the sheet is about in view.
    */
   onHeightChange?: (height: number) => void
+  /**
+   * PROTOTYPE: rests at least this share of the window while set, e.g. while a
+   * form is unfolded in it, without changing the size kept for next time.
+   */
+  minRatio?: number
 }
 
 /**
@@ -89,6 +94,7 @@ export default function SplitSheet({
   children,
   onBackPress,
   onHeightChange,
+  minRatio,
 }: Props) {
   const theme = useTheme()
   const holdId = useId()
@@ -106,7 +112,8 @@ export default function SplitSheet({
   const setRatio = useSplitSheetPreferences((s) => s.setRatio)
   const minHeight = windowHeight * SPLIT_SHEET_MIN_RATIO
   const maxHeight = windowHeight * SPLIT_SHEET_MAX_RATIO
-  const restingHeight = windowHeight * clampSplitSheetRatio(ratio)
+  const restingHeight =
+    windowHeight * Math.max(clampSplitSheetRatio(ratio), minRatio ?? 0)
   const [mounted, setMounted] = useState(open)
   const [keyboardUp, setKeyboardUp] = useState(false)
   const targetHeight = keyboardUp

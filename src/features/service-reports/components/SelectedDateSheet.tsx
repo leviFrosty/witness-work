@@ -20,6 +20,13 @@ import DayHistoryView, {
   type PlanFormSlot,
 } from '@/features/service-reports/components/DayHistoryView'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import moment from 'moment'
+import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
+import {
+  CARD_VARIANTS,
+  useAddTimePrototype,
+} from '@/features/service-reports/components/prototypes/AddTimeFormPrototype'
+import { SPLIT_SHEET_MAX_RATIO } from '@/stores/splitSheet'
 
 export type SelectedDateSheetState = {
   open: boolean
@@ -132,7 +139,8 @@ const SelectedDateSheet: React.FC<Props> = ({
         // @ts-expect-error — RN accepts a host component ref here.
         scrollView,
         (_x, y) =>
-          scrollView.scrollTo({ y: Math.max(0, y - 8), animated: true }),
+          // PROTOTYPE: keep the section header above the card in view.
+          scrollView.scrollTo({ y: Math.max(0, y - 40), animated: true }),
         () => {}
       )
     }, REVEAL_FORM_DELAY_MS)
@@ -258,8 +266,21 @@ const SelectedDateSheet: React.FC<Props> = ({
     </XView>
   )
 
+  // PROTOTYPE: an empty day up to today unfolds Add Time, so the sheet opens
+  // tall enough to show the whole form.
+  const protoVariant = useAddTimePrototype((s) => s.variant)
+  const unfoldsTimeForm =
+    __DEV__ &&
+    CARD_VARIANTS.includes(protoVariant) &&
+    !form &&
+    !moment(sheet.date).isAfter(moment(), 'day') &&
+    !(thisMonthsReports ?? []).some((r) =>
+      isStoredDateOnLocalDay(r.date, sheet.date)
+    )
+
   return (
     <SplitSheet
+      minRatio={unfoldsTimeForm ? SPLIT_SHEET_MAX_RATIO : undefined}
       open={sheet.open}
       hidden={!focused}
       onOpenChange={(open) => setSheet({ ...sheet, open })}

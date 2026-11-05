@@ -36,6 +36,12 @@ import TimeEntryForm, {
 } from '@/features/service-reports/components/TimeEntryForm'
 import CollapsibleCard from '@/components/ui/CollapsibleCard'
 import PointerTooltip from '@/components/ui/PointerTooltip'
+// PROTOTYPE — throwaway Add Time variants.
+import {
+  CARD_VARIANTS,
+  ProtoAddTimeCard,
+  useAddTimePrototype,
+} from '@/features/service-reports/components/prototypes/AddTimeFormPrototype'
 
 /** Reads a new Plan's form as it stands, to carry it to the Plan screen. */
 export type PlanFormDraft = { params: () => RootStackParamList['PlanDay'] }
@@ -193,6 +199,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   onExpandPlan,
 }) => {
   const theme = useTheme()
+  const protoVariant = useAddTimePrototype((s) => s.variant)
   const { showsTimeEntry } = usePublisher()
   // Regular Publishers who haven't opted into logging hours never see an
   // "Add Time" affordance — hours entered here would be invisible to them
@@ -222,7 +229,13 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const hasPlans = planItems.length > 0
   const inlineTimeForm = inlineForms && !!onAddTime && !hasTimeReports
   const inlinePlanForm = inlineForms && !!renderPlanForm && !hasPlans
-  const [timeFormOpen, setTimeFormOpen] = useState(false)
+  // PROTOTYPE: an empty day up to today opens with the form unfolded.
+  const [timeFormOpen, setTimeFormOpen] = useState(
+    () =>
+      __DEV__ &&
+      CARD_VARIANTS.includes(protoVariant) &&
+      !moment(date).isAfter(moment(), 'day')
+  )
   const [planFormOpen, setPlanFormOpen] = useState(false)
   const timeCard = useRef<View>(null)
   const planCard = useRef<View>(null)
@@ -287,7 +300,33 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             />
           )}
         </XView>
-        {inlineTimeForm ? (
+        {inlineTimeForm && __DEV__ && CARD_VARIANTS.includes(protoVariant) ? (
+          <ProtoAddTimeCard
+            ref={timeCard}
+            subtitle={
+              moment(date).isAfter(moment(), 'day')
+                ? undefined
+                : i18n.t('protoAddTime_noTime')
+            }
+            open={timeFormOpen}
+            onOpenChange={toggleForm(setTimeFormOpen, timeCard)}
+            onExpand={
+              onExpandTime
+                ? expand(timeDraft, setTimeFormOpen, onExpandTime, {
+                    date: date.toISOString(),
+                  })
+                : undefined
+            }
+          >
+            <TimeEntryForm
+              draftRef={timeDraft}
+              layout='inline'
+              date={date}
+              source='day_sheet'
+              onDone={() => setTimeFormOpen(false)}
+            />
+          </ProtoAddTimeCard>
+        ) : inlineTimeForm ? (
           <CollapsibleCard
             ref={timeCard}
             label={i18n.t('addTime')}
@@ -390,7 +429,31 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             />
           )}
         </XView>
-        {inlinePlanForm ? (
+        {inlinePlanForm && __DEV__ && CARD_VARIANTS.includes(protoVariant) ? (
+          <ProtoAddTimeCard
+            ref={planCard}
+            title={i18n.t('planDay')}
+            icon={CalendarDaysIcon}
+            openIcon={CalendarDaysIcon}
+            testID='day-plan-form'
+            open={planFormOpen}
+            onOpenChange={toggleForm(setPlanFormOpen, planCard)}
+            onExpand={
+              onExpandPlan
+                ? expand(planDraft, setPlanFormOpen, onExpandPlan, {
+                    date: date.toISOString(),
+                  })
+                : undefined
+            }
+          >
+            {renderPlanForm?.({
+              date,
+              layout: 'inline',
+              draftRef: planDraft,
+              onDone: () => setPlanFormOpen(false),
+            })}
+          </ProtoAddTimeCard>
+        ) : inlinePlanForm ? (
           <CollapsibleCard
             ref={planCard}
             label={i18n.t('planDay')}

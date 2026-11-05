@@ -12,6 +12,11 @@ import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 import { resetStopwatchSession } from '@/features/service-reports/hooks/useStopWatch'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
+import {
+  AddTimePrototypeSwitcher,
+  CARD_VARIANTS,
+  useAddTimePrototype,
+} from '@/features/service-reports/components/prototypes/AddTimeFormPrototype'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -23,6 +28,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     : undefined
   const editing = !!getReport(serviceReports, existingReport)
   const [changed, setChanged] = useState(false)
+  const protoVariant = useAddTimePrototype((s) => s.variant)
   const allowLeave = useDiscardChangesGuard(changed)
 
   useEffect(() => {
@@ -31,10 +37,12 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         <Header
           buttonType='back'
           title={i18n.t(editing ? 'updateTime' : 'addTime')}
+          // PROTOTYPE: variant D's low-anchored form has no hairline above.
+          noBottomBorder={CARD_VARIANTS.includes(protoVariant)}
         />
       ),
     })
-  }, [editing, navigation])
+  }, [editing, navigation, protoVariant])
 
   return (
     // The dock applies the bottom safe area itself.
@@ -68,6 +76,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
           navigation.goBack()
         }}
       />
+      <AddTimePrototypeSwitcher />
     </Wrapper>
   )
 }

@@ -14,7 +14,9 @@ const CARD_PADDING = Platform.OS === 'android' ? 4 : 16
  * From the card's trailing edge to an accessory's 44pt frame, clear of the
  * chevron: SwiftUI's sits at the card's padding, Compose's 16dp inside it.
  */
-const ACCESSORY_END = Platform.OS === 'android' ? 52 : 36
+// PROTOTYPE: 56 on iOS keeps 12pt between the accessory's 44pt frame and the
+// chevron's, in one column with Add Time's card.
+const ACCESSORY_END = Platform.OS === 'android' ? 52 : 56
 const CONTENT_INSET =
   2 + CARD_PADDING * 2 + (Platform.OS === 'android' ? 32 : 0)
 

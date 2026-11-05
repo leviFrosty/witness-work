@@ -69,7 +69,8 @@ export function roomTabSections(
         ? []
         : [section('windowTime'), section('windowSeason')]
     case 'wall':
-      return [section('wallColor'), section('wallPattern')]
+      // The pattern first: its colour picks under it, as swatches.
+      return [section('wallPattern'), section('wallColor')]
     default:
       return [section(tab)]
   }

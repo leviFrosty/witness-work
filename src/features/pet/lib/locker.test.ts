@@ -39,7 +39,7 @@ describe('lockerSections', () => {
     const none = unlockedRoomItems([], [])
     expect(
       lockerSections('wall', DEFAULT_ROOM, none).map(({ part }) => part)
-    ).toEqual(['wallColor', 'wallPattern'])
+    ).toEqual(['wallPattern', 'wallColor'])
     const [sign] = lockerSections('sign', DEFAULT_ROOM, none)
     expect(sign.forSale).toBe(0)
     expect(sign.nextForSale).toBeNull()

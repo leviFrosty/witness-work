@@ -46,8 +46,8 @@ describe('shopEntries', () => {
       0
     )
     expect(sections.map((section) => section.part)).toEqual([
-      'wallColor',
       'wallPattern',
+      'wallColor',
     ])
   })
 })

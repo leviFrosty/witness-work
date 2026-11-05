@@ -10,13 +10,16 @@ import Text from '@/components/ui/MyText'
 import Popover from '@/components/ui/Popover'
 import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
 import { settleAllPetUnlocks } from '@/features/pet/stores/petUnlockNews'
-import type { PetVisit, RoomItemId } from '@/types/pet'
+import type { PetVisit, RoomItemId, WallColor } from '@/types/pet'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import usePet from '@/stores/pet'
 import type { RootStackParamList } from '@/types/rootStack'
+import { WALL_RGB } from '@/features/pet/art'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
+import GameColorSwatches from '@/features/pet/components/GameColorSwatches'
+import GameColorTray from '@/features/pet/components/GameColorTray'
 import {
   GameButton,
   GameIconButton,
@@ -83,6 +86,8 @@ const PREVIEW_MAX_WIDTH = 420
 const INSET = 16
 /** Between cards, besides the room each card keeps for its ring. */
 const CARD_GAP = 4
+/** Between a part's heading, its rows of cards and its colour tray. */
+const SECTION_ROW_GAP = 8
 /** Between the corner buttons, so their frames don't touch. */
 const CORNER_GAP = 12
 const INFO_WIDTH = 280
@@ -267,7 +272,7 @@ export default function PetRoomScreen({
 
   const sections = lockerSections(tab, room, unlocked)
   const dots = tabsWithNew(room, unlocked, roomItemPicked)
-  const { cardWidth } = itemGridColumns(gridWidth, CARD_GAP)
+  const { columns, cardWidth } = itemGridColumns(gridWidth, CARD_GAP)
   const wide = width >= PET_WIDE_FROM
 
   const header = (
@@ -373,6 +378,127 @@ export default function PetRoomScreen({
       dots={dots}
     />
   )
+  const heading = (text: string) => (
+    <Text
+      accessibilityRole='header'
+      numberOfLines={2}
+      style={{
+        fontSize: theme.fontSize('sm'),
+        fontFamily: theme.fonts.semiBold,
+        color: palette.ink,
+      }}
+    >
+      {text}
+    </Text>
+  )
+  const cards = (section: LockerSection) => [
+    ...section.owned.map((option) => {
+      const inUse = option === section.current
+      const name = roomOptionLabel(section.part, option)
+      const isNew = isNewOption(
+        section.part,
+        option,
+        section.current,
+        roomItemPicked
+      )
+      return (
+        <GameItemCard
+          key={option}
+          part={section.part}
+          option={option}
+          name={name}
+          note={
+            inUse ? (
+              <CheckNote
+                label={
+                  section.part === 'hat'
+                    ? i18n.t('pet.shop.wearing')
+                    : i18n.t('pet.shop.inRoom')
+                }
+                palette={palette}
+              />
+            ) : null
+          }
+          picked={inUse}
+          isNew={isNew}
+          width={cardWidth}
+          palette={palette}
+          room={room}
+          liveNow={scene.liveNow}
+          thumbBase={scene.thumbBase}
+          onPress={() => choose(section, option)}
+          accessibilityRole='radio'
+          accessibilityState={{ checked: inUse }}
+          accessibilityLabel={
+            isNew
+              ? i18n.t('pet.room.secret.newA11y', {
+                  option: name,
+                })
+              : name
+          }
+        />
+      )
+    }),
+    ...(section.nextForSale
+      ? [
+          <MoreInShopCard
+            key='more'
+            count={section.forSale}
+            width={cardWidth}
+            palette={palette}
+            onPress={() => openShop('more', section.nextForSale ?? undefined)}
+          />,
+        ]
+      : []),
+  ]
+  const cardRows = (items: ReactElement[]) => (
+    <View
+      accessibilityRole='radiogroup'
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP }}
+    >
+      {items}
+    </View>
+  )
+  // The wall's colours hang from the pattern in use, under its row, so a
+  // pattern is picked first and its colour right below it.
+  const colors = sections.find((section) => section.part === 'wallColor')
+  const colorTray = (column: number) =>
+    colors && (
+      <GameColorTray
+        column={column}
+        cardWidth={cardWidth}
+        cardGap={CARD_GAP}
+        gap={SECTION_ROW_GAP}
+        palette={palette}
+      >
+        {heading(inUseText(colors, sections.length))}
+        <GameColorSwatches
+          palette={palette}
+          swatches={colors.owned.map((option) => ({
+            key: option,
+            color: WALL_RGB[option as WallColor],
+            label: roomOptionLabel(colors.part, option),
+            picked: option === colors.current,
+            isNew: isNewOption(
+              colors.part,
+              option,
+              colors.current,
+              roomItemPicked
+            ),
+          }))}
+          onPress={(option) => choose(colors, option)}
+          more={
+            colors.nextForSale
+              ? {
+                  count: colors.forSale,
+                  onPress: () =>
+                    openShop('more', colors.nextForSale ?? undefined),
+                }
+              : null
+          }
+        />
+      </GameColorTray>
+    )
   const grid = (
     <View
       onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
@@ -394,87 +520,25 @@ export default function PetRoomScreen({
         </GameSection>
       )}
       {cardWidth > 0 &&
-        sections.map((section) => (
-          <View key={section.part} style={{ gap: 8 }}>
-            <Text
-              accessibilityRole='header'
-              numberOfLines={2}
-              style={{
-                fontSize: theme.fontSize('sm'),
-                fontFamily: theme.fonts.semiBold,
-                color: palette.ink,
-              }}
-            >
-              {inUseText(section, sections.length)}
-            </Text>
-            <View
-              accessibilityRole='radiogroup'
-              style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: CARD_GAP,
-              }}
-            >
-              {section.owned.map((option) => {
-                const inUse = option === section.current
-                const name = roomOptionLabel(section.part, option)
-                const isNew = isNewOption(
-                  section.part,
-                  option,
-                  section.current,
-                  roomItemPicked
-                )
-                return (
-                  <GameItemCard
-                    key={option}
-                    part={section.part}
-                    option={option}
-                    name={name}
-                    note={
-                      inUse ? (
-                        <CheckNote
-                          label={
-                            section.part === 'hat'
-                              ? i18n.t('pet.shop.wearing')
-                              : i18n.t('pet.shop.inRoom')
-                          }
-                          palette={palette}
-                        />
-                      ) : null
-                    }
-                    picked={inUse}
-                    isNew={isNew}
-                    width={cardWidth}
-                    palette={palette}
-                    room={room}
-                    liveNow={scene.liveNow}
-                    thumbBase={scene.thumbBase}
-                    onPress={() => choose(section, option)}
-                    accessibilityRole='radio'
-                    accessibilityState={{ checked: inUse }}
-                    accessibilityLabel={
-                      isNew
-                        ? i18n.t('pet.room.secret.newA11y', {
-                            option: name,
-                          })
-                        : name
-                    }
-                  />
-                )
-              })}
-              {section.nextForSale && (
-                <MoreInShopCard
-                  count={section.forSale}
-                  width={cardWidth}
-                  palette={palette}
-                  onPress={() =>
-                    openShop('more', section.nextForSale ?? undefined)
-                  }
-                />
-              )}
-            </View>
-          </View>
-        ))}
+        sections
+          .filter((section) => section !== colors)
+          .map((section) => {
+            const all = cards(section)
+            const at = section.owned.indexOf(section.current)
+            const tray =
+              section.part === 'wallPattern' && colorTray(at % columns)
+            const split = tray
+              ? (Math.floor(at / columns) + 1) * columns
+              : all.length
+            return (
+              <View key={section.part} style={{ gap: SECTION_ROW_GAP }}>
+                {heading(inUseText(section, sections.length))}
+                {cardRows(all.slice(0, split))}
+                {tray}
+                {split < all.length && cardRows(all.slice(split))}
+              </View>
+            )
+          })}
     </View>
   )
 

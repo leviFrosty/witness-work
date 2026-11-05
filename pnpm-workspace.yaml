@@ -7,6 +7,8 @@ minimumReleaseAgeExclude:
   - '@typescript/*'
 allowBuilds:
   '@shopify/react-native-skia': true
+  # posthog-js's polyfills; its postinstall only prints a banner.
+  core-js: false
   esbuild: true
   unrs-resolver: true
   workerd: true

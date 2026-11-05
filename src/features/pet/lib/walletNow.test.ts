@@ -25,6 +25,7 @@ vi.mock('@/stores/conversationStore', async () => ({
 }))
 
 import usePet from '@/stores/pet'
+import useRoutine from '@/stores/routine'
 import { useServiceReport } from '@/stores/serviceReport'
 import type { TimeEntry } from '@/types/timeEntry'
 import { PET_RECORD_ID, type PetRecord } from '@/types/pet'
@@ -59,6 +60,7 @@ describe('petEarningsNow', () => {
     vi.setSystemTime(new Date(2026, 9, 21, 12))
     usePet.setState({ pet: { ...PET }, room: null })
     useServiceReport.setState({ serviceReports: {}, dayPlans: [] })
+    useRoutine.setState({ routineEntries: [], readingPlans: [] })
   })
   afterEach(() => {
     vi.useRealTimers()
@@ -84,7 +86,38 @@ describe('petEarningsNow', () => {
       plansKept: 3,
       milestones: [{ count: 3, on: '2026-10-09' }],
     })
-    expect(now?.wallet).toBe(3 + 3 + 10)
+    expect(now?.wallet).toBe(30 + 30 + 100)
+  })
+
+  it('adds what the Spiritual Routine earned since adoption', () => {
+    useRoutine.setState({
+      routineEntries: [
+        {
+          id: 'bibleReading:2026-09-30',
+          habit: 'bibleReading',
+          on: '2026-09-30',
+          updatedAt: 1,
+        },
+        {
+          id: 'bibleReading:2026-10-20',
+          habit: 'bibleReading',
+          on: '2026-10-20',
+          updatedAt: 1,
+        },
+        {
+          id: 'worship:2026-10-19',
+          habit: 'worship',
+          on: '2026-10-20',
+          updatedAt: 1,
+        },
+      ],
+    })
+    const now = petEarningsNow()
+    expect(now?.earned.routine.habits).toMatchObject({
+      bibleReading: 1,
+      worship: 1,
+    })
+    expect(now?.wallet).toBe(4 + 5)
   })
 
   it('takes off what was spent, so an overspent pet stays at 0', () => {
@@ -99,6 +132,6 @@ describe('petEarningsNow', () => {
     useServiceReport.setState({
       serviceReports: october(...Array.from({ length: 14 }, (_, i) => i + 7)),
     })
-    expect(petEarningsNow()?.wallet).toBe(2)
+    expect(petEarningsNow()?.wallet).toBe(20)
   })
 })

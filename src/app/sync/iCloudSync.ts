@@ -73,6 +73,11 @@ import {
 } from '@/app/sync/mileageStoreSync'
 import { petFromPayload } from '@/app/sync/petPayload'
 import { applyPetSnapshot, hasPetData } from '@/app/sync/petStoreSync'
+import { routineFromPayload } from '@/app/sync/routinePayload'
+import {
+  applyRoutineSnapshot,
+  hasRoutineData,
+} from '@/app/sync/routineStoreSync'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
@@ -430,11 +435,13 @@ export function hasMeaningfulLocalData(): boolean {
   if (categories.deletedCategories.length > 0) return true
   if (hasMileageData()) return true
   if (hasPetData()) return true
+  if (hasRoutineData()) return true
   return false
 }
 
 export function replaceLocalWithRemote(remote: SyncPayload): void {
   const hasPetSlice = remote.petStore !== undefined
+  const hasRoutineSlice = remote.routineStore !== undefined
   const hasCategorySlice = remote.categoryStore !== undefined
   const hasMileageSlice = remote.mileageStore !== undefined
   remote = foldRemotePayloads([remote])!
@@ -489,6 +496,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       })
     if (hasMileageSlice) applyMileageSnapshot(mileageFromPayload(remote))
     if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
+    if (hasRoutineSlice) applyRoutineSnapshot(routineFromPayload(remote))
 
     const now = Date.now()
     setPrefsIfChanged({

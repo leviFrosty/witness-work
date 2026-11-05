@@ -1,5 +1,6 @@
 import {
   Bed as BedIcon,
+  BookOpen as StudyIcon,
   createLucideIcon,
   Grid2x2 as WindowIcon,
   Lamp as LampIcon,
@@ -31,5 +32,6 @@ export const ROOM_TAB_ICONS: Readonly<Record<RoomTab, AppIcon>> = {
   bed: BedIcon,
   shelf: ShelfIcon,
   lamp: LampIcon,
+  study: StudyIcon,
   sign: SignIcon,
 }

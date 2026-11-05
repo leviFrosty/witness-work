@@ -9,6 +9,7 @@ import { useSharedCarsSession } from '@/stores/sharedCarsSession'
 import { forgetDeviceInviteSecrets } from '@/lib/sharedSpaces/deviceInviteSecrets'
 import { forgetDeviceSpaceKeys } from '@/lib/sharedSpaces/deviceKeyring'
 import usePet from '@/stores/pet'
+import useRoutine from '@/stores/routine'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import { useProfile, PROFILE_DEFAULTS } from '@/stores/profile'
 import { clearMmkvStorage } from '@/stores/mmkv'
@@ -36,6 +37,7 @@ import { useScribeConsent } from '@/features/scribe/stores/consent'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
+import { useRoutineDayLog } from '@/features/routine/stores/routineDayLog'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
 import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
@@ -60,6 +62,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useNotificationsTray,
   usePetUnlockNews,
   usePetSeen,
+  useRoutineDayLog,
   useDevNotifications,
   useStreakCelebration,
   useSplitSheetPreferences,
@@ -96,6 +99,7 @@ export function resetLocalData() {
   useConversations.getState()._WARNING_forceDeleteConversations()
   useMileage.getState()._WARNING_forceDeleteMileage()
   usePet.getState()._WARNING_forceDeletePet()
+  useRoutine.getState()._WARNING_forceDeleteRoutine()
   abortAllTurns()
   for (const store of RESET_STORES)
     store.setState(store.getInitialState() as never, true)

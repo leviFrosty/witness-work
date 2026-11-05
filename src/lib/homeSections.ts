@@ -22,6 +22,8 @@ export const homeSectionTitle = (key: HomeScreenElementKey): string => {
       return i18n.t('mileage.title')
     case 'pet':
       return i18n.t('pet.homeSectionLabel')
+    case 'routine':
+      return i18n.t('routine.title')
     case 'quickActions':
       return i18n.t('quickActions_sectionTitle')
     case 'thisWeek':
@@ -84,24 +86,29 @@ export const isHomeSectionShown = (
     homeScreenElements,
     petPromptDismissed,
     hasPet,
+    routineEnabled,
   }: {
     homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
     petPromptDismissed: boolean
     hasPet: boolean
+    routineEnabled?: boolean
   }
 ) =>
   isHomeSectionOn(key, homeScreenElements) &&
-  !(key === 'pet' && !hasPet && petPromptDismissed)
+  !(key === 'pet' && !hasPet && petPromptDismissed) &&
+  !(key === 'routine' && routineEnabled === false)
 
 export const setHomeSectionShown = (
   key: HomeScreenElementKey,
   shown: boolean
 ) => {
-  const { homeScreenElements, set } = usePreferences.getState()
+  const { homeScreenElements, routineEnabled, set } = usePreferences.getState()
   const offerAgain = key === 'pet' && shown && usePet.getState().pet === null
+  const inviteRoutine = key === 'routine' && shown && routineEnabled === false
   set({
     homeScreenElements: { ...homeScreenElements, [key]: shown },
     ...(offerAgain ? { petPromptDismissed: false } : {}),
+    ...(inviteRoutine ? { routineEnabled: undefined } : {}),
   })
 }
 

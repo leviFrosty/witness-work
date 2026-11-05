@@ -20,8 +20,10 @@ export default function useAvailableHomeSections({
     homeScreenElementsOrder,
     mileageTrackingEnabled,
     petPromptDismissed,
+    routineEnabled,
   } = usePreferences(
     useShallow((s) => ({
+      routineEnabled: s.routineEnabled,
       homeScreenElements: s.homeScreenElements,
       homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
@@ -47,6 +49,7 @@ export default function useAvailableHomeSections({
           homeScreenElements,
           petPromptDismissed,
           hasPet,
+          routineEnabled,
         })
     ),
   }

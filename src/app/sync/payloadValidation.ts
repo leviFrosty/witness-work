@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { publishers } from '@/constants/publisher'
 import { PET_SPECIES_IDS } from '@/types/pet'
+import { READING_PLAN_KINDS, ROUTINE_HABITS } from '@/types/routine'
 import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
 import {
   bibleStudyFlagSchema,
@@ -228,6 +229,21 @@ const pet = record.extend({
   purchases: z.array(z.unknown()).optional(),
   updatedAt: timestamp,
 })
+const routineEntry = record.extend({
+  habit: z.enum(ROUTINE_HABITS),
+  on: dateKey,
+  run: id.optional(),
+  portions: z.array(z.number().int().nonnegative()).optional(),
+  updatedAt: timestamp,
+})
+const readingPlan = record.extend({
+  kind: z.enum(READING_PLAN_KINDS),
+  startBook: z.number().int().nonnegative().optional(),
+  chaptersPerDay: z.number().int().positive().optional(),
+  startedOn: dateKey,
+  finishedOn: dateKey.optional(),
+  updatedAt: timestamp,
+})
 const petRoom = record.extend({
   window: z.object({ time: z.string(), season: z.string() }),
   wallColor: z.string(),
@@ -236,6 +252,7 @@ const petRoom = record.extend({
   bed: z.string(),
   shelf: z.string(),
   lamp: z.string(),
+  study: z.string().optional(),
   sign: z.string(),
 
   hat: z.string().optional(),
@@ -307,6 +324,13 @@ export const payloadSchema = z.object({
       deletedPetRecords: z.array(tombstone).optional(),
     })
     .optional(),
+  routineStore: z
+    .object({
+      routineEntries: z.array(routineEntry),
+      readingPlans: z.array(readingPlan),
+      deletedRoutineRecords: z.array(tombstone).optional(),
+    })
+    .optional(),
   preferencesStore: values,
   profileStore: values.optional(),
 })
@@ -341,6 +365,11 @@ const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
     deletedMileageRecords: tombstone,
   },
   petStore: { pets: pet, petRooms: petRoom, deletedPetRecords: tombstone },
+  routineStore: {
+    routineEntries: routineEntry,
+    readingPlans: readingPlan,
+    deletedRoutineRecords: tombstone,
+  },
 }
 
 const isMap = (value: unknown): value is Record<string, unknown> =>
@@ -618,6 +647,25 @@ const preferenceShapes = z
       .optional(),
     mileageEntryMode: z.enum(['distance', 'odometer']).optional(),
     petPromptDismissed: z.boolean().optional(),
+    routineEnabled: z.boolean().optional(),
+    routineHabits: z.array(z.enum(ROUTINE_HABITS)).optional(),
+    readingPlanRunId: id.nullable().optional(),
+    personalStudyGoal: z
+      .union([
+        z.object({
+          kind: z.literal('perWeek'),
+          times: z.number().int().min(1).max(7),
+        }),
+        z.object({
+          kind: z.literal('days'),
+          days: z.array(z.number().int().min(0).max(6)),
+        }),
+      ])
+      .optional(),
+    worshipDay: z.number().int().min(0).max(6).nullable().optional(),
+    worshipKind: z.enum(['family', 'personal']).optional(),
+    routineReminders: z.boolean().optional(),
+    routineReminderTime: z.number().int().min(0).max(1439).optional(),
   })
   .passthrough()
 

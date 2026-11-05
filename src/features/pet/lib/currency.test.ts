@@ -10,6 +10,7 @@ import {
   petEarned,
   SHARED_MONTH_COINS,
   spentOn,
+  storedPrice,
   walletGain,
   walletOf,
   type DaysOut,
@@ -77,13 +78,13 @@ describe('petEarned', () => {
       paceOf: () => (monthly ? 'monthly' : 'daily'),
     })
 
-  it('pays a coin a day out, one more a planned day kept, ten a milestone', () => {
+  it('pays 10 a day out, 10 more a planned day kept, 100 a milestone', () => {
     expect([
       COINS_PER_DAY,
       COINS_PER_PLAN_KEPT,
       COINS_PER_MILESTONE,
       SHARED_MONTH_COINS,
-    ]).toEqual([1, 1, 10, 8])
+    ]).toEqual([10, 10, 100, 80])
     expect(coinsOf(earned())).toBe(0)
     const week = earned({
       days: october(5, 9),
@@ -94,7 +95,7 @@ describe('petEarned', () => {
       },
     })
     expect(week).toMatchObject({ daysOut: 5, plansKept: 3, shared: 0 })
-    expect(coinsOf(week)).toBe(5 + 3 + 10)
+    expect(coinsOf(week)).toBe(50 + 30 + 100)
   })
 
   it('counts a Visit as a day out', () => {
@@ -138,18 +139,18 @@ describe('petEarned', () => {
     })
   })
 
-  it('pays a monthly-pace month with a Time Entry at least 8 for its days out', () => {
+  it('pays a monthly-pace month with a Time Entry at least 80 for its days out', () => {
     const one = earned({ days: ['2026-10-20'], monthly: true })
-    expect(one).toMatchObject({ daysOut: 1, shared: 7 })
-    expect(coinsOf(one)).toBe(8)
-    expect(coinsOf(earned({ days: ['2026-10-20'] }))).toBe(1)
+    expect(one).toMatchObject({ daysOut: 1, shared: 70 })
+    expect(coinsOf(one)).toBe(80)
+    expect(coinsOf(earned({ days: ['2026-10-20'] }))).toBe(10)
 
     expect(coinsOf(earned({ visitsOnly: ['2026-10-20'], monthly: true }))).toBe(
-      1
+      10
     )
 
     const before = { days: ['2026-10-03'], adoptedOn: '2026-10-10' }
-    expect(coinsOf(earned({ ...before, monthly: true }))).toBe(8)
+    expect(coinsOf(earned({ ...before, monthly: true }))).toBe(80)
     expect(coinsOf(earned(before))).toBe(0)
     expect(
       coinsOf(
@@ -157,7 +158,7 @@ describe('petEarned', () => {
       )
     ).toBe(0)
 
-    expect(coinsOf(earned({ days: october(1, 31), monthly: true }))).toBe(31)
+    expect(coinsOf(earned({ days: october(1, 31), monthly: true }))).toBe(310)
   })
 
   it('adds a planned day kept and a milestone on top of the monthly least', () => {
@@ -170,7 +171,7 @@ describe('petEarned', () => {
         best: 4,
       },
     })
-    expect(coinsOf(month)).toBe(8 + 1 + 10)
+    expect(coinsOf(month)).toBe(80 + 10 + 100)
   })
 })
 
@@ -183,7 +184,15 @@ describe('the wallet', () => {
         { item: 'hat:cap', price: 12, on: '2026-10-02' },
         { item: 'hat:tophat', price: 36, on: '2026-10-03' },
       ])
-    ).toBe(58)
+    ).toBe(580)
+  })
+
+  it('stores a price in the units purchases have always used', () => {
+    expect(storedPrice(100)).toBe(10)
+    expect(storedPrice(360)).toBe(36)
+    expect(
+      spentOn([{ item: 'hat:bow', price: storedPrice(100), on: '2026-10-01' }])
+    ).toBe(100)
   })
 
   it('leaves earned minus spent, never below 0', () => {

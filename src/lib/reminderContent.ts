@@ -10,6 +10,7 @@ import { formatMinutes } from '@/lib/minutes'
 import type { MinuteDisplayFormat } from '@/types/timeEntry'
 import type { LocalReminder } from '@/lib/reminderSchedule'
 import type { ReminderData } from '@/lib/notificationData'
+import { habitList } from '@/lib/routine/habitNames'
 
 const LEAD_KEYS = {
   minutes: 'reminderLeadMinutes',
@@ -129,6 +130,14 @@ export function reminderContent(
         title: i18n.t('weekPlanReminder_title'),
         body: i18n.t('weekPlanReminderBody', {
           date: formatMonthDayCompact(moment(reminder.targetId, 'YYYY-MM-DD')),
+        }),
+        data,
+      }
+    case 'routine':
+      return {
+        title: i18n.t('routine.reminder.title'),
+        body: i18n.t('routine.reminder.body', {
+          habits: habitList(reminder.habits ?? [], reminder.worshipKind),
         }),
         data,
       }

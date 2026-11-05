@@ -31,10 +31,15 @@ describe('Decorate Room labels', () => {
 
   it('says how coins are earned, with the real numbers', () => {
     expect(currencyInfoText({ monthlyHearts: false, streaks: true })).toBe(
-      "Earn 1 coin each day you go out in the ministry (log time or a visit), and 1 more when it's a planned day you keep. Each streak milestone earns 10 coins more. Spend them in the Shop."
+      "Earn 10 coins each day you go out in the ministry (log time or a visit), and 10 more when it's a planned day you keep. Each streak milestone earns 100 coins more. Spend them in the Shop."
     )
     expect(currencyInfoText({ monthlyHearts: true, streaks: false })).toBe(
-      'Earn at least 8 coins each month you share in the ministry. Spend them in the Shop.'
+      'Earn at least 80 coins each month you share in the ministry. Spend them in the Shop.'
+    )
+    expect(
+      currencyInfoText({ monthlyHearts: true, streaks: false, routine: true })
+    ).toBe(
+      'Earn at least 80 coins each month you share in the ministry. Your Spiritual Routine earns coins too. Spend them in the Shop.'
     )
   })
 
@@ -46,6 +51,7 @@ describe('Decorate Room labels', () => {
       'Bed',
       'Shelf',
       'Light',
+      'Study',
       'Sign',
       'Window',
     ])

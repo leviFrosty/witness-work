@@ -23,6 +23,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
+import useRoutine from '@/stores/routine'
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import { useProfile } from '@/stores/profile'
@@ -78,6 +79,7 @@ export function normalizeBackupFile(
     ? data.categoryStore
     : undefined
   const mileage = isRecord(data.mileageStore) ? data.mileageStore : undefined
+  const routine = isRecord(data.routineStore) ? data.routineStore : undefined
 
   const payload = {
     version: PAYLOAD_VERSION,
@@ -113,6 +115,15 @@ export function normalizeBackupFile(
           },
         }
       : {}),
+    ...(routine
+      ? {
+          routineStore: {
+            routineEntries: [],
+            readingPlans: [],
+            ...routine,
+          },
+        }
+      : {}),
     preferencesStore: { values: preferences, updatedAt: {} },
     ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
   }
@@ -134,6 +145,8 @@ export function normalizeBackupFile(
     result.categoryStore = withParsed(categories, parsed.categoryStore)
   if (mileage && parsed.mileageStore)
     result.mileageStore = withParsed(mileage, parsed.mileageStore)
+  if (routine && parsed.routineStore)
+    result.routineStore = withParsed(routine, parsed.routineStore)
   if (isRecord(data.preferencesStore))
     result.preferencesStore = parsed.preferencesStore.values
 
@@ -244,6 +257,10 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
         .set(knownSlice(data.mileageStore, useMileage.getState()))
 
     if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
+    if (data.routineStore)
+      useRoutine
+        .getState()
+        .set(knownSlice(data.routineStore, useRoutine.getState()))
     const preferences = extractProfileFromPreferences(
       knownSlice(data.preferencesStore, {
         ...usePreferences.getState(),

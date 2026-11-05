@@ -53,11 +53,21 @@ describe('Home screen preferences', () => {
     expect(result.filter((k) => k !== 'mileage')).toEqual(stored)
   })
 
-  it('places the Pet section right after Service Report for an existing order', () => {
+  it('places the Pet section right after Spiritual Routine for an existing order', () => {
     const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter((k) => k !== 'pet')
     const result = getEffectiveHomeScreenOrder(stored)
 
-    expect(result[result.indexOf('serviceReport') + 1]).toBe('pet')
+    expect(result[result.indexOf('routine') + 1]).toBe('pet')
+    expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
+  })
+
+  it('places Spiritual Routine right after Service Report for an existing order', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (k) => k !== 'routine'
+    )
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result[result.indexOf('serviceReport') + 1]).toBe('routine')
     expect(result).toEqual(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)
   })
 
@@ -77,6 +87,7 @@ describe('Home screen preferences', () => {
       'together',
       'tabletServiceYearSummary',
       'serviceReport',
+      'routine',
       'pet',
       'quickActions',
       'thisWeek',

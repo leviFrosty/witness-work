@@ -86,6 +86,9 @@ export function openReminderTarget(target: ReminderData): boolean {
       })
       return true
     }
+    case 'routine':
+      navigationRef.navigate('Routine' as never)
+      return true
     case 'weekPlan': {
       const week = moment(target.id, 'YYYY-MM-DD', true)
       if (!week.isValid()) return false

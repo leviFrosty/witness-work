@@ -1,6 +1,6 @@
 import type { ToastAccessory } from '@/stores/toasts'
 
-export type RewardAction = 'time' | 'visit' | 'checkbox'
+export type RewardAction = 'time' | 'visit' | 'checkbox' | 'routine'
 
 export type RewardProbe = (action: RewardAction) => () => ToastAccessory | null
 

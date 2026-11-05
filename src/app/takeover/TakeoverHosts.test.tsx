@@ -28,6 +28,9 @@ const runtime = vi.hoisted(() => ({
 vi.mock('@/features/pet/components/PetUnlockRevealHost', () => ({
   default: () => null,
 }))
+vi.mock('@/features/routine/components/PlanFinishedCelebrationHost', () => ({
+  default: () => null,
+}))
 vi.mock('react-native', () => ({
   AppState: {
     get currentState() {

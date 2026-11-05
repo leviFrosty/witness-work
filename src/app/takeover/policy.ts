@@ -9,6 +9,7 @@ export const TAKEOVER_PRIORITY: Record<TakeoverKind, number> = {
   'streak-celebration': 40,
   'badge-celebration': 41,
   'pet-unlock': 42,
+  'reading-plan-finished': 43,
   'badges-welcome': 50,
   'badges-history': 51,
 }

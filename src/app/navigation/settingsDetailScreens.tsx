@@ -125,6 +125,13 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('rewards'),
   },
   {
+    name: 'RoutineSettings',
+    getComponent: () =>
+      require('@/features/settings/screens/preferences/screens/RoutineSettingsScreen')
+        .default,
+    title: () => i18n.t('routine.title'),
+  },
+  {
     name: 'PreferencesTabOrder',
     getComponent: () =>
       require('@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen')

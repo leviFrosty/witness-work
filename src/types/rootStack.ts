@@ -143,6 +143,7 @@ export type RootStackParamList = {
   PreferencesNavigation: undefined
   PreferencesAudioAndHaptics: undefined
   PreferencesRewards: undefined
+  RoutineSettings: undefined
   PreferencesTabOrder: undefined
   PreferencesHomeScreen: undefined
   PreferencesScheduleScreen: undefined
@@ -291,6 +292,8 @@ export type RootStackParamList = {
   PetVisits: undefined
 
   PetShare: undefined
+
+  Routine: undefined
 
   Badges: { source?: BadgesSource } | undefined
 

@@ -4538,7 +4538,8 @@
       "quickActionsScribe": "Add time, contacts and plans in a tap, or speak an update with Scribe AI",
       "thisWeek": "Your week at a glance, a tap from each day",
       "timer": "Time your service as you go",
-      "didYouKnow": "A tip about something WitnessWork can do"
+      "didYouKnow": "A tip about something WitnessWork can do",
+      "routine": "Check off Bible reading, study and meeting prep each day."
     }
   },
   "progressCards": {
@@ -4985,7 +4986,8 @@
         "bed": "Bed",
         "shelf": "Shelf",
         "lamp": "Light",
-        "sign": "Sign"
+        "sign": "Sign",
+        "study": "Study"
       },
       "liveWindow": "Live window",
       "liveWindowInfo": "The window follows your clock and the season where you are. Turn it off to pick a time of day and a season yourself.",
@@ -5145,6 +5147,16 @@
           "fisherman": "Fisherman cap",
           "bush": "Bush hat",
           "tam": "Tam"
+        },
+        "study": {
+          "none": "Nothing",
+          "stool": "Reading stool",
+          "bag": "Meeting bag",
+          "bookstand": "Bookstand",
+          "desk": "Writing desk",
+          "bookcase": "Bookcase",
+          "table": "Study table",
+          "armchair": "Reading chair"
         }
       },
       "secret": {
@@ -5242,9 +5254,10 @@
         "other": "{{count}} coins"
       },
       "infoTitle": "Coins",
-      "infoDays": "Earn 1 coin each day you go out in the ministry (log time or a visit), and 1 more when it's a planned day you keep.",
+      "infoDays": "Earn {{day}} each day you go out in the ministry (log time or a visit), and {{kept}} more when it's a planned day you keep.",
       "infoMonths": "Earn at least {{floor}} coins each month you share in the ministry.",
       "infoStreak": "Each streak milestone earns {{amount}} more.",
+      "infoRoutine": "Your Spiritual Routine earns coins too.",
       "infoSpend": "Spend them in the Shop.",
       "gain": "+{{amount}}",
       "loss": "−{{amount}}",
@@ -5634,5 +5647,244 @@
   "paywallScribeAiFree": "Limited",
   "paywallScribeAiSupporter": "Generous limits",
   "scribe_legacyUndoConfirm": "Undo this import? Contacts, visits and time it added are removed, except anything you’ve changed since.",
-  "scribe_privacyLink": "Scribe AI privacy (OpenRouter ZDR)"
+  "scribe_privacyLink": "Scribe AI privacy (OpenRouter ZDR)",
+  "routine": {
+    "title": "Spiritual Routine",
+    "homeTitle": "Routine",
+    "habit": {
+      "bibleReading": "Bible reading",
+      "personalStudy": "Personal study",
+      "midweekPrep": "Midweek meeting prep",
+      "weekendPrep": "Weekend meeting prep",
+      "worship": "Family worship",
+      "worshipPersonal": "Personal worship evening"
+    },
+    "reward": {
+      "bibleReading": {
+        "one": "Bible reading",
+        "other": "Bible reading · {{count}} days"
+      },
+      "personalStudy": {
+        "one": "Personal study",
+        "other": "Personal study · {{count}} days"
+      },
+      "midweekPrep": {
+        "one": "Midweek meeting prep",
+        "other": "Midweek meeting prep · {{count}}"
+      },
+      "weekendPrep": {
+        "one": "Weekend meeting prep",
+        "other": "Weekend meeting prep · {{count}}"
+      },
+      "worship": {
+        "one": "Worship evening",
+        "other": "Worship evenings · {{count}}"
+      },
+      "planFinished": "Reading plan finished"
+    },
+    "bible": {
+      "book": {
+        "genesis": "Genesis",
+        "exodus": "Exodus",
+        "leviticus": "Leviticus",
+        "numbers": "Numbers",
+        "deuteronomy": "Deuteronomy",
+        "joshua": "Joshua",
+        "judges": "Judges",
+        "ruth": "Ruth",
+        "1samuel": "1 Samuel",
+        "2samuel": "2 Samuel",
+        "1kings": "1 Kings",
+        "2kings": "2 Kings",
+        "1chronicles": "1 Chronicles",
+        "2chronicles": "2 Chronicles",
+        "ezra": "Ezra",
+        "nehemiah": "Nehemiah",
+        "esther": "Esther",
+        "job": "Job",
+        "psalms": "Psalms",
+        "proverbs": "Proverbs",
+        "ecclesiastes": "Ecclesiastes",
+        "songOfSolomon": "Song of Solomon",
+        "isaiah": "Isaiah",
+        "jeremiah": "Jeremiah",
+        "lamentations": "Lamentations",
+        "ezekiel": "Ezekiel",
+        "daniel": "Daniel",
+        "hosea": "Hosea",
+        "joel": "Joel",
+        "amos": "Amos",
+        "obadiah": "Obadiah",
+        "jonah": "Jonah",
+        "micah": "Micah",
+        "nahum": "Nahum",
+        "habakkuk": "Habakkuk",
+        "zephaniah": "Zephaniah",
+        "haggai": "Haggai",
+        "zechariah": "Zechariah",
+        "malachi": "Malachi",
+        "matthew": "Matthew",
+        "mark": "Mark",
+        "luke": "Luke",
+        "john": "John",
+        "acts": "Acts",
+        "romans": "Romans",
+        "1corinthians": "1 Corinthians",
+        "2corinthians": "2 Corinthians",
+        "galatians": "Galatians",
+        "ephesians": "Ephesians",
+        "philippians": "Philippians",
+        "colossians": "Colossians",
+        "1thessalonians": "1 Thessalonians",
+        "2thessalonians": "2 Thessalonians",
+        "1timothy": "1 Timothy",
+        "2timothy": "2 Timothy",
+        "titus": "Titus",
+        "philemon": "Philemon",
+        "hebrews": "Hebrews",
+        "james": "James",
+        "1peter": "1 Peter",
+        "2peter": "2 Peter",
+        "1john": "1 John",
+        "2john": "2 John",
+        "3john": "3 John",
+        "jude": "Jude",
+        "revelation": "Revelation"
+      },
+      "range": "{{book}} {{from}}–{{to}}",
+      "chapter": "{{book}} {{chapter}}",
+      "join": "{{first}}; {{rest}}"
+    },
+    "reminder": {
+      "title": "Spiritual Routine",
+      "body": "Still open today: {{habits}}",
+      "separator": ", ",
+      "label": "Daily reminder",
+      "time": "Reminder time",
+      "info": "One reminder a day listing what’s still open. It’s skipped once everything is done."
+    },
+    "home": {
+      "promptTitle": "Keep up your spiritual routine",
+      "promptDescription": "Check off Bible reading, personal study and meeting prep each day.",
+      "promptSetUp": "Set up",
+      "promptNotNow": "Not now",
+      "allDone": "All done today",
+      "allDoneHint": "Shows today’s routine",
+      "nothingToday": "Nothing else is due today",
+      "studyProgress": "{{done}} of {{goal}} this week",
+      "meetingOn": "{{day}} meeting",
+      "worshipOn": "{{day}} evening",
+      "checked": "{{habit}} checked off",
+      "unchecked": "{{habit}} unchecked",
+      "loggedFor": "{{habit}} logged for {{date}}",
+      "settings": "Routine settings",
+      "checkHint": "Checks it off for today",
+      "uncheckHint": "Unchecks it for today"
+    },
+    "screen": {
+      "daysThisMonth": {
+        "one": "{{count}} day this month",
+        "other": "{{count}} days this month"
+      },
+      "weeksThisMonth": {
+        "one": "{{count}} week this month",
+        "other": "{{count}} weeks this month"
+      },
+      "graphA11y": {
+        "one": "{{habit}}: {{count}} day in the last {{weeks}} weeks",
+        "other": "{{habit}}: {{count}} days in the last {{weeks}} weeks"
+      },
+      "done": "Done",
+      "planTitle": "Reading plan",
+      "planDay": "Day {{day}} of {{total}}",
+      "todaysReading": "Today’s reading",
+      "markRead": "Mark as read",
+      "readNext": "Read next portion",
+      "nextUp": "Next: {{portion}}",
+      "changePlan": "Change plan",
+      "startPlan": "Start a reading plan",
+      "earlierDays": "Recent days",
+      "earlierDayA11y": "{{habit}}, {{date}}",
+      "noHabits": "Turn on habits in Routine settings to see them here."
+    },
+    "celebration": {
+      "title": "You read the whole Bible",
+      "caption": {
+        "one": "Finished in {{count}} day",
+        "other": "Finished in {{count}} days"
+      },
+      "coins": "{{coins}} for your pet",
+      "done": "Done"
+    },
+    "settings": {
+      "enabled": "Spiritual Routine",
+      "enabledInfo": "Check off Bible reading, study and meeting prep each day. Turning it off keeps your history.",
+      "habitsTitle": "Habits",
+      "readingTitle": "Bible reading",
+      "readingRow": "Reading",
+      "studyTitle": "Personal study",
+      "studyGoal": "Goal",
+      "studyGoalPerWeek": "Times a week",
+      "studyGoalDays": "Set days",
+      "studyTimes": {
+        "one": "Once a week",
+        "other": "{{count}} times a week"
+      },
+      "studyDays": "Days",
+      "worshipTitle": "Worship evening",
+      "worshipKind": "Kind",
+      "worshipDay": "Evening",
+      "anyDay": "Any day",
+      "reminderTitle": "Reminder",
+      "planProgress": "{{plan}} · Day {{day}} of {{total}}",
+      "planFinished": "{{plan}} · Finished"
+    },
+    "meetings": {
+      "title": "Meeting days",
+      "midweek": "Midweek meeting",
+      "weekend": "Weekend meeting",
+      "info": "Meeting prep shows up from two days before each meeting.",
+      "notSet": "Not set"
+    },
+    "setup": {
+      "title": "Spiritual Routine",
+      "subtitle": "Choose what to keep up. You can change it anytime in Settings.",
+      "habits": "Habits",
+      "family": "Do you live with family?",
+      "petCoins": "Each one earns coins for your pet.",
+      "save": "Start"
+    },
+    "plan": {
+      "title": "Bible reading",
+      "today": "Read today",
+      "todayDescription": "Check off each day you read.",
+      "kind": {
+        "canonical": "Bible in a year",
+        "chronological": "In order of events",
+        "custom": "My own plan"
+      },
+      "description": {
+        "canonical": "Genesis to Revelation in 365 days.",
+        "chronological": "The whole Bible in 365 days, in about the order things happened.",
+        "custom": "Choose where to start and how much to read."
+      },
+      "chronologicalInfo": "Books and chapters are placed in approximate order. Some, like most Psalms, are read together.",
+      "startBook": "Start at",
+      "chaptersLabel": "Each day",
+      "chaptersPerDay": {
+        "one": "{{count}} chapter",
+        "other": "{{count}} chapters"
+      },
+      "days": {
+        "one": "{{count}} day",
+        "other": "{{count}} days"
+      },
+      "start": "Start plan",
+      "resume": "Resume plan",
+      "restart": "Read it again",
+      "leaveTitle": "Leave this plan?",
+      "leaveBody": "You’re on day {{day}}. Your place is kept if you come back to it.",
+      "leaveConfirm": "Leave"
+    }
+  }
 }

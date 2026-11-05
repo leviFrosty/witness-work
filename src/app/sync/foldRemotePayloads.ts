@@ -13,6 +13,7 @@ import type { Category } from '@/types/category'
 import { atNewestResetEpoch } from '@/lib/syncResetEpoch'
 import { mileageFromPayload } from '@/app/sync/mileagePayload'
 import { petFromPayload } from '@/app/sync/petPayload'
+import { routineFromPayload } from '@/app/sync/routinePayload'
 
 type LocalMergeState = Omit<MergeResult, 'changed'>
 
@@ -47,6 +48,7 @@ export function foldRemotePayloads(
     deletedCategories: first.categoryStore?.deletedCategories ?? [],
     ...mileageFromPayload(first),
     ...petFromPayload(first),
+    ...routineFromPayload(first),
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
     profileValues: first.profileStore?.values ?? {},
@@ -116,6 +118,15 @@ export function foldRemotePayloads(
             pets: acc.pets,
             petRooms: acc.petRooms,
             deletedPetRecords: acc.deletedPetRecords,
+          },
+        }
+      : {}),
+    ...(payloads.some((payload) => payload.routineStore)
+      ? {
+          routineStore: {
+            routineEntries: acc.routineEntries,
+            readingPlans: acc.readingPlans,
+            deletedRoutineRecords: acc.deletedRoutineRecords,
           },
         }
       : {}),

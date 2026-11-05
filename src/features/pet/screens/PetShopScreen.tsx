@@ -38,6 +38,7 @@ import {
 import { roomChoicePatch, roomWithChoice } from '@/features/pet/lib/roomOptions'
 import { noteRoomItemPicked } from '@/features/pet/lib/secrets'
 import { shortBy, SHOP_TABS, type ShopTab } from '@/features/pet/lib/shop'
+import { storedPrice } from '@/features/pet/lib/currency'
 import {
   PET_WIDE_FROM,
   petOpensAsSheet,
@@ -167,7 +168,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
     if (price === null || shortBy(price, state.wallet) > 0) return
     const bought = usePet.getState().buyRoomItem({
       item: entry.item,
-      price,
+      price: storedPrice(price),
       on: state.todayKey,
     })
     if (!bought) return

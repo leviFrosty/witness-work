@@ -3,6 +3,7 @@ import { useDisplayRegions } from '@/stores/displayRegions'
 import { petOpensAsSheet } from '@/features/pet/lib/petPresentation'
 import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
+import RoutineSettingsButton from '@/features/routine/components/RoutineSettingsButton'
 import useTheme from '@/contexts/theme'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 import { usePreferences } from '@/stores/preferences'
@@ -671,6 +672,21 @@ const RootStackComponent = () => {
           name='PetShare'
           getComponent={() =>
             require('@/features/pet/screens/PetShareScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('routine.title')}
+                rightElement={<RoutineSettingsButton />}
+              />
+            ),
+          }}
+          name='Routine'
+          getComponent={() =>
+            require('@/features/routine/screens/RoutineScreen').default
           }
         />
         <RootStack.Screen

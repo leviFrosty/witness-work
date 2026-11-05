@@ -28,7 +28,7 @@ const FIXED: PetRoomSettings = {
 }
 
 describe('Decorate Room options', () => {
-  it('has the eight tabs in order, the hat first and the window last', () => {
+  it('has the nine tabs in order, the hat first and the window last', () => {
     expect(ROOM_TABS).toEqual([
       'hat',
       'wall',
@@ -36,6 +36,7 @@ describe('Decorate Room options', () => {
       'bed',
       'shelf',
       'lamp',
+      'study',
       'sign',
       'window',
     ])

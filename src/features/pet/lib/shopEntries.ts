@@ -106,6 +106,7 @@ const PREVIEW_TOP: Record<ShopTab, number> = {
   bed: 44,
   shelf: 4,
   lamp: 36,
+  study: 30,
 }
 
 export const shopPreviewView = (tab: ShopTab): Viewport => [

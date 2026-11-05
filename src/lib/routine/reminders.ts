@@ -1,0 +1,1 @@
+export const DEFAULT_ROUTINE_REMINDER_TIME = 19 * 60

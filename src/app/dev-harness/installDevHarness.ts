@@ -13,6 +13,7 @@ import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
 import useSharedCars from '@/stores/sharedCars'
 import usePet from '@/stores/pet'
+import useRoutine from '@/stores/routine'
 import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
@@ -467,6 +468,7 @@ export function installDevHarness() {
       savedPlaces: useSavedPlaces,
 
       pet: usePet,
+      routine: useRoutine,
 
       rewardStack: useRewardStack,
       categories: useCategories,

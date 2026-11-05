@@ -16,6 +16,7 @@ export const ROOM_TABS = [
   'bed',
   'shelf',
   'lamp',
+  'study',
   'sign',
   'window',
 ] as const
@@ -30,6 +31,7 @@ export type RoomChoicePart =
   | 'bed'
   | 'shelf'
   | 'lamp'
+  | 'study'
   | 'sign'
   | 'hat'
 
@@ -123,6 +125,7 @@ export const ROOM_THUMB_VIEWS: Readonly<Record<RoomChoicePart, Viewport>> = {
   bed: [28, 48, 80, 50],
   shelf: [67, 10, 48, 30],
   lamp: [92, 47, 80, 50],
+  study: [10, 42, 64, 40],
   sign: [115, 2, 64, 40],
   hat: [36, 36, 64, 40],
 }

@@ -30,6 +30,11 @@ import type {
   VehicleSetup,
 } from '@/types/mileage'
 import type { PetRecord, PetRoomRecord, PetTombstone } from '@/types/pet'
+import type {
+  ReadingPlanRun,
+  RoutineEntry,
+  RoutineTombstone,
+} from '@/types/routine'
 import {
   keptKeepsakes,
   keptPurchases,
@@ -72,6 +77,9 @@ export type MergeResult = {
   pets: PetRecord[]
   petRooms: PetRoomRecord[]
   deletedPetRecords: PetTombstone[]
+  routineEntries: RoutineEntry[]
+  readingPlans: ReadingPlanRun[]
+  deletedRoutineRecords: RoutineTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -110,6 +118,12 @@ type LocalState = {
   pets: PetRecord[]
   petRooms: PetRoomRecord[]
   deletedPetRecords: PetTombstone[]
+
+  routineEntries?: RoutineEntry[]
+
+  readingPlans?: ReadingPlanRun[]
+
+  deletedRoutineRecords?: RoutineTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -128,6 +142,9 @@ export function mergePayload(
     deletedRecurringPlans: localState.deletedRecurringPlans ?? [],
     conversationFieldDefs: localState.conversationFieldDefs ?? [],
     deletedConversationFieldDefs: localState.deletedConversationFieldDefs ?? [],
+    routineEntries: localState.routineEntries ?? [],
+    readingPlans: localState.readingPlans ?? [],
+    deletedRoutineRecords: localState.deletedRoutineRecords ?? [],
   }
   const local = translateSyncTimestamps(originalLocal, 0, now + 5 * 60_000)
   remote = translateSyncTimestamps(remote, 0, now + 5 * 60_000)
@@ -330,6 +347,26 @@ export function mergePayload(
     remotePet?.petRooms as PetRoomRecord[] | undefined
   )
 
+  const remoteRoutine = remote.routineStore
+  const mergedRoutineTombstones = mergeTombstones(
+    local.deletedRoutineRecords,
+    remoteRoutine?.deletedRoutineRecords ?? [],
+    now
+  )
+  const mergeRoutine = <T extends WithId>(localRecords: T[], remote?: T[]) =>
+    applyTombstones(
+      mergeById(localRecords, remote ?? []).merged,
+      mergedRoutineTombstones
+    )
+  const mergedRoutineEntries = mergeRoutine(
+    local.routineEntries,
+    remoteRoutine?.routineEntries as RoutineEntry[] | undefined
+  )
+  const mergedReadingPlans = mergeRoutine(
+    local.readingPlans,
+    remoteRoutine?.readingPlans as ReadingPlanRun[] | undefined
+  )
+
   const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
     mergePreferences(
       local.preferencesValues,
@@ -381,6 +418,9 @@ export function mergePayload(
     pets: mergedPets,
     petRooms: mergedPetRooms,
     deletedPetRecords: mergedPetTombstones,
+    routineEntries: mergedRoutineEntries,
+    readingPlans: mergedReadingPlans,
+    deletedRoutineRecords: mergedRoutineTombstones,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
     profileValues: mergedProfileValues,

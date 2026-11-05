@@ -29,6 +29,7 @@ export default function GameWallet({
 }) {
   const theme = useTheme()
   const streaks = usePreferences((state) => state.showStreaks)
+  const routine = usePreferences((state) => state.routineEnabled === true)
   const scale = gamePixelScale()
   return (
     <Popover
@@ -74,7 +75,7 @@ export default function GameWallet({
           {i18n.t('pet.currency.infoTitle')}
         </Text>
         <Text style={{ fontSize: theme.fontSize('sm'), color: palette.inkAlt }}>
-          {currencyInfoText({ monthlyHearts, streaks })}
+          {currencyInfoText({ monthlyHearts, streaks, routine })}
         </Text>
       </View>
     </Popover>

@@ -3,6 +3,8 @@ import useConversations from '@/stores/conversationStore'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useServiceReport } from '@/stores/serviceReport'
+import useRoutine from '@/stores/routine'
+import { routineEarned } from '@/lib/routine/coins'
 import {
   petDaysOut,
   petEarned,
@@ -39,6 +41,12 @@ export function petEarningsNow(now: Date = new Date()): PetEarnings | null {
     adoptedOn: pet.adoptedOn,
     today,
     paceOf,
+    routine: routineEarned({
+      entries: useRoutine.getState().routineEntries,
+      plans: useRoutine.getState().readingPlans,
+      adoptedOn: pet.adoptedOn,
+      today,
+    }),
   })
   return {
     earned,

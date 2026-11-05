@@ -35,6 +35,11 @@ import {
   weekPlanReminderDates,
   type WeekPlanSources,
 } from '@/lib/weekPlanReminders'
+import {
+  routineReminderDates,
+  type RoutineReminderSources,
+} from '@/lib/routine/reminderSchedule'
+import type { RoutineHabit, WorshipKind } from '@/types/routine'
 
 export type LocalReminder = {
   id: string
@@ -47,6 +52,7 @@ export type LocalReminder = {
     | 'streak'
     | 'monthReport'
     | 'weekPlan'
+    | 'routine'
 
   targetId: string
 
@@ -65,6 +71,10 @@ export type LocalReminder = {
   days?: string[]
 
   streak?: { count: number; kind: StreakKind }
+
+  habits?: RoutineHabit[]
+
+  worshipKind?: WorshipKind
 }
 
 export const reminderRequestId = (
@@ -187,6 +197,8 @@ type ReminderSources = {
   monthReport?: MonthReportSources
 
   weekPlan?: WeekPlanSources
+
+  routine?: RoutineReminderSources & { worshipKind?: WorshipKind }
 }
 
 export function reminderOccurrences(
@@ -299,6 +311,24 @@ export function reminderOccurrences(
         kind: 'weekPlan',
         targetId: week,
         anchor: moment(week, 'YYYY-MM-DD').toDate(),
+      })
+  }
+  if (args.routine) {
+    for (const { date, day, habits } of routineReminderDates(
+      args.routine,
+      args.now ?? Date.now()
+    ))
+      reminders.push({
+        id: reminderRequestId('routine', day),
+        date,
+        kind: 'routine',
+        targetId: day,
+        day,
+        anchor: date,
+        habits,
+        ...(args.routine.worshipKind
+          ? { worshipKind: args.routine.worshipKind }
+          : {}),
       })
   }
   return reminders.filter((reminder) =>

@@ -21,6 +21,7 @@ import {
   HAT_UNLOCK_ORDER,
   PET_KEEPSAKES_KEPT,
   SECRET_ROOM_ITEMS,
+  STUDY_UNLOCK_ORDER,
   UNLOCK_ORDER,
   type PetRecord,
   type RoomItemId,
@@ -105,6 +106,7 @@ function editPet(change: (pet: PetRecord) => PetRecord) {
 
 const EVERY_ITEM: readonly RoomItemId[] = [
   ...UNLOCK_ORDER,
+  ...STUDY_UNLOCK_ORDER,
   ...HAT_UNLOCK_ORDER,
   ...SECRET_ROOM_ITEMS,
 ]

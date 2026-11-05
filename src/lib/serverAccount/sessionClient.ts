@@ -95,7 +95,9 @@ function parseTokens(
  * account when the key has none, unless `accountId` names the account the
  * device knows: then it opens only when the key is that account's current one,
  * and is 404 `unknown_account` otherwise (docs/account-key-change.md). A
- * retired key is 403 `key_retired`. Failures throw `HttpError`.
+ * retired key is 403 `key_retired`. With `renews`, the new session replaces
+ * that live one, and a session that can't be renewed is 401 `unauthorized`.
+ * Failures throw `HttpError`.
  */
 export async function sendSessionOpen(
   {
@@ -103,6 +105,7 @@ export async function sendSessionOpen(
     device,
     appVersion,
     accountId,
+    renews,
   }: {
     proof: AttestationProof
     /** `sealDeviceLabel`'s output. */
@@ -111,6 +114,11 @@ export async function sendSessionOpen(
     appVersion?: string
     /** The account this key should be the current key of. */
     accountId?: string
+    /**
+     * A renewal: the live session this one replaces and its access token
+     * (docs/accounts-protocol.md, "Renewing a session").
+     */
+    renews?: { sessionId: string; accessToken: string }
   },
   options: SignedAccountOptions
 ): Promise<OpenedSession> {
@@ -122,12 +130,18 @@ export async function sendSessionOpen(
       ...(isSessionAppVersion(appVersion) && { appVersion }),
       capabilities: SESSION_CAPABILITIES,
       ...(accountId !== undefined && { accountId }),
+      ...(renews && { renews: renews.sessionId }),
     },
     options,
     {
       headers:
-        proof.kind === 'devBypass'
-          ? { 'x-ww-dev-bypass': proof.token }
+        proof.kind === 'devBypass' || renews
+          ? {
+              ...(proof.kind === 'devBypass' && {
+                'x-ww-dev-bypass': proof.token,
+              }),
+              ...(renews && { authorization: `Bearer ${renews.accessToken}` }),
+            }
           : undefined,
     }
   )

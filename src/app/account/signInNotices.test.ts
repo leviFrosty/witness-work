@@ -153,6 +153,25 @@ describe('applySignInActivity', () => {
     expect(state.marker?.at).toBe(T0 + 4)
   })
 
+  it('leaves out session renewals, this device’s or another’s', () => {
+    const state = apply(started(), [
+      entry('session.renewed', T0 + 1, {
+        session: OWN,
+        platform: 'ios',
+        method: 'attestation',
+        actor: 'own-before-00000000000',
+      }),
+      entry('session.renewed', T0 + 2, {
+        session: PHONE,
+        platform: 'android',
+        method: 'attestation',
+        actor: 'phone-before-000000000',
+      }),
+    ])
+    expect(state.notices).toEqual([])
+    expect(state.marker?.at).toBe(T0 + 2)
+  })
+
   it('leaves out a browser this device approved', () => {
     const state = apply(started(), [
       entry('device.approved', T0 + 1, { session: OWN }),

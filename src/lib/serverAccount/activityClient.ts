@@ -64,6 +64,7 @@ export type AccountDevice = {
 export const ACTIVITY_KINDS = [
   'account.created',
   'session.opened',
+  'session.renewed',
   'session.signed_out',
   'session.revoked',
   'session.replaced',

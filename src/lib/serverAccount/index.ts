@@ -29,6 +29,7 @@ import {
   AccountSessionError,
   type AccountSessionEvent,
   createAccountSessions,
+  SESSION_RENEW_WINDOW_MS,
   sessionAccountForKey,
   type SessionOpenReason,
   type SessionStore,
@@ -111,7 +112,10 @@ const isWeb = Platform.OS === 'web'
 /** A session opened for this device, or its account key changed. */
 export type AccountChange = 'session_opened' | 'key_changed'
 
-/** How a `session_opened` opened: `new` when this device had none for the key. */
+/**
+ * How a `session_opened` opened: `new` when this device had none for the key,
+ * `renewed` when it replaced this device's live session near its end.
+ */
 export type AccountChangeDetail = { reason?: SessionOpenReason }
 
 type AccountChangeListener = (
@@ -267,7 +271,10 @@ function recheckStatus(key: Uint8Array) {
   )
 }
 
-/** Opens are rare (one per device every 90 days), so each is worth a look. */
+/**
+ * Opens are rare (one per device every 90 days, renewed or not), so each is
+ * worth a look.
+ */
 function reportSessionEvent(event: AccountSessionEvent) {
   if (event.outcome !== 'ok')
     logger.debug(`[account] ${event.op}: ${event.outcome}`)
@@ -288,6 +295,8 @@ function reportSessionEvent(event: AccountSessionEvent) {
         ? `attestation_${event.attestation ?? 'failed'}`
         : event.outcome,
     server_reason: event.serverReason,
+    // A failed renewal keeps its session; it isn't a device left signed out.
+    ...(event.reason === 'renewed' && { source: 'renewal' }),
   })
 }
 
@@ -328,6 +337,18 @@ const keyRetiredHub = createKeyRetiredHub((error) =>
 export const onKeyRetired = (listener: KeyRetiredListener): (() => void) =>
   keyRetiredHub.subscribe(listener)
 
+/** Development builds only: a longer renew window, to see a renewal now. */
+let devRenewWindowMs: number | null = null
+
+/**
+ * Development builds only (the dev harness): renews a session once it has `ms`
+ * left instead of 30 days, so the next refresh renews any session; null goes
+ * back to 30 days. Does nothing in release builds.
+ */
+export function setDevSessionRenewWindow(ms: number | null) {
+  if (__DEV__) devRenewWindowMs = ms
+}
+
 /**
  * This device's attested account sessions (ADR 0027). Every user-scoped ww-api
  * call goes through `accountSessions.request` or `withSession`.
@@ -349,6 +370,7 @@ export const accountSessions = createAccountSessions({
     }
   },
   deviceLabel: thisDeviceLabel,
+  renewWindowMs: () => devRenewWindowMs ?? SESSION_RENEW_WINDOW_MS,
   // Devices shows it; `major.minor.patch` only.
   appVersion: () =>
     isWeb ? appVersion() : Application.nativeApplicationVersion,

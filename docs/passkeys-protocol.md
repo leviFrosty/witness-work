@@ -133,6 +133,7 @@ The route of [Opening a session](./accounts-protocol.md#opening-a-session-post-a
 - Each session row also records how it opened (`method`, as in [Activity](#activity)), the account's `keyEpoch` then, and `stepUpAt`. ADR 0039 reads the session's age and method.
 - `GET /sessions` adds `appVersion` (absent when unknown), `method`, and `platform: "web"`; a web session's `expiresAt` is its sliding expiry.
 - A refused refresh (401 `unauthorized`) now carries `reason`: `revoked` (another device signed it out), `replaced` (the cap), `expired`, `reused` (a replaced refresh token came back), `key_changed` (the account key changed on another session while this one was live; [account-key-change.md](./account-key-change.md)), or `unknown`. Phones open a new session for any of them.
+- Web sessions don't renew: they slide, so a browser in use never reopens one, and one unused for 180 days signs in again, which is a real sign-in.
 
 ### Step-up on the web
 
@@ -295,6 +296,7 @@ New [activity](./accounts-protocol.md#reading-activity-get-accountsv1activity) k
 | `account.key_changed` | The session that changed the account key ([account-key-change.md](./account-key-change.md)) | —              |
 
 - `session.opened` adds `method`: `attestation`, `dev`, `passkey`, `approval`, `recovery`, or `signup`. An `approval` one has `actor`: the phone's session.
+- `session.renewed` (a phone [renewed](./accounts-protocol.md#renewing-a-session) its session; `method` `attestation` or `dev`) has `session`, the new session, and `actor`, the one it replaced. Account Activity shows it as "Sign-in renewed on this device" (or the device's name), with a line saying it isn't a new sign-in. Entries from before renewals stay `session.opened` and read as before.
 - `session.replaced` also covers the web cap: a fourth web session ended the least recently active one.
 - Session platforms (`session.platform`, `actor.platform`, the access token's `platform` claim, and the device label's plaintext `platform`) add `web`. A web label is `{ "name": "Chrome on macOS", "platform": "web", "model": "" }`.
 
@@ -424,7 +426,7 @@ One utility asks for a fresh check before showing the recovery key, setting up o
   - **Paging:** a read follows `nextCursor` until a page reaches 5 seconds below the marker, for at most 5 pages (250 entries). One that stops there lists a single row, "250+ changes to your account" (as many as it read, every one newer than the marker; a later overflow replaces it), that opens Account Activity, and moves the marker only to what it read.
   - **A copied install:** the ids and the marker live in MMKV, which a device backup (iOS backup, Android Auto Backup) can carry to a new phone, while the session stays in the keystore. So the install keeps a random token in both MMKV and the keystore (`device-secrets`, this-device-only on both platforms). When the two disagree, the copy came from another phone: the app keeps only the session ids it remembered this launch and drops the notices' marker and rows, once (`onInstallMoved`; `checkInstall()` keeps answering `moved` for the rest of the launch, so every caller knows) (`installToken.ts`). A backup made before this version has no token, so its list carries over; its notices still reset, since that phone's first session opens as `new`.
   - **Rows:** one per kind, `session` (`session.opened`), `approval` (an `approval` `session.opened`; a `device.approved` only when the browser's sign-in, naming that phone as `actor`, isn't in the page within 10 minutes of it) and `passkey` (`passkey.added`). New entries join their kind's row while it's still in the tray, so a burst reads "3 new sign-ins" with the newest named, in Account Activity's words, and "Not you? Sign it out and change your account key" (or "Remove it", for a passkey; the web says to change the key on a phone, since the web can't): signing a device out isn't enough when it holds the account key. The row links to Signed-In Devices, or to Passkeys for `passkey`; it doesn't offer That Wasn't Me (the browser's own screen does). Tapping, dismissing, or Clear All takes it out; a later entry brings it back.
-  - **Known noise:** every phone's 90-day session renewal logs a `session.opened` with nothing tying it to the session it replaced, so it shows as a new sign-in. A ww-api renewal path will fix that.
+  - **Renewals:** `session.renewed` is never a notice, this device's or another's. A phone renews its session in the last 30 days of its 90 ([accounts-protocol.md](./accounts-protocol.md#renewing-a-session)), so its own reopen stays out of the tray. A phone whose renewal failed, or that ran an app version from before renewals, still reopens with `session.opened` at the end, and that shows as a new sign-in on the account's other devices. So does a phone nobody opened in its session's last month, since the renewal rides a refresh.
 
 ## Privacy
 

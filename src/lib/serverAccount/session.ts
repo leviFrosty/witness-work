@@ -42,9 +42,17 @@ import {
  * Callers use `request` (or `withSession` for transports `request()` doesn't
  * cover): it adds `Authorization`, refreshes ahead of expiry, refreshes once
  * and retries on a 401, and opens a new session (attesting again, without
- * asking the User) when the old one ended or reached its 90 days. A 426
- * `upgrade_required` calls `onUpgradeRequired`, and while Update Required shows
- * (`paused`) nothing goes out: every call fails as that 426 would.
+ * asking the User) when the old one ended or reached its 90 days.
+ *
+ * In a session's last 30 days (`SESSION_RENEW_WINDOW_MS`), the first refresh
+ * also renews it, after the call it was for: the same attested open, naming the
+ * session and carrying its fresh access token, so the server replaces it with a
+ * new 90-day session and logs `session.renewed`, not a new sign-in
+ * (docs/accounts-protocol.md, "Renewing a session"). One try per session a
+ * launch; when it fails, the session runs on to its end and the next one opens
+ * as before. A 426 `upgrade_required` calls `onUpgradeRequired`, and while
+ * Update Required shows (`paused`) nothing goes out: every call fails as that
+ * 426 would.
  *
  * Every refresh replaces the refresh token, and presenting a replaced one after
  * the server's grace minute ends the session as a reused token. So a new token
@@ -157,8 +165,9 @@ export class AccountSessionError extends HttpError {
  * Why the server refused a refresh (docs/passkeys-protocol.md, "Session
  * fields"): `revoked` (another device signed it out), `replaced` (a session
  * cap), `expired`, `reused` (a replaced refresh token came back), `key_changed`
- * (the account key changed on another device while it was live; ADR 0039), or
- * `unknown`. A phone opens a new session for any of them.
+ * (the account key changed on another device while it was live; ADR 0039),
+ * `renewed` (this device renewed it into a new session), or `unknown`. A phone
+ * opens a new session for any of them.
  */
 export type SessionEndReason =
   | 'revoked'
@@ -166,6 +175,7 @@ export type SessionEndReason =
   | 'expired'
   | 'reused'
   | 'key_changed'
+  | 'renewed'
   | 'unknown'
 
 const SESSION_END_REASONS: readonly SessionEndReason[] = [
@@ -174,6 +184,7 @@ const SESSION_END_REASONS: readonly SessionEndReason[] = [
   'expired',
   'reused',
   'key_changed',
+  'renewed',
 ]
 
 /**
@@ -493,6 +504,11 @@ export type SessionOpenReason =
   | 'unsaved'
   /** For a key received from another device, before it replaces this one. */
   | 'handoff'
+  /**
+   * In place of this device's live session, near its end: the same device
+   * staying signed in, not a sign-in.
+   */
+  | 'renewed'
 
 export type AccountSessionEvent = {
   op: 'session/open' | 'session/refresh' | 'session/close'
@@ -522,6 +538,11 @@ export type AccountSessionDeps = {
    * Devices can show it; anything else isn't sent.
    */
   appVersion?: () => string | null | undefined
+  /**
+   * How long before a session's end it's renewed; `SESSION_RENEW_WINDOW_MS`
+   * unless a development build moves it to see a renewal now.
+   */
+  renewWindowMs?: () => number
   fetchImpl?: typeof fetch
   /** Ww-api answered 426 `upgrade_required`. */
   onUpgradeRequired?: () => void
@@ -637,6 +658,12 @@ export const ACCESS_LIFETIME_MS = 15 * 60_000
 /** Open a new session this long before the 90 days are up. */
 export const SESSION_RENEW_MARGIN_MS = 10 * 60_000
 /**
+ * Renew a live session (`renewed`) once it has this long left: a month, so a
+ * phone opened even once in its last month never shows up as a new sign-in. The
+ * server doesn't enforce it.
+ */
+export const SESSION_RENEW_WINDOW_MS = 30 * 24 * 60 * 60_000
+/**
  * After a failed `session/open`, how long the same account key waits before
  * attesting again, unless the User asks (`retry`). Keeps a device that can't
  * attest from asking Apple or Google on every request.
@@ -735,6 +762,8 @@ type OpenCall = {
    * never creates one.
    */
   accountId?: string
+  /** A renewal: the live session the new one replaces, and its access token. */
+  renews?: { sessionId: string; accessToken: string }
 }
 
 export function createAccountSessions(deps: AccountSessionDeps) {
@@ -761,6 +790,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
   const retiredByServer = new Map<string, AccountSessionError>()
   /** Per account key, until when `session/open` is rate limited (device clock). */
   const openLimitedUntil = new Map<string, number>()
+  /** Sessions this launch tried to renew: one try each. */
+  const renewTried = new Set<string>()
   let lastFailure: {
     pub: string
     error: AccountSessionError
@@ -1036,6 +1067,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
                   device,
                   appVersion: appVersion(),
                   accountId: call.accountId,
+                  renews: call.renews,
                 },
                 {
                   ...clientOptions(attemptSignal),
@@ -1336,6 +1368,82 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     while (keyChange) await keyChange
   }
 
+  /** Whether a phone's session just refreshed is near enough its end to renew. */
+  const dueForRenewal = (session: Live) =>
+    !deps.web &&
+    !renewTried.has(session.sessionId) &&
+    session.sessionExpiresAt - deps.now() <=
+      (deps.renewWindowMs?.() ?? SESSION_RENEW_WINDOW_MS)
+
+  /**
+   * Renews `from` (just refreshed) once the flight that refreshed it is done:
+   * the caller that refreshed it isn't held up, and others wait only if they
+   * need a token meanwhile. On success the new session is stored and becomes
+   * this device's; on any failure `from` stays, to its end. A renewal the
+   * keystore won't save is closed, and `from` (which it ended) is refreshed
+   * next, which opens a session as an ended one does. Nothing is sent for a
+   * session closed, forgotten or replaced while this waits or attests.
+   */
+  function renewAfter(
+    accountKey: Uint8Array,
+    key: AccountSigningKey,
+    from: Live
+  ) {
+    renewTried.add(from.sessionId)
+    const pub = key.publicKey
+    const startedAt = generation
+    const unchanged = () => startedAt === generation
+    const run = async (): Promise<Live> => {
+      const current = live
+      if (!unchanged() || current?.sessionId !== from.sessionId)
+        throw new AccountSessionError('cancelled')
+      if (!accessUsable(current)) {
+        // Its token aged out first: the next refresh tries again.
+        renewTried.delete(current.sessionId)
+        return current
+      }
+      let opened: OpenedSession
+      try {
+        opened = await open(accountKey, key, 'renewed', {
+          current: unchanged,
+          accountId: current.accountId,
+          renews: {
+            sessionId: current.sessionId,
+            accessToken: current.accessToken!,
+          },
+        })
+      } catch {
+        if (!unchanged()) throw new AccountSessionError('cancelled')
+        return live ?? current
+      }
+      const next = toLive(pub, opened)
+      const saved = unchanged() ? await save(stored(next), unchanged) : null
+      if (saved !== 'saved' || !unchanged()) {
+        // Nothing keeps a session the keystore doesn't hold: end it rather
+        // than leave it live for 90 days under this device's name.
+        void closeTokens({ ...opened, accessUsable: true })
+        if (saved !== 'failed' || !unchanged())
+          throw new AccountSessionError('cancelled')
+        // The renewal ended `current` on the server. Its next use refreshes
+        // it, is refused, and opens a session as an ended one does.
+        live = { ...current, accessToken: null, accessExpiresAt: 0 }
+        return live
+      }
+      live = next
+      deps.onThisDeviceSession?.(next.sessionId)
+      return next
+    }
+    const promise = (flight?.promise ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(run)
+    flight = { pub, promise }
+    void promise
+      .catch(() => undefined)
+      .finally(() => {
+        if (flight?.promise === promise) flight = null
+      })
+  }
+
   /**
    * A usable session for this key: the current one, refreshed, or a new one.
    * One at a time; callers for the same key share it.
@@ -1401,6 +1509,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
             : (await refresh(current, unchanged)).next
           if (!unchanged()) throw new AccountSessionError('cancelled')
           live = next
+          if (dueForRenewal(next)) renewAfter(accountKey, key, next)
           return next
         } catch (error) {
           // Only an ended or expired session opens a new one; offline keeps

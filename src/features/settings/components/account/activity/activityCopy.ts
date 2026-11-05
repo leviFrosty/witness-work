@@ -177,6 +177,11 @@ export function activityTitle(
         default:
           return i18n.t('accountActivity_signedIn', { device })
       }
+    case 'session.renewed':
+      // This device or another staying signed in; not a sign-in.
+      return device
+        ? i18n.t('accountActivity_renewed', { device })
+        : i18n.t('accountActivity_renewedUnknown')
     case 'session.signed_out':
       return device
         ? i18n.t('accountActivity_signedOut', { device })
@@ -256,6 +261,8 @@ export function activityDetail(entry: ActivityEntry): string | null {
         return i18n.t('accountActivity_replacedWebDetail')
       return platform ? i18n.t('accountActivity_replacedDetail') : null
     }
+    case 'session.renewed':
+      return i18n.t('accountActivity_renewedDetail')
     case 'account.suspended':
       return i18n.t('accountActivity_suspendedDetail')
     case 'account.key_changed':

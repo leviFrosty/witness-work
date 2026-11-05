@@ -58,14 +58,34 @@ The answer is `challenge` and `expiresAt`. An install whose App Attest key isn't
 - Opening an eleventh session for an account ends its oldest.
 - Counts against the Buddies register edge limit and 20 per account a rolling day.
 
+### Renewing a session
+
+A phone renews its live session before the 90 days are up, so staying signed in doesn't show up as a new sign-in. It's the open above (the account key's envelope and a fresh attestation, the same proof) plus:
+
+- `renews` in the signed payload: the live session's id.
+- `Authorization: Bearer` with that session's access token.
+
+A stolen access token alone can't renew a session: it takes the account key and an attestation, as an open does.
+
+- The new session gets a full 90 days. The old one ends, and a refresh of it is 401 with `reason: "renewed"`.
+- The activity log gets one `session.renewed` (`session` the new session, `actor` the old one, `method` as for an open) and no `session.opened`.
+- The new session keeps the old one's account and platform, and its device label, app version and capabilities unless the request sends new ones. Phones never step up, so there's no step-up to carry over.
+- The old session ends before the cap counts, so a renewal never ends another device's session.
+- 401 `unauthorized` when the token isn't that session's, or the session has ended (signed out, revoked, replaced, renewed, or expired), is a browser's, is another account's than `accountPub`'s, or is another platform's than the attestation's. Then nothing changes: the app keeps its session to its end and opens a new one as usual. A refused attestation ends nothing either.
+- Of two renewals of one session, only the first opens. Renewals count toward the 20 opens a day.
+- **A renewal the device doesn't keep.** If the answer is lost, or the app is stopped before it saves the new session, the device still holds the old one. Its next refresh is refused with `renewed`, and the device opens a new session, which logs `session.opened` (a new sign-in elsewhere). That refused refresh also signs out the session the renewal opened (`session.signed_out`) while it has never been refreshed, so it isn't left live. A renewal the keystore won't save is closed by the app itself. If one is still left over (say the device never comes back), Signed-In Devices shows a second entry with the same device name that never becomes active, and the User can sign it out there. It ends by itself after 90 days.
+- **Signing out an old id.** A device list read before a renewal names the old session. `POST /sessions/revoke` with that id follows `session.renewed` to the live session and signs it out (or the caller, when it's the caller's own), so the device is signed out after all.
+
+Browsers don't renew: a web session slides (180 days from its last refresh), so it never reopens while it's used.
+
 ### Refreshing: `POST /accounts/v1/sessions/refresh`
 
 Plain JSON, no envelope: `{ refreshToken }` → `{ ok, accessToken, accessExpiresAt, refreshToken, sessionExpiresAt }`.
 
 - Every refresh replaces the refresh token. Sending the one just replaced within 60 seconds (a lost response) gets a new pair; sending any older one ends the session.
-- An ended or expired session is 401 `unauthorized`, and the app opens a new one, attesting again, without asking the User. The refusal's `reason` says why: `revoked`, `replaced`, `expired`, `reused`, `key_changed` (with `changedAt`), or `unknown`.
+- An ended or expired session is 401 `unauthorized`, and the app opens a new one, attesting again, without asking the User. The refusal's `reason` says why: `revoked`, `replaced`, `expired`, `reused`, `key_changed` (with `changedAt`), `renewed` (this device [renewed](#renewing-a-session) it), or `unknown`.
 - `key_changed` means two things, by where it comes. On a call, the access token is from before the session's own key change, so the app refreshes and sends it again. On a refresh, the session is over because the account key changed on another device while it was live ([account-key-change.md](./account-key-change.md)). A session signed out before the change stays `revoked`, and one already expired, `expired`.
-- A session lasts 90 days from opening. Refreshing doesn't extend it.
+- A session lasts 90 days from opening. Refreshing doesn't extend it; [renewing](#renewing-a-session) replaces it with a new one.
 - Counts against the Buddies read edge limit.
 
 ### Capabilities
@@ -88,6 +108,7 @@ A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`
 
 - `src/lib/serverAccount/session.ts` holds one session per device, for the account key it's using. The access token lives in memory only. The refresh token, with the session's id, account and expiry, lives in the platform keystore and is never synced or backed up (`modules/device-secrets`): a Keychain item with `kSecAttrSynchronizable` off and `AfterFirstUnlockThisDeviceOnly` on iOS, and a file sealed with an Android Keystore AES-GCM key in `noBackupFilesDir` on Android. A binary without the module keeps it in memory for the launch.
 - It refreshes a minute before the access token expires, one refresh at a time for every caller. A 401 `unauthorized` on a request refreshes once and sends it once more. A refused refresh, or a session within 10 minutes of its 90 days, opens a new session without asking the User. A dropped connection keeps the refresh token.
+- In a session's last 30 days, the first refresh also [renews](#renewing-a-session) it, once the call it refreshed for has its token, so no request is added at launch. It tries once per session per launch. When the renewal fails, the session runs on to its end and the next one opens as before. Settings → Account → Devices and Activity count the renewed session as this device's, and the new-sign-in notices keep their place (the open's reason is `renewed`, not `new`). The developer harness's `account.renewSession()` renews at once.
 - A refreshed token is written to the keystore before anything uses it, since presenting the replaced one after the server's grace minute would end the session. When the keystore refuses the write twice, the app uses the new token for the rest of the launch and marks the one still stored as stale: its hash goes to device-local MMKV (never the token). The next launch deletes a stale token and opens a new session instead of presenting it. A delete the keystore refuses (closing, forgetting) is marked the same way and retried at the next launch. Both failures are reported to error tracking.
 - After a failed attestation it waits before attesting again for the same account key: 30 minutes when the device or app can't be verified, 1 minute when verifying failed for now (`integrity_unavailable`, Apple or Google unreachable), 2 minutes otherwise. Try Again in Settings → Account skips the wait.
 - A rate-limited open (429) waits out its `Retry-After` (or body `retryAfter`) for that account key, 1 minute when there's none and at most a day: until then every call fails at once with `rateLimited`, attesting nothing. Try Again doesn't skip that wait, since the server would only refuse again.
@@ -148,19 +169,20 @@ Revoking ends the session, not the device's account key: a device that still has
 
 Query: `limit` (1–100, default 50) and `before` (the previous page's `nextCursor`). → `{ ok, activity: [Entry], nextCursor }`, newest first; `nextCursor` is `null` on the last page. A malformed `limit` or `before` is 400 `bad_request`.
 
-| Field       | What                                                                                                                                                 |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`        | Opaque, unique within the account; also a cursor                                                                                                     |
-| `kind`      | Below                                                                                                                                                |
-| `createdAt` | Epoch ms                                                                                                                                             |
-| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`                                                                   |
-| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it; for an `approval` `session.opened`, the phone that approved it (same shape) |
-| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`                                                                        |
+| Field       | What                                                                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`        | Opaque, unique within the account; also a cursor                                                                                                                                                     |
+| `kind`      | Below                                                                                                                                                                                                |
+| `createdAt` | Epoch ms                                                                                                                                                                                             |
+| `session`?  | The session the entry is about, or that did it: `{ sessionId, platform, device? }`                                                                                                                   |
+| `actor`?    | For `session.revoked` and `session.replaced`, the session that ended it; for `session.renewed`, the session it replaced; for an `approval` `session.opened`, the phone that approved it (same shape) |
+| `slotId`?   | `backup.deleted` (absent when every slot was deleted) and `backup.downloaded`                                                                                                                        |
 
 | `kind`                                                                       | `session`                                                                                     | `actor`             |
 | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------- |
 | `account.created`                                                            | —                                                                                             | —                   |
 | `session.opened`                                                             | The new session                                                                               | —                   |
+| `session.renewed`                                                            | The new session; a phone renewed its session, not a sign-in                                   | The old session     |
 | `session.signed_out`                                                         | The session that ended itself                                                                 | —                   |
 | `session.revoked`                                                            | The session signed out                                                                        | The one that did it |
 | `session.replaced`                                                           | The oldest session, ended by the cap                                                          | The new session     |

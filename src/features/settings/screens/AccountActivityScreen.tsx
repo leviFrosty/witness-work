@@ -13,6 +13,7 @@ import {
   Fingerprint as FingerprintIcon,
   KeyRound as KeyRoundIcon,
   QrCode as QrCodeIcon,
+  RefreshCw as RefreshCwIcon,
   Send as SendIcon,
   ShieldAlert as ShieldAlertIcon,
   ShieldCheck as ShieldCheckIcon,
@@ -58,6 +59,7 @@ import { logger } from '@/lib/logger'
 const ICONS: Record<ActivityKind, AppIcon> = {
   'account.created': UserPlusIcon,
   'session.opened': LogInIcon,
+  'session.renewed': RefreshCwIcon,
   'session.signed_out': LogOutIcon,
   'session.revoked': LogOutIcon,
   'session.replaced': LogOutIcon,

@@ -212,6 +212,28 @@ describe('browsers', () => {
     )
   })
 
+  it('says a device renewed its sign-in, not that it signed in', () => {
+    const renewed = (sessionId: string, device: string | null) =>
+      entry({
+        kind: 'session.renewed',
+        method: 'attestation',
+        session: { sessionId, platform: 'ios', device },
+        actor: { sessionId: 'before', platform: 'ios', device },
+      })
+    expect(activityTitle(renewed('me', 'iphone'), context)).toBe(
+      'Sign-in renewed on this device'
+    )
+    expect(activityTitle(renewed('x', 'pixel'), context)).toBe(
+      'Sign-in renewed on Pixel 9'
+    )
+    expect(activityTitle({ ...renewed('x', null), session: null })).toBe(
+      'A device renewed its sign-in'
+    )
+    expect(activityDetail(renewed('me', 'iphone'))).toBe(
+      'Devices renew their sign-in about every 3 months to stay signed in. It isn’t a new sign-in.'
+    )
+  })
+
   it('reads a method-less or phone sign-in as before', () => {
     expect(opened(null)).toBe('Signed in on Chrome on macOS')
     expect(opened('attestation', iphone)).toBe('Signed in on iPhone 17')

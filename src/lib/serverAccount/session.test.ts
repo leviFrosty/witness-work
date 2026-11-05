@@ -18,6 +18,7 @@ import {
   KEY_CHANGE_CLOSE_WAIT_MS,
   OPEN_RATE_LIMIT_DEFAULT_MS,
   OPEN_RETRY_AFTER_MS,
+  SESSION_RENEW_WINDOW_MS,
   type SessionStore,
   sessionAccountForKey,
   STORE_ATTEMPTS,
@@ -54,6 +55,8 @@ type Session = {
   accessTokens: Set<string>
   expiresAt: number
   ended: boolean
+  /** Why it ended, when the refusal says (`renewed`). */
+  endedReason?: string
 }
 
 /** The worker's routes, by the op names tests use. */
@@ -121,6 +124,18 @@ function fakeWorker(clock: { now: number }) {
           fromB64u(payload.accountPub)
         )
         if (!signed) return failure(401, 'bad_signature')
+        // A renewal: its bearer token must be the live session it names,
+        // the signing key's account's.
+        const renewed =
+          payload.renews === undefined ? undefined : sessionFor(headers)
+        if (
+          payload.renews !== undefined &&
+          (!renewed ||
+            renewed.sessionId !== payload.renews ||
+            clock.now >= renewed.expiresAt ||
+            accounts.get(payload.accountPub) !== renewed.accountId)
+        )
+          return failure(401, 'unauthorized')
         if (!payload.attestation && !headers['x-ww-dev-bypass'])
           return failure(403, 'attestation_failed', { reason: 'missing' })
         let accountId = accounts.get(payload.accountPub)
@@ -141,6 +156,10 @@ function fakeWorker(clock: { now: number }) {
           ended: false,
         }
         sessions.push(session)
+        if (renewed) {
+          renewed.ended = true
+          renewed.endedReason = 'renewed'
+        }
         return json(201, {
           ok: true,
           accountId,
@@ -154,7 +173,9 @@ function fakeWorker(clock: { now: number }) {
           (entry) => entry.refreshToken === body?.refreshToken
         )
         if (!session || session.ended || clock.now >= session.expiresAt)
-          return failure(401, 'unauthorized')
+          return failure(401, 'unauthorized', {
+            ...(session?.endedReason && { reason: session.endedReason }),
+          })
         session.previousRefresh = session.refreshToken
         session.refreshToken = `rt-${++issued}`
         return json(200, { ok: true, ...tokens(session) })
@@ -1503,5 +1524,224 @@ describe('account sessions for a call that must not run twice', () => {
       sessions.withSession(run, { retryUnauthorized: false })
     ).rejects.toMatchObject({ status: 401 })
     expect(run).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('renewing a session before it ends', () => {
+  /** Opens a session, then moves to `daysLeft` before its 90 days are up. */
+  async function nearEnd(daysLeft: number, options = {}) {
+    const harness = setup(options)
+    await harness.info()
+    harness.clock.now += 90 * DAY - daysLeft * DAY
+    return harness
+  }
+  const renewalOpens = (worker: ReturnType<typeof fakeWorker>) =>
+    worker
+      .opsCalled('session/open')
+      .filter((_, index) => openPayload(worker, index).renews !== undefined)
+
+  it('renews in the last 30 days after a refresh, without holding up the call', async () => {
+    const onThisDeviceSession = vi.fn()
+    const { worker, store, attestation, info, events, sessions } =
+      await nearEnd(6, { deps: { onThisDeviceSession } })
+
+    const response = await info()
+
+    // The call ran on the refreshed old session; the renewal follows it.
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    expect(worker.opsCalled('account/info')[1].headers.authorization).toBe(
+      'Bearer at-4'
+    )
+    expect(response.data.accountId).toMatch(/^acct/)
+    await vi.waitFor(() => expect(sessions.snapshot()?.sessionId).toBe('sid-2'))
+
+    // The open's own proof, plus the session it renews and its fresh token.
+    expect(attestation.assert).toHaveBeenCalledTimes(2)
+    const [renewal] = renewalOpens(worker)
+    expect(renewal.headers.authorization).toBe('Bearer at-4')
+    expect(openPayload(worker, 1)).toMatchObject({
+      accountPub: PUB_A,
+      renews: 'sid-1',
+      accountId: worker.sessions[0].accountId,
+      attestation: { purpose: 'account-session' },
+    })
+    expect(worker.sessions[0]).toMatchObject({
+      ended: true,
+      endedReason: 'renewed',
+    })
+    expect(JSON.parse(store.value!)).toMatchObject({
+      sessionId: 'sid-2',
+      refreshToken: worker.sessions[1].refreshToken,
+    })
+    expect(onThisDeviceSession).toHaveBeenLastCalledWith('sid-2')
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      outcome: 'ok',
+      reason: 'renewed',
+    })
+
+    // The next call uses the new session, with no refresh and no other open.
+    await info()
+    expect(worker.opsCalled('account/info').at(-1)?.headers.authorization).toBe(
+      `Bearer ${[...worker.sessions[1].accessTokens][0]}`
+    )
+    expect(worker.opsCalled('session/open')).toHaveLength(2)
+  })
+
+  it('leaves a session with more than 30 days alone', async () => {
+    const { worker, info, clock } = await nearEnd(31)
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(worker.opsCalled('session/refresh')).toHaveLength(2)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(SESSION_RENEW_WINDOW_MS).toBe(30 * DAY)
+  })
+
+  it('asks nothing extra at launch: a stored session renews on its first refresh, once', async () => {
+    const first = setup()
+    await first.info()
+    first.clock.now += 85 * DAY
+    const { worker, info, clock, sessions } = setup({
+      clock: first.clock,
+      worker: first.worker,
+      store: nextLaunchStore(first.store),
+    })
+    await sessions.ready()
+    expect(first.worker.calls.length).toBe(2)
+
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+    for (let i = 0; i < 3; i++) {
+      clock.now += ACCESS_LIFETIME_MS
+      await info()
+    }
+    expect(renewalOpens(worker)).toHaveLength(1)
+  })
+
+  it('keeps the session when the renewal fails, tries once a launch, and opens as usual at the end', async () => {
+    const { worker, store, info, clock, events, sessions } = await nearEnd(6)
+    worker.override.set('session/open', (call) =>
+      call === 1 ? failure(401, 'unauthorized') : null
+    )
+
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+    await sessions.ensure()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-1')
+    expect(JSON.parse(store.value!).sessionId).toBe('sid-1')
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      reason: 'renewed',
+      outcome: 'server',
+    })
+
+    // No second try this launch, however often it refreshes.
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(renewalOpens(worker)).toHaveLength(1)
+
+    // At the end, an ordinary open.
+    clock.now += 6 * DAY
+    await info()
+    expect(worker.opsCalled('session/open')).toHaveLength(3)
+    expect(openPayload(worker, 2).renews).toBeUndefined()
+    expect(events.at(-1)).toMatchObject({ reason: 'expired', outcome: 'ok' })
+  })
+
+  it('keeps the session when this device can’t attest', async () => {
+    let failing = false
+    const attestation = fakeAttestation({
+      fail: () => (failing ? new AttestationError('serverUnavailable') : null),
+    })
+    const { worker, info, sessions } = await nearEnd(6, { attestation })
+    failing = true
+
+    await info()
+    await vi.waitFor(() => expect(attestation.assert).toHaveBeenCalledTimes(2))
+    await sessions.ensure()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-1')
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    // A later call isn't held off as a failed open would be.
+    await expect(info()).resolves.toBeTruthy()
+  })
+
+  it('sends no renewal for a session closed while attesting', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let calls = 0
+    const base = fakeAttestation()
+    const attestation = {
+      ...base,
+      assert: vi.fn(async <T>(request: AttestedRequest<T>) => {
+        if (++calls === 2) await gate
+        return base.assert(request)
+      }),
+    } as unknown as ReturnType<typeof fakeAttestation>
+    const { worker, info, sessions, store } = await nearEnd(6, { attestation })
+
+    await info()
+    await vi.waitFor(() => expect(calls).toBe(2))
+    await sessions.close()
+    release()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(renewalOpens(worker)).toHaveLength(0)
+    expect(store.value).toBeNull()
+  })
+
+  it('renews earlier with a longer window (the development override)', async () => {
+    const { worker, info } = await nearEnd(45, {
+      deps: { renewWindowMs: () => 60 * DAY },
+    })
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+  })
+
+  it('closes a renewal it couldn’t save, and opens as usual instead of keeping it', async () => {
+    const onThisDeviceSession = vi.fn()
+    const { worker, store, info, sessions, events } = await nearEnd(6, {
+      deps: { onThisDeviceSession },
+    })
+    onThisDeviceSession.mockClear()
+    // The refresh saves; both writes of the renewal's session fail.
+    worker.override.set('session/open', (call) => {
+      if (call === 1) store.failWrites = STORE_ATTEMPTS
+      return null
+    })
+
+    await info()
+    await vi.waitFor(() =>
+      expect(worker.opsCalled('session/close')).toHaveLength(1)
+    )
+    // The unsaved successor is ended on the server, never this device's.
+    expect(worker.sessions[1].ended).toBe(true)
+    expect(worker.opsCalled('session/close')[0].headers.authorization).toBe(
+      `Bearer ${[...worker.sessions[1].accessTokens][0]}`
+    )
+    expect(onThisDeviceSession).not.toHaveBeenCalledWith('sid-2')
+
+    // The next call refreshes the old session, finds it renewed, and opens.
+    await info()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-3')
+    expect(openPayload(worker, 2).renews).toBeUndefined()
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      outcome: 'ok',
+      reason: 'ended',
+    })
+    expect(worker.sessions.filter((session) => !session.ended)).toHaveLength(1)
+  })
+
+  it('reads a refresh refused as renewed', () => {
+    const error = toAccountSessionError(
+      new HttpError('client', 401, 'unauthorized', null, undefined, {
+        error: 'unauthorized',
+        reason: 'renewed',
+      }),
+      { refresh: true }
+    )
+    expect(error.ended).toBe('renewed')
+    expect(sessionEndWipes('renewed')).toBe(false)
   })
 })

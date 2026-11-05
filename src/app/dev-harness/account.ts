@@ -31,7 +31,11 @@ import {
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
 import { toB64u, utf8 } from '@/lib/bytes'
 import apis from '@/constants/apis'
-import { accountSessions, cachedServerAccount } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  cachedServerAccount,
+  setDevSessionRenewWindow,
+} from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 import {
   deriveAccountSigningKey,
@@ -114,6 +118,37 @@ export const accountHarness = {
     )
     return 'started'
   },
+  /**
+   * Renews this device's session now, as the app does in a session's last 7
+   * days: moves the window past the 90 days for one refresh, refreshes, and
+   * waits for the renewal. `last` gets both session ids, or the session kept
+   * when the renewal didn't happen.
+   */
+  renewSession: () => {
+    last = null
+    void renewSessionNow().then(
+      (value) => (last = value),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+}
+
+async function renewSessionNow() {
+  await accountSessions.ensure()
+  const from = accountSessions.snapshot()?.sessionId ?? null
+  setDevSessionRenewWindow(91 * 24 * 60 * 60_000)
+  try {
+    await accountSessions.withSession(async () => null, { renew: true })
+    for (let waited = 0; waited < 30_000; waited += 250) {
+      const to = accountSessions.snapshot()?.sessionId ?? null
+      if (to !== from) return { renewed: true, from, to }
+      await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+    return { renewed: false, from, to: from }
+  } finally {
+    setDevSessionRenewWindow(null)
+  }
 }
 
 async function changeKeyElsewhere() {

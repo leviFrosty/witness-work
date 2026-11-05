@@ -265,6 +265,14 @@ describe('useSignInNoticeNotifications', () => {
     expect(latest().map((row) => row.title)).toEqual(['New sign-in'])
   })
 
+  it('keeps its marker when this device renewed its session', async () => {
+    await render()
+    runtime.entries.push(opened(T0 + 1, { device: 'Firefox on Windows' }))
+    vi.setSystemTime(T0 + 15 * 60_000)
+    await sessionOpened('renewed')
+    expect(latest().map((row) => row.title)).toEqual(['New sign-in'])
+  })
+
   it('drops what a device backup brought from another phone', async () => {
     runtime.install = 'moved'
     useSignInNotices.setState({

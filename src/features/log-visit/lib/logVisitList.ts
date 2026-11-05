@@ -28,7 +28,8 @@ export type LogVisitListItem =
       searchMatches?: readonly FuseResultMatch[]
     }
   | { type: 'noMatches'; key: string; query: string }
-  | { type: 'addNew'; key: string; name: string }
+  /** Adds a new Contact: blank from the browse list, or named from a search. */
+  | { type: 'addNew'; key: string; name?: string }
 
 /** Contacts A–Z by name, ignoring case and accents. */
 export const sortContactsByName = (contacts: Contact[]): Contact[] =>
@@ -37,9 +38,11 @@ export const sortContactsByName = (contacts: Contact[]): Contact[] =>
   )
 
 /**
- * The picker without a search: each suggested section under its header, then
- * everyone A–Z under All Contacts (suggested people again too, so the A–Z list
- * is predictable). Without suggestions the A–Z list stands alone.
+ * The picker without a search: a New Contact row first, each suggested section
+ * under its header, then everyone A–Z under All Contacts (suggested people
+ * again too, so the A–Z list is predictable). Without suggestions the A–Z list
+ * stands alone. Without Contacts there are no items; the screen shows its empty
+ * state instead.
  */
 export const buildBrowseItems = ({
   suggested,
@@ -50,7 +53,8 @@ export const buildBrowseItems = ({
   contacts: Contact[]
   currentTime?: Date
 }): LogVisitListItem[] => {
-  const items: LogVisitListItem[] = []
+  if (contacts.length === 0) return []
+  const items: LogVisitListItem[] = [{ type: 'addNew', key: 'new-contact' }]
   for (const section of suggested.sections) {
     items.push({
       type: 'header',
@@ -73,7 +77,7 @@ export const buildBrowseItems = ({
       })
     }
   }
-  if (items.length > 0 && contacts.length > 0) {
+  if (suggested.sections.length > 0) {
     items.push({
       type: 'header',
       key: 'header-all',

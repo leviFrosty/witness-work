@@ -139,19 +139,19 @@ const ContactsSearchInput = ({
  * switch at the top of the list so it updates as the user types — search is the
  * dominant action there, and round-tripping through a sheet would hide the very
  * results being searched. Sort and filter open the modal
- * `ContactsSortAndFilterScreen` from the Filters chip that starts the chip row
- * (it counts the filters set there) or from the header's "…" menu, which always
- * offers it. The header keeps two controls, that menu and Add Contact, so the
- * title keeps its size. Select mode (batch actions on the rows shown) starts
- * from the "…" menu, as in Notes and Files, or from a row's long-press
- * "Select". Filters and sort are shared: the Map pins the contacts the List
- * shows (it keeps its own search), and its header carries the same Saved View
- * and last-visit chips. On the Map the header floats translucent over it so the
- * map runs edge to edge, and compacts (and the tab bar slides away) once the
- * user starts exploring; swiping down on the header, tapping the title, or
- * bringing the map's cards back restores both. On the List, scrolling down
- * tucks the header, chips and tab bar away and leaves search; scrolling up
- * brings them back.
+ * `ContactsSortAndFilterScreen` from the Sort & Filter chip that starts the
+ * chip row (it counts the filters set there), its one entry point. The header's
+ * "…" menu holds only actions the screen doesn't already show, so it's hidden
+ * when it has none; with Add Contact that's at most two controls, so the title
+ * keeps its size. Select mode (batch actions on the rows shown) starts from the
+ * "…" menu, as in Notes and Files, or from a row's long-press "Select". Filters
+ * and sort are shared: the Map pins the contacts the List shows (it keeps its
+ * own search), and its header carries the same Saved View and last-visit chips.
+ * On the Map the header floats translucent over it so the map runs edge to
+ * edge, and compacts (and the tab bar slides away) once the user starts
+ * exploring; swiping down on the header, tapping the title, or bringing the
+ * map's cards back restores both. On the List, scrolling down tucks the header,
+ * chips and tab bar away and leaves search; scrolling up brings them back.
  */
 
 const ContactsScreen = ({
@@ -406,12 +406,6 @@ const ContactsScreen = ({
 
   const moreActions: ContextMenuEntries = [
     [
-      {
-        id: 'sort_and_filter',
-        title: i18n.t('contacts_sortAndFilter_title'),
-        systemImage: 'line.3.horizontal.decrease.circle',
-        onPress: () => navigation.navigate('Contacts Sort And Filter'),
-      },
       !showsMap &&
         listContacts.length > 0 && {
           id: 'select',
@@ -436,6 +430,7 @@ const ContactsScreen = ({
     ],
   ]
 
+  const hasMoreActions = moreActions.flat().some(Boolean)
   const headerActions = selection.selecting ? (
     <>
       <SelectionTextButton
@@ -450,13 +445,14 @@ const ContactsScreen = ({
     </>
   ) : (
     <>
-      {/* Never empty: Sort & Filter is always in it. */}
-      <PullDownMenu
-        accessibilityLabel={i18n.t('moreActions')}
-        triggerColor={theme.colors.accent}
-        triggerSize={22}
-        actions={moreActions}
-      />
+      {hasMoreActions && (
+        <PullDownMenu
+          accessibilityLabel={i18n.t('moreActions')}
+          triggerColor={theme.colors.accent}
+          triggerSize={22}
+          actions={moreActions}
+        />
+      )}
       {/* Beside the open contact's own "Add Visit", this one needs its name. */}
       <PointerTooltip label={i18n.t('addContact')} effect='none'>
         <IconButton

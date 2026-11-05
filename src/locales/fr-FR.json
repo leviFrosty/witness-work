@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Ce mois-ci",
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "Tous",
-  "contacts_filtersChip": "Filtres",
   "contacts_searchPlaceholder": {
     "one": "Rechercher parmi {{count}} contact",
     "other": "Rechercher parmi {{count}} contacts"

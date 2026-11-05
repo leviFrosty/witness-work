@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "今月",
   "contacts_pinStaleness_month": "古い",
   "contacts_stalenessChip_all": "すべて",
-  "contacts_filtersChip": "フィルター",
   "contacts_searchPlaceholder": {
     "one": "連絡先1件を検索",
     "other": "連絡先{{count}}件を検索"

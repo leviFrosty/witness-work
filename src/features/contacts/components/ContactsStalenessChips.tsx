@@ -43,14 +43,14 @@ export type ContactsStalenessChipsProps = {
 }
 
 /**
- * Swipeable row of quick filters by time since the last visit: Filters, which
- * opens Sort & Filter and counts the filters set there, then All and each
- * staleness bucket with its count, most stale first until the User drags them
- * into their own order. A chip swaps any `pinStaleness` filter for its own and
- * leaves other filters alone, so the Sort & Filter sheet still shows (and can
- * clear) what a chip set. With a Saved View showing, the chips edit that view's
- * filters. On the list, the trailing info button explains the colors and links
- * to their settings.
+ * Swipeable row of quick filters by time since the last visit: Sort & Filter,
+ * which opens that screen (its only entry point) and counts the filters set
+ * there, then All and each staleness bucket with its count, most stale first
+ * until the User drags them into their own order. A chip swaps any
+ * `pinStaleness` filter for its own and leaves other filters alone, so the Sort
+ * & Filter sheet still shows (and can clear) what a chip set. With a Saved View
+ * showing, the chips edit that view's filters. On the list, the trailing info
+ * button explains the colors and links to their settings.
  */
 const ContactsStalenessChips = ({
   contacts,
@@ -130,7 +130,7 @@ const ContactsStalenessChips = ({
         <>
           {/* Counts only what the row can't show itself. */}
           <StalenessChip
-            label={i18n.t('contacts_filtersChip')}
+            label={i18n.t('contacts_sortAndFilter_title')}
             icon={SlidersHorizontalIcon}
             count={otherFilters.length > 0 ? otherFilters.length : undefined}
             active={otherFilters.length > 0}

@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Deze maand",
   "contacts_pinStaleness_month": "Oud",
   "contacts_stalenessChip_all": "Alle",
-  "contacts_filtersChip": "Filters",
   "contacts_searchPlaceholder": {
     "one": "Zoek in 1 contact",
     "other": "Zoek in {{count}} contacten"

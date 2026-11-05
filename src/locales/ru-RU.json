@@ -2743,7 +2743,6 @@
   "contacts_pinStaleness_week": "В этом месяце",
   "contacts_pinStaleness_month": "Несвежие",
   "contacts_stalenessChip_all": "Все",
-  "contacts_filtersChip": "Фильтры",
   "contacts_searchPlaceholder": {
     "one": "Поиск среди {{count}} контакта",
     "few": "Поиск среди {{count}} контактов",

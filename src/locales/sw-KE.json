@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Mwezi huu",
   "contacts_pinStaleness_month": "Imepitwa",
   "contacts_stalenessChip_all": "Zote",
-  "contacts_filtersChip": "Vichujio",
   "contacts_searchPlaceholder": {
     "one": "Tafuta anwani 1",
     "other": "Tafuta anwani {{count}}"

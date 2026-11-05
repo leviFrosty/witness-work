@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "이번 달",
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "전체",
-  "contacts_filtersChip": "필터",
   "contacts_searchPlaceholder": {
     "one": "연락처 1개 검색",
     "other": "연락처 {{count}}개 검색"

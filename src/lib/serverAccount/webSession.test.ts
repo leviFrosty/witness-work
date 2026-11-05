@@ -67,8 +67,13 @@ type Session = {
   /** With `ended: 'key_changed'`: when. */
   changedAt?: number
   nonce: string
-  /** Refresh tokens it replaced: presenting one ends it as reused. */
+  /**
+   * Refresh tokens it replaced: presenting one ends it as reused, except the
+   * last one within a minute of its rotation.
+   */
   replaced: Set<string>
+  /** The last token it replaced, and when. */
+  previous?: { token: string; at: number }
 }
 
 /**
@@ -94,6 +99,11 @@ function fakeWorker(clock: { now: number }, events: string[]) {
   const sessions: Session[] = []
   const calls: { op: string; body: Record<string, unknown> | null }[] = []
   let issued = 0
+  /**
+   * Runs before the server answers a call of an op (its index among that op's
+   * calls), and the answer waits for it.
+   */
+  const before = new Map<string, (call: number) => Promise<void> | void>()
   /** Drops the answer to the next calls of an op, after the server ran it. */
   const lose = new Map<string, number>()
   /** Ops that never answer (offline). */
@@ -179,16 +189,26 @@ function fakeWorker(clock: { now: number }, events: string[]) {
         })
       }
       case 'POST sessions/refresh': {
+        const token = String(body.refreshToken)
         const session = sessions.find(
-          (entry) => entry.refreshToken === body.refreshToken
+          (entry) => entry.refreshToken === token || entry.replaced.has(token)
         )
-        const reused = sessions.find((entry) =>
-          entry.replaced.has(String(body.refreshToken))
-        )
-        if (reused) reused.ended = 'reused'
-        if (!session) return unauthorized('reused')
+        if (!session) return unauthorized('unknown')
+        // An ended session says why, whichever of its tokens comes back.
         if (session.ended) return unauthorized(session.ended, session.changedAt)
+        if (clock.now >= session.expiresAt) return unauthorized('expired')
+        if (session.refreshToken !== token) {
+          // The token just replaced, within its minute: the same new one.
+          if (
+            session.previous?.token === token &&
+            clock.now - session.previous.at <= 60_000
+          )
+            return json(200, { ok: true, ...tokens(session) })
+          session.ended = 'reused'
+          return unauthorized('reused')
+        }
         session.replaced.add(session.refreshToken)
+        session.previous = { token: session.refreshToken, at: clock.now }
         session.refreshToken = `rt-${++issued}`
         // Sliding: 180 days from every refresh.
         session.expiresAt = clock.now + 180 * DAY
@@ -215,6 +235,7 @@ function fakeWorker(clock: { now: number }, events: string[]) {
     calls.push({ op, body })
     events.push(op)
     if (hang.has(op)) return new Promise<Response>(() => {})
+    await before.get(op)?.(called(op).length - 1)
     const response = answer(op, init, body)
     const lost = lose.get(op) ?? 0
     if (lost > 0) {
@@ -239,7 +260,16 @@ function fakeWorker(clock: { now: number }, events: string[]) {
         session.changedAt = changedAt
       }
   }
-  return { fetchImpl, sessions, calls, called, lose, hang, changeKeyElsewhere }
+  return {
+    fetchImpl,
+    sessions,
+    calls,
+    called,
+    lose,
+    hang,
+    before,
+    changeKeyElsewhere,
+  }
 }
 
 /** Web Locks: one holder at a time, across the page's tabs. */
@@ -671,8 +701,9 @@ describe('web sessions', () => {
     await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
     disk.stores.set('contacts', 'A')
     clock.now += ACCESS_LIFETIME_MS
-    // The refresh reaches ww-api, but the tab closes before keeping the answer.
-    worker.lose.set('POST sessions/refresh', 1)
+    // The refresh reaches ww-api, and so does its retry, but the tab closes
+    // before keeping either answer.
+    worker.lose.set('POST sessions/refresh', 2)
     await one.info().catch(() => undefined)
 
     // A minute and more later, a new page presents the token it still has.
@@ -683,9 +714,9 @@ describe('web sessions', () => {
     await settle()
 
     const refreshes = worker.called('POST sessions/refresh')
-    expect(refreshes).toHaveLength(2)
-    expect(refreshes[1].body?.refreshToken).toBe(
-      refreshes[0].body?.refreshToken
+    expect(refreshes).toHaveLength(3)
+    expect(new Set(refreshes.map((call) => call.body?.refreshToken)).size).toBe(
+      1
     )
     expect(worker.sessions[0].ended).toBe('reused')
     expect(error).toMatchObject({ failure: 'signedOut', ended: 'expired' })
@@ -698,6 +729,78 @@ describe('web sessions', () => {
       keptData: true,
     })
     expect(disk.kv.has('refresh-in-flight')).toBe(false)
+  })
+
+  it('asks again at once when a refresh’s answer is lost, and stays signed in', async () => {
+    const { worker, clock, tab } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    clock.now += ACCESS_LIFETIME_MS
+    worker.lose.set('POST sessions/refresh', 1)
+
+    await expect(one.info()).resolves.toBeTruthy()
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(one.info()).resolves.toBeTruthy()
+
+    const refreshes = worker.called('POST sessions/refresh')
+    expect(refreshes).toHaveLength(3)
+    expect(refreshes[1].body?.refreshToken).toBe(
+      refreshes[0].body?.refreshToken
+    )
+    expect(refreshes[2].body?.refreshToken).not.toBe(
+      refreshes[0].body?.refreshToken
+    )
+    expect(worker.sessions[0].ended).toBeNull()
+    expect(one.wipe).not.toHaveBeenCalled()
+  })
+
+  it('keeps a session signed in while a refresh’s retry was out', async () => {
+    const { worker, clock, tab, disk } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    disk.stores.set('contacts', 'A')
+    clock.now += ACCESS_LIFETIME_MS
+    // The first answer is lost. Before the retry is answered, the User signs
+    // in again, which closes the old session: the retry is refused.
+    worker.lose.set('POST sessions/refresh', 1)
+    worker.before.set('POST sessions/refresh', async (call) => {
+      if (call === 1)
+        await one.account.openWebSessionWithTicket('ticket-a2', KEY_A)
+    })
+
+    await expect(one.info()).rejects.toMatchObject({ failure: 'cancelled' })
+    await settle()
+
+    expect(worker.sessions[0].ended).toBe('revoked')
+    expect(worker.sessions[1].ended).toBeNull()
+    expect(JSON.parse(disk.session!)).toMatchObject({ sessionId: 'sid-2' })
+    expect(one.onEnded).not.toHaveBeenCalled()
+    expect(one.wipe).not.toHaveBeenCalled()
+    expect(disk.stores.get('contacts')).toBe('A')
+    worker.before.clear()
+    await expect(one.info()).resolves.toBeTruthy()
+  })
+
+  it('leaves a sign-out to itself while a refresh’s retry was out', async () => {
+    const { worker, clock, tab } = browser()
+    const one = tab()
+    await one.account.start()
+    await one.account.openWebSessionWithTicket('ticket-a', KEY_A)
+    clock.now += ACCESS_LIFETIME_MS
+    worker.lose.set('POST sessions/refresh', 1)
+    worker.before.set('POST sessions/refresh', async (call) => {
+      if (call === 1) await one.account.signOut()
+    })
+
+    await expect(one.info()).rejects.toMatchObject({ failure: 'cancelled' })
+    await settle()
+
+    expect(worker.sessions[0].ended).toBe('revoked')
+    // The sign-out's own wipe, and nothing for the late refusal.
+    expect(one.wipe).toHaveBeenCalledTimes(1)
+    expect(one.onEnded).not.toHaveBeenCalled()
   })
 
   it('presents the token it holds when storing the last one failed', async () => {

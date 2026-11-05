@@ -1160,6 +1160,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         await web.inFlight.write(null).catch(() => undefined)
       return result
     } catch (error) {
+      // Signed in, out, or to another key meanwhile: a late refusal is the
+      // replaced session's, and says nothing of the one this tab has now.
+      if (!unchanged()) throw new AccountSessionError('cancelled')
       if (
         !(
           error instanceof AccountSessionError &&
@@ -1512,6 +1515,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           if (dueForRenewal(next)) renewAfter(accountKey, key, next)
           return next
         } catch (error) {
+          // Signed in, out, or to another key meanwhile: a late refusal never
+          // ends the session that replaced this one.
+          if (!unchanged()) throw new AccountSessionError('cancelled')
           // Only an ended or expired session opens a new one; offline keeps
           // the refresh token for next time.
           if (

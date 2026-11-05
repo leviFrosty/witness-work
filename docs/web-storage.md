@@ -154,6 +154,12 @@ Beside them, in the clear, never a secret:
 - `wipe-pending`: set before a wipe starts and before any other tab hears of
   it; see [Wiping everything](#wiping-everything).
 
+One more sealed value isn't the account's: `sealed:pending-link`, a contact
+share or Buddies invite link from the address that the app hasn't opened yet,
+so it outlasts a reload before then (docs/app-links.md "Without the app"). It's
+deleted once the app opens it, ignored after an hour, and saved again after a
+sign-in's wipe, but not after signing out.
+
 The code that reads and writes them is
 [`webRuntime.web.ts`](../src/lib/serverAccount/webRuntime.web.ts); phones load
 `webRuntime.ts`, which is null, so none of it is in their bundle.

@@ -13,6 +13,7 @@ import {
   returnedAppUserId,
   setLaunchAddress,
 } from '@/lib/launchAddress'
+import { pendingWebLink } from '@/lib/webLinks/pendingWebLink'
 
 const ID = 'ww_buyer_0123456789'
 
@@ -37,6 +38,7 @@ const page = (href: string) => {
 }
 
 beforeEach(() => {
+  pendingWebLink.clear()
   setLaunchAddress({
     returnedAppUserId: null,
     forwardedReturn: false,
@@ -151,6 +153,52 @@ describe('scrubLaunchAddress', () => {
   )
 })
 
+describe('links the web app opens (docs/app-links.md "Without the app")', () => {
+  const SECRET = '1AAECAwQFBgcICQoLDA0ODw'
+
+  it.each([
+    ['https://app.witnesswork.app/buddies/invite#', 'buddyInvite'],
+    ['https://app.witnesswork.app/b#', 'buddyInvite'],
+    ['https://app.witnesswork.app/contacts?fbclid=x#', 'contact'],
+    ['https://app.witnesswork.app/c/#', 'contact'],
+  ] as const)(
+    'takes %s… out of the address into memory, and opens Home',
+    (base, kind) => {
+      const { window, history } = page(`${base}${SECRET}`)
+      expect(scrubLaunchAddress(window, 'production')).toBe(true)
+      expect(history.replaceState).toHaveBeenCalledWith(
+        { key: 1 },
+        '',
+        'https://app.witnesswork.app/'
+      )
+      const pending = pendingWebLink.current()
+      expect(pending).toMatchObject({ kind, kept: false, handed: false })
+      expect(pending!.link.endsWith(`#${SECRET}`)).toBe(true)
+    }
+  )
+
+  it('sends a link route without a fragment to Home, opening nothing', () => {
+    // Reloading the invite screen, whose path is `/buddies/invite`.
+    const { window, history } = page(
+      'https://app.witnesswork.app/buddies/invite'
+    )
+    scrubLaunchAddress(window, 'production')
+    expect(history.replaceState).toHaveBeenCalledWith(
+      { key: 1 },
+      '',
+      'https://app.witnesswork.app/'
+    )
+    expect(pendingWebLink.current()).toBeNull()
+  })
+
+  it('leaves other fragments alone', () => {
+    const { window, history } = page('https://app.witnesswork.app/home#top')
+    scrubLaunchAddress(window, 'production')
+    expect(history.replaceState).not.toHaveBeenCalled()
+    expect(pendingWebLink.current()).toBeNull()
+  })
+})
+
 describe('scrubAddress', () => {
   it('removes dev_country and checkout ids together', () => {
     expect(
@@ -169,6 +217,7 @@ describe('scrubAddress', () => {
       forwarded: false,
       devCountry: 'MX',
       devBuyGate: false,
+      webLink: null,
     })
   })
 })
@@ -226,6 +275,8 @@ describe('the scrub’s imports', () => {
         ? path.resolve(path.dirname(from), specifier)
         : null
     if (!base) return null
+    // A file named with its extension (`appLinks.json`).
+    if (path.extname(base) && fs.existsSync(base)) return base
     for (const candidate of [
       ...EXTENSIONS.map((ext) => base + ext),
       ...EXTENSIONS.map((ext) => path.join(base, `index${ext}`)),
@@ -241,6 +292,8 @@ describe('the scrub’s imports', () => {
     const visit = (file: string) => {
       if (files.has(file)) return
       files.add(file)
+      // Data, which imports nothing.
+      if (file.endsWith('.json')) return
       const ast = parse(fs.readFileSync(file, 'utf8'), {
         sourceType: 'module',
         plugins: ['typescript', 'jsx'],
@@ -283,6 +336,7 @@ describe('the scrub’s imports', () => {
     // It does follow the scrub's own modules.
     expect(files).toContain('lib/purchaseReturn.ts')
     expect(files).toContain('lib/launchAddress.ts')
+    expect(files).toContain('lib/webLinks/pendingWebLink.ts')
     for (const file of files)
       expect(file).not.toMatch(/analytics|posthog|errorTracking|sentry/i)
     for (const name of packages)

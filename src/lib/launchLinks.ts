@@ -101,3 +101,10 @@ export async function pendingLaunchURL(): Promise<string | null> {
     clearTimeout(timer)
   }
 }
+
+/**
+ * Tells the web that a listener opened `url` (its prompt or screen showed), so
+ * it isn't handed out again (`launchLinks.web.ts`). Phones hand each launch
+ * link to each reader once already, so this does nothing here.
+ */
+export function linkOpened(_url: string) {}

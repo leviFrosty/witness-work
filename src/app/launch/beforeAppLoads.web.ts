@@ -2,6 +2,7 @@ import { LoadSkiaWeb } from '@shopify/react-native-skia/lib/module/web'
 import { registerRootComponent } from 'expo'
 import type { WebTabMessage } from '@/lib/serverAccount/webTabs'
 import { startInstallPromptCapture } from '@/lib/webInstall/installPrompt'
+import { webLinks } from '@/lib/webLinks/webLinks'
 import { webStorageBoot } from '@/lib/webStorage/boot'
 
 /**
@@ -17,6 +18,8 @@ import { webStorageBoot } from '@/lib/webStorage/boot'
  *   Center opens offline.
  * - The account key and session, sealed in IndexedDB, so the app knows whether
  *   the browser is signed in.
+ * - A contact share or Buddies invite link from the address, sealed for a reload
+ *   before the app opens it, or one a reload brought back (`webLinks.ts`).
  *
  * While WitnessWork is open in another tab, this tab shows that instead.
  */
@@ -41,6 +44,10 @@ export function beforeAppLoads(loadApp: () => void) {
       return loadSnapshot(helpLocaleFor(_i18n.locale)).catch(() => {})
     })
     .then(() => storage)
+    .then(async (launch) => {
+      await webLinks.start(window, launch)
+      return launch
+    })
     .then(async ({ activeTab }) => {
       // Verification hooks; Metro drops the branch from release bundles.
       if (__DEV__)

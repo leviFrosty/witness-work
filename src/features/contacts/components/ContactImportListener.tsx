@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
-import { addLinkListener, launchURL } from '@/lib/launchLinks'
+import { addLinkListener, launchURL, linkOpened } from '@/lib/launchLinks'
 import { toast } from '@/stores/toasts'
 import {
   ImportHandlerCallbacks,
@@ -74,6 +74,8 @@ export default function ContactImportListener() {
     if (pendingUrls.length === 0 || !onboarded || takingOver) return
     const [url] = pendingUrls
     setPendingUrls((urls) => urls.slice(1))
+    // On the web, it then never comes back after a remount or reload.
+    linkOpened(url)
     const handle = async (url: string | null) => {
       if (!url) return
 

@@ -1,10 +1,23 @@
 import { useEffect, useState } from 'react'
-import { addLinkListener, launchURL } from '@/lib/launchLinks'
+import { Platform } from 'react-native'
+import { appLinkFragment } from '@/constants/appLinks'
+import { addLinkListener, launchURL, linkOpened } from '@/lib/launchLinks'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { isInviteLink } from '@/features/buddies/lib/inviteLink'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { usePreferences } from '@/stores/preferences'
+
+const isWeb = Platform.OS === 'web'
+
+/**
+ * Whether `url` opens the pre-accept screen. On the web, an invite link whose
+ * fragment doesn't read (cut short, a later version) opens it too, and the
+ * screen says the link isn't valid: the web app opened it from its own address,
+ * so nothing else would tell the User.
+ */
+const opensInvite = (url: string) =>
+  isInviteLink(url) || (isWeb && !!appLinkFragment(url, 'buddyInvite'))
 
 /**
  * Routes invite links (`https://ww-proxy.leviwilkerson.com/b#1…` or
@@ -25,10 +38,10 @@ export default function BuddyInviteListener() {
 
   useEffect(() => {
     void launchURL('buddy-invite').then((url) => {
-      if (url && isInviteLink(url)) setPendingLink(url)
+      if (url && opensInvite(url)) setPendingLink(url)
     })
     const subscription = addLinkListener((url) => {
-      if (isInviteLink(url)) setPendingLink(url)
+      if (opensInvite(url)) setPendingLink(url)
     })
     return () => subscription.remove()
   }, [])
@@ -40,6 +53,8 @@ export default function BuddyInviteListener() {
       return () => clearTimeout(timer)
     }
     navigationRef.navigate('Buddy Invite', { link: pendingLink })
+    // On the web, it then never comes back after a remount or reload.
+    linkOpened(pendingLink)
     setPendingLink(null)
   }, [enabled, pendingLink, retry, onboarded, takingOver])
 

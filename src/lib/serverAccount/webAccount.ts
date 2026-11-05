@@ -179,6 +179,12 @@ export type WebAccountDeps = {
   markWipePending: () => Promise<void>
   /** Deletes all local data, the pending mark last: `clearAllWebData`. */
   wipe: () => Promise<void>
+  /**
+   * After a sign-in wiped another account's data: saves again what the wipe
+   * took that should outlast it, a contact or Buddies link not yet opened
+   * (`webLinks.ts`). Signing out keeps nothing.
+   */
+  afterSignInWipe?: () => Promise<void>
   reload: () => void
   /**
    * The server ended the session: in the tab whose refresh it refused, and
@@ -454,6 +460,7 @@ export function createWebAccount(deps: WebAccountDeps) {
         await deps.markWipePending()
         await deps.wipe()
         wiped = true
+        await deps.afterSignInWipe?.()
       }
       // After a wipe, nothing is anyone's.
       const owner = wiped ? null : await deps.owner.read()

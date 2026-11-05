@@ -305,6 +305,8 @@ export const analyticsEventNames = [
   // The web's local data (ADR 0037 §6): saving failures and tab takeovers.
   'web_storage_failed',
   'web_tab_taken_over',
+  // Contact share and Buddies invite links opened on the web (docs/app-links.md).
+  'web_link_opened',
   // Updates and install on the web (docs/web-offline.md).
   'web_install_accepted',
   'web_install_banner_dismissed',

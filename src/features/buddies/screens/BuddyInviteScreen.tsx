@@ -58,7 +58,9 @@ export default function BuddyInviteScreen({ route }: Props) {
   const acceptingRef = useRef(false)
   const [nameInvalid, setNameInvalid] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const { link } = route.params
+  // The web can reach the screen from its address with no params (Back into
+  // an old entry); an empty link reads as invalid.
+  const link = route.params?.link ?? ''
 
   useEffect(() => {
     let cancelled = false

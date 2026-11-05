@@ -236,6 +236,7 @@
     "webOffline",
     "webStorage",
     "webTabs",
+    "webLinks",
     "webUpdates",
     "dataPrivacy",
     "photoAccess"

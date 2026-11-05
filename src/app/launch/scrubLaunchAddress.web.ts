@@ -1,6 +1,11 @@
 import { appVariant, type AppVariant } from '@/lib/appVariant'
 import { setLaunchAddress } from '@/lib/launchAddress'
 import { scrubPurchaseReturn } from '@/lib/purchaseReturn'
+import {
+  pendingWebLink,
+  readWebLinkAddress,
+  type WebLinkKind,
+} from '@/lib/webLinks/pendingWebLink'
 
 /**
  * The web entry's first step, before any other module loads: before launch
@@ -11,6 +16,11 @@ import { scrubPurchaseReturn } from '@/lib/purchaseReturn'
  *   loads.
  * - Otherwise checkout's ids leave the address, and the `app_user_id` stays in
  *   memory only (`@/lib/launchAddress`).
+ * - A contact share or Buddies invite link (`/contacts#…`, `/buddies/invite#…`,
+ *   and the old host's `/c#…`, `/b#…`) leaves the address for memory
+ *   (`pendingWebLink`), and the address becomes `/`, so neither a reload, a
+ *   screenshot nor anything that reports the address has the fragment
+ *   (docs/app-links.md "Without the app").
  * - A development build on localhost reads `?dev_country=` (`GB`, or `CA-MB` for
  *   a province) to test the region notice, and `?dev_buy_gate=1` to make web
  *   Buy wait for an account session and a settled id as Beta and production do.
@@ -31,6 +41,8 @@ export type ScrubbedAddress = {
   forwarded: boolean
   devCountry: string | null
   devBuyGate: boolean
+  /** The link the address carried, for `pendingWebLink`. */
+  webLink: { kind: WebLinkKind; link: string } | null
 }
 
 /** `url` without the param `name`, and its one value. */
@@ -65,13 +77,17 @@ export function scrubAddress(
   const country = takeParam(scrubbed.url, DEV_COUNTRY)
   const buyGate = takeParam(country.url, DEV_BUY_GATE)
   const devLocal = variant === 'development' && LOCAL_HOSTS.has(hostname)
+  // A link route opens nothing of its own: the app opens on Home, and the link
+  // on top once its listener mounts.
+  const link = scrubbed.forwardTo ? null : readWebLinkAddress(buyGate.url)
   return {
     forwardTo: scrubbed.forwardTo,
-    url: buyGate.url,
+    url: link ? `${origin}/` : buyGate.url,
     appUserId: scrubbed.forwardTo ? null : scrubbed.appUserId,
     forwarded: scrubbed.forwarded,
     devCountry: devLocal ? country.value : null,
     devBuyGate: devLocal && buyGate.value === '1',
+    webLink: link?.link ? { kind: link.kind, link: link.link } : null,
   }
 }
 
@@ -87,6 +103,8 @@ export function scrubLaunchAddress(
   }
   if (address.url !== location.href)
     history.replaceState(history.state, '', address.url)
+  if (address.webLink)
+    pendingWebLink.set(address.webLink.kind, address.webLink.link)
   setLaunchAddress({
     returnedAppUserId: address.appUserId,
     forwardedReturn: address.forwarded,

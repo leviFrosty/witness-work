@@ -29,6 +29,7 @@ import {
 } from '@/lib/serverAccount/webSignInMark'
 import type { WebRuntime } from '@/lib/serverAccount/webRuntime'
 import { reloadPage, sessionTabs } from '@/lib/serverAccount/webTabs'
+import { webLinks } from '@/lib/webLinks/webLinks'
 import {
   clearAllWebData,
   DATA_OWNER_KEY,
@@ -135,6 +136,7 @@ export const webRuntime: WebRuntime | null = {
         webSignInLater.clear()
         return clearAllWebData()
       },
+      afterSignInWipe: webLinks.keepAcrossWipe,
       reload: reloadPage,
       onEnded: (reason, outcome, { fromTab }) => {
         if (!fromTab)

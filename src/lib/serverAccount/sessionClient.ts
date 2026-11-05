@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import type { AttestationProof } from '@/lib/attestation/appAttest'
 import { RELAY_ID_PATTERN, utf8 } from '@/lib/bytes'
+import { isKnownOffline } from '@/lib/http/online'
 import { HttpError, request } from '@/lib/http/request'
 import {
   ACCOUNT_TIMEOUT_MS,
@@ -168,6 +169,13 @@ export function parseOpenedSession(
 }
 
 /**
+ * The longest wait before a refresh's one retry (a 429's Retry-After included):
+ * with `ACCOUNT_TIMEOUT_MS`, the retry leaves within 20 seconds of the first
+ * try, inside ww-api's minute for the token it replaced.
+ */
+const REFRESH_RETRY_MAX_DELAY_MS = 5_000
+
+/**
  * `POST /accounts/v1/sessions/refresh`: replaces the refresh token, and tells
  * the session this build's version and `SESSION_CAPABILITIES`. A 401 means the
  * session ended or expired (its `reason` says which), and a new one has to be
@@ -187,6 +195,15 @@ export async function refreshSession(
       capabilities: SESSION_CAPABILITIES,
     },
     timeoutMs: ACCOUNT_TIMEOUT_MS,
+    // A lost answer (offline, a timeout, a 5xx) may hide a rotation. ww-api
+    // answers the replaced token again for a minute after it, so ask once
+    // more now, well inside that minute: a later caller presenting it would
+    // end the session as reused. Known to be offline, nothing leaves
+    // (`request` refuses it), so nothing rotated.
+    ...(!isKnownOffline() && {
+      idempotent: true,
+      retry: { retries: 1, maxDelayMs: REFRESH_RETRY_MAX_DELAY_MS },
+    }),
     signal: options.signal,
     fetchImpl: options.fetchImpl,
   })

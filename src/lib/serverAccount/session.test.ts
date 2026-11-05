@@ -57,7 +57,12 @@ type Session = {
   ended: boolean
   /** Why it ended, when the refusal says (`renewed`). */
   endedReason?: string
+  /** When its refresh token last rotated. */
+  rotatedAt?: number
 }
+
+/** How long ww-api still answers the refresh token it just replaced. */
+const REFRESH_GRACE_MS = 60_000
 
 /** The worker's routes, by the op names tests use. */
 const ROUTES: Record<string, string> = {
@@ -170,13 +175,25 @@ function fakeWorker(clock: { now: number }) {
       }
       case 'session/refresh': {
         const session = sessions.find(
-          (entry) => entry.refreshToken === body?.refreshToken
+          (entry) =>
+            entry.refreshToken === body?.refreshToken ||
+            entry.previousRefresh === body?.refreshToken
         )
         if (!session || session.ended || clock.now >= session.expiresAt)
           return failure(401, 'unauthorized', {
             ...(session?.endedReason && { reason: session.endedReason }),
           })
+        if (session.refreshToken !== body?.refreshToken) {
+          // The token it just replaced: the same new one within its minute,
+          // and after it, a reuse that ends the session.
+          if (clock.now - session.rotatedAt! <= REFRESH_GRACE_MS)
+            return json(200, { ok: true, ...tokens(session) })
+          session.ended = true
+          session.endedReason = 'reused'
+          return failure(401, 'unauthorized', { reason: 'reused' })
+        }
         session.previousRefresh = session.refreshToken
+        session.rotatedAt = clock.now
         session.refreshToken = `rt-${++issued}`
         return json(200, { ok: true, ...tokens(session) })
       }
@@ -412,6 +429,32 @@ describe('account sessions', () => {
 
     expect(worker.opsCalled('session/refresh')).toHaveLength(1)
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('asks again at once when a refresh’s answer is lost, so the replaced token never comes back after its minute', async () => {
+    const { worker, clock, store, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    // The worker rotates the token, and the answer never arrives.
+    worker.override.set('session/refresh', (call) => {
+      if (call !== 0) return null
+      const session = worker.sessions[0]
+      session.previousRefresh = session.refreshToken
+      session.refreshToken = 'rt-lost'
+      session.rotatedAt = clock.now
+      throw new TypeError('Network request failed')
+    })
+
+    await expect(info()).resolves.toBeTruthy()
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(info()).resolves.toBeTruthy()
+
+    expect(worker.sessions[0]).toMatchObject({ ended: false })
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(
+      worker.opsCalled('session/refresh').map((call) => call.body?.refreshToken)
+    ).toEqual(['rt-1', 'rt-1', 'rt-lost'])
+    expect(JSON.parse(store.value!)).toMatchObject({ sessionId: 'sid-1' })
   })
 
   it('shares one session/open between concurrent first callers', async () => {
@@ -656,8 +699,9 @@ describe('account sessions', () => {
     const { worker, store, clock, info } = setup()
     await info()
     clock.now += ACCESS_LIFETIME_MS
+    // Its one retry drops too.
     worker.override.set('session/refresh', (call) => {
-      if (call === 0) throw new TypeError('Network request failed')
+      if (call <= 1) throw new TypeError('Network request failed')
       return null
     })
 

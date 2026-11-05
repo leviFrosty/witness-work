@@ -84,10 +84,16 @@ const CONTENT_INSET =
 export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const theme = useTheme()
   const { question, plainText: answer } = entry
-  const italicsReady = useItalicFonts(richTextHasMark(entry.doc, 'italic'))
   const cardStyle = useCardStyle()
   const colorScheme = usePreferences((s) => s.colorScheme)
   const [expanded, setExpanded] = useState(false)
+  // The answer mounts the first time it opens and stays for the collapse
+  // animation. The Help Center lists every entry, so building every answer up
+  // front held its opening back.
+  const [opened, setOpened] = useState(false)
+  const italicsReady = useItalicFonts(
+    opened && richTextHasMark(entry.doc, 'italic')
+  )
   const [width, setWidth] = useState<number>()
   const contentWidth = width && width - CONTENT_INSET
 
@@ -115,7 +121,10 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
       >
         <Collapsible
           isOpen={expanded}
-          onOpenChange={setExpanded}
+          onOpenChange={(open) => {
+            if (open) setOpened(true)
+            setExpanded(open)
+          }}
           label={question}
           // SwiftUI's DisclosureGroup announces its own state; Compose's
           // header reads this one.
@@ -134,65 +143,69 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
             textAlign: alignText('start'),
           }}
         >
-          {/* Straight into the Collapsible's host: a nested host would
-          swallow the long press on Android. */}
-          <ContextMenu
-            hosted
-            actions={[
-              {
-                id: 'copy_answer',
-                title: i18n.t('copyAnswer'),
-                systemImage: 'doc.on.doc',
-                onPress: () => void copyAnswer(),
-              },
-              {
-                id: 'share',
-                title: i18n.t('shareEllipsis'),
-                systemImage: 'square.and.arrow.up',
-                onPress: () =>
-                  void Share.share({
-                    message: `${question}\n\n${answer}`,
-                  }).catch(() => {}),
-              },
-              {
-                id: 'share_link',
-                title: i18n.t('faq_shareLink'),
-                systemImage: 'link',
-                onPress: () =>
-                  void Share.share(
-                    Platform.OS === 'ios'
-                      ? { url: entry.url }
-                      : { message: entry.url }
-                  ).catch(() => {}),
-              },
-            ]}
-          >
-            {/* Hosted RN content sizes to itself, so give it the width left
-            inside the card. */}
-            <View
-              style={{
-                width: contentWidth,
-                paddingTop: Platform.OS === 'ios' ? 12 : 0,
-              }}
-            >
-              <RichTextView
-                doc={entry.doc}
-                style={{ lineHeight: 22 }}
-                showImages={false}
-                spans={{
-                  italicsReady,
-                  linkColor: theme.colors.accent,
-                  onLinkPress: (href) => void openURL(href),
-                }}
-              />
-            </View>
-          </ContextMenu>
-          {entry.id === 'reportBug' && (
-            <RNHostView matchContents>
-              <View style={{ width: contentWidth, paddingTop: 12 }}>
-                <ReportLinks />
-              </View>
-            </RNHostView>
+          {opened && (
+            <>
+              {/* Straight into the Collapsible's host: a nested host would
+              swallow the long press on Android. */}
+              <ContextMenu
+                hosted
+                actions={[
+                  {
+                    id: 'copy_answer',
+                    title: i18n.t('copyAnswer'),
+                    systemImage: 'doc.on.doc',
+                    onPress: () => void copyAnswer(),
+                  },
+                  {
+                    id: 'share',
+                    title: i18n.t('shareEllipsis'),
+                    systemImage: 'square.and.arrow.up',
+                    onPress: () =>
+                      void Share.share({
+                        message: `${question}\n\n${answer}`,
+                      }).catch(() => {}),
+                  },
+                  {
+                    id: 'share_link',
+                    title: i18n.t('faq_shareLink'),
+                    systemImage: 'link',
+                    onPress: () =>
+                      void Share.share(
+                        Platform.OS === 'ios'
+                          ? { url: entry.url }
+                          : { message: entry.url }
+                      ).catch(() => {}),
+                  },
+                ]}
+              >
+                {/* Hosted RN content sizes to itself, so give it the width left
+                inside the card. */}
+                <View
+                  style={{
+                    width: contentWidth,
+                    paddingTop: Platform.OS === 'ios' ? 12 : 0,
+                  }}
+                >
+                  <RichTextView
+                    doc={entry.doc}
+                    style={{ lineHeight: 22 }}
+                    showImages={false}
+                    spans={{
+                      italicsReady,
+                      linkColor: theme.colors.accent,
+                      onLinkPress: (href) => void openURL(href),
+                    }}
+                  />
+                </View>
+              </ContextMenu>
+              {entry.id === 'reportBug' && (
+                <RNHostView matchContents>
+                  <View style={{ width: contentWidth, paddingTop: 12 }}>
+                    <ReportLinks />
+                  </View>
+                </RNHostView>
+              )}
+            </>
           )}
         </Collapsible>
       </Host>

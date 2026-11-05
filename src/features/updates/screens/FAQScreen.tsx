@@ -75,6 +75,8 @@ const FAQScreen = () => {
   const userScrolledRef = useRef(false)
   // Where the screen last scrolled the requested category to.
   const placedYRef = useRef<number | null>(null)
+  // Whether the categories below the first screen may build yet.
+  const [buildRest, setBuildRest] = useState(!targetCategory)
 
   const handleCopyAccountId = useCallback(async () => {
     try {
@@ -99,6 +101,7 @@ const FAQScreen = () => {
       return
     placedYRef.current = y
     scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
+    setBuildRest(true)
   }
   // Sections measure in several passes after opening, and on Android their
   // offsets jump around before they settle. So the screen follows the
@@ -138,8 +141,14 @@ const FAQScreen = () => {
         return
       placedYRef.current = y
       scrollRef.current.scrollTo({ y: Math.max(0, y + 8), animated: true })
+      setBuildRest(true)
     })
-    return () => cancelAnimationFrame(frame)
+    // Never leave the rest of the list unbuilt.
+    const fallback = setTimeout(() => setBuildRest(true), 1000)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(fallback)
+    }
   }, [targetCategory, isWide])
 
   useEffect(() => {
@@ -165,6 +174,8 @@ const FAQScreen = () => {
                   setSearch('')
                 } else {
                   userScrolledRef.current = true
+                  scrollToEndPending.current = true
+                  setBuiltSections(Infinity)
                   scrollRef.current?.scrollToEnd({ animated: true })
                 }
               }}
@@ -194,6 +205,26 @@ const FAQScreen = () => {
       ),
     }))
     .filter((group) => group.entries.length > 0)
+
+  // Every answer card is its own native view, and building them all at once
+  // froze the screen as it opened. So the list builds one category a frame.
+  // It pauses after the requested category until that's in place, so the
+  // categories below don't keep moving it.
+  const targetSections =
+    grouped.findIndex((group) => group.category === targetCategory) + 1
+  const [builtSections, setBuiltSections] = useState(1)
+  const allBuilt = builtSections >= grouped.length
+  const paused = builtSections >= targetSections && !buildRest
+  useEffect(() => {
+    if (isWide || allBuilt || paused) return
+    const frame = requestAnimationFrame(() =>
+      setBuiltSections((built) => built + 1)
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [isWide, allBuilt, paused, builtSections])
+  // "Still need help?" sits below every category, so jumping there waits for
+  // them.
+  const scrollToEndPending = useRef(false)
 
   const support = <FAQSupport onCopyAccountId={handleCopyAccountId} />
   const results = (
@@ -316,10 +347,18 @@ const FAQScreen = () => {
             scrollRef.current = ref as unknown as ScrollView
           }}
           keyboardShouldPersistTaps='handled'
-          onContentSizeChange={scrollToTargetCategory}
+          onContentSizeChange={() => {
+            if (scrollToEndPending.current) {
+              if (allBuilt) scrollToEndPending.current = false
+              scrollRef.current?.scrollToEnd({ animated: true })
+              return
+            }
+            scrollToTargetCategory()
+          }}
           // Once the User scrolls, the screen stops placing the category.
           onScrollBeginDrag={() => {
             userScrolledRef.current = true
+            setBuildRest(true)
           }}
           contentContainerStyle={{
             paddingTop: 20,
@@ -370,31 +409,34 @@ const FAQScreen = () => {
                 >
                   {i18n.t('faq_allHeader')}
                 </Text>
-                {grouped.map(({ category, title, entries }) => (
-                  <View
-                    key={category}
-                    style={{ gap: 10, paddingHorizontal: 15 }}
-                    onLayout={(event) => {
-                      categoryOffsets.current[category] =
-                        event.nativeEvent.layout.y
-                      if (category === targetCategory) scrollToTargetCategory()
-                    }}
-                  >
-                    <Text
-                      accessibilityRole='header'
-                      style={{
-                        paddingHorizontal: 20,
-                        fontFamily: theme.fonts.semiBold,
-                        color: theme.colors.textAlt,
+                {grouped
+                  .slice(0, builtSections)
+                  .map(({ category, title, entries }) => (
+                    <View
+                      key={category}
+                      style={{ gap: 10, paddingHorizontal: 15 }}
+                      onLayout={(event) => {
+                        categoryOffsets.current[category] =
+                          event.nativeEvent.layout.y
+                        if (category === targetCategory)
+                          scrollToTargetCategory()
                       }}
                     >
-                      {title}
-                    </Text>
-                    {entries.map((entry) => (
-                      <FAQItem key={entry.id} entry={entry} />
-                    ))}
-                  </View>
-                ))}
+                      <Text
+                        accessibilityRole='header'
+                        style={{
+                          paddingHorizontal: 20,
+                          fontFamily: theme.fonts.semiBold,
+                          color: theme.colors.textAlt,
+                        }}
+                      >
+                        {title}
+                      </Text>
+                      {entries.map((entry) => (
+                        <FAQItem key={entry.id} entry={entry} />
+                      ))}
+                    </View>
+                  ))}
               </>
             )}
             {support}

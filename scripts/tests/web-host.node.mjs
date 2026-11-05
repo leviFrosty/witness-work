@@ -52,8 +52,13 @@ const integration = {
   tags: [],
 }
 const release = { ...integration, onMain: true, tags: [`v${version}`] }
-const plan = (target, args = ['--dry-run'], env = {}, git = integration) =>
-  deployPlan(target, args, { env, git })
+const plan = (
+  target,
+  args = ['--dry-run'],
+  env = {},
+  git = integration,
+  revenueCatProblems = []
+) => deployPlan(target, args, { env, git, revenueCatProblems })
 
 const fixtures = []
 function fixture() {
@@ -590,4 +595,36 @@ test('the well-known-only Workers are the app’s, and 404 anything without a fi
     assert.equal(holding.assets.not_found_handling, 'none')
     assert.deepEqual(holding.assets.run_worker_first, ['/.well-known/*'])
   }
+})
+
+test('a dev deploy refuses without usable RevenueCat sandbox values', () => {
+  const problems = ['no key: set EXPO_PUBLIC_REVENUECAT_WEB_API_KEY']
+  assert.deepEqual(plan('dev').blocked, [])
+  assert.deepEqual(
+    plan('dev', ['--dry-run'], {}, integration, problems).blocked,
+    problems
+  )
+  // A preview uploads the same bundle, so it needs them too.
+  assert.deepEqual(
+    plan('dev', ['--preview'], {}, integration, problems).blocked,
+    problems
+  )
+  // The holding bundle has no app code, and the release profiles aren't asked.
+  assert.ok(
+    !plan(
+      'dev',
+      ['--well-known-only'],
+      {},
+      { ...integration, onIntegration: true },
+      problems
+    ).blocked.includes(problems[0])
+  )
+  assert.deepEqual(
+    plan('beta', ['--dry-run'], {}, integration, problems).blocked,
+    []
+  )
+  assert.deepEqual(
+    plan('production', ['--dry-run'], keyword, release, problems).blocked,
+    []
+  )
 })

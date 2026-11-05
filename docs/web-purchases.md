@@ -88,6 +88,15 @@ A Stripe sandbox needs its own RevenueCat Billing config, so there are two:
   Supporter status only in development builds and on the development worker
   (ADR 0014). So Beta web uses the production config, like the Beta apps,
   whose App Store and Google Play test purchases still count.
+- **Where a development build gets them.** `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY`
+  and `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` come from `.env` or
+  `.env.local`. When either is empty, a `dev` web build or deploy reads it from
+  the 1Password Agents vault item `RevenueCat web billing sandbox (W6)` (the
+  `revenueCatWebItem` in `config/web-environments.json`), so a clean checkout
+  doesn't ship a paywall with no key. A `dev` deploy refuses without both, or
+  when the key isn't `rcb_sb_…` or no link is `sandbox/…`; a local build or
+  `web:serve` warns and goes on. Beta and production use their own env files
+  and never read that item. See `docs/web-hosting.md`.
 - **Both configs hold the same products**, attached to the same entitlements
   and packages.
 

@@ -21,6 +21,8 @@ import {
   checkAssociationFiles,
   checkExport,
   environments as profiles,
+  fillRevenueCatWeb,
+  filesContaining,
   listFiles,
   loadWebEnv,
   servedFiles,
@@ -175,7 +177,12 @@ export function writeWellKnownBundle(dir, target) {
 export function deployPlan(
   target,
   args,
-  { env = process.env, git, version = packageJson().version } = {}
+  {
+    env = process.env,
+    git,
+    version = packageJson().version,
+    revenueCatProblems = [],
+  } = {}
 ) {
   const profile = profiles[target]
   if (!profile?.worker) throw new Error(usage)
@@ -207,6 +214,10 @@ export function deployPlan(
   const blocked = []
   if (!git.clean)
     blocked.push('Commit all changes first: web deploys ship committed code')
+  // The dev bundle must carry the RevenueCat sandbox's key and links, or its
+  // paywall can't sell (`fillRevenueCatWeb`). The holding bundle has no app.
+  if (profile.revenueCatWebItem && !options.wellKnownOnly)
+    blocked.push(...revenueCatProblems)
   // A preview version gets its own workers.dev URL and leaves app-dev alone.
   if (target === 'dev' && !options.preview && git.head !== git.integrationHead)
     blocked.push(
@@ -392,9 +403,32 @@ function readProductionToken() {
   return token
 }
 
+/**
+ * A dev web build's RevenueCat values, as `pnpm web:build` resolves them (env
+ * files, then the 1Password item), checked for a deploy. Release profiles
+ * aren't asked.
+ */
+function revenueCatCheck(target, args) {
+  // The holding bundle has no app code.
+  if (
+    !profiles[target]?.revenueCatWebItem ||
+    args.includes('--well-known-only')
+  )
+    return { problems: [] }
+  try {
+    const { env } = loadWebEnv(root, target)
+    const { problems } = fillRevenueCatWeb(env, target)
+    return { env, problems }
+  } catch (error) {
+    return { problems: [error.message] }
+  }
+}
+
 async function deploy(target, args) {
   let git = gitState()
-  let plan = deployPlan(target, args, { git })
+  const check = revenueCatCheck(target, args)
+  const revenueCatProblems = check.problems
+  let plan = deployPlan(target, args, { git, revenueCatProblems })
   // A real deploy compares against origin as it is now; a dry run stays
   // offline and uses the last fetch.
   if (
@@ -409,7 +443,7 @@ async function deploy(target, args) {
     if (fetched.status !== 0)
       throw new Error("Couldn't fetch origin to check what may deploy")
     git = gitState()
-    plan = deployPlan(target, args, { git })
+    plan = deployPlan(target, args, { git, revenueCatProblems })
   }
   if (plan.dryRun && plan.prebuilt)
     try {
@@ -438,6 +472,14 @@ async function deploy(target, args) {
   checkExport(dist, loadWebEnv(root, target).excluded, {
     serviceWorker: true,
   })
+  // The sandbox's key must be in what uploads, a prebuilt bundle too.
+  if (check.env) {
+    const key = check.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
+    if (filesContaining(dist, [key]).length === 0)
+      throw new Error(
+        `The ${target} build doesn't carry the RevenueCat sandbox key; build it again with the values set (docs/web-hosting.md)`
+      )
+  }
   const missing = missingOrigins(dist, target)
   if (missing.length)
     throw new Error(

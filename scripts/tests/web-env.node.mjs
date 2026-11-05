@@ -10,8 +10,11 @@ import {
   checkExport,
   checkServiceWorker,
   environments,
+  fillRevenueCatWeb,
   filesContaining,
   loadWebEnv,
+  readOnePasswordFields,
+  revenueCatWebProblems,
   oversizedFiles,
   restoringFiles,
   runBuildSteps,
@@ -396,4 +399,184 @@ test('the worker precaches English and the on-demand chunks, not the other langu
     'index.js',
     'sql-wasm-browser.js',
   ])
+})
+
+const KEY = 'EXPO_PUBLIC_REVENUECAT_WEB_API_KEY'
+const LINKS = 'EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS'
+const sandboxKey = 'rcb_sb_testkey123'
+const sandboxLinks = '{"Monthly $3.99":"sandbox/abc123"}'
+const item = environments.dev.revenueCatWebItem
+
+/** An `op` that answers from `vault` and records what it was asked. */
+function fakeOp(vault, calls = []) {
+  const op = (name, labels) => {
+    calls.push({ name, labels })
+    return Object.fromEntries(labels.map((label) => [label, vault[label]]))
+  }
+  return Object.assign(op, { calls })
+}
+const noOp = () => assert.fail('op must not be called')
+const vault = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
+
+test('only the dev profile names a 1Password item for its sandbox values', () => {
+  assert.equal(item, 'RevenueCat web billing sandbox (W6)')
+  for (const name of ['local', 'beta', 'production'])
+    assert.equal(environments[name].revenueCatWebItem, undefined, name)
+})
+
+test('RevenueCat values in the env files are used, and 1Password is not asked', () => {
+  const env = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
+  const result = fillRevenueCatWeb(env, 'dev', { op: noOp })
+  assert.deepEqual(result.problems, [])
+  assert.deepEqual(result.fromOnePassword, [])
+  assert.equal(env[KEY], sandboxKey)
+  assert.equal(env[LINKS], sandboxLinks)
+})
+
+test('dev reads what the env files lack from the 1Password item', () => {
+  const env = { [KEY]: '', [LINKS]: undefined }
+  const op = fakeOp(vault)
+  const result = fillRevenueCatWeb(env, 'dev', { op })
+  assert.deepEqual(op.calls, [{ name: item, labels: [KEY, LINKS] }])
+  assert.deepEqual(result.fromOnePassword, [KEY, LINKS])
+  assert.deepEqual(result.problems, [])
+  assert.equal(env[KEY], sandboxKey)
+  assert.equal(env[LINKS], sandboxLinks)
+})
+
+test('dev asks 1Password only for the value the env files lack', () => {
+  const env = { [KEY]: sandboxKey, [LINKS]: '  ' }
+  const op = fakeOp(vault)
+  const result = fillRevenueCatWeb(env, 'dev', { op })
+  assert.deepEqual(op.calls, [{ name: item, labels: [LINKS] }])
+  assert.deepEqual(result.fromOnePassword, [LINKS])
+  assert.equal(env[LINKS], sandboxLinks)
+})
+
+test('local, beta and production never call op', () => {
+  for (const profile of ['local', 'beta', 'production']) {
+    const env = {}
+    const result = fillRevenueCatWeb(env, profile, { op: noOp })
+    assert.deepEqual(result.fromOnePassword, [], profile)
+    assert.equal(env[KEY], undefined, profile)
+  }
+  // Not even a sandbox-shaped gap in a release profile's own values.
+  const live = { [KEY]: 'rcb_live', [LINKS]: '{"A":"live/x"}' }
+  assert.deepEqual(
+    fillRevenueCatWeb({ ...live }, 'production', { op: noOp }).problems,
+    []
+  )
+  assert.deepEqual(
+    fillRevenueCatWeb({ ...live }, 'beta', { op: noOp }).problems,
+    []
+  )
+})
+
+test('without the values, dev reports what to set, whether op failed or lacks them', () => {
+  const failing = () => {
+    throw new Error('op exited with 1')
+  }
+  const failed = fillRevenueCatWeb({}, 'dev', { op: failing })
+  assert.equal(failed.problems.length, 1)
+  assert.match(failed.problems[0], new RegExp(KEY))
+  assert.match(failed.problems[0], new RegExp(LINKS))
+  assert.match(failed.problems[0], /RevenueCat web billing sandbox \(W6\)/)
+  assert.match(failed.problems[0], /op exited with 1/)
+  // The item answers but a field is empty.
+  const empty = fillRevenueCatWeb({}, 'dev', {
+    op: fakeOp({ [KEY]: sandboxKey, [LINKS]: '' }),
+  })
+  assert.equal(empty.problems.length, 1)
+  assert.match(empty.problems[0], new RegExp(LINKS))
+  // The local profile warns the same way but never asks 1Password.
+  const local = fillRevenueCatWeb({}, 'local', { op: noOp })
+  assert.equal(local.problems.length, 1)
+  assert.match(local.problems[0], new RegExp(KEY))
+})
+
+test('a key that is not a sandbox key, or links that are not sandbox links, are refused', () => {
+  const problems = (key, links) =>
+    revenueCatWebProblems({ [KEY]: key, [LINKS]: links })
+  assert.deepEqual(problems(sandboxKey, sandboxLinks), [])
+  assert.match(problems('rcb_live123', sandboxLinks)[0], /rcb_sb_/)
+  assert.match(problems('appl_abc', sandboxLinks)[0], /rcb_sb_/)
+  assert.match(problems(sandboxKey, '{not json')[0], /JSON/)
+  assert.match(problems(sandboxKey, '[]')[0], /JSON object/)
+  assert.match(problems(sandboxKey, '{}')[0], /sandbox\//)
+  assert.match(problems(sandboxKey, '{"A":"live/x","B":3}')[0], /sandbox\//)
+  // One sandbox link is enough.
+  assert.deepEqual(problems(sandboxKey, '{"A":"live/x","B":"sandbox/y"}'), [])
+  // Values that the env files hold are checked too, not only 1Password's.
+  const env = { [KEY]: 'rcb_live123', [LINKS]: sandboxLinks }
+  const result = fillRevenueCatWeb(env, 'dev', { op: noOp })
+  assert.match(result.problems[0], /rcb_sb_/)
+  // The values never reach a message.
+  for (const message of [
+    ...problems('rcb_live123', sandboxLinks),
+    ...problems(sandboxKey, '{"Secret Plan":"live/zzz"}'),
+  ]) {
+    assert.ok(!message.includes('rcb_live123'))
+    assert.ok(!message.includes('zzz'))
+  }
+})
+
+test('op is asked for the item by title, in the Agents vault, as JSON', () => {
+  const calls = []
+  const spawn = (command, args, options) => {
+    calls.push({ command, args, options })
+    const label = args.find((arg) => arg.startsWith('label='))?.slice(6)
+    return {
+      status: 0,
+      stdout: JSON.stringify({ label, value: `value of ${label}, "quoted"` }),
+    }
+  }
+  const values = readOnePasswordFields(item, [KEY, LINKS], {
+    spawn,
+    inherited: { OP_SERVICE_ACCOUNT_TOKEN: 'token' },
+  })
+  assert.deepEqual(values, {
+    [KEY]: `value of ${KEY}, "quoted"`,
+    [LINKS]: `value of ${LINKS}, "quoted"`,
+  })
+  assert.equal(calls.length, 2)
+  for (const { command, args, options } of calls) {
+    assert.equal(command, 'op')
+    assert.deepEqual(args.slice(0, 3), ['item', 'get', item])
+    assert.ok(args.includes('--reveal'))
+    assert.equal(args[args.indexOf('--vault') + 1], 'Agents')
+    assert.equal(args[args.indexOf('--format') + 1], 'json')
+    assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, 'token')
+    // stderr stays out of our output, where a value could appear.
+    assert.notEqual(options.stdio[2], 'inherit')
+  }
+})
+
+test('a failed or missing op fails without printing what it answered', () => {
+  const failing =
+    (status, stdout = '', stderr = '') =>
+    () => ({
+      status,
+      stdout,
+      stderr,
+    })
+  assert.throws(
+    () => readOnePasswordFields(item, [KEY], { spawn: failing(1, '', 'nope') }),
+    /op exited with 1/
+  )
+  assert.throws(
+    () =>
+      readOnePasswordFields(item, [KEY], {
+        spawn: () => ({
+          error: Object.assign(new Error('x'), { code: 'ENOENT' }),
+        }),
+      }),
+    /op isn't installed/
+  )
+  assert.throws(
+    () =>
+      readOnePasswordFields(item, [KEY], {
+        spawn: failing(0, 'secret-not-json-value'),
+      }),
+    (error) => !error.message.includes('secret-not-json-value')
+  )
 })

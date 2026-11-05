@@ -223,7 +223,9 @@ pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-a
   for the same profile and commit, and no file may have changed since. Only
   the deploy writes the stamp, after its own build.
 - **`--dry-run`** prints the plan and anything that would refuse it, without
-  building, reading a credential or deploying.
+  building or deploying. For `dev` it also resolves the RevenueCat sandbox
+  values (below), which are public bundle values, not credentials, and says
+  what is missing; it never prints them.
 - **Every deploy refuses uncommitted or untracked files**, as OTA updates do.
   The Help Center snapshot a build fetches goes into the export only;
   `web:build` puts `src/assets/help-center/` back as it was afterwards.
@@ -233,6 +235,21 @@ pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-a
   `--preview` uploads a version to a
   `workers.dev` preview URL without touching `app-dev`, from any clean
   branch.
+- **dev's RevenueCat sandbox values.** The paywall needs
+  `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY` and
+  `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`). A dev
+  build or deploy takes them from the env files (`.env`, `.env.local`) and,
+  for whichever is empty, from the 1Password Agents vault item named by
+  `revenueCatWebItem` in `config/web-environments.json`
+  (`RevenueCat web billing sandbox (W6)`, one field per variable, labelled with
+  its name). So a clean checkout deploys the same paywall as one with the
+  files, given `op` signed in as the agents' service account or the 1Password
+  app. A dev deploy (`--preview` too) **refuses** when the key or links are
+  still missing, when the key isn't a sandbox key (`rcb_sb_…`), or when the
+  links aren't a JSON object with at least one `sandbox/…` value, and after
+  building it checks the bundle holds the key. A local `pnpm web:build` or
+  `pnpm web:serve` without them still runs, with a warning, and an app that
+  can't sell. Beta and production never read the sandbox item.
 - **beta:** goes out with every Beta build (`scripts/build-beta.sh`, see the
   `beta-build` skill), against production ww-api. It's skipped, with `WEB_RESULT status=skipped`, when the beta profile's Help Center site doesn't answer, since the build would fail. It uses wrangler's own login
   on this Mac (`wrangler login`), like the other WitnessWork Workers.

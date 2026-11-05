@@ -31,6 +31,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         <Header
           buttonType='back'
           title={i18n.t(editing ? 'updateTime' : 'addTime')}
+          noBottomBorder
         />
       ),
     })

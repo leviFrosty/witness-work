@@ -19,7 +19,11 @@ const TypeFormRow = (props: {
 
   invalid?: boolean
   hint?: string
+
+  plain?: boolean
+  paddingX?: number
 }) => {
+  const paddingX = props.paddingX ?? FORM_ROW_PADDING_X
   const theme = useTheme()
   const layout = useDockedFormLayout()
   const row = useRef<View>(null)
@@ -37,15 +41,16 @@ const TypeFormRow = (props: {
           }
           props.onChange(selection)
         }}
-        leftIcon={TagIcon}
+        plain={props.plain}
+        leftIcon={props.plain ? undefined : TagIcon}
         onCustomNameFocus={() => layout.fieldFocused({ container: row })}
         lastInSection
         style={{
           minHeight: FORM_ROW_MIN_HEIGHT,
           paddingTop: 6,
           paddingBottom: 6,
-          paddingLeft: FORM_ROW_PADDING_X,
-          paddingRight: FORM_ROW_PADDING_X,
+          paddingLeft: paddingX,
+          paddingRight: paddingX,
         }}
       />
       {props.hint && (
@@ -53,7 +58,7 @@ const TypeFormRow = (props: {
           style={{
             color: theme.colors.textAlt,
             fontSize: 12,
-            paddingHorizontal: FORM_ROW_PADDING_X,
+            paddingHorizontal: paddingX,
             paddingBottom: 12,
           }}
         >

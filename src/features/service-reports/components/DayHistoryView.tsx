@@ -1,7 +1,6 @@
 import {
   CalendarDays as CalendarDaysIcon,
   Clock as ClockIcon,
-  Maximize2 as Maximize2Icon,
   Plus as PlusIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -19,7 +18,14 @@ import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
-import { ReactNode, RefObject, useMemo, useRef, useState } from 'react'
+import {
+  ReactNode,
+  RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import useServiceReport from '@/stores/serviceReport'
 import XView from '@/components/ui/layout/XView'
 import {
@@ -34,8 +40,7 @@ import DayHistoryHeader from '@/features/service-reports/components/DayHistoryHe
 import TimeEntryForm, {
   type TimeEntryDraft,
 } from '@/features/service-reports/components/TimeEntryForm'
-import CollapsibleCard from '@/components/ui/CollapsibleCard'
-import PointerTooltip from '@/components/ui/PointerTooltip'
+import DayFormCard from '@/features/service-reports/components/DayFormCard'
 
 export type PlanFormDraft = { params: () => RootStackParamList['PlanDay'] }
 
@@ -81,6 +86,8 @@ interface DayHistoryViewProps {
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
 
   onFormOpen?: (card: View) => void
+
+  onTimeFormOpenChange?: (open: boolean) => void
 
   onPlanOpen?: (target: RootStackParamList['Plan Details']) => void
 
@@ -138,29 +145,6 @@ const EmptyActionButton = (props: {
   )
 }
 
-const ExpandButton = (props: { onPress: () => void; testID?: string }) => {
-  const theme = useTheme()
-  return (
-    <PointerTooltip label={i18n.t('openFullScreen')}>
-      <IconButton
-        noTransform
-        icon={Maximize2Icon}
-        size={16}
-        color={theme.colors.textAlt}
-        onPress={props.onPress}
-        accessibilityLabel={i18n.t('openFullScreen')}
-        testID={props.testID}
-        style={{
-          width: 44,
-          height: 44,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      />
-    </PointerTooltip>
-  )
-}
-
 const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   date,
   serviceReports = [],
@@ -174,6 +158,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   inlineForms,
   renderPlanForm,
   onFormOpen,
+  onTimeFormOpenChange,
   onPlanOpen,
   onPlanEdit,
   onExpandTime,
@@ -207,7 +192,14 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
   const hasPlans = planItems.length > 0
   const inlineTimeForm = inlineForms && !!onAddTime && !hasTimeReports
   const inlinePlanForm = inlineForms && !!renderPlanForm && !hasPlans
-  const [timeFormOpen, setTimeFormOpen] = useState(false)
+
+  const unfoldsTimeForm = !moment(date).isAfter(moment(), 'day')
+  const [timeFormUnfolded, setTimeFormOpen] = useState(unfoldsTimeForm)
+  const timeFormOpen = !!inlineTimeForm && timeFormUnfolded
+  useEffect(() => {
+    onTimeFormOpenChange?.(timeFormOpen)
+    return () => onTimeFormOpenChange?.(false)
+  }, [timeFormOpen, onTimeFormOpenChange])
   const [planFormOpen, setPlanFormOpen] = useState(false)
   const timeCard = useRef<View>(null)
   const planCard = useRef<View>(null)
@@ -273,21 +265,24 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           )}
         </XView>
         {inlineTimeForm ? (
-          <CollapsibleCard
+          <DayFormCard
             ref={timeCard}
-            label={i18n.t('addTime')}
+            title={i18n.t('addTime')}
+            icon={PlusIcon}
+            openIcon={ClockIcon}
+            subtitle={
+              unfoldsTimeForm ? i18n.t('timeForm_noTimeLogged') : undefined
+            }
             open={timeFormOpen}
             onOpenChange={toggleForm(setTimeFormOpen, timeCard)}
-            accessory={
-              onExpandTime ? (
-                <ExpandButton
-                  onPress={expand(timeDraft, setTimeFormOpen, onExpandTime, {
+            onExpand={
+              onExpandTime
+                ? expand(timeDraft, setTimeFormOpen, onExpandTime, {
                     date: date.toISOString(),
-                  })}
-                  testID='day-time-form-expand'
-                />
-              ) : undefined
+                  })
+                : undefined
             }
+            expandTestID='day-time-form-expand'
             testID='day-time-form'
           >
             <TimeEntryForm
@@ -297,7 +292,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
               source='day_sheet'
               onDone={() => setTimeFormOpen(false)}
             />
-          </CollapsibleCard>
+          </DayFormCard>
         ) : (
           <View style={{ flex: 1, minHeight: 10 }}>
             <FlashList
@@ -375,21 +370,21 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
           )}
         </XView>
         {inlinePlanForm ? (
-          <CollapsibleCard
+          <DayFormCard
             ref={planCard}
-            label={i18n.t('planDay')}
+            title={i18n.t('planDay')}
+            icon={CalendarDaysIcon}
+            openIcon={CalendarDaysIcon}
             open={planFormOpen}
             onOpenChange={toggleForm(setPlanFormOpen, planCard)}
-            accessory={
-              onExpandPlan ? (
-                <ExpandButton
-                  onPress={expand(planDraft, setPlanFormOpen, onExpandPlan, {
+            onExpand={
+              onExpandPlan
+                ? expand(planDraft, setPlanFormOpen, onExpandPlan, {
                     date: date.toISOString(),
-                  })}
-                  testID='day-plan-form-expand'
-                />
-              ) : undefined
+                  })
+                : undefined
             }
+            expandTestID='day-plan-form-expand'
             testID='day-plan-form'
           >
             {renderPlanForm?.({
@@ -399,7 +394,7 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
 
               onDone: () => setPlanFormOpen(false),
             })}
-          </CollapsibleCard>
+          </DayFormCard>
         ) : (
           <View style={{ flex: 1, minHeight: 10 }}>
             <FlashList

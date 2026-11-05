@@ -169,6 +169,7 @@ const ServiceReportSection = () => {
             glassTint={theme.colors.accent}
             accessibilityLabel={i18n.t('addTime')}
             onPress={addTime}
+            testID='home-add-time'
             style={{
               width: '100%',
               minHeight: 48,

@@ -61,6 +61,8 @@ type Props = {
   onBackPress?: () => void
 
   onHeightChange?: (height: number) => void
+
+  minRatio?: number
 }
 
 export default function SplitSheet({
@@ -71,6 +73,7 @@ export default function SplitSheet({
   children,
   onBackPress,
   onHeightChange,
+  minRatio,
 }: Props) {
   const theme = useTheme()
   const holdId = useId()
@@ -87,7 +90,8 @@ export default function SplitSheet({
   const setRatio = useSplitSheetPreferences((s) => s.setRatio)
   const minHeight = windowHeight * SPLIT_SHEET_MIN_RATIO
   const maxHeight = windowHeight * SPLIT_SHEET_MAX_RATIO
-  const restingHeight = windowHeight * clampSplitSheetRatio(ratio)
+  const restingHeight =
+    windowHeight * Math.max(clampSplitSheetRatio(ratio), minRatio ?? 0)
   const [mounted, setMounted] = useState(open)
   const [keyboardUp, setKeyboardUp] = useState(false)
   const targetHeight = keyboardUp

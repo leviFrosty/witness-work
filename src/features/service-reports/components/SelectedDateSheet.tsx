@@ -20,6 +20,7 @@ import DayHistoryView, {
   type PlanFormSlot,
 } from '@/features/service-reports/components/DayHistoryView'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import { SPLIT_SHEET_MAX_RATIO } from '@/stores/splitSheet'
 
 export type SelectedDateSheetState = {
   open: boolean
@@ -77,6 +78,8 @@ const SelectedDateSheet: React.FC<Props> = ({
   const animation = useContext(AnimationViewContext)
   const [form, setForm] = useState<DayForm | null>(null)
 
+  const [timeFormUnfolded, setTimeFormUnfolded] = useState(false)
+
   const dayKey = sheet.date.getTime()
   const [shown, setShown] = useState({ open: sheet.open, dayKey })
   if (shown.open !== sheet.open || shown.dayKey !== dayKey) {
@@ -107,7 +110,7 @@ const SelectedDateSheet: React.FC<Props> = ({
       card.measureLayout(
         scrollView as unknown as View,
         (_x, y) =>
-          scrollView.scrollTo({ y: Math.max(0, y - 8), animated: true }),
+          scrollView.scrollTo({ y: Math.max(0, y - 40), animated: true }),
         () => {}
       )
     }, REVEAL_FORM_DELAY_MS)
@@ -233,6 +236,11 @@ const SelectedDateSheet: React.FC<Props> = ({
 
   return (
     <SplitSheet
+      minRatio={
+        timeFormUnfolded && !form && !planDetailsSlot
+          ? SPLIT_SHEET_MAX_RATIO
+          : undefined
+      }
       open={sheet.open}
       hidden={!focused}
       onOpenChange={(open) => setSheet({ ...sheet, open })}
@@ -310,6 +318,7 @@ const SelectedDateSheet: React.FC<Props> = ({
               inlineForms
               renderPlanForm={renderPlanForm}
               onFormOpen={revealForm}
+              onTimeFormOpenChange={setTimeFormUnfolded}
               onExpandTime={(params) => navigation.navigate('Add Time', params)}
               onExpandPlan={(params) => navigation.navigate('PlanDay', params)}
             />

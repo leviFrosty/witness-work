@@ -9,16 +9,16 @@ name: Log time in a day's sheet without leaving the day
 # Every flow starts on freshly remounted screens; setup opened today on
 # Schedule as the Calendar widget's link does
 # (witnesswork://schedule/<today>). Today has no time yet (setup cleared it), so
-# the time form is folded into the day's Time Reports under Add Time. (Home has
-# an Add Time button too, so wait for the day's section.)
+# the day's Time Reports open with the Add Time form already unfolded. (Home
+# has an Add Time button too, so wait for the day's section.)
 - extendedWaitUntil:
     visible: TIME REPORTS
     timeout: 60000
 # Android lists the sheet's rows only once it has slid into view.
 - waitForAnimationToEnd
-- tapOn:
-    id: day-time-form
-- assertVisible: Submit
+# Type shows only in the unfolded form. (An id wait times out over the
+# calendar's long accessibility tree on iOS.)
+- assertVisible: Type
 # Note opens the full-screen note editor; the sheet steps aside for it and
 # comes back with the form as it was (the assert reads the saved note).
 - tapOn:
@@ -31,7 +31,7 @@ name: Log time in a day's sheet without leaving the day
 - inputText: Logged from the day
 - tapOn:
     id: note-editor-done
-- assertVisible: Submit
+- assertVisible: Type
 - tapOn:
     id: time-entry-duration-pill
 # The calendar behind the picker shows small numbers too, so pick the hours

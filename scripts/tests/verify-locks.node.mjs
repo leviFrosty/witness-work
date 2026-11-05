@@ -930,6 +930,83 @@ test('androidUnlockStep: storage first, then the lock screen', async () => {
   assert.equal(androidUnlockStep('State: RUNNING_UNLOCKED', hidden), null)
 })
 
+// agent-device runs one daemon per machine. One started where CoreSimulator
+// can't be reached failed every iOS open, for every worktree, while up waited
+// five minutes for a JS runtime that was never launched.
+test('openApp: recovers a stale session or a daemon cut off from simulators, else fails at once', async () => {
+  const { openApp } = await import(VERIFY)
+  const unreachable =
+    'Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=Unable to lookup com.apple.CoreSimulator.CoreSimulatorService'
+  const harness = (results, { reachable = true, running = false } = {}) => {
+    const calls = []
+    return {
+      calls,
+      io: {
+        open: () => {
+          calls.push('open')
+          return results.shift()
+        },
+        closeSession: () => calls.push('close'),
+        simulatorsReachable: () => reachable,
+        restartDaemon: () => calls.push('restart'),
+        appRunning: async () => running,
+        log: () => {},
+      },
+    }
+  }
+  const ok = { status: 0, stdout: '', stderr: '' }
+  const failed = (stderr) => ({ status: 1, stdout: '', stderr })
+  const iphone = { platform: 'ios', name: 'WW Verify iPhone 1' }
+
+  const first = harness([ok])
+  await openApp(iphone, first.io)
+  assert.deepEqual(first.calls, ['open'])
+
+  const daemon = harness([failed(unreachable), ok])
+  await openApp(iphone, daemon.io)
+  assert.deepEqual(daemon.calls, ['open', 'restart', 'open'])
+
+  const shell = harness([failed(unreachable)], { reachable: false })
+  await assert.rejects(openApp(iphone, shell.io), /CoreSimulator/)
+  assert.deepEqual(
+    shell.calls,
+    ['open'],
+    'no restart when this shell is cut off too'
+  )
+
+  const session = harness([
+    failed(
+      'Session already active. Close it first or pass a new --session name.'
+    ),
+    ok,
+  ])
+  await openApp(iphone, session.io)
+  assert.deepEqual(session.calls, ['open', 'close', 'open'])
+
+  const other = harness([
+    failed('APP_NOT_INSTALLED: com.leviwilkerson.jwtimedev'),
+  ])
+  await assert.rejects(openApp(iphone, other.io), /APP_NOT_INSTALLED/)
+  assert.deepEqual(other.calls, ['open'])
+
+  const running = harness([failed('COMMAND_FAILED')], { running: true })
+  await openApp(iphone, running.io)
+
+  // The same daemon started inside a sandbox says this instead.
+  const sandboxed = harness([
+    failed('simctl[55248] CoreSimulatorService connection became invalid.'),
+    ok,
+  ])
+  await openApp(iphone, sandboxed.io)
+  assert.deepEqual(sandboxed.calls, ['open', 'restart', 'open'])
+
+  const android = harness([failed(unreachable)])
+  await assert.rejects(
+    openApp({ platform: 'android', name: 'ww-verify-1' }, android.io)
+  )
+  assert.deepEqual(android.calls, ['open'])
+})
+
 test('actsOnRef: ref commands skip the open that would expire their ref', async () => {
   const { actsOnRef } = await import(VERIFY)
   assert.equal(actsOnRef(['press', '@e12']), true)

@@ -1854,7 +1854,6 @@
   "contacts_pinStaleness_week": "Uno Mweshi",
   "contacts_pinStaleness_month": "Cakokola",
   "contacts_stalenessChip_all": "Fyonse",
-  "contacts_filtersChip": "Imisalo",
   "contacts_searchPlaceholder": {
     "one": "Fwaya umuntu 1 wa kulanshanya",
     "other": "Fwaya abantu {{count}} ba kulanshanya"

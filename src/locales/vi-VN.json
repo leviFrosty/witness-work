@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Tháng này",
   "contacts_pinStaleness_month": "Cũ",
   "contacts_stalenessChip_all": "Tất cả",
-  "contacts_filtersChip": "Bộ lọc",
   "contacts_searchPlaceholder": {
     "one": "Tìm trong 1 liên hệ",
     "other": "Tìm trong {{count}} liên hệ"

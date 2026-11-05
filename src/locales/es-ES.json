@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Este mes",
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "Todos",
-  "contacts_filtersChip": "Filtros",
   "contacts_searchPlaceholder": {
     "one": "Buscar 1 contacto",
     "other": "Buscar {{count}} contactos"

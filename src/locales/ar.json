@@ -2850,7 +2850,6 @@
   "contacts_pinStaleness_week": "هذا الشهر",
   "contacts_pinStaleness_month": "منذ مدة",
   "contacts_stalenessChip_all": "الكل",
-  "contacts_filtersChip": "عوامل التصفية",
   "contacts_searchPlaceholder": {
     "zero": "ابحث في {{count}} جهة اتصال",
     "one": "ابحث في جهة اتصال واحدة",

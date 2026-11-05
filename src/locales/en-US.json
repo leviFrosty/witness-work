@@ -2711,7 +2711,6 @@
   "contacts_pinStaleness_week": "This month",
   "contacts_pinStaleness_month": "Stale",
   "contacts_stalenessChip_all": "All",
-  "contacts_filtersChip": "Filters",
   "contacts_searchPlaceholder": {
     "one": "Search 1 contact",
     "other": "Search {{count}} contacts"

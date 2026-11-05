@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "本月",
   "contacts_pinStaleness_month": "陳舊",
   "contacts_stalenessChip_all": "全部",
-  "contacts_filtersChip": "篩選",
   "contacts_searchPlaceholder": {
     "one": "搜尋 1 位聯絡人",
     "other": "搜尋 {{count}} 位聯絡人"

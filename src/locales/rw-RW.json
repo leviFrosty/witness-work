@@ -2655,7 +2655,6 @@
   "contacts_pinStaleness_week": "Iyi week",
   "contacts_pinStaleness_month": "Uku kwezi",
   "contacts_stalenessChip_all": "Byose",
-  "contacts_filtersChip": "Imyunguruzi",
   "contacts_searchPlaceholder": {
     "one": "Shakisha umuntu 1",
     "other": "Shakisha mu bantu {{count}}"

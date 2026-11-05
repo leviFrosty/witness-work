@@ -49,6 +49,8 @@ type Props = {
   style?: StyleProp<ViewStyle>
 
   onCustomNameFocus?: () => void
+
+  plain?: boolean
 }
 
 const TypeSelectorRow = ({
@@ -59,6 +61,7 @@ const TypeSelectorRow = ({
   leftIcon,
   style,
   onCustomNameFocus,
+  plain,
 }: Props) => {
   const theme = useTheme()
   const { categories, addCategory, updateCategory, deleteCategory } =
@@ -183,6 +186,7 @@ const TypeSelectorRow = ({
         justifyContent='space-between'
       >
         <Select
+          variant={plain ? 'plain' : 'field'}
           data={typeOptions}
           onChange={({ value: c }) => handleSelect(c)}
           value={value}

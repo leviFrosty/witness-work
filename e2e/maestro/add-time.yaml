@@ -10,12 +10,16 @@ name: Log time from the Home service report card
 - extendedWaitUntil:
     visible: Add Time
     timeout: 60000
-- tapOn: Add Time
-- assertVisible: Submit
-# An empty Submit must stay on the form and outline Time, rather than saving.
+# Scribe's quick actions have an Add Time too; open the report card's.
+- tapOn:
+    id: home-add-time
+- assertVisible:
+    id: time-entry-save
+# An empty Add must stay on the form and outline the time, rather than saving.
 - tapOn:
     id: time-entry-save
-- assertVisible: Submit
+- assertVisible:
+    id: time-entry-preset-120
 # Note opens the full-screen note editor with the cursor already in it.
 - tapOn:
     id: time-entry-note-row
@@ -28,15 +32,9 @@ name: Log time from the Home service report card
 # Done closes the editor; the note stays on the form until it's saved.
 - tapOn:
     id: note-editor-done
+# The 2-hour preset sets the time in one tap.
 - tapOn:
-    id: time-entry-duration-pill
-# The hours and minutes wheels both show a "2"; either one logs time. Android's
-# wheel can settle a row short of the tapped value; the assert reads the stored entry.
-- tapOn:
-    text: '2'
-    index: 0
-- tapOn:
-    id: time-entry-picker-done
+    id: time-entry-preset-120
 - tapOn:
     id: time-entry-save
 - assertVisible: Add Time

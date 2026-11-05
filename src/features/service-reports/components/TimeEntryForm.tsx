@@ -25,11 +25,18 @@ import type { RootStackParamList } from '@/types/rootStack'
 import i18n from '@/lib/locales'
 import { measureReward } from '@/lib/actionRewards'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
-import FormDetailsSection from '@/components/ui/inputs/FormDetailsSection'
-import Section from '@/components/ui/inputs/Section'
-import NoteFormRow from '@/components/ui/inputs/NoteFormRow'
+import { useCardStyle } from '@/components/ui/Card'
 import TypeFormRow from '@/components/TypeFormRow'
-import WhenDock from '@/components/WhenDock'
+import { useOpenNoteEditor } from '@/hooks/useOpenNoteEditor'
+import { useFormattedMinutes } from '@/lib/minutes'
+import { entryMinutes } from '@/lib/entryMinutes'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import DurationInput, {
+  type DurationInputMethod,
+} from '@/features/service-reports/components/DurationInput'
+import DetailRow from '@/features/service-reports/components/DetailRow'
+import EntryDateRow from '@/features/service-reports/components/EntryDateRow'
+import MonthPreview from '@/features/service-reports/components/MonthPreview'
 import { usePreferences } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
 import {
@@ -91,6 +98,9 @@ type Props = TimeEntryPrefill & {
 
 const TimeEntryForm = (props: Props) => {
   const theme = useTheme()
+  const cardStyle = useCardStyle()
+  const insets = useSafeAreaInsets()
+  const openNote = useOpenNoteEditor()
   const {
     role: currentRole,
     roleHistory,
@@ -132,6 +142,8 @@ const TimeEntryForm = (props: Props) => {
   })()
 
   const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
+
+  const [durationInput, setDurationInput] = useState<DurationInputMethod>()
   const [serviceReport, setServiceReport] = useState<TimeEntry>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || props.hours || 0,
@@ -308,6 +320,7 @@ const TimeEntryForm = (props: Props) => {
       source: props.source,
       entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
+      duration_input: durationInput ?? 'prefilled',
       ...noteAnalytics(entry),
     })
     toast.success(progress.added, {
@@ -327,6 +340,7 @@ const TimeEntryForm = (props: Props) => {
       source: props.source,
       entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
+      duration_input: durationInput ?? 'prefilled',
       ...noteAnalytics(entry),
     })
     toast.success(i18n.t('success'), {
@@ -370,66 +384,87 @@ const TimeEntryForm = (props: Props) => {
     serviceReport.hours === 0 &&
     serviceReport.minutes < 1
 
+  const total = entryMinutes(serviceReport)
+  const { formatted: duration } = useFormattedMinutes(total)
+
   const saveButton = (
     <ActionButton
       onPress={existingServiceReport ? save : submit}
       testID='time-entry-save'
     >
-      {i18n.t(existingServiceReport ? 'save' : 'submit')}
+      {existingServiceReport
+        ? i18n.t('save')
+        : total > 0
+          ? i18n.t('timeForm_addDuration', { duration })
+          : i18n.t('addTime')}
     </ActionButton>
   )
 
   const inline = props.layout === 'inline'
+  const paddingX = inline ? 0 : 16
 
-  const dock = (
-    <WhenDock
-      durationInvalid={validation.invalid('duration')}
-      testID='time-entry'
-      date={serviceReport.date}
-      setDate={setDate}
+  const durationControl = (
+    <DurationInput
+      size={inline ? 'compact' : 'large'}
       hours={serviceReport.hours}
       minutes={serviceReport.minutes}
       setDuration={setDuration}
-      durationLabel={i18n.t('time')}
-      maxHours={99}
-      minuteStep={1}
-      notice={
-        providedLessThanOneMinute && (
-          <Text style={{ color: theme.colors.warnText }}>
-            {i18n.t('providedTimeIsLessThanOneMinute')}
-          </Text>
-        )
-      }
-      saveButton={inline ? null : saveButton}
-      inline={inline}
-      hideDate={inline}
+      onInput={setDurationInput}
+      invalid={validation.invalid('duration')}
+      testID='time-entry'
     />
   )
-
-  const detailRows = [
-    <NoteFormRow
-      key='note'
-      first
-      note={serviceReport}
-      onChange={setNote}
-      surface='time_entry'
-      maxLength={500}
-      testID='time-entry-note'
-    />,
+  const notice = providedLessThanOneMinute && (
+    <Text style={{ color: theme.colors.warnText, marginTop: 8 }}>
+      {i18n.t('providedTimeIsLessThanOneMinute')}
+    </Text>
+  )
+  const noteText = serviceReport.note?.trim().split('\n')[0]
+  const editNote = () =>
+    openNote({
+      surface: 'time_entry',
+      doc: getNoteDoc(serviceReport),
+      title: i18n.t('note'),
+      placeholder: i18n.t('timeForm_optional'),
+      characterLimit: 500,
+      allowImages: true,
+      onChange: (doc) => setNote(noteFields(doc)),
+    })
+  const typeRow = (
     <TypeFormRow
+      plain
+      paddingX={paddingX}
       invalid={validation.invalid('category')}
-      key='type'
       value={selectedValue}
       onChange={handleTypeChange}
       hint={hasSelectedCategory ? undefined : i18n.t('categoryNeeded')}
-    />,
-  ]
+    />
+  )
+  const noteRow = (
+    <DetailRow
+      divider
+      label={i18n.t('note')}
+      value={
+        noteText ||
+        i18n.t(
+          hasNote(serviceReport) ? 'timeForm_noteAdded' : 'timeForm_optional'
+        )
+      }
+      onPress={editNote}
+      paddingX={paddingX}
+      testID='time-entry-note-row'
+    />
+  )
 
   if (inline) {
     return (
-      <View style={{ gap: 12 }}>
-        {dock}
-        <Section>{detailRows}</Section>
+      <View>
+        {durationControl}
+        {notice}
+        <View style={{ marginTop: 16, marginBottom: 12 }}>
+          {typeRow}
+          {noteRow}
+        </View>
         {saveButton}
       </View>
     )
@@ -437,21 +472,61 @@ const TimeEntryForm = (props: Props) => {
 
   return (
     <DockedFormLayout
-      dock={dock}
+      dock={
+        <View
+          style={{
+            paddingTop: 12,
+            paddingHorizontal: inputLayout.horizontalPadding,
+            paddingBottom: Math.max(insets.bottom, 12),
+            backgroundColor: theme.colors.background,
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              maxWidth: inputLayout.contentMaxWidth,
+              alignSelf: 'center',
+            }}
+          >
+            {saveButton}
+          </View>
+        </View>
+      }
       contentContainerStyle={{
         flexGrow: 1,
-
-        justifyContent: 'flex-end',
-        gap: 12,
-        paddingTop: 10,
-        paddingBottom: 16,
+        paddingTop: 16,
+        paddingBottom: 8,
         paddingHorizontal: inputLayout.horizontalPadding,
         width: '100%',
         maxWidth: inputLayout.contentMaxWidth,
         alignSelf: 'center',
       }}
     >
-      <FormDetailsSection>{detailRows}</FormDetailsSection>
+      {}
+      <View style={{ flexGrow: 1 }} />
+      <View
+        style={{
+          ...cardStyle,
+          shadowOpacity: 0,
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+        }}
+      >
+        <MonthPreview entry={savedEntry()} />
+      </View>
+      <View style={{ height: 24 }} />
+      {durationControl}
+      {notice}
+      <View style={{ height: 28 }} />
+      <View style={{ ...cardStyle, shadowOpacity: 0 }}>
+        <EntryDateRow
+          date={serviceReport.date}
+          setDate={setDate}
+          paddingX={paddingX}
+        />
+        {typeRow}
+        {noteRow}
+      </View>
       {existingServiceReport && (
         <Button
           noTransform
@@ -461,6 +536,7 @@ const TimeEntryForm = (props: Props) => {
             alignItems: 'center',
             justifyContent: 'center',
             paddingVertical: 12,
+            marginTop: 8,
           }}
         >
           <Text

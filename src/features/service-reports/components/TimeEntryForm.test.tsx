@@ -22,6 +22,16 @@ vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, fontSize: () => 16 }),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}))
+vi.mock('@/lib/minutes', () => ({
+  useFormattedMinutes: (minutes: number) => ({ formatted: `${minutes}m` }),
+}))
+vi.mock('@/hooks/useOpenNoteEditor', () => ({
+  useOpenNoteEditor: () => vi.fn(),
+}))
+vi.mock('@/components/ui/Card', () => ({ useCardStyle: () => ({}) }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ role: 'pioneer', publisherHours: { pioneer: 0 } }),
 }))
@@ -80,26 +90,28 @@ vi.mock('@/components/ui/layout/DockedFormLayout', () => ({
   default: (props: { dock: React.ReactNode; children: React.ReactNode }) =>
     React.createElement('DockedFormLayout', props, props.children, props.dock),
 }))
-vi.mock('@/components/ui/inputs/FormDetailsSection', () => ({
-  default: 'FormDetailsSection',
-}))
-vi.mock('@/components/ui/inputs/Section', () => ({ default: 'Section' }))
-vi.mock('@/components/ui/inputs/NoteFormRow', () => ({
-  default: 'NoteFormRow',
-}))
 vi.mock('@/components/TypeFormRow', () => ({ default: 'TypeFormRow' }))
+vi.mock('@/features/service-reports/components/DurationInput', () => ({
+  default: 'DurationInput',
+}))
+vi.mock('@/features/service-reports/components/DetailRow', () => ({
+  default: 'DetailRow',
+}))
+vi.mock('@/features/service-reports/components/EntryDateRow', () => ({
+  default: 'EntryDateRow',
+}))
+vi.mock('@/features/service-reports/components/MonthPreview', () => ({
+  default: 'MonthPreview',
+}))
 vi.mock('@/components/TypeSelectorRow', () => ({
   CUSTOM_TYPE_VALUE: '__custom__',
   STANDARD_TYPE_VALUE: 'standard',
 }))
 
-vi.mock('@/components/WhenDock', () => ({
-  default: (props: { saveButton: React.ReactNode }) =>
-    React.createElement('WhenDock', props, props.saveButton),
-}))
-
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 let renderer: ReactTestRenderer
+const saveLabel = () =>
+  renderer.root.findByType('ActionButton' as never).props.children
 async function pressSave() {
   await act(async () =>
     renderer.root.findByType('ActionButton' as never).props.onPress()
@@ -113,7 +125,7 @@ afterEach(async () => {
 
 describe('Time Entry submission', () => {
   it.each(['docked', 'inline'] as const)(
-    'keeps %s Submit enabled and guards writes and success effects until duration is entered',
+    'keeps %s Add enabled and guards writes and success effects until duration is entered',
     async (layout) => {
       vi.useFakeTimers()
       await act(async () => {
@@ -135,18 +147,23 @@ describe('Time Entry submission', () => {
       expect(mocks.noteAction).not.toHaveBeenCalled()
       expect(mocks.toast).not.toHaveBeenCalled()
       expect(mocks.done).not.toHaveBeenCalled()
-      expect(
-        renderer.root.findByType('WhenDock' as never).props.durationInvalid
-      ).toBe(true)
-      await act(async () =>
-        renderer.root.findByType('WhenDock' as never).props.setDuration(1, 0)
-      )
-      expect(
-        renderer.root.findByType('WhenDock' as never).props.durationInvalid
-      ).toBe(false)
+      const duration = () => renderer.root.findByType('DurationInput' as never)
+      expect(duration().props.invalid).toBe(true)
+      expect(saveLabel()).toBe('addTime')
+      await act(async () => {
+        duration().props.setDuration(1, 0)
+        duration().props.onInput('preset')
+      })
+      expect(duration().props.invalid).toBe(false)
+
+      expect(saveLabel()).toBe('timeForm_addDuration')
       await pressSave()
       expect(mocks.add).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({ hours: 1, minutes: 0 })
+      )
+      expect(mocks.capture).toHaveBeenCalledWith(
+        'time_entry_created',
+        expect.objectContaining({ duration_input: 'preset' })
       )
       expect(mocks.toast).toHaveBeenCalledExactlyOnceWith('added', {
         message: 'progress',

@@ -1,6 +1,15 @@
-import { ChevronDown as ChevronDownIcon } from 'lucide-react-native'
+import {
+  ChevronDown as ChevronDownIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
+} from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { StyleProp, useWindowDimensions, View, ViewStyle } from 'react-native'
+import {
+  Platform,
+  StyleProp,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from 'react-native'
 import SelectMenu, { type SelectMenuItem } from '@/components/ui/SelectMenu'
 import useTheme from '@/contexts/theme'
 import Text from '@/components/ui/MyText'
@@ -23,6 +32,8 @@ export interface SelectProps<T> {
   placeholder?: string
   accessibilityLabel?: string
   style?: StyleProp<ViewStyle>
+
+  variant?: 'field' | 'plain'
 }
 
 const Select = <T,>({
@@ -32,6 +43,7 @@ const Select = <T,>({
   style,
   placeholder,
   accessibilityLabel,
+  variant = 'field',
 }: SelectProps<T>) => {
   const theme = useTheme()
 
@@ -45,6 +57,7 @@ const Select = <T,>({
     return String(itemValue) === String(value)
   }
   const selectedLabel = items.find((i) => isSelected(i.value))?.label
+  const plain = variant === 'plain'
 
   const menuItems = items.map((item) => ({
     id: String(item.value),
@@ -66,26 +79,35 @@ const Select = <T,>({
     >
       <View
         style={[
-          {
-            backgroundColor: theme.colors.background,
-            borderColor: theme.colors.border,
-            borderWidth: 1,
-            paddingHorizontal: 12,
-            borderRadius: theme.numbers.borderRadiusMd,
-            minHeight: inputLayout.controlMinHeight,
-            paddingVertical: enlarged ? 8 : undefined,
-            gap: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          },
+          plain
+            ? {
+                minHeight: 44,
+                paddingVertical: enlarged ? 8 : undefined,
+                gap: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+              }
+            : {
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                paddingHorizontal: 12,
+                borderRadius: theme.numbers.borderRadiusMd,
+                minHeight: inputLayout.controlMinHeight,
+                paddingVertical: enlarged ? 8 : undefined,
+                gap: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              },
           style,
         ]}
       >
         <ValueText
           numberOfLines={enlarged ? undefined : 1}
           style={{
-            color: theme.colors.text,
+            color: plain ? theme.colors.textAlt : theme.colors.text,
             fontSize: theme.fontSize('md'),
             flexShrink: 1,
           }}
@@ -93,9 +115,13 @@ const Select = <T,>({
           {selectedLabel ?? placeholder ?? ''}
         </ValueText>
         <LucideIcon
-          icon={ChevronDownIcon}
-          color={theme.colors.text}
-          size={14}
+          icon={
+            plain && Platform.OS === 'ios'
+              ? ChevronsUpDownIcon
+              : ChevronDownIcon
+          }
+          color={plain ? theme.colors.textAlt : theme.colors.text}
+          size={plain ? 16 : 14}
         />
       </View>
     </SelectMenu>

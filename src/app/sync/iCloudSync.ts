@@ -157,8 +157,11 @@ import {
   type PhotoReferences,
 } from '@/app/sync/publishedPhotos'
 import {
+  pendingPhotoDeletes,
+  photoDeletesDone,
   publishedPhotosMark,
   rebasePublishedPhotos,
+  setPhotoReferenceReader,
   takeReplacedPhotos,
 } from '@/app/sync/photoBaseline'
 import { onPhotoRoom } from '@/lib/syncTransport/server/photoUsage'
@@ -1349,34 +1352,63 @@ function startImagePush(
  */
 const deletesReplacedPhotos = () =>
   syncTransport().kind === 'cloud' && photosTravel()
+// A baseline saved by an earlier launch is rebased with what this launch reads.
+setPhotoReferenceReader(currentPhotoReferences)
 
 /**
- * After a publish without them: deletes the photos the User replaced or removed
- * since the last publish, once the photo uploads ahead have run.
+ * After a publish without them: records the photos the User replaced or removed
+ * since the last publish, and deletes them (`deletePendingPhotos`).
  */
 function deleteReplacedPhotos(references: PhotoReferences, mark: number): void {
-  const replaced = takeReplacedPhotos(
+  takeReplacedPhotos(
     syncTransport().identityToken(),
     references,
     mark,
     currentPhotoReferences
   )
-  if (!replaced.length) return
+  deletePendingPhotos()
+}
+
+/**
+ * Deletes the replaced photos whose delete hasn't finished, once the photo
+ * uploads ahead have run: those just found, and those left by a publish before
+ * a kill or a failed delete. Only after a complete pull: with a pull that
+ * failed or stopped short, another device's newer record may still refer to a
+ * photo this device's records dropped, and the merge that brings it in is what
+ * says so. A photo the records refer to when the delete runs isn't deleted (it
+ * came back, or another device's record keeps it). A delete that fails stays
+ * for the next try.
+ */
+function deletePendingPhotos(): void {
+  if (!deletesReplacedPhotos() || !lastPullComplete) return
+  if (!pendingPhotoDeletes(syncTransport().identityToken()).length) return
   void serializeImages(async () => {
-    if (!deletesReplacedPhotos()) return
+    if (!deletesReplacedPhotos() || !lastPullComplete) return
+    const pending = pendingPhotoDeletes(syncTransport().identityToken())
+    if (!pending.length) return
+    const { all } = currentPhotoReferences()
+    const done: string[] = []
     const deleted: string[] = []
-    for (const filename of replaced) {
+    for (const filename of pending) {
+      if (all.has(filename)) {
+        done.push(filename)
+        continue
+      }
       try {
         await withTransportTimeout(
           'photo delete',
           syncTransport().deleteBinaryFile(filename)
         )
         deleted.push(filename)
+        done.push(filename)
       } catch (e) {
-        // Cleanup deletes it later, after its grace.
+        // Tried again with the next publish or launch; cleanup's grace is the
+        // backstop.
         logger.warn(`${tag()} replaced photo delete failed`, e)
+        if (syncTransportErrorCode(e) === 'not-found') done.push(filename)
       }
     }
+    photoDeletesDone(done)
     if (!deleted.length) return
     const next: ImageSyncBookkeeping = {
       ...(usePreferences.getState().iCloudImageSync ?? {}),
@@ -2924,6 +2956,8 @@ async function catchUp(reason: string): Promise<void> {
     // follow-up, and remote-change pulls may have run meanwhile. Let every
     // queued pull land so GC judges the newest read.
     while (pullInFlight) await pullInFlight
+    // Deletes a kill or a failure left, now that the records are current.
+    deletePendingPhotos()
     // Not awaited: the cleanup queues behind any photo transfer, and the next
     // catch-up mustn't wait for either.
     if (scanned && lastPullComplete) void gcImagesIfEnabled()
@@ -3187,6 +3221,8 @@ export const iCloudSync = {
   },
   photosTravel,
   pullAndMerge,
+  /** A launch or a return to the foreground: pull, then publish. */
+  catchUp,
   pullBeforeCalendarPublish,
   canSync,
   confirmICloudAccount,

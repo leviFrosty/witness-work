@@ -61,6 +61,7 @@ import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
 import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
+import { clearPublishedPhotos } from '@/app/sync/photoBaseline'
 
 /**
  * Cloud Sync's runtime (ADR 0030; docs/accounts-protocol.md, "Sync"): the
@@ -403,6 +404,7 @@ export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
   )
   await deleteOwnCloudSyncSlot()
   endPhotoPasses()
+  clearPublishedPhotos()
   usePreferences.setState({
     ...CLOUD_ACCOUNT_CHANGE_RESET,
     cloudSyncAccountToken: null,
@@ -506,6 +508,8 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   })
   const account = onAccountChange((change) => {
     resetPhotoUsage()
+    // The photos the last publish referred to were that account's.
+    if (change === 'key_changed') clearPublishedPhotos()
     // Another account's photos: each is checked against its listing, and a
     // full account there doesn't show here (ADR 0030 §7).
     if (change === 'key_changed' && usesCloudSync()) {

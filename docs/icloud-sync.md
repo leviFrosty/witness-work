@@ -356,6 +356,17 @@ switching, `components/CloudSyncDefault.tsx`).
     (`rebasePublishedPhotos`): another device may still use the revision they
     moved away from, and under last-writer-wins a merge can swing a record
     back. A publish such a change overtakes deletes nothing.
+  - The baseline is saved on the device (device-local MMKV, filenames only,
+    never synced), with the replaced photos whose delete hasn't finished. A
+    photo removed just before the app is killed is still deleted by the next
+    launch's publish, and a delete the kill or a failure cut short is tried
+    again after the next complete pull. Deletes wait for a complete pull, and
+    skip any photo the records refer to when they run: after a pull that failed
+    or stopped short, another device's newer record may still keep it. A merge
+    on launch rebases the baseline, so it forgets a removal that wasn't
+    published yet. A transport switch, an account key change and leaving an
+    account clear the baseline; the next publish then records a new one and
+    deletes nothing.
   - **Storage full** (2 GB an account): the photo stays on this device, its
     bookkeeping entry says `storage-full`, and it shows “Not synced: storage
     full” (contact, profile and note photos); Settings → Account shows

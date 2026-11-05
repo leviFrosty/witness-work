@@ -16,6 +16,8 @@ const runtime = vi.hoisted(() => ({
   appState: 'active',
   os: 'android',
   files: {} as Record<string, Map<string, Uint8Array>>,
+  /** Each device's saved MMKV values. */
+  mmkv: {} as Record<string, Map<string, string>>,
 }))
 
 vi.mock('react-native', () => ({
@@ -100,6 +102,16 @@ async function device(
 ) {
   vi.resetModules()
   const files = (runtime.files[name] ??= new Map())
+  // Its MMKV outlives the app being killed (`relaunch`).
+  const stored = (runtime.mmkv[name] ??= new Map<string, string>())
+  vi.doMock('@/stores/mmkv', async () => ({
+    ...(await import('@/__tests__/mocks/mmkv')),
+    mmkvStorage: {
+      getString: (key: string) => stored.get(key),
+      set: (key: string, value: string) => stored.set(key, value),
+      delete: (key: string) => stored.delete(key),
+    },
+  }))
   vi.doMock('expo-device', () => ({
     DeviceType: { PHONE: 1, TABLET: 2 },
     deviceType: 1,
@@ -319,6 +331,7 @@ beforeEach(() => {
   vi.stubGlobal('__DEV__', true)
   vi.stubGlobal('fetch', drive.fetch)
   runtime.files = {}
+  runtime.mmkv = {}
   runtime.appState = 'active'
   runtime.os = 'android'
   cryptoPauseMs = 0
@@ -923,6 +936,16 @@ const publish = async (d: Device) => {
   await d.iCloudSync.imageWorkSettled()
 }
 
+/**
+ * A device the app has launched: its launch's pull is done. Deleting a replaced
+ * photo waits for a complete pull, so a device that deletes starts this way.
+ */
+const launchedDevice = async (...args: Parameters<typeof device>) => {
+  const d = await device(...args)
+  await d.iCloudSync.pullAndMerge('manual')
+  return d
+}
+
 describe('Photos over Cloud Sync', () => {
   it('carries contact, profile and note photos both ways, without “Include photos”', async () => {
     const iphone = await device('iphone', { os: 'ios' })
@@ -1359,7 +1382,7 @@ describe('Photos over Cloud Sync', () => {
   })
 
   it('deletes a replaced or removed photo once the snapshot without it is out', async () => {
-    const phone = await device('phone')
+    const phone = await launchedDevice('phone')
     phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
     phone.files.set(picked('c2', 'r2'), new Uint8Array([2]))
     phone.files.set(notePath('photo-0001'), new Uint8Array([3]))
@@ -1420,7 +1443,7 @@ describe('Photos over Cloud Sync', () => {
 
     /** On r1, published; then the User moves to r2, which deletes r1. */
     const onR2WithOlderCopy = async () => {
-      const phone = await device('phone')
+      const phone = await launchedDevice('phone')
       const { parsePayload } = await import('@/app/sync/payload')
       const { restoreBackupFile } = await import('@/app/sync/backupFileRestore')
       phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
@@ -1465,7 +1488,7 @@ describe('Photos over Cloud Sync', () => {
     })
 
     it('a publish a wholesale change overtook', async () => {
-      const phone = await device('phone')
+      const phone = await launchedDevice('phone')
       const published = {
         ...(await import('@/app/sync/publishedPhotos')),
         ...(await import('@/app/sync/photoBaseline')),
@@ -1504,7 +1527,7 @@ describe('Photos over Cloud Sync', () => {
     })
 
     it('a merge, either way: the device that replaced it deletes it', async () => {
-      const phone = await device('phone')
+      const phone = await launchedDevice('phone')
       phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
       phone.useContacts.setState({
         contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
@@ -1542,6 +1565,157 @@ describe('Photos over Cloud Sync', () => {
       )
       await publish(phone)
       expect(await listed(phone)).toEqual([r1, r2])
+    })
+  })
+
+  describe('deletes a photo removed just before the app was killed', () => {
+    const r1 = 'witness-work-img-contact-c1--r1.jpg'
+    const listed = async (d: Device) =>
+      (await d.cloudTransport.listBinaryFiles()).map((f) => f.filename).sort()
+    const dataOf = (state: object) =>
+      Object.fromEntries(
+        Object.entries(state).filter(([, value]) => typeof value !== 'function')
+      )
+
+    /**
+     * The app killed and opened again: the files and MMKV stay, every module
+     * loads again, and the stores hydrate what they had saved.
+     */
+    const relaunch = async (d: Device) => {
+      const saved = {
+        preferences: dataOf(d.usePreferences.getState()),
+        contacts: dataOf(d.useContacts.getState()),
+        profile: dataOf(d.useProfile.getState()),
+      }
+      const reborn = await device(d.name, { account: d.account })
+      reborn.usePreferences.setState(saved.preferences)
+      reborn.useContacts.setState(saved.contacts)
+      reborn.useProfile.setState(saved.profile)
+      return reborn
+    }
+
+    /** A phone with Ada's photo published, which is then removed. */
+    const removedBeforeKill = async () => {
+      const phone = await launchedDevice('phone')
+      phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
+      phone.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW), 'r1')] as never,
+      })
+      await publish(phone)
+      expect(await listed(phone)).toEqual([r1])
+      phone.useContacts.setState({
+        contacts: [contact('c1', 'Ada', NOW + 1_000)] as never,
+      })
+      return phone
+    }
+
+    /** The launch: pull, then publish, then the photo work it started. */
+    const launch = async (d: Device, reason = 'launch') => {
+      await d.iCloudSync.catchUp(reason)
+      await d.iCloudSync.imageWorkSettled()
+    }
+
+    it('frees the space when the next launch publishes', async () => {
+      const reborn = await relaunch(await removedBeforeKill())
+      await launch(reborn)
+      expect(await listed(reborn)).toEqual([])
+      expect(reborn.usePreferences.getState().iCloudImageSync ?? {}).toEqual({})
+      expect(
+        reborn.photoUsage.useCloudSyncPhotoUsage.getState().usage?.count
+      ).toBe(0)
+    })
+
+    it('waits for a complete pull, so another device’s newer record keeps it', async () => {
+      const phone = await removedBeforeKill()
+      // The tablet's later edit of Ada still refers to the photo.
+      const tablet = await device('tablet')
+      await tablet.iCloudSync.pullAndMerge('manual')
+      tablet.useContacts.setState({
+        contacts: tablet.useContacts.getState().contacts.map((c) => ({
+          ...c,
+          name: 'Ada T.',
+          updatedAt: NOW + 60_000,
+        })),
+      })
+      await publish(tablet)
+
+      const reborn = await relaunch(phone)
+      // The launch's pull fails, and it publishes anyway.
+      server.state.failReads = true
+      await launch(reborn)
+      expect(await listed(reborn)).toEqual([r1])
+      // A complete pull brings the tablet's record, and the merge rebases.
+      server.state.failReads = false
+      await launch(reborn, 'foreground')
+      expect(reborn.contactNames()).toEqual(['Ada T.'])
+      expect(reborn.useContacts.getState().contacts[0].avatar?.revision).toBe(
+        'r1'
+      )
+      expect(await listed(reborn)).toEqual([r1])
+    })
+
+    it('deletes it once a complete pull follows a failed one', async () => {
+      const reborn = await relaunch(await removedBeforeKill())
+      server.state.failReads = true
+      await launch(reborn)
+      expect(await listed(reborn)).toEqual([r1])
+      server.state.failReads = false
+      await launch(reborn, 'foreground')
+      expect(await listed(reborn)).toEqual([])
+    })
+
+    it('finishes a delete the app was killed or failed before', async () => {
+      const phone = await removedBeforeKill()
+      server.state.failPhotoDeletes = true
+      await publish(phone)
+      expect(await listed(phone)).toEqual([r1])
+      server.state.failPhotoDeletes = false
+      // Killed with the delete still waiting.
+      const reborn = await relaunch(phone)
+      await launch(reborn)
+      expect(await listed(reborn)).toEqual([])
+      expect(reborn.usePreferences.getState().iCloudImageSync ?? {}).toEqual({})
+    })
+
+    it('doesn’t finish a delete for a photo that came back', async () => {
+      const phone = await removedBeforeKill()
+      server.state.failPhotoDeletes = true
+      await publish(phone)
+      server.state.failPhotoDeletes = false
+      const reborn = await relaunch(phone)
+      reborn.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW + 5_000), 'r1')] as never,
+      })
+      await launch(reborn)
+      expect(await listed(reborn)).toEqual([r1])
+    })
+
+    it('keeps a photo another device’s merged removal already dropped', async () => {
+      const phone = await removedBeforeKill()
+      // The tablet's later edit also has no photo, and merges here first.
+      const tablet = await device('tablet')
+      tablet.useContacts.setState({
+        contacts: [contact('c1', 'Ada T.', NOW + 60_000)] as never,
+      })
+      await tablet.iCloudSync.pullAndMerge('manual')
+      await publish(tablet)
+      const reborn = await relaunch(phone)
+      await reborn.iCloudSync.pullAndMerge('manual')
+      expect(reborn.contactNames()).toEqual(['Ada T.'])
+      await publish(reborn)
+      // The merge made the removal another device's: nothing here deletes it.
+      expect(await listed(reborn)).toEqual([r1])
+    })
+
+    it('keeps a photo that came back before the next publish', async () => {
+      const phone = await removedBeforeKill()
+      const reborn = await relaunch(phone)
+      // Restored from a slot: the photo is current again.
+      reborn.useContacts.setState({
+        contacts: [withPhoto(contact('c1', 'Ada', NOW + 2_000), 'r1')] as never,
+      })
+      await publish(reborn)
+      expect(await listed(reborn)).toEqual([r1])
     })
   })
 
@@ -1587,7 +1761,7 @@ describe('Photos over Cloud Sync', () => {
      * has only downloaded them, unless it published since.
      */
     const removedOnPhone = async ({ tabletPublished = true } = {}) => {
-      const phone = await device('phone')
+      const phone = await launchedDevice('phone')
       phone.files.set(picked('c1', 'r1'), new Uint8Array([1]))
       phone.files.set(profilePath, new Uint8Array([2]))
       phone.files.set(notePath('photo-0001'), new Uint8Array([3]))

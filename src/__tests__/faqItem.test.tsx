@@ -116,7 +116,20 @@ describe('FAQItem', () => {
     expect(collapsible().props.stateDescription).toBe('a11y_expanded')
   })
 
+  it('builds the answer only once it first opens, and keeps it', () => {
+    const answers = () => renderer!.root.findAllByType('richtext' as never)
+    expect(answers()).toHaveLength(0)
+
+    act(() => collapsible().props.onOpenChange(true))
+    expect(answers()).toHaveLength(1)
+
+    // Still there while the disclosure animates closed.
+    act(() => collapsible().props.onOpenChange(false))
+    expect(answers()).toHaveLength(1)
+  })
+
   it('renders the answer as rich text', () => {
+    act(() => collapsible().props.onOpenChange(true))
     const answer = renderer!.root.findByType('richtext' as never)
     expect(answer.props.doc).toBe(entry.doc)
     expect(answer.props.showImages).toBe(false)

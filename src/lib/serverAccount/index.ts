@@ -304,8 +304,11 @@ function reportSessionEvent(event: AccountSessionEvent) {
 export function thisDeviceLabel(): DeviceLabel {
   if (webRuntime) return webRuntime.deviceLabel()
   const model = Device.modelName ?? ''
+  // Android's model is a code (`SM-S918B`); its device name is the one the
+  // phone shows in its own settings ("Galaxy S23"). iOS gives only "iPhone".
+  const shown = Platform.OS === 'android' ? Device.deviceName?.trim() : ''
   return {
-    name: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
+    name: shown || model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
     platform: Platform.OS === 'android' ? 'android' : 'ios',
     model,
   }

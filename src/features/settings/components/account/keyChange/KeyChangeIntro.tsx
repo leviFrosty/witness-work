@@ -14,6 +14,7 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import type { TooOldDevice } from '@/features/settings/hooks/useDevicesTooOldForKeyChange'
 
 /**
  * Change Account Key's first screen: what changes, the Apple Account note on
@@ -25,8 +26,8 @@ export default function KeyChangeIntro({
   ownerFailed,
   onStart,
 }: {
-  /** Other devices' names whose app can't sign back in; `unknown` unread. */
-  tooOld: string[] | 'unknown'
+  /** Other devices whose app can't sign back in; `unknown` unread. */
+  tooOld: TooOldDevice[] | 'unknown'
   ownerFailed: boolean
   onStart: () => void
 }) {
@@ -37,7 +38,11 @@ export default function KeyChangeIntro({
       <Text style={{ flex: 1 }}>{text}</Text>
     </View>
   )
-  const notice = (title: string | null, body: string, names?: string[]) => (
+  const notice = (
+    title: string | null,
+    body: string,
+    devices?: TooOldDevice[]
+  ) => (
     <View
       style={{
         flexDirection: 'row',
@@ -57,8 +62,8 @@ export default function KeyChangeIntro({
           <Text style={{ fontFamily: theme.fonts.semiBold }}>{title}</Text>
         )}
         <Text>{body}</Text>
-        {names?.map((name) => (
-          <Text key={name} style={{ fontFamily: theme.fonts.semiBold }}>
+        {devices?.map(({ id, name }) => (
+          <Text key={id} style={{ fontFamily: theme.fonts.semiBold }}>
             {`• ${name}`}
           </Text>
         ))}

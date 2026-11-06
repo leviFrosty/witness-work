@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -13,8 +14,8 @@ import { injectManifest } from 'workbox-build'
  */
 export const SW_FILE = 'sw.js'
 
-/** CanvasKit is about 8 MB; the entry chunk about 15. */
-export const MAX_PRECACHED_BYTES = 32 * 1024 * 1024
+/** The entry chunk is about 10 MB. */
+export const MAX_PRECACHED_BYTES = 16 * 1024 * 1024
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 
@@ -42,11 +43,12 @@ const RECORDER_CHUNK = /^module\.full\.no-external-[0-9a-f]{32}\.js$/
 
 /**
  * What the worker precaches, as `globPatterns` of `directory`: the shell, the
- * entry chunk(s), every other chunk that isn't a language (the screens that
- * load on demand, such as the database's), the wasm files, fonts and images,
- * and English's translations (a first visit opens offline in English). The
- * other languages load when picked and the worker keeps them then
- * (`web/sw/sw.ts`).
+ * entry chunk(s), every other chunk that isn't a language (the screens, which
+ * load when they first open, and the database's), fonts, images and sounds, and
+ * English's translations (a first visit opens offline in English). Not the wasm
+ * files: CanvasKit (8 MB) and SQLite's download when something first needs
+ * them, and the worker keeps them then, as it keeps the other languages once
+ * picked (`web/sw/sw.ts`).
  */
 export function precachePatterns(directory) {
   const chunks = fs
@@ -61,11 +63,23 @@ export function precachePatterns(directory) {
   return [
     'index.html',
     'favicon.ico',
-    '*.wasm',
     'assets/**/*',
     ...chunks,
     ...entryFiles(directory),
   ]
+}
+
+/**
+ * One revision for the wasm files at the export's root, which the worker keeps
+ * only once loaded: their cache is named after it, so a deploy that changes one
+ * never answers from the old copy.
+ */
+export function onDemandRevision(directory) {
+  const hash = createHash('sha256')
+  for (const file of fs.readdirSync(directory).sort())
+    if (file.endsWith('.wasm'))
+      hash.update(file).update(fs.readFileSync(path.join(directory, file)))
+  return hash.digest('hex').slice(0, 16)
 }
 
 /**
@@ -85,7 +99,10 @@ export async function buildServiceWorker(directory) {
       target: 'es2020',
       minify: true,
       legalComments: 'none',
-      define: { 'process.env.NODE_ENV': '"production"' },
+      define: {
+        'process.env.NODE_ENV': '"production"',
+        __WW_ON_DEMAND_REVISION__: JSON.stringify(onDemandRevision(directory)),
+      },
       logLevel: 'warning',
     })
     const result = await injectManifest({
@@ -94,8 +111,9 @@ export async function buildServiceWorker(directory) {
       globDirectory: directory,
       globPatterns: precachePatterns(directory),
       // Workbox skips `node_modules` by default, which is where Expo puts the
-      // packaged fonts (`assets/node_modules/@expo-google-fonts/…`).
-      globIgnores: ['**/*.map'],
+      // packaged fonts (`assets/node_modules/@expo-google-fonts/…`). The
+      // brotli copies are the Worker's, served under the files' own URLs.
+      globIgnores: ['**/*.map', '**/*.br'],
       // Expo names chunks and assets after a hash of their contents.
       dontCacheBustURLsMatching: /[.-][0-9a-f]{32}\.[A-Za-z0-9]+$/,
       maximumFileSizeToCacheInBytes: MAX_PRECACHED_BYTES,

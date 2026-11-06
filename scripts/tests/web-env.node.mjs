@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import fs from 'node:fs'
+import zlib from 'node:zlib'
 import os from 'node:os'
 import path from 'node:path'
 import {
@@ -16,11 +17,12 @@ import {
   readOnePasswordFields,
   revenueCatWebProblems,
   oversizedFiles,
+  precompressExport,
   restoringFiles,
   runBuildSteps,
   unservedReferences,
 } from '../web.mjs'
-import { precachePatterns } from '../web-sw.mjs'
+import { onDemandRevision, precachePatterns } from '../web-sw.mjs'
 
 const directories = []
 function fixture() {
@@ -371,6 +373,9 @@ test('an export whose service worker misses the shell, an entry chunk or an asse
     `[{"url":"/index.html"},{"url":"/${entry}"},{"url":"/${font}"}]`
   )
   checkServiceWorker(root)
+  // Brotli copies are the Worker's, never the service worker's.
+  write(root, `${font}.br`, 'br')
+  checkServiceWorker(root)
   write(root, 'sw.js', `[{"url":"/${entry}"},{"url":"/${font}"}]`)
   assert.throws(() => checkServiceWorker(root), /precache \/index\.html/)
 })
@@ -400,6 +405,49 @@ test('the worker precaches English and the on-demand chunks, not the other langu
     'index.js',
     'sql-wasm-browser.js',
   ])
+})
+
+test('the worker leaves the wasm files to download on demand, kept under their revision', () => {
+  const root = fixture()
+  write(root, 'index.html', '')
+  write(root, '_expo/static/js/web/index.js', '')
+  write(root, 'canvaskit.wasm', '\0asm')
+  assert.ok(!precachePatterns(root).some((pattern) => pattern.includes('wasm')))
+  const revision = onDemandRevision(root)
+  assert.match(revision, /^[0-9a-f]{16}$/)
+  assert.equal(onDemandRevision(root), revision)
+  write(root, 'canvaskit.wasm', '\0asm, another build')
+  assert.notEqual(onDemandRevision(root), revision)
+})
+
+test('the export precompresses what the Worker serves as brotli', async () => {
+  const root = fixture()
+  const script = 'console.log("WitnessWork");\n'.repeat(200)
+  write(root, '_expo/static/js/web/index-1.js', script)
+  write(root, 'canvaskit.wasm', Buffer.alloc(4096))
+  write(root, 'tiny.js', 'x')
+  write(root, 'index.html', script)
+  write(root, '_expo/static/js/web/index-1.js.map', script)
+  write(root, '.well-known/assetlinks.json', script)
+  const totals = await precompressExport(root, { quality: 5 })
+  assert.equal(totals.files, 2)
+  assert.ok(totals.compressed < totals.bytes)
+  assert.equal(
+    zlib
+      .brotliDecompressSync(
+        fs.readFileSync(path.join(root, '_expo/static/js/web/index-1.js.br'))
+      )
+      .toString(),
+    script
+  )
+  assert.ok(fs.existsSync(path.join(root, 'canvaskit.wasm.br')))
+  for (const skipped of [
+    'tiny.js.br',
+    'index.html.br',
+    '_expo/static/js/web/index-1.js.map.br',
+    '.well-known/assetlinks.json.br',
+  ])
+    assert.ok(!fs.existsSync(path.join(root, skipped)), skipped)
 })
 
 const KEY = 'EXPO_PUBLIC_REVENUECAT_WEB_API_KEY'

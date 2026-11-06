@@ -8,11 +8,13 @@ import BadgesVisual from '@/features/updates/components/reveal/visuals/BadgesVis
 import NotificationsVisual from '@/features/updates/components/reveal/visuals/NotificationsVisual'
 import HomeVisual from '@/features/updates/components/reveal/visuals/HomeVisual'
 import ContactsVisual from '@/features/updates/components/reveal/visuals/ContactsVisual'
-import YearPaceVisual from '@/features/updates/components/reveal/visuals/YearPaceVisual'
 import MileageVisual from '@/features/updates/components/reveal/visuals/MileageVisual'
 import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
-import WatchVisual from '@/features/updates/components/reveal/visuals/WatchVisual'
-import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
+import {
+  SiriVisual,
+  WatchVisual,
+  YearPaceVisual,
+} from '@/features/updates/components/reveal/visuals/skiaVisuals'
 
 /**
  * The illustration for each page of the update's tour. "And so much more" draws

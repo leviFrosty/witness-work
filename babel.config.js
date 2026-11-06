@@ -18,6 +18,8 @@ module.exports = function (api) {
     ],
     plugins: [
       './babel/lucide-imports',
+      // Web only: screens and Skia load on demand (docs/web-performance.md).
+      './babel/web-lazy-imports',
       'react-native-reanimated/plugin',
       [
         '@tamagui/babel-plugin',

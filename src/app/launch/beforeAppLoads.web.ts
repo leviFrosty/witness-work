@@ -1,4 +1,3 @@
-import { LoadSkiaWeb } from '@shopify/react-native-skia/lib/module/web'
 import { registerRootComponent } from 'expo'
 import type { WebTabMessage } from '@/lib/serverAccount/webTabs'
 import { startInstallPromptCapture } from '@/lib/webInstall/installPrompt'
@@ -10,8 +9,6 @@ import { webStorageBoot } from '@/lib/webStorage/boot'
  *
  * - The saved stores, from IndexedDB into memory, since the stores and the
  *   language read them synchronously as they load (docs/web-storage.md).
- * - Skia's CanvasKit, since some modules build Skia shaders as they load.
- *   `scripts/web.mjs` serves `canvaskit.wasm` from the web root.
  * - The selected language's translations, which the web downloads
  *   (`translationLoaders.web.ts`), so the first screen is already translated.
  * - Its Help Center snapshot and English's (`snapshots.web.ts`), so the Help
@@ -27,10 +24,9 @@ export function beforeAppLoads(loadApp: () => void) {
   // The browser offers its install prompt once, maybe before the app renders.
   startInstallPromptCapture()
   const storage = webStorageBoot.prepare()
-  void Promise.all([
-    LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' }),
-    storage,
-  ])
+  // Not Skia's CanvasKit: it downloads when something first draws with Skia
+  // (`src/lib/canvasKit`).
+  void storage
     .then(() => require('@/lib/locales').translationsLoaded())
     .then(() => {
       const { _i18n } = require('@/lib/locales')

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { type StyleProp, View, type ViewStyle } from 'react-native'
-import { Canvas, Fill, Shader } from '@shopify/react-native-skia'
 import { useIsFocused } from '@react-navigation/native'
 import Animated, {
   useAnimatedStyle,
@@ -16,8 +15,9 @@ import Animated, {
 import useTheme from '@/contexts/theme'
 import useAppActive from '@/hooks/useAppActive'
 import useOnScreen from '@/hooks/useOnScreen'
-import { orbShader } from '@/features/scribe/shaders/orbShader'
 import { orbPalette } from '@/features/scribe/shaders/orbPalette'
+import type ScribeOrbCanvasComponent from '@/features/scribe/components/ScribeOrbCanvas'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 export type ScribeOrbState =
   | 'idle'
@@ -191,6 +191,41 @@ const ScribeOrb = ({
 
   const accessible = accessibilityLabel !== undefined
   const coreColor = muted ? theme.colors.textAlt : theme.colors.accent
+  const plainOrb = (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {reduceMotion && (
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: ringSize,
+              height: ringSize,
+              borderRadius: ringSize / 2,
+              borderColor: coreColor,
+            },
+            ringStyle,
+          ]}
+        />
+      )}
+      <Animated.View
+        style={[
+          {
+            width: coreSize,
+            height: coreSize,
+            borderRadius: coreSize / 2,
+            backgroundColor: coreColor,
+          },
+          coreStyle,
+        ]}
+      />
+    </View>
+  )
 
   return (
     <Animated.View
@@ -201,49 +236,23 @@ const ScribeOrb = ({
       pointerEvents='none'
       style={[{ width: size, height: size }, style]}
     >
-      {reduceMotion || !orbShader ? (
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {reduceMotion && (
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  width: ringSize,
-                  height: ringSize,
-                  borderRadius: ringSize / 2,
-                  borderColor: coreColor,
-                },
-                ringStyle,
-              ]}
-            />
-          )}
-          <Animated.View
-            style={[
-              {
-                width: coreSize,
-                height: coreSize,
-                borderRadius: coreSize / 2,
-                backgroundColor: coreColor,
-              },
-              coreStyle,
-            ]}
-          />
-        </View>
+      {reduceMotion ? (
+        plainOrb
       ) : (
-        <Canvas style={{ width: size, height: size }}>
-          <Fill>
-            <Shader source={orbShader} uniforms={uniforms} />
-          </Fill>
-        </Canvas>
+        <OrbCanvas size={size} uniforms={uniforms} fallback={plainOrb} />
       )}
     </Animated.View>
   )
 }
+
+/**
+ * The shader, required the first time an orb draws; on the web it waits for
+ * CanvasKit, showing the plain orb meanwhile.
+ */
+const OrbCanvas = canvasKitComponent(
+  (): typeof ScribeOrbCanvasComponent =>
+    require('@/features/scribe/components/ScribeOrbCanvas').default,
+  ({ fallback }) => fallback
+)
 
 export default ScribeOrb

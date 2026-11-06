@@ -16,7 +16,7 @@ import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
-import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
+import { WelcomeBackdrop } from '@/features/onboarding/components/welcome/welcomeSkia'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
 

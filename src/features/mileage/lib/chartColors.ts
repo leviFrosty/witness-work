@@ -25,3 +25,6 @@ export const getVehicleChartColors = (
     color: palette[i % palette.length],
   }))
 }
+
+/** The mileage chart's plot height, which the screen keeps while it loads. */
+export const MILEAGE_CHART_HEIGHT = 88

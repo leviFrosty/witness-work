@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import environments from '../../../config/web-environments.json'
 import { MAX_REPORT_BYTES, parseViolations, receiveReport } from './cspReport'
 import {
+  HTML_CACHE,
   IMMUTABLE,
   REVALIDATE,
   contentSecurityPolicy,
@@ -18,6 +19,8 @@ const FONT =
 const FILES: Record<string, [string | null, string]> = {
   '/index.html': ['text/html; charset=utf-8', '<!doctype html>'],
   [CHUNK]: ['text/javascript; charset=utf-8', 'console.log(1)'],
+  // Brotli's bytes for it, as `scripts/web.mjs` writes them.
+  [`${CHUNK}.br`]: ['application/octet-stream', 'brotli bytes'],
   '/canvaskit.wasm': ['application/wasm', '\0asm'],
   '/sw.js': ['text/javascript; charset=utf-8', 'self.skipWaiting'],
   // The asset server can't type `.webmanifest`.
@@ -392,9 +395,60 @@ describe('headers', () => {
   it('writes the same set into _headers for every asset path', () => {
     const file = headersFile(dev).split('\n')
     expect(file[0]).toBe('/*')
-    expect(file.slice(1).filter(Boolean)).toEqual(
-      Object.entries(securityHeaders(dev)).map(([n, v]) => `  ${n}: ${v}`)
+    expect(file.slice(1).filter(Boolean)).toEqual([
+      ...Object.entries(securityHeaders(dev)).map(([n, v]) => `  ${n}: ${v}`),
+      `  Cache-Control: ${HTML_CACHE}`,
+    ])
+  })
+
+  it('keeps Cloudflare from rewriting the HTML, which it otherwise revalidates as before', () => {
+    // Its Web Analytics beacon is injected only into HTML it may transform.
+    expect(HTML_CACHE).toBe(`${REVALIDATE}, no-transform`)
+  })
+})
+
+describe('precompressed files', () => {
+  const brotli = { 'Accept-Encoding': 'gzip, deflate, br, zstd' }
+
+  it("serves a chunk's brotli file to a browser that takes brotli", async () => {
+    const response = await call(CHUNK, { headers: brotli })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Encoding')).toBe('br')
+    expect(response.headers.get('Content-Type')).toBe(
+      'text/javascript; charset=utf-8'
     )
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE)
+    expect(response.headers.get('Vary')).toBe('Accept-Encoding')
+    expect(await response.text()).toBe('brotli bytes')
+    expectSecurityHeaders(response)
+  })
+
+  it('serves the file itself without brotli, or for a range', async () => {
+    for (const headers of [
+      { 'Accept-Encoding': 'gzip' },
+      { ...brotli, Range: 'bytes=0-3' },
+    ]) {
+      const response = await call(CHUNK, { headers })
+      expect(response.headers.get('Content-Encoding')).toBeNull()
+      expect(response.headers.get('Vary')).toBe('Accept-Encoding')
+      expect(await response.text()).toBe('console.log(1)')
+    }
+  })
+
+  it('serves the file itself when the export has no brotli file for it', async () => {
+    const response = await call('/canvaskit.wasm', { headers: brotli })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Encoding')).toBeNull()
+    expect(response.headers.get('Content-Type')).toBe('application/wasm')
+    expect(await response.text()).toBe('\0asm')
+  })
+
+  it('never answers a missing chunk with a brotli file', async () => {
+    const response = await call('/_expo/static/js/web/index-deadbeef.js', {
+      headers: brotli,
+    })
+    expect(response.status).toBe(404)
+    expect(response.headers.get('Content-Encoding')).toBeNull()
   })
 })
 

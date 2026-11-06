@@ -173,9 +173,30 @@ export async function answerSessionRefresh(
   )
 }
 
+/**
+ * The request headers the app sends other origins, named one by one: WebKit
+ * doesn't let `*` cover `Authorization`.
+ */
+export const CORS_ALLOW_HEADERS = [
+  'Authorization',
+  'Content-Type',
+  'If-Match',
+  'X-WW-Slot-Id',
+  'X-WW-Reseal',
+  'X-WW-Payload',
+  'X-WW-Photo-Name',
+  'X-WW-Photo-Meta',
+  'X-WW-Created-At',
+  'X-Buddies-Payload',
+  'X-Buddies-Signature',
+  'X-Buddies-S',
+  'X-Buddies-Client',
+  'X-Upload-Content-Type',
+].join(', ')
+
 export const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': '*',
+  'Access-Control-Allow-Headers': CORS_ALLOW_HEADERS,
   'Access-Control-Allow-Methods': '*',
 }
 

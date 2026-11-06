@@ -574,6 +574,7 @@
   "loadingSlowly_description": "Try again later when connected to WIFI or when you have stable internet.",
   "goHome": "Go Home",
   "goBack": "Go Back",
+  "screenUnavailable": "This screen can’t open right now.",
   "editConversation": "Edit Conversation",
   "conversationHistory": "Conversation History",
   "copied": "Copied!",

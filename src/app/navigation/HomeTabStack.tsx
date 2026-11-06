@@ -29,6 +29,7 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
+import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
 import { isRtlLayout } from '@/lib/direction'
 import {
   getEffectiveTabOrder,
@@ -79,6 +80,12 @@ const decideLaunch = (): LaunchDecision => {
 }
 
 const Tab = createBottomTabNavigator<HomeTabStackParamList>()
+
+// Developer Tools draws pet art with Skia: on the web it opens once CanvasKit
+// has downloaded.
+const getToolsScreen = canvasKitScreen(
+  () => require('@/app/navigation/ToolsScreen').default
+)
 
 // Called inline, not rendered as a component: the navigator only reads
 // `Tab.Screen` elements among its direct children.
@@ -246,10 +253,7 @@ const HomeTabStack = () => {
           />
         )}
         {developerTools && (
-          <Tab.Screen
-            name='Tools'
-            getComponent={() => require('@/app/navigation/ToolsScreen').default}
-          />
+          <Tab.Screen name='Tools' getComponent={getToolsScreen} />
         )}
         {hasSidebar && (
           <Tab.Screen

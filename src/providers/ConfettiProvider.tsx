@@ -6,6 +6,7 @@ import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
 import type ConfettiComponent from '@/vendor/ConfettiSkia/react/Confetti'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 /**
  * Visual buffer between the global Lottie + chime ending and the Skia fireworks
@@ -130,8 +131,13 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
 /**
  * The Skia confetti, required the first time fireworks fire so launch doesn't
- * set up Skia for them.
+ * set up Skia for them (on the web, CanvasKit downloads then).
  */
+const Confetti = canvasKitComponent(
+  (): typeof ConfettiComponent =>
+    require('@/vendor/ConfettiSkia/react/Confetti').default
+)
+
 function SkiaConfetti({
   confettiRef,
   onActiveChange,
@@ -139,8 +145,6 @@ function SkiaConfetti({
   confettiRef: ReturnType<typeof useConfetti>['ref']
   onActiveChange: (active: boolean) => void
 }) {
-  const Confetti: typeof ConfettiComponent =
-    require('@/vendor/ConfettiSkia/react/Confetti').default
   return (
     <FullWindowOverlay>
       <Confetti ref={confettiRef} onActiveChange={onActiveChange} />

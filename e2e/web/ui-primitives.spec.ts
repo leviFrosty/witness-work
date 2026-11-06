@@ -37,6 +37,8 @@ async function openCreatePlan(page: Page) {
   await expect(page.getByRole('heading', { name: 'Create Plan' })).toBeVisible()
   // The Add menu has finished leaving, so nothing of it takes focus.
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  // The form below the header has its fields.
+  await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible()
 }
 
 /** Whether the focused element draws a ring, as keyboard focus should. */

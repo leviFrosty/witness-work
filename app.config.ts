@@ -463,6 +463,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     experiments: {
       reactCompiler: true,
+      // The web's lazy screens and Skia chunks share code. Granular chunking
+      // puts what they share in chunks of their own, loaded with them, rather
+      // than in one common chunk every launch downloads (docs/web-performance.md).
+      // Web builds only, so the native fingerprints stay the same.
+      ...(WEB_BUILD && { chunking: { mode: 'granular' as const } }),
     },
   }
 

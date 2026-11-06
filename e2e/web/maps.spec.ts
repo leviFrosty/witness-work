@@ -175,7 +175,13 @@ test.describe('with the test double', () => {
     await answerMapKitTokens(app.context(), 200)
     await app.context().setOffline(true)
     await app.getByRole('button', { name: 'Contacts', exact: true }).click()
-    await expect(app.getByText(en.map_unavailableOffline)).toBeVisible()
+    // The map says it's offline, or, before the service worker keeps the
+    // screen's code (blocked here), the screen says it can't open yet.
+    await expect(
+      app
+        .getByText(en.map_unavailableOffline)
+        .or(app.getByText(en.screenUnavailable))
+    ).toBeVisible()
     await app.context().setOffline(false)
     await expect((await mapsFrame(app)).locator('#map')).toBeVisible()
     await expect(pinFor(app, people[0]!.name)).toBeVisible()

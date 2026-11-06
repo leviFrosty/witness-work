@@ -1,6 +1,5 @@
-import { Skia } from '@shopify/react-native-skia'
 import { Theme } from '@/constants/theme'
-import { withAlpha } from '@/lib/color'
+import { unitRgb, withAlpha } from '@/lib/color'
 
 export interface WelcomePalette {
   /** Scene background beneath the aurora. */
@@ -39,7 +38,9 @@ export interface WelcomePalette {
   ctaGlowOpacity: number
 }
 
-const rgb = (color: string) => Array.from(Skia.Color(color)).slice(0, 3)
+// Plain arithmetic rather than Skia's parser, so the palette is ready before
+// Skia loads (on the web, CanvasKit downloads on demand).
+const rgb = (color: string) => unitRgb(color)
 
 /**
  * Colours for the welcome scene. The scene has its own art direction — a deep,

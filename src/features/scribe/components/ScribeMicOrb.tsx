@@ -1,7 +1,11 @@
-import { Mic as MicIcon } from 'lucide-react-native'
+import {
+  MessageSquareText as MessageSquareTextIcon,
+  Mic as MicIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { isDarkTheme } from '@/features/scribe/shaders/orbPalette'
 import ScribeOrb from '@/features/scribe/components/ScribeOrb'
 import ScribeOfflineBadge from '@/features/scribe/components/ScribeOfflineBadge'
@@ -22,10 +26,11 @@ interface Props {
 }
 
 /**
- * The idle orb with a microphone on it, as the Scribe AI entry on Home and in
- * the "+" sheet: the same orb the voice sheet opens with, so tapping it feels
- * like it grows into the listening screen. Offline it's grey and still, with
- * the no-internet badge.
+ * The idle orb with a microphone on it (a speech bubble where there's no voice
+ * input, the web), as the Scribe AI entry on Home and in the "+" sheet: the
+ * same orb the voice sheet opens with, so tapping it feels like it grows into
+ * the listening screen. Offline it's grey and still, with the no-internet
+ * badge.
  */
 const ScribeMicOrb = ({
   box,
@@ -63,7 +68,7 @@ const ScribeMicOrb = ({
         }}
       >
         <LucideIcon
-          icon={MicIcon}
+          icon={hasCapability('scribeVoice') ? MicIcon : MessageSquareTextIcon}
           size={iconSize}
           color={glyph}
           strokeWidth={2.4}

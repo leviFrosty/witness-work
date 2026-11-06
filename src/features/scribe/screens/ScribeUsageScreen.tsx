@@ -9,6 +9,7 @@ import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useScribeUsage } from '@/features/scribe'
 import ScribeUsageWindowRow from '@/features/scribe/components/ScribeUsageWindowRow'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
 import {
   ScribeSupporterNote,
   type RenderSupporterCta,
@@ -96,7 +97,7 @@ const ScribeUsageScreen = ({ renderSupporterCta }: Props) => {
               <InfoPopover
                 inline
                 title={i18n.t('scribe_usageInfoTitle')}
-                description={i18n.t('scribe_usageInfoBody')}
+                description={i18n.t(scribeKey('scribe_usageInfoBody'))}
               />
             </View>
             <View

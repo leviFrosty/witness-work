@@ -11,6 +11,7 @@ const runtime = vi.hoisted(() => ({
   capture: vi.fn(),
 }))
 
+vi.mock('@/lib/platformCapabilities', () => ({ hasCapability: () => true }))
 vi.mock('react-native', () => ({
   View: 'View',
   useWindowDimensions: () => ({ width: runtime.width }),

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as Speech from '../../../../modules/speech-transcription'
 import { usePreferences } from '@/stores/preferences'
+import { hasCapability } from '@/lib/platformCapabilities'
 import type { ScribeVoiceAvailability } from '@/features/scribe/types'
 import { speechLocaleCandidates } from '@/features/scribe/lib/locale'
 
@@ -23,9 +24,13 @@ function check(key: string): Promise<ScribeVoiceAvailability> {
   return pending
 }
 
-/** Whether on-device speech serves the app Language or a device language. */
+/**
+ * Whether on-device speech serves the app Language or a device language. Always
+ * unsupported where the platform has no voice input (the web), so the mic, Say
+ * a change and the voice sheet stay out and Scribe AI opens on the keyboard.
+ */
 export function useScribeVoiceAvailability(): ScribeVoiceAvailability {
-  const supported = Speech.isSupported()
+  const supported = hasCapability('scribeVoice') && Speech.isSupported()
   const key = usePreferences((state) => state.locale) ?? 'device'
   const [checked, setChecked] = useState<{
     key: string

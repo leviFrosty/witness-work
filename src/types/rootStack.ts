@@ -54,7 +54,11 @@ export interface ScribeVoiceRouteParams {
 export type ScribeConsentRouteParams =
   | {
       mode: 'open'
-      next:
+      /**
+       * Left out of the web's address (`webLinkingScreens.web.ts`), so a reload
+       * on the sheet has none: it then just closes.
+       */
+      next?:
         | { route: 'ScribeConversation'; params: ScribeConversationRouteParams }
         | { route: 'ScribeVoice'; params: ScribeVoiceRouteParams }
     }

@@ -43,6 +43,7 @@ Features with no web equivalent are hidden, not shown broken:
 
 - Home Screen widgets and Live Activities;
 - Siri and Shortcuts;
+- voice and photo input in Scribe AI (its text chat works);
 - the watch apps;
 - alternate app icons;
 - iCloud and Google Drive sync;
@@ -146,8 +147,10 @@ Users can dismiss it, and it stays dismissed. There's no banner on desktop.
   - ww-api mints MapKit JS tokens.
   - Search and directions go through ww-api's HERE routes, including a new
     point-of-interest search.
-- **Scribe AI:** text works as on phones. Voice records in the browser and is
-  transcribed through ww-api.
+- **Scribe AI:** text works as on phones, through the same account session.
+  Voice and photo input (the microphone, Say a change, Scan notes, and Read
+  paper pages) aren't on the web yet, so their buttons and the copy that
+  mentions them are hidden there, not shown broken (§1).
 - **Photos and files:** photos are picked from files or the camera. Exports
   and backups download as files.
 - **UI primitives:** date and time pickers, menus, popovers and tooltips get

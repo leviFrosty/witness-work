@@ -20,6 +20,7 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { tracking } from '@/lib/tracking'
 import type { RootStackNavigation } from '@/types/rootStack'
 import { useOpenScribe } from '@/features/scribe/components/openScribe'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
 import ScribeMicOrb from '@/features/scribe/components/ScribeMicOrb'
 import { ScribeLabel } from '@/features/scribe/components/ScribeBadge'
 
@@ -225,7 +226,7 @@ const ScribeQuickActionsCard = () => {
     </View>
   )
   const orbLabel = i18n.t(
-    scribe.offline ? 'scribe_orbOfflineLabel' : 'scribe_orbLabel'
+    scribe.offline ? 'scribe_orbOfflineLabel' : scribeKey('scribe_orbLabel')
   )
 
   if (orbBelow)

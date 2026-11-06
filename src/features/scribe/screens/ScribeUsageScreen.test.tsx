@@ -12,6 +12,7 @@ const runtime = vi.hoisted(() => ({
   recheck: vi.fn(async () => true),
 }))
 
+vi.mock('@/lib/platformCapabilities', () => ({ hasCapability: () => true }))
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
   ScrollView: 'ScrollView',

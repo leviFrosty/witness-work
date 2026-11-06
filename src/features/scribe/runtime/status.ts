@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import type { AttestationSupport } from '@/lib/attestation/appAttest'
 import { deviceAttestation } from '@/lib/attestation'
 import { errorTracking } from '@/lib/errorTracking'
@@ -75,12 +76,16 @@ let support: Promise<AttestationSupport> | null = null
  * What the session client and earlier calls know about this device, without
  * opening a session or creating an account key: whether it can ever attest,
  * whether the last session open failed for a reason that may pass, and whether
- * the account was seen suspended.
+ * the account was seen suspended. A browser never attests: its session comes
+ * from a passkey (ADR 0038), so it always counts as able to.
  */
 export async function refreshDeviceGate(): Promise<void> {
-  const pending = (support ??= deviceAttestation
-    .checkSupport()
-    .catch((): AttestationSupport => 'unknown'))
+  const pending = (support ??=
+    Platform.OS === 'web'
+      ? Promise.resolve<AttestationSupport>('supported')
+      : deviceAttestation
+          .checkSupport()
+          .catch((): AttestationSupport => 'unknown'))
   const supported = await pending
   // Unknown (offline, Play unreachable) is asked again next time.
   if (supported === 'unknown' && support === pending) support = null

@@ -86,7 +86,8 @@ and how it's verified.
 - **Maps:** the MapKit JS frame on `maps(-dev).witnesswork.app` and its
   ww-api token route; HERE search, place search and directions through
   ww-api.
-- **Scribe AI voice:** recorded in the browser, transcribed by ww-api.
+- **Scribe AI:** text chat through the account session; voice and photo
+  input are hidden on the web for now (ADR 0037 §8).
 - **Loading on demand:** CanvasKit when a screen needs it; locales from the
   app's origin.
 - **Offline and install:**

@@ -8,7 +8,8 @@ import { Platform } from 'react-native'
  * module or a newer binary checks that as well.
  *
  * Features that will get a web version (Buddies, Scribe AI, the Map, backups,
- * imports) aren't listed: they check their own availability.
+ * imports) aren't listed: they check their own availability. Scribe AI's text
+ * chat works on the web; only its voice and photo input are listed here.
  */
 export type PlatformCapability =
   /** Home Screen widgets (iOS). */
@@ -47,6 +48,18 @@ export type PlatformCapability =
    * the phones would get a reference to nothing.
    */
   | 'syncedPhotos'
+  /**
+   * Speaking to Scribe AI: the microphone button, "Say a change" and the
+   * wording that mentions them. On-device speech (ADR 0018) has no web
+   * version.
+   */
+  | 'scribeVoice'
+  /**
+   * Giving Scribe AI a photo: Scan notes and Read paper pages, and "From paper"
+   * in Pick up where you left off. The web has no on-device text recognition,
+   * and a page photo isn't sent from a browser.
+   */
+  | 'scribePhotos'
 
 type OS = typeof Platform.OS
 
@@ -67,6 +80,8 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
   syncedPhotos: ['ios', 'android'],
+  scribeVoice: ['ios', 'android'],
+  scribePhotos: ['ios', 'android'],
 }
 
 /** Whether this platform has `capability` at all. */

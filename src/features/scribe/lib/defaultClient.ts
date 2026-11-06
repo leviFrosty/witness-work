@@ -19,8 +19,11 @@ const buildDefaultClient = (): ScribeClient =>
       step: apis.scribeStep,
       transcribe: apis.scribeTranscribe,
     },
-    // React Native's own fetch can't read a streaming body.
-    streamFetch: expoFetch as unknown as typeof fetch,
+    // React Native's own fetch can't read a streaming body. Called through a
+    // wrapper, not as the client's method: on the web `expo/fetch` is the
+    // browser's `fetch`, which throws "Illegal invocation" with another `this`.
+    streamFetch: ((input, init) =>
+      expoFetch(input as never, init as never)) as typeof fetch,
     sessions: {
       withSession: (run, call) =>
         accountSessions.withSession((authorization) => run(authorization), {

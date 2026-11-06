@@ -15,6 +15,7 @@ import {
 } from '@react-navigation/native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { analytics } from '@/lib/analytics'
+import { hasCapability } from '@/lib/platformCapabilities'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import {
   forgoScribeResume,
@@ -232,7 +233,10 @@ const Conversation = ({
       <View style={{ flex: 1 }}>
         <ScribeTimeline
           controller={controller}
-          onSayAChange={canMessage ? sayAChange : undefined}
+          // Voice only: where there's none (the web), the composer is the way.
+          onSayAChange={
+            canMessage && hasCapability('scribeVoice') ? sayAChange : undefined
+          }
         />
         {voice ? (
           <ScribeVoiceSheet

@@ -3,6 +3,8 @@ import moment from 'moment'
 import { whenPhrase } from '@/lib/dayPhrases'
 import { localizeDisplayDate } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
+import enUS from '@/locales/en-US.json'
 import type {
   ScribeAvailability,
   ScribeErrorCode,
@@ -15,6 +17,18 @@ type BlockedReason = Extract<
   ScribeAvailability,
   { status: 'blocked' }
 >['reason']
+
+/**
+ * Copy that mentions speaking or photos names what the platform has: where
+ * there's no voice input (the web), a `<key>Web` variant says it with typing
+ * only. Returns that variant when this platform needs it and one exists, else
+ * `key`.
+ */
+export const scribeKey = (key: TranslationKey): TranslationKey => {
+  if (hasCapability('scribeVoice')) return key
+  const web = `${key}Web`
+  return web in enUS ? (web as TranslationKey) : key
+}
 
 /** Why Scribe AI can't run here, for the conversation's blocked card. */
 export const blockedCopy = (reason: BlockedReason): TranslationKey => {

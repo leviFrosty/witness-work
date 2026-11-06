@@ -30,6 +30,7 @@ import {
   formatResetTime,
   fullestWindow,
   limitNoticeCopy,
+  scribeKey,
 } from '@/features/scribe/components/scribeCopy'
 import type { ScribeUsage } from '@/features/scribe/types'
 
@@ -127,5 +128,39 @@ describe('Scribe AI copy', () => {
     )
     expect(limitNoticeCopy(null, NOW)).toBe('scribe_limitTitle')
     expect(limitNoticeCopy(NOW - HOUR, NOW)).toBe('scribe_limitNoticeLifted')
+  })
+})
+
+describe('scribeKey', () => {
+  beforeEach(() => {
+    runtime.platform = 'ios'
+  })
+
+  it('keeps the voice wording on the phones', () => {
+    for (const os of ['ios', 'android']) {
+      runtime.platform = os
+      expect(scribeKey('scribe_speakAnUpdate')).toBe('scribe_speakAnUpdate')
+      expect(scribeKey('scribe_orbLabel')).toBe('scribe_orbLabel')
+    }
+  })
+
+  it('says it with typing on the web, where a Web variant exists', () => {
+    runtime.platform = 'web'
+    expect(scribeKey('scribe_speakAnUpdate')).toBe('scribe_speakAnUpdateWeb')
+    expect(scribeKey('scribe_speakAnUpdateSubtitle')).toBe(
+      'scribe_speakAnUpdateSubtitleWeb'
+    )
+    expect(scribeKey('scribe_orbLabel')).toBe('scribe_orbLabelWeb')
+    expect(scribeKey('scribe_offlineBody')).toBe('scribe_offlineBodyWeb')
+    expect(scribeKey('scribe_zdrIntro')).toBe('scribe_zdrIntroWeb')
+    expect(scribeKey('scribe_zdrOnDeviceBody')).toBe(
+      'scribe_zdrOnDeviceBodyWeb'
+    )
+    expect(scribeKey('scribe_usageInfoBody')).toBe('scribe_usageInfoBodyWeb')
+  })
+
+  it('leaves copy with no Web variant alone', () => {
+    runtime.platform = 'web'
+    expect(scribeKey('scribe_emptyTitle')).toBe('scribe_emptyTitle')
   })
 })

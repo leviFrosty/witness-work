@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { withAlpha } from '@/lib/color'
 import { useOpenScribe } from '@/features/scribe/components/openScribe'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
 import ScribeMicOrb from '@/features/scribe/components/ScribeMicOrb'
 import { ScribePill } from '@/features/scribe/components/ScribeBadge'
 
@@ -16,9 +17,10 @@ interface Props {
 }
 
 /**
- * "Speak an update" at the top of the "+" menu. Unlike the green manual rows on
- * purpose: a dark surface lit by the same orb the voice sheet opens with.
- * Hidden where Scribe AI is; offline it greys out and explains when tapped.
+ * "Speak an update" ("Type an update" on the web) at the top of the "+" menu.
+ * Unlike the green manual rows on purpose: a dark surface lit by the same orb
+ * the voice sheet opens with. Hidden where Scribe AI is; offline it greys out
+ * and explains when tapped.
  */
 const ScribeQuickActionRow = ({ onAction }: Props) => {
   const theme = useTheme()
@@ -32,7 +34,7 @@ const ScribeQuickActionRow = ({ onAction }: Props) => {
         scribe.open('plus_sheet')
       }}
       accessibilityLabel={i18n.t(
-        scribe.offline ? 'scribe_orbOfflineLabel' : 'scribe_orbLabel'
+        scribe.offline ? 'scribe_orbOfflineLabel' : scribeKey('scribe_orbLabel')
       )}
       style={{
         minHeight: 76,
@@ -76,7 +78,7 @@ const ScribeQuickActionRow = ({ onAction }: Props) => {
               color: scribe.offline ? theme.colors.textAlt : theme.colors.text,
             }}
           >
-            {i18n.t('scribe_speakAnUpdate')}
+            {i18n.t(scribeKey('scribe_speakAnUpdate'))}
           </Text>
           <ScribePill compact />
         </View>
@@ -89,7 +91,7 @@ const ScribeQuickActionRow = ({ onAction }: Props) => {
           {i18n.t(
             scribe.offline
               ? 'scribe_offlineBadge'
-              : 'scribe_speakAnUpdateSubtitle'
+              : scribeKey('scribe_speakAnUpdateSubtitle')
           )}
         </Text>
       </View>

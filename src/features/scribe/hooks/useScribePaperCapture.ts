@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import Haptics from '@/lib/haptics'
 import { logger } from '@/lib/logger'
+import { hasCapability } from '@/lib/platformCapabilities'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type {
   ScribePaperCapture,
@@ -102,7 +103,8 @@ const landed = (text: string): string | null => {
  * read. When pages are left unread for a reason that can pass (no connection, a
  * busy service), their copies stay until Try again reads them or the User skips
  * them, so nothing has to be picked again. The text goes to the composer for
- * the User to edit.
+ * the User to edit. Unavailable where the platform can't read photos (the
+ * web).
  */
 export function useScribePaperCapture(): ScribePaperCapture {
   const [progress, setProgress] = useState<{
@@ -265,8 +267,10 @@ export function useScribePaperCapture(): ScribePaperCapture {
     return text
   }
 
+  const available = hasCapability('scribePhotos')
+
   const capture: ScribePaperCapture['capture'] = async (source, given) => {
-    if (running.current) return null
+    if (!available || running.current) return null
     running.current = true
     setError(null)
     setRetryAt(null)
@@ -320,7 +324,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
   }
 
   return {
-    available: true,
+    available,
     picker: library.host,
     busy: progress !== null,
     progress,

@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import * as TextRecognition from '../../../../modules/text-recognition'
 import Haptics from '@/lib/haptics'
 import { logger } from '@/lib/logger'
+import { hasCapability } from '@/lib/platformCapabilities'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { ScribePhotoCapture } from '@/features/scribe/types'
 import { appLocale } from '@/features/scribe/lib/locale'
@@ -26,7 +27,8 @@ async function cameraAllowed(): Promise<boolean> {
  * never leave the device; the library's copies are deleted once read.
  */
 export function useScribePhotoCapture(): ScribePhotoCapture {
-  const available = TextRecognition.isSupported()
+  const available =
+    hasCapability('scribePhotos') && TextRecognition.isSupported()
   const [busy, setBusy] = useState(false)
   const running = useRef(false)
   const library = useLibraryImagePicker('scribe_photo')

@@ -25,6 +25,8 @@ const all: PlatformCapability[] = [
   'photoLibrarySave',
   'otaUpdates',
   'syncedPhotos',
+  'scribeVoice',
+  'scribePhotos',
 ]
 const on = (os: string) => {
   platform.OS = os
@@ -55,7 +57,20 @@ describe('hasCapability', () => {
       'photoLibrarySave',
       'otaUpdates',
       'syncedPhotos',
+      'scribeVoice',
+      'scribePhotos',
     ])
+  })
+
+  it('keeps Scribe AI voice and photo input on the phones only', () => {
+    platform.OS = 'web'
+    expect(hasCapability('scribeVoice')).toBe(false)
+    expect(hasCapability('scribePhotos')).toBe(false)
+    for (const os of ['ios', 'android']) {
+      platform.OS = os
+      expect(hasCapability('scribeVoice')).toBe(true)
+      expect(hasCapability('scribePhotos')).toBe(true)
+    }
   })
 
   it('reads the platform when asked, not when loaded', () => {

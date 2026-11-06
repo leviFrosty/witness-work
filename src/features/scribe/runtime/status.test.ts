@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   ready: vi.fn(async () => undefined),
 }))
 
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('@/lib/attestation', () => ({
   deviceAttestation: { checkSupport: async () => 'supported' },

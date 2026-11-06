@@ -14,6 +14,8 @@ import { expect, readStoreRow, strings, test } from './fixtures'
 // Signed in: a release build's sign-in screen keeps a signed-out tab out of the
 // app, and Cloud Sync runs only with an account.
 test.use({
+  // The worker is what this file tests (the fixtures block it elsewhere).
+  serviceWorkers: 'allow',
   signedIn: true,
   preferences: { role: 'regularPioneer', roleHistory: null },
 })
@@ -21,7 +23,10 @@ test.use({
 const text = strings('en-US')
 const CHUNK_URL = (name: string) => `/_expo/static/js/web/${name}`
 
-/** A service worker controls the page and has kept the app shell. */
+/**
+ * A service worker controls the page and has kept the app shell, but not
+ * CanvasKit, which downloads only when something first draws with Skia.
+ */
 async function waitForOfflineReady(page: Page) {
   await expect
     .poll(
@@ -33,15 +38,22 @@ async function waitForOfflineReady(page: Page) {
             shell:
               (await caches.match('/index.html', { ignoreSearch: true })) !==
               undefined,
-            canvaskit:
-              (await caches.match('/canvaskit.wasm', {
-                ignoreSearch: true,
-              })) !== undefined,
+            precachedCanvasKit: (
+              await Promise.all(
+                (await caches.keys())
+                  .filter((name) => name.startsWith('workbox-precache'))
+                  .map(async (name) =>
+                    (await (await caches.open(name)).keys()).some((request) =>
+                      request.url.includes('canvaskit.wasm')
+                    )
+                  )
+              )
+            ).some(Boolean),
           }
         }),
       { timeout: 60_000 }
     )
-    .toEqual({ controlled: true, shell: true, canvaskit: true })
+    .toEqual({ controlled: true, shell: true, precachedCanvasKit: false })
 }
 
 async function addTwoHours(page: Page) {

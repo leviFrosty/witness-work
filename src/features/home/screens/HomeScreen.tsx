@@ -6,7 +6,7 @@ import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
-import { ComponentProps, ReactNode, useState } from 'react'
+import { ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -78,6 +78,7 @@ import {
 } from '@/lib/homeSections'
 import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const SECTION_GAP = 20
 
@@ -577,21 +578,23 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
 
 /**
  * The pet's slot draws with Skia. Its cards are required the first time the
- * slot shows one, so a Home without the pet doesn't set Skia up at launch.
+ * slot shows one, so a Home without the pet doesn't set Skia up at launch; the
+ * web shows them once CanvasKit has downloaded.
  */
-function PetPromptCard() {
-  const Card: typeof PetPromptCardComponent =
+const PetPromptCard = canvasKitComponent(
+  (): typeof PetPromptCardComponent =>
     require('@/features/pet/components/PetPromptCard').default
-  return <Card />
-}
+)
 
-function PetHomeSection(props: ComponentProps<typeof PetHomeSectionComponent>) {
-  const Section: typeof PetHomeSectionComponent =
+const PetHomeSection = canvasKitComponent(
+  (): typeof PetHomeSectionComponent =>
     require('@/features/pet/components/PetHomeSection').default
-  return <Section {...props} />
-}
+)
 
-/** Quick Actions' Scribe AI orb draws with Skia too; required the same way. */
+/**
+ * Quick Actions is required the same way. Its Scribe AI orb draws with Skia,
+ * which on the web waits for CanvasKit on its own (`ScribeOrb`).
+ */
 function QuickActionsCard() {
   const Card: typeof ScribeQuickActionsCardComponent =
     require('@/features/scribe/components/ScribeQuickActionsCard').default

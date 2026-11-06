@@ -15,9 +15,11 @@ import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 import {
   NAVIGATION_TIMEOUT_MS,
+  ON_DEMAND_CACHE_PREFIX,
   SHELL_URL,
   isChunkRequest,
   isNeverCached,
+  isOnDemandFile,
   isStorableFile,
   isUsableNavigation,
 } from './rules'
@@ -25,6 +27,10 @@ import {
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null } | string>
 }
+
+/** The wasm files' revision, written in at build (`scripts/web-sw.mjs`). */
+declare const __WW_ON_DEMAND_REVISION__: string
+const ON_DEMAND_CACHE = `${ON_DEMAND_CACHE_PREFIX}${__WW_ON_DEMAND_REVISION__}`
 
 /** The page asks to take over once the User accepts the update. */
 const SKIP_WAITING = 'SKIP_WAITING'
@@ -90,6 +96,39 @@ registerRoute(
     ],
   })
 )
+
+// The wasm files download when something first needs them (CanvasKit when
+// something first draws with Skia) and are kept from then on, in a cache named
+// after this build's copies; an activated worker drops other builds'.
+registerRoute(
+  ({ url }) => isOnDemandFile(url, self.location.origin),
+  new CacheFirst({
+    cacheName: ON_DEMAND_CACHE,
+    plugins: [
+      {
+        cacheWillUpdate: async ({ response }) =>
+          isStorableFile(response) ? response : null,
+      },
+    ],
+  })
+)
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names
+            .filter(
+              (name) =>
+                name.startsWith(ON_DEMAND_CACHE_PREFIX) &&
+                name !== ON_DEMAND_CACHE
+            )
+            .map((name) => caches.delete(name))
+        )
+      )
+  )
+})
 
 // Everything else (ww-api, PostHog, the Help Center, `/.well-known/*`, the CSP
 // report) matches no route, so the browser handles it and nothing is stored.

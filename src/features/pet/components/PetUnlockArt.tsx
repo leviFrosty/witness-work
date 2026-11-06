@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { resolveRoom } from '@/features/pet/art'
-import RoomOptionThumb from '@/features/pet/components/RoomOptionThumb'
+import type RoomOptionThumbComponent from '@/features/pet/components/RoomOptionThumb'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
 import {
   ROOM_THUMB_VIEWS,
@@ -9,6 +9,7 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { unlockedPart } from '@/features/pet/lib/unlockNews'
 import type { RoomItemId } from '@/types/pet'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 /**
  * An unlocked item as Decorate Room's thumbnail draws it, in the pet's own
@@ -56,3 +57,12 @@ export default function PetUnlockArt({
     </View>
   )
 }
+
+/**
+ * The thumbnail draws with Skia, so toasts and the tray can show this before
+ * Skia has loaded: on the web it draws once CanvasKit has downloaded.
+ */
+const RoomOptionThumb = canvasKitComponent(
+  (): typeof RoomOptionThumbComponent =>
+    require('@/features/pet/components/RoomOptionThumb').default
+)

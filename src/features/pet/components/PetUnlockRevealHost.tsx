@@ -1,4 +1,4 @@
-import { type ComponentProps, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type PetUnlockRevealComponent from '@/features/pet/components/PetUnlockReveal'
 import usePetLife from '@/features/pet/hooks/usePetLife'
@@ -12,6 +12,7 @@ import {
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 /**
  * Shows the unlock toasts `announcePetUnlocks` asks for, and hosts a pet item's
@@ -48,11 +49,9 @@ export default function PetUnlockRevealHost() {
   )
 }
 
-// The reveal's module loads the first time it shows.
-function PetUnlockReveal(
-  props: ComponentProps<typeof PetUnlockRevealComponent>
-) {
-  const Reveal: typeof PetUnlockRevealComponent =
+// The reveal's module loads the first time it shows; on the web, once
+// CanvasKit has downloaded.
+const PetUnlockReveal = canvasKitComponent(
+  (): typeof PetUnlockRevealComponent =>
     require('@/features/pet/components/PetUnlockReveal').default
-  return <Reveal {...props} />
-}
+)

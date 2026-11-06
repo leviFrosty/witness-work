@@ -8,7 +8,8 @@ import { expect, readStoreRow, strings, test } from './fixtures'
  * manifest and meta.
  */
 
-test.use({ signedIn: true })
+// Installing needs the service worker, which the fixtures block elsewhere.
+test.use({ signedIn: true, serviceWorkers: 'allow' })
 
 const text = strings('en-US')
 const ANDROID_UA =

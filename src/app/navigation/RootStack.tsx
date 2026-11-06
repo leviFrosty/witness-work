@@ -11,6 +11,31 @@ import i18n from '@/lib/locales'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
 import { useWebOnboardingHold } from '@/app/sync/useWebOnboardingHold'
+import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
+
+/**
+ * Screens that draw with Skia. On the web each opens once CanvasKit has
+ * downloaded (`src/lib/canvasKit`); elsewhere they load like any other.
+ */
+const skiaScreens = {
+  PetPicker: canvasKitScreen(
+    () => require('@/features/pet/screens/PetPickerScreen').default
+  ),
+  PetRoom: canvasKitScreen(() => require('@/app/pet/PetRoomRoute').default),
+  PetShop: canvasKitScreen(
+    () => require('@/features/pet/screens/PetShopScreen').default
+  ),
+  PetRename: canvasKitScreen(
+    () => require('@/features/pet/screens/PetRenameScreen').default
+  ),
+  PetSettings: canvasKitScreen(
+    () => require('@/app/pet/PetSettingsScreen').default
+  ),
+  PetVisits: canvasKitScreen(() => require('@/app/pet/PetVisitsRoute').default),
+  PetShare: canvasKitScreen(
+    () => require('@/features/pet/screens/PetShareScreen').default
+  ),
+}
 
 // Pushed screens get the system's Back button in iPhone Duo's vertical bar.
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
@@ -671,9 +696,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetPicker'
-          getComponent={() =>
-            require('@/features/pet/screens/PetPickerScreen').default
-          }
+          getComponent={skiaScreens.PetPicker}
         />
         <RootStack.Screen
           // The pet's details: a large sheet on iPhone with its name, the room
@@ -683,7 +706,7 @@ const RootStackComponent = () => {
           // save as they're made.
           options={petLargeScreenOptions}
           name='PetRoom'
-          getComponent={() => require('@/app/pet/PetRoomRoute').default}
+          getComponent={skiaScreens.PetRoom}
         />
         <RootStack.Screen
           // The Shop, over the pet's details: a large sheet on iPhone, full
@@ -692,9 +715,7 @@ const RootStackComponent = () => {
           // Android.
           options={petLargeScreenOptions}
           name='PetShop'
-          getComponent={() =>
-            require('@/features/pet/screens/PetShopScreen').default
-          }
+          getComponent={skiaScreens.PetShop}
         />
         <RootStack.Screen
           // Sized to its one field on iOS, like the picker.
@@ -710,9 +731,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetRename'
-          getComponent={() =>
-            require('@/features/pet/screens/PetRenameScreen').default
-          }
+          getComponent={skiaScreens.PetRename}
         />
         <RootStack.Screen
           // A large sheet over the details on iOS, its sections scrolling;
@@ -729,7 +748,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetSettings'
-          getComponent={() => require('@/app/pet/PetSettingsScreen').default}
+          getComponent={skiaScreens.PetSettings}
         />
         <RootStack.Screen
           // Every visiting pet: a large sheet like the details, so a long list
@@ -746,7 +765,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetVisits'
-          getComponent={() => require('@/app/pet/PetVisitsRoute').default}
+          getComponent={skiaScreens.PetVisits}
         />
         <RootStack.Screen
           // The share card, sized to it on iOS like the picker; full screen
@@ -763,9 +782,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetShare'
-          getComponent={() =>
-            require('@/features/pet/screens/PetShareScreen').default
-          }
+          getComponent={skiaScreens.PetShare}
         />
         <RootStack.Screen
           options={{

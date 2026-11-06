@@ -39,10 +39,11 @@ import {
   paceScale,
   type PacePoint,
   type ServiceYearPace,
+  PACE_CHART_HEIGHT,
 } from '@/features/progress/lib/serviceYearPace'
 import { alignText } from '@/lib/direction'
 
-const CHART_HEIGHT = 168
+const CHART_HEIGHT = PACE_CHART_HEIGHT
 const Y_GUTTER = 44
 const PADDING = { left: 2, right: Y_GUTTER, top: 8, bottom: 4 }
 const PLOT_TOP = PADDING.top

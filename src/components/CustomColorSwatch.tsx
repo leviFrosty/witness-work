@@ -3,7 +3,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import { useState } from 'react'
 import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import ColorPickerSheet from '@/components/ColorPickerSheet'
+import ColorPickerSheet from '@/components/ColorPickerSheetOnDemand'
 import ContextMenu from '@/components/ui/ContextMenu'
 import i18n from '@/lib/locales'
 

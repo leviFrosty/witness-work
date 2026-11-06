@@ -23,6 +23,12 @@ const toHex = (r: number, g: number, b: number) =>
     .join('')
     .toUpperCase()
 
+/** A hex color's red, green and blue as 0–1 fractions, as shaders take them. */
+export const unitRgb = (hex: string): [number, number, number] => {
+  const [r, g, b] = parseHex(hex)
+  return [r / 255, g / 255, b / 255]
+}
+
 /**
  * Linearly mix two hex colors in RGB space. `ratio` of 0 returns `hex`, 1
  * returns `target`. Values in between interpolate. Used to derive lighter

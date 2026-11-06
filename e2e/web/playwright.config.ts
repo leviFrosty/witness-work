@@ -45,6 +45,10 @@ export default defineConfig({
     baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // Requests from a page the service worker controls skip the specs' mocks,
+    // so a reload could reach a real service. Only the specs about the worker
+    // (offline, install) allow it.
+    serviceWorkers: 'block',
   },
   webServer:
     !process.env.E2E_HOST && !process.env.E2E_EXTERNAL

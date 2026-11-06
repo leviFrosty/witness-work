@@ -31,7 +31,9 @@ import {
 } from '@/lib/mileage/calc'
 import PeriodNavigator from '@/features/mileage/components/PeriodNavigator'
 import MileageSummary from '@/features/mileage/components/MileageSummary'
-import MileagePeriodChart from '@/features/mileage/components/MileagePeriodChart'
+import type MileagePeriodChartComponent from '@/features/mileage/components/MileagePeriodChart'
+import { MILEAGE_CHART_HEIGHT } from '@/features/mileage/lib/chartColors'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 import { getVehicleChartColors } from '@/features/mileage/lib/chartColors'
 import TripRow from '@/features/mileage/components/TripRow'
 import MileageEmptyState from '@/features/mileage/components/MileageEmptyState'
@@ -259,3 +261,13 @@ export default function MileageScreen() {
     </View>
   )
 }
+
+/**
+ * The chart draws with Skia; on the web it shows once CanvasKit has downloaded,
+ * its space kept meanwhile.
+ */
+const MileagePeriodChart = canvasKitComponent(
+  (): typeof MileagePeriodChartComponent =>
+    require('@/features/mileage/components/MileagePeriodChart').default,
+  () => <View style={{ height: MILEAGE_CHART_HEIGHT }} />
+)

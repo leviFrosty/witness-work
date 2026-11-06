@@ -1,7 +1,7 @@
-import type { ComponentProps } from 'react'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
 import type ScheduleIntroOverlayComponent from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 /**
  * Mounted once in HomeTabStack; shows the Schedule intro once the takeover
@@ -16,10 +16,8 @@ export default function ScheduleIntroHost() {
 }
 
 /** The intro's module loads the first time it shows, not at launch. */
-function ScheduleIntroOverlay(
-  props: ComponentProps<typeof ScheduleIntroOverlayComponent>
-) {
-  const Overlay: typeof ScheduleIntroOverlayComponent =
-    require('@/features/plans/components/schedule-intro/ScheduleIntroOverlay').default
-  return <Overlay {...props} />
-}
+const ScheduleIntroOverlay = canvasKitComponent(
+  (): typeof ScheduleIntroOverlayComponent =>
+    require('@/features/plans/components/schedule-intro/ScheduleIntroOverlay')
+      .default
+)

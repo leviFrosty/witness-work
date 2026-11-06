@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
 import { ArrowForwardIcon } from '@/components/ui/DirectionalIcon'
-import {
-  Canvas,
-  Group,
-  LinearGradient,
-  Rect,
-  vec,
-} from '@shopify/react-native-skia'
 import Animated, {
   SharedValue,
   useAnimatedStyle,
@@ -20,6 +13,8 @@ import useTheme from '@/contexts/theme'
 import { forwardSign, isRtlLayout } from '@/lib/direction'
 import { DISPLAY_FONT_SCALE_CAP } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import type WelcomeCtaSheenComponent from '@/features/onboarding/components/welcome/WelcomeCtaSheen'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const RADIUS = 14
 const HEIGHT = 56
@@ -106,30 +101,12 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
         }}
       >
         {width > 0 && !reduceMotion && (
-          <Canvas
-            pointerEvents='none'
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width,
-              height: HEIGHT,
-            }}
-          >
-            <Group transform={sheen}>
-              <Rect x={0} y={0} width={SHEEN_WIDTH} height={HEIGHT}>
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(SHEEN_WIDTH, 0)}
-                  colors={[
-                    'rgba(255,255,255,0)',
-                    'rgba(255,255,255,0.4)',
-                    'rgba(255,255,255,0)',
-                  ]}
-                />
-              </Rect>
-            </Group>
-          </Canvas>
+          <WelcomeCtaSheen
+            width={width}
+            height={HEIGHT}
+            sheenWidth={SHEEN_WIDTH}
+            transform={sheen}
+          />
         )}
         <Text
           maxFontSizeMultiplier={DISPLAY_FONT_SCALE_CAP}
@@ -153,5 +130,14 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
     </View>
   )
 }
+
+/**
+ * The sheen draws with Skia; on the web it shows once CanvasKit has downloaded,
+ * and the button works without it.
+ */
+const WelcomeCtaSheen = canvasKitComponent(
+  (): typeof WelcomeCtaSheenComponent =>
+    require('@/features/onboarding/components/welcome/WelcomeCtaSheen').default
+)
 
 export default WelcomeCta

@@ -28,6 +28,32 @@ export interface WebProfile {
 export const IMMUTABLE = 'public, max-age=31536000, immutable'
 export const REVALIDATE = 'public, max-age=0, must-revalidate'
 
+/**
+ * The app's HTML: revalidated on every load, as the asset server would, and
+ * `no-transform`, so Cloudflare injects nothing into it (its Web Analytics
+ * beacon would be a script from another origin, which the CSP refuses). Only
+ * HTML is served from assets without the Worker, so only HTML gets it; the
+ * Worker's files stay compressible.
+ */
+export const HTML_CACHE = `${REVALIDATE}, no-transform`
+
+/**
+ * What the export precompresses at brotli's highest level, beside each file as
+ * `<file>.br` (`scripts/web.mjs`), by extension, with the type the Worker
+ * serves it as. Cloudflare's own compression of these is much lighter.
+ */
+export const PRECOMPRESSED_TYPES: Record<string, string> = {
+  js: 'text/javascript; charset=utf-8',
+  mjs: 'text/javascript; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  wasm: 'application/wasm',
+  json: 'application/json',
+  webmanifest: 'application/manifest+json',
+  svg: 'image/svg+xml',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+}
+
 /** Where browsers post CSP and Trusted Types violations. */
 export const REPORT_PATH = '/_csp-report'
 
@@ -123,11 +149,15 @@ export function securityHeaders(profile: WebProfile): Record<string, string> {
   }
 }
 
-/** `_headers` for responses Cloudflare serves from assets without the Worker. */
+/**
+ * `_headers` for responses Cloudflare serves from assets without the Worker:
+ * `index.html`, for `/` and every app route.
+ */
 export function headersFile(profile: WebProfile): string {
-  const lines = Object.entries(securityHeaders(profile)).map(
-    ([name, value]) => `  ${name}: ${value}`
-  )
+  const lines = Object.entries({
+    ...securityHeaders(profile),
+    'Cache-Control': HTML_CACHE,
+  }).map(([name, value]) => `  ${name}: ${value}`)
   return `/*\n${lines.join('\n')}\n`
 }
 

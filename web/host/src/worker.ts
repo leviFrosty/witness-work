@@ -10,6 +10,7 @@ import environments from '../../../config/web-environments.json'
 import { receiveReport } from './cspReport'
 import {
   IMMUTABLE,
+  PRECOMPRESSED_TYPES,
   REPORT_PATH,
   REVALIDATE,
   securityHeaders,
@@ -60,6 +61,53 @@ function assetPath(pathname: string): string {
     .join('/')
 }
 
+/** Responses whose body is a `.br` file's bytes, already encoded. */
+const PRECOMPRESSED_BODIES = new WeakSet<Response>()
+
+const extension = (pathname: string) =>
+  /\.([A-Za-z0-9]+)$/.exec(pathname)?.[1].toLowerCase()
+
+/** The browser takes brotli and asked for the whole file. */
+const wantsBrotli = (request: Request) =>
+  request.method === 'GET' &&
+  !request.headers.has('Range') &&
+  /\bbr\b/.test(request.headers.get('Accept-Encoding') ?? '')
+
+/**
+ * `<file>.br`, served as the file with `Content-Encoding: br`, or null when the
+ * export has no such file. `encodeBody: 'manual'` sends the bytes as they are.
+ */
+async function precompressed(
+  request: Request,
+  env: Env,
+  url: URL
+): Promise<Response | null> {
+  const type = PRECOMPRESSED_TYPES[extension(url.pathname) ?? '']
+  if (!type || !wantsBrotli(request)) return null
+  const compressed = new URL(url)
+  compressed.pathname = `${url.pathname}.br`
+  // Its revalidation too: the `.br` file has its own ETag.
+  const headers = new Headers({ 'Accept-Encoding': 'identity' })
+  for (const name of ['If-None-Match', 'If-Modified-Since']) {
+    const value = request.headers.get(name)
+    if (value) headers.set(name, value)
+  }
+  const asset = await env.ASSETS.fetch(new Request(compressed, { headers }))
+  if (![200, 304].includes(asset.status) || isHtml(asset)) {
+    await asset.body?.cancel()
+    return null
+  }
+  const answer = new Headers(asset.headers)
+  answer.set('Content-Type', type)
+  answer.set('Content-Encoding', 'br')
+  answer.delete('Content-Length')
+  return new Response(asset.status === 304 ? null : asset.body, {
+    status: asset.status,
+    headers: answer,
+    encodeBody: 'manual',
+  })
+}
+
 const isHtml = (response: Response) =>
   (response.headers.get('Content-Type') ?? '').startsWith('text/html')
 
@@ -71,6 +119,10 @@ function withHeaders(response: Response, profile: WebProfile): Response {
     status: response.status,
     statusText: response.statusText,
     headers,
+    // A precompressed body is already encoded; others the runtime encodes.
+    ...(PRECOMPRESSED_BODIES.has(response) && {
+      encodeBody: 'manual' as const,
+    }),
   })
 }
 
@@ -89,15 +141,20 @@ async function serveFile(request: Request, env: Env): Promise<Response> {
     return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } })
   const url = new URL(request.url)
   url.pathname = assetPath(url.pathname)
-  const asset = await env.ASSETS.fetch(new Request(url, request))
+  const brotli = await precompressed(request, env, url)
+  const asset = brotli ?? (await env.ASSETS.fetch(new Request(url, request)))
   // Anything but the file itself, including the SPA's index.html fallback,
   // means this deploy doesn't have it.
   if (![200, 206, 304].includes(asset.status) || isHtml(asset)) {
     await asset.body?.cancel()
     return notFound(request.method)
   }
-  const response = new Response(asset.body, asset)
+  const response = brotli ?? new Response(asset.body, asset)
+  if (brotli) PRECOMPRESSED_BODIES.add(response)
   const { pathname } = new URL(request.url)
+  // One URL, two encodings: caches must keep them apart.
+  if (PRECOMPRESSED_TYPES[extension(pathname) ?? ''])
+    response.headers.set('Vary', 'Accept-Encoding')
   response.headers.set(
     'Cache-Control',
     HASHED.test(pathname) ? IMMUTABLE : REVALIDATE

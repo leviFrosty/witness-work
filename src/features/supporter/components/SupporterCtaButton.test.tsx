@@ -55,6 +55,11 @@ vi.mock('@/hooks/useOnScreen', () => ({
   },
 }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
+// The rim loads through `require`, which the test runner's `@/` alias misses.
+vi.mock('@/lib/canvasKit/canvasKitComponent', async () => {
+  const rim = await import('@/features/supporter/components/SupporterCtaRim')
+  return { canvasKitComponent: () => rim.default }
+})
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: new Proxy({}, { get: () => '#000' }) }),
 }))

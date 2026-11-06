@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isChunkRequest,
   isNeverCached,
+  isOnDemandFile,
   isStorableFile,
   isUsableNavigation,
 } from './rules'
@@ -46,6 +47,16 @@ describe('what the service worker never caches', () => {
         new URL('https://evil.example/_expo/static/js/web/a.js'),
         ORIGIN
       )
+    ).toBe(false)
+  })
+
+  it('keeps the wasm files at the root once loaded, not other origins’', () => {
+    expect(isOnDemandFile(url('/canvaskit.wasm'), ORIGIN)).toBe(true)
+    expect(isOnDemandFile(url('/sql-wasm-browser.wasm'), ORIGIN)).toBe(true)
+    expect(isOnDemandFile(url('/assets/a.wasm'), ORIGIN)).toBe(false)
+    expect(isOnDemandFile(url('/canvaskit.js'), ORIGIN)).toBe(false)
+    expect(
+      isOnDemandFile(new URL('https://evil.example/canvaskit.wasm'), ORIGIN)
     ).toBe(false)
   })
 

@@ -1,4 +1,4 @@
-import { type ComponentProps, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type BadgeCelebrationComponent from '@/features/badges/components/BadgeCelebration'
 import type {
@@ -14,6 +14,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import { useTakeover } from '@/stores/takeover'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 /**
  * The badge takeovers, each asking the takeover arbiter for its own turn (ADR
@@ -121,16 +122,12 @@ export default function BadgeCelebrationOverlay() {
 
 // Each card's module (and its confetti) loads the first time it shows.
 
-function BadgeCelebration(
-  props: ComponentProps<typeof BadgeCelebrationComponent>
-) {
-  const Card: typeof BadgeCelebrationComponent =
+const BadgeCelebration = canvasKitComponent(
+  (): typeof BadgeCelebrationComponent =>
     require('@/features/badges/components/BadgeCelebration').default
-  return <Card {...props} />
-}
+)
 
-function BadgesWelcome(props: ComponentProps<typeof BadgesWelcomeComponent>) {
-  const Card: typeof BadgesWelcomeComponent =
+const BadgesWelcome = canvasKitComponent(
+  (): typeof BadgesWelcomeComponent =>
     require('@/features/badges/components/BadgesWelcome').default
-  return <Card {...props} />
-}
+)

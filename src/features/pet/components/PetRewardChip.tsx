@@ -1,4 +1,4 @@
-import { PixelRatio } from 'react-native'
+import { PixelRatio, View } from 'react-native'
 import Animated, { ZoomIn } from 'react-native-reanimated'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
@@ -11,7 +11,8 @@ import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { startReward, type RewardLine } from '@/stores/rewardStack'
 import { COIN_ICON_PX } from '@/features/pet/art/gameUi'
-import { CoinIcon } from '@/features/pet/components/GamePixels'
+import type { CoinIcon as CoinIconComponent } from '@/features/pet/components/GamePixels'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 import {
   COINS_PER_DAY,
   COINS_PER_MILESTONE,
@@ -166,3 +167,21 @@ export function playPetRewardSample(): boolean {
     }) !== null
   )
 }
+
+/**
+ * The pixel coin draws with Skia: required when a chip first shows, and on the
+ * web drawn once CanvasKit has downloaded, its space kept meanwhile.
+ */
+const CoinIcon = canvasKitComponent(
+  (): typeof CoinIconComponent =>
+    require('@/features/pet/components/GamePixels').CoinIcon,
+  ({ size = 'small', scale }) =>
+    scale === undefined ? null : (
+      <View
+        style={{
+          width: COIN_ICON_PX[size] * scale,
+          height: COIN_ICON_PX[size] * scale,
+        }}
+      />
+    )
+)

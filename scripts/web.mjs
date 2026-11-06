@@ -1,9 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { promisify } from 'node:util'
+import zlib from 'node:zlib'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { loadLocalEnv } from './with-local-env.mjs'
+import { PRECOMPRESSED_TYPES } from '../web/host/src/headers.ts'
 
 /**
  * The web profiles, `local|dev|beta|production`: each one's native env files
@@ -464,14 +467,62 @@ export function checkServiceWorker(directory) {
     (match) => match[1]
   )
   // Every packaged asset too: fonts, images and sounds the screens need offline.
-  const assets = listFiles(path.join(directory, 'assets')).map(
-    (file) => `/assets/${file}`
-  )
+  // Not their brotli copies, which the Worker serves under the files' URLs.
+  const assets = listFiles(path.join(directory, 'assets'))
+    .filter((file) => !file.endsWith('.br'))
+    .map((file) => `/assets/${file}`)
   const missing = ['/index.html', ...entries, ...assets].filter(
     (url) => !worker.includes(`"${url}"`)
   )
   if (missing.length > 0)
     throw new Error(`sw.js doesn't precache ${missing.slice(0, 5).join(', ')}`)
+}
+
+const brotli = promisify(zlib.brotliCompress)
+
+/** Files smaller than this gain too little to keep a second copy. */
+const MIN_PRECOMPRESSED_BYTES = 1024
+
+/**
+ * Writes `<file>.br` beside every served file the Worker can serve
+ * precompressed (`PRECOMPRESSED_TYPES`), at brotli's highest level, where it's
+ * smaller: Cloudflare compresses on the fly at a much lower one. The Worker
+ * sends it to browsers that take brotli. Returns the files' total size before
+ * and after.
+ */
+export async function precompressExport(directory, { quality = 11 } = {}) {
+  const files = servedFiles(directory).filter((file) => {
+    const extension = path.extname(file).slice(1).toLowerCase()
+    return (
+      PRECOMPRESSED_TYPES[extension] !== undefined &&
+      !file.startsWith('.well-known/') &&
+      fs.statSync(path.join(directory, file)).size >= MIN_PRECOMPRESSED_BYTES
+    )
+  })
+  const totals = { files: 0, bytes: 0, compressed: 0 }
+  // A few at a time: zlib's thread pool runs four.
+  const queue = [...files]
+  const work = async () => {
+    for (let file = queue.shift(); file; file = queue.shift()) {
+      const contents = fs.readFileSync(path.join(directory, file))
+      const compressed = await brotli(contents, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: quality,
+          [zlib.constants.BROTLI_PARAM_SIZE_HINT]: contents.length,
+        },
+      })
+      totals.bytes += contents.length
+      if (compressed.length >= contents.length) {
+        totals.compressed += contents.length
+        continue
+      }
+      fs.writeFileSync(path.join(directory, `${file}.br`), compressed)
+      totals.files += 1
+      totals.compressed += compressed.length
+    }
+  }
+  await Promise.all(Array.from({ length: 4 }, work))
+  return totals
 }
 
 /**
@@ -630,6 +681,11 @@ async function main() {
     const worker = await buildServiceWorker(output)
     console.log(
       `[web] Service worker precaches ${worker.count} files, ${(worker.size / 1024 / 1024).toFixed(1)} MiB`
+    )
+    // Last, so the service worker is compressed too.
+    const compressed = await precompressExport(output)
+    console.log(
+      `[web] Brotli: ${compressed.files} files, ${(compressed.bytes / 1024 / 1024).toFixed(1)} MiB to ${(compressed.compressed / 1024 / 1024).toFixed(1)} MiB`
     )
     checkExport(output, excluded, { serviceWorker: true })
   } catch (error) {

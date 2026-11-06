@@ -40,6 +40,17 @@ export function isChunkRequest(url: URL, origin: string): boolean {
 }
 
 /**
+ * A wasm file at the web root that downloads when something first needs it:
+ * Skia's CanvasKit, SQLite's. The worker keeps it once loaded.
+ */
+export function isOnDemandFile(url: URL, origin: string): boolean {
+  return !isNeverCached(url, origin) && /^\/[^/]+\.wasm$/.test(url.pathname)
+}
+
+/** The cache for on-demand files, named after their build's revision. */
+export const ON_DEMAND_CACHE_PREFIX = 'ww-on-demand-'
+
+/**
  * Whether a response is the file it was asked for. Cloudflare answers an
  * unknown path with `index.html` (the Worker turns that into a 404 for chunks,
  * but a worker mustn't depend on it), and a cached page under a `.js` URL would

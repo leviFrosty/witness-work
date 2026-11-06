@@ -80,6 +80,9 @@ export type PaceScale = {
  * Totals only a little over the goal stay linear; the log band would stretch
  * them instead.
  */
+/** The pace chart's height, which the card keeps while the chart loads. */
+export const PACE_CHART_HEIGHT = 168
+
 export const paceScale = (
   goalMinutes: number,
   maxMinutes: number

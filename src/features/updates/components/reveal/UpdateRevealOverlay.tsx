@@ -25,8 +25,10 @@ import {
 } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
-import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
-import WelcomeCurtain from '@/features/onboarding/components/welcome/WelcomeCurtain'
+import {
+  WelcomeBackdrop,
+  WelcomeCurtain,
+} from '@/features/onboarding/components/welcome/welcomeSkia'
 import { UPDATE_REVEAL_VERSION } from '@/features/updates/constants/updateReveal'
 import useRevealPages, {
   RevealPage,

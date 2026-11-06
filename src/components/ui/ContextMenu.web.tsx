@@ -128,10 +128,12 @@ export default function ContextMenu({
         if (Date.now() >= swallowUntil.current) onPress()
       }}
       accessible={accessible}
-      accessibilityRole='button'
+      // Not a button when it isn't one accessibility element: it holds
+      // buttons of its own, and a <button> can't contain another.
+      accessibilityRole={accessible ? 'button' : undefined}
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
-      aria-haspopup={enabled ? 'menu' : undefined}
+      aria-haspopup={enabled && accessible ? 'menu' : undefined}
       testID={testID}
       style={({ pressed }) => [
         { borderRadius: hoverRadius },

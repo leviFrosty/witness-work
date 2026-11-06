@@ -220,6 +220,9 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       clearButtonMode='while-editing'
       enterKeyHint='next'
       {...(rest as InputProps)}
+      // The web names the element through `webAttributes`; Tamagui would hand
+      // `accessibilityLabel` to the DOM as an unknown attribute.
+      {...(webAttributes && { accessibilityLabel: undefined })}
       {...(fontSize !== undefined && { fontSize })}
       {...(fontFamily !== undefined && { fontFamily })}
       {...(fontWeight !== undefined && { fontWeight })}

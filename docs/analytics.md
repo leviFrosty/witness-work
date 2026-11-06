@@ -16,7 +16,7 @@ and properties in the same change as the feature and document the product
 question here. Prefer one successful outcome to a separate event for every click,
 intermediate step, preference, or background success.
 
-The October 2026 reduction retains 123 business event types and removes 133.
+The October 2026 reduction retains 123 business event types and removes 133 (a count from that date; later features have added events, so the current total is higher).
 Generic menu actions, navigation/keyboard/sidebar interactions, search/FAQ actions,
 cosmetic preferences, repetitive background maintenance, duplicate notification
 routing, and speculative paywall experiments have no permanent event. The

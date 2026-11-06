@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type ViewStyle,
 } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
@@ -70,14 +71,22 @@ const Header = (props: Props) => {
 
   // The nested provider measures the header's own safe area, so a screen pushed
   // inside an iOS modal sheet gets no status-bar inset instead of the window's.
-  // Sized by its content: on the web the provider's flex basis is 0%, which
-  // collapses the header under the screen below it, and that covers its buttons.
   return (
-    <SafeAreaProvider style={{ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}>
+    <SafeAreaProvider style={SIZED_BY_CONTENT}>
       <HeaderContent {...props} systemBack={false} />
     </SafeAreaProvider>
   )
 }
+
+// The provider's own style is `flex: 1`, and ours lays over it, so the header
+// is sized by its content. On the web `flex: 0` is a 0% basis, which collapses
+// the header under the screen below it, so the web spells it out. The phones
+// keep `flex: 0`: Yoga reads `flexBasis: 'auto'` as unset and takes the 0 basis
+// of the provider's `flex: 1`, which collapses the header there instead.
+const SIZED_BY_CONTENT = Platform.select<ViewStyle>({
+  web: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
+  default: { flex: 0 },
+})
 
 const HeaderContent = ({
   title,

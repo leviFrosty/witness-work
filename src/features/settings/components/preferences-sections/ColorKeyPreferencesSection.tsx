@@ -29,6 +29,7 @@ import Button from '@/components/ui/Button'
 import Divider from '@/components/ui/Divider'
 import ColorPickerSheet from '@/components/ColorPickerSheet'
 import { readStalenessDaysInput } from '@/features/settings/lib/stalenessDaysInput'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const SectionHeading = ({
   title,
@@ -232,37 +233,41 @@ const ColorKeyPreferencesSection = () => {
         )}
       </View>
       <Section>
-        <TextInputRow
-          label={i18n.t('colorKey_recentDays')}
-          description={i18n.t('colorKey_recentDays_description', {
-            label: i18n.t('contacts_pinStaleness_recent'),
-          })}
-          textInputProps={{
-            value: breakpointValue('weekDays'),
-            onChangeText: (value) => setBreakpoint('weekDays', value),
-            onEndEditing: commitBreakpoints,
-            type: 'number',
-            placeholder: formatPlainNumber(
-              DEFAULT_STALENESS_BREAKPOINTS.weekDays
-            ),
-          }}
-        />
-        <TextInputRow
-          label={i18n.t('colorKey_staleDays')}
-          description={i18n.t('colorKey_staleDays_description', {
-            label: i18n.t('contacts_pinStaleness_month'),
-          })}
-          textInputProps={{
-            value: breakpointValue('monthDays'),
-            onChangeText: (value) => setBreakpoint('monthDays', value),
-            onEndEditing: commitBreakpoints,
-            type: 'number',
-            placeholder: formatPlainNumber(
-              DEFAULT_STALENESS_BREAKPOINTS.monthDays
-            ),
-          }}
-          lastInSection
-        />
+        <SettingsSearchTarget id='colorKeyRecentDays'>
+          <TextInputRow
+            label={i18n.t('colorKey_recentDays')}
+            description={i18n.t('colorKey_recentDays_description', {
+              label: i18n.t('contacts_pinStaleness_recent'),
+            })}
+            textInputProps={{
+              value: breakpointValue('weekDays'),
+              onChangeText: (value) => setBreakpoint('weekDays', value),
+              onEndEditing: commitBreakpoints,
+              type: 'number',
+              placeholder: formatPlainNumber(
+                DEFAULT_STALENESS_BREAKPOINTS.weekDays
+              ),
+            }}
+          />
+        </SettingsSearchTarget>
+        <SettingsSearchTarget id='colorKeyStaleDays'>
+          <TextInputRow
+            label={i18n.t('colorKey_staleDays')}
+            description={i18n.t('colorKey_staleDays_description', {
+              label: i18n.t('contacts_pinStaleness_month'),
+            })}
+            textInputProps={{
+              value: breakpointValue('monthDays'),
+              onChangeText: (value) => setBreakpoint('monthDays', value),
+              onEndEditing: commitBreakpoints,
+              type: 'number',
+              placeholder: formatPlainNumber(
+                DEFAULT_STALENESS_BREAKPOINTS.monthDays
+              ),
+            }}
+            lastInSection
+          />
+        </SettingsSearchTarget>
       </Section>
 
       <ColorPickerSheet

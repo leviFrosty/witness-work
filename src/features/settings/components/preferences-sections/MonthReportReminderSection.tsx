@@ -6,6 +6,7 @@ import DateTimePicker from '@/components/ui/DateTimePicker'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useMonthReportReminder from '@/features/service-reports/hooks/useMonthReportReminder'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const MonthReportReminderSection = () => {
   const { enabled, setEnabled } = useMonthReportReminder()
@@ -15,13 +16,15 @@ const MonthReportReminderSection = () => {
 
   return (
     <Section>
-      <InputRowSwitch
-        label={i18n.t('monthReportReminders')}
-        info={i18n.t('monthReportReminders_info')}
-        value={enabled}
-        onValueChange={(next) => void setEnabled(next, 'settings')}
-        lastInSection={!enabled}
-      />
+      <SettingsSearchTarget id='monthReportReminder'>
+        <InputRowSwitch
+          label={i18n.t('monthReportReminders')}
+          info={i18n.t('monthReportReminders_info')}
+          value={enabled}
+          onValueChange={(next) => void setEnabled(next, 'settings')}
+          lastInSection={!enabled}
+        />
+      </SettingsSearchTarget>
       {enabled && (
         <InputRowContainer
           label={i18n.t('monthReportReminderTime')}

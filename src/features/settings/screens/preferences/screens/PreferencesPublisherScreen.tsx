@@ -1,4 +1,4 @@
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import PublisherPreferencesSection from '@/features/settings/components/preferences-sections/PublisherPreferencesSection'
@@ -8,11 +8,11 @@ const PreferencesPublisherScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView>
+        <SettingsScrollView>
           <ContentColumn style={{ paddingTop: 24, paddingBottom: 120 }}>
             <PublisherPreferencesSection />
           </ContentColumn>
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

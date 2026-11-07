@@ -16,6 +16,7 @@ import SettingsContents from '@/features/settings/components/SettingsContents'
 import SettingsOverviewScreen from '@/features/settings/screens/SettingsOverviewScreen'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
+import type { SettingsSearchRoute } from '@/features/settings/lib/settingsSearch'
 import SidebarToggle from '@/components/ui/SidebarToggle'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,
@@ -27,12 +28,14 @@ const SettingsDetailStack = createNativeStackNavigator<RootStackParamList>()
 type LayoutProps = {
   selectedDestination?: keyof RootStackParamList
   onNavigate: (destination: keyof RootStackParamList) => void
+  onOpenSearchResult: (path: SettingsSearchRoute[]) => void
   children: ReactNode
 }
 
 const SettingsSplitLayout = ({
   selectedDestination,
   onNavigate,
+  onOpenSearchResult,
   children,
 }: LayoutProps) => {
   const theme = useTheme()
@@ -66,6 +69,7 @@ const SettingsSplitLayout = ({
             </WindowControlsInsetView>
             <SettingsContents
               onNavigate={onNavigate}
+              onOpenSearchResult={onOpenSearchResult}
               selectedDestination={selectedDestination}
             />
           </>
@@ -135,6 +139,12 @@ export default function SettingsSplitScreen() {
           selectedDestination={state.routes[0]?.name}
           onNavigate={(destination) => {
             navigation.reset({ index: 0, routes: [{ name: destination }] })
+          }}
+          onOpenSearchResult={(path) => {
+            navigation.reset({
+              index: path.length - 1,
+              routes: path.map((name) => ({ name })),
+            })
           }}
         >
           {children}

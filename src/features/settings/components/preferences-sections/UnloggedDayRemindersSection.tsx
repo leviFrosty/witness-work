@@ -8,6 +8,7 @@ import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const UnloggedDayRemindersSection = () => {
   const { showsTimeEntry } = usePublisher()
@@ -35,13 +36,15 @@ const UnloggedDayRemindersSection = () => {
 
   return (
     <Section>
-      <InputRowSwitch
-        label={i18n.t('unloggedDayReminders')}
-        info={i18n.t('unloggedDayReminders_info')}
-        value={enabled}
-        onValueChange={(next) => void handleChange(next)}
-        lastInSection={!enabled}
-      />
+      <SettingsSearchTarget id='unloggedDayReminder'>
+        <InputRowSwitch
+          label={i18n.t('unloggedDayReminders')}
+          info={i18n.t('unloggedDayReminders_info')}
+          value={enabled}
+          onValueChange={(next) => void handleChange(next)}
+          lastInSection={!enabled}
+        />
+      </SettingsSearchTarget>
       {enabled && (
         <InputRowContainer
           label={i18n.t('unloggedDayReminderTime')}

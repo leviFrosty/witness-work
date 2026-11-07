@@ -27,18 +27,21 @@ import {
   isHomeSectionShown,
   setHomeSectionShown,
 } from '@/lib/homeSections'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const HideDonateHeart = () => {
   const { hideDonateHeart, set } = usePreferences()
 
   return (
-    <InputRowSwitch
-      label={i18n.t('hideDonateHeart')}
-      value={hideDonateHeart}
-      onValueChange={(value) => {
-        set({ hideDonateHeart: value })
-      }}
-    />
+    <SettingsSearchTarget id='hideDonateHeart'>
+      <InputRowSwitch
+        label={i18n.t('hideDonateHeart')}
+        value={hideDonateHeart}
+        onValueChange={(value) => {
+          set({ hideDonateHeart: value })
+        }}
+      />
+    </SettingsSearchTarget>
   )
 }
 
@@ -49,18 +52,20 @@ const HideSupporterNudge = () => {
   const lastInSection = entryMode === 'checkbox'
 
   return (
-    <InputRowSwitch
-      lastInSection={lastInSection}
-      label={i18n.t('hideSupporterNudge')}
-      value={hideSupporterNudge}
-      onValueChange={(value) => {
-        analytics.capture('supporter_nudge_visibility_changed', {
-          hidden: value,
-          source: 'settings',
-        })
-        set({ hideSupporterNudge: value })
-      }}
-    />
+    <SettingsSearchTarget id='hideSupporterNudge'>
+      <InputRowSwitch
+        lastInSection={lastInSection}
+        label={i18n.t('hideSupporterNudge')}
+        value={hideSupporterNudge}
+        onValueChange={(value) => {
+          analytics.capture('supporter_nudge_visibility_changed', {
+            hidden: value,
+            source: 'settings',
+          })
+          set({ hideSupporterNudge: value })
+        }}
+      />
+    </SettingsSearchTarget>
   )
 }
 

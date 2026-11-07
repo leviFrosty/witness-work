@@ -5886,5 +5886,53 @@
       "leaveBody": "You’re on day {{day}}. Your place is kept if you come back to it.",
       "leaveConfirm": "Leave"
     }
+  },
+  "settingsSearch": {
+    "placeholder": "Search settings",
+    "noResults": "No settings found",
+    "titles": {
+      "routineReminder": "Routine reminder",
+      "conversationNotification": "Follow-up notification",
+      "planNotification": "Plan notification",
+      "scribeUsage": "Scribe AI usage",
+      "scribeMemory": "Scribe AI memory"
+    },
+    "keywords": {
+      "language": "translation locale",
+      "scribe": "ai assistant artificial intelligence",
+      "profile": "name role publisher pioneer auxiliary regular special missionary start date status",
+      "goal": "hours target requirement monthly yearly",
+      "defaultExportMethod": "report submit send share export text email",
+      "serviceHistory": "past reports months years history",
+      "mileage": "car miles kilometers distance travel driving vehicle",
+      "credit": "credit hours ldc maximum cap limit",
+      "rollover": "leftover minutes carry over next month",
+      "account": "sign in backup recovery key devices",
+      "deviceSync": "icloud google drive cloud sync devices",
+      "colorScheme": "dark mode light mode theme appearance",
+      "fontSize": "text size larger smaller accessibility",
+      "colorKey": "contact colors pins staleness recent stale",
+      "routine": "bible reading personal study family worship habits",
+      "reminder": "notification alert notify",
+      "regionAndFormats": "date time format region",
+      "durationFormat": "hours minutes decimal",
+      "startOfWeek": "first day sunday monday",
+      "clockFormat": "12 hour 24 hour am pm",
+      "followUp": "return visit next visit",
+      "meetingDays": "congregation meeting midweek weekend",
+      "reportReminder": "service report submit monthly reminder notification",
+      "calendarSync": "calendar events",
+      "navigation": "maps directions apple maps google maps waze",
+      "map": "pins cards",
+      "customFields": "custom fields extra details",
+      "tabOrder": "tabs tab bar order",
+      "sounds": "sound audio effects",
+      "haptics": "vibration vibrate",
+      "widgets": "home screen widget lock screen",
+      "analytics": "usage statistics tracking data sharing",
+      "appLock": "face id touch id passcode fingerprint biometrics lock",
+      "backup": "export restore import file",
+      "importData": "transfer migrate other app"
+    }
   }
 }

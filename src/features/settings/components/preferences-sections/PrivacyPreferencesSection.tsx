@@ -14,6 +14,7 @@ import { syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { deleteAllHouseholderData } from '@/stores/householderData'
 import useTheme from '@/contexts/theme'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const PrivacyPreferencesSection = () => {
   const theme = useTheme()
@@ -76,39 +77,45 @@ const PrivacyPreferencesSection = () => {
       <View style={{ gap: 5 }}>
         <SectionTitle text={i18n.t('dataProtectionTitle')} alignWithIcons />
         <Section>
-          <InputRowContainer
-            leftIcon={ShieldCheckIcon}
-            label={i18n.t('dataProtectionSwitchLabel')}
-            info={i18n.t(syncKey('dataProtectionInfoDesc'))}
-            controlWidth='auto'
-            lastInSection={!dataProtectionMode}
-            style={{ justifyContent: 'space-between' }}
-          >
-            <Switch
-              accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
-              value={dataProtectionMode}
-              onValueChange={handleDataProtectionToggle}
-            />
-          </InputRowContainer>
+          <SettingsSearchTarget id='dataProtection'>
+            <InputRowContainer
+              leftIcon={ShieldCheckIcon}
+              label={i18n.t('dataProtectionSwitchLabel')}
+              info={i18n.t(syncKey('dataProtectionInfoDesc'))}
+              controlWidth='auto'
+              lastInSection={!dataProtectionMode}
+              style={{ justifyContent: 'space-between' }}
+            >
+              <Switch
+                accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
+                value={dataProtectionMode}
+                onValueChange={handleDataProtectionToggle}
+              />
+            </InputRowContainer>
+          </SettingsSearchTarget>
           {dataProtectionMode && (
-            <InputRowButton
-              leftIcon={Trash2Icon}
-              leftIconColor={theme.colors.error}
-              label={i18n.t('dataProtectionDeleteAll')}
-              onPress={handleDeleteAllHouseholderData}
-              lastInSection
-            />
+            <SettingsSearchTarget id='deleteHouseholderData'>
+              <InputRowButton
+                leftIcon={Trash2Icon}
+                leftIconColor={theme.colors.error}
+                label={i18n.t('dataProtectionDeleteAll')}
+                onPress={handleDeleteAllHouseholderData}
+                lastInSection
+              />
+            </SettingsSearchTarget>
           )}
         </Section>
       </View>
       <Section>
-        <InputRowSwitch
-          label={i18n.t('anonymousAnalytics')}
-          info={i18n.t('anonymousAnalyticsDesc')}
-          value={analyticsEnabled}
-          onValueChange={(value) => set({ analyticsEnabled: value })}
-          lastInSection
-        />
+        <SettingsSearchTarget id='anonymousAnalytics'>
+          <InputRowSwitch
+            label={i18n.t('anonymousAnalytics')}
+            info={i18n.t('anonymousAnalyticsDesc')}
+            value={analyticsEnabled}
+            onValueChange={(value) => set({ analyticsEnabled: value })}
+            lastInSection
+          />
+        </SettingsSearchTarget>
       </Section>
     </View>
   )

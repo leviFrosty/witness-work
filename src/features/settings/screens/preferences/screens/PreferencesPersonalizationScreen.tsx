@@ -1,4 +1,4 @@
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import PersonalizationPreferencesSection from '@/features/settings/components/preferences-sections/PersonalizationPreferencesSection'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
@@ -12,7 +12,7 @@ const PreferencesPersonalizationScreen = () => {
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
         <VisibilityViewportContext value={viewportRef}>
-          <KeyboardAwareScrollView
+          <SettingsScrollView
             innerRef={(node: ScrollView | null) => {
               viewportRef.current = node?.getNativeScrollRef() ?? null
             }}
@@ -24,7 +24,7 @@ const PreferencesPersonalizationScreen = () => {
             }}
           >
             <PersonalizationPreferencesSection />
-          </KeyboardAwareScrollView>
+          </SettingsScrollView>
         </VisibilityViewportContext>
       </Wrapper>
     </SettingsInputLayout>

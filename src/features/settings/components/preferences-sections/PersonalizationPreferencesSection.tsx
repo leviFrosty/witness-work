@@ -14,6 +14,7 @@ import IconButton from '@/components/ui/IconButton'
 import AccentColorPicker from '@/components/AccentColorPicker'
 import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const PersonalizationPreferencesSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -40,36 +41,40 @@ const PersonalizationPreferencesSection = () => {
   return (
     <View style={{ gap: 16 }}>
       <Section>
-        <InputRowContainer
-          label={i18n.t('colorScheme')}
-          style={{ justifyContent: 'space-between' }}
-        >
-          <View style={{ flex: 1 }}>
-            <Select
-              data={darkModeOptions}
-              value={colorScheme}
-              onChange={({ value }) => set({ colorScheme: value })}
-            />
-          </View>
-        </InputRowContainer>
-        <InputRowContainer
-          label={i18n.t('fontSizeOffset')}
-          info={i18n.t(
-            Platform.OS === 'android'
-              ? 'thisGloballyOffsetsTextSizeAndroid'
-              : 'thisGloballyOffsetsTextSize'
-          )}
-          style={{ justifyContent: 'space-between' }}
-          lastInSection
-        >
-          <View style={{ flex: 1 }}>
-            <Select
-              data={fontSizeOffsetOptions}
-              value={fontSizeOffset}
-              onChange={({ value }) => set({ fontSizeOffset: value })}
-            />
-          </View>
-        </InputRowContainer>
+        <SettingsSearchTarget id='colorScheme'>
+          <InputRowContainer
+            label={i18n.t('colorScheme')}
+            style={{ justifyContent: 'space-between' }}
+          >
+            <View style={{ flex: 1 }}>
+              <Select
+                data={darkModeOptions}
+                value={colorScheme}
+                onChange={({ value }) => set({ colorScheme: value })}
+              />
+            </View>
+          </InputRowContainer>
+        </SettingsSearchTarget>
+        <SettingsSearchTarget id='fontSize'>
+          <InputRowContainer
+            label={i18n.t('fontSizeOffset')}
+            info={i18n.t(
+              Platform.OS === 'android'
+                ? 'thisGloballyOffsetsTextSizeAndroid'
+                : 'thisGloballyOffsetsTextSize'
+            )}
+            style={{ justifyContent: 'space-between' }}
+            lastInSection
+          >
+            <View style={{ flex: 1 }}>
+              <Select
+                data={fontSizeOffsetOptions}
+                value={fontSizeOffset}
+                onChange={({ value }) => set({ fontSizeOffset: value })}
+              />
+            </View>
+          </InputRowContainer>
+        </SettingsSearchTarget>
       </Section>
       <Section style={{ paddingHorizontal: 12, paddingVertical: 16 }}>
         <AccentColorPicker />

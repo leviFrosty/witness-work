@@ -1,4 +1,4 @@
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ColorKeyPreferencesSection from '@/features/settings/components/preferences-sections/ColorKeyPreferencesSection'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
@@ -7,12 +7,12 @@ const PreferencesColorKeyScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
+        <SettingsScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 60 }}
         >
           <ColorKeyPreferencesSection />
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

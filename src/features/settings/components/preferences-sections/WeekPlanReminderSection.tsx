@@ -9,6 +9,7 @@ import useNotifications from '@/hooks/notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const WeekPlanReminderSection = () => {
   const enabled = usePreferences((s) => s.weekPlanReminder)
@@ -38,13 +39,15 @@ const WeekPlanReminderSection = () => {
 
   return (
     <Section>
-      <InputRowSwitch
-        label={i18n.t('weekPlanReminder')}
-        info={i18n.t('weekPlanReminder_info')}
-        value={enabled}
-        onValueChange={(next) => void handleChange(next)}
-        lastInSection={!enabled}
-      />
+      <SettingsSearchTarget id='weekPlanReminder'>
+        <InputRowSwitch
+          label={i18n.t('weekPlanReminder')}
+          info={i18n.t('weekPlanReminder_info')}
+          value={enabled}
+          onValueChange={(next) => void handleChange(next)}
+          lastInSection={!enabled}
+        />
+      </SettingsSearchTarget>
       {enabled && (
         <InputRowSelect
           label={i18n.t('weekPlanReminderDay')}

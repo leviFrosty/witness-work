@@ -1,5 +1,6 @@
 import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -74,7 +75,7 @@ export default function RoutineSettingsScreen() {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
           testID='routine-settings'
         >
@@ -122,12 +123,14 @@ export default function RoutineSettingsScreen() {
                 </Group>
               )}
               <Group title={i18n.t('routine.settings.reminderTitle')}>
-                <RoutineReminderFields
-                  enabled={reminders}
-                  time={reminderTime}
-                  onEnabledChange={(on) => void toggleReminder(on)}
-                  onTimeChange={(time) => set({ routineReminderTime: time })}
-                />
+                <SettingsSearchTarget id='routineReminder'>
+                  <RoutineReminderFields
+                    enabled={reminders}
+                    time={reminderTime}
+                    onEnabledChange={(on) => void toggleReminder(on)}
+                    onTimeChange={(time) => set({ routineReminderTime: time })}
+                  />
+                </SettingsSearchTarget>
               </Group>
             </>
           )}
@@ -140,7 +143,7 @@ export default function RoutineSettingsScreen() {
               />
             </Group>
           )}
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

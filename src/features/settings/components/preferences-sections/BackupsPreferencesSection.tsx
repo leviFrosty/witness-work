@@ -5,19 +5,22 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import i18n from '@/lib/locales'
 import Select from '@/components/ui/Select'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const RemindMeAboutBackups = () => {
   const { remindMeAboutBackups, set } = usePreferences()
 
   return (
-    <InputRowSwitch
-      label={i18n.t('remindMeToBackup')}
-      value={remindMeAboutBackups}
-      onValueChange={(value) => {
-        if (value === remindMeAboutBackups) return
-        set({ remindMeAboutBackups: value })
-      }}
-    />
+    <SettingsSearchTarget id='backupReminder'>
+      <InputRowSwitch
+        label={i18n.t('remindMeToBackup')}
+        value={remindMeAboutBackups}
+        onValueChange={(value) => {
+          if (value === remindMeAboutBackups) return
+          set({ remindMeAboutBackups: value })
+        }}
+      />
+    </SettingsSearchTarget>
   )
 }
 

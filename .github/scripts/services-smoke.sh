@@ -20,12 +20,15 @@ show_body() {
   echo "::$token::"
 }
 
-fetch() { # url -> headers in $HEADERS, body in $BODY; fails until 200
-  local url=$1
+fetch() { # url [allow_challenge] -> headers in $HEADERS, body in $BODY; fails until 200
+  local url=$1 allow_challenge=${2:-false}
   for attempt in $(seq 1 30); do
-    if curl -sS --max-time 20 -D "$HEADERS" -o "$BODY" "$url" &&
-      head -1 "$HEADERS" | grep -q ' 200'; then
-      return 0
+    if curl -sS --max-time 20 -D "$HEADERS" -o "$BODY" "$url"; then
+      head -1 "$HEADERS" | grep -q ' 200' && return 0
+      if [ "$allow_challenge" = true ] && grep -qi '^cf-mitigated: *challenge' "$HEADERS"; then
+        echo "$url is up but Cloudflare challenges this runner; skipping its body"
+        return 0
+      fi
     fi
     echo "waiting for $url (attempt $attempt)"
     sleep 10
@@ -55,8 +58,9 @@ jq -e --arg site "$SITE" '
 
 fetch "$SEARCH/v1/health"
 if [ -n "${LEGACY_SEARCH:-}" ]; then
-  # Shipped apps still call the old host (ADR 0042 §2).
-  fetch "$LEGACY_SEARCH/v1/health"
+  # Shipped apps still call the old host (ADR 0042 §2). Its zone runs Bot
+  # Fight Mode, which challenges GitHub's runners but not the apps.
+  fetch "$LEGACY_SEARCH/v1/health" true
 fi
 
 # Search answers are edge-cached by their parameters, so a per-run appVersion

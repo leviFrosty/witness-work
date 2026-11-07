@@ -1,0 +1,141 @@
+import { getRandomBytes } from 'expo-crypto'
+import apis from '@/constants/apis'
+import { webAccountKey } from '@/lib/accountKey/webAccountKey'
+import { analytics } from '@/lib/analytics'
+import { appVersion } from '@/lib/appUpdate'
+import { fromUtf8, utf8 } from '@/lib/bytes'
+import { syncNow } from '@/lib/syncClock'
+import { sealDeviceLabel } from '@/lib/serverAccount/deviceLabel'
+import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import type { SessionStore } from '@/lib/serverAccount/session'
+import {
+  closeSession,
+  sendWebSessionOpen,
+} from '@/lib/serverAccount/sessionClient'
+import {
+  createWebAccount,
+  type KeyRetiredPending,
+  type WebAccount,
+} from '@/lib/serverAccount/webAccount'
+import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
+import {
+  createSignUpKeyGuard,
+  createWebSignUpMarkStore,
+  WEB_SIGN_UP_LOCK,
+} from '@/lib/serverAccount/webSignUp'
+import {
+  webSignInLater,
+  webSignInMark,
+} from '@/lib/serverAccount/webSignInMark'
+import type { WebRuntime } from '@/lib/serverAccount/webRuntime'
+import { reloadPage, sessionTabs } from '@/lib/serverAccount/webTabs'
+import { webLinks } from '@/lib/webLinks/webLinks'
+import {
+  clearAllWebData,
+  DATA_OWNER_KEY,
+  markWipePending,
+  webStorageBoot,
+} from '@/lib/webStorage/boot'
+import { sealedSecrets } from '@/lib/webStorage/sealedSecrets'
+import { secureKv } from '@/lib/webStorage/secureKv'
+
+const SESSION_SECRET = 'session'
+const STALE_SESSION_KEY = 'session-stale'
+const REFRESH_IN_FLIGHT_KEY = 'session-refresh-in-flight'
+const KEY_RETIRED_PENDING_KEY = 'key-retired-pending'
+
+const kvEntry = <T>(key: string) => ({
+  read: async () => (await secureKv.get<T>(key)) ?? null,
+  write: (value: T | null) =>
+    value === null ? secureKv.delete(key) : secureKv.set(key, value),
+})
+
+const sessionStore: SessionStore = {
+  read: async () => {
+    const sealed = await sealedSecrets.read(SESSION_SECRET)
+    return sealed ? fromUtf8(sealed) : null
+  },
+  write: (value) =>
+    sealedSecrets.write(SESSION_SECRET, value === null ? null : utf8(value)),
+  stale: kvEntry<string>(STALE_SESSION_KEY),
+}
+
+let account: WebAccount | null = null
+
+export const webRuntime: WebRuntime | null = {
+  sessionStore,
+
+  sessionDeps: {
+    exclusive: sessionTabs.exclusive,
+    publish: sessionTabs.publish,
+    decide: async (reason, ending) => account?.decide(reason, ending),
+    onEnded: (reason, from) => account?.ended(reason, from),
+    inFlight: kvEntry<string>(REFRESH_IN_FLIGHT_KEY),
+  },
+  deviceLabel: () => webDeviceLabel(),
+  accountKey: webAccountKey,
+  bind: (sessions, hooks) =>
+    (account ??= createWebAccount({
+      ...hooks,
+      sessions,
+      accountKey: webAccountKey,
+      tabs: sessionTabs,
+      owner: kvEntry<string>(DATA_OWNER_KEY),
+      signUpKeyHeld: createSignUpKeyGuard({
+        mark: createWebSignUpMarkStore(secureKv),
+        readStoredKey: webAccountKey.readStored,
+
+        lockFree: async () => {
+          const locks =
+            typeof navigator === 'undefined' ? undefined : navigator.locks
+          if (!locks?.request) return true
+          return locks.request(
+            WEB_SIGN_UP_LOCK,
+            { ifAvailable: true },
+            async (lock) => lock !== null
+          )
+        },
+      }),
+      keyRetiredPending: kvEntry<KeyRetiredPending>(KEY_RETIRED_PENDING_KEY),
+      hasLocalData: webStorageBoot.hasLocalData,
+      open: (ticket, accountKey, signed) => {
+        const key = deriveAccountSigningKey(accountKey)
+        let device: string | undefined
+        try {
+          device = sealDeviceLabel(
+            accountKey,
+            key.publicKey,
+            webDeviceLabel(),
+            getRandomBytes(12)
+          )
+        } catch {}
+        return sendWebSessionOpen(
+          { ticket, device, appVersion: appVersion() ?? undefined },
+          {
+            baseUrl: apis.accounts,
+            key,
+            now: syncNow,
+            randomBytes: getRandomBytes,
+          },
+          signed
+        )
+      },
+      closeOpened: (accessToken) =>
+        closeSession(accessToken, { baseUrl: apis.accounts }),
+      markWipePending,
+      wipe: () => {
+        webSignInLater.clear()
+        return clearAllWebData()
+      },
+      afterSignInWipe: webLinks.keepAcrossWipe,
+      reload: reloadPage,
+      onEnded: (reason, outcome, { fromTab }) => {
+        if (!fromTab)
+          analytics.capture('web_session_ended', { reason, outcome })
+
+        webSignInLater.clear()
+
+        if (outcome === 'wiped') webSignInMark.write({ ended: reason })
+      },
+    })),
+}

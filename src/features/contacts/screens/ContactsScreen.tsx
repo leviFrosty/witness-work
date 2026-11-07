@@ -391,12 +391,14 @@ const ContactsScreen = ({
   ) : (
     <>
       {hasMoreActions && (
-        <PullDownMenu
-          accessibilityLabel={i18n.t('moreActions')}
-          triggerColor={theme.colors.accent}
-          triggerSize={22}
-          actions={moreActions}
-        />
+        <PointerTooltip label={i18n.t('moreActions')} effect='none'>
+          <PullDownMenu
+            accessibilityLabel={i18n.t('moreActions')}
+            triggerColor={theme.colors.accent}
+            triggerSize={22}
+            actions={moreActions}
+          />
+        </PointerTooltip>
       )}
       {}
       <PointerTooltip label={i18n.t('addContact')} effect='none'>

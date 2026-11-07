@@ -179,10 +179,22 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('handoff_setUp'),
   },
   {
+    name: 'Change Account Key',
+    getComponent: () =>
+      require('@/features/settings/screens/ChangeAccountKeyScreen').default,
+    title: () => i18n.t('accountKeyChange_row'),
+  },
+  {
     name: 'Account Devices',
     getComponent: () =>
       require('@/features/settings/screens/AccountDevicesScreen').default,
     title: () => i18n.t('accountSecurity_devices'),
+  },
+  {
+    name: 'Account Passkeys',
+    getComponent: () =>
+      require('@/features/settings/screens/AccountPasskeysScreen').default,
+    title: () => i18n.t('accountSecurity_passkeys'),
   },
   {
     name: 'Account Activity',
@@ -191,10 +203,22 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('accountSecurity_activity'),
   },
   {
+    name: 'Sign In With Passkey',
+    getComponent: () =>
+      require('@/features/settings/screens/SignInWithPasskeyScreen').default,
+    title: () => i18n.t('passkeySignIn_title'),
+  },
+  {
     name: 'Sign In With QR Code',
     getComponent: () =>
       require('@/features/settings/screens/SignInWithQrScreen').default,
     title: () => i18n.t('handoff_signIn'),
+  },
+  {
+    name: 'Sign In on a Computer',
+    getComponent: () =>
+      require('@/features/settings/screens/SignInOnComputerScreen').default,
+    title: () => i18n.t('approval_signIn'),
   },
   {
     name: 'PreferencesPersonalization',

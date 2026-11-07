@@ -278,6 +278,8 @@ export const payloadSchema = z.object({
       deviceName: z.string().optional(),
     })
     .optional(),
+
+  revenueCat: z.unknown().optional(),
   contactStore: z.object({
     contacts: z.array(contact),
     deletedContacts: z.array(contact),

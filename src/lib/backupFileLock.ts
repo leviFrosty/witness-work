@@ -232,10 +232,19 @@ function open(key: Uint8Array, file: LockedBackupFile): UnlockedBackupFile {
 
 export function unlockWithAccountKey(
   file: LockedBackupFile,
-  accountKey: Uint8Array
+  accountKey: Uint8Array,
+  olderFileKeys: readonly Uint8Array[] = []
 ): UnlockedBackupFile {
   if (file.lock !== 'account') throw new BackupUnlockError('format')
-  return open(deriveBackupFileKey(accountKey), file)
+  for (const key of [deriveBackupFileKey(accountKey), ...olderFileKeys]) {
+    try {
+      return open(key, file)
+    } catch (error) {
+      if (!(error instanceof BackupUnlockError) || error.problem !== 'key')
+        throw error
+    }
+  }
+  throw new BackupUnlockError('key')
 }
 
 export async function unlockWithPassword(

@@ -27,7 +27,6 @@ const FEATURE_ROWS: ReadonlyArray<{
   free: boolean | TranslationKey
   supporter: boolean | TranslationKey
 }> = [
-  { labelKey: 'paywallFeatureSync', free: false, supporter: true },
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   {

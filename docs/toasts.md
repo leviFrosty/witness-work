@@ -26,6 +26,8 @@ toast.undo({ title: i18n.t('contactDismissed'), onUndo: restore })
 toast.unlock({ key, eyebrow, title, message, art, onOpen, onClose })
 ```
 
+A toast that offers a button uses a bottom intent: the top `unlock` and `news` cards don't render `action`. The web's "Update available" prompt is a `toast.info` with a Reload action for that reason.
+
 With VoiceOver or TalkBack on, a toast with something to press stays 60 s and any other toast stays 10 s. Android raises both to the User's "Time to take action" setting (`src/lib/toastDuration.ts`).
 
 ## How they look and move

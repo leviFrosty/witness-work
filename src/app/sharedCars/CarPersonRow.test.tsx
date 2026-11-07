@@ -11,7 +11,11 @@ vi.mock('@/lib/locales', async () => {
 vi.mock('react-native', () => ({
   View: 'View',
   ActivityIndicator: 'ActivityIndicator',
-  Platform: { OS: 'ios' },
+  Platform: {
+    OS: 'ios',
+    select: (specifics: Record<string, unknown>) =>
+      'ios' in specifics ? specifics.ios : specifics.default,
+  },
 }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({

@@ -55,7 +55,15 @@ export default function RecoveryKeySheet({
   )
 }
 
-function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
+export function RecoveryKeyContent({
+  recoveryKey,
+  title = i18n.t('account_recoveryKeyTitle'),
+  padding = 20,
+}: {
+  recoveryKey: string
+  title?: string
+  padding?: number
+}) {
   const theme = useTheme()
 
   const copy = async () => {
@@ -106,7 +114,7 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
   )
 
   return (
-    <View style={{ padding: 20, gap: 16 }}>
+    <View style={{ padding, gap: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <Text
           accessibilityRole='header'
@@ -116,43 +124,14 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
             fontFamily: theme.fonts.bold,
           }}
         >
-          {i18n.t('account_recoveryKeyTitle')}
+          {title}
         </Text>
         <InfoPopover
           title={i18n.t('account_recoveryKeyTitle')}
           description={i18n.t('account_recoveryKeyInfo')}
         />
       </View>
-      <View
-        style={{
-          paddingVertical: 16,
-          paddingHorizontal: 12,
-          borderRadius: theme.numbers.borderRadiusMd,
-          backgroundColor: theme.colors.backgroundLighter,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          alignItems: 'center',
-        }}
-      >
-        <Text
-          selectable
-          testID='recovery-key'
-          accessibilityLabel={i18n.t('account_recoveryKeyLabel', {
-            key: recoveryKey.split('').join(' '),
-          })}
-          style={{
-            fontFamily: RECOVERY_KEY_FONT,
-            fontSize: theme.fontSize('lg'),
-            lineHeight: theme.fontSize('lg') * 1.6,
-
-            letterSpacing: 1,
-            textAlign: 'center',
-            color: theme.colors.text,
-          }}
-        >
-          {lines(recoveryKey).join('\n')}
-        </Text>
-      </View>
+      <RecoveryKeyBox recoveryKey={recoveryKey} />
       <View
         style={{
           flexDirection: 'row',
@@ -175,6 +154,42 @@ function RecoveryKeyContent({ recoveryKey }: { recoveryKey: string }) {
         {action(i18n.t('copy'), CopyIcon, copy, 'recovery-key-copy')}
         {action(i18n.t('share'), ShareIcon, share, 'recovery-key-share')}
       </View>
+    </View>
+  )
+}
+
+export function RecoveryKeyBox({ recoveryKey }: { recoveryKey: string }) {
+  const theme = useTheme()
+  return (
+    <View
+      style={{
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        borderRadius: theme.numbers.borderRadiusMd,
+        backgroundColor: theme.colors.backgroundLighter,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        alignItems: 'center',
+      }}
+    >
+      <Text
+        selectable
+        testID='recovery-key'
+        accessibilityLabel={i18n.t('account_recoveryKeyLabel', {
+          key: recoveryKey.split('').join(' '),
+        })}
+        style={{
+          fontFamily: RECOVERY_KEY_FONT,
+          fontSize: theme.fontSize('lg'),
+          lineHeight: theme.fontSize('lg') * 1.6,
+
+          letterSpacing: 1,
+          textAlign: 'center',
+          color: theme.colors.text,
+        }}
+      >
+        {lines(recoveryKey).join('\n')}
+      </Text>
     </View>
   )
 }

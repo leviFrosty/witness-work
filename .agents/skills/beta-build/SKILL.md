@@ -30,6 +30,8 @@ The script takes a per-machine lock, syncs widget sources, loads `.env.beta` (fa
 
 Before either path ships, `scripts/release-api.sh --branch <branch>` puts the backend out first (see `../release-process/SKILL.md`). It stops if ww-api's branch with this branch's name has commits that aren't on ww-api `main`. If ww-api `main` has commits since its latest `v*` tag, it tags and deploys the next ww-api version (about 1 min). Its `API_RESULT` line says `released` or `current`.
 
+After the phone ships, the script deploys the same commit to the web beta, `beta.app.witnesswork.app` (`pnpm web:deploy:beta`, see `docs/web-hosting.md`). That needs a clean tree, and it uses wrangler's own login on this Mac. Its build refreshes the Help Center snapshot from `witnesswork.app` first (`pnpm sync:help`). Its `WEB_RESULT` line says `deployed`, `skipped` (`reason=help-center-unreachable`: that site didn't answer, so the web beta wasn't updated) or `failed`. A web failure leaves the phone's Beta shipped; the script still exits non-zero.
+
 Tell the user which path it took. Watch the log to completion; relay only milestones (build started, upload, processing) and failures. The last line is `BETA_RESULT …`.
 
 ## 3. Report
@@ -39,6 +41,7 @@ Send a short summary the user can act on from their phone:
 - **OTA:** commit and update channel. "Swipe WitnessWork Beta away and reopen it." Let the background download finish, then swipe it away and reopen it again. Settings → version row shows the new commit hash.
 - **Native:** version (build), commit. "Update WitnessWork Beta in TestFlight." Processing is already complete when the script exits.
 - **ww-api:** the tag, when `API_RESULT status=released`.
+- **Web:** "Reload beta.app.witnesswork.app", when `WEB_RESULT status=deployed`.
 
 ## Failures
 
@@ -49,6 +52,7 @@ Read the log, diagnose, and report plainly. Fix code problems on the branch and 
 - **`errSecInternalComponent` / codesign can't access key:** the login keychain is locked (e.g. SSH session). The user must unlock it at the Mac, or run `security unlock-keychain ~/Library/Keychains/login.keychain-db` in their own terminal.
 - **`--mode ota` refused:** native code changed since the latest TestFlight build; rerun with `native`.
 - **Unmerged ww-api branch:** this feature's backend half isn't on ww-api `main`, so Beta would call a production API without it. Tell the user; don't merge or delete ww-api branches yourself. Rerun once it lands.
+- **Web beta failed** (`WEB_RESULT status=failed`): the phone's Beta already shipped. Read the error above it; `wrangler login` fixes an expired login. Rerun just the web with `pnpm web:deploy:beta`.
 - **ww-api tests, push or deploy failed:** nothing app-side shipped. Report the error or run URL. Rerunning is safe.
 - **Missing `.env.beta`, `asc`/`eas` auth, Xcode or WWDR certificates:** see `docs/build.md` → Beta builds.
 

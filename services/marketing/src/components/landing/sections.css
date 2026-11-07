@@ -1,0 +1,2657 @@
+/* WitnessWork landing page: section layouts (sections/*.tsx). Tokens, type,
+   device frames and shared motion are in landing.css. */
+
+/* --- Without the motion engine (blocked or still loading), show everything
+   after a beat rather than leaving it hidden. ------------------------------ */
+@keyframes ww-show {
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+html:not([data-ww-engine]) [data-page='ww'] .ww-reveal {
+  animation: ww-show 700ms ease 1.4s forwards;
+}
+html:not([data-ww-engine]) .ww-words .ww-word,
+html:not([data-ww-engine]) .ww-scribe [data-show] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* --- Nav ------------------------------------------------------------------- */
+
+.ww-nav {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  transition:
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+.ww-nav[data-scrolled] {
+  background-color: rgb(3 6 4 / 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: inset 0 -1px 0 var(--ww-line);
+}
+/* On the narrowest phones the icon stands in for the name, leaving room for
+   longer "Get the app" labels. */
+@media (max-width: 359px) {
+  .ww-wordmark {
+    display: none;
+  }
+}
+.ww-skip {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -4rem;
+  z-index: 70;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: var(--ww-green);
+  color: #03120a;
+  font-weight: 600;
+}
+.ww-skip:focus {
+  top: 0.6rem;
+}
+.ww-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  color: var(--ww-muted);
+  transition: color 200ms ease;
+}
+.ww-nav-link:hover {
+  color: var(--ww-ink);
+}
+.ww-icon-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  color: var(--ww-ink);
+  transition: background-color 200ms ease;
+}
+.ww-icon-btn:hover,
+details[open] > .ww-icon-btn {
+  background: rgb(255 255 255 / 0.08);
+}
+@keyframes ww-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+.ww-popover {
+  border-radius: 20px;
+  background: #0b110d;
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line-strong),
+    0 24px 60px -12px rgb(0 0 0 / 0.8);
+  animation: ww-pop 180ms var(--ww-ease);
+  scrollbar-width: thin;
+}
+.ww-popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border-radius: 12px;
+  font-size: 0.925rem;
+  color: var(--ww-ink);
+  transition: background-color 150ms ease;
+}
+.ww-popover-item:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+.ww-popover-item[aria-current='page'] {
+  font-weight: 600;
+}
+/* On a phone, the nav's menus drop down across the screen, below the bar,
+   so a long list never runs off either edge. */
+@media (max-width: 639px) {
+  .ww-nav .ww-popover {
+    position: fixed;
+    inset-inline: 0.75rem;
+    top: calc(var(--ww-nav-h) + 0.25rem);
+    width: auto;
+    margin: 0;
+  }
+}
+/* The bar's download button looks compact but takes a full 44px tap. */
+.ww-nav-cta {
+  position: relative;
+  min-height: 2.25rem;
+  padding-inline: 0.875rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .ww-nav-cta {
+    padding-inline: 1rem;
+    font-size: 0.875rem;
+  }
+}
+/* The phone menu's language list scrolls inside the menu. */
+.ww-menu {
+  max-height: calc(100svh - var(--ww-nav-h) - 1rem);
+  overflow-y: auto;
+}
+.ww-menu-languages {
+  margin-top: 0.25rem;
+  padding-inline-start: 0.5rem;
+}
+.ww-nav-cta::after {
+  content: '';
+  position: absolute;
+  inset: -0.25rem -0.125rem;
+}
+
+/* --- Hero ------------------------------------------------------------------- */
+
+.ww-hero {
+  padding-top: calc(var(--ww-nav-h) + 1.75rem);
+  padding-bottom: 2rem;
+  /* 0 → 1 as the hero scrolls away (it starts about a third through). */
+  --hp: clamp(0, calc((var(--p, 0.36) - 0.36) * 2.4), 1);
+}
+@media (min-width: 1024px) {
+  .ww-hero {
+    padding-top: calc(var(--ww-nav-h) + 3.25rem);
+  }
+}
+.ww-hero-top {
+  position: relative;
+  z-index: 7;
+}
+.ww-hero-head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  text-align: center;
+  /* The words lift and soften a little as the iPhone rises past them. */
+  translate: 0 calc(var(--hp) * -2.5rem);
+  opacity: calc(1 - var(--hp) * 0.5);
+}
+@media (min-width: 640px) {
+  .ww-hero-head {
+    padding-inline: 2rem;
+  }
+}
+.ww-hero-eyebrow {
+  font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ww-ink);
+}
+.ww-hero-title {
+  /* Two lines on every screen, so the tiles have room around it. */
+  max-width: 6.6em;
+  font-size: clamp(3rem, 13.6vw, 7.4rem);
+  color: var(--ww-ink);
+}
+@media (max-width: 639px) {
+  .ww-hero-lead {
+    font-size: 1.04rem;
+  }
+}
+/* What it costs, and what people think of it. One line from lg up. */
+.ww-hero-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--ww-muted);
+}
+@media (min-width: 1024px) {
+  .ww-hero-meta {
+    flex-direction: row;
+    gap: 1.1rem;
+  }
+  .ww-hero-meta > * + *::before {
+    content: '';
+    width: 1px;
+    height: 1rem;
+    margin-inline-end: 0.5rem;
+    background: var(--ww-line-strong);
+  }
+}
+.ww-note {
+  font-size: 0.875rem;
+  color: var(--ww-muted);
+  letter-spacing: 0.01em;
+}
+
+/* One big iPhone, rising out of the field as the page scrolls. */
+.ww-hero-device {
+  position: relative;
+  z-index: 6;
+  width: min(76vw, 21rem);
+  margin: 3.25rem auto 0;
+  translate: 0 calc((1 - var(--hp)) * 2.5rem);
+}
+@media (min-width: 1024px) {
+  .ww-hero-device {
+    width: 23.5rem;
+    margin-top: 3rem;
+  }
+}
+.ww-hero-phone {
+  /* Rises on load like a product reveal; scrolling then lifts it the rest
+     of the way (--hp on .ww-hero-device). */
+  animation: ww-rise 1500ms var(--ww-ease) 250ms both;
+}
+.ww-hero-phone .wwd-phone {
+  width: 100%;
+}
+@keyframes ww-rise {
+  from {
+    opacity: 0;
+    translate: 0 110px;
+    scale: 0.97;
+  }
+}
+.ww-hero-halo {
+  position: absolute;
+  inset: 6% -55% 30%;
+  z-index: -1;
+  background: radial-gradient(
+    closest-side,
+    rgb(27 209 93 / 0.32),
+    rgb(94 234 212 / 0.08) 55%,
+    transparent
+  );
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+/* --- The field: silk that leans toward the pointer (Codex's hero) -----------
+   The CSS glow shows until, or unless, WebGL draws. */
+.ww-field {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(48% 32% at 50% 22%, rgb(27 209 93 / 0.22), transparent 70%),
+    radial-gradient(
+      30% 26% at 22% 34%,
+      rgb(94 234 212 / 0.12),
+      transparent 70%
+    ),
+    radial-gradient(28% 24% at 80% 30%, rgb(34 211 238 / 0.1), transparent 70%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+}
+.ww-field canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ww-field-silk {
+  opacity: 0;
+  transition: opacity 1600ms ease;
+}
+.ww-field[data-ready] .ww-field-silk {
+  opacity: 1;
+}
+
+/* --- Floating feature tiles (T3 Code's agent icons) ------------------------- */
+.ww-tiles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ww-tile-pos {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  /* --hp drifts them up on scroll. */
+  translate: 0 calc(var(--hp, 0) * var(--d) * -4px);
+}
+.ww-tile {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1.05rem;
+  color: var(--c);
+  background: linear-gradient(180deg, #131c16, #0a0f0c);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 1px rgb(0 0 0 / 0.45),
+    0 22px 44px -18px rgb(0 0 0 / 0.95);
+  rotate: var(--r);
+  animation:
+    ww-tile-in 1000ms var(--ww-spring) both,
+    ww-bob 7s ease-in-out infinite alternate;
+  animation-delay: calc(450ms + var(--i) * 85ms), calc(var(--i) * -1.4s);
+}
+.ww-tile-icon {
+  width: 46%;
+  height: 46%;
+}
+@keyframes ww-tile-in {
+  from {
+    opacity: 0;
+    scale: 0.55;
+  }
+}
+@keyframes ww-bob {
+  from {
+    translate: 0 -5px;
+  }
+  to {
+    translate: 0 5px;
+  }
+}
+/* Phones: four in a row above the name, two hanging beside the iPhone. */
+@media (max-width: 1023px) {
+  .ww-hero-top > .ww-tiles {
+    position: relative;
+    inset: auto;
+    display: flex;
+    justify-content: center;
+    gap: clamp(1rem, 7vw, 2.25rem);
+    margin-bottom: 1.75rem;
+  }
+  .ww-hero-top > .ww-tiles .ww-tile-pos {
+    position: relative;
+    left: auto;
+    top: auto;
+  }
+  .ww-hero-top > .ww-tiles .ww-tile-pos:not([data-top]) {
+    display: none;
+  }
+  .ww-tile {
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 0.9rem;
+  }
+  .ww-tiles-side .ww-tile-pos {
+    translate: -50% calc(var(--hp, 0) * var(--d) * -3px);
+  }
+}
+@media (min-width: 1024px) {
+  .ww-tiles-side {
+    display: none;
+  }
+}
+
+@keyframes ww-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+.ww-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.95rem 0.55rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--ww-ink);
+  background: rgb(14 22 17 / 0.82);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    inset 0 0 0 1px rgb(154 245 195 / 0.25),
+    0 18px 40px -16px rgb(0 0 0 / 0.9),
+    0 0 30px -6px rgb(27 209 93 / 0.4);
+}
+.ww-toast-icon {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--ww-green);
+  color: #03120a;
+}
+
+/* --- Proof -------------------------------------------------------------------- */
+
+.ww-stat {
+  font-size: clamp(2.7rem, 9vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ww-ink);
+}
+.ww-review {
+  flex: none;
+  width: 17rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015)),
+    var(--ww-bg-raised);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+}
+@media (min-width: 640px) {
+  .ww-review {
+    width: 20rem;
+  }
+}
+
+/* Pause for the moving rows (PauseToggle). */
+.ww-marquees {
+  display: flex;
+  flex-direction: column;
+}
+.ww-pause-input:checked ~ * .ww-marquee-track {
+  animation-play-state: paused;
+}
+.ww-pause {
+  order: 1;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: 1.25rem;
+  border-radius: 999px;
+  color: var(--ww-muted);
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+.ww-pause:hover {
+  color: var(--ww-ink);
+  background: rgb(255 255 255 / 0.09);
+}
+.ww-pause-on,
+.ww-pause-input:checked ~ .ww-pause .ww-pause-off {
+  display: none;
+}
+.ww-pause-input:checked ~ .ww-pause .ww-pause-on {
+  display: block;
+}
+.ww-pause-input:focus-visible ~ .ww-pause {
+  outline: 2px solid var(--ww-mint);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ww-pause {
+    display: none;
+  }
+}
+
+/* --- Journey ------------------------------------------------------------------ */
+
+.ww-j-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 7rem;
+}
+.ww-j-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.ww-j-copy .ww-body {
+  margin-inline: auto;
+}
+.ww-j-time {
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ww-mint);
+  font-variant-numeric: tabular-nums;
+}
+.ww-j-inline .ww-j-phone {
+  width: min(64vw, 300px);
+}
+.ww-j-inline .ww-j-watch {
+  width: min(48vw, 230px);
+}
+.ww-j-inline .ww-j-fold {
+  width: min(92vw, 560px);
+}
+.ww-j-inline .ww-j-tablet {
+  width: min(90vw, 560px);
+}
+/* The foldable opens as it arrives. */
+.ww-j-inline .wwd-fold,
+.ww-j-item .wwd-fold {
+  --fold: 0.8;
+  transition: --fold 1300ms var(--ww-ease) 200ms;
+}
+.ww-j-inline[data-in='true'] .wwd-fold,
+.ww-j-item[data-active] .wwd-fold {
+  --fold: 0;
+}
+
+@media (min-width: 1024px) {
+  .ww-j-steps {
+    gap: 0;
+    padding-inline-start: 2.25rem;
+  }
+  .ww-j-steps::before,
+  .ww-j-steps::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    width: 1px;
+  }
+  .ww-j-steps::before {
+    bottom: 0;
+    background: var(--ww-line);
+  }
+  .ww-j-steps::after {
+    height: calc(var(--p, 0) * 100%);
+    background: linear-gradient(var(--ww-green), var(--ww-teal));
+    box-shadow: 0 0 12px rgb(27 209 93 / 0.6);
+  }
+  .ww-j-step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 78vh;
+    opacity: 0.3;
+    transition: opacity 500ms ease;
+  }
+  .ww-j-step[data-active] {
+    opacity: 1;
+  }
+  .ww-j-step::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: calc(-2.25rem - 5px);
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
+    background: var(--ww-bg);
+    box-shadow: 0 0 0 1.5px var(--ww-line-strong);
+    transition:
+      background-color 400ms ease,
+      box-shadow 400ms ease;
+  }
+  .ww-j-step[data-active]::before {
+    background: var(--ww-green);
+    box-shadow:
+      0 0 0 1.5px var(--ww-green),
+      0 0 16px 2px rgb(27 209 93 / 0.6);
+  }
+  .ww-j-copy {
+    align-items: flex-start;
+    text-align: start;
+  }
+  .ww-j-copy .ww-body {
+    margin-inline: 0;
+  }
+  .ww-j-stage-wrap {
+    position: relative;
+  }
+  .ww-j-stage {
+    position: sticky;
+    top: 13vh;
+    height: 74vh;
+    display: grid;
+    place-items: center;
+  }
+  .ww-j-halo {
+    position: absolute;
+    width: 80%;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(
+      closest-side,
+      rgb(27 209 93 / 0.2),
+      rgb(94 234 212 / 0.05) 60%,
+      transparent
+    );
+    filter: blur(10px);
+  }
+  .ww-j-item {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transform: translate3d(0, 30px, 0) scale(0.95);
+    filter: blur(8px);
+    transition:
+      opacity 600ms ease,
+      transform 900ms var(--ww-ease),
+      filter 600ms ease;
+    pointer-events: none;
+  }
+  .ww-j-item[data-active] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .ww-j-item .ww-j-phone {
+    width: min(300px, 31vh);
+  }
+  .ww-j-item .ww-j-watch {
+    width: min(250px, 27vh);
+  }
+  .ww-j-item .ww-j-fold {
+    width: min(100%, 580px);
+  }
+  .ww-j-item .ww-j-tablet {
+    width: min(100%, 80vh, 600px);
+  }
+}
+
+/* --- Feature chapters ---------------------------------------------------------- */
+
+.ww-pair {
+  position: relative;
+  width: min(100%, 500px);
+  aspect-ratio: 1 / 1.24;
+}
+.ww-pair-glow {
+  position: absolute;
+  inset: 12% 4%;
+  border-radius: 999px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--accent, var(--ww-green)) 40%, transparent),
+    transparent
+  );
+  filter: blur(36px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.ww-pair-back,
+.ww-pair-front {
+  position: absolute;
+}
+.ww-pair-back {
+  width: 47%;
+  top: 0;
+  right: 4%;
+  translate: 0 calc((var(--p, 0.5) - 0.5) * -40px);
+}
+.ww-pair-front {
+  width: 54%;
+  bottom: 0;
+  left: 5%;
+  z-index: 1;
+  translate: 0 calc((var(--p, 0.5) - 0.5) * 30px);
+}
+@media (min-width: 1024px) {
+  .ww-pair {
+    aspect-ratio: 1 / 1.12;
+  }
+  .ww-pair-back {
+    width: 45%;
+    right: 7%;
+  }
+  .ww-pair-front {
+    width: 49%;
+    left: 9%;
+  }
+}
+.ww-pair[data-flip] .ww-pair-back {
+  right: auto;
+  left: 4%;
+}
+.ww-pair[data-flip] .ww-pair-front {
+  left: auto;
+  right: 5%;
+}
+@media (min-width: 1024px) {
+  .ww-pair[data-flip] .ww-pair-back {
+    left: 7%;
+  }
+  .ww-pair[data-flip] .ww-pair-front {
+    right: 9%;
+  }
+}
+.ww-pair-back .wwd {
+  opacity: 0.92;
+}
+.ww-single {
+  position: relative;
+  width: min(64vw, 300px);
+}
+/* Scribe AI demo */
+.ww-scribe {
+  position: relative;
+}
+.ww-scribe-glow {
+  position: absolute;
+  inset: 8% 6%;
+  background: radial-gradient(
+    closest-side,
+    rgb(154 245 195 / 0.22),
+    transparent
+  );
+  filter: blur(40px);
+  pointer-events: none;
+}
+.ww-scribe-panel {
+  position: relative;
+  min-height: 27rem;
+  padding: 1.4rem;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.015)),
+    #09100b;
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line-strong),
+    0 40px 90px -40px rgb(0 0 0 / 0.95);
+}
+@media (min-width: 640px) {
+  .ww-scribe-panel {
+    padding: 2rem;
+  }
+}
+.ww-orb-sm {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+}
+.ww-orb-sm::before,
+.ww-orb-sm::after {
+  inset: -7px;
+}
+.ww-scribe .ww-wave {
+  transition: opacity 300ms ease;
+}
+.ww-scribe:is([data-step='3'], [data-step='4']) .ww-wave {
+  opacity: 0;
+}
+/* "Listening…" only while it listens. */
+.ww-scribe-status {
+  transition: opacity 300ms ease;
+}
+.ww-scribe:not([data-step='0'], [data-step='1']) .ww-scribe-status {
+  opacity: 0;
+}
+.ww-scribe:is([data-step='3'], [data-step='4']) .ww-orb-sm::before,
+.ww-scribe:is([data-step='3'], [data-step='4']) .ww-orb-sm::after {
+  animation: none;
+}
+.ww-bubble {
+  align-self: flex-end;
+  max-width: 90%;
+  min-height: 3rem;
+  padding: 0.8rem 1rem;
+  border-radius: 20px;
+  border-end-end-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #dff7e8;
+  background: #0f3a21;
+  box-shadow: inset 0 0 0 1px rgb(27 209 93 / 0.28);
+}
+@keyframes ww-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.ww-scribe[data-step='1'] [data-ww-type]::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-inline-start: 2px;
+  vertical-align: -0.18em;
+  background: var(--ww-mint);
+  animation: ww-caret 1s steps(2) infinite;
+}
+.ww-proposal {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+  transition: box-shadow 400ms ease;
+}
+.ww-scribe[data-step='4'] .ww-proposal {
+  box-shadow:
+    inset 0 0 0 1px rgb(27 209 93 / 0.45),
+    0 0 24px -8px rgb(27 209 93 / 0.6);
+}
+.ww-proposal-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  color: #03120a;
+  background: var(--ww-green);
+}
+.ww-proposal-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 12px;
+  color: var(--ww-mint);
+  background: rgb(27 209 93 / 0.12);
+}
+.ww-scribe-add {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 3rem;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #03120a;
+  background: var(--ww-green);
+  overflow: hidden;
+}
+.ww-scribe-added {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: var(--ww-mint);
+  background: #0e2a18;
+  box-shadow: inset 0 0 0 1px rgb(27 209 93 / 0.4);
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 350ms ease,
+    transform 500ms var(--ww-spring);
+}
+.ww-scribe[data-step='4'] .ww-scribe-added {
+  opacity: 1;
+  transform: none;
+}
+/* A finger taps Add before anything is added. */
+.ww-scribe-add {
+  transition: transform 180ms var(--ww-ease);
+}
+.ww-scribe[data-tap] .ww-scribe-add {
+  transform: scale(0.96);
+}
+@keyframes ww-touch {
+  from {
+    opacity: 0.85;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+.ww-scribe-add::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: -1.3rem 0 0 -1.3rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.75);
+  opacity: 0;
+  pointer-events: none;
+}
+.ww-scribe[data-tap] .ww-scribe-add::after {
+  animation: ww-touch 520ms ease-out;
+}
+
+/* Buddies and route, side by side */
+.ww-bento {
+  min-height: 38rem;
+}
+.ww-bento::before {
+  content: '';
+  position: absolute;
+  inset: auto -10% -30%;
+  height: 70%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--accent) 35%, transparent),
+    transparent
+  );
+  filter: blur(30px);
+  pointer-events: none;
+}
+.ww-bento-device {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: -22%;
+}
+.ww-bento-device .wwd {
+  width: min(66%, 300px);
+}
+.ww-widget-card {
+  min-height: 17rem;
+  background:
+    radial-gradient(
+      100% 90% at 50% 100%,
+      rgb(27 209 93 / 0.14),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015)),
+    var(--ww-bg-raised);
+}
+.ww-widget-img {
+  width: min(100%, 520px);
+  height: auto;
+  filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.7));
+  background: none !important;
+  border-radius: 0 !important;
+}
+
+/* --- Progress, pinned (wide screens) ------------------------------------------
+   The iPhone holds still while its screen turns from this month to the
+   service year (--sp). Phones, reduced motion, and pages without the engine
+   show the two screens side by side instead. */
+.ww-scene-media {
+  display: none;
+}
+@media (min-width: 1024px) and (min-height: 640px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .ww-scene {
+    --sp: clamp(0, calc((var(--p, 0) - 0.42) * 5), 1);
+    height: 240vh;
+  }
+  .ww-scene-sticky {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    height: 100vh;
+  }
+  .ww-scene .ww-chapter {
+    padding-block: 0;
+  }
+  .ww-scene-pair {
+    display: none;
+  }
+  .ww-scene-media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ww-scene-phone {
+    width: min(19.5rem, 34vh);
+    scale: calc(0.96 + var(--sp) * 0.04);
+  }
+  .ww-scene-next {
+    position: absolute;
+    inset: var(--bezel);
+    width: calc(100% - 2 * var(--bezel));
+    opacity: var(--sp);
+  }
+  .ww-scene-caption {
+    display: grid;
+    margin-top: 1.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ww-mint);
+  }
+  .ww-scene-caption span {
+    grid-area: 1 / 1;
+    text-align: center;
+  }
+  .ww-scene-caption [data-step='a'] {
+    opacity: calc(1 - var(--sp));
+  }
+  .ww-scene-caption [data-step='b'] {
+    opacity: var(--sp);
+  }
+}
+
+/* --- A visit note that types itself ------------------------------------------- */
+.ww-visits {
+  position: relative;
+}
+.ww-note-wrap {
+  position: relative;
+  z-index: 3;
+  width: min(21rem, 90%);
+  margin: -5rem auto 0;
+}
+@media (min-width: 1024px) {
+  .ww-note-wrap {
+    position: absolute;
+    inset-inline-start: -7%;
+    bottom: 6%;
+    width: 19.5rem;
+    margin: 0;
+  }
+}
+.ww-note-card {
+  padding: 1rem 1.1rem 0.85rem;
+  border-radius: 22px;
+  background: rgb(15 22 18 / 0.88);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 34px 70px -26px rgb(0 0 0 / 0.95);
+}
+.ww-note-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1404;
+  background: linear-gradient(160deg, #ffe08a, var(--ww-gold));
+}
+/* The full note, invisible, holds the card's height while it types. */
+.ww-note-text {
+  display: grid;
+  margin-top: 0.8rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ww-ink);
+}
+.ww-note-text > * {
+  grid-area: 1 / 1;
+}
+.ww-note-ghost {
+  visibility: hidden;
+}
+.ww-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-inline-start: 1px;
+  vertical-align: -0.2em;
+  border-radius: 1px;
+  background: var(--ww-gold);
+  animation: ww-caret 1s steps(2) infinite;
+}
+.ww-note-card[data-done] .ww-caret {
+  opacity: 0;
+  animation: none;
+}
+.ww-note-next {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--ww-line);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ww-gold);
+  opacity: 0;
+  translate: 0 6px;
+  transition:
+    opacity 500ms ease,
+    translate 600ms var(--ww-ease);
+}
+.ww-note-card[data-done] .ww-note-next,
+html:not([data-ww-engine]) .ww-note-next {
+  opacity: 1;
+  translate: none;
+}
+
+/* --- iPhone Duo, unfolding as the page scrolls ----------------------------------
+   --u runs 0 → 1 across the pinned stretch: the outer display hands off to
+   the open device nearly shut (--fold ≈ 0.86, about as wide), which then
+   opens flat. Without the engine --p is unset, so it shows open. */
+.ww-unfold {
+  --u: var(--p, 1);
+  position: relative;
+  height: 300vh;
+}
+.ww-unfold-sticky {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 100vh;
+  height: 100svh;
+  padding-top: var(--ww-nav-h);
+  overflow: hidden;
+}
+.ww-unfold-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(92vw, 44rem, calc((100svh - 25rem) * 1.42));
+  aspect-ratio: 2853 / 2007;
+  margin-top: 2.25rem;
+}
+.ww-unfold-stage > * {
+  grid-area: 1 / 1;
+}
+.ww-unfold-closed {
+  width: 39%;
+  opacity: clamp(0, calc((0.27 - var(--u)) * 14), 1);
+  rotate: y calc((0.24 - var(--u)) * 60deg);
+}
+/* On a phone the open device is only as wide as the screen, so the outer
+   display starts larger and settles to its true size as it hands off. */
+@media (max-width: 639px) {
+  .ww-unfold-closed {
+    scale: calc(1 + clamp(0, calc((0.45 - var(--u)) * 0.8), 0.35));
+  }
+}
+.ww-unfold-open {
+  width: 100%;
+  opacity: clamp(0, calc((var(--u) - 0.2) * 14), 1);
+}
+.ww-unfold .ww-unfold-open.wwd-fold {
+  --fold: clamp(0, calc((0.8 - var(--u)) * 1.6), 0.86);
+  transition: none;
+}
+.ww-unfold-caption {
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  margin-top: 1.75rem;
+}
+.ww-unfold-caption > * {
+  grid-area: 1 / 1;
+}
+.ww-unfold-caption [data-step='closed'],
+.ww-unfold-caption [data-step='half'] {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ww-mint);
+}
+.ww-unfold-caption [data-step='closed'] {
+  opacity: clamp(0, calc((0.3 - var(--u)) * 20), 1);
+}
+.ww-unfold-caption [data-step='half'] {
+  opacity: min(
+    clamp(0, calc((var(--u) - 0.3) * 20), 1),
+    clamp(0, calc((0.66 - var(--u)) * 20), 1)
+  );
+}
+.ww-unfold-caption [data-step='open'] {
+  opacity: clamp(0, calc((var(--u) - 0.68) * 10), 1);
+  translate: 0 calc(clamp(0, calc((0.78 - var(--u)) * 10), 1) * 0.75rem);
+}
+@media (prefers-reduced-motion: reduce), (scripting: none) {
+  .ww-unfold {
+    --u: 1;
+    height: auto;
+  }
+  .ww-unfold-sticky {
+    position: static;
+    height: auto;
+    padding-block: 6rem;
+  }
+}
+
+/* --- Devices ------------------------------------------------------------------ */
+
+.ww-devices-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    60% 45% at 50% 62%,
+    rgb(94 234 212 / 0.08),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+.ww-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.ww-segmented {
+  display: inline-flex;
+  gap: 2px;
+  max-width: 100%;
+  padding: 4px;
+  overflow-x: auto;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+  scrollbar-width: none;
+}
+.ww-segmented::-webkit-scrollbar {
+  display: none;
+}
+/* On a narrow phone the device tabs run edge to edge and scroll, fading out
+   where more are waiting. */
+.ww-seg-scroll {
+  display: flex;
+  margin-inline: -1.25rem;
+  padding-inline: 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 1.25rem,
+    #000 calc(100% - 1.25rem),
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 1.25rem,
+    #000 calc(100% - 1.25rem),
+    transparent
+  );
+}
+.ww-seg-scroll::-webkit-scrollbar {
+  display: none;
+}
+.ww-seg-scroll > .ww-segmented {
+  flex: none;
+  max-width: none;
+  margin-inline: auto;
+  overflow: visible;
+}
+@media (min-width: 640px) {
+  .ww-seg-scroll {
+    margin-inline: 0;
+    padding-inline: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+.ww-segmented label {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--ww-muted);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+.ww-segmented label:hover {
+  color: var(--ww-ink);
+}
+#ww-dev-iphone:checked ~ div label[for='ww-dev-iphone'],
+#ww-dev-ipad:checked ~ div label[for='ww-dev-ipad'],
+#ww-dev-watch:checked ~ div label[for='ww-dev-watch'],
+#ww-dev-android:checked ~ div label[for='ww-dev-android'] {
+  color: #03120a;
+  background: var(--ww-green);
+}
+#ww-dev-iphone:focus-visible ~ div label[for='ww-dev-iphone'],
+#ww-dev-ipad:focus-visible ~ div label[for='ww-dev-ipad'],
+#ww-dev-watch:focus-visible ~ div label[for='ww-dev-watch'],
+#ww-dev-android:focus-visible ~ div label[for='ww-dev-android'] {
+  outline: 2px solid var(--ww-mint);
+  outline-offset: 2px;
+}
+@keyframes ww-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.985);
+  }
+}
+.ww-dev-panel {
+  display: none;
+}
+#ww-dev-iphone:checked ~ .ww-dev-panels [data-panel='iphone'],
+#ww-dev-ipad:checked ~ .ww-dev-panels [data-panel='ipad'],
+#ww-dev-watch:checked ~ .ww-dev-panels [data-panel='watch'],
+#ww-dev-android:checked ~ .ww-dev-panels [data-panel='android'] {
+  display: block;
+  animation: ww-panel-in 650ms var(--ww-ease);
+}
+.ww-dev-visual {
+  display: flex;
+  min-height: 24rem;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ww-fan {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ww-fan-center {
+  position: relative;
+  z-index: 2;
+  width: min(42vw, 270px);
+}
+.ww-fan-side {
+  width: min(33vw, 230px);
+  opacity: 0.85;
+}
+.ww-fan-start {
+  margin-inline-end: -9vw;
+  transform: translateY(-6%) rotate(-5deg);
+}
+.ww-fan-end {
+  margin-inline-start: -9vw;
+  transform: translateY(-6%) rotate(5deg);
+}
+@media (min-width: 1024px) {
+  .ww-fan-start {
+    margin-inline-end: -50px;
+  }
+  .ww-fan-end {
+    margin-inline-start: -50px;
+  }
+}
+.ww-dev-tablet {
+  width: min(92vw, 760px);
+}
+/* The iPad lies in landscape, shorter than the phones beside it, so it sits
+   in the middle of their space rather than on its floor. */
+.ww-dev-visual:has(> .ww-dev-tablet) {
+  align-items: center;
+}
+.ww-watch-pair {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 4vw, 3rem);
+}
+.ww-watch-pair .wwd-watch {
+  width: min(40vw, 220px);
+}
+.ww-watch-second {
+  margin-top: 5rem;
+}
+
+/* --- Sync ------------------------------------------------------------------------ */
+
+.ww-sync-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(50% 40% at 50% 55%, rgb(27 209 93 / 0.1), transparent 70%),
+    radial-gradient(30% 30% at 20% 30%, rgb(94 234 212 / 0.06), transparent 70%);
+  pointer-events: none;
+}
+.ww-sync {
+  --core-x: 50;
+  --core-y: 50;
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 400 / 600;
+  margin-inline: auto;
+}
+.ww-beams {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ww-beams-wide {
+  display: none;
+}
+.ww-beam-base {
+  fill: none;
+  stroke: rgb(154 245 195 / 0.18);
+  stroke-width: 1.4;
+  stroke-dasharray: 3 7;
+}
+.ww-beam-light {
+  fill: none;
+  stroke: #b8ffd6;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 12 300;
+  stroke-dashoffset: 12;
+  filter: drop-shadow(0 0 6px #1bd15d);
+}
+@keyframes ww-beam-in {
+  from {
+    stroke-dashoffset: -100;
+  }
+  to {
+    stroke-dashoffset: 12;
+  }
+}
+@keyframes ww-beam-out {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+.ww-sync[data-phase='send'] [data-beam='watch'] .ww-beam-light {
+  animation: ww-beam-in 750ms ease-in both;
+}
+.ww-sync[data-phase='send']
+  [data-beam]:not([data-beam='watch'])
+  .ww-beam-light {
+  animation: ww-beam-out 850ms ease-out 650ms both;
+}
+
+.ww-core {
+  position: absolute;
+  left: calc(var(--core-x) * 1%);
+  top: calc(var(--core-y) * 1%);
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 23cqw;
+  aspect-ratio: 1;
+}
+.ww-core-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid rgb(154 245 195 / 0.35);
+  animation: ww-core-ring 3.2s ease-out infinite;
+}
+.ww-core-ring-2 {
+  animation-delay: 1.6s;
+}
+@keyframes ww-core-ring {
+  from {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.ww-core-disc {
+  display: grid;
+  place-items: center;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  color: #03120a;
+  background: radial-gradient(circle at 35% 30%, #d6ffe6, #1bd15d 55%, #0a6b30);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.35),
+    0 0 40px 4px rgb(27 209 93 / 0.5);
+}
+@keyframes ww-core-pulse {
+  40% {
+    transform: scale(1.12);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.35),
+      0 0 70px 14px rgb(27 209 93 / 0.7);
+  }
+}
+.ww-sync[data-phase='send'] .ww-core-disc {
+  animation: ww-core-pulse 900ms ease-out 550ms;
+}
+.ww-core-label {
+  position: absolute;
+  top: 100%;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ww-mint);
+}
+
+.ww-node {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+.ww-node[data-node='watch'] {
+  --x: 17.5;
+  --y: 15.8;
+  --w: 19cqw;
+}
+.ww-node[data-node='phone'] {
+  --x: 82.5;
+  --y: 16.7;
+  --w: 19cqw;
+}
+.ww-node[data-node='tablet'] {
+  --x: 18;
+  --y: 55;
+  --w: 26cqw;
+}
+.ww-node[data-node='android'] {
+  --x: 82;
+  --y: 55;
+  --w: 19cqw;
+}
+.ww-node[data-node='fold'] {
+  --x: 50;
+  --y: 84.2;
+  --w: 46cqw;
+}
+.ww-node-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--ww-muted);
+}
+/* Clear the watch's lower band. */
+.ww-node[data-kind='watch'] .ww-node-name {
+  margin-top: calc(var(--w) * 0.4);
+}
+.ww-node-device {
+  position: relative;
+  width: var(--w);
+}
+.ww-node-glass {
+  position: relative;
+  container-type: inline-size;
+  overflow: hidden;
+  aspect-ratio: 9 / 19.5;
+  border-radius: calc(var(--w) * 0.17);
+  background: #0a0e0b;
+  box-shadow:
+    0 0 0 calc(var(--w) * 0.035) #151a17,
+    0 0 0 calc(var(--w) * 0.045) #464d48,
+    0 24px 40px -18px #000;
+}
+.ww-node[data-kind='watch'] .ww-node-glass {
+  aspect-ratio: 416 / 496;
+  border-radius: calc(var(--w) * 0.26);
+  box-shadow:
+    0 0 0 calc(var(--w) * 0.06) #111513,
+    0 0 0 calc(var(--w) * 0.08) #525a55,
+    0 24px 40px -18px #000;
+}
+.ww-node[data-kind='tablet'] .ww-node-glass {
+  aspect-ratio: 3 / 4;
+  border-radius: calc(var(--w) * 0.07);
+  box-shadow:
+    0 0 0 calc(var(--w) * 0.025) #151a17,
+    0 0 0 calc(var(--w) * 0.032) #464d48,
+    0 24px 40px -18px #000;
+}
+.ww-node[data-kind='fold'] .ww-node-glass {
+  aspect-ratio: 1.42;
+  border-radius: calc(var(--w) * 0.05);
+  box-shadow:
+    0 0 0 calc(var(--w) * 0.018) #151a17,
+    0 0 0 calc(var(--w) * 0.024) #464d48,
+    0 24px 40px -18px #000;
+}
+.ww-node[data-kind='android'] .ww-node-glass {
+  aspect-ratio: 9 / 20;
+  border-radius: calc(var(--w) * 0.13);
+}
+.ww-node-band {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  height: 34%;
+  background: linear-gradient(90deg, #121815, #1d2521 50%, #121815);
+}
+.ww-node-band-top {
+  bottom: 100%;
+  border-radius: 40% 40% 0 0;
+}
+.ww-node-band-bottom {
+  top: 100%;
+  border-radius: 0 0 40% 40%;
+}
+.ww-node-hinge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgb(255 255 255 / 0.12);
+}
+
+/* The month on each mini screen. Sizes follow the screen (cqw). */
+.ww-mini {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 5cqw;
+  padding: 13cqw 9cqw;
+}
+.ww-mini-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3cqw;
+  min-width: 0;
+}
+.ww-mini-label {
+  font-size: 9cqw;
+  font-weight: 600;
+  color: var(--ww-muted);
+}
+.ww-mini-hours {
+  display: inline-grid;
+  font-size: 24cqw;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ww-ink);
+}
+.ww-mini-old,
+.ww-mini-new {
+  grid-area: 1 / 1;
+  transition:
+    transform 600ms var(--ww-spring),
+    opacity 300ms ease;
+  transition-delay: var(--d, 0ms);
+}
+.ww-mini-new {
+  color: var(--ww-mint);
+  opacity: 0;
+  transform: translateY(55%);
+}
+.ww-mini-bar {
+  position: relative;
+  height: 3.5cqw;
+  margin-top: 1cqw;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.1);
+  overflow: hidden;
+}
+.ww-mini-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 91.6%;
+  border-radius: inherit;
+  background: var(--ww-green);
+  transition: width 900ms var(--ww-ease);
+  transition-delay: var(--d, 0ms);
+}
+.ww-mini-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4cqw;
+  margin-top: 8cqw;
+}
+.ww-mini-rows i {
+  display: block;
+  height: 11cqw;
+  border-radius: 3cqw;
+  background: rgb(255 255 255 / 0.06);
+}
+.ww-mini-synced {
+  position: absolute;
+  top: 7cqw;
+  inset-inline-end: 7cqw;
+  width: 15cqw;
+  padding: 3cqw;
+  border-radius: 99px;
+  color: #03120a;
+  background: var(--ww-green);
+  box-shadow: 0 0 10px rgb(27 209 93 / 0.7);
+  transform: scale(0);
+  transition: transform 500ms var(--ww-spring);
+  transition-delay: var(--d, 0ms);
+}
+.ww-mini[data-kind='watch'] {
+  padding: 16cqw 11cqw;
+}
+.ww-mini[data-kind='watch'] .ww-mini-hours {
+  font-size: 27cqw;
+}
+.ww-mini[data-kind='watch'] .ww-mini-label {
+  font-size: 11cqw;
+}
+.ww-mini[data-kind='tablet'] {
+  padding: 7cqw 6cqw;
+}
+.ww-mini[data-kind='tablet'] .ww-mini-label {
+  font-size: 6cqw;
+}
+.ww-mini[data-kind='tablet'] .ww-mini-hours {
+  font-size: 15cqw;
+}
+.ww-mini[data-kind='tablet'] .ww-mini-bar {
+  height: 2.4cqw;
+}
+.ww-mini[data-kind='tablet'] .ww-mini-rows i {
+  height: 7cqw;
+}
+.ww-mini-sidebar {
+  flex: none;
+  width: 24%;
+  border-radius: 3cqw;
+  background: rgb(255 255 255 / 0.05);
+}
+.ww-mini[data-kind='fold'] {
+  padding: 6cqw 5cqw;
+  gap: 6cqw;
+}
+.ww-mini[data-kind='fold'] .ww-mini-label {
+  font-size: 4cqw;
+}
+.ww-mini[data-kind='fold'] .ww-mini-hours {
+  font-size: 10cqw;
+}
+.ww-mini[data-kind='fold'] .ww-mini-bar {
+  height: 1.6cqw;
+}
+.ww-mini[data-kind='fold'] .ww-mini-rows {
+  margin-top: 3cqw;
+  gap: 2cqw;
+}
+.ww-mini[data-kind='fold'] .ww-mini-rows i {
+  height: 5cqw;
+  border-radius: 1.5cqw;
+}
+.ww-mini-second .ww-mini-rows {
+  margin-top: 0;
+}
+.ww-mini[data-kind='fold'] .ww-mini-synced {
+  top: 3cqw;
+  width: 6.5cqw;
+  padding: 1.3cqw;
+}
+
+/* Who updates when: the watch at the tap, everyone else once the change
+   lands, one after another. */
+.ww-node[data-node='phone'] {
+  --d: 0ms;
+}
+.ww-node[data-node='fold'] {
+  --d: 120ms;
+}
+.ww-node[data-node='tablet'] {
+  --d: 240ms;
+}
+.ww-node[data-node='android'] {
+  --d: 360ms;
+}
+.ww-sync[data-phase='done'] .ww-mini-new,
+.ww-sync:not([data-phase='idle']) [data-node='watch'] .ww-mini-new {
+  opacity: 1;
+  transform: none;
+}
+.ww-sync[data-phase='done'] .ww-mini-old,
+.ww-sync:not([data-phase='idle']) [data-node='watch'] .ww-mini-old {
+  opacity: 0;
+  transform: translateY(-55%);
+}
+.ww-sync[data-phase='done'] .ww-mini-bar span,
+.ww-sync:not([data-phase='idle']) [data-node='watch'] .ww-mini-bar span {
+  width: 95.6%;
+}
+.ww-sync[data-phase='done']
+  [data-node]:not([data-node='watch'])
+  .ww-mini-synced {
+  transform: none;
+}
+.ww-sync[data-phase='idle'] *,
+.ww-sync[data-phase='idle'] *::before,
+.ww-sync[data-phase='idle'] *::after {
+  transition: none !important;
+}
+@keyframes ww-tap {
+  from {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+.ww-node[data-node='watch'] .ww-node-device::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 40%;
+  aspect-ratio: 1;
+  margin: -20% 0 0 -20%;
+  border-radius: 999px;
+  background: rgb(154 245 195 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+.ww-sync[data-phase='tap'] [data-node='watch'] .ww-node-device::after {
+  animation: ww-tap 700ms ease-out;
+}
+.ww-sync-toast {
+  position: absolute;
+  left: 17.5%;
+  top: 32%;
+  z-index: 3;
+  translate: -20% 0;
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  transition:
+    opacity 300ms ease,
+    transform 500ms var(--ww-spring);
+  pointer-events: none;
+}
+.ww-sync:is([data-phase='tap'], [data-phase='send']) .ww-sync-toast {
+  opacity: 1;
+  transform: none;
+}
+.ww-sync-toast .ww-toast {
+  font-size: 0.78rem;
+}
+
+@media (min-width: 900px) {
+  .ww-sync {
+    --core-y: 53.85;
+    max-width: 1100px;
+    aspect-ratio: 1000 / 520;
+  }
+  .ww-beams-wide {
+    display: block;
+  }
+  .ww-beams-tall {
+    display: none;
+  }
+  .ww-core {
+    width: 9cqw;
+  }
+  .ww-node[data-node='watch'] {
+    --x: 9.5;
+    --y: 63.5;
+    --w: 8.5cqw;
+  }
+  .ww-node[data-node='phone'] {
+    --x: 28;
+    --y: 48.1;
+    --w: 10.5cqw;
+  }
+  .ww-node[data-node='fold'] {
+    --x: 50;
+    --y: 18.3;
+    --w: 20cqw;
+  }
+  .ww-node[data-node='tablet'] {
+    --x: 72;
+    --y: 48.1;
+    --w: 13.5cqw;
+  }
+  .ww-node[data-node='android'] {
+    --x: 90.5;
+    --y: 63.5;
+    --w: 10.5cqw;
+  }
+  .ww-node-name {
+    font-size: 0.875rem;
+  }
+  .ww-sync-toast {
+    left: 9.5%;
+    top: 84%;
+    translate: -12% 0;
+  }
+  .ww-sync-toast .ww-toast {
+    font-size: 0.85rem;
+  }
+}
+
+.ww-icon-tile {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 13px;
+  color: var(--ww-mint);
+  background: rgb(27 209 93 / 0.1);
+  box-shadow: inset 0 0 0 1px rgb(27 209 93 / 0.22);
+}
+
+/* --- Privacy ----------------------------------------------------------------------- */
+
+.ww-cipher {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 2.5rem 0;
+}
+.ww-cipher::before {
+  content: '';
+  position: absolute;
+  inset: 10%;
+  background: radial-gradient(closest-side, rgb(27 209 93 / 0.18), transparent);
+  filter: blur(30px);
+}
+.ww-cipher-box {
+  position: relative;
+  width: min(100%, 25rem);
+}
+.ww-cipher-card {
+  position: relative;
+  display: grid;
+  min-height: 5.5rem;
+  align-items: center;
+  padding: 1.25rem 1.4rem;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02)),
+    var(--ww-bg-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line-strong),
+    0 40px 80px -40px rgb(0 0 0 / 0.9);
+}
+.ww-cipher-plain,
+.ww-cipher-text {
+  grid-area: 1 / 1;
+}
+.ww-cipher-plain {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  animation: ww-plain 7s ease-in-out infinite;
+}
+.ww-cipher-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  color: var(--ww-mint);
+  opacity: 0;
+  animation: ww-cipher 7s ease-in-out infinite;
+}
+@keyframes ww-plain {
+  0%,
+  36% {
+    opacity: 1;
+    filter: none;
+  }
+  46%,
+  86% {
+    opacity: 0;
+    filter: blur(6px);
+  }
+  96%,
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+@keyframes ww-cipher {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  48%,
+  84% {
+    opacity: 1;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+.ww-cipher-scan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(154 245 195 / 0.28),
+    transparent
+  );
+  animation: ww-scan 7s ease-in-out infinite;
+}
+@keyframes ww-scan {
+  0%,
+  30% {
+    left: -40%;
+  }
+  48% {
+    left: 100%;
+  }
+  80% {
+    left: 100%;
+  }
+  81% {
+    left: -40%;
+  }
+  92% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+.ww-cipher-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #03120a;
+  background: var(--ww-green);
+}
+.ww-cipher-lock {
+  position: absolute;
+  top: -1.9rem;
+  inset-inline-end: -0.6rem;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 16px;
+  color: var(--ww-mint);
+  background: #0f2a1a;
+  box-shadow:
+    inset 0 0 0 1px rgb(27 209 93 / 0.35),
+    0 0 30px -6px rgb(27 209 93 / 0.6);
+  animation: ww-float 6s ease-in-out infinite;
+}
+
+/* --- Languages ------------------------------------------------------------------------ */
+
+.ww-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 15rem;
+  padding: 1rem 1.25rem;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.01)),
+    var(--ww-bg-raised);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+  transition:
+    box-shadow 200ms ease,
+    transform 200ms var(--ww-ease);
+}
+.ww-lang:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px var(--ww-line-strong);
+}
+.ww-lang[aria-current='page'] {
+  box-shadow: inset 0 0 0 1px rgb(27 209 93 / 0.55);
+}
+.ww-lang-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ww-mint);
+}
+.ww-lang-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--ww-ink);
+}
+
+/* --- Pricing ---------------------------------------------------------------------------- */
+
+/* Everything that's free, as a spec sheet with hairlines between cells. */
+.ww-free-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--ww-line);
+}
+@media (min-width: 640px) {
+  .ww-free-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .ww-free-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.ww-free-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 8.25rem;
+  padding: 1.15rem 1.15rem 1.25rem;
+  background: var(--ww-bg-raised);
+  font-size: 0.97rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+@media (min-width: 640px) {
+  .ww-free-item {
+    padding: 1.4rem;
+    font-size: 1.02rem;
+  }
+}
+.ww-free-icon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.75rem;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+/* Supporter: quieter, and plainly optional. */
+.ww-supporter {
+  position: relative;
+  border-radius: 28px;
+  background:
+    radial-gradient(110% 90% at 0% 0%, rgb(244 194 58 / 0.09), transparent 60%),
+    var(--ww-bg-raised);
+  box-shadow: inset 0 0 0 1px rgb(244 194 58 / 0.16);
+}
+.ww-supporter-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--ww-line);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ww-ink);
+}
+.ww-supporter-list li:first-child {
+  border-top: 1px solid var(--ww-line);
+}
+.ww-supporter-list li::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ww-gold);
+}
+
+/* --- FAQ (answers come from the Help Center's renderer) ------------------------------- */
+
+.ww-faq > :first-child .ww-faq-item,
+.ww-faq > .ww-faq-item:first-child {
+  border-top: 1px solid var(--ww-line);
+}
+.ww-faq-item {
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-faq-item summary {
+  min-height: 3.5rem;
+  transition: color 200ms ease;
+}
+.ww-faq-item summary:hover {
+  color: var(--ww-mint);
+}
+/* --- Call to action ------------------------------------------------------------------- */
+
+.ww-cta-glow {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: min(60rem, 140vw);
+  height: 36rem;
+  translate: -50% -50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(27 209 93 / 0.24),
+    rgb(94 234 212 / 0.05) 60%,
+    transparent
+  );
+  filter: blur(20px);
+  pointer-events: none;
+}
+.ww-cta-icon {
+  position: relative;
+}
+.ww-cta-icon::before,
+.ww-cta-icon::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 40px;
+  border: 1px solid rgb(154 245 195 / 0.35);
+  animation: ww-ring 3.6s ease-out infinite;
+}
+.ww-cta-icon::after {
+  animation-delay: 1.8s;
+}
+.ww-cta-icon img {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.15),
+    0 30px 80px -10px rgb(27 209 93 / 0.6);
+}
+.ww-qr {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.7rem 0.55rem;
+  border-radius: 18px;
+  background: #ffffff;
+}
+.ww-qr img {
+  width: 92px;
+  height: 92px;
+}
+.ww-qr figcaption {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #14201a;
+}
+
+/* --- Footer ----------------------------------------------------------------------------- */
+
+.ww-footer {
+  background: linear-gradient(180deg, var(--ww-bg), #020403);
+}
+.ww-footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-inline: 0.625rem;
+  font-size: 0.875rem;
+  color: var(--ww-muted);
+  transition: color 200ms ease;
+}
+.ww-footer-link:hover {
+  color: var(--ww-ink);
+}
+
+/* --- The Help Center and the policies (help-center/pages.tsx, policy-page.tsx) ------ */
+
+.ww-help,
+.ww-policy {
+  flex: 1;
+  padding-top: calc(var(--ww-nav-h) + 2rem);
+  padding-bottom: 6rem;
+}
+@media (min-width: 640px) {
+  .ww-help,
+  .ww-policy {
+    padding-top: calc(var(--ww-nav-h) + 3rem);
+    padding-bottom: 8rem;
+  }
+}
+
+/* A link inside running text. */
+.ww-link {
+  font-weight: 500;
+  color: var(--ww-ink);
+  text-decoration: underline;
+  text-decoration-color: rgb(154 245 195 / 0.45);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition:
+    color 200ms ease,
+    text-decoration-color 200ms ease;
+}
+.ww-link:hover {
+  color: var(--ww-mint);
+  text-decoration-color: currentColor;
+}
+
+/* An answer (rich-text.tsx), here and in the landing page's FAQ. */
+.ww-rich {
+  color: var(--ww-muted);
+  text-wrap: pretty;
+}
+.ww-rich :is(strong, h2, h3) {
+  font-weight: 600;
+  color: var(--ww-ink);
+}
+.ww-rich li::marker {
+  color: var(--ww-faint);
+}
+
+/* The home page opens like the landing page: a big title over the moving
+   silk, with the search front and center. */
+.ww-help-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-block: 1rem 0.5rem;
+  text-align: center;
+}
+.ww-help-field {
+  inset: calc(-1 * (var(--ww-nav-h) + 3rem)) calc(50% - 50vw) -5rem;
+}
+.ww-help-title {
+  font-size: clamp(3rem, 12vw, 5.75rem);
+}
+.ww-help-page-title {
+  font-size: clamp(2.25rem, 6.6vw, 3.75rem);
+}
+.ww-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 3.75rem;
+  padding-inline: 1.25rem 0.75rem;
+  border-radius: 18px;
+  background: rgb(11 17 13 / 0.72);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line-strong),
+    0 24px 60px -28px rgb(0 0 0 / 0.9);
+  transition: box-shadow 200ms ease;
+}
+.ww-search:focus-within {
+  box-shadow:
+    inset 0 0 0 1px rgb(154 245 195 / 0.55),
+    0 0 0 4px rgb(27 209 93 / 0.14),
+    0 24px 60px -28px rgb(0 0 0 / 0.9);
+}
+.ww-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  transition: background-color 150ms ease;
+}
+.ww-search-result:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+/* The device filter: the Devices tabs' track, with quieter buttons. */
+.ww-segmented button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding-inline: 0.95rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ww-muted);
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+.ww-segmented button:hover {
+  color: var(--ww-ink);
+}
+.ww-segmented button[aria-checked='true'] {
+  color: var(--ww-ink);
+  background: rgb(255 255 255 / 0.12);
+}
+
+.ww-help-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+.ww-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.9375rem;
+  color: var(--ww-muted);
+}
+.ww-crumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.ww-crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  transition: color 200ms ease;
+}
+.ww-crumbs a:hover,
+.ww-crumbs [aria-current] {
+  color: var(--ww-ink);
+}
+
+/* Top questions */
+.ww-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  min-height: 8.5rem;
+  padding: 1.25rem 1.375rem;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015)),
+    var(--ww-bg-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--ww-line),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  transition:
+    box-shadow 250ms ease,
+    transform 250ms var(--ww-ease);
+}
+.ww-topic:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px rgb(154 245 195 / 0.3),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+}
+.ww-topic-category {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ww-mint);
+}
+.ww-topic-question {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  color: var(--ww-ink);
+  text-wrap: pretty;
+}
+.ww-topic-arrow {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: var(--ww-muted);
+  transition:
+    translate 250ms var(--ww-ease),
+    color 250ms ease;
+}
+.ww-topic:hover .ww-topic-arrow {
+  translate: 3px 0;
+  color: var(--ww-mint);
+}
+
+/* Question lists, flowing down two balanced columns on wide screens. */
+@media (min-width: 1024px) {
+  .ww-help-categories {
+    columns: 2;
+    column-gap: 3.5rem;
+  }
+  .ww-help-categories > * {
+    break-inside: avoid;
+  }
+}
+.ww-help-category {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ww-ink);
+  transition: color 200ms ease;
+}
+.ww-help-category:hover {
+  color: var(--ww-mint);
+}
+.ww-q-list {
+  border-top: 1px solid var(--ww-line);
+}
+.ww-q-list > li {
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-q-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.25rem;
+  padding-block: 0.8rem;
+  line-height: 1.4;
+  color: var(--ww-ink);
+  transition: color 200ms ease;
+}
+.ww-q-row:hover {
+  color: var(--ww-mint);
+}
+.ww-q-chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--ww-faint);
+  transition:
+    translate 250ms var(--ww-ease),
+    color 200ms ease;
+}
+.ww-q-row:hover .ww-q-chevron {
+  translate: 2px 0;
+  color: var(--ww-mint);
+}
+[dir='rtl'] :is(.ww-topic-arrow, .ww-q-chevron) {
+  scale: -1 1;
+}
+[dir='rtl']
+  :is(.ww-topic:hover .ww-topic-arrow, .ww-q-row:hover .ww-q-chevron) {
+  translate: -2px 0;
+}
+/* "iOS only", under a question that's about one platform. */
+.ww-help-only {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ww-muted);
+}
+
+.ww-help-article {
+  display: flex;
+  max-width: 46rem;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+.ww-help-notice {
+  padding: 0.875rem 1.125rem;
+  border-radius: 16px;
+  font-size: 0.9375rem;
+  color: var(--ww-muted);
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--ww-line);
+}
+.ww-help-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+}
+@media (min-width: 640px) {
+  .ww-help-contact {
+    padding: 2.75rem;
+  }
+}
+
+/* Policies */
+.ww-policy-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-policy-title {
+  font-size: clamp(2.75rem, 10vw, 4.75rem);
+}
+.ww-policy-sections section {
+  display: grid;
+  gap: 0.75rem;
+  padding-block: 2rem;
+  border-bottom: 1px solid var(--ww-line);
+}
+.ww-policy-sections h2 {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ww-ink);
+}
+@media (min-width: 768px) {
+  .ww-policy-sections section {
+    grid-template-columns: 11rem 1fr;
+    gap: 2.5rem;
+  }
+  .ww-policy-sections h2 {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+}
+.ww-policy-end {
+  padding-top: 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ww-pair-back,
+  .ww-pair-front,
+  .ww-tile-pos,
+  .ww-hero-head,
+  .ww-hero-device {
+    translate: none !important;
+  }
+  .ww-hero-head {
+    opacity: 1;
+  }
+  .ww-tile,
+  .ww-hero-phone {
+    animation: none;
+  }
+  .ww-j-inline .wwd-fold,
+  .ww-j-item .wwd-fold {
+    --fold: 0;
+  }
+  .ww-cipher-plain {
+    animation: none;
+  }
+  .ww-cipher-text,
+  .ww-cipher-scan {
+    display: none;
+  }
+}

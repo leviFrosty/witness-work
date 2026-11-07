@@ -1,4 +1,4 @@
-import { AppState, type AppStateStatus } from 'react-native'
+import { AppState, Platform, type AppStateStatus } from 'react-native'
 import { refreshLocalTimeOffset } from '@/lib/deviceTimeZone'
 
 type Listener = () => void
@@ -58,4 +58,17 @@ export function addBackgroundListener(listener: Listener): {
   subscribe()
   background.add(listener)
   return { remove: () => background.delete(listener) }
+}
+
+export function addWindowFocusListener(listener: Listener): {
+  remove: () => void
+} {
+  const target = globalThis as {
+    addEventListener?: (type: string, listener: () => void) => void
+    removeEventListener?: (type: string, listener: () => void) => void
+  }
+  if (Platform.OS !== 'web' || !target.addEventListener)
+    return { remove: () => {} }
+  target.addEventListener('focus', listener)
+  return { remove: () => target.removeEventListener?.('focus', listener) }
 }

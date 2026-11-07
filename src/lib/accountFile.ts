@@ -10,6 +10,10 @@ export type AccountFile = {
 
   entitled: boolean
   updatedAt: number
+
+  claimedAt?: number
+
+  account?: string
   deviceName?: string
 }
 
@@ -24,6 +28,16 @@ export const parseAccountFile = (json: string): AccountFile | null => {
     }
     if (typeof candidate.entitled !== 'boolean') return null
     if (typeof candidate.updatedAt !== 'number') return null
+    if (
+      candidate.claimedAt !== undefined &&
+      typeof candidate.claimedAt !== 'number'
+    )
+      delete candidate.claimedAt
+    if (
+      candidate.account !== undefined &&
+      typeof candidate.account !== 'string'
+    )
+      return null
     return candidate as AccountFile
   } catch {
     return null

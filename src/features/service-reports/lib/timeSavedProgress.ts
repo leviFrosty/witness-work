@@ -23,11 +23,22 @@ type TimeSavedProgressInput = {
   format: MinuteDisplayFormat
 }
 
-const formatProgressMinutes = (minutes: number, format: MinuteDisplayFormat) =>
-  formatMinutes(
-    format === 'decimal' ? Math.floor(minutes / 6) * 6 : Math.floor(minutes),
-    format
-  ).formatted
+const formatProgressMinutes = (
+  minutes: number,
+  goalMinutes: number,
+  format: MinuteDisplayFormat
+) => {
+  if (format !== 'decimal')
+    return formatMinutes(Math.floor(minutes), format).formatted
+  const nearest = formatMinutes(minutes, format)
+  const readsAsGoal =
+    goalMinutes > 0 &&
+    minutes < goalMinutes &&
+    Math.round(nearest.decimalHours * 60) >= goalMinutes
+  return readsAsGoal
+    ? formatMinutes(Math.floor(minutes / 6) * 6, format).formatted
+    : nearest.formatted
+}
 
 const pastPeriodLabel = (
   period: TimeSavedProgressInput['period'],
@@ -65,7 +76,7 @@ export const timeSavedProgress = ({
     value: formatMinutes(addedMinutes, format).formatted,
   })
   const pastPeriod = pastPeriodLabel(period, entryMonth, today)
-  const value = formatProgressMinutes(afterMinutes, format)
+  const value = formatProgressMinutes(afterMinutes, goalMinutes, format)
 
   if (goalMinutes <= 0) {
     return {

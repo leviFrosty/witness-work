@@ -4,8 +4,16 @@ import React, {
   isValidElement,
   PropsWithChildren,
   ReactNode,
+  useState,
 } from 'react'
-import { Pressable, StyleProp, View, ViewStyle } from 'react-native'
+import {
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import Text from '@/components/ui/MyText'
@@ -13,6 +21,7 @@ import WholeWordsText from '@/components/ui/WholeWordsText'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
+import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { hiddenFromScreenReaders } from '@/lib/screenReader'
 
@@ -40,6 +49,8 @@ export interface InputRowContainerProps {
   style?: StyleProp<ViewStyle>
 
   onLabelPress?: () => void
+
+  onRowPress?: () => void
 
   labelReadByControl?: boolean
 
@@ -73,6 +84,7 @@ const InputRowContainer: React.FC<
   required,
   style,
   onLabelPress,
+  onRowPress,
   labelReadByControl = !!onLabelPress,
   descriptionReadByControl,
   controlStyle,
@@ -80,6 +92,10 @@ const InputRowContainer: React.FC<
   inlineAtLargeText,
 }: InputRowContainerProps) => {
   const theme = useTheme()
+  const [hovered, setHovered] = useState(false)
+
+  const passThrough = onRowPress && ({ pointerEvents: 'none' } as const)
+  const boxNone = onRowPress && ({ pointerEvents: 'box-none' } as const)
   const hasInfo = Boolean(label && (info || labelTrailing))
   const hasLabelContent = Boolean(label || leftIcon || description)
 
@@ -93,6 +109,7 @@ const InputRowContainer: React.FC<
   const labelCluster = (leftIcon || label) && (
     <View
       {...(labelReadByControl && hiddenFromScreenReaders)}
+      {...passThrough}
       style={{
         alignItems: 'center',
         gap: inputLayout.labelGap,
@@ -135,7 +152,7 @@ const InputRowContainer: React.FC<
 
   const labelTitle =
     labelCluster &&
-    (onLabelPress ? (
+    (onLabelPress && !onRowPress ? (
       <Pressable
         onPress={onLabelPress}
         style={hasInfo ? { flexShrink: 1 } : undefined}
@@ -152,6 +169,7 @@ const InputRowContainer: React.FC<
     <>
       {label && (info || labelTrailing) ? (
         <View
+          {...boxNone}
           style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}
         >
           {labelTitle}
@@ -165,6 +183,7 @@ const InputRowContainer: React.FC<
       {description && (
         <Text
           {...(descriptionReadByControl && hiddenFromScreenReaders)}
+          {...passThrough}
           style={{
             fontSize: theme.fontSize('sm'),
             color: theme.colors.textAlt,
@@ -176,7 +195,7 @@ const InputRowContainer: React.FC<
     </>
   )
 
-  return (
+  const row = (
     <View
       style={[
         {
@@ -200,8 +219,20 @@ const InputRowContainer: React.FC<
         style,
       ]}
     >
+      {onRowPress && (
+        <Pressable
+          onPress={onRowPress}
+          style={[
+            StyleSheet.absoluteFill,
+            Platform.OS === 'web' && { cursor: 'pointer' },
+          ]}
+          {...hiddenFromScreenReaders}
+          tabIndex={-1}
+        />
+      )}
       {hasLabelContent ? (
         <View
+          {...boxNone}
           style={{
             flex: 1,
             gap: inputLayout.descriptionGap,
@@ -214,6 +245,7 @@ const InputRowContainer: React.FC<
         labelContent
       )}
       <View
+        {...boxNone}
         style={[
           {
             width:
@@ -241,7 +273,14 @@ const InputRowContainer: React.FC<
       >
         {children}
       </View>
+      {onRowPress && <HoverTint visible={hovered} />}
     </View>
+  )
+
+  return onRowPress ? (
+    <PointerHover onHoverChange={setHovered}>{row}</PointerHover>
+  ) : (
+    row
   )
 }
 

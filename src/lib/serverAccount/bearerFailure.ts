@@ -60,12 +60,17 @@ function sessionFailure(error: AccountSessionError): BearerFailure<never> {
       )
     case 'rateLimited':
       return failure('rate_limited', status || 429, error.retryAfterMs)
+
+    case 'keyRetired':
+      return failure('cancelled', 0)
     case 'server':
       return failure(
         status === 401 ? 'unauthorized' : 'unknown',
         status,
         error.retryAfterMs
       )
+    case 'signedOut':
+      return failure('unauthorized', status || 401)
   }
 }
 

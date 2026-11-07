@@ -14,7 +14,6 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
   Volume2 as Volume2Icon,
 } from 'lucide-react-native'
-import { Platform } from 'react-native'
 import i18n from '@/lib/locales'
 import { useNavigation } from '@react-navigation/native'
 import usePet from '@/stores/pet'
@@ -25,6 +24,7 @@ import {
   GroupedListSection,
 } from '@/components/ui/GroupedList'
 import { calendarSyncSupported } from '../../../../../modules/calendar-bridge'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const PreferencesScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -49,7 +49,7 @@ const PreferencesScreen = () => {
           label={i18n.t('plans')}
           onPress={() => navigation.navigate('PreferencesPlans')}
         />
-        {calendarSyncSupported && (
+        {hasCapability('calendarBridge') && calendarSyncSupported && (
           <GroupedListRow
             icon={Calendar1Icon}
             label={i18n.t('calendarSync')}
@@ -108,7 +108,7 @@ const PreferencesScreen = () => {
             onPress={() => navigation.navigate('PreferencesRewards')}
           />
         )}
-        {Platform.OS === 'ios' && (
+        {hasCapability('homeScreenWidgets') && (
           <GroupedListRow
             icon={LayoutGridIcon}
             label={i18n.t('widgets')}
@@ -120,11 +120,13 @@ const PreferencesScreen = () => {
           label={i18n.t('privacy')}
           onPress={() => navigation.navigate('PreferencesPrivacy')}
         />
-        <GroupedListRow
-          icon={FileOutputIcon}
-          label={i18n.t('backups')}
-          onPress={() => navigation.navigate('PreferencesBackups')}
-        />
+        {hasCapability('deviceNotifications') && (
+          <GroupedListRow
+            icon={FileOutputIcon}
+            label={i18n.t('backups')}
+            onPress={() => navigation.navigate('PreferencesBackups')}
+          />
+        )}
       </GroupedListSection>
     </GroupedList>
   )

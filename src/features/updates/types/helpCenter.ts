@@ -2,7 +2,7 @@ import type { RichTextDoc } from '@/types/richText'
 
 export const HELP_SCHEMA_VERSION = 1
 
-export type HelpPlatform = 'ios' | 'android'
+export type HelpPlatform = 'ios' | 'android' | 'web'
 
 export type HelpLocale = string
 

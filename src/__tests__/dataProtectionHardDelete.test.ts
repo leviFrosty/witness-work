@@ -7,6 +7,7 @@ vi.mock(
   '@react-native-async-storage/async-storage',
   () => import('@/__tests__/mocks/asyncStorage')
 )
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 vi.mock('expo-file-system/legacy', () => ({

@@ -73,7 +73,7 @@ const profileFields = {
   tenure: buddyTenureSchema.optional(),
 }
 
-export const BUDDY_PLATFORMS = ['ios', 'android'] as const
+export const BUDDY_PLATFORMS = ['ios', 'android', 'web'] as const
 export type BuddyPlatform = (typeof BUDDY_PLATFORMS)[number]
 const buddyPlatformSchema = z.enum(BUDDY_PLATFORMS).optional().catch(undefined)
 
@@ -147,6 +147,14 @@ export const pairConfirmedSchema = z.object({
   ...profileFields,
   platform: buddyPlatformSchema,
 })
+
+export const pairReconnectSchema = z.object({
+  v: z.literal(1),
+  inboxId: relayId,
+  secret: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
+  expiresAt: z.number(),
+})
+export type PairReconnect = z.infer<typeof pairReconnectSchema>
 
 export const SHARE_TYPES = ['plan', 'followUp'] as const
 export type ShareType = (typeof SHARE_TYPES)[number]
@@ -471,5 +479,10 @@ export const rosterSchema = z.object({
 
   cars: lenientRecord(relayId, z.object({ at: z.number().finite() })),
   leftCars: lenientRecord(relayId, z.number().finite()),
+
+  reconnects: lenientRecord(
+    relayId,
+    z.object({ inboxId: relayId, dhPub: b64uKey, expiresAt: z.number() })
+  ),
 })
 export type Roster = z.infer<typeof rosterSchema>

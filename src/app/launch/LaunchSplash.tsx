@@ -9,9 +9,10 @@ import {
 } from '@/constants/brandMark'
 
 export const splashMarkWidth = (window: { width: number; height: number }) =>
-  Platform.OS === 'android'
-    ? 160
-    : 235 * Math.min(window.width / 1284, window.height / 2778)
+  Platform.select({
+    android: 160,
+    default: 235 * Math.min(window.width / 1284, window.height / 2778),
+  })
 
 const LaunchSplash = () => {
   const window = useWindowDimensions()

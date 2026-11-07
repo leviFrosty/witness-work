@@ -147,7 +147,7 @@ export const exportMonthReport = async (
       { method: 'share', source, report_month }
     )
 
-    return shared && Platform.OS !== 'android'
+    return shared && Platform.OS === 'ios'
   }
 
   const remarks = data.hasNotesOverride

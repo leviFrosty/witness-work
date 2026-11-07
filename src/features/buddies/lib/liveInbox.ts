@@ -3,6 +3,7 @@ import {
   type LiveCloseAction,
   type LiveSignalDeps,
 } from '@/lib/liveSignal'
+import { LIVE_CLOSE_EXPIRED } from '@/lib/serverAccount/liveTicket'
 
 export type { LiveEvent } from '@/lib/liveSignal'
 
@@ -15,7 +16,9 @@ const inboxCloseAction = (code: number | undefined): LiveCloseAction =>
     ? 'sync'
     : code === CLOSE_SUSPENDED
       ? 'syncAndStay'
-      : 'reconnect'
+      : code === LIVE_CLOSE_EXPIRED
+        ? 'reconnectNow'
+        : 'reconnect'
 
 export type LiveInboxDeps = Omit<LiveSignalDeps, 'closeAction'>
 

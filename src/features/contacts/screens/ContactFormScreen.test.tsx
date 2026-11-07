@@ -27,6 +27,11 @@ vi.mock('react-native', () => ({
   View: 'View',
   TextInput: 'TextInput',
   Alert: { alert: mocks.alert },
+  Platform: {
+    OS: 'ios',
+    select: (options: { ios?: unknown; default?: unknown }) =>
+      options.ios ?? options.default,
+  },
 }))
 vi.mock('@/components/ui/layout/KeyboardAwareScrollView', () => ({
   default: 'ScrollView',

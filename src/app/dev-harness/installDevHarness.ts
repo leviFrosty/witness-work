@@ -30,6 +30,7 @@ import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnostics'
 import { useUpdateRequired } from '@/lib/appUpdate'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useSignInNotices } from '@/app/account/signInNoticesStore'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
@@ -53,7 +54,9 @@ import {
   seedScenario,
 } from '@/app/dev-harness/seedScenario'
 import { petHarness } from '@/app/dev-harness/pet'
+import { keyChangeHarness } from '@/app/dev-harness/keyChange'
 import { cloudSyncHarness } from '@/app/dev-harness/cloudSync'
+import { revenueCatHarness } from '@/app/dev-harness/revenueCat'
 import { appUpdateHarness } from '@/app/dev-harness/appUpdate'
 import { sessionHarness } from '@/app/dev-harness/session'
 import { scribeHarness } from '@/app/dev-harness/scribe'
@@ -69,8 +72,12 @@ import {
   accountHarness,
   backupHarness,
   handoffHarness,
+  approvalHarness,
+  passkeyPromptHarness,
 } from '@/app/dev-harness/account'
+import { passkeySignInHarness } from '@/app/dev-harness/passkeySignIn'
 import { backupFileHarness } from '@/app/dev-harness/backupFile'
+import { buddiesKeyChangeHarness } from '@/app/dev-harness/buddiesKeyChange'
 import i18n, { _i18n, type TranslationKey } from '@/lib/locales'
 import { isDevForceRtl, setDevForceRtl, syncLayoutDirection } from '@/lib/rtl'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -391,13 +398,24 @@ export function installDevHarness() {
 
     account: accountHarness,
 
+    buddiesKeyChange: buddiesKeyChangeHarness,
+
     handoff: handoffHarness,
+
+    approval: approvalHarness,
+
+    passkeyPrompt: passkeyPromptHarness,
+    passkeySignIn: passkeySignInHarness,
 
     backup: backupHarness,
 
     backupFile: backupFileHarness,
 
     cloudSync: cloudSyncHarness,
+
+    keyChange: keyChangeHarness,
+
+    revenueCat: revenueCatHarness,
 
     appUpdate: appUpdateHarness,
 
@@ -476,6 +494,8 @@ export function installDevHarness() {
       buddiesDiagnostics: useBuddiesDiagnostics,
 
       notificationsTray: useNotificationsTray,
+
+      signInNotices: useSignInNotices,
 
       streakCelebration: useStreakCelebration,
       calendarSync: useCalendarSync,

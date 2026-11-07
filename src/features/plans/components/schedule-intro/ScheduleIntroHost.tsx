@@ -1,7 +1,7 @@
-import type { ComponentProps } from 'react'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { useScheduleIntro } from '@/stores/scheduleIntro'
 import type ScheduleIntroOverlayComponent from '@/features/plans/components/schedule-intro/ScheduleIntroOverlay'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 export default function ScheduleIntroHost() {
   const source = useScheduleIntro((state) => state.source)
@@ -10,10 +10,8 @@ export default function ScheduleIntroHost() {
   return <ScheduleIntroOverlay key={source} source={source} />
 }
 
-function ScheduleIntroOverlay(
-  props: ComponentProps<typeof ScheduleIntroOverlayComponent>
-) {
-  const Overlay: typeof ScheduleIntroOverlayComponent =
-    require('@/features/plans/components/schedule-intro/ScheduleIntroOverlay').default
-  return <Overlay {...props} />
-}
+const ScheduleIntroOverlay = canvasKitComponent(
+  (): typeof ScheduleIntroOverlayComponent =>
+    require('@/features/plans/components/schedule-intro/ScheduleIntroOverlay')
+      .default
+)

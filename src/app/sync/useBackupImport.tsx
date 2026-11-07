@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Alert } from 'react-native'
-import * as FileSystem from 'expo-file-system/legacy'
 import * as DocumentPicker from 'expo-document-picker'
 import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 import { isBackupFile } from '@/lib/backupFile'
+import { readPickedText } from '@/lib/files/readPicked'
 import {
   type BackupFileLock,
   BackupUnlockError,
@@ -135,7 +135,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
         type: 'application/json',
       })
 
-      if (canceled) {
+      if (canceled || !assets?.length) {
         analytics.capture('import_cancelled', {
           ...properties,
           stage,
@@ -145,7 +145,7 @@ export function useBackupImport({ source, entryPoint }: Options) {
       }
 
       stage = 'read_file'
-      const contents = await FileSystem.readAsStringAsync(assets[0].uri)
+      const contents = await readPickedText(assets[0])
 
       stage = 'validate_file'
       let data: unknown = JSON.parse(contents)

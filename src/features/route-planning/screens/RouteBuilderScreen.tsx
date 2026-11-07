@@ -86,7 +86,9 @@ export default function RouteBuilderScreen({
   const mapHeight = useSharedValue(Math.max(240, Math.min(440, height * 0.38)))
 
   const mapStyle = useAnimatedStyle(() =>
-    isWide ? { flex: 1, height: '100%' } : { flex: 0, height: mapHeight.value }
+    isWide
+      ? { flex: 1, height: '100%' }
+      : { flexGrow: 0, flexShrink: 0, height: mapHeight.value }
   )
 
   const changeDay = (next: Date) => {

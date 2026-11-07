@@ -273,10 +273,10 @@ describe('catching up without a manual sync', () => {
 
   it('pushes an edit made before sync was ready', async () => {
     runtime.files = []
+    runtime.available = false
     const {
       installiCloudSync,
       iCloudSync,
-      useSupporter,
       useContacts,
       bridge,
       usePreferences,
@@ -288,7 +288,10 @@ describe('catching up without a manual sync', () => {
     })
     expect(iCloudSync.isPushScheduled()).toBe(false)
 
-    useSupporter.getState().setSupporter(true)
+    runtime.available = true
+    runtime.availabilityListeners.forEach((listener) =>
+      listener({ available: true })
+    )
 
     await vi.waitFor(() => expect(bridge.write).toHaveBeenCalled())
     expect(usePreferences.getState().iCloudSyncPendingPush).toBe(false)

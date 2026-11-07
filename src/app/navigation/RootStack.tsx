@@ -11,6 +11,28 @@ import HomeTabStack from '@/app/navigation/HomeTabStack'
 import i18n from '@/lib/locales'
 import { settingsDetailScreens } from '@/app/navigation/settingsDetailScreens'
 import { RootStackParamList } from '@/types/rootStack'
+import { useWebOnboardingHold } from '@/app/sync/useWebOnboardingHold'
+import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
+
+const skiaScreens = {
+  PetPicker: canvasKitScreen(
+    () => require('@/features/pet/screens/PetPickerScreen').default
+  ),
+  PetRoom: canvasKitScreen(() => require('@/app/pet/PetRoomRoute').default),
+  PetShop: canvasKitScreen(
+    () => require('@/features/pet/screens/PetShopScreen').default
+  ),
+  PetRename: canvasKitScreen(
+    () => require('@/features/pet/screens/PetRenameScreen').default
+  ),
+  PetSettings: canvasKitScreen(
+    () => require('@/app/pet/PetSettingsScreen').default
+  ),
+  PetVisits: canvasKitScreen(() => require('@/app/pet/PetVisitsRoute').default),
+  PetShare: canvasKitScreen(
+    () => require('@/features/pet/screens/PetShareScreen').default
+  ),
+}
 
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
 
@@ -33,6 +55,8 @@ const petLargeScreenOptions = () =>
 
 const RootStackComponent = () => {
   const onboardingComplete = usePreferences((s) => s.onboardingComplete)
+
+  const holdOnboarding = useWebOnboardingHold() !== 'none'
   const theme = useTheme()
 
   return (
@@ -57,7 +81,13 @@ const RootStackComponent = () => {
       }
     >
       <RootStack.Group
-        navigationKey={onboardingComplete ? 'app' : 'onboarding'}
+        navigationKey={
+          onboardingComplete
+            ? 'app'
+            : holdOnboarding
+              ? 'account-ready'
+              : 'onboarding'
+        }
       >
         {}
         {onboardingComplete ? (
@@ -65,6 +95,14 @@ const RootStackComponent = () => {
             options={{ header: () => undefined }}
             name='Root'
             component={HomeTabStack}
+          />
+        ) : holdOnboarding ? (
+          <RootStack.Screen
+            options={{ header: () => undefined }}
+            name='Account Ready'
+            getComponent={() =>
+              require('@/app/web-sign-in/AccountReadyScreen').default
+            }
           />
         ) : (
           <RootStack.Screen
@@ -255,7 +293,14 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
-            header: () => <Header buttonType='back' title={i18n.t('donate')} />,
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t(
+                  Platform.OS === 'web' ? 'paywallTitle' : 'donate'
+                )}
+              />
+            ),
           }}
           name='Paywall'
           getComponent={() =>
@@ -272,6 +317,16 @@ const RootStackComponent = () => {
               .default
           }
         />
+        {Platform.OS === 'web' && (
+          <RootStack.Screen
+            options={{ header: () => null }}
+            name='Web Purchase Return'
+            getComponent={() =>
+              require('@/features/supporter/screens/WebPurchaseReturnScreen')
+                .default
+            }
+          />
+        )}
         <RootStack.Screen
           options={{
             presentation: 'modal',
@@ -361,6 +416,17 @@ const RootStackComponent = () => {
           getComponent={() =>
             require('@/features/milestones/screens/MilestoneShowcaseScreen')
               .default
+          }
+        />
+        <RootStack.Screen
+          options={{
+            presentation: 'fullScreenModal',
+            gestureEnabled: false,
+            header: () => null,
+          }}
+          name='WebCloudSyncPreview'
+          getComponent={() =>
+            require('@/app/navigation/tools/WebCloudSyncPreviewScreen').default
           }
         />
         <RootStack.Screen
@@ -594,21 +660,17 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetPicker'
-          getComponent={() =>
-            require('@/features/pet/screens/PetPickerScreen').default
-          }
+          getComponent={skiaScreens.PetPicker}
         />
         <RootStack.Screen
           options={petLargeScreenOptions}
           name='PetRoom'
-          getComponent={() => require('@/app/pet/PetRoomRoute').default}
+          getComponent={skiaScreens.PetRoom}
         />
         <RootStack.Screen
           options={petLargeScreenOptions}
           name='PetShop'
-          getComponent={() =>
-            require('@/features/pet/screens/PetShopScreen').default
-          }
+          getComponent={skiaScreens.PetShop}
         />
         <RootStack.Screen
           options={
@@ -623,9 +685,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetRename'
-          getComponent={() =>
-            require('@/features/pet/screens/PetRenameScreen').default
-          }
+          getComponent={skiaScreens.PetRename}
         />
         <RootStack.Screen
           options={
@@ -640,7 +700,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetSettings'
-          getComponent={() => require('@/app/pet/PetSettingsScreen').default}
+          getComponent={skiaScreens.PetSettings}
         />
         <RootStack.Screen
           options={
@@ -655,7 +715,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetVisits'
-          getComponent={() => require('@/app/pet/PetVisitsRoute').default}
+          getComponent={skiaScreens.PetVisits}
         />
         <RootStack.Screen
           options={
@@ -670,9 +730,7 @@ const RootStackComponent = () => {
               : { presentation: 'modal', headerShown: false }
           }
           name='PetShare'
-          getComponent={() =>
-            require('@/features/pet/screens/PetShareScreen').default
-          }
+          getComponent={skiaScreens.PetShare}
         />
         <RootStack.Screen
           options={{

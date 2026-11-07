@@ -3,6 +3,8 @@ import { beforeEach, expect, it, vi } from 'vitest'
 const native = vi.hoisted(() => ({
   platform: 'ios',
   access: 'limited' as 'all' | 'limited' | 'none',
+  web: vi.fn(),
+  error: vi.fn(),
   launch: vi.fn(async () => ({
     canceled: false,
     assets: [{ uri: 'file:///system.jpg', width: 1, height: 1 }],
@@ -21,6 +23,12 @@ vi.mock('expo-image-picker', () => ({
     accessPrivileges: native.access,
   })),
   launchImageLibraryAsync: native.launch,
+}))
+
+vi.mock('@/lib/files/pickWebImages', () => ({ pickWebImages: native.web }))
+vi.mock('@/stores/toasts', () => ({ toast: { error: native.error } }))
+vi.mock('@/lib/photoLibrary/photoFailedMessage', () => ({
+  photoFailedMessage: () => 'Not a photo',
 }))
 
 const { pickLibraryImages } = await import('./pickLibraryImages')
@@ -69,4 +77,12 @@ it('uses the system picker with full access, none asked, or on Android', async (
   }
   expect(chooseShared).not.toHaveBeenCalled()
   expect(native.launch).toHaveBeenCalledTimes(3)
+})
+
+it('says so, and picks nothing, when no web file is a usable photo', async () => {
+  native.platform = 'web'
+  native.web.mockRejectedValueOnce(new Error('unsupported'))
+  const result = await pickLibraryImages({}, vi.fn())
+  expect(result).toEqual({ canceled: true, assets: null })
+  expect(native.error).toHaveBeenCalledWith('Not a photo')
 })

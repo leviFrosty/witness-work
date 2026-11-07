@@ -43,6 +43,8 @@ type Props = {
 }
 
 const CHANGE_DEBOUNCE_MS = 300
+
+const EMPTY_DOC = { type: 'doc', content: [{ type: 'paragraph' }] }
 const SELECTION_PREFILL_CHARS = 200
 
 const imageSources = new Map<string, string>()
@@ -97,6 +99,28 @@ function reportHandles() {
   })
 }
 
+let photoMissingText = ''
+
+function showImage(img: HTMLImageElement, src: string | undefined) {
+  if (src) img.src = src
+  else img.removeAttribute('src')
+  setMissing(img, !src)
+}
+
+function setMissing(img: HTMLImageElement, missing: boolean) {
+  const frame = img.parentElement
+  if (!frame) return
+  frame.classList.toggle('missing', missing)
+  frame.querySelector('.note-image-missing')?.remove()
+  if (!missing) return
+  const label = document.createElement('div')
+  label.className = 'note-image-missing'
+  label.setAttribute('role', 'img')
+  label.setAttribute('aria-label', photoMissingText)
+  label.textContent = photoMissingText
+  frame.insertBefore(label, img.nextSibling)
+}
+
 const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
   let current = node
   const id = String(node.attrs.id)
@@ -106,9 +130,14 @@ const imageView: NodeViewRenderer = ({ node, getPos, editor }) => {
   const img = document.createElement('img')
   img.setAttribute('data-note-image', id)
   img.style.aspectRatio = `${node.attrs.width} / ${node.attrs.height}`
-  img.src = imageSources.get(id) ?? ''
   img.draggable = false
   frame.append(img)
+  showImage(img, imageSources.get(id))
+
+  img.addEventListener('error', () => {
+    if (img.hasAttribute('src')) setMissing(img, true)
+  })
+  img.addEventListener('load', () => setMissing(img, false))
   const set = imageElements.get(id) ?? new Set()
   set.add(img)
   imageElements.set(id, set)
@@ -289,9 +318,37 @@ const TextDirections = Extension.create({
   },
 })
 
+type DocJson = { content?: { type?: string }[] }
+
+function withTrailingParagraph<T extends DocJson>(doc: T): T {
+  const last = doc.content?.[doc.content.length - 1]
+  if (last?.type !== 'image') return doc
+  return { ...doc, content: [...doc.content!, { type: 'paragraph' }] }
+}
+
+const TrailingParagraph = Extension.create({
+  name: 'noteTrailingParagraph',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('noteTrailingParagraph'),
+        appendTransaction: (transactions, _old, state) => {
+          if (!transactions.some((tr) => tr.docChanged)) return null
+          const { doc, schema } = state
+          if (doc.lastChild?.type.name !== 'image') return null
+          return state.tr.insert(
+            doc.content.size,
+            schema.nodes.paragraph.create()
+          )
+        },
+      }),
+    ]
+  },
+})
+
 function setImageSource(id: string, src: string) {
   imageSources.set(id, src)
-  for (const img of imageElements.get(id) ?? []) img.src = src
+  for (const img of imageElements.get(id) ?? []) showImage(img, src)
 }
 
 function formatState(editor: Editor): EditorFormatState {
@@ -383,7 +440,7 @@ function runCommand(editor: Editor, command: EditorCommand) {
             marks: [{ type: 'link', attrs: { href } }],
           })
           .unsetMark('link')
-          .insertContent(' ')
+          .insertContent({ type: 'text', text: ' ' })
           .run()
       } else {
         chain().setLink({ href }).run()
@@ -429,14 +486,29 @@ function fontFaces(setup: EditorSetup): string {
 
 function styles(setup: EditorSetup): string {
   const t = setup.theme
+
+  const inlineScroll = setup.inline
+    ? 'div:has(>.ProseMirror){height:100%;overflow-y:auto;}\n'
+    : ''
   return `${fontFaces(setup)}
 :root{color-scheme:${t.scheme};}
 /* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
 #root{flex-direction:column;}
-html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
+/* Tiptap's own base rules. It doesn't write them itself (\`injectCSS: false\`): the web's CSP refuses a \`<style>\` filled through \`innerHTML\` (ADR 0037 §5). They come before the note's, as Tiptap's did. */
+.ProseMirror{position:relative;word-wrap:break-word;white-space:pre-wrap;white-space:break-spaces;-webkit-font-variant-ligatures:none;font-variant-ligatures:none;font-feature-settings:"liga" 0;}
+.ProseMirror [contenteditable="false"]{white-space:normal;}
+.ProseMirror [contenteditable="false"] [contenteditable="true"]{white-space:pre-wrap;}
+img.ProseMirror-separator{display:inline !important;border:none !important;margin:0 !important;width:0 !important;height:0 !important;}
+.ProseMirror-gapcursor{display:none;pointer-events:none;position:absolute;margin:0;}
+.ProseMirror-gapcursor:after{content:"";display:block;position:absolute;top:-2px;width:20px;border-top:1px solid black;animation:ProseMirror-cursor-blink 1.1s steps(2,start) infinite;}
+@keyframes ProseMirror-cursor-blink{to{visibility:hidden;}}
+.ProseMirror-hideselection *::selection{background:transparent;}
+.ProseMirror-hideselection *{caret-color:transparent;}
+.ProseMirror-focused .ProseMirror-gapcursor{display:block;}
+${inlineScroll}html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
 body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
 /* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
-.ProseMirror{outline:none;box-sizing:border-box;min-height:100vh;padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
+.ProseMirror{outline:none;box-sizing:border-box;min-height:${setup.inline ? '100%' : '100vh'};padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
 .ProseMirror p{margin:0 0 6px;}
 .ProseMirror h1{font-size:1.43em;font-weight:700;line-height:1.25;margin:4px 0 6px;}
 .ProseMirror h2{font-size:1.15em;font-weight:700;line-height:1.3;margin:4px 0 6px;}
@@ -454,7 +526,9 @@ body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-s
 .ProseMirror a{color:${t.accent};text-decoration:underline;}
 .note-image{position:relative;max-width:100%;margin:6px auto;}
 .note-image img{display:block;width:100%;height:auto;border-radius:10px;background:${t.border};}
-.note-image.ProseMirror-selectednode img{outline:3px solid ${t.accent};}
+.note-image.ProseMirror-selectednode img,.note-image.ProseMirror-selectednode .note-image-missing{outline:3px solid ${t.accent};}
+.note-image.missing img{display:none;}
+.note-image-missing{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:96px;max-height:160px;padding:12px;border-radius:10px;background:${t.border};color:${t.textAlt};font-size:.85em;line-height:1.3;text-align:center;}
 .note-image.resizing img{opacity:.85;}
 .note-image-handle{display:none;position:absolute;z-index:1;width:44px;height:44px;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .note-image.ProseMirror-selectednode .note-image-handle{display:block;}
@@ -490,6 +564,7 @@ export default function RichTextEditorDom(props: Props) {
       for (const [id, src] of Object.entries(value.imageSources)) {
         imageSources.set(id, src)
       }
+      photoMissingText = value.photoMissing
       setSetup(value)
     })
     return () => {
@@ -502,7 +577,9 @@ export default function RichTextEditorDom(props: Props) {
       immediatelyRender: true,
       shouldRerenderOnTransaction: false,
       autofocus: setup?.autofocus ? 'end' : false,
-      content: setup?.doc ?? null,
+
+      content: withTrailingParagraph(setup?.doc ?? EMPTY_DOC),
+      injectCSS: false,
       editable: !!setup,
       extensions: [
         StarterKit.configure({
@@ -525,6 +602,7 @@ export default function RichTextEditorDom(props: Props) {
         NoteImage,
         Placeholder.configure({ placeholder: setup?.placeholder ?? '' }),
         TextDirections,
+        TrailingParagraph,
         CharacterCount.configure({ limit: setup?.characterLimit ?? null }),
       ],
       editorProps: {
@@ -586,10 +664,11 @@ export default function RichTextEditorDom(props: Props) {
     const moved = () => {
       if (handles.frame) reportHandles()
     }
-    window.addEventListener('scroll', moved, { passive: true })
+
+    window.addEventListener('scroll', moved, { passive: true, capture: true })
     window.addEventListener('resize', moved)
     return () => {
-      window.removeEventListener('scroll', moved)
+      window.removeEventListener('scroll', moved, { capture: true })
       window.removeEventListener('resize', moved)
     }
   }, [])

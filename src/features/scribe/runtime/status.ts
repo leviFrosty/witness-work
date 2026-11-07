@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import type { AttestationSupport } from '@/lib/attestation/appAttest'
 import { deviceAttestation } from '@/lib/attestation'
 import { errorTracking } from '@/lib/errorTracking'
@@ -65,9 +66,12 @@ export function refreshStatus({ force = false } = {}): Promise<void> {
 let support: Promise<AttestationSupport> | null = null
 
 export async function refreshDeviceGate(): Promise<void> {
-  const pending = (support ??= deviceAttestation
-    .checkSupport()
-    .catch((): AttestationSupport => 'unknown'))
+  const pending = (support ??=
+    Platform.OS === 'web'
+      ? Promise.resolve<AttestationSupport>('supported')
+      : deviceAttestation
+          .checkSupport()
+          .catch((): AttestationSupport => 'unknown'))
   const supported = await pending
 
   if (supported === 'unknown' && support === pending) support = null

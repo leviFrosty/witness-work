@@ -645,6 +645,133 @@ describe('pullMissingImages', () => {
   })
 })
 
+describe('a slow link', () => {
+  const MIB = 1024 * 1024
+  const avatar = (id: string) => ({
+    kind: 'contact' as const,
+    id,
+    localPath: `file:///docs/contact-${id}-avatar.jpg`,
+    revision: 'r1',
+  })
+  const file = (id: string) => `witness-work-img-contact-${id}--r1.jpg`
+
+  it('ends an upload pass at a file that timed out, and the next pass takes the next', async () => {
+    let now = 1_000
+    const writeBinary = vi
+      .fn()
+      .mockRejectedValue(new SyncTransportError('network', 'timeout'))
+    const deps = makeDeps({
+      bridge: {
+        writeBinary,
+        readBinary: vi.fn(),
+        listBinaryFiles: vi.fn(async () => []),
+        deleteBinaryFile: vi.fn(),
+      },
+      now: () => now,
+    })
+    const sources = ['a', 'b', 'c'].map(avatar)
+
+    const first = await pushAllImages({
+      sources,
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(1)
+    expect(first.failed).toBe(1)
+    expect(first.bookkeeping[file('a')]).toMatchObject({
+      errorCode: 'network',
+      failures: 1,
+      failedAt: 1_000,
+    })
+    expect(first.bookkeeping).not.toHaveProperty(file('b'))
+
+    now += 5_000
+    const second = await pushAllImages({
+      sources,
+      bookkeeping: first.bookkeeping,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(2)
+    expect(writeBinary).toHaveBeenLastCalledWith(
+      file('b'),
+      sources[1].localPath
+    )
+    expect(second.bookkeeping[file('b')]).toMatchObject({
+      errorCode: 'network',
+    })
+    expect(second.bookkeeping).not.toHaveProperty(file('c'))
+  })
+
+  it('goes on past a failure that is not the link', async () => {
+    const writeBinary = vi
+      .fn()
+      .mockRejectedValueOnce(new SyncTransportError('too-large', 'too_large'))
+      .mockResolvedValue(2000)
+    const deps = makeDeps({
+      bridge: {
+        writeBinary,
+        readBinary: vi.fn(),
+        listBinaryFiles: vi.fn(async () => []),
+        deleteBinaryFile: vi.fn(),
+      },
+    })
+    const result = await pushAllImages({
+      sources: ['a', 'b'].map(avatar),
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(writeBinary).toHaveBeenCalledTimes(2)
+    expect(result).toMatchObject({ failed: 1, uploaded: 1 })
+  })
+
+  it('downloads large photos one at a time, small ones together', async () => {
+    const events: string[] = []
+    const readBinary = vi.fn(async (filename: string) => {
+      events.push(`start ${filename}`)
+      await new Promise((resolve) => setTimeout(resolve, 1))
+      events.push(`end ${filename}`)
+      return 3000
+    })
+    const sizes: Record<string, number> = {
+      a: 10 * MIB,
+      b: 10 * MIB,
+      c: 100_000,
+      d: 100_000,
+      e: 100_000,
+    }
+    const deps = makeDeps({
+      bridge: {
+        writeBinary: vi.fn(),
+        readBinary,
+        listBinaryFiles: vi.fn(async () =>
+          Object.entries(sizes).map(([id, size]) => ({
+            filename: file(id),
+            modifiedAt: 3000,
+            size,
+          }))
+        ),
+        deleteBinaryFile: vi.fn(),
+      },
+      fs: { getModifiedAt: vi.fn(async () => null) },
+    })
+    const result = await pullMissingImages({
+      expectedSources: Object.keys(sizes).map(avatar),
+      bookkeeping: {},
+      deps,
+    })
+    expect(result.downloaded).toHaveLength(5)
+    const at = (event: string) => events.indexOf(event)
+
+    expect(at(`end ${file('a')}`)).toBeLessThan(at(`start ${file('b')}`))
+    expect(at(`end ${file('b')}`)).toBeLessThan(at(`start ${file('c')}`))
+
+    expect(at(`start ${file('e')}`)).toBeLessThan(at(`end ${file('c')}`))
+  })
+})
+
 describe('gcOrphanImages', () => {
   it('deletes a container binary whose contact is no longer active', async () => {
     const deleteBinaryFile = vi.fn(async () => {})
@@ -723,5 +850,176 @@ describe('gcOrphanImages', () => {
 
     expect(deps.bridge.deleteBinaryFile).not.toHaveBeenCalled()
     expect(result.deleted).toEqual([])
+  })
+})
+
+describe('Cloud Sync’s photo rules', () => {
+  const source = {
+    kind: 'contact' as const,
+    id: 'c1',
+    revision: 'r1',
+    localPath: 'file:///docs/contact-c1-avatar-picked-r1.jpg',
+  }
+  const filename = 'witness-work-img-contact-c1--r1.jpg'
+  const full = {
+    localMtime: 500,
+    uploadedMtime: null,
+    lastError: 'storage_full',
+    errorCode: 'storage-full',
+    failedAt: 0,
+    failures: 1,
+  }
+
+  it('retries a full account on foreground or room, even inside the backoff', async () => {
+    const deps = makeDeps({ fullRetriesOnSignal: true, now: () => 1_000 })
+    const edit = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(edit.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+
+    const foreground = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'foreground',
+    })
+    expect(foreground.uploaded).toBe(1)
+    expect(foreground.bookkeeping[filename].errorCode).toBeUndefined()
+  })
+
+  it('asks before putting back a photo it saw there that another device deleted', async () => {
+    const putsAgain = vi.fn(() => false)
+    const deps = makeDeps({ putsAgain })
+    const listing = vi.mocked(deps.bridge.listBinaryFiles)
+    listing.mockResolvedValue([{ filename, modifiedAt: 7 }])
+    const uploaded = { localMtime: 500, uploadedMtime: 500 }
+
+    const seen = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: uploaded },
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(seen.bookkeeping[filename].containerMtime).toBe(7)
+
+    listing.mockResolvedValue([])
+    const gone = await pushAllImages({
+      sources: [source, { ...source, id: 'c2', revision: 'r2' }],
+      bookkeeping: seen.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+
+    expect(putsAgain).toHaveBeenCalledExactlyOnceWith(filename)
+    expect(deps.bridge.writeBinary).toHaveBeenCalledExactlyOnceWith(
+      'witness-work-img-contact-c2--r2.jpg',
+      source.localPath
+    )
+    expect(gone.skipped).toBe(1)
+
+    putsAgain.mockReturnValue(true)
+    await pushAllImages({
+      sources: [source],
+      bookkeeping: gone.bookkeeping,
+      deps,
+      trigger: 'store-edit',
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenLastCalledWith(
+      filename,
+      source.localPath
+    )
+  })
+
+  it('never retries a photo too large for the transport until it changes', async () => {
+    const deps = makeDeps({ fullRetriesOnSignal: true, now: () => 10 ** 9 })
+    const tooLarge = {
+      [filename]: { ...full, errorCode: 'too-large', lastError: 'too_large' },
+    }
+    const result = await pushAllImages({
+      sources: [source],
+      bookkeeping: tooLarge,
+      deps,
+      trigger: 'foreground',
+    })
+    expect(result.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+  })
+
+  it('stops uploading, without failures, once the transport pauses uploads', async () => {
+    let open = true
+    const deps = makeDeps({ canUpload: () => open })
+    vi.mocked(deps.bridge.writeBinary).mockImplementationOnce(async () => {
+      open = false
+      throw new SyncTransportError('server-error', 'photos_disabled')
+    })
+    const result = await pushAllImages({
+      sources: [
+        source,
+        { ...source, id: 'c2', localPath: 'file:///docs/c2.jpg' },
+      ],
+      bookkeeping: {},
+      deps,
+      trigger: 'foreground',
+    })
+    expect(deps.bridge.writeBinary).toHaveBeenCalledOnce()
+    expect(result.failed).toBe(1)
+    expect(Object.keys(result.bookkeeping)).toEqual([filename])
+  })
+
+  it('keeps iCloud and Drive on the backoff, as before', async () => {
+    const deps = makeDeps({ now: () => 1_000 })
+    const result = await pushAllImages({
+      sources: [source],
+      bookkeeping: { [filename]: full },
+      deps,
+      trigger: 'foreground',
+    })
+    expect(result.skipped).toBe(1)
+    expect(deps.bridge.writeBinary).not.toHaveBeenCalled()
+  })
+
+  it('takes a revision it already has as current, whatever the listing time', async () => {
+    const expected = {
+      kind: 'contact' as const,
+      id: 'c1',
+      revision: 'r1',
+      localPath: 'file:///docs/contact-c1-avatar-synced-r1.jpg',
+    }
+    const listing = vi.fn(async () => [{ filename, modifiedAt: 9_999 }])
+    const cloud = makeDeps({ immutableNames: true })
+    cloud.bridge.listBinaryFiles = listing
+    const onCloud = await pullMissingImages({
+      expectedSources: [expected],
+      bookkeeping: { [filename]: { localMtime: 1, uploadedMtime: 1 } },
+      deps: cloud,
+    })
+    expect(cloud.bridge.readBinary).not.toHaveBeenCalled()
+    expect(onCloud.downloaded).toHaveLength(1)
+
+    const platform = makeDeps()
+    platform.bridge.listBinaryFiles = listing
+    await pullMissingImages({
+      expectedSources: [expected],
+      bookkeeping: { [filename]: { localMtime: 1, uploadedMtime: 1 } },
+      deps: platform,
+    })
+    expect(platform.bridge.readBinary).toHaveBeenCalledOnce()
+  })
+
+  it('drops what a device saw of the old cloud when it switches', async () => {
+    const { bookkeepingForNewTransport } = await import('@/app/sync/imageSync')
+    expect(
+      bookkeepingForNewTransport({
+        [filename]: { ...full, containerMtime: 5 },
+        other: { localMtime: 2, uploadedMtime: 2, containerMtime: 7 },
+      })
+    ).toEqual({
+      [filename]: { localMtime: 500, uploadedMtime: null },
+      other: { localMtime: 2, uploadedMtime: 2 },
+    })
   })
 })

@@ -80,12 +80,37 @@ test('production never merges development files, overrides or inherited bypass t
   assert.equal(env.EXPO_PUBLIC_API_DEV_BYPASS, undefined)
   assert.equal(env.POSTHOG_CLI_API_KEY, undefined)
   assert.equal(env.POSTHOG_DISABLE_UPLOAD, 'true')
-  assert.equal(
-    validateLocalEnv(env, 'ios').hostname,
-    'ww-proxy.leviwilkerson.com'
-  )
+  assert.equal(validateLocalEnv(env, 'ios').hostname, 'api.witnesswork.app')
   write(root, '.env.production.local', 'EXPO_PUBLIC_API_DEV_BYPASS=bad\n')
   assert.throws(() => loadLocalEnv(root, 'production', {}), /DEV_BYPASS/)
+})
+
+test('a blank API base resolves to the build variant’s API, as the app does', () => {
+  const env = {
+    APP_VARIANT: 'development',
+    EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'test_dev',
+    EXPO_PUBLIC_API_BASE_URL: '',
+  }
+  assert.equal(validateLocalEnv(env, 'ios').hostname, 'api-dev.witnesswork.app')
+  for (const variant of ['beta', 'production'])
+    assert.equal(
+      validateLocalEnv(
+        {
+          ...env,
+          APP_VARIANT: variant,
+          EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'appl',
+        },
+        'ios'
+      ).hostname,
+      'api.witnesswork.app'
+    )
+  assert.equal(
+    validateLocalEnv(
+      { ...env, EXPO_PUBLIC_API_BASE_URL: 'http://localhost:8787' },
+      'ios'
+    ).host,
+    'localhost:8787'
+  )
 })
 
 test('missing platform keys, placeholder Maps keys and store test keys stop before builds', () => {
@@ -193,6 +218,7 @@ test('Android localhost forwarding uses the configured port and requires explici
   ])
   const count = calls.length
   forwardAndroidBackend(new URL('https://ww-proxy.leviwilkerson.com'), {}, run)
+  forwardAndroidBackend(new URL('https://api.witnesswork.app'), {}, run)
   assert.equal(calls.length, count)
 })
 
@@ -289,7 +315,7 @@ test('OTA validation permits unavailable Android purchases while retaining Maps 
   assert.equal(
     validateLocalEnv(env, 'android', { allowUnavailablePurchases: true })
       .hostname,
-    'ww-proxy.leviwilkerson.com'
+    'api.witnesswork.app'
   )
   assert.throws(
     () =>

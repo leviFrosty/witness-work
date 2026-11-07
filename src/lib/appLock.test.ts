@@ -27,7 +27,12 @@ import {
   openScreenLockSettings,
   shouldRelock,
 } from '@/lib/appLock'
-import { useAppLockSession } from '@/stores/appLock'
+import {
+  APP_LOCK_DELAYS,
+  appLockDelayFor,
+  appLockDelays,
+  useAppLockSession,
+} from '@/stores/appLock'
 
 describe('appLockMethod', () => {
   it('names Face ID before Touch ID on iOS', () => {
@@ -68,6 +73,19 @@ describe('shouldRelock', () => {
   it('waits out the chosen delay', () => {
     expect(shouldRelock(59_999, 60)).toBe(false)
     expect(shouldRelock(60_000, 60)).toBe(true)
+  })
+})
+
+describe('the web’s delays', () => {
+  it('offers no Immediately on the web, 1 minute first', () => {
+    expect(appLockDelays(true)).toEqual([60, 300, 900])
+    expect(appLockDelays(false)).toEqual(APP_LOCK_DELAYS)
+  })
+
+  it('reads Immediately as 1 minute on the web, and leaves phones alone', () => {
+    expect(appLockDelayFor(0, true)).toBe(60)
+    expect(appLockDelayFor(300, true)).toBe(300)
+    expect(appLockDelayFor(0, false)).toBe(0)
   })
 })
 

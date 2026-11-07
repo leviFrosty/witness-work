@@ -1,0 +1,25 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.passkeys'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.passkeys"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  // Pinned to an exact patch version (CLAUDE.md). play-services-auth is the
+  // provider below Android 14, and on later versions when it's the User's.
+  implementation 'androidx.credentials:credentials:1.6.0'
+  implementation 'androidx.credentials:credentials-play-services-auth:1.6.0'
+  // GoogleApiAvailability, for compiling only: the provider above already
+  // brings Play services at runtime, so the app's resolved version stays put.
+  compileOnly 'com.google.android.gms:play-services-base:18.5.0'
+}

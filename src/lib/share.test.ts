@@ -6,6 +6,9 @@ vi.mock('react-native', () => ({
     get OS() {
       return native.platform
     },
+    select(specifics: Record<string, unknown>) {
+      return this.OS in specifics ? specifics[this.OS] : specifics.default
+    },
   },
   Share: { share: native.share },
 }))

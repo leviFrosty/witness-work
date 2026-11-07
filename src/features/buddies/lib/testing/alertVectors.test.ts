@@ -47,6 +47,7 @@ describe('named alert vectors', () => {
         'joinRequest',
         'paired',
         'quiet',
+        'reconnect',
         'reply',
         'share',
         'unknownKind',

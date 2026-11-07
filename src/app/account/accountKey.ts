@@ -1,5 +1,7 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { usePreferences } from '@/stores/preferences'
+import { deviceAccountKey, keyChangeRecords } from '@/lib/accountKey'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import { analytics } from '@/lib/analytics'
 import {
@@ -8,23 +10,32 @@ import {
   type OpenedAccountSession,
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
-import { serverAccount } from '@/lib/serverAccount'
+import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { leaveCloudSyncAccount } from '@/app/sync/cloudSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { holdCloudSyncDefault } from '@/app/sync/cloudSyncDefaultHold'
 
 export const accountKey = createAccountKeyService({
   store: {
-    peek: BuddiesKeychain.peekRootSeed,
-    getOrCreate: BuddiesKeychain.getOrCreateRootSeed,
-    replace: BuddiesKeychain.replaceRootSeed,
+    peek: deviceAccountKey.peek,
+    getOrCreate: deviceAccountKey.getOrCreate,
+    replace: deviceAccountKey.replace,
   },
   account: {
-    ensure: serverAccount.ensure,
+    ensure: (key, call) =>
+      call?.accountId
+        ? serverAccount
+            .connect(key, { accountId: call.accountId })
+            .catch(() => null)
+        : serverAccount.ensure(key),
     changeKey: serverAccount.changeKey,
+    lastAccountId: serverAccount.lastAccountId,
+    rekeyed: serverAccount.rekeyed,
+    openDetached: (key, call) => accountSessions.openDetached(key, call),
     signedInElsewhere: async () => {
       const key = await accountKey.peek()
       if (!key) throw new Error('No account key on this device')
@@ -49,6 +60,7 @@ export const accountKey = createAccountKeyService({
         : buddiesEngine.deleteEverything(),
     forget: () => buddiesEngine.dropIdentity(),
   },
+  keyChangeUnfinished: async () => (await keyChangeRecords.read()) !== null,
   sync: {
     leave: () =>
       leaveCloudSyncAccount(async () => {
@@ -57,6 +69,7 @@ export const accountKey = createAccountKeyService({
           await iCloudSync.push('leave-account')
 
         usePreferences.setState({ iCloudSyncEnabled: false })
+        endPhotoPasses()
         await iCloudSync.waitForSyncIdle()
       }),
   },
@@ -65,7 +78,11 @@ export const accountKey = createAccountKeyService({
 export const accountKeyAvailable = () => BuddiesKeychain.isAvailable()
 export const accountKeyReplaceable = () => BuddiesKeychain.isReplaceAvailable()
 
-export type AccountKeyReplaceSource = 'recovery_key' | 'handoff' | 'tools'
+export type AccountKeyReplaceSource =
+  | 'recovery_key'
+  | 'handoff'
+  | 'passkey'
+  | 'tools'
 
 export async function replaceAccountKey(
   newKey: Uint8Array,
@@ -73,13 +90,20 @@ export async function replaceAccountKey(
     source,
     confirmedLoss = false,
     session,
+    accountId,
   }: {
     source: AccountKeyReplaceSource
     confirmedLoss?: boolean
     session?: OpenedAccountSession
+
+    accountId?: string
   }
 ): Promise<ReplaceAccountKeyResult> {
-  const result = await accountKey.replace(newKey, { confirmedLoss, session })
+  if (!accountKeyReplaceable())
+    throw new Error('This device can’t replace its account key')
+  const result = await holdCloudSyncDefault(() =>
+    accountKey.replace(newKey, { confirmedLoss, session, accountId })
+  )
   if (result.outcome === 'replaced') {
     analytics.capture('account_key_replaced', {
       source,
@@ -87,8 +111,10 @@ export async function replaceAccountKey(
       had_inbox: result.loss.inboxRegistered,
       buddies_kept_elsewhere: result.loss.keptElsewhere,
       registered: result.accountId !== null,
+      same_account: result.sameAccount,
     })
-    if (source !== 'handoff') void joinBuddiesHere().catch(() => undefined)
+    if (source !== 'handoff' && source !== 'passkey')
+      void joinBuddiesHere().catch(() => undefined)
   }
   return result
 }

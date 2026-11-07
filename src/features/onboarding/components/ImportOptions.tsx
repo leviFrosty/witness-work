@@ -3,6 +3,7 @@ import {
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
+  UserRoundKey as UserRoundKeyIcon,
   NotebookPen as NotebookPenIcon,
   ScanQrCode as ScanQrCodeIcon,
 } from 'lucide-react-native'
@@ -13,11 +14,13 @@ import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import { usesGoogleDriveSync } from '@/lib/syncTransport'
+import { canReadMytimeDb } from '@/features/mytime-import/lib/readMytimeDb'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
 import { pickScribePaperPages } from '@/features/scribe/components/pickScribePaperPages'
 import { navigateToScribe } from '@/features/scribe/components/openScribe'
 import { accountKeyReplaceable } from '@/app/account/accountKey'
 import ImportOptionCard from '@/features/onboarding/components/ImportOptionCard'
+import usePasskeySignInAvailable from '@/features/settings/hooks/usePasskeySignInAvailable'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 export type ImportType =
@@ -27,6 +30,7 @@ export type ImportType =
   | 'icloud'
   | 'backup_json'
   | 'other_phone'
+  | 'passkey'
 
 export type HostedImportType = Extract<
   ImportType,
@@ -59,6 +63,7 @@ export default function ImportOptions({
   const paper = useScribePaperCapture()
   const paperAvailable = scribeShown && paper.available
   const library = useLibraryImagePicker('scribe_paper')
+  const passkeySignIn = usePasskeySignInAvailable()
 
   const fromPaper = async () => {
     const paperPages = await pickScribePaperPages(library.pick)
@@ -76,7 +81,9 @@ export default function ImportOptions({
           : importType,
       source,
     })
-    if (importType === 'other_phone')
+    if (importType === 'passkey')
+      navigation.navigate('Sign In With Passkey', { entry: source })
+    else if (importType === 'other_phone')
       navigation.navigate('Sign In With QR Code', { entry: source })
     else if (importType === 'notes')
       navigateToScribe(navigation, {
@@ -89,6 +96,15 @@ export default function ImportOptions({
 
   return (
     <View>
+      {passkeySignIn && (
+        <ImportOptionCard
+          icon={UserRoundKeyIcon}
+          color={theme.colors.accent}
+          titleKey='onboardingPickUp_passkey'
+          descKey='onboardingPickUp_passkeyDesc'
+          onPress={() => select('passkey')}
+        />
+      )}
       {accountKeyReplaceable() && (
         <ImportOptionCard
           icon={ScanQrCodeIcon}
@@ -120,13 +136,15 @@ export default function ImportOptions({
           onPress={() => select('paper')}
         />
       )}
-      <ImportOptionCard
-        icon={FileInputIcon}
-        color={theme.colors.indigo}
-        titleKey='onboardingPickUp_mytime'
-        descKey='onboardingPickUp_mytimeDesc'
-        onPress={() => select('mytime')}
-      />
+      {canReadMytimeDb && (
+        <ImportOptionCard
+          icon={FileInputIcon}
+          color={theme.colors.indigo}
+          titleKey='onboardingPickUp_mytime'
+          descKey='onboardingPickUp_mytimeDesc'
+          onPress={() => select('mytime')}
+        />
+      )}
       {cloud && (
         <ImportOptionCard
           icon={CloudIcon}

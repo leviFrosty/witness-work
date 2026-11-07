@@ -1,4 +1,10 @@
-import { fromB64u, toB64u } from '@/lib/bytes'
+import { fromB64u, sameBytes, toB64u } from '@/lib/bytes'
+import {
+  AccountSessionError,
+  type RekeyedTokens,
+} from '@/lib/serverAccount/session'
+
+export type { RekeyedTokens }
 
 export type AccountKeyStore = {
   peek: () => Promise<string | null>
@@ -30,13 +36,29 @@ export type AccountKeyServiceDeps = {
   store: AccountKeyStore
 
   account: {
-    ensure: (accountKey: Uint8Array) => Promise<{ accountId: string } | null>
+    ensure: (
+      accountKey: Uint8Array,
+      call?: { accountId?: string }
+    ) => Promise<{ accountId: string } | null>
     changeKey: (
       swap: () => Promise<void>,
       keys: { from: Uint8Array | null; to: Uint8Array }
     ) => Promise<void>
 
     signedInElsewhere: () => Promise<boolean>
+
+    lastAccountId?: () => string | null
+
+    rekeyed?: (
+      from: Uint8Array,
+      to: Uint8Array,
+      call: { accountId: string; tokens?: RekeyedTokens }
+    ) => Promise<void>
+
+    openDetached?: (
+      accountKey: Uint8Array,
+      call: { accountId?: string }
+    ) => Promise<SameAccountSession>
   }
 
   buddies: {
@@ -46,9 +68,16 @@ export type AccountKeyServiceDeps = {
   }
 
   sync?: { leave: () => Promise<void> }
+
+  keyChangeUnfinished?: () => Promise<boolean>
 }
 
 export type OpenedAccountSession = { adopt: () => Promise<void> }
+
+export type SameAccountSession = OpenedAccountSession & {
+  accountId: string
+  close: () => Promise<void>
+}
 
 export type ReplaceAccountKeyResult =
   | { outcome: 'unchanged' }
@@ -57,6 +86,8 @@ export type ReplaceAccountKeyResult =
       loss: AccountKeyLoss
 
       accountId: string | null
+
+      sameAccount: boolean
     }
 
 export class AccountKeyLossError extends Error {
@@ -66,10 +97,26 @@ export class AccountKeyLossError extends Error {
   }
 }
 
-const KEY_BYTES = 32
+export class KeyChangeUnfinishedError extends Error {
+  constructor() {
+    super('A key change on this device is not finished')
+    this.name = 'KeyChangeUnfinishedError'
+  }
+}
 
-const sameBytes = (a: Uint8Array, b: Uint8Array) =>
-  a.length === b.length && a.every((byte, i) => byte === b[i])
+export class AccountKeyRetiredError extends Error {
+  constructor(readonly changedAt: number | null) {
+    super('The account key was retired by a key change')
+    this.name = 'AccountKeyRetiredError'
+  }
+}
+
+const retiredOr = (error: unknown) =>
+  error instanceof AccountSessionError && error.failure === 'keyRetired'
+    ? new AccountKeyRetiredError(error.changedAt)
+    : error
+
+const KEY_BYTES = 32
 
 export function createAccountKeyService(deps: AccountKeyServiceDeps) {
   let replacing: Promise<ReplaceAccountKeyResult> | null = null
@@ -83,7 +130,15 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return fromB64u(await deps.store.getOrCreate())
   }
 
-  async function lossIfReplaced(newKey?: Uint8Array): Promise<AccountKeyLoss> {
+  const isSameAccount = (accountId: string | undefined) =>
+    accountId !== undefined &&
+    accountId === (deps.account.lastAccountId?.() ?? null)
+
+  async function lossIfReplaced(
+    newKey?: Uint8Array,
+    { accountId }: { accountId?: string } = {}
+  ): Promise<AccountKeyLoss> {
+    if (isSameAccount(accountId)) return NO_LOSS
     const current = await peek()
     if (!current || (newKey && sameBytes(current, newKey))) return NO_LOSS
     return currentLoss()
@@ -95,13 +150,42 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return { ...loss, keptElsewhere: await deps.account.signedInElsewhere() }
   }
 
+  async function rejoin(
+    current: Uint8Array | null,
+    newKey: Uint8Array,
+    accountId: string,
+    session: OpenedAccountSession | undefined
+  ): Promise<ReplaceAccountKeyResult> {
+    await deps.account.changeKey(
+      async () => {
+        await deps.store.replace(toB64u(newKey))
+        deps.buddies.forget()
+        await session?.adopt()
+      },
+      { from: current, to: newKey }
+    )
+    const account = await deps.account
+      .ensure(newKey, { accountId })
+      .catch(() => null)
+    return {
+      outcome: 'replaced',
+      loss: NO_LOSS,
+      accountId: account?.accountId ?? null,
+      sameAccount: true,
+    }
+  }
+
   async function run(
     newKey: Uint8Array,
     confirmedLoss: boolean,
-    session: OpenedAccountSession | undefined
+    session: OpenedAccountSession | undefined,
+    accountId: string | undefined
   ): Promise<ReplaceAccountKeyResult> {
     const current = await peek()
     if (current && sameBytes(current, newKey)) return { outcome: 'unchanged' }
+    if (await deps.keyChangeUnfinished?.()) throw new KeyChangeUnfinishedError()
+    if (isSameAccount(accountId))
+      return rejoin(current, newKey, accountId!, session)
 
     const loss = current ? await currentLoss() : NO_LOSS
     if (losesSomething(loss)) {
@@ -121,7 +205,12 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
       { from: current, to: newKey }
     )
     const account = await deps.account.ensure(newKey).catch(() => null)
-    return { outcome: 'replaced', loss, accountId: account?.accountId ?? null }
+    return {
+      outcome: 'replaced',
+      loss,
+      accountId: account?.accountId ?? null,
+      sameAccount: false,
+    }
   }
 
   function replace(
@@ -129,14 +218,19 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     {
       confirmedLoss = false,
       session,
-    }: { confirmedLoss?: boolean; session?: OpenedAccountSession } = {}
+      accountId,
+    }: {
+      confirmedLoss?: boolean
+      session?: OpenedAccountSession
+      accountId?: string
+    } = {}
   ): Promise<ReplaceAccountKeyResult> {
     if (newKey.length !== KEY_BYTES)
       return Promise.reject(new Error('Account key must be 32 bytes'))
     const previous = replacing ?? Promise.resolve()
     const next = previous
       .catch(() => undefined)
-      .then(() => run(newKey, confirmedLoss, session))
+      .then(() => run(newKey, confirmedLoss, session, accountId))
     replacing = next
     void next
       .catch(() => undefined)
@@ -146,7 +240,62 @@ export function createAccountKeyService(deps: AccountKeyServiceDeps) {
     return next
   }
 
-  return { peek, getOrCreate, lossIfReplaced, replace }
+  async function sameAccountSession(
+    newKey: Uint8Array
+  ): Promise<SameAccountSession | null> {
+    const accountId = deps.account.lastAccountId?.() ?? null
+    if (!accountId || !deps.account.openDetached) return null
+    try {
+      return await deps.account.openDetached(newKey, { accountId })
+    } catch (error) {
+      if (
+        (error as { serverCode?: unknown } | null)?.serverCode ===
+          'unknown_account' ||
+        (error instanceof AccountSessionError &&
+          error.failure === 'unavailable')
+      )
+        return null
+      throw retiredOr(error)
+    }
+  }
+
+  async function openSession(newKey: Uint8Array): Promise<SameAccountSession> {
+    if (!deps.account.openDetached)
+      throw new Error('Sessions need openDetached')
+    try {
+      return await deps.account.openDetached(newKey, {})
+    } catch (error) {
+      throw retiredOr(error)
+    }
+  }
+
+  const keyChangeUnfinished = async () =>
+    (await deps.keyChangeUnfinished?.()) ?? false
+
+  async function adoptChangedKey(
+    oldKey: Uint8Array,
+    newKey: Uint8Array,
+    call: { accountId: string; tokens?: RekeyedTokens }
+  ): Promise<void> {
+    if (newKey.length !== KEY_BYTES)
+      throw new Error('Account key must be 32 bytes')
+    if (!deps.account.rekeyed) throw new Error('Key changes need rekeyed')
+    await deps.account.rekeyed(oldKey, newKey, call)
+
+    await deps.store.replace(toB64u(newKey))
+    deps.buddies.forget()
+  }
+
+  return {
+    peek,
+    getOrCreate,
+    lossIfReplaced,
+    replace,
+    adoptChangedKey,
+    sameAccountSession,
+    openSession,
+    keyChangeUnfinished,
+  }
 }
 
 export type AccountKeyService = ReturnType<typeof createAccountKeyService>

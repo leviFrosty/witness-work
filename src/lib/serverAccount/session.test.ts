@@ -18,9 +18,13 @@ import {
   KEY_CHANGE_CLOSE_WAIT_MS,
   OPEN_RATE_LIMIT_DEFAULT_MS,
   OPEN_RETRY_AFTER_MS,
+  SESSION_RENEW_WINDOW_MS,
   type SessionStore,
+  sessionAccountForKey,
   STORE_ATTEMPTS,
+  sessionEndWipes,
   staleTokenHash,
+  toAccountSessionError,
 } from '@/lib/serverAccount/session'
 import { sessionAttestationHash } from '@/lib/serverAccount/sessionClient'
 
@@ -54,6 +58,8 @@ type Session = {
   rotatedAt: number | null
 
   reused: boolean
+
+  endedReason?: string
 }
 
 const GRACE_MS = 60_000
@@ -117,9 +123,23 @@ function fakeWorker(clock: { now: number }) {
           fromB64u(payload.accountPub)
         )
         if (!signed) return failure(401, 'bad_signature')
+
+        const renewed =
+          payload.renews === undefined ? undefined : sessionFor(headers)
+        if (
+          payload.renews !== undefined &&
+          (!renewed ||
+            renewed.sessionId !== payload.renews ||
+            clock.now >= renewed.expiresAt ||
+            accounts.get(payload.accountPub) !== renewed.accountId)
+        )
+          return failure(401, 'unauthorized')
         if (!payload.attestation && !headers['x-ww-dev-bypass'])
           return failure(403, 'attestation_failed', { reason: 'missing' })
         let accountId = accounts.get(payload.accountPub)
+
+        if (payload.accountId !== undefined && accountId !== payload.accountId)
+          return failure(404, 'unknown_account')
         if (!accountId) {
           accountId = `acct${String(accounts.size).padStart(18, '0')}`
           accounts.set(payload.accountPub, accountId)
@@ -136,6 +156,10 @@ function fakeWorker(clock: { now: number }) {
           reused: false,
         }
         sessions.push(session)
+        if (renewed) {
+          renewed.ended = true
+          renewed.endedReason = 'renewed'
+        }
         return json(201, {
           ok: true,
           accountId,
@@ -152,16 +176,19 @@ function fakeWorker(clock: { now: number }) {
             entry.previousRefresh === presented
         )
         if (!session || session.ended || clock.now >= session.expiresAt)
-          return failure(401, 'unauthorized')
+          return failure(401, 'unauthorized', {
+            ...(session?.endedReason && { reason: session.endedReason }),
+          })
         if (session.refreshToken !== presented) {
           if (clock.now - session.rotatedAt! <= GRACE_MS)
             return json(200, { ok: true, ...tokens(session) })
           session.ended = true
           session.reused = true
-          return failure(401, 'unauthorized')
+          session.endedReason = 'reused'
+          return failure(401, 'unauthorized', { reason: 'reused' })
         }
-        session.rotatedAt = clock.now
         session.previousRefresh = session.refreshToken
+        session.rotatedAt = clock.now
         session.refreshToken = `rt-${++issued}`
         return json(200, { ok: true, ...tokens(session) })
       }
@@ -367,7 +394,9 @@ describe('account sessions', () => {
     await info()
 
     expect(worker.opsCalled('session/refresh')).toEqual([
-      expect.objectContaining({ body: { refreshToken: 'rt-1' } }),
+      expect.objectContaining({
+        body: { refreshToken: 'rt-1', capabilities: ['sync-everyone'] },
+      }),
     ])
     expect(JSON.parse(store.value!).refreshToken).toBe('rt-3')
     clock.now += ACCESS_LIFETIME_MS
@@ -375,6 +404,7 @@ describe('account sessions', () => {
 
     expect(worker.opsCalled('session/refresh')[1].body).toEqual({
       refreshToken: 'rt-3',
+      capabilities: ['sync-everyone'],
     })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
   })
@@ -388,6 +418,32 @@ describe('account sessions', () => {
 
     expect(worker.opsCalled('session/refresh')).toHaveLength(1)
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('asks again at once when a refresh’s answer is lost, so the replaced token never comes back after its minute', async () => {
+    const { worker, clock, store, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+
+    worker.override.set('session/refresh', (call) => {
+      if (call !== 0) return null
+      const session = worker.sessions[0]
+      session.previousRefresh = session.refreshToken
+      session.refreshToken = 'rt-lost'
+      session.rotatedAt = clock.now
+      throw new TypeError('Network request failed')
+    })
+
+    await expect(info()).resolves.toBeTruthy()
+    clock.now += ACCESS_LIFETIME_MS
+    await expect(info()).resolves.toBeTruthy()
+
+    expect(worker.sessions[0]).toMatchObject({ ended: false })
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(
+      worker.opsCalled('session/refresh').map((call) => call.body?.refreshToken)
+    ).toEqual(['rt-1', 'rt-1', 'rt-lost'])
+    expect(JSON.parse(store.value!)).toMatchObject({ sessionId: 'sid-1' })
   })
 
   it('shares one session/open between concurrent first callers', async () => {
@@ -434,6 +490,106 @@ describe('account sessions', () => {
       reason: 'ended',
       outcome: 'ok',
     })
+  })
+
+  it('says why the server refused a refresh', async () => {
+    const { worker, clock, info, events } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    worker.override.set('session/refresh', () =>
+      failure(401, 'unauthorized', { reason: 'revoked' })
+    )
+
+    await info()
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        op: 'session/refresh',
+        outcome: 'server',
+        serverReason: 'revoked',
+      })
+    )
+    expect(events.at(-1)).toMatchObject({ op: 'session/open', reason: 'ended' })
+  })
+
+  it('reads the refused refresh reason into the error', () => {
+    const httpError = (body: Record<string, unknown>, status = 401) =>
+      new HttpError(
+        'client',
+        status,
+        String(body.error ?? '') || null,
+        null,
+        undefined,
+        body
+      )
+    const ended = (body: Record<string, unknown>, status = 401) =>
+      toAccountSessionError(httpError(body, status), { refresh: true }).ended
+    expect(ended({ error: 'unauthorized', reason: 'revoked' })).toBe('revoked')
+    expect(ended({ error: 'unauthorized', reason: 'reused' })).toBe('reused')
+    expect(ended({ error: 'unauthorized', reason: 'replaced' })).toBe(
+      'replaced'
+    )
+    expect(ended({ error: 'unauthorized', reason: 'expired' })).toBe('expired')
+    expect(ended({ error: 'unauthorized', reason: 'later' })).toBe('unknown')
+    expect(ended({ error: 'unauthorized' })).toBe('unknown')
+    expect(ended({ error: 'forbidden' }, 403)).toBeNull()
+
+    expect(
+      toAccountSessionError(
+        httpError({ error: 'unauthorized', reason: 'revoked' })
+      ).ended
+    ).toBeNull()
+    expect(sessionEndWipes('revoked')).toBe(true)
+    expect(sessionEndWipes('reused')).toBe(true)
+    expect(sessionEndWipes('expired')).toBe(false)
+    expect(sessionEndWipes('replaced')).toBe(false)
+    expect(sessionEndWipes(null)).toBe(false)
+  })
+
+  it('sends the app version on open and refresh', async () => {
+    const { worker, clock, info } = setup({
+      deps: { appVersion: () => '3.12.0' },
+    })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).appVersion).toBe('3.12.0')
+    expect(worker.opsCalled('session/refresh')[0].body).toEqual({
+      refreshToken: expect.any(String),
+      appVersion: '3.12.0',
+      capabilities: ['sync-everyone'],
+    })
+  })
+
+  it('asks for Cloud Sync for everyone on open and on every refresh', async () => {
+    const { worker, clock, info } = setup()
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+
+    expect(openPayload(worker).capabilities).toEqual(['sync-everyone'])
+    const refreshes = worker.opsCalled('session/refresh')
+    expect(refreshes.length).toBeGreaterThanOrEqual(2)
+    for (const refresh of refreshes)
+      expect(refresh.body).toMatchObject({ capabilities: ['sync-everyone'] })
+  })
+
+  it('leaves out an app version the server would refuse', async () => {
+    for (const version of ['3.12', '3.12.0 (412)', `${'1'.repeat(31)}.0.0`]) {
+      const { worker, clock, info } = setup({
+        deps: { appVersion: () => version },
+      })
+      await info()
+      clock.now += ACCESS_LIFETIME_MS
+      await info()
+      expect(openPayload(worker)).not.toHaveProperty('appVersion')
+      expect(worker.opsCalled('session/refresh')[0].body).not.toHaveProperty(
+        'appVersion'
+      )
+    }
   })
 
   it('renews the access token first when asked, signing a signed-out device back in', async () => {
@@ -527,6 +683,7 @@ describe('account sessions', () => {
     const { worker, store, clock, info } = setup()
     await info()
     clock.now += ACCESS_LIFETIME_MS
+
     worker.override.set('session/refresh', (call) => {
       if (call <= 1) throw new TypeError('Network request failed')
       return null
@@ -714,7 +871,7 @@ describe('account sessions', () => {
 
     expect(
       first.worker.opsCalled('session/refresh').map((call) => call.body)
-    ).toEqual([{ refreshToken: 'rt-1' }])
+    ).toEqual([{ refreshToken: 'rt-1', capabilities: ['sync-everyone'] }])
     expect(relaunched.attestation.assert).toHaveBeenCalledTimes(1)
     expect(relaunched.events).toEqual([
       expect.objectContaining({
@@ -748,6 +905,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh').at(-1)?.body).toEqual({
       refreshToken: 'rt-5',
+      capabilities: ['sync-everyone'],
     })
   })
 
@@ -794,6 +952,7 @@ describe('account sessions', () => {
     expect(relaunched.attestation.assert).not.toHaveBeenCalled()
     expect(first.worker.opsCalled('session/refresh')[0].body).toEqual({
       refreshToken: 'rt-1',
+      capabilities: ['sync-everyone'],
     })
   })
 
@@ -1154,6 +1313,23 @@ describe('account sessions', () => {
     expect(worker.sessions[1].ended).toBe(false)
   })
 
+  it('never brings back a replaced key by adopting a handoff’s session late', async () => {
+    const device = { key: KEY_A }
+    const { sessions, info } = setup({ device })
+    await info()
+    const late = await sessions.openDetached(KEY_A)
+    await sessions.changeKey(
+      async () => {
+        device.key = KEY_B
+      },
+      { from: KEY_A, to: KEY_B }
+    )
+
+    await late.adopt()
+
+    await expect(info(KEY_A)).rejects.toMatchObject({ failure: 'cancelled' })
+  })
+
   it('forgets the old session even when the server can’t be told, waiting only so long', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
@@ -1235,5 +1411,456 @@ describe('account sessions', () => {
     await expect(cancelled).rejects.toMatchObject({ failure: 'cancelled' })
     await expect(other).resolves.toMatchObject({ sessionId: 'sid-1' })
     expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+})
+
+describe('sessionAccountForKey', () => {
+  const session = { accountId: 'acct_a', accountPub: PUB_A }
+
+  it("is the session's account for its own key", () => {
+    expect(sessionAccountForKey(session, KEY_A)).toBe('acct_a')
+  })
+
+  it('is no account once the key is another', () => {
+    expect(sessionAccountForKey(session, KEY_B)).toBeNull()
+  })
+
+  it('is no account without a key or a session', () => {
+    expect(sessionAccountForKey(session, null)).toBeNull()
+    expect(sessionAccountForKey(null, KEY_A)).toBeNull()
+  })
+})
+
+describe('a request pinned to an account', () => {
+  const pinned = (sessions: ReturnType<typeof setup>['sessions'], id: string) =>
+    sessions.request<{ accountId: string }>(
+      { url: `${BASE}/accounts/v1/account`, method: 'GET', timeoutMs: 5_000 },
+      { accountId: id }
+    )
+
+  it("runs on that account's session", async () => {
+    const { sessions, info } = setup()
+    const { data } = await info()
+    await expect(pinned(sessions, data.accountId)).resolves.toBeTruthy()
+  })
+
+  it("isn't sent on another account's session", async () => {
+    const { sessions, worker, info } = setup()
+    await info()
+    const error = await pinned(sessions, 'acct_previous').catch(
+      (caught: unknown) => caught
+    )
+    expect(error).toBeInstanceOf(AccountSessionError)
+    expect((error as AccountSessionError).failure).toBe('cancelled')
+    expect(worker.opsCalled('account/info')).toHaveLength(1)
+  })
+})
+
+describe('account sessions across a key change on this device', () => {
+  const rekeyOnWorker = (worker: ReturnType<typeof fakeWorker>) => {
+    const accountId = worker.accounts.get(PUB_A)!
+    worker.accounts.delete(PUB_A)
+    worker.accounts.set(PUB_B, accountId)
+    const session = worker.sessions[0]
+    session.accessTokens.add('at-rekeyed')
+    return accountId
+  }
+
+  it('re-points its own session at the new key, keeping the session', async () => {
+    const device = { key: KEY_A }
+    const { worker, store, sessions, info, clock } = setup({ device })
+    await info()
+    const refreshToken = JSON.parse(store.value!).refreshToken
+    const accountId = rekeyOnWorker(worker)
+
+    await sessions.repoint(PUB_A, PUB_B, {
+      accessToken: 'at-rekeyed',
+      accessExpiresAt: clock.now + ACCESS_LIFETIME_MS,
+    })
+    device.key = KEY_B
+
+    const response = await info()
+    expect(response.data.accountId).toBe(accountId)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(worker.opsCalled('session/close')).toHaveLength(0)
+    expect(worker.calls.at(-1)!.headers.authorization).toBe('Bearer at-rekeyed')
+    expect(JSON.parse(store.value!)).toMatchObject({
+      accountPub: PUB_B,
+      accountId,
+      sessionId: 'sid-1',
+      refreshToken,
+    })
+    expect(sessions.snapshot()).toMatchObject({ accountPub: PUB_B })
+
+    await expect(info(KEY_A)).rejects.toMatchObject({ failure: 'cancelled' })
+  })
+
+  it('re-points a stored session it hasn’t used yet, and refreshes it next', async () => {
+    const first = setup()
+    await first.info()
+    const accountId = rekeyOnWorker(first.worker)
+    const { sessions, info, worker } = setup({
+      store: nextLaunchStore(first.store),
+      worker: first.worker,
+      clock: first.clock,
+      device: { key: KEY_B },
+    })
+    expect(await sessions.repoint(PUB_A, PUB_B)).toBe(true)
+    expect((await info()).data.accountId).toBe(accountId)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+  })
+
+  it('re-points nothing when its session is another key’s', async () => {
+    const { sessions, info, store } = setup()
+    await info()
+    const before = store.value
+    const pubC = deriveAccountSigningKey(new Uint8Array(32).fill(3)).publicKey
+    expect(await sessions.repoint(PUB_B, pubC)).toBe(false)
+    expect(store.value).toBe(before)
+  })
+
+  it('waits for a refresh in flight, so the rotated refresh token is kept', async () => {
+    const device = { key: KEY_A }
+    const { worker, store, sessions, info, clock } = setup({ device })
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    let release!: () => void
+    worker.override.set('session/refresh', async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return null
+    })
+    const refreshing = info()
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    rekeyOnWorker(worker)
+    const repointing = sessions.repoint(PUB_A, PUB_B)
+    release()
+    await refreshing
+    await repointing
+    expect(JSON.parse(store.value!)).toMatchObject({
+      accountPub: PUB_B,
+      refreshToken: worker.sessions[0].refreshToken,
+    })
+  })
+})
+
+describe('account sessions for a retired key', () => {
+  it('fails as keyRetired with when it changed, and opens nothing more for it', async () => {
+    const onKeyRetired = vi.fn()
+    const { worker, info } = setup({ deps: { onKeyRetired } })
+    worker.override.set('session/open', () =>
+      failure(403, 'key_retired', { changedAt: 1_234 })
+    )
+    const error = await info().catch((failed: unknown) => failed)
+    expect(error).toMatchObject({
+      failure: 'keyRetired',
+      changedAt: 1_234,
+      serverCode: 'key_retired',
+    })
+    expect(onKeyRetired).toHaveBeenCalledWith(PUB_A, 1_234)
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+  })
+
+  it('ends a session the server revoked, then reads the key as retired', async () => {
+    const onKeyRetired = vi.fn()
+    const { worker, info, clock } = setup({ deps: { onKeyRetired } })
+    await info()
+    worker.sessions[0].ended = true
+    clock.now += ACCESS_LIFETIME_MS
+    worker.override.set('session/open', () =>
+      failure(403, 'key_retired', { changedAt: 9 })
+    )
+    await expect(info()).rejects.toMatchObject({ failure: 'keyRetired' })
+    expect(onKeyRetired).toHaveBeenCalledWith(PUB_A, 9)
+  })
+})
+
+describe('account sessions into a known account', () => {
+  it('names the account it reopens', async () => {
+    const { worker, info, clock } = setup()
+    const accountId = (await info()).data.accountId
+    worker.sessions[0].ended = true
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(openPayload(worker, 0)).not.toHaveProperty('accountId')
+    expect(openPayload(worker, 1).accountId).toBe(accountId)
+  })
+
+  it('names the account the caller knows on a first open, and on a detached one', async () => {
+    const { worker, sessions } = setup()
+    await sessions.ensure(KEY_A, { accountId: 'acct-known' }).catch(() => null)
+    expect(openPayload(worker, 0).accountId).toBe('acct-known')
+
+    expect(worker.accounts.size).toBe(0)
+    await sessions
+      .openDetached(KEY_B, { accountId: 'acct-b' })
+      .catch(() => null)
+    expect(openPayload(worker, 1).accountId).toBe('acct-b')
+  })
+
+  it('opens a key that replaced the stored one underneath into the same account', async () => {
+    const onKeySwitched = vi.fn()
+    const device = { key: KEY_A }
+    const { worker, info } = setup({ device, deps: { onKeySwitched } })
+    const accountId = (await info()).data.accountId
+
+    worker.accounts.delete(PUB_A)
+    worker.accounts.set(PUB_B, accountId)
+    device.key = KEY_B
+    expect((await info()).data.accountId).toBe(accountId)
+    expect(openPayload(worker, 1)).toMatchObject({
+      accountPub: PUB_B,
+      accountId,
+    })
+    expect(onKeySwitched).toHaveBeenCalledWith(PUB_A, PUB_B)
+  })
+
+  it('opens another account’s key as before when it isn’t the old account’s', async () => {
+    const device = { key: KEY_A }
+    const { worker, info } = setup({ device })
+    const accountId = (await info()).data.accountId
+    device.key = KEY_B
+    const other = (await info()).data.accountId
+    expect(other).not.toBe(accountId)
+    expect(openPayload(worker, 1).accountId).toBe(accountId)
+    expect(openPayload(worker, 2)).not.toHaveProperty('accountId')
+  })
+
+  it('reads unknown_account as the key not being that account’s', async () => {
+    const { worker, sessions } = setup()
+    worker.override.set('session/open', () => failure(404, 'unknown_account'))
+    await expect(
+      sessions.openDetached(KEY_B, { accountId: 'acct-b' })
+    ).rejects.toMatchObject({ serverCode: 'unknown_account' })
+  })
+})
+
+describe('account sessions for a call that must not run twice', () => {
+  it('throws a 401 as it is, without refreshing and running it again', async () => {
+    const { sessions, info } = setup()
+    await info()
+    const run = vi.fn(async () => {
+      throw new HttpError('client', 401, 'unauthorized')
+    })
+    await expect(
+      sessions.withSession(run, { retryUnauthorized: false })
+    ).rejects.toMatchObject({ status: 401 })
+    expect(run).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('renewing a session before it ends', () => {
+  async function nearEnd(daysLeft: number, options = {}) {
+    const harness = setup(options)
+    await harness.info()
+    harness.clock.now += 90 * DAY - daysLeft * DAY
+    return harness
+  }
+  const renewalOpens = (worker: ReturnType<typeof fakeWorker>) =>
+    worker
+      .opsCalled('session/open')
+      .filter((_, index) => openPayload(worker, index).renews !== undefined)
+
+  it('renews in the last 30 days after a refresh, without holding up the call', async () => {
+    const onThisDeviceSession = vi.fn()
+    const { worker, store, attestation, info, events, sessions } =
+      await nearEnd(6, { deps: { onThisDeviceSession } })
+
+    const response = await info()
+
+    expect(worker.opsCalled('session/refresh')).toHaveLength(1)
+    expect(worker.opsCalled('account/info')[1].headers.authorization).toBe(
+      'Bearer at-4'
+    )
+    expect(response.data.accountId).toMatch(/^acct/)
+    await vi.waitFor(() => expect(sessions.snapshot()?.sessionId).toBe('sid-2'))
+
+    expect(attestation.assert).toHaveBeenCalledTimes(2)
+    const [renewal] = renewalOpens(worker)
+    expect(renewal.headers.authorization).toBe('Bearer at-4')
+    expect(openPayload(worker, 1)).toMatchObject({
+      accountPub: PUB_A,
+      renews: 'sid-1',
+      accountId: worker.sessions[0].accountId,
+      attestation: { purpose: 'account-session' },
+    })
+    expect(worker.sessions[0]).toMatchObject({
+      ended: true,
+      endedReason: 'renewed',
+    })
+    expect(JSON.parse(store.value!)).toMatchObject({
+      sessionId: 'sid-2',
+      refreshToken: worker.sessions[1].refreshToken,
+    })
+    expect(onThisDeviceSession).toHaveBeenLastCalledWith('sid-2')
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      outcome: 'ok',
+      reason: 'renewed',
+    })
+
+    await info()
+    expect(worker.opsCalled('account/info').at(-1)?.headers.authorization).toBe(
+      `Bearer ${[...worker.sessions[1].accessTokens][0]}`
+    )
+    expect(worker.opsCalled('session/open')).toHaveLength(2)
+  })
+
+  it('leaves a session with more than 30 days alone', async () => {
+    const { worker, info, clock } = await nearEnd(31)
+    await info()
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(worker.opsCalled('session/refresh')).toHaveLength(2)
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+    expect(SESSION_RENEW_WINDOW_MS).toBe(30 * DAY)
+  })
+
+  it('asks nothing extra at launch: a stored session renews on its first refresh, once', async () => {
+    const first = setup()
+    await first.info()
+    first.clock.now += 85 * DAY
+    const { worker, info, clock, sessions } = setup({
+      clock: first.clock,
+      worker: first.worker,
+      store: nextLaunchStore(first.store),
+    })
+    await sessions.ready()
+    expect(first.worker.calls.length).toBe(2)
+
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+    for (let i = 0; i < 3; i++) {
+      clock.now += ACCESS_LIFETIME_MS
+      await info()
+    }
+    expect(renewalOpens(worker)).toHaveLength(1)
+  })
+
+  it('keeps the session when the renewal fails, tries once a launch, and opens as usual at the end', async () => {
+    const { worker, store, info, clock, events, sessions } = await nearEnd(6)
+    worker.override.set('session/open', (call) =>
+      call === 1 ? failure(401, 'unauthorized') : null
+    )
+
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+    await sessions.ensure()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-1')
+    expect(JSON.parse(store.value!).sessionId).toBe('sid-1')
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      reason: 'renewed',
+      outcome: 'server',
+    })
+
+    clock.now += ACCESS_LIFETIME_MS
+    await info()
+    expect(renewalOpens(worker)).toHaveLength(1)
+
+    clock.now += 6 * DAY
+    await info()
+    expect(worker.opsCalled('session/open')).toHaveLength(3)
+    expect(openPayload(worker, 2).renews).toBeUndefined()
+    expect(events.at(-1)).toMatchObject({ reason: 'expired', outcome: 'ok' })
+  })
+
+  it('keeps the session when this device can’t attest', async () => {
+    let failing = false
+    const attestation = fakeAttestation({
+      fail: () => (failing ? new AttestationError('serverUnavailable') : null),
+    })
+    const { worker, info, sessions } = await nearEnd(6, { attestation })
+    failing = true
+
+    await info()
+    await vi.waitFor(() => expect(attestation.assert).toHaveBeenCalledTimes(2))
+    await sessions.ensure()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-1')
+    expect(worker.opsCalled('session/open')).toHaveLength(1)
+
+    await expect(info()).resolves.toBeTruthy()
+  })
+
+  it('sends no renewal for a session closed while attesting', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let calls = 0
+    const base = fakeAttestation()
+    const attestation = {
+      ...base,
+      assert: vi.fn(async <T>(request: AttestedRequest<T>) => {
+        if (++calls === 2) await gate
+        return base.assert(request)
+      }),
+    } as unknown as ReturnType<typeof fakeAttestation>
+    const { worker, info, sessions, store } = await nearEnd(6, { attestation })
+
+    await info()
+    await vi.waitFor(() => expect(calls).toBe(2))
+    await sessions.close()
+    release()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(renewalOpens(worker)).toHaveLength(0)
+    expect(store.value).toBeNull()
+  })
+
+  it('renews earlier with a longer window (the development override)', async () => {
+    const { worker, info } = await nearEnd(45, {
+      deps: { renewWindowMs: () => 60 * DAY },
+    })
+    await info()
+    await vi.waitFor(() => expect(renewalOpens(worker)).toHaveLength(1))
+  })
+
+  it('closes a renewal it couldn’t save, and opens as usual instead of keeping it', async () => {
+    const onThisDeviceSession = vi.fn()
+    const { worker, store, info, sessions, events } = await nearEnd(6, {
+      deps: { onThisDeviceSession },
+    })
+    onThisDeviceSession.mockClear()
+
+    worker.override.set('session/open', (call) => {
+      if (call === 1) store.failWrites = STORE_ATTEMPTS
+      return null
+    })
+
+    await info()
+    await vi.waitFor(() =>
+      expect(worker.opsCalled('session/close')).toHaveLength(1)
+    )
+
+    expect(worker.sessions[1].ended).toBe(true)
+    expect(worker.opsCalled('session/close')[0].headers.authorization).toBe(
+      `Bearer ${[...worker.sessions[1].accessTokens][0]}`
+    )
+    expect(onThisDeviceSession).not.toHaveBeenCalledWith('sid-2')
+
+    await info()
+    expect(sessions.snapshot()?.sessionId).toBe('sid-3')
+    expect(openPayload(worker, 2).renews).toBeUndefined()
+    expect(events.at(-1)).toMatchObject({
+      op: 'session/open',
+      outcome: 'ok',
+      reason: 'ended',
+    })
+    expect(worker.sessions.filter((session) => !session.ended)).toHaveLength(1)
+  })
+
+  it('reads a refresh refused as renewed', () => {
+    const error = toAccountSessionError(
+      new HttpError('client', 401, 'unauthorized', null, undefined, {
+        error: 'unauthorized',
+        reason: 'renewed',
+      }),
+      { refresh: true }
+    )
+    expect(error.ended).toBe('renewed')
+    expect(sessionEndWipes('renewed')).toBe(false)
   })
 })

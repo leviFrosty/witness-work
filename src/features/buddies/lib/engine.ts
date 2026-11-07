@@ -51,6 +51,7 @@ import {
   MAX_GUEST_AVATAR_CHARS,
   MAX_SHARED_PHOTOS,
   pairConfirmedSchema,
+  pairReconnectSchema,
   PairingCard,
   pairingCardSchema,
   type ProfilePhoto,
@@ -123,6 +124,8 @@ import {
   type ReceivedReply,
   incomingShareKey,
   initialBuddiesState,
+  MAX_RECONNECT_INVITES,
+  MAX_REFUSED_INBOXES,
   INVITE_TTL_MS,
   MAX_BUDDIES,
   MAX_ROSTER_PLAINTEXT_BYTES,
@@ -141,6 +144,7 @@ import {
   OutgoingShareSpec,
   pairingEnded,
   PendingRemoval,
+  type ReconnectInvite,
   SentBadgeReaction,
   type UnsentShare,
   type UnsentShareReason,
@@ -187,6 +191,7 @@ import {
   deriveAccountSigningKey,
   signInboxLink,
 } from '@/lib/serverAccount/keys'
+import { logger } from '@/lib/logger'
 import type { RichTextImageAttrs } from '@/types/richText'
 import { mapRichTextImages, richTextImages } from '@/lib/richText/inspect'
 import {
@@ -284,6 +289,8 @@ export type BuddiesEngineDeps = {
 
   onPaired?: (pairing: BuddyPairing) => void
 
+  paused?: () => Promise<boolean>
+
   showBadges?: () => boolean
 
   isEnabled?: () => boolean
@@ -339,7 +346,13 @@ export type BuddyPairing = {
   role: 'inviter' | 'invitee'
 
   buddyPlatform?: BuddyPlatform
+
+  reconnect?: true
 }
+
+export const RECONNECT_KIND = 'pair.reconnect'
+
+export type OwnerKeyRefusedOutcome = 'moved' | 'retired' | 'later' | 'ignored'
 
 export type BuddyInviteErrorReason =
   | 'invalid'
@@ -349,6 +362,7 @@ export type BuddyInviteErrorReason =
   | 'limit'
   | 'openInvites'
   | 'nameRequired'
+  | 'reconnectUnverified'
 
 export class BuddyInviteError extends Error {
   constructor(readonly reason: BuddyInviteErrorReason) {
@@ -377,6 +391,7 @@ export const BUDDY_PUSH_KINDS = [
   'followup.update',
   'followup.cancel',
   'share.reply',
+  'pair.reconnect',
 ] as const
 export type BuddyPushKind = (typeof BUDDY_PUSH_KINDS)[number]
 
@@ -501,6 +516,7 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
       .sort(),
     Object.keys(roster.read).sort(),
     Object.keys(roster.dismissed).sort(),
+    Object.keys(roster.reconnects).sort(),
 
     roster.card ? [roster.card.name, roster.card.updatedAt] : null,
 
@@ -698,8 +714,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const decode = (bytes: Uint8Array): unknown => JSON.parse(fromUtf8(bytes))
 
   function identity({ fresh = false } = {}): Promise<BuddyIdentity> {
-    if (!fresh && cachedIdentity)
-      return Promise.resolve(cachedIdentity.identity)
+    if (!fresh && cachedIdentity) {
+      const { inboxId } = cachedIdentity.identity
+      return store.getState().refusedInboxIds.includes(inboxId)
+        ? Promise.reject(new RelayError('cancelled', 0))
+        : Promise.resolve(cachedIdentity.identity)
+    }
     identityLoad ??= (async () => {
       try {
         const seed = await deps.getRootSeed()
@@ -709,7 +729,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           accountKeys.set(cachedIdentity.identity, seed)
           pairCache.clear()
         }
-        if (leftInboxes.has(cachedIdentity.identity.inboxId))
+        const { inboxId } = cachedIdentity.identity
+        if (
+          leftInboxes.has(inboxId) ||
+          store.getState().refusedInboxIds.includes(inboxId)
+        )
           throw new RelayError('cancelled', 0)
         return cachedIdentity.identity
       } finally {
@@ -932,13 +956,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       now
     )
     const content = {
-      buddies: state.buddies.map(({ streak, pet, overrides, ...buddy }) =>
-        compactProfile({
-          ...buddy,
-          showOnCalendar: buddySettings(state.sharing, { overrides }).settings
-            .showOnCalendar,
-          overrides: overrides ?? {},
-        })
+      buddies: state.buddies.map(
+        ({ streak, pet, overrides, reconnect, ...buddy }) =>
+          compactProfile({
+            ...buddy,
+            showOnCalendar: buddySettings(state.sharing, { overrides }).settings
+              .showOnCalendar,
+            overrides: overrides ?? {},
+          })
       ),
       outgoingInvites: state.outgoingInvites,
       incomingClaims: state.incomingClaims.map(compactProfile),
@@ -949,6 +974,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       read: marks.read,
       dismissed: marks.dismissed,
       ...(cardName().name ? { card: cardName() } : {}),
+
+      reconnects: Object.fromEntries(
+        Object.entries(state.reconnectInvites).map(
+          ([inviteId, { inboxId, dhPub, expiresAt }]) => [
+            inviteId,
+            { inboxId, dhPub, expiresAt },
+          ]
+        )
+      ),
     }
 
     const room =
@@ -1155,6 +1189,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       incomingClaims: state.incomingClaims.filter(
         (claim) => claim.inviteId !== inviteId
       ),
+      reconnectInvites: omitKey(state.reconnectInvites, inviteId),
       notifications: state.notifications.filter((n) => n.inviteId !== inviteId),
     }))
   }
@@ -1274,7 +1309,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     await saveRoster(me)
   }
 
-  async function readInvite(link: string) {
+  async function readInvite(
+    link: string,
+    { replacing }: { replacing?: string } = {}
+  ) {
     const secret = parseInviteSecret(link)
     if (!secret) throw new BuddyInviteError('invalid')
     const invite = deriveInvite(secret)
@@ -1298,7 +1336,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
 
     const me = await identity()
-    const state = store.getState()
+    const current = store.getState()
+    const state = replacing
+      ? {
+          ...current,
+          buddies: current.buddies.filter((b) => b.inboxId !== replacing),
+        }
+      : current
     if (card.inboxId === me.inboxId) throw new BuddyInviteError('own')
     if (state.buddies.some((buddy) => buddy.inboxId === card.inboxId))
       throw new BuddyInviteError('alreadyBuddies')
@@ -1320,7 +1364,24 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function acceptInvite(link: string) {
     requireName()
-    const { secret, invite, card, expiresAt } = await readInvite(link)
+    return acceptRead(await readInvite(link))
+  }
+
+  async function acceptRead(
+    { secret, invite, card, expiresAt }: Awaited<ReturnType<typeof readInvite>>,
+    carried: Partial<
+      Pick<
+        Buddy,
+        | 'nickname'
+        | 'color'
+        | 'colorIndex'
+        | 'overrides'
+        | 'prefsAt'
+        | 'reconnect'
+      >
+    > = {},
+    replacing?: PairParty
+  ) {
     const me = await ensureInbox()
     const party: PairParty = {
       inboxId: card.inboxId,
@@ -1328,19 +1389,35 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inviteSecret: toB64u(secret),
     }
     const { incoming } = pairKeys(me, party)
-    await addSlot(me, incoming)
-    const claim = seal(
-      invite.inviteKey,
-      json(pairingCard(me)),
-      aad.claim(invite.inviteId),
-      nonce()
-    )
+
+    if (replacing)
+      await relay
+        .removeSlot(ownerAuth(me), pairKeys(me, replacing).incoming.slotId)
+        .catch((error) => {
+          if (!isRelayError(error, 'not_found') && !isRelayError(error, 'gone'))
+            throw error
+        })
     try {
-      await claimOnce(invite.inviteId, invite.claimSecret, claim)
+      await addSlot(me, incoming)
+      const claim = seal(
+        invite.inviteKey,
+        json(pairingCard(me)),
+        aad.claim(invite.inviteId),
+        nonce()
+      )
+      try {
+        await claimOnce(invite.inviteId, invite.claimSecret, claim)
+      } catch (error) {
+        await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
+        if (isRelayError(error, 'conflict') || isRelayError(error, 'not_found'))
+          throw new BuddyInviteError('unavailable')
+        throw error
+      }
     } catch (error) {
-      await relay.removeSlot(ownerAuth(me), incoming.slotId).catch(() => {})
-      if (isRelayError(error, 'conflict') || isRelayError(error, 'not_found'))
-        throw new BuddyInviteError('unavailable')
+      if (replacing) {
+        queueRemoval([replacing], deps.now())
+        await saveRoster(me).catch(() => {})
+      }
       throw error
     }
     const colorIndex = nextColorIndex()
@@ -1356,6 +1433,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           pairedAt: newPairedAt(state, card.inboxId, deps.now()),
           colorIndex,
           expiresAt,
+          ...carried,
         },
       ],
 
@@ -1403,6 +1481,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     }
     requireName()
     const me = await ensureInbox()
+
+    const returning = reconnectFor(inviteId, claim)
+    const used = new Set(state.buddies.map((b) => b.colorIndex))
     const buddy: Buddy = {
       inboxId: claim.inboxId,
       name: claim.name,
@@ -1412,7 +1493,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       inviteSecret: claim.secret,
       status: 'active',
       pairedAt: newPairedAt(state, claim.inboxId, deps.now()),
-      colorIndex: nextColorIndex(),
+      colorIndex:
+        returning?.colorIndex !== undefined && !used.has(returning.colorIndex)
+          ? returning.colorIndex
+          : nextColorIndex(used),
+      ...(returning && carriedPrefs(returning)),
     }
     const { incoming, outgoing } = pairKeys(me, buddy)
     await addSlot(me, incoming)
@@ -1450,7 +1535,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       removedBuddies: omitKey(current.removedBuddies, buddy.inboxId),
     }))
     dropInvite(inviteId)
-    deps.onPaired?.({ role: 'inviter', buddyPlatform: claim.platform })
+    deps.onPaired?.({
+      role: 'inviter',
+      buddyPlatform: claim.platform,
+      ...(returning ? { reconnect: true as const } : {}),
+    })
     await relay.deleteInvite(ownerAuth(me), inviteId).catch(() => {})
     await saveRoster(me)
     addCardEdits(new Set([buddy.inboxId]))
@@ -1465,6 +1554,351 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (!isRelayError(error, 'not_found')) throw error
     }
     dropInvite(inviteId)
+    await saveRoster(me)
+  }
+
+  function reconnectFor(
+    inviteId: string,
+    claim: Pick<PairingCard, 'inboxId' | 'dhPub'>
+  ): ReconnectInvite | undefined {
+    const returning = store.getState().reconnectInvites[inviteId]
+    return returning?.inboxId === claim.inboxId &&
+      returning.dhPub === claim.dhPub
+      ? returning
+      : undefined
+  }
+
+  function carriedPrefs(
+    from: Pick<ReconnectInvite, 'nickname' | 'color' | 'overrides'>
+  ): Partial<Buddy> {
+    const { nickname, color, overrides } = from
+    return nickname || color || overrides
+      ? {
+          ...(nickname ? { nickname } : {}),
+          ...(color ? { color } : {}),
+          ...(overrides ? { overrides } : {}),
+          prefsAt: deps.now(),
+        }
+      : {}
+  }
+
+  async function confirmReconnects() {
+    for (const claim of store.getState().incomingClaims) {
+      if (!reconnectFor(claim.inviteId, claim)) continue
+      await confirmClaim(claim.inviteId).catch(() => {})
+    }
+  }
+
+  async function createReconnectInvite(
+    secret: Uint8Array,
+    former: Omit<ReconnectInvite, 'expiresAt'>
+  ): Promise<{ created: false } | { created: true; expiresAt: number }> {
+    const me = await ensureInbox()
+    const invite = deriveInvite(secret)
+    const known = store
+      .getState()
+      .outgoingInvites.find((i) => i.inviteId === invite.inviteId)
+    const createdAt = known?.createdAt ?? deps.now()
+    const expiresAt = known?.expiresAt ?? createdAt + INVITE_TTL_MS
+    if (!known) {
+      try {
+        await relay.createInvite(ownerAuth(me), {
+          inviteId: invite.inviteId,
+          claimVerifier: invite.claimVerifier,
+          blob: seal(
+            invite.inviteKey,
+            json(pairingCard(me)),
+            aad.inviteCard(invite.inviteId),
+            nonce()
+          ),
+          expiresAt,
+        })
+      } catch (error) {
+        if (isRelayError(error, 'limit')) return { created: false }
+
+        if (!isRelayError(error, 'conflict')) throw error
+      }
+    }
+    store.setState((state) => ({
+      outgoingInvites: state.outgoingInvites.some(
+        (i) => i.inviteId === invite.inviteId
+      )
+        ? state.outgoingInvites
+        : [
+            ...state.outgoingInvites,
+            {
+              inviteId: invite.inviteId,
+              secret: toB64u(secret),
+              createdAt,
+              expiresAt,
+            },
+          ],
+      reconnectInvites: {
+        ...state.reconnectInvites,
+        [invite.inviteId]: { ...former, expiresAt },
+      },
+    }))
+    await saveRoster(me)
+    return { created: true, expiresAt }
+  }
+
+  async function startNewInbox(inboxId: string, call?: RelayCallOptions) {
+    const me = await currentIdentity()
+    if (me.inboxId !== inboxId)
+      throw new Error('Buddies: the new account key is not stored yet')
+    await ensureInbox(call)
+  }
+
+  function knownPairings(inboxId: string): {
+    buddies: Buddy[]
+    pendingRemovals: PendingRemoval[]
+    cardName: CardName | null
+  } | null {
+    const { registeredInboxId, buddies, pendingRemovals, cardName } =
+      store.getState()
+    return registeredInboxId === inboxId
+      ? { buddies, pendingRemovals, cardName }
+      : null
+  }
+
+  function keepCardName(card: CardName | undefined) {
+    if (!card) return
+    const known = store.getState().cardName
+    if (known && known.updatedAt >= card.updatedAt) return
+    store.setState({ cardName: card })
+    saveRosterSoon()
+  }
+
+  function retireInbox(inboxId: string) {
+    leftInboxes.add(inboxId)
+  }
+
+  async function ownerKeyRefused(
+    inboxId: string
+  ): Promise<OwnerKeyRefusedOutcome> {
+    if (store.getState().registeredInboxId !== inboxId) return 'ignored'
+    if (await deps.paused?.()) return 'later'
+    await syncInFlight?.catch(() => undefined)
+    if (store.getState().registeredInboxId !== inboxId) return 'ignored'
+    cachedIdentity = null
+    pairCache.clear()
+    await resetLocalState()
+    const me = await identity({ fresh: true })
+    if (me.inboxId !== inboxId) return 'moved'
+    store.setState(({ refusedInboxIds }) => ({
+      refusedInboxIds: [
+        ...refusedInboxIds.filter((id) => id !== inboxId),
+        inboxId,
+      ].slice(-MAX_REFUSED_INBOXES),
+    }))
+    return 'retired'
+  }
+
+  async function applyReconnectEvent(
+    me: BuddyIdentity,
+    event: RelaySyncResponse['events'][number]
+  ) {
+    const buddy = senderOf(me, event.slotId)
+    if (!buddy) return
+    const state = store.getState()
+    if (
+      event.eventId in state.notificationMarks.dismissed ||
+      Object.values(state.reconnectOffers).some((offer) =>
+        offer.invites.some((invite) => invite.eventId === event.eventId)
+      )
+    )
+      return
+    let body: ReturnType<typeof pairReconnectSchema.parse>
+    try {
+      body = pairReconnectSchema.parse(openEvent(me, buddy, event))
+    } catch {
+      return
+    }
+    const now = deps.now()
+    if (
+      body.expiresAt <= now ||
+      body.inboxId === buddy.inboxId ||
+      body.inboxId === me.inboxId ||
+      state.buddies.some((b) => b.inboxId === body.inboxId)
+    )
+      return
+    const invite = {
+      inboxId: body.inboxId,
+      secret: body.secret,
+
+      expiresAt: Math.min(body.expiresAt, now + INVITE_TTL_MS),
+      eventId: event.eventId,
+    }
+
+    const known = state.reconnectOffers[buddy.inboxId]
+    if (known) {
+      if (known.invites.some((other) => other.inboxId === invite.inboxId))
+        return
+      let invites = [...known.invites, invite]
+
+      if (invites.length > MAX_RECONNECT_INVITES) {
+        const successor = await relay
+          .inboxSuccessor(buddy.inboxId)
+          .catch(() => null)
+        invites =
+          successor === null
+            ? invites.slice(-MAX_RECONNECT_INVITES)
+            : invites.filter((other) => other.inboxId === successor)
+      }
+      if (invites.length === 0) {
+        dropReconnect(buddy.inboxId)
+        return
+      }
+      store.setState((current) => ({
+        reconnectOffers: {
+          ...current.reconnectOffers,
+          [buddy.inboxId]: {
+            ...known,
+            invites,
+            expiresAt: Math.max(...invites.map((other) => other.expiresAt)),
+          },
+        },
+      }))
+      return
+    }
+    store.setState((current) => ({
+      reconnectOffers: {
+        ...current.reconnectOffers,
+        [buddy.inboxId]: {
+          invites: [invite],
+          expiresAt: invite.expiresAt,
+          name: buddy.name,
+          avatar: buddy.avatar,
+          nickname: buddy.nickname,
+          color: buddy.color,
+          colorIndex: buddy.colorIndex,
+          overrides: buddy.overrides,
+        },
+      },
+    }))
+    notify({
+      id: event.eventId,
+      kind: 'reconnect',
+      name: buddy.name,
+      reconnect: buddy.inboxId,
+      seq: event.seq,
+    })
+  }
+
+  function dropReconnect(from: string) {
+    store.setState((state) => ({
+      reconnectOffers: omitKey(state.reconnectOffers, from),
+      notifications: state.notifications.filter((n) => n.reconnect !== from),
+    }))
+  }
+
+  function endPairing(inboxId: string, { quiet = true } = {}) {
+    const buddy = store.getState().buddies.find((b) => b.inboxId === inboxId)
+    if (!buddy) return
+    if (!quiet) forgetBuddy(inboxId)
+    queueRemoval([buddy], deps.now())
+  }
+
+  function endedByWrite(error: unknown, inboxId: string): boolean {
+    if (
+      !isRelayError(error, 'gone') &&
+      !isRelayError(error, 'not_found') &&
+      !isRelayError(error, 'sealed')
+    )
+      return false
+    endPairing(inboxId, { quiet: false })
+    return true
+  }
+
+  async function endLapsedReconnects() {
+    for (const from of Object.keys(store.getState().lapsedReconnects)) {
+      const buddy = store.getState().buddies.find((b) => b.inboxId === from)
+      let successor: string | null = null
+      if (buddy) {
+        try {
+          successor = await relay.inboxSuccessor(from)
+        } catch {
+          continue
+        }
+        if (successor !== null) endPairing(from)
+      }
+      store.setState((state) => ({
+        lapsedReconnects: omitKey(state.lapsedReconnects, from),
+      }))
+    }
+  }
+
+  async function acceptReconnect(from: string): Promise<{ claimed: boolean }> {
+    const offer = store.getState().reconnectOffers[from]
+    if (!offer || offer.expiresAt <= deps.now()) {
+      dropReconnect(from)
+      throw new BuddyInviteError('unavailable')
+    }
+    requireName()
+    const successor = await relay.inboxSuccessor(from)
+    if (successor === null) throw new BuddyInviteError('reconnectUnverified')
+    const invite = offer.invites.find(
+      (candidate) =>
+        candidate.inboxId === successor && candidate.expiresAt > deps.now()
+    )
+    if (!invite) {
+      logger.warn('[buddies] reconnect: not the successor')
+
+      dropReconnect(from)
+      throw new BuddyInviteError('invalid')
+    }
+    let read: Awaited<ReturnType<typeof readInvite>>
+    try {
+      read = await readInvite(buildInviteLink(fromB64u(invite.secret)), {
+        replacing: from,
+      })
+    } catch (error) {
+      if (
+        error instanceof BuddyInviteError &&
+        error.reason === 'alreadyBuddies'
+      ) {
+        await finishReconnect(from)
+        return { claimed: false }
+      }
+      if (
+        error instanceof BuddyInviteError &&
+        (error.reason === 'unavailable' || error.reason === 'invalid')
+      )
+        dropReconnect(from)
+      throw error
+    }
+
+    if (read.card.inboxId !== invite.inboxId) {
+      dropReconnect(from)
+      throw new BuddyInviteError('invalid')
+    }
+    try {
+      await acceptRead(
+        read,
+        {
+          colorIndex: offer.colorIndex,
+          ...carriedPrefs(offer),
+          reconnect: true,
+        },
+        store.getState().buddies.find((b) => b.inboxId === from)
+      )
+    } catch (error) {
+      if (error instanceof BuddyInviteError && error.reason === 'unavailable')
+        dropReconnect(from)
+      throw error
+    }
+    await finishReconnect(from)
+    return { claimed: true }
+  }
+
+  async function finishReconnect(from: string) {
+    dropReconnect(from)
+    const old = store.getState().buddies.find((b) => b.inboxId === from)
+    const me = await ensureInbox()
+    if (old) {
+      queueRemoval([old], deps.now())
+      await flushRemovals(me, { force: true })
+    }
     await saveRoster(me)
   }
 
@@ -1792,8 +2226,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           },
         }))
       } catch (error) {
-        if (!isRelayError(error, 'gone')) throw error
-        forgetBuddy(buddy.inboxId)
+        if (!endedByWrite(error, buddy.inboxId)) throw error
       }
     }
   }
@@ -1941,6 +2374,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       state.buddies.some((buddy) => buddy.inboxId === card.inboxId)
     )
       return
+
+    const returning = reconnectFor(invite.inviteId, card) !== undefined
     store.setState((current) => ({
       incomingClaims: [
         ...current.incomingClaims,
@@ -1958,6 +2393,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
       ],
     }))
+    if (returning) return
     notify({
       id: event.eventId,
       kind: 'claim',
@@ -2000,6 +2436,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 tenure: body.tenure,
                 status: 'active',
                 expiresAt: undefined,
+                reconnect: undefined,
               }
             : b
         ),
@@ -2011,7 +2448,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         name: body.name,
         seq: event.seq,
       })
-      deps.onPaired?.({ role: 'invitee', buddyPlatform: body.platform })
+      deps.onPaired?.({
+        role: 'invitee',
+        buddyPlatform: body.platform,
+        ...(buddy.reconnect ? { reconnect: true as const } : {}),
+      })
 
       addCardEdits(new Set([buddy.inboxId]))
       return true
@@ -2494,8 +2935,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(inboxId)
         return 'sent'
       } catch (error) {
-        if (isRelayError(error, 'gone')) {
-          forgetBuddy(inboxId)
+        if (isRelayError(error, 'gone') || isRelayError(error, 'sealed')) {
+          endedByWrite(error, inboxId)
           return 'dropped'
         }
         const name = buddy.nickname ?? buddy.name
@@ -2505,6 +2946,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             refused('gone', name)
             notSent.gone.add(name)
           }
+          endPairing(inboxId)
           return 'dropped'
         }
         failure ??= error
@@ -3026,8 +3468,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(buddy.inboxId)
         markSent(key, rev)
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, buddy.inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -3215,8 +3656,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         spendShareBudget(buddy.inboxId)
         markSent(request.id, request.rev)
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(buddy.inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, buddy.inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -3516,8 +3956,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           spendShareBudget(inboxId)
           update(id, (a) => ({ sent: { ...a.sent, [inboxId]: true } }))
         } catch (error) {
-          if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
-          else failure ??= error
+          if (!endedByWrite(error, inboxId)) failure ??= error
         }
       }
     }
@@ -3745,8 +4184,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           current.rev === rev ? { sentRev: rev } : {}
         )
       } catch (error) {
-        if (isRelayError(error, 'gone')) forgetBuddy(inboxId)
-        else failure ??= error
+        if (!endedByWrite(error, inboxId)) failure ??= error
       }
     }
     if (failure) throw failure
@@ -4357,10 +4795,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       dismissJoinRequest(entry.shareKey)
       return
     }
+    if (entry.kind === 'reconnect' && entry.reconnect)
+      dismissReconnect(entry.reconnect)
     store.setState((current) => ({
       notifications: current.notifications.filter((n) => n.id !== id),
     }))
     markNotifications([id], 'dismissed')
+  }
+
+  function dismissReconnect(from: string) {
+    const ids = store
+      .getState()
+      .notifications.filter((n) => n.reconnect === from)
+      .map((n) => n.id)
+    dropReconnect(from)
+    endPairing(from)
+    if (ids.length > 0) markNotifications(ids, 'dismissed')
   }
 
   function shareIdForKey(key: string): string {
@@ -4472,6 +4922,15 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
           isOpen(claim) && !buddies.some((b) => b.inboxId === claim.inboxId)
       ),
       closedInviteIds,
+      reconnectInvites: Object.fromEntries(
+        Object.entries({
+          ...remote.reconnects,
+          ...state.reconnectInvites,
+        }).filter(
+          ([inviteId, invite]) =>
+            !(inviteId in closedInviteIds) && invite.expiresAt > now
+        )
+      ),
 
       removedBuddies: Object.fromEntries(
         Object.entries(removedBuddies).filter(
@@ -4739,6 +5198,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function readAndSend(call: RelayCallOptions, onRead: () => void) {
     perf.count('buddies:sync')
+    if (await deps.paused?.()) throw new RelayError('cancelled', 0)
     expireLocal()
     const firstSync = store.getState().lastSyncAt === 0
 
@@ -4788,6 +5248,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         applyBadgeReactionEvent(me, event, firstSync)
       } else if (CAR_EVENT_KINDS.includes(event.kind)) {
         applyCarEvent(me, event, firstSync)
+      } else if (event.kind === RECONNECT_KIND) {
+        await applyReconnectEvent(me, event)
       }
     }
     for (const card of response.cards) applyCard(me, card)
@@ -4820,7 +5282,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
     coolDownUntil = 0
     cancelled(call)
+    await endLapsedReconnects()
     await flushRemovals(me)
+    await confirmReconnects()
     if (await confirmUnsureInvites()) rosterChanged = true
     await deliverReplies().catch(() => {})
     await deliverJoinRequests().catch(() => {})
@@ -5056,6 +5520,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const me = await identity({ fresh: true })
     const registered = store.getState().registeredInboxId
     if (registered !== null && registered !== me.inboxId) {
+      if (await deps.paused?.()) throw new RelayError('cancelled', 0)
       await syncInFlight?.catch(() => undefined)
       await resetLocalState()
     }
@@ -5145,9 +5610,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       joinRequestNotifications,
       badgeNotifications,
       sharing,
+      refusedInboxIds,
+      avatarThumbnail,
     } = store.getState()
     store.setState({
       ...initialBuddiesState,
+      refusedInboxIds,
+
+      avatarThumbnail,
       devOverride,
       flagLastKnown,
       onboardingComplete,
@@ -5168,6 +5638,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     acceptInvite,
     confirmClaim,
     rejectClaim,
+    acceptReconnect,
+    createReconnectInvite,
+    startNewInbox,
+    retireInbox,
+    ownerKeyRefused,
+    knownPairings,
+    keepCardName,
     removeBuddy,
     setShowOnCalendar,
     setPetVisits,
@@ -5209,6 +5686,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     markNotificationsRead,
     markNotificationRead,
     dismissNotification,
+    dismissReconnect,
     sync,
     coolingDown,
 

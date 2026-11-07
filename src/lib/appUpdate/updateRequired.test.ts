@@ -151,6 +151,85 @@ describe('fetchAppConfig', () => {
     })
   })
 
+  it("reads web sign-up's switch and Turnstile's site key", async () => {
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          webSignup: {
+            enabled: true,
+            turnstileSiteKey: '1x00000000000000000000AA',
+          },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: null,
+      webSignup: {
+        enabled: true,
+        turnstileSiteKey: '1x00000000000000000000AA',
+      },
+    })
+    await expect(
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({
+          ok: true,
+          webSignup: { enabled: false, turnstileSiteKey: '' },
+        }) as unknown as typeof fetch
+      )
+    ).resolves.toEqual({
+      minAppVersion: null,
+      sync: null,
+      webSignup: { enabled: false, turnstileSiteKey: null },
+    })
+  })
+
+  it("reads the visitor's country and region", async () => {
+    const read = (body: Record<string, unknown>) =>
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({ ok: true, ...body }) as unknown as typeof fetch
+      ).then((config) => config.location)
+    await expect(read({ country: 'CA', regionCode: 'MB' })).resolves.toEqual({
+      country: 'CA',
+      regionCode: 'MB',
+    })
+    await expect(read({ country: 'us', regionCode: 'tx' })).resolves.toEqual({
+      country: 'US',
+      regionCode: 'TX',
+    })
+    await expect(read({ country: 'CA', regionCode: null })).resolves.toEqual({
+      country: 'CA',
+      regionCode: null,
+    })
+
+    for (const country of [null, 'XX', 'T1', 'CAN', 7]) {
+      await expect(read({ country, regionCode: 'MB' })).resolves.toEqual({
+        country: null,
+        regionCode: null,
+      })
+    }
+    await expect(read({ country: 'CA', regionCode: 'M B' })).resolves.toEqual({
+      country: 'CA',
+      regionCode: null,
+    })
+
+    await expect(read({})).resolves.toBeUndefined()
+  })
+
+  it('asks for Cloud Sync for everyone', async () => {
+    const fetchImpl = answer({ ok: true })
+    await fetchAppConfig(
+      'https://api.test/app/v1/config',
+      fetchImpl as unknown as typeof fetch
+    )
+    expect((fetchImpl.mock.calls[0] as unknown[])[0]).toBe(
+      'https://api.test/app/v1/config?capabilities=sync-everyone'
+    )
+  })
+
   it('throws on an answer that isn’t the config', async () => {
     await expect(
       fetchAppConfig(

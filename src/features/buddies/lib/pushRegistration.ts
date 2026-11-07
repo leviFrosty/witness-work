@@ -4,6 +4,7 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useSharedCarsSession } from '@/stores/sharedCarsSession'
 import type {
   BadgePushKind,
@@ -53,6 +54,10 @@ const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
     title: i18n.t('buddies_pushShareReplyTitle'),
     body: i18n.t('buddies_pushShareReplyBody'),
   },
+  'pair.reconnect': {
+    title: i18n.t('buddies_pushReconnectTitle'),
+    body: i18n.t('buddies_pushReconnectBody'),
+  },
 })
 
 const joinRequestTemplates = async (): Promise<
@@ -86,6 +91,8 @@ export async function ensureBuddiesNewsChannel(): Promise<void> {
 }
 
 async function pushAddress(): Promise<PushAddress> {
+  if (!hasCapability('deviceNotifications'))
+    throw new Error('Push needs a phone')
   const token = await Notifications.getDevicePushTokenAsync()
   if (Platform.OS === 'android') {
     await ensureBuddiesNewsChannel()
@@ -176,7 +183,9 @@ export function registerBuddiesPush(): Promise<void> {
 
 async function register(signal: AbortSignal) {
   const { registeredInboxId, notificationsEnabled } = useBuddies.getState()
-  if (registeredInboxId === null) return
+
+  if (registeredInboxId === null || !hasCapability('deviceNotifications'))
+    return
   const permission = await Notifications.getPermissionsAsync()
   if (!permission.granted) {
     analytics.capture('buddies_push_registration', {

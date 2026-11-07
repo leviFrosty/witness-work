@@ -1,9 +1,25 @@
+import { forBuild } from '@/constants/buildVariant'
+
+export const PRODUCTION_API_BASE_URL = 'https://api.witnesswork.app'
+
+export const PRODUCTION_API_BASE_URLS: readonly string[] = [
+  PRODUCTION_API_BASE_URL,
+  'https://ww-proxy.leviwilkerson.com',
+]
 const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  forBuild({
+    development: 'https://api-dev.witnesswork.app',
+    release: PRODUCTION_API_BASE_URL,
+  })
 
 export default {
   geocode: `${BASE_URL}/geocode`,
   autocomplete: `${BASE_URL}/autocomplete`,
+
+  placesSearch: `${BASE_URL}/places/v1/search`,
+
+  mapkitTokens: `${BASE_URL}/maps/v1/mapkit-tokens`,
 
   appStoreRatings: `${BASE_URL}/app-store/ratings`,
 

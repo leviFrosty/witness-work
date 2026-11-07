@@ -1,4 +1,4 @@
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import i18n from '@/lib/locales'
@@ -9,6 +9,7 @@ import {
   WidgetContactSort,
 } from '@/stores/preferences'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const contactSortData: { label: string; value: WidgetContactSort }[] = [
   { label: i18n.t('longestContacted'), value: 'longestContacted' },
@@ -42,7 +43,7 @@ const WidgetsPreferencesSection = () => {
     set,
   } = usePreferences()
 
-  if (Platform.OS !== 'ios') return null
+  if (!hasCapability('homeScreenWidgets')) return null
 
   return (
     <View style={{ gap: 20 }}>

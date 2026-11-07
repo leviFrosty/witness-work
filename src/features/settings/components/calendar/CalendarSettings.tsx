@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Alert, Linking, Platform, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
+import { openAppSettings } from '@/lib/openAppSettings'
 import { toast } from '@/stores/toasts'
 import type {
   CalendarDestination,
@@ -182,7 +183,7 @@ export default function CalendarSettings() {
       )}
       lastInSection
       onPress={() => {
-        void Linking.openSettings()
+        void openAppSettings()
       }}
     />
   )

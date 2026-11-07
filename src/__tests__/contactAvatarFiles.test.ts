@@ -16,6 +16,7 @@ vi.mock('expo-image-manipulator', () => ({
   SaveFormat: { JPEG: 'jpeg' },
 }))
 
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 
 import {

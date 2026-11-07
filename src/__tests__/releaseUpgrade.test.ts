@@ -1061,6 +1061,13 @@ describe.each(RELEASES)('upgrading from %s', (release) => {
     expectScenario(app, release, 'storage')
   })
 
+  it('reads as an install from before sync was free', () => {
+    expect(app.preferences.getState().installedBeforeFreeSync).toBe(true)
+    expect(app.preferences.getState()).not.toHaveProperty(
+      'iCloudSyncPausedForLapse'
+    )
+  })
+
   it('keeps every tombstone', () => {
     for (const [key, blob] of Object.entries(fixtureStores(release))) {
       const state = data(app[key as keyof App].getState())
@@ -1301,6 +1308,18 @@ describe.each(SYNC_FILES)(
     })
   }
 )
+
+describe('a fresh install', () => {
+  it('reads as a new install, and stays one on the next launch', async () => {
+    freshInstall()
+    const app = await launch()
+    expect(app.preferences.getState().installedBeforeFreeSync).toBe(false)
+    app.preferences.getState().set({ onboardingComplete: true })
+    const next = await launch()
+    expect(next.preferences.getState().installedBeforeFreeSync).toBe(false)
+    expect(next.preferences.getState().onboardingComplete).toBe(true)
+  })
+})
 
 describe('data saved by a newer build', () => {
   const latest = RELEASES.at(-1)!

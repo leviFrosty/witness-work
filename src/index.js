@@ -1,8 +1,16 @@
-import 'react-native-gesture-handler'
-import '@tamagui/native/setup-gesture-handler'
-import { registerRootComponent } from 'expo'
-import './app/launch/recordLaunchLinks'
+require('./app/launch/hardenWeb').hardenWeb()
 
-import App from './app/App'
+const { scrubLaunchAddress } = require('./app/launch/scrubLaunchAddress')
 
-registerRootComponent(App)
+if (scrubLaunchAddress()) {
+  require('react-native-gesture-handler')
+  require('@tamagui/native/setup-gesture-handler')
+  const { registerRootComponent } = require('expo')
+  const { beforeAppLoads } = require('./app/launch/beforeAppLoads')
+
+  beforeAppLoads(() => {
+    require('./app/launch/recordLaunchLinks')
+
+    registerRootComponent(require('./app/App').default)
+  })
+}

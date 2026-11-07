@@ -63,6 +63,16 @@ describe('Android stopwatch', () => {
     expect(stopwatch.areLiveActivitiesEnabled()).toBe(false)
   })
 
+  it('keeps time in storage on the web, which has no native module', async () => {
+    runtime.platform = 'web'
+    const stopwatch = await import('./index')
+    expect(stopwatch.isAvailable()).toBe(true)
+    expect(stopwatch.areLiveActivitiesEnabled()).toBe(false)
+    await stopwatch.start()
+    vi.setSystemTime(104_000)
+    expect((await stopwatch.pause()).accumulatedMs).toBe(4_000)
+  })
+
   it('accumulates running segments across pause, resume and stop', async () => {
     const stopwatch = await import('./index')
     expect(await stopwatch.start()).toMatchObject({

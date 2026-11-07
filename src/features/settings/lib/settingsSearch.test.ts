@@ -39,6 +39,9 @@ const everything: SettingsSearchAvailability = {
   mileage: true,
   routineOn: true,
   dataProtection: true,
+  deviceNotifications: true,
+  haptics: true,
+  otaUpdates: true,
 }
 
 describe('searchSettings', () => {
@@ -133,5 +136,50 @@ describe('settings search registry', () => {
       (item) => item.id === 'page:PreferencesConversation'
     )!
     expect(settingsSearchLocation(page)).toEqual(['Preferences'])
+  })
+})
+
+describe('settings search on the web', () => {
+  const web = filterAvailableSettingsSearchItems({
+    ...everything,
+    ios: false,
+    calendarSync: false,
+    deviceNotifications: false,
+    haptics: false,
+    otaUpdates: false,
+  }).map((item) => item.id)
+
+  it('leaves out rows the web hides', () => {
+    for (const id of [
+      'conversationNotification',
+      'conversationAlwaysNotify',
+      'planNotification',
+      'planAlwaysNotify',
+      'unloggedDayReminder',
+      'monthReportReminder',
+      'weekPlanReminder',
+      'streakReminders',
+      'routineReminder',
+      'backupReminder',
+      'page:PreferencesBackups',
+      'haptics',
+      'checkForUpdate',
+      'page:PreferencesWidgets',
+      'page:PreferencesAppIcon',
+      'page:PreferencesCalendar',
+    ])
+      expect(web).not.toContain(id)
+  })
+
+  it('keeps the rows the web shows', () => {
+    expect(web).toEqual(
+      expect.arrayContaining([
+        'playSounds',
+        'showStreak',
+        'autoFillAddress',
+        'meetingDays',
+        'anonymousAnalytics',
+      ])
+    )
   })
 })

@@ -183,3 +183,28 @@ describe('TextInput font', () => {
     expect(flatten(input().props.style).fontFamily).toBe('Bold')
   })
 })
+
+describe('TextInput on the web', () => {
+  it('puts spellcheck and the accessible name on the element', async () => {
+    platform.OS = 'web'
+    const attributes = new Map<string, string>()
+    const element = {
+      setAttribute: (name: string, value: string) =>
+        void attributes.set(name, value),
+      removeAttribute: (name: string) => void attributes.delete(name),
+    }
+    await act(async () => {
+      root = create(
+        <TextInput
+          multiline
+          accessibilityLabel='Recovery key'
+          spellCheck={false}
+        />,
+        { createNodeMock: () => element }
+      )
+    })
+
+    expect(attributes.get('spellcheck')).toBe('false')
+    expect(attributes.get('aria-label')).toBe('Recovery key')
+  })
+})

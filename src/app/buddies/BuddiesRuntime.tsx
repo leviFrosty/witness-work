@@ -30,6 +30,7 @@ import {
   buddiesEngine,
   currentBuddyPet,
   currentBuddyStreak,
+  dropRefusedInboxes,
 } from '@/features/buddies/lib/buddiesService'
 import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
 import {
@@ -304,6 +305,7 @@ export default function BuddiesRuntime() {
     void refreshAvatar().then((changed) => {
       if (changed) schedulePublish()
     })
+    dropRefusedInboxes()
     syncNow()
     checkPushRegistration()
     reportAlertOutcomes()
@@ -311,6 +313,7 @@ export default function BuddiesRuntime() {
 
     const foreground = addForegroundListener(() => {
       buddiesEngine.expire()
+      dropRefusedInboxes()
       syncNow()
       checkPushRegistration()
       reportAlertOutcomes()

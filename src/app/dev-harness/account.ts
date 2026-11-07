@@ -1,4 +1,5 @@
 import { getRandomBytes } from 'expo-crypto'
+import * as BuddiesKeychain from '../../../modules/buddies-keychain'
 import { accountKey } from '@/app/account/accountKey'
 import {
   backUpNow,
@@ -15,17 +16,39 @@ import {
   type RestoreSource,
   simulateCorruptDownload,
 } from '@/app/account/backupRestore'
+import { useApprovalDebug } from '@/app/account/approval'
 import { useHandoffDebug } from '@/app/account/handoff'
+import { readPasskeyOffer } from '@/app/account/passkeyOffer'
+import {
+  accountPasskeySupport,
+  simulatePasskeyAdd,
+} from '@/app/account/passkeys'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import {
   runHandoffSelfTest,
   type SelfTestStep,
 } from '@/app/account/handoffSelfTest'
 import { encodeRecoveryKey } from '@/lib/accountKey/recoveryKey'
-import { cachedServerAccount } from '@/lib/serverAccount'
+import { toB64u, utf8 } from '@/lib/bytes'
+import apis from '@/constants/apis'
+import {
+  accountSessions,
+  cachedServerAccount,
+  setDevSessionRenewWindow,
+} from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
-import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
+import {
+  deriveAccountSigningKey,
+  signAccountRequest,
+} from '@/lib/serverAccount/keys'
 import { deriveIdentity } from '@/features/buddies/lib/keys'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { navigationRef } from '@/features/contacts/lib/linking'
+import {
+  PASSKEY_PROMPT_INITIAL,
+  type PasskeyPromptReason,
+} from '@/lib/passkeys/promptRules'
+import { usePreferences } from '@/stores/preferences'
 
 let last: unknown = null
 
@@ -62,6 +85,102 @@ export const accountHarness = {
   },
 
   randomRecoveryKey: () => encodeRecoveryKey(getRandomBytes(32)),
+
+  replaceKeyBehindApp: () => {
+    last = null
+    void BuddiesKeychain.replaceRootSeed(toB64u(getRandomBytes(32))).then(
+      () => (last = 'replaced'),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+
+  changeKeyElsewhere: () => {
+    last = null
+    void changeKeyElsewhere().then(
+      (value) => (last = value),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+
+  renewSession: () => {
+    last = null
+    void renewSessionNow().then(
+      (value) => (last = value),
+      (error: unknown) => (last = { error: String(error) })
+    )
+    return 'started'
+  },
+}
+
+async function renewSessionNow() {
+  await accountSessions.ensure()
+  const from = accountSessions.snapshot()?.sessionId ?? null
+  setDevSessionRenewWindow(91 * 24 * 60 * 60_000)
+  try {
+    await accountSessions.withSession(async () => null, { renew: true })
+    for (let waited = 0; waited < 30_000; waited += 250) {
+      const to = accountSessions.snapshot()?.sessionId ?? null
+      if (to !== from) return { renewed: true, from, to }
+      await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+    return { renewed: false, from, to: from }
+  } finally {
+    setDevSessionRenewWindow(null)
+  }
+}
+
+async function changeKeyElsewhere() {
+  const oldKey = await accountKey.peek()
+  if (!oldKey) throw new Error('No account key')
+  const newKey = getRandomBytes(32)
+  const oldSigning = deriveAccountSigningKey(oldKey)
+  const newSigning = deriveAccountSigningKey(newKey)
+  const send = (keyEpoch: number) => {
+    const bytes = utf8(
+      JSON.stringify({
+        accountPub: oldSigning.publicKey,
+        ts: Date.now(),
+        nonce: toB64u(getRandomBytes(16)),
+        newAccountPub: newSigning.publicKey,
+        keyEpoch,
+        history: toB64u(getRandomBytes(64)),
+      })
+    )
+    return accountSessions.request<{ keyEpoch?: number }>({
+      url: `${apis.accounts}/accounts/v1/account/rekey`,
+      method: 'POST',
+      json: {
+        payload: toB64u(bytes),
+        signature: signAccountRequest('account/rekey', bytes, oldSigning),
+        newSignature: signAccountRequest(
+          'account/rekey/new',
+          bytes,
+          newSigning
+        ),
+      },
+      timeoutMs: 15_000,
+    })
+  }
+
+  let failure: unknown = null
+  for (const keyEpoch of [0, 1, 2, 3, 4]) {
+    try {
+      await send(keyEpoch)
+      failure = null
+      break
+    } catch (error) {
+      failure = error
+    }
+  }
+  if (failure) throw failure
+  await BuddiesKeychain.replaceRootSeed(toB64u(newKey))
+  return {
+    changed: true,
+    oldAccountPub: oldSigning.publicKey.slice(0, 12),
+    newAccountPub: newSigning.publicKey.slice(0, 12),
+  }
 }
 
 let selfTest: { passed: boolean | null; steps: SelfTestStep[] } | null = null
@@ -91,6 +210,19 @@ export const handoffHarness = {
   },
   get selfTestResult() {
     return selfTest
+  },
+}
+
+export const approvalHarness = {
+  state: () => {
+    const { session, entry } = useApprovalDebug.getState()
+    return session ? { entry, ...session.debug() } : null
+  },
+
+  scan: (link: string) => {
+    if (!navigationRef.isReady()) return 'navigation not ready'
+    navigationRef.navigate('Sign In on a Computer', { entry: 'tools', link })
+    return 'opened'
   },
 }
 
@@ -156,5 +288,42 @@ export const backupHarness = {
   },
   get last() {
     return backupLast
+  },
+}
+
+let passkeyOffer: unknown = null
+
+export const passkeyPromptHarness = {
+  state: () => usePreferences.getState().passkeyPrompt,
+  earn: (reason: PasskeyPromptReason = 'backup') => {
+    usePreferences.setState({ passkeyPrompt: PASSKEY_PROMPT_INITIAL })
+    earnPasskeyPrompt(reason)
+    return usePreferences.getState().passkeyPrompt
+  },
+  reset: () => {
+    usePreferences.setState({ passkeyPrompt: PASSKEY_PROMPT_INITIAL })
+    return PASSKEY_PROMPT_INITIAL
+  },
+  mockAdd: (result: 'added' | 'failed' | null) => {
+    simulatePasskeyAdd(
+      result === 'added'
+        ? { status: 'added', credentialId: 'verify-passkey', canUnlock: true }
+        : result === 'failed'
+          ? { status: 'failed', step: 'create', reason: 'failed' }
+          : null
+    )
+    return result
+  },
+  readOffer: () => {
+    passkeyOffer = null
+    void Promise.all([readPasskeyOffer(), accountPasskeySupport()]).then(
+      ([offer, support]) => {
+        passkeyOffer = { offer, support }
+      }
+    )
+    return 'started'
+  },
+  get offer() {
+    return passkeyOffer
   },
 }

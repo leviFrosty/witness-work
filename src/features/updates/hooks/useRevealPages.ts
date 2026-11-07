@@ -16,6 +16,7 @@ import {
   REVEAL_PAGES,
   RevealChipSpec,
 } from '@/features/updates/constants/updateRevealPages'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 export interface RevealPage {
   id: string
@@ -43,6 +44,9 @@ export interface RevealMoreTile {
 export const onThisPlatform = (platform?: 'ios' | 'android') =>
   !platform || platform === Platform.OS
 
+export const canPairWatch = () =>
+  hasCapability('watchApps') && WatchBridge.getStatus().isSupported
+
 export const meetsIos = (minIos?: number) =>
   !minIos ||
   (Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= minIos)
@@ -52,7 +56,7 @@ const useRevealPages = () => {
   const { hasAnnualGoal, showsTimeEntry } = usePublisher()
   const { isTablet } = useDevice()
   const buddiesEnabled = useBuddiesEnabled()
-  const watchSupported = WatchBridge.getStatus().isSupported
+  const watchSupported = canPairWatch()
 
   const moreTiles: RevealMoreTile[] = REVEAL_MORE_ITEMS.filter(
     (item) =>
@@ -72,6 +76,7 @@ const useRevealPages = () => {
       (!page.annualGoalOnly || hasAnnualGoal) &&
       (!page.buddiesOnly || buddiesEnabled) &&
       (!page.watchOnly || watchSupported) &&
+      (!page.siriPhraseKey || hasCapability('siriShortcuts')) &&
       (!page.timeEntryOnly || showsTimeEntry)
   ).map((page) => {
     const captionKey =

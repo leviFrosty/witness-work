@@ -1,4 +1,4 @@
-import { type ComponentProps, useEffect } from 'react'
+import { useEffect } from 'react'
 import useServiceStreak from '@/hooks/useServiceStreak'
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
@@ -8,6 +8,7 @@ import { actionBehind, celebrationClaim } from '@/lib/userAction'
 import type StreakCelebrationOverlayComponent from '@/features/profile/components/StreakCelebrationOverlay'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { usePreferences } from '@/stores/preferences'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const AFTER_SAVE_MS = 900
 
@@ -80,10 +81,7 @@ export default function StreakCelebration() {
   )
 }
 
-function StreakCelebrationOverlay(
-  props: ComponentProps<typeof StreakCelebrationOverlayComponent>
-) {
-  const Overlay: typeof StreakCelebrationOverlayComponent =
+const StreakCelebrationOverlay = canvasKitComponent(
+  (): typeof StreakCelebrationOverlayComponent =>
     require('@/features/profile/components/StreakCelebrationOverlay').default
-  return <Overlay {...props} />
-}
+)

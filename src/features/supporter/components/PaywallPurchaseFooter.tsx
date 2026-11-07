@@ -13,6 +13,10 @@ interface Props {
   onPurchase: () => unknown
 
   purchasing?: boolean
+
+  unavailableReason?: string
+
+  onSignIn?: () => void
 }
 
 export default function PaywallPurchaseFooter({
@@ -21,6 +25,8 @@ export default function PaywallPurchaseFooter({
   ctaLabel,
   onPurchase,
   purchasing = false,
+  unavailableReason,
+  onSignIn,
 }: Props) {
   const theme = useTheme()
   const labelColor = tier === 'supporter' ? '#343232' : theme.colors.textInverse
@@ -45,17 +51,55 @@ export default function PaywallPurchaseFooter({
           {ctaLabel}
         </Text>
       </SupporterCtaButton>
-      <Text
-        style={{
-          fontSize: 12,
-          color: theme.colors.textAlt,
-          textAlign: 'center',
-        }}
-      >
-        {tier === 'supporter'
-          ? i18n.t('paywallCtaReassuranceSupporter')
-          : i18n.t('paywallCtaReassuranceTip')}
-      </Text>
+      {unavailableReason ? (
+        <View style={{ alignItems: 'center' }}>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.text,
+              textAlign: 'center',
+            }}
+          >
+            {unavailableReason}
+          </Text>
+          {onSignIn && (
+            <Button
+              onPress={onSignIn}
+              accessibilityRole='button'
+              style={{
+                minHeight: 44,
+                minWidth: 44,
+                paddingHorizontal: 12,
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.accent,
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {i18n.t('paywallSignInToBuyWebAction')}
+              </Text>
+            </Button>
+          )}
+        </View>
+      ) : (
+        <Text
+          style={{
+            fontSize: 12,
+            color: theme.colors.textAlt,
+            textAlign: 'center',
+          }}
+        >
+          {tier === 'supporter'
+            ? i18n.t('paywallCtaReassuranceSupporter')
+            : i18n.t('paywallCtaReassuranceTip')}
+        </Text>
+      )}
     </View>
   )
 }

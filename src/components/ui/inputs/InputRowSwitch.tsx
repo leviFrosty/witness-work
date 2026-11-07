@@ -25,6 +25,7 @@ export default function InputRowSwitch({
       {...props}
       labelReadByControl
       descriptionReadByControl
+      onRowPress={() => onValueChange(!value)}
       controlStyle={{ width: 'auto', flexShrink: 0 }}
     >
       <Switch

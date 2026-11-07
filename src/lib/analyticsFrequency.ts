@@ -12,8 +12,11 @@ const dailyEvents = new Set([
   'account_backup_failed',
   'account_session_failed',
   'device_storage_full',
+  'web_storage_failed',
   'help_center_refreshed',
   'shared_car_sync_failed',
+  'cloud_sync_photos_storage_full',
+  'cloud_sync_photo_transfer_failed',
 ])
 const sessionEvents = new Set([
   'timer_action_completed',
@@ -23,6 +26,7 @@ const sessionEvents = new Set([
   'contacts_filter_added',
   'contacts_staleness_chip_applied',
   'map_group_opened',
+  'map_unavailable',
   'contacts_suggested_contact_opened',
   'buddies_push_registration',
   'icloud_restore_probe_result',
@@ -32,6 +36,8 @@ const sessionEvents = new Set([
   'account_activity_viewed',
   'account_devices_viewed',
   'update_required_shown',
+  'web_update_prompted',
+  'web_install_banner_shown',
   'help_center_search_completed',
   'settings_search_completed',
   'mileage_person_filter_used',

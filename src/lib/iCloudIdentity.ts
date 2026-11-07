@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { Platform } from 'react-native'
 import { usePreferences } from '@/stores/preferences'
 import { clearAdoptedAccountId } from '@/lib/account'
@@ -59,7 +60,6 @@ export const COPIED_DEVICE_RESET = {
 
 export const ACCOUNT_CHANGE_RESET = {
   iCloudSyncEnabled: false,
-  iCloudSyncPausedForLapse: false,
   iCloudSyncNeedsResolution: false,
   iCloudSyncPendingPush: false,
   iCloudSyncIssue: null,
@@ -98,9 +98,8 @@ function generateDeviceId(): string {
 
 function readInstallId(): string | null {
   try {
-    return Platform.OS === 'android'
-      ? androidDeviceInstallId()
-      : getOrCreateInstallId()
+    if (Platform.OS === 'android') return androidDeviceInstallId()
+    return getOrCreateInstallId()
   } catch (error) {
     logger.warn('[iCloudIdentity] install id unavailable', error)
     return null
@@ -125,6 +124,7 @@ function settleDeviceBinding(): { id: string; verified: boolean } {
   if (decision === 'rebind') {
     logger.warn('[iCloudIdentity] copied device id replaced')
   }
+  if (decision === 'rebind') endPhotoPasses()
   usePreferences.setState({
     ...(decision === 'rebind' ? COPIED_DEVICE_RESET : {}),
     iCloudDeviceId: id,
@@ -185,6 +185,7 @@ export function checkICloudIdentity(source: IdentityCheckSource): boolean {
       return true
     case 'changed': {
       const wasEnabled = prefs.iCloudSyncEnabled
+      endPhotoPasses()
       if (cloud) {
         usePreferences.setState({
           ...CLOUD_ACCOUNT_CHANGE_RESET,

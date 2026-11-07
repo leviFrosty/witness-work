@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useFeatureFlag } from '@/lib/featureFlags'
 import { accountSessions, onAccountChange } from '@/lib/serverAccount'
 import useSharedCars from '@/stores/sharedCars'
@@ -21,7 +22,7 @@ const registerPush = () =>
   )
 
 export default function SharedCarsRuntime() {
-  const enabled = useFeatureFlag('shared-cars')
+  const enabled = useFeatureFlag('shared-cars') && hasCapability('sharedCars')
   const buddies = useBuddiesSession((state) => state.running)
   const running = enabled && buddies
 

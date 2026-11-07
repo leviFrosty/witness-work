@@ -1,6 +1,5 @@
-import { Skia } from '@shopify/react-native-skia'
 import { Theme } from '@/constants/theme'
-import { withAlpha } from '@/lib/color'
+import { unitRgb, withAlpha } from '@/lib/color'
 
 export interface WelcomePalette {
   base: string
@@ -38,7 +37,7 @@ export interface WelcomePalette {
   ctaGlowOpacity: number
 }
 
-const rgb = (color: string) => Array.from(Skia.Color(color)).slice(0, 3)
+const rgb = (color: string) => unitRgb(color)
 
 export const getWelcomePalette = (theme: Theme): WelcomePalette => {
   const { colors } = theme

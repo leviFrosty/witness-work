@@ -21,7 +21,7 @@ const runtime = vi.hoisted(() => ({
   time: undefined as { value: number } | undefined,
 }))
 
-vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native', () => ({ Platform: { OS: 'ios' }, View: 'View' }))
 vi.mock('@shopify/react-native-skia', () => ({
   Canvas: 'Canvas',
   RoundedRect: 'RoundedRect',
@@ -55,6 +55,11 @@ vi.mock('@/hooks/useOnScreen', () => ({
   },
 }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
+
+vi.mock('@/lib/canvasKit/canvasKitComponent', async () => {
+  const rim = await import('@/features/supporter/components/SupporterCtaRim')
+  return { canvasKitComponent: () => rim.default }
+})
 vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: new Proxy({}, { get: () => '#000' }) }),
 }))

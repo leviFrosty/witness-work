@@ -1,0 +1,69 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ww-help-search",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  // Both hosts forever: shipped app versions call the old one
+  // (docs/adr/0042-witnesswork-app-domain.md §2).
+  "routes": [
+    { "pattern": "help-search.leviwilkerson.com", "custom_domain": true },
+    { "pattern": "help-search.witnesswork.app", "custom_domain": true },
+  ],
+  // Pulls the Help Center bundles and rebuilds the indexes that changed.
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "vars": {
+    // The site whose /help/bundle/manifest.json this Worker indexes.
+    "HELP_CENTER_ORIGIN": "https://witnesswork.app",
+  },
+  // Secrets: ADMIN_TOKEN (bearer for /v1/admin/*). 1Password Agents vault:
+  // "ww-help-search admin token".
+  // Workers AI: answer and query embeddings (src/embed.ts).
+  "ai": { "binding": "AI" },
+  // Search indexes (`index:<locale>`), written by sync.
+  "kv_namespaces": [
+    { "binding": "SYNC_STATE", "id": "c83d831f96024428926c04bb61d9a4b5" },
+  ],
+  "ratelimits": [
+    {
+      "name": "SEARCH_LIMITER",
+      "namespace_id": "2401",
+      "simple": { "limit": 60, "period": 60 },
+    },
+  ],
+  // Error and sync logs only: request logs would keep search text.
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } },
+  "env": {
+    // Indexes the staging site (dev.witnesswork.app), which `pnpm build:dev`
+    // in services/marketing builds. Named environments don't inherit vars,
+    // bindings, or rate limits, so each is repeated here.
+    "dev": {
+      "name": "ww-help-search-dev",
+      "routes": [
+        { "pattern": "help-search-dev.witnesswork.app", "custom_domain": true },
+      ],
+      "triggers": { "crons": ["*/15 * * * *"] },
+      "vars": {
+        "HELP_CENTER_ORIGIN": "https://dev.witnesswork.app",
+      },
+      // Secrets: ADMIN_TOKEN. 1Password Agents vault:
+      // "ww-help-search admin token (dev)".
+      "ai": { "binding": "AI" },
+      "kv_namespaces": [
+        { "binding": "SYNC_STATE", "id": "c794a46e025d41958e9efcc5a3af6e1f" },
+      ],
+      "ratelimits": [
+        {
+          "name": "SEARCH_LIMITER",
+          "namespace_id": "2402",
+          "simple": { "limit": 60, "period": 60 },
+        },
+      ],
+      "observability": {
+        "enabled": true,
+        "logs": { "invocation_logs": false },
+      },
+    },
+  },
+}

@@ -38,6 +38,7 @@ vi.mock('react-native-purchases', () => ({
         created: false,
       }
     }),
+    getAppUserID: vi.fn(async () => 'install-a'),
     getCustomerInfo: vi.fn(async () => {
       if (runtime.offline && !runtime.cached) throw offlineError()
       return { entitlements: { active: {} } }
@@ -60,10 +61,20 @@ vi.mock('@/lib/installId', () => {
 vi.mock('@/lib/account', () => ({
   getOrCreateAccountId: () => 'install-a',
   adoptAccountId: vi.fn(),
+  onAccountIdChange: () => () => {},
+  devAccountFileStaged: () => false,
+  droppedAccountIds: () => [],
+  onDevAccountFileChange: () => () => {},
+  getOwnAccountClaim: (entitled: boolean) => ({
+    appUserId: 'install-a',
+    entitled,
+    claimedAt: 1,
+  }),
   readAccountFile: vi.fn(),
   writeAccountFile: vi.fn(),
 }))
 vi.mock('@/lib/iCloudIdentity', () => ({ checkICloudIdentity: () => true }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },
@@ -72,6 +83,8 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
+  currentSupporterAccount: async () => null,
 }))
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))

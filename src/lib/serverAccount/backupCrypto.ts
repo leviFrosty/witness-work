@@ -1,6 +1,7 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
+import type { DevicePlatform } from '@/lib/devicePlatform'
 import { gunzipSync, gzipSync } from 'fflate'
 import { concatBytes, fromUtf8, toB64u, utf8 } from '@/lib/bytes'
 import { sha256Native } from '@/lib/sha256'
@@ -11,7 +12,7 @@ const TAG_LENGTH = 16
 
 export const BACKUP_PLAINTEXT_VERSION = 1
 
-export type BackupPlatform = 'ios' | 'android'
+export type BackupPlatform = DevicePlatform
 
 export type BackupPlaintext = {
   v: number
@@ -79,12 +80,77 @@ export function sealPlaintext(
 export function openBackup(
   backupKey: Uint8Array,
   blob: Uint8Array,
-  address: BackupAddress
+  address: BackupAddress,
+  olderKeys: readonly Uint8Array[] = []
 ): BackupPlaintext {
-  return openPlaintext(backupKey, blob, backupAad(address))
+  return openPlaintext(backupKey, blob, backupAad(address), olderKeys)
 }
 
 export function openPlaintext(
+  key: Uint8Array,
+  blob: Uint8Array,
+  aad: Uint8Array,
+  olderKeys: readonly Uint8Array[] = []
+): BackupPlaintext {
+  for (const older of olderKeys) {
+    try {
+      return openPlaintextWith(key, blob, aad)
+    } catch (error) {
+      if (!(error instanceof BackupOpenError) || error.problem !== 'decrypt')
+        throw error
+      key = older
+    }
+  }
+  return openPlaintextWith(key, blob, aad)
+}
+
+export type ResealResult =
+  | { outcome: 'resealed'; blob: Uint8Array }
+  | { outcome: 'current' }
+  | { outcome: 'unopened' }
+
+export function resealBlob(
+  blob: Uint8Array,
+  aad: Uint8Array,
+  {
+    from,
+    to,
+    nonce,
+  }: { from: readonly Uint8Array[]; to: Uint8Array; nonce: Uint8Array }
+): ResealResult {
+  if (nonce.length !== NONCE_LENGTH) throw new Error('Nonce must be 24 bytes')
+  if (decryptWith(to, blob, aad)) return { outcome: 'current' }
+  for (const key of from) {
+    const compressed = decryptWith(key, blob, aad)
+    if (!compressed) continue
+    const ciphertext = xchacha20poly1305(to, nonce, aad).encrypt(compressed)
+    return {
+      outcome: 'resealed',
+      blob: concatBytes(new Uint8Array([BLOB_VERSION]), nonce, ciphertext),
+    }
+  }
+  return { outcome: 'unopened' }
+}
+
+function decryptWith(
+  key: Uint8Array,
+  blob: Uint8Array,
+  aad: Uint8Array
+): Uint8Array | null {
+  if (blob.length < 1 + NONCE_LENGTH + TAG_LENGTH || blob[0] !== BLOB_VERSION)
+    return null
+  try {
+    return xchacha20poly1305(
+      key,
+      blob.subarray(1, 1 + NONCE_LENGTH),
+      aad
+    ).decrypt(blob.subarray(1 + NONCE_LENGTH))
+  } catch {
+    return null
+  }
+}
+
+function openPlaintextWith(
   key: Uint8Array,
   blob: Uint8Array,
   aad: Uint8Array
@@ -125,7 +191,10 @@ export function openPlaintext(
       typeof plaintext.deviceName === 'string'
         ? plaintext.deviceName.slice(0, 64)
         : '',
-    platform: plaintext.platform === 'android' ? 'android' : 'ios',
+    platform:
+      plaintext.platform === 'android' || plaintext.platform === 'web'
+        ? plaintext.platform
+        : 'ios',
     createdAt: plaintext.createdAt,
     payload: plaintext.payload,
   }

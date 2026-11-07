@@ -749,9 +749,11 @@ describe('buddies pairing', () => {
   it('caps active buddies plus pending invites at five', async () => {
     const { user } = setup()
     const mom = user('Mom')
-    for (let index = 0; index < 3; index++) await mom.engine.createInvite()
-    await expect(mom.engine.createInvite()).rejects.toThrow()
-    expect(mom.store.getState().outgoingInvites).toHaveLength(3)
+    for (let index = 0; index < 5; index++) await mom.engine.createInvite()
+    await expect(mom.engine.createInvite()).rejects.toEqual(
+      new BuddyInviteError('limit')
+    )
+    expect(mom.store.getState().outgoingInvites).toHaveLength(5)
   })
 
   it('keeps an invite whose answer got lost, so Try Again shows it instead of a second one', async () => {
@@ -1713,6 +1715,13 @@ describe('removed buddies stay removed', () => {
       dismissed: {},
       cars: {},
       leftCars: {},
+
+      reconnects: Object.fromEntries(
+        Array.from({ length: 5 }, () => [
+          id(),
+          { inboxId: id(), dhPub: dhPub(), expiresAt: at },
+        ])
+      ),
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
 
@@ -5198,6 +5207,12 @@ describe('a User’s devices stay in step', () => {
 
       cars: {},
       leftCars: {},
+      reconnects: Object.fromEntries(
+        Array.from({ length: 5 }, () => [
+          id(),
+          { inboxId: id(), dhPub: dhPub(), expiresAt: at },
+        ])
+      ),
     }
     const plaintext = utf8(JSON.stringify(rosterSchema.parse(roster)))
 

@@ -4,7 +4,8 @@
 # Publishes a Hot Updater bundle to the `beta` channel when HEAD's native fingerprint
 # matches the latest TestFlight beta build; otherwise builds locally and
 # uploads a new TestFlight build. Releases ww-api first when it has unreleased
-# commits (scripts/release-api.sh). Driven by the `/beta-build` skill.
+# commits (scripts/release-api.sh), and deploys the web beta
+# (beta.app.witnesswork.app). Driven by the `/beta-build` skill.
 #
 # Usage: scripts/build-beta.sh [--mode auto|ota|native] [--interactive] [--dry-run]
 #   --mode         auto (default) picks OTA vs native from the fingerprint.
@@ -137,13 +138,38 @@ API_ARGS=(--branch "$BRANCH")
 [ "$DRY_RUN" = true ] && API_ARGS+=(--dry-run)
 scripts/release-api.sh "${API_ARGS[@]}"
 
+# The web beta ships the same commit (docs/web-hosting.md). It runs after the
+# phone build, so a web failure never holds back the phone's Beta.
+ship_web() {
+  # A web build refreshes its Help Center from the beta profile's site first
+  # (scripts/web.mjs) and fails without it. When that site doesn't answer,
+  # skip the web beta rather than fail a Beta whose phone build has shipped.
+  local manifest
+  manifest=$(node -p "require('./config/web-environments.json').beta.helpManifest")
+  if ! curl -fsS -o /dev/null --max-time 20 "$manifest"; then
+    echo "WEB_RESULT target=beta status=skipped reason=help-center-unreachable"
+    return 0
+  fi
+  local flag=
+  [ "$DRY_RUN" = true ] && flag=--dry-run
+  if node scripts/web-host.mjs deploy beta ${flag:+"$flag"}; then
+    [ "$DRY_RUN" = true ] && echo "WEB_RESULT target=beta status=planned"
+    return 0
+  fi
+  echo "WEB_RESULT target=beta status=failed" >&2
+  return 1
+}
+
 if [ "$DRY_RUN" = true ]; then
+  ship_web || true
   echo "BETA_RESULT mode=$MODE sha=$SHA runtime=$RUNTIME dry_run=true"
   exit 0
 fi
 
 if [ "$MODE" = ota ]; then
   node scripts/ota.mjs beta ios --message "$BRANCH@$SHA: $SUBJECT"
+  WEB_OK=true
+  ship_web || WEB_OK=false
 
   echo
   echo "──────────────────────────────────────────"
@@ -155,6 +181,7 @@ if [ "$MODE" = ota ]; then
   echo "  Duration: $(format_duration $((SECONDS - START_TIME)))"
   echo "──────────────────────────────────────────"
   echo "BETA_RESULT mode=ota sha=$SHA runtime=$RUNTIME channel=beta"
+  [ "$WEB_OK" = true ] || exit 1
   exit 0
 fi
 
@@ -185,6 +212,8 @@ Hot Updater runtime: $BUILT_RUNTIME"
 
 echo "Uploading $IPA to App Store Connect (app $APP_ID)..."
 asc builds upload --app "$APP_ID" --ipa "$IPA" --test-notes "$NOTES" --locale en-US --wait --output json >"$TMP_DIR/upload.json"
+WEB_OK=true
+ship_web || WEB_OK=false
 
 echo
 echo "──────────────────────────────────────────"
@@ -195,3 +224,4 @@ echo "  Runtime:  $BUILT_RUNTIME"
 echo "  Duration: $(format_duration $((SECONDS - START_TIME)))"
 echo "──────────────────────────────────────────"
 echo "BETA_RESULT mode=native sha=$SHA version=$VERSION build=$BUILD runtime=$BUILT_RUNTIME"
+[ "$WEB_OK" = true ] || exit 1

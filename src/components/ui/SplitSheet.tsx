@@ -183,6 +183,18 @@ export default function SplitSheet({
     return () => subscription.remove()
   }, [shown])
 
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !shown) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      const { onBackPress, onOpenChange } = callbacks.current
+      if (onBackPress) onBackPress()
+      else onOpenChange(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [shown])
+
   const close = () => callbacks.current.onOpenChange(false)
   const commitHeight = (next: number) => setRatio(next / windowHeight)
 

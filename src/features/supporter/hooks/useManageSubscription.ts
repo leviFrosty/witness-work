@@ -11,6 +11,7 @@ import { usePreferences } from '@/stores/preferences'
 import { analytics } from '@/lib/analytics'
 import { errorTracking } from '@/lib/errorTracking'
 import { isOfflineError } from '@/lib/offlineError'
+import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import { formatDate } from '@/lib/dates'
@@ -31,7 +32,7 @@ export type ManageSubscriptionSource = 'paywall' | 'settings'
 export type StoreIntent = 'cancel' | 'pause'
 
 export const storePlatform: StorePlatform =
-  Platform.OS === 'android' ? 'android' : 'ios'
+  Platform.OS === 'android' ? 'android' : Platform.OS === 'web' ? 'web' : 'ios'
 
 const APP_STORE_SUBSCRIPTIONS_URL =
   'https://apps.apple.com/account/subscriptions'
@@ -74,6 +75,21 @@ const statusLabel = (state: ManageSubscriptionState): string | null => {
   }
 }
 
+const webManagementUrl = (
+  customer: ReturnType<typeof useCustomer>['customer']
+): string | null => {
+  const url = storePlatform === 'web' ? customer?.managementURL : null
+  return url && isHttpsUrl(url) ? url : null
+}
+
+const isHttpsUrl = (url: string): boolean => {
+  try {
+    return new URL(url).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export const useSubscriptionStatus = () => {
   const { customer } = useCustomer()
   const pause = usePauseRecord()
@@ -84,7 +100,10 @@ export const useSubscriptionStatus = () => {
     pause,
     now: Date.now(),
   })
-  return { state, label: statusLabel(state) }
+  const canManage =
+    state.kind !== 'none' &&
+    (storePlatform !== 'web' || webManagementUrl(customer) !== null)
+  return { state, label: statusLabel(state), canManage }
 }
 
 const useManageSubscription = (
@@ -93,8 +112,13 @@ const useManageSubscription = (
 ) => {
   const { customer, setCustomer, revalidate } = useCustomer()
   const pauseRecord = usePauseRecord()
+
   const productIdentifier =
-    manageableSubscription(customer, storePlatform)?.productIdentifier ?? null
+    storePlatform === 'web'
+      ? null
+      : (manageableSubscription(customer, storePlatform)?.productIdentifier ??
+        null)
+  const managementUrl = webManagementUrl(customer)
   const [lookupAttempt, setLookupAttempt] = useState(0)
   const [lookup, setLookup] = useState<{
     identifier: string
@@ -185,7 +209,7 @@ const useManageSubscription = (
 
   const refresh = async () => {
     try {
-      await Purchases.invalidateCustomerInfoCache()
+      await invalidateCustomerInfoCache()
     } catch {}
     await revalidate()
   }
@@ -243,6 +267,17 @@ const useManageSubscription = (
       ...eventProperties,
       intent,
     })
+    if (storePlatform === 'web') {
+      if (!managementUrl) return
+
+      window.open(managementUrl, '_blank', 'noopener,noreferrer')
+      const listener = AppState.addEventListener('change', (next) => {
+        if (next !== 'active') return
+        listener.remove()
+        void refresh()
+      })
+      return
+    }
     if (storePlatform === 'android') {
       const listener = AppState.addEventListener('change', (next) => {
         if (next !== 'active') return
@@ -262,13 +297,17 @@ const useManageSubscription = (
     try {
       await Purchases.showManageSubscriptions()
     } catch {
-      await openURL(customer?.managementURL ?? APP_STORE_SUBSCRIPTIONS_URL)
+      await openURL(APP_STORE_SUBSCRIPTIONS_URL)
     }
     await refresh()
   }
 
   return {
     state,
+
+    canManage: storePlatform !== 'web' || managementUrl !== null,
+
+    managementUrl,
     product,
     productLoaded,
     productError,

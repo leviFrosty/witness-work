@@ -8,10 +8,9 @@ import {
   toB64u,
   utf8,
 } from '@/lib/bytes'
+import { appLinkBase, appLinkFragment } from '@/constants/appLinks'
 import { curve25519 } from '@/lib/curve25519'
 import { open, seal } from '@/lib/sealedBlob'
-
-export const HANDOFF_LINK_BASE = 'https://ww-proxy.leviwilkerson.com/h'
 
 const LINK_VERSION = '1'
 const CHANNEL_BYTES = 16
@@ -90,22 +89,19 @@ export function buildHandoffLink(offer: HandoffOffer): string {
   )
   if (bytes.length !== CHANNEL_BYTES + PUBLIC_KEY_BYTES + SECRET_BYTES)
     throw new Error('Malformed handoff offer')
-  return `${HANDOFF_LINK_BASE}#${LINK_VERSION}${toB64u(bytes)}`
+  return `${appLinkBase('handoff')}#${LINK_VERSION}${toB64u(bytes)}`
 }
 
 export type ParsedHandoffLink =
   | { ok: true; offer: HandoffOffer }
   | { ok: false; problem: 'notHandoff' | 'version' | 'damaged' }
 
-const LINK_PATTERN =
-  /^https:\/\/ww-proxy\.leviwilkerson\.com\/h\/?(?:\?[^#]*)?(?:#(.*))?$/i
-
-export const isHandoffLink = (text: string) => LINK_PATTERN.test(text.trim())
+export const isHandoffLink = (text: string) =>
+  appLinkFragment(text, 'handoff') !== null
 
 export function parseHandoffLink(text: string): ParsedHandoffLink {
-  const match = LINK_PATTERN.exec(text.trim())
-  if (!match) return { ok: false, problem: 'notHandoff' }
-  const fragment = match[1] ?? ''
+  const fragment = appLinkFragment(text, 'handoff')
+  if (fragment === null) return { ok: false, problem: 'notHandoff' }
   if (!fragment) return { ok: false, problem: 'damaged' }
   if (!fragment.startsWith(LINK_VERSION))
     return { ok: false, problem: /^\d/.test(fragment) ? 'version' : 'damaged' }
@@ -173,21 +169,20 @@ export function deriveHandoffKeys({
   const prk = extract(sha256, shared, secret)
   const transcript = `${channelId}\n${offerPub}\n${claimPub}`
   const info = (purpose: string) => utf8(`${LABEL}/${purpose}\n${transcript}`)
-  const codeBytes = expand(sha256, prk, info('code'), 4)
-  const value =
-    ((codeBytes[0] << 24) |
-      (codeBytes[1] << 16) |
-      (codeBytes[2] << 8) |
-      codeBytes[3]) >>>
-    0
   return {
     helloKey: expand(sha256, prk, info('hello'), 32),
     keyKey: expand(sha256, prk, info('key'), 32),
-    code: String(value % 10 ** HANDOFF_CODE_DIGITS).padStart(
-      HANDOFF_CODE_DIGITS,
-      '0'
-    ),
+    code: sixDigitCode(expand(sha256, prk, info('code'), 4)),
   }
+}
+
+export function sixDigitCode(bytes: Uint8Array): string {
+  const value =
+    ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0
+  return String(value % 10 ** HANDOFF_CODE_DIGITS).padStart(
+    HANDOFF_CODE_DIGITS,
+    '0'
+  )
 }
 
 export const formatHandoffCode = (code: string) =>
@@ -196,8 +191,17 @@ export const formatHandoffCode = (code: string) =>
 const helloAad = (channelId: string) => `${LABEL}/hello\n${channelId}`
 const keyAad = (channelId: string) => `${LABEL}/key\n${channelId}`
 
-const cut = (value: string, max: number) =>
+export const cut = (value: string, max: number) =>
   Array.from(value).slice(0, max).join('')
+
+export const plainLine = (text: string, max: number) =>
+  cut(
+    text
+      .replace(/[\p{Cc}\p{Cf}]+/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+    max
+  )
 
 export function normalizeHello(hello: HandoffHello): HandoffHello {
   return {

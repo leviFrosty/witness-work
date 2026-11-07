@@ -1,0 +1,24 @@
+{
+  "name": "help-search",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --deny-warnings src test eval",
+    "eval": "node eval/run.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261023.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5",
+    "wrangler": "4.152.0",
+    "oxlint": "1.89.0"
+  },
+  "dependencies": {
+    "stemmer": "2.0.1"
+  }
+}

@@ -12,6 +12,10 @@ import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import PointerHover, { type PointerEffect } from '@/components/ui/PointerHover'
 import Text from '@/components/ui/MyText'
 import { isRtlLayout } from '@/lib/direction'
+import {
+  describeControl,
+  tooltipDomId,
+} from '@/components/ui/web/describeControl'
 
 type Placement = 'right' | 'left' | 'top' | 'bottom'
 type Rect = { x: number; y: number; width: number; height: number }
@@ -51,8 +55,12 @@ export default function PointerTooltip({
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const shownId = useRef<number>(undefined)
 
+  const undescribe = useRef<() => void>(undefined)
+
   const hide = () => {
     clearTimeout(timer.current)
+    undescribe.current?.()
+    undescribe.current = undefined
     if (shownId.current === undefined) return
     if (useTooltip.getState().tip?.id === shownId.current) {
       useTooltip.setState({ tip: null })
@@ -66,6 +74,13 @@ export default function PointerTooltip({
       if (!width && !height) return
       const id = ++nextId
       shownId.current = id
+      if (Platform.OS === 'web') {
+        undescribe.current?.()
+        undescribe.current = describeControl(
+          anchorRef.current,
+          tooltipDomId(id)
+        )
+      }
       useTooltip.setState({
         tip: { id, label, anchor: { x, y, width, height }, placement },
       })
@@ -80,6 +95,15 @@ export default function PointerTooltip({
   return (
     <PointerHover
       effect={effect}
+      onFocusVisibleChange={
+        enabled
+          ? (focused) => {
+              if (!focused) return hide()
+              clearTimeout(timer.current)
+              timer.current = setTimeout(show, 0)
+            }
+          : undefined
+      }
       onHoverChange={
         enabled
           ? (hovered) => {
@@ -95,6 +119,7 @@ export default function PointerTooltip({
         ref={anchorRef}
         collapsable={false}
         onTouchStart={hide}
+        onPointerDown={Platform.OS === 'web' ? hide : undefined}
         style={style}
       >
         {children}
@@ -155,7 +180,12 @@ function PlacedTooltip({ tip }: { tip: Tip }) {
         direction: 'ltr',
       }}
     >
-      <TooltipBubble label={tip.label} position={position} onSize={setSize} />
+      <TooltipBubble
+        label={tip.label}
+        position={position}
+        onSize={setSize}
+        domId={tooltipDomId(tip.id)}
+      />
     </View>
   )
 }
@@ -167,15 +197,20 @@ export function TooltipBubble({
   position,
   onSize,
   maxWidth = 280,
+  domId,
 }: {
   label: string
   position: { left: number; top: number } | undefined
   onSize: (size: Size) => void
   maxWidth?: number
+
+  domId?: string
 }) {
   const theme = useTheme()
   return (
     <View
+      role={Platform.OS === 'web' ? 'tooltip' : undefined}
+      nativeID={domId}
       onLayout={({ nativeEvent: { layout } }) =>
         onSize({ width: layout.width, height: layout.height })
       }
@@ -196,7 +231,7 @@ export function TooltipBubble({
         shadowOpacity: 0.12,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 2 },
-        elevation: Platform.OS === 'android' ? 4 : undefined,
+        elevation: Platform.select({ android: 4 }),
       }}
     >
       <Text

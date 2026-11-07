@@ -28,7 +28,7 @@ export const hotUpdater = HotUpdater.init({
 })
 
 hotUpdater.setReloadBehavior(
-  Platform.OS === 'android' ? 'processRestart' : 'reload'
+  Platform.select({ android: 'processRestart', default: 'reload' })
 )
 
 const launchedSelection = hotUpdater.getActiveUpdateState()

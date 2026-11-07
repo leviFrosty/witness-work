@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import Haptics from '@/lib/haptics'
 import { logger } from '@/lib/logger'
+import { hasCapability } from '@/lib/platformCapabilities'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type {
   ScribePaperCapture,
@@ -241,8 +242,10 @@ export function useScribePaperCapture(): ScribePaperCapture {
     return text
   }
 
+  const available = hasCapability('scribePhotos')
+
   const capture: ScribePaperCapture['capture'] = async (source, given) => {
-    if (running.current) return null
+    if (!available || running.current) return null
     running.current = true
     setError(null)
     setRetryAt(null)
@@ -296,7 +299,7 @@ export function useScribePaperCapture(): ScribePaperCapture {
   }
 
   return {
-    available: true,
+    available,
     picker: library.host,
     busy: progress !== null,
     progress,

@@ -1,4 +1,5 @@
 import { syncNow } from '@/lib/syncClock'
+import { keepsLocalAvatar } from '@/lib/avatarFilePolicy'
 import { translateSyncTimestamps } from '@/app/sync/clockSkew'
 import {
   reconcileSyncDefinitions,
@@ -489,14 +490,11 @@ function mergeById<T extends WithId>(
       const after = r as T & {
         avatar?: { type: string; value: string; revision?: string }
       }
-      const samePhoto =
-        before.avatar?.type === 'image' &&
-        after.avatar?.type === 'image' &&
-        before.avatar.revision === after.avatar.revision &&
-        before.avatar.value.startsWith('file://')
-      const winner = samePhoto
-        ? { ...r, avatar: { ...after.avatar, value: before.avatar!.value } }
-        : r
+      const winner = !keepsLocalAvatar(before.avatar, after.avatar)
+        ? r
+        : after.avatar?.type === 'image'
+          ? { ...r, avatar: { ...after.avatar, value: before.avatar!.value } }
+          : { ...r, avatar: before.avatar }
       byId.set(
         r.id,
         aliases.length ? { ...winner, legacyIds: aliases } : winner

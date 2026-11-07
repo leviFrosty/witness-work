@@ -1,7 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { AppState } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
-import type { HandoffSession } from '@/app/account/handoff'
 import useAppActive from '@/hooks/useAppActive'
 import { syncNow } from '@/lib/syncClock'
 
@@ -9,7 +8,12 @@ export const HANDOFF_POLL_MS = 1500
 
 const noop = () => () => undefined
 
-export function useHandoffState<S extends HandoffSession>(
+type Observable = {
+  state: unknown
+  subscribe: (listener: () => void) => () => void
+}
+
+export function useHandoffState<S extends Observable>(
   session: S | null
 ): S['state'] | null {
   return useSyncExternalStore(session ? session.subscribe : noop, () =>
@@ -18,7 +22,7 @@ export function useHandoffState<S extends HandoffSession>(
 }
 
 export function useHandoffPolling(
-  session: HandoffSession | null,
+  session: { poll: () => Promise<void> } | null,
   active: boolean
 ) {
   const focused = useIsFocused()

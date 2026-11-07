@@ -23,6 +23,11 @@ const toHex = (r: number, g: number, b: number) =>
     .join('')
     .toUpperCase()
 
+export const unitRgb = (hex: string): [number, number, number] => {
+  const [r, g, b] = parseHex(hex)
+  return [r / 255, g / 255, b / 255]
+}
+
 export const mix = (hex: string, target: string, ratio: number): string => {
   const [r1, g1, b1] = parseHex(hex)
   const [r2, g2, b2] = parseHex(target)

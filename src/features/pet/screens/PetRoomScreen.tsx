@@ -171,7 +171,7 @@ export default function PetRoomScreen({
 
   const [sheet] = useState(petOpensAsSheet)
 
-  const statusBar = Platform.OS === 'android' ? insets.top : 0
+  const statusBar = Platform.select({ android: insets.top, default: 0 })
   const scene = usePetRoomScene()
 
   const focus = route.params?.focus

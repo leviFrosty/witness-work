@@ -6,6 +6,7 @@ import reactCompiler from 'eslint-plugin-react-compiler'
 import boundaries from 'eslint-plugin-boundaries'
 import globals from 'globals'
 import { noComments } from './scripts/lib/source-comments.mjs'
+import witnessworkPlugin from './eslint-rules/witnesswork.mjs'
 
 const soundImports = {
   group: [
@@ -173,10 +174,13 @@ export default tseslint.config(
       '.expo/**',
       '.hot-updater/**',
       '.verify/**',
+      '**/.wrangler/**',
       '.tamagui/**',
       'ios/**',
       'android/**',
       'dist/**',
+      'web/maps-frame/dist/**',
+      'web/verify-frame/dist/**',
       'build/**',
       'coverage/**',
       'src/assets/lottie/**',
@@ -186,6 +190,8 @@ export default tseslint.config(
 
       'modules/*/android/build/**',
       '**/*.tar.gz',
+
+      'services/**',
     ],
   },
   js.configs.recommended,
@@ -478,6 +484,22 @@ export default tseslint.config(
         },
       ],
     },
+  },
+
+  {
+    files: ['src/**/*.{js,jsx,ts,tsx}', 'modules/**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{ios,android,native}.{js,jsx,ts,tsx}',
+      '**/*.test.{ts,tsx}',
+      'src/__tests__/**',
+      'src/lib/attestation/**',
+      'src/app/account/attestationCopy.ts',
+      'src/lib/serverAccount/index.ts',
+      'src/providers/CustomerProvider.tsx',
+      'src/features/supporter/**',
+    ],
+    plugins: { witnesswork: witnessworkPlugin },
+    rules: { 'witnesswork/platform-android-choice': 'error' },
   },
   {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],

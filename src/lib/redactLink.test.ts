@@ -9,6 +9,15 @@ describe('redactLink', () => {
     expect(
       redactLink('https://ww-proxy.leviwilkerson.com/accounts/handoff#1Secret')
     ).toBe('https://ww-proxy.leviwilkerson.com/accounts/…#…')
+    expect(
+      redactLink('https://witnesswork.app/buddies/invite#1AbCdEfGhIjKlMnOp')
+    ).toBe('https://witnesswork.app/buddies/…#…')
+    expect(redactLink('https://dev.witnesswork.app/contacts#H4sIAAAA')).toBe(
+      'https://dev.witnesswork.app/contacts#…'
+    )
+    expect(
+      redactLink('https://witnesswork.app/accounts/handoff?lang=es#1Secret')
+    ).toBe('https://witnesswork.app/accounts/…?…#…')
   })
 
   it('never shows a payload in the path or the query', () => {

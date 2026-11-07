@@ -30,6 +30,8 @@ import {
 import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
+import { hasCapability } from '@/lib/platformCapabilities'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 
 export type AvatarMetaCapture = {
   width: number
@@ -216,12 +218,13 @@ export const BackgroundSwatches = ({
 const AvatarPickerContent = ({
   value,
   onChange,
-  allowImage = true,
+  allowImage: imageAllowed = true,
   imageFileName = DEFAULT_AVATAR_FILENAME,
   backgroundValue = null,
   onBackgroundChange,
   onImageMeta,
 }: Props) => {
+  const allowImage = imageAllowed && hasCapability('syncedPhotos')
   const theme = useTheme()
   const draftFiles = useAvatarDraftFiles()
   const library = useLibraryImagePicker('avatar')
@@ -265,13 +268,25 @@ const AvatarPickerContent = ({
       })
     } catch (e) {
       logger.error('Failed to pick an avatar image', e)
-      toast.error(i18n.t('photoPicker_failed'))
+      toast.error(photoFailedMessage(e))
       return
     }
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
     const revision = Crypto.randomUUID()
+    if (Platform.OS === 'web') {
+      setPendingPick({
+        revision,
+        sourceUri: asset.uri,
+        destPath: '',
+        sourceWidth: asset.width,
+        sourceHeight: asset.height,
+        fileSize: asset.fileSize,
+        capturedAt: pickCapturedAt(asset.exif),
+      })
+      return
+    }
     const originalPath = `${FileSystem.documentDirectory}${originalSiblingFileName(imageFileName, revision)}`
     const destPath = `${FileSystem.documentDirectory}${revisionImageFileName(imageFileName, revision)}`
     const paths = [originalPath, destPath]
@@ -307,6 +322,7 @@ const AvatarPickerContent = ({
   }) => {
     if (!pendingPick) return
     if (
+      Platform.OS !== 'web' &&
       !draftFiles.commit([pendingPick.sourceUri, stripCacheBuster(next.path)])
     )
       return
@@ -374,42 +390,52 @@ const AvatarPickerContent = ({
       {(allowImage || hasAvatar) && (
         <View style={{ height: 1, backgroundColor: theme.colors.border }} />
       )}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {allowImage && (
-          <Button
-            variant='outline'
-            onPress={pickImage}
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              gap: 8,
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon icon={CameraIcon} size={13} color={theme.colors.text} />
-            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-              {i18n.t('choosePhoto')}
-            </Text>
-          </Button>
-        )}
-        {hasAvatar && (
-          <Button
-            variant='outline'
-            onPress={clearAvatar}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 14,
-              gap: 8,
-              justifyContent: 'center',
-            }}
-          >
-            <LucideIcon icon={Trash2Icon} size={13} color={theme.colors.text} />
-            <Text style={{ color: theme.colors.text, fontSize: 14 }}>
-              {i18n.t('remove')}
-            </Text>
-          </Button>
-        )}
-      </View>
+      {(allowImage || hasAvatar) && (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {allowImage && (
+            <Button
+              variant='outline'
+              onPress={pickImage}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                gap: 8,
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={CameraIcon}
+                size={13}
+                color={theme.colors.text}
+              />
+              <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                {i18n.t('choosePhoto')}
+              </Text>
+            </Button>
+          )}
+          {hasAvatar && (
+            <Button
+              variant='outline'
+              onPress={clearAvatar}
+              style={{
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                gap: 8,
+                justifyContent: 'center',
+              }}
+            >
+              <LucideIcon
+                icon={Trash2Icon}
+                size={13}
+                color={theme.colors.text}
+              />
+              <Text style={{ color: theme.colors.text, fontSize: 14 }}>
+                {i18n.t('remove')}
+              </Text>
+            </Button>
+          )}
+        </View>
+      )}
       {library.host}
       {pendingPick && (
         <ContactAvatarCropEditor

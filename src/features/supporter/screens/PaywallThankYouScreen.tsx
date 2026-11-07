@@ -120,7 +120,11 @@ const PaywallThankYouScreen = () => {
             <Text style={{ textAlign: 'center', maxWidth: 280 }}>
               {showSupporterCelebration
                 ? i18n.t('thankYou_description')
-                : i18n.t('thankYou_oneTimeDescription')}
+                : i18n.t(
+                    Platform.OS === 'web'
+                      ? 'thankYou_oneTimeDescriptionWeb'
+                      : 'thankYou_oneTimeDescription'
+                  )}
             </Text>
             {showSupporterCelebration && (
               <Text
@@ -139,29 +143,32 @@ const PaywallThankYouScreen = () => {
           {showSupporterCelebration && <SupporterBenefits />}
 
           {}
-          {showSupporterCelebration && !iCloudSharingAvailable && (
-            <Card style={{ marginTop: 15 }}>
-              <Text
-                style={{
-                  fontFamily: theme.fonts.semiBold,
-                }}
-              >
-                {i18n.t('thankYou_multiDeviceTitle')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('sm'),
-                  color: theme.colors.textAlt,
-                }}
-              >
-                {i18n.t(
-                  Platform.OS === 'android'
-                    ? 'thankYou_multiDeviceBodyAndroid'
-                    : 'thankYou_multiDeviceBody'
-                )}
-              </Text>
-            </Card>
-          )}
+          {}
+          {showSupporterCelebration &&
+            !iCloudSharingAvailable &&
+            Platform.OS !== 'web' && (
+              <Card style={{ marginTop: 15 }}>
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('thankYou_multiDeviceTitle')}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('sm'),
+                    color: theme.colors.textAlt,
+                  }}
+                >
+                  {i18n.t(
+                    Platform.OS === 'android'
+                      ? 'thankYou_multiDeviceBodyAndroid'
+                      : 'thankYou_multiDeviceBody'
+                  )}
+                </Text>
+              </Card>
+            )}
         </View>
       </ScrollView>
       <View

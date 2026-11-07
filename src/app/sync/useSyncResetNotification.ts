@@ -1,14 +1,14 @@
 import { Cloud as CloudIcon } from 'lucide-react-native'
 import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
-import { hasSyncTransport } from '@/lib/syncTransport/platform'
+import { hasSyncEngine } from '@/lib/syncTransport/platform'
 import { syncKey } from '@/lib/syncCopy'
 
 import type { NotificationItem } from '@/types/notifications'
 
 export function useSyncResetNotification(): NotificationItem | null {
   const notice = usePreferences((state) => state.iCloudResetAdoptedNotice)
-  if (!hasSyncTransport() || !notice) return null
+  if (!hasSyncEngine() || !notice) return null
   return {
     id: `icloud:reset-adopted:${notice.epochId}`,
     kind: 'icloud_sync',

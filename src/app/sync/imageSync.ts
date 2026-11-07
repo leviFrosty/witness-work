@@ -1,4 +1,7 @@
-import { filenameForContact, filenameForProfile } from '@/app/sync/imageNames'
+import {
+  filenameForContact,
+  filenameForProfile,
+} from '@/lib/syncTransport/imageNames'
 import { syncTransportErrorCode } from '@/lib/syncTransport/types'
 import { isStorageFullError } from '@/lib/errorTrackingPolicy'
 
@@ -6,7 +9,9 @@ export type ImageSyncDeps = {
   bridge: {
     writeBinary(filename: string, sourcePath: string): Promise<number>
     readBinary(filename: string, destinationPath: string): Promise<number>
-    listBinaryFiles(): Promise<Array<{ filename: string; modifiedAt: number }>>
+    listBinaryFiles(): Promise<
+      Array<{ filename: string; modifiedAt: number; size?: number }>
+    >
     deleteBinaryFile(filename: string): Promise<void>
   }
   fs: {
@@ -15,6 +20,14 @@ export type ImageSyncDeps = {
   now: () => number
 
   canTransfer?: () => boolean
+
+  immutableNames?: boolean
+
+  canUpload?: () => boolean
+
+  fullRetriesOnSignal?: boolean
+
+  putsAgain?: (filename: string) => boolean
 }
 
 export type AvatarSource =
@@ -71,6 +84,72 @@ function isQuotaFailure(entry: { lastError?: string; errorCode?: string }) {
   )
 }
 
+export type ImagePushTrigger = 'store-edit' | 'foreground'
+
+export function waitsOnFullAccount(
+  deps: ImageSyncDeps,
+  entry: { lastError?: string; errorCode?: string },
+  trigger: ImagePushTrigger
+): boolean | null {
+  if (!deps.fullRetriesOnSignal || !isQuotaFailure(entry)) return null
+  return trigger === 'store-edit'
+}
+
+export const isTooLarge = (
+  entry: { errorCode?: string; localMtime: number } | undefined,
+  localMtime: number
+) => entry?.errorCode === 'too-large' && entry.localMtime === localMtime
+
+export function bookkeepingForNewTransport(
+  bookkeeping: ImageSyncBookkeeping
+): ImageSyncBookkeeping {
+  return Object.fromEntries(
+    Object.entries(bookkeeping).map(([filename, entry]) => [
+      filename,
+      { localMtime: entry.localMtime, uploadedMtime: entry.uploadedMtime },
+    ])
+  )
+}
+
+export const deletedElsewhere = (
+  deps: ImageSyncDeps,
+  filename: string,
+  entry: { containerMtime?: number } | undefined
+) =>
+  entry?.containerMtime !== undefined &&
+  !!deps.putsAgain &&
+  !deps.putsAgain(filename)
+
+export const isLinkFailure = (error: unknown) =>
+  syncTransportErrorCode(error) === 'network'
+
+const DOWNLOAD_WAVE_BYTES = 4 * 1024 * 1024
+const DOWNLOAD_WAVE_FILES = 4
+
+export function downloadWaves<T>(
+  items: T[],
+  sizeOf: (item: T) => number | undefined
+): T[][] {
+  const waves: T[][] = []
+  let bytes = 0
+  for (const item of items) {
+    const size = sizeOf(item) ?? 0
+    const wave = waves[waves.length - 1]
+    if (
+      wave &&
+      wave.length < DOWNLOAD_WAVE_FILES &&
+      bytes + size <= DOWNLOAD_WAVE_BYTES
+    ) {
+      wave.push(item)
+      bytes += size
+    } else {
+      waves.push([item])
+      bytes = size
+    }
+  }
+  return waves
+}
+
 export function uploadBackoffMs(failures: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, failures - 1), 60 * 60_000)
 }
@@ -79,7 +158,7 @@ export async function pushAllImages(args: {
   sources: AvatarSource[]
   bookkeeping: ImageSyncBookkeeping
   deps: ImageSyncDeps
-  trigger: 'store-edit' | 'foreground'
+  trigger: ImagePushTrigger
 }): Promise<PushImagesResult> {
   const { sources, deps } = args
   const bookkeeping: ImageSyncBookkeeping = { ...args.bookkeeping }
@@ -87,8 +166,11 @@ export async function pushAllImages(args: {
   let failed = 0
   let skipped = 0
 
-  const containerFiles = new Set(
-    (await deps.bridge.listBinaryFiles()).map((file) => file.filename)
+  const containerFiles = new Map(
+    (await deps.bridge.listBinaryFiles()).map((file) => [
+      file.filename,
+      file.modifiedAt,
+    ])
   )
   for (const source of sources) {
     if (deps.canTransfer && !deps.canTransfer()) break
@@ -96,26 +178,44 @@ export async function pushAllImages(args: {
     const localMtime = await deps.fs.getModifiedAt(source.localPath)
     if (localMtime == null) continue
     const entry = bookkeeping[filename]
+    const containerMtime = containerFiles.get(filename)
     if (
       entry &&
       entry.uploadedMtime === localMtime &&
-      containerFiles.has(filename)
+      containerMtime !== undefined
+    ) {
+      if (deps.putsAgain && entry.containerMtime === undefined)
+        bookkeeping[filename] = { ...entry, containerMtime }
+      skipped++
+      continue
+    }
+    if (
+      containerMtime === undefined &&
+      deletedElsewhere(deps, filename, entry)
     ) {
       skipped++
       continue
     }
 
+    if (isTooLarge(entry, localMtime)) {
+      skipped++
+      continue
+    }
     if (entry?.lastError && entry.localMtime === localMtime) {
+      const full = waitsOnFullAccount(deps, entry, args.trigger)
       const waiting =
-        deps.now() - (entry.failedAt ?? 0) <
-        uploadBackoffMs(entry.failures ?? 1)
-      if (waiting || (args.trigger === 'store-edit' && isQuotaFailure(entry))) {
+        full ??
+        (deps.now() - (entry.failedAt ?? 0) <
+          uploadBackoffMs(entry.failures ?? 1) ||
+          (args.trigger === 'store-edit' && isQuotaFailure(entry)))
+      if (waiting) {
         skipped++
         continue
       }
     }
     try {
       if (deps.canTransfer && !deps.canTransfer()) break
+      if (deps.canUpload && !deps.canUpload()) break
       const containerMtime = await deps.bridge.writeBinary(
         filename,
         source.localPath
@@ -141,6 +241,7 @@ export async function pushAllImages(args: {
             : 1,
       }
       failed++
+      if (isLinkFailure(e)) break
     }
   }
 
@@ -188,8 +289,10 @@ export async function pullMissingImages(args: {
   let failed = 0
 
   const containerIndex = new Map<string, number>()
+  const containerSizes = new Map<string, number>()
   for (const entry of await deps.bridge.listBinaryFiles()) {
     containerIndex.set(entry.filename, entry.modifiedAt)
+    if (entry.size !== undefined) containerSizes.set(entry.filename, entry.size)
   }
 
   const downloadOne = async (source: AvatarSource) => {
@@ -217,7 +320,8 @@ export async function pullMissingImages(args: {
     if (
       localMtime != null &&
       (containerMtime == null ||
-        bookkeeping[filename]?.containerMtime === containerMtime)
+        bookkeeping[filename]?.containerMtime === containerMtime ||
+        (deps.immutableNames && source.revision !== undefined))
     ) {
       downloaded.push(
         source.kind === 'profile'
@@ -269,9 +373,12 @@ export async function pullMissingImages(args: {
     )
   }
 
-  for (let start = 0; start < expectedSources.length; start += 4) {
+  const waves = downloadWaves(expectedSources, (source) =>
+    containerSizes.get(filenameForSource(source))
+  )
+  for (const wave of waves) {
     if (deps.canTransfer && !deps.canTransfer()) break
-    await Promise.all(expectedSources.slice(start, start + 4).map(downloadOne))
+    await Promise.all(wave.map(downloadOne))
   }
 
   return { downloaded, missing, failed, bookkeeping }

@@ -11,6 +11,7 @@ import {
 } from '@/app/sync/routineStoreSync'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
+import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
@@ -126,4 +127,6 @@ export function applyMergedState(acc: LocalMergeState): void {
     ...(acc.profileValues as any),
     profileUpdatedAt: acc.profileUpdatedAt,
   })
+
+  rebasePublishedPhotos()
 }

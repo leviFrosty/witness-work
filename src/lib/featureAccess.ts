@@ -1,6 +1,5 @@
 export type FeatureKey =
   | 'customAccentColor'
-  | 'iCloudSync'
   | 'customAppIcon'
   | 'routePlanning'
   | 'buddyColor'
@@ -9,7 +8,6 @@ type GateRule = { gate: 'supporter-only' }
 
 export const FEATURES: Record<FeatureKey, GateRule> = {
   customAccentColor: { gate: 'supporter-only' },
-  iCloudSync: { gate: 'supporter-only' },
   customAppIcon: { gate: 'supporter-only' },
 
   routePlanning: { gate: 'supporter-only' },

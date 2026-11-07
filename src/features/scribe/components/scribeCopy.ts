@@ -3,6 +3,8 @@ import moment from 'moment'
 import { whenPhrase } from '@/lib/dayPhrases'
 import { localizeDisplayDate } from '@/lib/dates'
 import i18n, { type TranslationKey } from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
+import enUS from '@/locales/en-US.json'
 import type {
   ScribeAvailability,
   ScribeErrorCode,
@@ -16,14 +18,22 @@ type BlockedReason = Extract<
   { status: 'blocked' }
 >['reason']
 
+export const scribeKey = (key: TranslationKey): TranslationKey => {
+  if (hasCapability('scribeVoice')) return key
+  const web = `${key}Web`
+  return web in enUS ? (web as TranslationKey) : key
+}
+
 export const blockedCopy = (reason: BlockedReason): TranslationKey => {
   switch (reason) {
     case 'update_required':
       return 'scribe_blockedUpdate'
     case 'device_ineligible':
-      return Platform.OS === 'android'
-        ? 'scribe_blockedDeviceAndroid'
-        : 'scribe_blockedDevice'
+      return Platform.select<TranslationKey>({
+        android: 'scribe_blockedDeviceAndroid',
+        web: 'scribe_blockedDeviceWeb',
+        default: 'scribe_blockedDevice',
+      })
     case 'attestation_unavailable':
       return 'scribe_blockedAttestation'
     case 'suspended':

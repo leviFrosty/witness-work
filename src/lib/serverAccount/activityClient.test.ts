@@ -4,6 +4,7 @@ import {
   type AuthorizedRequest,
   fetchAccountActivity,
   fetchAccountDevices,
+  fetchSessionWindow,
   revokeAccountDevice,
 } from '@/lib/serverAccount/activityClient'
 import {
@@ -25,6 +26,39 @@ const answering = (data: unknown) => {
   return { request, calls }
 }
 
+describe('fetchSessionWindow', () => {
+  it('reads the server’s clock and when this session’s step-up stops counting', async () => {
+    const { request, calls } = answering({
+      ok: true,
+      sessions: [],
+      now: 1_000,
+      stepUpUntil: 301_000,
+    })
+    expect(await fetchSessionWindow({ baseUrl: BASE, request })).toEqual({
+      now: 1_000,
+      stepUpUntil: 301_000,
+    })
+    expect(calls[0]).toMatchObject({
+      url: `${BASE}/accounts/v1/sessions`,
+      method: 'GET',
+    })
+  })
+
+  it('has no window when the server names none, or an unreadable one', async () => {
+    for (const data of [
+      { ok: true, sessions: [], now: 1_000, stepUpUntil: null },
+      { ok: true, sessions: [], now: 1_000 },
+      { ok: true, sessions: [], now: 1_000, stepUpUntil: '301000' },
+
+      { ok: true, sessions: [] },
+    ])
+      expect(
+        (await fetchSessionWindow({ baseUrl: BASE, ...answering(data) }))
+          .stepUpUntil
+      ).toBeNull()
+  })
+})
+
 describe('fetchAccountDevices', () => {
   it('reads live sessions and drops ones that don’t parse', async () => {
     const device = {
@@ -41,19 +75,82 @@ describe('fetchAccountDevices', () => {
       sessions: [
         device,
         { ...device, sessionId: ID(2), device: undefined, platform: 'android' },
+        {
+          ...device,
+          sessionId: ID(4),
+          platform: 'web',
+          appVersion: '2.1.0',
+          method: 'passkey',
+        },
         { ...device, sessionId: 'short' },
-        { ...device, platform: 'windows' },
         'nope',
       ],
     })
+    const known = { appVersion: null }
     expect(await fetchAccountDevices({ baseUrl: BASE, request })).toEqual([
-      device,
-      { ...device, sessionId: ID(2), device: null, platform: 'android' },
+      { ...device, ...known },
+      {
+        ...device,
+        ...known,
+        sessionId: ID(2),
+        device: null,
+        platform: 'android',
+      },
+      {
+        ...device,
+        sessionId: ID(4),
+        platform: 'web',
+        appVersion: '2.1.0',
+      },
     ])
     expect(calls[0]).toMatchObject({
       url: `${BASE}/accounts/v1/sessions`,
       method: 'GET',
     })
+  })
+
+  it('keeps a session of a platform it doesn’t know, with no platform', async () => {
+    const { request } = answering({
+      ok: true,
+      sessions: [
+        {
+          sessionId: ID(1),
+          platform: 'windows',
+          current: false,
+          createdAt: 1,
+          lastActiveAt: 2,
+          expiresAt: 3,
+        },
+      ],
+    })
+    const devices = await fetchAccountDevices({ baseUrl: BASE, request })
+    expect(devices).toHaveLength(1)
+    expect(devices[0]).toMatchObject({ sessionId: ID(1), platform: null })
+  })
+
+  it('keeps a browser session and ignores a version it can’t read', async () => {
+    const web = {
+      sessionId: ID(1),
+      platform: 'web',
+      current: false,
+      createdAt: 1,
+      lastActiveAt: 2,
+      expiresAt: 3,
+    }
+    const { request } = answering({
+      ok: true,
+      sessions: [
+        { ...web, appVersion: '1.2.3' },
+        { ...web, sessionId: ID(2), appVersion: 4 },
+        { ...web, sessionId: ID(3), appVersion: '' },
+      ],
+    })
+    const devices = await fetchAccountDevices({ baseUrl: BASE, request })
+    expect(devices.map((d) => [d.platform, d.appVersion])).toEqual([
+      ['web', '1.2.3'],
+      ['web', null],
+      ['web', null],
+    ])
   })
 
   it('refuses an answer without a list', async () => {
@@ -90,9 +187,19 @@ describe('fetchAccountActivity', () => {
           actor: { sessionId: ID(2) },
         },
         { id: '8', kind: 'buddies.photo_shared', createdAt: 4 },
+        {
+          id: '10',
+          kind: 'session.opened',
+          createdAt: 6,
+          method: 'approval',
+          session: { sessionId: ID(5), platform: 'web', device: 'y' },
+          actor: { sessionId: ID(2), platform: 'ios' },
+        },
         { id: '7', kind: 'backup.deleted', createdAt: 3 },
         { id: '6', kind: 'backup.downloaded', createdAt: 2, slotId: ID(3) },
         { id: 5, kind: 'account.created', createdAt: 1 },
+        { id: '', kind: 'account.created', createdAt: 1 },
+        { id: '4', kind: 'account.key_changed', createdAt: 1 },
       ],
       nextCursor: '6',
     })
@@ -108,14 +215,25 @@ describe('fetchAccountActivity', () => {
           id: '9',
           kind: 'session.revoked',
           createdAt: 5,
+          method: null,
           session: { sessionId: ID(1), platform: 'android', device: 'x' },
           actor: { sessionId: ID(2), platform: null, device: null },
+          slotId: null,
+        },
+        {
+          id: '10',
+          kind: 'session.opened',
+          createdAt: 6,
+          method: 'approval',
+          session: { sessionId: ID(5), platform: 'web', device: 'y' },
+          actor: { sessionId: ID(2), platform: 'ios', device: null },
           slotId: null,
         },
         {
           id: '7',
           kind: 'backup.deleted',
           createdAt: 3,
+          method: null,
           session: null,
           actor: null,
           slotId: null,
@@ -124,12 +242,63 @@ describe('fetchAccountActivity', () => {
           id: '6',
           kind: 'backup.downloaded',
           createdAt: 2,
+          method: null,
           session: null,
           actor: null,
           slotId: ID(3),
         },
+        {
+          id: '4',
+          kind: 'account.key_changed',
+          createdAt: 1,
+          method: null,
+          session: null,
+          actor: null,
+          slotId: null,
+        },
       ],
     })
+  })
+
+  it('reads the passkey and approval kinds, and drops a method it doesn’t know', async () => {
+    const session = { sessionId: ID(1), platform: 'web', device: 'x' }
+    const { request } = answering({
+      ok: true,
+      activity: [
+        {
+          id: '4',
+          kind: 'passkey.added',
+          createdAt: 4,
+          session,
+          credentialId: 'c',
+        },
+        { id: '3', kind: 'passkey.removed', createdAt: 3, session },
+        {
+          id: '2',
+          kind: 'device.approved',
+          createdAt: 2,
+          session: { sessionId: ID(2), platform: 'ios' },
+        },
+        {
+          id: '1',
+          kind: 'session.opened',
+          createdAt: 1,
+          session,
+          method: 'soon',
+        },
+      ],
+    })
+    const { entries } = await fetchAccountActivity(
+      {},
+      { baseUrl: BASE, request }
+    )
+    expect(entries.map((e) => [e.kind, e.method])).toEqual([
+      ['passkey.added', null],
+      ['passkey.removed', null],
+      ['device.approved', null],
+      ['session.opened', null],
+    ])
+    expect(entries[0].session?.platform).toBe('web')
   })
 
   it('treats a missing cursor as the last page', async () => {
@@ -168,5 +337,16 @@ describe('createDeviceLabelReader', () => {
     expect(read(sealed)).toEqual(
       openDeviceLabel(key, deriveAccountSigningKey(key).publicKey, sealed)
     )
+  })
+
+  it('opens a browser’s label', () => {
+    const web = { name: 'Chrome on macOS', platform: 'web' as const, model: '' }
+    const sealedWeb = sealDeviceLabel(
+      key,
+      deriveAccountSigningKey(key).publicKey,
+      web,
+      new Uint8Array(12)
+    )
+    expect(createDeviceLabelReader(key)(sealedWeb)).toEqual(web)
   })
 })

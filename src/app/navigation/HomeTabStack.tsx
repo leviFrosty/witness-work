@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import NavigationTabBar from '@/app/navigation/NavigationTabBar'
 import HomeNavigator from '@/app/navigation/HomeNavigator'
+import InertWhenBlurred from '@/app/navigation/InertWhenBlurred'
 import { usePreferences } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import Constants from 'expo-constants'
@@ -28,6 +29,7 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
+import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
 import { isRtlLayout } from '@/lib/direction'
 import {
   getEffectiveTabOrder,
@@ -73,6 +75,10 @@ const decideLaunch = (): LaunchDecision => {
 }
 
 const Tab = createBottomTabNavigator<HomeTabStackParamList>()
+
+const getToolsScreen = canvasKitScreen(
+  () => require('@/app/navigation/ToolsScreen').default
+)
 
 const renderTabScreen = (name: TabOrderKey) => {
   switch (name) {
@@ -195,7 +201,7 @@ const HomeTabStack = () => {
         )}
         screenLayout={({ children }) => (
           <HorizontalSafeArea covered={navigationRail}>
-            {children}
+            <InertWhenBlurred>{children}</InertWhenBlurred>
           </HorizontalSafeArea>
         )}
       >
@@ -220,10 +226,7 @@ const HomeTabStack = () => {
           />
         )}
         {developerTools && (
-          <Tab.Screen
-            name='Tools'
-            getComponent={() => require('@/app/navigation/ToolsScreen').default}
-          />
+          <Tab.Screen name='Tools' getComponent={getToolsScreen} />
         )}
         {hasSidebar && (
           <Tab.Screen

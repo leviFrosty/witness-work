@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const platform = { OS: 'ios' }
+const platform = {
+  OS: 'ios',
+  select: (spec: Record<string, unknown>) => spec[platform.OS] ?? spec.default,
+}
 vi.mock('react-native', () => ({ Platform: platform }))
 
 const load = async (os: string) => {

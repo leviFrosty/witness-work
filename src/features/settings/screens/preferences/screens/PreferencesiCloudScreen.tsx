@@ -1,3 +1,6 @@
+import { openAppSettings } from '@/lib/openAppSettings'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
+import { syncSettingsMode } from '@/features/settings/lib/syncSettingsMode'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
@@ -19,12 +22,9 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import Text from '@/components/ui/MyText'
 import Badge from '@/components/ui/Badge'
-import SyncSupporterGate from '@/features/settings/components/sync/SyncSupporterGate'
-import SupporterInfoSheet from '@/components/SupporterInfoSheet'
-import useIsSupporter from '@/hooks/useIsSupporter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { optionSyncKey, platformSyncKey, syncKey } from '@/lib/syncCopy'
+import { platformSyncKey, syncKey } from '@/lib/syncCopy'
 import { usePreferences } from '@/stores/preferences'
 import { dismissICloudAccountChangeNotice } from '@/lib/iCloudIdentity'
 import {
@@ -47,7 +47,7 @@ import {
   UPLOAD_GRACE_MS,
 } from '@/features/settings/lib/iCloudStatus'
 import { alignText } from '@/lib/direction'
-import * as BuddiesKeychain from '../../../../../../modules/buddies-keychain'
+import { deviceAccountKey } from '@/lib/accountKey'
 import { fromB64u } from '@/lib/bytes'
 import { accountSessions } from '@/lib/serverAccount'
 import { signedInElsewhere } from '@/lib/serverAccount/accountDevices'
@@ -69,9 +69,9 @@ import {
   dismissCloudSyncOffer,
   showsCloudSyncOffer,
   switchSyncOption,
-  type SwitchFailure,
   type SyncOption,
 } from '@/app/sync/syncOption'
+import { switchFailureMessage } from '@/app/sync/switchFailureMessage'
 import SyncOptionSection, {
   useOtherDevicesSignedIn,
 } from '@/features/settings/components/sync/SyncOptionSection'
@@ -81,28 +81,8 @@ const formatOrDash = (ts: number | null): string =>
 
 async function accountHasOtherDevices(): Promise<boolean> {
   if (!accountSessions.snapshot()) return false
-  const seed = await BuddiesKeychain.peekRootSeed().catch(() => null)
+  const seed = await deviceAccountKey.peek().catch(() => null)
   return seed ? signedInElsewhere(fromB64u(seed)) : false
-}
-
-const switchFailureMessage = (reason: SwitchFailure, to: SyncOption) => {
-  const option = to === 'cloud' ? 'cloud' : 'platform'
-  switch (reason) {
-    case 'not_entitled':
-      return i18n.t('cloudSyncNotEntitled')
-    case 'disabled':
-      return i18n.t('cloudSyncDisabled')
-    case 'no_session':
-      return i18n.t('cloudSyncNoSession')
-    case 'offline':
-      return i18n.t('iCloudSyncNowOffline_description')
-    case 'incomplete':
-      return i18n.t(optionSyncKey('iCloudRemoteNotReady_description', option))
-    case 'unavailable':
-      return i18n.t(optionSyncKey('iCloudUnavailable_description', option))
-    case 'account_changed':
-      return i18n.t('syncOption_accountChanged')
-  }
 }
 
 const showCloudSyncPaused = (pause: CloudSyncPause) =>
@@ -138,7 +118,6 @@ const PreferencesiCloudScreenInner = () => {
     iCloudSyncIssue,
     iCloudSyncErrorCode,
     iCloudSyncPendingPush,
-    iCloudSyncPausedForLapse,
     iCloudSyncNeedsResolution,
     iCloudAccountChangedAt,
     googleDriveNeedsReconnect,
@@ -149,17 +128,22 @@ const PreferencesiCloudScreenInner = () => {
     set,
   } = usePreferences()
 
-  const cloudOffered =
-    registeredCloudSyncTransport() !== null &&
-    (cloudSyncConfig?.enabled === true || syncProvider === 'cloud')
-  const option = currentSyncOption()
-  const onCloud = option === 'cloud'
+  const web = cloudSyncOnly()
+  const option = web ? 'cloud' : currentSyncOption()
+  const {
+    optionPicker: cloudOffered,
+    onCloud,
+    rebuild,
+  } = syncSettingsMode({
+    web,
+    cloudRegistered: registeredCloudSyncTransport() !== null,
+    cloudSyncConfigEnabled: cloudSyncConfig?.enabled,
+    chosenProvider: syncProvider,
+    option,
+  })
   const offer = usePreferences(showsCloudSyncOffer)
   const [switchingTo, setSwitchingTo] = useState<SyncOption | null>(null)
   const otherDevicesSignedIn = useOtherDevicesSignedIn(accountHasOtherDevices)
-
-  const { isSupporter } = useIsSupporter()
-  const [platformGateOpen, setPlatformGateOpen] = useState(false)
 
   const googleDrive = usesGoogleDriveSync() && syncProvider !== 'cloud'
   const [syncing, setSyncing] = useState(false)
@@ -263,7 +247,9 @@ const PreferencesiCloudScreenInner = () => {
         case 'useRemote':
           if (pendingRemote) {
             iCloudSync.replaceLocalWithRemote(pendingRemote)
-            shouldPromptForImages = payloadReferencesPhotos(pendingRemote)
+
+            shouldPromptForImages =
+              !usesCloudSync() && payloadReferencesPhotos(pendingRemote)
             toast.success(i18n.t(syncKey('iCloudEnabledToastRestored')))
           }
           break
@@ -460,10 +446,6 @@ const PreferencesiCloudScreenInner = () => {
     source: 'settings' | 'offer' = 'settings'
   ) => {
     if (syncing || switchingTo || next === option) return
-    if (next === 'platform' && !isSupporter) {
-      setPlatformGateOpen(true)
-      return
-    }
     if (source === 'offer')
       analytics.capture('cloud_sync_offer_answered', { choice: 'switch' })
     if (option === 'off') {
@@ -660,15 +642,16 @@ const PreferencesiCloudScreenInner = () => {
   }
 
   const handleOpenSettings = () => {
-    void Linking.openSettings()
+    void openAppSettings()
   }
 
   const status = buildICloudStatus({
     enabled: iCloudSyncEnabled,
     available,
 
-    paused: onCloud ? cloudSyncEntitled === false : iCloudSyncPausedForLapse,
-    pausedBySwitch: onCloud && cloudSyncConfig?.enabled === false,
+    paused:
+      onCloud &&
+      (cloudSyncEntitled === false || cloudSyncConfig?.enabled === false),
     needsResolution: iCloudSyncNeedsResolution,
     issue: iCloudSyncIssue,
     uploadIssue: iCloudUploadIssue,
@@ -1172,14 +1155,6 @@ const PreferencesiCloudScreenInner = () => {
           </Section>
         )}
 
-        {iCloudSyncEnabled && onCloud && (
-          <View>
-            <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
-              {i18n.t('cloudSyncPhotosNote')}
-            </Text>
-          </View>
-        )}
-
         {iCloudSyncEnabled && !onCloud && (
           <View style={{ gap: 8 }}>
             <View
@@ -1255,7 +1230,7 @@ const PreferencesiCloudScreenInner = () => {
           </View>
         )}
 
-        {iCloudSyncEnabled && (
+        {iCloudSyncEnabled && rebuild && (
           <Section>
             <InputRowButton
               label={i18n.t(syncKey('iCloudReset'))}
@@ -1285,20 +1260,13 @@ const PreferencesiCloudScreenInner = () => {
         remote={pendingRemote}
         onChoose={handleFirstEnableChoice}
       />
-      <SupporterInfoSheet
-        open={platformGateOpen}
-        setOpen={setPlatformGateOpen}
-        featureKey='iCloudSync'
-      />
     </Wrapper>
   )
 }
 
 const PreferencesiCloudScreen = () => (
   <SettingsInputLayout>
-    <SyncSupporterGate>
-      <PreferencesiCloudScreenInner />
-    </SyncSupporterGate>
+    <PreferencesiCloudScreenInner />
   </SettingsInputLayout>
 )
 

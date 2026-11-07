@@ -10,13 +10,14 @@ import usePublisher from '@/hooks/usePublisher'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
 import ScribeSheetFrame from '@/features/scribe/components/ScribeSheetFrame'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
 
 const ScribeOfflineSheet = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { showsTimeEntry } = usePublisher()
   const titleFit = useUnbrokenWords(i18n.t('scribe_offlineTitle'))
-  const bodyFit = useUnbrokenWords(i18n.t('scribe_offlineBody'))
+  const bodyFit = useUnbrokenWords(i18n.t(scribeKey('scribe_offlineBody')))
   const close = () => navigation.goBack()
 
   return (
@@ -67,7 +68,7 @@ const ScribeOfflineSheet = () => {
               lineHeight: 22 * bodyFit.scale,
             }}
           >
-            {i18n.t('scribe_offlineBody')}
+            {i18n.t(scribeKey('scribe_offlineBody'))}
           </Text>
         </View>
         <View style={{ gap: 6 }}>

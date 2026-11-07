@@ -6,6 +6,7 @@ const fake = vi.hoisted(() => ({
   deletes: [] as (string | undefined)[],
   noteChange: vi.fn(),
   stop: vi.fn(),
+  run: vi.fn(async () => ({ status: 'uploaded' })),
 }))
 
 vi.mock('react-native', () => ({
@@ -28,13 +29,21 @@ vi.mock('@/lib/installId', () => ({
 }))
 vi.mock('@/app/account/accountKey', () => ({
   accountKeyAvailable: () => true,
-  accountKey: { peek: async () => new Uint8Array(32).fill(7) },
+  accountKey: {
+    peek: async () => new Uint8Array(32).fill(7),
+    getOrCreate: async () => new Uint8Array(32).fill(7),
+  },
 }))
+vi.mock('@/app/account/passkeyPrompt', () => ({ earnPasskeyPrompt: vi.fn() }))
 vi.mock('@/app/account/backupData', () => ({}))
 vi.mock('@/app/sync/localChanges', () => ({
   subscribeToLocalDataChanges: vi.fn(),
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+
+vi.mock('@/lib/confirmSensitive', () => ({
+  withStepUp: (_action: string, op: () => Promise<unknown>) => op(),
+}))
 vi.mock('@/lib/appLifecycle', () => ({
   addBackgroundListener: vi.fn(),
   addForegroundListener: vi.fn(),
@@ -62,12 +71,13 @@ vi.mock('@/lib/serverAccount/backupScheduler', async (importOriginal) => ({
   createBackupScheduler: () => ({
     noteChange: fake.noteChange,
     stop: fake.stop,
+    run: fake.run,
   }),
 }))
 
-const { deleteAllBackups, deleteBackupSlot, refreshBackupSlots } = await import(
-  './backup'
-)
+const { deleteAllBackups, deleteBackupSlot, enableBackup, refreshBackupSlots } =
+  await import('./backup')
+const { earnPasskeyPrompt } = await import('@/app/account/passkeyPrompt')
 const { listBackups } = await import('@/lib/serverAccount/backupClient')
 const { useBackupState } = await import('@/lib/serverAccount/backupStore')
 const { analytics } = await import('@/lib/analytics')
@@ -150,5 +160,17 @@ describe('listing slots', () => {
     answers[0]([slot('old')])
     await older
     expect(useBackupState.getState().slots).toEqual([slot('new')])
+  })
+})
+
+describe('turning backup on', () => {
+  it('earns the gentle passkey prompt when the User chose it in Settings', async () => {
+    await enableBackup('settings')
+    expect(earnPasskeyPrompt).toHaveBeenCalledWith('backup')
+  })
+
+  it('does not when a restore turned it back on', async () => {
+    await enableBackup('restore')
+    expect(earnPasskeyPrompt).not.toHaveBeenCalled()
   })
 })

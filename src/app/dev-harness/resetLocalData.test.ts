@@ -85,16 +85,7 @@ import { initialBuddiesState } from '@/features/buddies/lib/state'
 import useCategories from '@/stores/categories'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
-const RESET_BY_ACTIONS = [
-  'contacts',
-  'conversations',
-  'serviceReports',
-  'mileage',
-  'petCompanion',
-  'routine',
-  'preferences',
-  'profile',
-]
+const RESET_BY_ACTIONS = ['preferences', 'profile']
 
 const CLEARED_MMKV = ['notes-import-ledger', 'pet-secrets', 'stopwatch']
 
@@ -110,6 +101,8 @@ const KEPT_MMKV: Record<string, string> = {
   'app-store-ratings': 'cached App Store totals for the paywall',
   'help-center': "the website's Help Center manifest, never the User's",
   'analytics-frequency': 'analytics throttling, never shown',
+  'web-checkout':
+    "web only: an open checkout's tier and start time, for its return page",
   'ww-verify-session':
     "the verify harness's own session marks (dev builds), never the User's",
 }

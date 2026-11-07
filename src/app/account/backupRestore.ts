@@ -41,6 +41,7 @@ import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
 export type RestoreSource =
   | 'handoff'
+  | 'passkey'
   | 'recovery_key'
   | 'fresh_install'
   | 'settings'
@@ -78,6 +79,9 @@ export type RestoreOutcome =
     }
   | { outcome: 'failed'; reason: RestoreFailure }
 
+export const recordsCameBack = ({ outcome }: RestoreOutcome): boolean =>
+  outcome === 'restored' || outcome === 'synced'
+
 const failureFrom = (error: unknown): RestoreFailure => {
   if (error instanceof BackupError) {
     if (error.code === 'offline' || error.code === 'unavailable')
@@ -93,15 +97,17 @@ export function simulateCorruptDownload() {
 }
 
 export function readSlotBlob(
-  access: Pick<BackupAccess, 'accountKey' | 'accountId'>,
+  access: Pick<BackupAccess, 'accountKey' | 'accountId' | 'olderBackupKeys'>,
   slot: BackupSlot,
   blob: Uint8Array
 ): DownloadedSlot {
   try {
-    const plaintext = openBackup(deriveBackupKey(access.accountKey), blob, {
-      accountId: access.accountId,
-      slotId: slot.slotId,
-    })
+    const plaintext = openBackup(
+      deriveBackupKey(access.accountKey),
+      blob,
+      { accountId: access.accountId, slotId: slot.slotId },
+      access.olderBackupKeys
+    )
     const read = readBackupPayload(plaintext, slot.uploadedAt)
     if (!read.ok) return { ...slot, ok: false, problem: read.problem }
     return {
@@ -320,6 +326,7 @@ async function runRestore(
 
   const syncedAt =
     source === 'handoff' ||
+    source === 'passkey' ||
     source === 'recovery_key' ||
     source === 'fresh_install'
       ? cloudSyncNewestSlotAt()

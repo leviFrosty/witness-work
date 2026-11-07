@@ -6,6 +6,7 @@ import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useNotifications from '@/hooks/notifications'
 import { analytics } from '@/lib/analytics'
+import { hasCapability } from '@/lib/platformCapabilities'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { RoutineHabit } from '@/types/routine'
@@ -122,16 +123,20 @@ export default function RoutineSettingsScreen() {
                   />
                 </Group>
               )}
-              <Group title={i18n.t('routine.settings.reminderTitle')}>
-                <SettingsSearchTarget id='routineReminder'>
-                  <RoutineReminderFields
-                    enabled={reminders}
-                    time={reminderTime}
-                    onEnabledChange={(on) => void toggleReminder(on)}
-                    onTimeChange={(time) => set({ routineReminderTime: time })}
-                  />
-                </SettingsSearchTarget>
-              </Group>
+              {hasCapability('deviceNotifications') && (
+                <Group title={i18n.t('routine.settings.reminderTitle')}>
+                  <SettingsSearchTarget id='routineReminder'>
+                    <RoutineReminderFields
+                      enabled={reminders}
+                      time={reminderTime}
+                      onEnabledChange={(on) => void toggleReminder(on)}
+                      onTimeChange={(time) =>
+                        set({ routineReminderTime: time })
+                      }
+                    />
+                  </SettingsSearchTarget>
+                </Group>
+              )}
             </>
           )}
           {(!enabled || prepares) && (

@@ -1,0 +1,191 @@
+import type { Page } from '@playwright/test'
+import { expect, openBlankOnOrigin, readStoreRow, test } from './fixtures'
+
+test.use({
+  preferences: { role: 'regularPioneer', roleHistory: null },
+  signedIn: true,
+})
+
+const shown = (page: Page, text: string) =>
+  page.getByText(text, { exact: true }).filter({ visible: true }).first()
+
+async function addContact(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Contacts', exact: true }).click()
+  await page.getByRole('button', { name: 'Add Contact' }).first().click()
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await page.getByRole('button', { name: 'Skip' }).click()
+  await expect(shown(page, name)).toBeVisible()
+
+  if (!(await page.getByRole('button', { name: 'Quick Action' }).isVisible()))
+    await page.goBack()
+  await expect(page.getByRole('button', { name: 'Quick Action' })).toBeVisible()
+}
+
+async function expectContactAfterLoad(page: Page, name: string) {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Contacts', exact: true }).click()
+  await expect(shown(page, name)).toBeVisible()
+}
+
+async function addTwoHours(page: Page) {
+  await page.getByRole('button', { name: 'Quick Action' }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Add Time' })
+    .click()
+  await page.getByTestId('time-entry-duration-pill').click()
+  await page.getByRole('listbox', { name: 'Hours' }).selectOption('2')
+  await page.getByRole('button', { name: 'Done' }).click()
+  await page.getByTestId('time-entry-save').click()
+  await expect(page.getByRole('heading', { name: 'Add Time' })).toBeHidden()
+}
+
+const timeEntries = (raw: unknown) =>
+  Object.values(
+    JSON.parse(raw as string).state.serviceReports as Record<
+      string,
+      Record<string, { hours: number; minutes: number }[]>
+    >
+  ).flatMap((month) => Object.values(month).flat())
+
+const appKeysInLocalStorage = (page: Page) =>
+  page.evaluate(() =>
+    Object.keys(localStorage).filter(
+      (key) =>
+        key.includes('\\') ||
+        key.startsWith('mmkv') ||
+        /contacts|serviceReports|preferences/.test(
+          localStorage.getItem(key) ?? ''
+        )
+    )
+  )
+
+test('keeps a new contact and time entry across a reload, in IndexedDB only', async ({
+  app,
+}) => {
+  await addContact(app, 'Rowan Persist')
+  await addTwoHours(app)
+  await expectContactAfterLoad(app, 'Rowan Persist')
+
+  const contacts = await readStoreRow(app, 'mmkv.default', 'contacts')
+  expect(contacts).toContain('Rowan Persist')
+  const entries = timeEntries(
+    await readStoreRow(app, 'mmkv.default', 'serviceReports')
+  )
+  expect(entries.some((e) => e.hours * 60 + e.minutes > 0)).toBe(true)
+
+  expect(await appKeysInLocalStorage(app)).toEqual([])
+  console.log(
+    'localStorage keys:',
+    JSON.stringify(await app.evaluate(() => Object.keys(localStorage)))
+  )
+})
+
+test('runs in one tab at a time, and Use Here takes over without losing an edit', async ({
+  app,
+  shot,
+}) => {
+  const other = await app.context().newPage()
+  await other.goto('/')
+  await expect(
+    other.getByText('WitnessWork Is Open in Another Tab')
+  ).toBeVisible()
+  const useHere = other.getByRole('button', { name: 'Use Here' })
+  const box = await useHere.boundingBox()
+  expect(box!.height).toBeGreaterThanOrEqual(44)
+  await other.bringToFront()
+  await other.waitForTimeout(1000)
+  await other.screenshot({
+    path: `${process.env.WW_WEB_SHOTS ?? '/tmp'}/in-another-tab-${test.info().project.name}.png`,
+  })
+
+  await addContact(app, 'Edited Before Takeover')
+  await useHere.click()
+  await expect(
+    other.getByRole('button', { name: 'Quick Action' })
+  ).toBeVisible()
+  await other.getByRole('button', { name: 'Contacts', exact: true }).click()
+  await expect(shown(other, 'Edited Before Takeover')).toBeVisible()
+
+  await expect(
+    app.getByText('WitnessWork Is Open in Another Tab')
+  ).toBeVisible()
+  await shot('first-tab-after-takeover')
+
+  await addContact(other, 'Edited After Takeover')
+  await expectContactAfterLoad(other, 'Edited After Takeover')
+  await expect(shown(other, 'Edited Before Takeover')).toBeVisible()
+  await other.close()
+})
+
+test('says once when the browser is out of space, keeps working, and saves later', async ({
+  app,
+}) => {
+  await app.addInitScript(() => {
+    const put = IDBObjectStore.prototype.put
+    IDBObjectStore.prototype.put = function (...args) {
+      if ((globalThis as { wwFull?: boolean }).wwFull) {
+        throw new DOMException('Simulated', 'QuotaExceededError')
+      }
+      return put.apply(this, args)
+    }
+  })
+  await app.reload()
+  await expect(app.getByRole('button', { name: 'Quick Action' })).toBeVisible()
+  await app.evaluate(() => ((globalThis as { wwFull?: boolean }).wwFull = true))
+  await addContact(app, 'Saved Later')
+  await expect(
+    app.getByText('This browser is out of space for WitnessWork')
+  ).toBeVisible()
+  expect(await readStoreRow(app, 'mmkv.default', 'contacts')).not.toContain(
+    'Saved Later'
+  )
+
+  await app.evaluate(() => {
+    ;(globalThis as { wwFull?: boolean }).wwFull = false
+    window.dispatchEvent(new Event('pagehide'))
+  })
+  await expect
+    .poll(() => readStoreRow(app, 'mmkv.default', 'contacts'))
+    .toContain('Saved Later')
+  await expectContactAfterLoad(app, 'Saved Later')
+})
+
+test('runs from memory, and says so, where the browser refuses IndexedDB', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const open = IDBFactory.prototype.open
+    IDBFactory.prototype.open = function (name: string, version?: number) {
+      if (name === 'witnesswork-stores') {
+        throw new DOMException('Refused', 'SecurityError')
+      }
+      return open.call(this, name, version)
+    }
+  })
+  await page.goto('/')
+  await expect(
+    page.getByText("This browser isn't letting WitnessWork save")
+  ).toBeVisible()
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([])
+})
+
+test('boots as a fresh install once the site’s data is gone', async ({
+  app,
+}) => {
+  await addContact(app, 'Wiped Away')
+
+  await openBlankOnOrigin(app)
+  await app.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.deleteDatabase('witnesswork-stores')
+        request.onsuccess = () => resolve()
+        request.onerror = () => reject(request.error)
+      })
+  )
+  await app.goto('/')
+  await expect(app.getByRole('button', { name: 'Get Started' })).toBeVisible()
+})

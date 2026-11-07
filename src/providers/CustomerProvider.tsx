@@ -14,11 +14,13 @@ import { toPurchasesError } from '@/lib/purchasesError'
 import { logger } from '@/lib/logger'
 import { isOfflineError } from '@/lib/offlineError'
 import { getOrCreateAccountId } from '@/lib/account'
+import { noteRevenueCatAppUserId } from '@/lib/revenueCatIdentity'
 import { InstallIdUnavailableError } from '@/lib/installId'
 import { Platform } from 'react-native'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { addReconnectListener } from '@/lib/http/online'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
+import { forgetBrowserAppUserId } from '@/lib/revenueCatBrowser'
 
 interface Props {}
 
@@ -50,7 +52,9 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     const apiKey =
       Platform.OS === 'android'
         ? process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY
-        : process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
+        : Platform.OS === 'web'
+          ? process.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
+          : process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY
     logger.log('[CustomerProvider] init')
 
     if (!apiKey) {
@@ -62,6 +66,8 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
         )
         return
       }
+
+      if (Platform.OS === 'web') return
 
       const error = new Error(
         `[CustomerProvider] RevenueCat ${Platform.OS} SDK key is empty at runtime. Check the platform-specific EXPO_PUBLIC_REVENUECAT key and EAS visibility (must be sensitive/plaintext, not secret).`
@@ -84,7 +90,12 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
     try {
       if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
 
-      Purchases.configure({ apiKey })
+      Purchases.configure(
+        Platform.OS === 'web' && accountId
+          ? { apiKey, appUserID: accountId }
+          : { apiKey }
+      )
+      forgetBrowserAppUserId()
       logger.log('[CustomerProvider] Purchases.configure completed')
       setReady(true)
     } catch (error) {
@@ -109,6 +120,7 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
           logger.log('[CustomerProvider] Purchases.logIn completed', {
             created,
           })
+          noteRevenueCatAppUserId(accountId)
           seedCustomer(customerInfo)
         })
       : Purchases.getCustomerInfo().then(seedCustomer)
@@ -125,7 +137,14 @@ const CustomerProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
       if (accountId) {
         Purchases.getCustomerInfo()
-          .then(seedCustomer)
+          .then(async (info) => {
+            try {
+              noteRevenueCatAppUserId(await Purchases.getAppUserID())
+            } catch {
+              noteRevenueCatAppUserId(null)
+            }
+            seedCustomer(info)
+          })
           .catch(() => {})
       }
     })

@@ -8,7 +8,7 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import Switch from '@/components/ui/Switch'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import {
   appLockRequireLabel,
@@ -23,25 +23,14 @@ import {
   type AppLockDelay,
   useAppLockSettings,
 } from '@/stores/appLock'
+import { appLockDelayLabel } from '@/features/settings/components/appLockDelayLabel'
 
 const METHOD_ICONS = {
   faceId: ScanFaceIcon,
   touchId: FingerprintIcon,
   passcode: LockIcon,
   biometrics: FingerprintIcon,
-}
-
-const delayLabel = (delay: AppLockDelay) => {
-  switch (delay) {
-    case 0:
-      return i18n.t('appLock_immediately')
-    case 60:
-      return i18n.t('appLock_afterOneMinute')
-    case 300:
-      return i18n.t('appLock_afterFiveMinutes')
-    case 900:
-      return i18n.t('appLock_afterFifteenMinutes')
-  }
+  passkey: LockIcon,
 }
 
 const captureChange = (
@@ -97,7 +86,10 @@ const SecuritySettingsSection = () => {
         leftIcon={METHOD_ICONS[method]}
         label={label}
         info={i18n.t(
-          Platform.OS === 'android' ? 'appLock_infoAndroid' : 'appLock_info'
+          Platform.select<TranslationKey>({
+            android: 'appLock_infoAndroid',
+            default: 'appLock_info',
+          })
         )}
         controlWidth='auto'
         lastInSection={!enabled}
@@ -117,7 +109,7 @@ const SecuritySettingsSection = () => {
           selectProps={{
             data: APP_LOCK_DELAYS.map((value) => ({
               value,
-              label: delayLabel(value),
+              label: appLockDelayLabel(value),
             })),
             value: requireAfter,
             onChange: ({ value }) => {

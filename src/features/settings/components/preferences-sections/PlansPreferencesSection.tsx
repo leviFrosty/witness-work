@@ -20,6 +20,7 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import { midweekMeetingDay, weekendMeetingDay } from '@/lib/routine/habits'
 import { weekdayName } from '@/features/routine/lib/weekdays'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
@@ -78,67 +79,71 @@ const PlansPreferencesSection = () => {
   return (
     <View style={{ gap: 3 }}>
       <Section>
-        <SettingsSearchTarget id='planNotification'>
-          <InputRowContainer
-            label={i18n.t('notificationOffset')}
-            lastInSection
-            controlWidth='full'
-            description={i18n.t('planNotificationOffset_description')}
-            style={{
-              flexDirection: 'column',
-              gap: 10,
-              alignItems: 'flex-start',
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Select
-                  data={amountOptions}
-                  onChange={({ value }) =>
-                    set({
-                      planNotificationOffset: {
-                        amount: value,
-                        unit: currentUnit,
-                      },
-                    })
-                  }
-                  value={currentAmount}
-                />
-              </View>
+        {hasCapability('deviceNotifications') && (
+          <>
+            <SettingsSearchTarget id='planNotification'>
+              <InputRowContainer
+                label={i18n.t('notificationOffset')}
+                lastInSection
+                controlWidth='full'
+                description={i18n.t('planNotificationOffset_description')}
+                style={{
+                  flexDirection: 'column',
+                  gap: 10,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Select
+                      data={amountOptions}
+                      onChange={({ value }) =>
+                        set({
+                          planNotificationOffset: {
+                            amount: value,
+                            unit: currentUnit,
+                          },
+                        })
+                      }
+                      value={currentAmount}
+                    />
+                  </View>
 
-              <View style={{ flex: 1 }}>
-                <Select
-                  data={unitOptions}
-                  onChange={({ value }) =>
-                    set({
-                      planNotificationOffset: {
-                        amount: currentAmount,
-                        unit: value,
-                      },
-                    })
-                  }
-                  value={currentUnit}
-                />
-              </View>
-              <Text style={{ color: theme.colors.textAlt }}>
-                {i18n.t('before')}
-              </Text>
-            </View>
-          </InputRowContainer>
-        </SettingsSearchTarget>
-        <SettingsSearchTarget id='planAlwaysNotify'>
-          <InputRowSwitch
-            label={i18n.t('planAlwaysNotify')}
-            value={planAlwaysNotify}
-            onValueChange={(value) => set({ planAlwaysNotify: value })}
-          />
-        </SettingsSearchTarget>
+                  <View style={{ flex: 1 }}>
+                    <Select
+                      data={unitOptions}
+                      onChange={({ value }) =>
+                        set({
+                          planNotificationOffset: {
+                            amount: currentAmount,
+                            unit: value,
+                          },
+                        })
+                      }
+                      value={currentUnit}
+                    />
+                  </View>
+                  <Text style={{ color: theme.colors.textAlt }}>
+                    {i18n.t('before')}
+                  </Text>
+                </View>
+              </InputRowContainer>
+            </SettingsSearchTarget>
+            <SettingsSearchTarget id='planAlwaysNotify'>
+              <InputRowSwitch
+                label={i18n.t('planAlwaysNotify')}
+                value={planAlwaysNotify}
+                onValueChange={(value) => set({ planAlwaysNotify: value })}
+              />
+            </SettingsSearchTarget>
+          </>
+        )}
         <SettingsSearchTarget id='meetingDays'>
           <InputRowButton
             wrapValue

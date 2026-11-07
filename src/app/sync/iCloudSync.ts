@@ -26,7 +26,7 @@ import {
   filenameForContact,
   filenameForNoteImage,
   filenameForProfile,
-} from '@/app/sync/imageNames'
+} from '@/lib/syncTransport/imageNames'
 import {
   SyncDeviceFile,
   SyncDeviceFiles,
@@ -39,12 +39,20 @@ import { AppState, AppStateStatus } from 'react-native'
 import {
   addBackgroundListener,
   addForegroundListener,
+  addWindowFocusListener,
 } from '@/lib/appLifecycle'
 import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
 import debounce from 'lodash/debounce'
+import { hasCapability } from '@/lib/platformCapabilities'
+import { cloudSyncOnly, hasSyncEngine } from '@/lib/syncTransport/platform'
+import {
+  completePullGeneration,
+  markCompletePull,
+} from '@/lib/cloudSyncPullSettled'
 import {
   hasSyncTransport,
+  SyncTransportError,
   syncTransport as platformSyncTransport,
   syncTransportErrorCode,
   type SyncFile,
@@ -52,8 +60,10 @@ import {
   type SyncTransportErrorCode,
   type UploadStatus,
 } from '@/lib/syncTransport'
+import { photoEpoch } from '@/lib/syncTransport/photoEpoch'
 import {
   TRANSPORT_READ_TIMEOUT_MS,
+  withTransferTimeout,
   withTransportTimeout,
 } from '@/lib/syncTransport/timeout'
 import {
@@ -81,6 +91,11 @@ import {
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
 import { useSupporter } from '@/features/supporter/stores/supporter'
+import {
+  onOwnAccountClaimChange,
+  setPeerAccountClaims,
+} from '@/lib/accountClaimRegistry'
+import type { AccountClaim } from '@/lib/accountClaim'
 import {
   buildPayload,
   isNewerPayloadVersion,
@@ -116,6 +131,7 @@ import {
   ImageSyncBookkeeping,
   ImageSyncDeps,
   AvatarSource,
+  type ImagePushTrigger,
   filenameForSource,
 } from '@/app/sync/imageSync'
 import {
@@ -137,6 +153,20 @@ import {
 } from '@/lib/richText/noteImages'
 import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
+import {
+  currentPhotoReferences,
+  type PhotoReferences,
+} from '@/app/sync/publishedPhotos'
+import {
+  pendingPhotoDeletes,
+  photoDeletesDone,
+  publishedPhotosMark,
+  rebasePublishedPhotos,
+  setPhotoReferenceReader,
+  takeReplacedPhotos,
+} from '@/app/sync/photoBaseline'
+import { onPhotoRoom } from '@/lib/syncTransport/server/photoUsage'
+import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
@@ -230,6 +260,8 @@ type PullOutcome = {
   changed: boolean
   complete: boolean
 
+  claimsRead?: boolean
+
   ownFile?: boolean | null
 }
 
@@ -237,13 +269,29 @@ let lastPullComplete = false
 
 let lastReadFoundFiles = false
 
+let lastReadModifiedAt: ReadonlyMap<string, number> = new Map()
+
+let mergedForPrune: {
+  files: ReadonlyMap<string, number>
+  generation: number
+} | null = null
+
+let prunedThisLaunch = false
+
+let lastPushRetryAfterMs: number | null = null
+
 let pullInFlight: Promise<PullOutcome> | null = null
 let pullQueuedReason: string | null = null
 
 let pullInFlightStartedAt = 0
 let completePullStartedAt = -Infinity
 
+let pullsStarted = 0
+let completePull = 0
+
 let gcInFlight: Promise<void> | null = null
+
+let gcStarted = false
 
 let gcStopRequested = false
 
@@ -361,11 +409,13 @@ function setPrefsIfChanged(partial: Partial<PreferencesState>): void {
 }
 
 export function canSync(): boolean {
-  if (!hasSyncTransport()) return false
+  if (!hasSyncEngine()) return false
   const { iCloudSyncEnabled } = usePreferences.getState()
   if (!iCloudSyncEnabled) return false
   if (!syncEntitled()) return false
   if (cloudSyncWaitsForUpdate()) return false
+
+  if (usesCloudSync() && keyChangedElsewhere()) return false
   if (!syncTransport().isAvailable()) return false
   return checkICloudIdentity('can_sync')
 }
@@ -376,10 +426,16 @@ const cloudSyncWaitsForUpdate = () =>
 export function syncEntitled(): boolean {
   if (usesCloudSync())
     return usePreferences.getState().cloudSyncEntitled === true
-  return useSupporter.getState().isSupporter
+  return true
 }
 
-const transportHoldsPhotos = () => syncTransport().supportsBinaries !== false
+const transportHoldsPhotos = () =>
+  hasCapability('syncedPhotos') && syncTransport().supportsBinaries !== false
+
+export function photosTravel(): boolean {
+  if (!transportHoldsPhotos()) return false
+  return usesCloudSync() || usePreferences.getState().iCloudSyncIncludeImages
+}
 
 export type ICloudAccount = { token: string | null; changedAt: number | null }
 
@@ -499,9 +555,8 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     if (hasRoutineSlice) applyRoutineSnapshot(routineFromPayload(remote))
 
     const now = Date.now()
+    writeRemoteSettings(remote)
     setPrefsIfChanged({
-      ...(syncableValues(remote.preferencesStore.values) as any),
-      preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
       lastiCloudSyncAt: now,
       lastiCloudPulledAt: now,
       lastiCloudRemoteWrittenAt: remote.writtenAt,
@@ -509,14 +564,22 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
       lastiCloudRemoteDeviceName: remote.deviceName ?? null,
       iCloudResetEpoch: remote.resetEpoch ?? null,
     })
+  })
+  rebasePublishedPhotos()
+}
 
-    useProfile.setState({
-      ...syncableValues(
-        remote.profileStore?.values ?? {},
-        NON_SYNCABLE_PROFILE_KEYS
-      ),
-      profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
-    })
+function writeRemoteSettings(remote: SyncPayload): void {
+  setPrefsIfChanged({
+    ...(syncableValues(remote.preferencesStore.values) as any),
+    preferenceUpdatedAt: remote.preferencesStore.updatedAt ?? {},
+  })
+
+  useProfile.setState({
+    ...syncableValues(
+      remote.profileStore?.values ?? {},
+      NON_SYNCABLE_PROFILE_KEYS
+    ),
+    profileUpdatedAt: remote.profileStore?.updatedAt ?? {},
   })
 }
 
@@ -525,6 +588,7 @@ export function joinRemoteResetEpoch(remote: SyncPayload): void {
 }
 
 export async function overwriteRemoteWithLocal(): Promise<void> {
+  if (cloudSyncOnly()) throw new Error('The web can’t rebuild Cloud Sync data')
   if (resetInProgress) throw new Error('iCloud reset already running')
   resetInProgress = true
   try {
@@ -669,7 +733,12 @@ export type RemoteIncompleteReason =
 export type RemotePeek =
   | { status: 'found'; remote: SyncPayload; account: ICloudAccount }
   | { status: 'none' }
-  | { status: 'incomplete'; reason: RemoteIncompleteReason }
+  | {
+      status: 'incomplete'
+      reason: RemoteIncompleteReason
+
+      readable?: SyncPayload
+    }
   | { status: 'offline' }
   | { status: 'unavailable' }
 
@@ -677,18 +746,23 @@ const PEEK_READ_ATTEMPTS = 2
 
 export const PEEK_DEADLINE_MS = 25_000
 
-function incompletePeek(reason: RemoteIncompleteReason): RemotePeek {
+function incompletePeek(
+  reason: RemoteIncompleteReason,
+  readable?: SyncPayload
+): RemotePeek {
   logger.warn(`${tag()} peekRemotePayload: remote incomplete`, { reason })
   errorTracking.addBreadcrumb({
     category: 'iCloudSync',
     message: `peek — remote incomplete (${reason})`,
     level: 'warning',
   })
-  return { status: 'incomplete', reason }
+  return readable
+    ? { status: 'incomplete', reason, readable }
+    : { status: 'incomplete', reason }
 }
 
 export async function peekRemotePayload(): Promise<RemotePeek> {
-  if (!hasSyncTransport()) return { status: 'unavailable' }
+  if (!hasSyncEngine()) return { status: 'unavailable' }
   if (!syncTransport().isAvailable()) return { status: 'unavailable' }
   checkICloudIdentity('initial_enable')
   const account = storedICloudAccount()
@@ -718,15 +792,21 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
           filename !== filenameForDevice(ensureDeviceId())
       )
       const payloads: SyncPayload[] = []
+      let unreadable: 'newer-version' | 'invalid-file' | null = null
       for (const file of files) {
         const parsed = parsePayload(file.json)
         if (parsed) payloads.push(alignPayloadClock(parsed, file.modifiedAt))
-        else if (isNewerPayloadVersion(file.json)) {
-          return incompletePeek('newer-version')
-        } else {
-          return incompletePeek('invalid-file')
-        }
+        else if (isNewerPayloadVersion(file.json)) unreadable = 'newer-version'
+        else unreadable ??= 'invalid-file'
       }
+
+      if (unreadable)
+        return incompletePeek(
+          unreadable,
+          pending?.length
+            ? undefined
+            : (foldRemotePayloads(payloads) ?? undefined)
+        )
 
       if (!pending?.length) {
         const remote = foldRemotePayloads(payloads)
@@ -753,13 +833,18 @@ async function readRemotePeek(account: ICloudAccount): Promise<RemotePeek> {
 
 export type InitialEnableDecision =
   | { outcome: 'unavailable' }
-  | { outcome: 'incomplete'; reason: RemoteIncompleteReason }
+  | {
+      outcome: 'incomplete'
+      reason: RemoteIncompleteReason
+
+      remote?: SyncPayload
+    }
   | { outcome: 'seed' }
   | { outcome: 'pull'; remote: SyncPayload }
   | { outcome: 'conflict'; remote: SyncPayload; account: ICloudAccount }
 
 export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
-  if (!hasSyncTransport()) return { outcome: 'unavailable' }
+  if (!hasSyncEngine()) return { outcome: 'unavailable' }
   if (!syncTransport().isAvailable()) return { outcome: 'unavailable' }
 
   if (!checkICloudIdentity('initial_enable')) return { outcome: 'unavailable' }
@@ -769,7 +854,9 @@ export async function resolveInitialEnable(): Promise<InitialEnableDecision> {
     case 'offline':
       return { outcome: 'unavailable' }
     case 'incomplete':
-      return { outcome: 'incomplete', reason: peek.reason }
+      return peek.readable
+        ? { outcome: 'incomplete', reason: peek.reason, remote: peek.readable }
+        : { outcome: 'incomplete', reason: peek.reason }
     case 'none':
       return { outcome: 'seed' }
     case 'found':
@@ -813,23 +900,86 @@ export function applyPullEnable(
   }
 }
 
-function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
+export async function applyMergeEnable(
+  remote: SyncPayload,
+  source: 'settings' | 'supporter_default' = 'settings',
+  { keepRemoteSettings = false }: { keepRemoteSettings?: boolean } = {}
+): Promise<void> {
+  backfillUpdatedAtIfNeeded()
+  joinRemoteResetEpoch(remote)
+
+  if (keepRemoteSettings)
+    withRemoteDataMutation(() =>
+      writeRemoteSettings(foldRemotePayloads([remote])!)
+    )
+  const wasEnabled = usePreferences.getState().iCloudSyncEnabled
+  usePreferences.getState().set({
+    iCloudSyncEnabled: true,
+    iCloudSyncNeedsResolution: false,
+    iCloudFreshSetup: false,
+  })
+  if (!wasEnabled) {
+    analytics.capture('icloud_sync_enabled_changed', { enabled: true, source })
+  }
+  await pullAndMerge('initial-enable-merge')
+  if (
+    usePreferences.getState().iCloudSyncIssue ||
+    !(await push('initial-enable-merge'))
+  )
+    throw new Error('Sync merge incomplete')
+}
+
+const SLOT_PUT_INTERVAL_MS = 2_100
+
+const FLUSH_BUDGET_MS = 5_000
+
+export async function flushPendingPush(
+  reason: string,
+  budgetMs = FLUSH_BUDGET_MS
+): Promise<void> {
+  const deadline = Date.now() + budgetMs
+  for (let attempt = 0; attempt < 3; attempt++) {
+    resetPushBackoff()
+    await waitForSyncIdle()
+    if (!usePreferences.getState().iCloudSyncPendingPush || !canSync()) return
+    if (await push(reason)) continue
+    if (usePreferences.getState().iCloudSyncErrorCode !== 'rate-limited') return
+
+    const wait = lastPushRetryAfterMs ?? SLOT_PUT_INTERVAL_MS
+    if (Date.now() + wait > deadline) return
+    await new Promise((resolve) => setTimeout(resolve, wait))
+  }
+}
+
+function buildImageSyncDeps(
+  oneShot = false,
+  epoch = photoEpoch()
+): ImageSyncDeps {
   return {
     canTransfer: () =>
-      usePreferences.getState().iCloudSyncIncludeImages &&
-      transportHoldsPhotos() &&
+      epoch === photoEpoch() &&
+      photosTravel() &&
       syncTransport().isAvailable() &&
       (oneShot || canSync()),
+    canUpload: () => !syncTransport().binaryWritesPaused,
+    immutableNames: syncTransport().kind === 'cloud',
+    fullRetriesOnSignal: syncTransport().kind === 'cloud',
+    ...(syncTransport().kind === 'cloud' && { putsAgain }),
     bridge: {
       writeBinary: (filename, sourcePath) =>
-        withTransportTimeout(
+        withTransferTimeout(
           'photo upload',
-          syncTransport().writeBinary(filename, sourcePath)
+          (phases) => syncTransport().writeBinary(filename, sourcePath, phases),
+          syncTransport().binaryTimeoutMs,
+          syncTransport().binarySetupTimeoutMs
         ),
       readBinary: (filename, destinationPath) =>
-        withTransportTimeout(
+        withTransferTimeout(
           'photo download',
-          syncTransport().readBinary(filename, destinationPath)
+          (phases) =>
+            syncTransport().readBinary(filename, destinationPath, phases),
+          syncTransport().binaryTimeoutMs,
+          syncTransport().binarySetupTimeoutMs
         ),
       listBinaryFiles: () =>
         withTransportTimeout('photo list', syncTransport().listBinaryFiles()),
@@ -852,6 +1002,26 @@ function buildImageSyncDeps(oneShot = false): ImageSyncDeps {
   }
 }
 
+const deletedPhotos = new Map<string, number>()
+let deletedPhotosNoticed = false
+function putsAgain(filename: string): boolean {
+  const noticed = deletedPhotos.get(filename)
+  if (noticed === undefined) {
+    deletedPhotos.set(filename, pullsStarted)
+    deletedPhotosNoticed = true
+    return false
+  }
+  if (completePull <= noticed) return false
+  deletedPhotos.delete(filename)
+  return currentPhotoReferences().all.has(filename)
+}
+
+function pullForDeletedPhotos(): void {
+  if (!deletedPhotosNoticed) return
+  deletedPhotosNoticed = false
+  void pull('photo-deleted')
+}
+
 let imageWork: Promise<void> = Promise.resolve()
 function serializeImages<T>(work: () => Promise<T>): Promise<T> {
   const result = imageWork.then(work)
@@ -865,16 +1035,20 @@ const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
 
 let imagePushJob: Promise<void> | null = null
 let queuedImagePush: {
-  trigger: 'store-edit' | 'foreground'
+  trigger: ImagePushTrigger
   sources?: AvatarSource[]
 } | null = null
 
 function startImagePush(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   sources?: AvatarSource[]
 ): void {
   if (imagePushJob) {
-    queuedImagePush = { trigger, sources }
+    queuedImagePush = {
+      trigger:
+        queuedImagePush?.trigger === 'foreground' ? 'foreground' : trigger,
+      sources,
+    }
     return
   }
   imagePushJob = pushImagesIfEnabled(trigger, sources).finally(() => {
@@ -885,24 +1059,105 @@ function startImagePush(
   })
 }
 
+const deletesReplacedPhotos = () =>
+  syncTransport().kind === 'cloud' && photosTravel()
+
+setPhotoReferenceReader(currentPhotoReferences)
+
+function deleteReplacedPhotos(references: PhotoReferences, mark: number): void {
+  takeReplacedPhotos(
+    syncTransport().identityToken(),
+    references,
+    mark,
+    currentPhotoReferences
+  )
+  deletePendingPhotos()
+}
+
+function deletePendingPhotos(): void {
+  if (!deletesReplacedPhotos() || !lastPullComplete) return
+  if (!pendingPhotoDeletes(syncTransport().identityToken()).length) return
+  void serializeImages(async () => {
+    if (!deletesReplacedPhotos() || !lastPullComplete) return
+    const pending = pendingPhotoDeletes(syncTransport().identityToken())
+    if (!pending.length) return
+    const { all } = currentPhotoReferences()
+    const done: string[] = []
+    const deleted: string[] = []
+    for (const filename of pending) {
+      if (all.has(filename)) {
+        done.push(filename)
+        continue
+      }
+      try {
+        await withTransportTimeout(
+          'photo delete',
+          syncTransport().deleteBinaryFile(filename)
+        )
+        deleted.push(filename)
+        done.push(filename)
+      } catch (e) {
+        logger.warn(`${tag()} replaced photo delete failed`, e)
+        if (syncTransportErrorCode(e) === 'not-found') done.push(filename)
+      }
+    }
+    photoDeletesDone(done)
+    if (!deleted.length) return
+    const next: ImageSyncBookkeeping = {
+      ...(usePreferences.getState().iCloudImageSync ?? {}),
+    }
+    for (const filename of deleted) delete next[filename]
+    setPrefsIfChanged({ iCloudImageSync: next })
+    logger.log(`${tag()} replaced photos deleted`, { deleted: deleted.length })
+  })
+}
+
+const newRevision = () =>
+  `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+
+function reviseLegacyAvatars(sources: AvatarSource[]): void {
+  for (const source of sources) {
+    if (source.revision) continue
+    if (source.kind === 'profile') {
+      const avatar = useProfile.getState().avatar
+      if (avatar?.type === 'image' && !avatar.revision)
+        useProfile.getState().setAvatar({ ...avatar, revision: newRevision() })
+      continue
+    }
+    const avatar = useContacts
+      .getState()
+      .contacts.find((contact) => contact.id === source.id)?.avatar
+    if (avatar?.type === 'image' && !avatar.revision)
+      useContacts.getState().updateContact({
+        id: source.id,
+        avatar: { ...avatar, revision: newRevision() },
+      })
+  }
+}
+
 async function imagePushesSettled(): Promise<void> {
   while (imagePushJob) await imagePushJob
 }
 
 function pushImagesIfEnabled(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   publishedSources?: AvatarSource[]
 ): Promise<void> {
   return serializeImages(async () => {
     await pushImagesInner(trigger, publishedSources)
-    await pushNoteImagesInner(!!publishedSources)
+    await pushNoteImagesInner(trigger, !!publishedSources)
+    pullForDeletedPhotos()
   })
 }
 
-async function pushNoteImagesInner(published: boolean): Promise<void> {
+async function pushNoteImagesInner(
+  trigger: ImagePushTrigger,
+  published: boolean
+): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!photosTravel() || !canSync()) return
+  if (syncTransport().binaryWritesPaused) return
   if (!published && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
   const ids = referencedNoteImageIds()
@@ -912,10 +1167,13 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
       ids,
       localPath: noteImagePath,
       bookkeeping: prefs.iCloudImageSync ?? {},
-      deps: buildImageSyncDeps(),
+      deps: buildImageSyncDeps(false, epoch),
+      trigger,
     })
-    if (!result.uploaded && !result.failed) return
+
+    if (epoch !== photoEpoch()) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
+    if (!result.uploaded && !result.failed) return
     logger.log(`${tag()} note photo push`, {
       uploaded: result.uploaded,
       failed: result.failed,
@@ -927,12 +1185,11 @@ async function pushNoteImagesInner(published: boolean): Promise<void> {
 }
 
 async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
-  const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
-  const deps = buildImageSyncDeps(oneShot)
+  const epoch = photoEpoch()
+  const deps = buildImageSyncDeps(oneShot, epoch)
   const ids: string[] = []
   for (const id of referencedNoteImageIds()) {
     if (isNoteImageKnownLocal(id)) continue
@@ -950,7 +1207,15 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
       deps,
       prepare: ensureNoteImageDirectory,
     })
+    if (epoch !== photoEpoch()) return
     markNoteImagesLocal(result.downloaded)
+    if (Object.keys(result.seen).length)
+      setPrefsIfChanged({
+        iCloudImageSync: {
+          ...(usePreferences.getState().iCloudImageSync ?? {}),
+          ...result.seen,
+        },
+      })
     if (result.downloaded.length) noteImagesArrived()
     if (result.downloaded.length || result.failed) {
       logger.log(`${tag()} note photo pull`, {
@@ -964,12 +1229,14 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   }
 }
 async function pushImagesInner(
-  trigger: 'store-edit' | 'foreground',
+  trigger: ImagePushTrigger,
   publishedSources?: AvatarSource[]
 ): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages || !canSync()) return
+  if (!photosTravel() || !canSync()) return
+
+  if (syncTransport().binaryWritesPaused) return
   if (!publishedSources && prefs.iCloudSyncPendingPush) return
   if (!hasSyncTransport()) return
   try {
@@ -982,13 +1249,21 @@ async function pushImagesInner(
         documentDirectory: DOCUMENT_DIR,
       })
     if (sources.length === 0) return
-    const deps = buildImageSyncDeps()
+
+    const onCloud = syncTransport().kind === 'cloud'
+    if (onCloud) reviseLegacyAvatars(sources)
+    const uploadable = onCloud
+      ? sources.filter((source) => source.revision)
+      : sources
+    if (uploadable.length === 0) return
+    const deps = buildImageSyncDeps(false, epoch)
     const result = await pushAllImages({
-      sources,
+      sources: uploadable,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
       trigger,
     })
+    if (epoch !== photoEpoch()) return
     setPrefsIfChanged({ iCloudImageSync: result.bookkeeping })
 
     const firstError = Object.values(result.bookkeeping).find(
@@ -1014,26 +1289,54 @@ function pullImagesIfEnabled(oneShot = false): Promise<void> {
     await pullNoteImagesInner(oneShot)
   })
 }
+
+let imagePullJob: Promise<void> | null = null
+let imagePullQueued = false
+function startImagePull(): void {
+  if (imagePullJob) {
+    imagePullQueued = true
+    return
+  }
+  imagePullJob = pullImagesIfEnabled()
+    .catch((e) => logger.warn(`${tag()} image pull job failed`, e))
+    .finally(() => {
+      imagePullJob = null
+      if (!imagePullQueued) return
+      imagePullQueued = false
+      startImagePull()
+    })
+}
+
+async function imagePullsSettled(): Promise<void> {
+  while (imagePullJob) await imagePullJob
+}
 async function pullImagesInner(oneShot = false): Promise<void> {
+  const epoch = photoEpoch()
   const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
   if (!oneShot && !canSync()) return
   try {
-    const sources = collectExpectedMarkerSources({
+    const expected = collectExpectedMarkerSources({
       contacts: useContacts.getState().contacts,
       profileAvatar: useProfile.getState().avatar,
       profileUpdatedAt: useProfile.getState().profileUpdatedAt.avatar,
       documentDirectory: DOCUMENT_DIR,
     })
+
+    const sources =
+      syncTransport().kind === 'cloud'
+        ? expected.filter((source) => source.revision)
+        : expected
     if (sources.length === 0) return
-    const deps = buildImageSyncDeps(oneShot)
+    const deps = buildImageSyncDeps(oneShot, epoch)
     const result = await pullMissingImages({
       expectedSources: sources,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps,
     })
+
+    if (epoch !== photoEpoch()) return
     if (result.failed > 0) {
       logger.warn(`${tag()} image pull: downloads failed`, {
         failed: result.failed,
@@ -1045,7 +1348,7 @@ async function pullImagesInner(oneShot = false): Promise<void> {
     }
     const contactsState = useContacts.getState()
     const profileState = useProfile.getState()
-    const applied = usePreferences.getState().iCloudSyncIncludeImages
+    const applied = photosTravel()
       ? applyDownloadedAvatars({
           contacts: contactsState.contacts,
           profileAvatar: profileState.avatar,
@@ -1105,8 +1408,10 @@ function gcImagesIfEnabled(): Promise<void> {
   if (gcInFlight) return gcInFlight
   if (pullInFlight) return Promise.resolve()
   gcStopRequested = false
+  gcStarted = false
   gcInFlight = serializeImages(gcImages).finally(() => {
     gcInFlight = null
+    gcStarted = false
   })
   return gcInFlight
 }
@@ -1115,20 +1420,25 @@ const sameIds = (a: Set<string>, b: Set<string>) =>
   a.size === b.size && [...a].every((id) => b.has(id))
 
 async function gcImages(): Promise<void> {
-  const prefs = usePreferences.getState()
-  if (!transportHoldsPhotos()) return
-  if (!prefs.iCloudSyncIncludeImages) return
+  if (!photosTravel()) return
   if (!hasSyncTransport()) return
+
+  if (pullInFlight) return
+  gcStopRequested = false
+  gcStarted = true
   try {
-    const { contacts } = useContacts.getState()
+    const { contacts, deletedContacts } = useContacts.getState()
     const { avatar } = useProfile.getState()
-    const active: ActiveIdentity[] = contacts
+
+    const restorable = usesCloudSync() ? deletedContacts : []
+    const active: ActiveIdentity[] = [...contacts, ...restorable]
       .filter((c) => c.avatar?.type === 'image')
       .map((c) => ({ kind: 'contact', id: c.id, revision: c.avatar?.revision }))
     if (avatar?.type === 'image') {
       active.push({ kind: 'profile', revision: avatar.revision })
     }
-    const deps = buildImageSyncDeps()
+    const epoch = photoEpoch()
+    const deps = buildImageSyncDeps(false, epoch)
     const result = await gcOrphanImages({
       activeIdentities: active,
       deletions: [
@@ -1174,7 +1484,7 @@ async function gcImages(): Promise<void> {
             gcStopRequested || !sameIds(referencedNoteImageIds(), referenced),
         })
     const deletedFiles = [...result.deleted, ...notes.deleted]
-    if (deletedFiles.length > 0) {
+    if (deletedFiles.length > 0 && epoch === photoEpoch()) {
       const next: ImageSyncBookkeeping = {
         ...(usePreferences.getState().iCloudImageSync ?? {}),
       }
@@ -1235,6 +1545,8 @@ async function pushInner(reason: string): Promise<boolean> {
       return false
     }
     const generation = editGeneration
+
+    const prunePlan = mergedForPrune
     const deviceId = ensureDeviceId()
     const filename = filenameForDevice(deviceId)
     const imageSources = collectLocalAvatarSources({
@@ -1242,6 +1554,10 @@ async function pushInner(reason: string): Promise<boolean> {
       profileAvatar: useProfile.getState().avatar,
       documentDirectory: DOCUMENT_DIR,
     })
+    const photosMark = publishedPhotosMark()
+    const photoReferences = deletesReplacedPhotos()
+      ? currentPhotoReferences()
+      : null
     const payload = buildPayload({
       deviceId,
       deviceName: Device.modelName ?? undefined,
@@ -1301,8 +1617,10 @@ async function pushInner(reason: string): Promise<boolean> {
       restartUploadChecks()
     }
     resetPushBackoff()
+    lastPushRetryAfterMs = null
     publishedThisLaunch = true
     if (!covered) schedulePush()
+    if (prunePlan) void pruneEndedWebSnapshots(prunePlan)
     logger.log(`${tag()} push success`, { reason, filename })
     errorTracking.addBreadcrumb({
       category: 'iCloudSync',
@@ -1314,9 +1632,12 @@ async function pushInner(reason: string): Promise<boolean> {
       reason === 'foreground' ? 'foreground' : 'store-edit',
       imageSources
     )
+    if (photoReferences) deleteReplacedPhotos(photoReferences, photosMark)
     return true
   } catch (e) {
     const code = syncTransportErrorCode(e)
+    lastPushRetryAfterMs =
+      e instanceof SyncTransportError ? e.retryAfterMs : null
     if (isExpectedTransportFailure(e)) {
       logger.warn(`${tag()} push failed (${reason})`, e)
       errorTracking.addBreadcrumb({
@@ -1337,6 +1658,33 @@ async function pushInner(reason: string): Promise<boolean> {
     if (code === 'storage-full') recordUploadIssue()
     recordPushFailure(code)
     return false
+  }
+}
+
+async function pruneEndedWebSnapshots(plan: {
+  files: ReadonlyMap<string, number>
+  generation: number
+}): Promise<void> {
+  const transport = syncTransport()
+  if (
+    prunedThisLaunch ||
+    mergedForPrune !== plan ||
+    plan.generation !== completePullGeneration() ||
+    !usesCloudSync() ||
+    !transport.deleteEndedWebSnapshots
+  )
+    return
+  prunedThisLaunch = true
+  mergedForPrune = null
+  try {
+    const deleted = await transport.deleteEndedWebSnapshots(plan.files)
+    if (deleted.length)
+      logger.log(`${tag()} removed signed-out browsers' slots`, {
+        count: deleted.length,
+      })
+  } catch (e) {
+    prunedThisLaunch = false
+    logger.warn(`${tag()} couldn't remove signed-out browsers' slots`, e)
   }
 }
 
@@ -1529,11 +1877,15 @@ function pull(reason: string): Promise<PullOutcome> {
     return pullInFlight
   }
   const startedAt = Date.now()
+  const started = ++pullsStarted
   pullInFlightStartedAt = startedAt
+
+  const settledGeneration = completePullGeneration()
+  const onCloudSync = usesCloudSync()
 
   pullInFlight = Promise.resolve().then(async () => {
     try {
-      if (gcInFlight) {
+      if (gcInFlight && gcStarted) {
         gcStopRequested = true
         await Promise.race([
           gcInFlight,
@@ -1541,10 +1893,30 @@ function pull(reason: string): Promise<PullOutcome> {
         ])
       }
       lastReadFoundFiles = false
-      const outcome = await pullAndMergeInner(reason)
+      const outcome = await pullAndMergeInner(reason, settledGeneration)
       lastPullComplete = outcome.complete
-      if (outcome.complete) completePullStartedAt = startedAt
+      if (outcome.complete) {
+        completePullStartedAt = startedAt
+        completePull = started
+
+        if (deletedPhotos.size) {
+          const { all } = currentPhotoReferences()
+          for (const name of deletedPhotos.keys())
+            if (!all.has(name)) deletedPhotos.delete(name)
+          if (deletedPhotos.size) startImagePush('store-edit')
+        }
+      }
       if (outcome.complete && lastReadFoundFiles) markCompleteICloudPull()
+
+      if (outcome.claimsRead && onCloudSync && usesCloudSync()) {
+        markCompletePull(settledGeneration)
+
+        if (cloudSyncOnly() && !prunedThisLaunch)
+          mergedForPrune = {
+            files: lastReadModifiedAt,
+            generation: settledGeneration,
+          }
+      }
       return outcome
     } finally {
       const queued = pullQueuedReason
@@ -1586,8 +1958,15 @@ function canApplyPull(reason: string): boolean {
   return canSync()
 }
 
-async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
+async function pullAndMergeInner(
+  reason: string,
+  generation: number
+): Promise<PullOutcome> {
   perf.count('sync:pull')
+
+  const setPeerClaims = (claims: readonly AccountClaim[]) => {
+    if (generation === completePullGeneration()) setPeerAccountClaims(claims)
+  }
   if (!canSync()) {
     logger.log(`${tag()} pullAndMerge skipped (canSync=false)`, { reason })
     return { changed: false, complete: false }
@@ -1626,6 +2005,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   const { files, pending } = read
   lastReadFoundFiles = files.length > 0
 
+  lastReadModifiedAt = new Map()
+
   const ownFile =
     files.some((f) => f.filename === ownFilename) ||
     (pending ?? []).includes(ownFilename)
@@ -1642,7 +2023,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     pending,
   })
 
+  let claimsRead = complete
   if (files.length === 0) {
+    setPeerClaims([])
     usePreferences.getState().set({
       lastiCloudPulledAt: Date.now(),
       iCloudSyncIssue: issue,
@@ -1654,7 +2037,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       message: `pull (${reason}) — no remote`,
       level: 'info',
     })
-    return { changed: false, complete, ownFile }
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   let remotePayloads: Array<{
@@ -1664,6 +2047,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   }> = []
   const legacyFilenames: string[] = []
   const unparsed: SyncDeviceFiles = {}
+
+  const partlyRead = new Set<string>()
   for (const file of files) {
     if (file.filename === ownFilename) continue
     let dropped: string[] = []
@@ -1674,6 +2059,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       (rejected) => (rejection = rejected)
     )
     if (dropped.length) {
+      partlyRead.add(file.filename)
       reportDroppedFields(file.filename, dropped)
 
       if (dropped.some((field) => PHOTO_OWNER_FIELD.test(field)))
@@ -1710,6 +2096,19 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     }
   }
 
+  setPeerClaims(
+    remotePayloads
+      .map((r) => r.payload.revenueCat)
+      .filter((claim): claim is AccountClaim => claim !== undefined)
+  )
+
+  claimsRead &&= Object.keys(unparsed).length === 0
+  lastReadModifiedAt = new Map(
+    files
+      .filter((f) => !partlyRead.has(f.filename) && !(f.filename in unparsed))
+      .map((f) => [f.filename, f.modifiedAt])
+  )
+
   const localEpoch = usePreferences.getState().iCloudResetEpoch
   const newestEpoch = newestResetEpoch(
     remotePayloads.map((r) => r.payload.resetEpoch)
@@ -1726,7 +2125,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   if (compareResetEpochs(newestEpoch, localEpoch) > 0) {
     if (!canApplyPull(reason))
       return { changed: false, complete: false, ownFile }
-    return adoptResetEpoch(
+    const adopted = await adoptResetEpoch(
       reason,
       remotePayloads
         .filter(
@@ -1736,6 +2135,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       complete,
       issue
     )
+    return { ...adopted, claimsRead }
   }
   const preReset = remotePayloads.filter(
     (r) => compareResetEpochs(r.payload.resetEpoch, localEpoch) < 0
@@ -1781,7 +2181,7 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
       skippedOwn: files.some((f) => f.filename === ownFilename),
     })
 
-    return { changed: false, complete, ownFile }
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   if (!canApplyPull(reason)) return { changed: false, complete: false, ownFile }
@@ -1824,8 +2224,8 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
   })
 
   if (!anyChanged) {
-    await pullImagesIfEnabled()
-    return { changed: false, complete, ownFile }
+    startImagePull()
+    return { changed: false, complete, ownFile, claimsRead }
   }
 
   applyMergedState(acc)
@@ -1847,9 +2247,9 @@ async function pullAndMergeInner(reason: string): Promise<PullOutcome> {
     level: 'info',
   })
 
-  await pullImagesIfEnabled()
+  startImagePull()
 
-  return { changed: true, complete, ownFile }
+  return { changed: true, complete, ownFile, claimsRead }
 }
 
 let lastReadStamp = 0
@@ -1997,7 +2397,7 @@ async function adoptResetEpoch(
     level: 'info',
   })
   await push('reset-adopted')
-  await pullImagesIfEnabled()
+  startImagePull()
   return { changed: true, complete }
 }
 
@@ -2113,7 +2513,10 @@ async function catchUp(reason: string): Promise<void> {
     restartUploadChecks()
 
     while (pullInFlight) await pullInFlight
-    if (scanned && lastPullComplete) await gcImagesIfEnabled()
+
+    deletePendingPhotos()
+
+    if (scanned && lastPullComplete) void gcImagesIfEnabled()
     else logger.log(`${tag()} image gc skipped`, { reason, scanned })
   } finally {
     catchUpInFlight = false
@@ -2124,7 +2527,7 @@ async function catchUp(reason: string): Promise<void> {
 }
 
 export function installiCloudSync(): () => void {
-  if (!hasSyncTransport()) return () => {}
+  if (!hasSyncEngine()) return () => {}
   if (installed) return () => {}
   installed = true
 
@@ -2140,9 +2543,11 @@ export function installiCloudSync(): () => void {
     schedulePush()
   })
 
+  const unsubAccountClaim = onOwnAccountClaimChange(() => schedulePush())
+
   let lastForegroundCatchUpAt = 0
   let launchCatchUpStarted = false
-  const foregroundSub = addForegroundListener(() => {
+  const catchUpOnReturn = () => {
     launchCatchUpStarted = true
 
     resetPushBackoff()
@@ -2156,6 +2561,15 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = now
 
     void catchUp('foreground')
+  }
+  const foregroundSub = addForegroundListener(catchUpOnReturn)
+
+  const focusSub = addWindowFocusListener(() => {
+    if (AppState.currentState === 'active') catchUpOnReturn()
+  })
+
+  const unsubPhotoRoom = onPhotoRoom(() => {
+    if (usesCloudSync() && canSync()) startImagePush('foreground')
   })
   const backgroundSub = addBackgroundListener(() => {
     cancelReadRetry()
@@ -2220,11 +2634,6 @@ export function installiCloudSync(): () => void {
     lastForegroundCatchUpAt = Date.now()
     void catchUp(reason)
   }
-  const unsubSupporter = useSupporter.subscribe((state, prev) => {
-    if (state.isSupporter && !prev.isSupporter) {
-      catchUpIfActive('supporter-ready')
-    }
-  })
 
   const unsubEntitled = usePreferences.subscribe((state, prev) => {
     if (state.cloudSyncEntitled && !prev.cloudSyncEntitled && usesCloudSync())
@@ -2248,11 +2657,13 @@ export function installiCloudSync(): () => void {
 
   return () => {
     unsubLocalData()
-    unsubSupporter()
+    unsubAccountClaim()
+    unsubPhotoRoom()
     unsubEntitled()
     unsubUpdateRequired()
     appStateSub.remove()
     foregroundSub.remove()
+    focusSub.remove()
     backgroundSub.remove()
     reconnectSub.remove()
     platformSyncTransport().setShouldPoll?.(() => true)
@@ -2299,7 +2710,18 @@ export const iCloudSync = {
   push,
   resetPushBackoff,
   imagePushesSettled,
+
+  imageWorkSettled: async () => {
+    while (imagePushJob || imagePullJob) {
+      await imagePushesSettled()
+      await imagePullsSettled()
+    }
+    await serializeImages(async () => {})
+  },
+  photosTravel,
   pullAndMerge,
+
+  catchUp,
   pullBeforeCalendarPublish,
   canSync,
   confirmICloudAccount,
@@ -2312,6 +2734,8 @@ export const iCloudSync = {
   resolveInitialEnable,
   applySeedEnable,
   applyPullEnable,
+  applyMergeEnable,
+  flushPendingPush,
   enableImageSync,
   disableImageSync,
   clearCloudPhotos,

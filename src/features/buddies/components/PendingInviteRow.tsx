@@ -9,6 +9,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
 import useInviteLinkActions from '@/features/buddies/hooks/useInviteLinkActions'
 import type { OutgoingInvite } from '@/features/buddies/lib/state'
+import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { formatRelative } from '@/lib/dates'
 
 const AVATAR_SIZE = 44
@@ -23,6 +24,9 @@ export default function PendingInviteRow({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { copy, share, cancel } = useInviteLinkActions(invite.inviteId)
+  const reconnecting = useBuddies(
+    (state) => state.reconnectInvites[invite.inviteId]?.name
+  )
 
   const showCode = () =>
     navigation.navigate('Buddy Code', {
@@ -50,7 +54,11 @@ export default function PendingInviteRow({
           <LucideIcon icon={LinkIcon} size={18} color={theme.colors.textAlt} />
         </View>
       }
-      title={i18n.t('buddies_inviteRowTitle')}
+      title={
+        reconnecting
+          ? i18n.t('buddies_reconnectInviteRowTitle', { name: reconnecting })
+          : i18n.t('buddies_inviteRowTitle')
+      }
       subtitle={i18n.t('buddies_inviteRowSubtitle', {
         time: formatRelative(invite.expiresAt),
       })}

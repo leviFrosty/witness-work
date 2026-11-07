@@ -60,6 +60,8 @@ export type PaceScale = {
   compressed: boolean
 }
 
+export const PACE_CHART_HEIGHT = 168
+
 export const paceScale = (
   goalMinutes: number,
   maxMinutes: number

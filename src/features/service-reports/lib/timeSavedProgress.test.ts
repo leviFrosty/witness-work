@@ -60,7 +60,22 @@ describe('timeSavedProgress', () => {
   it("follows the User's Duration Format", () => {
     expect(timeSavedProgress({ ...base, format: 'decimal' })).toEqual({
       added: '1.5 Hrs added',
-      progress: '12.2 Hrs of 50 Hrs',
+      progress: '12.3 Hrs of 50 Hrs',
+    })
+  })
+
+  it('rounds the entry and the total alike, so a first entry matches its total', () => {
+    expect(
+      timeSavedProgress({
+        ...yearly,
+        addedMinutes: 105,
+        beforeMinutes: 0,
+        afterMinutes: 105,
+        format: 'decimal',
+      })
+    ).toEqual({
+      added: '1.8 Hrs added',
+      progress: '1.8 Hrs of 600 Hrs',
     })
   })
 

@@ -27,6 +27,8 @@ const RECONNECT_DELAYS_MS = [1, 2, 5, 15, 30, 60].map((s) => s * 1000)
 
 const CHANGE_DEBOUNCE_MS = 300
 
+const IMMEDIATE_RECONNECT_MS = 10 * 1000
+
 type LiveMessage = { type: 'hello' | 'changed'; seq: number }
 
 function parseMessage(data: unknown): LiveMessage | 'pong' | null {
@@ -58,7 +60,12 @@ export type LiveEvent =
   | { type: 'reconnectScheduled'; inMs: number; attempt: number }
   | { type: 'stopped' }
 
-export type LiveCloseAction = 'reconnect' | 'sync' | 'syncAndStay' | 'stay'
+export type LiveCloseAction =
+  | 'reconnect'
+  | 'reconnectNow'
+  | 'sync'
+  | 'syncAndStay'
+  | 'stay'
 
 export type LiveSignalDeps = {
   open: () => Promise<LiveSocket>
@@ -96,6 +103,7 @@ export function createLiveSignal(deps: LiveSignalDeps): LiveSignal {
 
   let refused = false
   let failures = 0
+  let immediateReconnectAt = -Infinity
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
   let pingTimer: ReturnType<typeof setInterval> | null = null
   let pongTimer: ReturnType<typeof setTimeout> | null = null
@@ -216,6 +224,15 @@ export function createLiveSignal(deps: LiveSignalDeps): LiveSignal {
       const action = deps.closeAction?.(event.code) ?? 'reconnect'
       if ((action === 'sync' || action === 'syncAndStay') && running) sync()
       if (action === 'syncAndStay' || action === 'stay') return
+      if (
+        action === 'reconnectNow' &&
+        heard &&
+        now() - immediateReconnectAt > IMMEDIATE_RECONNECT_MS
+      ) {
+        immediateReconnectAt = now()
+        connect()
+        return
+      }
       scheduleReconnect(deps.reconnectFloorMs?.(event.code) ?? 0)
     }
   }

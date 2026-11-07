@@ -27,6 +27,8 @@ interface BuddiesKeychainNative {
   setAlertContext?(json: string | null): void
 
   takeAlertOutcomes?(): Record<string, number>
+
+  refusedInboxes?(): string[]
 }
 
 const native =
@@ -99,4 +101,9 @@ export function setAlertContext(json: string | null): void {
 export function takeAlertOutcomes(): Record<string, number> {
   if (!isAlertContextAvailable() || !native!.takeAlertOutcomes) return {}
   return native!.takeAlertOutcomes()
+}
+
+export function refusedInboxes(): string[] {
+  if (!isAlertContextAvailable() || !native!.refusedInboxes) return []
+  return native!.refusedInboxes()
 }

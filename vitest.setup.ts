@@ -40,6 +40,13 @@ vi.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date' },
 }))
 
+vi.mock('@/lib/appVariant', async () => ({
+  ...(await vi.importActual<typeof import('@/lib/toAppVariant')>(
+    '@/lib/toAppVariant'
+  )),
+  appVariant: 'production',
+}))
+
 vi.mock('expo-localization', () => ({
   getLocales: () => [
     { languageTag: 'en-US', languageCode: 'en', regionCode: 'US' },

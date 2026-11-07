@@ -1,0 +1,22 @@
+---
+id: webMap
+title: How does the map work on the web?
+category: map
+platforms: [web]
+minAppVersion: "1.47.0"
+---
+
+On the web, the Contacts map, the pin pickers and Route Planning use Apple Maps. Pins, pin cards, dropping a pin with a long press, place search and route directions work as they do on your phone. **Open in Maps** opens Apple Maps on a Mac, iPhone or iPad, and Google Maps on other computers and phones.
+
+**What Apple receives.** The map runs in a separate, locked-down part of the page that can't read anything else in WitnessWork. WitnessWork gives it only the map's position, the places to put pins and lines, your own location when you've allowed it, and the map's colors and layer. Contact names, addresses, notes and anything else you wrote stay in WitnessWork and are drawn on top of the map by WitnessWork itself. Apple sees what any map in a browser sends it: your IP address and the parts of the map you look at. Searching for a place or getting directions goes to WitnessWork's server, which asks its map provider without your name or account details.
+
+**Your location.** To show where you are, tap the location button (the arrow) and let your browser share your location. If you said no before, allow location for app.witnesswork.app in your browser's site settings, then reload the page.
+
+**If the map says "Map unavailable".** The rest of WitnessWork keeps working, including your contacts list and route stops.
+
+- **You're offline:** the map needs a connection. It comes back when you reconnect; tap **Try Again**.
+- **The map is busy:** wait a minute, then tap **Try Again**.
+- **The map can't load right now:** tap **Try Again**. If it keeps happening, reload the page, and check that a browser extension isn't blocking content from apple-mapkit.com or maps.witnesswork.app.
+- **The map isn't available in the browser yet:** the map is still being turned on for the web. Everything else works, and the map appears once it's ready.
+
+If the map still won't load, report it through [Contact Support](/help) with your browser and its version. Leave contact details out of screenshots.

@@ -39,7 +39,10 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 vi.mock('@/hooks/useGlassColorScheme', () => ({ default: () => 'light' }))
-vi.mock('@/lib/pointerHover', () => ({ supportsPointerEffects: true }))
+vi.mock('@/lib/pointerHover', () => ({
+  supportsPointerEffects: true,
+  supportsWebHover: false,
+}))
 vi.mock('@/components/ui/PointerHover', () => ({
   default: slot('PointerHover'),
   HoverTint: slot('HoverTint'),

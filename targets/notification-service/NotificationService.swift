@@ -82,7 +82,12 @@ enum NamedAlert {
       event = SealedEvent(eventId: eventId, kind: marker.kind, blob: blob, slotId: nil)
     } else if let seq = marker.seq, seq > 0 {
       do {
-        event = try await InboxFetch.event(seq: seq, context: context)
+        event = try await InboxFetch.event(
+          seq: seq, context: context,
+          refused: AlertOutcomes.appGroup.flatMap { UserDefaults(suiteName: $0) })
+      } catch InboxFetch.Failure.keyChanged {
+        // The account's key changed elsewhere: the template, and no retry.
+        return (original, "fallback.keyChanged")
       } catch {
         return (original, "fallback.fetch")
       }

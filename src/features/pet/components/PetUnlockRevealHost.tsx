@@ -1,4 +1,4 @@
-import { type ComponentProps, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import type PetUnlockRevealComponent from '@/features/pet/components/PetUnlockReveal'
 import usePetLife from '@/features/pet/hooks/usePetLife'
@@ -12,6 +12,7 @@ import {
 import useTakeoverTurn from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 export default function PetUnlockRevealHost() {
   const navigation = useNavigation<RootStackNavigation>()
@@ -42,10 +43,7 @@ export default function PetUnlockRevealHost() {
   )
 }
 
-function PetUnlockReveal(
-  props: ComponentProps<typeof PetUnlockRevealComponent>
-) {
-  const Reveal: typeof PetUnlockRevealComponent =
+const PetUnlockReveal = canvasKitComponent(
+  (): typeof PetUnlockRevealComponent =>
     require('@/features/pet/components/PetUnlockReveal').default
-  return <Reveal {...props} />
-}
+)

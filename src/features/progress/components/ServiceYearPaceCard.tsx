@@ -11,8 +11,12 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { formatMinutes } from '@/lib/minutes'
 import { getStatusCopy, segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { usePreferences } from '@/stores/preferences'
-import ServiceYearPaceChart from '@/features/progress/components/ServiceYearPaceChart'
-import type { PacePoint } from '@/features/progress/lib/serviceYearPace'
+import type ServiceYearPaceChartComponent from '@/features/progress/components/ServiceYearPaceChart'
+import {
+  PACE_CHART_HEIGHT,
+  type PacePoint,
+} from '@/features/progress/lib/serviceYearPace'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 import type { ServiceYearPaceData } from '@/features/progress/hooks/useServiceYearPace'
 import { tracking } from '@/lib/tracking'
 import { formatDisplay } from '@/lib/dates'
@@ -323,3 +327,9 @@ const LegendItem = ({
 }
 
 export default ServiceYearPaceCard
+
+const ServiceYearPaceChart = canvasKitComponent(
+  (): typeof ServiceYearPaceChartComponent =>
+    require('@/features/progress/components/ServiceYearPaceChart').default,
+  () => <View style={{ height: PACE_CHART_HEIGHT }} />
+)

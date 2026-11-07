@@ -15,6 +15,8 @@ export type DateTimePickerProps = {
   iOSMode?: DateTimePickerMode
 
   display?: 'compact' | 'inline'
+
+  onSubmit?: () => void
   testID?: string
 }
 

@@ -1,5 +1,11 @@
 import { useSyncResolutionNotification } from '@/app/sync/useSyncResolutionNotification'
 import { useSyncResetNotification } from '@/app/sync/useSyncResetNotification'
+import { useCloudSyncTrayOffer } from '@/app/sync/useCloudSyncTrayOffer'
+import {
+  recheckPasskeyOffer,
+  usePasskeyPromptNotification,
+} from '@/app/account/usePasskeyPromptNotification'
+import { useSignInNoticeNotifications } from '@/app/account/useSignInNoticeNotifications'
 import useCalendarSyncNotification from '@/app/calendar/useCalendarSyncNotification'
 import useCalendarSyncPausedNotification from '@/app/calendar/useCalendarSyncPausedNotification'
 import type { NotificationItem } from '@/types/notifications'
@@ -42,6 +48,9 @@ export default function NotificationsBell() {
     useBackupNotification(now),
     useSyncResolutionNotification(),
     useSyncResetNotification(),
+    useCloudSyncTrayOffer(),
+    usePasskeyPromptNotification(now),
+    ...useSignInNoticeNotifications(),
     useCalendarSyncPausedNotification(now),
     useDataProtectionRetentionNotification(now),
     ...useReminderNotifications(now),
@@ -64,6 +73,7 @@ export default function NotificationsBell() {
       now={now}
       onOpen={() => {
         refresh()
+        recheckPasskeyOffer()
         if (buddiesEnabled) void syncBuddyNotifications()
       }}
       syncState={buddiesSync.state}

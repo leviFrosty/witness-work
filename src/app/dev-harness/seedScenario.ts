@@ -7,6 +7,7 @@ import { useProfile } from '@/stores/profile'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import { buildScenario } from '@/app/dev-harness/scenarios'
 import { resetLocalData } from '@/app/dev-harness/resetLocalData'
+import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import { runBadgeEvaluation } from '@/app/badges/runBadgeEvaluation'
 import { forgetRolloverPrompts } from '@/features/service-reports/hooks/useRolloverPrompt'
 
@@ -48,6 +49,7 @@ export function seedScenario(name: string) {
   addServiceReports(scenario.timeEntries)
   scenario.dayPlans.forEach((plan) => addDayPlan(plan))
   scenario.recurringPlans.forEach((plan) => addRecurringPlan(plan))
+  rebasePublishedPhotos()
   if (scenario.onboarded) {
     runBadgeEvaluation({ quiet: true })
     usePreferences.getState().markBadgesSeen()

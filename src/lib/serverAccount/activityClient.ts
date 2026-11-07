@@ -1,6 +1,7 @@
 import type { HttpResponse, RequestOptions } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
+import type { SessionWindow } from '@/lib/serverAccount/stepUp'
 
 export type AuthorizedRequest = <T>(
   options: RequestOptions
@@ -12,16 +13,35 @@ export type ActivityClientOptions = {
   signal?: AbortSignal
 }
 
-export type SessionPlatform = 'ios' | 'android' | 'dev'
+export type SessionPlatform = 'ios' | 'android' | 'web' | 'dev'
 
 const isPlatform = (value: unknown): value is SessionPlatform =>
-  value === 'ios' || value === 'android' || value === 'dev'
+  value === 'ios' || value === 'android' || value === 'web' || value === 'dev'
+
+const METHODS = [
+  'attestation',
+  'dev',
+  'passkey',
+  'approval',
+  'recovery',
+  'signup',
+] as const
+
+export type SessionMethod = (typeof METHODS)[number]
+
+const optionalMethod = (value: unknown): SessionMethod | null =>
+  (METHODS as readonly unknown[]).includes(value)
+    ? (value as SessionMethod)
+    : null
 
 export type AccountDevice = {
   sessionId: string
-  platform: SessionPlatform
+
+  platform: SessionPlatform | null
 
   device: string | null
+
+  appVersion: string | null
 
   current: boolean
   createdAt: number
@@ -32,6 +52,7 @@ export type AccountDevice = {
 export const ACTIVITY_KINDS = [
   'account.created',
   'session.opened',
+  'session.renewed',
   'session.signed_out',
   'session.revoked',
   'session.replaced',
@@ -43,6 +64,10 @@ export const ACTIVITY_KINDS = [
   'account.reinstated',
   'buddies.inbox_linked',
   'buddies.deleted',
+  'passkey.added',
+  'passkey.removed',
+  'device.approved',
+  'account.key_changed',
 ] as const
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number]
 
@@ -61,6 +86,8 @@ export type ActivityEntry = {
   createdAt: number
 
   session: ActivitySession | null
+
+  method: SessionMethod | null
 
   actor: ActivitySession | null
 
@@ -91,7 +118,6 @@ export function parseDevice(value: unknown): AccountDevice | null {
     value
   if (
     !isId(sessionId) ||
-    !isPlatform(platform) ||
     typeof current !== 'boolean' ||
     !isTime(createdAt) ||
     !isTime(lastActiveAt) ||
@@ -100,8 +126,9 @@ export function parseDevice(value: unknown): AccountDevice | null {
     return null
   return {
     sessionId,
-    platform,
+    platform: isPlatform(platform) ? platform : null,
     device: optionalString(value.device),
+    appVersion: optionalString(value.appVersion),
     current,
     createdAt,
     lastActiveAt,
@@ -121,12 +148,18 @@ const parseActivitySession = (value: unknown): ActivitySession | null => {
 export function parseActivityEntry(value: unknown): ActivityEntry | null {
   if (!isRecord(value)) return null
   const { id, kind, createdAt } = value
-  if (typeof id !== 'string' || !isActivityKind(kind) || !isTime(createdAt))
+  if (
+    typeof id !== 'string' ||
+    !id ||
+    !isActivityKind(kind) ||
+    !isTime(createdAt)
+  )
     return null
   return {
     id,
     kind,
     createdAt,
+    method: optionalMethod(value.method),
     session: parseActivitySession(value.session),
     actor: parseActivitySession(value.actor),
     slotId: isId(value.slotId) ? value.slotId : null,
@@ -146,6 +179,25 @@ export async function fetchAccountDevices(
   const sessions = response.data?.sessions
   if (!Array.isArray(sessions)) throw new Error('Malformed sessions answer')
   return sessions.flatMap((session) => parseDevice(session) ?? [])
+}
+
+export async function fetchSessionWindow(
+  options: ActivityClientOptions
+): Promise<SessionWindow> {
+  const response = await options.request<{
+    now?: unknown
+    stepUpUntil?: unknown
+  }>({
+    url: `${options.baseUrl}/accounts/v1/sessions`,
+    method: 'GET',
+    timeoutMs: ACCOUNT_TIMEOUT_MS,
+    retry: { retries: 1 },
+    signal: options.signal,
+  })
+  const { now, stepUpUntil } = response.data ?? {}
+  return isTime(now) && isTime(stepUpUntil)
+    ? { now, stepUpUntil }
+    : { now: isTime(now) ? now : Number.NaN, stepUpUntil: null }
 }
 
 export async function revokeAccountDevice(

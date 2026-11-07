@@ -36,6 +36,14 @@ vi.mock('@/app/account/attestationCopy', () => ({
 }))
 vi.mock('@/app/account/handoff', () => ({ approveHandoff: vi.fn() }))
 vi.mock('@/lib/deviceOwner', () => ({ confirmDeviceOwner: vi.fn() }))
+
+vi.mock('@/lib/confirmSensitive', async () => {
+  const { confirmDeviceOwner } = await import('@/lib/deviceOwner')
+  return {
+    confirmSensitiveAction: (_action: string, prompt: string) =>
+      confirmDeviceOwner(prompt),
+  }
+})
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))

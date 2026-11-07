@@ -1,7 +1,15 @@
 import { useEffect } from 'react'
-import { canSync, installiCloudSync } from '@/app/sync/iCloudSync'
+import {
+  canSync,
+  flushPendingPush,
+  installiCloudSync,
+} from '@/app/sync/iCloudSync'
 import { installCloudSyncRuntime } from '@/app/sync/cloudSync'
+import { installCloudSyncRequest } from '@/app/sync/cloudSyncRequest'
 import { settleSyncProvider } from '@/app/sync/syncOption'
+import { resetCompletePull } from '@/lib/cloudSyncPullSettled'
+import { webAccount } from '@/lib/serverAccount'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import { registeredCloudSyncTransport } from '@/lib/syncTransport/provider'
 import { usePreferences } from '@/stores/preferences'
 
@@ -15,11 +23,21 @@ export function useICloudSync(storageReady: boolean | undefined) {
         settleSyncProvider()
     })
     const uninstallSync = installiCloudSync()
-    const uninstallCloud = registeredCloudSyncTransport()
-      ? installCloudSyncRuntime(canSync)
-      : () => {}
+    const cloud = registeredCloudSyncTransport() !== null
+
+    const uninstallRequest =
+      cloud && !cloudSyncOnly() ? installCloudSyncRequest() : () => {}
+    const uninstallCloud = cloud ? installCloudSyncRuntime(canSync) : () => {}
+
+    const uninstallSignOut =
+      webAccount?.beforeSignOut(async () => {
+        await flushPendingPush('sign-out')
+        resetCompletePull()
+      }) ?? (() => {})
     return () => {
       settle()
+      uninstallSignOut()
+      uninstallRequest()
       uninstallCloud()
       uninstallSync()
     }

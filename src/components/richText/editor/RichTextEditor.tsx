@@ -1,5 +1,5 @@
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { Alert, Linking, Platform, View } from 'react-native'
+import { Alert, Platform, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import {
   useKeyboardController,
@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { openAppSettings } from '@/lib/openAppSettings'
 import LinkSheet from '@/components/richText/editor/LinkSheet'
 import RichTextEditorDom, {
   type BridgeValue,
@@ -31,11 +32,14 @@ import {
 import useTheme from '@/contexts/theme'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { relativeLuminance } from '@/lib/color'
+import { pickWebImages } from '@/lib/files/pickWebImages'
 import { isRtlLayout } from '@/lib/direction'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 import { richTextImages } from '@/lib/richText/inspect'
 import { MAX_NOTE_IMAGES } from '@/lib/richText/noteImages'
+import { canAddNotePhotos } from '@/lib/richText/notePhotos'
 import { saveNoteImage } from '@/lib/richText/saveNoteImage'
 import { parseRichTextDoc } from '@/lib/richText/parse'
 import { usePreferences } from '@/stores/preferences'
@@ -157,8 +161,10 @@ const RichTextEditor = (props: {
       direction: isRtlLayout() ? 'rtl' : 'ltr',
       placeholder: props.placeholder,
       label: props.label,
+      photoMissing: i18n.t('richText_photoMissing'),
       characterLimit: props.characterLimit,
       autofocus: true,
+      inline: Platform.OS === 'web',
     }
   }
 
@@ -195,7 +201,7 @@ const RichTextEditor = (props: {
           { text: i18n.t('cancel'), style: 'cancel' },
           {
             text: i18n.t('richText_openSettings'),
-            onPress: () => void Linking.openSettings(),
+            onPress: () => void openAppSettings(),
           },
         ]
       )
@@ -210,7 +216,9 @@ const RichTextEditor = (props: {
     try {
       result =
         source === 'camera'
-          ? await ImagePicker.launchCameraAsync(options)
+          ? Platform.OS === 'web'
+            ? await pickWebImages(options, 'camera')
+            : await ImagePicker.launchCameraAsync(options)
           : await library.pick({
               ...options,
               allowsMultipleSelection: true,
@@ -220,7 +228,10 @@ const RichTextEditor = (props: {
     } catch (error) {
       logger.error('Failed to pick a photo for a note', error)
       props.onPhotoFailed?.()
-      Alert.alert(i18n.t('error'), i18n.t('richText_photoFailed'))
+      Alert.alert(
+        i18n.t('error'),
+        photoFailedMessage(error, 'richText_photoFailed')
+      )
       run({ type: 'focus' })
       return
     }
@@ -305,7 +316,9 @@ const RichTextEditor = (props: {
             })
           }
           onAddPhoto={
-            props.allowImages ? (source) => void addPhoto(source) : undefined
+            canAddNotePhotos(props.allowImages)
+              ? (source) => void addPhoto(source)
+              : undefined
           }
         />
       </Animated.View>

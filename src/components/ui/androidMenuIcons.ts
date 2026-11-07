@@ -23,6 +23,7 @@ import brushIcon from '@/assets/android-menu-icons/ww_menu_brush.xml'
 import customizeIcon from '@/assets/android-menu-icons/ww_menu_customize.xml'
 import hideIcon from '@/assets/android-menu-icons/ww_menu_hide.xml'
 import storeIcon from '@/assets/android-menu-icons/ww_menu_store.xml'
+import lockOpenIcon from '@/assets/android-menu-icons/ww_menu_lock_open.xml'
 import peopleIcon from '@/assets/android-menu-icons/ww_menu_people.xml'
 
 const androidMenuIcons: Partial<Record<string, ImageSourcePropType>> = {
@@ -50,6 +51,7 @@ const androidMenuIcons: Partial<Record<string, ImageSourcePropType>> = {
   'square.grid.2x2': customizeIcon,
   'eye.slash': hideIcon,
   storefront: storeIcon,
+  'lock.open': lockOpenIcon,
   'person.2': peopleIcon,
 }
 

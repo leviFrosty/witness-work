@@ -24,6 +24,7 @@ import {
 } from '@/lib/serverAccount/keys'
 import {
   closeSession,
+  isSessionAppVersion,
   type OpenedSession,
   refreshSession,
   sendSessionOpen,
@@ -39,7 +40,9 @@ export type AccountSessionFailure =
   | 'upgrade'
   | 'attestation'
   | 'rateLimited'
+  | 'keyRetired'
   | 'server'
+  | 'signedOut'
 
 const KIND: Record<AccountSessionFailure, HttpError['kind']> = {
   offline: 'offline',
@@ -48,7 +51,9 @@ const KIND: Record<AccountSessionFailure, HttpError['kind']> = {
   upgrade: 'client',
   attestation: 'client',
   rateLimited: 'rateLimited',
+  keyRetired: 'client',
   server: 'server',
+  signedOut: 'client',
 }
 
 export class AccountSessionError extends HttpError {
@@ -58,6 +63,10 @@ export class AccountSessionError extends HttpError {
 
   readonly reason: string | null
 
+  readonly ended: SessionEndReason | null
+
+  readonly changedAt: number | null
+
   constructor(
     failure: AccountSessionFailure,
     details: {
@@ -66,6 +75,8 @@ export class AccountSessionError extends HttpError {
       retryAfterMs?: number | null
       attestation?: AttestationProblem
       reason?: string | null
+      ended?: SessionEndReason
+      changedAt?: number | null
     } = {}
   ) {
     super(
@@ -80,8 +91,31 @@ export class AccountSessionError extends HttpError {
     this.attestation =
       failure === 'attestation' ? (details.attestation ?? 'failed') : null
     this.reason = details.reason ?? null
+    this.ended = details.ended ?? null
+    this.changedAt = details.changedAt ?? null
   }
 }
+
+export type SessionEndReason =
+  | 'revoked'
+  | 'replaced'
+  | 'expired'
+  | 'reused'
+  | 'key_changed'
+  | 'renewed'
+  | 'unknown'
+
+const SESSION_END_REASONS: readonly SessionEndReason[] = [
+  'revoked',
+  'replaced',
+  'expired',
+  'reused',
+  'key_changed',
+  'renewed',
+]
+
+export const sessionEndWipes = (reason: SessionEndReason | null) =>
+  reason === 'revoked' || reason === 'reused'
 
 const DEVICE_REASONS = new Set([
   'device_integrity_failed',
@@ -118,17 +152,66 @@ export function attestationProblemFor(
 const isUpgrade = (status?: number | null, serverCode?: string | null) =>
   status === 426 || serverCode === 'upgrade_required'
 
-function fromHttp(details: {
+export type SessionFailure =
+  | 'offline'
+  | 'updateRequired'
+  | 'unverified'
+  | 'verifyLater'
+
+export function sessionFailureFor(error: unknown): SessionFailure | null {
+  if (error instanceof AccountSessionError) {
+    if (error.failure === 'attestation')
+      return error.attestation === 'temporary' ? 'verifyLater' : 'unverified'
+    if (error.failure === 'upgrade') return 'updateRequired'
+  }
+  if (!(error instanceof HttpError)) return null
+  if (isUpgrade(error.status, error.serverCode)) return 'updateRequired'
+  if (error.serverCode === 'attestation_failed') {
+    const reason = (error.body as { reason?: unknown } | null)?.reason
+    return attestationProblemFor(
+      null,
+      typeof reason === 'string' ? reason : null
+    ) === 'temporary'
+      ? 'verifyLater'
+      : 'unverified'
+  }
+  if (
+    error.kind === 'offline' ||
+    error.kind === 'timeout' ||
+    error.kind === 'cancelled'
+  )
+    return 'offline'
+  return null
+}
+
+const endedBy = (details: {
   status: number | null
   serverCode: string | null
-  retryAfterMs: number | null
   reason: string | null
-}): AccountSessionError {
+}): SessionEndReason | undefined =>
+  details.status === 401 &&
+  (details.serverCode === 'unauthorized' || !details.serverCode)
+    ? (SESSION_END_REASONS.find((known) => known === details.reason) ??
+      'unknown')
+    : undefined
+
+function fromHttp(
+  details: {
+    status: number | null
+    serverCode: string | null
+    retryAfterMs: number | null
+    reason: string | null
+    changedAt?: number | null
+  },
+  refresh: boolean
+): AccountSessionError {
   const { status, serverCode } = details
   if (isUpgrade(status, serverCode))
     return new AccountSessionError('upgrade', details)
   if (serverCode === 'disabled')
     return new AccountSessionError('unavailable', details)
+  if (serverCode === 'key_retired')
+    return new AccountSessionError('keyRetired', details)
   if (serverCode === 'attestation_failed')
     return new AccountSessionError('attestation', {
       ...details,
@@ -136,10 +219,16 @@ function fromHttp(details: {
     })
   if (status === 429 || serverCode === 'rate_limited')
     return new AccountSessionError('rateLimited', details)
-  return new AccountSessionError('server', details)
+  return new AccountSessionError('server', {
+    ...details,
+    ...(refresh && { ended: endedBy(details) }),
+  })
 }
 
-export function toAccountSessionError(error: unknown): AccountSessionError {
+export function toAccountSessionError(
+  error: unknown,
+  { refresh = false }: { refresh?: boolean } = {}
+): AccountSessionError {
   if (error instanceof AccountSessionError) return error
   if (error instanceof AttestationError) {
     if (error.code === 'cancelled') return new AccountSessionError('cancelled')
@@ -159,24 +248,31 @@ export function toAccountSessionError(error: unknown): AccountSessionError {
   if (error instanceof AttestationHttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'network') return new AccountSessionError('offline')
-    return fromHttp({
-      status: error.status ?? null,
-      serverCode: error.serverCode ?? null,
-      retryAfterMs: error.retryAfterMs ?? null,
-      reason: error.reason ?? null,
-    })
+    return fromHttp(
+      {
+        status: error.status ?? null,
+        serverCode: error.serverCode ?? null,
+        retryAfterMs: error.retryAfterMs ?? null,
+        reason: error.reason ?? null,
+      },
+      refresh
+    )
   }
   if (error instanceof HttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'offline' || error.kind === 'timeout')
       return new AccountSessionError('offline', { status: error.status })
-    const reason = (error.body as { reason?: unknown } | null)?.reason
-    return fromHttp({
-      status: error.status,
-      serverCode: error.serverCode,
-      retryAfterMs: error.retryAfterMs,
-      reason: typeof reason === 'string' ? reason : null,
-    })
+    const body = error.body as { reason?: unknown; changedAt?: unknown } | null
+    return fromHttp(
+      {
+        status: error.status,
+        serverCode: error.serverCode,
+        retryAfterMs: error.retryAfterMs,
+        reason: typeof body?.reason === 'string' ? body.reason : null,
+        changedAt: typeof body?.changedAt === 'number' ? body.changedAt : null,
+      },
+      refresh
+    )
   }
   return new AccountSessionError('server')
 }
@@ -210,12 +306,51 @@ export type SessionStore = {
 export const staleTokenHash = (refreshToken: string) =>
   bytesToHex(sha256(utf8(`ww-account/v1/stale\n${refreshToken}`)))
 
+export const tabTokenHash = (refreshToken: string) =>
+  bytesToHex(sha256(utf8(`ww-account/v1/tab\n${refreshToken}`)))
+
+export const refreshInFlightHash = (refreshToken: string) =>
+  bytesToHex(sha256(utf8(`ww-account/v1/in-flight\n${refreshToken}`)))
+
+export type SessionTabMessage =
+  | {
+      type: 'tokens'
+      sessionId: string
+
+      refreshHash: string
+      accessToken: string
+
+      accessExpiresAt: number
+    }
+  | { type: 'ended'; sessionId: string; reason: SessionEndReason }
+
+export type WebSessionDeps = {
+  exclusive: <T>(run: () => Promise<T>) => Promise<T>
+
+  publish: (message: SessionTabMessage) => void
+
+  decide?: (
+    reason: SessionEndReason,
+    ending: { accountPub: string; changedAt: number | null }
+  ) => Promise<void>
+
+  onEnded: (reason: SessionEndReason, from: { fromTab: boolean }) => void
+
+  inFlight: {
+    read: () => Promise<string | null>
+    write: (hash: string | null) => Promise<void>
+  }
+}
+
+export const TAB_TOKENS_WAIT_MS = 1_000
+
 export type SessionOpenReason =
   | 'new'
   | 'expired'
   | 'ended'
   | 'unsaved'
   | 'handoff'
+  | 'renewed'
 
 export type AccountSessionEvent = {
   op: 'session/open' | 'session/refresh' | 'session/close'
@@ -242,9 +377,15 @@ export type AccountSessionDeps = {
   accountKey: () => Promise<Uint8Array>
 
   deviceLabel?: () => DeviceLabel
+
+  appVersion?: () => string | null | undefined
+
+  renewWindowMs?: () => number
   fetchImpl?: typeof fetch
 
   onUpgradeRequired?: () => void
+
+  web?: WebSessionDeps
 
   paused?: () => boolean
   onEvent?: (event: AccountSessionEvent) => void
@@ -254,6 +395,10 @@ export type AccountSessionDeps = {
   onThisDeviceSession?: (sessionId: string) => void
 
   onStatusChange?: (accountPub: string, status: AccountStatus) => void
+
+  onKeyRetired?: (accountPub: string, changedAt: number | null) => void
+
+  onKeySwitched?: (fromPub: string, toPub: string) => void
 
   onSucceededWhileSuspended?: (accountKey: Uint8Array) => void
 }
@@ -271,6 +416,25 @@ export type AccountSessionSnapshot = AccountSessionInfo & {
 
   sessionExpiresAt: number
 }
+
+let lastPublicKey: { accountKey: string; publicKey: string } | null = null
+const publicKeyOf = (accountKey: Uint8Array): string => {
+  const encoded = toB64u(accountKey)
+  if (lastPublicKey?.accountKey !== encoded)
+    lastPublicKey = {
+      accountKey: encoded,
+      publicKey: deriveAccountSigningKey(accountKey).publicKey,
+    }
+  return lastPublicKey.publicKey
+}
+
+export const sessionAccountForKey = (
+  session: Pick<AccountSessionSnapshot, 'accountId' | 'accountPub'> | null,
+  accountKey: Uint8Array | null
+): string | null =>
+  session && accountKey && publicKeyOf(accountKey) === session.accountPub
+    ? session.accountId
+    : null
 
 export type DetachedSession = AccountSessionInfo & {
   adopt: () => Promise<void>
@@ -301,6 +465,8 @@ export const ACCESS_REFRESH_MARGIN_MS = 60_000
 export const ACCESS_LIFETIME_MS = 15 * 60_000
 
 export const SESSION_RENEW_MARGIN_MS = 10 * 60_000
+
+export const SESSION_RENEW_WINDOW_MS = 30 * 24 * 60 * 60_000
 
 export const OPEN_RETRY_AFTER_MS: Record<AttestationProblem, number> = {
   device: 30 * 60_000,
@@ -371,6 +537,17 @@ function raceSignal<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
   })
 }
 
+export type RekeyedTokens = { accessToken: string; accessExpiresAt: number }
+
+type OpenCall = {
+  signal?: AbortSignal
+  current?: () => boolean
+
+  accountId?: string
+
+  renews?: { sessionId: string; accessToken: string }
+}
+
 export function createAccountSessions(deps: AccountSessionDeps) {
   const localNow = deps.localNow ?? Date.now
   let live: Live | null = null
@@ -392,17 +569,27 @@ export function createAccountSessions(deps: AccountSessionDeps) {
 
   const retired = new Set<string>()
 
+  const retiredByServer = new Map<string, AccountSessionError>()
+
   const openLimitedUntil = new Map<string, number>()
+
+  const renewTried = new Set<string>()
   let lastFailure: {
     pub: string
     error: AccountSessionError
     until: number
   } | null = null
 
+  const appVersion = () => {
+    const version = deps.appVersion?.()
+    return isSessionAppVersion(version) ? version : undefined
+  }
+
   const clientOptions = (signal?: AbortSignal) => ({
     baseUrl: deps.baseUrl,
     fetchImpl: deps.fetchImpl,
     signal,
+    appVersion: appVersion(),
   })
 
   const emit = (event: AccountSessionEvent) => deps.onEvent?.(event)
@@ -527,7 +714,9 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       emit({ op, outcome: 'ok', ms: localNow() - started, ...extra })
       return value
     } catch (error) {
-      const failure = toAccountSessionError(error)
+      const failure = toAccountSessionError(error, {
+        refresh: op === 'session/refresh',
+      })
       emit({
         op,
         outcome: failure.failure,
@@ -573,15 +762,27 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
-    call: { signal?: AbortSignal; current?: () => boolean } = {}
+    call: OpenCall = {}
   ): Promise<OpenedSession> {
     const pub = key.publicKey
     const limited = openRateLimit(pub)
     if (limited) throw limited
+    const refused = retiredByServer.get(pub)
+    if (refused) throw refused
+    const seen: { changedAt: number | null } = { changedAt: null }
     try {
-      return await attestAndOpen(accountKey, key, reason, call)
+      return await attestAndOpen(accountKey, key, reason, call, seen)
     } catch (error) {
-      const failure = toAccountSessionError(error)
+      let failure = toAccountSessionError(error)
+      if (failure.failure === 'keyRetired') {
+        failure = new AccountSessionError('keyRetired', {
+          status: failure.status,
+          serverCode: 'key_retired',
+          changedAt: failure.changedAt ?? seen.changedAt,
+        })
+        retiredByServer.set(pub, failure)
+        deps.onKeyRetired?.(pub, failure.changedAt)
+      }
       if (failure.failure === 'rateLimited') {
         const wait = Math.min(
           Math.max(failure.retryAfterMs ?? OPEN_RATE_LIMIT_DEFAULT_MS, 1_000),
@@ -597,7 +798,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     accountKey: Uint8Array,
     key: AccountSigningKey,
     reason: SessionOpenReason,
-    call: { signal?: AbortSignal; current?: () => boolean }
+    call: OpenCall,
+    seen: { changedAt: number | null }
   ): Promise<OpenedSession> {
     const hash = sessionAttestationHash(key.publicKey)
     const device = deviceLabelFor(accountKey, key.publicKey)
@@ -613,7 +815,13 @@ export function createAccountSessions(deps: AccountSessionDeps) {
               throw new AttestationHttpError({ kind: 'cancelled' })
             try {
               return await sendSessionOpen(
-                { proof, device },
+                {
+                  proof,
+                  device,
+                  appVersion: appVersion(),
+                  accountId: call.accountId,
+                  renews: call.renews,
+                },
                 {
                   ...clientOptions(attemptSignal),
                   key,
@@ -622,6 +830,15 @@ export function createAccountSessions(deps: AccountSessionDeps) {
                 }
               )
             } catch (error) {
+              if (
+                error instanceof HttpError &&
+                error.serverCode === 'key_retired'
+              ) {
+                const changedAt = (error.body as { changedAt?: unknown } | null)
+                  ?.changedAt
+                seen.changedAt =
+                  typeof changedAt === 'number' ? changedAt : null
+              }
               throw toAttestationHttpError(error)
             }
           },
@@ -629,6 +846,203 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         }),
       { reason }
     )
+  }
+
+  async function refresh(
+    current: Live,
+    unchanged: () => boolean
+  ): Promise<{
+    next: Live
+    accessExpiresAt: number
+    saved: 'saved' | 'failed'
+  }> {
+    const tokens = await timed('session/refresh', () =>
+      refreshSession(current.refreshToken, clientOptions())
+    )
+    if (!unchanged()) throw new AccountSessionError('cancelled')
+    const next: Live = {
+      ...current,
+      refreshToken: tokens.refreshToken,
+      sessionExpiresAt: tokens.sessionExpiresAt,
+      accessToken: tokens.accessToken,
+      accessExpiresAt: accessExpiry(tokens.accessExpiresAt),
+    }
+    const saved = await save(stored(next), unchanged)
+    if (saved === 'skipped' || !unchanged())
+      throw new AccountSessionError('cancelled')
+
+    unsavedToken =
+      saved === 'failed'
+        ? { replaced: current.refreshToken, held: tokens.refreshToken }
+        : null
+    return { next, accessExpiresAt: tokens.accessExpiresAt, saved }
+  }
+
+  async function refreshMarked(
+    web: WebSessionDeps,
+    current: Live,
+    unchanged: () => boolean
+  ) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false)
+      throw new AccountSessionError('offline')
+    const hash = refreshInFlightHash(current.refreshToken)
+    const sentBefore = (await web.inFlight.read().catch(() => null)) === hash
+    try {
+      await web.inFlight.write(hash)
+    } catch {
+      throw new AccountSessionError('cancelled')
+    }
+    if (!unchanged()) throw new AccountSessionError('cancelled')
+    try {
+      const result = await refresh(current, unchanged)
+      if (result.saved === 'saved')
+        await web.inFlight.write(null).catch(() => undefined)
+      return result
+    } catch (error) {
+      if (!unchanged()) throw new AccountSessionError('cancelled')
+      if (
+        !(
+          error instanceof AccountSessionError &&
+          error.failure === 'server' &&
+          error.status === 401
+        )
+      )
+        throw error
+      await web.inFlight.write(null).catch(() => undefined)
+      if (!sentBefore || error.ended !== 'reused') throw error
+
+      throw new AccountSessionError('server', {
+        status: 401,
+        serverCode: error.serverCode,
+        ended: 'expired',
+      })
+    }
+  }
+
+  let unsavedToken: { replaced: string; held: string } | null = null
+
+  let tabTokens: Extract<SessionTabMessage, { type: 'tokens' }> | null = null
+  const tabWaiters = new Set<() => void>()
+
+  function tabTokensFor(saved: Stored) {
+    const hash = tabTokenHash(saved.refreshToken)
+    const match = () =>
+      tabTokens?.sessionId === saved.sessionId && tabTokens.refreshHash === hash
+        ? tabTokens
+        : null
+    const found = match()
+    if (found) return Promise.resolve(found)
+    return new Promise<typeof tabTokens>((resolve) => {
+      const done = () => {
+        clearTimeout(timer)
+        tabWaiters.delete(check)
+        resolve(match())
+      }
+      const check = () => {
+        if (match()) done()
+      }
+      const timer = setTimeout(done, TAB_TOKENS_WAIT_MS)
+      tabWaiters.add(check)
+    })
+  }
+
+  async function refreshInTabs(
+    web: WebSessionDeps,
+    current: Live,
+    rejected: string | undefined,
+    unchanged: () => boolean
+  ): Promise<Live> {
+    const raw = await deps.store.read().catch(() => undefined)
+
+    if (raw === undefined || !unchanged())
+      throw new AccountSessionError('cancelled')
+    const saved = parseStored(raw)
+
+    if (
+      saved?.accountPub !== current.accountPub ||
+      saved.sessionId !== current.sessionId
+    )
+      throw new AccountSessionError('signedOut')
+    storedToken = saved.refreshToken
+    const base: Live = {
+      ...current,
+      ...saved,
+      ...(unsavedToken?.replaced === saved.refreshToken && {
+        refreshToken: unsavedToken.held,
+      }),
+    }
+    if (
+      saved.refreshToken !== current.refreshToken &&
+      unsavedToken?.replaced !== saved.refreshToken
+    ) {
+      const shared = await tabTokensFor(saved)
+      if (!unchanged()) throw new AccountSessionError('cancelled')
+      if (shared) {
+        const candidate: Live = {
+          ...base,
+          accessToken: shared.accessToken,
+          accessExpiresAt: accessExpiry(shared.accessExpiresAt),
+        }
+        if (accessUsable(candidate, rejected)) return candidate
+      }
+    }
+    const { next, accessExpiresAt } = await refreshMarked(web, base, unchanged)
+    web.publish({
+      type: 'tokens',
+      sessionId: next.sessionId,
+      refreshHash: tabTokenHash(next.refreshToken),
+      accessToken: next.accessToken!,
+      accessExpiresAt,
+    })
+    return next
+  }
+
+  async function endWebSession(
+    current: Live,
+    reason: SessionEndReason,
+    changedAt: number | null = null
+  ): Promise<AccountSessionError> {
+    generation++
+    lastFailure = null
+    live = null
+
+    await deps.web
+      ?.decide?.(reason, { accountPub: current.accountPub, changedAt })
+      .catch(() => undefined)
+    deps.web?.onEnded(reason, { fromTab: false })
+    void save(null)
+    deps.web?.publish({
+      type: 'ended',
+      sessionId: current.sessionId,
+      reason,
+    })
+    return new AccountSessionError('signedOut', {
+      status: 401,
+      serverCode: 'unauthorized',
+      ended: reason,
+    })
+  }
+
+  function receive(message: SessionTabMessage) {
+    if (!deps.web) return
+    if (message.type === 'tokens') {
+      tabTokens = message
+      for (const check of [...tabWaiters]) check()
+
+      if (live?.sessionId === message.sessionId)
+        live = {
+          ...live,
+          accessToken: message.accessToken,
+          accessExpiresAt: accessExpiry(message.accessExpiresAt),
+        }
+      return
+    }
+    if (live?.sessionId !== message.sessionId) return
+    generation++
+    flight = null
+    lastFailure = null
+    live = null
+    deps.web.onEnded(message.reason, { fromTab: true })
   }
 
   async function closeTokens(session: {
@@ -667,10 +1081,77 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     while (keyChange) await keyChange
   }
 
+  const dueForRenewal = (session: Live) =>
+    !deps.web &&
+    !renewTried.has(session.sessionId) &&
+    session.sessionExpiresAt - deps.now() <=
+      (deps.renewWindowMs?.() ?? SESSION_RENEW_WINDOW_MS)
+
+  function renewAfter(
+    accountKey: Uint8Array,
+    key: AccountSigningKey,
+    from: Live
+  ) {
+    renewTried.add(from.sessionId)
+    const pub = key.publicKey
+    const startedAt = generation
+    const unchanged = () => startedAt === generation
+    const run = async (): Promise<Live> => {
+      const current = live
+      if (!unchanged() || current?.sessionId !== from.sessionId)
+        throw new AccountSessionError('cancelled')
+      if (!accessUsable(current)) {
+        renewTried.delete(current.sessionId)
+        return current
+      }
+      let opened: OpenedSession
+      try {
+        opened = await open(accountKey, key, 'renewed', {
+          current: unchanged,
+          accountId: current.accountId,
+          renews: {
+            sessionId: current.sessionId,
+            accessToken: current.accessToken!,
+          },
+        })
+      } catch {
+        if (!unchanged()) throw new AccountSessionError('cancelled')
+        return live ?? current
+      }
+      const next = toLive(pub, opened)
+      const saved = unchanged() ? await save(stored(next), unchanged) : null
+      if (saved !== 'saved' || !unchanged()) {
+        void closeTokens({ ...opened, accessUsable: true })
+        if (saved !== 'failed' || !unchanged())
+          throw new AccountSessionError('cancelled')
+
+        live = { ...current, accessToken: null, accessExpiresAt: 0 }
+        return live
+      }
+      live = next
+      deps.onThisDeviceSession?.(next.sessionId)
+      return next
+    }
+    const promise = (flight?.promise ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(run)
+    flight = { pub, promise }
+    void promise
+      .catch(() => undefined)
+      .finally(() => {
+        if (flight?.promise === promise) flight = null
+      })
+  }
+
   async function acquire(
     accountKey: Uint8Array,
     key: AccountSigningKey,
-    call: { rejected?: string; retry?: boolean; signal?: AbortSignal }
+    call: {
+      rejected?: string
+      retry?: boolean
+      signal?: AbortSignal
+      accountId?: string
+    }
   ): Promise<Live> {
     const pub = key.publicKey
     refuseWhilePaused()
@@ -692,7 +1173,13 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       if (current?.accountPub === pub && accessUsable(current, call.rejected))
         return current
       let reason: SessionOpenReason = discardedStale ? 'unsaved' : 'new'
+
+      const knownAccount = call.accountId ?? current?.accountId
+
+      if (deps.web && current && current.accountPub !== pub)
+        throw new AccountSessionError('cancelled')
       if (current && current.accountPub !== pub) {
+        deps.onKeySwitched?.(current.accountPub, pub)
         live = null
         void save(null)
         void closeTokens({ ...current, accessUsable: accessUsable(current) })
@@ -702,24 +1189,19 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         reason = 'expired'
       } else if (current) {
         try {
-          const tokens = await timed('session/refresh', () =>
-            refreshSession(current.refreshToken, clientOptions())
-          )
+          const web = deps.web
+          const next = web
+            ? await web.exclusive(() =>
+                refreshInTabs(web, current, call.rejected, unchanged)
+              )
+            : (await refresh(current, unchanged)).next
           if (!unchanged()) throw new AccountSessionError('cancelled')
-          const next: Live = {
-            ...current,
-            refreshToken: tokens.refreshToken,
-            sessionExpiresAt: tokens.sessionExpiresAt,
-            accessToken: tokens.accessToken,
-            accessExpiresAt: accessExpiry(tokens.accessExpiresAt),
-          }
-
-          const saved = await save(stored(next), unchanged)
-          if (saved === 'skipped' || !unchanged())
-            throw new AccountSessionError('cancelled')
           live = next
+          if (dueForRenewal(next)) renewAfter(accountKey, key, next)
           return next
         } catch (error) {
+          if (!unchanged()) throw new AccountSessionError('cancelled')
+
           if (
             !(
               error instanceof AccountSessionError &&
@@ -728,6 +1210,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
             )
           )
             throw error
+          if (deps.web)
+            throw await endWebSession(
+              current,
+              error.ended ?? 'unknown',
+              error.changedAt
+            )
           reason = 'ended'
           if (!unchanged()) throw new AccountSessionError('cancelled')
 
@@ -735,6 +1223,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           live = ended
           void save(stored(ended), () => live === ended)
         }
+      }
+
+      if (deps.web) {
+        if (current && reason === 'expired')
+          throw await endWebSession(current, 'expired')
+        throw new AccountSessionError('signedOut')
       }
       if (
         !call.retry &&
@@ -745,7 +1239,21 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       if (!unchanged()) throw new AccountSessionError('cancelled')
       let opened: OpenedSession
       try {
-        opened = await open(accountKey, key, reason, { current: unchanged })
+        try {
+          opened = await open(accountKey, key, reason, {
+            current: unchanged,
+            accountId: knownAccount,
+          })
+        } catch (error) {
+          if (
+            call.accountId !== undefined ||
+            knownAccount === undefined ||
+            !(error instanceof HttpError) ||
+            error.serverCode !== 'unknown_account'
+          )
+            throw error
+          opened = await open(accountKey, key, reason, { current: unchanged })
+        }
       } catch (error) {
         const failure = toAccountSessionError(error)
         if (failure.failure === 'attestation')
@@ -803,7 +1311,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
 
   async function ensure(
     accountKey?: Uint8Array,
-    call: { retry?: boolean; signal?: AbortSignal } = {}
+    call: { retry?: boolean; signal?: AbortSignal; accountId?: string } = {}
   ): Promise<AccountSessionInfo> {
     const { bytes, key } = await keyFor(accountKey)
     await load()
@@ -818,6 +1326,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       accountKey?: Uint8Array
       signal?: AbortSignal
       renew?: boolean
+
+      retryUnauthorized?: boolean
     } = {}
   ): Promise<T> {
     const { bytes, key } = await keyFor(call.accountKey)
@@ -846,7 +1356,11 @@ export function createAccountSessions(deps: AccountSessionDeps) {
           throw toAccountSessionError(error)
         }
         if (refusedAsSuspended(error)) noteStatus(key.publicKey, 'suspended')
-        if (attempt === 0 && isUnauthorized(error)) {
+        if (
+          attempt === 0 &&
+          call.retryUnauthorized !== false &&
+          isUnauthorized(error)
+        ) {
           rejected = token
           continue
         }
@@ -857,27 +1371,75 @@ export function createAccountSessions(deps: AccountSessionDeps) {
 
   function authorizedRequest<T = unknown>(
     options: RequestOptions,
-    call: { accountKey?: Uint8Array; renew?: boolean } = {}
+    call: { accountKey?: Uint8Array; renew?: boolean; accountId?: string } = {}
   ): Promise<HttpResponse<T>> {
     return withSession(
-      (authorization) =>
-        request<T>({
+      (authorization, session) => {
+        if (
+          call.accountId !== undefined &&
+          session.accountId !== call.accountId
+        )
+          throw new AccountSessionError('cancelled')
+        return request<T>({
           ...options,
           headers: { ...options.headers, authorization },
           fetchImpl: options.fetchImpl ?? deps.fetchImpl,
-        }),
+        })
+      },
       { accountKey: call.accountKey, signal: options.signal, renew: call.renew }
     )
   }
 
+  async function adopt(
+    accountKey: Uint8Array,
+    opened: OpenedSession,
+    { replace }: { replace?: { waitMs?: number } } = {}
+  ): Promise<'saved' | 'skipped' | 'failed'> {
+    const pub = deriveAccountSigningKey(accountKey).publicKey
+    await load()
+    let previous = replace ? live : null
+
+    if (deps.web && previous) {
+      const saved = parseStored(await deps.store.read().catch(() => null))
+      if (saved?.sessionId === previous.sessionId)
+        previous = { ...previous, refreshToken: saved.refreshToken }
+    }
+    const adoptedAt = ++generation
+    flight = null
+    lastFailure = null
+
+    if (deps.web) retired.delete(pub)
+    live = toLive(pub, opened)
+    deps.onThisDeviceSession?.(opened.sessionId)
+    const saved = await save(stored(live), () => generation === adoptedAt)
+    if (!previous || previous.sessionId === opened.sessionId) return saved
+    if (saved === 'failed') {
+      if (generation === adoptedAt) {
+        generation++
+        live = previous
+        deps.onThisDeviceSession?.(previous.sessionId)
+      }
+      return saved
+    }
+    const closing = closeTokens({
+      ...previous,
+      accessUsable: accessUsable(previous),
+    })
+    await (replace?.waitMs === undefined
+      ? closing
+      : settleWithin(closing, replace.waitMs))
+    return saved
+  }
+
   async function openDetached(
     accountKey: Uint8Array,
-    call: { signal?: AbortSignal } = {}
+    call: { signal?: AbortSignal; accountId?: string } = {}
   ): Promise<DetachedSession> {
     refuseWhilePaused()
     const key = deriveAccountSigningKey(accountKey)
     const opened = await open(accountKey, key, 'handoff', {
       signal: call.signal,
+      accountId: call.accountId,
     })
     let settled = false
     return {
@@ -887,14 +1449,8 @@ export function createAccountSessions(deps: AccountSessionDeps) {
       adopt: async () => {
         if (settled) return
         settled = true
-        await load()
-        const adoptedAt = ++generation
-        flight = null
-        lastFailure = null
-        live = toLive(key.publicKey, opened)
-        deps.onThisDeviceSession?.(opened.sessionId)
 
-        await save(stored(live), () => generation === adoptedAt)
+        await adopt(accountKey, opened)
       },
       close: async () => {
         if (settled) return
@@ -904,16 +1460,26 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     }
   }
 
-  async function close(): Promise<void> {
+  async function close({ waitMs }: { waitMs?: number } = {}): Promise<void> {
     await load()
-    const current = live
+    let current = live
+
+    if (deps.web && current) {
+      const saved = parseStored(await deps.store.read().catch(() => null))
+      if (saved?.sessionId === current.sessionId)
+        current = { ...current, refreshToken: saved.refreshToken }
+    }
     generation++
     flight = null
     lastFailure = null
     live = null
     await save(null)
-    if (current)
-      await closeTokens({ ...current, accessUsable: accessUsable(current) })
+    if (!current) return
+    const closing = closeTokens({
+      ...current,
+      accessUsable: accessUsable(current),
+    })
+    await (waitMs === undefined ? closing : settleWithin(closing, waitMs))
   }
 
   function forget() {
@@ -958,11 +1524,63 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     }
   }
 
+  async function repoint(
+    fromPub: string,
+    toPub: string,
+    tokens?: RekeyedTokens
+  ): Promise<boolean> {
+    await keySettled()
+    let done!: () => void
+    keyChange = new Promise<void>((resolve) => {
+      done = resolve
+    })
+    keyChanges++
+    try {
+      await load()
+      while (flight) await flight.promise.catch(() => undefined)
+      retired.add(fromPub)
+      retired.delete(toPub)
+      if (live?.accountPub !== fromPub) return live?.accountPub === toPub
+      const next: Live = {
+        ...live,
+        accountPub: toPub,
+        ...(tokens
+          ? {
+              accessToken: tokens.accessToken,
+              accessExpiresAt: accessExpiry(tokens.accessExpiresAt),
+            }
+          : { accessToken: null, accessExpiresAt: 0 }),
+      }
+      live = next
+      lastFailure = null
+
+      await save(stored(next), () => live === next)
+      return true
+    } finally {
+      keyChange = null
+      done()
+    }
+  }
+
   function noteStatus(accountPub: string, status: AccountStatus) {
     if (live?.accountPub !== accountPub || live.status === status) return
     const next = { ...live, status }
     live = next
-    void save(stored(next), () => live === next)
+    if (deps.web) {
+      const web = deps.web
+      void web
+        .exclusive(async () => {
+          const saved = parseStored(await deps.store.read().catch(() => null))
+          if (
+            saved?.sessionId === next.sessionId &&
+            live?.sessionId === next.sessionId
+          )
+            await save({ ...saved, status: live.status })
+        })
+        .catch(() => undefined)
+    } else {
+      void save(stored(next), () => live === next)
+    }
     deps.onStatusChange?.(accountPub, status)
   }
 
@@ -984,9 +1602,12 @@ export function createAccountSessions(deps: AccountSessionDeps) {
     withSession,
     request: authorizedRequest,
     openDetached,
+    adopt,
+    receive,
     close,
     forget,
     changeKey,
+    repoint,
     noteStatus,
     snapshot,
     lastOpenFailure,

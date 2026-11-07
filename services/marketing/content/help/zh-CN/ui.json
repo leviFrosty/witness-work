@@ -1,0 +1,23 @@
+{
+  "helpCenter": "帮助中心",
+  "intro": "快速回答关于WitnessWork的常见问题。找不到你需要的东西？联系他们——你的反馈会影响应用的价值。",
+  "searchPlaceholder": "检索问题",
+  "topQuestions": "常见问题",
+  "allQuestions": "所有问题",
+  "noMatches": "不匹配",
+  "noResults": "没有问题能与你的搜索匹配。",
+  "searching": "正在搜索…",
+  "clearSearch": "清除搜索",
+  "stillNeedHelp": "还需要帮助吗？",
+  "emailUs": "请私下通过电子邮件联系我们，地址为",
+  "bugReport": "报告错误",
+  "featureRequest": "功能请求",
+  "device": "设备",
+  "language": "语言",
+  "all": "全部",
+  "copyLink": "复制链接",
+  "iosOnly": "仅限 iOS",
+  "androidOnly": "仅限 Android",
+  "notTranslated": "此回答尚未翻译，因此以英文显示。",
+  "stillNeedHelpDescription": "如需私人支持，请发送电子邮件；如需报告错误或提出功能建议，请前往 GitHub。请说明你尝试过的操作、你的设备和 WitnessWork 版本。公开报告中请勿包含联系方式、私人笔记或账户 ID。"
+}

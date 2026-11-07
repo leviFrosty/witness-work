@@ -1,21 +1,47 @@
-import { useEffect, useRef } from 'react'
-import { AppState, BackHandler } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { AppState, BackHandler, Platform } from 'react-native'
 import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { useAppLockAvailability } from '@/hooks/useAppLockAvailability'
 import { shouldRelock } from '@/lib/appLock'
-import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
+import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
+import {
+  appLockDelayFor,
+  useAppLockSession,
+  useAppLockSettings,
+} from '@/stores/appLock'
 import AppLockScreen from '@/app/app-lock/AppLockScreen'
-import { promptUnlock, wasAskedAtLaunch } from '@/app/app-lock/unlock'
+import {
+  promptUnlock,
+  unlockWebAppLock,
+  wasAskedAtLaunch,
+} from '@/app/app-lock/unlock'
+import { confirmWebSignOut } from '@/app/web-sign-in/confirmWebSignOut'
 import { setFirstScreenCovered } from '@/app/launch/useAfterLaunch'
 import { setAppSwitcherHidden } from '../../../modules/app-switcher-privacy'
 
 const unlock = () => useAppLockSession.setState({ locked: false })
 
+const isWeb = Platform.OS === 'web'
+
+const requireAfter = () =>
+  appLockDelayFor(useAppLockSettings.getState().requireAfter, isWeb)
+
 export default function AppLockGate() {
+  return hasCapability('appLock') ? <DeviceAppLockGate /> : null
+}
+
+function DeviceAppLockGate() {
   const enabled = useAppLockSettings((s) => s.enabled)
   const locked = useAppLockSession((s) => s.locked)
+  const authenticating = useAppLockSession((s) => s.authenticating)
   const availability = useAppLockAvailability()
+
+  const [unlockProblem, setUnlockProblem] = useState<string | null>(null)
+  const canUnlockHere = useAppLockSettings(
+    (s) => (s.webCredentials?.ids.length ?? 0) > 0
+  )
 
   const backgroundedAt = useRef<number | null>(
     AppState.currentState === 'background' ? Date.now() : null
@@ -36,17 +62,17 @@ export default function AppLockGate() {
       if (state === 'background') {
         backgroundedAt.current = Date.now()
 
-        if (useAppLockSettings.getState().requireAfter === 0) {
+        if (requireAfter() === 0) {
           useAppLockSession.setState({ locked: true })
         }
       } else if (state === 'active' && backgroundedAt.current !== null) {
         const awayMs = Date.now() - backgroundedAt.current
         backgroundedAt.current = null
-        if (shouldRelock(awayMs, useAppLockSettings.getState().requireAfter)) {
+        if (shouldRelock(awayMs, requireAfter())) {
           useAppLockSession.setState({ locked: true })
         }
 
-        if (useAppLockSession.getState().locked) promptUnlock()
+        if (useAppLockSession.getState().locked && !isWeb) promptUnlock()
       }
     })
     return () => subscription.remove()
@@ -57,6 +83,7 @@ export default function AppLockGate() {
     const launch = mounting.current
     mounting.current = false
     if (launch && wasAskedAtLaunch()) return
+    if (isWeb) return
     if (enabled && locked && AppState.currentState === 'active') {
       promptUnlock()
     }
@@ -66,10 +93,32 @@ export default function AppLockGate() {
 
   return (
     <FullWindowOverlay onClose={() => BackHandler.exitApp()}>
-      <AppLockScreen
-        method={availability?.method ?? 'passcode'}
-        onUnlock={promptUnlock}
-      />
+      {isWeb ? (
+        <AppLockScreen
+          method='passkey'
+          onUnlock={() => {
+            setUnlockProblem(null)
+            void unlockWebAppLock().then(setUnlockProblem)
+          }}
+          unlocking={authenticating}
+          canUnlock={canUnlockHere}
+          problem={
+            unlockProblem ??
+            (canUnlockHere ? null : i18n.t('webAppLock_noKeptPasskey'))
+          }
+          onSignOut={() =>
+            confirmWebSignOut({
+              onStarted: () => setUnlockProblem(null),
+              onFailed: () => setUnlockProblem(i18n.t('webSignOut_failed')),
+            })
+          }
+        />
+      ) : (
+        <AppLockScreen
+          method={availability?.method ?? 'passcode'}
+          onUnlock={promptUnlock}
+        />
+      )}
     </FullWindowOverlay>
   )
 }

@@ -1,7 +1,11 @@
-import { Mic as MicIcon } from 'lucide-react-native'
+import {
+  MessageSquareText as MessageSquareTextIcon,
+  Mic as MicIcon,
+} from 'lucide-react-native'
 import { View } from 'react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { isDarkTheme } from '@/features/scribe/shaders/orbPalette'
 import ScribeOrb from '@/features/scribe/components/ScribeOrb'
 import ScribeOfflineBadge from '@/features/scribe/components/ScribeOfflineBadge'
@@ -56,7 +60,7 @@ const ScribeMicOrb = ({
         }}
       >
         <LucideIcon
-          icon={MicIcon}
+          icon={hasCapability('scribeVoice') ? MicIcon : MessageSquareTextIcon}
           size={iconSize}
           color={glyph}
           strokeWidth={2.4}

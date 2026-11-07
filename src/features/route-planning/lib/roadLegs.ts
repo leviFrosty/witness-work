@@ -18,7 +18,7 @@ export type RoadLegs = ReadonlyMap<string, RoadLeg | null>
 
 const MAX_LEGS = 300
 
-const MAX_ANDROID_LEGS = 11
+const MAX_API_LEGS = 11
 
 const IOS_CONCURRENCY = 3
 
@@ -58,7 +58,7 @@ const toRoadLeg = (leg: RouteDirections.RouteDirectionsLeg): RoadLeg => ({
 export const canLoadRoadLegs = () =>
   Platform.OS === 'ios'
     ? RouteDirections.isAvailable
-    : Platform.OS === 'android'
+    : Platform.OS === 'android' || Platform.OS === 'web'
 
 export const loadRoadLegs = async (
   path: Coordinate[],
@@ -73,10 +73,10 @@ export const loadRoadLegs = async (
   const missing = legs.filter(({ from, to }) => !cache.has(legKey(from, to)))
   if (missing.length === 0) return false
 
-  if (Platform.OS === 'android') {
+  if (Platform.OS !== 'ios') {
     let learned = false
-    for (let i = 0; i < legs.length; i += MAX_ANDROID_LEGS) {
-      const run = legs.slice(i, i + MAX_ANDROID_LEGS)
+    for (let i = 0; i < legs.length; i += MAX_API_LEGS) {
+      const run = legs.slice(i, i + MAX_API_LEGS)
       const runMissing = run.filter(
         ({ from, to }) => !cache.has(legKey(from, to))
       )

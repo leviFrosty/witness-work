@@ -90,6 +90,15 @@ export default function InlineNotice({
           loading={retrying}
           loadingColor={theme.colors.textAlt}
           accessibilityRole='button'
+          style={{
+            minWidth: 44,
+            minHeight: 44,
+            paddingHorizontal: 8,
+            marginHorizontal: -8,
+            marginVertical: -8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Text
             style={{

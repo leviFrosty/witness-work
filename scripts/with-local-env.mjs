@@ -73,6 +73,12 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   return { env, files }
 }
 
+export function defaultApiBaseUrl(variant) {
+  return variant === 'development'
+    ? 'https://api-dev.witnesswork.app'
+    : 'https://api.witnesswork.app'
+}
+
 export function validateLocalEnv(
   env,
   platform,
@@ -102,7 +108,7 @@ export function validateLocalEnv(
     )
   }
   const api = new URL(
-    env.EXPO_PUBLIC_API_BASE_URL || 'https://ww-proxy.leviwilkerson.com'
+    env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl(env.APP_VARIANT)
   )
   if (!['http:', 'https:'].includes(api.protocol))
     throw new Error('EXPO_PUBLIC_API_BASE_URL must be an HTTP(S) URL')

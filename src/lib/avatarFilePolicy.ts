@@ -1,3 +1,25 @@
+export const isInlineImage = (uri: string): boolean =>
+  /^(data|blob):/i.test(uri)
+
+export const isLocalAvatarValue = (value: string | undefined): boolean =>
+  value !== undefined && (value.startsWith('file://') || isInlineImage(value))
+
+type AvatarLike = { type?: string; value?: string; revision?: string }
+
+export function keepsLocalAvatar(
+  local: AvatarLike | undefined,
+  remote: AvatarLike | undefined
+): boolean {
+  if (local?.type !== 'image') return false
+  if (remote?.type === 'image')
+    return local.revision === remote.revision && isLocalAvatarValue(local.value)
+  return (
+    (remote === undefined || remote.type === 'none') &&
+    local.value !== undefined &&
+    isInlineImage(local.value)
+  )
+}
+
 export function isManagedAvatarPath(
   uri: string,
   documentDirectory: string

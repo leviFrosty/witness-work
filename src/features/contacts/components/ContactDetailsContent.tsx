@@ -1,10 +1,15 @@
-import { MessageCircle as MessageCircleIcon } from 'lucide-react-native'
+import {
+  MessageCircle as MessageCircleIcon,
+  UserRoundX as UserRoundXIcon,
+} from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
+import { CommonActions } from '@react-navigation/native'
 import { ScrollView, View } from 'react-native'
 import { getLocales } from 'expo-localization'
 import { StatusBar } from 'expo-status-bar'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import ActionButton from '@/components/ui/ActionButton'
 import Empty from '@/components/ui/Empty'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -16,6 +21,7 @@ import XView from '@/components/ui/layout/XView'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import { navigateTo } from '@/lib/address'
+import { navigationRef } from '@/features/contacts/lib/linking'
 import { getReadableTextColor, relativeLuminance } from '@/lib/color'
 import {
   contactMostRecentStudy,
@@ -155,9 +161,33 @@ const ContactDetailsContent = ({
   if (!contact) {
     return (
       <Wrapper style={{ flexGrow: 1, padding: 10 }}>
-        <Text style={{ fontSize: 18, marginTop: 15 }}>
-          {i18n.t('contactNotFoundWithId', { id })}
-        </Text>
+        <Empty
+          style={{ flex: 1 }}
+          icon={
+            <LucideIcon
+              icon={UserRoundXIcon}
+              size={24}
+              color={theme.colors.text}
+            />
+          }
+          title={i18n.t('contactNotFound_title')}
+          description={i18n.t('contactNotFound_description')}
+          action={
+            <ActionButton
+              onPress={() =>
+                navigationRef.dispatch(
+                  CommonActions.navigate({
+                    name: 'Root',
+                    pop: true,
+                    params: { screen: 'Contacts' },
+                  })
+                )
+              }
+            >
+              {i18n.t('contactNotFound_action')}
+            </ActionButton>
+          }
+        />
       </Wrapper>
     )
   }

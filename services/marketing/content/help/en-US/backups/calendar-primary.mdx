@@ -1,0 +1,9 @@
+---
+id: calendarPrimary
+title: Why does Calendar Sync use a primary device?
+category: backups
+platforms:
+  - ios
+---
+
+Exactly one device publishes your Follow-ups to avoid competing updates. The first device to connect becomes primary. On iOS devices using the same iCloud account, open Settings → Preferences → Calendar Sync to register each device, view the Primary device list, and choose a primary. Calendar Sync itself does not require Supporter. Follow-ups edited on another device reach the primary through existing app-data sync, which needs sync turned on in Settings → Device Sync (and Supporter access before version 1.47.0); open WitnessWork on the primary to publish them. After a transfer, the new primary needs access to the same calendar account and full calendar permission. If a transfer is pending, reopen WitnessWork on the previous primary so it can finish its interrupted operation. There is no automatic timeout takeover if that device is permanently unavailable; use private support under Still need help? in the Help Center. Removing a stale device from the list does not delete its app records or calendar events.

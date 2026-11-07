@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
-import * as Linking from 'expo-linking'
-import { launchURL } from '@/lib/launchLinks'
+import { addLinkListener, launchURL, linkOpened } from '@/lib/launchLinks'
 import { toast } from '@/stores/toasts'
 import {
   ImportHandlerCallbacks,
@@ -31,7 +30,7 @@ export default function ContactImportListener() {
     }
     if (!handledInitialUrl.current) {
       handledInitialUrl.current = true
-      launchURL()
+      launchURL('contact-import')
         .then((initial) => {
           logger.log(
             '[ContactImportListener] getInitialURL resolved =',
@@ -43,7 +42,7 @@ export default function ContactImportListener() {
           logger.error('[ContactImportListener] getInitialURL error:', error)
         })
     }
-    const sub = Linking.addEventListener('url', ({ url }) => {
+    const sub = addLinkListener((url) => {
       logger.log(
         '[ContactImportListener] url event fired, url =',
         redactLink(url)
@@ -57,6 +56,8 @@ export default function ContactImportListener() {
     if (pendingUrls.length === 0 || !onboarded || takingOver) return
     const [url] = pendingUrls
     setPendingUrls((urls) => urls.slice(1))
+
+    linkOpened(url)
     const handle = async (url: string | null) => {
       if (!url) return
 

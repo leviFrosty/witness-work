@@ -24,6 +24,7 @@ import {
   type ManageSubscriptionState,
   type PauseOffer,
 } from '@/features/supporter/lib/supporterPause'
+import { managementPage } from '@/features/supporter/lib/managementPage'
 
 interface Props {
   open: boolean
@@ -32,11 +33,26 @@ interface Props {
 }
 
 const isAndroid = storePlatform === 'android'
+const isWeb = storePlatform === 'web'
+
+const webPageKey = <K extends string>(
+  managementUrl: string | null,
+  keys: { web: K; ios: K; android: K }
+): K => {
+  const page = managementPage(managementUrl)
+  return page === 'app_store'
+    ? keys.ios
+    : page === 'play_store'
+      ? keys.android
+      : keys.web
+}
 
 const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
   const theme = useTheme()
   const {
     state,
+    canManage,
+    managementUrl,
     productLoaded,
     productError,
     retryProduct,
@@ -55,18 +71,35 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
 
   const closeThenOpenStore = (intent: StoreIntent) => {
     if (pausing) return
+    if (isWeb) {
+      void openStore(intent)
+      setOpen(false)
+      return
+    }
     afterDismiss.current = () => void openStore(intent)
     setOpen(false)
   }
 
-  const storeButtonLabel =
-    state.kind === 'ending' || state.kind === 'none'
+  const storeButtonLabel = isWeb
+    ? i18n.t('manageSupport_manageWeb')
+    : state.kind === 'ending' || state.kind === 'none'
       ? i18n.t(
           isAndroid
             ? 'manageSupport_manageInStoreAndroid'
             : 'manageSupport_manageInStore'
         )
       : i18n.t('manageSupport_cancelOrChange')
+  const storeHint = i18n.t(
+    isWeb
+      ? webPageKey(managementUrl, {
+          web: 'manageSupport_storeHintWeb',
+          ios: 'manageSupport_storeHint',
+          android: 'manageSupport_storeHintAndroid',
+        })
+      : isAndroid
+        ? 'manageSupport_storeHintAndroid'
+        : 'manageSupport_storeHint'
+  )
 
   return (
     <Sheet
@@ -130,6 +163,7 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
 
         <ManageSubscriptionBody
           state={state}
+          managementUrl={managementUrl}
           productLoaded={productLoaded}
           productError={productError}
           onRetryProduct={retryProduct}
@@ -138,45 +172,43 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
           onPlayPause={() => closeThenOpenStore('pause')}
         />
 
-        <View style={{ gap: 8 }}>
-          <Button
-            noTransform
-            variant='outline'
-            disabled={pausing}
-            onPress={() => closeThenOpenStore('cancel')}
-            style={{
-              paddingVertical: 14,
-              paddingHorizontal: 16,
-              borderRadius: theme.numbers.borderRadiusSm,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pausing ? 0.5 : 1,
-            }}
-          >
-            <Text
+        {canManage && (
+          <View style={{ gap: 8 }}>
+            <Button
+              noTransform
+              variant='outline'
+              disabled={pausing}
+              onPress={() => closeThenOpenStore('cancel')}
               style={{
-                fontSize: theme.fontSize('md'),
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                borderRadius: theme.numbers.borderRadiusSm,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pausing ? 0.5 : 1,
               }}
             >
-              {storeButtonLabel}
+              <Text
+                style={{
+                  fontSize: theme.fontSize('md'),
+                  fontFamily: theme.fonts.semiBold,
+                  color: theme.colors.text,
+                }}
+              >
+                {storeButtonLabel}
+              </Text>
+            </Button>
+            <Text
+              style={{
+                fontSize: theme.fontSize('xs'),
+                color: theme.colors.textAlt,
+                textAlign: 'center',
+              }}
+            >
+              {storeHint}
             </Text>
-          </Button>
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-              textAlign: 'center',
-            }}
-          >
-            {i18n.t(
-              isAndroid
-                ? 'manageSupport_storeHintAndroid'
-                : 'manageSupport_storeHint'
-            )}
-          </Text>
-        </View>
+          </View>
+        )}
       </View>
     </Sheet>
   )
@@ -184,6 +216,7 @@ const ManageSubscriptionSheet = ({ open, setOpen, source }: Props) => {
 
 const ManageSubscriptionBody = ({
   state,
+  managementUrl,
   productLoaded,
   productError,
   onRetryProduct,
@@ -192,6 +225,8 @@ const ManageSubscriptionBody = ({
   onPlayPause,
 }: {
   state: ManageSubscriptionState
+
+  managementUrl: string | null
   productLoaded: boolean
   productError: 'offline' | 'failed' | null
   onRetryProduct: () => void
@@ -284,9 +319,15 @@ const ManageSubscriptionBody = ({
       return (
         <Text style={bodyStyle}>
           {i18n.t(
-            isAndroid
-              ? 'manageSupport_billingIssueAndroid'
-              : 'manageSupport_billingIssue'
+            isWeb
+              ? webPageKey(managementUrl, {
+                  web: 'manageSupport_billingIssueWeb',
+                  ios: 'manageSupport_billingIssue',
+                  android: 'manageSupport_billingIssueAndroid',
+                })
+              : isAndroid
+                ? 'manageSupport_billingIssueAndroid'
+                : 'manageSupport_billingIssue'
           )}
         </Text>
       )

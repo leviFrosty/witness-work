@@ -5,6 +5,7 @@ import {
   type BackupClientOptions,
   deleteBackup,
   getBackup,
+  getBackupSlot,
   listBackups,
   putBackup,
 } from '@/lib/serverAccount/backupClient'
@@ -118,6 +119,25 @@ describe.skipIf(!interopEnabled)('backup against a real worker', () => {
       random(64)
     ).catch((error: unknown) => error)
     expect(code(failure)).toBe('bad_request')
+  })
+
+  it('puts with If-Match only over the bytes read', async () => {
+    const { options } = await account()
+    const slotId = newBackupSlotId(random)
+    const blob = random(64)
+    await putBackup(options, slotId, blob)
+    const read = await getBackupSlot(options, slotId)
+    expect(read.blob).toEqual(blob)
+    expect(read.etag).toMatch(/^[^"]+$/)
+
+    const missing = newBackupSlotId(random)
+    const failure = await putBackup(options, missing, random(64), {
+      ifMatch: read.etag!,
+    }).catch((error: unknown) => error)
+    expect(code(failure)).toBe('precondition_failed')
+    expect((await listBackups(options)).map((slot) => slot.slotId)).toEqual([
+      slotId,
+    ])
   })
 })
 

@@ -19,6 +19,9 @@ let account: string | null
 let appUserId: string | null
 let answer: () => Promise<unknown>
 let requests: RequestOptions[]
+
+let pinnedTo: Array<string | undefined>
+let confirmed: number
 let opened: number
 let deps: RevenueCatLinkDeps
 
@@ -28,15 +31,22 @@ beforeEach(() => {
   account = ACCOUNT
   appUserId = RC_ID
   requests = []
+  pinnedTo = []
+  confirmed = 0
   opened = 0
   answer = async () => ({ ok: true, supporter: true, expiresAt: null })
   deps = {
     baseUrl: 'https://api.test',
-    request: (async (options: RequestOptions) => {
+    request: (async (options: RequestOptions, accountId?: string) => {
       requests.push(options)
+      pinnedTo.push(accountId)
       return { data: await answer(), status: 200, headers: new Headers() }
     }) as RevenueCatLinkDeps['request'],
-    currentAccount: async () => account,
+    confirmAccount: async () => {
+      confirmed++
+      return account
+    },
+    sessionAccount: async () => account,
     openAccount: async () => {
       opened++
       return ACCOUNT
@@ -75,6 +85,7 @@ describe('ensure', () => {
       result: 'linked',
       supporter: true,
       expiresAt: null,
+      accountId: ACCOUNT,
     })
     expect(requests).toEqual([
       expect.objectContaining({
@@ -131,6 +142,20 @@ describe('ensure', () => {
     appUserId = '$RCAnonymousID:0123456789abcdef'
     const link = createRevenueCatLink(deps)
     await expect(link.ensure({ reason: 'launch' })).resolves.toEqual({
+      result: 'no_customer',
+    })
+    expect(requests).toHaveLength(0)
+  })
+
+  it('reads the RevenueCat id once the account is confirmed', async () => {
+    const link = createRevenueCatLink({
+      ...deps,
+      confirmAccount: async () => {
+        appUserId = null
+        return account
+      },
+    })
+    await expect(link.ensure({ reason: 'account_changed' })).resolves.toEqual({
       result: 'no_customer',
     })
     expect(requests).toHaveLength(0)
@@ -219,9 +244,45 @@ describe('ensure', () => {
       reason: 'session_opened',
     })
     expect(onOutcome).toHaveBeenCalledWith(
-      { result: 'linked', supporter: true, expiresAt: null },
+      {
+        result: 'linked',
+        supporter: true,
+        expiresAt: null,
+        accountId: ACCOUNT,
+      },
       'session_opened'
     )
+  })
+
+  it("doesn't answer for an account that changed during the link", async () => {
+    answer = async () => {
+      account = 'BBBBBBBBBBBBBBBBBBBBBB'
+      return { ok: true, supporter: true, expiresAt: null }
+    }
+    await expect(
+      createRevenueCatLink(deps).ensure({ reason: 'launch' })
+    ).resolves.toEqual({ result: 'failed' })
+    expect(stored).toBeNull()
+  })
+
+  it('sends the link on the account it confirmed, confirming once', async () => {
+    await createRevenueCatLink(deps).ensure({ reason: 'launch' })
+    expect(pinnedTo).toEqual([ACCOUNT])
+
+    expect(confirmed).toBe(1)
+  })
+
+  it("drops a link the session's account changed before", async () => {
+    const link = createRevenueCatLink({
+      ...deps,
+      request: async () => {
+        throw new AccountSessionError('cancelled')
+      },
+    })
+    await expect(link.ensure({ reason: 'launch' })).resolves.toEqual({
+      result: 'offline',
+    })
+    expect(stored).toBeNull()
   })
 })
 
@@ -241,6 +302,41 @@ describe('fetchStatus', () => {
     expect(requests[0]).toMatchObject({
       url: 'https://api.test/accounts/v1/supporter',
       method: 'GET',
+    })
+  })
+
+  it("reads on an account's session when given one", async () => {
+    answer = async () => ({ ok: true, supporter: false, customers: 0 })
+    await createRevenueCatLink(deps).fetchStatus(ACCOUNT)
+    expect(pinnedTo).toEqual([ACCOUNT])
+  })
+
+  it("waits out a 503's Retry-After before the next link", async () => {
+    answer = async () => {
+      throw new HttpError('server', 503, 'unavailable', 30_000)
+    }
+    const link = createRevenueCatLink(deps)
+    await expect(link.fetchStatus(ACCOUNT)).rejects.toThrow()
+    answer = async () => ({ ok: true, supporter: true, expiresAt: null })
+    now += 29_000
+    await expect(link.ensure({ reason: 'foreground' })).resolves.toEqual({
+      result: 'backoff',
+    })
+    now += 1_001
+    await expect(link.ensure({ reason: 'foreground' })).resolves.toMatchObject({
+      result: 'linked',
+    })
+  })
+
+  it("doesn't wait after another failure", async () => {
+    answer = async () => {
+      throw new HttpError('server', 500, 'internal', null)
+    }
+    const link = createRevenueCatLink(deps)
+    await expect(link.fetchStatus(ACCOUNT)).rejects.toThrow()
+    answer = async () => ({ ok: true, supporter: true, expiresAt: null })
+    await expect(link.ensure({ reason: 'foreground' })).resolves.toMatchObject({
+      result: 'linked',
     })
   })
 

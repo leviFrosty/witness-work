@@ -10,6 +10,7 @@ import {
 } from '@/lib/richText/notes'
 import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import useTheme from '@/contexts/theme'
+import useFormAtTopOnWeb from '@/hooks/useFormAtTopOnWeb'
 import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
@@ -97,6 +98,7 @@ type Props = TimeEntryPrefill & {
 }
 
 const TimeEntryForm = (props: Props) => {
+  const formAtTop = useFormAtTopOnWeb()
   const theme = useTheme()
   const cardStyle = useCardStyle()
   const insets = useSafeAreaInsets()
@@ -502,8 +504,7 @@ const TimeEntryForm = (props: Props) => {
         alignSelf: 'center',
       }}
     >
-      {}
-      <View style={{ flexGrow: 1 }} />
+      {!formAtTop && <View style={{ flexGrow: 1 }} />}
       <View
         style={{
           ...cardStyle,

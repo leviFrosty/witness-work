@@ -32,10 +32,12 @@ import ContactsVisual from '@/features/updates/components/reveal/visuals/Contact
 import BuddiesVisual from '@/features/updates/components/reveal/visuals/BuddiesVisual'
 import BadgesVisual from '@/features/updates/components/reveal/visuals/BadgesVisual'
 import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
-import { HoursWatch } from '@/features/updates/components/reveal/visuals/WatchVisual'
-import SiriVisual from '@/features/updates/components/reveal/visuals/SiriVisual'
+import {
+  HoursWatch,
+  SiriVisual,
+  TimeVisual,
+} from '@/features/updates/components/reveal/visuals/skiaVisuals'
 import PlanVisual from '@/features/plans/components/schedule-intro/PlanVisual'
-import TimeVisual from '@/features/onboarding/components/tour/TimeVisual'
 import ReportVisual from '@/features/onboarding/components/tour/ReportVisual'
 import PrivacyVisual from '@/features/onboarding/components/tour/PrivacyVisual'
 

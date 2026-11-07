@@ -25,6 +25,9 @@ export function deriveAccountSigningKey(
   return { seed, publicKey: toB64u(curve25519().ed25519.getPublicKey(seed)) }
 }
 
+export const accountPubOf = (accountKey: Uint8Array): string =>
+  deriveAccountSigningKey(accountKey).publicKey
+
 export function signAccountRequest(
   op: string,
   payload: Uint8Array,

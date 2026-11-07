@@ -32,5 +32,6 @@ export const toastDuration = async (
       )
     : base
 
+  if (!AccessibilityInfo.getRecommendedTimeoutMillis) return ms
   return Math.max(ms, await AccessibilityInfo.getRecommendedTimeoutMillis(ms))
 }

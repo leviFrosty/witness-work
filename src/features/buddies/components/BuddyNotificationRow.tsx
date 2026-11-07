@@ -21,6 +21,7 @@ import SharedEventSummary, {
   sharedEventText,
 } from '@/features/buddies/components/SharedEventSummary'
 import ShareAnswerButtons from '@/features/buddies/components/ShareAnswerButtons'
+import useReconnect from '@/features/buddies/hooks/useReconnect'
 import useReplyDelivery from '@/features/buddies/hooks/useReplyDelivery'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { alertBuddiesError } from '@/features/buddies/lib/buddiesErrorAlert'
@@ -95,6 +96,13 @@ export default function BuddyNotificationRow({
   const buddy = useBuddies((state) =>
     entry.from ? state.buddies.find((b) => b.inboxId === entry.from) : undefined
   )
+
+  const reconnectFrom = entry.reconnect
+  const reconnect = useBuddies((state) =>
+    reconnectFrom ? state.reconnectOffers[reconnectFrom] : undefined
+  )
+
+  const asked = useReconnect(reconnectFrom ?? '')
   const dayPlans = useServiceReport((state) => state.dayPlans)
   const timeDisplayFormat = usePreferences((state) => state.timeDisplayFormat)
   const dataProtectionMode = usePreferences((state) => state.dataProtectionMode)
@@ -116,7 +124,11 @@ export default function BuddyNotificationRow({
       setBusy(false)
     }
   }
-  const askerName = buddy ? buddyDisplayName(buddy) : entry.name
+  const askerName = buddy
+    ? buddyDisplayName(buddy)
+    : reconnect
+      ? buddyDisplayName(reconnect)
+      : entry.name
 
   const mutedJoinRequests = useBuddies((state) =>
     state.notificationsEnabled && entry.from
@@ -175,10 +187,7 @@ export default function BuddyNotificationRow({
     status !== 'cancelled' &&
     (status === 'pending' || changing)
 
-  const title = notificationHeadline({
-    ...entry,
-    name: buddy ? buddyDisplayName(buddy) : entry.name,
-  })
+  const title = notificationHeadline({ ...entry, name: askerName })
 
   const summary = joinRequest
     ? {
@@ -246,9 +255,9 @@ export default function BuddyNotificationRow({
             <XView style={{ gap: 10, alignItems: 'center' }}>
               <View>
                 <BuddyAvatar
-                  avatar={buddy?.avatar ?? claim?.avatar}
-                  name={buddy ? buddyDisplayName(buddy) : entry.name}
-                  color={buddy}
+                  avatar={buddy?.avatar ?? claim?.avatar ?? reconnect?.avatar}
+                  name={askerName}
+                  color={buddy ?? reconnect}
                   size={36}
                 />
                 {unread && (
@@ -400,6 +409,20 @@ export default function BuddyNotificationRow({
               </Button>
             ) : null}
           </XView>
+        </View>
+      ) : null}
+
+      {entry.kind === 'reconnect' && reconnectFrom && reconnect ? (
+        <View style={{ gap: 6 }}>
+          <Text style={{ color: theme.colors.textAlt }}>
+            {i18n.t('buddies_reconnectBody', { name: askerName })}
+          </Text>
+          <ActionButton
+            disabled={busy || asked.busy}
+            onPress={() => void asked.reconnect()}
+          >
+            {i18n.t('buddies_reconnect')}
+          </ActionButton>
         </View>
       ) : null}
 

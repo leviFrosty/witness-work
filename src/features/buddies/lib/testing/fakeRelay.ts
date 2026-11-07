@@ -19,7 +19,8 @@ type StoredEvent = {
 type Inbox = {
   ownerPub: string
   seq: number
-  slots: Map<string, { writerPub: string; createdAt: number }>
+
+  slots: Map<string, { writerPub: string; createdAt: number; sealed?: true }>
   cards: Map<string, { blob: string; seq: number; updatedAt: number }>
   events: StoredEvent[]
   devices: Map<string, unknown>
@@ -35,6 +36,8 @@ type Invite = {
   status: 'open' | 'claimed'
   badClaims: number
 }
+
+const SUCCESSOR_TTL_MS = 90 * 24 * 60 * 60 * 1000
 
 export function createFakeRelay(now: () => number) {
   const inboxes = new Map<string, Inbox>()
@@ -62,6 +65,22 @@ export function createFakeRelay(now: () => number) {
     { accountPub: string; status: 'active' | 'suspended' }
   >()
   const inboxAccounts = new Map<string, string>()
+
+  const inboxLinkKeys = new Map<string, string>()
+
+  const successors = new Map<
+    string,
+    { successor: string; at: number; accountId: string }
+  >()
+  const replaced = (inboxId: string) => {
+    const recorded = successors.get(inboxId)
+    return recorded !== undefined && recorded.at + SUCCESSOR_TTL_MS > now()
+  }
+
+  const refusals = new Map<
+    string,
+    { status: number; error: string; reason?: string }
+  >()
 
   const sessions = new Map<
     string,
@@ -116,6 +135,11 @@ export function createFakeRelay(now: () => number) {
     inbox.cards.delete(slotId)
     inbox.events = inbox.events.filter((event) => event.slotId !== slotId)
   }
+
+  const currentLink = (inboxId: string, accountId: string | undefined) =>
+    accountId !== undefined &&
+    inboxAccounts.get(inboxId) === accountId &&
+    inboxLinkKeys.get(inboxId) === accounts.get(accountId)?.accountPub
 
   function notOwner(inboxId: string, accountId: string) {
     const linked = inboxAccounts.get(inboxId)
@@ -280,6 +304,12 @@ export function createFakeRelay(now: () => number) {
     })
     const caller = callerOf(headers)
     if (caller instanceof Response) return caller
+    const refusal = refusals.get(op)
+    if (refusal)
+      return respond(refusal.status, {
+        error: refusal.error,
+        ...(refusal.reason ? { reason: refusal.reason } : {}),
+      })
     const { accountId } = caller
     if (op === 'blob/put') return putBlob(init, headers, accountId)
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -324,6 +354,8 @@ export function createFakeRelay(now: () => number) {
         return fail(401, 'bad_signature')
       }
       invite.status = 'claimed'
+
+      inboxes.get(invite.inboxId)?.openInvites.delete(payload.inviteId)
       const creator = inboxes.get(invite.inboxId)!
       creator.seq += 1
       creator.events.push({
@@ -365,6 +397,8 @@ export function createFakeRelay(now: () => number) {
 
     if (op === 'inbox/register') {
       if (!signedBy(payload.ownerPub)) return fail(401, 'bad_signature')
+
+      if (replaced(payload.inboxId)) return fail(409, 'conflict')
       if (suspended(payload.inboxId)) return fail(403, 'suspended')
 
       const proof = payload.account as
@@ -389,6 +423,7 @@ export function createFakeRelay(now: () => number) {
       if (existing && existing.ownerPub !== payload.ownerPub)
         return fail(409, 'conflict')
       inboxAccounts.set(payload.inboxId, proof.accountId)
+      inboxLinkKeys.set(payload.inboxId, account.accountPub)
       if (!existing)
         inboxes.set(payload.inboxId, {
           ownerPub: payload.ownerPub,
@@ -403,17 +438,47 @@ export function createFakeRelay(now: () => number) {
       return ok({ accountId: proof.accountId })
     }
 
+    if (op === 'inbox/successor') {
+      const recorded = successors.get(payload.inboxId)
+      return ok({
+        successor:
+          recorded &&
+          replaced(payload.inboxId) &&
+          accounts.get(recorded.accountId)?.status !== 'suspended' &&
+          currentLink(recorded.successor, recorded.accountId)
+            ? recorded.successor
+            : null,
+      })
+    }
+
+    if (
+      op === 'inbox/delete' &&
+      payload.successor !== undefined &&
+      !inboxes.has(payload.inboxId) &&
+      successors.get(payload.inboxId)?.successor === payload.successor
+    )
+      return ok()
+
     const inbox = inboxes.get(payload.inboxId)
     if (!inbox) return op === 'slot/leave' ? ok() : fail(404, 'not_found')
 
-    if (['card/put', 'event/put', 'slot/leave'].includes(op)) {
+    if (['card/put', 'event/put', 'slot/leave', 'slot/seal'].includes(op)) {
       const slot = inbox.slots.get(payload.slotId)
       if (!slot) return op === 'slot/leave' ? ok() : fail(410, 'gone')
       if (!signedBy(slot.writerPub)) return fail(401, 'bad_signature')
-      if (op === 'slot/leave') {
-        clearSlot(inbox, payload.slotId)
+      if (op === 'slot/seal') {
+        slot.sealed = true
         return ok()
       }
+      if (op === 'slot/leave') {
+        if (slot.sealed) {
+          inbox.slots.delete(payload.slotId)
+          inbox.cards.delete(payload.slotId)
+        } else clearSlot(inbox, payload.slotId)
+        return ok()
+      }
+
+      if (slot.sealed) return fail(403, 'sealed')
       if (op === 'card/put') {
         if (fromB64u(payload.blob).length > 16 * 1024)
           return fail(400, 'bad_request')
@@ -467,6 +532,13 @@ export function createFakeRelay(now: () => number) {
     }
 
     if (enveloped) return fail(400, 'bad_request')
+
+    if (
+      op === 'inbox/delete' &&
+      payload.successor !== undefined &&
+      inboxAccounts.get(payload.inboxId) === undefined
+    )
+      return fail(403, 'forbidden')
     const refused = notOwner(payload.inboxId, accountId)
     if (refused) return refused
     if (
@@ -483,6 +555,7 @@ export function createFakeRelay(now: () => number) {
           slots: [...inbox.slots].map(([slotId, slot]) => ({
             slotId,
             createdAt: slot.createdAt,
+            ...(slot.sealed ? { sealed: true } : {}),
           })),
           cards: [...inbox.cards]
             .filter(([, card]) => card.seq > since)
@@ -497,10 +570,23 @@ export function createFakeRelay(now: () => number) {
         for (const blobId of payload.blobIds as string[])
           blobs.delete(`${payload.inboxId}|${blobId}`)
         return ok()
-      case 'inbox/delete':
+      case 'inbox/delete': {
+        const successor = payload.successor as string | undefined
+        if (successor !== undefined) {
+          if (accounts.get(accountId)?.status === 'suspended')
+            return fail(403, 'suspended')
+          if (
+            !currentLink(successor, accountId) ||
+            !inboxes.has(successor) ||
+            successors.has(successor)
+          )
+            return fail(409, 'conflict')
+          successors.set(payload.inboxId, { successor, at: now(), accountId })
+        }
         for (const inviteId of inbox.openInvites) invites.delete(inviteId)
         inboxes.delete(payload.inboxId)
         return ok()
+      }
       case 'device/register':
         inbox.devices.set(payload.deviceId, payload)
         return ok()
@@ -527,7 +613,7 @@ export function createFakeRelay(now: () => number) {
         return ok({ seq: inbox.seq })
       case 'invite/create':
         if (
-          inbox.openInvites.size >= 3 ||
+          inbox.openInvites.size >= 5 ||
           inbox.slots.size + inbox.openInvites.size >= 5
         )
           return fail(429, 'limit')
@@ -561,6 +647,8 @@ export function createFakeRelay(now: () => number) {
     capabilities,
     accounts,
     inboxAccounts,
+    successors,
+    refusals,
     sessions,
     requests,
 

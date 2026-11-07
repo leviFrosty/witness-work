@@ -63,16 +63,34 @@ vi.mock('@/lib/account', async () => {
       return 'install-a'
     },
     adoptAccountId: vi.fn(),
+    boundSupporterAccount: () => null,
+    onAccountIdChange: () => () => {},
+    devAccountFileStaged: () => false,
+    droppedAccountIds: () => [],
+    onDevAccountFileChange: () => () => {},
+    getOwnAccountClaim: (entitled: boolean) => ({
+      appUserId: 'install-a',
+      entitled,
+      claimedAt: 1,
+    }),
     readAccountFile: vi.fn(async () => ({
       file: runtime.accountFile,
       pending: false,
     })),
-    writeAccountFile: vi.fn(async (accountId: string, entitled: boolean) => {
-      runtime.accountFile = { v: 1, accountId, entitled, updatedAt: 1 }
-    }),
+    writeAccountFile: vi.fn(
+      async (claim: { appUserId: string; entitled: boolean }) => {
+        runtime.accountFile = {
+          v: 1,
+          accountId: claim.appUserId,
+          entitled: claim.entitled,
+          updatedAt: 1,
+        }
+      }
+    ),
   }
 })
 vi.mock('@/lib/iCloudIdentity', () => ({ checkICloudIdentity: () => true }))
+vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn(), addBreadcrumb: vi.fn() },
@@ -81,6 +99,8 @@ vi.mock('@/lib/serverAccount/revenueCatLinkRuntime', () => ({
   ensureRevenueCatLinked: async (options: unknown) => {
     runtime.links.push(options)
   },
+  onSupporterAccountSwitched: () => () => {},
+  currentSupporterAccount: async () => null,
 }))
 
 const foreground = async () => {
@@ -148,7 +168,11 @@ describe('a launch while the Keychain is locked', () => {
     await foreground()
     await act(async () => release())
     await vi.waitFor(() =>
-      expect(account.writeAccountFile).toHaveBeenCalledWith('install-a', false)
+      expect(account.writeAccountFile).toHaveBeenCalledWith({
+        appUserId: 'install-a',
+        entitled: false,
+        claimedAt: 1,
+      })
     )
     await settle()
 

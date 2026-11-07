@@ -12,10 +12,13 @@ import { withAlpha } from '@/lib/color'
 import { formatMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import ContactAvatarViewer from '@/features/contacts/components/ContactAvatarViewer'
+import PhotoNotSyncedBadge from '@/components/PhotoNotSyncedBadge'
+import { contactPhotoFilename } from '@/lib/syncTransport/imageNames'
 import GenderIcon from '@/components/GenderIcon'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
+import { hasCapability } from '@/lib/platformCapabilities'
 import moment from 'moment'
 
 type Props = {
@@ -101,7 +104,7 @@ const ContactHero = ({
                   systemImage: 'crop',
                   onPress: () => void photo.edit(),
                 },
-                {
+                hasCapability('photoLibrarySave') && {
                   id: 'save',
                   title: i18n.t('saveToPhotos'),
                   systemImage: 'square.and.arrow.down',
@@ -194,6 +197,11 @@ const ContactHero = ({
             />
           </View>
         )}
+        <PhotoNotSyncedBadge
+          filename={contactPhotoFilename(contact.id, avatar)}
+          variant='inline'
+          color={heroForeground}
+        />
       </View>
     </View>
   )

@@ -6,24 +6,30 @@ import Text from '@/components/ui/MyText'
 import TextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
 import { accountKey, replaceAccountKey } from '@/app/account/accountKey'
-import { platformKey } from '@/app/account/attestationCopy'
-import { offerRestore } from '@/app/account/backupRestore'
+import {
+  attestationProblemBody,
+  platformKey,
+} from '@/app/account/attestationCopy'
+import { offerRestore, recordsCameBack } from '@/app/account/backupRestore'
+import { passkeyKeyArrived } from '@/app/account/passkeySignIn'
 import { analytics } from '@/lib/analytics'
 import {
+  AccountKeyRetiredError,
+  KeyChangeUnfinishedError,
   losesSomething,
   type ReplaceAccountKeyResult,
 } from '@/lib/accountKey/accountKey'
-import {
-  normalizeRecoveryKey,
-  parseRecoveryKey,
-  RECOVERY_KEY_LENGTH,
-} from '@/lib/accountKey/recoveryKey'
+import { formatDate } from '@/lib/dates'
+import { serverAccount } from '@/lib/serverAccount'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { buddiesErrorMessage } from '@/features/buddies/lib/buddiesErrors'
 import { BuddyRemovalPendingError } from '@/features/buddies/lib/engine'
 import { RECOVERY_KEY_FONT } from '@/features/settings/components/account/recoveryKeyFont'
+import { recoveryKeyStatus } from '@/features/settings/components/account/recoveryKeyStatus'
 import { confirmAccountReplace } from '@/features/settings/components/account/confirmAccountReplace'
+import { refuseWhileKeyChangeUnfinished } from '@/features/settings/components/account/keyChange/refuseWhileKeyChangeUnfinished'
 import useAttestationSupport from '@/features/settings/hooks/useAttestationSupport'
 
 type Props = {
@@ -35,11 +41,17 @@ type Props = {
   onRestored?: () => void
 }
 
+type Finished = {
+  outcome: ReplaceAccountKeyResult['outcome']
+
+  sameAccount: boolean
+}
+
 export default function UseRecoveryKeySheet(props: Props) {
   const theme = useTheme()
   const [busy, setBusy] = useState(false)
 
-  const finished = useRef<ReplaceAccountKeyResult['outcome'] | null>(null)
+  const finished = useRef<Finished | null>(null)
   return (
     <Sheet
       open={props.open}
@@ -47,14 +59,19 @@ export default function UseRecoveryKeySheet(props: Props) {
         if (!open) props.onClose()
       }}
       onClosed={() => {
-        const outcome = finished.current
+        const done = finished.current
         finished.current = null
-        if (!outcome) return
+        if (!done) return
         props.onDone()
-        if (outcome === 'unchanged')
+        if (done.outcome === 'unchanged')
           Alert.alert(
             i18n.t('account_sameKeyTitle'),
             i18n.t('account_sameKeyBody')
+          )
+        else if (done.sameAccount)
+          Alert.alert(
+            i18n.t('account_rejoinedTitle'),
+            i18n.t('account_rejoinedBody')
           )
         else
           Alert.alert(
@@ -66,7 +83,13 @@ export default function UseRecoveryKeySheet(props: Props) {
                 onPress: () =>
                   void offerRestore('recovery_key')
                     .then((result) => {
-                      if (result.outcome === 'restored') props.onRestored?.()
+                      if (recordsCameBack(result)) props.onRestored?.()
+
+                      if (result.outcome === 'synced' && result.combine)
+                        Alert.alert(
+                          i18n.t('handoff_newDoneTitle'),
+                          i18n.t('handoff_newDoneSyncedCombine')
+                        )
                     })
                     .catch((error: unknown) =>
                       logger.warn('[backup] restore offer failed', error)
@@ -80,8 +103,8 @@ export default function UseRecoveryKeySheet(props: Props) {
       testID='use-recovery-key-sheet'
     >
       <RecoveryKeyForm
-        onFinished={(outcome) => {
-          finished.current = outcome
+        onFinished={(done) => {
+          finished.current = done
           props.onClose()
         }}
         busy={busy}
@@ -116,12 +139,22 @@ function Unverifiable() {
   )
 }
 
+async function openSessionFor(newKey: Uint8Array) {
+  try {
+    return await accountKey.openSession(newKey)
+  } catch (error) {
+    if (error instanceof AccountSessionError && error.failure === 'unavailable')
+      return undefined
+    throw error
+  }
+}
+
 function RecoveryKeyForm({
   onFinished,
   busy,
   setBusy,
 }: {
-  onFinished: (outcome: ReplaceAccountKeyResult['outcome']) => void
+  onFinished: (done: Finished) => void
   busy: boolean
   setBusy: (busy: boolean) => void
 }) {
@@ -129,37 +162,16 @@ function RecoveryKeyForm({
   const support = useAttestationSupport()
   const [value, setValue] = useState('')
   const input = useRef<RNTextInput>(null)
-  const parsed = parseRecoveryKey(value)
-  const typed = normalizeRecoveryKey(value).length
+  const { parsed, status } = recoveryKeyStatus(
+    value,
+    i18n.t('account_enterHint')
+  )
 
   useEffect(() => {
     if (Platform.OS !== 'android') return
     const timer = setTimeout(() => input.current?.focus(), 300)
     return () => clearTimeout(timer)
   }, [])
-
-  const status: { text: string; tone: 'hint' | 'error' | 'ok' } = parsed.ok
-    ? { text: i18n.t('account_enterValid'), tone: 'ok' }
-    : parsed.problem === 'empty'
-      ? { text: i18n.t('account_enterHint'), tone: 'hint' }
-      : parsed.problem === 'incomplete'
-        ? {
-            text: i18n.t('account_enterProgress', {
-              count: typed,
-              total: RECOVERY_KEY_LENGTH,
-            }),
-            tone: 'hint',
-          }
-        : {
-            text: i18n.t(
-              parsed.problem === 'character'
-                ? 'account_enterCharacter'
-                : parsed.problem === 'tooLong'
-                  ? 'account_enterTooLong'
-                  : 'account_enterChecksum'
-            ),
-            tone: 'error',
-          }
 
   const submit = async () => {
     if (!parsed.ok || busy) return
@@ -171,23 +183,64 @@ function RecoveryKeyForm({
         current !== null &&
         (current.length !== newKey.length ||
           current.some((byte, i) => byte !== newKey[i]))
-      const loss = await accountKey.lossIfReplaced(newKey)
-
-      if (
-        differs &&
-        (losesSomething(loss) || Platform.OS === 'ios') &&
-        !(await confirmAccountReplace(loss, 'recoveryKey'))
-      ) {
-        analytics.capture('recovery_key_used', { outcome: 'declined' })
+      const another = current === null || differs
+      if (another && (await refuseWhileKeyChangeUnfinished())) {
+        analytics.capture('recovery_key_used', {
+          outcome: 'key_change_unfinished',
+        })
         return
       }
-      const result = await replaceAccountKey(newKey, {
-        source: 'recovery_key',
-        confirmedLoss: true,
-      })
-      analytics.capture('recovery_key_used', { outcome: result.outcome })
-      onFinished(result.outcome)
+
+      const opened = another
+        ? ((await accountKey.sameAccountSession(newKey)) ??
+          (await openSessionFor(newKey)))
+        : undefined
+      try {
+        const rejoining =
+          opened !== undefined &&
+          opened.accountId === serverAccount.lastAccountId()
+        const loss = await accountKey.lossIfReplaced(newKey, {
+          accountId: opened?.accountId,
+        })
+
+        if (
+          differs &&
+          !rejoining &&
+          (losesSomething(loss) || Platform.OS === 'ios') &&
+          !(await confirmAccountReplace(loss, 'recoveryKey'))
+        ) {
+          analytics.capture('recovery_key_used', { outcome: 'declined' })
+          return
+        }
+        const result = await replaceAccountKey(newKey, {
+          source: 'recovery_key',
+          confirmedLoss: true,
+          session: opened,
+          accountId: opened?.accountId,
+        })
+        analytics.capture('recovery_key_used', { outcome: result.outcome })
+
+        void passkeyKeyArrived(newKey)
+        onFinished({
+          outcome: result.outcome,
+          sameAccount: result.outcome === 'replaced' && result.sameAccount,
+        })
+      } finally {
+        await opened?.close()
+      }
     } catch (error) {
+      if (error instanceof AccountKeyRetiredError) {
+        analytics.capture('recovery_key_used', { outcome: 'retired' })
+        Alert.alert(
+          i18n.t('account_keyRetiredTitle'),
+          error.changedAt
+            ? i18n.t('account_keyRetiredBody', {
+                date: formatDate(error.changedAt),
+              })
+            : i18n.t('account_keyRetiredBodyNoDate')
+        )
+        return
+      }
       logger.warn('Using a recovery key failed', error)
       analytics.capture('recovery_key_used', { outcome: 'failed' })
       Alert.alert(
@@ -195,7 +248,12 @@ function RecoveryKeyForm({
 
         error instanceof BuddyRemovalPendingError
           ? buddiesErrorMessage(error)
-          : i18n.t('account_replaceFailedBody')
+          : error instanceof AccountSessionError &&
+              error.failure === 'attestation'
+            ? i18n.t(attestationProblemBody(error.attestation ?? 'failed'))
+            : error instanceof KeyChangeUnfinishedError
+              ? i18n.t('account_keyChangeUnfinished')
+              : i18n.t('account_replaceFailedBody')
       )
     } finally {
       setBusy(false)

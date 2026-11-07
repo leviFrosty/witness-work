@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { AccessibilityInfo, findNodeHandle, Platform, View } from 'react-native'
+import { AccessibilityInfo, Platform, View } from 'react-native'
 import {
   MapPin as MapPinIcon,
   Route as RouteIcon,
@@ -7,6 +7,7 @@ import {
   X as XIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
+import { findNodeHandle } from '@/lib/findNodeHandle'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'

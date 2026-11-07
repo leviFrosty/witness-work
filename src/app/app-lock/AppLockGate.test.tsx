@@ -24,6 +24,7 @@ vi.mock('react-native', () => ({
     addEventListener: () => ({ remove: vi.fn() }),
   },
   BackHandler: { exitApp: vi.fn() },
+  Platform: { OS: 'ios' },
 }))
 vi.mock('@/components/ui/FullWindowOverlay', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
@@ -34,6 +35,15 @@ vi.mock('@/hooks/useAppLockAvailability', () => ({
   useAppLockAvailability: () => null,
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+
+vi.mock('@/lib/webAppLockRuntime', () => ({
+  webAppLock: null,
+  turnOffWebAppLock: vi.fn(),
+}))
+vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
+vi.mock('@/app/web-sign-in/confirmWebSignOut', () => ({
+  confirmWebSignOut: vi.fn(),
+}))
 vi.mock('@/lib/appLock', () => ({
   authenticateAppLock: vi.fn(() => Promise.resolve('cancelled')),
   shouldRelock: vi.fn(() => false),

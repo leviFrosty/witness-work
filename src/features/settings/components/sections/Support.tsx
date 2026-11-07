@@ -10,13 +10,14 @@ import useIsSupporter from '@/hooks/useIsSupporter'
 import { isFoundingSupporter } from '@/lib/foundingSupporter'
 import useTheme from '@/contexts/theme'
 import { openStoreListing } from '@/lib/storeListing'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useNavigation } from '@react-navigation/native'
 import { RootStackNavigation } from '@/types/rootStack'
 import { SettingsSectionProps } from '@/features/settings/screens/settingScreen'
 import { useSubscriptionStatus } from '@/features/supporter/hooks/useManageSubscription'
 import { formatDisplay } from '@/lib/dates'
 
-const SupporterRow = ({ since }: { since: Date }) => {
+const SupporterRow = ({ since }: { since: Date | null }) => {
   const theme = useTheme()
   const isFounding = isFoundingSupporter(since)
   return (
@@ -28,10 +29,14 @@ const SupporterRow = ({ since }: { since: Date }) => {
       label={i18n.t(
         isFounding ? 'supporterCardFoundingTitle' : 'supporterCardTitle'
       )}
-      sublabel={i18n.t(
-        isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
-        { year: formatDisplay(since, 'YYYY') }
-      )}
+      sublabel={
+        since
+          ? i18n.t(
+              isFounding ? 'supporterCardFoundingSince' : 'supporterCardSince',
+              { year: formatDisplay(since, 'YYYY') }
+            )
+          : undefined
+      }
     />
   )
 }
@@ -44,11 +49,11 @@ const SupportSection = ({
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const subscription = useSubscriptionStatus()
-  const { since } = useIsSupporter()
+  const { isSupporter, since } = useIsSupporter()
 
   return (
     <GroupedListSection title={i18n.t('support')}>
-      {since && <SupporterRow since={since} />}
+      {isSupporter && <SupporterRow since={since} />}
       <GroupedListRow
         icon={HeartIcon}
         iconColor={theme.colors.supporter}
@@ -58,7 +63,7 @@ const SupportSection = ({
           navigation.navigate('Paywall', { source: 'settings_support' })
         }}
       />
-      {subscription.state.kind !== 'none' && (
+      {subscription.canManage && (
         <GroupedListRow
           icon={CalendarClockIcon}
           label={i18n.t('manageSubscription')}
@@ -66,18 +71,22 @@ const SupportSection = ({
           onPress={onManageSubscription}
         />
       )}
-      <GroupedListRow
-        icon={Share2Icon}
-        label={i18n.t('shareApp_title')}
-        onPress={() => handleNavigate('ShareApp')}
-        selected={selectedDestination === 'ShareApp'}
-      />
-      <GroupedListRow
-        icon={MedalIcon}
-        label={i18n.t('rateWitnessWorkOnAppStore')}
-        accessory='external'
-        onPress={() => openStoreListing({ review: true })}
-      />
+      {hasCapability('storeListings') && (
+        <GroupedListRow
+          icon={Share2Icon}
+          label={i18n.t('shareApp_title')}
+          onPress={() => handleNavigate('ShareApp')}
+          selected={selectedDestination === 'ShareApp'}
+        />
+      )}
+      {hasCapability('storeReview') && (
+        <GroupedListRow
+          icon={MedalIcon}
+          label={i18n.t('rateWitnessWorkOnAppStore')}
+          accessory='external'
+          onPress={() => openStoreListing({ review: true })}
+        />
+      )}
     </GroupedListSection>
   )
 }

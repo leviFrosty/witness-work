@@ -1,4 +1,5 @@
 import * as PlaceSearchNative from '../../modules/place-search'
+import { onWeb } from '@/lib/placeSearchWeb'
 import type { PlaceSearchScope } from '../../modules/place-search'
 import apis from '@/constants/apis'
 import { errorBodyCode } from '@/lib/http/errorBody'
@@ -22,13 +23,15 @@ export type PlaceSuggestion = {
 
 export type Coordinate = { latitude: number; longitude: number }
 
-export type PlaceSearchProvider = 'mapkit' | 'here'
+export type PlaceSearchProvider = 'mapkit' | 'here' | 'places'
 
 export function placeSearchProvider(
-  scope: PlaceSearchScope
+  scope: PlaceSearchScope,
+  web: boolean = onWeb
 ): PlaceSearchProvider | undefined {
   if (scope === 'all') {
-    return PlaceSearchNative.isAvailable ? 'mapkit' : undefined
+    if (PlaceSearchNative.isAvailable) return 'mapkit'
+    return web ? 'places' : undefined
   }
   return PlaceSearchNative.supportsAddressScope ? 'mapkit' : 'here'
 }
@@ -130,6 +133,62 @@ async function searchHere(
   return data.items.filter(isHereItem).map(hereSuggestion)
 }
 
+type PlacesItem = HereAutocompleteItem & {
+  name?: string
+  latitude: number
+  longitude: number
+}
+
+const isPlacesItem = (value: unknown): value is PlacesItem => {
+  const item = value as Partial<PlacesItem> | null
+  return (
+    isHereItem(value) &&
+    optionalString(item?.name) &&
+    Number.isFinite(item?.latitude) &&
+    Number.isFinite(item?.longitude)
+  )
+}
+
+const placesSuggestion = (item: PlacesItem): PlaceSuggestion => {
+  const address = hereSuggestion(item)
+  const name = item.name?.trim()
+  return {
+    id: item.id,
+    ...(name
+      ? { title: name, subtitle: item.address.label }
+      : { title: address.title, subtitle: address.subtitle }),
+    place: {
+      ...(name && { name }),
+      ...address.place,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    },
+  }
+}
+
+async function searchPlacesApi(
+  query: string,
+  near: Coordinate | undefined,
+  signal: AbortSignal | undefined
+): Promise<PlaceSuggestion[]> {
+  if (!near) return searchHere(query, near, signal)
+  const params = new URLSearchParams({
+    q: query.slice(0, 200),
+    at: `${near.latitude},${near.longitude}`,
+    limit: String(HERE_MAX_SUGGESTIONS),
+  })
+
+  const { data } = await request<{ items?: unknown } | null>({
+    url: `${apis.placesSearch}?${params.toString()}`,
+    timeoutMs: SEARCH_TIMEOUT_MS,
+    signal,
+  })
+  if (!Array.isArray(data?.items)) {
+    throw new HttpError('unknown', null, null, null, 'invalid place search')
+  }
+  return data.items.filter(isPlacesItem).map(placesSuggestion)
+}
+
 function bounded<T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -180,6 +239,8 @@ export async function searchPlaces(
       )
     case 'here':
       return searchHere(query, near, signal)
+    case 'places':
+      return searchPlacesApi(query, near, signal)
     default:
       return []
   }

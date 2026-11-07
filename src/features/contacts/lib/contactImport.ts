@@ -1,5 +1,4 @@
 import * as DocumentPicker from 'expo-document-picker'
-import * as FileSystem from 'expo-file-system/legacy'
 import { Alert } from 'react-native'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js'
@@ -7,6 +6,7 @@ import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
 import i18n from '@/lib/locales'
+import { readPickedText, type PickedFile } from '@/lib/files/readPicked'
 import { logger } from '@/lib/logger'
 import { isRedactedContactTombstone } from '@/lib/dataProtection'
 import {
@@ -75,11 +75,12 @@ export const parseContactImportFile = (contents: string): ImportResult => {
   return validateContactImport(json)
 }
 
-const readContactImportFile = async (uri: string): Promise<ImportResult> => {
+const readContactImportFile = async (
+  file: PickedFile
+): Promise<ImportResult> => {
   let contents: string
   try {
-    contents = await FileSystem.readAsStringAsync(uri, {
-      position: 0,
+    contents = await readPickedText(file, {
       length: CONTACT_SHARE_LIMITS.MAX_FILE_BYTES + 1,
     })
   } catch (error) {
@@ -96,14 +97,14 @@ export const importContactFromFile = async (): Promise<ImportResult> => {
       copyToCacheDirectory: true,
     })
 
-    if (result.canceled) {
+    if (result.canceled || !result.assets?.length) {
       return {
         success: false,
         error: 'Cancelled',
       }
     }
 
-    return await readContactImportFile(result.assets[0].uri)
+    return await readContactImportFile(result.assets[0])
   } catch (error) {
     logger.error('Error importing contact:', error)
     return invalidFile()
@@ -111,7 +112,7 @@ export const importContactFromFile = async (): Promise<ImportResult> => {
 }
 
 export const importContactFromUrl = (url: string): Promise<ImportResult> =>
-  readContactImportFile(url)
+  readContactImportFile({ uri: url })
 
 export const importContactFromLink = (url: string): ImportResult => {
   const decoded = parseContactShareLink(url)

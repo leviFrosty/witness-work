@@ -13,6 +13,7 @@ const LOCAL_MODULES = [
   { importName: 'WatchBridge', className: 'WatchBridgeModule' },
   { importName: 'DeviceSecrets', className: 'DeviceSecretsModule' },
   { importName: 'BackgroundTime', className: 'BackgroundTimeModule' },
+  { importName: 'Passkeys', className: 'PasskeysModule' },
   { importName: 'PointerStyle', className: 'PointerStyleModule' },
   { importName: 'DisplayRegions', className: 'DisplayRegionsModule' },
   { importName: 'SystemMenu', className: 'SystemMenuModule' },

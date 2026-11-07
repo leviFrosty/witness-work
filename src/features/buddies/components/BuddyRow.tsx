@@ -10,6 +10,8 @@ import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import BuddyAvatar from '@/features/buddies/components/BuddyAvatar'
 import BuddyListRow from '@/features/buddies/components/BuddyListRow'
+import ReconnectButtons from '@/features/buddies/components/ReconnectButtons'
+import useReconnect from '@/features/buddies/hooks/useReconnect'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import {
   confirmRemoveBuddy,
@@ -40,6 +42,8 @@ export default function BuddyRow({
   const shownOnCalendar = useBuddies(
     (state) => buddySettings(state.sharing, buddy).settings.showOnCalendar
   )
+  const asked = useReconnect(buddy.inboxId)
+  const reconnecting = !awaiting && asked.offer !== null
 
   const withdraw: ContextMenuEntries = [
     {
@@ -52,6 +56,25 @@ export default function BuddyRow({
   ]
 
   const actions: ContextMenuEntries = [
+    ...(reconnecting && !asked.busy
+      ? ([
+          [
+            {
+              id: 'reconnect',
+              title: i18n.t('buddies_reconnect'),
+              systemImage: 'person.2',
+              onPress: () => void asked.reconnect(),
+            },
+            {
+              id: 'dismiss_reconnect',
+              title: i18n.t('dismiss'),
+              systemImage: 'xmark.circle',
+              destructive: true,
+              onPress: asked.dismiss,
+            },
+          ],
+        ] satisfies ContextMenuEntries)
+      : []),
     [
       {
         id: 'view',
@@ -100,14 +123,16 @@ export default function BuddyRow({
       subtitle={
         awaiting
           ? i18n.t('buddies_awaitingConfirm', { name: buddyDisplayName(buddy) })
-          : buddy.tenure
-            ? buddyTenureLabel(buddy.tenure)
-            : i18n.t('buddies_sharingPlans')
+          : reconnecting
+            ? i18n.t('buddies_reconnectAsked')
+            : buddy.tenure
+              ? buddyTenureLabel(buddy.tenure)
+              : i18n.t('buddies_sharingPlans')
       }
       onPress={awaiting ? undefined : open}
       actions={awaiting ? withdraw : actions}
       accessory={
-        awaiting ? undefined : (
+        awaiting || reconnecting ? undefined : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {streak > 0 && <StreakBadge count={streak} size='sm' />}
             <LucideIcon
@@ -127,6 +152,8 @@ export default function BuddyRow({
             })}
             triggerSize={16}
           />
+        ) : reconnecting ? (
+          <ReconnectButtons from={buddy.inboxId} />
         ) : undefined
       }
     />

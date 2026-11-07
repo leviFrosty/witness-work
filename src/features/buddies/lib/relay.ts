@@ -18,6 +18,7 @@ const RELAY_ERROR_CODES = [
   'not_found',
   'conflict',
   'gone',
+  'sealed',
   'limit',
   'rate_limited',
   'disabled',
@@ -112,7 +113,8 @@ export type PushAddress =
 
 export type RelaySyncResponse = {
   seq: number
-  slots: { slotId: string; createdAt: number }[]
+
+  slots: { slotId: string; createdAt: number; sealed?: boolean }[]
   cards: { slotId: string; blob: string; seq: number; updatedAt: number }[]
   events: {
     eventId: string
@@ -156,6 +158,8 @@ export type RelayDeps = {
   onAccountActive?: () => void
 
   openSocket?: (url: string, headers: Record<string, string>) => LiveSocket
+
+  openTicketedSocket?: (url: string, inboxId: string) => Promise<LiveSocket>
 }
 
 type RelayRequest = Pick<RequestOptions, 'headers' | 'json' | 'body'>
@@ -391,16 +395,16 @@ export function createRelayClient(deps: RelayDeps) {
     registerInbox,
 
     openLive: async (auth: OwnerAuth): Promise<LiveSocket> => {
+      const url = `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`
       try {
+        if (deps.openTicketedSocket)
+          return await deps.openTicketedSocket(url, auth.inboxId)
         return await deps.authorize(
           async (authorization) =>
-            (deps.openSocket ?? openHeaderSocket)(
-              `${deps.baseUrl.replace(/^http/, 'ws')}/buddies/v1/inbox/live`,
-              {
-                authorization,
-                'x-buddies-payload': encodeFields({ inboxId: auth.inboxId }),
-              }
-            ),
+            (deps.openSocket ?? openHeaderSocket)(url, {
+              authorization,
+              'x-buddies-payload': encodeFields({ inboxId: auth.inboxId }),
+            }),
           {}
         )
       } catch (error) {
@@ -415,7 +419,20 @@ export function createRelayClient(deps: RelayDeps) {
         call,
         since === 0 ? RELAY_FULL_SYNC_TIMEOUT_MS : RELAY_TIMEOUT_MS
       ),
-    deleteInbox: (auth: OwnerAuth) => owner('inbox/delete', auth, {}),
+
+    deleteInbox: (
+      auth: OwnerAuth,
+      { successor }: { successor?: string } = {}
+    ) => owner('inbox/delete', auth, successor ? { successor } : {}),
+
+    inboxSuccessor: async (inboxId: string, call?: RelayCallOptions) => {
+      const response = await post<{ ok: true; successor?: string | null }>(
+        'inbox/successor',
+        () => ({ json: { inboxId } }),
+        call
+      )
+      return typeof response.successor === 'string' ? response.successor : null
+    },
     registerDevice: (
       auth: OwnerAuth,
       device: PushAddress & {
@@ -458,6 +475,8 @@ export function createRelayClient(deps: RelayDeps) {
       event: { eventId: string; kind: string; blob: string; push: boolean }
     ) => writer<{ seq: number }>('event/put', auth, event),
     leaveSlot: (auth: WriterAuth) => writer('slot/leave', auth, {}),
+
+    sealSlot: (auth: WriterAuth) => writer('slot/seal', auth, {}),
 
     putBlob: (auth: OwnerAuth, blob: BlobUpload, call: RelayCallOptions = {}) =>
       linked(auth, call, () => putBlobOnce(auth, blob, call)),

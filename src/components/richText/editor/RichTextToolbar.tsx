@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, ScrollView, View } from 'react-native'
 import {
   Bold as BoldIcon,
   Heading1 as Heading1Icon,
@@ -24,16 +24,19 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import {
   NOTE_MAX_WIDTH,
   type EditorCommand,
   type EditorFormatState,
 } from '@/components/richText/editor/editorProtocol'
 import useTheme from '@/contexts/theme'
+import { canCapturePhotos } from '@/lib/files/pickWebImages'
 import i18n from '@/lib/locales'
 
 export const TOOLBAR_HEIGHT = 48
-const BUTTON_SIZE = 40
+
+const BUTTON_SIZE = Platform.OS === 'web' ? MIN_TOUCH_TARGET : 40
 const ICON_SIZE = 20
 
 type Tool = {
@@ -228,7 +231,7 @@ const RichTextToolbar = (props: {
       accessibilityLabel={i18n.t('richText_addPhoto')}
       testID='note-editor-photo'
       actions={[
-        {
+        !(Platform.OS === 'web' && !canCapturePhotos()) && {
           id: 'camera',
           title: i18n.t('richText_takePhoto'),
           systemImage: 'camera',

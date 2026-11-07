@@ -111,6 +111,39 @@ describe('translations load on demand', () => {
   })
 })
 
+describe('a language that cannot download (web, offline)', () => {
+  it('settles, answers in English, and loads on the next try', async () => {
+    stored.preferences = JSON.stringify({ state: { locale: 'de-de' } })
+    let online = false
+    const german = { addTime: 'Zeit hinzufügen' }
+    vi.resetModules()
+    vi.doMock('@/lib/translationLoaders', async () => {
+      const { translationLoaders } = await vi.importActual<
+        typeof import('@/lib/translationLoaders')
+      >('@/lib/translationLoaders')
+      return {
+        translationLoaders: {
+          ...translationLoaders,
+          'de-de': () =>
+            online ? Promise.resolve(german) : Promise.reject(new Error('off')),
+        },
+      }
+    })
+    const {
+      default: i18n,
+      setI18nLocale,
+      translationsLoaded,
+    } = await import('@/lib/locales')
+    await expect(translationsLoaded()).resolves.toBeDefined()
+    expect(i18n.t('addTime')).toBe('Add Time')
+    online = true
+    setI18nLocale('de-de')
+    await translationsLoaded()
+    expect(i18n.t('addTime')).toBe('Zeit hinzufügen')
+    vi.doUnmock('@/lib/translationLoaders')
+  })
+})
+
 describe('moment locales load on demand', () => {
   it('loads a locale and its base language, keeping the active one', async () => {
     const { loadMomentLocale } = await import('@/lib/momentLocales')

@@ -4,6 +4,8 @@ import { analytics } from '@/lib/analytics'
 export const supportsPointerHover =
   Platform.OS === 'android' || (Platform.OS === 'ios' && Platform.isPad)
 
+export const supportsWebHover = Platform.OS === 'web'
+
 export const supportsPointerEffects = Platform.OS === 'ios' && Platform.isPad
 
 let reported = false

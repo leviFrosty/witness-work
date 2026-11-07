@@ -8,7 +8,6 @@ import i18n from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import {
   buildInviteLink,
-  isInviteLink,
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
 import { MAX_BUDDIES, occupiedBuddySpots } from '@/features/buddies/lib/state'
@@ -41,8 +40,8 @@ export default function EnterInviteLink() {
         {
           text: i18n.t('buddies_openInvite'),
           onPress: (value?: string) => {
-            const link = value?.trim() ?? ''
-            if (isInviteLink(link)) open(link)
+            const secret = parseInviteSecret(value ?? '')
+            if (secret) open(buildInviteLink(secret))
             else
               Alert.alert(
                 i18n.t('buddies_enterInviteLink'),
@@ -56,7 +55,7 @@ export default function EnterInviteLink() {
 
   return (
     <Button
-      onPress={Platform.OS === 'android' ? () => void paste() : prompt}
+      onPress={Platform.OS === 'ios' ? prompt : () => void paste()}
       style={{ alignSelf: 'flex-start', marginTop: -14 }}
     >
       <Text style={{ color: theme.colors.textAlt }}>

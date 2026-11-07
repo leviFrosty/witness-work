@@ -1,5 +1,8 @@
 import { Platform } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { pickWebImages } from '@/lib/files/pickWebImages'
+import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
+import { toast } from '@/stores/toasts'
 
 export type SharedPhotoRequest = {
   selectionLimit: number
@@ -15,6 +18,14 @@ export async function pickLibraryImages(
   options: ImagePicker.ImagePickerOptions,
   chooseShared: ChooseSharedPhotos
 ): Promise<ImagePicker.ImagePickerResult> {
+  if (Platform.OS === 'web') {
+    try {
+      return await pickWebImages(options)
+    } catch (error) {
+      toast.error(photoFailedMessage(error))
+      return { canceled: true, assets: null }
+    }
+  }
   if (Platform.OS === 'ios') {
     const permission = await ImagePicker.getMediaLibraryPermissionsAsync()
     if (permission.accessPrivileges === 'limited') {

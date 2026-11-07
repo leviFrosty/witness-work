@@ -1,8 +1,10 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
 import {
   avatarFileContactId,
+  isInlineImage,
   isManagedAvatarPath,
   originalSiblingFileName,
 } from '@/lib/avatarFilePolicy'
@@ -52,22 +54,40 @@ export function originalAvatarPath(
 }
 
 export function stripCacheBuster(uri: string): string {
+  if (isInlineImage(uri)) return uri
   const q = uri.indexOf('?')
   return q === -1 ? uri : uri.slice(0, q)
 }
 
 export function withCacheBuster(path: string): string {
-  return `${path}?t=${Date.now()}`
+  return isInlineImage(path) ? path : `${path}?t=${Date.now()}`
 }
 
 export async function originalExists(
   contactId: string,
   revision?: string
 ): Promise<boolean> {
+  if (Platform.OS === 'web') return false
   const info = await FileSystem.getInfoAsync(
     originalAvatarPath(contactId, revision)
   )
   return info.exists
+}
+
+const WEB_AVATAR_MAX_SIDE = 1024
+const WEB_AVATAR_QUALITY = 0.85
+
+async function cropAvatarInBrowser(
+  srcUri: string,
+  rect: CropRect
+): Promise<{ path: string; width: number; height: number }> {
+  const { renderJpeg, blobToDataUrl } = await import('@/lib/files/webImages')
+  const { blob, width, height } = await renderJpeg(stripCacheBuster(srcUri), {
+    crop: rect,
+    maxSide: WEB_AVATAR_MAX_SIDE,
+    quality: WEB_AVATAR_QUALITY,
+  })
+  return { path: await blobToDataUrl(blob), width, height }
 }
 
 export interface CropRect {
@@ -86,6 +106,7 @@ export async function cropAndSaveImage(
   rect: CropRect,
   source: { width: number; height: number }
 ): Promise<{ path: string; width: number; height: number }> {
+  if (Platform.OS === 'web') return cropAvatarInBrowser(srcUri, rect)
   const safeRect: CropRect = {
     originX: Math.max(0, Math.min(rect.originX, source.width - 1)),
     originY: Math.max(0, Math.min(rect.originY, source.height - 1)),

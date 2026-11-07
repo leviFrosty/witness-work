@@ -1,9 +1,20 @@
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
+import { devicePlatform } from '@/lib/devicePlatform'
+import * as DeviceSecrets from '../../../../modules/device-secrets'
+import { deviceAccountKey, unfinishedKeyChange } from '@/lib/accountKey'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
+import { logger } from '@/lib/logger'
 import apis from '@/constants/apis'
 import { analytics } from '@/lib/analytics'
 import { refreshSyncClock, syncNow } from '@/lib/syncClock'
-import { accountSessions, serverAccount } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  fetchServerAccountInfo,
+  serverAccount,
+  webAccount,
+} from '@/lib/serverAccount'
+import { openTicketedSocket } from '@/lib/serverAccount/liveTicket'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { usePet } from '@/stores/pet'
@@ -28,6 +39,10 @@ import type {
   BuddyStreak,
   ProfilePhoto,
 } from '@/features/buddies/lib/schemas'
+import {
+  type BuddiesKeyChangeOutcome,
+  createBuddiesKeyChange,
+} from '@/features/buddies/lib/keyChange'
 import { randomBytes } from '@/features/buddies/lib/random'
 import { createRelayClient, isRelayError } from '@/features/buddies/lib/relay'
 import { runRelayCheck } from '@/features/buddies/lib/relayCheck'
@@ -119,28 +134,40 @@ const carsLink = createBuddiesCarsLink(useSharedCars, {
 
 export const setBuddiesCarsHandler = carsLink.setHandler
 
-const engine = createBuddiesEngine({
-  relay: createRelayClient({
-    baseUrl: apis.buddies,
-    randomBytes,
+const relay = createRelayClient({
+  baseUrl: apis.buddies,
+  randomBytes,
 
-    authorize: (run, { signal }) =>
-      accountSessions.withSession(run, { signal }),
+  authorize: (run, { signal }) => accountSessions.withSession(run, { signal }),
 
-    now: syncNow,
-    recalibrate: () => refreshSyncClock({ force: true }),
+  now: syncNow,
+  recalibrate: () => refreshSyncClock({ force: true }),
 
-    onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
+  onAccountActive: () => useBuddiesSession.setState(accountActiveStatus),
+
+  ...(Platform.OS === 'web' && {
+    openTicketedSocket: (url: string, inboxId: string) =>
+      openTicketedSocket(
+        { url, socket: 'buddies', id: inboxId },
+        {
+          baseUrl: apis.accounts,
+          authorize: (run) => accountSessions.withSession(run),
+        }
+      ),
   }),
+})
+
+const engine = createBuddiesEngine({
+  relay,
   store: useBuddies,
   randomBytes,
 
   now: Date.now,
-  getRootSeed: async () =>
-    fromB64u(await BuddiesKeychain.getOrCreateRootSeed()),
+  getRootSeed: async () => fromB64u(await deviceAccountKey.getOrCreate()),
 
   deleteRootSeed: async () => {
-    const seed = await BuddiesKeychain.peekRootSeed()
+    if (webAccount) return webAccount.signOut()
+    const seed = await deviceAccountKey.peek()
     await serverAccount.changeKey(() => BuddiesKeychain.deleteRootSeed(), {
       from: seed ? fromB64u(seed) : null,
     })
@@ -176,13 +203,22 @@ const engine = createBuddiesEngine({
       dayPlans: useServiceReport.getState().dayPlans,
       visits: useConversations.getState().conversations,
     }),
-  platform: Platform.OS === 'android' ? 'android' : 'ios',
+  platform: devicePlatform(),
 
-  onPaired: ({ role, buddyPlatform }) =>
+  onPaired: ({ role, buddyPlatform, reconnect }) =>
     analytics.capture('buddy_paired', {
       role,
       buddy_platform: buddyPlatform ?? 'unknown',
+      reconnect: reconnect ?? false,
     }),
+
+  paused: async () => {
+    const record = await unfinishedKeyChange().catch(() => null)
+    return (
+      record !== null &&
+      !(await keyChangeReset.capturedFor(fromB64u(record.oldKey)))
+    )
+  },
   showBadges: () => usePreferences.getState().showBadges,
   isEnabled: () => useBuddiesSession.getState().running,
   later: (run, ms) => {
@@ -199,6 +235,92 @@ const engine = createBuddiesEngine({
   cars: carsLink.deps,
   inviteSecrets: deviceInviteSecrets,
 })
+
+async function refuseWhileKeyChanges() {
+  if (await unfinishedKeyChange()) throw new KeyChangeUnfinishedError()
+}
+
+const KEY_CHANGE_PROGRESS = 'buddies.key-change'
+
+const keyChangeReset = createBuddiesKeyChange({
+  relay,
+  engine,
+  progress: {
+    read: () => DeviceSecrets.read(KEY_CHANGE_PROGRESS),
+    write: (value) => DeviceSecrets.write(KEY_CHANGE_PROGRESS, value),
+    remove: () => DeviceSecrets.remove(KEY_CHANGE_PROGRESS),
+  },
+  randomBytes,
+  now: Date.now,
+  onReconnectSent: () => analytics.capture('buddy_reconnect_sent'),
+  onInvitesSkipped: (reason) =>
+    analytics.capture('buddy_reconnect_skipped', { reason }),
+  onReconnectNotSent: (reason) =>
+    analytics.capture('buddy_reconnect_not_sent', { reason }),
+})
+
+let keyChangeWaiting = true
+
+let keyChangeTimer: ReturnType<typeof setTimeout> | null = null
+
+function noteKeyChange(outcome: BuddiesKeyChangeOutcome) {
+  if (keyChangeTimer) clearTimeout(keyChangeTimer)
+  keyChangeTimer = null
+  keyChangeWaiting = !outcome.done
+  if (!outcome.done)
+    keyChangeTimer = setTimeout(
+      carryOnBuddiesKeyChange,
+      Math.max(0, outcome.retryAt - Date.now())
+    )
+}
+
+export async function prepareBuddiesForKeyChange(
+  change: Parameters<typeof keyChangeReset.prepare>[0]
+) {
+  const linked = await keyChangeReset.prepare(change)
+  if (linked === 'otherAccount')
+    logger.warn('[buddies] key change: the old inbox is another account’s')
+}
+
+export async function resetBuddiesForKeyChange(
+  input: Parameters<typeof keyChangeReset.reset>[0]
+) {
+  keyChangeWaiting = true
+  const outcome = await keyChangeReset.reset(input)
+  noteKeyChange(outcome)
+  return outcome
+}
+
+export function carryOnBuddiesKeyChange() {
+  if (!keyChangeWaiting) return
+  keyChangeReset
+    .carryOn()
+    .then(noteKeyChange)
+    .catch((error: unknown) => {
+      logger.warn('[buddies] key change reset', error)
+    })
+}
+
+function ownerKeyRefused(inboxId: string) {
+  engine
+    .ownerKeyRefused(inboxId)
+    .then(async (outcome) => {
+      if (outcome === 'moved') await buddiesEngine.sync({ automatic: true })
+      if (outcome !== 'retired') return
+
+      const seed = await deviceAccountKey.peek()
+      if (seed)
+        await fetchServerAccountInfo(fromB64u(seed)).catch(() => undefined)
+    })
+    .catch((error: unknown) => {
+      logger.warn('[buddies] refused owner key', error)
+    })
+}
+
+export function dropRefusedInboxes() {
+  for (const inboxId of BuddiesKeychain.refusedInboxes())
+    ownerKeyRefused(inboxId)
+}
 
 export async function loadBuddyPhoto(
   inboxId: string,
@@ -236,8 +358,8 @@ function sending<Args extends unknown[]>(
 
 export const buddiesEngine: typeof engine = {
   ...engine,
-  sync: (options?: BuddiesSyncOptions) =>
-    options?.automatic && engine.coolingDown()
+  sync: async (options?: BuddiesSyncOptions) => {
+    const outcome = await (options?.automatic && engine.coolingDown()
       ? engine.sync(options)
       : trackSync(() => engine.sync(options), {
           update: (change) => useBuddiesSession.setState(change),
@@ -246,7 +368,22 @@ export const buddiesEngine: typeof engine = {
           failureReason: buddiesFailureReason,
           skipped: (outcome) => outcome === 'skipped',
           cancelled: (error) => isRelayError(error, 'cancelled'),
-        }),
+        }))
+
+    if (outcome === 'synced') carryOnBuddiesKeyChange()
+    return outcome
+  },
+
+  deleteEverything: async () => {
+    await refuseWhileKeyChanges()
+    await keyChangeReset.leaveNow()
+    await engine.deleteEverything()
+  },
+  leaveThisDevice: async () => {
+    await refuseWhileKeyChanges()
+    await keyChangeReset.leaveNow()
+    await engine.leaveThisDevice()
+  },
   replyToShare: sending(engine.replyToShare),
   deliverReplies: sending(engine.deliverReplies),
   sendHeldReplies: sending(engine.sendHeldReplies),

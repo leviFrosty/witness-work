@@ -6,7 +6,7 @@ import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
-import { ComponentProps, ReactNode, useState } from 'react'
+import { ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
 import { iCloudSync } from '@/app/sync/iCloudSync'
@@ -80,6 +80,7 @@ import {
 } from '@/lib/homeSections'
 import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const SECTION_GAP = 20
 
@@ -197,7 +198,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     <View
       ref={scroll.frameRef}
       collapsable={false}
-      style={{ flexGrow: 1, backgroundColor: theme.colors.background }}
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
     >
       <ScrollAwayHeader
         hidden={bars.hidden}
@@ -555,17 +556,15 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   )
 }
 
-function PetPromptCard() {
-  const Card: typeof PetPromptCardComponent =
+const PetPromptCard = canvasKitComponent(
+  (): typeof PetPromptCardComponent =>
     require('@/features/pet/components/PetPromptCard').default
-  return <Card />
-}
+)
 
-function PetHomeSection(props: ComponentProps<typeof PetHomeSectionComponent>) {
-  const Section: typeof PetHomeSectionComponent =
+const PetHomeSection = canvasKitComponent(
+  (): typeof PetHomeSectionComponent =>
     require('@/features/pet/components/PetHomeSection').default
-  return <Section {...props} />
-}
+)
 
 function QuickActionsCard() {
   const Card: typeof ScribeQuickActionsCardComponent =

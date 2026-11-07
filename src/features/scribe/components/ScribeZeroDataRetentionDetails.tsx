@@ -12,6 +12,7 @@ import links from '@/constants/links'
 import useTheme from '@/contexts/theme'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
 
 const POINTS = [
   {
@@ -57,7 +58,7 @@ export function ScribeZeroDataRetentionHeading() {
           lineHeight: 20,
         }}
       >
-        {i18n.t('scribe_zdrIntro')}
+        {i18n.t(scribeKey('scribe_zdrIntro'))}
       </Text>
     </View>
   )
@@ -107,7 +108,7 @@ export default function ScribeZeroDataRetentionDetails() {
                   lineHeight: 20,
                 }}
               >
-                {i18n.t(point.body)}
+                {i18n.t(scribeKey(point.body))}
               </Text>
             </View>
           </View>

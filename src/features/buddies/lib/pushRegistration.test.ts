@@ -161,12 +161,12 @@ describe('registerBuddiesPush', () => {
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
 
-    expect(BUDDY_PUSH_KINDS).toHaveLength(9)
-    expect(Object.keys(templates)).toHaveLength(16)
+    expect(BUDDY_PUSH_KINDS).toHaveLength(10)
+    expect(Object.keys(templates)).toHaveLength(17)
     expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
   })
 
-  it('stays within 18 of the relay’s 32 templates with five buddies, badge alerts, and Shared Cars', async () => {
+  it('stays within 19 of the relay’s 32 templates with five buddies, badge alerts, and Shared Cars', async () => {
     useSharedCarsSession.setState({ running: true })
     joinKinds.current = ['a', 'b', 'c', 'd', 'e'].map(
       (tag) => `join.request.${tag.repeat(12)}`
@@ -174,7 +174,7 @@ describe('registerBuddiesPush', () => {
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
 
-    expect(Object.keys(templates)).toHaveLength(18)
+    expect(Object.keys(templates)).toHaveLength(19)
   })
 
   it('registers generic, name-free templates for shared cars only while Shared Cars runs', async () => {

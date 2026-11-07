@@ -10,16 +10,20 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'iCloudResetEpoch',
   'iCloudResetAdoptedNotice',
   'iCloudSyncDevices',
-  'iCloudSyncPausedForLapse',
   'iCloudFreshSetup',
   'hasReconciledSyncDefinitions',
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
   'syncProvider',
+  'installedBeforeFreeSync',
+  'cloudSyncTrayOffer',
+  'passkeyPrompt',
   'cloudSyncOffer',
   'cloudSyncAccountToken',
   'cloudSyncConfig',
   'cloudSyncEntitled',
+  'cloudSyncPhotos',
+  'cloudSyncRequestAnswered',
   'iCloudSyncIncludeImages',
   'dataProtectionMode',
   'dataProtectionModeSetByUser',
@@ -63,7 +67,9 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'lastBackupDate',
   'backupReminderSnoozedAt',
   'analyticsEnabled',
+  'sessionReplayOptIn',
   'onboardingStepId',
+  'onboardingPasskeysOffered',
   'homeChecklistCompletedAt',
   'devRolloverDateOverride',
   'devStreakOverride',
@@ -84,6 +90,22 @@ export const FRESH_SETUP_PREFERENCES = {
   iCloudSyncEnabled: false,
   iCloudSyncSetByUser: true,
   iCloudSyncNeedsResolution: false,
+}
+
+export function freshSetupPreferences(state: {
+  installedBeforeFreeSync: boolean
+  iCloudSyncEnabled: boolean
+  iCloudSyncSetByUser: boolean
+  syncProvider: 'cloud' | 'platform' | null
+}) {
+  const neverChose =
+    !state.installedBeforeFreeSync &&
+    !state.iCloudSyncEnabled &&
+    !state.iCloudSyncSetByUser &&
+    state.syncProvider === null
+  if (!neverChose) return FRESH_SETUP_PREFERENCES
+  const { iCloudSyncSetByUser: _choice, ...rest } = FRESH_SETUP_PREFERENCES
+  return rest
 }
 
 export const SYNC_MAP_KEYS = new Set([

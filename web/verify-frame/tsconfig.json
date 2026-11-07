@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "types": []
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../src/lib/turnstileFrame/protocol.ts",
+    "../../src/lib/mapsFrame/protocol.ts"
+  ]
+}

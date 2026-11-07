@@ -2,15 +2,14 @@ import { HttpError } from '@/lib/http/request'
 import { RELAY_ID_PATTERN } from '@/lib/bytes'
 import {
   type BearerAccountOptions,
+  type BearerSignedAccountOptions,
+  okOnly,
   sendBearerAccountOp,
-  sendSignedAccountOp,
-  type SignedAccountOptions,
+  sendBearerSignedAccountOp,
 } from '@/lib/serverAccount/client'
 import { backupBlobDigest } from '@/lib/serverAccount/backupCrypto'
 
-export type BackupClientOptions = BearerAccountOptions & {
-  sign: SignedAccountOptions
-}
+export type BackupClientOptions = BearerSignedAccountOptions
 
 export const BACKUP_LIMITS = {
   bytes: 20 * 1024 * 1024,
@@ -43,7 +42,8 @@ const isSlot = (value: unknown): value is BackupSlot => {
 export async function putBackup(
   options: BearerAccountOptions,
   slotId: string,
-  blob: Uint8Array
+  blob: Uint8Array,
+  { ifMatch }: { ifMatch?: string } = {}
 ): Promise<{ uploadedAt: number }> {
   const response = await sendBearerAccountOp<{
     ok?: boolean
@@ -53,6 +53,7 @@ export async function putBackup(
     headers: {
       'x-ww-slot-id': slotId,
       'x-ww-sha256': await backupBlobDigest(blob),
+      ...(ifMatch && { 'if-match': `"${ifMatch}"` }),
     },
     timeoutMs: BLOB_TIMEOUT_MS,
   })
@@ -87,27 +88,33 @@ export async function getBackup(
   options: BearerAccountOptions,
   slotId: string
 ): Promise<Uint8Array> {
+  return (await getBackupSlot(options, slotId)).blob
+}
+
+export async function getBackupSlot(
+  options: BearerAccountOptions,
+  slotId: string
+): Promise<{ blob: Uint8Array; etag: string | null }> {
   const response = await sendBearerAccountOp<Uint8Array>(
     'backup/get',
     { slotId },
     options,
     { responseType: 'bytes', timeoutMs: BLOB_TIMEOUT_MS, idempotent: true }
   )
-  return response.data
+  const etag = /^"([^"]+)"$/.exec(response.headers.get('etag') ?? '')
+  return { blob: response.data, etag: etag?.[1] ?? null }
 }
 
 export async function deleteBackup(
   options: BackupClientOptions,
   slotId?: string
 ): Promise<void> {
-  const response = await options.authorize((authorization) =>
-    sendSignedAccountOp<{ ok?: boolean }>(
+  okOnly(
+    await sendBearerSignedAccountOp(
       'backup/delete',
       slotId ? { slotId } : {},
-      { ...options.sign, signal: options.signal },
-      { headers: { authorization }, idempotent: true }
+      options,
+      { idempotent: true }
     )
   )
-  if (response.data?.ok !== true)
-    throw new HttpError('server', response.status, 'unexpected_response')
 }

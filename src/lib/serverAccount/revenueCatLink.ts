@@ -1,8 +1,11 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 import { utf8 } from '@/lib/bytes'
-import { HttpError } from '@/lib/http/request'
-import type { AuthorizedRequest } from '@/lib/serverAccount/activityClient'
+import {
+  type HttpResponse,
+  HttpError,
+  type RequestOptions,
+} from '@/lib/http/request'
 import { ACCOUNT_TIMEOUT_MS } from '@/lib/serverAccount/client'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 
@@ -27,9 +30,16 @@ export type RevenueCatLinkReason =
   | 'paid_call'
   | 'refused'
   | 'tools'
+  | 'purchase_return'
 
 export type RevenueCatLinkOutcome =
-  | { result: 'linked'; supporter: boolean; expiresAt: number | null }
+  | {
+      result: 'linked'
+      supporter: boolean
+      expiresAt: number | null
+
+      accountId: string
+    }
   | { result: 'skipped' }
   | { result: 'no_session' }
   | { result: 'no_customer' }
@@ -47,9 +57,14 @@ export type SupporterStatus = {
 export type RevenueCatLinkDeps = {
   baseUrl: string
 
-  request: AuthorizedRequest
+  request: <T>(
+    options: RequestOptions,
+    accountId?: string
+  ) => Promise<HttpResponse<T>>
 
-  currentAccount: () => Promise<string | null>
+  confirmAccount: () => Promise<string | null>
+
+  sessionAccount: () => Promise<string | null>
 
   openAccount: () => Promise<string>
 
@@ -130,12 +145,15 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     if (options.reason !== 'tools' && deps.now() < backoffUntil)
       return { result: 'backoff' }
     try {
-      const appUserId = toRevenueCatAppUserId(await deps.appUserId())
-      if (!appUserId) return { result: 'no_customer' }
+      if (!toRevenueCatAppUserId(await deps.appUserId()))
+        return { result: 'no_customer' }
       const accountId = options.open
         ? await deps.openAccount()
-        : await deps.currentAccount()
+        : await deps.confirmAccount()
       if (!accountId) return { result: 'no_session' }
+
+      const appUserId = toRevenueCatAppUserId(await deps.appUserId())
+      if (!appUserId) return { result: 'no_customer' }
 
       const key = linkKey(accountId, appUserId)
       const stored = readStored()
@@ -146,20 +164,27 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
       )
         return { result: 'skipped' }
 
-      const response = await deps.request<Record<string, unknown> | null>({
-        url: `${deps.baseUrl}/accounts/v1/revenuecat-customers`,
-        method: 'POST',
-        json: { appUserId },
-        timeoutMs: ACCOUNT_TIMEOUT_MS,
-      })
+      const response = await deps.request<Record<string, unknown> | null>(
+        {
+          url: `${deps.baseUrl}/accounts/v1/revenuecat-customers`,
+          method: 'POST',
+          json: { appUserId },
+          timeoutMs: ACCOUNT_TIMEOUT_MS,
+        },
+        accountId
+      )
       const data = response.data
       if (!isRecord(data) || typeof data.supporter !== 'boolean')
+        return { result: 'failed' }
+
+      if ((await deps.sessionAccount()) !== accountId)
         return { result: 'failed' }
       deps.storage.set(JSON.stringify({ key, at: deps.now() }))
       return {
         result: 'linked',
         supporter: data.supporter,
         expiresAt: parseExpiry(data.expiresAt),
+        accountId,
       }
     } catch (error) {
       return failureOf(error)
@@ -190,12 +215,27 @@ export function createRevenueCatLink(deps: RevenueCatLinkDeps) {
     return current
   }
 
-  async function fetchStatus(): Promise<SupporterStatus> {
-    const response = await deps.request<Record<string, unknown> | null>({
-      url: `${deps.baseUrl}/accounts/v1/supporter`,
-      method: 'GET',
-      timeoutMs: ACCOUNT_TIMEOUT_MS,
-    })
+  async function fetchStatus(accountId?: string): Promise<SupporterStatus> {
+    let response: { data: Record<string, unknown> | null }
+    try {
+      response = await deps.request<Record<string, unknown> | null>(
+        {
+          url: `${deps.baseUrl}/accounts/v1/supporter`,
+          method: 'GET',
+          timeoutMs: ACCOUNT_TIMEOUT_MS,
+        },
+        accountId
+      )
+    } catch (error) {
+      if (
+        error instanceof HttpError &&
+        error.status === 503 &&
+        error.serverCode === 'unavailable'
+      )
+        backoffUntil =
+          deps.now() + (error.retryAfterMs ?? UNAVAILABLE_DEFAULT_MS)
+      throw error
+    }
     const data = response.data
     if (
       !isRecord(data) ||

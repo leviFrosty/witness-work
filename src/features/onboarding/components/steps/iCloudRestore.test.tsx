@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   remoteChangeListeners: [] as Array<() => void>,
   preferencesSet: vi.fn(),
-  isSupporter: false,
 }))
 
 vi.mock('react-native', async () => {
@@ -123,12 +122,14 @@ vi.mock('../../../../../modules/icloud-bridge', () => ({
 }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: Object.assign(() => ({ set: runtime.preferencesSet }), {
-    getState: () => ({ iCloudSyncEnabled: true }),
+    getState: () => ({
+      iCloudSyncEnabled: true,
+      set: runtime.preferencesSet,
+    }),
   }),
 }))
-vi.mock('@/stores/profile', () => ({ useProfile: () => ({ set: vi.fn() }) }))
-vi.mock('@/hooks/useFeatureAccess', () => ({
-  default: () => ({ hasAccess: runtime.isSupporter }),
+vi.mock('@/stores/profile', () => ({
+  useProfile: { getState: () => ({ set: vi.fn() }) },
 }))
 
 let renderer: ReactTestRenderer | null = null
@@ -144,7 +145,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubGlobal('requestAnimationFrame', (callback: () => void) => callback())
   runtime.remoteChangeListeners = []
-  runtime.isSupporter = false
 })
 
 afterEach(() => {
@@ -316,9 +316,10 @@ describe('restoring over data already on this device', () => {
     const { iCloudSync, analytics, confirm, press } = await renderFound({
       meaningful: true,
     })
-    expect(confirm![1]).toBe('iCloudRestoreReplaceConfirm_description')
+    expect(confirm![1]).toBe('iCloudRestoreReplaceConfirm_descriptionWithMerge')
     expect((confirm![2] as AlertButton[]).map((b) => b.text)).toEqual([
       'cancel',
+      'iCloudRestoreReplaceConfirm_merge',
       'iCloudRestoreReplaceConfirm_replace',
     ])
     expect(iCloudSync.replaceLocalWithRemote).not.toHaveBeenCalled()
@@ -348,16 +349,11 @@ describe('restoring over data already on this device', () => {
     expect(completed()).toBe(true)
     expect(analytics.capture).toHaveBeenCalledWith(
       'icloud_restore_replace_confirmed',
-      { source: 'onboarding', merge_offered: false, choice: 'replace' }
-    )
-
-    expect(runtime.preferencesSet).not.toHaveBeenCalledWith(
-      expect.objectContaining({ iCloudSyncEnabled: true })
+      { source: 'onboarding', choice: 'replace' }
     )
   })
 
-  it('turns sync on for a Supporter only after replacing', async () => {
-    runtime.isSupporter = true
+  it('turns sync on only after replacing', async () => {
     const { iCloudSync, press } = await renderFound({ meaningful: true })
 
     await press('iCloudRestoreReplaceConfirm_replace')
@@ -380,8 +376,7 @@ describe('restoring over data already on this device', () => {
     )
   })
 
-  it('lets a Supporter merge instead of replacing', async () => {
-    runtime.isSupporter = true
+  it('lets the User merge instead of replacing', async () => {
     const { iCloudSync, confirm, press } = await renderFound({
       meaningful: true,
     })
@@ -407,7 +402,6 @@ describe('restoring over data already on this device', () => {
 
   describe('after the Apple Account changed since the probe', () => {
     const switched = async (mode: 'replace' | 'merge') => {
-      runtime.isSupporter = true
       const found = await renderFound({ meaningful: true })
       vi.mocked(found.iCloudSync.confirmICloudAccount).mockReturnValueOnce(
         false
@@ -447,7 +441,6 @@ describe('restoring over data already on this device', () => {
   })
 
   it("doesn't finish onboarding when the merge doesn't finish", async () => {
-    runtime.isSupporter = true
     const { iCloudSync, Alert, press } = await renderFound({
       meaningful: true,
     })

@@ -62,6 +62,8 @@ const ScribeConsentSheet = () => {
       setPreferences({ scribeAiEnabled: true })
       trackScribeTurnedOnOff(true)
       navigation.goBack()
+    } else if (!params.next) {
+      navigation.goBack()
     } else if (params.next.route === 'ScribeVoice') {
       navigation.replace('ScribeVoice', params.next.params)
     } else {

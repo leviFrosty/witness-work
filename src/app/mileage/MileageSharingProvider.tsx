@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import useTheme from '@/contexts/theme'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useFeatureFlag } from '@/lib/featureFlags'
 import { logger } from '@/lib/logger'
 import type { MileageBuddy } from '@/lib/mileage/people'
@@ -46,7 +47,7 @@ export default function MileageSharingProvider({
   children: ReactNode
 }) {
   const theme = useTheme()
-  const flag = useFeatureFlag('shared-cars')
+  const flag = useFeatureFlag('shared-cars') && hasCapability('sharedCars')
   const buddiesEnabled = useBuddiesEnabled()
   const buddies = useBuddies((state) => state.buddies)
   const ownName = useBuddiesCardName()

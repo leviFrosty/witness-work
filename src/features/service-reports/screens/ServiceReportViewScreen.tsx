@@ -317,7 +317,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         flex: 1,
         backgroundColor: theme.colors.background,
 
-        paddingTop: Platform.OS === 'android' ? insets.top + 12 : 20,
+        paddingTop: Platform.select({ android: insets.top + 12, default: 20 }),
         paddingHorizontal: 10,
       }}
     >

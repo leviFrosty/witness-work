@@ -1,6 +1,18 @@
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
-import { markerForContact, MARKER_PROFILE } from '@/app/sync/imageNames'
+import { hasCapability } from '@/lib/platformCapabilities'
+import { isInlineImage } from '@/lib/avatarFilePolicy'
+import {
+  markerForContact,
+  MARKER_PROFILE,
+} from '@/lib/syncTransport/imageNames'
+
+const isUnsyncablePhoto = (avatar: ProfileAvatar): boolean =>
+  !hasCapability('syncedPhotos') &&
+  avatar.type === 'image' &&
+  isInlineImage(avatar.value)
+
+const NO_AVATAR: ProfileAvatar = { type: 'none', value: '' }
 
 export function sanitizeContactAvatar(
   contact: Contact,
@@ -12,6 +24,8 @@ export function sanitizeContactAvatar(
     ...synced
   } = contact
   if (contact.avatar?.type !== 'image') return synced
+
+  if (isUnsyncablePhoto(contact.avatar)) return { ...synced, avatar: NO_AVATAR }
   return {
     ...synced,
     avatar: { ...contact.avatar, value: markerForContact(contact.id) },
@@ -24,5 +38,6 @@ export function sanitizeProfileAvatar(
 ): ProfileAvatar | undefined {
   if (!avatar) return avatar
   if (avatar.type !== 'image') return avatar
+  if (isUnsyncablePhoto(avatar)) return NO_AVATAR
   return { ...avatar, value: MARKER_PROFILE }
 }

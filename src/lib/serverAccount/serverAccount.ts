@@ -13,6 +13,7 @@ import {
   AccountSessionError,
   type AccountSessionInfo,
   type AttestationProblem,
+  type RekeyedTokens,
   toAccountSessionError,
 } from '@/lib/serverAccount/session'
 
@@ -40,7 +41,7 @@ export type ServerAccountDeps = {
   sessions: {
     ensure: (
       accountKey: Uint8Array,
-      call?: { retry?: boolean }
+      call?: { retry?: boolean; accountId?: string }
     ) => Promise<AccountSessionInfo>
     forget: () => void
     close: () => Promise<void>
@@ -49,10 +50,18 @@ export type ServerAccountDeps = {
       keys?: { from?: Uint8Array | null; to?: Uint8Array | null }
     ) => Promise<T>
     noteStatus?: (accountPub: string, status: AccountStatus) => void
+
+    repoint?: (
+      fromPub: string,
+      toPub: string,
+      tokens?: RekeyedTokens
+    ) => Promise<boolean>
   }
 
   info?: (accountKey: Uint8Array) => Promise<ServerAccountInfo>
   storage: ServerAccountStorage
+
+  lastAccount?: { get: () => string | null; set: (accountId: string) => void }
   now: () => number
 
   onKeyChanged?: () => void
@@ -79,6 +88,15 @@ const isDisabled = (error: unknown) =>
   error instanceof HttpError && error.serverCode === 'disabled'
 
 export function createServerAccount(deps: ServerAccountDeps) {
+  const noteLastAccount = (accountId: string) => {
+    if (deps.lastAccount && deps.lastAccount.get() !== accountId)
+      deps.lastAccount.set(accountId)
+  }
+
+  const cachedAtLaunch = deps.storage.get()?.accountId
+  if (cachedAtLaunch && deps.lastAccount?.get() == null)
+    noteLastAccount(cachedAtLaunch)
+
   const session = (
     key: AccountSigningKey,
     accountId: string
@@ -91,12 +109,14 @@ export function createServerAccount(deps: ServerAccountDeps) {
   const remember = (
     key: AccountSigningKey,
     account: { accountId: string; status: AccountStatus }
-  ) =>
+  ) => {
     deps.storage.set({
       accountPub: key.publicKey,
       accountId: account.accountId,
       status: account.status,
     })
+    noteLastAccount(account.accountId)
+  }
 
   const markUnavailable = (key: AccountSigningKey) =>
     deps.storage.set({
@@ -115,7 +135,7 @@ export function createServerAccount(deps: ServerAccountDeps) {
 
   async function connect(
     accountKey: Uint8Array,
-    call: { retry?: boolean } = {}
+    call: { retry?: boolean; accountId?: string } = {}
   ): Promise<ServerAccountSession> {
     const key = deriveAccountSigningKey(accountKey)
     const known = cached(accountKey)
@@ -135,6 +155,7 @@ export function createServerAccount(deps: ServerAccountDeps) {
         known.status !== opened.status
       )
         remember(key, opened)
+      else noteLastAccount(opened.accountId)
       return session(key, opened.accountId)
     } catch (error) {
       if (isDisabled(error)) markUnavailable(key)
@@ -187,6 +208,32 @@ export function createServerAccount(deps: ServerAccountDeps) {
         return result
       })
   }
+
+  async function rekeyed(
+    fromKey: Uint8Array,
+    toKey: Uint8Array,
+    {
+      accountId,
+      tokens,
+    }: {
+      accountId: string
+      tokens?: RekeyedTokens
+    }
+  ): Promise<void> {
+    const from = deriveAccountSigningKey(fromKey).publicKey
+    const to = deriveAccountSigningKey(toKey).publicKey
+    await deps.sessions.repoint?.(from, to, tokens)
+    const known = deps.storage.get()
+    deps.storage.set({
+      accountPub: to,
+      accountId,
+      ...(known?.accountId === accountId &&
+        known.status && { status: known.status }),
+    })
+    noteLastAccount(accountId)
+  }
+
+  const lastAccountId = (): string | null => deps.lastAccount?.get() ?? null
 
   function failedCheck(
     accountKey: Uint8Array,
@@ -246,6 +293,8 @@ export function createServerAccount(deps: ServerAccountDeps) {
     forget,
     close,
     changeKey,
+    rekeyed,
+    lastAccountId,
     cached,
     check,
     noteStatus,

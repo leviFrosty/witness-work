@@ -1,9 +1,15 @@
 import { Linking, Platform } from 'react-native'
 import * as LocalAuthentication from 'expo-local-authentication'
+import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 import { useAppLockSession } from '@/stores/appLock'
 
-export type AppLockMethod = 'faceId' | 'touchId' | 'passcode' | 'biometrics'
+export type AppLockMethod =
+  | 'faceId'
+  | 'touchId'
+  | 'passcode'
+  | 'biometrics'
+  | 'passkey'
 
 export type AppLockAvailability = {
   method: AppLockMethod
@@ -26,7 +32,7 @@ export async function openScreenLockSettings() {
   try {
     await Linking.sendIntent('android.settings.SECURITY_SETTINGS')
   } catch {
-    await Linking.openSettings()
+    await openAppSettings()
   }
 }
 
@@ -52,6 +58,8 @@ export function appLockRequireLabel(method: AppLockMethod) {
       return i18n.t('appLock_requirePasscode')
     case 'biometrics':
       return i18n.t('appLock_requireBiometricsAndroid')
+    case 'passkey':
+      return i18n.t('webAppLock_require')
   }
 }
 
@@ -64,6 +72,8 @@ export function appLockUnlockLabel(method: AppLockMethod) {
     case 'passcode':
     case 'biometrics':
       return i18n.t('appLock_unlock')
+    case 'passkey':
+      return i18n.t('webAppLock_unlock')
   }
 }
 

@@ -7,9 +7,8 @@ export const UPLOAD_GRACE_MS = 30_000
 export type ICloudStatusInput = {
   enabled: boolean
   available: boolean
-  paused: boolean
 
-  pausedBySwitch?: boolean
+  paused: boolean
   needsResolution: boolean
   issue: string | null
   uploadIssue: 'icloud-full' | 'upload-failed' | null
@@ -37,7 +36,6 @@ export function buildICloudStatus({
   enabled,
   available,
   paused,
-  pausedBySwitch = false,
   needsResolution,
   issue,
   uploadIssue,
@@ -55,14 +53,7 @@ export function buildICloudStatus({
 }: ICloudStatusInput): ICloudStatusDisplay {
   if (needsResolution)
     return { text: i18n.t(syncKey('iCloudStatusNeedsResolution')) }
-  if (paused)
-    return {
-      text: i18n.t(
-        pausedBySwitch
-          ? 'iCloudStatusCloudSyncPaused'
-          : syncKey('iCloudStatusSupporterPaused')
-      ),
-    }
+  if (paused) return { text: i18n.t('iCloudStatusCloudSyncPaused') }
   if (!enabled) return { text: i18n.t(syncKey('iCloudStatusDisabled')) }
   if (needsReconnect) return { text: i18n.t('googleDriveStatusNeedsReconnect') }
   if (!available) return { text: i18n.t(syncKey('iCloudStatusUnavailable')) }

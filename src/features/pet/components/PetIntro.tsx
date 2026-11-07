@@ -99,7 +99,12 @@ export default function PetIntro({
         : i18n.t('pet.intro.decorate.body')
 
   return (
-    <View style={{ gap: 16, flex: Platform.OS === 'android' ? 1 : undefined }}>
+    <View
+      style={{
+        gap: 16,
+        flex: Platform.select({ android: 1, default: undefined }),
+      }}
+    >
       <GameFrame
         kind='preview'
         palette={palette}

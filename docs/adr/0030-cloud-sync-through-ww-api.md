@@ -4,6 +4,8 @@ status: proposed
 
 # Cloud Sync: end-to-end encrypted, realtime sync through ww-api
 
+> Amended by [ADR 0040](./0040-sync-is-free-and-cloud-sync-carries-photos.md): sync is free for everyone (replacing §6's entitlement) and Cloud Sync carries photos (replacing §9's photo phase).
+
 ## Context
 
 Sync today runs on the User's own cloud: the iCloud container on iOS and the
@@ -240,7 +242,11 @@ datasets with notes. **Record-level deltas**: see §9.
   records pulls everything, one with records asks Merge or Replace.
 - **A key change noticed later** (the stored server account doesn't match
   the session's) resets Cloud Sync's bookkeeping, like an Apple Account change
-  does for iCloud, and decides again as above.
+  does for iCloud, and decides again as above. Only a change of `accountId`
+  counts: a new key for the same account (Change Account Key, ADR 0039, or
+  signing back in after it) keeps the bookkeeping and the device's slot, so
+  there's no Merge or Replace prompt and no leave, and offline edits go up
+  through the normal merge.
 - **Signed out remotely** (revoked from another device): the next call is
   401, the session client opens a new session (attesting again); the slot is
   rewritten under it.

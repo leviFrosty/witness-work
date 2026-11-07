@@ -1,0 +1,10 @@
+# The services workspace (docs/project-structure.md): the website and the
+# Help Center search Worker. Separate from the app's workspace at the repo root,
+# with its own lockfile, so neither one's dependencies reach the other.
+packages:
+  - marketing
+  - help-search
+minimumReleaseAge: 10080
+allowBuilds:
+  esbuild: true
+  workerd: true

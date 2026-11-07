@@ -2,7 +2,7 @@ import { Cloud as CloudIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
 import { usePreferences } from '@/stores/preferences'
 import i18n from '@/lib/locales'
-import { hasSyncTransport } from '@/lib/syncTransport/platform'
+import { hasSyncEngine } from '@/lib/syncTransport/platform'
 import { syncKey } from '@/lib/syncCopy'
 
 import type { NotificationItem } from '@/types/notifications'
@@ -13,7 +13,7 @@ export function useSyncResolutionNotification(): NotificationItem | null {
     (state) => state.iCloudSyncNeedsResolution
   )
   const navigation = useNavigation<RootStackNavigation>()
-  if (!hasSyncTransport() || !needsResolution) return null
+  if (!hasSyncEngine() || !needsResolution) return null
   return {
     id: 'icloud:resolve',
     kind: 'icloud_sync',

@@ -30,10 +30,12 @@ import {
 import useWelcomeChoreography from '@/features/onboarding/hooks/useWelcomeChoreography'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
-import WelcomeBackdrop from '@/features/onboarding/components/welcome/WelcomeBackdrop'
 import WelcomeConstellation from '@/features/onboarding/components/welcome/WelcomeConstellation'
 import WelcomeCta from '@/features/onboarding/components/welcome/WelcomeCta'
-import WelcomeCurtain from '@/features/onboarding/components/welcome/WelcomeCurtain'
+import {
+  WelcomeBackdrop,
+  WelcomeCurtain,
+} from '@/features/onboarding/components/welcome/welcomeSkia'
 import WelcomeHeadline from '@/features/onboarding/components/welcome/WelcomeHeadline'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 

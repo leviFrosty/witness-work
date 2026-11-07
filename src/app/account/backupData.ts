@@ -33,7 +33,11 @@ export function buildBackupPlaintext({
   platform: BackupPlatform
   now: number
 }): BackupPlaintext {
-  const { resetEpoch: _resetEpoch, ...payload } = buildPayload({
+  const {
+    resetEpoch: _resetEpoch,
+    revenueCat: _revenueCat,
+    ...payload
+  } = buildPayload({
     deviceId: ensureSyncDeviceId(),
     deviceName,
   })
@@ -76,7 +80,11 @@ export function readBackupPayload(
   if (isNewerPayloadVersion(json)) return { ok: false, problem: 'newer' }
   const parsed = parsePayload(json)
   if (!parsed) return { ok: false, problem: 'unreadable' }
-  const { resetEpoch: _resetEpoch, ...payload } = parsed
+  const {
+    resetEpoch: _resetEpoch,
+    revenueCat: _revenueCat,
+    ...payload
+  } = parsed
   return { ok: true, payload: alignPayloadClock(payload, uploadedAt) }
 }
 

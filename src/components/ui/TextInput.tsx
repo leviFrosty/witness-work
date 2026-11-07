@@ -177,9 +177,27 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     innerStyle.minHeight = typeof min === 'number' ? Math.max(min, fit) : fit
   }
 
+  const webAttributes =
+    Platform.OS === 'web'
+      ? {
+          spellcheck:
+            rest.spellCheck === undefined ? undefined : String(rest.spellCheck),
+          'aria-label': accessibleLabel,
+        }
+      : null
+  const setRef = (node: InputRef | null) => {
+    if (typeof ref === 'function') ref(node)
+    else if (ref) ref.current = node
+    const element = node as unknown as Partial<HTMLElement> | null
+    if (!webAttributes || typeof element?.setAttribute !== 'function') return
+    for (const [name, value] of Object.entries(webAttributes))
+      if (value === undefined) element.removeAttribute?.(name)
+      else element.setAttribute(name, value)
+  }
+
   const input = (
     <Component
-      ref={ref}
+      ref={setRef}
       unstyled
       style={resolvedStyle}
       placeholderTextColor={
@@ -190,6 +208,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       clearButtonMode='while-editing'
       enterKeyHint='next'
       {...(rest as InputProps)}
+      {...(webAttributes && { accessibilityLabel: undefined })}
       {...(fontSize !== undefined && { fontSize })}
       {...(fontFamily !== undefined && { fontFamily })}
       {...(fontWeight !== undefined && { fontWeight })}
@@ -199,6 +218,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       })}
       textAlign={inputAlign}
       autoFocusNative={rest.autoFocusNative ?? rest.autoFocus}
+      {...(rest.secureTextEntry && { type: rest.type ?? 'password' })}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
         borderWidth,

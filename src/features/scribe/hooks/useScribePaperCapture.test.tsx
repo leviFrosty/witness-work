@@ -3,12 +3,17 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { beforeEach, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  photos: true,
   capture: vi.fn(),
   deleteAsync: vi.fn(async (_uri: string, _options?: object) => {}),
 
   failures: new Map<string, string>(),
 }))
 
+vi.mock('@/lib/platformCapabilities', () => ({
+  hasCapability: (capability: string) =>
+    capability === 'scribePhotos' ? mocks.photos : true,
+}))
 vi.mock('expo-image-picker', () => ({}))
 vi.mock('@/hooks/useLibraryImagePicker', () => ({
   default: () => ({ pick: vi.fn(), host: null }),
@@ -90,6 +95,7 @@ const lastEvent = () => mocks.capture.mock.calls.at(-1)?.[1]
 
 beforeEach(async () => {
   vi.clearAllMocks()
+  mocks.photos = true
   mocks.failures.clear()
   await act(async () => {
     renderer = create(<Harness />)
@@ -223,4 +229,14 @@ it('stops reading and deletes the pages when the conversation closes mid-read', 
   expect(await reading).toBeNull()
   expect(deleted()).toEqual(['p1', 'p2', 'p3'])
   expect(lastEvent()).toMatchObject({ outcome: 'discarded', pages: 3 })
+})
+
+it('is unavailable, and reads nothing, where the platform cannot read photos', async () => {
+  mocks.photos = false
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  expect(hook.available).toBe(false)
+  expect(await read()).toBeNull()
+  expect(mocks.capture).not.toHaveBeenCalled()
 })

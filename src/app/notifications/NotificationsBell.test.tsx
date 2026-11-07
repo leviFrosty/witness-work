@@ -65,6 +65,16 @@ vi.mock('@/app/notifications/useAnnouncementNotification', () => ({
   default: () => null,
 }))
 vi.mock('@/app/notifications/devNotifications', () => ({ default: () => [] }))
+vi.mock('@/app/sync/useCloudSyncTrayOffer', () => ({
+  useCloudSyncTrayOffer: () => null,
+}))
+vi.mock('@/app/account/usePasskeyPromptNotification', () => ({
+  usePasskeyPromptNotification: () => null,
+  recheckPasskeyOffer: () => {},
+}))
+vi.mock('@/app/account/useSignInNoticeNotifications', () => ({
+  useSignInNoticeNotifications: () => [],
+}))
 vi.mock('@/app/notifications/reminderTargets', () => ({
   openReminderTarget: () => {},
 }))

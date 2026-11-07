@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const platform = vi.hoisted(() => ({ OS: 'ios' }))
+vi.mock('react-native', () => ({ Platform: platform }))
 const store = vi.hoisted(() => new Map<string, string>())
 const getString = vi.hoisted(() => vi.fn((key: string) => store.get(key)))
 vi.mock('@/stores/mmkv', () => ({
@@ -237,6 +239,17 @@ describe('fetchLinkPreview caching', () => {
     await fetchLinkPreview('https://a.test/2')
     vi.setSystemTime(60 * 60 * 1000)
     expect(getCachedLinkPreview('https://a.test/2')).toEqual({ preview: null })
+  })
+
+  it('never fetches on the web', async () => {
+    platform.OS = 'web'
+    try {
+      await expect(fetchLinkPreview('https://a.test/web')).resolves.toBeNull()
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(getCachedLinkPreview('https://a.test/web')).toBeUndefined()
+    } finally {
+      platform.OS = 'ios'
+    }
   })
 
   it('does not cache a network failure', async () => {

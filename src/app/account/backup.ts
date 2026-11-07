@@ -1,13 +1,16 @@
-import { AppState, Platform } from 'react-native'
+import { AppState } from 'react-native'
+import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { getRandomBytes } from 'expo-crypto'
-import * as Device from 'expo-device'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
 import {
   backupPlaintextHash,
   buildBackupPlaintext,
 } from '@/app/account/backupData'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
 import { subscribeToLocalDataChanges } from '@/app/sync/localChanges'
 import { analytics } from '@/lib/analytics'
+import { withStepUp } from '@/lib/confirmSensitive'
 import {
   addBackgroundListener,
   addForegroundListener,
@@ -41,11 +44,6 @@ import {
   useBackupState,
 } from '@/lib/serverAccount/backupStore'
 
-const deviceName = () =>
-  Device.modelName || (Platform.OS === 'ios' ? 'iPhone' : 'Android')
-
-const platform = () => (Platform.OS === 'android' ? 'android' : 'ios')
-
 async function readAccountKey(create: boolean): Promise<Uint8Array | null> {
   if (!accountKeyAvailable()) throw new BackupError('key')
   try {
@@ -75,7 +73,9 @@ const scheduler = createBackupScheduler({
   now: Date.now,
   setTimer: (run, ms) => setTimeout(run, ms),
   clearTimer: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
-  isEnabled: () => useBackupState.getState().enabled,
+
+  isEnabled: () =>
+    useBackupState.getState().enabled && keyChangedElsewhere() === null,
   prepare: async () => {
     const key = await readAccountKey(true)
     const access = await backupAccessFor(key!)
@@ -83,7 +83,7 @@ const scheduler = createBackupScheduler({
     const address = { accountId: access.accountId, slotId }
     const plaintext = buildBackupPlaintext({
       deviceName: deviceName(),
-      platform: platform(),
+      platform: devicePlatform(),
       now: Date.now(),
     })
     return {
@@ -155,6 +155,8 @@ export async function enableBackup(
   backupSchedule.set({ pending: true, retryAt: null, failures: 0 })
   analytics.capture('account_backup_changed', { enabled: true, source })
   logBackup('info', `turned on (${source})`)
+
+  if (source === 'settings') earnPasskeyPrompt('backup')
   const upload = await backUpNow('enabled')
   void refreshBackupSlots()
   return { ok: true, upload }
@@ -262,7 +264,10 @@ export async function deleteBackupSlot(
   await deleteWithBackupOff(
     mine && useBackupState.getState().enabled && source !== 'disable',
     source,
-    () => asAccount((access) => deleteBackup(access.options, slotId))
+    () =>
+      asAccount((access) =>
+        withStepUp('delete_data', () => deleteBackup(access.options, slotId))
+      )
   )
   if (mine) forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'slot', source })
@@ -277,7 +282,9 @@ export async function deleteAllBackups(
   source: BackupDeleteSource
 ): Promise<void> {
   await deleteWithBackupOff(useBackupState.getState().enabled, source, () =>
-    asAccount((access) => deleteBackup(access.options))
+    asAccount((access) =>
+      withStepUp('delete_data', () => deleteBackup(access.options))
+    )
   )
   forgetUploads()
   analytics.capture('account_backup_deleted', { scope: 'all', source })

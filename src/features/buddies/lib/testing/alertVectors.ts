@@ -440,6 +440,28 @@ export function computeAlertVectors(): AlertVectors {
       name: 'car answer from a newer version',
       event: event(45, 'car.reply', { ...carReply('joined'), v: 2 }),
     },
+    {
+      name: 'reconnect after an account key change',
+      event: event(24, 'pair.reconnect', {
+        v: 1,
+        inboxId: sam.inboxId,
+        secret: toB64u(counting(16, 0xd0)),
+        expiresAt: 1_900_000_000_000,
+      }),
+    },
+    {
+      name: 'reconnect without its invite',
+      event: event(25, 'pair.reconnect', { v: 1, inboxId: sam.inboxId }),
+    },
+    {
+      name: 'reconnect of another version',
+      event: event(26, 'pair.reconnect', {
+        v: 2,
+        inboxId: sam.inboxId,
+        secret: toB64u(counting(16, 0xd0)),
+        expiresAt: 1_900_000_000_000,
+      }),
+    },
   ]
 
   return {

@@ -61,7 +61,10 @@ import {
   storeErrorOutcome,
   type StoreErrorOutcome,
 } from '@/features/supporter/lib/purchaseErrors'
-import { clearAdoptedAccountId } from '@/lib/account'
+import { clearAdoptedAccountId, getOrCreateAccountId } from '@/lib/account'
+import { revenueCatIsOwn } from '@/lib/revenueCatIdentity'
+import { logInRevenueCat } from '@/lib/revenueCatLogIn'
+import { toast } from '@/stores/toasts'
 import {
   FounderLetter,
   SocialProofRow,
@@ -77,6 +80,9 @@ import PaywallPurchaseFooter, {
   PaywallLegalFooter,
 } from '@/features/supporter/components/PaywallPurchaseFooter'
 import { analytics } from '@/lib/analytics'
+import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
+import useWebCheckout from '@/features/supporter/hooks/useWebCheckout'
+import WebRegionNotice from '@/features/supporter/components/WebRegionNotice'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 
@@ -89,6 +95,13 @@ type OfferingsTrigger = 'initial' | 'retry' | 'foreground' | 'reconnect'
 type OfferingsLoad = { force: boolean; trigger: OfferingsTrigger }
 
 const storePlatform = Platform.OS === 'android' ? 'android' : 'ios'
+
+const WEB_TOGGLE = { minHeight: 48 } as const
+
+const WEB_BUY_WAITING_KEYS = {
+  session: 'paywallSignInToBuyWeb',
+  settled_id: 'paywallGettingAccountReadyWeb',
+} as const
 
 const totalPackages = (offerings: PurchasesOfferings) =>
   Object.values(offerings.all).reduce(
@@ -123,6 +136,13 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     ready,
     unavailable,
   } = useCustomer()
+
+  const webCheckout = useWebCheckout()
+  const regionBlocked = webCheckout?.region === 'blocked'
+
+  const noOfferingsKey = webCheckout
+    ? 'thereAreNoOfferingsWeb'
+    : 'thereAreNoOfferings'
   const [tier, setTier] = useState<Tier>(initialTier)
 
   const [supporterBilling, setSupporterBilling] =
@@ -136,6 +156,14 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       initial_tier: initialTier,
     })
   }, [source, feature, gateAttribution, initialTier])
+
+  useEffect(() => {
+    if (!regionBlocked) return
+    analytics.capture('supporter_web_region_notice_viewed', {
+      source,
+      ...gateAttribution,
+    })
+  }, [regionBlocked, source, gateAttribution])
 
   useEffect(
     () =>
@@ -192,33 +220,47 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     setSelectedByView((prev) => ({ ...prev, [priceView]: pkg }))
 
   useLayoutEffect(() => {
+    const openFaq = () => {
+      navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
+    }
     navigation.setOptions({
       header: () => (
         <Header
           buttonType='back'
           title={i18n.t('paywallTitle')}
           rightElement={
-            <IconButton
-              style={{ position: 'absolute', right: 0 }}
-              icon={CircleQuestionMarkIcon}
-              size='xl'
-              accessibilityLabel={i18n.t('paywallLearnMore')}
-              onPress={() => {
-                navigation.navigate('FAQ', { scrollToCategory: 'supporter' })
-              }}
-            />
+            Platform.OS === 'web' ? (
+              <View style={{ position: 'absolute', right: 0 }}>
+                <IconButton
+                  frame
+                  icon={CircleQuestionMarkIcon}
+                  size='xl'
+                  accessibilityLabel={i18n.t('paywallLearnMore')}
+                  onPress={openFaq}
+                />
+              </View>
+            ) : (
+              <IconButton
+                style={{ position: 'absolute', right: 0 }}
+                icon={CircleQuestionMarkIcon}
+                size='xl'
+                accessibilityLabel={i18n.t('paywallLearnMore')}
+                onPress={openFaq}
+              />
+            )
           }
         />
       ),
     })
   }, [navigation, source, gateAttribution])
 
-  const allOfferings = useMemo(() => {
-    if (!currentOfferings) return []
-    return Object.keys(currentOfferings.all).map(
-      (key) => currentOfferings.all[key]
-    )
-  }, [currentOfferings])
+  const allOfferings = useMemo(
+    () =>
+      Object.values(currentOfferings?.all ?? {}).filter(
+        (offering) => !webCheckout || webCheckout.sells(offering.identifier)
+      ),
+    [currentOfferings, webCheckout]
+  )
 
   const monthlyPackages = useMemo(() => {
     return allOfferings
@@ -393,7 +435,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     if (isRefreshing) return
     setIsRefreshing(true)
     try {
-      Purchases.invalidateCustomerInfoCache()
+      void invalidateCustomerInfoCache()
       await fetchOfferings({ force: true, trigger: 'retry' })
       await revalidate()
     } catch {
@@ -426,7 +468,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
               logger.log('[Paywall] dev reset — logging in as', { freshId })
               const { customerInfo } = await Purchases.logIn(freshId)
               setCustomer(customerInfo)
-              Purchases.invalidateCustomerInfoCache()
+              void invalidateCustomerInfoCache()
               await fetchOfferings({ force: true, trigger: 'retry' })
               await revalidate()
             } catch (error) {
@@ -484,9 +526,28 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     )
   }
 
+  const revenueCatOnOwnId = async (): Promise<boolean> => {
+    if (revenueCatIsOwn()) return true
+    try {
+      const { customerInfo } = await logInRevenueCat(getOrCreateAccountId())
+      setCustomer(customerInfo)
+      return true
+    } catch (error) {
+      logger.warn('[Paywall] RevenueCat not on this device id yet', error)
+      toast.error(i18n.t('supporterStoreAccountNotReady'), {
+        message: i18n.t('supporterStoreAccountNotReady_body'),
+      })
+      return false
+    }
+  }
+
   const handleRestore = async () => {
     if (purchasing || restoring) return
     setRestoring(true)
+    if (!(await revenueCatOnOwnId())) {
+      setRestoring(false)
+      return
+    }
     analytics.capture('supporter_restore_started', {
       source,
       ...gateAttribution,
@@ -545,7 +606,23 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       price: selectedPackage.product.price,
       currency: selectedPackage.product.currencyCode,
     }
+    if (webCheckout) {
+      setPurchasing(true)
+      try {
+        if (!webCheckout.canBuy(selectedPackage)) return
+
+        analytics.capture('supporter_web_checkout_opened', purchaseProperties)
+        await webCheckout.open(selectedPackage, tier)
+      } finally {
+        setPurchasing(false)
+      }
+      return
+    }
     setPurchasing(true)
+    if (!(await revenueCatOnOwnId())) {
+      setPurchasing(false)
+      return
+    }
     analytics.capture('supporter_purchase_started', purchaseProperties)
     try {
       const { productIdentifier, customerInfo } =
@@ -589,8 +666,20 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     return i18n.t('paywallCtaSupporterMonthly', { price })
   }, [selectedPackage, tier, supporterBilling])
 
-  if (!currentOfferings || missingOfferings) {
-    const empty = !!currentOfferings && !offeringsError
+  const awaitingRegion = webCheckout?.region === 'loading'
+
+  const nothingForSale =
+    !!currentOfferings &&
+    !missingOfferings &&
+    allOfferings.every((offering) => offering.availablePackages.length === 0)
+  if (
+    !regionBlocked &&
+    (!currentOfferings || missingOfferings || nothingForSale || awaitingRegion)
+  ) {
+    const empty =
+      !!currentOfferings &&
+      (missingOfferings || nothingForSale) &&
+      !offeringsError
     return (
       <Wrapper
         style={{
@@ -636,7 +725,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
             }
             description={
               empty
-                ? i18n.t('thereAreNoOfferings')
+                ? i18n.t(noOfferingsKey)
                 : offeringsError === 'offline'
                   ? i18n.t('paywall_offline')
                   : i18n.t('paywall_offeringsError')
@@ -703,7 +792,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     <View style={{ gap: 16 }}>
       <FounderLetter spacious={isWide} />
       {Platform.OS === 'ios' && <SocialProofRow />}
-      {tier === 'supporter' && (
+      {(tier === 'supporter' || regionBlocked) && (
         <View
           onLayout={(event) =>
             handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
@@ -714,7 +803,26 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       )}
     </View>
   )
-  const pricing = (
+  const regionNotice = (
+    <View style={{ gap: 14 }}>
+      {isWide && (
+        <Text
+          style={{
+            fontFamily: theme.fonts.bold,
+            fontSize: theme.fontSize('xl'),
+          }}
+        >
+          {i18n.t('becomeSupporter')}
+        </Text>
+      )}
+      <WebRegionNotice />
+      <Divider />
+      <PaywallLegalFooter onRestore={handleRestore} showRestore={false} />
+    </View>
+  )
+  const pricing = regionBlocked ? (
+    regionNotice
+  ) : (
     <View
       style={{ gap: 14 }}
       onLayout={(event) => {
@@ -786,7 +894,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
           onChange={(billing) => {
             setSupporterBilling(billing)
           }}
-          style={{ alignSelf: 'center' }}
+          style={[{ alignSelf: 'center' }, Platform.OS === 'web' && WEB_TOGGLE]}
           options={[
             { key: 'monthly', label: i18n.t('paywallBillingMonthly') },
             {
@@ -800,7 +908,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
 
       <View style={{ gap: 6 }}>
         {activePackages.length === 0 && (
-          <InlineNotice tone='info' message={i18n.t('thereAreNoOfferings')} />
+          <InlineNotice tone='info' message={i18n.t(noOfferingsKey)} />
         )}
         {(isWide && showAllOptions ? activePackages : visiblePackages).map(
           (pkg) => renderPriceOption(pkg)
@@ -850,16 +958,30 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       <PaywallLegalFooter
         onRestore={handleRestore}
         restoring={restoring}
-        showRestore={!hasPurchasedBefore}
+        showRestore={!hasPurchasedBefore && !webCheckout}
       />
-      {hasPurchasedBefore && customer && (
+      {}
+      {hasPurchasedBefore && customer && !webCheckout && (
         <PreviousDonations customer={customer} />
       )}
     </View>
   )
-  const purchaseFooter = (
+  const purchaseFooter = regionBlocked ? null : (
     <PaywallPurchaseFooter
-      selected={!!selectedPackage}
+      selected={
+        !!selectedPackage &&
+        (!webCheckout || webCheckout.canBuy(selectedPackage))
+      }
+      unavailableReason={
+        selectedPackage && webCheckout?.waitingFor
+          ? i18n.t(WEB_BUY_WAITING_KEYS[webCheckout.waitingFor])
+          : undefined
+      }
+      onSignIn={
+        selectedPackage && webCheckout?.waitingFor === 'session'
+          ? webCheckout.signIn
+          : undefined
+      }
       tier={tier}
       ctaLabel={ctaLabel}
       onPurchase={handlePurchase}
@@ -912,7 +1034,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
                 {pricing}
                 {!dockFooter && purchaseFooter}
               </ScrollView>
-              {dockFooter && (
+              {dockFooter && purchaseFooter && (
                 <View
                   style={{
                     padding: 20,
@@ -950,7 +1072,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
               {!dockFooter && purchaseFooter}
             </View>
           </ScrollView>
-          {dockFooter && (
+          {dockFooter && purchaseFooter && (
             <View
               style={[
                 {

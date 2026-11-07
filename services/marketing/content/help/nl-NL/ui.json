@@ -1,0 +1,23 @@
+{
+  "helpCenter": "Helpcentrum",
+  "intro": "Vind snelle antwoorden op veelgestelde vragen over WitnessWork. Kun je niet vinden wat je nodig hebt? Neem contact op — jouw feedback vormt de app.",
+  "searchPlaceholder": "Zoekvragen",
+  "topQuestions": "Topvragen",
+  "allQuestions": "Alle vragen",
+  "noMatches": "Geen overeenkomsten",
+  "noResults": "Geen enkele vraag komt overeen met je zoekopdracht.",
+  "searching": "Zoeken…",
+  "clearSearch": "Zoekopdracht wissen",
+  "stillNeedHelp": "Nog steeds hulp nodig?",
+  "emailUs": "Neem privé contact op via e-mail op",
+  "bugReport": "Bug melden",
+  "featureRequest": "Functieverzoek",
+  "device": "Apparaat",
+  "language": "Taal",
+  "all": "Alle",
+  "copyLink": "Link kopiëren",
+  "iosOnly": "Alleen iOS",
+  "androidOnly": "Alleen Android",
+  "notTranslated": "Dit antwoord is nog niet vertaald en wordt daarom in het Engels getoond.",
+  "stillNeedHelpDescription": "Mail ons voor persoonlijke hulp, of meld een bug of vraag een functie aan op GitHub. Vermeld wat je hebt geprobeerd, je apparaat en je WitnessWork-versie. Laat contactgegevens, privénotities en account-ID's weg uit openbare meldingen."
+}

@@ -6,6 +6,7 @@ import type { ConfettiConfig } from '@/vendor/ConfettiSkia/core/Config'
 import type ConfettiComponent from '@/vendor/ConfettiSkia/react/Confetti'
 import { ConfettiContext, FireworksCtx, FireOpts } from '@/contexts/Confetti'
 import useReduceMotionEnabled from '@/hooks/useReduceMotionEnabled'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 export const FIREWORKS_AFTER_LOTTIE_BUFFER_MS = 200
 
@@ -96,6 +97,11 @@ const ConfettiProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
   )
 }
 
+const Confetti = canvasKitComponent(
+  (): typeof ConfettiComponent =>
+    require('@/vendor/ConfettiSkia/react/Confetti').default
+)
+
 function SkiaConfetti({
   confettiRef,
   onActiveChange,
@@ -103,8 +109,6 @@ function SkiaConfetti({
   confettiRef: ReturnType<typeof useConfetti>['ref']
   onActiveChange: (active: boolean) => void
 }) {
-  const Confetti: typeof ConfettiComponent =
-    require('@/vendor/ConfettiSkia/react/Confetti').default
   return (
     <FullWindowOverlay>
       <Confetti ref={confettiRef} onActiveChange={onActiveChange} />

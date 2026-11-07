@@ -18,6 +18,8 @@ module.exports = function (api) {
     ],
     plugins: [
       './babel/lucide-imports',
+
+      './babel/web-lazy-imports',
       'react-native-reanimated/plugin',
       [
         '@tamagui/babel-plugin',

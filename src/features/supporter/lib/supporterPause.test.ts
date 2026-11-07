@@ -96,6 +96,33 @@ describe('Supporter pause', () => {
       expect(manageableSubscription(null, 'ios')).toBeNull()
     })
 
+    it('never manages a web subscription on a phone', () => {
+      const web = sub({
+        productIdentifier: 'web_jwtime_499_1mo',
+        store: 'RC_BILLING',
+      })
+      expect(manageableSubscription(customer(web), 'ios')).toBeNull()
+      expect(manageableSubscription(customer(web), 'android')).toBeNull()
+    })
+
+    it('manages the web subscription first on the web, then a store one', () => {
+      const web = sub({
+        productIdentifier: 'web_jwtime_499_1mo',
+        store: 'RC_BILLING',
+        willRenew: false,
+      })
+      const apple = sub()
+      const play = sub({ productIdentifier: 'p:monthly', store: 'PLAY_STORE' })
+      expect(manageableSubscription(customer(apple, web), 'web')).toBe(web)
+      expect(manageableSubscription(customer(play), 'web')).toBe(play)
+      expect(
+        manageableSubscription(
+          customer(sub({ productIdentifier: 'promo', store: 'PROMOTIONAL' })),
+          'web'
+        )
+      ).toBeNull()
+    })
+
     it('ignores grants, refunds, family sharing, and expired subscriptions', () => {
       expect(
         manageableSubscription(
@@ -207,7 +234,7 @@ describe('Supporter pause', () => {
     const state = (
       info: CustomerInfo | null,
       options: {
-        platform?: 'ios' | 'android'
+        platform?: 'ios' | 'android' | 'web'
         product?: PurchasesStoreProduct | null
         pause?: PauseRecord
       } = {}
@@ -223,6 +250,23 @@ describe('Supporter pause', () => {
     it('has nothing to manage without a store subscription', () => {
       expect(state(null).kind).toBe('none')
       expect(state(customer()).kind).toBe('none')
+    })
+
+    it('never offers a pause on the web', () => {
+      const web = sub({
+        productIdentifier: 'web_jwtime_499_1mo',
+        store: 'RC_BILLING',
+      })
+      expect(state(customer(web), { platform: 'web' })).toMatchObject({
+        kind: 'renewing',
+        pause: { kind: 'unavailable', reason: 'unsupported_plan' },
+      })
+      expect(
+        state(customer(sub()), {
+          platform: 'web',
+          pause: { startedAt: now - day, resumesAt: now + 30 * day },
+        }).kind
+      ).toBe('renewing')
     })
 
     it('offers App Store pauses to renewing subscriptions', () => {

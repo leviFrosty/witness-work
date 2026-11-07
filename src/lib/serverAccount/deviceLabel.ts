@@ -5,7 +5,7 @@ import { open, seal } from '@/lib/sealedBlob'
 
 export type DeviceLabel = {
   name: string
-  platform: 'ios' | 'android'
+  platform: 'ios' | 'android' | 'web'
   model: string
 }
 
@@ -24,6 +24,9 @@ const aad = (accountPub: string) => `${LABEL}\n${accountPub}`
 
 const sealedLength = (plaintextBytes: number) =>
   Math.ceil(((1 + 12 + plaintextBytes + 16) * 4) / 3)
+
+const clamp = (value: string) =>
+  Array.from(value).slice(0, DEVICE_LABEL_FIELD_MAX).join('')
 
 const plaintext = (label: DeviceLabel) => utf8(JSON.stringify(label))
 
@@ -67,14 +70,32 @@ export function openDeviceLabel(
   accountPub: string,
   sealed: string
 ): DeviceLabel {
+  return openDeviceLabelWith(
+    deriveDeviceLabelKey(accountKey),
+    accountPub,
+    sealed
+  )
+}
+
+export function openDeviceLabelWith(
+  labelKey: Uint8Array,
+  accountPub: string,
+  sealed: string
+): DeviceLabel {
   const value = JSON.parse(
-    fromUtf8(open(deriveDeviceLabelKey(accountKey), sealed, aad(accountPub)))
+    fromUtf8(open(labelKey, sealed, aad(accountPub)))
   ) as Partial<DeviceLabel> | null
   if (
     typeof value?.name !== 'string' ||
     typeof value.model !== 'string' ||
-    (value.platform !== 'ios' && value.platform !== 'android')
+    (value.platform !== 'ios' &&
+      value.platform !== 'android' &&
+      value.platform !== 'web')
   )
     throw new Error('Not a device label')
-  return { name: value.name, platform: value.platform, model: value.model }
+  return {
+    name: clamp(value.name),
+    platform: value.platform,
+    model: clamp(value.model),
+  }
 }

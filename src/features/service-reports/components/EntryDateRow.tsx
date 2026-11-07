@@ -47,7 +47,7 @@ const EntryDateRow = (props: {
         paddingX={props.paddingX}
         testID='time-entry-date-row'
       />
-      {Platform.OS === 'android' ? (
+      {Platform.select({ android: true, ios: false, web: false }) ? (
         picking && (
           <DateTimeDialog
             part='date'

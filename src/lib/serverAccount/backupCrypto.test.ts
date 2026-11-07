@@ -11,6 +11,7 @@ import {
   deriveBackupKey,
   newBackupSlotId,
   openBackup,
+  resealBlob,
   sealBackup,
 } from '@/lib/serverAccount/backupCrypto'
 
@@ -84,6 +85,32 @@ describe('backup blob', () => {
     expect(problem(() => openBackup(other, blob, address))).toBe('decrypt')
   })
 
+  it('opens a blob an older account key sealed with the keys it’s given', () => {
+    const oldKey = new Uint8Array(32).fill(5)
+    const blob = sealBackup(
+      deriveBackupKey(oldKey),
+      plaintext,
+      address,
+      random(24)
+    )
+    expect(
+      problem(() => openBackup(deriveBackupKey(accountKey), blob, address))
+    ).toBe('decrypt')
+    expect(
+      openBackup(deriveBackupKey(accountKey), blob, address, [
+        deriveBackupKey(new Uint8Array(32).fill(6)),
+        deriveBackupKey(oldKey),
+      ])
+    ).toEqual(plaintext)
+    expect(
+      problem(() =>
+        openBackup(deriveBackupKey(accountKey), blob, address, [
+          deriveBackupKey(new Uint8Array(32).fill(6)),
+        ])
+      )
+    ).toBe('decrypt')
+  })
+
   it('refuses a blob moved to another slot or another account', () => {
     const key = deriveBackupKey(accountKey)
     const blob = sealBackup(key, plaintext, address, random(24))
@@ -153,5 +180,80 @@ describe('backup blob', () => {
     expect(await backupBlobDigest(new Uint8Array([1, 2, 3]))).toBe(
       'A5BYxvLAy0ksUzsKTRTvd8wPeKvMztUofYShogEc-4E'
     )
+  })
+
+  describe('re-sealing under a new account key', () => {
+    const K1 = deriveBackupKey(new Uint8Array(32).fill(1))
+    const K0 = deriveBackupKey(new Uint8Array(32).fill(2))
+    const K2 = deriveBackupKey(new Uint8Array(32).fill(3))
+    const aad = backupAad(address)
+
+    it('re-seals the same sealed bytes under the new key, with a fresh nonce', () => {
+      const old = sealBackup(K1, plaintext, address, random(24))
+      const nonce = random(24)
+      const result = resealBlob(old, aad, { from: [K1], to: K2, nonce })
+      if (result.outcome !== 'resealed') throw new Error(result.outcome)
+      expect(result.blob.subarray(1, 25)).toEqual(nonce)
+      expect(openBackup(K2, result.blob, address)).toEqual(plaintext)
+      expect(problem(() => openBackup(K1, result.blob, address))).toBe(
+        'decrypt'
+      )
+
+      const inner = (key: Uint8Array, blob: Uint8Array) =>
+        xchacha20poly1305(key, blob.subarray(1, 25), aad).decrypt(
+          blob.subarray(25)
+        )
+      expect(inner(K2, result.blob)).toEqual(inner(K1, old))
+    })
+
+    it('keeps what a newer app wrote, without reading it', () => {
+      const newer = gzipSync(utf8(JSON.stringify({ v: 9, extra: 'kept' })))
+      const nonce = random(24)
+      const old = concatBytes(
+        new Uint8Array([1]),
+        nonce,
+        xchacha20poly1305(K1, nonce, aad).encrypt(newer)
+      )
+      const result = resealBlob(old, aad, {
+        from: [K1],
+        to: K2,
+        nonce: random(24),
+      })
+      if (result.outcome !== 'resealed') throw new Error(result.outcome)
+      expect(problem(() => openBackup(K2, result.blob, address))).toBe('newer')
+    })
+
+    it('opens with an older key from the history when the old one doesn’t', () => {
+      const old = sealBackup(K0, plaintext, address, random(24))
+      const result = resealBlob(old, aad, {
+        from: [K1, K0],
+        to: K2,
+        nonce: random(24),
+      })
+      if (result.outcome !== 'resealed') throw new Error(result.outcome)
+      expect(openBackup(K2, result.blob, address)).toEqual(plaintext)
+    })
+
+    it('says when the blob is already under the new key', () => {
+      const current = sealBackup(K2, plaintext, address, random(24))
+      expect(
+        resealBlob(current, aad, { from: [K1], to: K2, nonce: random(24) })
+      ).toEqual({ outcome: 'current' })
+    })
+
+    it('leaves a blob none of the keys open, or that isn’t a blob', () => {
+      const other = deriveBackupKey(new Uint8Array(32).fill(9))
+      const theirs = sealBackup(other, plaintext, address, random(24))
+      const moved = sealBackup(
+        K1,
+        plaintext,
+        { ...address, slotId: 'T'.repeat(22) },
+        random(24)
+      )
+      for (const blob of [theirs, moved, new Uint8Array([2, 3]), random(80)])
+        expect(
+          resealBlob(blob, aad, { from: [K1], to: K2, nonce: random(24) })
+        ).toEqual({ outcome: 'unopened' })
+    })
   })
 })

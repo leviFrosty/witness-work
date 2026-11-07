@@ -10,6 +10,10 @@ import { FlashList } from '@shopify/flash-list'
 import {
   Ban as BanIcon,
   Download as DownloadIcon,
+  Fingerprint as FingerprintIcon,
+  KeyRound as KeyRoundIcon,
+  QrCode as QrCodeIcon,
+  RefreshCw as RefreshCwIcon,
   Send as SendIcon,
   ShieldAlert as ShieldAlertIcon,
   ShieldCheck as ShieldCheckIcon,
@@ -55,6 +59,7 @@ import { logger } from '@/lib/logger'
 const ICONS: Record<ActivityKind, AppIcon> = {
   'account.created': UserPlusIcon,
   'session.opened': LogInIcon,
+  'session.renewed': RefreshCwIcon,
   'session.signed_out': LogOutIcon,
   'session.revoked': LogOutIcon,
   'session.replaced': LogOutIcon,
@@ -66,6 +71,10 @@ const ICONS: Record<ActivityKind, AppIcon> = {
   'account.reinstated': ShieldCheckIcon,
   'buddies.inbox_linked': UsersIcon,
   'buddies.deleted': UserXIcon,
+  'passkey.added': FingerprintIcon,
+  'passkey.removed': FingerprintIcon,
+  'device.approved': QrCodeIcon,
+  'account.key_changed': KeyRoundIcon,
 }
 
 type Loaded = {

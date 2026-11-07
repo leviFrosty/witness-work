@@ -15,6 +15,8 @@ export type SheetProps = {
   dismissible?: boolean
 
   backgroundColor?: string
+
+  accessibilityLabel?: string
   testID?: string
   children: ReactNode
 }
@@ -30,6 +32,7 @@ export type NativeSheetProps = {
   backgroundColor: string
 
   colorScheme?: 'light' | 'dark'
+  accessibilityLabel?: string
   testID?: string
   children: ReactNode
 }

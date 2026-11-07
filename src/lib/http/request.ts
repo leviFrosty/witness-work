@@ -26,6 +26,8 @@ export type RetryPolicy = {
   baseDelayMs?: number
 
   maxDelayMs?: number
+
+  retryTimeouts?: boolean
 }
 
 export type RequestOptions = {
@@ -73,7 +75,8 @@ export async function request<T = unknown>(
       const failure = toHttpError(error)
       const retryable =
         failure.kind === 'offline' ||
-        failure.kind === 'timeout' ||
+        (failure.kind === 'timeout' &&
+          options.retry?.retryTimeouts !== false) ||
         failure.kind === 'rateLimited' ||
         (failure.kind === 'server' && failure.status !== 501)
       if (attempt >= retries || !retryable || options.signal?.aborted)

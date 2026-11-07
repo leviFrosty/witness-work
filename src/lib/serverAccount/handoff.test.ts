@@ -18,7 +18,6 @@ import {
   deriveVerifier,
   formatHandoffCode,
   type HandoffHello,
-  HANDOFF_LINK_BASE,
   isHandoffLink,
   openAccountKey,
   openHello,
@@ -37,6 +36,8 @@ import { HttpError } from '@/lib/http/request'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+
+const HANDOFF_LINK_BASE = 'https://ww-proxy.leviwilkerson.com/h'
 
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 

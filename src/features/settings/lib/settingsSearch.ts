@@ -62,6 +62,9 @@ export type SettingsSearchRequirement =
   | 'mileage'
   | 'routineOn'
   | 'dataProtection'
+  | 'deviceNotifications'
+  | 'haptics'
+  | 'otaUpdates'
 
 export type SettingsSearchAvailability = Readonly<
   Record<SettingsSearchRequirement, boolean>
@@ -324,7 +327,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'settingsSearch.titles.routineReminder',
     page: 'RoutineSettings',
     keywords: 'settingsSearch.keywords.reminder',
-    requires: ['routineOn'],
+    requires: ['routineOn', 'deviceNotifications'],
   },
 
   page('Preferences'),
@@ -372,12 +375,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'settingsSearch.titles.conversationNotification',
     page: 'PreferencesConversation',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'conversationAlwaysNotify',
     title: 'alwaysNotify',
     page: 'PreferencesConversation',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'autoFillAddress',
@@ -391,12 +396,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'settingsSearch.titles.planNotification',
     page: 'PreferencesPlans',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'planAlwaysNotify',
     title: 'planAlwaysNotify',
     page: 'PreferencesPlans',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'meetingDays',
@@ -414,18 +421,21 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'unloggedDayReminders',
     page: 'PreferencesPlans',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'monthReportReminder',
     title: 'monthReportReminders',
     page: 'PreferencesPlans',
     keywords: 'settingsSearch.keywords.reportReminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'weekPlanReminder',
     title: 'weekPlanReminder',
     page: 'PreferencesPlans',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
 
   page('PreferencesCalendar', {
@@ -469,6 +479,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'streakReminders',
     page: 'PreferencesStreaksAndBadges',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
   {
     id: 'showBadges',
@@ -488,6 +499,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'haptics',
     page: 'PreferencesAudioAndHaptics',
     keywords: 'settingsSearch.keywords.haptics',
+    requires: ['haptics'],
   },
 
   page('PreferencesRewards', { requires: ['pet'] }),
@@ -515,12 +527,13 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.analytics',
   },
 
-  page('PreferencesBackups'),
+  page('PreferencesBackups', { requires: ['deviceNotifications'] }),
   {
     id: 'backupReminder',
     title: 'remindMeToBackup',
     page: 'PreferencesBackups',
     keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
   },
 
   page('Security', { keywords: 'settingsSearch.keywords.appLock' }),
@@ -550,6 +563,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: 'checkForUpdate',
     title: 'checkForUpdate',
     page: 'More',
+    requires: ['otaUpdates'],
   },
   {
     id: 'restartOnboarding',

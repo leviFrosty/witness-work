@@ -3,7 +3,7 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect'
 
 const liquidGlass = isLiquidGlassAvailable()
 
-export const MAP_BUTTON_HEIGHT = Platform.OS === 'android' ? 48 : 44
+export const MAP_BUTTON_HEIGHT = Platform.select({ android: 48, default: 44 })
 
 export const mapPillStyle = (cardColor: string): ViewStyle => ({
   height: MAP_BUTTON_HEIGHT,

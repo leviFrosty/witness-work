@@ -33,6 +33,10 @@ config.resolver.blockList = [
   /[\\/]\.verify[\\/].*/,
 
   /[\\/]\.env[^\\/]*(?:[\\/].*)?$/,
+
+  new RegExp(
+    `^${path.join(__dirname, 'services').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/].*`
+  ),
 ]
 
 const lucideVersion = require(

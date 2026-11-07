@@ -35,6 +35,8 @@ import {
   sanitizeContactAvatar,
   sanitizeProfileAvatar,
 } from '@/app/sync/avatarPayload'
+import { type AccountClaim, parseAccountClaim } from '@/lib/accountClaim'
+import { ownAccountClaim } from '@/lib/accountClaimRegistry'
 
 export const PAYLOAD_VERSION = 1
 
@@ -47,6 +49,8 @@ export type SyncPayload = {
   deviceName?: string
 
   resetEpoch?: ResetEpoch
+
+  revenueCat?: AccountClaim
   contactStore: {
     contacts: any[]
 
@@ -133,6 +137,7 @@ export function buildPayload(args: {
   const prefs = usePreferences.getState()
   const profile = useProfile.getState()
 
+  const revenueCat = ownAccountClaim()
   const includeImages = prefs.iCloudSyncIncludeImages === true
   const avatarOpts = { includeImages }
 
@@ -164,6 +169,7 @@ export function buildPayload(args: {
     deviceId,
     deviceName,
     ...(prefs.iCloudResetEpoch ? { resetEpoch: prefs.iCloudResetEpoch } : {}),
+    ...(revenueCat && { revenueCat }),
     contactStore: {
       contacts: contacts.contacts.map((c) =>
         sanitizeContactAvatar(c, avatarOpts)
@@ -293,6 +299,11 @@ export function parsePayload(
       return null
     }
     const d = result.data
+    step = 'revenuecat'
+
+    const revenueCat = parseAccountClaim(d.revenueCat)
+    if (revenueCat) d.revenueCat = revenueCat
+    else delete d.revenueCat
     step = 'field-names'
     normalizeLegacyPayloadFieldNames(d)
     step = 'follow-ups'

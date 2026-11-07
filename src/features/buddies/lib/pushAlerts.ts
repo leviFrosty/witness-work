@@ -14,6 +14,7 @@ import {
   carReplyEventSchema,
   joinRequestSchema,
   pairConfirmedSchema,
+  pairReconnectSchema,
   pairingCardSchema,
   shareCancelSchema,
   shareInviteSchema,
@@ -125,6 +126,7 @@ export type AlertWhen = { d: string; s?: number }
 export type BuddyAlert =
   | { type: 'claimed'; name: string }
   | { type: 'paired'; name: string }
+  | { type: 'reconnect'; name: string }
   | {
       type: 'share'
       action: 'invite' | 'update' | 'cancel'
@@ -203,6 +205,7 @@ const whenOf = (share: ShareWhen | undefined): AlertWhen | undefined =>
 
 type Handler =
   | 'paired'
+  | 'reconnect'
   | 'share'
   | 'reply'
   | 'joinRequest'
@@ -214,6 +217,7 @@ type Handler =
 
 function handlerOf(kind: string): Handler | null {
   if (kind === 'pair.confirmed') return 'paired'
+  if (kind === 'pair.reconnect') return 'reconnect'
   if (kind === 'share.reply') return 'reply'
   if (/^(plan|followup)\.(invite|update|cancel)$/.test(kind)) return 'share'
   if (/^join\.request\.[0-9a-f]{12}$/.test(kind)) return 'joinRequest'
@@ -269,6 +273,10 @@ export function describeBuddyEvent(
     case 'paired':
       return parsed(pairConfirmedSchema, body)
         ? { alert: { type: 'paired', name } }
+        : failed('unreadable')
+    case 'reconnect':
+      return parsed(pairReconnectSchema, body)
+        ? { alert: { type: 'reconnect', name } }
         : failed('unreadable')
     case 'share': {
       const [prefix, action] = event.kind.split('.') as [

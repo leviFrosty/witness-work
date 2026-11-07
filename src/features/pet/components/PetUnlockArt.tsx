@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { resolveRoom } from '@/features/pet/art'
-import RoomOptionThumb from '@/features/pet/components/RoomOptionThumb'
+import type RoomOptionThumbComponent from '@/features/pet/components/RoomOptionThumb'
 import usePetRoomScene from '@/features/pet/hooks/usePetRoomScene'
 import {
   ROOM_THUMB_VIEWS,
@@ -9,6 +9,7 @@ import {
 } from '@/features/pet/lib/roomOptions'
 import { unlockedPart } from '@/features/pet/lib/unlockNews'
 import type { RoomItemId } from '@/types/pet'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 export default function PetUnlockArt({
   item,
@@ -51,3 +52,8 @@ export default function PetUnlockArt({
     </View>
   )
 }
+
+const RoomOptionThumb = canvasKitComponent(
+  (): typeof RoomOptionThumbComponent =>
+    require('@/features/pet/components/RoomOptionThumb').default
+)

@@ -5,6 +5,7 @@ import { execSync } from 'child_process'
 import { readdirSync } from 'fs'
 import path from 'path'
 import { ExpoConfig, ConfigContext } from 'expo/config'
+import appLinks from './src/constants/appLinks.json'
 
 type AppVariant = 'development' | 'beta' | 'production'
 const APP_VARIANT: AppVariant =
@@ -19,13 +20,50 @@ process.env.EXPO_PUBLIC_COMMIT_HASH = execSync('git rev-parse --short HEAD')
   .toString()
   .trim()
 
+process.env.EXPO_PUBLIC_APP_VARIANT = APP_VARIANT
+
 const PERF_PROBE = IS_DEV && process.env.EXPO_PUBLIC_PERF_PROBE === '1'
+
+const WEB_BUILD = process.env.WW_WEB_BUILD === '1'
 
 const BUNDLE_ID = {
   development: 'com.leviwilkerson.jwtimedev',
   beta: 'com.leviwilkerson.jwtimebeta',
   production: 'com.leviwilkerson.jwtime',
 }[APP_VARIANT]
+
+const APP_LINK_FULL_PATHS = Object.values(appLinks.paths)
+const APP_LINK_LEGACY_HOST_DATA = [
+  { path: appLinks.legacyPaths.contact },
+  { pathPrefix: appLinks.legacyContactPathPrefix },
+  { path: appLinks.legacyPaths.buddyInvite },
+  { path: appLinks.legacyPaths.handoff },
+  ...APP_LINK_FULL_PATHS.map((path) => ({ path })),
+]
+const APP_LINK_APEX_HOSTS = IS_DEV
+  ? [appLinks.host, appLinks.devHost]
+  : [appLinks.host]
+const APP_LINK_DOMAINS = [
+  `applinks:${appLinks.legacyHost}`,
+  ...APP_LINK_APEX_HOSTS.map((host) =>
+    host === appLinks.devHost
+      ? `applinks:${host}?mode=developer`
+      : `applinks:${host}`
+  ),
+]
+
+const APP_LINK_INTENT_FILTERS = [
+  { host: appLinks.legacyHost, data: APP_LINK_LEGACY_HOST_DATA },
+  ...APP_LINK_APEX_HOSTS.map((host) => ({
+    host,
+    data: APP_LINK_FULL_PATHS.map((path) => ({ path })),
+  })),
+].map(({ host, data }) => ({
+  action: 'VIEW',
+  autoVerify: true,
+  category: ['BROWSABLE', 'DEFAULT'],
+  data: data.map((match) => ({ scheme: 'https', host, ...match })),
+}))
 
 const APP_NAME = {
   development: 'WitnessWork Dev',
@@ -50,7 +88,11 @@ const APP_LANGUAGES = readdirSync(path.join(__dirname, 'src', 'locales'))
   .sort((a, b) => Number(b === 'en') - Number(a === 'en') || a.localeCompare(b))
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  if (!IS_DEV && !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim())
+  if (
+    !IS_DEV &&
+    !WEB_BUILD &&
+    !process.env.EXPO_PUBLIC_HOT_UPDATER_API_KEY?.trim()
+  )
     throw new Error(
       'EXPO_PUBLIC_HOT_UPDATER_API_KEY is required for this build'
     )
@@ -67,6 +109,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: IS_BETA ? './src/assets/icon-beta.png' : './src/assets/icon.png',
     userInterfaceStyle: 'automatic',
     assetBundlePatterns: ['**/*'],
+
+    ...(WEB_BUILD && {
+      web: {
+        bundler: 'metro',
+        output: 'single',
+        favicon: './src/assets/icon.png',
+        name: APP_NAME,
+        shortName: 'WitnessWork',
+        themeColor: '#4BD27C',
+      },
+    }),
     android: {
       blockedPermissions: [
         'android.permission.READ_MEDIA_IMAGES',
@@ -85,36 +138,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
         backgroundColor: '#F8F9FA',
       },
+
       intentFilters: [
-        {
-          action: 'VIEW',
-          autoVerify: true,
-          category: ['BROWSABLE', 'DEFAULT'],
-          data: [
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/c',
-            },
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              pathPrefix: '/c/',
-            },
-
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/b',
-            },
-
-            {
-              scheme: 'https',
-              host: 'ww-proxy.leviwilkerson.com',
-              path: '/h',
-            },
-          ],
-        },
+        ...APP_LINK_INTENT_FILTERS,
         {
           action: 'VIEW',
           category: ['BROWSABLE', 'DEFAULT'],
@@ -168,7 +194,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ],
       },
 
-      associatedDomains: ['applinks:ww-proxy.leviwilkerson.com'],
+      associatedDomains: [
+        ...APP_LINK_DOMAINS,
+        IS_DEV
+          ? 'webcredentials:app-dev.witnesswork.app?mode=developer'
+          : 'webcredentials:app.witnesswork.app',
+      ],
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
 
@@ -217,6 +248,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       './plugins/with-wear-os',
       ['./plugins/with-android-locale-config', { locales: APP_LANGUAGES }],
       './plugins/with-android-text-input-direction',
+      './plugins/with-passkey-domains',
       './plugins/with-posthog-symbols-last',
       [
         'react-native-maps',
@@ -336,6 +368,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ],
     experiments: {
       reactCompiler: true,
+
+      ...(WEB_BUILD && { chunking: { mode: 'granular' as const } }),
     },
   }
 

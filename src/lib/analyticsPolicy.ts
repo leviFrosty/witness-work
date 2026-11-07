@@ -15,6 +15,10 @@ export function setAnalyticsProduction(value: boolean): void {
   production = value
 }
 
+export function analyticsProductionBuild(): boolean {
+  return production
+}
+
 export function analyticsEventsAllowed(): boolean {
   return allowed
 }

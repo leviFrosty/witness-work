@@ -10,7 +10,10 @@ const { slot } = vi.hoisted(() => ({
 }))
 
 vi.mock('react-native', () => ({
-  Platform: { OS: 'ios' },
+  Platform: {
+    OS: 'ios',
+    select: (spec: Record<string, unknown>) => spec.ios ?? spec.default,
+  },
   Pressable: 'Pressable',
   View: 'View',
   useWindowDimensions: () => dims,

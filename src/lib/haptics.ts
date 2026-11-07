@@ -1,10 +1,11 @@
 import * as ExpoHaptics from 'expo-haptics'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { usePreferences } from '@/stores/preferences'
 
 export const isHapticsEnabled = () => usePreferences.getState().hapticsEnabled
 
 const whenEnabled = (play: () => Promise<void>) => () =>
-  isHapticsEnabled() ? play() : Promise.resolve()
+  hasCapability('haptics') && isHapticsEnabled() ? play() : Promise.resolve()
 
 const Haptics = {
   light: whenEnabled(() =>

@@ -28,7 +28,7 @@ EAS/Xcode has already pushed the build.
 2. **Stage everything in one shot** (creates version + copies text metadata + attaches build + readiness check, stops before submit). `--copy-metadata-from` takes the previous **version STRING** (`1.38.3`), NOT its version ID — passing an ID fails `apply_metadata` with `source version "<id>" not found`:
 
    ```
-   asc release stage --app 6469723047 --version 1.38.3 --build <BUILD_ID> \
+   asc release stage --app 6469723047 --version 1.38.3 --build-id <BUILD_ID> \
      --copy-metadata-from <PREV_VERSION_STRING> --exclude-fields whatsNew --platform IOS --confirm
    ```
 
@@ -48,8 +48,63 @@ EAS/Xcode has already pushed the build.
 
 4. **Preflight then submit:** `asc review doctor --app 6469723047` (look for `nextAction: No submission blockers`), optionally `asc review submit … --dry-run`, then:
    ```
-   asc review submit --app 6469723047 --version 1.38.3 --build <BUILD_ID> --platform IOS --confirm
+   asc review submit --app 6469723047 --version 1.38.3 --build-id <BUILD_ID> --platform IOS --confirm
    ```
+
+## Store URLs on witnesswork.app (release N)
+
+ADR 0042 §6 moves every locale's privacy, support and marketing URLs to the new site. This also replaces the third-party privacy page and the dead `leviwilkerson.com/jw-time` URL some locales still show.
+
+- **When:** while staging the first version whose `app.config.ts` claims `applinks:witnesswork.app`, and on any later release where a store URL still isn't on `https://witnesswork.app`:
+
+  ```sh
+  asc localizations list --app 6469723047 --type app-info --output json | jq -r '.data[].attributes | [.locale, .privacyPolicyUrl] | @tsv'
+  asc localizations list --version "$VERSION_ID" --output json | jq -r '.data[].attributes | [.locale, .supportUrl, .marketingUrl] | @tsv'
+  ```
+
+- **First, the site must be live:** `curl -s -o /dev/null -w '%{http_code}\n' https://witnesswork.app/support` prints `200` (it deploys from `services/` on `main`). App Review opens the Support URL.
+- **Stage without the old URLs:** in step 2, use `--exclude-fields whatsNew,supportUrl,marketingUrl`. `asc release stage` copies metadata again on every run, including a resumed one, so a re-run would otherwise put the old URLs back. If you re-run it anyway, run the loop below again.
+- **Support and Marketing URLs** are version fields; **Privacy Policy URL** is app-level (`--type app-info`), stays set for later versions, and can only change while a version is editable. Later releases copy the new Support and Marketing URLs forward with `--copy-metadata-from`.
+
+Set `VERSION_ID` to the staged version's ID (`asc versions list --app 6469723047`), then run this. Its list is the locale map (ASC locale, then the site path; English has none, and privacy is English only):
+
+```sh
+VERSION_ID=…
+while read -r locale site; do
+  asc localizations update --version "$VERSION_ID" --locale "$locale" \
+    --support-url "https://witnesswork.app$site/support" \
+    --marketing-url "https://witnesswork.app$site"
+  asc localizations update --app 6469723047 --type app-info --locale "$locale" \
+    --privacy-policy-url https://witnesswork.app/privacy
+done <<'EOF'
+en-US
+fr-FR /fr-FR
+de-DE /de-DE
+nl-NL /nl-NL
+it /it-IT
+pt-BR /pt-BR
+es-MX /es-ES
+ru /ru-RU
+vi /vi-VN
+ja /ja-JP
+ko /ko-KR
+zh-Hans /zh-CN
+zh-Hant /zh-TW
+ar-SA /ar
+EOF
+```
+
+Then, right before step 4:
+
+- read them back with the two `asc localizations list` commands above;
+- check each URL answers 200: `curl -s -o /dev/null -w '%{http_code} %{url_effective}\n' <url>`;
+- run `asc review doctor --app 6469723047`.
+
+**Google Play** keeps one value per app and has no field in this skill's tools. The owner sets them in Play Console any time after the site is live (no release needed):
+
+- **App content → Privacy policy:** `https://witnesswork.app/privacy`.
+- **Store settings → Contact details:** website `https://witnesswork.app`. Optionally the email `support@witnesswork.app`, once its Email Routing forward is verified (replies still come from the old address).
+- These changes go through review, and wait for an explicit publish when managed publishing is on.
 
 ## Gotchas (learned the hard way)
 

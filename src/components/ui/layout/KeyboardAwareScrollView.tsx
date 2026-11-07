@@ -6,9 +6,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Keyboard, Platform, StyleSheet, TextInput } from 'react-native'
+import { Keyboard, Platform, StyleSheet } from 'react-native'
 import { KeyboardAwareScrollView as BaseScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { focusedInput } from '@/lib/focusedInput'
 
 const REVEAL_MARGIN = 16
 
@@ -17,11 +18,8 @@ type Props = ComponentProps<typeof BaseScrollView> & {
 }
 
 export default function KeyboardAwareScrollView(props: Props) {
-  return Platform.OS === 'android' ? (
-    <AndroidKeyboardAwareScrollView {...props} />
-  ) : (
-    <BaseScrollView {...props} />
-  )
+  if (Platform.OS !== 'android') return <BaseScrollView {...props} />
+  return <AndroidKeyboardAwareScrollView {...props} />
 }
 
 type RevealHandles = {
@@ -34,7 +32,7 @@ type RevealHandles = {
 const revealFocusedField = (handles: RevealHandles) =>
   requestAnimationFrame(() => {
     const top = handles.keyboardTop.current
-    const input = TextInput.State.currentlyFocusedInput()
+    const input = focusedInput()
     if (top === null || !input) return
     input.measureInWindow((_x, y, _width, height) => {
       const covered = y + height + REVEAL_MARGIN - top

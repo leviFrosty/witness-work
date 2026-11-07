@@ -1,6 +1,7 @@
 import Constants from 'expo-constants'
 import apis from '@/constants/apis'
 import { usePreferences } from '@/stores/preferences'
+import { readLaunchAppConfig } from '@/lib/appUpdate/launchConfig'
 import {
   createAppConfigCheck,
   fetchAppConfig,
@@ -10,8 +11,14 @@ import {
 export const appVersion = (): string | null =>
   Constants.expoConfig?.version ?? null
 
+let launchConfigRead = false
+
 export const checkAppConfig = createAppConfigCheck({
-  fetchConfig: () => fetchAppConfig(apis.appConfig),
+  fetchConfig: () => {
+    if (launchConfigRead) return fetchAppConfig(apis.appConfig)
+    launchConfigRead = true
+    return readLaunchAppConfig()
+  },
   currentVersion: appVersion,
   now: Date.now,
 
@@ -26,6 +33,9 @@ export const checkAppConfig = createAppConfigCheck({
   },
 })
 
+export const fetchWebSignupConfig = async () =>
+  (await fetchAppConfig(apis.appConfig)).webSignup ?? null
+
 export const updateRequiredByServer = () =>
   requireUpdateFromServer(appVersion())
 
@@ -34,6 +44,7 @@ export {
   useUpdateRequired,
 } from '@/lib/appUpdate/updateRequired'
 export type {
+  AppWebSignupConfig,
   UpdateRequired,
   UpdateRequiredSource,
 } from '@/lib/appUpdate/updateRequired'

@@ -1,4 +1,9 @@
 {
+  "src/__tests__/preferencesPersistMigration.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
   "src/app/sync/__tests__/categoryMerge.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 10
@@ -7,6 +12,11 @@
   "src/app/sync/__tests__/payloadFieldRenames.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
+    }
+  },
+  "src/app/sync/__tests__/payloadRevenueCat.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
     }
   },
   "src/app/sync/__tests__/payloadSalvage.test.ts": {
@@ -89,6 +99,11 @@
       "count": 1
     }
   },
+  "src/lib/files/fileNames.ts": {
+    "no-control-regex": {
+      "count": 1
+    }
+  },
   "src/stores/conversationStore.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -107,6 +122,11 @@
   "src/stores/serviceReport.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
+    }
+  },
+  "web/maps-frame/src/mapkitEngine.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 8
     }
   }
 }

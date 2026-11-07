@@ -1,4 +1,9 @@
 import { Gunzip, gzipSync, strToU8, strFromU8 } from 'fflate'
+import {
+  appLinkBase,
+  appLinkFragment,
+  legacyContactPathPayload,
+} from '@/constants/appLinks'
 import { Contact } from '@/types/contact'
 import { Visit } from '@/types/visit'
 import { CustomFieldDefinition } from '@/types/customField'
@@ -12,12 +17,6 @@ import { logger } from '@/lib/logger'
 import { redactLink } from '@/lib/redactLink'
 
 export const CONTACT_SHARE_LINK = {
-  ORIGIN_PROD: 'https://ww-proxy.leviwilkerson.com',
-
-  PATH: '/c',
-
-  LEGACY_PATH_PREFIX: '/c/',
-
   SCHEME_HOST: 'import-contact',
 
   MAX_URL_BYTES: 4_000,
@@ -117,7 +116,7 @@ export function buildContactShareLink(
   customFieldDefs: CustomFieldDefinition[] = [],
   now: Date = new Date()
 ): ContactShareLinkResult {
-  const baseUrl = `${CONTACT_SHARE_LINK.ORIGIN_PROD}${CONTACT_SHARE_LINK.PATH}#`
+  const baseUrl = `${appLinkBase('contact')}#`
 
   const hardLimited = newestFirst(conversations).slice(
     0,
@@ -173,26 +172,13 @@ export function buildContactShareLink(
 }
 
 function extractPayload(url: string): string | null {
+  const fragment = appLinkFragment(url, 'contact')
+  if (fragment !== null) return fragment || null
+  const legacy = legacyContactPathPayload(url)
+  if (legacy !== null) return legacy
+
   try {
     const parsed = new URL(url)
-    const expected = new URL(CONTACT_SHARE_LINK.ORIGIN_PROD)
-
-    if (
-      parsed.protocol === expected.protocol &&
-      parsed.hostname === expected.hostname
-    ) {
-      if (parsed.pathname === CONTACT_SHARE_LINK.PATH) {
-        return parsed.hash.slice(1) || null
-      }
-
-      if (parsed.pathname.startsWith(CONTACT_SHARE_LINK.LEGACY_PATH_PREFIX)) {
-        const payload = parsed.pathname.slice(
-          CONTACT_SHARE_LINK.LEGACY_PATH_PREFIX.length
-        )
-        return payload || null
-      }
-      return null
-    }
 
     if (
       parsed.protocol === 'witnesswork:' &&

@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type ViewStyle,
 } from 'react-native'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
@@ -48,6 +49,9 @@ type Props = {
 
 const TITLE_GAP = 8
 
+const ROW_PADDING = 12
+const TITLE_HEIGHT = 21
+
 const Header = (props: Props) => {
   const systemBack = useSystemBackButton(
     props.buttonType === 'back' && !props.leftElement && !props.onPressLeftIcon
@@ -56,11 +60,16 @@ const Header = (props: Props) => {
   if (systemBack) return <HeaderContent {...props} systemBack />
 
   return (
-    <SafeAreaProvider style={{ flex: 0 }}>
+    <SafeAreaProvider style={SIZED_BY_CONTENT}>
       <HeaderContent {...props} systemBack={false} />
     </SafeAreaProvider>
   )
 }
+
+const SIZED_BY_CONTENT = Platform.select<ViewStyle>({
+  web: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
+  default: { flex: 0 },
+})
 
 const HeaderContent = ({
   title,
@@ -175,7 +184,10 @@ const HeaderContent = ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 12,
+          paddingVertical: ROW_PADDING,
+
+          ...(Platform.OS === 'web' &&
+            !title && { minHeight: ROW_PADDING * 2 + TITLE_HEIGHT }),
         }}
       >
         {leftElement ? (
@@ -197,6 +209,7 @@ const HeaderContent = ({
                 icon={iconName()}
                 accessibilityLabel={buttonLabel()}
                 hitSlop={24}
+                frame={Platform.OS === 'web'}
                 iconStyle={{
                   color:
                     foregroundColor ??

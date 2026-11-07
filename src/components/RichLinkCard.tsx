@@ -52,7 +52,9 @@ export function useLinkActions() {
   const copy = (url: string) => copyText(url, i18n.t('linkCopied'))
 
   const share = (url: string) => {
-    void Share.share(Platform.OS === 'ios' ? { url } : { message: url })
+    void Share.share(
+      Platform.select({ android: { message: url }, default: { url } })
+    )
   }
 
   const menu = (url: string): ContextMenuEntries => [

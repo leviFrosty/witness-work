@@ -1,7 +1,12 @@
 import { getRandomBytes } from 'expo-crypto'
 import apis from '@/constants/apis'
+import { withStepUp } from '@/lib/confirmSensitive'
 import { HttpError } from '@/lib/http/request'
-import { bearerOptions, serverAccount } from '@/lib/serverAccount'
+import {
+  bearerOptions,
+  olderAccountKeys,
+  serverAccount,
+} from '@/lib/serverAccount'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 import {
   type BackupClientOptions,
@@ -19,6 +24,8 @@ import { syncNow } from '@/lib/syncClock'
 export type BackupAccess = {
   accountKey: Uint8Array
   accountId: string
+
+  olderBackupKeys?: readonly Uint8Array[]
   options: BackupClientOptions
 }
 
@@ -34,6 +41,7 @@ export async function backupAccessFor(
   return {
     accountKey,
     accountId,
+    olderBackupKeys: await olderAccountKeys(accountId, 'backup'),
     options: {
       ...bearerOptions(accountKey),
       sign: {
@@ -111,7 +119,9 @@ export async function deleteBackupsBeforeKeyLoss(
   accountKey: Uint8Array
 ): Promise<void> {
   try {
-    await withBackupAccess(accountKey, (access) => deleteBackup(access.options))
+    await withBackupAccess(accountKey, (access) =>
+      withStepUp('delete_data', () => deleteBackup(access.options))
+    )
   } catch (error) {
     if (
       error instanceof BackupError &&

@@ -1,0 +1,33 @@
+// The maps frame's Worker (docs/web-maps.md): static files only, with the
+// headers `scripts/web-maps.mjs` writes into `dist/_headers`. Deploy only
+// through `pnpm web:deploy:maps:<dev|production>`, never `wrangler deploy` by
+// hand. The top level is for `pnpm web:serve:maps`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ww-maps-local",
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "none",
+    "html_handling": "auto-trailing-slash",
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "env": {
+    "dev": {
+      "name": "ww-maps-dev",
+      "routes": [
+        { "pattern": "maps-dev.witnesswork.app", "custom_domain": true },
+      ],
+      "workers_dev": false,
+      "preview_urls": true,
+    },
+    "production": {
+      "name": "ww-maps",
+      "routes": [{ "pattern": "maps.witnesswork.app", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+    },
+  },
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MILEAGE_CHART_HEIGHT } from '@/features/mileage/lib/chartColors'
 import { Pressable, View } from 'react-native'
 import { Line as SkiaLine, vec } from '@shopify/react-native-skia'
 import { CartesianChart } from 'victory-native'
@@ -22,7 +23,7 @@ import type { MileageFormatter } from '@/features/mileage/lib/format'
 import type { VehicleChartColor } from '@/features/mileage/lib/chartColors'
 import type { Trip } from '@/types/mileage'
 
-const CHART_HEIGHT = 88
+const CHART_HEIGHT = MILEAGE_CHART_HEIGHT
 const PLOT_TOP = 2
 const INNER_PADDING = 0.3
 

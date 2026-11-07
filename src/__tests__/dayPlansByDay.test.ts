@@ -1,4 +1,4 @@
-import { afterAll, afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import moment from 'moment'
 
 import { dayPlansByDayKey, dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
@@ -14,6 +14,11 @@ import {
   plannedMinutesThroughEachDayOfMonth,
 } from '@/lib/recurrence'
 import type { DayPlan } from '@/types/timeEntry'
+
+vi.mock('@/lib/normalizeDate', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/normalizeDate')>()
+  return { ...actual, storedDayKey: vi.fn(actual.storedDayKey) }
+})
 
 const originalTZ = process.env.TZ
 const setTZ = (tz: string) => {
@@ -219,20 +224,30 @@ describe('dayPlansByDayKey', () => {
     expect(dayPlansByDayKey(mixed)).not.toBe(before)
   })
 
-  it('totals a Service Year of 1,000 Day Plans quickly', () => {
-    const dayPlans = makeDayPlans(2)
-    const start = performance.now()
-    for (let m = 0; m < 12; m++) {
-      const month = moment({ year: 2024, month: 8 }).add(m, 'months')
-      plannedMinutesThroughDayForMonth(
-        month.month(),
-        month.year(),
-        31,
-        [...dayPlans],
-        []
-      )
+  describe('totaling a Service Year of 1,000 Day Plans', () => {
+    const totalServiceYear = (dayPlansForMonth: (m: number) => DayPlan[]) => {
+      vi.mocked(storedDayKey).mockClear()
+      for (let m = 0; m < 12; m++) {
+        const month = moment({ year: 2024, month: 8 }).add(m, 'months')
+        plannedMinutesThroughDayForMonth(
+          month.month(),
+          month.year(),
+          31,
+          dayPlansForMonth(m),
+          []
+        )
+      }
+      return vi.mocked(storedDayKey).mock.calls.length
     }
 
-    expect(performance.now() - start).toBeLessThan(100)
+    it('builds the index once and reuses it for every month', () => {
+      const dayPlans = makeDayPlans(2)
+      expect(totalServiceYear(() => dayPlans)).toBe(dayPlans.length)
+    })
+
+    it('keys each Day Plan once per month even when the list is replaced', () => {
+      const dayPlans = makeDayPlans(2)
+      expect(totalServiceYear(() => [...dayPlans])).toBe(dayPlans.length * 12)
+    })
   })
 })

@@ -8,6 +8,7 @@ import useTheme from '@/contexts/theme'
 import { Address, Contact, Coordinate } from '@/types/contact'
 import KeyboardAwareScrollView from '@/components/ui/layout/KeyboardAwareScrollView'
 import Header from '@/components/ui/layout/Header'
+import { webTextTargetFrame } from '@/components/ui/touchTarget'
 import i18n from '@/lib/locales'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import * as Localization from 'expo-localization'
@@ -534,7 +535,11 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             ) : (
               <Button
                 disabled={fetching}
-                style={{ position: 'absolute', right: 0 }}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  ...webTextTargetFrame('end'),
+                }}
                 onPress={async () => {
                   if (!validateForm()) {
                     return false

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshControl, ScrollView, View } from 'react-native'
+import { Platform, RefreshControl, ScrollView, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -14,6 +14,7 @@ import { analytics } from '@/lib/analytics'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { useMileageView } from '@/stores/mileageView'
 import Header from '@/components/ui/layout/Header'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import Card from '@/components/ui/Card'
 import IconButton from '@/components/ui/IconButton'
 import PullDownMenu from '@/components/ui/PullDownMenu'
@@ -38,7 +39,9 @@ import {
 } from '@/lib/mileage/people'
 import PeriodNavigator from '@/features/mileage/components/PeriodNavigator'
 import MileageSummary from '@/features/mileage/components/MileageSummary'
-import MileagePeriodChart from '@/features/mileage/components/MileagePeriodChart'
+import type MileagePeriodChartComponent from '@/features/mileage/components/MileagePeriodChart'
+import { MILEAGE_CHART_HEIGHT } from '@/features/mileage/lib/chartColors'
+import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 import { getVehicleChartColors } from '@/features/mileage/lib/chartColors'
 import TripRow from '@/features/mileage/components/TripRow'
 import MileageEmptyState from '@/features/mileage/components/MileageEmptyState'
@@ -145,11 +148,17 @@ export default function MileageScreen() {
               right: 0,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 16,
+
+              gap: Platform.OS === 'web' ? 24 : 16,
             }}
           >
             <PointerTooltip label={i18n.t('mileage.shareReport')} effect='none'>
               <PullDownMenu
+                style={
+                  Platform.OS === 'web'
+                    ? { margin: (20 - MIN_TOUCH_TARGET) / 2 }
+                    : undefined
+                }
                 accessibilityLabel={i18n.t('mileage.shareReport')}
                 actions={[
                   {
@@ -172,8 +181,24 @@ export default function MileageScreen() {
                   },
                 ]}
               >
-                <View>
-                  <IconButton icon={ShareIcon} size={20} />
+                {}
+                <View
+                  style={
+                    Platform.OS === 'web'
+                      ? {
+                          width: MIN_TOUCH_TARGET,
+                          height: MIN_TOUCH_TARGET,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }
+                      : undefined
+                  }
+                >
+                  <IconButton
+                    icon={ShareIcon}
+                    size={20}
+                    hitSlop={Platform.OS === 'web' ? 0 : undefined}
+                  />
                 </View>
               </PullDownMenu>
             </PointerTooltip>
@@ -306,3 +331,9 @@ export default function MileageScreen() {
     </View>
   )
 }
+
+const MileagePeriodChart = canvasKitComponent(
+  (): typeof MileagePeriodChartComponent =>
+    require('@/features/mileage/components/MileagePeriodChart').default,
+  () => <View style={{ height: MILEAGE_CHART_HEIGHT }} />
+)

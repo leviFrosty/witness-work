@@ -203,7 +203,7 @@ const FullMapView = ({
   const bottomOverlayInset =
     insets.bottom +
     bottomBarHeight +
-    (Platform.OS === 'android' ? LEGAL_LABEL_HEIGHT : 0)
+    Platform.select({ android: LEGAL_LABEL_HEIGHT, default: 0 })
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
@@ -327,7 +327,7 @@ const FullMapView = ({
   )
 
   const dismissSearchKeyboard = useCallback(() => {
-    if (searchInputRef.current?.isFocused()) {
+    if (searchInputRef.current?.isFocused?.()) {
       searchInputRef.current.blur()
     }
   }, [])
@@ -438,7 +438,9 @@ const FullMapView = ({
 
   const hasFitOnMount = useRef(false)
 
-  const [isMapLoaded, setIsMapLoaded] = useState(Platform.OS !== 'android')
+  const [isMapLoaded, setIsMapLoaded] = useState(
+    Platform.select({ android: false, default: true })
+  )
   useEffect(() => {
     if (!isMapReady || isMapLoaded) return
     const timer = setTimeout(() => setIsMapLoaded(true), 1500)
@@ -456,7 +458,7 @@ const FullMapView = ({
       fitMapToCoordinates(
         mapRef.current,
         visibleContactMarkers.map((contact) => contact.coordinate!),
-        { animated: Platform.OS !== 'android' }
+        { animated: Platform.select({ android: false, default: true }) }
       )
       hasFitOnMount.current = true
     }
@@ -914,12 +916,13 @@ const FullMapView = ({
                       top: topInset,
                       right: inspectorRight,
                       left: inspectorLeft,
-                      bottom:
-                        Platform.OS === 'android'
-                          ? insets.bottom + bottomBarHeight
-                          : tabBarHidden
-                            ? 0
-                            : insets.bottom + bottomBarHeight / 4,
+                      bottom: Platform.select({
+                        android: insets.bottom + bottomBarHeight,
+
+                        default: tabBarHidden
+                          ? 0
+                          : insets.bottom + bottomBarHeight / 4,
+                      }),
                     }
               }
               style={{ height: '100%', width: '100%' }}

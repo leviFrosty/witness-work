@@ -304,6 +304,13 @@ const WhenDock = (props: Props) => {
     setPicker(null)
   }
 
+  const pickerTitle =
+    picker === 'date'
+      ? i18n.t('date')
+      : picker === 'when'
+        ? i18n.t('planForm_howLong')
+        : props.durationLabel
+
   const durationWheels = (
     hours: number,
     setHours: (hours: number) => void,
@@ -405,6 +412,19 @@ const WhenDock = (props: Props) => {
             />
           )}
         </View>
+        {props.durationInvalid && (
+          <Text
+            accessibilityRole='alert'
+            accessibilityLiveRegion='polite'
+            style={{
+              color: theme.colors.error,
+              fontSize: theme.fontSize('sm'),
+              textAlign: 'center',
+            }}
+          >
+            {i18n.t('whenDock_durationRequired')}
+          </Text>
+        )}
         {props.saveButton}
       </View>
 
@@ -413,6 +433,7 @@ const WhenDock = (props: Props) => {
         onCancel={() => setPicker(null)}
         onDone={commitPicker}
         doneTestID={`${props.testID}-picker-done`}
+        title={pickerTitle}
       >
         {picker === 'date' && (
           <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
@@ -420,6 +441,7 @@ const WhenDock = (props: Props) => {
               value={draftDate}
               display='inline'
               onChange={(_, picked) => picked && setDraftDate(picked)}
+              onSubmit={commitPicker}
             />
           </View>
         )}

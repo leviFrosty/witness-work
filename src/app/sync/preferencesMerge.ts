@@ -1,4 +1,5 @@
 import { canonicalJson } from '@/lib/canonicalJson'
+import { keepsLocalAvatar } from '@/lib/avatarFilePolicy'
 import {
   SYNC_MAP_KEYS,
   SYNC_SET_KEYS,
@@ -111,13 +112,11 @@ export function mergePreferences(
         | { type?: string; value?: string; revision?: string }
         | undefined
       values[key] =
-        key === 'avatar' &&
-        before?.type === 'image' &&
-        after?.type === 'image' &&
-        before.revision === after.revision &&
-        before.value?.startsWith('file://')
-          ? { ...after, value: before.value }
-          : remoteValues[key]
+        key !== 'avatar' || !keepsLocalAvatar(before, after)
+          ? remoteValues[key]
+          : after?.type === 'image'
+            ? { ...after, value: before!.value }
+            : before
       updatedAt[key] = rt
     }
   }

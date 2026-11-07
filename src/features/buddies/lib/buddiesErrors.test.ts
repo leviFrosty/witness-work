@@ -9,10 +9,16 @@ import {
   BuddyRemovalPendingError,
 } from '@/features/buddies/lib/engine'
 import { RelayError } from '@/features/buddies/lib/relay'
+import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
 
 const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key))
 vi.mock('@/lib/locales', () => ({ default: { t } }))
-const platform = vi.hoisted(() => ({ OS: 'ios' }))
+const platform = vi.hoisted(() => ({
+  OS: 'ios',
+  select(specifics: Record<string, unknown>) {
+    return this.OS in specifics ? specifics[this.OS] : specifics.default
+  },
+}))
 vi.mock('react-native', () => ({ Platform: platform }))
 
 describe('Buddies errors', () => {
@@ -49,6 +55,12 @@ describe('Buddies errors', () => {
     ).toBe(false)
   })
 
+  it('says to wait while an account key change finishes', () => {
+    const error = new KeyChangeUnfinishedError()
+    expect(buddiesErrorMessage(error)).toBe('account_keyChangeUnfinished')
+    expect(isRetryableBuddiesError(error)).toBe(false)
+  })
+
   it("names the relay's cap on open invites", () => {
     expect(buddiesErrorMessage(new BuddyInviteError('openInvites'))).toBe(
       'buddies_openInvitesLimit'
@@ -62,6 +74,8 @@ describe('Buddies errors', () => {
       true
     )
     expect(isRetryableBuddiesError(new RelayError('unknown', 500))).toBe(true)
+
+    expect(isRetryableBuddiesError(new RelayError('sealed', 403))).toBe(false)
     expect(isRetryableBuddiesError(new Error('boom'))).toBe(true)
     expect(isRetryableBuddiesError(new RelayError('disabled', 503))).toBe(false)
     expect(isRetryableBuddiesError(new BuddyInviteError('unavailable'))).toBe(

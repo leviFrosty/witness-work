@@ -17,6 +17,7 @@ export type StepId =
   | 'planMonth'
   | 'dataProtection'
   | 'buddies'
+  | 'passkeys'
   | 'notifications'
   | 'calendarSync'
   | 'defaultNav'
@@ -35,7 +36,11 @@ export interface StepShowIfContext {
 
   buddiesAvailable: boolean
 
+  passkeysAvailable: boolean
+
   calendarAvailable: boolean
+
+  notificationsAvailable: boolean
 }
 
 export interface StepDef {
@@ -76,7 +81,17 @@ export const onboardingSteps: StepDef[] = [
 
     showIf: ({ buddiesAvailable }) => buddiesAvailable,
   },
-  { id: 'notifications', countsTowardProgress: true },
+  {
+    id: 'passkeys',
+    countsTowardProgress: true,
+
+    showIf: ({ passkeysAvailable }) => passkeysAvailable,
+  },
+  {
+    id: 'notifications',
+    countsTowardProgress: true,
+    showIf: ({ notificationsAvailable }) => notificationsAvailable,
+  },
   {
     id: 'calendarSync',
     countsTowardProgress: true,

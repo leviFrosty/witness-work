@@ -97,7 +97,7 @@ export function pushWatchSnapshot(
       addCalendarMonths(month, 1)
     )
     const snapshot = buildWatchSnapshot({
-      platform: Platform.OS === 'android' ? 'android' : 'ios',
+      platform: Platform.select({ android: 'android', default: 'ios' }),
       serviceReports: sr.serviceReports,
       publisher,
       publisherHours: prefs.publisherHours,

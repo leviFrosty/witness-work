@@ -1,7 +1,8 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { AppState, Platform } from 'react-native'
-import * as Device from 'expo-device'
 import { getRandomBytes } from 'expo-crypto'
 import { sha256 } from '@noble/hashes/sha2.js'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import apis from '@/constants/apis'
 import { toB64u, utf8 } from '@/lib/bytes'
 import {
@@ -18,10 +19,13 @@ import {
 import {
   accountSessions,
   bearerOptions,
+  olderAccountKeys,
+  olderPhotoKeys,
   onAccountChange,
   peekAccountKey,
   serverAccount,
 } from '@/lib/serverAccount'
+import { openTicketedSocket } from '@/lib/serverAccount/liveTicket'
 import { ensureRevenueCatLinked } from '@/lib/serverAccount/revenueCatLinkRuntime'
 import {
   cloudSyncOffered,
@@ -34,11 +38,23 @@ import {
   type ServerSyncAccess,
 } from '@/lib/syncTransport/server/serverTransport'
 import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
+import { derivePhotoKeys } from '@/lib/syncTransport/server/photoCrypto'
+import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
 import {
+  recordPhotoUsage,
+  resetPhotoUsage,
+  useCloudSyncPhotoUsage,
+} from '@/lib/syncTransport/server/photoUsage'
+import {
+  fetchSyncPhotoUsage,
   fetchSyncStatus,
   listSyncSlots,
+  type SyncPhotoUsage,
   type SyncStatus,
 } from '@/lib/syncTransport/server/syncClient'
+import { analytics } from '@/lib/analytics'
+import { resetCompletePull } from '@/lib/cloudSyncPullSettled'
+import { resetFirstSync } from '@/app/sync/webFirstSync'
 import {
   createLiveInbox,
   type LiveEvent,
@@ -46,24 +62,46 @@ import {
 import { useSupporter } from '@/features/supporter/stores/supporter'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { usePreferences } from '@/stores/preferences'
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
+import { clearPublishedPhotos } from '@/app/sync/photoBaseline'
 
-let derived: { seed: string; key: Uint8Array } | null = null
-const syncKeyFor = (accountKey: Uint8Array) => {
+let derived: {
+  seed: string
+  syncKey: Uint8Array
+  photoKeys: ReturnType<typeof derivePhotoKeys>
+} | null = null
+const keysFor = (accountKey: Uint8Array) => {
   const seed = toB64u(accountKey)
-  if (derived?.seed !== seed) derived = { seed, key: deriveSyncKey(accountKey) }
-  return derived.key
+  if (derived?.seed !== seed)
+    derived = {
+      seed,
+      syncKey: deriveSyncKey(accountKey),
+      photoKeys: derivePhotoKeys(accountKey),
+    }
+  return derived
 }
 
 async function cloudSyncAccess(): Promise<ServerSyncAccess> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
   const { accountId } = await serverAccount.connect(accountKey)
+  const { syncKey, photoKeys } = keysFor(accountKey)
   return {
     accountId,
-    syncKey: syncKeyFor(accountKey),
+    syncKey,
+    photoKeys,
+    olderSyncKeys: await olderAccountKeys(accountId, 'sync'),
+    olderPhotoKeys: (await olderPhotoKeys(accountId)).map(
+      ({ name, photo }) => ({ nameKey: name, photoKey: photo })
+    ),
     options: bearerOptions(accountKey),
   }
 }
+
+const photoCountBucket = (count: number) =>
+  count < 100 ? '<100' : count < 1000 ? '<1000' : '1000+'
+
+const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
 const accountToken = (accountId: string) =>
   `account:${toB64u(sha256(utf8(accountId))).slice(0, 22)}`
@@ -76,12 +114,35 @@ export const cloudSyncTransport = createServerTransport({
     return session ? accountToken(session.accountId) : null
   },
   randomBytes: getRandomBytes,
-  deviceName: () =>
-    Device.modelName ?? (Platform.OS === 'android' ? 'Android' : 'iPhone'),
-  platform: Platform.OS === 'android' ? 'android' : 'ios',
+  deviceName,
+  platform: devicePlatform(),
   now: syncNow,
+  files: photoFiles,
+  photoSwitch: () => usePreferences.getState().cloudSyncPhotos,
+  slotId: ensureSyncDeviceId,
+  pause: yieldToUi,
+  onPhotoUsage: (usage, source) => {
+    recordPhotoUsage(usage, source)
+
+    if (source === 'full')
+      analytics.capture('cloud_sync_photos_storage_full', {
+        photos: photoCountBucket(usage.count),
+      })
+  },
+  onPhotoFailure: (direction, code) => {
+    if (code === 'storage-full' || code === 'network') return
+    analytics.capture('cloud_sync_photo_transfer_failed', {
+      source: direction,
+      reason: code,
+    })
+  },
   onRefused: (refusal) => {
     logger.warn(`[cloudSync] refused: ${refusal}`)
+
+    if (refusal === 'photos_disabled') {
+      usePreferences.setState({ cloudSyncPhotos: false })
+      return
+    }
     usePreferences.setState(
       refusal === 'disabled'
         ? {
@@ -100,6 +161,15 @@ export const cloudSyncTransport = createServerTransport({
 
 export function registerCloudSync(): void {
   registerCloudSyncTransport(cloudSyncTransport)
+}
+
+const statusListeners = new Set<(status: SyncStatus) => void>()
+
+export const onCloudSyncStatus = (
+  listener: (status: SyncStatus) => void
+): (() => void) => {
+  statusListeners.add(listener)
+  return () => statusListeners.delete(listener)
 }
 
 let statusInFlight: Promise<SyncStatus | null> | null = null
@@ -132,6 +202,7 @@ export function refreshCloudSyncStatus({
         cloudSyncEntitled: supporterUnknown
           ? prefs.cloudSyncEntitled
           : status.entitled,
+        cloudSyncPhotos: status.photos,
         ...(prefs.cloudSyncConfig?.enabled !== status.enabled ||
         prefs.cloudSyncConfig?.entitlement !== status.entitlement
           ? {
@@ -143,6 +214,7 @@ export function refreshCloudSyncStatus({
           : {}),
       })
       cloudSyncTransport.notifyAvailabilityChange()
+      for (const listener of statusListeners) listener(status)
       return status
     } catch (error) {
       logger.warn('[cloudSync] status unavailable', error)
@@ -168,6 +240,22 @@ export async function recheckCloudSyncPause(): Promise<CloudSyncPause | null> {
   if (!usesCloudSync()) return null
   await refreshCloudSyncStatus({ force: true })
   return cloudSyncPause()
+}
+
+export async function refreshCloudSyncPhotoUsage(): Promise<SyncPhotoUsage | null> {
+  if (!usesCloudSync() || !usePreferences.getState().iCloudSyncEnabled)
+    return null
+  await accountSessions.ready()
+  if (!accountSessions.snapshot()) return null
+  try {
+    const { options } = await cloudSyncAccess()
+    const usage = await fetchSyncPhotoUsage(options)
+    recordPhotoUsage(usage, 'usage')
+    return usage
+  } catch (error) {
+    logger.warn('[cloudSync] photo usage unavailable', error)
+    return null
+  }
 }
 
 export type PrepareCloudSyncOutcome =
@@ -239,22 +327,33 @@ export async function leaveCloudSyncAccount(flush: () => Promise<unknown>) {
     LEAVE_WAIT_MS
   )
   await deleteOwnCloudSyncSlot()
+  endPhotoPasses()
+  clearPublishedPhotos()
   usePreferences.setState({
     ...CLOUD_ACCOUNT_CHANGE_RESET,
     cloudSyncAccountToken: null,
   })
   cloudSyncTransport.reset()
+  resetCompletePull()
+  resetFirstSync()
 }
 
 async function openSyncSocket(): Promise<LiveSocket> {
   const accountKey = await peekAccountKey()
   if (!accountKey) throw new Error('No account key on this device')
+  const url = `${apis.accounts.replace(/^http/, 'ws')}/accounts/v1/sync/live`
+
+  if (Platform.OS === 'web')
+    return openTicketedSocket(
+      { url, socket: 'sync', id: ensureSyncDeviceId() },
+      bearerOptions(accountKey)
+    )
   return accountSessions.withSession(
     async (authorization) =>
-      openHeaderSocket(
-        `${apis.accounts.replace(/^http/, 'ws')}/accounts/v1/sync/live`,
-        { authorization, 'x-ww-slot-id': ensureSyncDeviceId() }
-      ),
+      openHeaderSocket(url, {
+        authorization,
+        'x-ww-slot-id': ensureSyncDeviceId(),
+      }),
     { accountKey }
   )
 }
@@ -275,7 +374,12 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   const live = createLiveInbox({
     open: openSyncSocket,
     syncedSeq: () => cloudSyncTransport.lastSeq(),
-    onChange: () => cloudSyncTransport.notifyRemoteChange(),
+    onChange: () => {
+      cloudSyncTransport.notifyRemoteChange()
+
+      if (useCloudSyncPhotoUsage.getState().fullAt)
+        void refreshCloudSyncPhotoUsage()
+    },
 
     verify: () => refreshCloudSyncStatus({ force: true }),
     onEvent: recordLiveEvent,
@@ -312,7 +416,23 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   const gate = useUpdateRequired.subscribe((state, previous) => {
     if (Boolean(state.required) !== Boolean(previous.required)) update()
   })
-  const account = onAccountChange(() => {
+  const account = onAccountChange((change) => {
+    resetPhotoUsage()
+    if (change === 'key_changed') {
+      clearPublishedPhotos()
+
+      resetCompletePull()
+      resetFirstSync()
+    }
+
+    if (change === 'key_changed' && usesCloudSync()) {
+      endPhotoPasses()
+      usePreferences.setState((state) => ({
+        iCloudImageSync: bookkeepingForNewTransport(
+          state.iCloudImageSync ?? {}
+        ),
+      }))
+    }
     cloudSyncTransport.notifyAvailabilityChange()
     void refreshCloudSyncStatus({ force: true }).then(update)
   })

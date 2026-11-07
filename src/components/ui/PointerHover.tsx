@@ -1,12 +1,10 @@
 import type { ReactElement } from 'react'
-import { StyleSheet, View, type ViewStyle } from 'react-native'
 import {
   Gesture,
   GestureDetector,
   HoverEffect,
   PointerType,
 } from 'react-native-gesture-handler'
-import useTheme from '@/contexts/theme'
 import {
   notePointerHover,
   supportsPointerEffects,
@@ -26,6 +24,8 @@ type Props = {
 
   effect?: PointerEffect
   onHoverChange?: (hovered: boolean) => void
+
+  onFocusVisibleChange?: (focused: boolean) => void
 
   enabled?: boolean
 }
@@ -54,29 +54,4 @@ export default function PointerHover({
   return <GestureDetector gesture={hover}>{children}</GestureDetector>
 }
 
-export function HoverTint({
-  visible,
-  borderRadius,
-  borderCurve,
-}: {
-  visible: boolean
-  borderRadius?: ViewStyle['borderRadius']
-  borderCurve?: ViewStyle['borderCurve']
-}) {
-  const theme = useTheme()
-  if (!visible) return null
-  return (
-    <View
-      pointerEvents='none'
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          borderRadius,
-          borderCurve,
-          backgroundColor: theme.colors.text,
-          opacity: 0.06,
-        },
-      ]}
-    />
-  )
-}
+export { default as HoverTint } from '@/components/ui/HoverTint'

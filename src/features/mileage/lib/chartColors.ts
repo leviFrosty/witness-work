@@ -19,3 +19,5 @@ export const getVehicleChartColors = (
     color: palette[i % palette.length],
   }))
 }
+
+export const MILEAGE_CHART_HEIGHT = 88

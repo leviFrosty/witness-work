@@ -12,6 +12,12 @@ export function formatBytes(bytes?: number | null): string {
     return i18n.t('fileSize_bytes', { value: formatNumber(bytes) })
   if (bytes < 1024 * 1024)
     return i18n.t('fileSize_kilobytes', { value: fixed(bytes / 1024, 1) })
+  if (bytes >= 1_000_000_000)
+    return i18n.t('fileSize_gigabytes', {
+      value: formatNumber(bytes / 1_000_000_000, {
+        maximumFractionDigits: 2,
+      }),
+    })
   return i18n.t('fileSize_megabytes', {
     value: fixed(bytes / (1024 * 1024), 2),
   })

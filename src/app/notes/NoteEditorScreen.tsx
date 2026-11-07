@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { View } from 'react-native'
+import { type RefObject, useEffect, useRef, useState } from 'react'
+import { Platform, View } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import RichTextEditor, {
   type RichTextEditorRef,
@@ -7,6 +7,7 @@ import RichTextEditor, {
 import Button from '@/components/ui/Button'
 import Header from '@/components/ui/layout/Header'
 import Text from '@/components/ui/MyText'
+import { webTextTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -18,6 +19,18 @@ import {
 import type { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NoteEditor'>
+
+const closeNote = (
+  closing: RefObject<boolean>,
+  editor: RefObject<RichTextEditorRef | null>,
+  navigation: Props['navigation']
+) => {
+  if (closing.current) return
+  closing.current = true
+  const done = () => navigation.goBack()
+  if (editor.current) editor.current.flush(done)
+  else done()
+}
 
 const NoteEditorScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
@@ -44,15 +57,21 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
     [navigation]
   )
 
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.isComposing) return
+      const target = event.target as Element | null
+      if (target?.closest?.('dialog, [role=dialog], [role=menu]')) return
+      closeNote(closing, editor, navigation)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [navigation])
+
   if (!session) return null
 
-  const close = () => {
-    if (closing.current) return
-    closing.current = true
-    const done = () => navigation.goBack()
-    if (editor.current) editor.current.flush(done)
-    else done()
-  }
+  const close = () => closeNote(closing, editor, navigation)
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -67,7 +86,11 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
             accessibilityLabel={i18n.t('done')}
             testID='note-editor-done'
             hitSlop={10}
-            style={{ position: 'absolute', right: 0 }}
+            style={{
+              position: 'absolute',
+              right: 0,
+              ...webTextTargetFrame('end'),
+            }}
           >
             <Text
               style={{

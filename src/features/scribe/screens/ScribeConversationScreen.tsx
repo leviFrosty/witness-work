@@ -15,6 +15,7 @@ import {
 } from '@react-navigation/native'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { analytics } from '@/lib/analytics'
+import { hasCapability } from '@/lib/platformCapabilities'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import {
   forgoScribeResume,
@@ -214,7 +215,9 @@ const Conversation = ({
       <View style={{ flex: 1 }}>
         <ScribeTimeline
           controller={controller}
-          onSayAChange={canMessage ? sayAChange : undefined}
+          onSayAChange={
+            canMessage && hasCapability('scribeVoice') ? sayAChange : undefined
+          }
         />
         {voice ? (
           <ScribeVoiceSheet
@@ -273,7 +276,7 @@ const ScribeConversationScreen = ({ renderSupporterCta }: Props) => {
   const keyboard = useAnimatedKeyboard()
 
   const trustKeyboard = useSharedValue(
-    Platform.OS !== 'android' || Keyboard.isVisible()
+    Platform.select({ android: Keyboard.isVisible(), default: true })
   )
   useAnimatedReaction(
     () => keyboard.state.value,

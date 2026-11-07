@@ -12,6 +12,7 @@ import {
   usePreferences,
   type RewardSoundSet,
 } from '@/stores/preferences'
+import { hasUserGesture } from '@/lib/userGesture'
 import successChime from '@/assets/audio/success-chime.mp3'
 import scribeVoiceStart from '@/assets/audio/scribe-voice-start.wav'
 import scribeVoiceEnd from '@/assets/audio/scribe-voice-end.wav'
@@ -59,11 +60,13 @@ export type SoundName = keyof typeof SOUNDS
 
 export const isAudioEnabled = () => usePreferences.getState().audioEnabled
 
+const canPlaySound = () => isAudioEnabled() && hasUserGesture()
+
 export function useSound(name: SoundName) {
   const player = useAudioPlayer(SOUNDS[name])
 
   return () => {
-    if (!isAudioEnabled()) return
+    if (!canPlaySound()) return
     try {
       player.seekTo(0)
       player.play()
@@ -82,7 +85,7 @@ export function useLazySound(name: SoundName) {
   )
 
   return () => {
-    if (!isAudioEnabled()) return
+    if (!canPlaySound()) return
     try {
       playFromStart(playerRef, name)
     } catch {}
@@ -177,7 +180,7 @@ export function playRewardSound(
     set = rewardSoundSet(),
   }: { rate?: number; volume?: number; set?: RewardSoundSet } = {}
 ) {
-  if (!isAudioEnabled() || set === 'off') return
+  if (!canPlaySound() || set === 'off') return
   try {
     const key = rewardKey(set, role)
     const clamped = Math.min(2, Math.max(0.5, rate))
@@ -281,7 +284,7 @@ export async function prepareCues(...names: CueName[]) {
 }
 
 export function playCue(name: CueName) {
-  if (!isAudioEnabled()) return
+  if (!canPlaySound()) return
   const uri = cueUris.get(name)
   if (!uri) return
   try {

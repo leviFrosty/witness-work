@@ -9,7 +9,7 @@ import {
   HelpPlatform,
 } from '@/features/updates/types/helpCenter'
 
-const PLATFORMS: HelpPlatform[] = ['ios', 'android']
+const PLATFORMS: HelpPlatform[] = ['ios', 'android', 'web']
 const VERSION = /^\d+\.\d+\.\d+$/
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

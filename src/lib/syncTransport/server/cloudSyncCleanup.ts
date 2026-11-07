@@ -1,3 +1,4 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
 import { logger } from '@/lib/logger'
 import { CLOUD_ACCOUNT_CHANGE_RESET } from '@/lib/iCloudIdentity'
 import { bearerOptions } from '@/lib/serverAccount'
@@ -18,9 +19,11 @@ export async function deleteCloudSyncBeforeKeyLoss(
   } catch (error) {
     logger.warn('[cloudSync] deleting the account’s slots failed', error)
   }
-  if (usesCloudSync())
+  if (usesCloudSync()) {
+    endPhotoPasses()
     usePreferences.setState({
       ...CLOUD_ACCOUNT_CHANGE_RESET,
       cloudSyncAccountToken: null,
     })
+  }
 }

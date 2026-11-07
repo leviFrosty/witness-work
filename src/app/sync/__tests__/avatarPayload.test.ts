@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const platform = vi.hoisted(() => ({ OS: 'ios' as string }))
+vi.mock('react-native', () => ({ Platform: platform }))
+
 import {
   sanitizeContactAvatar,
   sanitizeProfileAvatar,
@@ -103,5 +107,67 @@ describe('payload.sanitizeProfileAvatar', () => {
     expect(
       sanitizeProfileAvatar(undefined, { includeImages: false })
     ).toBeUndefined()
+  })
+})
+
+describe('on the web, which has no photo sync', () => {
+  beforeEach(() => {
+    platform.OS = 'web'
+  })
+
+  it('keeps the reference to a photo a phone made', () => {
+    const c = makeContact({
+      avatar: {
+        type: 'image',
+        value: 'icloud://contact-contact-1',
+        revision: 'r1',
+      },
+    })
+    expect(sanitizeContactAvatar(c, { includeImages: true }).avatar).toEqual({
+      type: 'image',
+      value: 'icloud://contact-contact-1',
+      revision: 'r1',
+    })
+  })
+
+  it.each(['data:image/jpeg;base64,AAAA', 'blob:https://app.test/1'])(
+    'does not refer to a contact photo whose bytes only this page holds (%s)',
+    (value) => {
+      const c = makeContact({
+        avatar: { type: 'image', value, revision: 'web1' },
+      })
+      expect(sanitizeContactAvatar(c, { includeImages: true }).avatar).toEqual({
+        type: 'none',
+        value: '',
+      })
+    }
+  )
+
+  it('does not refer to a profile photo only this page holds', () => {
+    expect(
+      sanitizeProfileAvatar(
+        { type: 'image', value: 'data:image/jpeg;base64,AAAA', revision: 'p1' },
+        { includeImages: true }
+      )
+    ).toEqual({ type: 'none', value: '' })
+  })
+
+  it('keeps the profile reference a phone made', () => {
+    expect(
+      sanitizeProfileAvatar(
+        { type: 'image', value: 'icloud://profile', revision: 'p1' },
+        { includeImages: true }
+      )
+    ).toEqual({ type: 'image', value: 'icloud://profile', revision: 'p1' })
+  })
+
+  it('still refers to a phone photo from a data URL on a phone', () => {
+    platform.OS = 'ios'
+    const c = makeContact({
+      avatar: { type: 'image', value: 'data:image/jpeg;base64,AAAA' },
+    })
+    expect(
+      sanitizeContactAvatar(c, { includeImages: true }).avatar?.value
+    ).toBe('icloud://contact-contact-1')
   })
 })

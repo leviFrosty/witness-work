@@ -14,8 +14,10 @@ import * as Crypto from 'expo-crypto'
 import { Ref, useEffect, useImperativeHandle, useState } from 'react'
 import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useFormAtTopOnWeb from '@/hooks/useFormAtTopOnWeb'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
@@ -404,6 +406,7 @@ const PlanDayForm = ({
   layout = 'docked',
   draftRef,
 }: Props) => {
+  const formAtTop = useFormAtTopOnWeb()
   const navigation = useNavigation<RootStackNavigation>()
   const defaultDate = planDayFromRouteDate(params.date)
   const defaultStoredDate = storedDateFor(defaultDate)
@@ -1334,31 +1337,35 @@ const PlanDayForm = ({
       note={note}
       setNote={setNote}
       buddies={buddiesRow}
-      notifyMe={{
-        on: notificationsAllowed && notifyMe,
-        onToggle: (on) => void handleNotifyMeChange(on),
-        description: notificationsAllowed
-          ? undefined
-          : i18n.t('notifyMe_description'),
-        offset: anytime ? (
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('planForm_anytimeReminder', {
-              time: formatTime(anytimeReminderAt),
-            })}
-          </Text>
-        ) : (
-          <ReminderOffsetSelect
-            value={notifyMeOffset}
-            onChange={setNotifyMeOffset}
-          />
-        ),
+      notifyMe={
+        hasCapability('deviceNotifications')
+          ? {
+              on: notificationsAllowed && notifyMe,
+              onToggle: (on) => void handleNotifyMeChange(on),
+              description: notificationsAllowed
+                ? undefined
+                : i18n.t('notifyMe_description'),
+              offset: anytime ? (
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('planForm_anytimeReminder', {
+                    time: formatTime(anytimeReminderAt),
+                  })}
+                </Text>
+              ) : (
+                <ReminderOffsetSelect
+                  value={notifyMeOffset}
+                  onChange={setNotifyMeOffset}
+                />
+              ),
 
-        notice: oneTime && reminderPassed && (
-          <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
-            {i18n.t('reminderTimePassed')}
-          </Text>
-        ),
-      }}
+              notice: oneTime && reminderPassed && (
+                <Text style={{ color: theme.colors.textAlt, fontSize: 12 }}>
+                  {i18n.t('reminderTimePassed')}
+                </Text>
+              ),
+            }
+          : undefined
+      }
       end={
         oneTime
           ? undefined
@@ -1414,7 +1421,7 @@ const PlanDayForm = ({
         contentContainerStyle={{
           flexGrow: 1,
 
-          justifyContent: 'flex-end',
+          justifyContent: formAtTop ? 'flex-start' : 'flex-end',
           gap: 12,
           paddingTop: 10,
           paddingBottom: 16,

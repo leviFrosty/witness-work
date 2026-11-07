@@ -6,7 +6,7 @@ import type {
   PurchasesSubscriptionInfo,
 } from 'react-native-purchases'
 
-export type StorePlatform = 'ios' | 'android'
+export type StorePlatform = 'ios' | 'android' | 'web'
 export type BillingKind = 'monthly' | 'annual' | 'other'
 export type PauseMonths = 1 | 3 | 6
 
@@ -16,10 +16,12 @@ export const PAUSE_COOLDOWN_MONTHS = 12
 
 const PAUSE_OFFER_ID = /^supporter_pause_(\d+)m(?:_.+)?$/
 
-const STORE_FOR_PLATFORM = {
-  ios: 'APP_STORE',
-  android: 'PLAY_STORE',
-} as const
+const STORES_FOR_PLATFORM: Record<StorePlatform, readonly string[]> = {
+  ios: ['APP_STORE'],
+  android: ['PLAY_STORE'],
+
+  web: ['RC_BILLING', 'APP_STORE', 'PLAY_STORE'],
+}
 
 export const billingKind = (
   subscriptionPeriod: string | null | undefined
@@ -49,19 +51,23 @@ export const matchStoreProduct = (
 const manageableSubscriptions = (
   customer: CustomerInfo | null,
   platform: StorePlatform
-): PurchasesSubscriptionInfo[] =>
-  Object.values(customer?.subscriptionsByProductIdentifier ?? {})
+): PurchasesSubscriptionInfo[] => {
+  const stores = STORES_FOR_PLATFORM[platform]
+  return Object.values(customer?.subscriptionsByProductIdentifier ?? {})
     .filter(
       (sub) =>
         sub.isActive &&
-        sub.store === STORE_FOR_PLATFORM[platform] &&
+        stores.includes(sub.store) &&
         !sub.refundedAt &&
         sub.ownershipType !== 'FAMILY_SHARED'
     )
     .sort((a, b) => {
+      const store = stores.indexOf(a.store) - stores.indexOf(b.store)
+      if (store !== 0) return store
       if (a.willRenew !== b.willRenew) return a.willRenew ? -1 : 1
       return moment(b.expiresDate).diff(a.expiresDate)
     })
+}
 
 export const manageableSubscription = (
   customer: CustomerInfo | null,
@@ -182,6 +188,8 @@ const pauseAvailability = ({
     reason,
   })
   if (sub.billingIssuesDetectedAt) return unavailable('billing_issue')
+
+  if (platform === 'web') return unavailable('unsupported_plan')
   if (sub.periodType !== 'NORMAL') return unavailable('not_normal_period')
   const renewing = manageableSubscriptions(customer, platform).filter(
     (s) => s.willRenew

@@ -49,7 +49,7 @@ describe('preferences set', () => {
 
     usePreferences.getState().set({
       fontSizeOffset: 2,
-      iCloudSyncPausedForLapse: PREFERENCE_DEFAULTS.iCloudSyncPausedForLapse,
+      iCloudFreshSetup: PREFERENCE_DEFAULTS.iCloudFreshSetup,
     })
     usePreferences.getState().set(() => ({}))
 

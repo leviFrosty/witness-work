@@ -1,4 +1,5 @@
 import { I18nManager } from 'react-native'
+import { applyDocumentDirection } from '@/lib/documentDirection'
 import { logger } from '@/lib/logger'
 import { mmkvStorage } from '@/stores/mmkv'
 
@@ -52,6 +53,8 @@ export function syncLayoutDirection(locale: string): {
   needsReload: boolean
 } {
   const rtl = isRtlLayoutFor(locale)
+  if (applyDocumentDirection(rtl ? 'rtl' : 'ltr', locale))
+    return { rtl, needsReload: false }
   I18nManager.allowRTL(rtl)
   I18nManager.forceRTL(rtl)
   return { rtl, needsReload: I18nManager.isRTL !== rtl }

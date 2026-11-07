@@ -33,6 +33,10 @@ vi.mock('@/hooks/useUser', () => ({ default: () => ({ name: profile.name }) }))
 vi.mock('@/hooks/useIsSupporter', () => ({ default: () => ({ since: null }) }))
 vi.mock('@/hooks/useServiceStreak', () => ({ default: () => 0 }))
 vi.mock('@/lib/serviceStreak', () => ({ shownStreak: () => 0 }))
+vi.mock('@/lib/syncTransport/photoSyncStatus', () => ({
+  usePhotoSyncProblem: () => null,
+  PHOTO_SYNC_PROBLEM_LABEL: {},
+}))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/numbers', () => ({ formatNumber: String }))
 vi.mock('@/lib/badges/display', () => ({ profileBadges: () => [] }))

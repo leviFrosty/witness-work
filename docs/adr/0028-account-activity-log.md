@@ -32,6 +32,7 @@ only high-level, security-relevant actions:
 | ------------------------ | -------------------------------------------------------------------- |
 | `account.created`        | The account was created (opening its first session, or registering)  |
 | `session.opened`         | A device signed in (opened a session)                                |
+| `session.renewed`        | A phone replaced its own live session near its end; not a sign-in    |
 | `session.signed_out`     | A device ended its own session                                       |
 | `session.revoked`        | Another of the User's devices signed this one out                    |
 | `session.replaced`       | Opening an eleventh session ended this, the oldest                   |
@@ -43,6 +44,15 @@ only high-level, security-relevant actions:
 | `account.reinstated`     | The account was reinstated                                           |
 | `buddies.inbox_linked`   | A Buddies inbox was linked to the account                            |
 | `buddies.deleted`        | The account's Buddies data was deleted                               |
+
+A phone's session lasts 90 days, so a phone that only ever reopened would
+log a `session.opened` every three months with nothing tying it to the
+session it replaced, and the User's own phone would look like a new sign-in.
+So a phone renews its live session in its last 30 days with the same proof as
+an open plus that session's bearer token, and the server logs one
+`session.renewed` naming both sessions (the new one, and the old one as
+`actor`) in place of `session.opened`
+([accounts-protocol.md](../accounts-protocol.md#renewing-a-session)).
 
 Not logged: refreshes, reads, uploads, and sessions that just expire. A
 `session.refresh_reused` is the one a stolen refresh token leaves behind, so

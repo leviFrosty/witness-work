@@ -14,6 +14,7 @@ import { usePreferences } from '@/stores/preferences'
 import { registerAndroidSyncTransport } from '@/lib/syncTransport'
 import { googleDriveTransport } from '@/lib/syncTransport/googleDrive/googleDriveTransport'
 import { registerCloudSync } from '@/app/sync/cloudSync'
+import { installKeyChange } from '@/app/account/keyChange'
 import { promptUnlockAtLaunch } from '@/app/app-lock/unlock'
 import { registerRewardProbe, registerRewardSample } from '@/lib/actionRewards'
 import {
@@ -21,6 +22,7 @@ import {
   playPetRewardSample,
 } from '@/features/pet/components/PetRewardChip'
 import * as BuddiesKeychain from '../../modules/buddies-keychain'
+import { webRuntime } from '@/lib/serverAccount/webRuntime'
 
 export function initializeApp() {
   perf.mark('initializeApp')
@@ -29,10 +31,19 @@ export function initializeApp() {
   promptUnlockAtLaunch()
   configureLogger(() => usePreferences.getState().developerTools)
 
+  installKeyChange()
+
   if (Platform.OS === 'android')
     registerAndroidSyncTransport(googleDriveTransport)
 
   if (BuddiesKeychain.isAvailable()) registerCloudSync()
+  else if (webRuntime) {
+    const stop = webRuntime.accountKey.subscribe((key) => {
+      if (!key) return
+      stop()
+      registerCloudSync()
+    })
+  }
 
   registerRewardProbe(petRewardProbe)
   registerRewardSample(playPetRewardSample)

@@ -23,7 +23,7 @@ import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 export const MAX_BUDDIES = 5
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
-export const MAX_OPEN_INVITES = 3
+export const MAX_OPEN_INVITES = 5
 
 export type BuddyProfile = {
   name: string
@@ -363,6 +363,8 @@ export type Buddy = {
 
   expiresAt?: number
 
+  reconnect?: true
+
   badges?: SharedBadge[]
 
   pet?: BuddyPet
@@ -373,6 +375,44 @@ export type OutgoingInvite = {
   secret: string
   createdAt: number
   expiresAt: number
+}
+
+export type ReconnectInvite = {
+  inboxId: string
+  dhPub: string
+  expiresAt: number
+
+  name?: string
+  nickname?: string
+  color?: string
+  colorIndex?: number
+  overrides?: BuddyOverrides
+}
+
+export type ReconnectInvitation = {
+  inboxId: string
+
+  secret: string
+  expiresAt: number
+
+  eventId: string
+}
+
+const LAPSED_RECONNECT_CHECK_MS = 30 * 24 * 60 * 60 * 1000
+
+export const MAX_RECONNECT_INVITES = 3
+
+export type ReconnectOffer = {
+  invites: ReconnectInvitation[]
+
+  expiresAt: number
+
+  name: string
+  avatar?: BuddyAvatar
+  nickname?: string
+  color?: string
+  colorIndex: number
+  overrides?: BuddyOverrides
 }
 
 export type IncomingClaim = {
@@ -846,6 +886,7 @@ export type BuddyNotificationKind =
   | 'badgeReaction'
   | 'carInvite'
   | 'carJoined'
+  | 'reconnect'
 
 export type BuddyNotification = {
   id: string
@@ -869,6 +910,8 @@ export type BuddyNotification = {
   badges?: SharedBadge[]
 
   reaction?: BadgeReactionEmoji
+
+  reconnect?: string
 
   seq?: number
 }
@@ -902,6 +945,14 @@ export type BuddiesState = {
 
   unconfirmedInvites: OutgoingInvite[]
   incomingClaims: IncomingClaim[]
+
+  reconnectInvites: Record<string, ReconnectInvite>
+
+  reconnectOffers: Record<string, ReconnectOffer>
+
+  lapsedReconnects: Record<string, number>
+
+  refusedInboxIds: string[]
 
   closedInviteIds: Record<string, number>
 
@@ -996,6 +1047,10 @@ export const initialBuddiesState: BuddiesState = {
   outgoingInvites: [],
   unconfirmedInvites: [],
   incomingClaims: [],
+  reconnectInvites: {},
+  reconnectOffers: {},
+  lapsedReconnects: {},
+  refusedInboxIds: [],
   closedInviteIds: {},
   removedBuddies: {},
   rosterVersion: 0,
@@ -1066,6 +1121,9 @@ type ExpiringState = Pick<
   BuddiesState,
   | 'outgoingInvites'
   | 'incomingClaims'
+  | 'reconnectInvites'
+  | 'reconnectOffers'
+  | 'lapsedReconnects'
   | 'closedInviteIds'
   | 'incomingShares'
   | 'shareReplies'
@@ -1103,9 +1161,35 @@ export function withoutExpired(
           ) > now
     )
   )
+  const unlapsed = <T extends { expiresAt: number }>(
+    entries: Record<string, T>
+  ) =>
+    Object.fromEntries(
+      Object.entries(entries).filter(([, entry]) => entry.expiresAt > now)
+    )
+  const reconnectOffers: Record<string, ReconnectOffer> = {}
+  const lapsedReconnects = { ...state.lapsedReconnects }
+  for (const [from, offer] of Object.entries(state.reconnectOffers)) {
+    const invites = offer.invites.filter((invite) => invite.expiresAt > now)
+    if (invites.length > 0)
+      reconnectOffers[from] = {
+        ...offer,
+        invites,
+        expiresAt: Math.max(...invites.map((invite) => invite.expiresAt)),
+      }
+    else lapsedReconnects[from] ??= now
+  }
   return {
     outgoingInvites: state.outgoingInvites.filter((i) => i.expiresAt > now),
     incomingClaims,
+    reconnectInvites: unlapsed(state.reconnectInvites),
+    reconnectOffers,
+
+    lapsedReconnects: Object.fromEntries(
+      Object.entries(lapsedReconnects).filter(
+        ([, at]) => at + LAPSED_RECONNECT_CHECK_MS > now
+      )
+    ),
     closedInviteIds: Object.fromEntries(
       Object.entries(state.closedInviteIds).filter(
         ([, expiresAt]) => expiresAt > now
@@ -1150,7 +1234,10 @@ export function withoutExpired(
             : n.kind === 'shareReply' ||
               !n.shareKey ||
               n.shareKey in incomingShares) &&
-        (!n.inviteId || incomingClaims.some((c) => c.inviteId === n.inviteId))
+        (!n.inviteId ||
+          incomingClaims.some((c) => c.inviteId === n.inviteId)) &&
+        (n.kind !== 'reconnect' ||
+          (!!n.reconnect && n.reconnect in reconnectOffers))
     ),
   }
 }
@@ -1178,17 +1265,30 @@ export function awaitsAnswer(
 
 export function cappedQueue(
   notifications: BuddyNotification[],
-  state: AnswerState,
+  state: AnswerState & Partial<Pick<BuddiesState, 'reconnectOffers'>>,
   now: number
 ): BuddyNotification[] {
   if (notifications.length <= MAX_NOTIFICATIONS) return notifications
-  const room =
-    MAX_NOTIFICATIONS -
-    notifications.filter((n) => awaitsAnswer(n, state, now)).length
-  let kept = 0
-  return notifications.filter(
-    (n) => awaitsAnswer(n, state, now) || kept++ < room
-  )
+  const kept = (n: BuddyNotification) =>
+    awaitsAnswer(n, state, now) ||
+    (n.kind === 'reconnect' &&
+      n.reconnect !== undefined &&
+      n.reconnect in (state.reconnectOffers ?? {}))
+  const room = MAX_NOTIFICATIONS - notifications.filter(kept).length
+  let others = 0
+  return notifications.filter((n) => kept(n) || others++ < room)
+}
+
+export function pendingReconnects(
+  state: Pick<BuddiesState, 'reconnectOffers' | 'buddies'>,
+  now: number
+): { from: string; offer: ReconnectOffer; buddy?: Buddy }[] {
+  return Object.entries(state.reconnectOffers)
+    .filter(([, offer]) => offer.expiresAt > now)
+    .map(([from, offer]) => {
+      const buddy = state.buddies.find((b) => b.inboxId === from)
+      return buddy ? { from, offer, buddy } : { from, offer }
+    })
 }
 
 export const pendingInviteNotificationId = (shareKey: string) =>
@@ -1196,7 +1296,7 @@ export const pendingInviteNotificationId = (shareKey: string) =>
 
 export function withPendingInvitesQueued(
   state: Pick<BuddiesState, 'notifications' | 'incomingShares' | 'buddies'> &
-    Partial<Pick<BuddiesState, 'carInvites'>>,
+    Partial<Pick<BuddiesState, 'carInvites' | 'reconnectOffers'>>,
   now: number
 ): BuddyNotification[] {
   const listed = new Set(
@@ -1245,8 +1345,28 @@ export function withPendingInvitesQueued(
       shareKey: key,
     })
   }
-  if (missing.length === 0) return state.notifications
-  return [...state.notifications, ...missing].sort((a, b) => b.at - a.at)
+  const reconnecting = new Set(state.notifications.map((n) => n.reconnect))
+  const reconnects = pendingReconnects(
+    { buddies: state.buddies, reconnectOffers: state.reconnectOffers ?? {} },
+    now
+  ).flatMap(({ from, offer }): BuddyNotification[] =>
+    reconnecting.has(from) || offer.invites.length === 0
+      ? []
+      : [
+          {
+            id: offer.invites[0].eventId,
+            kind: 'reconnect',
+            at: now,
+            read: false,
+            name: offer.name,
+            reconnect: from,
+          },
+        ]
+  )
+  if (missing.length + reconnects.length === 0) return state.notifications
+  return [...state.notifications, ...missing, ...reconnects].sort(
+    (a, b) => b.at - a.at
+  )
 }
 
 export const isCarNotification = (entry: Pick<BuddyNotification, 'kind'>) =>
@@ -1262,3 +1382,5 @@ export function listedNotifications(
         (n) => n.kind !== 'badge' && n.kind !== 'badgeReaction'
       )
 }
+
+export const MAX_REFUSED_INBOXES = 4

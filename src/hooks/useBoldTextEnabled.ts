@@ -5,8 +5,8 @@ import { getFontWeightAdjustment } from '../../modules/font-weight-adjustment'
 const androidBoldText = () => getFontWeightAdjustment() > 0
 
 export default function useBoldTextEnabled() {
-  const [enabled, setEnabled] = useState(() =>
-    Platform.OS === 'android' ? androidBoldText() : false
+  const [enabled, setEnabled] = useState(
+    () => Platform.OS === 'android' && androidBoldText()
   )
 
   useEffect(() => {

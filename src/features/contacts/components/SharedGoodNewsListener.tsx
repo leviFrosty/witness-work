@@ -1,7 +1,7 @@
 import { analytics } from '@/lib/analytics'
 import { useEffect, useState } from 'react'
 import * as Linking from 'expo-linking'
-import { launchURL } from '@/lib/launchLinks'
+import { addLinkListener, launchURL } from '@/lib/launchLinks'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
 import useServiceReport from '@/stores/serviceReport'
@@ -40,9 +40,9 @@ export default function SharedGoodNewsListener() {
       if (isSharedGoodNewsUrl(url)) setPending(true)
     }
 
-    launchURL().then(handle)
+    launchURL('shared-good-news').then(handle)
 
-    const sub = Linking.addEventListener('url', ({ url }) => handle(url))
+    const sub = addLinkListener(handle)
     return () => sub.remove()
   }, [])
 

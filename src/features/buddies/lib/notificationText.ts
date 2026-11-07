@@ -14,6 +14,8 @@ export function notificationHeadline(
       return i18n.t('buddies_requestTitle', name)
     case 'paired':
       return i18n.t('buddies_notifPaired', name)
+    case 'reconnect':
+      return i18n.t('buddies_notifReconnect', name)
     case 'shareInvite':
       return followUp
         ? i18n.t('buddies_notifFollowUpInvite', name)

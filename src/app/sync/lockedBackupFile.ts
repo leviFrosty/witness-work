@@ -1,8 +1,8 @@
 import { getRandomBytes } from 'expo-crypto'
-import * as Device from 'expo-device'
-import { Platform } from 'react-native'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
 import { createBackupFile } from '@/lib/backupFile'
+import { olderAccountKeys, serverAccount } from '@/lib/serverAccount'
 import {
   type LockedBackupFile,
   lockWithAccountKey,
@@ -18,9 +18,8 @@ export type BackupFileLockChoice =
 export const accountLockAvailable = () => accountKeyAvailable()
 
 const origin = () => ({
-  deviceName:
-    Device.modelName || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-  platform: Platform.OS === 'android' ? ('android' as const) : ('ios' as const),
+  deviceName: deviceName(),
+  platform: devicePlatform(),
   createdAt: Date.now(),
 })
 
@@ -40,5 +39,12 @@ export async function unlockWithThisAccount(
 ): Promise<UnlockedBackupFile | null> {
   if (!accountLockAvailable()) return null
   const key = await accountKey.peek()
-  return key ? unlockWithAccountKey(file, key) : null
+  if (!key) return null
+
+  const accountId = serverAccount.cached(key)?.accountId
+  return unlockWithAccountKey(
+    file,
+    key,
+    accountId ? await olderAccountKeys(accountId, 'backupFile') : []
+  )
 }

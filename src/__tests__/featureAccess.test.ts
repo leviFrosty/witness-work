@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateFeatureAccess, type FeatureKey } from '@/lib/featureAccess'
+import {
+  evaluateFeatureAccess,
+  FEATURES,
+  type FeatureKey,
+} from '@/lib/featureAccess'
 
 const allFeatures: FeatureKey[] = [
   'customAccentColor',
-  'iCloudSync',
   'customAppIcon',
   'routePlanning',
+  'buddyColor',
 ]
 
 describe('evaluateFeatureAccess', () => {
@@ -25,5 +29,9 @@ describe('evaluateFeatureAccess', () => {
         })
       }
     )
+  })
+
+  it('gates no sync feature', () => {
+    expect(Object.keys(FEATURES).sort()).toEqual([...allFeatures].sort())
   })
 })

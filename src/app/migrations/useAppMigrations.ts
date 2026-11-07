@@ -11,13 +11,14 @@ import {
 } from '@/stores/migrations/categories'
 import { runProfileMigration } from '@/stores/migrations/profile'
 import { migrateLegacyLocale } from '@/features/settings/lib/migrateLegacyLocale'
+import { whenIdle } from '@/lib/whenIdle'
 
 export function useAppMigrations() {
   const [hasMigrated, setHasMigrated] = useState(hasMigratedFromAsyncStorage())
 
   useEffect(() => {
     if (!hasMigratedFromAsyncStorage()) {
-      requestIdleCallback(async () => {
+      whenIdle(async () => {
         try {
           if (await migrateFromAsyncStorage()) await reloadApp()
         } catch {}

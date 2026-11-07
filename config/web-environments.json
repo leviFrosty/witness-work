@@ -1,0 +1,55 @@
+{
+  "local": {
+    "variant": "development",
+    "host": "localhost",
+    "associatedApps": ["production", "beta", "development"],
+    "apiOrigin": "http://localhost:8787",
+    "apiFromEnv": true,
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "verifyOrigin": "https://verify-dev.witnesswork.app",
+    "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
+    "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
+    "csp": "report-only"
+  },
+  "dev": {
+    "variant": "development",
+    "worker": "ww-web-dev",
+    "revenueCatWebItem": "RevenueCat web billing sandbox (Dev project)",
+    "host": "app-dev.witnesswork.app",
+    "associatedApps": ["production", "beta", "development"],
+    "apiOrigin": "https://api-dev.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps-dev.witnesswork.app",
+    "verifyOrigin": "https://verify-dev.witnesswork.app",
+    "helpManifest": "https://dev.witnesswork.app/help/bundle/manifest.json",
+    "helpSearchOrigin": "https://help-search-dev.witnesswork.app",
+    "csp": "enforce"
+  },
+  "beta": {
+    "variant": "beta",
+    "worker": "ww-web-beta",
+    "host": "beta.app.witnesswork.app",
+    "associatedApps": ["production", "beta"],
+    "apiOrigin": "https://api.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps.witnesswork.app",
+    "verifyOrigin": "https://verify.witnesswork.app",
+    "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
+    "helpSearchOrigin": "https://help-search.witnesswork.app",
+    "csp": "enforce"
+  },
+  "production": {
+    "variant": "production",
+    "worker": "ww-web",
+    "host": "app.witnesswork.app",
+    "associatedApps": ["production", "beta"],
+    "apiOrigin": "https://api.witnesswork.app",
+    "posthogOrigin": "https://ww-api-r.leviwilkerson.com",
+    "mapsOrigin": "https://maps.witnesswork.app",
+    "verifyOrigin": "https://verify.witnesswork.app",
+    "helpManifest": "https://witnesswork.app/help/bundle/manifest.json",
+    "helpSearchOrigin": "https://help-search.witnesswork.app",
+    "csp": "enforce"
+  }
+}

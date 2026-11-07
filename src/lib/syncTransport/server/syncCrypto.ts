@@ -39,5 +39,6 @@ export const sealSyncBlob = (
 export const openSyncBlob = (
   syncKey: Uint8Array,
   blob: Uint8Array,
-  address: SyncAddress
-) => openPlaintext(syncKey, blob, syncAad(address))
+  address: SyncAddress,
+  olderKeys: readonly Uint8Array[] = []
+) => openPlaintext(syncKey, blob, syncAad(address), olderKeys)

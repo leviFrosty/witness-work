@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import useNow from '@/hooks/useNow'
+import { hasCapability } from '@/lib/platformCapabilities'
 import { useFeatureFlag } from '@/lib/featureFlags'
 import { isOnSharedCar } from '@/lib/mileage/sharedCar'
 import useSharedCars from '@/stores/sharedCars'
@@ -29,7 +30,7 @@ export function carInviteAnswer(
 
 export default function useSharedCarNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
-  const enabled = useFeatureFlag('shared-cars')
+  const enabled = useFeatureFlag('shared-cars') && hasCapability('sharedCars')
   const buddiesEnabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const queue = useBuddies((state) => state.notifications)

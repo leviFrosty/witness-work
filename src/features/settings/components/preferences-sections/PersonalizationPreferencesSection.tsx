@@ -12,9 +12,10 @@ import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import AccentColorPicker from '@/components/AccentColorPicker'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
 import { RootStackNavigation } from '@/types/rootStack'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
+import { hasCapability } from '@/lib/platformCapabilities'
 
 const PersonalizationPreferencesSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -59,9 +60,11 @@ const PersonalizationPreferencesSection = () => {
           <InputRowContainer
             label={i18n.t('fontSizeOffset')}
             info={i18n.t(
-              Platform.OS === 'android'
-                ? 'thisGloballyOffsetsTextSizeAndroid'
-                : 'thisGloballyOffsetsTextSize'
+              Platform.select<TranslationKey>({
+                android: 'thisGloballyOffsetsTextSizeAndroid',
+                web: 'thisGloballyOffsetsTextSizeWeb',
+                default: 'thisGloballyOffsetsTextSize',
+              })
             )}
             style={{ justifyContent: 'space-between' }}
             lastInSection
@@ -89,7 +92,7 @@ const PersonalizationPreferencesSection = () => {
           <IconButton icon={ChevronForwardIcon} />
         </InputRowButton>
       </Section>
-      {Platform.OS === 'ios' && (
+      {hasCapability('alternateAppIcons') && (
         <Section>
           <InputRowButton
             leftIcon={ShapesIcon}

@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import * as Application from 'expo-application'
 import { getRandomBytes } from 'expo-crypto'
 import * as Device from 'expo-device'
+import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { create } from 'zustand'
 import apis from '@/constants/apis'
 import {
@@ -11,13 +12,15 @@ import {
 } from '@/app/account/accountKey'
 import { backUpNow } from '@/app/account/backup'
 import { offerRestore, type RestoreOutcome } from '@/app/account/backupRestore'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
+import { passkeyKeyArrived } from '@/app/account/passkeySignIn'
 import { joinBuddiesHere } from '@/app/buddies/joinBuddiesHere'
 import {
   type AccountKeyLoss,
   losesSomething,
 } from '@/lib/accountKey/accountKey'
 import { analytics } from '@/lib/analytics'
-import type { DeviceOwnerCheck } from '@/lib/deviceOwner'
+import { type SensitiveCheck, stopsQuietly } from '@/lib/sensitiveCheck'
 import { logger } from '@/lib/logger'
 import { accountSessions, serverAccount } from '@/lib/serverAccount'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
@@ -106,9 +109,11 @@ function track(
       (session.role === 'claim' && state.step === 'waiting')
     )
       analytics.capture('handoff_claimed', { role })
-    else if (state.step === 'done')
+    else if (state.step === 'done') {
       analytics.capture('handoff_completed', { role })
-    else if (state.step === 'failed')
+
+      if (role === 'old') earnPasskeyPrompt('device')
+    } else if (state.step === 'failed')
       analytics.capture('handoff_failed', { role, reason: state.reason })
     else if (state.step === 'declined')
       analytics.capture('handoff_answered', { answer: 'decline' })
@@ -138,7 +143,7 @@ export type OfferStartProblem =
   | 'updateRequired'
   | 'offline'
 
-function offerStartProblem(error: unknown): OfferStartProblem {
+export function offerStartProblem(error: unknown): OfferStartProblem {
   const failure = toAccountSessionError(error)
   switch (failure.failure) {
     case 'unavailable':
@@ -189,7 +194,7 @@ const ownerChecks = new WeakMap<OfferSession, 'confirmed' | 'noLock'>()
 
 export async function approveHandoff(
   session: OfferSession,
-  { confirmOwner }: { confirmOwner: () => Promise<DeviceOwnerCheck> }
+  { confirmOwner }: { confirmOwner: () => Promise<SensitiveCheck> }
 ): Promise<'sent' | 'cancelled' | 'failed'> {
   let owner = ownerChecks.get(session)
   if (!owner) {
@@ -201,6 +206,8 @@ export async function approveHandoff(
       analytics.capture('handoff_answered', { answer: 'allow', auth: check })
       return check
     }
+
+    if (stopsQuietly(check)) return 'cancelled'
     owner = check
     ownerChecks.set(session, owner)
   }
@@ -215,8 +222,9 @@ export async function approveHandoff(
 export function handoffHello(): HandoffHello {
   const model = Device.modelName ?? ''
   return {
-    deviceName: model || (Platform.OS === 'ios' ? 'iPhone' : 'Android'),
-    platform: Platform.OS === 'ios' ? 'ios' : 'android',
+    deviceName: deviceName(),
+
+    platform: devicePlatform() === 'ios' ? 'ios' : 'android',
     model,
     appVersion: Application.nativeApplicationVersion ?? '',
   }
@@ -239,6 +247,8 @@ export type ClaimCompletion =
       buddiesStarted: boolean
 
       restore: RestoreOutcome
+
+      rejoined: boolean
     }
   | { outcome: 'declined' }
   | {
@@ -274,7 +284,7 @@ export async function completeClaimHandoff(
 
   let opened: DetachedSession
   try {
-    opened = await accountSessions.openDetached(newKey)
+    opened = await accountSessions.openDetached(newKey, { accountId })
   } catch (error) {
     const reason = handoffFailureFor(error, 'session/open')
     if (RETRYABLE_OPEN_FAILURES.has(reason))
@@ -295,7 +305,7 @@ export async function completeClaimHandoff(
       current.some((byte, i) => byte !== newKey[i]))
   let loss: AccountKeyLoss
   try {
-    loss = await accountKey.lossIfReplaced(newKey)
+    loss = await accountKey.lossIfReplaced(newKey, { accountId })
   } catch (error) {
     logger.warn("[handoff] couldn't check the account's other devices", error)
     await opened.close()
@@ -303,8 +313,10 @@ export async function completeClaimHandoff(
     return { outcome: 'failed', reason: 'replace_failed' }
   }
 
+  const rejoining = accountId === serverAccount.lastAccountId()
   if (
     differs &&
+    !rejoining &&
     (losesSomething(loss) || Platform.OS === 'ios') &&
     !(await confirmReplace(loss))
   ) {
@@ -318,6 +330,7 @@ export async function completeClaimHandoff(
       source: 'handoff',
       confirmedLoss: true,
       session: opened,
+      accountId,
     })
     if (result.outcome === 'replaced' && result.accountId !== accountId)
       logger.warn('[handoff] the new account opened under another id')
@@ -337,14 +350,19 @@ export async function completeClaimHandoff(
   }
 
   await session.finish()
+
+  void passkeyKeyArrived(newKey)
   const buddiesStarted = buddiesEnabled
     ? await joinBuddiesHere('handoff').catch((error: unknown) => {
         logger.warn('[handoff] starting Buddies failed', error)
         return false
       })
     : false
-  const restore = await offerRestoreAfterHandoff()
-  return { outcome: 'done', buddiesStarted, restore }
+
+  const restore: RestoreOutcome = rejoining
+    ? { outcome: 'skipped' }
+    : await offerRestoreAfterHandoff()
+  return { outcome: 'done', buddiesStarted, restore, rejoined: rejoining }
 }
 
 export async function offerRestoreAfterHandoff(): Promise<RestoreOutcome> {

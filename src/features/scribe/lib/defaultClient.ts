@@ -20,7 +20,8 @@ const buildDefaultClient = (): ScribeClient =>
       transcribe: apis.scribeTranscribe,
     },
 
-    streamFetch: expoFetch as unknown as typeof fetch,
+    streamFetch: ((input, init) =>
+      expoFetch(input as never, init as never)) as typeof fetch,
     sessions: {
       withSession: (run, call) =>
         accountSessions.withSession((authorization) => run(authorization), {

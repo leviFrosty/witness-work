@@ -16,6 +16,7 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { platformSyncKey } from '@/lib/syncCopy'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import type { SyncOption } from '@/app/sync/syncOption'
 
 export default function SyncOptionSection({
@@ -40,6 +41,7 @@ export default function SyncOptionSection({
   otherDevicesSignedIn: boolean | null
 }) {
   const theme = useTheme()
+  const web = cloudSyncOnly()
 
   const row = (
     value: SyncOption,
@@ -133,28 +135,40 @@ export default function SyncOptionSection({
         </Text>
         <InfoPopover
           title={i18n.t('syncOption_title')}
-          description={i18n.t(platformSyncKey('syncOption_info'))}
+          description={i18n.t(
+            web ? 'syncOption_infoWeb' : platformSyncKey('syncOption_info')
+          )}
         />
       </View>
       <Section>
-        {row('cloud', i18n.t('cloudSync'), i18n.t('syncOption_cloudSublabel'))}
         {row(
-          'platform',
-          i18n.t(platformSyncKey('iCloudSync')),
-          i18n.t(platformSyncKey('syncOption_platformSublabel'))
+          'cloud',
+          i18n.t('cloudSync'),
+          i18n.t(
+            web ? 'syncOption_cloudSublabelWeb' : 'syncOption_cloudSublabel'
+          ),
+          web
         )}
-        {row('off', i18n.t('syncOption_off'), undefined, true)}
+        {!web &&
+          row(
+            'platform',
+            i18n.t(platformSyncKey('iCloudSync')),
+            i18n.t(platformSyncKey('syncOption_platformSublabel'))
+          )}
+        {!web && row('off', i18n.t('syncOption_off'), undefined, true)}
       </Section>
       <View style={{ paddingHorizontal: inputLayout.horizontalPadding }}>
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>
           {i18n.t(
-            option === 'cloud'
-              ? 'syncOption_cloudFooter'
-              : option === 'platform'
-                ? otherDevicesSignedIn
-                  ? platformSyncKey('syncOption_platformFooterMixed')
-                  : platformSyncKey('syncOption_platformFooter')
-                : platformSyncKey('syncOption_security')
+            web
+              ? 'syncOption_cloudFooterWeb'
+              : option === 'cloud'
+                ? 'syncOption_cloudFooter'
+                : option === 'platform'
+                  ? otherDevicesSignedIn
+                    ? platformSyncKey('syncOption_platformFooterMixed')
+                    : platformSyncKey('syncOption_platformFooter')
+                  : platformSyncKey('syncOption_security')
           )}
         </Text>
       </View>

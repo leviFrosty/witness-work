@@ -22,6 +22,8 @@ export type UploadStatus = {
 export type BinaryFileInfo = {
   filename: string
   modifiedAt: number
+
+  size?: number
 }
 
 export type TransportSubscription = { remove: () => void }
@@ -33,6 +35,7 @@ export type SyncTransportErrorCode =
   | 'rate-limited'
   | 'server-error'
   | 'not-found'
+  | 'too-large'
   | 'unknown'
 
 export class SyncTransportError extends Error {
@@ -52,12 +55,20 @@ export const syncTransportErrorCode = (
 ): SyncTransportErrorCode | null =>
   error instanceof SyncTransportError ? error.code : null
 
+export type TransferPhases = { start(): void; end(): void }
+
 export interface SyncTransport {
   readonly kind: SyncTransportKind
 
   readonly writeConfirmsUpload: boolean
 
   readonly supportsBinaries?: boolean
+
+  readonly binaryWritesPaused?: boolean
+
+  readonly binaryTimeoutMs?: number
+
+  readonly binarySetupTimeoutMs?: number
 
   readonly writeTimeoutMs?: number
 
@@ -80,9 +91,21 @@ export interface SyncTransport {
 
   deleteAll(): Promise<void>
 
-  writeBinary(filename: string, sourcePath: string): Promise<number>
+  deleteEndedWebSnapshots?(
+    merged: ReadonlyMap<string, number>
+  ): Promise<string[]>
 
-  readBinary(filename: string, destinationPath: string): Promise<number>
+  writeBinary(
+    filename: string,
+    sourcePath: string,
+    phases?: TransferPhases
+  ): Promise<number>
+
+  readBinary(
+    filename: string,
+    destinationPath: string,
+    phases?: TransferPhases
+  ): Promise<number>
   listBinaryFiles(): Promise<BinaryFileInfo[]>
   deleteBinaryFile(filename: string): Promise<void>
   deleteAllBinaries(): Promise<void>

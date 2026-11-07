@@ -28,14 +28,11 @@ type StopwatchBridgeNative = {
 const native =
   requireOptionalNativeModule<StopwatchBridgeNative>('StopwatchBridge')
 
-const stopwatch =
-  Platform.OS === 'android'
-    ? native
-      ? androidNativeStopwatch(native)
-      : androidStopwatch
-    : Platform.OS === 'ios'
-      ? native
-      : null
+const stopwatch = (() => {
+  if (Platform.OS === 'ios') return native
+  if (Platform.OS === 'android' && native) return androidNativeStopwatch(native)
+  return androidStopwatch
+})()
 
 export function isAvailable(): boolean {
   return stopwatch != null

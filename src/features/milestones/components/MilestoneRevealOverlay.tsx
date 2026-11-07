@@ -31,7 +31,7 @@ interface Props {
   onSeeWhatsNew: () => void
 }
 
-const Fireworks = Platform.OS === 'android' ? ConfettiProvider : Fragment
+const Fireworks = Platform.OS === 'ios' ? Fragment : ConfettiProvider
 
 const TIMING = {
   backdropDuration: 320,

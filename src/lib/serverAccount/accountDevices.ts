@@ -1,5 +1,10 @@
+import semver from 'semver'
 import apis from '@/constants/apis'
-import { accountSessions, isThisDeviceSession } from '@/lib/serverAccount'
+import {
+  accountSessions,
+  checkInstall,
+  isThisDeviceSession,
+} from '@/lib/serverAccount'
 import {
   type AccountDevice,
   type ActivityClientOptions,
@@ -29,8 +34,25 @@ export async function signedInElsewhere(
   accountKey: Uint8Array,
   signal?: AbortSignal
 ): Promise<boolean> {
+  await checkInstall()
   const devices = await readAccountDevices(accountKey, signal)
   return devices.some(
     (device) => !device.current && !isThisDeviceSession(device.sessionId)
   )
+}
+
+export const KEY_CHANGE_MIN_APP_VERSION = '1.47.0'
+
+export async function devicesTooOldForKeyChange(
+  accountKey: Uint8Array,
+  signal?: AbortSignal
+): Promise<AccountDevice[]> {
+  const devices = await readAccountDevices(accountKey, signal)
+  return devices.filter(isTooOldForKeyChange)
+}
+
+export function isTooOldForKeyChange(device: AccountDevice): boolean {
+  if (device.current) return false
+  const version = semver.valid(device.appVersion)
+  return !version || semver.lt(version, KEY_CHANGE_MIN_APP_VERSION)
 }

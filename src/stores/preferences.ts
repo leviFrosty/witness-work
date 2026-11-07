@@ -86,6 +86,7 @@ import {
   type RoleHistory,
 } from '@/lib/roleHistory'
 import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
+import { PASSKEY_PROMPT_INITIAL } from '@/lib/passkeys/promptRules'
 
 export type { MarkerColors }
 
@@ -277,6 +278,8 @@ export function getEffectiveHomeScreenOrder(
   return out
 }
 
+export type CloudSyncTrayOfferState = 'shown' | 'answered' | null
+
 export const PREFERENCE_DEFAULTS = {
   role: 'publisher' as Publisher,
   publisherHours: publisherHours,
@@ -375,6 +378,8 @@ export const PREFERENCE_DEFAULTS = {
   backupReminderSnoozedAt: null as number | null,
 
   analyticsEnabled: true,
+
+  sessionReplayOptIn: false,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',
@@ -480,6 +485,7 @@ export const PREFERENCE_DEFAULTS = {
     | 'rate-limited'
     | 'server-error'
     | 'not-found'
+    | 'too-large'
     | 'unknown'
     | null,
   iCloudSyncNeedsResolution: false,
@@ -493,7 +499,6 @@ export const PREFERENCE_DEFAULTS = {
   } | null,
 
   iCloudSyncDevices: {} as SyncDeviceFiles,
-  iCloudSyncPausedForLapse: false,
   iCloudFreshSetup: false,
   hasReconciledSyncDefinitions: false,
   iCloudSyncEnabled: false,
@@ -503,6 +508,12 @@ export const PREFERENCE_DEFAULTS = {
   iCloudSyncIncludeImages: false,
 
   syncProvider: null as 'cloud' | 'platform' | null,
+
+  installedBeforeFreeSync: false,
+
+  cloudSyncTrayOffer: null as CloudSyncTrayOfferState,
+
+  passkeyPrompt: PASSKEY_PROMPT_INITIAL,
 
   cloudSyncOffer: null as 'pending' | 'dismissed' | null,
 
@@ -514,6 +525,10 @@ export const PREFERENCE_DEFAULTS = {
   } | null,
 
   cloudSyncEntitled: null as boolean | null,
+
+  cloudSyncPhotos: null as boolean | null,
+
+  cloudSyncRequestAnswered: null as number | null,
 
   dataProtectionMode: false,
 
@@ -583,6 +598,8 @@ export const PREFERENCE_DEFAULTS = {
   homeChecklistCompletedAt: null as number | null,
 
   onboardingStepId: null as string | null,
+
+  onboardingPasskeysOffered: null as boolean | null,
 
   serviceYearCatchUpStatus: null as
     | 'pending'
@@ -727,6 +744,32 @@ export const migratePreferencesPersistedState = (
   }
   if (version < 15) {
     next = migrateShowQuickActionsHomeSection(next)
+  }
+  if (version < 16) {
+    next = migrateMarkInstalledBeforeFreeSync(next)
+  }
+  return next
+}
+
+export const migrateMarkInstalledBeforeFreeSync = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const { iCloudSyncPausedForLapse: _paused, ...rest } = state as Record<
+    string,
+    unknown
+  >
+  const next: Record<string, unknown> = {
+    ...rest,
+    installedBeforeFreeSync: true,
+  }
+  const timestamps = next.preferenceUpdatedAt
+  if (
+    timestamps &&
+    typeof timestamps === 'object' &&
+    'iCloudSyncPausedForLapse' in timestamps
+  ) {
+    const { iCloudSyncPausedForLapse: _stamp, ...restTimestamps } =
+      timestamps as Record<string, unknown>
+    next.preferenceUpdatedAt = restTimestamps
   }
   return next
 }
@@ -1460,7 +1503,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 15,
+      version: 16,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

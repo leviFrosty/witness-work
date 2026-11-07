@@ -1,5 +1,6 @@
 import { Platform, View } from 'react-native'
-import i18n from '@/lib/locales'
+import i18n, { type TranslationKey } from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import Section from '@/components/ui/inputs/Section'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import { usePreferences } from '@/stores/preferences'
@@ -15,23 +16,28 @@ const AudioAndHapticsPreferencesSection = () => {
           <InputRowSwitch
             label={i18n.t('playSounds')}
             info={i18n.t(
-              Platform.OS === 'android'
-                ? 'playSounds_descriptionAndroid'
-                : 'playSounds_description'
+              Platform.select<TranslationKey>({
+                android: 'playSounds_descriptionAndroid',
+                web: 'playSounds_descriptionWeb',
+                default: 'playSounds_description',
+              })
             )}
             value={audioEnabled}
             onValueChange={(value) => set({ audioEnabled: value })}
+            lastInSection={!hasCapability('haptics')}
           />
         </SettingsSearchTarget>
-        <SettingsSearchTarget id='haptics'>
-          <InputRowSwitch
-            label={i18n.t('haptics')}
-            info={i18n.t('haptics_description')}
-            value={hapticsEnabled}
-            onValueChange={(value) => set({ hapticsEnabled: value })}
-            lastInSection
-          />
-        </SettingsSearchTarget>
+        {hasCapability('haptics') && (
+          <SettingsSearchTarget id='haptics'>
+            <InputRowSwitch
+              label={i18n.t('haptics')}
+              info={i18n.t('haptics_description')}
+              value={hapticsEnabled}
+              onValueChange={(value) => set({ hapticsEnabled: value })}
+              lastInSection
+            />
+          </SettingsSearchTarget>
+        )}
       </Section>
     </View>
   )

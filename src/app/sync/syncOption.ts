@@ -1,4 +1,9 @@
+import { endPhotoPasses } from '@/lib/syncTransport/photoEpoch'
+import { earnPasskeyPrompt } from '@/app/account/passkeyPrompt'
+import { bookkeepingForNewTransport } from '@/app/sync/imageSync'
 import { iCloudSync } from '@/app/sync/iCloudSync'
+import { clearPublishedPhotos } from '@/app/sync/photoBaseline'
+import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
   deleteOwnCloudSyncSlot,
   prepareCloudSync,
@@ -8,6 +13,7 @@ import { analytics } from '@/lib/analytics'
 import { checkICloudIdentity } from '@/lib/iCloudIdentity'
 import { logger } from '@/lib/logger'
 import { syncTransport as platformSyncTransport } from '@/lib/syncTransport'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import {
   cloudSyncOffered,
   syncProvider,
@@ -40,6 +46,7 @@ const NAMESPACE_RESET = {
 
 type RestoredKey =
   | keyof typeof NAMESPACE_RESET
+  | 'iCloudImageSync'
   | 'syncProvider'
   | 'iCloudSyncEnabled'
   | 'iCloudSyncSetByUser'
@@ -48,6 +55,7 @@ type RestoredKey =
 
 const RESTORED_KEYS: RestoredKey[] = [
   ...(Object.keys(NAMESPACE_RESET) as Array<keyof typeof NAMESPACE_RESET>),
+  'iCloudImageSync',
   'syncProvider',
   'iCloudSyncEnabled',
   'iCloudSyncSetByUser',
@@ -81,7 +89,12 @@ export type SwitchOutcome =
     }
   | { outcome: 'failed'; reason: SwitchFailure }
 
-export type SwitchSource = 'settings' | 'offer' | 'tools'
+export type SwitchSource =
+  | 'settings'
+  | 'offer'
+  | 'tray'
+  | 'tools'
+  | 'account_request'
 
 const FLUSH_WAIT_MS = 15_000
 
@@ -106,7 +119,7 @@ export function switchSyncOption(
   to: SyncOption,
   source: SwitchSource
 ): Promise<SwitchOutcome> {
-  switching ??= runSwitch(to, source).finally(() => {
+  switching ??= withSyncOptionLock(() => runSwitch(to, source)).finally(() => {
     switching = null
   })
   return switching
@@ -124,6 +137,7 @@ async function runSwitch(
     return { outcome: 'failed', reason }
   }
 
+  if (cloudSyncOnly() && to !== 'cloud') return fail('unavailable')
   if (to === 'cloud') {
     const prepared = await prepareCloudSync()
     if (prepared.outcome !== 'ready') return fail(prepareFailure(prepared))
@@ -138,7 +152,11 @@ async function runSwitch(
   }
   const previous = snapshot()
   usePreferences.setState({ iCloudSyncEnabled: false })
+
+  endPhotoPasses()
   await iCloudSync.waitForSyncIdle()
+
+  clearPublishedPhotos()
   if (from === 'cloud') {
     await deleteOwnCloudSyncSlot()
 
@@ -157,6 +175,9 @@ async function runSwitch(
 
   usePreferences.setState({
     ...NAMESPACE_RESET,
+    iCloudImageSync: bookkeepingForNewTransport(
+      usePreferences.getState().iCloudImageSync ?? {}
+    ),
     syncProvider: to,
     iCloudSyncSetByUser: true,
     iCloudSyncNeedsResolution: false,
@@ -193,11 +214,17 @@ async function runSwitch(
   usePreferences.setState({ iCloudSyncEnabled: true, iCloudFreshSetup: false })
   if (peek.status === 'found') await iCloudSync.pullAndMerge('switch')
   const pushed = await iCloudSync.push('switch')
+
+  if (to === 'cloud') {
+    usePreferences.setState({ cloudSyncTrayOffer: 'answered' })
+
+    earnPasskeyPrompt('cloud_sync')
+  }
   analytics.capture('cloud_sync_option_changed', { from, to, source })
   if (from === 'off')
     analytics.capture('icloud_sync_enabled_changed', {
       enabled: true,
-      source: 'settings',
+      source: source === 'tray' ? 'tray' : 'settings',
     })
   return { outcome: 'switched', pending: !pushed }
 }

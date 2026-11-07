@@ -87,6 +87,10 @@ export type EditorSetup = {
   placeholder: string
   label: string
 
+  photoMissing: string
+
   characterLimit?: number
   autofocus: boolean
+
+  inline: boolean
 }

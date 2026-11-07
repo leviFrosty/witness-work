@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
   History as HistoryIcon,
+  UserRoundKey as UserRoundKeyIcon,
   Smartphone as SmartphoneIcon,
 } from 'lucide-react-native'
 import Section from '@/components/ui/inputs/Section'
@@ -24,6 +25,11 @@ export default function AccountSecuritySection() {
           leftIcon={SmartphoneIcon}
           label={i18n.t('accountSecurity_devices')}
           onPress={() => navigation.navigate('Account Devices')}
+        />
+        <InputRowButton
+          leftIcon={UserRoundKeyIcon}
+          label={i18n.t('accountSecurity_passkeys')}
+          onPress={() => navigation.navigate('Account Passkeys')}
         />
         <InputRowButton
           leftIcon={HistoryIcon}

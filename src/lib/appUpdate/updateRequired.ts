@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { HttpError, request } from '@/lib/http/request'
 import { belowMinVersion } from '@/lib/appUpdate/versionGate'
+import { SESSION_CAPABILITIES } from '@/lib/serverAccount/capabilities'
+import {
+  parseVisitorLocation,
+  type VisitorLocation,
+} from '@/lib/visitorLocation'
 
 export type UpdateRequiredSource = 'config' | 'server'
 
@@ -31,10 +36,19 @@ export type AppSyncConfig = {
   entitlement: 'supporter' | 'everyone'
 }
 
+export type AppWebSignupConfig = {
+  enabled: boolean
+  turnstileSiteKey: string | null
+}
+
 export type AppConfig = {
   minAppVersion: string | null
 
   sync: AppSyncConfig | null
+
+  webSignup?: AppWebSignupConfig
+
+  location?: VisitorLocation
 }
 
 export async function fetchAppConfig(
@@ -45,10 +59,17 @@ export async function fetchAppConfig(
     ok?: unknown
     minAppVersion?: unknown
     sync?: { enabled?: unknown; entitlement?: unknown } | null
-  } | null>({ url, timeoutMs: 8_000, fetchImpl })
+    webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
+    country?: unknown
+    regionCode?: unknown
+  } | null>({
+    url: `${url}?capabilities=${SESSION_CAPABILITIES.join(',')}`,
+    timeoutMs: 8_000,
+    fetchImpl,
+  })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion, sync } = response.data
+  const { minAppVersion, sync, webSignup, country, regionCode } = response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
     sync:
@@ -59,6 +80,20 @@ export async function fetchAppConfig(
               sync.entitlement === 'everyone' ? 'everyone' : 'supporter',
           }
         : null,
+    ...(webSignup &&
+      typeof webSignup.enabled === 'boolean' && {
+        webSignup: {
+          enabled: webSignup.enabled,
+          turnstileSiteKey:
+            typeof webSignup.turnstileSiteKey === 'string' &&
+            webSignup.turnstileSiteKey
+              ? webSignup.turnstileSiteKey
+              : null,
+        },
+      }),
+    ...('country' in response.data && {
+      location: parseVisitorLocation(country, regionCode),
+    }),
   }
 }
 

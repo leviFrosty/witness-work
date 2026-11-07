@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Platform } from 'react-native'
 import * as Font from 'expo-font'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 import { fonts } from '@/constants/theme'
@@ -38,6 +39,7 @@ const REMOTE_FONTS: Record<string, string> = {
 type FontPair = { regular: string; bold: string }
 
 function targetFontsFor(locale: string): FontPair {
+  if (Platform.OS === 'web') return { regular: FALLBACK, bold: FALLBACK_BOLD }
   const lower = locale.toLowerCase()
   if (lower.startsWith('ko'))
     return { regular: 'Gaegu_400Regular', bold: 'Gaegu_700Bold' }

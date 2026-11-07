@@ -3,7 +3,9 @@ import {
   createNavigationContainerRef,
 } from '@react-navigation/native'
 import * as Linking from 'expo-linking'
+import { APP_LINK_HOSTS } from '@/constants/appLinks'
 import { launchURL, linkSinceLaunch } from '@/lib/launchLinks'
+import { webLinkingScreens } from '@/lib/webLinkingScreens'
 import { usePreferences } from '@/stores/preferences'
 import { afterTakeovers } from '@/stores/takeover'
 import { RootStackParamList } from '@/types/rootStack'
@@ -19,7 +21,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
     Linking.createURL('/'),
     'witnesswork://',
 
-    'https://ww-proxy.leviwilkerson.com',
+    ...APP_LINK_HOSTS.map((host) => `https://${host}`),
   ],
   config: {
     initialRouteName: 'Root',
@@ -38,11 +40,12 @@ export const linking: LinkingOptions<RootStackParamList> = {
       'Visit Details': 'visit/:visitId',
 
       PlanDay: 'day',
+      ...webLinkingScreens,
     },
   },
 
   async getInitialURL() {
-    const url = await launchURL()
+    const url = await launchURL('navigation')
     openedAtLaunch = url
     if (url && !usePreferences.getState().onboardingComplete) {
       heldAtLaunch = url
@@ -68,7 +71,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       deliver(url)
     )
 
-    const missed = linkSinceLaunch()
+    const missed = linkSinceLaunch('navigation')
     const pending = missed && missed !== openedAtLaunch ? missed : heldAtLaunch
     heldAtLaunch = null
     if (pending) deliver(pending)

@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { perf } from '@/lib/perf'
 import { isLaunching, subscribeLaunched } from '@/app/launch/launchState'
+import { whenIdle } from '@/lib/whenIdle'
 
 export const LAUNCH_IDLE_TIMEOUT_MS = 1_500
 
@@ -41,7 +42,7 @@ function drainIdleQueue() {
     setTimeout(drainIdleQueue, 0)
   }
   if (covered) setTimeout(start, 0)
-  else requestIdleCallback(start, { timeout: LAUNCH_IDLE_TIMEOUT_MS })
+  else whenIdle(start, { timeout: LAUNCH_IDLE_TIMEOUT_MS })
 }
 
 function enqueueIdle(begin: () => void): () => void {

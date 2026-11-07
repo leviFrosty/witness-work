@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts", "../../src/lib/mapsFrame/*.ts"],
+  "exclude": ["../../src/lib/mapsFrame/*.test.ts"]
+}

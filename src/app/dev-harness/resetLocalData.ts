@@ -26,6 +26,7 @@ import { useSidebarPreferences } from '@/stores/sidebar'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
 import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
+import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
 import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
@@ -36,6 +37,7 @@ import { useScribeMemory } from '@/features/scribe/stores/memory'
 import { useScribeConsent } from '@/features/scribe/stores/consent'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
+import { useSignInNotices } from '@/app/account/signInNoticesStore'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { useRoutineDayLog } from '@/features/routine/stores/routineDayLog'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
@@ -50,6 +52,12 @@ type ResettableStore = {
 }
 
 export const RESET_STORES: readonly ResettableStore[] = [
+  useContacts,
+  useConversations,
+  useServiceReport,
+  useMileage,
+  usePet,
+  useRoutine,
   useBuddies,
 
   useSharedCars,
@@ -60,6 +68,8 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useMapFindSkips,
   useGeocodeRetry,
   useNotificationsTray,
+
+  useSignInNotices,
   usePetUnlockNews,
   usePetSeen,
   useRoutineDayLog,
@@ -87,19 +97,6 @@ export function resetLocalData() {
   const setPreferences = usePreferences.getState().set
 
   setPreferences({ iCloudSyncEnabled: false, iCloudSyncSetByUser: true })
-  useContacts.getState()._WARNING_forceDeleteContacts()
-  useContacts.getState()._WARNING_clearDeleted()
-  useServiceReport.getState()._WARNING_forceDeleteServiceReports()
-  useServiceReport.getState().set({
-    dayPlans: [],
-    recurringPlans: [],
-    deletedDayPlans: [],
-    deletedRecurringPlans: [],
-  })
-  useConversations.getState()._WARNING_forceDeleteConversations()
-  useMileage.getState()._WARNING_forceDeleteMileage()
-  usePet.getState()._WARNING_forceDeletePet()
-  useRoutine.getState()._WARNING_forceDeleteRoutine()
   abortAllTurns()
   for (const store of RESET_STORES)
     store.setState(store.getInitialState() as never, true)
@@ -117,4 +114,6 @@ export function resetLocalData() {
 
   forgetDeviceInviteSecrets()
   void Stopwatch.reset()
+
+  rebasePublishedPhotos()
 }

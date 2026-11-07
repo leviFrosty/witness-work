@@ -5,6 +5,8 @@ import { create } from 'zustand'
 import { createJSONStorage } from 'zustand/middleware'
 import { keepPersistedState, persist } from '@/stores/persist'
 import { MmkvStorage } from '@/stores/mmkv'
+import { usePreferences } from '@/stores/preferences'
+import type { CloudSyncTrayOfferVariant } from '@/app/sync/cloudSyncTrayOffer'
 import type { NotificationItem } from '@/types/notifications'
 import { navigationRef } from '@/features/contacts/lib/linking'
 import {
@@ -64,6 +66,18 @@ export function clearDevNotifications() {
     dismissed: withoutDev(dismissed),
     seen: withoutDev(seen),
   }))
+}
+
+export function showCloudSyncTrayOffer(variant: CloudSyncTrayOfferVariant) {
+  usePreferences.setState({
+    installedBeforeFreeSync: true,
+    cloudSyncTrayOffer: null,
+    devSupporterOverride: variant === 'thanks' ? new Date() : null,
+  })
+  useNotificationsTray.setState(({ dismissed }) => {
+    const { cloud_sync_offer: _dismissed, ...rest } = dismissed
+    return { dismissed: rest }
+  })
 }
 
 export function openNotificationsTray() {

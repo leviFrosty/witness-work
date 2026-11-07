@@ -94,7 +94,7 @@ export default function GameSheet({
           paddingBottom: sheetInsets.bottom,
           gap: 18,
 
-          flex: Platform.OS === 'android' ? 1 : undefined,
+          flex: Platform.select({ android: 1, default: undefined }),
         },
         style,
       ]}

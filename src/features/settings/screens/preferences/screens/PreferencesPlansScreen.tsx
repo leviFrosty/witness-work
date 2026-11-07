@@ -1,5 +1,6 @@
 import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
+import { hasCapability } from '@/lib/platformCapabilities'
 import PlansPreferencesSection from '@/features/settings/components/preferences-sections/PlansPreferencesSection'
 import UnloggedDayRemindersSection from '@/features/settings/components/preferences-sections/UnloggedDayRemindersSection'
 import MonthReportReminderSection from '@/features/settings/components/preferences-sections/MonthReportReminderSection'
@@ -14,9 +15,13 @@ const PreferencesPlansScreen = () => {
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <PlansPreferencesSection />
-          <UnloggedDayRemindersSection />
-          <MonthReportReminderSection />
-          <WeekPlanReminderSection />
+          {hasCapability('deviceNotifications') && (
+            <>
+              <UnloggedDayRemindersSection />
+              <MonthReportReminderSection />
+              <WeekPlanReminderSection />
+            </>
+          )}
         </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>

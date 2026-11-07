@@ -1,4 +1,5 @@
 import Constants from 'expo-constants'
+import { Platform } from 'react-native'
 import type PostHog from 'posthog-react-native'
 import { AnonymousPostHog } from '@/lib/anonymousPostHog'
 import { logger } from '@/lib/logger'
@@ -82,6 +83,8 @@ function createClient(): PostHog | null {
             ...event.properties,
             app_variant: extra?.appVariant ?? 'unknown',
             development_mode: typeof __DEV__ !== 'undefined' && __DEV__,
+
+            app_platform: Platform.OS,
           }),
         }
       },

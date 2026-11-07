@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications'
-import { Linking, Platform } from 'react-native'
+import { Platform } from 'react-native'
+import { openAppSettings } from '@/lib/openAppSettings'
 import i18n from '@/lib/locales'
 
 export const REMINDER_CHANNEL_ID =
@@ -28,6 +29,6 @@ export async function requestOrOpenNotificationSettings(): Promise<boolean> {
 
   if (current.canAskAgain)
     return (await registerForPushNotificationsAsync()).granted
-  await Linking.openSettings()
+  await openAppSettings()
   return false
 }

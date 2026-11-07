@@ -52,7 +52,8 @@ export default function BuddyInviteScreen({ route }: Props) {
   const acceptingRef = useRef(false)
   const [nameInvalid, setNameInvalid] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const { link } = route.params
+
+  const link = route.params?.link ?? ''
 
   useEffect(() => {
     let cancelled = false

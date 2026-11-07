@@ -43,7 +43,8 @@ export interface ScribeVoiceRouteParams {
 export type ScribeConsentRouteParams =
   | {
       mode: 'open'
-      next:
+
+      next?:
         | { route: 'ScribeConversation'; params: ScribeConversationRouteParams }
         | { route: 'ScribeVoice'; params: ScribeVoiceRouteParams }
     }
@@ -125,6 +126,10 @@ export type RootStackParamList = {
       }
     | undefined
   'Thank You': { purchaseTier?: 'supporter' | 'tip' } | undefined
+
+  'Web Purchase Return': { tier?: string } | undefined
+
+  'Account Ready': undefined
   'Import and Export': { source: 'backup_reminder' } | undefined
   'Import Data': undefined
   MytimeImport: undefined
@@ -225,6 +230,8 @@ export type RootStackParamList = {
       }
     | undefined
   MilestoneShowcase: undefined
+
+  WebCloudSyncPreview: { mode: 'live' | 'turnOn' | 'waiting' | 'updatePhone' }
   FAQ: { scrollToCategory?: string } | undefined
 
   ShareApp: undefined
@@ -233,12 +240,22 @@ export type RootStackParamList = {
 
   'Set Up Another Device': { entry?: 'settings' | 'tools' } | undefined
 
+  'Change Account Key':
+    | { entry?: 'settings' | 'device_signed_out' | 'resume' }
+    | undefined
+
   'Account Devices': undefined
+  'Account Passkeys': undefined
 
   'Account Activity': undefined
 
+  'Sign In With Passkey': { entry?: 'settings' | 'onboarding' } | undefined
   'Sign In With QR Code':
     | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }
+    | undefined
+
+  'Sign In on a Computer':
+    | { entry?: 'settings' | 'tools'; link?: string }
     | undefined
   OpenSourceLicenses: undefined
   More: undefined

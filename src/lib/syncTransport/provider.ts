@@ -1,5 +1,6 @@
 import { usePreferences } from '@/stores/preferences'
 import { syncTransport } from '@/lib/syncTransport'
+import { cloudSyncOnly } from '@/lib/syncTransport/platform'
 import { registerCloudSyncCopy } from '@/lib/syncTransport/registry'
 import type {
   SyncTransport,
@@ -28,6 +29,7 @@ export function cloudSyncOffered(): boolean {
 }
 
 export function syncProvider(): SyncProvider {
+  if (cloudSyncOnly()) return cloudTransport ? 'cloud' : 'platform'
   const { syncProvider: chosen, iCloudSyncEnabled } = usePreferences.getState()
   if (chosen === 'cloud') return cloudTransport ? 'cloud' : 'platform'
   if (chosen === 'platform') return 'platform'

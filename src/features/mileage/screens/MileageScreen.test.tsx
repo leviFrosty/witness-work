@@ -24,6 +24,11 @@ vi.mock('react-native', async () => {
     View: host('View'),
     ScrollView: host('ScrollView'),
     RefreshControl: host('RefreshControl'),
+    Platform: {
+      OS: 'ios',
+      select: (specifics: Record<string, unknown>) =>
+        'ios' in specifics ? specifics.ios : specifics.default,
+    },
   }
 })
 vi.mock('lucide-react-native', () => ({

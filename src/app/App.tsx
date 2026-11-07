@@ -5,7 +5,7 @@ import 'react-native-gesture-handler'
 import React, { useRef } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { useColorScheme } from 'react-native'
+import { Platform, useColorScheme } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useNoteImageCleanup } from '@/app/notes/useNoteImageCleanup'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
@@ -18,6 +18,8 @@ import SurveyProvider from '@/providers/SurveyProvider'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
+import WebBannersLayout from '@/app/web-banners/WebBannersLayout'
+import WebOfflineRuntime from '@/app/web-offline/WebOfflineRuntime'
 import SystemBars from '@/app/components/SystemBars'
 import DisplayRegionsObserver from '@/components/DisplayRegionsObserver'
 import LaunchSplash from '@/app/launch/LaunchSplash'
@@ -38,12 +40,12 @@ import SilentForegroundAlerts from '@/app/notifications/SilentForegroundAlerts'
 import SystemMenu from '@/app/menu-bar/SystemMenu'
 import { ScribeRoot } from '@/features/scribe'
 import SupporterStoreSync from '@/features/supporter/components/SupporterStoreSync'
-import SupporterSyncDefault from '@/app/sync/components/SupporterSyncDefault'
+import PlatformSyncDefault from '@/app/sync/components/PlatformSyncDefault'
 import CloudSyncDefault from '@/app/sync/components/CloudSyncDefault'
-import SupporterSyncLapseGate from '@/app/sync/components/SupporterSyncLapseGate'
 import AppIconSync from '@/features/settings/components/AppIconSync'
 import { FeatureFlagsRuntime } from '@/lib/featureFlags'
 import '@/lib/analyticsConsent'
+import { useSessionReplay } from '@/lib/sessionReplay/useSessionReplay'
 import { usePreferences } from '@/stores/preferences'
 import useUserLocalePrefs from '@/features/settings/hooks/useLocale'
 import { useDevRemountKey } from '@/app/navigation/useDevRemountKey'
@@ -65,10 +67,17 @@ import { linking, navigationRef } from '@/features/contacts/lib/linking'
 import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
+import WebFocusStyles from '@/components/ui/WebFocusStyles'
 import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import ToastHost from '@/components/toast/ToastHost'
+import WebStorageNotices from '@/app/launch/WebStorageNotices'
 import AppLockGate from '@/app/app-lock/AppLockGate'
+import WebAppLockBoundary from '@/app/app-lock/WebAppLockBoundary'
+import StepUpSheet from '@/app/step-up/StepUpSheet'
 import UpdateRequiredGate from '@/app/update-required/UpdateRequiredGate'
+import WebSignInGate from '@/app/web-sign-in/WebSignInGate'
+
+const isWeb = Platform.OS === 'web'
 
 initializeApp()
 
@@ -89,12 +98,19 @@ function LaunchWork() {
   useGeocodeRetries(useAfterLaunch('idle'))
   useTimeEntryCreditNormalization(useAfterLaunch('idle'))
   useAccountBackup(useAfterLaunch('idle'))
+  useSessionReplay(useAfterLaunch('idle'))
   return null
 }
 
 export default function App() {
   if (!useStorageUnlock()) return <LaunchSplash />
-  return <UnlockedApp />
+  return (
+    <WebSignInGate>
+      <WebAppLockBoundary>
+        <UnlockedApp />
+      </WebAppLockBoundary>
+    </WebSignInGate>
+  )
 }
 
 function UnlockedApp() {
@@ -121,9 +137,8 @@ function UnlockedApp() {
         <FeatureFlagsRuntime />
         <ScribeRoot />
         <SupporterStoreSync />
-        <SupporterSyncDefault />
+        <PlatformSyncDefault />
         <CloudSyncDefault />
-        <SupporterSyncLapseGate />
         <AppIconSync />
         <ThemeProvider>
           <SafeAreaProvider>
@@ -136,65 +151,72 @@ function UnlockedApp() {
                   preload={false}
                   preserveEdgeToEdge
                 >
-                  <NavigationContainer
-                    key={devRemountKey}
-                    ref={navigationRef}
-                    linking={linking}
-                    fallback={<LaunchSplash />}
-                    onReady={() => {
-                      stopRecordingLaunchLinks()
-                      markLaunched()
-                      reportLaunch()
-                      captureLaunchTiming()
-                      const initialScreen =
-                        navigationRef.current?.getCurrentRoute()?.name
-                      routeNameRef.current = initialScreen
-                      if (initialScreen) analytics.screen(initialScreen)
-                    }}
-                    onStateChange={() => {
-                      const previousScreen = routeNameRef.current
-                      const currentScreen =
-                        navigationRef.current?.getCurrentRoute()?.name
-                      if (currentScreen && currentScreen !== previousScreen) {
-                        analytics.screen(currentScreen, {
-                          previous_screen: previousScreen,
-                        })
-                      }
-                      routeNameRef.current = currentScreen
-                    }}
-                  >
-                    <TamaguiProvider
-                      defaultTheme={
-                        colorScheme
-                          ? colorScheme
-                          : systemColorScheme || undefined
-                      }
-                      config={tamaguiConfig}
+                  <WebBannersLayout>
+                    <NavigationContainer
+                      key={devRemountKey}
+                      ref={navigationRef}
+                      linking={linking}
+                      fallback={<LaunchSplash />}
+                      onReady={() => {
+                        stopRecordingLaunchLinks()
+                        markLaunched()
+                        reportLaunch()
+                        captureLaunchTiming()
+                        const initialScreen =
+                          navigationRef.current?.getCurrentRoute()?.name
+                        routeNameRef.current = initialScreen
+                        if (initialScreen) analytics.screen(initialScreen)
+                      }}
+                      onStateChange={() => {
+                        const previousScreen = routeNameRef.current
+                        const currentScreen =
+                          navigationRef.current?.getCurrentRoute()?.name
+                        if (currentScreen && currentScreen !== previousScreen) {
+                          analytics.screen(currentScreen, {
+                            previous_screen: previousScreen,
+                          })
+                        }
+                        routeNameRef.current = currentScreen
+                      }}
                     >
-                      <SystemBars />
-                      <ConfettiProvider>
-                        <AnimationViewProvider>
-                          <SurveyProvider>
-                            <DeepLinkListeners />
-                            <BuddiesRuntime />
-                            <SharedCarsRuntime />
-                            <BadgesRuntime />
-                            <NotificationResponseListener />
-                            <SilentForegroundAlerts />
-                            <SystemMenu language={loadedLocale} />
-                            <MileageSharingProvider>
-                              <RootStackComponent />
-                            </MileageSharingProvider>
-                            <ToastHost />
-                            <PointerTooltipLayer />
-                            <UpdateRequiredGate />
-                            {}
-                            <AppLockGate />
-                          </SurveyProvider>
-                        </AnimationViewProvider>
-                      </ConfettiProvider>
-                    </TamaguiProvider>
-                  </NavigationContainer>
+                      <TamaguiProvider
+                        defaultTheme={
+                          colorScheme
+                            ? colorScheme
+                            : systemColorScheme || undefined
+                        }
+                        config={tamaguiConfig}
+                      >
+                        <SystemBars />
+                        <ConfettiProvider>
+                          <AnimationViewProvider>
+                            <SurveyProvider>
+                              <DeepLinkListeners />
+                              <BuddiesRuntime />
+                              <SharedCarsRuntime />
+                              <BadgesRuntime />
+                              <NotificationResponseListener />
+                              <SilentForegroundAlerts />
+                              <SystemMenu language={loadedLocale} />
+                              <MileageSharingProvider>
+                                <RootStackComponent />
+                              </MileageSharingProvider>
+                              <ToastHost />
+                              <WebStorageNotices />
+                              <WebOfflineRuntime />
+                              <PointerTooltipLayer />
+                              <WebFocusStyles />
+                              <UpdateRequiredGate />
+                              {}
+                              {isWeb && <StepUpSheet />}
+                              {}
+                              <AppLockGate />
+                            </SurveyProvider>
+                          </AnimationViewProvider>
+                        </ConfettiProvider>
+                      </TamaguiProvider>
+                    </NavigationContainer>
+                  </WebBannersLayout>
                 </KeyboardProvider>
               </PopoverTouchShield>
             </GestureHandlerRootView>

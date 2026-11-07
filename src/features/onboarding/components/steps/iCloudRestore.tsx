@@ -14,6 +14,7 @@ import { Spinner } from 'tamagui'
 import { formatRelative } from '@/lib/dates'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import ActionButton from '@/components/ui/ActionButton'
@@ -32,10 +33,9 @@ import { addReconnectListener } from '@/lib/http/online'
 import { ICloudAccount, iCloudSync, RemotePeek } from '@/app/sync/iCloudSync'
 import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
-import { FRESH_SETUP_PREFERENCES } from '@/lib/syncPreferencePolicy'
+import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
-import { useProfile } from '@/stores/profile'
-import useFeatureAccess from '@/hooks/useFeatureAccess'
+import { usesCloudSync } from '@/lib/syncTransport/provider'
 
 interface Props {
   goBack: () => void
@@ -73,8 +73,6 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
 const ICloudRestore = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const { set } = usePreferences()
-  const { set: setProfile } = useProfile()
-  const { hasAccess: canEnableICloudSync } = useFeatureAccess('iCloudSync')
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
 
   const [search, setSearch] = useState(0)
@@ -202,10 +200,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       restore(remote, account, 'replace')
       return
     }
-    const properties = {
-      source: 'onboarding',
-      merge_offered: canEnableICloudSync,
-    }
+    const properties = { source: 'onboarding' }
 
     const choose = (mode: RestoreMode) => () => {
       analytics.capture('icloud_restore_replace_confirmed', {
@@ -216,24 +211,16 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
     }
     Alert.alert(
       i18n.t(syncKey('iCloudRestoreReplaceConfirm_title')),
-      i18n.t(
-        canEnableICloudSync
-          ? syncKey('iCloudRestoreReplaceConfirm_descriptionWithMerge')
-          : syncKey('iCloudRestoreReplaceConfirm_description')
-      ),
+      i18n.t(syncKey('iCloudRestoreReplaceConfirm_descriptionWithMerge')),
       [
         {
           text: i18n.t('cancel'),
           style: 'cancel',
         },
-        ...(canEnableICloudSync
-          ? [
-              {
-                text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_merge')),
-                onPress: choose('merge'),
-              },
-            ]
-          : []),
+        {
+          text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_merge')),
+          onPress: choose('merge'),
+        },
         {
           text: i18n.t(syncKey('iCloudRestoreReplaceConfirm_replace')),
           style: 'destructive' as const,
@@ -319,7 +306,6 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   }
 
   const enableSync = () => {
-    if (!canEnableICloudSync) return
     const wasSyncEnabled = usePreferences.getState().iCloudSyncEnabled
     set({
       iCloudSyncEnabled: true,
@@ -346,19 +332,14 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       mode,
       elapsed_ms: Date.now() - startedAt,
     })
-    analytics.capture('onboarding_completed', {
-      completion_method: 'icloud_restore',
-    })
 
-    set({
-      onboardingComplete: true,
-      onboardingStepId: null,
-      hasCompletedMapOnboarding: true,
-    })
+    completeOnboardingFromRestore('icloud_restore')
     if (mode === 'replace') enableSync()
-    setProfile({ hasCompletedProfileSetup: true })
 
-    if (payloadReferencesPhotos(remote)) {
+    const referencesPhotos = payloadReferencesPhotos(remote)
+    if (referencesPhotos && usesCloudSync()) {
+      void iCloudSync.pullImagesIfEnabled()
+    } else if (referencesPhotos) {
       analytics.capture('icloud_restore_images_prompted', {
         source: 'onboarding',
       })
@@ -692,18 +673,16 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                   relative: formatRelative(probe.remote.writtenAt),
                 })}
               </Text>
-              {canEnableICloudSync && (
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: theme.colors.textAlt,
-                    marginTop: 4,
-                    lineHeight: 16,
-                  }}
-                >
-                  {i18n.t(syncKey('iCloudRestoreFoundSyncNote'))}
-                </Text>
-              )}
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: theme.colors.textAlt,
+                  marginTop: 4,
+                  lineHeight: 16,
+                }}
+              >
+                {i18n.t(syncKey('iCloudRestoreFoundSyncNote'))}
+              </Text>
             </View>
           </Card>
         )}
@@ -741,11 +720,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
                 </Text>
               </View>
             ) : (
-              i18n.t(
-                canEnableICloudSync
-                  ? syncKey('iCloudRestoreActionWithSync')
-                  : syncKey('iCloudRestoreAction')
-              )
+              i18n.t(syncKey('iCloudRestoreActionWithSync'))
             )}
           </ActionButton>
         )}
@@ -786,7 +761,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
               import_type: importType(),
               status: probe.state,
             })
-            set(FRESH_SETUP_PREFERENCES)
+            set(freshSetupPreferences(usePreferences.getState()))
             goNext()
           }}
           style={{ alignSelf: 'center', paddingVertical: 10 }}

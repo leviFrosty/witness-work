@@ -130,9 +130,8 @@ export function logBackup(level: BackupLogEntry['level'], message: string) {
 
 function installBinding(): string | null {
   try {
-    return Platform.OS === 'android'
-      ? androidDeviceInstallId()
-      : getOrCreateInstallId()
+    if (Platform.OS === 'android') return androidDeviceInstallId()
+    return getOrCreateInstallId()
   } catch {
     return null
   }

@@ -1,0 +1,23 @@
+{
+  "helpCenter": "ヘルプセンター",
+  "intro": "WitnessWorkに関するよくある質問への迅速な回答を見つけましょう。必要なものが見つからない?連絡を取りましょう — あなたのフィードバックがアプリの形を決めます。",
+  "searchPlaceholder": "検索に関する質問",
+  "topQuestions": "主な質問",
+  "allQuestions": "すべての質問",
+  "noMatches": "一致しない",
+  "noResults": "あなたの探し方に合う質問はありません。",
+  "searching": "検索中…",
+  "clearSearch": "検索をクリア",
+  "stillNeedHelp": "まだ助けが必要ですか?",
+  "emailUs": "メールで個別にご連絡ください。",
+  "bugReport": "バグレポート",
+  "featureRequest": "機能リクエスト",
+  "device": "デバイス",
+  "language": "言語",
+  "all": "すべて",
+  "copyLink": "リンクをコピー",
+  "iosOnly": "iOSのみ",
+  "androidOnly": "Androidのみ",
+  "notTranslated": "この回答はまだ翻訳されていないため、英語で表示しています。",
+  "stillNeedHelpDescription": "個別のサポートはメールで、不具合の報告や機能のリクエストは GitHub でお寄せください。試したこと、お使いのデバイス、WitnessWork のバージョンを添えてください。公開の報告には連絡先、個人的なメモ、アカウント ID を含めないでください。"
+}

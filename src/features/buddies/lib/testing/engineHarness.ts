@@ -148,6 +148,7 @@ export function setup({
       | 'onSharesNotSent'
       | 'cars'
       | 'inviteSecrets'
+      | 'paused'
     > = {}
   ) {
     const store = memoryStore({})

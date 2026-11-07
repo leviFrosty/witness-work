@@ -17,6 +17,12 @@ export default defineConfig({
       '**/dist/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/.claude/**',
+
+      'services/**',
+
+      'e2e/web/**',
+
+      ...(process.env.WW_VERIFY_TESTS ? [] : ['.verify/**']),
     ],
   },
 })

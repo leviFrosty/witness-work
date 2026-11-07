@@ -729,6 +729,46 @@
       "outcome": {
         "failed": "unreadable"
       }
+    },
+    {
+      "name": "reconnect after an account key change",
+      "event": {
+        "eventId": "mJmam5ydnp-goaKjpKWmpw",
+        "kind": "pair.reconnect",
+        "blob": "AScoKSorLC0uLzAxMumhFjXgm6mVCO_okPQ3ztEseanosxu9jDy92Whb0S5kDHY9Z6y8v-wAvca-Dfry8-zzYkflbDU47RV6Re3P5hMHx4r8REf0lUPmxi44TqyzkkJYP8fFr6Sf63A4LUjE9CXTXx_r56hhT26VelqQuZDWoFcNkRQ"
+      },
+      "outcome": {
+        "alert": {
+          "type": "reconnect",
+          "name": "Zoë 王"
+        }
+      },
+      "text": {
+        "title": "Zoë 王 asked to reconnect",
+        "body": "They changed their account key. Reconnect to stay buddies."
+      }
+    },
+    {
+      "name": "reconnect without its invite",
+      "event": {
+        "eventId": "mZqbnJ2en6ChoqOkpaanqA",
+        "kind": "pair.reconnect",
+        "blob": "ASgpKissLS4vMDEyMyQCelyKV9OV_PzeHwKkf-kPKdRYsDeJI8KnjBww_hBfIAGkX6aYZUw7l96n1At0HpHdwRmeNtd5dLA"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
+    },
+    {
+      "name": "reconnect of another version",
+      "event": {
+        "eventId": "mpucnZ6foKGio6SlpqeoqQ",
+        "kind": "pair.reconnect",
+        "blob": "ASkqKywtLi8wMTIzNMZbtgonkh-MQd8VvAcbnlyasLvKzgOgKzXYJrWioezeeiyazp2plKOL_tihgz80nXYBW4IZjICoTPthAAw_syGrKdTBL465p9sXo2CVVeEGlTtq-cjneMJv4xyZNLV0h7wmhawRsJpys38yjIOZVgzniKZdtPc"
+      },
+      "outcome": {
+        "failed": "unreadable"
+      }
     }
   ]
 }

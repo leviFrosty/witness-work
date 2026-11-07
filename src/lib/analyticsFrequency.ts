@@ -33,6 +33,7 @@ const sessionEvents = new Set([
   'account_devices_viewed',
   'update_required_shown',
   'help_center_search_completed',
+  'settings_search_completed',
   'mileage_person_filter_used',
 ])
 

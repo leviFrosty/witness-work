@@ -11,6 +11,7 @@ import {
   DEFAULT_RETURN_VISIT_TIME_OFFSET,
   usePreferences,
 } from '@/stores/preferences'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const ConversationsPreferencesSection = () => {
   const theme = useTheme()
@@ -49,126 +50,134 @@ const ConversationsPreferencesSection = () => {
   return (
     <View style={{ gap: 3 }}>
       <Section>
-        <InputRowContainer
-          label={i18n.t('followUpOffset')}
-          description={i18n.t('nextVisitOffset_description')}
-          controlWidth='full'
-          style={{
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
-        >
-          <View
+        <SettingsSearchTarget id='followUpOffset'>
+          <InputRowContainer
+            label={i18n.t('followUpOffset')}
+            description={i18n.t('nextVisitOffset_description')}
+            controlWidth='full'
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
+              flexDirection: 'column',
               gap: 10,
+              alignItems: 'flex-start',
             }}
           >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={amountOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitTimeOffset: {
-                      amount: value,
-                      unit: currentTimeUnit,
-                    },
-                  })
-                }
-                value={currentTimeAmount}
-              />
-            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={amountOptions}
+                  onChange={({ value }) =>
+                    set({
+                      returnVisitTimeOffset: {
+                        amount: value,
+                        unit: currentTimeUnit,
+                      },
+                    })
+                  }
+                  value={currentTimeAmount}
+                />
+              </View>
 
-            <View style={{ flex: 1 }}>
-              <Select
-                data={unitOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitTimeOffset: {
-                      amount: currentTimeAmount,
-                      unit: value,
-                    },
-                  })
-                }
-                value={currentTimeUnit}
-              />
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={unitOptions}
+                  onChange={({ value }) =>
+                    set({
+                      returnVisitTimeOffset: {
+                        amount: currentTimeAmount,
+                        unit: value,
+                      },
+                    })
+                  }
+                  value={currentTimeUnit}
+                />
+              </View>
             </View>
-          </View>
-        </InputRowContainer>
+          </InputRowContainer>
+        </SettingsSearchTarget>
 
-        <InputRowContainer
-          label={i18n.t('notificationOffset')}
-          description={i18n.t('notificationOffset_description')}
-          controlWidth='full'
-          lastInSection
-          style={{
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'flex-start',
-          }}
-        >
-          <View
+        <SettingsSearchTarget id='conversationNotification'>
+          <InputRowContainer
+            label={i18n.t('notificationOffset')}
+            description={i18n.t('notificationOffset_description')}
+            controlWidth='full'
+            lastInSection
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
+              flexDirection: 'column',
               gap: 10,
+              alignItems: 'flex-start',
             }}
           >
-            <View style={{ flex: 1 }}>
-              <Select
-                data={amountOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitNotificationOffset: {
-                      amount: value,
-                      unit: currentNotifUnit,
-                    },
-                  })
-                }
-                value={currentNotifAmount}
-              />
-            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={amountOptions}
+                  onChange={({ value }) =>
+                    set({
+                      returnVisitNotificationOffset: {
+                        amount: value,
+                        unit: currentNotifUnit,
+                      },
+                    })
+                  }
+                  value={currentNotifAmount}
+                />
+              </View>
 
-            <View style={{ flex: 1 }}>
-              <Select
-                data={unitOptions}
-                onChange={({ value }) =>
-                  set({
-                    returnVisitNotificationOffset: {
-                      amount: currentNotifAmount,
-                      unit: value,
-                    },
-                  })
-                }
-                value={currentNotifUnit}
-              />
+              <View style={{ flex: 1 }}>
+                <Select
+                  data={unitOptions}
+                  onChange={({ value }) =>
+                    set({
+                      returnVisitNotificationOffset: {
+                        amount: currentNotifAmount,
+                        unit: value,
+                      },
+                    })
+                  }
+                  value={currentNotifUnit}
+                />
+              </View>
+              <Text style={{ color: theme.colors.textAlt }}>
+                {i18n.t('before')}
+              </Text>
             </View>
-            <Text style={{ color: theme.colors.textAlt }}>
-              {i18n.t('before')}
-            </Text>
-          </View>
-        </InputRowContainer>
-        <InputRowSwitch
-          label={i18n.t('alwaysNotify')}
-          value={returnVisitAlwaysNotify}
-          onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
-        />
-        <InputRowSwitch
-          label={i18n.t('autoFillAddressFromLastContact')}
-          info={i18n.t('autoFillAddressFromLastContact_description')}
-          lastInSection
-          value={prefillAddress.enabled}
-          onValueChange={(value) =>
-            set({
-              prefillAddress: {
-                ...prefillAddress,
-                enabled: value,
-              },
-            })
-          }
-        />
+          </InputRowContainer>
+        </SettingsSearchTarget>
+        <SettingsSearchTarget id='conversationAlwaysNotify'>
+          <InputRowSwitch
+            label={i18n.t('alwaysNotify')}
+            value={returnVisitAlwaysNotify}
+            onValueChange={(value) => set({ returnVisitAlwaysNotify: value })}
+          />
+        </SettingsSearchTarget>
+        <SettingsSearchTarget id='autoFillAddress'>
+          <InputRowSwitch
+            label={i18n.t('autoFillAddressFromLastContact')}
+            info={i18n.t('autoFillAddressFromLastContact_description')}
+            lastInSection
+            value={prefillAddress.enabled}
+            onValueChange={(value) =>
+              set({
+                prefillAddress: {
+                  ...prefillAddress,
+                  enabled: value,
+                },
+              })
+            }
+          />
+        </SettingsSearchTarget>
       </Section>
     </View>
   )

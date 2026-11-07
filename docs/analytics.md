@@ -61,6 +61,7 @@ automatic events are discarded. Touch/text autocapture and session replay stay o
 | `device_storage_full`                                                             | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                  |
 | `update_required_shown`                                                           | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                         |
 | `help_center_search_completed`                                                    | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                          |
+| `settings_search_completed`                                                       | Once per session per outcome; reach of settings search and of searches that find nothing, not every search.                                                                                                                        |
 | `mileage_person_filter_used`                                                      | Once per session; reach of the Mileage screen's person filter on Shared Cars, not every switch.                                                                                                                                    |
 | `help_center_refreshed`                                                           | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                          |
 | `shared_car_sync_failed`                                                          | Once per UTC day and reason; which Shared Car failures reach people, not how often a phone retries.                                                                                                                                |
@@ -625,6 +626,17 @@ content reaches devices.
 
 Never the query, the answers opened, or URLs. Individual keystrokes, opened
 answers and copies are not captured.
+
+## Settings search
+
+Settings has a search field that jumps to a page or a setting. These answer
+whether people use it, and whether it misses the words they type.
+
+| Event                       | When                                                                                                                                       | Properties                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `settings_search_completed` | A result was opened (`opened`), or a search with no results stayed unchanged for 1.5 seconds (`no_results`). Once per session per outcome. | `outcome: opened \| no_results`. |
+
+Never the query or the setting opened.
 
 ## Announcements
 

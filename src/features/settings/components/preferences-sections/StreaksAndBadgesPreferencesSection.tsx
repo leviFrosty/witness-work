@@ -13,6 +13,7 @@ import { earnedBadgeCount } from '@/lib/badges/display'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
+import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const StreaksAndBadgesPreferencesSection = () => {
   const navigation = useNavigation<RootStackNavigation>()
@@ -46,36 +47,42 @@ const StreaksAndBadgesPreferencesSection = () => {
   return (
     <View style={{ gap: 30 }}>
       <Section>
-        <InputRowSwitch
-          label={i18n.t('streaks_showSetting')}
-          info={i18n.t('streaks_showSetting_info')}
-          value={showStreaks}
-          onValueChange={handleShowStreaksChange}
-          lastInSection={!showStreaks}
-        />
-        {showStreaks && (
+        <SettingsSearchTarget id='showStreak'>
           <InputRowSwitch
-            label={i18n.t('streakReminders')}
-            info={i18n.t(
-              streakKind === 'months'
-                ? 'streakReminders_infoMonths'
-                : 'streakReminders_info'
-            )}
-            value={streakReminders}
-            onValueChange={(next) => void handleStreakRemindersChange(next)}
-            lastInSection
+            label={i18n.t('streaks_showSetting')}
+            info={i18n.t('streaks_showSetting_info')}
+            value={showStreaks}
+            onValueChange={handleShowStreaksChange}
+            lastInSection={!showStreaks}
           />
+        </SettingsSearchTarget>
+        {showStreaks && (
+          <SettingsSearchTarget id='streakReminders'>
+            <InputRowSwitch
+              label={i18n.t('streakReminders')}
+              info={i18n.t(
+                streakKind === 'months'
+                  ? 'streakReminders_infoMonths'
+                  : 'streakReminders_info'
+              )}
+              value={streakReminders}
+              onValueChange={(next) => void handleStreakRemindersChange(next)}
+              lastInSection
+            />
+          </SettingsSearchTarget>
         )}
       </Section>
 
       <Section>
-        <InputRowSwitch
-          label={i18n.t('badges_showSetting')}
-          info={i18n.t('badges_showSetting_info')}
-          value={showBadges}
-          onValueChange={handleShowBadgesChange}
-          lastInSection={!showBadges}
-        />
+        <SettingsSearchTarget id='showBadges'>
+          <InputRowSwitch
+            label={i18n.t('badges_showSetting')}
+            info={i18n.t('badges_showSetting_info')}
+            value={showBadges}
+            onValueChange={handleShowBadgesChange}
+            lastInSection={!showBadges}
+          />
+        </SettingsSearchTarget>
         {showBadges && (
           <InputRowButton
             leftIcon={AwardIcon}

@@ -14,7 +14,10 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
     "noUncheckedIndexedAccess": true,
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "/@react-refresh": ["./src/islands/react-refresh.d.ts"]
+    }
   },
   "include": ["src", "scripts", "tests", "*.ts"]
 }

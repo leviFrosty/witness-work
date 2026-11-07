@@ -9,7 +9,7 @@
     "preview": "wrangler dev --port 8899",
     "test": "vitest run && pnpm run check:locales && pnpm run help:validate",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint --deny-warnings src scripts tests",
+    "lint": "oxlint --deny-warnings --ignore-pattern src/routeTree.gen.ts src scripts tests",
     "e2e": "playwright test",
     "help:validate": "node scripts/help-center/validate.ts",
     "check:locales": "node scripts/landing/check-landing-locales.mjs"

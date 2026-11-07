@@ -60,11 +60,11 @@ export class HelpCenterError extends Error {
 
 export function slugForId(id: string): string {
   return id
-    .replace(/^([a-z])(?=[A-Z][a-z])/, (letter) => letter + '\u0000')
+    .replace(/^([a-z])(?=[A-Z][a-z])/, (letter) => letter + '\uE000')
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
 
-    .replace(/\u0000-?/g, '')
+    .replace(/\uE000-?/g, '')
     .toLowerCase()
 }
 

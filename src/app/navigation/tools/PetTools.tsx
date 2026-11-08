@@ -10,7 +10,7 @@ import {
   type RewardSoundSet,
 } from '@/stores/preferences'
 import { toast } from '@/stores/toasts'
-import { PET_SPECIES_IDS, SECRET_ROOM_ITEMS } from '@/types/pet'
+import { PET_SPECIES_IDS } from '@/types/pet'
 import { petHarness } from '@/app/dev-harness/pet'
 import {
   ToolList,
@@ -18,13 +18,9 @@ import {
   ToolSection,
   ToolSubheading,
 } from '@/app/navigation/tools/ToolsUI'
-import { coinsOf } from '@/features/pet/lib/currency'
-import { petEarningsNow } from '@/features/pet/lib/walletNow'
-import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
 const HEARTS = ['real', '0', '1', '2.5', '4', '5'] as const
-const WALLETS = ['real', '0', '25', '100', '500'] as const
 const MOMENTS = ['entrance', 'trick', 'twirl', 'wake', 'cheer'] as const
 
 const confirmDevAction = (title: string, onConfirm: () => void) =>
@@ -43,16 +39,8 @@ export default function PetTools() {
   const promptDismissed = usePreferences((state) => state.petPromptDismissed)
   const rewardAnimations = usePreferences((state) => state.rewardAnimations)
   const rewardSounds = usePreferences((state) => state.rewardSounds)
-  const showStreaks = usePreferences((state) => state.showStreaks)
   const setPreferences = usePreferences((state) => state.set)
   const override = usePetSession((state) => state.devOverride)
-
-  usePetSeen((state) => state.seen)
-  const earnings = pet ? petEarningsNow() : null
-  const ownedItems = pet?.earnedRoomItems?.length ?? 0
-  const everyItem = pet?.earnedRoomItems?.includes(
-    SECRET_ROOM_ITEMS[SECRET_ROOM_ITEMS.length - 1]
-  )
 
   return (
     <ToolSection
@@ -134,17 +122,6 @@ export default function PetTools() {
               }
             />
             <ToolRow
-              label={`Every item owned (${ownedItems})`}
-              info='On owns every hat and room item, secrets too, as earned: nothing is spent. Off locks them all but the starters, purchases included; secrets the records have earned (badges) come straight back.'
-              trailing={
-                <Switch
-                  value={!!everyItem}
-                  onValueChange={(on) => void petHarness.items(on)}
-                  accessibilityLabel='Every item owned'
-                />
-              }
-            />
-            <ToolRow
               label='Secrets shown (not stored)'
               trailing={
                 <Switch
@@ -156,68 +133,7 @@ export default function PetTools() {
                 />
               }
             />
-            <ToolRow
-              label={`Refund purchases (${pet.purchases?.length ?? 0})`}
-              onPress={() => {
-                petHarness.refund()
-                done('Purchases refunded')
-              }}
-            />
           </ToolList>
-
-          {earnings && (
-            <>
-              <ToolSubheading
-                title='Wallet'
-                info='What is left to spend, and what earned it since adoption (ADR 0035).'
-              />
-              <ToolList>
-                <ToolRow
-                  label='Coins'
-                  value={`${earnings.wallet} of ${coinsOf(earnings.earned)}`}
-                />
-                <ToolRow
-                  label='Days out'
-                  value={`${earnings.earned.daysOut}`}
-                />
-                <ToolRow
-                  label='Planned days kept'
-                  value={`${earnings.earned.plansKept}`}
-                />
-                <ToolRow
-                  label='Monthly least added'
-                  value={`${earnings.earned.shared}`}
-                />
-                <ToolRow
-                  label='Streak milestones'
-                  value={
-                    showStreaks
-                      ? earnings.earned.milestones
-                          .map(({ count }) => count)
-                          .join(', ') || 'none'
-                      : 'streaks hidden'
-                  }
-                />
-              </ToolList>
-            </>
-          )}
-          <ToolSubheading
-            title='Fake wallet'
-            info='Coins earned, shown on this device only. What is bought still comes off.'
-          />
-          <ChoiceChips
-            accessibilityLabel='Fake wallet'
-            options={WALLETS.map((key) => ({ key, label: key }))}
-            value={
-              override?.wallet === undefined ? 'real' : `${override.wallet}`
-            }
-            onChange={(key) =>
-              petHarness.override({
-                wallet: key === 'real' ? undefined : Number(key),
-              })
-            }
-            style={{ paddingTop: 8 }}
-          />
 
           <ToolSubheading title='Life (this device)' />
           <ChoiceChips

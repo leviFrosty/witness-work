@@ -2028,6 +2028,8 @@
   "nwPublisherOnlyAllowsLastMonth": "NW Publisher only allows you to submit the previous month's report.",
   "defaultExportMethod": "Submission method",
   "submitMonthsReport": "Submit {{month}}'s Report",
+  "monthsReportDue": "{{month}}'s report is due",
+  "monthsReportMarkedSent": "{{month}}'s report marked as sent",
   "reportSubmitted": "Report Submitted",
   "reportSent": "Sent",
   "reportSentOn": "Sent {{date}}",

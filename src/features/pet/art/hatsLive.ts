@@ -52,6 +52,10 @@ export const SHOW_MS = 14_000
 
 const SHOW_FADE_MS = 900
 
+const COINS_SHOW_MS = 2000
+
+const COINS_FADE_MS = 120
+
 const HOP = [0, 2, 4, 4, 3, 1, 0] as const
 
 const HOP_STEP_MS = 80
@@ -70,9 +74,14 @@ export const isDarkTime = (time: TimeOfDay): boolean =>
 export function hatRoomDim(hat: BigHatId, m: HatMoment): number {
   if (hat !== 'lighthouse' && hat !== 'dome') return 0
   if (isDarkTime(m.time)) return 1
-  const since = m.tMs - m.patMs
-  if (since < 0 || since >= SHOW_MS) return 0
-  return Math.min(1, since / SHOW_FADE_MS, (SHOW_MS - since) / SHOW_FADE_MS)
+  const fade = (since: number, showMs: number, fadeMs: number) =>
+    since < 0 || since >= showMs
+      ? 0
+      : Math.min(1, since / fadeMs, (showMs - since) / fadeMs)
+  return Math.max(
+    fade(m.tMs - m.patMs, SHOW_MS, SHOW_FADE_MS),
+    fade(m.tMs - m.coinsMs, COINS_SHOW_MS, COINS_FADE_MS)
+  )
 }
 
 const frames = createLru<PixelBuffer>(128)
@@ -172,12 +181,12 @@ export function trainAngle(tMs: number, patMs: number): number {
 function drawTrain(buf: PixelBuffer, m: HatMoment) {
   blit(buf, frameOf('train/bed'), 0, 0)
   const angle = trainAngle(m.tMs, m.patMs)
-  const heaped = m.tMs - m.coinsMs < 20_000
+  const heaped = m.tMs === 0 || m.tMs - m.coinsMs < 20_000
   const cars = [
     { side: CARS.loco, end: CARS.locoEnd, at: angle },
     { side: CARS.coal, end: CARS.coalEnd, at: angle - 0.95 },
     {
-      side: heaped || m.coinsMs === NOT_YET ? CARS.heaped : CARS.wagon,
+      side: heaped ? CARS.heaped : CARS.wagon,
       end: CARS.wagonEnd,
       at: angle - 1.75,
     },

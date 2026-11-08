@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { hashBuffer, opaqueBounds, pixelAt } from '@/lib/pixelArt'
-import { BIG_HAT_IDS } from '@/types/pet'
+import { hatReactions } from '@/features/pet/lib/hatReactions'
+import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
 import {
   composeScene,
@@ -165,5 +166,63 @@ describe('the big hats', () => {
         visitors: [{ ...visitor, hat: 'from-a-newer-build' }],
       })
     ).toBe(plain)
+  })
+
+  describe('what the Shop previews', () => {
+    const pixelsChanged = (hat: ResolvedRoom['hat'], event: string) => {
+      const start = 30_000
+      let most = 0
+      for (const after of [80, 300, 800, 1500, 1900, 3000]) {
+        const a = composeScene(input(hat), start + after).data
+        const b = composeScene(
+          input(hat, { [event]: start }),
+          start + after
+        ).data
+        let changed = 0
+        for (let i = 0; i < a.length; i += 4)
+          if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2])
+            changed++
+        most = Math.max(most, changed)
+      }
+      return most
+    }
+
+    it.each(BIG_HAT_IDS)('lists exactly what %s reacts to', (hat) => {
+      const listed = hatReactions(`hat:${hat}`)
+      expect(pixelsChanged(hat, 'hatPatMs') > 0).toBe(listed.includes('pat'))
+      expect(pixelsChanged(hat, 'hatCoinsMs') > 0).toBe(
+        listed.includes('coins')
+      )
+    })
+
+    it('leads with the pat, and gives every rare hat both reactions', () => {
+      for (const hat of [...UNCOMMON_HAT_IDS, ...RARE_HAT_IDS]) {
+        const listed = hatReactions(`hat:${hat}`)
+        if (listed.length > 0) expect(listed[0]).toBe('pat')
+      }
+      for (const hat of RARE_HAT_IDS) {
+        expect(hatReactions(`hat:${hat}`)).toEqual(['pat', 'coins'])
+        expect(pixelsChanged(hat, 'hatPatMs')).toBeGreaterThan(5)
+        expect(pixelsChanged(hat, 'hatCoinsMs')).toBeGreaterThan(5)
+      }
+    })
+
+    it('dims the room for a moment on new coins, so stars show by day', () => {
+      expect(pixelsChanged('dome', 'hatCoinsMs')).toBeGreaterThan(1000)
+      expect(pixelsChanged('lighthouse', 'hatCoinsMs')).toBeGreaterThan(1000)
+      const after = 40_000
+      expect(drawn('dome', after, { hatCoinsMs: 30_000 })).toBe(
+        drawn('dome', after)
+      )
+    })
+
+    it('fills the wagon only after new coins, and in a still picture', () => {
+      const wagonEmpty = drawn('train', 5000)
+      expect(drawn('train', 5000, { hatCoinsMs: 4000 })).not.toBe(wagonEmpty)
+      expect(drawn('train', 0)).not.toBe(drawn('none', 0))
+      expect(drawn('train', 40_000, { hatCoinsMs: 4000 })).toBe(
+        drawn('train', 40_000)
+      )
+    })
   })
 })

@@ -11,6 +11,7 @@ import {
   cssColor,
   GAME_FRAME_INSET,
   ownedStamp,
+  type GameFrameKind,
   type GamePalette,
 } from '@/features/pet/art/gameUi'
 import { GameIcon } from '@/features/pet/components/GameControls'
@@ -31,8 +32,14 @@ import {
   thumbShowsPet,
   type RoomChoicePart,
 } from '@/features/pet/lib/roomOptions'
-import { isRareItem } from '@/features/pet/lib/prices'
+import { itemRarity, type ItemRarity } from '@/features/pet/lib/prices'
 import { shopThumbView } from '@/features/pet/lib/shopEntries'
+
+const CARD_FRAME = {
+  common: { rest: 'card', picked: 'cardPicked' },
+  uncommon: { rest: 'cardUncommon', picked: 'cardUncommonPicked' },
+  rare: { rest: 'cardRare', picked: 'cardRarePicked' },
+} as const satisfies Record<ItemRarity, Record<string, GameFrameKind>>
 
 const THUMB_RATIO = 0.6
 
@@ -223,7 +230,7 @@ export default function GameItemCard({
   const scale = gamePixelScale()
   const { inset, w, h } = thumbPixels(width, scale)
   const view = shopThumbView(part, w, h, option, thumbBase.hatLife?.growth)
-  const rare = !secret && isRareItem(`${part}:${option}`)
+  const rarity = secret ? 'common' : itemRarity(`${part}:${option}`)
 
   const sceneOf = (settings: PetRoomSettings): SceneInput => ({
     ...thumbBase,
@@ -248,23 +255,15 @@ export default function GameItemCard({
       accessibilityRole={accessibilityRole}
       accessibilityState={{ ...accessibilityState, disabled: owned }}
       accessibilityLabel={
-        rare
-          ? `${accessibilityLabel}, ${i18n.t('pet.shop.rare')}`
-          : accessibilityLabel
+        rarity === 'common'
+          ? accessibilityLabel
+          : `${accessibilityLabel}, ${i18n.t(`pet.shop.${rarity}`)}`
       }
       pointerEffect='tint'
       style={{ width }}
     >
       <GameFrame
-        kind={
-          rare
-            ? picked
-              ? 'cardRarePicked'
-              : 'cardRare'
-            : picked
-              ? 'cardPicked'
-              : 'card'
-        }
+        kind={CARD_FRAME[rarity][picked ? 'picked' : 'rest']}
         palette={palette}
         style={{ padding: inset, gap: 6 }}
       >

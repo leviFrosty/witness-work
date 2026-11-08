@@ -194,8 +194,18 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 
   The room shows run for `SHOW_MS` (14 s) by day after a pat and dim it with an overlay; the lamp
   itself keeps following the hearts. `fig` grows through six stages at 0, 3, 8, 16, 30 and 50 days out
-  since its purchase (`lib/hatLife.ts`); one not bought yet shows grown in the Shop. Rare hats get a
-  blue card frame in the Shop and the details (`cardRare`, `cardRarePicked`), not in the room.
+  since its purchase (`lib/hatLife.ts`); one not bought yet shows grown in the Shop. New coins dim the
+  room for 2 seconds by day under `lighthouse` and `dome`, so their flash and shooting stars show.
+  `itemRarity` (`lib/prices.ts`) gives each item its tier. The eleven hats with one moving part
+  (`UNCOMMON_HAT_IDS`) get a green card frame (`cardUncommon`, `cardUncommonPicked`), and rare hats a
+  blue one (`cardRare`, `cardRarePicked`), in the Shop and the details, not in the room. "Uncommon" is
+  a code name and is spoken by screen readers, but no screen prints it.
+
+  Selecting a hat with a reaction in the Shop or the details plays its pat, the one that happens most
+  often, without patting the pet. `HatPreviewTray` hangs under the selected card, like the wall colors
+  tray, in the card's frame color, with a button for each event the hat reacts to (`hatReactions` in
+  `lib/hatReactions.ts`, the Pat and New coins columns above; a test holds it to what the art does).
+  Reduce Motion leaves the tray out, since a hat stays still under it.
   Visitors wear their hats, moving but with no effect on the room.
 
 - Owned = starters ∪ `earnedRoomItems` ∪ `purchases`. `earnedRoomItems` holds found secrets and

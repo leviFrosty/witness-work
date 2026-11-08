@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { Platform, ScrollView, useWindowDimensions, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Text from '@/components/ui/MyText'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
@@ -15,6 +16,7 @@ import { toast } from '@/stores/toasts'
 import type { RootStackParamList } from '@/types/rootStack'
 import { resolveRoom, VIEW_CARD, WALL_RGB } from '@/features/pet/art'
 import { cssColor, gamePalette } from '@/features/pet/art/gameUi'
+import HatPreviewTray from '@/features/pet/components/HatPreviewTray'
 import ShopBuyPanel from '@/features/pet/components/ShopBuyPanel'
 import ShopHeader from '@/features/pet/components/ShopHeader'
 import ShopItemCard from '@/features/pet/components/ShopItemCard'
@@ -35,6 +37,7 @@ import {
   roomSectionLabel,
   shopItemLabel,
 } from '@/features/pet/lib/roomLabels'
+import { hatReactions } from '@/features/pet/lib/hatReactions'
 import { roomChoicePatch, roomWithChoice } from '@/features/pet/lib/roomOptions'
 import { noteRoomItemPicked } from '@/features/pet/lib/secrets'
 import { shortBy, SHOP_TABS, type ShopTab } from '@/features/pet/lib/shop'
@@ -51,7 +54,9 @@ import {
   type ShopEntry,
 } from '@/features/pet/lib/shopEntries'
 import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
-import PetSceneView from '@/features/pet/render/PetSceneView'
+import PetSceneView, {
+  type PetSceneHandle,
+} from '@/features/pet/render/PetSceneView'
 import type { RoomItemId, WallColor } from '@/types/pet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetShop'>
@@ -92,6 +97,8 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const [barHeight, setBarHeight] = useState(0)
 
   const itemsScroll = useRef<ScrollView>(null)
+  const previewRef = useRef<PetSceneHandle>(null)
+  const reduceMotion = useReducedMotion()
 
   const from = route.params?.from ?? 'room'
   useEffect(() => {
@@ -144,6 +151,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const pick = (entry: ShopEntry) => {
     if (isOwned(entry)) return
     setPickedItem(entry.item)
+    if (hatReactions(entry.item).length > 0) previewRef.current?.hatPat()
 
     if (entry.part === 'wallPattern') setLastPattern(entry.item)
     else if (entry.part === 'wallColor' && pattern) setLastPattern(pattern.item)
@@ -251,6 +259,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
   const previewView = (
     <GameFrame kind='preview' palette={palette} style={{ padding: 2 * scale }}>
       <PetSceneView
+        ref={previewRef}
         input={preview}
         viewport={
           wide
@@ -304,9 +313,15 @@ export default function PetShopScreen({ navigation, route }: Props) {
             ))
             const at = pattern ? section.entries.indexOf(pattern) : -1
             const hung = colors && section.part === 'wallPattern' && at >= 0
-            const split = hung
-              ? (Math.floor(at / columns) + 1) * columns
-              : cards.length
+            const previewAt =
+              picked && !reduceMotion && hatReactions(picked.item).length > 0
+                ? section.entries.indexOf(picked)
+                : -1
+            const hangsAt = hung ? at : previewAt
+            const split =
+              hangsAt >= 0
+                ? (Math.floor(hangsAt / columns) + 1) * columns
+                : cards.length
             const cardRows = (items: ReactElement[]) => (
               <View
                 style={{
@@ -323,6 +338,20 @@ export default function PetShopScreen({ navigation, route }: Props) {
                 {heading && sectionHeading(heading)}
                 {cardRows(cards.slice(0, split))}
                 {hung && colorTray(at % columns)}
+                {picked && previewAt >= 0 && (
+                  <HatPreviewTray
+                    hat={picked.option}
+                    hatName={roomOptionLabel(picked.part, picked.option)}
+                    petName={scene.name}
+                    scene={previewRef}
+                    from='shop'
+                    column={previewAt % columns}
+                    cardWidth={cardWidth}
+                    cardGap={CARD_GAP}
+                    gap={SECTION_ROW_GAP}
+                    palette={palette}
+                  />
+                )}
                 {split < cards.length && cardRows(cards.slice(split))}
               </View>
             )

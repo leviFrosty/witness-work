@@ -76,6 +76,8 @@ export interface ScenePlayer {
 
   coinsEarned(tMs: number): void
 
+  hatPat(tMs: number): void
+
   pat(tMs: number, mood: PetMood, opts?: { readonly rub?: boolean }): PatResult
 
   isBusy(): boolean
@@ -149,6 +151,9 @@ export function createScenePlayer(
     },
     coinsEarned(tMs) {
       if (tMs - hatCoinsMs >= COINS_REACTION_GAP_MS) hatCoinsMs = tMs
+    },
+    hatPat(tMs) {
+      hatPatMs = tMs
     },
     pat(tMs, mood, o = {}) {
       if (playing) return 'busy'

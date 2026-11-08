@@ -50,6 +50,8 @@ export type GamePalette = {
   newInk: string
 
   rare: Rgb
+
+  uncommon: Rgb
 }
 
 const LIGHT = rgbPalette({
@@ -67,6 +69,7 @@ const LIGHT = rgbPalette({
   accentDark: '#211d1a',
   newFill: '#d30808',
   rare: '#2f8fff',
+  uncommon: '#2fa84f',
 })
 const DARK = rgbPalette({
   paper: '#171513',
@@ -83,6 +86,7 @@ const DARK = rgbPalette({
   accentDark: '#b9ad9a',
   newFill: '#e5383b',
   rare: '#5ab1ff',
+  uncommon: '#5ccf7d',
 })
 
 export const gamePalette = (dark: boolean): GamePalette =>
@@ -162,6 +166,8 @@ export type GameFrameKind =
   | 'cardPicked'
   | 'cardRare'
   | 'cardRarePicked'
+  | 'cardUncommon'
+  | 'cardUncommonPicked'
   | 'button'
   | 'buttonOff'
   | 'buttonSoft'
@@ -182,6 +188,8 @@ export const GAME_FRAME_INSET: Record<GameFrameKind, number> = {
   cardPicked: 5,
   cardRare: 5,
   cardRarePicked: 5,
+  cardUncommon: 5,
+  cardUncommonPicked: 5,
   button: 2,
   buttonOff: 2,
   buttonSoft: 2,
@@ -219,6 +227,13 @@ export function gameFrame(
     case 'cardRarePicked':
       drawBox(b, 0, 0, w, h, [p.rare, p.rare], null, 2)
       drawBox(b, 2, 2, w - 4, h - 4, [p.rare], p.card, 1)
+      break
+    case 'cardUncommon':
+      drawBox(b, 2, 2, w - 4, h - 4, [p.uncommon], p.card, 1)
+      break
+    case 'cardUncommonPicked':
+      drawBox(b, 0, 0, w, h, [p.uncommon, p.uncommon], null, 2)
+      drawBox(b, 2, 2, w - 4, h - 4, [p.uncommon], p.card, 1)
       break
     case 'button':
       drawBox(

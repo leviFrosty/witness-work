@@ -29,6 +29,7 @@ import { richTextHasMark } from '@/lib/richText/inspect'
 import type { HelpEntry } from '@/features/updates/types/helpCenter'
 import { alignInput, alignText } from '@/lib/direction'
 import { postScriptName } from '@/lib/postScriptName'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 const ReportLinks = () => {
   const theme = useTheme()
@@ -76,9 +77,17 @@ const ReportLinks = () => {
   )
 }
 
-const CARD_PADDING = Platform.select({ android: 4, default: 20 })
+const CARD_PADDING = Platform.select({
+  ios: { vertical: 16, horizontal: inputLayout.horizontalPadding },
+  android: { vertical: 4, horizontal: 4 },
+  default: { vertical: 4, horizontal: 0 },
+})
+const COLLAPSIBLE_CONTENT_INSET = Platform.select({ ios: 0, default: 32 })
 const CONTENT_INSET =
-  2 + CARD_PADDING * 2 + Platform.select({ android: 32, default: 0 })
+  2 + CARD_PADDING.horizontal * 2 + COLLAPSIBLE_CONTENT_INSET
+
+export const FAQ_TEXT_INSET =
+  1 + CARD_PADDING.horizontal + COLLAPSIBLE_CONTENT_INSET / 2
 
 export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
   const theme = useTheme()
@@ -105,7 +114,14 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
 
   return (
     <View
-      style={[cardStyle, { flexShrink: 1, padding: CARD_PADDING }]}
+      style={[
+        cardStyle,
+        {
+          flexShrink: 1,
+          paddingVertical: CARD_PADDING.vertical,
+          paddingHorizontal: CARD_PADDING.horizontal,
+        },
+      ]}
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     >
       {}

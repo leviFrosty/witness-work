@@ -31,6 +31,7 @@ import {
   FAQSearch,
   FAQItem,
   FAQSupport,
+  FAQ_TEXT_INSET,
 } from '@/features/updates/components/FAQContent'
 import FAQTopics, {
   FAQTopic,
@@ -41,8 +42,13 @@ import useFAQSearch from '@/features/updates/hooks/useFAQSearch'
 import useHelpCenter from '@/features/updates/hooks/useHelpCenter'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
+import {
+  BriefHighlightOverlay,
+  useBriefHighlight,
+} from '@/components/ui/BriefHighlight'
 
 const LAYOUT_SETTLE_MS = 150
+const HIGHLIGHT_DELAY_MS = 400
 
 const FAQScreen = () => {
   const theme = useTheme()
@@ -121,6 +127,13 @@ const FAQScreen = () => {
       setSearch('')
     }
   }, [targetCategory])
+
+  const { progress: highlight, play: playHighlight } = useBriefHighlight()
+  useEffect(() => {
+    if (!targetCategory) return
+    const timer = setTimeout(playHighlight, HIGHLIGHT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [targetCategory, playHighlight])
 
   useEffect(() => {
     userScrolledRef.current = false
@@ -307,18 +320,27 @@ const FAQScreen = () => {
                   gap: 20,
                 }}
               >
-                <Text
-                  accessibilityRole='header'
-                  style={{
-                    paddingHorizontal: 15,
-                    fontSize: theme.fontSize('xl'),
-                    fontFamily: theme.fonts.bold,
-                  }}
-                >
-                  {isSearching
-                    ? i18n.t('faq_allHeader')
-                    : faqTopicTitle(selectedTopic, categories)}
-                </Text>
+                <View>
+                  <Text
+                    accessibilityRole='header'
+                    style={{
+                      paddingHorizontal: 15,
+                      fontSize: theme.fontSize('xl'),
+                      fontFamily: theme.fonts.bold,
+                    }}
+                  >
+                    {isSearching
+                      ? i18n.t('faq_allHeader')
+                      : faqTopicTitle(selectedTopic, categories)}
+                  </Text>
+                  {!isSearching && selectedTopic === targetCategory && (
+                    <BriefHighlightOverlay
+                      progress={highlight}
+                      borderRadius={theme.numbers.borderRadiusSm}
+                      style={{ top: -4, bottom: -4, left: 5, right: 5 }}
+                    />
+                  )}
+                </View>
                 {!isSearching && selectedTopic === 'support'
                   ? support
                   : results}
@@ -372,7 +394,7 @@ const FAQScreen = () => {
                     <Text
                       accessibilityRole='header'
                       style={{
-                        paddingHorizontal: 20,
+                        paddingHorizontal: FAQ_TEXT_INSET,
                         fontFamily: theme.fonts.semiBold,
                         color: theme.colors.textAlt,
                       }}
@@ -387,7 +409,7 @@ const FAQScreen = () => {
                 <Text
                   accessibilityRole='header'
                   style={{
-                    paddingHorizontal: 35,
+                    paddingHorizontal: 15 + FAQ_TEXT_INSET,
                     fontFamily: theme.fonts.semiBold,
                     color: theme.colors.textAlt,
                   }}
@@ -407,16 +429,25 @@ const FAQScreen = () => {
                           scrollToTargetCategory()
                       }}
                     >
-                      <Text
-                        accessibilityRole='header'
-                        style={{
-                          paddingHorizontal: 20,
-                          fontFamily: theme.fonts.semiBold,
-                          color: theme.colors.textAlt,
-                        }}
-                      >
-                        {title}
-                      </Text>
+                      <View>
+                        <Text
+                          accessibilityRole='header'
+                          style={{
+                            paddingHorizontal: FAQ_TEXT_INSET,
+                            fontFamily: theme.fonts.semiBold,
+                            color: theme.colors.textAlt,
+                          }}
+                        >
+                          {title}
+                        </Text>
+                        {category === targetCategory && (
+                          <BriefHighlightOverlay
+                            progress={highlight}
+                            borderRadius={theme.numbers.borderRadiusSm}
+                            style={{ top: -6, bottom: -6 }}
+                          />
+                        )}
+                      </View>
                       {entries.map((entry) => (
                         <FAQItem key={entry.id} entry={entry} />
                       ))}

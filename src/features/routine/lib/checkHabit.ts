@@ -11,10 +11,13 @@ import { habitLabel } from '@/lib/routine/labels'
 import { planProgress } from '@/lib/routine/readingPlans'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
-import useRoutine from '@/stores/routine'
+import useRoutine, { type CheckOptions } from '@/stores/routine'
 import { toast } from '@/stores/toasts'
 import type { ReadingPlanRun, RoutineHabit } from '@/types/routine'
-import { celebratePlan } from '@/features/routine/stores/planCelebration'
+import {
+  celebratePlan,
+  endPlanCelebration,
+} from '@/features/routine/stores/planCelebration'
 import { recordRoutineCheck } from '@/features/routine/stores/routineDayLog'
 
 export function activePlan(): ReadingPlanRun | null {
@@ -44,26 +47,42 @@ function finishIfDone(run: ReadingPlanRun, today: string): boolean {
 const label = (habit: RoutineHabit) =>
   habitLabel(habit, usePreferences.getState().worshipKind)
 
-function checkToday(habit: RoutineHabit, today: string, readAhead = false) {
+function undoCheck(
+  habit: RoutineHabit,
+  day: string,
+  { run, portion }: CheckOptions,
+  finishedRun: string | null
+) {
+  const routine = useRoutine.getState()
+  const undone =
+    run !== undefined && portion !== undefined
+      ? routine.uncheckPortion(day, run, portion)
+      : routine.uncheck(habit, day)
+  if (!undone) return
+  if (finishedRun && routine.reopenPlan(finishedRun)) endPlanCelebration()
+  void Haptics.light().catch(() => {})
+}
+
+function checkToday(habit: RoutineHabit, today: string, undoable = false) {
   const run = habit === 'bibleReading' ? activePlan() : null
   const next = run
     ? planProgress(run, useRoutine.getState().routineEntries).next
     : null
   const earned = measureReward('routine')
-  const checked = useRoutine
-    .getState()
-    .check(
-      habit,
-      today,
-      run && next ? { run: run.id, portion: next.index } : {}
-    )
-  if (!checked) return
+  const options: CheckOptions =
+    run && next ? { run: run.id, portion: next.index } : {}
+  if (!useRoutine.getState().check(habit, today, options)) return
   const finished = run ? finishIfDone(run, today) : false
   const accessory = earned()
-  if (!readAhead || accessory || finished)
-    toast.success(i18n.t('routine.home.checked', { habit: label(habit) }), {
+  const title = i18n.t('routine.home.checked', { habit: label(habit) })
+  if (undoable)
+    toast.undo({
+      title,
       accessory,
+      onUndo: () =>
+        undoCheck(habit, today, options, finished && run ? run.id : null),
     })
+  else toast.success(title, { accessory })
   if (!accessory) void Haptics.light().catch(() => {})
   recordRoutineCheck(habit, today, false)
 }
@@ -115,5 +134,5 @@ export function toggleHabit({
   else checkEarlier(habit, day, today)
 }
 
-export const readNextPortion = (today: string) =>
+export const markPortionRead = (today: string) =>
   checkToday('bibleReading', today, true)

@@ -10,7 +10,7 @@ import ReadingPlanBlock from '@/features/routine/components/ReadingPlanBlock'
 import ReadingPlanSheet from '@/features/routine/components/ReadingPlanSheet'
 import RoutineHabitCard from '@/features/routine/components/RoutineHabitCard'
 import useRoutineToday from '@/features/routine/hooks/useRoutineToday'
-import { readNextPortion, toggleHabit } from '@/features/routine/lib/checkHabit'
+import { markPortionRead, toggleHabit } from '@/features/routine/lib/checkHabit'
 
 export default function RoutineScreen() {
   const theme = useTheme()
@@ -45,10 +45,7 @@ export default function RoutineScreen() {
                       plan={plan}
                       entries={entries}
                       today={today}
-                      onRead={() =>
-                        toggleHabit({ habit, day: today, today, done: false })
-                      }
-                      onReadNext={() => readNextPortion(today)}
+                      onRead={() => markPortionRead(today)}
                       onChoosePlan={() => setPlanSheetOpen(true)}
                     />
                   </View>

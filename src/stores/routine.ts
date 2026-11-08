@@ -39,6 +39,16 @@ const tombstone = (record: { id: string; updatedAt: number }) => ({
   deletedAt: syncTimestamp(record.updatedAt),
 })
 
+const withoutEntry = (state: State, existing: RoutineEntry) => ({
+  routineEntries: state.routineEntries.filter(
+    (entry) => entry.id !== existing.id
+  ),
+  deletedRoutineRecords: [
+    ...state.deletedRoutineRecords.filter((t) => t.id !== existing.id),
+    tombstone(existing),
+  ],
+})
+
 export type CheckOptions = {
   run?: string
 
@@ -104,14 +114,35 @@ export const useRoutine = create(
         const existing = get().routineEntries.find((entry) => entry.id === id)
         if (!existing) return false
         if (!isWeeklyHabit(habit) && existing.on !== day) return false
+        set((state) => withoutEntry(state, existing))
+        return true
+      },
+
+      uncheckPortion: (day: string, run: string, portion: number): boolean => {
+        const id = routineEntryId('bibleReading', day)
+        const existing = get().routineEntries.find((entry) => entry.id === id)
+        if (
+          !existing ||
+          existing.on !== day ||
+          existing.run !== run ||
+          !existing.portions?.includes(portion)
+        )
+          return false
+        const portions = existing.portions.filter((p) => p !== portion)
+        if (portions.length === 0) {
+          set((state) => withoutEntry(state, existing))
+          return true
+        }
         set((state) => ({
-          routineEntries: state.routineEntries.filter(
-            (entry) => entry.id !== id
+          routineEntries: state.routineEntries.map((entry) =>
+            entry.id === id
+              ? {
+                  ...entry,
+                  portions,
+                  updatedAt: stampFor(state, id, entry.updatedAt),
+                }
+              : entry
           ),
-          deletedRoutineRecords: [
-            ...state.deletedRoutineRecords.filter((t) => t.id !== id),
-            tombstone(existing),
-          ],
         }))
         return true
       },
@@ -157,6 +188,19 @@ export const useRoutine = create(
                 }
               : plan
           ),
+        }))
+        return true
+      },
+
+      reopenPlan: (id: string): boolean => {
+        const run = get().readingPlans.find((plan) => plan.id === id)
+        if (!run?.finishedOn) return false
+        set((state) => ({
+          readingPlans: state.readingPlans.map((plan) => {
+            if (plan.id !== id) return plan
+            const { finishedOn: _finishedOn, ...open } = plan
+            return { ...open, updatedAt: stampFor(state, id, plan.updatedAt) }
+          }),
         }))
         return true
       },

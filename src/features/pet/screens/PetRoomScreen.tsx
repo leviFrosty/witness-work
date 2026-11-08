@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { Platform, ScrollView, useWindowDimensions, View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
+import { useReducedMotion } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Button from '@/components/ui/Button'
@@ -20,6 +21,8 @@ import { WALL_RGB } from '@/features/pet/art'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import GameColorSwatches from '@/features/pet/components/GameColorSwatches'
 import GameColorTray from '@/features/pet/components/GameColorTray'
+import HatPreviewTray from '@/features/pet/components/HatPreviewTray'
+import { hatReactions } from '@/features/pet/lib/hatReactions'
 import {
   GameButton,
   GameIconButton,
@@ -195,6 +198,7 @@ export default function PetRoomScreen({
   }, [hasPet, focused, navigation])
 
   const sceneRef = useRef<PetSceneHandle>(null)
+  const reduceMotion = useReducedMotion()
   const entrancePending = usePetSession((s) => s.entrance !== null)
   const visits = useShownPetVisits(realVisits)
   useEffect(() => {
@@ -229,6 +233,7 @@ export default function PetRoomScreen({
       .getState()
       .updateRoom(roomChoicePatch(room, part, option), state.roomDefaults)
     analytics.capture('pet_room_changed', { part, option, from: 'room' })
+    if (hatReactions(`${part}:${option}`).length > 0) sceneRef.current?.hatPat()
   }
 
   const setLive = (live: boolean) => {
@@ -499,7 +504,24 @@ export default function PetRoomScreen({
             const all = cards(section)
             const at = section.owned.indexOf(section.current)
             const tray =
-              section.part === 'wallPattern' && colorTray(at % columns)
+              (section.part === 'wallPattern' && colorTray(at % columns)) ||
+              (at >= 0 &&
+                !reduceMotion &&
+                hatReactions(`${section.part}:${section.current}`).length >
+                  0 && (
+                  <HatPreviewTray
+                    hat={section.current}
+                    hatName={roomOptionLabel(section.part, section.current)}
+                    petName={scene.name}
+                    scene={sceneRef}
+                    from='room'
+                    column={at % columns}
+                    cardWidth={cardWidth}
+                    cardGap={CARD_GAP}
+                    gap={SECTION_ROW_GAP}
+                    palette={palette}
+                  />
+                ))
             const split = tray
               ? (Math.floor(at / columns) + 1) * columns
               : all.length

@@ -199,6 +199,7 @@ export const analyticsEventNames = [
   'pet_details_opened',
   'pet_intro_closed',
   'pet_prompt_answered',
+  'pet_hat_preview_played',
   'pet_item_bought',
   'pet_room_changed',
   'pet_room_item_unlocked',

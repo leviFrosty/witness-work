@@ -21,9 +21,13 @@ by its owner.
    part (620–1,100) and five rare ones (1,200–3,200). `ITEM_PRICES` holds them
    like any other item, in whole tens, so `storedPrice` stays exact.
 2. **Rare hats have a blue frame on their item card**, in the Shop and the
-   details, and nothing extra in the room: the effect is the point there.
+   details, and nothing extra in the room: the effect is the point there. The
+   eleven with one moving part are `uncommon` in the code, with a green frame.
 3. **A rare hat moves, changes the room, and answers you**, with its own
-   reaction to a pat and to new coins.
+   reaction to a pat and to new coins. Selecting any hat that reacts plays its
+   pat reaction, and buttons under its card play each one, since nobody saves
+   for what they can't see. The lighthouse and planetarium dim the room for 2 seconds on new
+   coins by day, or their flash and shooting stars wouldn't show.
 4. **Hats never read the hearts or the streak.** They look the same for a pet
    that's doing well and one that isn't, and a hidden streak changes nothing. The
    Mailbox and the fig tree read days out instead, and the lamp keeps following

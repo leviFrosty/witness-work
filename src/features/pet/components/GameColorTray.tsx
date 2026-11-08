@@ -2,6 +2,13 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import { GameFrame, gamePixelScale } from '@/features/pet/components/GamePixels'
+import type { ItemRarity } from '@/features/pet/lib/prices'
+
+const PICKED_FRAME = {
+  common: 'cardPicked',
+  uncommon: 'cardUncommonPicked',
+  rare: 'cardRarePicked',
+} as const
 
 const NOTCH_PT = 10
 
@@ -13,6 +20,7 @@ export default function GameColorTray({
   cardGap,
   gap,
   palette,
+  rarity = 'common',
   children,
 }: {
   column: number | null
@@ -22,6 +30,8 @@ export default function GameColorTray({
 
   gap: number
   palette: GamePalette
+
+  rarity?: ItemRarity
   children: ReactNode
 }) {
   const scale = gamePixelScale()
@@ -32,7 +42,13 @@ export default function GameColorTray({
   )
   const center =
     column === null ? 0 : column * (cardWidth + cardGap) + cardWidth / 2
-  const ring = cssColor(palette.accent)
+  const ring = cssColor(
+    rarity === 'rare'
+      ? palette.rare
+      : rarity === 'uncommon'
+        ? palette.uncommon
+        : palette.accent
+  )
   return (
     <View style={column === null ? null : { marginTop: NOTCH_PT - gap }}>
       {column !== null && (
@@ -62,7 +78,7 @@ export default function GameColorTray({
         </View>
       )}
       <GameFrame
-        kind={column === null ? 'card' : 'cardPicked'}
+        kind={column === null ? 'card' : PICKED_FRAME[rarity]}
         palette={palette}
         style={{ paddingHorizontal: 12, paddingVertical: 10, gap: 4 }}
       >

@@ -5648,6 +5648,14 @@
       "owned": "Owned",
       "allOwned": "You own all of these",
       "rare": "Rare",
+      "uncommon": "Uncommon",
+      "hatPreview": {
+        "title": "See it react",
+        "pat": "Pat",
+        "coins": "New coins",
+        "patA11y": "Show how {{item}} reacts when you pat {{name}}",
+        "coinsA11y": "Show how {{item}} reacts to new coins"
+      },
       "hatNote": {
         "mailbox": "The flag goes up on days you go out.",
         "cuckoo": "Shows your real time and calls on the hour. Pat your pet to make it call.",

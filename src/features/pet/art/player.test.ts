@@ -92,6 +92,19 @@ describe('scene player', () => {
     expect(ended).toBe('twirl')
   })
 
+  it('plays a hat reaction without patting the pet', () => {
+    const hat: PlayerInput = { ...INPUT, room: { ...INPUT.room, hat: 'train' } }
+    const quiet = createScenePlayer()
+    const previewed = createScenePlayer()
+    previewed.hatPat(1000)
+    const frame = previewed.frame(hat, 1500)
+    expect(frame.say).toBeNull()
+    expect(frame.hearts).toBe(false)
+    expect(hashBuffer(frame.buffer)).not.toBe(
+      hashBuffer(quiet.frame(hat, 1500).buffer)
+    )
+  })
+
   it('cheers with a happy sound, but not mid-motion', () => {
     const p = createScenePlayer()
     p.cheer(0)

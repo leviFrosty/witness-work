@@ -232,6 +232,20 @@ export const RARE_HAT_IDS = [
 ] as const
 export type RareHatId = (typeof RARE_HAT_IDS)[number]
 
+export const UNCOMMON_HAT_IDS = [
+  'propeller',
+  'snail',
+  'mailbox',
+  'nest',
+  'frog',
+  'hive',
+  'cottage',
+  'cloud',
+  'cuckoo',
+  'mini',
+  'balloon',
+] as const
+
 export const BIG_HAT_IDS = [
   'toast',
   'acorn',
@@ -244,17 +258,7 @@ export const BIG_HAT_IDS = [
   'umbrella',
   'books',
   'dropped',
-  'propeller',
-  'snail',
-  'mailbox',
-  'nest',
-  'frog',
-  'hive',
-  'cottage',
-  'cloud',
-  'cuckoo',
-  'mini',
-  'balloon',
+  ...UNCOMMON_HAT_IDS,
   ...RARE_HAT_IDS,
 ] as const
 export type BigHatId = (typeof BIG_HAT_IDS)[number]
@@ -284,17 +288,7 @@ export const HAT_IDS = [
   'umbrella',
   'books',
   'dropped',
-  'propeller',
-  'snail',
-  'mailbox',
-  'nest',
-  'frog',
-  'hive',
-  'cottage',
-  'cloud',
-  'cuckoo',
-  'mini',
-  'balloon',
+  ...UNCOMMON_HAT_IDS,
   ...RARE_HAT_IDS,
   ...SECRET_HAT_IDS,
 ] as const

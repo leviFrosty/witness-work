@@ -8,7 +8,7 @@ import {
 } from '@/types/pet'
 import { ROOM_TABS } from '@/features/pet/lib/roomOptions'
 import { FAKE_WALLETS } from '@/features/pet/lib/fakeWallet'
-import { isRareItem, ITEM_PRICES, priceOf } from '@/features/pet/lib/prices'
+import { itemRarity, ITEM_PRICES, priceOf } from '@/features/pet/lib/prices'
 import {
   shopItemState,
   SHOP_TABS,
@@ -55,12 +55,20 @@ describe('Shop prices', () => {
   it('lists hats cheapest first, and only the top five are rare', () => {
     const hats = HAT_UNLOCK_ORDER.map((item) => priceOf(item)!)
     expect(hats).toEqual([...hats].sort((a, b) => a - b))
-    expect(HAT_UNLOCK_ORDER.filter(isRareItem)).toEqual(
-      HAT_UNLOCK_ORDER.slice(-5)
-    )
+    const rare = (item: string) => itemRarity(item) === 'rare'
+    expect(HAT_UNLOCK_ORDER.filter(rare)).toEqual(HAT_UNLOCK_ORDER.slice(-5))
     expect(priceOf(HAT_UNLOCK_ORDER.at(-5)!)).toBe(1200)
-    expect(isRareItem('hat:tophat')).toBe(false)
-    expect(isRareItem('floor:tile')).toBe(false)
+    expect(itemRarity('hat:tophat')).toBe('common')
+    expect(itemRarity('floor:tile')).toBe('common')
+  })
+
+  it('makes the eleven moving hats just below the rare ones uncommon', () => {
+    const uncommon = HAT_UNLOCK_ORDER.filter(
+      (item) => itemRarity(item) === 'uncommon'
+    )
+    expect(uncommon).toEqual(HAT_UNLOCK_ORDER.slice(-16, -5))
+    expect(uncommon[0]).toBe('hat:propeller')
+    expect(uncommon.at(-1)).toBe('hat:balloon')
   })
 
   it('sells the study corner, with nothing in it to start', () => {

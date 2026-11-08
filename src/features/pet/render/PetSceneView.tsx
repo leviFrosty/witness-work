@@ -76,6 +76,8 @@ export type PetSceneHandle = {
   cheer: () => void
   coinsEarned: () => void
 
+  hatPat: () => void
+
   rub: () => void
   endRub: () => void
 
@@ -329,6 +331,10 @@ export default function PetSceneView({
     },
     coinsEarned: () => {
       scene.player.coinsEarned(now())
+      scene.loop.kick()
+    },
+    hatPat: () => {
+      scene.player.hatPat(now())
       scene.loop.kick()
     },
     rub: () => touch(true),

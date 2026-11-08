@@ -23,6 +23,21 @@ export const roomSectionLabel = (part: RoomChoicePart): string | null =>
 export const roomOptionLabel = (part: RoomChoicePart, option: string): string =>
   i18n.t(`pet.room.option.${part}.${option}` as TranslationKey)
 
+const HAT_NOTES: ReadonlySet<string> = new Set([
+  'mailbox',
+  'cuckoo',
+  'bowl',
+  'lighthouse',
+  'train',
+  'dome',
+  'fig',
+])
+
+export const hatNoteOf = (hat: string): string | null =>
+  HAT_NOTES.has(hat)
+    ? i18n.t(`pet.shop.hatNote.${hat}` as TranslationKey)
+    : null
+
 export const coinsText = (amount: number): string =>
   i18n.t('pet.currency.coin' as TranslationKey, { count: amount })
 

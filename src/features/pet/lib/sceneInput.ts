@@ -9,6 +9,7 @@ import type {
 } from '@/types/pet'
 import {
   resolveRoom,
+  type HatLife,
   type PlayerInput,
   type SceneVisitor,
   type SignData,
@@ -82,6 +83,7 @@ export type PetSceneArgs = {
 
   visits: readonly PetVisit[]
   roll: PetVisitRoll
+  hatLife?: HatLife
   override?: PetDevOverride | null
 }
 
@@ -107,6 +109,8 @@ export function petSceneInput(args: PetSceneArgs): {
   const visitors: SceneVisitor[] = args.visits.map(({ pet }) => ({
     species: pet.species,
     coat: pet.coat,
+    hat: pet.hat,
+    hatGrowth: pet.hatGrowth,
   }))
   const shown: PetMomentsShown = {
     rainbow: shouldShowRainbow(args.life, window),
@@ -128,6 +132,10 @@ export function petSceneInput(args: PetSceneArgs): {
         seed: petSeed(args.pet),
       },
       visitors,
+      hatLife:
+        o.hatGrowth === undefined
+          ? args.hatLife
+          : { ...args.hatLife, growth: o.hatGrowth },
       moments: {
         rainbow: shown.rainbow,
         paradise: shown.paradise,

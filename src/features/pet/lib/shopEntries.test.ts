@@ -78,13 +78,14 @@ describe('pickedEntry', () => {
     )[0].entries
 
   it('opens on the first item still for sale, past what’s owned', () => {
-    const entries = hats(['hat:bow', 'hat:cap'])
-    expect(entries.slice(0, 3).map((entry) => entry.item)).toEqual([
+    const entries = hats(['hat:bow', 'hat:toast', 'hat:cap'])
+    expect(entries.slice(0, 4).map((entry) => entry.item)).toEqual([
       'hat:bow',
+      'hat:toast',
       'hat:cap',
-      'hat:beanie',
+      'hat:acorn',
     ])
-    expect(pickedEntry(entries, null)?.item).toBe('hat:beanie')
+    expect(pickedEntry(entries, null)?.item).toBe('hat:acorn')
   })
 
   it('keeps what was asked for, even once it’s bought', () => {

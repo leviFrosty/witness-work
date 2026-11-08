@@ -81,16 +81,43 @@ export function pickedEntry(
 const SCENE_W = 180
 const SCENE_H = 100
 
+const HAT_RISE: Readonly<Record<string, number>> = {
+  bowl: 22,
+  mailbox: 19,
+  cottage: 18,
+  cloud: 19,
+  cuckoo: 19,
+  lighthouse: 28,
+  fig: 34,
+  balloon: 38,
+}
+
+const HEAD_ROW = 57
+
+const FIG_RISE = [11, 15, 21, 25, 30, 34] as const
+
+const hatTopRow = (option?: string, growth?: number): number | null => {
+  const rise =
+    option === 'fig' && growth !== undefined
+      ? FIG_RISE[growth]
+      : option && HAT_RISE[option]
+  return rise ? HEAD_ROW - rise - 2 : null
+}
+
 export function shopThumbView(
   part: RoomChoicePart,
   w: number,
-  h: number
+  h: number,
+  option?: string,
+  growth?: number
 ): Viewport {
   const [x, y, vw, vh] = ROOM_THUMB_VIEWS[part]
   const width = Math.min(SCENE_W, Math.max(1, w))
   const height = Math.min(SCENE_H, Math.max(1, h))
   const left = Math.round(x + vw / 2 - width / 2)
-  const top = Math.round(y + vh / 2 - height / 2)
+  const hatTop = part === 'hat' ? hatTopRow(option, growth) : null
+  const centred = Math.round(y + vh / 2 - height / 2)
+  const top = hatTop === null ? centred : Math.min(centred, hatTop)
   return [
     Math.max(0, Math.min(SCENE_W - width, left)),
     Math.max(0, Math.min(SCENE_H - height, top)),
@@ -109,9 +136,16 @@ const PREVIEW_TOP: Record<ShopTab, number> = {
   study: 30,
 }
 
-export const shopPreviewView = (tab: ShopTab): Viewport => [
+export const shopPreviewView = (
+  tab: ShopTab,
+  option?: string,
+  growth?: number
+): Viewport => [
   12,
-  PREVIEW_TOP[tab],
+  Math.min(
+    PREVIEW_TOP[tab],
+    (tab === 'hat' && hatTopRow(option, growth)) || 100
+  ),
   156,
   56,
 ]

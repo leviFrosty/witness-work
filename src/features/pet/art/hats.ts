@@ -10,7 +10,7 @@ import {
   type Shape,
   type ShapeSpec,
 } from '@/lib/pixelArt'
-import type { HatId } from '@/types/pet'
+import { BIG_HAT_IDS, type BigHatId, type HatId } from '@/types/pet'
 
 import {
   dome,
@@ -22,6 +22,13 @@ import {
   HAT_W,
   rect,
 } from './hatShapes'
+import { BIG_HAT_BRIM_ROW, BIG_HAT_CX } from './hatCanvas'
+import {
+  bigHatFrame,
+  bigHatRest,
+  FULL_GROWTH,
+  type HatMoment,
+} from './hatsLive'
 import { WHIMSY_HAT_SPECS } from './hatsWhimsy'
 import { WORLD_HAT_SPECS } from './hatsWorld'
 import { SPRITE_SIZE } from './layout'
@@ -422,13 +429,17 @@ const SHORT_SPECS = {
 type ShortHatId = keyof typeof SHORT_SPECS
 
 const TALL_SPECS: Readonly<
-  Record<Exclude<HatId, 'none' | ShortHatId>, ShapeSpec>
+  Record<Exclude<HatId, 'none' | ShortHatId | BigHatId>, ShapeSpec>
 > = { ...WORLD_HAT_SPECS, ...WHIMSY_HAT_SPECS }
+
+const BIG_HATS: ReadonlySet<string> = new Set(BIG_HAT_IDS)
+
+export const isBigHat = (hat: string): hat is BigHatId => BIG_HATS.has(hat)
 
 const isShortHat = (hat: string): hat is ShortHatId =>
   Object.hasOwn(SHORT_SPECS, hat)
 
-function drawHat(hat: Exclude<HatId, 'none'>): PixelBuffer {
+function drawHat(hat: Exclude<HatId, 'none' | BigHatId>): PixelBuffer {
   if (!isShortHat(hat))
     return rasterize(TALL_SPECS[hat as keyof typeof TALL_SPECS], HAT_W, HAT_H)
   const out = createBuffer(HAT_W, HAT_H)
@@ -436,28 +447,54 @@ function drawHat(hat: Exclude<HatId, 'none'>): PixelBuffer {
   return out
 }
 
-const cache = createLru<PixelBuffer>(64)
+const cache = createLru<PixelBuffer>(128)
 
 export function hatSprite(
   hat: string,
-  opts: { readonly flip?: boolean; readonly grey?: GreyMode } = {}
+  opts: {
+    readonly flip?: boolean
+    readonly grey?: GreyMode
+    readonly growth?: number
+  } = {}
 ): PixelBuffer | null {
-  if (!isShortHat(hat) && !Object.hasOwn(TALL_SPECS, hat)) return null
+  const big = isBigHat(hat)
+  if (!big && !isShortHat(hat) && !Object.hasOwn(TALL_SPECS, hat)) return null
   const grey = opts.grey ?? 'none'
-  return cache.getOrCreate(`${hat}|${opts.flip ? 1 : 0}|${grey}`, () => {
-    let px = drawHat(hat as Exclude<HatId, 'none'>)
-    if (opts.flip) px = flipH(px)
-    return greyed(px, grey)
-  })
+  const growth = opts.growth ?? FULL_GROWTH
+  return cache.getOrCreate(
+    `${hat}|${opts.flip ? 1 : 0}|${grey}|${big ? growth : ''}`,
+    () => {
+      let px = big
+        ? bigHatRest(hat, growth)
+        : drawHat(hat as Exclude<HatId, 'none' | BigHatId>)
+      if (opts.flip) px = flipH(px)
+      return greyed(px, grey)
+    }
+  )
+}
+
+export function hatFrame(
+  hat: BigHatId,
+  moment: HatMoment,
+  opts: { readonly flip?: boolean; readonly grey?: GreyMode } = {}
+): PixelBuffer {
+  let px = bigHatFrame(hat, moment)
+  if (opts.flip) px = flipH(px)
+  return opts.grey && opts.grey !== 'none' ? greyed(px, opts.grey) : px
 }
 
 export function hatOrigin(
   species: PetSpeciesId,
   origin: readonly [number, number],
-  bob: number
+  bob: number,
+  hat = 'none'
 ): [number, number] {
+  const big = isBigHat(hat)
   return [
-    origin[0] + SPRITE_SIZE / 2 - HAT_CX,
-    origin[1] + HAT_ANCHOR_Y[species] + bob - HAT_BRIM_ROW,
+    origin[0] + SPRITE_SIZE / 2 - (big ? BIG_HAT_CX : HAT_CX),
+    origin[1] +
+      HAT_ANCHOR_Y[species] +
+      bob -
+      (big ? BIG_HAT_BRIM_ROW : HAT_BRIM_ROW),
   ]
 }

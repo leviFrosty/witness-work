@@ -53,7 +53,7 @@ export function petVisitorsFor({
     if (!buddy?.pet) return
     const earlier = visitsByInbox.get(inboxId)
     if (earlier && earlier.startMinutes <= startMinutes) return
-    const { species, coat, name } = buddy.pet
+    const { species, coat, name, hat, hatGrowth } = buddy.pet
     visitsByInbox.set(inboxId, {
       inboxId,
 
@@ -63,6 +63,8 @@ export function petVisitorsFor({
         species,
         coat: resolveCoat(species, coat),
         ...(name ? { name } : {}),
+        ...(hat ? { hat } : {}),
+        ...(hatGrowth === undefined ? {} : { hatGrowth }),
       },
       startMinutes,
       activity,

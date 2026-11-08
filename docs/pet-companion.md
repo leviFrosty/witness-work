@@ -137,25 +137,25 @@ purchases are (`lib/currency.ts`).
 
 Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 
-| Part   | Options                                                                               | Starter (free)           |
-| ------ | ------------------------------------------------------------------------------------- | ------------------------ |
-| window | time `live dawn day dusk night` × season `live spring summer autumn winter`           | all                      |
-| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`               | sand, cream; plain, dots |
-| floor  | `wood stone brick tile`                                                               | wood                     |
-| bed    | `rug hay basket cushion`                                                              | rug                      |
-| shelf  | `scrolls books pottery fruit`                                                         | scrolls                  |
-| lamp   | `clay lantern candle stand`                                                           | clay                     |
-| sign   | `none month year shared plan convos`                                                  | all                      |
-| hat    | `none bow cap beanie flowers bucket beret sunhat hardhat fedora cowboy safari tophat` | none                     |
+| Part   | Options                                                                     | Starter (free)           |
+| ------ | --------------------------------------------------------------------------- | ------------------------ |
+| window | time `live dawn day dusk night` × season `live spring summer autumn winter` | all                      |
+| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`     | sand, cream; plain, dots |
+| floor  | `wood stone brick tile`                                                     | wood                     |
+| bed    | `rug hay basket cushion`                                                    | rug                      |
+| shelf  | `scrolls books pottery fruit`                                               | scrolls                  |
+| lamp   | `clay lantern candle stand`                                                 | clay                     |
+| sign   | `none month year shared plan convos`                                        | all                      |
+| hat    | `none`, then 39 to buy (`HAT_IDS`, cheapest first)                          | none                     |
 
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
 - Prices: every non-starter item and hat but `none` has a Shop price (`ITEM_PRICES` in
-  `lib/prices.ts`): 10–30 coins, rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`, and six rare ones
-  at the top of their kind (trellis 22, cushion 22, stand 28, tile 30, safari 32, top hat 36). About
-  570 coins buy everything: about two and a half years for someone out once or twice a week who keeps
-  their Plans with streaks showing; longer without Plans. A purchase keeps what it cost, so prices can be retuned. Starters are free; secrets are found, never
-  sold.
+  `lib/prices.ts`), in the ×10 units of ADR 0038: room items and the first 12 hats 100–360 coins,
+  rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27 big hats (ADR 0044) fill in from 110
+  to 3,200: six cheap ones in the gaps (110–380), silly ones that don't move (400–560), ones with one
+  moving part (620–1,100) and five rare ones (1,200–3,200). A purchase keeps what it cost, so prices
+  can be retuned. Starters are free; secrets are found, never sold.
 - Hats: the pet wears one (or none). Bought hats are stored with the room items (`hat:bow`, …).
 
   A hat sits on the head (`art/hats.ts`: a 24 × 20 picture whose brim row 17 lands on the species'
@@ -163,6 +163,40 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   drawn 24 × 14 and moved down into it, the secret ones use its full height). A pet lying down
   (rolling over, or one that died) has no hat. No party, holiday, halo or wizard hats (JW
   sensitivities below).
+
+  **Big hats** (`BIG_HAT_IDS`, ADR 0044) draw on a 48 × 56 canvas with the brim on row 52
+  (`art/hatCanvas.ts`), so they can rise far above the head: static art in `art/hatsPlain.ts`, frames
+  in `art/hatFrames.ts`, what's on screen at a time in `art/hatsLive.ts`, and what they do to the
+  room in `art/hatRoomFx.ts`. All of it is a pure function of the scene clock, the pet's room and
+  `HatLife`, with no state of its own, so a thumbnail, a share card and the widget just draw `tMs` 0,
+  and so does Reduce Motion. A hat never reads the hearts or the streak. `hatRoomFx` runs after
+  `applyLighting`, so its light glows in a dark room; `subject` keeps stars and water light behind
+  the pet.
+
+  | Hat                 | Moves                                  | Reads                         | Pat                      | New coins      |
+  | ------------------- | -------------------------------------- | ----------------------------- | ------------------------ | -------------- |
+  | `propeller`         | Blades                                 |                               | Lifts off                |                |
+  | `snail`             | Crosses the head in a minute           |                               | Hides in its shell       |                |
+  | `mailbox`           |                                        | A day out today: flag up      | Letter pokes out         | Flag snaps up  |
+  | `nest`              | Chicks take turns                      |                               | All beaks open           |                |
+  | `frog`              | Blinks, breathes, catches a fly        |                               | Hops                     |                |
+  | `hive`              | Bees                                   |                               | Bees speed up            |                |
+  | `cottage`           | Smoke                                  | Dusk or night: lit            |                          |                |
+  | `cloud`             | Rain, drifting                         | Winter: snow                  | Rains harder             |                |
+  | `cuckoo`            | Hands, pendulum                        | The real time                 | Calls                    |                |
+  | `mini`              | Bobs out of step                       | The pet's species, coat       | Hops                     |                |
+  | `balloon`           | Sways on its string                    |                               | A tug on the string      |                |
+  | `bowl` (rare)       | Fish, bubbles, water light on the wall |                               | Sloshes, fish dart       | A fish leaps   |
+  | `lighthouse` (rare) | Lamp, gulls; a beam after dusk         | Dusk or night: dims room      | Two flashes, runs by day | One flash      |
+  | `train` (rare)      | Train loops the hill, steam            |                               | One fast lap             | Wagon heaps up |
+  | `dome` (rare)       | Stars and shooting stars after dusk    | Dusk or night: dims room      | Runs by day              | Shooting stars |
+  | `fig` (rare)        | Falling leaves, a bird                 | Days out since bought, season | A fig drops, bird flies  | New leaves     |
+
+  The room shows run for `SHOW_MS` (14 s) by day after a pat and dim it with an overlay; the lamp
+  itself keeps following the hearts. `fig` grows through six stages at 0, 3, 8, 16, 30 and 50 days out
+  since its purchase (`lib/hatLife.ts`); one not bought yet shows grown in the Shop. Rare hats get a
+  blue card frame in the Shop and the details (`cardRare`, `cardRarePicked`), not in the room.
+  Visitors wear their hats, moving but with no effect on the room.
 
 - Owned = starters ∪ `earnedRoomItems` ∪ `purchases`. `earnedRoomItems` holds found secrets and
   anything opened under the old streak and months rules before the Shop, which stays owned. An owned

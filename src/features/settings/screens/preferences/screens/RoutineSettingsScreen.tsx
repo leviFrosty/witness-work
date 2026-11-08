@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import { BookOpenCheck as BookOpenCheckIcon } from 'lucide-react-native'
 import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 import Section from '@/components/ui/inputs/Section'
@@ -83,6 +84,7 @@ export default function RoutineSettingsScreen() {
           <Group>
             <InputRowSwitch
               label={i18n.t('routine.settings.enabled')}
+              leftIcon={BookOpenCheckIcon}
               info={i18n.t('routine.settings.enabledInfo')}
               value={enabled}
               onValueChange={toggleRoutine}

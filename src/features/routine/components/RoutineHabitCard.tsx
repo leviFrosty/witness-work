@@ -11,6 +11,7 @@ import {
   type RoutineEntry,
   type RoutineHabit,
 } from '@/types/routine'
+import HabitIcon from '@/features/routine/components/HabitIcon'
 import EarlierDays from '@/features/routine/components/EarlierDays'
 
 export const monthCount = (days: readonly string[], today: string): number =>
@@ -38,29 +39,32 @@ export default function RoutineHabitCard({
   const count = monthCount(days, today)
   return (
     <Card style={{ gap: 14 }} testID={`routine-card-${habit}`}>
-      <View style={{ gap: 2 }}>
-        <Text
-          accessibilityRole='header'
-          style={{
-            fontSize: theme.fontSize('lg'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {label}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t(
-            isWeeklyHabit(habit)
-              ? 'routine.screen.weeksThisMonth'
-              : 'routine.screen.daysThisMonth',
-            { count }
-          )}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <HabitIcon habit={habit} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            accessibilityRole='header'
+            style={{
+              fontSize: theme.fontSize('lg'),
+              fontFamily: theme.fonts.semiBold,
+            }}
+          >
+            {label}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t(
+              isWeeklyHabit(habit)
+                ? 'routine.screen.weeksThisMonth'
+                : 'routine.screen.daysThisMonth',
+              { count }
+            )}
+          </Text>
+        </View>
       </View>
       {children}
       <ContributionGraph

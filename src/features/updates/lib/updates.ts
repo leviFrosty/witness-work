@@ -1,8 +1,9 @@
-import { Alert, Platform } from 'react-native'
+import { Alert, AppState, Platform, type AppStateStatus } from 'react-native'
 import {
   checkHotUpdate,
   hasPreparedUpdate,
   hotUpdater,
+  launchRead,
   otaEnabled,
   preparedUpdateId,
   reloadApp,
@@ -22,39 +23,86 @@ type UpdateCheckOutcome =
   | 'offline'
   | 'failed'
   | 'busy'
+const LAUNCH_READ_TIMEOUT_MS = 10_000
+const STARTUP_DELAY_MS = 3_000
+const CHECK_INTERVAL_MS = 4 * 60_000
+
 let checking = false
+let downloadingSelected = false
 let pendingUpdate: Awaited<ReturnType<typeof checkHotUpdate>> = null
-let startupDownload: Promise<void> | undefined
+let backgroundCheck: Promise<void> | undefined
+let lastBackgroundCheckAt = 0
+let reportedBackgroundFailure = false
+let checksStarted = false
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 async function notePreparedUpdate() {
   usePendingUpdate.setState({ bundleId: await preparedUpdateId() })
 }
 
-export function downloadUpdateOnLaunch(): Promise<void> {
-  if (!otaEnabled || startupDownload)
-    return startupDownload ?? Promise.resolve()
-  startupDownload = (async () => {
+export function checkForUpdateInBackground(): Promise<void> {
+  if (backgroundCheck) return backgroundCheck
+  if (!otaEnabled || checking || downloadingSelected || isKnownOffline())
+    return Promise.resolve()
+  lastBackgroundCheckAt = Date.now()
+  backgroundCheck = (async () => {
     try {
       const update = await checkHotUpdate()
       if (update && !(await update.updateBundle()))
-        throw new Error('Could not download the startup update')
+        throw new Error('Could not download the update in the background')
       await notePreparedUpdate()
     } catch (error) {
-      if (!isConnectivityError(error)) errorTracking.captureException(error)
+      if (isConnectivityError(error) || reportedBackgroundFailure) return
+      reportedBackgroundFailure = true
+      errorTracking.captureException(error)
+    } finally {
+      backgroundCheck = undefined
     }
   })()
-  return startupDownload
+  return backgroundCheck
+}
+
+export function startUpdateChecks() {
+  if (!otaEnabled || checksStarted) return
+  checksStarted = true
+
+  const checkIfDue = () => {
+    if (Date.now() - lastBackgroundCheckAt >= CHECK_INTERVAL_MS)
+      void checkForUpdateInBackground()
+  }
+  let interval: ReturnType<typeof setInterval> | undefined
+  const followAppState = (state: AppStateStatus) => {
+    clearInterval(interval)
+    interval = undefined
+    if (state !== 'active') return
+    checkIfDue()
+    interval = setInterval(checkIfDue, CHECK_INTERVAL_MS)
+  }
+
+  void Promise.race([launchRead, wait(LAUNCH_READ_TIMEOUT_MS)])
+    .then(() => wait(STARTUP_DELAY_MS))
+    .then(() => {
+      AppState.addEventListener('change', followAppState)
+      followAppState(AppState.currentState)
+    })
 }
 
 export async function downloadSelectedUpdate(): Promise<boolean> {
-  await startupDownload
-  const update = pendingUpdate ?? (await checkHotUpdate())
-  pendingUpdate = null
-  if (update && !(await update.updateBundle()))
-    throw new Error('Could not prepare update')
+  downloadingSelected = true
+  try {
+    await backgroundCheck
+    const update = pendingUpdate ?? (await checkHotUpdate())
+    pendingUpdate = null
+    if (update && !(await update.updateBundle()))
+      throw new Error('Could not prepare update')
 
-  await notePreparedUpdate()
-  return usePendingUpdate.getState().bundleId !== null
+    await notePreparedUpdate()
+    return usePendingUpdate.getState().bundleId !== null
+  } finally {
+    downloadingSelected = false
+  }
 }
 
 export async function applyPendingUpdate() {
@@ -85,7 +133,7 @@ export const fetchUpdate = async (
   checking = true
 
   try {
-    await startupDownload
+    await backgroundCheck
     const update = await checkHotUpdate()
     if (update?.transitionKind === 'ADOPT_RELEASE') {
       if (!(await update.updateBundle()))

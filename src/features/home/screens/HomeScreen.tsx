@@ -55,6 +55,7 @@ import usePet from '@/stores/pet'
 import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
+import { checkForUpdateInBackground } from '@/features/updates/lib/updates'
 import BuddiesHomeSection from '@/features/buddies/components/BuddiesHomeSection'
 import BuddyStreaks from '@/features/buddies/components/BuddyStreaks'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
@@ -128,6 +129,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
 
   const handleRefresh = () => {
     setRefreshing(true)
+    void checkForUpdateInBackground()
     return pullThenPush().finally(() => setRefreshing(false))
   }
   const { isTablet } = useDevice()

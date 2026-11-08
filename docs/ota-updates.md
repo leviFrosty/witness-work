@@ -21,12 +21,29 @@ three update Workers. It does not publish any app bundle.
 ## Client and native builds
 
 `src/lib/hotUpdater.ts` initializes one SDK instance. Native startup verification
-and rollback belong to the SDK. Release builds check once on launch, download
-in the background and apply on the next cold launch. The app does not restart
-while someone is recording service. Settings → More → Check for update checks
-the latest catalog, including an already staged update; its existing Update
-screen downloads and restarts immediately. Android uses a process restart so
-the SDK can finish native launch verification; iOS reloads in process.
+and rollback belong to the SDK.
+
+Release builds look for an update in the background
+(`startUpdateChecks` in `src/features/updates/lib/updates.ts`):
+
+- 3 seconds after the launch is confirmed, if the app is in the foreground. A
+  launch iOS starts in the background waits until the app opens.
+- When the app returns to the foreground, if the last check was 4 minutes ago or
+  more.
+- Every 4 minutes while the app stays in the foreground.
+- When someone pulls down to refresh on Home.
+
+A check is silent. Whatever it finds downloads straight away and is listed in
+the notification tray with Update Now; otherwise it applies on the next cold
+launch. A check never restarts the app, so it can't interrupt someone recording
+service. A later check doesn't download a staged update again, and a newer
+release replaces it. Only the first failure in a run of the app goes to error
+tracking, so an outage doesn't report on every check.
+
+Settings → More → Check for update checks the latest catalog, including an
+already staged update; its existing Update screen downloads and restarts
+immediately. Android uses a process restart so the SDK can finish native launch
+verification; iOS reloads in process.
 
 ### Test `dev` updates
 
@@ -40,7 +57,7 @@ the same bundle ID and `.env` values, but without Metro:
 pnpm ios:ota                   # or: pnpm android:ota
 # change some JS, then:
 pnpm update:dev ios --message 'Test update'
-# relaunch the app twice, or use Settings → More → Check for update
+# wait for the bell, relaunch the app twice, or use Settings → More → Check for update
 ```
 
 `scripts/with-local-env.mjs` requires the dev `EXPO_PUBLIC_HOT_UPDATER_API_KEY`

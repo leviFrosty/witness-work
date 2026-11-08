@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
   enabled: true,
@@ -10,9 +10,21 @@ const runtime = vi.hoisted(() => ({
   knownOffline: false,
   prepared: false,
   calls: [] as string[],
+  appState: 'active',
+  appStateListeners: [] as ((state: string) => void)[],
+  launchRead: Promise.resolve(),
 }))
 vi.mock('react-native', () => ({
   Alert: { alert: runtime.alert },
+  AppState: {
+    get currentState() {
+      return runtime.appState
+    },
+    addEventListener(_: string, listener: (state: string) => void) {
+      runtime.appStateListeners.push(listener)
+      return { remove: vi.fn() }
+    },
+  },
   Platform: {
     get OS() {
       return runtime.platform
@@ -25,6 +37,9 @@ vi.mock('react-native', () => ({
 vi.mock('@/lib/hotUpdater', () => ({
   get otaEnabled() {
     return runtime.enabled && !__DEV__
+  },
+  get launchRead() {
+    return runtime.launchRead
   },
   checkHotUpdate: runtime.check,
   hasPreparedUpdate: async () => runtime.prepared,
@@ -53,7 +68,7 @@ vi.mock('@/lib/http/online', () => ({
 import { usePendingUpdate } from '@/features/updates/stores/pendingUpdate'
 import {
   applyPendingUpdate,
-  downloadUpdateOnLaunch,
+  checkForUpdateInBackground,
   fetchUpdate,
 } from './updates'
 
@@ -165,13 +180,13 @@ it('adopts metadata for the running artifact without requesting a restart', asyn
   expect(navigate).not.toHaveBeenCalled()
 })
 
-it('lists an update the launch check downloaded in the tray', async () => {
+it('lists an update a background check downloaded in the tray', async () => {
   const updateBundle = vi.fn().mockImplementation(async () => {
     runtime.prepared = true
     return true
   })
   runtime.check.mockResolvedValue({ transitionKind: 'INSTALL', updateBundle })
-  await downloadUpdateOnLaunch()
+  await checkForUpdateInBackground()
   expect(updateBundle).toHaveBeenCalledOnce()
   expect(usePendingUpdate.getState().bundleId).toBe('staged')
 })
@@ -192,4 +207,162 @@ it('sends Update Now before the restart can drop it', async () => {
   )
   await applyPendingUpdate()
   expect(runtime.calls).toEqual(['pending_update_applied', 'flush', 'reload'])
+})
+
+it('skips a background check while offline or while the Update screen downloads', async () => {
+  runtime.knownOffline = true
+  await checkForUpdateInBackground()
+  expect(runtime.check).not.toHaveBeenCalled()
+  runtime.knownOffline = false
+
+  let finish: (value: boolean) => void = () => {}
+  const updateBundle = vi.fn(
+    () =>
+      new Promise<boolean>((resolve) => {
+        finish = resolve
+      })
+  )
+  runtime.check.mockResolvedValueOnce({ updateBundle })
+  const { downloadSelectedUpdate } = await import('./updates')
+  const download = downloadSelectedUpdate()
+  await vi.waitFor(() => expect(updateBundle).toHaveBeenCalledOnce())
+  await checkForUpdateInBackground()
+  expect(runtime.check).toHaveBeenCalledOnce()
+  finish(true)
+  await download
+})
+
+it('shares one background check between callers', async () => {
+  let finish: (value: null) => void = () => {}
+  runtime.check.mockReturnValueOnce(
+    new Promise((resolve) => {
+      finish = resolve
+    })
+  )
+  const first = checkForUpdateInBackground()
+  const second = checkForUpdateInBackground()
+  finish(null)
+  await Promise.all([first, second])
+  expect(runtime.check).toHaveBeenCalledOnce()
+})
+
+describe('background check failures', () => {
+  beforeEach(() => vi.resetModules())
+
+  it('stay silent and report once per run', async () => {
+    const { checkForUpdateInBackground: check } = await import('./updates')
+    runtime.check.mockRejectedValue(new Error('stale catalog'))
+    await check()
+    await check()
+    expect(runtime.check).toHaveBeenCalledTimes(2)
+    expect(runtime.captureException).toHaveBeenCalledOnce()
+    expect(runtime.alert).not.toHaveBeenCalled()
+  })
+
+  it('never report a lost connection', async () => {
+    const { checkForUpdateInBackground: check } = await import('./updates')
+    runtime.check.mockRejectedValue(
+      new Error('The Internet connection appears to be offline.')
+    )
+    await check()
+    expect(runtime.captureException).not.toHaveBeenCalled()
+  })
+})
+
+describe('startUpdateChecks', () => {
+  const MINUTE = 60_000
+  const changeAppState = (state: string) => {
+    runtime.appState = state
+    runtime.appStateListeners.forEach((listener) => listener(state))
+  }
+  const startChecks = async () => {
+    vi.resetModules()
+    const { startUpdateChecks } = await import('./updates')
+    startUpdateChecks()
+    return startUpdateChecks
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    runtime.appState = 'active'
+    runtime.appStateListeners = []
+    runtime.launchRead = Promise.resolve()
+  })
+
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+  })
+
+  it('checks once the launch is confirmed, not before', async () => {
+    let confirmLaunch = () => {}
+    runtime.launchRead = new Promise((resolve) => {
+      confirmLaunch = resolve
+    })
+    const start = await startChecks()
+    start()
+    await vi.advanceTimersByTimeAsync(9_000)
+    expect(runtime.check).not.toHaveBeenCalled()
+    confirmLaunch()
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(runtime.check).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(runtime.check).toHaveBeenCalledOnce()
+  })
+
+  it('still checks when the launch is never confirmed', async () => {
+    runtime.launchRead = new Promise(() => {})
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(13_000)
+    expect(runtime.check).toHaveBeenCalledOnce()
+  })
+
+  it('polls every 4 minutes in the foreground', async () => {
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(3_000)
+    expect(runtime.check).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(4 * MINUTE)
+    expect(runtime.check).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(4 * MINUTE)
+    expect(runtime.check).toHaveBeenCalledTimes(3)
+  })
+
+  it('stops polling in the background and checks on return once due', async () => {
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(3_000)
+    changeAppState('background')
+    await vi.advanceTimersByTimeAsync(30 * MINUTE)
+    expect(runtime.check).toHaveBeenCalledTimes(1)
+    changeAppState('active')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(runtime.check).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not check on a quick return to the app', async () => {
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(3_000)
+    changeAppState('background')
+    await vi.advanceTimersByTimeAsync(MINUTE)
+    changeAppState('active')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(runtime.check).toHaveBeenCalledTimes(1)
+  })
+
+  it('waits for the app to open after a launch in the background', async () => {
+    runtime.appState = 'background'
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(60 * MINUTE)
+    expect(runtime.check).not.toHaveBeenCalled()
+    changeAppState('active')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(runtime.check).toHaveBeenCalledOnce()
+  })
+
+  it('does nothing in a build without OTA', async () => {
+    runtime.enabled = false
+    await startChecks()
+    await vi.advanceTimersByTimeAsync(60 * MINUTE)
+    expect(runtime.check).not.toHaveBeenCalled()
+    expect(runtime.appStateListeners).toEqual([])
+  })
 })

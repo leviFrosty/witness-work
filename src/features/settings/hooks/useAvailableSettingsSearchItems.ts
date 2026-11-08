@@ -1,6 +1,7 @@
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import { calendarSyncSupported } from '../../../../modules/calendar-bridge'
+import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import usePublisher from '@/hooks/usePublisher'
 import { useScribeOffered } from '@/hooks/useScribeEnabled'
 import { hasCapability } from '@/lib/platformCapabilities'
@@ -22,6 +23,7 @@ export default function useAvailableSettingsSearchItems() {
   const mileage = usePreferences((s) => s.mileageTrackingEnabled === true)
   const pet = usePet((s) => s.pet !== null)
   const routineOn = usePreferences((s) => s.routineEnabled === true)
+  const buddies = useBuddiesEnabled()
   const dataProtection = usePreferences((s) => s.dataProtectionMode)
   const { entryMode, canAdjustCreditLimit, showsTimeEntry, monthlyGoalHours } =
     usePublisher('standing')
@@ -42,6 +44,7 @@ export default function useAvailableSettingsSearchItems() {
     timeRollover: showsTimeEntry,
     mileage,
     routineOn,
+    buddies,
     dataProtection,
     deviceNotifications: hasCapability('deviceNotifications'),
     haptics: hasCapability('haptics'),

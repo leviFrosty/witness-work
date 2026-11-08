@@ -298,6 +298,7 @@ export const analyticsEventNames = [
   'help_center_refreshed',
   'help_center_search_completed',
   'settings_search_completed',
+  'notification_settings_opened',
 
   'update_required_shown',
   'update_required_store_opened',

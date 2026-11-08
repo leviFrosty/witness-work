@@ -19,7 +19,7 @@ Shared Cars lets up to 10 people keep one car's mileage together, end to end enc
 
 ## How to get to it (user POV)
 
-- Home → the Mileage card (or Progress, or Settings → Preferences → Publisher → Mileage) → Mileage. Mileage Settings (the header's gear) → a car → People.
+- Home → the Mileage card (or Progress, or Settings → Profile → Mileage) → Mileage. Mileage Settings (the header's gear) → a car → People.
 - Home → the bell → a Shared Car invitation → Join. A "joined" entry opens that car's People.
 - Mileage → a trip → Trip Details. Mileage → Log Trip → Car and Note.
 - Mileage Settings → Delete All Mileage Data….

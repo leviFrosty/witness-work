@@ -38,6 +38,7 @@ const everything: SettingsSearchAvailability = {
   timeRollover: true,
   mileage: true,
   routineOn: true,
+  buddies: true,
   dataProtection: true,
   deviceNotifications: true,
   haptics: true,
@@ -129,13 +130,42 @@ describe('settings search registry', () => {
       (item) => item.id === 'followUpOffset'
     )!
     expect(settingsSearchLocation(followUp)).toEqual([
-      'Preferences',
+      'Features',
       'Conversations',
     ])
     const page = SETTINGS_SEARCH_ITEMS.find(
       (item) => item.id === 'page:PreferencesConversation'
     )!
-    expect(settingsSearchLocation(page)).toEqual(['Preferences'])
+    expect(settingsSearchLocation(page)).toEqual(['Features'])
+  })
+})
+
+describe('notification settings', () => {
+  it('finds every notification setting on one top-level page', () => {
+    expect(settingsSearchPath('PreferencesNotifications')).toEqual([
+      'PreferencesNotifications',
+    ])
+    const onPage = SETTINGS_SEARCH_ITEMS.filter(
+      (item) => item.page === 'PreferencesNotifications' && !('isPage' in item)
+    ).map((item) => item.id)
+    expect(onPage).toEqual([
+      'planAlwaysNotify',
+      'planNotification',
+      'conversationAlwaysNotify',
+      'conversationNotification',
+      'weekPlanReminder',
+      'unloggedDayReminder',
+      'monthReportReminder',
+      'streakReminders',
+      'routineReminder',
+      'buddiesNotifications',
+      'backupReminder',
+    ])
+  })
+
+  it('finds Buddies alerts by the words on their rows', () => {
+    expect(ids('ask to join')).toContain('buddiesNotifications')
+    expect(ids('badge alerts')).toContain('buddiesNotifications')
   })
 })
 
@@ -161,7 +191,8 @@ describe('settings search on the web', () => {
       'streakReminders',
       'routineReminder',
       'backupReminder',
-      'page:PreferencesBackups',
+      'buddiesNotifications',
+      'page:PreferencesNotifications',
       'haptics',
       'checkForUpdate',
       'page:PreferencesWidgets',

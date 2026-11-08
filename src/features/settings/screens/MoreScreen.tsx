@@ -28,7 +28,7 @@ import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { toast } from '@/stores/toasts'
 import { logger } from '@/lib/logger'
-import AppPreferencesSection from '@/features/settings/components/preferences-sections/AppPreferencesSection'
+import AppPreferencesSection from '@/features/settings/preferences/general/AppPreferencesSection'
 
 const MoreScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()

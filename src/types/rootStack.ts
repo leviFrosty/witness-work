@@ -152,7 +152,7 @@ export type RootStackParamList = {
   PreferencesTabOrder: undefined
   PreferencesHomeScreen: undefined
   PreferencesScheduleScreen: undefined
-  PreferencesBackups: undefined
+  PreferencesNotifications: undefined
   PreferencesAppearance: undefined
   PreferencesPersonalization: undefined
   PreferencesWidgets: undefined

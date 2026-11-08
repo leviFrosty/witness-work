@@ -1,4 +1,5 @@
 import {
+  Bell as BellIcon,
   BookOpenCheck as BookOpenCheckIcon,
   Cloud as CloudIcon,
   KeyRound as KeyRoundIcon,
@@ -50,6 +51,15 @@ const PreferencesSection = ({
             label={i18n.t('syncSettingsTitle')}
             onPress={() => handleNavigate('PreferencesiCloud')}
             selected={selectedDestination === 'PreferencesiCloud'}
+          />
+        )}
+        {hasCapability('deviceNotifications') && (
+          <GroupedListRow
+            icon={BellIcon}
+            label={i18n.t('notifications')}
+            onPress={() => handleNavigate('PreferencesNotifications')}
+            selected={selectedDestination === 'PreferencesNotifications'}
+            testID='settings-notifications'
           />
         )}
         <GroupedListRow

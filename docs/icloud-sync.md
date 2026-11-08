@@ -451,7 +451,7 @@ switching, `components/CloudSyncDefault.tsx`).
 | `src/app/sync/definitionReconciliation.ts`, `src/lib/contactRetention.ts`             | Legacy repair and deleted-detail expiry                     |
 | `src/app/sync/imageSync.ts`, `imageSources.ts`, `src/lib/syncTransport/imageNames.ts` | Photo transfer, reference guards, cleanup policy            |
 | `src/app/notifications/useReconciledReminders.ts`                                     | Local reminder reconciliation on iOS and Android            |
-| `src/features/settings/screens/preferences/screens/PreferencesiCloudScreen.tsx`       | Settings and recovery controls                              |
+| `src/features/settings/preferences/sync/PreferencesiCloudScreen.tsx`                  | Settings and recovery controls                              |
 | `src/features/onboarding/components/steps/iCloudRestore.tsx`                          | Onboarding one-shot restore                                 |
 | `modules/icloud-bridge/ios/ICloudBridgeModule.swift`                                  | Coordinated iCloud IO and metadata query                    |
 

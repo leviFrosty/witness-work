@@ -23,7 +23,7 @@ test('Schedule', async ({ app, shot }) => {
 
 test('Settings', async ({ app, shot }) => {
   await app.getByRole('button', { name: 'Settings', exact: true }).click()
-  await expect(app.getByText('Preferences', { exact: true })).toBeVisible()
+  await expect(app.getByText('Features', { exact: true })).toBeVisible()
   await shot('settings')
 })
 

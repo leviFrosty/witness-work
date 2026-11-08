@@ -11,6 +11,7 @@ export type SettingsSearchPage =
       | 'Account'
       | 'PreferencesiCloud'
       | 'PreferencesPersonalization'
+      | 'PreferencesNotifications'
       | 'RoutineSettings'
       | 'Preferences'
       | 'Security'
@@ -39,7 +40,6 @@ export type SettingsSearchPage =
       | 'PreferencesRewards'
       | 'PreferencesWidgets'
       | 'PreferencesPrivacy'
-      | 'PreferencesBackups'
       | 'PreferencesColorKey'
       | 'PreferencesAppIcon'
     >
@@ -61,6 +61,7 @@ export type SettingsSearchRequirement =
   | 'timeRollover'
   | 'mileage'
   | 'routineOn'
+  | 'buddies'
   | 'dataProtection'
   | 'deviceNotifications'
   | 'haptics'
@@ -82,6 +83,7 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   PreferencesPublisher: { title: 'profile' },
   Account: { title: 'account_title' },
   PreferencesiCloud: { title: 'syncSettingsTitle' },
+  PreferencesNotifications: { title: 'notifications' },
   PreferencesPersonalization: { title: 'personalization' },
   RoutineSettings: { title: 'routine.title' },
   Preferences: { title: 'preferences' },
@@ -157,10 +159,6 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   },
   PreferencesPrivacy: {
     title: 'privacy',
-    parent: 'Preferences',
-  },
-  PreferencesBackups: {
-    title: 'backups',
     parent: 'Preferences',
   },
   PreferencesColorKey: {
@@ -291,6 +289,88 @@ export const SETTINGS_SEARCH_ITEMS = [
     requires: ['deviceSync'],
   }),
 
+  page('PreferencesNotifications', {
+    keywords: 'settingsSearch.keywords.notifications',
+    requires: ['deviceNotifications'],
+  }),
+  {
+    id: 'planAlwaysNotify',
+    title: 'planAlwaysNotify',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'planNotification',
+    title: 'settingsSearch.titles.planNotification',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'conversationAlwaysNotify',
+    title: 'notificationSettings_followUpAlwaysNotify',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'conversationNotification',
+    title: 'settingsSearch.titles.conversationNotification',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'weekPlanReminder',
+    title: 'weekPlanReminder',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'unloggedDayReminder',
+    title: 'unloggedDayReminders',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'monthReportReminder',
+    title: 'monthReportReminders',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reportReminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'streakReminders',
+    title: 'streakReminders',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+  {
+    id: 'routineReminder',
+    title: 'settingsSearch.titles.routineReminder',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['routineOn', 'deviceNotifications'],
+  },
+  {
+    id: 'buddiesNotifications',
+    title: 'notificationSettings_buddiesAll',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.buddiesNotifications',
+    requires: ['buddies', 'deviceNotifications'],
+  },
+  {
+    id: 'backupReminder',
+    title: 'remindMeToBackup',
+    page: 'PreferencesNotifications',
+    keywords: 'settingsSearch.keywords.reminder',
+    requires: ['deviceNotifications'],
+  },
+
   page('PreferencesPersonalization'),
   {
     id: 'colorScheme',
@@ -322,15 +402,8 @@ export const SETTINGS_SEARCH_ITEMS = [
   page('PreferencesAppIcon', { requires: ['ios'] }),
 
   page('RoutineSettings', { keywords: 'settingsSearch.keywords.routine' }),
-  {
-    id: 'routineReminder',
-    title: 'settingsSearch.titles.routineReminder',
-    page: 'RoutineSettings',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['routineOn', 'deviceNotifications'],
-  },
 
-  page('Preferences'),
+  page('Preferences', { keywords: 'settingsSearch.keywords.features' }),
   page('PreferencesAppearance', {
     keywords: 'settingsSearch.keywords.regionAndFormats',
   }),
@@ -371,40 +444,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.followUp',
   },
   {
-    id: 'conversationNotification',
-    title: 'settingsSearch.titles.conversationNotification',
-    page: 'PreferencesConversation',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
-  },
-  {
-    id: 'conversationAlwaysNotify',
-    title: 'alwaysNotify',
-    page: 'PreferencesConversation',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
-  },
-  {
     id: 'autoFillAddress',
     title: 'autoFillAddressFromLastContact',
     page: 'PreferencesConversation',
   },
 
   page('PreferencesPlans'),
-  {
-    id: 'planNotification',
-    title: 'settingsSearch.titles.planNotification',
-    page: 'PreferencesPlans',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
-  },
-  {
-    id: 'planAlwaysNotify',
-    title: 'planAlwaysNotify',
-    page: 'PreferencesPlans',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
-  },
   {
     id: 'meetingDays',
     title: 'routine.meetings.title',
@@ -415,27 +460,6 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: 'availability',
     title: 'availability.settingsRow',
     page: 'PreferencesPlans',
-  },
-  {
-    id: 'unloggedDayReminder',
-    title: 'unloggedDayReminders',
-    page: 'PreferencesPlans',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
-  },
-  {
-    id: 'monthReportReminder',
-    title: 'monthReportReminders',
-    page: 'PreferencesPlans',
-    keywords: 'settingsSearch.keywords.reportReminder',
-    requires: ['deviceNotifications'],
-  },
-  {
-    id: 'weekPlanReminder',
-    title: 'weekPlanReminder',
-    page: 'PreferencesPlans',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
   },
 
   page('PreferencesCalendar', {
@@ -473,13 +497,6 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: 'showStreak',
     title: 'streaks_showSetting',
     page: 'PreferencesStreaksAndBadges',
-  },
-  {
-    id: 'streakReminders',
-    title: 'streakReminders',
-    page: 'PreferencesStreaksAndBadges',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
   },
   {
     id: 'showBadges',
@@ -525,15 +542,6 @@ export const SETTINGS_SEARCH_ITEMS = [
     title: 'anonymousAnalytics',
     page: 'PreferencesPrivacy',
     keywords: 'settingsSearch.keywords.analytics',
-  },
-
-  page('PreferencesBackups', { requires: ['deviceNotifications'] }),
-  {
-    id: 'backupReminder',
-    title: 'remindMeToBackup',
-    page: 'PreferencesBackups',
-    keywords: 'settingsSearch.keywords.reminder',
-    requires: ['deviceNotifications'],
   },
 
   page('Security', { keywords: 'settingsSearch.keywords.appLock' }),

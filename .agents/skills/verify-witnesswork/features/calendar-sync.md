@@ -4,7 +4,7 @@ Users publish all their upcoming Follow-ups to a calendar in their device's cale
 
 ## Sub-features
 
-- `calendar-connect` connects from Preferences → Calendar Sync ("Choose a calendar" → "Continue" → pick an existing calendar, or "Create WitnessWork calendar on this device" on Android).
+- `calendar-connect` connects from Features → Calendar Sync ("Choose a calendar" → "Continue" → pick an existing calendar, or "Create WitnessWork calendar on this device" on Android).
 - `calendar-quick-connect` is the one-tap **Add to Calendar** in the onboarding `calendarSync` step and the notifications-tray invitation ("Follow-ups in Your Calendar").
 - `calendar-publish` adds, updates (reschedule, Notify Me alert, names and addresses) and removes events (dismissed or deleted Visit, deleted contact). Past Follow-ups aren't added.
 - `calendar-turn-off` keeps or removes WitnessWork events; "Reconnect <calendar>" appears afterwards.
@@ -14,7 +14,7 @@ Users publish all their upcoming Follow-ups to a calendar in their device's cale
 
 ## How to get to it (user POV)
 
-- Settings → Preferences → Calendar Sync.
+- Settings → Features → Calendar Sync.
 - Onboarding, after the notifications step.
 - The bell on Home → "Follow-ups in Your Calendar" → "Add to Calendar" (only until answered), or "Calendar updates paused" while updates fail.
 

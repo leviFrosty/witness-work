@@ -78,16 +78,16 @@ devSupporterNudgeForceShow: false,                    // non-syncable, __DEV__ o
 
 ## Files
 
-| File                                                                                     | Purpose                                                                     |
-| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `src/stores/preferences.ts`                                                              | The nudge preferences above                                                 |
-| `src/lib/syncPreferencePolicy.ts`                                                        | Keeps `devSupporterNudgeForceShow` device-local                             |
-| `src/features/supporter/lib/supporterNudge.ts`                                           | Pure `isSupporterNudgeEligible(...)` predicate; unit-testable without React |
-| `src/features/supporter/hooks/useSupporterNotifications.ts`                              | Stamps the intro grace and builds the tray item (or the survey invitation)  |
-| `src/app/notifications/NotificationsBell.tsx`                                            | Lists the supporter items in the notifications tray                         |
-| `src/features/settings/components/preferences-sections/HomeScreenPreferencesSection.tsx` | "Hide supporter reminders" switch next to `hideDonateHeart`                 |
-| `src/app/navigation/ToolsScreen.tsx`                                                     | Dev "Force-show nudge" switch and "Reset nudge dismissal" button            |
-| `src/__tests__/supporterNudge.test.ts`                                                   | Predicate tests                                                             |
+| File                                                                                 | Purpose                                                                     |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `src/stores/preferences.ts`                                                          | The nudge preferences above                                                 |
+| `src/lib/syncPreferencePolicy.ts`                                                    | Keeps `devSupporterNudgeForceShow` device-local                             |
+| `src/features/supporter/lib/supporterNudge.ts`                                       | Pure `isSupporterNudgeEligible(...)` predicate; unit-testable without React |
+| `src/features/supporter/hooks/useSupporterNotifications.ts`                          | Stamps the intro grace and builds the tray item (or the survey invitation)  |
+| `src/app/notifications/NotificationsBell.tsx`                                        | Lists the supporter items in the notifications tray                         |
+| `src/features/settings/preferences/home-and-layout/HomeScreenPreferencesSection.tsx` | "Hide supporter reminders" switch next to `hideDonateHeart`                 |
+| `src/app/navigation/ToolsScreen.tsx`                                                 | Dev "Force-show nudge" switch and "Reset nudge dismissal" button            |
+| `src/__tests__/supporterNudge.test.ts`                                               | Predicate tests                                                             |
 
 ## Dev affordances
 

@@ -151,7 +151,7 @@ async function recordUntilUploaded(app: Page, ingest: Ingest) {
 async function openPrivacy(app: Page) {
   await tab(app, 'Home').click()
   await tab(app, 'Settings').click()
-  await app.getByText('Preferences', { exact: true }).first().click()
+  await app.getByText('Features', { exact: true }).first().click()
   await app.getByText(en.privacy, { exact: true }).first().click()
   await expect(app.getByText(en.anonymousAnalytics)).toBeVisible()
 }

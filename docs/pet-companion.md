@@ -108,7 +108,7 @@ purchases are (`lib/currency.ts`).
   plays in); a single small line lets taps through. With no tally on screen (the toast left, a
   checkbox has none) it lands in a tally of its own. The gain is marked seen
   (`petSeen.markEarnedSeen`), so Home doesn't play it again.
-- **Settings → Preferences → Rewards** (`PreferencesRewardsScreen`, shown with a pet):
+- **Settings → Features → Rewards** (`PreferencesRewardsScreen`, shown with a pet):
   `rewardAnimations` (on by default; off, the toast shows a plain "+N" chip) and `rewardSounds`
   (Hex's sound sets: `signature` by default, `classic`, `click`, `soft`, `wood`, `analog`, `thock`,
   or `off`; each previews when picked, and a retired or unknown set plays the default), both synced,
@@ -264,7 +264,7 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 - **Pet Settings** (route `PetSettings`, `src/app/pet/PetSettingsScreen.tsx`), from the cog in the
   details: Name and Change pet (each showing its value; they open Rename and the picker), Show on
   Home, Rewards (the reward animations switch, the sound sets in a two-column grid that previews each one, and
-  Play a sample; the same settings as Settings → Preferences → Rewards), and with Buddies,
+  Play a sample; the same settings as Settings → Features → Rewards), and with Buddies,
   Buddies' Pets (whether they visit, for everyone and per buddy).
 - **The game look.** Every pet screen past the Home card is game-themed, like the Shop: washi
   paper, hinoki frames, sumi ink and pixel icons, light and dark (`art/gameUi.ts`,

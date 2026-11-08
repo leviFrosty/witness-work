@@ -40,6 +40,7 @@ const sessionEvents = new Set([
   'web_install_banner_shown',
   'help_center_search_completed',
   'settings_search_completed',
+  'notification_settings_opened',
   'mileage_person_filter_used',
 ])
 

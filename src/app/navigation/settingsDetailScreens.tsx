@@ -14,8 +14,7 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'Preferences',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/PreferencesScreen')
-        .default,
+      require('@/features/settings/preferences/PreferencesScreen').default,
     title: () => i18n.t('preferences'),
   },
   {
@@ -57,112 +56,112 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'PreferencesPublisher',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesPublisherScreen')
+      require('@/features/settings/preferences/profile/PreferencesPublisherScreen')
         .default,
     title: () => i18n.t('profileEditTitle'),
   },
   {
     name: 'PreferencesCalendar',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesCalendarScreen')
+      require('@/features/settings/preferences/plans/PreferencesCalendarScreen')
         .default,
     title: () => i18n.t('calendarSync'),
   },
   {
     name: 'PreferencesConversation',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesConversationScreen')
+      require('@/features/settings/preferences/contacts/PreferencesConversationScreen')
         .default,
     title: () => i18n.t('conversations'),
   },
   {
     name: 'PreferencesPlans',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesPlansScreen')
+      require('@/features/settings/preferences/plans/PreferencesPlansScreen')
         .default,
     title: () => i18n.t('plans'),
   },
   {
     name: 'PreferencesStreaksAndBadges',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesStreaksAndBadgesScreen')
+      require('@/features/settings/preferences/streaks-and-rewards/PreferencesStreaksAndBadgesScreen')
         .default,
     title: () => i18n.t('streaksAndBadges'),
   },
   {
     name: 'PreferencesCustomFields',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesCustomFieldsScreen')
+      require('@/features/settings/preferences/contacts/PreferencesCustomFieldsScreen')
         .default,
     title: () => i18n.t('contactFields'),
   },
   {
     name: 'PreferencesConversationFields',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesConversationFieldsScreen')
+      require('@/features/settings/preferences/contacts/PreferencesConversationFieldsScreen')
         .default,
     title: () => i18n.t('conversationFields'),
   },
   {
     name: 'PreferencesNavigation',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesNavigationScreen')
+      require('@/features/settings/preferences/map/PreferencesNavigationScreen')
         .default,
     title: () => i18n.t('navigation'),
   },
   {
     name: 'PreferencesAudioAndHaptics',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesAudioAndHapticsScreen')
+      require('@/features/settings/preferences/general/PreferencesAudioAndHapticsScreen')
         .default,
     title: () => i18n.t('audioAndHaptics'),
   },
   {
     name: 'PreferencesRewards',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesRewardsScreen')
+      require('@/features/settings/preferences/streaks-and-rewards/PreferencesRewardsScreen')
         .default,
     title: () => i18n.t('rewards'),
   },
   {
     name: 'RoutineSettings',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/RoutineSettingsScreen')
+      require('@/features/settings/preferences/routine/RoutineSettingsScreen')
         .default,
     title: () => i18n.t('routine.title'),
   },
   {
     name: 'PreferencesTabOrder',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesTabOrderScreen')
+      require('@/features/settings/preferences/home-and-layout/PreferencesTabOrderScreen')
         .default,
     title: () => i18n.t('tabOrder'),
   },
   {
     name: 'PreferencesHomeScreen',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesHomeScreen')
+      require('@/features/settings/preferences/home-and-layout/PreferencesHomeScreen')
         .default,
     title: () => i18n.t('homeScreen'),
   },
   {
     name: 'PreferencesScheduleScreen',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesScheduleScreen')
+      require('@/features/settings/preferences/plans/PreferencesScheduleScreen')
         .default,
     title: () => i18n.t('milestoneSecondary_schedule_title'),
   },
   {
-    name: 'PreferencesBackups',
+    name: 'PreferencesNotifications',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesBackupsScreen')
+      require('@/features/settings/preferences/notifications/PreferencesNotificationsScreen')
         .default,
-    title: () => i18n.t('backups'),
+    title: () => i18n.t('notifications'),
   },
   {
     name: 'PreferencesAppearance',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesAppearanceScreen')
+      require('@/features/settings/preferences/general/PreferencesAppearanceScreen')
         .default,
     title: () => i18n.t('regionAndFormats'),
   },
@@ -223,21 +222,21 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'PreferencesPersonalization',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesPersonalizationScreen')
+      require('@/features/settings/preferences/personalization/PreferencesPersonalizationScreen')
         .default,
     title: () => i18n.t('personalization'),
   },
   {
     name: 'PreferencesWidgets',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesWidgetsScreen')
+      require('@/features/settings/preferences/home-and-layout/PreferencesWidgetsScreen')
         .default,
     title: () => i18n.t('widgets'),
   },
   {
     name: 'PreferencesPrivacy',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesPrivacyScreen')
+      require('@/features/settings/preferences/general/PreferencesPrivacyScreen')
         .default,
     title: () => i18n.t('privacy'),
   },
@@ -250,35 +249,35 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
   {
     name: 'PreferencesiCloud',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesiCloudScreen')
+      require('@/features/settings/preferences/sync/PreferencesiCloudScreen')
         .default,
     title: () => i18n.t('syncSettingsTitle'),
   },
   {
     name: 'PreferencesiCloudDevices',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesiCloudDevicesScreen')
+      require('@/features/settings/preferences/sync/PreferencesiCloudDevicesScreen')
         .default,
     title: () => i18n.t('iCloudDevices'),
   },
   {
     name: 'PreferencesAppIcon',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesAppIconScreen')
+      require('@/features/settings/preferences/personalization/PreferencesAppIconScreen')
         .default,
     title: () => i18n.t('appIconScreenTitle'),
   },
   {
     name: 'PreferencesMap',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesMapScreen')
+      require('@/features/settings/preferences/map/PreferencesMapScreen')
         .default,
     title: () => i18n.t('mapSettings_title'),
   },
   {
     name: 'PreferencesColorKey',
     getComponent: () =>
-      require('@/features/settings/screens/preferences/screens/PreferencesColorKeyScreen')
+      require('@/features/settings/preferences/personalization/PreferencesColorKeyScreen')
         .default,
     title: () => i18n.t('colorKeyScreenTitle'),
   },

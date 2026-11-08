@@ -2065,7 +2065,7 @@ export default function ToolsScreen() {
         <ToolSection title={i18n.t('data')} icon={BracesIcon}>
           <View style={{ gap: 8, paddingTop: 8 }}>
             <JsonViewer
-              label={i18n.t('preferences')}
+              label='Preferences'
               value={preferences}
               count={Object.keys(preferences).length}
             />

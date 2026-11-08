@@ -16,11 +16,13 @@ const timeOfDay = (minutes: number): Date => {
 }
 
 export default function RoutineReminderFields({
+  label,
   enabled,
   time,
   onEnabledChange,
   onTimeChange,
 }: {
+  label?: string
   enabled: boolean
   time: number
   onEnabledChange: (enabled: boolean) => void
@@ -29,7 +31,7 @@ export default function RoutineReminderFields({
   return (
     <>
       <InputRowSwitch
-        label={i18n.t('routine.reminder.label')}
+        label={label ?? i18n.t('routine.reminder.label')}
         info={i18n.t('routine.reminder.info')}
         value={enabled}
         onValueChange={onEnabledChange}

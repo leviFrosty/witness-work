@@ -38,7 +38,7 @@ MMKV's binary format isn't readable from Swift, so JS computes a small derived *
 | `src/features/contacts/lib/linking.ts`                                           | React Navigation linking config, including the widget URL contract.                                                                   |
 | `src/lib/contactStaleness.ts`                                                    | `getContactStaleness()` + `stalenessToColor()` — shared between in-app pin colors and the contacts widget dot.                        |
 | `src/features/visits/screens/RescheduleVisitScreen.tsx`                          | Modal sheet for overdue follow-ups, reachable from `witnesswork://reschedule/:contactId/:visitId`.                                    |
-| `src/features/settings/screens/preferences/screens/PreferencesWidgetsScreen.tsx` | Settings > Widgets — single source of truth for sort, action, and window. Pushes into snapshot config.                                |
+| `src/features/settings/preferences/home-and-layout/PreferencesWidgetsScreen.tsx` | Settings > Widgets — single source of truth for sort, action, and window. Pushes into snapshot config.                                |
 | `src/features/contacts/components/SharedGoodNewsListener.tsx`                    | Reacts to the `shared-good-news` deep link by adding a 0h0m report and playing confetti.                                              |
 | `modules/widget-bridge/`                                                         | Local Expo module exposing `writeSnapshot`, `writeFile`, `pruneFiles`, `reloadAllTimelines`, `getAppGroupIdentifier` to JS. iOS-only. |
 | `targets/widgets/Snapshot.swift`                                                 | Swift mirror of the TS `WidgetSnapshot` schema. Bump `SUPPORTED_VERSION` in lockstep with the TS `SNAPSHOT_VERSION`.                  |
@@ -85,7 +85,7 @@ Widgets show the language chosen in the app, which can differ from the phone's:
 1. Add a new Swift file in `targets/widgets/` (e.g. `MyWidget.swift`). Reuse `SnapshotLoader.load()` and the existing `WidgetSnapshot` model.
 2. Register it in `WidgetsBundle.swift` alongside the existing widgets. Do **not** add `@main` — the bundle owns that.
 3. Use `StaticConfiguration` and `TimelineProvider` (not `IntentConfiguration` / `AppIntentTimelineProvider`). Widget configuration always lives in **Settings > Widgets** and is delivered via `snapshot.config` — there is intentionally no long-press "Edit Widget" UI so users have one place to tune behavior.
-4. If the widget needs user-configurable settings, add the field to `src/stores/preferences.ts`, surface a control in `src/features/settings/components/preferences-sections/WidgetsPreferencesSection.tsx`, add it to `WidgetConfig` in `snapshot.ts`, mirror it in `Snapshot.swift`, and read it from `snapshot.config` in your widget view.
+4. If the widget needs user-configurable settings, add the field to `src/stores/preferences.ts`, surface a control in `src/features/settings/preferences/home-and-layout/WidgetsPreferencesSection.tsx`, add it to `WidgetConfig` in `snapshot.ts`, mirror it in `Snapshot.swift`, and read it from `snapshot.config` in your widget view.
 5. If the widget needs new snapshot data fields, follow the "Adding a field" section above.
 6. Add its gallery name and description to `src/locales/en-US.json`, list the keys under `iosWidgetStrings` in `src/app/watch/watchStringKeys.json`, run `pnpm sync:widget-shared`, and read them with `L10n.t("key")`.
 7. Re-run `pnpm prebuild`.

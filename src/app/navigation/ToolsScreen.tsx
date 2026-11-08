@@ -107,6 +107,7 @@ import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import PetTools from '@/app/navigation/tools/PetTools'
+import WalletTools from '@/app/navigation/tools/WalletTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
 import ToastTools from '@/app/navigation/tools/ToastTools'
 import WebCloudSyncTools from '@/app/navigation/tools/WebCloudSyncTools'
@@ -1274,6 +1275,8 @@ export default function ToolsScreen() {
         <ToastTools />
 
         <PetTools />
+
+        <WalletTools />
 
         <BuddiesTools />
 

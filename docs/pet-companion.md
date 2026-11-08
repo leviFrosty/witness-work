@@ -506,6 +506,10 @@ are), opens every secret item
 and current unlocks and purchases (`state().unlocks`), and plays any motion (`play`, `pat`),
 so every animation can be recorded in the app. See `.agents/skills/verify-witnesswork/features/pet.md`.
 
+Developer Tools → Wallet unlocks the whole Shop and fakes the wallet from 0 to 50,000 coins. The fake
+wallet works in debug and Beta builds so a phone can test the Shop, and production ignores it. The other
+fakes (hearts, gold, secrets) stay debug-only.
+
 PNG tools for drawing and reviewing art, skipped in normal test runs and written to `.verify/`
 (gitignored): `PET_GALLERY=1 pnpm vitest run src/features/pet/art/gallery` (every sprite, part and
 motion), `PET_PREVIEW=<part> pnpm vitest run src/features/pet/art/preview` (one part's options by day

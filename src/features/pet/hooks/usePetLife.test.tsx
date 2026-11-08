@@ -4,12 +4,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => {
   Object.assign(globalThis, { __DEV__: true, IS_REACT_ACT_ENVIRONMENT: true })
-  return { streak: { kind: 'plans' as 'plans' | 'months', count: 0 } }
+  return {
+    streak: { kind: 'plans' as 'plans' | 'months', count: 0 },
+    variant: 'development',
+  }
 })
 
 const unlocks = vi.hoisted(() => ({ announce: vi.fn() }))
 vi.mock('@/features/pet/lib/unlockAnnounce', () => ({
   announcePetUnlocks: unlocks.announce,
+}))
+vi.mock('@/lib/appVariant', () => ({
+  get appVariant() {
+    return runtime.variant
+  },
 }))
 vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock(
@@ -242,5 +250,21 @@ describe('usePetLife wallet', () => {
     mount()
     expect(latest?.wallet).toBe(40)
     expect(usePet.getState().pet?.purchases).toBeUndefined()
+  })
+
+  it.each([
+    ['beta', 40],
+    ['production', 0],
+  ])('in a %s release build shows %i of a 40 coin fake', (variant, wallet) => {
+    vi.stubGlobal('__DEV__', false)
+    runtime.variant = variant
+    try {
+      usePetSession.setState({ devOverride: { wallet: 40 } })
+      mount()
+      expect(latest?.wallet).toBe(wallet)
+    } finally {
+      vi.stubGlobal('__DEV__', true)
+      runtime.variant = 'development'
+    }
   })
 })

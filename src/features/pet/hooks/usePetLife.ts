@@ -49,6 +49,7 @@ import {
   unlockedRoomItems,
 } from '@/features/pet/lib/unlocks'
 import { secretItemsEarnedBy } from '@/features/pet/lib/secretUnlocks'
+import { fakeWalletWorks } from '@/features/pet/lib/fakeWallet'
 import { usePetSession } from '@/features/pet/stores/petSession'
 
 function lastResult<A extends unknown[], R>(fn: (...args: A) => R) {
@@ -184,7 +185,7 @@ export default function usePetLife(): PetLifeState {
   const todayKey = localDayKey(today)
 
   const fakedWallet = usePetSession((s) =>
-    __DEV__ ? s.devOverride?.wallet : undefined
+    fakeWalletWorks() ? s.devOverride?.wallet : undefined
   )
   const fakedSecrets = usePetSession((s) =>
     __DEV__ ? s.devOverride?.secrets === true : false

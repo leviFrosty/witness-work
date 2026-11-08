@@ -9,14 +9,18 @@ import Text from '@/components/ui/MyText'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import type { RoutineHabit } from '@/types/routine'
+import HabitIcon from '@/features/routine/components/HabitIcon'
 
 export default function RoutineHabitRow({
+  habit,
   label,
   detail,
   done,
   onToggle,
   testID,
 }: {
+  habit: RoutineHabit
   label: string
   detail?: string
   done: boolean
@@ -40,14 +44,10 @@ export default function RoutineHabitRow({
         paddingVertical: 8,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
+        gap: 12,
       }}
     >
-      <LucideIcon
-        icon={done ? CircleCheckIcon : CircleIcon}
-        size={26}
-        color={done ? theme.colors.accent : theme.colors.textAlt}
-      />
+      <HabitIcon habit={habit} muted={done} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text
           style={{
@@ -69,6 +69,11 @@ export default function RoutineHabitRow({
           </Text>
         ) : null}
       </View>
+      <LucideIcon
+        icon={done ? CircleCheckIcon : CircleIcon}
+        size={26}
+        color={done ? theme.colors.accent : theme.colors.textAlt}
+      />
     </Button>
   )
 }

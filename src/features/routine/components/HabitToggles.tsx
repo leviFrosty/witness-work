@@ -5,6 +5,7 @@ import {
   type RoutineHabit,
   type WorshipKind,
 } from '@/types/routine'
+import { HABIT_ICONS } from '@/features/routine/lib/habitIcons'
 
 export const toggledHabits = (
   habits: readonly RoutineHabit[],
@@ -32,6 +33,7 @@ export default function HabitToggles({
         <InputRowSwitch
           key={habit}
           label={habitName(habit, worshipKind)}
+          leftIcon={HABIT_ICONS[habit]}
           value={habits.includes(habit)}
           onValueChange={(on) => onToggle(habit, on)}
           lastInSection={lastInSection && index === ROUTINE_HABITS.length - 1}

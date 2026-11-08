@@ -123,15 +123,28 @@ export default function RoutineHomeSection() {
               paddingHorizontal: 20,
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 14,
+              gap: 12,
             }}
             testID='routine-all-done'
           >
-            <LucideIcon
-              icon={CircleCheckIcon}
-              size={26}
-              color={collapsed ? theme.colors.accent : theme.colors.textAlt}
-            />
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: collapsed
+                  ? theme.colors.accentTranslucent
+                  : theme.colors.backgroundLighter,
+              }}
+            >
+              <LucideIcon
+                icon={CircleCheckIcon}
+                size={18}
+                color={collapsed ? theme.colors.accent : theme.colors.textAlt}
+              />
+            </View>
             <Text
               style={{
                 fontSize: theme.fontSize('md'),
@@ -148,6 +161,7 @@ export default function RoutineHomeSection() {
           items.map(({ habit, done }) => (
             <RoutineHabitRow
               key={habit}
+              habit={habit}
               testID={`routine-habit-${habit}`}
               label={habitLabel(habit, routine.worshipKind)}
               detail={itemDetail({

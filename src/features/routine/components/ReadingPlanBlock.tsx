@@ -56,14 +56,12 @@ export default function ReadingPlanBlock({
   entries,
   today,
   onRead,
-  onReadNext,
   onChoosePlan,
 }: {
   plan: ActivePlan | null
   entries: readonly RoutineEntry[]
   today: string
   onRead: () => void
-  onReadNext: () => void
   onChoosePlan: () => void
 }) {
   const theme = useTheme()
@@ -160,7 +158,7 @@ export default function ReadingPlanBlock({
         {doneToday && progress.next ? (
           <ActionButton
             label={i18n.t('routine.screen.readNext')}
-            onPress={onReadNext}
+            onPress={onRead}
             testID='routine-read-next'
           />
         ) : null}

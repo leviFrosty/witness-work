@@ -3,7 +3,7 @@ import { installPerfProbe } from '@/lib/perfProbe'
 import * as Notifications from 'expo-notifications'
 import { errorTracking } from '@/lib/errorTracking'
 import { hotUpdater } from '@/lib/hotUpdater'
-import { downloadUpdateOnLaunch } from '@/features/updates/lib/updates'
+import { startUpdateChecks } from '@/features/updates/lib/updates'
 import { isLayoutDirectionReloadDue } from '@/app/launch/layoutDirection'
 import Constants from 'expo-constants'
 import { LogBox, Platform } from 'react-native'
@@ -67,7 +67,7 @@ export function initializeApp() {
     updateBundleId: hotUpdater.getBundleId(),
   })
 
-  if (!isLayoutDirectionReloadDue()) void downloadUpdateOnLaunch()
+  if (!isLayoutDirectionReloadDue()) startUpdateChecks()
 
   if (__DEV__) {
     require('@/app/dev-harness/installDevHarness').installDevHarness()

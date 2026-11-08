@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({ reloadDue: false }))
-const downloadUpdateOnLaunch = vi.hoisted(() => vi.fn(async () => {}))
+const startUpdateChecks = vi.hoisted(() => vi.fn())
 
 vi.mock('@/app/launch/layoutDirection', () => ({
   isLayoutDirectionReloadDue: () => state.reloadDue,
 }))
-vi.mock('@/features/updates/lib/updates', () => ({ downloadUpdateOnLaunch }))
+vi.mock('@/features/updates/lib/updates', () => ({ startUpdateChecks }))
 vi.mock('@/lib/perf', () => ({ perf: { mark: vi.fn() } }))
 vi.mock('@/lib/perfProbe', () => ({ installPerfProbe: vi.fn() }))
 vi.mock('expo-notifications', () => ({ setNotificationHandler: vi.fn() }))
@@ -53,7 +53,7 @@ import { initializeApp } from './initializeApp'
 beforeEach(() => {
   vi.stubGlobal('__DEV__', false)
   state.reloadDue = false
-  downloadUpdateOnLaunch.mockClear()
+  startUpdateChecks.mockClear()
   promptUnlockAtLaunch.mockClear()
 })
 
@@ -63,14 +63,14 @@ describe('initializeApp', () => {
     expect(promptUnlockAtLaunch).toHaveBeenCalledTimes(1)
   })
 
-  it('downloads an update at launch', () => {
+  it('starts the background update checks at launch', () => {
     initializeApp()
-    expect(downloadUpdateOnLaunch).toHaveBeenCalledTimes(1)
+    expect(startUpdateChecks).toHaveBeenCalledTimes(1)
   })
 
-  it('leaves the download to the launch after a layout-direction reload', () => {
+  it('leaves the update checks to the launch after a layout-direction reload', () => {
     state.reloadDue = true
     initializeApp()
-    expect(downloadUpdateOnLaunch).not.toHaveBeenCalled()
+    expect(startUpdateChecks).not.toHaveBeenCalled()
   })
 })

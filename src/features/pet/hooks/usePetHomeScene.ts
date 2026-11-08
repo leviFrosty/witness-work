@@ -113,6 +113,7 @@ export default function usePetHomeScene(
     else if (command.kind === 'twirl') scene.playTwirl()
     else if (command.kind === 'wake') scene.playWake()
     else if (command.kind === 'cheer') scene.cheer()
+    else if (command.kind === 'coins') scene.coinsEarned()
     else if (command.kind === 'scrub') {
       const end = performance.now() + command.ms
       const timer = setInterval(() => {
@@ -174,6 +175,7 @@ export default function usePetHomeScene(
           keepsakes: pet.keepsakes,
           visits,
           roll,
+          hatLife: state.hatLife,
           override,
         })
       : null
@@ -198,6 +200,15 @@ export default function usePetHomeScene(
     }, GREET_DELAY_MS)
     return () => clearTimeout(timer)
   }, [focused, hasPet])
+
+  const shownCoins = reveal.shown.coins
+  const coinsBefore = useRef({ wallet: state.wallet, shown: shownCoins })
+  useEffect(() => {
+    const before = coinsBefore.current
+    if (state.wallet > before.wallet || shownCoins > before.shown)
+      sceneRef.current?.coinsEarned()
+    coinsBefore.current = { wallet: state.wallet, shown: shownCoins }
+  }, [state.wallet, shownCoins])
 
   const filled = reveal.heart?.up === true && shownHearts === realLife?.hearts
   useEffect(() => {

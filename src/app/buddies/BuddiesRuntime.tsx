@@ -1,3 +1,4 @@
+import { hatGrowthNow } from '@/features/pet/lib/walletNow'
 import { isApplyingRemoteData } from '@/lib/remoteDataMutation'
 import { useEffect } from 'react'
 import { AppState, Platform } from 'react-native'
@@ -29,6 +30,7 @@ import { syncBuddyNotifications } from '@/features/buddies/hooks/useBuddyNotific
 import {
   buddiesEngine,
   currentBuddyPet,
+  setBuddyHatGrowthSource,
   currentBuddyStreak,
   dropRefusedInboxes,
 } from '@/features/buddies/lib/buddiesService'
@@ -390,9 +392,10 @@ export default function BuddiesRuntime() {
         void refreshAvatar().then(schedulePublish)
     })
 
+    setBuddyHatGrowthSource(hatGrowthNow)
     let pet = JSON.stringify(currentBuddyPet() ?? null)
     const petStore = usePet.subscribe((state, previous) => {
-      if (state.pet === previous.pet) return
+      if (state.pet === previous.pet && state.room === previous.room) return
       const next = JSON.stringify(currentBuddyPet() ?? null)
       if (next === pet) return
       pet = next

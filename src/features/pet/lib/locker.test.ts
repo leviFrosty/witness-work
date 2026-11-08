@@ -22,7 +22,7 @@ describe('lockerSections', () => {
     expect(hats.current).toBe('none')
     expect(hats.owned).toEqual(['none', 'cap', 'duck'])
 
-    expect(hats.forSale).toBe(11)
+    expect(hats.forSale).toBe(38)
     expect(hats.nextForSale).toBe('hat:bow')
   })
 

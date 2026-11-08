@@ -8,7 +8,7 @@ import type {
 } from '@/types/pet'
 
 export type PetCommand =
-  | { kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' }
+  | { kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' | 'coins' }
   | { kind: 'pat'; count: number }
   | { kind: 'scrub'; ms: number }
 
@@ -29,6 +29,8 @@ export type PetDevOverride = {
   star?: boolean
   gift?: GiftKind | null
   sill?: GiftKind[]
+
+  hatGrowth?: number
 
   visits?: PetVisit[] | null
 }

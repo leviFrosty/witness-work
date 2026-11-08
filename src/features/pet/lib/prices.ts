@@ -1,4 +1,4 @@
-import type { RoomItemId } from '@/types/pet'
+import { RARE_HAT_IDS, type RoomItemId } from '@/types/pet'
 
 export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'bed:hay': 100,
@@ -37,7 +37,40 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'hat:cowboy': 300,
   'hat:safari': 320,
   'hat:tophat': 360,
+  'hat:toast': 110,
+  'hat:acorn': 130,
+  'hat:leaf': 150,
+  'hat:box': 280,
+  'hat:saucepan': 340,
+  'hat:toque': 380,
+  'hat:cone': 400,
+  'hat:melon': 440,
+  'hat:umbrella': 480,
+  'hat:books': 520,
+  'hat:dropped': 560,
+  'hat:propeller': 620,
+  'hat:snail': 650,
+  'hat:mailbox': 680,
+  'hat:nest': 720,
+  'hat:frog': 760,
+  'hat:hive': 800,
+  'hat:cottage': 860,
+  'hat:cloud': 900,
+  'hat:cuckoo': 950,
+  'hat:mini': 1000,
+  'hat:balloon': 1100,
+  'hat:bowl': 1200,
+  'hat:lighthouse': 1600,
+  'hat:train': 2000,
+  'hat:dome': 2600,
+  'hat:fig': 3200,
 }
 
 export const priceOf = (item: string): number | null =>
   ITEM_PRICES[item as RoomItemId] ?? null
+
+const RARE_ITEMS: ReadonlySet<string> = new Set(
+  RARE_HAT_IDS.map((hat) => `hat:${hat}`)
+)
+
+export const isRareItem = (item: string): boolean => RARE_ITEMS.has(item)

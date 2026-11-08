@@ -7,7 +7,7 @@ import {
   UNLOCK_ORDER,
 } from '@/types/pet'
 import { ROOM_TABS } from '@/features/pet/lib/roomOptions'
-import { ITEM_PRICES, priceOf } from '@/features/pet/lib/prices'
+import { isRareItem, ITEM_PRICES, priceOf } from '@/features/pet/lib/prices'
 import {
   shopItemState,
   SHOP_TABS,
@@ -30,18 +30,31 @@ describe('Shop prices', () => {
     )
   })
 
-  it('asks 100 to 360 coins, the rare ones at the top of their kind', () => {
+  it('asks 100 to 3,200 coins, whole in the old units, rare hats on top', () => {
     const prices = Object.values(ITEM_PRICES)
     for (const price of prices) {
       expect(price).toBeGreaterThanOrEqual(100)
-      expect(price).toBeLessThanOrEqual(360)
+      expect(price).toBeLessThanOrEqual(3200)
       expect(price % 10).toBe(0)
     }
-    expect(priceOf('hat:tophat')).toBe(Math.max(...prices))
-    expect(priceOf('study:armchair')).toBe(Math.max(...prices))
+    expect(priceOf('hat:fig')).toBe(Math.max(...prices))
+    expect(priceOf('study:armchair')).toBe(360)
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
 
-    expect(prices.reduce((sum, price) => sum + price, 0)).toBe(5720 + 1480)
+    expect(prices.reduce((sum, price) => sum + price, 0)).toBe(
+      5720 + 1480 + 23430
+    )
+  })
+
+  it('lists hats cheapest first, and only the top five are rare', () => {
+    const hats = HAT_UNLOCK_ORDER.map((item) => priceOf(item)!)
+    expect(hats).toEqual([...hats].sort((a, b) => a - b))
+    expect(HAT_UNLOCK_ORDER.filter(isRareItem)).toEqual(
+      HAT_UNLOCK_ORDER.slice(-5)
+    )
+    expect(priceOf(HAT_UNLOCK_ORDER.at(-5)!)).toBe(1200)
+    expect(isRareItem('hat:tophat')).toBe(false)
+    expect(isRareItem('floor:tile')).toBe(false)
   })
 
   it('sells the study corner, with nothing in it to start', () => {

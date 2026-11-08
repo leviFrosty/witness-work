@@ -14,6 +14,7 @@ import {
   type Earned,
 } from '@/features/pet/lib/currency'
 import { localDayKey } from '@/features/pet/lib/dayKeys'
+import { figGrowth } from '@/features/pet/lib/hatLife'
 import { selectHeartsPace } from '@/features/pet/lib/petInputs'
 import { readPet } from '@/features/pet/lib/records'
 import { storedPurchases } from '@/features/pet/lib/unlocks'
@@ -52,4 +53,15 @@ export function petEarningsNow(now: Date = new Date()): PetEarnings | null {
     earned,
     wallet: walletOf(coinsOf(earned), spentOn(storedPurchases(stored))),
   }
+}
+
+export function hatGrowthNow(): number | undefined {
+  const { pet } = usePet.getState()
+  if (!pet) return undefined
+  const { serviceReports } = useServiceReport.getState()
+  const visits = useConversations.getState().conversations
+  return figGrowth(
+    storedPurchases(pet),
+    petDaysOut({ serviceReports, visits }).days
+  )
 }

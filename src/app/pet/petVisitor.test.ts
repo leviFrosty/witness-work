@@ -112,6 +112,25 @@ describe('petVisitorsFor', () => {
     ])
   })
 
+  it('brings the hat the pet wears', () => {
+    const wearing: VisitorBuddy = {
+      ...anna,
+      pet: { species: 'cat', coat: 'grey', hat: 'fig', hatGrowth: 2 },
+    }
+    const [visit] = visitsFor({
+      buddies: [wearing],
+      dayPlans: [
+        plan('hat', {
+          date: noonUtc(today),
+          startTimeInMinutes: 540,
+          buddies: ['anna'],
+        }),
+      ],
+    })
+    expect(visit.pet.hat).toBe('fig')
+    expect(visit.pet.hatGrowth).toBe(2)
+  })
+
   it('brings each buddy once, from the first thing with them', () => {
     const visits = visitsFor({
       dayPlans: [

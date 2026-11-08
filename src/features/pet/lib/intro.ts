@@ -17,5 +17,5 @@ export function fullyUnlockedRoom(room: PetRoomSettings): PetRoomSettings {
     const [part, option] = item.split(':')
     last[part] = option
   }
-  return { ...room, ...last } as PetRoomSettings
+  return { ...room, ...last, hat: 'tophat' } as PetRoomSettings
 }

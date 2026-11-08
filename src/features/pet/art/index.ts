@@ -1,4 +1,5 @@
 export * from './hats'
+export { FULL_GROWTH, type HatLife } from './hatsLive'
 export * from './hearts'
 export * from './layout'
 export * as particles from './particles'

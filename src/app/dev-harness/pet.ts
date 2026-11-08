@@ -55,6 +55,8 @@ type DevVisitor = {
   species: PetSpecies
   coat?: string
   name?: string
+  hat?: string
+  hatGrowth?: number
 
   buddy?: string
   activity?: PetVisitActivity
@@ -67,6 +69,10 @@ const devVisit = (visitor: DevVisitor, i: number): PetVisit => ({
     species: speciesOrThrow(visitor.species),
     coat: visitor.coat ?? defaultCoatFor(visitor.species),
     ...(visitor.name ? { name: visitor.name } : {}),
+    ...(visitor.hat ? { hat: visitor.hat } : {}),
+    ...(visitor.hatGrowth === undefined
+      ? {}
+      : { hatGrowth: visitor.hatGrowth }),
   },
   startMinutes: 540 + i * 30,
   activity: visitor.activity ?? { type: 'plan', planId: 'dev-visitor' },
@@ -219,7 +225,7 @@ export const petHarness = {
     return state()
   },
 
-  play: (kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer') => {
+  play: (kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' | 'coins') => {
     usePetSession.getState().send({ kind })
     return kind
   },

@@ -252,7 +252,11 @@ export default function PetShopScreen({ navigation, route }: Props) {
     <GameFrame kind='preview' palette={palette} style={{ padding: 2 * scale }}>
       <PetSceneView
         input={preview}
-        viewport={wide ? VIEW_CARD : shopPreviewView(tab)}
+        viewport={
+          wide
+            ? VIEW_CARD
+            : shopPreviewView(tab, picked?.option, scene.input.hatLife?.growth)
+        }
         accessibilityLabel={
           picked && picked.state !== 'secret'
             ? i18n.t('pet.shop.previewA11y', {

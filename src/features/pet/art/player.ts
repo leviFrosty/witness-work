@@ -40,7 +40,7 @@ export interface PlayerPet {
 
 export type PlayerInput = Omit<
   SceneInput,
-  'pet' | 'particles' | 'reduceMotion'
+  'pet' | 'particles' | 'reduceMotion' | 'hatPatMs' | 'hatCoinsMs' | 'clockMs'
 > & {
   readonly pet: PlayerPet | null
 }
@@ -61,6 +61,7 @@ export type PatResult = 'pat' | 'wake' | 'busy'
 
 const PAT_JOY_MS = 1500
 const SQUISH_MS = 160
+const COINS_REACTION_GAP_MS = 2500
 
 export interface ScenePlayer {
   playEntrance(species: PetSpeciesId, tMs: number): void
@@ -72,6 +73,8 @@ export interface ScenePlayer {
   playWake(tMs: number): void
 
   cheer(tMs: number): void
+
+  coinsEarned(tMs: number): void
 
   pat(tMs: number, mood: PetMood, opts?: { readonly rub?: boolean }): PatResult
 
@@ -98,6 +101,8 @@ export function createScenePlayer(
   let playing: Playing | null = null
   let patUntilMs = 0
   let squishUntilMs = 0
+  let hatPatMs = -Infinity
+  let hatCoinsMs = -Infinity
   let pendingSay: PetMoment | null = null
   let reduceMotion = opts.reduceMotion ?? false
 
@@ -142,10 +147,14 @@ export function createScenePlayer(
       particles = emitHeartBurst(particles, tMs)
       pendingSay = 'happy'
     },
+    coinsEarned(tMs) {
+      if (tMs - hatCoinsMs >= COINS_REACTION_GAP_MS) hatCoinsMs = tMs
+    },
     pat(tMs, mood, o = {}) {
       if (playing) return 'busy'
       if (mood === 'dead' || mood === 'nap') return 'wake'
       patUntilMs = tMs + PAT_JOY_MS
+      hatPatMs = tMs
       if (!o.rub) squishUntilMs = tMs + SQUISH_MS
       particles = emitPatHeart(particles, tMs)
       pendingSay = 'pat'
@@ -212,7 +221,15 @@ export function createScenePlayer(
         gold: input.moments?.gold,
       })
       const buffer = composeScene(
-        { ...input, pet, particles, reduceMotion },
+        {
+          ...input,
+          pet,
+          particles,
+          reduceMotion,
+          hatPatMs,
+          hatCoinsMs,
+          clockMs: Date.now(),
+        },
         tMs,
         out,
         petNow
@@ -221,7 +238,10 @@ export function createScenePlayer(
         buffer,
         say,
         ended,
-        petBox: pet && petNow ? petBox(pet, petNow, input.room.hat) : null,
+        petBox:
+          pet && petNow
+            ? petBox(pet, petNow, input.room.hat, input.hatLife?.growth)
+            : null,
         hearts:
           tMs < patUntilMs ||
           particles.particles.some((p) => p.kind === 'heart'),
@@ -231,6 +251,8 @@ export function createScenePlayer(
       playing = null
       patUntilMs = 0
       squishUntilMs = 0
+      hatPatMs = -Infinity
+      hatCoinsMs = -Infinity
       pendingSay = null
       mouthWasOpen = false
       mouthClosedAtMs = -Infinity

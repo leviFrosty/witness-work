@@ -20,7 +20,18 @@ import {
   type MotionTable,
   type Pose,
 } from '../motion'
-import { HAT_ANCHOR_Y, HAT_EARS_THROUGH, hatOrigin, hatSprite } from './hats'
+import type { BigHatId } from '@/types/pet'
+
+import {
+  HAT_ANCHOR_Y,
+  HAT_EARS_THROUGH,
+  hatFrame,
+  hatOrigin,
+  hatSprite,
+  isBigHat,
+} from './hats'
+import { drawHatRoom, type HatFxPlace } from './hatRoomFx'
+import { FULL_GROWTH, type HatLife, type HatMoment } from './hatsLive'
 import { applyLighting } from './lighting'
 import { PET_X, PET_Y, SCENE_H, SCENE_W, VISITOR_SPOTS } from './layout'
 import { draw as drawParticles, type ParticleState } from './particles'
@@ -73,6 +84,10 @@ export interface SceneVisitor {
   readonly joyUntilMs?: number
 
   readonly outlined?: boolean
+
+  readonly hat?: string
+
+  readonly hatGrowth?: number
 }
 
 export interface SceneMoments {
@@ -98,6 +113,14 @@ export interface SceneInput {
   readonly particles?: ParticleState | null
 
   readonly reduceMotion?: boolean
+
+  readonly hatLife?: HatLife
+
+  readonly hatPatMs?: number
+
+  readonly hatCoinsMs?: number
+
+  readonly clockMs?: number | null
 }
 
 export interface PetFrame {
@@ -159,11 +182,32 @@ export function petFrame(
   }
 }
 
+function hatMomentOf(
+  input: SceneInput,
+  pet: Pick<ScenePet, 'species' | 'coat'>,
+  tMs: number,
+  reduceMotion: boolean
+): HatMoment {
+  return {
+    tMs: reduceMotion ? 0 : tMs,
+    species: pet.species,
+    coat: pet.coat,
+    season: input.room.season,
+    time: input.room.time,
+    growth: input.hatLife?.growth ?? FULL_GROWTH,
+    wentOut: input.hatLife?.wentOut ?? true,
+    patMs: reduceMotion ? -Infinity : (input.hatPatMs ?? -Infinity),
+    coinsMs: reduceMotion ? -Infinity : (input.hatCoinsMs ?? -Infinity),
+    clockMs: input.clockMs ?? null,
+  }
+}
+
 function petHat(
   pet: Pick<ScenePet, 'species'>,
   frame: PetFrame,
-  hat: string
-): { sprite: PixelBuffer; at: [number, number] } | null {
+  hat: string,
+  growth?: number
+): { sprite: PixelBuffer; at: [number, number]; grey: GreyMode } | null {
   if (hat === 'none' || frame.sprite.lie) return null
   const bob = frame.sprite.bob
   const cut = frame.colorFromRow
@@ -171,9 +215,9 @@ function petHat(
     cut !== null && cut > HAT_ANCHOR_Y[pet.species] + bob
       ? 'full'
       : (frame.sprite.grey ?? 'none')
-  const sprite = hatSprite(hat, { flip: frame.sprite.flip, grey })
+  const sprite = hatSprite(hat, { flip: frame.sprite.flip, grey, growth })
   if (!sprite) return null
-  return { sprite, at: hatOrigin(pet.species, frame.origin, bob) }
+  return { sprite, at: hatOrigin(pet.species, frame.origin, bob, hat), grey }
 }
 
 const spriteBounds = new WeakMap<PixelBuffer, Viewport | null>()
@@ -190,7 +234,8 @@ function boundsOf(buf: PixelBuffer): Viewport | null {
 export function petBox(
   pet: Pick<ScenePet, 'species' | 'coat'>,
   frame: PetFrame,
-  hat = 'none'
+  hat = 'none',
+  growth?: number
 ): Viewport | null {
   const boxes: Viewport[] = []
   const body = boundsOf(petSprite(pet.species, pet.coat, frame.sprite))
@@ -201,7 +246,7 @@ export function petBox(
       body[2],
       body[3],
     ])
-  const worn = petHat(pet, frame, hat)
+  const worn = petHat(pet, frame, hat, growth)
   const top = worn && boundsOf(worn.sprite)
   if (worn && top)
     boxes.push([top[0] + worn.at[0], top[1] + worn.at[1], top[2], top[3]])
@@ -218,13 +263,17 @@ function drawPet(
   pet: ScenePet,
   frame: PetFrame,
   subject: PixelMask,
-  hat: string
+  hat: string,
+  moment: HatMoment
 ): void {
   drawPetBody(buf, pet, frame, subject)
-  const worn = petHat(pet, frame, hat)
+  const worn = petHat(pet, frame, hat, moment.growth)
   if (!worn) return
-  blit(buf, worn.sprite, worn.at[0], worn.at[1])
-  maskOpaque(subject, worn.sprite, worn.at[0], worn.at[1])
+  const shown = isBigHat(hat)
+    ? hatFrame(hat, moment, { flip: frame.sprite.flip, grey: worn.grey })
+    : worn.sprite
+  blit(buf, shown, worn.at[0], worn.at[1])
+  maskOpaque(subject, shown, worn.at[0], worn.at[1])
   const ears = HAT_EARS_THROUGH[pet.species]
   if (!ears) return
 
@@ -268,7 +317,8 @@ function drawVisitor(
   seed: number,
   tMs: number,
   reduceMotion: boolean,
-  subject: PixelMask
+  subject: PixelMask,
+  input: SceneInput
 ): void {
   const until = visitor.joyUntilMs
   const joy = until !== undefined && tMs < until
@@ -285,6 +335,25 @@ function drawVisitor(
   const at = visitor.outlined ? 2 : 0
   blit(buf, shown, x - at, y - at)
   maskOpaque(subject, shown, x - at, y - at)
+  const hat = visitor.hat
+  if (!hat || hat === 'none') return
+  const [hx, hy] = hatOrigin(visitor.species, [x, y], idle.bob, hat)
+  const worn = isBigHat(hat)
+    ? hatFrame(
+        hat,
+        {
+          ...hatMomentOf(input, visitor, tMs + seed * 97, reduceMotion),
+          growth: visitor.hatGrowth ?? FULL_GROWTH,
+          wentOut: true,
+          patMs: -Infinity,
+          coinsMs: -Infinity,
+        },
+        { flip: true }
+      )
+    : hatSprite(hat, { flip: true })
+  if (!worn) return
+  blit(buf, worn, hx, hy)
+  maskOpaque(subject, worn, hx, hy)
 }
 
 const OUTLINE = rgbPalette({ light: '#fffbe6', dark: '#3a2a20' })
@@ -321,7 +390,8 @@ function drawVisitors(
   visitors: readonly SceneVisitor[],
   tMs: number,
   reduceMotion: boolean,
-  subject: PixelMask
+  subject: PixelMask,
+  input: SceneInput
 ): void {
   visitors
     .slice(0, VISITOR_SPOTS.length)
@@ -332,7 +402,16 @@ function drawVisitors(
         a.spot[1] - b.spot[1]
     )
     .forEach(({ visitor, i, spot }) =>
-      drawVisitor(buf, visitor, spot, 777 + i * 131, tMs, reduceMotion, subject)
+      drawVisitor(
+        buf,
+        visitor,
+        spot,
+        777 + i * 131,
+        tMs,
+        reduceMotion,
+        subject,
+        input
+      )
     )
 }
 
@@ -374,7 +453,7 @@ export function composeScene(
   )
 
   subject.data.fill(0)
-  drawVisitors(out, input.visitors ?? [], tMs, reduceMotion, subject)
+  drawVisitors(out, input.visitors ?? [], tMs, reduceMotion, subject, input)
 
   const lamp = LAMPS[room.lamp]
   if (lamp.stool && input.visitors?.length) {
@@ -386,10 +465,26 @@ export function composeScene(
   blit(out, lampImage, lamp.ox, lamp.oy)
   maskOpaque(subject, lampImage, lamp.ox, lamp.oy, false)
   let origin: readonly [number, number] = [PET_X, PET_Y]
+  let worn: {
+    hat: BigHatId
+    moment: HatMoment
+    place: HatFxPlace
+  } | null = null
   if (input.pet) {
     const pet = frame ?? petFrame(input.pet, tMs, reduceMotion)
-    drawPet(out, input.pet, pet, subject, room.hat ?? 'none')
+    const hat = room.hat ?? 'none'
+    const moment = hatMomentOf(input, input.pet, tMs, reduceMotion)
+    drawPet(out, input.pet, pet, subject, hat, moment)
     origin = pet.origin
+    if (isBigHat(hat) && !pet.sprite.lie) {
+      const [x, y] = hatOrigin(
+        input.pet.species,
+        pet.origin,
+        pet.sprite.bob,
+        hat
+      )
+      worn = { hat, moment, place: { x, y, flip: !!pet.sprite.flip } }
+    }
   }
 
   const bedFront = bedFrontLayer(room.bed)
@@ -398,6 +493,7 @@ export function composeScene(
     maskOpaque(subject, bedFront, 0, 0, false)
   }
   applyLighting(out, room.lamp, level, room.time, tMs, subject)
+  if (worn) drawHatRoom(out, worn.hat, worn.moment, worn.place, subject)
 
   if (moments.paradise) drawParadiseWalkers(out, tMs)
   if (moments.star) drawShootingStar(out, tMs)

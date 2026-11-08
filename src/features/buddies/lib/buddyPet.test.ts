@@ -31,6 +31,19 @@ describe('the pet on a Buddy Card', () => {
     ).toEqual({ species: 'lamb', coat: 'default' })
   })
 
+  it('carries the hat it wears, and drops one it can’t read', () => {
+    const wearing = { ...kitten, hat: 'fig', hatGrowth: 3 }
+    expect(buddyCardSchema.parse({ ...card, pet: wearing }).pet).toEqual(
+      wearing
+    )
+    expect(
+      buddyCardSchema.parse({
+        ...card,
+        pet: { ...kitten, hat: 'x'.repeat(25), hatGrowth: 9 },
+      }).pet
+    ).toEqual(kitten)
+  })
+
   it('drops a pet it can’t read without dropping the card', () => {
     for (const pet of [
       { species: 'dragon', coat: 'red' },

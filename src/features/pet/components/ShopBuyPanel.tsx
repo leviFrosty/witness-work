@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import InfoPopover from '@/components/ui/InfoPopover'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -7,6 +8,7 @@ import { GameButton } from '@/features/pet/components/GameControls'
 import { gamePixelScale } from '@/features/pet/components/GamePixels'
 import {
   coinsText,
+  hatNoteOf,
   priceText,
   roomOptionLabel,
 } from '@/features/pet/lib/roomLabels'
@@ -105,6 +107,11 @@ export default function ShopBuyPanel({
     }
   }
 
+  const note =
+    entry?.part === 'hat' && entry.state !== 'secret'
+      ? hatNoteOf(entry.option)
+      : null
+
   const button = action && (
     <GameButton
       label={action.label}
@@ -129,16 +136,27 @@ export default function ShopBuyPanel({
       }
     >
       <View style={{ flex: layout === 'row' ? 1 : undefined, gap: 2 }}>
-        <Text
-          numberOfLines={1}
-          style={{
-            fontSize: layout === 'row' ? 17 : 20,
-            fontFamily: theme.fonts.bold,
-            color: palette.ink,
-          }}
-        >
-          {name}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              flexShrink: 1,
+              fontSize: layout === 'row' ? 17 : 20,
+              fontFamily: theme.fonts.bold,
+              color: palette.ink,
+            }}
+          >
+            {name}
+          </Text>
+          {note && (
+            <InfoPopover
+              title={name}
+              description={note}
+              inline
+              color={palette.inkAlt}
+            />
+          )}
+        </View>
         <Text
           numberOfLines={layout === 'row' ? 1 : 2}
           style={{ fontSize: 12, color: palette.inkAlt }}

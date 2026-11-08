@@ -31,6 +31,7 @@ import {
   thumbShowsPet,
   type RoomChoicePart,
 } from '@/features/pet/lib/roomOptions'
+import { isRareItem } from '@/features/pet/lib/prices'
 import { shopThumbView } from '@/features/pet/lib/shopEntries'
 
 const THUMB_RATIO = 0.6
@@ -221,7 +222,8 @@ export default function GameItemCard({
   const theme = useTheme()
   const scale = gamePixelScale()
   const { inset, w, h } = thumbPixels(width, scale)
-  const view = shopThumbView(part, w, h)
+  const view = shopThumbView(part, w, h, option, thumbBase.hatLife?.growth)
+  const rare = !secret && isRareItem(`${part}:${option}`)
 
   const sceneOf = (settings: PetRoomSettings): SceneInput => ({
     ...thumbBase,
@@ -245,12 +247,24 @@ export default function GameItemCard({
       disabled={owned}
       accessibilityRole={accessibilityRole}
       accessibilityState={{ ...accessibilityState, disabled: owned }}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={
+        rare
+          ? `${accessibilityLabel}, ${i18n.t('pet.shop.rare')}`
+          : accessibilityLabel
+      }
       pointerEffect='tint'
       style={{ width }}
     >
       <GameFrame
-        kind={picked ? 'cardPicked' : 'card'}
+        kind={
+          rare
+            ? picked
+              ? 'cardRarePicked'
+              : 'cardRare'
+            : picked
+              ? 'cardPicked'
+              : 'card'
+        }
         palette={palette}
         style={{ padding: inset, gap: 6 }}
       >

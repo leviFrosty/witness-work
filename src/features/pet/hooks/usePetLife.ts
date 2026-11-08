@@ -1,3 +1,5 @@
+import type { HatLife } from '@/features/pet/art'
+import { figGrowth } from '@/features/pet/lib/hatLife'
 import { useEffect } from 'react'
 import usePublisher from '@/hooks/usePublisher'
 import useToday from '@/hooks/useToday'
@@ -71,6 +73,7 @@ const roomOf = lastResult(
 )
 const storedOf = lastResult(storedRoomItems)
 const purchasesOf = lastResult(storedPurchases)
+const figGrowthOf = lastResult(figGrowth)
 const unlockedOf = lastResult(unlockedRoomItems)
 const daysOutOf = lastResult(
   (
@@ -159,6 +162,8 @@ export type PetLifeState = {
   pendingGift: { kind: GiftKind; on: string } | null
 
   todayKey: string
+
+  hatLife: HatLife
 }
 
 export default function usePetLife(): PetLifeState {
@@ -263,6 +268,7 @@ export default function usePetLife(): PetLifeState {
       monthlyHearts,
       pendingGift: null,
       todayKey,
+      hatLife: {},
     }
 
   return {
@@ -278,5 +284,9 @@ export default function usePetLife(): PetLifeState {
     monthlyHearts,
     pendingGift: pendingGift({ life, keepsakes: pet.keepsakes }),
     todayKey,
+    hatLife: {
+      growth: daysOut ? figGrowthOf(purchases, daysOut.days) : undefined,
+      wentOut: daysOut?.days.has(todayKey) ?? false,
+    },
   }
 }

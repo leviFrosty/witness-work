@@ -233,7 +233,7 @@ The settings every buddy follows unless they have their own: what they see (phot
 _Avoid_: "defaults", "global settings", "inherit" in UI copy; "custom" or "override" for a buddy's own setting; "Reset" wording (the undo arrow says it).
 
 **Buddy Card**:
-Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, **Pet** (its kind, coat and name), and planned days and times for the next 8 weeks. Only the name is always on it. Start times can go exactly, as the time of day (Morning, Afternoon, Evening), or not at all; what it carries follows that buddy's settings (their own, else All buddies'), and while the User pauses sharing it carries only who they are, without Plans, streak, Badges, or Pet, for every buddy. The buddy isn't told. Never shown by name in the UI.
+Internal term for the encrypted payload one User publishes to each buddy: their shared name, photo, pioneer status, **Service Streak**, earned **Badges**, **Pet** (its kind, coat, name and the hat it wears), and planned days and times for the next 8 weeks. Only the name is always on it. Start times can go exactly, as the time of day (Morning, Afternoon, Evening), or not at all; what it carries follows that buddy's settings (their own, else All buddies'), and while the User pauses sharing it carries only who they are, without Plans, streak, Badges, or Pet, for every buddy. The buddy isn't told. Never shown by name in the UI.
 _Avoid_: "profile" (the **Profile** is the User's own identity data; a Buddy Card is the shared, filtered copy).
 
 **Buddies Alert**:
@@ -435,8 +435,11 @@ How what a save earned the Pet plays where the User is: a line for each source (
 _Avoid_: "combo meter", "loot", "jackpot".
 
 **Shop**:
-Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Prices run from 100 to 360 coins. The **Study corner** is a room part with no starter item: it stays empty, and isn't drawn, until the User buys one of its 6–8 pieces, which any Pet owner can buy whether or not **Spiritual Routine** is on. Nothing in it costs money.
+Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Prices run from 100 to 3,200 coins; the five dearest hats are **Rare hats**. The **Study corner** is a room part with no starter item: it stays empty, and isn't drawn, until the User buys one of its 6–8 pieces, which any Pet owner can buy whether or not **Spiritual Routine** is on. Nothing in it costs money.
 _Avoid_: "store" (that's the App Store or Play Store), "market", "loot", "gacha"; "unlock" for a purchase.
+
+**Rare hat**:
+One of the five dearest hats in the **Shop** (Fishbowl, Lighthouse, Model railway, Planetarium, Little fig tree), framed in blue on its Shop and **Locker** cards. It moves, changes the room around it, and reacts to a pat and to new **Coins**. Like every hat, it never reads **Hearts** or the **Service Streak** (ADR 0044). The Little fig tree grows with days out since it was bought, in six stages; it can't be bought grown.
 
 **Locker**:
 The Pet's details, opened from its Home card: its name, **Hearts** and **Coins** beside the **Shop**, then its room and, part by part, only the hats and room items the User owns, put on with a tap. What's for sale or still secret never shows there; that's the Shop's. Its cog opens the Pet's settings. Like the Shop, every Pet screen past the Home card has the game look (washi paper, pixel frames).

@@ -70,6 +70,7 @@ export default function usePetRoomScene(): PetRoomScene | null {
     keepsakes: pet.keepsakes,
     visits: [],
     roll: NO_ROLL,
+    hatLife: state.hatLife,
     override: override && {
       ...override,
       window: undefined,
@@ -94,6 +95,7 @@ export default function usePetRoomScene(): PetRoomScene | null {
       lampLevel: input.lampLevel,
       pet: input.pet,
       moments: { sill: input.moments?.sill },
+      hatLife: input.hatLife,
     },
   }
 }

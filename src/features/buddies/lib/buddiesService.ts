@@ -117,13 +117,23 @@ export function currentBuddyStreak(
   return n > 0 ? { n, until: streakLastsThrough(streak, now) } : undefined
 }
 
+let hatGrowthNow: () => number | undefined = () => undefined
+
+export const setBuddyHatGrowthSource = (source: () => number | undefined) => {
+  hatGrowthNow = source
+}
+
 export function currentBuddyPet(): BuddyPet | undefined {
-  const pet = usePet.getState().pet
+  const { pet, room } = usePet.getState()
   if (!pet) return undefined
+  const hat = room?.hat
+  const growth = hat === 'fig' ? hatGrowthNow() : undefined
   return {
     species: pet.species,
     coat: pet.coat,
     ...(pet.name ? { name: pet.name } : {}),
+    ...(hat && hat !== 'none' ? { hat } : {}),
+    ...(growth === undefined ? {} : { hatGrowth: growth }),
   }
 }
 

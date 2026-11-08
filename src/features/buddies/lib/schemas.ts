@@ -65,6 +65,13 @@ export const buddyPetSchema = z.object({
     .refine((name) => [...name].length <= PET_NAME_MAX_LENGTH)
     .optional()
     .catch(undefined),
+  hat: z
+    .string()
+    .min(1)
+    .max(MAX_SHARED_PET_COAT_LENGTH)
+    .optional()
+    .catch(undefined),
+  hatGrowth: z.number().int().min(0).max(5).optional().catch(undefined),
 })
 export type BuddyPet = z.infer<typeof buddyPetSchema>
 

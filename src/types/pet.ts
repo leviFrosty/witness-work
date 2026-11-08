@@ -223,20 +223,79 @@ export const LAMP_IDS = [
 ] as const
 export type LampId = (typeof LAMP_IDS)[number]
 
+export const RARE_HAT_IDS = [
+  'bowl',
+  'lighthouse',
+  'train',
+  'dome',
+  'fig',
+] as const
+export type RareHatId = (typeof RARE_HAT_IDS)[number]
+
+export const BIG_HAT_IDS = [
+  'toast',
+  'acorn',
+  'leaf',
+  'box',
+  'saucepan',
+  'toque',
+  'cone',
+  'melon',
+  'umbrella',
+  'books',
+  'dropped',
+  'propeller',
+  'snail',
+  'mailbox',
+  'nest',
+  'frog',
+  'hive',
+  'cottage',
+  'cloud',
+  'cuckoo',
+  'mini',
+  'balloon',
+  ...RARE_HAT_IDS,
+] as const
+export type BigHatId = (typeof BIG_HAT_IDS)[number]
+
 export const HAT_IDS = [
   'none',
   'bow',
+  'toast',
   'cap',
+  'acorn',
   'beanie',
+  'leaf',
   'flowers',
   'bucket',
   'beret',
   'sunhat',
   'hardhat',
   'fedora',
+  'box',
   'cowboy',
   'safari',
+  'saucepan',
   'tophat',
+  'toque',
+  'cone',
+  'melon',
+  'umbrella',
+  'books',
+  'dropped',
+  'propeller',
+  'snail',
+  'mailbox',
+  'nest',
+  'frog',
+  'hive',
+  'cottage',
+  'cloud',
+  'cuckoo',
+  'mini',
+  'balloon',
+  ...RARE_HAT_IDS,
   ...SECRET_HAT_IDS,
 ] as const
 export type HatId = (typeof HAT_IDS)[number]
@@ -338,17 +397,44 @@ export const STUDY_UNLOCK_ORDER: readonly RoomItemId[] = [
 
 export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:bow',
+  'hat:toast',
   'hat:cap',
+  'hat:acorn',
   'hat:beanie',
+  'hat:leaf',
   'hat:flowers',
   'hat:bucket',
   'hat:beret',
   'hat:sunhat',
   'hat:hardhat',
   'hat:fedora',
+  'hat:box',
   'hat:cowboy',
   'hat:safari',
+  'hat:saucepan',
   'hat:tophat',
+  'hat:toque',
+  'hat:cone',
+  'hat:melon',
+  'hat:umbrella',
+  'hat:books',
+  'hat:dropped',
+  'hat:propeller',
+  'hat:snail',
+  'hat:mailbox',
+  'hat:nest',
+  'hat:frog',
+  'hat:hive',
+  'hat:cottage',
+  'hat:cloud',
+  'hat:cuckoo',
+  'hat:mini',
+  'hat:balloon',
+  'hat:bowl',
+  'hat:lighthouse',
+  'hat:train',
+  'hat:dome',
+  'hat:fig',
 ]
 
 export type SecretRoomItemId =
@@ -459,7 +545,15 @@ export type PetSnapshot = {
   deletedPetRecords: PetTombstone[]
 }
 
-export type SharedPet = { species: PetSpecies; coat: string; name?: string }
+export type SharedPet = {
+  species: PetSpecies
+  coat: string
+  name?: string
+
+  hat?: string
+
+  hatGrowth?: number
+}
 
 export type PetVisitActivity =
   | { type: 'plan'; planId: string }

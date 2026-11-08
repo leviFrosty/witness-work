@@ -104,14 +104,24 @@ const ServiceReportSection = () => {
             justifyContent: 'space-between',
           }}
         >
-          <Text
-            style={{
-              fontSize: theme.fontSize('lg'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('serviceReport')}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('lg'),
+                fontFamily: theme.fonts.semiBold,
+              }}
+            >
+              {i18n.t('serviceReport')}
+            </Text>
+            <Text
+              style={{
+                color: theme.colors.textAlt,
+                fontSize: theme.fontSize('xs'),
+              }}
+            >
+              {today.format('MMMM')}
+            </Text>
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {sentLabel !== null && <ReportSentLabel label={sentLabel} />}
             <LucideIcon
@@ -123,6 +133,10 @@ const ServiceReportSection = () => {
         </View>
       </HomeSectionMenu>
 
+      {due.isPreviousMonth ? (
+        <DueReportRow month={due.month} year={due.year} />
+      ) : null}
+
       <View
         style={{
           gap: 18,
@@ -132,9 +146,6 @@ const ServiceReportSection = () => {
           borderTopColor: theme.colors.border,
         }}
       >
-        {due.isPreviousMonth ? (
-          <DueReportRow month={due.month} year={due.year} />
-        ) : null}
         <View
           style={{
             flexDirection: 'row',

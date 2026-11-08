@@ -1,0 +1,23 @@
+# seed: pioneer
+# The pioneer scenario leaves last month's report unsent, so Home's Service
+# Report card shows the due strip. Its visible menu marks the report sent, and
+# Undo brings the strip back.
+# assert: __WW_DEV__.state().route.name === 'Dashboard'
+appId: com.leviwilkerson.jwtimedev
+name: Mark last month's report sent from Home's due strip, then undo it
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- waitForAnimationToEnd
+- tapOn:
+    id: due-report-menu
+- tapOn: Mark as Sent
+- assertNotVisible:
+    id: due-report-row
+# Undo lasts 5 seconds, so nothing here may wait on a slow condition first.
+- tapOn: Undo
+- extendedWaitUntil:
+    visible:
+      id: due-report-row
+    timeout: 5000

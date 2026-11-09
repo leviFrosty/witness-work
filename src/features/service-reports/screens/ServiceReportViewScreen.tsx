@@ -48,12 +48,7 @@ import useMonthReportData, {
 import useRolloverPrompt from '@/features/service-reports/hooks/useRolloverPrompt'
 import { exportMonthReport } from '@/features/service-reports/lib/monthReportExport'
 import MonthReportReminderOffer from '@/features/service-reports/components/MonthReportReminderOffer'
-import {
-  markReportNotSent,
-  markReportSent,
-} from '@/features/service-reports/hooks/useMonthReportExport'
-import useReportSentState from '@/features/service-reports/hooks/useReportSentState'
-import ReportSentLabel from '@/features/service-reports/components/ReportSentLabel'
+import ReportSentLink from '@/features/service-reports/components/ReportSentLink'
 import { getSubmitCtaLabel } from '@/features/service-reports/lib/submissionMethod'
 import {
   buildReportMonthMenu,
@@ -90,6 +85,7 @@ const RAGGED_INSET = 6
 const RAGGED_SEGMENTS_X = 14
 const RAGGED_SEGMENTS_Y = 20
 const SUBMIT_CONFIRMATION_DURATION_MS = 2000
+const SUBMIT_PANEL_HEIGHT_ESTIMATE = 170
 
 function pseudoRandom(seed: number): number {
   const x = Math.sin(seed * 9999.137) * 43758.5453
@@ -199,8 +195,9 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
 
   const [sentHere, setSentHere] = useState(false)
   const isSubmitConfirmed = confirmedMethod !== null
-  const sentState = useReportSentState(month, year)
-  const sentLabel = sentState.label ?? i18n.t('reportNotSent')
+  const [submitPanelHeight, setSubmitPanelHeight] = useState(
+    SUBMIT_PANEL_HEIGHT_ESTIMATE
+  )
   const submitConfirmationTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null)
@@ -303,7 +300,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
     handleShareAction(defaultExportMethod)
   }, [isEditingNotes, handleSaveNotes, handleShareAction, defaultExportMethod])
 
-  const handleMenuOpen = useCallback(() => {
+  const finishEditingNotes = useCallback(() => {
     if (isEditingNotes) handleSaveNotes()
     Keyboard.dismiss()
   }, [isEditingNotes, handleSaveNotes])
@@ -339,7 +336,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
           actions={monthMenuActions}
           accessibilityLabel={monthYearLabel}
           accessibilityHint={i18n.t('selectMonth')}
-          onOpen={handleMenuOpen}
+          onOpen={finishEditingNotes}
           hoverRadius={theme.numbers.borderRadiusLg}
         >
           <View
@@ -375,55 +372,13 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
         <View style={{ width: 18 }} />
       </View>
 
-      {}
-      <View style={{ alignItems: 'center', marginTop: 2 }}>
-        <PullDownMenu
-          actions={[
-            sentState.sent
-              ? {
-                  id: 'mark_not_sent',
-                  title: i18n.t('markAsNotSent'),
-                  systemImage: 'arrow.uturn.backward',
-                  onPress: () =>
-                    markReportNotSent(month, year, 'report_screen'),
-                }
-              : {
-                  id: 'mark_sent',
-                  title: i18n.t('markAsSent'),
-                  systemImage: 'checkmark.circle',
-                  onPress: () => markReportSent(month, year, 'report_screen'),
-                },
-          ]}
-          accessibilityLabel={sentLabel}
-          accessibilityHint={i18n.t(
-            sentState.sent ? 'markAsNotSent' : 'markAsSent'
-          )}
-          onOpen={handleMenuOpen}
-          hoverRadius={theme.numbers.borderRadiusSm}
-        >
-          <View style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-            <ReportSentLabel
-              label={sentLabel}
-              sent={sentState.sent}
-              trailing={
-                <LucideIcon
-                  icon={ChevronDownIcon}
-                  size={11}
-                  color={theme.colors.textAlt}
-                />
-              }
-            />
-          </View>
-        </PullDownMenu>
-      </View>
-
       <ScrollView
         automaticallyAdjustKeyboardInsets
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: 18,
 
-          paddingBottom: insets.bottom + 190 + (sentHere ? 52 : 0),
+          paddingBottom: insets.bottom + 12 + submitPanelHeight + 24,
           paddingHorizontal: 16,
           alignItems: 'center',
         }}
@@ -505,6 +460,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
       </ScrollView>
 
       <View
+        onLayout={(e) => setSubmitPanelHeight(e.nativeEvent.layout.height)}
         style={{
           position: 'absolute',
           left: 20,
@@ -557,6 +513,11 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
             )}
           </View>
         </ActionButton>
+        <ReportSentLink
+          month={month}
+          year={year}
+          onPress={finishEditingNotes}
+        />
       </View>
     </View>
   )

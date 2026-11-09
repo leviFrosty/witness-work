@@ -17,7 +17,9 @@ name: Share a Service Report and cancel the share sheet, then copy it, which mar
 - extendedWaitUntil:
     visible: NUMBER OF DIFFERENT BIBLE STUDIES CONDUCTED
     timeout: 20000
-- assertVisible: Not Sent
+- assertVisible:
+    id: report-sent-link
+- evalScript: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 0
 # The submission method is remembered, and the button below says what it does.
 # iOS also has a text with this name, so pick the menu control itself; Android
 # adds the method to the control's name, and its first match is the control.
@@ -57,7 +59,9 @@ name: Share a Service Report and cancel the share sheet, then copy it, which mar
     commands:
       - back
 - assertNotVisible: dismiss popup
-- assertVisible: Not Sent
+- assertVisible:
+    id: report-sent-link
+- evalScript: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 0
 - runFlow:
     when:
       platform: iOS
@@ -79,7 +83,7 @@ name: Share a Service Report and cancel the share sheet, then copy it, which mar
     traits: button
 # Sent, so the report offers a reminder for next month's.
 - assertVisible: Get a reminder on the 1st
-- assertNotVisible: Not Sent
+- evalScript: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 1
 - tapOn:
     text: Close
     traits: button

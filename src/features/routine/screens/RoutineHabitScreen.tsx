@@ -46,7 +46,7 @@ export default function RoutineHabitScreen({ route }: Props) {
                 entries={entries}
                 today={today}
                 onRead={(portion) => markPortionRead(today, portion)}
-                onUnread={(portion) => unmarkPortionRead(today, portion)}
+                onUnread={(portion, day) => unmarkPortionRead(day, portion)}
                 onChoosePlan={() => setPlanSheetOpen(true)}
               />
             ) : (

@@ -241,6 +241,7 @@ const readingPlan = record.extend({
   startBook: z.number().int().nonnegative().optional(),
   chaptersPerDay: z.number().int().positive().optional(),
   startedOn: dateKey,
+  finishBy: dateKey.optional(),
   finishedOn: dateKey.optional(),
   updatedAt: timestamp,
 })

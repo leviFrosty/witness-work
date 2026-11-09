@@ -6374,6 +6374,20 @@
         "one": "Routine: {{count}} day in the last {{weeks}} weeks",
         "other": "Routine: {{count}} days in the last {{weeks}} weeks"
       },
+      "showEarlier": "Show earlier readings",
+      "planStarted": "Started {{date}}",
+      "planStartedFinishBy": "Started {{date}} · Finish by {{finish}}",
+      "paceEstimate": "A reading a day finishes {{date}}",
+      "paceOn": "On pace to finish on time",
+      "paceExtra": {
+        "one": "{{count}} extra reading gets you there on time",
+        "other": "{{count}} extra readings get you there on time"
+      },
+      "paceFaster": {
+        "one": "{{count}} reading a day to finish on time",
+        "other": "{{count}} readings a day to finish on time"
+      },
+      "pacePassed": "This date has passed. Pick a new one any time.",
       "changePlan": "Change plan",
       "startPlan": "Start a reading plan",
       "earlierDays": "Recent days",
@@ -6426,6 +6440,13 @@
       "family": "Do you live with family?",
       "petCoins": "Each one earns coins for your pet.",
       "save": "Start"
+    },
+    "dates": {
+      "title": "Plan dates",
+      "started": "Started",
+      "finishSwitch": "Set a finish date",
+      "finishInfo": "Pick the day you want to finish by and see how much to read each day to get there. Your plan still waits for you when you miss a day.",
+      "finishBy": "Finish by"
     },
     "plan": {
       "title": "Bible reading",

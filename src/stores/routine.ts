@@ -175,6 +175,37 @@ export const useRoutine = create(
         return id
       },
 
+      setPlanDates: (
+        id: string,
+        dates: { startedOn?: string; finishBy?: string | null }
+      ): boolean => {
+        const run = get().readingPlans.find((plan) => plan.id === id)
+        if (!run) return false
+        const startedOn = dates.startedOn ?? run.startedOn
+        const finishBy =
+          dates.finishBy === undefined ? run.finishBy : dates.finishBy
+        if (!isDayKey(startedOn) || (finishBy != null && !isDayKey(finishBy)))
+          return false
+        if (
+          startedOn === run.startedOn &&
+          (finishBy ?? null) === (run.finishBy ?? null)
+        )
+          return false
+        set((state) => ({
+          readingPlans: state.readingPlans.map((plan) => {
+            if (plan.id !== id) return plan
+            const { finishBy: _finishBy, ...rest } = plan
+            return {
+              ...rest,
+              startedOn,
+              ...(finishBy ? { finishBy } : {}),
+              updatedAt: stampFor(state, id, plan.updatedAt),
+            }
+          }),
+        }))
+        return true
+      },
+
       finishPlan: (id: string, day: string): boolean => {
         const run = get().readingPlans.find((plan) => plan.id === id)
         if (!run || run.finishedOn || !isDayKey(day)) return false

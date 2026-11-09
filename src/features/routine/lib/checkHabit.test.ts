@@ -127,3 +127,30 @@ describe('reading ahead', () => {
     expect(entry()).toBeUndefined()
   })
 })
+
+describe('plan dates', () => {
+  it('unmarks a portion read on an earlier day', () => {
+    useRoutine.getState().check('bibleReading', '2026-11-03', {
+      run: RUN.id,
+      portion: 0,
+    })
+    unmarkPortionRead('2026-11-03', 0)
+    expect(useRoutine.getState().routineEntries).toEqual([])
+  })
+
+  it('sets, moves and removes the finish date and moves the start', () => {
+    const { setPlanDates } = useRoutine.getState()
+    expect(setPlanDates(RUN.id, { finishBy: '2026-12-31' })).toBe(true)
+    expect(plan().finishBy).toBe('2026-12-31')
+    expect(setPlanDates(RUN.id, { finishBy: '2026-12-31' })).toBe(false)
+    expect(setPlanDates(RUN.id, { startedOn: '2026-10-01' })).toBe(true)
+    expect(plan()).toMatchObject({
+      startedOn: '2026-10-01',
+      finishBy: '2026-12-31',
+    })
+    expect(setPlanDates(RUN.id, { finishBy: 'soon' })).toBe(false)
+    expect(setPlanDates(RUN.id, { finishBy: null })).toBe(true)
+    expect('finishBy' in plan()).toBe(false)
+    expect(plan().updatedAt).toBeGreaterThan(RUN.updatedAt)
+  })
+})

@@ -6366,14 +6366,6 @@
       "upNext": "Next",
       "thisWeek": "This week",
       "history": "History",
-      "checkedCount": {
-        "one": "{{count}} checked",
-        "other": "{{count}} checked"
-      },
-      "overviewGraphA11y": {
-        "one": "Routine: {{count}} day in the last {{weeks}} weeks",
-        "other": "Routine: {{count}} days in the last {{weeks}} weeks"
-      },
       "showEarlier": "Show earlier readings",
       "planStarted": "Started {{date}}",
       "planStartedFinishBy": "Started {{date}} · Finish by {{finish}}",

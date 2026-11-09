@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshControl, ScrollView, View } from 'react-native'
+import { RefreshControl, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import {
@@ -14,6 +14,7 @@ import useTheme from '@/contexts/theme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
@@ -204,7 +205,7 @@ const AccountDevicesScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <ScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
           refreshControl={
             <RefreshControl
@@ -271,7 +272,7 @@ const AccountDevicesScreen = () => {
               onRetry={refresh}
             />
           )}
-        </ScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

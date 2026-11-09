@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ActivityIndicator, Alert, View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import { toast } from '@/stores/toasts'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
@@ -141,7 +141,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
+      <SettingsScrollView
         contentContainerStyle={{ gap: 8, paddingTop: 30, paddingBottom: 30 }}
       >
         <View
@@ -213,7 +213,7 @@ const PreferencesiCloudDevicesScreenInner = () => {
             ))}
           </Section>
         )}
-      </KeyboardAwareScrollView>
+      </SettingsScrollView>
     </Wrapper>
   )
 }

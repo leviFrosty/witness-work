@@ -3,7 +3,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Image, Pressable, View, type ScrollView } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import { toast } from '@/stores/toasts'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
@@ -278,7 +278,7 @@ const PreferencesAppIconScreen = () => {
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
         <VisibilityViewportContext value={viewportRef}>
-          <KeyboardAwareScrollView
+          <SettingsScrollView
             innerRef={(node: ScrollView | null) => {
               viewportRef.current = node?.getNativeScrollRef() ?? null
             }}
@@ -294,7 +294,7 @@ const PreferencesAppIconScreen = () => {
                 <PreferencesAppIconPicker />
               </IsSupporter>
             </View>
-          </KeyboardAwareScrollView>
+          </SettingsScrollView>
         </VisibilityViewportContext>
       </Wrapper>
     </SettingsInputLayout>

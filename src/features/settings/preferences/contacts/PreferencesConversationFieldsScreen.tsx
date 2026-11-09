@@ -5,7 +5,7 @@ import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import ReorderControls from '@/components/ui/ReorderControls'
 import { useState } from 'react'
 import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
@@ -87,7 +87,7 @@ const PreferencesConversationFieldsScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <View style={{ paddingHorizontal: 12 }}>
@@ -251,7 +251,7 @@ const PreferencesConversationFieldsScreen = () => {
               </Section>
             </View>
           )}
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

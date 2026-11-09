@@ -1,6 +1,9 @@
 import { type ComponentProps, createContext, useContext, useRef } from 'react'
 import type { ScrollView, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
+
+const gutter = inputLayout.horizontalPadding
 
 type SettingsScrollContextValue = {
   reveal: (row: View, animated: boolean) => void
@@ -22,6 +25,8 @@ type Props = Omit<
 export default function SettingsScrollView({
   innerRef,
   onLayout,
+  style,
+  contentContainerStyle,
   ...props
 }: Props) {
   const scrollRef = useRef<ScrollView | null>(null)
@@ -45,6 +50,11 @@ export default function SettingsScrollView({
     <SettingsScrollContext value={{ reveal }}>
       <KeyboardAwareScrollView
         {...props}
+        style={[style, { marginHorizontal: -gutter }]}
+        contentContainerStyle={[
+          contentContainerStyle,
+          { paddingHorizontal: gutter },
+        ]}
         innerRef={(node) => {
           const scroll = node as unknown as ScrollView | null
           scrollRef.current = scroll

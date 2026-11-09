@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Platform, RefreshControl, ScrollView } from 'react-native'
+import { Platform, RefreshControl } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
 import Wrapper from '@/components/ui/layout/Wrapper'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import LoadStatus from '@/features/settings/components/account/activity/LoadStatus'
 import {
@@ -92,7 +93,7 @@ const AccountPasskeysScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <ScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
           refreshControl={
             <RefreshControl
@@ -142,7 +143,7 @@ const AccountPasskeysScreen = () => {
               onRetry={refresh}
             />
           )}
-        </ScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

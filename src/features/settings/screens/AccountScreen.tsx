@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Platform, ScrollView } from 'react-native'
+import { Platform } from 'react-native'
 import { checkSignInNotices } from '@/app/account/signInNoticesRuntime'
 import Wrapper from '@/components/ui/layout/Wrapper'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import AccountStatusSection from '@/features/settings/components/account/AccountStatusSection'
 import BackupSection from '@/features/settings/components/account/BackupSection'
@@ -32,7 +33,7 @@ const AccountScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <ScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <KeyChangeSection />
@@ -65,7 +66,7 @@ const AccountScreen = () => {
           />
           {}
           {isWeb && <WebSignOutSection />}
-        </ScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

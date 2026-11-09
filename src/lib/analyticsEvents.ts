@@ -29,6 +29,7 @@ export const analyticsEventNames = [
   'routine_reminder_toggled',
   'routine_plan_started',
   'routine_habit_toggled',
+  'routine_habit_opened',
   'routine_enabled',
   'routine_disabled',
   'routine_plan_finished',

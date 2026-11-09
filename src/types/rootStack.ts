@@ -8,6 +8,7 @@ import type {
 } from '@/types/timeEntry'
 import type { PetSpecies } from '@/types/pet'
 import type { RichText } from '@/types/richText'
+import type { RoutineHabit } from '@/types/routine'
 import type { SupporterGateAttribution } from '@/lib/supporterGateAnalytics'
 
 type ScribeRouteEntry =
@@ -311,6 +312,8 @@ export type RootStackParamList = {
   PetShare: undefined
 
   Routine: undefined
+
+  RoutineHabit: { habit: RoutineHabit }
 
   Badges: { source?: BadgesSource } | undefined
 

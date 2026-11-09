@@ -6342,7 +6342,8 @@
       "loggedFor": "{{habit}} logged for {{date}}",
       "settings": "Routine settings",
       "checkHint": "Checks it off for today",
-      "uncheckHint": "Unchecks it for today"
+      "uncheckHint": "Unchecks it for today",
+      "openHint": "Shows details"
     },
     "screen": {
       "daysThisMonth": {
@@ -6358,12 +6359,21 @@
         "other": "{{habit}}: {{count}} days in the last {{weeks}} weeks"
       },
       "done": "Done",
-      "planTitle": "Reading plan",
-      "planDay": "Day {{day}} of {{total}}",
+      "planRead": "{{read}} of {{total}} read",
+      "planDayNumber": "Day {{day}}",
       "todaysReading": "Today’s reading",
-      "markRead": "Mark as read",
-      "readNext": "Read next portion",
-      "nextUp": "Next: {{portion}}",
+      "readToday": "Read today",
+      "upNext": "Next",
+      "thisWeek": "This week",
+      "history": "History",
+      "checkedCount": {
+        "one": "{{count}} checked",
+        "other": "{{count}} checked"
+      },
+      "overviewGraphA11y": {
+        "one": "Routine: {{count}} day in the last {{weeks}} weeks",
+        "other": "Routine: {{count}} days in the last {{weeks}} weeks"
+      },
       "changePlan": "Change plan",
       "startPlan": "Start a reading plan",
       "earlierDays": "Recent days",

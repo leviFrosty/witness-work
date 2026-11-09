@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import ContributionGraph from '@/components/ContributionGraph'
 import Card from '@/components/ui/Card'
@@ -11,62 +10,60 @@ import {
   type RoutineEntry,
   type RoutineHabit,
 } from '@/types/routine'
-import HabitIcon from '@/features/routine/components/HabitIcon'
 import EarlierDays from '@/features/routine/components/EarlierDays'
 
 export const monthCount = (days: readonly string[], today: string): number =>
   days.filter((day) => day.slice(0, 7) === today.slice(0, 7) && day <= today)
     .length
 
-export default function RoutineHabitCard({
+export const monthCountLabel = (
+  habit: RoutineHabit,
+  entries: readonly RoutineEntry[],
+  today: string
+): string =>
+  i18n.t(
+    isWeeklyHabit(habit)
+      ? 'routine.screen.weeksThisMonth'
+      : 'routine.screen.daysThisMonth',
+    { count: monthCount(habitDays(entries, habit), today) }
+  )
+
+export default function RoutineHabitHistory({
   habit,
   label,
   entries,
   today,
   onToggle,
-  children,
 }: {
   habit: RoutineHabit
   label: string
   entries: readonly RoutineEntry[]
   today: string
   onToggle: (day: string, done: boolean) => void
-  children?: ReactNode
 }) {
   const theme = useTheme()
-  const days = habitDays(entries, habit)
-  const daily = new Map(days.map((day) => [day, 1]))
-  const count = monthCount(days, today)
+  const daily = new Map(habitDays(entries, habit).map((day) => [day, 1]))
   return (
-    <Card style={{ gap: 14 }} testID={`routine-card-${habit}`}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <HabitIcon habit={habit} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            accessibilityRole='header'
-            style={{
-              fontSize: theme.fontSize('lg'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {label}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t(
-              isWeeklyHabit(habit)
-                ? 'routine.screen.weeksThisMonth'
-                : 'routine.screen.daysThisMonth',
-              { count }
-            )}
-          </Text>
-        </View>
+    <Card style={{ gap: 14 }} testID={`routine-history-${habit}`}>
+      <View style={{ gap: 2 }}>
+        <Text
+          accessibilityRole='header'
+          style={{
+            fontSize: theme.fontSize('lg'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {i18n.t('routine.screen.history')}
+        </Text>
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+          }}
+        >
+          {monthCountLabel(habit, entries, today)}
+        </Text>
       </View>
-      {children}
       <ContributionGraph
         daily={daily}
         formatValue={() => i18n.t('routine.screen.done')}

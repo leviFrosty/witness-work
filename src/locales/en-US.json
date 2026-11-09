@@ -2032,6 +2032,7 @@
   "reportSubmitted": "Report Submitted",
   "reportSent": "Sent",
   "reportSentOn": "Sent {{date}}",
+  "alreadySubmitted": "Already submitted?",
   "markAsNotSent": "Mark as Not Sent",
   "markAsSent": "Mark as Sent",
   "reportNotSent": "Not Sent",

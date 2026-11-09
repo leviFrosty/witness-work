@@ -12,10 +12,12 @@ name: Open last month's report from Home, mark it sent, and Home stops asking fo
 - tapOn:
     id: due-report-row
 # The report opens on last month, still unsent.
-- assertVisible: Not Sent
-- tapOn: Not Sent
-- tapOn: Mark as Sent
-- assertNotVisible: Not Sent
+- assertVisible:
+    id: report-sent-link
+- evalScript: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 0
+- tapOn:
+    id: report-sent-link
+- evalScript: __WW_DEV__.stores.preferences.getState().submittedReportMonths.length === 1
 - tapOn:
     text: Close
     traits: button

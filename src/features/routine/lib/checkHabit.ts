@@ -143,9 +143,9 @@ export function toggleHabit({
 export const markPortionRead = (today: string, portion?: number) =>
   checkToday('bibleReading', today, true, portion)
 
-export function unmarkPortionRead(today: string, portion: number) {
+export function unmarkPortionRead(day: string, portion: number) {
   const run = activePlan()
-  if (!run || !useRoutine.getState().uncheckPortion(today, run.id, portion))
+  if (!run || !useRoutine.getState().uncheckPortion(day, run.id, portion))
     return
   void Haptics.light().catch(() => {})
 }

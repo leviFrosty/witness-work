@@ -60,7 +60,11 @@ day out needs a fraction of a coin, which reads badly in a pixel-art wallet
    default. A plan (the Bible in a year in book order, in order of events, or
    the User's own start book and chapters a day) shows "Day N of M" and
    always offers the next unread portion, however long the User was away; it
-   never shows a backlog or a slipping finish date. Switching plans keeps the
+   never shows a backlog or a slipping finish date. Later amended: the plan
+   shows its start date and an estimated finish at a reading a day, and the
+   User may set a finish date (`finishBy` on the run). That date is a goal
+   the User opts into; it changes the readings a day the screen suggests and
+   never creates a backlog. Switching plans keeps the
    old run for when they come back. Plans are the app's own chapter lists;
    nothing is pulled from jw.org.
 7. **No streaks or Badges for Routine in v1**, and one reminder a day, off

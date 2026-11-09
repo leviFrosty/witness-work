@@ -63,14 +63,20 @@ function undoCheck(
   void Haptics.light().catch(() => {})
 }
 
-function checkToday(habit: RoutineHabit, today: string, undoable = false) {
+function checkToday(
+  habit: RoutineHabit,
+  today: string,
+  undoable = false,
+  portion?: number
+) {
   const run = habit === 'bibleReading' ? activePlan() : null
-  const next = run
-    ? planProgress(run, useRoutine.getState().routineEntries).next
-    : null
+  const index =
+    run && portion === undefined
+      ? planProgress(run, useRoutine.getState().routineEntries).next?.index
+      : portion
   const earned = measureReward('routine')
   const options: CheckOptions =
-    run && next ? { run: run.id, portion: next.index } : {}
+    run && index !== undefined ? { run: run.id, portion: index } : {}
   if (!useRoutine.getState().check(habit, today, options)) return
   const finished = run ? finishIfDone(run, today) : false
   const accessory = earned()
@@ -134,5 +140,12 @@ export function toggleHabit({
   else checkEarlier(habit, day, today)
 }
 
-export const markPortionRead = (today: string) =>
-  checkToday('bibleReading', today, true)
+export const markPortionRead = (today: string, portion?: number) =>
+  checkToday('bibleReading', today, true, portion)
+
+export function unmarkPortionRead(today: string, portion: number) {
+  const run = activePlan()
+  if (!run || !useRoutine.getState().uncheckPortion(today, run.id, portion))
+    return
+  void Haptics.light().catch(() => {})
+}

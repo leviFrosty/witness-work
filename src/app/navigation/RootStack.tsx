@@ -6,6 +6,7 @@ import Header from '@/components/ui/layout/Header'
 import RoutineSettingsButton from '@/features/routine/components/RoutineSettingsButton'
 import useTheme from '@/contexts/theme'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
+import { habitLabel } from '@/lib/routine/labels'
 import { usePreferences } from '@/stores/preferences'
 import HomeTabStack from '@/app/navigation/HomeTabStack'
 import i18n from '@/lib/locales'
@@ -745,6 +746,24 @@ const RootStackComponent = () => {
           name='Routine'
           getComponent={() =>
             require('@/features/routine/screens/RoutineScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={({ route }) => ({
+            header: () => (
+              <Header
+                buttonType='back'
+                title={habitLabel(
+                  route.params.habit,
+                  usePreferences.getState().worshipKind
+                )}
+                rightElement={<RoutineSettingsButton />}
+              />
+            ),
+          })}
+          name='RoutineHabit'
+          getComponent={() =>
+            require('@/features/routine/screens/RoutineHabitScreen').default
           }
         />
         <RootStack.Screen

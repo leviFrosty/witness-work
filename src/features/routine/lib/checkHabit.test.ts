@@ -27,7 +27,11 @@ import { planPortionCount, planProgress } from '@/lib/routine/readingPlans'
 import useRoutine from '@/stores/routine'
 import { resetToasts, useToasts } from '@/stores/toasts'
 import type { ReadingPlanRun } from '@/types/routine'
-import { markPortionRead, toggleHabit } from '@/features/routine/lib/checkHabit'
+import {
+  markPortionRead,
+  toggleHabit,
+  unmarkPortionRead,
+} from '@/features/routine/lib/checkHabit'
 import { usePlanCelebration } from '@/features/routine/stores/planCelebration'
 
 const TODAY = '2026-11-07'
@@ -99,5 +103,27 @@ describe('reading plan buttons', () => {
       done: false,
     })
     expect(lastToast()?.intent).toBe('success')
+  })
+})
+
+describe('reading ahead', () => {
+  it('marks the portion that was tapped, not only the next one', () => {
+    markPortionRead(TODAY, 2)
+    expect(entry()?.portions).toEqual([2])
+    expect(
+      planProgress(plan(), useRoutine.getState().routineEntries).next
+    ).toMatchObject({ index: 0 })
+
+    lastToast()?.action?.onPress()
+    expect(entry()).toBeUndefined()
+  })
+
+  it('unmarks one of today’s portions and keeps the rest', () => {
+    markPortionRead(TODAY)
+    markPortionRead(TODAY)
+    unmarkPortionRead(TODAY, 0)
+    expect(entry()?.portions).toEqual([1])
+    unmarkPortionRead(TODAY, 1)
+    expect(entry()).toBeUndefined()
   })
 })

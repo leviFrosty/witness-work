@@ -1,53 +1,24 @@
 import { View } from 'react-native'
-import Button from '@/components/ui/Button'
 import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import Text from '@/components/ui/MyText'
-import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { portionLabel } from '@/lib/routine/labels'
-import { planPortion } from '@/lib/routine/readingPlans'
 import type { RoutineEntry } from '@/types/routine'
+import RoutineHabitRow from '@/features/routine/components/RoutineHabitRow'
+import RoutineOutlineButton from '@/features/routine/components/RoutineOutlineButton'
 import type { ActivePlan } from '@/features/routine/hooks/useRoutineToday'
-import { readToday } from '@/features/routine/lib/itemDetail'
+import { planName } from '@/features/routine/lib/applyPlanChoice'
+import { planAgenda, type AgendaRow } from '@/features/routine/lib/planAgenda'
 
-function ActionButton({
-  label,
-  onPress,
-  primary,
-  testID,
-}: {
-  label: string
-  onPress: () => void
-  primary?: boolean
-  testID?: string
-}) {
-  const theme = useTheme()
-  return (
-    <Button
-      accessibilityRole='button'
-      onPress={onPress}
-      testID={testID}
-      style={{
-        minHeight: MIN_TOUCH_TARGET,
-        paddingHorizontal: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: theme.numbers.borderRadiusMd,
-        ...(primary
-          ? { backgroundColor: theme.colors.accent }
-          : { borderWidth: 1, borderColor: theme.colors.border }),
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: theme.fonts.semiBold,
-          color: primary ? theme.colors.textInverse : theme.colors.text,
-        }}
-      >
-        {label}
-      </Text>
-    </Button>
+const caption = (row: AgendaRow, readSomeToday: boolean): string => {
+  if (row.readToday) return i18n.t('routine.screen.readToday')
+  if (!row.isNext)
+    return i18n.t('routine.screen.planDayNumber', {
+      day: row.portion.index + 1,
+    })
+  return i18n.t(
+    readSomeToday ? 'routine.screen.upNext' : 'routine.screen.todaysReading'
   )
 }
 
@@ -56,31 +27,23 @@ export default function ReadingPlanBlock({
   entries,
   today,
   onRead,
+  onUnread,
   onChoosePlan,
 }: {
-  plan: ActivePlan | null
+  plan: ActivePlan
   entries: readonly RoutineEntry[]
   today: string
-  onRead: () => void
+  onRead: (portion: number) => void
+  onUnread: (portion: number) => void
   onChoosePlan: () => void
 }) {
   const theme = useTheme()
-  if (!plan)
-    return (
-      <ActionButton
-        label={i18n.t('routine.screen.startPlan')}
-        onPress={onChoosePlan}
-        testID='routine-start-plan'
-      />
-    )
   const { run, progress } = plan
-  const readIndex = readToday(run, entries, today)
-  const doneToday = readIndex !== null
-  const day = Math.min(progress.total, progress.read + (doneToday ? 0 : 1))
-  const todays = doneToday ? planPortion(run, readIndex) : progress.next
+  const rows = planAgenda(run, entries, today)
+  const readSomeToday = rows.some((row) => row.readToday)
   return (
-    <View style={{ gap: 12 }} testID='routine-plan'>
-      <View style={{ gap: 6 }}>
+    <View testID='routine-plan'>
+      <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 8 }}>
         <View
           style={{
             flexDirection: 'row',
@@ -90,21 +53,25 @@ export default function ReadingPlanBlock({
           }}
         >
           <Text
+            accessibilityRole='header'
             style={{
-              fontSize: theme.fontSize('sm'),
+              flexShrink: 1,
+              fontSize: theme.fontSize('lg'),
               fontFamily: theme.fonts.semiBold,
-              color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('routine.screen.planTitle')}
+            {planName(run.kind)}
           </Text>
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
-              fontFamily: theme.fonts.semiBold,
+              color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('routine.screen.planDay', { day, total: progress.total })}
+            {i18n.t('routine.screen.planRead', {
+              read: progress.read,
+              total: progress.total,
+            })}
           </Text>
         </View>
         <SimpleProgressBar
@@ -114,55 +81,24 @@ export default function ReadingPlanBlock({
           animated={false}
         />
       </View>
-      {todays ? (
-        <View style={{ gap: 2 }}>
-          <Text
-            style={{
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('routine.screen.todaysReading')}
-          </Text>
-          <Text
-            style={{
-              fontSize: theme.fontSize('md'),
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {portionLabel(todays)}
-          </Text>
-          {doneToday && progress.next ? (
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('routine.screen.nextUp', {
-                portion: portionLabel(progress.next),
-              })}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {!doneToday && progress.next ? (
-          <ActionButton
-            primary
-            label={i18n.t('routine.screen.markRead')}
-            onPress={onRead}
-            testID='routine-mark-read'
+      <View style={{ paddingVertical: 8 }}>
+        {rows.map((row) => (
+          <RoutineHabitRow
+            key={row.portion.index}
+            testID={`routine-portion-${row.portion.index}`}
+            caption={caption(row, readSomeToday)}
+            label={portionLabel(row.portion)}
+            done={row.readToday}
+            onToggle={() =>
+              row.readToday
+                ? onUnread(row.portion.index)
+                : onRead(row.portion.index)
+            }
           />
-        ) : null}
-        {doneToday && progress.next ? (
-          <ActionButton
-            label={i18n.t('routine.screen.readNext')}
-            onPress={onRead}
-            testID='routine-read-next'
-          />
-        ) : null}
-        <ActionButton
+        ))}
+      </View>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 20 }}>
+        <RoutineOutlineButton
           label={i18n.t('routine.screen.changePlan')}
           onPress={onChoosePlan}
           testID='routine-change-plan'

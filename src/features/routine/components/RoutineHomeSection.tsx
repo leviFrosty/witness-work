@@ -21,6 +21,7 @@ import RoutineHabitRow from '@/features/routine/components/RoutineHabitRow'
 import useRoutineToday from '@/features/routine/hooks/useRoutineToday'
 import { toggleHabit } from '@/features/routine/lib/checkHabit'
 import { itemDetail } from '@/features/routine/lib/itemDetail'
+import { openHabit } from '@/features/routine/lib/openHabit'
 import { flushRoutineDayLog } from '@/features/routine/stores/routineDayLog'
 
 export default function RoutineHomeSection() {
@@ -174,6 +175,7 @@ export default function RoutineHomeSection() {
                 plan: routine.plan,
               })}
               done={done}
+              onOpen={() => openHabit(navigation, habit, 'home')}
               onToggle={() => toggleHabit({ habit, day: today, today, done })}
             />
           ))

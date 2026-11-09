@@ -149,7 +149,6 @@ export default function PetShopScreen({ navigation, route }: Props) {
   }
 
   const pick = (entry: ShopEntry) => {
-    if (isOwned(entry)) return
     setPickedItem(entry.item)
     if (hatReactions(entry.item).length > 0) previewRef.current?.hatPat()
 

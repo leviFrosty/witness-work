@@ -236,9 +236,10 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
     view is cut about in half (`tabGap`), so the row reads as scrollable. Items sit two to four to a
     row (`ShopItemCard`), starters left out (`shopEntries`): picture, name, and the price. Once
     bought or found, the picture fades under a big check stamp (`ownedStamp`), the card says
-    "Owned", and it can't be picked: owned things are worn and placed from the details. A locked
-    secret shows its silhouette and `???`. The picked item's button (`ShopBuyPanel`) buys it ("Buy"
-    with the price) or says what's missing ("Need 3 more", disabled). Buying puts it on at once,
+    "Owned", and it can't be picked: owned things are worn and placed from the details. Owned wall
+    colors keep a check but can still be tapped, so the room tries them on beside the colors for
+    sale. A locked secret shows its silhouette and `???`. The picked item's button (`ShopBuyPanel`)
+    buys it ("Buy" with the price) or says what's missing ("Need 3 more", disabled). Buying puts it on at once,
     with a success haptic and a toast ("Cap bought. Biscuit is wearing it."); the bought card stays
     picked, its button "Owned" (disabled) with "Wearing it now" or "In the room now" under its
     name. A secret's panel only says it's found along the way. Once a category is all owned, the

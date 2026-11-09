@@ -73,7 +73,6 @@ export default function GameColorSwatches({
           <Button
             key={swatch.key}
             onPress={() => onPress(swatch.key)}
-            disabled={owned}
             pointerEffect='highlight'
             accessibilityRole={radio ? 'radio' : 'button'}
             accessibilityState={

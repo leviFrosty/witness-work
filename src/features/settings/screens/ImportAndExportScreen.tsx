@@ -14,7 +14,7 @@ import Divider from '@/components/ui/Divider'
 import Badge from '@/components/ui/Badge'
 import XView from '@/components/ui/layout/XView'
 import InfoPopover from '@/components/ui/InfoPopover'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import IconButton from '@/components/ui/IconButton'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import { RouteProp, useRoute } from '@react-navigation/native'
@@ -50,7 +50,7 @@ const ImportAndExportScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom' style={{ paddingTop: 30 }}>
-        <KeyboardAwareScrollView contentContainerStyle={{ gap: 30 }}>
+        <SettingsScrollView contentContainerStyle={{ gap: 30 }}>
           <XView style={{ gap: 0 }}>
             <Text
               accessibilityRole='header'
@@ -136,7 +136,7 @@ const ImportAndExportScreen = () => {
           <Text style={{ color: theme.colors.textAlt }}>
             {i18n.t('backupReasoning')}
           </Text>
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
         <CreateBackupSheet
           open={protecting}
           lock={exporter.lock}

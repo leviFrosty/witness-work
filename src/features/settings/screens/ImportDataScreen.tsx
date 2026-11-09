@@ -1,10 +1,10 @@
-import { ScrollView } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
 import ImportOptions, {
@@ -34,7 +34,7 @@ const ImportDataScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <ScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 20, paddingTop: 30, paddingBottom: 30 }}
         >
           <Text style={{ color: theme.colors.textAlt }}>
@@ -53,7 +53,7 @@ const ImportDataScreen = () => {
             backupRestoring={importing}
             onSelect={select}
           />
-        </ScrollView>
+        </SettingsScrollView>
         {unlockSheet}
       </Wrapper>
     </SettingsInputLayout>

@@ -14,7 +14,7 @@ import { listSyncDevices } from '@/lib/syncDevices'
 import IconButton from '@/components/ui/IconButton'
 import Card from '@/components/ui/Card'
 import Switch from '@/components/ui/Switch'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -836,7 +836,7 @@ const PreferencesiCloudScreenInner = () => {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView
+      <SettingsScrollView
         contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
       >
         <View
@@ -1244,7 +1244,7 @@ const PreferencesiCloudScreenInner = () => {
             </InputRowButton>
           </Section>
         )}
-      </KeyboardAwareScrollView>
+      </SettingsScrollView>
       <FirstEnableSheet
         open={firstEnableSheetOpen}
         setOpen={(open) => {

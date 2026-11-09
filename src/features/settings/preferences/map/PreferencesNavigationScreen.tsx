@@ -1,4 +1,4 @@
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import NavigationPreferencesSection from '@/features/settings/preferences/map/NavigationPreferencesSection'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
@@ -7,11 +7,11 @@ const PreferencesNavigationScreen = () => {
   return (
     <SettingsInputLayout>
       <Wrapper insets='bottom'>
-        <KeyboardAwareScrollView
+        <SettingsScrollView
           contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
         >
           <NavigationPreferencesSection />
-        </KeyboardAwareScrollView>
+        </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
   )

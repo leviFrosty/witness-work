@@ -249,6 +249,26 @@ describe('TextInput on the web', () => {
       expect(style).not.toHaveProperty(key)
   })
 
+  it('turns a number field into text with a numeric keyboard', async () => {
+    platform.OS = 'web'
+    await render({ type: 'number' })
+    expect(input().props).toMatchObject({ type: 'text', inputMode: 'numeric' })
+
+    await render({ type: 'number', keyboardType: 'decimal-pad' })
+    expect(input().props).toMatchObject({ type: 'text', inputMode: 'decimal' })
+
+    await render({ type: 'number', inputMode: 'decimal' })
+    expect(input().props).toMatchObject({ type: 'text', inputMode: 'decimal' })
+  })
+
+  it.each(['ios', 'android'])('keeps the number type on %s', async (os) => {
+    platform.OS = os
+    await render({ type: 'number' })
+
+    expect(input().props.type).toBe('number')
+    expect(input().props.inputMode).toBeUndefined()
+  })
+
   it('leaves the style alone on iOS and Android', async () => {
     platform.OS = 'ios'
     await render({ placeholder: 'Optional' })

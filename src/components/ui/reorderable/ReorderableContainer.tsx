@@ -138,6 +138,7 @@ export default function ReorderableContainer<Id extends string>({
 
   const lastRects = useRef(new Map<string, Rect>())
   const zonesFrame = useRef<number | null>(null)
+  const measureFrame = useRef<number | null>(null)
 
   const liftOrigin = useRef<{ x: number; y: number; offset: number } | null>(
     null
@@ -163,6 +164,8 @@ export default function ReorderableContainer<Id extends string>({
       if (drag.current?.frame) cancelAnimationFrame(drag.current.frame)
       if (settle.current) clearTimeout(settle.current)
       if (zonesFrame.current !== null) cancelAnimationFrame(zonesFrame.current)
+      if (measureFrame.current !== null)
+        cancelAnimationFrame(measureFrame.current)
     },
     []
   )
@@ -213,6 +216,22 @@ export default function ReorderableContainer<Id extends string>({
       syncZones()
     })
   }
+
+  const remeasure = () => {
+    for (const entry of entries.current.values()) entry.measure()
+  }
+
+  const scheduleRemeasure = () => {
+    if (measureFrame.current !== null) return
+    measureFrame.current = requestAnimationFrame(() => {
+      measureFrame.current = null
+      remeasure()
+    })
+  }
+
+  useEffect(() => {
+    scheduleRemeasure()
+  })
 
   const placeGhost = (x: number, y: number) => {
     const d = drag.current
@@ -392,6 +411,7 @@ export default function ReorderableContainer<Id extends string>({
     .onTouchesDown((e, manager) => {
       const touch = e.allTouches[0]
       if (touch && onChromeAt(zones.value, touch.x, touch.y)) manager.fail()
+      else scheduleOnRN(remeasure)
     })
     .onStart((e) => scheduleOnRN(startDrag, e.x, e.y, e.absoluteX, e.absoluteY))
     .onUpdate((e) => scheduleOnRN(dragTo, e.x, e.y, e.absoluteX, e.absoluteY))
@@ -481,6 +501,7 @@ export default function ReorderableContainer<Id extends string>({
             containerRef.current?.measureInWindow((x, y) => {
               liftOrigin.current = { x, y, offset: startOffset }
             })
+            remeasure()
           },
           start: (id, at) => {
             const point = fromWindow(at)
@@ -511,6 +532,7 @@ export default function ReorderableContainer<Id extends string>({
           onLayout={(e) => {
             setWidth(e.nativeEvent.layout.width)
             remeasureLift(true)
+            scheduleRemeasure()
           }}
           style={[style, draggedId ? { zIndex: 10 } : null]}
         >

@@ -75,6 +75,12 @@ describe('Home sections', () => {
         ...phone,
         mileageTrackingEnabled: undefined,
       })
+    ).toBe(true)
+    expect(
+      isHomeSectionAvailable('mileage', {
+        ...phone,
+        mileageTrackingEnabled: false,
+      })
     ).toBe(false)
     expect(isHomeSectionAvailable('thisWeek', phone)).toBe(true)
     expect(isHomeSectionAvailable('together', phone)).toBe(true)

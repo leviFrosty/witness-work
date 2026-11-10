@@ -391,13 +391,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     if (!homeScreenElements.serviceReport) return null
                     return <ServiceReportSection key={key} />
                   case 'mileage':
-                    if (mileageTrackingEnabled === undefined)
-                      return <MileagePromptCard key={key} />
                     if (
-                      mileageTrackingEnabled !== true ||
+                      mileageTrackingEnabled === false ||
                       homeScreenElements.mileage === false
                     )
                       return null
+                    if (mileageTrackingEnabled === undefined)
+                      return <MileagePromptCard key={key} />
                     return <MileageHomeSection key={key} />
                   case 'pet': {
                     const slot = petHomeSlot({
@@ -417,13 +417,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     return null
                   }
                   case 'routine':
-                    if (routineEnabled === undefined)
-                      return <RoutinePromptCard key={key} />
                     if (
-                      routineEnabled !== true ||
+                      routineEnabled === false ||
                       homeScreenElements.routine === false
                     )
                       return null
+                    if (routineEnabled === undefined)
+                      return <RoutinePromptCard key={key} />
                     return <RoutineHomeSection key={key} />
                   case 'quickActions':
                     if (homeScreenElements.quickActions === false) return null
@@ -453,9 +453,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                 }
               })()
               if (!section) return null
-              const isPrompt =
-                (key === 'mileage' && mileageTrackingEnabled === undefined) ||
-                (key === 'routine' && routineEnabled === undefined)
               const title = homeSectionTitle(key)
 
               const at = shownSections.indexOf(key)
@@ -466,7 +463,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                   key={key}
                   id={key}
                   liftOutsideEditing={false}
-                  onRemove={isPrompt ? undefined : () => hideHomeSection(key)}
+                  onRemove={() => hideHomeSection(key)}
                   removeLabel={i18n.t('homeEdit.removeA11y', {
                     section: title,
                   })}
@@ -478,9 +475,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     ...(after
                       ? [{ name: 'later', label: i18n.t('moveDown') }]
                       : []),
-                    ...(isPrompt
-                      ? []
-                      : [{ name: 'remove', label: i18n.t('homeEdit.remove') }]),
+                    { name: 'remove', label: i18n.t('homeEdit.remove') },
                   ]}
                   onAccessibilityAction={(name) => {
                     if (name === 'remove') hideHomeSection(key)

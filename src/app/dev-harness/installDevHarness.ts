@@ -17,6 +17,7 @@ import useRoutine from '@/stores/routine'
 import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
+import { useEditModeStore } from '@/stores/editMode'
 import { useProfile } from '@/stores/profile'
 import { useProfileOverlay } from '@/stores/profileOverlay'
 import type { JsonType } from '@posthog/core'
@@ -468,6 +469,7 @@ export function installDevHarness() {
     },
     stores: {
       preferences: usePreferences,
+      editMode: useEditModeStore,
       profile: useProfile,
       contacts: useContacts,
 

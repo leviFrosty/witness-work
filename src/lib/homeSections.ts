@@ -56,7 +56,7 @@ export const isHomeSectionAvailable = (
 ) => {
   if (key === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
   if (key === 'timer') return showsTimer
-  if (key === 'mileage') return mileageTrackingEnabled === true
+  if (key === 'mileage') return mileageTrackingEnabled !== false
   if (key === 'together') return buddiesAvailable
   return true
 }

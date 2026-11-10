@@ -11,6 +11,8 @@ import i18n from '@/lib/locales'
 import { isRtlLayout } from '@/lib/direction'
 import { isSubmenu } from '@/components/ui/menuEntries'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
+import LucideIcon from '@/components/ui/LucideIcon'
+import webMenuIcons from '@/components/ui/web/webMenuIcons'
 import { nextMenuIndex, typeaheadIndex } from '@/components/ui/web/menuKeys'
 import type {
   ContextMenuAction,
@@ -26,6 +28,7 @@ type Row = {
   group: number
   activate: () => void
   entry?: ContextMenuAction
+  systemImage?: ContextMenuItem['systemImage']
 }
 
 type Props = {
@@ -35,6 +38,11 @@ type Props = {
 }
 
 export const MENU_MAX_WIDTH = 320
+
+const ICON_SIZE = 18
+
+const iconFor = (systemImage: ContextMenuItem['systemImage']) =>
+  systemImage ? webMenuIcons[systemImage] : undefined
 
 const itemNodes = (list: HTMLElement | null) =>
   list ? [...list.querySelectorAll<HTMLElement>('[data-menu-item]')] : []
@@ -126,6 +134,7 @@ export default function WebMenu({ groups, onSelect }: Props) {
                 title: entry.title,
                 kind: 'submenu',
                 group: groupIndex,
+                systemImage: entry.systemImage,
                 activate: () => {
                   parentKey.current = entry.id
                   setSubmenu(entry)
@@ -138,10 +147,13 @@ export default function WebMenu({ groups, onSelect }: Props) {
                 group: groupIndex,
                 activate: () => onSelect(entry),
                 entry,
+                systemImage: entry.systemImage,
               }
       )
     ),
   ]
+
+  const indent = rows.some((row) => iconFor(row.systemImage))
 
   const checkedRow = rows.findIndex((row) => row.entry?.checked)
   const initialRow = submenu ? 1 : Math.max(checkedRow, 0)
@@ -155,6 +167,8 @@ export default function WebMenu({ groups, onSelect }: Props) {
       {rows.map((row, index) => {
         const { key, title, kind, activate, entry } = row
         const destructive = entry?.destructive === true
+        const color = destructive ? theme.colors.error : theme.colors.text
+        const icon = iconFor(row.systemImage)
         const checked = entry?.checked
         const style: CSSProperties = {
           display: 'flex',
@@ -169,12 +183,12 @@ export default function WebMenu({ groups, onSelect }: Props) {
             active === index
               ? `color-mix(in srgb, ${theme.colors.text} 9%, transparent)`
               : 'transparent',
-          color: destructive ? theme.colors.error : theme.colors.text,
+          color,
           font: `${theme.fontSize('md')}px ${theme.fonts.regular}, system-ui, sans-serif`,
           textAlign: 'start',
           cursor: 'pointer',
           outline: 'none',
-          gap: 8,
+          gap: 10,
         }
         return (
           <Fragment key={key}>
@@ -211,7 +225,19 @@ export default function WebMenu({ groups, onSelect }: Props) {
                 }
               }}
             >
-              {kind === 'back' ? <Chevron flip={!rtl} /> : null}
+              {kind === 'back' ? (
+                <Chevron flip={!rtl} />
+              ) : indent ? (
+                <span
+                  aria-hidden
+                  data-menu-icon={icon ? row.systemImage : undefined}
+                  style={iconSlotStyle}
+                >
+                  {icon ? (
+                    <LucideIcon icon={icon} color={color} size={ICON_SIZE} />
+                  ) : null}
+                </span>
+              ) : null}
               <span style={{ flex: 1 }}>{title}</span>
               {checked ? <Check /> : null}
               {kind === 'submenu' ? <Chevron flip={rtl} /> : null}
@@ -233,6 +259,13 @@ function Separator({ color }: { color: string }) {
 }
 
 const iconStyle: CSSProperties = { flexShrink: 0 }
+
+const iconSlotStyle: CSSProperties = {
+  display: 'flex',
+  flexShrink: 0,
+  width: ICON_SIZE,
+  height: ICON_SIZE,
+}
 
 function Check() {
   return (

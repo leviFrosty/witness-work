@@ -207,4 +207,56 @@ describe('TextInput on the web', () => {
     expect(attributes.get('spellcheck')).toBe('false')
     expect(attributes.get('aria-label')).toBe('Recovery key')
   })
+
+  it('gives the field its inset as padding a browser understands', async () => {
+    platform.OS = 'web'
+    await render({ placeholder: 'Optional' })
+
+    const style = flatten(input().props.style)
+    expect(style).toMatchObject({
+      paddingTop: 10,
+      paddingBottom: 10,
+      paddingLeft: 16,
+      paddingRight: 16,
+    })
+    expect(style).not.toHaveProperty('paddingHorizontal')
+    expect(style).not.toHaveProperty('paddingVertical')
+  })
+
+  it("keeps a caller's spacing, with one side over an axis over the box", async () => {
+    platform.OS = 'web'
+    await render({
+      style: {
+        padding: 4,
+        paddingHorizontal: 0,
+        paddingLeft: 8,
+        paddingEnd: 2,
+        marginVertical: 6,
+      },
+    })
+
+    const style = flatten(input().props.style)
+    expect(style).toMatchObject({
+      paddingTop: 10,
+      paddingBottom: 10,
+      paddingLeft: 8,
+      paddingRight: 0,
+      paddingInlineEnd: 2,
+      marginTop: 6,
+      marginBottom: 6,
+    })
+    for (const key of ['padding', 'paddingEnd', 'marginVertical'])
+      expect(style).not.toHaveProperty(key)
+  })
+
+  it('leaves the style alone on iOS and Android', async () => {
+    platform.OS = 'ios'
+    await render({ placeholder: 'Optional' })
+
+    expect(flatten(input().props.style)).toMatchObject({
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    })
+    expect(flatten(input().props.style)).not.toHaveProperty('paddingRight')
+  })
 })

@@ -59,6 +59,34 @@ const PLACEHOLDER_ALIGN_VERTICAL = {
   bottom: 'flex-end',
 } as const
 
+const WEB_SIDES = [
+  ['Top', 'Vertical'],
+  ['Bottom', 'Vertical'],
+  ['Left', 'Horizontal'],
+  ['Right', 'Horizontal'],
+] as const
+
+const WEB_FLOW_SIDES = { Start: 'InlineStart', End: 'InlineEnd' } as const
+
+export const toWebSpacing = (style: Record<string, unknown>) => {
+  for (const box of ['padding', 'margin'] as const) {
+    for (const [side, axis] of WEB_SIDES) {
+      const value = style[`${box}${side}`] ?? style[`${box}${axis}`]
+      if (value !== undefined) style[`${box}${side}`] = value
+      else if (style[box] !== undefined) style[`${box}${side}`] = style[box]
+    }
+    for (const [flow, inline] of Object.entries(WEB_FLOW_SIDES)) {
+      if (style[`${box}${flow}`] !== undefined)
+        style[`${box}${inline}`] = style[`${box}${flow}`]
+      delete style[`${box}${flow}`]
+    }
+    delete style[box]
+    delete style[`${box}Horizontal`]
+    delete style[`${box}Vertical`]
+  }
+  return style
+}
+
 const toFlow = (
   align: TextStyle['textAlign'] | FlowAlign | undefined
 ): FlowAlign | 'center' => {
@@ -128,6 +156,8 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   }
 
   resolvedStyle.fontFamily ??= theme.fonts.regular
+  if (Platform.OS === 'web')
+    toWebSpacing(resolvedStyle as unknown as Record<string, unknown>)
   const callerProps = rest as InputProps & {
     backgroundColor?: string
     borderColor?: string

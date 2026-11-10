@@ -31,7 +31,7 @@ App-level infrastructure that boots in `App.tsx` and may reach into any feature.
 - [`pet/`](/src/app/pet) — the buddy's pet that visits the Pet Companion's room (`usePetVisitor`).
 - [`sync/`](/src/app/sync) — iCloud sync orchestration (payload, merge, image sync, sync components).
 - [`deep-links/`](/src/app/deep-links) — `DeepLinkListeners`.
-- [`launch/`](/src/app/launch) — `LaunchSplash` (a pixel match of the native splash, shown while the app boots and while navigation resolves), `launchState` (whether navigation's first screen is up yet) and `beforeAppLoads` (what the web loads before the app's modules: CanvasKit and the selected language).
+- [`launch/`](/src/app/launch) — `LaunchSplash` (a pixel match of the native splash, shown while the app boots and while navigation resolves; on the web it carries on the progress bar that `public/index.html` shows before any script loads, `docs/build.md`), `launchState` (whether navigation's first screen is up yet) and `beforeAppLoads` (what the web loads before the app's modules: CanvasKit and the selected language).
 - [`notifications/`](/src/app/notifications) — `NotificationsBell` (composes every feature's tray items into the Home header bell) and `NotificationHosts` (the sheet and survey tray actions open on Home).
 
 ### Feature tier — [`src/features/`](/src/features)

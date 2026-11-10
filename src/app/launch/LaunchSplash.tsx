@@ -1,4 +1,4 @@
-import { Platform, useWindowDimensions, View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import {
   BRAND_MARK_CARD_PATH,
@@ -7,14 +7,14 @@ import {
   BRAND_MARK_SIZE,
   SPLASH_BACKGROUND_COLOR,
 } from '@/constants/brandMark'
+import {
+  splashMarkWidth,
+  type LaunchSplashProps,
+} from '@/app/launch/splashMark'
 
-export const splashMarkWidth = (window: { width: number; height: number }) =>
-  Platform.select({
-    android: 160,
-    default: 235 * Math.min(window.width / 1284, window.height / 2778),
-  })
+export { splashMarkWidth }
 
-const LaunchSplash = () => {
+const LaunchSplash = (_: LaunchSplashProps) => {
   const window = useWindowDimensions()
   const width = splashMarkWidth(window)
   const height = (width / BRAND_MARK_SIZE.width) * BRAND_MARK_SIZE.height

@@ -214,6 +214,31 @@ than English and the Help Center snapshots do (each is its own chunk, loaded
 when its language is shown). On the web, `import()` downloads the chunk before
 requiring the module (`src/vendor/web/asyncRequire.ts`).
 
+### Web launch splash
+
+`public/index.html` holds the launch splash itself, inside `#root`: the brand
+green, the mark and a progress bar. It paints with the HTML, while the entry
+chunk (about 2 MB compressed) is still downloading, and it is CSS only, since
+the hosts' CSP allows no inline script (`docs/web-hosting.md`).
+
+- **Handover:** React's first render replaces what's in `#root` with
+  `LaunchSplash` (`src/app/launch/LaunchSplash.web.tsx`), which renders the
+  same markup on the page's styles, so nothing moves. Every bar the app mounts
+  takes the first bar's animation start time, so the bar keeps its place while
+  launch swaps one splash for the next. `LaunchSplash.web.test.tsx` fails when
+  the page's markup and the component's differ.
+- **Indeterminate:** a browser reports no progress for a `<script>` it is
+  downloading, so there's no honest percentage to show.
+- **Reduced motion:** the bar fades in place instead of sliding.
+- **Light and dark:** the splash is the same green in both, as the native
+  splash is.
+- **Name:** the bar is a `progressbar` named with `common_loading`. `pnpm web`
+  and `web:build` write `public/launch-splash.js` (git-ignored) from
+  `src/locales`. It names the bar in the browser's first language until the
+  app, which knows the language the User chose, renders its own.
+- **Elsewhere:** the Welcome screen's copy of the splash passes
+  `indicator={false}`, since nothing is loading there.
+
 ## Native changes
 
 - To regenerate `ios/` from scratch, run `APP_VARIANT=development pnpm run prebuild`.

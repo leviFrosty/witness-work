@@ -45,6 +45,23 @@ already staged update; its existing Update screen downloads and restarts
 immediately. Android uses a process restart so the SDK can finish native launch
 verification; iOS reloads in process.
 
+### Fonts outlive the bundle
+
+On iOS an applied update reloads the JavaScript inside the same process
+(`setReloadBehavior('reload')`). iOS registers a font by its file's path and
+reads glyphs from that file as text is first drawn, and expo-font does not
+register a family again after a reload. Fonts loaded straight from a bundle's
+assets therefore stay tied to the bundle the process started on. The next
+download removes that bundle's folder (Hot Updater keeps only the running,
+stable and new bundles), and every glyph drawn afterwards is a boxed question
+mark until the app is quit.
+
+So bundled fonts load through `loadFonts` (`src/lib/fonts/loadFonts.ts`): on iOS
+it copies each font once, named by content hash, to `Documents/fonts/` and
+registers that copy. Never call `Font.loadAsync` or `useFonts` with a bundled
+font directly. Anything else native code keeps reading by path across a reload
+needs the same care.
+
 ### Test `dev` updates
 
 A debug dev client can't receive OTA updates: Hot Updater skips update checks

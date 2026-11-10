@@ -539,7 +539,6 @@ const TimeEntryForm = (props: Props) => {
       }
       contentContainerStyle={{
         flexGrow: 1,
-        paddingTop: 12,
         paddingBottom: 8,
         paddingHorizontal: inputLayout.horizontalPadding,
         width: '100%',
@@ -547,9 +546,10 @@ const TimeEntryForm = (props: Props) => {
         alignSelf: 'center',
       }}
     >
-      {!formAtTop && <View style={{ flexGrow: 1 }} />}
+      <EntryDayPicker date={serviceReport.date} setDate={setDate} />
+      <View style={{ flexGrow: formAtTop ? 0 : 1, minHeight: 16 }} />
       {planned && (
-        <View style={{ marginBottom: 8 }}>
+        <View style={{ marginBottom: 16 }}>
           <DayPlanSuggestion
             minutes={planned.minutes}
             applied={total === planned.minutes}
@@ -557,8 +557,6 @@ const TimeEntryForm = (props: Props) => {
           />
         </View>
       )}
-      <EntryDayPicker date={serviceReport.date} setDate={setDate} />
-      <View style={{ height: 16 }} />
       {durationControl}
       {notice}
       <View style={{ height: 16 }} />

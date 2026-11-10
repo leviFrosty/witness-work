@@ -3,7 +3,6 @@ import { Keyboard, Platform, View } from 'react-native'
 import moment from 'moment'
 import { CalendarDays as CalendarDaysIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
-import { useCardStyle } from '@/components/ui/Card'
 import DateTimePicker, { DateTimeDialog } from '@/components/ui/DateTimePicker'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -30,8 +29,7 @@ import {
 
 export type DateInputMethod = 'day' | 'calendar'
 
-const CELL_HEIGHT = 60
-const STRIP_PADDING = 6
+const CELL_HEIGHT = 56
 
 const dayLabel = (date: Date, today: Date) => {
   const day = moment(date)
@@ -60,7 +58,6 @@ const EntryDayPicker = (props: {
   setDate: (date: Date, method: DateInputMethod) => void
 }) => {
   const theme = useTheme()
-  const cardStyle = useCardStyle()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const format = usePreferences((s) => s.timeDisplayFormat)
   const [picking, setPicking] = useState(false)
@@ -85,7 +82,7 @@ const EntryDayPicker = (props: {
   }
 
   return (
-    <View style={{ ...cardStyle, shadowOpacity: 0 }}>
+    <View>
       <Button
         noTransform
         onPress={open}
@@ -96,8 +93,7 @@ const EntryDayPicker = (props: {
         testID='time-entry-date-row'
         style={{
           minHeight: MIN_TOUCH_TARGET,
-          paddingStart: 16,
-          paddingEnd: 14,
+          paddingHorizontal: 4,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 12,
@@ -107,28 +103,23 @@ const EntryDayPicker = (props: {
           numberOfLines={1}
           style={{
             flex: 1,
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('md'),
+            fontFamily: theme.fonts.medium,
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
           }}
         >
           {dayLabel(props.date, today)}
         </Text>
         <LucideIcon
           icon={CalendarDaysIcon}
-          size={20}
+          size={18}
           color={theme.colors.textAlt}
         />
       </Button>
       <View
         accessibilityRole='radiogroup'
-        onLayout={(event) =>
-          setWidth(event.nativeEvent.layout.width - STRIP_PADDING * 2)
-        }
-        style={{
-          flexDirection: 'row',
-          paddingHorizontal: STRIP_PADDING,
-          paddingBottom: STRIP_PADDING,
-        }}
+        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        style={{ flexDirection: 'row' }}
       >
         {days.map((day) => {
           const key = localDayKey(day)
@@ -157,17 +148,13 @@ const EntryDayPicker = (props: {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 1,
-                backgroundColor: selected
-                  ? theme.colors.accentTranslucent
-                  : 'transparent',
-                borderWidth: 1.5,
-                borderColor: selected ? theme.colors.accent : 'transparent',
+                backgroundColor: selected ? theme.colors.card : 'transparent',
               }}
             >
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontFamily:
                     key === todayKey ? theme.fonts.bold : theme.fonts.medium,
                   color:
@@ -180,11 +167,12 @@ const EntryDayPicker = (props: {
               </Text>
               <Text
                 style={{
-                  fontSize: 18,
-                  lineHeight: 22,
+                  fontSize: 16,
+                  lineHeight: 20,
                   fontFamily: selected
                     ? theme.fonts.bold
                     : theme.fonts.semiBold,
+                  color: selected ? theme.colors.text : theme.colors.textAlt,
                   fontVariant: ['tabular-nums'],
                 }}
               >

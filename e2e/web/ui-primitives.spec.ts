@@ -378,6 +378,31 @@ test('Tab walks a form with a visible focus ring', async ({ app, shot }) => {
   await shot('focus-ring')
 })
 
+test.describe('a pill text field', () => {
+  test.use({
+    preferences: {
+      role: 'regularPioneer',
+      roleHistory: null,
+      mileageTrackingEnabled: true,
+    },
+  })
+
+  test('keeps its text off its rounded ends', async ({ app }) => {
+    const mileage = app.getByRole('button', { name: 'Mileage', exact: true })
+    await mileage.scrollIntoViewIfNeeded()
+    await mileage.click()
+    await app.getByRole('button', { name: 'Mileage Settings' }).click()
+    await app.getByText('Add Car', { exact: true }).first().click()
+    const padding = await app
+      .getByRole('textbox', { name: 'Name', exact: true })
+      .evaluate((field) => {
+        const style = getComputedStyle(field)
+        return [style.paddingLeft, style.paddingRight].map(Number.parseFloat)
+      })
+    expect(padding).toEqual([16, 16])
+  })
+})
+
 test('Contacts has a search field that takes typing', async ({ app, shot }) => {
   await app.getByRole('button', { name: 'Contacts', exact: true }).click()
   const search = app.getByTestId('contacts-search')

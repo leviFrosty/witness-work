@@ -92,11 +92,23 @@ account's Supporter status on ww-api (below) still unlocks them.
 say Supporter, until its `expiresAt` (or with no end). The answer is kept in
 device-local MMKV with a hash of the account it was read for: another account
 key, or no session, doesn't count it, and offline keeps the last one. It's read
-when a session opens, after a link, and otherwise at most every 4 hours on
-launch or foreground, or sooner once it has expired
-(`src/lib/serverAccount/serverSupporter.ts`). `since` stays RevenueCat's date,
-so it's null on the server's answer alone: Settings shows "You're a supporter"
-without a year. The dev override still wins in dev builds.
+(`src/lib/serverAccount/serverSupporter.ts`):
+
+- when a session opens, and after a link;
+- when a pull brings peers' claims that disagree with it: a peer says
+  Supporter and the answer doesn't, or the other way round. That's how a
+  purchase on a phone reaches a browser within seconds, since the phone's
+  claim arrives over Cloud Sync's live socket. If a peer says Supporter and
+  the server still doesn't (the phone's link hasn't landed yet), it asks once
+  more 15 seconds later;
+- the moment the answer reaches its `expiresAt`, to tell a renewal from a
+  lapse without waiting for the next launch;
+- otherwise on launch or foreground, at most every 4 hours on phones. On the
+  web, where ww-api's answer can be the only one (a build without RevenueCat
+  Billing's key has no customer info), at most every 15 minutes, also while
+  the tab stays open and visible. `since` stays RevenueCat's date,
+  so it's null on the server's answer alone: Settings shows "You're a supporter"
+  without a year. The dev override still wins in dev builds.
 
 The account backup ([accounts-protocol.md](./accounts-protocol.md#backup))
 uploads the same payload, end-to-end encrypted, to ww-api, without its

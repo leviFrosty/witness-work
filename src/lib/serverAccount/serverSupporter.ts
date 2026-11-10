@@ -8,6 +8,10 @@ import type {
 
 export const SERVER_SUPPORTER_REFRESH_MS = 4 * 60 * 60_000
 
+export const SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS = 15 * 60_000
+
+export const PEER_CLAIM_RETRY_MS = 15_000
+
 export type ServerSupporterStatus = {
   supporter: boolean
 
@@ -81,6 +85,10 @@ export type ServerSupporterDeps = {
 
   onAccountSwitched: (previous: string) => void
   now: () => number
+
+  refreshMs?: () => number
+
+  schedule?: (run: () => void, afterMs: number) => void
 }
 
 export type SupporterAccountBinding = Pick<
@@ -148,7 +156,8 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
     if (
       !options.force &&
       entry?.account === account &&
-      deps.now() - entry.readAt < SERVER_SUPPORTER_REFRESH_MS &&
+      deps.now() - entry.readAt <
+        (deps.refreshMs?.() ?? SERVER_SUPPORTER_REFRESH_MS) &&
       (entry.expiresAt === null || deps.now() < entry.expiresAt)
     )
       return
@@ -204,5 +213,38 @@ export function createServerSupporter(deps: ServerSupporterDeps) {
     await refresh({ reason: 'account_changed' })
   }
 
-  return { record, refresh, accountChanged, accountSwitched }
+  const answersSupporter = (): boolean => {
+    const entry = deps.store.entry()
+    return (
+      !!entry?.supporter &&
+      (entry.expiresAt === null || deps.now() < entry.expiresAt)
+    )
+  }
+
+  let peersEntitled: boolean | null = null
+
+  async function peerClaimsChanged(entitled: boolean): Promise<void> {
+    peersEntitled = entitled
+    if (entitled === answersSupporter()) return
+    await refresh({ force: true, reason: 'peer_claim' })
+
+    if (!entitled || answersSupporter()) return
+    deps.schedule?.(() => {
+      if (peersEntitled && !answersSupporter())
+        void refresh({ force: true, reason: 'peer_claim' })
+    }, PEER_CLAIM_RETRY_MS)
+  }
+
+  async function expired(): Promise<void> {
+    await refresh({ reason: 'expired' })
+  }
+
+  return {
+    record,
+    refresh,
+    accountChanged,
+    accountSwitched,
+    peerClaimsChanged,
+    expired,
+  }
 }

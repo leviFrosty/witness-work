@@ -1,3 +1,4 @@
+import { AppState, Platform } from 'react-native'
 import Purchases from 'react-native-purchases'
 import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
@@ -16,6 +17,8 @@ import {
 import {
   confirmSupporterAccount,
   createServerSupporter,
+  SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS,
+  SERVER_SUPPORTER_REFRESH_MS,
 } from '@/lib/serverAccount/serverSupporter'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import {
@@ -26,10 +29,13 @@ import {
   getOrCreateAccountId,
 } from '@/lib/account'
 import {
+  onPeerAccountClaimsChange,
+  peerAccountClaims,
   setOwnAccountClaim,
   setPeerAccountClaims,
 } from '@/lib/accountClaimRegistry'
 import {
+  onServerSupporterExpired,
   setServerSupporterAccount,
   setServerSupporterEntry,
   useServerSupporter,
@@ -190,12 +196,19 @@ onAccountChange((change) => {
   )
 })
 
+const serverSupporterRefreshMs =
+  Platform.OS === 'web'
+    ? SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS
+    : SERVER_SUPPORTER_REFRESH_MS
+
 export const serverSupporter = createServerSupporter({
   currentAccount: () => currentSessionAccount({ reopenStale: true }),
   link: (reason) => revenueCatLink.ensure({ reason }),
   fetchStatus: (accountId) => revenueCatLink.fetchStatus(accountId),
   ...supporterAccount,
   now: Date.now,
+  refreshMs: () => serverSupporterRefreshMs,
+  schedule: (run, afterMs) => void setTimeout(run, afterMs),
 })
 
 onRevenueCatLinked(
@@ -212,4 +225,19 @@ onAccountChange((change) => {
 addForegroundListener(
   () => void serverSupporter.refresh({ reason: 'foreground' })
 )
+onPeerAccountClaimsChange(
+  () =>
+    void serverSupporter.peerClaimsChanged(
+      peerAccountClaims().some((claim) => claim.entitled)
+    )
+)
+
+onServerSupporterExpired(() => void serverSupporter.expired())
+
+if (Platform.OS === 'web')
+  setInterval(() => {
+    if (AppState.currentState === 'active')
+      void serverSupporter.refresh({ reason: 'interval' })
+  }, SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS)
+
 void serverSupporter.refresh({ reason: 'launch' })

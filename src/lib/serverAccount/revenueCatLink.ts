@@ -31,6 +31,9 @@ export type RevenueCatLinkReason =
   | 'refused'
   | 'tools'
   | 'purchase_return'
+  | 'peer_claim'
+  | 'expired'
+  | 'interval'
 
 export type RevenueCatLinkOutcome =
   | {

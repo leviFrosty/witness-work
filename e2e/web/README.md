@@ -64,6 +64,12 @@ Specs that reach sign-in from a tab opened without an account use
 `test.use({ withoutAccountOnce: true })`, which opens it that way only on the
 tab's first load.
 
+`supporterStatus.spec.ts` covers how the web learns the account's Supporter
+status from ww-api (`docs/icloud-sync.md`, "One RevenueCat customer per
+account"): a peer's claim that disagrees makes it ask again, in both
+directions, and so does an answer reaching its end. It answers ww-api itself
+and needs the dev server's harness (`wwv web test`), so it skips on an export.
+
 Each test seeds the app past onboarding by editing the preferences the app
 saved in IndexedDB on its first load, while no tab of the app is open
 (`fixtures.ts`), and fails on any uncaught page error. `storage.spec.ts` covers

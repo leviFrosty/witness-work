@@ -6,6 +6,8 @@ import {
   createServerSupporter,
   nextServerSupporterChange,
   parseServerSupporterEntry,
+  PEER_CLAIM_RETRY_MS,
+  SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS,
   SERVER_SUPPORTER_REFRESH_MS,
   serverSupporterActive,
   type ServerSupporterEntry,
@@ -95,8 +97,10 @@ const setup = (
     bound?: string | null
     adoptedFor?: string | null
     now?: number
+    refreshMs?: number
   } = {}
 ) => {
+  const scheduled: { run: () => void; afterMs: number }[] = []
   let stored = options.stored ?? null
   let bound = options.bound === undefined ? null : options.bound
   let account: string | null | undefined = undefined
@@ -127,6 +131,12 @@ const setup = (
     },
     onAccountSwitched: vi.fn(),
     now: () => now,
+    ...(options.refreshMs === undefined
+      ? {}
+      : { refreshMs: () => options.refreshMs as number }),
+    schedule: (run: () => void, afterMs: number) => {
+      scheduled.push({ run, afterMs })
+    },
   }
   const supporter = createServerSupporter(deps)
   return {
@@ -135,6 +145,7 @@ const setup = (
     stored: () => stored,
     account: () => account,
     bound: () => bound,
+    scheduled,
     signInAs: (id: string | null) => (current = id),
     advance: (ms: number) => (now += ms),
   }
@@ -533,5 +544,115 @@ describe('createServerSupporter', () => {
       expect(bound()).toBe(accountFingerprint(ACCOUNT))
       expect(deps.onAccountSwitched).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('when another device changes the account', () => {
+  const notSupporter = async () => ({ supporter: false, expiresAt: null })
+  const supporterNow = async () => ({ supporter: true, expiresAt: null })
+
+  it('reads again as soon as a peer says Supporter, however fresh the answer', async () => {
+    const status = vi.fn(notSupporter)
+    const { supporter, deps, stored, advance } = setup({ status })
+    await supporter.refresh({ reason: 'session_opened' })
+    expect(stored()).toMatchObject({ supporter: false })
+
+    advance(60_000)
+    status.mockImplementation(supporterNow)
+    await supporter.peerClaimsChanged(true)
+
+    expect(deps.link).toHaveBeenLastCalledWith('peer_claim')
+    expect(deps.fetchStatus).toHaveBeenCalledTimes(2)
+    expect(stored()).toMatchObject({ supporter: true })
+  })
+
+  it("asks once more when the peer's link hasn't reached the server yet", async () => {
+    const status = vi.fn(notSupporter)
+    const { supporter, deps, stored, scheduled } = setup({ status })
+    await supporter.peerClaimsChanged(true)
+    expect(stored()).toMatchObject({ supporter: false })
+    expect(scheduled.map((s) => s.afterMs)).toEqual([PEER_CLAIM_RETRY_MS])
+
+    status.mockImplementation(supporterNow)
+    scheduled[0].run()
+    await vi.waitFor(() => expect(stored()).toMatchObject({ supporter: true }))
+    expect(deps.fetchStatus).toHaveBeenCalledTimes(2)
+    expect(scheduled).toHaveLength(1)
+  })
+
+  it('skips the second ask when the answer came in the meantime', async () => {
+    const { supporter, deps, scheduled } = setup({ status: notSupporter })
+    await supporter.peerClaimsChanged(true)
+    await supporter.record(ACCOUNT, { supporter: true, expiresAt: null })
+    scheduled[0].run()
+    expect(deps.fetchStatus).toHaveBeenCalledOnce()
+  })
+
+  it('reads again when no peer says Supporter any more', async () => {
+    const status = vi.fn(supporterNow)
+    const { supporter, deps, stored, scheduled } = setup({ status })
+    await supporter.refresh({ reason: 'launch' })
+
+    status.mockImplementation(notSupporter)
+    await supporter.peerClaimsChanged(false)
+
+    expect(deps.fetchStatus).toHaveBeenCalledTimes(2)
+    expect(stored()).toMatchObject({ supporter: false })
+    expect(scheduled).toHaveLength(0)
+  })
+
+  it("doesn't ask when the peers agree with the answer", async () => {
+    const { supporter, deps } = setup()
+    await supporter.refresh({ reason: 'launch' })
+    await supporter.peerClaimsChanged(true)
+    expect(deps.fetchStatus).toHaveBeenCalledOnce()
+
+    const none = setup({ status: notSupporter })
+    await none.supporter.refresh({ reason: 'launch' })
+    await none.supporter.peerClaimsChanged(false)
+    expect(none.deps.fetchStatus).toHaveBeenCalledOnce()
+  })
+
+  it('counts an answer past its end as not a Supporter', async () => {
+    const { supporter, deps } = setup({
+      stored: entry({ expiresAt: 10 * HOUR - 1, readAt: 9 * HOUR }),
+    })
+    await supporter.peerClaimsChanged(true)
+    expect(deps.fetchStatus).toHaveBeenCalledOnce()
+  })
+})
+
+describe('when the answer reaches its end', () => {
+  it('reads again at once, to tell a renewal from a lapse', async () => {
+    const { supporter, deps, stored, advance } = setup({
+      status: async () => ({ supporter: true, expiresAt: 35 * HOUR }),
+      stored: entry({ expiresAt: 11 * HOUR, readAt: 10 * HOUR }),
+    })
+    await supporter.expired()
+    expect(deps.fetchStatus).not.toHaveBeenCalled()
+
+    advance(HOUR)
+    await supporter.expired()
+    expect(deps.link).toHaveBeenLastCalledWith('expired')
+    expect(stored()).toMatchObject({ supporter: true, expiresAt: 35 * HOUR })
+  })
+})
+
+describe('where the server is the only source', () => {
+  it('reads again after minutes, not hours', async () => {
+    const { supporter, deps, advance } = setup({
+      status: async () => ({ supporter: false, expiresAt: null }),
+      refreshMs: SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS,
+    })
+    await supporter.refresh({ reason: 'launch' })
+    advance(SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS - 1)
+    await supporter.refresh({ reason: 'interval' })
+    expect(deps.fetchStatus).toHaveBeenCalledOnce()
+    advance(1)
+    await supporter.refresh({ reason: 'interval' })
+    expect(deps.fetchStatus).toHaveBeenCalledTimes(2)
+    expect(SERVER_SUPPORTER_ONLY_SOURCE_REFRESH_MS).toBeLessThan(
+      SERVER_SUPPORTER_REFRESH_MS
+    )
   })
 })

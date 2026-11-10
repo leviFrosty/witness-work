@@ -346,7 +346,10 @@ RS KR TJ TZ TR AE UY UZ VN`;
 - **Status.** `useIsSupporter` applies ADR 0014's rule to the web's customer
   info, exactly as on phones. A web subscription counts because it's in
   `activeSubscriptions`. ww-api's answer for the account is the fallback when
-  RevenueCat can't be reached (ADR 0040 §7).
+  RevenueCat can't be reached (ADR 0040 §7), and the only source in a build
+  without RevenueCat Billing's key. The web reads it again when a peer's
+  claim disagrees with it, when it expires, and every 15 minutes while the
+  tab is open ([when it's read](./icloud-sync.md#one-revenuecat-customer-per-account)).
 - **Manage** opens `customerInfo.managementURL` in a new tab:
   - for a web subscription, RevenueCat's customer portal (cancel, payment
     method, receipts);

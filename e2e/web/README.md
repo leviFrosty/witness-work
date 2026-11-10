@@ -75,7 +75,8 @@ tooltips, sheets and the focus ring, by mouse and by keyboard. Firefox in the
 container reaches the host by name, so `playwright.config.ts` lists that host
 as a secure context for it (the app needs `crypto.randomUUID`).
 
-`layout.spec.ts` covers layout and navigation: Home scrolls, the note editor
+`layout.spec.ts` covers layout and navigation: Home and a long Settings page
+scroll, the note editor
 closes, Tab stays on the tab that's showing, headers have a body, and controls
 are 44 px (`AGENTS.md`, "Touch targets").
 

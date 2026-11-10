@@ -1,7 +1,11 @@
 import { PropsWithChildren } from 'react'
-import { View, ViewStyle, StyleProp } from 'react-native'
+import { Platform, View, ViewStyle, StyleProp } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
+
+const shrinkToParentOnWeb = Platform.select<ViewStyle>({
+  web: { flexShrink: 1 },
+})
 
 interface Props {
   style?: StyleProp<ViewStyle>
@@ -41,6 +45,7 @@ const Wrapper: React.FC<PropsWithChildren<Props>> = ({
           {
             ...getInsets(),
             flexGrow: 1,
+            ...shrinkToParentOnWeb,
             backgroundColor: theme.colors.background,
           },
         ],

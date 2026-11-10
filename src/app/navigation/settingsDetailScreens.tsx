@@ -241,12 +241,6 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('privacy'),
   },
   {
-    name: 'Security',
-    getComponent: () =>
-      require('@/features/settings/screens/SecurityScreen').default,
-    title: () => i18n.t('security'),
-  },
-  {
     name: 'PreferencesiCloud',
     getComponent: () =>
       require('@/features/settings/preferences/sync/PreferencesiCloudScreen')

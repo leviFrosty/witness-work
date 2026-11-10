@@ -1,11 +1,11 @@
 import {
   Bell as BellIcon,
-  BookOpenCheck as BookOpenCheckIcon,
+  Globe as GlobeIcon,
   Cloud as CloudIcon,
   KeyRound as KeyRoundIcon,
-  Lock as LockIcon,
   Palette as PaletteIcon,
   Settings as SettingsIcon,
+  ShieldCheck as ShieldCheckIcon,
   User as UserIcon,
 } from 'lucide-react-native'
 import * as BuddiesKeychain from '../../../../../modules/buddies-keychain'
@@ -27,6 +27,12 @@ const PreferencesSection = ({
     <>
       <GroupedListSection>
         <LanguageSelector />
+        <GroupedListRow
+          icon={GlobeIcon}
+          label={i18n.t('regionAndFormats')}
+          onPress={() => handleNavigate('PreferencesAppearance')}
+          selected={selectedDestination === 'PreferencesAppearance'}
+        />
       </GroupedListSection>
       <GroupedListSection>
         <GroupedListRow
@@ -53,6 +59,14 @@ const PreferencesSection = ({
             selected={selectedDestination === 'PreferencesiCloud'}
           />
         )}
+        <GroupedListRow
+          icon={ShieldCheckIcon}
+          label={i18n.t('privacy')}
+          onPress={() => handleNavigate('PreferencesPrivacy')}
+          selected={selectedDestination === 'PreferencesPrivacy'}
+        />
+      </GroupedListSection>
+      <GroupedListSection>
         {hasCapability('deviceNotifications') && (
           <GroupedListRow
             icon={BellIcon}
@@ -69,26 +83,11 @@ const PreferencesSection = ({
           selected={selectedDestination === 'PreferencesPersonalization'}
         />
         <GroupedListRow
-          icon={BookOpenCheckIcon}
-          label={i18n.t('routine.title')}
-          onPress={() => handleNavigate('RoutineSettings')}
-          selected={selectedDestination === 'RoutineSettings'}
-          testID='settings-routine'
-        />
-        <GroupedListRow
           icon={SettingsIcon}
           label={i18n.t('preferences')}
           onPress={() => handleNavigate('Preferences')}
           selected={selectedDestination === 'Preferences'}
         />
-        {hasCapability('appLock') && (
-          <GroupedListRow
-            icon={LockIcon}
-            label={i18n.t('security')}
-            onPress={() => handleNavigate('Security')}
-            selected={selectedDestination === 'Security'}
-          />
-        )}
       </GroupedListSection>
     </>
   )

@@ -43,6 +43,7 @@ const everything: SettingsSearchAvailability = {
   deviceNotifications: true,
   haptics: true,
   otaUpdates: true,
+  appLock: true,
 }
 
 describe('searchSettings', () => {

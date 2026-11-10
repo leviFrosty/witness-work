@@ -14,7 +14,6 @@ export type SettingsSearchPage =
       | 'PreferencesNotifications'
       | 'RoutineSettings'
       | 'Preferences'
-      | 'Security'
       | 'Import and Export'
       | 'Import Data'
       | 'More'
@@ -66,6 +65,7 @@ export type SettingsSearchRequirement =
   | 'deviceNotifications'
   | 'haptics'
   | 'otaUpdates'
+  | 'appLock'
 
 export type SettingsSearchAvailability = Readonly<
   Record<SettingsSearchRequirement, boolean>
@@ -85,9 +85,8 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   PreferencesiCloud: { title: 'syncSettingsTitle' },
   PreferencesNotifications: { title: 'notifications' },
   PreferencesPersonalization: { title: 'personalization' },
-  RoutineSettings: { title: 'routine.title' },
+  RoutineSettings: { title: 'routine.title', parent: 'Preferences' },
   Preferences: { title: 'preferences' },
-  Security: { title: 'security' },
   'Import and Export': { title: 'backupAndRestore' },
   'Import Data': { title: 'importData' },
   More: { title: 'more' },
@@ -97,10 +96,7 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   FAQ: { title: 'helpCenter' },
   'Whats New': { title: 'whatsNew' },
   OpenSourceLicenses: { title: 'openSourceLicenses' },
-  PreferencesAppearance: {
-    title: 'regionAndFormats',
-    parent: 'Preferences',
-  },
+  PreferencesAppearance: { title: 'regionAndFormats' },
   PreferencesConversation: {
     title: 'conversations',
     parent: 'Preferences',
@@ -157,10 +153,7 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
     title: 'widgets',
     parent: 'Preferences',
   },
-  PreferencesPrivacy: {
-    title: 'privacy',
-    parent: 'Preferences',
-  },
+  PreferencesPrivacy: { title: 'privacy' },
   PreferencesColorKey: {
     title: 'colorKeyScreenTitle',
     parent: 'PreferencesPersonalization',
@@ -208,6 +201,38 @@ export const SETTINGS_SEARCH_ITEMS = [
     page: 'SettingsRoot',
     keywords: 'settingsSearch.keywords.scribe',
     requires: ['scribeOffered'],
+  },
+
+  page('PreferencesAppearance', {
+    keywords: 'settingsSearch.keywords.regionAndFormats',
+  }),
+  {
+    id: 'durationFormat',
+    title: 'durationFormat',
+    page: 'PreferencesAppearance',
+    keywords: 'settingsSearch.keywords.durationFormat',
+  },
+  {
+    id: 'formatRegion',
+    title: 'formatRegion',
+    page: 'PreferencesAppearance',
+  },
+  {
+    id: 'startOfWeek',
+    title: 'startOfWeek',
+    page: 'PreferencesAppearance',
+    keywords: 'settingsSearch.keywords.startOfWeek',
+  },
+  {
+    id: 'clockFormat',
+    title: 'clockFormat',
+    page: 'PreferencesAppearance',
+    keywords: 'settingsSearch.keywords.clockFormat',
+  },
+  {
+    id: 'dateOrder',
+    title: 'dateOrder',
+    page: 'PreferencesAppearance',
   },
 
   page('PreferencesPublisher', {
@@ -288,6 +313,32 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.deviceSync',
     requires: ['deviceSync'],
   }),
+
+  page('PreferencesPrivacy', { keywords: 'settingsSearch.keywords.privacy' }),
+  {
+    id: 'appLock',
+    title: 'appLock_title',
+    page: 'PreferencesPrivacy',
+    keywords: 'settingsSearch.keywords.appLock',
+    requires: ['appLock'],
+  },
+  {
+    id: 'dataProtection',
+    title: 'dataProtectionSwitchLabel',
+    page: 'PreferencesPrivacy',
+  },
+  {
+    id: 'deleteHouseholderData',
+    title: 'dataProtectionDeleteAll',
+    page: 'PreferencesPrivacy',
+    requires: ['dataProtection'],
+  },
+  {
+    id: 'anonymousAnalytics',
+    title: 'anonymousAnalytics',
+    page: 'PreferencesPrivacy',
+    keywords: 'settingsSearch.keywords.analytics',
+  },
 
   page('PreferencesNotifications', {
     keywords: 'settingsSearch.keywords.notifications',
@@ -401,41 +452,8 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   page('PreferencesAppIcon', { requires: ['ios'] }),
 
-  page('RoutineSettings', { keywords: 'settingsSearch.keywords.routine' }),
-
   page('Preferences', { keywords: 'settingsSearch.keywords.features' }),
-  page('PreferencesAppearance', {
-    keywords: 'settingsSearch.keywords.regionAndFormats',
-  }),
-  {
-    id: 'durationFormat',
-    title: 'durationFormat',
-    page: 'PreferencesAppearance',
-    keywords: 'settingsSearch.keywords.durationFormat',
-  },
-  {
-    id: 'formatRegion',
-    title: 'formatRegion',
-    page: 'PreferencesAppearance',
-  },
-  {
-    id: 'startOfWeek',
-    title: 'startOfWeek',
-    page: 'PreferencesAppearance',
-    keywords: 'settingsSearch.keywords.startOfWeek',
-  },
-  {
-    id: 'clockFormat',
-    title: 'clockFormat',
-    page: 'PreferencesAppearance',
-    keywords: 'settingsSearch.keywords.clockFormat',
-  },
-  {
-    id: 'dateOrder',
-    title: 'dateOrder',
-    page: 'PreferencesAppearance',
-  },
-
+  page('RoutineSettings', { keywords: 'settingsSearch.keywords.routine' }),
   page('PreferencesConversation'),
   {
     id: 'followUpOffset',
@@ -524,27 +542,6 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.widgets',
     requires: ['ios'],
   }),
-
-  page('PreferencesPrivacy'),
-  {
-    id: 'dataProtection',
-    title: 'dataProtectionSwitchLabel',
-    page: 'PreferencesPrivacy',
-  },
-  {
-    id: 'deleteHouseholderData',
-    title: 'dataProtectionDeleteAll',
-    page: 'PreferencesPrivacy',
-    requires: ['dataProtection'],
-  },
-  {
-    id: 'anonymousAnalytics',
-    title: 'anonymousAnalytics',
-    page: 'PreferencesPrivacy',
-    keywords: 'settingsSearch.keywords.analytics',
-  },
-
-  page('Security', { keywords: 'settingsSearch.keywords.appLock' }),
 
   page('Import and Export', {
     keywords: 'settingsSearch.keywords.backup',

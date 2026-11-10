@@ -1,17 +1,16 @@
 import {
+  BookOpenCheck as BookOpenCheckIcon,
   Calendar1 as Calendar1Icon,
   CalendarDays as CalendarDaysIcon,
   CalendarSync as CalendarSyncIcon,
   Coins as CoinsIcon,
   Flame as FlameIcon,
-  Globe as GlobeIcon,
   House as HouseIcon,
   LayoutGrid as LayoutGridIcon,
   Map as MapIcon,
   PanelBottom as PanelBottomIcon,
   MessagesSquare as MessagesSquareIcon,
   Route as RouteIcon,
-  ShieldCheck as ShieldCheckIcon,
   SlidersHorizontal as SlidersHorizontalIcon,
   Volume2 as Volume2Icon,
 } from 'lucide-react-native'
@@ -34,6 +33,15 @@ const PreferencesScreen = () => {
 
   return (
     <GroupedList>
+      <GroupedListSection>
+        <GroupedListRow
+          icon={BookOpenCheckIcon}
+          label={i18n.t('routine.title')}
+          onPress={() => navigation.navigate('RoutineSettings')}
+          testID='settings-routine'
+        />
+      </GroupedListSection>
+
       <GroupedListSection title={i18n.t('preferences_groupPlans')}>
         <GroupedListRow
           icon={Calendar1Icon}
@@ -122,19 +130,9 @@ const PreferencesScreen = () => {
 
       <GroupedListSection title={i18n.t('preferences_groupGeneral')}>
         <GroupedListRow
-          icon={GlobeIcon}
-          label={i18n.t('regionAndFormats')}
-          onPress={() => navigation.navigate('PreferencesAppearance')}
-        />
-        <GroupedListRow
           icon={Volume2Icon}
           label={i18n.t('audioAndHaptics')}
           onPress={() => navigation.navigate('PreferencesAudioAndHaptics')}
-        />
-        <GroupedListRow
-          icon={ShieldCheckIcon}
-          label={i18n.t('privacy')}
-          onPress={() => navigation.navigate('PreferencesPrivacy')}
         />
       </GroupedListSection>
     </GroupedList>

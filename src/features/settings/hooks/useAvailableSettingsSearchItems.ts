@@ -49,6 +49,7 @@ export default function useAvailableSettingsSearchItems() {
     deviceNotifications: hasCapability('deviceNotifications'),
     haptics: hasCapability('haptics'),
     otaUpdates: hasCapability('otaUpdates'),
+    appLock: hasCapability('appLock'),
   }
 
   return filterAvailableSettingsSearchItems(availability)

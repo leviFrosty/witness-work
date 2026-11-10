@@ -5,6 +5,7 @@ import { hatReactions } from '@/features/pet/lib/hatReactions'
 import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
 import { BIG_HAT_BRIM_ROW, BIG_HAT_CX, BIG_HAT_W } from './hatCanvas'
+import { COIN_TOSS_MS } from './hatRoomFx'
 import { trainAngle, trainSpot } from './hatsLive'
 import {
   composeScene,
@@ -131,6 +132,33 @@ describe('the big hats', () => {
     expect(drawn('mailbox', 0, { hatLife: { wentOut: true } })).not.toBe(
       drawn('mailbox', 0, { hatLife: { wentOut: false } })
     )
+  })
+
+  it('lets new coins take the mailbox over from a pat still playing', () => {
+    const patted = drawn('mailbox', 1000, { hatPatMs: 500 })
+    expect(drawn('mailbox', 1000, { hatPatMs: 500, hatCoinsMs: 900 })).not.toBe(
+      patted
+    )
+    expect(drawn('mailbox', 3000, { hatPatMs: 2900, hatCoinsMs: 500 })).toBe(
+      drawn('mailbox', 3000, { hatPatMs: 2900 })
+    )
+  })
+
+  it('tosses gold coins over every hat that reacts to new coins', () => {
+    const gold = (hat: ResolvedRoom['hat'], over: Partial<SceneInput>) => {
+      const { data } = composeScene(input(hat, over), 20_300)
+      let count = 0
+      for (let i = 0; i < data.length; i += 4)
+        if (data[i] === 0xff && data[i + 1] === 0xf0 && data[i + 2] === 0xa8)
+          count++
+      return count
+    }
+    for (const hat of BIG_HAT_IDS) {
+      const reacts = hatReactions(`hat:${hat}`).includes('coins')
+      expect(gold(hat, { hatCoinsMs: 20_000 }) > 0).toBe(reacts)
+      expect(gold(hat, { hatCoinsMs: 20_000 - COIN_TOSS_MS })).toBe(0)
+      expect(gold(hat, { hatCoinsMs: 20_000, reduceMotion: true })).toBe(0)
+    }
   })
 
   it('shows the real time on the cuckoo clock', () => {

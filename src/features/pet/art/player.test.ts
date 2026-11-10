@@ -105,6 +105,19 @@ describe('scene player', () => {
     )
   })
 
+  it('replays a previewed coin reaction at once, unlike earned coins', () => {
+    const hat: PlayerInput = { ...INPUT, room: { ...INPUT.room, hat: 'bowl' } }
+    const at = (again: (p: ReturnType<typeof createScenePlayer>) => void) => {
+      const p = createScenePlayer()
+      p.hatCoins(1000)
+      again(p)
+      return hashBuffer(p.frame(hat, 2400).buffer)
+    }
+    const once = at(() => {})
+    expect(at((p) => p.coinsEarned(2000))).toBe(once)
+    expect(at((p) => p.hatCoins(2000))).not.toBe(once)
+  })
+
   it('cheers with a happy sound, but not mid-motion', () => {
     const p = createScenePlayer()
     p.cheer(0)

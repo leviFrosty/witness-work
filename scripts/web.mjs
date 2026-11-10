@@ -589,6 +589,9 @@ async function main() {
       'start',
       '--web',
       ...(port ? ['--port', port] : []),
+      ...(process.env.WW_WEB_MAX_WORKERS
+        ? ['--max-workers', process.env.WW_WEB_MAX_WORKERS]
+        : []),
     ])
     if (result.signal) process.kill(process.pid, result.signal)
     process.exitCode = result.status ?? 1

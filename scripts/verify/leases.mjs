@@ -58,7 +58,7 @@ export const CONFIG = {
   metroPorts: Array.from({ length: 40 }, (_, i) => 8090 + i),
 
   jobs: {
-    max: num('WW_VERIFY_MAX_JOBS', 6, 3),
+    max: num('WW_VERIFY_MAX_JOBS', 6, 4),
     minFreePct: num('WW_VERIFY_MIN_FREE_PCT_JOB', 15),
     waitMin: num('WW_VERIFY_JOB_WAIT_MIN', 45),
     classes: {
@@ -68,13 +68,16 @@ export const CONFIG = {
         held: true,
       },
       'web-dev': {
-        max: num('WW_VERIFY_MAX_WEB_DEV', 2, 1),
-        gb: num('WW_VERIFY_EST_WEB_DEV_GB', 2.5),
+        max: num('WW_VERIFY_MAX_WEB_DEV', 6, 3),
+        gb: num('WW_VERIFY_EST_WEB_DEV_GB', 1.5),
         maxMin: num('WW_VERIFY_WEB_DEV_MAX_MIN', 45),
+        idleMin: num('WW_VERIFY_WEB_DEV_IDLE_MIN', 15),
+        contendedIdleMin: num('WW_VERIFY_WEB_DEV_CONTENDED_IDLE_MIN', 3),
+        persistent: true,
         held: true,
       },
       'web-test': {
-        max: num('WW_VERIFY_MAX_WEB_TESTS', 3, 2),
+        max: num('WW_VERIFY_MAX_WEB_TESTS', 4, 3),
         gb: num('WW_VERIFY_EST_WEB_TEST_GB', 1.5),
         held: true,
       },

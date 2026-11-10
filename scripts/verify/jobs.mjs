@@ -73,17 +73,35 @@ export function holdMessage(hold, what) {
   return `verification is on hold${hold.reason ? `: ${hold.reason}` : ''}. Skip ${what} and list it as unverified in your report. If the task cannot be finished without it, rerun with WW_VERIFY_IGNORE_HOLD=1 and say so.`
 }
 
-const overAge = (job, now) => {
-  const limit = CONFIG.jobs.classes[job.cls]?.maxMin
-  return Boolean(limit && job.pgid && now - job.startedAt > limit * 60_000)
+const persistent = (job) => Boolean(CONFIG.jobs.classes[job.cls]?.persistent)
+
+function ageLimit(job, now, contended) {
+  const policy = CONFIG.jobs.classes[job.cls]
+  if (!policy || !job.pgid) return null
+  if (job.touchedAt) {
+    const limit = contended ? policy.contendedIdleMin : policy.idleMin
+    return limit && now - job.touchedAt > limit * 60_000
+      ? `idle over ${limit} min${contended ? ' while others wait' : ''}`
+      : null
+  }
+  return policy.maxMin && now - job.startedAt > policy.maxMin * 60_000
+    ? `it ran over ${policy.maxMin} min`
+    : null
 }
 
 export function reapJobs({ log = () => {}, now = Date.now() } = {}) {
-  const victims = withMutex(() => liveJobs().filter((j) => overAge(j, now)))
+  const victims = withMutex(() => {
+    const waiting = new Set(liveJobWaiters(now).map((w) => w.cls))
+    const pressed = (memoryLevel()?.pressure ?? 1) > 1
+    return liveJobs()
+      .map((job) => ({
+        ...job,
+        why: ageLimit(job, now, pressed || waiting.has(job.cls)),
+      }))
+      .filter((job) => job.why)
+  })
   for (const job of victims) {
-    log(
-      `stopping ${job.cls} of ${path.basename(job.worktree)}: it ran over ${CONFIG.jobs.classes[job.cls].maxMin} min`
-    )
+    log(`stopping ${job.cls} of ${path.basename(job.worktree)}: ${job.why}`)
     killTree(job.pgid)
   }
   if (victims.length) withMutex(() => writeJson(JOBS, liveJobs()))
@@ -118,14 +136,13 @@ export function tryAdmit({ cls, worktree, label, pid = process.pid }) {
       return wait(
         `${count(cls)} of ${policy.max} ${cls} slots busy (${names(jobs.filter((j) => j.cls === cls))})`
       )
-    const ahead = waiters
-      .slice(0, position - 1)
-      .filter((w) => w.cls === cls || !capped(w.cls))
+    const ahead = waiters.slice(0, position - 1).filter((w) => w.cls === cls)
     if (ahead.length)
-      return wait(`queued behind ${ahead.length} earlier job(s)`)
-    if (jobs.length >= CONFIG.jobs.max)
+      return wait(`queued behind ${ahead.length} earlier ${cls} job(s)`)
+    const active = jobs.filter((j) => !persistent(j))
+    if (!policy.persistent && active.length >= CONFIG.jobs.max)
       return wait(
-        `${jobs.length} of ${CONFIG.jobs.max} job slots busy (${names(jobs)}; WW_VERIFY_MAX_JOBS)`
+        `${active.length} of ${CONFIG.jobs.max} job slots busy (${names(active)}; WW_VERIFY_MAX_JOBS)`
       )
     const used = round(
       usage(readLeases(now), liveBuilds(now)) +
@@ -136,7 +153,7 @@ export function tryAdmit({ cls, worktree, label, pid = process.pid }) {
         `memory budget: ${used} GB in use + ${policy.gb} GB > ${CONFIG.budgetGb} GB (WW_VERIFY_MEMORY_BUDGET_GB)`
       )
     const level = memoryLevel()
-    if (level && jobs.length) {
+    if (level && (policy.persistent ? jobs.length : active.length)) {
       if (level.pressure > 1)
         return wait(`macOS reports memory pressure (${level.free}% free)`)
       if (level.free < CONFIG.jobs.minFreePct)
@@ -151,6 +168,18 @@ export function tryAdmit({ cls, worktree, label, pid = process.pid }) {
     )
     return { ok: true }
   })
+}
+
+export function adoptJob(pid, patch) {
+  updateJob(pid, patch)
+}
+
+export function touchJob(pid, now = Date.now()) {
+  updateJob(pid, { touchedAt: now })
+}
+
+export function dropJob(pid) {
+  leave(pid)
 }
 
 function updateJob(pid, patch) {
@@ -221,51 +250,71 @@ function exec(argv, { cwd, env, detached }) {
   return { pid: proc.pid, status }
 }
 
-export async function runJob({
+export async function acquire({
   cls,
-  argv,
-  cwd = process.cwd(),
+  label = cls,
   env = process.env,
   worktree = ROOT,
   waitMs = CONFIG.jobs.waitMin * 60_000,
   pollMs = Number(env.WW_VERIFY_JOB_POLL_MS) || 2000,
-  prepare = () => ({}),
   log = (message) => console.error(`[ww-verify] ${message}`),
+  pid = process.pid,
 }) {
   const policy = CONFIG.jobs.classes[cls]
   if (!policy)
     throw new Error(
       `Unknown job class "${cls}"; use ${Object.keys(CONFIG.jobs.classes).join(', ')}`
     )
-  if (direct(env)) return exec(argv, { cwd, env, detached: false }).status
   const hold = policy.held && !ignoresHold(env) && readHold()
   if (hold) {
     log(holdMessage(hold, `this ${cls}`))
-    return BUSY
+    return false
   }
-  const pid = process.pid
-  const label = argv.join(' ').slice(0, 120)
   const deadline = Date.now() + waitMs
   let said = ''
-  try {
-    for (;;) {
-      reapJobs({ log })
-      const result = tryAdmit({ cls, worktree, label, pid })
-      if (result.ok) break
-      if (Date.now() >= deadline) {
-        log(
-          `gave up after ${Math.round(waitMs / 60_000)} min in the queue: ${result.wait}. The machine is busy; see \`wwv status\`, then retry later.`
-        )
-        return BUSY
-      }
-      if (result.wait !== said) {
-        said = result.wait
-        log(
-          `waiting for a ${cls} slot (${result.position} of ${result.queued} in the queue): ${result.wait}`
-        )
-      }
-      await sleep(Math.max(0, Math.min(pollMs, deadline - Date.now())))
+  for (;;) {
+    reapJobs({ log })
+    const result = tryAdmit({ cls, worktree, label, pid })
+    if (result.ok) return true
+    if (Date.now() >= deadline) {
+      leave(pid)
+      log(
+        `gave up after ${Math.round(waitMs / 60_000)} min in the queue: ${result.wait}. The machine is busy; see \`wwv status\`, then retry later.`
+      )
+      return false
     }
+    if (result.wait !== said) {
+      said = result.wait
+      log(
+        `waiting for a ${cls} slot (${result.position} of ${result.queued} in the queue): ${result.wait}`
+      )
+    }
+    await sleep(Math.max(0, Math.min(pollMs, deadline - Date.now())))
+  }
+}
+
+export async function runJob({
+  cls,
+  argv,
+  cwd = process.cwd(),
+  env = process.env,
+  prepare = () => ({}),
+  ...options
+}) {
+  if (!CONFIG.jobs.classes[cls])
+    throw new Error(
+      `Unknown job class "${cls}"; use ${Object.keys(CONFIG.jobs.classes).join(', ')}`
+    )
+  if (direct(env)) return exec(argv, { cwd, env, detached: false }).status
+  const pid = process.pid
+  try {
+    const admitted = await acquire({
+      cls,
+      env,
+      label: argv.join(' ').slice(0, 120),
+      ...options,
+    })
+    if (!admitted) return BUSY
     const extra = await prepare()
     const detached = !process.stdin.isTTY
     const running = exec(argv, {

@@ -24,7 +24,7 @@ import {
   type MileageFormatter,
 } from '@/features/mileage/lib/format'
 import { personExportName } from '@/features/mileage/lib/personLabel'
-import type { Fuel, Trip, Vehicle } from '@/types/mileage'
+import type { Fuel, FuelUnit, Trip, Vehicle } from '@/types/mileage'
 
 export type ReportPeople = {
   people: MileagePeople
@@ -175,6 +175,20 @@ export function buildReportCsv({
             ? selfName(sharing)
             : loggedByName(trip, sharing)
       : undefined
+  const estimates = new Map(
+    trips.map((trip) => {
+      const estimate = estimateTrip(trip, index)
+      return [
+        trip.id,
+        { estimate, fuel: fuels.find((f) => f.id === estimate.fuelId) },
+      ] as const
+    })
+  )
+  const fuelUnits = [
+    ...new Set([...estimates.values()].map(({ fuel }) => fuel?.unit)),
+  ]
+  const suffixes = (suffix: (unit?: FuelUnit) => string) =>
+    (fuelUnits.length > 0 ? fuelUnits : [undefined]).map(suffix).join(', ')
   const header = [
     i18n.t('date'),
     i18n.t('mileage.car'),
@@ -186,8 +200,12 @@ export function buildReportCsv({
     i18n.t('mileage.roundTrip'),
     i18n.t('note'),
     i18n.t('mileage.fuel'),
-    i18n.t('mileage.fuelEconomyWithUnit', { unit: format.economySuffix }),
-    i18n.t('mileage.fuelPriceWithUnit', { unit: format.priceSuffix }),
+    i18n.t('mileage.fuelEconomyWithUnit', {
+      unit: suffixes(format.economySuffixFor),
+    }),
+    i18n.t('mileage.fuelPriceWithUnit', {
+      unit: suffixes(format.priceSuffixFor),
+    }),
     i18n.t('mileage.estimatedCost'),
   ]
   const distance = (miles: number | undefined) =>
@@ -195,7 +213,7 @@ export function buildReportCsv({
       ? undefined
       : formatInputNumber(milesToDistance(miles, format.distanceUnit), 2)
   const rows = [...trips].reverse().map((trip) => {
-    const estimate = estimateTrip(trip, index)
+    const { estimate, fuel } = estimates.get(trip.id)!
     return [
       trip.date,
       vehicleName(vehicles, trip.vehicleId),
@@ -206,17 +224,18 @@ export function buildReportCsv({
       format.distanceSuffix,
       trip.roundTrip ? i18n.t('yes') : i18n.t('no'),
       trip.note,
-      fuels.find((f) => f.id === estimate.fuelId)?.name,
+      fuel?.name,
       estimate.milesPerGallon &&
         formatInputNumber(
-          mpgToEconomy(estimate.milesPerGallon, format.economyUnit),
+          mpgToEconomy(estimate.milesPerGallon, format.economyUnit, fuel?.unit),
           2
         ),
       estimate.price &&
         formatInputNumber(
           pricePerGallonToDisplay(
             estimate.price.pricePerGallon,
-            format.economyUnit
+            format.economyUnit,
+            fuel?.unit
           ),
           3
         ),

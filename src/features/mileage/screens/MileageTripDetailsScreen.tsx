@@ -117,11 +117,11 @@ export default function MileageTripDetailsScreen({ route, navigation }: Props) {
     fuel && { label: i18n.t('mileage.fuel'), value: fuel.name },
     estimate.milesPerGallon && {
       label: i18n.t('mileage.fuelEconomy'),
-      value: format.economy(estimate.milesPerGallon),
+      value: format.economy(estimate.milesPerGallon, fuel?.unit),
     },
     estimate.price && {
       label: i18n.t('mileage.fuelPrice'),
-      value: format.price(estimate.price.pricePerGallon),
+      value: format.price(estimate.price.pricePerGallon, fuel?.unit),
     },
     estimate.cost !== undefined && {
       label: i18n.t('mileage.estimatedCost'),

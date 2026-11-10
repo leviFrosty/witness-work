@@ -34,6 +34,7 @@ import {
   type HistoryChangeMode,
 } from '@/lib/mileage/calc'
 import { fuelsForVehicle } from '@/lib/mileage/view'
+import { premadeFuelKey } from '@/lib/mileage/premadeFuels'
 import {
   displayToPricePerGallon,
   economyToMpg,
@@ -87,10 +88,7 @@ export default function MileageVehicleFormScreen({
   const history = existing ? (index.setupsByVehicle.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
   const current = effectiveEntry(history, today)
-  const toEconomyInput = (mpg?: number) =>
-    mpg === undefined
-      ? ''
-      : formatEditableNumber(mpgToEconomy(mpg, format.economyUnit), 1)
+  const unitOf = (fuelId?: string) => fuels.find((f) => f.id === fuelId)?.unit
   const currentFuel =
     current?.fuelId && fuels.some((f) => f.id === current.fuelId)
       ? current.fuelId
@@ -112,13 +110,20 @@ export default function MileageVehicleFormScreen({
       : existing
         ? currentFuel
         : (fuels[0]?.id ?? NEW_FUEL)
-  const economy = typedEconomy ?? toEconomyInput(current?.milesPerGallon)
+  const fuelUnit = unitOf(fuel)
+  const savedEconomy =
+    current?.milesPerGallon === undefined || unitOf(current.fuelId) !== fuelUnit
+      ? ''
+      : formatEditableNumber(
+          mpgToEconomy(current.milesPerGallon, format.economyUnit, fuelUnit),
+          1
+        )
+  const economy = typedEconomy ?? savedEconomy
   const [changeMode, setChangeMode] = useState<HistoryChangeMode>('starting')
   const [changeDate, setChangeDate] = useState(() => new Date())
 
   const economyValue = parseDecimal(economy)
-  const setupChanged =
-    fuel !== currentFuel || economy !== toEconomyInput(current?.milesPerGallon)
+  const setupChanged = fuel !== currentFuel || economy !== savedEconomy
   const askHowToApply = !!current && setupChanged
   const creatingFuel = fuel === NEW_FUEL && newFuelName.trim().length > 0
   const validation = useFormValidation(
@@ -131,7 +136,18 @@ export default function MileageVehicleFormScreen({
 
   const fuelOptions = [
     { label: i18n.t('none'), value: NO_FUEL },
-    ...fuels.map((f) => ({ label: f.name, value: f.id })),
+    ...fuels.map((f) => {
+      const price = effectiveEntry(index.pricesByFuel.get(f.id), today)
+      return {
+        label: price
+          ? i18n.t('mileage.fuelWithPrice', {
+              fuel: f.name,
+              price: format.price(price.pricePerGallon, f.unit),
+            })
+          : f.name,
+        value: f.id,
+      }
+    }),
     { label: i18n.t('mileage.newFuel'), value: NEW_FUEL },
   ]
 
@@ -163,7 +179,7 @@ export default function MileageVehicleFormScreen({
     }
     const milesPerGallon =
       economyValue !== undefined
-        ? economyToMpg(economyValue, format.economyUnit)
+        ? economyToMpg(economyValue, format.economyUnit, fuelUnit)
         : undefined
 
     if (current && (setupChanged || creatingFuel)) {
@@ -195,6 +211,7 @@ export default function MileageVehicleFormScreen({
         has_fuel: !!fuelId,
         has_fuel_economy: milesPerGallon !== undefined,
         created_fuel: creatingFuel,
+        premade_fuel: premadeFuelKey(fuels.find((f) => f.id === fuelId)),
         setup_change: askHowToApply ? changeMode : undefined,
         source: route.params?.source,
       })
@@ -267,7 +284,10 @@ export default function MileageVehicleFormScreen({
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
+      <KeyboardAwareScrollView
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps='handled'
+      >
         <ContentColumn
           style={{
             paddingTop: 20,
@@ -342,7 +362,7 @@ export default function MileageVehicleFormScreen({
             <Section>
               <TextInputRow
                 label={i18n.t('mileage.fuelEconomyWithUnit', {
-                  unit: format.economySuffix,
+                  unit: format.economySuffixFor(fuelUnit),
                 })}
                 info={i18n.t('mileage.fuelEconomy_info')}
                 lastInSection
@@ -374,7 +394,8 @@ export default function MileageVehicleFormScreen({
               value:
                 [
                   fuels.find((f) => f.id === entry.fuelId)?.name,
-                  entry.milesPerGallon && format.economy(entry.milesPerGallon),
+                  entry.milesPerGallon &&
+                    format.economy(entry.milesPerGallon, unitOf(entry.fuelId)),
                 ]
                   .filter(Boolean)
                   .join(' · ') || i18n.t('none'),

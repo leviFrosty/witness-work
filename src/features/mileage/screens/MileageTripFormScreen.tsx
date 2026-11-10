@@ -245,7 +245,10 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
+      <KeyboardAwareScrollView
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps='handled'
+      >
         <ContentColumn
           style={{
             paddingTop: 20,

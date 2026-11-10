@@ -1,4 +1,4 @@
-import type { DistanceUnit, FuelEconomyUnit } from '@/types/mileage'
+import type { DistanceUnit, FuelEconomyUnit, FuelUnit } from '@/types/mileage'
 import { parseDecimalInput } from '@/lib/digits'
 import {
   formatNumber as formatAppNumber,
@@ -78,9 +78,36 @@ export const distanceToMiles = (value: number, unit: DistanceUnit) =>
 
 const L100KM_X_MPG = (100 * LITRES_PER_US_GALLON) / KM_PER_MILE
 
-export function mpgToEconomy(mpg: number, unit: FuelEconomyUnit): number {
+export type EfficiencyUnit =
+  | FuelEconomyUnit
+  | 'miPerKwh'
+  | 'kmPerKwh'
+  | 'kwhPer100km'
+
+export const efficiencyUnit = (
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
+): EfficiencyUnit => {
+  if (fuelUnit !== 'kWh') return unit
   switch (unit) {
     case 'mpgUS':
+    case 'mpgUK':
+      return 'miPerKwh'
+    case 'lPer100km':
+      return 'kwhPer100km'
+    case 'kmPerL':
+      return 'kmPerKwh'
+  }
+}
+
+export function mpgToEconomy(
+  mpg: number,
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
+): number {
+  switch (efficiencyUnit(unit, fuelUnit)) {
+    case 'mpgUS':
+    case 'miPerKwh':
       return mpg
     case 'mpgUK':
       return (mpg * LITRES_PER_UK_GALLON) / LITRES_PER_US_GALLON
@@ -88,12 +115,21 @@ export function mpgToEconomy(mpg: number, unit: FuelEconomyUnit): number {
       return L100KM_X_MPG / mpg
     case 'kmPerL':
       return (mpg * KM_PER_MILE) / LITRES_PER_US_GALLON
+    case 'kmPerKwh':
+      return mpg * KM_PER_MILE
+    case 'kwhPer100km':
+      return 100 / (mpg * KM_PER_MILE)
   }
 }
 
-export function economyToMpg(value: number, unit: FuelEconomyUnit): number {
-  switch (unit) {
+export function economyToMpg(
+  value: number,
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
+): number {
+  switch (efficiencyUnit(unit, fuelUnit)) {
     case 'mpgUS':
+    case 'miPerKwh':
       return value
     case 'mpgUK':
       return (value * LITRES_PER_US_GALLON) / LITRES_PER_UK_GALLON
@@ -101,24 +137,38 @@ export function economyToMpg(value: number, unit: FuelEconomyUnit): number {
       return L100KM_X_MPG / value
     case 'kmPerL':
       return (value * LITRES_PER_US_GALLON) / KM_PER_MILE
+    case 'kmPerKwh':
+      return value / KM_PER_MILE
+    case 'kwhPer100km':
+      return 100 / (value * KM_PER_MILE)
   }
 }
 
 export const fuelVolumeUnit = (unit: FuelEconomyUnit): 'gallon' | 'litre' =>
   unit === 'mpgUS' ? 'gallon' : 'litre'
 
+export const fuelPriceUnit = (
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
+): 'gallon' | 'litre' | 'kWh' => fuelUnit ?? fuelVolumeUnit(unit)
+
 export const pricePerGallonToDisplay = (
   pricePerGallon: number,
-  unit: FuelEconomyUnit
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
 ) =>
-  fuelVolumeUnit(unit) === 'gallon'
-    ? pricePerGallon
-    : pricePerGallon / LITRES_PER_US_GALLON
+  fuelPriceUnit(unit, fuelUnit) === 'litre'
+    ? pricePerGallon / LITRES_PER_US_GALLON
+    : pricePerGallon
 
 export const displayToPricePerGallon = (
   price: number,
-  unit: FuelEconomyUnit
-) => (fuelVolumeUnit(unit) === 'gallon' ? price : price * LITRES_PER_US_GALLON)
+  unit: FuelEconomyUnit,
+  fuelUnit?: FuelUnit
+) =>
+  fuelPriceUnit(unit, fuelUnit) === 'litre'
+    ? price * LITRES_PER_US_GALLON
+    : price
 
 export const parseDecimal = parseDecimalInput
 

@@ -20,6 +20,7 @@ import {
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
+import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
@@ -33,6 +34,7 @@ import {
 import {
   displayToPricePerGallon,
   formatEditableNumber,
+  fuelPriceUnit,
   fuelVolumeUnit,
   parseDecimal,
   pricePerGallonToDisplay,
@@ -43,8 +45,11 @@ import HistoryChangeRow from '@/features/mileage/components/HistoryChangeRow'
 import HistoryList from '@/features/mileage/components/HistoryList'
 import { fuelCarName } from '@/features/mileage/lib/fuelLabel'
 import type { RootStackParamList } from '@/types/rootStack'
+import type { FuelUnit } from '@/types/mileage'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageFuelForm'>
+
+const BY_VOLUME = '__volume__'
 
 export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const theme = useTheme()
@@ -58,11 +63,13 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const history = existing ? (index.pricesByFuel.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
   const current = effectiveEntry(history, today)
+  const [pickedUnit, setUnit] = useState<FuelUnit | undefined>()
+  const unit = existing ? existing.unit : pickedUnit
   const toInput = (pricePerGallon?: number) =>
     pricePerGallon === undefined
       ? ''
       : formatEditableNumber(
-          pricePerGallonToDisplay(pricePerGallon, format.economyUnit),
+          pricePerGallonToDisplay(pricePerGallon, format.economyUnit, unit),
           3
         )
 
@@ -82,6 +89,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
     saveFuel({
       id: fuelId,
       name: name.trim(),
+      ...(unit && { unit }),
       createdAt: existing?.createdAt ?? Date.now(),
     })
     if (priceValue !== undefined && priceChanged) {
@@ -92,12 +100,17 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
         id: target?.id ?? Crypto.randomUUID(),
         fuelId,
         effectiveFrom,
-        pricePerGallon: displayToPricePerGallon(priceValue, format.economyUnit),
+        pricePerGallon: displayToPricePerGallon(
+          priceValue,
+          format.economyUnit,
+          unit
+        ),
       })
     }
     if (!existing)
       analytics.capture('mileage_fuel_added', {
         has_price: priceValue !== undefined,
+        priced_per_kwh: unit === 'kWh',
         price_change: askHowToApply ? changeMode : undefined,
       })
     navigation.goBack()
@@ -125,7 +138,10 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
 
   return (
     <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView automaticallyAdjustKeyboardInsets>
+      <KeyboardAwareScrollView
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps='handled'
+      >
         <ContentColumn
           style={{
             paddingTop: 20,
@@ -152,9 +168,29 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
                 maxLength: 60,
               }}
             />
+            {!existing && (
+              <InputRowSelect
+                label={i18n.t('mileage.pricedPer')}
+                selectProps={{
+                  data: [
+                    {
+                      label: i18n.t(
+                        `mileage.pricedPer_${fuelVolumeUnit(format.economyUnit)}`
+                      ),
+                      value: BY_VOLUME,
+                    },
+                    { label: i18n.t('mileage.pricedPer_kWh'), value: 'kWh' },
+                  ],
+                  value: unit ?? BY_VOLUME,
+                  onChange: (item) =>
+                    setUnit(item.value === 'kWh' ? 'kWh' : undefined),
+                  accessibilityLabel: i18n.t('mileage.pricedPer'),
+                }}
+              />
+            )}
             <TextInputRow
               label={i18n.t(
-                `mileage.pricePer_${fuelVolumeUnit(format.economyUnit)}`
+                `mileage.pricePer_${fuelPriceUnit(format.economyUnit, unit)}`
               )}
               info={i18n.t('mileage.fuelPrice_info')}
               lastInSection
@@ -181,7 +217,7 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
             entries={history.map((entry) => ({
               id: entry.id,
               effectiveFrom: entry.effectiveFrom,
-              value: format.price(entry.pricePerGallon),
+              value: format.price(entry.pricePerGallon, unit),
             }))}
             onDelete={deleteFuelPrice}
           />

@@ -76,9 +76,10 @@ export default function MileageSettingsScreen() {
 
   const carSummary = (vehicle: MileageVehicle, f: MileageFormatter) => {
     const setup = effectiveEntry(index.setupsByVehicle.get(vehicle.id), today)
+    const fuel = fuels.find((fuel) => fuel.id === setup?.fuelId)
     return [
-      fuels.find((fuel) => fuel.id === setup?.fuelId)?.name,
-      setup?.milesPerGallon && f.economy(setup.milesPerGallon),
+      fuel?.name,
+      setup?.milesPerGallon && f.economy(setup.milesPerGallon, fuel?.unit),
     ]
       .filter(Boolean)
       .join(' · ')
@@ -193,7 +194,11 @@ export default function MileageSettingsScreen() {
                 <MileageLinkRow
                   key={fuel.id}
                   label={fuelLabel(fuel, { vehicles, sharedRecordSpaces })}
-                  value={price ? format.price(price.pricePerGallon) : undefined}
+                  value={
+                    price
+                      ? format.price(price.pricePerGallon, fuel.unit)
+                      : undefined
+                  }
                   onPress={() =>
                     navigation.navigate('MileageFuelForm', { fuelId: fuel.id })
                   }

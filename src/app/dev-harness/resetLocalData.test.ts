@@ -83,6 +83,7 @@ import { RESET_STORES, resetLocalData } from '@/app/dev-harness/resetLocalData'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { initialBuddiesState } from '@/features/buddies/lib/state'
 import useCategories from '@/stores/categories'
+import useMileage from '@/stores/mileage'
 import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 const RESET_BY_ACTIONS = ['preferences', 'profile']
@@ -178,7 +179,9 @@ describe('resetLocalData', () => {
       store.setState({ leftover: true } as never, true)
     resetLocalData()
 
-    for (const store of RESET_STORES.filter((s) => s !== useCategories))
+    for (const store of RESET_STORES.filter(
+      (s) => s !== useCategories && s !== useMileage
+    ))
       expect((store as unknown as { getState: () => unknown }).getState()).toBe(
         store.getInitialState()
       )
@@ -192,6 +195,21 @@ describe('resetLocalData', () => {
     expect(useCategories.getState().categories.map((c) => c.id)).toEqual([
       LDC_BUILTIN_CATEGORY_ID,
     ])
+  })
+
+  it('makes the premade fuels, as a fresh launch does', () => {
+    useMileage.setState({
+      fuels: [{ id: 'other-run', name: 'Other run', createdAt: 1 }],
+    })
+    resetLocalData()
+    const { fuels, vehicles, deletedMileageRecords } = useMileage.getState()
+    expect(fuels.map((fuel) => fuel.id)).toEqual([
+      'premade-fuel-gasoline',
+      'premade-fuel-diesel',
+      'premade-fuel-electric',
+    ])
+    expect(vehicles).toEqual([])
+    expect(deletedMileageRecords).toEqual([])
   })
 
   it('saves the reset state, so it is still there after a relaunch', () => {

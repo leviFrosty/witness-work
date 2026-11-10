@@ -60,6 +60,9 @@ vi.mock('expo-file-system/legacy', () => ({
   getInfoAsync: vi.fn(async () => ({ exists: false })),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
+vi.mock('@/app/sync/premadeFuels', () => ({
+  addPremadeFuels: () => {},
+}))
 
 import { createBackupFile } from '@/lib/backupFile'
 import { restoreBackupFile } from '@/app/sync/backupFileRestore'

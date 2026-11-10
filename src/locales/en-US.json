@@ -3756,6 +3756,14 @@
     "fuelOnSharedCar": "Changes apply to everyone on {{car}}.",
     "pricePer_gallon": "Price per Gallon",
     "pricePer_litre": "Price per Litre",
+    "pricePer_kWh": "Price per kWh",
+    "pricedPer": "Priced Per",
+    "pricedPer_gallon": "Gallon",
+    "pricedPer_litre": "Litre",
+    "pricedPer_kWh": "kWh",
+    "premadeFuel_gasoline": "Gasoline",
+    "premadeFuel_diesel": "Diesel",
+    "premadeFuel_electric": "Electric",
     "fuelEconomy": "Fuel Economy",
     "fuelEconomyWithUnit": "Fuel Economy ({{unit}})",
     "fuelEconomy_info": "How far the car goes on its fuel. Used with the fuel price to estimate cost. Check your car's manual or trip computer.",
@@ -3919,6 +3927,7 @@
     "sharedCarOption": "{{name}} · {{people}}",
     "sharedCarA11y": "Shared, {{people}}",
     "fuelOnCar": "{{fuel}} · {{car}}",
+    "fuelWithPrice": "{{fuel}} · {{price}}",
     "archiveCarEllipsis": "Archive…",
     "archiveSharedCar_title": "Archive this car?",
     "archiveSharedCar_description": "Archiving hides it from new trips for everyone on this car, and keeps its trips in reports.",
@@ -3934,8 +3943,12 @@
       "mpgUK": "mpg",
       "lPer100km": "L/100 km",
       "kmPerL": "km/L",
+      "miPerKwh": "mi/kWh",
+      "kmPerKwh": "km/kWh",
+      "kwhPer100km": "kWh/100 km",
       "per_gallon": "/gal",
-      "per_litre": "/L"
+      "per_litre": "/L",
+      "per_kWh": "/kWh"
     },
     "unitValues": {
       "mi": "{{value}} mi",
@@ -3944,8 +3957,12 @@
       "mpgUK": "{{value}} mpg",
       "lPer100km": "{{value}} L/100 km",
       "kmPerL": "{{value}} km/L",
+      "miPerKwh": "{{value}} mi/kWh",
+      "kmPerKwh": "{{value}} km/kWh",
+      "kwhPer100km": "{{value}} kWh/100 km",
       "per_gallon": "{{value}}/gal",
-      "per_litre": "{{value}}/L"
+      "per_litre": "{{value}}/L",
+      "per_kWh": "{{value}}/kWh"
     },
     "unitNames": {
       "mi": "Miles",

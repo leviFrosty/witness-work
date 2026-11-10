@@ -49,6 +49,9 @@ const MONTH_LABEL_GAP = 4
 const POPOVER_WIDTH = 150
 const POPOVER_OFFSET = 8
 
+const TOUCH_CLEARANCE = 4
+const MONTH_ROW_GAP = 8
+
 const SCRUB_LONG_PRESS_MS = 200
 
 const hexToHsl = (hex: string): [number, number, number] => {
@@ -155,9 +158,7 @@ const ContributionGraph = ({
 }: Props) => {
   const theme = useTheme()
   const [width, setWidth] = useState(0)
-  const [hovered, setHovered] = useState<{ col: number; row: number } | null>(
-    null
-  )
+  const [hovered, setHovered] = useState<Hovered | null>(null)
 
   const grid = useMemo(() => contributionGrid(daily, weeks), [daily, weeks])
 
@@ -206,14 +207,14 @@ const ContributionGraph = ({
   )
 
   const applyHover = useCallback(
-    (col: number, row: number, haptic: boolean) => {
+    (col: number, row: number, touch: boolean) => {
       const cellData = grid[col]?.[row]
       if (!cellData || cellData.future) {
         setHovered(null)
         return
       }
-      setHovered({ col, row })
-      if (haptic) Haptics.selection()
+      setHovered({ col, row, touch })
+      if (touch) Haptics.selection()
     },
     [grid]
   )
@@ -224,12 +225,12 @@ const ContributionGraph = ({
   const sign = forwardSign()
 
   const gesture = useMemo(() => {
-    const scrubTo = (x: number, y: number, haptic: boolean) => {
+    const scrubTo = (x: number, y: number, touch: boolean) => {
       'worklet'
       const col = contributionColumnAt(x, stride, gridPixelWidth, rtl)
       const row = Math.floor(y / stride)
       const valid = col >= 0 && col < weeks && row >= 0 && row <= 6
-      const idx = valid ? col * 7 + row : -1
+      const idx = valid ? (col * 7 + row) * 2 + (touch ? 1 : 0) : -1
       if (idx === lastIdx.value) return
       lastIdx.value = idx
       if (idx < 0) {
@@ -241,7 +242,7 @@ const ContributionGraph = ({
       ringX.value = sign * col * stride
       ringY.value = row * stride
       ringOpacity.value = 1
-      runOnJS(applyHover)(col, row, haptic)
+      runOnJS(applyHover)(col, row, touch)
     }
     const endScrub = () => {
       'worklet'
@@ -255,11 +256,11 @@ const ContributionGraph = ({
       .activateAfterLongPress(SCRUB_LONG_PRESS_MS)
       .onStart((e) => {
         'worklet'
-        scrubTo(e.x, e.y, true)
+        scrubTo(e.x, e.y, e.pointerType !== PointerType.MOUSE)
       })
       .onUpdate((e) => {
         'worklet'
-        scrubTo(e.x, e.y, true)
+        scrubTo(e.x, e.y, e.pointerType !== PointerType.MOUSE)
       })
       .onFinalize(endScrub)
     if (!supportsPointerHover) return pan
@@ -342,7 +343,7 @@ const ContributionGraph = ({
     >
       {}
       <View
-        style={{ gap: 8 }}
+        style={{ gap: MONTH_ROW_GAP }}
         accessibilityElementsHidden
         importantForAccessibility='no-hide-descendants'
       >
@@ -425,6 +426,7 @@ const ContributionGraph = ({
                 cell={cell}
                 stride={stride}
                 gridPixelWidth={gridPixelWidth}
+                monthRowHeight={labelRowHeight}
                 theme={theme}
                 formatValue={formatValue}
               />
@@ -463,12 +465,20 @@ const ContributionGraph = ({
   )
 }
 
+type Hovered = {
+  col: number
+  row: number
+
+  touch: boolean
+}
+
 type ScrubPopoverProps = {
-  hovered: { col: number; row: number } | null
+  hovered: Hovered | null
   grid: ContributionCell[][]
   cell: number
   stride: number
   gridPixelWidth: number
+  monthRowHeight: number
   theme: ReturnType<typeof useTheme>
   formatValue: (value: number) => string
 }
@@ -479,6 +489,7 @@ const ScrubPopover = ({
   cell,
   stride,
   gridPixelWidth,
+  monthRowHeight,
   theme,
   formatValue,
 }: ScrubPopoverProps) => {
@@ -494,10 +505,15 @@ const ScrubPopover = ({
     Math.min(anchorX, Math.max(0, gridPixelWidth - POPOVER_WIDTH))
   )
 
+  const gridHeight = 7 * cell + 6 * GAP
   const above = hovered.row >= 2
-  const top = above
-    ? hovered.row * stride - POPOVER_OFFSET - 44
-    : hovered.row * stride + cell + POPOVER_OFFSET
+  const vertical = hovered.touch
+    ? {
+        bottom: gridHeight + MONTH_ROW_GAP + monthRowHeight + TOUCH_CLEARANCE,
+      }
+    : above
+      ? { bottom: gridHeight - hovered.row * stride + POPOVER_OFFSET }
+      : { top: hovered.row * stride + cell + POPOVER_OFFSET }
 
   return (
     <View
@@ -505,7 +521,7 @@ const ScrubPopover = ({
       style={{
         position: 'absolute',
         left,
-        top,
+        ...vertical,
         width: POPOVER_WIDTH,
         paddingVertical: 6,
         paddingHorizontal: 10,

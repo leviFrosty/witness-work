@@ -34,6 +34,8 @@ const FX = rgbPalette({
   steam: '#eee9dd',
   window: '#ffd45c',
   coin: '#f1b92e',
+  coinLight: '#fff0a8',
+  coinDark: '#8a5a12',
   rain: '#7cb9e8',
   snow: '#ffffff',
   fig: '#6d3a78',
@@ -372,6 +374,45 @@ function drawWeather(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
   }
 }
 
+const COIN_HATS: ReadonlySet<BigHatId> = new Set([
+  'mailbox',
+  'bowl',
+  'lighthouse',
+  'train',
+  'dome',
+  'fig',
+])
+
+const COIN_TOSS = { count: 5, staggerMs: 100, flightMs: 900 }
+
+export const COIN_TOSS_MS =
+  (COIN_TOSS.count - 1) * COIN_TOSS.staggerMs + COIN_TOSS.flightMs
+
+function drawCoinToss(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  const since = m.tMs - m.coinsMs
+  if (since < 0 || since >= COIN_TOSS_MS) return
+  for (let i = 0; i < COIN_TOSS.count; i++) {
+    const age = since - i * COIN_TOSS.staggerMs
+    if (age < 0 || age >= COIN_TOSS.flightMs) continue
+    const p = age / COIN_TOSS.flightMs
+    const side = i - (COIN_TOSS.count - 1) / 2
+    const [cx, cy] = at(place, side * (3 + 4 * p), 4 + 48 * p * (1 - p))
+    const x = Math.round(cx)
+    const y = Math.round(cy)
+    const a = Math.min(1, (1 - p) * 4)
+    square(buf, x - 1, y - 1, 3, FX.coinDark, a)
+    blend(buf, x, y - 2, FX.coinDark, a)
+    blend(buf, x, y + 2, FX.coinDark, a)
+    blend(buf, x - 2, y, FX.coinDark, a)
+    blend(buf, x + 2, y, FX.coinDark, a)
+    blend(buf, x, y - 1, FX.coin, a)
+    blend(buf, x, y + 1, FX.coin, a)
+    blend(buf, x - 1, y, FX.coin, a)
+    blend(buf, x + 1, y, FX.coin, a)
+    blend(buf, x, y, FX.coinLight, a)
+  }
+}
+
 export function drawHatRoom(
   buf: PixelBuffer,
   hat: BigHatId,
@@ -424,13 +465,6 @@ export function drawHatRoom(
         if (near < 0 && Math.abs(d) < 7) return null
         return at(place, d + (near > 0 ? -2.5 : 2.5), u + 9)
       })
-      if (m.tMs - m.coinsMs >= 0 && m.tMs - m.coinsMs < 700) {
-        const age = m.tMs - m.coinsMs
-        for (let i = -3; i <= 3; i++) {
-          const [x, y] = at(place, i * 2, 12 + age * 0.012)
-          blend(buf, x, y, FX.coin, 1 - age / 700)
-        }
-      }
       break
     case 'fig':
       drawFallingLeaves(buf, m, place)
@@ -452,4 +486,5 @@ export function drawHatRoom(
       break
     default:
   }
+  if (COIN_HATS.has(hat)) drawCoinToss(buf, m, place)
 }

@@ -10,6 +10,8 @@ const PICKED_FRAME = {
   rare: 'cardRarePicked',
 } as const
 
+const QUIET_INSET = 2
+
 const NOTCH_PT = 10
 
 const OVERLAP_PT = 6
@@ -21,6 +23,7 @@ export default function GameColorTray({
   gap,
   palette,
   rarity = 'common',
+  quiet = false,
   children,
 }: {
   column: number | null
@@ -32,13 +35,17 @@ export default function GameColorTray({
   palette: GamePalette
 
   rarity?: ItemRarity
+
+  quiet?: boolean
   children: ReactNode
 }) {
   const scale = gamePixelScale()
 
-  const rows = Array.from(
-    { length: Math.ceil((NOTCH_PT + OVERLAP_PT) / scale) },
-    (_, i) => 2 + 2 * i
+  const rowCount = quiet
+    ? Math.ceil(NOTCH_PT / scale) + QUIET_INSET
+    : Math.ceil((NOTCH_PT + OVERLAP_PT) / scale)
+  const rows = Array.from({ length: rowCount }, (_, i) =>
+    quiet ? 2 * (rowCount - i) : 2 + 2 * i
   )
   const center =
     column === null ? 0 : column * (cardWidth + cardGap) + cardWidth / 2
@@ -57,7 +64,7 @@ export default function GameColorTray({
           style={{
             position: 'absolute',
             bottom: '100%',
-            marginBottom: -scale,
+            marginBottom: -scale * (quiet ? QUIET_INSET : 1),
             start: 0,
             end: 0,
             zIndex: 1,
@@ -78,7 +85,7 @@ export default function GameColorTray({
         </View>
       )}
       <GameFrame
-        kind={column === null ? 'card' : PICKED_FRAME[rarity]}
+        kind={column === null || quiet ? 'card' : PICKED_FRAME[rarity]}
         palette={palette}
         style={{ paddingHorizontal: 12, paddingVertical: 10, gap: 4 }}
       >

@@ -42,6 +42,7 @@ export default function HatPreviewTray({
   return (
     <GameColorTray
       rarity={itemRarity(item)}
+      quiet
       column={column}
       cardWidth={cardWidth}
       cardGap={cardGap}
@@ -86,7 +87,7 @@ export default function HatPreviewTray({
             palette={palette}
             style={{ flex: 1 }}
             onPress={() => {
-              scene.current?.coinsEarned()
+              scene.current?.hatCoins()
               played('coins')
             }}
           />

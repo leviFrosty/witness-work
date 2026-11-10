@@ -562,7 +562,7 @@ function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
     case 'mailbox': {
       const sinceCoins = t - m.coinsMs
       const key =
-        sincePat >= 0 && sincePat < 1600
+        sincePat >= 0 && sincePat < 1600 && m.patMs >= m.coinsMs
           ? 'open'
           : sinceCoins >= 0 && sinceCoins < 500
             ? 'down'

@@ -53,7 +53,7 @@ type Props = {
   role: 'menu' | 'dialog'
   label?: string
 
-  matchAnchorWidth?: boolean
+  matchAnchorWidthUpTo?: number
 
   trapFocus?: boolean
   children: ReactNode
@@ -69,7 +69,7 @@ export default function WebLayer({
   placement,
   role,
   label,
-  matchAnchorWidth = false,
+  matchAnchorWidthUpTo,
   trapFocus = false,
   children,
   style,
@@ -93,7 +93,8 @@ export default function WebLayer({
       const rect = at
         ? new DOMRect(at.x, at.y, 1, 1)
         : anchor.getBoundingClientRect()
-      if (matchAnchorWidth) setMinWidth(rect.width)
+      if (matchAnchorWidthUpTo !== undefined)
+        setMinWidth(Math.min(rect.width, matchAnchorWidthUpTo))
       setPlaced(
         placeOverlay({
           anchor: {
@@ -162,7 +163,7 @@ export default function WebLayer({
       window.removeEventListener('resize', onResize)
       window.removeEventListener('scroll', onScroll, true)
     }
-  }, [open, anchor, at, matchAnchorWidth, rtl, side, align, gap, margin])
+  }, [open, anchor, at, matchAnchorWidthUpTo, rtl, side, align, gap, margin])
 
   useEffect(() => {
     const layer = layerRef.current

@@ -16,6 +16,8 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import {
+  EMBEDDED_NOTE_MAX_HEIGHT,
+  EMBEDDED_NOTE_MIN_HEIGHT,
   NOTE_GUTTER,
   NOTE_MAX_WIDTH,
   type EditorCommand,
@@ -44,6 +46,8 @@ type Props = {
 }
 
 const CHANGE_DEBOUNCE_MS = 300
+
+const EMBEDDED_CLASS = 'note-embedded'
 
 const EMPTY_DOC = { type: 'doc', content: [{ type: 'paragraph' }] }
 const SELECTION_PREFILL_CHARS = 200
@@ -507,11 +511,23 @@ function styles(setup: EditorSetup): string {
   const inlineScroll = setup.inline
     ? 'div:has(>.ProseMirror){height:100%;overflow-y:auto;}\n'
     : ''
+  const typography = `color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;`
+  const page = setup.embedded
+    ? ''
+    : `/* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
+#root{flex-direction:column;}
+html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
+body{${typography}-webkit-tap-highlight-color:transparent;}
+`
+  const embedded = setup.embedded
+    ? `/* In a form the note is one field among others: it grows with its text up to a limit and scrolls past it, and it styles only itself, never the page around it. The selectors outrank the full-screen editor's, whose style sheet can be on the page at the same time. */
+div.${EMBEDDED_CLASS}:has(>.ProseMirror){height:auto;max-height:${EMBEDDED_NOTE_MAX_HEIGHT}px;overflow-x:hidden;overflow-y:auto;}
+.${EMBEDDED_CLASS} .ProseMirror{min-height:${EMBEDDED_NOTE_MIN_HEIGHT}px;padding:12px ${NOTE_GUTTER}px;${typography}}
+`
+    : ''
   return `${fontFaces(setup)}
 :root{color-scheme:${t.scheme};}
-/* expo/dom's #root is a flex row, which shrinks the note to its widest line; as a column the note fills the width, so right-aligned text and lists sit at the edge and a resized photo's share is of the whole width, as when the note is shown. */
-#root{flex-direction:column;}
-/* Tiptap's own base rules. It doesn't write them itself (\`injectCSS: false\`): the web's CSP refuses a \`<style>\` filled through \`innerHTML\` (ADR 0037 §5). They come before the note's, as Tiptap's did. */
+${page}/* Tiptap's own base rules. It doesn't write them itself (\`injectCSS: false\`): the web's CSP refuses a \`<style>\` filled through \`innerHTML\` (ADR 0037 §5). They come before the note's, as Tiptap's did. */
 .ProseMirror{position:relative;word-wrap:break-word;white-space:pre-wrap;white-space:break-spaces;-webkit-font-variant-ligatures:none;font-variant-ligatures:none;font-feature-settings:"liga" 0;}
 .ProseMirror [contenteditable="false"]{white-space:normal;}
 .ProseMirror [contenteditable="false"] [contenteditable="true"]{white-space:pre-wrap;}
@@ -522,9 +538,7 @@ img.ProseMirror-separator{display:inline !important;border:none !important;margi
 .ProseMirror-hideselection *::selection{background:transparent;}
 .ProseMirror-hideselection *{caret-color:transparent;}
 .ProseMirror-focused .ProseMirror-gapcursor{display:block;}
-${inlineScroll}html,body{margin:0;padding:0;min-height:100%;overflow-x:hidden;background:${t.background};-webkit-text-size-adjust:100%;}
-body{color:${t.text};font-family:NoteInter,-apple-system,system-ui,Roboto,sans-serif;font-size:${t.fontSize}px;line-height:1.45;-webkit-tap-highlight-color:transparent;}
-/* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
+${inlineScroll}${embedded}/* On a wide screen the side padding grows so the text keeps to a ${NOTE_MAX_WIDTH}px column, while a tap beside it still reaches the note. A photo's share is of that column. */
 .ProseMirror{outline:none;box-sizing:border-box;min-height:${setup.inline ? '100%' : '100vh'};padding:12px max(${NOTE_GUTTER}px,calc((100% - ${NOTE_MAX_WIDTH}px) / 2 + ${NOTE_GUTTER}px)) 96px;caret-color:${t.accent};white-space:pre-wrap;word-wrap:break-word;-webkit-user-select:text;user-select:text;}
 .ProseMirror p{margin:0 0 6px;}
 .ProseMirror h1{font-size:1.43em;font-weight:700;line-height:1.25;margin:4px 0 6px;}
@@ -573,6 +587,7 @@ export default function RichTextEditorDom(props: Props) {
   const changeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastState = useRef<EditorFormatState | null>(null)
   const stateFrame = useRef<number | null>(null)
+  const unsavedDoc = useRef<ProseMirrorNode | null>(null)
 
   useEffect(() => {
     let active = true
@@ -630,7 +645,9 @@ export default function RichTextEditorDom(props: Props) {
           role: 'textbox',
           'aria-multiline': 'true',
           'aria-label': setup?.label ?? '',
-          'data-submit-owner': '',
+          ...(setup?.embedded && setup.inline
+            ? {}
+            : { 'data-submit-owner': '' }),
 
           dir: setup?.direction ?? 'ltr',
           autocapitalize: 'sentences',
@@ -641,6 +658,11 @@ export default function RichTextEditorDom(props: Props) {
         if (setup) send(bridge.current.onReady())
       },
       onUpdate: ({ editor: current }) => {
+        if (setup?.embedded && setup.inline) {
+          send(bridge.current.onChange(current.getJSON()))
+          return
+        }
+        unsavedDoc.current = current.state.doc
         if (changeTimer.current) clearTimeout(changeTimer.current)
         changeTimer.current = setTimeout(() => {
           changeTimer.current = null
@@ -669,8 +691,20 @@ export default function RichTextEditorDom(props: Props) {
     [setup]
   )
 
+  useEffect(
+    () => () => {
+      if (!changeTimer.current) return
+      clearTimeout(changeTimer.current)
+      changeTimer.current = null
+      if (unsavedDoc.current)
+        send(bridge.current.onChange(unsavedDoc.current.toJSON()))
+    },
+    []
+  )
+
+  const embeddedInPage = !!setup?.embedded && setup.inline
   useEffect(() => {
-    if (!editor) return
+    if (!editor || embeddedInPage) return
     const focusEnd = (event: MouseEvent) => {
       if (editor.view.dom.contains(event.target as Node)) return
       event.preventDefault()
@@ -678,7 +712,7 @@ export default function RichTextEditorDom(props: Props) {
     }
     document.addEventListener('click', focusEnd)
     return () => document.removeEventListener('click', focusEnd)
-  }, [editor])
+  }, [editor, embeddedInPage])
 
   useEffect(() => {
     handles.report = (rects) => send(bridge.current.onImageHandles(rects))
@@ -727,7 +761,10 @@ export default function RichTextEditorDom(props: Props) {
   return (
     <>
       <style>{styles(setup)}</style>
-      <EditorContent editor={editor} />
+      <EditorContent
+        editor={editor}
+        className={setup.embedded ? EMBEDDED_CLASS : undefined}
+      />
     </>
   )
 }

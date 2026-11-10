@@ -109,6 +109,8 @@ const RichTextToolbar = (props: {
   onAddPhoto?: (source: 'camera' | 'library') => void
   onDismissKeyboard: () => void
   keyboardVisible: boolean
+
+  embedded?: boolean
 }) => {
   const theme = useTheme()
   const { format, run } = props
@@ -262,11 +264,38 @@ const RichTextToolbar = (props: {
     </PullDownMenu>
   )
 
+  const tools = groups.map((group, index) => {
+    const buttons = (
+      <>
+        {group.map((tool) => (
+          <ToolButton key={tool.key} tool={tool} />
+        ))}
+        {group[0]?.key === 'link' && photoButton}
+      </>
+    )
+    const key = group[0]?.key ?? index
+    return props.embedded ? (
+      <View
+        key={key}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}
+      >
+        {buttons}
+      </View>
+    ) : (
+      <Fragment key={key}>
+        {index > 0 && <GroupDivider />}
+        {buttons}
+      </Fragment>
+    )
+  })
+
   return (
     <View
       style={{
-        height: TOOLBAR_HEIGHT,
-        backgroundColor: theme.colors.card,
+        ...(props.embedded
+          ? { minHeight: TOOLBAR_HEIGHT }
+          : { height: TOOLBAR_HEIGHT }),
+        backgroundColor: props.embedded ? 'transparent' : theme.colors.card,
         borderTopWidth: 1,
         borderTopColor: theme.colors.border,
         alignItems: 'center',
@@ -279,32 +308,40 @@ const RichTextToolbar = (props: {
         style={{
           flex: 1,
           width: '100%',
-          maxWidth: NOTE_MAX_WIDTH,
+          maxWidth: props.embedded ? undefined : NOTE_MAX_WIDTH,
           flexDirection: 'row',
           alignItems: 'center',
         }}
       >
-        <ScrollView
-          horizontal
-          keyboardShouldPersistTaps='always'
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            alignItems: 'center',
-            paddingHorizontal: 6,
-            gap: 2,
-          }}
-          style={{ flex: 1 }}
-        >
-          {groups.map((group, index) => (
-            <Fragment key={group[0]?.key ?? index}>
-              {index > 0 && <GroupDivider />}
-              {group.map((tool) => (
-                <ToolButton key={tool.key} tool={tool} />
-              ))}
-              {group[0]?.key === 'link' && photoButton}
-            </Fragment>
-          ))}
-        </ScrollView>
+        {props.embedded ? (
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              columnGap: 12,
+            }}
+          >
+            {tools}
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps='always'
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              alignItems: 'center',
+              paddingHorizontal: 6,
+              gap: 2,
+            }}
+            style={{ flex: 1 }}
+          >
+            {tools}
+          </ScrollView>
+        )}
         {props.keyboardVisible && (
           <View
             style={{

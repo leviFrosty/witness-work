@@ -23,6 +23,7 @@ export type PlatformCapability =
   | 'territorySharing'
   | 'camera'
   | 'reverseGeocoding'
+  | 'inlineNoteEditor'
 
 type OS = typeof Platform.OS
 
@@ -49,6 +50,7 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   territorySharing: ['ios', 'android'],
   camera: ['ios', 'android'],
   reverseGeocoding: ['ios', 'android'],
+  inlineNoteEditor: ['web'],
 }
 
 export function hasCapability(capability: PlatformCapability): boolean {

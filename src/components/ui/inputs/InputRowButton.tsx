@@ -6,7 +6,7 @@ import Text from '@/components/ui/MyText'
 import WholeWordsText from '@/components/ui/WholeWordsText'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import Haptics from '@/lib/haptics'
 import useLinkMenuActions from '@/hooks/useLinkMenuActions'
 import ContextMenu, {
@@ -91,12 +91,12 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   const rowStyle: ViewStyle = {
     flexDirection: 'row',
     borderColor: theme.colors.border,
-    borderBottomWidth: lastInSection ? 0 : 1,
+    borderBottomWidth: 0,
     paddingBottom: 10,
     paddingTop: 10,
     paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
     paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
-    minHeight: 56,
+    minHeight: inputLayout.rowMinHeight,
     alignItems: 'center',
     flexGrow: 0,
     justifyContent: justifyContent ?? 'space-between',
@@ -153,6 +153,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       >
         {children}
       </View>
+      {!lastInSection && <RowSeparator hasIcon={!!leftIcon} />}
     </>
   )
 

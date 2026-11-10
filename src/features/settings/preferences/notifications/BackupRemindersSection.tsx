@@ -34,6 +34,7 @@ export default function BackupRemindersSection() {
           lastInSection
         >
           <Select
+            variant='plain'
             data={frequencyOptions}
             value={frequency}
             onChange={({ value }) =>

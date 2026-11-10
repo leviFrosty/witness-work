@@ -139,6 +139,7 @@ const PublisherTypeSelector = ({
         })
   const select = (
     <Select
+      variant='plain'
       accessibilityLabel={i18n.t('status')}
       data={items}
       onChange={({ value }) => handleRoleChange(value)}
@@ -248,6 +249,7 @@ const PublisherTypeSelector = ({
       ) : (
         <InputRowContainer
           label={i18n.t('status')}
+          controlWidth='auto'
           info={
             showGoalDescription && role !== 'publisher'
               ? i18n.t('defaultMonthlyGoal_description')

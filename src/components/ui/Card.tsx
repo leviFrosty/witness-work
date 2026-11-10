@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react'
 import { View, ViewProps } from 'react-native'
 import useTheme from '@/contexts/theme'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 
 interface Props extends ViewProps {
   flexDirection?:
@@ -14,10 +15,9 @@ interface Props extends ViewProps {
 export const useCardStyle = () => {
   const theme = useTheme()
   return {
-    borderRadius: theme.numbers.borderRadiusLg,
+    borderRadius: inputLayout.sectionRadius,
+    borderCurve: 'continuous' as const,
     backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     shadowOffset: { width: 0, height: 1 } as const,
     shadowColor: theme.colors.shadow,
     shadowOpacity: theme.numbers.shadowOpacity,
@@ -37,10 +37,9 @@ const Card: React.FC<PropsWithChildren<Props>> = ({
       style={[
         [
           {
-            borderRadius: theme.numbers.borderRadiusLg,
+            borderRadius: inputLayout.sectionRadius,
+            borderCurve: 'continuous',
             backgroundColor: theme.colors.card,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
             paddingVertical: 20,
             paddingHorizontal: 20,
             gap: 15,

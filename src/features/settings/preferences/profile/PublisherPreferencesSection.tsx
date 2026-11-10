@@ -30,6 +30,7 @@ import useGoalHoursInput from '@/hooks/useGoalHoursInput'
 import { useProfile } from '@/stores/profile'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import Card from '@/components/ui/Card'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import MonthlyMaximumCreditHoursSection from '@/features/settings/preferences/profile/MonthlyMaximumCreditHoursSection'
@@ -109,11 +110,14 @@ const PublisherPreferencesSection = () => {
     !isCheckboxMode || (showsTimeEntry && monthlyGoalHours > 0)
 
   return (
-    <View style={{ gap: 20 }}>
+    <View style={{ gap: inputLayout.sectionGap }}>
       <View style={{ gap: 8 }}>
         <ProfileCard />
         <BuddiesAccountNameHint
-          style={{ fontSize: theme.fontSize('sm'), paddingHorizontal: 15 }}
+          style={{
+            fontSize: theme.fontSize('sm'),
+            paddingHorizontal: inputLayout.horizontalPadding,
+          }}
         />
       </View>
 
@@ -138,7 +142,10 @@ const PublisherPreferencesSection = () => {
       <Section>
         <PublisherTypeSelector askStartMonth />
         {tracksTenure && (
-          <InputRowContainer label={i18n.t(getStartDateLabels(role).label)}>
+          <InputRowContainer
+            label={i18n.t(getStartDateLabels(role).label)}
+            controlWidth='auto'
+          >
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <DateTimePicker
                 value={tenureStartDate ? new Date(tenureStartDate) : new Date()}
@@ -180,7 +187,7 @@ const PublisherPreferencesSection = () => {
         )}
         {showAnnualGoal && (
           <SettingsSearchTarget id='annualGoal'>
-            <InputRowContainer label={i18n.t('annualGoal')}>
+            <InputRowContainer label={i18n.t('annualGoal')} controlWidth='auto'>
               <View style={{ flex: 1 }}>
                 <AnnualGoalSelector />
               </View>
@@ -240,7 +247,7 @@ const PublisherPreferencesSection = () => {
       </Section>
 
       {showAdvanced && (
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: -12 }}>
           <PointerHover onHoverChange={setAdvancedHovered}>
             <Pressable
               accessibilityRole='button'
@@ -250,7 +257,7 @@ const PublisherPreferencesSection = () => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingHorizontal: 16,
+                paddingHorizontal: inputLayout.horizontalPadding,
                 paddingVertical: 16,
               }}
             >
@@ -276,7 +283,7 @@ const PublisherPreferencesSection = () => {
           </PointerHover>
 
           {advancedOpen && (
-            <View style={{ gap: 20 }}>
+            <View style={{ gap: inputLayout.sectionGap }}>
               {canAdjustCreditLimit && (
                 <SettingsSearchTarget
                   id='monthlyCreditLimit'

@@ -96,9 +96,10 @@ const ServiceReportSection = () => {
       >
         <View
           style={{
-            minHeight: 48,
+            minHeight: 56,
             paddingHorizontal: 20,
-            paddingVertical: 10,
+            paddingTop: 18,
+            paddingBottom: 12,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',

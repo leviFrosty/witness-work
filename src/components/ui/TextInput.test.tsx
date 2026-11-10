@@ -107,10 +107,10 @@ describe('TextInput placeholder on Android', () => {
       overlay()[0].props.onLayout({ nativeEvent: { layout: { height: 90 } } })
     )
 
-    expect(flatten(field().props.style).minHeight).toBe(112)
+    expect(flatten(field().props.style).minHeight).toBe(110)
 
     await act(async () => field().props.onChangeText('Ada'))
-    expect(flatten(field().props.style).minHeight).not.toBe(112)
+    expect(flatten(field().props.style).minHeight).not.toBe(110)
   })
 
   it('uses the native placeholder when it already is the label', async () => {

@@ -200,9 +200,11 @@ export function GroupedListPickerRow({
       leftIcon={icon}
       label={label}
       description={sublabel}
+      controlWidth='auto'
       lastInSection={lastInSection}
     >
       <Select
+        variant='plain'
         accessibilityLabel={label}
         data={options}
         value={value}

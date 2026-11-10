@@ -154,7 +154,7 @@ const ContactIdentityCard = ({
       >
         {i18n.t(editMode ? 'editContact' : 'addContact')}
       </Text>
-      <Card style={{ paddingVertical: 14, paddingHorizontal: 12 }}>
+      <Card style={{ paddingVertical: 18, paddingHorizontal: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <AvatarPickerPopover
             value={contact.avatar ?? { type: 'none', value: '' }}

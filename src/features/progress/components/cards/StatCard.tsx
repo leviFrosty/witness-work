@@ -56,8 +56,8 @@ export default function StatCard({
     <Card
       style={{
         flex: 1,
-        paddingVertical: 14,
-        paddingHorizontal: 14,
+        paddingVertical: 18,
+        paddingHorizontal: 18,
         gap: 6,
       }}
     >

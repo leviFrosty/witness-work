@@ -116,10 +116,10 @@ const darkModeColors: Colors = {
 }
 
 export const numbers = {
-  borderRadiusSm: 5,
-  borderRadiusMd: 10,
-  borderRadiusLg: 15,
-  borderRadiusXl: 25,
+  borderRadiusSm: 8,
+  borderRadiusMd: 16,
+  borderRadiusLg: 26,
+  borderRadiusXl: 32,
   shadowOpacity: 0.1,
 }
 

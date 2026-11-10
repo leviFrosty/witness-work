@@ -57,8 +57,8 @@ const VisitJourneyCard = ({
       style={{
         backgroundColor: theme.colors.card,
         borderRadius: theme.numbers.borderRadiusLg,
-        paddingTop: 14,
-        paddingBottom: 12,
+        paddingTop: 18,
+        paddingBottom: 16,
         paddingHorizontal: 18,
         gap: 8,
         shadowColor: '#000',

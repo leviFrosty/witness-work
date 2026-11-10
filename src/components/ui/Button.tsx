@@ -204,7 +204,7 @@ const useButtonBaseStyle = (
     baseStyle: {
       borderWidth: variant === 'outline' ? 1 : undefined,
       borderColor: styled ? theme.colors.border : undefined,
-      borderRadius: styled ? theme.numbers.borderRadiusMd : undefined,
+      borderRadius: styled ? 999 : undefined,
       paddingHorizontal: styled ? 15 : undefined,
       paddingVertical: styled ? 20 : undefined,
       flexDirection: styled ? 'row' : undefined,

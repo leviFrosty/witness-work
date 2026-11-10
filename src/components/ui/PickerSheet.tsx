@@ -59,6 +59,7 @@ const PickerSheet = (props: {
         <Button
           noTransform
           onPress={props.onDone}
+          submitShortcut
           testID={props.doneTestID}
           style={{
             minWidth: MIN_TOUCH_TARGET,

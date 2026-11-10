@@ -92,10 +92,13 @@ export function GameButton({
   accessibilityHint,
   palette,
   style,
+  submitShortcut,
 }: {
   label: string
   onPress?: () => void
   kind?: 'primary' | 'soft'
+
+  submitShortcut?: boolean
 
   icon?: GameIconName
 
@@ -135,6 +138,7 @@ export function GameButton({
     <Button
       onPress={onPress}
       disabled={off}
+      submitShortcut={submitShortcut}
       accessibilityRole='button'
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}

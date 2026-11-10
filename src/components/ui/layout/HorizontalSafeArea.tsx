@@ -5,6 +5,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 import { FoldArea } from '@/components/ui/layout/FoldPane'
+import { submitScope } from '@/components/ui/submitScope'
 import { isRtlLayout } from '@/lib/direction'
 
 const HorizontalBleedContext = createContext({ left: 0, right: 0 })
@@ -48,6 +49,7 @@ export default function HorizontalSafeArea({
 
   return (
     <View
+      {...submitScope}
       style={{
         flex: 1,
         backgroundColor: left || right ? backgroundColor : undefined,

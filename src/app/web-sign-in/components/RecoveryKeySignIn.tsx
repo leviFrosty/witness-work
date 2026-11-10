@@ -187,6 +187,7 @@ export default function RecoveryKeySignIn({
         onPress={submit}
         disabled={!ready}
         loading={busy}
+        submitShortcut
         testID='web-sign-in-recovery-submit'
       />
     </SignInPage>

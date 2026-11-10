@@ -50,6 +50,7 @@ export default function PetRenameScreen({ navigation }: Props) {
         label={i18n.t('pet.picker.save')}
         disabled={!changed}
         onPress={save}
+        submitShortcut
         palette={palette}
       />
     </GameSheet>

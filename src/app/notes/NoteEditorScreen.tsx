@@ -82,6 +82,7 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
           <Button
             noTransform
             onPress={close}
+            submitShortcut
             accessibilityRole='button'
             accessibilityLabel={i18n.t('done')}
             testID='note-editor-done'
@@ -112,6 +113,7 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
         characterLimit={session.characterLimit}
         allowImages={session.allowImages}
         onChange={session.onChange}
+        onSubmit={close}
         onLoad={() => markNoteEditorLoaded(sessionId)}
         onPhotoAdded={(count) =>
           analytics.capture('note_photo_added', {

@@ -450,6 +450,7 @@ const VisitFormScreen = ({
               }}
             >
               <Button
+                submitShortcut
                 style={webTextTargetFrame('end')}
                 onPress={async () => {
                   const saved = await submit()

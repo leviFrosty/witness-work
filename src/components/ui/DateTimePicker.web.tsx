@@ -338,6 +338,7 @@ export function DateTimeDialog({
           <Button
             noTransform
             onPress={() => onPick(draft)}
+            submitShortcut
             style={{
               minWidth: MIN_TOUCH_TARGET,
               minHeight: MIN_TOUCH_TARGET,

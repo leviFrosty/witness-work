@@ -147,6 +147,8 @@ type Props = {
 
   loading?: boolean
   testID?: string
+
+  submitShortcut?: boolean
 }
 
 const IconButton = ({
@@ -165,6 +167,7 @@ const IconButton = ({
   frame,
   loading,
   testID,
+  submitShortcut,
 }: Props) => {
   const theme = useContext(ThemeContext)
   const size = typeof _size === 'number' ? _size : theme.fontSize(_size)
@@ -212,6 +215,7 @@ const IconButton = ({
       loading={loading}
       loadingColor={typeof iconColor === 'string' ? iconColor : undefined}
       testID={testID}
+      submitShortcut={submitShortcut}
     >
       {frameStyle ? (
         <View style={webFrame && !frame ? webFrame.inner : style}>{glyph}</View>

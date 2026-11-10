@@ -424,6 +424,7 @@ const ServiceReportViewScreen = ({ route, navigation }: Props) => {
                       color={PAPER_LABEL}
                       frame
                       onPress={handleSaveNotes}
+                      submitShortcut
                       accessibilityLabel={i18n.t('save')}
                     />
                   </PointerTooltip>

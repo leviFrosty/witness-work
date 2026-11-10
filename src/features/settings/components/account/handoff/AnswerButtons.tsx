@@ -47,6 +47,7 @@ export default function AnswerButtons({
       <View style={{ flex: 1 }}>
         <ActionButton
           onPress={onYes}
+          submitShortcut={false}
           loading={sending}
           disabled={sending}
           testID={`${testIDPrefix}-allow`}

@@ -15,6 +15,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
   disabled,
   size = 'lg',
   loadingColor,
+  submitShortcut = true,
   ...props
 }) => {
   const theme = useTheme()
@@ -38,6 +39,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
       onPress={onPress}
       disabled={disabled}
       loadingColor={loadingColor ?? theme.colors.textInverse}
+      submitShortcut={submitShortcut}
       {...props}
     >
       {typeof children === 'string' ? (

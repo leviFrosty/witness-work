@@ -534,6 +534,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
               </View>
             ) : (
               <Button
+                submitShortcut
                 disabled={fetching}
                 style={{
                   position: 'absolute',

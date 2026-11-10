@@ -12,6 +12,7 @@ import SettingsScrollView from '@/features/settings/components/shared/SettingsSc
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Section from '@/components/ui/inputs/Section'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import { submitScope } from '@/components/ui/submitScope'
 import ActionButton from '@/components/ui/ActionButton'
 import MyTextInput from '@/components/ui/TextInput'
 import Text from '@/components/ui/MyText'
@@ -119,7 +120,7 @@ const PreferencesCustomFieldsScreen = () => {
 
           <View style={{ gap: 5 }}>
             <SectionTitle text={i18n.t('addNewField')} />
-            <Section>
+            <Section {...submitScope}>
               <InputRowContainer
                 lastInSection
                 controlWidth='full'

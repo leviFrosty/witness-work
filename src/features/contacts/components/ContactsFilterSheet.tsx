@@ -595,6 +595,7 @@ const ContactsFilterSheet: React.FC<ContactsFilterSheetProps> = ({
       >
         <Button
           onPress={handleApply}
+          submitShortcut
           noTransform
           style={{
             paddingVertical: 14,

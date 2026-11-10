@@ -18,6 +18,7 @@ import DisplayRegionsView, {
 } from '../../../../modules/display-regions'
 import { getFoldSplit } from '@/lib/foldSplit'
 import { FoldHandled, useFoldHandled } from '@/components/ui/layout/FoldPane'
+import { submitScope } from '@/components/ui/submitScope'
 
 const NO_FLEX =
   Platform.OS === 'web'
@@ -141,6 +142,7 @@ export default function FoldSplit({
       <Animated.View
         ref={leadingRef}
         collapsable={false}
+        {...submitScope}
         style={[
           single
             ? { flex: 1 }
@@ -159,6 +161,7 @@ export default function FoldSplit({
       </Animated.View>
       <Animated.View style={gapAnimatedStyle} />
       <View
+        {...submitScope}
         style={[
           { flex: 1, minWidth: 0, display: single ? 'none' : 'flex' },
           trailingStyle,

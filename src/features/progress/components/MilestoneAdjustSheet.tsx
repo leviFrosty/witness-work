@@ -340,7 +340,12 @@ const MilestoneAdjustSheet = ({ visible, onClose }: Props) => {
               onPress={handleClose}
             />
           ) : (
-            <Button noTransform onPress={handleDone} hitSlop={10}>
+            <Button
+              noTransform
+              onPress={handleDone}
+              hitSlop={10}
+              submitShortcut
+            >
               <Text
                 style={{
                   color: theme.colors.accent,

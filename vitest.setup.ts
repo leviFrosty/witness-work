@@ -5,6 +5,8 @@ vi.mock('./modules/display-regions', () => ({
   supportsDisplayRegions: false,
 }))
 
+vi.mock('@/hooks/useSubmitAction', () => ({ default: () => undefined }))
+
 vi.mock('@/components/ui/layout/FoldPane', async () => {
   const reactNative = await import('react-native')
   const passThrough = ({ children }: { children: unknown }) => children

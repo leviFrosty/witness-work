@@ -114,6 +114,7 @@ const ImportAndExportScreen = () => {
               disabled={exporter.sharing || protecting}
               loading={importing}
               onPress={handleImport}
+              submitShortcut={false}
             >
               <XView>
                 <IconButton

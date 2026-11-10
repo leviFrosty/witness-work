@@ -32,6 +32,7 @@ import {
 import useTheme from '@/contexts/theme'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { relativeLuminance } from '@/lib/color'
+import { registerSubmitAction } from '@/lib/submitShortcut'
 import { pickWebImages } from '@/lib/files/pickWebImages'
 import { isRtlLayout } from '@/lib/direction'
 import i18n from '@/lib/locales'
@@ -67,6 +68,8 @@ const RichTextEditor = (props: {
   onPhotoFailed?: () => void
 
   onLoad?: () => void
+
+  onSubmit?: () => void
 }) => {
   const theme = useTheme()
   const library = useLibraryImagePicker('note')
@@ -123,6 +126,24 @@ const RichTextEditor = (props: {
 
   const run = (command: EditorCommand) =>
     dom.current?.run?.(command as unknown as BridgeValue)
+
+  const submit = () => {
+    if (props.onSubmit) props.onSubmit()
+    else run({ type: 'blur' })
+  }
+  const latestSubmit = useRef(submit)
+  useEffect(() => {
+    latestSubmit.current = submit
+  })
+  useEffect(() => {
+    if (Platform.OS === 'web' || !format.focused) return
+    return registerSubmitAction({
+      owns: true,
+      press: () => latestSubmit.current(),
+      disabled: () => false,
+      focused: () => true,
+    })
+  }, [format.focused])
 
   useImperativeHandle(props.ref, () => ({
     flush: (done) => {
@@ -293,6 +314,7 @@ const RichTextEditor = (props: {
             props.onLoad?.()
           }}
           onChange={onChange}
+          onSubmit={async () => submit()}
           onImageHandles={excludeFromBackGesture}
           onFormatState={async (state) => {
             if (state.focused && !format.focused) requestKeyboard()

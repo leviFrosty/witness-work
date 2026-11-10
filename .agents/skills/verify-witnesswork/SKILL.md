@@ -226,26 +226,29 @@ Every device run costs CPU that the other agents on this Mac share, plus tokens.
 
 ## Web
 
-A web change is proven in a browser, through the machine's job queue. One export peaks near 6 GB and six cores, so only one runs at a time on this Mac.
+A web change is proven in a browser against this worktree's own Expo web dev server. The server stays up between checks, so an edit rebundles in under a second.
 
 ```bash
-wwv web test e2e/web/zz-my-check.spec.ts     # build if needed, then Playwright
+wwv web test e2e/web/zz-my-check.spec.ts     # start or reuse the dev server, then Playwright
 wwv web test e2e/web/layout.spec.ts -g Home  # any Playwright arguments pass through
-wwv web build                                # only the export (dist/, dev profile)
-wwv web dev                                  # Expo web dev server, for the dev harness
+wwv web dev                                  # only the server; prints {"url","port"}
+wwv web down                                 # stop it when the task is done
+wwv web test --export e2e/web/offline.spec.ts   # against a fresh production export
 ```
 
-- **`wwv web test` is the whole loop.** It exports `dist/` in the web-build slot, skips the export when `dist/` already matches this tree's bundled files (edits to specs, docs and tests keep it), serves `dist/` on a port reserved for the run (8130 to 8159), and runs Playwright with `--project chromium-desktop --workers 1` unless you pass your own. Add a project (`--project webkit-desktop`, `--project chromium-phone`) only where the change could differ there.
+- **`wwv web test` is the whole loop.** It starts the dev server on a port reserved for this worktree (8130 to 8159), or reuses the one already running, and runs Playwright against it with `--project chromium-desktop --workers 1` unless you pass your own. Add a project (`--project webkit-desktop`, `--project chromium-phone`) only where the change could differ there. The server's output is in `.verify/web-dev.log`.
+- **The dev server has the dev harness**, so a spec or `page.evaluate` can use `__WW_DEV__` to seed and read state, as on a simulator.
+- **`--export` is the exception.** It builds `dist/` (a full production bundle: about 6 GB, a minute, one at a time on this Mac) and tests that. Use it only for what the dev server cannot show: the service worker and offline, hosting headers and CSP, the launch splash, bundle contents, or a final check the user asks for.
 - **Throwaway specs** drive a one-off check: name them `e2e/web/zz-<name>.spec.ts` (gitignored), start from `fixtures.ts` as the real specs do, and save screenshots under `.verify/artifacts/`. A path a later agent should re-prove becomes a real spec instead.
-- **`wwv web dev`** is only for what the export lacks: `__WW_DEV__`, Fast Refresh, sign-in against a local ww-api ([`e2e/web/README.md`](../../../e2e/web/README.md)). It prints its port, holds the one web-dev slot, and is stopped after `WW_VERIFY_WEB_DEV_MAX_MIN`. Stop it the moment the check is done.
-- **Waiting is normal.** A queued command prints its place and the reason, then runs. Leave it waiting; a second copy only joins the back of the queue. Exit status 75 means it gave up or verification is on hold: report the check as unverified rather than running the tool by hand.
+- **Servers are pooled.** At most `WW_VERIFY_MAX_WEB_DEV` run at once. One that no `wwv web` command has used for `WW_VERIFY_WEB_DEV_IDLE_MIN` minutes is stopped, or after `WW_VERIFY_WEB_DEV_CONTENDED_IDLE_MIN` when another worktree is waiting for a slot; the next `wwv web test` starts it again. Run `wwv web down` as soon as the proof is done.
+- **Waiting is normal.** A queued command prints its place and the reason, then runs. Leave it waiting; a second copy only joins the back of the queue. Exit status 75 means it gave up or verification is on hold: report the check as unverified rather than running `expo` or `playwright` by hand.
 
 ## Concurrency and resources
 
 Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 
 - **Only through `wwv`.** Don't boot, build or serve by hand: no `pnpm run ios`/`android`, `simctl boot`, `emulator -avd`, T3 `device_open`, or Metro on 8081. Those skip the leases and the build cache, and collide with the user's devices and other worktrees. Never run `adb emu kill` or `gradlew --stop`, which hit every worktree's emulator or Gradle.
-- **Jobs.** Web exports, web tests, web dev servers, `vitest run`, typecheck and lint are jobs: `pnpm web:build`, `web:test`, `web`, `testFinal`, `typecheck` and `lint` all queue through `scripts/verify/run.mjs`, first come, first served. At most `WW_VERIFY_MAX_JOBS` run at once, each class has its own cap (`WW_VERIFY_MAX_WEB_BUILDS`, `…_WEB_TESTS`, `…_WEB_DEV`, `…_TESTS`, `…_TYPECHECKS`, `…_LINTS`), and a job behind a running one also waits out memory pressure. Queue anything else that is heavy with `wwv run --class <class> -- <command>`. Vitest runs 3 workers and Playwright 2 on a 16 GB machine (`WW_VITEST_WORKERS`, `E2E_WORKERS`). CI runs everything directly.
+- **Jobs.** Web exports, web tests, web dev servers, `vitest run`, typecheck and lint are jobs: `pnpm web:build`, `web:test`, `web`, `testFinal`, `typecheck` and `lint` all queue through `scripts/verify/run.mjs`, first come, first served within each class. Dev servers hold their own slots and don't count toward `WW_VERIFY_MAX_JOBS`. At most `WW_VERIFY_MAX_JOBS` run at once, each class has its own cap (`WW_VERIFY_MAX_WEB_BUILDS`, `…_WEB_TESTS`, `…_WEB_DEV`, `…_TESTS`, `…_TYPECHECKS`, `…_LINTS`), and a job behind a running one also waits out memory pressure. Queue anything else that is heavy with `wwv run --class <class> -- <command>`. Vitest runs 3 workers and Playwright 2 on a 16 GB machine (`WW_VITEST_WORKERS`, `E2E_WORKERS`). CI runs everything directly.
 - **Hold.** `wwv hold "<reason>"` pauses device and web runs for every worktree until `wwv resume`: `wwv up` and the web jobs exit 75 with the reason, while tests, typecheck and lint keep queueing. Under a hold, skip the run and report it unverified. `WW_VERIFY_IGNORE_HOLD=1` is for a task that cannot finish without it; say so in the report.
 - **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof.
 - **iPhone first.** When you need a device in the loop, use an iPhone simulator. An emulator is only for what [Scope](#scope) sends there.

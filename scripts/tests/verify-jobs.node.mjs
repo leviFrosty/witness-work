@@ -137,6 +137,57 @@ test('a waiter whose class is full does not block other classes', async () => {
   assert.deepEqual(result.c, { ok: true })
 })
 
+test('a waiter only queues behind earlier waiters of its own class', async () => {
+  const box = sandbox({ WW_VERIFY_MEMORY_LEVEL: '5,2' })
+  const result = await child(
+    box,
+    `const a = J.tryAdmit({ cls: 'test', worktree: '/w/a', pid: process.pid })
+     const b = J.tryAdmit({ cls: 'lint', worktree: '/w/b', pid: process.ppid })
+     J.clearHold()
+     return { a, b: b.wait }`
+  )
+  assert.deepEqual(result.a, { ok: true })
+  assert.match(result.b, /memory pressure/)
+  const calm = { ...box, env: { ...box.env, WW_VERIFY_MEMORY_LEVEL: '100' } }
+  assert.deepEqual(
+    await child(
+      calm,
+      `return J.tryAdmit({ cls: 'typecheck', worktree: '/w/c', pid: 1 })`
+    ),
+    { ok: true }
+  )
+})
+
+test('dev servers stay out of the job cap and expire when idle', async () => {
+  const box = sandbox({ WW_VERIFY_MAX_JOBS: '1', WW_VERIFY_MAX_WEB_DEV: '1' })
+  const server = spawn(
+    process.execPath,
+    ['-e', 'setInterval(() => {}, 1000)'],
+    {
+      detached: true,
+      stdio: 'ignore',
+    }
+  )
+  server.unref()
+  const result = await child(
+    box,
+    `const dev = J.tryAdmit({ cls: 'web-dev', worktree: '/w/a', pid: process.pid })
+     J.adoptJob(process.pid, { pid: ${server.pid}, pgid: ${server.pid}, port: 8130, touchedAt: Date.now() - 5 * 60_000 })
+     const test = J.tryAdmit({ cls: 'test', worktree: '/w/a', pid: process.pid })
+     J.dropJob(process.pid)
+     const calm = J.reapJobs().length
+     const second = J.tryAdmit({ cls: 'web-dev', worktree: '/w/b', pid: process.pid })
+     const contended = J.reapJobs().length
+     return { dev, test, calm, second: second.wait, contended }`
+  )
+  assert.deepEqual(result.dev, { ok: true })
+  assert.deepEqual(result.test, { ok: true })
+  assert.equal(result.calm, 0)
+  assert.match(result.second, /1 of 1 web-dev slots busy/)
+  assert.equal(result.contended, 1)
+  assert.throws(() => process.kill(server.pid, 0))
+})
+
 test('the command exit status and arguments pass through', async () => {
   const box = sandbox()
   const run = await gated(box, 'test', 'console.log("hi"); process.exit(3)')

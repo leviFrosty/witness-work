@@ -20,10 +20,11 @@ E2E_PORT=8790 pnpm web:test     # another port, for runs side by side
 ```
 
 On a machine shared with agents, `pnpm web:build`, `web:test` and `web` wait
-for a slot in the verification job queue (`wwv status` shows it), and
-`wwv web test <spec>` does the whole loop for one check: it exports only when
-`dist/` is stale, reserves a port, and runs Chromium at desktop size with one
-worker (the `verify-witnesswork` skill, "Web"). `E2E_WORKERS` sets the worker
+for a slot in the verification job queue (`wwv status` shows it). For one
+check, `wwv web test <spec>` runs Playwright against the worktree's own web
+dev server, which it starts on a reserved port and keeps for the next run, in
+Chromium at desktop size with one worker; `--export` tests a fresh `dist/`
+instead (the `verify-witnesswork` skill, "Web"). `E2E_WORKERS` sets the worker
 count, 2 by default outside CI.
 
 A run serves `dist/` on `127.0.0.1:$E2E_PORT` (8765 by default). With

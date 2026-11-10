@@ -58,7 +58,7 @@ import {
   reapJobs,
   setHold,
 } from './jobs.mjs'
-import { webBuild, webDev, webTest } from './web-pool.mjs'
+import { webBuild, webDev, webDown, webTest } from './web-pool.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(
   /\/$/,
@@ -3293,6 +3293,7 @@ const commands = {
   },
 
   async down({ flags }) {
+    if (webDown()) log('stopped the web dev server')
     const state = readState()
     const own = readLeases().filter((l) => l.worktree === ROOT)
     const platforms = flags.platform
@@ -3346,8 +3347,18 @@ const commands = {
 
   async web({ raw }) {
     const [action, ...args] = raw
-    const actions = { build: webBuild, test: webTest, dev: webDev }
-    if (!actions[action]) fail('Usage: wwv web <build|test|dev> [args]')
+    const actions = {
+      build: webBuild,
+      test: webTest,
+      dev: webDev,
+      down: async () => {
+        console.log(
+          webDown() ? 'web dev server stopped' : 'no web dev server here'
+        )
+        return 0
+      },
+    }
+    if (!actions[action]) fail('Usage: wwv web <test|dev|down|build> [args]')
     try {
       process.exitCode = await actions[action](args)
     } catch (error) {
@@ -3498,11 +3509,12 @@ const commands = {
     )
     printTable(
       'JOBS (web builds, web tests, web dev servers, vitest, typecheck, lint)',
-      ['class', 'worktree', 'running', 'port', 'command'],
+      ['class', 'worktree', 'running', 'idle', 'port', 'command'],
       jobs.map((j) => [
         j.cls,
         path.basename(j.worktree),
         ago(j.startedAt),
+        j.touchedAt ? ago(j.touchedAt) : '-',
         j.port ?? '-',
         j.label ?? '-',
       ])
@@ -3548,11 +3560,13 @@ const commands = {
   down [--platform p] [--shutdown] [--keep-device]
                                            release devices (kept booted while the
                                            warm pool has room), stop Metro, keep evidence
-  web build [--env dev] [--force]          export dist/ in the one web-build slot; skipped
-                                           when dist/ already matches this tree
-  web test [playwright args]               build if needed, then Playwright on a reserved
-                                           port (chromium-desktop, 1 worker by default)
-  web dev [--env local] [--port N]         Expo web dev server in a web-dev slot
+  web test [--export] [playwright args]    Playwright against this worktree's web dev
+                                           server (started on its own port and kept
+                                           for the next run; chromium-desktop, 1 worker).
+                                           --export tests a fresh dist/ instead
+  web dev [--env local]                    start that dev server and print its URL
+  web down                                 stop it
+  web build [--env dev] [--force]          export dist/ (one at a time on this machine)
   run --class <c> [--wait min] -- <cmd>    queue any heavy command (test, typecheck, lint,
                                            web-build, web-test, web-dev)
   hold [reason] / resume                   pause or resume device and web runs machine-wide

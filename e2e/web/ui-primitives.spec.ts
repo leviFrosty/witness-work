@@ -216,7 +216,12 @@ test.describe('menus', () => {
       .click({ button: 'right' })
     await expect(app.getByRole('menu')).toBeVisible()
 
-    await app.mouse.move(app.viewportSize()!.width * 0.4, 300)
+    const menu = (await app.getByRole('menu').boundingBox())!
+    const below = menu.y + menu.height + 40
+    await app.mouse.move(
+      app.viewportSize()!.width * 0.4,
+      below < app.viewportSize()!.height - 40 ? below : menu.y - 40
+    )
     await app.mouse.wheel(0, 300)
     await expect(app.getByRole('menu')).toBeHidden()
   })
@@ -557,6 +562,27 @@ test.describe('menus', () => {
     await app.getByRole('button', { name: 'More actions' }).first().click()
     const item = app.getByRole('menuitem').first()
     expect((await sizeOf(item)).height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('menu items show their icons, in the color of their title', async ({
+    app,
+  }) => {
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await app.getByText('Daniel Okafor').first().click({ button: 'right' })
+    const edit = app.getByRole('menuitem', { name: 'Edit' })
+    await expect(edit.locator('[data-menu-icon="pencil"] svg')).toBeVisible()
+    expect((await sizeOf(edit)).height).toBeGreaterThanOrEqual(44)
+
+    const remove = app.getByRole('menuitem', { name: /^Delete/ })
+    const icon = remove.locator('[data-menu-icon="trash"] svg')
+    await expect(icon).toBeVisible()
+    const colors = await remove.evaluate((item) => [
+      getComputedStyle(item).color,
+      getComputedStyle(item.querySelector('svg')!).stroke,
+      getComputedStyle(document.querySelector('[role=menuitem]')!).color,
+    ])
+    expect(colors[1]).toBe(colors[0])
+    expect(colors[0]).not.toBe(colors[2])
   })
 
   test('an open menu follows its trigger when the window resizes', async ({

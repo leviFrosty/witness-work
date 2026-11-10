@@ -250,6 +250,13 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       textAlign={inputAlign}
       autoFocusNative={rest.autoFocusNative ?? rest.autoFocus}
       {...(rest.secureTextEntry && { type: rest.type ?? 'password' })}
+      {...(Platform.OS === 'web' &&
+        rest.type === 'number' && {
+          type: 'text',
+          inputMode:
+            rest.inputMode ??
+            (rest.keyboardType === 'decimal-pad' ? 'decimal' : 'numeric'),
+        })}
       {...(textAlignVertical !== undefined && { textAlignVertical })}
       {...{
         borderWidth,

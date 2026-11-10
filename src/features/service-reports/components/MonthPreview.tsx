@@ -72,30 +72,34 @@ const MonthPreview = (props: { entry: TimeEntry }) => {
       accessibilityValue={
         goal ? { text: i18n.t('timeForm_ofGoal', { goal: format(goal) }) } : {}
       }
-      style={{ gap: 10 }}
+      style={{ gap: 8 }}
     >
-      <Text
-        style={{
-          fontSize: theme.fontSize('sm'),
-          fontFamily: theme.fonts.semiBold,
-        }}
-      >
-        {month}
-      </Text>
       <View
         style={{
           flexDirection: 'row',
-          flexWrap: 'wrap',
           alignItems: 'center',
-          columnGap: 8,
-          rowGap: 2,
+          minHeight: 20,
+          gap: 6,
         }}
       >
         <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            fontSize: theme.fontSize('sm'),
+            fontFamily: theme.fonts.semiBold,
+          }}
+        >
+          {month}
+        </Text>
+        <Text
           style={
             changes
-              ? { fontSize: 17, color: theme.colors.textAlt }
-              : { fontSize: 17, fontFamily: theme.fonts.semiBold }
+              ? { fontSize: theme.fontSize('sm'), color: theme.colors.textAlt }
+              : {
+                  fontSize: theme.fontSize('sm'),
+                  fontFamily: theme.fonts.semiBold,
+                }
           }
         >
           {format(before)}
@@ -104,59 +108,70 @@ const MonthPreview = (props: { entry: TimeEntry }) => {
           <>
             <LucideIcon
               icon={ArrowForwardIcon}
-              size={16}
+              size={14}
               color={theme.colors.textAlt}
             />
-            <Text style={{ fontSize: 17, fontFamily: theme.fonts.semiBold }}>
+            <Text
+              style={{
+                fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.bold,
+              }}
+            >
               {format(after)}
             </Text>
           </>
         )}
-        {!!goal && (
-          <Text style={{ color: theme.colors.textAlt }}>
-            {i18n.t('timeForm_ofGoal', { goal: format(goal) })}
-          </Text>
-        )}
       </View>
       {!!goal && (
-        <View
-          style={{
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: 'rgba(118,118,128,0.2)',
-            overflow: 'hidden',
-          }}
-        >
-          {after > before && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              flex: 1,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: 'rgba(118,118,128,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            {after > before && (
+              <View
+                style={{
+                  position: 'absolute',
+                  start: share(before),
+                  top: 0,
+                  bottom: 0,
+                  width: share(after - before),
+                  minWidth: 12,
+
+                  borderStartWidth: 2,
+                  borderStartColor: theme.colors.background,
+
+                  backgroundColor: `${theme.colors.accent}99`,
+                  borderTopEndRadius: 4,
+                  borderBottomEndRadius: 4,
+                }}
+              />
+            )}
             <View
               style={{
                 position: 'absolute',
-                start: share(before),
+                start: 0,
                 top: 0,
                 bottom: 0,
-                width: share(after - before),
-                minWidth: 12,
-
-                borderStartWidth: 2,
-                borderStartColor: theme.colors.card,
-
-                backgroundColor: `${theme.colors.accent}99`,
-                borderTopEndRadius: 5,
-                borderBottomEndRadius: 5,
+                width: share(Math.min(before, after)),
+                backgroundColor: theme.colors.accent,
+                borderRadius: 4,
               }}
             />
-          )}
-          <View
+          </View>
+          <Text
             style={{
-              position: 'absolute',
-              start: 0,
-              top: 0,
-              bottom: 0,
-              width: share(Math.min(before, after)),
-              backgroundColor: theme.colors.accent,
-              borderRadius: 5,
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
             }}
-          />
+          >
+            {i18n.t('timeForm_ofGoal', { goal: format(goal) })}
+          </Text>
         </View>
       )}
     </View>

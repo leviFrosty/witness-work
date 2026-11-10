@@ -1,4 +1,11 @@
+import type { MinuteDisplayFormat } from '@/types/timeEntry'
+
 export const DURATION_STEP = 15
+
+export const isExactInFormat = (
+  minutes: number,
+  format: MinuteDisplayFormat
+): boolean => format !== 'decimal' || minutes % 6 === 0
 
 export const DURATION_PRESETS = [30, 60, 90, 120, 180] as const
 

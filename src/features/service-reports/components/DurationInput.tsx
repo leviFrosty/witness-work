@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PickerSheet from '@/components/ui/PickerSheet'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import WheelPicker from '@/components/ui/WheelPicker'
 import useTheme from '@/contexts/theme'
 import { lightModeColors } from '@/constants/theme'
@@ -24,11 +25,12 @@ import { usePreferences } from '@/stores/preferences'
 import {
   DURATION_PRESETS,
   DURATION_STEP,
+  isExactInFormat,
   MAX_DURATION_HOURS,
   stepDuration,
 } from '@/features/service-reports/lib/durationInput'
 
-export type DurationInputMethod = 'preset' | 'stepper' | 'exact'
+export type DurationInputMethod = 'preset' | 'stepper' | 'exact' | 'plan'
 
 type Props = {
   hours: number
@@ -46,8 +48,8 @@ type Props = {
 const useControlColors = () => {
   const theme = useTheme()
   return theme.colors.background === lightModeColors.background
-    ? { fill: 'rgba(118,118,128,0.12)', thumb: '#FFFFFF', outline: '#C6C6C8' }
-    : { fill: 'rgba(118,118,128,0.32)', thumb: '#636366', outline: '#8E8E93' }
+    ? { fill: 'rgba(118,118,128,0.16)' }
+    : { fill: 'rgba(118,118,128,0.32)' }
 }
 
 const Step = (props: {
@@ -133,56 +135,55 @@ const Presets = (props: {
   onChange: (minutes: number) => void
 }) => {
   const theme = useTheme()
-  const colors = useControlColors()
   const format = usePreferences((s) => s.timeDisplayFormat)
   return (
     <View
       accessibilityRole='radiogroup'
-      style={{
-        flexDirection: 'row',
-        padding: 3,
-        gap: 2,
-        borderRadius: 999,
-        backgroundColor: colors.fill,
-      }}
+      style={{ flexDirection: 'row', gap: 6 }}
     >
       {DURATION_PRESETS.map((preset) => {
         const active = preset === props.value
         return (
-          <Button
+          <View
             key={preset}
-            noTransform
-            onPress={() => props.onChange(preset)}
-            accessibilityRole='radio'
-            accessibilityLabel={formatMinutes(preset, format).formatted}
-            accessibilityState={{ selected: active, checked: active }}
-            testID={`time-entry-preset-${preset}`}
             style={{
               flex: 1,
-              height: 44,
-              borderRadius: 999,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: active ? colors.thumb : 'transparent',
-              borderWidth: active ? 1 : 0,
-              borderColor: colors.outline,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: active ? 0.14 : 0,
-              shadowRadius: 3,
+              borderRadius: theme.numbers.borderRadiusMd,
+              backgroundColor: theme.colors.card,
             }}
           >
-            <Text
+            <Button
+              noTransform
+              onPress={() => props.onChange(preset)}
+              accessibilityRole='radio'
+              accessibilityLabel={formatMinutes(preset, format).formatted}
+              accessibilityState={{ selected: active, checked: active }}
+              testID={`time-entry-preset-${preset}`}
               style={{
-                color: theme.colors.text,
-                fontFamily: active ? theme.fonts.bold : theme.fonts.medium,
+                height: MIN_TOUCH_TARGET,
+                borderRadius: theme.numbers.borderRadiusMd,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: active
+                  ? theme.colors.accentTranslucent
+                  : 'transparent',
+                borderWidth: active ? 1.5 : 1,
+                borderColor: active ? theme.colors.accent : theme.colors.border,
               }}
             >
-              {format === 'decimal'
-                ? formatPlainNumber(preset / 60)
-                : formatMinutesCompact(preset)}
-            </Text>
-          </Button>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('md'),
+                  color: theme.colors.text,
+                  fontFamily: active ? theme.fonts.bold : theme.fonts.semiBold,
+                }}
+              >
+                {format === 'decimal'
+                  ? formatMinutesCompact(preset / 60, { unit: 'hours' })
+                  : formatMinutesCompact(preset)}
+              </Text>
+            </Button>
+          </View>
         )
       })}
     </View>
@@ -193,7 +194,12 @@ const DurationInput = (props: Props) => {
   const theme = useTheme()
   const total = entryMinutes(props)
   const { formatted } = useFormattedMinutes(total)
+  const format = usePreferences((s) => s.timeDisplayFormat)
   const large = props.size === 'large'
+
+  const exact = isExactInFormat(total, format)
+    ? undefined
+    : formatMinutes(total, 'short').formatted
   const [picking, setPicking] = useState(false)
   const [draftHours, setDraftHours] = useState(props.hours)
   const [draftMinutes, setDraftMinutes] = useState(props.minutes)
@@ -230,7 +236,7 @@ const DurationInput = (props: Props) => {
           onPress={openWheels}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('time')}
-          accessibilityValue={{ text: formatted }}
+          accessibilityValue={{ text: exact ?? formatted }}
           accessibilityHint={i18n.t('timeForm_exactHint')}
           testID={`${props.testID}-duration-pill`}
           style={{
@@ -247,7 +253,7 @@ const DurationInput = (props: Props) => {
           }}
         >
           {}
-          <View style={{ flexShrink: 1, marginHorizontal: 28 }}>
+          <View style={{ flexShrink: 1, marginHorizontal: large ? 34 : 28 }}>
             <DurationValue minutes={total} size={props.size} />
             <View
               style={{
@@ -278,7 +284,26 @@ const DurationInput = (props: Props) => {
           onPress={() => setTotal(stepDuration(total, 1), 'stepper')}
         />
       </View>
-      <View style={{ marginTop: large ? 8 : 12 }}>
+      <View
+        style={{ height: large ? 24 : 20 }}
+        accessibilityElementsHidden
+        importantForAccessibility='no-hide-descendants'
+      >
+        {exact && (
+          <Text
+            numberOfLines={1}
+            style={{
+              textAlign: 'center',
+              fontSize: theme.fontSize('sm'),
+              fontFamily: theme.fonts.medium,
+              color: theme.colors.textAlt,
+            }}
+          >
+            {exact}
+          </Text>
+        )}
+      </View>
+      <View>
         <Presets
           value={total}
           onChange={(minutes) => setTotal(minutes, 'preset')}

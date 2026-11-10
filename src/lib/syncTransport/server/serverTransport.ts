@@ -381,7 +381,7 @@ export function createServerTransport(
     },
     waitForInitialScan: async () => true,
 
-    async readFiles(include) {
+    async readFiles(include, options) {
       const current = await access()
       let listing: Awaited<ReturnType<typeof listSyncSlots>>
       try {
@@ -397,6 +397,10 @@ export function createServerTransport(
       for (const slot of listing.slots) {
         const filename = filenameForSlot(slot.slotId)
         if (!include(filename)) continue
+        if (options?.listOnly?.(filename)) {
+          files.push({ filename, json: '', modifiedAt: slot.updatedAt })
+          continue
+        }
         const json = await readSlot(current, slot)
         if (json === null) continue
         files.push({ filename, json, modifiedAt: slot.updatedAt })

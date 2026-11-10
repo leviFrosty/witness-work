@@ -181,6 +181,15 @@ const hasPhoneContact = (
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
+const launchCatchUpDone = async ({
+  iCloudSync,
+  bridge,
+}: Pick<Awaited<ReturnType<typeof load>>, 'iCloudSync' | 'bridge'>) => {
+  await vi.waitFor(() => expect(bridge.write).toHaveBeenCalled())
+  await iCloudSync.waitForSyncIdle()
+  await settle()
+}
+
 let uninstall: () => void = () => {}
 
 beforeEach(async () => {
@@ -256,6 +265,119 @@ describe('catching up without a manual sync', () => {
     )
 
     await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+  })
+
+  it('doesn’t pull again when availability is announced during the launch catch-up', async () => {
+    const { installiCloudSync, iCloudSync, useSupporter, useContacts, bridge } =
+      await load()
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+
+    const announce = () =>
+      runtime.availabilityListeners.forEach((listener) =>
+        listener({ available: true })
+      )
+    announce()
+    await settle()
+    announce()
+    await launchCatchUpDone({ iCloudSync, bridge })
+    await iCloudSync.waitForSyncIdle()
+
+    expect(hasPhoneContact(useContacts)).toBe(true)
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+  })
+
+  it('doesn’t pull again when availability is announced right after a complete catch-up', async () => {
+    const { installiCloudSync, iCloudSync, useSupporter, bridge } = await load()
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+    await launchCatchUpDone({ iCloudSync, bridge })
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+
+    runtime.availabilityListeners.forEach((listener) =>
+      listener({ available: true })
+    )
+    await settle()
+    await iCloudSync.waitForSyncIdle()
+
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+  })
+
+  it('pulls again when availability is announced during a catch-up that leaves a file unread', async () => {
+    runtime.pending = [PHONE_FILE]
+    runtime.files = []
+    const { installiCloudSync, iCloudSync, useSupporter, useContacts, bridge } =
+      await load()
+    useSupporter.getState().setSupporter(true)
+    vi.mocked(bridge.readFiles).mockImplementationOnce(async () => {
+      runtime.availabilityListeners.forEach((listener) =>
+        listener({ available: true })
+      )
+      const read = { files: [], pending: [PHONE_FILE] }
+      runtime.pending = []
+      runtime.files = [phonePayload()]
+      return read
+    })
+    uninstall = installiCloudSync()
+
+    await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+    await iCloudSync.waitForSyncIdle()
+    expect(bridge.readFiles).toHaveBeenCalledTimes(2)
+  })
+
+  it('pulls again when availability is announced after a catch-up that left a file unread', async () => {
+    runtime.pending = [PHONE_FILE]
+    runtime.files = []
+    const { installiCloudSync, iCloudSync, useSupporter, useContacts, bridge } =
+      await load()
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+    await launchCatchUpDone({ iCloudSync, bridge })
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+
+    runtime.pending = []
+    runtime.files = [phonePayload()]
+    runtime.availabilityListeners.forEach((listener) =>
+      listener({ available: true })
+    )
+
+    await vi.waitFor(() => expect(hasPhoneContact(useContacts)).toBe(true))
+    expect(bridge.readFiles).toHaveBeenCalledTimes(2)
+  })
+
+  it('pulls again when availability is announced after the account’s pulls start over', async () => {
+    const { installiCloudSync, iCloudSync, useSupporter, bridge } = await load()
+    const { resetCompletePull } = await import('@/lib/cloudSyncPullSettled')
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+    await launchCatchUpDone({ iCloudSync, bridge })
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+
+    resetCompletePull()
+    runtime.availabilityListeners.forEach((listener) =>
+      listener({ available: true })
+    )
+
+    await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalledTimes(2))
+  })
+
+  it('pulls again when availability is announced half a minute after the last catch-up', async () => {
+    const { installiCloudSync, iCloudSync, useSupporter, bridge } = await load()
+    useSupporter.getState().setSupporter(true)
+    uninstall = installiCloudSync()
+    await launchCatchUpDone({ iCloudSync, bridge })
+    expect(bridge.readFiles).toHaveBeenCalledTimes(1)
+
+    const later = Date.now() + 31_000
+    const now = vi.spyOn(Date, 'now').mockReturnValue(later)
+    try {
+      runtime.availabilityListeners.forEach((listener) =>
+        listener({ available: true })
+      )
+      await vi.waitFor(() => expect(bridge.readFiles).toHaveBeenCalledTimes(2))
+    } finally {
+      now.mockRestore()
+    }
   })
 
   it('leaves the first pull to the enable flow when sync is switched on', async () => {

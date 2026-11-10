@@ -13,6 +13,10 @@ export type SyncRead = {
   pending: string[] | null
 }
 
+export type SyncReadOptions = {
+  listOnly?: (filename: string) => boolean
+}
+
 export type UploadStatus = {
   uploaded: boolean
   uploading: boolean
@@ -80,7 +84,10 @@ export interface SyncTransport {
 
   waitForInitialScan(timeoutMs?: number): Promise<boolean>
 
-  readFiles(include: (filename: string) => boolean): Promise<SyncRead>
+  readFiles(
+    include: (filename: string) => boolean,
+    options?: SyncReadOptions
+  ): Promise<SyncRead>
 
   write(filename: string, json: string): Promise<number>
 

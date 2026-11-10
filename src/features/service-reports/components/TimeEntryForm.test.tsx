@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   add: vi.fn(),
@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   noteAction: vi.fn(),
   heavy: vi.fn(),
   capture: vi.fn(),
+  planned: vi.fn(),
+  logged: vi.fn(),
+  categories: [] as { id: string; name: string; isCredit: boolean }[],
 }))
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
@@ -36,12 +39,16 @@ vi.mock('@/components/ui/Card', () => ({ useCardStyle: () => ({}) }))
 vi.mock('@/stores/preferences', () => ({
   usePreferences: () => ({ role: 'pioneer', publisherHours: { pioneer: 0 } }),
 }))
-vi.mock('@/stores/categories', () => ({ default: () => ({ categories: [] }) }))
+vi.mock('@/stores/categories', () => ({
+  default: () => ({ categories: mocks.categories }),
+}))
 vi.mock('@/stores/serviceReport', () => ({
   default: () => ({
     addServiceReport: mocks.add,
     updateServiceReport: mocks.update,
     serviceReports: {},
+    dayPlans: [],
+    recurringPlans: [],
   }),
 }))
 vi.mock('@/lib/serviceReport', () => ({
@@ -98,8 +105,15 @@ vi.mock('@/features/service-reports/components/DurationInput', () => ({
 vi.mock('@/features/service-reports/components/DetailRow', () => ({
   default: 'DetailRow',
 }))
-vi.mock('@/features/service-reports/components/EntryDateRow', () => ({
-  default: 'EntryDateRow',
+vi.mock('@/features/service-reports/components/EntryDayPicker', () => ({
+  default: 'EntryDayPicker',
+}))
+vi.mock('@/features/service-reports/components/DayPlanSuggestion', () => ({
+  default: 'DayPlanSuggestion',
+}))
+vi.mock('@/features/service-reports/lib/entryDays', () => ({
+  dayPlanSuggestion: mocks.planned,
+  loggedMinutesOnDays: mocks.logged,
 }))
 vi.mock('@/features/service-reports/components/MonthPreview', () => ({
   default: 'MonthPreview',
@@ -110,6 +124,7 @@ vi.mock('@/components/TypeSelectorRow', () => ({
 }))
 
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
+import { localDayKey } from '@/lib/normalizeDate'
 let renderer: ReactTestRenderer
 const saveLabel = () =>
   renderer.root.findByType('ActionButton' as never).props.children
@@ -118,6 +133,13 @@ async function pressSave() {
     renderer.root.findByType('ActionButton' as never).props.onPress()
   )
 }
+const suggestions = () =>
+  renderer.root.findAllByType('DayPlanSuggestion' as never)
+beforeEach(() => {
+  mocks.planned.mockReturnValue(undefined)
+  mocks.logged.mockReturnValue(new Map())
+  mocks.categories = []
+})
 afterEach(async () => {
   await act(async () => renderer.unmount())
   vi.clearAllMocks()
@@ -164,7 +186,10 @@ describe('Time Entry submission', () => {
       )
       expect(mocks.capture).toHaveBeenCalledWith(
         'time_entry_created',
-        expect.objectContaining({ duration_input: 'preset' })
+        expect.objectContaining({
+          duration_input: 'preset',
+          date_input: 'kept',
+        })
       )
       expect(mocks.toast).toHaveBeenCalledExactlyOnceWith('added', {
         message: 'progress',
@@ -207,5 +232,94 @@ describe('Time Entry submission', () => {
     await pressSave()
     expect(mocks.update).toHaveBeenCalledOnce()
     expect(mocks.done).toHaveBeenCalledOnce()
+  })
+  it('saves on the day picked among the recent days', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' hours={2} onDone={mocks.done} />
+      )
+    })
+    const picked = new Date(2026, 10, 8, 9)
+    await act(async () =>
+      renderer.root
+        .findByType('EntryDayPicker' as never)
+        .props.setDate(picked, 'day')
+    )
+    await pressSave()
+    expect(mocks.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ date: picked, hours: 2 })
+    )
+    expect(mocks.capture).toHaveBeenCalledWith(
+      'time_entry_created',
+      expect.objectContaining({
+        duration_input: 'prefilled',
+        date_input: 'day',
+      })
+    )
+  })
+
+  it("fills in the day's planned time and Type when asked", async () => {
+    mocks.categories = [{ id: 'ldc', name: 'LDC', isCredit: true }]
+    mocks.planned.mockReturnValue({ minutes: 150, categoryId: 'ldc' })
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' onDone={mocks.done} />
+      )
+    })
+    expect(suggestions()).toHaveLength(1)
+    expect(suggestions()[0].props).toMatchObject({
+      minutes: 150,
+      applied: false,
+    })
+    await act(async () => suggestions()[0].props.onPress())
+    expect(suggestions()[0].props.applied).toBe(true)
+    expect(renderer.root.findByType('TypeFormRow' as never).props.value).toBe(
+      'ldc'
+    )
+    await pressSave()
+    expect(mocks.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        hours: 2,
+        minutes: 30,
+        categoryId: 'ldc',
+        credit: true,
+      })
+    )
+    expect(mocks.capture).toHaveBeenCalledWith(
+      'time_entry_created',
+      expect.objectContaining({ duration_input: 'plan' })
+    )
+  })
+
+  it('offers no planned time once the day has time, or while editing', async () => {
+    mocks.planned.mockReturnValue({ minutes: 150 })
+    mocks.logged.mockImplementation(
+      (_: unknown, days: Date[]) =>
+        new Map(days.map((day) => [localDayKey(day), 60]))
+    )
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' onDone={mocks.done} />
+      )
+    })
+    expect(suggestions()).toHaveLength(0)
+    await act(async () => renderer.unmount())
+
+    mocks.logged.mockReturnValue(new Map())
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm
+          source='time_entry_form'
+          existingReport={{
+            id: 'existing',
+            hours: 1,
+            minutes: 0,
+            date: new Date(),
+          }}
+          onDone={mocks.done}
+        />
+      )
+    })
+    expect(suggestions()).toHaveLength(0)
   })
 })

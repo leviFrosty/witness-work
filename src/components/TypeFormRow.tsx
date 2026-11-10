@@ -22,6 +22,8 @@ const TypeFormRow = (props: {
 
   plain?: boolean
   paddingX?: number
+
+  divider?: boolean
 }) => {
   const paddingX = props.paddingX ?? FORM_ROW_PADDING_X
   const theme = useTheme()
@@ -30,7 +32,10 @@ const TypeFormRow = (props: {
   return (
     <View
       ref={row}
-      style={{ borderTopWidth: 1, borderTopColor: theme.colors.border }}
+      style={{
+        borderTopWidth: props.divider === false ? 0 : 1,
+        borderTopColor: theme.colors.border,
+      }}
     >
       <TypeSelectorRow
         invalid={props.invalid}

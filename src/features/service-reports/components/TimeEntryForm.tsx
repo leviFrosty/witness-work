@@ -30,13 +30,21 @@ import { useCardStyle } from '@/components/ui/Card'
 import TypeFormRow from '@/components/TypeFormRow'
 import { useOpenNoteEditor } from '@/hooks/useOpenNoteEditor'
 import { useFormattedMinutes } from '@/lib/minutes'
-import { entryMinutes } from '@/lib/entryMinutes'
+import { entryMinutes, splitMinutes } from '@/lib/entryMinutes'
+import { localDayKey } from '@/lib/normalizeDate'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DurationInput, {
   type DurationInputMethod,
 } from '@/features/service-reports/components/DurationInput'
 import DetailRow from '@/features/service-reports/components/DetailRow'
-import EntryDateRow from '@/features/service-reports/components/EntryDateRow'
+import EntryDayPicker, {
+  type DateInputMethod,
+} from '@/features/service-reports/components/EntryDayPicker'
+import DayPlanSuggestion from '@/features/service-reports/components/DayPlanSuggestion'
+import {
+  dayPlanSuggestion,
+  loggedMinutesOnDays,
+} from '@/features/service-reports/lib/entryDays'
 import MonthPreview from '@/features/service-reports/components/MonthPreview'
 import { usePreferences } from '@/stores/preferences'
 import useCategories from '@/stores/categories'
@@ -120,6 +128,8 @@ const TimeEntryForm = (props: Props) => {
     serviceReports,
     updateServiceReport,
     deleteServiceReport,
+    dayPlans,
+    recurringPlans,
   } = useServiceReport()
   const existingServiceReport = getReport(serviceReports, props.existingReport)
 
@@ -146,6 +156,7 @@ const TimeEntryForm = (props: Props) => {
   const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
 
   const [durationInput, setDurationInput] = useState<DurationInputMethod>()
+  const [dateInput, setDateInput] = useState<DateInputMethod>()
   const [serviceReport, setServiceReport] = useState<TimeEntry>({
     id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
     hours: existingServiceReport?.report.hours || props.hours || 0,
@@ -187,11 +198,36 @@ const TimeEntryForm = (props: Props) => {
     })
   }
 
-  const setDate = (date: Date) => {
+  const setDate = (date: Date, method: DateInputMethod) => {
     setServiceReport({
       ...serviceReport,
       date,
     })
+    setDateInput(method)
+  }
+
+  const planned =
+    !existingServiceReport &&
+    !loggedMinutesOnDays(serviceReports, [serviceReport.date]).get(
+      localDayKey(serviceReport.date)
+    )
+      ? dayPlanSuggestion(serviceReport.date, dayPlans, recurringPlans)
+      : undefined
+
+  const applyPlanned = () => {
+    if (!planned) return
+    const category = categories.find((c) => c.id === planned.categoryId)
+    setServiceReport({
+      ...serviceReport,
+      ...splitMinutes(planned.minutes),
+      ...(category && {
+        categoryId: category.id,
+        tag: undefined,
+        credit: category.isCredit,
+      }),
+    })
+    if (category) setSelectedValue(category.id)
+    setDurationInput('plan')
   }
 
   const setDuration = (hours: number, minutes: number) => {
@@ -323,6 +359,7 @@ const TimeEntryForm = (props: Props) => {
       entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
       duration_input: durationInput ?? 'prefilled',
+      date_input: dateInput ?? 'kept',
       ...noteAnalytics(entry),
     })
     toast.success(progress.added, {
@@ -343,6 +380,7 @@ const TimeEntryForm = (props: Props) => {
       entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
       duration_input: durationInput ?? 'prefilled',
+      date_input: dateInput ?? 'kept',
       ...noteAnalytics(entry),
     })
     toast.success(i18n.t('success'), {
@@ -435,6 +473,7 @@ const TimeEntryForm = (props: Props) => {
   const typeRow = (
     <TypeFormRow
       plain
+      divider={inline}
       paddingX={paddingX}
       invalid={validation.invalid('category')}
       value={selectedValue}
@@ -488,15 +527,19 @@ const TimeEntryForm = (props: Props) => {
               width: '100%',
               maxWidth: inputLayout.contentMaxWidth,
               alignSelf: 'center',
+              gap: 10,
             }}
           >
+            <View style={{ paddingHorizontal: 4 }}>
+              <MonthPreview entry={savedEntry()} />
+            </View>
             {saveButton}
           </View>
         </View>
       }
       contentContainerStyle={{
         flexGrow: 1,
-        paddingTop: 16,
+        paddingTop: 12,
         paddingBottom: 8,
         paddingHorizontal: inputLayout.horizontalPadding,
         width: '100%',
@@ -505,26 +548,21 @@ const TimeEntryForm = (props: Props) => {
       }}
     >
       {!formAtTop && <View style={{ flexGrow: 1 }} />}
-      <View
-        style={{
-          ...cardStyle,
-          shadowOpacity: 0,
-          paddingHorizontal: 20,
-          paddingVertical: 12,
-        }}
-      >
-        <MonthPreview entry={savedEntry()} />
-      </View>
-      <View style={{ height: 24 }} />
+      {planned && (
+        <View style={{ marginBottom: 8 }}>
+          <DayPlanSuggestion
+            minutes={planned.minutes}
+            applied={total === planned.minutes}
+            onPress={applyPlanned}
+          />
+        </View>
+      )}
+      <EntryDayPicker date={serviceReport.date} setDate={setDate} />
+      <View style={{ height: 16 }} />
       {durationControl}
       {notice}
-      <View style={{ height: 28 }} />
+      <View style={{ height: 16 }} />
       <View style={{ ...cardStyle, shadowOpacity: 0 }}>
-        <EntryDateRow
-          date={serviceReport.date}
-          setDate={setDate}
-          paddingX={paddingX}
-        />
         {typeRow}
         {noteRow}
       </View>

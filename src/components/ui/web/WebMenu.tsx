@@ -34,6 +34,8 @@ type Props = {
   onSelect: (action: ContextMenuAction) => void
 }
 
+export const MENU_MAX_WIDTH = 320
+
 const itemNodes = (list: HTMLElement | null) =>
   list ? [...list.querySelectorAll<HTMLElement>('[data-menu-item]')] : []
 
@@ -148,7 +150,7 @@ export default function WebMenu({ groups, onSelect }: Props) {
     <div
       ref={listRef}
       onKeyDown={onKeyDown}
-      style={{ padding: 4, minWidth: 180, maxWidth: 320 }}
+      style={{ padding: 4, minWidth: 180, maxWidth: MENU_MAX_WIDTH }}
     >
       {rows.map((row, index) => {
         const { key, title, kind, activate, entry } = row

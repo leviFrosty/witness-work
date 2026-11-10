@@ -7,7 +7,7 @@ import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { menuGroups } from '@/components/ui/menuEntries'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
 import WebLayer, { useAnchor } from '@/components/ui/web/WebLayer'
-import WebMenu from '@/components/ui/web/WebMenu'
+import WebMenu, { MENU_MAX_WIDTH } from '@/components/ui/web/WebMenu'
 import type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
 
 export type { PullDownMenuProps } from '@/components/ui/PullDownMenu.types'
@@ -82,7 +82,7 @@ export default function PullDownMenu({
         onClose={() => setOpen(false)}
         role='menu'
         label={accessibilityLabel}
-        matchAnchorWidth={fill}
+        matchAnchorWidthUpTo={fill ? MENU_MAX_WIDTH : undefined}
         placement={{ align: children ? 'start' : 'end' }}
       >
         <WebMenu

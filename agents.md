@@ -48,6 +48,7 @@ iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and 
 - **Custom pressables** (raw `Pressable`, gesture-driven controls): wrap them in `PointerHover`. Use `effect` for small controls, and `onHoverChange` plus `HoverTint` for rows and cards. Never scale rows or cards.
 - **Icon-only controls** whose meaning isn't obvious get a `PointerTooltip` with the control's name. Leave it out when the label is already visible, and never put instructions in it.
 - **Charts and other scrubbed data:** if a value appears on press-and-drag, show the same readout when the pointer hovers there (`Gesture.Hover` `onUpdate`).
+- **A finger hides what's under it.** A readout that follows a touch goes above the whole scrubbed area, or in a fixed spot like the card's header, never beside the touched point. Only a mouse pointer gets a readout next to it (see `ContributionGraph`, `ServiceYearPaceCard`).
 - **Resize and drag handles:** use `PointerStyleView` from `modules/pointer-style` to show directional arrows next to the pointer.
 - **Don't:**
   - add decorative effects to non-interactive content;

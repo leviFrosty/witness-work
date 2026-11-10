@@ -18,13 +18,31 @@ vi.mock('react-native-reanimated', () => ({
   useAnimatedStyle: () => ({}),
   useSharedValue: (value: number) => ({ value }),
 }))
+type ScrubEvent = { x: number; y: number; pointerType: string }
+const pan = vi.hoisted(
+  () => ({}) as Record<string, (event: ScrubEvent) => void>
+)
 vi.mock('react-native-gesture-handler', () => {
-  const gesture = (): Record<string, unknown> =>
-    new Proxy({}, { get: (target, _key, proxy) => () => proxy })
+  const gesture = (handlers?: typeof pan) => (): Record<string, unknown> =>
+    new Proxy(
+      {},
+      {
+        get: (target, key, proxy) => (arg: unknown) => {
+          if (handlers && typeof arg === 'function') {
+            handlers[String(key)] = arg as (event: ScrubEvent) => void
+          }
+          return proxy
+        },
+      }
+    )
   return {
-    Gesture: { Pan: gesture, Hover: gesture, Simultaneous: gesture },
+    Gesture: {
+      Pan: gesture(pan),
+      Hover: gesture(),
+      Simultaneous: gesture(),
+    },
     GestureDetector: ({ children }: { children: React.ReactNode }) => children,
-    PointerType: { STYLUS: 'stylus' },
+    PointerType: { TOUCH: 'touch', STYLUS: 'stylus', MOUSE: 'mouse' },
   }
 })
 vi.mock('@/contexts/theme', () => {
@@ -127,6 +145,35 @@ describe('ContributionGraph', () => {
         for (const label of labels()) label.props.onLayout(layout(20))
       })
       expect(shown()).toEqual(['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'])
+    })
+  })
+
+  describe('scrub readout', () => {
+    const readout = (root: ReturnType<typeof render>) =>
+      root.find(
+        (node) =>
+          (node.type as unknown) === 'View' &&
+          node.props.pointerEvents === 'none' &&
+          node.props.style?.width === 150
+      )
+    const gridHeight = 7 * 8 + 6 * 3
+
+    it('sits above the grid and its month labels under a finger, whatever the row', () => {
+      const root = render(new Map())
+      for (const y of [2, 30, 70]) {
+        act(() => pan.onStart({ x: 2, y, pointerType: 'touch' }))
+        const { style } = readout(root).props
+        expect(style.bottom).toBe(gridHeight + 8 + 14 + 4)
+        expect(style.top).toBeUndefined()
+      }
+    })
+
+    it('stays beside the cell under a mouse pointer', () => {
+      const root = render(new Map())
+      act(() => pan.onStart({ x: 2, y: 2, pointerType: 'mouse' }))
+      expect(readout(root).props.style.top).toBe(8 + 8)
+      act(() => pan.onUpdate({ x: 2, y: 70, pointerType: 'mouse' }))
+      expect(readout(root).props.style.bottom).toBe(gridHeight - 6 * 11 + 8)
     })
   })
 

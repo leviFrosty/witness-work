@@ -123,7 +123,11 @@ export default function KeyChangeIntro({
           {i18n.t('accountKeyChange_unlockFailed')}
         </Text>
       )}
-      <ActionButton onPress={onStart} testID='key-change-start'>
+      <ActionButton
+        onPress={onStart}
+        submitShortcut={false}
+        testID='key-change-start'
+      >
         {i18n.t('accountKeyChange_start')}
       </ActionButton>
     </View>

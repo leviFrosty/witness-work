@@ -51,12 +51,14 @@ const RoundIcon = ({
   onPress,
   filled,
   disabled,
+  submitShortcut,
 }: {
   icon: AppIcon
   label: string
   onPress: () => void
   filled?: boolean
   disabled?: boolean
+  submitShortcut?: boolean
 }) => {
   const theme = useTheme()
   return (
@@ -64,6 +66,7 @@ const RoundIcon = ({
       <Button
         onPress={onPress}
         disabled={disabled}
+        submitShortcut={submitShortcut}
         accessibilityRole='button'
         accessibilityLabel={label}
         pointerEffect='lift'
@@ -401,6 +404,7 @@ const ScribeComposer = ({
             onPress={onSend}
             filled
             disabled={!sendable}
+            submitShortcut
           />
         )}
       </View>

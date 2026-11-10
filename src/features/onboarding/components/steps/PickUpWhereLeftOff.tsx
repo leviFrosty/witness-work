@@ -168,6 +168,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
         />
       </View>
       <ActionButton
+        submitShortcut={false}
         disabled={importing}
         onPress={() => {
           if (!hasImportedData)

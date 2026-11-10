@@ -34,6 +34,7 @@ import PointerHover, {
   type PointerEffect,
 } from '@/components/ui/PointerHover'
 import { supportsPointerEffects, supportsWebHover } from '@/lib/pointerHover'
+import useSubmitAction from '@/hooks/useSubmitAction'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
@@ -53,6 +54,8 @@ export interface ButtonProps extends PressableProps {
   loading?: boolean
 
   loadingColor?: string
+
+  submitShortcut?: boolean
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -449,7 +452,16 @@ const InertButton: React.FC<PropsWithChildren<ButtonProps>> = ({
   )
 }
 
-const Button: React.FC<PropsWithChildren<ButtonProps>> = (props) => {
+const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
+  submitShortcut,
+  ...rest
+}) => {
+  const mark = useSubmitAction(
+    !!submitShortcut,
+    rest.onPress,
+    !!(rest.disabled || rest.loading)
+  )
+  const props = mark ? { ...rest, ...mark } : rest
   if (
     !props.onPress &&
     !props.onLongPress &&

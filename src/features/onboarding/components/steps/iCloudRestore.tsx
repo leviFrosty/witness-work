@@ -699,7 +699,11 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           </ActionButton>
         )}
         {probe.state === 'found' && (
-          <ActionButton onPress={handleRestore} disabled={restoring}>
+          <ActionButton
+            onPress={handleRestore}
+            disabled={restoring}
+            submitShortcut={false}
+          >
             {restoring ? (
               <View
                 style={{

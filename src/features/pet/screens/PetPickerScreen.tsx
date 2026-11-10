@@ -73,6 +73,7 @@ export default function PetPickerScreen({ route, navigation }: Props) {
       <GameButton
         label={i18n.t(adopting ? 'pet.picker.adopt' : 'pet.picker.save')}
         disabled={action.kind === 'none'}
+        submitShortcut
         onPress={() => {
           save(action)
           if (action.kind === 'adopt') setShowIntro(true)

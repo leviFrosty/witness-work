@@ -27,6 +27,7 @@
     "appLock",
     "updateRequired",
     "navigationShortcuts",
+    "keyboardSave",
     "pointerHover",
     "logTimeForDay",
     "timeRollover",

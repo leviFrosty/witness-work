@@ -68,6 +68,7 @@ import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
 import WebFocusStyles from '@/components/ui/WebFocusStyles'
+import SubmitShortcut from '@/components/ui/SubmitShortcut'
 import { PopoverTouchShield } from '@/components/ui/popoverTouchShield'
 import ToastHost from '@/components/toast/ToastHost'
 import WebStorageNotices from '@/app/launch/WebStorageNotices'
@@ -206,6 +207,7 @@ function UnlockedApp() {
                               <WebOfflineRuntime />
                               <PointerTooltipLayer />
                               <WebFocusStyles />
+                              <SubmitShortcut />
                               <UpdateRequiredGate />
                               {}
                               {isWeb && <StepUpSheet />}

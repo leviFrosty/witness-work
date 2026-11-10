@@ -38,6 +38,7 @@ type Props = {
   onReady: () => Promise<void>
   onChange: (doc: Record<string, unknown>) => Promise<void>
   onFormatState: (state: EditorFormatState) => Promise<void>
+  onSubmit: () => Promise<void>
 
   onImageHandles: (rects: number[][]) => Promise<void>
 }
@@ -346,6 +347,22 @@ const TrailingParagraph = Extension.create({
   },
 })
 
+const SubmitShortcut = Extension.create<{ onSubmit: () => void }>({
+  name: 'noteSubmitShortcut',
+  priority: 1000,
+  addOptions() {
+    return { onSubmit: () => {} }
+  },
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Enter': () => {
+        this.options.onSubmit()
+        return true
+      },
+    }
+  },
+})
+
 function setImageSource(id: string, src: string) {
   imageSources.set(id, src)
   for (const img of imageElements.get(id) ?? []) showImage(img, src)
@@ -604,12 +621,16 @@ export default function RichTextEditorDom(props: Props) {
         TextDirections,
         TrailingParagraph,
         CharacterCount.configure({ limit: setup?.characterLimit ?? null }),
+        SubmitShortcut.configure({
+          onSubmit: () => send(bridge.current.onSubmit()),
+        }),
       ],
       editorProps: {
         attributes: {
           role: 'textbox',
           'aria-multiline': 'true',
           'aria-label': setup?.label ?? '',
+          'data-submit-owner': '',
 
           dir: setup?.direction ?? 'ltr',
           autocapitalize: 'sentences',

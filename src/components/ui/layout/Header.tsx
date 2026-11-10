@@ -30,6 +30,7 @@ import WindowControlsInsetView, {
 import DisplayRegionsView from '../../../../modules/display-regions'
 import { useSystemBackButton } from '@/components/ui/layout/SystemBackButton'
 import { useLocalFoldPane } from '@/components/ui/layout/FoldPane'
+import { submitHeader } from '@/components/ui/submitScope'
 
 type Props = {
   backgroundColor?: string
@@ -159,6 +160,7 @@ const HeaderContent = ({
 
   return (
     <View
+      {...submitHeader}
       style={{
         backgroundColor: backgroundColor || theme.colors.background,
         paddingTop:

@@ -18,10 +18,24 @@ public class SystemMenuModule: Module {
   private var groups: [SystemMenuGroup] = []
   private var configured = false
   private var keyboard: NavigationKeyboard?
+  private var submitKeyboard: SubmitKeyboard?
 
   public func definition() -> ModuleDefinition {
     Name("SystemMenu")
-    Events("onAction", "onCommandKeyChanged", "onNavigationShortcut")
+    Events("onAction", "onCommandKeyChanged", "onNavigationShortcut", "onSubmitShortcut")
+
+    AsyncFunction("enableSubmitShortcut") { [weak self] () -> Bool in
+      guard let self else { return false }
+      if self.submitKeyboard == nil {
+        let keyboard = SubmitKeyboard()
+        keyboard.onSubmit = { [weak self] in
+          self?.sendEvent("onSubmitShortcut", [:])
+        }
+        self.submitKeyboard = keyboard
+      }
+      self.submitKeyboard?.start()
+      return true
+    }.runOnQueue(.main)
 
     AsyncFunction("configureNavigationShortcuts") { [weak self] (inputs: [String]) -> Bool in
       guard let self, #available(iOS 26.0, *), UIDevice.current.userInterfaceIdiom == .pad else {
@@ -43,8 +57,10 @@ public class SystemMenuModule: Module {
 
     OnDestroy { [weak self] in
       let keyboard = self?.keyboard
+      let submitKeyboard = self?.submitKeyboard
       DispatchQueue.main.async {
         keyboard?.stop()
+        submitKeyboard?.stop()
       }
     }
 

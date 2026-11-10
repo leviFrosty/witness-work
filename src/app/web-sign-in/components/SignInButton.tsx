@@ -15,6 +15,8 @@ type Props = {
   disabled?: boolean
   loading?: boolean
   testID?: string
+
+  submitShortcut?: boolean
 }
 
 export default function SignInButton({
@@ -26,6 +28,7 @@ export default function SignInButton({
   disabled,
   loading,
   testID,
+  submitShortcut,
 }: Props) {
   const theme = useTheme()
   const color =
@@ -45,6 +48,7 @@ export default function SignInButton({
         disabled={disabled}
         loading={loading}
         loadingColor={color}
+        submitShortcut={submitShortcut}
         variant={kind === 'secondary' ? 'outline' : 'solid'}
         testID={testID}
         style={{

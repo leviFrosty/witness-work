@@ -38,6 +38,7 @@ export default function KeyChangeNewKey({
       <ActionButton
         onPress={onChange}
         disabled={!saved}
+        submitShortcut={false}
         testID='key-change-confirm'
       >
         {i18n.t('accountKeyChange_start')}

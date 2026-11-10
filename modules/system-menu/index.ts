@@ -13,6 +13,7 @@ export type SystemMenuGroup = {
 type SystemMenuNative = {
   configure(groups: SystemMenuGroup[]): Promise<boolean>
   configureNavigationShortcuts?(inputs: string[]): Promise<boolean>
+  enableSubmitShortcut?(): Promise<boolean>
   addListener<Event extends keyof SystemMenuEvents>(
     event: Event,
     listener: (event: SystemMenuEvents[Event]) => void
@@ -23,6 +24,7 @@ type SystemMenuEvents = {
   onAction: { action: string }
   onCommandKeyChanged: { pressed: boolean }
   onNavigationShortcut: { input: string }
+  onSubmitShortcut: Record<string, never>
 }
 
 const native =
@@ -58,4 +60,11 @@ export function subscribeToNavigationShortcut(
 ) {
   if (supportsNavigationShortcuts)
     return native?.addListener('onNavigationShortcut', listener)
+}
+
+export function subscribeToSubmitShortcut(listener: () => void) {
+  if (typeof native?.enableSubmitShortcut !== 'function') return
+  const subscription = native.addListener('onSubmitShortcut', listener)
+  void native.enableSubmitShortcut().catch(() => {})
+  return subscription
 }

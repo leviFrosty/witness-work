@@ -741,6 +741,22 @@ test.describe('pointer hover', () => {
     await app.mouse.move(5, 5)
     await expect(tint).toHaveCount(0)
   })
+
+  test('a mouse tints a sidebar tab as it does a row, with no ring', async ({
+    app,
+  }) => {
+    test.skip(isPhone(app), 'a phone has no mouse')
+    const tab = app.getByRole('button', { name: 'Progress', exact: true })
+    const tint = tab.getByTestId('hover-tint')
+    await expect(tint).toHaveCount(0)
+    await tab.hover()
+    await expect(tint).toHaveCSS('opacity', '0.06')
+    await expect(
+      app.locator('[data-ww-pointer=highlight]').filter({ has: tab })
+    ).toHaveCount(0)
+    await app.mouse.move(600, 880)
+    await expect(tint).toHaveCount(0)
+  })
 })
 
 test.describe('a touch screen', () => {

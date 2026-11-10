@@ -159,7 +159,7 @@ const ServiceReportSection = () => {
               <PublisherCheckBoxCard />
             </View>
           ) : (
-            <ServiceReportTimeOverlay containerStyle={{ flex: 1 }}>
+            <ServiceReportTimeOverlay containerStyle={{ flex: 2 }}>
               <HourEntryCard />
             </ServiceReportTimeOverlay>
           )}

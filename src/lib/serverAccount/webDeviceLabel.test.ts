@@ -1,4 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/lib/locales', async () => {
+  const { default: strings } = await import('@/locales/en-US.json')
+  return {
+    default: {
+      t: (key: keyof typeof strings, values: Record<string, string> = {}) =>
+        String(strings[key]).replace(/%\{(\w+)\}/g, (_, name) => values[name]),
+    },
+  }
+})
+
 import {
   browserAndSystem,
   webDeviceLabel,
@@ -29,11 +40,11 @@ describe('web device label', () => {
     [UA.chromeAndroid, 'Chrome', 'Android'],
     ['', 'Browser', 'Web'],
   ])('names %s', (userAgent, browser, system) => {
-    expect(browserAndSystem(userAgent)).toEqual({ browser, system })
+    expect(browserAndSystem({ userAgent })).toEqual({ browser, system })
   })
 
   it('labels the session as the protocol says', () => {
-    expect(webDeviceLabel(UA.chromeMac)).toEqual({
+    expect(webDeviceLabel({ userAgent: UA.chromeMac })).toEqual({
       name: 'Chrome on macOS',
       platform: 'web',
       model: '',

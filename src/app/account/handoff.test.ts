@@ -45,6 +45,7 @@ vi.mock('@/app/account/backupRestore', () => ({
 vi.mock('@/app/buddies/joinBuddiesHere', () => ({ joinBuddiesHere: vi.fn() }))
 vi.mock('@/lib/accountKey/accountKey', () => ({ losesSomething: () => false }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { openDetached: fake.openDetached },

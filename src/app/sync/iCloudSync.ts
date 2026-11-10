@@ -114,6 +114,7 @@ import {
 import { logger } from '@/lib/logger'
 import { errorTracking } from '@/lib/errorTracking'
 import * as Device from 'expo-device'
+import { syncDeviceName } from '@/lib/devicePlatform'
 import { CustomFieldDefinition } from '@/types/customField'
 import { Category } from '@/types/category'
 import { isSeededBuiltinCategory } from '@/constants/categories'
@@ -627,7 +628,7 @@ async function overwriteRemoteWithLocalInner(): Promise<void> {
 
     previous: usePreferences.getState().iCloudResetEpoch,
     deviceId,
-    deviceName: Device.modelName ?? undefined,
+    deviceName: syncDeviceName() ?? undefined,
   })
 
   setPrefsIfChanged({
@@ -1560,7 +1561,7 @@ async function pushInner(reason: string): Promise<boolean> {
       : null
     const payload = buildPayload({
       deviceId,
-      deviceName: Device.modelName ?? undefined,
+      deviceName: syncDeviceName() ?? undefined,
     })
     const json = JSON.stringify(payload)
     logger.log(`${tag()} push start`, {
@@ -2289,7 +2290,7 @@ function recordDeviceFiles(args: {
   if (own) {
     observed[ownFilename] = {
       deviceId: args.deviceId,
-      deviceName: Device.modelName ?? null,
+      deviceName: syncDeviceName(),
       writtenAt: null,
       modifiedAt: own.modifiedAt,
       status: 'ok',

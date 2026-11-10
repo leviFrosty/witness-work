@@ -27,6 +27,12 @@ import {
 import { webDeviceLabel } from '@/lib/serverAccount/webDeviceLabel'
 import { createSessionTabs } from '@/lib/serverAccount/webTabs'
 
+vi.mock('@/lib/locales', () => ({
+  default: {
+    t: (_key: string, values: { browser: string; system: string }) =>
+      `${values.browser} on ${values.system}`,
+  },
+}))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/http/online', () => ({ isKnownOffline: () => false }))
 
@@ -376,7 +382,7 @@ function browser() {
         if (!key) throw new AccountSessionError('signedOut')
         return key
       },
-      deviceLabel: () => webDeviceLabel(CHROME),
+      deviceLabel: () => webDeviceLabel({ userAgent: CHROME }),
       appVersion: () => '9.8.7',
       fetchImpl: worker.fetchImpl,
       web: {

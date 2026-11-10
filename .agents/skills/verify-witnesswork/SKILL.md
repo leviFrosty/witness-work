@@ -1,6 +1,6 @@
 ---
 name: verify-witnesswork
-description: Drive the real WitnessWork app on an iOS simulator or Android emulator (plus the local ww-api backend) to prove a change works, with captured evidence and no human in the loop. Use before claiming any UI, navigation, data, deep link, permission, or backend-integration change is done; when asked to verify, QA, smoke test, reproduce a bug, or fuzz the app; or when a task says "test on device/simulator/Android".
+description: Drive the real WitnessWork app on an iOS simulator or Android emulator (plus the local ww-api backend) to prove a change works, with captured evidence and no human in the loop. Use before claiming any UI, navigation, data, deep link, permission, or backend-integration change is done; when asked to verify, QA, smoke test, reproduce a bug, or fuzz the app; or when a task says "test on device/simulator/Android"; and before building, serving or browser-testing the web app (`wwv web`).
 ---
 
 # Verify WitnessWork
@@ -224,11 +224,29 @@ Every device run costs CPU that the other agents on this Mac share, plus tokens.
 - **Re-checks stay small.** After a follow-up that changes only copy, spacing or a review nit, rerun the unit tests or take one screenshot. Don't drive the whole flow again, and don't repeat other devices.
 - **Prove the change, not the app.** Note unrelated problems you spot in the report; don't fix or chase them.
 
+## Web
+
+A web change is proven in a browser, through the machine's job queue. One export peaks near 6 GB and six cores, so only one runs at a time on this Mac.
+
+```bash
+wwv web test e2e/web/zz-my-check.spec.ts     # build if needed, then Playwright
+wwv web test e2e/web/layout.spec.ts -g Home  # any Playwright arguments pass through
+wwv web build                                # only the export (dist/, dev profile)
+wwv web dev                                  # Expo web dev server, for the dev harness
+```
+
+- **`wwv web test` is the whole loop.** It exports `dist/` in the web-build slot, skips the export when `dist/` already matches this tree's bundled files (edits to specs, docs and tests keep it), serves `dist/` on a port reserved for the run (8130 to 8159), and runs Playwright with `--project chromium-desktop --workers 1` unless you pass your own. Add a project (`--project webkit-desktop`, `--project chromium-phone`) only where the change could differ there.
+- **Throwaway specs** drive a one-off check: name them `e2e/web/zz-<name>.spec.ts` (gitignored), start from `fixtures.ts` as the real specs do, and save screenshots under `.verify/artifacts/`. A path a later agent should re-prove becomes a real spec instead.
+- **`wwv web dev`** is only for what the export lacks: `__WW_DEV__`, Fast Refresh, sign-in against a local ww-api ([`e2e/web/README.md`](../../../e2e/web/README.md)). It prints its port, holds the one web-dev slot, and is stopped after `WW_VERIFY_WEB_DEV_MAX_MIN`. Stop it the moment the check is done.
+- **Waiting is normal.** A queued command prints its place and the reason, then runs. Leave it waiting; a second copy only joins the back of the queue. Exit status 75 means it gave up or verification is on hold: report the check as unverified rather than running the tool by hand.
+
 ## Concurrency and resources
 
 Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 
 - **Only through `wwv`.** Don't boot, build or serve by hand: no `pnpm run ios`/`android`, `simctl boot`, `emulator -avd`, T3 `device_open`, or Metro on 8081. Those skip the leases and the build cache, and collide with the user's devices and other worktrees. Never run `adb emu kill` or `gradlew --stop`, which hit every worktree's emulator or Gradle.
+- **Jobs.** Web exports, web tests, web dev servers, `vitest run`, typecheck and lint are jobs: `pnpm web:build`, `web:test`, `web`, `testFinal`, `typecheck` and `lint` all queue through `scripts/verify/run.mjs`, first come, first served. At most `WW_VERIFY_MAX_JOBS` run at once, each class has its own cap (`WW_VERIFY_MAX_WEB_BUILDS`, `…_WEB_TESTS`, `…_WEB_DEV`, `…_TESTS`, `…_TYPECHECKS`, `…_LINTS`), and a job behind a running one also waits out memory pressure. Queue anything else that is heavy with `wwv run --class <class> -- <command>`. Vitest runs 3 workers and Playwright 2 on a 16 GB machine (`WW_VITEST_WORKERS`, `E2E_WORKERS`). CI runs everything directly.
+- **Hold.** `wwv hold "<reason>"` pauses device and web runs for every worktree until `wwv resume`: `wwv up` and the web jobs exit 75 with the reason, while tests, typecheck and lint keep queueing. Under a hold, skip the run and report it unverified. `WW_VERIFY_IGNORE_HOLD=1` is for a task that cannot finish without it; say so in the report.
 - **Iterate without a device.** Use typecheck, lint and vitest while you work. Take a device lease once, for the proof.
 - **iPhone first.** When you need a device in the loop, use an iPhone simulator. An emulator is only for what [Scope](#scope) sends there.
 - **Caps.** At most `WW_VERIFY_MAX_IOS` simulators and `WW_VERIFY_MAX_ANDROID` emulators are leased at once, and the pool never grows past the cap. Only `WW_VERIFY_MAX_BUILDS` native builds run at a time. A worktree waiting for a build slot stops waiting as soon as its fingerprint appears in the cache, and a cached artifact never waits.
@@ -245,7 +263,7 @@ Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.
 - **Always `wwv down` when done**, including after a failed `up`.
 
 ```bash
-wwv status     # leases, device and build waiters with reasons, builds, Metros, memory (read-only)
+wwv status     # hold, leases, jobs, every queue with reasons, builds, Metros, memory (read-only)
 wwv gc         # reap expired leases and orphaned builds now
 wwv warm       # boot devices up to WW_VERIFY_WARM_MIN per platform (no-op at 0)
 ```
@@ -325,6 +343,7 @@ For Buddies between two people, bring up a second device with `wwv up --platform
 - `scripts/verify/ww-verify.mjs` is the CLI above (`wwv help`).
 - `scripts/verify/monkey.mjs` is the monkey engine (`wwv monkey`).
 - `scripts/verify/flows.mjs` is the flow interpreter (`wwv flow`).
+- `scripts/verify/jobs.mjs` is the job queue and the hold (`wwv run`, `scripts/verify/run.mjs`); `scripts/verify/web-pool.mjs` is `wwv web`.
 - `scripts/perf/run.mjs` profiles a commit's Release build through the same build slots, leases and install records (see `docs/perf/README.md`). `wwv up` reinstalls the dev client over it.
 - `src/app/dev-harness/` holds the dev-only in-app API, scenarios and reset. It is installed from `initializeApp` under `__DEV__` and is absent from release bundles.
 - `e2e/maestro/` holds the shared flows.

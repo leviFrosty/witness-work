@@ -557,7 +557,7 @@ async function main() {
     envFlag === -1 ? (command === 'build' ? 'dev' : 'local') : args[envFlag + 1]
   if (!['start', 'build'].includes(command))
     throw new Error(
-      'Usage: node scripts/web.mjs <start|build> [--env local|dev|beta|production]'
+      'Usage: node scripts/web.mjs <start|build> [--env local|dev|beta|production] [--port <port>]'
     )
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files, excluded, api, host } = loadWebEnv(root, profile)
@@ -583,7 +583,13 @@ async function main() {
     return result
   }
   if (command === 'start') {
-    const result = spawn('expo', ['start', '--web'])
+    const portFlag = args.indexOf('--port')
+    const port = portFlag === -1 ? process.env.WW_WEB_PORT : args[portFlag + 1]
+    const result = spawn('expo', [
+      'start',
+      '--web',
+      ...(port ? ['--port', port] : []),
+    ])
     if (result.signal) process.kill(process.pid, result.signal)
     process.exitCode = result.status ?? 1
     return

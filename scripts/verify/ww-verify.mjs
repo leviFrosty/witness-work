@@ -48,6 +48,17 @@ import {
   withLock,
   withMutex,
 } from './leases.mjs'
+import {
+  cli as runCli,
+  clearHold,
+  holdMessage,
+  ignoresHold,
+  jobsSnapshot,
+  readHold,
+  reapJobs,
+  setHold,
+} from './jobs.mjs'
+import { webBuild, webDev, webTest } from './web-pool.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(
   /\/$/,
@@ -2687,6 +2698,8 @@ const commands = {
       fail('--platform must be ios or android')
     if (flags.api && !['local', 'env'].includes(flags.api))
       fail('--api must be local or env')
+    const hold = !ignoresHold() && readHold()
+    if (hold) fail(holdMessage(hold, 'the device run'))
     const disk = freeDiskGb()
     if (disk < 8)
       fail(
@@ -3327,10 +3340,40 @@ const commands = {
     }
   },
 
+  async run({ raw }) {
+    process.exitCode = await runCli(raw)
+  },
+
+  async web({ raw }) {
+    const [action, ...args] = raw
+    const actions = { build: webBuild, test: webTest, dev: webDev }
+    if (!actions[action]) fail('Usage: wwv web <build|test|dev> [args]')
+    try {
+      process.exitCode = await actions[action](args)
+    } catch (error) {
+      fail(error.message)
+    }
+  },
+
+  async hold({ raw }) {
+    const hold = setHold(raw.join(' ').trim())
+    console.log(
+      `on hold${hold.reason ? `: ${hold.reason}` : ''}. wwv up and wwv web refuse until \`wwv resume\`; tests, typecheck and lint still queue.`
+    )
+  },
+
+  async resume() {
+    console.log(clearHold() ? 'hold cleared' : 'no hold was set')
+  },
+
   async gc() {
     const builds = await reapBuilds({ log })
     const reaped = await reapExpired()
+    const jobs = reapJobs({ log })
     const lines = [
+      ...jobs.map(
+        (j) => `stopped ${j.cls} of ${j.worktree} (process group ${j.pgid})`
+      ),
       ...builds.map(
         (b) =>
           `reaped orphaned ${b.platform} build of ${b.worktree} (process group ${b.pgid ?? 'none'})`
@@ -3351,7 +3394,21 @@ const commands = {
     console.log(
       `memory ${usedGb} / ${CONFIG.budgetGb} GB budgeted${memory ? `; ${memory.free}% free, pressure ${pressure[memory.pressure] ?? memory.pressure} (macOS)` : ''}\n`
     )
+    const { hold, jobs, jobWaiters } = jobsSnapshot()
+    if (hold)
+      console.log(
+        `ON HOLD since ${new Date(hold.at).toLocaleString()}${hold.reason ? `: ${hold.reason}` : ''} (wwv resume clears it)\n`
+      )
     const policy = {
+      WW_VERIFY_MAX_JOBS: CONFIG.jobs.max,
+      WW_VERIFY_MIN_FREE_PCT_JOB: CONFIG.jobs.minFreePct,
+      WW_VERIFY_MAX_WEB_BUILDS: CONFIG.jobs.classes['web-build'].max,
+      WW_VERIFY_MAX_WEB_DEV: CONFIG.jobs.classes['web-dev'].max,
+      WW_VERIFY_MAX_WEB_TESTS: CONFIG.jobs.classes['web-test'].max,
+      WW_VERIFY_MAX_TESTS: CONFIG.jobs.classes.test.max,
+      WW_VERIFY_MAX_TYPECHECKS: CONFIG.jobs.classes.typecheck.max,
+      WW_VERIFY_MAX_LINTS: CONFIG.jobs.classes.lint.max,
+      WW_VERIFY_WEB_DEV_MAX_MIN: CONFIG.jobs.classes['web-dev'].maxMin,
       WW_VERIFY_MEMORY_BUDGET_GB: CONFIG.budgetGb,
       WW_VERIFY_MAX_IOS: CONFIG.max.ios,
       WW_VERIFY_MAX_ANDROID: CONFIG.max.android,
@@ -3440,6 +3497,28 @@ const commands = {
       ])
     )
     printTable(
+      'JOBS (web builds, web tests, web dev servers, vitest, typecheck, lint)',
+      ['class', 'worktree', 'running', 'port', 'command'],
+      jobs.map((j) => [
+        j.cls,
+        path.basename(j.worktree),
+        ago(j.startedAt),
+        j.port ?? '-',
+        j.label ?? '-',
+      ])
+    )
+    printTable(
+      'JOB QUEUE (first come, first served)',
+      ['#', 'class', 'worktree', 'waited', 'reason'],
+      jobWaiters.map((w, i) => [
+        i + 1,
+        w.cls,
+        path.basename(w.worktree),
+        ago(w.since),
+        w.reason ?? '-',
+      ])
+    )
+    printTable(
       'METRO (listeners on 8090-8129)',
       ['port', 'pid', 'serving'],
       [...listeningPorts()]
@@ -3469,7 +3548,15 @@ const commands = {
   down [--platform p] [--shutdown] [--keep-device]
                                            release devices (kept booted while the
                                            warm pool has room), stop Metro, keep evidence
-  status                                   machine-wide leases, queue, builds, Metros, memory
+  web build [--env dev] [--force]          export dist/ in the one web-build slot; skipped
+                                           when dist/ already matches this tree
+  web test [playwright args]               build if needed, then Playwright on a reserved
+                                           port (chromium-desktop, 1 worker by default)
+  web dev [--env local] [--port N]         Expo web dev server in a web-dev slot
+  run --class <c> [--wait min] -- <cmd>    queue any heavy command (test, typecheck, lint,
+                                           web-build, web-test, web-dev)
+  hold [reason] / resume                   pause or resume device and web runs machine-wide
+  status                                   machine-wide leases, jobs, queues, builds, Metros, memory
   warm                                     boot devices up to WW_VERIFY_WARM_MIN per platform
   gc                                       reap expired leases (also runs on every up)`)
   },

@@ -19,6 +19,13 @@ WW_WEB_SHOTS=/tmp/shots pnpm web:test   # also save a screenshot of each screen
 E2E_PORT=8790 pnpm web:test     # another port, for runs side by side
 ```
 
+On a machine shared with agents, `pnpm web:build`, `web:test` and `web` wait
+for a slot in the verification job queue (`wwv status` shows it), and
+`wwv web test <spec>` does the whole loop for one check: it exports only when
+`dist/` is stale, reserves a port, and runs Chromium at desktop size with one
+worker (the `verify-witnesswork` skill, "Web"). `E2E_WORKERS` sets the worker
+count, 2 by default outside CI.
+
 A run serves `dist/` on `127.0.0.1:$E2E_PORT` (8765 by default). With
 `E2E_HOST` set, it opens the app there and starts no server: serve it yourself
 with `E2E_LISTEN=0.0.0.0 node e2e/web/serve.mjs dist <port>`. A container that

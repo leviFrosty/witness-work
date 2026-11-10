@@ -5804,6 +5804,8 @@
   "webSignIn_phoneDeclined": "The request ended on your phone.",
   "webSignIn_phoneUsed": "Another device already scanned that code.",
   "webSignIn_phoneUnavailable": "Signing in with a phone isn't available right now. Try again later.",
+  "webDevice_browser": "Web browser",
+  "webDevice_browserOnSystem": "%{browser} on %{system}",
   "webSignIn_approvedTitle": "Approved by %{device}",
   "webSignIn_approvedBody": "This browser is signed in to your account.",
   "webSignIn_approvedWarning": "If you don't know this phone, choose That Wasn't Me to sign out and erase this browser.",

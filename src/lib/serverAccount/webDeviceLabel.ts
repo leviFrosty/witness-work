@@ -1,39 +1,24 @@
+import {
+  webDeviceName,
+  webDeviceParts,
+  type WebDeviceSignals,
+} from '@/lib/webDeviceName'
 import type { DeviceLabel } from '@/lib/serverAccount/deviceLabel'
 
 export type BrowserAndSystem = { browser: string; system: string }
 
-const BROWSERS: [RegExp, string][] = [
-  [/\bEdg(e|A|iOS)?\//, 'Edge'],
-  [/\b(OPR|Opera)\//, 'Opera'],
-  [/\bSamsungBrowser\//, 'Samsung Internet'],
-  [/\b(Firefox|FxiOS)\//, 'Firefox'],
-  [/\b(Chrome|CriOS|Chromium)\//, 'Chrome'],
-  [/\bVersion\/[\d.]+.*Safari\//, 'Safari'],
-]
+const signalsHere = (): WebDeviceSignals =>
+  typeof navigator === 'undefined' ? {} : navigator
 
-const SYSTEMS: [RegExp, string][] = [
-  [/\biPad\b/, 'iPadOS'],
-  [/\b(iPhone|iPod)\b/, 'iOS'],
-  [/\bAndroid\b/, 'Android'],
-  [/\bCrOS\b/, 'ChromeOS'],
-  [/\b(Macintosh|Mac OS X)\b/, 'macOS'],
-  [/\bWindows\b/, 'Windows'],
-  [/\bLinux\b/, 'Linux'],
-]
-
-const match = (value: string, table: [RegExp, string][], fallback: string) =>
-  table.find(([pattern]) => pattern.test(value))?.[1] ?? fallback
-
-export function browserAndSystem(userAgent: string): BrowserAndSystem {
-  return {
-    browser: match(userAgent, BROWSERS, 'Browser'),
-    system: match(userAgent, SYSTEMS, 'Web'),
-  }
+export function browserAndSystem(
+  signals: WebDeviceSignals = signalsHere()
+): BrowserAndSystem {
+  const { browser, system } = webDeviceParts(signals)
+  return { browser: browser ?? 'Browser', system: system ?? 'Web' }
 }
 
 export function webDeviceLabel(
-  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent
+  signals: WebDeviceSignals = signalsHere()
 ): DeviceLabel {
-  const { browser, system } = browserAndSystem(userAgent)
-  return { name: `${browser} on ${system}`, platform: 'web', model: '' }
+  return { name: webDeviceName(signals), platform: 'web', model: '' }
 }

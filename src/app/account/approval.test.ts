@@ -29,6 +29,7 @@ vi.mock('@/app/account/accountKey', () => ({
   accountKeyAvailable: fake.available,
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount', () => ({
   accountSessions: { withSession: vi.fn() },

@@ -48,6 +48,7 @@ vi.mock('@/lib/appLifecycle', () => ({
   addBackgroundListener: vi.fn(),
   addForegroundListener: vi.fn(),
 }))
+vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/serverAccount/backupAccess', () => ({
   backupAccessFor: vi.fn(),

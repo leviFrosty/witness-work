@@ -31,6 +31,7 @@ vi.mock('react-native-mmkv', () => ({
 }))
 vi.mock('expo-device', () => ({ modelName: 'iPad' }))
 vi.mock('@/lib/installId', () => ({ getOrCreateInstallId: () => 'ipad' }))
+vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('../../modules/icloud-bridge', () => ({
   readFiles: vi.fn(async (include: (filename: string) => boolean) => ({

@@ -91,7 +91,7 @@ export function webSignIn(): WebSignIn {
         randomBytes: getRandomBytes,
         origin: window.location.origin,
         hello: {
-          ...browserAndSystem(navigator.userAgent),
+          ...browserAndSystem(),
           appVersion: appVersion() ?? '',
         },
       }),

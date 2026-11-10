@@ -1,5 +1,5 @@
 import { MMKV } from 'react-native-mmkv'
-import * as Device from 'expo-device'
+import { syncDeviceName } from '@/lib/devicePlatform'
 import { hasSyncTransport, syncTransport } from '@/lib/syncTransport'
 import { getOrCreateInstallId } from '@/lib/installId'
 import {
@@ -253,7 +253,7 @@ export const writeAccountFile = async (claim: AccountClaim): Promise<void> => {
     updatedAt: Date.now(),
     claimedAt: claim.claimedAt,
     ...(claim.account ? { account: claim.account } : {}),
-    deviceName: Device.modelName ?? undefined,
+    deviceName: syncDeviceName() ?? undefined,
   }
   if (devAccountFileStaged()) {
     devAccountFile = payload

@@ -71,6 +71,11 @@ as a secure context for it (the app needs `crypto.randomUUID`).
 closes, Tab stays on the tab that's showing, headers have a body, and controls
 are 44 px (`AGENTS.md`, "Touch targets").
 
+`splash.spec.ts` holds back the entry chunk and the fonts to check the launch
+splash (`docs/build.md`, "Web launch splash"): the page's progress bar shows
+before any script runs, and the app's splash takes over in the same place and
+at the same point of the animation.
+
 Install the browsers once for the pinned Playwright version with
 `pnpm exec playwright install chromium webkit firefox`.
 

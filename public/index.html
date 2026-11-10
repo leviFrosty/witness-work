@@ -32,11 +32,119 @@
         flex: 1;
       }
     </style>
+    <!-- The launch splash (docs/build.md, "Web launch splash"): it paints with
+         this file, before any script arrives, and the app's LaunchSplash
+         renders the same markup on these styles once it runs. The hosts' CSP
+         allows no inline script, so it is CSS only. -->
+    <style id="launch-splash-style">
+      /* As react-native-web's own reset does once it runs. */
+      body {
+        margin: 0;
+      }
+      .launch-splash {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        background-color: #4bd27c;
+      }
+      .launch-splash-mark {
+        position: relative;
+      }
+      /* The native splash's mark: 235 px wide on a 1284 × 2778 screen. */
+      .launch-splash-mark svg {
+        display: block;
+        width: min(calc(100vw * 235 / 1284), calc(100vh * 235 / 2778));
+        width: min(calc(100vw * 235 / 1284), calc(100dvh * 235 / 2778));
+        height: auto;
+        fill: #fff;
+      }
+      /* Out of flow, so the mark stays centered. */
+      .launch-splash-progress {
+        position: absolute;
+        top: calc(100% + 28px);
+        left: calc(50% - 44px);
+        width: 88px;
+        height: 4px;
+        overflow: hidden;
+        border-radius: 2px;
+        background-color: rgba(255, 255, 255, 0.35);
+      }
+      .launch-splash-bar {
+        width: 40%;
+        height: 100%;
+        border-radius: 2px;
+        background-color: #fff;
+        animation: launch-splash-slide 1.4s ease-in-out infinite;
+      }
+      @keyframes launch-splash-slide {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(250%);
+        }
+      }
+      @keyframes launch-splash-pulse {
+        from {
+          opacity: 0.25;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      /* No track, so the still bar doesn't read as a finished one. */
+      @media (prefers-reduced-motion: reduce) {
+        .launch-splash-progress {
+          background-color: transparent;
+        }
+        .launch-splash-bar {
+          width: 100%;
+          animation: launch-splash-pulse 1.6s ease-in-out infinite alternate;
+        }
+      }
+    </style>
+    <noscript>
+      <style>
+        .launch-splash {
+          display: none;
+        }
+      </style>
+    </noscript>
   </head>
 
   <body>
     <noscript> You need to enable JavaScript to run this app. </noscript>
-    <!-- The root element for your Expo app. -->
-    <div id="root"></div>
+    <!-- The root element for your Expo app. React replaces what's in it with
+         its first render. -->
+    <div id="root">
+      <div class="launch-splash">
+        <div class="launch-splash-mark">
+          <svg viewBox="0 0 650 506" aria-hidden="true">
+            <path
+              fill-rule="evenodd"
+              d="M72,0 H578 A72,72 0,0 1,650 72 V434 A72,72 0,0 1,578 506 H72 A72,72 0,0 1,0 434 V72 A72,72 0,0 1,72 0 Z M54,145 H596 V433 A18,18 0,0 1,578 451 H72 A18,18 0,0 1,54 433 Z"
+            ></path>
+            <path
+              d="M162,252 A72,72 0,1 0,306 252 A72,72 0,1 0,162 252 Z M108,451 A126,90 0,0 1,360 451 Z"
+            ></path>
+            <path
+              d="M423,199 H518 A25,25 0,0 1,518 249 H423 A25,25 0,0 1,423 199 Z M423,307 H518 A25,25 0,0 1,518 357 H423 A25,25 0,0 1,423 307 Z"
+            ></path>
+          </svg>
+          <div
+            id="launch-splash-progress"
+            class="launch-splash-progress"
+            role="progressbar"
+            aria-label="Loading"
+          >
+            <div class="launch-splash-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Puts the progress bar's name in the browser's language
+         (scripts/web.mjs writes it from src/locales). -->
+    <script src="/launch-splash.js" async></script>
   </body>
 </html>

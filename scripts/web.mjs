@@ -461,6 +461,65 @@ export function copySqlWasm(root) {
   return target
 }
 
+export const SPLASH_LABEL_KEY = 'common_loading'
+export const SPLASH_LABELS_FILE = 'launch-splash.js'
+
+export function splashLabels(root) {
+  const directory = path.join(root, 'src', 'locales')
+  return Object.fromEntries(
+    fs
+      .readdirSync(directory)
+      .filter((file) => file.endsWith('.json'))
+      .sort()
+      .map((file) => [
+        path.basename(file, '.json'),
+        JSON.parse(fs.readFileSync(path.join(directory, file), 'utf8'))[
+          SPLASH_LABEL_KEY
+        ],
+      ])
+      .filter(([, label]) => typeof label === 'string' && label.trim())
+  )
+}
+
+function nameSplashBar(labels) {
+  const { document, navigator } = globalThis
+  const bar = document.getElementById('launch-splash-progress')
+  const tag = (navigator.languages?.[0] ?? navigator.language ?? '')
+    .toLowerCase()
+    .replace(/_/g, '-')
+  const subtags = tag.split('-')
+  const locales = Object.keys(labels)
+  const sameLanguage = locales.filter(
+    (locale) => locale.toLowerCase().split('-')[0] === subtags[0]
+  )
+  const traditional =
+    subtags.includes('hant') ||
+    (!subtags.includes('hans') &&
+      ['tw', 'hk', 'mo'].some((region) => subtags.includes(region)))
+  const locale =
+    locales.find((locale) => locale.toLowerCase() === tag) ??
+    (subtags[0] === 'zh'
+      ? sameLanguage.find((locale) => /-tw$/i.test(locale) === traditional)
+      : undefined) ??
+    sameLanguage[0]
+  if (!bar || !locale) return
+  bar.setAttribute('aria-label', labels[locale])
+  bar.setAttribute('lang', locale)
+}
+
+export const splashLabelScript = (labels) =>
+  `(${nameSplashBar})(${JSON.stringify(labels)})\n`
+
+export function writeSplashLabels(root) {
+  const labels = splashLabels(root)
+  if (!labels['en-US'])
+    throw new Error(`src/locales/en-US.json has no ${SPLASH_LABEL_KEY}`)
+  const target = path.join(root, 'public', SPLASH_LABELS_FILE)
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  fs.writeFileSync(target, splashLabelScript(labels))
+  return target
+}
+
 export const HELP_SNAPSHOT = 'src/assets/help-center'
 
 export function restoringFiles(directory, build) {
@@ -513,6 +572,7 @@ async function main() {
   )
   copyCanvasKit(root)
   copySqlWasm(root)
+  writeSplashLabels(root)
   const spawn = (executable, argv) => {
     const result = spawnSync(executable, argv, {
       cwd: root,

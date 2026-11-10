@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import zlib from 'node:zlib'
 import os from 'node:os'
 import path from 'node:path'
+import vm from 'node:vm'
 import {
   MAX_FILES,
   WEB_EXCLUDED_KEYS,
@@ -20,7 +21,10 @@ import {
   precompressExport,
   restoringFiles,
   runBuildSteps,
+  splashLabelScript,
+  splashLabels,
   unservedReferences,
+  writeSplashLabels,
 } from '../web.mjs'
 import { onDemandRevision, precachePatterns } from '../web-sw.mjs'
 
@@ -445,6 +449,77 @@ test('the export precompresses what the Worker serves as brotli', async () => {
     '.well-known/assetlinks.json.br',
   ])
     assert.ok(!fs.existsSync(path.join(root, skipped)), skipped)
+})
+
+function splashBarAfter(script, languages, { bar = true } = {}) {
+  const attributes = {}
+  vm.runInNewContext(script, {
+    navigator: { languages, language: languages[0] },
+    document: {
+      getElementById: (id) =>
+        bar && id === 'launch-splash-progress'
+          ? { setAttribute: (name, value) => (attributes[name] = value) }
+          : null,
+    },
+  })
+  return attributes
+}
+
+test('the splash script names the progress bar in every translated language', () => {
+  const root = fixture()
+  write(root, 'src/locales/en-US.json', '{"common_loading":"Loading"}')
+  write(root, 'src/locales/pt-BR.json', '{"common_loading":"Carregando"}')
+  write(root, 'src/locales/pt-PT.json', '{"common_loading":"A carregar"}')
+  write(root, 'src/locales/zh-CN.json', '{"common_loading":"正在加载"}')
+  write(root, 'src/locales/zh-TW.json', '{"common_loading":"載入中"}')
+  write(root, 'src/locales/ar.json', '{"common_loading":"جارٍ التحميل"}')
+  write(root, 'src/locales/de-DE.json', '{"other":"Anderes"}')
+  const script = fs.readFileSync(writeSplashLabels(root), 'utf8')
+  assert.equal(
+    path.relative(root, writeSplashLabels(root)),
+    'public/launch-splash.js'
+  )
+  for (const [languages, locale, label] of [
+    [['en-GB', 'pt-BR'], 'en-US', 'Loading'],
+    [['pt'], 'pt-BR', 'Carregando'],
+    [['pt-PT'], 'pt-PT', 'A carregar'],
+    [['zh-HK'], 'zh-TW', '載入中'],
+    [['zh-Hant-CN'], 'zh-TW', '載入中'],
+    [['zh-Hans-TW'], 'zh-CN', '正在加载'],
+    [['zh'], 'zh-CN', '正在加载'],
+    [['ar-EG'], 'ar', 'جارٍ التحميل'],
+  ])
+    assert.deepEqual(
+      splashBarAfter(script, languages),
+      { 'aria-label': label, lang: locale },
+      languages[0]
+    )
+  for (const languages of [['de-DE'], ['xx'], []])
+    assert.deepEqual(splashBarAfter(script, languages), {}, languages[0])
+  assert.deepEqual(splashBarAfter(script, ['pt-BR'], { bar: false }), {})
+})
+
+test('the splash script carries the app’s own Loading string, and a build needs the English one', () => {
+  const project = new URL('../../', import.meta.url).pathname
+  const labels = splashLabels(project)
+  for (const file of fs.readdirSync(path.join(project, 'src/locales')))
+    assert.equal(
+      labels[path.basename(file, '.json')],
+      JSON.parse(
+        fs.readFileSync(path.join(project, 'src/locales', file), 'utf8')
+      ).common_loading,
+      file
+    )
+  assert.equal(
+    splashBarAfter(splashLabelScript(labels), ['ja-JP'])['aria-label'],
+    labels['ja-JP']
+  )
+  const root = fixture()
+  write(root, 'src/locales/fr-FR.json', '{"common_loading":"Chargement"}')
+  assert.throws(
+    () => writeSplashLabels(root),
+    /en-US\.json has no common_loading/
+  )
 })
 
 const KEY = 'EXPO_PUBLIC_REVENUECAT_WEB_API_KEY'

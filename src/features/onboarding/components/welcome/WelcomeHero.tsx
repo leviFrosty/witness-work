@@ -280,7 +280,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           pointerEvents='none'
           style={[StyleSheet.absoluteFill, splashStyle]}
         >
-          <LaunchSplash />
+          <LaunchSplash indicator={false} />
         </Animated.View>
       )}
       {skippable && stage && (

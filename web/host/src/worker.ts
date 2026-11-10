@@ -8,6 +8,7 @@ import {
   securityHeaders,
   type WebProfile,
 } from './headers'
+import { partialResponse } from './range'
 
 export interface Env {
   ASSETS: Fetcher
@@ -111,6 +112,20 @@ const notFound = (method: string) =>
     },
   })
 
+async function fileResponse(
+  request: Request,
+  asset: Response
+): Promise<Response> {
+  const range = request.headers.get('Range')
+  const validator = request.headers.get('If-Range')
+  const current = !validator || validator === asset.headers.get('ETag')
+  if (request.method === 'GET' && range && current)
+    return partialResponse(range, asset)
+  const response = new Response(asset.body, asset)
+  if (asset.status === 200) response.headers.set('Accept-Ranges', 'bytes')
+  return response
+}
+
 async function serveFile(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'HEAD')
     return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } })
@@ -123,7 +138,7 @@ async function serveFile(request: Request, env: Env): Promise<Response> {
     await asset.body?.cancel()
     return notFound(request.method)
   }
-  const response = brotli ?? new Response(asset.body, asset)
+  const response = brotli ?? (await fileResponse(request, asset))
   if (brotli) PRECOMPRESSED_BODIES.add(response)
   const { pathname } = new URL(request.url)
 

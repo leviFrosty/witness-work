@@ -16,6 +16,8 @@ const CHUNK = '/_expo/static/js/web/index-8ee1e5e4af138582a02721ff781b6161.js'
 
 const FONT =
   '/assets/node_modules/@expo-google-fonts/inter/Inter_400Regular.079af0e2936ccb99b391ddc0bbb73dcb.ttf'
+const SOUND =
+  '/assets/src/assets/audio/success-chime.c3ce1f3e1dee5917a4a66240d0478aa4.mp3'
 const FILES: Record<string, [string | null, string]> = {
   '/index.html': ['text/html; charset=utf-8', '<!doctype html>'],
   [CHUNK]: ['text/javascript; charset=utf-8', 'console.log(1)'],
@@ -33,6 +35,7 @@ const FILES: Record<string, [string | null, string]> = {
     'png',
   ],
   [FONT.replace('@', '%40')]: ['font/ttf', 'ttf'],
+  [SOUND]: ['audio/mpeg', 'ID3 chime bytes'],
 
   '/.well-known/apple-app-site-association': [null, '{"applinks":{}}'],
   '/.well-known/assetlinks.json': ['application/json', '[]'],
@@ -396,6 +399,81 @@ describe('headers', () => {
   })
 })
 
+describe('byte ranges, which Safari needs before it plays a sound', () => {
+  const range = (value: string, headers: Record<string, string> = {}) =>
+    call(SOUND, { headers: { Range: value, ...headers } })
+
+  it('answers the two-byte probe Safari sends first with those two bytes', async () => {
+    const response = await range('bytes=0-1')
+    expect(response.status).toBe(206)
+    expect(response.headers.get('Content-Range')).toBe('bytes 0-1/15')
+    expect(response.headers.get('Content-Length')).toBe('2')
+    expect(response.headers.get('Accept-Ranges')).toBe('bytes')
+    expect(response.headers.get('Content-Type')).toBe('audio/mpeg')
+    expect(response.headers.get('Cache-Control')).toBe(IMMUTABLE)
+    expect(await response.text()).toBe('ID')
+    expectSecurityHeaders(response)
+  })
+
+  it('answers open-ended and suffix ranges, and stops at the end of the file', async () => {
+    for (const [value, contentRange, body] of [
+      ['bytes=4-', 'bytes 4-14/15', 'chime bytes'],
+      ['bytes=-5', 'bytes 10-14/15', 'bytes'],
+      ['bytes=10-999', 'bytes 10-14/15', 'bytes'],
+      ['bytes=0-14', 'bytes 0-14/15', 'ID3 chime bytes'],
+    ]) {
+      const response = await range(value)
+      expect(response.status).toBe(206)
+      expect(response.headers.get('Content-Range')).toBe(contentRange)
+      expect(await response.text()).toBe(body)
+    }
+  })
+
+  it('refuses a range past the end of the file', async () => {
+    const response = await range('bytes=15-20')
+    expect(response.status).toBe(416)
+    expect(response.headers.get('Content-Range')).toBe('bytes */15')
+    expect(await response.text()).toBe('')
+  })
+
+  it('sends the whole file for a range it does not answer', async () => {
+    for (const value of [
+      'bytes=0-1,4-5',
+      'items=0-1',
+      'bytes=5-2',
+      'bytes=-',
+    ]) {
+      const response = await range(value)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Content-Range')).toBeNull()
+      expect(await response.text()).toBe('ID3 chime bytes')
+    }
+  })
+
+  it('sends the whole file when the copy the browser has is out of date', async () => {
+    const stale = await range('bytes=0-1', { 'If-Range': '"older"' })
+    expect(stale.status).toBe(200)
+    expect(await stale.text()).toBe('ID3 chime bytes')
+    const current = await range('bytes=0-1', { 'If-Range': '"etag"' })
+    expect(current.status).toBe(206)
+  })
+
+  it('says a whole file can be asked for in ranges', async () => {
+    for (const method of ['GET', 'HEAD']) {
+      const response = await call(SOUND, { method })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('Accept-Ranges')).toBe('bytes')
+    }
+  })
+
+  it('keeps a missing file a 404 when a range is asked for', async () => {
+    const response = await call('/assets/missing.mp3', {
+      headers: { Range: 'bytes=0-1' },
+    })
+    expect(response.status).toBe(404)
+  })
+})
+
 describe('precompressed files', () => {
   const brotli = { 'Accept-Encoding': 'gzip, deflate, br, zstd' }
 
@@ -412,16 +490,23 @@ describe('precompressed files', () => {
     expectSecurityHeaders(response)
   })
 
-  it('serves the file itself without brotli, or for a range', async () => {
-    for (const headers of [
-      { 'Accept-Encoding': 'gzip' },
-      { ...brotli, Range: 'bytes=0-3' },
-    ]) {
-      const response = await call(CHUNK, { headers })
-      expect(response.headers.get('Content-Encoding')).toBeNull()
-      expect(response.headers.get('Vary')).toBe('Accept-Encoding')
-      expect(await response.text()).toBe('console.log(1)')
-    }
+  it('serves the file itself without brotli', async () => {
+    const response = await call(CHUNK, {
+      headers: { 'Accept-Encoding': 'gzip' },
+    })
+    expect(response.headers.get('Content-Encoding')).toBeNull()
+    expect(response.headers.get('Vary')).toBe('Accept-Encoding')
+    expect(await response.text()).toBe('console.log(1)')
+  })
+
+  it('answers a range from the file itself, never from its brotli file', async () => {
+    const response = await call(CHUNK, {
+      headers: { ...brotli, Range: 'bytes=0-3' },
+    })
+    expect(response.status).toBe(206)
+    expect(response.headers.get('Content-Encoding')).toBeNull()
+    expect(response.headers.get('Vary')).toBe('Accept-Encoding')
+    expect(await response.text()).toBe('cons')
   })
 
   it('serves the file itself when the export has no brotli file for it', async () => {

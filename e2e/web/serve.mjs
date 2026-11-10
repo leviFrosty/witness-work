@@ -39,9 +39,23 @@ http
       }
       file = path.join(root, 'index.html')
     }
-    response.writeHead(200, {
-      'Content-Type': types[path.extname(file)] ?? 'application/octet-stream',
-    })
+    const type = types[path.extname(file)] ?? 'application/octet-stream'
+    const { size } = fs.statSync(file)
+
+    const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers.range ?? '')
+    if (range && Number(range[1]) < size) {
+      const start = Number(range[1])
+      const end = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1
+      response.writeHead(206, {
+        'Content-Type': type,
+        'Content-Range': `bytes ${start}-${end}/${size}`,
+        'Content-Length': end - start + 1,
+        'Accept-Ranges': 'bytes',
+      })
+      fs.createReadStream(file, { start, end }).pipe(response)
+      return
+    }
+    response.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes' })
     fs.createReadStream(file).pipe(response)
   })
   .listen(port, address, () =>

@@ -67,6 +67,13 @@ managed proxy, and uses RevenueCat's browser API.
   - `/sw.js`, the service worker, is served `no-cache` so every update check is
     fresh, and `/manifest.webmanifest` as `application/manifest+json`. How the
     worker caches, and the update flow: [`web-offline.md`](web-offline.md).
+  - A `Range` request gets a `206` with just those bytes (`range.ts`), and
+    whole files say `Accept-Ranges: bytes`. Workers Static Assets answers a
+    range with the whole file and a `200`, which Safari refuses to play: it
+    asks for the first two bytes of every sound before it loads it, so
+    without this the app is silent in Safari. A range the Worker doesn't
+    answer (several ranges, a stale `If-Range`) gets the whole file; one past
+    the end gets a `416`.
   - Only `GET` and `HEAD`.
 - **Not uploaded:** source maps and the build stamp (`.assetsignore`).
 - **Limits:** 25 MiB per file and 20,000 files. The deploy checks both before

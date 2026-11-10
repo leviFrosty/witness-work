@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TextStyle } from 'react-native'
 import * as Font from 'expo-font'
 import { fonts } from '@/constants/theme'
+import { loadFonts } from '@/lib/fonts/loadFonts'
 
 const ITALIC = 'Inter_400Regular_Italic'
 const BOLD_ITALIC = 'Inter_700Bold_Italic'
@@ -10,7 +11,7 @@ let load: Promise<void> | undefined
 const loaded = () => Font.isLoaded(ITALIC) && Font.isLoaded(BOLD_ITALIC)
 
 function loadItalics(): Promise<void> {
-  load ??= Font.loadAsync({
+  load ??= loadFonts({
     [ITALIC]: require('@/assets/fonts/Inter_400Regular_Italic.ttf'),
     [BOLD_ITALIC]: require('@/assets/fonts/Inter_700Bold_Italic.ttf'),
   }).catch(() => {

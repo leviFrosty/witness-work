@@ -3,6 +3,7 @@ import { Platform } from 'react-native'
 import * as Font from 'expo-font'
 import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam'
 import { fonts } from '@/constants/theme'
+import { loadFonts } from '@/lib/fonts/loadFonts'
 
 const FALLBACK = 'Kalam_400Regular'
 const FALLBACK_BOLD = 'Kalam_700Bold'
@@ -11,7 +12,7 @@ let bundledLoad: Promise<void> | undefined
 const bundledLoaded = () =>
   Font.isLoaded(FALLBACK) && Font.isLoaded(FALLBACK_BOLD)
 const loadBundled = () =>
-  (bundledLoad ??= Font.loadAsync({
+  (bundledLoad ??= loadFonts({
     [FALLBACK]: Kalam_400Regular,
     [FALLBACK_BOLD]: Kalam_700Bold,
   }).catch(() => {

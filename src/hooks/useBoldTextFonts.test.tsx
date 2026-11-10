@@ -36,6 +36,7 @@ vi.mock('expo-font', () => ({
   isLoaded: (name: string) => a11y.loaded.has(name),
   loadAsync: a11y.loadAsync,
 }))
+vi.mock('@/lib/fonts/loadFonts', () => ({ loadFonts: a11y.loadAsync }))
 vi.mock('@expo-google-fonts/inter', () => ({ Inter_800ExtraBold: 1 }))
 vi.mock('../../modules/font-weight-adjustment', () => ({
   getFontWeightAdjustment: () => a11y.fontWeightAdjustment,

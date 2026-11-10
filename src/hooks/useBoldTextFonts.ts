@@ -3,6 +3,7 @@ import * as Font from 'expo-font'
 import { Inter_800ExtraBold } from '@expo-google-fonts/inter'
 import { fonts, type Fonts } from '@/constants/theme'
 import { boldTextFonts, EXTRA_BOLD_FONT } from '@/lib/boldTextFonts'
+import { loadFonts } from '@/lib/fonts/loadFonts'
 import useBoldTextEnabled from '@/hooks/useBoldTextEnabled'
 
 export default function useBoldTextFonts(): Fonts {
@@ -13,7 +14,7 @@ export default function useBoldTextFonts(): Fonts {
 
   useEffect(() => {
     if (!boldText || extraBoldLoaded) return
-    Font.loadAsync({ [EXTRA_BOLD_FONT]: Inter_800ExtraBold }).then(
+    loadFonts({ [EXTRA_BOLD_FONT]: Inter_800ExtraBold }).then(
       () => setExtraBoldLoaded(true),
 
       () => {}

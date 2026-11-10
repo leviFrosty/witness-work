@@ -8,6 +8,7 @@ import {
 } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
+import { partialResponse } from '../host/src/range'
 import {
   NAVIGATION_TIMEOUT_MS,
   ON_DEMAND_CACHE_PREFIX,
@@ -54,6 +55,17 @@ registerRoute(
 )
 
 precache(self.__WB_MANIFEST)
+
+registerRoute(
+  ({ request, url }) =>
+    request.headers.has('Range') && !isNeverCached(url, self.location.origin),
+  async ({ request }) => {
+    const cached = await matchPrecache(request.url)
+    return cached
+      ? partialResponse(request.headers.get('Range') ?? '', cached)
+      : fetch(request)
+  }
+)
 addRoute()
 cleanupOutdatedCaches()
 

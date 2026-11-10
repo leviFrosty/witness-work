@@ -38,6 +38,12 @@ it with `updateViaCache: 'none'`, so every update check is fresh.
 | ww-api, PostHog, the Help Center, RevenueCat, any other origin                 | **Never** cached; the worker doesn't touch them.                         |
 | `/_csp-report`, `/.well-known/*`, `/sw.js`                                     | **Never** cached.                                                        |
 
+A `Range` request for a precached file (Safari asks for every sound that way)
+is answered from the precache with a `206` holding just those bytes, by the
+same code as the web host (`web/host/src/range.ts`, `docs/web-hosting.md`).
+Workbox's precache route alone would answer with the whole file, which Safari
+won't play, so the range route is registered ahead of it.
+
 A response is stored under a script's URL only if it isn't HTML (`isStorableFile`
 in `web/sw/rules.ts`): Cloudflare answers an unknown path with `index.html`, and
 a cached page under a `.js` URL would keep a tab broken. The app's data never

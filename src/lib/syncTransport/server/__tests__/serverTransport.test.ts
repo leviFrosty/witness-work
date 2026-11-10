@@ -142,6 +142,39 @@ describe('serverTransport', () => {
     expect(files.map((f) => f.json).sort()).toEqual(['{"a":1}', '{"b":2}'])
   })
 
+  it('lists a slot without downloading it when only its name is wanted', async () => {
+    const { server, transport } = setup()
+    await transport.write(filenameForSlot(SLOT), '{"a":1}')
+    await transport.write(filenameForSlot(OTHER), '{"b":1}')
+    server.state.log.length = 0
+    const { files } = await transport.readFiles(everything, {
+      listOnly: (name) => name === filenameForSlot(SLOT),
+    })
+    expect(server.state.log).toEqual(['POST sync/list', 'POST sync/get'])
+    expect(files).toEqual([
+      {
+        filename: filenameForSlot(SLOT),
+        json: '',
+        modifiedAt: expect.any(Number),
+      },
+      {
+        filename: filenameForSlot(OTHER),
+        json: '{"b":1}',
+        modifiedAt: expect.any(Number),
+      },
+    ])
+
+    await transport.write(filenameForSlot(SLOT), '{"a":2}')
+    server.state.log.length = 0
+    await transport.readFiles(everything, {
+      listOnly: (name) => name === filenameForSlot(SLOT),
+    })
+    expect(server.state.log).toEqual(['POST sync/list'])
+
+    const all = await transport.readFiles(everything)
+    expect(all.files.map((f) => f.json).sort()).toEqual(['{"a":2}', '{"b":1}'])
+  })
+
   it('skips slots the engine leaves out', async () => {
     const { transport } = setup()
     await transport.write(filenameForSlot(SLOT), '{}')

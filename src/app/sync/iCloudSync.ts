@@ -57,6 +57,7 @@ import {
   syncTransportErrorCode,
   type SyncFile,
   type SyncRead,
+  type SyncTransport,
   type SyncTransportErrorCode,
   type UploadStatus,
 } from '@/lib/syncTransport'
@@ -310,6 +311,33 @@ let uploadGeneration = 0
 
 let catchUpInFlight = false
 let catchUpQueuedReason: string | null = null
+
+type CatchUpPass = {
+  transport: SyncTransport
+  identity: string | null
+  generation: number
+  finishedAt: number | null
+  complete: boolean
+  announced: boolean
+}
+let lastCatchUpPass: CatchUpPass | null = null
+
+function availabilityAlreadyCaughtUp(): boolean {
+  const pass = lastCatchUpPass
+  if (!pass) return false
+  const transport = syncTransport()
+  if (
+    pass.transport !== transport ||
+    pass.identity !== transport.identityToken() ||
+    pass.generation !== completePullGeneration()
+  )
+    return false
+  if (pass.finishedAt === null) {
+    pass.announced = true
+    return true
+  }
+  return pass.complete && Date.now() - pass.finishedAt < FOREGROUND_CATCH_UP_MS
+}
 
 let resetInProgress = false
 let pullDeferredReason: string | null = null
@@ -1982,7 +2010,9 @@ async function pullAndMergeInner(
   try {
     read = await withTransportTimeout(
       'read',
-      syncTransport().readFiles(isPayloadFilename),
+      syncTransport().readFiles(isPayloadFilename, {
+        listOnly: (filename) => filename === ownFilename,
+      }),
       TRANSPORT_READ_TIMEOUT_MS
     )
   } catch (e) {
@@ -2493,10 +2523,20 @@ async function catchUp(reason: string): Promise<void> {
     return
   }
   catchUpInFlight = true
+  const pass: CatchUpPass = {
+    transport: syncTransport(),
+    identity: syncTransport().identityToken(),
+    generation: completePullGeneration(),
+    finishedAt: null,
+    complete: false,
+    announced: false,
+  }
+  lastCatchUpPass = pass
   try {
     await calibrateClock()
     const scanned = await syncTransport().waitForInitialScan(5000)
     const pulled = await pull(reason)
+    pass.complete = pulled.complete
 
     if (
       usePreferences.getState().iCloudSyncPendingPush ||
@@ -2519,8 +2559,11 @@ async function catchUp(reason: string): Promise<void> {
     if (scanned && lastPullComplete) void gcImagesIfEnabled()
     else logger.log(`${tag()} image gc skipped`, { reason, scanned })
   } finally {
+    pass.finishedAt = Date.now()
     catchUpInFlight = false
-    const queued = catchUpQueuedReason
+    const queued =
+      catchUpQueuedReason ??
+      (pass.announced && !pass.complete ? 'icloud-available' : null)
     catchUpQueuedReason = null
     if (queued) void catchUp(queued)
   }
@@ -2651,6 +2694,10 @@ export function installiCloudSync(): () => void {
       logger.warn(`${tag()} iCloud became unavailable`)
       return
     }
+    if (availabilityAlreadyCaughtUp()) {
+      perf.count('sync:catchUp-covered')
+      return
+    }
     catchUpIfActive('icloud-available')
   })
   catchUpIfActive('launch')
@@ -2676,6 +2723,7 @@ export function installiCloudSync(): () => void {
     cancelUploadChecks()
     debouncedPush.cancel()
     pushScheduled = false
+    lastCatchUpPass = null
     installed = false
   }
 }

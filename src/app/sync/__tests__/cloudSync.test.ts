@@ -2488,4 +2488,79 @@ describe('The web on Cloud Sync', () => {
   })
 })
 
+describe('requests at launch', () => {
+  const relaunch = async (os: 'ios' | 'web') => {
+    const before = await device('returning', { os })
+    expect(await before.iCloudSync.push('manual')).toBe(true)
+    const slotId = before.slotId()
+    const launched = await device('returning', { os })
+    launched.usePreferences.setState({ iCloudDeviceId: slotId })
+    server.state.log.length = 0
+    return launched
+  }
+  const sync = () =>
+    server.state.log.filter((op) => !op.includes('sync/photos'))
+
+  const launch = async (launched: Device) => {
+    const uninstall = launched.installiCloudSync()
+    try {
+      launched.cloudTransport.notifyAvailabilityChange()
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      launched.cloudTransport.notifyAvailabilityChange()
+      await launched.iCloudSync.waitForSyncIdle()
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      await launched.iCloudSync.waitForSyncIdle()
+    } finally {
+      uninstall()
+    }
+  }
+
+  it('lists once and uploads once on a phone, without reading its own slot', async () => {
+    const phone = await relaunch('ios')
+    await launch(phone)
+    expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+  })
+
+  it('lists once more on the web, to remove signed-out browsers’ slots', async () => {
+    const browser = await relaunch('web')
+    await launch(browser)
+    expect(sync()).toEqual([
+      'POST sync/list',
+      'POST sync/put',
+      'POST sync/list',
+    ])
+  })
+
+  it('downloads another device’s slot once', async () => {
+    const tablet = await device('tablet', { os: 'ios' })
+    tablet.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    expect(await tablet.iCloudSync.push('manual')).toBe(true)
+    const phone = await relaunch('ios')
+    await launch(phone)
+    expect(sync()).toEqual(['POST sync/list', 'POST sync/get', 'POST sync/put'])
+    expect(phone.contactNames()).toEqual(['Ada Reyes'])
+  })
+
+  it('still notices that its own slot is gone and uploads it again', async () => {
+    const phone = await relaunch('ios')
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    await phone.cloudTransport.deleteFile(filenameOf(phone.slotId()))
+    expect(server.slotIds('family')).toEqual([])
+    server.state.log.length = 0
+    await phone.iCloudSync.pullAndMerge('manual')
+    expect(sync()).toEqual(['POST sync/list'])
+    const uninstall = phone.installiCloudSync()
+    try {
+      await vi.waitFor(() =>
+        expect(server.slotIds('family')).toEqual([phone.slotId()])
+      )
+    } finally {
+      uninstall()
+    }
+  })
+})
+
 const filenameOf = (slotId: string) => `witness-work-${slotId}.json`

@@ -367,7 +367,7 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
                 },
               }
             ),
-            [44, 36, 48, 48]
+            [38, 0, 60, 88]
           )
         )
     write('sheets/hats.png', contactSheet(hatCells, HAT_IDS.length), 3)

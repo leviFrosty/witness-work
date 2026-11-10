@@ -4,10 +4,12 @@ import type { BigHatId } from '@/types/pet'
 import { bigHatPoint } from './hatCanvas'
 import {
   BIRD_AWAY_MS,
+  birdPerch,
   FISH_JUMP_MS,
   hatRoomDim,
   isDarkTime,
   trainAngle,
+  trainSpot,
   type HatMoment,
 } from './hatsLive'
 import { SCENE_H, SCENE_W } from './layout'
@@ -312,7 +314,11 @@ function drawFigDrop(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
   const since = m.tMs - m.patMs
   if (since < 0 || m.growth < 4 || m.season === 'winter') return
   if (since < BIRD_AWAY_MS) {
-    const [bx, by] = at(place, 2 + since * 0.02, 33 + since * 0.014)
+    const [bx, by] = at(
+      place,
+      2 + since * 0.02,
+      birdPerch(m)[1] + 1 + since * 0.014
+    )
     const flap = Math.floor(since / 120) % 2
     blend(buf, bx - 1, by - flap, FX.bird, 1)
     blend(buf, bx, by, FX.bird, 1)
@@ -414,14 +420,9 @@ export function drawHatRoom(
       break
     case 'train':
       drawPuffs(buf, m.tMs, 5, 1700, FX.steam, 2, (bornMs) => {
-        const a = trainAngle(bornMs, m.patMs)
-        const d = 12 * Math.cos(a)
-        if (Math.sin(a) < 0 && Math.abs(d) < 6) return null
-        return at(
-          place,
-          d + (Math.sin(a) > 0 ? -2 : 2),
-          3.2 - 3.1 * Math.sin(a) + 4.6
-        )
+        const { d, u, near } = trainSpot(trainAngle(bornMs, m.patMs))
+        if (near < 0 && Math.abs(d) < 7) return null
+        return at(place, d + (near > 0 ? -2.5 : 2.5), u + 9)
       })
       if (m.tMs - m.coinsMs >= 0 && m.tMs - m.coinsMs < 700) {
         const age = m.tMs - m.coinsMs

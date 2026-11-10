@@ -19,7 +19,7 @@ import {
   bigHatCanvas,
   bigHatPoint,
 } from './hatCanvas'
-import { FIG_STAGES, HAT_FRAME_SPECS } from './hatFrames'
+import { FIG_STAGES, HAT_FRAME_SPECS, TRACK } from './hatFrames'
 import { PLAIN_HAT_SPECS, type PlainHatId } from './hatsPlain'
 import type { TimeOfDay } from './room/window'
 import { idlePose, petSprite } from './sprite'
@@ -107,6 +107,7 @@ const INK = rgbPalette({
   bee: '#f1b92e',
   hand: '#2d2a32',
   bird: '#6b4a33',
+  breast: '#e0703a',
   beak: '#e0a43a',
   string: '#8b7f6a',
   brass: '#6d4526',
@@ -118,32 +119,62 @@ const put = (buf: PixelBuffer, d: number, u: number, c: number) => {
 }
 
 const CAR_COLOR: Readonly<Record<string, number>> = rgbPalette({
-  r: '#c0453f',
-  g: '#ffd45c',
-  b: '#2f7f5a',
+  r: '#d8453c',
+  R: '#a8322e',
+  c: '#ffe9a6',
+  g: '#f6d55c',
+  s: '#f1b92e',
   k: '#26221e',
-  o: '#8f8a84',
-  y: '#f1b92e',
+  o: '#3a332c',
+  y: '#f6d55c',
   Y: '#c98a16',
-  w: '#3f6fb5',
-  W: '#2c5290',
 })
 
 const CARS = {
   loco: [
-    '......k.',
-    'rrr...k.',
-    'rgrbbbbb',
-    'rrrbbbbb',
-    'kkkkkkkk',
-    '.o..o.o.',
+    '.......kk..',
+    'kkkkk..kk..',
+    'rccr.g.kk..',
+    'rccrrrrrrk.',
+    'rrrrRRRRRk.',
+    'sssssssssss',
+    '.oo..oo.oo.',
+    '.oo..oo.oo.',
   ],
-  coal: ['......', 'kkkkkk', 'rrrrrr', 'rrrrrr', 'kkkkkk', '.o..o.'],
-  wagon: ['......', '......', 'wwwwww', 'WWWWWW', 'kkkkkk', '.o..o.'],
-  heaped: ['..yy..', 'yYyyYy', 'wwwwww', 'WWWWWW', 'kkkkkk', '.o..o.'],
-  locoEnd: ['.k.', 'rrr', 'rgr', 'rrr', 'kkk', 'o.o'],
-  coalEnd: ['...', 'kkk', 'rrr', 'rrr', 'kkk', 'o.o'],
-  wagonEnd: ['...', 'yyy', 'www', 'WWW', 'kkk', 'o.o'],
+  coal: [
+    '.......',
+    '.......',
+    '.kkkkk.',
+    'rrrrrrr',
+    'RRRRRRR',
+    'sssssss',
+    '.oo.oo.',
+    '.oo.oo.',
+  ],
+  wagon: [
+    '.......',
+    '.......',
+    '.......',
+    'rrrrrrr',
+    'RRRRRRR',
+    'sssssss',
+    '.oo.oo.',
+    '.oo.oo.',
+  ],
+  heaped: [
+    '.......',
+    '..yyy..',
+    '.yyYyy.',
+    'rrrrrrr',
+    'RRRRRRR',
+    'sssssss',
+    '.oo.oo.',
+    '.oo.oo.',
+  ],
+  locoEnd: ['.kk.', 'kkkk', 'rccr', 'rkkr', 'rkkr', 'ssss', 'o..o', 'o..o'],
+  coalEnd: ['....', '....', '.kk.', 'rrrr', 'RRRR', 'ssss', 'o..o', 'o..o'],
+  wagonEnd: ['....', '....', '....', 'rrrr', 'RRRR', 'ssss', 'o..o', 'o..o'],
+  heapedEnd: ['....', '.yy.', 'yYyy', 'rrrr', 'RRRR', 'ssss', 'o..o', 'o..o'],
 } as const
 
 function drawCar(
@@ -160,7 +191,7 @@ function drawCar(
         setPixel(
           buf,
           x - Math.floor(row.length / 2) + i,
-          y - map.length + j,
+          y - map.length + 1 + j,
           CAR_COLOR[ch]
         )
     }
@@ -169,13 +200,24 @@ function drawCar(
 
 const TRAIN_LAP_MS = 2000
 
+const TRAIN_START = Math.PI / 2 + 0.75
+
 export function trainAngle(tMs: number, patMs: number): number {
   const since = tMs - patMs
   const lap =
     since >= 0 && since < TRAIN_LAP_MS
       ? (since / TRAIN_LAP_MS) * 2 * Math.PI
       : 0
-  return tMs * 0.0011 + lap
+  return TRAIN_START + tMs * 0.0011 + lap
+}
+
+export function trainSpot(at: number): {
+  readonly d: number
+  readonly u: number
+  readonly near: number
+} {
+  const near = Math.sin(at)
+  return { d: TRACK.rx * Math.cos(at), u: TRACK.u - TRACK.ry * near, near }
 }
 
 function drawTrain(buf: PixelBuffer, m: HatMoment) {
@@ -184,30 +226,32 @@ function drawTrain(buf: PixelBuffer, m: HatMoment) {
   const heaped = m.tMs === 0 || m.tMs - m.coinsMs < 20_000
   const cars = [
     { side: CARS.loco, end: CARS.locoEnd, at: angle },
-    { side: CARS.coal, end: CARS.coalEnd, at: angle - 0.95 },
+    { side: CARS.coal, end: CARS.coalEnd, at: angle - 0.92 },
     {
       side: heaped ? CARS.heaped : CARS.wagon,
-      end: CARS.wagonEnd,
-      at: angle - 1.75,
+      end: heaped ? CARS.heapedEnd : CARS.wagonEnd,
+      at: angle - 1.62,
     },
-  ].map((car) => ({
-    ...car,
-    sin: Math.sin(car.at),
-    d: 12 * Math.cos(car.at),
-    edge: Math.abs(Math.cos(car.at)) < 0.34,
-  }))
+  ].map((car) => ({ ...car, ...trainSpot(car.at) }))
   const place = (car: (typeof cars)[number]) => {
-    const [x, y] = bigHatPoint(car.d, 3.2 - 3.1 * car.sin - 1.4)
-    drawCar(buf, car.edge ? car.end : car.side, x, y, !car.edge && car.sin > 0)
+    const turning = Math.abs(car.near) < 0.3
+    const [x, y] = bigHatPoint(car.d, car.u)
+    drawCar(
+      buf,
+      turning ? car.end : car.side,
+      Math.round(x),
+      Math.round(y),
+      !turning && car.near > 0
+    )
   }
   cars
-    .filter((car) => car.sin <= 0)
-    .sort((a, b) => a.sin - b.sin)
+    .filter((car) => car.near <= 0)
+    .sort((a, b) => a.near - b.near)
     .forEach(place)
   blit(buf, frameOf('train/hill'), 0, 0)
   cars
-    .filter((car) => car.sin > 0)
-    .sort((a, b) => a.sin - b.sin)
+    .filter((car) => car.near > 0)
+    .sort((a, b) => a.near - b.near)
     .forEach(place)
 }
 
@@ -297,14 +341,18 @@ function drawFrog(buf: PixelBuffer, m: HatMoment) {
 
 const SNAIL_CROSSING_MS = 60_000
 
+const SNAIL_REACH = 5
+
 function drawSnail(buf: PixelBuffer, m: HatMoment) {
-  const lap = (m.tMs % (SNAIL_CROSSING_MS * 2)) / SNAIL_CROSSING_MS
+  const lap =
+    ((m.tMs + SNAIL_CROSSING_MS / 2) % (SNAIL_CROSSING_MS * 2)) /
+    SNAIL_CROSSING_MS
   const forward = lap < 1
-  const d = forward ? -7 + lap * 14 : 7 - (lap - 1) * 14
+  const d = SNAIL_REACH * (forward ? lap * 2 - 1 : 3 - lap * 2)
   const sincePat = m.tMs - m.patMs
   const key = sincePat >= 0 && sincePat < 1200 ? 'snail/in' : 'snail/out'
   const sprite = forward ? frameOf(key) : flippedFrameOf(key)
-  blit(buf, sprite, Math.round(d), Math.round((d / 8) ** 2 * 2))
+  blit(buf, sprite, Math.round(d), Math.abs(d) > 4 ? 1 : 0)
 }
 
 const NEST_TURNS = [0, 1, 0, 2, 0, 3] as const
@@ -341,8 +389,8 @@ function drawHive(buf: PixelBuffer, m: HatMoment) {
 
 function drawCuckoo(buf: PixelBuffer, m: HatMoment) {
   const clock = m.clockMs === null ? null : new Date(m.clockMs)
-  const hour = clock ? clock.getHours() % 12 : 10
-  const minute = clock ? clock.getMinutes() : 10
+  const hour = clock ? clock.getHours() % 12 : 3
+  const minute = clock ? clock.getMinutes() : 0
   const second = clock ? clock.getSeconds() : 0
   const sincePat = m.tMs - m.patMs
   const calling =
@@ -350,11 +398,16 @@ function drawCuckoo(buf: PixelBuffer, m: HatMoment) {
   blit(buf, frameOf(calling ? 'cuckoo/out' : 'cuckoo/shut'), 0, 0)
   const hand = (turn: number, length: number) => {
     const a = turn * 2 * Math.PI
-    for (let r = 0; r <= length; r += 0.5)
-      put(buf, r * Math.sin(a), 5.6 + r * Math.cos(a), INK.hand)
+    for (let r = 0; r <= length; r++)
+      put(
+        buf,
+        Math.round(r * Math.sin(a)),
+        6 + Math.round(r * Math.cos(a)),
+        INK.hand
+      )
   }
-  hand((hour + minute / 60) / 12, 2.2)
-  hand(minute / 60, 3.4)
+  hand(minute / 60, 3)
+  hand((hour + minute / 60) / 12, 2)
   put(buf, Math.floor(m.tMs / 500) % 2 ? -1 : 1, 0.8, INK.brass)
 }
 
@@ -405,8 +458,39 @@ function miniOf(species: PetSpeciesId, coat: string, bob: number): PixelBuffer {
         )
       }
     }
-    return out
+    return outlined(out)
   })
+}
+
+function outlined(src: PixelBuffer): PixelBuffer {
+  const out = cloneBuffer(src)
+  const { width, height, data } = src
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] > 0) continue
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const xx = x + dx
+        const yy = y + dy
+        if (xx < 0 || yy < 0 || xx >= width || yy >= height) continue
+        const k = (yy * width + xx) * 4
+        if (data[k + 3] === 0) continue
+        setPixel(
+          out,
+          x,
+          y,
+          (Math.round(data[k] * 0.42) << 16) |
+            (Math.round(data[k + 1] * 0.42) << 8) |
+            Math.round(data[k + 2] * 0.42)
+        )
+        break
+      }
+    }
+  return out
 }
 
 function drawBalloon(buf: PixelBuffer, m: HatMoment) {
@@ -428,9 +512,9 @@ function drawBalloon(buf: PixelBuffer, m: HatMoment) {
   blit(buf, frameOf('balloon'), sway, -lift)
 }
 
-function birdPerch(m: HatMoment): readonly [number, number] {
+export function birdPerch(m: HatMoment): readonly [number, number] {
   const hop = [0, 0, 1, 1, 0, -1, -1, 0][Math.floor(m.tMs / 700) % 8]
-  return [2 + hop, m.growth >= 5 ? 33 : 29]
+  return [2 + hop, m.growth >= 5 ? 31 : 29]
 }
 
 export const BIRD_AWAY_MS = 3200
@@ -446,10 +530,10 @@ function drawFig(buf: PixelBuffer, m: HatMoment) {
     const [d, u] = birdPerch(m)
     put(buf, d, u, INK.bird)
     put(buf, d + 1, u, INK.bird)
-    put(buf, d, u - 1, INK.bird)
-    put(buf, d + 1, u - 1, INK.bird)
     put(buf, d + 2, u, INK.beak)
-    put(buf, d, u + 1, INK.dark)
+    put(buf, d - 1, u - 1, INK.dark)
+    put(buf, d, u - 1, INK.bird)
+    put(buf, d + 1, u - 1, INK.breast)
   }
 }
 

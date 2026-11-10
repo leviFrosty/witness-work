@@ -85,6 +85,22 @@ export const feat = (d: number, u: number, c: string): FeaturePixel => [
   color(c),
 ]
 
+export function pixelMap(
+  d: number,
+  u: number,
+  rows: readonly string[],
+  ink: Readonly<Record<string, string>>
+): FeaturePixel[] {
+  const out: FeaturePixel[] = []
+  rows.forEach((row, j) => {
+    for (let i = 0; i < row.length; i++) {
+      const c = ink[row[i]]
+      if (c) out.push(feat(d + i, u + rows.length - 1 - j, c))
+    }
+  })
+  return out
+}
+
 export function domeOf(
   d: number,
   base: number,

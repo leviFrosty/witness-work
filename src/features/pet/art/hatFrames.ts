@@ -1,7 +1,16 @@
 import type { FeaturePixel, ShapeSpec } from '@/lib/pixelArt'
 import type { Season } from '@/types/pet'
 
-import { box, domeOf, ell, feat, paint, poly, type Tones } from './hatCanvas'
+import {
+  box,
+  domeOf,
+  ell,
+  feat,
+  paint,
+  pixelMap,
+  poly,
+  type Tones,
+} from './hatCanvas'
 
 const specs: Record<string, ShapeSpec> = {}
 
@@ -180,76 +189,108 @@ const cottage = (glass: string) => [
 specs['cottage/day'] = { shapes: cottage('#7fa9c4') }
 specs['cottage/night'] = { shapes: cottage('#ffd45c') }
 
-const SNAIL_SHELL = [
-  ell(-0.6, 4.2, 3.6, 3.5, ['#c0763e', '#9a5a2b', '#dc9a62']),
-]
-const SNAIL_SWIRL: readonly FeaturePixel[] = [
-  feat(-1, 5, '#7e4620'),
-  feat(0, 5, '#7e4620'),
-  feat(1, 4, '#7e4620'),
-  feat(0, 3, '#7e4620'),
-  feat(-2, 3, '#7e4620'),
-  feat(-3, 4, '#7e4620'),
-]
+const SNAIL_INK = {
+  K: '#4a2c16',
+  S: '#cc7240',
+  s: '#a4532a',
+  h: '#eaa06c',
+  w: '#7a3c1a',
+  B: '#f0d890',
+  b: '#cfae62',
+  k: '#6b5630',
+  e: '#23201c',
+}
 specs['snail/out'] = {
-  shapes: [
-    poly(
-      [
-        [-5, 0],
-        [6, 0],
-        [7.4, 2],
-        [7.4, 4.4],
-        [5.4, 4.4],
-        [4.4, 1.8],
-        [-4, 1.6],
-      ],
-      ['#e6d3a6', '#c9b482', '#f4e8c6']
-    ),
-    box(5.8, 4, 6.4, 7, ['#c9b482'], { no: true }),
-    box(7, 4, 7.6, 6.6, ['#c9b482'], { no: true }),
-    ...SNAIL_SHELL,
-  ],
-  feats: [...SNAIL_SWIRL, feat(6, 7, '#23201c'), feat(7, 6.6, '#23201c')],
+  shapes: [],
+  feats: pixelMap(
+    -9,
+    1,
+    [
+      '....KKKKK.........',
+      '..KKhhSSSKK.......',
+      '.KhhSwwwwSSK..e.e.',
+      '.KhSwSSSSwSsK.b.b.',
+      '.KSSwSwwSwSsK.b.b.',
+      '.KSSwSSwSwssKkBBBk',
+      '.KSSSwwSSwssKBBBBk',
+      'kkKsSSSSwwsKBBBBBk',
+      'kBBKKKKKKKKBBBBbk.',
+      '.kbbbbbbbbbbbbbk..',
+    ],
+    SNAIL_INK
+  ),
 }
 specs['snail/in'] = {
-  shapes: [box(-4, 0, 3.4, 1, ['#c9b482'], { no: true }), ...SNAIL_SHELL],
-  feats: SNAIL_SWIRL,
+  shapes: [],
+  feats: pixelMap(
+    -9,
+    1,
+    [
+      '....KKKKK.........',
+      '..KKhhSSSKK.......',
+      '.KhhSwwwwSSK......',
+      '.KhSwSSSSwSsK.....',
+      '.KSSwSwwSwSsK.....',
+      '.KSSwSSwSwssK.....',
+      '.KSSSwwSSwssK.....',
+      '..KsSSSSwwsK......',
+      '...KKKKKKKK.......',
+      '...kbbbbbbk.......',
+    ],
+    SNAIL_INK
+  ),
 }
 
 const CHICK: Tones = ['#f6d55c', '#d9b43a', '#ffe88a']
-const nest = (open: readonly boolean[], lift: readonly number[]) => {
-  const beak = (d: number, u: number, wide: boolean) =>
-    wide
-      ? [
-          feat(d + 2, u + 0.4, '#e0883a'),
-          feat(d + 3, u + 0.4, '#e0883a'),
-          feat(d + 2, u - 0.7, '#c9502f'),
-          feat(d + 2, u - 1.6, '#e0883a'),
-          feat(d + 3, u - 1.6, '#e0883a'),
+const BEAK = '#e8822e'
+const GAPE = '#b93a2c'
+const CHICKS = [
+  { d: -6.4, u: 8.2, face: -1 },
+  { d: 0, u: 7.6, face: 0 },
+  { d: 6.4, u: 8, face: 1 },
+] as const
+const nest = (open: readonly boolean[], lift: readonly number[]) => ({
+  shapes: [
+    ...CHICKS.map(({ d, u }, i) => ell(d, u + lift[i], 2.6, 2.6, CHICK)),
+    ell(0, 2.8, 10.8, 3.3, ['#8d6a42', '#6d4f2d', '#ad8a5e']),
+  ],
+  feats: [
+    ...CHICKS.flatMap(({ d, u, face }, i) => {
+      const eye = Math.round(u + lift[i] + 1.1)
+      if (face === 0)
+        return [
+          feat(-2, eye, '#23201c'),
+          feat(1, eye, '#23201c'),
+          feat(-1, eye - 1, BEAK),
+          feat(0, eye - 1, BEAK),
+          ...(open[i] ? [feat(-1, eye - 2, GAPE), feat(0, eye - 2, GAPE)] : []),
         ]
-      : [feat(d + 2, u - 0.6, '#e0883a'), feat(d + 3, u - 0.6, '#e0883a')]
-  const chicks = [
-    [-4.6, 6],
-    [0, 7],
-    [4.6, 6],
-  ] as const
-  return {
-    shapes: [
-      ...chicks.map(([d, u], i) => ell(d, u + lift[i], 2.5, 2.5, CHICK)),
-      ell(0, 2.6, 9.4, 3.1, ['#8d6a42', '#6d4f2d', '#ad8a5e']),
-    ],
-    feats: [
-      ...chicks.flatMap(([d, u], i) => [
-        feat(d + 0.6, u + lift[i] + 0.8, '#23201c'),
-        ...beak(d, u + lift[i], open[i]),
-      ]),
-      ...[-8, -5, -2, 1, 4, 7].flatMap((d, i) => [
-        feat(d, 3.6 - (i % 2), '#6d4f2d'),
-        feat(d + 1, 1.8 + (i % 2), '#ad8a5e'),
-      ]),
-    ],
-  }
-}
+      const col = (k: number) => Math.round(d - 0.5 + face * k)
+      return [
+        feat(col(1.6), eye, '#23201c'),
+        ...(open[i]
+          ? [
+              feat(col(3.1), eye, BEAK),
+              feat(col(4.1), eye + 1, BEAK),
+              feat(col(3.1), eye - 1, GAPE),
+              feat(col(3.1), eye - 2, BEAK),
+              feat(col(4.1), eye - 2, BEAK),
+            ]
+          : [feat(col(3.1), eye - 1, BEAK), feat(col(4.1), eye - 1, BEAK)]),
+      ]
+    }),
+    ...[-9, -6, -3, 0, 3, 6].flatMap((d, i) => [
+      feat(d, 4 - (i % 2), '#6d4f2d'),
+      feat(d + 1, 3 - (i % 2), '#6d4f2d'),
+      feat(d + 2, 2 + (i % 2), '#bd9a6c'),
+    ]),
+    feat(-12, 5, '#6d4f2d'),
+    feat(-13, 6, '#6d4f2d'),
+    feat(11, 5, '#6d4f2d'),
+    feat(12, 6, '#6d4f2d'),
+    feat(12, 3, '#8d6a42'),
+  ],
+})
 specs['nest/0'] = nest([false, false, false], [0, 0, 0])
 specs['nest/1'] = nest([false, true, false], [0, 1, 0])
 specs['nest/2'] = nest([true, false, false], [1, 0, 0])
@@ -296,35 +337,46 @@ specs['cloud/heavy'] = cloudOf(true)
 
 const CASE: Tones = ['#8a5a34', '#6d4526', '#a97a50']
 const cuckooBody = [
-  box(-7, 0, 7, 12, CASE),
+  box(-6.5, 0, 7.5, 12, CASE),
   poly(
     [
-      [-9, 11.4],
-      [9, 11.4],
-      [0, 18.4],
+      [-8.5, 11.4],
+      [9.5, 11.4],
+      [0.5, 18.4],
     ],
     ['#6d4526', '#55351c', '#8a5a34'],
     { edge: true }
   ),
-  ell(0, 5.6, 4.6, 4.6, ['#f7efdc', '#e0d4b8'], { edge: true }),
+  ell(0.5, 5.4, 4.4, 4.4, ['#f7efdc', '#e0d4b8'], { edge: true }),
+]
+const CUCKOO_TICKS = [
+  feat(0, 10, '#b3a283'),
+  feat(0, 2, '#b3a283'),
+  feat(4, 6, '#b3a283'),
+  feat(-4, 6, '#b3a283'),
 ]
 specs['cuckoo/shut'] = {
   shapes: [
     ...cuckooBody,
-    box(-1.5, 12, 1.5, 15, ['#55351c', '#402713'], { edge: true }),
+    box(-1, 12, 2, 15, ['#55351c', '#402713'], { edge: true }),
   ],
+  feats: CUCKOO_TICKS,
 }
 specs['cuckoo/out'] = {
   shapes: [
     ...cuckooBody,
-    box(-1.5, 12, 1.5, 15, ['#26180c'], { edge: true }),
-    box(-7, 12.6, 0.4, 13.4, ['#b9a78a'], { edge: true }),
-    ell(-7.6, 13.8, 2.4, 1.7, ['#5ea9d6', '#3f86b2', '#8ac8ea'], {
+    box(-1, 12, 2, 15, ['#26180c'], { edge: true }),
+    box(-6.5, 12.6, 0.9, 13.4, ['#b9a78a'], { edge: true }),
+    ell(-7.1, 13.8, 2.4, 1.7, ['#5ea9d6', '#3f86b2', '#8ac8ea'], {
       edge: true,
     }),
-    ell(-9.4, 15, 1.4, 1.3, ['#5ea9d6', '#3f86b2'], { edge: true, g: 'bird' }),
+    ell(-8.9, 15, 1.4, 1.3, ['#5ea9d6', '#3f86b2'], { edge: true, g: 'bird' }),
   ],
-  feats: [feat(-10, 15.2, '#23201c'), feat(-11, 14.8, '#f6d55c')],
+  feats: [
+    ...CUCKOO_TICKS,
+    feat(-10, 15.2, '#23201c'),
+    feat(-11, 14.8, '#f6d55c'),
+  ],
 }
 
 specs.balloon = {
@@ -429,7 +481,21 @@ specs['bowl/1'] = bowlBody(15.8, 14.2)
 specs['bowl/2'] = bowlBody(14.2, 15.8)
 
 const tower = [
-  ell(0, 1.6, 10, 2.6, ['#8b8f94', '#6a6e74', '#aeb2b6']),
+  poly(
+    [
+      [-10.6, 0],
+      [-9.8, 2],
+      [-7.4, 3.6],
+      [-5.6, 2.6],
+      [-4.2, 3.8],
+      [4.4, 3.8],
+      [6, 2.4],
+      [8, 3.4],
+      [10, 1.6],
+      [10.6, 0],
+    ],
+    ['#8b8f94', '#6a6e74', '#aeb2b6']
+  ),
   poly(
     [
       [-5.8, 2],
@@ -485,75 +551,98 @@ const towerBands = [6, 12.4].map((u) =>
       feat(0, 10.6, '#3a4a5a'),
       feat(-3, 20, '#2d3a4a'),
       feat(3, 20, '#2d3a4a'),
+      feat(-10, 1, '#ffffff'),
+      feat(-9, 1, '#cfe6f2'),
+      feat(-7, 1, '#ffffff'),
+      feat(7, 1, '#ffffff'),
+      feat(8, 1, '#cfe6f2'),
+      feat(-8, 2, '#5a5e64'),
+      feat(7, 2, '#5a5e64'),
     ],
   }
 })
 
+const GRASS: Tones = ['#79b356', '#5e9440', '#97cc74']
+export const TRACK = { rx: 11.4, ry: 4.2, u: 4.8 } as const
+const TIE = '#6b4a2c'
+const TRACK_TIES = Array.from({ length: 30 }, (_, i) => {
+  const a = (i / 30) * 2 * Math.PI
+  return feat(
+    Math.round(TRACK.rx * Math.cos(a) - 0.5),
+    TRACK.u + TRACK.ry * Math.sin(a) + 0.3,
+    TIE
+  )
+})
 specs['train/bed'] = {
   shapes: [
-    ell(0, 3.2, 13.6, 4.1, ['#7a5a3c', '#5e432b', '#94714f']),
-    ell(0, 3.2, 11.8, 3.1, ['#b7a98c', '#9a8c6f']),
-    ell(0, 3.2, 9.8, 2.2, ['#6fa64e', '#578a3c', '#8cc266']),
+    ell(0, 4.2, 14.4, 6.2, ['#8a6a45', '#6d5230', '#a98a62']),
+    ell(0, 4.9, 13.6, 5.5, GRASS, { no: true }),
+    ell(0, 4.8, 12.8, 5.1, ['#d9cdb0', '#c2b594'], { no: true }),
+    ell(0, 4.9, 9.9, 3.2, GRASS, { no: true }),
   ],
-  feats: [-12, -9, -6, -3, 0, 3, 6, 9, 12].flatMap((d) => [
-    feat(d, 5.8, '#5e432b'),
-    feat(d, 0.5, '#5e432b'),
-  ]),
+  feats: TRACK_TIES,
 }
 specs['train/hill'] = {
   shapes: [
-    ell(-3.4, 13.6, 2.8, 2.8, ['#3f8a4c', '#2c6a39', '#62ad67'], { g: 'tree' }),
-    box(-3.9, 9, -2.9, 12, ['#775432'], { no: true }),
-    poly(domeOf(0, 3, 8.8, 9), ['#7fbf58', '#5e9c40', '#a4dc78']),
+    box(-3.4, 10, -2.4, 14, ['#6b4a2c'], { no: true }),
+    ell(-2.9, 15.4, 3.1, 2.7, ['#2f8a4c', '#1f6a3a', '#57b06c'], {
+      g: 'tree',
+    }),
+    poly(domeOf(0, 5, 6.4, 7), ['#8cc466', '#69a54a', '#aee085']),
   ],
   feats: [
-    feat(2, 8, '#5e9c40'),
-    feat(-1, 6, '#a4dc78'),
-    feat(4, 5, '#a4dc78'),
-    feat(-4, 4.4, '#5e9c40'),
+    feat(-4, 8, '#69a54a'),
+    feat(2, 10, '#aee085'),
+    feat(3, 7, '#f6d55c'),
+    feat(-2, 7, '#fbf6ea'),
   ],
 }
 
+const STONE: Tones = ['#e9e1d0', '#c8bea8', '#f8f3e6']
 const domeOfShow = (lit: boolean): ShapeSpec => {
-  const lamp = lit ? '#ffd45c' : '#f7efdc'
+  const glass = lit ? '#ffd45c' : '#54698c'
   return {
     shapes: [
-      box(1, 6, 3.2, 10, ['#b08a4a', '#8a6a34']),
-      box(-8, 0, 8, 4.6, ['#c9a24e', '#a07c30', '#e6c66e']),
-      box(-8.4, 4.2, 8.4, 5.4, ['#8a6a34', '#6d5226']),
-      poly(domeOf(0, 5.2, 7.2, 7.4), ['#2c3a66', '#1e2849', '#46588f'], {
+      box(-10, 0, 10, 1.4, ['#b9af9a', '#978d78', '#d0c7b3']),
+      box(-9, 1, 9, 6, STONE),
+      box(-9.6, 5.6, 9.6, 6.8, ['#a9a08c', '#8a8170', '#c2b9a4']),
+      poly(domeOf(0, 6.6, 6.6, 7.6), ['#d3dae4', '#b3bcc9', '#f1f4f8'], {
         k: 'd',
       }),
-      poly(
-        [
-          [-0.6, 9.6],
-          [5.4, 14],
-          [7, 12.4],
-          [1.2, 8.2],
-        ],
-        ['#d8b45e', '#a98838', '#f2d68c'],
-        { edge: true }
-      ),
-      box(5, 13.4, 7.8, 15, ['#8a6a34', '#6d5226'], { edge: true }),
     ],
     paints: [
       paint(
         [
-          [-3.4, 4],
-          [-1.6, 4],
-          [-0.4, 13],
-          [-1.4, 13],
+          [-4.8, 6],
+          [-4, 6],
+          [-2, 14.4],
+          [-2.6, 14.4],
         ],
-        lit ? ['#ffe9a6'] : ['#16203c'],
+        ['#b3bcc9'],
+        ['d']
+      ),
+      paint(
+        [
+          [0, 6],
+          [3, 6],
+          [2.6, 14.6],
+          [0.4, 14.6],
+        ],
+        lit ? ['#ffe9a6'] : ['#2f3a57'],
         ['d']
       ),
     ],
     feats: [
-      ...[-6, -3, 0, 3, 6].map((d) => feat(d, 1.6, lamp)),
-      feat(3, 7, '#d7e2ff'),
-      feat(-5, 7, '#d7e2ff'),
-      feat(1, 10, '#d7e2ff'),
-      feat(4, 9, '#9db0e4'),
+      ...[-8, -7, -5, -4, 3, 4, 6, 7].flatMap((d) => [
+        feat(d, 3, glass),
+        feat(d, 4, glass),
+      ]),
+      ...[-1, 0].flatMap((d) => [1, 2, 3, 4].map((u) => feat(d, u, '#7a5232'))),
+      ...pixelMap(0, 10, ['.ss.', 'slLs', 'sLls', '.ss.'], {
+        s: '#6c7890',
+        l: lit ? '#fff7d6' : '#d7ecff',
+        L: lit ? '#ffd45c' : '#8fc4f2',
+      }),
     ],
   }
 }

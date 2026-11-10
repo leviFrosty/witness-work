@@ -4,6 +4,8 @@ import { hashBuffer, opaqueBounds, pixelAt } from '@/lib/pixelArt'
 import { hatReactions } from '@/features/pet/lib/hatReactions'
 import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
+import { BIG_HAT_BRIM_ROW, BIG_HAT_CX, BIG_HAT_W } from './hatCanvas'
+import { trainAngle, trainSpot } from './hatsLive'
 import {
   composeScene,
   DEMO_SIGN_DATA,
@@ -150,6 +152,29 @@ describe('the big hats', () => {
       return blue
     }
     expect(below(1000)).toBeGreaterThan(0)
+  })
+
+  it('shows the whole train out in front in a still picture', () => {
+    const at = trainAngle(0, -Infinity)
+    for (const behind of [0, 0.92, 1.62])
+      expect(trainSpot(at - behind).near).toBeGreaterThan(0.3)
+  })
+
+  it('rests the snail on the middle of the head', () => {
+    const [x, , width] = opaqueBounds(hatSprite('snail')!)!
+    expect(Math.abs(x + width / 2 - BIG_HAT_CX)).toBeLessThanOrEqual(1)
+  })
+
+  it('perches the bird on the fig tree, not above it', () => {
+    for (const growth of [4, 5]) {
+      const tree = hatSprite('fig', { growth })!
+      const top = opaqueBounds(tree)![1]
+      for (let y = top; y <= BIG_HAT_BRIM_ROW; y++) {
+        let any = false
+        for (let x = 0; x < BIG_HAT_W; x++) any ||= pixelAt(tree, x, y) !== null
+        expect(any).toBe(true)
+      }
+    }
   })
 
   it('puts hats on visiting pets', () => {

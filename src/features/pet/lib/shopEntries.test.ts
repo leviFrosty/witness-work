@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_ROOM } from '@/types/pet'
-import { SCENE_H, SCENE_W } from '@/features/pet/art'
+import { opaqueBounds } from '@/lib/pixelArt'
+import { BIG_HAT_IDS, DEFAULT_ROOM } from '@/types/pet'
+import {
+  HAT_ANCHOR_Y,
+  hatSprite,
+  PET_Y,
+  SCENE_H,
+  SCENE_W,
+} from '@/features/pet/art'
+import { BIG_HAT_BRIM_ROW } from '@/features/pet/art/hatCanvas'
 import { ROOM_THUMB_VIEWS } from '@/features/pet/lib/roomOptions'
 import {
   isForSale,
@@ -127,6 +135,17 @@ describe('Shop views', () => {
         expect(x + vw).toBeLessThanOrEqual(SCENE_W)
         expect(y + vh).toBeLessThanOrEqual(SCENE_H)
       }
+    }
+  })
+
+  it('keeps the top of every big hat in its card, however narrow', () => {
+    const headRow = PET_Y + Math.min(...Object.values(HAT_ANCHOR_Y))
+    for (const hat of BIG_HAT_IDS) {
+      const top = opaqueBounds(hatSprite(hat)!)![1]
+      for (const h of [32, 40, 48])
+        expect(shopThumbView('hat', 64, h, hat)[1]).toBeLessThanOrEqual(
+          headRow - (BIG_HAT_BRIM_ROW - top)
+        )
     }
   })
 

@@ -51,11 +51,8 @@ export async function addWebPasskey(
                       ),
               },
               confirmOwner: async () => 'confirmed',
-              ...(stepUp.beforeCreate && {
-                beforeCreate: stepUp.beforeCreate,
-
-                createStopIsFailure: true,
-              }),
+              createStopIsFailure: true,
+              ...(stepUp.beforeCreate && { beforeCreate: stepUp.beforeCreate }),
             })
   track.finished(source, result)
   return result

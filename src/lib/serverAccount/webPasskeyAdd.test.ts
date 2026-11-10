@@ -139,6 +139,19 @@ describe('Add a Passkey in a browser', () => {
     })
   })
 
+  it('shows a create the browser stopped with no gate, as on the Approved by screen', async () => {
+    const { add, create, server, track } = setup()
+    create.mockRejectedValueOnce(new PasskeyError('cancelled'))
+    const result = await add()
+    expect(result).toEqual({
+      status: 'failed',
+      step: 'create',
+      reason: 'not_created',
+    })
+    expect(server.add).not.toHaveBeenCalled()
+    expect(track.finished).toHaveBeenCalledWith('key_change', result)
+  })
+
   it('reads a check that throws as failed', async () => {
     const { add, stepUp } = setup()
     stepUp.confirm.mockRejectedValueOnce(new HttpError('server', 500, null))

@@ -56,6 +56,43 @@ export const CONFIG = {
     'build-android': num('WW_VERIFY_EST_ANDROID_BUILD_GB', 6.5),
   },
   metroPorts: Array.from({ length: 40 }, (_, i) => 8090 + i),
+
+  jobs: {
+    max: num('WW_VERIFY_MAX_JOBS', 6, 3),
+    minFreePct: num('WW_VERIFY_MIN_FREE_PCT_JOB', 15),
+    waitMin: num('WW_VERIFY_JOB_WAIT_MIN', 45),
+    classes: {
+      'web-build': {
+        max: num('WW_VERIFY_MAX_WEB_BUILDS', 2, 1),
+        gb: num('WW_VERIFY_EST_WEB_BUILD_GB', 6),
+        held: true,
+      },
+      'web-dev': {
+        max: num('WW_VERIFY_MAX_WEB_DEV', 2, 1),
+        gb: num('WW_VERIFY_EST_WEB_DEV_GB', 2.5),
+        maxMin: num('WW_VERIFY_WEB_DEV_MAX_MIN', 45),
+        held: true,
+      },
+      'web-test': {
+        max: num('WW_VERIFY_MAX_WEB_TESTS', 3, 2),
+        gb: num('WW_VERIFY_EST_WEB_TEST_GB', 1.5),
+        held: true,
+      },
+      test: {
+        max: num('WW_VERIFY_MAX_TESTS', 3, 2),
+        gb: num('WW_VERIFY_EST_TEST_GB', 1.5),
+      },
+      typecheck: {
+        max: num('WW_VERIFY_MAX_TYPECHECKS', 2, 1),
+        gb: num('WW_VERIFY_EST_TYPECHECK_GB', 1.5),
+      },
+      lint: {
+        max: num('WW_VERIFY_MAX_LINTS', 2, 1),
+        gb: num('WW_VERIFY_EST_LINT_GB', 1),
+      },
+    },
+    webPorts: Array.from({ length: 30 }, (_, i) => 8130 + i),
+  },
 }
 
 const LEGACY_STALE_MS = 24 * 60 * 60 * 1000

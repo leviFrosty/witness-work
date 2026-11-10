@@ -224,7 +224,7 @@ const AvatarPickerContent = ({
   onBackgroundChange,
   onImageMeta,
 }: Props) => {
-  const allowImage = imageAllowed && hasCapability('syncedPhotos')
+  const allowImage = imageAllowed && hasCapability('syncedAvatarPhotos')
   const theme = useTheme()
   const draftFiles = useAvatarDraftFiles()
   const library = useLibraryImagePicker('avatar')

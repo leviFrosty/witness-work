@@ -177,6 +177,10 @@ async function device(
     '@/lib/syncTransport/server/photoCrypto'
   )
   const photoUsage = await import('@/lib/syncTransport/server/photoUsage')
+  const { webPhotoFiles } = await import(
+    '@/lib/syncTransport/server/photoFiles'
+  )
+  const { webPhotos } = await import('@/lib/files/webPhotoStore')
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
   const { usePreferences } = await import('@/stores/preferences')
   const { default: useContacts } = await import('@/stores/contactsStore')
@@ -237,17 +241,19 @@ async function device(
     onRefused: (refusal) =>
       refusal !== 'photos_disabled' &&
       usePreferences.setState({ cloudSyncEntitled: false }),
-    files: {
-      size: async (path) => files.get(path)?.length ?? 0,
-      read: async (path) => {
-        const bytes = files.get(path)
-        if (!bytes) throw new Error(`no file at ${path}`)
-        return bytes
-      },
-      write: async (path, bytes) => {
-        files.set(path, bytes.slice())
-      },
-    },
+    files: web
+      ? webPhotoFiles
+      : {
+          size: async (path) => files.get(path)?.length ?? 0,
+          read: async (path) => {
+            const bytes = files.get(path)
+            if (!bytes) throw new Error(`no file at ${path}`)
+            return bytes
+          },
+          write: async (path, bytes) => {
+            files.set(path, bytes.slice())
+          },
+        },
     photoSwitch: () => usePreferences.getState().cloudSyncPhotos,
     slotId: () => identity.ensureSyncDeviceId(),
     onPhotoUsage: photoUsage.recordPhotoUsage,
@@ -289,6 +295,11 @@ async function device(
     os,
     cloudTransport,
     files,
+    webPhotos,
+    webPhotoBytes: async (id: string) => {
+      const blob = await webPhotos.blob(id)
+      return blob ? [...new Uint8Array(await blob.arrayBuffer())] : null
+    },
     photoUsage,
     usePreferences,
     useContacts,
@@ -963,7 +974,7 @@ describe('Photos over Cloud Sync', () => {
       expect(server.photoBytes('family', name)![0]).toBe(1)
   })
 
-  describe('with a browser on the account (it has no photo sync)', () => {
+  describe('with a browser on the account (note photos only)', () => {
     const phoneWithPhotos = async () => {
       const iphone = await device('iphone', { os: 'ios' })
       iphone.files.set(picked('c1', 'r1'), new Uint8Array([1, 1, 1]))
@@ -983,17 +994,31 @@ describe('Photos over Cloud Sync', () => {
       return iphone
     }
 
-    it('never moves photo bytes, so nothing there can fail or delete', async () => {
+    it('downloads the note photo and leaves contact and profile photos alone', async () => {
       const iphone = await phoneWithPhotos()
       const stored = server.photoNames('family')
       expect(stored).toHaveLength(3)
 
       const web = await device('browser', { os: 'web' })
+      server.state.log.length = 0
       await running(web, async () => {
-        expect(web.iCloudSync.photosTravel()).toBe(false)
+        expect(web.iCloudSync.photosTravel()).toBe(true)
         await web.iCloudSync.pullAndMerge('manual')
         await web.iCloudSync.imageWorkSettled()
+        expect(await web.iCloudSync.push('manual')).toBe(true)
+        await web.iCloudSync.imageWorkSettled()
       })
+
+      expect(await web.webPhotoBytes('photo-0001')).toEqual([2, 2])
+      expect(web.webPhotos.list().map((photo) => photo.id)).toEqual([
+        'photo-0001',
+      ])
+      expect(
+        server.state.log.filter((op) => op === 'POST sync/photos/get')
+      ).toHaveLength(1)
+      expect(
+        server.state.log.filter((op) => /photos\/(put|delete)/.test(op))
+      ).toEqual([])
 
       expect(web.contactNames()).toEqual(['Ada'])
       expect(web.useContacts.getState().contacts[0].avatar).toMatchObject({
@@ -1001,9 +1026,67 @@ describe('Photos over Cloud Sync', () => {
         revision: 'r1',
       })
       expect([...web.files.keys()]).toEqual([])
-      expect(web.usePreferences.getState().iCloudImageSync ?? {}).toEqual({})
       expect(server.photoNames('family')).toEqual(stored)
       expect(iphone.name).toBe('iphone')
+    })
+
+    it('sends a note photo added in the browser to the phone', async () => {
+      const iphone = await phoneWithPhotos()
+      const web = await device('browser', { os: 'web' })
+      await running(web, async () => {
+        await web.iCloudSync.pullAndMerge('manual')
+        await web.iCloudSync.imageWorkSettled()
+        web.webPhotos.put(
+          'web-photo-0002',
+          new Blob([new Uint8Array([7, 7, 7])])
+        )
+        web.useConversations.setState({
+          conversations: [
+            ...web.useConversations.getState().conversations,
+            visit('v2', 'web-photo-0002', NOW + 10),
+          ] as never,
+        })
+        await publish(web)
+      })
+      expect(server.photoNames('family')).toHaveLength(4)
+      expect(
+        web.usePreferences.getState().iCloudImageSync?.[
+          'witness-work-note-web-photo-0002.jpg'
+        ]
+      ).toMatchObject({ uploadedMtime: expect.any(Number) })
+
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      expect([...iphone.files.get(notePath('web-photo-0002'))!]).toEqual([
+        7, 7, 7,
+      ])
+      expect([...iphone.files.get(notePath('photo-0001'))!]).toEqual([2, 2])
+    })
+
+    it('deletes a note photo from the account once the browser removes it from its note', async () => {
+      const iphone = await phoneWithPhotos()
+      const stored = server.photoNames('family')
+      const web = await device('browser', { os: 'web' })
+      await running(web, async () => {
+        await web.iCloudSync.pullAndMerge('manual')
+        await web.iCloudSync.imageWorkSettled()
+        await publish(web)
+        expect(server.photoNames('family')).toEqual(stored)
+        web.useConversations.setState({
+          conversations: [visit('v1', null, NOW + 10)] as never,
+        })
+        await publish(web)
+        await web.iCloudSync.imageWorkSettled()
+      })
+      expect(server.photoNames('family')).toHaveLength(stored.length - 1)
+
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      expect(iphone.useContacts.getState().contacts[0].avatar).toMatchObject({
+        type: 'image',
+        revision: 'r1',
+      })
+      expect([...iphone.files.get(picked('c1', 'r1'))!]).toEqual([1, 1, 1])
     })
 
     it('keeps the phone’s photos when the browser edits the records around them', async () => {
@@ -1959,7 +2042,7 @@ describe('The web on Cloud Sync', () => {
     expect(phone.claims.peerAccountClaims()).toEqual([phoneClaim])
   })
 
-  it('moves no photo bytes yet, and keeps the photo references', async () => {
+  it('moves no contact photo bytes, and keeps the photo references', async () => {
     const phone = await device('phone', { os: 'ios' })
     phone.useContacts.setState({
       contacts: [
@@ -1975,12 +2058,14 @@ describe('The web on Cloud Sync', () => {
     })
     await phone.iCloudSync.push('manual')
     const browser = await device('browser', { os: 'web' })
-    expect(browser.iCloudSync.photosTravel()).toBe(false)
     const before = server.state.log.length
     await browser.iCloudSync.pullAndMerge('manual')
     expect(await browser.iCloudSync.push('manual')).toBe(true)
+    await browser.iCloudSync.imageWorkSettled()
     expect(
-      server.state.log.slice(before).filter((op) => op.includes('photos'))
+      server.state.log
+        .slice(before)
+        .filter((op) => /photos\/(put|get|delete)/.test(op))
     ).toEqual([])
     const [ada] = browser.useContacts.getState().contacts
     expect(ada.avatar).toMatchObject({ type: 'image', revision: 'r1' })

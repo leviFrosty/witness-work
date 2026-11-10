@@ -1733,6 +1733,7 @@
   "richText_photoLimitTitle": "Photo limit reached",
   "richText_photoLimit": "A note can hold up to %{count} photos.",
   "richText_photoFailed": "The photo couldn't be added. Try again.",
+  "richText_photosNotAllowed": "This note can't hold photos.",
   "richText_cameraPermission": "WitnessWork needs camera access to add photos to notes. You can allow it in Settings.",
   "richText_photosPermission": "WitnessWork needs access to your photos to add them to notes. You can allow it in Settings.",
   "richText_openSettings": "Open Settings",

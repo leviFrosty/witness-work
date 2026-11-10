@@ -36,7 +36,7 @@ import {
   syncDeviceRemoval,
 } from '@/lib/syncDevices'
 import { analytics } from '@/lib/analytics'
-import { AppState, AppStateStatus } from 'react-native'
+import { AppState, AppStateStatus, Platform } from 'react-native'
 import {
   addBackgroundListener,
   addForegroundListener,
@@ -44,6 +44,7 @@ import {
 } from '@/lib/appLifecycle'
 import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
+import { webPhotoModifiedAt } from '@/lib/syncTransport/server/photoFiles'
 import debounce from 'lodash/debounce'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { cloudSyncOnly, hasSyncEngine } from '@/lib/syncTransport/platform'
@@ -52,7 +53,6 @@ import {
   markCompletePull,
 } from '@/lib/cloudSyncPullSettled'
 import {
-  hasSyncTransport,
   SyncTransportError,
   syncTransport as platformSyncTransport,
   syncTransportErrorCode,
@@ -134,6 +134,7 @@ import {
   pushAllImages,
   pullMissingImages,
   gcOrphanImages,
+  type GcResult,
   ActiveIdentity,
   ImageSyncBookkeeping,
   ImageSyncDeps,
@@ -156,7 +157,7 @@ import {
   ensureNoteImageDirectory,
   isNoteImageKnownLocal,
   markNoteImagesLocal,
-  noteImagePath,
+  noteImageFilePath,
 } from '@/lib/richText/noteImages'
 import { noteImagesArrived } from '@/lib/richText/noteImageRevision'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
@@ -464,7 +465,10 @@ export function syncEntitled(): boolean {
 }
 
 const transportHoldsPhotos = () =>
-  hasCapability('syncedPhotos') && syncTransport().supportsBinaries !== false
+  hasCapability('syncedNotePhotos') &&
+  syncTransport().supportsBinaries !== false
+
+const avatarPhotosTravel = () => hasCapability('syncedAvatarPhotos')
 
 export function photosTravel(): boolean {
   if (!transportHoldsPhotos()) return false
@@ -1029,6 +1033,7 @@ function buildImageSyncDeps(
     },
     fs: {
       getModifiedAt: async (path) => {
+        if (Platform.OS === 'web') return webPhotoModifiedAt(path)
         const info = await FileSystem.getInfoAsync(path)
         if (!info.exists) return null
         return typeof info.modificationTime === 'number'
@@ -1197,13 +1202,13 @@ async function pushNoteImagesInner(
   if (!photosTravel() || !canSync()) return
   if (syncTransport().binaryWritesPaused) return
   if (!published && prefs.iCloudSyncPendingPush) return
-  if (!hasSyncTransport()) return
+  if (!hasSyncEngine()) return
   const ids = referencedNoteImageIds()
   if (!ids.size) return
   try {
     const result = await pushNoteImages({
       ids,
-      localPath: noteImagePath,
+      localPath: noteImageFilePath,
       bookkeeping: prefs.iCloudImageSync ?? {},
       deps: buildImageSyncDeps(false, epoch),
       trigger,
@@ -1224,14 +1229,14 @@ async function pushNoteImagesInner(
 
 async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   if (!photosTravel()) return
-  if (!hasSyncTransport()) return
+  if (!hasSyncEngine()) return
   if (!oneShot && !canSync()) return
   const epoch = photoEpoch()
   const deps = buildImageSyncDeps(oneShot, epoch)
   const ids: string[] = []
   for (const id of referencedNoteImageIds()) {
     if (isNoteImageKnownLocal(id)) continue
-    if ((await deps.fs.getModifiedAt(noteImagePath(id))) != null) {
+    if ((await deps.fs.getModifiedAt(noteImageFilePath(id))) != null) {
       markNoteImagesLocal([id])
       continue
     }
@@ -1241,7 +1246,7 @@ async function pullNoteImagesInner(oneShot: boolean): Promise<void> {
   try {
     const result = await pullNoteImages({
       ids,
-      localPath: noteImagePath,
+      localPath: noteImageFilePath,
       deps,
       prepare: ensureNoteImageDirectory,
     })
@@ -1272,11 +1277,12 @@ async function pushImagesInner(
 ): Promise<void> {
   const epoch = photoEpoch()
   const prefs = usePreferences.getState()
+  if (!avatarPhotosTravel()) return
   if (!photosTravel() || !canSync()) return
 
   if (syncTransport().binaryWritesPaused) return
   if (!publishedSources && prefs.iCloudSyncPendingPush) return
-  if (!hasSyncTransport()) return
+  if (!hasSyncEngine()) return
   try {
     const sources =
       publishedSources ??
@@ -1351,8 +1357,9 @@ async function imagePullsSettled(): Promise<void> {
 async function pullImagesInner(oneShot = false): Promise<void> {
   const epoch = photoEpoch()
   const prefs = usePreferences.getState()
+  if (!avatarPhotosTravel()) return
   if (!photosTravel()) return
-  if (!hasSyncTransport()) return
+  if (!hasSyncEngine()) return
   if (!oneShot && !canSync()) return
   try {
     const expected = collectExpectedMarkerSources({
@@ -1459,7 +1466,7 @@ const sameIds = (a: Set<string>, b: Set<string>) =>
 
 async function gcImages(): Promise<void> {
   if (!photosTravel()) return
-  if (!hasSyncTransport()) return
+  if (!hasSyncEngine()) return
 
   if (pullInFlight) return
   gcStopRequested = false
@@ -1477,35 +1484,37 @@ async function gcImages(): Promise<void> {
     }
     const epoch = photoEpoch()
     const deps = buildImageSyncDeps(false, epoch)
-    const result = await gcOrphanImages({
-      activeIdentities: active,
-      deletions: [
-        ...useContacts.getState().deletedContacts.map((c) => ({
-          identity: { kind: 'contact' as const, id: c.id },
-          deletedAt: c.updatedAt ?? 0,
-        })),
-        ...contacts
-          .filter((c) => c.updatedAt && c.updatedAt > 1 && c.avatar)
-          .map((c) => ({
-            identity: { kind: 'contact' as const, id: c.id },
-            deletedAt: c.updatedAt!,
-          })),
-        ...(useProfile.getState().profileUpdatedAt.avatar
-          ? [
-              {
-                identity: { kind: 'profile' as const },
-                deletedAt: useProfile.getState().profileUpdatedAt.avatar,
-              },
-            ]
-          : []),
-      ],
-      deps,
+    const result = avatarPhotosTravel()
+      ? await gcOrphanImages({
+          activeIdentities: active,
+          deletions: [
+            ...useContacts.getState().deletedContacts.map((c) => ({
+              identity: { kind: 'contact' as const, id: c.id },
+              deletedAt: c.updatedAt ?? 0,
+            })),
+            ...contacts
+              .filter((c) => c.updatedAt && c.updatedAt > 1 && c.avatar)
+              .map((c) => ({
+                identity: { kind: 'contact' as const, id: c.id },
+                deletedAt: c.updatedAt!,
+              })),
+            ...(useProfile.getState().profileUpdatedAt.avatar
+              ? [
+                  {
+                    identity: { kind: 'profile' as const },
+                    deletedAt: useProfile.getState().profileUpdatedAt.avatar,
+                  },
+                ]
+              : []),
+          ],
+          deps,
 
-      shouldStop: () =>
-        gcStopRequested ||
-        useContacts.getState().contacts !== contacts ||
-        useProfile.getState().avatar !== avatar,
-    })
+          shouldStop: () =>
+            gcStopRequested ||
+            useContacts.getState().contacts !== contacts ||
+            useProfile.getState().avatar !== avatar,
+        })
+      : ({ deleted: [], stopped: false } satisfies GcResult)
     if (result.stopped) {
       logger.log(`${tag()} image gc stopped early`, {
         deleted: result.deleted.length,

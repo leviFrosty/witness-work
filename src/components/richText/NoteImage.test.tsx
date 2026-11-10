@@ -1,7 +1,7 @@
 import { act, create } from 'react-test-renderer'
 import { describe, expect, it, vi } from 'vitest'
 
-const runtime = vi.hoisted(() => ({ uri: '' }))
+const runtime = vi.hoisted(() => ({ uri: '', pending: false }))
 vi.mock('react-native', () => ({ View: 'View' }))
 vi.mock('expo-image', () => ({ Image: 'Image' }))
 vi.mock('lucide-react-native', () => ({ ImageOff: 'ImageOff' }))
@@ -18,6 +18,7 @@ vi.mock('@/contexts/theme', () => ({
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/richText/noteImageRevision', () => ({
   useNoteImageUri: () => runtime.uri,
+  useNoteImagePending: () => runtime.pending,
 }))
 
 import { Image } from 'expo-image'
@@ -44,6 +45,15 @@ describe('NoteImage', () => {
         .map((text) => text.props.children)
         .includes('richText_photoMissing')
     ).toBe(true)
+  })
+
+  it('shows an empty frame, not the placeholder, while the browser loads a photo it holds', () => {
+    runtime.uri = ''
+    runtime.pending = true
+    const tree = render()
+    runtime.pending = false
+    expect(tree.root.findAllByType(Image)).toHaveLength(0)
+    expect(tree.root.findAllByType(Text)).toHaveLength(0)
   })
 
   it('shows the photo when there is a uri', () => {

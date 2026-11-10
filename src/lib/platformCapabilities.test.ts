@@ -24,7 +24,8 @@ const all: PlatformCapability[] = [
   'appLock',
   'photoLibrarySave',
   'otaUpdates',
-  'syncedPhotos',
+  'syncedAvatarPhotos',
+  'syncedNotePhotos',
   'scribeVoice',
   'scribePhotos',
 ]
@@ -39,7 +40,7 @@ describe('hasCapability', () => {
   })
 
   it('hides every feature with no web equivalent on the web', () => {
-    expect(on('web')).toEqual(['appLock'])
+    expect(on('web')).toEqual(['appLock', 'syncedNotePhotos'])
   })
 
   it('gives iOS its Apple-only features and Android its Google ones', () => {
@@ -55,7 +56,8 @@ describe('hasCapability', () => {
       'appLock',
       'photoLibrarySave',
       'otaUpdates',
-      'syncedPhotos',
+      'syncedAvatarPhotos',
+      'syncedNotePhotos',
       'scribeVoice',
       'scribePhotos',
     ])

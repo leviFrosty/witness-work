@@ -5,6 +5,8 @@ import {
   getWebPhotoUrl,
   hasWebPhoto,
   listWebPhotos,
+  webPhotoPath,
+  webPhotosReady,
 } from '@/lib/files/webPhotoStore'
 import { isImageId } from '@/lib/richText/parse'
 
@@ -19,6 +21,12 @@ export function noteImagePath(id: string): string {
 
   if (Platform.OS === 'web') return getWebPhotoUrl(id)
   return `${noteImageDirectory()}${id}.jpg`
+}
+
+export function noteImageFilePath(id: string): string {
+  if (Platform.OS !== 'web') return noteImagePath(id)
+  if (!isImageId(id)) throw new Error('Invalid note image id')
+  return webPhotoPath(id)
 }
 
 export function noteImageFileId(fileName: string): string | undefined {
@@ -47,7 +55,10 @@ export function ensureNoteImageDirectory(): Promise<void> {
 
 export async function noteImageExists(id: string): Promise<boolean> {
   if (!isImageId(id)) return false
-  if (Platform.OS === 'web') return hasWebPhoto(id)
+  if (Platform.OS === 'web') {
+    await webPhotosReady()
+    return hasWebPhoto(id)
+  }
   const info = await FileSystem.getInfoAsync(noteImagePath(id))
   return info.exists
 }
@@ -73,7 +84,10 @@ export async function deleteNoteImages(ids: Iterable<string>): Promise<void> {
 export async function listNoteImageFiles(): Promise<
   { id: string; modifiedAt: number }[]
 > {
-  if (Platform.OS === 'web') return listWebPhotos()
+  if (Platform.OS === 'web') {
+    await webPhotosReady()
+    return listWebPhotos()
+  }
   const directory = noteImageDirectory()
   const info = await FileSystem.getInfoAsync(directory)
   if (!info.exists) return []

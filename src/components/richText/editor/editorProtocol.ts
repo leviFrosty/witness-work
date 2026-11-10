@@ -93,4 +93,10 @@ export type EditorSetup = {
   autofocus: boolean
 
   inline: boolean
+
+  takesImageFiles: boolean
 }
+
+export type EditorImageSource = 'paste' | 'drop'
+
+export type EditorImageFile = { uri: string; size: number }

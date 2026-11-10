@@ -215,9 +215,10 @@ runs on the web like on a phone on Cloud Sync, with its own slot:
   syncs, so nothing is overwritten.
 - **Live.** The live socket (a ticket, ADR 0038 §10) runs while the tab is
   visible, so other devices' changes arrive within seconds.
-- **Photos** keep their references in the payload, but their bytes don't move
-  on the web yet (`photosTravel()` is false): photos from phones show as
-  initials, and the web's photos stay in the browser.
+- **Photos.** Note photos move both ways and are kept in a database of their
+  own, `witnesswork-photos` (`docs/web-files.md`, "Note photos in the
+  browser"). Avatars keep their references in the payload, but their bytes
+  don't move on the web yet: photos from phones show as initials.
 - **Signing out** sends a push still waiting first (`webAccount.beforeSignOut`,
   at most 5 s, waiting out the put limit's `Retry-After` when it fits), and
   never deletes the browser's slot. The server deletes a slot 30 days after
@@ -266,8 +267,8 @@ const unsubscribe = onCompletedPull(() => {
 ## Wiping everything
 
 `clearAllWebData()` from [`boot.ts`](../src/lib/webStorage/boot.ts) deletes all of
-WitnessWork's local data in this browser: every store row, the memory copy, and
-every secure key/value entry, the stores first. Writes stop until the page
+WitnessWork's local data in this browser: every store row, the memory copy,
+every note photo, and every secure key/value entry, the stores first. Writes stop until the page
 reloads, so call `location.reload()` (or navigate) straight after. Signing out
 calls it, as do a session the server ended as `revoked` or `reused` (in every
 tab that hears of it), and signing in as another account (`webAccount.ts`).

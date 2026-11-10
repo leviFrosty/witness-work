@@ -93,7 +93,7 @@ One window, from the blob's size in bytes (the `Content-Length` of a put, the li
 - **Usage.** Settings → Account shows the account's photo storage (`usage.bytes` of `usage.limit`) while the device is on Cloud Sync.
 - **Changing the account key** (ADR 0039) re-seals every photo under the new key's photo and name keys, as it re-encrypts the slots.
 - **Older app versions** ignore photo references they can't transfer, and show initials as they do today.
-- **The web** has no photo pass yet (`hasCapability('syncedPhotos')`; `docs/web-files.md`): it uploads, downloads and deletes no photo, and can't add one. It keeps each record's photo reference and revision as it came, so its edits leave the phones' photos alone, and shows initials or a placeholder. It never publishes a reference to a photo it holds only as a `data:` or `blob:` URL.
+- **The web** runs the photo pass for note photos only (`hasCapability('syncedNotePhotos')`; `docs/web-files.md`): it uploads the note photos added there, downloads the ones its notes use into the browser's photo store, and deletes one from the account after a snapshot without it is out, as a phone does. It has no avatar pass yet (`syncedAvatarPhotos`): it uploads, downloads and cleans up no contact or profile photo, and can't add one. It keeps each avatar's reference and revision as it came, so its edits leave the phones' avatars alone, and shows initials. It never publishes a reference to an avatar it holds only as a `data:` or `blob:` URL. ww-api doesn't expose `x-ww-created-at` to browsers (`CORS_EXPOSED_HEADERS`), so a photo the web downloads is recorded with the time it arrived instead.
 
 ## The Cloud Sync request
 

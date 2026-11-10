@@ -6,7 +6,10 @@ import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { useNoteImageUri } from '@/lib/richText/noteImageRevision'
+import {
+  useNoteImagePending,
+  useNoteImageUri,
+} from '@/lib/richText/noteImageRevision'
 import { filenameForNoteImage } from '@/lib/syncTransport/imageNames'
 import PhotoNotSyncedBadge from '@/components/PhotoNotSyncedBadge'
 import type { RichTextImageAttrs } from '@/types/richText'
@@ -19,6 +22,7 @@ const NoteImage = (props: {
 }) => {
   const theme = useTheme()
   const uri = useNoteImageUri(props.image.id)
+  const pending = useNoteImagePending(props.image.id)
   const [failedUri, setFailedUri] = useState<string | null>(null)
   const ratio = props.image.width / props.image.height
   const { scale } = props.image
@@ -35,6 +39,8 @@ const NoteImage = (props: {
         ? { height: MAX_HEIGHT }
         : { width: '100%' as const }),
   }
+
+  if (!uri && pending) return <View style={frame} />
 
   if (!uri || failedUri === uri) {
     return (

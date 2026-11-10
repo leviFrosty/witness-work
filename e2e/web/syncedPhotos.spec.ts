@@ -128,7 +128,7 @@ const storedContact = async (page: Page) => {
   )
 }
 
-test.describe('photos without photo sync', () => {
+test.describe('photos the browser does not hold', () => {
   test.use({ preferences: { badgesWelcome: 'done' }, signedIn: true })
 
   test('the avatar menus offer emoji but no photo to choose', async ({
@@ -168,8 +168,7 @@ test.describe('photos without photo sync', () => {
     expect(await brokenImages(app)).toEqual([])
     await shot('contact-detail-phone-photo')
 
-    await app.getByRole('button', { name: en.moreActions }).last().click()
-    await app.getByText(en.edit, { exact: true }).first().click()
+    await app.getByTestId('contact-details-edit').last().click()
     await expect(app.getByText(en.choosePhoto)).toHaveCount(0)
     await app.getByTestId('contact-name-input').fill('Daniel O. Okafor')
     await shot('contact-editor-phone-photo')
@@ -185,7 +184,7 @@ test.describe('photos without photo sync', () => {
     expect(await brokenImages(app)).toEqual([])
   })
 
-  test("a phone's note photo shows a placeholder, and the note can't add photos", async ({
+  test("a phone's note photo shows a placeholder until it downloads", async ({
     app,
     shot,
   }) => {

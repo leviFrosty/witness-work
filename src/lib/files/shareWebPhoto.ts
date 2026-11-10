@@ -3,7 +3,7 @@ import { getWebPhotoBlob } from '@/lib/files/webPhotoStore'
 import { logger } from '@/lib/logger'
 
 export default async function shareWebPhoto(id: string): Promise<void> {
-  const blob = getWebPhotoBlob(id)
+  const blob = await getWebPhotoBlob(id)
   if (!blob) return
   try {
     const bytes = new Uint8Array(await blob.arrayBuffer())

@@ -10,14 +10,9 @@ describe('canAddNotePhotos', () => {
     platform.OS = 'ios'
   })
 
-  it.each(['ios', 'android'])('follows the note on %s', (os) => {
+  it.each(['ios', 'android', 'web'])('follows the note on %s', (os) => {
     platform.OS = os
     expect(canAddNotePhotos(true)).toBe(true)
     expect(canAddNotePhotos(false)).toBe(false)
-  })
-
-  it('is never on the web, which has no photo sync', () => {
-    platform.OS = 'web'
-    expect(canAddNotePhotos(true)).toBe(false)
   })
 })

@@ -4,6 +4,7 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { Asset } from 'expo-asset'
 import { Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter'
 import type { EditorFonts } from '@/components/richText/editor/editorProtocol'
+import { getWebPhotoBlob } from '@/lib/files/webPhotoStore'
 import { noteImagePath } from '@/lib/richText/noteImages'
 
 const IMAGE_SIDE = 1200
@@ -11,7 +12,9 @@ const IMAGE_SIDE = 1200
 async function inlineImage(id: string): Promise<string> {
   if (Platform.OS === 'web') {
     const { blobToDataUrl, renderJpeg } = await import('@/lib/files/webImages')
-    const { blob } = await renderJpeg(noteImagePath(id), {
+    const source = await getWebPhotoBlob(id)
+    if (!source) throw new Error('This browser does not hold the photo')
+    const { blob } = await renderJpeg(source, {
       maxSide: IMAGE_SIDE,
       quality: 0.7,
     })

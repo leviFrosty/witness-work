@@ -26,6 +26,17 @@ type ServerSupporterState = {
 
 let expiryTimer: ReturnType<typeof setTimeout> | null = null
 
+const expiryListeners = new Set<() => void>()
+
+export const onServerSupporterExpired = (
+  listener: () => void
+): (() => void) => {
+  expiryListeners.add(listener)
+  return () => {
+    expiryListeners.delete(listener)
+  }
+}
+
 const MAX_TIMER_MS = 2 ** 31 - 1
 
 const deriveAndArmExpiry = (
@@ -40,9 +51,10 @@ const deriveAndArmExpiry = (
     expiryTimer = setTimeout(
       () => {
         const state = useServerSupporter.getState()
-        useServerSupporter.setState(
-          deriveAndArmExpiry(state.entry, state.account)
-        )
+        const derived = deriveAndArmExpiry(state.entry, state.account)
+        useServerSupporter.setState(derived)
+        if (expiryTimer === null)
+          for (const listener of expiryListeners) listener()
       },
       Math.min(next - now, MAX_TIMER_MS)
     )

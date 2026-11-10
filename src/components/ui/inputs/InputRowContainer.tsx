@@ -22,7 +22,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
-import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import { hiddenFromScreenReaders } from '@/lib/screenReader'
 
 export interface InputRowContainerProps {
@@ -201,7 +201,7 @@ const InputRowContainer: React.FC<
         {
           flexDirection: 'row',
           borderColor: theme.colors.border,
-          borderBottomWidth: lastInSection ? 0 : 1,
+          borderBottomWidth: 0,
           minHeight: inputLayout.rowMinHeight,
           paddingTop: inputLayout.rowPadding,
           paddingBottom: inputLayout.rowPadding,
@@ -255,9 +255,11 @@ const InputRowContainer: React.FC<
                   ? 'auto'
                   : '48%',
             maxWidth:
-              !hasLabelContent || controlWidth !== 'compact' || stack
+              !hasLabelContent || controlWidth === 'full' || stack
                 ? '100%'
-                : inputLayout.controlMaxWidth,
+                : controlWidth === 'auto'
+                  ? '65%'
+                  : inputLayout.controlMaxWidth,
             flexShrink: 1,
 
             ...(stack &&
@@ -274,6 +276,7 @@ const InputRowContainer: React.FC<
         {children}
       </View>
       {onRowPress && <HoverTint visible={hovered} />}
+      {!lastInSection && <RowSeparator hasIcon={!!leftIcon} />}
     </View>
   )
 

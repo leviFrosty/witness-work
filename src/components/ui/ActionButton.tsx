@@ -27,7 +27,7 @@ const ActionButton: React.FC<PropsWithChildren<Props>> = ({
           backgroundColor: disabled
             ? theme.colors.accentAlt
             : theme.colors.accent,
-          borderRadius: theme.numbers.borderRadiusSm,
+          borderRadius: 999,
           paddingVertical: 12,
           paddingHorizontal: 24,
           flexDirection: 'row',

@@ -36,7 +36,7 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 3. The one device to use and the exact `wwv up` line. Another device gets its own brief, after this one is down. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`.
 4. Setup (`seed`, `flag`, `nav`), then the user path to drive, with labels or testIDs and the expected result of each step.
 5. The exact `wwv eval` read-backs and the values you expect.
-6. The screens to capture, with `wwv shot <name>`, plus dark mode or iPad where needed.
+6. The screens to capture, with `wwv shot <name>`, plus iPad where needed. One appearance only: don't ask for light and dark copies of a screen.
 7. "Don't edit files, commit or change git state. Don't go beyond the brief: report anything else you notice instead of chasing it. Leave the device up." (Then you run `wwv down` once you've read the report and need no re-run.)
 
 **The subagent** follows the brief and doesn't improvise around the harness:
@@ -206,7 +206,8 @@ Proof standards:
 - Capture the action and the resulting state: a settled diff or `wait text`, plus a screenshot. A screenshot alone isn't proof of an interaction.
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
-- New surfaces and color changes need light and dark: `wwv ad settings appearance dark` (or `light`), then `wwv shot`.
+- Capture in one appearance, the one the device is already in. Don't shoot screens in both light and dark. Switch (`wwv ad settings appearance dark` or `light`) only for a color that differs between the two, and capture just that screen.
+- When a change touches a card, section, sheet or control shape, or its padding, screenshot every screen that uses it and check the corners: no title, row or control crowding a rounded corner or the top edge (see Rounded containers in `agents.md`).
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
 - Report what you verified, on which devices, the artifact paths, what you couldn't verify, and which devices you skipped on purpose, with the reason.
 

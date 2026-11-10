@@ -13,7 +13,7 @@ export type ProfileCardDetail = {
   text: string
 }
 
-const CARD_PADDING_V = 14
+const CARD_PADDING_V = 18
 const CARD_PADDING_H = 16
 
 export default function ProfileCardLayout({

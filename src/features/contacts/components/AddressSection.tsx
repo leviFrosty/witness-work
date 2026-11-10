@@ -47,7 +47,7 @@ const ModeSegment: React.FC<{
           gap: 8,
           minHeight: 44,
           paddingVertical: 8,
-          borderRadius: theme.numbers.borderRadiusSm,
+          borderRadius: 999,
           backgroundColor: active
             ? theme.colors.backgroundLighter
             : 'transparent',
@@ -242,10 +242,8 @@ export default function AddressSection({
               marginHorizontal: 12,
               marginBottom: 8,
               padding: 3,
-              borderRadius: theme.numbers.borderRadiusSm + 3,
+              borderRadius: stackModes ? 26 : 999,
               backgroundColor: theme.colors.background,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
               gap: 3,
             }}
           >

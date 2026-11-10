@@ -183,9 +183,10 @@ const Section: React.FC<PropsWithChildren<Props>> = ({
         {
           borderColor: theme.colors.border,
           borderWidth: inputLayout.sectionBorderWidth,
-          borderRadius: theme.numbers.borderRadiusLg,
+          borderRadius: inputLayout.sectionRadius,
           backgroundColor: theme.colors.backgroundLighter,
           padding: 0,
+          borderCurve: 'continuous',
           overflow: 'hidden',
         },
         style,

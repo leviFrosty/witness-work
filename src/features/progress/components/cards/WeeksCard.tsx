@@ -37,7 +37,7 @@ export default function WeeksCard({ month, year, size }: ProgressCardProps) {
 
   return (
     <Card
-      style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, gap: 8 }}
+      style={{ flex: 1, paddingVertical: 18, paddingHorizontal: 18, gap: 8 }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <LucideIcon icon={ChartIcon} size={13} color={theme.colors.accent} />

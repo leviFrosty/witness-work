@@ -94,12 +94,13 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   const resolvedStyle = StyleSheet.flatten([
     {
       minHeight: inputLayout.controlMinHeight,
-      borderWidth: 1,
+      borderWidth: 0,
       borderStyle: 'solid',
-      borderRadius: theme.numbers.borderRadiusMd,
+      borderRadius: rest.multiline ? inputLayout.controlRadius : 999,
+      borderCurve: 'continuous',
       borderColor: error || invalid ? theme.colors.error : theme.colors.border,
       backgroundColor: theme.colors.background,
-      paddingHorizontal: 12,
+      paddingHorizontal: inputLayout.controlPadding,
       paddingVertical: 10,
       fontFamily: theme.fonts.regular,
       fontSize: theme.fontSize('md'),
@@ -137,7 +138,7 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   const borderWidth =
     error || invalid
       ? 1
-      : (callerProps.borderWidth ?? resolvedStyle.borderWidth ?? 1)
+      : (callerProps.borderWidth ?? resolvedStyle.borderWidth ?? 0)
 
   const accessibleLabel = rest.accessibilityLabel ?? rest['aria-label']
   const drawsPlaceholder =

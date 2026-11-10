@@ -82,6 +82,7 @@ const Select = <T,>({
           plain
             ? {
                 minHeight: 44,
+                marginVertical: -6,
                 paddingVertical: enlarged ? 8 : undefined,
                 gap: 6,
                 flexDirection: 'row',
@@ -90,10 +91,9 @@ const Select = <T,>({
               }
             : {
                 backgroundColor: theme.colors.background,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-                paddingHorizontal: 12,
-                borderRadius: theme.numbers.borderRadiusMd,
+                paddingHorizontal: inputLayout.controlPadding,
+                borderRadius: 999,
+                borderCurve: 'continuous',
                 minHeight: inputLayout.controlMinHeight,
                 paddingVertical: enlarged ? 8 : undefined,
                 gap: 8,

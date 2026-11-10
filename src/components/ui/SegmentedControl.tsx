@@ -61,11 +61,7 @@ function PillSegmentedControl<T extends string>({
 }: PillVariantProps<T>) {
   const theme = useTheme()
   const field = size === 'field'
-  const radius = field
-    ? theme.numbers.borderRadiusMd
-    : size === 'sm'
-      ? 999
-      : theme.numbers.borderRadiusXl
+  const radius = 999
   const inset = size === 'sm' ? 2 : field ? 3 : 4
   const labelFontSize = field ? theme.fontSize('md') : size === 'sm' ? 12 : 14
 
@@ -80,11 +76,7 @@ function PillSegmentedControl<T extends string>({
           gap: size === 'sm' ? 2 : 4,
           opacity: disabled ? 0.5 : 1,
         },
-        field && {
-          minHeight: 44,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-        },
+        field && { minHeight: 44 },
         style,
       ]}
       {...props}

@@ -33,7 +33,8 @@ Every agent's simulators, emulators and native builds share one Mac mini, and ev
 - **Add a device only where the change could break.** Decide for yourself, and say in the report what you skipped and why. When the user asks for a platform or device, check it.
   - **Android** when the change has Android-specific code: `Platform.OS` branches, `.android.*` files, Android native modules, `android/`, Gradle, or a native API, permission, notification, purchase, or map behavior implemented separately for Android. It also covers a bug that only shows on Android. Shared JS UI that works on iOS doesn't need an Android pass. The emulator is the costliest device on this Mac.
   - **iPad, iPhone Duo, iPad mini, iPhone SE** when the change reworks a screen's layout or how it adapts to size: columns, splits, sidebars, bars, `useAdaptiveLayout`, `FoldSplit`, `FoldPane`. Check the one or two sizes the change could break. Keep the full sweep for large layout work.
-  - **Dark mode** for new surfaces and color changes.
+  - **One appearance.** Verify and capture in whichever appearance the simulator is already in. Don't repeat screens in both light and dark; switch only when the change is a color that differs between them, and then capture just that screen.
+  - **Rounded containers** when a change touches a card, section, sheet, or control shape or its padding: check the screens that use it for content crowding the corners (see [Rounded containers](#rounded-containers)).
 - **One device at a time.** Run `wwv down` on one device before you bring up the next, unless the feature needs two at once (Buddies, Shared Cars).
 - **Prove the change, not the app.** Don't turn verification into an audit. Note unrelated problems you spot in the report instead of fixing them. After a follow-up that only changes copy, spacing, or a review nit, re-check with unit tests or one screenshot, not a full re-drive.
 - **Delegate the driving to a cheaper subagent.** Every tap, snapshot and screenshot re-reads your whole conversation, so driving the app from a long thread is our biggest token cost. Hand the device run to a subagent on the cheapest model your harness offers (for example Claude Haiku). You still decide what to prove and judge the evidence. The skill's [Delegate the drive](./.agents/skills/verify-witnesswork/SKILL.md#delegate-the-drive) says what to hand off, what to keep, and how to brief it.
@@ -72,6 +73,16 @@ iPhone Duo has a compact outer display and a regular-width inner one. On both, t
 - **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.
 - **Test:** when a change reworks layout or how a screen adapts, run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). After large layout work, also check `--ipad`, `--ipad-mini` and `--se` for regressions. After smaller work, check only the size it could break.
 
+## Rounded containers
+
+Cards, sections and sheets use large continuous corners (`inputLayout.sectionRadius`, 26pt), and controls inside them are capsules. Follow Apple's [new design system guidance](https://developer.apple.com/videos/play/wwdc2025/356/): nested shapes are concentric, and content must not look pinched into a corner.
+
+- **Concentric radii.** A shape nested in a rounded container takes the container's radius minus the padding between them (26pt container, 12pt padding → 14pt inner radius), or is a capsule. Never give a nested shape a larger radius than its container, or the same radius at a small inset.
+- **Keep content off the corners.** In a 26pt container, text, icons and controls stay at least 16pt from the top and bottom edges and 16pt from the sides. A title or first row needs about 18pt above it. `Card`'s default padding (20pt) and `Section` rows (56pt tall, 12pt vertical padding) already do this; a card that sets `padding: 0` and pads its own children has to as well.
+- **Don't shrink padding to fit.** If content doesn't fit, wrap it, stack it, or move it out. Don't cut the padding back toward the old 10–14pt values.
+- **Small containers get small radii.** A tile or chip shorter than about 52pt uses `borderRadiusMd` or a capsule, not the section radius.
+- **Check it** on every screen that uses the shape you changed, including a card's first and last rows, headers, and footers. Look at the corners in a screenshot: if a glyph or line of text sits closer to the edge than the curve is deep, it is too tight.
+
 ## Touch targets
 
 Small tap targets are the UX bug that keeps coming back, usually as a bare 16–24pt chevron or X with a few points of `hitSlop`. Follow Apple's [Accessibility guidance](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls) and Material's 48dp target.
@@ -101,7 +112,7 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
 - **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table in the PR body. A brand-new screen has no before; label it "New screen".
 - **Capture on the iPhone simulator.** Add Android, iPad or Duo pairs only for devices you verified anyway, and only where the change looks different there.
 - **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree only when it can reuse a cached native build (a JS-only diff). Otherwise, post AFTER only and say so.
-- **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Add dark mode only where the change looks different there.
+- **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Use one appearance for every screenshot; never post the same screen in both light and dark.
 - **Make them readable.** Stage sample data so every changed section has content, since an empty state hides the change. Turn off the floating dev Tools button (dev menu → Tools button). Shrink images to about 1,000 px tall (`sips -Z 1000`). Use made-up names and data; the repo is public.
 - **Uploading PR images.** Reference local files in the body (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them like browser drag-and-drop and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder. Unmatched files get appended to the end instead. Afterwards, check `gh pr view` for leftover local paths. Don't use cookie-based upload tools. For alternatives, see [`docs/research/pr-screenshot-uploads.md`](./docs/research/pr-screenshot-uploads.md).
 - **Say what's missing.** If you can't capture a changed screen (Android-only, missing data, no pointer), say so instead of leaving it out.

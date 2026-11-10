@@ -28,10 +28,10 @@ const AnnualGoalSelector = () => {
   return (
     <View>
       <Select
+        variant='plain'
         data={items}
         onChange={({ value }) => set({ userSpecifiedHasAnnualGoal: value })}
         value={userSpecifiedHasAnnualGoal}
-        style={{ marginBottom: 10 }}
       />
     </View>
   )

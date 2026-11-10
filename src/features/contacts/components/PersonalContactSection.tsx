@@ -193,9 +193,8 @@ export default function PersonalContactSection({
                       customCaret={<IconButton icon={ChevronDownIcon} />}
                       phoneInputStyles={{
                         container: {
-                          borderWidth: 1,
-                          borderColor: theme.colors.border,
-                          borderRadius: theme.numbers.borderRadiusMd,
+                          borderWidth: 0,
+                          borderRadius: 22,
                           backgroundColor: theme.colors.background,
                           minHeight: 44,
                           overflow: 'hidden',
@@ -203,8 +202,8 @@ export default function PersonalContactSection({
                         },
                         flagContainer: {
                           backgroundColor: theme.colors.card,
-                          borderRadius: theme.numbers.borderRadiusSm,
-                          paddingHorizontal: 10,
+                          borderRadius: 0,
+                          paddingHorizontal: 12,
                           minWidth: 88,
                           ...(wrapPhone && {
                             height: 'auto',

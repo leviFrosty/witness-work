@@ -14,9 +14,10 @@ const InputRowSelect = <T extends { label: string; value: unknown }>(
 ) => {
   const { selectProps, ...rest } = props
   return (
-    <InputRowContainer {...rest}>
+    <InputRowContainer controlWidth='auto' {...rest}>
       <View style={{ flex: 1 }}>
         <Select
+          variant='plain'
           {...selectProps}
           accessibilityLabel={selectProps.accessibilityLabel ?? rest.label}
         />

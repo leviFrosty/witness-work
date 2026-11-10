@@ -46,9 +46,11 @@ const PersonalizationPreferencesSection = () => {
           <InputRowContainer
             label={i18n.t('colorScheme')}
             style={{ justifyContent: 'space-between' }}
+            controlWidth='auto'
           >
             <View style={{ flex: 1 }}>
               <Select
+                variant='plain'
                 data={darkModeOptions}
                 value={colorScheme}
                 onChange={({ value }) => set({ colorScheme: value })}
@@ -67,10 +69,12 @@ const PersonalizationPreferencesSection = () => {
               })
             )}
             style={{ justifyContent: 'space-between' }}
+            controlWidth='auto'
             lastInSection
           >
             <View style={{ flex: 1 }}>
               <Select
+                variant='plain'
                 data={fontSizeOffsetOptions}
                 value={fontSizeOffset}
                 onChange={({ value }) => set({ fontSizeOffset: value })}

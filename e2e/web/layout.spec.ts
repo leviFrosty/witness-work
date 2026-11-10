@@ -105,6 +105,58 @@ test('Home scrolls by a touch swipe', async ({ app, browserName }) => {
   expect(box.y + box.height).toBeLessThanOrEqual(size.height)
 })
 
+for (const page of [
+  { name: 'Profile', row: null, last: 'Advanced' },
+  {
+    name: 'Account',
+    row: 'Account',
+    last: 'Signing out erases your account key',
+  },
+]) {
+  test(`Settings' ${page.name} page scrolls to its end in a short window`, async ({
+    app,
+    shot,
+  }) => {
+    test.skip(
+      isPhone(app),
+      'checked where Settings shows a page beside its list'
+    )
+    const size = { width: app.viewportSize()!.width, height: 560 }
+    await app.setViewportSize(size)
+    await app.getByRole('button', { name: 'Settings', exact: true }).click()
+    if (page.row)
+      await app.getByRole('button', { name: page.row, exact: true }).click()
+    const last = app.getByText(page.last).filter({ visible: true }).first()
+    await expect(last).toBeAttached()
+
+    const pane = await last.evaluate((element) => {
+      for (let node = element.parentElement; node; node = node.parentElement)
+        if (/auto|scroll/.test(getComputedStyle(node).overflowY)) {
+          const { bottom } = node.getBoundingClientRect()
+          return { bottom, hidden: node.scrollHeight - node.clientHeight }
+        }
+      return null
+    })
+    expect(pane, 'the page has a scroll view').not.toBeNull()
+    expect(pane!.bottom, 'the scroll view ends inside the window').toBeLessThan(
+      size.height + 1
+    )
+    expect(
+      pane!.hidden,
+      'the page is taller than its scroll view'
+    ).toBeGreaterThan(0)
+
+    const box = (await last.boundingBox())!
+    await app.mouse.move(box.x + box.width / 2, size.height / 2)
+    for (let step = 0; step < 12; step++) {
+      await app.mouse.wheel(0, 500)
+      await app.waitForTimeout(150)
+    }
+    await expect(last).toBeInViewport({ ratio: 1 })
+    await shot(`settings-${page.name.toLowerCase()}-scrolled`)
+  })
+}
+
 test.describe('the note editor', () => {
   test.beforeEach(async ({ app }) => {
     await addContact(app, 'Sam Rivera')

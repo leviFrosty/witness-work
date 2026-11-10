@@ -162,7 +162,10 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   `HAT_ANCHOR_Y`, following the head's bob, mirrored and greyed with the pet; the first twelve are
   drawn 24 × 14 and moved down into it, the secret ones use its full height). A pet lying down
   (rolling over, or one that died) has no hat. No party, holiday, halo or wizard hats (JW
-  sensitivities below).
+  sensitivities below), and nothing that reads as one at this size: an up arrow on the cardboard box
+  looked like a cross and a starry dark dome on a gold band like a crown, so the box has a label and
+  the planetarium is a pale building. Show new hat art to someone who doesn't know its name before it
+  ships.
 
   **Big hats** (`BIG_HAT_IDS`, ADR 0044) draw on a 48 × 56 canvas with the brim on row 52
   (`art/hatCanvas.ts`), so they can rise far above the head: static art in `art/hatsPlain.ts`, frames

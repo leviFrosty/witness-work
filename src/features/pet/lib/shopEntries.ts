@@ -82,6 +82,8 @@ const SCENE_W = 180
 const SCENE_H = 100
 
 const HAT_RISE: Readonly<Record<string, number>> = {
+  dropped: 19,
+  train: 19,
   bowl: 22,
   mailbox: 19,
   cottage: 18,

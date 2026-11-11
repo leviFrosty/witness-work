@@ -21,7 +21,9 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const existingReport: TimeEntry | undefined = route.params?.existingReport
     ? JSON.parse(route.params.existingReport)
     : undefined
-  const editing = !!getReport(serviceReports, existingReport)
+  const [editing, setEditing] = useState(
+    () => !!getReport(serviceReports, existingReport)
+  )
   const [changed, setChanged] = useState(false)
   const allowLeave = useDiscardChangesGuard(changed)
 
@@ -51,6 +53,10 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
         noteDoc={route.params?.noteDoc}
         source='time_entry_form'
         onChangedChange={setChanged}
+        onEditingChange={setEditing}
+        onAddAnother={(date) =>
+          navigation.navigate('Add Time', { date: date.toISOString() })
+        }
         onDone={() => {
           const sessionStart = route.params?.timerSessionStart
           if (

@@ -10,7 +10,7 @@ import {
   type RecurringPlan,
 } from '@/lib/recurrence'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
-import type { DayPlan, TimeEntriesByYear } from '@/types/timeEntry'
+import type { DayPlan, TimeEntriesByYear, TimeEntry } from '@/types/timeEntry'
 
 export const ENTRY_DAYS_MAX = 7
 export const ENTRY_DAYS_MIN = 5
@@ -43,22 +43,29 @@ export const entryDays = (
   )
 }
 
+export const entriesOnDay = (
+  serviceReports: TimeEntriesByYear,
+  day: Date
+): TimeEntry[] => {
+  const key = localDayKey(day)
+  return getMonthsReports(serviceReports, day.getMonth(), day.getFullYear())
+    .filter((entry) => isCountableEntry(entry))
+    .filter((entry) => storedDayKey(entry.date) === key)
+}
+
 export const loggedMinutesOnDays = (
   serviceReports: TimeEntriesByYear,
   days: Date[]
 ): Map<string, number> => {
   const logged = new Map<string, number>()
   for (const day of days) {
-    const key = localDayKey(day)
-    const minutes = getMonthsReports(
-      serviceReports,
-      day.getMonth(),
-      day.getFullYear()
+    logged.set(
+      localDayKey(day),
+      entriesOnDay(serviceReports, day).reduce(
+        (total, entry) => total + entryMinutes(entry),
+        0
+      )
     )
-      .filter((entry) => isCountableEntry(entry))
-      .filter((entry) => storedDayKey(entry.date) === key)
-      .reduce((total, entry) => total + entryMinutes(entry), 0)
-    logged.set(key, minutes)
   }
   return logged
 }

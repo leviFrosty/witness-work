@@ -108,6 +108,9 @@ vi.mock('@/features/service-reports/components/DetailRow', () => ({
 vi.mock('@/features/service-reports/components/EntryDayPicker', () => ({
   default: 'EntryDayPicker',
 }))
+vi.mock('@/features/service-reports/components/DayEntryList', () => ({
+  default: 'DayEntryList',
+}))
 vi.mock('@/features/service-reports/components/DayPlanSuggestion', () => ({
   default: 'DayPlanSuggestion',
 }))
@@ -123,6 +126,7 @@ vi.mock('@/components/TypeSelectorRow', () => ({
   STANDARD_TYPE_VALUE: 'standard',
 }))
 
+import { Alert } from 'react-native'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 import { localDayKey } from '@/lib/normalizeDate'
 let renderer: ReactTestRenderer
@@ -135,6 +139,9 @@ async function pressSave() {
 }
 const suggestions = () =>
   renderer.root.findAllByType('DayPlanSuggestion' as never)
+const dayEntries = () => renderer.root.findByType('DayEntryList' as never)
+const duration = () => renderer.root.findByType('DurationInput' as never)
+const logged = { id: 'logged', hours: 1, minutes: 0, date: new Date() }
 beforeEach(() => {
   mocks.planned.mockReturnValue(undefined)
   mocks.logged.mockReturnValue(new Map())
@@ -321,5 +328,150 @@ describe('Time Entry submission', () => {
       )
     })
     expect(suggestions()).toHaveLength(0)
+  })
+})
+
+describe("Editing the chosen day's entries from Add Time", () => {
+  it('opens an entry in the form, saves it, and returns to the new entry', async () => {
+    const editing = vi.fn()
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm
+          source='time_entry_form'
+          hours={2}
+          onDone={mocks.done}
+          onEditingChange={editing}
+        />
+      )
+    })
+    expect(dayEntries().props.editing).toBeUndefined()
+    await act(async () => dayEntries().props.onSelect(logged))
+    expect(dayEntries().props.editing).toMatchObject({ id: 'logged' })
+    expect(saveLabel()).toBe('save')
+    expect(duration().props.hours).toBe(1)
+    expect(editing).toHaveBeenLastCalledWith(true)
+
+    await act(async () => duration().props.setDuration(3, 0))
+    await pressSave()
+    expect(mocks.update).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: 'logged', hours: 3 })
+    )
+    expect(mocks.capture).toHaveBeenCalledWith(
+      'time_entry_updated',
+      expect.objectContaining({ source: 'add_time_day_entry' })
+    )
+    expect(mocks.done).not.toHaveBeenCalled()
+    expect(editing).toHaveBeenLastCalledWith(false)
+    expect(saveLabel()).toBe('timeForm_addDuration')
+    expect(duration().props.hours).toBe(2)
+
+    await pressSave()
+    expect(mocks.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: 'new-entry', hours: 2 })
+    )
+    expect(mocks.done).toHaveBeenCalledOnce()
+  })
+
+  it('closes an unchanged entry when its row or its day is tapped again', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' onDone={mocks.done} />
+      )
+    })
+    await act(async () => dayEntries().props.onSelect(logged))
+    await act(async () => dayEntries().props.onSelect(logged))
+    expect(saveLabel()).toBe('addTime')
+    expect(Alert.alert).not.toHaveBeenCalled()
+
+    await act(async () => dayEntries().props.onSelect(logged))
+    await act(async () =>
+      renderer.root
+        .findByType('EntryDayPicker' as never)
+        .props.setDate(logged.date, 'day')
+    )
+    expect(saveLabel()).toBe('addTime')
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it('asks before dropping changes to an entry', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' onDone={mocks.done} />
+      )
+    })
+    await act(async () => dayEntries().props.onSelect(logged))
+    await act(async () => duration().props.setDuration(3, 0))
+    await act(async () => dayEntries().props.onSelect(logged))
+    expect(saveLabel()).toBe('save')
+    const [title, , buttons] = vi.mocked(Alert.alert).mock.calls[0]
+    expect(title).toBe('discardChanges')
+    await act(async () => buttons?.[1].onPress?.())
+    expect(saveLabel()).toBe('addTime')
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it('returns to the new entry when the open entry is deleted from the list', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='time_entry_form' onDone={mocks.done} />
+      )
+    })
+    await act(async () => dayEntries().props.onSelect(logged))
+    await act(async () => dayEntries().props.onDeleted(logged))
+    expect(saveLabel()).toBe('addTime')
+    expect(dayEntries().props.editing).toBeUndefined()
+  })
+
+  it('lists no entries while editing an entry opened from elsewhere', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm
+          source='time_entry_form'
+          existingReport={logged}
+          onDone={mocks.done}
+        />
+      )
+    })
+    expect(renderer.root.findAllByType('DayEntryList' as never)).toHaveLength(0)
+    await pressSave()
+    expect(mocks.done).toHaveBeenCalledOnce()
+  })
+})
+
+describe('Add Another', () => {
+  it('offers to add another entry on the same day after one is added', async () => {
+    const another = vi.fn()
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm
+          source='time_entry_form'
+          hours={1}
+          onDone={mocks.done}
+          onAddAnother={another}
+        />
+      )
+    })
+    const picked = new Date(2026, 10, 8, 9)
+    await act(async () =>
+      renderer.root
+        .findByType('EntryDayPicker' as never)
+        .props.setDate(picked, 'day')
+    )
+    await pressSave()
+    const { action } = mocks.toast.mock.calls[0][1]
+    expect(action.label).toBe('timeForm_addAnother')
+    action.onPress()
+    expect(another).toHaveBeenCalledExactlyOnceWith(picked)
+    expect(mocks.capture).toHaveBeenCalledWith('time_entry_add_another')
+  })
+
+  it('offers nothing where the form stays on its day', async () => {
+    await act(async () => {
+      renderer = create(
+        <TimeEntryForm source='day_sheet' hours={1} onDone={mocks.done} />
+      )
+    })
+    await pressSave()
+    expect(mocks.toast.mock.calls[0][1].action).toBeUndefined()
   })
 })

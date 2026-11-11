@@ -379,6 +379,11 @@
   "timeForm_usePlanned": "Use planned time, {{value}}",
   "timeForm_otherDateHint": "Opens a calendar for any other day",
   "timeForm_collapse": "Collapse",
+  "timeForm_addAnother": "Add Another",
+  "timeForm_moreEntries": {
+    "one": "Show {{count}} more",
+    "other": "Show {{count}} more"
+  },
   "updatedPlan": "Updated Plan",
   "editPlan": "Edit Plan",
   "recurrence": "Recurrence",

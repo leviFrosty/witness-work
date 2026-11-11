@@ -13,7 +13,9 @@ import { SHELF_IDS, type ShelfId } from '@/types/pet'
 export { SHELF_IDS }
 export type { ShelfId }
 
-const SHIFT_X = -58
+export const SHELF_SHIFT_X = -58
+
+const SHIFT_X = SHELF_SHIFT_X
 
 const WHITE = rgb('#ffffff')
 
@@ -188,6 +190,172 @@ const ITEMS: Readonly<Record<ShelfId, (d: Draw) => void>> = {
     })
     ell(136, 30, 2, 2, rgb('#6a3a6a'))
     ell(164, 30, 2, 2, rgb('#6a3a6a'))
+  },
+  hourglass({ rect, dot }) {
+    const blue = rgb('#3f6b8a')
+    const ochre = rgb('#c9a24a')
+    const red = rgb('#8e3b37')
+    const paper = rgb('#f2e8d0')
+    const paperShade = rgb('#d9cba8')
+    rect(155, 29, 169, 32, blue)
+    rect(156, 30, 169, 31, paper)
+    rect(155, 29, 169, 30, mix(blue, WHITE, 0.25))
+    rect(155, 31, 169, 32, dim(blue, 0.75))
+    rect(157, 26, 168, 29, ochre)
+    rect(157, 27, 167, 28, paper)
+    rect(157, 26, 168, 27, mix(ochre, WHITE, 0.3))
+    rect(159, 23, 167, 26, red)
+    rect(160, 24, 167, 25, paperShade)
+    rect(159, 23, 167, 24, mix(red, WHITE, 0.25))
+    dot(163, 25, rgb('#d4a640'))
+    dot(163, 26, rgb('#b0413e'))
+    dot(163, 27, rgb('#b0413e'))
+  },
+  tea(d) {
+    const { rect, ell, dot } = d
+    const china = rgb('#a9cdb6')
+    const light = rgb('#d3e9d8')
+    const shade = rgb('#7ca88c')
+    const deep = rgb('#5d8a70')
+    const band = rgb('#3d6db3')
+    const wood = rgb('#8a5a36')
+    const woodDark = rgb('#6e4529')
+    rect(132, 31, 171, 32, woodDark)
+    rect(133, 31, 170, 32, wood)
+    dot(132, 30, woodDark)
+    dot(170, 30, woodDark)
+
+    for (const [x, y] of [
+      [136, 22],
+      [135, 23],
+      [134, 24],
+      [134, 25],
+      [134, 26],
+      [135, 27],
+      [136, 28],
+    ] as const)
+      dot(x, y, deep)
+    line(d, 149, 27, 153, 22, shade, 2.6)
+    line(d, 149, 26, 153, 21, china, 1.8)
+    dot(154, 20, china)
+    dot(154, 21, shade)
+    dot(153, 20, light)
+    ell(143.5, 25.5, 6.6, 5.4, shade)
+    ell(143, 25, 6.2, 5, china)
+    ellBand(d, 143.5, 25.5, 6.6, 5.4, 26, 27, band)
+    ellBand(d, 143.5, 25.5, 6.6, 5.4, 27, 28, mix(band, WHITE, 0.45))
+    ell(141, 23, 2.4, 1.5, light)
+    dot(139, 25, light)
+    rect(140, 30, 147, 31, deep)
+    rect(140, 19, 147, 21, shade)
+    rect(140, 19, 147, 20, light)
+    rect(139, 20, 148, 21, china)
+    rect(143, 17, 145, 19, band)
+    dot(143, 17, mix(band, WHITE, 0.45))
+
+    const cup = (x: number) => {
+      rect(x - 1, 30, x + 7, 31, light)
+      rect(x + 4, 30, x + 7, 31, shade)
+      rect(x, 25, x + 6, 29, china)
+      rect(x + 1, 29, x + 5, 30, china)
+      rect(x + 5, 26, x + 6, 29, shade)
+      dot(x + 4, 29, shade)
+      rect(x, 26, x + 1, 28, light)
+      rect(x, 25, x + 6, 26, light)
+      rect(x + 1, 25, x + 5, 26, rgb('#a8643a'))
+      rect(x, 27, x + 6, 28, band)
+      dot(x + 6, 26, deep)
+      dot(x + 7, 27, deep)
+      dot(x + 6, 28, deep)
+    }
+    cup(155)
+    cup(164)
+  },
+  gramophone(d) {
+    const { rect, ell, dot } = d
+    const wood = rgb('#7a4a2a')
+    const woodLight = rgb('#a8703f')
+    const woodDark = rgb('#57331c')
+    const panel = rgb('#8f5a34')
+    const brass = rgb('#d2a544')
+    const brassDark = rgb('#9a7226')
+    const brassDeep = rgb('#6a4a14')
+    const shine = rgb('#f6e08a')
+    const vinyl = rgb('#26221e')
+
+    line(d, 152, 25.4, 148.6, 21.6, brassDark, 3)
+    line(d, 151.4, 25, 148.2, 21.2, brass, 1.8)
+    ell(143.6, 17.1, 6.5, 6.6, brassDark)
+    ell(143, 16.5, 6.2, 6.3, brass)
+    ell(142.7, 16.2, 4.6, 4.8, brassDark)
+    ell(143.4, 17, 3.1, 3.3, brassDeep)
+    ell(144.1, 17.7, 1.5, 1.6, rgb('#3a2a10'))
+    for (const a of [175, 250, 325, 55]) {
+      const r = (a * Math.PI) / 180
+      line(
+        d,
+        143.5 + 2.4 * Math.cos(r),
+        17.1 + 2.5 * Math.sin(r),
+        143 + 5 * Math.cos(r),
+        16.5 + 5.1 * Math.sin(r),
+        brass
+      )
+    }
+    for (let a = 140; a <= 300; a += 5) {
+      const r = (a * Math.PI) / 180
+      dot(143 + 5.8 * Math.cos(r), 16.5 + 5.9 * Math.sin(r), shine)
+    }
+
+    rect(149, 26, 170, 32, wood)
+    rect(149, 26, 170, 27, woodLight)
+    rect(149, 31, 170, 32, woodDark)
+    rect(169, 27, 170, 31, woodDark)
+    rect(152, 28, 167, 30, panel)
+    rect(152, 28, 167, 29, woodDark)
+    dot(150, 27, brass)
+    dot(168, 27, brass)
+    dot(150, 30, brass)
+    dot(168, 30, brass)
+    rect(170, 28, 172, 29, brassDark)
+    dot(172, 27, brass)
+    dot(172, 26, brass)
+    dot(171, 26, woodLight)
+
+    ell(159.5, 24.6, 8.6, 2.3, vinyl)
+    rect(152, 25, 168, 26, dim(vinyl, 0.75))
+    rect(157, 24, 163, 25, rgb('#c0463a'))
+    dot(159, 24, rgb('#f2e8d0'))
+    rect(167, 21, 169, 26, brassDark)
+    rect(167, 21, 169, 22, brass)
+    line(d, 167, 22, 163, 23.4, brass)
+    dot(162, 24, shine)
+  },
+  volcano({ rect, ell, dot }) {
+    const grass = rgb('#7aa857')
+    const grassDark = rgb('#5a8440')
+    const card = rgb('#b98a5a')
+    const tree = rgb('#3f7a3a')
+    const treeLight = rgb('#5e9a4a')
+    const trunk = rgb('#6e4529')
+    const paper = rgb('#f2e8d0')
+    rect(132, 30, 170, 32, card)
+    rect(133, 30, 169, 31, grass)
+    rect(133, 31, 169, 32, grassDark)
+    for (const x of [136, 141, 160, 166]) dot(x, 30, mix(grass, WHITE, 0.3))
+
+    rect(134, 27, 135, 30, trunk)
+    rect(132, 23, 138, 27, paper)
+    rect(132, 26, 138, 27, rgb('#d9cba8'))
+    rect(133, 24, 137, 25, rgb('#9c8f74'))
+    dot(133, 25, rgb('#c0463a'))
+    dot(135, 25, rgb('#9c8f74'))
+    dot(136, 25, rgb('#9c8f74'))
+
+    rect(166, 28, 167, 30, trunk)
+    ell(166.5, 26, 2.2, 2.4, tree)
+    dot(165, 25, treeLight)
+    dot(166, 24, treeLight)
+    dot(165, 26, treeLight)
   },
   ship(d) {
     const { rect, dot } = d

@@ -16,6 +16,8 @@ import {
   type WallPattern,
 } from '@/types/pet'
 
+import { SCENE_W } from '../layout'
+
 export { WALL_COLOR_IDS, WALL_PATTERN_IDS }
 export type { WallColor, WallPattern }
 
@@ -50,11 +52,15 @@ type PatternPainter = (
   buf: PixelBuffer,
   shade: Rgb,
   light: Rgb,
-  speck: Rgb
+  speck: Rgb,
+  base: Rgb
 ) => void
 
-const TOP = 7
-const BOTTOM = 52
+export const WALL_TOP = 7
+export const WALL_BOTTOM = 52
+
+const TOP = WALL_TOP
+const BOTTOM = WALL_BOTTOM
 
 function eachWallPixel(
   buf: PixelBuffer,
@@ -93,6 +99,113 @@ function overlapOffset(
   return null
 }
 
+type Ridge = readonly (readonly [number, number])[]
+
+function ridgeHeights(points: Ridge): Float32Array {
+  const ys = new Float32Array(SCENE_W)
+  for (let x = 0; x < SCENE_W; x++) {
+    let i = 0
+    while (i < points.length - 2 && points[i + 1][0] <= x) i++
+    const [x0, y0] = points[i]
+    const [x1, y1] = points[i + 1]
+    ys[x] = y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)
+  }
+  return ys
+}
+
+export const MOUNTAIN_FAR = ridgeHeights([
+  [-6, 33],
+  [10, 25],
+  [22, 31],
+  [36, 21],
+  [50, 30],
+  [64, 25],
+  [74, 31],
+  [88, 21],
+  [100, 30],
+  [110, 22],
+  [118, 29],
+  [127, 17],
+  [138, 28],
+  [148, 23],
+  [158, 28],
+  [166, 20],
+  [173, 29],
+  [182, 19],
+  [190, 26],
+])
+
+const MOUNTAIN_MID = ridgeHeights([
+  [-5, 40],
+  [12, 35],
+  [28, 41],
+  [46, 34],
+  [62, 40],
+  [80, 36],
+  [96, 42],
+  [114, 35],
+  [130, 41],
+  [146, 34],
+  [164, 40],
+  [185, 36],
+])
+
+const MOUNTAIN_NEAR = (() => {
+  const ys = new Float32Array(SCENE_W)
+  for (let x = 0; x < SCENE_W; x++)
+    ys[x] = 46.5 + 2.4 * Math.sin(x * 0.07 + 0.6) + 1.3 * Math.sin(x * 0.19)
+  return ys
+})()
+
+const SNOW_LINE = 25.5
+
+export function wallTones(base: Rgb): {
+  readonly base: Rgb
+  readonly shade: Rgb
+  readonly light: Rgb
+  readonly bright: Rgb
+  readonly far: Rgb
+  readonly mid: Rgb
+  readonly near: Rgb
+  readonly deep: Rgb
+} {
+  const dark = wallDarkness(base)
+  const [shade, light] = patternTones(base)
+  return {
+    base,
+    shade,
+    light,
+    bright: mix(base, WHITE, 0.5 - 0.22 * dark),
+    far: dim(base, 0.9 - 0.06 * dark),
+    mid: dim(base, 0.8 - 0.08 * dark),
+    near: dim(base, 0.7 - 0.1 * dark),
+    deep: dim(base, 0.56 - 0.12 * dark),
+  }
+}
+
+const LEAF_MOTIF = [
+  '..x..',
+  '.xvx.',
+  '.xvx.',
+  'xxvxx',
+  'xxvxx',
+  'xxvxx',
+  '.xvx.',
+  '..v..',
+  '..v..',
+] as const
+
+const LEAF_LEAN = [
+  '....xx.',
+  '...xvxx',
+  '..xvxxx',
+  '.xxvxx.',
+  '.xvxx..',
+  'xxvx...',
+  '.vx....',
+  'v......',
+] as const
+
 const PATTERNS: Readonly<Record<WallPattern, PatternPainter>> = {
   plain(buf, shade, _light, speck) {
     const r = createRng(7)
@@ -120,6 +233,86 @@ const PATTERNS: Readonly<Record<WallPattern, PatternPainter>> = {
           plot(buf, x, y, light)
       }
     }
+  },
+  clouds(buf, shade, light) {
+    const r = createRng(97)
+    for (let i = 0; i < 26; i++) {
+      const x = Math.floor(r() * buf.width)
+      const y = TOP + 2 + Math.floor(r() * (BOTTOM - TOP - 4))
+      const w = 3 + Math.floor(r() * 5)
+      fillRect(buf, x, y, x + w, y + 1, light)
+      if (r() < 0.5) fillRect(buf, x + 1, y + 1, x + w - 1, y + 2, shade)
+    }
+  },
+  leaves(buf, shade, light) {
+    for (let row = -1; TOP + row * 12 < BOTTOM; row++) {
+      for (let col = -1; col * 16 < buf.width + 16; col++) {
+        const x0 = col * 16 + mod(row, 2) * 8 + 2
+        const y0 = TOP + 2 + row * 12
+        const kind = mod(col + row * 2, 3)
+        const motif = kind === 0 ? LEAF_MOTIF : LEAF_LEAN
+        const flip = kind === 2
+        motif.forEach((line, j) => {
+          for (let i = 0; i < line.length; i++) {
+            const cell = line[i]
+            if (cell === '.') continue
+            const x = x0 + (flip ? line.length - 1 - i : i)
+            const y = y0 + j
+            if (y >= TOP && y < BOTTOM)
+              plot(buf, x, y, cell === 'v' ? light : shade)
+          }
+        })
+      }
+    }
+  },
+  mountains(buf, _shade, light, _speck, base) {
+    const t = wallTones(base)
+    const r = createRng(211)
+    for (let x = 0; x < buf.width; x++) {
+      const far = MOUNTAIN_FAR[x]
+      const mid = MOUNTAIN_MID[x]
+      const near = MOUNTAIN_NEAR[x]
+      const rising = x > 0 && MOUNTAIN_FAR[x - 1] > far
+      for (let y = Math.max(TOP, Math.ceil(far)); y < BOTTOM; y++) {
+        if (y >= near) {
+          plot(buf, x, y, y - near < 1 ? t.mid : t.near)
+          continue
+        }
+        if (y >= mid) {
+          const slope = x > 0 && MOUNTAIN_MID[x - 1] > mid
+          const lit = y - mid < 1 || (slope && y - mid < 3 && (x + y) % 2 === 0)
+          plot(buf, x, y, lit ? t.far : t.mid)
+          continue
+        }
+        const depth = y - far
+        const cap = (SNOW_LINE - far) * 0.6 + ((x * 7) % 3 === 0 ? 1 : 0)
+        if (far < SNOW_LINE && depth < cap)
+          plot(buf, x, y, rising || depth < 1 ? t.bright : light)
+        else if (depth < 1) plot(buf, x, y, rising ? light : t.far)
+        else plot(buf, x, y, !rising && depth < 5 ? t.shade : t.far)
+      }
+    }
+    let x = 3
+    while (x < buf.width) {
+      const h = 4 + Math.floor(r() * 3)
+      const foot = Math.round(MOUNTAIN_NEAR[Math.min(x, buf.width - 1)])
+      for (let i = 0; i < h; i++) {
+        const half = Math.floor((i + 1) / 2)
+        fillRect(
+          buf,
+          x - half,
+          foot - h + i,
+          x + half + 1,
+          foot - h + i + 1,
+          t.deep
+        )
+      }
+      plot(buf, x, foot, t.deep)
+      x += 5 + Math.floor(r() * 9)
+    }
+  },
+  aurora(buf, shade, light, speck, base) {
+    PATTERNS.plain(buf, shade, light, speck, base)
   },
   waves(buf, shade, light) {
     eachWallPixel(buf, (x, y) => {
@@ -277,7 +470,7 @@ export function drawWall(
   const base = WALL_RGB[color]
   fillRect(buf, 0, 0, W, 52, base)
   const [shade, light, speck] = patternTones(base)
-  PATTERNS[pattern](buf, shade, light, speck)
+  PATTERNS[pattern](buf, shade, light, speck, base)
   fillRect(buf, 0, 0, W, 3, MOULDING)
   fillRect(buf, 0, 3, W, 4, MOULDING_SHADOW)
   fillRect(buf, 0, 52, W, 62, WAINSCOT)

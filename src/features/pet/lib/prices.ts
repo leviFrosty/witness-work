@@ -1,4 +1,8 @@
-import { RARE_HAT_IDS, UNCOMMON_HAT_IDS, type RoomItemId } from '@/types/pet'
+import {
+  RARE_ROOM_ITEMS,
+  UNCOMMON_ROOM_ITEMS,
+  type RoomItemId,
+} from '@/types/pet'
 
 export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'bed:hay': 100,
@@ -18,6 +22,26 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'shelf:fruit': 260,
   'lamp:stand': 280,
   'floor:tile': 300,
+  'shelf:hourglass': 620,
+  'shelf:tea': 660,
+  'wallPattern:clouds': 720,
+  'floor:grass': 780,
+  'bed:leafpile': 820,
+  'wallPattern:leaves': 840,
+  'lamp:stove': 880,
+  'floor:shore': 920,
+  'bed:pool': 960,
+  'lamp:streetlamp': 1000,
+  'shelf:gramophone': 1300,
+  'shelf:volcano': 1600,
+  'wallPattern:mountains': 1700,
+  'bed:hotspring': 1800,
+  'lamp:shadows': 2000,
+  'floor:koi': 2200,
+  'bed:flowerbed': 2400,
+  'wallPattern:aurora': 2500,
+  'floor:forest': 2600,
+  'lamp:campfire': 2800,
   'study:stool': 100,
   'study:bag': 120,
   'study:bookstand': 160,
@@ -25,6 +49,10 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'study:bookcase': 240,
   'study:table': 300,
   'study:armchair': 360,
+  'study:rocker': 700,
+  'study:typewriter': 760,
+  'study:lampdesk': 1400,
+  'study:fort': 1900,
   'hat:bow': 100,
   'hat:cap': 120,
   'hat:beanie': 140,
@@ -71,13 +99,9 @@ export const priceOf = (item: string): number | null =>
 
 export type ItemRarity = 'common' | 'uncommon' | 'rare'
 
-const RARE_ITEMS: ReadonlySet<string> = new Set(
-  RARE_HAT_IDS.map((hat) => `hat:${hat}`)
-)
+const RARE_ITEMS: ReadonlySet<string> = new Set(RARE_ROOM_ITEMS)
 
-const UNCOMMON_ITEMS: ReadonlySet<string> = new Set(
-  UNCOMMON_HAT_IDS.map((hat) => `hat:${hat}`)
-)
+const UNCOMMON_ITEMS: ReadonlySet<string> = new Set(UNCOMMON_ROOM_ITEMS)
 
 export const itemRarity = (item: string): ItemRarity =>
   RARE_ITEMS.has(item)

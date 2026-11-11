@@ -173,6 +173,19 @@ export const SECRET_HAT_IDS = [
   'tam',
 ] as const
 
+export const UNCOMMON_WALL_PATTERNS = ['clouds', 'leaves'] as const
+export const RARE_WALL_PATTERNS = ['mountains', 'aurora'] as const
+export const UNCOMMON_FLOOR_IDS = ['grass', 'shore'] as const
+export const RARE_FLOOR_IDS = ['koi', 'forest'] as const
+export const UNCOMMON_BED_IDS = ['leafpile', 'pool'] as const
+export const RARE_BED_IDS = ['hotspring', 'flowerbed'] as const
+export const UNCOMMON_SHELF_IDS = ['hourglass', 'tea'] as const
+export const RARE_SHELF_IDS = ['gramophone', 'volcano'] as const
+export const UNCOMMON_LAMP_IDS = ['stove', 'streetlamp'] as const
+export const RARE_LAMP_IDS = ['shadows', 'campfire'] as const
+export const UNCOMMON_STUDY_IDS = ['rocker', 'typewriter'] as const
+export const RARE_STUDY_IDS = ['lampdesk', 'fort'] as const
+
 export const WALL_COLORS = [
   'sand',
   'sage',
@@ -187,6 +200,8 @@ export const WALL_PATTERNS = [
   'dots',
   'stripes',
   'trellis',
+  ...UNCOMMON_WALL_PATTERNS,
+  ...RARE_WALL_PATTERNS,
   ...SECRET_WALL_PATTERNS,
 ] as const
 export type WallPattern = (typeof WALL_PATTERNS)[number]
@@ -195,6 +210,8 @@ export const FLOOR_IDS = [
   'stone',
   'brick',
   'tile',
+  ...UNCOMMON_FLOOR_IDS,
+  ...RARE_FLOOR_IDS,
   ...SECRET_FLOOR_IDS,
 ] as const
 export type FloorId = (typeof FLOOR_IDS)[number]
@@ -203,6 +220,8 @@ export const BED_IDS = [
   'hay',
   'basket',
   'cushion',
+  ...UNCOMMON_BED_IDS,
+  ...RARE_BED_IDS,
   ...SECRET_BED_IDS,
 ] as const
 export type BedId = (typeof BED_IDS)[number]
@@ -211,6 +230,8 @@ export const SHELF_IDS = [
   'books',
   'pottery',
   'fruit',
+  ...UNCOMMON_SHELF_IDS,
+  ...RARE_SHELF_IDS,
   ...SECRET_SHELF_IDS,
 ] as const
 export type ShelfId = (typeof SHELF_IDS)[number]
@@ -219,6 +240,8 @@ export const LAMP_IDS = [
   'lantern',
   'candle',
   'stand',
+  ...UNCOMMON_LAMP_IDS,
+  ...RARE_LAMP_IDS,
   ...SECRET_LAMP_IDS,
 ] as const
 export type LampId = (typeof LAMP_IDS)[number]
@@ -302,6 +325,8 @@ export const STUDY_IDS = [
   'bookcase',
   'table',
   'armchair',
+  ...UNCOMMON_STUDY_IDS,
+  ...RARE_STUDY_IDS,
 ] as const
 export type StudyId = (typeof STUDY_IDS)[number]
 export const SIGN_IDS = [
@@ -377,6 +402,26 @@ export const UNLOCK_ORDER: readonly RoomItemId[] = [
   'shelf:fruit',
   'lamp:stand',
   'floor:tile',
+  'shelf:hourglass',
+  'wallPattern:clouds',
+  'shelf:tea',
+  'floor:grass',
+  'bed:leafpile',
+  'wallPattern:leaves',
+  'lamp:stove',
+  'floor:shore',
+  'bed:pool',
+  'lamp:streetlamp',
+  'shelf:gramophone',
+  'wallPattern:mountains',
+  'shelf:volcano',
+  'bed:hotspring',
+  'lamp:shadows',
+  'floor:koi',
+  'bed:flowerbed',
+  'wallPattern:aurora',
+  'floor:forest',
+  'lamp:campfire',
 ]
 
 export const STUDY_UNLOCK_ORDER: readonly RoomItemId[] = [
@@ -387,6 +432,10 @@ export const STUDY_UNLOCK_ORDER: readonly RoomItemId[] = [
   'study:bookcase',
   'study:table',
   'study:armchair',
+  'study:rocker',
+  'study:typewriter',
+  'study:lampdesk',
+  'study:fort',
 ]
 
 export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
@@ -429,6 +478,31 @@ export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:train',
   'hat:dome',
   'hat:fig',
+]
+
+const itemsOf = <P extends UnlockableRoomPart>(
+  part: P,
+  options: readonly RoomOption<P>[]
+): RoomItemId[] => options.map((option) => roomItemId(part, option))
+
+export const UNCOMMON_ROOM_ITEMS: readonly RoomItemId[] = [
+  ...itemsOf('wallPattern', UNCOMMON_WALL_PATTERNS),
+  ...itemsOf('floor', UNCOMMON_FLOOR_IDS),
+  ...itemsOf('bed', UNCOMMON_BED_IDS),
+  ...itemsOf('shelf', UNCOMMON_SHELF_IDS),
+  ...itemsOf('lamp', UNCOMMON_LAMP_IDS),
+  ...itemsOf('study', UNCOMMON_STUDY_IDS),
+  ...itemsOf('hat', UNCOMMON_HAT_IDS),
+]
+
+export const RARE_ROOM_ITEMS: readonly RoomItemId[] = [
+  ...itemsOf('wallPattern', RARE_WALL_PATTERNS),
+  ...itemsOf('floor', RARE_FLOOR_IDS),
+  ...itemsOf('bed', RARE_BED_IDS),
+  ...itemsOf('shelf', RARE_SHELF_IDS),
+  ...itemsOf('lamp', RARE_LAMP_IDS),
+  ...itemsOf('study', RARE_STUDY_IDS),
+  ...itemsOf('hat', RARE_HAT_IDS),
 ]
 
 export type SecretRoomItemId =

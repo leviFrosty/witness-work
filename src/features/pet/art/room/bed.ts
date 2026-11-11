@@ -4,7 +4,9 @@ import {
   dim,
   fillEllipse,
   fillRect,
+  isOpaque,
   mix,
+  pixelAt,
   plot,
   readRgb,
   rgb,
@@ -1052,6 +1054,530 @@ function rubberDuck(buf: PixelBuffer, x: number, y: number): void {
   plot(buf, x + 2, y + 1, TUB.duckShade)
 }
 
+const WHITE = rgb('#ffffff')
+
+const LEAF = rgbPalette({
+  red: '#b3412b',
+  rust: '#c9602a',
+  orange: '#e08a2e',
+  amber: '#eeb03c',
+  gold: '#f4d060',
+  brown: '#8d5226',
+  deep: '#5c3118',
+  dusk: '#7a3d1c',
+  olive: '#a39a3c',
+  outline: '#42220f',
+})
+
+const LEAF_TONES: readonly Rgb[] = [
+  LEAF.red,
+  LEAF.rust,
+  LEAF.orange,
+  LEAF.amber,
+  LEAF.gold,
+  LEAF.brown,
+  LEAF.orange,
+  LEAF.amber,
+  LEAF.gold,
+  LEAF.rust,
+  LEAF.olive,
+  LEAF.red,
+]
+
+interface PileLeaf {
+  x: number
+  y: number
+  rx: number
+  ry: number
+  deg: number
+  tone: Rgb
+}
+
+const pileLump = (x: number) =>
+  Math.sin(x * 0.55) * 0.7 + Math.sin(x * 0.21 + 1.3) * 1.1
+
+export function leafPileTop(x: number): number {
+  const u = (x + 0.5 - 68) / 33
+  if (Math.abs(u) >= 1) return 91
+  return 91 - 18 * (1 - u * u) ** 0.6 + pileLump(x)
+}
+
+const leafFrontTop = (x: number) => {
+  const u = (x + 0.5 - 68) / 30
+  if (Math.abs(u) >= 1) return 95
+  return 93.5 - 12.5 * (1 - u * u) ** 0.6 - pileLump(x + 9) * 0.5
+}
+
+const leafFrontBottom = (x: number) => {
+  const u = (x + 0.5 - 68) / 30
+  return 92 + 2.4 * Math.sqrt(Math.max(0, 1 - u * u))
+}
+
+function scatterLeaves(
+  seed: number,
+  count: number,
+  x0: number,
+  x1: number,
+  top: (x: number) => number,
+  bottom: (x: number) => number
+): PileLeaf[] {
+  const r = createRng(seed)
+  const out: PileLeaf[] = []
+  for (let tries = 0; out.length < count && tries < count * 20; tries++) {
+    const x = x0 + r() * (x1 - x0)
+    const v = r()
+    const rx = 2.5 + r() * 1.4
+    const ry = 1.3 + r() * 0.7
+    const deg = r() * 140 - 70
+    const tone = LEAF_TONES[Math.floor(r() * LEAF_TONES.length)]
+    const lo = top(x) + 0.8
+    const hi = bottom(x) + 0.4
+    if (hi <= lo) continue
+    out.push({ x, y: lo + v * (hi - lo), rx, ry, deg, tone })
+  }
+  return out.sort((a, b) => a.y - b.y)
+}
+
+function paintLeaf(buf: PixelBuffer, l: PileLeaf): void {
+  const t = (l.deg * Math.PI) / 180
+  const ax = Math.cos(t)
+  const ay = Math.sin(t)
+  for (let y = Math.floor(l.y - 4); y <= l.y + 4; y++) {
+    for (let x = Math.floor(l.x - 5); x <= l.x + 5; x++) {
+      if (!inTilted(x, y, l.x, l.y, l.rx, l.ry, l.deg)) continue
+      const across = -(x + 0.5 - l.x) * ay + (y + 0.5 - l.y) * ax
+      plot(buf, x, y, across > 0.35 ? dim(l.tone, 0.74) : l.tone)
+    }
+  }
+  const rib = mix(l.tone, WHITE, 0.3)
+  for (let k = -l.rx * 0.6; k <= l.rx * 0.6; k += 0.8)
+    plot(buf, l.x + ax * k - 0.5, l.y + ay * k - 0.5, rib)
+}
+
+function leafHeap(
+  seed: number,
+  count: number,
+  x0: number,
+  x1: number,
+  top: (x: number) => number,
+  bottom: (x: number) => number,
+  shade = 1
+): PixelBuffer {
+  const heap = createBuffer(SCENE_W, SCENE_H)
+  for (let x = x0; x <= x1; x++) {
+    for (let y = Math.ceil(top(x)); y < bottom(x); y++)
+      plot(heap, x, y, (x >> 2) % 2 ? LEAF.deep : LEAF.dusk)
+  }
+  for (const l of scatterLeaves(seed, count, x0, x1, top, bottom))
+    paintLeaf(heap, shade < 1 ? { ...l, tone: dim(l.tone, shade) } : l)
+  return heap
+}
+
+function stampHeap(buf: PixelBuffer, heap: PixelBuffer): void {
+  paintBox(
+    buf,
+    30,
+    64,
+    106,
+    98,
+    (x, y) => pixelAt(heap, x, y),
+    () => LEAF.outline
+  )
+}
+
+function looseLeaf(
+  buf: PixelBuffer,
+  x: number,
+  y: number,
+  deg: number,
+  tone: Rgb
+): void {
+  paintBox(
+    buf,
+    x - 4,
+    y - 3,
+    x + 4,
+    y + 3,
+    (px, py) =>
+      inTilted(px, py, x + 0.5, y + 0.5, 2.6, 1.3, deg)
+        ? py > y
+          ? dim(tone, 0.76)
+          : tone
+        : null,
+    (_px, py) => (py >= y ? LEAF.outline : null)
+  )
+}
+
+const LOOSE_BACK: readonly (readonly [number, number, number, Rgb])[] = [
+  [30, 86, 20, LEAF.amber],
+  [106, 85, -30, LEAF.rust],
+  [36, 81, -50, LEAF.red],
+]
+
+const LOOSE_FRONT: readonly (readonly [number, number, number, Rgb])[] = [
+  [33, 94, -15, LEAF.orange],
+  [104, 94, 25, LEAF.gold],
+  [45, 95, 20, LEAF.red],
+  [92, 95, -25, LEAF.amber],
+]
+
+const POOL = rgbPalette({
+  coral: '#ee6a52',
+  coralLight: '#ff9d84',
+  coralShade: '#c2452f',
+  sun: '#ffd23f',
+  sunLight: '#ffeb96',
+  sunShade: '#dba318',
+  sky: '#3aa7d8',
+  skyLight: '#8bd6f1',
+  skyShade: '#2179ae',
+  liner: '#c4e7f3',
+  linerShade: '#98c9de',
+  water: '#58c0e4',
+  waterSky: '#74cdea',
+  waterLight: '#a9e5f6',
+  waterDeep: '#3a9fcc',
+  outline: '#274a66',
+})
+
+const POOL_Y = 80
+const POOL_RX = 31
+const POOL_RY = 5.6
+const POOL_IN_RX = 27
+const POOL_IN_RY = 3.9
+const POOL_DEPTH = 10
+const POOL_WATER_Y = 81
+
+const poolInside = (x: number, y: number) =>
+  ell(x, y, 68, POOL_Y, POOL_IN_RX, POOL_IN_RY) <= 1
+
+const poolWater = (x: number, y: number) =>
+  poolInside(x, y) && ell(x, y, 68, POOL_WATER_Y, POOL_IN_RX, POOL_IN_RY) <= 1
+
+const poolAt: Paint = (x, y) => {
+  const yc = y + 0.5
+  const a = (x + 0.5 - 68) / POOL_RX
+  if (Math.abs(a) >= 1) return null
+  const s = Math.sqrt(1 - a * a)
+  if (yc < POOL_Y - POOL_RY * s) return null
+  const lip = POOL_Y + POOL_RY * s
+  const tone = (c: Rgb, light: Rgb, shade: Rgb) =>
+    a > 0.7 ? shade : a < -0.6 && a > -0.8 ? light : c
+  if (yc <= lip) {
+    if (!poolInside(x, y)) {
+      if (yc < POOL_Y - 0.5) return a > 0.6 ? POOL.coral : POOL.coralLight
+      return tone(POOL.coral, POOL.coralLight, POOL.coralShade)
+    }
+    if (!poolWater(x, y)) return a > 0.45 ? POOL.linerShade : POOL.liner
+    const depth = ell(x, y, 68, POOL_WATER_Y, POOL_IN_RX, POOL_IN_RY)
+    if (depth > 0.78 && yc > POOL_WATER_Y) return POOL.waterDeep
+    if (yc < POOL_WATER_Y - 2 && depth < 0.9) return POOL.waterSky
+    return POOL.water
+  }
+  const d = yc - lip
+  if (d > POOL_DEPTH) return null
+  const side = Math.abs(a)
+  if (d > POOL_DEPTH - 1 && side > 0.94) return null
+  if (d < 3) {
+    if (d >= 2) return side > 0.965 ? null : POOL.coralShade
+    return tone(POOL.coral, POOL.coralLight, POOL.coralShade)
+  }
+  if (d < 6.5) {
+    if (d < 4) return tone(POOL.sunLight, WHITE, POOL.sun)
+    if (d >= 5.5) return side > 0.965 ? null : POOL.sunShade
+    return tone(POOL.sun, POOL.sunLight, POOL.sunShade)
+  }
+  if (d < 7.5) return tone(POOL.skyLight, WHITE, POOL.sky)
+  if (d >= 9) return POOL.skyShade
+  if (d < 8.5 && ((x % 6) + 6) % 6 === 2 && side < 0.9) return WHITE
+  return tone(POOL.sky, POOL.skyLight, POOL.skyShade)
+}
+
+const poolFrontAt: Paint = (x, y) => {
+  const yc = y + 0.5
+  if (poolInside(x, y))
+    return poolWater(x, y) && yc > POOL_WATER_Y ? poolAt(x, y) : null
+  return yc > POOL_Y ? poolAt(x, y) : null
+}
+
+const POOL_GLINTS: readonly (readonly [number, number, number])[] = [
+  [50, 79, 3],
+  [82, 78, 3],
+  [88, 80, 2],
+  [59, 77, 2],
+]
+
+const SPRING = rgbPalette({
+  water: '#86d2c8',
+  waterLight: '#c6f0e6',
+  waterDeep: '#5bb0aa',
+  waterEdge: '#479693',
+  outline: '#3f3b37',
+  moss: '#6f9444',
+  mossLight: '#93b85c',
+})
+
+const SPRING_Y = 80.5
+const SPRING_RX = 27
+const SPRING_RY = 5.4
+
+const ROCK_TONES = ['#9a948b', '#8b8479', '#aaa397', '#878c90', '#b3a694'].map(
+  rgb
+)
+
+interface Rock {
+  x: number
+  y: number
+  rx: number
+  ry: number
+  tone: number
+  front: boolean
+  moss?: boolean
+}
+
+const ROCKS: readonly Rock[] = [
+  { x: 44, y: 76.8, rx: 4.6, ry: 3, tone: 1, front: false },
+  { x: 51.5, y: 74.6, rx: 5, ry: 3.3, tone: 0, front: false, moss: true },
+  { x: 60, y: 73.5, rx: 4.6, ry: 2.9, tone: 2, front: false },
+  { x: 68.5, y: 73, rx: 5, ry: 3, tone: 3, front: false },
+  { x: 77, y: 73.5, rx: 4.6, ry: 2.9, tone: 0, front: false },
+  { x: 85, y: 74.6, rx: 5, ry: 3.3, tone: 4, front: false },
+  { x: 92.5, y: 76.8, rx: 4.6, ry: 3, tone: 1, front: false, moss: true },
+  { x: 39.5, y: 82, rx: 4.6, ry: 3.6, tone: 2, front: true },
+  { x: 97, y: 82, rx: 4.6, ry: 3.6, tone: 3, front: true },
+  { x: 44.5, y: 86.5, rx: 5.6, ry: 3.9, tone: 0, front: true },
+  { x: 92, y: 86.5, rx: 5.6, ry: 3.9, tone: 2, front: true },
+  { x: 53.5, y: 89, rx: 6, ry: 4.1, tone: 4, front: true, moss: true },
+  { x: 83, y: 89, rx: 6, ry: 4.1, tone: 1, front: true },
+  { x: 63, y: 90.5, rx: 5.6, ry: 3.9, tone: 3, front: true },
+  { x: 73.5, y: 90.5, rx: 5.6, ry: 3.9, tone: 0, front: true },
+]
+
+function drawRock(buf: PixelBuffer, r: Rock): void {
+  const tone = ROCK_TONES[r.tone]
+  paintBox(
+    buf,
+    Math.floor(r.x - r.rx),
+    Math.floor(r.y - r.ry),
+    Math.ceil(r.x + r.rx),
+    Math.ceil(r.y + r.ry),
+    (x, y) => {
+      const dx = (x + 0.5 - r.x) / r.rx
+      const dy = (y + 0.5 - r.y) / r.ry
+      const e = Math.abs(dx) ** 2.5 + Math.abs(dy) ** 2.5
+      if (e > 1) return null
+      if (r.moss && dy < -0.4) return dx < 0 ? SPRING.mossLight : SPRING.moss
+      if (dx < -0.1 && dy < -0.2 && e < 0.7) return mix(tone, WHITE, 0.3)
+      if (dy > 0.4 || dx > 0.62) return dim(tone, 0.78)
+      return tone
+    },
+    () => SPRING.outline
+  )
+}
+
+const springWaterAt: Paint = (x, y) => {
+  const e = ell(x, y, 68, SPRING_Y, SPRING_RX, SPRING_RY)
+  if (e > 1) return null
+  if (e > 0.84) return SPRING.waterEdge
+  if (y + 0.5 > SPRING_Y + 1.5 && e > 0.5) return SPRING.waterDeep
+  return SPRING.water
+}
+
+const SPRING_GLINTS: readonly (readonly [number, number, number])[] = [
+  [50, 80, 3],
+  [84, 79, 3],
+  [58, 78, 2],
+  [78, 81, 2],
+]
+
+export type WaterBed = 'pool' | 'hotspring'
+
+const waterMasks = new Map<WaterBed, Uint8Array>()
+
+function waterMask(bed: WaterBed): Uint8Array {
+  let mask = waterMasks.get(bed)
+  if (!mask) {
+    mask = new Uint8Array(SCENE_W * SCENE_H)
+    const rocks = createBuffer(SCENE_W, SCENE_H)
+    if (bed === 'hotspring') for (const r of ROCKS) drawRock(rocks, r)
+    for (let y = 70; y < 90; y++) {
+      for (let x = 36; x < 100; x++) {
+        const wet =
+          bed === 'pool'
+            ? poolWater(x, y)
+            : springWaterAt(x, y) !== null && !isOpaque(rocks, x, y)
+        if (wet) mask[y * SCENE_W + x] = 1
+      }
+    }
+    waterMasks.set(bed, mask)
+  }
+  return mask
+}
+
+export function isBedWater(bed: WaterBed, x: number, y: number): boolean {
+  return (
+    x >= 0 &&
+    y >= 0 &&
+    x < SCENE_W &&
+    y < SCENE_H &&
+    waterMask(bed)[y * SCENE_W + x] === 1
+  )
+}
+
+const GARDEN = rgbPalette({
+  wood: '#b78352',
+  woodLight: '#d3a16b',
+  woodShade: '#8c5c37',
+  woodDark: '#6b4428',
+  outline: '#4a2e1c',
+  soil: '#5b3b27',
+  soilLight: '#70492f',
+  soilDark: '#452c1c',
+  stem: '#4c8a3a',
+  leaf: '#6aa84a',
+  leafLight: '#93c765',
+  leafDark: '#356b2b',
+  white: '#fbf8ee',
+  whiteShade: '#d9d6c8',
+  yolk: '#f4c430',
+  pink: '#f08db0',
+  pinkLight: '#ffc2d6',
+  pinkDark: '#cf5f8a',
+  red: '#d8453c',
+  redLight: '#f07a68',
+  redDark: '#a12f2a',
+  eye: '#2f2420',
+  purple: '#8c6bd0',
+  purpleLight: '#b9a2ec',
+  purpleDark: '#6248a3',
+  blue: '#5b9be0',
+  blueLight: '#a9cdf5',
+  sun: '#f6c531',
+  sunDark: '#c98f12',
+  sunEye: '#6b3f1c',
+})
+
+export const GARDEN_BUDS: readonly (readonly [number, number, boolean])[] = [
+  [48, 71, false],
+  [93, 73, false],
+  [62, 82, true],
+  [79, 82, true],
+]
+
+function stem(buf: PixelBuffer, x: number, y0: number, y1: number): void {
+  for (let y = y0; y <= y1; y++) plot(buf, x, y, GARDEN.stem)
+}
+
+function blade(buf: PixelBuffer, x: number, y: number, side: -1 | 1): void {
+  plot(buf, x + side, y, GARDEN.leaf)
+  plot(buf, x + side * 2, y - 1, GARDEN.leafLight)
+}
+
+function daisy(buf: PixelBuffer, x: number, y: number): void {
+  plot(buf, x, y - 1, GARDEN.white)
+  plot(buf, x - 1, y, GARDEN.white)
+  plot(buf, x + 1, y, GARDEN.whiteShade)
+  plot(buf, x, y + 1, GARDEN.whiteShade)
+  plot(buf, x, y, GARDEN.yolk)
+}
+
+function tulip(
+  buf: PixelBuffer,
+  x: number,
+  y: number,
+  c: Rgb,
+  light: Rgb,
+  dark: Rgb
+): void {
+  plot(buf, x - 1, y - 2, light)
+  plot(buf, x + 1, y - 2, c)
+  fillRect(buf, x - 1, y - 1, x + 2, y + 1, c)
+  plot(buf, x - 1, y - 1, light)
+  plot(buf, x, y - 2, dark)
+  plot(buf, x + 1, y, dark)
+  plot(buf, x, y + 1, dark)
+}
+
+function poppy(buf: PixelBuffer, x: number, y: number): void {
+  fillRect(buf, x - 1, y - 1, x + 2, y + 2, GARDEN.red)
+  plot(buf, x - 1, y - 1, GARDEN.redLight)
+  plot(buf, x, y - 1, GARDEN.redLight)
+  plot(buf, x + 1, y + 1, GARDEN.redDark)
+  plot(buf, x, y, GARDEN.eye)
+}
+
+function spike(buf: PixelBuffer, x: number, y: number, h: number): void {
+  for (let i = 0; i < h; i++) {
+    plot(buf, x, y + i, i % 2 ? GARDEN.purple : GARDEN.purpleLight)
+    plot(buf, x + 1, y + i, i % 2 ? GARDEN.purpleDark : GARDEN.purple)
+  }
+  plot(buf, x, y - 1, GARDEN.purpleLight)
+}
+
+function sunflower(buf: PixelBuffer, x: number, y: number): void {
+  fillRect(buf, x - 1, y - 2, x + 2, y + 3, GARDEN.sun)
+  fillRect(buf, x - 2, y - 1, x + 3, y + 2, GARDEN.sun)
+  plot(buf, x + 2, y + 1, GARDEN.sunDark)
+  plot(buf, x + 1, y + 2, GARDEN.sunDark)
+  plot(buf, x, y + 2, GARDEN.sunDark)
+  plot(buf, x + 2, y, GARDEN.sunDark)
+  fillRect(buf, x - 1, y - 1, x + 2, y + 2, GARDEN.sunEye)
+  plot(buf, x - 1, y - 1, GARDEN.sunDark)
+  plot(buf, x, y, GARDEN.eye)
+}
+
+function bud(buf: PixelBuffer, x: number, y: number): void {
+  plot(buf, x, y - 1, GARDEN.pinkLight)
+  plot(buf, x, y, GARDEN.pink)
+  plot(buf, x - 1, y, GARDEN.leaf)
+  plot(buf, x + 1, y, GARDEN.leafDark)
+}
+
+function blossom(
+  buf: PixelBuffer,
+  x: number,
+  y: number,
+  c: Rgb,
+  light: Rgb,
+  heart: Rgb
+): void {
+  plot(buf, x, y - 1, light)
+  plot(buf, x - 1, y, light)
+  plot(buf, x + 1, y, c)
+  plot(buf, x, y + 1, c)
+  plot(buf, x, y, heart)
+}
+
+const gardenFoliage = (x: number) =>
+  83 -
+  Math.max(0, Math.sin(x * 0.8) * 1.6) -
+  Math.max(0, Math.sin(x * 0.33 + 2) * 1.5)
+
+const gardenBoxAt: Paint = (x, y) => {
+  if (x < 39 || x > 98 || y < 76 || y > 94) return null
+  const post = x <= 41 || x >= 96
+  if (y >= 85) {
+    if (post) return x === 39 || x === 96 ? GARDEN.woodLight : GARDEN.woodShade
+    if (y === 85) return GARDEN.woodLight
+    if (y === 90 || y === 94) return GARDEN.woodDark
+    if ((x === 45 || x === 92) && (y === 87 || y === 92)) return GARDEN.woodDark
+    if (y === 86 || y === 91) return GARDEN.wood
+    const grain = (x * 5 + y * 11) % 17 === 0 || (x + y * 7) % 23 === 0
+    if (grain) return GARDEN.woodShade
+    return y > 90 ? mix(GARDEN.wood, GARDEN.woodShade, 0.35) : GARDEN.wood
+  }
+  if (post) return y === 76 ? GARDEN.woodLight : GARDEN.wood
+  if (y <= 78) return y === 76 ? GARDEN.woodLight : GARDEN.woodShade
+  const fleck = (x * 7 + y * 13) % 11
+  return fleck === 0
+    ? GARDEN.soilLight
+    : fleck === 5
+      ? GARDEN.soilDark
+      : GARDEN.soil
+}
+
+const gardenFrontAt: Paint = (x, y) => (y >= 85 ? gardenBoxAt(x, y) : null)
+
 const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
   rug(buf) {
     fillEllipse(buf, 68, 85, 37, 8.5, C.rugEdge)
@@ -1086,6 +1612,59 @@ const BACK: Readonly<Record<BedId, (buf: PixelBuffer) => void>> = {
       plot(buf, x, y, C.strawDark)
       plot(buf, x + 1, y, C.strawLight)
     }
+  },
+  leafpile(buf) {
+    floorShadow(buf, 68, 92, 35, 3.4)
+    for (const [x, y, deg, tone] of LOOSE_BACK) looseLeaf(buf, x, y, deg, tone)
+    stampHeap(
+      buf,
+      leafHeap(17, 170, 36, 100, leafPileTop, () => 91.5, 0.9)
+    )
+  },
+  pool(buf) {
+    floorShadow(buf, 68, 94.5, 31, 2.6)
+    paintBox(buf, 36, 73, 100, 97, poolAt, () => POOL.outline)
+    for (const [x, y, n] of POOL_GLINTS)
+      fillRect(buf, x, y, x + n, y + 1, POOL.waterLight)
+  },
+  hotspring(buf) {
+    floorShadow(buf, 68, 91.5, 33, 4.6)
+    paintBox(buf, 40, 73, 96, 87, springWaterAt)
+    for (const [x, y, n] of SPRING_GLINTS)
+      fillRect(buf, x, y, x + n, y + 1, SPRING.waterLight)
+    for (const r of ROCKS) if (!r.front) drawRock(buf, r)
+  },
+  flowerbed(buf) {
+    floorShadow(buf, 68, 95, 32, 2)
+    paintBox(buf, 38, 75, 99, 95, gardenBoxAt, () => GARDEN.outline)
+    stem(buf, 43, 66, 80)
+    blade(buf, 43, 71, 1)
+    blade(buf, 43, 75, -1)
+    blade(buf, 43, 78, 1)
+    sunflower(buf, 43, 63)
+    stem(buf, 48, 72, 80)
+    blade(buf, 48, 77, 1)
+    bud(buf, 48, 71)
+    stem(buf, 53, 71, 80)
+    blade(buf, 53, 75, -1)
+    blade(buf, 53, 78, 1)
+    tulip(buf, 53, 69, GARDEN.red, GARDEN.redLight, GARDEN.redDark)
+    stem(buf, 60, 76, 80)
+    poppy(buf, 60, 74)
+    stem(buf, 77, 77, 80)
+    daisy(buf, 77, 75)
+    stem(buf, 86, 73, 80)
+    blade(buf, 86, 77, -1)
+    daisy(buf, 86, 71)
+    stem(buf, 90, 69, 80)
+    blade(buf, 90, 74, 1)
+    blade(buf, 90, 78, -1)
+    tulip(buf, 90, 67, GARDEN.pink, GARDEN.pinkLight, GARDEN.pinkDark)
+    stem(buf, 93, 74, 80)
+    bud(buf, 93, 73)
+    stem(buf, 96, 69, 80)
+    blade(buf, 96, 76, -1)
+    spike(buf, 96, 64, 5)
   },
   teacup(buf) {
     floorShadow(buf, 68, 94.5, 31, 2.6)
@@ -1306,6 +1885,51 @@ const FRONT: Readonly<Partial<Record<BedId, (buf: PixelBuffer) => void>>> = {
       plot(buf, x + 1, y - 1, C.hay)
       plot(buf, x + 2, y - 2, C.hayDark)
     }
+  },
+  leafpile(buf) {
+    stampHeap(buf, leafHeap(29, 130, 39, 97, leafFrontTop, leafFrontBottom))
+    for (const [x, y, deg, tone] of LOOSE_FRONT) looseLeaf(buf, x, y, deg, tone)
+  },
+  pool(buf) {
+    paintBox(buf, 36, 79, 100, 97, poolFrontAt, (x, y) =>
+      y + 0.5 > POOL_Y && poolAt(x, y) === null ? POOL.outline : null
+    )
+  },
+  hotspring(buf) {
+    paintBox(buf, 40, 81, 96, 87, (x, y) =>
+      y + 0.5 > SPRING_Y + 1.2 ? springWaterAt(x, y) : null
+    )
+    for (const r of [...ROCKS].sort((a, b) => a.y - b.y))
+      if (r.front) drawRock(buf, r)
+  },
+  flowerbed(buf) {
+    paintBox(buf, 38, 84, 99, 95, gardenFrontAt, (_x, y) =>
+      y >= 85 ? GARDEN.outline : null
+    )
+    for (let x = 42; x <= 95; x++) {
+      const top = Math.round(gardenFoliage(x))
+      const hang = x % 4 < 2 ? 86 : 85
+      for (let y = top; y <= hang; y++)
+        plot(
+          buf,
+          x,
+          y,
+          y === top
+            ? GARDEN.leafLight
+            : (x * 7 + y * 13) % 5 === 0
+              ? GARDEN.leafDark
+              : GARDEN.leaf
+        )
+    }
+    blossom(buf, 45, 82, GARDEN.pink, GARDEN.pinkLight, GARDEN.yolk)
+    daisy(buf, 51, 81)
+    blossom(buf, 56, 83, GARDEN.blue, GARDEN.blueLight, GARDEN.white)
+    bud(buf, 62, 82)
+    blossom(buf, 67, 83, GARDEN.sun, GARDEN.white, GARDEN.sunDark)
+    blossom(buf, 73, 82, GARDEN.purple, GARDEN.purpleLight, GARDEN.yolk)
+    bud(buf, 79, 82)
+    blossom(buf, 85, 83, GARDEN.pink, GARDEN.pinkLight, GARDEN.yolk)
+    daisy(buf, 91, 81)
   },
   teacup(buf) {
     paintBox(buf, 44, 76, 92, 92, cupFront, (x, y) =>

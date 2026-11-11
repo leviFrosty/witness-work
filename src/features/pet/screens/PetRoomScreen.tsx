@@ -21,8 +21,8 @@ import { WALL_RGB } from '@/features/pet/art'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import GameColorSwatches from '@/features/pet/components/GameColorSwatches'
 import GameColorTray from '@/features/pet/components/GameColorTray'
-import HatPreviewTray from '@/features/pet/components/HatPreviewTray'
-import { hatReactions } from '@/features/pet/lib/hatReactions'
+import ReactionPreviewTray from '@/features/pet/components/ReactionPreviewTray'
+import { itemReactions } from '@/features/pet/lib/itemReactions'
 import {
   GameButton,
   GameIconButton,
@@ -233,7 +233,8 @@ export default function PetRoomScreen({
       .getState()
       .updateRoom(roomChoicePatch(room, part, option), state.roomDefaults)
     analytics.capture('pet_room_changed', { part, option, from: 'room' })
-    if (hatReactions(`${part}:${option}`).length > 0) sceneRef.current?.hatPat()
+    if (itemReactions(`${part}:${option}`).length > 0)
+      sceneRef.current?.hatPat()
   }
 
   const setLive = (live: boolean) => {
@@ -503,33 +504,36 @@ export default function PetRoomScreen({
           .map((section) => {
             const all = cards(section)
             const at = section.owned.indexOf(section.current)
-            const tray =
-              (section.part === 'wallPattern' && colorTray(at % columns)) ||
-              (at >= 0 &&
-                !reduceMotion &&
-                hatReactions(`${section.part}:${section.current}`).length >
-                  0 && (
-                  <HatPreviewTray
-                    hat={section.current}
-                    hatName={roomOptionLabel(section.part, section.current)}
+            const hung =
+              section.part === 'wallPattern' && colorTray(at % columns)
+            const reacts =
+              at >= 0 &&
+              !reduceMotion &&
+              itemReactions(`${section.part}:${section.current}`).length > 0
+            const split =
+              hung || reacts
+                ? (Math.floor(at / columns) + 1) * columns
+                : all.length
+            return (
+              <View key={section.part} style={{ gap: SECTION_ROW_GAP }}>
+                {heading(inUseText(section, sections.length))}
+                {cardRows(all.slice(0, split))}
+                {hung}
+                {reacts && (
+                  <ReactionPreviewTray
+                    part={section.part}
+                    option={section.current}
+                    itemName={roomOptionLabel(section.part, section.current)}
                     petName={scene.name}
                     scene={sceneRef}
                     from='room'
-                    column={at % columns}
+                    column={hung ? null : at % columns}
                     cardWidth={cardWidth}
                     cardGap={CARD_GAP}
                     gap={SECTION_ROW_GAP}
                     palette={palette}
                   />
-                ))
-            const split = tray
-              ? (Math.floor(at / columns) + 1) * columns
-              : all.length
-            return (
-              <View key={section.part} style={{ gap: SECTION_ROW_GAP }}>
-                {heading(inUseText(section, sections.length))}
-                {cardRows(all.slice(0, split))}
-                {tray}
+                )}
                 {split < all.length && cardRows(all.slice(split))}
               </View>
             )

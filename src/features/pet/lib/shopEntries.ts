@@ -7,6 +7,7 @@ import {
   selectedRoomOption,
   type RoomChoicePart,
 } from '@/features/pet/lib/roomOptions'
+import { LAMPS, type LampId } from '@/features/pet/art'
 import { priceOf } from '@/features/pet/lib/prices'
 import {
   shopItemState,
@@ -106,6 +107,16 @@ const hatTopRow = (option?: string, growth?: number): number | null => {
   return rise ? HEAD_ROW - rise - 2 : null
 }
 
+const LAMP_HEADROOM = 2
+
+function lampTopRow(option: string | undefined, height: number): number | null {
+  if (!option || !Object.hasOwn(LAMPS, option)) return null
+  const lamp = LAMPS[option as LampId]
+  const fits = lamp.height + LAMP_HEADROOM <= height
+  const lightOnTop = lamp.fy < lamp.height / 2
+  return fits || lightOnTop ? lamp.oy - 1 : null
+}
+
 export function shopThumbView(
   part: RoomChoicePart,
   w: number,
@@ -117,9 +128,15 @@ export function shopThumbView(
   const width = Math.min(SCENE_W, Math.max(1, w))
   const height = Math.min(SCENE_H, Math.max(1, h))
   const left = Math.round(x + vw / 2 - width / 2)
-  const hatTop = part === 'hat' ? hatTopRow(option, growth) : null
   const centred = Math.round(y + vh / 2 - height / 2)
-  const top = hatTop === null ? centred : Math.min(centred, hatTop)
+  const lampTop = part === 'lamp' ? lampTopRow(option, height) : null
+  const itemTop =
+    part === 'hat'
+      ? hatTopRow(option, growth)
+      : lampTop !== null && centred > lampTop + LAMP_HEADROOM + 1
+        ? lampTop
+        : null
+  const top = itemTop === null ? centred : Math.min(centred, itemTop)
   return [
     Math.max(0, Math.min(SCENE_W - width, left)),
     Math.max(0, Math.min(SCENE_H - height, top)),

@@ -84,6 +84,10 @@ describe('room registry', () => {
       'dots',
       'stripes',
       'trellis',
+      'clouds',
+      'leaves',
+      'mountains',
+      'aurora',
       ...SECRET_WALL_PATTERNS,
     ])
     expect(ROOM_PARTS.floor.options).toEqual([
@@ -91,6 +95,10 @@ describe('room registry', () => {
       'stone',
       'brick',
       'tile',
+      'grass',
+      'shore',
+      'koi',
+      'forest',
       ...SECRET_FLOOR_IDS,
     ])
     expect(ROOM_PARTS.bed.options).toEqual([
@@ -98,6 +106,10 @@ describe('room registry', () => {
       'hay',
       'basket',
       'cushion',
+      'leafpile',
+      'pool',
+      'hotspring',
+      'flowerbed',
       ...SECRET_BED_IDS,
     ])
     expect(ROOM_PARTS.shelf.options).toEqual([
@@ -105,6 +117,10 @@ describe('room registry', () => {
       'books',
       'pottery',
       'fruit',
+      'hourglass',
+      'tea',
+      'gramophone',
+      'volcano',
       ...SECRET_SHELF_IDS,
     ])
     expect(ROOM_PARTS.lamp.options).toEqual([
@@ -112,6 +128,10 @@ describe('room registry', () => {
       'lantern',
       'candle',
       'stand',
+      'stove',
+      'streetlamp',
+      'shadows',
+      'campfire',
       ...SECRET_LAMP_IDS,
     ])
     expect(ROOM_PARTS.sign.options).toEqual([

@@ -7,7 +7,7 @@ import {
 } from '@/features/pet/lib/intro'
 
 describe('adoption intro', () => {
-  it('previews the room with the last item of every part and the last hat', () => {
+  it('previews the room with the last common item of every part and hat', () => {
     expect(fullyUnlockedRoom(DEFAULT_ROOM)).toEqual({
       ...DEFAULT_ROOM,
       wallColor: 'rose',

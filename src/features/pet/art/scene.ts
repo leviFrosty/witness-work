@@ -30,6 +30,7 @@ import {
   hatSprite,
   isBigHat,
 } from './hats'
+import { darken } from './fx'
 import { drawHatRoom, type HatFxPlace } from './hatRoomFx'
 import { FULL_GROWTH, type HatLife, type HatMoment } from './hatsLive'
 import { applyLighting } from './lighting'
@@ -40,11 +41,13 @@ import {
   drawRoomBase,
   LAMPS,
   lampSprite,
+  roomOpenMask,
   stoolLayer,
   type GiftKind,
   type ResolvedRoom,
   type SignData,
 } from './room'
+import { roomLiveDim, roomLiveParts, type RoomMoment } from './roomLive'
 import {
   greyModeFor,
   idlePose,
@@ -417,6 +420,8 @@ function drawVisitors(
 
 const subject = createMask(SCENE_W, SCENE_H)
 
+const frontLayer = createBuffer(SCENE_W, SCENE_H)
+
 const SPARKLE = rgbPalette({ core: '#fffbe6', ray: '#ffd34a' })
 const SPARKLE_SHAPE: readonly (readonly [number, number])[] = [
   [0, -1],
@@ -443,14 +448,28 @@ export function composeScene(
 ): PixelBuffer {
   const { room, moments = {}, reduceMotion = false } = input
   const level = Math.max(0, Math.min(5, Math.round(input.lampLevel)))
-  copyInto(
-    out,
-    drawRoomBase(room, input.sign, {
-      rainbow: moments.rainbow,
-      sill: moments.sill,
-      gift: moments.gift,
-    })
-  )
+  const decor = {
+    rainbow: moments.rainbow,
+    sill: moments.sill,
+    gift: moments.gift,
+  }
+  copyInto(out, drawRoomBase(room, input.sign, decor))
+
+  const live = roomLiveParts(room)
+  const roomMoment: RoomMoment = {
+    tMs: reduceMotion ? 0 : tMs,
+    time: room.time,
+    season: room.season,
+    wallColor: room.wallColor,
+    lampLevel: level,
+    patMs: reduceMotion ? -Infinity : (input.hatPatMs ?? -Infinity),
+    coinsMs: reduceMotion ? -Infinity : (input.hatCoinsMs ?? -Infinity),
+  }
+  const open =
+    live.back.length > 0 || live.fx.length > 0
+      ? roomOpenMask(room, input.sign, decor)
+      : null
+  if (open) for (const back of live.back) back(out, roomMoment, open)
 
   subject.data.fill(0)
   drawVisitors(out, input.visitors ?? [], tMs, reduceMotion, subject, input)
@@ -492,8 +511,18 @@ export function composeScene(
     blit(out, bedFront, 0, 0)
     maskOpaque(subject, bedFront, 0, 0, false)
   }
+  if (live.front.length > 0) {
+    frontLayer.data.fill(0)
+    for (const front of live.front) front(frontLayer, roomMoment)
+    blit(out, frontLayer, 0, 0)
+    maskOpaque(subject, frontLayer, 0, 0, false)
+  }
   applyLighting(out, room.lamp, level, room.time, tMs, subject)
-  if (worn) drawHatRoom(out, worn.hat, worn.moment, worn.place, subject)
+  const roomDim = roomLiveDim(live, roomMoment)
+  if (worn)
+    drawHatRoom(out, worn.hat, worn.moment, worn.place, subject, roomDim)
+  else if (roomDim > 0) darken(out, roomDim)
+  if (open) for (const fx of live.fx) fx(out, roomMoment, subject, open)
 
   if (moments.paradise) drawParadiseWalkers(out, tMs)
   if (moments.star) drawShootingStar(out, tMs)

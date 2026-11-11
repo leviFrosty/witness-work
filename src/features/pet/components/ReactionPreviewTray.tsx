@@ -7,14 +7,16 @@ import i18n from '@/lib/locales'
 import type { GamePalette } from '@/features/pet/art/gameUi'
 import GameColorTray from '@/features/pet/components/GameColorTray'
 import { GameButton } from '@/features/pet/components/GameControls'
-import { hatReactions } from '@/features/pet/lib/hatReactions'
-import { hatNoteOf } from '@/features/pet/lib/roomLabels'
+import { itemReactions } from '@/features/pet/lib/itemReactions'
+import { itemNoteOf } from '@/features/pet/lib/roomLabels'
 import { itemRarity } from '@/features/pet/lib/prices'
+import type { RoomChoicePart } from '@/features/pet/lib/roomOptions'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 
-export default function HatPreviewTray({
-  hat,
-  hatName,
+export default function ReactionPreviewTray({
+  part,
+  option,
+  itemName,
   petName,
   scene,
   from,
@@ -24,23 +26,25 @@ export default function HatPreviewTray({
   gap,
   palette,
 }: {
-  hat: string
-  hatName: string
+  part: RoomChoicePart
+  option: string
+  itemName: string
   petName: string
   scene: RefObject<PetSceneHandle | null>
   from: 'shop' | 'room'
-  column: number
+
+  column: number | null
   cardWidth: number
   cardGap: number
   gap: number
   palette: GamePalette
 }) {
   const theme = useTheme()
-  const item = `hat:${hat}`
-  const reactions = hatReactions(item)
-  const note = hatNoteOf(hat)
+  const item = `${part}:${option}`
+  const reactions = itemReactions(item)
+  const note = itemNoteOf(part, option)
   const played = (trigger: 'pat' | 'coins') =>
-    analytics.capture('pet_hat_preview_played', { hat, trigger, from })
+    analytics.capture('pet_item_preview_played', { item, part, trigger, from })
   return (
     <GameColorTray
       rarity={itemRarity(item)}
@@ -59,7 +63,7 @@ export default function HatPreviewTray({
           color: palette.inkAlt,
         }}
       >
-        {i18n.t('pet.shop.hatPreview.title')}
+        {i18n.t('pet.shop.reactionPreview.title')}
       </Text>
       {note && (
         <Text
@@ -75,9 +79,9 @@ export default function HatPreviewTray({
         {reactions.includes('pat') && (
           <GameButton
             kind='soft'
-            label={i18n.t('pet.shop.hatPreview.pat')}
-            accessibilityLabel={i18n.t('pet.shop.hatPreview.patA11y', {
-              item: hatName,
+            label={i18n.t('pet.shop.reactionPreview.pat')}
+            accessibilityLabel={i18n.t('pet.shop.reactionPreview.patA11y', {
+              item: itemName,
               name: petName,
             })}
             palette={palette}
@@ -92,9 +96,9 @@ export default function HatPreviewTray({
           <GameButton
             kind='soft'
             coin
-            label={i18n.t('pet.shop.hatPreview.coins')}
-            accessibilityLabel={i18n.t('pet.shop.hatPreview.coinsA11y', {
-              item: hatName,
+            label={i18n.t('pet.shop.reactionPreview.coins')}
+            accessibilityLabel={i18n.t('pet.shop.reactionPreview.coinsA11y', {
+              item: itemName,
             })}
             palette={palette}
             style={{ flex: 1 }}

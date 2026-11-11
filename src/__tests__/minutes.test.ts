@@ -219,7 +219,7 @@ describe('Duration Format (src/lib/minutes.ts)', () => {
       fc.assert(
         fc.property(nonNegativeMinutes, (total) => {
           expect(formatMinutesSpoken(total)).toMatch(
-            /^\d+ (hours?|minutes?)( \d+ minutes?)?$/
+            /^\d{1,3}(,\d{3})* (hours?|minutes?)( \d+ minutes?)?$/
           )
         }),
         runs

@@ -7,6 +7,7 @@ import { readBootPreferences } from '@/stores/bootPreferences'
 import * as cardinals from 'make-plural/cardinals'
 import { createPluralizer, type CardinalRule } from '@/lib/plurals'
 import { digitSystemFor, localizeNumeral } from '@/lib/digits'
+import { formatCount, isGroupedCount } from '@/lib/numbers'
 
 export type TranslatedLocale = keyof typeof translationLoaders
 
@@ -70,12 +71,17 @@ const interpolate = _i18n.interpolate
 _i18n.interpolate = (i18n, message, options) => {
   const requested = options.digitsLocale ?? options.locale
   const locale = typeof requested === 'string' ? requested : i18n.locale
-  if (digitSystemFor(locale) === 'latn')
-    return interpolate(i18n, message, options)
+  const latin = digitSystemFor(locale) === 'latn'
+  const grouped = isGroupedCount(options.count)
+  if (latin && !grouped) return interpolate(i18n, message, options)
   const localized: typeof options = {}
   for (const [name, value] of Object.entries(options))
     localized[name] =
-      typeof value === 'number' ? localizeNumeral(String(value), locale) : value
+      name === 'count' && grouped
+        ? formatCount(value as number, locale)
+        : typeof value === 'number' && !latin
+          ? localizeNumeral(String(value), locale)
+          : value
   return interpolate(i18n, message, localized)
 }
 

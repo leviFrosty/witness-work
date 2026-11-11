@@ -2254,7 +2254,7 @@
   "openFullScreen": "Open Full Screen",
   "startOfWeek": "Start of Week",
   "formatRegion": "Format Region",
-  "formatRegion_description": "Dates and times are shown the way your selected region writes them. You can also adjust each setting individually.",
+  "formatRegion_description": "Dates, times and numbers are shown the way your selected region writes them, such as 1,000 or 1.000. You can also adjust each date and time setting individually.",
   "autoDevice": "Auto (Device)",
   "autoWithValue": "Auto ({{value}})",
   "clockFormat": "Clock Format",
@@ -5404,6 +5404,10 @@
           "dots": "Dots",
           "stripes": "Stripes",
           "trellis": "Trellis",
+          "clouds": "Clouds",
+          "leaves": "Falling leaves",
+          "mountains": "Mountain view",
+          "aurora": "Northern lights",
           "waves": "Waves",
           "chevron": "Chevron",
           "gingham": "Gingham",
@@ -5420,6 +5424,10 @@
           "stone": "Stone",
           "brick": "Brick",
           "tile": "Clay tile",
+          "grass": "Tall grass",
+          "shore": "Seashore",
+          "koi": "Koi pond",
+          "forest": "Forest floor",
           "zellige": "Zellige",
           "azulejo": "Azulejo",
           "terrazzo": "Terrazzo",
@@ -5436,6 +5444,10 @@
           "cushion": "Cushion",
           "basket": "Basket",
           "hay": "Hay",
+          "leafpile": "Leaf pile",
+          "pool": "Kiddie pool",
+          "hotspring": "Hot spring",
+          "flowerbed": "Flower bed",
           "teacup": "Giant teacup",
           "clam": "Clamshell",
           "rowboat": "Rowboat",
@@ -5452,6 +5464,10 @@
           "books": "Books",
           "pottery": "Pottery",
           "fruit": "Fruit bowl",
+          "hourglass": "Hourglass",
+          "tea": "Tea set",
+          "gramophone": "Gramophone",
+          "volcano": "Volcano model",
           "ship": "Ship in a bottle",
           "dala": "Dala horses",
           "spices": "Spice jars",
@@ -5468,6 +5484,10 @@
           "lantern": "Brass lantern",
           "candle": "Candle",
           "stand": "Lampstand",
+          "stove": "Wood stove",
+          "streetlamp": "Street lamp",
+          "shadows": "Shadow lantern",
+          "campfire": "Campfire",
           "lighthouse": "Lighthouse",
           "pierced": "Pierced lantern",
           "firefly": "Firefly jar",
@@ -5551,7 +5571,11 @@
           "desk": "Writing desk",
           "bookcase": "Bookcase",
           "table": "Study table",
-          "armchair": "Reading chair"
+          "armchair": "Reading chair",
+          "rocker": "Rocking chair",
+          "typewriter": "Typewriter",
+          "lampdesk": "Lamplit desk",
+          "fort": "Blanket fort"
         }
       },
       "secret": {
@@ -5675,21 +5699,37 @@
       "allOwned": "You own all of these",
       "rare": "Rare",
       "uncommon": "Uncommon",
-      "hatPreview": {
+      "reactionPreview": {
         "title": "See it react",
         "pat": "Pat",
         "coins": "New coins",
         "patA11y": "Show how {{item}} reacts when you pat {{name}}",
         "coinsA11y": "Show how {{item}} reacts to new coins"
       },
-      "hatNote": {
-        "mailbox": "The flag goes up on days you go out.",
-        "cottage": "The windows light up after dusk.",
-        "cloud": "The rain turns to snow in winter.",
-        "cuckoo": "Shows your real time and calls on the hour.",
-        "lighthouse": "After dusk, the beam sweeps the room by itself.",
-        "dome": "After dusk, stars fill the room by themselves.",
-        "fig": "Starts as a sprout and grows with your days out. A pat shakes a fig loose once the tree is grown, but not in winter."
+      "itemNote": {
+        "hat": {
+          "mailbox": "The flag goes up on days you go out.",
+          "cottage": "The windows light up after dusk.",
+          "cloud": "The rain turns to snow in winter.",
+          "cuckoo": "Shows your real time and calls on the hour.",
+          "lighthouse": "After dusk, the beam sweeps the room by itself.",
+          "dome": "After dusk, stars fill the room by themselves.",
+          "fig": "Starts as a sprout and grows with your days out. A pat shakes a fig loose once the tree is grown, but not in winter."
+        },
+        "wallPattern": {
+          "mountains": "The sky follows the time in your window.",
+          "aurora": "After dusk, the lights glow by themselves."
+        },
+        "floor": {
+          "forest": "After dusk, fireflies fill the room by themselves."
+        },
+        "lamp": {
+          "shadows": "The bird shadows show strongest after dusk."
+        },
+        "study": {
+          "lampdesk": "The lamp lights its corner after dusk.",
+          "fort": "After dusk, it glows from inside."
+        }
       },
       "wearingNow": "Wearing it now",
       "inRoomNow": "In the room now",

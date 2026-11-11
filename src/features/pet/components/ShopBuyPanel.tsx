@@ -8,7 +8,7 @@ import { GameButton } from '@/features/pet/components/GameControls'
 import { gamePixelScale } from '@/features/pet/components/GamePixels'
 import {
   coinsText,
-  hatNoteOf,
+  itemNoteOf,
   priceText,
   roomOptionLabel,
 } from '@/features/pet/lib/roomLabels'
@@ -111,8 +111,8 @@ export default function ShopBuyPanel({
   }
 
   const note =
-    entry?.part === 'hat' && entry.state !== 'secret' && !noteShown
-      ? hatNoteOf(entry.option)
+    entry && entry.state !== 'secret' && !noteShown
+      ? itemNoteOf(entry.part, entry.option)
       : null
 
   const button = action && (

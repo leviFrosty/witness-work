@@ -11,6 +11,7 @@ import {
 } from '@/lib/pixelArt'
 import type { BigHatId, Season } from '@/types/pet'
 
+import { isDarkTime, SHOW_MS, showStrength } from './fx'
 import {
   BIG_HAT_BRIM_ROW,
   BIG_HAT_CX,
@@ -46,15 +47,9 @@ export interface HatMoment {
 
 export const FULL_GROWTH = FIG_STAGES - 1
 
+export { isDarkTime, SHOW_MS }
+
 const NOT_YET = -Infinity
-
-export const SHOW_MS = 14_000
-
-const SHOW_FADE_MS = 900
-
-const COINS_SHOW_MS = 2000
-
-const COINS_FADE_MS = 120
 
 const HOP = [0, 2, 4, 4, 3, 1, 0] as const
 
@@ -68,20 +63,9 @@ export const hatHop = (sincePat: number): number =>
 const isStaticHat = (hat: BigHatId): hat is PlainHatId =>
   Object.hasOwn(PLAIN_HAT_SPECS, hat)
 
-export const isDarkTime = (time: TimeOfDay): boolean =>
-  time === 'night' || time === 'dusk'
-
 export function hatRoomDim(hat: BigHatId, m: HatMoment): number {
   if (hat !== 'lighthouse' && hat !== 'dome') return 0
-  if (isDarkTime(m.time)) return 1
-  const fade = (since: number, showMs: number, fadeMs: number) =>
-    since < 0 || since >= showMs
-      ? 0
-      : Math.min(1, since / fadeMs, (showMs - since) / fadeMs)
-  return Math.max(
-    fade(m.tMs - m.patMs, SHOW_MS, SHOW_FADE_MS),
-    fade(m.tMs - m.coinsMs, COINS_SHOW_MS, COINS_FADE_MS)
-  )
+  return showStrength(m)
 }
 
 const frames = createLru<PixelBuffer>(128)

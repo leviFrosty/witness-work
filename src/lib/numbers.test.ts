@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   appDigitSystem,
   appLanguage,
+  formatCount,
   formatNumber,
   formatPlainNumber,
+  isGroupedCount,
   localizeAppDigits,
   numberFormatLocale,
   setNumberConventions,
@@ -103,5 +105,34 @@ describe('app Language', () => {
     setNumberConventions({ language: 'ar' })
     expect(appDigitSystem()).toBe('arab')
     expect(localizeAppDigits('12:30')).toBe('١٢:٣٠')
+  })
+})
+
+describe('formatCount', () => {
+  it('groups by the Format Region, in Latin digits', () => {
+    setNumberConventions({ language: 'en-us', deviceRegion: 'US' })
+    expect(formatCount(97800)).toBe('97,800')
+    setNumberConventions({ language: 'en-us', region: 'de' })
+    expect(formatCount(97800)).toBe('97.800')
+    setNumberConventions({ language: 'fr-fr', region: 'fr' })
+    expect(formatCount(97800)).toMatch(/^97\s800$/)
+    setNumberConventions({ language: 'de-de', region: 'de-ch' })
+    expect(formatCount(97800)).toMatch(/^97[^\d\s.,]800$/)
+  })
+
+  it('uses the Arabic separator and digits for an Arabic sentence', () => {
+    setNumberConventions({ language: 'ar' })
+    expect(formatCount(97800)).toBe('٩٧٬٨٠٠')
+    setNumberConventions({ language: 'en-us', deviceRegion: 'US' })
+    expect(formatCount(97800, 'ar')).toBe('٩٧٬٨٠٠')
+  })
+
+  it('counts only whole numbers from a thousand as grouped', () => {
+    expect(isGroupedCount(999)).toBe(false)
+    expect(isGroupedCount(1000)).toBe(true)
+    expect(isGroupedCount(-2500)).toBe(true)
+    expect(isGroupedCount(1500.5)).toBe(false)
+    expect(isGroupedCount('1500')).toBe(false)
+    expect(isGroupedCount(undefined)).toBe(false)
   })
 })

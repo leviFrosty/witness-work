@@ -83,7 +83,7 @@ describe('analytics frequency', () => {
     ).toBe(true)
   })
 
-  it('keeps distinct registration outcomes in the same session', async () => {
+  it('keeps distinct registration outcomes on the same day', async () => {
     const { allowAnalyticsFrequency: allow } = await import(
       './analyticsFrequency'
     )
@@ -183,4 +183,56 @@ it('caps flag exposure across launches without merging flags or variants', async
       $feature_flag_response: true,
     })
   ).toBe(true)
+})
+
+describe('analytics frequency caps', () => {
+  it('measures launch speed and checklist reach once a week per installation', async () => {
+    let { allowAnalyticsFrequency: allow } = await import(
+      './analyticsFrequency'
+    )
+    expect(allow('app_launch_timed', { launch_ms: 900 })).toBe(true)
+    expect(allow('onboarding_checklist_viewed')).toBe(true)
+    vi.setSystemTime(new Date('2026-10-10T12:00:00Z'))
+    vi.resetModules()
+    ;({ allowAnalyticsFrequency: allow } = await import('./analyticsFrequency'))
+    expect(allow('app_launch_timed', { launch_ms: 700 })).toBe(false)
+    vi.setSystemTime(new Date('2026-10-11T12:00:00Z'))
+    expect(allow('app_launch_timed', { launch_ms: 700 })).toBe(true)
+    expect(allow('onboarding_checklist_viewed')).toBe(true)
+    expect(allow('onboarding_checklist_viewed')).toBe(false)
+  })
+
+  it('counts each screen once a day', async () => {
+    const { allowAnalyticsFrequency: allow } = await import(
+      './analyticsFrequency'
+    )
+    expect(allow('$screen', { $screen_name: 'Schedule' })).toBe(true)
+    expect(allow('$screen', { $screen_name: 'Schedule' })).toBe(false)
+    expect(allow('$screen', { $screen_name: 'Contacts' })).toBe(true)
+    vi.setSystemTime(new Date('2026-10-05T00:00:00Z'))
+    expect(allow('$screen', { $screen_name: 'Schedule' })).toBe(true)
+  })
+
+  it('counts a room part once per session and place, not every option tried', async () => {
+    const { allowAnalyticsFrequency: allow } = await import(
+      './analyticsFrequency'
+    )
+    const pick = (part: string, option: string, from = 'room') =>
+      allow('pet_room_changed', { part, option, from, $session_id: 'one' })
+    expect(pick('hat', 'cap')).toBe(true)
+    expect(pick('hat', 'duck')).toBe(false)
+    expect(pick('floor', 'stone')).toBe(true)
+    expect(pick('hat', 'duck', 'shop')).toBe(true)
+  })
+
+  it('keeps push registration to one report a day per outcome', async () => {
+    const { allowAnalyticsFrequency: allow } = await import(
+      './analyticsFrequency'
+    )
+    const report = (outcome: string, $session_id: string) =>
+      allow('buddies_push_registration', { outcome, $session_id })
+    expect(report('registered', 'one')).toBe(true)
+    expect(report('registered', 'two')).toBe(false)
+    expect(report('failed', 'two')).toBe(true)
+  })
 })

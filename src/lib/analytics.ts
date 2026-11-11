@@ -37,9 +37,6 @@ function definedProperties(properties?: AnalyticsProperties) {
   return result
 }
 
-let screenSessionId: string | undefined
-const screensSentThisSession = new Set<string>()
-
 export const analytics = {
   capture(event: AnalyticsEventName, properties?: AnalyticsProperties): void {
     safely(`capture "${event}"`, () =>
@@ -49,13 +46,6 @@ export const analytics = {
   screen(name: string, properties?: AnalyticsProperties): void {
     safely(`screen "${name}"`, () => {
       if (!analyticsEventsAllowed()) return
-      const sessionId = client?.getSessionId()
-      if (sessionId !== screenSessionId) {
-        screenSessionId = sessionId
-        screensSentThisSession.clear()
-      }
-      if (screensSentThisSession.has(name)) return
-      screensSentThisSession.add(name)
       return client?.screen(name, definedProperties(properties))
     })
   },
@@ -79,8 +69,6 @@ export const analytics = {
 
   reset(): void {
     safely('reset', () => {
-      screenSessionId = undefined
-      screensSentThisSession.clear()
       resetAnalyticsFrequency()
       logger.debug('[Analytics] Resetting identity')
       return client?.reset()

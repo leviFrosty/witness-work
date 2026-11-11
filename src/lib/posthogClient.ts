@@ -14,7 +14,10 @@ import {
   isAnalyticsEvent,
   setAnalyticsProduction,
 } from '@/lib/analyticsPolicy'
-import { allowAnalyticsFrequency } from '@/lib/analyticsFrequency'
+import {
+  allowAnalyticsFrequency,
+  allowExceptionFrequency,
+} from '@/lib/analyticsFrequency'
 
 const extra = Constants.expoConfig?.extra as
   | { posthogProjectToken?: string; posthogHost?: string; appVariant?: string }
@@ -76,6 +79,8 @@ function createClient(): PostHog | null {
           })
           return null
         }
+        if (isException && !allowExceptionFrequency(event.properties))
+          return null
         return {
           ...event,
           properties: scrubAnalyticsEventProperties(event.event, {

@@ -208,8 +208,7 @@ describe('analytics boundary', () => {
     ).toBeNull()
   })
 
-  it('sends each screen once per session', async () => {
-    mocks.getSessionId.mockReturnValue('session-1')
+  it('hands every screen to the SDK, so the current screen stays right on other events', async () => {
     const { analytics } = await import('./analytics')
     analytics.screen('Dashboard')
     analytics.screen('Schedule', { previous_screen: 'Dashboard' })
@@ -217,12 +216,8 @@ describe('analytics boundary', () => {
     expect(mocks.screen.mock.calls).toEqual([
       ['Dashboard', undefined],
       ['Schedule', { previous_screen: 'Dashboard' }],
+      ['Dashboard', { previous_screen: 'Schedule' }],
     ])
-
-    mocks.getSessionId.mockReturnValue('session-2')
-    analytics.screen('Dashboard')
-    expect(mocks.screen).toHaveBeenLastCalledWith('Dashboard', undefined)
-    expect(mocks.screen).toHaveBeenCalledTimes(3)
   })
 
   it('does not break app startup when the provider cannot initialize', async () => {

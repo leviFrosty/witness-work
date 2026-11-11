@@ -355,7 +355,6 @@ export const analyticsEventNames = [
   'onboarding_started',
   'onboarding_step_completed',
   'onboarding_step_skipped',
-  'onboarding_step_viewed',
   'onboarding_tour_closed',
 
   'paywall_closed',
@@ -392,12 +391,13 @@ export const analyticsEventNames = [
 
 export type AnalyticsEventName = (typeof analyticsEventNames)[number]
 
+const exposureReportedFlags = new Set<unknown>(['announcement'])
+
 const retainedEvents = new Set<string>([
   ...analyticsEventNames,
   '$screen',
   '$feature_flag_called',
   'Application Installed',
-  'Application Opened',
   'Application Became Active',
 ])
 
@@ -406,12 +406,13 @@ export function isRetainedAnalyticsEvent(
   properties?: unknown
 ): boolean {
   if (!retainedEvents.has(event)) return false
-  if (event !== 'timer_action_completed') return true
-
-  return (
-    properties !== null &&
-    typeof properties === 'object' &&
-    'action' in properties &&
-    properties.action === 'started'
-  )
+  const props =
+    properties !== null && typeof properties === 'object'
+      ? (properties as Record<string, unknown>)
+      : {}
+  if (event === '$screen') return props.$screen_name !== 'Dashboard'
+  if (event === '$feature_flag_called')
+    return exposureReportedFlags.has(props.$feature_flag)
+  if (event === 'timer_action_completed') return props.action === 'started'
+  return true
 }

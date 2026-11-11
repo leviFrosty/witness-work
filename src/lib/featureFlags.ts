@@ -217,7 +217,7 @@ export function useFeatureFlagValue(
     if (
       currentValue === undefined ||
       !analyticsEnabled ||
-      !analyticsEventAllowed('$feature_flag_called')
+      !analyticsEventAllowed('$feature_flag_called', { $feature_flag: flag })
     )
       return
     try {

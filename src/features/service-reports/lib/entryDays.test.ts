@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   dayPlanSuggestion,
+  entriesOnDay,
   entryDayCount,
   entryDays,
   loggedMinutesOnDays,
@@ -106,6 +107,14 @@ describe('loggedMinutesOnDays', () => {
     expect(logged.get('2026-10-31')).toBe(120)
     expect(logged.get('2026-11-08')).toBe(135)
     expect(logged.get('2026-11-09')).toBe(0)
+  })
+
+  it("lists a day's entries in the order they were logged, without rollover time", () => {
+    expect(
+      entriesOnDay(reports, day('2026-11-08')).map((entry) => entry.id)
+    ).toEqual(['a', 'b'])
+    expect(entriesOnDay(reports, day('2026-11-09'))).toEqual([])
+    expect(entriesOnDay(reports, day('2025-11-08'))).toEqual([])
   })
 })
 

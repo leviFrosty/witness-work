@@ -1,0 +1,27 @@
+# seed: pioneer
+# setup: (() => { __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true }); return true })()
+# Today already has 45 minutes, so Add Time lists it under the days.
+# setup: (() => { const d = new Date(); __WW_DEV__.stores.serviceReports.getState().addServiceReport({ id: 'verify-flow-morning', hours: 0, minutes: 45, date: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9), credit: false }); return true })()
+# assert: Object.values(__WW_DEV__.stores.serviceReports.getState().serviceReports).flatMap((m) => Object.values(m).flat()).some((e) => e.id === 'verify-flow-morning' && e.hours === 2 && e.minutes === 0)
+# assert: __WW_DEV__.state().route.name === 'Add Time'
+appId: com.leviwilkerson.jwtimedev
+name: Change a day's logged time from Add Time
+---
+- extendedWaitUntil:
+    visible: Add Time
+    timeout: 60000
+- tapOn:
+    id: home-add-time
+# The entry's row opens it in the same form.
+- tapOn:
+    id: time-entry-day-entry-verify-flow-morning
+- assertVisible: Update Time
+- assertVisible: Delete…
+- tapOn:
+    id: time-entry-preset-120
+# Save keeps Add Time open, back on a new entry.
+- tapOn:
+    id: time-entry-save
+- assertNotVisible: Update Time
+- assertVisible:
+    id: time-entry-day-entry-verify-flow-morning

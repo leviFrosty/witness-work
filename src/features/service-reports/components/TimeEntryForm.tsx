@@ -40,6 +40,7 @@ import DetailRow from '@/features/service-reports/components/DetailRow'
 import EntryDayPicker, {
   type DateInputMethod,
 } from '@/features/service-reports/components/EntryDayPicker'
+import DayEntryList from '@/features/service-reports/components/DayEntryList'
 import DayPlanSuggestion from '@/features/service-reports/components/DayPlanSuggestion'
 import {
   dayPlanSuggestion,
@@ -73,7 +74,8 @@ import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { analytics } from '@/lib/analytics'
 import { calendarMonthOf, roleForMonth } from '@/lib/roleHistory'
 import { serviceYearOf } from '@/lib/serviceYear'
-import useDraftChanged from '@/hooks/useDraftChanged'
+import { canonicalJson } from '@/lib/canonicalJson'
+import type { Category } from '@/types/category'
 import usePublisher from '@/hooks/usePublisher'
 import { timeSavedProgress } from '@/features/service-reports/lib/timeSavedProgress'
 
@@ -100,10 +102,65 @@ type Props = TimeEntryPrefill & {
 
   onChangedChange?: (changed: boolean) => void
 
+  onEditingChange?: (editing: boolean) => void
+
+  onAddAnother?: (date: Date) => void
+
   layout?: 'docked' | 'inline'
 
   draftRef?: Ref<TimeEntryDraft>
 }
+
+type FormDraft = { entry: TimeEntry; type: string }
+
+type ParkedDraft = FormDraft & {
+  baseline: string
+  durationInput?: DurationInputMethod
+  dateInput?: DateInputMethod
+}
+
+const draftFor = (
+  existing: TimeEntry | undefined,
+  prefill: TimeEntryPrefill,
+  categories: Category[]
+): FormDraft => {
+  const prefillCategory =
+    !existing && prefill.categoryId
+      ? categories.find((c) => c.id === prefill.categoryId)
+      : undefined
+  const type = (() => {
+    if (prefillCategory) return prefillCategory.id
+    if (existing?.categoryId) return existing.categoryId
+    if (existing?.tag) {
+      const match = categories.find((c) => c.name === existing.tag)
+      return match ? match.id : existing.tag
+    }
+    return STANDARD_TYPE_VALUE
+  })()
+  return {
+    type,
+    entry: {
+      id: existing?.id ?? Crypto.randomUUID(),
+      hours: existing?.hours || prefill.hours || 0,
+      minutes: existing?.minutes ?? (prefill.minutes || 0),
+      date: existing
+        ? storedDateToLocalDate(existing.date)
+        : moment(prefill.date).toDate(),
+      credit: existing?.credit ?? prefillCategory?.isCredit ?? false,
+      categoryId: existing?.categoryId ?? prefillCategory?.id,
+      note: existing ? existing.note : prefill.note,
+      noteDoc: existing ? existing.noteDoc : prefill.noteDoc,
+    },
+  }
+}
+
+const withNote = (entry: TimeEntry): TimeEntry => ({
+  ...entry,
+  ...noteFields(getNoteDoc(entry)),
+})
+
+const snapshot = (draft: FormDraft) =>
+  canonicalJson({ entry: withNote(draft.entry), selectedValue: draft.type })
 
 const TimeEntryForm = (props: Props) => {
   const formAtTop = useFormAtTopOnWeb()
@@ -131,51 +188,20 @@ const TimeEntryForm = (props: Props) => {
     dayPlans,
     recurringPlans,
   } = useServiceReport()
-  const existingServiceReport = getReport(serviceReports, props.existingReport)
+  const [editing, setEditing] = useState(props.existingReport)
+  const existingServiceReport = getReport(serviceReports, editing)
+  const editingInPlace = !props.existingReport && !!existingServiceReport
 
-  const prefillCategory =
-    !existingServiceReport && props.categoryId
-      ? categories.find((c) => c.id === props.categoryId)
-      : undefined
-
-  const initialPickerValue: string = (() => {
-    if (prefillCategory) return prefillCategory.id
-    if (existingServiceReport?.report.categoryId) {
-      return existingServiceReport.report.categoryId
-    }
-    if (existingServiceReport?.report.tag) {
-      const match = categories.find(
-        (c) => c.name === existingServiceReport.report.tag
-      )
-      if (match) return match.id
-      return existingServiceReport.report.tag
-    }
-    return STANDARD_TYPE_VALUE
-  })()
-
-  const [selectedValue, setSelectedValue] = useState<string>(initialPickerValue)
+  const [initial] = useState(() =>
+    draftFor(existingServiceReport?.report, props, categories)
+  )
+  const [selectedValue, setSelectedValue] = useState<string>(initial.type)
 
   const [durationInput, setDurationInput] = useState<DurationInputMethod>()
   const [dateInput, setDateInput] = useState<DateInputMethod>()
-  const [serviceReport, setServiceReport] = useState<TimeEntry>({
-    id: existingServiceReport?.report.id ?? Crypto.randomUUID(),
-    hours: existingServiceReport?.report.hours || props.hours || 0,
-    minutes: existingServiceReport?.report.minutes ?? (props.minutes || 0),
-    date: existingServiceReport
-      ? storedDateToLocalDate(existingServiceReport.report.date)
-      : moment(props.date).toDate(),
-    credit:
-      existingServiceReport?.report.credit ??
-      prefillCategory?.isCredit ??
-      false,
-    categoryId: existingServiceReport?.report.categoryId ?? prefillCategory?.id,
-    note: existingServiceReport
-      ? existingServiceReport.report.note
-      : props.note,
-    noteDoc: existingServiceReport
-      ? existingServiceReport.report.noteDoc
-      : props.noteDoc,
-  })
+  const [serviceReport, setServiceReport] = useState<TimeEntry>(initial.entry)
+  const [baseline, setBaseline] = useState(() => snapshot(initial))
+  const [parked, setParked] = useState<ParkedDraft>()
   const validation = useFormValidation(
     {
       duration: serviceReport.hours * 60 + serviceReport.minutes <= 0,
@@ -198,7 +224,64 @@ const TimeEntryForm = (props: Props) => {
     })
   }
 
+  const changed =
+    snapshot({ entry: serviceReport, type: selectedValue }) !== baseline
+
+  const confirmLeavingEdit = (leave: () => void) => {
+    if (!editingInPlace || !changed) {
+      leave()
+      return
+    }
+    Alert.alert(i18n.t('discardChanges'), undefined, [
+      { text: i18n.t('keepEditing'), style: 'cancel' },
+      { text: i18n.t('discard'), style: 'destructive', onPress: leave },
+    ])
+  }
+
+  const startNew = () => {
+    setEditing(undefined)
+    setParked(undefined)
+    if (!parked) return
+    setServiceReport(parked.entry)
+    setSelectedValue(parked.type)
+    setBaseline(parked.baseline)
+    setDurationInput(parked.durationInput)
+    setDateInput(parked.dateInput)
+  }
+
+  const editInPlace = (entry: TimeEntry) => {
+    if (!editing) {
+      setParked({
+        entry: serviceReport,
+        type: selectedValue,
+        baseline,
+        durationInput,
+        dateInput,
+      })
+    }
+    const draft = draftFor(entry, {}, categories)
+    setEditing(entry)
+    setServiceReport(draft.entry)
+    setSelectedValue(draft.type)
+    setBaseline(snapshot(draft))
+    setDurationInput(undefined)
+    setDateInput(undefined)
+  }
+
+  const selectEntry = (entry: TimeEntry) =>
+    confirmLeavingEdit(() =>
+      entry.id === editing?.id ? startNew() : editInPlace(entry)
+    )
+
   const setDate = (date: Date, method: DateInputMethod) => {
+    if (
+      editingInPlace &&
+      method === 'day' &&
+      localDayKey(date) === localDayKey(serviceReport.date)
+    ) {
+      confirmLeavingEdit(startNew)
+      return
+    }
     setServiceReport({
       ...serviceReport,
       date,
@@ -241,10 +324,7 @@ const TimeEntryForm = (props: Props) => {
   const setNote = (note: NoteUpdate) =>
     setServiceReport((current) => ({ ...current, ...note }))
 
-  const savedEntry = (): TimeEntry => ({
-    ...serviceReport,
-    ...noteFields(getNoteDoc(serviceReport)),
-  })
+  const savedEntry = (): TimeEntry => withNote(serviceReport)
   useImperativeHandle(props.draftRef, () => ({
     params: () => {
       const entry = savedEntry()
@@ -258,16 +338,23 @@ const TimeEntryForm = (props: Props) => {
       }
     },
   }))
-  const changed = useDraftChanged({ entry: savedEntry(), selectedValue })
-  const { onChangedChange } = props
+  const unsaved = changed || (!!parked && snapshot(parked) !== parked.baseline)
+  const { onChangedChange, onEditingChange, onAddAnother } = props
   useEffect(() => {
-    onChangedChange?.(changed)
-  }, [changed, onChangedChange])
+    onChangedChange?.(unsaved)
+  }, [unsaved, onChangedChange])
+  const isEditing = !!existingServiceReport
+  useEffect(() => {
+    onEditingChange?.(isEditing)
+  }, [isEditing, onEditingChange])
+  const source = editingInPlace ? 'add_time_day_entry' : props.source
   const noteAnalytics = (entry: TimeEntry) => ({
     has_note: hasNote(entry),
     has_formatting: !!entry.noteDoc,
     note_photos: entry.noteDoc ? richTextImages(entry.noteDoc.doc).length : 0,
   })
+
+  const leaveEdit = () => (editingInPlace ? startNew() : props.onDone())
 
   const submit = () => {
     if (!validation.validate()) return
@@ -365,6 +452,16 @@ const TimeEntryForm = (props: Props) => {
     toast.success(progress.added, {
       message: progress.progress,
       accessory: earned(),
+      ...(onAddAnother && {
+        durationMs: 5000,
+        action: {
+          label: i18n.t('timeForm_addAnother'),
+          onPress: () => {
+            analytics.capture('time_entry_add_another')
+            onAddAnother(entry.date)
+          },
+        },
+      }),
     })
     props.onDone()
   }
@@ -376,7 +473,7 @@ const TimeEntryForm = (props: Props) => {
     const earned = measureReward('time')
     updateServiceReport(entry)
     analytics.capture('time_entry_updated', {
-      source: props.source,
+      source,
       entry_mode: timeEntryMode(entry),
       has_category: !!entry.categoryId,
       duration_input: durationInput ?? 'prefilled',
@@ -388,7 +485,7 @@ const TimeEntryForm = (props: Props) => {
       accessory: earned(),
     })
 
-    props.onDone()
+    leaveEdit()
   }
 
   const handleRequestDelete = () => {
@@ -403,13 +500,13 @@ const TimeEntryForm = (props: Props) => {
         onPress: () => {
           deleteServiceReport(serviceReport)
           analytics.capture('time_entry_deleted', {
-            source: props.source,
+            source,
             entry_mode: timeEntryMode(serviceReport),
           })
           toast.success(i18n.t('success'), {
             message: i18n.t('deleted'),
           })
-          props.onDone()
+          leaveEdit()
         },
       },
     ])
@@ -547,6 +644,16 @@ const TimeEntryForm = (props: Props) => {
       }}
     >
       <EntryDayPicker date={serviceReport.date} setDate={setDate} />
+      {!props.existingReport && (
+        <DayEntryList
+          date={serviceReport.date}
+          editing={existingServiceReport?.report}
+          onSelect={selectEntry}
+          onDeleted={(entry) => {
+            if (entry.id === editing?.id) startNew()
+          }}
+        />
+      )}
       <View style={{ flexGrow: formAtTop ? 0 : 1, minHeight: 16 }} />
       {planned && (
         <View style={{ marginBottom: 16 }}>

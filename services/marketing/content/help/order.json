@@ -30,6 +30,7 @@
     "keyboardSave",
     "pointerHover",
     "logTimeForDay",
+    "changeLoggedTime",
     "timeRollover",
     "bibleStudies",
     "iCloudSync",

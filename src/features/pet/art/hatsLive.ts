@@ -111,6 +111,12 @@ const INK = rgbPalette({
   beak: '#e0a43a',
   string: '#8b7f6a',
   brass: '#6d4526',
+  tube: '#56617a',
+  tubeDark: '#3a4359',
+  lens: '#d7ecff',
+  glass: '#8fc4f2',
+  lensLit: '#fff7d6',
+  glassLit: '#ffd45c',
 })
 
 const put = (buf: PixelBuffer, d: number, u: number, c: number) => {
@@ -537,6 +543,63 @@ function drawFig(buf: PixelBuffer, m: HatMoment) {
   }
 }
 
+const SCOPE = {
+  d: 1,
+  u: 10,
+  length: 9,
+  sweep: 0.75,
+  reach: 0.95,
+  patMs: 1600,
+  coinsMs: 1500,
+} as const
+
+const window01 = (since: number, totalMs: number, rampMs: number): number =>
+  since < 0 || since >= totalMs
+    ? 0
+    : Math.min(1, since / rampMs, (totalMs - since) / rampMs)
+
+export function telescopeAngle(m: HatMoment): number {
+  const up = Math.PI / 2
+  let angle = up - SCOPE.sweep * Math.sin(m.tMs * 0.0005 + 0.9)
+  const sincePat = m.tMs - m.patMs
+  const pat = window01(sincePat, SCOPE.patMs, 200)
+  if (pat > 0) {
+    const swing = Math.sin((sincePat / SCOPE.patMs) * 2 * Math.PI)
+    angle += (up + SCOPE.reach * swing - angle) * pat
+  }
+  const sinceCoins = m.tMs - m.coinsMs
+  const coins = window01(sinceCoins, SCOPE.coinsMs, 180)
+  if (coins > 0) {
+    const along = Math.min(1, sinceCoins / 900)
+    angle += (up - SCOPE.reach + 1.5 * along - angle) * coins
+  }
+  return angle
+}
+
+function drawTelescope(buf: PixelBuffer, m: HatMoment, lit: boolean) {
+  const angle = telescopeAngle(m)
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  const steep = Math.abs(sin) > Math.abs(cos)
+  for (let i = 0; i <= SCOPE.length; i++) {
+    const d = Math.round(SCOPE.d + cos * i)
+    const u = Math.round(SCOPE.u + sin * i)
+    const lens = i >= SCOPE.length - 1
+    put(
+      buf,
+      d,
+      u,
+      lens ? (lit ? INK.lensLit : INK.lens) : i === 0 ? INK.dark : INK.tube
+    )
+    put(
+      buf,
+      steep ? d + 1 : d,
+      steep ? u : u - 1,
+      lens ? (lit ? INK.glassLit : INK.glass) : INK.tubeDark
+    )
+  }
+}
+
 const scratch = bigHatCanvas()
 
 function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
@@ -622,14 +685,12 @@ function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
     case 'train':
       drawTrain(buf, m)
       break
-    case 'dome':
-      blit(
-        buf,
-        frameOf(hatRoomDim(hat, m) > 0.25 ? 'dome/open' : 'dome/closed'),
-        0,
-        0
-      )
+    case 'dome': {
+      const lit = hatRoomDim(hat, m) > 0.25
+      blit(buf, frameOf(lit ? 'dome/open' : 'dome/closed'), 0, 0)
+      drawTelescope(buf, m, lit)
       break
+    }
     case 'fig':
       drawFig(buf, m)
       break

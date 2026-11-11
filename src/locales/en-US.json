@@ -5684,12 +5684,12 @@
       },
       "hatNote": {
         "mailbox": "The flag goes up on days you go out.",
-        "cuckoo": "Shows your real time and calls on the hour. Pat your pet to make it call.",
-        "bowl": "Pat your pet and the fish dart. New coins make one leap.",
-        "lighthouse": "The beam sweeps the room after dusk. Pat your pet to run it by day.",
-        "train": "Pat your pet for a burst of speed. New coins heap the last wagon with gold.",
-        "dome": "Stars fill the room after dusk. Pat your pet to run the show by day.",
-        "fig": "Starts as a sprout and grows with your days out."
+        "cottage": "The windows light up after dusk.",
+        "cloud": "The rain turns to snow in winter.",
+        "cuckoo": "Shows your real time and calls on the hour.",
+        "lighthouse": "After dusk, the beam sweeps the room by itself.",
+        "dome": "After dusk, stars fill the room by themselves.",
+        "fig": "Starts as a sprout and grows with your days out. A pat shakes a fig loose once the tree is grown, but not in winter."
       },
       "wearingNow": "Wearing it now",
       "inRoomNow": "In the room now",

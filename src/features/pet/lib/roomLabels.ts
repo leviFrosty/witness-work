@@ -25,10 +25,10 @@ export const roomOptionLabel = (part: RoomChoicePart, option: string): string =>
 
 const HAT_NOTES: ReadonlySet<string> = new Set([
   'mailbox',
+  'cottage',
+  'cloud',
   'cuckoo',
-  'bowl',
   'lighthouse',
-  'train',
   'dome',
   'fig',
 ])

@@ -6,7 +6,7 @@ import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
 import { BIG_HAT_BRIM_ROW, BIG_HAT_CX, BIG_HAT_W } from './hatCanvas'
 import { COIN_TOSS_MS } from './hatRoomFx'
-import { trainAngle, trainSpot } from './hatsLive'
+import { telescopeAngle, trainAngle, trainSpot } from './hatsLive'
 import {
   composeScene,
   DEMO_SIGN_DATA,
@@ -52,6 +52,7 @@ const MOVING = [
   'bowl',
   'lighthouse',
   'train',
+  'dome',
   'fig',
 ] as const
 
@@ -102,6 +103,42 @@ describe('the big hats', () => {
       drawn('dome', 2000, { lampLevel: level, hatPatMs: 0 })
     expect(lit(5)).not.toBe(drawn('dome', 2000, { lampLevel: 5 }))
     expect(lit(1)).not.toBe(drawn('dome', 2000, { lampLevel: 1 }))
+  })
+
+  it('turns the planetarium telescope, and swings it for a pat and new coins', () => {
+    const moment = (tMs: number, over = {}) => ({
+      tMs,
+      species: 'lion' as const,
+      coat: 'default' as const,
+      season: 'summer' as const,
+      time: 'day' as const,
+      growth: 5,
+      wentOut: true,
+      patMs: -Infinity,
+      coinsMs: -Infinity,
+      clockMs: null,
+      ...over,
+    })
+    const idle = [0, 2000, 4000, 6000, 8000].map((t) =>
+      telescopeAngle(moment(t))
+    )
+    expect(Math.max(...idle) - Math.min(...idle)).toBeGreaterThan(0.8)
+    const swing = [400, 1200].map((dt) =>
+      telescopeAngle(moment(5000 + dt, { patMs: 5000 }))
+    )
+    expect(swing[0] - swing[1]).toBeGreaterThan(1.5)
+    const start = telescopeAngle(moment(5200, { coinsMs: 5000 }))
+    const end = telescopeAngle(moment(5900, { coinsMs: 5000 }))
+    expect(start).toBeLessThan(Math.PI / 2 - 0.5)
+    expect(end).toBeGreaterThan(Math.PI / 2 + 0.2)
+    for (const t of [0, 1000, 5400, 5900, 7000]) {
+      const a = telescopeAngle(moment(t, { patMs: 5000, coinsMs: 5200 }))
+      expect(a).toBeGreaterThan(0.4)
+      expect(a).toBeLessThan(Math.PI - 0.4)
+    }
+    expect(telescopeAngle(moment(9000, { patMs: 5000, coinsMs: 5000 }))).toBe(
+      telescopeAngle(moment(9000))
+    )
   })
 
   const wall = (over: Partial<SceneInput>, room = {}) =>

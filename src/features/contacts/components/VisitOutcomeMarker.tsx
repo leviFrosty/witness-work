@@ -27,14 +27,14 @@ const VisitOutcomeMarker = ({
   const theme = useTheme()
   const style = {
     study: {
-      backgroundColor: theme.colors.accent,
-      borderColor: theme.colors.accent,
+      backgroundColor: theme.colors.text,
+      borderColor: theme.colors.text,
       color: theme.colors.card,
     },
     conversation: {
       backgroundColor: theme.colors.card,
-      borderColor: theme.colors.accent3,
-      color: theme.colors.accent3,
+      borderColor: theme.colors.text,
+      color: theme.colors.text,
     },
     notAtHome: {
       backgroundColor: theme.colors.backgroundLighter,

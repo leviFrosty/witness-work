@@ -18,10 +18,9 @@ name: Favorite a contact from Contact Details, then rename them through Edit
 # The star sits in the header; its name says what a tap does.
 - tapOn: Add to Favorites
 - assertVisible: Remove from Favorites
-- tapOn: More actions
-- assertVisible: Delete Permanently…
-- waitForAnimationToEnd
-- tapOn: Edit
+# Edit is the pencil beside the star.
+- tapOn:
+    id: contact-details-edit
 - assertVisible: EDIT CONTACT
 - tapOn:
     id: contact-name-input

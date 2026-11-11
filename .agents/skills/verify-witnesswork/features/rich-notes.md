@@ -15,7 +15,7 @@ Notes on visits, time entries, plans and trips open in a full-screen note editor
 ## How to get to it (user POV)
 
 - Add Time → Note. Plan a day → Note. A contact → Add (conversation) → Note. Mileage → add a trip → Note.
-- Read back: the Schedule day sheet (time entries), Plan Details and plan rows, a contact's Conversation History (Show more), trip rows and trip details.
+- Read back: the Schedule day sheet (time entries), Plan Details and plan rows, a contact's Visit History (Show more), trip rows and trip details.
 
 ## Driving it with ww-verify
 

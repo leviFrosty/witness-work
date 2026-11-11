@@ -38,6 +38,16 @@ export type UpNext = {
   topic?: string
 }
 
+const visitsAnswering = (visit: Visit, contactVisits: Visit[]): Visit[] => {
+  if (!visit.followUp) return []
+  const after = ms(visit.date)
+  const from = moment(visit.followUp.date).startOf('day').valueOf()
+  return contactVisits.filter(
+    (other) =>
+      other.id !== visit.id && ms(other.date) > after && ms(other.date) >= from
+  )
+}
+
 export const getUpNext = (
   contactVisits: Visit[],
   now: Date = new Date()
@@ -48,7 +58,8 @@ export const getUpNext = (
     if (!followUp || followUp.dismissed) continue
     const date = new Date(followUp.date)
     if (date.getTime() <= now.getTime()) continue
-    if (followUpAnswer(visit, contactVisits)) continue
+    if (visitsAnswering(visit, contactVisits).some((v) => !v.notAtHome))
+      continue
     if (!best || date.getTime() < best.date.getTime()) {
       best = {
         visit,
@@ -60,6 +71,35 @@ export const getUpNext = (
   }
   return best
 }
+
+export type OpenFollowUp = UpNext & { attempted: boolean }
+
+export const getOpenFollowUp = (
+  contactVisits: Visit[],
+  now: Date = new Date()
+): OpenFollowUp | null => {
+  let best: OpenFollowUp | null = null
+  for (const visit of contactVisits) {
+    const followUp = visit.followUp
+    if (!followUp || followUp.dismissed) continue
+    const date = new Date(followUp.date)
+    if (date.getTime() > now.getTime()) continue
+    const later = visitsAnswering(visit, contactVisits)
+    if (later.some((other) => !other.notAtHome)) continue
+    if (!best || date.getTime() > best.date.getTime()) {
+      best = {
+        visit,
+        date,
+        notifyMe: followUp.notifyMe,
+        topic: followUp.topic?.trim() || undefined,
+        attempted: later.length > 0,
+      }
+    }
+  }
+  return best
+}
+
+export const JOURNEY_MIN_VISITS = 8
 
 export type JourneyDot = { id: string; outcome: VisitOutcome; position: number }
 

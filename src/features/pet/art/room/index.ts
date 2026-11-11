@@ -1,4 +1,10 @@
-import { createBuffer, createLru, type PixelBuffer } from '@/lib/pixelArt'
+import {
+  createBuffer,
+  createLru,
+  createMask,
+  type PixelBuffer,
+  type PixelMask,
+} from '@/lib/pixelArt'
 import {
   DEFAULT_ROOM,
   HAT_IDS,
@@ -43,6 +49,7 @@ export * from './bed'
 export * from './floor'
 export * from './keepsakes'
 export * from './lamp'
+export type { RoomLive, RoomLiveSet, RoomMoment } from './live'
 export * from './shelf'
 export * from './sign'
 export * from './study'
@@ -169,6 +176,15 @@ export function paintRoomBase(
 ): void {
   drawWall(buf, room.wallColor, room.wallPattern)
   drawFloor(buf, room.floor)
+  paintRoomFurniture(buf, room, sign, decor)
+}
+
+function paintRoomFurniture(
+  buf: PixelBuffer,
+  room: ResolvedRoom,
+  sign: SignData,
+  decor: RoomDecor
+): void {
   drawWindow(buf, {
     time: room.time,
     season: room.season,
@@ -233,5 +249,22 @@ export function drawRoomBase(
     const buf = createBuffer(SCENE_W, SCENE_H)
     paintRoomBase(buf, room, sign, decor)
     return buf
+  })
+}
+
+const openMasks = createLru<PixelMask>(4)
+
+export function roomOpenMask(
+  room: ResolvedRoom,
+  sign: SignData,
+  decor: RoomDecor = {}
+): PixelMask {
+  return openMasks.getOrCreate(roomBaseKey(room, sign, decor), () => {
+    const over = createBuffer(SCENE_W, SCENE_H)
+    paintRoomFurniture(over, room, sign, decor)
+    const mask = createMask(SCENE_W, SCENE_H)
+    for (let p = 0; p < mask.data.length; p++)
+      mask.data[p] = over.data[p * 4 + 3] === 0 ? 1 : 0
+    return mask
   })
 }

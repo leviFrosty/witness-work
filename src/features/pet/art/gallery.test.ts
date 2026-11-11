@@ -4,7 +4,13 @@ import path from 'node:path'
 import { describe, it } from 'vitest'
 
 import { crop, scaleNearest, type PixelBuffer } from '@/lib/pixelArt'
-import { HAT_IDS } from '@/types/pet'
+import { ROOM_THUMB_VIEWS } from '@/features/pet/lib/roomOptions'
+import {
+  HAT_IDS,
+  RARE_ROOM_ITEMS,
+  UNCOMMON_ROOM_ITEMS,
+  WALL_COLORS,
+} from '@/types/pet'
 
 import { ENTRANCES, TRICKS, WAKE, type MotionTable } from '../motion'
 import {
@@ -371,5 +377,170 @@ describe.runIf(process.env.PET_GALLERY === '1')('pet gallery', () => {
           )
         )
     write('sheets/hats.png', contactSheet(hatCells, HAT_IDS.length), 3)
+  }, 120000)
+})
+
+const LIVE_PET = {
+  species: 'dog',
+  coat: 'gold',
+  mood: 'happy',
+  seed: 1000,
+} as const
+
+const LIVE_ROOM: ResolvedRoom = {
+  ...ROOM,
+  time: 'day',
+  wallColor: 'cream',
+  wallPattern: 'plain',
+}
+
+type LivePart = 'wallPattern' | 'floor' | 'bed' | 'shelf' | 'lamp' | 'study'
+
+function liveFrames(
+  room: ResolvedRoom,
+  times: readonly number[],
+  extra: Partial<SceneInput> = {}
+): PixelBuffer[] {
+  return times.map((t) =>
+    composeScene(
+      {
+        room,
+        sign: DEMO_SIGN_DATA,
+        lampLevel: 4,
+        pet: LIVE_PET,
+        ...extra,
+      },
+      t
+    )
+  )
+}
+
+describe.runIf(process.env.PET_GALLERY === 'live')('pet live gallery', () => {
+  it('writes the moving room items, idle and reacting', () => {
+    const only = process.env.PET_LIVE
+    const onlyItem = process.env.PET_LIVE_ITEM
+    const items = [...UNCOMMON_ROOM_ITEMS, ...RARE_ROOM_ITEMS]
+      .map((item) => item.split(':') as [LivePart | 'hat', string])
+      .filter(([part]) => part !== 'hat')
+      .filter(([part]) => !only || part === only || part.startsWith(only))
+      .filter(([, option]) => !onlyItem || option === onlyItem)
+    const idle = [0, 300, 600, 900, 1500, 2400, 4000, 7000]
+    const after = [0, 150, 300, 600, 1000, 1600, 2500, 4000]
+    for (const [part, option] of items) {
+      const room = { ...LIVE_ROOM, [part]: option } as ResolvedRoom
+      const name = `live/${part}-${option}`
+      write(`${name}-day.png`, contactSheet(liveFrames(room, idle), 4), 2)
+      write(
+        `${name}-night.png`,
+        contactSheet(
+          [
+            ...liveFrames({ ...room, time: 'night' }, [0, 900, 2400, 7000], {
+              lampLevel: 3,
+            }),
+            ...liveFrames({ ...room, time: 'dusk' }, [0, 900, 2400, 7000], {
+              lampLevel: 5,
+            }),
+          ],
+          4
+        ),
+        2
+      )
+      write(
+        `${name}-pat.png`,
+        contactSheet(
+          liveFrames(
+            room,
+            after.map((t) => 1000 + t),
+            { hatPatMs: 1000 }
+          ),
+          4
+        ),
+        2
+      )
+      write(
+        `${name}-coins.png`,
+        contactSheet(
+          liveFrames(
+            room,
+            after.map((t) => 1000 + t),
+            { hatCoinsMs: 1000 }
+          ),
+          4
+        ),
+        2
+      )
+      const view = ROOM_THUMB_VIEWS[part as LivePart]
+      write(
+        `${name}-zoom.png`,
+        contactSheet(
+          liveFrames(room, [0, 1200, 2400]).map((frame) => crop(frame, view)),
+          3
+        ),
+        6
+      )
+      if (part === 'lamp') {
+        const lamp = option as ResolvedRoom['lamp']
+        write(
+          `${name}-levels.png`,
+          contactSheet(
+            [0, 1, 2, 3, 4, 5].flatMap((level) =>
+              [400, 1400].map((t) => lampSprite(lamp, level, t))
+            ),
+            6
+          ),
+          6
+        )
+        write(
+          `${name}-rooms.png`,
+          contactSheet(
+            [0, 1, 3, 5].map(
+              (lampLevel) =>
+                liveFrames({ ...room, time: 'night' }, [1200], {
+                  lampLevel,
+                })[0]
+            ),
+            4
+          ),
+          2
+        )
+      }
+      if (part === 'wallPattern')
+        write(
+          `${name}-colors.png`,
+          contactSheet(
+            WALL_COLORS.map((wallColor) =>
+              crop(
+                liveFrames({ ...room, wallColor }, [1200])[0],
+                [40, 0, 120, 62]
+              )
+            ),
+            6
+          ),
+          2
+        )
+    }
+    const parts = [...new Set(items.map(([part]) => part))] as LivePart[]
+    for (const part of parts) {
+      const view = ROOM_THUMB_VIEWS[part]
+      const options = (ROOM_PARTS[part].options as readonly string[]).slice(
+        0,
+        part === 'study' ? 12 : 8
+      )
+      write(
+        `live/${part}-thumbs.png`,
+        contactSheet(
+          options.map((option) =>
+            crop(
+              liveFrames({ ...LIVE_ROOM, [part]: option } as ResolvedRoom, [
+                0,
+              ])[0],
+              view
+            )
+          ),
+          4
+        ),
+        4
+      )
+    }
   }, 120000)
 })

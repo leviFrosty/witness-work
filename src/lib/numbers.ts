@@ -91,6 +91,26 @@ export function formatNumber(
   return latinNumeral(numberFormatter(locale, options).format(value))
 }
 
+export const GROUPED_COUNT_FROM = 1000
+
+export const isGroupedCount = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  Number.isInteger(value) &&
+  Math.abs(value) >= GROUPED_COUNT_FROM
+
+export function formatCount(value: number, language?: string): string {
+  const shown = language ?? conventions.language
+  if (digitSystemFor(shown) !== 'latn') {
+    return localizeNumeral(
+      latinNumeral(numberFormatter('en-US', undefined).format(value)),
+      shown
+    )
+  }
+  return latinNumeral(
+    numberFormatter(conventions.locale, undefined).format(value)
+  )
+}
+
 export function formatPlainNumber(value: number): string {
   return localizeNumeral(String(value), conventions.language)
 }

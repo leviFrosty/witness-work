@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { opaqueBounds } from '@/lib/pixelArt'
 import { BIG_HAT_IDS, DEFAULT_ROOM } from '@/types/pet'
 import {
+  LAMPS,
   HAT_ANCHOR_Y,
   hatSprite,
   PET_Y,
@@ -147,6 +148,15 @@ describe('Shop views', () => {
           headRow - (BIG_HAT_BRIM_ROW - top)
         )
     }
+  })
+
+  it('keeps the top of a light in its card when it fits or shines from the top', () => {
+    const centred = shopThumbView('lamp', 66, 40)[1]
+    expect(shopThumbView('lamp', 66, 40, 'clay')[1]).toBe(centred)
+    expect(shopThumbView('lamp', 66, 40, 'campfire')[1]).toBe(centred)
+    expect(shopThumbView('lamp', 66, 40, 'stove')[1]).toBe(centred)
+    for (const lamp of ['shadows', 'streetlamp', 'stand', 'hurricane'] as const)
+      expect(shopThumbView('lamp', 66, 40, lamp)[1]).toBe(LAMPS[lamp].oy - 1)
   })
 
   it('shows a strip of the room inside the scene for every category', () => {

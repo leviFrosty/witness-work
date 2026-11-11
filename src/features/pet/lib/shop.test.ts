@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   HAT_UNLOCK_ORDER,
+  RARE_ROOM_ITEMS,
   SECRET_ROOM_ITEMS,
   STARTER_ROOM_ITEMS,
   STUDY_UNLOCK_ORDER,
+  UNCOMMON_ROOM_ITEMS,
   UNLOCK_ORDER,
 } from '@/types/pet'
 import { ROOM_TABS } from '@/features/pet/lib/roomOptions'
@@ -43,7 +45,7 @@ describe('Shop prices', () => {
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
 
     expect(prices.reduce((sum, price) => sum + price, 0)).toBe(
-      5720 + 1480 + 23430
+      34820 + 6240 + 23430
     )
   })
 
@@ -74,8 +76,47 @@ describe('Shop prices', () => {
   it('sells the study corner, with nothing in it to start', () => {
     expect(STARTER_ROOM_ITEMS).toContain('study:none')
     expect(STUDY_UNLOCK_ORDER.map(priceOf)).toEqual([
-      100, 120, 160, 200, 240, 300, 360,
+      100, 120, 160, 200, 240, 300, 360, 700, 760, 1400, 1900,
     ])
+  })
+
+  it('prices uncommon and rare room items like the hats of their tier', () => {
+    const priced = (items: readonly string[]) =>
+      items.map((item) => priceOf(item)!)
+    const hats = (items: readonly string[]) =>
+      priced(items.filter((item) => item.startsWith('hat:')))
+    const room = (items: readonly string[]) =>
+      items.filter((item) => !item.startsWith('hat:'))
+    for (const item of room(UNCOMMON_ROOM_ITEMS)) {
+      expect(itemRarity(item)).toBe('uncommon')
+      expect(priceOf(item)).toBeGreaterThanOrEqual(
+        Math.min(...hats(UNCOMMON_ROOM_ITEMS))
+      )
+      expect(priceOf(item)).toBeLessThanOrEqual(
+        Math.max(...hats(UNCOMMON_ROOM_ITEMS))
+      )
+    }
+    for (const item of room(RARE_ROOM_ITEMS)) {
+      expect(itemRarity(item)).toBe('rare')
+      expect(priceOf(item)).toBeGreaterThanOrEqual(
+        Math.min(...hats(RARE_ROOM_ITEMS))
+      )
+      expect(priceOf(item)).toBeLessThanOrEqual(
+        Math.max(...hats(RARE_ROOM_ITEMS))
+      )
+    }
+  })
+
+  it('lists each part cheapest first, uncommon then rare', () => {
+    for (const order of [UNLOCK_ORDER, STUDY_UNLOCK_ORDER]) {
+      const byPart = new Map<string, number[]>()
+      for (const item of order) {
+        const part = item.split(':')[0]
+        byPart.set(part, [...(byPart.get(part) ?? []), priceOf(item)!])
+      }
+      for (const prices of byPart.values())
+        expect(prices).toEqual([...prices].sort((a, b) => a - b))
+    }
   })
 
   it('says how much more a price needs than the wallet holds', () => {

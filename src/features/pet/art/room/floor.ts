@@ -76,6 +76,186 @@ const S = {
   lilyHeart: rgb('#f2c94c'),
 }
 
+const L = {
+  lawn: rgb('#7dab4f'),
+  lawnDark: rgb('#6b9a44'),
+  lawnLight: rgb('#8fbb5a'),
+  blade: rgb('#568a36'),
+  tip: rgb('#a9d26d'),
+  daisy: rgb('#f7f5ec'),
+  daisyShade: rgb('#d5dcc2'),
+  pink: rgb('#f0a9bf'),
+  pinkShade: rgb('#cf7f9a'),
+  heart: rgb('#f2c94c'),
+  bell: rgb('#7f9fe0'),
+  bellLight: rgb('#b4c8f2'),
+}
+
+export const LAWN_FLOWERS: readonly (readonly [number, number, 0 | 1 | 2])[] = [
+  [9, 69, 0],
+  [27, 91, 1],
+  [16, 82, 2],
+  [38, 66, 1],
+  [52, 96, 0],
+  [61, 68, 2],
+  [5, 96, 0],
+  [33, 78, 0],
+  [106, 66, 0],
+  [112, 96, 1],
+  [100, 80, 2],
+  [134, 97, 0],
+  [156, 94, 2],
+  [158, 66, 1],
+  [176, 80, 0],
+  [86, 97, 2],
+  [72, 65, 0],
+  [142, 68, 0],
+]
+
+const B = {
+  sand: rgb('#ead4a2'),
+  sandDark: rgb('#d9bf88'),
+  sandLight: rgb('#f5e6bf'),
+  grit: rgb('#c4a878'),
+  wet: rgb('#cdb07c'),
+  shell: rgb('#f0a79a'),
+  shellShade: rgb('#c9766e'),
+  shellRib: rgb('#dd8a80'),
+  shellLight: rgb('#fbd9d0'),
+  whelk: rgb('#f6efe0'),
+  whelkLight: rgb('#ffffff'),
+  whelkDark: rgb('#a8875c'),
+  star: rgb('#e8843c'),
+  starLight: rgb('#f6aa66'),
+  starDark: rgb('#c0622a'),
+  pebble: rgb('#a39c92'),
+  pebbleBlue: rgb('#8795a5'),
+}
+
+const SHORE_SCALLOPS: readonly (readonly [number, number])[] = [
+  [14, 70],
+  [58, 67],
+  [108, 71],
+  [34, 86],
+  [164, 84],
+]
+const SHORE_WHELKS: readonly (readonly [number, number])[] = [
+  [28, 66],
+  [6, 82],
+  [98, 66],
+  [150, 68],
+  [112, 86],
+]
+const SHORE_STARS: readonly (readonly [number, number])[] = [
+  [22, 78],
+  [132, 67],
+  [8, 92],
+]
+const SHORE_PEBBLES: readonly (readonly [number, number, boolean])[] = [
+  [42, 70, true],
+  [4, 66, false],
+  [68, 64, true],
+  [18, 88, false],
+  [120, 96, true],
+  [156, 92, false],
+  [172, 70, true],
+  [30, 94, true],
+]
+
+const K = {
+  water: rgb('#5bb6b0'),
+  deep: rgb('#4aa5a4'),
+  bedStone: rgb('#48999d'),
+  bedSand: rgb('#7cc7b6'),
+  glint: rgb('#b4ead9'),
+  bank: rgb('#56503f'),
+  moss: rgb('#6f9a45'),
+  stones: [rgb('#a7a196'), rgb('#948d82'), rgb('#b5aea1'), rgb('#8c8f94')],
+}
+
+const F = {
+  soil: rgb('#6a5236'),
+  soilDark: rgb('#58432c'),
+  soilLight: rgb('#7c6242'),
+  moss: rgb('#5f8c3e'),
+  mossLight: rgb('#7fae4c'),
+  mossDark: rgb('#476d30'),
+  mossBright: rgb('#9cc65c'),
+  twig: rgb('#3f2d1c'),
+  twigLight: rgb('#6b4f33'),
+  leaves: [rgb('#e8a23a'), rgb('#cf5f2e'), rgb('#f0c44a'), rgb('#b9743a')],
+  fern: rgb('#2a6a3f'),
+  fernLight: rgb('#9fe070'),
+  fernDark: rgb('#1f4a2c'),
+  stem: rgb('#efe2c6'),
+  stemShade: rgb('#cdbb98'),
+  cap: rgb('#c58f58'),
+  capLight: rgb('#e6bd88'),
+  capDark: rgb('#96663a'),
+}
+
+const FOREST_MOSS: readonly (readonly [number, number, number, number])[] = [
+  [14, 67, 15, 4],
+  [52, 71, 17, 5],
+  [98, 66, 16, 3.6],
+  [140, 70, 19, 5],
+  [174, 78, 11, 5],
+  [8, 84, 12, 5],
+  [40, 92, 20, 5],
+  [84, 86, 14, 4],
+  [120, 91, 18, 5.4],
+  [160, 95, 15, 4],
+  [70, 98, 12, 3],
+  [118, 77, 8, 2.4],
+  [24, 76, 7, 2.2],
+]
+
+const FERN_FROND: readonly (readonly [number, number, boolean])[] = [
+  [0, 0, false],
+  [0, -1, false],
+  [0, -2, false],
+  [0, -3, false],
+  [0, -4, true],
+  [1, -1, false],
+  [2, -2, false],
+  [3, -3, true],
+  [-1, -1, false],
+  [-2, -2, false],
+  [-3, -3, true],
+  [2, 0, false],
+  [3, 0, false],
+  [4, -1, true],
+  [-2, 0, false],
+  [-3, 0, false],
+  [-4, -1, true],
+]
+
+const FOREST_FERNS: readonly (readonly [number, number, boolean])[] = [
+  [8, 70, false],
+  [36, 94, true],
+  [62, 67, false],
+  [18, 86, true],
+  [104, 68, false],
+  [112, 95, true],
+  [140, 96, false],
+  [156, 68, true],
+  [174, 92, false],
+  [86, 97, false],
+]
+
+const FOREST_MUSHROOMS: readonly (readonly [number, number, boolean])[] = [
+  [26, 74, true],
+  [31, 77, false],
+  [4, 92, false],
+  [48, 64, false],
+  [100, 88, true],
+  [105, 91, false],
+  [96, 91, false],
+  [150, 93, true],
+  [168, 66, false],
+  [70, 96, false],
+]
+
 function mod(n: number, m: number): number {
   return ((n % m) + m) % m
 }
@@ -140,6 +320,252 @@ const FLOORS: Readonly<Record<FloorId, (buf: PixelBuffer) => void>> = {
         fillRect(buf, x + 1, y + 1, x + 10, y + 2, mix(c, WHITE, 0.15))
       }
     }
+  },
+  grass(buf) {
+    const W = buf.width
+    fillRect(buf, 0, FLOOR_TOP, W, buf.height, L.lawn)
+    const r = createRng(88)
+    for (let n = 0; n < 34; n++) {
+      const cx = r() * W
+      const cy = FLOOR_TOP + r() * 38
+      const rx = 5 + r() * 9
+      const tone = r() < 0.55 ? L.lawnDark : L.lawnLight
+      for (let y = Math.floor(cy - 2); y <= cy + 2; y++) {
+        if (y < FLOOR_TOP) continue
+        for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
+          const a = (x + 0.5 - cx) / rx
+          const b = (y + 0.5 - cy) / 2.4
+          if (a * a + b * b <= 1 && (x + y * 3) % 5 !== 0) plot(buf, x, y, tone)
+        }
+      }
+    }
+    for (let n = 0; n < 90; n++) {
+      const x = Math.floor(r() * W)
+      const y = FLOOR_TOP + 1 + Math.floor(r() * 37)
+      const tone = r() < 0.5 ? L.blade : L.tip
+      plot(buf, x, y, tone)
+      if (r() < 0.6) plot(buf, x, y - 1, tone)
+    }
+    for (const [x, y, kind] of LAWN_FLOWERS) {
+      if (kind === 2) {
+        plot(buf, x, y, L.bell)
+        plot(buf, x + 1, y, L.bellLight)
+        plot(buf, x, y + 1, L.blade)
+        continue
+      }
+      const petal = kind === 0 ? L.daisy : L.pink
+      plot(buf, x, y - 1, petal)
+      plot(buf, x - 1, y, petal)
+      plot(buf, x + 1, y, petal)
+      plot(buf, x, y + 1, kind === 0 ? L.daisyShade : L.pinkShade)
+      plot(buf, x, y, L.heart)
+    }
+    backGlow(buf, L.tip, 0.14)
+  },
+  shore(buf) {
+    const W = buf.width
+    fillRect(buf, 0, FLOOR_TOP, W, buf.height, B.sand)
+    const r = createRng(17)
+    for (let n = 0; n < 330; n++) {
+      const x = Math.floor(r() * W)
+      const y = FLOOR_TOP + Math.floor(r() * 38)
+      const tone = r()
+      plot(
+        buf,
+        x,
+        y,
+        tone < 0.45 ? B.sandDark : tone < 0.8 ? B.sandLight : B.grit
+      )
+    }
+    for (let n = 0; n < 16; n++) {
+      const x = Math.floor(r() * (W - 12))
+      const y = FLOOR_TOP + 2 + Math.floor(r() * 26)
+      const w = 5 + Math.floor(r() * 7)
+      for (let i = 0; i < w; i++)
+        plot(buf, x + i, y + (i > 1 && i < w - 2 ? 0 : 1), B.sandDark)
+      for (let i = 2; i < w - 2; i++) plot(buf, x + i, y + 1, B.sandLight)
+    }
+    for (let y = 95; y < buf.height; y++) {
+      for (let x = 0; x < W; x++) {
+        if (y > 95 || (x + (x >> 2)) % 3 !== 0) plot(buf, x, y, B.wet)
+      }
+    }
+    for (const [x, y] of SHORE_SCALLOPS) {
+      fillRect(buf, x - 2, y - 1, x + 3, y + 1, B.shell)
+      fillRect(buf, x - 1, y - 2, x + 2, y - 1, B.shell)
+      plot(buf, x - 1, y + 1, B.shellShade)
+      plot(buf, x, y + 1, B.shellShade)
+      plot(buf, x + 1, y + 1, B.shellShade)
+      plot(buf, x - 1, y - 1, B.shellRib)
+      plot(buf, x + 1, y - 1, B.shellRib)
+      plot(buf, x - 2, y, B.shellRib)
+      plot(buf, x, y, B.shellRib)
+      plot(buf, x + 2, y, B.shellRib)
+      plot(buf, x, y - 2, B.shellLight)
+    }
+    for (const [x, y] of SHORE_WHELKS) {
+      fillRect(buf, x, y, x + 3, y + 2, B.whelk)
+      plot(buf, x + 3, y + 1, B.whelk)
+      plot(buf, x + 4, y + 1, B.whelkDark)
+      plot(buf, x + 1, y, B.whelkLight)
+      plot(buf, x, y + 1, B.whelkDark)
+      plot(buf, x + 2, y + 1, B.whelkDark)
+    }
+    for (const [x, y] of SHORE_STARS) {
+      plot(buf, x, y - 2, B.star)
+      fillRect(buf, x - 2, y - 1, x + 3, y, B.star)
+      fillRect(buf, x - 1, y, x + 2, y + 1, B.star)
+      plot(buf, x - 2, y + 1, B.star)
+      plot(buf, x - 1, y + 1, B.starDark)
+      plot(buf, x + 1, y + 1, B.starDark)
+      plot(buf, x + 2, y + 1, B.star)
+      plot(buf, x, y - 1, B.starLight)
+      plot(buf, x, y, B.starDark)
+    }
+    for (const [x, y, tone] of SHORE_PEBBLES) {
+      const c = tone ? B.pebble : B.pebbleBlue
+      fillRect(buf, x, y, x + 2, y + 1, c)
+      plot(buf, x, y, mix(c, WHITE, 0.3))
+      plot(buf, x + 2, y, dim(c, 0.8))
+    }
+    backGlow(buf, B.sandLight, 0.3)
+  },
+  koi(buf) {
+    const W = buf.width
+    fillRect(buf, 0, FLOOR_TOP, W, buf.height, K.water)
+    const r = createRng(207)
+    for (let n = 0; n < 30; n++) {
+      const cx = r() * W
+      const cy = FLOOR_TOP + 5 + r() * 33
+      const rx = 4 + r() * 8
+      const ry = 1.4 + r() * 1.6
+      fillEllipse(buf, cx, cy, rx, ry, K.deep)
+    }
+    for (let n = 0; n < 26; n++) {
+      const cx = Math.floor(r() * W)
+      const cy = FLOOR_TOP + 6 + Math.floor(r() * 32)
+      const w = 2 + Math.floor(r() * 3)
+      const tone = r() < 0.5 ? K.bedStone : K.bedSand
+      fillRect(buf, cx, cy, cx + w, cy + 1, tone)
+      if (w > 2) fillRect(buf, cx + 1, cy + 1, cx + w - 1, cy + 2, tone)
+    }
+    for (let n = 0; n < 18; n++) {
+      const x = Math.floor(r() * (W - 6))
+      const y = FLOOR_TOP + 6 + Math.floor(r() * 32)
+      fillRect(buf, x, y, x + 2 + Math.floor(r() * 3), y + 1, K.glint)
+    }
+    backGlow(buf, K.glint, 0.22)
+    fillRect(buf, 0, FLOOR_TOP, W, FLOOR_TOP + 4, K.bank)
+    let x = -Math.floor(r() * 4)
+    while (x < W) {
+      const w = 6 + Math.floor(r() * 7)
+      const h = 3 + Math.floor(r() * 3)
+      const c = K.stones[Math.floor(r() * K.stones.length)]
+      fillRect(buf, x + 1, FLOOR_TOP, x + w, FLOOR_TOP + h, c)
+      fillRect(buf, x + 2, FLOOR_TOP + h, x + w - 1, FLOOR_TOP + h + 1, c)
+      fillRect(buf, x + 1, FLOOR_TOP, x + w, FLOOR_TOP + 1, mix(c, WHITE, 0.28))
+      plot(buf, x + w - 1, FLOOR_TOP + h - 1, dim(c, 0.8))
+      fillRect(
+        buf,
+        x + 2,
+        FLOOR_TOP + h + 1,
+        x + w - 1,
+        FLOOR_TOP + h + 2,
+        K.deep
+      )
+      if (r() < 0.3) {
+        plot(buf, x + 3, FLOOR_TOP + 1, K.moss)
+        plot(buf, x + 4, FLOOR_TOP + 1, K.moss)
+        plot(buf, x + 4, FLOOR_TOP + 2, K.moss)
+      }
+      x += w
+    }
+  },
+  forest(buf) {
+    const W = buf.width
+    fillRect(buf, 0, FLOOR_TOP, W, buf.height, F.soil)
+    const r = createRng(311)
+    for (let n = 0; n < 150; n++) {
+      const x = Math.floor(r() * W)
+      const y = FLOOR_TOP + Math.floor(r() * 38)
+      const tone = r() < 0.5 ? F.soilDark : F.soilLight
+      plot(buf, x, y, tone)
+      plot(buf, x + 1, y, tone)
+    }
+    for (const [cx, cy, rx, ry] of FOREST_MOSS) {
+      for (let y = Math.floor(cy - ry - 1); y <= cy + ry + 1; y++) {
+        if (y < FLOOR_TOP) continue
+        for (let x = Math.floor(cx - rx - 1); x <= cx + rx + 1; x++) {
+          const a = (x + 0.5 - cx) / rx
+          const b = (y + 0.5 - cy) / ry
+          const bump = 0.12 * Math.sin(x * 0.9 + cy) + 0.1 * Math.sin(x * 0.37)
+          const e = a * a + b * b + bump
+          if (e > 1) continue
+          const under = b > 0.35 && e > 0.62
+          const top = b < -0.25 && e < 0.8
+          const fleck = (x * 5 + y * 3) % 11 === 0
+          plot(
+            buf,
+            x,
+            y,
+            under
+              ? F.mossDark
+              : top
+                ? fleck
+                  ? F.mossBright
+                  : F.mossLight
+                : fleck
+                  ? F.mossLight
+                  : F.moss
+          )
+        }
+      }
+    }
+    for (let n = 0; n < 7; n++) {
+      const x = Math.floor(r() * (W - 12))
+      const y = FLOOR_TOP + 4 + Math.floor(r() * 32)
+      const w = 5 + Math.floor(r() * 6)
+      const rise = r() < 0.5 ? 1 : -1
+      for (let i = 0; i < w; i++)
+        plot(buf, x + i, y + (i > w / 2 ? rise : 0), F.twig)
+      plot(buf, x + 2, y - 1, F.twig)
+      plot(buf, x + 1, y, F.twigLight)
+    }
+    for (let n = 0; n < 34; n++) {
+      const x = Math.floor(r() * (W - 5))
+      const y = FLOOR_TOP + 2 + Math.floor(r() * 35)
+      const c = F.leaves[Math.floor(r() * F.leaves.length)]
+      const lean = r() < 0.5 ? 1 : -1
+      fillRect(buf, x, y, x + 3, y + 1, c)
+      plot(buf, x + 1, y - 1, mix(c, WHITE, 0.22))
+      plot(buf, x + 1 + lean, y - 1, c)
+      plot(buf, x + 1, y + 1, dim(c, 0.72))
+      plot(buf, x + 1 - lean * 2, y + 1, dim(c, 0.72))
+    }
+    for (const [x, y, flip] of FOREST_FERNS) {
+      const side = flip ? -1 : 1
+      for (const [dx, dy, tip] of FERN_FROND) {
+        plot(buf, x + dx * side, y + dy, tip ? F.fernLight : F.fern)
+      }
+      plot(buf, x, y + 1, F.fernDark)
+    }
+    for (const [x, y, size] of FOREST_MUSHROOMS) {
+      if (size) {
+        fillRect(buf, x, y + 2, x + 2, y + 5, F.stem)
+        plot(buf, x + 1, y + 4, F.stemShade)
+        fillRect(buf, x - 2, y, x + 4, y + 2, F.cap)
+        fillRect(buf, x - 1, y - 1, x + 3, y, F.cap)
+        fillRect(buf, x - 2, y + 1, x + 4, y + 2, F.capDark)
+        plot(buf, x, y - 1, F.capLight)
+        plot(buf, x - 1, y, F.capLight)
+      } else {
+        fillRect(buf, x, y + 1, x + 1, y + 3, F.stem)
+        fillRect(buf, x - 1, y, x + 2, y + 1, F.cap)
+        plot(buf, x, y - 1, F.capLight)
+        plot(buf, x + 1, y, F.capDark)
+      }
+    }
+    backGlow(buf, F.mossLight, 0.12)
   },
   zellige(buf) {
     const W = buf.width

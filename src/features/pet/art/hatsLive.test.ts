@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { hashBuffer, opaqueBounds, pixelAt } from '@/lib/pixelArt'
-import { hatReactions } from '@/features/pet/lib/hatReactions'
+import { itemReactions } from '@/features/pet/lib/itemReactions'
 import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
 import { BIG_HAT_BRIM_ROW, BIG_HAT_CX, BIG_HAT_W } from './hatCanvas'
@@ -191,7 +191,7 @@ describe('the big hats', () => {
       return count
     }
     for (const hat of BIG_HAT_IDS) {
-      const reacts = hatReactions(`hat:${hat}`).includes('coins')
+      const reacts = itemReactions(`hat:${hat}`).includes('coins')
       expect(gold(hat, { hatCoinsMs: 20_000 }) > 0).toBe(reacts)
       expect(gold(hat, { hatCoinsMs: 20_000 - COIN_TOSS_MS })).toBe(0)
       expect(gold(hat, { hatCoinsMs: 20_000, reduceMotion: true })).toBe(0)
@@ -278,7 +278,7 @@ describe('the big hats', () => {
     }
 
     it.each(BIG_HAT_IDS)('lists exactly what %s reacts to', (hat) => {
-      const listed = hatReactions(`hat:${hat}`)
+      const listed = itemReactions(`hat:${hat}`)
       expect(pixelsChanged(hat, 'hatPatMs') > 0).toBe(listed.includes('pat'))
       expect(pixelsChanged(hat, 'hatCoinsMs') > 0).toBe(
         listed.includes('coins')
@@ -287,11 +287,11 @@ describe('the big hats', () => {
 
     it('leads with the pat, and gives every rare hat both reactions', () => {
       for (const hat of [...UNCOMMON_HAT_IDS, ...RARE_HAT_IDS]) {
-        const listed = hatReactions(`hat:${hat}`)
+        const listed = itemReactions(`hat:${hat}`)
         if (listed.length > 0) expect(listed[0]).toBe('pat')
       }
       for (const hat of RARE_HAT_IDS) {
-        expect(hatReactions(`hat:${hat}`)).toEqual(['pat', 'coins'])
+        expect(itemReactions(`hat:${hat}`)).toEqual(['pat', 'coins'])
         expect(pixelsChanged(hat, 'hatPatMs')).toBeGreaterThan(5)
         expect(pixelsChanged(hat, 'hatCoinsMs')).toBeGreaterThan(5)
       }

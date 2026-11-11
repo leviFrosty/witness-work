@@ -137,16 +137,20 @@ purchases are (`lib/currency.ts`).
 
 Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 
-| Part   | Options                                                                     | Starter (free)           |
-| ------ | --------------------------------------------------------------------------- | ------------------------ |
-| window | time `live dawn day dusk night` × season `live spring summer autumn winter` | all                      |
-| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`     | sand, cream; plain, dots |
-| floor  | `wood stone brick tile`                                                     | wood                     |
-| bed    | `rug hay basket cushion`                                                    | rug                      |
-| shelf  | `scrolls books pottery fruit`                                               | scrolls                  |
-| lamp   | `clay lantern candle stand`                                                 | clay                     |
-| sign   | `none month year shared plan convos`                                        | all                      |
-| hat    | `none`, then 39 to buy (`HAT_IDS`, cheapest first)                          | none                     |
+| Part   | Options                                                                                                           | Starter (free)           |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| window | time `live dawn day dusk night` × season `live spring summer autumn winter`                                       | all                      |
+| wall   | color `sand sage sky rose cream` × pattern `plain dots stripes trellis`, then `clouds leaves`, `mountains aurora` | sand, cream; plain, dots |
+| floor  | `wood stone brick tile`, then `grass shore`, `koi forest`                                                         | wood                     |
+| bed    | `rug hay basket cushion`, then `leafpile pool`, `hotspring flowerbed`                                             | rug                      |
+| shelf  | `scrolls books pottery fruit`, then `hourglass tea`, `gramophone volcano`                                         | scrolls                  |
+| lamp   | `clay lantern candle stand`, then `stove streetlamp`, `shadows campfire`                                          | clay                     |
+| study  | `none stool bag bookstand desk bookcase table armchair`, then `rocker typewriter`, `lampdesk fort`                | none                     |
+| sign   | `none month year shared plan convos`                                                                              | all                      |
+| hat    | `none`, then 39 to buy (`HAT_IDS`, cheapest first)                                                                | none                     |
+
+Each part the Shop sells lists its common options, then two uncommon and two rare ones (below), then
+its secrets.
 
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
@@ -154,8 +158,10 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   `lib/prices.ts`), in the ×10 units of ADR 0038: room items and the first 12 hats 100–360 coins,
   rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27 big hats (ADR 0044) fill in from 110
   to 3,200: six cheap ones in the gaps (110–380), silly ones that don't move (400–560), ones with one
-  moving part (620–1,100) and five rare ones (1,200–3,200). A purchase keeps what it cost, so prices
-  can be retuned. Starters are free; secrets are found, never sold.
+  moving part (620–1,100) and five rare ones (1,200–3,200). Uncommon and rare room items (ADR 0045)
+  cost what hats of their tier do: uncommon 620–1,000, rare 1,300–2,800, dearer the more an item
+  does. A purchase keeps what it cost, so prices can be retuned. Starters are free; secrets are
+  found, never sold.
 - Hats: the pet wears one (or none). Bought hats are stored with the room items (`hat:bow`, …).
 
   A hat sits on the head (`art/hats.ts`: a 24 × 20 picture whose brim row 17 lands on the species'
@@ -204,19 +210,65 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   Every hat that reacts to new coins also tosses five gold coins over itself (`drawCoinToss`,
   `COIN_TOSS_MS`), so the moment shows even while a pat's show is still running, and on the mailbox
   the newer of a pat and new coins wins.
-  `itemRarity` (`lib/prices.ts`) gives each item its tier. The eleven hats with one moving part
-  (`UNCOMMON_HAT_IDS`) get a green card frame (`cardUncommon`, `cardUncommonPicked`), and rare hats a
-  blue one (`cardRare`, `cardRarePicked`), in the Shop and the details, not in the room. "Uncommon" is
-  a code name and is spoken by screen readers, but no screen prints it.
+  `itemRarity` (`lib/prices.ts`) gives each item its tier (`UNCOMMON_ROOM_ITEMS`, `RARE_ROOM_ITEMS`
+  in `src/types/pet.ts`, hats and room items alike). Uncommon items get a green card frame
+  (`cardUncommon`, `cardUncommonPicked`), and rare ones a blue one (`cardRare`, `cardRarePicked`), in
+  the Shop and the details, not in the room. "Uncommon" is a code name and is spoken by screen
+  readers, but no screen prints it.
 
-  Selecting a hat with a reaction in the Shop or the details plays its pat, the one that happens most
-  often, without patting the pet. `HatPreviewTray` hangs under the selected card, like the wall colors
-  tray, but in a plain card frame: the rarity color stays on the card, whose ring points down at the
-  tray. It has a button for each event the hat reacts to (`hatReactions` in
-  `lib/hatReactions.ts`, the Pat and New coins columns above; a test holds it to what the art does).
-  "New coins" replays on every press (`hatCoins`, with no gap between reactions as earned coins have).
-  Reduce Motion leaves the tray out, since a hat stays still under it.
+  Selecting an item with a reaction in the Shop or the details plays its pat, the one that happens
+  most often, without patting the pet. `ReactionPreviewTray` hangs under the selected card, like the
+  wall colors tray, but in a plain card frame: the rarity color stays on the card, whose ring points
+  down at the tray. It has a button for each event the item reacts to (`itemReactions` in
+  `lib/itemReactions.ts`, the Pat and New coins columns here and below; tests hold it to what the art
+  does). Under a wall pattern it sits below the colors tray, with no ring of its own. "New coins"
+  replays on every press (`hatCoins`, with no gap between reactions as earned coins have).
+  Reduce Motion leaves the tray out, since everything stays still under it.
   Visitors wear their hats, moving but with no effect on the room.
+
+- **Uncommon and rare room items** (ADR 0045). Every part the Shop sells but the wall color has two
+  uncommon items, which have one moving part and no reactions, and two rare ones, which move, change
+  the room around them, and answer a pat and new coins as rare hats do.
+
+  | Item                    | Coins | Moves                                        | Reads                 | Pat                              | New coins                           |
+  | ----------------------- | ----- | -------------------------------------------- | --------------------- | -------------------------------- | ----------------------------------- |
+  | `shelf:hourglass`       | 620   | Sand runs for 16 s, then it turns over       |                       |                                  |                                     |
+  | `shelf:tea`             | 660   | Steam from the pot and both cups             |                       |                                  |                                     |
+  | `study:rocker`          | 700   | The chair rocks                              |                       |                                  |                                     |
+  | `wallPattern:clouds`    | 720   | Clouds drift across the wall                 | Wall color            |                                  |                                     |
+  | `study:typewriter`      | 760   | Carriage steps and returns, paper feeds      |                       |                                  |                                     |
+  | `floor:grass`           | 780   | Tufts sway in a breeze                       |                       |                                  |                                     |
+  | `bed:leafpile`          | 820   | Leaves drift down onto the pile              |                       |                                  |                                     |
+  | `wallPattern:leaves`    | 840   | Leaves sway down the wall                    | Wall color            |                                  |                                     |
+  | `lamp:stove`            | 880   | Fire behind the door, glow on the floor      | Hearts (lamp level)   |                                  |                                     |
+  | `floor:shore`           | 920   | A wave washes in and out                     |                       |                                  |                                     |
+  | `bed:pool`              | 960   | Ripples, a toy boat bobs                     |                       |                                  |                                     |
+  | `lamp:streetlamp`       | 1,000 | A moth circles the light                     | Hearts (lamp level)   |                                  |                                     |
+  | `shelf:gramophone`      | 1,300 | Record turns, notes drift along the wall     | Wall color            | A flurry of notes                | Gold notes, the horn shines         |
+  | `study:lampdesk`        | 1,400 | A page turns; light on the desk and wall     | Dusk or night: bright | Lamp brightens, pages flutter    | Lamp flashes, gold glints           |
+  | `shelf:volcano`         | 1,600 | Smoke; a glow on the wall after dusk         | Dusk or night: glow   | Shakes, puffs a smoke ring       | Erupts with gold sparks             |
+  | `wallPattern:mountains` | 1,700 | Clouds, gliding birds, sun or moon and stars | Time of day, color    | A flock takes off                | Gold ring, sparkles along the ridge |
+  | `bed:hotspring`         | 1,800 | Ripples, steam rising up the wall            |                       | A splash, droplets, more steam   | Gold bubbles rise and pop           |
+  | `study:fort`            | 1,900 | Glows from inside onto the floor             | Dusk or night: bright | Flap lifts, the light swells     | Gold sparkles at the opening        |
+  | `lamp:shadows`          | 2,000 | Bird shadows glide across the walls          | Hearts (lamp level)   | The birds race one lap           | Gold flecks sweep the wall          |
+  | `floor:koi`             | 2,200 | Koi swim, ripples, water light on the wall   | Dusk or night: light  | Koi dart, rings spread           | A golden koi leaps                  |
+  | `bed:flowerbed`         | 2,400 | Butterflies fly around the room              |                       | They scatter; more burst out     | Buds bloom, gold pollen             |
+  | `wallPattern:aurora`    | 2,500 | Ribbons of light flow across the wall        | Dusk or night: dims   | Flares; runs the show by day     | A gold shimmer passes through       |
+  | `floor:forest`          | 2,600 | Fireflies; after dusk they fill the room     | Dusk or night: dims   | They swirl; runs the show by day | They gather and flash gold          |
+  | `lamp:campfire`         | 2,800 | Flames, sparks rising through the room       | Hearts (lamp level)   | Flares up, a burst of sparks     | A fountain of gold sparks           |
+
+  They draw in a **live layer** over the cached room base (`art/roomLive.ts`, one `RoomLive` an item
+  in `art/room/<part>Live.ts`), each a pure function of `RoomMoment` (the scene clock, time of day,
+  season, wall color, lamp level, and the pat and new-coins timestamps hats use), with no state:
+  `back` paints after the base and before the pets, `front` on a layer in front of the pet and the
+  bed, `fx` after `applyLighting` so glows show in a dark room, and `dim` darkens the room for a show
+  (the greater of it and the hat's). Walls and floors paint only where `roomOpenMask` says the
+  surface isn't covered by the window, shelf, sign or furniture. Only lamps read the lamp level, as
+  every lamp does; at level 0 a rare lamp's effects are out too. The night shows (`aurora`, `forest`)
+  run for `SHOW_MS` by day after a pat, as the planetarium does (`showStrength` in `art/fx.ts`). A
+  thumbnail, a share card, the widget and Reduce Motion draw `tMs` 0. The intro's fully unlocked room
+  keeps to common items. Visitors bring no room items, and a device on an older build shows a room
+  item it doesn't know as that part's default.
 
 - Owned = starters ∪ `earnedRoomItems` ∪ `purchases`. `earnedRoomItems` holds found secrets and
   anything opened under the old streak and months rules before the Shop, which stays owned. An owned
@@ -459,7 +511,9 @@ Feature tier `src/features/pet/`:
 
 - `art/species/` — one file per species (rig + coats + sounds keys), `art/species/index.ts` registry.
 - `art/room/` — window, wall, floor, bed, shelf, lamps, sign, keepsakes; `art/room/index.ts`
-  registry + `UNLOCK_ORDER`; `art/hats.ts` — the hats and where each species wears them;
+  registry + `UNLOCK_ORDER`; `art/room/<part>Live.ts` — what moves in the uncommon and rare items;
+  `art/roomLive.ts` — their registry; `art/fx.ts` — blending, glows, dimming and the show timing
+  shared with hats; `art/hats.ts` — the hats and where each species wears them;
   `art/scene.ts` composes a frame from a `SceneState`.
 - `art/particles.ts` — hearts, Zzz, sparkles, dust.
 - `motion/` — `Pose` type, entrance/trick/twirl/wake tables, `evaluateMotion(table, elapsedMs)`.
@@ -494,11 +548,12 @@ widget images),
 2. `pixelArt.raster` rasterizes specs to RGBA `PixelBuffer`s; results are memoized by
    `(species, coat, pose key)` so steady-state frames don't rasterize.
 3. `art/scene.ts` composes, back to front: the room base (cached per room config + data: wall,
-   floor, window with rainbow, shelf, sign, sill, plant, stool, bed back, gift on the rug) → visitors
+   floor, window with rainbow, shelf, sign, sill, plant, stool, bed back, gift on the rug) → the live
+   layer's `back` (moving room items) → visitors
    (all behind the pet, furthest back first) → lamp and its stool (over the visitors, so they always show, but behind
-   the pet, so one running past it stays in front) → pet → bed front →
+   the pet, so one running past it stays in front) → pet → bed front → the live layer's `front` →
    lighting over all of it (cached per lamp × level × time of day × breathing phase; the pets'
-   pixels, a `PixelMask`, take half the room's darkness so a dark coat reads at night) → window moments (paradise walkers, shooting star) and the gift sparkle →
+   pixels, a `PixelMask`, take half the room's darkness so a dark coat reads at night) → the hat's and the live layer's room effects (`drawHatRoom`, `fx`) → window moments (paradise walkers, shooting star) and the gift sparkle →
    particles and dust.
 4. `render/PetSceneView` uploads the buffer as an `SkImage` and draws it scaled with
    `FilterMode.Nearest`. The scene is 180×100 logical pixels; views crop it with a viewport.

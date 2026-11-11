@@ -50,6 +50,12 @@ describe('i18n numbers in Arabic', () => {
     )
   })
 
+  it('groups a count from a thousand with the Arabic separator, never a year', () => {
+    expect(i18n.t(goalLine, { count: 1200, year: 2026, name: 'Ada' })).toBe(
+      'هدفك ١٬٢٠٠ ساعة لسنة ٢٠٢٦، اسمك Ada'
+    )
+  })
+
   it('writes 1 and 2 with the singular and dual noun in sentences', () => {
     const remind = (count: number) => t('visitDetails_remindHours', count)
     expect(remind(0)).toBe('سنذكّرك قبل ٠ ساعة.')

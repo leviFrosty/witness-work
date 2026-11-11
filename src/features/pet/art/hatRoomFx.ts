@@ -1,13 +1,13 @@
 import { rgbPalette, type PixelBuffer, type PixelMask } from '@/lib/pixelArt'
 import type { BigHatId } from '@/types/pet'
 
+import { blend, darken, isDarkTime, square } from './fx'
 import { bigHatPoint } from './hatCanvas'
 import {
   BIRD_AWAY_MS,
   birdPerch,
   FISH_JUMP_MS,
   hatRoomDim,
-  isDarkTime,
   trainAngle,
   trainSpot,
   type HatMoment,
@@ -46,50 +46,9 @@ const FX = rgbPalette({
   sprout: '#b8ec7c',
 })
 
-function blend(
-  buf: PixelBuffer,
-  px: number,
-  py: number,
-  c: number,
-  a: number
-): void {
-  const x = Math.round(px)
-  const y = Math.round(py)
-  if (x < 0 || y < 0 || x >= buf.width || y >= buf.height || a <= 0) return
-  const k = (y * buf.width + x) * 4
-  const d = buf.data
-  const v = Math.min(1, a)
-  d[k] += (((c >> 16) & 255) - d[k]) * v
-  d[k + 1] += (((c >> 8) & 255) - d[k + 1]) * v
-  d[k + 2] += ((c & 255) - d[k + 2]) * v
-}
-
-function square(
-  buf: PixelBuffer,
-  x: number,
-  y: number,
-  size: number,
-  c: number,
-  a: number
-) {
-  for (let j = 0; j < size; j++)
-    for (let i = 0; i < size; i++) blend(buf, x + i, y + j, c, a)
-}
-
 const at = (place: HatFxPlace, d: number, u: number): [number, number] => {
   const [x, y] = bigHatPoint(place.flip ? -d : d, u)
   return [place.x + x, place.y + y]
-}
-
-function darken(buf: PixelBuffer, amount: number) {
-  const r = 1 - 0.45 * amount
-  const b = 1 - 0.34 * amount
-  const d = buf.data
-  for (let k = 0; k < d.length; k += 4) {
-    d[k] *= r
-    d[k + 1] *= r
-    d[k + 2] *= b
-  }
 }
 
 const sines = {
@@ -418,10 +377,12 @@ export function drawHatRoom(
   hat: BigHatId,
   m: HatMoment,
   place: HatFxPlace,
-  subject: PixelMask
+  subject: PixelMask,
+  roomDim = 0
 ): void {
   const dim = hatRoomDim(hat, m)
-  if (dim > 0) darken(buf, dim)
+  const dark = Math.max(dim, roomDim)
+  if (dark > 0) darken(buf, dark)
   switch (hat) {
     case 'bowl': {
       drawWaterLight(buf, m, subject)

@@ -16,7 +16,7 @@ import { toast } from '@/stores/toasts'
 import type { RootStackParamList } from '@/types/rootStack'
 import { resolveRoom, VIEW_CARD, WALL_RGB } from '@/features/pet/art'
 import { cssColor, gamePalette } from '@/features/pet/art/gameUi'
-import HatPreviewTray from '@/features/pet/components/HatPreviewTray'
+import ReactionPreviewTray from '@/features/pet/components/ReactionPreviewTray'
 import ShopBuyPanel from '@/features/pet/components/ShopBuyPanel'
 import ShopHeader from '@/features/pet/components/ShopHeader'
 import ShopItemCard from '@/features/pet/components/ShopItemCard'
@@ -37,7 +37,7 @@ import {
   roomSectionLabel,
   shopItemLabel,
 } from '@/features/pet/lib/roomLabels'
-import { hatReactions } from '@/features/pet/lib/hatReactions'
+import { itemReactions } from '@/features/pet/lib/itemReactions'
 import { roomChoicePatch, roomWithChoice } from '@/features/pet/lib/roomOptions'
 import { noteRoomItemPicked } from '@/features/pet/lib/secrets'
 import { shortBy, SHOP_TABS, type ShopTab } from '@/features/pet/lib/shop'
@@ -150,7 +150,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
 
   const pick = (entry: ShopEntry) => {
     setPickedItem(entry.item)
-    if (hatReactions(entry.item).length > 0) previewRef.current?.hatPat()
+    if (itemReactions(entry.item).length > 0) previewRef.current?.hatPat()
 
     if (entry.part === 'wallPattern') setLastPattern(entry.item)
     else if (entry.part === 'wallColor' && pattern) setLastPattern(pattern.item)
@@ -312,10 +312,16 @@ export default function PetShopScreen({ navigation, route }: Props) {
             ))
             const at = pattern ? section.entries.indexOf(pattern) : -1
             const hung = colors && section.part === 'wallPattern' && at >= 0
-            const previewAt =
-              picked && !reduceMotion && hatReactions(picked.item).length > 0
-                ? section.entries.indexOf(picked)
-                : -1
+            const reacting = reduceMotion
+              ? undefined
+              : [picked, pattern].find(
+                  (entry) =>
+                    entry &&
+                    entry.state !== 'secret' &&
+                    section.entries.includes(entry) &&
+                    itemReactions(entry.item).length > 0
+                )
+            const previewAt = reacting ? section.entries.indexOf(reacting) : -1
             const hangsAt = hung ? at : previewAt
             const split =
               hangsAt >= 0
@@ -337,14 +343,15 @@ export default function PetShopScreen({ navigation, route }: Props) {
                 {heading && sectionHeading(heading)}
                 {cardRows(cards.slice(0, split))}
                 {hung && colorTray(at % columns)}
-                {picked && previewAt >= 0 && (
-                  <HatPreviewTray
-                    hat={picked.option}
-                    hatName={roomOptionLabel(picked.part, picked.option)}
+                {reacting && (
+                  <ReactionPreviewTray
+                    part={reacting.part}
+                    option={reacting.option}
+                    itemName={roomOptionLabel(reacting.part, reacting.option)}
                     petName={scene.name}
                     scene={previewRef}
                     from='shop'
-                    column={previewAt % columns}
+                    column={hung ? null : previewAt % columns}
                     cardWidth={cardWidth}
                     cardGap={CARD_GAP}
                     gap={SECTION_ROW_GAP}
@@ -366,7 +373,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
       onBuy={() => picked && buy(picked)}
       layout={layout}
       noteShown={
-        !!picked && !reduceMotion && hatReactions(picked.item).length > 0
+        !!picked && !reduceMotion && itemReactions(picked.item).length > 0
       }
     />
   )

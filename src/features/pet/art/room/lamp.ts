@@ -1820,11 +1820,630 @@ const lava: LampDefinition = {
   },
 }
 
+const STOVE = rgbPalette({
+  iron: '#40444d',
+  ironS: '#2b2e35',
+  ironH: '#626773',
+  plate: '#565b67',
+  pipe: '#4b4f59',
+  pipeS: '#34373f',
+  pipeH: '#727783',
+  wall: '#7d828e',
+  wallS: '#5a5e69',
+  brass: '#d4a640',
+  cold: '#1f1c1c',
+  hot: '#7a2610',
+  ember: '#ff5a2a',
+  vent: '#1b191a',
+  ventLit: '#ffa23a',
+})
+
+const STOVE_BARS: readonly Pt[] = (() => {
+  const out: Pt[] = []
+  for (const x of [12, 15]) {
+    for (let y = 26; y <= 36; y++) {
+      const a = (x + 0.5 - 14) / 4.2
+      const b = (y + 0.5 - 31) / 3.9
+      if (a * a + b * b <= 1) out.push([x, y])
+    }
+  }
+  return out
+})()
+
+const stove: LampDefinition = {
+  width: 28,
+  height: 47,
+  ox: 114,
+  oy: 47,
+  fx: 14,
+  fy: 31,
+  k: 0,
+  stool: false,
+  frames: 8,
+  frameTicks: 1,
+  spec(L, frame) {
+    const C = STOVE
+    const a = (frame / 8) * 2 * Math.PI
+    const glass = byLevel(C.cold, C.hot, L)
+    const shapes: Shape[] = [
+      { t: 'e', x: 14, y: 6, rx: 4.6, ry: 4.6, c: C.wall, s: C.wallS },
+      { t: 'e', x: 14, y: 6.6, rx: 2.8, ry: 2.8, c: C.pipe, edge: true },
+      { t: 'p', pts: rect(11.2, 6.6, 16.8, 22), c: C.pipe, g: 'pipe' },
+      { t: 'p', pts: rect(15, 6.6, 16.8, 22), c: C.pipeS, g: 'pipe' },
+      { t: 'p', pts: rect(12, 5, 13, 22), c: C.pipeH, g: 'pipe' },
+      { t: 'p', pts: rect(10.4, 14, 17.6, 15.6), c: C.pipeS, edge: true },
+      {
+        t: 'p',
+        pts: [
+          [6.6, 40],
+          [9.8, 40],
+          [8.4, 46],
+          [4.6, 46],
+        ],
+        c: C.ironS,
+      },
+      {
+        t: 'p',
+        pts: [
+          [18.2, 40],
+          [21.4, 40],
+          [23.4, 46],
+          [19.6, 46],
+        ],
+        c: C.ironS,
+      },
+      {
+        t: 'e',
+        x: 14,
+        y: 32,
+        rx: 9.4,
+        ry: 9.4,
+        c: C.iron,
+        s: C.ironS,
+        h: C.ironH,
+        edge: true,
+      },
+      {
+        t: 'p',
+        pts: rect(6, 39.6, 22, 42),
+        c: C.plate,
+        s: C.ironS,
+        edge: true,
+      },
+      {
+        t: 'p',
+        pts: rect(5, 21.4, 23, 24.2),
+        c: C.plate,
+        h: C.ironH,
+        edge: true,
+      },
+      {
+        t: 'e',
+        x: 14,
+        y: 31,
+        rx: 5.7,
+        ry: 5.4,
+        c: C.plate,
+        s: C.ironS,
+        h: C.ironH,
+        edge: true,
+      },
+      {
+        t: 'e',
+        x: 14,
+        y: 31,
+        rx: 4.2,
+        ry: 3.9,
+        c: glass,
+        k: 'fire',
+        edge: true,
+      },
+    ]
+    const paints: Paint[] = []
+    if (L) {
+      paints.push({
+        t: 'e',
+        x: 14,
+        y: 34.6,
+        rx: 4.4,
+        ry: 1.5,
+        c: C.ember,
+        on: ['fire'],
+      })
+      const tongues: readonly (readonly [number, number, number])[] = [
+        [-2.2, 0.7, 0],
+        [2.3, 0.8, 2.1],
+        [0.1, 1, 4.2],
+      ]
+      for (const [dx, scale, phase] of tongues) {
+        const H = (1 + L * 0.42) * scale + Math.sin(a + phase) * 0.45
+        const x = 14 + dx + Math.sin(a * 2 + phase) * 0.3
+        paints.push(
+          {
+            t: 'e',
+            x,
+            y: 34.8 - H,
+            rx: 1.5,
+            ry: H,
+            c: FLAME.outer,
+            on: ['fire'],
+          },
+          {
+            t: 'e',
+            x,
+            y: 34.8 - H * 0.72,
+            rx: 0.9,
+            ry: H * 0.66,
+            c: FLAME.mid,
+            on: ['fire'],
+          }
+        )
+      }
+      if (L >= 3)
+        paints.push({
+          t: 'e',
+          x: 14.1,
+          y: 34.2 - L * 0.16,
+          rx: 0.7,
+          ry: 0.5 + L * 0.2,
+          c: FLAME.core,
+          on: ['fire'],
+        })
+    }
+    const vent = (i: number): Rgb =>
+      L && (frame + i) % 3 !== 0 ? byLevel(C.vent, C.ventLit, L) : C.vent
+    const feats: FeaturePixel[] = [
+      ...STOVE_BARS.map(([x, y]): FeaturePixel => [x, y, C.ironS]),
+      [20, 30, C.brass],
+      [20, 31, C.brass],
+      [10, 38, vent(0)],
+      [12, 38, vent(1)],
+      [14, 38, vent(2)],
+      [16, 38, vent(0)],
+      [18, 38, vent(1)],
+      [7, 27, C.ironH],
+      [6, 30, C.ironH],
+      [18, 9, C.brass],
+      [18, 10, C.pipeS],
+      ...(L ? [] : smokePixels(13, 22, frame / 3)),
+    ]
+    return { shapes, paints, feats }
+  },
+}
+
+const STREET = rgbPalette({
+  iron: '#3b4149',
+  ironS: '#272b31',
+  ironH: '#5d646f',
+  glassOff: '#56616c',
+  glassLit: '#ffe7a0',
+  mantle: '#d9dde0',
+  mothBody: '#4a3a2c',
+  mothWing: '#e2d6b6',
+})
+
+const streetlamp: LampDefinition = {
+  width: 28,
+  height: 47,
+  ox: 114,
+  oy: 47,
+  fx: 14,
+  fy: 10.5,
+  k: 0,
+  stool: false,
+  frames: 16,
+  frameTicks: 1,
+  spec(L, frame) {
+    const C = STREET
+    const iron = { c: C.iron, s: C.ironS, h: C.ironH }
+    const glass = byLevel(C.glassOff, C.glassLit, L)
+    const shapes: Shape[] = [
+      { t: 'p', pts: rect(9, 43, 19, 46), ...iron, edge: true },
+      { t: 'p', pts: rect(10.4, 40.6, 17.6, 43), ...iron, edge: true },
+      {
+        t: 'p',
+        pts: [
+          [11.8, 40.6],
+          [16.2, 40.6],
+          [15, 35],
+          [13, 35],
+        ],
+        ...iron,
+        edge: true,
+      },
+      { t: 'p', pts: rect(13, 16, 15, 36), c: C.iron, g: 'post' },
+      { t: 'p', pts: rect(13, 16, 13.9, 36), c: C.ironH, g: 'post' },
+      { t: 'p', pts: rect(12.2, 30, 15.8, 31.6), ...iron, edge: true },
+      { t: 'p', pts: rect(12.2, 21, 15.8, 22.6), ...iron, edge: true },
+      {
+        t: 'p',
+        pts: [
+          [10.4, 14.2],
+          [17.6, 14.2],
+          [15.8, 16.6],
+          [12.2, 16.6],
+        ],
+        ...iron,
+        edge: true,
+      },
+      {
+        t: 'p',
+        pts: [
+          [9, 6.4],
+          [19, 6.4],
+          [17.4, 14.4],
+          [10.6, 14.4],
+        ],
+        c: glass,
+        k: 'glass',
+      },
+      {
+        t: 'p',
+        pts: [
+          [9, 6.4],
+          [10.1, 6.4],
+          [11.7, 14.4],
+          [10.6, 14.4],
+        ],
+        c: C.iron,
+        g: 'cage',
+      },
+      {
+        t: 'p',
+        pts: [
+          [17.9, 6.4],
+          [19, 6.4],
+          [17.4, 14.4],
+          [16.3, 14.4],
+        ],
+        c: C.ironS,
+        g: 'cage',
+      },
+      {
+        t: 'p',
+        pts: [
+          [7.4, 6.6],
+          [20.6, 6.6],
+          [16.4, 3.4],
+          [11.6, 3.4],
+        ],
+        ...iron,
+        edge: true,
+      },
+      { t: 'p', pts: rect(12.6, 2, 15.4, 3.6), c: C.iron },
+      { t: 'e', x: 14, y: 1.9, rx: 1, ry: 1, c: C.ironH },
+    ]
+    const paints: Paint[] = []
+    if (L) {
+      paints.push(
+        {
+          t: 'e',
+          x: 14,
+          y: 10.6,
+          rx: 1.2 + L * 0.42,
+          ry: 1.4 + L * 0.5,
+          c: mix(glass, GLOW.core, 0.55),
+          on: ['glass'],
+        },
+        {
+          t: 'e',
+          x: 14,
+          y: 10.8,
+          rx: 0.6 + L * 0.16,
+          ry: 0.9 + L * 0.24,
+          c: WHITE,
+          on: ['glass'],
+        }
+      )
+    }
+    const feats: FeaturePixel[] = [
+      [14, 13, C.ironS],
+      [14, 12, L ? C.mantle : C.ironS],
+    ]
+    if (!L) {
+      feats.push(
+        [17, 11, C.mothBody],
+        [16, 10, C.mothWing],
+        [18, 10, C.mothWing]
+      )
+      return { shapes, paints, feats }
+    }
+    const a = (frame / 16) * 2 * Math.PI
+    const mx = Math.round(14 + 8.4 * Math.cos(a))
+    const my = Math.round(10.6 + 3.2 * Math.sin(a) + Math.sin(a * 3) * 0.9)
+    const behind = Math.sin(a) < 0 && mx >= 9 && mx <= 19
+    if (!behind) {
+      const wing = frame % 2 ? my : my - 1
+      feats.push(
+        [mx - 1, wing, C.mothWing],
+        [mx + 1, wing, C.mothWing],
+        [mx, my, C.mothBody]
+      )
+    }
+    return { shapes, paints, feats }
+  },
+}
+
+const SHADE = rgbPalette({
+  paper: '#a8946c',
+  paperLit: '#ffdf9a',
+  paperS: '#8a7854',
+  paperSLit: '#f0b860',
+  hot: '#fff6cf',
+  wood: '#7a4a2c',
+  woodS: '#55301a',
+  woodH: '#9a6640',
+})
+
+const shadows: LampDefinition = {
+  width: 22,
+  height: 32,
+  ox: 116,
+  oy: 45,
+  fx: 11,
+  fy: 17,
+  k: 0,
+  stool: true,
+  frames: 8,
+  frameTicks: 1,
+  spec(L, frame) {
+    const C = SHADE
+    const brass = { c: BRASS.c, s: BRASS.s, h: BRASS.h }
+    const paper = byLevel(C.paper, C.paperLit, L)
+    const a = (frame / 8) * 2 * Math.PI
+    const shapes: Shape[] = [
+      { t: 'e', x: 11, y: 28.8, rx: 7.6, ry: 1.9, ...brass, edge: true },
+      { t: 'p', pts: rect(9.6, 25, 12.4, 28.4), ...brass },
+      { t: 'p', pts: rect(4, 9.6, 18, 25), c: paper, k: 'shade' },
+      {
+        t: 'p',
+        pts: rect(15, 9.6, 18, 25),
+        c: byLevel(C.paperS, C.paperSLit, L),
+        k: 'shade',
+        g: 'shade',
+      },
+      {
+        t: 'e',
+        x: 11,
+        y: 25,
+        rx: 7.6,
+        ry: 1.5,
+        c: C.wood,
+        s: C.woodS,
+        edge: true,
+      },
+      {
+        t: 'e',
+        x: 11,
+        y: 9.6,
+        rx: 7.6,
+        ry: 1.7,
+        c: C.wood,
+        h: C.woodH,
+        edge: true,
+      },
+      {
+        t: 'p',
+        pts: [
+          [5.4, 8.8],
+          [16.6, 8.8],
+          [12.4, 4.4],
+          [9.6, 4.4],
+        ],
+        ...brass,
+        edge: true,
+      },
+      { t: 'e', x: 11, y: 3.2, rx: 1.3, ry: 1.3, ...brass },
+    ]
+    const paints: Paint[] = []
+    if (L) {
+      const breathe = Math.sin(a) * 0.4
+      paints.push({
+        t: 'e',
+        x: 11,
+        y: 18.4,
+        rx: 2.2 + L * 0.5,
+        ry: 3 + L * 0.7 + breathe,
+        c: mix(paper, C.hot, 0.5),
+        on: ['shade'],
+      })
+      if (L >= 3)
+        paints.push({
+          t: 'e',
+          x: 11,
+          y: 18.6,
+          rx: 1 + L * 0.34,
+          ry: 1.4 + L * 0.46 + breathe,
+          c: C.hot,
+          on: ['shade'],
+        })
+    }
+    const glint = 7 + ((frame * (L ? 1 : 0)) % 8)
+    const feats: FeaturePixel[] = [
+      [glint, 7, BRASS.h],
+      [glint + 1, 6, BRASS.h],
+      [11, 1, BRASS.s],
+      [4, 26, C.woodS],
+      [17, 26, C.woodS],
+    ]
+    return { shapes, paints, feats }
+  },
+}
+
+const CAMP = rgbPalette({
+  stone: '#8f8a84',
+  stoneS: '#69655f',
+  stoneH: '#b0aaa2',
+  stoneB: '#7d766f',
+  bark: '#6e4426',
+  barkS: '#4a2c18',
+  barkH: '#8d5c36',
+  end: '#cfa672',
+  ring: '#9a7448',
+  char: '#2b2420',
+  ash: '#96918b',
+  ember: '#ff6a2a',
+  emberHot: '#ffc24a',
+})
+
+const CAMP_STONES: readonly (readonly [
+  number,
+  number,
+  number,
+  number,
+  boolean,
+])[] = (() => {
+  const out: [number, number, number, number, boolean][] = []
+  for (let i = 0; i < 11; i++) {
+    const t = ((i * 360) / 11 + 14) * (Math.PI / 180)
+    const back = Math.sin(t) < 0
+    out.push([
+      16 + 12.4 * Math.cos(t),
+      27 + 3.4 * Math.sin(t),
+      2.3 + ((i * 7) % 3) * 0.3,
+      1.7 + ((i * 5) % 3) * 0.25,
+      back,
+    ])
+  }
+  return out
+})()
+
+const campfire: LampDefinition = {
+  width: 32,
+  height: 33,
+  ox: 112,
+  oy: 62,
+  fx: 16,
+  fy: 17.5,
+  k: 1,
+  stool: false,
+  frames: 8,
+  frameTicks: 1,
+  spec(L, frame) {
+    const C = CAMP
+    const a = (frame / 8) * 2 * Math.PI
+    const stone = (
+      [x, y, rx, ry]: readonly [number, number, number, number, boolean],
+      i: number
+    ): Shape => ({
+      t: 'e',
+      x,
+      y,
+      rx,
+      ry,
+      c: i % 3 === 1 ? C.stoneB : C.stone,
+      s: C.stoneS,
+      h: C.stoneH,
+      edge: true,
+    })
+    const bark = L ? C.bark : mix(C.bark, C.char, 0.45)
+    const barkS = L ? C.barkS : mix(C.barkS, C.char, 0.5)
+    const shapes: Shape[] = [
+      ...CAMP_STONES.map((s, i) => (s[4] ? stone(s, i) : null)).filter(
+        (s): s is Shape => s !== null
+      ),
+      {
+        t: 'e',
+        x: 16,
+        y: 27.2,
+        rx: 9.6,
+        ry: 2.4,
+        c: L ? mix(C.char, C.ember, 0.25 + L * 0.06) : C.ash,
+        no: true,
+      },
+      {
+        t: 'p',
+        pts: [
+          [6, 23.4],
+          [25.6, 21],
+          [26.2, 23.8],
+          [6.6, 26.4],
+        ],
+        c: bark,
+        s: barkS,
+        h: C.barkH,
+        edge: true,
+      },
+    ]
+    if (L) {
+      const side = Math.max(1, L - 1)
+      shapes.push(
+        ...flameShapes(
+          10.8 + Math.sin(a + 1.7) * 0.4,
+          25.6,
+          side,
+          1.05,
+          Math.sin(a + 2.2) * 0.6
+        ),
+        ...flameShapes(
+          21 + Math.sin(a + 4) * 0.4,
+          25.4,
+          side,
+          0.95,
+          Math.sin(a + 4.4) * 0.6
+        ),
+        ...flameShapes(
+          16 + Math.sin(a) * 0.5,
+          26,
+          L,
+          1.4,
+          Math.sin(a) * 0.5 + Math.sin(a * 2 + 1) * 0.3
+        )
+      )
+    }
+    shapes.push(
+      {
+        t: 'p',
+        pts: [
+          [5.4, 25.4],
+          [25.8, 26.8],
+          [25.6, 29.8],
+          [5.2, 28.4],
+        ],
+        c: bark,
+        s: barkS,
+        h: C.barkH,
+        edge: true,
+      },
+      { t: 'e', x: 5.6, y: 26.9, rx: 1.3, ry: 1.6, c: C.end, edge: true },
+      ...CAMP_STONES.map((s, i) => (s[4] ? null : stone(s, i))).filter(
+        (s): s is Shape => s !== null
+      )
+    )
+    const glow = (i: number): Rgb =>
+      (frame + i * 3) % 4 === 0 ? C.emberHot : C.ember
+    const feats: FeaturePixel[] = [[5, 27, C.ring]]
+    if (L) {
+      feats.push(
+        [10, 27, glow(0)],
+        [14, 28, glow(1)],
+        [19, 28, glow(2)],
+        [23, 28, glow(3)],
+        [12, 24, glow(2)],
+        [20, 23, glow(0)]
+      )
+    } else {
+      feats.push(
+        [12, 27, C.char],
+        [17, 28, C.char],
+        [21, 27, C.char],
+        ...smokePixels(15, 22, frame / 3),
+        ...smokePixels(18, 20, (frame + 2) / 3)
+      )
+    }
+    return { shapes, feats }
+  },
+}
+
 export const LAMPS: Readonly<Record<LampId, LampDefinition>> = {
   clay: clayLamp,
   lantern,
   candle,
   stand,
+  stove,
+  streetlamp,
+  shadows,
+  campfire,
   lighthouse,
   pierced,
   firefly,

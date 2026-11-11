@@ -47,11 +47,40 @@ const C = rgbPalette({
   bookBlue: '#3d5f8a',
   bookPlum: '#7a5a8a',
   bookTeal: '#3f7f7a',
+  plaid: '#b5524a',
+  plaidDark: '#8c3b32',
+  plaidLine: '#ecd9a8',
+  enamel: '#4f7a72',
+  enamelLight: '#6f9c92',
+  enamelDark: '#2f4a45',
+  basket: '#22302d',
+  key: '#efe6cf',
+  steel: '#b9bcc4',
+  platen: '#3a3a42',
+  platenLight: '#5c5c68',
+  shade: '#2f7d5b',
+  shadeLight: '#4fa57c',
+  shadeDark: '#1f5a41',
+  bulb: '#ffe7a0',
+  quilt: '#6a8fb3',
+  quiltLight: '#8fb0cf',
+  quiltDark: '#4a6c8f',
+  quiltFold: '#587a9e',
+  lining: '#c9dcec',
+  liningShade: '#a3bcd3',
+  inside: '#e9b662',
+  insideMid: '#cf9247',
+  insideDeep: '#8f5a2c',
+  peg: '#d9b77a',
 })
+
+export const STUDY_SHIFT_X = 4
+
+export const STUDY_COLORS = C
 
 type Box = readonly [number, number, number, number]
 
-const SHIFT_X = 4
+const SHIFT_X = STUDY_SHIFT_X
 
 const rect = (buf: PixelBuffer, [x0, y0, x1, y1]: Box, c: Rgb) =>
   fillRect(buf, x0 + SHIFT_X, y0, x1 + SHIFT_X, y1, c)
@@ -277,6 +306,274 @@ const ITEMS: Readonly<
     rect(buf, [45, 70, 47, 74], C.woodDark)
     openBook(buf, 34, 59, 4)
   },
+  rocker(buf) {
+    shadow(buf, 22, 48)
+  },
+  typewriter(buf) {
+    shadow(buf, 20, 50)
+    rect(buf, [22, 62, 48, 64], C.woodTop)
+    rect(buf, [22, 64, 48, 65], C.woodDark)
+    rect(buf, [24, 65, 26, 74], C.wood)
+    rect(buf, [44, 65, 46, 74], C.wood)
+    rect(buf, [26, 69, 44, 70], C.woodDark)
+    rect(buf, [25, 60, 46, 62], C.enamelDark)
+    rect(buf, [26, 58, 45, 60], C.enamel)
+    rect(buf, [28, 55, 43, 58], C.enamel)
+    rect(buf, [28, 55, 43, 56], C.enamelLight)
+    dot(buf, 26, 58, C.enamelLight)
+    rect(buf, [32, 56, 39, 58], C.basket)
+    for (let x = 33; x < 38; x += 2) dot(buf, x, 56, C.steel)
+    for (let x = 27; x < 44; x += 2) dot(buf, x, 58, C.key)
+    for (let x = 28; x < 44; x += 2) dot(buf, x, 59, C.key)
+    rect(buf, [31, 60, 40, 61], C.key)
+    dot(buf, 25, 61, C.basket)
+    dot(buf, 45, 61, C.basket)
+  },
+  lampdesk(buf) {
+    shadow(buf, 14, 52)
+    rect(buf, [16, 60, 51, 62], C.woodTop)
+    rect(buf, [16, 62, 51, 63], C.woodDark)
+    rect(buf, [17, 63, 29, 74], C.wood)
+    rect(buf, [17, 63, 18, 74], C.woodLight)
+    rect(buf, [28, 63, 29, 74], C.woodDark)
+    rect(buf, [19, 64, 27, 68], C.woodLight)
+    rect(buf, [19, 69, 27, 73], C.woodLight)
+    rect(buf, [19, 67, 27, 68], C.wood)
+    rect(buf, [19, 72, 27, 73], C.wood)
+    rect(buf, [22, 65, 24, 66], C.brass)
+    rect(buf, [22, 70, 24, 71], C.brass)
+    rect(buf, [29, 63, 50, 65], C.wood)
+    rect(buf, [29, 65, 50, 66], C.woodDark)
+    rect(buf, [48, 66, 50, 74], C.woodDark)
+    rect(buf, [47, 66, 48, 74], C.wood)
+    rect(buf, [19, 59, 27, 60], C.brass)
+    rect(buf, [20, 58, 26, 59], C.brass)
+    dot(buf, 20, 58, C.highlight)
+    dot(buf, 21, 58, C.highlight)
+    rect(buf, [22, 55, 24, 58], C.brass)
+    rect(buf, [22, 55, 23, 58], C.highlight)
+    rect(buf, [19, 49, 27, 50], C.shadeLight)
+    rect(buf, [17, 50, 29, 54], C.shade)
+    rect(buf, [18, 50, 24, 51], C.shadeLight)
+    dot(buf, 18, 51, C.shadeLight)
+    rect(buf, [17, 53, 29, 54], C.shadeDark)
+    rect(buf, [19, 54, 27, 55], C.bulb)
+    dot(buf, 27, 55, C.brass)
+    dot(buf, 27, 56, C.brass)
+    dot(buf, 27, 57, C.highlight)
+    openBook(buf, 31, 55, 6)
+    rect(buf, [44, 58, 50, 60], C.notebook)
+    rect(buf, [44, 58, 50, 59], C.notebookDark)
+    rect(buf, [45, 57, 49, 58], C.pen)
+    dot(buf, 45, 57, C.brass)
+  },
+  fort(buf) {
+    shadow(buf, 13, 52)
+    paintFortShell(buf)
+    paintFortOpening(buf, 0)
+  },
+}
+
+const ROCKER_REACH = 28
+
+export function paintRocker(buf: PixelBuffer, lean: number): void {
+  const put = (x: number, y: number, c: Rgb) =>
+    dot(buf, x + Math.round((lean * (STUDY_FLOOR_Y - y)) / ROCKER_REACH), y, c)
+  const row = (x0: number, x1: number, y: number, c: Rgb) => {
+    for (let x = x0; x < x1; x++) put(x, y, c)
+  }
+  const contact = 35 + lean * 2
+  const runner = (x: number) =>
+    STUDY_FLOOR_Y - 1 - Math.round(((x - contact) * (x - contact)) / 44)
+  for (let x = 22; x <= 48; x++) {
+    dot(buf, x, runner(x), C.shelfBack)
+    dot(buf, x, runner(x) - 1, C.woodDark)
+  }
+  for (const x of [28, 41]) {
+    for (let y = 65; y < runner(x) - 1; y++) {
+      put(x, y, C.woodDark)
+      put(x + 1, y, C.shelfBack)
+    }
+  }
+  row(30, 41, 68, C.shelfBack)
+  const post = (y: number) => 23 + Math.round(((y - 49) * 3) / 14)
+  for (let y = 51; y < 63; y++) {
+    const x = post(y)
+    put(x + 6, y, C.shelfBack)
+    put(x + 7, y, C.woodDark)
+    if (y < 61) {
+      put(x + 2, y, C.wood)
+      put(x + 4, y, C.wood)
+    }
+    put(x, y, C.woodDark)
+    put(x + 1, y, C.wood)
+  }
+  row(post(49), post(49) + 8, 49, C.wood)
+  row(post(50), post(50) + 8, 50, C.woodDark)
+  row(post(61) + 2, post(61) + 6, 61, C.woodDark)
+  row(26, 45, 63, C.wood)
+  row(26, 45, 64, C.shelfBack)
+  row(27, 45, 57, C.wood)
+  row(27, 44, 58, C.shelfBack)
+  for (let y = 59; y < 63; y++) {
+    put(42, y, C.woodDark)
+    put(43, y, C.shelfBack)
+  }
+  for (let y = 48; y < 57; y++) {
+    const x0 = post(Math.max(49, y)) - 2
+    const x1 = x0 + (y < 54 ? 6 : 4)
+    for (let x = x0; x < x1; x++) {
+      let c = C.plaid
+      if (y === 48 || y === 51 || y === 54) c = C.plaidLine
+      else if ((x - x0) % 3 === 1) c = C.plaidDark
+      put(x, y, c)
+    }
+  }
+  for (let x = post(57) - 2; x < post(57) + 2; x += 2) put(x, 57, C.plaidLine)
+  row(31, 41, 62, C.cover)
+  for (let y = 59; y < 62; y++) row(32, 40, y, C.paper)
+  for (let y = 59; y < 62; y++) put(36, y, C.paperShade)
+  for (const x of [33, 34, 38]) put(x, 60, C.ink)
+  put(36, 62, C.ribbon)
+}
+
+const TYPED = ['## ### ', '### # #', '# ## ##', '## # ##'] as const
+
+export function paintTypewriterCarriage(
+  buf: PixelBuffer,
+  shift: number,
+  paper: number,
+  lines: number,
+  typed: number
+): void {
+  if (paper > 0) {
+    const x0 = 32 + shift
+    rect(buf, [x0, 53 - paper, x0 + 9, 53], C.paper)
+    rect(buf, [x0 + 8, 53 - paper, x0 + 9, 53], C.paperShade)
+    for (let n = 1; n <= lines; n++) {
+      const y = 52 - n
+      if (y <= 53 - paper) break
+      const words = TYPED[(lines - n) % TYPED.length]
+      for (let i = 0; i < words.length; i++)
+        if (words[i] === '#') dot(buf, x0 + 1 + i, y, C.ink)
+    }
+    const words = TYPED[lines % TYPED.length]
+    for (let i = 0; i < typed; i++)
+      if (words[i] === '#') dot(buf, x0 + 1 + i, 52, C.ink)
+  }
+  rect(buf, [29 + shift, 53, 44 + shift, 55], C.platen)
+  rect(buf, [29 + shift, 53, 44 + shift, 54], C.platenLight)
+  rect(buf, [28 + shift, 53, 29 + shift, 55], C.brass)
+  rect(buf, [44 + shift, 53, 45 + shift, 55], C.brass)
+  dot(buf, 27 + shift, 52, C.steel)
+  dot(buf, 27 + shift, 53, C.steel)
+}
+
+const PAGE_TURN: readonly (readonly [number, number])[] = [
+  [42, 2],
+  [40, 4],
+  [37, 5],
+  [34, 4],
+  [32, 2],
+]
+
+export const PAGE_TURN_STEPS = PAGE_TURN.length
+
+export function paintLampdeskPage(buf: PixelBuffer, step: number): void {
+  const turn = PAGE_TURN[step]
+  if (!turn) return
+  const [x, height] = turn
+  rect(buf, [x, 59 - height, x + 1, 59], C.paper)
+  dot(buf, x + (step < 2 ? 1 : -1), 59 - height + 1, C.paperShade)
+}
+
+const FORT_MID = 33
+
+const fortTop = (x: number): number => {
+  if (x < 17) return 50 + (17 - x) * 2
+  if (x > 48) return 50 + (x - 48) * 2
+  if (x <= 20 || x >= 45) return 50
+  const a = (x - 32.5) / 12.5
+  return 51 + Math.round(3 * (1 - a * a))
+}
+
+const fortHem = (x: number): number =>
+  x >= 25 && x <= 42 ? STUDY_FLOOR_Y : STUDY_FLOOR_Y - 2 + ((x >> 1) & 1)
+
+function paintFortShell(buf: PixelBuffer): void {
+  rect(buf, [18, 70, 20, 74], C.woodDark)
+  rect(buf, [46, 70, 48, 74], C.woodDark)
+  for (let x = 14; x <= 51; x++) {
+    const top = fortTop(x)
+    const hem = fortHem(x)
+    for (let y = top; y < hem; y++) {
+      const drop = y - top
+      let c = C.quilt
+      if (drop === 0) c = C.quiltLight
+      else if (drop % 6 === 3) c = C.plaidLine
+      else if (drop % 6 === 4) c = C.quiltLight
+      if (x === 14 || x === 51 || x === 24 || x === 43) c = C.quiltFold
+      if (y === hem - 1) c = C.quiltDark
+      dot(buf, x, y, c)
+    }
+  }
+  for (let x = 14; x <= 26; x++) {
+    const top = fortTop(x)
+    const end = 65 - Math.round((x - 14) * 0.75)
+    for (let y = top; y < end; y++) {
+      const drop = y - top
+      let c = C.plaid
+      if (drop === 0 || y === end - 1) c = C.plaidLine
+      else if (drop % 4 === 2) c = C.plaidDark
+      else if ((x - 14) % 4 === 1) c = C.plaidDark
+      dot(buf, x, y, c)
+    }
+  }
+  for (const x of [27, 39]) {
+    dot(buf, x, fortTop(x) - 1, C.peg)
+    dot(buf, x, fortTop(x), C.peg)
+    dot(buf, x, fortTop(x) + 1, C.woodDark)
+  }
+}
+
+export const FORT_GLOW: readonly [number, number] = [FORT_MID, 68]
+
+export const FORT_APEX = 60
+
+export function fortOpening(
+  lift: number,
+  y: number
+): readonly [left: number, right: number, flap: number] {
+  const drop = y - FORT_APEX
+  const left = FORT_MID - Math.min(5, Math.ceil(drop * 0.6))
+  const right =
+    FORT_MID + Math.min(5 + lift, Math.ceil(drop * (0.6 + 0.15 * lift)))
+  const flap = y > STUDY_FLOOR_Y - 1 - lift * 3 ? 0 : 1 + Math.floor(drop / 5)
+  return [left, right, flap]
+}
+
+export function paintFortOpening(buf: PixelBuffer, lift: number): void {
+  for (let y = FORT_APEX; y < STUDY_FLOOR_Y; y++) {
+    const [left, right, flap] = fortOpening(lift, y)
+    const reach = lift > 0 && flap === 0 ? right + 3 : right
+    for (let x = left; x <= reach; x++) {
+      const d = Math.hypot(x - FORT_MID, (y - 68) * 0.9)
+      dot(buf, x, y, d < 3.2 ? C.inside : d < 6.2 ? C.insideMid : C.insideDeep)
+    }
+    dot(buf, left - 1, y, C.lining)
+    for (let i = 1; i <= flap; i++)
+      dot(buf, right + i, y, i === flap && flap > 1 ? C.liningShade : C.lining)
+    if (flap > 0) dot(buf, right + flap + 1, y, C.quiltDark)
+  }
+  rect(buf, [28, 71, 35, 74], C.pillow)
+  rect(buf, [29, 70, 34, 71], C.pillow)
+  rect(buf, [28, 73, 35, 74], C.pillowShade)
+  rect(buf, [34, 72, 39, 74], C.cover)
+  rect(buf, [34, 71, 39, 73], C.paper)
+  dot(buf, 36, 71, C.paperShade)
+  dot(buf, 36, 72, C.paperShade)
+  dot(buf, 35, 72, C.ink)
+  dot(buf, 38, 72, C.ink)
 }
 
 export function drawStudy(buf: PixelBuffer, study: StudyId | undefined): void {

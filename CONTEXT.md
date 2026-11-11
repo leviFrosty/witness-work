@@ -435,11 +435,14 @@ How what a save earned the Pet plays where the User is: a line for each source (
 _Avoid_: "combo meter", "loot", "jackpot".
 
 **Shop**:
-Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Prices run from 100 to 3,200 coins; the five dearest hats are **Rare hats**. The **Study corner** is a room part with no starter item: it stays empty, and isn't drawn, until the User buys one of its 6–8 pieces, which any Pet owner can buy whether or not **Spiritual Routine** is on. Nothing in it costs money.
+Where the User spends **Coins** on the Pet's hats and room items, from the **Locker** (its Shop button, or the More in Shop card that ends a part's items) or the Pet's Home card menu. It only sells: each item is bought once, put on at once, and owned for good, after which the Shop just marks it owned; **Secret items** are never sold. Prices run from 100 to 3,200 coins; the five dearest hats are **Rare hats**, and every room part it sells has **Uncommon and rare room items** too. The **Study corner** is a room part with no starter item: it stays empty, and isn't drawn, until the User buys one of its 6–8 pieces, which any Pet owner can buy whether or not **Spiritual Routine** is on. Nothing in it costs money.
 _Avoid_: "store" (that's the App Store or Play Store), "market", "loot", "gacha"; "unlock" for a purchase.
 
 **Uncommon hat**:
 One of the eleven **Shop** hats with one moving part, from Propeller to Balloon, framed in green on its Shop and **Locker** cards. Selecting one that reacts to a pat or to new **Coins** plays the pat, and buttons under its card preview each reaction. The name is for code and docs; the app shows the frame, not the word.
+
+**Uncommon and rare room items**:
+The two uncommon and two rare items of each room part the **Shop** sells (wall pattern, floor, bed, shelf, light, **Study corner**), framed in green and blue like **Uncommon hats** and **Rare hats** and priced like them (620–1,000 and 1,300–2,800 coins). An uncommon one has one moving part (an hourglass, a wave on the shore). A rare one moves, changes the room around it, and reacts to a pat and to new **Coins** (koi pond, campfire, Northern lights), with the same preview buttons under its card. Only lights read **Hearts**, through the lamp level, as every light does (ADR 0045).
 
 **Rare hat**:
 One of the five dearest hats in the **Shop** (Fishbowl, Lighthouse, Model railway, Planetarium, Little fig tree), framed in blue on its Shop and **Locker** cards. It moves, changes the room around it, and reacts to a pat and to new **Coins**. Selecting one plays its pat reaction, and buttons under its card preview each reaction. Like every hat, it never reads **Hearts** or the **Service Streak** (ADR 0044). The Little fig tree grows with days out since it was bought, in six stages; it can't be bought grown.
@@ -486,8 +489,8 @@ The User's chosen translation locale — which set of strings (English, Español
 _Avoid_: "locale" alone (ambiguous — it historically meant both Language and formatting; the two are now distinct concerns), "region" (region governs format, not words).
 
 **Format Region**:
-The User's chosen formatting conventions — date ordering (`DD/MM` vs `MM/DD`), 12- vs 24-hour time, and the default first day of week — selected **independently of Language**, so "English language, Australian formats" is expressible. Supplies the _defaults_ for the per-axis controls below; each can still be overridden individually. Defaults to the device region. Sourced from the conventions moment already carries for each locale, not a separate dataset.
-_Avoid_: "locale" (Language and Format Region are deliberately separable), "date format" (date order is only one of the three things Region governs).
+The User's chosen formatting conventions — date ordering (`DD/MM` vs `MM/DD`), 12- vs 24-hour time, the default first day of week, and how numbers are written (`1,234.5` vs `1.234,5`, including the thousands separator in counts such as `97,800 coins`) — selected **independently of Language**, so "English language, Australian formats" is expressible. Supplies the _defaults_ for the per-axis controls below; each can still be overridden individually. Defaults to the device region. Sourced from the conventions moment already carries for each locale, not a separate dataset.
+_Avoid_: "locale" (Language and Format Region are deliberately separable), "date format" (date order is only one of the things Region governs).
 
 **Start of Week**:
 Which weekday a calendar week begins on across the app (calendar grids, weekday-label rows, recurring-plan math). A standalone preference that defaults from the **Format Region** but is independently overridable.

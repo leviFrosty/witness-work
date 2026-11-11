@@ -147,10 +147,16 @@ describe('usePetLife secret items', () => {
     )
     expect(latest?.unlockedItems.has('hat:duck')).toBe(true)
     expect(latest?.unlockedItems.has('hat:teapot')).toBe(false)
-    expect(analytics.capture).toHaveBeenCalledWith('pet_room_item_unlocked', {
-      item: 'hat:duck',
+    const unlocks = vi
+      .mocked(analytics.capture)
+      .mock.calls.filter(([event]) => event === 'pet_room_item_unlocked')
+    expect(unlocks).toHaveLength(1)
+    expect(unlocks[0][1]).toEqual({
+      items: [...stored()].sort().join(','),
+      count: stored().length,
       by: 'secret',
     })
+    expect(unlocks[0][1]?.items).toContain('hat:duck')
 
     const settled = renders
     const unlocked = latest?.unlockedItems

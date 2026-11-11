@@ -3,9 +3,9 @@ import { logger } from '@/lib/logger'
 
 const dailyEvents = new Set([
   'Application Became Active',
-  'app_launch_timed',
+  '$screen',
   '$feature_flag_called',
-  'onboarding_checklist_viewed',
+  'buddies_push_registration',
   'supporter_nudge_viewed',
   'backup_reminder_viewed',
   'pointer_hover_detected',
@@ -18,7 +18,13 @@ const dailyEvents = new Set([
   'cloud_sync_photos_storage_full',
   'cloud_sync_photo_transfer_failed',
 ])
+const weeklyEvents = new Set([
+  'app_launch_timed',
+  'onboarding_checklist_viewed',
+])
+const WEEK_DAYS = 7
 const sessionEvents = new Set([
+  'pet_room_changed',
   'timer_action_completed',
   'buddies_opened',
   'badges_opened',
@@ -28,7 +34,6 @@ const sessionEvents = new Set([
   'map_group_opened',
   'map_unavailable',
   'contacts_suggested_contact_opened',
-  'buddies_push_registration',
   'icloud_restore_probe_result',
   'saved_view_applied',
   'schedule_year_view_opened',
@@ -47,6 +52,7 @@ const sessionEvents = new Set([
 let storage: MMKV | undefined
 let day: string | undefined
 let daily = new Set<string>()
+let weekly: Record<string, string> | undefined
 let session: string | undefined
 const sessionSeen = new Set<string>()
 
@@ -58,7 +64,12 @@ export function allowAnalyticsFrequency(
   event: string,
   properties: Record<string, unknown> = {}
 ): boolean {
-  if (!dailyEvents.has(event) && !sessionEvents.has(event)) return true
+  if (
+    !dailyEvents.has(event) &&
+    !weeklyEvents.has(event) &&
+    !sessionEvents.has(event)
+  )
+    return true
 
   const key = JSON.stringify([
     event,
@@ -69,6 +80,9 @@ export function allowAnalyticsFrequency(
     properties.reason ?? null,
     properties.$feature_flag ?? null,
     properties.$feature_flag_response ?? null,
+    properties.$screen_name ?? null,
+    properties.from ?? null,
+    properties.part ?? null,
   ])
 
   if (sessionEvents.has(event)) {
@@ -83,6 +97,14 @@ export function allowAnalyticsFrequency(
   }
 
   const today = new Date().toISOString().slice(0, 10)
+  if (weeklyEvents.has(event)) return allowWeekly(key, today)
+  return allowDaily(key, today)
+}
+
+function allowDaily(
+  key: string,
+  today = new Date().toISOString().slice(0, 10)
+): boolean {
   if (day !== today) {
     day = today
     daily = new Set()
@@ -113,13 +135,64 @@ export function allowAnalyticsFrequency(
   return true
 }
 
+export function allowExceptionFrequency(
+  properties: Record<string, unknown> = {}
+): boolean {
+  if (properties.$exception_level === 'fatal') return true
+  const list = properties.$exception_list
+  const first: unknown = Array.isArray(list) ? list[0] : undefined
+  if (first === null || typeof first !== 'object') return true
+  const { type, value } = first as { type?: unknown; value?: unknown }
+  return allowDaily(
+    JSON.stringify([
+      '$exception',
+      typeof type === 'string' ? type : null,
+      typeof value === 'string' ? value.slice(0, 120) : null,
+    ])
+  )
+}
+
+function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
+}
+
+function allowWeekly(key: string, today: string): boolean {
+  if (!weekly) {
+    weekly = {}
+    try {
+      const saved = JSON.parse(
+        frequencyStorage().getString('weekly') ?? 'null'
+      ) as unknown
+      if (saved !== null && typeof saved === 'object' && !Array.isArray(saved))
+        for (const [savedKey, sent] of Object.entries(saved))
+          if (typeof sent === 'string') weekly[savedKey] = sent
+    } catch {
+      logger.debug('[Analytics] Frequency storage unavailable')
+    }
+  }
+  const sent = weekly[key]
+  if (sent !== undefined) {
+    const age = daysBetween(sent, today)
+    if (age >= 0 && age < WEEK_DAYS) return false
+  }
+  weekly[key] = today
+  try {
+    frequencyStorage().set('weekly', JSON.stringify(weekly))
+  } catch {
+    logger.debug('[Analytics] Frequency state could not be persisted')
+  }
+  return true
+}
+
 export function resetAnalyticsFrequency(): void {
   day = undefined
   daily.clear()
+  weekly = undefined
   session = undefined
   sessionSeen.clear()
   try {
     frequencyStorage().delete('daily')
+    frequencyStorage().delete('weekly')
   } catch {
     logger.debug('[Analytics] Frequency state could not be cleared')
   }

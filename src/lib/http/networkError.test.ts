@@ -98,6 +98,16 @@ describe('classifyNetworkError', () => {
     ).toBe('cancelled')
   })
 
+  it('reads an iOS transport failure in any language as offline', () => {
+    expect(
+      classifyNetworkError(
+        new Error(
+          'fetch failed: UnexpectedException: La conexión a internet parece estar desactivada. (at ExpoModulesCore/Promise.swift:56)'
+        )
+      )
+    ).toBe('offline')
+  })
+
   it('leaves bugs alone', () => {
     expect(
       classifyNetworkError(

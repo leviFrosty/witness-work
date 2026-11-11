@@ -152,7 +152,7 @@ it('does not report exposure just for loading all flags', async () => {
   expect(mocks.exposures).toEqual([])
 })
 
-it('records a loaded flag at its reader, preserving multivariate values and boolean gating', async () => {
+it('records an announcement at its reader, not a rollout gate, preserving multivariate values and boolean gating', async () => {
   mocks.reload.mockImplementation(async () => {
     const values = { announcement: 'variant-b', buddies: false }
     publish(values)
@@ -177,7 +177,6 @@ it('records a loaded flag at its reader, preserving multivariate values and bool
       value: 'variant-b',
       distinctId: 'installation-one',
     },
-    { flag: 'buddies', value: false, distinctId: 'installation-one' },
   ])
 })
 

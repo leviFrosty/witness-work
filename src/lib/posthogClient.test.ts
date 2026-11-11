@@ -376,7 +376,7 @@ describe('PostHog consent with persisted SDK state', () => {
 
 describe('PostHog volume and privacy policy', () => {
   it.each(['ios', 'android'])(
-    'preserves outcomes and flags while dropping noise on %s',
+    'preserves outcomes and announcement reach while dropping noise on %s',
     async (platform) => {
       mocks.platform = platform
       const sdk = await start()
@@ -390,12 +390,23 @@ describe('PostHog volume and privacy policy', () => {
         sdk.capture('timer_action_completed', { action: 'paused' })
         sdk.capture('timer_action_completed', { action: 'started' })
       }
-      sdk.capture('$feature_flag_called', {
-        $feature_flag: 'buddies',
-        $feature_flag_response: true,
-      })
+      for (const flag of ['buddies', 'announcement'])
+        sdk.capture('$feature_flag_called', {
+          $feature_flag: flag,
+          $feature_flag_response: true,
+        })
       await sdk.flush()
       const names = sentEvents().map((event: { event: string }) => event.event)
+      expect(
+        sentEvents()
+          .filter(
+            (event: { event: string }) => event.event === '$feature_flag_called'
+          )
+          .map(
+            (event: { properties: Record<string, unknown> }) =>
+              event.properties.$feature_flag
+          )
+      ).toEqual(['announcement'])
       expect(
         names.filter((name: string) => name === 'contact_created')
       ).toHaveLength(3)
@@ -405,8 +416,8 @@ describe('PostHog volume and privacy policy', () => {
       expect(
         names.filter((name: string) => name === 'timer_action_completed')
       ).toHaveLength(1)
-      expect(names).toContain('$feature_flag_called')
       for (const name of [
+        'Application Opened',
         'Application Backgrounded',
         '$set',
         'navigation_destination_selected',
@@ -426,7 +437,7 @@ describe('PostHog volume and privacy policy', () => {
   )
 
   it.each(['ios', 'android'])(
-    'removes private launch URLs from cold-start capture on %s',
+    'keeps cold-start launches and their private URLs on the device on %s',
     async (platform) => {
       mocks.platform = platform
       mocks.launchUrl =
@@ -436,20 +447,19 @@ describe('PostHog volume and privacy policy', () => {
         expect(
           sdk
             .getPersistedProperty<{ message: { event: string } }[]>(P.Queue)
-            ?.some((item) => item.message.event === 'Application Opened')
+            ?.some((item) => item.message.event === 'Application Installed')
         ).toBe(true)
       )
       await sdk.flush()
-      const opened = sentEvents().find(
-        (event: { event: string }) => event.event === 'Application Opened'
-      )
-      expect(opened.properties.url).toBeUndefined()
+      const names = sentEvents().map((event: { event: string }) => event.event)
+      expect(names).toContain('Application Installed')
+      expect(names).not.toContain('Application Opened')
       expect(JSON.stringify(sentEvents())).not.toContain('private-secret')
       expect(JSON.stringify(sentEvents())).not.toContain('private-id')
     }
   )
 
-  it('prunes restored noise and scrubs retained legacy launch URLs before delivery', async () => {
+  it('prunes restored noise, legacy launches included, before delivery', async () => {
     seed({
       [P.AnonymousId]: 'anonymous-installation',
       [P.InstalledAppBuild]: '1',
@@ -475,13 +485,56 @@ describe('PostHog volume and privacy policy', () => {
     await sdk.flush()
     const events = sentEvents()
     expect(events.map((event: { event: string }) => event.event)).toEqual([
-      'Application Opened',
       'contact_created',
       'survey sent',
-      'Application Opened',
     ])
-    expect(events[0].properties.url).toBeUndefined()
     expect(JSON.stringify(events)).not.toContain('private-secret')
+  })
+
+  it('sends a screen once a day, and never Home', async () => {
+    const sdk = await start()
+    await sdk.screen('Dashboard')
+    await sdk.screen('Schedule')
+    await sdk.screen('Dashboard')
+    await sdk.screen('Schedule')
+    await sdk.screen('Contacts')
+    await sdk.flush()
+    expect(
+      sentEvents()
+        .filter((event: { event: string }) => event.event === '$screen')
+        .map(
+          (event: { properties: Record<string, unknown> }) =>
+            event.properties.$screen_name
+        )
+    ).toEqual(['Schedule', 'Contacts'])
+  })
+
+  it('reports a repeating failure once a day, and every crash', async () => {
+    const sdk = await start()
+    const failure = (level: string, value: string) =>
+      sdk.capture('$exception', {
+        $exception_level: level,
+        $exception_list: [{ type: 'Error', value }],
+      })
+    failure('warning', 'iCloudSync: invalid remote payload')
+    failure('warning', 'iCloudSync: invalid remote payload')
+    failure('error', 'Something else')
+    failure('fatal', 'SIGSEGV')
+    failure('fatal', 'SIGSEGV')
+    await sdk.flush()
+    expect(
+      sentEvents()
+        .filter((event: { event: string }) => event.event === '$exception')
+        .map(
+          (event: { properties: { $exception_list: { value: string }[] } }) =>
+            event.properties.$exception_list[0].value
+        )
+    ).toEqual([
+      'iCloudSync: invalid remote payload',
+      'Something else',
+      'SIGSEGV',
+      'SIGSEGV',
+    ])
   })
 
   it.each(['capture', 'restored queue'])(

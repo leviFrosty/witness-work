@@ -24,6 +24,7 @@ const OFFLINE_PATTERNS = [
   'enotfound',
 
   'error performing request',
+  'fetch failed: unexpectedexception',
 ]
 
 const TIMEOUT_PATTERNS = [

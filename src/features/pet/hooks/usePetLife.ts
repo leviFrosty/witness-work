@@ -244,8 +244,12 @@ export default function usePetLife(): PetLifeState {
     const { pet: before, earnRoomItems } = usePet.getState()
 
     const added = earnRoomItems(toStore.split(' ') as RoomItemId[])
-    for (const item of added)
-      analytics.capture('pet_room_item_unlocked', { item, by: 'secret' })
+    if (added.length)
+      analytics.capture('pet_room_item_unlocked', {
+        items: [...added].sort().join(','),
+        count: added.length,
+        by: 'secret',
+      })
 
     if (
       added.length &&

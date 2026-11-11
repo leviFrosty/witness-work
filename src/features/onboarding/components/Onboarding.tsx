@@ -33,10 +33,6 @@ import { hasReportsInCatchUpWindow } from '@/features/service-reports/components
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import {
-  effectiveHasAnnualGoal,
-  tracksTenure,
-} from '@/lib/publisherCapabilities'
-import {
   reachedStep,
   resumeStepIndex,
   type StepId,
@@ -173,18 +169,7 @@ const OnBoarding = () => {
     }
     lastViewedStep.current = step.id
     stepViewedAt.current = Date.now()
-    analytics.capture('onboarding_step_viewed', {
-      step_id: step.id,
-      step_index: stepIndex + 1,
-      total_steps: visibleSteps.length,
-      publisher_role: role,
-      has_annual_goal: effectiveHasAnnualGoal(role, userSpecifiedHasAnnualGoal),
-      tenure_step_available: tracksTenure(role),
-      backfill_step_available: visibleSteps.some(
-        (candidate) => candidate.id === 'onboardingBackfill'
-      ),
-    })
-  }, [stepIndex, visibleSteps, isFocused, role, userSpecifiedHasAnnualGoal])
+  }, [stepIndex, visibleSteps, isFocused])
 
   const goNext = useCallback(() => {
     const preferences = usePreferences.getState()

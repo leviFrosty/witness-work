@@ -4,11 +4,12 @@ import PointerHover from '@/components/ui/PointerHover'
 import SwipeableRow from '@/components/ui/SwipeableRow'
 import RichNote from '@/components/RichNote'
 import ContextMenu from '@/components/ui/ContextMenu'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import SwipeableDelete from '@/components/ui/swipeableActions/Delete'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
-import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { activeCustomFieldDefs } from '@/lib/customFields'
 import { formatTime } from '@/lib/dates'
@@ -44,7 +45,6 @@ const VisitTimelineCard = ({
   const canExpand = showsNote && (truncates || hasPhotos || expanded)
   const dayLabel = visitDayLabel(visit.date)
 
-  const largeText = useAccessibilityTextSize()
   const fields = activeCustomFieldDefs(
     useConversations((state) => state.conversationFieldDefs)
   ).flatMap((def) => {
@@ -53,6 +53,16 @@ const VisitTimelineCard = ({
   })
 
   const noteStyle = { fontSize: theme.fontSize('sm') + 1, lineHeight: 19 }
+  const outcome = visitOutcome(visit)
+  const time = formatTime(visit.date)
+  const outcomeLabel = {
+    study: i18n.t('contactDetails.outcomeStudy'),
+    conversation: i18n.t('contactDetails.outcomeConversation'),
+    notAtHome: i18n.t('notAtHome'),
+  }[outcome]
+  const meta = outcomeLabel
+
+  const radius = theme.numbers.borderRadiusMd
 
   return (
     <SwipeableRow
@@ -63,15 +73,15 @@ const VisitTimelineCard = ({
         swipeable.reset()
         requestDelete()
       }}
-      containerStyle={{ borderRadius: theme.numbers.borderRadiusLg }}
+      containerStyle={{ borderRadius: radius }}
     >
       <ContextMenu
         onPress={open}
-        hoverRadius={theme.numbers.borderRadiusLg}
+        hoverRadius={radius}
         accessibilityLabel={visitCardAccessibilityLabel({
           day: dayLabel,
-          time: formatTime(visit.date),
-          outcome: visitOutcome(visit),
+          time,
+          outcome,
           note: getNoteText(visit),
           fields,
         })}
@@ -82,7 +92,9 @@ const VisitTimelineCard = ({
           testID={`visit-card-${visit.id}`}
           style={{
             backgroundColor: theme.colors.card,
-            borderRadius: theme.numbers.borderRadiusLg,
+            borderRadius: radius,
+            minHeight: 56,
+            justifyContent: 'center',
             paddingVertical: 14,
             paddingHorizontal: 15,
             gap: 8,
@@ -94,29 +106,38 @@ const VisitTimelineCard = ({
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              alignItems: 'baseline',
-              flexWrap: largeText ? 'wrap' : 'nowrap',
-              gap: 9,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              columnGap: 9,
+              rowGap: 2,
             }}
           >
             <Text
-              numberOfLines={largeText ? undefined : 1}
               style={{
                 flexShrink: 1,
-                fontSize: theme.fontSize('lg'),
-                fontFamily: theme.fonts.bold,
+                fontSize: theme.fontSize('lg') - 1,
+                fontFamily: theme.fonts.semiBold,
               }}
             >
               {dayLabel}
             </Text>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm') + 0.5,
-                color: theme.colors.textAlt,
-              }}
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
             >
-              {formatTime(visit.date)}
-            </Text>
+              <Text
+                style={{
+                  fontSize: theme.fontSize('sm') + 0.5,
+                  color: theme.colors.textAlt,
+                }}
+              >
+                {meta}
+              </Text>
+              <LucideIcon
+                icon={ChevronForwardIcon}
+                size={14}
+                color={theme.colors.textAlt}
+              />
+            </View>
           </View>
           {showsNote ? (
             <View style={{ gap: 4 }}>
@@ -187,16 +208,6 @@ const VisitTimelineCard = ({
                 </PointerHover>
               )}
             </View>
-          ) : visit.notAtHome ? (
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm') + 1,
-                fontStyle: 'italic',
-                color: theme.colors.textAlt,
-              }}
-            >
-              {i18n.t('contactDetails.noOneAnswered')}
-            </Text>
           ) : null}
           {fields.length > 0 && (
             <View style={{ gap: 2 }}>

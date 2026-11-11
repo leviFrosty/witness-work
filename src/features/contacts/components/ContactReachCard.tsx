@@ -3,20 +3,19 @@ import {
   ChevronUp as ChevronUpIcon,
   Mail as MailIcon,
   MapPin as MapPinIcon,
-  MessageCircle as MessageCircleIcon,
+  MessageSquareText as MessageSquareTextIcon,
   Navigation as NavigationIcon,
   Phone as PhoneIcon,
 } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import Button from '@/components/ui/Button'
-import ContextMenu, {
-  type ContextMenuEntries,
-} from '@/components/ui/ContextMenu'
+import { type ContextMenuEntries } from '@/components/ui/ContextMenu'
+import PullDownMenu from '@/components/ui/PullDownMenu'
 import { liftedContent, useCopyAction } from '@/components/ui/Copyeable'
 import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
-import { touchTargetFrame } from '@/components/ui/touchTarget'
+import { MIN_TOUCH_TARGET, touchTargetFrame } from '@/components/ui/touchTarget'
 import Text from '@/components/ui/MyText'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import useTheme from '@/contexts/theme'
@@ -32,6 +31,8 @@ import { Contact } from '@/types/contact'
 import { contactAddressLines } from '@/features/contacts/lib/contactChannels'
 import { ltrIsolate } from '@/lib/direction'
 
+const SUMMARY_PAD = 12
+
 type Props = {
   contact: Contact
 
@@ -46,8 +47,6 @@ type Line = {
   id: string
   icon: AppIcon
   text: string
-
-  onPress?: () => void
 
   menu: ContextMenuEntries
 }
@@ -88,7 +87,6 @@ const ContactReachCard = ({
             id: 'address',
             icon: MapPinIcon,
             text: addressLines.join('\n'),
-            onPress: onNavigate,
             menu: [
               [
                 onNavigate && {
@@ -136,7 +134,6 @@ const ContactReachCard = ({
             id: 'phone',
             icon: PhoneIcon,
             text: ltrIsolate(phone),
-            onPress: onCall,
             menu: [
               onCall && {
                 id: 'call',
@@ -161,7 +158,6 @@ const ContactReachCard = ({
             id: 'email',
             icon: MailIcon,
             text: ltrIsolate(email),
-            onPress: onEmail,
             menu: [
               onEmail && {
                 id: 'email',
@@ -190,7 +186,7 @@ const ContactReachCard = ({
     {
       id: 'text',
       label: i18n.t('contactDetails.text'),
-      icon: MessageCircleIcon,
+      icon: MessageSquareTextIcon,
       onPress: phone ? onText : undefined,
     },
     {
@@ -228,7 +224,7 @@ const ContactReachCard = ({
       }}
     >
       {summary &&
-        (expanded ? (
+        (expanded || !expandable ? (
           <View style={{ gap: 10, paddingHorizontal: 2 }}>
             {lines.map((line, index) => (
               <View
@@ -246,18 +242,16 @@ const ContactReachCard = ({
                     color={theme.colors.textAlt}
                   />
                 </View>
-                <ContextMenu
-                  style={[{ flex: 1, minWidth: 0 }, liftedContent.outset]}
-                  onPress={line.onPress}
+                <PullDownMenu
+                  fill
+                  style={{ flex: 1, minWidth: 0 }}
                   accessibilityLabel={line.text}
                   hoverRadius={theme.numbers.borderRadiusSm}
                   actions={line.menu}
                 >
-                  <Text style={[textStyle, liftedContent.inset]}>
-                    {line.text}
-                  </Text>
-                </ContextMenu>
-                {index === 0 && (
+                  <Text style={textStyle}>{line.text}</Text>
+                </PullDownMenu>
+                {index === 0 && expandable && (
                   <PointerHover effect='highlight'>
                     <Pressable
                       onPress={() => setExpanded(false)}
@@ -301,7 +295,12 @@ const ContactReachCard = ({
                 },
 
                 liftedContent.outset,
-                { paddingHorizontal: 10, paddingVertical: 4 },
+                {
+                  paddingHorizontal: 10,
+                  paddingVertical: SUMMARY_PAD,
+                  marginVertical: -SUMMARY_PAD,
+                  minHeight: MIN_TOUCH_TARGET,
+                },
               ]}
             >
               <View style={{ paddingTop: 2 }}>
@@ -354,7 +353,7 @@ const ContactReachCard = ({
               <LucideIcon
                 icon={action.icon}
                 size={18}
-                color={theme.colors.accent}
+                color={theme.colors.text}
               />
               <Text
                 numberOfLines={1}

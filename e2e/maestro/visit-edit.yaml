@@ -16,7 +16,7 @@ name: Edit a conversation from its details on the timeline, and the details read
 - assertVisible: Up next
 - waitForAnimationToEnd
 - scrollUntilVisible:
-    element: Conversation History
+    element: Visit History
 - tapOn:
     id: visit-card-verify-visit-2-0
 # The rail says what happened: Chen Wei's latest visit was a Bible study.

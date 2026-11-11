@@ -1,19 +1,15 @@
 import {
-  Bell as BellIcon,
   BellOff as BellOffIcon,
   Check as CheckIcon,
   Clock as ClockIcon,
   TriangleAlert as TriangleAlertIcon,
 } from 'lucide-react-native'
-import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import moment from 'moment'
 import { Fragment, RefObject } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { AppIcon } from '@/components/ui/LucideIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
-import PointerHover from '@/components/ui/PointerHover'
-import TimelinePill from '@/components/ui/TimelinePill'
 import useTheme from '@/contexts/theme'
 import { withAlpha } from '@/lib/color'
 import { formatDate, formatMonthDayCompact } from '@/lib/dates'
@@ -27,7 +23,6 @@ import {
   FollowUpState,
   followUpState,
   gapBetween,
-  UpNext,
   visitOutcome,
 } from '@/features/contacts/lib/visitTimeline'
 
@@ -35,6 +30,8 @@ const RAIL = 26
 const NODE = 24
 
 const FIRST_CARDS = 8
+
+const LONG_GAP_DAYS = 28
 const CARD_BATCH = 8
 
 const FOLLOW_UP: Record<
@@ -61,7 +58,7 @@ const FollowUpNode = ({ state }: { state: FollowUpState }) => {
       ? theme.colors.warn
       : state === 'dismissed'
         ? null
-        : theme.colors.accent
+        : theme.colors.text
   return (
     <View
       style={{
@@ -95,55 +92,57 @@ const RailConnector = ({
   state: FollowUpState | null
 }) => {
   const theme = useTheme()
-  const gap = newer
-    ? gapBetween(new Date(newer.date), new Date(visit.date))
-    : undefined
+  const gap =
+    newer &&
+    moment(newer.date).diff(moment(visit.date), 'days') >= LONG_GAP_DAYS
+      ? gapBetween(new Date(newer.date), new Date(visit.date))
+      : null
+  if (!gap && !state) return <View style={{ height: 10 }} />
   const followUp = visit.followUp
   const labelColor =
     state === 'missed'
-      ? theme.colors.warn
+      ? theme.colors.warnText
       : state === 'dismissed'
         ? theme.colors.textAlt
-        : theme.colors.accent3
+        : theme.colors.text
+  const textStyle = { fontSize: theme.fontSize('sm'), lineHeight: 18 }
   return (
     <View style={{ flexDirection: 'row', paddingVertical: 9, minHeight: 30 }}>
       <View style={{ width: RAIL, alignItems: 'center' }}>
         {state && <FollowUpNode state={state} />}
       </View>
-      <View style={{ flex: 1, minWidth: 0, gap: 5, paddingLeft: 6 }}>
-        {newer && (
-          <TimelinePill
-            icon={ClockIcon}
-            label={
-              gap
-                ? i18n.t('contactDetails.gapEarlier', { gap })
-                : i18n.t('contactDetails.sameDay')
-            }
-          />
+      <View style={{ flex: 1, minWidth: 0, gap: 4, paddingLeft: 21 }}>
+        {gap && (
+          <Text
+            style={{
+              fontSize: theme.fontSize('xs') + 1,
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('contactDetails.gapEarlier', { gap })}
+          </Text>
         )}
         {state && followUp && (
-          <Text style={{ fontSize: theme.fontSize('sm'), lineHeight: 16 }}>
-            <Text style={{ fontFamily: theme.fonts.bold, color: labelColor }}>
+          <Text style={textStyle}>
+            <Text
+              style={{
+                ...textStyle,
+                fontFamily: theme.fonts.semiBold,
+                color: labelColor,
+              }}
+            >
               {i18n.t(`contactDetails.${FOLLOW_UP[state].label}`)}
             </Text>
-            {followUp.topic?.trim() ? ` · ${followUp.topic.trim()}` : ''}
-            <Text style={{ color: theme.colors.textAlt }}>
-              {` (${
+            <Text style={{ ...textStyle, color: theme.colors.textAlt }}>
+              {` · ${
                 state === 'upcoming'
                   ? visitDayLabel(followUp.date)
                   : formatMonthDayCompact(moment(followUp.date))
-              })`}
+              }`}
             </Text>
-            {state !== 'dismissed' && (
-              <Text style={{ color: theme.colors.textAlt }}>
-                {'  '}
-                <LucideIcon
-                  icon={followUp.notifyMe ? BellIcon : BellOffIcon}
-                  size={10}
-                  color={theme.colors.textAlt}
-                />
-              </Text>
-            )}
+            {followUp.topic?.trim() ? (
+              <Text style={textStyle}>{` · ${followUp.topic.trim()}`}</Text>
+            ) : null}
           </Text>
         )}
       </View>
@@ -153,18 +152,17 @@ const RailConnector = ({
 
 type Props = {
   visits: Visit[]
-  upNext: UpNext | null
+
+  featuredVisitId?: string
   highlightedVisitId?: string
   highlightedRef: RefObject<View | null>
-  onPressUpNext: () => void
 }
 
 const VisitTimeline = ({
   visits,
-  upNext,
+  featuredVisitId,
   highlightedVisitId,
   highlightedRef,
-  onPressUpNext,
 }: Props) => {
   const theme = useTheme()
   const now = new Date()
@@ -188,87 +186,10 @@ const VisitTimeline = ({
           backgroundColor: theme.colors.border,
         }}
       />
-      {upNext && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingBottom: 12,
-          }}
-        >
-          <View style={{ width: RAIL, alignItems: 'center' }}>
-            <View
-              style={{
-                width: NODE,
-                height: NODE,
-                borderRadius: NODE / 2,
-                backgroundColor: theme.colors.accent,
-                borderWidth: 4,
-                borderColor: theme.colors.accentTranslucent,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <LucideIcon
-                icon={ClockIcon}
-                size={11}
-                color={theme.colors.card}
-              />
-            </View>
-          </View>
-          <PointerHover effect='highlight'>
-            <Pressable
-              onPress={onPressUpNext}
-              accessibilityRole='button'
-              style={({ pressed }) => ({
-                marginLeft: 6,
-                flexShrink: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingVertical: 6,
-                paddingHorizontal: 11,
-                borderRadius: theme.numbers.borderRadiusSm,
-                borderWidth: 1,
-                borderColor: withAlpha(theme.colors.accent, 0x55),
-                backgroundColor: withAlpha(theme.colors.accent, 0x1a),
-                opacity: pressed ? 0.6 : 1,
-              })}
-            >
-              <Text
-                numberOfLines={1}
-                style={{
-                  flexShrink: 1,
-                  fontSize: theme.fontSize('sm') + 0.5,
-                  color: theme.colors.accent3,
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: theme.fonts.bold,
-                    color: theme.colors.accent3,
-                  }}
-                >
-                  {i18n.t('contactDetails.nextVisit', {
-                    date: visitDayLabel(upNext.date),
-                  })}
-                </Text>
-                {` · ${i18n.t('contactDetails.seeUpNext')}`}
-              </Text>
-              <LucideIcon
-                icon={ChevronForwardIcon}
-                size={11}
-                color={theme.colors.accent3}
-              />
-            </Pressable>
-          </PointerHover>
-        </View>
-      )}
       {visits.slice(0, shown).map((visit, index) => {
         const raw = followUpState(visit, visits, now)
 
-        const state =
-          raw === 'upcoming' && upNext?.visit.id === visit.id ? null : raw
+        const state = featuredVisitId === visit.id ? null : raw
         const newer = index > 0 ? visits[index - 1] : undefined
         const highlighted = visit.id === highlightedVisitId
         return (
@@ -296,7 +217,7 @@ const VisitTimeline = ({
           </Fragment>
         )
       })}
-      {oldest && shown >= visits.length && (
+      {oldest && visits.length > FIRST_CARDS && shown >= visits.length && (
         <View
           style={{
             flexDirection: 'row',
@@ -322,7 +243,7 @@ const VisitTimeline = ({
               color: theme.colors.textAlt,
             }}
           >
-            {i18n.t('contactDetails.relationshipBegan', {
+            {i18n.t('contactDetails.firstVisit', {
               date: formatDate(oldest.date, { style: 'medium' }),
             })}
           </Text>

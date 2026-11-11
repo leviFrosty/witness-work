@@ -8,7 +8,7 @@ import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { withAlpha } from '@/lib/color'
+import { mix, relativeLuminance, withAlpha } from '@/lib/color'
 import { formatMonthDayCompact } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import ContactAvatarViewer from '@/features/contacts/components/ContactAvatarViewer'
@@ -26,7 +26,7 @@ type Props = {
   heroBackground: string
   heroForeground: string
 
-  overlapped: boolean
+  overlap: number
   isActiveStudy: boolean
   mostRecentStudy: Visit | null
 
@@ -37,7 +37,7 @@ const ContactHero = ({
   contact,
   heroBackground,
   heroForeground,
-  overlapped,
+  overlap,
   isActiveStudy,
   mostRecentStudy,
   onEdit,
@@ -49,13 +49,17 @@ const ContactHero = ({
   const isImageAvatar =
     avatar.type === 'image' && isRenderableImageValue(avatar.value)
   const photo = useContactAvatarActions(contact, isImageAvatar)
+  const initialIsLight = relativeLuminance(theme.colors.textInverse) > 0.5
   const avatarNode = (
     <Avatar
       avatar={avatar}
       name={contact.name}
       size={58}
       focusable={!isImageAvatar}
-      background={contact.avatarBackground ?? undefined}
+      background={
+        contact.avatarBackground ??
+        mix(heroBackground, initialIsLight ? '#000000' : '#FFFFFF', 0.25)
+      }
     />
   )
 
@@ -69,7 +73,7 @@ const ContactHero = ({
         backgroundColor: heroBackground,
         paddingHorizontal: 20,
         paddingTop: 8,
-        paddingBottom: overlapped ? 54 : 24,
+        paddingBottom: overlap + 8,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 14,
@@ -178,22 +182,20 @@ const ContactHero = ({
             <Text
               style={{
                 fontSize: theme.fontSize('sm'),
+                fontFamily: theme.fonts.semiBold,
                 color: heroForeground,
-                opacity: 0.94,
                 flexShrink: 1,
               }}
             >
               {isActiveStudy
-                ? i18n.t('contactDetails.studyingSince', { date: studyDate })
+                ? i18n.t('contactDetails.studying')
                 : i18n.t('contactDetails.lastStudy', { date: studyDate })}
             </Text>
             <InfoPopover
               inline
               color={heroForeground}
               title={i18n.t('contactDetails.studyRuleTitle')}
-              description={i18n.t(
-                'inactiveBibleStudiesDoNoCountTowardsMonthlyTotals'
-              )}
+              description={i18n.t('contactDetails.studyRuleDescription')}
             />
           </View>
         )}

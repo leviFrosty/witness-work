@@ -1,21 +1,16 @@
-import { Plus as PlusIcon, Star as StarIcon } from 'lucide-react-native'
-import { Pressable, View } from 'react-native'
+import { Pencil as PencilIcon, Star as StarIcon } from 'lucide-react-native'
+import { View } from 'react-native'
 
 import IconButton from '@/components/ui/IconButton'
-import LucideIcon from '@/components/ui/LucideIcon'
-import Text from '@/components/ui/MyText'
-import PointerHover from '@/components/ui/PointerHover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useShareContact from '@/features/contacts/hooks/useShareContact'
-import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import { useContactRemovalActions } from '@/hooks/useContactMenuActions'
 import { isContactDismissed } from '@/lib/dismissedContacts'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
-import { usePreferences } from '@/stores/preferences'
 import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
 
@@ -23,99 +18,6 @@ export type ContactDetailsNavigation = Pick<
   RootStackNavigation,
   'navigate' | 'replace' | 'popToTop' | 'goBack' | 'setOptions'
 >
-
-export function AddVisitMenu({
-  contact,
-  navigation,
-  color,
-  compact = false,
-  label = i18n.t('add'),
-}: {
-  contact: Contact
-  navigation: ContactDetailsNavigation
-  color: string
-  compact?: boolean
-
-  label?: string
-}) {
-  const theme = useTheme()
-  const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
-  const notAtHome = useLogNotAtHome()
-
-  const addConversation = () => {
-    navigation.navigate('Visit Form', {
-      contactId: contact.id,
-      returnToContacts: true,
-    })
-  }
-
-  const trigger = (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        minHeight: compact ? 32 : 36,
-        paddingHorizontal: 10,
-        borderColor: color,
-        borderWidth: 1,
-        borderRadius: theme.numbers.borderRadiusSm,
-      }}
-    >
-      <LucideIcon icon={PlusIcon} color={color} size={compact ? 14 : 16} />
-      <Text
-        style={{
-          color,
-          fontSize: compact ? theme.fontSize('sm') : undefined,
-        }}
-      >
-        {label}
-      </Text>
-    </View>
-  )
-
-  if (dataProtectionMode) {
-    return (
-      <PointerHover effect='highlight'>
-        <Pressable
-          onPress={addConversation}
-          accessibilityRole='button'
-          accessibilityLabel={i18n.t('addConversation')}
-          hitSlop={8}
-          style={({ pressed }) => ({
-            borderRadius: theme.numbers.borderRadiusSm,
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          {trigger}
-        </Pressable>
-      </PointerHover>
-    )
-  }
-
-  return (
-    <PullDownMenu
-      accessibilityLabel={label}
-      actions={[
-        {
-          id: 'conversation',
-          title: i18n.t('conversation'),
-          systemImage: 'bubble.left.and.bubble.right',
-          onPress: addConversation,
-        },
-        {
-          id: 'not_at_home',
-          title: i18n.t('notAtHome'),
-          systemImage: 'door.left.hand.closed',
-          onPress: () =>
-            notAtHome.logWithUndo(contact, { source: 'contact_details' }),
-        },
-      ]}
-    >
-      {trigger}
-    </PullDownMenu>
-  )
-}
 
 const MORE_SIZE = 22
 
@@ -159,30 +61,6 @@ export default function ContactDetailsActions({
         gap: MIN_TOUCH_TARGET - (MORE_SIZE + theme.fontSize()) / 2,
       }}
     >
-      <PointerTooltip label={i18n.t('moreActions')} effect='none'>
-        <PullDownMenu
-          accessibilityLabel={i18n.t('moreActions')}
-          triggerColor={color}
-          triggerSize={MORE_SIZE}
-          actions={[
-            [
-              share && {
-                id: 'share',
-                title: i18n.t('shareEllipsis'),
-                systemImage: 'square.and.arrow.up',
-                onPress: share,
-              },
-              {
-                id: 'edit',
-                title: i18n.t('edit'),
-                systemImage: 'pencil',
-                onPress: edit,
-              },
-            ],
-            [!isContactDismissed(contact) && dismiss, archive, remove],
-          ]}
-        />
-      </PointerTooltip>
       <PointerTooltip
         label={i18n.t(
           contact.isFavorite ? 'removeFromFavorites' : 'addToFavorites'
@@ -200,13 +78,34 @@ export default function ContactDetailsActions({
           onPress={() => toggleFavoriteContact(contact.id)}
         />
       </PointerTooltip>
-      {}
-      <AddVisitMenu
-        contact={contact}
-        navigation={navigation}
-        color={color}
-        label={embedded ? i18n.t('addVisit') : undefined}
-      />
+      <PointerTooltip label={i18n.t('edit')} effect='none'>
+        <IconButton
+          icon={PencilIcon}
+          color={color}
+          accessibilityLabel={i18n.t('edit')}
+          testID='contact-details-edit'
+          frame
+          onPress={edit}
+        />
+      </PointerTooltip>
+      <PointerTooltip label={i18n.t('moreActions')} effect='none'>
+        <PullDownMenu
+          accessibilityLabel={i18n.t('moreActions')}
+          triggerColor={color}
+          triggerSize={MORE_SIZE}
+          actions={[
+            [
+              share && {
+                id: 'share',
+                title: i18n.t('shareEllipsis'),
+                systemImage: 'square.and.arrow.up',
+                onPress: share,
+              },
+            ],
+            [!isContactDismissed(contact) && dismiss, archive, remove],
+          ]}
+        />
+      </PointerTooltip>
     </View>
   )
 }

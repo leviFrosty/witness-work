@@ -13,7 +13,7 @@ name: Open a conversation's details from Contact Details, then edit it
     text: Chen Wei
     index: 0
 - scrollUntilVisible:
-    element: Conversation History
+    element: Visit History
 # Tapping a conversation opens its details in a sheet, not the form.
 - tapOn:
     id: visit-card-verify-visit-2-0

@@ -1,4 +1,5 @@
 import {
+  CalendarPlus as CalendarPlusIcon,
   Caravan as CaravanIcon,
   MessagesSquare as MessagesSquareIcon,
 } from 'lucide-react-native'
@@ -56,6 +57,7 @@ import {
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
+import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 import useDraftChanged from '@/hooks/useDraftChanged'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
@@ -211,14 +213,27 @@ const VisitFormScreen = ({
     initialNotifyMeOffset()
   )
 
-  const defaultFollowUpDate = () =>
-    moment()
-      .add(
-        returnVisitTimeOffset?.amount ??
-          DEFAULT_RETURN_VISIT_TIME_OFFSET.amount,
-        returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
-      )
+  const defaultFollowUpDate = () => {
+    const date = moment().add(
+      returnVisitTimeOffset?.amount ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.amount,
+      returnVisitTimeOffset?.unit ?? DEFAULT_RETURN_VISIT_TIME_OFFSET.unit
+    )
+
+    if (conversationToUpdate && !conversationToUpdate.notAtHome) {
+      const visited = moment(conversationToUpdate.date)
+      const sameTime = date
+        .clone()
+        .hours(visited.hours())
+        .minutes(visited.minutes())
+      if (sameTime.isAfter(moment()))
+        date.hours(visited.hours()).minutes(visited.minutes())
+    }
+
+    return date
+      .minutes(Math.round(date.minutes() / 15) * 15)
+      .startOf('minute')
       .toDate()
+  }
 
   const [bibleStudyPrefilled] = useState(
     () =>
@@ -300,6 +315,7 @@ const VisitFormScreen = ({
       : !params.notAtHome
   )
 
+  const dismissFollowUp = useDismissFollowUp()
   const allowLeave = useDiscardChangesGuard(
     useDraftChanged({
       conversation: {
@@ -419,7 +435,9 @@ const VisitFormScreen = ({
           noInsets={params.overSheet}
           buttonType={params.fromContactForm ? 'none' : 'exit'}
           onPressLeftIcon={
-            params.overSheet ? () => navigation.goBack() : undefined
+            params.overSheet || params.returnToContacts
+              ? () => navigation.goBack()
+              : undefined
           }
           leftElement={
             params.fromContactForm ? (
@@ -551,7 +569,16 @@ const VisitFormScreen = ({
       },
     })
 
+  const planning = !!params?.planFollowUp && !!params?.visitToEditId
+
   const getTitle = () => {
+    if (planning) {
+      const planned = conversationToUpdate?.followUp
+      if (!planned) return i18n.t('planFollowUp_title')
+      return new Date(planned.date).getTime() < Date.now()
+        ? i18n.t('reschedule')
+        : i18n.t('editFollowUp_title')
+    }
     if (params?.visitToEditId) {
       if (notAtHome) {
         return i18n.t('editNotAtHome')
@@ -599,7 +626,13 @@ const VisitFormScreen = ({
           }}
         >
           <IconButton
-            icon={conversation.notAtHome ? CaravanIcon : MessagesSquareIcon}
+            icon={
+              planning
+                ? CalendarPlusIcon
+                : conversation.notAtHome
+                  ? CaravanIcon
+                  : MessagesSquareIcon
+            }
             size={18}
             iconStyle={{ color: theme.colors.text }}
           />
@@ -610,67 +643,75 @@ const VisitFormScreen = ({
             {getTitle()}
           </Text>
         </View>
-        <Section>
-          <InputRowContainer
-            label={i18n.t('date')}
-            justifyContent='space-between'
-            controlWidth='auto'
-          >
-            <DateTimePicker
-              value={conversation.date}
-              onChange={handleDateChange}
-              iOSMode='datetime'
-            />
-          </InputRowContainer>
-          <NoteInputRow
-            label={i18n.t('note')}
-            description={
-              plannedTopic
-                ? i18n.t('plannedTopic', { topic: plannedTopic })
-                : undefined
-            }
-            info={
-              dataProtectionMode ? i18n.t('dataProtectionNoteHint') : undefined
-            }
-            placeholder={i18n.t('note_placeholder')}
-            note={conversation}
-            onChange={(note) =>
-              setConversation((current) => ({ ...current, ...note }))
-            }
-            surface='visit'
-            allowImages={!dataProtectionMode}
-            lastInSection={notAtHome}
-            testID='visit-note'
-          />
-          {!notAtHome && (
-            <InputRowSwitch
-              label={i18n.t('conductedBibleStudy')}
-              value={conversation.isBibleStudy}
-              onValueChange={(isBibleStudy) =>
-                setConversation({ ...conversation, isBibleStudy })
+        {!planning && (
+          <Section>
+            <InputRowContainer
+              label={i18n.t('date')}
+              justifyContent='space-between'
+              controlWidth='auto'
+            >
+              <DateTimePicker
+                value={conversation.date}
+                onChange={handleDateChange}
+                iOSMode='datetime'
+              />
+            </InputRowContainer>
+            <NoteInputRow
+              label={i18n.t('note')}
+              description={
+                plannedTopic
+                  ? i18n.t('plannedTopic', { topic: plannedTopic })
+                  : undefined
               }
-              lastInSection
+              info={
+                dataProtectionMode
+                  ? i18n.t('dataProtectionNoteHint')
+                  : undefined
+              }
+              placeholder={i18n.t('note_placeholder')}
+              note={conversation}
+              onChange={(note) =>
+                setConversation((current) => ({ ...current, ...note }))
+              }
+              surface='visit'
+              allowImages={!dataProtectionMode}
+              lastInSection={notAtHome}
+              testID='visit-note'
+            />
+            {!notAtHome && (
+              <InputRowSwitch
+                label={i18n.t('conductedBibleStudy')}
+                value={conversation.isBibleStudy}
+                onValueChange={(isBibleStudy) =>
+                  setConversation({ ...conversation, isBibleStudy })
+                }
+                lastInSection
+              />
+            )}
+          </Section>
+        )}
+        {!planning && (
+          <VisitCustomFieldsSection
+            customFields={conversation.customFields}
+            setCustomField={setCustomField}
+            contactId={contactId}
+            visitId={conversation.id}
+            visitDate={conversation.date}
+            scrollBy={(dy) =>
+              scrollRef.current?.scrollForExtraHeightOnAndroid(dy)
+            }
+          />
+        )}
+        <Section>
+          {!planning && (
+            <InputRowSwitch
+              label={i18n.t('followUp')}
+              info={i18n.t('followUp_description')}
+              value={followUpEnabled}
+              onValueChange={handleFollowUpEnabledChange}
+              lastInSection={!followUpEnabled}
             />
           )}
-        </Section>
-        <VisitCustomFieldsSection
-          customFields={conversation.customFields}
-          setCustomField={setCustomField}
-          contactId={contactId}
-          visitId={conversation.id}
-          visitDate={conversation.date}
-          scrollBy={(dy) =>
-            scrollRef.current?.scrollForExtraHeightOnAndroid(dy)
-          }
-        />
-        <Section>
-          <InputRowSwitch
-            label={i18n.t('followUp')}
-            info={i18n.t('followUp_description')}
-            value={followUpEnabled}
-            onValueChange={handleFollowUpEnabledChange}
-            lastInSection={!followUpEnabled}
-          />
           {followUpEnabled && (
             <>
               <InputRowContainer
@@ -729,7 +770,35 @@ const VisitFormScreen = ({
             </>
           )}
         </Section>
-        {isEditing && (
+        {planning && conversationToUpdate?.followUp && (
+          <Button
+            noTransform
+            testID='visit-form-dismiss-follow-up'
+            onPress={() =>
+              dismissFollowUp(conversationToUpdate, () => {
+                allowLeave()
+                navigation.goBack()
+              })
+            }
+            accessibilityRole='button'
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+            }}
+          >
+            <Text
+              style={{
+                color: theme.colors.error,
+                fontFamily: theme.fonts.semiBold,
+                fontSize: theme.fontSize('md'),
+              }}
+            >
+              {i18n.t('dismissFollowUpAction')}
+            </Text>
+          </Button>
+        )}
+        {isEditing && !planning && (
           <Button
             noTransform
             onPress={handleRequestDelete}

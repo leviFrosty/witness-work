@@ -638,11 +638,6 @@ const domeOfShow = (lit: boolean): ShapeSpec => {
         feat(d, 4, glass),
       ]),
       ...[-1, 0].flatMap((d) => [1, 2, 3, 4].map((u) => feat(d, u, '#7a5232'))),
-      ...pixelMap(0, 10, ['.ss.', 'slLs', 'sLls', '.ss.'], {
-        s: '#6c7890',
-        l: lit ? '#fff7d6' : '#d7ecff',
-        L: lit ? '#ffd45c' : '#8fc4f2',
-      }),
     ],
   }
 }

@@ -33,6 +33,7 @@ export default function ShopBuyPanel({
   palette,
   onBuy,
   layout,
+  noteShown = false,
 }: {
   entry: ShopEntry | null
 
@@ -42,6 +43,8 @@ export default function ShopBuyPanel({
   onBuy: () => void
 
   layout: 'row' | 'stack'
+
+  noteShown?: boolean
 }) {
   const theme = useTheme()
   const scale = gamePixelScale()
@@ -108,7 +111,7 @@ export default function ShopBuyPanel({
   }
 
   const note =
-    entry?.part === 'hat' && entry.state !== 'secret'
+    entry?.part === 'hat' && entry.state !== 'secret' && !noteShown
       ? hatNoteOf(entry.option)
       : null
 

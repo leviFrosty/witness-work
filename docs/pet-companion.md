@@ -192,13 +192,15 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
   | `bowl` (rare)       | Fish, bubbles, water light on the wall |                               | Sloshes, fish dart       | A fish leaps   |
   | `lighthouse` (rare) | Lamp, gulls; a beam after dusk         | Dusk or night: dims room      | Two flashes, runs by day | One flash      |
   | `train` (rare)      | Train loops the hill, steam            |                               | One fast lap             | Wagon heaps up |
-  | `dome` (rare)       | Stars and shooting stars after dusk    | Dusk or night: dims room      | Runs by day              | Shooting stars |
+  | `dome` (rare)       | Telescope turns; stars after dusk      | Dusk or night: dims room      | Swings; runs by day      | Shooting stars |
   | `fig` (rare)        | Falling leaves, a bird                 | Days out since bought, season | A fig drops, bird flies  | New leaves     |
 
   The room shows run for `SHOW_MS` (14 s) by day after a pat and dim it with an overlay; the lamp
   itself keeps following the hearts. `fig` grows through six stages at 0, 3, 8, 16, 30 and 50 days out
   since its purchase (`lib/hatLife.ts`); one not bought yet shows grown in the Shop. New coins dim the
   room for 2 seconds by day under `lighthouse` and `dome`, so their flash and shooting stars show.
+  The planetarium's telescope (`telescopeAngle`) scans slowly all day, swings across the sky once on a
+  pat, and follows the shooting stars on new coins.
   Every hat that reacts to new coins also tosses five gold coins over itself (`drawCoinToss`,
   `COIN_TOSS_MS`), so the moment shows even while a pat's show is still running, and on the mailbox
   the newer of a pat and new coins wins.

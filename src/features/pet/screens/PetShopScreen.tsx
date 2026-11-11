@@ -365,6 +365,9 @@ export default function PetShopScreen({ navigation, route }: Props) {
       palette={palette}
       onBuy={() => picked && buy(picked)}
       layout={layout}
+      noteShown={
+        !!picked && !reduceMotion && hatReactions(picked.item).length > 0
+      }
     />
   )
 

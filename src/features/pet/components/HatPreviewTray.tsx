@@ -8,6 +8,7 @@ import type { GamePalette } from '@/features/pet/art/gameUi'
 import GameColorTray from '@/features/pet/components/GameColorTray'
 import { GameButton } from '@/features/pet/components/GameControls'
 import { hatReactions } from '@/features/pet/lib/hatReactions'
+import { hatNoteOf } from '@/features/pet/lib/roomLabels'
 import { itemRarity } from '@/features/pet/lib/prices'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 
@@ -37,6 +38,7 @@ export default function HatPreviewTray({
   const theme = useTheme()
   const item = `hat:${hat}`
   const reactions = hatReactions(item)
+  const note = hatNoteOf(hat)
   const played = (trigger: 'pat' | 'coins') =>
     analytics.capture('pet_hat_preview_played', { hat, trigger, from })
   return (
@@ -59,6 +61,16 @@ export default function HatPreviewTray({
       >
         {i18n.t('pet.shop.hatPreview.title')}
       </Text>
+      {note && (
+        <Text
+          style={{
+            fontSize: theme.fontSize('sm'),
+            color: palette.inkAlt,
+          }}
+        >
+          {note}
+        </Text>
+      )}
       <View style={{ flexDirection: 'row', gap: 8, paddingTop: 4 }}>
         {reactions.includes('pat') && (
           <GameButton

@@ -154,6 +154,7 @@
     "editRecurringPlan",
     "awayDay",
     "multiplePlansOneDay",
+    "copyLastWeekPlans",
     "planFirstMonth",
     "logTimeReminders",
     "weekPlanReminders",

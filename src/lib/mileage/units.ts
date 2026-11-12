@@ -150,7 +150,8 @@ export const fuelVolumeUnit = (unit: FuelEconomyUnit): 'gallon' | 'litre' =>
 export const fuelPriceUnit = (
   unit: FuelEconomyUnit,
   fuelUnit?: FuelUnit
-): 'gallon' | 'litre' | 'kWh' => fuelUnit ?? fuelVolumeUnit(unit)
+): 'gallon' | 'litre' | 'kWh' =>
+  fuelUnit === 'kWh' ? 'kWh' : fuelVolumeUnit(unit)
 
 export const pricePerGallonToDisplay = (
   pricePerGallon: number,

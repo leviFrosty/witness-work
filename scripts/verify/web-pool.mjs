@@ -233,11 +233,11 @@ export async function ensureDev(args = []) {
     }
     const bundle = index.match(/src="([^"]*\.bundle[^"]*)"/)?.[1]
     if (bundle) {
-      if (!(await acquire({ cls: 'web-build', label: 'first web bundle' })))
-        throw new Error('no slot for the first bundle')
-      const started = Date.now()
       const beat = setInterval(() => touchJob(state.pid), 30_000)
       try {
+        if (!(await acquire({ cls: 'web-build', label: 'first web bundle' })))
+          throw new Error('no slot for the first bundle')
+        const started = Date.now()
         log(
           'bundling the app for the first time (later edits rebundle in under a second)'
         )

@@ -19,6 +19,7 @@ export const PROGRESS_CARD_IDS = [
 export type ProgressCardId = (typeof PROGRESS_CARD_IDS)[number]
 
 export const YEAR_CARD_IDS = [
+  'milestones',
   'pace',
   'needed',
   'monthlyAverage',
@@ -29,6 +30,7 @@ export const YEAR_CARD_IDS = [
   'visits',
   'serviceDays',
   'mileage',
+  'months',
 ] as const
 
 export type YearCardId = (typeof YEAR_CARD_IDS)[number]
@@ -58,7 +60,12 @@ export type ProgressCardCatalog<Id extends string> = {
   ids: readonly Id[]
 
   sizes: Record<Id, readonly ProgressCardSize[]>
+
+  implicit?: readonly { id: Id; at: 'start' | 'end' }[]
 }
+
+export type StoredProgressCard<Id extends string = string> =
+  ProgressCardLayoutItem<Id> & { hidden?: true }
 
 export const PROGRESS_CARD_SIZES: Record<
   ProgressCardId,
@@ -89,6 +96,8 @@ export const YEAR_CARDS: ProgressCardCatalog<YearCardId> = {
   scope: 'year',
   ids: YEAR_CARD_IDS,
   sizes: {
+    milestones: ['wide'],
+    months: ['compact', 'full'],
     pace: ['wide'],
     needed: ['small', 'wide'],
     monthlyAverage: ['small', 'wide'],
@@ -100,6 +109,10 @@ export const YEAR_CARDS: ProgressCardCatalog<YearCardId> = {
     serviceDays: ['small', 'wide'],
     mileage: ['small', 'wide'],
   },
+  implicit: [
+    { id: 'milestones', at: 'start' },
+    { id: 'months', at: 'end' },
+  ],
 }
 
 export const ALL_TIME_CARDS: ProgressCardCatalog<AllTimeCardId> = {
@@ -161,11 +174,17 @@ export const defaultYearProgressCards = ({
   hasAnnualGoal,
   showsTimeEntry,
 }: YearCardDefaultsInput): ProgressCardLayoutItem<YearCardId>[] => [
-  ...(hasAnnualGoal ? [{ id: 'pace' as const, size: 'wide' as const }] : []),
+  ...(hasAnnualGoal
+    ? [
+        { id: 'milestones' as const, size: 'wide' as const },
+        { id: 'pace' as const, size: 'wide' as const },
+      ]
+    : []),
   showsTimeEntry
     ? { id: 'monthlyAverage', size: 'small' }
     : { id: 'monthsShared', size: 'small' },
   { id: 'studies', size: 'small' },
+  { id: 'months', size: 'compact' },
 ]
 
 export const defaultAllTimeProgressCards =
@@ -186,6 +205,7 @@ export const getEffectiveProgressCards = <Id extends string>(
     const id = (item as Partial<ProgressCardLayoutItem<string>> | null)?.id
     if (!isCardId(catalog, id) || seen.has(id)) continue
     seen.add(id)
+    if ((item as StoredProgressCard).hidden === true) continue
     const size = (item as Partial<ProgressCardLayoutItem<Id>>).size
     const sizes = catalog.sizes[id]
     out.push({
@@ -193,8 +213,22 @@ export const getEffectiveProgressCards = <Id extends string>(
       size: size && sizes.includes(size) ? size : sizes[0],
     })
   }
+  for (const { id, at } of catalog.implicit ?? []) {
+    if (seen.has(id)) continue
+    const item = { id, size: catalog.sizes[id][0] }
+    if (at === 'start') out.unshift(item)
+    else out.push(item)
+  }
   return out
 }
+
+export const hiddenProgressCards = <Id extends string>(
+  catalog: ProgressCardCatalog<Id>,
+  layout: ProgressCardLayoutItem<Id>[]
+): StoredProgressCard<Id>[] =>
+  (catalog.implicit ?? [])
+    .filter(({ id }) => !layout.some((item) => item.id === id))
+    .map(({ id }) => ({ id, size: catalog.sizes[id][0], hidden: true }))
 
 export const keepUnknownProgressCards = <Id extends string>(
   catalog: ProgressCardCatalog<Id>,

@@ -902,6 +902,13 @@ editing session answers both:
 Opening the editor without changing anything sends nothing. No hours, goals,
 names, or dates are sent; card ids and sizes are a fixed list.
 
+On the Year tab, Milestones (`milestones`) and the list of months (`months`) are
+cards too, so the same event answers whether people rearrange Progress Year and
+whether they choose the long months form: `tab = year` with `moved`, and
+`months:full` (every month) against `months:compact` (the default short list
+that scrolls) in `cards`. A removed one is missing from `cards` and counted in
+`removed`. No separate event.
+
 ## Home sections
 
 Home's sections (Approaching Conversations, Service Report, Quick Actions,

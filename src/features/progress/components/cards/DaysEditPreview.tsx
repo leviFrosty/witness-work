@@ -1,5 +1,6 @@
 import { CalendarDays as CalendarDaysIcon } from 'lucide-react-native'
 import { View } from 'react-native'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import type { ProgressCardSize } from '@/lib/progressCards'
@@ -15,19 +16,28 @@ export const DAYS_PREVIEW_HEIGHTS = {
   full: 118 + (ROWS.full - ROWS.compact) * (ROW_HEIGHT + ROW_GAP),
 } as const
 
-export default function DaysEditPreview({ size }: { size: ProgressCardSize }) {
+export default function DaysEditPreview({
+  size,
+  icon = CalendarDaysIcon,
+  title = i18n.t('progressCards.days.title'),
+  fullCaption = i18n.t('progressCards.days.fullCaption'),
+  compactCaption = i18n.t('progressCards.days.compactCaption'),
+}: {
+  size: ProgressCardSize
+
+  icon?: AppIcon
+  title?: string
+  fullCaption?: string
+  compactCaption?: string
+}) {
   const theme = useTheme()
   const full = size === 'full'
   return (
     <StatCard
-      icon={CalendarDaysIcon}
-      title={i18n.t('progressCards.days.title')}
+      icon={icon}
+      title={title}
       value={progressCardSizeName(size)}
-      caption={
-        full
-          ? i18n.t('progressCards.days.fullCaption')
-          : i18n.t('progressCards.days.compactCaption')
-      }
+      caption={full ? fullCaption : compactCaption}
       size='wide'
       footer={
         <View style={{ gap: ROW_GAP, paddingTop: 6 }}>

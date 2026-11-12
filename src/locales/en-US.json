@@ -5053,6 +5053,15 @@
       "none": "Nothing to count yet"
     },
     "year": {
+      "milestones": {
+        "description": "The steps on the way to your annual goal"
+      },
+      "months": {
+        "title": "Months",
+        "description": "Each month of the service year",
+        "fullCaption": "Every month of the service year",
+        "compactCaption": "The months around this one, in a short list that scrolls"
+      },
       "pace": {
         "description": "Your time against your annual goal, month by month"
       },

@@ -170,15 +170,28 @@ export function withOverride<T extends object, K extends keyof T>(
   return Object.keys(next).length > 0 ? next : undefined
 }
 
+export function calendarShownByDefault(
+  sharing: Pick<Partial<BuddySharing>, 'showOnCalendar' | 'calendarUpdatedAt'>
+): boolean {
+  return sharing.showOnCalendar !== false && !sharing.calendarUpdatedAt
+}
+
 export function rosterOverrides(
   entry: { showOnCalendar: boolean; overrides?: BuddyOverrides },
   sharing: BuddySharing,
-  previous: BuddyOverrides | undefined
+  previous: BuddyOverrides | undefined,
+  shownByDefault = false
 ): BuddyOverrides | undefined {
   if (entry.overrides) {
-    const own = Object.fromEntries(
+    const own: BuddyOverrides = Object.fromEntries(
       Object.entries(entry.overrides).filter(([, value]) => value !== undefined)
     )
+    if (
+      shownByDefault &&
+      own.showOnCalendar === undefined &&
+      entry.showOnCalendar !== sharing.showOnCalendar
+    )
+      own.showOnCalendar = entry.showOnCalendar
     return Object.keys(own).length > 0 ? own : undefined
   }
   const shown = previous?.showOnCalendar ?? sharing.showOnCalendar
@@ -288,22 +301,23 @@ function mergePlanSharing(
 }
 
 export function migrateLegacySettings(
-  restored: Partial<BuddiesState> & { mutedJoinRequests?: string[] }
+  restored: Partial<BuddiesState> & { mutedJoinRequests?: string[] },
+  now: number
 ): Partial<BuddiesState> {
   const { mutedJoinRequests, ...rest } = restored
+  const buddies = rest.buddies?.map((stored) => {
+    const { showOnCalendar, ...buddy } = stored as Buddy & {
+      showOnCalendar?: boolean
+    }
+    return showOnCalendar === false &&
+      buddy.overrides?.showOnCalendar === undefined
+      ? { ...buddy, overrides: { ...buddy.overrides, showOnCalendar } }
+      : buddy
+  })
   return {
     ...rest,
-    ...(rest.buddies && {
-      buddies: rest.buddies.map((stored) => {
-        const { showOnCalendar, ...buddy } = stored as Buddy & {
-          showOnCalendar?: boolean
-        }
-        return showOnCalendar === false &&
-          buddy.overrides?.showOnCalendar === undefined
-          ? { ...buddy, overrides: { ...buddy.overrides, showOnCalendar } }
-          : buddy
-      }),
-    }),
+    ...(buddies && { buddies }),
+    ...calendarOffForNewBuddies(rest.sharing, buddies, now),
     ...(mutedJoinRequests && {
       alertOverrides: {
         ...Object.fromEntries(
@@ -311,6 +325,33 @@ export function migrateLegacySettings(
         ),
         ...rest.alertOverrides,
       },
+    }),
+  }
+}
+
+function calendarOffForNewBuddies(
+  sharing: BuddySharing | undefined,
+  buddies: Buddy[] | undefined,
+  now: number
+): Partial<Pick<BuddiesState, 'sharing' | 'buddies'>> | undefined {
+  if (!sharing && !buddies) return undefined
+  if (!calendarShownByDefault(sharing ?? {})) return undefined
+  return {
+    sharing: {
+      ...initialBuddiesState.sharing,
+      ...sharing,
+      showOnCalendar: false,
+    },
+    ...(buddies && {
+      buddies: buddies.map((buddy) =>
+        buddy.overrides?.showOnCalendar === undefined
+          ? {
+              ...buddy,
+              overrides: { ...buddy.overrides, showOnCalendar: true },
+              prefsAt: now,
+            }
+          : buddy
+      ),
     }),
   }
 }
@@ -1088,7 +1129,7 @@ export const initialBuddiesState: BuddiesState = {
     planTimes: 'exact',
     pausedUntil: 0,
     plansUpdatedAt: 0,
-    showOnCalendar: true,
+    showOnCalendar: false,
     calendarUpdatedAt: 0,
     petVisits: true,
     petVisitsUpdatedAt: 0,

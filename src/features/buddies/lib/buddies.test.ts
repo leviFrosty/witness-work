@@ -26,9 +26,11 @@ import {
   BuddiesState,
   Buddy,
   BuddyNotification,
+  buddySettings,
   BuddySharing,
   IncomingShare,
   incomingShareKey,
+  initialBuddiesState,
   listedNotifications,
   mergeSharing,
   migrateLegacySettings,
@@ -4937,13 +4939,13 @@ describe('a User’s devices stay in step', () => {
     advance(1000)
     await mom.engine.setNickname(anna.inboxId, 'Annie')
     await mom.engine.setColor(anna.inboxId, '#A855F7')
-    mom.engine.setShowOnCalendar(anna.inboxId, false)
+    mom.engine.setShowOnCalendar(anna.inboxId, true)
     await flushRoster(mom)
     await momsIpad.engine.sync()
     expect(momsIpad.store.getState().buddies[0]).toMatchObject({
       nickname: 'Annie',
       color: '#A855F7',
-      overrides: { showOnCalendar: false },
+      overrides: { showOnCalendar: true },
     })
 
     advance(1000)
@@ -4951,11 +4953,11 @@ describe('a User’s devices stay in step', () => {
     await mom.engine.sync()
     expect(mom.store.getState().buddies[0].nickname).toBe('Anna B')
     expect(mom.store.getState().buddies[0].overrides).toEqual({
-      showOnCalendar: false,
+      showOnCalendar: true,
     })
 
     advance(1000)
-    mom.engine.setShowOnCalendar(anna.inboxId, true)
+    mom.engine.setShowOnCalendar(anna.inboxId, false)
     await flushRoster(mom)
     expect(mom.store.getState().buddies[0].overrides).toBeUndefined()
   })
@@ -4971,7 +4973,7 @@ describe('a User’s devices stay in step', () => {
     const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
 
     expect(written.buddies[0]).toMatchObject({
-      showOnCalendar: true,
+      showOnCalendar: false,
       overrides: { plans: false },
     })
 
@@ -4984,7 +4986,7 @@ describe('a User’s devices stay in step', () => {
         buddies: [
           {
             ...older,
-            showOnCalendar: false,
+            showOnCalendar: true,
             prefsAt: (older.prefsAt ?? 0) + 1000,
           },
         ],
@@ -4994,24 +4996,106 @@ describe('a User’s devices stay in step', () => {
     await mom.engine.sync()
     expect(mom.store.getState().buddies[0].overrides).toEqual({
       plans: false,
-      showOnCalendar: false,
+      showOnCalendar: true,
     })
   })
 
+  it('leaves a new buddy off the calendar until the User shows them', async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    const { sharing, buddies } = mom.store.getState()
+    expect(buddies[0].overrides).toBeUndefined()
+    expect(buddySettings(sharing, buddies[0]).settings.showOnCalendar).toBe(
+      false
+    )
+  })
+
+  it('keeps buddies on the calendar when restoring an older app’s roster that showed them by default', async () => {
+    const { fake, advance, user } = setup()
+    const relay = relayPowers(fake)
+    const mom = user('Mom')
+    const anna = user('Anna')
+    const sam = user('Sam')
+    await pair(mom, anna)
+    await pair(mom, sam)
+    advance(1000)
+    const written = openRoster(mom, relay.rosterBlob(mom.inboxId))
+    relay.serveRoster(
+      mom.inboxId,
+      sealLegacyRoster(mom, {
+        ...written,
+        sharing: { ...written.sharing, showOnCalendar: true },
+        buddies: written.buddies.map((buddy) => ({
+          ...buddy,
+          showOnCalendar: buddy.inboxId === anna.inboxId,
+          overrides: buddy.inboxId === anna.inboxId ? {} : { photo: false },
+        })),
+      })
+    )
+    const momsIpad = user('Mom', undefined, mom.seed)
+    await momsIpad.engine.sync()
+    const state = momsIpad.store.getState()
+    expect(state.sharing.showOnCalendar).toBe(false)
+    const shown = (inboxId: string) =>
+      buddySettings(
+        state.sharing,
+        state.buddies.find((buddy) => buddy.inboxId === inboxId)!
+      ).settings.showOnCalendar
+    expect(shown(anna.inboxId)).toBe(true)
+    expect(shown(sam.inboxId)).toBe(false)
+  })
+
   it('moves a hidden calendar and muted requests from older saved state into their own settings', () => {
-    const migrated = migrateLegacySettings({
-      buddies: [
-        { inboxId: 'a', showOnCalendar: false },
-        { inboxId: 'b', showOnCalendar: true },
-      ] as unknown as Buddy[],
-      mutedJoinRequests: ['b'],
-    })
+    const migrated = migrateLegacySettings(
+      {
+        sharing: { ...initialBuddiesState.sharing, showOnCalendar: false },
+        buddies: [
+          { inboxId: 'a', showOnCalendar: false },
+          { inboxId: 'b', showOnCalendar: true },
+        ] as unknown as Buddy[],
+        mutedJoinRequests: ['b'],
+      },
+      5000
+    )
     expect(migrated.buddies).toEqual([
       { inboxId: 'a', overrides: { showOnCalendar: false } },
       { inboxId: 'b' },
     ])
     expect(migrated.alertOverrides).toEqual({ b: { joinRequests: false } })
     expect(migrated).not.toHaveProperty('mutedJoinRequests')
+  })
+
+  it('keeps the buddies a User already has on the calendar and leaves new ones off', () => {
+    const saved = {
+      sharing: { ...initialBuddiesState.sharing, showOnCalendar: true },
+      buddies: [
+        { inboxId: 'a', overrides: { showOnCalendar: false } },
+        { inboxId: 'b', overrides: { plans: false } },
+        { inboxId: 'c' },
+      ] as Buddy[],
+    }
+    const migrated = migrateLegacySettings(saved, 5000)
+    expect(migrated.sharing?.showOnCalendar).toBe(false)
+    expect(migrated.buddies).toEqual([
+      { inboxId: 'a', overrides: { showOnCalendar: false } },
+      {
+        inboxId: 'b',
+        overrides: { plans: false, showOnCalendar: true },
+        prefsAt: 5000,
+      },
+      { inboxId: 'c', overrides: { showOnCalendar: true }, prefsAt: 5000 },
+    ])
+
+    expect(migrateLegacySettings(migrated, 6000)).toEqual(migrated)
+
+    const chosen = {
+      ...saved,
+      sharing: { ...saved.sharing, calendarUpdatedAt: 1 },
+    }
+    expect(migrateLegacySettings(chosen, 5000)).toEqual(chosen)
+    expect(migrateLegacySettings({}, 5000)).toEqual({})
   })
 
   it('sends a shared Plan from one device only, and a change to it as one alert', async () => {

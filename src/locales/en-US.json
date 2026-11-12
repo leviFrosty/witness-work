@@ -1429,7 +1429,7 @@
   "buddies_shareMyPlansInfo": "Buddies see which days you go out and for how long. Turned off, they see none of your plans, and aren't told.",
   "buddies_buddySeesTitle": "How {{name}} sees you",
   "buddies_calendarSettingsTitle": "Your Calendar",
-  "buddies_showOnCalendarInfo": "Shows the days buddies plan to go out on your calendar. Plans you go out on together always show.",
+  "buddies_showOnCalendarInfo": "Marks the days buddies plan to go out on your calendar. Tap any day to see who's going out. Plans you go out on together always show.",
   "buddies_petSettingsTitle": "Your Pet",
   "buddies_petVisits": "Their pets visit mine",
   "buddies_petVisitsInfo": "On a day you go out together, a buddy's pet visits yours.",

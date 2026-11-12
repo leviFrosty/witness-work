@@ -135,6 +135,7 @@ import {
   mergeRemovedBuddies,
   mergeSharing,
   isSharingPaused,
+  calendarShownByDefault,
   rosterOverrides,
   withOverride,
   NOTIFICATION_MARK_TTL_MS,
@@ -4848,6 +4849,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
     const ended = (buddy: Buddy) => pairingEnded(removedBuddies, buddy)
     const sharing = mergeSharing(state.sharing, remote.sharing)
+    const shownByDefault = calendarShownByDefault(remote.sharing)
     const known = new Set(state.buddies.map((b) => b.inboxId))
     const usedColors = new Set(state.buddies.map((b) => b.colorIndex))
     const added: Buddy[] = []
@@ -4863,7 +4865,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ? nextColorIndex(usedColors)
         : buddy.colorIndex
       usedColors.add(colorIndex)
-      const own = rosterOverrides({ showOnCalendar, overrides }, sharing, {})
+      const own = rosterOverrides(
+        { showOnCalendar, overrides },
+        sharing,
+        {},
+        shownByDefault
+      )
       added.push({ ...buddy, colorIndex, ...(own && { overrides: own }) })
     }
 
@@ -4895,7 +4902,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
                 ...confirmed,
                 nickname: theirs.nickname,
                 color: theirs.color,
-                overrides: rosterOverrides(theirs, sharing, local.overrides),
+                overrides: rosterOverrides(
+                  theirs,
+                  sharing,
+                  local.overrides,
+                  shownByDefault
+                ),
                 prefsAt: theirs.prefsAt,
               }
             : confirmed

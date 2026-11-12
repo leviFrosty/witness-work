@@ -15,15 +15,22 @@ name: Edit a conversation from its details on the timeline, and the details read
     id: contact-row-verify-contact-2
 - assertVisible: Up next
 - waitForAnimationToEnd
-- scrollUntilVisible:
-    element: Visit History
+# Chen Wei's two visits fit on screen, so wait for the card instead of
+# scrolling to the "Visit History, 2" header.
+- extendedWaitUntil:
+    visible:
+      id: visit-card-verify-visit-2-0
+    timeout: 10000
 - tapOn:
     id: visit-card-verify-visit-2-0
-# The rail says what happened: Chen Wei's latest visit was a Bible study.
-- assertVisible: You held a Bible study with Chen Wei
+# The visit card says what happened: Chen Wei's latest visit was a Bible study.
+- assertVisible:
+    id: visit-details-visit
+- assertVisible: 'Bible Study ·'
 # The sheet takes taps once it has slid into place.
 - waitForAnimationToEnd
-- tapOn: Edit
+- tapOn:
+    id: details-header-edit
 - assertVisible: Edit Conversation
 - tapOn:
     text: Conducted Bible Study
@@ -31,6 +38,6 @@ name: Edit a conversation from its details on the timeline, and the details read
 - tapOn: Save
 # Saving returns to the details, which now tell it as a conversation.
 - assertNotVisible: Edit Conversation
-- assertVisible: You talked with Chen Wei
-- assertNotVisible: You held a Bible study with Chen Wei
+- assertVisible: 'Conversation ·'
+- assertNotVisible: 'Bible Study ·'
 - assertVisible: Continue lesson 3

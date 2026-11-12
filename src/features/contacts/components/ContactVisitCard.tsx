@@ -11,29 +11,30 @@ import {
 } from 'lucide-react-native'
 import moment from 'moment'
 import { View } from 'react-native'
+import {
+  ActionChip,
+  ActionChipIcon,
+  CHIP_HEIGHT,
+} from '@/components/ui/ActionChip'
 import Button from '@/components/ui/Button'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import StatusCaption from '@/components/ui/StatusCaption'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import { formatRelative, formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
-import { tracking } from '@/lib/tracking'
 import useConversations from '@/stores/conversationStore'
 import { usePreferences } from '@/stores/preferences'
 import { Contact } from '@/types/contact'
-import {
-  relativeDayLabel,
-  visitDayLabel,
-} from '@/features/contacts/lib/visitDates'
-import { actionForeground } from '@/features/contacts/hooks/useContactHeroBackground'
+import { relativeDayLabel, visitDayLabel } from '@/lib/visitDates'
+import { actionForeground } from '@/hooks/useContactActionColor'
 import { UpNext } from '@/features/contacts/lib/visitTimeline'
 
 const EDGE = 16
-const CHIP_HEIGHT = 34
 
 export type ContactVisitPlan = UpNext & {
   status: 'upcoming' | 'missed' | 'attempted'
@@ -109,46 +110,6 @@ const ContactVisitCard = ({
     backgroundColor: theme.colors.backgroundLighter,
   }
 
-  const chip = (
-    icon: AppIcon,
-    label: string,
-    onPress: () => void,
-    testID: string
-  ) => (
-    <Button
-      onPress={onPress}
-      testID={testID}
-      hitSlop={0}
-      style={{
-        minHeight: MIN_TOUCH_TARGET,
-        marginVertical: (CHIP_HEIGHT - MIN_TOUCH_TARGET) / 2,
-        justifyContent: 'center',
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          minHeight: CHIP_HEIGHT,
-          paddingHorizontal: 12,
-          borderRadius: CHIP_HEIGHT / 2,
-          backgroundColor: theme.colors.backgroundLighter,
-        }}
-      >
-        <LucideIcon icon={icon} size={15} color={theme.colors.text} />
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {label}
-        </Text>
-      </View>
-    </Button>
-  )
-
   const upcoming = plan?.status === 'upcoming'
   const header = (() => {
     if (plan) {
@@ -168,76 +129,33 @@ const ContactVisitCard = ({
             })
       return (
         <>
-          <View
-            style={{
-              flexShrink: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            {warn && (
-              <LucideIcon icon={TriangleAlertIcon} size={13} color={tone} />
-            )}
-            <Text
-              numberOfLines={largeText || !upcoming ? undefined : 1}
-              style={{
-                ...captionStyle,
-                flexShrink: 1,
-                color: tone,
-                textTransform: 'uppercase',
-                letterSpacing: tracking(0.5),
-              }}
-            >
-              {caption}
-            </Text>
-          </View>
+          <StatusCaption
+            text={caption}
+            icon={warn ? TriangleAlertIcon : undefined}
+            color={tone}
+            numberOfLines={largeText || !upcoming ? undefined : 1}
+          />
           {upcoming ? (
-            chip(
-              CalendarDaysIcon,
-              i18n.t('editFollowUp_title'),
-              onEdit,
-              'contact-visit-edit-follow-up'
-            )
+            <ActionChip
+              icon={CalendarDaysIcon}
+              label={i18n.t('editFollowUp_title')}
+              onPress={onEdit}
+              testID='contact-visit-edit-follow-up'
+            />
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {chip(
-                CalendarClockIcon,
-                i18n.t('reschedule'),
-                onEdit,
-                'contact-visit-edit-follow-up'
-              )}
-              <Button
+              <ActionChip
+                icon={CalendarClockIcon}
+                label={i18n.t('reschedule')}
+                onPress={onEdit}
+                testID='contact-visit-edit-follow-up'
+              />
+              <ActionChipIcon
+                icon={XIcon}
+                accessibilityLabel={i18n.t('dismissFollowUpAction')}
                 onPress={onDismiss}
                 testID='contact-visit-dismiss-follow-up'
-                accessibilityLabel={i18n.t('dismissFollowUpAction')}
-                hitSlop={0}
-                style={{
-                  width: MIN_TOUCH_TARGET,
-                  minHeight: MIN_TOUCH_TARGET,
-                  marginVertical: (CHIP_HEIGHT - MIN_TOUCH_TARGET) / 2,
-                  marginEnd: (CHIP_HEIGHT - MIN_TOUCH_TARGET) / 2,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    width: CHIP_HEIGHT,
-                    height: CHIP_HEIGHT,
-                    borderRadius: CHIP_HEIGHT / 2,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.colors.backgroundLighter,
-                  }}
-                >
-                  <LucideIcon
-                    icon={XIcon}
-                    size={15}
-                    color={theme.colors.text}
-                  />
-                </View>
-              </Button>
+              />
             </View>
           )}
         </>
@@ -254,12 +172,12 @@ const ContactVisitCard = ({
         <Text style={{ flexShrink: 1, color: theme.colors.textAlt }}>
           {i18n.t('contactDetails.noFollowUp')}
         </Text>
-        {chip(
-          CalendarPlusIcon,
-          i18n.t('contactDetails.planFollowUp'),
-          onPlan,
-          'contact-visit-plan-follow-up'
-        )}
+        <ActionChip
+          icon={CalendarPlusIcon}
+          label={i18n.t('contactDetails.planFollowUp')}
+          onPress={onPlan}
+          testID='contact-visit-plan-follow-up'
+        />
       </>
     )
   })()

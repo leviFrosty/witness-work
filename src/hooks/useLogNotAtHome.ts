@@ -12,6 +12,7 @@ import type { LogVisitAttribution } from '@/types/rootStack'
 export type NotAtHomeAttribution =
   | { source: 'follow_up_card' }
   | { source: 'contact_details' }
+  | { source: 'visit_details' }
   | LogVisitAttribution
 
 export default function useLogNotAtHome() {

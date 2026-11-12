@@ -2,6 +2,9 @@ import type { ReactNode } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import DetailsHeaderActions from '@/components/DetailsHeaderActions'
 import DetailsLayout from '@/components/ui/layout/DetailsLayout'
+import { useContactActionColor } from '@/hooks/useContactActionColor'
+import useDismissFollowUp from '@/hooks/useDismissFollowUp'
+import useLogNotAtHome from '@/hooks/useLogNotAtHome'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { followUpAnswer } from '@/lib/conversations'
 import i18n from '@/lib/locales'
@@ -11,13 +14,8 @@ import type { Contact } from '@/types/contact'
 import type { RootStackNavigation } from '@/types/rootStack'
 import type { Visit } from '@/types/visit'
 import VisitDetailsContact from '@/features/visits/components/VisitDetailsContact'
-import VisitFollowUpStop from '@/features/visits/components/VisitFollowUpStop'
-import VisitNoFollowUpStop from '@/features/visits/components/VisitNoFollowUpStop'
-import VisitPastStop from '@/features/visits/components/VisitPastStop'
-import VisitRail, {
-  type RailNode,
-  type RailStop,
-} from '@/features/visits/components/VisitRail'
+import VisitFollowUpCard from '@/features/visits/components/VisitFollowUpCard'
+import VisitSummaryCard from '@/features/visits/components/VisitSummaryCard'
 import { followUpStatus, nextVisit } from '@/features/visits/lib/visitDetails'
 import {
   trackVisitDetailsAction,
@@ -33,9 +31,6 @@ export type FollowUpDetailsBuddiesSlot = (props: {
   surface: string
 }) => ReactNode
 
-const outcomeNode = (visit: Visit): RailNode =>
-  visit.notAtHome ? 'notAtHome' : visit.isBibleStudy ? 'study' : 'conversation'
-
 export default function VisitDetails({
   visit,
   contact,
@@ -50,6 +45,9 @@ export default function VisitDetails({
   const navigation = useNavigation<RootStackNavigation>()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const conversations = useConversations((s) => s.conversations)
+  const actionColor = useContactActionColor(contact)
+  const dismissFollowUp = useDismissFollowUp()
+  const notAtHome = useLogNotAtHome()
   const contactVisits = conversations.filter(
     (other) => other.contact.id === visit.contact.id
   )
@@ -101,70 +99,11 @@ export default function VisitDetails({
   const openVisit = (visitId: string) =>
     navigation.push('Visit Details', { visitId })
 
-  const today: RailStop = { key: 'today', node: 'today' }
-  const stops: RailStop[] = [
-    {
-      key: 'visit',
-      node: outcomeNode(visit),
-      content: <VisitPastStop visit={visit} contactName={contact.name} />,
-    },
-  ]
-  if (visit.followUp && status) {
-    const date = new Date(visit.followUp.date)
-
-    const ahead = status !== 'kept' && date.getTime() > now
-    const followUp: RailStop = {
-      key: 'followUp',
-      ahead,
-      node:
-        status === 'upcoming'
-          ? 'ahead'
-          : status === 'overdue'
-            ? 'overdue'
-            : status,
-      content: (
-        <VisitFollowUpStop
-          followUp={visit.followUp}
-          status={status}
-          answer={answer}
-          now={now}
-          renderBuddies={
-            dataProtectionMode || !renderFollowUpBuddies
-              ? undefined
-              : (surface) =>
-                  renderFollowUpBuddies({
-                    visit,
-                    now,
-                    surface,
-                    onInvited: () => track('invite_buddy'),
-                  })
-          }
-          onLogVisit={logVisit}
-          onReschedule={reschedule}
-          onOpenVisit={openVisit}
-        />
-      ),
-    }
-    stops.push(...(ahead ? [today, followUp] : [followUp, today]))
-  } else {
-    const later = nextVisit(visit, contactVisits)
-    const after: RailStop = {
-      key: 'next',
-      node: later ? outcomeNode(later) : 'empty',
-      ahead: !later,
-      content: (
-        <VisitNoFollowUpStop
-          later={later}
-          now={now}
-          onOpenVisit={openVisit}
-          onPlan={planFollowUp}
-        />
-      ),
-    }
-    stops.push(...(later ? [after, today] : [today, after]))
-  }
-
-  stops.reverse()
+  const followUpFirst =
+    status === 'upcoming' ||
+    status === 'overdue' ||
+    (status === 'kept' && !!answer?.notAtHome)
+  const summary = <VisitSummaryCard visit={visit} />
 
   return (
     <DetailsLayout
@@ -173,7 +112,36 @@ export default function VisitDetails({
       actions={<DetailsHeaderActions onEdit={edit} menu={menu} />}
     >
       <VisitDetailsContact contact={contact} onOpen={openContact} />
-      <VisitRail stops={stops} />
+      {followUpFirst ? null : summary}
+      <VisitFollowUpCard
+        visit={visit}
+        contactId={contact.id}
+        status={status}
+        answer={answer}
+        later={status ? undefined : nextVisit(visit, contactVisits)}
+        now={now}
+        actionColor={actionColor}
+        renderBuddies={
+          dataProtectionMode || !renderFollowUpBuddies
+            ? undefined
+            : (surface) =>
+                renderFollowUpBuddies({
+                  visit,
+                  now,
+                  surface,
+                  onInvited: () => track('invite_buddy'),
+                })
+        }
+        onEdit={planFollowUp}
+        onReschedule={reschedule}
+        onDismiss={() => dismissFollowUp(visit)}
+        onLogVisit={logVisit}
+        onNotAtHome={() =>
+          notAtHome.logWithUndo(contact, { source: 'visit_details' })
+        }
+        onOpenVisit={openVisit}
+      />
+      {followUpFirst ? summary : null}
     </DetailsLayout>
   )
 }

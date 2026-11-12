@@ -20,6 +20,7 @@ export default function DetailsHeaderActions({
           icon={PencilIcon}
           size={20}
           onPress={onEdit}
+          testID='details-header-edit'
           accessibilityLabel={i18n.t('edit')}
         />
       </PointerTooltip>

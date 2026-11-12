@@ -8,7 +8,7 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 
 import moment from 'moment'
 import { applyFormatRegion, formatDate } from '@/lib/dates'
-import { visitDayLabel } from '@/features/contacts/lib/visitDates'
+import { visitDayLabel } from '@/lib/visitDates'
 
 const NOW = new Date('2026-10-14T12:00:00')
 const LAST_YEAR = '2025-06-05T09:00:00'

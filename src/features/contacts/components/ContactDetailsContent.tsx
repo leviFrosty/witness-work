@@ -50,10 +50,11 @@ import ContactVisitCard, {
 import JsonViewer from '@/features/contacts/components/JsonViewer'
 import VisitHistorySummary from '@/features/contacts/components/VisitHistorySummary'
 import VisitTimeline from '@/features/contacts/components/VisitTimeline'
-import useContactHeroBackground, {
+import useContactHeroBackground from '@/features/contacts/hooks/useContactHeroBackground'
+import {
   actionForeground,
   useContactActionColor,
-} from '@/features/contacts/hooks/useContactHeroBackground'
+} from '@/hooks/useContactActionColor'
 import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 import WindowControlsInsetView, {
   NO_WINDOW_CONTROLS,

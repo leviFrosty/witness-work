@@ -16,7 +16,7 @@ vi.mock('@/lib/locales', () => ({
   },
 }))
 
-const { followUpStatus, nextVisit, pastSentenceKey, reminderSentence } =
+const { followUpStatus, nextVisit, outcomeLabel, reminderSentence } =
   await import('@/features/visits/lib/visitDetails')
 
 const NOW = new Date('2026-10-08T15:00:00').getTime()
@@ -87,15 +87,15 @@ describe('nextVisit', () => {
   })
 })
 
-describe('pastSentenceKey', () => {
-  it('says what happened', () => {
+describe('outcomeLabel', () => {
+  it('names what happened', () => {
     const v = visit('a', '2026-10-01T10:00:00')
-    expect(pastSentenceKey(v)).toBe('visitDetails_pastConversation')
-    expect(pastSentenceKey({ ...v, isBibleStudy: true })).toBe(
-      'visitDetails_pastStudy'
+    expect(outcomeLabel(v)).toBe('contactDetails.outcomeConversation')
+    expect(outcomeLabel({ ...v, isBibleStudy: true })).toBe(
+      'contactDetails.outcomeStudy'
     )
-    expect(pastSentenceKey({ ...v, isBibleStudy: true, notAtHome: true })).toBe(
-      'visitDetails_pastNotAtHome'
+    expect(outcomeLabel({ ...v, isBibleStudy: true, notAtHome: true })).toBe(
+      'notAtHome'
     )
   })
 })

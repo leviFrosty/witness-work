@@ -25,7 +25,8 @@ export const useBuddies = create<BuddiesState>()(
       const now = Date.now()
 
       const restored = migrateLegacySettings(
-        (persisted ?? {}) as Partial<BuddiesState>
+        (persisted ?? {}) as Partial<BuddiesState>,
+        now
       )
       const merged = {
         ...current,

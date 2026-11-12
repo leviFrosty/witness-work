@@ -3,13 +3,18 @@ import {
   buddyAlertSettings,
   type BuddySettings,
   buddySettings,
+  calendarShownByDefault,
   initialBuddiesState,
   ownSettingsCount,
   rosterOverrides,
   withOverride,
 } from '@/features/buddies/lib/state'
 
-const sharing = { ...initialBuddiesState.sharing, streak: false }
+const sharing = {
+  ...initialBuddiesState.sharing,
+  streak: false,
+  showOnCalendar: true,
+}
 
 describe('buddy settings over All Buddies', () => {
   it('takes a buddy’s own value where they have one, and says where each comes from', () => {
@@ -83,5 +88,25 @@ describe('buddy settings over All Buddies', () => {
     expect(
       rosterOverrides({ showOnCalendar: false }, sharing, previous)
     ).toEqual({ plans: false, showOnCalendar: false })
+  })
+
+  it('keeps a buddy an older app showed by default on the calendar after All Buddies turns it off', () => {
+    const hidden = { ...sharing, showOnCalendar: false }
+    const entry = { showOnCalendar: true, overrides: { streak: false } }
+    expect(rosterOverrides(entry, hidden, undefined, true)).toEqual({
+      streak: false,
+      showOnCalendar: true,
+    })
+    expect(rosterOverrides(entry, hidden, undefined, false)).toEqual({
+      streak: false,
+    })
+    expect(rosterOverrides(entry, sharing, undefined, true)).toEqual({
+      streak: false,
+    })
+    expect(calendarShownByDefault({ showOnCalendar: true })).toBe(true)
+    expect(
+      calendarShownByDefault({ showOnCalendar: true, calendarUpdatedAt: 1 })
+    ).toBe(false)
+    expect(calendarShownByDefault({ showOnCalendar: false })).toBe(false)
   })
 })

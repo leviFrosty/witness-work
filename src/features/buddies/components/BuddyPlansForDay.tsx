@@ -18,7 +18,6 @@ import useBuddyCalendarMarkers from '@/features/buddies/hooks/useBuddyCalendarMa
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { cardPlanLabel } from '@/features/buddies/lib/cardPlanLabel'
-import { buddySettings } from '@/features/buddies/lib/state'
 import { tracking } from '@/lib/tracking'
 
 export default function BuddyPlansForDay({
@@ -37,7 +36,6 @@ export default function BuddyPlansForDay({
   const { timeDisplayFormat, dataProtectionMode } = usePreferences()
   const buddies = useBuddies((state) => state.buddies)
   const cards = useBuddies((state) => state.cards)
-  const sharing = useBuddies((state) => state.sharing)
   const incomingShares = useBuddies((state) => state.incomingShares)
   const key = moment(date).format('YYYY-MM-DD')
 
@@ -48,7 +46,6 @@ export default function BuddyPlansForDay({
     .filter(
       (buddy) =>
         buddy.status === 'active' &&
-        buddySettings(sharing, buddy).settings.showOnCalendar &&
         !withBuddies.some((other) => other.inboxId === buddy.inboxId)
     )
     .flatMap((buddy) =>

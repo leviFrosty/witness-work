@@ -61,7 +61,7 @@ const build = (
 ): ReturnType<typeof buildBuddyDayMarkers> =>
   buildBuddyDayMarkers({
     buddies: [],
-    sharing: initialBuddiesState.sharing,
+    sharing: { ...initialBuddiesState.sharing, showOnCalendar: true },
     cards: {},
     dayPlans: [],
     repliesFor: () => undefined,

@@ -12,6 +12,26 @@ import {
   memberOwnsKey,
   wrapSpaceKey,
 } from '@/lib/sharedSpaces/crypto'
+import {
+  checkHandoffCreate,
+  checkHandoffEnd,
+  checkLeave,
+  checkLinkCreate,
+  checkLinkEnd,
+  checkMemberRemove,
+  checkMemberScopes,
+  checkShare,
+  isScopedRecordId,
+  mayReadRecord,
+  mayWriteRecord,
+  parseScopedRecordId,
+  SCOPED_LIMITS,
+  type ScopedActor,
+  type ScopedCheck,
+  type ScopedSpaceView,
+  validScopeList,
+} from '@/lib/sharedSpaces/records'
+import { isLinkId } from '@/lib/sharedSpaces/scopes'
 
 type Member = {
   tokenHash: string
@@ -19,6 +39,29 @@ type Member = {
   joinedAt: number
 
   wrap: string
+
+  scopes: string[] | null
+
+  invitedBy: string | null
+}
+
+type Holder = {
+  memberId: string | null
+  inviteId: string | null
+  since: number
+}
+
+type Link = {
+  createdBy: string
+  verifier: string
+  scopes: string[]
+  createdAt: number
+  expiresAt: number
+  endedAt: number | null
+  epoch: number
+  syncs: number[]
+  puts: number[]
+  stored: { at: number; count: number }[]
 }
 
 type Invite = {
@@ -27,6 +70,10 @@ type Invite = {
   invitedBy: string
   createdAt: number
   wrong: number
+
+  scopes: string[] | null
+
+  handoff: boolean
 
   joined?: { memberId: string; dhPub: string; tokenHash: string }
 }
@@ -40,7 +87,18 @@ type StoredRecord = {
   seq: number
 }
 
+type LoggedInvite = {
+  invitedBy: string
+  scopes: string[] | null
+  handoff: boolean
+}
+
 type Space = {
+  mode: 'scoped' | null
+  holders: Map<string, Holder>
+  inviteLog: Map<string, LoggedInvite>
+  links: Map<string, Link>
+  linksCreated: number[]
   seq: number
   epoch: number
   ownerId: string
@@ -51,7 +109,13 @@ type Space = {
   records: Map<string, StoredRecord>
   rekeyNeeded: boolean
 
-  created: { memberId: string; dhPub: string; tokenHash: string; wrap: string }
+  created: {
+    memberId: string
+    dhPub: string
+    tokenHash: string
+    wrap: string
+    mode: 'scoped' | null
+  }
 }
 
 type Phantom = { dhPub: string; joinedAt: number }
@@ -72,16 +136,52 @@ const INVITE_MAX_MS = 7 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000
 const STAMP_AHEAD_MS = 24 * 60 * 60 * 1000
 const BAD_JOINS = 5
 const SPACES_PER_DAY = 20
+const MINUTE_MS = 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
+const GUEST_PUT_RECORDS = 20
+const GUEST_BODY_CHARS = 64 * 1024
+const GUEST_BLOB_MAX = 4 * 1024
+const GUEST_SYNC_RECORDS = 500
+const GUEST_SYNCS_PER_MINUTE = 120
+const GUEST_PUTS_PER_MINUTE = 30
+const GUEST_RECORDS_PER_DAY = 2000
+const LINK_LISTED_AFTER_EXPIRY_MS = DAY_MS
+
+const ID_PATTERN = /^[A-Za-z0-9_-]{22}$/
+const KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/
+
+const SCOPED_ONLY = new Set([
+  'member/scopes',
+  'handoff/create',
+  'handoff/end',
+  'link/create',
+  'link/end',
+])
+
+const CHECK_STATUS: Record<Exclude<ScopedCheck, 'ok'>, number> = {
+  forbidden: 403,
+  conflict: 409,
+  bad_request: 400,
+}
 
 const SOCKETS_PER_PLACE = 4
 
-const WHILE_DISABLED = new Set(['leave', 'member/remove', 'delete'])
+const WHILE_DISABLED = new Set([
+  'leave',
+  'member/remove',
+  'delete',
+  'handoff/end',
+  'link/end',
+])
 
 const REFUSED_WHILE_SUSPENDED = new Set([
   'create',
   'put',
   'invite/create',
   'join',
+  'member/scopes',
+  'handoff/create',
+  'link/create',
 ])
 
 const hashB64u = (text: string) => toB64u(sha256(fromB64u(text)))
@@ -140,6 +240,8 @@ export function createFakeSpacesServer({
   const state = {
     enabled: true,
 
+    guests: true,
+
     maxMembers,
 
     log: [] as string[],
@@ -164,17 +266,25 @@ export function createFakeSpacesServer({
       status,
       headers: { 'content-type': 'application/json', ...headers },
     })
-  const fail = (status: number, code: string, retryAfter?: number) =>
+  const fail = (
+    status: number,
+    code: string,
+    retryAfter?: number,
+    extra: Record<string, unknown> = {}
+  ) =>
     json(
       {
         ok: false,
         error: code,
         code,
+        ...extra,
         ...(retryAfter !== undefined && { retryAfter }),
       },
       status,
       retryAfter !== undefined ? { 'retry-after': String(retryAfter) } : {}
     )
+  const refuse = (check: ScopedCheck) =>
+    check === 'ok' ? null : fail(CHECK_STATUS[check], check)
   const ok = (body: Record<string, unknown> = {}) => json({ ok: true, ...body })
 
   const openSocketsOf = (spaceId: string) =>
@@ -301,11 +411,25 @@ export function createFakeSpacesServer({
       ([, invite]) => !invite.joined && invite.expiresAt > now()
     )
 
-  function prune(space: Space) {
+  function releaseHold(space: Space, inviteId: string) {
+    for (const [scopeId, holder] of space.holders)
+      if (holder.inviteId === inviteId && holder.memberId === null)
+        space.holders.delete(scopeId)
+  }
+
+  function prune(space: Space, spaceId?: string) {
+    let released = false
     for (const [inviteId, invite] of space.invites)
-      if (invite.expiresAt <= now()) space.invites.delete(inviteId)
+      if (invite.expiresAt <= now()) {
+        space.invites.delete(inviteId)
+        if (invite.handoff && !invite.joined) {
+          releaseHold(space, inviteId)
+          released = true
+        }
+      }
     for (const [inviteId, expiresAt] of space.closedInvites)
       if (expiresAt <= now()) space.closedInvites.delete(inviteId)
+    if (released && spaceId !== undefined) advance(spaceId, space)
   }
 
   function closeInvite(space: Space, inviteId: string) {
@@ -313,6 +437,83 @@ export function createFakeSpacesServer({
     if (!invite) return
     space.invites.delete(inviteId)
     space.closedInvites.set(inviteId, invite.expiresAt)
+    releaseHold(space, inviteId)
+  }
+
+  const liveLink = (link: Link) =>
+    link.endedAt === null && link.expiresAt > now()
+
+  function viewOf(space: Space): ScopedSpaceView {
+    return {
+      ownerId: space.ownerId,
+      members: [...space.members].map(([memberId, member]) => ({
+        memberId,
+        scopes: member.scopes,
+        invitedBy: member.invitedBy,
+      })),
+      invites: [...space.inviteLog].map(([inviteId, invite]) => ({
+        inviteId,
+        ...invite,
+      })),
+      holders: [...space.holders].map(([scopeId, holder]) => ({
+        scopeId,
+        memberId: holder.memberId,
+        inviteId: holder.inviteId,
+      })),
+      links: [...space.links].map(([linkId, link]) => ({
+        linkId,
+        createdBy: link.createdBy,
+        scopes: link.scopes,
+        expiresAt: link.expiresAt,
+        endedAt: link.endedAt,
+      })),
+    }
+  }
+
+  function detachMember(spaceId: string, space: Space, memberId: string) {
+    space.members.delete(memberId)
+    for (const [inviteId, invite] of space.invites)
+      if (invite.invitedBy === memberId && !invite.joined)
+        closeInvite(space, inviteId)
+    closeSockets(spaceId, memberId)
+  }
+
+  function endHold(spaceId: string, space: Space, scopeId: string): boolean {
+    const hold = space.holders.get(scopeId)
+    if (!hold) return false
+    space.holders.delete(scopeId)
+    if (hold.inviteId !== null) closeInvite(space, hold.inviteId)
+    const holderId = hold.memberId
+    if (holderId === null) return true
+    const removed: string[] = []
+    for (const [memberId, member] of space.members) {
+      const affected =
+        memberId === holderId ||
+        (member.invitedBy === holderId && member.scopes !== null)
+      if (!affected || member.scopes === null) continue
+      member.scopes = member.scopes.filter((id) => id !== scopeId)
+      if (member.scopes.length === 0) removed.push(memberId)
+    }
+    for (const [inviteId, invite] of space.invites)
+      if (
+        invite.invitedBy === holderId &&
+        !invite.joined &&
+        invite.scopes?.includes(scopeId)
+      )
+        closeInvite(space, inviteId)
+    for (const link of space.links.values())
+      if (
+        link.createdBy === holderId &&
+        link.endedAt === null &&
+        link.scopes.includes(scopeId)
+      )
+        link.endedAt = now()
+    for (const memberId of removed) detachMember(spaceId, space, memberId)
+    if (removed.length > 0) {
+      closeOpenInvites(space)
+      space.rekeyNeeded = true
+    }
+    return true
   }
 
   function closeOpenInvites(space: Space) {
@@ -332,7 +533,18 @@ export function createFakeSpacesServer({
   }
 
   function dropMember(spaceId: string, space: Space, memberId: string) {
+    if (space.mode === 'scoped')
+      for (const [scopeId, holder] of [...space.holders])
+        if (holder.memberId === memberId) endHold(spaceId, space, scopeId)
+    if (!space.members.has(memberId)) {
+      advance(spaceId, space)
+      return
+    }
     space.members.delete(memberId)
+    if (space.mode === 'scoped')
+      for (const link of space.links.values())
+        if (link.createdBy === memberId && link.endedAt === null)
+          link.endedAt = now()
     if (space.members.size === 0) {
       wipe(spaceId)
       return
@@ -352,22 +564,64 @@ export function createFakeSpacesServer({
       memberId: id,
       dhPub: forgedKeys.get(id) ?? member.dhPub,
       joinedAt: member.joinedAt,
+      ...(space.mode === 'scoped' && {
+        scopes: member.scopes,
+        invitedBy: member.invitedBy,
+      }),
     })),
     ...[...(phantoms.get(spaceId) ?? [])].map(([id, phantom]) => ({
       memberId: id,
       ...phantom,
+      ...(space.mode === 'scoped' && { scopes: null, invitedBy: null }),
     })),
   ]
 
-  function syncPage(
-    spaceId: string,
+  function scopedFields(space: Space, memberId: string) {
+    const view = viewOf(space)
+    const isOwner = memberId === space.ownerId
+    const seesAll = isOwner || space.members.get(memberId)?.scopes === null
+    return {
+      mode: 'scoped',
+      invites: openInvites(space)
+        .filter(([, invite]) => seesAll || invite.invitedBy === memberId)
+        .sort(([, a], [, b]) => a.createdAt - b.createdAt)
+        .map(([inviteId, invite]) => ({
+          inviteId,
+          invitedBy: invite.invitedBy,
+          expiresAt: invite.expiresAt,
+          scopes: invite.scopes,
+          handoff: invite.handoff,
+        })),
+      holders: [...space.holders].map(([scopeId, holder]) => ({
+        scopeId,
+        ...holder,
+      })),
+      links: [...space.links]
+        .filter(
+          ([, link]) =>
+            (seesAll || link.createdBy === memberId) &&
+            link.expiresAt + LINK_LISTED_AFTER_EXPIRY_MS > now()
+        )
+        .map(([linkId, link]) => ({
+          linkId,
+          createdBy: link.createdBy,
+          scopes: link.scopes,
+          createdAt: link.createdAt,
+          expiresAt: link.expiresAt,
+          endedAt: link.endedAt,
+        })),
+      view,
+    }
+  }
+
+  function recordsPage(
     space: Space,
-    memberId: string,
     since: number,
-    limit = pageRecords
+    limit: number,
+    readable: (recordId: string) => boolean
   ) {
     const after = [...space.records]
-      .filter(([, record]) => record.seq > since)
+      .filter(([recordId, record]) => record.seq > since && readable(recordId))
       .sort(([, a], [, b]) => a.seq - b.seq)
     const page: [string, StoredRecord][] = []
     let chars = 0
@@ -383,9 +637,37 @@ export function createFakeSpacesServer({
       page.push(entry)
       chars += entry[1].blob.length
     }
-    const planted = plantedWraps.get(spaceId)?.get(memberId)
     return {
       seq: more ? page[page.length - 1][1].seq : space.seq,
+      records: page.map(([recordId, { blobHash: _hash, ...record }]) => ({
+        recordId,
+        ...record,
+      })),
+      more,
+    }
+  }
+
+  function syncPage(
+    spaceId: string,
+    space: Space,
+    memberId: string,
+    since: number,
+    limit = pageRecords
+  ) {
+    const scoped =
+      space.mode === 'scoped' ? scopedFields(space, memberId) : null
+    const actor: ScopedActor = { memberId }
+    const { seq, records, more } = recordsPage(
+      space,
+      since,
+      limit,
+      scoped
+        ? (recordId) => mayReadRecord(scoped.view, actor, recordId)
+        : () => true
+    )
+    const planted = plantedWraps.get(spaceId)?.get(memberId)
+    return {
+      seq,
       epoch: planted?.epoch ?? space.epoch,
       wrap: planted?.wrap ?? space.members.get(memberId)!.wrap,
       ownerId: space.ownerId,
@@ -398,13 +680,27 @@ export function createFakeSpacesServer({
           expiresAt: invite.expiresAt,
         })),
       rekeyNeeded: space.rekeyNeeded,
-      records: page.map(([recordId, { blobHash: _hash, ...record }]) => ({
-        recordId,
-        ...record,
-      })),
+      records,
       more,
+      ...(scoped && {
+        mode: scoped.mode,
+        invites: scoped.invites,
+        holders: scoped.holders,
+        links: scoped.links,
+      }),
     }
   }
+
+  const badStamps = (records: PutRecordBody[]) =>
+    records.some(
+      (record) =>
+        !Number.isSafeInteger(record.stamp) ||
+        !Number.isSafeInteger(record.epoch) ||
+        record.stamp > now() + STAMP_AHEAD_MS
+    )
+
+  const blobsOver = (records: PutRecordBody[], max: number) =>
+    records.some((record) => fromB64u(record.blob).length > max)
 
   function put(
     spaceId: string,
@@ -416,23 +712,31 @@ export function createFakeSpacesServer({
       return fail(400, 'bad_request')
     if (records.length > PUT_RECORDS) return fail(413, 'too_large')
 
+    if (badStamps(records)) return fail(400, 'bad_request')
     if (
-      records.some(
-        (record) =>
-          !Number.isSafeInteger(record.stamp) ||
-          !Number.isSafeInteger(record.epoch) ||
-          record.stamp > now() + STAMP_AHEAD_MS
-      )
+      space.mode === 'scoped' &&
+      records.some((record) => !isScopedRecordId(record.recordId))
     )
       return fail(400, 'bad_request')
-    if (records.some((record) => fromB64u(record.blob).length > BLOB_MAX))
-      return fail(413, 'too_large')
+    if (blobsOver(records, BLOB_MAX)) return fail(413, 'too_large')
 
     const reserved = (recordId: string) =>
       (recordId.startsWith('m.') && recordId !== `m.${memberId}`) ||
       (recordId.startsWith('k.') && space.ownerId !== memberId)
-    if (records.some((record) => reserved(record.recordId)))
+    if (space.mode === 'scoped') {
+      const view = viewOf(space)
+      if (
+        records.some(
+          (record) => !mayWriteRecord(view, { memberId }, record.recordId)
+        )
+      )
+        return fail(403, 'forbidden')
+    } else if (records.some((record) => reserved(record.recordId)))
       return fail(403, 'forbidden')
+    return store(spaceId, space, records)
+  }
+
+  function store(spaceId: string, space: Space, records: PutRecordBody[]) {
     if (records.some((record) => record.epoch !== space.epoch))
       return fail(409, 'stale_key')
     const added = new Set(
@@ -479,6 +783,290 @@ export function createFakeSpacesServer({
     return ok({ seq: space.seq, results })
   }
 
+  const withinDay = (times: number[]) =>
+    times.filter((at) => at > now() - DAY_MS)
+
+  function scopedOp(
+    op: string,
+    body: Record<string, unknown>,
+    spaceId: string,
+    space: Space,
+    memberId: string
+  ): Response | null {
+    const view = viewOf(space)
+    switch (op) {
+      case 'invite/create': {
+        const { scopes, handoff } = body
+        if (
+          (scopes !== undefined &&
+            !validScopeList(scopes, SCOPED_LIMITS.scopesPerInvite)) ||
+          (handoff !== undefined && typeof handoff !== 'boolean') ||
+          (handoff === true && (scopes as unknown[] | undefined)?.length !== 1)
+        )
+          return fail(400, 'bad_request')
+        return null
+      }
+      case 'leave':
+        return refuse(checkLeave(view, memberId))
+      case 'member/remove': {
+        const removeId = body.removeId as string
+        const refused = refuse(checkMemberRemove(view, memberId, removeId))
+        if (refused) return refused
+        phantoms.get(spaceId)?.delete(removeId)
+        if (space.members.has(removeId)) {
+          closeOpenInvites(space)
+          dropMember(spaceId, space, removeId)
+        }
+        return ok()
+      }
+      case 'member/scopes': {
+        const { target, scopes } = body as {
+          target: string
+          scopes: string[] | null
+        }
+        if (typeof target !== 'string' || scopes === undefined)
+          return fail(400, 'bad_request')
+        const refused = refuse(
+          checkMemberScopes(view, memberId, { target, scopes })
+        )
+        if (refused) return refused
+        const member = space.members.get(target)!
+        const narrowed =
+          scopes !== null &&
+          (member.scopes === null ||
+            member.scopes.some((scopeId) => !scopes.includes(scopeId)))
+        member.scopes = scopes && [...scopes]
+        if (narrowed) space.rekeyNeeded = true
+        advance(spaceId, space)
+        return ok()
+      }
+      case 'handoff/create': {
+        const { scopeId, target } = body as { scopeId: string; target: string }
+        const refused = refuse(
+          checkHandoffCreate(view, memberId, { scopeId, target })
+        )
+        if (refused) return refused
+        const member = space.members.get(target)!
+        if (member.scopes !== null && !member.scopes.includes(scopeId))
+          member.scopes = [...member.scopes, scopeId]
+        space.holders.set(scopeId, {
+          memberId: target,
+          inviteId: null,
+          since: now(),
+        })
+        return ok({ seq: advance(spaceId, space) })
+      }
+      case 'handoff/end': {
+        const scopeId = body.scopeId as string
+        const refused = refuse(checkHandoffEnd(view, memberId, scopeId))
+        if (refused) return refused
+        return ok({
+          seq: endHold(spaceId, space, scopeId)
+            ? advance(spaceId, space)
+            : space.seq,
+        })
+      }
+      case 'link/create': {
+        const { linkId, verifier, scopes, expiresAt, epoch } = body as {
+          linkId: string
+          verifier: string
+          scopes: string[]
+          expiresAt: number
+          epoch: number
+        }
+        if (
+          !isLinkId(linkId) ||
+          typeof verifier !== 'string' ||
+          !KEY_PATTERN.test(verifier) ||
+          !validScopeList(scopes, SCOPED_LIMITS.scopesPerLink) ||
+          !Number.isSafeInteger(expiresAt) ||
+          expiresAt <= now() ||
+          expiresAt >
+            now() +
+              SCOPED_LIMITS.linkLifetimeMs +
+              SCOPED_LIMITS.linkLifetimeSlackMs ||
+          !Number.isSafeInteger(epoch) ||
+          epoch < 1
+        )
+          return fail(400, 'bad_request')
+        const existing = space.links.get(linkId)
+        if (existing)
+          return existing.createdBy === memberId &&
+            existing.verifier === verifier &&
+            existing.expiresAt === expiresAt &&
+            JSON.stringify(existing.scopes) === JSON.stringify(scopes)
+            ? ok({ seq: space.seq })
+            : fail(409, 'conflict')
+        const refused = refuse(checkLinkCreate(view, memberId, scopes))
+        if (refused) return refused
+        if (epoch !== space.epoch) return fail(409, 'stale_key')
+        space.linksCreated = withinDay(space.linksCreated)
+        const open = [...space.links.values()].filter(liveLink).length
+        if (
+          open >= SCOPED_LIMITS.openLinks ||
+          space.linksCreated.length >= SCOPED_LIMITS.linksPerDay
+        )
+          return fail(429, 'limit')
+        space.linksCreated.push(now())
+        space.links.set(linkId, {
+          createdBy: memberId,
+          verifier,
+          scopes: [...scopes],
+          createdAt: now(),
+          expiresAt,
+          endedAt: null,
+          epoch,
+          syncs: [],
+          puts: [],
+          stored: [],
+        })
+        return ok({ seq: advance(spaceId, space) })
+      }
+      case 'link/end': {
+        const linkId = body.linkId as string
+        const refused = refuse(checkLinkEnd(view, memberId, linkId, now()))
+        if (refused) return refused
+        const link = space.links.get(linkId)
+        if (!link || !liveLink(link)) return ok({ seq: space.seq })
+        link.endedAt = now()
+        return ok({ seq: advance(spaceId, space) })
+      }
+    }
+    return null
+  }
+
+  function guestLink(
+    body: Record<string, unknown>
+  ): { spaceId: string; space: Space; linkId: string; link: Link } | Response {
+    const { spaceId, linkId, linkToken } = body
+    if (
+      typeof spaceId !== 'string' ||
+      !ID_PATTERN.test(spaceId) ||
+      !isLinkId(linkId) ||
+      typeof linkToken !== 'string' ||
+      !KEY_PATTERN.test(linkToken)
+    )
+      return fail(400, 'bad_request')
+    if (deleted.has(spaceId))
+      return fail(410, 'gone', undefined, { reason: 'ended' })
+    const space = spaces.get(spaceId)
+    const link = space?.mode === 'scoped' ? space.links.get(linkId) : undefined
+    if (!space || !link || hashB64u(linkToken) !== link.verifier)
+      return fail(404, 'not_found')
+    if (link.endedAt !== null)
+      return fail(410, 'gone', undefined, { reason: 'ended' })
+    if (link.expiresAt <= now())
+      return fail(410, 'gone', undefined, { reason: 'expired' })
+    return { spaceId, space, linkId, link }
+  }
+
+  const recent = (times: number[]) =>
+    times.filter((at) => at > now() - MINUTE_MS)
+
+  function handleGuest(op: string, text: string): Response {
+    const refusal = state.refusals.findIndex(([name]) => name === op)
+    if (refusal >= 0) {
+      const [, status, code, retryAfter] = state.refusals.splice(refusal, 1)[0]
+      return fail(status, code, retryAfter)
+    }
+    if (!state.enabled || !state.guests) return fail(503, 'disabled', 60)
+    if (text.length > GUEST_BODY_CHARS) return fail(413, 'too_large')
+    let body: Record<string, unknown>
+    try {
+      body = JSON.parse(text) as Record<string, unknown>
+    } catch {
+      return fail(400, 'bad_request')
+    }
+    if (op === 'guest/sync') {
+      const { since, limit } = body
+      if (
+        !Number.isSafeInteger(since) ||
+        (since as number) < 0 ||
+        (limit !== undefined &&
+          (!Number.isSafeInteger(limit) ||
+            (limit as number) < 1 ||
+            (limit as number) > GUEST_SYNC_RECORDS))
+      )
+        return fail(400, 'bad_request')
+    } else if (op === 'guest/put') {
+      const { records } = body
+      if (!Array.isArray(records) || records.length < 1)
+        return fail(400, 'bad_request')
+      if (records.length > GUEST_PUT_RECORDS) return fail(413, 'too_large')
+      if (
+        badStamps(records as PutRecordBody[]) ||
+        (records as PutRecordBody[]).some(
+          (record) =>
+            typeof record?.recordId !== 'string' ||
+            typeof record.blob !== 'string' ||
+            !isScopedRecordId(record.recordId)
+        )
+      )
+        return fail(400, 'bad_request')
+    } else return fail(404, 'not_found')
+    const found = guestLink(body)
+    if (found instanceof Response) return found
+    const { spaceId, space, link } = found
+    prune(space, spaceId)
+    link.syncs = recent(link.syncs)
+    link.puts = recent(link.puts)
+    link.stored = link.stored.filter(({ at }) => at > now() - DAY_MS)
+    const actor: ScopedActor = {
+      guest: {
+        linkId: found.linkId,
+        createdBy: link.createdBy,
+        scopes: link.scopes,
+        expiresAt: link.expiresAt,
+        endedAt: link.endedAt,
+      },
+    }
+    const view = viewOf(space)
+    const date = { date: new Date(now()).toUTCString() }
+
+    if (op === 'guest/sync') {
+      if (link.syncs.length >= GUEST_SYNCS_PER_MINUTE)
+        return fail(429, 'rate_limited', 60)
+      link.syncs.push(now())
+      const page = recordsPage(
+        space,
+        body.since as number,
+        Math.min(
+          (body.limit as number | undefined) ?? GUEST_SYNC_RECORDS,
+          GUEST_SYNC_RECORDS
+        ),
+        (recordId) => mayReadRecord(view, actor, recordId)
+      )
+      return json(
+        { ok: true, ...page, epoch: space.epoch, expiresAt: link.expiresAt },
+        200,
+        date
+      )
+    }
+
+    const records = body.records as PutRecordBody[]
+    const storedToday = link.stored.reduce((sum, { count }) => sum + count, 0)
+    if (
+      link.puts.length >= GUEST_PUTS_PER_MINUTE ||
+      storedToday + records.length > GUEST_RECORDS_PER_DAY
+    )
+      return fail(429, 'rate_limited', 60)
+    link.puts.push(now())
+    if (
+      records.some(
+        (record) =>
+          parseScopedRecordId(record.recordId)?.class === 'street' ||
+          !mayWriteRecord(view, actor, record.recordId)
+      )
+    )
+      return fail(403, 'forbidden')
+    if (blobsOver(records, GUEST_BLOB_MAX)) return fail(413, 'too_large')
+    const answer = store(spaceId, space, records)
+    if (answer.ok) link.stored.push({ at: now(), count: records.length })
+    const headers = new Headers(answer.headers)
+    headers.set('date', date.date)
+    return new Response(answer.body, { status: answer.status, headers })
+  }
+
   function handle(
     op: string,
     body: Record<string, unknown>,
@@ -499,7 +1087,9 @@ export function createFakeSpacesServer({
         string,
         string
       >
+      const mode = body.mode === undefined ? null : body.mode
       if (
+        (mode !== null && mode !== 'scoped') ||
         typeof spaceId !== 'string' ||
         typeof wrap !== 'string' ||
         typeof tokenHash !== 'string' ||
@@ -514,7 +1104,8 @@ export function createFakeSpacesServer({
           existing.created.memberId === memberId &&
           existing.created.dhPub === dhPub &&
           existing.created.tokenHash === tokenHash &&
-          existing.created.wrap === wrap
+          existing.created.wrap === wrap &&
+          existing.created.mode === mode
         return same
           ? ok({ seq: 1, joinedAt: existing.members.get(memberId)!.joinedAt })
           : fail(409, 'conflict')
@@ -524,15 +1115,25 @@ export function createFakeSpacesServer({
       state.created.set(account, count + 1)
       const joinedAt = now()
       spaces.set(spaceId, {
+        mode,
+        holders: new Map(),
+        inviteLog: new Map(),
+        links: new Map(),
+        linksCreated: [],
         seq: 1,
         epoch: 1,
         ownerId: memberId,
-        members: new Map([[memberId, { tokenHash, dhPub, joinedAt, wrap }]]),
+        members: new Map([
+          [
+            memberId,
+            { tokenHash, dhPub, joinedAt, wrap, scopes: null, invitedBy: null },
+          ],
+        ]),
         invites: new Map(),
         closedInvites: new Map(),
         records: new Map(),
         rekeyNeeded: false,
-        created: { memberId, dhPub, tokenHash, wrap },
+        created: { memberId, dhPub, tokenHash, wrap, mode },
       })
       return ok({ seq: 1, joinedAt })
     }
@@ -562,7 +1163,7 @@ export function createFakeSpacesServer({
       if (deleted.has(spaceId)) return fail(410, 'gone')
       const space = spaces.get(spaceId)
       if (!space) return fail(404, 'not_found')
-      prune(space)
+      prune(space, space.mode === 'scoped' ? spaceId : undefined)
       const invite = space.invites.get(inviteId)
       if (!invite) return fail(404, 'not_found')
       const secretMatches = hashB64u(joinSecret) === invite.verifier
@@ -598,8 +1199,22 @@ export function createFakeSpacesServer({
       if (space.members.size + openInvites(space).length > state.maxMembers)
         return fail(429, 'limit')
       const joinedAt = now()
-      space.members.set(memberId, { tokenHash, dhPub, joinedAt, wrap })
+      const scoped = space.mode === 'scoped'
+      space.members.set(memberId, {
+        tokenHash,
+        dhPub,
+        joinedAt,
+        wrap,
+        scopes: scoped ? invite.scopes : null,
+        invitedBy: scoped ? invite.invitedBy : null,
+      })
       invite.joined = { memberId, dhPub, tokenHash }
+      if (scoped && invite.handoff && invite.scopes)
+        space.holders.set(invite.scopes[0], {
+          memberId,
+          inviteId: null,
+          since: joinedAt,
+        })
       const seq = advance(spaceId, space)
       return ok({ seq, epoch: space.epoch, joinedAt })
     }
@@ -609,6 +1224,17 @@ export function createFakeSpacesServer({
     const { space, memberId } = found
     const spaceId = body.spaceId as string
     const isOwner = space.ownerId === memberId
+
+    if (space.mode === 'scoped') {
+      prune(space, spaceId)
+      const answer = scopedOp(op, body, spaceId, space, memberId)
+      if (answer) return answer
+    } else if (
+      SCOPED_ONLY.has(op) ||
+      (op === 'invite/create' &&
+        (body.scopes !== undefined || body.handoff !== undefined))
+    )
+      return fail(400, 'bad_request')
 
     switch (op) {
       case 'sync': {
@@ -655,9 +1281,23 @@ export function createFakeSpacesServer({
           return !existing.joined &&
             existing.invitedBy === memberId &&
             existing.expiresAt === expiresAt &&
-            existing.verifier === joinVerifier
+            existing.verifier === joinVerifier &&
+            JSON.stringify(existing.scopes) ===
+              JSON.stringify((body.scopes as unknown) ?? null) &&
+            existing.handoff === (body.handoff === true)
             ? ok()
             : fail(409, 'conflict')
+        const scoped = space.mode === 'scoped'
+        const scopes = scoped
+          ? ((body.scopes as string[] | undefined) ?? null)
+          : null
+        const handoff = scoped && body.handoff === true
+        if (scoped) {
+          const refused = refuse(
+            checkShare(viewOf(space), memberId, { scopes, handoff })
+          )
+          if (refused) return refused
+        }
         if (space.members.size + openInvites(space).length >= state.maxMembers)
           return fail(429, 'limit')
         space.invites.set(inviteId, {
@@ -666,7 +1306,22 @@ export function createFakeSpacesServer({
           invitedBy: memberId,
           createdAt: now(),
           wrong: 0,
+          scopes,
+          handoff,
         })
+        if (scoped) {
+          space.inviteLog.set(inviteId, {
+            invitedBy: memberId,
+            scopes,
+            handoff,
+          })
+          if (handoff && scopes)
+            space.holders.set(scopes[0], {
+              memberId: null,
+              inviteId,
+              since: now(),
+            })
+        }
         advance(spaceId, space)
         return ok()
       }
@@ -762,6 +1417,8 @@ export function createFakeSpacesServer({
       return sessionRoute(text.split('/accounts/v1/')[1], init)
     const op = text.split('/spaces/v1/')[1]
     state.log.push(op)
+    if (op.startsWith('guest/'))
+      return handleGuest(op, String(init?.body ?? '{}'))
     const account = caller(headersOf(init).authorization)
     if (account instanceof Response) return account
     return handle(

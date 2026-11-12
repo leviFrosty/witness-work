@@ -1,7 +1,7 @@
 import type {
   RecognizedLine,
   RecognizedPage,
-} from '../../../../modules/text-recognition'
+} from '../../modules/text-recognition'
 
 const COLUMN_GAP = 0.04
 

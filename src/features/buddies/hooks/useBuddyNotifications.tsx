@@ -38,6 +38,7 @@ import {
   awaitsAnswer,
   type BuddyNotification,
   isCarNotification,
+  isTerritoryNotification,
   listedNotifications,
 } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -211,7 +212,7 @@ export default function useBuddyNotifications(): NotificationItem[] {
   }
 
   const listed = listedNotifications(queue, { showBadges }).filter(
-    (entry) => !isCarNotification(entry)
+    (entry) => !isCarNotification(entry) && !isTerritoryNotification(entry)
   )
 
   const news = buddyNews(listed).flatMap(

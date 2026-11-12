@@ -33,8 +33,10 @@ import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
 import { isRtlLayout } from '@/lib/direction'
 import {
   getEffectiveTabOrder,
+  isTabAvailable,
   type TabOrderKey,
 } from '@/lib/tabOrderPreferences'
+import { useFeatureFlag } from '@/lib/featureFlags'
 
 type LaunchDecision = {
   action: RevealAction
@@ -114,6 +116,16 @@ const renderTabScreen = (name: TabOrderKey) => {
           }
         />
       )
+    case 'Territories':
+      return (
+        <Tab.Screen
+          key={name}
+          name={name}
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoriesScreen').default
+          }
+        />
+      )
   }
 }
 
@@ -129,8 +141,9 @@ const HomeTabStack = () => {
     (s) => s.arbiter.active?.kind === 'update-reveal'
   )
   const { showsYearTabs } = usePublisher()
-  const tabOrder = getEffectiveTabOrder(storedTabOrder).filter(
-    (name) => name !== 'Progress' || showsYearTabs
+  const territories = useFeatureFlag('territories')
+  const tabOrder = getEffectiveTabOrder(storedTabOrder).filter((name) =>
+    isTabAvailable(name, { showsYearTabs, territories })
   )
 
   const [launch] = useState(decideLaunch)

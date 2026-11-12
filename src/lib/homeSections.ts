@@ -12,6 +12,8 @@ export const homeSectionTitle = (key: HomeScreenElementKey): string => {
   switch (key) {
     case 'approachingConversations':
       return i18n.t('approachingConversations')
+    case 'territories':
+      return i18n.t('territories.homeCard_title')
     case 'together':
       return i18n.t('buddies_together')
     case 'tabletServiceYearSummary':
@@ -42,6 +44,8 @@ export type HomeSectionCapabilities = {
   mileageTrackingEnabled: boolean | undefined
 
   buddiesAvailable: boolean
+
+  territoriesAvailable?: boolean
 }
 
 export const isHomeSectionAvailable = (
@@ -52,12 +56,14 @@ export const isHomeSectionAvailable = (
     showsTimer,
     mileageTrackingEnabled,
     buddiesAvailable,
+    territoriesAvailable = false,
   }: HomeSectionCapabilities
 ) => {
   if (key === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
   if (key === 'timer') return showsTimer
   if (key === 'mileage') return mileageTrackingEnabled !== false
   if (key === 'together') return buddiesAvailable
+  if (key === 'territories') return territoriesAvailable
   return true
 }
 

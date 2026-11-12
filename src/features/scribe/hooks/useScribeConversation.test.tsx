@@ -63,6 +63,9 @@ vi.mock('@/features/scribe/lib/defaultClient', () => ({
     transcribe: async () => {
       throw new Error('unused')
     },
+    territoryNotes: async () => {
+      throw new Error('unused')
+    },
     step: async (
       _body: unknown,
       { onEvent }: { onEvent: (event: unknown) => void }

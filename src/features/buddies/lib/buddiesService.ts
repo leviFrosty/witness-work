@@ -29,6 +29,7 @@ import {
   shrinkGuestAvatar,
 } from '@/features/buddies/lib/buddyProfile'
 import { fromB64u } from '@/features/buddies/lib/bytes'
+import { createBuddiesTerritoriesLink } from '@/features/buddies/lib/territoriesLink'
 import { dismissBuddyAlerts } from '@/features/buddies/lib/dismissBuddyAlerts'
 import {
   type BuddiesSyncOptions,
@@ -159,6 +160,10 @@ const carsLink = createBuddiesCarsLink(useSharedCars, {
 
 export const setBuddiesCarsHandler = carsLink.setHandler
 
+const territoriesLink = createBuddiesTerritoriesLink()
+
+export const setBuddiesTerritoriesHandler = territoriesLink.setHandler
+
 const relay = createRelayClient({
   baseUrl: apis.buddies,
   randomBytes,
@@ -258,6 +263,7 @@ const engine = createBuddiesEngine({
   dismissAlerts: (seqs) => void dismissBuddyAlerts(seqs),
   onSharesNotSent: (notSent) => sharesNotSent.add(notSent),
   cars: carsLink.deps,
+  territories: territoriesLink.deps,
   inviteSecrets: deviceInviteSecrets,
 })
 

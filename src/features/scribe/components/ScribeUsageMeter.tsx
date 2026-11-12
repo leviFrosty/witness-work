@@ -13,7 +13,11 @@ import type { RootStackNavigation } from '@/types/rootStack'
 import { useScribeUsage } from '@/features/scribe'
 import { fullestWindow } from '@/features/scribe/components/scribeCopy'
 
-const ScribeUsageMeter = () => {
+const ScribeUsageMeter = ({
+  surface = 'conversation',
+}: {
+  surface?: 'conversation' | 'territory_notes'
+}) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const { usage } = useScribeUsage()
@@ -26,11 +30,11 @@ const ScribeUsageMeter = () => {
     if (!usage || reported.current) return
     reported.current = true
     analytics.capture('scribe_usage_viewed', {
-      surface: 'conversation',
+      surface,
       plan: usage.plan,
       limited: usage.limited,
     })
-  }, [usage])
+  }, [usage, surface])
 
   if (!usage || !fullest) return null
   const percent = fullest.percentUsed

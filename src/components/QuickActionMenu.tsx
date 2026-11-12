@@ -4,6 +4,7 @@ import {
   Clock as ClockIcon,
   DoorOpen as DoorOpenIcon,
   IdCard as IdCardIcon,
+  Map as MapIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import type { ReactNode } from 'react'
@@ -14,6 +15,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useMileageView } from '@/stores/mileageView'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
+import { useFeatureFlag } from '@/lib/featureFlags'
 
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -34,6 +36,7 @@ type QuickActionOption =
   | 'addContact'
   | 'addPlan'
   | 'logTrip'
+  | 'territories'
 
 export default function QuickActionMenu({
   navigation,
@@ -45,6 +48,7 @@ export default function QuickActionMenu({
   const hasActiveCar = useMileageView((view) =>
     view.vehicles.some((v) => !v.archived)
   )
+  const territories = useFeatureFlag('territories')
   const handleQuickAction = (action: QuickActionOption) => {
     onAction()
     switch (action) {
@@ -68,6 +72,13 @@ export default function QuickActionMenu({
             source: 'quick_action',
             thenLogTrip: true,
           })
+        break
+      case 'territories':
+        navigation.navigate(
+          'Root',
+          { screen: 'Territories', params: { resume: true } } as never,
+          { pop: true }
+        )
         break
     }
   }
@@ -102,6 +113,13 @@ export default function QuickActionMenu({
           text='mileage.logTrip'
           icon={CarIcon}
           onPress={() => handleQuickAction('logTrip')}
+        />
+      )}
+      {territories && (
+        <ActionButton
+          text='territories.workTerritory'
+          icon={MapIcon}
+          onPress={() => handleQuickAction('territories')}
         />
       )}
     </View>

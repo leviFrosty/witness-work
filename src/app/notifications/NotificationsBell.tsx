@@ -14,6 +14,7 @@ import useDevNotificationItems from '@/app/notifications/devNotifications'
 import useReminderNotifications from '@/app/notifications/useReminderNotifications'
 import useDataProtectionRetentionNotification from '@/app/data-protection/useDataProtectionRetentionNotification'
 import useSharedCarNotifications from '@/app/sharedCars/useSharedCarNotifications'
+import useTerritoryNotifications from '@/app/territories/useTerritoryNotifications'
 import useBadgeNotifications from '@/features/badges/hooks/useBadgeNotifications'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import useBuddyNotifications, {
@@ -59,6 +60,7 @@ export default function NotificationsBell() {
     ...usePetUnlockNotifications(),
     ...useBuddyNotifications(),
     ...useSharedCarNotifications(),
+    ...useTerritoryNotifications(),
     usePendingUpdateNotification(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),

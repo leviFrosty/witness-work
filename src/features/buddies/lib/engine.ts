@@ -47,6 +47,10 @@ import {
   type CarReply,
   type CarReplyEvent,
   carReplyEventSchema,
+  type TerritoryHandoffEvent,
+  territoryHandoffEventSchema,
+  type TerritoryInviteEvent,
+  territoryInviteEventSchema,
   joinRequestSchema,
   MAX_GUEST_AVATAR_CHARS,
   MAX_SHARED_PHOTOS,
@@ -109,6 +113,9 @@ import {
   CAR_REPLY_TTL_MS,
   cappedQueue,
   type CarEventKind,
+  isSpaceInviteKind,
+  type SpaceEventKind,
+  type TerritoryEventKind,
   IncomingShare,
   type IncomingCarInvite,
   incomingCarInviteKey,
@@ -171,7 +178,7 @@ import {
   type OpenCarInvite,
   rosterSharedCarMemberships,
 } from '@/lib/mileage/sharedCar'
-import { inviteEventId } from '@/lib/sharedSpaces/crypto'
+import { inviteEventId, territoryEventId } from '@/lib/sharedSpaces/crypto'
 import {
   createInviteSecretStore,
   type InviteSecrets,
@@ -220,6 +227,108 @@ export type CarEventNotice = {
 }
 
 export type LostCarInvite = { to: string; spaceId: string; inviteId: string }
+
+export type TerritoryEventNotice = {
+  kind: TerritoryEventKind
+
+  from: string
+  spaceId: string
+  inviteId: string
+
+  status?: CarReply
+
+  scopeId?: string
+  street?: string
+}
+
+export type TerritoryMembershipsRoster = {
+  territories: Record<string, { at: number }>
+  leftTerritories: Record<string, number>
+}
+
+export type TerritoryInviteSend = {
+  spaceId: string
+  inviteId: string
+  joinSecret: string
+  epoch: number
+  key: string
+  title: string
+  streets: string[]
+  handoff: boolean
+  people: number
+  expiresAt: number
+}
+
+export type TerritoryHandoffSend = {
+  spaceId: string
+  scopeId: string
+  street: string
+  since: number
+}
+
+type BuddiesSpaceDeps = Pick<
+  BuddiesCarsDeps,
+  | 'openInvitesTo'
+  | 'replyApplies'
+  | 'isOnCar'
+  | 'inviteOpen'
+  | 'onInviteLost'
+  | 'onBuddyGone'
+  | 'leaveAll'
+  | 'finishPending'
+  | 'forgetLocal'
+>
+
+export type BuddiesTerritoriesDeps = BuddiesSpaceDeps & {
+  memberships: () => TerritoryMembershipsRoster
+
+  mergeMemberships: (remote: TerritoryMembershipsRoster) => void
+
+  onEvent?: (notice: TerritoryEventNotice) => void
+}
+
+type SpaceFamily = 'car' | 'territory'
+
+type SpaceEventNotice = Omit<TerritoryEventNotice, 'kind'> & {
+  kind: SpaceEventKind
+}
+
+type SpaceInvite = CarInviteEvent &
+  Pick<IncomingCarInvite, 'family' | 'territory'>
+
+const familyOfKind = (kind: string): SpaceFamily =>
+  kind.startsWith('territory.') ? 'territory' : 'car'
+
+const familyOfInvite = (invite: Pick<IncomingCarInvite, 'family'>) =>
+  invite.family ?? 'car'
+
+const MAX_ROSTER_LEFT_TERRITORIES = 100
+
+function rosterTerritoryMemberships(
+  memberships: TerritoryMembershipsRoster,
+  room: number
+): TerritoryMembershipsRoster {
+  let left = room
+  const fits = (spaceId: string, value: unknown) => {
+    const bytes = spaceId.length + JSON.stringify(value).length + 4
+    if (bytes > left) return false
+    left -= bytes
+    return true
+  }
+  const territories: TerritoryMembershipsRoster['territories'] = {}
+  for (const [spaceId, entry] of Object.entries(memberships.territories)
+    .filter(
+      ([spaceId, { at }]) => (memberships.leftTerritories[spaceId] ?? 0) < at
+    )
+    .sort(([a, x], [b, y]) => y.at - x.at || a.localeCompare(b)))
+    if (fits(spaceId, entry)) territories[spaceId] = { at: entry.at }
+  const leftTerritories: TerritoryMembershipsRoster['leftTerritories'] = {}
+  for (const [spaceId, at] of Object.entries(memberships.leftTerritories)
+    .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+    .slice(0, MAX_ROSTER_LEFT_TERRITORIES))
+    if (fits(spaceId, at)) leftTerritories[spaceId] = at
+  return { territories, leftTerritories }
+}
 
 export type BuddiesCarsDeps = {
   memberships: () => SharedCarMemberships
@@ -318,6 +427,8 @@ export type BuddiesEngineDeps = {
 
   cars?: BuddiesCarsDeps
 
+  territories?: BuddiesTerritoriesDeps
+
   inviteSecrets?: InviteSecretStore
 
   onSharesNotSent?: (notSent: {
@@ -407,11 +518,22 @@ export type BadgePushKind =
 export const CAR_PUSH_KINDS = ['car.invite', 'car.reply'] as const
 export type CarPushKind = (typeof CAR_PUSH_KINDS)[number]
 
-const CAR_EVENT_KINDS: readonly string[] = [
+export const TERRITORY_PUSH_KINDS = [
+  'territory.invite',
+  'territory.reply',
+  'territory.handoff',
+] as const
+export type TerritoryPushKind = (typeof TERRITORY_PUSH_KINDS)[number]
+
+const SPACE_EVENT_KINDS: readonly string[] = [
   'car.invite',
   'car.cancel',
   'car.reply',
-] satisfies CarEventKind[]
+  'territory.invite',
+  'territory.cancel',
+  'territory.reply',
+  'territory.handoff',
+] satisfies SpaceEventKind[]
 
 export type PushRegistrationOutcome = 'registered' | 'refreshed' | 'unchanged'
 
@@ -529,6 +651,12 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     Object.entries(roster.leftCars)
       .map(([spaceId, at]) => `${spaceId}:${at}`)
       .sort(),
+    Object.entries(roster.territories)
+      .map(([spaceId, { at }]) => `${spaceId}:${at}`)
+      .sort(),
+    Object.entries(roster.leftTerritories)
+      .map(([spaceId, at]) => `${spaceId}:${at}`)
+      .sort(),
   ])
 }
 
@@ -611,15 +739,14 @@ function answeredCarInvite(
 
 function settledCarInvites(
   carInvites: Record<string, IncomingCarInvite>,
-  isOnCar: ((spaceId: string) => boolean) | undefined,
+  isOn: (invite: IncomingCarInvite) => boolean,
   now: number
 ): { carInvites: Record<string, IncomingCarInvite>; settled: string[] } {
-  if (!isOnCar) return { carInvites, settled: [] }
   const settled = Object.entries(carInvites)
     .filter(
       ([, invite]) =>
         (invite.status === 'pending' || invite.status === 'declined') &&
-        isOnCar(invite.spaceId)
+        isOn(invite)
     )
     .map(([key]) => key)
   if (settled.length === 0) return { carInvites, settled }
@@ -993,12 +1120,22 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         ...content,
         cars: {},
         leftCars: {},
+        territories: {},
+        leftTerritories: {},
       }).length
+    const cars = rosterSharedCarMemberships(
+      deps.cars?.memberships() ?? { cars: {}, leftCars: {} },
+      room
+    )
     return {
       ...content,
-      ...rosterSharedCarMemberships(
-        deps.cars?.memberships() ?? { cars: {}, leftCars: {} },
-        room
+      ...cars,
+      ...rosterTerritoryMemberships(
+        deps.territories?.memberships() ?? {
+          territories: {},
+          leftTerritories: {},
+        },
+        room - json(cars).length
       ),
     }
   }
@@ -1115,6 +1252,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
     }))
     deps.cars?.onBuddyGone?.(inboxId)
+    deps.territories?.onBuddyGone?.(inboxId)
   }
 
   function noteUnsentTo(inboxId: string): string | null {
@@ -4268,16 +4406,21 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       .getState()
       .buddies.find((b) => b.inboxId === inboxId && b.status === 'active')
 
+  const spaceDeps = (family: SpaceFamily): BuddiesSpaceDeps | undefined =>
+    family === 'territory' ? deps.territories : deps.cars
+
+  const isOnInvite = (invite: IncomingCarInvite) =>
+    spaceDeps(familyOfInvite(invite))?.isOnCar?.(invite.spaceId) ?? false
+
   function queueCarEvent(
     me: BuddyIdentity,
     event: Omit<OutgoingCarEventInput, 'eventId'>
   ) {
-    const eventId = inviteEventId(
-      event.kind,
-      me.inboxId,
-      event.to,
-      event.inviteId
-    )
+    const eventId = (
+      familyOfKind(event.kind) === 'territory'
+        ? territoryEventId
+        : inviteEventId
+    )(event.kind, me.inboxId, event.to, event.inviteId)
     store.setState((state) => ({
       carEvents: {
         ...state.carEvents,
@@ -4322,6 +4465,78 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       },
       push: true,
       expiresAt: invite.expiresAt,
+    })
+    await deliverCarEvents().catch(() => {})
+    return true
+  }
+
+  async function sendTerritoryInvite(
+    to: string,
+    invite: TerritoryInviteSend
+  ): Promise<boolean> {
+    if (!activeBuddy(to)) return false
+    const me = await ensureInbox()
+    if (!activeBuddy(to)) return false
+    inviteSecrets.put(sentInviteSecretId(invite.inviteId), {
+      joinSecret: invite.joinSecret,
+      key: invite.key,
+    })
+    queueCarEvent(me, {
+      kind: 'territory.invite',
+      to,
+      spaceId: invite.spaceId,
+      inviteId: invite.inviteId,
+      body: {
+        v: 1,
+        id: invite.spaceId,
+        rev: deps.now(),
+        inviteId: invite.inviteId,
+        epoch: invite.epoch,
+        title: invite.title,
+        streets: invite.streets,
+        handoff: invite.handoff,
+        people: invite.people,
+        expiresAt: invite.expiresAt,
+      },
+      push: true,
+      expiresAt: invite.expiresAt,
+    })
+    await deliverCarEvents().catch(() => {})
+    return true
+  }
+
+  async function sendTerritoryCancel(
+    to: string,
+    invite: Pick<OpenCarInvite, 'spaceId' | 'inviteId' | 'expiresAt'>
+  ) {
+    if (!activeBuddy(to)) return
+    const me = await ensureInbox()
+    if (!queueCarCancel(me, to, invite, 'territory')) return
+    await deliverCarEvents().catch(() => {})
+  }
+
+  async function sendTerritoryHandoff(
+    to: string,
+    handoff: TerritoryHandoffSend
+  ): Promise<boolean> {
+    if (!activeBuddy(to)) return false
+    const me = await ensureInbox()
+    if (!activeBuddy(to)) return false
+    const now = deps.now()
+    queueCarEvent(me, {
+      kind: 'territory.handoff',
+      to,
+      spaceId: handoff.spaceId,
+      inviteId: `${handoff.scopeId}|${handoff.since}`,
+      body: {
+        v: 1,
+        id: handoff.spaceId,
+        rev: now,
+        scopeId: handoff.scopeId,
+        street: handoff.street,
+      },
+      push: true,
+      expiresAt: now + CAR_REPLY_TTL_MS,
     })
     await deliverCarEvents().catch(() => {})
     return true
@@ -4374,9 +4589,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       spaceId,
       inviteId,
       expiresAt,
-    }: Pick<OpenCarInvite, 'spaceId' | 'inviteId' | 'expiresAt'>
+    }: Pick<OpenCarInvite, 'spaceId' | 'inviteId' | 'expiresAt'>,
+    family: SpaceFamily = 'car'
   ): boolean {
-    const inviteEvent = inviteEventId('car.invite', me.inboxId, to, inviteId)
+    const inviteEvent =
+      family === 'territory'
+        ? territoryEventId('territory.invite', me.inboxId, to, inviteId)
+        : inviteEventId('car.invite', me.inboxId, to, inviteId)
     const waiting = store.getState().carEvents[inviteEvent]
     if (waiting)
       store.setState((state) => ({
@@ -4384,7 +4603,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }))
     if (waiting && !waiting.attempted) return false
     queueCarEvent(me, {
-      kind: 'car.cancel',
+      kind: family === 'territory' ? 'territory.cancel' : 'car.cancel',
       to,
       spaceId,
       inviteId,
@@ -4436,7 +4655,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     )
     if (!activeBuddy(answered.from)) return true
     queueCarEvent(me, {
-      kind: 'car.reply',
+      kind:
+        familyOfInvite(answered) === 'territory'
+          ? 'territory.reply'
+          : 'car.reply',
       to: answered.from,
       spaceId: answered.spaceId,
       inviteId: answered.inviteId,
@@ -4490,11 +4712,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         drop(eventId)
         continue
       }
-      const invitation = event.kind === 'car.invite'
+      const invitation = isSpaceInviteKind(event.kind)
 
       if (
         invitation &&
-        deps.cars?.inviteOpen?.(event.spaceId, event.inviteId) === false
+        spaceDeps(familyOfKind(event.kind))?.inviteOpen?.(
+          event.spaceId,
+          event.inviteId
+        ) === false
       ) {
         drop(eventId)
         continue
@@ -4543,19 +4768,23 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function dropLostCarInvites(me: BuddyIdentity) {
     const invites = () =>
-      Object.values(store.getState().carEvents).filter(
-        (event) => event.kind === 'car.invite'
+      Object.values(store.getState().carEvents).filter((event) =>
+        isSpaceInviteKind(event.kind)
       )
     if (invites().length === 0 || !(await inviteSecrets.ready())) return
     const lost = invites().filter(
       (event) =>
         !inviteSecrets.get(sentInviteSecretId(event.inviteId)) &&
         activeBuddy(event.to) &&
-        deps.cars?.inviteOpen?.(event.spaceId, event.inviteId) !== false
+        spaceDeps(familyOfKind(event.kind))?.inviteOpen?.(
+          event.spaceId,
+          event.inviteId
+        ) !== false
     )
-    for (const event of lost) queueCarCancel(me, event.to, event)
-    for (const { to, spaceId, inviteId } of lost)
-      deps.cars?.onInviteLost?.({ to, spaceId, inviteId })
+    for (const event of lost)
+      queueCarCancel(me, event.to, event, familyOfKind(event.kind))
+    for (const { to, spaceId, inviteId, kind } of lost)
+      spaceDeps(familyOfKind(kind))?.onInviteLost?.({ to, spaceId, inviteId })
   }
 
   function applyCarEvent(
@@ -4563,11 +4792,12 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     event: RelaySyncResponse['events'][number],
     firstSync: boolean
   ) {
-    if (!deps.cars) return
+    const family = familyOfKind(event.kind)
+    if (!spaceDeps(family)) return
     const buddy = senderOf(me, event.slotId)
     if (!buddy) return
     if (store.getState().seenCarEvents[event.eventId] !== undefined) return
-    let notice: CarEventNotice | null
+    let notice: SpaceEventNotice | null
     try {
       const body = openEvent(me, buddy, event)
       const source = { id: event.eventId, seq: event.seq }
@@ -4575,18 +4805,42 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       const at = Number.isFinite(event.createdAt)
         ? Math.min(event.createdAt, now)
         : now
+      const timing = { at, read: firstSync }
       notice =
         event.kind === 'car.invite'
-          ? applyCarInvite(buddy, source, carInviteEventSchema.parse(body), {
-              at,
-              read: firstSync,
-            })
-          : event.kind === 'car.cancel'
-            ? applyCarCancel(buddy, carCancelEventSchema.parse(body))
-            : applyCarReply(buddy, source, carReplyEventSchema.parse(body), {
-                at,
-                read: firstSync,
-              })
+          ? applyCarInvite(
+              buddy,
+              source,
+              carInviteEventSchema.parse(body),
+              timing
+            )
+          : event.kind === 'territory.invite'
+            ? applyCarInvite(
+                buddy,
+                source,
+                territoryInviteOf(territoryInviteEventSchema.parse(body)),
+                timing
+              )
+            : event.kind === 'territory.handoff'
+              ? applyTerritoryHandoff(
+                  buddy,
+                  source,
+                  territoryHandoffEventSchema.parse(body),
+                  timing
+                )
+              : event.kind === 'car.cancel' || event.kind === 'territory.cancel'
+                ? applyCarCancel(
+                    buddy,
+                    carCancelEventSchema.parse(body),
+                    family
+                  )
+                : applyCarReply(
+                    buddy,
+                    source,
+                    carReplyEventSchema.parse(body),
+                    timing,
+                    family
+                  )
     } catch {
       return
     }
@@ -4601,15 +4855,63 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         [event.eventId]: now,
       },
     }))
-    if (notice) deps.cars.onEvent?.(notice)
+    if (!notice) return
+    if (family === 'territory')
+      deps.territories?.onEvent?.(notice as TerritoryEventNotice)
+    else deps.cars?.onEvent?.(notice as CarEventNotice)
+  }
+
+  function territoryInviteOf(invite: TerritoryInviteEvent): SpaceInvite {
+    return {
+      ...invite,
+      name: invite.title,
+      family: 'territory',
+      territory: {
+        title: Array.from(invite.title.trim()).slice(0, 100).join(''),
+        streets: invite.streets.map((street) =>
+          Array.from(street.trim()).slice(0, 80).join('')
+        ),
+        handoff: invite.handoff,
+      },
+    }
+  }
+
+  function applyTerritoryHandoff(
+    buddy: Buddy,
+    source: EventSource,
+    handoff: TerritoryHandoffEvent,
+    { at, read }: { at: number; read: boolean }
+  ): SpaceEventNotice {
+    const street = Array.from(handoff.street.trim()).slice(0, 80).join('')
+    notify(
+      {
+        ...source,
+        kind: 'territoryHandoff',
+        from: buddy.inboxId,
+        name: buddy.name,
+        spaceId: handoff.id,
+        street,
+        at,
+      },
+      read
+    )
+    return {
+      kind: 'territory.handoff',
+      from: buddy.inboxId,
+      spaceId: handoff.id,
+      inviteId: '',
+      scopeId: handoff.scopeId,
+      street,
+    }
   }
 
   function applyCarInvite(
     buddy: Buddy,
     source: EventSource,
-    invite: CarInviteEvent,
+    invite: SpaceInvite,
     { at, read }: { at: number; read: boolean }
-  ): CarEventNotice | null {
+  ): SpaceEventNotice | null {
+    const family = familyOfInvite(invite)
     const now = deps.now()
     const expiresAt = Math.min(
       invite.expiresAt,
@@ -4620,7 +4922,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const state = store.getState()
 
     if (state.carInvites[key]) return null
-    const onCar = deps.cars?.isOnCar?.(invite.id) ?? false
+    const onCar = spaceDeps(family)?.isOnCar?.(invite.id) ?? false
     const replaced = Object.entries(state.carInvites).filter(
       ([, other]) =>
         other.from === buddy.inboxId &&
@@ -4662,6 +4964,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
             ? { status: 'joined', answeredAt: now }
             : { status: 'pending', join: { epoch: invite.epoch } }),
           alertSeqs: [source.seq],
+          ...(invite.family
+            ? { family: invite.family, territory: invite.territory }
+            : {}),
         },
       },
       notifications: current.notifications.filter(
@@ -4673,7 +4978,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     notify(
       {
         ...source,
-        kind: 'carInvite',
+        kind: family === 'territory' ? 'territoryInvite' : 'carInvite',
         from: buddy.inboxId,
         name: buddy.name,
         shareKey: key,
@@ -4682,7 +4987,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       read || wasRead || onCar
     )
     return {
-      kind: 'car.invite',
+      kind: family === 'territory' ? 'territory.invite' : 'car.invite',
       from: buddy.inboxId,
       spaceId: invite.id,
       inviteId: invite.inviteId,
@@ -4691,13 +4996,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   function applyCarCancel(
     buddy: Buddy,
-    cancel: CarCancelEvent
-  ): CarEventNotice {
+    cancel: CarCancelEvent,
+    family: SpaceFamily
+  ): SpaceEventNotice {
     const now = deps.now()
     const key = incomingCarInviteKey(buddy.inboxId, cancel.inviteId)
     const existing = store.getState().carInvites[key]
-    const notice: CarEventNotice = {
-      kind: 'car.cancel',
+    const notice: SpaceEventNotice = {
+      kind: family === 'territory' ? 'territory.cancel' : 'car.cancel',
       from: buddy.inboxId,
       spaceId: cancel.id,
       inviteId: cancel.inviteId,
@@ -4720,6 +5026,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
               expiresAt: now + INCOMING_CAR_INVITE_MAX_MS,
               receivedAt: now,
               status: 'cancelled',
+              ...(family === 'territory' ? { family } : {}),
             },
       },
       notifications: state.notifications.filter((n) => n.shareKey !== key),
@@ -4732,19 +5039,20 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     buddy: Buddy,
     source: EventSource,
     reply: CarReplyEvent,
-    { at, read }: { at: number; read: boolean }
-  ): CarEventNotice | null {
+    { at, read }: { at: number; read: boolean },
+    family: SpaceFamily
+  ): SpaceEventNotice | null {
     const ref = {
       from: buddy.inboxId,
       spaceId: reply.id,
       inviteId: reply.inviteId,
     }
-    if (!deps.cars?.replyApplies(ref)) return null
+    if (!spaceDeps(family)?.replyApplies(ref)) return null
     if (reply.status === 'joined')
       notify(
         {
           ...source,
-          kind: 'carJoined',
+          kind: family === 'territory' ? 'territoryJoined' : 'carJoined',
           from: buddy.inboxId,
           name: buddy.name,
           spaceId: reply.id,
@@ -4752,7 +5060,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         },
         read
       )
-    return { kind: 'car.reply', ...ref, status: reply.status }
+    return {
+      kind: family === 'territory' ? 'territory.reply' : 'car.reply',
+      ...ref,
+      status: reply.status,
+    }
   }
 
   function noteCarMemberships() {
@@ -4762,6 +5074,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function queueCarCancelsTo(me: BuddyIdentity, inboxId: string) {
     for (const invite of deps.cars?.openInvitesTo(inboxId) ?? [])
       queueCarCancel(me, inboxId, invite)
+    for (const invite of deps.territories?.openInvitesTo(inboxId) ?? [])
+      queueCarCancel(me, inboxId, invite, 'territory')
   }
 
   function markNotificationsRead() {
@@ -4969,6 +5283,10 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       cars: remote.cars,
       leftCars: remote.leftCars,
     })
+    deps.territories?.mergeMemberships({
+      territories: remote.territories,
+      leftTerritories: remote.leftTerritories,
+    })
     applyMarks()
 
     if (endedHere.length > 0) queueRemoval(endedHere)
@@ -4999,7 +5317,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }
     }
 
-    const isOnCar = deps.cars?.isOnCar
     let carInvites = state.carInvites
     let carEvents = state.carEvents
     for (const [key, mark] of Object.entries(answerMarks)) {
@@ -5009,7 +5326,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (invite.status !== 'pending' && mark.r <= (invite.answeredAt ?? 0))
         continue
       const status = mark.s === 'going' ? 'joined' : 'declined'
-      if (status === 'declined' && isOnCar?.(invite.spaceId)) continue
+      if (status === 'declined' && isOnInvite(invite)) continue
       answered.add(key)
       carInvites = {
         ...carInvites,
@@ -5017,14 +5334,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       }
       const waiting = Object.values(carEvents).find(
         (event) =>
-          event.kind === 'car.reply' &&
+          (event.kind === 'car.reply' || event.kind === 'territory.reply') &&
           event.to === invite.from &&
           event.inviteId === invite.inviteId
       )
       if (waiting) carEvents = omitKey(carEvents, waiting.eventId)
     }
 
-    const onCars = settledCarInvites(carInvites, isOnCar, deps.now())
+    const onCars = settledCarInvites(carInvites, isOnInvite, deps.now())
     carInvites = onCars.carInvites
     for (const key of onCars.settled) answered.add(key)
     const { read, dismissed } = notificationMarks
@@ -5085,7 +5402,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     const state = store.getState()
     const { carInvites, settled } = settledCarInvites(
       state.carInvites,
-      deps.cars?.isOnCar,
+      isOnInvite,
       deps.now()
     )
     if (settled.length === 0) return
@@ -5260,7 +5577,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         applyBadgeEvent(me, event, firstSync)
       } else if (event.kind === BADGE_REACTION_PUSH_KIND) {
         applyBadgeReactionEvent(me, event, firstSync)
-      } else if (CAR_EVENT_KINDS.includes(event.kind)) {
+      } else if (SPACE_EVENT_KINDS.includes(event.kind)) {
         applyCarEvent(me, event, firstSync)
       } else if (event.kind === RECONNECT_KIND) {
         await applyReconnectEvent(me, event)
@@ -5544,7 +5861,8 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function deleteEverything() {
     const me = await currentIdentity()
     const cars = await deps.cars?.leaveAll?.()
-    const notLeft = carsNotLeft(cars)
+    const territories = await deps.territories?.leaveAll?.()
+    const notLeft = [...carsNotLeft(cars), ...carsNotLeft(territories)]
     if (notLeft.length > 0)
       throw new BuddyRemovalPendingError('everything', notLeft)
     queueRemoval(store.getState().buddies)
@@ -5576,9 +5894,13 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function leaveThisDevice() {
     const me = await currentIdentity()
     const cars = await deps.cars?.finishPending?.()
+    const territories = await deps.territories?.finishPending?.()
     if (store.getState().pendingRemovals.length > 0)
       await flushRemovals(me, { force: true })
-    if (store.getState().pendingRemovals.length > 0 || (cars?.pending ?? 0) > 0)
+    if (
+      store.getState().pendingRemovals.length > 0 ||
+      (cars?.pending ?? 0) + (territories?.pending ?? 0) > 0
+    )
       throw new BuddyRemovalPendingError('everything')
 
     await deliverCarEvents().catch(() => {})
@@ -5608,6 +5930,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function resetLocalState() {
     deps.cars?.forgetLocal?.()
+    deps.territories?.forgetLocal?.()
     inviteSecrets.clear()
     shareSends.clear()
     lastAlertSentAt.clear()
@@ -5689,6 +6012,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     deliverBadgeReactions,
     sendCarInvite,
     sendCarCancel,
+    sendTerritoryInvite,
+    sendTerritoryCancel,
+    sendTerritoryHandoff,
     answerCarInvite,
     carInviteSecrets,
     deliverCarEvents,

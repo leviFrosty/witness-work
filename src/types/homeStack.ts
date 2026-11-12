@@ -24,6 +24,8 @@ export type HomeTabStackParamList = {
     | undefined
   Settings: undefined
 
+  Territories: { resume?: boolean } | undefined
+
   Buddies: undefined
 }
 

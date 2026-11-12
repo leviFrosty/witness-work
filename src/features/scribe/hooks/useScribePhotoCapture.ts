@@ -8,7 +8,7 @@ import { hasCapability } from '@/lib/platformCapabilities'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import type { ScribePhotoCapture } from '@/features/scribe/types'
 import { appLocale } from '@/features/scribe/lib/locale'
-import { layoutRecognizedPages } from '@/features/scribe/lib/recognizedTextLayout'
+import { layoutRecognizedPages } from '@/lib/recognizedTextLayout'
 import { trackCaptureFinished } from '@/features/scribe/analytics'
 
 export const SCRIBE_PHOTO_MAX_IMAGES = 5

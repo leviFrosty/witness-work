@@ -1,0 +1,122 @@
+import moment from 'moment'
+import i18n from '@/lib/locales'
+import {
+  formatDate,
+  formatDateTime,
+  formatMonthDayCompact,
+  formatTime,
+} from '@/lib/dates'
+import {
+  coversWholeTerritory,
+  personById,
+  sharedStreets,
+  shareTimeLeft,
+} from '@/features/territories/lib/sharing'
+import { territoryTitle } from '@/features/territories/lib/territoryTitle'
+import type {
+  Territory,
+  TerritoryShare,
+  TerritoryStreet,
+} from '@/features/territories/types/territory'
+
+const HOUR_MS = 60 * 60 * 1000
+const MINUTE_MS = 60 * 1000
+
+export const joinNames = (names: string[]): string => {
+  const [first, second] = names
+  if (names.length === 0 || first === undefined) return ''
+  if (names.length === 1 || second === undefined) return first
+  if (names.length === 2)
+    return i18n.t('territories.share.namesTwo', { first, second })
+  return i18n.t('territories.share.namesMore', {
+    first,
+    second,
+    count: names.length - 2,
+  })
+}
+
+export const shareScopeText = (
+  territory: Pick<Territory, 'streets' | 'received'>,
+  share: Pick<TerritoryShare, 'streetIds' | 'by'>
+): string =>
+  territory.received?.kind === 'handoff' ||
+  (share.streetIds && !coversWholeTerritory(territory, share.streetIds))
+    ? sharedStreets(territory, share)
+        .map((street) => street.name)
+        .join(', ')
+    : i18n.t('territories.share.wholeTerritory')
+
+export const linkHeading = (
+  territory: Pick<Territory, 'number' | 'streets' | 'received'>,
+  share: Pick<TerritoryShare, 'streetIds' | 'by'>
+): string =>
+  i18n.t('territories.share.linkHeading', {
+    territory: territoryTitle(territory),
+    covers: shareScopeText(territory, share),
+  })
+
+export const pickedScopeText = (
+  streets: Pick<TerritoryStreet, 'id' | 'name'>[],
+  chosen: string[],
+  whole: boolean
+): string => {
+  if (whole) return i18n.t('territories.share.wholeTerritory')
+  const picked = streets.filter((street) => chosen.includes(street.id))
+  const [only] = picked
+  if (!only) return i18n.t('territories.share.scopeNone')
+  if (picked.length === 1) return only.name
+  return i18n.t('territories.share.scopeStreets', { count: picked.length })
+}
+
+export const timeLeftText = (share: TerritoryShare, now: number): string => {
+  const left = shareTimeLeft(share, now)
+  if (left === undefined) return ''
+  if (left <= 0) return i18n.t('territories.share.linkEnded')
+  if (left >= HOUR_MS)
+    return i18n.t('territories.share.hoursLeft', {
+      count: Math.floor(left / HOUR_MS),
+    })
+  return i18n.t('territories.share.minutesLeft', {
+    count: Math.max(1, Math.ceil(left / MINUTE_MS)),
+  })
+}
+
+export const linkEndsText = (share: TerritoryShare): string =>
+  share.expiresAt === undefined
+    ? ''
+    : i18n.t('territories.share.endsAt', {
+        time: formatDateTime(share.endedAt ?? share.expiresAt, {
+          style: 'medium',
+        }),
+      })
+
+export const personName = (
+  territory: Pick<Territory, 'people'>,
+  id: string | undefined
+): string =>
+  personById(territory, id)?.name ?? i18n.t('territories.share.someone')
+
+const isToday = (at: number) =>
+  new Date(at).toDateString() === new Date().toDateString()
+
+const dayText = (at: number) =>
+  new Date(at).getFullYear() === new Date().getFullYear()
+    ? formatMonthDayCompact(moment(at))
+    : formatDate(at, { style: 'medium' })
+
+export const recordedByText = (name: string | null, at: number): string =>
+  name === null
+    ? isToday(at)
+      ? i18n.t('territories.share.recordedByYouAt', { time: formatTime(at) })
+      : i18n.t('territories.share.recordedByYouOn', {
+          date: dayText(at),
+        })
+    : isToday(at)
+      ? i18n.t('territories.share.recordedByAt', { name, time: formatTime(at) })
+      : i18n.t('territories.share.recordedByOn', {
+          name,
+          date: dayText(at),
+        })
+
+export const hasOthers = (territory: Pick<Territory, 'people' | 'received'>) =>
+  (territory.people?.length ?? 0) > 0 || territory.received !== undefined

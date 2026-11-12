@@ -352,6 +352,12 @@ const downgradePreferences = (
   let blob: Record<string, unknown> = disk(prefs)
   let stamps: Record<string, unknown> = { ...prefs.preferenceUpdatedAt }
   const home = { ...prefs.homeScreenElements }
+  if (version < 18) {
+    const order = (prefs.homeScreenElementsOrder as string[]).filter(
+      (key) => key !== 'territories'
+    )
+    blob.homeScreenElementsOrder = [order[0], 'territories', ...order.slice(1)]
+  }
   if (version < 16) {
     delete blob.installedBeforeFreeSync
     blob.iCloudSyncPausedForLapse = extras.retiredFlag
@@ -417,7 +423,7 @@ describe('preferences store migrate (v17)', () => {
   it('is a no-op on current data', () => {
     fc.assert(
       fc.property(preferencesArb, (prefs) => {
-        same(migratePreferencesPersistedState(disk(prefs), 17), prefs)
+        same(migratePreferencesPersistedState(disk(prefs), 18), prefs)
       }),
       runs
     )
@@ -427,7 +433,7 @@ describe('preferences store migrate (v17)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 16 }),
+        fc.integer({ min: 0, max: 17 }),
         fc.boolean(),
         fc.boolean(),
         (prefs, version, retiredFlag, dropShown) => {
@@ -446,7 +452,7 @@ describe('preferences store migrate (v17)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 16 }),
+        fc.integer({ min: 0, max: 17 }),
         (prefs, version) => {
           const once = migratePreferencesPersistedState(
             downgradePreferences(prefs, version, {
@@ -455,7 +461,7 @@ describe('preferences store migrate (v17)', () => {
             }),
             version
           )
-          same(migratePreferencesPersistedState(disk(once), 17), once)
+          same(migratePreferencesPersistedState(disk(once), 18), once)
         }
       ),
       runs

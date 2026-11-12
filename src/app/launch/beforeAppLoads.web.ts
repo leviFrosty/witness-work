@@ -1,10 +1,17 @@
 import { registerRootComponent } from 'expo'
+import { isGuestPagePath } from '@/features/territories/guest/launch'
 import type { WebTabMessage } from '@/lib/serverAccount/webTabs'
 import { startInstallPromptCapture } from '@/lib/webInstall/installPrompt'
 import { webLinks } from '@/lib/webLinks/webLinks'
 import { webStorageBoot } from '@/lib/webStorage/boot'
 
 export function beforeAppLoads(loadApp: () => void) {
+  if (isGuestPagePath(window.location.pathname)) {
+    registerRootComponent(
+      require('@/app/territory-guest/TerritoryGuestRoot').default
+    )
+    return
+  }
   startInstallPromptCapture()
   const storage = webStorageBoot.prepare()
 

@@ -39,5 +39,19 @@
   "member.check": "clKMf5O5yUVb8FZJcp-g-Q",
   "member.checkNoAvatar": "8KRnkH7lHcnQkhNBtgqfNA",
   "copy.id": "dd7b640c-6b72-8ff8-9ba2-a98a150ef186",
-  "event.id": "n59lXR3m0_Ll_feZeOg6mQ"
+  "event.id": "n59lXR3m0_Ll_feZeOg6mQ",
+  "scope.streetId": "3f2a9c1e-5b7d-4e8f-a1b2-c3d4e5f60718",
+  "scope.id": "PyqcHlt9To-hssPU5fYHGA",
+  "scope.key": "88301c6909231b94ae95ac5d651fb9e436f7d3ae540808b950fa956343268ed6",
+  "scope.recordId": "s.PyqcHlt9To-hssPU5fYHGA.9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",
+  "scope.blob": "ARESExQVFhcYGRobHB0eHyAhIiMkJSYnKD7rCEbzFPNToKGSUtFivuFDQDO6M3mRwgtUgoz_9N4EvZW16Rcd4xfXRzZ6VpGwjYuyllLdtapaQzFYHWThlqTfiiZ7ud-QbEWAk-Qsiu0m_GKB5oDBbVnRQQ5h249DvJtg",
+  "link.id": "IiMkJSYnKCkqKywtLi8wMQ",
+  "link.secret": "4b80be17e037201ccf8c7377f3fd4f6050e670628f465f75decf4418683cfefd",
+  "link.token": "iCcviUT8C919a4VllW9lE33VxMcnCbbw43F0U0e3Vu0",
+  "link.verifier": "09gxrrg6mX9aV3TM7J2Q2RV2XA5V_9nsqAHNWSzWCwU",
+  "link.key": "544880e00825044e1b8e7824e4c0644d983d4c54d38460122e63b65ffce4559d",
+  "link.url.production": "https://app.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
+  "link.url.beta": "https://beta.app.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
+  "link.url.development": "https://app-dev.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
+  "link.keysBlob": "ATM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSpu9_Fw4gE25JJAlrMOm9hkQKoLxEX7Srp2oIt460_RuyUPvKKrLZDy-DDPGJvihDHzo9wsGE9yqueesqTxtV0y02XONOffGZAhrzLQcEwkB92FfqB5PTfrqpvWCol2V4sHjAekC0naNg180CZ_9rvttxdrHqRJhyViXXM5vq5fNcf8Sm1y7g2-YiQM"
 }

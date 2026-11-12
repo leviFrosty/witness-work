@@ -1739,6 +1739,8 @@ describe('removed buddies stay removed', () => {
       dismissed: {},
       cars: {},
       leftCars: {},
+      territories: {},
+      leftTerritories: {},
 
       reconnects: Object.fromEntries(
         Array.from({ length: 5 }, () => [
@@ -5313,6 +5315,8 @@ describe('a User’s devices stay in step', () => {
 
       cars: {},
       leftCars: {},
+      territories: {},
+      leftTerritories: {},
       reconnects: Object.fromEntries(
         Array.from({ length: 5 }, () => [
           id(),

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   reset: vi.fn(),
   flush: vi.fn(),
   debug: vi.fn(),
+  setPersonPropertiesForFlags: vi.fn(),
   construct: vi.fn(),
   frequency: new Map<string, string>(),
   platform: 'ios',
@@ -38,6 +39,7 @@ vi.mock('posthog-react-native', () => ({
     reset = mocks.reset
     flush = mocks.flush
     debug = mocks.debug
+    setPersonPropertiesForFlags = mocks.setPersonPropertiesForFlags
   },
 }))
 

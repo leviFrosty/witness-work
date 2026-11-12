@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   layoutRecognizedPage,
   layoutRecognizedPages,
-} from '@/features/scribe/lib/recognizedTextLayout'
+} from '@/lib/recognizedTextLayout'
 
 const line = (
   text: string,

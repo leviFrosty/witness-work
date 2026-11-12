@@ -6,6 +6,7 @@ import {
   Flag as FlagIcon,
   LayoutGrid as LayoutGridIcon,
   Lightbulb as LightbulbIcon,
+  Map as MapIcon,
   MessagesSquare as MessagesSquareIcon,
   PawPrint as PawPrintIcon,
   Timer as TimerIcon,
@@ -20,6 +21,7 @@ import type { HomeScreenElementKey } from '@/stores/preferences'
 
 const ICONS: Record<HomeScreenElementKey, AppIcon> = {
   approachingConversations: MessagesSquareIcon,
+  territories: MapIcon,
   together: UsersIcon,
   tabletServiceYearSummary: FlagIcon,
   serviceReport: FileTextIcon,

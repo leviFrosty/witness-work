@@ -94,6 +94,7 @@ describe('Home screen preferences', () => {
       'mileage',
       'timer',
       'didYouKnow',
+      'territories',
     ])
   })
 

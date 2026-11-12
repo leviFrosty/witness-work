@@ -85,6 +85,7 @@ const URLS = {
   usage: 'https://api.test/scribe/v1/usage',
   step: 'https://api.test/scribe/v1/step',
   transcribe: 'https://api.test/scribe/v1/transcribe',
+  territoryNotes: 'https://api.test/scribe/v1/territory-notes',
 }
 
 const meter = (percentUsed: number) => ({

@@ -13,6 +13,7 @@ import useScreenReaderEnabled from '@/hooks/useScreenReaderEnabled'
 import { useRewardStack } from '@/stores/rewardStack'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import { useTakeover } from '@/stores/takeover'
+import { useToastDockHeight } from '@/stores/toastDock'
 import {
   toast as toasts,
   toastPlacement,
@@ -32,6 +33,7 @@ export default function ToastHost() {
   const { hasBottomBar } = useAdaptiveLayout()
   const tabBarHidden = useTabBarHidden()
   const rewarding = useRewardStack((s) => s.run !== null)
+  const dock = useToastDockHeight((s) => s.height)
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -50,7 +52,10 @@ export default function ToastHost() {
   for (const item of items)
     (toastPlacement(item.intent) === 'top' ? top : bottom).push(item)
   const bottomInset =
-    insets.bottom + (hasBottomBar && !tabBarHidden ? TAB_BAR_HEIGHT : 0) + 16
+    (dock > 0
+      ? dock
+      : insets.bottom + (hasBottomBar && !tabBarHidden ? TAB_BAR_HEIGHT : 0)) +
+    16
 
   const content = (
     <View

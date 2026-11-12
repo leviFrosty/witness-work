@@ -411,4 +411,72 @@ describe('Shared Spaces crypto vectors', () => {
       )
     )
   })
+  it('derive scope ids, scope keys and link values with the territory labels', () => {
+    const streetId = vectors['scope.streetId']
+    const scopeId = Buffer.from(streetId.replace(/-/g, ''), 'hex').toString(
+      'base64url'
+    )
+    expect(vectors['scope.id']).toBe(scopeId)
+    const scopeKey = nodeHkdf(
+      spaceKey,
+      `ww-spaces/v1/scope-record|${scopeId}`,
+      32
+    )
+    expect(vectors['scope.key']).toBe(hex(scopeKey))
+    expect(vectors['scope.key']).not.toBe(vectors['key.record'])
+
+    const linkId = toB64u(counting(16, 0x22))
+    expect(vectors['link.id']).toBe(linkId)
+    const secret = nodeHkdf(
+      counting(32, 0x00),
+      `ww-spaces/v1/link|${spaceId}|${linkId}`,
+      32
+    )
+    expect(vectors['link.secret']).toBe(hex(secret))
+    const token = nodeHkdf(secret, 'ww-spaces/v1/link-token', 32)
+    expect(vectors['link.token']).toBe(toB64u(token))
+    expect(vectors['link.verifier']).toBe(toB64u(nodeSha256(token)))
+    const linkKey = nodeHkdf(secret, 'ww-spaces/v1/link-key', 32)
+    expect(vectors['link.key']).toBe(hex(linkKey))
+
+    const fragment = `v1.${spaceId}.${linkId}.${toB64u(secret)}`
+    expect(vectors['link.url.production']).toBe(
+      `https://app.witnesswork.app/territories/guest#${fragment}`
+    )
+    expect(vectors['link.url.beta']).toBe(
+      `https://beta.app.witnesswork.app/territories/guest#${fragment}`
+    )
+    expect(vectors['link.url.development']).toBe(
+      `https://app-dev.witnesswork.app/territories/guest#${fragment}`
+    )
+
+    const doorAad = recordAadOf(
+      spaceId,
+      1,
+      vectors['scope.recordId'],
+      false,
+      1_790_000_300_000
+    )
+    const door = openBlob(scopeKey, vectors['scope.blob'], doorAad)
+    expect(door).not.toBe('refused')
+    expect(JSON.parse(new TextDecoder().decode(door as Uint8Array))).toEqual({
+      v: 1,
+      kind: 'door',
+      data: { label: '12', outcome: 'notHome', at: 1_790_000_300_000 },
+    })
+    expect(
+      openBlob(recordKeyOf(spaceKey), vectors['scope.blob'], doorAad)
+    ).toBe('refused')
+
+    const keys = openBlob(
+      linkKey,
+      vectors['link.keysBlob'],
+      recordAadOf(spaceId, 1, `g.${linkId}`, false, 1_790_000_400_000)
+    )
+    expect(JSON.parse(new TextDecoder().decode(keys as Uint8Array))).toEqual({
+      v: 1,
+      kind: 'guestKeys',
+      data: { scopes: { [scopeId]: { '1': toB64u(scopeKey) } } },
+    })
+  })
 })

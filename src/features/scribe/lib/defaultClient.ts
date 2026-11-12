@@ -18,6 +18,7 @@ const buildDefaultClient = (): ScribeClient =>
       usage: apis.scribeUsage,
       step: apis.scribeStep,
       transcribe: apis.scribeTranscribe,
+      territoryNotes: apis.scribeTerritoryNotes,
     },
 
     streamFetch: ((input, init) =>

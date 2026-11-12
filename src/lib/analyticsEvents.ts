@@ -199,6 +199,18 @@ export const analyticsEventNames = [
   'shared_car_shared',
   'shared_car_sync_failed',
 
+  'territory_shared',
+  'territory_invite_answered',
+  'territory_link_created',
+  'territory_link_ended',
+  'territory_handoff',
+  'territory_sync_failed',
+  'territory_streets_suggested',
+  'territory_notes_scanned',
+  'territory_notes_read',
+  'territory_notes_added',
+  'territory_menu_action',
+
   'pet_adopted',
   'pet_appearance_changed',
   'pet_details_opened',
@@ -389,6 +401,9 @@ export const analyticsEventNames = [
   'supporter_web_checkout_opened',
   'supporter_web_purchase_returned',
   'supporter_web_region_notice_viewed',
+  'territory_guest_page_opened',
+  'territory_guest_named',
+  'territory_guest_first_record',
 ] as const
 
 export type AnalyticsEventName = (typeof analyticsEventNames)[number]

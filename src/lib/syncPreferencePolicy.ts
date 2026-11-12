@@ -28,6 +28,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'dataProtectionMode',
   'dataProtectionModeSetByUser',
   'dataProtectionRetentionPromptedAt',
+  'territoryPrivacyMode',
   'audioEnabled',
   'hapticsEnabled',
   'iCloudImageSync',

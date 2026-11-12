@@ -366,6 +366,31 @@ export const carReplyEventSchema = carCancelEventSchema.extend({
 })
 export type CarReplyEvent = z.infer<typeof carReplyEventSchema>
 
+export const territoryInviteEventSchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  rev: z.number(),
+  inviteId: relayId,
+  joinSecret: b64uKey,
+  epoch: z.number().int().min(1).safe(),
+  key: b64uKey,
+  title: z.string(),
+  streets: z.array(z.string()).max(30).catch([]),
+  handoff: z.boolean().catch(false),
+  people: z.number().int().min(0).safe(),
+  expiresAt: z.number(),
+})
+export type TerritoryInviteEvent = z.infer<typeof territoryInviteEventSchema>
+
+export const territoryHandoffEventSchema = z.object({
+  v: z.literal(1),
+  id: relayId,
+  rev: z.number(),
+  scopeId: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
+  street: z.string(),
+})
+export type TerritoryHandoffEvent = z.infer<typeof territoryHandoffEventSchema>
+
 const b64uSecret = z.string().regex(/^[A-Za-z0-9_-]{22}$/)
 
 const shareKey = z.string().regex(/^[A-Za-z0-9_-]{22}\|[A-Za-z0-9_-]{22}$/)
@@ -516,6 +541,9 @@ export const rosterSchema = z.object({
 
   cars: lenientRecord(relayId, z.object({ at: z.number().finite() })),
   leftCars: lenientRecord(relayId, z.number().finite()),
+
+  territories: lenientRecord(relayId, z.object({ at: z.number().finite() })),
+  leftTerritories: lenientRecord(relayId, z.number().finite()),
 
   reconnects: lenientRecord(
     relayId,

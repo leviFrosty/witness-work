@@ -12,6 +12,8 @@ import {
   badgeReactionSchema,
   carInviteEventSchema,
   carReplyEventSchema,
+  territoryHandoffEventSchema,
+  territoryInviteEventSchema,
   joinRequestSchema,
   pairConfirmedSchema,
   pairReconnectSchema,
@@ -151,6 +153,9 @@ export type BuddyAlert =
     }
   | { type: 'carInvite'; name: string }
   | { type: 'carJoined'; name: string }
+  | { type: 'territoryInvite'; name: string; handoff: boolean }
+  | { type: 'territoryJoined'; name: string }
+  | { type: 'territoryHandoff'; name: string }
 
 export type BuddyAlertFailure =
   | 'noContext'
@@ -214,6 +219,9 @@ type Handler =
   | 'badgeReaction'
   | 'carInvite'
   | 'carReply'
+  | 'territoryInvite'
+  | 'territoryReply'
+  | 'territoryHandoff'
 
 function handlerOf(kind: string): Handler | null {
   if (kind === 'pair.confirmed') return 'paired'
@@ -229,6 +237,10 @@ function handlerOf(kind: string): Handler | null {
   if (kind === 'car.reply') return 'carReply'
 
   if (kind === 'car.cancel') return 'quiet'
+  if (kind === 'territory.invite') return 'territoryInvite'
+  if (kind === 'territory.reply') return 'territoryReply'
+  if (kind === 'territory.handoff') return 'territoryHandoff'
+  if (kind === 'territory.cancel') return 'quiet'
   return null
 }
 
@@ -372,5 +384,22 @@ export function describeBuddyEvent(
         ? { alert: { type: 'carJoined', name } }
         : { quiet: true }
     }
+    case 'territoryInvite': {
+      const invite = parsed(territoryInviteEventSchema, body)
+      return invite
+        ? { alert: { type: 'territoryInvite', name, handoff: invite.handoff } }
+        : failed('unreadable')
+    }
+    case 'territoryReply': {
+      const reply = parsed(carReplyEventSchema, body)
+      if (!reply) return failed('unreadable')
+      return reply.status === 'joined'
+        ? { alert: { type: 'territoryJoined', name } }
+        : { quiet: true }
+    }
+    case 'territoryHandoff':
+      return parsed(territoryHandoffEventSchema, body)
+        ? { alert: { type: 'territoryHandoff', name } }
+        : failed('unreadable')
   }
 }

@@ -20,6 +20,7 @@ export type FeatureFlag =
   | 'announcement'
   | 'scribe-ai'
   | 'shared-cars'
+  | 'territories'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 

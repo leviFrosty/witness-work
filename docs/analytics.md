@@ -91,6 +91,7 @@ phone browser reports iOS or Android, and `$app_version` is unset.
 | `mileage_person_filter_used`                       | Once per session; reach of the Mileage screen's person filter on Shared Cars, not every switch.                                                                                                                                                              |
 | `help_center_refreshed`                            | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                                                    |
 | `shared_car_sync_failed`                           | Once per UTC day and reason; which Shared Car failures reach people, not how often a phone retries.                                                                                                                                                          |
+| `territory_sync_failed`                            | Once per UTC day and reason; which shared territory failures reach people, not how often a phone retries.                                                                                                                                                    |
 | Supporter gate, purchase, and core outcome events  | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                                                  |
 | `$feature_flag_called`                             | Only for flags whose reach is a product question (`exposureReportedFlags` in `analyticsEvents.ts`; today `announcement`), once per UTC day and flag/value. Rollout gates such as `buddies` send nothing; add an experiment's flag to the list while it runs. |
 
@@ -414,7 +415,7 @@ between turns (`api_scribe_step`) without a person profile; see [`scribe-ai-prot
 | `scribe_setting_changed`     | Scribe AI was turned on or off with the switch in Settings → Scribe AI. `enabled`: whether it's on now. Off hides every entry point and stops Scribe AI's status checks. Turning it on where this device hasn't agreed to the Terms of Use sends this only once they're accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Do people turn Scribe AI off, and do they come back to it?                                    |
 | `scribe_privacy_viewed`      | How Scribe AI handles data was shown. `surface`: `settings` (Zero Data Retention's Learn more) or `first_open` (the step after the Terms of Use, the first time this device opens Scribe AI).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Do people look into how Scribe AI handles their data, and does it come before turning it off? |
 | `scribe_terms_resolved`      | The Terms of Use step for Scribe AI ended (once a device, before its first use, and when turning Scribe AI on in Settings before agreeing). `surface`: `first_open` or `settings`. `outcome`: `accepted` or `dismissed` (swiped away: Scribe AI stays on and asks again next time; from Settings it stays off).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Do people agree to the terms, or put Scribe AI off?                                           |
-| `scribe_usage_viewed`        | Usage was shown. `surface`: `conversation` (the meter in the conversation header, once per visit) or `settings` (Settings → Scribe AI usage, once per visit). `plan`, `limited`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Do people check their usage, and do they do it when they're limited?                          |
+| `scribe_usage_viewed`        | Usage was shown. `surface`: `conversation` (the meter in the conversation header, once per visit), `territory_notes` (the meter in Add Results From Notes' header, once per visit) or `settings` (Settings → Scribe AI usage, once per visit). `plan`, `limited`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Do people check their usage, and do they do it when they're limited?                          |
 | `scribe_upsell_tapped`       | Become a Supporter was tapped. `surface`: `limit_reached` (the limit card) or `usage` (Settings → Scribe AI usage). The Paywall then opens with `source` `scribe_limit_reached` or `scribe_usage`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Does reaching a limit lead to supporting?                                                     |
 | `scribe_supporter_rechecked` | Check again was tapped where this device is a Supporter but ww-api metered the account as free (the limit card or Settings → Scribe AI usage). `supporter`: whether ww-api answered Supporter after linking again.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | How often does a Supporter's status fail to reach the server, and does linking again fix it?  |
 | `quick_actions_tile_tapped`  | A tile in Home's Quick Actions section was tapped. `tile`: `time` (Add Time), `visit` (Log Visit, shown in place of Time when the publisher doesn't log hours), `contact`, or `plan`. The orb in the same section sends `scribe_entry_tapped` with `entry: home_orb`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Do the Quick Actions tiles earn their place on Home next to the orb?                          |
@@ -884,10 +885,11 @@ screen tracking (`ShareApp`) shows how often the code is opened from Settings.
 
 ## Navigation preferences
 
-Users can reorder the Home, Contacts, Progress, and Schedule tabs in Preferences
-→ Tab Order; Home remains the launch tab. `tab_order_changed` measures adoption
+Users can reorder the Home, Contacts, Progress, Schedule, and Territories tabs
+in Preferences → Tab Order; Home remains the launch tab. Territories is a tab
+only while the `territories` flag is on. `tab_order_changed` measures adoption
 of this preference with `order` (comma-separated bounded route names, including
-Progress even when hidden) and `source` (`arrows` or `menu`). Generic menu and
+Progress and Territories even when hidden) and `source` (`arrows` or `menu`). Generic menu and
 navigation interactions remain removed.
 
 ## Progress cards
@@ -1316,6 +1318,56 @@ shared_car_joined`.
 None carries names, space or member ids, car names, trips, distances, or
 invitation details.
 
+### Shared Territories
+
+Shared Territories (ADR 0047, behind the `territories` flag) answers whether
+people share territories, how (the whole territory or some streets, with buddies
+or with a guest link), whether the buddies they invite join, and whether
+hand-offs get used. `territory_shared` is sent each time the User shares with
+buddies, with `scope` (`whole` or `streets`) and `people` (how many buddies were
+picked). `territory_invite_answered` is sent on the device that answered a
+buddy's invitation, with `answer` (`joined` or `declined`) and `handoff`
+(whether the invitation handed them a street); a Join doesn't count when the
+User was on the territory already. `territory_link_created` counts guest links,
+with `streets` (how many streets it covers), and `territory_link_ended` counts
+links the User ended early (links that expire or end with a return send
+nothing). `territory_handoff` counts hand-offs, with `action`: `handed`,
+`taken_back` (the owner took it back), or `given_back` (the holder gave it
+back). `territory_sync_failed` is a shared territory's sync that failed, by
+`reason`, once per UTC day per reason; offline, timeouts and cancels send
+nothing. `territory_streets_suggested` is sent once each time the owner leaves
+Find Streets in the Outline after it checked at least one point, whether or not
+they added any, with `points` (how many outline points the geocoder answered),
+`found` (distinct street names found), `added` (streets added) and `stopped`
+(whether the search ended early, from a geocoder error or because they left).
+
+| Event                         | When                                                                           | Properties                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `territory_shared`            | The User shared a territory with buddies.                                      | `scope: whole \| streets`, `people` (count).                                                                                                                             |
+| `territory_invite_answered`   | The User answered a buddy's invitation to a territory.                         | `answer: joined \| declined`, `handoff` (boolean).                                                                                                                       |
+| `territory_link_created`      | The User made a guest link.                                                    | `streets` (count).                                                                                                                                                       |
+| `territory_link_ended`        | The User ended a guest link early.                                             | None.                                                                                                                                                                    |
+| `territory_handoff`           | A street was handed off, taken back, or given back by the User.                | `action: handed \| taken_back \| given_back`.                                                                                                                            |
+| `territory_sync_failed`       | A shared territory's sync failed. Once per UTC day per reason.                 | `reason` (a Shared Spaces error code).                                                                                                                                   |
+| `territory_streets_suggested` | The User left Find Streets in the Outline after it checked at least one point. | `points`, `found`, `added` (counts), `stopped` (boolean).                                                                                                                |
+| `territory_notes_scanned`     | Scan Notes on Add Results From Notes finished.                                 | `outcome: scanned \| empty \| cancelled \| denied \| failed`, `pages` (count).                                                                                           |
+| `territory_notes_read`        | Read Notes finished on Add Results From Notes.                                 | `reader: scribe \| device`, `reason` (device only: `notOffered`, `scribeOff`, `limited`, `offline`, `unavailable`, `failed`, `tooLong`), `entries`, `problems` (counts). |
+| `territory_notes_added`       | Entries from notes were added after review.                                    | `reader`, `reason` (as above), `entries`, `do_not_calls` (counts).                                                                                                       |
+| `territory_menu_action`       | The User chose an action from a territory's or a street's long-press menu.     | `surface: territory \| street`, `action` (the item's name, such as `map`, `return`, `markWorked` or `delete`).                                                           |
+
+`territory_menu_action` answers whether the long-press menus on the
+Territories list and the Streets card get used, and for which actions, so the
+menus can keep only what people reach for. It is sent once per chosen action,
+never on opening a menu.
+
+Add Results From Notes events answer whether people scan paper notes, how
+often Scribe AI reads them versus the on-device reader (and why it fell back),
+and how much of what is read ends up added. Scribe AI's server side counts the
+same reads as `api_scribe_territory_notes` (counts and usage only).
+
+None carries names, space, member or link ids, territory numbers or names,
+streets, addresses, door records, or the notes' text.
+
 ## Account and recovery key
 
 These answer whether people save their recovery key (ADR 0026), whether
@@ -1550,6 +1602,23 @@ tab, before the link opened (docs/app-links.md "Without the app").
 | Event             | When                                                                                                                                                                                       | Properties                                                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `web_link_opened` | A contact share or Buddies invite link in the web app's address reached the app, past the sign-in screen and App Lock, which opens Import Contact or the pre-accept screen. Once per link. | `kind: contact \| buddyInvite`, `kept` (it waited across a reload first: signing in, Use Here, or a reload on the sign-in screen). Never the link. |
+
+### Territory guest links
+
+These answer whether people who get a territory guest link (ADR 0047) can open
+it, and whether they go on to record anything: how many links open to a working
+page against how many arrive ended, expired, broken or paused, and how many
+guests give a name and then record. The guest page runs before the app's storage
+and sign-in, so it has no Settings: it sends under the web's default (usage
+analytics on), and like every event only from the production variant. The URL
+fragment is cleared before anything loads, and no event carries the link, its
+ids, a name, a street or an address.
+
+| Event                          | When                                                                                                        | Properties                                                                                                                                                              |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `territory_guest_page_opened`  | The guest page reached its first answer from the server (or its saved copy). Once per page load.            | `state: ready \| ended \| expired \| invalid \| paused` (`invalid`: the server doesn't know the link, or the page has no link; `paused`: guest links are switched off). |
+| `territory_guest_named`        | The guest gave a name for the first time on this link. Renaming sends nothing.                              | None.                                                                                                                                                                   |
+| `territory_guest_first_record` | The guest's first door, worked street or do-not-call on this link. Once per guest and link in this browser. | None.                                                                                                                                                                   |
 
 ### Web updates and install
 

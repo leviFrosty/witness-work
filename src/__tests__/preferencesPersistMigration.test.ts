@@ -22,6 +22,8 @@ vi.mock('@/lib/locales', () => ({
 }))
 
 import {
+  DEFAULT_HOME_SCREEN_ELEMENTS_ORDER,
+  getEffectiveHomeScreenOrder,
   migrateDaysCardToShortList,
   migrateDropProgressBarDetailsPreference,
   migrateMarkInstalledBeforeFreeSync,
@@ -29,6 +31,7 @@ import {
   migrateShowPetHomeSection,
   migrateShowQuickActionsHomeSection,
   migrateShowThisWeekHomeSection,
+  migrateTerritoriesHomeSectionLast,
   migrateUnchosenContactSortToSuggested,
 } from '@/stores/preferences'
 import { mergePreferences } from '@/app/sync/preferencesMerge'
@@ -1039,5 +1042,51 @@ describe('preferences v17: the Days card opens as the short list', () => {
     const once = migrateDaysCardToShortList(blob)
     expect(migrateDaysCardToShortList(once)).toEqual(once)
     expect(migratePreferencesPersistedState(blob, 17)).toEqual(blob)
+  })
+})
+
+describe('preferences persist migrate v17 → v18 (Territories last on Home)', () => {
+  it('moves a saved Territories section to the end of the Home order', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        homeScreenElementsOrder: [
+          'approachingConversations',
+          'territories',
+          'serviceReport',
+          'routine',
+          'didYouKnow',
+        ],
+      },
+      17
+    )
+    expect(migrated.homeScreenElementsOrder).toEqual([
+      'approachingConversations',
+      'serviceReport',
+      'routine',
+      'didYouKnow',
+      'territories',
+    ])
+  })
+
+  it('leaves an order without Territories to the defaults, which put it last', () => {
+    const before = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (key) => key !== 'territories'
+    ).reverse()
+    const saved = { homeScreenElementsOrder: before }
+    expect(migrateTerritoriesHomeSectionLast(saved)).toBe(saved)
+    expect(getEffectiveHomeScreenOrder(before)).toEqual([
+      ...before,
+      'territories',
+    ])
+    expect(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.at(-1)).toBe('territories')
+  })
+
+  it('is idempotent and does not run for a v18 blob', () => {
+    const once = migrateTerritoriesHomeSectionLast({
+      homeScreenElementsOrder: ['territories', 'timer'],
+    })
+    expect(migrateTerritoriesHomeSectionLast(once)).toEqual(once)
+    const moved = { homeScreenElementsOrder: ['territories', 'timer'] }
+    expect(migratePreferencesPersistedState(moved, 18)).toEqual(moved)
   })
 })

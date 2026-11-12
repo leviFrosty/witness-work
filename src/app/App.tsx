@@ -32,7 +32,9 @@ import { reportLaunch } from '@/lib/perfProbe'
 import DeepLinkListeners from '@/app/deep-links/DeepLinkListeners'
 import BuddiesRuntime from '@/app/buddies/BuddiesRuntime'
 import MileageSharingProvider from '@/app/mileage/MileageSharingProvider'
+import TerritorySharingProvider from '@/app/territories/TerritorySharingProvider'
 import SharedCarsRuntime from '@/app/sharedCars/SharedCarsRuntime'
+import TerritoriesRuntime from '@/app/territories/TerritoriesRuntime'
 import BadgesRuntime from '@/app/badges/BadgesRuntime'
 import '@/app/buddies/buddiesBackgroundSync'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
@@ -195,12 +197,15 @@ function UnlockedApp() {
                               <DeepLinkListeners />
                               <BuddiesRuntime />
                               <SharedCarsRuntime />
+                              <TerritoriesRuntime />
                               <BadgesRuntime />
                               <NotificationResponseListener />
                               <SilentForegroundAlerts />
                               <SystemMenu language={loadedLocale} />
                               <MileageSharingProvider>
-                                <RootStackComponent />
+                                <TerritorySharingProvider>
+                                  <RootStackComponent />
+                                </TerritorySharingProvider>
                               </MileageSharingProvider>
                               <ToastHost />
                               <WebStorageNotices />

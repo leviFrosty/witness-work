@@ -9,16 +9,24 @@ import useTheme from '@/contexts/theme'
 import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { getEffectiveTabOrder, moveVisibleTab } from '@/lib/tabOrderPreferences'
+import { useFeatureFlag } from '@/lib/featureFlags'
+import {
+  getEffectiveTabOrder,
+  isTabAvailable,
+  moveVisibleTab,
+} from '@/lib/tabOrderPreferences'
 import { usePreferences } from '@/stores/preferences'
 
 const TabOrderPreferencesSection = () => {
   const { tabOrder, set } = usePreferences()
   const { showsYearTabs } = usePublisher()
+  const territories = useFeatureFlag('territories')
   const theme = useTheme()
   const order = getEffectiveTabOrder(tabOrder)
 
-  const visible = order.filter((key) => key !== 'Progress' || showsYearTabs)
+  const visible = order.filter((key) =>
+    isTabAvailable(key, { showsYearTabs, territories })
+  )
 
   const moveTo = (index: number, target: number, source: 'arrows' | 'menu') => {
     const next = moveVisibleTab(order, visible, index, target)

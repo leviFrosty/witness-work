@@ -1,9 +1,17 @@
 import { z } from 'zod'
 import { BADGE_REACTION_IDS } from '@/features/buddies/lib/badgeReactions'
 import { RELAY_ID_PATTERN } from '@/features/buddies/lib/bytes'
-import { PET_NAME_MAX_LENGTH, PET_SPECIES_IDS } from '@/types/pet'
+import {
+  PET_NAME_MAX_LENGTH,
+  PET_SPECIES_IDS,
+  ROOM_PART_OPTIONS,
+  SEASONS,
+  TIMES_OF_DAY,
+} from '@/types/pet'
 
 export const MAX_AVATAR_IMAGE_CHARS = 10_000
+
+export const MAX_BUDDIES = 50
 
 export const BUDDY_TENURE_KINDS = [
   'pioneer',
@@ -55,6 +63,14 @@ export type BuddyStreak = z.infer<typeof buddyStreakSchema>
 
 export const MAX_SHARED_PET_COAT_LENGTH = 24
 
+const roomPart = <T extends string>(
+  options: readonly [T, ...T[]] | readonly T[]
+) =>
+  z
+    .enum(options as [T, ...T[]])
+    .optional()
+    .catch(undefined)
+
 export const buddyPetSchema = z.object({
   species: z.enum(PET_SPECIES_IDS),
   coat: z.string().min(1).max(MAX_SHARED_PET_COAT_LENGTH),
@@ -72,6 +88,20 @@ export const buddyPetSchema = z.object({
     .optional()
     .catch(undefined),
   hatGrowth: z.number().int().min(0).max(5).optional().catch(undefined),
+  room: z
+    .object({
+      time: roomPart([...TIMES_OF_DAY, 'live']),
+      season: roomPart([...SEASONS, 'live']),
+      wallColor: roomPart(ROOM_PART_OPTIONS.wallColor),
+      wallPattern: roomPart(ROOM_PART_OPTIONS.wallPattern),
+      floor: roomPart(ROOM_PART_OPTIONS.floor),
+      bed: roomPart(ROOM_PART_OPTIONS.bed),
+      shelf: roomPart(ROOM_PART_OPTIONS.shelf),
+      lamp: roomPart(ROOM_PART_OPTIONS.lamp),
+      study: roomPart(ROOM_PART_OPTIONS.study),
+    })
+    .optional()
+    .catch(undefined),
 })
 export type BuddyPet = z.infer<typeof buddyPetSchema>
 
@@ -403,7 +433,7 @@ export const rosterSchema = z.object({
         prefsAt: z.number().optional(),
       })
     )
-    .max(5),
+    .max(MAX_BUDDIES),
   outgoingInvites: z
     .array(
       z.object({
@@ -413,7 +443,7 @@ export const rosterSchema = z.object({
         expiresAt: z.number(),
       })
     )
-    .max(5),
+    .max(MAX_BUDDIES),
   incomingClaims: z
     .array(
       z.object({
@@ -428,7 +458,7 @@ export const rosterSchema = z.object({
         expiresAt: z.number(),
       })
     )
-    .max(5),
+    .max(MAX_BUDDIES),
   closedInviteIds: z.record(relayId, z.number()).default({}),
 
   removedBuddies: z.record(relayId, z.number()).default({}),

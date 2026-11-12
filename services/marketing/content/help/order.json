@@ -123,6 +123,7 @@
     "petChange",
     "petShare",
     "petVisitors",
+    "petBuddyRooms",
     "petWidget",
     "petSync",
     "buddiesRestore",

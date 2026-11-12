@@ -613,6 +613,18 @@ export type PetSnapshot = {
   deletedPetRecords: PetTombstone[]
 }
 
+export type SharedPetRoom = {
+  time?: RoomWindow['time']
+  season?: RoomWindow['season']
+  wallColor?: WallColor
+  wallPattern?: WallPattern
+  floor?: FloorId
+  bed?: BedId
+  shelf?: ShelfId
+  lamp?: LampId
+  study?: StudyId
+}
+
 export type SharedPet = {
   species: PetSpecies
   coat: string
@@ -621,6 +633,8 @@ export type SharedPet = {
   hat?: string
 
   hatGrowth?: number
+
+  room?: SharedPetRoom
 }
 
 export type PetVisitActivity =

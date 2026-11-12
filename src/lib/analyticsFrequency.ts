@@ -29,6 +29,7 @@ const sessionEvents = new Set([
   'buddies_opened',
   'badges_opened',
   'buddy_badges_opened',
+  'buddy_pet_room_viewed',
   'contacts_filter_added',
   'contacts_staleness_chip_applied',
   'map_group_opened',

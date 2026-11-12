@@ -36,7 +36,9 @@ import {
   migrateLegacySettings,
   INVITE_TTL_MS,
   MAX_ANSWER_MARKS,
+  MAX_BUDDIES,
   MAX_NOTIFICATION_MARKS,
+  MAX_OPEN_INVITES,
   MAX_NOTIFICATIONS,
   MAX_REMOVED_BUDDIES,
   mergeAnswerMarks,
@@ -748,14 +750,34 @@ describe('buddies pairing', () => {
     expect(anna.store.getState().buddies[0].streak).toBeUndefined()
   })
 
-  it('caps active buddies plus pending invites at five', async () => {
+  it('caps open invites at five, and buddies plus pending invites at fifty', async () => {
+    expect(MAX_BUDDIES).toBe(50)
     const { user } = setup()
     const mom = user('Mom')
-    for (let index = 0; index < 5; index++) await mom.engine.createInvite()
+    for (let index = 0; index < MAX_OPEN_INVITES; index++)
+      await mom.engine.createInvite()
+    await expect(mom.engine.createInvite()).rejects.toEqual(
+      new BuddyInviteError('openInvites')
+    )
+    expect(mom.store.getState().outgoingInvites).toHaveLength(MAX_OPEN_INVITES)
+
+    mom.store.setState({
+      buddies: Array.from(
+        { length: MAX_BUDDIES - MAX_OPEN_INVITES },
+        (_, n): Buddy => ({
+          inboxId: `buddy-${n}`,
+          name: `Buddy ${n}`,
+          dhPub: 'pub',
+          inviteSecret: 'secret',
+          status: 'active',
+          pairedAt: 0,
+          colorIndex: n,
+        })
+      ),
+    })
     await expect(mom.engine.createInvite()).rejects.toEqual(
       new BuddyInviteError('limit')
     )
-    expect(mom.store.getState().outgoingInvites).toHaveLength(5)
   })
 
   it('keeps an invite whose answer got lost, so Try Again shows it instead of a second one', async () => {

@@ -1404,6 +1404,7 @@
   "buddies_plansUpdated": "Updated {{time}}",
   "buddies_removeBuddy": "Remove Buddy",
   "buddies_editProfile": "Edit Profile",
+  "buddies_editBuddy": "Edit Buddy",
   "buddies_sharePhoto": "Photo",
   "buddies_shareTenure": "Pioneer status",
   "buddies_shareStreak": "Streak",
@@ -5653,6 +5654,9 @@
       "detail": "{{name}}'s pet · {{activity}}",
       "planAt": "Plan at {{time}}",
       "followUpAt": "Follow-up at {{time}}"
+    },
+    "buddyRoom": {
+      "owner": "{{name}}'s pet"
     },
     "settings": {
       "title": "Pet Settings",

@@ -79,6 +79,57 @@ describe('the pet on a Buddy Card', () => {
     ).toBe(emoji)
   })
 
+  it('carries the room, drawing a part it doesn’t know as the default', () => {
+    const room = {
+      time: 'live',
+      season: 'winter',
+      wallColor: 'sage',
+      wallPattern: 'stripes',
+      floor: 'stone',
+      bed: 'basket',
+      shelf: 'books',
+      lamp: 'lantern',
+      study: 'desk',
+    }
+    expect(
+      buddyCardSchema.parse({ ...card, pet: { ...kitten, room } }).pet
+    ).toEqual({ ...kitten, room })
+
+    const newer = buddyCardSchema.parse({
+      ...card,
+      pet: { ...kitten, room: { ...room, floor: 'moonbase', lamp: 7 } },
+    }).pet
+    expect(newer?.room).toEqual({
+      ...room,
+      floor: undefined,
+      lamp: undefined,
+    })
+
+    for (const unreadable of ['cozy', 42, null]) {
+      expect(
+        buddyCardSchema.parse({ ...card, pet: { ...kitten, room: unreadable } })
+          .pet
+      ).toEqual(kitten)
+    }
+  })
+
+  it('shares the room in Buddy Cards, republishing when it changes', async () => {
+    const { user } = setup()
+    const mom = user('Mom')
+    const anna = user('Anna')
+    await pair(mom, anna)
+    mom.setPet({ ...kitten, room: { floor: 'wood' } })
+    await mom.engine.publishCards()
+    const wood = mom.store.getState().publishedCardHashes[anna.inboxId]
+    mom.setPet({ ...kitten, room: { floor: 'tile' } })
+    await mom.engine.publishCards()
+    expect(mom.store.getState().publishedCardHashes[anna.inboxId]).not.toBe(
+      wood
+    )
+    await anna.engine.sync()
+    expect(anna.store.getState().buddies[0].pet?.room?.floor).toBe('tile')
+  })
+
   it('shares the pet in Buddy Cards, republishing when it changes', async () => {
     const { user } = setup()
     const mom = user('Mom')

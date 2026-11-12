@@ -2763,8 +2763,6 @@
   "yearTotal_info_title": "Service year total",
   "yearTotal_info_description": "Your role doesn't have an annual goal, so this shows the raw hours logged this service year (after monthly credit caps) instead of progress toward a goal.",
   "category": "Category",
-  "showAllDays": "Show all days",
-  "hideFutureDays": "Hide future days",
   "timeRollover": "Time Rollover",
   "timeRollover_intro": "Your previous month had partial hours. We can roll those minutes into this month so your reports stay on whole hours.",
   "timeRollover_movePreview": "Move {{minutes}} min from {{from}} into {{to}}",
@@ -5000,9 +4998,9 @@
     },
     "days": {
       "title": "Days",
-      "description": "Every day of the month, or just the latest few",
+      "description": "A short list that opens on today, or every day of the month",
       "fullCaption": "Every day of the month",
-      "compactCaption": "The latest days, in a short list that scrolls"
+      "compactCaption": "Five days at a time, starting around today"
     },
     "serviceYear": {
       "description": "The service year's total so far"

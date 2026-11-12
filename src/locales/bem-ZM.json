@@ -2725,8 +2725,6 @@
   "yearTotal_info_title": "Amaawala yonse aya mwaka wa mulimo",
   "yearTotal_info_description": "Umulimo wenu tawakwata ico mwapanga ukufikapo mu mwaka, e ico ici cilalanga amaawala yonse mwalemba muli uno mwaka wa mulimo (pa numa ya mipaka ya cila mweshi iya maawala ya milimo imbi ayapendwa) mu cifulo ca kulanga ifyo mulepalama ku co mwapanga ukufikapo.",
   "category": "ulupange",
-  "showAllDays": "langa fyonse inshiku",
-  "hideFutureDays": "fisa kuntanshi inshiku",
   "timeRollover_creditExcluded": "yenu partial awala includes {{minutes}} min wa inshita ya kwishibilwa. inshita ya kwishibilwa isn't eligible pa lwa ukusenda inshita.",
   "timeRollover_creditOnlyNotice": "mweshi wapita's partial awala ni inshita ya kwishibilwa, ico isn't eligible pa lwa ukusenda inshita.",
   "rolloverIncludesCredit": "Roll ukucila inshita ya kwishibilwa",

@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Totale dell’anno di servizio",
   "yearTotal_info_description": "Il tuo tipo di proclamatore non ha un obiettivo annuale, quindi qui vengono mostrate le ore effettivamente registrate in questo anno di servizio (dopo i limiti mensili delle ore accreditate) invece del progresso verso un obiettivo.",
   "category": "Categoria",
-  "showAllDays": "Mostra tutti i giorni",
-  "hideFutureDays": "Nascondi i giorni futuri",
   "timeRollover": "Tempo Rollover",
   "timeRollover_intro": "Il mese precedente aveva ore parziali. Possiamo trasferire quei minuti in questo mese, in modo che i vostri rapporti si basino su ore intere.",
   "timeRollover_movePreview": "Spostare {{minutes}} min da {{from}} a {{to}}",

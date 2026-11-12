@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "奉仕年度の合計",
   "yearTotal_info_description": "あなたの伝道者区分には年間目標がないため、目標に対する進捗ではなく、今奉仕年度に記録した時間の合計（月ごとのみなし時間の上限を適用後）を表示しています。",
   "category": "カテゴリー",
-  "showAllDays": "すべての日をショー",
-  "hideFutureDays": "未来の日々を隠す",
   "timeRollover": "時間ロールオーバー",
   "timeRollover_intro": "前月は部分時間でした。その分を今月にロールオーバーすることで、レポートが全時間で表示されるようになります。",
   "timeRollover_movePreview": "{{minutes}}分を{{from}}から{{to}}に移動します。",

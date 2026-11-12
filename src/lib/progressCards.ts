@@ -76,7 +76,7 @@ export const PROGRESS_CARD_SIZES: Record<
   streak: ['small', 'wide'],
   lifetime: ['small', 'wide'],
   mileage: ['small', 'wide'],
-  days: ['full', 'compact'],
+  days: ['compact', 'full'],
 }
 
 export const MONTH_CARDS: ProgressCardCatalog<ProgressCardId> = {
@@ -143,12 +143,12 @@ export const defaultProgressCards = ({
         { id: 'dailyPace', size: 'small' },
         { id: 'studies', size: 'small' },
         { id: 'projected', size: 'wide' },
-        { id: 'days', size: 'full' },
+        { id: 'days', size: 'compact' },
       ]
     : [
         { id: 'serviceDays', size: 'small' },
         { id: 'studies', size: 'small' },
-        { id: 'days', size: 'full' },
+        { id: 'days', size: 'compact' },
       ]
 
 export type YearCardDefaultsInput = {

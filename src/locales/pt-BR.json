@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Total do ano de serviço",
   "yearTotal_info_description": "Sua função não tem alvo anual, por isso aqui aparecem as horas registradas neste ano de serviço (após os limites mensais de crédito de horas), em vez do progresso em direção a um alvo.",
   "category": "Categoria",
-  "showAllDays": "Mostrar todos os dias",
-  "hideFutureDays": "Esconda dias futuros",
   "timeRollover": "Prorrogação de tempo",
   "timeRollover_intro": "Seu mês anterior teve horas parciais. Podemos transferir esses minutos para este mês para que seus relatórios permaneçam com horas inteiras.",
   "timeRollover_movePreview": "Mover {{minutes}} min de {{from}} para {{to}}",

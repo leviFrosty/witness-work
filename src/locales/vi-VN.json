@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Tổng số giờ năm công tác",
   "yearTotal_info_description": "Vai trò của bạn không có mục tiêu hằng năm, vì vậy mục này hiển thị số giờ thực tế đã ghi trong năm công tác này (sau khi áp dụng giới hạn giờ được tính thêm mỗi tháng) thay vì tiến độ đạt mục tiêu.",
   "category": "Thể loại",
-  "showAllDays": "Hiển thị tất cả các ngày",
-  "hideFutureDays": "Ẩn những ngày trong tương lai",
   "timeRollover": "Chuyển tiếp thời gian",
   "timeRollover_intro": "Tháng trước của bạn có giờ lẻ. Chúng tôi có thể chuyển những phút đó sang tháng này để báo cáo của bạn ở số giờ nguyên.",
   "timeRollover_movePreview": "Chuyển {{minutes}} phút từ {{from}} sang {{to}}",

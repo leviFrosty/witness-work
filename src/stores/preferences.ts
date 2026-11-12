@@ -748,7 +748,24 @@ export const migratePreferencesPersistedState = (
   if (version < 16) {
     next = migrateMarkInstalledBeforeFreeSync(next)
   }
+  if (version < 17) {
+    next = migrateDaysCardToShortList(next)
+  }
   return next
+}
+
+export const migrateDaysCardToShortList = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const cards = (state as Record<string, unknown>).progressCards
+  if (!Array.isArray(cards)) return state
+  return {
+    ...state,
+    progressCards: cards.map((item) =>
+      item && typeof item === 'object' && item.id === 'days'
+        ? { ...item, size: 'compact' }
+        : item
+    ),
+  }
 }
 
 export const migrateMarkInstalledBeforeFreeSync = (state: unknown): unknown => {
@@ -1503,7 +1520,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 16,
+      version: 17,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

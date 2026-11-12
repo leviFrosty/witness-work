@@ -61,7 +61,17 @@ describe('progress cards', () => {
     ).toEqual([
       { id: 'studies', size: 'wide' },
       { id: 'projected', size: 'wide' },
-      { id: 'days', size: 'full' },
+      { id: 'days', size: 'compact' },
+    ])
+  })
+
+  it('opens Days as the short list by default', () => {
+    for (const hasMonthlyGoal of [true, false])
+      expect(
+        defaultProgressCards({ hasMonthlyGoal }).find((c) => c.id === 'days')
+      ).toEqual({ id: 'days', size: 'compact' })
+    expect(addProgressCard(MONTH_CARDS, [], 'days')).toEqual([
+      { id: 'days', size: 'compact' },
     ])
   })
 

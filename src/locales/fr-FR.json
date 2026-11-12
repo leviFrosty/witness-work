@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Total de l’année de service",
   "yearTotal_info_description": "Votre statut n’a pas d’objectif annuel : ce total indique donc les heures enregistrées cette année de service (après application des limites mensuelles du crédit d’heures) au lieu de la progression vers un objectif.",
   "category": "Catégorie",
-  "showAllDays": "Afficher tous les jours",
-  "hideFutureDays": "Cacher les jours futurs",
   "timeRollover": "Temps de renouvellement",
   "timeRollover_intro": "Votre mois précédent comportait des heures partielles. Nous pouvons reporter ces minutes sur ce mois-ci afin que vos rapports portent sur des heures entières.",
   "timeRollover_movePreview": "Déplacer {{minutes}} min de {{from}} dans {{to}}",

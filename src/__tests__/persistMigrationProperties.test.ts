@@ -413,11 +413,11 @@ const downgradePreferences = (
   return { ...blob, preferenceUpdatedAt: stamps }
 }
 
-describe('preferences store migrate (v16)', () => {
+describe('preferences store migrate (v17)', () => {
   it('is a no-op on current data', () => {
     fc.assert(
       fc.property(preferencesArb, (prefs) => {
-        same(migratePreferencesPersistedState(disk(prefs), 16), prefs)
+        same(migratePreferencesPersistedState(disk(prefs), 17), prefs)
       }),
       runs
     )
@@ -427,7 +427,7 @@ describe('preferences store migrate (v16)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 15 }),
+        fc.integer({ min: 0, max: 16 }),
         fc.boolean(),
         fc.boolean(),
         (prefs, version, retiredFlag, dropShown) => {
@@ -446,7 +446,7 @@ describe('preferences store migrate (v16)', () => {
     fc.assert(
       fc.property(
         preferencesArb,
-        fc.integer({ min: 0, max: 15 }),
+        fc.integer({ min: 0, max: 16 }),
         (prefs, version) => {
           const once = migratePreferencesPersistedState(
             downgradePreferences(prefs, version, {
@@ -455,7 +455,7 @@ describe('preferences store migrate (v16)', () => {
             }),
             version
           )
-          same(migratePreferencesPersistedState(disk(once), 16), once)
+          same(migratePreferencesPersistedState(disk(once), 17), once)
         }
       ),
       runs

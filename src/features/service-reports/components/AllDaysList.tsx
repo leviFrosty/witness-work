@@ -1,9 +1,13 @@
-import {
-  ChevronDown as ChevronDownIcon,
-  ChevronUp as ChevronUpIcon,
-} from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import { ReactElement, ReactNode, Ref, useMemo, useState } from 'react'
+import {
+  ReactElement,
+  ReactNode,
+  Ref,
+  RefObject,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
 import moment from 'moment'
 import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
@@ -27,8 +31,8 @@ import { DayPlan, TimeEntry } from '@/types/timeEntry'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 
-import Button from '@/components/ui/Button'
-import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
+import PeekScrollView from '@/components/ui/PeekScrollView'
+import { peekWindowHeight, peekWindowTopIndex } from '@/lib/peekWindow'
 import Text from '@/components/ui/MyText'
 import LucideIcon from '@/components/ui/LucideIcon'
 import type {
@@ -57,6 +61,8 @@ interface AllDaysListProps {
 
   dayRef?: (day: string) => Ref<View>
 
+  leadRowRef?: RefObject<View | null>
+
   renderPlanForm?: (slot: PlanFormSlot) => ReactNode
 
   renderPlanDetails?: {
@@ -71,7 +77,9 @@ interface AllDaysListProps {
   wrapHeader?: (header: ReactElement) => ReactElement
 }
 
-const COMPACT_LIST_HEIGHT = 200
+export const COMPACT_VISIBLE_ROWS = 5
+
+const COMPACT_ROW_ESTIMATE = 42
 
 type DayRow = {
   date: Date
@@ -210,7 +218,7 @@ const DayRowItem = ({
               }
             : cardStyle),
           paddingVertical: plain ? 10 : 12,
-          paddingHorizontal: 15,
+          paddingHorizontal: plain ? 16 : 15,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
@@ -254,6 +262,7 @@ const AllDaysList = ({
   year,
   dayReveal,
   dayRef,
+  leadRowRef,
   renderPlanForm,
   renderPlanDetails,
   variant = 'full',
@@ -272,8 +281,6 @@ const AllDaysList = ({
     date: new Date(),
   })
 
-  const [showAllDays, setShowAllDays] = useState(false)
-
   const { isCurrentMonth, daysInMonth } = useMemo(() => {
     const now = moment()
     const base = moment().month(month).year(year).startOf('month')
@@ -283,8 +290,6 @@ const AllDaysList = ({
     }
   }, [month, year])
 
-  const hasFutureDays = isCurrentMonth && moment().date() < daysInMonth
-
   const thisMonthsReports = useMemo(
     () => getMonthsReports(serviceReports, month, year),
     [month, serviceReports, year]
@@ -293,10 +298,9 @@ const AllDaysList = ({
   const rows = useMemo<DayRow[]>(() => {
     const now = moment()
     const base = moment().month(month).year(year).startOf('month')
-    const limit = isCurrentMonth && !showAllDays ? now.date() : daysInMonth
 
     const entries: DayRow[] = []
-    for (let d = 1; d <= limit; d++) {
+    for (let d = 1; d <= daysInMonth; d++) {
       const day = moment(base).date(d)
       const dayDate = day.toDate()
       const dayKey = localDayKey(day)
@@ -409,10 +413,34 @@ const AllDaysList = ({
     theme,
     isCurrentMonth,
     daysInMonth,
-    showAllDays,
   ])
 
   const compact = variant === 'compact'
+
+  const todayIndex = rows.findIndex((row) => row.isToday)
+  const monthIsAhead = moment()
+    .month(month)
+    .year(year)
+    .startOf('month')
+    .isAfter(moment(), 'month')
+  const topIndex = peekWindowTopIndex({
+    count: rows.length,
+    visibleRows: compact ? COMPACT_VISIBLE_ROWS : 1,
+    focusIndex: todayIndex < 0 ? null : todayIndex,
+    withoutFocus: monthIsAhead ? 'end' : 'start',
+  })
+
+  const listRef = useRef<ScrollView>(null)
+  const [rowHeight, setRowHeight] = useState(0)
+  const leadRow = useRef<{ month: string; y: number } | null>(null)
+  const openedFor = useRef<string | null>(null)
+  const monthKey = `${year}-${month}`
+  const openOnLeadRow = () => {
+    if (openedFor.current === monthKey) return
+    if (leadRow.current?.month !== monthKey) return
+    openedFor.current = monthKey
+    listRef.current?.scrollTo({ y: leadRow.current.y, animated: false })
+  }
   const headingStyle = {
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.textAlt,
@@ -425,8 +453,8 @@ const AllDaysList = ({
     <View
       style={{
         marginHorizontal: compact ? 0 : inset,
-        paddingHorizontal: 15,
-        paddingTop: compact ? 12 : 0,
+        paddingHorizontal: compact ? 16 : 15,
+        paddingTop: compact ? 16 : 0,
         paddingBottom: compact ? 8 : 2,
         flexDirection: 'row',
         alignItems: 'center',
@@ -455,7 +483,7 @@ const AllDaysList = ({
     </View>
   )
 
-  const rowItems = rows.map((row) => (
+  const rowItems = rows.map((row, index) => (
     <View
       key={row.date.toISOString()}
       ref={
@@ -464,7 +492,22 @@ const AllDaysList = ({
           : undefined
       }
       collapsable={false}
+      onLayout={
+        compact && (index === topIndex || index === 0)
+          ? (e) => {
+              const { y, height } = e.nativeEvent.layout
+              if (index === 0) setRowHeight(height)
+              if (index === topIndex) {
+                leadRow.current = { month: monthKey, y }
+                openOnLeadRow()
+              }
+            }
+          : undefined
+      }
     >
+      {!compact && index === topIndex && index > 0 ? (
+        <View ref={leadRowRef} collapsable={false} />
+      ) : null}
       <View
         ref={dayRef?.(moment(row.date).format('YYYY-MM-DD'))}
         collapsable={false}
@@ -479,40 +522,6 @@ const AllDaysList = ({
     </View>
   ))
 
-  const futureToggle = hasFutureDays ? (
-    <Button
-      onPress={() => setShowAllDays((v) => !v)}
-      accessibilityState={{ expanded: showAllDays }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        minHeight: MIN_TOUCH_TARGET,
-        paddingHorizontal: 15,
-        marginHorizontal: compact ? 0 : inset,
-        ...(compact
-          ? { borderBottomWidth: 1, borderBottomColor: theme.colors.border }
-          : {}),
-      }}
-    >
-      <LucideIcon
-        icon={showAllDays ? ChevronUpIcon : ChevronDownIcon}
-        size={theme.fontSize('sm')}
-        color={theme.colors.textAlt}
-      />
-      <Text
-        style={{
-          color: theme.colors.textAlt,
-          fontSize: theme.fontSize('sm'),
-          fontFamily: theme.fonts.semiBold,
-        }}
-      >
-        {showAllDays ? i18n.t('hideFutureDays') : i18n.t('showAllDays')}
-      </Text>
-    </Button>
-  ) : null
-
   return (
     <View style={{ gap: 8 }}>
       {compact ? (
@@ -525,20 +534,24 @@ const AllDaysList = ({
           }}
         >
           {header}
-          <ScrollView
-            key={`${year}-${month}`}
-            nestedScrollEnabled
-            style={{ maxHeight: COMPACT_LIST_HEIGHT * Math.max(1, fontScale) }}
-            contentContainerStyle={{ paddingBottom: 4 }}
+          <PeekScrollView
+            key={monthKey}
+            ref={listRef}
+            testID='days-list-scroll'
+            height={peekWindowHeight(
+              rows.length,
+              COMPACT_VISIBLE_ROWS,
+              rowHeight || COMPACT_ROW_ESTIMATE * Math.max(1, fontScale)
+            )}
+            fadeColor={theme.colors.card}
+            onContentSizeChange={openOnLeadRow}
           >
-            {futureToggle}
             {rowItems}
-          </ScrollView>
+          </PeekScrollView>
         </Card>
       ) : (
         <View style={{ gap: 6 }}>
           {header}
-          {futureToggle}
           {rowItems}
         </View>
       )}

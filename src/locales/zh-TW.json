@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "傳道工作年度總計",
   "yearTotal_info_description": "你的傳道員身分沒有年度目標，因此這裡顯示本傳道工作年度記錄的原始時數（已計入每月認可時數上限），而不是目標進度。",
   "category": "分類",
-  "showAllDays": "全天候節目",
-  "hideFutureDays": "隱藏未來的日子",
   "timeRollover": "時間展期",
   "timeRollover_intro": "您上一個月有部分時間。我們可以將這些時間滾動到這個月，這樣您的報告就可以保持完整的小時。",
   "timeRollover_movePreview": "將 {{minutes}} 分鐘從 {{from}} 移到 {{to}} 中。",

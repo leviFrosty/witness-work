@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Totaal dienstjaar",
   "yearTotal_info_description": "Je verkondigersrol heeft geen jaardoel, dus dit toont de werkelijk geregistreerde uren in dit dienstjaar (na de maandelijkse limieten voor urencompensatie) in plaats van de voortgang naar een doel.",
   "category": "Categorie",
-  "showAllDays": "Show alle dagen",
-  "hideFutureDays": "Verberg toekomstige dagen",
   "timeRollover": "Tijdsverloop",
   "timeRollover_intro": "Uw vorige maand had gedeeltelijke uren. We kunnen die minuten doorrollen naar deze maand, zodat uw rapporten op hele uren blijven staan.",
   "timeRollover_movePreview": "Verplaats {{minutes}} min van {{from}} naar {{to}}",

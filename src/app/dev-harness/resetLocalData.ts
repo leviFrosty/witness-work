@@ -20,6 +20,7 @@ import {
   runLdcCategoryMigration,
   runTagsToCategoriesMigration,
 } from '@/stores/migrations/categories'
+import { addPremadeFuels } from '@/app/sync/premadeFuels'
 import { useAppLockSettings } from '@/stores/appLock'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import { useSidebarPreferences } from '@/stores/sidebar'
@@ -105,6 +106,7 @@ export function resetLocalData() {
 
   runTagsToCategoriesMigration()
   runLdcCategoryMigration()
+  addPremadeFuels()
   useBadgeSession.getState().reset()
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
   clearLegacyLedger()

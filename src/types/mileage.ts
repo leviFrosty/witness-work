@@ -9,9 +9,13 @@ export type Vehicle = {
   updatedAt?: number
 }
 
+export type FuelUnit = 'kWh'
+
 export type Fuel = {
   id: string
   name: string
+
+  unit?: FuelUnit
 
   createdAt: number
   updatedAt?: number

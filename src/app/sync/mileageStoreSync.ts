@@ -1,4 +1,6 @@
 import useMileage from '@/stores/mileage'
+import { addPremadeFuels } from '@/app/sync/premadeFuels'
+import { hasOwnMileageRecords } from '@/lib/mileage/premadeFuels'
 import type { MileageSnapshot } from '@/types/mileage'
 
 export function localMileageSnapshot(): MileageSnapshot {
@@ -29,8 +31,9 @@ export function applyMileageSnapshot(snapshot: MileageSnapshot): void {
     trips: snapshot.trips,
     deletedMileageRecords: snapshot.deletedMileageRecords,
   })
+  addPremadeFuels()
 }
 
 export function hasMileageData(): boolean {
-  return Object.values(localMileageSnapshot()).some((list) => list.length > 0)
+  return hasOwnMileageRecords(localMileageSnapshot())
 }

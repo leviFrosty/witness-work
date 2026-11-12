@@ -191,7 +191,11 @@ const vehicle = record.extend({
   archived: z.boolean().optional(),
   createdAt: timestamp,
 })
-const fuel = record.extend({ name: z.string(), createdAt: timestamp })
+const fuel = record.extend({
+  name: z.string(),
+  unit: z.string().optional(),
+  createdAt: timestamp,
+})
 const fuelPrice = record.extend({
   fuelId: id,
   effectiveFrom: dateKey,

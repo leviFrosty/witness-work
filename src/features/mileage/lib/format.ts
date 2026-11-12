@@ -4,16 +4,17 @@ import { formatDate, formatMonthDayCompact, formatDisplay } from '@/lib/dates'
 import {
   autoDistanceUnit,
   autoFuelEconomyUnit,
+  efficiencyUnit,
   formatCurrency,
   formatFuelPrice,
   formatNumber,
-  fuelVolumeUnit,
+  fuelPriceUnit,
   milesToDistance,
   mpgToEconomy,
   pricePerGallonToDisplay,
 } from '@/lib/mileage/units'
 import type { MileagePeriod } from '@/lib/mileage/calc'
-import type { DistanceUnit, FuelEconomyUnit } from '@/types/mileage'
+import type { DistanceUnit, FuelEconomyUnit, FuelUnit } from '@/types/mileage'
 
 export type MileageUnits = {
   distanceUnit: DistanceUnit
@@ -36,31 +37,43 @@ export function resolveMileageUnits(prefs: {
 
 export function createMileageFormatter(units: MileageUnits) {
   const distanceSuffix = i18n.t(`mileage.units.${units.distanceUnit}`)
-  const economySuffix = i18n.t(`mileage.units.${units.economyUnit}`)
-  const priceSuffix = i18n.t(
-    `mileage.units.per_${fuelVolumeUnit(units.economyUnit)}`
-  )
+  const economySuffixFor = (fuelUnit?: FuelUnit) =>
+    i18n.t(`mileage.units.${efficiencyUnit(units.economyUnit, fuelUnit)}`)
+  const priceSuffixFor = (fuelUnit?: FuelUnit) =>
+    i18n.t(`mileage.units.per_${fuelPriceUnit(units.economyUnit, fuelUnit)}`)
   return {
     ...units,
     distanceSuffix,
-    economySuffix,
-    priceSuffix,
+    economySuffix: economySuffixFor(),
+    priceSuffix: priceSuffixFor(),
+    economySuffixFor,
+    priceSuffixFor,
     distance: (miles: number) =>
       i18n.t(`mileage.unitValues.${units.distanceUnit}`, {
         value: formatNumber(milesToDistance(miles, units.distanceUnit)),
       }),
-    economy: (mpg: number) =>
-      i18n.t(`mileage.unitValues.${units.economyUnit}`, {
-        value: formatNumber(mpgToEconomy(mpg, units.economyUnit)),
-      }),
+    economy: (mpg: number, fuelUnit?: FuelUnit) =>
+      i18n.t(
+        `mileage.unitValues.${efficiencyUnit(units.economyUnit, fuelUnit)}`,
+        {
+          value: formatNumber(mpgToEconomy(mpg, units.economyUnit, fuelUnit)),
+        }
+      ),
     cost: (amount: number) => formatCurrency(amount, units.currency),
-    price: (pricePerGallon: number) =>
-      i18n.t(`mileage.unitValues.per_${fuelVolumeUnit(units.economyUnit)}`, {
-        value: formatFuelPrice(
-          pricePerGallonToDisplay(pricePerGallon, units.economyUnit),
-          units.currency
-        ),
-      }),
+    price: (pricePerGallon: number, fuelUnit?: FuelUnit) =>
+      i18n.t(
+        `mileage.unitValues.per_${fuelPriceUnit(units.economyUnit, fuelUnit)}`,
+        {
+          value: formatFuelPrice(
+            pricePerGallonToDisplay(
+              pricePerGallon,
+              units.economyUnit,
+              fuelUnit
+            ),
+            units.currency
+          ),
+        }
+      ),
   }
 }
 

@@ -270,6 +270,7 @@ async function launch() {
   const { runTagsToCategoriesMigration, runLdcCategoryMigration } =
     await import('@/stores/migrations/categories')
   const { runProfileMigration } = await import('@/stores/migrations/profile')
+  const { addPremadeFuels } = await import('@/app/sync/premadeFuels')
   const { migrateLegacyLocale } = await import(
     '@/features/settings/lib/migrateLegacyLocale'
   )
@@ -277,6 +278,7 @@ async function launch() {
   runTagsToCategoriesMigration()
   runProfileMigration()
   runLdcCategoryMigration()
+  addPremadeFuels()
   migrateLegacyLocale()
   return {
     preferences: usePreferences,
@@ -690,8 +692,17 @@ function expectMileage(app: App, release: string, source: Source) {
   if (!coverage(release, source).mileage) return
   const state = app.mileage.getState()
   expect(ids(state.vehicles)).toEqual(['veh-1'])
-  expect(ids(state.fuels)).toEqual(['fuel-1'])
-  expect(ids(state.fuelPrices)).toEqual(['fp-1'])
+  expect(ids(state.fuels)).toEqual([
+    'fuel-1',
+    'premade-fuel-diesel',
+    'premade-fuel-electric',
+  ])
+  expect(
+    ids(state.fuelPrices).filter((id) => !id.startsWith('premade-'))
+  ).toEqual(['fp-1'])
+  expect(state.deletedMileageRecords.map(({ id }) => id)).toContain(
+    'premade-fuel-gasoline'
+  )
   expect(ids(state.vehicleSetups)).toEqual(['vs-1'])
   expect(ids(state.trips)).toEqual(['trip-1', 'trip-2', 'trip-3'])
   expect(

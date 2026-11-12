@@ -2,9 +2,11 @@
 # A seed leaves mileage tracking unanswered, so Home asks "Track mileage?".
 # The finished Get started checklist would push that card down, and the pet
 # offer's sprites redraw ten times a second, which slows every screen read.
-# setup: (() => { __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true }); return true })()
+# The routine offer sits above the card too.
+# setup: (() => { __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true, routineEnabled: false }); return true })()
 # assert: __WW_DEV__.stores.preferences.getState().mileageTrackingEnabled === true
 # assert: __WW_DEV__.stores.mileage.getState().vehicles.some((v) => v.name === 'Family sedan')
+# assert: (() => { const { vehicles, vehicleSetups } = __WW_DEV__.stores.mileage.getState(); const car = vehicles.find((v) => v.name === 'Family sedan'); return vehicleSetups.some((s) => s.vehicleId === car?.id && s.fuelId === 'premade-fuel-gasoline') })()
 # assert: (() => { const { vehicles, trips } = __WW_DEV__.stores.mileage.getState(); const car = vehicles.find((v) => v.name === 'Family sedan'); const d = new Date(); const today = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); return trips.length === 1 && trips.some((t) => t.vehicleId === car?.id && t.date === today && Math.abs(t.distanceMiles - 12.5) < 0.01) })()
 appId: com.leviwilkerson.jwtimedev
 name: Turn on mileage from Home, add a car, log a trip, and see it in this month
@@ -14,8 +16,10 @@ name: Turn on mileage from Home, add a car, log a trip, and see it in this month
     timeout: 60000
 # The card sits right under the Service Report.
 - tapOn: 'Yes'
-# "Yes" opens Add Car. A row's label names its field too, so pick the field.
+# "Yes" opens Add Car, with the premade Gasoline already chosen as its fuel.
+# A row's label names its field too, so pick the field.
 - assertVisible: Fuel Economy (mpg)
+- assertVisible: Gasoline · $3.86/gal
 - tapOn:
     text: Name
     editable: true

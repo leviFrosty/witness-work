@@ -10,6 +10,8 @@ import {
   runLdcCategoryMigration,
 } from '@/stores/migrations/categories'
 import { runProfileMigration } from '@/stores/migrations/profile'
+import { addPremadeFuels } from '@/app/sync/premadeFuels'
+import { translationsLoaded } from '@/lib/locales'
 import { migrateLegacyLocale } from '@/features/settings/lib/migrateLegacyLocale'
 import { whenIdle } from '@/lib/whenIdle'
 
@@ -41,6 +43,10 @@ export function useAppMigrations() {
 
   useEffect(() => {
     if (hasMigrated) runLdcCategoryMigration()
+  }, [hasMigrated])
+
+  useEffect(() => {
+    if (hasMigrated) void translationsLoaded().then(addPremadeFuels, () => {})
   }, [hasMigrated])
 
   useEffect(() => {

@@ -73,7 +73,12 @@ const readVehicle = (id: string, data: AnyRecord): Vehicle | null =>
 
 const readFuel = (id: string, data: AnyRecord): Fuel | null =>
   isString(data.name) && isNumber(data.createdAt)
-    ? { id, name: data.name, createdAt: data.createdAt }
+    ? {
+        id,
+        name: data.name,
+        ...optional(data, { unit: (v) => v === 'kWh' }),
+        createdAt: data.createdAt,
+      }
     : null
 
 const readPrice = (id: string, data: AnyRecord): FuelPrice | null =>

@@ -23,6 +23,7 @@ import useCategories from '@/stores/categories'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import useMileage from '@/stores/mileage'
+import { addPremadeFuels } from '@/app/sync/premadeFuels'
 import usePet from '@/stores/pet'
 import useRoutine from '@/stores/routine'
 import { usePreferences } from '@/stores/preferences'
@@ -256,6 +257,7 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
       useMileage
         .getState()
         .set(knownSlice(data.mileageStore, useMileage.getState()))
+    addPremadeFuels()
 
     if (data.petStore) usePet.getState().set(petSliceFromBackup(data.petStore))
     if (data.routineStore)

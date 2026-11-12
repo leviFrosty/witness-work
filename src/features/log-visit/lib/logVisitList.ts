@@ -28,7 +28,7 @@ export type LogVisitListItem =
       searchMatches?: readonly FuseResultMatch[]
     }
   | { type: 'noMatches'; key: string; query: string }
-  | { type: 'addNew'; key: string; name: string }
+  | { type: 'addNew'; key: string; name?: string }
 
 export const sortContactsByName = (contacts: Contact[]): Contact[] =>
   [...contacts].sort((a, b) =>
@@ -44,7 +44,8 @@ export const buildBrowseItems = ({
   contacts: Contact[]
   currentTime?: Date
 }): LogVisitListItem[] => {
-  const items: LogVisitListItem[] = []
+  if (contacts.length === 0) return []
+  const items: LogVisitListItem[] = [{ type: 'addNew', key: 'new-contact' }]
   for (const section of suggested.sections) {
     items.push({
       type: 'header',
@@ -67,7 +68,7 @@ export const buildBrowseItems = ({
       })
     }
   }
-  if (items.length > 0 && contacts.length > 0) {
+  if (suggested.sections.length > 0) {
     items.push({
       type: 'header',
       key: 'header-all',

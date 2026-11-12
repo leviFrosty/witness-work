@@ -393,7 +393,9 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
           </View>
 
           <View style={{ gap: 8 }}>
-            <ActionButton onPress={save}>{i18n.t('save')}</ActionButton>
+            <ActionButton onPress={save} testID='trip-save'>
+              {i18n.t('save')}
+            </ActionButton>
             {existing && (
               <Button
                 noTransform

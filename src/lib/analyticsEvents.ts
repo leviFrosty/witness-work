@@ -143,6 +143,7 @@ export const analyticsEventNames = [
   'buddy_join_requested',
   'buddy_linked_plan_saved',
   'buddy_paired',
+  'buddy_pet_room_viewed',
   'buddy_plan_invite_opened',
   'buddy_plan_same_time_opened',
   'buddy_reconnect_claimed',

@@ -512,7 +512,9 @@ describe('pairing on a flaky connection', () => {
   })
 
   it('says when the relay holds as many open invites as it allows', async () => {
-    const { user } = setup()
+    const { user } = setup({
+      relayLimits: { openInvites: 5, slotsPlusOpenInvites: 50 },
+    })
     const mom = user('Mom')
 
     const momsPad = user('Mom', undefined, mom.seed)

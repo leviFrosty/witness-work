@@ -17,7 +17,7 @@
 
 ## 1. Principles
 
-1. **Not social media.** Invite → accept → mutual. At most 5 buddies, pending invites included. Either person ends it instantly. No discovery, search, feeds, public profiles, or contact upload.
+1. **Not social media.** Invite → accept → mutual. At most 50 buddies, pending invites included (5 before [ADR 0046](./adr/0046-fifty-buddies.md)), and at most 5 invites waiting at once. Either person ends it instantly. No discovery, search, feeds, public profiles, or contact upload.
 2. **E2EE by construction.** The relay never holds names, Plans, Contacts, or the buddy graph in plaintext. Keys never touch iCloud Drive.
 3. **Least data, shortest life.** Share the minimum by default; everything shared expires.
 4. **Encouragement, not comparison** (Gal. 6:4; Heb. 10:24, 25). Nothing ranks, compares, or shames; hours stay private unless a User deliberately shares them.
@@ -119,7 +119,7 @@ Prices: Cloudflare [Workers](https://developers.cloudflare.com/workers/platform/
 | 50k  | 12,500        | 6.0 M         | 7.2 M     | 6.25 M          | 0.63 GB | **$0.93**                          | $10.47                                 |
 | 200k | 50,000        | 24 M          | 28.8 M    | 25 M            | 2.5 GB  | **$9.21**                          | $41.89                                 |
 
-Stress case (200k MAU, everyone on Buddies with 5 buddies): ~$283–344/month, three-quarters of it row writes. Levers if it ever matters: skip fan-out to inboxes idle for 14 days, stretch the publish debounce to 15 min, send daily activity digests. Full math: [03 §6](./research/buddies/03-architecture-and-cost.md).
+Stress case (200k MAU, everyone on Buddies with 5 buddies): ~$283–344/month, three-quarters of it row writes. Cards and events fan out to each buddy, so this grows about in step with the average number of buddies: everyone at the 50 allowed would cost about ten times as much, though few Users will come near it. Levers if it ever matters: skip fan-out to inboxes idle for 14 days, stretch the publish debounce to 15 min, send daily activity digests. Full math: [03 §6](./research/buddies/03-architecture-and-cost.md).
 
 ### 3.7 Where the code goes
 
@@ -336,7 +336,7 @@ Buddies never gets: leaderboards or rankings · hour comparisons or charts · co
 | Public-DB records count against the user's iCloud quota                                                 | They count against the app's quota; Apple no longer publishes per-user limits.                                                                                   |
 | "ww-proxy never sees the link payload"                                                                  | Only a `#fragment` stays on-device; paths reach the server through previews and fallback pages.                                                                  |
 | Reciprocal two-link handshake                                                                           | One link, a relay-mediated claim, and a one-tap inviter confirmation.                                                                                            |
-| UI suggests 25 friends; "friendly social pressure"; auto-published milestone and month-completed events | 5 buddies; encouragement; opt-in sharing with no numbers by default.                                                                                             |
+| UI suggests 25 friends; "friendly social pressure"; auto-published milestone and month-completed events | Up to 50 buddies, invite only; encouragement; opt-in sharing with no numbers by default.                                                                         |
 | `src/screens/...` paths                                                                                 | Three-tier layout (`src/features/buddies`, `src/app/buddies`, `src/lib/*`).                                                                                      |
 
 Once this document is accepted, mark `friend-sharing-plan.md` superseded.

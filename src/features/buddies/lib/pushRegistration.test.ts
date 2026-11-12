@@ -11,6 +11,9 @@ import {
   ensureBuddiesNewsChannel,
   registerBuddiesPush,
 } from '@/features/buddies/lib/pushRegistration'
+import { MAX_BUDDIES } from '@/features/buddies/lib/state'
+
+const RELAY_MAX_TEMPLATES = 96
 
 const {
   registerPush,
@@ -107,12 +110,27 @@ describe('registerBuddiesPush', () => {
       ].sort()
     )
 
-    expect(Object.keys(templates).length).toBeLessThanOrEqual(32)
     for (const template of Object.values(templates))
       expect(template).toEqual({
         title: expect.stringMatching(/^buddies_push/),
         body: expect.stringMatching(/^buddies_push/),
       })
+  })
+
+  it('stays within the relay’s templates with every buddy and every kind', async () => {
+    joinKinds.current = Array.from(
+      { length: MAX_BUDDIES },
+      (_, n) => `join.request.${n.toString(16).padStart(12, '0')}`
+    )
+    useSharedCarsSession.setState({ running: true })
+    await registerBuddiesPush()
+    const { templates } = registerPush.mock.calls[0][0]
+    expect(Object.keys(templates)).toHaveLength(
+      BUDDY_PUSH_KINDS.length + MAX_BUDDIES + 2 + CAR_PUSH_KINDS.length
+    )
+    expect(Object.keys(templates).length).toBeLessThanOrEqual(
+      RELAY_MAX_TEMPLATES
+    )
   })
 
   it('uses production APNs for TestFlight and App Store builds', async () => {

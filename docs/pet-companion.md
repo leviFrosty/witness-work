@@ -498,6 +498,13 @@ interface PetRoomRecord {
   `petVisits` (All Buddies, with each buddy's own override, synced in the roster) is that choice:
   Pet Settings (the pet's details → Settings), a buddy's Buddies settings → Your Pet, or Hide on a
   visiting pet's long-press menu. See `docs/buddies-protocol.md`.
+- The same `pet` also carries `room` (optional, each part optional): the window's `time` and
+  `season` and the `wallColor`, `wallPattern`, `floor`, `bed`, `shelf`, `lamp` and `study` the
+  sender picked. Never the sign (it would show their hours), hearts, wallet or keepsakes. A buddy's
+  page (`Buddy`) draws that room with their pet in it (`SharedPetRoomCard`, scene from
+  `lib/sharedRoom.ts`: the sign blank, the lamp full, the pet happy, its hat on), while the pet
+  section is on Home (`homeScreenElements.pet`). A part a receiver doesn't know, or a room from an
+  older app, draws as the default room's part.
 
 ## Module layout
 
@@ -539,7 +546,7 @@ Feature tier `src/features/pet/`:
 
 App tier: `src/app/pet/` for cross-feature glue (visitors from buddies + Plans + Follow-ups, the
 details route that hands them to `PetRoom`, Pet Settings with its rewards and buddies' switches,
-widget images),
+widget images), `src/app/buddies/BuddyPetRoomSection.tsx` for a buddy's room on their page,
 `src/app/widgets/petWidget*.ts` for the iOS widget snapshot.
 
 ## Rendering pipeline

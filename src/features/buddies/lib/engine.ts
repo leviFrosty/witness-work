@@ -128,6 +128,7 @@ import {
   MAX_REFUSED_INBOXES,
   INVITE_TTL_MS,
   MAX_BUDDIES,
+  MAX_OPEN_INVITES,
   MAX_ROSTER_PLAINTEXT_BYTES,
   mergeAnswerMarks,
   mergeCardName,
@@ -163,6 +164,7 @@ import {
 } from '@/features/buddies/lib/shares'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 import { guestTag } from '@/features/buddies/lib/guests'
+import { nextBuddyColorIndex } from '@/features/buddies/lib/buddyColors'
 import { ANNOUNCE_ORDER, parseBadgeKey } from '@/lib/badges/catalog'
 import {
   CAR_INVITE_NAME_MAX,
@@ -888,10 +890,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function nextColorIndex(
     used = new Set(store.getState().buddies.map((b) => b.colorIndex))
   ): number {
-    for (let index = 0; index < MAX_BUDDIES; index++) {
-      if (!used.has(index)) return index
-    }
-    return 0
+    return nextBuddyColorIndex(used)
   }
 
   async function registerInbox(me: BuddyIdentity, call?: RelayCallOptions) {
@@ -1236,6 +1235,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       await saveRoster(me)
       return buildInviteLink(fromB64u(unsure.secret))
     }
+
+    if (store.getState().outgoingInvites.length >= MAX_OPEN_INVITES)
+      throw new BuddyInviteError('openInvites')
     const secret = deps.randomBytes(16)
     const invite = deriveInvite(secret)
     const createdAt = deps.now()

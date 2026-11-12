@@ -274,6 +274,8 @@ export type RootStackParamList = {
 
   Buddy: { inboxId: string }
 
+  BuddyEdit: { inboxId: string }
+
   'Buddy Code': { mode: 'code' | 'scan'; inviteId?: string }
 
   'Buddy Invite': { link: string }

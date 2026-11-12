@@ -109,10 +109,14 @@ export function ownerAuthFor(seed: Uint8Array): OwnerAuth {
 
 export function setup({
   start = Date.parse('2026-09-23T15:00:00Z'),
-}: { start?: number } = {}) {
+  relayLimits,
+}: {
+  start?: number
+  relayLimits?: Parameters<typeof createFakeRelay>[1]
+} = {}) {
   let clock = start
   const now = () => clock
-  const fake = createFakeRelay(now)
+  const fake = createFakeRelay(now, relayLimits)
 
   const offlineOps = new Set<string>()
 

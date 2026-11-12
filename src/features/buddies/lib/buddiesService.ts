@@ -134,6 +134,21 @@ export function currentBuddyPet(): BuddyPet | undefined {
     ...(pet.name ? { name: pet.name } : {}),
     ...(hat && hat !== 'none' ? { hat } : {}),
     ...(growth === undefined ? {} : { hatGrowth: growth }),
+    ...(room
+      ? {
+          room: {
+            time: room.window.time,
+            season: room.window.season,
+            wallColor: room.wallColor,
+            wallPattern: room.wallPattern,
+            floor: room.floor,
+            bed: room.bed,
+            shelf: room.shelf,
+            lamp: room.lamp,
+            study: room.study ?? 'none',
+          },
+        }
+      : {}),
   }
 }
 

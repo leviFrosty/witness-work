@@ -900,9 +900,10 @@ describe('the roster’s cars', () => {
     )
     annaCars.state.memberships = { cars: active, leftCars: left }
 
+    const closed = Math.floor((MAX_ROSTER_PLAINTEXT_BYTES - 4_700) / 39)
     anna.store.setState({
       closedInviteIds: Object.fromEntries(
-        Array.from({ length: 700 }, () => [id(), at + 365 * DAY])
+        Array.from({ length: closed }, () => [id(), at + 365 * DAY])
       ),
     })
     anna.engine.noteCarMemberships()

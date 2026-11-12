@@ -20,7 +20,7 @@ import type { BuddyShareRef } from '@/types/timeEntry'
 import { SPACE_LIMITS } from '@/lib/sharedSpaces/client'
 import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 
-export const MAX_BUDDIES = 5
+export { MAX_BUDDIES } from '@/features/buddies/lib/schemas'
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 export const MAX_OPEN_INVITES = 5
@@ -476,7 +476,7 @@ export type RemovedBuddies = Record<string, number>
 
 export const MAX_REMOVED_BUDDIES = 200
 
-export const MAX_ROSTER_PLAINTEXT_BYTES = 32 * 1024 - 29
+export const MAX_ROSTER_PLAINTEXT_BYTES = 128 * 1024 - 29
 
 export function pairingEnded(
   removedBuddies: RemovedBuddies,

@@ -39,7 +39,12 @@ type Invite = {
 
 const SUCCESSOR_TTL_MS = 90 * 24 * 60 * 60 * 1000
 
-export function createFakeRelay(now: () => number) {
+export const FAKE_RELAY_LIMITS = { openInvites: 50, slotsPlusOpenInvites: 50 }
+
+export function createFakeRelay(
+  now: () => number,
+  limits: typeof FAKE_RELAY_LIMITS = FAKE_RELAY_LIMITS
+) {
   const inboxes = new Map<string, Inbox>()
   const invites = new Map<string, Invite>()
   const pushes: { inboxId: string; kind: string }[] = []
@@ -596,7 +601,8 @@ export function createFakeRelay(now: () => number) {
       case 'slot/add':
         if (
           !inbox.slots.has(payload.slotId) &&
-          inbox.slots.size + inbox.openInvites.size >= 5
+          inbox.slots.size + inbox.openInvites.size >=
+            limits.slotsPlusOpenInvites
         )
           return fail(429, 'limit')
         inbox.slots.set(payload.slotId, {
@@ -613,8 +619,9 @@ export function createFakeRelay(now: () => number) {
         return ok({ seq: inbox.seq })
       case 'invite/create':
         if (
-          inbox.openInvites.size >= 5 ||
-          inbox.slots.size + inbox.openInvites.size >= 5
+          inbox.openInvites.size >= limits.openInvites ||
+          inbox.slots.size + inbox.openInvites.size >=
+            limits.slotsPlusOpenInvites
         )
           return fail(429, 'limit')
         invites.set(payload.inviteId, {

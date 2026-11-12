@@ -4,6 +4,7 @@ import { petOpensAsSheet } from '@/features/pet/lib/petPresentation'
 import createSystemBackStackNavigator from '@/app/navigation/createSystemBackStackNavigator'
 import Header from '@/components/ui/layout/Header'
 import RoutineSettingsButton from '@/features/routine/components/RoutineSettingsButton'
+import BuddyEditButton from '@/features/buddies/components/BuddyEditButton'
 import useTheme from '@/contexts/theme'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 import { habitLabel } from '@/lib/routine/labels'
@@ -493,13 +494,30 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
-            header: () => (
-              <Header buttonType='back' title={i18n.t('buddies_title')} />
+            header: ({ route }) => (
+              <Header
+                buttonType='back'
+                title={i18n.t('buddies_title')}
+                rightElement={
+                  <BuddyEditButton
+                    inboxId={(route.params as { inboxId: string }).inboxId}
+                  />
+                }
+              />
             ),
           }}
           name='Buddy'
+          getComponent={() => require('@/app/buddies/BuddyRouteScreen').default}
+        />
+        <RootStack.Screen
+          options={{
+            header: () => (
+              <Header buttonType='back' title={i18n.t('buddies_editBuddy')} />
+            ),
+          }}
+          name='BuddyEdit'
           getComponent={() =>
-            require('@/features/buddies/screens/BuddyDetailScreen').default
+            require('@/features/buddies/screens/BuddyEditScreen').default
           }
         />
         <RootStack.Screen

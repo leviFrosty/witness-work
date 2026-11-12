@@ -328,6 +328,8 @@ export const PREFERENCE_DEFAULTS = {
 
   planTimeMode: 'hours' as PlanTimeMode,
 
+  planMinutes: 120,
+
   unloggedDayReminders: false,
 
   unloggedDayReminderTime: DEFAULT_UNLOGGED_DAY_REMINDER_TIME,

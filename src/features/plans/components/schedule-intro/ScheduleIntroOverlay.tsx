@@ -48,6 +48,7 @@ import ScheduleIntroPage, {
   type ScheduleIntroPageSpec,
 } from '@/features/plans/components/schedule-intro/ScheduleIntroPage'
 import { flowScrollX, isRtlLayout } from '@/lib/direction'
+import { dayToPlan } from '@/features/plans/lib/planDayDates'
 
 type CloseMethod = 'plan' | 'done' | 'close' | 'back'
 
@@ -163,7 +164,9 @@ export default function ScheduleIntroOverlay({
   const leave = (method: CloseMethod) => {
     close()
     if (method === 'plan')
-      navigation.navigate('PlanDay', { date: new Date().toISOString() })
+      navigation.navigate('PlanDay', {
+        date: dayToPlan(new Date()).toISOString(),
+      })
   }
 
   const finish = (method: CloseMethod) => {

@@ -30,3 +30,11 @@ export const allEventsStartDate = (
   )
   return localDayFromUtcCursor(momentStoredDate(seriesStart).add(shift, 'days'))
 }
+
+const LATE_IN_THE_DAY_HOUR = 18
+
+export const dayToPlan = (now: Date): Date => {
+  const day = moment(now)
+  if (day.hours() >= LATE_IN_THE_DAY_HOUR) day.add(1, 'day')
+  return day.toDate()
+}

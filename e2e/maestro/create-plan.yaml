@@ -35,8 +35,10 @@ name: Create a one-time Plan from the bottom dock
     id: note-editor-done
 - tapOn:
     id: plan-duration-pill
-# Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.
-- tapOn: '2'
+# A new Plan opens at 2 hours, so the minutes wheel has the first plain '2':
+# pick the hours row by its id.
+- tapOn:
+    id: plan-duration-hours-2
 - tapOn:
     id: plan-picker-done
 - tapOn:

@@ -463,6 +463,8 @@ const PlanDayForm = ({
   const initialOneTime = existingRecurringPlan
     ? false
     : isEditMode || !params.recurring
+  const planMinutes = usePreferences((s) => s.planMinutes)
+  const newPlanMinutes = isEditMode ? 0 : (prefill?.minutes ?? planMinutes)
 
   const [oneTime, setOneTime] = useState(initialOneTime)
   const [date, setDate] = useState(
@@ -485,14 +487,14 @@ const PlanDayForm = ({
       ? Math.floor(existingDayPlan.minutes / 60)
       : recurringPlanData
         ? Math.floor(recurringPlanData.minutes / 60)
-        : Math.floor((prefill?.minutes ?? 0) / 60)
+        : Math.floor(newPlanMinutes / 60)
   )
   const [minutes, setMinutes] = useState(
     existingDayPlan
       ? existingDayPlan.minutes % 60
       : recurringPlanData
         ? recurringPlanData.minutes % 60
-        : (prefill?.minutes ?? 0) % 60
+        : newPlanMinutes % 60
   )
   const [interval, setInterval] = useState<number>(
     existingRecurringPlan?.recurrence.interval ??
@@ -758,14 +760,14 @@ const PlanDayForm = ({
         ? Math.floor(existingDayPlan.minutes / 60)
         : recurringPlanData
           ? Math.floor(recurringPlanData.minutes / 60)
-          : Math.floor((prefill?.minutes ?? 0) / 60)
+          : Math.floor(newPlanMinutes / 60)
     )
     setMinutes(
       existingDayPlan
         ? existingDayPlan.minutes % 60
         : recurringPlanData
           ? recurringPlanData.minutes % 60
-          : (prefill?.minutes ?? 0) % 60
+          : newPlanMinutes % 60
     )
     setInterval(
       existingRecurringPlan?.recurrence.interval ??
@@ -1115,6 +1117,8 @@ const PlanDayForm = ({
         addRecurringPlan({ id, ...payload })
       }
 
+      setPreferences({ planMinutes: plannedMinutes })
+
       toast.success(i18n.t('success'), {
         message: i18n.t('addedPlan'),
         durationMs: 2500,
@@ -1139,6 +1143,8 @@ const PlanDayForm = ({
         reminder_enabled: notifyMe,
         time_mode: anytime ? 'hours' : 'span',
         prefilled: !!prefill,
+        duration_prefilled:
+          prefill?.minutes === undefined && plannedMinutes === planMinutes,
       })
     setSaveScopeModalOpen(false)
     onSaved(detailsTarget)

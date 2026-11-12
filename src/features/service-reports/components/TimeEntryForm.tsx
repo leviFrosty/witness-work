@@ -35,7 +35,7 @@ import { localDayKey } from '@/lib/normalizeDate'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DurationInput, {
   type DurationInputMethod,
-} from '@/features/service-reports/components/DurationInput'
+} from '@/components/DurationInput'
 import DetailRow from '@/features/service-reports/components/DetailRow'
 import EntryDayPicker, {
   type DateInputMethod,

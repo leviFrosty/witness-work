@@ -3,7 +3,7 @@
 # assert: __WW_DEV__.stores.serviceReports.getState().dayPlans.some((p) => !p.anytime && p.minutes === 60)
 # assert: __WW_DEV__.stores.preferences.getState().planTimeMode === 'span'
 appId: com.leviwilkerson.jwtimedev
-name: Plan just hours, then a time span, and the form remembers the last one
+name: Plan hours with no set time, then a start time, and the form remembers the last one
 ---
 - extendedWaitUntil:
     visible: Quick Action
@@ -11,32 +11,25 @@ name: Plan just hours, then a time span, and the form remembers the last one
 - tapOn: Quick Action
 - tapOn: Create Plan
 - assertVisible: Add One Time Plan
+# New Plans start with no set time (Anytime); a preset sets the hours.
+- assertVisible: Anytime
 - tapOn:
-    id: plan-duration-pill
-# iOS's native segmented control has no per-segment ids, so tap the labels.
-- tapOn: Just hours
-# Android's wheel can settle a row short of the tapped value; the assert reads the stored plan.
-- tapOn: '2'
-- tapOn:
-    id: plan-picker-done
+    id: plan-preset-120
 - tapOn:
     id: plan-save
 - assertNotVisible: Add One Time Plan
-# A Plan for today celebrates Ready to Go first (see badge-celebration.yaml).
 - extendedWaitUntil:
-    visible: See all badges
+    visible: Quick Action
     timeout: 20000
-- tapOn: Done
-# The next Plan opens in Just hours; a time span starts an hour long.
+# Start time opens the Start and End wheels; a Plan with no hours yet starts an hour long.
 - tapOn: Quick Action
 - tapOn: Create Plan
 - tapOn:
-    id: plan-duration-pill
-- tapOn: Time span
-# Switching modes swaps the wheels; a Done tap mid-swap can miss.
+    id: plan-start-row
 - waitForAnimationToEnd
 - tapOn:
-    id: plan-picker-done
+    id: plan-start-done
+- assertNotVisible: Anytime
 - tapOn:
     id: plan-save
 - assertNotVisible: Add One Time Plan

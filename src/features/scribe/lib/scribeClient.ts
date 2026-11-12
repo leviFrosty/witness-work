@@ -14,6 +14,8 @@ import {
   type StepRequest,
   type StepStreamEvent,
   type StepTerminalEvent,
+  type TerritoryNotesRequest,
+  type TerritoryNotesResponse,
   type TranscribeRequest,
   type TranscribeResponse,
   type UsageSnapshotWire,
@@ -34,6 +36,10 @@ export interface ScribeClient {
     image: Omit<TranscribeRequest, 'protocol'>,
     signal?: AbortSignal
   ): Promise<TranscribeResponse>
+  territoryNotes(
+    notes: Omit<TerritoryNotesRequest, 'protocol'>,
+    signal?: AbortSignal
+  ): Promise<TerritoryNotesResponse>
 }
 
 export interface ScribeSessions {
@@ -44,7 +50,13 @@ export interface ScribeSessions {
 }
 
 export interface ScribeClientDeps {
-  urls: { status: string; usage: string; step: string; transcribe: string }
+  urls: {
+    status: string
+    usage: string
+    step: string
+    transcribe: string
+    territoryNotes: string
+  }
 
   streamFetch: typeof fetch
 
@@ -67,6 +79,7 @@ export const ACTIVE_CAP_DEFAULT_RETRY_MS = 5_000
 const STATUS_TIMEOUT_MS = 10_000
 const USAGE_TIMEOUT_MS = 15_000
 const TRANSCRIBE_TIMEOUT_MS = 60_000
+const TERRITORY_NOTES_TIMEOUT_MS = 50_000
 
 const CALL_ID = /^[A-Za-z0-9_-]{1,64}$/
 const FINISHES = new Set<StepFinish>(['tool_calls', 'end', 'length', 'refused'])
@@ -480,6 +493,33 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
         return {
           text: data.text,
           truncated: data.truncated === true,
+          usage: parseUsageSnapshot(data.usage),
+        }
+      }, signal)
+    },
+    territoryNotes: async (notes, signal) => {
+      await linkOnce()
+      return authorized(async (authorization) => {
+        const { data } = await request<unknown>({
+          url: deps.urls.territoryNotes,
+          method: 'POST',
+          headers: { authorization },
+          json: { protocol: SCRIBE_PROTOCOL, ...notes },
+          timeoutMs: TERRITORY_NOTES_TIMEOUT_MS,
+          signal,
+          fetchImpl: deps.fetchImpl,
+        })
+        if (
+          !isRecord(data) ||
+          !Array.isArray(data.doors) ||
+          !Array.isArray(data.ranges) ||
+          !Array.isArray(data.unread)
+        )
+          throw new ScribeClientError('unknown')
+        return {
+          doors: data.doors,
+          ranges: data.ranges,
+          unread: data.unread,
           usage: parseUsageSnapshot(data.usage),
         }
       }, signal)

@@ -588,6 +588,108 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{ header: () => null }}
+          name='TerritoryForm'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryFormScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryDetails'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryDetailsScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryStreetForm'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryStreetFormScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryStreet'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryStreetScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', headerShown: false }}
+          name='TerritoryShare'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryShareScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', headerShown: false }}
+          name='TerritoryShareLink'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryShareLinkScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', headerShown: false }}
+          name='TerritoryHandoff'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryHandoffScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', headerShown: false }}
+          name='TerritoryGuest'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryGuestScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryDoorPin'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryDoorPinScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryDoNotCall'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryDoNotCallFormScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryMap'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryMapScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
+          name='TerritoryNotes'
+          getComponent={() =>
+            require('@/app/territories/TerritoryNotesRoute').default
+          }
+        />
+        <RootStack.Screen
+          options={{ presentation: 'modal', headerShown: false }}
+          name='TerritoryStreetSuggest'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryStreetSuggestScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
           name='Mileage'
           getComponent={() =>
             require('@/features/mileage/screens/MileageScreen').default

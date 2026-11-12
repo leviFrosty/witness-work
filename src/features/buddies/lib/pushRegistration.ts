@@ -6,11 +6,13 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { useSharedCarsSession } from '@/stores/sharedCarsSession'
+import { useTerritoriesSession } from '@/stores/territoriesSession'
 import type {
   BadgePushKind,
   BuddyPushKind,
   CarPushKind,
   JoinRequestPushKind,
+  TerritoryPushKind,
 } from '@/features/buddies/lib/engine'
 import type { PushAddress, PushTemplate } from '@/features/buddies/lib/relay'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
@@ -150,11 +152,32 @@ const carTemplates = (): Partial<Record<CarPushKind, PushTemplate>> =>
       }
     : {}
 
+const territoryTemplates = (): Partial<
+  Record<TerritoryPushKind, PushTemplate>
+> =>
+  useTerritoriesSession.getState().running
+    ? {
+        'territory.invite': {
+          title: i18n.t('buddies_pushTerritoryInviteTitle'),
+          body: i18n.t('buddies_pushTerritoryBody'),
+        },
+        'territory.reply': {
+          title: i18n.t('buddies_pushTerritoryJoinedTitle'),
+          body: i18n.t('buddies_pushTerritoryBody'),
+        },
+        'territory.handoff': {
+          title: i18n.t('buddies_pushTerritoryHandoffTitle'),
+          body: i18n.t('buddies_pushTerritoryBody'),
+        },
+      }
+    : {}
+
 export const buddiesPushTemplates = async () => ({
   ...pushTemplates(),
   ...(await joinRequestTemplates()),
   ...badgeTemplates(),
   ...carTemplates(),
+  ...territoryTemplates(),
 })
 
 let registration: Promise<void> = Promise.resolve()

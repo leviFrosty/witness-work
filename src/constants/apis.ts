@@ -29,6 +29,7 @@ export default {
   scribeUsage: `${BASE_URL}/scribe/v1/usage`,
   scribeStep: `${BASE_URL}/scribe/v1/step`,
   scribeTranscribe: `${BASE_URL}/scribe/v1/transcribe`,
+  scribeTerritoryNotes: `${BASE_URL}/scribe/v1/territory-notes`,
 
   routePlanningOptimize: `${BASE_URL}/route-planning/optimize`,
   routePlanningDirections: `${BASE_URL}/route-planning/directions`,

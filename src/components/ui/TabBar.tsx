@@ -4,6 +4,7 @@ import {
   ChartLine as ChartLineIcon,
   CircleQuestionMark as CircleQuestionMarkIcon,
   House as HouseIcon,
+  Map as MapIcon,
   Plus as PlusIcon,
   Settings as SettingsIcon,
   Users as UsersIcon,
@@ -162,6 +163,8 @@ const TabBar = ({
           return SettingsIcon
         case 'Buddies':
           return UsersIcon
+        case 'Territories':
+          return MapIcon
         default:
           return CircleQuestionMarkIcon
       }

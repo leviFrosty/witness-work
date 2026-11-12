@@ -236,6 +236,38 @@ export interface TranscribeResponse {
   usage: UsageSnapshotWire | null
 }
 
+export type TerritoryNotesOutcomeWire = 'notHome' | 'spoke' | 'doNotCall'
+
+export interface TerritoryNotesRequest {
+  protocol: typeof SCRIBE_PROTOCOL
+  notes: string
+  streets: { name: string; numbering: 'both' | 'odd' | 'even' | 'none' }[]
+  locale: string
+}
+
+export interface TerritoryNotesDoorWire {
+  line: number
+  street: string | null
+  door: string
+  outcome: TerritoryNotesOutcomeWire
+}
+
+export interface TerritoryNotesRangeWire {
+  line: number
+  street: string | null
+  from: number
+  to: number
+  side: 'all' | 'odd' | 'even'
+  outcome: TerritoryNotesOutcomeWire
+}
+
+export interface TerritoryNotesResponse {
+  doors: TerritoryNotesDoorWire[]
+  ranges: TerritoryNotesRangeWire[]
+  unread: number[]
+  usage: UsageSnapshotWire | null
+}
+
 export type ScribeServerCode =
   | 'bad_request'
   | 'invalid_tools'

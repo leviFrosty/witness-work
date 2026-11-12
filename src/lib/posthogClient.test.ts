@@ -594,6 +594,18 @@ describe('PostHog volume and privacy policy', () => {
   )
 })
 
+it('sends the app variant with flag requests so flags can target Beta', async () => {
+  mocks.variant = 'beta'
+  const sdk = await start()
+  await sdk.reloadFeatureFlagsAsync()
+  const flagsCall = mocks.fetch.mock.calls.find(([url]) =>
+    String(url).includes('/flags')
+  )
+  expect(JSON.parse(flagsCall![1].body).person_properties).toMatchObject({
+    app_variant: 'beta',
+  })
+})
+
 it('reports each SDK flag/variant once while preserving the assigned value', async () => {
   const sdk = await start()
   sdk.updateFlags({ announcement: 'variant-a' })

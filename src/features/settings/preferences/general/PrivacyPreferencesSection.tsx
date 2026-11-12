@@ -1,4 +1,5 @@
 import {
+  Map as MapIcon,
   ShieldCheck as ShieldCheckIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
@@ -17,11 +18,26 @@ import useTheme from '@/contexts/theme'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 import { analytics } from '@/lib/analytics'
 import { useReplayOptInRequired } from '@/lib/sessionReplay/replayCountry'
+import { useFeatureFlag } from '@/lib/featureFlags'
+import { useTerritoryPrivacy } from '@/hooks/useTerritoryPrivacy'
+import confirmDestructive from '@/lib/confirmDestructive'
+import {
+  clearAllDoorRecords,
+  territoriesWithDoorRecords,
+} from '@/features/territories/lib/doorRecordPrivacy'
 
 const PrivacyPreferencesSection = () => {
   const theme = useTheme()
-  const { dataProtectionMode, analyticsEnabled, sessionReplayOptIn, set } =
-    usePreferences()
+  const {
+    dataProtectionMode,
+    territoryPrivacyMode,
+    analyticsEnabled,
+    sessionReplayOptIn,
+    set,
+  } = usePreferences()
+
+  const territoriesEnabled = useFeatureFlag('territories')
+  const territoryPrivacy = useTerritoryPrivacy()
 
   const askReplayOptIn =
     useReplayOptInRequired() && !dataProtectionMode && analyticsEnabled
@@ -55,9 +71,31 @@ const PrivacyPreferencesSection = () => {
     )
   }
 
+  const beforeDoorRecordsGo = (apply: () => void, alsoTerritory = false) => {
+    const count = territoriesEnabled ? territoriesWithDoorRecords() : 0
+    if (count === 0) return apply()
+    confirmDestructive({
+      title: i18n.t('territories.privacyConfirm_title'),
+      description: [
+        alsoTerritory && i18n.t('territories.privacyConfirm_alsoTerritory'),
+        i18n.t('territories.privacyConfirm_description', { count }),
+      ]
+        .filter(Boolean)
+        .join(' '),
+      confirmLabel: i18n.t('territories.privacyConfirm_action'),
+      onConfirm: () => {
+        apply()
+        clearAllDoorRecords()
+      },
+    })
+  }
+
   const handleDataProtectionToggle = (value: boolean) => {
     if (value) {
-      set({ dataProtectionMode: true, dataProtectionModeSetByUser: true })
+      const turnOn = () =>
+        set({ dataProtectionMode: true, dataProtectionModeSetByUser: true })
+      if (territoryPrivacyMode === null) beforeDoorRecordsGo(turnOn, true)
+      else turnOn()
       return
     }
     Alert.alert(
@@ -89,7 +127,7 @@ const PrivacyPreferencesSection = () => {
               label={i18n.t('dataProtectionSwitchLabel')}
               info={i18n.t(syncKey('dataProtectionInfoDesc'))}
               controlWidth='auto'
-              lastInSection={!dataProtectionMode}
+              lastInSection={!dataProtectionMode && !territoriesEnabled}
               style={{ justifyContent: 'space-between' }}
             >
               <Switch
@@ -99,6 +137,27 @@ const PrivacyPreferencesSection = () => {
               />
             </InputRowContainer>
           </SettingsSearchTarget>
+          {territoriesEnabled && (
+            <InputRowSwitch
+              leftIcon={MapIcon}
+              label={i18n.t('territories.privacySwitch')}
+              description={i18n.t(
+                territoryPrivacyMode === null && dataProtectionMode
+                  ? 'territories.privacySwitch_following'
+                  : 'territories.privacySwitch_description'
+              )}
+              info={i18n.t('territories.privacySwitch_info')}
+              value={territoryPrivacy}
+              onValueChange={(value) =>
+                value
+                  ? beforeDoorRecordsGo(() =>
+                      set({ territoryPrivacyMode: true })
+                    )
+                  : set({ territoryPrivacyMode: false })
+              }
+              lastInSection={!dataProtectionMode}
+            />
+          )}
           {dataProtectionMode && (
             <SettingsSearchTarget id='deleteHouseholderData'>
               <InputRowButton

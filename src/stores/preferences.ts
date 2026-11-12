@@ -225,6 +225,7 @@ export type AppIconVariant =
 
 export type HomeScreenElementKey =
   | 'approachingConversations'
+  | 'territories'
   | 'together'
   | 'tabletServiceYearSummary'
   | 'serviceReport'
@@ -248,6 +249,7 @@ export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
   'mileage',
   'timer',
   'didYouKnow',
+  'territories',
 ]
 
 export function getEffectiveHomeScreenOrder(
@@ -270,7 +272,8 @@ export function getEffectiveHomeScreenOrder(
   DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.forEach((k, i) => {
     if (seen.has(k)) return
     const previous = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER[i - 1]
-    const at = previous ? out.indexOf(previous) : -1
+    const last = i === DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.length - 1
+    const at = previous && !last ? out.indexOf(previous) : -1
     if (at === -1) out.push(k)
     else out.splice(at + 1, 0, k)
     seen.add(k)
@@ -412,6 +415,7 @@ export const PREFERENCE_DEFAULTS = {
   scheduleScreenElementsOrder: DEFAULT_SCHEDULE_SCREEN_ELEMENTS_ORDER,
   homeScreenElements: {
     approachingConversations: true,
+    territories: true,
 
     together: false,
     monthlyRoutine: true,
@@ -537,6 +541,8 @@ export const PREFERENCE_DEFAULTS = {
   dataProtectionModeSetByUser: false,
 
   dataProtectionRetentionPromptedAt: undefined as string | undefined,
+
+  territoryPrivacyMode: null as boolean | null,
 
   audioEnabled: typeof __DEV__ === 'undefined' || !__DEV__,
 
@@ -753,6 +759,9 @@ export const migratePreferencesPersistedState = (
   if (version < 17) {
     next = migrateDaysCardToShortList(next)
   }
+  if (version < 18) {
+    next = migrateTerritoriesHomeSectionLast(next)
+  }
   return next
 }
 
@@ -767,6 +776,20 @@ export const migrateDaysCardToShortList = (state: unknown): unknown => {
         ? { ...item, size: 'compact' }
         : item
     ),
+  }
+}
+
+export const migrateTerritoriesHomeSectionLast = (state: unknown): unknown => {
+  if (!state || typeof state !== 'object') return state
+  const order = (state as { homeScreenElementsOrder?: unknown })
+    .homeScreenElementsOrder
+  if (!Array.isArray(order) || !order.includes('territories')) return state
+  return {
+    ...state,
+    homeScreenElementsOrder: [
+      ...order.filter((key) => key !== 'territories'),
+      'territories',
+    ],
   }
 }
 
@@ -1522,7 +1545,7 @@ export const usePreferences = create(
     {
       name: 'preferences',
       storage: createPreferencesStorage(),
-      version: 17,
+      version: 18,
       migrate: (persistedState, version) =>
         migratePreferencesPersistedState(persistedState, version),
     }

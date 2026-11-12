@@ -39,12 +39,15 @@ interface Props {
 
   sublabel?: string
 
+  footnote?: ReactNode
+
   selected?: boolean
 
   checked?: boolean
 
   wrapValue?: boolean
   style?: ViewStyle
+  testID?: string
 }
 
 const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
@@ -56,6 +59,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   onPress,
   disabled,
   sublabel,
+  footnote,
   selected,
   checked,
   wrapValue,
@@ -65,6 +69,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   leftIconFill,
   url,
   contextActions,
+  testID,
 }: Props) => {
   const theme = useTheme()
   const linkActions = useLinkMenuActions({ url, label, onOpen: onPress })
@@ -145,6 +150,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
               {sublabel}
             </Text>
           )}
+          {footnote}
         </View>
       </View>
       <View
@@ -157,7 +163,12 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
     </>
   )
 
-  if (hasMenu) return withMenu(<View style={rowStyle}>{content}</View>)
+  if (hasMenu)
+    return withMenu(
+      <View style={rowStyle} testID={testID}>
+        {content}
+      </View>
+    )
 
   return (
     <Button
@@ -179,6 +190,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       disabled={disabled}
       style={rowStyle}
       onPress={onPress}
+      testID={testID}
     >
       {content}
     </Button>

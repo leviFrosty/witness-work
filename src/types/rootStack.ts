@@ -85,6 +85,8 @@ export type RootStackParamList = {
     returnToContacts?: boolean
     initialCoordinate?: Coordinate
 
+    initialAddressLine?: string
+
     name?: string
 
     logVisit?: LogVisitAttribution
@@ -285,6 +287,32 @@ export type RootStackParamList = {
   'Buddies Feedback': { source: 'badge' | 'menu' | 'settings' } | undefined
 
   Mileage: undefined
+
+  TerritoryForm: { territoryId?: string } | undefined
+  TerritoryDetails: { territoryId: string }
+  TerritoryStreetForm: { territoryId: string; streetId?: string }
+  TerritoryStreet: {
+    territoryId: string
+    streetId: string
+    notHomeOnly?: boolean
+  }
+  TerritoryDoorPin: { territoryId: string; streetId: string; doorId: string }
+  TerritoryDoNotCall: { territoryId: string; entryId: string }
+  TerritoryMap: {
+    territoryId: string
+    streetId?: string
+    view?: 'map' | 'card'
+  }
+  TerritoryNotes: { territoryId: string; streetId?: string }
+  TerritoryStreetSuggest: { territoryId: string }
+  TerritoryShare: { territoryId: string; streetId?: string }
+  TerritoryShareLink: {
+    territoryId: string
+    shareId?: string
+    streetIds?: string[]
+  }
+  TerritoryHandoff: { territoryId: string; streetId?: string }
+  TerritoryGuest: { territoryId: string; shareId: string }
 
   MileageTripForm:
     | { tripId?: string; duplicateOf?: string; source?: MileageSource }

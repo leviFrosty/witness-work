@@ -46,6 +46,7 @@ import { forgetFoundSecrets } from '@/features/pet/lib/secrets'
 import { useStreakCelebration } from '@/features/profile/stores/streakCelebration'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
+import { useTerritories } from '@/features/territories/stores/territories'
 
 type ResettableStore = {
   getInitialState: () => unknown
@@ -67,6 +68,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useSavedPlaces,
   useSavedRoutes,
   useMapFindSkips,
+  useTerritories,
   useGeocodeRetry,
   useNotificationsTray,
 

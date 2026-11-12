@@ -44,6 +44,9 @@ import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
+import TerritoryHomeCard, {
+  useHasTerritories,
+} from '@/features/territories/components/TerritoryHomeCard'
 import RoutineHomeSection from '@/features/routine/components/RoutineHomeSection'
 import RoutinePromptCard from '@/features/routine/components/RoutinePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
@@ -97,6 +100,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
 
   const foldColumn = useFoldColumn(isWide ? null : 720)
+  const hasTerritories = useHasTerritories()
   const {
     homeChecklistDismissed,
     iCloudSyncEnabled,
@@ -335,6 +339,13 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                         headerAction={<TodayRouteAction />}
                       />
                     )
+                  case 'territories':
+                    if (
+                      !hasTerritories ||
+                      !isHomeSectionOn('territories', homeScreenElements)
+                    )
+                      return null
+                    return <TerritoryHomeCard key={key} />
                   case 'together':
                     if (
                       !buddiesAvailable ||

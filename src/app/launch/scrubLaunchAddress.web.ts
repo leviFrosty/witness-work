@@ -1,4 +1,5 @@
 import { appVariant, type AppVariant } from '@/lib/appVariant'
+import { takeGuestPageAddress } from '@/features/territories/guest/launch'
 import { setLaunchAddress } from '@/lib/launchAddress'
 import { scrubPurchaseReturn } from '@/lib/purchaseReturn'
 import {
@@ -72,6 +73,7 @@ export function scrubLaunchAddress(
   { location, history }: Pick<Window, 'location' | 'history'> = window,
   variant: AppVariant = appVariant
 ): boolean {
+  if (takeGuestPageAddress({ location, history })) return true
   const address = scrubAddress(location, variant)
   if (address.forwardTo) {
     location.replace(address.forwardTo)

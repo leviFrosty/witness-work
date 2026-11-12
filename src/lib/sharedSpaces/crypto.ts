@@ -312,3 +312,17 @@ export const inviteEventId = (
       )
     ).subarray(0, 16)
   )
+
+export const territoryEventId = (
+  kind: string,
+  senderInboxId: string,
+  recipientInboxId: string,
+  ref: string
+) =>
+  toB64u(
+    sha256(
+      utf8(
+        `ww-spaces/v1/territory-event|${kind}|${senderInboxId}|${recipientInboxId}|${ref}`
+      )
+    ).subarray(0, 16)
+  )

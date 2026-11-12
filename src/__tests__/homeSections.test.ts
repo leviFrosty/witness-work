@@ -89,6 +89,26 @@ describe('Home sections', () => {
     ).toBe(false)
   })
 
+  it('offers Territories only while the feature is on', () => {
+    expect(isHomeSectionAvailable('territories', phone)).toBe(false)
+    expect(
+      isHomeSectionAvailable('territories', {
+        ...phone,
+        territoriesAvailable: true,
+      })
+    ).toBe(true)
+  })
+
+  it('puts Territories after follow-ups in an order saved before it existed', () => {
+    const saved = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (key) => key !== 'territories'
+    ).reverse()
+    const order = getEffectiveHomeScreenOrder(saved)
+    expect(order.indexOf('territories')).toBe(
+      order.indexOf('approachingConversations') + 1
+    )
+  })
+
   it('always offers Quick Actions, whatever the device can do', () => {
     expect(isHomeSectionAvailable('quickActions', phone)).toBe(true)
     expect(

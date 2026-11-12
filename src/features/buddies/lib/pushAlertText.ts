@@ -112,5 +112,22 @@ export function buddyAlertText(alert: BuddyAlert): {
         title: i18n.t('buddies_alertCarJoined', { name }),
         body: i18n.t('buddies_pushCarJoinedBody'),
       }
+    case 'territoryInvite':
+      return {
+        title: alert.handoff
+          ? i18n.t('buddies_alertTerritoryHandoff', { name })
+          : i18n.t('buddies_alertTerritoryInvite', { name }),
+        body: i18n.t('buddies_pushTerritoryBody'),
+      }
+    case 'territoryJoined':
+      return {
+        title: i18n.t('buddies_alertTerritoryJoined', { name }),
+        body: i18n.t('buddies_pushTerritoryBody'),
+      }
+    case 'territoryHandoff':
+      return {
+        title: i18n.t('buddies_alertTerritoryHandoff', { name }),
+        body: i18n.t('buddies_pushTerritoryBody'),
+      }
   }
 }

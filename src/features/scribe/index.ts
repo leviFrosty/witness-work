@@ -22,6 +22,16 @@ export { ScribeRoot } from '@/features/scribe/runtime/ScribeRoot'
 export { useScribeMemoryEnabled } from '@/features/scribe/stores/memory'
 export { forgoResume as forgoScribeResume } from '@/features/scribe/runtime/runs'
 export {
+  readTerritoryNotesWithScribe,
+  type ScribeNotesFailure,
+  type ScribeNotesRead,
+} from '@/features/scribe/runtime/territoryNotes'
+export type {
+  TerritoryNotesDoorWire,
+  TerritoryNotesRangeWire,
+  TerritoryNotesResponse,
+} from '@/features/scribe/lib/wire'
+export {
   SCRIBE_PAPER_MAX_PAGES,
   SCRIBE_UNDO_WINDOW_DAYS,
   SCRIBE_VOICE_DISCARD_CONFIRM_MS,

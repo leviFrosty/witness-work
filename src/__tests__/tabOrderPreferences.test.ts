@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_TAB_ORDER,
   getEffectiveTabOrder,
+  isTabAvailable,
   moveVisibleTab,
+  type TabOrderKey,
 } from '@/lib/tabOrderPreferences'
+
+const FOUR: TabOrderKey[] = ['Home', 'Contacts', 'Progress', 'Schedule']
 
 describe('getEffectiveTabOrder', () => {
   it('falls back to the default order', () => {
@@ -16,19 +20,62 @@ describe('getEffectiveTabOrder', () => {
       'Home',
       'Progress',
       'Schedule',
+      'Territories',
     ])
+  })
+
+  it('adds Territories last to an order saved before it existed', () => {
+    expect(
+      getEffectiveTabOrder(['Schedule', 'Home', 'Contacts', 'Progress'])
+    ).toEqual(['Schedule', 'Home', 'Contacts', 'Progress', 'Territories'])
+  })
+
+  it('keeps a moved Territories tab where it was put', () => {
+    expect(
+      getEffectiveTabOrder([
+        'Home',
+        'Territories',
+        'Contacts',
+        'Progress',
+        'Schedule',
+      ])
+    ).toEqual(['Home', 'Territories', 'Contacts', 'Progress', 'Schedule'])
+  })
+})
+
+describe('isTabAvailable', () => {
+  const all = { showsYearTabs: true, territories: true }
+
+  it('shows Territories only while the feature is on', () => {
+    expect(isTabAvailable('Territories', all)).toBe(true)
+    expect(isTabAvailable('Territories', { ...all, territories: false })).toBe(
+      false
+    )
+  })
+
+  it('shows Progress only for roles with year tabs', () => {
+    expect(isTabAvailable('Progress', { ...all, showsYearTabs: false })).toBe(
+      false
+    )
+  })
+
+  it('leaves the original tabs alone when Territories is off', () => {
+    const off = { showsYearTabs: true, territories: false }
+    expect(
+      getEffectiveTabOrder(undefined).filter((key) => isTabAvailable(key, off))
+    ).toEqual(FOUR)
   })
 })
 
 describe('moveVisibleTab', () => {
   it('moves a tab up and down', () => {
-    expect(moveVisibleTab(DEFAULT_TAB_ORDER, DEFAULT_TAB_ORDER, 2, 0)).toEqual([
+    expect(moveVisibleTab(FOUR, FOUR, 2, 0)).toEqual([
       'Progress',
       'Home',
       'Contacts',
       'Schedule',
     ])
-    expect(moveVisibleTab(DEFAULT_TAB_ORDER, DEFAULT_TAB_ORDER, 0, 3)).toEqual([
+    expect(moveVisibleTab(FOUR, FOUR, 0, 3)).toEqual([
       'Contacts',
       'Progress',
       'Schedule',
@@ -44,6 +91,16 @@ describe('moveVisibleTab', () => {
       'Schedule',
       'Home',
       'Contacts',
+    ])
+  })
+
+  it('keeps a hidden Territories tab in place while the others move', () => {
+    expect(moveVisibleTab(DEFAULT_TAB_ORDER, FOUR, 3, 0)).toEqual([
+      'Schedule',
+      'Home',
+      'Contacts',
+      'Progress',
+      'Territories',
     ])
   })
 

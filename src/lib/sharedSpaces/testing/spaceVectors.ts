@@ -22,7 +22,17 @@ import {
   readKeysData,
   recordAad,
   sealRecord,
+  sealRecordWithKey,
+  inScopeRecordId,
+  guestKeysRecordId,
 } from '@/lib/sharedSpaces/records'
+import {
+  deriveLinkCredentials,
+  deriveLinkSecret,
+  deriveScopeKey,
+  guestLinkUrl,
+  scopeIdForStreet,
+} from '@/lib/sharedSpaces/scopes'
 import expected from '@/lib/sharedSpaces/testing/spaceVectors.json'
 
 const hex = (bytes: Uint8Array): string =>
@@ -221,6 +231,65 @@ export function computeSpaceVectors(): SpaceVectors {
     inboxId,
     otherInboxId,
     toB64u(counting(16, 0x80))
+  )
+
+  const streetId = '3f2a9c1e-5b7d-4e8f-a1b2-c3d4e5f60718'
+  const scopeId = scopeIdForStreet(streetId)
+  out['scope.streetId'] = streetId
+  out['scope.id'] = scopeId
+  const scopeKey = deriveScopeKey(spaceKey, scopeId)
+  out['scope.key'] = hex(scopeKey)
+  const doorAddress = {
+    spaceId,
+    epoch: 1,
+    recordId: inScopeRecordId(scopeId, '9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a'),
+    deleted: false,
+    stamp: 1_790_000_300_000,
+  }
+  out['scope.recordId'] = doorAddress.recordId
+  out['scope.blob'] = sealRecordWithKey(
+    scopeKey,
+    doorAddress,
+    {
+      kind: 'door',
+      data: { label: '12', outcome: 'notHome', at: 1_790_000_300_000 },
+    },
+    counting(24, 0x11)
+  )
+
+  const linkId = toB64u(counting(16, 0x22))
+  const linkSecret = deriveLinkSecret(seed, spaceId, linkId)
+  const link = deriveLinkCredentials(linkSecret)
+  out['link.id'] = linkId
+  out['link.secret'] = hex(linkSecret)
+  out['link.token'] = link.linkToken
+  out['link.verifier'] = link.verifier
+  out['link.key'] = hex(link.linkKey)
+  out['link.url.production'] = guestLinkUrl('production', {
+    spaceId,
+    linkId,
+    linkSecret,
+  })
+  out['link.url.beta'] = guestLinkUrl('beta', { spaceId, linkId, linkSecret })
+  out['link.url.development'] = guestLinkUrl('development', {
+    spaceId,
+    linkId,
+    linkSecret,
+  })
+  out['link.keysBlob'] = sealRecordWithKey(
+    link.linkKey,
+    {
+      spaceId,
+      epoch: 1,
+      recordId: guestKeysRecordId(linkId),
+      deleted: false,
+      stamp: 1_790_000_400_000,
+    },
+    {
+      kind: 'guestKeys',
+      data: { scopes: { [scopeId]: { '1': toB64u(scopeKey) } } },
+    },
+    counting(24, 0x33)
   )
 
   return out

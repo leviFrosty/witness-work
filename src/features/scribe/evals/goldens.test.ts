@@ -91,6 +91,9 @@ function replay(steps: Step[]) {
     transcribe: async () => {
       throw new Error('not used')
     },
+    territoryNotes: async () => {
+      throw new Error('not used')
+    },
     step: async (body, { onEvent }) => {
       bodies.push(structuredClone(body))
       const step = steps.shift()

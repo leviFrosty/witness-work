@@ -151,6 +151,7 @@ export function setup({
       | 'account'
       | 'onSharesNotSent'
       | 'cars'
+      | 'territories'
       | 'inviteSecrets'
       | 'paused'
     > = {}

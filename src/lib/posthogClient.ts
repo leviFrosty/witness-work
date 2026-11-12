@@ -95,6 +95,10 @@ function createClient(): PostHog | null {
       },
     })
 
+    client.setPersonPropertiesForFlags(
+      { app_variant: extra?.appVariant ?? 'unknown' },
+      false
+    )
     client.debug(logger.isEnabled())
     if (logger.isEnabled()) {
       logger.debug('[Analytics] Initializing PostHog', {

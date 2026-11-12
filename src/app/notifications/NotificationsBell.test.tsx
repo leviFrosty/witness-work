@@ -101,6 +101,9 @@ vi.mock('@/features/buddies/hooks/useBuddyNotifications', () => ({
 vi.mock('@/app/sharedCars/useSharedCarNotifications', () => ({
   default: () => [],
 }))
+vi.mock('@/app/territories/useTerritoryNotifications', () => ({
+  default: () => [],
+}))
 vi.mock('@/features/updates/lib/updates', () => ({
   applyPendingUpdate: tray.applyPendingUpdate,
 }))

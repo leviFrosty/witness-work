@@ -837,6 +837,10 @@ export type IncomingCarInvite = {
   answeredAt?: number
 
   alertSeqs?: number[]
+
+  family?: 'territory'
+
+  territory?: { title: string; streets: string[]; handoff: boolean }
 }
 
 export const incomingCarInviteKey = (from: string, inviteId: string) =>
@@ -851,7 +855,8 @@ export function neededInviteSecrets(
 ): Set<string> {
   const ids = new Set<string>()
   for (const event of Object.values(state.carEvents))
-    if (event.kind === 'car.invite') ids.add(sentInviteSecretId(event.inviteId))
+    if (isSpaceInviteKind(event.kind))
+      ids.add(sentInviteSecretId(event.inviteId))
   for (const [key, invite] of Object.entries(state.carInvites))
     if (invite.status === 'pending') ids.add(receivedInviteSecretId(key))
   return ids
@@ -877,9 +882,24 @@ export function withoutStoredInviteSecrets(
 
 export type CarEventKind = 'car.invite' | 'car.cancel' | 'car.reply'
 
+export type TerritoryEventKind =
+  | 'territory.invite'
+  | 'territory.cancel'
+  | 'territory.reply'
+  | 'territory.handoff'
+
+export type SpaceEventKind = CarEventKind | TerritoryEventKind
+
+export const isSpaceInviteKind = (kind: SpaceEventKind) =>
+  kind === 'car.invite' || kind === 'territory.invite'
+
+export const isSpaceInviteNotification = (
+  entry: Pick<BuddyNotification, 'kind'>
+) => entry.kind === 'carInvite' || entry.kind === 'territoryInvite'
+
 export type OutgoingCarEvent = {
   eventId: string
-  kind: CarEventKind
+  kind: SpaceEventKind
 
   to: string
   spaceId: string
@@ -927,6 +947,9 @@ export type BuddyNotificationKind =
   | 'badgeReaction'
   | 'carInvite'
   | 'carJoined'
+  | 'territoryInvite'
+  | 'territoryJoined'
+  | 'territoryHandoff'
   | 'reconnect'
 
 export type BuddyNotification = {
@@ -953,6 +976,8 @@ export type BuddyNotification = {
   reaction?: BadgeReactionEmoji
 
   reconnect?: string
+
+  street?: string
 
   seq?: number
 }
@@ -1268,7 +1293,7 @@ export function withoutExpired(
             n.shareKey in joinRequests &&
             !joinRequests[n.shareKey].dismissed &&
             !joinRequests[n.shareKey].withdrawn
-          : n.kind === 'carInvite'
+          : isSpaceInviteNotification(n)
             ? !!n.shareKey &&
               n.shareKey in carInvites &&
               carInvites[n.shareKey].status !== 'cancelled'
@@ -1297,7 +1322,7 @@ export function awaitsAnswer(
     const share = state.incomingShares[entry.shareKey ?? '']
     return share?.status === 'pending' && !hasSharedEventEnded(share, now)
   }
-  if (entry.kind === 'carInvite') {
+  if (isSpaceInviteNotification(entry)) {
     const invite = state.carInvites?.[entry.shareKey ?? '']
     return invite?.status === 'pending' && invite.expiresAt > now
   }
@@ -1346,7 +1371,7 @@ export function withPendingInvitesQueued(
         (n) =>
           n.kind === 'shareInvite' ||
           n.kind === 'shareUpdate' ||
-          n.kind === 'carInvite'
+          isSpaceInviteNotification(n)
       )
       .map((n) => n.shareKey)
   )
@@ -1378,7 +1403,7 @@ export function withPendingInvitesQueued(
     if (!buddy) continue
     missing.push({
       id: pendingInviteNotificationId(key),
-      kind: 'carInvite',
+      kind: invite.family === 'territory' ? 'territoryInvite' : 'carInvite',
       at: invite.receivedAt,
       read: false,
       from: invite.from,
@@ -1412,6 +1437,13 @@ export function withPendingInvitesQueued(
 
 export const isCarNotification = (entry: Pick<BuddyNotification, 'kind'>) =>
   entry.kind === 'carInvite' || entry.kind === 'carJoined'
+
+export const isTerritoryNotification = (
+  entry: Pick<BuddyNotification, 'kind'>
+) =>
+  entry.kind === 'territoryInvite' ||
+  entry.kind === 'territoryJoined' ||
+  entry.kind === 'territoryHandoff'
 
 export function listedNotifications(
   notifications: BuddyNotification[],

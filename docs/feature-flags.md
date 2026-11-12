@@ -50,6 +50,24 @@ server's own kill switch is `spaces:enabled`; while it's off every op but
 (see `docs/shared-cars-protocol.md`). Dev builds:
 `__WW_DEV__.setFlag('shared-cars', true)`.
 
+Territories uses the `territories` flag. It shows the Territories tab and, on
+iOS and Android (`territorySharing`), runs the sharing runtime
+(`TerritoriesRuntime`), which also waits for Buddies to be running and for an
+account session, like Shared Cars. Territories nobody has shared work without
+it. The server's switches are `spaces:enabled` and, for guest links alone,
+`spaces:guests` (see `docs/territories-protocol.md`). Dev builds:
+`__WW_DEV__.setFlag('territories', true)`.
+
+## Targeting one app variant
+
+The app sends its variant (`production`, `beta`, `development`) with every
+flag request as the person property `app_variant`
+(`setPersonPropertiesForFlags` in `src/lib/posthogClient.ts`). No person
+profile is stored; PostHog evaluates the flag with it. To turn a flag on for the
+Beta app only, give it one release condition: person property `app_variant`
+equals `beta`, rolled out to 100%. Builds released before this change don't
+send it, so they don't match.
+
 ## Announcements
 
 The `announcement` flag posts a notice to the Home notifications tray without a

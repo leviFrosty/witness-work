@@ -5,7 +5,7 @@ import type { BuddyNotification } from '@/features/buddies/lib/state'
 
 export function notificationHeadline(
   entry: BuddyNotification,
-  { car }: { car?: string } = {}
+  { car, territory }: { car?: string; territory?: string } = {}
 ): string {
   const name = { name: entry.name }
   const followUp = entry.shareType === 'followUp'
@@ -56,6 +56,21 @@ export function notificationHeadline(
       return car
         ? i18n.t('buddies_notifCarJoined', { ...name, car })
         : i18n.t('buddies_alertCarJoined', name)
+    case 'territoryInvite':
+      return territory
+        ? i18n.t('buddies_notifTerritoryInvite', { ...name, territory })
+        : i18n.t('buddies_alertTerritoryInvite', name)
+    case 'territoryJoined':
+      return territory
+        ? i18n.t('buddies_notifTerritoryJoined', { ...name, territory })
+        : i18n.t('buddies_alertTerritoryJoined', name)
+    case 'territoryHandoff':
+      return entry.street || territory
+        ? i18n.t('buddies_notifTerritoryHandoff', {
+            ...name,
+            street: entry.street || territory,
+          })
+        : i18n.t('buddies_alertTerritoryHandoff', name)
   }
 }
 

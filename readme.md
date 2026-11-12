@@ -79,6 +79,9 @@ progress, badges, mileage`"]
 end-to-end encrypted sharing`"]
     A_CARS["`**Shared Cars**
 end-to-end encrypted mileage spaces`"]
+    A_TERR["`**Territories**
+end-to-end encrypted territory spaces,
+one scope per street, guest links`"]
     A_ACCOUNT["`**Account**
 anonymous account, recovery key,
 Set Up Another Device, backup`"]
@@ -295,6 +298,10 @@ the web's map, cdn.apple-mapkit.com`"]
   A_SCRIBE -->|"account session"| A_ACCOUNT
   A_CARS -->|"account session"| A_ACCOUNT
   A_CARS -->|"bearer: sealed records, WebSocket"| R_SPACES
+  A_TERR -->|"account session"| A_ACCOUNT
+  A_TERR -->|"bearer: sealed records per street, WebSocket"| R_SPACES
+  A_TERR -->|"bearer: notes text to read into results"| R_SCRIBE
+  W_BROWSER -->|"guest link: sealed street records, no account"| R_SPACES
   A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
   A_ROUTE -->|"account session"| A_ACCOUNT
   A_ROUTE -->|"bearer: today's stops"| R_ROUTE
@@ -366,7 +373,7 @@ the web's map, cdn.apple-mapkit.com`"]
   classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
   classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
   class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
-  class A_CORE,A_BUDDIES,A_CARS,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
+  class A_CORE,A_BUDDIES,A_CARS,A_TERR,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
   class A_LOCAL local
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PASSKEY,P_PUSH,P_STORE,S_GPI platform
   class R_BUD,R_SPACES,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_MAPS,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB,S_MAPSF,S_VERIFYF worker
@@ -379,6 +386,7 @@ the web's map, cdn.apple-mapkit.com`"]
 - Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
 - Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
 - Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
+- A shared territory is a shared space with one scope per street ([ADR 0047](./docs/adr/0047-shared-territories-are-scoped-record-spaces.md), [docs/territories-protocol.md](./docs/territories-protocol.md)): records are sealed on the device, a hand-off gives a buddy one street's key, and a guest link carries its key only in the URL fragment, which the browser never sends to a server. Reading notes into results sends the notes text to Scribe AI on the account's session.
 - Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
 - The website and the Help Center's content are built from this repo's `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app` and `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); development builds use the staging site, `dev.witnesswork.app`, and the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search.witnesswork.app` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
 - The web's Turnstile check, before web sign-up and recovery-key sign-in, runs in a sandboxed frame on its own origin, `verify.witnesswork.app` (`verify-dev.witnesswork.app` for dev), so Cloudflare's script never runs on the app's origin. The frame gets the site key and the action and posts back only the token ([docs/web-turnstile.md](./docs/web-turnstile.md)).

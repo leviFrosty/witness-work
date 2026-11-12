@@ -20,6 +20,9 @@ export type PlatformCapability =
   | 'scribeVoice'
   | 'scribePhotos'
   | 'sharedCars'
+  | 'territorySharing'
+  | 'camera'
+  | 'reverseGeocoding'
 
 type OS = typeof Platform.OS
 
@@ -43,6 +46,9 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   scribeVoice: ['ios', 'android'],
   scribePhotos: ['ios', 'android'],
   sharedCars: ['ios', 'android'],
+  territorySharing: ['ios', 'android'],
+  camera: ['ios', 'android'],
+  reverseGeocoding: ['ios', 'android'],
 }
 
 export function hasCapability(capability: PlatformCapability): boolean {

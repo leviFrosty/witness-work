@@ -44,12 +44,14 @@ import {
 import { checkCryptoVectors } from '@/features/buddies/lib/testing/cryptoVectors'
 import { checkSpaceVectors } from '@/lib/sharedSpaces/testing/spaceVectors'
 import { sharedCarsHarness } from '@/app/dev-harness/sharedCars'
+import { territoriesHarness } from '@/app/dev-harness/territories'
 import apis from '@/constants/apis'
 import { SCENARIO_NAMES } from '@/app/dev-harness/scenarios'
 import { buildTodayRouteFixture } from '@/app/dev-fixtures/todayRoute'
 import { buildRouteDemoFixture } from '@/app/dev-fixtures/routeDemo'
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
+import { useTerritories } from '@/features/territories/stores/territories'
 import {
   cancelSeedRootReset,
   seedScenario,
@@ -314,6 +316,8 @@ export function installDevHarness() {
 
     sharedCars: sharedCarsHarness,
 
+    territories: territoriesHarness,
+
     buddiesEngine,
 
     fakeGoogleDrive: applyFakeGoogleDrive,
@@ -486,6 +490,7 @@ export function installDevHarness() {
 
       savedRoutes: useSavedRoutes,
       savedPlaces: useSavedPlaces,
+      territories: useTerritories,
 
       pet: usePet,
       routine: useRoutine,

@@ -138,6 +138,9 @@ function fakeClient(steps: FakeStep[]) {
     transcribe: async () => {
       throw new Error('not used')
     },
+    territoryNotes: async () => {
+      throw new Error('not used')
+    },
     step: async (body, { signal, onEvent }) => {
       bodies.push(structuredClone(body))
       const step = steps.shift()

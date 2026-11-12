@@ -40,6 +40,7 @@ const URLS = {
   usage: 'https://api.test/scribe/v1/usage',
   step: 'https://api.test/scribe/v1/step',
   transcribe: 'https://api.test/scribe/v1/transcribe',
+  territoryNotes: 'https://api.test/scribe/v1/territory-notes',
 }
 
 const BODY: StepRequest = {
@@ -838,5 +839,59 @@ describe('frameData', () => {
     expect(frameData('event: text\ndata: {"a":1}')).toBe('{"a":1}')
     expect(frameData('data:one\ndata: two')).toBe('one\ntwo')
     expect(frameData(': heartbeat')).toBeNull()
+  })
+})
+
+describe('territoryNotes', () => {
+  const NOTES = {
+    notes: 'Oak Street\n12 NH',
+    streets: [{ name: 'Oak Street', numbering: 'both' as const }],
+    locale: 'en-US',
+  }
+
+  it('posts protocol 1 with the notes and reads doors, ranges, unread and usage', async () => {
+    const doors = [
+      { line: 1, street: 'Oak Street', door: '12', outcome: 'notHome' },
+    ]
+    const h = harness({
+      plain: [
+        jsonResponse(200, {
+          ok: true,
+          doors,
+          ranges: [],
+          unread: [],
+          usage: METER,
+        }),
+      ],
+    })
+    expect(await h.client.territoryNotes(NOTES)).toEqual({
+      doors,
+      ranges: [],
+      unread: [],
+      usage: METER,
+    })
+    expect(h.plain.calls[0]).toMatchObject({
+      url: URLS.territoryNotes,
+      method: 'POST',
+      headers: { authorization: 'Bearer token-1' },
+      body: { protocol: 1, ...NOTES },
+    })
+  })
+
+  it('carries the usage of a charged model error', async () => {
+    const h = harness({
+      plain: [jsonResponse(502, envelope('model_error', { usage: METER }))],
+    })
+    await expect(h.client.territoryNotes(NOTES)).rejects.toMatchObject({
+      code: 'model_error',
+      usage: METER,
+    })
+  })
+
+  it('is unknown without the lists', async () => {
+    const h = harness({ plain: [jsonResponse(200, { ok: true, doors: [] })] })
+    await expect(h.client.territoryNotes(NOTES)).rejects.toMatchObject({
+      code: 'unknown',
+    })
   })
 })

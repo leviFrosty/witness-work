@@ -223,6 +223,7 @@ describe.skipIf(!ENABLED)('Scribe AI on the real model', () => {
       usage: url('usage'),
       step: url('step'),
       transcribe: url('transcribe'),
+      territoryNotes: url('territory-notes'),
     },
     streamFetch: withIp,
     fetchImpl: withIp,

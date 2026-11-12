@@ -5,6 +5,8 @@ import {
   type StepRequest,
   type StepStreamEvent,
   type StepTerminalEvent,
+  type TerritoryNotesRequest,
+  type TerritoryNotesResponse,
   type UsageSnapshotWire,
 } from '@/features/scribe/lib/wire'
 import type { ScribeClient } from '@/features/scribe/lib/scribeClient'
@@ -584,6 +586,14 @@ export const fake = {
 
   dropAfterPages: null as number | null,
 
+  notesAnswer: {
+    doors: [{ line: 0, street: null, door: '12', outcome: 'notHome' }],
+    ranges: [],
+    unread: [],
+  } as Omit<TerritoryNotesResponse, 'usage'> | null,
+
+  notesRequests: [] as Omit<TerritoryNotesRequest, 'protocol'>[],
+
   delayMs: 250,
 }
 
@@ -632,6 +642,15 @@ export const fakeScribeClient: ScribeClient = {
     if (text == null) throw new ScribeClientError('model_error')
     if (fake.dropAfterPages !== null) fake.dropAfterPages -= 1
     return { text, truncated: false, usage: fake.usage }
+  },
+  territoryNotes: async (notes, signal) => {
+    await sleep(fake.delayMs * 4, signal)
+    if (getOnline() === false) throw new ScribeClientError('network')
+    fake.notesRequests = [...fake.notesRequests, structuredClone(notes)].slice(
+      -5
+    )
+    if (!fake.notesAnswer) throw new ScribeClientError('model_error')
+    return { ...structuredClone(fake.notesAnswer), usage: fake.usage }
   },
 }
 

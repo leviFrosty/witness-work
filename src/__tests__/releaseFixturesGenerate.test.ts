@@ -227,6 +227,9 @@ const scribeServer: ScribeClient = {
   transcribe: async () => {
     throw new Error('Not read by the fixture')
   },
+  territoryNotes: async () => {
+    throw new Error('Not read by the fixture')
+  },
   step: async (body, { onEvent }) => {
     const turns = body.messages.filter(({ role }) => role === 'user').length
     const turn = SCRIBE.turns[turns - 1]

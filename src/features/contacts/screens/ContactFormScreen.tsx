@@ -101,7 +101,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   const newContactAddress: Address = prefill.enabled
     ? prefill.address
     : {
-        line1: '',
+        line1: route.params.initialAddressLine ?? '',
         line2: '',
         city: '',
         state: '',

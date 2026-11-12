@@ -27,8 +27,9 @@ import {
   DURATION_STEP,
   isExactInFormat,
   MAX_DURATION_HOURS,
+  maxDurationMinutes,
   stepDuration,
-} from '@/features/service-reports/lib/durationInput'
+} from '@/lib/durationInput'
 
 export type DurationInputMethod = 'preset' | 'stepper' | 'exact' | 'plan'
 
@@ -41,6 +42,10 @@ type Props = {
   invalid?: boolean
 
   size: 'large' | 'compact'
+
+  label?: string
+
+  maxHours?: number
 
   testID: string
 }
@@ -133,6 +138,7 @@ const DurationValue = (props: {
 const Presets = (props: {
   value: number
   onChange: (minutes: number) => void
+  testID: string
 }) => {
   const theme = useTheme()
   const format = usePreferences((s) => s.timeDisplayFormat)
@@ -158,7 +164,7 @@ const Presets = (props: {
               accessibilityRole='radio'
               accessibilityLabel={formatMinutes(preset, format).formatted}
               accessibilityState={{ selected: active, checked: active }}
-              testID={`time-entry-preset-${preset}`}
+              testID={`${props.testID}-preset-${preset}`}
               style={{
                 height: MIN_TOUCH_TARGET,
                 borderRadius: theme.numbers.borderRadiusMd,
@@ -196,6 +202,7 @@ const DurationInput = (props: Props) => {
   const { formatted } = useFormattedMinutes(total)
   const format = usePreferences((s) => s.timeDisplayFormat)
   const large = props.size === 'large'
+  const maxHours = props.maxHours ?? MAX_DURATION_HOURS
 
   const exact = isExactInFormat(total, format)
     ? undefined
@@ -229,13 +236,13 @@ const DurationInput = (props: Props) => {
             duration: formatMinutesCompact(DURATION_STEP),
           })}
           disabled={total === 0}
-          onPress={() => setTotal(stepDuration(total, -1), 'stepper')}
+          onPress={() => setTotal(stepDuration(total, -1, maxHours), 'stepper')}
         />
         <Button
           noTransform
           onPress={openWheels}
           accessibilityRole='button'
-          accessibilityLabel={i18n.t('time')}
+          accessibilityLabel={props.label ?? i18n.t('time')}
           accessibilityValue={{ text: exact ?? formatted }}
           accessibilityHint={i18n.t('timeForm_exactHint')}
           testID={`${props.testID}-duration-pill`}
@@ -280,8 +287,8 @@ const DurationInput = (props: Props) => {
           label={i18n.t('timeForm_more', {
             duration: formatMinutesCompact(DURATION_STEP),
           })}
-          disabled={total >= MAX_DURATION_HOURS * 60 + 59}
-          onPress={() => setTotal(stepDuration(total, 1), 'stepper')}
+          disabled={total >= maxDurationMinutes(maxHours)}
+          onPress={() => setTotal(stepDuration(total, 1, maxHours), 'stepper')}
         />
       </View>
       <View
@@ -307,6 +314,7 @@ const DurationInput = (props: Props) => {
         <Presets
           value={total}
           onChange={(minutes) => setTotal(minutes, 'preset')}
+          testID={props.testID}
         />
       </View>
 
@@ -319,11 +327,12 @@ const DurationInput = (props: Props) => {
           props.onInput?.('exact')
         }}
         doneTestID={`${props.testID}-picker-done`}
+        title={props.label}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <WheelPicker
-              data={wheel([...Array(MAX_DURATION_HOURS + 1).keys()])}
+              data={wheel([...Array(maxHours + 1).keys()])}
               value={draftHours}
               onValueChange={setDraftHours}
               accessibilityLabel={i18n.t('hours')}

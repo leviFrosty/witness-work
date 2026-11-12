@@ -69,12 +69,11 @@ test('a plan takes a date and a time span', async ({ app, shot }) => {
     app.getByRole('button', { name: 'Date', exact: true })
   ).not.toContainText('Today')
 
-  await app.getByRole('button', { name: 'How long?' }).click()
-  await app.getByRole('radio', { name: 'Time span' }).click()
+  await app.getByTestId('plan-start-row').click()
   await app.getByRole('listbox', { name: 'Start' }).selectOption({ index: 36 })
   await app.getByRole('listbox', { name: 'End' }).selectOption({ index: 12 })
   await app.getByRole('button', { name: 'Done' }).click()
-  await expect(app.getByRole('button', { name: 'How long?' })).toContainText(
+  await expect(app.getByTestId('plan-start-row')).toContainText(
     '3:00 AM – 4:05 AM'
   )
 
@@ -129,22 +128,29 @@ test('a time entry takes the date that was picked', async ({ app }) => {
 })
 
 test('a segmented choice takes the arrow keys', async ({ app }) => {
-  await openCreatePlan(app)
-  await app.getByRole('button', { name: 'How long?' }).click()
-  const hours = app.getByRole('radio', { name: 'Just hours' })
-  const span = app.getByRole('radio', { name: 'Time span' })
-  await expect(hours).toHaveAttribute('aria-checked', 'true')
-  await hours.focus()
+  await app.evaluate(() =>
+    (
+      globalThis as unknown as {
+        __WW_DEV__: { navigate: (name: string) => void }
+      }
+    ).__WW_DEV__.navigate('ShareApp')
+  )
+  const android = app.getByRole('radio', { name: 'Android', exact: true })
+  const iphone = app.getByRole('radio', { name: 'iPhone', exact: true })
+  await expect(android).toBeVisible()
+  const [first, second] = (await android.isChecked())
+    ? [android, iphone]
+    : [iphone, android]
+  await first.focus()
   await app.keyboard.press('ArrowRight')
-  await expect(span).toHaveAttribute('aria-checked', 'true')
-  await expect(span).toBeFocused()
-  await expect(hours).toHaveAttribute('aria-checked', 'false')
+  await expect(second).toHaveAttribute('aria-checked', 'true')
+  await expect(second).toBeFocused()
+  await expect(first).toHaveAttribute('aria-checked', 'false')
 })
 
 test('the time of a plan follows the Time Format', async ({ app }) => {
   await openCreatePlan(app)
-  await app.getByRole('button', { name: 'How long?' }).click()
-  await app.getByRole('radio', { name: 'Time span' }).click()
+  await app.getByTestId('plan-start-row').click()
   const start = app.getByRole('listbox', { name: 'Start' })
   await expect(start.locator('option').nth(36)).toHaveText(/3:00 AM/)
 })
@@ -474,9 +480,9 @@ test.describe('dismissing a picker cancels it', () => {
       await expect(pill).toHaveText(before!)
     })
 
-    test(`${how} keeps How long?`, async ({ app }) => {
+    test(`${how} keeps the duration`, async ({ app }) => {
       await openCreatePlan(app)
-      const pill = app.getByRole('button', { name: 'How long?' })
+      const pill = app.getByTestId('plan-duration-pill')
       const before = await pill.textContent()
       await pill.click()
       await app.getByRole('listbox', { name: 'Hours' }).selectOption('3')
@@ -525,8 +531,8 @@ test('dialogs are named after what they hold', async ({ app }) => {
   await expect(sheet).toHaveAccessibleName('Date')
   await app.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
-  await app.getByRole('button', { name: 'How long?' }).click()
-  await expect(sheet).toHaveAccessibleName('How long?')
+  await app.getByTestId('plan-start-row').click()
+  await expect(sheet).toHaveAccessibleName('Start time')
   await app.keyboard.press('Escape')
   await expect(sheet).toBeHidden()
 })
@@ -691,8 +697,7 @@ test.describe('at 1024 px and wider', () => {
     await app.getByRole('button', { name: 'Date', exact: true }).click()
     await app.locator('input[type=date]').fill(day.input)
     await app.getByRole('button', { name: 'Done' }).click()
-    await app.getByRole('button', { name: 'How long?' }).click()
-    await app.getByRole('radio', { name: 'Time span' }).click()
+    await app.getByTestId('plan-start-row').click()
     await app.getByRole('button', { name: 'Done' }).click()
     await app.getByRole('button', { name: 'Add One Time Plan' }).click()
     await expect(app.getByText('Added plan')).toBeVisible()

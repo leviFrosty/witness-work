@@ -99,7 +99,7 @@ vi.mock('@/components/ui/layout/DockedFormLayout', () => ({
     React.createElement('DockedFormLayout', props, props.children, props.dock),
 }))
 vi.mock('@/components/TypeFormRow', () => ({ default: 'TypeFormRow' }))
-vi.mock('@/features/service-reports/components/DurationInput', () => ({
+vi.mock('@/components/DurationInput', () => ({
   default: 'DurationInput',
 }))
 vi.mock('@/features/service-reports/components/DetailRow', () => ({

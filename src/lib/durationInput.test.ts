@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stepDuration } from '@/features/service-reports/lib/durationInput'
+import { stepDuration } from '@/lib/durationInput'
 
 describe('stepDuration', () => {
   it('moves by 15 minutes from a mark', () => {
@@ -18,5 +18,10 @@ describe('stepDuration', () => {
     expect(stepDuration(10, -1)).toBe(0)
     expect(stepDuration(99 * 60 + 50, 1)).toBe(99 * 60 + 59)
     expect(stepDuration(99 * 60 + 59, 1)).toBe(99 * 60 + 59)
+  })
+
+  it('stops at a shorter longest entry when given one', () => {
+    expect(stepDuration(23 * 60 + 50, 1, 23)).toBe(23 * 60 + 59)
+    expect(stepDuration(23 * 60 + 59, 1, 23)).toBe(23 * 60 + 59)
   })
 })

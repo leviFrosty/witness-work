@@ -84,7 +84,9 @@ import type {
 import PlanRecurrenceControls from '@/features/plans/components/PlanRecurrenceControls'
 import PlanKindToggle from '@/features/plans/components/PlanKindToggle'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
-import WhenDock from '@/components/WhenDock'
+import DurationInput from '@/components/DurationInput'
+import PlanDateButton from '@/features/plans/components/PlanDateButton'
+import { type PlanStartTime } from '@/features/plans/components/PlanStartTimeRow'
 import { noteUserAction } from '@/lib/userAction'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { richTextImages } from '@/lib/richText/inspect'
@@ -105,6 +107,8 @@ const storedDateFor = (date: Date) => preserveOrNormalizeStoredDate(date)
 const storedDay = (date: Date) => momentStoredDate(storedDateFor(date))
 
 const localDateForWrite = (date: Date) => localDayFromUtcCursor(storedDay(date))
+
+const MAX_PLAN_HOURS = 23
 
 const sameDay = (a: Date, b: Date) => storedDay(a).isSame(storedDay(b), 'day')
 
@@ -407,6 +411,7 @@ const PlanDayForm = ({
   draftRef,
 }: Props) => {
   const formAtTop = useFormAtTopOnWeb()
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
   const defaultDate = planDayFromRouteDate(params.date)
   const defaultStoredDate = storedDateFor(defaultDate)
@@ -1245,45 +1250,62 @@ const PlanDayForm = ({
 
   const inline = layout === 'inline'
 
-  const dock = (
-    <WhenDock
-      durationInvalid={validation.invalid('duration')}
-      testID='plan'
-      header={
-        <>
-          {!isEditMode && (
-            <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />
-          )}
-          {!oneTime && (
-            <PlanRecurrenceControls
-              frequency={frequency}
-              setFrequency={handleFrequencyChange}
-              weekday={weekday}
-              setWeekday={setWeekday}
-              weekOfMonth={weekOfMonth}
-              setWeekOfMonth={setWeekOfMonth}
-            />
-          )}
-        </>
-      }
-      date={date}
-      setDate={handleDateChange}
-      hours={hours}
-      minutes={minutes}
-      setDuration={(nextHours, nextMinutes) => {
-        setHours(nextHours)
-        setMinutes(nextMinutes)
-      }}
-      notice={
-        linkedShare &&
+  const kindControls = (
+    <>
+      {!isEditMode && (
+        <PlanKindToggle oneTime={oneTime} setOneTime={setOneTime} />
+      )}
+      {!oneTime && (
+        <PlanRecurrenceControls
+          frequency={frequency}
+          setFrequency={handleFrequencyChange}
+          weekday={weekday}
+          setWeekday={setWeekday}
+          weekOfMonth={weekOfMonth}
+          setWeekOfMonth={setWeekOfMonth}
+        />
+      )}
+    </>
+  )
+
+  const durationControl = (
+    <View>
+      {linkedShare && (
+        <Text
+          style={{
+            color: theme.colors.textAlt,
+            fontFamily: theme.fonts.semiBold,
+            fontSize: theme.fontSize('sm'),
+            textAlign: 'center',
+            marginBottom: 4,
+          }}
+        >
+          {i18n.t('planForm_yourHours')}
+        </Text>
+      )}
+      <DurationInput
+        size={inline ? 'compact' : 'large'}
+        hours={hours}
+        minutes={minutes}
+        setDuration={(nextHours, nextMinutes) => {
+          setHours(nextHours)
+          setMinutes(nextMinutes)
+        }}
+        invalid={validation.invalid('duration')}
+        label={i18n.t(linkedShare ? 'planForm_yourHours' : 'planForm_duration')}
+        maxHours={MAX_PLAN_HOURS}
+        testID='plan'
+      />
+      {linkedShare &&
         organizerName &&
         plannedByOrganizer !== undefined &&
-        hours * 60 + minutes !== plannedByOrganizer ? (
+        hours * 60 + minutes !== plannedByOrganizer && (
           <Text
             style={{
               color: theme.colors.textAlt,
               fontSize: theme.fontSize('sm'),
               textAlign: 'center',
+              marginTop: 10,
             }}
           >
             {i18n.t('planForm_organizerPlanned', {
@@ -1291,42 +1313,33 @@ const PlanDayForm = ({
               hours: organizerHours,
             })}
           </Text>
-        ) : undefined
-      }
-      timeSpan={
-        linkedShare
-          ? undefined
-          : {
-              anytime,
-              setWhen: (when) => {
-                setAnytime(when.anytime)
-                setHours(Math.floor(when.minutes / 60))
-                setMinutes(when.minutes % 60)
-                if (when.startTimeInMinutes !== undefined) {
-                  const next = new Date(date)
-                  next.setHours(0, when.startTimeInMinutes, 0, 0)
-                  setDate(next)
-                }
-                setPreferences({
-                  planTimeMode: when.anytime ? 'hours' : 'span',
-                })
-              },
-            }
-      }
-      durationLabel={i18n.t(
-        linkedShare ? 'planForm_yourHours' : 'planForm_duration'
-      )}
-      maxHours={23}
-      minuteStep={5}
-      saveButton={inline ? null : saveButton}
-      inline={inline}
-      hideDate={inline || !!linkedShare}
-    />
+        )}
+    </View>
   )
+
+  const startTime: PlanStartTime | undefined = linkedShare
+    ? undefined
+    : {
+        anytime,
+        date,
+        minutes: hours * 60 + minutes,
+        setWhen: (when) => {
+          setAnytime(when.anytime)
+          setHours(Math.floor(when.minutes / 60))
+          setMinutes(when.minutes % 60)
+          if (when.startTimeInMinutes !== undefined) {
+            const next = new Date(date)
+            next.setHours(0, when.startTimeInMinutes, 0, 0)
+            setDate(next)
+          }
+          setPreferences({ planTimeMode: when.anytime ? 'hours' : 'span' })
+        },
+      }
 
   const detailsList = (
     <PlanDetailsList
       organizerFields={linkedShare ? 'hidden' : 'editable'}
+      startTime={startTime}
       title={title}
       setTitle={setTitle}
       location={
@@ -1405,7 +1418,8 @@ const PlanDayForm = ({
     return (
       <>
         <View style={{ gap: 12 }}>
-          {dock}
+          {kindControls}
+          {durationControl}
           {detailsList}
           {saveButton}
         </View>
@@ -1417,13 +1431,34 @@ const PlanDayForm = ({
   return (
     <>
       <DockedFormLayout
-        dock={dock}
+        dock={
+          <View
+            style={{
+              backgroundColor: theme.colors.backgroundLighter,
+              borderTopStartRadius: 24,
+              borderTopEndRadius: 24,
+              borderTopWidth: 1,
+              borderColor: theme.colors.border,
+              paddingTop: 14,
+              paddingHorizontal: 16,
+              paddingBottom: Math.max(insets.bottom, 12),
+            }}
+          >
+            <View
+              style={{
+                gap: 12,
+                width: '100%',
+                maxWidth: inputLayout.contentMaxWidth,
+                alignSelf: 'center',
+              }}
+            >
+              {kindControls}
+              {saveButton}
+            </View>
+          </View>
+        }
         contentContainerStyle={{
           flexGrow: 1,
-
-          justifyContent: formAtTop ? 'flex-start' : 'flex-end',
-          gap: 12,
-          paddingTop: 10,
           paddingBottom: 16,
           paddingHorizontal: inputLayout.horizontalPadding,
           width: '100%',
@@ -1431,8 +1466,15 @@ const PlanDayForm = ({
           alignSelf: 'center',
         }}
       >
-        {linkedShare && <LinkedPlanBanner share={linkedShare} />}
-        {detailsList}
+        {!linkedShare && (
+          <PlanDateButton date={date} setDate={handleDateChange} />
+        )}
+        <View style={{ flexGrow: formAtTop ? 0 : 1, minHeight: 16 }} />
+        <View style={{ gap: 16 }}>
+          {linkedShare && <LinkedPlanBanner share={linkedShare} />}
+          {durationControl}
+          {detailsList}
+        </View>
         {isEditMode && (
           <Button
             noTransform

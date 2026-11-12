@@ -18,15 +18,15 @@ name: Plan a day in its sheet without leaving the day
 - tapOn:
     id: day-plan-form
 # Android lists only what's on screen, and the Add button is below the fold.
-- assertVisible: How long?
+- assertVisible: Start time
 - tapOn:
     id: plan-title-input
 - inputText: Cart from the day
 - hideKeyboard
 - tapOn:
     id: plan-duration-pill
-# Setup left new Plans in Just hours, with no set time. The calendar behind
-# the picker shows small numbers too, so pick the hours row by its id.
+# Setup left new Plans with no set time. The calendar behind the picker shows
+# small numbers too, so pick the hours row by its id.
 - tapOn:
     id: plan-duration-hours-2
 - tapOn:

@@ -26,6 +26,9 @@ import InviteBuddiesFormRow, {
 } from '@/components/InviteBuddiesFormRow'
 import PlaceSearchInput from '@/components/PlaceSearchInput'
 import TypeFormRow from '@/components/TypeFormRow'
+import PlanStartTimeRow, {
+  type PlanStartTime,
+} from '@/features/plans/components/PlanStartTimeRow'
 import { type TypeSelection } from '@/components/TypeSelectorRow'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -36,6 +39,8 @@ import type { PlanLocation } from '@/types/timeEntry'
 
 type Props = {
   organizerFields?: 'editable' | 'hidden'
+
+  startTime?: PlanStartTime
   title: string
   setTitle: (title: string) => void
 
@@ -74,11 +79,12 @@ type Props = {
 const TitleRow = (props: {
   title: string
   setTitle: (title: string) => void
+  first: boolean
 }) => {
   const theme = useTheme()
   const layout = useDockedFormLayout()
   return (
-    <FormRow icon={TypeIcon} first>
+    <FormRow icon={TypeIcon} first={props.first}>
       <TextInput
         value={props.title}
         onChangeText={props.setTitle}
@@ -251,7 +257,14 @@ const PlanDetailsList = (props: Props) => {
   const organizer = props.organizerFields !== 'hidden'
   return (
     <FormDetailsSection>
-      {organizer && <TitleRow title={props.title} setTitle={props.setTitle} />}
+      {props.startTime && <PlanStartTimeRow {...props.startTime} first />}
+      {organizer && (
+        <TitleRow
+          title={props.title}
+          setTitle={props.setTitle}
+          first={!props.startTime}
+        />
+      )}
       {organizer && props.location && <LocationRow {...props.location} />}
       {organizer && (
         <NoteFormRow
@@ -265,7 +278,10 @@ const PlanDetailsList = (props: Props) => {
         <InviteBuddiesFormRow {...props.buddies} testID='plan-buddies-row' />
       )}
       {props.notifyMe && (
-        <NotifyMeRow {...props.notifyMe} first={!organizer && !props.buddies} />
+        <NotifyMeRow
+          {...props.notifyMe}
+          first={!organizer && !props.buddies && !props.startTime}
+        />
       )}
       {props.end && <EndDateRow {...props.end} />}
       <TypeFormRow {...props.type} />

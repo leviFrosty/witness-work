@@ -2,10 +2,12 @@ import type { ComponentType } from 'react'
 import {
   BookOpenCheck as StudyIcon,
   CalendarCheck as CalendarCheckIcon,
+  CalendarDays as CalendarDaysIcon,
   CalendarHeart as CalendarHeartIcon,
   Car as CarIcon,
   ChartColumn as ChartColumnIcon,
   ChartLine as ChartLineIcon,
+  Flag as FlagIcon,
   History as HistoryIcon,
   MessagesSquare as VisitsIcon,
   TrendingUp as TrendingUpIcon,
@@ -38,11 +40,23 @@ export const YEAR_CARD_GROUPS: { group: YearCardGroup; title: () => string }[] =
   ]
 
 export type YearCardDefinition = ProgressCardMeta<YearCardGroup> & {
-  Component: ComponentType<YearCardProps>
+  Component?: ComponentType<YearCardProps>
   destination?: ProgressCardDestination
 }
 
 export const YEAR_PROGRESS_CARDS: Record<YearCardId, YearCardDefinition> = {
+  milestones: {
+    group: 'time',
+    icon: FlagIcon,
+    title: () => i18n.t('milestones'),
+    description: () => i18n.t('progressCards.year.milestones.description'),
+  },
+  months: {
+    group: 'time',
+    icon: CalendarDaysIcon,
+    title: () => i18n.t('progressCards.year.months.title'),
+    description: () => i18n.t('progressCards.year.months.description'),
+  },
   pace: {
     group: 'time',
     icon: ChartLineIcon,

@@ -7,6 +7,7 @@ import {
   defaultProgressCards,
   describeProgressCardChange,
   getEffectiveProgressCards,
+  hiddenProgressCards,
   keepUnknownProgressCards,
   MONTH_CARDS,
   moveProgressCard,
@@ -176,15 +177,18 @@ describe('year and all time cards', () => {
     expect(
       defaultYearProgressCards({ hasAnnualGoal: true, showsTimeEntry: true })
     ).toEqual([
+      { id: 'milestones', size: 'wide' },
       { id: 'pace', size: 'wide' },
       { id: 'monthlyAverage', size: 'small' },
       { id: 'studies', size: 'small' },
+      { id: 'months', size: 'compact' },
     ])
     expect(
       defaultYearProgressCards({ hasAnnualGoal: false, showsTimeEntry: false })
     ).toEqual([
       { id: 'monthsShared', size: 'small' },
       { id: 'studies', size: 'small' },
+      { id: 'months', size: 'compact' },
     ])
     expect(defaultAllTimeProgressCards().map((c) => c.id)).toEqual([
       'bestYear',
@@ -204,8 +208,10 @@ describe('year and all time cards', () => {
         []
       )
     ).toEqual([
+      { id: 'milestones', size: 'wide' },
       { id: 'pace', size: 'wide' },
       { id: 'bestMonth', size: 'wide' },
+      { id: 'months', size: 'compact' },
     ])
     expect(
       addProgressCard(
@@ -214,5 +220,181 @@ describe('year and all time cards', () => {
         'studies'
       )[0]
     ).toEqual({ id: 'studies', size: 'small' })
+  })
+})
+
+describe('year sections: milestones and months', () => {
+  const pioneer = { hasAnnualGoal: true, showsTimeEntry: true }
+  const publisher = { hasAnnualGoal: false, showsTimeEntry: false }
+  const ids = (layout: ProgressCardLayoutItem<string>[]) =>
+    layout.map((c) => c.id)
+
+  const save = (
+    stored: unknown,
+    layout: ProgressCardLayoutItem<(typeof YEAR_CARDS.ids)[number]>[]
+  ) => [
+    ...keepUnknownProgressCards(YEAR_CARDS, stored, layout),
+    ...hiddenProgressCards(YEAR_CARDS, layout),
+  ]
+  const read = (stored: unknown, role = pioneer) =>
+    getEffectiveProgressCards(
+      YEAR_CARDS,
+      stored,
+      defaultYearProgressCards(role)
+    )
+
+  it('gives a layout saved before they existed milestones first and months last', () => {
+    const saved = [
+      { id: 'studies', size: 'wide' },
+      { id: 'pace', size: 'wide' },
+    ]
+    expect(read(saved)).toEqual([
+      { id: 'milestones', size: 'wide' },
+      { id: 'studies', size: 'wide' },
+      { id: 'pace', size: 'wide' },
+      { id: 'months', size: 'compact' },
+    ])
+
+    expect(ids(read([]))).toEqual(['milestones', 'months'])
+  })
+
+  it('keeps them where the User put them, at the size chosen', () => {
+    const moved = moveProgressCard(read(null), 'months', 'milestones')
+    const long = resizeProgressCard(YEAR_CARDS, moved, 'months', 'full')
+    const stored = save(null, long)
+    expect(stored.some((c) => 'hidden' in c)).toBe(false)
+    expect(read(stored)[0]).toEqual({ id: 'months', size: 'full' })
+    expect(ids(read(stored))).toEqual([
+      'months',
+      'milestones',
+      'pace',
+      'monthlyAverage',
+      'studies',
+    ])
+  })
+
+  it('keeps a removed one removed, and adds it back first', () => {
+    const stored = save(null, removeProgressCard(read(null), 'months'))
+    expect(stored.at(-1)).toEqual({
+      id: 'months',
+      size: 'compact',
+      hidden: true,
+    })
+    expect(ids(read(stored))).not.toContain('months')
+
+    const again = save(stored, removeProgressCard(read(stored), 'pace'))
+    expect(ids(read(again))).toEqual([
+      'milestones',
+      'monthlyAverage',
+      'studies',
+    ])
+
+    const back = save(again, addProgressCard(YEAR_CARDS, read(again), 'months'))
+    expect(back.some((c) => 'hidden' in c)).toBe(false)
+    expect(read(back)[0]).toEqual({ id: 'months', size: 'compact' })
+  })
+
+  it('survives an older version editing the synced layout', () => {
+    const OLD = {
+      ...YEAR_CARDS,
+      ids: YEAR_CARDS.ids.filter(
+        (id) => id !== 'months' && id !== 'milestones'
+      ),
+      implicit: undefined,
+    }
+    const stored = save(null, removeProgressCard(read(null), 'milestones'))
+    const onOld = getEffectiveProgressCards(OLD, stored, [])
+    expect(ids(onOld)).toEqual(['pace', 'monthlyAverage', 'studies'])
+    const fromOld = keepUnknownProgressCards(
+      OLD,
+      stored,
+      removeProgressCard(onOld, 'studies')
+    )
+    expect(ids(read(fromOld))).toEqual(['pace', 'monthlyAverage', 'months'])
+
+    expect(ids(read([{ id: 'studies', size: 'small' }]))).toEqual([
+      'milestones',
+      'studies',
+      'months',
+    ])
+  })
+
+  it('keeps one arrangement across a role change', () => {
+    const stored = save(
+      null,
+      moveProgressCard(
+        moveProgressCard(read(null), 'months', 'milestones'),
+        'milestones',
+        'pace'
+      )
+    )
+    expect(ids(read(stored))).toEqual([
+      'months',
+      'pace',
+      'milestones',
+      'monthlyAverage',
+      'studies',
+    ])
+
+    const available = (id: string) => id !== 'milestones' && id !== 'pace'
+    const asPublisher = read(stored, publisher)
+    expect(ids(asPublisher.filter((c) => available(c.id)))).toEqual([
+      'months',
+      'monthlyAverage',
+      'studies',
+    ])
+
+    const edited = save(
+      stored,
+      stepProgressCard(
+        asPublisher,
+        ['months', 'monthlyAverage', 'studies'],
+        'months',
+        1
+      )
+    )
+    expect(ids(read(edited, pioneer))).toEqual([
+      'pace',
+      'milestones',
+      'monthlyAverage',
+      'months',
+      'studies',
+    ])
+  })
+
+  it('gives a role that gains an annual goal its milestones', () => {
+    const stored = [
+      { id: 'monthsShared', size: 'wide' },
+      { id: 'studies', size: 'small' },
+    ]
+    expect(ids(read(stored, pioneer))).toEqual([
+      'milestones',
+      'monthsShared',
+      'studies',
+      'months',
+    ])
+
+    expect(ids(read(null, publisher))).toEqual([
+      'monthsShared',
+      'studies',
+      'months',
+    ])
+  })
+
+  it('reports the months size and a move for analytics', () => {
+    const before = read(null)
+    const after = resizeProgressCard(
+      YEAR_CARDS,
+      moveProgressCard(before, 'months', 'pace'),
+      'months',
+      'full'
+    )
+    expect(describeProgressCardChange(before, after)).toMatchObject({
+      cards:
+        'milestones:wide,months:full,pace:wide,monthlyAverage:small,studies:small',
+      resized: 1,
+      moved: true,
+      removed: 0,
+    })
   })
 })

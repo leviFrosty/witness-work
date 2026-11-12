@@ -3,6 +3,7 @@ import { toast } from '@/stores/toasts'
 import {
   addProgressCard,
   getEffectiveProgressCards,
+  hiddenProgressCards,
   keepUnknownProgressCards,
   moveProgressCard,
   PROGRESS_CARD_PREFERENCE,
@@ -59,12 +60,15 @@ export default function useProgressCardLayout<Id extends string>({
     ) => ProgressCardLayoutItem<Id>[]
   ) => {
     const current = usePreferences.getState()[key]
-    const next = keepUnknownProgressCards(
-      catalog,
-      current,
-      change(getEffectiveProgressCards(catalog, current, defaults))
+    const changed = change(
+      getEffectiveProgressCards(catalog, current, defaults)
     )
-    write(sameProgressCards(next, defaults) ? null : next)
+    const next = keepUnknownProgressCards(catalog, current, changed)
+    write(
+      sameProgressCards(next, defaults)
+        ? null
+        : [...next, ...hiddenProgressCards(catalog, changed)]
+    )
   }
 
   return {

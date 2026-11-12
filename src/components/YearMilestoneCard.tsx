@@ -52,7 +52,7 @@ interface YearMilestoneCardProps {
 
   categoriesSlot?: ReactNode
 
-  separateMilestones?: boolean
+  part?: 'all' | 'summary' | 'milestones'
 }
 
 const YearMilestoneCard = ({
@@ -60,8 +60,9 @@ const YearMilestoneCard = ({
   onAdjustMilestones,
   onViewYear,
   categoriesSlot,
-  separateMilestones = false,
+  part = 'all',
 }: YearMilestoneCardProps) => {
+  const separateMilestones = part !== 'all'
   const theme = useTheme()
   const largeText = useAccessibilityTextSize()
   const serviceYear = year - 1
@@ -165,21 +166,26 @@ const YearMilestoneCard = ({
     }
     if (!isCurrentServiceYear) return
     if (justHitTop === null) return
-    sealScale.value = withSequence(
-      withTiming(1.3, { duration: 180 }),
-      withTiming(1, { duration: 220 })
-    )
+
+    if (part !== 'summary') {
+      sealScale.value = withSequence(
+        withTiming(1.3, { duration: 180 }),
+        withTiming(1, { duration: 220 })
+      )
+      if (!isJustHitAnnualGoal) setBannerMilestone(justHitTop)
+    }
+    if (part === 'milestones') return
     if (isJustHitAnnualGoal) {
       Haptics.heavy()
       fireworks.fire()
     } else {
       Haptics.light()
-      setBannerMilestone(justHitTop)
     }
     for (const m of justHitMilestones) {
       markMilestoneCelebrated(serviceYearKey, m)
     }
   }, [
+    part,
     isFocused,
     isCurrentServiceYear,
     justHitTop,
@@ -527,27 +533,24 @@ const YearMilestoneCard = ({
     </Card>
   )
 
-  if (!separateMilestones) return card
+  if (part !== 'milestones') return card
 
   return (
-    <View style={{ gap: 12 }}>
-      {card}
-      <Card>
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('sm'),
-            color: theme.colors.textAlt,
-            textTransform: 'uppercase',
-            letterSpacing: tracking(0.5),
-          }}
-        >
-          {i18n.t('milestones')}
-        </Text>
-        {milestoneCount}
-        {milestoneDetails}
-      </Card>
-    </View>
+    <Card>
+      <Text
+        style={{
+          fontFamily: theme.fonts.semiBold,
+          fontSize: theme.fontSize('sm'),
+          color: theme.colors.textAlt,
+          textTransform: 'uppercase',
+          letterSpacing: tracking(0.5),
+        }}
+      >
+        {i18n.t('milestones')}
+      </Text>
+      {milestoneCount}
+      {milestoneDetails}
+    </Card>
   )
 }
 

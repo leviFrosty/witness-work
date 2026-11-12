@@ -16,6 +16,7 @@ export function useYearCardAvailability(serviceYear: number) {
   const mileageTrackingEnabled = usePreferences((s) => s.mileageTrackingEnabled)
   return (id: YearCardId): boolean => {
     switch (id) {
+      case 'milestones':
       case 'pace':
       case 'needed':
         return hasAnnualGoal

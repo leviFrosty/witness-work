@@ -18,7 +18,8 @@ export type LeadingReorder = {
 
 type Props = {
   leading: ReactNode
-  trailing: ReactNode
+
+  trailing?: ReactNode
   header?: ReactNode
   leadingFraction?: number
   paddingTop?: number
@@ -46,7 +47,8 @@ export default function AdaptiveSplitScrollView({
   scrollBars,
   leadingReorder,
 }: Props) {
-  const { isWide, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide: wide, contentMaxWidth } = useAdaptiveLayout()
+  const isWide = wide && trailing != null
   const reorder = leadingReorder?.scroller.props
   const singleRef = useRef<KeyboardAwareScrollView>(null)
   const leadingRef = useRef<KeyboardAwareScrollView>(null)
@@ -131,7 +133,9 @@ export default function AdaptiveSplitScrollView({
           <View ref={anchor.anchorRef('header', 'single')}>{header}</View>
         ) : null}
         <View ref={anchor.anchorRef('leading', 'single')}>{leading}</View>
-        <View ref={anchor.anchorRef('trailing', 'single')}>{trailing}</View>
+        {trailing != null ? (
+          <View ref={anchor.anchorRef('trailing', 'single')}>{trailing}</View>
+        ) : null}
         {scroll.room}
       </KeyboardAwareScrollView>
     )

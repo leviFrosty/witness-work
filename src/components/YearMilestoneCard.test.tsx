@@ -179,6 +179,31 @@ describe('YearMilestoneCard celebration', () => {
     expect(bannerShown(renderer!)).toBe(true)
   })
 
+  it('celebrates once when the summary and the milestones are separate cards', () => {
+    const year = currentYear()
+    const both = () => (
+      <>
+        <YearMilestoneCard year={year} part='summary' />
+        <YearMilestoneCard year={year} part='milestones' />
+      </>
+    )
+    runtime.minutes = 120 * 60
+    act(() => {
+      renderer = create(both())
+    })
+    expect(runtime.light).toHaveBeenCalledTimes(1)
+    expect(bannerShown(renderer!)).toBe(true)
+
+    runtime.focused = false
+    act(() => renderer!.update(both()))
+    runtime.reports = { serviceReports: {} }
+    runtime.minutes = 600 * 60
+    runtime.focused = true
+    act(() => renderer!.update(both()))
+    expect(runtime.heavy).toHaveBeenCalledTimes(1)
+    expect(runtime.fire).toHaveBeenCalledTimes(1)
+  })
+
   it('reads the hero as one phrase against the annual goal', () => {
     runtime.minutes = 90
     render()

@@ -46,6 +46,8 @@ export const MIN_MS_TO_SAVE = 60000
 
 export const RESET_CONFIRM_MIN_MS = 60000
 
+export type TimerSource = 'home' | 'plan_details'
+
 const ZERO: Stopwatch.StopwatchState = {
   startedAt: null,
   accumulatedMs: 0,
@@ -57,14 +59,16 @@ type StopwatchAction = 'started' | 'paused' | 'reset'
 
 const runCommand = async (
   action: StopwatchAction,
-  cmd: () => Promise<Stopwatch.StopwatchState>
+  cmd: () => Promise<Stopwatch.StopwatchState>,
+  source?: TimerSource
 ) => {
+  const props = source ? { action, source } : { action }
   try {
     const next = await cmd()
-    analytics.capture('timer_action_completed', { action })
+    analytics.capture('timer_action_completed', props)
     return next
   } catch (err) {
-    analytics.capture('timer_action_failed', { action })
+    analytics.capture('timer_action_failed', props)
     console.warn('[stopwatch] native command failed', err)
     return null
   }
@@ -119,7 +123,7 @@ export const useElapsedReached = (
   return reached
 }
 
-export const useStopWatch = () => {
+export const useStopWatch = (source: TimerSource = 'home') => {
   const [state, setState] = useState<Stopwatch.StopwatchState>(() =>
     Stopwatch.isAvailable() ? Stopwatch.getState() : ZERO
   )
@@ -135,10 +139,10 @@ export const useStopWatch = () => {
       action: StopwatchAction,
       cmd: () => Promise<Stopwatch.StopwatchState>
     ) => {
-      const next = await runCommand(action, cmd)
+      const next = await runCommand(action, cmd, source)
       if (next) setState(next)
     },
-    []
+    [source]
   )
 
   const start = useCallback(() => {

@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import moment from 'moment'
 import useMonthlyGoal from '@/hooks/useMonthlyGoal'
 import useProjectedTotal from '@/hooks/useProjectedTotal'
@@ -22,6 +23,7 @@ export default function MonthGoalMeter({
   onPress,
   onEditGoal,
 }: Props) {
+  perf.count('render:MonthGoalMeter')
   const { effectiveGoalHours } = useMonthlyGoal({ month, year })
   const goalMinutes = Math.round(effectiveGoalHours * 60)
   const { projection, today } = useProjectedTotal(

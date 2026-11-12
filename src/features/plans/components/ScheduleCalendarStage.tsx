@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { startTransition, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -6,6 +7,10 @@ import type { BuddyDayMarker } from '@/features/buddies/lib/calendarMarkers'
 import JumpToTodayButton from '@/features/plans/components/JumpToTodayButton'
 import ScheduleMonthView from '@/features/plans/components/ScheduleMonthView'
 import ScheduleYearView from '@/features/plans/components/ScheduleYearView'
+import {
+  type ScheduleFocusStore,
+  useScheduleFocus,
+} from '@/features/plans/hooks/useScheduleCalendar'
 import type useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar'
 import type { ScheduleDayIndex } from '@/features/plans/lib/scheduleDayIndex'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
@@ -38,12 +43,13 @@ export default function ScheduleCalendarStage({
   editableGoal,
   onEditGoal,
 }: Props) {
+  perf.count('render:ScheduleCalendarStage')
   const {
     view,
     monthLanding,
     zoom,
     schedule,
-    focusedMonth,
+    focusStore,
     focusedOrdinal,
     yearFocusedMonth,
     initialRowIndex,
@@ -52,7 +58,6 @@ export default function ScheduleCalendarStage({
     yearServiceYear,
     currentServiceYear,
     isCurrentServiceYear,
-    todayDirection,
     onScroll,
     onScrollBeginDrag,
     onZoomFrameLayout,
@@ -100,7 +105,7 @@ export default function ScheduleCalendarStage({
         <View {...layer(monthActive && !monthLanding)}>
           <ScheduleMonthView
             schedule={schedule}
-            focusedMonth={focusedMonth}
+            focusStore={focusStore}
             focusedOrdinal={focusedOrdinal}
             initialRowIndex={initialRowIndex}
             listRef={listRef}
@@ -146,23 +151,45 @@ export default function ScheduleCalendarStage({
             />
           ) : null}
         </View>
-        <JumpToTodayButton
-          visible={
-            monthActive ? todayDirection !== 'visible' : !isCurrentServiceYear
-          }
-          direction={
-            monthActive
-              ? todayDirection === 'up'
-                ? 'up'
-                : 'down'
-              : yearServiceYear > currentServiceYear
-                ? 'backward'
-                : 'forward'
+        <TodayButton
+          focusStore={focusStore}
+          monthActive={monthActive}
+          yearVisible={!isCurrentServiceYear}
+          yearDirection={
+            yearServiceYear > currentServiceYear ? 'backward' : 'forward'
           }
           bottom={bottomInset - 28}
           onPress={monthActive ? jumpToToday : showCurrentServiceYear}
         />
       </View>
     </GestureDetector>
+  )
+}
+
+function TodayButton({
+  focusStore,
+  monthActive,
+  yearVisible,
+  yearDirection,
+  bottom,
+  onPress,
+}: {
+  focusStore: ScheduleFocusStore
+  monthActive: boolean
+  yearVisible: boolean
+  yearDirection: 'backward' | 'forward'
+  bottom: number
+  onPress: () => void
+}) {
+  const todayDirection = useScheduleFocus(focusStore, (f) => f.todayDirection)
+  return (
+    <JumpToTodayButton
+      visible={monthActive ? todayDirection !== 'visible' : yearVisible}
+      direction={
+        monthActive ? (todayDirection === 'up' ? 'up' : 'down') : yearDirection
+      }
+      bottom={bottom}
+      onPress={onPress}
+    />
   )
 }

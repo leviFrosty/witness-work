@@ -7,25 +7,19 @@ import DayPreview, { dayHasPreview } from '@/components/DayPreview'
 import useDayMenuActions from '@/hooks/useDayMenuActions'
 import useLocalDay from '@/hooks/useLocalDay'
 import useServiceReport from '@/stores/serviceReport'
-import moment from 'moment'
 import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { localDayKey, storedDayKey } from '@/lib/normalizeDate'
 import { DayPlan, TimeEntry } from '@/types/timeEntry'
-import {
-  RecurringPlan,
-  getPlansIntersectingDay,
-  getEffectiveNoteForRecurringPlan,
-  plannedMinutesForDay,
-} from '@/lib/recurrence'
+import type { RecurringPlan } from '@/lib/recurrence'
 import { usePreferences } from '@/stores/preferences'
 import { Theme } from '@/types/theme'
-import { formatMinutesCompact, formatMinutesSpoken } from '@/lib/minutes'
-import { formatDisplay } from '@/lib/dates'
-import { calendarDayAccessibilityLabel } from '@/lib/calendarDayLabel'
-import { entryMinutes } from '@/lib/entryMinutes'
-import { isCountableEntry } from '@/lib/serviceReport'
-import { hasNote as noteExists } from '@/lib/richText/notes'
+import {
+  buildCalendarDayModel,
+  calendarDayModelLabel,
+  type CalendarDayModel,
+} from '@/components/calendarDayModel'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
+import { perf } from '@/lib/perf'
 
 const boxSize = 40
 
@@ -88,32 +82,28 @@ const getNoteIndicatorColor = (
   return theme.colors.textInverse
 }
 
-const NonPlannedDay = (
-  props: DayProps & {
-    serviceReports: TimeEntry[] | undefined
-    viewMode?: CalendarViewMode
-    height?: number
+type DayViewProps = {
+  model: CalendarDayModel
+  state?: 'disabled' | 'today' | ''
+  viewMode?: CalendarViewMode
+  height?: number
 
-    today: string
-  }
-) => {
+  today: string
+}
+
+const NonPlannedDay = ({
+  model,
+  state,
+  viewMode,
+  height,
+  today,
+}: DayViewProps) => {
   const theme = useTheme()
-  const minutesForDay =
-    props.serviceReports?.reduce(
-      (acc, report) => acc + entryMinutes(report),
-      0
-    ) || 0
-  const actualDurationText = formatMinutesCompact(minutesForDay)
-
-  if (!props.date) return null
-  const disabled = props.state === 'disabled'
-  const isToday = props.date.dateString === props.today
-  const wentInService = !!props.serviceReports?.some(isCountableEntry)
-  const hasNote = !!props.serviceReports?.some((report) => report.note)
+  const disabled = state === 'disabled'
+  const isToday = model.dateString === today
+  const { wentInService } = model
   const showActualTime =
-    (props.viewMode === 'actual' || props.viewMode === 'auto') &&
-    wentInService &&
-    !disabled
+    (viewMode === 'actual' || viewMode === 'auto') && wentInService && !disabled
 
   const backgroundColor = disabled
     ? undefined
@@ -125,7 +115,7 @@ const NonPlannedDay = (
     <View
       style={{
         width: boxSize,
-        height: props.height ?? boxSize,
+        height: height ?? boxSize,
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -149,7 +139,7 @@ const NonPlannedDay = (
         }}
         maxFontSizeMultiplier={FONT_SCALE_CAP}
       >
-        {props.date?.day}
+        {model.localDay.getDate()}
       </Text>
       {showActualTime && (
         <Text
@@ -161,10 +151,10 @@ const NonPlannedDay = (
           ellipsizeMode='tail'
           maxFontSizeMultiplier={FONT_SCALE_CAP}
         >
-          {actualDurationText}
+          {model.loggedText}
         </Text>
       )}
-      {hasNote && (
+      {model.noteDot && (
         <View
           style={{
             position: 'absolute',
@@ -184,58 +174,24 @@ const NonPlannedDay = (
   )
 }
 
-const PlannedDay = (
-  props: DayProps & {
-    serviceReports: TimeEntry[] | undefined
-    dayPlans?: DayPlan[]
-    recurringPlans?: RecurringPlan[]
-    viewMode?: CalendarViewMode
-    height?: number
-
-    today: string
-  }
-) => {
+const PlannedDay = ({
+  model,
+  state,
+  viewMode,
+  height,
+  today,
+}: DayViewProps) => {
   const theme = useTheme()
-  const minutesForDay =
-    props.serviceReports?.reduce(
-      (acc, report) => acc + entryMinutes(report),
-      0
-    ) || 0
-
-  const disabled = props.state === 'disabled'
-
-  const hasDayPlans = !!props.dayPlans?.length
-  const plannedMinutes = plannedMinutesForDay(
-    moment(props.date!.dateString).toDate(),
-    props.dayPlans ?? [],
-    props.recurringPlans ?? []
-  )
-  const plannedDurationText = formatMinutesCompact(plannedMinutes)
-  const actualDurationText = formatMinutesCompact(minutesForDay)
-  const wentInService = !!props.serviceReports?.some(isCountableEntry)
+  const disabled = state === 'disabled'
+  const { wentInService, plannedMinutes, loggedMinutes } = model
   const showActual =
-    props.viewMode === 'actual' || (props.viewMode === 'auto' && wentInService)
+    viewMode === 'actual' || (viewMode === 'auto' && wentInService)
 
-  const hasAPlan = hasDayPlans || !!props.recurringPlans?.length
-
-  const recurringPlanHasNote = props.recurringPlans?.some((plan) => {
-    const effectiveNote = getEffectiveNoteForRecurringPlan(
-      plan,
-      moment(props.date!.dateString).toDate()
-    )
-    return noteExists(effectiveNote)
-  })
-
-  const hasNote = !!(
-    props.dayPlans?.some(noteExists) ||
-    props.serviceReports?.some(noteExists) ||
-    recurringPlanHasNote
-  )
   const hitGoal =
-    wentInService && plannedMinutes > 0 && minutesForDay >= plannedMinutes
-  const dateString = props.date?.dateString ?? props.today
-  const dateInPast = dateString <= props.today
-  const isToday = dateString === props.today
+    wentInService && plannedMinutes > 0 && loggedMinutes >= plannedMinutes
+  const dateString = model.dateString
+  const dateInPast = dateString <= today
+  const isToday = dateString === today
 
   const statusColor = disabled
     ? {
@@ -253,7 +209,7 @@ const PlannedDay = (
     <View
       style={{
         width: boxSize,
-        height: props.height ?? boxSize,
+        height: height ?? boxSize,
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -273,7 +229,7 @@ const PlannedDay = (
         }}
         maxFontSizeMultiplier={FONT_SCALE_CAP}
       >
-        {props.date?.day}
+        {model.localDay.getDate()}
       </Text>
       {showActual
         ? wentInService && (
@@ -286,10 +242,10 @@ const PlannedDay = (
               ellipsizeMode='tail'
               maxFontSizeMultiplier={FONT_SCALE_CAP}
             >
-              {actualDurationText}
+              {model.loggedText}
             </Text>
           )
-        : hasAPlan && (
+        : model.planned && (
             <Text
               style={{
                 fontSize: theme.fontSize('xs'),
@@ -299,10 +255,10 @@ const PlannedDay = (
               ellipsizeMode='tail'
               maxFontSizeMultiplier={FONT_SCALE_CAP}
             >
-              {plannedDurationText}
+              {model.plannedText}
             </Text>
           )}
-      {hasNote && (
+      {model.noteDot && (
         <View
           style={{
             position: 'absolute',
@@ -319,97 +275,64 @@ const PlannedDay = (
   )
 }
 
-const CalendarDay = (
-  props: DayProps & {
-    monthsReports: TimeEntry[] | null
-    viewMode?: CalendarViewMode
-    height?: number
+type CellProps = {
+  model: CalendarDayModel
+  state?: 'disabled' | 'today' | ''
+  onPress?: (date: Date) => void
+  viewMode?: CalendarViewMode
+  height?: number
 
-    dayPlansOverride?: DayPlan[]
-    recurringPlansOverride?: RecurringPlan[]
+  today: string
 
-    overlay?: ReactNode
+  overlay?: ReactNode
 
-    overlayAccessibilityLabel?: string
+  overlayAccessibilityLabel?: string
 
-    selected?: boolean
-  }
-) => {
-  const storeDayPlans = useServiceReport((s) => s.dayPlans)
-  const storeRecurringPlans = useServiceReport((s) => s.recurringPlans)
-  const dayPlans = props.dayPlansOverride ?? storeDayPlans
-  const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
+  selected?: boolean
+}
+
+export const CalendarDayCell = ({
+  model,
+  state,
+  onPress,
+  viewMode,
+  height,
+  today,
+  overlay,
+  overlayAccessibilityLabel,
+  selected,
+}: CellProps) => {
+  perf.count('render:CalendarDay')
   const theme = useTheme()
-  const today = useLocalDay()
-
-  const dateString = props.date?.dateString
-  const dayKey = dateString ? localDayKey(dateString) : undefined
-  const reportsForDay =
-    dayKey && props.monthsReports
-      ? props.monthsReports.filter(
-          (report) => storedDayKey(report.date) === dayKey
-        )
-      : []
-  const dayPlansForDay = dateString
-    ? dayPlansOnLocalDay(dayPlans, dateString)
-    : []
-  const recurringPlansForDay = dateString
-    ? getPlansIntersectingDay(moment(dateString).toDate(), recurringPlans)
-    : []
-
-  const disabled = props.state === 'disabled'
-  const localDay = dateString ? moment(dateString).toDate() : undefined
+  const disabled = state === 'disabled'
+  const { localDay } = model
 
   const menu = useDayMenuActions(disabled ? undefined : localDay)
 
-  if (props.date === undefined || !dateString || !localDay) return null
-
-  const loggedMinutes = reportsForDay.reduce(
-    (acc, report) => acc + entryMinutes(report),
-    0
-  )
-  const wentInService = reportsForDay.some(isCountableEntry)
-  const accessibilityLabel = calendarDayAccessibilityLabel(
-    {
-      date: formatDisplay(localDay, 'dddd, LL'),
-      isToday: dateString === today,
-      isPast: dateString < today,
-      wentInService,
-      loggedMinutes,
-      hasPlan: !!(dayPlansForDay.length || recurringPlansForDay.length),
-      plannedMinutes: plannedMinutesForDay(
-        localDay,
-        dayPlansForDay,
-        recurringPlansForDay
-      ),
-      hasNote:
-        reportsForDay.some(noteExists) ||
-        dayPlansForDay.some(noteExists) ||
-        recurringPlansForDay.some((plan) =>
-          noteExists(getEffectiveNoteForRecurringPlan(plan, localDay))
-        ),
-      extra: props.overlayAccessibilityLabel,
-    },
-    formatMinutesSpoken
+  const accessibilityLabel = calendarDayModelLabel(
+    model,
+    today,
+    overlayAccessibilityLabel
   )
 
-  const frame = touchTargetFrame(boxSize, props.height ?? boxSize)
+  const frame = touchTargetFrame(boxSize, height ?? boxSize)
   const inset = (frame.width as number) / 2 - boxSize / 2
 
   const previewData = {
-    reports: reportsForDay,
-    dayPlans: dayPlansForDay,
-    recurringPlans: recurringPlansForDay,
+    reports: model.reports,
+    dayPlans: model.dayPlans,
+    recurringPlans: model.recurringPlans,
   }
+  const dayProps = { model, state, viewMode, height, today }
 
   return (
     <ContextMenu
       actions={menu}
       deferHost
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: !!props.selected }}
+      accessibilityState={{ selected: !!selected }}
       onPress={() => {
-        props.onPress?.(props.date)
+        onPress?.(localDay)
         const { howToAddPlan, removeHint } = usePreferences.getState()
         if (howToAddPlan) {
           removeHint('howToAddPlan')
@@ -437,29 +360,71 @@ const CalendarDay = (
         }}
       >
         <View>
-          {dayPlansForDay.length || recurringPlansForDay.length ? (
-            <PlannedDay
-              {...props}
-              serviceReports={reportsForDay}
-              dayPlans={dayPlansForDay}
-              recurringPlans={recurringPlansForDay}
-              today={today}
-            />
+          {model.planned ? (
+            <PlannedDay {...dayProps} />
           ) : (
-            <NonPlannedDay
-              {...props}
-              serviceReports={reportsForDay}
-              today={today}
-            />
+            <NonPlannedDay {...dayProps} />
           )}
-          {props.overlay ? (
+          {overlay ? (
             <View pointerEvents='none' style={StyleSheet.absoluteFill}>
-              {props.overlay}
+              {overlay}
             </View>
           ) : null}
         </View>
       </View>
     </ContextMenu>
+  )
+}
+
+const CalendarDay = (
+  props: DayProps & {
+    monthsReports: TimeEntry[] | null
+    viewMode?: CalendarViewMode
+    height?: number
+
+    dayPlansOverride?: DayPlan[]
+    recurringPlansOverride?: RecurringPlan[]
+
+    overlay?: ReactNode
+
+    overlayAccessibilityLabel?: string
+
+    selected?: boolean
+  }
+) => {
+  const storeDayPlans = useServiceReport((s) => s.dayPlans)
+  const storeRecurringPlans = useServiceReport((s) => s.recurringPlans)
+  const dayPlans = props.dayPlansOverride ?? storeDayPlans
+  const recurringPlans = props.recurringPlansOverride ?? storeRecurringPlans
+  const today = useLocalDay()
+
+  const dateString = props.date?.dateString
+  if (props.date === undefined || !dateString) return null
+  const dayKey = localDayKey(dateString)
+  const model = buildCalendarDayModel({
+    dateString,
+    reports: props.monthsReports
+      ? props.monthsReports.filter(
+          (report) => storedDayKey(report.date) === dayKey
+        )
+      : [],
+    dayPlans: dayPlansOnLocalDay(dayPlans, dateString),
+    recurringPlans,
+  })
+  const date = props.date
+
+  return (
+    <CalendarDayCell
+      model={model}
+      state={props.state}
+      onPress={props.onPress ? () => props.onPress?.(date) : undefined}
+      viewMode={props.viewMode}
+      height={props.height}
+      today={today}
+      overlay={props.overlay}
+      overlayAccessibilityLabel={props.overlayAccessibilityLabel}
+      selected={props.selected}
+    />
   )
 }
 

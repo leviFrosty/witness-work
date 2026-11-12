@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import moment from 'moment'
 import { View } from 'react-native'
 import Text from '@/components/ui/MyText'
@@ -14,6 +15,7 @@ export default function ScheduleMonthHeader({
 }: {
   row: ScheduleMonthRow
 }) {
+  perf.count('render:ScheduleMonthHeader')
   const theme = useTheme()
   const start = `${(row.column / 7) * 100}%` as const
   const date = moment({ year: row.month.year, month: row.month.month, day: 1 })

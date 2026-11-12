@@ -6,7 +6,7 @@ import {
   RecurringPlanFrequencies,
   RecurringPlanOverride,
 } from '@/types/timeEntry'
-import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
+import { dayPlansByDayKey, dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { logger } from '@/lib/logger'
 import { hasNote } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
@@ -149,6 +149,19 @@ export const getPlansIntersectingDay = (
   })
 }
 
+export const recurringPlansOverlapping = (
+  plans: RecurringPlan[],
+  first: Date,
+  last: Date
+): RecurringPlan[] => {
+  const from = epochDayOf(first)
+  const to = epochDayOf(last)
+  return plans.filter((plan) => {
+    const { start, end } = compileRecurringPlan(plan)
+    return start <= to && (end === null || end >= from)
+  })
+}
+
 export const getEffectiveMinutesForRecurringPlan = (
   plan: RecurringPlan,
   date: Date
@@ -280,6 +293,11 @@ export const plannedMinutesThroughEachDayOfMonth = (
   })
 }
 
+const monthTotals = new WeakMap<
+  ReadonlyMap<string, DayPlan[]>,
+  WeakMap<RecurringPlan[], Map<string, number>>
+>()
+
 export const plannedMinutesThroughDayForMonth = (
   month: number,
   year: number,
@@ -287,6 +305,22 @@ export const plannedMinutesThroughDayForMonth = (
   dayPlans: DayPlan[],
   recurringPlans: RecurringPlan[]
 ) => {
+  const byDay = dayPlansByDayKey(dayPlans)
+  let byPlans = monthTotals.get(byDay)
+  if (!byPlans) {
+    byPlans = new WeakMap()
+    monthTotals.set(byDay, byPlans)
+  }
+  let totals = byPlans.get(recurringPlans)
+  if (!totals) {
+    totals = new Map()
+    byPlans.set(recurringPlans, totals)
+  }
+
+  const key = `${year}-${month}-${throughDay}@${new Date().getTimezoneOffset()}`
+  const cached = totals.get(key)
+  if (cached !== undefined) return cached
+
   const selectedMonth = moment({ year, month, date: 1 }).startOf('month')
   const dayOfMonth = Math.max(
     0,
@@ -294,18 +328,15 @@ export const plannedMinutesThroughDayForMonth = (
   )
 
   let count = 0
+  for (let i = 0; i < dayOfMonth; i++)
+    count += plannedMinutesOnMonthDay(
+      selectedMonth,
+      i + 1,
+      dayPlans,
+      recurringPlans
+    )
 
-  Array(dayOfMonth)
-    .fill(1)
-    .forEach((_, i) => {
-      count += plannedMinutesOnMonthDay(
-        selectedMonth,
-        i + 1,
-        dayPlans,
-        recurringPlans
-      )
-    })
-
+  totals.set(key, count)
   return count
 }
 

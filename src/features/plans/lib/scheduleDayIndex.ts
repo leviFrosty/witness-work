@@ -23,7 +23,30 @@ const push = <T>(map: Map<string, T[]>, key: string, value: T) => {
   else map.set(key, [value])
 }
 
+const indexes = new WeakMap<
+  TimeEntriesByYear,
+  WeakMap<DayPlan[], ScheduleDayIndex>
+>()
+
 export function buildScheduleDayIndex(
+  serviceReports: TimeEntriesByYear,
+  dayPlans: DayPlan[]
+): ScheduleDayIndex {
+  let byPlans = indexes.get(serviceReports)
+  if (!byPlans) {
+    byPlans = new WeakMap()
+    indexes.set(serviceReports, byPlans)
+  }
+  const cached = byPlans.get(dayPlans)
+
+  if (cached && cached.dayPlansByDay === dayPlansByDayKey(dayPlans))
+    return cached
+  const index = indexReports(serviceReports, dayPlans)
+  byPlans.set(dayPlans, index)
+  return index
+}
+
+function indexReports(
   serviceReports: TimeEntriesByYear,
   dayPlans: DayPlan[]
 ): ScheduleDayIndex {

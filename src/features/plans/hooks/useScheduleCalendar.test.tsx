@@ -205,7 +205,10 @@ it('opens on a linked day’s week, with nothing left to reveal once it loads', 
   const row = calendar().schedule.dayRow.get('2026-11-19')!
 
   expect(calendar().initialRowIndex).toBe(row - 1)
-  expect(calendar().focusedMonth).toEqual({ year: 2026, month: 10 })
+  expect(calendar().focusStore.getState().month).toEqual({
+    year: 2026,
+    month: 10,
+  })
 
   offset = (row - 6) * ROW
   act(() => {

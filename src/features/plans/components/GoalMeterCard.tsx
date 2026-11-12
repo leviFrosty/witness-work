@@ -1,5 +1,6 @@
 import { View } from 'react-native'
 import ContextMenu from '@/components/ui/ContextMenu'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import StripedFill from '@/components/ui/StripedFill'
@@ -125,10 +126,10 @@ export default function GoalMeterCard({
   const card = (
     <View
       style={{
-        gap: 7,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        borderRadius: theme.numbers.borderRadiusLg,
+        gap: 8,
+        paddingHorizontal: inputLayout.horizontalPadding,
+        paddingVertical: 16,
+        borderRadius: inputLayout.sectionRadius,
         borderCurve: 'continuous',
         borderWidth: 1.5,
         borderColor: theme.colors.accent,
@@ -261,7 +262,7 @@ export default function GoalMeterCard({
       ]}
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
-      hoverRadius={theme.numbers.borderRadiusLg}
+      hoverRadius={inputLayout.sectionRadius}
       style={{ flex: 1 }}
     >
       {card}

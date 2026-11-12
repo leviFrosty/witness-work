@@ -18,7 +18,7 @@ import { Visit } from '@/types/visit'
 import VisitOutcomeMarker from '@/features/contacts/components/VisitOutcomeMarker'
 import VisitTimelineCard from '@/features/contacts/components/VisitTimelineCard'
 import useProgressiveCount from '@/features/contacts/hooks/useProgressiveCount'
-import { visitDayLabel } from '@/features/contacts/lib/visitDates'
+import { visitDayLabel } from '@/lib/visitDates'
 import {
   FollowUpState,
   followUpState,

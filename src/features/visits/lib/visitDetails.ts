@@ -45,12 +45,14 @@ export function detailsDateTime(date: Date): string {
   return `${dayLabel} · ${formatTime(date)}`
 }
 
-export const pastSentenceKey = (visit: Visit) =>
-  visit.notAtHome
-    ? 'visitDetails_pastNotAtHome'
-    : visit.isBibleStudy
-      ? 'visitDetails_pastStudy'
-      : 'visitDetails_pastConversation'
+export const outcomeLabel = (visit: Visit): string =>
+  i18n.t(
+    visit.notAtHome
+      ? 'notAtHome'
+      : visit.isBibleStudy
+        ? 'contactDetails.outcomeStudy'
+        : 'contactDetails.outcomeConversation'
+  )
 
 const REMIND_KEYS = {
   minutes: 'visitDetails_remindMinutes',

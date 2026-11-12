@@ -20,7 +20,7 @@ import { getNoteDoc, getNoteText, hasNote } from '@/lib/richText/notes'
 import useConversations from '@/stores/conversationStore'
 import { Visit } from '@/types/visit'
 import { visitCardAccessibilityLabel } from '@/features/contacts/lib/visitCardLabel'
-import { visitDayLabel } from '@/features/contacts/lib/visitDates'
+import { visitDayLabel } from '@/lib/visitDates'
 import { visitOutcome } from '@/features/contacts/lib/visitTimeline'
 
 const NOTE_LINES = 3

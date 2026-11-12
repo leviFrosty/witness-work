@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useRef, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -56,6 +56,10 @@ export function useDaysBeside(month: number, year: number) {
   return isWide && cards.shown.some((item) => item.id === 'days')
 }
 
+const DAYS_PANE_LEAD = 8
+
+const DAYS_PANE_TODAY_ROOM = 280
+
 const ProgressMonthTab = ({
   month,
   year,
@@ -104,6 +108,42 @@ const ProgressMonthTab = ({
   )
   const dayRef = (day: string) =>
     anchor.anchorRef(`day:${day}`, daysBeside ? 'trailing' : 'leading')
+
+  const leadDayRow = useRef<View>(null)
+  const trailingY = useRef(0)
+  useEffect(() => {
+    if (!daysBeside) return
+    let cancelled = false
+    const open = () => {
+      const scroll = dayReveal.scrollRef.current
+      const row = leadDayRow.current
+      const frame = trailingFrame.current
+      if (cancelled || !scroll) return
+      if (!row || !frame) return scroll.scrollToPosition(0, 0, false)
+      frame.measureInWindow((_fx, frameY, _fw, frameHeight) =>
+        row.measureInWindow((_rx, rowY) => {
+          const rowTop = trailingY.current + rowY - frameY
+          if (cancelled || !Number.isFinite(rowTop)) return
+          const inView = rowTop + DAYS_PANE_TODAY_ROOM <= frameHeight
+          scroll.scrollToPosition(
+            0,
+            inView ? 0 : Math.max(0, rowTop - DAYS_PANE_LEAD),
+            false
+          )
+        })
+      )
+    }
+    const frames = [
+      requestAnimationFrame(() => {
+        frames[1] = requestAnimationFrame(open)
+      }),
+      0,
+    ]
+    return () => {
+      cancelled = true
+      frames.forEach(cancelAnimationFrame)
+    }
+  }, [daysBeside, month, year, dayReveal.scrollRef])
 
   useTabReselect(() => {
     anchor.reset()
@@ -240,7 +280,10 @@ const ProgressMonthTab = ({
                 onScrollBeginDrag={trailingAnchor.onScrollBeginDrag}
                 onScrollEndDrag={trailingAnchor.onScrollEndDrag}
                 onMomentumScrollEnd={trailingAnchor.onMomentumScrollEnd}
-                onScroll={dayReveal.onScroll}
+                onScroll={(e) => {
+                  trailingY.current = e.nativeEvent.contentOffset.y
+                  dayReveal.onScroll(e)
+                }}
                 scrollEventThrottle={16}
                 keyboardShouldPersistTaps='handled'
                 style={{ flex: 1 }}
@@ -287,6 +330,7 @@ const ProgressMonthTab = ({
                       size='full'
                       dayReveal={dayReveal}
                       dayRef={dayRef}
+                      leadRowRef={leadDayRow}
                       wrapEditTrigger={(header) => (
                         <ReorderableLiftZone>
                           <ProgressCardPressable

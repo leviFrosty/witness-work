@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "传道工作年度总计",
   "yearTotal_info_description": "你的传道员身份没有年度目标，因此这里显示本传道工作年度记录的原始时数（已计入每月认可时数上限），而不是目标进度。",
   "category": "类别",
-  "showAllDays": "全天候演出",
-  "hideFutureDays": "隐藏未来的日子",
   "timeRollover": "时间滚动",
   "timeRollover_intro": "您上个月的时间不完整。我们可以将这些时间滚入本月，这样您的报告就可以保持完整的小时数。",
   "timeRollover_movePreview": "将 {{minutes}} 分钟从 {{from}} 移到 {{to}} 中。",

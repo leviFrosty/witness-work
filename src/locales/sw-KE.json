@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Jumla ya mwaka wa utumishi",
   "yearTotal_info_description": "Aina yako ya mhubiri haina lengo la mwaka, kwa hiyo hapa panaonyesha jumla ghafi ya saa zilizorekodiwa mwaka huu wa utumishi (baada ya vikomo vya kila mwezi vya saa za shughuli nyingine) badala ya maendeleo kuelekea lengo.",
   "category": "Jamii",
-  "showAllDays": "Onyesha siku zote",
-  "hideFutureDays": "Ficha siku zijazo",
   "timeRollover": "Uhamishaji wa Muda",
   "timeRollover_intro": "Mwezi wako uliopita ulikuwa na saa za sehemu. Tunaweza kuhamisha dakika hizo kwenye mwezi huu ili ripoti zako zibaki kwenye saa kamili.",
   "timeRollover_movePreview": "Hamisha dakika {{minutes}} kutoka {{from}} hadi {{to}}",

@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Total del año de servicio",
   "yearTotal_info_description": "Tu tipo de publicador no tiene meta anual, así que aquí se muestran las horas registradas en este año de servicio (tras aplicar los límites mensuales de crédito de horas) en lugar del progreso hacia una meta.",
   "category": "Categoría",
-  "showAllDays": "Mostrar todos los días",
-  "hideFutureDays": "Ocultar días futuros",
   "timeRollover": "Tiempo Rollover",
   "timeRollover_intro": "El mes anterior tenía horas parciales. Podemos transferir esos minutos a este mes para que sus informes se mantengan en horas completas.",
   "timeRollover_movePreview": "Mover {{minutes}} min de {{from}} a {{to}}",

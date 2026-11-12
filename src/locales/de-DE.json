@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Gesamtzeit im Dienstjahr",
   "yearTotal_info_description": "Für deine Verkündigerrolle gibt es kein Jahresziel. Daher zeigt dies die tatsächlich erfassten Stunden in diesem Dienstjahr (nach den monatlichen Anrechnungsgrenzen) statt des Fortschritts zu einem Ziel.",
   "category": "Kategorie",
-  "showAllDays": "Show alle Tage",
-  "hideFutureDays": "Verstecke zukünftige Tage",
   "timeRollover": "Zeit Rollover",
   "timeRollover_intro": "Ihr vorheriger Monat hatte Teilstunden. Wir können diese Minuten in diesen Monat übertragen, so dass Ihre Berichte immer ganze Stunden enthalten.",
   "timeRollover_movePreview": "Verschiebe {{minutes}} min von {{from}} in {{to}}",

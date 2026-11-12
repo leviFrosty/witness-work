@@ -2592,8 +2592,6 @@
   "yearTotal_info_title": "Igiteranyo cy'umwaka w'umurimo",
   "yearTotal_info_description": "Icyiciro cyawe nta ntego y'umwaka gifite, bityo aha herekana amasaha yose wanditse muri uyu mwaka w'umurimo (nyuma y'imbibi za buri kwezi z'amasaha y'indi mirimo) aho kwerekana aho ugeze ugana ku ntego.",
   "category": "Catégorie",
-  "showAllDays": "Show all days",
-  "hideFutureDays": "Hide future days",
   "timeRollover": "Gusubizaho amasaha",
   "timeRollover_intro": "Iyo urenze intego, amasaha asaga arashobora kujyanwa ku kwezi gukurikira.",
   "timeRollover_movePreview": "Imura iminota {{minutes}} kuva {{from}} ujyana {{to}}",

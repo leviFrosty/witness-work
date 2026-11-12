@@ -2725,8 +2725,6 @@
   "yearTotal_info_title": "Total do ano de serviço",
   "yearTotal_info_description": "A sua função não tem alvo anual, por isso aqui aparecem as horas registadas neste ano de serviço (após os limites mensais de crédito de horas), em vez do progresso em direção a um alvo.",
   "category": "Categoria",
-  "showAllDays": "Mostrar todos os dias",
-  "hideFutureDays": "Ocultar dias futuros",
   "timeRollover_creditExcluded": "A sua hora parcial inclui {{minutes}} min de Tempo de Crédito. O Tempo de Crédito não é elegível para transferência.",
   "timeRollover_creditOnlyNotice": "A hora parcial do mês passado é Tempo de Crédito, que não é elegível para transferência.",
   "rolloverIncludesCredit": "Transferir Tempo de Crédito",

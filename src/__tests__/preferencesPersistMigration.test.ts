@@ -22,6 +22,7 @@ vi.mock('@/lib/locales', () => ({
 }))
 
 import {
+  migrateDaysCardToShortList,
   migrateDropProgressBarDetailsPreference,
   migrateMarkInstalledBeforeFreeSync,
   migratePreferencesPersistedState,
@@ -996,5 +997,47 @@ describe('preferences persist migrate v15 → v16 (installed before sync was fre
 
   it('does not run for a v16 blob', () => {
     expect(migratePreferencesPersistedState({}, 16)).toEqual({})
+  })
+})
+
+describe('preferences v17: the Days card opens as the short list', () => {
+  it('moves a stored Days card to the short size and keeps the rest', () => {
+    const migrated = migratePreferencesPersistedState(
+      {
+        role: 'regularPioneer',
+        progressCards: [
+          { id: 'studies', size: 'wide' },
+          { id: 'days', size: 'full' },
+          { id: 'fromTheFuture', size: 'small' },
+        ],
+      },
+      16
+    )
+    expect(migrated).toEqual({
+      role: 'regularPioneer',
+      progressCards: [
+        { id: 'studies', size: 'wide' },
+        { id: 'days', size: 'compact' },
+        { id: 'fromTheFuture', size: 'small' },
+      ],
+    })
+  })
+
+  it('leaves an uncustomized or emptied layout alone', () => {
+    expect(migrateDaysCardToShortList({ progressCards: null })).toEqual({
+      progressCards: null,
+    })
+    expect(migrateDaysCardToShortList({ progressCards: [] })).toEqual({
+      progressCards: [],
+    })
+    expect(migrateDaysCardToShortList({ a: 1 })).toEqual({ a: 1 })
+    expect(migrateDaysCardToShortList(null)).toBeNull()
+  })
+
+  it('is idempotent and does not run for a v17 blob', () => {
+    const blob = { progressCards: [{ id: 'days', size: 'full' }, null] }
+    const once = migrateDaysCardToShortList(blob)
+    expect(migrateDaysCardToShortList(once)).toEqual(once)
+    expect(migratePreferencesPersistedState(blob, 17)).toEqual(blob)
   })
 })

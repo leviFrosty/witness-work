@@ -32,6 +32,10 @@ vi.mock('react-native-safe-area-context', () => ({
 vi.mock('@/lib/minutes', () => ({
   useFormattedMinutes: (minutes: number) => ({ formatted: `${minutes}m` }),
 }))
+vi.mock('@/hooks/useNoteEditorMode', () => ({ default: () => 'takeover' }))
+vi.mock('@/components/richText/editor/InlineNoteEditor', () => ({
+  default: 'InlineNoteEditor',
+}))
 vi.mock('@/hooks/useOpenNoteEditor', () => ({
   useOpenNoteEditor: () => vi.fn(),
 }))

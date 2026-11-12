@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { expect, readStoreRow, test } from './fixtures'
 
 test.use({
   preferences: { role: 'regularPioneer', roleHistory: null },
@@ -159,6 +159,7 @@ for (const page of [
 
 test.describe('the note editor', () => {
   test.beforeEach(async ({ app }) => {
+    test.skip(!isPhone(app), 'a wide window edits the note in the form')
     await addContact(app, 'Sam Rivera')
     await app.getByRole('button', { name: 'Save' }).click()
     await app.getByRole('button', { name: 'Note' }).first().click()
@@ -209,6 +210,99 @@ test.describe('the note editor', () => {
 
   test('its formatting tools are fingertip big', async ({ app }) => {
     await expectTarget(app, 'Bold')
+  })
+})
+
+test.describe('a note in a wide window', () => {
+  const note = (page: Page) => page.getByRole('textbox', { name: 'Note' })
+
+  test.beforeEach(async ({ app }) => {
+    test.skip(isPhone(app), 'a phone-sized window opens the note editor')
+    await addContact(app, 'Sam Rivera')
+    await app.getByRole('button', { name: 'Save' }).click()
+    await expect(note(app)).toBeVisible()
+    await expect(app).toHaveURL(/Visit(%20| )Form/)
+  })
+
+  test('is edited in the form, with fingertip-big formatting tools', async ({
+    app,
+    shot,
+  }) => {
+    await note(app).click()
+    await app.keyboard.type('Talked about ')
+    await app.getByRole('button', { name: 'Bold' }).click()
+    await expect(note(app)).toBeFocused()
+    await app.keyboard.type('hope', { delay: 40 })
+
+    await expect(note(app).locator('strong')).toHaveText('hope')
+    await expect(app).toHaveURL(/Visit(%20| )Form/)
+    await expect(app.getByRole('button', { name: 'Done' })).toHaveCount(0)
+    await expectTarget(app, 'Bold')
+    await shot('note-inline')
+  })
+
+  test('does not take the focus from the form until it is clicked', async ({
+    app,
+  }) => {
+    expect(
+      await note(app).evaluate((element) => element === document.activeElement)
+    ).toBe(false)
+  })
+
+  test('a long note scrolls inside its box and keeps its tools in reach', async ({
+    app,
+  }) => {
+    await note(app).click()
+    for (let line = 0; line < 40; line++) {
+      await app.keyboard.type(`Line ${line}`)
+      await app.keyboard.press('Enter')
+    }
+    const box = (await note(app).locator('..').boundingBox())!
+    expect(box.height).toBeLessThanOrEqual(400)
+    await expect(app.getByText('Line 39')).toBeInViewport()
+    await expect(app.getByRole('button', { name: 'Bold' })).toBeInViewport()
+  })
+
+  test('Ctrl/Cmd+Enter in the note saves the form, with the text just typed', async ({
+    app,
+  }) => {
+    await note(app).click()
+    await app.keyboard.type('Talked about hope')
+    const apple = await app.evaluate(() =>
+      /mac|iphone|ipad|ipod/i.test(navigator.platform)
+    )
+    await app.keyboard.press(apple ? 'Meta+Enter' : 'Control+Enter')
+
+    await expect(app).not.toHaveURL(/Visit(%20| )Form/)
+    await expect
+      .poll(async () => {
+        const row = (await readStoreRow(
+          app,
+          'mmkv.default',
+          'conversations'
+        )) as string | undefined
+        return row && JSON.parse(row).state.conversations?.at(-1)?.note
+      })
+      .toBe('Talked about hope')
+  })
+
+  test('keeps the text when the window narrows to the full-screen editor and widens again', async ({
+    app,
+  }) => {
+    await note(app).click()
+    await app.keyboard.type('Talked about hope')
+    await app.setViewportSize({ width: 390, height: 844 })
+
+    await expect(note(app)).toBeHidden()
+    await expect(app.getByText('Talked about hope')).toBeVisible()
+    await app.getByRole('button', { name: 'Note' }).first().click()
+    await expect(note(app)).toContainText('Talked about hope')
+    await app.keyboard.type(' and prayer')
+    await app.setViewportSize({ width: 1280, height: 900 })
+    await app.getByRole('button', { name: 'Done' }).click()
+
+    await expect(app).toHaveURL(/Visit(%20| )Form/)
+    await expect(note(app)).toContainText('Talked about hope and prayer')
   })
 })
 

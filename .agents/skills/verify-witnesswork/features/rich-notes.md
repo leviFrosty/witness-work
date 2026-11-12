@@ -5,6 +5,7 @@ Notes on visits, time entries, plans and trips open in a full-screen note editor
 ## Sub-features
 
 - `notes-editor` opens from every note field: Add Time and the Plan form (`time-entry-note-row`, `plan-note-row`), the visit form's Note box (`visit-note`) and the trip form (`trip-note`). Done (`note-editor-done`) closes it; Android Back does too. The form keeps the note until it's saved.
+- `notes-inline` replaces the full-screen editor on the web when the layout is wide (`useAdaptiveLayout().isWide`, 760 pt of content): every note field is then the editor itself, in the form, with the formatting bar under the text (`useNoteEditorMode`, `InlineNoteEditor`). It has no Done; edits reach the form as you type and are kept by the form's own Save. Phones, tablets and narrow browser windows keep the full-screen editor, because there the editor is a web view (`hasCapability('inlineNoteEditor')`). The field keeps its testID (`visit-note`, `trip-note`, `plan-note`, `route-note`, `time-entry-note`).
 - `notes-toolbar` formats at the cursor. Buttons have testIDs `note-editor-<tool>` (`bold`, `italic`, `underline`, `strike`, `heading1`, `heading2`, `bulletList`, `orderedList`, `taskList`, `outdent`, `indent`, `link`, `photo`, `undo`, `redo`, `dismiss`).
 - `notes-links` turns typed `https://…` and `www.…` addresses into links; the link button opens a sheet for an address (and text when nothing is selected). Read-only notes show a preview card for up to three links.
 - `notes-photos` adds photos from the camera or library (up to 10, resized), shown in notes and full screen when tapped. Visit notes offer no photo button in data protection mode.
@@ -32,6 +33,10 @@ Steps:
 - **Second view.** Schedule → today's day sheet shows the formatted note with its link card; tick a checklist item and read the store again (`checked: true`, and `☑` in `note`).
 - **Proof.** `wwv shot <label>` after each step and `wwv errors`.
 - **Scripted.** `wwv flow e2e/maestro/add-time.yaml` and `e2e/maestro/create-plan.yaml` type a plain note through the editor.
+
+## Driving it on the web
+
+`wwv web test e2e/web/layout.spec.ts -g note` covers both modes: "the note editor" at the phone size (`--project chromium-phone`) and "a note in a wide window" at the desktop size, including a window resized across the line while a note is being written. In a spec, the inline editor is `getByRole('textbox', { name: 'Note' })` in the form. After clicking a toolbar button, wait for the textbox to be focused before typing: the editor takes the focus back on the next frame, and keys typed before that are lost.
 
 ## Gotchas
 

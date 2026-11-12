@@ -1,11 +1,15 @@
+import { useRef } from 'react'
 import { View } from 'react-native'
 import { Maximize2 as Maximize2Icon } from 'lucide-react-native'
 import RichNote from '@/components/RichNote'
+import InlineNoteEditor from '@/components/richText/editor/InlineNoteEditor'
+import type { RichTextEditorRef } from '@/components/richText/editor/RichTextEditor'
 import Button from '@/components/ui/Button'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useNoteEditorMode from '@/hooks/useNoteEditorMode'
 import { useOpenNoteEditor } from '@/hooks/useOpenNoteEditor'
 import i18n from '@/lib/locales'
 import type { NoteSurface } from '@/lib/richText/noteEditorSession'
@@ -35,6 +39,8 @@ const NoteInputRow = (props: {
 }) => {
   const theme = useTheme()
   const openEditor = useOpenNoteEditor()
+  const mode = useNoteEditorMode()
+  const editor = useRef<RichTextEditorRef>(null)
   const filled = hasNote(props.note)
   const open = () =>
     openEditor({
@@ -46,6 +52,31 @@ const NoteInputRow = (props: {
       allowImages: props.allowImages ?? true,
       onChange: (doc) => props.onChange(noteFields(doc)),
     })
+
+  if (mode === 'inline') {
+    return (
+      <InputRowContainer
+        label={props.label}
+        description={props.description}
+        info={props.info}
+        lastInSection={props.lastInSection}
+        controlWidth='full'
+        onLabelPress={() => editor.current?.focus()}
+      >
+        <InlineNoteEditor
+          ref={editor}
+          note={props.note}
+          onChange={props.onChange}
+          surface={props.surface}
+          label={props.label}
+          placeholder={props.placeholder}
+          maxLength={props.maxLength}
+          allowImages={props.allowImages}
+          testID={props.testID}
+        />
+      </InputRowContainer>
+    )
+  }
 
   return (
     <InputRowContainer

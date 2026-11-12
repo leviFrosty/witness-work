@@ -72,6 +72,15 @@ describe('hasCapability', () => {
     }
   })
 
+  it('edits notes in the page only where the editor is part of the page', () => {
+    platform.OS = 'web'
+    expect(hasCapability('inlineNoteEditor')).toBe(true)
+    for (const os of ['ios', 'android']) {
+      platform.OS = os
+      expect(hasCapability('inlineNoteEditor')).toBe(false)
+    }
+  })
+
   it('reads the platform when asked, not when loaded', () => {
     platform.OS = 'web'
     expect(hasCapability('deviceNotifications')).toBe(false)

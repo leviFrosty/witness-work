@@ -28,7 +28,9 @@ import { measureReward } from '@/lib/actionRewards'
 import DockedFormLayout from '@/components/ui/layout/DockedFormLayout'
 import { useCardStyle } from '@/components/ui/Card'
 import TypeFormRow from '@/components/TypeFormRow'
+import useNoteEditorMode from '@/hooks/useNoteEditorMode'
 import { useOpenNoteEditor } from '@/hooks/useOpenNoteEditor'
+import InlineNoteEditor from '@/components/richText/editor/InlineNoteEditor'
 import { useFormattedMinutes } from '@/lib/minutes'
 import { entryMinutes, splitMinutes } from '@/lib/entryMinutes'
 import { localDayKey } from '@/lib/normalizeDate'
@@ -168,6 +170,7 @@ const TimeEntryForm = (props: Props) => {
   const cardStyle = useCardStyle()
   const insets = useSafeAreaInsets()
   const openNote = useOpenNoteEditor()
+  const noteMode = useNoteEditorMode()
   const {
     role: currentRole,
     roleHistory,
@@ -578,21 +581,52 @@ const TimeEntryForm = (props: Props) => {
       hint={hasSelectedCategory ? undefined : i18n.t('categoryNeeded')}
     />
   )
-  const noteRow = (
-    <DetailRow
-      divider
-      label={i18n.t('note')}
-      value={
-        noteText ||
-        i18n.t(
-          hasNote(serviceReport) ? 'timeForm_noteAdded' : 'timeForm_optional'
-        )
-      }
-      onPress={editNote}
-      paddingX={paddingX}
-      testID='time-entry-note-row'
-    />
-  )
+  const noteRow =
+    noteMode === 'inline' ? (
+      <View
+        testID='time-entry-note-row'
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+          paddingHorizontal: paddingX,
+          paddingTop: 16,
+          paddingBottom: 16,
+          gap: 10,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: theme.fonts.medium,
+            fontSize: theme.fontSize('md'),
+          }}
+        >
+          {i18n.t('note')}
+        </Text>
+        <InlineNoteEditor
+          note={serviceReport}
+          onChange={setNote}
+          surface='time_entry'
+          label={i18n.t('note')}
+          placeholder={i18n.t('timeForm_optional')}
+          maxLength={500}
+          testID='time-entry-note'
+        />
+      </View>
+    ) : (
+      <DetailRow
+        divider
+        label={i18n.t('note')}
+        value={
+          noteText ||
+          i18n.t(
+            hasNote(serviceReport) ? 'timeForm_noteAdded' : 'timeForm_optional'
+          )
+        }
+        onPress={editNote}
+        paddingX={paddingX}
+        testID='time-entry-note-row'
+      />
+    )
 
   if (inline) {
     return (

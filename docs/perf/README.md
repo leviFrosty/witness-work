@@ -89,3 +89,23 @@ Every run records `conditions`: the 1- and 5-minute load averages, `kern.memorys
 - iCloud sync, iOS Calendar Sync publishing, APNs/FCM pushes, widgets' and the watch's far side, and RevenueCat's native network aren't exercised (see step 5).
 - iOS launch time includes simctl overhead (see the metric table); Android's doesn't.
 - Android has no inactive state, so it has no blip cycles.
+
+## Scroll smoothness: the Schedule scrub
+
+`scripts/perf/scrub.mjs` measures what a person feels when they hold a finger on the Schedule's month list and move it quickly up and down across a month boundary. It uses the same Release probe build and device leases as `run.mjs`.
+
+```bash
+node scripts/perf/scrub.mjs --ref <sha> --name before            # stress data, 6 rounds of 8 s
+node scripts/perf/scrub.mjs --ref <sha> --name after --trace     # plus an Instruments Time Profiler trace of round 1
+node scripts/perf/scrub.mjs compare docs/perf/before.json docs/perf/after.json
+```
+
+- **The finger is real HID input.** `scripts/perf/scrub-touch` (Swift, built on demand against AXe's FBSimulatorControl) presses once, streams touch moves at 120 Hz on a triangle wave (`--period 500` ms per up-and-down cycle, `--amplitude 280` pt), holds still, and lifts, so UIKit's scroll view tracks it exactly as it tracks a finger. `--pattern fling` lifts after each stroke instead. AXe's own `batch` takes about a second per touch step, too slow for this.
+- **The app records every frame.** With `-wwPerfScrub 1` (a launch argument the runner passes), `src/app/dev-harness/perfScrub.ts` seeds the scenario (`--scenario`, default `stress`), opens Schedule, and records each UI-thread display-link frame (a Reanimated worklet) and each JS-thread `requestAnimationFrame` with wall-clock times. The runner trims them to the gesture and reports frames per second, p95/p99/worst frame times, hitches (frames longer than 1.5 refresh periods), missed refreshes, and the hitch time ratio (ms of delay per second, as in Apple's hitch metric).
+- **Counters say why.** Each round reports `perf.count` deltas: `render:*` for the screen, list, rows and day cells, `schedule:focus` (month changes under the focus line) and `schedule:scroll`, plus Hermes GCs.
+- **`--trace`** records a Time Profiler trace of round 1 to `.verify/` (open it in Instruments, or `xcrun xctrace export` it).
+- `scripts/perf/js-profile.mjs -- <command>` samples the dev build's JS thread over CDP while a command (such as the scrub tool) runs, to attribute JS time by function. Dev React is slower than Release; use it to find work, and the Release scrub to time it.
+
+Results from November 2026, with what was slow and how it was fixed: [`scrub-results-2026-11.md`](./scrub-results-2026-11.md).
+
+Simulators share the Mac's CPU and run at 60 Hz, so compare runs on the same machine, back to back. A physical device needs the same build installed through Xcode; the probe works there too, but the HID finger doesn't.

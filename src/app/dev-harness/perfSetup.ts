@@ -1,3 +1,4 @@
+import { Platform, Settings } from 'react-native'
 import { mmkvStorage } from '@/stores/mmkv'
 import { usePreferences } from '@/stores/preferences'
 import { setDevFlagOverride } from '@/lib/featureFlags'
@@ -8,7 +9,14 @@ import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { quickConnectCalendar } from '@/app/calendar/calendarSync'
 import { seedScenario } from '@/app/dev-harness/seedScenario'
 
-const SCENARIO = 'busy'
+const launchArg = (name: string): string | undefined => {
+  if (Platform.OS !== 'ios') return undefined
+  const value: unknown = Settings.get(name)
+  return typeof value === 'string' && value ? value : undefined
+}
+
+const SCENARIO = launchArg('wwPerfScenario') ?? 'busy'
+const SCRUB = launchArg('wwPerfScrub') === '1'
 
 const SETUP_KEY = 'perfSetupScenario'
 
@@ -24,6 +32,12 @@ async function outcome(step: () => Promise<unknown>): Promise<string> {
 async function setUp() {
   seedScenario(SCENARIO)
 
+  if (SCRUB) {
+    const buddies = await outcome(() => buddiesEngine.ensureInbox())
+    mmkvStorage.set(SETUP_KEY, SCENARIO)
+    reportPerf({ type: 'setup', at: Date.now(), scenario: SCENARIO, buddies })
+    return
+  }
   usePreferences.getState().set({
     unloggedDayReminders: true,
     unloggedDayRemindersEnabledAt: Date.now(),
@@ -47,7 +61,9 @@ async function setUp() {
 
 export function installPerfSetup() {
   setDevFlagOverride('buddies', true)
-  if (mmkvStorage.getString(SETUP_KEY)) return
+  const ready = () => mmkvStorage.getString(SETUP_KEY) === SCENARIO
+  if (SCRUB) require('@/app/dev-harness/perfScrub').runPerfScrub(ready)
+  if (ready()) return
   const start = () => {
     if (navigationRef.isReady()) void setUp()
     else setTimeout(start, 250)

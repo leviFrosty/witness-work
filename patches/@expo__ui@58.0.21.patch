@@ -176,6 +176,46 @@ index 24db7b13b0eb4e935cacfdc5b34978d13a290246..801cfc52dd32db0c8cc726432ae535a1
        }
      }
    }
+diff --git a/ios/Modifiers/HostViewContentMarginsMitigation.swift b/ios/Modifiers/HostViewContentMarginsMitigation.swift
+index 9ec58aa55c65873a01156126d7b7b49a93a0bfb8..866061b401249c6b902ca7485555c193f9ba71ed 100644
+--- a/ios/Modifiers/HostViewContentMarginsMitigation.swift
++++ b/ios/Modifiers/HostViewContentMarginsMitigation.swift
+@@ -39,16 +39,31 @@ internal struct HostViewContentMarginsMitigation: ViewModifier {
+     var trailing: CGFloat?
+   }
+ 
++  private struct HorizontalPlacement: Equatable {
++    var minX: CGFloat
++    var maxX: CGFloat
++    var leading: CGFloat
++    var trailing: CGFloat
++  }
++
+   func body(content: Content) -> some View {
+ #if os(iOS)
+     if #available(iOS 17.0, *) {
+       content
+         .contentMargins(.leading, margins.leading, for: .scrollContent)
+         .contentMargins(.trailing, margins.trailing, for: .scrollContent)
+-        .onGeometryChange(for: CGRect.self, of: { proxy in proxy.frame(in: .global) }) { _ in
+-          updateMargins()
+-        }
+-        .onGeometryChange(for: EdgeInsets.self, of: { proxy in proxy.safeAreaInsets }) { _ in
++        // Only the horizontal placement and side insets matter here. Watching the whole global frame
++        // ran this on every frame of a vertical scroll for every Host in the list (a calendar with a
++        // context menu per day has a hundred), which kept the main thread busy and dropped frames.
++        .onGeometryChange(for: HorizontalPlacement.self, of: { proxy in
++          let frame = proxy.frame(in: .global)
++          return HorizontalPlacement(
++            minX: frame.minX,
++            maxX: frame.maxX,
++            leading: proxy.safeAreaInsets.leading,
++            trailing: proxy.safeAreaInsets.trailing
++          )
++        }) { _ in
+           updateMargins()
+         }
+     } else {
 diff --git a/src/jetpack-compose/modifiers/index.ts b/src/jetpack-compose/modifiers/index.ts
 index 9ab09f9867e129561e1563787a6898425df58b2c..c787fe8de1f7084ecfd705e1f98ecb9a5c11dd6c 100644
 --- a/src/jetpack-compose/modifiers/index.ts

@@ -1,3 +1,4 @@
+import { perf } from '@/lib/perf'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { BackHandler, Platform, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,6 +8,7 @@ import {
 } from '@react-navigation/bottom-tabs'
 import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
+import Animated from 'react-native-reanimated'
 
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
@@ -20,7 +22,9 @@ import { useTakeover } from '@/stores/takeover'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 import RootHeader from '@/components/RootHeader'
-import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
+import ScrollAwayHeader, {
+  useScrollAwayMotion,
+} from '@/components/ui/ScrollAwayHeader'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import { renderDaySheetPlanForm } from '@/features/plans/components/PlanDayForm'
@@ -41,13 +45,17 @@ import ScheduleInsights from '@/features/plans/components/ScheduleInsights'
 import ScheduleScreenSections from '@/features/plans/components/ScheduleScreenSections'
 import ScheduleViewToggle from '@/features/plans/components/ScheduleViewToggle'
 import useEditableMonthGoal from '@/features/plans/hooks/useEditableMonthGoal'
-import useScheduleCalendar from '@/features/plans/hooks/useScheduleCalendar'
+import useScheduleCalendar, {
+  type ScheduleFocusStore,
+  useScheduleFocus,
+} from '@/features/plans/hooks/useScheduleCalendar'
 import useScheduleDayIndex from '@/features/plans/hooks/useScheduleDayIndex'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
 const ScheduleScreen = ({ route, navigation }: Props) => {
+  perf.count('render:ScheduleScreen')
   const theme = useTheme()
   const { isWide, hasBottomBar } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
@@ -84,7 +92,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
 
   const {
     view,
-    focusedMonth: focused,
+    focusStore,
     changeView,
     showMonth,
     revealDay,
@@ -109,6 +117,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         setSelectedDateSheet((current) => ({ ...current, open: false }))
         return
       }
+      const focused = focusStore.getState().month
       const date = moment(selectedDateSheet.date)
       if (date.year() === focused.year && date.month() === focused.month) return
       const today = moment()
@@ -162,6 +171,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     return () => subscription.remove()
   }, [goalOpen])
 
+  const sheetHeight = useRef(0)
   const linkedDate = route.params?.date
   useEffect(() => {
     if (!linkedDate) return
@@ -180,6 +190,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   }, [linkedDate, isWide, view, navigation, showMonth, revealDay])
 
   const bars = useHideBarsOnScroll({ paused: selectedDateSheet.open })
+  const scrollAway = useScrollAwayMotion(bars.hidden)
 
   const selectedDate = selectedDateSheet.date
   const selectedMonthReports =
@@ -189,7 +200,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
       selectedDate.getFullYear()
     ) ?? []
 
-  const sheetHeight = useRef(0)
   const pressDay = (date: Date) => {
     if (isWide) dayInView.current = true
     setSelectedDateSheet({ open: !isWide, date })
@@ -220,7 +230,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   )
 
   const header = (
-    <ScrollAwayHeader hidden={bars.hidden}>
+    <ScrollAwayHeader hidden={bars.hidden} motion={scrollAway.motion}>
       <RootHeader
         title={i18n.t('Schedule')}
         actions={
@@ -269,7 +279,7 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         leading={
           <View style={{ flex: 1 }}>
             {header}
-            <View
+            <Animated.View
               style={
                 isWide
                   ? { flex: 1 }
@@ -281,11 +291,12 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
                         alignSelf: 'center',
                       },
                       foldColumn,
+                      scrollAway.contentStyle,
                     ]
               }
             >
               {stage}
-            </View>
+            </Animated.View>
           </View>
         }
         trailingStyle={isWide ? { paddingTop: insets.top + 8 } : undefined}
@@ -300,18 +311,10 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
                 date={selectedDate}
                 reports={selectedMonthReports}
               />
-              <ScheduleInsights
-                month={focused.month}
-                year={focused.year}
-                onEditGoal={
-                  editableGoal(focused)
-                    ? () => openGoalEditor(focused)
-                    : undefined
-                }
-              />
-              <ScheduleScreenSections
-                month={focused.month}
-                year={focused.year}
+              <FocusedMonthPanel
+                focusStore={focusStore}
+                editableGoal={editableGoal}
+                onEditGoal={openGoalEditor}
               />
             </ScrollView>
           ) : undefined
@@ -350,6 +353,30 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
         />
       ) : null}
     </View>
+  )
+}
+
+function FocusedMonthPanel({
+  focusStore,
+  editableGoal,
+  onEditGoal,
+}: {
+  focusStore: ScheduleFocusStore
+  editableGoal: (month: CalendarMonth) => boolean
+  onEditGoal: (month: CalendarMonth) => void
+}) {
+  const focused = useScheduleFocus(focusStore, (f) => f.month)
+  return (
+    <>
+      <ScheduleInsights
+        month={focused.month}
+        year={focused.year}
+        onEditGoal={
+          editableGoal(focused) ? () => onEditGoal(focused) : undefined
+        }
+      />
+      <ScheduleScreenSections month={focused.month} year={focused.year} />
+    </>
   )
 }
 

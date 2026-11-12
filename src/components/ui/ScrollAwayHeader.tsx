@@ -1,10 +1,50 @@
-import { PropsWithChildren, useState } from 'react'
+import { PropsWithChildren, useEffect, useState } from 'react'
 import { StyleSheet } from 'react-native'
-import Animated, { useReducedMotion } from 'react-native-reanimated'
+import Animated, {
+  Easing,
+  type SharedValue,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 
 export const BARS_TRANSITION_MS = 260
+
+const EASE_IN_OUT = Easing.bezier(0.42, 0, 0.58, 1)
+
+export type ScrollAwayMotion = {
+  progress: SharedValue<number>
+
+  travel: SharedValue<number>
+}
+
+export function useScrollAwayMotion(hidden: boolean) {
+  const reduceMotion = useReducedMotion()
+  const progress = useSharedValue(hidden ? 1 : 0)
+  const travel = useSharedValue(0)
+
+  useEffect(() => {
+    progress.set(
+      withTiming(hidden ? 1 : 0, {
+        duration: reduceMotion ? 0 : BARS_TRANSITION_MS,
+        easing: EASE_IN_OUT,
+      })
+    )
+  }, [hidden, reduceMotion, progress])
+
+  const contentStyle = useAnimatedStyle(() => {
+    const laidOut = progress.value > 0 ? -travel.value : 0
+    return {
+      transform: [{ translateY: -travel.value * progress.value - laidOut }],
+    }
+  })
+
+  const motion: ScrollAwayMotion = { progress, travel }
+  return { motion, contentStyle }
+}
 
 type Props = PropsWithChildren<{
   hidden: boolean
@@ -13,6 +53,8 @@ type Props = PropsWithChildren<{
 
   overlay?: boolean
   onHeightChange?: (height: number) => void
+
+  motion?: ScrollAwayMotion
 }>
 
 export default function ScrollAwayHeader({
@@ -20,6 +62,7 @@ export default function ScrollAwayHeader({
   backgroundColor,
   overlay = false,
   onHeightChange,
+  motion,
   children,
 }: Props) {
   const theme = useTheme()
@@ -30,18 +73,32 @@ export default function ScrollAwayHeader({
   const travel = Math.max(0, height - insets.top)
   const duration = reduceMotion ? 0 : BARS_TRANSITION_MS
 
+  const motionTravel = motion?.travel
+  useEffect(() => {
+    motionTravel?.set(travel)
+  }, [motionTravel, travel])
+  const collapse = useAnimatedStyle(() =>
+    motion
+      ? {
+          marginBottom: motion.progress.value > 0 ? -motion.travel.value : 0,
+        }
+      : {}
+  )
+
   return (
     <Animated.View
       pointerEvents='box-none'
       style={
         overlay
           ? styles.overlay
-          : {
-              marginBottom: hidden ? -travel : 0,
-              transitionProperty: 'marginBottom',
-              transitionDuration: duration,
-              transitionTimingFunction: 'ease-in-out',
-            }
+          : motion
+            ? collapse
+            : {
+                marginBottom: hidden ? -travel : 0,
+                transitionProperty: 'marginBottom',
+                transitionDuration: duration,
+                transitionTimingFunction: 'ease-in-out',
+              }
       }
     >
       <Animated.View

@@ -1,8 +1,10 @@
+import { perf } from '@/lib/perf'
 import type { FlashListRef } from '@shopify/flash-list'
 import moment from 'moment'
 import { useEffect, useRef, useState } from 'react'
 import type { LayoutRectangle } from 'react-native'
 import { useSharedValue } from 'react-native-reanimated'
+import { createStore, type StoreApi, useStore } from 'zustand'
 import useLocalDay from '@/hooks/useLocalDay'
 import useStartOfWeek from '@/hooks/useStartOfWeek'
 import { analytics } from '@/lib/analytics'
@@ -48,6 +50,20 @@ const INITIAL_SCROLL_MS = 150
 
 export type YearOpenSource = 'toggle' | 'pinch' | 'divider'
 
+export type TodayDirection = 'visible' | 'up' | 'down'
+
+export type ScheduleFocus = {
+  month: CalendarMonth
+  todayDirection: TodayDirection
+}
+
+export type ScheduleFocusStore = StoreApi<ScheduleFocus>
+
+export const useScheduleFocus = <T>(
+  store: ScheduleFocusStore,
+  select: (focus: ScheduleFocus) => T
+): T => useStore(store, select)
+
 function useScheduleRows(firstServiceYear: number, lastServiceYear: number) {
   const startOfWeek = useStartOfWeek()
   return buildScheduleRows({ firstServiceYear, lastServiceYear, startOfWeek })
@@ -86,7 +102,12 @@ export default function useScheduleCalendar({
     viewRef.current = next
     setViewState(next)
   }
-  const [focusedMonth, setFocusedMonth] = useState<CalendarMonth>(start)
+  const [focusStore] = useState(() =>
+    createStore<ScheduleFocus>(() => ({
+      month: start,
+      todayDirection: 'visible',
+    }))
+  )
 
   const focusedOrdinal = useSharedValue(monthOrdinal(start))
 
@@ -99,9 +120,6 @@ export default function useScheduleCalendar({
     first: Math.min(currentServiceYear, serviceYearOf(start)) - 1,
     last: Math.max(currentServiceYear, serviceYearOf(start)) + 1,
   }))
-  const [todayDirection, setTodayDirection] = useState<
-    'visible' | 'up' | 'down'
-  >('visible')
 
   const [monthLanding, setMonthLanding] = useState(false)
 
@@ -168,8 +186,9 @@ export default function useScheduleCalendar({
     const previous = focusedRef.current
     if (sameCalendarMonth(previous, month)) return
     focusedRef.current = month
+    perf.count('schedule:focus')
     focusedOrdinal.set(monthOrdinal(month))
-    setFocusedMonth(month)
+    focusStore.setState({ month })
     const now = Date.now()
     if (!tick || now < quietUntil.current) return
     if (now - lastTick.current < MIN_TICK_INTERVAL_MS) return
@@ -185,10 +204,12 @@ export default function useScheduleCalendar({
     const { startIndex, endIndex } = list.computeVisibleIndices()
     const next =
       todayRow < startIndex ? 'up' : todayRow > endIndex ? 'down' : 'visible'
-    setTodayDirection((current) => (current === next ? current : next))
+    if (focusStore.getState().todayDirection !== next)
+      focusStore.setState({ todayDirection: next })
   }
 
   const onScroll = (y: number) => {
+    perf.count('schedule:scroll')
     const row = rowAt(y + focusLine())
     if (row !== undefined) focus(schedule.rows[row].month, true)
     updateTodayDirection()
@@ -487,7 +508,7 @@ export default function useScheduleCalendar({
   return {
     view,
     monthLanding,
-    focusedMonth,
+    focusStore,
     focusedOrdinal,
     yearFocusedMonth,
     yearServiceYear,
@@ -496,7 +517,6 @@ export default function useScheduleCalendar({
     listRef,
     yearRef,
     zoom,
-    todayDirection,
     currentServiceYear,
     isCurrentServiceYear: yearServiceYear === currentServiceYear,
     onScroll,

@@ -1,7 +1,7 @@
 import { getRandomBytes } from 'expo-crypto'
 import { deviceName, devicePlatform } from '@/lib/devicePlatform'
 import { accountKey, accountKeyAvailable } from '@/app/account/accountKey'
-import { createBackupFile } from '@/lib/backupFile'
+import { backupFileContents } from '@/app/sync/backupFileContents'
 import { olderAccountKeys, serverAccount } from '@/lib/serverAccount'
 import {
   type LockedBackupFile,
@@ -27,7 +27,7 @@ export async function createLockedBackupFile(
   choice: BackupFileLockChoice,
   onProgress?: (fraction: number) => void
 ): Promise<LockedBackupFile> {
-  const file = createBackupFile()
+  const file = backupFileContents()
   const options = { origin: origin(), randomBytes: getRandomBytes }
   if (choice.lock === 'password')
     return lockWithPassword(file, choice.password, { ...options, onProgress })

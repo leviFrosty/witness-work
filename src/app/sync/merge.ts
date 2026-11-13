@@ -51,6 +51,11 @@ import {
   NON_SYNCABLE_PROFILE_KEYS,
 } from '@/lib/syncPreferencePolicy'
 import { SyncPayload } from '@/app/sync/payload'
+import {
+  mergeSlices,
+  type TerritorySyncRecord,
+  type TerritorySyncTombstone,
+} from '@/features/territories/lib/personalSync'
 
 export type MergeResult = {
   contacts: Contact[]
@@ -81,6 +86,8 @@ export type MergeResult = {
   routineEntries: RoutineEntry[]
   readingPlans: ReadingPlanRun[]
   deletedRoutineRecords: RoutineTombstone[]
+  territoryRecords: TerritorySyncRecord[]
+  deletedTerritoryRecords: TerritorySyncTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -125,6 +132,10 @@ type LocalState = {
   readingPlans?: ReadingPlanRun[]
 
   deletedRoutineRecords?: RoutineTombstone[]
+
+  territoryRecords?: TerritorySyncRecord[]
+
+  deletedTerritoryRecords?: TerritorySyncTombstone[]
   preferencesValues: Record<string, unknown>
   preferenceUpdatedAt: Record<string, number>
   profileValues: Record<string, unknown>
@@ -146,6 +157,8 @@ export function mergePayload(
     routineEntries: localState.routineEntries ?? [],
     readingPlans: localState.readingPlans ?? [],
     deletedRoutineRecords: localState.deletedRoutineRecords ?? [],
+    territoryRecords: localState.territoryRecords ?? [],
+    deletedTerritoryRecords: localState.deletedTerritoryRecords ?? [],
   }
   const local = translateSyncTimestamps(originalLocal, 0, now + 5 * 60_000)
   remote = translateSyncTimestamps(remote, 0, now + 5 * 60_000)
@@ -368,6 +381,14 @@ export function mergePayload(
     remoteRoutine?.readingPlans as ReadingPlanRun[] | undefined
   )
 
+  const mergedTerritories = mergeSlices(
+    {
+      territoryRecords: local.territoryRecords,
+      deletedTerritoryRecords: local.deletedTerritoryRecords,
+    },
+    remote.territoryStore
+  )
+
   const { values: mergedPrefValues, updatedAt: mergedPrefTimestamps } =
     mergePreferences(
       local.preferencesValues,
@@ -422,6 +443,8 @@ export function mergePayload(
     routineEntries: mergedRoutineEntries,
     readingPlans: mergedReadingPlans,
     deletedRoutineRecords: mergedRoutineTombstones,
+    territoryRecords: mergedTerritories.territoryRecords,
+    deletedTerritoryRecords: mergedTerritories.deletedTerritoryRecords,
     preferencesValues: mergedPrefValues,
     preferenceUpdatedAt: mergedPrefTimestamps,
     profileValues: mergedProfileValues,

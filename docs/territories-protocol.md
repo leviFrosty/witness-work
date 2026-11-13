@@ -6,7 +6,7 @@ The server stays **blind**. It sees opaque scope ids (one per street), record id
 
 ## Summary
 
-- **One space per shared territory**, created the first time the owner shares it, makes a guest link, or hands off a street. A territory nobody has shared stays on the device, as today.
+- **One space per shared territory**, created the first time the owner shares it, makes a guest link, or hands off a street. A territory nobody has shared travels in the User's own sync and backups instead ([below](#unshared-territories-sync-and-backup)).
 - **Every street is a scope.** Its records carry the street's scope id in their record id, and are sealed under a key derived for that scope. The server filters reads and checks writes per scope, so people given some streets get only those streets.
 - **Guest links** are capability URLs. The secret travels in the URL fragment and never reaches the server. The guest page calls two public ops, `guest/sync` and `guest/put`, holding only the keys of its streets.
 - **A hand-off** makes a buddy the server-recorded **holder** of one street. Only the owner can hand off, and a space's owner never changes, so a holder can never hand a street off again.
@@ -392,11 +392,54 @@ The owner's device syncs (pull and push), then runs `delete`. That ends every sh
 
 The Buddies roster gains `territories: { "<spaceId>": { "at" } }` and `leftTerritories: { "<spaceId>": at }`, merged like `cars` and `leftCars`. Every device of the User derives the same member values, so it's the same owner, member, or holder, and sees every territory space the User is on.
 
-## Unshared territories: sync and backup (deferred)
+## Unshared territories: sync and backup
 
-Not in v1. A territory nobody has shared lives only on the device that created it: it isn't in iCloud, Google Drive, Cloud Sync, or the account backup, and a lost or replaced phone loses it. That's true of the prototype today. Shared territories come back on a new device from the roster, like shared cars. A returned territory's history stays only on the device that returned it.
+The User's own territories that aren't in a space travel in the sync payload, so every sync option (Cloud Sync, iCloud, Google Drive), the account Backup, Set Up Another Device (which restores that Backup) and backup files carry them. They're never put on a space for this: that would put a User's territories on our server without their choosing it, against ADR 0030 §3, and need Buddies on every device. Code: `src/features/territories/lib/personalSync.ts` (pure records, merge and projection), `src/app/sync/territoryStoreSync.ts` (the store glue).
 
-The next step is to put territories into the sync payload as flat records with `updatedAt` and tombstones, using the same record shapes as above, so every sync option and the backup carry them. We didn't make every territory a private space: that would put a User's territories on our server without their choosing it, against ADR 0030 §3, and needs Buddies on every device.
+### Records
+
+The optional payload slice `territoryStore` holds `territoryRecords` (`{ id, kind, data, updatedAt }`) and `deletedTerritoryRecords` (`{ id, deletedAt }`). `id` is `<territoryId>:<key>`:
+
+| Key                 | Kind                                               | `data`                                                                                                   |
+| ------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `h`                 | `territory`                                        | the space's `territory` data without `houseRecords`, plus `finishedAt?` (returned) and `shared?` (below) |
+| `s.<streetId>`      | `street`                                           | as in a space                                                                                            |
+| `s.<streetId>.w`    | `worked`                                           | `at`                                                                                                     |
+| `s.<streetId>.<id>` | `door` or `doNotCall`                              | as in a space, without `by` and `byName`                                                                 |
+| `d.<id>`            | `doNotCall` (no street, or its street was deleted) | as in a space, plus `streetId?` for one whose street was deleted                                         |
+
+Street, door and do-not-call ids are the store's own (any case, UUIDs since the v2 migration), not scope ids. The card photo and each street's next house stay on the device. Received territories (live or ended) aren't in the slice: they belong to the other person's space.
+
+The territories store keeps the same records with their stamps in its persisted `ledger`. A store subscriber diffs every changed territory against it (`restampLedger`) and stamps what changed with the synced clock (`syncTimestamp`), so a stamp is the edit's time. A change to the ledger is a local data change for sync and the Backup. Building a payload restamps everything first, which catches edits made before the subscriber was attached.
+
+### Merge
+
+- **A record:** the newest `updatedAt` wins; a tie goes to the larger canonical JSON. A tombstone beats any version that isn't strictly newer, so Undo can put a door back.
+- **A deleted territory (`h` tombstoned) or street (`s.<id>` tombstoned) is deleted for good.** No later version brings it back, and its children are dropped from the ledger, keeping only the one tombstone. A deleted street's do-not-calls move to `d.<id>` (with `streetId`), so a do-not-call recorded on another device while the street was being deleted isn't lost. A territory a device keeps when its space ends (`removeSpace`'s `keep`) isn't kept if it was deleted elsewhere.
+- **Two records for one house** fold as in a space ([Merge rules](#merge-rules), rule 3); the next restamp writes the fold.
+- **A missing slice is not a deletion.** 1.46.0 and earlier don't know `territoryStore` (their schema drops it) and write snapshots without it; a merge with such a payload changes nothing, and a restore (Replace, or a backup file) without it keeps this device's territories. Every device writes only its own snapshot, so an older one can't remove another's. The merge is commutative, associative and idempotent; `personalSync.test.ts` checks convergence over random edits and sync orders.
+- **The `territories` flag doesn't gate any of it.** A device with the flag off merges, stores and writes territories like any other record, so turning the flag off and on again loses nothing.
+
+### Shared and unshared
+
+A territory is in exactly one place at a time on a device: its space, or the personal records.
+
+- **First share.** When the territory moves into a space (seeding), it leaves the personal list, and the device writes `h` again with `shared: true` (only if `h` is older than the space's creation, the owner's `joinedAt`). Other devices hide a territory whose `h` says `shared` until its space reaches them through the roster, unless they edited it after the mark, in which case their next restamp writes it back. Its personal records stay, frozen, and nothing else reads them.
+- **While shared,** the space is the source of truth. Personal sync never deletes or marks a territory this device sees in a space, and never shows a personal copy beside one: a view replaces a personal territory with the same id (`placeView`).
+- **When the share ends,** the owner's devices keep the territory personal, as now ([Returning](#returning-a-territory)); the restamp writes `h` without `shared` and every record that changed, so it comes back on every device, returned. A device with a stale space (the flag off, or it hasn't heard `gone` yet) leaves the newer personal records alone instead of marking them again.
+- **Deleted while shared,** the device that deleted it tombstones `h`, and the other devices' finished copies are dropped.
+- A territory shared before this shipped has no personal records; it comes back on a new device only through the roster, as before.
+
+### Territory privacy mode
+
+A device with territory privacy mode (or data protection mode) on keeps no door records, its own or anyone's:
+
+- Turning it on clears this device's doors (`clearAllDoorRecords`); the restamp tombstones them, so they're cleared on the User's other devices too and no stale snapshot brings them back. Do-not-call doors become do-not-calls under the same id.
+- A pull drops other devices' door records before they reach the ledger or the screen, without tombstoning them; do-not-call doors become do-not-calls. Doors recorded later on a device with privacy off stay there and come back here once privacy is off.
+
+### Limits
+
+A door record is about 360 bytes of JSON; a territory of 40 streets and 5,000 doors with locations and descriptions is about 1.8 MB, against 20 MiB a Cloud Sync snapshot and 20 MiB a Backup. Tombstones are kept like every sync tombstone: returning or checking out a territory again tombstones each of its doors (about 70 bytes each), so a territory worked many times grows by that each round. A deleted territory or street shrinks to one tombstone.
 
 ## Migration from the prototype
 
@@ -500,7 +543,8 @@ Reuse `src/lib/sharedSpaces` (client, crypto, keyring, keyTrust, live, invite se
 
 ## Deferred
 
-- Sync and backup of unshared territories ([above](#unshared-territories-sync-and-backup-deferred)).
+- Card photos in sync and backups: a card photo stays on the device that took it.
+- Compacting the door tombstones of a territory returned or checked out again many times.
 - A live socket for guests (they poll).
 - Named alerts in the iOS Notification Service Extension (templates meanwhile).
 - Per-member street keys, so a street-only member couldn't read other streets even with the server's help.

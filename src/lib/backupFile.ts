@@ -22,6 +22,7 @@ export type BackupFile = {
   mileageStore?: unknown
   petStore?: unknown
   routineStore?: unknown
+  territoryStore?: unknown
 }
 
 const BACKUP_STORE_KEYS = Object.keys({
@@ -34,6 +35,7 @@ const BACKUP_STORE_KEYS = Object.keys({
   mileageStore: true,
   petStore: true,
   routineStore: true,
+  territoryStore: true,
 } satisfies Record<keyof BackupFile, true>) as (keyof BackupFile)[]
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

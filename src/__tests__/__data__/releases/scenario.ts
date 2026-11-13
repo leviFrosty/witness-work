@@ -467,6 +467,119 @@ export const SAVED_ROUTE = {
   note: 'Start at the Kingdom Hall',
 }
 
+const territoryId = (n: number) =>
+  `5e1f0c2a-7b3d-4c8e-9a6f-${String(n).padStart(12, '0')}`
+
+export const TERRITORIES = {
+  working: {
+    id: territoryId(1),
+    number: '14',
+    name: 'Cedar Park',
+    photo: 'territory-card-14.jpg',
+    checkedOutAt: at(2025, 9, 1, 12, 0).getTime(),
+    returnBy: at(2026, 1, 1, 12, 0).getTime(),
+    createdAt: at(2025, 9, 1, 12, 0).getTime(),
+    outline: [
+      { latitude: 44.9612, longitude: -93.2011 },
+      { latitude: 44.9625, longitude: -93.1987 },
+      { latitude: 44.9601, longitude: -93.1975 },
+    ],
+    streets: [
+      {
+        id: territoryId(10),
+        name: 'Birch Lane',
+        numbering: 'odd' as const,
+        next: 7,
+        first: 1,
+        saveLocations: true,
+        workedAt: at(2025, 10, 4, 11, 0).getTime(),
+        doors: [
+          {
+            id: territoryId(11),
+            label: '1',
+            outcome: 'notHome' as const,
+            at: at(2025, 10, 4, 10, 0).getTime(),
+            tries: 2,
+            coordinate: { latitude: 44.9613, longitude: -93.2008 },
+            coordinateSource: 'gps' as const,
+          },
+          {
+            id: territoryId(12),
+            label: '3',
+            outcome: 'spoke' as const,
+            at: at(2025, 10, 4, 10, 5).getTime(),
+            tries: 1,
+          },
+          {
+            id: territoryId(13),
+            label: '5',
+            outcome: 'doNotCall' as const,
+            at: at(2025, 10, 4, 10, 9).getTime(),
+            tries: 1,
+          },
+        ],
+      },
+      {
+        id: territoryId(20),
+        name: 'Maple Court',
+        numbering: 'none' as const,
+        next: 1,
+        doors: [
+          {
+            id: territoryId(21),
+            label: 'Blue house',
+            outcome: 'notHome' as const,
+            at: at(2025, 10, 5, 9, 30).getTime(),
+            tries: 1,
+            description: 'Behind the hedge',
+          },
+        ],
+      },
+    ],
+    doNotCalls: [
+      {
+        id: territoryId(30),
+        address: '22 Birch Lane',
+        at: at(2025, 9, 20, 10, 0).getTime(),
+        streetId: territoryId(10),
+        label: '22',
+      },
+      {
+        id: territoryId(31),
+        address: '400 County Road',
+        at: at(2025, 9, 21, 10, 0).getTime(),
+      },
+    ],
+  },
+  returned: {
+    id: territoryId(2),
+    number: '7',
+    checkedOutAt: at(2025, 6, 1, 12, 0).getTime(),
+    finishedAt: at(2025, 8, 30, 12, 0).getTime(),
+    createdAt: at(2025, 6, 1, 12, 0).getTime(),
+    streets: [
+      {
+        id: territoryId(40),
+        name: 'Elm Row',
+        numbering: 'both' as const,
+        next: 1,
+        doors: [],
+        workedAt: at(2025, 8, 20, 12, 0).getTime(),
+      },
+    ],
+    doNotCalls: [
+      {
+        id: territoryId(41),
+        address: '9 Elm Row',
+        at: at(2025, 7, 2, 12, 0).getTime(),
+        streetId: territoryId(40),
+        label: '9',
+      },
+    ],
+  },
+  deletedId: territoryId(3),
+}
+
 const scribeMeter = (percentUsed: number, asOf: Date) => ({
   plan: 'free' as const,
   supporterCheckFailed: false,

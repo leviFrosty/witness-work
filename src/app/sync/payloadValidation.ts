@@ -3,6 +3,7 @@ import { publishers } from '@/constants/publisher'
 import { PET_SPECIES_IDS } from '@/types/pet'
 import { READING_PLAN_KINDS, ROUTINE_HABITS } from '@/types/routine'
 import { entryTimestampKey } from '@/lib/syncPreferencePolicy'
+import { splitSyncId } from '@/features/territories/lib/personalSync'
 import {
   bibleStudyFlagSchema,
   dateStringSchema as date,
@@ -174,6 +175,21 @@ const tombstone = z.object({
   legacyIds: z.array(id).optional(),
   importUndone: z.literal(true).optional(),
 })
+const territoryRecordId = z
+  .string()
+  .max(200)
+  .refine((value) => splitSyncId(value) !== null)
+const territoryRecord = z
+  .object({
+    id: territoryRecordId,
+    kind: z.string().min(1).max(40),
+    data: z.record(z.unknown()),
+    updatedAt: timestamp,
+  })
+  .passthrough()
+const territoryTombstone = z
+  .object({ id: territoryRecordId, deletedAt: timestamp })
+  .passthrough()
 const customFieldDef = record.extend({
   label: z.string(),
   order: z.number().finite(),
@@ -338,6 +354,12 @@ export const payloadSchema = z.object({
       deletedRoutineRecords: z.array(tombstone).optional(),
     })
     .optional(),
+  territoryStore: z
+    .object({
+      territoryRecords: z.array(territoryRecord),
+      deletedTerritoryRecords: z.array(territoryTombstone).optional(),
+    })
+    .optional(),
   preferencesStore: values,
   profileStore: values.optional(),
 })
@@ -376,6 +398,10 @@ const recordLists: Record<string, Record<string, z.ZodTypeAny>> = {
     routineEntries: routineEntry,
     readingPlans: readingPlan,
     deletedRoutineRecords: tombstone,
+  },
+  territoryStore: {
+    territoryRecords: territoryRecord,
+    deletedTerritoryRecords: territoryTombstone,
   },
 }
 

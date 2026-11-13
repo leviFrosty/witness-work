@@ -9,6 +9,10 @@ import {
   applyRoutineSnapshot,
   localRoutineSnapshot,
 } from '@/app/sync/routineStoreSync'
+import {
+  applyTerritorySnapshot,
+  localTerritorySnapshot,
+} from '@/app/sync/territoryStoreSync'
 import { migrateNormalizeDates } from '@/lib/normalizeDate'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
@@ -62,6 +66,7 @@ export function localMergeState(): LocalMergeState {
     ...localMileageSnapshot(),
     ...localPetSnapshot(),
     ...localRoutineSnapshot(),
+    ...localTerritorySnapshot(),
     preferencesValues: localPrefValues,
     preferenceUpdatedAt: preferencesState.preferenceUpdatedAt ?? {},
     profileValues: localProfileValues,
@@ -119,6 +124,7 @@ export function applyMergedState(acc: LocalMergeState): void {
   applyMileageSnapshot(acc)
   applyPetSnapshot(acc)
   applyRoutineSnapshot(acc)
+  applyTerritorySnapshot(acc)
   usePreferences.setState({
     ...(acc.preferencesValues as any),
     preferenceUpdatedAt: acc.preferenceUpdatedAt,

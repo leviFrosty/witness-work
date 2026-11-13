@@ -86,6 +86,10 @@ import { petFromPayload } from '@/app/sync/petPayload'
 import { applyPetSnapshot, hasPetData } from '@/app/sync/petStoreSync'
 import { routineFromPayload } from '@/app/sync/routinePayload'
 import {
+  hasTerritoryData,
+  replaceTerritorySnapshot,
+} from '@/app/sync/territoryStoreSync'
+import {
   applyRoutineSnapshot,
   hasRoutineData,
 } from '@/app/sync/routineStoreSync'
@@ -521,6 +525,7 @@ export function hasMeaningfulLocalData(): boolean {
   if (hasMileageData()) return true
   if (hasPetData()) return true
   if (hasRoutineData()) return true
+  if (hasTerritoryData()) return true
   return false
 }
 
@@ -529,6 +534,7 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
   const hasRoutineSlice = remote.routineStore !== undefined
   const hasCategorySlice = remote.categoryStore !== undefined
   const hasMileageSlice = remote.mileageStore !== undefined
+  const hasTerritorySlice = remote.territoryStore !== undefined
   remote = foldRemotePayloads([remote])!
   withRemoteDataMutation(() => {
     const deletedCustomFieldDefs =
@@ -582,6 +588,8 @@ export function replaceLocalWithRemote(remote: SyncPayload): void {
     if (hasMileageSlice) applyMileageSnapshot(mileageFromPayload(remote))
     if (hasPetSlice) applyPetSnapshot(petFromPayload(remote))
     if (hasRoutineSlice) applyRoutineSnapshot(routineFromPayload(remote))
+    if (hasTerritorySlice && remote.territoryStore)
+      replaceTerritorySnapshot(remote.territoryStore)
 
     const now = Date.now()
     writeRemoteSettings(remote)

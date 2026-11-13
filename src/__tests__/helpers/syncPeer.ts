@@ -30,6 +30,8 @@ export const emptyDevice = (
   routineEntries: [],
   readingPlans: [],
   deletedRoutineRecords: [],
+  territoryRecords: [],
+  deletedTerritoryRecords: [],
   vehicles: [],
   fuels: [],
   fuelPrices: [],

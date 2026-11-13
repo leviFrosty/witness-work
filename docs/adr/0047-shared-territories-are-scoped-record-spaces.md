@@ -79,9 +79,16 @@ to change a lot after that.
    tombstones win ties; two records for one house fold in the view, with the
    do-not-call winning, and fold on the server at the next edit.
 
-9. **Unshared territories don't sync yet.** They stay on the device, as now,
-   outside sync and backups. The next step puts them in the sync payload as
-   flat records.
+9. **Unshared territories travel in the User's own sync and backups.** First
+   shipped without it; now the User's own territories that aren't in a space
+   go in the sync payload as flat records (the space's record shapes, with
+   `updatedAt` and tombstones), so every sync option, the account Backup, Set
+   Up Another Device and backup files carry them. A deleted territory or
+   street is deleted for good; a territory that moves into a space is marked
+   `shared` rather than deleted, and the space is its source of truth until
+   the share ends. Older versions leave the slice out, which never deletes.
+   Card photos stay on the device. Details:
+   [Unshared territories](../territories-protocol.md#unshared-territories-sync-and-backup).
 
 10. **Prototype data is cleaned, not migrated.** Everything the harness
     simulated (received territories, people, shares, hand-offs) is removed;
@@ -110,9 +117,9 @@ The wire contract is [`territories-protocol.md`](../territories-protocol.md).
 - **Every territory a private space from creation.** It would sync and
   restore every territory, but put a User's territories on our server without
   their choosing it (against ADR 0030 §3) and need Buddies on every device.
-- **Unshared territories in the sync payload now.** The right next step, but
-  it needs flat records and tombstones in the payload, and isn't needed to
-  test sharing on Beta.
+- **Unshared territories in the sync payload from the start.** Left for after
+  sharing reached Beta, since it needs flat records and tombstones in the
+  payload; it's now decision 9.
 
 ## Consequences
 
@@ -131,7 +138,8 @@ The wire contract is [`territories-protocol.md`](../territories-protocol.md).
   links use `beta.app.witnesswork.app`.
 - Shared Spaces is off in production today; Beta testing needs
   `spaces:enabled` and `spaces:guests` on there.
-- Unshared territories are still lost with the device until they join sync.
+- Unshared territories come back on a new device through sync or a backup,
+  except their card photos, which stay on the device that took them.
 - New work: scoped mode, hand-off and link ops and the guest ops in ww-api;
   the territory engine, Buddies events, and the guest web route in the app;
   the Help Center, analytics, and the feature flag for Beta.

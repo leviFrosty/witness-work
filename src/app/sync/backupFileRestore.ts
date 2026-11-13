@@ -13,6 +13,7 @@ import { petSliceFromBackup } from '@/lib/petBackup'
 import { extractProfileFromPreferences } from '@/lib/profileMigration'
 import { withRemoteDataMutation } from '@/lib/remoteDataMutation'
 import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
+import { replaceTerritorySnapshot } from '@/app/sync/territoryStoreSync'
 import {
   syncableValues,
   NON_SYNCABLE_PROFILE_KEYS,
@@ -82,6 +83,9 @@ export function normalizeBackupFile(
     : undefined
   const mileage = isRecord(data.mileageStore) ? data.mileageStore : undefined
   const routine = isRecord(data.routineStore) ? data.routineStore : undefined
+  const territories = isRecord(data.territoryStore)
+    ? data.territoryStore
+    : undefined
 
   const payload = {
     version: PAYLOAD_VERSION,
@@ -126,6 +130,9 @@ export function normalizeBackupFile(
           },
         }
       : {}),
+    ...(territories
+      ? { territoryStore: { territoryRecords: [], ...territories } }
+      : {}),
     preferencesStore: { values: preferences, updatedAt: {} },
     ...(profile ? { profileStore: { values: profile, updatedAt: {} } } : {}),
   }
@@ -149,6 +156,8 @@ export function normalizeBackupFile(
     result.mileageStore = withParsed(mileage, parsed.mileageStore)
   if (routine && parsed.routineStore)
     result.routineStore = withParsed(routine, parsed.routineStore)
+  if (territories && parsed.territoryStore)
+    result.territoryStore = withParsed(territories, parsed.territoryStore)
   if (isRecord(data.preferencesStore))
     result.preferencesStore = parsed.preferencesStore.values
 
@@ -264,6 +273,8 @@ export function restoreBackupFile(file: BackupFile): BackupFileRestore {
       useRoutine
         .getState()
         .set(knownSlice(data.routineStore, useRoutine.getState()))
+    if (isRecord(data.territoryStore))
+      replaceTerritorySnapshot(data.territoryStore)
     const preferences = extractProfileFromPreferences(
       knownSlice(data.preferencesStore, {
         ...usePreferences.getState(),

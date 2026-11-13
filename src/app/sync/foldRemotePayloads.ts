@@ -49,6 +49,9 @@ export function foldRemotePayloads(
     ...mileageFromPayload(first),
     ...petFromPayload(first),
     ...routineFromPayload(first),
+    territoryRecords: first.territoryStore?.territoryRecords ?? [],
+    deletedTerritoryRecords:
+      first.territoryStore?.deletedTerritoryRecords ?? [],
     preferencesValues: first.preferencesStore?.values ?? {},
     preferenceUpdatedAt: first.preferencesStore?.updatedAt ?? {},
     profileValues: first.profileStore?.values ?? {},
@@ -127,6 +130,14 @@ export function foldRemotePayloads(
             routineEntries: acc.routineEntries,
             readingPlans: acc.readingPlans,
             deletedRoutineRecords: acc.deletedRoutineRecords,
+          },
+        }
+      : {}),
+    ...(payloads.some((payload) => payload.territoryStore)
+      ? {
+          territoryStore: {
+            territoryRecords: acc.territoryRecords,
+            deletedTerritoryRecords: acc.deletedTerritoryRecords,
           },
         }
       : {}),

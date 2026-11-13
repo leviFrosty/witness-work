@@ -115,7 +115,7 @@ describe('logDoor', () => {
     expect(again.doors).toEqual([
       { id: 'd1', label: '12', outcome: 'spoke', at: 100 + 2 * DAY, tries: 2 },
     ])
-    expect(again.next).toBe(20)
+    expect(again.next).toBe(14)
   })
 
   it('corrects the outcome without another try on the same day', () => {
@@ -153,14 +153,50 @@ describe('logDoor', () => {
     expect(next.next).toBe(16)
   })
 
-  it('keeps its place when a house behind is filled in', () => {
-    const next = logDoor(street({ next: 20 }), {
-      id: 'a',
-      label: '14',
-      outcome: 'spoke',
-      at: 1,
-    })
-    expect(next.next).toBe(20)
+  const log = (from: TerritoryStreet, label: string) =>
+    logDoor(from, { id: label, label, outcome: 'notHome', at: 1 })
+
+  it('follows a house filled in behind', () => {
+    expect(log(street({ next: 20 }), '14').next).toBe(16)
+  })
+
+  it('follows the last number entered, not the furthest', () => {
+    const both = street({ numbering: 'both', next: 1 })
+    const far = log(both, '100')
+    expect(far.next).toBe(101)
+    expect(log(far, '5').next).toBe(6)
+  })
+
+  it('follows the last number on one side of the street', () => {
+    const even = log(street({ next: 2 }), '100')
+    expect(even.next).toBe(102)
+    expect(log(even, '6').next).toBe(8)
+    const odd = log(street({ numbering: 'odd', next: 1 }), '101')
+    expect(odd.next).toBe(103)
+    expect(log(odd, '5').next).toBe(7)
+  })
+
+  it('follows the last number down a street walked the other way', () => {
+    const down = log(street({ numbering: 'both', descending: true }), '5')
+    expect(down.next).toBe(4)
+    expect(log(down, '100').next).toBe(99)
+    const evenDown = log(street({ descending: true, next: 4 }), '4')
+    expect(log(evenDown, '50').next).toBe(48)
+  })
+
+  it('skips recorded doors after the last number', () => {
+    let worked = street({ numbering: 'both', next: 1 })
+    for (const label of ['6', '7', '9', '100']) worked = log(worked, label)
+    expect(worked.next).toBe(101)
+    const back = log(worked, '5')
+    expect(back.next).toBe(8)
+    expect(log({ ...back, descending: true }, '8').next).toBe(4)
+  })
+
+  it('lands on this side after a number from the other side', () => {
+    expect(log(street({ next: 2 }), '5').next).toBe(6)
+    expect(log(street({ next: 2, descending: true }), '5').next).toBe(4)
+    expect(log(street({ numbering: 'odd', next: 1 }), '8').next).toBe(9)
   })
 
   it('keeps the stepper where it is for a label that is not a number', () => {

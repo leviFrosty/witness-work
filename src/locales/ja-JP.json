@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "主導権はあなたに",
   "buddies_onboardingControlBody": "二人が同意するまで、何も共有されません。バディをカレンダーから隠したり、いつでも削除したりできます。相手に通知は届きません。",
   "buddies_onboardingProfileTitle": "バディに見えるもの",
-  "buddies_accountNameHint": "バディには、アカウントの名前である%{name}と表示されます。ここで名前を変更すると、バディに表示される名前も変わります。",
   "buddies_onboardingProfileInfo": "バディには、あなたの名前と、今後8週間に出かける予定の日とその時間の長さが表示されます。写真、開拓者の区分、連続記録、バッジ、ペット、開始時刻は、オフにしない限り共有されます。これらの変更や共有の一時停止は、バディ設定でできます。記録した時間、報告、目標、連絡先、訪問、メモは常に非公開です。プランとフォローアップの招待には、フォームに表示された追加の詳細が共有されます。",
   "buddies_onboardingSharedTitle": "共有する内容",
   "buddies_invite": "バディを招待",

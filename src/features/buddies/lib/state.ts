@@ -215,10 +215,6 @@ const PLAN_TIMES_PRIVACY: Record<BuddyPlanTimes, number> = {
   daysOnly: 2,
 }
 
-export function mergeCardName(local: CardName, remote: CardName | undefined) {
-  return remote && remote.updatedAt >= local.updatedAt ? remote : local
-}
-
 function mergeStampedChoice(
   local: { on: boolean; at: number },
   remote: { on: boolean | undefined; at: number | undefined }
@@ -301,10 +297,19 @@ function mergePlanSharing(
 }
 
 export function migrateLegacySettings(
-  restored: Partial<BuddiesState> & { mutedJoinRequests?: string[] },
+  restored: Partial<BuddiesState> & {
+    mutedJoinRequests?: string[]
+    cardName?: unknown
+    startedAt?: unknown
+  },
   now: number
 ): Partial<BuddiesState> {
-  const { mutedJoinRequests, ...rest } = restored
+  const {
+    mutedJoinRequests,
+    cardName: _cardName,
+    startedAt: _startedAt,
+    ...rest
+  } = restored
   const buddies = rest.buddies?.map((stored) => {
     const { showOnCalendar, ...buddy } = stored as Buddy & {
       showOnCalendar?: boolean
@@ -574,12 +579,6 @@ export type UnsentShare = {
   hash?: string
 
   at: number
-}
-
-export type CardName = {
-  name: string
-
-  updatedAt: number
 }
 
 export type IncomingShareStatus = 'pending' | ShareReply | 'cancelled'
@@ -1038,10 +1037,6 @@ export type BuddiesState = {
 
   unsentShares: Record<string, Record<string, UnsentShare>>
 
-  cardName: CardName | null
-
-  startedAt: number | null
-
   sharedPhotos: Record<string, UploadedSharedPhoto>
 
   photosAvailable: boolean
@@ -1126,8 +1121,6 @@ export const initialBuddiesState: BuddiesState = {
   publishedCardHashes: {},
   outgoingShares: {},
   unsentShares: {},
-  cardName: null,
-  startedAt: null,
   sharedPhotos: {},
   photosAvailable: false,
   profilePhoto: null,

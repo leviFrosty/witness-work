@@ -7,7 +7,6 @@ import {
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import { InputProps } from 'tamagui'
 import moment from 'moment'
-import { useState } from 'react'
 import useTheme from '@/contexts/theme'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
@@ -75,8 +74,6 @@ interface Props {
 
   hideBadges?: boolean
 
-  shownName?: string
-
   autoFocusName?: boolean
 }
 
@@ -84,11 +81,9 @@ const ProfileCard = ({
   readOnly,
   hideBadges,
   nameInvalid,
-  shownName,
   autoFocusName = true,
 }: Props) => {
   const theme = useTheme()
-  const [nameEdited, setNameEdited] = useState(false)
   const {
     installedOn,
     tenureStartDate,
@@ -109,10 +104,7 @@ const ProfileCard = ({
   const { name, avatar, customAvatarBackground, set: setProfile } = useProfile()
 
   const photoProblem = usePhotoSyncProblem(profilePhotoFilename(avatar))
-  const { name: profileName } = useUser()
-  const showsOtherName = shownName !== undefined && !nameEdited
-  const fieldName = showsOtherName ? shownName : name
-  const trimmedName = showsOtherName ? shownName.trim() : profileName
+  const { name: trimmedName } = useUser()
   const { type: publisher, isInFullTimeService } = usePublisher()
   const { since: supporterSince } = useIsSupporter()
   const serviceStreak = shownStreak(useServiceStreak())
@@ -187,19 +179,16 @@ const ProfileCard = ({
         ) : (
           <MyTextInput
             invalid={nameInvalid}
-            value={fieldName}
-            onChangeText={(val) => {
-              setNameEdited(true)
-              setProfile({ name: val })
-            }}
+            value={name}
+            onChangeText={(val) => setProfile({ name: val })}
             placeholder={i18n.t('firstNamePlaceholder')}
             placeholderTextColor={
               theme.colors.textAlt as InputProps['placeholderTextColor']
             }
             autoCapitalize='words'
             autoCorrect={false}
-            autoFocus={autoFocusName && !fieldName}
-            autoFocusNative={autoFocusName && !fieldName}
+            autoFocus={autoFocusName && !name}
+            autoFocusNative={autoFocusName && !name}
             maxLength={40}
             enterKeyHint='done'
             textAlign='start'

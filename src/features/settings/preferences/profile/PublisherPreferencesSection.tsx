@@ -23,7 +23,6 @@ import AuxiliaryMonthRow from '@/features/service-reports/components/AuxiliaryMo
 import DefaultExportMethodSelector from '@/components/DefaultExportMethodSelector'
 import AnnualGoalSelector from '@/features/settings/components/AnnualGoalSelector'
 import ProfileCard from '@/features/profile/components/ProfileCard'
-import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import { PREFERENCE_DEFAULTS, usePreferences } from '@/stores/preferences'
 import useGoalHoursInput from '@/hooks/useGoalHoursInput'
@@ -111,15 +110,7 @@ const PublisherPreferencesSection = () => {
 
   return (
     <View style={{ gap: inputLayout.sectionGap }}>
-      <View style={{ gap: 8 }}>
-        <ProfileCard />
-        <BuddiesAccountNameHint
-          style={{
-            fontSize: theme.fontSize('sm'),
-            paddingHorizontal: inputLayout.horizontalPadding,
-          }}
-        />
-      </View>
+      <ProfileCard />
 
       {publisherType === 'custom' && (
         <>

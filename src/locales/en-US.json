@@ -1473,7 +1473,6 @@
   "buddies_onboardingControlTitle": "You're in control",
   "buddies_onboardingControlBody": "Nothing is shared until you both agree. Hide a buddy from your calendar or remove them anytime — they won't be notified.",
   "buddies_onboardingProfileTitle": "How buddies see you",
-  "buddies_accountNameHint": "Buddies see you as %{name}, the name on your account. Change your name here to change it for them.",
   "buddies_onboardingProfileInfo": "Buddies see your name and the days you plan to go out over the next 8 weeks, with how long you plan. Your photo, pioneer status, streak, badges, pet, and start times are shared unless you turn them off. Change any of it, or pause sharing, in Buddies Settings. Your recorded hours, reports, goals, contacts, visits, and notes always stay private. Plan and Follow-up invitations share the extra details shown in the form.",
   "buddies_onboardingSharedTitle": "What you share",
   "buddies_invite": "Invite a Buddy",

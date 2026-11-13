@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "Vous gardez le contrôle",
   "buddies_onboardingControlBody": "Rien n’est partagé tant que vous n’êtes pas tous les deux d’accord. Masquez un compagnon de votre calendrier ou retirez-le à tout moment, il n’en sera pas informé.",
   "buddies_onboardingProfileTitle": "Ce que voient vos compagnons",
-  "buddies_accountNameHint": "Vos compagnons vous voient sous le nom %{name}, le nom de votre compte. Modifiez votre nom ici pour le changer pour eux.",
   "buddies_onboardingProfileInfo": "Vos compagnons voient votre nom et les jours où vous prévoyez de sortir au cours des 8 prochaines semaines, ainsi que la durée prévue. Votre photo, votre statut de pionnier, votre série, vos badges, votre animal et vos heures de début sont partagés, sauf si vous les désactivez. Modifiez tout cela, ou suspendez le partage, dans les paramètres de Compagnons. Vos heures enregistrées, rapports, objectifs, contacts, visites et notes restent toujours privés. Les invitations à un plan ou à un suivi partagent les détails supplémentaires indiqués dans le formulaire.",
   "buddies_onboardingSharedTitle": "Ce que vous partagez",
   "buddies_invite": "Inviter un compagnon",

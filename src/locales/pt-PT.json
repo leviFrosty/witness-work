@@ -2224,7 +2224,6 @@
   "buddies_onboardingControlTitle": "Está no controlo",
   "buddies_onboardingControlBody": "Nada é partilhado até ambos concordarem. Oculte um companheiro do seu calendário ou remova-o em qualquer altura — ele não será notificado.",
   "buddies_onboardingProfileTitle": "O que os companheiros veem de si",
-  "buddies_accountNameHint": "Os companheiros veem-no como %{name}, o nome da sua conta. Altere aqui o seu nome para o alterar para eles.",
   "buddies_onboardingProfileInfo": "Os companheiros veem o seu nome e os dias em que planeia sair nas próximas 8 semanas, com a duração planeada. A sua fotografia, estado de pioneiro, sequência, crachás, mascote e horas de início são partilhados, a menos que os desative. Altere o que quiser, ou pause a partilha, nas Definições de Companheiros. As suas horas registadas, relatórios, objetivos, contactos, visitas e notas permanecem sempre privados. Os convites de Plano e de Acompanhamento partilham os detalhes adicionais apresentados no formulário.",
   "buddies_onboardingSharedTitle": "O que partilha",
   "buddies_invite": "Convidar um companheiro",

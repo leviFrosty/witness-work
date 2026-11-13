@@ -26,8 +26,6 @@ import {
 import {
   type Buddy,
   type BuddyOverrides,
-  type CardName,
-  mergeCardName,
   pairingEnded,
 } from '@/features/buddies/lib/state'
 import { logger } from '@/lib/logger'
@@ -81,8 +79,6 @@ export type BuddiesKeyChangeProgress = {
   startedAt: number
 
   hadInbox: boolean
-
-  cardName?: CardName
   former: FormerBuddy[]
   newInboxLinked?: true
   oldInboxDeleted?: true
@@ -118,7 +114,6 @@ export type BuddiesKeyChangeDeps = {
     | 'startNewInbox'
     | 'retireInbox'
     | 'knownPairings'
-    | 'keepCardName'
   >
 
   progress: {
@@ -266,9 +261,7 @@ export function createBuddiesKeyChange(deps: BuddiesKeyChangeDeps) {
       }
     })
 
-    const kept = local?.cardName ?? undefined
-    const cardName = kept ? mergeCardName(kept, roster?.card) : roster?.card
-    return { hadInbox, former, ...(cardName ? { cardName } : {}) }
+    return { hadInbox, former }
   }
 
   const writerOf = (buddy: FormerBuddy): WriterAuth => ({
@@ -566,8 +559,6 @@ export function createBuddiesKeyChange(deps: BuddiesKeyChangeDeps) {
         await deps.progress.write(JSON.stringify(progress))
       }
 
-      engine.keepCardName(progress.cardName)
-
       if (!progress.oldInboxDeleted) {
         const skipped = await deleteOldInbox(
           old,
@@ -592,7 +583,6 @@ export function createBuddiesKeyChange(deps: BuddiesKeyChangeDeps) {
       const progress = parseProgress(await deps.progress.read())
       if (!progress?.oldInboxDeleted) return { done: true }
 
-      engine.keepCardName(progress.cardName)
       return proceed(progress)
     })
   }

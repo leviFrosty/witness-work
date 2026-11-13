@@ -15,7 +15,7 @@ runs every time:
    `importScripts`, so nothing loads from another origin.
 2. **Workbox `injectManifest`** writes the precache list into it, with
    `maximumFileSizeToCacheInBytes` raised to 32 MiB so `canvaskit.wasm` (about
-   8 MB) and the entry chunk (about 15 MB) are kept.
+   8 MB) and the app's chunk (`startApp-…js`, about 5 MB) are kept.
 3. **`checkExport`** (`serviceWorker: true`) fails the build if `sw.js` is missing
    or doesn't precache `index.html` and every chunk `index.html` loads.
 
@@ -37,6 +37,28 @@ it with `updateViaCache: 'none'`, so every update check is fresh.
 | Chunks that aren't precached (other languages, the session replay recorder)    | **Cache first** once loaded, 120 entries, purged on quota errors.        |
 | ww-api, PostHog, the Help Center, RevenueCat, any other origin                 | **Never** cached; the worker doesn't touch them.                         |
 | `/_csp-report`, `/.well-known/*`, `/sw.js`                                     | **Never** cached.                                                        |
+
+### The guest page
+
+A territory guest link (`/territories/guest`) loads its own chunk
+(`src/app/launch/start.web.ts`), not the app's, and registers the same `/sw.js`
+with the scope `/territories/guest` (`src/app/territory-guest/TerritoryGuestRoot.web.tsx`,
+`src/lib/webOffline/guestWorker.ts`). Under that scope the worker precaches
+nothing, so a guest on cellular never downloads the app. It keeps, in the
+`ww-guest` cache:
+
+| Request                                 | Strategy                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| Navigations                             | The stored shell at once, refreshed in the background for the next visit. |
+| Hashed chunks and assets the page loads | **Cache first**, 80 entries, purged on quota errors.                      |
+| `/launch-splash.js`                     | Stale while revalidate.                                                   |
+
+The shell is stored and matched under `/index.html` only. A guest link's secret
+is in the address's fragment, so the opened address is never a cache key or a
+request the worker makes. The first visit loads before the worker controls the
+page, so the page then names the files it loaded (`KEEP_FILES`) and the worker
+stores them, from the browser's HTTP cache. A worker under this scope activates
+as soon as it installs; the guest page has no update prompt.
 
 A `Range` request for a precached file (Safari asks for every sound that way)
 is answered from the precache with a `206` holding just those bytes, by the

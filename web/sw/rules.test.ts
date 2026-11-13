@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  guestFilesToKeep,
   isChunkRequest,
+  isGuestFile,
+  isGuestScope,
   isNeverCached,
   isOnDemandFile,
   isStorableFile,
@@ -75,5 +78,55 @@ describe('what the service worker never caches', () => {
     expect(isUsableNavigation(response(200))).toBe(true)
     expect(isUsableNavigation(response(404))).toBe(true)
     expect(isUsableNavigation(response(503))).toBe(false)
+  })
+})
+
+describe('the guest page’s worker', () => {
+  it('is the one registered under the guest path', () => {
+    expect(isGuestScope(`${ORIGIN}/territories/guest`)).toBe(true)
+    expect(isGuestScope(`${ORIGIN}/territories/guest/`)).toBe(true)
+    expect(isGuestScope(`${ORIGIN}/`)).toBe(false)
+    expect(isGuestScope(`${ORIGIN}/territories`)).toBe(false)
+    expect(isGuestScope('not a url')).toBe(false)
+  })
+
+  const HASH = '0123456789abcdef0123456789abcdef'
+
+  it('keeps hashed chunks and assets of this origin', () => {
+    for (const path of [
+      `/_expo/static/js/web/index-${HASH}.js`,
+      `/_expo/static/js/web/__shared-55e8cb29e2f025a1-${HASH}.js`,
+      `/assets/node_modules/@expo-google-fonts/inter/Inter_500Medium.${HASH}.ttf`,
+    ])
+      expect(isGuestFile(url(path), ORIGIN), path).toBe(true)
+  })
+
+  it('keeps no page address, unhashed file, query or other origin', () => {
+    for (const target of [
+      `${ORIGIN}/territories/guest`,
+      `${ORIGIN}/index.html`,
+      `${ORIGIN}/sw.js`,
+      `${ORIGIN}/canvaskit.wasm`,
+      `${ORIGIN}/assets/logo.png`,
+      `${ORIGIN}/_expo/static/js/web/index-${HASH}.js?v=1`,
+      `https://api.witnesswork.app/assets/a.${HASH}.js`,
+    ])
+      expect(isGuestFile(new URL(target), ORIGIN), target).toBe(false)
+  })
+
+  it('takes only such files from what a page names', () => {
+    expect(
+      guestFilesToKeep(
+        [
+          `/_expo/static/js/web/index-${HASH}.js`,
+          `${ORIGIN}/_expo/static/js/web/index-${HASH}.js#v1.secret`,
+          '/territories/guest',
+          `https://elsewhere.example/assets/a.${HASH}.js`,
+          42,
+        ],
+        ORIGIN
+      )
+    ).toEqual([`/_expo/static/js/web/index-${HASH}.js`])
+    expect(guestFilesToKeep('nope', ORIGIN)).toEqual([])
   })
 })

@@ -217,6 +217,33 @@ describe('guest session', () => {
     await started
   })
 
+  it('shows the saved records before it starts, then asks only for what changed', async () => {
+    const space = await linkSpace()
+    const first = guestFor(space)
+    await first.start()
+    const saved = kinds(first)
+    expect(saved.length).toBeGreaterThan(0)
+    requests = []
+
+    const again = guestFor(space)
+    expect(again.getState().status).toBe('ready')
+    expect(kinds(again)).toEqual(saved)
+    expect(requests).toEqual([])
+
+    await again.start()
+    expect(requests).toHaveLength(1)
+    const { since } = JSON.parse(requests[0].body) as { since: number }
+    expect(since).toBeGreaterThan(0)
+    expect(kinds(again)).toEqual(saved)
+  })
+
+  it('doesn’t show a saved link that has since expired', async () => {
+    const space = await linkSpace()
+    await guestFor(space).start()
+    clock += 25 * HOUR
+    expect(guestFor(space).getState().status).toBe('loading')
+  })
+
   it('stamps with the server’s clock when the device’s is off', async () => {
     const space = await linkSpace()
     const session = guestFor(space)

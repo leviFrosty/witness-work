@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Sichern und Wiederherstellen",
   "coordinateSaved": "Koordinate gespeichert",
   "saved": "Gespeichert",
-  "locationDisabled_description": "Ihre Standortfreigabe ist deaktiviert. Die Karte kann nicht automatisch auf Ihren Standort zoomen.",
   "locationDisabled_callToAction": "App-Einstellungen öffnen",
   "locationSettings_description": "Erlauben Sie WitnessWork in den Einstellungen den Standortzugriff, um zu sehen, wo Sie sich auf der Karte befinden, und Kontakte in Ihrer Nähe zu finden.",
   "overrideCoordinate": "Koordinate überschreiben",

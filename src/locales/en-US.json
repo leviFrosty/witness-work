@@ -2169,9 +2169,7 @@
   "backupAndRestore": "Backup & Restore",
   "coordinateSaved": "Coordinate Saved",
   "saved": "Saved",
-  "locationDisabled_description": "Your location sharing is disabled. The map will not be able to automatically zoom into your location.",
   "locationDisabled_callToAction": "Open app settings",
-  "locationDisabled_callToActionWeb": "Allow location for this site in your browser's settings.",
   "locationSettings_description": "Allow location for WitnessWork in its settings to see where you are on the map and find contacts near you.",
   "overrideCoordinate": "Override Coordinate",
   "overrideCoordinate_description": "You specified your own coordinate. Since you just changed the address, do you want to automatically fetch an updated coordinate based on the new address?",
@@ -3576,6 +3574,17 @@
   "faceIdPermissionPurpose": "$(PRODUCT_NAME) uses Face ID to unlock the app when you turn on app lock, and to keep your recovery key private.",
   "microphonePermissionPurpose": "$(PRODUCT_NAME) uses the microphone to record Scribe AI voice logs. Your voice is turned into text on this device; the audio is never saved or sent.",
   "speechRecognitionPermissionPurpose": "$(PRODUCT_NAME) turns Scribe AI voice logs into text on this device. Your audio never leaves your device.",
+  "locationPermissionPurpose": "$(PRODUCT_NAME) uses your location to show where you are on the map, find contacts near you, and start routes from where you are. In Territories, it also saves where each door you record is.",
+  "locationNotice": {
+    "off": "Location is off for WitnessWork.",
+    "offWeb": "Location is off for this site.",
+    "blockedWeb": "Location is blocked for this site. Allow it in your browser's site settings.",
+    "approximate": "WitnessWork only has your approximate location.",
+    "servicesOff": "Location is turned off on this device.",
+    "allow": "Allow Location",
+    "openSettings": "Open Settings",
+    "turnOn": "Turn On Location"
+  },
   "contactDetails": {
     "upNext": "Up next · {{countdown}}",
     "upNextSoon": "Up next",
@@ -6831,12 +6840,10 @@
     "notHomes_info": "Houses to try again. Tap a street to see only these.",
     "pins": {
       "pinning": "Save where each door is",
-      "stateDenied": "Location isn't allowed. Tap to fix.",
+      "stateDenied": "Location isn't allowed.",
       "stateAway": "You're away from this street, so no pins for now.",
       "deniedTitle": "Location isn't allowed",
-      "deniedDescription": "To save where each door is, allow WitnessWork to use your location in Settings.",
-      "deniedDescriptionWeb": "To save where each door is, allow this site to use your location in your browser settings.",
-      "openSettings": "Open Settings",
+      "deniedDescription": "Doors are still recorded, just without where they are. Turn location back on to save where each door is.",
       "awayTitle": "You're away from this street",
       "awayDescription": "Doors are still recorded, just without a map pin, so they don't all land in one spot. If you're standing at the doors, pin them anyway.",
       "pinAnyway": "I'm at the Doors",
@@ -6856,7 +6863,6 @@
         "other": "{{count}} years ago"
       },
       "pinning_info": "Each door you record gets a pin where you're standing, so you can find it on the map later. Doors are still recorded without a pin when location isn't allowed or you're away from this street.",
-      "allowLocation": "Allow Location",
       "changeCaption": "Now {{outcome}} · pick a new result",
       "doorList_hint": "Tap a house to change its result or remove it.",
       "doorList_hintDoor": "Tap a door to change its result or remove it.",
@@ -6870,7 +6876,7 @@
       "viewCard": "Card",
       "showLocation": "Show My Location",
       "goToLocation": "Go to My Location",
-      "locationOff": "Allow location for WitnessWork in Settings to see where you are.",
+      "locationUnavailable": "Couldn't find where you are. Try again in a moment.",
       "streetFocus_clear": "Show the Whole Territory",
       "openStreet": "Open {{street}}",
       "recordedBy": "Recorded by {{name}}",
@@ -7198,7 +7204,7 @@
         "one": "Added 1 street",
         "other": "Added %{count} streets"
       },
-      "locationNeeded": "Allow location for WitnessWork in Settings to look up street names.",
+      "locationNeeded": "Looking up street names on this device needs your location.",
       "upNext": "Up Next"
     }
   }

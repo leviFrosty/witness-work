@@ -2,9 +2,10 @@ import { useEffect, useState, type Ref } from 'react'
 import { View, type StyleProp, type ViewStyle } from 'react-native'
 import MapView, { Marker, type Region } from 'react-native-maps'
 import * as Location from 'expo-location'
-import MapWarningLocationSharingDisabled from '@/components/MapWarningLocationSharingDisabled'
+import LocationNotice from '@/components/LocationNotice'
 import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
+import useLocationAccess from '@/hooks/useLocationAccess'
 import { usePreferences } from '@/stores/preferences'
 import type { Coordinate } from '@/types/contact'
 
@@ -33,7 +34,8 @@ export default function PinPickerMap({
 }) {
   const theme = useTheme()
   const { colorScheme } = usePreferences()
-  const [hasLocationPermission, setHasLocationPermission] = useState(false)
+  const location = useLocationAccess()
+  const [noticeHidden, setNoticeHidden] = useState(false)
 
   const [userLocation, setUserLocation] = useState<Region | null>()
   const [opensOn] = useState(coordinate ?? around)
@@ -41,7 +43,6 @@ export default function PinPickerMap({
   useEffect(() => {
     const getLocation = async () => {
       const { granted } = await Location.getForegroundPermissionsAsync()
-      setHasLocationPermission(granted)
       if (!granted) {
         setUserLocation(null)
         return
@@ -78,7 +79,7 @@ export default function PinPickerMap({
         <MapView
           userInterfaceStyle={colorScheme ? colorScheme : undefined}
           ref={mapRef}
-          showsUserLocation={hasLocationPermission}
+          showsUserLocation={location.granted}
           style={{ height: '100%', width: '100%' }}
           onPress={drop}
           onLongPress={drop}
@@ -111,9 +112,23 @@ export default function PinPickerMap({
         </MapView>
       )}
 
-      <MapWarningLocationSharingDisabled
-        hasLocationPermission={hasLocationPermission}
-      />
+      {location.notice && !noticeHidden && location.access && (
+        <LocationNotice
+          floating
+          access={location.access}
+          fix={location.fix}
+          onFix={location.runFix}
+          onDismiss={() => setNoticeHidden(true)}
+          testID='pin-picker-location-notice'
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            right: 8,
+            borderRadius: 8,
+          }}
+        />
+      )}
     </View>
   )
 }

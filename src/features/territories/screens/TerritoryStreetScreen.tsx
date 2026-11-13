@@ -17,6 +17,7 @@ import {
   Pencil as PencilIcon,
   Trash2 as Trash2Icon,
 } from 'lucide-react-native'
+import LocationNotice from '@/components/LocationNotice'
 import ActionButton from '@/components/ui/ActionButton'
 import ChoiceChips from '@/components/ui/ChoiceChips'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -623,6 +624,17 @@ function StreetScreen({ route, navigation }: Props) {
                 onToggle={pinning.toggle}
                 onFix={pinning.fix}
               />
+            }
+            notice={
+              pinning.notice && (
+                <LocationNotice
+                  access={pinning.notice.access}
+                  fix={pinning.notice.fix}
+                  onFix={pinning.notice.onFix}
+                  testID='door-location-notice'
+                  style={{ marginTop: -8, marginBottom: -4 }}
+                />
+              )
             }
             switchSide={
               side && !worked

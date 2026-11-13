@@ -337,8 +337,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-location',
         {
-          locationWhenInUsePermission:
-            '$(PRODUCT_NAME) will use your location to display where you are on the map, useful for finding nearby contacts.',
+          locationWhenInUsePermission: enUS.locationPermissionPurpose,
         },
       ],
       [

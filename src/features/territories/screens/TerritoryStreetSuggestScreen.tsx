@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ActivityIndicator, Platform, ScrollView, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import * as Location from 'expo-location'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Plus as PlusIcon } from 'lucide-react-native'
+import LocationNotice from '@/components/LocationNotice'
 import ActionButton from '@/components/ui/ActionButton'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
@@ -13,11 +14,11 @@ import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Header from '@/components/ui/layout/Header'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import useLocationAccess from '@/hooks/useLocationAccess'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import PickMark from '@/features/territories/components/sharing/PickMark'
-import { askDoorLocation } from '@/features/territories/lib/doorLocation'
 import { saveStreet } from '@/features/territories/lib/doors'
 import { territoryAccess } from '@/features/territories/lib/sharing'
 import {
@@ -43,10 +44,10 @@ const PAUSE_MS = 300
 const pause = () =>
   new Promise<void>((resolve) => setTimeout(resolve, PAUSE_MS))
 
-const permitted = async () => {
-  if (Platform.OS !== 'android') return true
-  return (await askDoorLocation()).granted
-}
+const GEOCODER_NEEDS_LOCATION = Platform.select({
+  android: true,
+  default: false,
+})
 
 export default function TerritoryStreetSuggestScreen({
   route,
@@ -65,7 +66,9 @@ export default function TerritoryStreetSuggestScreen({
     stopped: false,
     done: false,
   })
-  const [blocked, setBlocked] = useState(false)
+  const location = useLocationAccess({ enabled: GEOCODER_NEEDS_LOCATION })
+  const allowed = !GEOCODER_NEEDS_LOCATION || location.granted
+  const blocked = GEOCODER_NEEDS_LOCATION && location.notice
   const [skipped, setSkipped] = useState<string[]>([])
   const report = useRef({ sent: false, search })
 
@@ -78,13 +81,18 @@ export default function TerritoryStreetSuggestScreen({
     if (!editable) navigation.goBack()
   }, [editable, navigation])
 
+  const askOnce = useEffectEvent(() => {
+    if (GEOCODER_NEEDS_LOCATION) void location.request()
+  })
+
   useEffect(() => {
+    askOnce()
+  }, [])
+
+  useEffect(() => {
+    if (!allowed) return
     let left = false
     const run = async () => {
-      if (!(await permitted())) {
-        if (!left) setBlocked(true)
-        return
-      }
       const points = outlineSamplePoints(outline)
       await findOutlineStreets({
         points,
@@ -110,7 +118,7 @@ export default function TerritoryStreetSuggestScreen({
         stopped: sent.search.stopped || !sent.search.done,
       })
     }
-  }, [outline])
+  }, [outline, allowed])
 
   if (!territory || !editable) return null
 
@@ -174,11 +182,20 @@ export default function TerritoryStreetSuggestScreen({
             gap: 16,
           }}
         >
-          {blocked ? (
-            note(
-              i18n.t('territories.suggest.locationNeeded'),
-              'suggest-blocked'
-            )
+          {blocked && location.access ? (
+            <View style={{ gap: 4 }}>
+              {note(
+                i18n.t('territories.suggest.locationNeeded'),
+                'suggest-blocked'
+              )}
+              <LocationNotice
+                access={location.access}
+                fix={location.fix}
+                onFix={location.runFix}
+                testID='suggest-location-notice'
+                style={{ paddingStart: 5 }}
+              />
+            </View>
           ) : (
             <>
               {note(i18n.t('territories.suggest.bestGuess'))}

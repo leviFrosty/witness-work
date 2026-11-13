@@ -2166,7 +2166,6 @@
   "backupAndRestore": "النسخ الاحتياطي والاستعادة",
   "coordinateSaved": "تم حفظ الإحداثيات",
   "saved": "تم الحفظ",
-  "locationDisabled_description": "مشاركة موقعك متوقفة. لن تتمكن الخريطة من التكبير تلقائيًا على موقعك.",
   "locationDisabled_callToAction": "فتح إعدادات التطبيق",
   "locationSettings_description": "اسمح بالوصول إلى الموقع لـ WitnessWork في إعداداته لترى مكانك على الخريطة وتجد جهات الاتصال القريبة منك.",
   "overrideCoordinate": "استبدال الإحداثيات",

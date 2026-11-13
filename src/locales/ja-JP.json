@@ -2008,7 +2008,6 @@
   "backupAndRestore": "バックアップと復元",
   "coordinateSaved": "座標を保存しました",
   "saved": "保存しました",
-  "locationDisabled_description": "現在地の共有が無効になっています。マップはあなたの現在地を自動的にズームインできません。",
   "locationDisabled_callToAction": "アプリの設定を開く",
   "locationSettings_description": "地図上で現在地を確認したり、近くの連絡先を探したりするには、WitnessWorkの位置情報を設定で許可してください。",
   "overrideCoordinate": "座標を上書き",

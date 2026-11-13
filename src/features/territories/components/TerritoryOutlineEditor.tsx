@@ -4,6 +4,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import * as Location from 'expo-location'
 import { Trash2 as TrashIcon, X as XIcon } from 'lucide-react-native'
+import LocationNotice from '@/components/LocationNotice'
 import Button from '@/components/ui/Button'
 import { UndoIcon } from '@/components/ui/DirectionalIcon'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -11,12 +12,13 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
+import useLocationAccess from '@/hooks/useLocationAccess'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
+import { checkLocationAccess } from '@/lib/locationPermission'
 import { usePreferences } from '@/stores/preferences'
 import { TerritoryMapEditorFrame } from '@/features/territories/components/TerritoryMapEditor'
 import TerritoryOutlineShape from '@/features/territories/components/TerritoryOutlineShape'
-import { doorLocationAllowed } from '@/features/territories/lib/doorLocation'
 import {
   cornerAt,
   cornerPoint,
@@ -46,7 +48,7 @@ const opening = async (points: Coordinate[]): Promise<MapRegion | null> => {
   const known = regionFor(points, CLOSEST)
   if (known) return known
   try {
-    if (!(await doorLocationAllowed())) return null
+    if ((await checkLocationAccess()) !== 'granted') return null
     const last = await Location.getLastKnownPositionAsync()
     return last
       ? {
@@ -78,7 +80,8 @@ export default function TerritoryOutlineEditor({
   const [selected, setSelected] = useState<number | null>(null)
   const [tapped, setTapped] = useState<number[]>([])
   const [region, setRegion] = useState<MapRegion | null | undefined>()
-  const [showsUser, setShowsUser] = useState(false)
+  const location = useLocationAccess()
+  const [noticeHidden, setNoticeHidden] = useState(false)
   const [start] = useState(() => [...outline, ...(pin ? [pin] : [])])
   const mapRef = useRef<MapView>(null)
   const view = useRef<{ region: MapRegion | null; size: MapSize | null }>({
@@ -92,7 +95,6 @@ export default function TerritoryOutlineEditor({
       view.current.region = found
       setRegion(found)
     })
-    void doorLocationAllowed().then(setShowsUser)
   }, [start])
 
   const count = draft.length
@@ -247,7 +249,7 @@ export default function TerritoryOutlineEditor({
                 userInterfaceStyle={colorScheme ? colorScheme : undefined}
                 style={{ flex: 1 }}
                 initialRegion={region ?? undefined}
-                showsUserLocation={showsUser}
+                showsUserLocation={location.granted}
                 showsPointsOfInterests={false}
                 toolbarEnabled={false}
                 rotateEnabled={false}
@@ -328,6 +330,16 @@ export default function TerritoryOutlineEditor({
             )}
           </View>
         </GestureDetector>
+        {location.notice && !noticeHidden && location.access && (
+          <LocationNotice
+            access={location.access}
+            fix={location.fix}
+            onFix={location.runFix}
+            onDismiss={() => setNoticeHidden(true)}
+            testID='territory-outline-location-notice'
+            style={{ paddingStart: 4, marginVertical: -6 }}
+          />
+        )}
         <Text
           testID='territory-outline-status'
           accessibilityLiveRegion='polite'

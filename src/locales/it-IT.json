@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Backup e ripristino",
   "coordinateSaved": "Coordinate salvate",
   "saved": "Salvate",
-  "locationDisabled_description": "La condivisione della tua posizione è disattivata. La mappa non sarà in grado di ingrandire automaticamente la tua posizione.",
   "locationDisabled_callToAction": "Apri impostazioni app",
   "locationSettings_description": "Consenti la posizione a WitnessWork nelle sue impostazioni per vedere dove ti trovi sulla mappa e trovare i contatti vicini a te.",
   "overrideCoordinate": "Ignora coordinate",

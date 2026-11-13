@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Sao lưu & Phục hồi",
   "coordinateSaved": "Tọa độ đã lưu",
   "saved": "Đã lưu",
-  "locationDisabled_description": "Chia sẻ vị trí của bạn đã bị vô hiệu hóa. Bản đồ sẽ không thể tự động phóng to vị trí của bạn.",
   "locationDisabled_callToAction": "Mở cài đặt ứng dụng",
   "locationSettings_description": "Hãy cho phép WitnessWork dùng vị trí trong phần cài đặt của ứng dụng để xem bạn đang ở đâu trên bản đồ và tìm các liên hệ gần bạn.",
   "overrideCoordinate": "Ghi đè tọa độ",

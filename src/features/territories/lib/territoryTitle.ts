@@ -9,6 +9,7 @@ import {
   wholeNumber,
   type FormatDoorAddress,
 } from '@/features/territories/lib/doors'
+import { houseProgress } from '@/features/territories/lib/houses'
 import type {
   Territory,
   TerritoryDoNotCall,
@@ -142,7 +143,22 @@ export const streetSummary = (
       }),
       notHome,
     ])
-  if (counts.total === 0) return i18n.t('territories.streetNotWorked')
+  const houses = houseProgress(street)
+  if (houses && houses.visited > 0)
+    return joined([
+      i18n.t('territories.housesVisited', {
+        visited: formatNumber(houses.visited),
+        total: formatNumber(houses.total),
+      }),
+      notHome,
+    ])
+  if (counts.total === 0)
+    return houses
+      ? joined([
+          i18n.t('territories.streetNotWorked'),
+          i18n.t('territories.houseCount', { count: houses.total }),
+        ])
+      : i18n.t('territories.streetNotWorked')
   return joined([
     i18n.t('territories.streetInProgress'),
     i18n.t('territories.recordedCount', { count: counts.total }),

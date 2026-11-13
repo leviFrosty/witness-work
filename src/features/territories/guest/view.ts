@@ -164,6 +164,7 @@ export function projectGuestView(
       first: part.street.first,
       descending: part.street.descending,
       saveLocations: part.street.saveLocations,
+      houses: part.street.houses,
       doors: fold.doors,
       next: 1,
       workedAt: part.worked?.at,

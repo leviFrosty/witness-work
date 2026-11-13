@@ -82,6 +82,7 @@ export default function TerritoryStreetFormScreen({
       next: from,
       first: existing ? existing.first : from,
       descending: numbering !== 'none' && descending ? true : undefined,
+      houses: existing?.houses,
       doors: existing?.doors ?? [],
       workedAt: existing?.workedAt,
       saveLocations: pinDoors ? undefined : false,

@@ -117,6 +117,7 @@ const KNOWN: Record<PersonalKind, readonly string[]> = {
     'first',
     'descending',
     'saveLocations',
+    'houses',
     'order',
   ],
   worked: ['at', 'by', 'byName'],
@@ -604,6 +605,7 @@ export function territoryFromEntry(
         ...(fields.saveLocations !== undefined && {
           saveLocations: fields.saveLocations,
         }),
+        ...(fields.houses && { houses: fields.houses }),
         doors: folded,
         ...(workedAt !== undefined && { workedAt }),
       }

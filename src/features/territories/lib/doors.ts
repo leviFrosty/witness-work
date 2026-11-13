@@ -49,6 +49,17 @@ export const nextUnrecorded = (street: TerritoryStreet, from: number) => {
   return next
 }
 
+const onSide = (
+  street: Pick<TerritoryStreet, 'numbering' | 'descending'>,
+  number: number
+) => {
+  const odd = number % 2 === 1
+  const otherSide =
+    (street.numbering === 'odd' && !odd) || (street.numbering === 'even' && odd)
+  if (!otherSide) return number
+  return street.descending ? number + 1 : number - 1
+}
+
 const OTHER_SIDE = { odd: 'even', even: 'odd' } as const
 
 export const switchSide = (street: TerritoryStreet): TerritoryStreet => {
@@ -114,13 +125,13 @@ export const logDoor = (
         },
       ]
   const number = wholeNumber(label)
-  const reached =
-    number !== undefined &&
-    (street.descending ? number <= street.next : number >= street.next)
   return {
     ...street,
     doors,
-    next: reached ? nextUnrecorded({ ...street, doors }, number) : street.next,
+    next:
+      number === undefined
+        ? street.next
+        : nextUnrecorded({ ...street, doors }, onSide(street, number)),
   }
 }
 

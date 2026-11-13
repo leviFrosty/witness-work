@@ -1,6 +1,4 @@
 import {
-  ArrowDown as ArrowDownIcon,
-  ArrowUp as ArrowUpIcon,
   BookUser as BookUserIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
@@ -27,6 +25,7 @@ import {
 } from '@react-navigation/native'
 import * as Crypto from 'expo-crypto'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import SortSummary from '@/components/sortFilter/SortSummary'
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
 import {
@@ -514,35 +513,11 @@ const ContactsScreen = ({
         {}
         {isSortNonDefault && sortLabel.length > 0 && (
           <Collapse collapsed={bars.hidden}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingTop: 10,
-                paddingHorizontal: 12,
-              }}
-            >
-              <LucideIcon
-                icon={
-                  contactSortDirection === 'asc' ? ArrowUpIcon : ArrowDownIcon
-                }
-                size={theme.fontSize('xs')}
-                style={{ color: theme.colors.textAlt }}
-              />
-              <Text
-                style={{
-                  color: theme.colors.textAlt,
-                  fontSize: theme.fontSize('xs'),
-                  fontFamily: theme.fonts.semiBold,
-                }}
-                numberOfLines={1}
-              >
-                {i18n.t('contacts_sortAndFilter_sortLabel', {
-                  label: sortLabel,
-                })}
-              </Text>
-            </View>
+            <SortSummary
+              label={sortLabel}
+              direction={contactSortDirection}
+              style={{ paddingTop: 10, paddingHorizontal: 12 }}
+            />
           </Collapse>
         )}
       </View>

@@ -7,10 +7,14 @@ import {
 } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
-import { Map as MapIcon } from 'lucide-react-native'
+import {
+  SlidersHorizontal as SlidersHorizontalIcon,
+  Map as MapIcon,
+} from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
+import SortSummary from '@/components/sortFilter/SortSummary'
 import Section from '@/components/ui/inputs/Section'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
@@ -18,10 +22,17 @@ import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import i18n from '@/lib/locales'
+import TerritoriesFilterChips from '@/features/territories/components/TerritoriesFilterChips'
+import useTerritoriesQuery from '@/features/territories/hooks/useTerritoriesQuery'
 import TerritoriesTabHeader from '@/features/territories/components/TerritoriesTabHeader'
 import TerritoryReceivedSection from '@/features/territories/components/sharing/TerritoryReceivedSection'
 import TerritoryReturnedGroup from '@/features/territories/components/TerritoryReturnedGroup'
 import TerritoryListRow from '@/features/territories/components/TerritoryListRow'
+import {
+  DEFAULT_TERRITORIES_QUERY,
+  matchesTerritoryFilters,
+  sortTerritories,
+} from '@/features/territories/lib/listView'
 import { handedStreetId } from '@/features/territories/lib/sharing'
 import TerritorySectionTitle from '@/features/territories/components/TerritorySectionTitle'
 import useDoorRecordPrivacy from '@/features/territories/hooks/useDoorRecordPrivacy'
@@ -40,17 +51,35 @@ export default function TerritoriesScreen() {
   const territories = useTerritories((state) => state.territories)
   useDoorRecordPrivacy()
 
-  const owned = territories.filter((territory) => !territory.received)
-  const active = owned
-    .filter((territory) => territory.finishedAt === undefined)
-    .sort((a, b) => b.checkedOutAt - a.checkedOutAt)
-  const finished = owned
-    .filter((territory) => territory.finishedAt !== undefined)
-    .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0))
+  const { sort, direction, filters, isSortDefault, clearFilters } =
+    useTerritoriesQuery()
+  const order = { sort, direction }
+
+  const now = Date.now()
+  const shown = territories.filter((territory) =>
+    matchesTerritoryFilters(territory, filters, now)
+  )
+  const checkedOut = (list: Territory[]) =>
+    list.filter(
+      (territory) => !territory.received && territory.finishedAt === undefined
+    )
+  const active = sortTerritories(
+    checkedOut(shown),
+    order,
+    (territory) => territory.checkedOutAt
+  )
+  const finished = sortTerritories(
+    shown.filter(
+      (territory) => !territory.received && territory.finishedAt !== undefined
+    ),
+    sort === 'number' || sort === 'recent' ? order : DEFAULT_TERRITORIES_QUERY,
+    (territory) => territory.finishedAt ?? 0
+  )
 
   const resume =
     useRoute<RouteProp<HomeTabStackParamList, 'Territories'>>().params?.resume
-  const only = active.length === 1 ? active[0]?.id : undefined
+  const working = checkedOut(territories)
+  const only = working.length === 1 ? working[0]?.id : undefined
   useEffect(() => {
     if (!resume) return
     navigation.setParams({ resume: false })
@@ -101,6 +130,43 @@ export default function TerritoriesScreen() {
               }
             />
           )}
+          {territories.length > 0 && (
+            <View
+              style={{
+                marginHorizontal: -inputLayout.horizontalPadding,
+                gap: 10,
+              }}
+            >
+              <TerritoriesFilterChips territories={territories} />
+              {!isSortDefault && (
+                <SortSummary
+                  label={i18n.t(`territories.view.sort.${sort}`)}
+                  direction={direction}
+                  style={{ paddingHorizontal: 12 }}
+                />
+              )}
+            </View>
+          )}
+          {territories.length > 0 && shown.length === 0 && (
+            <Empty
+              style={{ marginTop: 40 }}
+              testID='territories-none-match'
+              icon={
+                <LucideIcon
+                  icon={SlidersHorizontalIcon}
+                  size={28}
+                  color={theme.colors.textAlt}
+                />
+              }
+              title={i18n.t('territories.view.noMatchTitle')}
+              description={i18n.t('territories.view.noMatchDescription')}
+              action={
+                <ActionButton onPress={clearFilters} submitShortcut={false}>
+                  {i18n.t('territories.view.clearFilters')}
+                </ActionButton>
+              }
+            />
+          )}
           {active.length > 0 && (
             <View style={{ gap: 8 }}>
               <TerritorySectionTitle>
@@ -113,7 +179,8 @@ export default function TerritoriesScreen() {
             <TerritoryReceivedSection
               key={kind}
               kind={kind}
-              territories={territories}
+              territories={shown}
+              sort={order}
               onOpen={(territory) => {
                 const streetId = handedStreetId(territory)
                 if (streetId)

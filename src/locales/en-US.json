@@ -6818,6 +6818,22 @@
     "homeCard_seeAll": "See All",
     "finished_show": "Show returned territories",
     "finished_hide": "Hide returned territories",
+    "view": {
+      "sort": {
+        "recent": "Date checked out",
+        "returnBy": "Return date",
+        "number": "Number",
+        "progress": "Streets worked"
+      },
+      "filter": {
+        "overdue": "Overdue",
+        "notHome": "Not at Homes",
+        "streetsLeft": "Streets Left"
+      },
+      "noMatchTitle": "No Territories Match",
+      "noMatchDescription": "None of your territories match the filters you chose.",
+      "clearFilters": "Clear Filters"
+    },
     "numberingHelp": {
       "both": "Every number comes up in order.",
       "odd": "Only odd numbers come up. When you cross the street, tap Switch to the Even Side.",

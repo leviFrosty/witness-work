@@ -43,3 +43,56 @@ export function isStorableFile(response: {
 export function isUsableNavigation(response: { status: number }): boolean {
   return response.status < 500
 }
+
+export const GUEST_SCOPE_PATH = '/territories/guest'
+
+export const GUEST_CACHE = 'ww-guest'
+
+export const KEEP_FILES = 'KEEP_FILES'
+
+export const isGuestScope = (scope: string): boolean => {
+  try {
+    return new URL(scope).pathname.replace(/\/+$/, '') === GUEST_SCOPE_PATH
+  } catch {
+    return false
+  }
+}
+
+const HASHED_FILE = /[.-][0-9a-f]{32}\.[A-Za-z0-9]+$/
+
+export function isGuestFile(url: URL, origin: string): boolean {
+  if (isNeverCached(url, origin) || url.search) return false
+  const { pathname } = url
+  return (
+    (pathname.startsWith(CHUNK_PREFIX) || pathname.startsWith('/assets/')) &&
+    HASHED_FILE.test(pathname)
+  )
+}
+
+export const isHtml = (response: {
+  headers: { get(name: string): string | null }
+}): boolean =>
+  (response.headers.get('Content-Type') ?? '')
+    .toLowerCase()
+    .startsWith('text/html')
+
+export function guestFilesToKeep(
+  urls: unknown,
+  origin: string,
+  limit = 60
+): string[] {
+  if (!Array.isArray(urls)) return []
+  const kept = new Set<string>()
+  for (const value of urls) {
+    if (typeof value !== 'string') continue
+    let url: URL
+    try {
+      url = new URL(value, origin)
+    } catch {
+      continue
+    }
+    if (isGuestFile(url, origin)) kept.add(url.pathname)
+    if (kept.size >= limit) break
+  }
+  return [...kept]
+}

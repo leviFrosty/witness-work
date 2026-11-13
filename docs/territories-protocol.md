@@ -358,7 +358,7 @@ Only sharing with buddies and handing off need Buddies: they travel as Buddies e
 6. **After a rekey**, guest puts get `stale_key`. The page re-reads `g.<linkId>` until it has the new epoch's keys, keeping its records meanwhile. The creator's devices add the new epoch's keys to every live link they made on their next sync.
 7. **Ending:** `link/end` (the owner, or the holder for their links), `handoff/end`, returning the territory, or 24 hours. The guest's next request gets `gone`.
 
-**What a guest's browser stores**, in `localStorage` under `ww.territoryGuest.v1.<linkId>` and a `current` pointer: the fragment's values (`spaceId`, `linkId`, `L`), its guest UUID and name, its sync cursor, the sealed records it synced, and its unsent records. Everything for a link is deleted when the link answers `gone` or `not_found`, at `expiresAt`, or when the guest chooses Forget This Link. Nothing goes into the web app's own storage.
+**What a guest's browser stores**, in `localStorage` under `ww.territoryGuest.v1.<linkId>` and a `current` pointer: the fragment's values (`spaceId`, `linkId`, `L`), its guest UUID and name, its sync cursor, the sealed records it synced, and its unsent records. Everything for a link is deleted when the link answers `gone` or `not_found`, at `expiresAt`, or when the guest chooses Forget This Link. Nothing goes into the web app's own storage. The page also registers the web app's service worker for `/territories/guest` only (`docs/web-offline.md`, "The guest page"), which keeps the page's shell and the script and font files it loaded in the `ww-guest` cache, so a later visit opens from the device, offline too. Those files are the same for every link: the cache holds nothing from the fragment and no record, the shell is stored under `/index.html` and never under the address that was opened, and the cache stays when a link is forgotten.
 
 ### Hand-off, take back, give back
 
@@ -536,7 +536,7 @@ Reuse `src/lib/sharedSpaces` (client, crypto, keyring, keyTrust, live, invite se
 
 ### 3. Guest web page
 
-**Files:** `src/app/App.tsx` (on the web, `/territories/guest` renders the guest root before the storage unlock, sign-in, and app-lock gates), new `src/app/territory-guest/TerritoryGuestRoot.web.tsx` (with a native `TerritoryGuestRoot.tsx` that renders nothing), new `src/features/territories/guest/` (fragment parsing and URL clearing, `localStorage` store, session: sync, put, polling, outbox, clock), a presentational `components/sharing/GuestPageBody.tsx` shared with the in-app preview `TerritoryGuestScreen`, guest strings in `src/locales/en-US.json`, and a dev script `scripts/verify/territory-guest-link.mjs` that makes a scoped space and link on the dev API with a dev session and prints the URL.
+**Files:** `src/app/launch/start.web.ts` (on the web, `/territories/guest` loads the guest root as its own chunk, without the app or its storage unlock, sign-in, and app-lock gates), new `src/app/territory-guest/TerritoryGuestRoot.web.tsx` (with a native `TerritoryGuestRoot.tsx` that renders nothing), new `src/features/territories/guest/` (fragment parsing and URL clearing, `localStorage` store, session: sync, put, polling, outbox, clock), a presentational `components/sharing/GuestPageBody.tsx` shared with the in-app preview `TerritoryGuestScreen`, guest strings in `src/locales/en-US.json`, and a dev script `scripts/verify/territory-guest-link.mjs` that makes a scoped space and link on the dev API with a dev session and prints the URL.
 
 **Order:**
 

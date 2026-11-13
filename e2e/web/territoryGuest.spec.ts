@@ -297,3 +297,135 @@ test('with the owner’s privacy mode on, a guest marks streets worked and notes
     .toEqual(['Maria'])
   await shot(page, '6-privacy')
 })
+
+test.describe('a second visit', () => {
+  test.use({ serviceWorkers: 'allow' })
+
+  test('loads the page and the territory from the device', async ({
+    page,
+    context,
+    baseURL,
+    browserName,
+  }) => {
+    test.skip(
+      !!process.env.E2E_EXTERNAL,
+      'the dev server has no service worker'
+    )
+    test.skip(
+      browserName === 'firefox',
+      'setOffline fails navigations in Firefox'
+    )
+    test.setTimeout(120_000)
+    const sent: Sent[] = []
+    await routeGuestOps(context, sent)
+    const network = { down: false, held: null as (() => void) | null }
+    await context.route(
+      (url) => url.pathname === '/spaces/v1/guest/sync',
+      async (route) => {
+        if (route.request().method() === 'OPTIONS') return route.fallback()
+        if (network.down) return route.abort('internetdisconnected')
+        if (network.held)
+          await new Promise<void>((release) => {
+            network.held = release
+          })
+        await route.fallback()
+      }
+    )
+    const link = makeLink('second-visit')
+    const secret = secretOf(link.fragment)
+    await page.goto(`/territories/guest#${link.fragment}`)
+    await expect(page.getByTestId('guest-title')).toBeVisible()
+
+    const kept = () =>
+      page.evaluate(async () => {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        const names = await caches.keys()
+        const keys = (await (await caches.open('ww-guest')).keys()).map(
+          (request) => request.url
+        )
+        return {
+          scopes: registrations.map(({ scope }) => new URL(scope).pathname),
+          caches: names,
+          keys,
+        }
+      })
+    await expect
+      .poll(
+        async () => {
+          const { keys } = await kept()
+          return {
+            shell: keys.some((key) => key.endsWith('/index.html')),
+            entry: keys.some((key) =>
+              /\/_expo\/static\/js\/web\/index-[0-9a-f]{32}\.js$/.test(key)
+            ),
+            guest: keys.some((key) =>
+              /\/startGuest-[0-9a-f]{32}\.js$/.test(key)
+            ),
+          }
+        },
+        { timeout: 60_000 }
+      )
+      .toEqual({ shell: true, entry: true, guest: true })
+    const stored = await kept()
+    expect(stored.scopes).toEqual(['/territories/guest'])
+    expect(
+      stored.caches.filter((name) => name.startsWith('workbox-precache'))
+    ).toEqual([])
+    for (const key of stored.keys) {
+      expect(key).not.toContain(secret)
+      expect(key).not.toContain('#')
+      expect(new URL(key).pathname).not.toBe('/territories/guest')
+    }
+    expect(stored.keys.some((key) => /\/startApp-/.test(key))).toBe(false)
+    await page.close()
+
+    sent.length = 0
+    network.held = () => {}
+    const second = await context.newPage()
+    const answers: { url: string; fromWorker: boolean }[] = []
+    second.on('response', (response) => {
+      const { origin, pathname } = new URL(response.url())
+      if (
+        origin === baseURL &&
+        !pathname.startsWith('/icons/') &&
+        !['/manifest.webmanifest', '/favicon.ico'].includes(pathname)
+      )
+        answers.push({
+          url: response.url(),
+          fromWorker: response.fromServiceWorker(),
+        })
+    })
+    await second.goto(`/territories/guest#${link.fragment}`)
+    await expect(second.getByTestId('guest-title')).toHaveText(
+      "Anna's Territory 12 · North Hill"
+    )
+    expect(await second.evaluate(() => location.hash)).toBe('')
+    expect(answers.length).toBeGreaterThan(3)
+    expect(answers.filter((answer) => !answer.fromWorker)).toEqual([])
+    await expect
+      .poll(() => sent.filter((request) => request.url.endsWith('/guest/sync')))
+      .not.toEqual([])
+    const [sync] = sent.filter((request) => request.url.endsWith('/guest/sync'))
+    expect((JSON.parse(sync!.body) as { since: number }).since).toBeGreaterThan(
+      0
+    )
+    network.held()
+    network.held = null
+    for (const request of sent) {
+      expect(request.url).not.toContain(secret)
+      expect(request.url).not.toContain(link.fragment)
+    }
+    await second.close()
+
+    network.down = true
+    await context.setOffline(true)
+    const offline = await context.newPage()
+    await offline.goto('/territories/guest')
+    await expect(offline.getByTestId('guest-title')).toHaveText(
+      "Anna's Territory 12 · North Hill"
+    )
+    await expect(offline.getByTestId('guest-offline')).toBeVisible()
+    await shot(offline, '7-offline-second-visit')
+    await context.setOffline(false)
+  })
+})

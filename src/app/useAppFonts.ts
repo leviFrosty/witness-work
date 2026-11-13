@@ -8,7 +8,7 @@ import {
 } from '@expo-google-fonts/inter'
 import { loadFonts } from '@/lib/fonts/loadFonts'
 
-const APP_FONTS: Record<string, number> = {
+export const APP_FONTS: Record<string, number> = {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
@@ -17,11 +17,11 @@ const APP_FONTS: Record<string, number> = {
   InterBold: Inter_700Bold,
 }
 
-const allLoaded = () =>
+export const appFontsLoaded = () =>
   Object.keys(APP_FONTS).every((family) => Font.isLoaded(family))
 
 export function useAppFonts() {
-  const [settled, setSettled] = useState(allLoaded)
+  const [settled, setSettled] = useState(appFontsLoaded)
 
   useEffect(() => {
     if (settled) return

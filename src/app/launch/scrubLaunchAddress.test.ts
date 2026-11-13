@@ -247,14 +247,34 @@ describe('the web entry', () => {
       name: 'scrubLaunchAddress',
     })
 
-    const inside = JSON.stringify(second)
-    for (const module of [
+    expect(JSON.stringify(second)).toContain('"value":"./app/launch/start"')
+  })
+
+  it('loads the app and the guest page as separate chunks on the web', () => {
+    const start = fs.readFileSync(path.join(__dirname, 'start.web.ts'), 'utf8')
+    expect(
+      [...start.matchAll(/^import (?:.* from )?'([^']+)'/gm)].map((m) => m[1])
+    ).toEqual(['expo/build/Expo.fx', '@/features/territories/guest/launch'])
+    expect(start).not.toMatch(/\brequire\(/)
+    expect(
+      [...start.matchAll(/\bimport\('([^']+)'\)/g)].map((m) => m[1])
+    ).toEqual(['@/app/territory-guest/startGuest', '@/app/launch/startApp'])
+  })
+
+  it('starts the app in the order it always has', () => {
+    const order = [
+      ...fs
+        .readFileSync(path.join(__dirname, 'startApp.ts'), 'utf8')
+        .matchAll(/require\('([^']+)'\)/g),
+    ].map((m) => m[1])
+    expect(order).toEqual([
       'react-native-gesture-handler',
-      './app/launch/beforeAppLoads',
-      './app/launch/recordLaunchLinks',
-      './app/App',
+      '@tamagui/native/setup-gesture-handler',
+      'expo',
+      './beforeAppLoads',
+      './recordLaunchLinks',
+      '../App',
     ])
-      expect(inside).toContain(`"value":"${module}"`)
   })
 })
 

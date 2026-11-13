@@ -11,16 +11,20 @@ import tamaguiConfig from '../../../tamagui.config'
 import ToastHost from '@/components/toast/ToastHost'
 import ThemeProvider from '@/providers/ThemeProvider'
 import LaunchSplash from '@/app/launch/LaunchSplash'
-import { useAppFonts } from '@/app/useAppFonts'
+import { useGuestFonts } from '@/app/territory-guest/useGuestFonts'
 import { setAnalyticsEventsAllowed } from '@/lib/analyticsPolicy'
 import { translationsLoaded } from '@/lib/locales'
+import { logger } from '@/lib/logger'
+import { GUEST_LINK_PATH } from '@/lib/sharedSpaces/scopes'
+import { keepGuestPage, loadedFiles } from '@/lib/webOffline/guestWorker'
+import { workerScriptURL } from '@/vendor/web/trustedTypes'
 import TerritoryGuestPage from '@/features/territories/guest/TerritoryGuestPage'
 
 setAnalyticsEventsAllowed(true)
 
 export default function TerritoryGuestRoot() {
   const scheme = useColorScheme()
-  const fontsLoaded = useAppFonts()
+  const fontsLoaded = useGuestFonts()
   const [translated, setTranslated] = useState(false)
 
   useEffect(() => {
@@ -29,7 +33,29 @@ export default function TerritoryGuestRoot() {
       .then(() => setTranslated(true))
   }, [])
 
-  if (!fontsLoaded || !translated) return <LaunchSplash />
+  const shown = fontsLoaded && translated
+  useEffect(() => {
+    if (!shown || __DEV__ || !('serviceWorker' in navigator)) return
+    let keep = () => {}
+    const left = () => {
+      if (document.visibilityState === 'hidden') keep()
+    }
+    keepGuestPage(
+      navigator.serviceWorker,
+      workerScriptURL(),
+      GUEST_LINK_PATH,
+      () =>
+        loadedFiles(performance.getEntriesByType('resource'), location.origin)
+    )
+      .then((kept) => {
+        keep = kept.keep
+      })
+      .catch((error) => logger.warn('[guest] no service worker', error))
+    document.addEventListener('visibilitychange', left)
+    return () => document.removeEventListener('visibilitychange', left)
+  }, [shown])
+
+  if (!shown) return <LaunchSplash />
   return (
     <ThemeProvider>
       <SafeAreaProvider>

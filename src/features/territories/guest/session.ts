@@ -472,6 +472,8 @@ export function createGuestSession({
     void sync()
   }
 
+  if (readKeys() && !expiredNow()) recompute('ready')
+
   return {
     getState: () => state,
 

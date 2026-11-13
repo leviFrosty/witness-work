@@ -29,8 +29,19 @@ vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/IconButton', () => ({ default: 'IconButton' }))
 vi.mock('@/components/ui/InfoPopover', () => ({ default: 'InfoPopover' }))
 vi.mock('@/components/ui/layout/XView', () => ({ default: 'XView' }))
-vi.mock('@/components/MapWarningLocationSharingDisabled', () => ({
-  default: 'MapWarningLocationSharingDisabled',
+vi.mock('@/components/LocationNotice', () => ({
+  default: 'LocationNotice',
+}))
+vi.mock('@/hooks/useLocationAccess', () => ({
+  default: () => ({
+    access: 'denied',
+    granted: false,
+    notice: true,
+    fix: 'settings',
+    request: async () => false,
+    runFix: () => undefined,
+    refresh: async () => 'denied',
+  }),
 }))
 
 import PinLocation from '@/features/contacts/components/PinLocation'

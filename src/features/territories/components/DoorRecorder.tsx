@@ -73,6 +73,7 @@ export default function DoorRecorder({
   onFinishStreet,
   switchSide,
   pinControl,
+  notice,
   stow,
   onLayout,
 }: {
@@ -100,6 +101,8 @@ export default function DoorRecorder({
   switchSide: { label: string; onPress: () => void } | null
 
   pinControl?: ReactNode
+
+  notice?: ReactNode
 
   stow?: DoorRecorderStow
 
@@ -337,6 +340,7 @@ export default function DoorRecorder({
             importantForAccessibility={stowed ? 'no-hide-descendants' : 'auto'}
             style={[{ gap: 12 }, fade]}
           >
+            {!describing && notice}
             {describing ? (
               <View style={{ gap: 12 }}>
                 <Text style={{ fontFamily: theme.fonts.semiBold }}>

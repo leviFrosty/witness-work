@@ -1328,7 +1328,6 @@
   "backupAndRestore": "Cópia de Segurança e Restauração",
   "coordinateSaved": "Coordenada Salva",
   "saved": "Salvo",
-  "locationDisabled_description": "O compartilhamento de sua localização está desativado. O mapa não conseguirá fazer zoom automaticamente na sua localização.",
   "locationDisabled_callToAction": "Abrir configurações do aplicativo",
   "locationSettings_description": "Permita a localização para o WitnessWork nas respetivas definições para ver onde está no mapa e encontrar contactos perto de si.",
   "overrideCoordinate": "Substituir coordenada",

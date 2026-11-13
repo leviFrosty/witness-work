@@ -5,12 +5,14 @@ import MapView, { Marker } from 'react-native-maps'
 import * as Location from 'expo-location'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Link as LinkIcon } from 'lucide-react-native'
+import LocationNotice from '@/components/LocationNotice'
 import Button from '@/components/ui/Button'
 import FoldPane from '@/components/ui/layout/FoldPane'
 import Header from '@/components/ui/layout/Header'
 import Text from '@/components/ui/MyText'
 import SegmentedControl from '@/components/ui/SegmentedControl'
 import useTheme from '@/contexts/theme'
+import useLocationAccess from '@/hooks/useLocationAccess'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
@@ -22,7 +24,6 @@ import TerritoryMapMarker from '@/features/territories/components/TerritoryMapMa
 import TerritoryMarkerCard from '@/features/territories/components/TerritoryMarkerCard'
 import TerritoryOutlineShape from '@/features/territories/components/TerritoryOutlineShape'
 import useDoorRecordPrivacy from '@/features/territories/hooks/useDoorRecordPrivacy'
-import { doorLocationAllowed } from '@/features/territories/lib/doorLocation'
 import { isOutline, regionFor } from '@/features/territories/lib/territoryArea'
 import {
   fitPoints,
@@ -70,7 +71,9 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
     streetFocus(markers, route.params.streetId)
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [locationAllowed, setLocationAllowed] = useState(false)
+  const location = useLocationAccess()
+  const locationAllowed = location.granted
+  const [noticeHidden, setNoticeHidden] = useState(false)
   const [cardHeight, setCardHeight] = useState(0)
   const [mapHeight, setMapHeight] = useState(0)
   const [latitudeDelta, setLatitudeDelta] = useState<number | null>(null)
@@ -78,10 +81,6 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (!territory) navigation.goBack()
   }, [territory, navigation])
-
-  useEffect(() => {
-    void doorLocationAllowed().then(setLocationAllowed)
-  }, [])
 
   if (!territory) return null
 
@@ -91,6 +90,7 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
   const outline = isOutline(territory.outline) ? territory.outline : null
   const focusStreet = territory.streets.find((street) => street.id === focus)
   const focused = !!focusStreet
+  const showNotice = location.notice && !noticeHidden
   const selected = markers.find((marker) => marker.id === selectedId)
   const selectedStreet = territory.streets.find(
     (street) => street.id === selected?.streetId
@@ -122,10 +122,8 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
 
   const onLocation = async () => {
     try {
-      if (!locationAllowed) {
-        const { granted } = await Location.requestForegroundPermissionsAsync()
-        setLocationAllowed(granted)
-        if (!granted) toast.info(i18n.t('territories.map.locationOff'))
+      if (!(await location.request({ again: true }))) {
+        setNoticeHidden(false)
         return
       }
       const position =
@@ -136,7 +134,7 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
         longitude: position.coords.longitude,
       })
     } catch {
-      toast.info(i18n.t('territories.map.locationOff'))
+      toast.info(i18n.t('territories.map.locationUnavailable'))
     }
   }
 
@@ -212,7 +210,7 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
         ))}
       </MapView>
 
-      {focusStreet && (
+      {(focusStreet || showNotice) && (
         <View
           pointerEvents='box-none'
           style={{
@@ -224,49 +222,64 @@ export default function TerritoryMapScreen({ route, navigation }: Props) {
             gap: 8,
           }}
         >
-          <View
-            testID='territory-map-focus-street'
-            style={{
-              minHeight: 44,
-              maxWidth: '100%',
-              justifyContent: 'center',
-              paddingHorizontal: 16,
-              borderRadius: 22,
-              borderCurve: 'continuous',
-              backgroundColor: `${theme.colors.card}EE`,
-            }}
-          >
-            <Text
-              numberOfLines={1}
-              style={{ fontFamily: theme.fonts.semiBold }}
-            >
-              {focusStreet.name}
-            </Text>
-          </View>
-          <Button
-            variant='glass'
-            onPress={() => {
-              setFocus(undefined)
-              fit(undefined)
-            }}
-            testID='territory-map-focus'
-            style={{
-              minHeight: 44,
-              justifyContent: 'center',
-              paddingHorizontal: 16,
-              borderRadius: 22,
-              backgroundColor: `${theme.colors.card}EE`,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.accent,
-              }}
-            >
-              {i18n.t('territories.map.streetFocus_clear')}
-            </Text>
-          </Button>
+          {showNotice && location.access && (
+            <LocationNotice
+              floating
+              access={location.access}
+              fix={location.fix}
+              onFix={location.runFix}
+              onDismiss={() => setNoticeHidden(true)}
+              testID='territory-map-location-notice'
+              style={{ alignSelf: 'stretch' }}
+            />
+          )}
+          {focusStreet && (
+            <>
+              <View
+                testID='territory-map-focus-street'
+                style={{
+                  minHeight: 44,
+                  maxWidth: '100%',
+                  justifyContent: 'center',
+                  paddingHorizontal: 16,
+                  borderRadius: 22,
+                  borderCurve: 'continuous',
+                  backgroundColor: `${theme.colors.card}EE`,
+                }}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={{ fontFamily: theme.fonts.semiBold }}
+                >
+                  {focusStreet.name}
+                </Text>
+              </View>
+              <Button
+                variant='glass'
+                onPress={() => {
+                  setFocus(undefined)
+                  fit(undefined)
+                }}
+                testID='territory-map-focus'
+                style={{
+                  minHeight: 44,
+                  justifyContent: 'center',
+                  paddingHorizontal: 16,
+                  borderRadius: 22,
+                  backgroundColor: `${theme.colors.card}EE`,
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    color: theme.colors.accent,
+                  }}
+                >
+                  {i18n.t('territories.map.streetFocus_clear')}
+                </Text>
+              </Button>
+            </>
+          )}
         </View>
       )}
 

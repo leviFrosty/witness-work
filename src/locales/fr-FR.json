@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Sauvegarde et restauration",
   "coordinateSaved": "Coordonnées enregistrées",
   "saved": "Enregistrées",
-  "locationDisabled_description": "Le partage de votre position est désactivé. La carte ne pourra pas zoomer automatiquement sur votre position.",
   "locationDisabled_callToAction": "Ouvrir les paramètres de l'application",
   "locationSettings_description": "Autorisez la localisation pour WitnessWork dans ses réglages afin de voir où vous êtes sur la carte et de trouver des contacts près de vous.",
   "overrideCoordinate": "Remplacer les coordonnées",

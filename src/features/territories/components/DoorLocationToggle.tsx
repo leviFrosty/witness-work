@@ -1,4 +1,4 @@
-import { Platform, Pressable, View, useWindowDimensions } from 'react-native'
+import { Pressable, View, useWindowDimensions } from 'react-native'
 import {
   MapPin as MapPinIcon,
   MapPinOff as MapPinOffIcon,
@@ -12,7 +12,7 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import Switch from '@/components/ui/Switch'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
-import i18n, { type TranslationKey } from '@/lib/locales'
+import i18n from '@/lib/locales'
 import type { DoorPinState } from '@/features/territories/lib/doorPins'
 
 const DETAIL = {
@@ -26,10 +26,7 @@ const DETAIL = {
   },
   denied: {
     title: 'territories.pins.deniedTitle',
-    description: Platform.select<TranslationKey>({
-      web: 'territories.pins.deniedDescriptionWeb',
-      default: 'territories.pins.deniedDescription',
-    }),
+    description: 'territories.pins.deniedDescription',
   },
   away: {
     title: 'territories.pins.awayTitle',
@@ -44,7 +41,7 @@ export default function DoorLocationToggle({
   onFix,
 }: {
   state: DoorPinState
-  fixWith: 'pinAnyway' | 'allowLocation' | 'openSettings' | null
+  fixWith: 'pinAnyway' | null
   onToggle: (value: boolean) => void
   onFix: () => void
 }) {
@@ -137,7 +134,7 @@ export default function DoorLocationToggle({
                     color: theme.colors.accent,
                   }}
                 >
-                  {i18n.t(`territories.pins.${fixWith}`)}
+                  {i18n.t('territories.pins.pinAnyway')}
                 </Text>
               </Button>
             )}

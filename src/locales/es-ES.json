@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Copia de seguridad y restauración",
   "coordinateSaved": "Coordenada guardada",
   "saved": "Guardada",
-  "locationDisabled_description": "La función para compartir tu ubicación está deshabilitada. El mapa no podrá hacer zoom automáticamente en tu ubicación.",
   "locationDisabled_callToAction": "Abrir configuración de la aplicación",
   "locationSettings_description": "Permite la ubicación de WitnessWork en sus ajustes para ver dónde estás en el mapa y encontrar contactos cerca de ti.",
   "overrideCoordinate": "Anular coordenada",

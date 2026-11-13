@@ -2008,7 +2008,6 @@
   "backupAndRestore": "备份与恢复",
   "coordinateSaved": "坐标已保存",
   "saved": "已保存",
-  "locationDisabled_description": "您的位置共享已禁用。地图将无法自动放大到您的位置。",
   "locationDisabled_callToAction": "打开应用设置",
   "locationSettings_description": "请在设置中允许 WitnessWork 使用定位，以便在地图上查看你的位置并查找你附近的联系人。",
   "overrideCoordinate": "覆盖坐标",

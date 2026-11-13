@@ -2008,7 +2008,6 @@
   "backupAndRestore": "Backup e Restauração",
   "coordinateSaved": "Coordenada Salva",
   "saved": "Salvo",
-  "locationDisabled_description": "Seu compartilhamento de localização está desabilitado. O mapa não poderá ampliar automaticamente sua localização.",
   "locationDisabled_callToAction": "Abrir configurações do aplicativo",
   "locationSettings_description": "Permita a localização do WitnessWork nos ajustes dele para ver onde você está no mapa e encontrar contatos perto de você.",
   "overrideCoordinate": "Substituir Coordenada",

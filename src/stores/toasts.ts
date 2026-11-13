@@ -160,6 +160,12 @@ export const toast = {
 
   dismiss: (id: number, reason: ToastCloseReason = 'dismissed') =>
     close(id, reason),
+
+  dismissKey: (key: string, reason: ToastCloseReason = 'dismissed') =>
+    useToasts
+      .getState()
+      .toasts.filter((shown) => shown.key === key)
+      .forEach((shown) => close(shown.id, reason)),
 }
 
 export const toastKeys = (toasts: readonly Toast[]): string[] =>

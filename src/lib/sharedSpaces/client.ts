@@ -927,6 +927,18 @@ export function createSpacesClient(deps: SpacesClientDeps) {
       )
     },
 
+    async setLinkExpiry(
+      auth: SpaceMemberAuth,
+      fields: { linkId: string; expiresAt: number },
+      call: SpaceCallOptions = {}
+    ): Promise<{ seq: number }> {
+      return seqOf(
+        await post('link/expiry', { ...member(auth), ...fields }, call, {
+          idempotent: true,
+        })
+      )
+    },
+
     async deleteSpace(
       auth: SpaceMemberAuth,
       call: SpaceCallOptions = {}

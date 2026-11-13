@@ -8,6 +8,7 @@ import {
   UserPlus as UserPlusIcon,
 } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
@@ -73,6 +74,7 @@ export default function DoorRow({
   recordedBy,
   mine,
   fresh,
+  plain = false,
 }: {
   door: TerritoryDoor
   title: string
@@ -82,6 +84,8 @@ export default function DoorRow({
   mine?: boolean
 
   fresh?: boolean
+
+  plain?: boolean
 
   open: boolean
 
@@ -179,7 +183,13 @@ export default function DoorRow({
             </Text>
           </View>
           <LucideIcon
-            icon={open ? ChevronUpIcon : ChevronDownIcon}
+            icon={
+              plain
+                ? ChevronForwardIcon
+                : open
+                  ? ChevronUpIcon
+                  : ChevronDownIcon
+            }
             size={18}
             color={theme.colors.textAlt}
           />

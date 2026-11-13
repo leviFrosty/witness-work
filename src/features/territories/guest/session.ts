@@ -69,6 +69,13 @@ export type GuestSessionState = {
   records: ReadonlyMap<string, GuestRecord>
   guest: { id: string; name: string } | null
   next: Readonly<Record<string, number>>
+  streetId: string | null
+
+  from: string | null
+
+  title: string | null
+
+  joined: boolean
   firstRecordSent: boolean
 }
 
@@ -127,6 +134,10 @@ export function createGuestSession({
     records: new Map(),
     guest: null,
     next: saved.next,
+    streetId: saved.streetId ?? null,
+    from: null,
+    title: null,
+    joined: false,
     firstRecordSent: saved.firstRecordSent === true,
   }
 
@@ -222,6 +233,10 @@ export function createGuestSession({
           ? { id: saved.guestId, name: saved.name }
           : null,
       next: saved.next,
+      streetId: saved.streetId ?? null,
+      from: keys?.from || state.from,
+      title: keys?.title || state.title,
+      joined: !!(saved.guestId && saved.name),
       firstRecordSent: saved.firstRecordSent === true,
     }
     emit()
@@ -244,6 +259,7 @@ export function createGuestSession({
       records: new Map(),
       guest: null,
       next: {},
+      streetId: null,
     }
     emit()
   }
@@ -534,6 +550,13 @@ export function createGuestSession({
     setNext(streetId: string, next: number) {
       if (saved.next[streetId] === next || isFinal()) return
       saved.next = { ...saved.next, [streetId]: next }
+      persist()
+      recompute()
+    },
+
+    setStreet(streetId: string | null) {
+      if ((saved.streetId ?? null) === streetId || isFinal()) return
+      saved.streetId = streetId ?? undefined
       persist()
       recompute()
     },

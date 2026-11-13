@@ -51,7 +51,15 @@ function reportOutcome(outcome: TerritoryOutcome) {
       })
       return
     case 'link_created':
-      analytics.capture('territory_link_created', { streets: outcome.streets })
+      analytics.capture('territory_link_created', {
+        streets: outcome.streets,
+        days: outcome.days,
+      })
+      return
+    case 'link_lifetime_changed':
+      analytics.capture('territory_link_lifetime_changed', {
+        days: outcome.days,
+      })
       return
     case 'link_ended':
       analytics.capture('territory_link_ended')

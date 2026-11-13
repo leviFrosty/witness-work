@@ -71,6 +71,7 @@ export default function DoorRecorder({
   onPick,
   onSkip,
   onFinishStreet,
+  onCancelChange,
   switchSide,
   pinControl,
   notice,
@@ -97,6 +98,8 @@ export default function DoorRecorder({
   onSkip: () => void
 
   onFinishStreet: (() => void) | null
+
+  onCancelChange?: () => void
 
   switchSide: { label: string; onPress: () => void } | null
 
@@ -253,6 +256,23 @@ export default function DoorRecorder({
         </Text>
       )}
       {!describing && !blocked && pinControl}
+      {onCancelChange && editing && !describing && !blocked && (
+        <Button
+          onPress={onCancelChange}
+          testID='door-change-cancel'
+          style={{
+            minHeight: MIN_TOUCH_TARGET,
+            justifyContent: 'center',
+            paddingHorizontal: 16,
+            borderRadius: MIN_TOUCH_TARGET / 2,
+            backgroundColor: theme.colors.backgroundLighter,
+          }}
+        >
+          <Text style={{ fontFamily: theme.fonts.semiBold }}>
+            {i18n.t('cancel')}
+          </Text>
+        </Button>
+      )}
       {onFinishStreet && !describing && !blocked && !editing && (
         <Button
           onPress={onFinishStreet}

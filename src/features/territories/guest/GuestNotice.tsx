@@ -25,14 +25,14 @@ export default function GuestNotice({
         padding: 16,
         borderRadius: 20,
         backgroundColor: offline
-          ? theme.colors.backgroundLighter
+          ? theme.colors.warnTranslucent
           : theme.colors.accentTranslucent,
       }}
     >
       <LucideIcon
         icon={offline ? WifiOffIcon : InfoIcon}
         size={20}
-        color={offline ? theme.colors.textAlt : theme.colors.accent}
+        color={offline ? theme.colors.text : theme.colors.accent}
       />
       <Text style={{ flex: 1, fontSize: theme.fontSize('sm') }}>{text}</Text>
     </View>

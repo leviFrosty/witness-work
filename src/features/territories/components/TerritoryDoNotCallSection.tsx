@@ -49,6 +49,7 @@ export default function TerritoryDoNotCallSection({
   editable = !readOnly,
   streets,
   pickStreet = true,
+  elsewhere = true,
   copyable = false,
   summary,
   onAdd,
@@ -68,6 +69,8 @@ export default function TerritoryDoNotCallSection({
   streets: StreetChoice[]
 
   pickStreet?: boolean
+
+  elsewhere?: boolean
 
   copyable?: boolean
   onAdd: (entry: NewDoNotCall) => void
@@ -243,10 +246,14 @@ export default function TerritoryDoNotCallSection({
                   label: option.name,
                   value: option.id,
                 })),
-                {
-                  label: i18n.t('territories.doNotCallElsewhere'),
-                  value: ELSEWHERE,
-                },
+                ...(elsewhere
+                  ? [
+                      {
+                        label: i18n.t('territories.doNotCallElsewhere'),
+                        value: ELSEWHERE,
+                      },
+                    ]
+                  : []),
               ],
               value: choice,
               onChange: (item) => setChoice(item.value),

@@ -226,6 +226,45 @@ describe('guest links', () => {
     expect(await anna.engine.linkUrl(spaceId, linkId)).toBe(url)
   })
 
+  it('lasts a day unless told, and never past the longest a link may', async () => {
+    const DAY = 24 * 60 * 60 * 1000
+    const lasts = async (lifetimeMs?: number) => {
+      const before = Date.now()
+      const { linkId, spaceId } = await anna.engine.createLink(
+        'territory-1',
+        [OAK],
+        lifetimeMs
+      )
+      const link = server.spaces.get(spaceId)?.links.get(linkId)
+      return Math.round(((link?.expiresAt ?? 0) - before) / DAY)
+    }
+    expect(await lasts()).toBe(1)
+    expect(await lasts(7 * DAY)).toBe(7)
+    expect(await lasts(400 * DAY)).toBe(30)
+  })
+
+  it('changes how long a live link lasts, and the guest keeps the same link', async () => {
+    const DAY = 24 * 60 * 60 * 1000
+    const { url, linkId, spaceId } = await anna.engine.createLink(
+      'territory-1',
+      [OAK]
+    )
+    await new Promise((resolve) => setTimeout(resolve, 2))
+    const before = Date.now()
+    await anna.engine.setLinkLifetime(spaceId, linkId, 7 * DAY)
+    const link = server.spaces.get(spaceId)?.links.get(linkId)
+    expect(Math.round(((link?.expiresAt ?? 0) - before) / DAY)).toBe(7)
+    expect(
+      anna.territory().shares?.find((share) => share.id === linkId)?.expiresAt
+    ).toBe(link?.expiresAt)
+    const { data } = await guestFor(server, url).keys()
+    expect(data.expiresAt).toBe(link?.expiresAt)
+    await anna.engine.endLink(spaceId, linkId)
+    await expect(
+      anna.engine.setLinkLifetime(spaceId, linkId, DAY)
+    ).rejects.toMatchObject({ code: 'not_found' })
+  })
+
   it('ending a link answers the guest gone', async () => {
     const { url, linkId, spaceId } = await anna.engine.createLink('territory-1')
     await anna.engine.endLink(spaceId, linkId)

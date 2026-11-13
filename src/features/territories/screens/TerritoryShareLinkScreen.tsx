@@ -5,13 +5,14 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Copy as CopyIcon,
-  Eye as EyeIcon,
   Share as ShareIcon,
   Timer as TimerIcon,
 } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
+import Section from '@/components/ui/inputs/Section'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Header from '@/components/ui/layout/Header'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
@@ -19,17 +20,27 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useNow from '@/hooks/useNow'
 import confirmDestructive from '@/lib/confirmDestructive'
+import { formatDateTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { shareUrl } from '@/lib/share'
+import { usePreferences } from '@/stores/preferences'
 import { toast } from '@/stores/toasts'
 import GuestLinkQrCard from '@/features/territories/components/sharing/GuestLinkQrCard'
 import useDoorRecordPrivacy from '@/features/territories/hooks/useDoorRecordPrivacy'
 import {
+  guestLinkDaysLabel,
   linkEndsText,
   linkHeading,
   timeLeftText,
 } from '@/features/territories/lib/shareText'
 import useTerritorySharing from '@/features/territories/hooks/useTerritorySharing'
+import {
+  GUEST_LINK_DAYS,
+  type GuestLinkDays,
+  guestLinkDays,
+  guestLinkLifetimeMs,
+  linkDaysLeft,
+} from '@/features/territories/lib/linkLifetime'
 import { isShareLive } from '@/features/territories/lib/sharing'
 import { territoryTitle } from '@/features/territories/lib/territoryTitle'
 import { useTerritory } from '@/features/territories/stores/territories'
@@ -45,12 +56,16 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
   const { actions } = useTerritorySharing()
   const privacy = useDoorRecordPrivacy()
   const { now } = useNow()
+  const days = guestLinkDays(
+    usePreferences((state) => state.territoryGuestLinkDays)
+  )
   const share = territory?.shares?.find((entry) => entry.id === shareId)
   const [made, setMade] = useState<{ linkId: string; url: string } | null>(null)
   const [shown, setShown] = useState<{ linkId: string; url: string } | null>(
     null
   )
   const [creating, setCreating] = useState(false)
+  const [changing, setChanging] = useState(false)
   const [unreadable, setUnreadable] = useState<string | null>(null)
 
   useEffect(() => {
@@ -82,36 +97,75 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
 
   const create = async () => {
     setCreating(true)
-    const created = await actions.createLink(territoryId, streetIds)
+    const created = await actions.createLink(
+      territoryId,
+      streetIds,
+      guestLinkLifetimeMs(days)
+    )
     setCreating(false)
     if (!created) return
     setMade(created)
     navigation.setParams({ shareId: created.linkId, streetIds: undefined })
   }
 
-  const pill = (
+  const action = (
     icon: AppIcon,
     label: string,
     onPress: () => void,
-    testID: string
+    testID: string,
+    filled: boolean
   ) => (
     <Button
       onPress={onPress}
       testID={testID}
       style={{
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        minHeight: 44,
+        minHeight: 52,
         paddingHorizontal: 16,
-        borderRadius: 22,
-        backgroundColor: theme.colors.card,
+        borderRadius: 26,
+        backgroundColor: filled ? theme.colors.accent : theme.colors.card,
       }}
     >
-      <LucideIcon icon={icon} size={18} color={theme.colors.accent} />
-      <Text style={{ fontFamily: theme.fonts.semiBold }}>{label}</Text>
+      <LucideIcon
+        icon={icon}
+        size={20}
+        color={filled ? theme.colors.textInverse : theme.colors.accent}
+      />
+      <Text
+        style={{
+          fontFamily: theme.fonts.bold,
+          fontSize: theme.fontSize('md'),
+          color: filled ? theme.colors.textInverse : theme.colors.text,
+        }}
+      >
+        {label}
+      </Text>
     </Button>
   )
+
+  const changeLasts = (picked: GuestLinkDays) => {
+    usePreferences.getState().set({ territoryGuestLinkDays: picked })
+    if (!shareId || changing) return
+    setChanging(true)
+    void actions
+      .setLinkLifetime(territoryId, shareId, guestLinkLifetimeMs(picked))
+      .then((changed) => {
+        setChanging(false)
+        if (changed)
+          toast.success(
+            i18n.t('territories.share.lastsChanged_toast', {
+              time: formatDateTime(Date.now() + guestLinkLifetimeMs(picked), {
+                style: 'medium',
+              }),
+            })
+          )
+      })
+  }
+
   const note = (text: string, testID?: string) => (
     <Text
       testID={testID}
@@ -163,35 +217,36 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
             >
               {heading}
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                marginTop: 6,
-              }}
-            >
-              <LucideIcon
-                icon={TimerIcon}
-                size={16}
-                color={live ? theme.colors.accent : theme.colors.textAlt}
-              />
-              <Text
-                testID='guest-link-time-left'
+            {share && (
+              <View
                 style={{
-                  fontFamily: theme.fonts.semiBold,
-                  color: live ? theme.colors.text : theme.colors.textAlt,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: 6,
                 }}
               >
-                {!share
-                  ? i18n.t('territories.share.linkLasts')
-                  : live
+                <LucideIcon
+                  icon={TimerIcon}
+                  size={16}
+                  color={live ? theme.colors.accent : theme.colors.textAlt}
+                />
+                <Text
+                  testID='guest-link-time-left'
+                  style={{
+                    flex: 1,
+                    fontFamily: theme.fonts.semiBold,
+                    color: live ? theme.colors.text : theme.colors.textAlt,
+                  }}
+                >
+                  {live
                     ? `${timeLeftText(share, now)} · ${linkEndsText(share)}`
                     : i18n.t('territories.share.linkEndedOn', {
                         time: linkEndsText(share),
                       })}
-              </Text>
-            </View>
+                </Text>
+              </View>
+            )}
           </View>
 
           {!share ? (
@@ -225,24 +280,18 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
           ) : live && shareId && url ? (
             <>
               <GuestLinkQrCard url={url} caption={caption} />
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  gap: 8,
-                }}
-              >
-                {pill(
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {action(
                   CopyIcon,
                   i18n.t('copy'),
                   () => {
                     void Clipboard.setStringAsync(url)
                     toast.success(i18n.t('linkCopied'))
                   },
-                  'guest-link-copy'
+                  'guest-link-copy',
+                  false
                 )}
-                {pill(
+                {action(
                   ShareIcon,
                   i18n.t('share'),
                   () =>
@@ -252,19 +301,26 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
                         territory: territoryTitle(territory),
                       })
                     ),
-                  'guest-link-share'
-                )}
-                {pill(
-                  EyeIcon,
-                  i18n.t('territories.share.previewGuest'),
-                  () =>
-                    navigation.navigate('TerritoryGuest', {
-                      territoryId,
-                      shareId,
-                    }),
-                  'guest-link-preview'
+                  'guest-link-share',
+                  true
                 )}
               </View>
+              <Section>
+                <InputRowSelect
+                  key={String(linkDaysLeft(share.expiresAt, now))}
+                  label={i18n.t('territories.share.lastsTitle')}
+                  lastInSection
+                  selectProps={{
+                    data: GUEST_LINK_DAYS.map((option) => ({
+                      label: guestLinkDaysLabel(option),
+                      value: option,
+                    })),
+                    value: linkDaysLeft(share.expiresAt, now),
+                    placeholder: timeLeftText(share, now),
+                    onChange: (item) => changeLasts(item.value),
+                  }}
+                />
+              </Section>
               {guests.length > 0 &&
                 note(
                   i18n.t('territories.share.guestsJoined', {
@@ -273,14 +329,13 @@ export default function TerritoryShareLinkScreen({ route, navigation }: Props) {
                   'guest-link-joined'
                 )}
               <Button
-                variant='outline'
                 testID='guest-link-end'
                 onPress={endNow}
                 style={{
-                  minHeight: 48,
-                  paddingVertical: 12,
+                  alignSelf: 'center',
+                  minHeight: 44,
+                  paddingHorizontal: 16,
                   justifyContent: 'center',
-                  borderColor: theme.colors.error,
                 }}
               >
                 <Text

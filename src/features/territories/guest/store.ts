@@ -43,6 +43,7 @@ export type StoredGuestLink = {
   records: Record<string, SyncedRecord>
   local: Record<string, LocalWrite>
   next: Record<string, number>
+  streetId?: string
   firstRecordSent?: boolean
 }
 

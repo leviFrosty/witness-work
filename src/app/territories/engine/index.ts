@@ -971,8 +971,13 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
 
   async function createLink(
     territoryId: string,
-    streetIds?: readonly string[]
+    streetIds?: readonly string[],
+    lifetimeMs: number = SCOPED_LIMITS.linkLifetimeMs
   ) {
+    const lasts = Math.min(
+      Math.max(lifetimeMs, 60_000),
+      SCOPED_LIMITS.maxLinkLifetimeMs
+    )
     const spaceId = await ensureSpace(territoryId)
     return ctx.serial(spaceId, async () => {
       const member = await ctx.memberFor(spaceId)
@@ -1009,9 +1014,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
         const { verifier } = deriveLinkCredentials(
           deriveLinkSecret(seed, spaceId, linkId)
         )
-        const expiresAt = Math.floor(
-          deps.syncNow() + SCOPED_LIMITS.linkLifetimeMs
-        )
+        const expiresAt = Math.floor(deps.syncNow() + lasts)
         try {
           await client.createLink(
             ctx.auth(member),
@@ -1040,7 +1043,11 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
           ],
         }))
         await sync.putGuestKeys(spaceId, member, linkId)
-        deps.onOutcome?.({ type: 'link_created', streets: scopes.length })
+        deps.onOutcome?.({
+          type: 'link_created',
+          streets: scopes.length,
+          days: Math.max(1, Math.round(lasts / SCOPED_LIMITS.linkLifetimeMs)),
+        })
         return { spaceId, linkId, url: await linkUrl(spaceId, linkId) }
       }
     })
@@ -1060,6 +1067,42 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
         ),
       }))
       deps.onOutcome?.({ type: 'link_ended' })
+      await sync.runSteps(spaceId, member).catch((error: unknown) => {
+        ctx.rethrowReset(error)
+        ctx.report(error, 'sync')
+      })
+    })
+  }
+
+  function setLinkLifetime(
+    spaceId: string,
+    linkId: string,
+    lifetimeMs: number
+  ) {
+    return ctx.serial(spaceId, async () => {
+      required(spaceId)
+      const member = await ctx.memberFor(spaceId)
+      const lasts = Math.min(
+        Math.max(lifetimeMs, 60_000),
+        SCOPED_LIMITS.maxLinkLifetimeMs
+      )
+      const expiresAt = Math.floor(deps.syncNow() + lasts)
+      await client.setLinkExpiry(
+        ctx.auth(member),
+        { linkId, expiresAt },
+        ctx.call()
+      )
+      ctx.update(spaceId, (s) => ({
+        ...s,
+        links: s.links.map((link) =>
+          link.linkId === linkId ? { ...link, expiresAt } : link
+        ),
+      }))
+      await sync.putGuestKeys(spaceId, member, linkId)
+      deps.onOutcome?.({
+        type: 'link_lifetime_changed',
+        days: Math.max(1, Math.round(lasts / SCOPED_LIMITS.linkLifetimeMs)),
+      })
       await sync.runSteps(spaceId, member).catch((error: unknown) => {
         ctx.rethrowReset(error)
         ctx.report(error, 'sync')
@@ -1305,6 +1348,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     leaveTerritory,
     returnTerritory,
     createLink,
+    setLinkLifetime,
     linkUrl,
     endLink,
     handOff,

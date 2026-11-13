@@ -3,6 +3,7 @@ import {
   guestLaunch,
   guestPageAddress,
   isGuestPagePath,
+  showGuestLink,
   takeGuestPageAddress,
 } from '@/features/territories/guest/launch'
 
@@ -27,18 +28,46 @@ describe('guest page address', () => {
     expect(isGuestPagePath('/territories/guest/x')).toBe(false)
   })
 
-  it('takes the fragment out of the address into memory, once', () => {
+  it('reads the fragment once and leaves the link in the address', () => {
     const { window, history } = page(
-      `https://beta.app.witnesswork.app/territories/guest?utm=x#${FRAGMENT}`
+      `https://beta.app.witnesswork.app/territories/guest#${FRAGMENT}`
+    )
+    expect(takeGuestPageAddress(window)).toBe(true)
+    expect(history.replaceState).not.toHaveBeenCalled()
+    expect(guestLaunch.take()).toBe(FRAGMENT)
+    expect(guestLaunch.take()).toBeNull()
+  })
+
+  it('drops everything but the link from the address', () => {
+    const { window, history } = page(
+      `https://beta.app.witnesswork.app/territories/guest/?utm=x#${FRAGMENT}`
     )
     expect(takeGuestPageAddress(window)).toBe(true)
     expect(history.replaceState).toHaveBeenCalledWith(
       null,
       '',
-      'https://beta.app.witnesswork.app/territories/guest'
+      `https://beta.app.witnesswork.app/territories/guest#${FRAGMENT}`
     )
     expect(guestLaunch.take()).toBe(FRAGMENT)
-    expect(guestLaunch.take()).toBeNull()
+  })
+
+  it('puts a saved link back in the address, and takes an ended one out', () => {
+    const saved = page('https://app.witnesswork.app/territories/guest')
+    showGuestLink(FRAGMENT, saved.window)
+    expect(saved.history.replaceState).toHaveBeenCalledWith(
+      null,
+      '',
+      `https://app.witnesswork.app/territories/guest#${FRAGMENT}`
+    )
+    const ended = page(
+      `https://app.witnesswork.app/territories/guest#${FRAGMENT}`
+    )
+    showGuestLink(null, ended.window)
+    expect(ended.history.replaceState).toHaveBeenCalledWith(
+      null,
+      '',
+      'https://app.witnesswork.app/territories/guest'
+    )
   })
 
   it('leaves a reload without a fragment alone', () => {

@@ -202,6 +202,7 @@ export const analyticsEventNames = [
   'territory_shared',
   'territory_invite_answered',
   'territory_link_created',
+  'territory_link_lifetime_changed',
   'territory_link_ended',
   'territory_handoff',
   'territory_sync_failed',
@@ -408,6 +409,7 @@ export const analyticsEventNames = [
   'territory_guest_page_opened',
   'territory_guest_named',
   'territory_guest_first_record',
+  'territory_guest_link_shared',
 ] as const
 
 export type AnalyticsEventName = (typeof analyticsEventNames)[number]

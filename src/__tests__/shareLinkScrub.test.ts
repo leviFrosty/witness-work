@@ -24,6 +24,19 @@ describe('scrubShareLinkUrl', () => {
     ).toBe('https://ww-proxy.leviwilkerson.com/b#[redacted]')
   })
 
+  it('drops a territory guest link on any host, and on its own', () => {
+    const link = `v1.${'a'.repeat(22)}.${'b-_'.repeat(7)}b.${'c'.repeat(43)}`
+    expect(
+      scrubShareLinkUrl(`http://127.0.0.1:8130/territories/guest#${link}`)
+    ).toBe('http://127.0.0.1:8130/territories/guest#[redacted]')
+    expect(
+      scrubShareLinkUrl(`https://app.witnesswork.app/territories/guest#${link}`)
+    ).toBe('https://app.witnesswork.app/territories/guest#[redacted]')
+    expect(scrubShareLinkUrl(`opened ${link} twice`)).toBe(
+      'opened [redacted] twice'
+    )
+  })
+
   it('drops fragments on the new hosts and the web app', () => {
     for (const [url, scrubbed] of [
       [

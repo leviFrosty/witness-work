@@ -134,6 +134,10 @@ async function shot(page: Page, name: string) {
 
 const secretOf = (fragment: string) => fragment.split('.')[3] as string
 
+const streetIds = (link: Link) =>
+  (JSON.parse(fs.readFileSync(link.state, 'utf8')) as { streetIds: string[] })
+    .streetIds
+
 test('a guest opens a link, names themself, records doors, and sees others’ records', async ({
   page,
   context,
@@ -148,17 +152,23 @@ test('a guest opens a link, names themself, records doors, and sees others’ re
 
   await expect(page.getByTestId('guest-name-card')).toBeVisible()
   expect(await page.evaluate(() => location.href)).toBe(
-    `${baseURL}/territories/guest`
+    `${baseURL}/territories/guest#${link.fragment}`
   )
+  await expect(page.getByTestId('guest-overline')).toHaveText('Shared by Anna')
   await expect(page.getByTestId('guest-title')).toHaveText(
-    "Anna's Territory 12 · North Hill"
+    'Territory 12 · North Hill'
   )
-  await expect(page.getByTestId('guest-ends')).toContainText('Ends')
+  await expect(page.getByTestId('guest-ends')).toContainText('Open until')
+  await expect(page.getByText('Elm Street')).toHaveCount(0)
   await shot(page, '1-name-step')
 
   await page.getByTestId('guest-name-input').fill('Maria')
   await page.getByTestId('guest-name-continue').click()
+  await expect(page.getByTestId('guest-street-list')).toBeVisible()
+  await shot(page, '1b-street-step')
+  await page.getByTestId(`guest-street-${streetIds(link)[0]}`).click()
   await expect(page.getByTestId('door-recorder')).toBeVisible()
+  await expect(page.getByTestId('guest-title')).toHaveText('Oak Street')
   await expect(page.getByTestId('door-row-4')).toContainText('Joe')
 
   await page.getByTestId('door-outcome-notHome').click()
@@ -218,9 +228,55 @@ test('a guest opens a link, names themself, records doors, and sees others’ re
     )
     .toEqual(['Maria'])
 
+  await page.getByTestId('door-row-4').click()
+  await expect(page.getByTestId('guest-door-title')).toHaveText('House 4')
+  await page.getByTestId('guest-door-done').click()
+
+  await page.getByTestId('guest-share').click()
+  await expect(page.getByTestId('guest-share-qr')).toBeVisible()
+  await page.getByTestId('guest-share-done').click()
+
   await page.reload()
   await expect(page.getByTestId('door-recorder')).toBeVisible()
   await expect(page.getByTestId('door-row-10')).toBeVisible()
+})
+
+test('the link opens again in a new tab, with or without the address, and for a second person', async ({
+  page,
+  context,
+  browser,
+  baseURL,
+}) => {
+  test.setTimeout(120_000)
+  await routeGuestOps(context, [])
+  const link = makeLink('reopen')
+  await page.goto(`/territories/guest#${link.fragment}`)
+  await page.getByTestId('guest-name-input').fill('Maria')
+  await page.getByTestId('guest-name-continue').click()
+  await page.getByTestId(`guest-street-${streetIds(link)[1]}`).click()
+  await expect(page.getByTestId('guest-title')).toHaveText('Elm Street')
+  await page.close()
+
+  const bare = await context.newPage()
+  await bare.goto('/territories/guest')
+  await expect(bare.getByTestId('guest-title')).toHaveText('Elm Street')
+  expect(await bare.evaluate(() => location.href)).toBe(
+    `${baseURL}/territories/guest#${link.fragment}`
+  )
+
+  const second = await context.newPage()
+  await second.goto(`/territories/guest#${link.fragment}`)
+  await expect(second.getByTestId('guest-title')).toHaveText('Elm Street')
+
+  const other = await browser.newContext()
+  await routeGuestOps(other, [])
+  const theirs = await other.newPage()
+  await theirs.goto(`/territories/guest#${link.fragment}`)
+  await expect(theirs.getByTestId('guest-name-card')).toBeVisible()
+  await theirs.getByTestId('guest-name-input').fill('Joe')
+  await theirs.getByTestId('guest-name-continue').click()
+  await expect(theirs.getByTestId('guest-street-list')).toBeVisible()
+  await other.close()
 })
 
 test('the page says so when the link is ended, and keeps nothing', async ({
@@ -232,6 +288,17 @@ test('the page says so when the link is ended, and keeps nothing', async ({
   const link = makeLink('ended')
   await page.goto(`/territories/guest#${link.fragment}`)
   await expect(page.getByTestId('guest-name-card')).toBeVisible()
+  await page.getByTestId('guest-name-input').fill('Maria')
+  await page.getByTestId('guest-name-continue').click()
+  await expect
+    .poll(
+      () =>
+        (
+          owner('records', link.state) as unknown as Record<string, unknown>[]
+        ).filter((record) => record.kind === 'guest').length,
+      { timeout: 30_000 }
+    )
+    .toBe(1)
   owner('end', link.state)
   await expect(page.getByTestId('guest-state-ended')).toBeVisible({
     timeout: 40_000,
@@ -246,6 +313,11 @@ test('the page says so when the link is ended, and keeps nothing', async ({
     )
   )
   expect(kept).toEqual([])
+  await expect(page.getByTestId('guest-state-ended')).toContainText(
+    'Ask Anna for a new link'
+  )
+  await expect(page.getByTestId('guest-saved')).toBeVisible()
+  expect(await page.evaluate(() => location.hash)).toBe('')
 })
 
 test('an expired link says it expired', async ({ page, context }) => {
@@ -257,16 +329,12 @@ test('an expired link says it expired', async ({ page, context }) => {
   await shot(page, '4-expired')
 })
 
-test('an unknown link says it doesn’t work, with the address cleared', async ({
-  page,
-  context,
-}) => {
+test('an unknown link says it doesn’t work', async ({ page, context }) => {
   const sent: Sent[] = []
   await routeGuestOps(context, sent)
   const unknown = `v1.${randomBytes(16).toString('base64url')}.${randomBytes(16).toString('base64url')}.${randomBytes(32).toString('base64url')}`
   await page.goto(`/territories/guest#${unknown}`)
   await expect(page.getByTestId('guest-state-invalid')).toBeVisible()
-  expect(await page.evaluate(() => location.hash)).toBe('')
   expect(sent.some((request) => request.url.endsWith('/guest/sync'))).toBe(true)
   await shot(page, '5-invalid')
 })
@@ -282,9 +350,7 @@ test('with the owner’s privacy mode on, a guest marks streets worked and notes
   await page.getByTestId('guest-name-continue').click()
   await expect(page.getByTestId('guest-privacy')).toBeVisible()
   await expect(page.getByTestId('door-recorder')).toHaveCount(0)
-  const [streetId] = (
-    JSON.parse(fs.readFileSync(link.state, 'utf8')) as { streetIds: string[] }
-  ).streetIds
+  const [streetId] = streetIds(link)
   await page.getByTestId(`guest-worked-${streetId}`).click()
   await expect
     .poll(

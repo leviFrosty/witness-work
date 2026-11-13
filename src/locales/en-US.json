@@ -7082,10 +7082,9 @@
         "other": "{{first}}, {{second}} and %{count} more"
       },
       "guestLink": "A Link or QR Code",
-      "guestLink_description": "For people without the app. Opens in a browser for 24 hours.",
+      "guestLink_description": "For people without the app. Opens in a browser.",
       "guestLinkTitle": "Guest Link",
       "linkHeading": "{{territory}} · {{covers}}",
-      "linkLasts": "Works for 24 hours once created",
       "createLink": "Create Link",
       "chooseStreets": "Choose Streets",
       "pickBuddies": "Pick Buddies",
@@ -7111,13 +7110,9 @@
       "endLink_description": "Anyone who has it can no longer open it or record doors. Doors they already recorded stay.",
       "endLink_toast": "Link ended",
       "guestsJoined": "Joined with this link: {{names}}",
-      "previewGuest": "Preview What Guests See",
-      "previewGuestTitle": "Guest Page",
-      "guestTitle": "{{name}}'s {{territory}}",
       "guestName": "What's your name?",
       "guestName_placeholder": "Your Name",
       "guestName_description": "So the group sees who recorded each door.",
-      "guestStart": "Start Recording",
       "recordedByAt": "by {{name}} at {{time}}",
       "recordedByOn": "by {{name}} on {{date}}",
       "someone": "Someone",
@@ -7174,8 +7169,6 @@
         "one": "Has 1 street",
         "other": "Has %{count} streets"
       },
-      "guestPreview_title": "Preview",
-      "guestPreview_description": "This is what a guest sees. Nothing you do here is saved.",
       "recordedByYouAt": "by you at {{time}}",
       "recordedByYouOn": "by you on {{date}}",
       "handOffAStreet": "Hand Off a Street",
@@ -7215,9 +7208,25 @@
       "startOffline_toast": "Couldn't start sharing. Check your connection and try again.",
       "startOutdated_toast": "Couldn't start sharing. Update WitnessWork, then try again.",
       "startFailed_toast": "Couldn't start sharing. Try again in a moment.",
-      "startBusy": "Getting the link ready…",
       "setUpBuddies": "Set Up Buddies",
-      "setUpBuddies_description": "To share with people who use WitnessWork or hand off a street, pair with them in Buddies."
+      "setUpBuddies_description": "To share with people who use WitnessWork or hand off a street, pair with them in Buddies.",
+      "lastsTitle": "Link Lasts",
+      "lastsDays": {
+        "one": "1 Day",
+        "other": "%{count} Days"
+      },
+      "lastsWeeks": {
+        "one": "1 Week",
+        "other": "%{count} Weeks"
+      },
+      "daysLeft": {
+        "one": "1 day left",
+        "other": "%{count} days left"
+      },
+      "startBusy": "Getting the link ready…",
+      "lastsChanged_toast": "Link now ends {{time}}",
+      "showFullLink": "Show the full link",
+      "hideFullLink": "Hide the full link"
     },
     "doNotCallDoors": "Do not call: {{doors}}",
     "doNotCallHouses": {
@@ -7228,11 +7237,9 @@
     "guest": {
       "opening": "Opening the link…",
       "invalid_title": "This Link Doesn't Work",
-      "invalid_description": "Check that you opened the whole link, or ask whoever shared it for a new one.",
+      "invalid_description": "Ask the person who shared it to show the code or send the link again.",
       "ended_title": "This Link Has Ended",
-      "ended_description": "Whoever shared it ended it. Ask them for a new link if you're still working.",
       "expired_title": "This Link Has Expired",
-      "expired_description": "Links last 24 hours. Ask for a new one if you're still working.",
       "lost": {
         "one": "1 record from this browser wasn't saved.",
         "other": "%{count} records from this browser weren't saved."
@@ -7256,10 +7263,62 @@
       "changeName": "Change Name",
       "forget": "Forget This Link",
       "forget_title": "Forget this link?",
-      "forget_description": "This browser deletes everything it kept for this link. Records already sent stay with the group.",
+      "forget_description": "You'll need the code again to get back in. What you recorded stays saved.",
       "forgotten_title": "Link Forgotten",
-      "forgotten_description": "This browser keeps nothing from the link. Open the link again to keep recording.",
-      "privacy": "This territory doesn't keep house-by-house records. Mark streets worked and note do-not-calls."
+      "forgotten_description": "Scan the code again to keep recording.",
+      "sharedBy": "Shared by {{name}}",
+      "streetsCount": {
+        "one": "1 street",
+        "other": "%{count} streets"
+      },
+      "openUntilToday": "Open until {{time}} today",
+      "openUntilTomorrow": "Open until tomorrow, {{time}}",
+      "openUntil": "Open until {{date}}",
+      "whichStreet": "Which street are you on?",
+      "changeStreet": "Change Street",
+      "streetRecorded": {
+        "one": "1 house recorded",
+        "other": "%{count} houses recorded"
+      },
+      "streetWorked": "Worked",
+      "shareGroup": "Share",
+      "shareGroup_a11y": "Share with your group",
+      "shareTitle": "Let Others Scan This",
+      "shareLine": "Everyone in the car can record with this same link.",
+      "shareLink": "Share Link",
+      "copyLink": "Copy Link",
+      "next": "Next",
+      "start": "Start",
+      "nameHintPrivacy": "So the group sees who marked each street.",
+      "savedBefore": "What you recorded was saved.",
+      "askOwner": "Ask {{name}} for a new link if you're still working.",
+      "askSomeone": "Ask the person who shared it for a new link if you're still working.",
+      "youAreHere": "You're here",
+      "streetRecordedBy": {
+        "one": "1 house · {{names}}",
+        "other": "%{count} houses · {{names}}"
+      },
+      "markedWorked_toast": "{{street}} marked worked",
+      "markedNotWorked_toast": "{{street}} marked not worked",
+      "houseTitle": "House {{number}}",
+      "changeResult": "Change the result",
+      "removeRecord": "Remove My Record",
+      "markWorked": "Mark Worked",
+      "streetsHeading": "Streets",
+      "changeOthers": "{{name}} recorded this. Change it?",
+      "workedBy": "Worked by {{name}} · {{when}}",
+      "doNotKnock": "House {{number}} is Do Not Call. Don't knock.",
+      "yourGroup": "Started by Your Group",
+      "allStreets": "All Streets",
+      "findStreet": "Find a street",
+      "noStreetFound": "No street by that name.",
+      "closesAt": "Closes at {{time}}",
+      "shareContext": "{{owner}} · {{until}}",
+      "workedByYou": "Worked by you · {{when}}",
+      "workedStreets": "Worked",
+      "noHousesYet": "No houses recorded yet.",
+      "noDoorsYet": "No doors recorded yet.",
+      "you": "You"
     },
     "suggest": {
       "action": "Find Streets in the Outline",

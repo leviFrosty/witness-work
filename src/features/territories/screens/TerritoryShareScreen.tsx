@@ -42,7 +42,12 @@ import {
   territoryListTitle,
   territoryTitle,
 } from '@/features/territories/lib/territoryTitle'
+import {
+  guestLinkDays,
+  guestLinkLifetimeMs,
+} from '@/features/territories/lib/linkLifetime'
 import { useTerritory } from '@/features/territories/stores/territories'
+import { usePreferences } from '@/stores/preferences'
 import type { RootStackParamList } from '@/types/rootStack'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TerritoryShare'>
@@ -154,7 +159,13 @@ export default function TerritoryShareScreen({ route, navigation }: Props) {
     }
     setStarting(true)
     await nextFrame()
-    const created = await sharing.actions.createLink(territoryId, streetIds)
+    const created = await sharing.actions.createLink(
+      territoryId,
+      streetIds,
+      guestLinkLifetimeMs(
+        guestLinkDays(usePreferences.getState().territoryGuestLinkDays)
+      )
+    )
     setStarting(false)
     if (!created || !navigation.isFocused()) return
     navigation.replace('TerritoryShareLink', {

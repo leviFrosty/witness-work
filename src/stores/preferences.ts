@@ -544,6 +544,8 @@ export const PREFERENCE_DEFAULTS = {
 
   territoryPrivacyMode: null as boolean | null,
 
+  territoryGuestLinkDays: 1,
+
   audioEnabled: typeof __DEV__ === 'undefined' || !__DEV__,
 
   hapticsEnabled: true,

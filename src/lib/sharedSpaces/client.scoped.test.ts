@@ -680,7 +680,7 @@ describe('guest links', () => {
         ...fields,
       })
     expect(
-      (await refusal(() => create({ expiresAt: clock + 25 * HOUR }))).code
+      (await refusal(() => create({ expiresAt: clock + 31 * 24 * HOUR }))).code
     ).toBe('bad_request')
     expect((await refusal(() => create({ expiresAt: clock }))).code).toBe(
       'bad_request'

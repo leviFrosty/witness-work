@@ -38,6 +38,7 @@ import {
 } from '@/features/onboarding/components/welcome/welcomeSkia'
 import WelcomeHeadline from '@/features/onboarding/components/welcome/WelcomeHeadline'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 
 interface Props {
   onGetStarted: () => void
@@ -49,6 +50,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
   const theme = useTheme()
   const palette = getWelcomePalette(theme)
   const insets = useSafeAreaInsets()
+  const bleed = useHorizontalBleed()
   const window = useWindowDimensions()
   const reduceMotion = useReducedMotion()
   const isFocused = useIsFocused()
@@ -133,7 +135,12 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
 
   return (
     <View
-      style={{ flex: 1, backgroundColor: palette.base }}
+      style={{
+        flex: 1,
+        backgroundColor: palette.base,
+        marginLeft: -bleed.left,
+        marginRight: -bleed.right,
+      }}
       onLayout={(e: LayoutChangeEvent) => {
         const { width, height } = e.nativeEvent.layout
         setRoot((prev) =>
@@ -164,6 +171,8 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           flex: 1,
           paddingTop: insets.top,
           paddingBottom: Math.max(insets.bottom, 20),
+          paddingLeft: bleed.left,
+          paddingRight: bleed.right,
         }}
       >
         <View

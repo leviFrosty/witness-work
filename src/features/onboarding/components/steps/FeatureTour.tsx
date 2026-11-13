@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
@@ -38,6 +39,7 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const palette = getWelcomePalette(theme)
   const reduceMotion = useReducedMotion()
   const isFocused = useIsFocused()
+  const bleed = useHorizontalBleed()
   const markScheduleIntroCovered = usePreferences(
     (state) => state.markScheduleIntroCovered
   )
@@ -83,7 +85,12 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
 
   return (
     <View
-      style={{ flex: 1, backgroundColor: palette.base }}
+      style={{
+        flex: 1,
+        backgroundColor: palette.base,
+        marginLeft: -bleed.left,
+        marginRight: -bleed.right,
+      }}
       onLayout={(e: LayoutChangeEvent) => {
         const { width, height } = e.nativeEvent.layout
         setSize((prev) =>
@@ -110,23 +117,34 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
           chrome={still}
         />
       )}
-      <RevealTour
-        pages={pages}
-        palette={palette}
-        time={time}
-        reduceMotion={reduceMotion}
-        onPageViewed={(id) => {
-          if (lastPage.current && lastPage.current !== id && !heldPages)
-            setHeldPages(pages)
-          viewed.current.add(id)
-          lastPage.current = id
-          const introPage = SCHEDULE_INTRO_PAGES[id]
-          if (introPage) markScheduleIntroCovered(introPage)
+      <View
+        style={{
+          flex: 1,
+          paddingLeft: bleed.left,
+          paddingRight: bleed.right,
         }}
-        finish={{ label: i18n.t('continue'), onPress: () => close('finished') }}
-        exit={{ label: i18n.t('skip'), onPress: () => close('skipped') }}
-        onBackFromStart={() => close('back')}
-      />
+      >
+        <RevealTour
+          pages={pages}
+          palette={palette}
+          time={time}
+          reduceMotion={reduceMotion}
+          onPageViewed={(id) => {
+            if (lastPage.current && lastPage.current !== id && !heldPages)
+              setHeldPages(pages)
+            viewed.current.add(id)
+            lastPage.current = id
+            const introPage = SCHEDULE_INTRO_PAGES[id]
+            if (introPage) markScheduleIntroCovered(introPage)
+          }}
+          finish={{
+            label: i18n.t('continue'),
+            onPress: () => close('finished'),
+          }}
+          exit={{ label: i18n.t('skip'), onPress: () => close('skipped') }}
+          onBackFromStart={() => close('back')}
+        />
+      </View>
       <Animated.View
         pointerEvents='none'
         style={[

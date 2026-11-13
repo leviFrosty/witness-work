@@ -155,6 +155,7 @@ import { pinLookupKey } from '@/features/map/lib/geocodeContacts'
 import { buddyAlertSettings, buddySettings } from '@/features/buddies/lib/state'
 import type { SyncTransport } from '@/lib/syncTransport'
 import type { TimeEntry } from '@/types/timeEntry'
+import type { Territory } from '@/features/territories/types/territory'
 import {
   APP_LOCK,
   BUDDIES,
@@ -182,6 +183,7 @@ import {
   SIDEBAR,
   SPLIT_SHEET_RATIO,
   STREAK_SEEN,
+  TERRITORIES,
   TRAY,
   VISITS,
   at,
@@ -264,6 +266,9 @@ async function launch() {
   )
   const { useScribeLedger } = await import('@/features/scribe/stores/ledger')
   const { useScribeUsageStore } = await import('@/features/scribe/stores/usage')
+  const { useTerritories } = await import(
+    '@/features/territories/stores/territories'
+  )
   const { runCustomFieldsMigration } = await import(
     '@/features/contacts/lib/runCustomFieldsMigration'
   )
@@ -304,6 +309,7 @@ async function launch() {
     'scribe-conversations': useScribeConversations,
     'scribe-ledger': useScribeLedger,
     'scribe-usage': useScribeUsageStore,
+    territories: useTerritories,
   }
 }
 type App = Awaited<ReturnType<typeof launch>>
@@ -364,6 +370,7 @@ function coverage(release: string, source: Source) {
     pet: since(release, '1.45.0'),
 
     scribe: since(release, '1.45.0'),
+    territories: since(release, '1.47.0'),
   }
 }
 
@@ -738,6 +745,43 @@ function expectScenario(app: App, release: string, source: Source) {
   expectProfile(app, release, source)
   expectMileage(app, release, source)
   expectPet(app, release, source)
+  expectTerritories(app, release, source)
+}
+
+function expectTerritories(app: App, release: string, source: Source) {
+  if (!coverage(release, source).territories) return
+  const { territories, ledger } = app.territories.getState()
+  const { working, returned, deletedId } = TERRITORIES
+  expect(ids(territories)).toEqual(ids([working, returned]))
+  for (const want of [working, returned] as Territory[]) {
+    const got = territories.find(({ id }) => id === want.id)!
+    expect(got.number).toBe(want.number)
+    expect(got.name).toBe(want.name)
+    expect(got.checkedOutAt).toBe(want.checkedOutAt)
+    expect(got.returnBy).toBe(want.returnBy)
+    expect(got.finishedAt).toBe(want.finishedAt)
+    expect(got.outline).toEqual(want.outline)
+    expect(got.photo).toBe(
+      source === 'storage' || source === 'merged' ? want.photo : undefined
+    )
+    expect(
+      got.streets.map(({ next: _next, doors, ...street }) => street)
+    ).toEqual(want.streets.map(({ next: _next, doors, ...street }) => street))
+    expect(got.streets.map((street) => ids(street.doors))).toEqual(
+      want.streets.map((street) => ids(street.doors))
+    )
+    for (const door of want.streets.flatMap((street) => street.doors))
+      expect(
+        got.streets
+          .flatMap((street) => street.doors)
+          .find(({ id }) => id === door.id)
+      ).toEqual(door)
+    expect(ids(got.doNotCalls)).toEqual(ids(want.doNotCalls))
+  }
+  expect(ledger[deletedId]).toEqual({
+    records: {},
+    deleted: { h: expect.any(Number) },
+  })
 }
 
 function expectBuddies(app: App) {

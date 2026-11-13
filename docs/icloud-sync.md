@@ -32,7 +32,12 @@ categories, custom field definitions, mileage (cars, fuels, price and car setup
 histories, trips, and one shared tombstone list in the optional `mileageStore`
 slice), the Pet Companion (its pet and room records and their tombstones in the
 optional `petStore` slice; hearts aren't stored, every device replays them from
-the records above, ADR 0030), shared preferences, and profile data.
+the records above, ADR 0030), the User's own territories that aren't in a
+shared space (their streets, door records, do-not-calls and returned state, as
+records with tombstones in the optional `territoryStore` slice; card photos stay
+on the device, see
+[territories-protocol.md](./territories-protocol.md#unshared-territories-sync-and-backup)),
+shared preferences, and profile data.
 Saved Views for the Contacts list are a shared preference; which view a device
 is showing, and its unsaved edits, stay on that device. A view this build can't
 read (e.g. a filter from a newer version) is skipped with its stamp, leaving the
@@ -117,7 +122,7 @@ uploads the same payload, end-to-end encrypted, to ww-api, without its
 (`mergeIntoLocal.ts`, as a pull does), keeping this device's reset generation
 and pull bookkeeping, so sync here merges the restored records with its cloud.
 
-JSON backups additionally include categories, mileage, the pet, and profile. Restoring a backup
+JSON backups additionally include categories, mileage, the pet, territories, and profile. Restoring a backup
 preserves installation identity and local consent/settings, including backups
 created by older versions that included them. Missing optional stores are kept.
 Photo bytes are not embedded in JSON backups.

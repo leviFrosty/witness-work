@@ -152,6 +152,7 @@ import {
   SIDEBAR,
   SPLIT_SHEET_RATIO,
   STREAK_SEEN,
+  TERRITORIES,
   TRAY,
   VISITS,
   at,
@@ -190,6 +191,8 @@ const PERSISTED_STORES = [
   'scribe-conversations',
   'scribe-ledger',
   'scribe-usage',
+
+  'territories',
 ]
 
 const MMKV_INSTANCES: string[] = []
@@ -303,7 +306,7 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     const { default: useMileage } = await import('@/stores/mileage')
     const { default: usePet } = await import('@/stores/pet')
     const { LDC_BUILTIN_CATEGORY_ID } = await import('@/constants/categories')
-    const { createBackupFile } = await import('@/lib/backupFile')
+    const { backupFileContents } = await import('@/app/sync/backupFileContents')
 
     const { runCustomFieldsMigration } = await import(
       '@/features/contacts/lib/runCustomFieldsMigration'
@@ -605,6 +608,18 @@ describe.skipIf(!RELEASE)('release fixture', () => {
     useSavedPlaces.getState().set('home', SAVED_PLACES.home)
     useSavedRoutes.getState().save({ ...SAVED_ROUTE, updatedAt: Date.now() })
 
+    const { useTerritories } = await import(
+      '@/features/territories/stores/territories'
+    )
+    useTerritories.getState().save(TERRITORIES.working)
+    useTerritories.getState().save(TERRITORIES.returned)
+    useTerritories.getState().save({
+      ...TERRITORIES.returned,
+      id: TERRITORIES.deletedId,
+      number: '99',
+    })
+    useTerritories.getState().remove(TERRITORIES.deletedId)
+
     const { sendScribeMessage } = await import(
       '@/features/scribe/runtime/turnLoop'
     )
@@ -679,7 +694,7 @@ describe.skipIf(!RELEASE)('release fixture', () => {
       ) + '\n'
     )
 
-    writeFileSync(`${out}/backup.json`, JSON.stringify(createBackupFile()))
+    writeFileSync(`${out}/backup.json`, JSON.stringify(backupFileContents()))
 
     const saved = new Map(disk.data)
     for (const [os, file] of [

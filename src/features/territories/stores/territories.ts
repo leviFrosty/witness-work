@@ -7,6 +7,13 @@ import { clearDoorRecords } from '@/features/territories/lib/doors'
 import { diffTerritory } from '@/features/territories/lib/shared/diff'
 import { migrateTerritories } from '@/features/territories/lib/shared/migration'
 import {
+  type HeldTerritories,
+  isDeleted,
+  type PersonalLedger,
+  personalTerritories,
+  restampLedger,
+} from '@/features/territories/lib/personalSync'
+import {
   type BuddyNameResolver,
   myRole,
   projectSpace,
@@ -30,6 +37,7 @@ export type TerritoriesState = {
   pendingEnds: Record<string, PendingEnd>
   closingInvites: Record<string, Record<string, true>>
   memberships: TerritoryMemberships
+  ledger: PersonalLedger
   save: (territory: Territory) => void
   update: (id: string, change: (territory: Territory) => Territory) => void
   remove: (id: string) => void
@@ -51,6 +59,7 @@ export type TerritoriesState = {
   clearClosingInvite: (spaceId: string, inviteId: string) => void
   noteJoined: (spaceId: string, at: number) => void
   noteLeft: (spaceId: string, at: number) => void
+  stampLedger: () => void
   reset: () => void
 }
 
@@ -85,20 +94,77 @@ function placeView(
   view: Territory,
   replaces?: string
 ): Territory[] {
-  const at = territories.findIndex(
-    (territory) =>
-      territory.shared?.spaceId === view.shared?.spaceId ||
-      territory.id === replaces
-  )
+  const ownCopy = (territory: Territory) =>
+    view.shared?.role === 'owner' &&
+    territory.shared === undefined &&
+    territory.received === undefined &&
+    territory.id === view.id
+  const replaced = (territory: Territory) =>
+    territory.shared?.spaceId === view.shared?.spaceId ||
+    territory.id === replaces ||
+    ownCopy(territory)
+  const at = territories.findIndex(replaced)
   if (at === -1) return [...territories, view]
   const next = [...territories]
   next[at] = view
-  return next.filter(
-    (territory, index) =>
-      index === at ||
-      (territory.shared?.spaceId !== view.shared?.spaceId &&
-        territory.id !== replaces)
+  return next.filter((territory, index) => index === at || !replaced(territory))
+}
+
+export function heldTerritories(
+  state: Pick<TerritoriesState, 'territories' | 'spaces' | 'memberships'>
+): HeldTerritories {
+  const held = new Map<string, number | undefined>()
+  for (const territory of state.territories) {
+    if (!territory.shared) continue
+    const { spaceId } = territory.shared
+    const space = state.spaces?.[spaceId]
+    const created = space?.members.find(
+      (member) => member.memberId === space.ownerId
+    )?.joinedAt
+    held.set(
+      territory.id,
+      created ?? state.memberships?.territories?.[spaceId]?.at
+    )
+  }
+  return held
+}
+
+function stampedLedger(
+  state: TerritoriesState,
+  only?: ReadonlySet<string>
+): PersonalLedger {
+  const held = heldTerritories(state)
+  return restampLedger(
+    state.ledger,
+    personalTerritories(state.territories, held),
+    held,
+    syncTimestamp,
+    only
   )
+}
+
+function changedTerritories(
+  state: TerritoriesState,
+  previous: TerritoriesState
+): Set<string> {
+  const changed = new Set<string>()
+  const before = new Map(previous.territories.map((t) => [t.id, t]))
+  for (const territory of state.territories) {
+    if (before.get(territory.id) !== territory) changed.add(territory.id)
+    before.delete(territory.id)
+  }
+  for (const id of before.keys()) changed.add(id)
+  if (
+    state.spaces !== previous.spaces ||
+    state.memberships !== previous.memberships
+  ) {
+    const now = heldTerritories(state)
+    const was = heldTerritories(previous)
+    for (const [id, since] of now)
+      if (!was.has(id) || was.get(id) !== since) changed.add(id)
+    for (const id of was.keys()) if (!now.has(id)) changed.add(id)
+  }
+  return changed
 }
 
 export function applyTerritoryChange(
@@ -151,6 +217,7 @@ export const territoriesState: StateCreator<TerritoriesState> = (set) => {
     pendingEnds: {},
     closingInvites: {},
     memberships: EMPTY_MEMBERSHIPS,
+    ledger: {},
     save: (territory) =>
       set((state) => {
         const before = state.territories.find((t) => t.id === territory.id)
@@ -197,7 +264,7 @@ export const territoriesState: StateCreator<TerritoriesState> = (set) => {
       set((state) => withSpace(state, space, replaces)),
     updateSpace: (spaceId, change) =>
       set((state) => {
-        const space = state.spaces[spaceId]
+        const space = state.spaces?.[spaceId]
         if (!space) return state
         const next = change(space)
         return next === space ? state : withSpace(state, next)
@@ -205,19 +272,20 @@ export const territoriesState: StateCreator<TerritoriesState> = (set) => {
     removeSpace: (spaceId, keep) =>
       set((state) => {
         if (!state.spaces[spaceId]) return state
+        const kept = keep && !isDeleted(state.ledger[keep.id]) ? keep : null
         const at = state.territories.findIndex(
           (t) => t.shared?.spaceId === spaceId
         )
         const territories = state.territories.filter(
           (t) => t.shared?.spaceId !== spaceId && t.id !== keep?.id
         )
-        if (keep)
-          territories.splice(at === -1 ? territories.length : at, 0, keep)
+        if (kept)
+          territories.splice(at === -1 ? territories.length : at, 0, kept)
         return { spaces: without(state.spaces, spaceId), territories }
       }),
     setHouseRecords: (spaceId, on) =>
       set((state) => {
-        const space = state.spaces[spaceId]
+        const space = state.spaces?.[spaceId]
         if (!space) return state
         const all = projectSpace(space, {
           privacy: false,
@@ -308,6 +376,11 @@ export const territoriesState: StateCreator<TerritoriesState> = (set) => {
           },
         }
       }),
+    stampLedger: () =>
+      set((state) => {
+        const ledger = stampedLedger(state)
+        return ledger === state.ledger ? state : { ledger }
+      }),
     reset: () =>
       set((state) => ({
         territories: state.territories.filter((t) => !t.shared),
@@ -336,6 +409,7 @@ export const useTerritories = create<TerritoriesState>()(
       pendingEnds,
       closingInvites,
       memberships,
+      ledger,
     }) => ({
       territories: Array.isArray(territories)
         ? territories.filter((territory) => !territory.shared)
@@ -346,6 +420,7 @@ export const useTerritories = create<TerritoriesState>()(
       pendingEnds,
       closingInvites,
       memberships,
+      ledger,
     }),
     merge: (persisted, current) => {
       const saved = (persisted ?? {}) as Partial<TerritoriesState>
@@ -359,12 +434,33 @@ export const useTerritories = create<TerritoriesState>()(
         ...current,
         ...saved,
         memberships: saved.memberships ?? EMPTY_MEMBERSHIPS,
+        ledger: saved.ledger ?? {},
         spaces,
         territories,
       }
     },
   })
 )
+
+useTerritories.subscribe((state, previous) => {
+  if (
+    !Array.isArray(state.territories) ||
+    !Array.isArray(previous.territories) ||
+    typeof state.ledger !== 'object' ||
+    state.ledger === null
+  )
+    return
+  if (
+    state.territories === previous.territories &&
+    state.spaces === previous.spaces &&
+    state.memberships === previous.memberships
+  )
+    return
+  const only = changedTerritories(state, previous)
+  if (only.size === 0) return
+  const ledger = stampedLedger(state, only)
+  if (ledger !== state.ledger) useTerritories.setState({ ledger })
+})
 
 export function configureTerritoryViews(options: {
   privacy: () => boolean

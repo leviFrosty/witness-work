@@ -21,6 +21,11 @@ import useCategories from '@/stores/categories'
 import useMileage from '@/stores/mileage'
 import { localPetSnapshot } from '@/app/sync/petStoreSync'
 import { localRoutineSnapshot } from '@/app/sync/routineStoreSync'
+import { localTerritorySnapshot } from '@/app/sync/territoryStoreSync'
+import type {
+  TerritorySyncRecord,
+  TerritorySyncTombstone,
+} from '@/features/territories/lib/personalSync'
 import { usePreferences, PREFERENCE_DEFAULTS } from '@/stores/preferences'
 import { NON_SYNCABLE_PREFERENCE_KEYS } from '@/stores/preferences'
 import {
@@ -112,6 +117,11 @@ export type SyncPayload = {
 
     readingPlans: unknown[]
     deletedRoutineRecords?: { id: string; deletedAt: number }[]
+  }
+
+  territoryStore?: {
+    territoryRecords: TerritorySyncRecord[]
+    deletedTerritoryRecords?: TerritorySyncTombstone[]
   }
   preferencesStore: {
     values: Record<string, any>
@@ -210,6 +220,7 @@ export function buildPayload(args: {
     },
     petStore: localPetSnapshot(),
     routineStore: localRoutineSnapshot(),
+    territoryStore: localTerritorySnapshot(),
     preferencesStore: {
       values: syncablePrefs,
       updatedAt: prefs.preferenceUpdatedAt ?? {},

@@ -6,6 +6,7 @@ import useMileage from '@/stores/mileage'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import { useProfile } from '@/stores/profile'
+import { useTerritories } from '@/features/territories/stores/territories'
 
 export type LocalDataStore =
   | 'contacts'
@@ -16,6 +17,7 @@ export type LocalDataStore =
   | 'pet'
   | 'preferences'
   | 'profile'
+  | 'territories'
 
 export function subscribeToLocalDataChanges(
   onChange: (store: LocalDataStore) => void
@@ -33,6 +35,9 @@ export function subscribeToLocalDataChanges(
     }),
     useProfile.subscribe((state, prev) => {
       if (state.profileUpdatedAt !== prev.profileUpdatedAt) onChange('profile')
+    }),
+    useTerritories.subscribe((state, prev) => {
+      if (state.ledger !== prev.ledger) onChange('territories')
     }),
   ]
   return () => {

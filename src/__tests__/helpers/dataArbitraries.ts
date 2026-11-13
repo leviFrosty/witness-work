@@ -789,6 +789,8 @@ export const deviceArb: fc.Arbitrary<DeviceState> = fc
         routineEntries: [],
         readingPlans: [],
         deletedRoutineRecords: [],
+        territoryRecords: [],
+        deletedTerritoryRecords: [],
         preferencesValues: settings.values,
         preferenceUpdatedAt: settings.stamps,
         profileValues: profile.values,

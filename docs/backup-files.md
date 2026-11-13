@@ -9,6 +9,8 @@ Since 1.46 the file is locked, and the User picks how:
 
 Older versions can't open a locked file, and say it's invalid. Files written before 1.46 aren't locked, and still restore.
 
+The file holds what sync carries, territories included (`territoryStore`, in the sync payload's record format). Restoring one replaces this device's own territories with the file's; a file without territories leaves them as they are. Card photos aren't in the file.
+
 ## Format
 
 The file is UTF-8 JSON (`src/lib/backupFileLock.ts`):

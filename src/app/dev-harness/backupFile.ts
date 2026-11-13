@@ -1,12 +1,13 @@
 import { getRandomBytes } from 'expo-crypto'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
+import { backupFileContents } from '@/app/sync/backupFileContents'
 import {
   type BackupFileLockChoice,
   createLockedBackupFile,
   unlockWithThisAccount,
 } from '@/app/sync/lockedBackupFile'
-import { createBackupFile, isBackupFile } from '@/lib/backupFile'
+import { isBackupFile } from '@/lib/backupFile'
 import {
   type LockedBackupFile,
   lockWithAccountKey,
@@ -42,9 +43,9 @@ type TestFile = 'locked' | 'plain' | 'otherAccount'
 async function writeTestFile(kind: TestFile): Promise<string> {
   const file =
     kind === 'plain'
-      ? createBackupFile()
+      ? backupFileContents()
       : kind === 'otherAccount'
-        ? lockWithAccountKey(createBackupFile(), getRandomBytes(32), {
+        ? lockWithAccountKey(backupFileContents(), getRandomBytes(32), {
             origin: { deviceName: 'verify', platform: 'ios', createdAt: 0 },
             randomBytes: getRandomBytes,
           })

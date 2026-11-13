@@ -3,6 +3,7 @@ import i18n from '@/lib/locales'
 import {
   formatDate,
   formatDateTime,
+  formatDisplay,
   formatMonthDayCompact,
   formatTime,
 } from '@/lib/dates'
@@ -100,22 +101,34 @@ const isToday = (at: number) =>
   new Date(at).toDateString() === new Date().toDateString()
 
 const dayText = (at: number) =>
-  new Date(at).getFullYear() === new Date().getFullYear()
-    ? formatMonthDayCompact(moment(at))
-    : formatDate(at, { style: 'medium' })
+  i18n.t('territories.weekdayDate', {
+    weekday: formatDisplay(at, 'ddd'),
+    date:
+      new Date(at).getFullYear() === new Date().getFullYear()
+        ? formatMonthDayCompact(moment(at))
+        : formatDate(at, { style: 'medium' }),
+  })
+
+export const doorWhenText = (at: number): string =>
+  i18n.t('territories.doorWhen', { date: dayText(at), time: formatTime(at) })
+
+export const doorRecordedText = (at: number): string =>
+  isToday(at)
+    ? i18n.t('territories.doorToday', { time: formatTime(at) })
+    : doorWhenText(at)
 
 export const recordedByText = (name: string | null, at: number): string =>
   name === null
     ? isToday(at)
       ? i18n.t('territories.share.recordedByYouAt', { time: formatTime(at) })
       : i18n.t('territories.share.recordedByYouOn', {
-          date: dayText(at),
+          date: doorWhenText(at),
         })
     : isToday(at)
       ? i18n.t('territories.share.recordedByAt', { name, time: formatTime(at) })
       : i18n.t('territories.share.recordedByOn', {
           name,
-          date: dayText(at),
+          date: doorWhenText(at),
         })
 
 export const hasOthers = (territory: Pick<Territory, 'people' | 'received'>) =>

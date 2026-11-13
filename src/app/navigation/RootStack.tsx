@@ -618,6 +618,14 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{ header: () => null }}
+          name='TerritoryInsights'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoryInsightsScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
+          options={{ header: () => null }}
           name='TerritoryStreetForm'
           getComponent={() =>
             require('@/features/territories/screens/TerritoryStreetFormScreen')

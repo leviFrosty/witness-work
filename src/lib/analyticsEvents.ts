@@ -211,6 +211,9 @@ export const analyticsEventNames = [
   'territory_notes_added',
   'territory_menu_action',
   'territories_view_changed',
+  'territory_insights_ready',
+  'territory_insights_opened',
+  'territory_insights_chart_explored',
 
   'pet_adopted',
   'pet_appearance_changed',

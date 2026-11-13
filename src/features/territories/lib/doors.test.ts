@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   checkOutAgain,
   clearDoorRecords,
+  CORRECTION_MS,
+  doorVisits,
+  MAX_DOOR_HISTORY,
   countsAsAnotherTry,
   doNotCallAt,
   doorCounts,
@@ -113,9 +116,77 @@ describe('logDoor', () => {
       { id: 'd2', label: '12', outcome: 'spoke', at: 100 + 2 * DAY }
     )
     expect(again.doors).toEqual([
-      { id: 'd1', label: '12', outcome: 'spoke', at: 100 + 2 * DAY, tries: 2 },
+      {
+        id: 'd1',
+        label: '12',
+        outcome: 'spoke',
+        at: 100 + 2 * DAY,
+        tries: 2,
+        history: [{ at: 100, outcome: 'notHome' }],
+      },
     ])
     expect(again.next).toBe(14)
+  })
+
+  it('keeps an earlier visit on the same day unless it was a quick fix', () => {
+    const first = logDoor(street(), {
+      id: 'd1',
+      label: '12',
+      outcome: 'notHome',
+      at: 100,
+    })
+    const fixed = logDoor(first, {
+      id: 'd2',
+      label: '12',
+      outcome: 'spoke',
+      at: 100 + CORRECTION_MS / 2,
+    })
+    expect(fixed.doors[0].history).toBeUndefined()
+    const later = logDoor(first, {
+      id: 'd2',
+      label: '12',
+      outcome: 'spoke',
+      at: 100 + 3 * CORRECTION_MS,
+    })
+    expect(later.doors[0]).toMatchObject({
+      tries: 1,
+      history: [{ at: 100, outcome: 'notHome' }],
+    })
+  })
+
+  it('keeps only the latest visits in a door history', () => {
+    let current = street()
+    for (let n = 0; n <= MAX_DOOR_HISTORY + 3; n++)
+      current = logDoor(current, {
+        id: 'd1',
+        label: '12',
+        outcome: 'notHome',
+        at: 100 + n * DAY,
+      })
+    const [door] = current.doors
+    expect(door.history).toHaveLength(MAX_DOOR_HISTORY)
+    expect(doorVisits(door).at(-2)?.at).toBe(100 + (MAX_DOOR_HISTORY + 2) * DAY)
+  })
+
+  it('marks a visit from notes as untimed, and clears it at the door', () => {
+    const noted = logDoor(street(), {
+      id: 'd1',
+      label: '12',
+      outcome: 'notHome',
+      at: 100,
+      untimed: true,
+    })
+    expect(noted.doors[0].untimed).toBe(true)
+    const answered = logDoor(noted, {
+      id: 'd1',
+      label: '12',
+      outcome: 'spoke',
+      at: 100 + 2 * DAY,
+    })
+    expect(answered.doors[0].untimed).toBeUndefined()
+    expect(answered.doors[0].history).toEqual([
+      { at: 100, outcome: 'notHome', untimed: true },
+    ])
   })
 
   it('corrects the outcome without another try on the same day', () => {

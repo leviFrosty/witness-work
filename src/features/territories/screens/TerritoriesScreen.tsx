@@ -25,6 +25,7 @@ import i18n from '@/lib/locales'
 import TerritoriesFilterChips from '@/features/territories/components/TerritoriesFilterChips'
 import useTerritoriesQuery from '@/features/territories/hooks/useTerritoriesQuery'
 import TerritoriesTabHeader from '@/features/territories/components/TerritoriesTabHeader'
+import TerritoryInsightsCard from '@/features/territories/components/insights/TerritoryInsightsCard'
 import TerritoryReceivedSection from '@/features/territories/components/sharing/TerritoryReceivedSection'
 import TerritoryReturnedGroup from '@/features/territories/components/TerritoryReturnedGroup'
 import TerritoryListRow from '@/features/territories/components/TerritoryListRow'
@@ -130,6 +131,7 @@ export default function TerritoriesScreen() {
               }
             />
           )}
+          {territories.length > 0 && <TerritoryInsightsCard />}
           {territories.length > 0 && (
             <View
               style={{

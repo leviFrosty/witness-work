@@ -1,10 +1,15 @@
-import { isHandedOff } from '@/features/territories/lib/doors'
+import {
+  doorVisits,
+  isHandedOff,
+  MAX_DOOR_HISTORY,
+} from '@/features/territories/lib/doors'
 import type {
   Territory,
   TerritoryDoor,
   TerritoryPerson,
   TerritoryShare,
   TerritoryStreet,
+  TerritoryVisit,
 } from '@/features/territories/types/territory'
 
 export const WORKING_NOW_MS = 10 * 60 * 1000
@@ -219,7 +224,20 @@ export const mergeDoor = (
     coordinateSource: winner.coordinate
       ? winner.coordinateSource
       : other.coordinateSource,
+    history: mergedHistory(winner, other),
   }
+}
+
+const mergedHistory = (
+  winner: TerritoryDoor,
+  other: TerritoryDoor
+): TerritoryVisit[] | undefined => {
+  const seen = new Set<number>([winner.at])
+  const visits = [...(winner.history ?? []), ...doorVisits(other)]
+    .filter((visit) => !seen.has(visit.at) && seen.add(visit.at))
+    .sort((a, b) => a.at - b.at)
+    .slice(-MAX_DOOR_HISTORY)
+  return visits.length > 0 ? visits : undefined
 }
 
 export const workingNow = (

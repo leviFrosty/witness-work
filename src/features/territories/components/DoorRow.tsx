@@ -12,14 +12,16 @@ import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
-import { formatDate } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import {
   OUTCOME_ICON,
   OUTCOME_LABEL,
   outcomeColor,
 } from '@/features/territories/lib/outcomes'
-import { recordedByText } from '@/features/territories/lib/shareText'
+import {
+  doorRecordedText,
+  recordedByText,
+} from '@/features/territories/lib/shareText'
 import type { TerritoryDoor } from '@/features/territories/types/territory'
 
 const BADGE = 36
@@ -98,7 +100,7 @@ export default function DoorRow({
     door.tries > 1 && i18n.t('territories.tries', { count: door.tries }),
     recordedBy && recordedByText(recordedBy, door.at),
     !recordedBy && mine && recordedByText(null, door.at),
-    !recordedBy && !mine && formatDate(door.at, { style: 'medium' }),
+    !recordedBy && !mine && doorRecordedText(door.at),
   ]
     .filter(Boolean)
     .join(' · ')

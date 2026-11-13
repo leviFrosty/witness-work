@@ -1,5 +1,6 @@
 import { clip } from '@/lib/sharedSpaces/records'
 import { cleanHouses } from '@/features/territories/lib/houseList'
+import { MAX_DOOR_HISTORY } from '@/features/territories/lib/doors'
 import { isUuid } from '@/lib/sharedSpaces/scopes'
 import type { Coordinate } from '@/types/contact'
 import type {
@@ -10,6 +11,7 @@ import type {
   TerritoryDoNotCall,
   TerritoryDoor,
   TerritoryStreet,
+  TerritoryVisit,
 } from '@/features/territories/types/territory'
 
 export const TERRITORY_LIMITS = {
@@ -61,6 +63,8 @@ const KNOWN: Record<string, readonly string[]> = {
     'description',
     'by',
     'byName',
+    'untimed',
+    'hist',
   ],
   doNotCall: ['address', 'at', 'coordinate', 'label', 'name', 'reason'],
   guest: ['name', 'linkId', 'joinedAt'],
@@ -297,7 +301,44 @@ export function doorData(
     ),
     by,
     ...optional('byName', byName && clip(byName, TERRITORY_LIMITS.personName)),
+    ...optional('untimed', door.untimed ? true : undefined),
+    ...optional('hist', historyData(door.history)),
   }
+}
+
+const OUTCOME_MARK: Record<DoorOutcome, string> = {
+  spoke: 's',
+  notHome: 'n',
+  doNotCall: 'd',
+}
+
+const MARK_OUTCOME: Record<string, DoorOutcome> = {
+  s: 'spoke',
+  n: 'notHome',
+  d: 'doNotCall',
+}
+
+const historyData = (history: TerritoryVisit[] | undefined) =>
+  history && history.length > 0
+    ? history
+        .slice(-MAX_DOOR_HISTORY)
+        .map((visit) =>
+          visit.untimed
+            ? [visit.at, OUTCOME_MARK[visit.outcome], 1]
+            : [visit.at, OUTCOME_MARK[visit.outcome]]
+        )
+    : undefined
+
+function readHistory(value: unknown): TerritoryVisit[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const visits = value.slice(-MAX_DOOR_HISTORY).flatMap((entry) => {
+    if (!Array.isArray(entry)) return []
+    const [at, mark, untimed] = entry as unknown[]
+    const outcome = typeof mark === 'string' ? MARK_OUTCOME[mark] : undefined
+    if (!isNumber(at) || !outcome) return []
+    return [{ at, outcome, ...(untimed === 1 && { untimed: true }) }]
+  })
+  return visits.length > 0 ? visits : undefined
 }
 
 export function readDoorData(data: Data): DoorFields | null {
@@ -334,6 +375,8 @@ export function readDoorData(data: Data): DoorFields | null {
         ? clip(data.byName, TERRITORY_LIMITS.personName)
         : undefined
     ),
+    ...optional('untimed', data.untimed === true ? true : undefined),
+    ...optional('history', readHistory(data.hist)),
   }
 }
 

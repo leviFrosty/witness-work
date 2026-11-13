@@ -101,6 +101,10 @@ vi.mock('@/features/buddies/hooks/useBuddyNotifications', () => ({
 vi.mock('@/app/sharedCars/useSharedCarNotifications', () => ({
   default: () => [],
 }))
+vi.mock(
+  '@/features/territories/hooks/useTerritoryInsightsNotification',
+  () => ({ default: () => null })
+)
 vi.mock('@/app/territories/useTerritoryNotifications', () => ({
   default: () => [],
 }))

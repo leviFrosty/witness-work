@@ -28,6 +28,7 @@ import { hasCapability } from '@/lib/platformCapabilities'
 import { usePreferences } from '@/stores/preferences'
 import TerritoryActions from '@/features/territories/components/TerritoryActions'
 import TerritoryNotHomeSection from '@/features/territories/components/TerritoryNotHomeSection'
+import TerritoryInsightsCard from '@/features/territories/components/insights/TerritoryInsightsCard'
 import TerritoryDoNotCallSection from '@/features/territories/components/TerritoryDoNotCallSection'
 import TerritoryHeaderAction from '@/features/territories/components/TerritoryHeaderAction'
 import TerritoryPill from '@/features/territories/components/TerritoryPill'
@@ -450,6 +451,8 @@ export default function TerritoryDetailsScreen({ route, navigation }: Props) {
               }
             />
           )}
+
+          {!privacy && <TerritoryInsightsCard territoryId={territoryId} />}
 
           {(owner || heldStreetIds(territory).length > 0) && !finished && (
             <TerritorySharedWithSection

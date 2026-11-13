@@ -93,6 +93,7 @@ export const addNoteDoors = (
           label,
           outcome: door.outcome,
           at: options.at,
+          untimed: true,
         })
         if (!had) added.push(id)
         next = {

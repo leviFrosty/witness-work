@@ -48,6 +48,7 @@ import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { useTerritories } from '@/features/territories/stores/territories'
 import { useTerritoriesView } from '@/features/territories/stores/territoriesView'
+import { useTerritoryVisits } from '@/features/territories/stores/territoryVisits'
 
 type ResettableStore = {
   getInitialState: () => unknown
@@ -71,6 +72,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useMapFindSkips,
   useTerritories,
   useTerritoriesView,
+  useTerritoryVisits,
   useGeocodeRetry,
   useNotificationsTray,
 

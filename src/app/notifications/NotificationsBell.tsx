@@ -23,6 +23,7 @@ import useBuddyNotifications, {
 } from '@/features/buddies/hooks/useBuddyNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
 import usePetUnlockNotifications from '@/features/pet/hooks/usePetUnlockNotifications'
+import useTerritoryInsightsNotification from '@/features/territories/hooks/useTerritoryInsightsNotification'
 import useNow from '@/hooks/useNow'
 import useAuxiliaryMonthNotification from '@/features/service-reports/hooks/useAuxiliaryMonthNotification'
 import useHoursLoggingNotification from '@/features/service-reports/hooks/useHoursLoggingNotification'
@@ -61,6 +62,7 @@ export default function NotificationsBell() {
     ...useBuddyNotifications(),
     ...useSharedCarNotifications(),
     ...useTerritoryNotifications(),
+    useTerritoryInsightsNotification(),
     usePendingUpdateNotification(),
     useWhatsNewNotification(),
     useCalendarSyncNotification(),

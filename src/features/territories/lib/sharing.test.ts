@@ -242,6 +242,25 @@ describe('mergeDoor', () => {
     })
   })
 
+  it("keeps both records' visits when two people record the same house", () => {
+    const mine = door({
+      id: 'b',
+      outcome: 'notHome',
+      history: [{ at: 50, outcome: 'notHome' }],
+    })
+    const theirs = door({
+      id: 'a',
+      outcome: 'spoke',
+      at: mine.at + 5000,
+      history: [{ at: 50, outcome: 'notHome' }],
+    })
+    expect(mergeDoor(mine, theirs).history).toEqual([
+      { at: 50, outcome: 'notHome' },
+      { at: mine.at, outcome: 'notHome' },
+    ])
+    expect(mergeDoor(mine, theirs)).toEqual(mergeDoor(theirs, mine))
+  })
+
   it('ends the same whichever side merges first', () => {
     const mine = door({ id: 'b', outcome: 'notHome' })
     const theirs = door({

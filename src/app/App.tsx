@@ -35,6 +35,7 @@ import MileageSharingProvider from '@/app/mileage/MileageSharingProvider'
 import TerritorySharingProvider from '@/app/territories/TerritorySharingProvider'
 import SharedCarsRuntime from '@/app/sharedCars/SharedCarsRuntime'
 import TerritoriesRuntime from '@/app/territories/TerritoriesRuntime'
+import TerritoryVisitTally from '@/app/territories/TerritoryVisitTally'
 import BadgesRuntime from '@/app/badges/BadgesRuntime'
 import '@/app/buddies/buddiesBackgroundSync'
 import NotificationResponseListener from '@/app/notifications/NotificationResponseListener'
@@ -198,6 +199,7 @@ function UnlockedApp() {
                               <BuddiesRuntime />
                               <SharedCarsRuntime />
                               <TerritoriesRuntime />
+                              <TerritoryVisitTally />
                               <BadgesRuntime />
                               <NotificationResponseListener />
                               <SilentForegroundAlerts />

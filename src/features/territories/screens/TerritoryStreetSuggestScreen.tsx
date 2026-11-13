@@ -330,6 +330,15 @@ export default function TerritoryStreetSuggestScreen({
             found.size > 0 &&
             note(i18n.t('territories.houses.attribution'), 'suggest-osm')}
 
+          {lookup.state === 'done' &&
+            found.size === 0 &&
+            note(
+              i18n.t(
+                `territories.suggest.housesMissing.${lookup.failure ?? 'none'}`
+              ),
+              'suggest-houses-missing'
+            )}
+
           {done && !blocked && fresh.length === 0 && fills === 0 && (
             <View style={{ gap: 12 }}>
               <View style={{ gap: 4, paddingHorizontal: 5 }}>

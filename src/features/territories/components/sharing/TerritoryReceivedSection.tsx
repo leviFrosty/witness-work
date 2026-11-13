@@ -7,6 +7,10 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import TerritorySectionTitle from '@/features/territories/components/TerritorySectionTitle'
 import { useTerritoryMenu } from '@/features/territories/hooks/useTerritoryMenu'
+import {
+  sortTerritories,
+  type TerritoriesQuery,
+} from '@/features/territories/lib/listView'
 import { isReceivedLive } from '@/features/territories/lib/sharing'
 import {
   streetSummary,
@@ -19,15 +23,19 @@ import type { Territory } from '@/features/territories/types/territory'
 export default function TerritoryReceivedSection({
   kind,
   territories,
+  sort,
   onOpen,
 }: {
   kind: 'handoff' | 'shared'
   territories: Territory[]
+  sort: Pick<TerritoriesQuery, 'sort' | 'direction'>
   onOpen: (territory: Territory) => void
 }) {
-  const list = territories
-    .filter((territory) => territory.received?.kind === kind)
-    .sort((a, b) => (b.received?.at ?? 0) - (a.received?.at ?? 0))
+  const list = sortTerritories(
+    territories.filter((territory) => territory.received?.kind === kind),
+    sort,
+    (territory) => territory.received?.at ?? 0
+  )
   if (list.length === 0) return null
 
   const sublabel = (territory: Territory) => {

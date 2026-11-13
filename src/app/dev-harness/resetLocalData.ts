@@ -47,6 +47,7 @@ import { useStreakCelebration } from '@/features/profile/stores/streakCelebratio
 import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { useTerritories } from '@/features/territories/stores/territories'
+import { useTerritoriesView } from '@/features/territories/stores/territoriesView'
 
 type ResettableStore = {
   getInitialState: () => unknown
@@ -69,6 +70,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useSavedRoutes,
   useMapFindSkips,
   useTerritories,
+  useTerritoriesView,
   useGeocodeRetry,
   useNotificationsTray,
 

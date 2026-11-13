@@ -210,6 +210,7 @@ export const analyticsEventNames = [
   'territory_notes_read',
   'territory_notes_added',
   'territory_menu_action',
+  'territories_view_changed',
 
   'pet_adopted',
   'pet_appearance_changed',

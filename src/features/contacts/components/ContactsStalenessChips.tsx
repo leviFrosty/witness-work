@@ -3,9 +3,9 @@ import {
   SlidersHorizontal as SlidersHorizontalIcon,
 } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
+import LucideIcon from '@/components/ui/LucideIcon'
+import FilterChip from '@/components/ui/FilterChip'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
-import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
@@ -19,7 +19,6 @@ import { useMarkerColors } from '@/hooks/useMarkerColors'
 import { usePreferences } from '@/stores/preferences'
 import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import { Contact } from '@/types/contact'
-import Text from '@/components/ui/MyText'
 import Button from '@/components/ui/Button'
 import SortableChipRow from '@/components/ui/SortableChipRow'
 import Popover from '@/components/ui/Popover'
@@ -112,14 +111,14 @@ const ContactsStalenessChips = ({
       leading={
         <>
           {}
-          <StalenessChip
+          <FilterChip
             label={i18n.t('contacts_sortAndFilter_title')}
             icon={SlidersHorizontalIcon}
             count={otherFilters.length > 0 ? otherFilters.length : undefined}
             active={otherFilters.length > 0}
             onPress={() => navigation.navigate('Contacts Sort And Filter')}
           />
-          <StalenessChip
+          <FilterChip
             label={i18n.t('contacts_stalenessChip_all')}
             count={contacts.length}
             active={selected.size === 0}
@@ -128,7 +127,7 @@ const ContactsStalenessChips = ({
         </>
       }
       renderItem={(bucket) => (
-        <StalenessChip
+        <FilterChip
           label={i18n.t(`contacts_pinStaleness_${bucket}` as TranslationKey)}
           count={counts[bucket]}
           color={stalenessToColor(bucket, markerColors)}
@@ -138,92 +137,6 @@ const ContactsStalenessChips = ({
       )}
       trailing={surface === 'list' ? colorKey : undefined}
     />
-  )
-}
-
-const StalenessChip = ({
-  label,
-  count,
-  color,
-  icon,
-  active,
-  onPress,
-}: {
-  label: string
-
-  count?: number
-
-  color?: string
-
-  icon?: AppIcon
-  active: boolean
-  onPress: () => void
-}) => {
-  const theme = useTheme()
-  return (
-    <Button
-      onPress={onPress}
-      noTransform
-      accessibilityRole='button'
-      accessibilityState={{ selected: active }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-
-        minHeight: 32,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 999,
-        borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: active ? theme.colors.accent : theme.colors.border,
-        backgroundColor: active
-          ? theme.colors.accentTranslucent
-          : theme.colors.backgroundLighter,
-
-        opacity: count === 0 && !active ? 0.55 : 1,
-      }}
-    >
-      {color && (
-        <View
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: color,
-          }}
-        />
-      )}
-      {icon && (
-        <LucideIcon
-          icon={icon}
-          size={theme.fontSize('sm')}
-          style={{ color: active ? theme.colors.accent : theme.colors.text }}
-        />
-      )}
-      <Text
-        numberOfLines={1}
-        style={{
-          fontSize: theme.fontSize('sm'),
-          fontFamily: active ? theme.fonts.semiBold : theme.fonts.medium,
-          color: active ? theme.colors.accent : theme.colors.text,
-        }}
-      >
-        {label}
-      </Text>
-      {count !== undefined && (
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            fontFamily: theme.fonts.semiBold,
-            color: active ? theme.colors.accent : theme.colors.textAlt,
-          }}
-        >
-          {count}
-        </Text>
-      )}
-    </Button>
   )
 }
 

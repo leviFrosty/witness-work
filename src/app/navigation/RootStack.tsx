@@ -188,6 +188,20 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
+          options={{
+            presentation: 'modal',
+            sheetAllowedDetents: [1],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 18,
+            headerShown: false,
+          }}
+          name='Territories Sort And Filter'
+          getComponent={() =>
+            require('@/features/territories/screens/TerritoriesSortAndFilterScreen')
+              .default
+          }
+        />
+        <RootStack.Screen
           options={() => {
             const regions = useDisplayRegions.getState().regions
             const formSheet =

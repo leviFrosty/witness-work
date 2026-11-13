@@ -114,6 +114,7 @@ export type RootStackParamList = {
   'Recover Contacts': undefined
   'Dismissed Contacts': undefined
   'Contacts Sort And Filter': undefined
+  'Territories Sort And Filter': undefined
 
   'Saved Contact Views': { focusId?: string } | undefined
   Onboarding: undefined

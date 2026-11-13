@@ -1,16 +1,8 @@
-import {
-  ArrowDown as ArrowDownIcon,
-  ArrowUp as ArrowUpIcon,
-  Check as CheckIcon,
-  CircleX as CircleXIcon,
-  Plus as PlusIcon,
-  X as XIcon,
-} from 'lucide-react-native'
+import { CircleX as CircleXIcon, Plus as PlusIcon } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
 import React, { useState } from 'react'
-import { Platform, ScrollView, StyleSheet, View } from 'react-native'
+import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
@@ -27,14 +19,16 @@ import { CustomFieldDefinition } from '@/types/customField'
 import { useContactsSorted } from '@/features/contacts/hooks/useContactsSorted'
 import useContactsQuery from '@/features/contacts/hooks/useContactsQuery'
 import SavedViewSection from '@/features/contacts/components/SavedViewSection'
+import SortDirectionButtons from '@/components/sortFilter/SortDirectionButtons'
+import SortFilterOption from '@/components/sortFilter/SortFilterOption'
+import SortFilterSection from '@/components/sortFilter/SortFilterSection'
+import SortFilterSheet from '@/components/sortFilter/SortFilterSheet'
 import Button from '@/components/ui/Button'
 import ContextMenu from '@/components/ui/ContextMenu'
-import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
 import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import ContactsFilterSheet from '@/features/contacts/components/ContactsFilterSheet'
 import { RootStackNavigation } from '@/types/rootStack'
-import { tracking } from '@/lib/tracking'
 import { analytics } from '@/lib/analytics'
 
 const operatorLabel = (op: TextOperator | ComparableOperator): string => {
@@ -129,7 +123,6 @@ const describeFilter = (
 const ContactsSortAndFilterScreen = () => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const insets = useSafeAreaInsets()
 
   const { customFieldDefs } = useContacts()
   const {
@@ -194,460 +187,204 @@ const ContactsSortAndFilterScreen = () => {
 
   const canReset = !view || edited
 
-  const sectionTitleStyle = {
-    fontSize: theme.fontSize('xs'),
-    color: theme.colors.textAlt,
-    fontFamily: theme.fonts.semiBold,
-    textTransform: 'uppercase' as const,
-    letterSpacing: tracking(0.5),
-  }
-
-  const renderSortRow = (
-    key: string,
-    label: string,
-    selected: boolean,
-    onPress: () => void,
-
-    description?: string
-  ) => (
-    <Button
-      key={key}
-      onPress={onPress}
-      noTransform
-      style={{
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-        borderRadius: theme.numbers.borderRadiusSm,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: selected
-          ? theme.colors.accentTranslucent
-          : theme.colors.backgroundLighter,
-        borderWidth: 1,
-        borderColor: selected ? theme.colors.accent : theme.colors.border,
-      }}
-    >
-      <View style={{ flexShrink: 1, gap: 2 }}>
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-            color: selected ? theme.colors.accent : theme.colors.text,
-          }}
-        >
-          {label}
-        </Text>
-        {description && (
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {description}
-          </Text>
-        )}
-      </View>
-      {selected && (
-        <LucideIcon
-          icon={CheckIcon}
-          size={theme.fontSize('md')}
-          style={{ color: theme.colors.accent }}
-        />
-      )}
-    </Button>
-  )
-
-  const renderDirectionButton = (
-    value: 'asc' | 'desc',
-    label: string,
-    icon: typeof ArrowUpIcon
-  ) => {
-    const selected = contactSortDirection === value
-    return (
-      <Button
-        onPress={() => setContactSortDirection(value)}
-        noTransform
-        style={{
-          flex: 1,
-          height: 40,
-          borderRadius: theme.numbers.borderRadiusSm,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          backgroundColor: selected
-            ? theme.colors.accentTranslucent
-            : theme.colors.backgroundLighter,
-          borderWidth: 1,
-          borderColor: selected ? theme.colors.accent : theme.colors.border,
-        }}
-      >
-        <LucideIcon
-          icon={icon}
-          size={theme.fontSize('sm')}
-          style={{
-            color: selected ? theme.colors.accent : theme.colors.text,
-          }}
-        />
-        <Text
-          style={{
-            fontSize: theme.fontSize('sm'),
-            fontFamily: selected ? theme.fonts.semiBold : theme.fonts.regular,
-            color: selected ? theme.colors.accent : theme.colors.text,
-          }}
-        >
-          {label}
-        </Text>
-      </Button>
-    )
-  }
-
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-
-          paddingTop: Platform.select({
-            android: insets.top + 12,
-            default: 20,
-          }),
-          paddingBottom: 14,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: theme.colors.border,
-          backgroundColor: theme.colors.background,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: theme.fontSize('xl'),
-            color: theme.colors.text,
-            fontFamily: theme.fonts.semiBold,
-          }}
-        >
-          {i18n.t('contacts_sortAndFilter_title')}
-        </Text>
-        <IconButton
-          onPress={handleClose}
-          size={20}
-          icon={XIcon}
-          color={theme.colors.text}
+    <SortFilterSheet
+      resultCount={resultCount}
+      canReset={canReset}
+      onReset={reset}
+      onClose={handleClose}
+      overlay={
+        <ContactsFilterSheet
+          open={filterSheetOpen}
+          onOpenChange={setFilterSheetOpen}
+          initial={
+            filterEditingIndex !== null
+              ? contactsFilters[filterEditingIndex]
+              : undefined
+          }
+          initialIndex={filterEditingIndex ?? undefined}
+          customFieldDefs={customFieldDefs}
+          onSave={handleSaveFilter}
         />
-      </View>
+      }
+    >
+      <SavedViewSection />
 
-      {}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingTop: 18,
-          paddingBottom: 120 + insets.bottom,
-        }}
-        keyboardShouldPersistTaps='handled'
-        showsVerticalScrollIndicator
-      >
-        <View style={{ gap: 22 }}>
-          <SavedViewSection />
-
-          {}
-          <View style={{ gap: 10 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text style={sectionTitleStyle}>
-                {i18n.t('contacts_sortAndFilter_filtersSection')}
-              </Text>
-              {contactsFilters.length > 1 && (
-                <Button
-                  onPress={handleClearAllFilters}
-                  noTransform
-                  hitSlop={10}
-                >
-                  <Text
-                    style={{
-                      fontSize: theme.fontSize('sm'),
-                      color: theme.colors.textAlt,
-                      fontFamily: theme.fonts.semiBold,
-                      textDecorationLine: 'underline',
-                    }}
-                  >
-                    {i18n.t('contacts_filter_clear_all')}
-                  </Text>
-                </Button>
-              )}
-            </View>
-
-            {contactsFilters.length > 0 && (
-              <View style={{ gap: 8 }}>
-                {contactsFilters.map((filter, index) => {
-                  const label = describeFilter(filter, customFieldDefs)
-                  return (
-                    <View
-                      key={`filter-row-${index}`}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: theme.colors.accentTranslucent,
-                        borderColor: theme.colors.accent,
-                        borderWidth: 1,
-                        borderRadius: theme.numbers.borderRadiusSm,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <ContextMenu
-                        style={{ flex: 1 }}
-                        onPress={() => handleEditFilter(index)}
-                        accessibilityLabel={label}
-                        actions={[
-                          {
-                            id: 'edit',
-                            title: i18n.t('editFilterEllipsis'),
-                            systemImage: 'pencil',
-                            onPress: () => handleEditFilter(index),
-                          },
-                          {
-                            id: 'remove',
-                            title: i18n.t('removeFilter'),
-                            systemImage: 'xmark.circle',
-                            destructive: true,
-                            onPress: () => handleRemoveFilter(index),
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            fontSize: theme.fontSize('sm'),
-                            color: theme.colors.accent,
-                            fontFamily: theme.fonts.semiBold,
-                            paddingHorizontal: 14,
-                            paddingVertical: 12,
-                          }}
-                          numberOfLines={2}
-                        >
-                          {label}
-                        </Text>
-                      </ContextMenu>
-                      <Button
-                        onPress={() => handleRemoveFilter(index)}
-                        accessibilityLabel={i18n.t('removeFilter')}
-                        noTransform
-                        style={{
-                          minWidth: MIN_TOUCH_TARGET,
-                          minHeight: MIN_TOUCH_TARGET,
-                          paddingHorizontal: 14,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <LucideIcon
-                          icon={CircleXIcon}
-                          size={theme.fontSize('md')}
-                          style={{ color: theme.colors.accent }}
-                        />
-                      </Button>
-                    </View>
-                  )
-                })}
-              </View>
-            )}
-
-            <Button
-              onPress={handleAddFilter}
-              noTransform
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                paddingVertical: 12,
-                borderRadius: theme.numbers.borderRadiusSm,
-                borderWidth: 1,
-                borderStyle: 'dashed',
-                borderColor: theme.colors.textAlt,
-              }}
-            >
-              <LucideIcon
-                icon={PlusIcon}
-                size={theme.fontSize('xs')}
-                style={{ color: theme.colors.textAlt }}
-              />
+      <SortFilterSection
+        title={i18n.t('contacts_sortAndFilter_filtersSection')}
+        action={
+          contactsFilters.length > 1 && (
+            <Button onPress={handleClearAllFilters} noTransform hitSlop={10}>
               <Text
                 style={{
                   fontSize: theme.fontSize('sm'),
                   color: theme.colors.textAlt,
                   fontFamily: theme.fonts.semiBold,
+                  textDecorationLine: 'underline',
                 }}
               >
-                {i18n.t('contacts_addFilter')}
+                {i18n.t('contacts_filter_clear_all')}
               </Text>
             </Button>
-          </View>
-
-          {}
-          <View style={{ gap: 10 }}>
-            <Text style={sectionTitleStyle}>
-              {i18n.t('contacts_sortAndFilter_sortSection')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              {renderDirectionButton(
-                'asc',
-                i18n.t('contacts_sortAscending'),
-                ArrowUpIcon
-              )}
-              {renderDirectionButton(
-                'desc',
-                i18n.t('contacts_sortDescending'),
-                ArrowDownIcon
-              )}
-            </View>
-
-            <View style={{ gap: 8 }}>
-              {builtInContactSortOptions.map((option) =>
-                renderSortRow(
-                  option.value,
-                  option.label(),
-                  contactSort === option.value,
-                  () => setContactSort(option.value),
-                  option.value === 'suggested'
-                    ? i18n.t('contacts_sortBySuggested_description')
-                    : undefined
-                )
-              )}
-
-              {activeCustomFieldDefs.length > 0 && (
-                <>
-                  <View style={{ marginTop: 8, marginBottom: 2 }}>
+          )
+        }
+      >
+        {contactsFilters.length > 0 && (
+          <View style={{ gap: 8 }}>
+            {contactsFilters.map((filter, index) => {
+              const label = describeFilter(filter, customFieldDefs)
+              return (
+                <View
+                  key={`filter-row-${index}`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: theme.colors.accentTranslucent,
+                    borderColor: theme.colors.accent,
+                    borderWidth: 1,
+                    borderRadius: theme.numbers.borderRadiusSm,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <ContextMenu
+                    style={{ flex: 1 }}
+                    onPress={() => handleEditFilter(index)}
+                    accessibilityLabel={label}
+                    actions={[
+                      {
+                        id: 'edit',
+                        title: i18n.t('editFilterEllipsis'),
+                        systemImage: 'pencil',
+                        onPress: () => handleEditFilter(index),
+                      },
+                      {
+                        id: 'remove',
+                        title: i18n.t('removeFilter'),
+                        systemImage: 'xmark.circle',
+                        destructive: true,
+                        onPress: () => handleRemoveFilter(index),
+                      },
+                    ]}
+                  >
                     <Text
                       style={{
-                        fontSize: theme.fontSize('xs'),
-                        color: theme.colors.textAlt,
+                        fontSize: theme.fontSize('sm'),
+                        color: theme.colors.accent,
                         fontFamily: theme.fonts.semiBold,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
                       }}
+                      numberOfLines={2}
                     >
-                      {i18n.t('contacts_pickCustomField')}
+                      {label}
                     </Text>
-                  </View>
-                  {activeCustomFieldDefs.map((def) => {
-                    const value: ContactSortKey = `customField:${def.id}`
-                    return renderSortRow(
-                      value,
-                      def.label,
-                      contactSort === value,
-                      () => setContactSort(value)
-                    )
-                  })}
-                </>
-              )}
-            </View>
+                  </ContextMenu>
+                  <Button
+                    onPress={() => handleRemoveFilter(index)}
+                    accessibilityLabel={i18n.t('removeFilter')}
+                    noTransform
+                    style={{
+                      minWidth: MIN_TOUCH_TARGET,
+                      minHeight: MIN_TOUCH_TARGET,
+                      paddingHorizontal: 14,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <LucideIcon
+                      icon={CircleXIcon}
+                      size={theme.fontSize('md')}
+                      style={{ color: theme.colors.accent }}
+                    />
+                  </Button>
+                </View>
+              )
+            })}
           </View>
-        </View>
-      </ScrollView>
+        )}
 
-      {}
-      <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: Math.max(28, insets.bottom + 12),
-          backgroundColor: theme.colors.background,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <View style={{ flex: 1 }}>
+        <Button
+          onPress={handleAddFilter}
+          noTransform
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 12,
+            borderRadius: theme.numbers.borderRadiusSm,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: theme.colors.textAlt,
+          }}
+        >
+          <LucideIcon
+            icon={PlusIcon}
+            size={theme.fontSize('xs')}
+            style={{ color: theme.colors.textAlt }}
+          />
           <Text
             style={{
               fontSize: theme.fontSize('sm'),
               color: theme.colors.textAlt,
               fontFamily: theme.fonts.semiBold,
             }}
-            numberOfLines={1}
           >
-            {i18n.t('contacts_sortAndFilter_resultCount', {
-              count: resultCount,
-            })}
-          </Text>
-        </View>
-        <Button
-          onPress={reset}
-          disabled={!canReset}
-          noTransform
-          style={{
-            paddingVertical: 12,
-            paddingHorizontal: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: theme.numbers.borderRadiusMd,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.backgroundLighter,
-            opacity: canReset ? 1 : 0.5,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.text,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('reset')}
+            {i18n.t('contacts_addFilter')}
           </Text>
         </Button>
-        <Button
-          onPress={handleClose}
-          noTransform
-          style={{
-            paddingVertical: 12,
-            paddingHorizontal: 22,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: theme.numbers.borderRadiusMd,
-            backgroundColor: theme.colors.accent,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('md'),
-              color: theme.colors.textInverse,
-              fontFamily: theme.fonts.semiBold,
-            }}
-          >
-            {i18n.t('done')}
-          </Text>
-        </Button>
-      </View>
+      </SortFilterSection>
 
-      <ContactsFilterSheet
-        open={filterSheetOpen}
-        onOpenChange={setFilterSheetOpen}
-        initial={
-          filterEditingIndex !== null
-            ? contactsFilters[filterEditingIndex]
-            : undefined
-        }
-        initialIndex={filterEditingIndex ?? undefined}
-        customFieldDefs={customFieldDefs}
-        onSave={handleSaveFilter}
-      />
-    </View>
+      <SortFilterSection title={i18n.t('contacts_sortAndFilter_sortSection')}>
+        <SortDirectionButtons
+          value={contactSortDirection}
+          onChange={setContactSortDirection}
+        />
+
+        <View style={{ gap: 8 }}>
+          {builtInContactSortOptions.map((option) => (
+            <SortFilterOption
+              key={option.value}
+              label={option.label()}
+              selected={contactSort === option.value}
+              onPress={() => setContactSort(option.value)}
+              description={
+                option.value === 'suggested'
+                  ? i18n.t('contacts_sortBySuggested_description')
+                  : undefined
+              }
+            />
+          ))}
+
+          {activeCustomFieldDefs.length > 0 && (
+            <>
+              <View style={{ marginTop: 8, marginBottom: 2 }}>
+                <Text
+                  style={{
+                    fontSize: theme.fontSize('xs'),
+                    color: theme.colors.textAlt,
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                >
+                  {i18n.t('contacts_pickCustomField')}
+                </Text>
+              </View>
+              {activeCustomFieldDefs.map((def) => {
+                const value: ContactSortKey = `customField:${def.id}`
+                return (
+                  <SortFilterOption
+                    key={value}
+                    label={def.label}
+                    selected={contactSort === value}
+                    onPress={() => setContactSort(value)}
+                  />
+                )
+              })}
+            </>
+          )}
+        </View>
+      </SortFilterSection>
+    </SortFilterSheet>
   )
 }
 

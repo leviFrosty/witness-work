@@ -36,7 +36,6 @@ import { formatNumber } from '@/lib/numbers'
 import { toastDuration } from '@/lib/toastDuration'
 import { useToastDock } from '@/stores/toastDock'
 import DoorLocationToggle from '@/features/territories/components/DoorLocationToggle'
-import HouseGrid from '@/features/territories/components/HouseGrid'
 import DoorRecorder, {
   type DoorUndo,
 } from '@/features/territories/components/DoorRecorder'
@@ -71,9 +70,7 @@ import {
   updateStreet,
   wholeNumber,
 } from '@/features/territories/lib/doors'
-import { knownHouses } from '@/features/territories/lib/houseList'
 import { forgetDoorVisits } from '@/features/territories/stores/territoryVisits'
-import { houseProgress } from '@/features/territories/lib/houses'
 import {
   OUTCOME_ICON,
   OUTCOME_LABEL,
@@ -182,8 +179,6 @@ function StreetScreen({ route, navigation }: Props) {
   const upNext = nextStreet(territory, street.id)
   const docked = recording && (!worked || typed !== null)
   const access = territoryAccess(territory)
-  const houses = knownHouses(street)
-  const houseTally = houseProgress(street)
 
   const undoable = (shown: Omit<DoorUndo, 'onPress'>) =>
     setUndo({ ...shown, before: street })
@@ -457,25 +452,6 @@ function StreetScreen({ route, navigation }: Props) {
                       lastInSection
                     />
                   </Section>
-                )}
-
-                {houses && houseTally && (
-                  <HouseGrid
-                    houses={houses}
-                    doors={street.doors}
-                    progress={houseTally}
-                    descending={street.descending}
-                    selected={recording && !worked ? label : undefined}
-                    onPick={
-                      recording && description === null
-                        ? (house) => {
-                            setOpenId(null)
-                            setStowed(false)
-                            show(house === String(street.next) ? null : house)
-                          }
-                        : undefined
-                    }
-                  />
                 )}
 
                 {doNotCalls(!finished && !handedOff)}

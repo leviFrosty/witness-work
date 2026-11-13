@@ -155,9 +155,9 @@ status, usage, step SSE, transcribe`"]
 coordinates only`"]
       R_PLACES["`**GET /geocode, /autocomplete**
 HERE proxy, key stays server-side`"]
-      R_MAPS["`**POST /maps/v1/mapkit-tokens, /maps/v1/addresses, GET /places/v1/search**
+      R_MAPS["`**POST /maps/v1/mapkit-tokens, GET /places/v1/search**
 web: MapKit JS tokens (bearer),
-territory house numbers (bearer), places near a point`"]
+places near a point`"]
       R_PASSKEY["`**/accounts/v1/passkeys, /web, /approval**
 passkeys + PRF wraps, web sign-up,
 approve a browser from a phone`"]
@@ -263,8 +263,6 @@ masked web session replay`"]
 bot check for web sign-up + recovery`"]
     S_MAPKITJS["`**Apple MapKit JS**
 the web's map, cdn.apple-mapkit.com`"]
-    S_OSM["`**OpenStreetMap (Overpass API)**
-house-number addresses inside an outline`"]
   end
 
   C_WIDGETS --> A_LOCAL
@@ -303,7 +301,6 @@ house-number addresses inside an outline`"]
   A_TERR -->|"account session"| A_ACCOUNT
   A_TERR -->|"bearer: sealed records per street, WebSocket"| R_SPACES
   A_TERR -->|"bearer: notes text to read into results"| R_SCRIBE
-  A_TERR -->|"bearer: outline, for house numbers"| R_MAPS
   W_BROWSER -->|"guest link: sealed street records, no account"| R_SPACES
   A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
   A_ROUTE -->|"account session"| A_ACCOUNT
@@ -358,7 +355,6 @@ house-number addresses inside an outline`"]
   R_ROUTE -->|"waypoint sequence, routing"| S_HERE
   R_PLACES -->|"geocode, autocomplete"| S_HERE
   R_MAPS -->|"place search (Discover)"| S_HERE
-  R_MAPS -->|"outline only: house numbers"| S_OSM
   CRON -->|"ratings lookup"| P_STORE
   S_RC -->|"store receipts"| P_STORE
   S_RC -->|"web payments (RevenueCat Billing)"| S_STRIPE
@@ -382,7 +378,7 @@ house-number addresses inside an outline`"]
   class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PASSKEY,P_PUSH,P_STORE,S_GPI platform
   class R_BUD,R_SPACES,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_MAPS,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB,S_MAPSF,S_VERIFYF worker
   class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_APPROVAL,DO_RATE,DO_AA,DO_PI,DO_METER,DO_SPACE,DO_RPQ,KV,AIS state
-  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_TURNSTILE,S_MAPKITJS,S_OSM,S_EAS external
+  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_TURNSTILE,S_MAPKITJS,S_EAS external
 ```
 
 - ww-api runs as one Cloudflare Worker, `ww-proxy`, at `api.witnesswork.app`, and at `ww-proxy.leviwilkerson.com` for builds shipped before [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md). It also serves the link pages and association files on `witnesswork.app`, through exact-path routes ([docs/app-links.md](./docs/app-links.md)). The dev Worker, `ww-proxy-dev` (`api-dev.witnesswork.app`), has its own KV namespace, Durable Objects, and R2 buckets.

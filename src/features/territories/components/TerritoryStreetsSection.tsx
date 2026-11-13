@@ -14,17 +14,10 @@ import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
-import SimpleProgressBar from '@/components/ui/SimpleProgressBar'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { formatNumber } from '@/lib/numbers'
 import StreetHereNow from '@/features/territories/components/sharing/StreetHereNow'
 import TerritorySectionTitle from '@/features/territories/components/TerritorySectionTitle'
-import { knownHouses } from '@/features/territories/lib/houseList'
-import {
-  progressShare,
-  territoryHouseProgress,
-} from '@/features/territories/lib/houses'
 import { personName } from '@/features/territories/lib/shareText'
 import {
   handoffSummary,
@@ -87,9 +80,6 @@ export default function TerritoryStreetsSection({
       )
     )
 
-  const missingHouses = streets.some(
-    (street) => street.numbering !== 'none' && !knownHouses(street)
-  )
   const suggestRow = () =>
     onSuggest && (
       <InputRowButton
@@ -97,16 +87,7 @@ export default function TerritoryStreetsSection({
         testID='territory-suggest-streets'
         leftIcon={SparklesIcon}
         leftIconColor={theme.colors.accent}
-        label={i18n.t(
-          missingHouses
-            ? 'territories.suggest.action_houses'
-            : 'territories.suggest.action'
-        )}
-        sublabel={
-          missingHouses
-            ? i18n.t('territories.suggest.action_houses_description')
-            : undefined
-        }
+        label={i18n.t('territories.suggest.action')}
         onPress={onSuggest}
         lastInSection
       />
@@ -209,38 +190,11 @@ export default function TerritoryStreetsSection({
     )
   }
 
-  const houses = readOnly ? undefined : territoryHouseProgress({ streets })
-  const share = houses && progressShare(houses)
-
   return (
     <View style={{ gap: 8 }}>
-      <TerritorySectionTitle
-        info={
-          houses
-            ? i18n.t('territories.houses.territoryProgress_info')
-            : undefined
-        }
-      >
+      <TerritorySectionTitle>
         {i18n.t('territories.streets')}
       </TerritorySectionTitle>
-      {share !== undefined && (
-        <View
-          testID='territory-house-progress'
-          style={{ gap: 6, marginHorizontal: 5, marginBottom: 4 }}
-        >
-          <Text
-            style={{
-              color: theme.colors.textAlt,
-              fontSize: theme.fontSize('sm'),
-            }}
-          >
-            {i18n.t('territories.houses.territoryProgress', {
-              percent: formatNumber(share, { style: 'percent' }),
-            })}
-          </Text>
-          <SimpleProgressBar percentage={share} height={6} animated={false} />
-        </View>
-      )}
       <Section>
         {streets.map((street, index) =>
           readOnly ? (

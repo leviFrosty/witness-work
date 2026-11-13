@@ -10,6 +10,7 @@ import useBuddiesCardName from '@/features/buddies/hooks/useBuddiesCardName'
 import { buddyColor } from '@/features/buddies/lib/buddyColors'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
+import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 import {
   TerritorySharingContext,
   type TerritorySharing,
@@ -23,6 +24,7 @@ import {
 } from '@/app/territories/sharingFailure'
 import { startLink } from '@/app/territories/startLink'
 import {
+  prepareTerritoryAccount,
   territoriesEngine,
   territoriesFailureName,
   territoryInvitations,
@@ -41,9 +43,12 @@ const refuse = (failure: SharingFailure) => {
 
 async function attempt<T>(
   context: string,
-  work: () => Promise<T>
+  work: () => Promise<T>,
+  { buddies = false } = {}
 ): Promise<T | null> {
-  if (!useTerritoriesSession.getState().running) return refuse('needsBuddies')
+  if (!useTerritoriesSession.getState().running) return refuse('failed')
+  if (buddies && !useBuddiesSession.getState().running)
+    return refuse('needsBuddies')
   try {
     return await work()
   } catch (error) {
@@ -51,32 +56,49 @@ async function attempt<T>(
   }
 }
 
-const done = async (context: string, work: () => Promise<unknown>) =>
-  (await attempt(context, async () => {
-    await work()
-    return true
-  })) === true
+const done = async (
+  context: string,
+  work: () => Promise<unknown>,
+  options?: { buddies?: boolean }
+) =>
+  (await attempt(
+    context,
+    async () => {
+      await work()
+      return true
+    },
+    options
+  )) === true
+
+const withBuddies = { buddies: true }
 
 const spaceIdOf = (territoryId: string) =>
   spaceOfTerritory(territoryId)?.spaceId
 
 const actions: TerritorySharingActions = {
   share: (territoryId, inboxIds, streetIds) =>
-    done('share', () =>
-      territoryInvitations.share(territoryId, inboxIds, streetIds)
+    done(
+      'share',
+      () => territoryInvitations.share(territoryId, inboxIds, streetIds),
+      withBuddies
     ),
   stopSharing: (territoryId, personId) =>
     done('stop', () => territoryInvitations.stopSharing(territoryId, personId)),
   handOff: (territoryId, streetId, inboxId) =>
-    done('handoff', () =>
-      territoryInvitations.handOff(territoryId, streetId, inboxId)
+    done(
+      'handoff',
+      () => territoryInvitations.handOff(territoryId, streetId, inboxId),
+      withBuddies
     ),
   endHandoff: (territoryId, streetId) =>
     done('handoff/end', () =>
       territoryInvitations.endHandoff(territoryId, streetId)
     ),
   createLink: (territoryId, streetIds) =>
-    startLink(() => territoriesEngine.createLink(territoryId, streetIds)),
+    startLink(async () => {
+      await prepareTerritoryAccount()
+      return territoriesEngine.createLink(territoryId, streetIds)
+    }),
   linkUrl: async (territoryId, linkId) => {
     const spaceId = spaceIdOf(territoryId)
     if (!spaceId) return null
@@ -117,11 +139,13 @@ export default function TerritorySharingProvider({
   const availability = useBuddiesAvailability()
   const buddies = useBuddies((state) => state.buddies)
   const ownName = useBuddiesCardName()
+  const buddiesSetUp = useBuddiesSession((state) => state.running)
 
   const value: TerritorySharing = {
     buddiesAvailable: availability !== 'hidden',
+    buddiesSetUp,
     buddies: buddies
-      .filter((buddy) => buddy.status === 'active')
+      .filter((buddy) => buddiesSetUp && buddy.status === 'active')
       .map((buddy) => ({
         inboxId: buddy.inboxId,
         name: buddyDisplayName(buddy),

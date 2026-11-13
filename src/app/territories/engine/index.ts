@@ -1232,6 +1232,25 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
       .then(() => sync.syncSpace(spaceId))
   }
 
+  async function adoptOwnSpace(mark: {
+    spaceId: string
+    ownerId: string
+    at: number
+  }): Promise<string> {
+    const { spaceId, ownerId, at } = mark
+    const state = store.getState()
+    if (
+      !SPACE_ID_PATTERN.test(spaceId) ||
+      ctx.space(spaceId) ||
+      state.seeding[spaceId] ||
+      state.pendingEnds[spaceId]
+    )
+      return 'skipped'
+    const member = await ctx.memberFor(spaceId)
+    if (member.memberId !== ownerId) return 'skipped'
+    return addFromRoster(spaceId, at)
+  }
+
   function dropFromRoster(spaceId: string, leftAt: number) {
     store.getState().noteLeft(spaceId, leftAt)
     const joinedAt = store.getState().memberships.territories[spaceId]?.at
@@ -1294,6 +1313,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     syncSpace: sync.syncSpace,
     finishPendingEnds,
     addFromRoster,
+    adoptOwnSpace,
     dropFromRoster,
     leaveAll,
     resyncWithoutPrivacy,

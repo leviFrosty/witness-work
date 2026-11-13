@@ -2,12 +2,8 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { isSpaceError, SpaceError } from '@/lib/sharedSpaces/client'
 import { toast } from '@/stores/toasts'
-import { useTerritoriesSession } from '@/stores/territoriesSession'
 import { TerritorySharingError } from '@/app/territories/engine/types'
-import {
-  SHARING_FAILURE_TEXT,
-  startFailureText,
-} from '@/app/territories/sharingFailure'
+import { startFailureText } from '@/app/territories/sharingFailure'
 
 export const LINK_START_DEADLINE_MS = 60_000
 
@@ -32,10 +28,6 @@ export async function startLink(
   start: () => Promise<StartedLink>,
   ms = LINK_START_DEADLINE_MS
 ): Promise<StartedLink | null> {
-  if (!useTerritoriesSession.getState().running) {
-    toast.error(i18n.t(SHARING_FAILURE_TEXT.needsBuddies))
-    return null
-  }
   try {
     return await withDeadline(Promise.resolve().then(start), ms)
   } catch (error) {

@@ -92,12 +92,14 @@ describe('starting a guest link', () => {
     )
   })
 
-  it('says Buddies is needed when sharing isn’t running', async () => {
+  it('never asks for Buddies', async () => {
     useTerritoriesSession.setState({ running: false })
-    expect(await start(anna)).toBeNull()
-    expect(toasts.error).toHaveBeenCalledWith(
+    expect(await start(anna)).not.toBeNull()
+    server.refuseNext('create', 400, 'bad_request')
+    anna.store.getState().save({ ...sampleTerritory(), id: 'territory-2' })
+    await startLink(() => anna.engine.createLink('territory-2'))
+    expect(toasts.error).not.toHaveBeenCalledWith(
       'territories.share.needsBuddies_toast'
     )
-    expect(server.spaces.size).toBe(0)
   })
 })

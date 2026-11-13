@@ -35,6 +35,8 @@ export type TerritorySharingActions = {
 export type TerritorySharing = {
   buddiesAvailable: boolean
 
+  buddiesSetUp: boolean
+
   buddies: readonly TerritoryBuddy[]
 
   ownName: string
@@ -48,6 +50,7 @@ const unavailable = async () => false
 
 export const NO_TERRITORY_SHARING: TerritorySharing = {
   buddiesAvailable: false,
+  buddiesSetUp: false,
   buddies: [],
   ownName: '',
   canOpenBuddies: false,

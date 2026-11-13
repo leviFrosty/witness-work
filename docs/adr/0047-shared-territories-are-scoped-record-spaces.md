@@ -90,7 +90,16 @@ to change a lot after that.
    Card photos stay on the device. Details:
    [Unshared territories](../territories-protocol.md#unshared-territories-sync-and-backup).
 
-10. **Prototype data is cleaned, not migrated.** Everything the harness
+10. **Guest links don't need Buddies.** A space needs only the account key
+    and session, so a User without Buddies can make, show and end links. The
+    member record's `tag` uses the inbox id Buddies derives from the same
+    key, so setting up Buddies later keeps the same member. The `shared` mark
+    in personal sync names the space (`space: { id, owner, at }`), so the
+    owner's other devices find it without the roster. Sharing with buddies
+    and hand-offs still need Buddies. Details:
+    [Without Buddies](../territories-protocol.md#without-buddies).
+
+11. **Prototype data is cleaned, not migrated.** Everything the harness
     simulated (received territories, people, shares, hand-offs) is removed;
     the User's own territories stay.
 

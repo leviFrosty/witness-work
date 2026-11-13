@@ -29,6 +29,11 @@ export type BuddyIdentity = {
   rosterKey: Uint8Array
 }
 
+export function deriveInboxId(rootSeed: Uint8Array): string {
+  if (rootSeed.length !== 32) throw new Error('Root seed must be 32 bytes')
+  return toB64u(hkdf(rootSeed, EMPTY, 'ww-buddies/v1/inbox-id', 16))
+}
+
 export function deriveIdentity(rootSeed: Uint8Array): BuddyIdentity {
   if (rootSeed.length !== 32) throw new Error('Root seed must be 32 bytes')
   const ownerSeed = hkdf(rootSeed, EMPTY, 'ww-buddies/v1/owner-sign', 32)
@@ -38,7 +43,7 @@ export function deriveIdentity(rootSeed: Uint8Array): BuddyIdentity {
     ownerPub: toB64u(ed25519PublicKey(ownerSeed)),
     dhPrivate,
     dhPub: toB64u(x25519PublicKey(dhPrivate)),
-    inboxId: toB64u(hkdf(rootSeed, EMPTY, 'ww-buddies/v1/inbox-id', 16)),
+    inboxId: deriveInboxId(rootSeed),
     rosterKey: hkdf(rootSeed, EMPTY, 'ww-buddies/v1/roster-key', 32),
   }
 }

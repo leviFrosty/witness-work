@@ -7,6 +7,10 @@ import type { LiveSignal } from '@/lib/liveSignal'
 import { logger } from '@/lib/logger'
 import { isSpaceError } from '@/lib/sharedSpaces/client'
 import { createSpaceLive } from '@/lib/sharedSpaces/live'
+import {
+  markedSpaces,
+  type SharedMark,
+} from '@/features/territories/lib/personalSync'
 import type { TerritoriesState } from '@/features/territories/stores/territories'
 import type { TerritoryEngine } from '@/app/territories/engine'
 
@@ -35,6 +39,7 @@ export type TerritoriesRuntimeDeps = {
   watchPrivacy: (onChange: () => void) => () => void
   reconcileMemberships?: () => void
   onMembershipsChanged?: () => void
+  adopt?: (mark: SharedMark) => Promise<unknown>
   setRunning: (running: boolean) => void
 }
 
@@ -46,6 +51,7 @@ export function startTerritoriesRuntime({
   watchPrivacy,
   reconcileMemberships,
   onMembershipsChanged,
+  adopt,
   setRunning,
 }: TerritoriesRuntimeDeps): () => void {
   const lives = new Map<string, LiveSignal>()
@@ -96,19 +102,37 @@ export function startTerritoriesRuntime({
     )
   }
 
+  const tried = new Set<string>()
+  const adoptMarked = () => {
+    if (!adopt) return
+    const state = store.getState()
+    for (const mark of markedSpaces(state.ledger)) {
+      if (state.spaces[mark.spaceId] || tried.has(mark.spaceId)) continue
+      tried.add(mark.spaceId)
+      void adopt(mark).catch(logFailure)
+    }
+  }
+  const retryAdopting = () => {
+    tried.clear()
+    adoptMarked()
+  }
+
   setRunning(true)
   reconcileMemberships?.()
   syncAll()
   reconcileLive()
+  adoptMarked()
 
   const foreground = addForegroundListener(() => {
     syncAll()
     reconcileLive()
+    retryAdopting()
   })
   const background = addBackgroundListener(stopLive)
 
   const spaces = store.subscribe((state, previous) => {
     if (state.memberships !== previous.memberships) onMembershipsChanged?.()
+    if (state.ledger !== previous.ledger) adoptMarked()
     if (state.spaces === previous.spaces) return
     let added = false
     for (const [spaceId, space] of Object.entries(state.spaces)) {
@@ -130,6 +154,7 @@ export function startTerritoriesRuntime({
   const readiness = watchReady(() => {
     syncAll()
     reconcileLive()
+    retryAdopting()
   })
 
   return () => {

@@ -13,6 +13,7 @@ import {
   isDeleted,
   isMarked,
   ledgerToSlice,
+  markedSpaces,
   mergeLedgers,
   mergeSlices,
   type PersonalLedger,
@@ -491,6 +492,52 @@ describe('shared territories', () => {
     settle([a, b])
     expect(a.personal).toEqual([])
     expect(b.personal).toEqual([])
+  })
+
+  it('names the space in the mark so the owner’s other devices can find it', () => {
+    const SPACE = 'AAAAAAAAAAAAAAAAAAAAAA'
+    const a = device([territory()])
+    const b = device()
+    pull(b, a)
+    clock = SPACE_CREATED + 1
+    a.held.set(TERRITORY, SPACE_CREATED)
+    a.personal = []
+    a.ledger = restampLedger(
+      a.ledger,
+      a.personal,
+      a.held,
+      stamp,
+      undefined,
+      new Map([
+        [TERRITORY, { spaceId: SPACE, ownerId: 'owner', at: SPACE_CREATED }],
+      ])
+    )
+    pull(b, a)
+    expect(markedSpaces(b.ledger)).toEqual([
+      {
+        territoryId: TERRITORY,
+        spaceId: SPACE,
+        ownerId: 'owner',
+        at: SPACE_CREATED,
+      },
+    ])
+    expect(b.personal).toEqual([])
+
+    a.held.delete(TERRITORY)
+    edit(a, () => [finishTerritory(territory(), clock + 5, formatAddress)])
+    expect(a.ledger[TERRITORY]?.records[HEADER]?.data.space).toBeUndefined()
+    pull(b, a)
+    expect(markedSpaces(b.ledger)).toEqual([])
+    expect(b.personal).toHaveLength(1)
+  })
+
+  it('finds no space in a mark written without one', () => {
+    const a = device([territory()])
+    clock = SPACE_CREATED + 1
+    a.held.set(TERRITORY, SPACE_CREATED)
+    edit(a, () => [])
+    expect(isMarked(a.ledger[TERRITORY])).toBe(true)
+    expect(markedSpaces(a.ledger)).toEqual([])
   })
 
   it('does not delete a marked territory a reset dropped', () => {

@@ -49,12 +49,12 @@ Regex for the server: `^(h|s\.[A-Za-z0-9_-]{22}(\.(w|[0-9a-f-]{36}))?|d\.[0-9a-f
 
 All of [Shared Cars' keys](./shared-cars-protocol.md#keys) apply: space key `K_e` per epoch, wraps, key chain, trusted keys, key check, rekey. Added:
 
-| Derived         | How                                                                                                              | Used for                                        |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Scope key       | `HKDF(K_e, "", "ww-spaces/v1/scope-record\|" + S, 32)`                                                           | every `s.<S>` and `s.<S>.*` record at epoch `e` |
-| Link secret `L` | `HKDF(seed, "", "ww-spaces/v1/link\|" + spaceId + "\|" + linkId, 32)`, from the link creator's Buddies root seed | the URL fragment                                |
-| Link token      | `HKDF(L, "", "ww-spaces/v1/link-token", 32)`; the server keeps `verifier = b64u(SHA-256(linkToken))`             | guest ops                                       |
-| Link key        | `HKDF(L, "", "ww-spaces/v1/link-key", 32)`                                                                       | sealing `g.<linkId>`                            |
+| Derived         | How                                                                                                        | Used for                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Scope key       | `HKDF(K_e, "", "ww-spaces/v1/scope-record\|" + S, 32)`                                                     | every `s.<S>` and `s.<S>.*` record at epoch `e` |
+| Link secret `L` | `HKDF(seed, "", "ww-spaces/v1/link\|" + spaceId + "\|" + linkId, 32)`, from the link creator's account key | the URL fragment                                |
+| Link token      | `HKDF(L, "", "ww-spaces/v1/link-token", 32)`; the server keeps `verifier = b64u(SHA-256(linkToken))`       | guest ops                                       |
+| Link key        | `HKDF(L, "", "ww-spaces/v1/link-key", 32)`                                                                 | sealing `g.<linkId>`                            |
 
 - Blobs and AAD are exactly [Shared Cars' records](./shared-cars-protocol.md#records); only the key changes by id. `g.<linkId>` uses the link key directly as the XChaCha20-Poly1305 key, with the usual AAD at the space's current epoch.
 - Because `L` derives from the creator's seed, every device of the creator can show the QR code again and keep `g.<linkId>` current. `L` is never stored in a saved store.
@@ -320,6 +320,17 @@ When the owner first shares, makes a link, or hands off a street:
 
 The space then stays until the territory is returned or deleted, even when nobody else is on it, so the owner's other devices keep it.
 
+### Without Buddies
+
+Only sharing with buddies and handing off need Buddies: they travel as Buddies events between inboxes. A space, its records and its guest links need only what every space op needs: the account key (Shared Cars calls it the Buddies root seed; it's the same key) and an attested account session. So a User who has never set up Buddies, or has turned it off, can make, show and end guest links, and see what guests record.
+
+- **Account.** Making a link calls `accountSessions.ensure()` first when the device has no account key, which makes the key and opens a session the way Scribe AI does. Nothing in the background makes one.
+- **Member values** come from the account key, as always, so they don't change when Buddies is set up later.
+- **Member record.** `name` is the Buddies card name, which falls back to the profile name (empty when the User has none; the guest page then shows only the territory's title). `tag` is `memberTag(spaceId, inboxId)` with the inbox id Buddies derives from the same key (`HKDF(seed, "", "ww-buddies/v1/inbox-id", 16)`, `deriveInboxId`), registered or not. No photo. Once Buddies is set up, the member is the same `memberId` with the same `tag`; the name follows the card name as for any rename, and `g.<linkId>`'s `from` keeps the name the link was made with.
+- **Roster.** The space is in `memberships` from seeding, as for anyone. When Buddies starts on a device that has territory spaces, the device saves the roster soon after, so they join it like any other.
+- **Runtime.** Sync, live sockets and seeding run whenever Territories is on, with or without Buddies. Pushes, invitations, hand-offs and the roster still need Buddies running.
+- **The Share screen** shows Set Up Buddies in place of the buddy list, and the Hand Off screen does the same, so the needs-Buddies refusal isn't reachable from a link.
+
 ### Sharing with buddies
 
 - **Whole territory:** `invite/create` without `scopes`, put `i.<inviteId>`, send `territory.invite`. Joining is Shared Cars' sequence, then `territory.reply`.
@@ -392,6 +403,8 @@ The owner's device syncs (pull and push), then runs `delete`. That ends every sh
 
 The Buddies roster gains `territories: { "<spaceId>": { "at" } }` and `leftTerritories: { "<spaceId>": at }`, merged like `cars` and `leftCars`. Every device of the User derives the same member values, so it's the same owner, member, or holder, and sees every territory space the User is on.
 
+A territory the User owns also names its space in personal sync, so devices without Buddies find it too: the `shared` mark on `h` carries `space: { id, owner, at }` (the space id, the owner's `memberId`, the owner's `joinedAt`; see [Shared and unshared](#shared-and-unshared)). A device that sees such a mark for a space it doesn't have derives its own member values for that space and, only if its `memberId` is `owner` (the same account key), adds the space as the roster would (`adoptOwnSpace`, then `addFromRoster(spaceId, at)`). The same `leftTerritories` check applies, so a space this device saw end isn't added again. A device with another account key leaves the mark alone. It does this at start, on foreground, when the account becomes ready, and when a synced ledger brings a new mark. Territories shared or handed to the User still reach other devices only through the roster.
+
 ## Unshared territories: sync and backup
 
 The User's own territories that aren't in a space travel in the sync payload, so every sync option (Cloud Sync, iCloud, Google Drive), the account Backup, Set Up Another Device (which restores that Backup) and backup files carry them. They're never put on a space for this: that would put a User's territories on our server without their choosing it, against ADR 0030 §3, and need Buddies on every device. Code: `src/features/territories/lib/personalSync.ts` (pure records, merge and projection), `src/app/sync/territoryStoreSync.ts` (the store glue).
@@ -424,7 +437,7 @@ The territories store keeps the same records with their stamps in its persisted 
 
 A territory is in exactly one place at a time on a device: its space, or the personal records.
 
-- **First share.** When the territory moves into a space (seeding), it leaves the personal list, and the device writes `h` again with `shared: true` (only if `h` is older than the space's creation, the owner's `joinedAt`). Other devices hide a territory whose `h` says `shared` until its space reaches them through the roster, unless they edited it after the mark, in which case their next restamp writes it back. Its personal records stay, frozen, and nothing else reads them.
+- **First share.** When the territory moves into a space (seeding), it leaves the personal list, and the device writes `h` again with `shared: true` and `space: { id, owner, at }` (only if `h` is older than the space's creation, the owner's `joinedAt`). Other devices hide a territory whose `h` says `shared` until its space reaches them, through the roster or the mark's `space` ([Another of the User's devices](#another-of-the-users-devices)), unless they edited it after the mark, in which case their next restamp writes it back. Its personal records stay, frozen, and nothing else reads them. `space` is a known field, so writing `h` again without the mark drops it; marks written before it existed have none.
 - **While shared,** the space is the source of truth. Personal sync never deletes or marks a territory this device sees in a space, and never shows a personal copy beside one: a view replaces a personal territory with the same id (`placeView`).
 - **When the share ends,** the owner's devices keep the territory personal, as now ([Returning](#returning-a-territory)); the restamp writes `h` without `shared` and every record that changed, so it comes back on every device, returned. A device with a stale space (the flag off, or it hasn't heard `gone` yet) leaves the newer personal records alone instead of marking them again.
 - **Deleted while shared,** the device that deleted it tombstones `h`, and the other devices' finished copies are dropped.

@@ -1,4 +1,5 @@
 import { canonicalJson } from '@/lib/canonicalJson'
+import { SPACE_ID_PATTERN } from '@/lib/sharedSpaces/crypto'
 import {
   clearDoorRecords,
   type FormatDoorAddress,
@@ -58,6 +59,10 @@ export type Stamp = (previous?: number) => number
 
 export type HeldTerritories = ReadonlyMap<string, number | undefined>
 
+export type SharedMark = { spaceId: string; ownerId: string; at: number }
+
+export type SharedMarks = ReadonlyMap<string, SharedMark>
+
 export const HEADER = 'h'
 
 const SAFE_ID = /^[A-Za-z0-9_-]+$/
@@ -109,6 +114,7 @@ const KNOWN: Record<PersonalKind, readonly string[]> = {
     'houseRecords',
     'finishedAt',
     'shared',
+    'space',
   ],
   street: [
     'id',
@@ -284,16 +290,27 @@ function writeTerritory(
   return prune(next)
 }
 
-function markShared(entry: PersonalEntry, stamp: Stamp): PersonalEntry {
+function markShared(
+  entry: PersonalEntry,
+  stamp: Stamp,
+  mark: SharedMark | undefined
+): PersonalEntry {
   const header = entry.records[HEADER]
   if (!header) return entry
+  const { space: _space, ...data } = header.data
   return {
     ...entry,
     records: {
       ...entry.records,
       [HEADER]: {
         ...header,
-        data: { ...header.data, shared: true },
+        data: {
+          ...data,
+          shared: true,
+          ...(mark && {
+            space: { id: mark.spaceId, owner: mark.ownerId, at: mark.at },
+          }),
+        },
         updatedAt: stamp(header.updatedAt),
       },
     },
@@ -327,7 +344,8 @@ export function restampLedger(
   personal: readonly Territory[],
   held: HeldTerritories,
   stamp: Stamp,
-  only?: ReadonlySet<string>
+  only?: ReadonlySet<string>,
+  marks?: SharedMarks
 ): PersonalLedger {
   const byId = new Map(personal.map((territory) => [territory.id, territory]))
   const ids = only ?? new Set([...byId.keys(), ...Object.keys(ledger)])
@@ -350,7 +368,7 @@ export function restampLedger(
     if (held.has(id)) {
       const since = held.get(id)
       if (since !== undefined && header.updatedAt <= since)
-        set(id, markShared(entry, stamp))
+        set(id, markShared(entry, stamp, marks?.get(id)))
       continue
     }
     set(id, deleteTerritory(entry, stamp))
@@ -709,6 +727,27 @@ export function applyLedger(options: {
     .filter((territory): territory is Territory => territory !== null)
     .sort((a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : 1))
   return { ledger: after, personal: [...personal, ...added], removed }
+}
+
+export function markedSpaces(
+  ledger: PersonalLedger
+): (SharedMark & { territoryId: string })[] {
+  const marked: (SharedMark & { territoryId: string })[] = []
+  for (const [territoryId, entry] of Object.entries(ledger)) {
+    if (!isMarked(entry)) continue
+    const space = entry.records[HEADER]?.data.space
+    if (!space || typeof space !== 'object') continue
+    const { id, owner, at } = space as Record<string, unknown>
+    if (
+      typeof id === 'string' &&
+      SPACE_ID_PATTERN.test(id) &&
+      typeof owner === 'string' &&
+      typeof at === 'number' &&
+      Number.isFinite(at)
+    )
+      marked.push({ territoryId, spaceId: id, ownerId: owner, at })
+  }
+  return marked
 }
 
 export const countPersonalTerritories = (ledger: PersonalLedger) =>

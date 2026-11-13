@@ -7121,7 +7121,7 @@
       "ended_toast": "{{title}} is no longer shared with you",
       "notShared_toast": "Some changes to {{title}} weren't shared. That street was handed off meanwhile.",
       "offline_toast": "Couldn't reach WitnessWork. Check your connection and try again.",
-      "needsBuddies_toast": "Sharing territories needs Buddies on this device.",
+      "needsBuddies_toast": "Sharing with buddies needs Buddies on this device.",
       "notAllowed_toast": "Only the territory's owner can do that.",
       "paused_toast": "Sharing territories is paused right now. Try again later.",
       "tooLarge_toast": "This territory is too large to share.",
@@ -7143,7 +7143,9 @@
       "startOffline_toast": "Couldn't start sharing. Check your connection and try again.",
       "startOutdated_toast": "Couldn't start sharing. Update WitnessWork, then try again.",
       "startFailed_toast": "Couldn't start sharing. Try again in a moment.",
-      "startBusy": "Getting the link ready…"
+      "startBusy": "Getting the link ready…",
+      "setUpBuddies": "Set Up Buddies",
+      "setUpBuddies_description": "To share with people who use WitnessWork or hand off a street, pair with them in Buddies."
     },
     "doNotCallDoors": "Do not call: {{doors}}",
     "doNotCallHouses": {

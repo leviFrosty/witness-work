@@ -18,6 +18,7 @@ import i18n from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
 import StreetHereNow from '@/features/territories/components/sharing/StreetHereNow'
 import TerritorySectionTitle from '@/features/territories/components/TerritorySectionTitle'
+import { knownHouses } from '@/features/territories/lib/houseList'
 import {
   progressShare,
   territoryHouseProgress,
@@ -84,17 +85,26 @@ export default function TerritoryStreetsSection({
       )
     )
 
+  const missingHouses = streets.some(
+    (street) => street.numbering !== 'none' && !knownHouses(street)
+  )
   const suggestRow = () =>
     onSuggest && (
       <InputRowButton
         key='suggest'
         testID='territory-suggest-streets'
         leftIcon={MapPinnedIcon}
-        label={i18n.t('territories.suggest.action')}
+        label={i18n.t(
+          streets.length > 0 && missingHouses
+            ? 'territories.suggest.action_houses'
+            : 'territories.suggest.action'
+        )}
         sublabel={
           streets.length === 0
             ? i18n.t('territories.suggest.action_description')
-            : undefined
+            : missingHouses
+              ? i18n.t('territories.suggest.action_houses_description')
+              : undefined
         }
         onPress={onSuggest}
         lastInSection

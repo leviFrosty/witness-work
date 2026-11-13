@@ -7220,6 +7220,15 @@
       "housesAdded_toast": {
         "one": "Added house numbers to 1 street",
         "other": "Added house numbers to %{count} streets"
+      },
+      "action_houses": "Find House Numbers",
+      "action_houses_description": "From the map, where it has them. Also finds streets you haven't added.",
+      "housesMissing": {
+        "none": "The map has no house numbers inside this outline yet. Record doors as usual.",
+        "signedOut": "Sign in to your WitnessWork account to look up house numbers.",
+        "tooLarge": "This outline is too large to look up house numbers. Draw a smaller outline.",
+        "busy": "The house number lookup is busy. Try again in a minute.",
+        "failed": "Couldn't look up house numbers. Check your connection and try again."
       }
     },
     "houseCount": {

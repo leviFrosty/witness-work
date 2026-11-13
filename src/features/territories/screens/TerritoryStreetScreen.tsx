@@ -72,6 +72,7 @@ import {
   wholeNumber,
 } from '@/features/territories/lib/doors'
 import { knownHouses } from '@/features/territories/lib/houseList'
+import { forgetDoorVisits } from '@/features/territories/stores/territoryVisits'
 import { houseProgress } from '@/features/territories/lib/houses'
 import {
   OUTCOME_ICON,
@@ -575,6 +576,7 @@ function StreetScreen({ route, navigation }: Props) {
                             onRemove={() => {
                               show(null)
                               setOpenId(null)
+                              forgetDoorVisits([door.id])
                               change((current) => removeDoor(current, door.id))
                               undoable({
                                 icon: Trash2Icon,
@@ -636,6 +638,14 @@ function StreetScreen({ route, navigation }: Props) {
                     onPress: () => {
                       const { before } = undo
                       show(null)
+                      forgetDoorVisits(
+                        street.doors
+                          .filter(
+                            (door) =>
+                              !before.doors.some((was) => was.id === door.id)
+                          )
+                          .map((door) => door.id)
+                      )
                       change(() => before)
                     },
                   }

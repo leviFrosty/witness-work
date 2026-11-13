@@ -291,6 +291,7 @@ export type RootStackParamList = {
 
   TerritoryForm: { territoryId?: string } | undefined
   TerritoryDetails: { territoryId: string }
+  TerritoryInsights: { territoryId?: string } | undefined
   TerritoryStreetForm: { territoryId: string; streetId?: string }
   TerritoryStreet: {
     territoryId: string

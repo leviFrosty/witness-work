@@ -21,6 +21,7 @@ export type NotificationKind =
   | 'supporter_note'
   | 'data_protection_retention'
   | 'buddies'
+  | 'territory_insights'
   | 'calendar_sync'
   | 'announcement'
   | 'badge'

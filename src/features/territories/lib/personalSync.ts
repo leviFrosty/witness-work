@@ -137,6 +137,8 @@ const KNOWN: Record<PersonalKind, readonly string[]> = {
     'description',
     'by',
     'byName',
+    'untimed',
+    'hist',
   ],
   doNotCall: [
     'address',

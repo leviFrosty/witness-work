@@ -107,6 +107,8 @@ import BuddiesTools from '@/app/navigation/tools/BuddiesTools'
 import BadgesTools from '@/app/navigation/tools/BadgesTools'
 import LayoutDirectionTools from '@/app/navigation/tools/LayoutDirectionTools'
 import PetTools from '@/app/navigation/tools/PetTools'
+import TerritoryTools from '@/app/navigation/tools/TerritoryTools'
+import { generateTerritories } from '@/app/dev-harness/territories'
 import WalletTools from '@/app/navigation/tools/WalletTools'
 import StreakTools from '@/app/navigation/tools/StreakTools'
 import ToastTools from '@/app/navigation/tools/ToastTools'
@@ -856,6 +858,7 @@ export default function ToolsScreen() {
     generateOverdueFollowUps()
     generateTodayRoute()
     generateMileage()
+    generateTerritories()
     applyBadgeHistoryFixture()
     generatedWithBadges()
   })
@@ -1164,6 +1167,22 @@ export default function ToolsScreen() {
               })}
             />
             <ToolRow
+              label='Territories'
+              info='Three sample territories with doors recorded across the past four months, one already returned, so Territory Insights are ready (Saturday mornings answer most often). Adds the "insights are ready" tray notification the first time.'
+              onPress={() => {
+                const territories = generateTerritories()
+                showDone(`Generated ${territories.length} territories`)
+              }}
+            />
+            <ToolRow
+              label='Territories (few doors)'
+              info='One sample territory with under 40 doors, so Territory Insights still say to check back later. Use Reset insights in Territories first if you already generated more.'
+              onPress={() => {
+                generateTerritories(true)
+                showDone('Generated 1 territory')
+              }}
+            />
+            <ToolRow
               label='Oversized share contact'
               info='One contact whose share link exceeds the 4 KB URL cap, to exercise the file-export fallback.'
               onPress={withMockData(() => {
@@ -1269,6 +1288,8 @@ export default function ToolsScreen() {
             />
           </ToolList>
         </ToolSection>
+
+        <TerritoryTools />
 
         <StreakTools />
 

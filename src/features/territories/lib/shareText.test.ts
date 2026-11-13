@@ -9,6 +9,7 @@ vi.mock('@/lib/locales', async () => {
   return { default: { t: (key: string, o?: object) => i18n.t(key, o) } }
 })
 import {
+  doorRecordedText,
   hasOthers,
   linkHeading,
   pickedScopeText,
@@ -27,6 +28,14 @@ describe('recordedByText', () => {
     expect(recordedByText(null, new Date(2026, 0, 5, 10).getTime())).toMatch(
       /^by you on /
     )
+  })
+
+  it('says the weekday and time of an earlier day', () => {
+    const at = new Date(2025, 0, 4, 10, 30).getTime()
+    expect(recordedByText(null, at)).toBe(
+      'by you on Sat, Jan 4, 2025 at 10:30 AM'
+    )
+    expect(doorRecordedText(at)).toBe('Sat, Jan 4, 2025 at 10:30 AM')
   })
 })
 

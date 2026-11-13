@@ -29,6 +29,9 @@ const sameDoor = (a: TerritoryDoor, b: TerritoryDoor) =>
   a.tries === b.tries &&
   a.description === b.description &&
   a.by === b.by &&
+  a.untimed === b.untimed &&
+  a.history?.length === b.history?.length &&
+  a.history?.at(-1)?.at === b.history?.at(-1)?.at &&
   a.coordinate?.latitude === b.coordinate?.latitude &&
   a.coordinate?.longitude === b.coordinate?.longitude &&
   a.coordinateSource === b.coordinateSource
@@ -79,6 +82,8 @@ function streetWrites(
             coordinate: door.coordinate,
             coordinateSource: door.coordinateSource,
             description: door.description,
+            untimed: door.untimed,
+            history: door.history,
             by,
             byName:
               by === guest.id

@@ -85,6 +85,32 @@ describe('guest codecs', () => {
     })
   })
 
+  it("carries a door's earlier visits both ways, dropping bad ones", () => {
+    const door = {
+      label: '12',
+      outcome: 'spoke' as const,
+      at: 300,
+      tries: 2,
+      history: [
+        { at: 100, outcome: 'notHome' as const, untimed: true },
+        { at: 200, outcome: 'notHome' as const },
+      ],
+    }
+    const data = doorData(door)
+    expect(data.hist).toEqual([
+      [100, 'n', 1],
+      [200, 'n'],
+    ])
+    expect(readDoor(data)?.history).toEqual(door.history)
+    expect(
+      readDoor({ ...data, hist: [[1, 'z'], 'x', [2, 's']] })?.history
+    ).toEqual([{ at: 2, outcome: 'spoke' }])
+    expect(readDoor({ ...data, hist: [] })?.history).toBeUndefined()
+    expect(
+      app.readDoorData(app.doorData({ ...door, id: 'd' }, 'm', 'Jo'))
+    ).toMatchObject({ history: door.history })
+  })
+
   it('keeps unknown fields when writing a record back', () => {
     const data = doorData(
       {

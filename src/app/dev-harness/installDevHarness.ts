@@ -53,6 +53,7 @@ import { useSavedPlaces } from '@/features/route-planning/stores/savedPlaces'
 import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { useTerritories } from '@/features/territories/stores/territories'
 import { useTerritoriesView } from '@/features/territories/stores/territoriesView'
+import { useTerritoryVisits } from '@/features/territories/stores/territoryVisits'
 import {
   cancelSeedRootReset,
   seedScenario,
@@ -493,6 +494,7 @@ export function installDevHarness() {
       savedPlaces: useSavedPlaces,
       territories: useTerritories,
       territoriesView: useTerritoriesView,
+      territoryVisits: useTerritoryVisits,
 
       pet: usePet,
       routine: useRoutine,

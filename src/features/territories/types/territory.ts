@@ -18,6 +18,13 @@ export type TerritoryPerson = {
 
 export type CoordinateSource = 'gps' | 'manual'
 
+export type TerritoryVisit = {
+  at: number
+  outcome: DoorOutcome
+
+  untimed?: boolean
+}
+
 export type TerritoryDoor = {
   id: string
 
@@ -26,6 +33,10 @@ export type TerritoryDoor = {
   at: number
 
   tries: number
+
+  untimed?: boolean
+
+  history?: TerritoryVisit[]
 
   coordinate?: Coordinate
 

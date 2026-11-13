@@ -6,6 +6,7 @@ import type {
   TerritoryDoNotCall,
   TerritoryDoor,
   TerritoryStreet,
+  TerritoryVisit,
 } from '@/features/territories/types/territory'
 
 export const RETURN_WITHIN_MONTHS = 4
@@ -31,6 +32,29 @@ export const stepNumber = (
 
 export const wholeNumber = (label: string) =>
   /^\d+$/.test(label.trim()) ? Number(label.trim()) : undefined
+
+export const CORRECTION_MS = 30 * 60 * 1000
+
+export const MAX_DOOR_HISTORY = 20
+
+export const doorVisits = (
+  door: Pick<TerritoryDoor, 'at' | 'outcome' | 'untimed' | 'history'>
+): TerritoryVisit[] => [
+  ...(door.history ?? []),
+  {
+    at: door.at,
+    outcome: door.outcome,
+    ...(door.untimed && { untimed: true }),
+  },
+]
+
+const historyAfter = (
+  door: TerritoryDoor,
+  at: number
+): TerritoryVisit[] | undefined => {
+  if (at - door.at < CORRECTION_MS) return door.history
+  return doorVisits(door).slice(-MAX_DOOR_HISTORY)
+}
 
 const sameDay = (left: number, right: number) =>
   new Date(left).toDateString() === new Date(right).toDateString()
@@ -96,6 +120,7 @@ export const logDoor = (
     at: number
     description?: string
     by?: string
+    untimed?: boolean
   }
 ): TerritoryStreet => {
   const label = entry.label.trim()
@@ -112,6 +137,8 @@ export const logDoor = (
                 : door.tries,
               description: entry.description,
               by: entry.by,
+              untimed: entry.untimed || undefined,
+              history: historyAfter(door, entry.at),
             }
           : door
       )
@@ -125,6 +152,7 @@ export const logDoor = (
           tries: 1,
           description: entry.description,
           by: entry.by,
+          ...(entry.untimed && { untimed: true }),
         },
       ]
   const number = wholeNumber(label)

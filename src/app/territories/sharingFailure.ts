@@ -1,4 +1,5 @@
 import { isSpaceError } from '@/lib/sharedSpaces/client'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 import type { TranslationKey } from '@/lib/locales'
 import { TerritorySharingError } from '@/app/territories/engine/types'
 import { TerritoryInvitationError } from '@/app/territories/territoryInvitations'
@@ -15,8 +16,6 @@ export type SharingFailure =
 export function sharingFailure(error: unknown): SharingFailure {
   if (error instanceof TerritorySharingError)
     switch (error.code) {
-      case 'no_account_key':
-        return 'needsBuddies'
       case 'not_owner':
       case 'not_allowed':
         return 'notAllowed'
@@ -26,6 +25,10 @@ export function sharingFailure(error: unknown): SharingFailure {
         return 'failed'
     }
   if (error instanceof TerritoryInvitationError) return 'failed'
+  if (error instanceof AccountSessionError)
+    return error.failure === 'offline' || error.failure === 'rateLimited'
+      ? 'offline'
+      : 'failed'
   if (isSpaceError(error))
     switch (error.code) {
       case 'network':

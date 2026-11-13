@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   HandHelping as HandHelpingIcon,
   Link as LinkIcon,
-  UserPlus as UserPlusIcon,
 } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
@@ -19,6 +18,7 @@ import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
+import BuddiesNeededRow from '@/features/territories/components/sharing/BuddiesNeededRow'
 import PersonPickRow from '@/features/territories/components/sharing/PersonPickRow'
 import ShareScopePicker, {
   type ShareScopeMode,
@@ -274,19 +274,9 @@ export default function TerritoryShareScreen({ route, navigation }: Props) {
               </TerritorySectionTitle>
               <Section>
                 {sharing.buddies.length === 0 ? (
-                  <InputRowButton
-                    leftIcon={UserPlusIcon}
-                    label={i18n.t('territories.share.noBuddies')}
-                    sublabel={i18n.t('territories.share.noBuddies_description')}
-                    onPress={
-                      sharing.canOpenBuddies
-                        ? () => navigation.navigate('Buddies')
-                        : undefined
-                    }
-                    lastInSection
-                  >
-                    {sharing.canOpenBuddies && opens}
-                  </InputRowButton>
+                  <BuddiesNeededRow
+                    onOpenBuddies={() => navigation.navigate('Buddies')}
+                  />
                 ) : (
                   sharing.buddies.map((buddy, index) => (
                     <PersonPickRow

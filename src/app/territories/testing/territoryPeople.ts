@@ -76,10 +76,11 @@ export function territoryPerson(
   server: FakeSpacesServer,
   name: string,
   random: (length: number) => Uint8Array,
-  overrides: Partial<TerritoryEngineDeps> = {}
+  overrides: Partial<TerritoryEngineDeps> = {},
+  account: { seed?: Uint8Array; inboxId?: string } = {}
 ) {
-  const seed = random(32)
-  const inboxId = toB64u(random(16))
+  const seed = account.seed ?? random(32)
+  const inboxId = account.inboxId ?? toB64u(random(16))
   const { client } = fakeSpacesClient(server, {
     randomBytes: random,
     accountKey: seed,

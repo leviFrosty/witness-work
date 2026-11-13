@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { useFeatureFlag } from '@/lib/featureFlags'
 import { logger } from '@/lib/logger'
@@ -26,15 +26,18 @@ export default function TerritoriesRuntime() {
   const enabled =
     useFeatureFlag('territories') && hasCapability('territorySharing')
   const buddies = useBuddiesSession((state) => state.running)
-  const running = enabled && buddies
 
   useEffect(() => {
-    if (!running) return
+    if (!enabled) return
     const stop = startTerritoriesRuntime({
       engine: territoriesEngine,
       store: useTerritories,
       reconcileMemberships: territoryInvitations.reconcileMemberships,
       onMembershipsChanged: () => buddiesEngine.noteCarMemberships(),
+      adopt: async (mark) => {
+        if (useUpdateRequired.getState().required) return
+        await territoriesEngine.adoptOwnSpace(mark)
+      },
       setRunning: (on) => useTerritoriesSession.setState({ running: on }),
       ready: () =>
         accountSessions.snapshot() !== null &&
@@ -71,7 +74,16 @@ export default function TerritoriesRuntime() {
       stop()
       registerPush()
     }
-  }, [running])
+  }, [enabled])
+
+  const buddiesBefore = useRef(buddies)
+  useEffect(() => {
+    const started = buddies && !buddiesBefore.current
+    buddiesBefore.current = buddies
+    if (!enabled || !started) return
+    territoryInvitations.reconcileMemberships()
+    buddiesEngine.noteCarMemberships()
+  }, [enabled, buddies])
 
   return null
 }

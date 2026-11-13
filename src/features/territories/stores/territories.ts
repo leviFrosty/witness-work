@@ -12,6 +12,8 @@ import {
   type PersonalLedger,
   personalTerritories,
   restampLedger,
+  type SharedMark,
+  type SharedMarks,
 } from '@/features/territories/lib/personalSync'
 import {
   type BuddyNameResolver,
@@ -129,6 +131,26 @@ export function heldTerritories(
   return held
 }
 
+export function sharedMarks(
+  state: Pick<TerritoriesState, 'territories' | 'spaces'>
+): SharedMarks {
+  const marks = new Map<string, SharedMark>()
+  for (const territory of state.territories) {
+    const space = territory.shared && state.spaces[territory.shared.spaceId]
+    if (!space || space.ownerId !== space.myMemberId) continue
+    const at = space.members.find(
+      (member) => member.memberId === space.ownerId
+    )?.joinedAt
+    if (at !== undefined)
+      marks.set(territory.id, {
+        spaceId: space.spaceId,
+        ownerId: space.ownerId,
+        at,
+      })
+  }
+  return marks
+}
+
 function stampedLedger(
   state: TerritoriesState,
   only?: ReadonlySet<string>
@@ -139,7 +161,8 @@ function stampedLedger(
     personalTerritories(state.territories, held),
     held,
     syncTimestamp,
-    only
+    only,
+    sharedMarks(state)
   )
 }
 

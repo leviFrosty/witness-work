@@ -40,6 +40,7 @@ import {
   type TerritoryOutcome,
 } from '@/app/territories/engine'
 import { createTerritoryInvitations } from '@/app/territories/territoryInvitations'
+import { createTerritoryProfile } from '@/app/territories/territoryProfile'
 
 function reportOutcome(outcome: TerritoryOutcome) {
   switch (outcome.type) {
@@ -89,13 +90,23 @@ const spacesClient = createSpacesClient({
   },
 })
 
-const profile = createCarProfile({
-  cardName: () => buddiesEngine.ownCardName(),
-  inboxId: () => useBuddies.getState().registeredInboxId,
-  sharesPhoto: () => useBuddies.getState().sharing.photo,
-  avatar: currentBuddyAvatar,
-  shrink: shrinkGuestAvatar,
+const profile = createTerritoryProfile({
+  buddies: createCarProfile({
+    cardName: () => buddiesEngine.ownCardName(),
+    inboxId: () => useBuddies.getState().registeredInboxId,
+    sharesPhoto: () => useBuddies.getState().sharing.photo,
+    avatar: currentBuddyAvatar,
+    shrink: shrinkGuestAvatar,
+  }),
+  buddiesStarted: () => useBuddies.getState().registeredInboxId !== null,
+  accountKey: peekAccountKey,
+  name: () => buddiesEngine.ownCardName(),
 })
+
+export async function prepareTerritoryAccount() {
+  if (await peekAccountKey()) return
+  await accountSessions.ensure()
+}
 
 export const territoryPrivacy = () =>
   territoryPrivacyOn(usePreferences.getState())

@@ -1,6 +1,10 @@
 import type { Coordinate } from '@/types/contact'
 import { startNumber } from '@/features/territories/lib/doors'
 import {
+  cleanHouses,
+  firstKnownHouse,
+} from '@/features/territories/lib/houseList'
+import {
   areaCentroid,
   isOutline,
 } from '@/features/territories/lib/territoryArea'
@@ -176,9 +180,17 @@ export const newStreetNames = (
   return found.filter((name) => !known.has(streetKey(name)))
 }
 
-export const suggestedStreet = (id: string, name: string): TerritoryStreet => {
+export const suggestedStreet = (
+  id: string,
+  name: string,
+  found?: readonly string[]
+): TerritoryStreet => {
   const numbering = 'both'
-  const from = startNumber(numbering, 1)
+  const houses = found && found.length > 0 ? cleanHouses(found) : undefined
+  const from = startNumber(
+    numbering,
+    houses && firstKnownHouse({ numbering, houses })
+  )
   return {
     id,
     name: name.trim(),
@@ -186,6 +198,7 @@ export const suggestedStreet = (id: string, name: string): TerritoryStreet => {
     next: from,
     first: from,
     descending: undefined,
+    ...(houses && houses.length > 0 && { houses }),
     doors: [],
     workedAt: undefined,
     saveLocations: undefined,

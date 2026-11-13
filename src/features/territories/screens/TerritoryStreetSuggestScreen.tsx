@@ -20,14 +20,26 @@ import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import PickMark from '@/features/territories/components/sharing/PickMark'
 import { saveStreet } from '@/features/territories/lib/doors'
+import {
+  fillHouses,
+  type FoundStreet,
+  groupAddresses,
+  streetsToFill,
+} from '@/features/territories/lib/houses'
 import { territoryAccess } from '@/features/territories/lib/sharing'
 import {
+  addStreetName,
   findOutlineStreets,
   newStreetNames,
   outlineSamplePoints,
+  streetKey,
   suggestedStreet,
   type StreetSearch,
 } from '@/features/territories/lib/streetSuggestions'
+import {
+  type AddressLookup,
+  lookupTerritoryAddresses,
+} from '@/features/territories/lib/territoryAddresses'
 import {
   useTerritories,
   useTerritory,
@@ -48,6 +60,17 @@ const GEOCODER_NEEDS_LOCATION = Platform.select({
   android: true,
   default: false,
 })
+
+type Lookup =
+  | { state: 'loading' }
+  | {
+      state: 'done'
+      found: ReadonlyMap<string, FoundStreet>
+      addresses: number
+      failure?: Extract<AddressLookup, { ok: false }>['reason']
+    }
+
+const NO_HOUSES: ReadonlyMap<string, FoundStreet> = new Map()
 
 export default function TerritoryStreetSuggestScreen({
   route,
@@ -70,7 +93,12 @@ export default function TerritoryStreetSuggestScreen({
   const allowed = !GEOCODER_NEEDS_LOCATION || location.granted
   const blocked = GEOCODER_NEEDS_LOCATION && location.notice
   const [skipped, setSkipped] = useState<string[]>([])
-  const report = useRef({ sent: false, search })
+  const [lookup, setLookup] = useState<Lookup>({ state: 'loading' })
+  const report = useRef<{
+    sent: boolean
+    search: StreetSearch
+    lookup: Lookup
+  }>({ sent: false, search, lookup })
 
   const editable =
     !!territory &&
@@ -88,6 +116,29 @@ export default function TerritoryStreetSuggestScreen({
   useEffect(() => {
     askOnce()
   }, [])
+
+  useEffect(() => {
+    if (!outline) return
+    const abort = new AbortController()
+    void lookupTerritoryAddresses(outline, abort.signal).then((result) => {
+      if (abort.signal.aborted) return
+      const next: Lookup = result.ok
+        ? {
+            state: 'done',
+            found: groupAddresses(result.addresses),
+            addresses: result.addresses.length,
+          }
+        : {
+            state: 'done',
+            found: NO_HOUSES,
+            addresses: 0,
+            failure: result.reason,
+          }
+      report.current.lookup = next
+      setLookup(next)
+    })
+    return () => abort.abort()
+  }, [outline])
 
   useEffect(() => {
     if (!allowed) return
@@ -116,15 +167,25 @@ export default function TerritoryStreetSuggestScreen({
         found: sent.search.names.length,
         added: 0,
         stopped: sent.search.stopped || !sent.search.done,
+        ...houseReport(sent.lookup, 0),
       })
     }
   }, [outline, allowed])
 
   if (!territory || !editable) return null
 
-  const fresh = newStreetNames(search.names, territory.streets)
+  const found = lookup.state === 'done' ? lookup.found : NO_HOUSES
+  const names = [...found.values()].reduce(
+    (all, street) => addStreetName(all, street.name),
+    search.names
+  )
+  const fresh = newStreetNames(names, territory.streets)
   const picked = fresh.filter((name) => !skipped.includes(name))
-  const searching = !search.done && !blocked
+  const fills = streetsToFill(territory.streets, found)
+  const housesFor = (name: string) => found.get(streetKey(name))?.houses
+  const lookingUp = lookup.state === 'loading'
+  const searching = (!search.done && !blocked) || lookingUp
+  const done = (search.done || blocked) && !lookingUp
 
   const toggle = (name: string) =>
     setSkipped((had) =>
@@ -135,21 +196,29 @@ export default function TerritoryStreetSuggestScreen({
 
   const add = () => {
     update(territoryId, (current) =>
-      newStreetNames(picked, current.streets).reduce(
+      newStreetNames(picked, fillHouses(current, found).streets).reduce(
         (next, name) =>
-          saveStreet(next, suggestedStreet(Crypto.randomUUID(), name)),
-        current
+          saveStreet(
+            next,
+            suggestedStreet(Crypto.randomUUID(), name, housesFor(name))
+          ),
+        fillHouses(current, found)
       )
     )
     report.current.sent = true
+    const housed =
+      picked.filter((name) => housesFor(name) !== undefined).length + fills
     analytics.capture('territory_streets_suggested', {
       points: search.checked,
-      found: search.names.length,
+      found: names.length,
       added: picked.length,
       stopped: search.stopped || !search.done,
+      ...houseReport(lookup, housed),
     })
     toast.success(
-      i18n.t('territories.suggest.added_toast', { count: picked.length })
+      picked.length > 0
+        ? i18n.t('territories.suggest.added_toast', { count: picked.length })
+        : i18n.t('territories.suggest.housesAdded_toast', { count: fills })
     )
     navigation.goBack()
   }
@@ -212,10 +281,12 @@ export default function TerritoryStreetSuggestScreen({
                 >
                   <ActivityIndicator color={theme.colors.textAlt} />
                   <Text style={{ color: theme.colors.textAlt }}>
-                    {i18n.t('territories.suggest.checking', {
-                      checked: search.checked,
-                      total: search.total,
-                    })}
+                    {!search.done && !blocked
+                      ? i18n.t('territories.suggest.checking', {
+                          checked: search.checked,
+                          total: search.total,
+                        })
+                      : i18n.t('territories.suggest.lookingUpHouses')}
                   </Text>
                 </View>
               )}
@@ -229,6 +300,13 @@ export default function TerritoryStreetSuggestScreen({
                   key={name}
                   testID={`suggest-street-${index}`}
                   label={name}
+                  sublabel={
+                    housesFor(name)
+                      ? i18n.t('territories.houseCount', {
+                          count: housesFor(name)!.length,
+                        })
+                      : undefined
+                  }
                   checked={!skipped.includes(name)}
                   onPress={() => toggle(name)}
                   lastInSection={index === fresh.length - 1}
@@ -241,7 +319,18 @@ export default function TerritoryStreetSuggestScreen({
 
           {search.stopped && note(i18n.t('territories.suggest.stopped'))}
 
-          {search.done && fresh.length === 0 && (
+          {done &&
+            fills > 0 &&
+            note(
+              i18n.t('territories.suggest.fillExisting', { count: fills }),
+              'suggest-fill-existing'
+            )}
+
+          {done &&
+            found.size > 0 &&
+            note(i18n.t('territories.houses.attribution'), 'suggest-osm')}
+
+          {done && !blocked && fresh.length === 0 && fills === 0 && (
             <View style={{ gap: 12 }}>
               <View style={{ gap: 4, paddingHorizontal: 5 }}>
                 <Text
@@ -271,13 +360,15 @@ export default function TerritoryStreetSuggestScreen({
             </View>
           )}
 
-          {fresh.length > 0 && (
+          {(fresh.length > 0 || (done && fills > 0)) && (
             <ActionButton
               testID='suggest-add'
-              disabled={picked.length === 0}
+              disabled={picked.length === 0 && fills === 0}
               onPress={add}
             >
-              {i18n.t('territories.suggest.add', { count: picked.length })}
+              {picked.length > 0 || fills === 0
+                ? i18n.t('territories.suggest.add', { count: picked.length })
+                : i18n.t('territories.suggest.addHouses', { count: fills })}
             </ActionButton>
           )}
         </ContentColumn>
@@ -285,3 +376,13 @@ export default function TerritoryStreetSuggestScreen({
     </View>
   )
 }
+
+const houseReport = (lookup: Lookup, housed: number) =>
+  lookup.state === 'done'
+    ? {
+        addresses: lookup.addresses,
+        house_streets: housed,
+        house_lookup:
+          lookup.failure ?? (lookup.addresses > 0 ? 'found' : 'none'),
+      }
+    : { addresses: 0, house_streets: 0, house_lookup: 'pending' }

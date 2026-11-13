@@ -1338,8 +1338,14 @@ back). `territory_sync_failed` is a shared territory's sync that failed, by
 nothing. `territory_streets_suggested` is sent once each time the owner leaves
 Find Streets in the Outline after it checked at least one point, whether or not
 they added any, with `points` (how many outline points the geocoder answered),
-`found` (distinct street names found), `added` (streets added) and `stopped`
-(whether the search ended early, from a geocoder error or because they left).
+`found` (distinct street names found, from the geocoder and the house-number
+lookup), `added` (streets added), `stopped` (whether the search ended early,
+from a geocoder error or because they left), `addresses` (house-number address
+points the lookup returned), `house_streets` (streets added or filled with a
+house list; 0 when they left without adding) and `house_lookup` (`found`,
+`none`, `pending` when they left before it answered, or the failure:
+`signedOut`, `tooLarge`, `busy`, `failed`). Never the outline, street names, or
+house numbers.
 
 | Event                         | When                                                                           | Properties                                                                                                                                                               |
 | ----------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -1349,7 +1355,7 @@ they added any, with `points` (how many outline points the geocoder answered),
 | `territory_link_ended`        | The User ended a guest link early.                                             | None.                                                                                                                                                                    |
 | `territory_handoff`           | A street was handed off, taken back, or given back by the User.                | `action: handed \| taken_back \| given_back`.                                                                                                                            |
 | `territory_sync_failed`       | A shared territory's sync failed. Once per UTC day per reason.                 | `reason` (a Shared Spaces error code).                                                                                                                                   |
-| `territory_streets_suggested` | The User left Find Streets in the Outline after it checked at least one point. | `points`, `found`, `added` (counts), `stopped` (boolean).                                                                                                                |
+| `territory_streets_suggested` | The User left Find Streets in the Outline after it checked at least one point. | `points`, `found`, `added`, `addresses`, `house_streets` (counts), `stopped` (boolean), `house_lookup`.                                                                  |
 | `territory_notes_scanned`     | Scan Notes on Add Results From Notes finished.                                 | `outcome: scanned \| empty \| cancelled \| denied \| failed`, `pages` (count).                                                                                           |
 | `territory_notes_read`        | Read Notes finished on Add Results From Notes.                                 | `reader: scribe \| device`, `reason` (device only: `notOffered`, `scribeOff`, `limited`, `offline`, `unavailable`, `failed`, `tooLong`), `entries`, `problems` (counts). |
 | `territory_notes_added`       | Entries from notes were added after review.                                    | `reader`, `reason` (as above), `entries`, `do_not_calls` (counts).                                                                                                       |

@@ -311,6 +311,7 @@ export function projectSpace(
       ...(part.street.saveLocations !== undefined && {
         saveLocations: part.street.saveLocations,
       }),
+      ...(part.street.houses && { houses: part.street.houses }),
       doors,
       ...(part.worked?.at !== undefined && { workedAt: part.worked.at }),
       ...(part.worked?.at !== undefined &&

@@ -7205,7 +7205,35 @@
         "other": "Added %{count} streets"
       },
       "locationNeeded": "Looking up street names on this device needs your location.",
-      "upNext": "Up Next"
+      "upNext": "Up Next",
+      "lookingUpHouses": "Looking up house numbers…",
+      "fillExisting": {
+        "one": "House numbers found for 1 street you already have.",
+        "other": "House numbers found for %{count} streets you already have."
+      },
+      "addHouses": {
+        "one": "Add House Numbers to 1 Street",
+        "other": "Add House Numbers to %{count} Streets"
+      },
+      "housesAdded_toast": {
+        "one": "Added house numbers to 1 street",
+        "other": "Added house numbers to %{count} streets"
+      }
+    },
+    "houseCount": {
+      "one": "%{count} house",
+      "other": "%{count} houses"
+    },
+    "housesVisited": "{{visited}} of {{total}} houses",
+    "houses": {
+      "title": "Houses",
+      "progress": "{{visited}} of {{total}} visited",
+      "hint": "Tap a house to record it.",
+      "attribution": "House numbers © OpenStreetMap contributors",
+      "notVisited": "Not visited",
+      "house_a11y": "{{door}}, {{status}}",
+      "territoryProgress": "{{percent}} of houses visited",
+      "territoryProgress_info": "Counts the streets that have a house list from the map. Streets you number by hand aren't included."
     }
   }
 }

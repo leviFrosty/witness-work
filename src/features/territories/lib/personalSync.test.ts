@@ -187,6 +187,26 @@ describe('personal territory records', () => {
     expect(restampLedger(ledger, [copy], new Map(), stamp)).toBe(ledger)
   })
 
+  it('round-trips a street house list', () => {
+    const base = territory()
+    const original = {
+      ...base,
+      streets: base.streets.map((street, index) =>
+        index === 0 ? { ...street, houses: ['2', '4', '4A', '6'] } : street
+      ),
+    }
+    const ledger = restampLedger({}, [original], new Map(), stamp)
+    const copy = territoryFromEntry(TERRITORY, ledger[TERRITORY])!
+    const id = original.streets[0]!.id
+    expect(copy.streets.find((street) => street.id === id)?.houses).toEqual([
+      '2',
+      '4',
+      '4A',
+      '6',
+    ])
+    expect(restampLedger(ledger, [copy], new Map(), stamp)).toBe(ledger)
+  })
+
   it('keeps device-only fields out of the records', () => {
     const ledger = restampLedger(
       {},

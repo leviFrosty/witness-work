@@ -47,6 +47,8 @@ export type TerritoryStreet = {
 
   first?: number
   descending?: boolean
+
+  houses?: string[]
   doors: TerritoryDoor[]
 
   workedAt?: number

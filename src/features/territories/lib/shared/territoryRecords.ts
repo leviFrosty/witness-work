@@ -1,4 +1,5 @@
 import { clip } from '@/lib/sharedSpaces/records'
+import { cleanHouses } from '@/features/territories/lib/houseList'
 import { isUuid } from '@/lib/sharedSpaces/scopes'
 import type { Coordinate } from '@/types/contact'
 import type {
@@ -46,6 +47,7 @@ const KNOWN: Record<string, readonly string[]> = {
     'first',
     'descending',
     'saveLocations',
+    'houses',
     'order',
   ],
   worked: ['at', 'by', 'byName'],
@@ -199,7 +201,13 @@ export function readTerritoryData(data: Data): TerritoryHeader | null {
 
 export type StreetFields = Pick<
   TerritoryStreet,
-  'id' | 'name' | 'numbering' | 'first' | 'descending' | 'saveLocations'
+  | 'id'
+  | 'name'
+  | 'numbering'
+  | 'first'
+  | 'descending'
+  | 'saveLocations'
+  | 'houses'
 > & { order: number }
 
 export function streetData(street: TerritoryStreet, order: number): Data {
@@ -210,12 +218,19 @@ export function streetData(street: TerritoryStreet, order: number): Data {
     ...optional('first', street.first),
     ...optional('descending', street.descending || undefined),
     ...optional('saveLocations', street.saveLocations),
+    ...optional(
+      'houses',
+      street.houses && street.houses.length > 0
+        ? cleanHouses(street.houses)
+        : undefined
+    ),
     order,
   }
 }
 
 export function readStreetData(data: Data): StreetFields | null {
   const { id, name, numbering, first, descending, saveLocations, order } = data
+  const houses = Array.isArray(data.houses) ? cleanHouses(data.houses) : []
   if (!isText(id) || !isUuid(id) || !isText(name)) return null
   return {
     id,
@@ -229,6 +244,7 @@ export function readStreetData(data: Data): StreetFields | null {
       'saveLocations',
       typeof saveLocations === 'boolean' ? saveLocations : undefined
     ),
+    ...optional('houses', houses.length > 0 ? houses : undefined),
     order: isNumber(order) ? order : 0,
   }
 }

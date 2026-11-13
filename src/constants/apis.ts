@@ -20,6 +20,7 @@ export default {
   placesSearch: `${BASE_URL}/places/v1/search`,
 
   mapkitTokens: `${BASE_URL}/maps/v1/mapkit-tokens`,
+  territoryAddresses: `${BASE_URL}/maps/v1/addresses`,
 
   appStoreRatings: `${BASE_URL}/app-store/ratings`,
 

@@ -534,11 +534,6 @@ export const rosterSchema = z.object({
 
   dismissed: lenientRecord(notificationId, z.number()),
 
-  card: z
-    .object({ name: z.string().max(120), updatedAt: z.number() })
-    .optional()
-    .catch(undefined),
-
   cars: lenientRecord(relayId, z.object({ at: z.number().finite() })),
   leftCars: lenientRecord(relayId, z.number().finite()),
 

@@ -18,9 +18,7 @@ import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
-import BuddiesAccountNameHint from '@/features/buddies/components/BuddiesAccountNameHint'
 import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
-import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const STEPS = ['intro', 'profile'] as const
@@ -70,8 +68,7 @@ export default function BuddiesOnboarding({
   const insets = useSafeAreaInsets()
   const profileName = useProfile((state) => state.name.trim())
 
-  const accountName = useBuddies((state) => state.cardName?.name)
-  const hasName = profileName.length > 0 || !!accountName
+  const hasName = profileName.length > 0
   const [step, setStep] = useState(0)
   const validation = useFormValidation({ name: !hasName }, 'buddies_profile')
   const current = STEPS[step]
@@ -192,7 +189,6 @@ export default function BuddiesOnboarding({
               />
             </View>
             {profileEditor(validation.invalid('name'))}
-            <BuddiesAccountNameHint style={lead} />
             <BuddiesSharingSection withoutProfile />
           </>
         )}

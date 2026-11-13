@@ -46,7 +46,6 @@ export function watchSharedCarProfile(onChange: () => void): () => void {
   }
   const buddies = useBuddies.subscribe((state, previous) => {
     if (
-      state.cardName !== previous.cardName ||
       state.sharing.photo !== previous.sharing.photo ||
       state.avatarThumbnail !== previous.avatarThumbnail ||
       state.registeredInboxId !== previous.registeredInboxId

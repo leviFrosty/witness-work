@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "Sie haben die Kontrolle",
   "buddies_onboardingControlBody": "Nichts wird geteilt, bevor Sie beide zustimmen. Blenden Sie einen Buddy in Ihrem Kalender aus oder entfernen Sie ihn jederzeit – er wird nicht benachrichtigt.",
   "buddies_onboardingProfileTitle": "Wie Buddies Sie sehen",
-  "buddies_accountNameHint": "Buddies sehen Sie als %{name}, den Namen Ihres Kontos. Ändern Sie hier Ihren Namen, um ihn auch für sie zu ändern.",
   "buddies_onboardingProfileInfo": "Buddies sehen Ihren Namen und die Tage, an denen Sie in den nächsten 8 Wochen in den Dienst gehen wollen, samt geplanter Dauer. Ihr Foto, Pionierstatus, Ihre Serie, Abzeichen, Ihr Haustier und die Startzeiten werden geteilt, sofern Sie das nicht ausschalten. Ändern Sie alles davon oder pausieren Sie das Teilen in den Buddies-Einstellungen. Ihre erfassten Stunden, Berichte, Ziele, Kontakte, Besuche und Notizen bleiben immer privat. Einladungen zu einem Plan oder Folgebesuch teilen die zusätzlichen Angaben, die im Formular angezeigt werden.",
   "buddies_onboardingSharedTitle": "Was Sie teilen",
   "buddies_invite": "Buddy einladen",

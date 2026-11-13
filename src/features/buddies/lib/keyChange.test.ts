@@ -1646,22 +1646,17 @@ describe('showing a reconnect', () => {
 describe('how buddies see the User through a key change', () => {
   async function named() {
     const env = setup()
-    const mom = env.user('Verify')
+    const mom = env.user('Ana Lopes')
     const anna = env.user('Anna')
-    mom.engine.setCardName('Ana Lopes')
     await pair(mom, anna)
     expect(anna.store.getState().buddies[0].name).toBe('Ana Lopes')
     return { env, mom, anna }
   }
 
-  it('keeps the name the User chose on the new inbox, and buddies see it after reconnecting', async () => {
+  it('shows buddies the Profile name after reconnecting', async () => {
     const { env, mom, anna } = await named()
-    const chosen = mom.store.getState().cardName
     const change = await rotate(env, mom)
     await change.run()
-    expect(mom.store.getState().cardName).toEqual(chosen)
-
-    expect(change.progress()!.cardName).toEqual(chosen)
 
     await anna.engine.sync()
     await anna.engine.acceptReconnect(change.oldInboxId)
@@ -1673,49 +1668,6 @@ describe('how buddies see the User through a key change', () => {
     expect(anna.store.getState().cards[change.newInboxId]?.name).toBe(
       'Ana Lopes'
     )
-  })
-
-  it('takes the name from the old roster when this device never kept one', async () => {
-    const { env, mom } = await named()
-    const chosen = mom.store.getState().cardName
-
-    mom.store.setState({ cardName: null })
-    const change = await rotate(env, mom)
-    await change.run()
-    expect(mom.store.getState().cardName).toEqual(chosen)
-  })
-
-  it('puts the name back on resume after the app is killed mid-change', async () => {
-    const { env, mom } = await named()
-    const chosen = mom.store.getState().cardName
-    const change = await rotate(env, mom)
-    let killed = false
-    env.setAfterOp(async (op) => {
-      if (op !== 'inbox/delete' || killed) return
-      killed = true
-      throw new Error('killed')
-    })
-    await change.run().catch(() => {})
-    env.setAfterOp(null)
-    expect(killed).toBe(true)
-
-    mom.store.setState({ cardName: null })
-    await change.run()
-    expect(mom.store.getState().cardName).toEqual(chosen)
-
-    mom.store.setState({ cardName: null })
-    await change.carryOn()
-    expect(mom.store.getState().cardName).toEqual(chosen)
-  })
-
-  it('keeps a newer name the User chose after the change', async () => {
-    const { env, mom } = await named()
-    const change = await rotate(env, mom)
-    await change.run()
-    env.advance(1000)
-    mom.engine.setCardName('Ana L.')
-    await change.carryOn()
-    expect(mom.store.getState().cardName?.name).toBe('Ana L.')
   })
 
   it('keeps the shrunk Profile photo cards carry', async () => {

@@ -108,7 +108,6 @@ import {
   buddySettings,
   BuddySharing,
   BuddiesState,
-  type CardName,
   BuddyNotification,
   CAR_REPLY_TTL_MS,
   cappedQueue,
@@ -138,7 +137,6 @@ import {
   MAX_OPEN_INVITES,
   MAX_ROSTER_PLAINTEXT_BYTES,
   mergeAnswerMarks,
-  mergeCardName,
   mergeNotificationMarks,
   mergeRemovedBuddies,
   mergeSharing,
@@ -643,8 +641,6 @@ function rosterSignature(roster: Omit<Roster, 'v' | 'version'>) {
     Object.keys(roster.dismissed).sort(),
     Object.keys(roster.reconnects).sort(),
 
-    roster.card ? [roster.card.name, roster.card.updatedAt] : null,
-
     Object.entries(roster.cars)
       .map(([spaceId, { at }]) => `${spaceId}:${at}`)
       .sort(),
@@ -940,34 +936,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     return keys
   }
 
-  function cardName(): CardName {
-    const { cardName: known, startedAt } = store.getState()
-    return (
-      known ?? {
-        name: deps.getProfile().name.trim(),
-
-        updatedAt: -(startedAt ?? 0),
-      }
-    )
-  }
-
-  function adoptCardName(state: BuddiesState, remote: CardName | undefined) {
-    if (!remote) return state.cardName
-    const local = cardName()
-    if (mergeCardName(local, remote) !== remote) return state.cardName
-    return state.cardName === null && remote.name === local.name ? null : remote
-  }
-
-  function setCardName(name: string) {
-    store.setState({ cardName: { name: name.trim(), updatedAt: deps.now() } })
-    saveRosterSoon()
-  }
-
   function profile(): BuddyProfile {
     const current = deps.getProfile()
     const { sharing } = store.getState()
     return {
-      name: cardName().name,
+      name: current.name.trim(),
       avatar: sharing.photo ? current.avatar : undefined,
       tenure: sharing.tenure ? current.tenure : undefined,
       badges: sharesBadges() ? (current.badges ?? []) : [],
@@ -1036,12 +1009,11 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (store.getState().registeredInboxId === me.inboxId) return me
     registering ??= registerInbox(me, call)
       .then(() => {
-        store.setState((state) => ({
+        store.setState({
           registeredInboxId: me.inboxId,
           syncSeq: 0,
           pushRegistrationKey: null,
-          startedAt: state.startedAt ?? deps.now(),
-        }))
+        })
         return me
       })
       .finally(() => {
@@ -1100,7 +1072,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       answers: mergeAnswerMarks(state.answerMarks, {}, now),
       read: marks.read,
       dismissed: marks.dismissed,
-      ...(cardName().name ? { card: cardName() } : {}),
 
       reconnects: Object.fromEntries(
         Object.entries(state.reconnectInvites).map(
@@ -1793,21 +1764,9 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   function knownPairings(inboxId: string): {
     buddies: Buddy[]
     pendingRemovals: PendingRemoval[]
-    cardName: CardName | null
   } | null {
-    const { registeredInboxId, buddies, pendingRemovals, cardName } =
-      store.getState()
-    return registeredInboxId === inboxId
-      ? { buddies, pendingRemovals, cardName }
-      : null
-  }
-
-  function keepCardName(card: CardName | undefined) {
-    if (!card) return
-    const known = store.getState().cardName
-    if (known && known.updatedAt >= card.updatedAt) return
-    store.setState({ cardName: card })
-    saveRosterSoon()
+    const { registeredInboxId, buddies, pendingRemovals } = store.getState()
+    return registeredInboxId === inboxId ? { buddies, pendingRemovals } : null
   }
 
   function retireInbox(inboxId: string) {
@@ -2270,7 +2229,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function sendCards() {
     const current = deps.getProfile()
-    const { name } = cardName()
+    const name = displayName()
     const edits = cardEdits
     cardEdits = new Set()
     const active = store.getState().buddies.filter((b) => b.status === 'active')
@@ -2293,7 +2252,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function sendCardsTo(targets: Buddy[], current: BuddyProfile) {
     const me = await identity()
 
-    const { name } = cardName()
+    const name = displayName()
     const each = targets.map((buddy) => ({
       buddy,
       settings: settingsFor(buddy),
@@ -5270,7 +5229,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       ),
       rosterVersion: Math.max(state.rosterVersion, remote.version ?? 0),
       sharing,
-      cardName: adoptCardName(state, remote.card),
       answerMarks: mergeAnswerMarks(state.answerMarks, remote.answers, now),
       notificationMarks: mergeNotificationMarks(
         state.notificationMarks,
@@ -5981,7 +5939,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     retireInbox,
     ownerKeyRefused,
     knownPairings,
-    keepCardName,
     removeBuddy,
     setShowOnCalendar,
     setPetVisits,
@@ -5999,7 +5956,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     replyToShare,
     deliverReplies,
     sendHeldReplies,
-    setCardName,
     askToJoin,
     withdrawJoinRequest,
     dismissJoinRequest,
@@ -6020,7 +5976,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     deliverCarEvents,
     noteCarMemberships,
 
-    ownCardName: () => cardName().name,
+    ownCardName: displayName,
     expire: expireLocal,
     shareIdForKey,
     markNotificationsRead,

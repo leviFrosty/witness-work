@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "Tú tienes el control",
   "buddies_onboardingControlBody": "No se comparte nada hasta que los dos estéis de acuerdo. Oculta a un compañero de tu calendario o quítalo cuando quieras; no se le avisará.",
   "buddies_onboardingProfileTitle": "Cómo te ven tus compañeros",
-  "buddies_accountNameHint": "Tus compañeros te ven como %{name}, el nombre de tu cuenta. Cambia tu nombre aquí para cambiarlo para ellos.",
   "buddies_onboardingProfileInfo": "Tus compañeros ven tu nombre y los días en que planeas salir durante las próximas 8 semanas, con cuánto tiempo planeas. Tu foto, tipo de precursorado, racha, insignias, mascota y horas de inicio se comparten a menos que lo desactives. Cambia lo que quieras, o pausa el uso compartido, en los ajustes de Compañeros. Tus horas registradas, informes, metas, contactos, visitas y notas siempre son privados. Las invitaciones a un plan o a un seguimiento comparten los datos adicionales que se muestran en el formulario.",
   "buddies_onboardingSharedTitle": "Lo que compartes",
   "buddies_invite": "Invitar a un compañero",

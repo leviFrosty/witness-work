@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "모든 것을 직접 관리합니다",
   "buddies_onboardingControlBody": "두 사람이 모두 동의하기 전에는 아무것도 공유되지 않습니다. 언제든 버디를 캘린더에서 숨기거나 삭제할 수 있으며, 상대에게 알림이 가지 않습니다.",
   "buddies_onboardingProfileTitle": "버디에게 보이는 내 정보",
-  "buddies_accountNameHint": "버디에게는 계정의 이름인 %{name}(으)로 보입니다. 여기서 이름을 바꾸면 버디에게 보이는 이름도 바뀝니다.",
   "buddies_onboardingProfileInfo": "버디는 내 이름과 앞으로 8주 동안 봉사에 나갈 계획인 날 및 계획한 시간을 볼 수 있습니다. 사진, 파이오니아 상태, 연속 기록, 배지, 반려동물, 시작 시간은 끄지 않는 한 공유됩니다. 버디 설정에서 언제든지 바꾸거나 공유를 일시 중지할 수 있습니다. 기록한 시간, 보고, 목표, 연락처, 방문, 메모는 항상 비공개로 유지됩니다. 계획 및 다음 방문 초대에는 양식에 표시된 추가 정보가 함께 공유됩니다.",
   "buddies_onboardingSharedTitle": "공유하는 내용",
   "buddies_invite": "버디 초대",

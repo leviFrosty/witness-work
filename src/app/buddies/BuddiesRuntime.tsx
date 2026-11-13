@@ -35,10 +35,7 @@ import {
   dropRefusedInboxes,
 } from '@/features/buddies/lib/buddiesService'
 import { startFallbackPoll, syncSoon } from '@/features/buddies/lib/autoSync'
-import {
-  currentBuddyProfile,
-  refreshBuddyAvatarThumbnail,
-} from '@/features/buddies/lib/buddyProfile'
+import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile'
 import {
   forgetBuddiesInData,
   reconcileLinkedPlans,
@@ -385,8 +382,6 @@ export default function BuddiesRuntime() {
       if (state.name !== previous.name || state.avatar !== previous.avatar)
         noteEdit()
 
-      if (state.name !== previous.name && isLocalEdit())
-        buddiesEngine.setCardName(currentBuddyProfile().name)
       if (state.name !== previous.name) schedulePublish()
       if (state.avatar !== previous.avatar)
         void refreshAvatar().then(schedulePublish)

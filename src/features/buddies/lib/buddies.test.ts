@@ -1257,83 +1257,37 @@ describe('the name on Buddy Cards', () => {
   const nameAt = (viewer: User, inboxId: string) =>
     viewer.store.getState().buddies.find((b) => b.inboxId === inboxId)?.name
 
-  it("is the account's, whichever device publishes, for a device joining it", async () => {
-    const { user, advance } = setup()
+  it('is the Profile name', async () => {
+    const { user } = setup()
     const mom = user('Maya Torres')
     const anna = user('Anna')
     await pair(mom, anna)
-    await mom.engine.sync()
-
-    advance(60_000)
-    const momsTablet = user(
-      'Verify',
-      { dayPlans: [], recurringPlans: [] },
-      mom.seed
-    )
-    await momsTablet.engine.sync()
-    expect(momsTablet.store.getState().cardName?.name).toBe('Maya Torres')
-
-    await momsTablet.engine.publishCards({ edited: true })
-    await anna.engine.sync()
     expect(nameAt(anna, mom.inboxId)).toBe('Maya Torres')
-  })
 
-  it('follows a change the User makes on any device', async () => {
-    const { fake, user, advance } = setup()
-    const mom = user('Maya Torres')
-    const anna = user('Anna')
-    await pair(mom, anna)
-    await mom.engine.sync()
-    const momsTablet = user(
-      'Verify',
-      { dayPlans: [], recurringPlans: [] },
-      mom.seed
-    )
-    await momsTablet.engine.sync()
-
-    advance(60_000)
-    momsTablet.profile.name = 'Maya T.'
-    momsTablet.engine.setCardName('Maya T.')
-
-    const roster = () => fake.inboxes.get(mom.inboxId)!.roster!.seq
-    const before = roster()
-    expect(momsTablet.timers).toHaveLength(1)
-    momsTablet.timers.splice(0)[0].run()
-    await vi.waitFor(() => expect(roster()).toBeGreaterThan(before))
-    await momsTablet.engine.publishCards({ edited: true })
-    await anna.engine.sync()
-    expect(nameAt(anna, mom.inboxId)).toBe('Maya T.')
-
-    advance(60_000)
-    await mom.engine.sync()
-    expect(mom.store.getState().cardName?.name).toBe('Maya T.')
-    mom.setShares([])
+    mom.profile.name = 'Maya T.'
     await mom.engine.publishCards({ edited: true })
     await anna.engine.sync()
     expect(nameAt(anna, mom.inboxId)).toBe('Maya T.')
   })
 
-  it('settles on one name for devices that both ran Buddies before it was kept', async () => {
+  it('lets the User invite once their Profile has a name', async () => {
     const { user } = setup()
-    const mom = user('Maya Torres')
-    const anna = user('Anna')
-    await pair(mom, anna)
-
-    const momsTablet = user(
-      'Theo',
-      { dayPlans: [], recurringPlans: [] },
-      mom.seed
+    const mom = user('')
+    await expect(mom.engine.createInvite()).rejects.toEqual(
+      new BuddyInviteError('nameRequired')
     )
-    await momsTablet.engine.sync()
-    mom.store.setState({ cardName: null, startedAt: null })
-    momsTablet.store.setState({ cardName: null, startedAt: null })
 
-    await mom.engine.sync()
-    await momsTablet.engine.sync()
-    await mom.engine.sync()
-    expect(mom.store.getState().cardName?.name).toBe(
-      momsTablet.store.getState().cardName?.name
+    mom.profile.name = 'Maya Torres'
+    await expect(mom.engine.createInvite()).resolves.toBeTruthy()
+  })
+
+  it('forgets the name older builds kept apart from the Profile', () => {
+    const restored = migrateLegacySettings(
+      { cardName: { name: '', updatedAt: 1 }, startedAt: 1 },
+      0
     )
+    expect(restored).not.toHaveProperty('cardName')
+    expect(restored).not.toHaveProperty('startedAt')
   })
 })
 

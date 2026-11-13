@@ -239,7 +239,7 @@ Every plaintext is `{ "v": 1, "kind": "<kind>", "data": { … } }`. `data` leave
 
 - A deletion is `deleted: true` with plaintext `{ "v": 1, "kind": "<kind>" }`. Its `stamp` is the deletion time.
 - `stamp` is the record's `updatedAt`, which the store already sets past the version it replaces.
-- `tag` is `b64u(SHA-256("ww-spaces/v1/member-tag|" + spaceId + "|" + inboxId)[0..16])`, derived from the person's Buddies inbox. A device works it out for each of its own buddies, so it can show them as it knows them (nickname, color, photo). To anyone else, it means nothing. `name` and `avatar` follow the person's Buddies sharing: `card.name`, and a photo only while `sharing.photo` is on.
+- `tag` is `b64u(SHA-256("ww-spaces/v1/member-tag|" + spaceId + "|" + inboxId)[0..16])`, derived from the person's Buddies inbox. A device works it out for each of its own buddies, so it can show them as it knows them (nickname, color, photo). To anyone else, it means nothing. `name` and `avatar` follow the person's Buddies sharing: the Profile name on their Buddy Card, and a photo only while `sharing.photo` is on.
 - `trip.note` and `trip.noteDoc` are shared with everyone on the car. Photos in a note are local files and don't travel, so the trip form offers no photos on a shared car. A photo a trip already had shows as "not on this device" elsewhere, and survives other people's edits. The trip form keeps a shared trip's sealed record within the 16 KB cap. The engine never cuts what a device stores.
 
 ## Invitations (Buddies events)

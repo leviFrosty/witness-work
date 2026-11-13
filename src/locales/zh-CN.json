@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "一切由你掌控",
   "buddies_onboardingControlBody": "在你们双方同意之前，不会分享任何内容。你可以随时在日历中隐藏同伴或移除同伴，对方不会收到通知。",
   "buddies_onboardingProfileTitle": "同伴看到的你",
-  "buddies_accountNameHint": "同伴看到的你是 %{name}，也就是你账户上的姓名。在这里更改姓名，他们看到的姓名也会随之改变。",
   "buddies_onboardingProfileInfo": "同伴会看到你的姓名和你计划外出的日期，以及你计划的时长。除非你关闭，否则你的照片、先驱身份、连续记录、徽章、宠物和开始时间也会被分享。你可以在“同伴设置”中更改任何内容，或暂停分享。你记录的时数、报告、目标、联系人、访问和笔记始终保持私密。计划和跟进邀请会分享表单中显示的额外详情。",
   "buddies_onboardingSharedTitle": "你分享的内容",
   "buddies_invite": "邀请同伴",

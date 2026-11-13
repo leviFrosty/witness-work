@@ -1367,7 +1367,6 @@
   "buddies_onboardingControlTitle": "Hai il controllo",
   "buddies_onboardingControlBody": "Nulla viene condiviso finché non siete d’accordo entrambi. Nascondi un compagno dal tuo calendario o rimuovilo quando vuoi: non riceverà alcuna notifica.",
   "buddies_onboardingProfileTitle": "Come ti vedono i compagni",
-  "buddies_accountNameHint": "I compagni ti vedono come %{name}, il nome del tuo account. Cambia qui il tuo nome per cambiarlo anche per loro.",
   "buddies_onboardingProfileInfo": "I compagni vedono il tuo nome e i giorni in cui pianifichi di uscire nelle prossime 8 settimane, con la durata prevista. La tua foto, il servizio da pioniere, la serie, i badge, l'animaletto e gli orari di inizio vengono condivisi a meno che tu non li disattivi. Cambia ciò che vuoi, o sospendi la condivisione, nelle Impostazioni Compagni. Le ore registrate, i rapporti, gli obiettivi, i contatti, le visite e le note restano sempre privati. Gli inviti a un Piano o a un Follow-up condividono i dettagli aggiuntivi mostrati nel modulo.",
   "buddies_onboardingSharedTitle": "Cosa condividi",
   "buddies_invite": "Invita un compagno",

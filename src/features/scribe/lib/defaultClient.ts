@@ -7,30 +7,57 @@ import {
   type ScribeClient,
 } from '@/features/scribe/lib/scribeClient'
 import { useScribeStatusStore } from '@/features/scribe/stores/status'
+import { scribeTermsPending } from '@/features/scribe/stores/consent'
+import { ScribeClientError } from '@/features/scribe/lib/errors'
+import { logger } from '@/lib/logger'
 
 let defaultClient: ScribeClient | null = null
 let override: ScribeClient | null = null
 
-const buildDefaultClient = (): ScribeClient =>
-  createScribeClient({
-    urls: {
-      status: apis.scribeStatus,
-      usage: apis.scribeUsage,
-      step: apis.scribeStep,
-      transcribe: apis.scribeTranscribe,
-      territoryNotes: apis.scribeTerritoryNotes,
-    },
+const requireAgreement = () => {
+  if (!scribeTermsPending()) return
+  logger.warn('[scribe] stopped a call before the Terms of Use were accepted')
+  throw new ScribeClientError('cancelled')
+}
 
-    streamFetch: ((input, init) =>
-      expoFetch(input as never, init as never)) as typeof fetch,
-    sessions: {
-      withSession: (run, call) =>
-        accountSessions.withSession((authorization) => run(authorization), {
-          signal: call?.signal,
-        }),
-    },
-    linkBeforePaidCall,
-  })
+export const withAgreement = (client: ScribeClient): ScribeClient => ({
+  ...client,
+  step: async (...args) => {
+    requireAgreement()
+    return client.step(...args)
+  },
+  transcribe: async (...args) => {
+    requireAgreement()
+    return client.transcribe(...args)
+  },
+  territoryNotes: async (...args) => {
+    requireAgreement()
+    return client.territoryNotes(...args)
+  },
+})
+
+const buildDefaultClient = (): ScribeClient =>
+  withAgreement(
+    createScribeClient({
+      urls: {
+        status: apis.scribeStatus,
+        usage: apis.scribeUsage,
+        step: apis.scribeStep,
+        transcribe: apis.scribeTranscribe,
+        territoryNotes: apis.scribeTerritoryNotes,
+      },
+
+      streamFetch: ((input, init) =>
+        expoFetch(input as never, init as never)) as typeof fetch,
+      sessions: {
+        withSession: (run, call) =>
+          accountSessions.withSession((authorization) => run(authorization), {
+            signal: call?.signal,
+          }),
+      },
+      linkBeforePaidCall,
+    })
+  )
 
 export function scribeClient(): ScribeClient {
   if (override) return override

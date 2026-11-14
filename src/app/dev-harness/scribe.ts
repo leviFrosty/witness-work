@@ -52,7 +52,6 @@ import { useScribeConversations } from '@/features/scribe/stores/conversations'
 import { useScribeLedger } from '@/features/scribe/stores/ledger'
 import {
   acceptScribeTerms,
-  markScribePrivacySeen,
   useScribeConsent,
 } from '@/features/scribe/stores/consent'
 import { noteUsage, useScribeUsageStore } from '@/features/scribe/stores/usage'
@@ -338,7 +337,6 @@ export const scribeHarness = {
 
   acceptConsent: () => {
     acceptScribeTerms()
-    markScribePrivacySeen()
     return useScribeConsent.getState()
   },
 

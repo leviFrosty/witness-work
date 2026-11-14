@@ -5,7 +5,7 @@ const runtime = vi.hoisted(() => ({ capture: vi.fn(), consentPending: false }))
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({}) }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: runtime.capture } }))
 vi.mock('@/features/scribe/stores/consent', () => ({
-  scribeConsentPending: () => runtime.consentPending,
+  scribeTermsPending: () => runtime.consentPending,
 }))
 vi.mock('@/features/scribe', () => ({
   useScribeAvailability: () => ({ status: 'offline' }),
@@ -120,12 +120,12 @@ describe('Scribe AI entry points', () => {
     })
   })
 
-  it('asks for consent first while this device has steps to see', () => {
+  it("asks for agreement first on a device that hasn't agreed", () => {
     runtime.consentPending = true
     const navigation = { navigate: vi.fn() }
     openScribe(navigation, 'home_orb', available, 'available')
     expect(navigation.navigate).toHaveBeenCalledWith('ScribeConsent', {
-      mode: 'open',
+      surface: 'first_open',
       next: { route: 'ScribeVoice', params: { entry: 'home_orb' } },
     })
 
@@ -139,7 +139,7 @@ describe('Scribe AI entry points', () => {
       params: { entry: 'onboarding', focusComposer: true },
     })
     expect(navigation.navigate).toHaveBeenLastCalledWith('ScribeConsent', {
-      mode: 'open',
+      surface: 'first_open',
       next: {
         route: 'ScribeConversation',
         params: { entry: 'onboarding', focusComposer: true },

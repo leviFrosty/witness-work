@@ -17,98 +17,75 @@ import links from '@/constants/links'
 import useTheme from '@/contexts/theme'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
-import ScribeSheetFrame from '@/features/scribe/components/ScribeSheetFrame'
-import ScribeZeroDataRetentionDetails, {
-  ScribeZeroDataRetentionHeading,
-} from '@/features/scribe/components/ScribeZeroDataRetentionDetails'
+import { scribeKey } from '@/features/scribe/components/scribeCopy'
+import { settleScribeConsent } from '@/features/scribe/components/scribeConsentGate'
+import ScribeSheetFrame, {
+  type ScribeSheetDismissal,
+} from '@/features/scribe/components/ScribeSheetFrame'
 import {
   acceptScribeTerms,
-  markScribePrivacySeen,
-  pendingScribeConsent,
+  scribeTermsPending,
 } from '@/features/scribe/stores/consent'
 import {
-  trackPrivacyViewed,
-  trackScribeTurnedOnOff,
   trackTermsResolved,
+  type ScribeTermsDismissedVia,
 } from '@/features/scribe/analytics'
-
-type Step = 'terms' | 'privacy'
 
 const ScribeConsentSheet = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { params } = useRoute<RouteProp<RootStackParamList, 'ScribeConsent'>>()
-  const setPreferences = usePreferences((s) => s.set)
-  const surface = params.mode === 'open' ? 'first_open' : 'settings'
+  const { surface, next } = params
+  const [alreadyAgreed] = useState(() => !scribeTermsPending())
+  const resolved = useRef(false)
 
-  const [steps] = useState<Step[]>(() => {
-    if (params.mode === 'enable') return ['terms']
-    const pending = pendingScribeConsent()
-    return [
-      ...(pending.terms ? (['terms'] as const) : []),
-      ...(pending.privacy ? (['privacy'] as const) : []),
-    ]
-  })
-  const [index, setIndex] = useState(0)
-  const step: Step | undefined = steps[index]
-
-  const finished = useRef(false)
-
-  const finish = () => {
-    if (finished.current) return
-    finished.current = true
-    if (params.mode === 'enable') {
-      setPreferences({ scribeAiEnabled: true })
-      trackScribeTurnedOnOff(true)
-      navigation.goBack()
-    } else if (!params.next) {
-      navigation.goBack()
-    } else if (params.next.route === 'ScribeVoice') {
-      navigation.replace('ScribeVoice', params.next.params)
-    } else {
-      navigation.replace('ScribeConversation', params.next.params)
-    }
-  }
-  const advance = () => {
-    if (index + 1 < steps.length) setIndex(index + 1)
-    else finish()
+  const goOn = () => {
+    if (!next) navigation.goBack()
+    else if (next.route === 'ScribeVoice')
+      navigation.replace('ScribeVoice', next.params)
+    else navigation.replace('ScribeConversation', next.params)
   }
 
-  const finishIfNothingToAsk = useEffectEvent(() => {
-    if (!step) finish()
+  const agree = () => {
+    if (resolved.current) return
+    resolved.current = true
+    acceptScribeTerms()
+    trackTermsResolved(surface, 'accepted')
+    settleScribeConsent(true)
+    goOn()
+  }
+
+  const continueIfAgreed = useEffectEvent(() => {
+    if (!alreadyAgreed) return
+    resolved.current = true
+    settleScribeConsent(true)
+    goOn()
   })
-  useEffect(() => finishIfNothingToAsk(), [])
+  useEffect(() => continueIfAgreed(), [])
 
-  useEffect(() => {
-    if (step === 'privacy') trackPrivacyViewed('first_open')
-  }, [step])
+  const dismissed = (via: ScribeTermsDismissedVia) => {
+    if (resolved.current) return
+    resolved.current = true
+    trackTermsResolved(surface, 'dismissed', via)
+    settleScribeConsent(false)
+  }
 
-  const close = () => {
-    if (step === 'terms') trackTermsResolved(surface, 'dismissed')
+  const dismissedBySystem = useEffectEvent(() => dismissed('system'))
+  useEffect(
+    () => navigation.addListener('beforeRemove', () => dismissedBySystem()),
+    [navigation]
+  )
+
+  const close = (via: ScribeSheetDismissal) => {
+    dismissed(via === 'escape' ? 'system' : via)
     navigation.goBack()
   }
 
-  if (!step) return null
+  if (alreadyAgreed) return null
 
   return (
     <ScribeSheetFrame onDismissRequest={close}>
-      {step === 'terms' ? (
-        <TermsStep
-          onAccept={() => {
-            acceptScribeTerms()
-            trackTermsResolved(surface, 'accepted')
-            advance()
-          }}
-        />
-      ) : (
-        <PrivacyStep
-          onContinue={() => {
-            markScribePrivacySeen()
-            advance()
-          }}
-        />
-      )}
+      <TermsStep onAccept={agree} />
     </ScribeSheetFrame>
   )
 }
@@ -126,19 +103,30 @@ function TermsStep({ onAccept }: { onAccept: () => void }) {
           gap: 20,
         }}
       >
-        <Text
-          accessibilityRole='header'
-          style={{
-            fontSize: theme.fontSize('xl'),
-            fontFamily: theme.fonts.bold,
-          }}
-        >
-          {i18n.t('scribe_termsTitle')}
-        </Text>
+        <View style={{ gap: 6 }}>
+          <Text
+            accessibilityRole='header'
+            style={{
+              fontSize: theme.fontSize('xl'),
+              fontFamily: theme.fonts.bold,
+            }}
+          >
+            {i18n.t('scribe_termsTitle')}
+          </Text>
+          <Text
+            style={{
+              fontSize: theme.fontSize('md'),
+              color: theme.colors.text,
+              lineHeight: 22,
+            }}
+          >
+            {i18n.t(scribeKey('scribe_termsIntro'))}
+          </Text>
+        </View>
         <Point
           icon={ShieldCheckIcon}
           title={i18n.t('scribe_termsPrivateTitle')}
-          body={i18n.t('scribe_termsPrivateBody')}
+          body={i18n.t(scribeKey('scribe_termsPrivateBody'))}
         />
         <Point
           icon={ChecklistIcon}
@@ -247,31 +235,6 @@ function PolicyLink({ label, url }: { label: string; url: string }) {
       </Text>
       <LucideIcon icon={ExternalIcon} size={14} color={theme.colors.accent} />
     </Button>
-  )
-}
-
-function PrivacyStep({ onContinue }: { onContinue: () => void }) {
-  return (
-    <>
-      {}
-      <ScrollView
-        style={{ flexGrow: 0, flexShrink: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 22,
-          paddingTop: 6,
-          gap: 20,
-        }}
-      >
-        <ScribeZeroDataRetentionHeading />
-        <ScribeZeroDataRetentionDetails />
-      </ScrollView>
-      <View style={{ paddingHorizontal: 22, paddingTop: 8, paddingBottom: 8 }}>
-        <PrimaryButton
-          label={i18n.t('scribe_consentContinue')}
-          onPress={onContinue}
-        />
-      </View>
-    </>
   )
 }
 

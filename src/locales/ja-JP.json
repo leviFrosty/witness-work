@@ -5328,7 +5328,6 @@
   "scribe_termsMistakesBody": "AIは間違えることがあります。それぞれの変更を確認してから追加してください。",
   "scribe_termsBody": "「同意する」をタップすると、WitnessWorkの利用規約とプライバシーポリシーに同意したことになります。",
   "scribe_termsAgree": "同意する",
-  "scribe_consentContinue": "続ける",
   "scribe_usageRow": "使用状況",
   "scribe_memoryRow": "メモリー",
   "scribe_memoryToggle": "メモリー",

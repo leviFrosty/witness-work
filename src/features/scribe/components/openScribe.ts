@@ -10,7 +10,8 @@ import {
   type ScribeVoiceAvailability,
   type ScribeVoiceParams,
 } from '@/features/scribe'
-import { scribeConsentPending } from '@/features/scribe/stores/consent'
+import { askScribeConsent } from '@/features/scribe/components/scribeConsentGate'
+import { scribeTermsPending } from '@/features/scribe/stores/consent'
 
 export type ScribeEntryState =
   | 'available'
@@ -72,8 +73,10 @@ export const navigateToScribe = (
 ) => {
   if (target.route === 'ScribeOffline')
     return navigation.navigate('ScribeOffline')
-  if (scribeConsentPending())
-    return navigation.navigate('ScribeConsent', { mode: 'open', next: target })
+  if (scribeTermsPending()) {
+    void askScribeConsent(navigation, { surface: 'first_open', next: target })
+    return
+  }
   if (target.route === 'ScribeVoice')
     navigation.navigate('ScribeVoice', target.params)
   else navigation.navigate('ScribeConversation', target.params)

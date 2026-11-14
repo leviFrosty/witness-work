@@ -9,7 +9,7 @@ import {
 
 const en = strings('en-US')
 const TERMS_ACCEPTED = {
-  'scribe-consent': { termsAcceptedAt: 1_700_000_000_000, privacySeenAt: 1 },
+  'scribe-consent': { termsAcceptedAt: 1_700_000_000_000 },
 }
 
 test.use({

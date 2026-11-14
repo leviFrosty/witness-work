@@ -88,7 +88,12 @@ import { LDC_BUILTIN_CATEGORY_ID } from '@/constants/categories'
 
 const RESET_BY_ACTIONS = ['preferences', 'profile']
 
-const CLEARED_MMKV = ['notes-import-ledger', 'pet-secrets', 'stopwatch']
+const CLEARED_MMKV = [
+  'notes-import-ledger',
+  'pet-secrets',
+  'stopwatch',
+  'cloud-sync-slots',
+]
 
 const KEPT_MMKV: Record<string, string> = {
   'install-id': 'the install id',
@@ -228,7 +233,7 @@ describe('resetLocalData', () => {
     expect(saved('buddies')).toMatchObject({ buddies: [] })
   })
 
-  it('clears the Notes Import ledger, pet secrets, space keys, invitation secrets and the stopwatch', async () => {
+  it('clears the Notes Import ledger, pet secrets, stored sync slots, space keys, invitation secrets and the stopwatch', async () => {
     native.secrets.set('shared-spaces-keyring', '{"space":{"1":"key"}}')
     native.secrets.set(
       'shared-spaces-invites',
@@ -236,7 +241,12 @@ describe('resetLocalData', () => {
     )
     resetLocalData()
     expect(native.cleared).toEqual(
-      expect.arrayContaining(['default', 'notes-import-ledger', 'pet-secrets'])
+      expect.arrayContaining([
+        'default',
+        'notes-import-ledger',
+        'pet-secrets',
+        'cloud-sync-slots',
+      ])
     )
     expect(native.stopwatchReset).toHaveBeenCalled()
 

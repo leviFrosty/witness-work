@@ -56,6 +56,7 @@ vi.mock('@/app/sync/cloudSync', () => ({
 }))
 vi.mock('@/app/sync/syncOption', () => ({
   currentSyncOption: () => runtime.option,
+  republishSnapshot: vi.fn(async () => {}),
   switchSyncOption: vi.fn(async (to: SyncOption) => {
     const outcome = runtime.switchOutcome ?? {
       outcome: 'switched',
@@ -84,7 +85,9 @@ async function load() {
   const request = await import('@/app/sync/cloudSyncRequest')
   const { usePreferences } = await import('@/stores/preferences')
   const { useUpdateRequired } = await import('@/lib/appUpdate/updateRequired')
-  const { switchSyncOption } = await import('@/app/sync/syncOption')
+  const { republishSnapshot, switchSyncOption } = await import(
+    '@/app/sync/syncOption'
+  )
   const { toast } = await import('@/stores/toasts')
   const { analytics } = await import('@/lib/analytics')
   const { useSupporter } = await import('@/features/supporter/stores/supporter')
@@ -95,6 +98,7 @@ async function load() {
     useUpdateRequired,
     useSupporter,
     switchSyncOption: vi.mocked(switchSyncOption),
+    republishSnapshot: vi.mocked(republishSnapshot),
     toastSuccess: vi.mocked(toast.success),
     capture: vi.mocked(analytics.capture),
   }
@@ -168,6 +172,7 @@ describe('answering the Cloud Sync request', () => {
       outcome: 'already_on',
     })
     expect(app.switchSyncOption).not.toHaveBeenCalled()
+    expect(app.republishSnapshot).toHaveBeenCalledWith('account_request')
     expect(app.toastSuccess).not.toHaveBeenCalled()
     expect(app.capture).toHaveBeenCalledWith('cloud_sync_request_answered', {
       outcome: 'already_on',

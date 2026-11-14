@@ -565,6 +565,13 @@ export const PREFERENCE_DEFAULTS = {
 
   lastiCloudPushedAt: null as number | null,
 
+  iCloudPublished: null as {
+    hash: string
+    claim: string
+    modifiedAt: number
+    deviceId: string
+  } | null,
+
   lastiCloudPulledAt: null as number | null,
 
   lastiCloudUploadedAt: null as number | null,

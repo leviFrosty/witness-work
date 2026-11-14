@@ -77,8 +77,29 @@ export type PhotoFiles = {
   write: (path: string, bytes: Uint8Array) => Promise<void>
 }
 
+export type SlotStore = {
+  read: (
+    accountId: string,
+    slotId: string
+  ) => { etag: string; blob: Uint8Array } | null
+  write: (
+    accountId: string,
+    slotId: string,
+    etag: string,
+    blob: Uint8Array
+  ) => void
+  remove: (slotId: string) => void
+
+  prune: (accountId: string, keep: ReadonlySet<string>) => void
+  clear: () => void
+}
+
+export const MAX_STORED_SLOT_BYTES = 2 * 1024 * 1024
+
 export type ServerTransportDeps = {
   access: () => Promise<ServerSyncAccess>
+
+  slotStore?: SlotStore
 
   isAvailable: () => boolean
 
@@ -268,12 +289,60 @@ export function createServerTransport(
     return current
   }
 
+  const storedSlot = (accountId: string, slotId: string) => {
+    try {
+      return deps.slotStore?.read(accountId, slotId) ?? null
+    } catch {
+      return null
+    }
+  }
+  const storeSlot = (
+    accountId: string,
+    slotId: string,
+    etag: string,
+    blob: Uint8Array
+  ) => {
+    if (blob.length > MAX_STORED_SLOT_BYTES) return forgetStoredSlot(slotId)
+    try {
+      deps.slotStore?.write(accountId, slotId, etag, blob)
+    } catch {}
+  }
+  const forgetStoredSlot = (slotId: string) => {
+    try {
+      deps.slotStore?.remove(slotId)
+    } catch {}
+  }
+  const forgetStoredSlots = () => {
+    try {
+      deps.slotStore?.clear()
+    } catch {}
+  }
+
   const readSlot = async (
     current: ServerSyncAccess,
     slot: SyncSlot
   ): Promise<string | null> => {
     const cached = cache.get(slot.slotId)
     if (cached?.etag === slot.etag) return cached.json
+    const open = (blob: Uint8Array) =>
+      JSON.stringify(
+        openSyncBlob(
+          current.syncKey,
+          blob,
+          { accountId: current.accountId, slotId: slot.slotId },
+          current.olderSyncKeys
+        ).payload
+      )
+    const stored = storedSlot(current.accountId, slot.slotId)
+    if (stored?.etag === slot.etag) {
+      try {
+        const json = open(stored.blob)
+        cache.set(slot.slotId, { etag: slot.etag, json })
+        return json
+      } catch {
+        forgetStoredSlot(slot.slotId)
+      }
+    }
     let blob: Uint8Array
     try {
       blob = await getSyncSlot(current.options, slot.slotId)
@@ -284,13 +353,8 @@ export function createServerTransport(
     }
     let json: string
     try {
-      const plaintext = openSyncBlob(
-        current.syncKey,
-        blob,
-        { accountId: current.accountId, slotId: slot.slotId },
-        current.olderSyncKeys
-      )
-      json = JSON.stringify(plaintext.payload)
+      json = open(blob)
+      storeSlot(current.accountId, slot.slotId, slot.etag, blob)
     } catch (error) {
       json =
         error instanceof BackupOpenError && error.problem === 'newer'
@@ -393,6 +457,9 @@ export function createServerTransport(
       const listed = new Set(listing.slots.map((slot) => slot.slotId))
       for (const slotId of cache.keys())
         if (!listed.has(slotId)) cache.delete(slotId)
+      try {
+        deps.slotStore?.prune(current.accountId, listed)
+      } catch {}
       const files: SyncFile[] = []
       for (const slot of listing.slots) {
         const filename = filenameForSlot(slot.slotId)
@@ -450,6 +517,7 @@ export function createServerTransport(
         fail(error)
       }
       cache.delete(slotId)
+      forgetStoredSlot(slotId)
     },
 
     async deleteEndedWebSnapshots(merged) {
@@ -470,6 +538,7 @@ export function createServerTransport(
           continue
         }
         cache.delete(slot.slotId)
+        forgetStoredSlot(slot.slotId)
         deleted.push(filenameForSlot(slot.slotId))
       }
       return deleted
@@ -483,6 +552,7 @@ export function createServerTransport(
         fail(error)
       }
       cache = new Map()
+      forgetStoredSlots()
     },
 
     async writeBinary(filename, sourcePath, phases) {
@@ -733,6 +803,7 @@ export function createServerTransport(
     lastSeq: () => seq,
     reset() {
       cache = new Map()
+      forgetStoredSlots()
       photoFilenames = new Map()
       olderKeysByName = new Map()
       listedPhotos = new Map()

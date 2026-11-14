@@ -26,12 +26,18 @@ export type SyncOption = SyncProvider | 'off'
 export const currentSyncOption = (): SyncOption =>
   usePreferences.getState().iCloudSyncEnabled ? syncProvider() : 'off'
 
+export function republishSnapshot(reason: string): Promise<void> {
+  usePreferences.setState({ iCloudSyncPendingPush: true })
+  return iCloudSync.flushPendingPush(reason)
+}
+
 const NAMESPACE_RESET = {
   iCloudSyncPendingPush: true,
   iCloudSyncIssue: null,
   iCloudSyncErrorCode: null,
   lastiCloudSyncAt: null,
   lastiCloudPushedAt: null,
+  iCloudPublished: null,
   lastiCloudPulledAt: null,
   lastiCloudUploadedAt: null,
   iCloudUploadPendingSince: null,

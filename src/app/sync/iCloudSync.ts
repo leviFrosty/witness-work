@@ -110,6 +110,7 @@ import {
   SyncPayload,
 } from '@/app/sync/payload'
 import { classifyUploadStatus, UploadVerdict } from '@/app/sync/uploadStatus'
+import { contentHash } from '@/lib/contentHash'
 import { isAccountFilename } from '@/lib/accountFile'
 import { reclaimAccountFile } from '@/lib/account'
 import {
@@ -189,6 +190,7 @@ const SYNC_FILE_EXT = '.json'
 let installed = false
 let pushScheduled = false
 let pushInFlight: Promise<boolean> | null = null
+let pushInFlightWrites = true
 let editGeneration = 0
 
 let publishedThisLaunch = false
@@ -250,7 +252,7 @@ function armPushRetry() {
     () => {
       pushRetryTimer = null
       if (usePreferences.getState().iCloudSyncPendingPush)
-        void push('push-retry')
+        void push('push-retry', { ifChanged: true })
     },
     Math.max(0, nextPushAllowedAt - Date.now())
   )
@@ -278,6 +280,10 @@ let lastPullComplete = false
 let lastReadFoundFiles = false
 
 let lastReadModifiedAt: ReadonlyMap<string, number> = new Map()
+
+let lastOwnFileModifiedAt: number | null = null
+
+let ownClaimSettled = false
 
 let mergedForPrune: {
   files: ReadonlyMap<string, number>
@@ -1548,10 +1554,17 @@ async function gcImages(): Promise<void> {
   }
 }
 
-export function push(reason: string): Promise<boolean> {
-  if (pushInFlight) return pushInFlight
+export function push(
+  reason: string,
+  { ifChanged = false }: { ifChanged?: boolean } = {}
+): Promise<boolean> {
+  if (pushInFlight) {
+    if (ifChanged || pushInFlightWrites) return pushInFlight
+    return pushInFlight.then(() => push(reason))
+  }
   let succeeded = false
-  pushInFlight = pushInner(reason)
+  pushInFlightWrites = !ifChanged
+  pushInFlight = pushInner(reason, ifChanged)
     .then((result) => {
       succeeded = result
       return result
@@ -1577,7 +1590,7 @@ async function calibrateClock(): Promise<void> {
     })
 }
 
-async function pushInner(reason: string): Promise<boolean> {
+async function pushInner(reason: string, ifChanged: boolean): Promise<boolean> {
   perf.count('sync:push')
   if (!canSync()) {
     setPrefsIfChanged({ iCloudSyncPendingPush: true })
@@ -1629,11 +1642,22 @@ async function pushInner(reason: string): Promise<boolean> {
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
     const transport = syncTransport()
-    await withTransportTimeout(
-      'write',
-      transport.write(filename, json),
-      transport.writeTimeoutMs
-    )
+    const snapshot = transport.writeConfirmsUpload
+      ? publishedSnapshot(payload)
+      : null
+    const published =
+      ifChanged && snapshot ? unchangedSince(snapshot, deviceId) : null
+    if (published) perf.count('sync:push-unchanged')
+    const modifiedAt = published
+      ? published.modifiedAt
+      : await withTransportTimeout(
+          'write',
+          transport.write(filename, json),
+          transport.writeTimeoutMs
+        )
+    if (!published)
+      lastOwnFileModifiedAt =
+        snapshot && typeof modifiedAt === 'number' ? modifiedAt : null
     const covered = generation === editGeneration
     const now = Date.now()
     const prefs = usePreferences.getState()
@@ -1646,6 +1670,11 @@ async function pushInner(reason: string): Promise<boolean> {
       iCloudSyncPendingPush: !covered,
       lastiCloudSyncAt: now,
       lastiCloudPushedAt: now,
+      iCloudPublished:
+        published ??
+        (snapshot && typeof modifiedAt === 'number'
+          ? { ...snapshot, modifiedAt, deviceId }
+          : null),
       ...(prefs.iCloudSyncIssue === 'push-failed' && {
         iCloudSyncIssue: null,
         iCloudSyncErrorCode: null,
@@ -1668,10 +1697,14 @@ async function pushInner(reason: string): Promise<boolean> {
     publishedThisLaunch = true
     if (!covered) schedulePush()
     if (prunePlan) void pruneEndedWebSnapshots(prunePlan)
-    logger.log(`${tag()} push success`, { reason, filename })
+    logger.log(`${tag()} push success`, {
+      reason,
+      filename,
+      unchanged: published !== null,
+    })
     errorTracking.addBreadcrumb({
       category: 'iCloudSync',
-      message: `push (${reason}) ${sizeBucket(json.length)}`,
+      message: `push (${reason}) ${published ? 'unchanged' : sizeBucket(json.length)}`,
       level: 'info',
     })
 
@@ -1682,6 +1715,7 @@ async function pushInner(reason: string): Promise<boolean> {
     if (photoReferences) deleteReplacedPhotos(photoReferences, photosMark)
     return true
   } catch (e) {
+    lastOwnFileModifiedAt = null
     const code = syncTransportErrorCode(e)
     lastPushRetryAfterMs =
       e instanceof SyncTransportError ? e.retryAfterMs : null
@@ -1706,6 +1740,40 @@ async function pushInner(reason: string): Promise<boolean> {
     recordPushFailure(code)
     return false
   }
+}
+
+type PublishedSnapshot = NonNullable<
+  ReturnType<typeof usePreferences.getState>['iCloudPublished']
+>
+
+const PUBLISHED_MAX_AGE_MS = 24 * 60 * 60_000
+
+function publishedSnapshot(
+  payload: SyncPayload
+): Pick<PublishedSnapshot, 'hash' | 'claim'> {
+  const { revenueCat, ...data } = payload
+  const json = JSON.stringify({ ...data, writtenAt: 0 })
+  return {
+    hash: `${json.length}:${contentHash(json)}`,
+    claim: revenueCat ? JSON.stringify(revenueCat) : '',
+  }
+}
+
+function unchangedSince(
+  snapshot: Pick<PublishedSnapshot, 'hash' | 'claim'>,
+  deviceId: string
+): PublishedSnapshot | null {
+  const published = usePreferences.getState().iCloudPublished
+  if (
+    !published ||
+    published.deviceId !== deviceId ||
+    published.modifiedAt !== lastOwnFileModifiedAt ||
+    Math.abs(syncNow() - published.modifiedAt) >= PUBLISHED_MAX_AGE_MS ||
+    published.hash !== snapshot.hash
+  )
+    return null
+  const claimLoading = !ownClaimSettled && snapshot.claim === ''
+  return claimLoading || published.claim === snapshot.claim ? published : null
 }
 
 async function pruneEndedWebSnapshots(plan: {
@@ -1867,7 +1935,7 @@ const debouncedPush = debounce(
       perf.count('sync:push-skipped')
       return
     }
-    void push('store-change')
+    void push('store-change', { ifChanged: true })
   },
   PUSH_DEBOUNCE_MS,
   { leading: false, trailing: true }
@@ -2047,9 +2115,12 @@ async function pullAndMergeInner(
       iCloudSyncErrorCode: syncTransportErrorCode(e) ?? 'unknown',
     })
     scheduleReadRetry()
+    lastOwnFileModifiedAt = null
     return { changed: false, complete: false, ownFile: null }
   }
   cancelReadRetry()
+  lastOwnFileModifiedAt =
+    read.files.find((file) => file.filename === ownFilename)?.modifiedAt ?? null
   let issue: 'newer-version' | 'invalid-file' | 'read-failed' | null = null
   const { files, pending } = read
   lastReadFoundFiles = files.length > 0
@@ -2562,7 +2633,7 @@ async function catchUp(reason: string): Promise<void> {
       pulled.ownFile === false ||
       !publishedThisLaunch
     ) {
-      await push(reason)
+      await push(reason, { ifChanged: true })
     } else {
       perf.count('sync:push-skipped')
 
@@ -2605,7 +2676,10 @@ export function installiCloudSync(): () => void {
     schedulePush()
   })
 
-  const unsubAccountClaim = onOwnAccountClaimChange(() => schedulePush())
+  const unsubAccountClaim = onOwnAccountClaimChange(() => {
+    ownClaimSettled = true
+    schedulePush()
+  })
 
   let lastForegroundCatchUpAt = 0
   let launchCatchUpStarted = false
@@ -2617,7 +2691,7 @@ export function installiCloudSync(): () => void {
     if (now - lastForegroundCatchUpAt < FOREGROUND_CATCH_UP_MS) {
       perf.count('sync:catchUp-throttled')
       if (usePreferences.getState().iCloudSyncPendingPush && canSync())
-        void push('foreground')
+        void push('foreground', { ifChanged: true })
       return
     }
     lastForegroundCatchUpAt = now

@@ -2,6 +2,7 @@ import { onCloudSyncStatus } from '@/app/sync/cloudSync'
 import { withSyncOptionLock } from '@/app/sync/syncOptionLock'
 import {
   currentSyncOption,
+  republishSnapshot,
   switchSyncOption,
   type SwitchFailure,
 } from '@/app/sync/syncOption'
@@ -52,6 +53,7 @@ async function answer(status: SyncStatus): Promise<CloudSyncRequestAnswer> {
   const from = await withSyncOptionLock(async () => currentSyncOption())
   if (from === 'cloud') {
     acted()
+    void republishSnapshot('account_request').catch(() => undefined)
     analytics.capture('cloud_sync_request_answered', { outcome: 'already_on' })
     return { outcome: 'already_on' }
   }

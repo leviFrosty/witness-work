@@ -11,6 +11,11 @@ const runtime = vi.hoisted(() => ({
   files: {} as Record<string, Map<string, Uint8Array>>,
 
   mmkv: {} as Record<string, Map<string, string>>,
+
+  slots: {} as Record<
+    string,
+    Map<string, { accountId: string; etag: string; blob: Uint8Array }>
+  >,
 }))
 
 vi.mock('react-native', () => ({
@@ -188,6 +193,7 @@ async function device(
     '@/stores/conversationStore'
   )
   const { useProfile } = await import('@/stores/profile')
+  const { default: useMileage } = await import('@/stores/mileage')
   const { useUpdateRequired } = await import('@/lib/appUpdate/updateRequired')
   const claims = await import('@/lib/accountClaimRegistry')
   const pullSettled = await import('@/lib/cloudSyncPullSettled')
@@ -217,7 +223,28 @@ async function device(
 
   const accountKey = new Uint8Array(32).fill(account.length)
   const accountId = `acct-${account}`.padEnd(22, '0')
+  const slots = (runtime.slots[name] ??= new Map())
   const cloudTransport = createServerTransport({
+    slotStore: web
+      ? undefined
+      : {
+          read: (owner, slotId) => {
+            const slot = slots.get(slotId)
+            return slot?.accountId === owner ? slot : null
+          },
+          write: (owner, slotId, etag, blob) => {
+            slots.set(slotId, { accountId: owner, etag, blob: blob.slice() })
+          },
+          remove: (slotId) => {
+            slots.delete(slotId)
+          },
+          prune: (owner, keep) => {
+            for (const [slotId, slot] of slots)
+              if (!keep.has(slotId) || slot.accountId !== owner)
+                slots.delete(slotId)
+          },
+          clear: () => slots.clear(),
+        },
     access: async () => ({
       accountId,
       syncKey: deriveSyncKey(accountKey),
@@ -305,6 +332,7 @@ async function device(
     useContacts,
     useConversations,
     useProfile,
+    useMileage,
     useUpdateRequired,
     claims,
     pullSettled,
@@ -339,6 +367,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', drive.fetch)
   runtime.files = {}
   runtime.mmkv = {}
+  runtime.slots = {}
   runtime.appState = 'active'
   runtime.os = 'android'
   cryptoPauseMs = 0
@@ -2586,7 +2615,10 @@ describe('requests at launch', () => {
   const sync = () =>
     server.state.log.filter((op) => !op.includes('sync/photos'))
 
-  const launch = async (launched: Device) => {
+  const launch = async (
+    launched: Device,
+    afterwards: () => Promise<void> = async () => {}
+  ) => {
     const uninstall = launched.installiCloudSync()
     try {
       launched.cloudTransport.notifyAvailabilityChange()
@@ -2595,6 +2627,7 @@ describe('requests at launch', () => {
       await launched.iCloudSync.waitForSyncIdle()
       await new Promise((resolve) => setTimeout(resolve, 50))
       await launched.iCloudSync.waitForSyncIdle()
+      await afterwards()
     } finally {
       uninstall()
     }
@@ -2626,6 +2659,238 @@ describe('requests at launch', () => {
     await launch(phone)
     expect(sync()).toEqual(['POST sync/list', 'POST sync/get', 'POST sync/put'])
     expect(phone.contactNames()).toEqual(['Ada Reyes'])
+  })
+
+  describe('on a later launch', () => {
+    const dataOf = (state: object) =>
+      Object.fromEntries(
+        Object.entries(state).filter(([, value]) => typeof value !== 'function')
+      )
+    const reopen = async (d: Device, option: Option = 'cloud') => {
+      const saved = {
+        preferences: dataOf(d.usePreferences.getState()),
+        contacts: dataOf(d.useContacts.getState()),
+        profile: dataOf(d.useProfile.getState()),
+        mileage: dataOf(d.useMileage.getState()),
+      }
+      const reborn = await device(d.name, {
+        os: d.os,
+        account: d.account,
+        option,
+      })
+      reborn.usePreferences.setState(saved.preferences)
+      reborn.useContacts.setState(saved.contacts)
+      reborn.useProfile.setState(saved.profile)
+      reborn.useMileage.setState(saved.mileage)
+      server.state.log.length = 0
+      return reborn
+    }
+    const launched = async () => {
+      const phone = await relaunch('ios')
+      phone.useContacts.setState({
+        contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+      })
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+      return phone
+    }
+
+    it('uploads nothing when nothing changed', async () => {
+      const phone = await reopen(await launched())
+      phone.usePreferences.setState({
+        lastiCloudSyncAt: 1,
+        lastiCloudPushedAt: 1,
+        lastiCloudUploadedAt: 1,
+      })
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list'])
+      expect(phone.usePreferences.getState()).toMatchObject({
+        iCloudSyncPendingPush: false,
+        iCloudSyncIssue: null,
+      })
+      const { lastiCloudSyncAt, lastiCloudPushedAt, lastiCloudUploadedAt } =
+        phone.usePreferences.getState()
+      expect(lastiCloudSyncAt).toBeGreaterThan(1)
+      expect(lastiCloudPushedAt).toBeGreaterThan(1)
+      expect(lastiCloudUploadedAt).toBeGreaterThan(1)
+
+      await phone.iCloudSync.catchUp('foreground')
+      expect(sync()).toEqual(['POST sync/list', 'POST sync/list'])
+    })
+
+    it('downloads nothing when no other device changed either', async () => {
+      const before = await launched()
+      const tablet = await device('tablet', { os: 'ios' })
+      tablet.useContacts.setState({
+        contacts: [contact('c2', 'Ben Ortiz', NOW)] as never,
+      })
+      expect(await tablet.iCloudSync.push('manual')).toBe(true)
+      const first = await reopen(before)
+      await launch(first)
+      expect(sync()).toEqual([
+        'POST sync/list',
+        'POST sync/get',
+        'POST sync/put',
+      ])
+      expect(first.contactNames()).toEqual(['Ada Reyes', 'Ben Ortiz'])
+
+      const phone = await reopen(first)
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list'])
+      expect(phone.contactNames()).toEqual(['Ada Reyes', 'Ben Ortiz'])
+    })
+
+    it('uploads what changed while the app was closed', async () => {
+      const phone = await reopen(await launched())
+      phone.useContacts.setState({
+        contacts: [contact('c1', 'Ada R.', NOW + 1_000)] as never,
+      })
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+
+      const again = await reopen(phone)
+      await launch(again)
+      expect(sync()).toEqual(['POST sync/list'])
+    })
+
+    it('uploads again when its slot is no longer the one it wrote', async () => {
+      const before = await launched()
+      const tablet = await device('tablet', { os: 'ios' })
+      await tablet.cloudTransport.write(filenameOf(before.slotId()), '{}')
+      const phone = await reopen(before)
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+    })
+
+    it('leaves Google Drive alone too when nothing changed', async () => {
+      const written = () =>
+        drive.files('family').map((file) => [file.name, file.modifiedAt])
+      const first = await device('phone', { os: 'android', option: 'platform' })
+      first.useContacts.setState({
+        contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+      })
+      await first.iCloudSync.catchUp('launch')
+      const before = written()
+      expect(before).toHaveLength(1)
+
+      const phone = await reopen(first, 'platform')
+      await phone.iCloudSync.catchUp('launch')
+      expect(written()).toEqual(before)
+
+      const edited = await reopen(phone, 'platform')
+      edited.useContacts.setState({
+        contacts: [contact('c1', 'Ada R.', NOW + 1_000)] as never,
+      })
+      await edited.iCloudSync.catchUp('launch')
+      expect(written()).not.toEqual(before)
+    })
+
+    const puts = () => sync().filter((op) => op === 'POST sync/put').length
+    const unchanged = { ifChanged: true }
+
+    it('uploads nothing for an edit that changed nothing it sends', async () => {
+      const phone = await reopen(await launched())
+      await launch(phone)
+      phone.usePreferences.setState({ iCloudSyncPendingPush: true })
+      expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(true)
+      expect(puts()).toBe(0)
+      expect(phone.usePreferences.getState().iCloudSyncPendingPush).toBe(false)
+
+      phone.useContacts.setState({
+        contacts: [contact('c1', 'Ada R.', NOW + 1_000)] as never,
+      })
+      expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(true)
+      expect(puts()).toBe(1)
+      expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(true)
+      expect(puts()).toBe(1)
+    })
+
+    it('still uploads when asked to outright', async () => {
+      const phone = await reopen(await launched())
+      await launch(phone)
+      expect(await phone.iCloudSync.push('manual')).toBe(true)
+      expect(puts()).toBe(1)
+      await phone.republishSnapshot('account_request')
+      expect(puts()).toBe(2)
+    })
+
+    it('uploads for a push that must write, even behind one that needn’t', async () => {
+      const phone = await reopen(await launched())
+      await launch(phone)
+      const [skipped, written] = await Promise.all([
+        phone.iCloudSync.push('store-change', unchanged),
+        phone.iCloudSync.push('key-change'),
+      ])
+      expect([skipped, written]).toEqual([true, true])
+      expect(puts()).toBe(1)
+    })
+
+    it('uploads after a push that failed, whatever the slot looked like before', async () => {
+      const phone = await reopen(await launched())
+      await launch(phone)
+      server.state.failPuts = true
+      expect(await phone.iCloudSync.push('manual')).toBe(false)
+      server.state.failPuts = false
+      const before = puts()
+      expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(true)
+      expect(puts()).toBe(before + 1)
+    })
+
+    it('waits for the Supporter claim instead of uploading without it', async () => {
+      const claim = { appUserId: 'rc-phone', entitled: true, claimedAt: 5 }
+      const before = await launched()
+      before.claims.setOwnAccountClaim(claim)
+      expect(await before.iCloudSync.push('manual')).toBe(true)
+
+      const phone = await reopen(before)
+      await launch(phone, async () => {
+        expect(puts()).toBe(0)
+
+        phone.claims.setOwnAccountClaim(claim)
+        expect(phone.usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+        expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(
+          true
+        )
+        expect(puts()).toBe(0)
+
+        phone.claims.setOwnAccountClaim(null)
+        expect(await phone.iCloudSync.push('store-change', unchanged)).toBe(
+          true
+        )
+        expect(puts()).toBe(1)
+      })
+    })
+
+    it('uploads again once its slot is a day old', async () => {
+      const before = await launched()
+      const realNow = Date.now
+      const later = vi
+        .spyOn(Date, 'now')
+        .mockImplementation(() => realNow() + 25 * 60 * 60_000)
+      try {
+        const phone = await reopen(before)
+        await launch(phone)
+        expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+
+        const again = await reopen(phone)
+        await launch(again)
+        expect(sync()).toEqual(['POST sync/list'])
+      } finally {
+        later.mockRestore()
+      }
+    })
+
+    it('uploads again under a new device id', async () => {
+      const phone = await reopen(await launched())
+      phone.usePreferences.setState({
+        iCloudPublished: {
+          ...phone.usePreferences.getState().iCloudPublished!,
+          deviceId: 'another-device',
+        },
+      })
+      await launch(phone)
+      expect(sync()).toEqual(['POST sync/list', 'POST sync/put'])
+    })
   })
 
   it('still notices that its own slot is gone and uploads it again', async () => {

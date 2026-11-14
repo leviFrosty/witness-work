@@ -628,6 +628,7 @@ const preferenceShapes = z
     weekPlanReminderDay: z.number().int().min(0).max(6).optional(),
     weekPlanReminderTime: z.number().int().min(0).max(1439).optional(),
     weekPlanReminderEnabledAt: timestamp.nullable().optional(),
+    territoryInsightsLoadingHidden: z.boolean().optional(),
     serviceYearCatchUpStatus: z
       .enum(['pending', 'skipped', 'completed', 'dismissed'])
       .nullable()

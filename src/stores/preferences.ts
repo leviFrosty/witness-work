@@ -616,6 +616,8 @@ export const PREFERENCE_DEFAULTS = {
 
   onboardingPasskeysOffered: null as boolean | null,
 
+  territoryInsightsLoadingHidden: false,
+
   serviceYearCatchUpStatus: null as
     | 'pending'
     | 'skipped'

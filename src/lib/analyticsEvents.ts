@@ -213,6 +213,7 @@ export const analyticsEventNames = [
   'territories_view_changed',
   'territory_insights_ready',
   'territory_insights_opened',
+  'territory_insights_loading_hidden',
   'territory_insights_chart_explored',
 
   'pet_adopted',

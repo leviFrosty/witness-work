@@ -1,8 +1,10 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { ChartColumn as ChartColumnIcon } from 'lucide-react-native'
+import { ChartColumn as ChartColumnIcon, X as XIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import ContextMenu from '@/components/ui/ContextMenu'
+import IconButton from '@/components/ui/IconButton'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -21,6 +23,8 @@ import {
 } from '@/features/territories/lib/insightsText'
 import { useTerritoryTallies } from '@/features/territories/stores/territoryVisits'
 import useNow from '@/hooks/useNow'
+import { usePreferences } from '@/stores/preferences'
+import { toast } from '@/stores/toasts'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 export default function TerritoryInsightsCard({
@@ -35,6 +39,8 @@ export default function TerritoryInsightsCard({
   const insights = territoryInsights(tallies, { now })
   const title = i18n.t('territories.insights.title')
   const source = territoryId === undefined ? 'card' : 'territory'
+  const loadingHidden = usePreferences((s) => s.territoryInsightsLoadingHidden)
+  const setPreferences = usePreferences((s) => s.set)
 
   if (territoryId !== undefined && insights.total === 0) return null
 
@@ -66,36 +72,95 @@ export default function TerritoryInsightsCard({
     </View>
   )
 
-  if (!insights.ready)
+  if (!insights.ready) {
+    if (loadingHidden) return null
+
+    const hide = () => {
+      setPreferences({ territoryInsightsLoadingHidden: true })
+      analytics.capture('territory_insights_loading_hidden', {
+        source,
+        visits: insights.total,
+      })
+      toast.undo({
+        title: i18n.t('territories.insights.hidden'),
+        onUndo: () => setPreferences({ territoryInsightsLoadingHidden: false }),
+      })
+    }
+
     return (
-      <Card style={{ gap: 10 }} testID='territory-insights-card'>
-        {heading(
-          <InfoPopover
-            title={title}
-            description={i18n.t(
-              territoryId === undefined
-                ? 'territories.insights.info'
-                : 'territories.insights.territoryInfo'
-            )}
-            inline
-          />
-        )}
-        <Text
-          style={{
-            fontFamily: theme.fonts.semiBold,
-            fontSize: theme.fontSize('lg'),
-          }}
+      <ContextMenu
+        accessibilityLabel={title}
+        hoverRadius={inputLayout.sectionRadius}
+        pointerEffect='none'
+        actions={[
+          {
+            id: 'hide_until_ready',
+            title: i18n.t('territories.insights.hideUntilReady'),
+            systemImage: 'eye.slash',
+            onPress: hide,
+          },
+        ]}
+      >
+        <Card
+          style={{ gap: 8, paddingVertical: 18 }}
+          testID='territory-insights-card'
         >
-          {i18n.t('territories.insights.checkBackLater')}
-        </Text>
-        <Text style={{ color: theme.colors.textAlt }}>
-          {i18n.t('territories.insights.needMore', {
-            count: insights.remaining,
-          })}
-        </Text>
-        <InsightsProgress total={insights.total} />
-      </Card>
+          {heading(
+            <>
+              <View style={{ flex: 1, maxWidth: 160, marginLeft: 6 }}>
+                <InsightsProgress total={insights.total} />
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginRight: -12,
+                }}
+              >
+                <InfoPopover
+                  title={title}
+                  description={i18n.t(
+                    territoryId === undefined
+                      ? 'territories.insights.info'
+                      : 'territories.insights.territoryInfo'
+                  )}
+                  inline
+                />
+                <IconButton
+                  icon={XIcon}
+                  size={18}
+                  color={theme.colors.textAlt}
+                  onPress={hide}
+                  neighborGap={0}
+                  accessibilityLabel={i18n.t(
+                    'territories.insights.hideUntilReady_a11y'
+                  )}
+                  testID='territory-insights-hide'
+                  style={{
+                    width: 44,
+                    height: 44,
+                    marginVertical: -10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                />
+              </View>
+            </>
+          )}
+          <Text
+            style={{
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('territories.insights.needMore', {
+              count: insights.remaining,
+            })}
+          </Text>
+        </Card>
+      </ContextMenu>
     )
+  }
 
   const notEnough = i18n.t('territories.insights.notEnough')
   return (
@@ -109,8 +174,9 @@ export default function TerritoryInsightsCard({
           navigation.navigate('TerritoryInsights', { territoryId })
         }}
         style={{
-          gap: 14,
-          padding: 20,
+          gap: 10,
+          paddingHorizontal: 20,
+          paddingVertical: 18,
           borderRadius: inputLayout.sectionRadius,
           borderCurve: 'continuous',
         }}

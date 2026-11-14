@@ -2,7 +2,7 @@
 
 WitnessWork is the easy way for Jehovah's Witnesses to manage their field service priorities.
 
-It is written in Typescript using React Native and Expo and is available on iOS and Android.
+It's available on iOS, Android, and the web, built in TypeScript with React Native and Expo.
 
 ## Sponsor
 
@@ -10,13 +10,11 @@ Please consider donating if you have found WitnessWork helpful to you in your se
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/leviwilkerson)
 
-## Looking for maintainers
-
-Due to my increased time constraints volunteering, my day job, family, etc., I'm looking for someone to take the lead in bug fixes + future development on this project for the foreseeable future. Please contact me at <levi@leviwilkerson.com>.
-
 ## View it live
 
-[![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/jw-time/id6469723047)
+[![App Store](https://img.shields.io/badge/App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white)](https://apps.apple.com/us/app/witnesswork/id6469723047)
+[![Google Play](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.leviwilkerson.jwtime)
+[![Web](https://img.shields.io/badge/Web-2f9e44?style=for-the-badge&logo=googlechrome&logoColor=white)](https://app.witnesswork.app)
 
 <div float="left">
 <img src="./docs/screenshots/preview1.jpg" width="130">
@@ -35,365 +33,100 @@ WitnessWork is available in 19 languages, translated with AI, including Arabic w
 
 Development setup (iOS and Android) and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
 
-### Source comments
-
-JavaScript and TypeScript source files (`.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs`, `.mts`, `.cts`) must not contain comments. `pnpm lint` enforces `source/no-comments`, including JSDoc, JSX comments, and tooling directives. Inline ESLint configuration is disabled, so a comment cannot turn the rule off. Executable hashbangs are preserved.
-
-- `pnpm comments:check` checks tracked and non-ignored untracked source files without changing them.
-- `node scripts/strip-comments.mjs` previews which files need cleanup.
-- `pnpm comments:strip` removes comments with the TypeScript parser, checks that stripping preserves the syntax tree, and formats changed files with Prettier. Strings, regular expressions, and template text are left intact. All files are parsed before writing; symlinks and deleted files are skipped.
-- `pnpm test:source-comments` tests the cleanup and ESLint rule.
-
-Keep explanations in Markdown documentation, types in TypeScript or companion `.d.mts` declarations, and lint configuration outside source files. `eslint-suppressions.json` carries the existing lint exceptions previously expressed as directives, with per-file/per-rule violation budgets rather than blanket rule overrides. New violations beyond those budgets still fail lint. Intentional empty catch blocks are allowed without explanatory comments. Markdown, native Swift/Kotlin code, dependencies, ignored generated files, and license files are not stripped.
-
 ## Architecture
 
-How the app, its backend [ww-api](https://github.com/leviFrosty/ww-api) (a Cloudflare Worker), and the services they call connect. Arrows point from the caller to what it calls or reads, and dashed arrows are pushes and background work. "A / B" boxes name the iOS / Android pair that does the same job, such as App Attest / Play Integrity.
+How the app, its backend [ww-api](https://github.com/leviFrosty/ww-api), and the services they use connect. Arrows point from the caller to what it calls; dashed arrows are pushes and background work.
+
+[Open the diagram in Mermaid Live](https://mermaid.live/view#pako:eNp9Vm1T4zYQ_isa35c2KBQYKCTT6YxJQsnxkkzsO8qcOyDb60SNY3kkmTS9u__eleQkduEYPsRa6Vnt7vPsiq9eIlLw-l6Wi3WyYFKT8DIqCFFVPJesXJDB7Xh0HwZfIu9hARJICaLMgVQKyAPXBSj1IOQy8v4yKEL86RSPPnc6jU3CyrLTiQo-CcgB8YtUCp4-7yAPo8vXEFEQvQCyhtgg0cHh2u2ucfcQ13v86M9w5ge1C6aThblPUbLm6Rw0fgRccuNFL6So5gvruFyIAkjDDxRpVLQyn9764dVkdoee_dLk_Av5Q4g5fiiQLzwBtQth-hQ83g9cCHyQiyolQ8lfGhC7NEGoTZGQjOegnhvwm9Fj0ILfwAbp4AV6uMxFsiSBFtI6YEkiqkKTJWyaHvwwHAWh84HhEl9rUBrh05xtyLjQMJdcb4yHUooXUISRORQVb5fBuLrzp3Uwd6y84XqfBa5Vp9M8O_0UXNeXTu8Vnrwa3Nk7KrUgKeSYtWzFGYST2Wgfpk1rf4EJ1sElpq_2RXpNz-AKvdhiZTmT0FDg2Llfr7us5MTICWSjcqgIV-MAqaDkskpTDkYmKH9IyYBJRaMiBIn1EtJtJZLHQPwxJSghjfLJWVHwYk5Jzotlg8qhH_pffmrer9AJm1vqhseUDCvJYsx0Ev8NiYlldkLJzWf08HPtYoIerINrocmnMmXahY-kyS5qt8u4JJW1q1YXXU-2AniA2JBKFkJpW868UmTFSsKKlMRCd5MFoKYyyVZNH8E4rKn5X7MZH9iKimPqB-Qa8pIMACUlG9iRPxvUUmgcwF5hSKVx4IhQWMUfk4q9PJrd-7foZ1JpxdM3mi14ur29cxdNSihmhhBboH9Bii6WhXUlaLyd4xBZ4XjLmyk-XY-2-jNfVhdpKjFZbIkDSy_y2gTM6saewQv2CwyYxnOBlry0pAZVWQppUn0lWoOe1jWZIhXXYm7vK1i-0TxB8lG6c_xRlXyBTQsX4NSdPTpsgMlI2xcxS5ZYNYLiFLJ1HvkPPg9abfvRjNuwkoXSOG9qDo0MqNEAsRp4RYWbpuS3bvd3M8yNCX-IW47NEm96a1kLsAlAJTeXRl6ttZWMsbgv0j1849R2DBtb_Rg5NJa25Q2JquMxcdQ2VxZ3bmxtpkObayuntsEIo22ZDdprx87OhnF_izwz8yLvWz0VbV4IdEm4ube3OQTysRBiaUC2mmY_yZlSQ8jwgyPv5q3I-x_ik-wkjqnSUiyh_-Ek68HpKU1ELmT_wzGYvxYYB5TOhFzVcOhBAtkOfto7Ozo7fwe-tr1ag7MMLpJkB4aLs95R8g5YaRxNO2xydH6xw6a904uj7B0s_IOdhP1Rw9OjOMv2cf96fnqc9n4AN0qgyDetJezqt992jzR1jy3dvpjUvXfUkUZronb1a3ofUxQ0rfVFjU5pLVxXrv1ZozFXhr3N6ow6cVEjAmoUTLdaolut7koQFR71ViBXjKf4H9rXyMPhv8KHrh95KWSsynXkfcczrNLCvGVeX8sKqOfehiFnOFNXzvj9P-cDKOo) to zoom and pan.
 
 ```mermaid
-flowchart LR
-  %% WitnessWork architecture, high level.
-  %% Arrows point from the caller to what it calls or reads. Dashed arrows are pushes and background work.
-  %% "A / B" boxes are the iOS / Android pair for the same job.
-
-  subgraph DEVICE["Other surfaces on the device"]
-    C_WIDGETS["`**iOS widgets, Live Activity**
-read a snapshot, App Group`"]
-    C_SIRI["`**Siri + Shortcuts (iOS)**
-queue drafts, App Group`"]
-    C_WATCH["`**Apple Watch app**
-via WatchConnectivity`"]
-    C_WEAR["`**Wear OS app**
-via Wearable Data Layer`"]
-    C_NSE["`**iOS notification extension**
-names Buddies alerts`"]
+flowchart TB
+  subgraph CLIENTS["Where people use WitnessWork"]
+    APP["`**WitnessWork app**
+iOS + Android`"]
+    WEB["`**WitnessWork on the web**
+app.witnesswork.app`"]
+    EXTRAS["`**Watch apps, widgets, Siri**
+through the phone app`"]
   end
 
-  subgraph APP["WitnessWork app"]
-    A_LOCAL[("`**On-device data**
-Zustand stores in MMKV + files`")]
-    A_CORE["`**Field service core, local only**
-time, reports, plans, Assistant
-progress, badges, mileage`"]
-    A_BUDDIES["`**Buddies**
-end-to-end encrypted sharing`"]
-    A_CARS["`**Shared Cars**
-end-to-end encrypted mileage spaces`"]
-    A_TERR["`**Territories**
-end-to-end encrypted territory spaces,
-one scope per street, guest links`"]
-    A_ACCOUNT["`**Account**
-anonymous account, recovery key,
-Set Up Another Device, backup`"]
-    A_SYNC["`**Sync + backups**
-one option per device: Cloud Sync,
-iCloud / Google Drive, or off`"]
-    A_SCRIBE["`**Scribe AI**
-on-device voice + photo text,
-tools run on the phone`"]
-    A_ROUTE["`**Route planning**
-Supporter only`"]
-    A_CONTACTS["`**Contacts, visits + map**
-addresses and pins`"]
-    A_LINKS["`**Share links**
-contacts, Buddies invites`"]
-    A_SUPPORTER["`**Supporter + paywall**
-purchases and entitlements`"]
-    A_SHELL["`**App shell**
-analytics, flags, surveys, OTA`"]
-    A_HELP["`**Help Center**
-offline snapshot + downloaded bundle`"]
-  end
-
-  subgraph PLATFORM["Apple / Google platform services"]
-    P_CAL["`**Device calendar**
-EventKit / CalendarContract`"]
-    P_SEED["`**iCloud Keychain / Block Store**
-account key (Buddies root seed)`"]
+  subgraph PLATFORM["Apple / Google services"]
     P_SYNC["`**iCloud Drive / Google Drive**
-sync files + photos`"]
+sync files`"]
+    P_KEYS["`**iCloud Keychain / Block Store**
+account key`"]
     P_ATTEST["`**App Attest / Play Integrity**
 proves a genuine app`"]
-    P_MAPS["`**MapKit / Google Maps SDK**
-maps, place search, iOS directions`"]
-    P_PASSKEY["`**ASAuthorization / Credential Manager**
-passkeys + PRF (WebAuthn in the browser)`"]
-  end
-
-  P_PUSH["`**APNs / FCM**
+    P_MAPS["`**MapKit / Google Maps**`"]
+    P_PUSH["`**APNs / FCM**
 push delivery`"]
-
-  W_BROWSER["`**WitnessWork on the web**
-the same app in a browser`"]
+    P_STORE["`**App Store / Google Play**
+purchases`"]
+  end
 
   subgraph CF["Cloudflare"]
-    S_OTA["`**Hot Updater Workers**
-separate dev / beta / prod`"]
-    D_OTA[("`**D1 databases**
-release catalogs + operational reports`")]
-    B_OTA[("`**Private R2 buckets**
-signed JavaScript + assets`")]
-    S_WEB["`**Web app Workers**
-static files, headers, CSP reports
-separate dev / beta / prod`"]
-    S_MAPSF["`**Maps frame Workers**
-maps.witnesswork.app, maps-dev:
-static page that runs MapKit JS`"]
-    S_VERIFYF["`**Turnstile frame Workers**
-verify.witnesswork.app, verify-dev:
-static page that runs Turnstile`"]
-    S_OTA --> D_OTA
-    S_OTA -->|"signed downloads"| B_OTA
-    subgraph WORKER["ww-api Worker, api.witnesswork.app"]
-      R_BUD["`**/buddies/v1/...**
-signed ops, live WebSocket, photos`"]
-      R_SPACES["`**/spaces/v1/...**
-bearer ops on sealed records, live WebSocket`"]
-      R_SCRIBE["`**/scribe/v1/...**
-status, usage, step SSE, transcribe`"]
-      R_ROUTE["`**POST /route-planning/optimize, /directions**
-coordinates only`"]
-      R_PLACES["`**GET /geocode, /autocomplete**
-HERE proxy, key stays server-side`"]
-      R_MAPS["`**POST /maps/v1/mapkit-tokens, GET /places/v1/search**
-web: MapKit JS tokens (bearer),
-places near a point`"]
-      R_PASSKEY["`**/accounts/v1/passkeys, /web, /approval**
-passkeys + PRF wraps, web sign-up,
-approve a browser from a phone`"]
-      R_ACC["`**/accounts/v1/...**
-attested sessions, bearer ops,
-handoff relay, encrypted backups,
-Cloud Sync slots + photos + live WebSocket,
-RevenueCat link + Supporter status`"]
-      R_RCHOOK["`**POST /revenuecat/v1/webhook**
-keeps Supporter status current`"]
-      R_ATTEST["`**/attestation/v1/...**
-status, challenges, App Attest key setup`"]
-      R_APPCFG["`**GET /app/v1/config**
-minimum app version, sync switches`"]
-      R_LINKS["`**GET /c, /b, /h, /.well-known**
-link pages, Universal + App Links;
-on witnesswork.app: /contacts,
-/buddies/invite, /accounts/handoff`"]
-      R_RATINGS["`**GET /app-store/ratings**
-paywall social proof`"]
-      CRON["`**Hourly cron**
-App Store ratings sweep, pruning`"]
-    end
-    subgraph BUD_STATE["Buddies relay state"]
-      DO_REGQ[("`**BuddyRegistrationQuota DO**
-registrations per caller`")]
-      DO_INV[("`**BuddyInvite DO**
-one per invite, 7-day expiry`")]
-      DO_INBOX[("`**BuddyInbox DO**
-one per inbox, sealed data`")]
-      R2[("`**R2: ww-buddy-blobs**
-sealed photos, 90 days max`")]
-    end
-    subgraph AT_STATE["Attestation state"]
-      DO_AA[("`**AppAttestIdentity DO**
-attested key per iOS install`")]
-      DO_PI[("`**PlayIntegrityChallenges DO**
-one-time Android challenges`")]
-    end
-    DO_SPACE[("`**SharedSpace DO**
-one per shared car: sealed records,
-members, wraps, invites`")]
-    DO_METER[("`**ScribeMeter DO**
-usage windows per account`")]
-    subgraph ACC_STATE["Account state"]
-      D_ACC[("`**D1: accounts**
-account ids, public keys, inbox links,
-sessions, linked RevenueCat customers`")]
-      DO_HANDOFF[("`**AccountHandoff DO**
-one per handoff, 10 minutes`")]
-      R2_BACKUP[("`**R2: ww-account-backups**
-sealed slot per device, 400 days idle`")]
-      DO_SYNC[("`**AccountSync DO**
-one per account: slot and photo index,
-sync sockets, limits, photo purge`")]
-      R2_SYNC[("`**R2: ww-account-sync**
-sealed sync slot per device`")]
-      R2_PHOTOS[("`**R2: ww-account-photos**
-sealed Cloud Sync photos, up to 2 GB an account`")]
-      DO_APPROVAL[("`**AccountApproval DO**
-one per browser approval, sealed key`")]
-      DO_RATE[("`**AccountRateCounter DO**
-rolling caps per hashed IP`")]
-    end
-    subgraph HELP["Help Center search"]
-      S_HELPS["`**ww-help-search Worker**
-help-search.witnesswork.app (services/help-search):
-GET /v1/search, cron content sync`"]
-      AIS[("`**Workers AI + KV**
-embeddings, keyword index by locale`")]
-    end
-    S_SITE["`**ww-marketing (witnesswork.app)**
-static site: Help Center pages + JSON bundles`"]
-    S_WEB["`**Web app host (app.witnesswork.app)**
-/.well-known passkey association files`"]
-    DO_RPQ[("`**RoutePlanningQuota DO**
-route and directions quotas per account`")]
-    KV[("`**Workers KV: NOTES_KV**
-switches, limits, tokens, ratings`")]
+    API["`**ww-api Worker**
+accounts, Cloud Sync, Buddies, Shared Cars,
+Territories, Scribe AI, route planning, links`"]
+    DATA[("`**ww-api storage**
+D1, Durable Objects, R2, KV`")]
+    OTA["`**Hot Updater**
+over-the-air updates`"]
+    WEBHOST["`**Web app host**
+plus map and bot-check frames`"]
+    SITE["`**witnesswork.app**
+website + Help Center`"]
+    SEARCH["`**Help Center search**
+Workers AI`"]
   end
 
-  subgraph EXTERNAL["External services"]
-    S_GPI["`**Play Integrity API (Google)**
-decodes Android verdicts`"]
-    S_OR["`**OpenRouter**
-LLM gateway`"]
-    S_LLM["`**Azure via OpenRouter**
-(zero data retention)`"]
-    S_HERE["`**HERE location APIs**
-geocode, autocomplete, sequence`"]
-    P_STORE["`**App Store / Google Play**
-purchases, App Store ratings`"]
-    S_SENTRY["`**Sentry**
-Worker errors + traces`"]
-    S_RC["`**RevenueCat**
-Supporter entitlements, web checkout pages`"]
-    S_STRIPE["`**Stripe**
-card payments for web checkout`"]
+  subgraph EXTERNAL["Outside services"]
+    S_LLM["`**OpenRouter**
+zero-data-retention models`"]
+    S_HERE["`**HERE**
+addresses + routing`"]
+    S_RC["`**RevenueCat + Stripe**
+Supporter purchases`"]
     S_PH["`**PostHog**
-analytics, flags, surveys, errors,
-masked web session replay`"]
-    S_TURNSTILE["`**Cloudflare Turnstile**
-bot check for web sign-up + recovery`"]
-    S_MAPKITJS["`**Apple MapKit JS**
-the web's map, cdn.apple-mapkit.com`"]
+analytics, flags, surveys`"]
+    S_SENTRY["`**Sentry**
+backend errors`"]
+    S_WEBSVC["`**MapKit JS + Turnstile**
+web map, bot check`"]
   end
 
-  C_WIDGETS --> A_LOCAL
-  C_SIRI --> A_LOCAL
-  C_WATCH <--> A_LOCAL
-  C_WEAR <--> A_LOCAL
-  C_NSE -->|"inbox/sync"| R_BUD
+  EXTRAS <--> APP
+  APP --> API
+  WEB --> API
+  WEB --> WEBHOST
+  APP --> OTA
+  APP --> SITE
+  APP --> SEARCH
+  SEARCH -.-> SITE
+  APP --> PLATFORM
+  CLIENTS --> S_PH
+  APP --> S_RC
+  WEBHOST --> S_WEBSVC
+  API --> DATA
+  API --> S_LLM
+  API --> S_HERE
+  API --> S_RC
+  API --> S_SENTRY
+  API -.->|"push"| P_PUSH
+  S_RC --> P_STORE
+  S_RC -.->|"webhook"| API
 
-  A_CORE -->|"Follow-ups as events"| P_CAL
-  A_BUDDIES -->|"root seed"| P_SEED
-  A_SYNC -->|"iCloud / Drive: sync files + photos"| P_SYNC
-  A_SYNC -->|"Cloud Sync: account session"| A_ACCOUNT
-  A_SYNC -->|"Cloud Sync: bearer: sealed snapshots + photos, WebSocket"| R_ACC
-  A_ACCOUNT -->|"attest device"| P_ATTEST
-  A_CONTACTS -->|"maps, place search"| P_MAPS
-  A_SHELL -->|"fingerprint-compatible OTA"| S_OTA
-  W_BROWSER -->|"app files, CSP reports"| S_WEB
-  W_BROWSER -->|"framed map: coordinates, pin colors, own location; no names"| S_MAPSF
-  W_BROWSER -->|"bearer: MapKit JS token; place search"| R_MAPS
-  W_BROWSER -->|"bearer: directions"| R_ROUTE
-  S_MAPSF -->|"script, tiles, with the app's token"| S_MAPKITJS
-  W_BROWSER -->|"framed check: site key, action; token back"| S_VERIFYF
-  S_VERIFYF -->|"script, widget"| S_TURNSTILE
-
-  A_BUDDIES -->|"signed ops, WebSocket"| R_BUD
-  A_ACCOUNT -->|"account key"| P_SEED
-  A_ACCOUNT -->|"open session, sealed handoff, sealed backup, RevenueCat id"| R_ACC
-  A_ACCOUNT -->|"status, key setup, session challenge"| R_ATTEST
-  A_ACCOUNT -->|"create, sign in"| P_PASSKEY
-  A_ACCOUNT -->|"bearer: passkeys, approve a browser"| R_PASSKEY
-  P_PASSKEY -->|"association files (Apple, Google)"| S_WEB
-  A_SHELL -->|"minimum version"| R_APPCFG
-  A_SCRIBE -->|"account session"| A_ACCOUNT
-  A_CARS -->|"account session"| A_ACCOUNT
-  A_CARS -->|"bearer: sealed records, WebSocket"| R_SPACES
-  A_TERR -->|"account session"| A_ACCOUNT
-  A_TERR -->|"bearer: sealed records per street, WebSocket"| R_SPACES
-  A_TERR -->|"bearer: notes text to read into results"| R_SCRIBE
-  W_BROWSER -->|"guest link: sealed street records, no account"| R_SPACES
-  A_SCRIBE -->|"bearer: conversation + tools, SSE per step"| R_SCRIBE
-  A_ROUTE -->|"account session"| A_ACCOUNT
-  A_ROUTE -->|"bearer: today's stops"| R_ROUTE
-  A_ROUTE -->|"directions (iOS)"| P_MAPS
-  A_CONTACTS -->|"address lookup"| R_PLACES
-  A_LINKS -->|"old-host and apex links"| R_LINKS
-  A_SUPPORTER -->|"paywall ratings"| R_RATINGS
-  A_SUPPORTER -->|"purchases, RevenueCat SDK, web checkout links"| S_RC
-  A_SHELL -->|"events, flags, surveys, errors; masked web replay"| S_PH
-  A_HELP -->|"manifest + locale bundle"| S_SITE
-  A_HELP -->|"search query, locale, platform"| S_HELPS
-
-  R_BUD -->|"register"| DO_REGQ
-  R_BUD -->|"invite claims"| DO_INV
-  R_BUD -->|"RPC + WebSocket"| DO_INBOX
-  R_BUD -->|"photo reads"| R2
-  R_BUD -->|"inbox links"| D_ACC
-  R_ACC -->|"accounts"| D_ACC
-  R_ACC -->|"handoff channel"| DO_HANDOFF
-  R_ACC -->|"backup slots"| R2_BACKUP
-  R_ACC -->|"sync index, WebSocket"| DO_SYNC
-  R_ACC -->|"sync slots"| R2_SYNC
-  DO_SYNC -.->|"retention sweep"| R2_SYNC
-  R_ACC -->|"sync photos"| R2_PHOTOS
-  DO_SYNC -.->|"photo purge"| R2_PHOTOS
-  R_ACC -->|"iOS assertion"| DO_AA
-  R_PASSKEY -->|"credentials, wraps"| D_ACC
-  R_PASSKEY -->|"approval channel"| DO_APPROVAL
-  R_PASSKEY -->|"sign-up + sign-in caps"| DO_RATE
-  R_PASSKEY -->|"Siteverify"| S_TURNSTILE
-  R_ACC -->|"Android verdict"| S_GPI
-  R_ATTEST -->|"iOS keys, challenges"| DO_AA
-  R_ATTEST -->|"Android challenge"| DO_PI
-  DO_INBOX <-->|"invites"| DO_INV
-  DO_INBOX -->|"photo writes"| R2
-  R_SCRIBE -->|"usage windows"| DO_METER
-  R_SPACES -->|"RPC + WebSocket"| DO_SPACE
-  R_ROUTE -->|"daily quota"| DO_RPQ
-  R_ROUTE -->|"Supporter status"| D_ACC
-  R_SCRIBE -->|"Supporter status"| D_ACC
-  R_RCHOOK -->|"customer records"| D_ACC
-  R_RATINGS -->|"cached ratings"| KV
-  CRON -->|"writes ratings"| KV
-  WORKER -.->|"flags, limits, tokens"| KV
-
-  R_BUD -.->|"push"| P_PUSH
-  P_PUSH -.->|"iOS alert"| C_NSE
-  P_PUSH -.->|"Android data push"| A_BUDDIES
-  R_SCRIBE -->|"model steps (streamed) and page reads, ZDR hosts only"| S_OR
-  S_OR --> S_LLM
-  R_ROUTE -->|"waypoint sequence, routing"| S_HERE
-  R_PLACES -->|"geocode, autocomplete"| S_HERE
-  R_MAPS -->|"place search (Discover)"| S_HERE
-  CRON -->|"ratings lookup"| P_STORE
-  S_RC -->|"store receipts"| P_STORE
-  S_RC -->|"web payments (RevenueCat Billing)"| S_STRIPE
-  WORKER -->|"reads customers (REST)"| S_RC
-  S_RC -.->|"webhook events"| R_RCHOOK
-  WORKER -->|"usage events"| S_PH
-  WORKER -->|"errors + traces"| S_SENTRY
-  S_HELPS -->|"embeddings + index"| AIS
-  S_HELPS -.->|"pulls changed answers"| S_SITE
-
-  classDef device fill:#99e9f2,stroke:#0c8599,color:#1e1e1e
-  classDef app fill:#b2f2bb,stroke:#2f9e44,color:#1e1e1e
-  classDef local fill:#ffec99,stroke:#f08c00,color:#1e1e1e
+  classDef client fill:#b2f2bb,stroke:#2f9e44,color:#1e1e1e
   classDef platform fill:#e9ecef,stroke:#495057,color:#1e1e1e
   classDef worker fill:#ffe8cc,stroke:#e8590c,color:#1e1e1e
   classDef state fill:#ffc078,stroke:#d9480f,color:#1e1e1e
   classDef external fill:#d0bfff,stroke:#6741d9,color:#1e1e1e
-  class C_WIDGETS,C_SIRI,C_WATCH,C_WEAR,C_NSE device
-  class A_CORE,A_BUDDIES,A_CARS,A_TERR,A_ACCOUNT,A_SYNC,A_SCRIBE,A_ROUTE,A_CONTACTS,A_LINKS,A_SUPPORTER,A_SHELL,A_HELP app
-  class A_LOCAL local
-  class P_CAL,P_SEED,P_SYNC,P_ATTEST,P_MAPS,P_PASSKEY,P_PUSH,P_STORE,S_GPI platform
-  class R_BUD,R_SPACES,R_ACC,R_PASSKEY,R_RCHOOK,R_ATTEST,R_APPCFG,R_SCRIBE,R_ROUTE,R_PLACES,R_MAPS,R_LINKS,R_RATINGS,CRON,S_HELPS,S_SITE,S_WEB,S_MAPSF,S_VERIFYF worker
-  class DO_REGQ,DO_INV,DO_INBOX,R2,D_ACC,DO_HANDOFF,R2_BACKUP,DO_SYNC,R2_SYNC,DO_APPROVAL,DO_RATE,DO_AA,DO_PI,DO_METER,DO_SPACE,DO_RPQ,KV,AIS state
-  class S_OR,S_LLM,S_HERE,S_SENTRY,S_RC,S_STRIPE,S_PH,S_TURNSTILE,S_MAPKITJS,S_EAS external
+  class APP,WEB,EXTRAS client
+  class P_SYNC,P_KEYS,P_ATTEST,P_MAPS,P_PUSH,P_STORE platform
+  class API,OTA,WEBHOST,SITE,SEARCH worker
+  class DATA state
+  class S_LLM,S_HERE,S_RC,S_PH,S_SENTRY,S_WEBSVC external
 ```
-
-- ww-api runs as one Cloudflare Worker, `ww-proxy`, at `api.witnesswork.app`, and at `ww-proxy.leviwilkerson.com` for builds shipped before [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md). It also serves the link pages and association files on `witnesswork.app`, through exact-path routes ([docs/app-links.md](./docs/app-links.md)). The dev Worker, `ww-proxy-dev` (`api-dev.witnesswork.app`), has its own KV namespace, Durable Objects, and R2 buckets.
-- Buddies cards, events, and photos are sealed on the device before they reach the relay. [docs/buddies-protocol.md](./docs/buddies-protocol.md) lists what the relay can see.
-- Account backups are sealed on the device with a key only the User's devices can derive; the server keeps each device's ciphertext, its size and upload time ([docs/accounts-protocol.md](./docs/accounts-protocol.md#backup)).
-- Each device syncs through one option ([ADR 0030](./docs/adr/0030-cloud-sync-through-ww-api.md)). Cloud Sync, the default, works across iOS and Android: each device's snapshot is sealed with the account's sync key before it reaches ww-api, and the account's sync socket tells its other devices to pull. iCloud and Google Drive sync stay available, and devices sync only with devices on the same option ([docs/icloud-sync.md](./docs/icloud-sync.md)).
-- Scribe AI reaches its model through OpenRouter, pinned to zero-data-retention hosts ([ADR 0008](./docs/adr/0008-notes-import-third-party-llm-zero-retention.md)). Its tools run on the phone: each model step is one bearer request on the account's attested session ([ADR 0027](./docs/adr/0027-account-sessions-attest-once-then-bearer-tokens.md)) carrying the conversation, and ww-api keeps only usage records ([ADR 0032](./docs/adr/0032-scribe-ai-agent-harness.md), [docs/scribe-ai-protocol.md](./docs/scribe-ai-protocol.md)). The old `/notes-import/...` routes answer 426 Update Required, except the status probe older app versions still read.
-- A shared territory is a shared space with one scope per street ([ADR 0047](./docs/adr/0047-shared-territories-are-scoped-record-spaces.md), [docs/territories-protocol.md](./docs/territories-protocol.md)): records are sealed on the device, a hand-off gives a buddy one street's key, and a guest link carries its key only in the URL fragment, which the browser never sends to a server. Reading notes into results sends the notes text to Scribe AI on the account's session.
-- Supporter status lives on the server account ([ADR 0029](./docs/adr/0029-supporter-status-on-the-server-account.md)): the app names the RevenueCat customer it's logged in as, ww-api reads that customer from RevenueCat itself, and RevenueCat's webhook keeps the record current. Legacy route planning still asks RevenueCat about the id it sends.
-- The website and the Help Center's content are built from this repo's `services/marketing`, a static site on Workers Static Assets published at `witnesswork.app` and `witnesswork.app/help` ([ADR 0033](./docs/adr/0033-help-center-on-the-website.md), [ADR 0042](./docs/adr/0042-witnesswork-app-domain.md), [docs/help-center.md](./docs/help-center.md)); development builds use the staging site, `dev.witnesswork.app`, and the old `leviwilkerson.com/witness-work/…` addresses shipped builds use redirect there. The app ships a snapshot, downloads a newer bundle when the Help Center opens, and searches on the device when the `help-search.witnesswork.app` Worker (`services/help-search`) can't answer. Search requests carry the typed query, language, platform and app version, and no account or device identifier.
-- The web's Turnstile check, before web sign-up and recovery-key sign-in, runs in a sandboxed frame on its own origin, `verify.witnesswork.app` (`verify-dev.witnesswork.app` for dev), so Cloudflare's script never runs on the app's origin. The frame gets the site key and the action and posts back only the token ([docs/web-turnstile.md](./docs/web-turnstile.md)).
-- The web's map is Apple MapKit JS in a sandboxed frame on its own origin, `maps.witnesswork.app` (`maps-dev.witnesswork.app` for dev), so Apple's script never runs on the app's origin. The app passes the frame coordinates, opaque pin ids, colors and the camera, never names, addresses or notes, and a MapKit JS token ww-api signs for that origin ([docs/web-maps.md](./docs/web-maps.md)).
-- Left out: `GET /health` (the app checks its clock against it), the admin reset route, the private CloudKit record that picks which iPhone publishes Follow-ups to the calendar, link previews the device fetches for URLs in notes, and the build and release pipeline.
-
-When a change adds, removes, or reroutes one of these connections, update the diagram in the same pull request.
 
 ## License
 

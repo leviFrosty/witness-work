@@ -1,30 +1,25 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import CustomFieldPrivacyWarning from '@/components/CustomFieldPrivacyWarning'
+import { useCustomFieldPrivacyNote } from '@/components/CustomFieldPrivacyWarning'
 import { analytics } from '@/lib/analytics'
 import { getContactInformationFields } from '@/lib/contactInformationFields'
 import { usePreferences } from '@/stores/preferences'
-import SectionTitle from '@/features/settings/components/shared/SectionTitle'
-import ReorderControls from '@/components/ui/ReorderControls'
-import { useMemo, useState } from 'react'
-import { View } from 'react-native'
-import Switch from '@/components/ui/Switch'
-import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
-import Wrapper from '@/components/ui/layout/Wrapper'
-import Section from '@/components/ui/inputs/Section'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
-import { submitScope } from '@/components/ui/submitScope'
-import ActionButton from '@/components/ui/ActionButton'
-import MyTextInput from '@/components/ui/TextInput'
-import Text from '@/components/ui/MyText'
-import PullDownMenu from '@/components/ui/PullDownMenu'
-import useTheme from '@/contexts/theme'
+import { useState } from 'react'
+import {
+  GroupedList,
+  GroupedListReorderSection,
+  GroupedListRow,
+  GroupedListSection,
+  GroupedListSwitchRow,
+  GroupedListTextFieldRow,
+} from '@/components/ui/GroupedList'
+import { moveItem } from '@/lib/reorder'
 import i18n from '@/lib/locales'
 import confirmDestructive from '@/lib/confirmDestructive'
 import useContacts from '@/stores/contactsStore'
-import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+
+const FIELD_NAME_MAX_LENGTH = 14
 
 const PreferencesCustomFieldsScreen = () => {
-  const theme = useTheme()
   const {
     customFieldDefs,
     addCustomFieldDef,
@@ -49,13 +44,12 @@ const PreferencesCustomFieldsScreen = () => {
     customFieldDefs,
     contactInformationOrder
   )
-  const archivedDefs = useMemo(
-    () =>
-      [...customFieldDefs]
-        .filter((d) => d.archived)
-        .sort((a, b) => a.order - b.order),
-    [customFieldDefs]
-  )
+  const archivedDefs = customFieldDefs
+    .filter((d) => d.archived)
+    .sort((a, b) => a.order - b.order)
+
+  const newFieldNote = useCustomFieldPrivacyNote([newFieldName])
+  const activeNote = useCustomFieldPrivacyNote(Object.values(edits))
 
   const handleAdd = () => {
     if (!validation.validate()) return
@@ -64,19 +58,29 @@ const PreferencesCustomFieldsScreen = () => {
     setNewFieldName('')
   }
 
-  const move = (id: string, direction: -1 | 1) => {
-    const idx = activeFields.findIndex((field) => field.id === id)
-    if (idx < 0) return
-    const target = idx + direction
-    if (target < 0 || target >= activeFields.length) return
-    const next = activeFields.map((field) => field.id)
-    ;[next[idx], next[target]] = [next[target], next[idx]]
+  const move = (from: number, to: number) => {
+    const next = moveItem(
+      activeFields.map((field) => field.id),
+      from,
+      to
+    )
     set({ contactInformationOrder: next })
     reorderCustomFieldDefs(
       getContactInformationFields(customFieldDefs, next).flatMap((field) =>
         field.kind === 'custom' ? [field.definition.id] : []
       )
     )
+  }
+
+  const rename = (id: string, label: string) => {
+    const value = edits[id]
+    const trimmed = value?.trim()
+    if (trimmed && trimmed !== label) renameCustomFieldDef(id, trimmed)
+    setEdits((s) => {
+      const next = { ...s }
+      delete next[id]
+      return next
+    })
   }
 
   const confirmArchive = (id: string, label: string) => {
@@ -102,214 +106,98 @@ const PreferencesCustomFieldsScreen = () => {
   }
 
   return (
-    <SettingsInputLayout>
-      <Wrapper insets='bottom'>
-        <SettingsScrollView
-          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-        >
-          <View style={{ paddingHorizontal: 12 }}>
-            <Text
-              style={{
-                fontFamily: theme.fonts.semiBold,
-                fontSize: theme.fontSize('lg'),
-              }}
-            >
-              {i18n.t('manageContactFields')}
-            </Text>
-          </View>
+    <GroupedList title={i18n.t('manageContactFields')} editing>
+      <GroupedListSection title={i18n.t('addNewField')} footer={newFieldNote}>
+        <GroupedListTextFieldRow
+          accessibilityLabel={i18n.t('addNewField')}
+          placeholder={i18n.t('customField_placeholder')}
+          invalid={validation.invalid('name')}
+          value={newFieldName}
+          onChangeText={setNewFieldName}
+          maxLength={FIELD_NAME_MAX_LENGTH}
+          action={{ label: i18n.t('add'), onPress: handleAdd }}
+        />
+      </GroupedListSection>
 
-          <View style={{ gap: 5 }}>
-            <SectionTitle text={i18n.t('addNewField')} />
-            <Section {...submitScope}>
-              <InputRowContainer
-                lastInSection
-                controlWidth='full'
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-                controlStyle={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <MyTextInput
-                  placeholder={i18n.t('customField_placeholder')}
-                  invalid={validation.invalid('name')}
-                  value={newFieldName}
-                  onChangeText={setNewFieldName}
-                  autoCapitalize='words'
-                  maxLength={14}
-                  textAlign='start'
-                  style={{ flex: 1 }}
-                />
-                <ActionButton onPress={handleAdd}>
-                  <Text style={{ color: theme.colors.textInverse }}>
-                    {i18n.t('add')}
-                  </Text>
-                </ActionButton>
-              </InputRowContainer>
-            </Section>
-            <CustomFieldPrivacyWarning texts={[newFieldName]} />
-          </View>
-
-          <View style={{ gap: 5 }}>
-            <SectionTitle text={i18n.t('active')} />
-            <Section>
-              {activeFields.map((field, idx) => {
-                const last = idx === activeFields.length - 1
-                if (field.kind !== 'custom') {
-                  const label = i18n.t(field.kind)
-                  return (
-                    <InputRowContainer
-                      key={field.id}
-                      lastInSection={last}
-                      controlWidth='full'
-                      controlStyle={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <ReorderControls
-                        onMoveUp={
-                          idx === 0 ? undefined : () => move(field.id, -1)
-                        }
-                        onMoveDown={last ? undefined : () => move(field.id, 1)}
-                      />
-                      <Text style={{ flex: 1, minWidth: 0 }}>{label}</Text>
-                      <Switch
-                        accessibilityLabel={label}
-                        value={
-                          field.kind === 'phone'
-                            ? showContactPhone
-                            : showContactEmail
-                        }
-                        onValueChange={(value) =>
-                          set(
-                            field.kind === 'phone'
-                              ? { showContactPhone: value }
-                              : { showContactEmail: value }
-                          )
-                        }
-                      />
-                    </InputRowContainer>
+      <GroupedListReorderSection
+        title={i18n.t('active')}
+        footer={activeNote}
+        data={activeFields}
+        keyExtractor={(field) => field.id}
+        onMove={move}
+      >
+        {(field) => {
+          if (field.kind !== 'custom') {
+            const phone = field.kind === 'phone'
+            return (
+              <GroupedListSwitchRow
+                label={i18n.t(field.kind)}
+                value={phone ? showContactPhone : showContactEmail}
+                onValueChange={(value) =>
+                  set(
+                    phone
+                      ? { showContactPhone: value }
+                      : { showContactEmail: value }
                   )
                 }
-                const def = field.definition
-                const value = edits[def.id] ?? def.label
-                return (
-                  <View key={def.id}>
-                    <InputRowContainer
-                      lastInSection={last}
-                      controlWidth='full'
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                      controlStyle={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
-                      <ReorderControls
-                        onMoveUp={
-                          idx === 0 ? undefined : () => move(field.id, -1)
-                        }
-                        onMoveDown={last ? undefined : () => move(field.id, 1)}
-                      />
-                      <MyTextInput
-                        value={value}
-                        onChangeText={(v: string) =>
-                          setEdits((s) => ({ ...s, [def.id]: v }))
-                        }
-                        onEndEditing={() => {
-                          const trimmed = value.trim()
-                          if (trimmed && trimmed !== def.label) {
-                            renameCustomFieldDef(def.id, trimmed)
-                          }
-
-                          setEdits((s) => {
-                            const next = { ...s }
-                            delete next[def.id]
-                            return next
-                          })
-                        }}
-                        autoCapitalize='words'
-                        maxLength={14}
-                        textAlign='start'
-                        style={{ flex: 1 }}
-                      />
-                      <PullDownMenu
-                        triggerSize={16}
-                        style={{ marginStart: 10 }}
-                        accessibilityLabel={i18n.t('moreActionsFor', {
-                          name: def.label,
-                        })}
-                        actions={[
-                          {
-                            id: 'archive-field',
-                            title: i18n.t('archiveField'),
-                            systemImage: 'archivebox',
-                            destructive: true,
-                            onPress: () => confirmArchive(def.id, def.label),
-                          },
-                        ]}
-                      />
-                    </InputRowContainer>
-                    <CustomFieldPrivacyWarning texts={[value]} />
-                  </View>
-                )
-              })}
-            </Section>
-          </View>
-
-          {archivedDefs.length > 0 && (
-            <View style={{ gap: 5 }}>
-              <SectionTitle
-                text={i18n.t('archived')}
-                info={i18n.t('archivedFields_description')}
               />
-              <Section>
-                {archivedDefs.map((def, idx) => (
-                  <InputRowContainer
-                    key={def.id}
-                    lastInSection={idx === archivedDefs.length - 1}
-                    label={def.label}
-                    controlWidth='auto'
-                  >
-                    <PullDownMenu
-                      triggerSize={16}
-                      accessibilityLabel={i18n.t('moreActionsFor', {
-                        name: def.label,
-                      })}
-                      actions={[
-                        {
-                          id: 'restore-field',
-                          title: i18n.t('restore'),
-                          systemImage: 'arrow.uturn.backward',
-                          onPress: () => {
-                            restoreCustomFieldDef(def.id)
-                          },
-                        },
-                        {
-                          id: 'delete-field',
-                          title: i18n.t('delete'),
-                          systemImage: 'trash',
-                          destructive: true,
-                          onPress: () =>
-                            confirmPermanentDelete(def.id, def.label),
-                        },
-                      ]}
-                    />
-                  </InputRowContainer>
-                ))}
-              </Section>
-            </View>
-          )}
-        </SettingsScrollView>
-      </Wrapper>
-    </SettingsInputLayout>
+            )
+          }
+          const def = field.definition
+          return (
+            <GroupedListTextFieldRow
+              accessibilityLabel={def.label}
+              value={edits[def.id] ?? def.label}
+              onChangeText={(value) =>
+                setEdits((s) => ({ ...s, [def.id]: value }))
+              }
+              onEndEditing={() => rename(def.id, def.label)}
+              maxLength={FIELD_NAME_MAX_LENGTH}
+              menuLabel={i18n.t('moreActionsFor', { name: def.label })}
+              menuActions={[
+                {
+                  id: 'archive-field',
+                  title: i18n.t('archiveField'),
+                  systemImage: 'archivebox',
+                  destructive: true,
+                  onPress: () => confirmArchive(def.id, def.label),
+                },
+              ]}
+            />
+          )
+        }}
+      </GroupedListReorderSection>
+
+      {archivedDefs.length > 0 && (
+        <GroupedListSection
+          title={i18n.t('archived')}
+          footer={i18n.t('archivedFields_description')}
+        >
+          {archivedDefs.map((def) => (
+            <GroupedListRow
+              key={def.id}
+              label={def.label}
+              menuLabel={i18n.t('moreActionsFor', { name: def.label })}
+              menuActions={[
+                {
+                  id: 'restore-field',
+                  title: i18n.t('restore'),
+                  systemImage: 'arrow.uturn.backward',
+                  onPress: () => restoreCustomFieldDef(def.id),
+                },
+                {
+                  id: 'delete-field',
+                  title: i18n.t('delete'),
+                  systemImage: 'trash',
+                  destructive: true,
+                  onPress: () => confirmPermanentDelete(def.id, def.label),
+                },
+              ]}
+            />
+          ))}
+        </GroupedListSection>
+      )}
+    </GroupedList>
   )
 }
 

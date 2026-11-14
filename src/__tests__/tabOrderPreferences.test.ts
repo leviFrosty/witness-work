@@ -3,9 +3,9 @@ import {
   DEFAULT_TAB_ORDER,
   getEffectiveTabOrder,
   isTabAvailable,
-  moveVisibleTab,
   type TabOrderKey,
 } from '@/lib/tabOrderPreferences'
+import { moveVisible as moveVisibleTab } from '@/lib/reorder'
 
 const FOUR: TabOrderKey[] = ['Home', 'Contacts', 'Progress', 'Schedule']
 
@@ -67,7 +67,7 @@ describe('isTabAvailable', () => {
   })
 })
 
-describe('moveVisibleTab', () => {
+describe('moveVisible', () => {
   it('moves a tab up and down', () => {
     expect(moveVisibleTab(FOUR, FOUR, 2, 0)).toEqual([
       'Progress',

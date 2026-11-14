@@ -927,7 +927,7 @@ Users can reorder the Home, Contacts, Progress, Schedule, and Territories tabs
 in Preferences → Tab Order; Home remains the launch tab. Territories is a tab
 only while the `territories` flag is on. `tab_order_changed` measures adoption
 of this preference with `order` (comma-separated bounded route names, including
-Progress and Territories even when hidden) and `source` (`arrows` or `menu`). Generic menu and
+Progress and Territories even when hidden) and `source` (`drag` on iOS, `buttons` on Android and the web). Generic menu and
 navigation interactions remain removed.
 
 ## Progress cards

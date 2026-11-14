@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement, ReactNode, Ref } from 'react'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu.types'
 
@@ -8,6 +8,8 @@ export type GroupedListProps = {
   title?: string
 
   header?: ReactNode
+
+  editing?: boolean
   testID?: string
 }
 
@@ -38,6 +40,9 @@ export type GroupedListRowProps = RowBase & {
 
   contextActions?: ContextMenuEntries
 
+  menuActions?: ContextMenuEntries
+  menuLabel?: string
+
   disabled?: boolean
 
   selected?: boolean
@@ -63,4 +68,37 @@ export type GroupedListPickerRowProps = RowBase & {
   onChange: (value: string) => void
 
   sublabel?: string
+}
+
+export type GroupedListReorderSectionProps<T> = {
+  title?: string
+  footer?: string
+  data: readonly T[]
+  keyExtractor: (item: T) => string
+
+  onMove: (from: number, to: number) => void
+  children: (item: T, index: number) => ReactElement
+}
+
+export type GroupedListTextFieldRowRef = { focus: () => void }
+
+export type GroupedListTextFieldRowProps = {
+  value: string
+  onChangeText: (text: string) => void
+
+  onEndEditing?: () => void
+  accessibilityLabel: string
+  placeholder?: string
+  maxLength?: number
+  autoCapitalize?: 'words' | 'sentences'
+  invalid?: boolean
+
+  sublabel?: string
+
+  action?: { label: string; onPress: () => void }
+
+  menuActions?: ContextMenuEntries
+  menuLabel?: string
+  ref?: Ref<GroupedListTextFieldRowRef>
+  testID?: string
 }

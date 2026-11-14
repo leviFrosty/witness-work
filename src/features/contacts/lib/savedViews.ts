@@ -205,19 +205,6 @@ export function reorderSavedViews(
   return next
 }
 
-export function moveSavedView(
-  views: SavedContactViews,
-  id: string,
-  direction: -1 | 1
-): SavedContactViews {
-  const ordered = orderedSavedViews(views).map((view) => view.id)
-  const index = ordered.indexOf(id)
-  const target = index + direction
-  if (index < 0 || target < 0 || target >= ordered.length) return views
-  ;[ordered[index], ordered[target]] = [ordered[target], ordered[index]]
-  return reorderSavedViews(views, ordered)
-}
-
 export const savedViewAnalyticsSort = (
   query: ContactsQuery
 ): Exclude<ContactSortKey, `customField:${string}`> | 'customField' =>

@@ -29,6 +29,7 @@ import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
 import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
 import { forgetStoredSlots } from '@/lib/syncTransport/server/slotStore'
+import { forgetStoredChanges } from '@/lib/syncTransport/server/changeStore'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
 import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
@@ -119,6 +120,7 @@ export function resetLocalData() {
   clearLegacyLedger()
   forgetFoundSecrets()
   forgetStoredSlots()
+  forgetStoredChanges()
 
   forgetDeviceSpaceKeys()
 

@@ -17,6 +17,12 @@ export type SyncReadOptions = {
   listOnly?: (filename: string) => boolean
 }
 
+export type SyncWriteOptions = {
+  compact?: boolean
+
+  fold?: boolean
+}
+
 export type UploadStatus = {
   uploaded: boolean
   uploading: boolean
@@ -66,6 +72,12 @@ export interface SyncTransport {
 
   readonly writeConfirmsUpload: boolean
 
+  readonly skipsUnchangedWrites?: boolean
+
+  wantsCompaction?(): boolean
+
+  setPushRequester?(request: (() => void) | null): void
+
   readonly supportsBinaries?: boolean
 
   readonly binaryWritesPaused?: boolean
@@ -89,7 +101,11 @@ export interface SyncTransport {
     options?: SyncReadOptions
   ): Promise<SyncRead>
 
-  write(filename: string, json: string): Promise<number>
+  write(
+    filename: string,
+    json: string,
+    options?: SyncWriteOptions
+  ): Promise<number>
 
   supportsUploadStatus(): boolean
   uploadStatus(filename: string): Promise<UploadStatus | null>

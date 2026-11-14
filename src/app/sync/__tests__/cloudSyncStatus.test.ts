@@ -88,6 +88,9 @@ vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('@/lib/syncTransport/server/slotStore', () => ({
   slotStore: undefined,
 }))
+vi.mock('@/lib/syncTransport/server/changeStore', () => ({
+  changeStore: undefined,
+}))
 
 const status = (overrides: Partial<SyncStatus> = {}): SyncStatus => ({
   enabled: true,

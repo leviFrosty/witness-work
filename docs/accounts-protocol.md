@@ -102,7 +102,7 @@ The app's list is `SESSION_CAPABILITIES` (`src/lib/serverAccount/capabilities.ts
 
 ### The access token
 
-A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`), `sid` (the session), `platform` (`ios`, `android`, or `dev`), `iss` (one per environment, so a development token never passes on production), `aud` (`ww-account`), `iat`, `exp` (15 minutes). A missing, expired, or invalid token is 401 `unauthorized` with `WWW-Authenticate: Bearer error="invalid_token"`; the app refreshes once and retries.
+A JWT (`HS256`, with `kid`) the app treats as opaque. Claims: `sub` (`accountId`), `sid` (the session), `platform` (`ios`, `android`, or `dev`), `iss` (one per environment, so a development token never passes on production), `aud` (`ww-account`), `iat`, `exp` (15 minutes), `kep` (the session's key epoch, [account-key-change.md](./account-key-change.md)), and `cap` (the session's [capabilities](#capabilities), when the server knew them as it signed the token, so the routes that send record changes needn't read them). A missing, expired, or invalid token is 401 `unauthorized` with `WWW-Authenticate: Bearer error="invalid_token"`; the app refreshes once and retries.
 
 ### The app
 
@@ -337,6 +337,8 @@ Each device keeps its own encrypted slot in R2, at `v1/<accountId>/<slotId>`. A 
 
 Cloud Sync ([ADR 0030](./adr/0030-cloud-sync-through-ww-api.md)): each device on it keeps one end-to-end encrypted snapshot of its data in a slot of the account, and every device merges the others' with the sync engine ([icloud-sync.md](./icloud-sync.md)). One `AccountSync` Durable Object per account holds the slots' metadata and the live sockets; R2 holds the ciphertext at `v1/<accountId>/<slotId>`.
 
+Between snapshots, a device sends each edit as a small sealed change ([ADR 0060](./adr/0060-cloud-sync-sends-record-changes.md)): see [Record changes](#record-changes).
+
 Photos over Cloud Sync, and the account's request to turn Cloud Sync on, are in [cloud-sync-photos.md](./cloud-sync-photos.md) ([ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md)).
 
 ### The blob
@@ -366,7 +368,7 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 - `updatedAt` is the server's time of the slot's last put (epoch ms), the transport's `modifiedAt`. `seq` counts the account's puts and deletes; it only grows.
 - `sync/get` answers with the bytes exactly as put, `ETag: "<etag>"`, `x-ww-updated-at`, and `Cache-Control: no-store`.
 - `sync/delete` is idempotent: a missing slot is `ok`. Without `slotId` it deletes every slot of the account. Deleting every slot needs a live session (`requireLiveSession`), so a signed-out device's last access token can't. A device deletes its own slot when it leaves Cloud Sync or the account; another device's only from its Devices list, Rebuild, or "Keep this device's data". A browser also deletes other browsers' slots (`platform: web`) whose session ended (`live: false`), once its own slot holds what it merged from them (docs/web-storage.md, "Old browser slots").
-- **Live socket**: the upgrade carries the bearer token and the device's own slot id (`x-ww-slot-id`). The server sends `{"type":"hello","seq":n}` once (as Buddies' inbox socket does), then `{"type":"changed","seq":n}` after every put or delete by another slot. Sending `ping` gets `pong` without waking the Durable Object. At most 20 sockets an account: one more closes the oldest with `4000 "replaced"`. It carries no data.
+- **Live socket**: the upgrade carries the bearer token and the device's own slot id (`x-ww-slot-id`). The server sends `{"type":"hello","seq":n}` once (as Buddies' inbox socket does), then `{"type":"changed","seq":n}` after every put or delete by another slot. Sending `ping` gets `pong` without waking the Durable Object. At most 20 sockets an account: one more closes the oldest with `4000 "replaced"`. It carries notices only, unless the device asks for record changes on it ([Record changes](#record-changes)).
 - **Switches**: `put`, `list`, `get`, and `live` are 503 `disabled` (with `Retry-After`) while the kill switch is off, and 403 `supporter_required` when the account isn't entitled. With `entitlement: supporter`, a RevenueCat failure is 503 `unavailable` (with `Retry-After`), never `supporter_required`. `delete` and the status always work.
 - **Limits**: 20 MiB a blob (`too_large`, 413, refused from `Content-Length` before the body is read), 20 slots an account (`limit`, 429, for a new slot only), one put a slot every 2 seconds and one at a time, and 1,000 puts and 2 GiB an account a rolling day (`rate_limited`, 429, with `Retry-After`). `sync/put` counts against the Buddies write edge tier, the rest against the read tier.
 - **Retention**: a slot not written for 30 days whose last writer's session has ended is deleted; so is any slot not written for 400 days (R2's lifecycle rule is the backstop).
@@ -377,15 +379,62 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 
 `entitlement: everyone` applies only to a session whose capabilities include `sync-everyone`, and to a config request with `?capabilities=sync-everyone` (see [Capabilities](#capabilities)). Anyone else is answered as if the entitlement were `supporter`, everywhere above.
 
+### Record changes
+
+[ADR 0060](./adr/0060-cloud-sync-sends-record-changes.md). A slot's snapshot is its **base**. A device sends each edit as a **change**: one small sealed blob with only the records that changed. A slot's changes that aren't in its base yet are its **tail**. Changes are kept in the account's Durable Object, each under the account's next **sequence** (the number the snapshot ops call `seq`).
+
+**The change.** Sealed like a slot, under the same sync key:
+
+- `changeId`: 16 random bytes the device makes, base64url (22 characters).
+- `0x01 ‖ nonce[24] ‖ XChaCha20-Poly1305(syncKey, nonce, padded, aad)`, with `aad = UTF-8("ww-account/v1/sync-change\n" + accountId + "\n" + slotId + "\n" + changeId)`.
+- `padded = u32be(length) ‖ gzip(JSON) ‖ zeros`, where `length` is the gzip's byte length and the zeros make the sealed blob a whole number of 256-byte blocks. So its size doesn't say which kind of record changed.
+- The JSON says how the slot's payload changed since the change before: `{ v: 1, leaves?, records?, removedLeaves?, removedRecords? }`. A path is the keys from the payload's root, joined by `/` (`contactStore/contacts`, `serviceReportStore/serviceReports/2026/11`).
+  - `records`: path → the added or edited records of that list, each whole. A list whose items all have a string `id` is a list of records. A deletion is a record leaving its list and its tombstone arriving in the tombstone list.
+  - `removedRecords`: path → the ids that left that list.
+  - `leaves`: path → the new value of anything that isn't a record: a number, a flag, a list without ids. `preferencesStore`, `profileStore`, `resetEpoch` and `revenueCat` are each one value. `writtenAt` and `calibratedClock` are in every change.
+  - `removedLeaves`: the paths that are gone.
+  - A reader applies the removals, then the leaves (shortest path first), then the records by id. **The base with its changes applied in sequence order is the payload the writer's snapshot would hold**, and it goes through the same parse and merge as a snapshot. No merge rule is written twice.
+  - A change with a higher `v` than a build knows makes the slot read as "newer version", as a snapshot from a newer payload version does.
+  - A device leaves out a record it received: one that another slot of the same reset generation already holds, unchanged. It sends that record once that slot is gone.
+- At most 256 KiB sealed. A larger set of edits is published as the base.
+
+**Ops.** Every op is **Bearer**, and every id travels in the JSON body.
+
+| Op                                      | Request                        | Response                                                                       |
+| --------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------ |
+| `POST /accounts/v1/sync/changes/put`    | `{ slotId, changeId, blob }`   | `{ ok, sequence, tailCount, tailBytes, snapshotReaders, changedAt }`           |
+| `POST /accounts/v1/sync/changes/list`   | `{ slotId, afterSequence }`    | `{ ok, sequence, slots, changes, more, snapshotReaders, requestedAt, photos }` |
+| `POST /accounts/v1/sync/changes/reseal` | `{ sequence, changeId, blob }` | `{ ok, sequence }`                                                             |
+
+- `blob` is the sealed change in unpadded base64url.
+- `sync/changes/put` stores the change in the slot's tail and sends it to the account's other sockets that read changes. The slot needs a base first (409 `no_slot`). The same `changeId` again answers the first put's `sequence`, so a retry is safe. `changedAt` is the slot's last base put or change, the time the transport reports for the device's own slot.
+- `sync/changes/list` is the catch-up. `slotId` is the device's own slot and `afterSequence` its cursor (0 for everything).
+  - `slots` is each slot as `sync/list` gives it, without `live`, plus `floorSequence` and `changedAt` (its last base put or change).
+  - `changes` is the other slots' changes after the cursor, oldest first: `{ sequence, slotId, changeId, keyEpoch, createdAt, blob }`. `keyEpoch` says which account key opens it ([account-key-change.md](./account-key-change.md)).
+  - **A device reads a slot's base (`sync/get`) only when `floorSequence` is past its cursor, or its cursor is 0.** The slot is then that base with its changes applied on top. A base whose bytes don't hash to the listed `etag` was replaced meanwhile: the device catches up again.
+  - Once every base and change is saved, the device's cursor is `sequence`. With `more`, it asks again from the last change's `sequence`.
+  - `requestedAt` and `photos` are `GET /accounts/v1/sync`'s, so a device on Cloud Sync needn't read that at launch.
+- **Folding the tail into the base.** `sync/put` with `x-ww-covers-sequence: N` says the snapshot includes this slot's changes up to sequence `N`. The server deletes them and sets the slot's `floorSequence` to `N`, so a device already past `N` doesn't read the base. A put **without** the header replaces everything: the whole tail is deleted and the floor is the put's own `seq`, so every device reads it. An app from before record changes always puts this way. `sync/put` answers `floorSequence` too.
+- **`snapshotReaders`** is true while a session that reads only snapshots is on the account: one that sent a `sync/list` without `x-ww-sync-changes: 1` in the last 14 days and hasn't read changes since (a catch-up, or a list with the header) or ended. While it's true, a device still sends each change, and also puts its base a few seconds later. An app that reads changes sends that header on every `sync/list`.
+- **Live socket.** After `hello`, the device sends `{"type":"sync","afterSequence":n}`. The server answers on the socket with the catch-up (`{"type":"sync", …}`, the body of `sync/changes/list` without `ok`), and from then on sends each other slot's change as it's put: `{"type":"change","change":{…}}`. A catch-up that can't be answered is `{"type":"error","error":…}`: `changes_disabled`, `unavailable` (use `sync/changes/list`), or `bad_request`. Base puts, deletes and photos still send `changed`.
+  - A device applies a `change` at once, with no request. It does so only when the change's `sequence` is its cursor plus one (its own puts count); otherwise it asks for a catch-up.
+  - The socket belongs to its session. It closes with `4006 "session_ended"` when the session signs out, is signed out from another device, or is found ended. It gets changes only while its session was confirmed live in the last 15 minutes: the token that opened it counts until it expires, and after that the server checks the session before it sends.
+- **No database on the write path.** `sync/changes/put` and `sync/changes/list` don't read the session. The access token carries the capabilities (`cap`), and the Durable Object refuses a session that ended and a token from before a key change (401 `unauthorized`, with `reason: "key_changed"` for the second; the app refreshes). If the notice of an ended session is lost, its last token can add changes for at most 15 minutes. It can't replace or delete anything: `sync/put`, `sync/delete` and `sync/changes/reseal` still need a live session.
+- **Re-sealing.** After a key change, `sync/changes/reseal` replaces one change's bytes with the same change under the new key. Its sequence, slot and time stay. Allowed for 7 days after the change (403 `forbidden`), as `x-ww-reseal` is; 404 `not_found` once the change's device folded it into its base.
+- **Switch.** KV `sync:changes`, off in production until the app release that sends changes. Off, the three ops and the socket's catch-up answer 503 `changes_disabled`, and devices publish whole snapshots. `GET /accounts/v1/sync` (`changes`) and `GET /app/v1/config` (`sync.changes`) say whether it's on.
+- **Limits.** 256 KiB a change (413 `too_large`), 200 changes and 1 MiB in a slot's tail (409 `tail_full`: fold, then send again), 60 changes a slot a minute and 3,000 an account a rolling day (429 `rate_limited`, with `Retry-After`). Put and re-seal count against the Buddies write edge tier, list against the read tier.
+- **Retention** counts a change as a write, and a catch-up marks the device's slot as seen at most once a day, which counts too. A slot's tail is deleted with the slot.
+
 ### The app
 
 - **One option.** A device syncs through Cloud Sync, iCloud (iOS) or Google Drive (Android), or not at all (`syncProvider` in device-local preferences). The engine runs on that one transport (`activeSyncTransport()`); devices on different options don't see each other.
 - **Default.** A device that never chose (no `syncProvider`, sync not turned off by the User) gets Cloud Sync once `sync.enabled` and it's entitled (`everyone`, or a Supporter): it opens the account's session (creating the account key when there's none), then decides like the Supporter auto-enable: seed an empty account, pull into a device without records, or ask Merge or Replace. A device already on iCloud or Google Drive keeps it and sees a one-time offer to switch in Settings → Sync.
 - **Entitlement.** The device records the status's `entitled` and syncs only while it's true. A status with `supporterCheckFailed` (ww-api couldn't reach RevenueCat) keeps what was recorded on a device that's a Supporter by its own RevenueCat answer, and the default tries such a device again at the next foreground instead of giving up.
 - **Switching** flushes the old transport, joins the new one's newest reset generation and merges with its devices, then pushes. Leaving Cloud Sync deletes this device's slot (devices on Cloud Sync keep what they've already pulled from it; one that was offline since its last edits doesn't get them); leaving iCloud or Drive leaves this device's file there, where it can't bring back a record deleted later.
-- **Reads.** A pull lists the slots and downloads only those whose ETag changed since the last read; this device's own slot is never downloaded. The phone apps keep the sealed bytes of the other slots with their ETags between launches, so a launch downloads only what was written since (the web keeps them for the launch only). Photos aren't transferred.
-- **Writes.** The app doesn't put a snapshot the server already has: when the listing still shows this device's slot at the `updatedAt` its last put returned, that put is less than a day old, and what it would send is the same, a launch or an edit that changed nothing synced sends no `sync/put`. So puts follow real edits, plus one a day from a device in use, which keeps its slot clear of the retention rule below. A key change, a switch and the account's Cloud Sync request always put.
-- **Live.** One socket per device, in the foreground only, reconnecting with backoff (1, 2, 5, 15, 30 s, then every minute) and with a fresh token after a refresh. `hello` with a `seq` newer than the last pull, and every `changed`, pull at once.
+- **Reads.** With record changes on, a pull is one catch-up from the device's cursor: over the live socket when it's open, else `sync/changes/list`. It downloads a base only when that slot's floor moved past the cursor. The phone apps keep each other slot's sealed base and the sealed changes on top of it between launches, so a launch with nothing new is the socket and one message each way (the web keeps them for the page load only, so each load reads every base). The engine still sees one file a slot: the base with its changes applied.
+- **Writes.** The device keeps a fingerprint of each record its slot holds. A push sends one change with the records whose fingerprint differs, 300 ms after the edit (at most 2 seconds while edits keep coming, and at least 2 seconds after the change before). Nothing differs, nothing is sent. It puts the whole base instead when it has no fingerprints for this slot (a new device, another account or key, a browser's first write after a load), when the reset generation changes, when the slot is gone, and when the edits don't fit one change. It folds its changes into its base (`x-ww-covers-sequence`) once the tail holds 50 changes or 128 KiB, when the app leaves the foreground or at a launch; 5 seconds after a change while `snapshotReaders` is true; and before an account key change.
+- **Without record changes** (the switch is off, or the server answers `changes_disabled`), reads list the slots and download those whose ETag changed, and writes put the whole snapshot unless the server already has it, as before ADR 0060.
+- **Live.** One socket per device, in the foreground only, reconnecting with backoff (1, 2, 5, 15, 30 s, then every minute) and with a fresh token after a refresh. With record changes, the device asks for its catch-up on the socket after every `hello` and then gets each change on it. Every `changed` (a base put, a delete, a photo) pulls at once.
 - **Leaving the account** (a QR code or a recovery key to another account) flushes, deletes this device's slot, and stops sync before the key is replaced. Delete Buddies on the account's last device deletes every slot.
 
 ## Supporter status

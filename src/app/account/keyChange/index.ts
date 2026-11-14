@@ -52,8 +52,11 @@ import { usesCloudSync } from '@/lib/syncTransport/provider'
 import { syncNow } from '@/lib/syncClock'
 import {
   getSyncSlot,
+  listSyncChanges,
   listSyncSlots,
   putSyncSlot,
+  resealSyncChange,
+  type SyncChange,
 } from '@/lib/syncTransport/server/syncClient'
 import { webAccountKey } from '@/lib/accountKey/webAccountKey'
 import { readAccountDevices } from '@/lib/serverAccount/accountDevices'
@@ -321,6 +324,8 @@ const readHistory = async (accountId: string, accountKey: Uint8Array) =>
 
 const ownSyncSlotId = () => usePreferences.getState().iCloudDeviceId ?? null
 
+const KEY_CHANGE_READER_SLOT = 'key-change-reader'
+
 const PHOTOS_LEFT = 'key-change-photos-left'
 const photosLeft: PhotosLeftStore = {
   get: () => store().getString(PHOTOS_LEFT) ?? null,
@@ -353,7 +358,23 @@ const resealStep = createResealStep({
   sync: (accountKey) => {
     const options = bearerOptions(accountKey)
     return {
-      list: async () => (await listSyncSlots(options)).slots,
+      list: async () =>
+        (await listSyncSlots(options, { readsChanges: true })).slots,
+      changes: async () => {
+        const changes: SyncChange[] = []
+        let after = 0
+        for (;;) {
+          const page = await listSyncChanges(
+            options,
+            KEY_CHANGE_READER_SLOT,
+            after
+          )
+          changes.push(...page.changes)
+          if (!page.more || page.changes.length === 0) return changes
+          after = page.changes[page.changes.length - 1].sequence
+        }
+      },
+      resealChange: (change) => resealSyncChange(options, change),
       get: (slotId) => getSyncSlot(options, slotId),
       put: async (slotId, blob, put) => {
         await putSyncSlot(options, slotId, blob, put)

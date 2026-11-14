@@ -85,6 +85,7 @@ export const cloudSyncHarness = {
       devices: Object.keys(prefs.iCloudSyncDevices ?? {}).length,
       contacts: useContacts.getState().contacts.length,
       lastSeq: cloudSyncDiagnostics.lastSeq(),
+      changes: cloudSyncDiagnostics.changes(),
       liveEvents: cloudSyncDiagnostics.liveEvents().slice(-10),
 
       completePull: completedPullThisLaunch(),
@@ -123,10 +124,13 @@ export const cloudSyncHarness = {
     }),
 
   syncNow: () =>
-    tracked(async () => ({
-      pulled: await iCloudSync.pullAndMerge('manual'),
-      pushed: await iCloudSync.push('manual'),
-    })),
+    tracked(async () => {
+      const started = Date.now()
+      const pulled = await iCloudSync.pullAndMerge('manual')
+      const pullMs = Date.now() - started
+      const pushed = await iCloudSync.push('manual')
+      return { pulled, pushed, pullMs, pushMs: Date.now() - started - pullMs }
+    }),
 
   simulateUpgradedPlatformDevice: () => {
     usePreferences.setState({

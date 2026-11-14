@@ -181,8 +181,13 @@ downloads), so foreground catch-up pushes only when edits are pending, a merge
 changed local data, this device's snapshot is missing from the listing, or this
 launch hasn't published yet.
 
-On Cloud Sync and Google Drive, a push that would send what the server already
-has doesn't upload. Each upload records `iCloudPublished`: a hash of the payload
+On Cloud Sync with record changes, the transport decides what a push sends (a
+change, the base, or nothing: see [Cloud Sync](#cloud-sync)), so the engine
+skips the check below and always calls `write`.
+
+On Google Drive, and on Cloud Sync without record changes, a push that would
+send what the server already has doesn't upload. Each upload records
+`iCloudPublished`: a hash of the payload
 (`writtenAt` zeroed, the Supporter claim apart), the claim, the `modifiedAt` the
 write returned, and the device id. The pushes the engine starts itself (launch
 and foreground catch-up, the debounced push after a store change, a retry) pass
@@ -369,9 +374,38 @@ switching, `components/CloudSyncDefault.tsx`).
   copy that no longer opens is dropped and downloaded again; copies of slots
   that left the listing, or of another account, are removed at the next read,
   and all of them when the transport resets. The web keeps none.
+- **Record changes** (ADR 0060, on while the server says `changes`). The
+  slot's snapshot is its base, and each edit goes up as one small sealed
+  change. Code: `recordChanges.ts`, `payloadDiff.ts`, `changeCrypto.ts`,
+  `changeStore.ts`.
+  - **Writes.** The transport keeps a fingerprint of each record its slot
+    holds (`changeStore.ts`, MMKV `cloud-sync-changes`). A push sends the
+    records whose fingerprint differs as one change, the base when it has no
+    fingerprints or the reset generation changed, and nothing when nothing
+    differs. It leaves out a record another slot of the same generation
+    already holds, so a device doesn't send back what it merged.
+  - **The wait** before a push is 300 ms after the last edit, at most 2
+    seconds while edits keep coming, and at least 2 seconds between changes
+    (5 seconds without record changes).
+  - **Reads.** The transport keeps each other slot as its sealed base plus the
+    sealed changes after it, and a cursor. A pull asks for what came after the
+    cursor, applies it, and hands the engine one payload a slot, the same
+    payload a snapshot would hold. The engine parses and merges it as before.
+  - **Folding.** The device puts its base again, covering its changes, once
+    they pass 50 or 128 KiB (on leaving the foreground or at a launch), 5
+    seconds after a change while an older app is on the account, and before an
+    account key change. The transport asks the engine for that push
+    (`setPushRequester`). It asks for one too when another slot went away, to
+    send the records only that slot held.
+  - **Off.** When the server says changes are off, or answers
+    `changes_disabled`, the transport forgets its cursor and fingerprints and
+    reads and writes whole snapshots as described above.
 - **Remote changes** come from the live socket (`/accounts/v1/sync/live`),
-  open only in the foreground, one per device, never from polling. A `changed`
-  message, or a `hello` with a newer `seq`, pulls at once.
+  open only in the foreground, one per device, never from polling. With record
+  changes, the device asks for its catch-up on the socket after `hello`, and
+  each other device's change then arrives on it and is merged with no request.
+  A `changed` message pulls at once; so does a `hello` with a newer `seq`
+  without record changes.
 - **Gate.** `canSync` uses `cloudSyncEntitled` (from `GET /accounts/v1/sync`)
   instead of the device's Supporter status. A 503 `disabled` or 403
   `supporter_required` records itself and pauses sync; the choice is kept, so

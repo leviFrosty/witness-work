@@ -41,6 +41,7 @@ import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
 import { derivePhotoKeys } from '@/lib/syncTransport/server/photoCrypto'
 import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
 import { slotStore } from '@/lib/syncTransport/server/slotStore'
+import { changeStore } from '@/lib/syncTransport/server/changeStore'
 import {
   recordPhotoUsage,
   resetPhotoUsage,
@@ -110,6 +111,13 @@ const accountToken = (accountId: string) =>
 export const cloudSyncTransport = createServerTransport({
   access: cloudSyncAccess,
   slotStore: Platform.OS === 'web' ? undefined : slotStore,
+  changeStore: Platform.OS === 'web' ? undefined : changeStore,
+  changes: () => usePreferences.getState().cloudSyncChanges === true,
+  onChangesRefused: () => {
+    logger.warn('[cloudSync] record changes are off on the server')
+    usePreferences.setState({ cloudSyncChanges: false })
+  },
+  onCatchUp: (caughtUp) => noteCatchUp(caughtUp),
   isAvailable: () => accountSessions.snapshot() !== null,
   identityToken: () => {
     const session = accountSessions.snapshot()
@@ -179,10 +187,51 @@ let statusReadAt = -Infinity
 
 const STATUS_MIN_INTERVAL_MS = 60_000
 
+const catchUpCoversStatus = () => {
+  const prefs = usePreferences.getState()
+  return (
+    usesCloudSync() &&
+    prefs.iCloudSyncEnabled &&
+    prefs.cloudSyncChanges === true &&
+    prefs.cloudSyncEntitled === true &&
+    prefs.cloudSyncConfig?.enabled === true
+  )
+}
+
+function noteCatchUp(caughtUp: {
+  requestedAt: number | null
+  photos: boolean | null
+}): void {
+  const prefs = usePreferences.getState()
+  if (!prefs.cloudSyncConfig) return
+  statusReadAt = Date.now()
+  if (
+    prefs.cloudSyncEntitled !== true ||
+    prefs.cloudSyncPhotos !== caughtUp.photos
+  )
+    usePreferences.setState({
+      cloudSyncEntitled: true,
+      cloudSyncPhotos: caughtUp.photos,
+    })
+  const status: SyncStatus = {
+    enabled: true,
+    entitled: true,
+    entitlement: prefs.cloudSyncConfig.entitlement,
+    supporter: useSupporter.getState().isSupporter,
+    supporterCheckFailed: false,
+    photos: caughtUp.photos,
+    requestedAt: caughtUp.requestedAt,
+    changes: true,
+  }
+  for (const listener of statusListeners) listener(status)
+}
+
 export function refreshCloudSyncStatus({
   force = false,
-}: { force?: boolean } = {}): Promise<SyncStatus | null> {
+  automatic = false,
+}: { force?: boolean; automatic?: boolean } = {}): Promise<SyncStatus | null> {
   if (statusInFlight) return statusInFlight
+  if (!force && automatic && catchUpCoversStatus()) return Promise.resolve(null)
   if (!force && Date.now() - statusReadAt < STATUS_MIN_INTERVAL_MS)
     return Promise.resolve(null)
   statusInFlight = (async () => {
@@ -205,6 +254,7 @@ export function refreshCloudSyncStatus({
           ? prefs.cloudSyncEntitled
           : status.entitled,
         cloudSyncPhotos: status.photos,
+        cloudSyncChanges: status.changes === true,
         ...(prefs.cloudSyncConfig?.enabled !== status.enabled ||
         prefs.cloudSyncConfig?.entitlement !== status.entitlement
           ? {
@@ -293,7 +343,9 @@ export async function cloudSyncNewestSlotAt(): Promise<number | null> {
   if (!status?.entitled) return null
   try {
     const { options } = await cloudSyncAccess()
-    const { slots } = await listSyncSlots(options)
+    const { slots } = await listSyncSlots(options, {
+      readsChanges: cloudSyncTransport.readsChanges(),
+    })
     const own = ensureSyncDeviceId()
     const others = slots.filter((slot) => slot.slotId !== own)
     if (others.length === 0) return null
@@ -382,9 +434,20 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
       if (useCloudSyncPhotoUsage.getState().fullAt)
         void refreshCloudSyncPhotoUsage()
     },
+    onMessage: (message, send) => cloudSyncTransport.liveMessage(message, send),
+    catchesUpOnHello: () => cloudSyncTransport.readsChanges(),
 
     verify: () => refreshCloudSyncStatus({ force: true }),
-    onEvent: recordLiveEvent,
+    onEvent: (event) => {
+      recordLiveEvent(event)
+      if (
+        event.type === 'connecting' ||
+        event.type === 'openFailed' ||
+        event.type === 'closed' ||
+        event.type === 'stopped'
+      )
+        cloudSyncTransport.liveEvent(event.type)
+    },
   })
   const wanted = () =>
     AppState.currentState === 'active' && usesCloudSync() && canSync()
@@ -394,7 +457,7 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   }
 
   const foreground = addForegroundListener(() => {
-    void refreshCloudSyncStatus()
+    void refreshCloudSyncStatus({ automatic: true })
     update()
   })
   const background = addBackgroundListener(() => live.stop())
@@ -406,6 +469,8 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
       state.cloudSyncConfig !== previous.cloudSyncConfig
     )
       update()
+    if (state.cloudSyncChanges !== previous.cloudSyncChanges && wanted())
+      live.reconnect()
   })
   const supporter = useSupporter.subscribe((state, previous) => {
     if (state.isSupporter === previous.isSupporter) return
@@ -440,7 +505,7 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
   })
   void accountSessions.ready().then(() => {
     cloudSyncTransport.notifyAvailabilityChange()
-    void refreshCloudSyncStatus().then(update)
+    void refreshCloudSyncStatus({ automatic: true }).then(update)
   })
   update()
 
@@ -459,4 +524,8 @@ export function installCloudSyncRuntime(canSync: () => boolean): () => void {
 export const cloudSyncDiagnostics = {
   liveEvents: () => [...cloudSyncLiveEvents],
   lastSeq: () => cloudSyncTransport.lastSeq(),
+  changes: () => ({
+    on: cloudSyncTransport.readsChanges(),
+    ...cloudSyncTransport.changeStats(),
+  }),
 }

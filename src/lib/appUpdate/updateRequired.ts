@@ -34,6 +34,8 @@ export function requireUpdateFromServer(currentVersion: string | null) {
 export type AppSyncConfig = {
   enabled: boolean
   entitlement: 'supporter' | 'everyone'
+
+  changes: boolean
 }
 
 export type AppWebSignupConfig = {
@@ -58,7 +60,11 @@ export async function fetchAppConfig(
   const response = await request<{
     ok?: unknown
     minAppVersion?: unknown
-    sync?: { enabled?: unknown; entitlement?: unknown } | null
+    sync?: {
+      enabled?: unknown
+      entitlement?: unknown
+      changes?: unknown
+    } | null
     webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
     country?: unknown
     regionCode?: unknown
@@ -78,6 +84,7 @@ export async function fetchAppConfig(
             enabled: sync.enabled,
             entitlement:
               sync.entitlement === 'everyone' ? 'everyone' : 'supporter',
+            changes: sync.changes === true,
           }
         : null,
     ...(webSignup &&

@@ -1,3 +1,4 @@
+import { fromB64u } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
 import type { KeyChangeRecord } from '@/lib/accountKey/keyChangeRecord'
 import {
@@ -7,6 +8,7 @@ import {
 } from '@/lib/serverAccount/backupCrypto'
 import type { BearerAccountOptions } from '@/lib/serverAccount/client'
 import { isCloudSyncPhotoFilename } from '@/lib/syncTransport/imageNames'
+import { resealChange } from '@/lib/syncTransport/server/changeCrypto'
 import {
   derivePhotoKeys,
   openPhoto,
@@ -32,6 +34,13 @@ import {
 } from '@/lib/syncTransport/server/syncCrypto'
 import type { KeyChangeStep, KeyChangeStepContext } from './steps'
 
+export type ResealSyncChange = {
+  sequence: number
+  slotId: string
+  changeId: string
+  blob: string
+}
+
 export type ResealSyncApi = {
   list: () => Promise<{ slotId: string; etag: string }[]>
   get: (slotId: string) => Promise<Uint8Array>
@@ -40,6 +49,13 @@ export type ResealSyncApi = {
     blob: Uint8Array,
     options: { ifMatch: string; reseal: boolean }
   ) => Promise<void>
+
+  changes?: () => Promise<ResealSyncChange[]>
+  resealChange?: (change: {
+    sequence: number
+    changeId: string
+    blob: Uint8Array
+  }) => Promise<void>
 }
 
 export type ResealBackupApi = {
@@ -269,6 +285,48 @@ async function resealSync(
       }
     }
     await record(slotId)
+  }
+  await resealSyncChanges(deps, api, accountId, { from, to })
+}
+
+async function resealSyncChanges(
+  deps: ResealStepDeps,
+  api: ResealSyncApi,
+  accountId: string,
+  keys: { from: readonly Uint8Array[]; to: Uint8Array }
+): Promise<void> {
+  if (!api.changes || !api.resealChange) return
+  let changes: ResealSyncChange[]
+  try {
+    changes = await api.changes()
+  } catch (error) {
+    if (syncUnavailable(error) || codeOf(error) === 'changes_disabled') return
+    throw error
+  }
+  for (const change of changes) {
+    const result = resealChange(
+      fromB64u(change.blob),
+      { accountId, slotId: change.slotId, changeId: change.changeId },
+      { ...keys, nonce: deps.randomBytes(24) }
+    )
+    if (result.outcome !== 'resealed') continue
+    try {
+      await api.resealChange({
+        sequence: change.sequence,
+        changeId: change.changeId,
+        blob: result.blob,
+      })
+    } catch (error) {
+      const code = codeOf(error)
+      if (code === 'not_found') continue
+      if (
+        code === 'forbidden' ||
+        code === 'changes_disabled' ||
+        syncUnavailable(error)
+      )
+        return
+      throw error
+    }
   }
 }
 

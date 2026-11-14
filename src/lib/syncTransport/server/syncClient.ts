@@ -1,3 +1,4 @@
+import { toB64u } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
 import {
   type BearerAccountOptions,
@@ -66,6 +67,8 @@ export type SyncStatus = {
   photos: boolean | null
 
   requestedAt: number | null
+
+  changes?: boolean
 }
 
 export type SyncSlotPlatform = 'ios' | 'android' | 'dev' | 'web'
@@ -135,6 +138,7 @@ export async function fetchSyncStatus(
     supporterCheckFailed: data.supporterCheckFailed === true,
     photos: typeof data.photos === 'boolean' ? data.photos : null,
     requestedAt: typeof data.requestedAt === 'number' ? data.requestedAt : null,
+    changes: data.changes === true,
   }
 }
 
@@ -172,7 +176,11 @@ export async function putSyncSlot(
   options: BearerAccountOptions,
   slotId: string,
   blob: Uint8Array,
-  { ifMatch, reseal }: { ifMatch?: string; reseal?: boolean } = {}
+  {
+    ifMatch,
+    reseal,
+    coversSequence,
+  }: { ifMatch?: string; reseal?: boolean; coversSequence?: number } = {}
 ): Promise<{ etag: string; updatedAt: number; seq: number }> {
   const response = await sendBearerAccountOp<Record<string, unknown>>(
     'sync/put',
@@ -185,6 +193,9 @@ export async function putSyncSlot(
         'x-ww-sha256': await syncBlobDigest(blob),
         ...(ifMatch && { 'if-match': ifMatch === '*' ? '*' : `"${ifMatch}"` }),
         ...(reseal && { 'x-ww-reseal': '1' }),
+        ...(coversSequence !== undefined && {
+          'x-ww-covers-sequence': String(coversSequence),
+        }),
       },
       timeoutMs: BLOB_TIMEOUT_MS,
     }
@@ -201,13 +212,17 @@ export async function putSyncSlot(
 }
 
 export async function listSyncSlots(
-  options: BearerAccountOptions
+  options: BearerAccountOptions,
+  { readsChanges = false }: { readsChanges?: boolean } = {}
 ): Promise<SyncListing> {
   const response = await sendBearerAccountOp<Record<string, unknown>>(
     'sync/list',
     {},
     options,
-    { idempotent: true }
+    {
+      idempotent: true,
+      ...(readsChanges && { headers: { 'x-ww-sync-changes': '1' } }),
+    }
   )
   const { ok, seq, slots } = response.data ?? {}
   if (ok !== true || typeof seq !== 'number' || !Array.isArray(slots))
@@ -229,6 +244,181 @@ export async function listSyncSlots(
         ended: live === false,
       })),
   }
+}
+
+export const SYNC_CHANGE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/
+
+export type SyncChange = {
+  sequence: number
+  slotId: string
+  changeId: string
+
+  createdAt: number
+
+  blob: string
+}
+
+export type SyncCatchUpSlot = {
+  slotId: string
+  etag: string
+  size: number
+  updatedAt: number
+  platform: SyncSlotPlatform | null
+
+  floorSequence: number
+
+  changedAt: number
+}
+
+export type SyncCatchUp = {
+  sequence: number
+  slots: SyncCatchUpSlot[]
+  changes: SyncChange[]
+  more: boolean
+
+  snapshotReaders: boolean
+  requestedAt: number | null
+  photos: boolean | null
+}
+
+const isSequence = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+
+export function parseSyncChange(value: unknown): SyncChange | null {
+  const change = value as Partial<SyncChange> | null
+  return isSequence(change?.sequence) &&
+    typeof change.slotId === 'string' &&
+    SYNC_SLOT_ID_PATTERN.test(change.slotId) &&
+    typeof change.changeId === 'string' &&
+    SYNC_CHANGE_ID_PATTERN.test(change.changeId) &&
+    typeof change.createdAt === 'number' &&
+    typeof change.blob === 'string'
+    ? {
+        sequence: change.sequence,
+        slotId: change.slotId,
+        changeId: change.changeId,
+        createdAt: change.createdAt,
+        blob: change.blob,
+      }
+    : null
+}
+
+export function parseSyncCatchUp(value: unknown): SyncCatchUp | null {
+  const data = value as Record<string, unknown> | null
+  if (
+    !data ||
+    !isSequence(data.sequence) ||
+    !Array.isArray(data.slots) ||
+    !Array.isArray(data.changes)
+  )
+    return null
+  const slots: SyncCatchUpSlot[] = []
+  for (const slot of data.slots as unknown[]) {
+    if (!isSlot(slot)) continue
+    const { floorSequence, changedAt } = slot as Partial<SyncCatchUpSlot>
+    if (!isSequence(floorSequence)) return null
+    slots.push({
+      slotId: slot.slotId,
+      etag: slot.etag,
+      size: slot.size,
+      updatedAt: slot.updatedAt,
+      platform: SLOT_PLATFORMS.includes(slot.platform)
+        ? (slot.platform as SyncSlotPlatform)
+        : null,
+      floorSequence,
+      changedAt: typeof changedAt === 'number' ? changedAt : slot.updatedAt,
+    })
+  }
+  const changes: SyncChange[] = []
+  for (const each of data.changes as unknown[]) {
+    const change = parseSyncChange(each)
+    if (!change) return null
+    changes.push(change)
+  }
+  return {
+    sequence: data.sequence,
+    slots,
+    changes,
+    more: data.more === true,
+    snapshotReaders: data.snapshotReaders === true,
+    requestedAt: typeof data.requestedAt === 'number' ? data.requestedAt : null,
+    photos: typeof data.photos === 'boolean' ? data.photos : null,
+  }
+}
+
+export async function listSyncChanges(
+  options: BearerAccountOptions,
+  slotId: string,
+  afterSequence: number
+): Promise<SyncCatchUp> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/changes/list',
+    { slotId, afterSequence },
+    options,
+    { idempotent: true }
+  )
+  const catchUp =
+    response.data?.ok === true ? parseSyncCatchUp(response.data) : null
+  if (!catchUp) throw unexpected(response.status)
+  return catchUp
+}
+
+export type SyncChangePut = {
+  sequence: number
+
+  tailCount: number
+  tailBytes: number
+  snapshotReaders: boolean
+
+  changedAt: number | null
+}
+
+export async function putSyncChange(
+  options: BearerAccountOptions,
+  change: { slotId: string; changeId: string; blob: Uint8Array }
+): Promise<SyncChangePut> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/changes/put',
+    {
+      slotId: change.slotId,
+      changeId: change.changeId,
+      blob: toB64u(change.blob),
+    },
+    options,
+    { idempotent: true }
+  )
+  const data = response.data ?? {}
+  if (
+    data.ok !== true ||
+    !isSequence(data.sequence) ||
+    !isSequence(data.tailCount) ||
+    !isSequence(data.tailBytes)
+  )
+    throw unexpected(response.status)
+  return {
+    sequence: data.sequence,
+    tailCount: data.tailCount,
+    tailBytes: data.tailBytes,
+    snapshotReaders: data.snapshotReaders === true,
+    changedAt: typeof data.changedAt === 'number' ? data.changedAt : null,
+  }
+}
+
+export async function resealSyncChange(
+  options: BearerAccountOptions,
+  change: { sequence: number; changeId: string; blob: Uint8Array }
+): Promise<void> {
+  const response = await sendBearerAccountOp<Record<string, unknown>>(
+    'sync/changes/reseal',
+    {
+      sequence: change.sequence,
+      changeId: change.changeId,
+      blob: toB64u(change.blob),
+    },
+    options,
+    { idempotent: true }
+  )
+  if (response.data?.ok !== true) throw unexpected(response.status)
 }
 
 export async function getSyncSlot(

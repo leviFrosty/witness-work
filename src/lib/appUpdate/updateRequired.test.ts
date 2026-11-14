@@ -130,12 +130,12 @@ describe('fetchAppConfig', () => {
         'https://api.test/app/v1/config',
         answer({
           ok: true,
-          sync: { enabled: true, entitlement: 'everyone' },
+          sync: { enabled: true, entitlement: 'everyone', changes: true },
         }) as unknown as typeof fetch
       )
     ).resolves.toEqual({
       minAppVersion: null,
-      sync: { enabled: true, entitlement: 'everyone' },
+      sync: { enabled: true, entitlement: 'everyone', changes: true },
     })
     await expect(
       fetchAppConfig(
@@ -147,7 +147,7 @@ describe('fetchAppConfig', () => {
       )
     ).resolves.toEqual({
       minAppVersion: null,
-      sync: { enabled: false, entitlement: 'supporter' },
+      sync: { enabled: false, entitlement: 'supporter', changes: false },
     })
   })
 

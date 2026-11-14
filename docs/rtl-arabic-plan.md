@@ -46,7 +46,7 @@ Goal: ship Arabic as WitnessWork's first right-to-left language on iOS and Andro
 React Native swaps `left/right`, margins, paddings and `row` under RTL. These don't flip:
 
 - Gestures: `PlanRow`, `ContactRow`, `VisitTimelineCard`, `TripRow` (Swipeable), `SwipeMonthNavigator`, `PlanDaySlider`, `SortableChipRow`, `SidebarResizeHandle`, `MapScreen.tsx:1070-1077`.
-- Carousels: `RevealTour`, `ScheduleIntroOverlay`, `ApproachingConversations` (`scrollTo({x})`, `contentOffset.x`), `MonthlyRoutine` (`initialScrollIndex`).
+- Carousels: `RevealTour`, `ApproachingConversations` (`scrollTo({x})`, `contentOffset.x`), `MonthlyRoutine` (`initialScrollIndex`).
 - Charts: `ServiceYearPaceChart`, `MileagePeriodChart` draw with Skia, while `ChartXLabels` labels are mirrored views.
 - About 114 directional icon references; back chevrons at `Header.tsx:89` and `OnboardingNav.tsx:126`; `FormRowChevron` exists but most rows import `ChevronRightIcon` directly.
 - About 64 explicit `textAlign: 'left'|'right'`; `TextInput` defaults to `'right'`.

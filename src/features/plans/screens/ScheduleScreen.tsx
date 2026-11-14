@@ -6,7 +6,6 @@ import {
   BottomTabScreenProps,
   useBottomTabBarHeight,
 } from '@react-navigation/bottom-tabs'
-import { useIsFocused } from '@react-navigation/native'
 import moment from 'moment'
 import Animated from 'react-native-reanimated'
 
@@ -16,9 +15,6 @@ import i18n from '@/lib/locales'
 import { getMonthsReports } from '@/lib/serviceReport'
 import type { CalendarMonth } from '@/lib/monthlyGoals'
 import useServiceReport from '@/stores/serviceReport'
-import { usePreferences } from '@/stores/preferences'
-import { useScheduleIntro } from '@/stores/scheduleIntro'
-import { useTakeover } from '@/stores/takeover'
 import { HomeTabStackParamList } from '@/types/homeStack'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 import RootHeader from '@/components/RootHeader'
@@ -63,19 +59,6 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
   const tabBarHeight = useBottomTabBarHeight()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   useSyncBuddiesOnFocus()
-  const openIntro = useScheduleIntro((s) => s.open)
-  const isFocused = useIsFocused()
-
-  useEffect(() => {
-    if (!isFocused || usePreferences.getState().scheduleIntroSeen) return
-    openIntro('first_visit')
-    return () => {
-      const intro = useScheduleIntro.getState()
-      const showing =
-        useTakeover.getState().arbiter.active?.kind === 'schedule-intro'
-      if (intro.source === 'first_visit' && !showing) intro.close()
-    }
-  }, [isFocused, openIntro])
   const buddyMarkers = useBuddyCalendarMarkers()
   const index = useScheduleDayIndex()
   const editableGoal = useEditableMonthGoal()

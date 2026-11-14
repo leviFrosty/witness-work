@@ -118,7 +118,6 @@ export const SYNC_MAP_KEYS = new Set([
 ])
 export const SYNC_SET_KEYS = new Set([
   'seenTipIds',
-  'scheduleIntroCoveredPages',
   'submittedReportMonths',
   'badgeLedger',
 ])

@@ -33,7 +33,6 @@ import Text from '@/components/ui/MyText'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import { HomeTabStackNavigation } from '@/types/homeStack'
-import MapKey from '@/features/map/components/MapColorKey'
 import LocationPreview from '@/features/map/components/LocationPreview'
 import { analytics } from '@/lib/analytics'
 import { isKnownOffline } from '@/lib/http/online'
@@ -97,7 +96,6 @@ export default function MapOnboarding() {
   const tabBarHeight = useBottomTabBarHeight()
   const { isWide } = useAdaptiveLayout()
   const [fetching, setFetching] = useState(false)
-  const [locationPermissions, setLocationPermissions] = useState<boolean>()
   const [statuses, setStatuses] = useState<Record<string, FetchStatus>>({})
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -105,12 +103,7 @@ export default function MapOnboarding() {
 
   const handleLocationPermission = (status: boolean) => {
     analytics.capture('map_location_permission_result', { granted: status })
-    setLocationPermissions(status)
-    goNext()
-  }
-
-  const handleSkipLocation = () => {
-    goNext()
+    finish()
   }
 
   const oldContactsWithAddressWithoutCoordinates = useMemo(() => {
@@ -219,6 +212,8 @@ export default function MapOnboarding() {
   const goNext = () => {
     setStep((s) => s + 1)
   }
+
+  const finish = () => set({ hasCompletedMapOnboarding: true })
 
   const handleSkipFetchPress = () => {
     if (!fetching) {
@@ -529,24 +524,16 @@ export default function MapOnboarding() {
             </View>
           </View>
           <View style={{ gap: 10 }}>
-            {locationPermissions === undefined ? (
-              <ActionButton
-                onPress={() =>
-                  requestLocationPermission(handleLocationPermission)
-                }
-              >
-                <Text style={{ color: theme.colors.textInverse }}>
-                  {i18n.t('enableLocationServices')}
-                </Text>
-              </ActionButton>
-            ) : (
-              <ActionButton onPress={goNext}>
-                <Text style={{ color: theme.colors.textInverse }}>
-                  {i18n.t('continue')}
-                </Text>
-              </ActionButton>
-            )}
-            <Button onPress={handleSkipLocation}>
+            <ActionButton
+              onPress={() =>
+                requestLocationPermission(handleLocationPermission)
+              }
+            >
+              <Text style={{ color: theme.colors.textInverse }}>
+                {i18n.t('enableLocationServices')}
+              </Text>
+            </ActionButton>
+            <Button onPress={finish}>
               <Text
                 style={{
                   textAlign: 'center',
@@ -557,41 +544,6 @@ export default function MapOnboarding() {
                 {i18n.t('notNow')}
               </Text>
             </Button>
-          </View>
-        </ScrollView>
-      )}
-      {step === 2 && (
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-
-            justifyContent: isWide ? 'center' : 'space-between',
-            gap: isWide ? 32 : 20,
-          }}
-        >
-          <View style={{ gap: 20 }}>
-            <View style={{ gap: 10 }}>
-              <Text
-                style={{
-                  fontSize: theme.fontSize('xl'),
-                  fontFamily: theme.fonts.bold,
-                }}
-              >
-                {i18n.t('oneMoreThing')}
-              </Text>
-              <Text>{i18n.t('markers_description')}</Text>
-            </View>
-            <MapKey />
-          </View>
-
-          <View>
-            <ActionButton
-              onPress={() => set({ hasCompletedMapOnboarding: true })}
-            >
-              <Text style={{ color: theme.colors.textInverse }}>
-                {i18n.t('letsGo')}
-              </Text>
-            </ActionButton>
           </View>
         </ScrollView>
       )}

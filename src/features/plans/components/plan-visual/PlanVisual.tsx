@@ -30,7 +30,7 @@ import {
   WeekStrip,
   dayX,
   thisWeek,
-} from '@/features/plans/components/schedule-intro/introKit'
+} from '@/features/plans/components/plan-visual/weekKit'
 
 const CARD = { top: 24, height: 118 }
 const STRIP_TOP = 42

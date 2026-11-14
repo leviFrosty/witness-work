@@ -21,7 +21,7 @@ vi.mock('@/stores/preferences', async () => {
       customCreditLimitHours: 0,
       logsHours: false,
       timeDisplayFormat: 'decimal',
-      scheduleIntroSeen: false,
+      rewardAnimations: true,
       onboardingComplete: false,
     })),
   }
@@ -58,7 +58,7 @@ it('does not re-render on preference writes it does not read', () => {
     usePreferences.setState({ timeDisplayFormat: 'short' })
   })
   act(() => {
-    usePreferences.setState({ scheduleIntroSeen: true })
+    usePreferences.setState({ rewardAnimations: false })
   })
   act(() => {
     usePreferences.setState({ onboardingComplete: true })

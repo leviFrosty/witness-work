@@ -44,7 +44,7 @@ import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 const SNAPSHOT: UsageSnapshotWire = {
   plan: 'free',
   supporterCheckFailed: false,
-  windows: [{ id: 'monthly', percentUsed: 12, resetsAt: 2_000 }],
+  windows: [{ id: 'weekly', percentUsed: 12, resetsAt: 2_000 }],
   limited: false,
   resetsAt: null,
   asOf: 1_000,

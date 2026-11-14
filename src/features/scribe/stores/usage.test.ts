@@ -8,7 +8,7 @@ import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 const snapshot = (asOf: number, percentUsed: number): UsageSnapshotWire => ({
   plan: 'free',
   supporterCheckFailed: false,
-  windows: [{ id: 'monthly', percentUsed, resetsAt: null }],
+  windows: [{ id: 'weekly', percentUsed, resetsAt: null }],
   limited: false,
   resetsAt: null,
   asOf,

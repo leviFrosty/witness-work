@@ -92,7 +92,7 @@ const meter = (percentUsed: number) => ({
   plan: 'free' as const,
   supporterCheckFailed: false,
   windows: [
-    { id: 'monthly' as const, percentUsed, resetsAt: 1_900_000_000_000 },
+    { id: 'weekly' as const, percentUsed, resetsAt: 1_900_000_000_000 },
   ],
   limited: false,
   resetsAt: null,

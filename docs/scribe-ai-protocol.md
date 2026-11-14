@@ -31,7 +31,7 @@ sequenceDiagram
 | Ref          | A short alias the device minted for a record (`c3`); the model never sees raw ids             |
 | Proposal     | The write calls of one turn, validated and resolved on the device, waiting for review         |
 | Usage unit   | The meter's unit: cost-weighted tokens ([Metering](#metering))                                |
-| Usage window | A period with a unit limit: `session` (5 h), `weekly` (7 d), `monthly` (30 d)                 |
+| Usage window | A period with a unit limit: `session` (5 h), `weekly` (7 d). `monthly` (30 d) limits nobody   |
 
 ## Routes
 
@@ -163,7 +163,11 @@ interface UsageSnapshot {
    * free.
    */
   supporterCheckFailed: boolean
-  /** The windows that limit this plan, shortest first. */
+  /**
+   * The windows that limit this plan, shortest first. A free account also gets
+   * `monthly`, a copy of its weekly window for apps before 1.47.0, which read
+   * only that one; newer apps ignore it.
+   */
   windows: UsageWindow[]
   /** True when any window is at or over its limit. */
   limited: boolean
@@ -651,18 +655,23 @@ Streamed chars count text, reasoning and tool arguments. A charge of 0 units sta
 
 | Window    | Length | Applies to | Default limit (units) | Starts                                                 |
 | --------- | ------ | ---------- | --------------------- | ------------------------------------------------------ |
-| `session` | 5 h    | Supporter  | 540,000               | At the first charge while no session window is running |
-| `weekly`  | 7 d    | Supporter  | 1,550,000             | At the first charge while no weekly window is running  |
-| `monthly` | 30 d   | Free       | 150,000               | At the first charge while no monthly window is running |
+| `session` | 5 h    | Supporter  | 200,000               | At the first charge while no session window is running |
+| `weekly`  | 7 d    | Supporter  | 500,000               | At the first charge while no weekly window is running  |
+| `weekly`  | 7 d    | Free       | 25,000                | At the first charge while no weekly window is running  |
+| `monthly` | 30 d   | Nobody     | None                  | At the first charge while no monthly window is running |
 
-Every charge accrues to all three windows; the plan decides which ones limit and are shown. A window that has ended reads as 0 % with `resetsAt: null` until the next charge starts a new one. Changing plan changes which windows apply, immediately and in both directions (a lapsed Supporter is limited by the monthly window, which already holds their recent usage). `-1` as a limit is unlimited (the [dev bypass](#configuration) uses it).
+Every charge accrues to all three windows; the plan decides which ones limit and are shown. A window that has ended reads as 0 % with `resetsAt: null` until the next charge starts a new one. Changing plan changes which windows apply, immediately and in both directions (a lapsed Supporter is limited by the free weekly limit, in a weekly window that already holds their recent usage).
+
+**Welcome window.** The first weekly window an account ever starts is its welcome window: a free account's limit in it is `free.welcome` (150,000) in place of `free.weekly`, so a first import of notes or paper pages isn't cut short. An account that hasn't started a window reads the welcome limit too. Every later window has the weekly limit. The meter forgets an account 31 days after its last charge, so someone who comes back after that starts with a welcome window again. `free.welcome` never lowers the limit: a value under `free.weekly` is ignored.
+
+The monthly window limited free accounts until November 2026. It still accrues, and limits nobody. `-1` as a limit is unlimited (the [dev bypass](#configuration) uses it).
 
 ### Enforcement
 
 Order of pre-flight checks on `/step`: per-IP rate limit → auth → kill switch and provider health → body size → `protocol` → body, tool and message validation → context estimate → meter (with turn grace) → step key → active-step cap → model. The meter, step key and active-step cap are one atomic check in the account's `ScribeMeter` Durable Object.
 
 - **Meter:** admit when every window of the plan has `used < limit`.
-- **Turn grace:** a step with `step > 0` whose `turnId` was admitted at step 0 within the last `turnGraceMinutes` (30) is also admitted while every window has `used < limit + graceUnits` (50,000). So a turn that started under the limit finishes, with bounded overshoot. Otherwise → 402 `limit_reached` with `usage` and `retryAfter` = seconds until `usage.resetsAt`.
+- **Turn grace:** a step with `step > 0` whose `turnId` was admitted at step 0 within the last `turnGraceMinutes` (30) is also admitted while every window has `used < limit + graceUnits` (50,000 for a Supporter; `free.graceUnits`, 15,000, for a free account). So a turn that started under the limit finishes, with bounded overshoot. Otherwise → 402 `limit_reached` with `usage` and `retryAfter` = seconds until `usage.resetsAt`.
 - **Overshoot policy:** an admitted step always runs to completion and is charged in full, even past the limit. The worst case is one step over (≤ `maxInputTokens` + 5 × `maxOutputTokens` ≈ 68k units per model call, twice that if a blank completion is retried) or `graceUnits` plus one step during turn grace. Measured steps are far smaller: ≈ 900–3,800 units with a warm cache, ≈ 6,300–7,700 cold, cache writes included ([Measured usage](#measured-usage-behind-the-defaults)).
 - **Active steps:** at most `activeStepCap` (2) running steps per account → 429 `active_cap`, `retryAfter` 5. A step that never settled frees its slot after `stepTimeoutMs` + 30 s.
 - Context estimate: `ceil(bytes(system prompt + tools + context + messages) / 3)`; over `maxInputTokens` → 413 `context_full`.
@@ -713,11 +722,11 @@ The system prompt and tools are shared by every User and conversation without an
 
 At `low` the model sometimes left out the second of two actions in one message. A dropped action is worse than a slower step, so the default is `medium`.
 
-**Defaults that follow.** Limits are sized at `medium` reasoning and a 50 % cache hit rate, since real sessions pause between turns and the prefix cache can go cold, with every uncached token written at 1.25×: a quick edit ≈ 7,200 units, a 7-turn conversation ≈ 54,600 (ww-api `AGENTS.md` → Scribe AI → Model notes). Metering cache writes raised each limit by ≈ 1.19× (from 125,000, 450,000 and 1,300,000), which keeps what each costs at list price where it was.
+**Defaults that follow.** Limits are sized at `medium` reasoning and a 50 % cache hit rate, since real sessions pause between turns and the prefix cache can go cold, with every uncached token written at 1.25×: a quick edit ≈ 7,200 units, a 7-turn conversation ≈ 54,600 (ww-api `AGENTS.md` → Scribe AI → Model notes). The limits were resized in November 2026 from production usage, as below.
 
-- **Free monthly 150,000.** Two longer conversations and three quick edits (2 × 54,600 + 3 × 7,200 = 130,800) with headroom; at list price that's at most ≈ $0.015 per free User a month.
-- **Supporter session 540,000** (≈ 9 longer conversations in 5 hours) and **weekly 1,550,000** (≈ 28 a week): generous for anyone using it for ministry, at most ≈ $0.155 a week at list price.
-- **A paper page** (measured on a 1700 × 2200 page; the app sends at most 2,000 px on the long edge) is ≈ 4,690 tokens in, ≈ 4,450 of them the image, and nothing written. A sparse page (≈ 150 tokens out) is ≈ 5,400 units; a full one (≈ 600 out) ≈ 7,700, about 5 % of the free month.
+- **Free weekly 25,000, welcome 150,000.** Three or four quick updates a week. Production usage from October 24 to November 13, 2026 (100 free accounts in `api_scribe_step`): a step cost a median of 6,600 units at a 42 % cache hit rate, the median account used 7,900 units in the whole period, and the 95th percentile 21,600, so 25,000 a week leaves ordinary use alone and limits the few who use it every day. The welcome window keeps the old monthly figure for a first week, because one first import used 130,000 units in an hour. At list price a free User costs at most ≈ $0.011 a month after the first week. The free turn grace is 15,000, so a turn can't overshoot a 25,000 limit by twice its size.
+- **Supporter session 200,000 and weekly 500,000.** About 27 quick updates in 5 hours and 69 a week, 20 times a free week. In the same three weeks of production usage (13 Supporter accounts), the heaviest used 64,300 units in 5 hours and in a week, so both limits sit at three times the heaviest use or more. At most ≈ $0.05 a week at list price. They were 540,000 and 1,550,000 until November 2026.
+- **A paper page** (measured on a 1700 × 2200 page; the app sends at most 2,000 px on the long edge) is ≈ 4,690 tokens in, ≈ 4,450 of them the image, and nothing written. A sparse page (≈ 150 tokens out) is ≈ 5,400 units; a full one (≈ 600 out) ≈ 7,700, about a quarter of a free week.
 - **`maxInputTokens` 48,000.** The measured 7-turn conversation ended at 6,560 input tokens, far below the 75 % banner (36,000). Pasted pages and long read results are what fill it.
 
 **Later cuts.** List reads now answer in lines ([Messages](#messages): Read results), which leaves step 0 as it was and shrinks the steps after a read. The tool descriptions stayed as they were: rewording two of them to mention lines moved a request that reads nothing (`visit-no-day`, 8 of 10 against 10 of 10). Three more were tried on the eval suite (142 scenarios, two runs each) and dropped:
@@ -755,12 +764,12 @@ A failed KV read counts as absent: Scribe AI stays on with the defaults, and the
 
 ### Configuration
 
-`scribe:limits` (each field on its own: KV → env `SCRIBE_` + its path in snake case, e.g. `SCRIBE_FREE_MONTHLY`, `SCRIBE_WINDOW_LENGTHS_SESSION_HOURS` → default). A value of the wrong kind falls through to the next source: allowances are integers ≥ `-1`, caps integers ≥ 1, weights numbers ≥ 0.
+`scribe:limits` (each field on its own: KV → env `SCRIBE_` + its path in snake case, e.g. `SCRIBE_FREE_WEEKLY`, `SCRIBE_WINDOW_LENGTHS_SESSION_HOURS` → default). A value of the wrong kind falls through to the next source: allowances are integers ≥ `-1`, caps integers ≥ 1, weights numbers ≥ 0.
 
 ```json
 {
-  "free": { "monthly": 150000 },
-  "supporter": { "session": 540000, "weekly": 1550000 },
+  "free": { "weekly": 25000, "welcome": 150000, "graceUnits": 15000 },
+  "supporter": { "session": 200000, "weekly": 500000 },
   "windowLengths": { "sessionHours": 5, "weeklyDays": 7, "monthlyDays": 30 },
   "weights": {
     "input": 1,

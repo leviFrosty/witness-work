@@ -16,6 +16,9 @@ import StepThree from '@/features/onboarding/components/steps/Three'
 import CalendarSync from '@/features/onboarding/components/steps/CalendarSync'
 import StepDefaultNav from '@/features/onboarding/components/steps/DefaultNav'
 import DataProtection from '@/features/onboarding/components/steps/DataProtection'
+import CloudSync, {
+  cloudSyncOptedOut,
+} from '@/features/onboarding/components/steps/CloudSync'
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import { OnboardingKeyboardProvider } from '@/features/onboarding/components/OnboardingFooter'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
@@ -27,6 +30,7 @@ import Buddies from '@/features/onboarding/components/steps/Buddies'
 import SavePasskey from '@/features/onboarding/components/steps/SavePasskey'
 import useOnboardingBuddiesAvailable from '@/features/onboarding/hooks/useOnboardingBuddiesAvailable'
 import useOnboardingPasskeysAvailable from '@/features/onboarding/hooks/useOnboardingPasskeysAvailable'
+import useOnboardingCloudSyncAvailable from '@/features/onboarding/hooks/useOnboardingCloudSyncAvailable'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import OnboardingBackfill from '@/features/onboarding/components/steps/OnboardingBackfill'
 import { hasReportsInCatchUpWindow } from '@/features/service-reports/components/OnboardingBackfillForm'
@@ -66,6 +70,7 @@ const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
   pioneerDate: ProfileSetupPioneerDate,
   planMonth: PlanMonth,
   dataProtection: DataProtection,
+  cloudSync: CloudSync,
   buddies: Buddies,
   passkeys: SavePasskey,
   notifications: StepThree,
@@ -95,6 +100,9 @@ const OnBoarding = () => {
   const passkeysAvailable = useOnboardingPasskeysAvailable(
     reachedStep(onboardingStepId, 'passkeys', hasCompletedProfileSetup)
   )
+  const cloudSyncAvailable = useOnboardingCloudSyncAvailable(
+    reachedStep(onboardingStepId, 'cloudSync', hasCompletedProfileSetup)
+  )
 
   const showIfCtx: StepShowIfContext = useMemo(
     () => ({
@@ -106,6 +114,7 @@ const OnBoarding = () => {
       hasCatchUpReports: hasReportsInCatchUpWindow(serviceReports, installedOn),
       buddiesAvailable,
       passkeysAvailable,
+      cloudSyncAvailable,
       calendarAvailable:
         hasCapability('calendarBridge') && calendarBridgeAvailable,
       notificationsAvailable: hasCapability('deviceNotifications'),
@@ -119,6 +128,7 @@ const OnBoarding = () => {
       serviceReports,
       buddiesAvailable,
       passkeysAvailable,
+      cloudSyncAvailable,
     ]
   )
 
@@ -183,6 +193,9 @@ const OnBoarding = () => {
         : {}),
       ...(visibleSteps[stepIndex]?.id === 'defaultNav'
         ? { selected_option: preferences.defaultNavigationMapProvider }
+        : {}),
+      ...(visibleSteps[stepIndex]?.id === 'cloudSync'
+        ? { selected_option: cloudSyncOptedOut(preferences) ? 'off' : 'on' }
         : {}),
       ...(visibleSteps[stepIndex]?.id === 'buddies'
         ? {

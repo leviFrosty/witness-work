@@ -412,10 +412,10 @@ switching, `components/CloudSyncDefault.tsx`).
   While Cloud Sync isn't offered, it gets iCloud or Drive the same way
   (`PlatformSyncDefault`).
 - **New and existing installs** (ADR 0040 §2). Those defaults apply to every
-  new install. An install from before sync was free isn't switched: it keeps
-  the rule it had, where only a Supporter got sync without choosing, so one
-  that isn't a Supporter and never chose stays off until the User turns sync
-  on. `installedBeforeFreeSync` (device-local) tells them apart: the
+  new install, and onboarding's Cloud Sync step says so first and lets the
+  User turn it off. An install from before sync was free is never switched,
+  a Supporter's included: one that never chose stays off until the User turns
+  sync on, from the tray offer below or Settings → Sync. `installedBeforeFreeSync` (device-local) tells them apart: the
   preferences store's v16 persist migration sets it on any store saved by an
   older version, and a new install's store keeps the default, false. The
   decisions are `src/app/sync/syncDefaults.ts`.
@@ -425,7 +425,8 @@ switching, `components/CloudSyncDefault.tsx`).
   before sync was free, onboarded, not on Cloud Sync (iCloud, Drive, or off,
   chosen or not), while Cloud Sync is offered, gets one notifications-tray
   item. A Supporter gets a thank-you ("Thank you for supporting WitnessWork",
-  Turn On Cloud Sync); anyone else gets "Cloud Sync is now free" (Turn On), and
+  Turn On Cloud Sync); anyone else gets "Cloud Sync is now free for everyone",
+  crediting the Supporters (Turn On), and
   only while the entitlement is `everyone`. It waits until RevenueCat and
   ww-api's Supporter answer for the account (ADR 0040 §7) are in, so a
   Supporter never sees the other one. Turn On switches in place

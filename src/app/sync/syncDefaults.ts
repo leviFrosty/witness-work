@@ -13,14 +13,13 @@ export function cloudSyncDefaultMayApply({
   entitlement,
   cloudSyncEntitled,
 }: SyncDefaultInputs): boolean {
+  if (installedBeforeFreeSync) return false
   if (isSupporter) return true
-
-  if (entitlement === 'supporter' && cloudSyncEntitled === true) return true
-  return !installedBeforeFreeSync && entitlement === 'everyone'
+  if (entitlement === 'supporter') return cloudSyncEntitled === true
+  return entitlement === 'everyone'
 }
 
 export const platformSyncDefaultApplies = ({
   installedBeforeFreeSync,
-  isSupporter,
-}: Pick<SyncDefaultInputs, 'installedBeforeFreeSync' | 'isSupporter'>) =>
-  !installedBeforeFreeSync || isSupporter
+}: Pick<SyncDefaultInputs, 'installedBeforeFreeSync'>) =>
+  !installedBeforeFreeSync

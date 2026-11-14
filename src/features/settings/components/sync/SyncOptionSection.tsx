@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import {
   Check as CheckIcon,
+  Cloud as CloudIcon,
+  CloudOff as CloudOffIcon,
+  HardDrive as HardDriveIcon,
   ShieldCheck as ShieldCheckIcon,
 } from 'lucide-react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import LucideIcon from '@/components/ui/LucideIcon'
+import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
-import InfoPopover from '@/components/ui/InfoPopover'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import Section from '@/components/ui/inputs/Section'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
@@ -17,6 +19,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { platformSyncKey } from '@/lib/syncCopy'
 import { cloudSyncOnly } from '@/lib/syncTransport/platform'
+import { usesGoogleDriveSync } from '@/lib/syncTransport'
 import type { SyncOption } from '@/app/sync/syncOption'
 
 export default function SyncOptionSection({
@@ -43,19 +46,35 @@ export default function SyncOptionSection({
   const theme = useTheme()
   const web = cloudSyncOnly()
 
-  const row = (
-    value: SyncOption,
-    label: string,
-    sublabel: string | undefined,
-    last = false
-  ) => (
+  const row = ({
+    value,
+    label,
+    icon,
+    iconColor,
+    sublabel,
+    footnote,
+    last = false,
+  }: {
+    value: SyncOption
+    label: string
+    icon: AppIcon
+    iconColor?: string
+    sublabel?: string
+    footnote?: ReactNode
+    last?: boolean
+  }) => (
     <InputRowButton
       key={value}
       label={label}
+      leftIcon={icon}
+      leftIconColor={iconColor}
       sublabel={sublabel}
+      footnote={footnote}
       onPress={() => onSelect(value)}
       disabled={busy !== null}
+      checked={option === value}
       lastInSection={last}
+      testID={`sync-option-${value}`}
     >
       {busy === value ? (
         <ActivityIndicator size='small' color={theme.colors.textAlt} />
@@ -63,6 +82,24 @@ export default function SyncOptionSection({
         <LucideIcon icon={CheckIcon} size={20} color={theme.colors.accent} />
       ) : null}
     </InputRowButton>
+  )
+
+  const cloudFootnote = (
+    <Text
+      style={{ fontSize: theme.fontSize('xs'), color: theme.colors.textAlt }}
+    >
+      <Text
+        style={{
+          fontSize: theme.fontSize('xs'),
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.accent,
+        }}
+      >
+        {i18n.t('syncOption_cloudEncrypted')}
+      </Text>
+      {' · '}
+      {i18n.t(web ? 'syncOption_cloudDevicesWeb' : 'syncOption_cloudDevices')}
+    </Text>
   )
 
   return (
@@ -117,45 +154,40 @@ export default function SyncOptionSection({
         </Card>
       )}
 
-      <View
+      <Text
+        accessibilityRole='header'
         style={{
           paddingHorizontal: inputLayout.horizontalPadding,
-          flexDirection: 'row',
-          alignItems: 'center',
+          fontSize: theme.fontSize('md'),
+          fontFamily: theme.fonts.semiBold,
+          color: theme.colors.text,
         }}
       >
-        <Text
-          style={{
-            fontSize: theme.fontSize('md'),
-            fontFamily: theme.fonts.semiBold,
-            color: theme.colors.text,
-          }}
-        >
-          {i18n.t('syncOption_title')}
-        </Text>
-        <InfoPopover
-          title={i18n.t('syncOption_title')}
-          description={i18n.t(
-            web ? 'syncOption_infoWeb' : platformSyncKey('syncOption_info')
-          )}
-        />
-      </View>
+        {i18n.t('syncOption_title')}
+      </Text>
       <Section>
-        {row(
-          'cloud',
-          i18n.t('cloudSync'),
-          i18n.t(
-            web ? 'syncOption_cloudSublabelWeb' : 'syncOption_cloudSublabel'
-          ),
-          web
-        )}
+        {row({
+          value: 'cloud',
+          label: i18n.t('cloudSync'),
+          icon: ShieldCheckIcon,
+          iconColor: theme.colors.accent,
+          footnote: cloudFootnote,
+          last: web,
+        })}
         {!web &&
-          row(
-            'platform',
-            i18n.t(platformSyncKey('iCloudSync')),
-            i18n.t(platformSyncKey('syncOption_platformSublabel'))
-          )}
-        {!web && row('off', i18n.t('syncOption_off'), undefined, true)}
+          row({
+            value: 'platform',
+            label: i18n.t(platformSyncKey('syncOption_platformLabel')),
+            icon: usesGoogleDriveSync() ? HardDriveIcon : CloudIcon,
+            sublabel: i18n.t(platformSyncKey('syncOption_platformSublabel')),
+          })}
+        {!web &&
+          row({
+            value: 'off',
+            label: i18n.t('syncOption_off'),
+            icon: CloudOffIcon,
+            last: true,
+          })}
       </Section>
       <View style={{ paddingHorizontal: inputLayout.horizontalPadding }}>
         <Text style={{ fontSize: 12, color: theme.colors.textAlt }}>

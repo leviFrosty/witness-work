@@ -6,7 +6,7 @@ const runtime = vi.hoisted(() => ({
   isSupporter: true,
   cloudSyncEntitled: null as boolean | null,
   entitlement: 'supporter' as 'supporter' | 'everyone',
-  installedBeforeFreeSync: true,
+  installedBeforeFreeSync: false,
   os: 'ios' as 'ios' | 'web',
   onboardingComplete: true,
   setState: vi.fn(),
@@ -96,7 +96,7 @@ beforeEach(() => {
   runtime.isSupporter = true
   runtime.cloudSyncEntitled = null
   runtime.entitlement = 'supporter'
-  runtime.installedBeforeFreeSync = true
+  runtime.installedBeforeFreeSync = false
   runtime.os = 'ios'
   runtime.onboardingComplete = true
   runtime.appStateListeners = []
@@ -516,6 +516,7 @@ describe('CloudSyncDefault', () => {
 
     it('leaves an existing install that isn’t a Supporter off', async () => {
       runtime.isSupporter = false
+      runtime.installedBeforeFreeSync = true
       runtime.entitlement = 'everyone'
       runtime.cloudSyncEntitled = true
       const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
@@ -528,19 +529,17 @@ describe('CloudSyncDefault', () => {
       expect(runtime.setState).not.toHaveBeenCalled()
     })
 
-    it('still turns it on for an existing Supporter install', async () => {
+    it('leaves an existing Supporter install off too', async () => {
+      runtime.installedBeforeFreeSync = true
       runtime.entitlement = 'everyone'
       const { default: CloudSyncDefault } = await import('./CloudSyncDefault')
       const { prepareCloudSync } = await import('@/app/sync/cloudSync')
-      const { iCloudSync } = await import('@/app/sync/iCloudSync')
-      vi.mocked(prepareCloudSync).mockResolvedValueOnce(ready)
 
       await act(async () => {
         renderer = create(<CloudSyncDefault />)
       })
-      expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith(
-        'supporter_default'
-      )
+      expect(prepareCloudSync).not.toHaveBeenCalled()
+      expect(runtime.setState).not.toHaveBeenCalled()
     })
   })
 })

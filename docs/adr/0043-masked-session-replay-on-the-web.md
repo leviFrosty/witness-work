@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Masked session replay on the web

@@ -1,12 +1,13 @@
 ---
 status: accepted
+supersedes: [0054]
 ---
 
 # Pet hearts fill by the month for monthly reporters
 
 ## Context
 
-ADR 0030 replays the pet's hearts from active days: each adds a heart, and
+ADR 0054 replays the pet's hearts from active days: each adds a heart, and
 after 10 quiet days half a heart fades every 3 days. It said no rule reads the
 Publisher role, so the pet wouldn't reward circumstance.
 
@@ -15,9 +16,9 @@ asks them the same way: one "shared in ministry" check a month. Many record
 nothing else. Under the daily rule that one active day a month left their pet
 at one or two hearts and asleep for much of the month, however faithfully they
 went out. The daily rule rewarded logging often, which is circumstance for
-them, the very thing ADR 0030 meant to avoid. The Service Streak already
+them, the very thing ADR 0054 meant to avoid. The Service Streak already
 counts months for this role, and Badges count months for the same reason
-(ADR 0019).
+(ADR 0052).
 
 ## Decision
 
@@ -45,4 +46,4 @@ counts months for this role, and Badges count months for the same reason
 - The widget's timeline reaches `MONTHLY_HOLD_MAX_DAYS` (61) further, so it
   can still show the fading and the end without the app opening.
 - Every device works out the pace from the synced Role History, so they agree,
-  as ADR 0030 requires.
+  as ADR 0054 requires.

@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Routing ministry data through a third-party LLM under contractual zero-retention
 
 ## Context

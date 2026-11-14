@@ -1,3 +1,8 @@
+---
+status: accepted
+superseded-by: [0027]
+---
+
 # Notes-import identity and request authentication
 
 ## Context

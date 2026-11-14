@@ -1,5 +1,6 @@
 ---
 status: accepted
+superseded-by: [0027]
 ---
 
 # Paper pages are read by ww-api's vision model, then reuse the text pipeline

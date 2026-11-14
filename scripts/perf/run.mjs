@@ -41,8 +41,8 @@ const HELP = `node scripts/perf/run.mjs [--ref HEAD] [--platform ios|android|bot
   --settle 3           seconds between terminating the app and the next launch
   --background 5       seconds the app stays in the background per cycle
   --dwell 20           seconds in the foreground before each cycle
-  --name <name>        output name (default perf-<sha12>); writes docs/perf/<name>.json and .md
-  --out-dir docs/perf  where results go
+  --name <name>        output name (default perf-<sha12>); writes <out-dir>/<name>.json and .md
+  --out-dir .verify/artifacts/perf  where results go (gitignored)
   --api-dir <dir>      ww-api checkout with scripts/verify/dev.mjs (default $WW_API_DIR, else wwv's own checkout at origin/main)
   --api-url <url>      relay to an already running ww-api instead
   --build-only         build (and cache) the apps, then stop
@@ -217,7 +217,10 @@ async function main() {
   }
   result.machine.atEnd = machineConditions()
 
-  const outDir = path.resolve(ROOT, flags['out-dir'] ?? 'docs/perf')
+  const outDir = path.resolve(
+    ROOT,
+    flags['out-dir'] ?? '.verify/artifacts/perf'
+  )
   const name = flags.name ?? `perf-${sha.slice(0, 12)}`
   fs.mkdirSync(outDir, { recursive: true })
   writeJson(path.join(outDir, `${name}.json`), result)

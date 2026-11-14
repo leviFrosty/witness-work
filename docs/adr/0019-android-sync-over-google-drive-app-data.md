@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Android syncs through the Google Drive app data folder
@@ -148,7 +148,7 @@ project's daily total against Google's announced billing threshold.
   the "our servers never see it" property.
 - **Firebase / Firestore or our own backend.** Gives cross-platform sync for
   free but requires an account system and puts householder data on servers we
-  operate, which the product rules out (as in icloud-sync-plan.md).
+  operate, which the product rules out.
 - **Legacy Google Sign-In** (`GoogleSignInClient`): deprecated in 2024 and
   removed in play-services-auth 22.0.0.
 

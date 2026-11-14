@@ -1,13 +1,13 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Shared Cars are end-to-end encrypted record spaces on ww-api, joined through Buddies
 
 ## Context
 
-Mileage Tracking keeps cars, fuels, and trips on one User's devices
-([mileage-tracking-prd.md](../mileage-tracking-prd.md)). Couples, families, and
+Mileage Tracking keeps cars, fuels, and trips on one User's devices.
+Couples, families, and
 pioneer partners often drive one car and want one history for it. The User
 asked for:
 

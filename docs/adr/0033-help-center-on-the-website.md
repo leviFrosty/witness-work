@@ -1,5 +1,6 @@
 ---
 status: accepted
+superseded-by: [0042]
 ---
 
 # The Help Center lives on the website

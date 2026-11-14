@@ -36,7 +36,7 @@ import { createDriver, machineConditions } from './measure.mjs'
 import { percentile } from './stats.mjs'
 
 const HELP = `node scripts/perf/scrub.mjs [--ref HEAD] [--name <name>]
-node scripts/perf/scrub.mjs compare docs/perf/a.json docs/perf/b.json …
+node scripts/perf/scrub.mjs compare .verify/artifacts/perf/a.json .verify/artifacts/perf/b.json …
   --scenario stress     data to seed (busy, pioneer, stress, …)
   --rounds 6            measured gestures (one discarded warm-up first)
   --pattern drag        drag: finger held, moved up and down; fling: release each stroke
@@ -46,7 +46,7 @@ node scripts/perf/scrub.mjs compare docs/perf/a.json docs/perf/b.json …
   --hz 120              touch samples per second (a ProMotion screen samples at 120)
   --trace               also record an Instruments Time Profiler trace of round 1
   --shot <png>          screenshot the Schedule before the first gesture (with --rounds 0, only that)
-  --out-dir docs/perf   where <name>.json and <name>.md go
+  --out-dir .verify/artifacts/perf   where <name>.json and <name>.md go (gitignored)
   --rebuild             ignore the cached build
   --wait 60             minutes to wait for a build slot or a device`
 
@@ -527,7 +527,10 @@ async function main() {
   result.machine.atEnd = machineConditions()
   result.summary = summarize(result.rounds)
 
-  const outDir = path.resolve(ROOT, flags['out-dir'] ?? 'docs/perf')
+  const outDir = path.resolve(
+    ROOT,
+    flags['out-dir'] ?? '.verify/artifacts/perf'
+  )
   fs.mkdirSync(outDir, { recursive: true })
   writeJson(path.join(outDir, `${name}.json`), result)
   const markdown = renderScrubMarkdown(result)

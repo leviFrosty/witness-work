@@ -1,5 +1,6 @@
 ---
-status: proposed
+status: accepted
+supersedes: [0033]
 ---
 
 # WitnessWork moves to witnesswork.app

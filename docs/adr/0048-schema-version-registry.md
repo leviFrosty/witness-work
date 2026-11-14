@@ -1,6 +1,9 @@
-# 0001 — SchemaVersion registry vs. per-store migration chains
+---
+status: proposed
+---
 
-- Status: Proposed
+# SchemaVersion registry vs. per-store migration chains
+
 - Date: 2026-05-05
 - Issue: [#315](https://github.com/leviFrosty/witness-work/issues/315)
 - Enables: #322 (registry + serviceReport integration), #329 (iCloud merge guard), #330 (migrate `customFieldsMigration` and `migrateNormalizeDates` into the registry)

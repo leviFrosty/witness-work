@@ -28,7 +28,7 @@ ported from) lives outside the repo. The TypeScript port in `src/features/pet/ar
 ### Hearts (life model)
 
 Hearts are **replayed day by day from synced records**, from the adoption day to today. Nothing about
-hearts is stored, so every device computes the same answer (ADR 0030).
+hearts is stored, so every device computes the same answer (ADR 0054).
 
 - A pet starts with **3 hearts** on its adoption day. An active day the day before counts as after
   the adoption, so a synced device in an earlier time zone agrees with the adopting one.
@@ -155,7 +155,7 @@ its secrets.
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
 - Prices: every non-starter item and hat but `none` has a Shop price (`ITEM_PRICES` in
-  `lib/prices.ts`), in the ×10 units of ADR 0038: room items and the first 12 hats 100–360 coins,
+  `lib/prices.ts`), in the ×10 units of ADR 0057: room items and the first 12 hats 100–360 coins,
   rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27 big hats (ADR 0044) fill in from 110
   to 3,200: six cheap ones in the gaps (110–380), silly ones that don't move (400–560), ones with one
   moving part (620–1,100) and five rare ones (1,200–3,200). Uncommon and rare room items (ADR 0045)
@@ -274,7 +274,7 @@ its secrets.
   anything opened under the old streak and months rules before the Shop, which stays owned. An owned
   item never locks again.
 - **Locker and Shop.** Like a game's locker and its item shop, what the User owns and what's for
-  sale live on two screens that never overlap (ADR 0036):
+  sale live on two screens that never overlap (ADR 0055):
   - **The pet's details** (route `PetRoom`, `screens/PetRoomScreen.tsx`, "Hat & Room…" on the
     card's menu) are the locker. Its header holds the name and hearts (tap the hearts: what they mean),
     Share and the Settings cog (top right; Close after them where it's full screen), then the wallet
@@ -362,7 +362,7 @@ of wall patterns, floors, beds, shelves and lights. They aren't in `UNLOCK_ORDER
 | `gold`      | the hearts are gold (the pineapple hat, the honeycomb pattern)                              |
 | `longRun`   | that many calendar months with a day out since adoption (15, 18, 24, 36), whatever the role |
 
-Badges count months, never hours (ADR 0019), so no rule favours a role. No rule needs Buddies
+Badges count months, never hours (ADR 0052), so no rule favours a role. No rule needs Buddies
 (`together`, `firstBuddy`), so every User can reach every secret, and none can be missed for good.
 A badge opens at most two secrets. Earned secrets are stored in `earnedRoomItems` like the rest, so a
 badge reset never locks one again. `pet_room_item_unlocked` sends `by: 'secret'`.
@@ -462,7 +462,7 @@ interface PetRecord {
   name?: string
   adoptedOn: string // YYYY-MM-DD local day key
   seed?: number // random at adoption; picks the gift days
-  wakes: string[] // day keys of wake taps; old ones trimmed only past 120 and 400 days (ADR 0030)
+  wakes: string[] // day keys of wake taps; old ones trimmed only past 120 and 400 days (ADR 0054)
   keepsakes: { kind: GiftKind; on: string }[] // collected gifts, newest 20 kept
   earnedRoomItems?: string[] // found secrets, and items opened before the Shop; absent = none
   purchases?: {

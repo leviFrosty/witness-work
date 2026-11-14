@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Buddies on Android: Block Store root seed, FCM pushes, App Links
@@ -59,8 +59,7 @@ What doesn't match iOS:
 
 - Block Store restores at setup and reinstall; it doesn't sync between devices
   in use. A second Android device, or an iPhone and an Android phone, is a
-  separate identity with its own buddies. Linking devices stays future work
-  (the device-link QR in `buddies-recommendations.md`).
+  separate identity with its own buddies. Linking devices stays future work.
 - Without a screen lock the seed survives a reinstall only while Google backup
   is on, and doesn't reach a new phone.
 - Without Google Play services the seed lives only on the device.

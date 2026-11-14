@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Shared account id over iCloud (multi-device Supporter, no sign-in)
 
 ## Context

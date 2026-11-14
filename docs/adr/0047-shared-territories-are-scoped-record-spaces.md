@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Shared territories are scoped record spaces, with browser guest links and server-held hand-offs
@@ -22,7 +22,7 @@ already show the product the User wants:
 - returning a territory ends everything;
 - free, no AI.
 
-Shared Spaces (ADR 0037, Shared Cars) already gives blind, end-to-end
+Shared Spaces (ADR 0056, Shared Cars) already gives blind, end-to-end
 encrypted, per-record sync with live updates, joined through Buddies. But
 every member of a space reads and writes every record, any member can invite,
 ownership passes on when the owner leaves, and every op needs an attested

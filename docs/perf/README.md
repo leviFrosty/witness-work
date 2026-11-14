@@ -2,7 +2,7 @@
 
 `scripts/perf` measures a commit's **Release** build of the development app (`com.leviwilkerson.jwtimedev`): the JS bundle is embedded as Hermes bytecode, dev mode is off and there is no Metro. It builds, leases devices and installs through the same machinery as [`scripts/verify`](../../.agents/skills/verify-witnesswork/SKILL.md), so it never fights other worktrees for build slots, memory or devices, and it never installs a production or beta app.
 
-Results land here as `<name>.json` (everything, machine-readable) and `<name>.md` (the summary tables). The first baseline is [`baseline-9ec4ab0b.md`](./baseline-9ec4ab0b.md): `perf-foundation` plus this runner, whose app-side code is dead in every bundle built without the probe.
+Results land in `.verify/artifacts/perf/` (gitignored) as `<name>.json` (everything, machine-readable) and `<name>.md` (the summary tables). Put the before/after table in the PR description; don't commit results.
 
 ## Run it
 
@@ -15,7 +15,7 @@ node scripts/perf/run.mjs --ref <after sha> --name after
 node scripts/perf/run.mjs --ref <sha> --platform ios --runs 10 --name after-ios
 
 # Before/after table
-node scripts/perf/compare.mjs docs/perf/before.json docs/perf/after.json
+node scripts/perf/compare.mjs .verify/artifacts/perf/before.json .verify/artifacts/perf/after.json
 node scripts/perf/compare.mjs a.json b.json --all --out comparison.md   # every counter, saved
 ```
 
@@ -97,7 +97,7 @@ Every run records `conditions`: the 1- and 5-minute load averages, `kern.memorys
 ```bash
 node scripts/perf/scrub.mjs --ref <sha> --name before            # stress data, 6 rounds of 8 s
 node scripts/perf/scrub.mjs --ref <sha> --name after --trace     # plus an Instruments Time Profiler trace of round 1
-node scripts/perf/scrub.mjs compare docs/perf/before.json docs/perf/after.json
+node scripts/perf/scrub.mjs compare .verify/artifacts/perf/before.json .verify/artifacts/perf/after.json
 ```
 
 - **The finger is real HID input.** `scripts/perf/scrub-touch` (Swift, built on demand against AXe's FBSimulatorControl) presses once, streams touch moves at 120 Hz on a triangle wave (`--period 500` ms per up-and-down cycle, `--amplitude 280` pt), holds still, and lifts, so UIKit's scroll view tracks it exactly as it tracks a finger. `--pattern fling` lifts after each stroke instead. AXe's own `batch` takes about a second per touch step, too slow for this.
@@ -105,7 +105,5 @@ node scripts/perf/scrub.mjs compare docs/perf/before.json docs/perf/after.json
 - **Counters say why.** Each round reports `perf.count` deltas: `render:*` for the screen, list, rows and day cells, `schedule:focus` (month changes under the focus line) and `schedule:scroll`, plus Hermes GCs.
 - **`--trace`** records a Time Profiler trace of round 1 to `.verify/` (open it in Instruments, or `xcrun xctrace export` it).
 - `scripts/perf/js-profile.mjs -- <command>` samples the dev build's JS thread over CDP while a command (such as the scrub tool) runs, to attribute JS time by function. Dev React is slower than Release; use it to find work, and the Release scrub to time it.
-
-Results from November 2026, with what was slow and how it was fixed: [`scrub-results-2026-11.md`](./scrub-results-2026-11.md).
 
 Simulators share the Mac's CPU and run at 60 Hz, so compare runs on the same machine, back to back. A physical device needs the same build installed through Xcode; the probe works there too, but the HID finger doesn't.

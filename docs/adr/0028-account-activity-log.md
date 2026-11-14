@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Account activity: a security history the User can see

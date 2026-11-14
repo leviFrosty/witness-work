@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Multi-import history and resume are client-only, on a device-side ledger
 
 ## Context

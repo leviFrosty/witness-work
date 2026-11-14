@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * The app's Language, for what the watch lays out and writes itself, as `AppLanguage.swift`
  * does on the Apple Watch. Text arrives translated from the phone's JavaScript, but the watch
  * would lay it out and write numbers in its own language, which can differ from the one chosen
- * in the app (ADR 0026). Both are `null` from a phone app older than this; the watch's own
+ * in the app (ADR 0053). Both are `null` from a phone app older than this; the watch's own
  * choice stands then.
  */
 data class AppLanguage(

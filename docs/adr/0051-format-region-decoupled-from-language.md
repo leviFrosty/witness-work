@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Format Region is decoupled from Language; date conventions are patched onto the language locale, not selected as a locale
 
 Historically a single `locale` preference did double duty: it picked the translation Language _and_ set moment's global locale, so date ordering, 12/24-hour time, and first-day-of-week were all a side effect of which language the User read the app in. That coupling has no escape hatch — an Australian who wants the app in English is forced into `en-us` → moment `en` → `MM/DD/YYYY`, with no way to get `DD/MM/YYYY` short of reading the app in a different language. The recurring request ("let me change the date format") is really a request to **separate formatting conventions from translation language**.

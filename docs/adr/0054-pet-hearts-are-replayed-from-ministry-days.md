@@ -1,8 +1,11 @@
 ---
 status: accepted
+superseded-by: [0031, 0035]
 ---
 
 # Pet hearts are replayed from ministry days, never stored
+
+> Partly superseded by [ADR 0031](./0031-pet-hearts-fill-by-the-month-for-monthly-reporters.md) (monthly reporters fill hearts by the month) and [ADR 0035](./0035-pet-items-are-bought-with-coins.md) (decisions 4 and 5: items are bought with coins).
 
 ## Context
 
@@ -17,7 +20,7 @@ week behind on sync, and two devices would race to write the same counter.
 Merging by last writer would drop one side's change, and replaying a restore
 or import would count days twice.
 
-Like Badges (ADR 0019), the pet must not reward circumstance. A Kingdom
+Like Badges (ADR 0052), the pet must not reward circumstance. A Kingdom
 Publisher reports only whether they shared, and many people can't pioneer.
 
 ## Decision
@@ -45,7 +48,7 @@ Publisher reports only whether they shared, and many people can't pioneer.
    reaches its number (per streak kind, in `UNLOCK_ORDER`). A User with no
    streak to grow (streaks hidden, or a `plans` streak and no Plans) unlocks by
    active months since adoption instead, one per month, for the same reason
-   badges count months (ADR 0019). A streak ends, so unlike hearts an earned
+   badges count months (ADR 0052). A streak ends, so unlike hearts an earned
    item is stored on the pet record and never locks again. (Amended: only
    hidden streaks switch to months; a `plans` streak with no Plans stays on
    the streak, and the Decorate Room note tells the User to plan.)

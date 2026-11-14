@@ -1,12 +1,16 @@
 ---
 status: accepted
+supersedes: [0054]
+superseded-by: [0057]
 ---
 
 # Pet items are bought with coins
 
+> Partly superseded by [ADR 0057](./0057-spiritual-routine-and-coin-scale.md): every coin amount and price is ten times the scale.
+
 ## Context
 
-Room items and hats opened up two ways (ADR 0030): at Service Streak counts
+Room items and hats opened up two ways (ADR 0054): at Service Streak counts
 while streaks showed, or one per active month with streaks hidden. Each way
 read differently, and the streak only grows by keeping Plans, so a User who
 never plans never opened anything in streak mode. Early analytics agreed,
@@ -66,7 +70,7 @@ scale and the months count were three things to explain for one room.
    their own milestones and are never sold. The long-run secrets that read the
    streak or active months now read calendar months with a day out since
    adoption (15, 18, 24 and 36), so every role reaches them at the same pace,
-   as with badges (ADR 0019).
+   as with badges (ADR 0052).
 5. **The streak opens nothing directly, and months mode is gone.** Items,
    hats and the lamp don't read the Service Streak; its milestones pay coins
    instead (1).
@@ -95,7 +99,7 @@ scale and the months count were three things to explain for one room.
 
 ## Consequences
 
-- Supersedes ADR 0030's streak and months unlocks and its streak-lit lamp.
+- Supersedes ADR 0054's streak and months unlocks and its streak-lit lamp.
   Hearts are unchanged.
 - Keeping Plans and showing streaks earns most: someone out once or twice a
   week earns about 13 coins a month from days out and Plans kept, plus 10 at

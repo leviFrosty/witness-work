@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Anonymous server accounts, starting with suspending Buddies abuse

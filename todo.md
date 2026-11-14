@@ -1,7 +1,7 @@
 # TODO
 
 - Add e2e tests
-- Spiritual Routine badges: a Badge collection (counted in months, ADR 0019) and/or Secret pet items for Routine milestones. Deferred from v1.
+- Spiritual Routine badges: a Badge collection (counted in months, ADR 0052) and/or Secret pet items for Routine milestones. Deferred from v1.
 - Spiritual Routine: Today's routine widget, watch check-offs, Siri/Shortcuts "Log Bible reading" (fast follow).
 - Reading plan: meeting-workbook weekly Bible reading (needs a yearly data source; we don't pull from jw.org).
 - Add a "pet" feature. To define later.

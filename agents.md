@@ -111,12 +111,19 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
   The next paragraph starts here.
   ```
 
-- **In the PR body,** put each pair in a `| Before | After |` table. Reference local files (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder; unmatched files get appended to the end. Afterwards, check `gh pr view` for leftover local paths. Alternatives: [`docs/research/pr-screenshot-uploads.md`](./docs/research/pr-screenshot-uploads.md).
+- **In the PR body,** put each pair in a `| Before | After |` table. Reference local files (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder; unmatched files get appended to the end. Afterwards, check `gh pr view` for leftover local paths.
 - **Say what's missing.** If you can't capture a changed screen (Android-only, missing data, no pointer), say so.
 
 ## Domain language
 
 [`CONTEXT.md`](./CONTEXT.md) defines the domain terms (publishers and roles, field activity, goals, Buddies, sync, monetization and more), about 17k tokens. When a task turns on a domain concept, read the section for it, not the whole file.
+
+## Docs and ADRs
+
+- **The code is the source of truth.** Read the code to learn how something works, not a doc about it. Explain why the code works the way it does in a comment next to it.
+- **`docs/` holds only ADRs and reference docs.** A reference doc is something a developer new to the app would need: how to build, a wire protocol, a convention to follow. Don't add research, plans, PRDs, audits, fix logs or benchmark results anywhere in the repo. Put them in the PR description.
+- **Record a decision as an ADR** when it's hard to reverse, surprising without context, or a real trade-off. Name the file `docs/adr/NNNN-what-was-decided.md`, using the next number that isn't taken on `main` or this branch. Give it frontmatter `status: proposed | accepted | superseded`, then add `supersedes: [NNNN]` and `superseded-by: [NNNN]` where they apply. Use the sections Context, Decision and Consequences, and add Considered options when there were real alternatives.
+- **Don't rewrite an accepted ADR.** To change a decision, write a new ADR that supersedes it. In the old ADR, add `superseded-by`, and put a one-line note under its title (`> Partly superseded by ADR NNNN: …`). Set the old ADR's status to `superseded` only when no part of it still holds.
 
 ## Guardrails (always apply)
 

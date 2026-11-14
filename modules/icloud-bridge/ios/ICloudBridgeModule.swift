@@ -20,7 +20,6 @@ public class ICloudBridgeModule: Module {
   /// use a distinct `witness-work-img-*.jpg` filename so the two namespaces
   /// never cross — critical because the JSON metadata query predicate matches
   /// only `*.json` and must not fire remote-change events for binary writes.
-  /// Phase 2 of iCloud image sync, see docs/icloud-image-sync-plan.md.
   private static let imageFilePrefix = "witness-work-img-"
   /// Photos in notes. Their own prefix, so builds from before note photos
   /// (which accept only `witness-work-img-`) never list, adopt, or clean them

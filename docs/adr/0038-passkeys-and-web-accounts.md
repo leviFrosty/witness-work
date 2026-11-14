@@ -1,5 +1,6 @@
 ---
-status: proposed
+status: accepted
+supersedes: [0027]
 ---
 
 # Passkeys, and accounts on the web

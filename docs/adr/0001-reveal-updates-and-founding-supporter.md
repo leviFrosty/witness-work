@@ -1,4 +1,11 @@
+---
+status: superseded
+superseded-by: [0015, 0058]
+---
+
 # Reveal updates and Founding Supporter recognition
+
+> Superseded by [ADR 0015](./0015-founding-supporter-from-since-date.md) (who is a Founding Supporter) and [ADR 0058](./0058-reveal-updates-are-named-releases-behind-one-version-gate.md) (how a Reveal update is gated).
 
 A **Reveal update** is an app version that earns its own dedicated full-screen reveal on first launch and **suppresses `WhatsNewSheet` entirely** for that version transition — the reveal IS the update intro for users in its audience. A Reveal update can chain multiple audience-specific reveals (e.g. the universal `MilestoneRevealOverlay` followed by `FoundingSupporterRevealScreen` for users who were active Supporters at upgrade). Each reveal owns its own `seen…` preference flag for one-shot semantics; non-audience users (e.g. non-Supporters on a Supporter-targeted Reveal update) still get `WhatsNewSheet` because they still need to know about the version.
 
@@ -16,11 +23,3 @@ A **Reveal update** is an app version that earns its own dedicated full-screen r
 - Future Reveal updates must explicitly opt into the suppression rule by adding their own gate alongside `MILESTONE_UPDATE_VERSION` / `FOUNDING_SUPPORTER_REVEAL_VERSION` in `HomeTabStack`.
 - TestFlight users who installed a build with the Reveal version _before_ this work shipped have `lastAppVersion` already stamped at the target version; they will not cross the gate. Replay via the dev-tools "Reset reveals" control is the documented workaround.
 - The Founding flag is **never cleared**. A re-subscribing Founding Supporter regains their badge automatically; an erroneously-granted flag cannot be revoked without a migration.
-
-## Addendum (1.44 update reveal)
-
-The 1.44 update reveal replaced the Milestone Update on launch; its overlay and showcase stay only as replays in Developer Tools → Special updates. The reveal's gate is now a single `UPDATE_REVEAL_VERSION` (`src/features/updates/constants/updateReveal.ts`), and engagement is stored against that version in `updateReveal` instead of per-reveal `seen…` booleans, so a future Reveal update only raises the constant. Reveal updates are named releases: `UPDATE_REVEAL_NAME` (The Together Update for 1.44) titles the reveal, its tray replay item, and the release's What's New badge. The suppression rule above is unchanged: crossing the version shows the reveal instead of `WhatsNewSheet` or the passive tray item, and release notes stay in Settings → What's New.
-
-## Addendum (Founding Supporter from `since` date)
-
-The Founding reveal never shipped, so no install ever set `seenFoundingSupporterReveal`. Founding Supporter recognition is now derived from the Supporter `since` date and a fixed cutoff, and the flag is removed. See ADR 0015; the flag-gated rule above is superseded.

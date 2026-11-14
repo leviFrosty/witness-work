@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Supporter status on the server account, kept by RevenueCat's webhook

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Buddies follow the User to their other devices through the roster, started by iCloud Sync

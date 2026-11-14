@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Move the server account to another phone, recover it, and back it up

@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Projected Totals mirror report cap semantics; Plans are typed by Category reference
 
 The original Projected Total design applied the credit cap as a blanket clamp on all planned minutes (`planned = min(planned, cap − logged)`), which silently ceilinged every projection at the cap — a regular pioneer planning a 70-hour month of ordinary ministry saw 55h. The clamp was deliberate (Plans were untyped, so the conservative reading treated them all as potentially-credit), but it punished the overwhelmingly common case: planned time is ordinary house-to-house preaching, which the cap never touches.

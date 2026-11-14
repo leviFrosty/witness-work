@@ -1,5 +1,7 @@
 ---
-status: proposed
+status: accepted
+supersedes: [0007, 0017, 0025]
+superseded-by: [0038]
 ---
 
 # Account sessions: attest once, then bearer tokens

@@ -29,11 +29,6 @@ it resends. One credit per message would make a two-word correction cost as
 much as a page of notes, and one per conversation would let one conversation
 run forever.
 
-The research behind this decision is in
-[`docs/research/assistant-tool-architecture.md`](../research/assistant-tool-architecture.md)
-(§7) and [`docs/research/voice-assistant-ux.md`](../research/voice-assistant-ux.md)
-(Design A).
-
 ## Decision
 
 ### 1. A stateless step loop with client-executed tools

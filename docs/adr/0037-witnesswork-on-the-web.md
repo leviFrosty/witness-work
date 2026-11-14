@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # WitnessWork on the web

@@ -1,6 +1,9 @@
-# ADR 0006: Read MyTime backups via `expo-sqlite` for the import feature
+---
+status: accepted
+---
 
-- **Status:** Accepted
+# Read MyTime backups via `expo-sqlite` for the import feature
+
 - **Date:** 2026-06-08
 - **Related code (planned):** `src/features/mytime-import/lib/readMytimeDb.ts`,
   `src/features/mytime-import/lib/mapMytimeData.ts`,

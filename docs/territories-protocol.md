@@ -560,7 +560,7 @@ Reuse `src/lib/sharedSpaces` (client, crypto, keyring, keyTrust, live, invite se
 - A live socket for guests (they poll).
 - Named alerts in the iOS Notification Service Extension (templates meanwhile).
 - Per-member street keys, so a street-only member couldn't read other streets even with the server's help.
-- Signed membership changes (as ADR 0037 notes for cars).
+- Signed membership changes (as ADR 0056 notes for cars).
 - Card photos on shared territories, a guest map, and extending a link.
 - Turnstile on guest ops, if links leak and abuse shows up; it isn't configured in production yet.
 - Territories in the web app for signed-in users (`territorySharing` is iOS and Android).

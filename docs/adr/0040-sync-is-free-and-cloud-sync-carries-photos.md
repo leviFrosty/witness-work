@@ -1,5 +1,6 @@
 ---
-status: proposed
+status: accepted
+supersedes: [0030]
 ---
 
 # Sync is free, and Cloud Sync carries photos

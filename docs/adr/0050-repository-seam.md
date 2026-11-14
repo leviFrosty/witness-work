@@ -1,6 +1,9 @@
-# ADR 0002: Repository seam between iCloud sync and Zustand stores
+---
+status: proposed
+---
 
-- **Status:** Proposed
+# Repository seam between iCloud sync and Zustand stores
+
 - **Date:** 2026-05-05
 - **Related issues:** #314 (this ADR), #321, #326, #327, #328
 - **Related code:** `src/lib/sync/iCloudSync.ts`, `src/lib/sync/payload.ts`,

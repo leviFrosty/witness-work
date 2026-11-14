@@ -1,6 +1,6 @@
 # Buddies relay protocol v1 (MVP)
 
-The wire contract between the WitnessWork app (`src/features/buddies`) and the ww-proxy relay (`ww-api/src/buddies`). Design rationale lives in [`buddies-recommendations.md`](./buddies-recommendations.md); this file is the source of truth for bytes on the wire. Anything not specified here is an implementation detail of one side.
+The wire contract between the WitnessWork app (`src/features/buddies`) and the ww-proxy relay (`ww-api/src/buddies`). This file is the source of truth for bytes on the wire. Anything not specified here is an implementation detail of one side.
 
 The relay is **blind**: it stores ciphertext, random ids, public keys, and push tokens. It never sees names, Plans, or which inboxes belong to which people.
 

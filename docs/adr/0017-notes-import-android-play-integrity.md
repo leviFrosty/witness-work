@@ -1,5 +1,6 @@
 ---
-status: proposed
+status: accepted
+superseded-by: [0027]
 ---
 
 # Notes Import on Android uses Play Integrity where iOS uses App Attest

@@ -1,5 +1,6 @@
 ---
-status: proposed
+status: accepted
+superseded-by: [0040]
 ---
 
 # Cloud Sync: end-to-end encrypted, realtime sync through ww-api

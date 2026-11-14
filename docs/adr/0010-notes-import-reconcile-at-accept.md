@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Cross-import deduplication happens at Accept time, not at parse time
 
 ## Context

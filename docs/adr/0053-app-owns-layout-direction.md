@@ -6,7 +6,7 @@ status: accepted
 
 ## Context
 
-Arabic is the first right-to-left Language (see [`docs/rtl-arabic-plan.md`](../rtl-arabic-plan.md)). Users pick a Language in Settings, or Device Default, and the app runs in that Language whatever the phone is set to. Layout direction has to follow the same choice: Arabic should be mirrored, and English on a phone set to Arabic should not.
+Arabic is the first right-to-left Language. Users pick a Language in Settings, or Device Default, and the app runs in that Language whatever the phone is set to. Layout direction has to follow the same choice: Arabic should be mirrored, and English on a phone set to Arabic should not.
 
 React Native decides the direction once, when the JS loads. `I18nManager.isRTL` is a constant from that moment, and the native root view (`RCTFabricSurface` on iOS, `ReactSurfaceImpl` on Android) reads the same flags when it starts. `I18nManager.allowRTL` and `forceRTL` only save flags (iOS `NSUserDefaults`, Android `SharedPreferences`) for the next load.
 

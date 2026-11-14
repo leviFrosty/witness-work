@@ -251,7 +251,7 @@ One drive in a **Car**: a date, a distance (or odometer start and end), whether 
 _Avoid_: "trip" for a **Route** or its legs.
 
 **Shared Car**:
-A **Car** the User shares with buddies, up to 10 people in all, so everyone on it sees its whole history and can add, edit and delete its **Trips**, fuel setups and prices. Anyone on it can invite their own buddies, so the people on a car needn't all be each other's buddies. The person who shared it removes people and can Stop Sharing. Each Trip shows who logged it; totals count everyone's, and the Mileage screen can show one person's. Leaving, being removed, or Stop Sharing leaves each person a copy. End-to-end encrypted on ww-api (ADR 0037).
+A **Car** the User shares with buddies, up to 10 people in all, so everyone on it sees its whole history and can add, edit and delete its **Trips**, fuel setups and prices. Anyone on it can invite their own buddies, so the people on a car needn't all be each other's buddies. The person who shared it removes people and can Stop Sharing. Each Trip shows who logged it; totals count everyone's, and the Mileage screen can show one person's. Leaving, being removed, or Stop Sharing leaves each person a copy. End-to-end encrypted on ww-api (ADR 0056).
 _Avoid_: "carpool", "shared vehicle", or "members" in UI copy (say "people on this car").
 
 ### Assistant
@@ -389,7 +389,7 @@ _Avoid_: "legacy supporter" (sounds deprecated), "existing supporter" (administr
 ### Badges
 
 **Badge**:
-A keepsake the User earns on-device for a steady habit: one **Badge Level** of a **Badge Collection**, or a **One-time Badge**. Every Badge counts calendar months, never hours, goals, or minutes, so every **Publisher** role earns at the same pace (ADR 0019), and none depends on an unbroken run of months; the **Service Streak** is separate, and no Badge reads it. Once earned it is never revoked, even when the records behind it are deleted. Badges reached by history (a device's first evaluation, an Import, a restore, or any month older than last month) are stored quietly with one summary. A Badge earned live is announced to buddies; it's celebrated full screen only when the User's own action just earned it, and otherwise waits on a New badge card at the top of Home (ADR 0021). Shown on the User's **Profile**, the Badges screen, and the **Buddy Card**; the Show badges preference hides them everywhere without forgetting them.
+A keepsake the User earns on-device for a steady habit: one **Badge Level** of a **Badge Collection**, or a **One-time Badge**. Every Badge counts calendar months, never hours, goals, or minutes, so every **Publisher** role earns at the same pace (ADR 0052), and none depends on an unbroken run of months; the **Service Streak** is separate, and no Badge reads it. Once earned it is never revoked, even when the records behind it are deleted. Badges reached by history (a device's first evaluation, an Import, a restore, or any month older than last month) are stored quietly with one summary. A Badge earned live is announced to buddies; it's celebrated full screen only when the User's own action just earned it, and otherwise waits on a New badge card at the top of Home (ADR 0021). Shown on the User's **Profile**, the Badges screen, and the **Buddy Card**; the Show badges preference hides them everywhere without forgetting them.
 _Avoid_: "achievement", "award", "trophy", "reward" (and **Achievement Tier**, the monthly-goal celebration); "badge" for the app icon's unread count (say "app icon badge") or for UI pills and labels (`SinceBadge`, `StreakBadge`, the Buddies Alpha badge).
 
 **Badge Collection**:
@@ -415,7 +415,7 @@ The User's one opt-in Pet Companion on Home: a small pixel-art pet (lion cub, pu
 _Avoid_: "avatar" (that's the **Profile** picture), "virtual pet"; ghost, halo, angel or "went to heaven" imagery for a pet that died.
 
 **Hearts**:
-The Pet's wellbeing, ½ to 5 in half steps (0 once it died). Replayed day by day from synced records, never stored (ADR 0030): it starts at 3 on the adoption day, each active day (a Time Entry including the checkbox, a Visit, or a Plan saved that day; never a Time Rollover) adds one up to 5, and from the 10th quiet day half a heart fades every 3 days down to ½ (asleep). After 60 quiet days the pet died. In a month whose role reports only whether it shared (the Kingdom Publisher), an active day fills all 5 instead and they hold through the next month before quiet days count (ADR 0031). Tapping it records a wake, back to 1. 365 days in a row at 5 turns them gold.
+The Pet's wellbeing, ½ to 5 in half steps (0 once it died). Replayed day by day from synced records, never stored (ADR 0054): it starts at 3 on the adoption day, each active day (a Time Entry including the checkbox, a Visit, or a Plan saved that day; never a Time Rollover) adds one up to 5, and from the 10th quiet day half a heart fades every 3 days down to ½ (asleep). After 60 quiet days the pet died. In a month whose role reports only whether it shared (the Kingdom Publisher), an active day fills all 5 instead and they hold through the next month before quiet days count (ADR 0031). Tapping it records a wake, back to 1. 365 days in a row at 5 turns them gold.
 _Avoid_: "health", "lives", "HP", "score".
 
 **Lamp**:
@@ -427,7 +427,7 @@ A small gift (olive, fig, pebble, feather or lily) the Pet leaves on its rug on 
 _Avoid_: "reward", "loot", "collectible".
 
 **Coins**:
-The Pet's one currency, gold coins, earned since adoption: 10 for each day out (a Time Entry, the checkbox included, or a Visit the User logged; never a Plan or a Time Rollover), 10 more for each Planned day kept (a day with a Plan for some time and time logged), and 100 for each **Service Streak** milestone it reaches, only while streaks are shown. A month whose role reports only whether it shared earns at least 80 once it has a Time Entry. **Spiritual Routine** pays too: 4 for each day of Bible reading, 4 for each day of personal study, 5 for each meeting's prep, 5 for each worship evening, and 500 for a finished **Reading Plan**; a day out is still worth more than any one Routine Habit. Replayed from records like **Hearts**, never stored; only what the Shop sold is (ADR 0035). Every amount was multiplied by 10 at once when Routine arrived (ADR 0038), so nobody lost anything; purchases are still stored at the old price and read ×10, so an older build stays right about ministry coins and only misses what Routine earned. Never sold for money, never granted by Supporter status.
+The Pet's one currency, gold coins, earned since adoption: 10 for each day out (a Time Entry, the checkbox included, or a Visit the User logged; never a Plan or a Time Rollover), 10 more for each Planned day kept (a day with a Plan for some time and time logged), and 100 for each **Service Streak** milestone it reaches, only while streaks are shown. A month whose role reports only whether it shared earns at least 80 once it has a Time Entry. **Spiritual Routine** pays too: 4 for each day of Bible reading, 4 for each day of personal study, 5 for each meeting's prep, 5 for each worship evening, and 500 for a finished **Reading Plan**; a day out is still worth more than any one Routine Habit. Replayed from records like **Hearts**, never stored; only what the Shop sold is (ADR 0035). Every amount was multiplied by 10 at once when Routine arrived (ADR 0057), so nobody lost anything; purchases are still stored at the old price and read ×10, so an older build stays right about ministry coins and only misses what Routine earned. Never sold for money, never granted by Supporter status.
 _Avoid_: "thread" or "dye" (earlier drafts' currencies), "points", "gems", "credits", "money".
 
 **Reward stack**:
@@ -485,7 +485,7 @@ _Avoid_: "snackbar", "banner", "popup", "notification" for a toast; "reward" for
 ### Localization
 
 **Language**:
-The User's chosen translation locale — which set of strings (English, Español, 日本語, …) the app renders. One of the supported `TranslatedLocale` values. Controls the _words_ the User reads, including month and weekday **names**. Defaults to the device language when the User has made no choice. Nineteen ship; Arabic is the one right-to-left Language, so it also mirrors the layout and writes numbers in Arabic-Indic digits (ADR 0026).
+The User's chosen translation locale — which set of strings (English, Español, 日本語, …) the app renders. One of the supported `TranslatedLocale` values. Controls the _words_ the User reads, including month and weekday **names**. Defaults to the device language when the User has made no choice. Nineteen ship; Arabic is the one right-to-left Language, so it also mirrors the layout and writes numbers in Arabic-Indic digits (ADR 0053).
 _Avoid_: "locale" alone (ambiguous — it historically meant both Language and formatting; the two are now distinct concerns), "region" (region governs format, not words).
 
 **Format Region**:

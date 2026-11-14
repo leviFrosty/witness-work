@@ -1,6 +1,6 @@
 # Web launch network profile
 
-`scripts/perf/web-network.mjs` records every request the web app makes while it launches: the page, the service worker, CORS preflights, and WebSocket frames. It drives Chrome over the DevTools protocol, so it sees what the Network panel sees. Results for the first run are in [`web-network-2026-11.md`](./web-network-2026-11.md).
+`scripts/perf/web-network.mjs` records every request the web app makes while it launches: the page, the service worker, CORS preflights, and WebSocket frames. It drives Chrome over the DevTools protocol, so it sees what the Network panel sees.
 
 ## Capture
 

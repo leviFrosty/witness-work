@@ -1,5 +1,6 @@
 ---
 status: accepted
+supersedes: [0001]
 ---
 
 # Founding Supporter is derived from the Supporter `since` date

@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Change the account key

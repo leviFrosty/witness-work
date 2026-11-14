@@ -1,6 +1,6 @@
 # Shared Cars protocol v1
 
-The wire contract between the WitnessWork app and ww-api's Shared Spaces (`ww-api/src/spaces`), plus the Buddies events that invite people to a car. Design and rationale: [ADR 0037](./adr/0037-shared-cars-are-encrypted-record-spaces.md). Product rules: [mileage-tracking-prd.md](./mileage-tracking-prd.md#shared-cars).
+The wire contract between the WitnessWork app and ww-api's Shared Spaces (`ww-api/src/spaces`), plus the Buddies events that invite people to a car. Design and rationale: [ADR 0056](./adr/0056-shared-cars-are-encrypted-record-spaces.md).
 
 The server is **blind** and generic. It stores sealed records under random ids, per-member token hashes and public keys, and wrapped keys. It never sees a car, a name, a trip, or which accounts are on a space.
 

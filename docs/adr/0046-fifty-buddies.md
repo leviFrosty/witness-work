@@ -6,8 +6,8 @@ status: accepted
 
 ## Context
 
-Buddies allowed five spots per User, buddies and pending invites together
-([buddies-recommendations.md](../buddies-recommendations.md) §1). ADR 0037 left
+Buddies allowed five spots per User, buddies and pending invites together.
+ADR 0056 left
 raising it open as a product decision. The User asked to raise it to 50.
 
 Several things were sized for five:
@@ -53,4 +53,4 @@ Several things were sized for five:
   to 50 requests. That's within the per-account write budget (600 a minute).
 - A first sync downloads every buddy's card, up to 50.
 - Relay cost grows with fan-out, so about in step with the average number of
-  buddies. The cost notes in buddies-recommendations.md assume about five.
+  buddies. The original cost estimates assumed about five.

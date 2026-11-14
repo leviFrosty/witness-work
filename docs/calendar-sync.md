@@ -70,4 +70,4 @@ Removal follows iOS: only explicit removals (dismissed or deleted Follow-ups, de
 
 `pnpm run test:calendar-native` compiles and runs the Swift ownership state tests on macOS. They exercise exclusive acquire, pending handoff, stale-owner rejection, crash persistence, no-op registration, device removal, disconnect, legacy record decoding, configuration-token validation, destination manifests, missing-event policy, invalid dates, and contact-marker decoding. These tests do not simulate CloudKit's server or EventKit's database.
 
-Run the standard typecheck, lint, full tests, circular-dependency check, and an iOS simulator build before merging. The research in `calendar-sync-research.md` captures the original recommendation; this document describes the implemented contract and its remaining release validation.
+Run the standard typecheck, lint, full tests, circular-dependency check, and an iOS simulator build before merging.

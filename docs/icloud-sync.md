@@ -512,5 +512,3 @@ photo, clock, backup, and store regressions live in `src/app/sync/__tests__` and
 `src/lib/syncTransport/googleDrive/__tests__`, and
 `src/app/sync/__tests__/googleDriveSync.test.ts` runs several Android devices
 against one fake Drive.
-For the addressed audit checklist and remaining Critical/High work, see
-[icloud-sync-audit-fixes.md](./icloud-sync-audit-fixes.md).

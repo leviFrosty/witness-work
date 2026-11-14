@@ -1,5 +1,6 @@
 ---
 status: accepted
+supersedes: [0035]
 ---
 
 # Spiritual Routine, and coins at ten times the scale
@@ -33,7 +34,7 @@ day out needs a fraction of a coin, which reads badly in a pixel-art wallet
    keyed `habit:day` / `habit:monday`), `readingPlans` (each plan run's
    settings, start and finish) and tombstones for unchecks. Coins, plan
    progress and the heat maps are derived from them at read time, like hearts
-   and coins (ADR 0030, 0035). Settings (which habits, Meeting Days, the
+   and coins (ADR 0035, 0054). Settings (which habits, Meeting Days, the
    study goal, the worship evening, the reminder) are synced preferences.
 3. **Coins are ten times the scale.** Every ministry amount is multiplied by
    10 at once: 10 a day out, 10 a planned day kept, 100 a streak milestone, at

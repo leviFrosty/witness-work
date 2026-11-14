@@ -89,7 +89,11 @@ function useServerVersion(): ServerVersion {
     let cancelled = false
     request<HealthResponse>({ url: apis.apiHealth, timeoutMs: 10_000 })
       .then(({ data }) => {
-        const version = data.versionTag ?? data.versionId?.slice(0, 8)
+        const tag = data.versionTag
+        const version =
+          tag && /^[0-9a-f]{40}$/i.test(tag)
+            ? tag.slice(0, 7)
+            : (tag ?? data.versionId?.slice(0, 8))
         if (cancelled) return
         setServer(
           version
@@ -248,7 +252,9 @@ export default function AppInfoScreen() {
     .join('\n')
 
   const value = (text: string) => (
-    <Text style={{ color: theme.colors.textAlt }}>{text}</Text>
+    <Text numberOfLines={1} style={{ color: theme.colors.textAlt }}>
+      {text}
+    </Text>
   )
 
   return (

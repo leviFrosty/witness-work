@@ -6783,6 +6783,9 @@
       "byTerritory_info": "Each territory has its own pattern. Tap one to see its charts.",
       "bestShort": "Best: {{slot}}",
       "checkBackLater": "Check back later",
+      "hideUntilReady": "Hide Until Ready",
+      "hideUntilReady_a11y": "Hide Insights until ready",
+      "hidden": "Insights hidden until ready",
       "needMore": {
         "one": "Record %{count} more door to see when people are most often home.",
         "other": "Record %{count} more doors to see when people are most often home."

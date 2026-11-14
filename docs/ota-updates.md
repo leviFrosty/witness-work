@@ -153,7 +153,7 @@ when the deploy ends, interrupted or not. Native builds read only the public
 key.
 
 - **Beta and dev** keys are in the Agents vault and read through the agents'
-  service account, so `/beta-build` publishes without anyone at the Mac.
+  service account, so the Beta ship publishes without anyone at the Mac.
 - **Production** is read through the 1Password app, never the service account
   (the script drops `OP_SERVICE_ACCOUNT_TOKEN` for that read), so a person
   approves each publish with Touch ID or the account password. Keep its item in
@@ -189,7 +189,7 @@ requires code already on `origin/main` and the user's typed
 and Hot Updater config reject an unguarded production deployment. Use the
 wrapper to publish; direct `hot-updater deploy` is refused.
 
-The first `/beta-build` after migration takes the native path. Later builds
+The first Beta ship after migration takes the native path. Later builds
 compare the installed TestFlight build's `Hot Updater runtime:` note with the
 local fingerprint. A match permits an iOS OTA. After a background update has
 downloaded, swipe Beta away and reopen it, or use Check for update to apply it

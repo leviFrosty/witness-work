@@ -5,7 +5,8 @@
 # matches the latest TestFlight beta build; otherwise builds locally and
 # uploads a new TestFlight build. Releases ww-api first when it has unreleased
 # commits (scripts/release-api.sh), and deploys the web beta
-# (beta.app.witnesswork.app). Driven by the `/beta-build` skill.
+# (beta.app.witnesswork.app). Run for every push to main by the Beta ship
+# workflow, on one of our own Macs (.github/workflows/beta-ship.yml).
 #
 # Usage: scripts/build-beta.sh [--mode auto|ota|native] [--interactive] [--dry-run]
 #   --mode         auto (default) picks OTA vs native from the fingerprint.

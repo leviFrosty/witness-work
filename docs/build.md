@@ -631,7 +631,7 @@ and [source map uploads](https://posthog.com/docs/error-tracking/upload-source-m
 
 ## Beta builds (internal TestFlight)
 
-Invoke `/beta-build` (see `.agents/skills/beta-build/SKILL.md`) to put any branch on your phone. It runs `scripts/build-beta.sh` (`pnpm run build:beta`), which ships the committed HEAD to **WitnessWork Beta**. That's a separate App Store Connect app (`com.leviwilkerson.jwtimebeta`, orange icon, never submitted for review) with its own App Group, iCloud container and data. WIP builds never replace the App Store app or touch real records, and Beta can reuse the current marketing version indefinitely.
+Beta ships itself: every push to `main` starts the **Beta ship** workflow ([`.github/workflows/beta-ship.yml`](../.github/workflows/beta-ship.yml)), and one of our own Macs runs `scripts/build-beta.sh` on the tip of `main`. The commit's **Beta ship** status on GitHub turns green when it is on Beta. Merge a change, then test it on your phone; don't run the script by hand. It ships to **WitnessWork Beta**. That's a separate App Store Connect app (`com.leviwilkerson.jwtimebeta`, orange icon, never submitted for review) with its own App Group, iCloud container and data. WIP builds never replace the App Store app or touch real records, and Beta can reuse the current marketing version indefinitely.
 
 - **Native build + TestFlight** when native code changed: `eas build --profile beta --local`, then `asc builds upload --wait`. The upload sets What to Test to the branch, commit and `Hot Updater runtime: <fingerprint>`.
 - **Hot Updater** to the isolated Cloudflare `beta` service when it didn't. The

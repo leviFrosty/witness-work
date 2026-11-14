@@ -1,15 +1,15 @@
-name: Services
+name: Website deploy
 
-# Checks and deploys the website and the Help Center search Worker from services/.
-#   push to main                    -> production (services-production)
-#   workflow_dispatch               -> staging, dev.witnesswork.app (services-staging), on any ref, even main
-#   push to any other branch        -> lint, typecheck, test and build; no deploy
+# Deploys the website, Help Center and Help Center search Worker from services/.
+#   push to main touching services/ -> production: witnesswork.app (services-production)
+#   workflow_dispatch, on any ref   -> dev: dev.witnesswork.app (services-staging)
 # Production only ever comes from a push to main. Never deploys the app or ww-api.
+# Pull requests are checked by the Checks workflow (tests.yml), not here.
 # The Cloudflare token reaches only the deploy steps (services/README.md).
 on:
   push:
     branches:
-      - '**'
+      - main
     paths:
       - services/**
       - .github/workflows/services.yml
@@ -25,48 +25,8 @@ defaults:
     working-directory: services
 
 jobs:
-  check:
-    name: Check
-    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: services-check-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          persist-credentials: false
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-        with:
-          package_json_file: services/package.json
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-          cache-dependency-path: services/pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run lint
-        run: pnpm lint
-
-      - name: Run typecheck
-        run: pnpm typecheck
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
-
   deploy-production:
-    name: Deploy production
+    name: 'Production: witnesswork.app'
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: services-production
@@ -129,7 +89,7 @@ jobs:
         run: bash ../.github/scripts/services-smoke.sh
 
   deploy-staging:
-    name: Deploy staging
+    name: 'Dev: dev.witnesswork.app'
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: services-staging

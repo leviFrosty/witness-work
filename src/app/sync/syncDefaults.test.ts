@@ -40,15 +40,14 @@ describe('Cloud Sync’s default for a device that never chose (ADR 0040 §2)', 
     )
   })
 
-  it('keeps what an existing Supporter install got before', () => {
-    expect(cloudSyncDefaultMayApply(install(true, true))).toBe(true)
+  it('leaves an existing Supporter install off too; the tray offers it instead', () => {
+    expect(cloudSyncDefaultMayApply(install(true, true))).toBe(false)
     expect(cloudSyncDefaultMayApply(install(true, true, 'supporter'))).toBe(
-      true
+      false
     )
-
     expect(
       cloudSyncDefaultMayApply(install(true, false, 'supporter', true))
-    ).toBe(true)
+    ).toBe(false)
   })
 })
 
@@ -58,8 +57,8 @@ describe('iCloud or Google Drive’s default while Cloud Sync isn’t offered', 
     expect(platformSyncDefaultApplies(install(false, true))).toBe(true)
   })
 
-  it('keeps an existing install’s rule: Supporters only', () => {
+  it('leaves every existing install as it was, Supporters too', () => {
     expect(platformSyncDefaultApplies(install(true, false))).toBe(false)
-    expect(platformSyncDefaultApplies(install(true, true))).toBe(true)
+    expect(platformSyncDefaultApplies(install(true, true))).toBe(false)
   })
 })

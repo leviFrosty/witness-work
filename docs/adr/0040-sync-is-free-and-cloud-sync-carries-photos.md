@@ -27,8 +27,10 @@ Nothing sync-related is a Supporter benefit.
 
 - **New installs** start with Cloud Sync on, following ADR 0030 §3's
   never-chosen rule, now for everyone.
-- **Existing installs** aren't switched. They get one notifications-tray alert
-  offering Cloud Sync with one tap (§4).
+- **Existing installs** aren't switched, a Supporter's included. They get one
+  notifications-tray alert offering Cloud Sync with one tap (§4).
+- **Onboarding** has a Cloud Sync step that tells a new install it's on, with
+  a switch to turn it off before anything syncs.
 - **Devices on iCloud or Drive** keep it.
 - **An explicit off** stays off.
 
@@ -43,12 +45,13 @@ No new perks yet. Supporters keep:
 
 ### 4. Messages
 
-- **Non-Supporters, in the tray:** "Cloud Sync is now free. Keep your data in
-  step across iPhone, Android and the web, end-to-end encrypted." Button: Turn
-  On.
+- **Non-Supporters, in the tray:** "Cloud Sync is now free for everyone.
+  Thanks to our generous Supporters, you can keep your records in sync across
+  iPhone, Android and the web, end-to-end encrypted." Button: Turn On.
 - **Supporters, in the tray:** a thank-you, not a pricing message: "Thank you
-  for supporting WitnessWork. Your support built Cloud Sync and WitnessWork on
-  the web." Button: Turn On Cloud Sync. It never says "free".
+  for supporting WitnessWork. Your support made Cloud Sync possible for
+  everyone. Turn it on to keep your records in sync, end-to-end encrypted." Button: Turn On Cloud Sync. It never says
+  "free".
 - **Public release notes and Updates:** lead with WitnessWork on the web and
   Cloud Sync across iPhone, Android and the web. Close with "Made possible by
   our Supporters". They never say "free".

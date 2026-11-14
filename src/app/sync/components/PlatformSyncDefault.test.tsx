@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const runtime = vi.hoisted(() => ({
   setPreferences: vi.fn(),
   isSupporter: true,
-  installedBeforeFreeSync: true,
+  installedBeforeFreeSync: false,
   remoteChangeListeners: [] as Array<() => void>,
   appStateListeners: [] as Array<(state: string) => void>,
 }))
@@ -66,7 +66,7 @@ let renderer: ReactTestRenderer | null = null
 beforeEach(() => {
   vi.clearAllMocks()
   runtime.isSupporter = true
-  runtime.installedBeforeFreeSync = true
+  runtime.installedBeforeFreeSync = false
   runtime.remoteChangeListeners = []
   runtime.appStateListeners = []
 })
@@ -163,15 +163,19 @@ describe('who gets it (ADR 0040 §2)', () => {
     expect(iCloudSync.applySeedEnable).toHaveBeenCalledWith('supporter_default')
   })
 
-  it('leaves an existing install that isn’t a Supporter as it was', async () => {
-    runtime.isSupporter = false
-    const { default: PlatformSyncDefault } = await import(
-      './PlatformSyncDefault'
-    )
-    const { iCloudSync } = await import('@/app/sync/iCloudSync')
-    await act(async () => {
-      renderer = create(<PlatformSyncDefault />)
-    })
-    expect(iCloudSync.resolveInitialEnable).not.toHaveBeenCalled()
-  })
+  it.each([false, true])(
+    'leaves an existing install as it was (Supporter: %s)',
+    async (isSupporter) => {
+      runtime.isSupporter = isSupporter
+      runtime.installedBeforeFreeSync = true
+      const { default: PlatformSyncDefault } = await import(
+        './PlatformSyncDefault'
+      )
+      const { iCloudSync } = await import('@/app/sync/iCloudSync')
+      await act(async () => {
+        renderer = create(<PlatformSyncDefault />)
+      })
+      expect(iCloudSync.resolveInitialEnable).not.toHaveBeenCalled()
+    }
+  )
 })

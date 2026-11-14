@@ -16,6 +16,7 @@ export type StepId =
   | 'pioneerDate'
   | 'planMonth'
   | 'dataProtection'
+  | 'cloudSync'
   | 'buddies'
   | 'passkeys'
   | 'notifications'
@@ -33,6 +34,8 @@ export interface StepShowIfContext {
   userSpecifiedHasAnnualGoal: boolean | 'default'
 
   hasCatchUpReports: boolean
+
+  cloudSyncAvailable: boolean
 
   buddiesAvailable: boolean
 
@@ -75,6 +78,11 @@ export const onboardingSteps: StepDef[] = [
       tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
   { id: 'dataProtection', countsTowardProgress: true },
+  {
+    id: 'cloudSync',
+    countsTowardProgress: true,
+    showIf: ({ cloudSyncAvailable }) => cloudSyncAvailable,
+  },
   {
     id: 'buddies',
     countsTowardProgress: true,

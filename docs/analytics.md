@@ -236,7 +236,7 @@ just `onboarding_step_completed`. `elapsed_ms` includes background time and time
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
 `publisherType`, `hoursLogging`, `pioneerDate`, `planMonth`, `dataProtection`,
-`buddies`, `passkeys`, `notifications`, `calendarSync`, `defaultNav`,
+`cloudSync`, `buddies`, `passkeys`, `notifications`, `calendarSync`, `defaultNav`,
 `onboardingBackfill`, `profileSetup`, `founderNote`. The flow introduces the app
 before it asks for anything, asks for the name last, and ends on the founder
 note. `intentPicker` and `yourPlanPreview` were retired in October 2026 when
@@ -272,6 +272,15 @@ people join late in the month. `edited_day_count` counts days changed by hand
 with the day slider; `shape` is `manual` when every plan was added by hand. "I'll plan later"
 sends `onboarding_step_skipped`. Divide accepted by completed plus skipped for
 the step. Exclude `source: onboarding` when measuring the Schedule Assistant.
+
+`cloudSync` only appears where Cloud Sync will turn itself on once setup ends
+(a new install, or a Supporter, with Cloud Sync offered and the device not
+already syncing), added in November 2026. It tells the User Cloud Sync is on and
+lets them turn it off before anything syncs. Its question is how many new
+Users opt out. `onboarding_step_completed` carries `selected_option`: `on` or
+`off`. Off records the choice the way Settings does, so no
+`cloud_sync_default_outcome` follows; with `on`, compare against that event's
+outcomes after onboarding.
 
 `buddies` only appears where Buddies is available (iOS builds with the Keychain
 module and the `buddies` flag on). Its question is whether introducing Buddies
@@ -587,7 +596,9 @@ No account ids, emails, or hashes are sent.
 Retain committed enable/disable transitions (`icloud_sync_enabled_changed`) and
 bounded `source`: settings, supporter default, onboarding restore, or tray (Cloud Sync turned on from the tray's offer on a device whose sync was off).
 `supporter_default` is the name of any automatic enable for a device that never
-chose; since ADR 0040 it includes new installs that aren't Supporters.
+chose; since ADR 0040 it includes new installs that aren't Supporters, and no
+longer any install from before sync was free (those turn it on from the tray,
+`source: tray`).
 `icloud_sync_paused` (its only `source` was `supporter_lapse`) is no longer
 sent: Supporter status doesn't pause sync. The `iCloudSync` feature and its `icloud_sync` gate
 surface are gone from the `supporter_gate_*` events, and

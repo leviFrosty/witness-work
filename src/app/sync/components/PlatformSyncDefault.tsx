@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
-import useIsSupporter from '@/hooks/useIsSupporter'
 import { usePreferences } from '@/stores/preferences'
 import { iCloudSync } from '@/app/sync/iCloudSync'
 import { analytics } from '@/lib/analytics'
@@ -17,7 +16,6 @@ export const cloudSyncDecidesDefault = (state: {
   (state.cloudSyncConfig == null || state.cloudSyncConfig.enabled)
 
 export default function PlatformSyncDefault() {
-  const { isSupporter } = useIsSupporter()
   const {
     iCloudSyncEnabled,
     iCloudSyncSetByUser,
@@ -29,10 +27,7 @@ export default function PlatformSyncDefault() {
     syncProvider,
     cloudSyncConfig,
   })
-  const applies = platformSyncDefaultApplies({
-    installedBeforeFreeSync,
-    isSupporter,
-  })
+  const applies = platformSyncDefaultApplies({ installedBeforeFreeSync })
 
   useEffect(() => {
     if (!hasSyncTransport()) return

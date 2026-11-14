@@ -27,6 +27,7 @@ const ctx = (
   hasCatchUpReports: false,
   buddiesAvailable: true,
   passkeysAvailable: false,
+  cloudSyncAvailable: false,
   calendarAvailable: true,
   notificationsAvailable: true,
   ...overrides,
@@ -64,6 +65,17 @@ describe('visibleOnboardingSteps', () => {
       'profileSetup',
       'founderNote',
     ])
+  })
+
+  it('tells a new install about Cloud Sync after data protection, where it turns on', () => {
+    expect(ids(ctx('publisher'))).not.toContain('cloudSync')
+    const shown = ids(ctx('publisher', { cloudSyncAvailable: true }))
+    expect(
+      shown.slice(
+        shown.indexOf('dataProtection'),
+        shown.indexOf('dataProtection') + 3
+      )
+    ).toEqual(['dataProtection', 'cloudSync', 'buddies'])
   })
 
   it('adds tenure, planning, and backfill for a mid-year regular pioneer', () => {

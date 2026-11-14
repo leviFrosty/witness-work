@@ -10,6 +10,7 @@ import type {
 } from '@/features/scribe/types'
 import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 import { fullWindow } from '@/features/scribe/lib/usageSnapshot'
+import type { ScribeFailureStage } from '@/features/scribe/lib/errors'
 import {
   SCRIBE_MEMORY_MAX_CHARS,
   type ScribeMemoryChange,
@@ -40,6 +41,8 @@ export function trackTurnStarted(props: {
 
 export type TurnOutcome = 'proposal' | 'answer' | 'error' | 'stopped' | 'limit'
 
+export type TurnErrorStage = ScribeFailureStage | 'offline' | 'unknown'
+
 export function trackTurnFinished(props: {
   outcome: TurnOutcome
   steps: number
@@ -47,6 +50,7 @@ export function trackTurnFinished(props: {
   writeCalls: number
   invalidCalls: number
   errorCode: ScribeErrorCode | null
+  errorStage?: TurnErrorStage | null
   durationMs: number
 }): void {
   analytics.capture('scribe_turn_finished', {
@@ -56,6 +60,7 @@ export function trackTurnFinished(props: {
     write_calls: props.writeCalls,
     invalid_calls: props.invalidCalls,
     error_code: props.errorCode,
+    ...(props.errorStage ? { error_stage: props.errorStage } : {}),
     duration: turnDurationBucket(props.durationMs),
   })
 }

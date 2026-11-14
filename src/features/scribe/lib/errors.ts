@@ -4,8 +4,16 @@ import type { ScribeError, ScribeErrorCode } from '@/features/scribe/types'
 import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 import { parseUsageSnapshot } from '@/features/scribe/lib/usageSnapshot'
 
+export type ScribeFailureStage =
+  | 'session'
+  | 'session_timeout'
+  | 'no_response'
+  | 'dropped'
+
 export class ScribeClientError extends Error {
   readonly code: ScribeErrorCode | 'cancelled'
+
+  readonly stage: ScribeFailureStage | null
 
   readonly serverCode: string | null
   readonly status: number | null
@@ -20,6 +28,7 @@ export class ScribeClientError extends Error {
       status?: number | null
       retryAfterMs?: number | null
       usage?: UsageSnapshotWire | null
+      stage?: ScribeFailureStage | null
     } = {}
   ) {
     super(
@@ -31,6 +40,7 @@ export class ScribeClientError extends Error {
     this.status = details.status ?? null
     this.retryAfterMs = details.retryAfterMs ?? null
     this.usage = details.usage ?? null
+    this.stage = details.stage ?? null
   }
 }
 
@@ -118,7 +128,10 @@ function fromSessionError(error: AccountSessionError): ScribeClientError {
     case 'cancelled':
       return new ScribeClientError('cancelled')
     case 'offline':
-      return new ScribeClientError('network', details)
+      return new ScribeClientError('network', {
+        ...details,
+        stage: error.timedOut ? 'session_timeout' : 'session',
+      })
     case 'upgrade':
       return new ScribeClientError('update_required', details)
     case 'attestation':

@@ -24,6 +24,7 @@ import {
   toScribeClientError,
   toScribeError,
 } from '@/features/scribe/lib/errors'
+import { isKnownOffline } from '@/lib/http/online'
 import { RefRegistry } from '@/features/scribe/runtime/refs'
 import {
   buildScribeContext,
@@ -846,6 +847,12 @@ function failTurn(
     writeCalls: stats.writeCalls,
     invalidCalls: stats.invalidCalls,
     errorCode: error.code,
+    errorStage:
+      error.code !== 'network'
+        ? null
+        : isKnownOffline()
+          ? 'offline'
+          : (failure.stage ?? 'unknown'),
     durationMs: deps.now().getTime() - startedAt,
   })
   const run: ScribeRun = { phase: 'error', error }

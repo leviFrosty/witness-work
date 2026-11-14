@@ -181,6 +181,17 @@ describe('session failures', () => {
     expect(toScribeClientError(error).code).toBe(code)
   })
 
+  it('marks a session that couldn’t open, and whether it timed out', () => {
+    expect(toScribeClientError(new AccountSessionError('offline')).stage).toBe(
+      'session'
+    )
+    expect(
+      toScribeClientError(
+        new AccountSessionError('offline', { timedOut: true })
+      ).stage
+    ).toBe('session_timeout')
+  })
+
   it('keeps a session’s wait', () => {
     expect(
       toScribeError(

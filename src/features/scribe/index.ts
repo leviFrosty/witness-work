@@ -46,6 +46,10 @@ export async function undoScribeProposal(
   return undoScribeProposalNow(proposalId, source)
 }
 
+export function prepareScribeSession(): void {
+  void refreshUsage()
+}
+
 export function refreshScribeStatus(): void {
   void refreshStatus({ force: true })
   void refreshUsage({ force: true })

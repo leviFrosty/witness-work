@@ -3,6 +3,7 @@ import { ed25519 } from '@noble/curves/ed25519.js'
 import { describe, expect, it, type Mock, vi } from 'vitest'
 import {
   AttestationError,
+  AttestationHttpError,
   type AttestedRequest,
 } from '@/lib/attestation/appAttest'
 import { concatBytes, fromB64u, fromUtf8, utf8 } from '@/lib/bytes'
@@ -1862,5 +1863,20 @@ describe('renewing a session before it ends', () => {
     )
     expect(error.ended).toBe('renewed')
     expect(sessionEndWipes('renewed')).toBe(false)
+  })
+})
+
+describe('a session that could not open', () => {
+  it.each([
+    [new HttpError('timeout'), true],
+    [new HttpError('offline'), false],
+    [new AttestationHttpError({ kind: 'network', timedOut: true }), true],
+    [new AttestationHttpError({ kind: 'network' }), false],
+    [new AttestationError('network', { timedOut: true }), true],
+    [new AttestationError('network'), false],
+  ] as const)('%s is offline, timed out: %s', (error, timedOut) => {
+    const failure = toAccountSessionError(error)
+    expect(failure.failure).toBe('offline')
+    expect(failure.timedOut).toBe(timedOut)
   })
 })

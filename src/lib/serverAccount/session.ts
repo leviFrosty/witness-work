@@ -67,6 +67,8 @@ export class AccountSessionError extends HttpError {
 
   readonly changedAt: number | null
 
+  readonly timedOut: boolean
+
   constructor(
     failure: AccountSessionFailure,
     details: {
@@ -77,6 +79,8 @@ export class AccountSessionError extends HttpError {
       reason?: string | null
       ended?: SessionEndReason
       changedAt?: number | null
+
+      timedOut?: boolean
     } = {}
   ) {
     super(
@@ -93,6 +97,7 @@ export class AccountSessionError extends HttpError {
     this.reason = details.reason ?? null
     this.ended = details.ended ?? null
     this.changedAt = details.changedAt ?? null
+    this.timedOut = failure === 'offline' && details.timedOut === true
   }
 }
 
@@ -232,7 +237,8 @@ export function toAccountSessionError(
   if (error instanceof AccountSessionError) return error
   if (error instanceof AttestationError) {
     if (error.code === 'cancelled') return new AccountSessionError('cancelled')
-    if (error.code === 'network') return new AccountSessionError('offline')
+    if (error.code === 'network')
+      return new AccountSessionError('offline', { timedOut: error.timedOut })
     if (isUpgrade(error.status, error.serverCode))
       return new AccountSessionError('upgrade', {
         status: error.status,
@@ -247,7 +253,8 @@ export function toAccountSessionError(
   }
   if (error instanceof AttestationHttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
-    if (error.kind === 'network') return new AccountSessionError('offline')
+    if (error.kind === 'network')
+      return new AccountSessionError('offline', { timedOut: error.timedOut })
     return fromHttp(
       {
         status: error.status ?? null,
@@ -261,7 +268,10 @@ export function toAccountSessionError(
   if (error instanceof HttpError) {
     if (error.kind === 'cancelled') return new AccountSessionError('cancelled')
     if (error.kind === 'offline' || error.kind === 'timeout')
-      return new AccountSessionError('offline', { status: error.status })
+      return new AccountSessionError('offline', {
+        status: error.status,
+        timedOut: error.kind === 'timeout',
+      })
     const body = error.body as { reason?: unknown; changedAt?: unknown } | null
     return fromHttp(
       {
@@ -359,6 +369,8 @@ export type AccountSessionEvent = {
   attestation?: AttestationProblem
 
   serverReason?: string
+
+  timedOut?: boolean
   ms: number
 }
 
@@ -724,6 +736,7 @@ export function createAccountSessions(deps: AccountSessionDeps) {
         ...extra,
         ...(failure.attestation && { attestation: failure.attestation }),
         ...(failure.reason && { serverReason: failure.reason }),
+        ...(failure.timedOut && { timedOut: true }),
       })
       if (failure.failure === 'upgrade') upgradeRequired()
       throw failure

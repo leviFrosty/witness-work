@@ -76,6 +76,8 @@ export const STEP_IN_PROGRESS_RETRY_MS = 2_000
 
 export const ACTIVE_CAP_DEFAULT_RETRY_MS = 5_000
 
+export const SESSION_RETRY_DELAY_MS = 1_000
+
 const STATUS_TIMEOUT_MS = 10_000
 const USAGE_TIMEOUT_MS = 15_000
 const TRANSCRIBE_TIMEOUT_MS = 60_000
@@ -181,7 +183,7 @@ class StreamIdleError extends Error {
 
 type StreamOutcome =
   | { kind: 'terminal'; event: StepTerminalEvent }
-  | { kind: 'closed' }
+  | { kind: 'closed'; responded: boolean }
 
 const defaultSleep = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
@@ -355,14 +357,14 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
       ])
       responded = true
       if (!res.ok) throw await refusal(res)
-      if (!res.body) return { kind: 'closed' }
+      if (!res.body) return { kind: 'closed', responded }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       for (;;) {
         const { value, done } = await Promise.race([reader.read(), idle])
-        if (done) return { kind: 'closed' }
+        if (done) return { kind: 'closed', responded }
 
         armIdle()
         buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
@@ -387,11 +389,11 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
       }
     } catch (error) {
       if (signal?.aborted) throw new ScribeClientError('cancelled')
-      if (error instanceof StreamIdleError) return { kind: 'closed' }
+      if (error instanceof StreamIdleError) return { kind: 'closed', responded }
       if (error instanceof HttpError) throw error
 
-      if (responded) return { kind: 'closed' }
-      throw new ScribeClientError('network')
+      if (responded) return { kind: 'closed', responded }
+      throw new ScribeClientError('network', { stage: 'no_response' })
     } finally {
       clearTimeout(idleTimer)
       signal?.removeEventListener('abort', onCallerAbort)
@@ -403,6 +405,7 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
     let drops = 0
     let waitedInProgress = false
     let waitedActiveCap = false
+    let retriedSession = false
     for (;;) {
       if (signal?.aborted) throw new ScribeClientError('cancelled')
       let outcome: StreamOutcome
@@ -419,6 +422,15 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
           await sleep(STEP_IN_PROGRESS_RETRY_MS, signal)
           continue
         }
+        if (
+          (failure.stage === 'session' ||
+            failure.stage === 'session_timeout') &&
+          !retriedSession
+        ) {
+          retriedSession = true
+          await sleep(SESSION_RETRY_DELAY_MS, signal)
+          continue
+        }
         if (failure.serverCode === 'active_cap' && !waitedActiveCap) {
           waitedActiveCap = true
           await sleep(
@@ -432,7 +444,9 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
       if (outcome.kind === 'terminal') return outcome.event
 
       if (drops >= STEP_DROP_RETRY_DELAYS_MS.length)
-        throw new ScribeClientError('network')
+        throw new ScribeClientError('network', {
+          stage: outcome.responded ? 'dropped' : 'no_response',
+        })
       await sleep(STEP_DROP_RETRY_DELAYS_MS[drops++], signal)
     }
   }

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import * as Crypto from 'expo-crypto'
 import {
   type RouteProp,
@@ -10,10 +11,15 @@ import type {
   ScribeConversationRouteParams,
 } from '@/types/rootStack'
 import ScribeVoiceSheet from '@/features/scribe/components/ScribeVoiceSheet'
+import { prepareScribeSession } from '@/features/scribe'
 
 const ScribeVoiceScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { params } = useRoute<RouteProp<RootStackParamList, 'ScribeVoice'>>()
+
+  useEffect(() => {
+    prepareScribeSession()
+  }, [])
 
   const openConversation = (
     extra: Partial<ScribeConversationRouteParams> = {}

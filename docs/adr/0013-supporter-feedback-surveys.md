@@ -22,6 +22,10 @@ Future general-purpose surveys must be launchable from PostHog without adding su
 - All app Languages are eligible. Supporter invitations use PostHog translations matching the app Language when available, otherwise the English base survey. Automatic popovers use the SDK's language detection. Other locale files remain human-approved and untouched.
 - Lapse feedback offers one optional main reason followed by optional text, allowing choice-only or text-only feedback. PostHog controls validation; no custom branching/form engine is added.
 
+### Update: asked at cancel time too
+
+Manage Subscription's Cancel support step ("One last thing", ADR 0016) offers the lapse campaign as an optional row while the subscription still renews or is paused. It opens the same `SurveyModal` over the sheet and tags its events with the session property `survey_source: manage_cancel`. This is user-initiated, so it doesn't conflict with keeping lapse invitations away from Supporters who only turned off renewal. Reusing the campaign keeps one set of reasons and results, and its seen state stops the 30-day lapse invitation from asking the same person twice.
+
 ## Implementation tradeoff
 
 The installed React Native SDK has no public controller for opening one named survey from a custom card. Use its exported `SurveyModal` and public `@posthog/core/surveys` helpers instead of copying question rendering or importing private SDK files. A small adapter handles API-survey availability, show/dismiss events, and seen-state persistence. The modal owns response submission. The full appearance defaults are required by the public modal prop type; remote appearance overrides them.

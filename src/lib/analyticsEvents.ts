@@ -379,6 +379,7 @@ export const analyticsEventNames = [
   'paywall_offerings_empty',
   'paywall_offerings_failed',
   'paywall_viewed',
+  'supporter_cancel_tapped',
   'supporter_feature_gate_clicked',
   'supporter_feature_gate_viewed',
   'supporter_gate_clicked',

@@ -548,19 +548,23 @@ person counts or a billing ledger.
 ### Supporter subscription management
 
 Manage Subscription (Settings → Manage subscription, or the active card in the
-Paywall's Your donations) offers a Supporter Pause before the store's own
-cancel/change screen (ADR 0016). The events answer how many Supporters reach
-the intercept, how many pause rather than continue to the store, which pause
-length they choose, and why a pause isn't offered.
+Paywall's Your donations) shows the subscription's status with Change plan and
+Cancel support. A Supporter Pause is offered only after Cancel support is
+tapped, as "One last thing" before the store's own cancel screen (ADR 0016).
+That step also offers the optional lapse feedback survey (ADR 0013).
+The events answer how many Supporters reach the intercept, how many pause
+rather than continue to the store, which pause length they choose, and why a
+pause isn't offered.
 
-| Event                           | Meaning                                                                                                                                                                                                                |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null), `product_lookup_failed`. |
-| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                                          |
-| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                                                     |
-| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                                            |
-| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                                                  |
-| `supporter_manage_store_opened` | The store's subscription management opened. `intent: pause` is Android's Pause in Google Play; `intent: cancel` is the footer button on both platforms.                                                                |
+| Event                           | Meaning                                                                                                                                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supporter_manage_viewed`       | The sheet opened, once per open after the store product loads. `state` (`renewing`, `ending`, `paused`, `none`), `will_renew`, `pause_options` (count), `pause_unavailable_reason` (or null), `product_lookup_failed`.                               |
+| `supporter_cancel_tapped`       | Cancel support was tapped. `state`; `pause_offered`: true when One last thing showed pause options (or a retry when they failed to load); `survey_offered`: true when it offered the feedback survey. With both false it went straight to the store. |
+| `supporter_pause_started`       | An App Store pause length was tapped; `months` is 1, 3, or 6.                                                                                                                                                                                        |
+| `supporter_pause_completed`     | The App Store accepted the free promotional offer.                                                                                                                                                                                                   |
+| `supporter_pause_cancelled`     | The App Store purchase sheet was dismissed.                                                                                                                                                                                                          |
+| `supporter_pause_failed`        | The offer couldn't be signed or redeemed; `error_code` and `offline`.                                                                                                                                                                                |
+| `supporter_manage_store_opened` | The store's subscription management opened. `intent`: `manage` is Change plan (or Manage when renewal is off, and on the web), `cancel` is Cancel support with no pause to offer or Continue to cancel, `pause` is Android's Pause in Google Play.   |
 
 All carry `source` (`paywall`, `settings`), `billing` (`monthly`, `annual`,
 `other`), and `store`. `supporter_manage_store_opened` records intent only:
@@ -1096,6 +1100,13 @@ PostHog manages the two API campaigns, their questions, translations, availabili
 and targeting. RevenueCat-based local eligibility distinguishes current paid
 access from a recent confirmed lapse. See [ADR 0013](adr/0013-supporter-feedback-surveys.md)
 for campaign links, default recurrence/dismissal behavior, and rollout steps.
+
+Manage Subscription's One last thing step also offers the lapse campaign as an
+optional "Tell us why you're cancelling" row while the subscription still
+renews or is paused. Its `survey shown`, `survey sent` and `survey dismissed`
+events carry the session property `survey_source: manage_cancel`, so those
+answers can be told apart from the lapse invitation's. Answering or dismissing
+it there marks the campaign seen, so the lapse invitation doesn't ask again.
 
 ### Buddy detail
 

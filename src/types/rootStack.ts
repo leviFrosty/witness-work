@@ -312,7 +312,6 @@ export type RootStackParamList = {
     streetIds?: string[]
   }
   TerritoryHandoff: { territoryId: string; streetId?: string }
-  TerritoryGuest: { territoryId: string; shareId: string }
 
   MileageTripForm:
     | { tripId?: string; duplicateOf?: string; source?: MileageSource }

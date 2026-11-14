@@ -23,10 +23,16 @@ export type TerritorySharingActions = {
   endHandoff: (territoryId: string, streetId: string) => Promise<boolean>
   createLink: (
     territoryId: string,
-    streetIds?: readonly string[]
+    streetIds?: readonly string[],
+    lifetimeMs?: number
   ) => Promise<{ linkId: string; url: string } | null>
   linkUrl: (territoryId: string, linkId: string) => Promise<string | null>
   endLink: (territoryId: string, linkId: string) => Promise<boolean>
+  setLinkLifetime: (
+    territoryId: string,
+    linkId: string,
+    lifetimeMs: number
+  ) => Promise<boolean>
   leave: (territoryId: string) => Promise<boolean>
   returnTerritory: (territoryId: string) => Promise<boolean>
   refresh: (territoryId: string) => Promise<void>
@@ -62,6 +68,7 @@ export const NO_TERRITORY_SHARING: TerritorySharing = {
     createLink: async () => null,
     linkUrl: async () => null,
     endLink: unavailable,
+    setLinkLifetime: unavailable,
     leave: unavailable,
     returnTerritory: unavailable,
     refresh: async () => {},

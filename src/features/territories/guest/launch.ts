@@ -1,5 +1,7 @@
 import { GUEST_LINK_PATH } from '@/lib/sharedSpaces/scopes'
 
+type Page = Pick<Window, 'location' | 'history'>
+
 let fragment: string | null = null
 
 export const isGuestPagePath = (pathname: string) =>
@@ -20,14 +22,21 @@ export function guestPageAddress(href: string): {
   return { url: `${url.origin}${GUEST_LINK_PATH}`, fragment: hash || null }
 }
 
-export function takeGuestPageAddress({
-  location,
-  history,
-}: Pick<Window, 'location' | 'history'>): boolean {
+export function showGuestLink(
+  shown: string | null,
+  { location, history }: Page = window
+) {
   const address = guestPageAddress(location.href)
+  if (!address) return
+  const href = shown ? `${address.url}#${shown}` : address.url
+  if (href !== location.href) history.replaceState(null, '', href)
+}
+
+export function takeGuestPageAddress(page: Page): boolean {
+  const address = guestPageAddress(page.location.href)
   if (!address) return false
   fragment = address.fragment
-  if (address.url !== location.href) history.replaceState(null, '', address.url)
+  showGuestLink(address.fragment, page)
   return true
 }
 

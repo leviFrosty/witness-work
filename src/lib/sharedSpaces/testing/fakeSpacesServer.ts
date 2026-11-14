@@ -156,6 +156,7 @@ const SCOPED_ONLY = new Set([
   'handoff/end',
   'link/create',
   'link/end',
+  'link/expiry',
 ])
 
 const CHECK_STATUS: Record<Exclude<ScopedCheck, 'ok'>, number> = {
@@ -182,6 +183,7 @@ const REFUSED_WHILE_SUSPENDED = new Set([
   'member/scopes',
   'handoff/create',
   'link/create',
+  'link/expiry',
 ])
 
 const hashB64u = (text: string) => toB64u(sha256(fromB64u(text)))
@@ -883,7 +885,7 @@ export function createFakeSpacesServer({
           expiresAt <= now() ||
           expiresAt >
             now() +
-              SCOPED_LIMITS.linkLifetimeMs +
+              SCOPED_LIMITS.maxLinkLifetimeMs +
               SCOPED_LIMITS.linkLifetimeSlackMs ||
           !Number.isSafeInteger(epoch) ||
           epoch < 1
@@ -929,6 +931,26 @@ export function createFakeSpacesServer({
         const link = space.links.get(linkId)
         if (!link || !liveLink(link)) return ok({ seq: space.seq })
         link.endedAt = now()
+        return ok({ seq: advance(spaceId, space) })
+      }
+      case 'link/expiry': {
+        const linkId = body.linkId as string
+        const expiresAt = body.expiresAt as number
+        if (
+          !Number.isSafeInteger(expiresAt) ||
+          expiresAt <= now() ||
+          expiresAt >
+            now() +
+              SCOPED_LIMITS.maxLinkLifetimeMs +
+              SCOPED_LIMITS.linkLifetimeSlackMs
+        )
+          return fail(400, 'bad_request')
+        const link = space.links.get(linkId)
+        if (!link || !liveLink(link)) return fail(404, 'not_found')
+        const refused = refuse(checkLinkEnd(view, memberId, linkId, now()))
+        if (refused) return refused
+        if (link.expiresAt === expiresAt) return ok({ seq: space.seq })
+        link.expiresAt = expiresAt
         return ok({ seq: advance(spaceId, space) })
       }
     }

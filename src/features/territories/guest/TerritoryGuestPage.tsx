@@ -3,12 +3,10 @@ import { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
-import { formatDateTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import { toast } from '@/stores/toasts'
 import GuestPageBody from '@/features/territories/components/sharing/GuestPageBody'
 import GuestNotice from '@/features/territories/guest/GuestNotice'
-import GuestPageFooter from '@/features/territories/guest/GuestPageFooter'
 import GuestStatusView from '@/features/territories/guest/GuestStatusView'
 import type { GuestStatus } from '@/features/territories/guest/session'
 import useGuestSession from '@/features/territories/guest/useGuestSession'
@@ -29,7 +27,7 @@ const REPORTED: readonly GuestStatus[] = [
 
 export default function TerritoryGuestPage() {
   const theme = useTheme()
-  const { session, state } = useGuestSession()
+  const { session, state, linkUrl } = useGuestSession()
   const [renaming, setRenaming] = useState(false)
   const reported = useRef(false)
   const latest = useRef<GuestView | null>(null)
@@ -49,6 +47,11 @@ export default function TerritoryGuestPage() {
   }, [state.status])
 
   useEffect(() => {
+    if (state.status !== 'ready' && state.status !== 'loading')
+      toast.dismissKey('territory-guest-door')
+  }, [state.status])
+
+  useEffect(() => {
     if (state.refused === 0 || !session) return
     toast.error(i18n.t('territories.guest.refused', { count: state.refused }))
     session.clearRefused()
@@ -60,6 +63,9 @@ export default function TerritoryGuestPage() {
         <GuestStatusView
           status={state.status === 'ready' ? 'loading' : state.status}
           lost={state.lost}
+          from={state.from}
+          territory={state.title}
+          joined={state.joined}
           onRetry={
             session && (state.status === 'paused' || state.status === 'offline')
               ? () => void session.sync()
@@ -115,13 +121,6 @@ export default function TerritoryGuestPage() {
         }
       />
     ),
-    !view.houseRecords && (
-      <GuestNotice
-        key='privacy'
-        testID='guest-privacy'
-        text={i18n.t('territories.guest.privacy')}
-      />
-    ),
     view.streets.length === 0 && (
       <GuestNotice
         key='none'
@@ -141,25 +140,19 @@ export default function TerritoryGuestPage() {
         streets={view.streets}
         title={view.title}
         ownerName={view.from}
-        endsText={i18n.t('territories.share.endsAt', {
-          time: formatDateTime(session.expiresAt() ?? view.expiresAt, {
-            style: 'medium',
-          }),
-        })}
+        endsAt={session.expiresAt() ?? view.expiresAt}
         live
         guest={guest}
         houseRecords={view.houseRecords}
         initialName={state.guest?.name}
+        streetId={state.streetId}
+        onPickStreet={(streetId) => session.setStreet(streetId)}
+        shareUrl={linkUrl}
         notice={
           notices.length > 0 ? <View style={{ gap: 12 }}>{notices}</View> : null
         }
-        footer={
-          <GuestPageFooter
-            name={guest?.name ?? null}
-            onChangeName={() => setRenaming(true)}
-            onForget={forget}
-          />
-        }
+        onChangeName={() => setRenaming(true)}
+        onForget={forget}
         onJoin={onJoin}
         onChange={onChange}
       />

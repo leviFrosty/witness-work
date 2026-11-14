@@ -4,10 +4,16 @@ import apis from '@/constants/apis'
 import { fromB64u } from '@/lib/bytes'
 import { createGuestSpacesClient } from '@/lib/sharedSpaces/client'
 import {
+  GUEST_LINK_PATH,
   type GuestLink,
+  guestLinkFragment,
   parseGuestLinkFragment,
 } from '@/lib/sharedSpaces/scopes'
-import { guestLaunch } from '@/features/territories/guest/launch'
+import {
+  guestLaunch,
+  guestPageAddress,
+  showGuestLink,
+} from '@/features/territories/guest/launch'
 import {
   createGuestSession,
   type GuestSession,
@@ -47,19 +53,36 @@ function linkToOpen(store: GuestLinkStore): GuestLink | null {
   }
 }
 
-function openSession(): GuestSession | null {
+type Opened = { session: GuestSession; fragment: string; url: string }
+
+function openSession(): Opened | null {
   const store = createGuestLinkStore(browserStorage())
   const link = linkToOpen(store)
-  if (!link) return null
-  return createGuestSession({
-    link,
-    client: createGuestSpacesClient({ baseUrl: apis.spaces }),
-    store,
-    now: Date.now,
-    randomBytes,
-    randomUUID: () => Crypto.randomUUID(),
-  })
+  if (!link) {
+    showGuestLink(null)
+    return null
+  }
+  const fragment = guestLinkFragment(link)
+  showGuestLink(fragment)
+  return {
+    fragment,
+    url: `${window.location.origin}${GUEST_LINK_PATH}#${fragment}`,
+    session: createGuestSession({
+      link,
+      client: createGuestSpacesClient({ baseUrl: apis.spaces }),
+      store,
+      now: Date.now,
+      randomBytes,
+      randomUUID: () => Crypto.randomUUID(),
+    }),
+  }
 }
+
+const CLOSED: readonly GuestSessionState['status'][] = [
+  'ended',
+  'expired',
+  'forgotten',
+]
 
 const NO_LINK: GuestSessionState = {
   status: 'invalid',
@@ -71,6 +94,10 @@ const NO_LINK: GuestSessionState = {
   records: new Map(),
   guest: null,
   next: {},
+  streetId: null,
+  from: null,
+  title: null,
+  joined: false,
   firstRecordSent: false,
 }
 
@@ -82,8 +109,11 @@ const isVisible = () =>
 export default function useGuestSession(): {
   session: GuestSession | null
   state: GuestSessionState
+
+  linkUrl: string | null
 } {
-  const [session] = useState(openSession)
+  const [opened] = useState(openSession)
+  const session = opened?.session ?? null
   const activity = useRef(0)
   const state = useSyncExternalStore(
     session ? session.subscribe : noSubscription,
@@ -134,6 +164,18 @@ export default function useGuestSession(): {
     }
   }, [session])
 
+  const closed = CLOSED.includes(state.status)
+  useEffect(() => {
+    if (!opened) return
+    if (closed) return showGuestLink(null)
+    const another = () => {
+      const shown = guestPageAddress(window.location.href)?.fragment
+      if (shown && shown !== opened.fragment) window.location.reload()
+    }
+    window.addEventListener('hashchange', another)
+    return () => window.removeEventListener('hashchange', another)
+  }, [opened, closed])
+
   const expiresAt = session?.expiresAt()
   useEffect(() => {
     if (!session || expiresAt === undefined) return
@@ -143,5 +185,10 @@ export default function useGuestSession(): {
     return () => clearTimeout(timer)
   }, [session, expiresAt])
 
-  return { session, state }
+  return {
+    session,
+    state,
+    linkUrl:
+      opened && !closed && state.status !== 'invalid' ? opened.url : null,
+  }
 }

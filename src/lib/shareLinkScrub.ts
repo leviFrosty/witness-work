@@ -31,8 +31,11 @@ const IMPORT_CONTACT_PAYLOAD = new RegExp(
   'gi'
 )
 
+const GUEST_LINK = /v1\.[\w-]{22}\.[\w-]{22}\.[\w-]{43}/g
+
 export function scrubShareLinkUrl(value: string): string {
   return value
+    .replace(GUEST_LINK, '[redacted]')
     .replace(LEGACY_PATH_PAYLOAD, '$1[redacted]')
     .replace(FRAGMENT, '$1$2[redacted]')
     .replace(IMPORT_CONTACT_PAYLOAD, '$1[redacted]')

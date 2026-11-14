@@ -13,6 +13,7 @@ import {
   sharedStreets,
   shareTimeLeft,
 } from '@/features/territories/lib/sharing'
+import type { GuestLinkDays } from '@/features/territories/lib/linkLifetime'
 import { territoryTitle } from '@/features/territories/lib/territoryTitle'
 import type {
   Territory,
@@ -21,6 +22,7 @@ import type {
 } from '@/features/territories/types/territory'
 
 const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
 const MINUTE_MS = 60 * 1000
 
 export const joinNames = (names: string[]): string => {
@@ -73,12 +75,35 @@ export const timeLeftText = (share: TerritoryShare, now: number): string => {
   const left = shareTimeLeft(share, now)
   if (left === undefined) return ''
   if (left <= 0) return i18n.t('territories.share.linkEnded')
+  if (left >= 2 * DAY_MS)
+    return i18n.t('territories.share.daysLeft', {
+      count: Math.ceil(left / DAY_MS),
+    })
   if (left >= HOUR_MS)
     return i18n.t('territories.share.hoursLeft', {
       count: Math.floor(left / HOUR_MS),
     })
   return i18n.t('territories.share.minutesLeft', {
     count: Math.max(1, Math.ceil(left / MINUTE_MS)),
+  })
+}
+
+export const linkOpenUntilText = (expiresAt: number, now: number): string => {
+  const ends = moment(expiresAt)
+  const days = ends
+    .clone()
+    .startOf('day')
+    .diff(moment(now).startOf('day'), 'days')
+  if (days <= 0)
+    return i18n.t('territories.guest.openUntilToday', {
+      time: formatTime(expiresAt),
+    })
+  if (days === 1)
+    return i18n.t('territories.guest.openUntilTomorrow', {
+      time: formatTime(expiresAt),
+    })
+  return i18n.t('territories.guest.openUntil', {
+    date: formatMonthDayCompact(ends),
   })
 }
 
@@ -133,3 +158,8 @@ export const recordedByText = (name: string | null, at: number): string =>
 
 export const hasOthers = (territory: Pick<Territory, 'people' | 'received'>) =>
   (territory.people?.length ?? 0) > 0 || territory.received !== undefined
+
+export const guestLinkDaysLabel = (days: GuestLinkDays): string =>
+  days === 7 || days === 14
+    ? i18n.t('territories.share.lastsWeeks', { count: days / 7 })
+    : i18n.t('territories.share.lastsDays', { count: days })

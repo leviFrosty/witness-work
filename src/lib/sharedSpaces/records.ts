@@ -413,6 +413,8 @@ export const SCOPED_LIMITS = {
 
   linkLifetimeMs: 24 * 60 * 60 * 1000,
 
+  maxLinkLifetimeMs: 30 * 24 * 60 * 60 * 1000,
+
   linkLifetimeSlackMs: 5 * 60 * 1000,
 
   openLinks: 10,

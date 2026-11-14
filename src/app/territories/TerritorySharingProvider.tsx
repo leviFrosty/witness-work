@@ -94,10 +94,10 @@ const actions: TerritorySharingActions = {
     done('handoff/end', () =>
       territoryInvitations.endHandoff(territoryId, streetId)
     ),
-  createLink: (territoryId, streetIds) =>
+  createLink: (territoryId, streetIds, lifetimeMs) =>
     startLink(async () => {
       await prepareTerritoryAccount()
-      return territoriesEngine.createLink(territoryId, streetIds)
+      return territoriesEngine.createLink(territoryId, streetIds, lifetimeMs)
     }),
   linkUrl: async (territoryId, linkId) => {
     const spaceId = spaceIdOf(territoryId)
@@ -113,6 +113,12 @@ const actions: TerritorySharingActions = {
       const spaceId = spaceIdOf(territoryId)
       if (!spaceId) throw new Error('No shared territory')
       await territoriesEngine.endLink(spaceId, linkId)
+    }),
+  setLinkLifetime: (territoryId, linkId, lifetimeMs) =>
+    done('link/expiry', async () => {
+      const spaceId = spaceIdOf(territoryId)
+      if (!spaceId) throw new Error('No shared territory')
+      await territoriesEngine.setLinkLifetime(spaceId, linkId, lifetimeMs)
     }),
   leave: (territoryId) =>
     done('leave', () => territoriesEngine.leaveTerritory(territoryId)),

@@ -665,14 +665,6 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          options={{ presentation: 'modal', headerShown: false }}
-          name='TerritoryGuest'
-          getComponent={() =>
-            require('@/features/territories/screens/TerritoryGuestScreen')
-              .default
-          }
-        />
-        <RootStack.Screen
           options={{ header: () => null }}
           name='TerritoryDoorPin'
           getComponent={() =>

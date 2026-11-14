@@ -16,6 +16,7 @@ import { useToastDock } from '@/stores/toastDock'
 import { toast } from '@/stores/toasts'
 import DoorRecorder from '@/features/territories/components/DoorRecorder'
 import DoorRow from '@/features/territories/components/DoorRow'
+import GuestDoorSheet from '@/features/territories/components/sharing/GuestDoorSheet'
 import TerritoryDoNotCallSection from '@/features/territories/components/TerritoryDoNotCallSection'
 import useFreshDoors from '@/features/territories/hooks/useFreshDoors'
 import {
@@ -39,6 +40,7 @@ import {
 import type {
   DoorOutcome,
   Territory,
+  TerritoryDoor,
   TerritoryStreet,
 } from '@/features/territories/types/territory'
 
@@ -78,8 +80,7 @@ export default function GuestStreetRecorder({
   const blocked = doNotCallAt(territory, street, label, formatDoorAddress)
   const away = typed !== null && typed.trim() !== String(street.next)
 
-  const record = (outcome: DoorOutcome) => {
-    const logged = label.trim()
+  const record = (outcome: DoorOutcome, logged = label.trim()) => {
     void Haptics.light()
     change((current) =>
       logDoor(current, {
@@ -94,6 +95,7 @@ export default function GuestStreetRecorder({
     setOpenId(null)
     toast.undo({
       key: UNDO_KEY,
+      durationMs: 5000,
       title: i18n.t('territories.doorRecorded', {
         door: formatDoorAddress(street, { label: logged }),
         outcome: i18n.t(OUTCOME_LABEL[outcome]),
@@ -102,16 +104,16 @@ export default function GuestStreetRecorder({
     })
   }
 
-  const pick = (outcome: DoorOutcome) => {
-    if (!label.trim()) return
-    if (outcome !== 'doNotCall') return record(outcome)
+  const pick = (outcome: DoorOutcome, logged = label.trim()) => {
+    if (!logged) return
+    if (outcome !== 'doNotCall') return record(outcome, logged)
     confirmDestructive({
       title: i18n.t('territories.doNotCallConfirm_title', {
-        address: formatDoorAddress(street, { label: label.trim() }),
+        address: formatDoorAddress(street, { label: logged }),
       }),
       description: i18n.t('territories.doNotCallConfirm_description'),
       confirmLabel: i18n.t('territories.outcome.doNotCall'),
-      onConfirm: () => record(outcome),
+      onConfirm: () => record(outcome, logged),
     })
   }
 
@@ -128,6 +130,7 @@ export default function GuestStreetRecorder({
     }))
     toast.undo({
       key: UNDO_KEY,
+      durationMs: 5000,
       title: i18n.t('territories.streetFinished_toast', {
         street: street.name,
       }),
@@ -147,6 +150,14 @@ export default function GuestStreetRecorder({
     change((current) => ({ ...current, next: nextUnrecorded(current, shown) }))
   }
 
+  const recordedBy = (door: TerritoryDoor) =>
+    door.by === guestId
+      ? undefined
+      : door.by
+        ? personName(territory, door.by)
+        : ownerName || undefined
+  const changing = street.doors.find((door) => door.id === openId)
+
   const doNotCalls = streetDoNotCalls(territory, street, formatDoorAddress)
   const called = doorsInWalkingOrder(
     street.doors.filter((door) => door.outcome !== 'doNotCall'),
@@ -159,7 +170,7 @@ export default function GuestStreetRecorder({
         <ContentColumn
           style={{
             padding: inputLayout.horizontalPadding,
-            paddingBottom: 30,
+            paddingBottom: 110,
             gap: 20,
           }}
         >
@@ -186,8 +197,8 @@ export default function GuestStreetRecorder({
             >
               {i18n.t(
                 unnumbered
-                  ? 'territories.streetEmptyDoors'
-                  : 'territories.streetEmptyHouses'
+                  ? 'territories.guest.noDoorsYet'
+                  : 'territories.guest.noHousesYet'
               )}
             </Text>
           ) : (
@@ -197,35 +208,17 @@ export default function GuestStreetRecorder({
                   key={door.id}
                   door={door}
                   title={doorTitle(street, door.label)}
-                  open={door.id === openId}
-                  current={door.id === recorded?.id}
+                  open={false}
+                  plain
+                  current={door.id === openId}
                   last={index === called.length - 1}
                   fresh={fresh.has(door.id)}
-                  recordedBy={
-                    door.by === guestId
-                      ? undefined
-                      : door.by
-                        ? personName(territory, door.by)
-                        : ownerName || undefined
-                  }
+                  recordedBy={recordedBy(door)}
                   mine={door.by === guestId}
                   onToggle={() => {
-                    const opening = openId !== door.id
-                    setOpenId(opening ? door.id : null)
-                    setTyped(
-                      !opening || door.label === String(street.next)
-                        ? null
-                        : door.label
-                    )
+                    toast.dismissKey(UNDO_KEY)
+                    setOpenId(door.id)
                   }}
-                  onRemove={
-                    door.by === guestId
-                      ? () => {
-                          setOpenId(null)
-                          change((current) => removeDoor(current, door.id))
-                        }
-                      : undefined
-                  }
                 />
               ))}
             </Section>
@@ -239,9 +232,13 @@ export default function GuestStreetRecorder({
           switchSide={null}
           caption={
             blocked
-              ? i18n.t('territories.doNotCallSince', {
-                  date: formatDate(blocked.at, { style: 'medium' }),
-                })
+              ? unnumbered
+                ? i18n.t('territories.doNotCallSince', {
+                    date: formatDate(blocked.at, { style: 'medium' }),
+                  })
+                : i18n.t('territories.guest.doNotKnock', {
+                    number: label.trim(),
+                  })
               : recorded
                 ? i18n.t('territories.pins.changeCaption', {
                     outcome: i18n.t(OUTCOME_LABEL[recorded.outcome]),
@@ -264,8 +261,33 @@ export default function GuestStreetRecorder({
           onPick={pick}
           onSkip={skip}
           back={null}
+          onCancelChange={() => setTyped(null)}
         />
       </KeyboardStickyView>
+      <GuestDoorSheet
+        door={changing ?? null}
+        title={
+          changing
+            ? unnumbered
+              ? doorTitle(street, changing.label)
+              : i18n.t('territories.guest.houseTitle', {
+                  number: changing.label,
+                })
+            : ''
+        }
+        recordedBy={changing ? recordedBy(changing) : undefined}
+        mine={changing?.by === guestId}
+        onPick={(outcome) => changing && pick(outcome, changing.label)}
+        onRemove={
+          changing?.by === guestId
+            ? () => {
+                setOpenId(null)
+                change((current) => removeDoor(current, changing.id))
+              }
+            : undefined
+        }
+        onClose={() => setOpenId(null)}
+      />
     </>
   )
 }

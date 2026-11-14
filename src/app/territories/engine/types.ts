@@ -33,8 +33,9 @@ export type TerritorySyncFailure = SpaceErrorCode | TerritorySharingErrorCode
 export type TerritoryOutcome =
   | { type: 'shared'; scope: 'whole' | 'streets'; people: number }
   | { type: 'joined'; handoff: boolean }
-  | { type: 'link_created'; streets: number }
+  | { type: 'link_created'; streets: number; days: number }
   | { type: 'link_ended' }
+  | { type: 'link_lifetime_changed'; days: number }
   | { type: 'handoff'; action: 'handed' | 'taken_back' | 'given_back' }
   | { type: 'ended'; reason: TerritoryEnding }
   | { type: 'sync_failed'; reason: TerritorySyncFailure }

@@ -119,10 +119,10 @@ export const fakeUsage = (
   supporterCheckFailed: false,
   windows: [
     {
-      id: 'monthly',
+      id: 'weekly',
       percentUsed: 12,
-      resetsAt: Date.now() + 20 * 86_400_000,
-      units: { used: 36_000, limit: 300_000 },
+      resetsAt: Date.now() + 5 * 86_400_000,
+      units: { used: 3_000, limit: 25_000 },
     },
   ],
   limited: false,
@@ -514,10 +514,10 @@ export const FAKE_SCRIPTS = {
         resetsAt: Date.now() + 3 * 86_400_000,
         windows: [
           {
-            id: 'monthly',
+            id: 'weekly',
             percentUsed: 100,
             resetsAt: Date.now() + 3 * 86_400_000,
-            units: { used: 300_000, limit: 300_000 },
+            units: { used: 25_000, limit: 25_000 },
           },
         ],
       })

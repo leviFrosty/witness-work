@@ -93,7 +93,7 @@ const BODY: StepRequest = {
 const METER: UsageSnapshotWire = {
   plan: 'free',
   supporterCheckFailed: false,
-  windows: [{ id: 'monthly', percentUsed: 12, resetsAt: 1_800_000_000_000 }],
+  windows: [{ id: 'weekly', percentUsed: 12, resetsAt: 1_800_000_000_000 }],
   limited: false,
   resetsAt: null,
   asOf: 1_790_000_000_000,
@@ -282,6 +282,27 @@ describe('step stream', () => {
     expect(events[1]).toEqual({ type: 'text', delta: 'Hello there' })
     expect(terminal.type).toBe('done')
   })
+
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])(
+    'reads CRLF frames whatever the read size (%i bytes)',
+    async (chunkSize) => {
+      const h = harness({
+        stream: [
+          sseResponse([START, { type: 'text', delta: 'Hello there' }, DONE], {
+            chunkSize,
+            crlf: true,
+          }),
+        ],
+      })
+      const { terminal, events } = await runStep(h)
+      expect(events.map((event) => event.type)).toEqual([
+        'start',
+        'text',
+        'done',
+      ])
+      expect(terminal.type).toBe('done')
+    }
+  )
 
   it('resolves with an error event and its meter', async () => {
     const h = harness({

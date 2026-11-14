@@ -1224,7 +1224,7 @@ describe('stopping and failures', () => {
       plan: 'free',
       supporterCheckFailed: false,
       windows: [
-        { id: 'monthly', percentUsed: 100, resetsAt: 1_900_000_000_000 },
+        { id: 'weekly', percentUsed: 100, resetsAt: 1_900_000_000_000 },
       ],
       limited: true,
       resetsAt: 1_900_000_000_000,
@@ -1241,7 +1241,7 @@ describe('stopping and failures', () => {
     })
     expect(useScribeUsageStore.getState().snapshot).toEqual(meter)
     expect(events('scribe_limit_reached')).toEqual([
-      { plan: 'free', window: 'monthly' },
+      { plan: 'free', window: 'weekly' },
     ])
     expect(events('scribe_turn_finished')[0]).toMatchObject({
       outcome: 'limit',

@@ -17,7 +17,7 @@ const RESETS_AT = 1_793_836_800_000
 const LIMITED: UsageSnapshotWire = {
   plan: 'free',
   supporterCheckFailed: false,
-  windows: [{ id: 'monthly', percentUsed: 100, resetsAt: RESETS_AT }],
+  windows: [{ id: 'weekly', percentUsed: 100, resetsAt: RESETS_AT }],
   limited: true,
   resetsAt: RESETS_AT,
   asOf: 1_793_831_400_000,

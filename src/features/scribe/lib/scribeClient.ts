@@ -367,7 +367,10 @@ export function createScribeClient(deps: ScribeClientDeps): ScribeClient {
         if (done) return { kind: 'closed', responded }
 
         armIdle()
-        buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
+        buffer = (buffer + decoder.decode(value, { stream: true })).replace(
+          /\r\n/g,
+          '\n'
+        )
         let index = buffer.indexOf('\n\n')
         while (index !== -1) {
           const data = frameData(buffer.slice(0, index))

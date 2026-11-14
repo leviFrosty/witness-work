@@ -105,7 +105,7 @@ One item of a Proposal as the User sees it: time, a Day Plan, or a Contact with 
 _Avoid_: "suggestion card", "preview row".
 
 **Usage Window**:
-A period over which ww-api meters Scribe AI's model usage, shown as percent used and when it resets, never as tokens or messages. Free: a 30-day monthly window that starts with the first use after the last one ended. Supporter: a 5-hour session window and a 7-day weekly window, sized to be generous. When any window is full, Scribe AI works again when it resets; work already running finishes. Reading paper pages also has a daily page ceiling.
+A period over which ww-api meters Scribe AI's model usage, shown as percent used and when it resets, never as tokens or messages. Free: a 7-day weekly window that starts with the first use after the last one ended, with a larger limit in an account's first week. Supporter: a 5-hour session window and a 7-day weekly window, sized to be generous. When any window is full, Scribe AI works again when it resets; work already running finishes. Reading paper pages also has a daily page ceiling.
 _Avoid_: "credits", "messages left", "unlimited" (no plan is unlimited).
 
 **Quick Actions**:

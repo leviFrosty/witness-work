@@ -14,7 +14,7 @@ const DAY_MS = 86_400_000
 const free = (change: Partial<UsageSnapshotWire> = {}): UsageSnapshotWire => ({
   plan: 'free',
   supporterCheckFailed: false,
-  windows: [{ id: 'monthly', percentUsed: 40, resetsAt: AS_OF + 1_000 }],
+  windows: [{ id: 'weekly', percentUsed: 40, resetsAt: AS_OF + 1_000 }],
   limited: false,
   resetsAt: null,
   asOf: AS_OF,
@@ -63,19 +63,19 @@ describe('parseUsageSnapshot', () => {
     const snapshot = parseUsageSnapshot({
       plan: 'free',
       windows: [
-        { id: 'monthly', percentUsed: 140, resetsAt: AS_OF },
+        { id: 'weekly', percentUsed: 140, resetsAt: AS_OF },
         { id: 'session', percentUsed: -3, resetsAt: 'soon' },
         { id: 'yearly', percentUsed: 10 },
         { id: 'weekly', percentUsed: 'x' },
         null,
-        { id: 'monthly', percentUsed: 50, units: { used: 1 } },
+        { id: 'weekly', percentUsed: 50, units: { used: 1 } },
       ],
       asOf: AS_OF,
     })
     expect(snapshot?.windows).toEqual([
-      { id: 'monthly', percentUsed: 100, resetsAt: AS_OF },
+      { id: 'weekly', percentUsed: 100, resetsAt: AS_OF },
       { id: 'session', percentUsed: 0, resetsAt: null },
-      { id: 'monthly', percentUsed: 50, resetsAt: null },
+      { id: 'weekly', percentUsed: 50, resetsAt: null },
     ])
     expect(snapshot).toMatchObject({
       limited: false,
@@ -98,15 +98,28 @@ describe('parseUsageSnapshot', () => {
 })
 
 describe('toScribeUsage', () => {
-  it('free shows its monthly window', () => {
+  it('free shows its weekly window', () => {
     expect(toScribeUsage(free(), AS_OF)).toEqual({
       plan: 'free',
-      windows: [{ id: 'monthly', percentUsed: 40, resetsAt: AS_OF + 1_000 }],
+      windows: [{ id: 'weekly', percentUsed: 40, resetsAt: AS_OF + 1_000 }],
       limited: false,
       resetsAt: null,
       supporterCheckFailed: false,
       asOf: AS_OF,
     })
+  })
+
+  it('leaves out the monthly copy ww-api sends for older apps', () => {
+    const week = { percentUsed: 40, resetsAt: AS_OF + 1_000 }
+    const snapshot = free({
+      windows: [
+        { id: 'weekly', ...week },
+        { id: 'monthly', ...week },
+      ],
+    })
+    expect(toScribeUsage(snapshot, AS_OF).windows).toEqual([
+      { id: 'weekly', ...week },
+    ])
   })
 
   it('supporter shows session then weekly, shortest first, never units', () => {
@@ -138,7 +151,7 @@ describe('toScribeUsage', () => {
 
   it('a window that hasn’t started shows 0 % with no reset', () => {
     expect(toScribeUsage(free({ windows: [] }), AS_OF).windows).toEqual([
-      { id: 'monthly', percentUsed: 0, resetsAt: null },
+      { id: 'weekly', percentUsed: 0, resetsAt: null },
     ])
   })
 
@@ -179,17 +192,19 @@ describe('fullWindow', () => {
     expect(
       fullWindow(
         free({
-          windows: [{ id: 'monthly', percentUsed: 100, resetsAt: AS_OF }],
+          windows: [{ id: 'weekly', percentUsed: 100, resetsAt: AS_OF }],
         })
       )
-    ).toBe('monthly')
+    ).toBe('weekly')
   })
 
   it('is null when nothing is full, or only another plan’s window is', () => {
     expect(fullWindow(free())).toBeNull()
     expect(
       fullWindow(
-        free({ windows: [{ id: 'weekly', percentUsed: 100, resetsAt: AS_OF }] })
+        free({
+          windows: [{ id: 'session', percentUsed: 100, resetsAt: AS_OF }],
+        })
       )
     ).toBeNull()
   })
@@ -261,7 +276,7 @@ describe('currentUsageSnapshot', () => {
   it('shows a saved limit as lifted once its reset passes', () => {
     const usage = toScribeUsage(
       free({
-        windows: [{ id: 'monthly', percentUsed: 100, resetsAt: AS_OF + 5 }],
+        windows: [{ id: 'weekly', percentUsed: 100, resetsAt: AS_OF + 5 }],
         limited: true,
         resetsAt: AS_OF + 5,
       }),
@@ -270,7 +285,7 @@ describe('currentUsageSnapshot', () => {
     expect(usage).toMatchObject({
       limited: false,
       resetsAt: null,
-      windows: [{ id: 'monthly', percentUsed: 0, resetsAt: null }],
+      windows: [{ id: 'weekly', percentUsed: 0, resetsAt: null }],
     })
   })
 })
@@ -282,7 +297,7 @@ describe('nextUsageChange', () => {
     expect(
       nextUsageChange(
         free({
-          windows: [{ id: 'monthly', percentUsed: 3, resetsAt: AS_OF + 50 }],
+          windows: [{ id: 'weekly', percentUsed: 3, resetsAt: AS_OF + 50 }],
         }),
         AS_OF
       )
@@ -290,7 +305,7 @@ describe('nextUsageChange', () => {
     expect(
       nextUsageChange(
         free({
-          windows: [{ id: 'monthly', percentUsed: 3, resetsAt: AS_OF - 1 }],
+          windows: [{ id: 'weekly', percentUsed: 3, resetsAt: AS_OF - 1 }],
         }),
         AS_OF
       )

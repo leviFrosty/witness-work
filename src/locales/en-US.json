@@ -6283,7 +6283,7 @@
   "scribe_usagePercent": "{{percent}}% used",
   "scribe_usageResets": "Resets {{when}}",
   "scribe_usageNotStarted": "Starts with your next use",
-  "scribe_usagePlanFree": "Limited use each month",
+  "scribe_usagePlanFree": "Limited use each week",
   "scribe_usagePlanSupporter": "Generous limits as a Supporter",
   "scribe_usageInfoTitle": "How usage works",
   "scribe_usageInfoBody": "Usage depends on how much Scribe AI reads and writes, not on how many messages you send. Quick updates use a little; long conversations and paper pages use more. Each limit starts with your first use and resets at the time shown.",

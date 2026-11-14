@@ -55,7 +55,7 @@ export function parseUsageSnapshot(value: unknown): UsageSnapshotWire | null {
 }
 
 const PLAN_WINDOWS: Record<ScribeUsage['plan'], ScribeUsageWindowId[]> = {
-  free: ['monthly'],
+  free: ['weekly'],
   supporter: ['session', 'weekly'],
 }
 

@@ -110,7 +110,10 @@ Limits are windows, like Claude's:
 - Supporter: a 5-hour session window and a 7-day weekly window, sized to be
   generous.
 - Free: a 30-day monthly window, sized so an average User fits about two
-  longer conversations and three quick edits a month.
+  longer conversations and three quick edits a month. (Since November 2026: a
+  7-day weekly window sized for three or four quick updates, with the old
+  monthly figure in an account's first week. See the protocol's
+  [Windows](../scribe-ai-protocol.md#windows).)
 
 Every limit and weight is read from KV first, so they can be tuned with real
 usage. The app shows each window as percent used and when it resets, never raw
@@ -239,7 +242,7 @@ API key.
   removes them.
 - Typing works on every device that can attest; voice falls back to the
   keyboard where on-device speech isn't available.
-- A free User at the monthly limit sees when it resets and the Supporter
+- A free User at the limit sees when it resets and the Supporter
   upsell; usage shows percent and reset times only.
 - An app from before Scribe AI gets Update Required for Notes Import once the
   legacy switch is off, and still opens account sessions.

@@ -55,7 +55,7 @@ import ScribeUsageScreen from '@/features/scribe/screens/ScribeUsageScreen'
 
 const usage = (overrides: Partial<ScribeUsage> = {}): ScribeUsage => ({
   plan: 'free',
-  windows: [{ id: 'monthly', percentUsed: 37, resetsAt: 1 }],
+  windows: [{ id: 'weekly', percentUsed: 37, resetsAt: 1 }],
   limited: false,
   resetsAt: null,
   supporterCheckFailed: false,
@@ -111,7 +111,7 @@ describe('ScribeUsageScreen', () => {
       'scribe_becomeSupporter',
     ])
     expect(find('ScribeUsageWindowRow').map((n) => n.props.window.id)).toEqual([
-      'monthly',
+      'weekly',
     ])
     expect(runtime.capture).toHaveBeenCalledWith('scribe_usage_viewed', {
       surface: 'settings',

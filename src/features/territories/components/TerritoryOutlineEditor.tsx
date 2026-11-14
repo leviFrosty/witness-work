@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Platform, View } from 'react-native'
 import MapView, { Marker, Polyline } from 'react-native-maps'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import {
+  cancelAnimation,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import * as Location from 'expo-location'
 import { Trash2 as TrashIcon, X as XIcon } from 'lucide-react-native'
 import LocationNotice from '@/components/LocationNotice'
@@ -18,6 +25,9 @@ import i18n from '@/lib/locales'
 import { checkLocationAccess } from '@/lib/locationPermission'
 import { usePreferences } from '@/stores/preferences'
 import { TerritoryMapEditorFrame } from '@/features/territories/components/TerritoryMapEditor'
+import TerritoryOutlineDragLayer, {
+  type HeldCorner,
+} from '@/features/territories/components/TerritoryOutlineDragLayer'
 import TerritoryOutlineShape from '@/features/territories/components/TerritoryOutlineShape'
 import {
   cornerAt,
@@ -32,6 +42,7 @@ import {
   regionFor,
   removeCorner,
   replaceCorner,
+  type ScreenPoint,
   tappedAfterInsert,
   tappedAfterRemove,
 } from '@/features/territories/lib/territoryArea'
@@ -43,6 +54,16 @@ const SELECTED = 26
 const TARGET = 44
 const GRAB = 32
 const CLOSEST = 0.004
+const HANDOFF_DELAY = 120
+const HANDOFF_FADE = 120
+
+const onScreen = (
+  corners: readonly Coordinate[],
+  { region, size }: { region: MapRegion | null; size: MapSize | null }
+): ScreenPoint[] =>
+  region && size
+    ? corners.map((corner) => cornerPoint(corner, region, size))
+    : []
 
 const opening = async (points: Coordinate[]): Promise<MapRegion | null> => {
   const known = regionFor(points, CLOSEST)
@@ -88,7 +109,21 @@ export default function TerritoryOutlineEditor({
     region: null,
     size: null,
   })
-  const drag = useRef<{ index: number; from: Coordinate } | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const points = useSharedValue<ScreenPoint[]>([])
+  const held = useSharedValue<HeldCorner | null>(null)
+  const moved = useSharedValue<ScreenPoint>({ x: 0, y: 0 })
+  const active = useSharedValue(false)
+  const grabbed = useSharedValue(false)
+  const shown = useSharedValue(0)
+
+  const placeCorners = (corners: readonly Coordinate[]) => {
+    points.value = onScreen(corners, view.current)
+  }
+
+  useEffect(() => {
+    points.value = onScreen(draft, view.current)
+  }, [draft, points])
 
   useEffect(() => {
     void opening(start).then((found) => {
@@ -110,6 +145,7 @@ export default function TerritoryOutlineEditor({
       latitudeDelta: northEast.latitude - southWest.latitude,
       longitudeDelta: northEast.longitude - southWest.longitude,
     }
+    placeCorners(draft)
   }
 
   const add = (index: number, point: Coordinate) => {
@@ -130,42 +166,62 @@ export default function TerritoryOutlineEditor({
     setSelected(index)
   }
 
+  const drop = (index: number, translation: ScreenPoint) => {
+    const { region: at, size } = view.current
+    if (at && size && (translation.x !== 0 || translation.y !== 0))
+      setDraft((current) => {
+        const from = current[index]
+        return from
+          ? replaceCorner(
+              current,
+              index,
+              draggedCorner(from, translation, at, size)
+            )
+          : current
+      })
+    setDragging(false)
+    shown.value = withDelay(
+      HANDOFF_DELAY,
+      withTiming(0, { duration: HANDOFF_FADE })
+    )
+  }
+
   const pan = Gesture.Pan()
-    .runOnJS(true)
     .enabled(corner !== undefined)
     .manualActivation(true)
     .onTouchesDown((event, manager) => {
       const touch = event.allTouches[0]
-      const { region: shown, size } = view.current
-      if (
-        selected === null ||
-        !corner ||
-        !touch ||
-        !shown ||
-        !size ||
-        event.numberOfTouches > 1
-      )
-        return manager.fail()
-      const at = cornerPoint(corner, shown, size)
+      const at = selected === null ? undefined : points.value[selected]
+      grabbed.value = false
+      if (!touch || !at || event.numberOfTouches > 1) return manager.fail()
       if (Math.hypot(at.x - touch.x, at.y - touch.y) > GRAB)
         return manager.fail()
-      drag.current = { index: selected, from: corner }
-      manager.activate()
+      grabbed.value = true
+    })
+    .onTouchesMove((_event, manager) => {
+      if (grabbed.value) manager.activate()
     })
     .onUpdate((event) => {
-      const held = drag.current
-      const { region: shown, size } = view.current
-      if (!held || !shown || !size) return
-      const moved = draggedCorner(
-        held.from,
-        { x: event.translationX, y: event.translationY },
-        shown,
-        size
-      )
-      setDraft((current) => replaceCorner(current, held.index, moved))
+      const at = selected === null ? undefined : points.value[selected]
+      if (selected === null || !at) return
+      if (!active.value) {
+        active.value = true
+        scheduleOnRN(setDragging, true)
+      }
+      cancelAnimation(shown)
+      shown.value = 1
+      moved.value = { x: event.translationX, y: event.translationY }
+      held.value = {
+        index: selected,
+        x: at.x + event.translationX,
+        y: at.y + event.translationY,
+      }
     })
     .onFinalize(() => {
-      drag.current = null
+      const drag = held.value
+      if (!active.value || !drag) return
+      active.value = false
+      scheduleOnRN(drop, drag.index, moved.value)
     })
 
   const status =
@@ -222,6 +278,7 @@ export default function TerritoryOutlineEditor({
             onLayout={(event) => {
               const { width, height } = event.nativeEvent.layout
               view.current.size = { width, height }
+              placeCorners(draft)
             }}
             style={{
               flex: 1,
@@ -258,12 +315,15 @@ export default function TerritoryOutlineEditor({
                   web: true,
                   default: corner === undefined,
                 })}
+                zoomEnabled={!dragging}
                 onMapReady={() => void measureRegion()}
                 onRegionChange={(next) => {
                   view.current.region = next
+                  placeCorners(draft)
                 }}
                 onRegionChangeComplete={(next) => {
                   view.current.region = next
+                  placeCorners(draft)
                 }}
                 onPress={(event) => {
                   const { action, coordinate, position } = event.nativeEvent
@@ -282,7 +342,7 @@ export default function TerritoryOutlineEditor({
                   add(edge ?? count, { latitude, longitude })
                 }}
               >
-                {isOutline(draft) ? (
+                {dragging ? null : isOutline(draft) ? (
                   <TerritoryOutlineShape
                     outline={draft}
                     color={theme.colors.accent}
@@ -306,6 +366,7 @@ export default function TerritoryOutlineEditor({
                       coordinate={point}
                       anchor={{ x: 0.5, y: 0.5 }}
                       zIndex={chosen ? 2 : 1}
+                      opacity={chosen && dragging ? 0 : 1}
                       tracksViewChanges={false}
                       onPress={() => select(index)}
                     >
@@ -328,6 +389,13 @@ export default function TerritoryOutlineEditor({
                 })}
               </MapView>
             )}
+            <TerritoryOutlineDragLayer
+              points={points}
+              held={held}
+              shown={shown}
+              color={theme.colors.accent}
+              ring={theme.colors.card}
+            />
           </View>
         </GestureDetector>
         {location.notice && !noticeHidden && location.access && (

@@ -28,6 +28,7 @@ import { useSplitSheetPreferences } from '@/stores/splitSheet'
 import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
 import { rebasePublishedPhotos } from '@/app/sync/photoBaseline'
+import { forgetStoredSlots } from '@/lib/syncTransport/server/slotStore'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
 import { clearLegacyLedger } from '@/features/scribe/legacy/notesImportLedger'
@@ -117,6 +118,7 @@ export function resetLocalData() {
   useProfile.getState().set({ ...PROFILE_DEFAULTS })
   clearLegacyLedger()
   forgetFoundSecrets()
+  forgetStoredSlots()
 
   forgetDeviceSpaceKeys()
 

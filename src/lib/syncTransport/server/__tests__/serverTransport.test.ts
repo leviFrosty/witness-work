@@ -6,6 +6,7 @@ import {
   slotIdForFilename,
   toServerTransportError,
   type ServerTransportDeps,
+  type SlotStore,
 } from '@/lib/syncTransport/server/serverTransport'
 import { photoUploadTimeoutMs } from '@/lib/syncTransport/server/syncClient'
 import {
@@ -140,6 +141,156 @@ describe('serverTransport', () => {
     const { files } = await transport.readFiles(everything)
     expect(server.state.log).toEqual(['POST sync/list', 'POST sync/get'])
     expect(files.map((f) => f.json).sort()).toEqual(['{"a":1}', '{"b":2}'])
+  })
+
+  describe('with stored slots (a later launch)', () => {
+    const memorySlotStore = () => {
+      const slots = new Map<
+        string,
+        { accountId: string; etag: string; blob: Uint8Array }
+      >()
+      const store: SlotStore = {
+        read: (accountId, slotId) => {
+          const slot = slots.get(slotId)
+          return slot?.accountId === accountId
+            ? { etag: slot.etag, blob: slot.blob }
+            : null
+        },
+        write: (accountId, slotId, etag, blob) => {
+          slots.set(slotId, { accountId, etag, blob: blob.slice() })
+        },
+        remove: (slotId) => {
+          slots.delete(slotId)
+        },
+        prune: (accountId, keep) => {
+          for (const [slotId, slot] of slots)
+            if (!keep.has(slotId) || slot.accountId !== accountId)
+              slots.delete(slotId)
+        },
+        clear: () => slots.clear(),
+      }
+      return { slots, store }
+    }
+    const others = {
+      listOnly: (name: string) => name === filenameForSlot(SLOT),
+    }
+
+    it('reads an unchanged slot from the device instead of downloading it', async () => {
+      const { slots, store } = memorySlotStore()
+      const first = setup({ slotStore: store })
+      await first.transport.write(filenameForSlot(SLOT), '{"a":1}')
+      await first.transport.write(filenameForSlot(OTHER), '{"b":1}')
+      await first.transport.readFiles(everything, others)
+      expect([...slots.keys()]).toEqual([OTHER])
+
+      const next = setup({ slotStore: store }, 1, first.server)
+      first.server.state.log.length = 0
+      const { files } = await next.transport.readFiles(everything, others)
+      expect(first.server.state.log).toEqual(['POST sync/list'])
+      expect(
+        files.find((f) => f.filename === filenameForSlot(OTHER))?.json
+      ).toBe('{"b":1}')
+    })
+
+    it('downloads a slot another device wrote since', async () => {
+      const { store } = memorySlotStore()
+      const first = setup({ slotStore: store })
+      await first.transport.write(filenameForSlot(OTHER), '{"b":1}')
+      await first.transport.readFiles(everything, others)
+      await first.transport.write(filenameForSlot(OTHER), '{"b":2}')
+
+      const next = setup({ slotStore: store }, 1, first.server)
+      first.server.state.log.length = 0
+      const { files } = await next.transport.readFiles(everything, others)
+      expect(first.server.state.log).toEqual([
+        'POST sync/list',
+        'POST sync/get',
+      ])
+      expect(files.map((f) => f.json)).toEqual(['{"b":2}'])
+
+      const again = setup({ slotStore: store }, 1, first.server)
+      first.server.state.log.length = 0
+      await again.transport.readFiles(everything, others)
+      expect(first.server.state.log).toEqual(['POST sync/list'])
+    })
+
+    it('downloads again when the stored copy can’t be opened', async () => {
+      const { slots, store } = memorySlotStore()
+      const first = setup({ slotStore: store })
+      await first.transport.write(filenameForSlot(OTHER), '{"b":1}')
+      await first.transport.readFiles(everything, others)
+      const stored = slots.get(OTHER)!
+      stored.blob[stored.blob.length - 1] ^= 1
+
+      const next = setup({ slotStore: store }, 1, first.server)
+      first.server.state.log.length = 0
+      const { files } = await next.transport.readFiles(everything, others)
+      expect(first.server.state.log).toEqual([
+        'POST sync/list',
+        'POST sync/get',
+      ])
+      expect(files.map((f) => f.json)).toEqual(['{"b":1}'])
+      expect(slots.get(OTHER)!.blob).not.toEqual(stored.blob)
+    })
+
+    it('never opens a copy stored for another account', async () => {
+      const { slots, store } = memorySlotStore()
+      const first = setup({ slotStore: store })
+      await first.transport.write(filenameForSlot(OTHER), '{"b":1}')
+      await first.transport.readFiles(everything, others)
+      slots.get(OTHER)!.accountId = 'B'.repeat(22)
+
+      const next = setup({ slotStore: store }, 1, first.server)
+      first.server.state.log.length = 0
+      await next.transport.readFiles(everything, others)
+      expect(first.server.state.log).toEqual([
+        'POST sync/list',
+        'POST sync/get',
+      ])
+      expect(slots.get(OTHER)!.accountId).toBe(ACCOUNT_ID)
+    })
+
+    it('forgets a slot that left the account, and all of them on reset', async () => {
+      const { slots, store } = memorySlotStore()
+      const { transport } = setup({ slotStore: store })
+      await transport.write(filenameForSlot(OTHER), '{"b":1}')
+      await transport.readFiles(everything, others)
+      expect(slots.size).toBe(1)
+
+      await transport.deleteFile(filenameForSlot(OTHER))
+      expect(slots.size).toBe(0)
+
+      await transport.write(filenameForSlot(OTHER), '{"b":2}')
+      await transport.readFiles(everything, others)
+      expect(slots.size).toBe(1)
+      transport.reset()
+      expect(slots.size).toBe(0)
+    })
+
+    it('keeps syncing when the store fails', async () => {
+      const failing: SlotStore = {
+        read: () => {
+          throw new Error('locked')
+        },
+        write: () => {
+          throw new Error('full')
+        },
+        remove: () => {
+          throw new Error('locked')
+        },
+        prune: () => {
+          throw new Error('locked')
+        },
+        clear: () => {
+          throw new Error('locked')
+        },
+      }
+      const { transport } = setup({ slotStore: failing })
+      await transport.write(filenameForSlot(OTHER), '{"b":1}')
+      const { files } = await transport.readFiles(everything, others)
+      expect(files.map((f) => f.json)).toEqual(['{"b":1}'])
+      transport.reset()
+    })
   })
 
   it('lists a slot without downloading it when only its name is wanted', async () => {

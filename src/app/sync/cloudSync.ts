@@ -40,6 +40,7 @@ import {
 import { deriveSyncKey } from '@/lib/syncTransport/server/syncCrypto'
 import { derivePhotoKeys } from '@/lib/syncTransport/server/photoCrypto'
 import { photoFiles } from '@/lib/syncTransport/server/photoFiles'
+import { slotStore } from '@/lib/syncTransport/server/slotStore'
 import {
   recordPhotoUsage,
   resetPhotoUsage,
@@ -108,6 +109,7 @@ const accountToken = (accountId: string) =>
 
 export const cloudSyncTransport = createServerTransport({
   access: cloudSyncAccess,
+  slotStore: Platform.OS === 'web' ? undefined : slotStore,
   isAvailable: () => accountSessions.snapshot() !== null,
   identityToken: () => {
     const session = accountSessions.snapshot()

@@ -179,7 +179,32 @@ snapshot only clears pending changes if it covers the current edit generation.
 Every push uploads the whole dataset (and on Drive a new file every other device
 downloads), so foreground catch-up pushes only when edits are pending, a merge
 changed local data, this device's snapshot is missing from the listing, or this
-launch hasn't published yet. It runs on a real return from the background
+launch hasn't published yet.
+
+On Cloud Sync and Google Drive, a push that would send what the server already
+has doesn't upload. Each upload records `iCloudPublished`: a hash of the payload
+(`writtenAt` zeroed, the Supporter claim apart), the claim, the `modifiedAt` the
+write returned, and the device id. The pushes the engine starts itself (launch
+and foreground catch-up, the debounced push after a store change, a retry) pass
+`ifChanged`, and skip the upload when:
+
+- the last listing showed this device's snapshot with that exact `modifiedAt`
+  (or this launch wrote it), and no push has failed since;
+- that write is less than a day old, so a device in use still writes its slot
+  often enough for ww-api's retention (a slot unwritten for 30 days is deleted
+  once its writer's session has ended); and
+- the payload hashes the same and carries the same claim. The claim loads a
+  moment after launch, so until it has, a payload without one counts as
+  unchanged rather than uploading once without it and again with it.
+
+A skipped push does everything else a push does (clears the pending flag,
+records the sync, push and upload times, starts photo work) and counts
+`sync:push-unchanged`. Pushes something asked for (a switch, an account key
+change, leaving an account, a reset, the account's Cloud Sync request) always
+upload, also when one that may skip is in flight. iCloud always uploads: its
+write only confirms a local file, not Apple's upload.
+
+Catch-up runs on a real return from the background
 (`addForegroundListener`; iOS `inactive` blips such as Control Center don't
 count), and returns within 30 s of the last one only push pending edits.
 Leaving the foreground (including `inactive`) still flushes a debounced push.
@@ -338,7 +363,12 @@ switching, `components/CloudSyncDefault.tsx`).
   devices hold. The server stores and relays ciphertext, sizes, and times.
 - **Reads** list the slots and download only those whose ETag changed;
   **writes** put and resolve once the server has the bytes
-  (`writeConfirmsUpload`).
+  (`writeConfirmsUpload`). The phone apps keep each other device's sealed
+  snapshot with its ETag (`slotStore.ts`, MMKV `cloud-sync-slots`, 2 MB a slot
+  at most), so a later launch downloads only the slots written since. A stored
+  copy that no longer opens is dropped and downloaded again; copies of slots
+  that left the listing, or of another account, are removed at the next read,
+  and all of them when the transport resets. The web keeps none.
 - **Remote changes** come from the live socket (`/accounts/v1/sync/live`),
   open only in the foreground, one per device, never from polling. A `changed`
   message, or a `hello` with a newer `seq`, pulls at once.
@@ -446,7 +476,10 @@ switching, `components/CloudSyncDefault.tsx`).
   `account_request`) and shows a toast, once onboarding is done
   (`cloudSyncRequest.ts`). It acts once per `requestedAt`
   (`cloudSyncRequestAnswered`), never clears the request (ww-api does), and
-  tries again next time only when the switch couldn't happen yet.
+  tries again next time only when the switch couldn't happen yet. A phone
+  already on Cloud Sync uploads its snapshot once for the request
+  (`republishSnapshot`): ww-api clears a request when every phone has written
+  since, and an unchanged launch no longer writes.
 - Leaving Cloud Sync deletes this device's slot. Leaving iCloud or Drive leaves
   this device's file there: it holds nothing newer than the switch, and
   tombstones win over anything not strictly newer, so it can't bring back a

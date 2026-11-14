@@ -9,6 +9,7 @@ import {
   initialLiveDiagnostics,
 } from '@/lib/liveSignalDiagnostics'
 import { logger } from '@/lib/logger'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import { isSpaceError } from '@/lib/sharedSpaces/client'
 import { createSpaceLive } from '@/lib/sharedSpaces/live'
 import type { SharedCarsStore } from '@/stores/sharedCars'
@@ -149,6 +150,9 @@ export function startSharedCarsRuntime({
     reconcileLive()
   })
   const background = addBackgroundListener(stopLive)
+  const refresh = onPullToRefresh(() =>
+    engine.sync(automatic).catch(logFailure)
+  )
   const localChanges = watchLocalChanges(
     store,
     (spaceId) => void syncCar(spaceId),
@@ -190,6 +194,7 @@ export function startSharedCarsRuntime({
   return () => {
     foreground.remove()
     background.remove()
+    refresh.remove()
     localChanges()
     memberships()
     profile?.()

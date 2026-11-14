@@ -200,6 +200,16 @@ wwv ad record start / wwv ad record stop   # video for motion and animation clai
 
 On iOS the simulator writes captures itself, and it can't write to every volume (a worktree on an external drive fails with "Operation not permitted"). So `shot` and `ad record` capture to a temporary folder and copy the file into the artifacts; `ad record stop` prints where the video went. Don't call `simctl io` yourself to work around a failure.
 
+**Network.** On a device, a dev build records every request and WebSocket its JavaScript makes from launch in `globalThis.__WW_NET__` (`src/app/dev-harness/networkLog.ts`; not on the web, where the browser's own tools do this). Use it to prove what a change sends, or stops sending:
+
+```bash
+wwv eval '__WW_NET__.mark("edit")'           # label a point in the log
+wwv eval 'JSON.stringify(__WW_NET__.dump())' # up to 60 entries; dump(from, limit) pages, count() sizes it
+wwv eval '__WW_NET__.clear()'
+```
+
+Each request has its method, URL, status, bytes up and down, time to first byte, total time, a few caching headers and the functions that started it; each socket its open time, messages and bytes. `at` is milliseconds since the recorder started, just before the app's modules load. It doesn't see requests native SDKs make themselves (RevenueCat, PostHog session replay): read those from the simulator's `log stream` or a proxy.
+
 Proof standards:
 
 - Drive the real user path. `seed`, `nav` and `flag` set up state; they are never the proof of the feature under test.

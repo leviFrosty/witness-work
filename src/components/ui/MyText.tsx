@@ -41,6 +41,7 @@ const Text: React.FC<PropsWithChildren<Props>> = ({
   const modifiedStyle: TextStyle = {
     ...flatStyle,
 
+    color: flatStyle.color ?? theme.colors.text,
     fontFamily: flatStyle.fontFamily ?? theme.fonts.regular,
     fontSize: incomingFontSize + fontSizeOffset,
   }

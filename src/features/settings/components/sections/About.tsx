@@ -1,5 +1,6 @@
 import {
   Code as CodeIcon,
+  Info as InfoIcon,
   Library as LibraryIcon,
   ScrollText as ScrollTextIcon,
   ShieldHalf as ShieldHalfIcon,
@@ -20,6 +21,12 @@ const AboutSection = ({
 
   return (
     <GroupedListSection title={i18n.t('about')}>
+      <GroupedListRow
+        icon={InfoIcon}
+        label={i18n.t('appInfo_title')}
+        onPress={() => handleNavigate('AppInfo')}
+        selected={selectedDestination === 'AppInfo'}
+      />
       <GroupedListRow
         icon={TagIcon}
         label={i18n.t('whatsNew')}

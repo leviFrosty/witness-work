@@ -1,8 +1,18 @@
 import { ChevronDown } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
-import { Children, Fragment, isValidElement, ReactNode, useState } from 'react'
-import { Platform, Pressable, View } from 'react-native'
-import Card from '@/components/ui/Card'
+import {
+  Children,
+  createContext,
+  Fragment,
+  isValidElement,
+  ReactNode,
+  useContext,
+  useState,
+} from 'react'
+import { Platform, Pressable, StyleSheet, View } from 'react-native'
+import Button from '@/components/ui/Button'
+import Section from '@/components/ui/inputs/Section'
+import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import Divider from '@/components/ui/Divider'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon, { AppIcon } from '@/components/ui/LucideIcon'
@@ -30,6 +40,44 @@ const useToneColor = (tone: Tone) => {
       : theme.colors.text
 }
 
+const InToolGroup = createContext(false)
+
+const GroupHeader = ({ title }: { title: string }) => {
+  const theme = useTheme()
+  return (
+    <Text
+      accessibilityRole='header'
+      style={{
+        marginStart: inputLayout.horizontalPadding,
+        fontFamily: theme.fonts.semiBold,
+        fontSize: theme.fontSize('sm'),
+        color: theme.colors.textAlt,
+      }}
+    >
+      {title}
+    </Text>
+  )
+}
+
+const hairline = StyleSheet.hairlineWidth
+
+export const ToolGroup = ({
+  title,
+  children,
+}: {
+  title?: string
+  children: ReactNode
+}) => (
+  <View style={{ gap: 8 }}>
+    {title ? <GroupHeader title={title} /> : null}
+    <Section animateRows={false}>
+      <View style={{ marginBottom: -hairline }}>
+        <InToolGroup.Provider value>{children}</InToolGroup.Provider>
+      </View>
+    </Section>
+  </View>
+)
+
 export const ToolSection = ({
   title,
   icon,
@@ -48,38 +96,41 @@ export const ToolSection = ({
   children: ReactNode
 }) => {
   const theme = useTheme()
+  const inGroup = useContext(InToolGroup)
   const [expanded, setExpanded] = useState(defaultExpanded)
   const toneColor = useToneColor(tone)
 
-  return (
-    <Card style={{ paddingVertical: 4, paddingHorizontal: 16, gap: 0 }}>
-      <Pressable
+  const row = (
+    <View>
+      <Button
+        noTransform
         accessibilityRole='button'
+        accessibilityLabel={summary ? `${title}, ${summary}` : title}
         accessibilityState={{ expanded }}
         onPress={() => {
           Haptics.light()
           setExpanded(!expanded)
         }}
-        style={({ pressed }) => ({
+        style={{
           flexDirection: 'row',
           alignItems: 'center',
-          minHeight: 52,
-          gap: 10,
-          opacity: pressed ? 0.6 : 1,
-        })}
+          minHeight: inputLayout.rowMinHeight,
+          paddingVertical: 10,
+          paddingHorizontal: inputLayout.horizontalPadding,
+          gap: inputLayout.labelGap,
+        }}
       >
         <LucideIcon
           icon={icon}
-          size={theme.fontSize('lg')}
+          size={inputLayout.iconSize}
           color={tone === 'default' ? theme.colors.textAlt : toneColor}
         />
-        <XView style={{ flexShrink: 1, gap: 0 }}>
+        <XView style={{ flexShrink: 0, maxWidth: '70%', gap: 0 }}>
           <Text
-            accessibilityRole='header'
             numberOfLines={1}
             style={{
               flexShrink: 1,
-              fontFamily: theme.fonts.semiBold,
+              fontFamily: theme.fonts.medium,
               fontSize: theme.fontSize('md'),
               color: tone === 'destructive' ? toneColor : theme.colors.text,
             }}
@@ -88,33 +139,39 @@ export const ToolSection = ({
           </Text>
           {info && <InfoPopover title={title} description={info} inline />}
         </XView>
-        <View style={{ flex: 1 }} />
-        {summary ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              flexShrink: 1,
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {summary}
-          </Text>
-        ) : null}
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            textAlign: alignText('end'),
+            fontSize: theme.fontSize('sm'),
+            color: theme.colors.textAlt,
+          }}
+        >
+          {summary}
+        </Text>
         <LucideIcon
           icon={expanded ? ChevronDown : ChevronForwardIcon}
           size={theme.fontSize('md')}
           color={theme.colors.textAlt}
         />
-      </Pressable>
+      </Button>
       {expanded && (
-        <View style={{ paddingBottom: 8 }}>
+        <View
+          style={{
+            paddingHorizontal: inputLayout.horizontalPadding,
+            paddingBottom: inputLayout.rowPadding,
+          }}
+        >
           <Divider />
           {children}
         </View>
       )}
-    </Card>
+      {inGroup && <RowSeparator hasIcon />}
+    </View>
   )
+
+  return inGroup ? row : <Section animateRows={false}>{row}</Section>
 }
 
 export const ToolSubheading = ({
@@ -258,7 +315,7 @@ export const QuickTile = ({
       ? theme.colors.errorTranslucent
       : tone === 'accent'
         ? theme.colors.accentTranslucent
-        : theme.colors.backgroundLighter
+        : theme.colors.background
 
   return (
     <Pressable
@@ -275,7 +332,8 @@ export const QuickTile = ({
         minHeight: 84,
         padding: 12,
         gap: 6,
-        borderRadius: theme.numbers.borderRadiusMd,
+        borderRadius: inputLayout.sectionRadius - QUICK_TILE_INSET,
+        borderCurve: 'continuous',
         backgroundColor: tint,
         opacity: disabled ? 0.5 : pressed ? 0.6 : 1,
         justifyContent: 'space-between',
@@ -304,3 +362,20 @@ export const QuickTile = ({
     </Pressable>
   )
 }
+
+const QUICK_TILE_INSET = 12
+
+export const QuickTiles = ({
+  title,
+  children,
+}: {
+  title?: string
+  children: ReactNode
+}) => (
+  <View style={{ gap: 8 }}>
+    {title ? <GroupHeader title={title} /> : null}
+    <Section animateRows={false} style={{ padding: QUICK_TILE_INSET }}>
+      <XView style={{ flexWrap: 'wrap', gap: 10 }}>{children}</XView>
+    </Section>
+  </View>
+)

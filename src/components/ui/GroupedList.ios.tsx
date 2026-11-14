@@ -112,7 +112,12 @@ function useRowStyle() {
   }
 }
 
-export function GroupedList({ children, title, testID }: GroupedListProps) {
+export function GroupedList({
+  children,
+  title,
+  header,
+  testID,
+}: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const style = useRowStyle()
   const { theme } = style
@@ -152,6 +157,21 @@ export function GroupedList({ children, title, testID }: GroupedListProps) {
                 >
                   {title}
                 </Text>
+              }
+            >
+              {null}
+            </Section>
+          ) : null}
+          {header ? (
+            <Section
+              header={
+                <HStack>
+                  <Spacer />
+                  <RNHostView matchContents>
+                    <View>{header}</View>
+                  </RNHostView>
+                  <Spacer />
+                </HStack>
               }
             >
               {null}

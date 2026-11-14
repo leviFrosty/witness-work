@@ -27,7 +27,12 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 export type * from '@/components/ui/GroupedList.types'
 
-export function GroupedList({ children, title, testID }: GroupedListProps) {
+export function GroupedList({
+  children,
+  title,
+  header,
+  testID,
+}: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
   const theme = useTheme()
 
@@ -57,6 +62,7 @@ export function GroupedList({ children, title, testID }: GroupedListProps) {
             {title}
           </Text>
         ) : null}
+        {header ? <View style={{ alignItems: 'center' }}>{header}</View> : null}
         {children}
       </ScrollView>
     </View>

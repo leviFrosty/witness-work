@@ -288,6 +288,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('openSourceLicenses'),
   },
   {
+    name: 'AppInfo',
+    getComponent: () =>
+      require('@/features/settings/screens/AppInfoScreen').default,
+    title: () => i18n.t('appInfo_title'),
+  },
+  {
     name: 'FAQ',
     getComponent: () => require('@/features/updates/screens/FAQScreen').default,
     title: () => i18n.t('helpCenter'),

@@ -259,6 +259,7 @@ export type RootStackParamList = {
     | { entry?: 'settings' | 'tools'; link?: string }
     | undefined
   OpenSourceLicenses: undefined
+  AppInfo: undefined
   More: undefined
   ServiceReportView: { month: number; year: number }
   OnboardingBackfill: undefined

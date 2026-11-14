@@ -1,4 +1,3 @@
-import AppVersionInfo from '@/features/updates/components/AppVersionInfo'
 import {
   Bug as BugIcon,
   Hand as HandIcon,
@@ -317,11 +316,7 @@ export const FAQSearch = ({
   )
 }
 
-export const FAQSupport = ({
-  onCopyAccountId,
-}: {
-  onCopyAccountId: () => void
-}) => {
+export const FAQSupport = () => {
   const theme = useTheme()
   return (
     <View style={{ gap: 24 }}>
@@ -359,23 +354,6 @@ export const FAQSupport = ({
             </Text>
           </Text>
         </Card>
-      </View>
-
-      <View style={{ paddingHorizontal: 15, paddingTop: 4, gap: 5 }}>
-        <AppVersionInfo />
-        <Button
-          onPress={onCopyAccountId}
-          style={{ alignSelf: 'center', paddingVertical: 10 }}
-        >
-          <Text
-            style={{
-              fontSize: theme.fontSize('xs'),
-              color: theme.colors.textAlt,
-            }}
-          >
-            {i18n.t('copyAccountId')}
-          </Text>
-        </Button>
       </View>
     </View>
   )

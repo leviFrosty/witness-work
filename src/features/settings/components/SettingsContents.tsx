@@ -9,7 +9,6 @@ import AppSection from '@/features/settings/components/sections/App'
 import ScribeSection from '@/features/settings/components/sections/Scribe'
 import ContactSection from '@/features/settings/components/sections/Contact'
 import AboutSection from '@/features/settings/components/sections/About'
-import AdvancedSection from '@/features/settings/components/sections/Advanced'
 import SupportSection from '@/features/settings/components/sections/Support'
 import SettingsSearchHeader from '@/features/settings/components/search/SettingsSearchHeader'
 import SettingsSearchResults from '@/features/settings/components/search/SettingsSearchResults'
@@ -118,7 +117,6 @@ export default function SettingsContents({
             />
             <ContactSection {...sectionProps} />
             <AboutSection {...sectionProps} />
-            <AdvancedSection />
           </GroupedList>
         )}
       </View>

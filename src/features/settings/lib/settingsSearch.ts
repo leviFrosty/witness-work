@@ -23,6 +23,7 @@ export type SettingsSearchPage =
       | 'FAQ'
       | 'Whats New'
       | 'OpenSourceLicenses'
+      | 'AppInfo'
       | 'PreferencesAppearance'
       | 'PreferencesConversation'
       | 'PreferencesPlans'
@@ -96,6 +97,7 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   FAQ: { title: 'helpCenter' },
   'Whats New': { title: 'whatsNew' },
   OpenSourceLicenses: { title: 'openSourceLicenses' },
+  AppInfo: { title: 'appInfo_title' },
   PreferencesAppearance: { title: 'regionAndFormats' },
   PreferencesConversation: {
     title: 'conversations',
@@ -589,6 +591,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   page('FAQ'),
   page('Whats New'),
   page('OpenSourceLicenses'),
+  page('AppInfo', { keywords: 'settingsSearch.keywords.appInfo' }),
 ] as const satisfies readonly SettingsSearchItem[]
 
 export type SettingsSearchItemId = (typeof SETTINGS_SEARCH_ITEMS)[number]['id']

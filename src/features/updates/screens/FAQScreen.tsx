@@ -2,20 +2,10 @@ import {
   MessageCircle as MessageCircleIcon,
   Search as SearchIcon,
 } from 'lucide-react-native'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { View, ScrollView, useWindowDimensions } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as Clipboard from 'expo-clipboard'
-import { errorTracking } from '@/lib/errorTracking'
-import Purchases from 'react-native-purchases'
-import { toast } from '@/stores/toasts'
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -82,18 +72,6 @@ const FAQScreen = () => {
   const placedYRef = useRef<number | null>(null)
 
   const [buildRest, setBuildRest] = useState(!targetCategory)
-
-  const handleCopyAccountId = useCallback(async () => {
-    try {
-      const id = await Purchases.getAppUserID()
-      await Clipboard.setStringAsync(id)
-
-      toast.success(i18n.t('accountIdCopied'))
-    } catch (error) {
-      errorTracking.captureException(error)
-      toast.error(i18n.t('copyAccountIdError'))
-    }
-  }, [])
 
   const placeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const placeTargetCategory = () => {
@@ -226,7 +204,7 @@ const FAQScreen = () => {
 
   const scrollToEndPending = useRef(false)
 
-  const support = <FAQSupport onCopyAccountId={handleCopyAccountId} />
+  const support = <FAQSupport />
   const results = (
     <View style={{ gap: 10, paddingHorizontal: 15 }}>
       {(isWide ? visibleAnswers : matches).map((entry) => (

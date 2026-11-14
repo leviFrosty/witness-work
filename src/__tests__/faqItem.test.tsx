@@ -59,9 +59,6 @@ vi.mock('@/components/ui/MyText', () => ({ default: passthrough }))
 vi.mock('@/components/ui/IconButton', () => ({ default: () => null }))
 vi.mock('@/components/ui/Button', () => ({ default: passthrough }))
 vi.mock('@/components/ui/LucideIcon', () => ({ default: () => null }))
-vi.mock('@/features/updates/components/AppVersionInfo', () => ({
-  default: () => null,
-}))
 vi.mock('@/stores/toasts', () => ({ toast: {} }))
 vi.mock('tamagui', () => ({
   Input: (props: object) => createElement('input', props),

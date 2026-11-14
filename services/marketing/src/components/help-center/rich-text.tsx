@@ -80,6 +80,20 @@ function Block({ block }: { block: RichTextBlock }) {
           <Inline content={block.content} />
         </h3>
       )
+    case 'image':
+      return (
+        <figure className='my-1'>
+          <img
+            src={block.attrs.src}
+            alt={block.attrs.alt}
+            width={block.attrs.width}
+            height={block.attrs.height}
+            loading='lazy'
+            decoding='async'
+            className='h-auto w-full max-w-[280px] rounded-[22px] border border-white/10 bg-white/5'
+          />
+        </figure>
+      )
     case 'bulletList':
       return (
         <ul className='flex list-disc flex-col gap-2 ps-5'>

@@ -41,7 +41,15 @@ export const isSafeHref = (value: unknown): value is string =>
   value.length <= MAX_HREF_LENGTH &&
   SAFE_HREF.test(value.trim())
 
-type Budget = { nodes: number; chars: number }
+type Budget = { nodes: number; chars: number; remoteImages: boolean }
+
+const HELP_IMAGE_SRC =
+  /^https:\/\/(?:dev\.)?witnesswork\.app\/help\/images\/[a-z0-9-]+\.[0-9a-f]{12}\.webp$/
+const MAX_ALT_LENGTH = 300
+
+export type ParseRichTextOptions = {
+  remoteImages?: boolean
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -134,7 +142,10 @@ function parseInline(value: unknown, budget: Budget): RichTextInline[] {
 const paragraph = (content: RichTextInline[]): RichTextBlock =>
   content.length ? { type: 'paragraph', content } : { type: 'paragraph' }
 
-function parseImage(attrs: unknown): RichTextImageAttrs | null {
+function parseImage(
+  attrs: unknown,
+  remoteImages: boolean
+): RichTextImageAttrs | null {
   if (!isRecord(attrs) || !isImageId(attrs.id)) return null
   const width = Math.round(Number(attrs.width))
   const height = Math.round(Number(attrs.height))
@@ -145,9 +156,20 @@ function parseImage(attrs: unknown): RichTextImageAttrs | null {
     return null
   }
   const scale = normalizeImageScale(attrs.scale)
-  return scale === undefined
-    ? { id: attrs.id, width, height }
-    : { id: attrs.id, width, height, scale }
+  const image: RichTextImageAttrs =
+    scale === undefined
+      ? { id: attrs.id, width, height }
+      : { id: attrs.id, width, height, scale }
+  if (
+    remoteImages &&
+    typeof attrs.src === 'string' &&
+    HELP_IMAGE_SRC.test(attrs.src)
+  ) {
+    image.src = attrs.src
+    if (typeof attrs.alt === 'string' && attrs.alt.trim())
+      image.alt = attrs.alt.trim().slice(0, MAX_ALT_LENGTH)
+  }
+  return image
 }
 
 function parseItemBlocks(
@@ -238,7 +260,7 @@ function parseBlocks(
         blocks.push(...parseList(node, budget, depth))
         break
       case 'image': {
-        const attrs = parseImage(node.attrs)
+        const attrs = parseImage(node.attrs, budget.remoteImages)
         if (attrs) blocks.push({ type: 'image', attrs })
         break
       }
@@ -254,9 +276,16 @@ function parseBlocks(
   return blocks
 }
 
-export function parseRichTextDoc(value: unknown): RichTextDoc | null {
+export function parseRichTextDoc(
+  value: unknown,
+  options: ParseRichTextOptions = {}
+): RichTextDoc | null {
   if (!isRecord(value) || value.type !== 'doc') return null
-  const budget: Budget = { nodes: MAX_NODES, chars: MAX_TEXT_CHARS }
+  const budget: Budget = {
+    nodes: MAX_NODES,
+    chars: MAX_TEXT_CHARS,
+    remoteImages: options.remoteImages === true,
+  }
   const content = parseBlocks(children(value), budget, 0)
   return {
     type: 'doc',

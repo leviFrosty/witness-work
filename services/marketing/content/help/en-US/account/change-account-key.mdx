@@ -6,31 +6,43 @@ platforms: [ios, android, web]
 minAppVersion: '1.47.0'
 ---
 
-Your account key is what unlocks your WitnessWork account, and your recovery key is that same key written out. Change it if you lost a device or think someone else has your recovery key. Your account stays the same: its number, Supporter status, Cloud Sync data, backups, and account activity all carry over. Only the key changes, and the old one stops working everywhere.
+Change it if you lost a device or think someone else has your recovery key. Your account, Supporter status, Cloud Sync data and backups all stay. Only the key changes, and the old one stops working everywhere.
 
-**Before you start:** if you lost an iPhone, iPad, or Mac, remove it from your Apple Account first. Your account key syncs through iCloud Keychain, so a device still signed in to your Apple Account would receive the new key too. Then sign the lost device out in Settings → Account → Signed-In Devices; WitnessWork offers to change your key right after. A browser you sign out erases your records from it the next time it connects. A browser still signed in when the key changes keeps them, and any other device you sign out keeps its records and can sign back in, so change your key too if someone else may have it.
+## Before you start
 
-**To change it:**
+- If you lost an iPhone, iPad or Mac, remove it from your Apple Account first. Otherwise it receives the new key too.
+- Sign the lost device out in **Settings → Account → Signed-In Devices**. WitnessWork then offers to change your key.
 
-1. Go to Settings → Account → Change Account Key. WitnessWork needs the internet for this.
-2. Read what will happen, then tap Change Key. Your phone asks for Face ID, Touch ID, your passcode, or your screen lock when one is set.
-3. WitnessWork saves your latest changes to Cloud Sync and Backup, then shows your **new recovery key**. Copy it into a password manager, or share it to a private note or print it. Turn on "I've saved my new recovery key", then tap Change Key.
-4. Keep WitnessWork open while it changes the key, saves it on this device, locks your Cloud Sync data and backups with it, and invites your buddies to reconnect. When it says "Account key changed", you're done.
+## Change your key on your phone
 
-**In a browser** (from version 1.47.0), two more things apply, so that someone at a computer you left signed in can't change your key:
+1. Open **Settings → Account → Change Account Key**. You need the internet.
+2. Read what will happen, then tap **Change Key**. Confirm with Face ID, Touch ID, your passcode or your screen lock.
+3. Copy the new recovery key into a password manager, or print it.
+4. Turn on **I've saved my new recovery key**, then tap **Change Key**.
+5. Keep WitnessWork open until it says **Account key changed**.
 
-- **The browser must have been signed in for at least a day.** If it signed in more recently, WitnessWork says when it can change the key; until then, change it on your phone.
-- **Your account needs a passkey.** Right after you tap Change Key on the new recovery key, your browser asks you to confirm with your passkey. When your browser supports it, that passkey then unlocks your account with the new key straight away; otherwise WitnessWork offers to add a passkey once the key has changed. If your account has no passkey, add one in WitnessWork on your phone, or change the key there.
+## Change it in a browser
 
-**What happens next:**
+- The browser must have been signed in for at least a day. If not, WitnessWork says when you can, or you can change it on your phone.
+- Your account needs a passkey. The browser asks you to confirm with it. If you have none, add one on your phone, or change the key there.
 
-- **Your other devices are signed out.** Their records stay on them. To sign a phone back in, use the new recovery key (Settings → Account → Use a Recovery Key) or a QR code from a signed-in device (Sign In with QR Code). A browser that was signed in forgets the old key and shows that your key changed; sign it back in with a QR code from your phone, the new recovery key, or a passkey you used to make the change or have used on a signed-in device since. A browser you signed out before the change, like one on a lost computer, erases your records from it the next time it connects. Each signs back in to the same account, with no restore or merge to choose. Apple devices signed in to the same Apple Account get the new key through iCloud Keychain and sign back in on their own.
-- **Devices on an older version** of WitnessWork can't sign back in until they're updated. Before you change the key, WitnessWork lists any it finds; update the app on them first.
-- **Your buddies** each get an invite to reconnect. Buddies on a current version reconnect with one tap; others see you leave and can add you again with a new invite.
-- **Passkeys** keep working for signing in to WitnessWork in a browser. A passkey that unlocks your account starts unlocking with the new key the next time you use it on a device that has it.
-- **Backup files** you saved with "My Account" protection before the change still open on your devices.
-- Settings → Account → Account Activity shows "Account key changed".
+## What happens next
 
-**If something stops partway:** if WitnessWork closes or loses its connection, or you close or reload the browser tab, the change picks up where it stopped the next time you open WitnessWork. Before your new key is in use, Settings → Account shows "Account key change not finished": tap Continue to finish, or Discard New Key to keep your current recovery key. Until you do, this device can't switch to another account with a recovery key or a QR code. After the key has changed, the rest finishes the next times you open WitnessWork. If it says the key was changed on another device, someone (maybe you) changed it there first; sign back in with that device's new recovery key. An old recovery key no longer works after a change: WitnessWork says when it was replaced, and nothing changes on the device.
+- **Your other devices are signed out.** Their records stay on them. Sign each one back in with the new recovery key (**Settings → Account → Use a Recovery Key**) or a QR code from a signed-in phone (**Sign In with QR Code**).
+- **Apple devices** on the same Apple Account get the new key and sign back in by themselves.
+- **Older versions of WitnessWork** can't sign back in until they're updated. WitnessWork lists any it finds before you start. Update them first.
+- **Your buddies** get an invite to reconnect.
+- **Passkeys** keep working for signing in on the web.
+- **Account Activity** shows **Account key changed**.
 
-**No one can undo a change or bring back an old key,** including WitnessWork support. Whoever has your recovery key has your account, so keep the new one somewhere only you can reach. If you lose every signed-in device, every passkey that can unlock, and your recovery key, see [What if I lose access?](/help/account/lost-access).
+## If something goes wrong
+
+- **It stopped partway:** open WitnessWork again. **Settings → Account** shows **Account key change not finished**. Tap **Continue** to finish, or **Discard New Key** to keep your current key.
+- **It says the key was changed on another device:** sign in with that device's new recovery key.
+- **An old recovery key doesn't work:** that's expected after a change.
+
+## Good to know
+
+- No one can undo a change or bring back an old key, including WitnessWork support.
+- Whoever has your recovery key has your account. Keep the new one somewhere only you can reach.
+- Lost every device and your key? See [What if I lose access to my WitnessWork account?](/help/account/lost-access).

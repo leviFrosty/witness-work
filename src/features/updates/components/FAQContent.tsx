@@ -23,6 +23,7 @@ import links from '@/constants/links'
 import { email } from '@/constants/contactInformation'
 import { openURL } from '@/lib/links'
 import RichTextView from '@/components/richText/RichTextView'
+import HelpImage from '@/features/updates/components/HelpImage'
 import { useItalicFonts } from '@/components/richText/richTextFonts'
 import { richTextHasMark } from '@/lib/richText/inspect'
 import type { HelpEntry } from '@/features/updates/types/helpCenter'
@@ -194,7 +195,10 @@ export const FAQItem = ({ entry }: { entry: HelpEntry }) => {
                   <RichTextView
                     doc={entry.doc}
                     style={{ lineHeight: 22 }}
-                    showImages={false}
+                    relaxed
+                    renderImage={(image) => (
+                      <HelpImage image={image} maxWidth={contentWidth ?? 0} />
+                    )}
                     spans={{
                       italicsReady,
                       linkColor: theme.colors.accent,

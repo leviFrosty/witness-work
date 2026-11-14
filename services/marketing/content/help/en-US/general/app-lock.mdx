@@ -4,6 +4,44 @@ title: How do I lock WitnessWork with my face, fingerprint, passcode, or a passk
 category: general
 ---
 
-Open Settings → Privacy (Settings → Security before version 1.47.0) and turn on Require Face ID (Require Touch ID or Require Passcode on devices without Face ID; Require Biometric Unlock on Android). WitnessWork asks you to confirm it's you before it turns on. From then on, WitnessWork asks you to unlock it every time it opens. Use Require to choose whether it asks again as soon as you leave the app, or only after 1, 5, or 15 minutes away. If Face ID, Touch ID, or your fingerprint isn't recognized, use your device passcode, PIN, pattern, or password instead. The lock is on this device only: it isn't synced, saved in backups, or sent anywhere, so turn it on separately on each device. Your device needs a passcode, or on Android a screen lock (PIN, pattern, or password); if your Android device has none, tap Open Settings when WitnessWork asks, set one up, then turn the lock on again. If you remove it later, WitnessWork opens without asking. While the lock is on, the app switcher (Recents on Android) shows a blank card instead of WitnessWork's screen; on Android, this needs Android 13 or later. The lock covers the app itself; widgets, Live Activities, notifications, Siri, and your watch still show what they normally do. Messages, celebrations, and Update Required wait until you unlock, and a reminder, widget, or link you tap while WitnessWork is locked opens once you unlock. To turn it off, open Settings → Privacy, turn the switch off, and confirm it's you. If unlocking keeps failing, check that your device passcode works on the lock screen, then force-quit and reopen WitnessWork. For other problems, use the Help Center's private support link and keep personal details out of public reports.
+You can make WitnessWork ask for your face, fingerprint, or passcode every time it opens.
 
-**On the web,** App Lock uses one of your account's passkeys, so your account needs a passkey first (Settings → Account → Passkeys). Open Settings → Privacy, turn on Require a Passkey, and confirm it's you with your passkey; turning it on needs an internet connection. From then on, WitnessWork asks for your passkey each time it opens in that browser, and when you come back after the time you chose in Require: 1, 5, or 15 minutes away (1 minute unless you change it). Browsers don't offer Immediately, since switching tabs would close what you were typing. Click Unlock with Passkey to unlock. Your browser checks the passkey itself, so unlocking works offline. To turn it off, turn the switch off and use your passkey again. The lock is for that browser only, and signing out turns it off. If you remove every passkey it unlocks with from your account, the lock turns off on its own, and says so, the next time you unlock it or open Settings → Account → Passkeys in that browser; until then, the lock screen offers only Sign Out. If none of your passkeys is available, choose Sign Out on the lock screen and sign in again; anything that browser hadn't synced is erased when it signs out. App Lock hides WitnessWork in that browser until you unlock it. It doesn't encrypt anything, and someone who can use the browser's developer tools could get past it. It doesn't sign you out either, so on a shared computer, sign out when you're done.
+## Turn on the lock
+
+1. Open **Settings → Privacy**.
+2. Turn on **Require Face ID**. On other phones it says **Require Touch ID**, **Require Passcode**, or, on Android, **Require Biometric Unlock**.
+3. Confirm it's you.
+4. Under **Require**, choose how soon WitnessWork asks again after you leave it: right away, or after 1, 5, or 15 minutes.
+
+## Turn it off
+
+Open **Settings → Privacy**, turn the switch off, and confirm it's you.
+
+## Good to know
+
+- If your face or fingerprint isn't recognized, use your phone's passcode, PIN, pattern, or password.
+- The lock is only on the phone where you turn it on. Turn it on separately on each device.
+- Your phone needs a passcode or screen lock. If it has none, tap **Open Settings** when WitnessWork asks, set one up, then turn the lock on again.
+- While the lock is on, the app switcher shows a blank card. On Android, this needs Android 13 or later.
+- The lock covers the app only. Widgets, notifications, Siri, and your watch still show what they normally do.
+- If you tap a reminder or link while WitnessWork is locked, it opens after you unlock.
+
+## On the web
+
+The web lock uses a passkey, so your account needs one first. See [What is a passkey?](/help/account/passkeys-overview).
+
+1. Open **Settings → Privacy**.
+2. Turn on **Require a Passkey** and confirm with your passkey. You need to be online.
+3. Under **Require**, choose 1, 5, or 15 minutes. The web has no right-away option.
+
+To unlock, click **Unlock with Passkey**. To turn the lock off, turn the switch off and use your passkey again.
+
+- The lock is for that browser only. Signing out turns it off.
+- It hides WitnessWork until you unlock, but it doesn't sign you out. On a shared computer, sign out when you're done.
+- If you remove every passkey it uses from your account, the lock turns off by itself.
+
+## If something goes wrong
+
+- **Unlocking keeps failing on your phone:** check that your passcode works on the phone's lock screen, then close WitnessWork completely and open it again.
+- **None of your passkeys is available on the web:** choose **Sign Out** on the lock screen and sign in again. Anything that browser hadn't synced is erased.
+- **Still stuck:** use the Help Center's private support link, and keep personal details out of public reports.

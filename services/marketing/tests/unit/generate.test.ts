@@ -20,8 +20,9 @@ async function generate(env?: string) {
   await generateHelpCenterAssets(root)
   const read = (file: string) =>
     readFile(path.join(root, 'public', file), 'utf8')
+  const bytes = (file: string) => readFile(path.join(root, 'public', file))
   const json = async <T>(file: string) => JSON.parse(await read(file)) as T
-  return { read, json }
+  return { read, json, bytes }
 }
 
 afterEach(() => {
@@ -91,7 +92,7 @@ describe('Markdown alternates and llms.txt', () => {
   test('each question has a .md alternate in every locale', async () => {
     const { read } = await generate()
     expect(await read('help/time/time-rollover.md')).toBe(
-      '# Does my time roll over?\n\nPartial hours roll over. See the [privacy policy](/privacy) or\n[the support page](/support).\n'
+      '# Does my time roll over?\n\nPartial hours roll over. See the [privacy policy](/privacy) or\n[the support page](/support).\n\n![Profile settings with the rollover switch](https://witnesswork.app/help/images/time-rollover.1f455de1611b.webp)\n'
     )
     expect(await read('help/de-DE/time/time-rollover.md')).toMatch(
       /^# Wird meine Zeit übertragen\?/
@@ -135,6 +136,48 @@ describe('Markdown alternates and llms.txt', () => {
     const full = await read('llms-full.txt')
     expect(full).toContain(
       '## Does my time roll over?\n\nSource: https://witnesswork.app/help/time/time-rollover'
+    )
+  })
+})
+
+describe('screenshots', () => {
+  const SRC =
+    'https://witnesswork.app/help/images/time-rollover.1f455de1611b.webp'
+
+  test('an image paragraph becomes an image block with its served URL and size', async () => {
+    const { json } = await generate()
+    const bundle = await json<HelpBundle>('help/bundle/en-US.json')
+    const entry = bundle.entries.find((e) => e.id === 'timeRollover')!
+    expect(entry.doc.content.at(-1)).toEqual({
+      type: 'image',
+      attrs: {
+        id: 'help-1f455de1611b',
+        src: SRC,
+        alt: 'Profile settings with the rollover switch',
+        width: 12,
+        height: 20,
+      },
+    })
+    expect(entry.plainText).not.toMatch(/rollover switch|webp/)
+  })
+
+  test('the image is copied under its content-hashed name', async () => {
+    const { bytes } = await generate()
+    const served = await bytes(new URL(SRC).pathname.slice(1))
+    const source = await readFile(
+      path.join(FIXTURE, 'content/help/images/time-rollover.webp')
+    )
+    expect(served.equals(source)).toBe(true)
+  })
+
+  test('staging bundles point at the staging origin', async () => {
+    const { json } = await generate('dev')
+    const bundle = await json<HelpBundle>('help/bundle/en-US.json')
+    const image = bundle.entries
+      .find((e) => e.id === 'timeRollover')!
+      .doc.content.find((block) => block.type === 'image')
+    expect(image?.type === 'image' && image.attrs.src).toMatch(
+      /^https:\/\/dev\.witnesswork\.app\/help\/images\//
     )
   })
 })

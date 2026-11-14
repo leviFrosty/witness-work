@@ -1,5 +1,6 @@
 import type { HelpCenter, HelpQuestion } from './help-center/load.ts'
 import { DEFAULT_LOCALE, HELP_LOCALES } from './help-center/locales.ts'
+import { HELP_IMAGES_BASE } from './help-center/images.ts'
 import { BUNDLE_BASE, helpPageUrl } from './help-center/paths.ts'
 import {
   absoluteUrl,
@@ -49,6 +50,11 @@ export function headersFile(): string {
     '/llms-full.txt': ['Content-Type: text/plain; charset=utf-8'],
 
     '/assets/*': ['Cache-Control: public, max-age=31536000, immutable'],
+    // Screenshot names carry a content hash, so a changed image gets a new URL.
+    [`${HELP_IMAGES_BASE}/*`]: [
+      'Access-Control-Allow-Origin: *',
+      'Cache-Control: public, max-age=31536000, immutable',
+    ],
   }
   return Object.entries(rules)
     .map(([pattern, headers]) =>
@@ -56,6 +62,26 @@ export function headersFile(): string {
     )
     .join('\n')
     .concat('\n')
+}
+
+/**
+ * `_redirects` for Workers Static Assets: each answer merged into another
+ * (`redirectFrom`) sends its old page and Markdown alternate, in every locale,
+ * to the answer that replaced it.
+ */
+export function redirectsFile(center: HelpCenter): string {
+  const lines: string[] = []
+  for (const question of center.questions) {
+    for (const from of question.redirectFrom) {
+      const [category, slug] = from.split('/')
+      for (const locale of HELP_LOCALES) {
+        const old = helpPageUrl(locale, category, slug)
+        const target = helpPageUrl(locale, question.category, question.slug)
+        lines.push(`${old} ${target} 301`, `${old}.md ${target}.md 301`)
+      }
+    }
+  }
+  return lines.length ? `${lines.join('\n')}\n` : ''
 }
 
 type SitemapUrl = {

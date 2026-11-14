@@ -28,7 +28,7 @@ function parseEntry(value: unknown): HelpEntry | null {
   const { id, slug, category, question, url } = value
   if (![id, slug, category, question, url].every(isText)) return null
   if (!/^https:\/\//.test(url as string)) return null
-  const doc = parseRichTextDoc(value.doc)
+  const doc = parseRichTextDoc(value.doc, { remoteImages: true })
   if (!doc) return null
   const platforms = Array.isArray(value.platforms)
     ? PLATFORMS.filter((platform) =>

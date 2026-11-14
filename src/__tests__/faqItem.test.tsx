@@ -35,6 +35,9 @@ vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/components/richText/RichTextView', () => ({
   default: (props: object) => createElement('richtext', props),
 }))
+vi.mock('@/features/updates/components/HelpImage', () => ({
+  default: () => null,
+}))
 vi.mock('@/components/richText/richTextFonts', () => ({
   useItalicFonts: () => true,
 }))
@@ -130,7 +133,8 @@ describe('FAQItem', () => {
     act(() => collapsible().props.onOpenChange(true))
     const answer = renderer!.root.findByType('richtext' as never)
     expect(answer.props.doc).toBe(entry.doc)
-    expect(answer.props.showImages).toBe(false)
+    expect(answer.props.relaxed).toBe(true)
+    expect(typeof answer.props.renderImage).toBe('function')
   })
 
   it('leaves announcing the state to the screen reader', () => {

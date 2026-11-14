@@ -7,10 +7,12 @@ import {
   isHelpLocale,
   type HelpLocale,
 } from './locales.ts'
+import { loadHelpImages, type LoadedImage } from './images.ts'
 import {
   AnswerMarkdownError,
   docToPlainText,
   markdownToDoc,
+  markdownWithImageUrls,
 } from './markdown.ts'
 import { helpPageUrl, SITE_URL } from './paths.ts'
 import {
@@ -37,6 +39,8 @@ export type HelpQuestion = {
   pinned: boolean
   related: number[]
   minAppVersion?: string
+  /** Old `<category>/<slug>` pages, merged into this one, that redirect here. */
+  redirectFrom: string[]
   translations: Partial<Record<HelpLocale, Translation>>
 }
 
@@ -45,6 +49,7 @@ export type HelpCenter = {
   questions: HelpQuestion[]
   categoryTitles: Partial<Record<HelpLocale, Record<string, string>>>
   ui: Partial<Record<HelpLocale, Record<string, string>>>
+  images: LoadedImage[]
 }
 
 export class HelpCenterError extends Error {
@@ -78,7 +83,9 @@ const ENGLISH_KEYS = new Set([
   'pinned',
   'related',
   'minAppVersion',
+  'redirectFrom',
 ])
+const REDIRECT_PATTERN = /^[a-z]+\/[a-z0-9]+(-[a-z0-9]+)*$/
 const TRANSLATION_KEYS = new Set(['id', 'title'])
 
 export const UI_KEYS = [
@@ -166,7 +173,7 @@ export async function loadHelpCenter(
   const parsed: Parsed[] = []
 
   for (const entry of await readdir(base, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue
+    if (!entry.isDirectory() || entry.name === 'images') continue
     if (!isHelpLocale(entry.name)) {
       problems.push(
         `${HELP_CONTENT_DIR}/${entry.name}: not a locale (${HELP_LOCALES.join(', ')})`
@@ -229,6 +236,13 @@ export async function loadHelpCenter(
 
   const questions = new Map<string, HelpQuestion>()
   const slugs = new Map<string, string>()
+  const images = await loadHelpImages(root, problems)
+  const usedImages = new Set<string>()
+  const lookupImage = (name: string) => {
+    const found = images.get(name)
+    if (found) usedImages.add(name)
+    return found
+  }
 
   const translate = (item: Parsed): Translation | undefined => {
     const title = item.data.title
@@ -237,10 +251,10 @@ export async function loadHelpCenter(
       return undefined
     }
     try {
-      const doc = markdownToDoc(item.body, SITE_URL)
+      const doc = markdownToDoc(item.body, SITE_URL, lookupImage)
       return {
         question: title.trim(),
-        markdown: item.body.trim(),
+        markdown: markdownWithImageUrls(item.body.trim(), lookupImage),
         doc,
         plainText: docToPlainText(doc),
       }
@@ -324,6 +338,18 @@ export async function loadHelpCenter(
       )
     }
 
+    const redirectFrom = data.redirectFrom ?? []
+    if (
+      !Array.isArray(redirectFrom) ||
+      !redirectFrom.every(
+        (entry) => typeof entry === 'string' && REDIRECT_PATTERN.test(entry)
+      )
+    ) {
+      problems.push(
+        `${file}: "redirectFrom" must be a list of old pages as <category>/<slug>, like contacts/dismiss-contact`
+      )
+    }
+
     const translation = translate(item)
     questions.set(id, {
       id,
@@ -333,6 +359,11 @@ export async function loadHelpCenter(
       pinned: data.pinned === true,
       related: Array.isArray(related) ? (related as number[]) : [],
       ...(typeof minAppVersion === 'string' ? { minAppVersion } : {}),
+      redirectFrom: Array.isArray(redirectFrom)
+        ? redirectFrom.filter(
+            (entry): entry is string => typeof entry === 'string'
+          )
+        : [],
       translations: translation ? { [DEFAULT_LOCALE]: translation } : {},
     })
   }
@@ -387,8 +418,36 @@ export async function loadHelpCenter(
       )
   }
 
+  const pages = new Set(ordered.map((q) => `${q.category}/${q.slug}`))
+  const redirected = new Map<string, string>()
+  for (const question of ordered) {
+    for (const from of question.redirectFrom) {
+      if (pages.has(from))
+        problems.push(
+          `${question.id}: redirectFrom "${from}" is still a question; delete it first`
+        )
+      else if (redirected.has(from))
+        problems.push(
+          `${question.id}: redirectFrom "${from}" also redirects to ${redirected.get(from)}`
+        )
+      redirected.set(from, question.id)
+    }
+  }
+  for (const name of images.keys()) {
+    if (!usedImages.has(name))
+      problems.push(
+        `content/help/images/${name}: no answer uses it; delete it or add it to an answer`
+      )
+  }
+
   if (problems.length) throw new HelpCenterError(problems)
-  return { categories, questions: ordered, categoryTitles, ui }
+  return {
+    categories,
+    questions: ordered,
+    categoryTitles,
+    ui,
+    images: [...images.values()],
+  }
 }
 
 export function entryFor(

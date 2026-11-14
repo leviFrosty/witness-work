@@ -6,11 +6,13 @@ import type {
   PhrasingContent,
   RootContent,
 } from 'mdast'
+import { cjkFriendlyExtension } from 'micromark-extension-cjk-friendly'
 import { fromMarkdown } from 'mdast-util-from-markdown'
 import { gfmStrikethroughFromMarkdown } from 'mdast-util-gfm-strikethrough'
 import { gfmStrikethrough } from 'micromark-extension-gfm-strikethrough'
 import type {
   RichTextBlock,
+  RichTextImage,
   RichTextDoc,
   RichTextInline,
   RichTextListItem,
@@ -20,7 +22,25 @@ import type {
 export class AnswerMarkdownError extends Error {}
 
 const ALLOWED_SUMMARY =
-  'paragraphs, # and ## headings, bold, italic, ~~strike~~, links, line breaks, and bulleted or numbered lists'
+  'paragraphs, # and ## headings, bold, italic, ~~strike~~, links, line breaks, bulleted or numbered lists, and screenshots in their own paragraph'
+
+/** A screenshot in `content/help/images`, as the site serves it. */
+export type HelpImage = {
+  /** The file name answers use: `submit-report.webp`. */
+  name: string
+  /** Absolute URL of the served copy, whose name carries a content hash. */
+  src: string
+  width: number
+  height: number
+  /** Stable id for the image block: `help-` plus the content hash. */
+  id: string
+}
+
+export type ImageLookup = (name: string) => HelpImage | undefined
+
+type Context = { siteUrl: string; images: ImageLookup }
+
+export const IMAGE_NAME = /^[a-z0-9][a-z0-9-]*\.webp$/
 
 function unsupported(what: string, line?: number): never {
   throw new AnswerMarkdownError(
@@ -96,8 +116,12 @@ function inline(
       case 'inlineCode':
         unsupported('Inline code', line)
       case 'image':
+        unsupported(
+          'An image inside text (put it in a paragraph of its own)',
+          line
+        )
       case 'imageReference':
-        unsupported('An image', line)
+        unsupported('A reference-style image', line)
       case 'html':
         unsupported('HTML', line)
       case 'linkReference':
@@ -117,7 +141,39 @@ function trimInline(content: RichTextInline[]): RichTextInline[] {
   return content.filter((node) => node.type !== 'text' || node.text)
 }
 
-function listItem(item: ListItem, siteUrl: string): RichTextListItem {
+function image(
+  node: Extract<PhrasingContent, { type: 'image' }>,
+  ctx: Context
+): RichTextImage {
+  const line = node.position?.start.line
+  if (!IMAGE_NAME.test(node.url))
+    unsupported(
+      `The image "${node.url}" (use the file name of a .webp in content/help/images, like submit-report.webp)`,
+      line
+    )
+  const found = ctx.images(node.url)
+  if (!found)
+    throw new AnswerMarkdownError(
+      `content/help/images/${node.url} doesn't exist${line ? ` (line ${line})` : ''}. Add it with pnpm help:image.`
+    )
+  const alt = node.alt?.trim()
+  if (!alt)
+    throw new AnswerMarkdownError(
+      `The image ${node.url}${line ? ` (line ${line})` : ''} needs a description: ![What the screen shows](${node.url})`
+    )
+  return {
+    type: 'image',
+    attrs: {
+      id: found.id,
+      src: found.src,
+      alt,
+      width: found.width,
+      height: found.height,
+    },
+  }
+}
+
+function listItem(item: ListItem, ctx: Context): RichTextListItem {
   const first = item.children[0]
   const lead = first?.type === 'paragraph' ? first.children[0] : undefined
   if (
@@ -126,15 +182,15 @@ function listItem(item: ListItem, siteUrl: string): RichTextListItem {
   ) {
     unsupported('A checklist', item.position?.start.line)
   }
-  const content = item.children.map((child) => block(child, siteUrl))
+  const content = item.children.map((child) => block(child, ctx))
   return {
     type: 'listItem',
     content: content.length ? content : [{ type: 'paragraph' }],
   }
 }
 
-function list(node: List, siteUrl: string): RichTextBlock {
-  const content = node.children.map((item) => listItem(item, siteUrl))
+function list(node: List, ctx: Context): RichTextBlock {
+  const content = node.children.map((item) => listItem(item, ctx))
   if (node.ordered) {
     const start = node.start ?? 1
     return start === 1
@@ -146,15 +202,22 @@ function list(node: List, siteUrl: string): RichTextBlock {
 
 function block(
   node: RootContent | BlockContent | DefinitionContent,
-  siteUrl: string
+  ctx: Context
 ): RichTextBlock {
   const line = node.position?.start.line
+  const { siteUrl } = ctx
   switch (node.type) {
-    case 'paragraph':
+    case 'paragraph': {
+      const parts = node.children.filter(
+        (child) => child.type !== 'text' || child.value.trim()
+      )
+      if (parts.length === 1 && parts[0]!.type === 'image')
+        return image(parts[0]!, ctx)
       return {
         type: 'paragraph',
         content: trimInline(inline(node.children, [], siteUrl)),
       }
+    }
     case 'heading':
       if (node.depth > 2) unsupported(`A level-${node.depth} heading`, line)
       return {
@@ -163,7 +226,7 @@ function block(
         content: trimInline(inline(node.children, [], siteUrl)),
       }
     case 'list':
-      return list(node, siteUrl)
+      return list(node, ctx)
     case 'code':
       unsupported('A code block', line)
     case 'blockquote':
@@ -181,14 +244,24 @@ function block(
   }
 }
 
-export function markdownToDoc(markdown: string, siteUrl: string): RichTextDoc {
+export function markdownToDoc(
+  markdown: string,
+  siteUrl: string,
+  images: ImageLookup = () => undefined
+): RichTextDoc {
+  const ctx: Context = { siteUrl, images }
   const tree = fromMarkdown(markdown, {
-    extensions: [gfmStrikethrough({ singleTilde: false })],
+    // Bold and italic close next to Chinese, Japanese and Korean punctuation
+    // ("**设置：**请"), which plain CommonMark leaves as literal stars.
+    extensions: [
+      gfmStrikethrough({ singleTilde: false }),
+      cjkFriendlyExtension(),
+    ],
     mdastExtensions: [gfmStrikethroughFromMarkdown()],
   })
   const content = tree.children
     .filter((node) => node.type !== 'yaml')
-    .map((node) => block(node, siteUrl))
+    .map((node) => block(node, ctx))
   if (content.length === 0)
     throw new AnswerMarkdownError('The answer is empty.')
   return { type: 'doc', content }
@@ -240,6 +313,8 @@ function blockLines(block: RichTextBlock, indent: string): string[] {
     case 'paragraph':
     case 'heading':
       return prefixLines(inlineText(block.content), indent, indent)
+    case 'image':
+      return []
     case 'bulletList':
       return block.content.flatMap((item) => itemLines(item, indent, BULLET))
     case 'orderedList': {
@@ -254,6 +329,24 @@ function blockLines(block: RichTextBlock, indent: string): string[] {
 export function docToPlainText(doc: RichTextDoc): string {
   return doc.content
     .map((b) => blockLines(b, '').join('\n'))
+    .filter((text) => text !== '')
     .join('\n\n')
     .trim()
+}
+
+/**
+ * The answer's Markdown with each screenshot's file name swapped for the URL
+ * the site serves it at, for the `.md` alternates and llms-full.txt.
+ */
+export function markdownWithImageUrls(
+  markdown: string,
+  images: ImageLookup
+): string {
+  return markdown.replace(
+    /!\[([^\]]*)\]\(([^)\s]+)\)/g,
+    (whole, alt: string, name: string) => {
+      const found = images(name)
+      return found ? `![${alt}](${found.src})` : whole
+    }
+  )
 }

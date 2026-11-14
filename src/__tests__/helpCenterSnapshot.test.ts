@@ -7,11 +7,12 @@ vi.mock('@/lib/logger', () => ({ logger: { debug: vi.fn(), warn: vi.fn() } }))
 import {
   expandSnapshot,
   readSnapshot,
+  unpackSnapshot,
 } from '@/features/updates/lib/helpCenter/snapshot'
 
 const read = (locale: string) =>
-  JSON.parse(
-    fs.readFileSync(`src/assets/help-center/${locale}.json`, 'utf8')
+  unpackSnapshot(
+    JSON.parse(fs.readFileSync(`src/assets/help-center/${locale}.json`, 'utf8'))
   ) as Parameters<typeof expandSnapshot>[0]
 
 describe('bundled Help Center snapshot', () => {

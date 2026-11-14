@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import {
   categoryTitle,
@@ -142,6 +142,11 @@ export async function generateHelpCenterAssets(root: string = process.cwd()) {
     path.join(publicDir, MANIFEST_PATH),
     JSON.stringify(manifest, null, 2)
   )
+  for (const image of center.images) {
+    const target = path.join(publicDir, image.servedPath)
+    await mkdir(path.dirname(target), { recursive: true })
+    await copyFile(image.file, target)
+  }
   await write(path.join(publicDir, 'llms.txt'), llmsIndex(center))
   await write(path.join(publicDir, 'llms-full.txt'), llmsFull(center))
   return { center, manifest }

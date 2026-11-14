@@ -4,4 +4,32 @@ title: Is my data private and secure?
 category: general
 ---
 
-Yes. WitnessWork has no ads, and your records live on your device. Using the phone app needs no sign-up, and from version 1.47.0 you can optionally save a passkey, which is a way to sign in; on the web, you sign in to the account you use in the phone app, or from version 1.47.0 create one with a passkey, after a security check (Cloudflare Turnstile) that sees your IP address and browser details. Anything that leaves it is encrypted or anonymized, so it isn't tied to you. Your account is anonymous: no email, phone number, or password. If you turn on Backup (Settings → Account), WitnessWork's server keeps an end-to-end encrypted copy of your records that only your devices can read, not WitnessWork; it's off unless you turn it on. Cloud Sync keeps an end-to-end encrypted copy of each device's data on WitnessWork's server that only your devices can read, and it's how WitnessWork on the web gets your records. On the web, your records, account key, and session stay in your browser until you sign out. The server stores a passkey's public key, and, for a passkey that can unlock your account, the account key sealed so only that passkey can open it. iCloud Sync and Google Drive Sync go straight to your own account over an encrypted connection, never through WitnessWork's servers; on iPhone and iPad, turning on Apple's Advanced Data Protection makes iCloud end-to-end encrypted. Buddies is end-to-end encrypted, so only you and your buddies can read what you share. From version 1.47.0, shared cars in Mileage are end-to-end encrypted too, so only the people on a car can read it. A shared contact travels inside its link and isn't stored by WitnessWork. Scribe AI sends what you ask it over an encrypted connection to Zero Data Retention providers that don't store it, and route planning sends only map coordinates. Usage statistics are anonymous counts that never include names, contacts, reports, or notes. On the web, about 1 in 10 sessions are also recorded as masked replays, with all text except WitnessWork's own labels, every input, images, and the map hidden on your device before anything is sent, and kept for 30 days. They're never recorded when data protection mode is on, and in the EU, the UK, and Switzerland (or where your country can't be told) only if you turn on Share Masked Screen Recordings in Settings → Privacy (Settings → Preferences → Privacy before version 1.47.0). Turn usage statistics off in the same place to stop replays and usage statistics anytime. Supporter purchases in the phone apps use a random identifier, not your name or email; see the Privacy Policy for details. Backup files you export are yours, so keep them somewhere private; they can include householder details. WitnessWork deletes its own temporary copies of exported backups, shared contact files, and picked photos the next time it starts and when you permanently delete householder data. For privacy questions, use the private support link in the Help Center.
+Yes. WitnessWork has no ads, and your records live on your phone. Nothing you share with WitnessWork is tied to your name.
+
+## What WitnessWork knows about you
+
+- The phone app needs no sign-up. Your account has no email, phone number, or password. You can save a passkey, which is a way to sign in.
+- On the web, you sign in to the same account, or create one with a passkey. A security check on that page sees your internet address and browser details.
+- Usage statistics are anonymous counts. They never include names, contacts, reports, or notes. Turn them off in **Settings → Privacy**.
+- Purchases in the phone apps use a random number, not your name or email.
+
+## What leaves your phone, and who can read it
+
+- **Backup** and **Cloud Sync** (both off until you turn them on): a copy is saved that only your own devices can read. Not even WitnessWork can read it. Cloud Sync is also how the web app gets your records.
+- **iCloud Sync** and **Google Drive Sync** go straight to your own Apple or Google account, not through WitnessWork.
+- **Buddies** and **shared cars** in Mileage: only you and the people you share with can read them.
+- **Shared contacts** travel inside the link you send. WitnessWork doesn't keep a copy.
+- **Scribe AI** sends what you ask to providers that don't store it. Route planning sends only map locations.
+
+## On the web
+
+- Your records and sign-in stay in your browser until you sign out.
+- About 1 in 10 sessions are recorded as screen replays with all your text, inputs, photos, and the map hidden before anything is sent. They are kept for 30 days.
+- Replays are never recorded when data protection mode is on. In the EU, the UK, and Switzerland, they happen only if you turn on **Share Masked Screen Recordings** in **Settings → Privacy**.
+- Turn usage statistics off in **Settings → Privacy** to stop replays too.
+
+## Good to know
+
+- Backup files you export belong to you. Keep them somewhere private, because they can include householder details.
+- WitnessWork deletes its own temporary copies of exported backups, shared contact files, and picked photos the next time it starts and when you permanently delete householder data.
+- For details, read the Privacy Policy under **Settings → About**. For privacy questions, use the private support link in the Help Center.

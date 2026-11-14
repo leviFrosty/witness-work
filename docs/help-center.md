@@ -49,7 +49,10 @@ platforms: [ios, android, web] # optional; any non-empty subset; omit = all thre
 pinned: true # optional; "Top questions"
 related: [196, 226] # optional; GitHub issue numbers
 minAppVersion: '4.12.0' # optional; applies to app ≥ this version
+redirectFrom: [time/hourglass-setup] # optional; old pages merged into this one
 ```
+
+`redirectFrom` lists the `<category>/<slug>` of answers that were merged into this one and deleted. The site writes a 301 from each old page and its `.md` alternate, in every locale, to this answer (`public/_redirects`, served by Workers Static Assets). The build fails if a listed page still exists or two answers claim the same one. Bundles drop merged answers like any deleted question; the app never opens an answer by id (only by category), so nothing else needs the old id.
 
 `platforms` is where an answer applies: `ios`, `android` (the phone apps) and `web` (WitnessWork on the web, [ADR 0037](adr/0037-witnesswork-on-the-web.md)). Leave it out for an answer that holds on all three. Set it for one that doesn't apply on the web (widgets, Siri and Shortcuts, notifications, Live Activities, the watch apps, iCloud or Google Drive sync, purchases through the app stores) or that's only for the web. Lists are normalized to the order `ios`, `android`, `web`.
 
@@ -57,7 +60,20 @@ Translations (`content/help/<locale>/…`) set only `id` and `title`; everything
 
 ### Answer Markdown subset
 
-Answers must convert losslessly to the app's `RichTextDoc` (`src/types/richText.ts`; the site keeps the subset it uses in `services/marketing/src/lib/help-center/types.ts`). Allowed: paragraphs, headings (`#`, `##`), **bold**, _italic_, ~~strike~~, links, hard line breaks, bulleted and numbered lists (nestable). Not allowed: images, tables, code, blockquotes, HTML, MDX components, task lists. The build fails on anything else. Links must be `https:`, `mailto:`, or a site path (`/privacy`, `/help/…`), which the build makes absolute on the site's origin (`https://witnesswork.app`, or the staging origin in a staging build). (The app opens `https:`, `http:`, `mailto:`, and `tel:` links and shows any other as plain text.)
+Answers must convert losslessly to the app's `RichTextDoc` (`src/types/richText.ts`; the site keeps the subset it uses in `services/marketing/src/lib/help-center/types.ts`). Allowed: paragraphs, headings (`#`, `##`), **bold**, _italic_, ~~strike~~, links, hard line breaks, bulleted and numbered lists (nestable), and screenshots. Not allowed: tables, code, blockquotes, HTML, MDX components, task lists, images inside text. The build fails on anything else. How to write answers (reader, template, tone): [`services/marketing/README.md`](../services/marketing/README.md#writing-help-center-answers).
+
+Answers are structured as a short lead paragraph followed by `##` sections and lists. Both clients render headings and lists natively: the site maps `#` to `<h2>` and `##` to `<h3>`; the app renders Help Center answers with `RichTextView`'s `relaxed` spacing (more room between blocks, list items and before headings).
+
+### Screenshots
+
+A screenshot is a paragraph holding only `![What the screen shows](<file>.webp)`, where `<file>.webp` is in `content/help/images/` (lowercase, named after its answer, made with `pnpm help:image`). The description is required; it's the image's accessible label. The build checks the file exists and is a WebP, reads its size, and fails on an image no answer uses.
+
+- **Stored in the repo, next to the answers,** and deployed with the site's static assets rather than a separate R2 bucket: an answer and its screenshot deploy together, staging and local builds show them, and adding one needs no credentials. Each is usually 5–30 KB.
+- **Served** from the site's static assets at `/help/images/<name>.<hash>.webp` (first 12 hex of its SHA-256), `Cache-Control: public, max-age=31536000, immutable` and `Access-Control-Allow-Origin: *`. A changed image gets a new URL. Same origin as the bundles, so the site's `img-src 'self'` already allows it; the web app's CSP allows the bundles' origin in `img-src`.
+- **In the bundle** it's an image block: `{ type: 'image', attrs: { id: 'help-<hash>', src, alt, width, height } }`, with `src` the absolute URL and `width`/`height` in pixels. `plainText` leaves images out. The `.md` alternates and `llms-full.txt` keep `![alt](<absolute src>)`.
+- **In the app** `parseHelpBundle` keeps `src` and `alt` only for Help Center docs (`parseRichTextDoc(…, { remoteImages: true })`) and only for a content-hashed `https://witnesswork.app/help/images/…` or `https://dev.witnesswork.app/help/images/…` URL; note docs never keep them. `HelpImage` shows the copy bundled with the app when it has one, and otherwise the site's copy through `expo-image` with a disk cache, so an image once seen works offline. If it can't load, it shows nothing; the answer's text stands without it.
+- **Bundled for offline use.** `pnpm sync:help` downloads every image the snapshots use into `src/assets/help-center/images/` (removing ones no longer used) and regenerates `src/features/updates/lib/helpCenter/snapshotImages.ts`, which maps file names to bundled assets.
+- **Older apps** (before Help Center images) parse the block like a note image (`id`, `width`, `height`) and render answers with images hidden, so a screenshot needs no `schemaVersion` bump and no `minAppVersion`. That's why an answer must not depend on its image: older apps, screen readers and failed loads show the text alone. The frozen legacy parser test feeds a bundle with an image through the old parser. Links must be `https:`, `mailto:`, or a site path (`/privacy`, `/help/…`), which the build makes absolute on the site's origin (`https://witnesswork.app`, or the staging origin in a staging build). (The app opens `https:`, `http:`, `mailto:`, and `tel:` links and shows any other as plain text.)
 
 ### URLs
 
@@ -165,6 +181,7 @@ content/help/
   <locale>/categories.json          category titles
   <locale>/ui.json                  page strings (search placeholder, "Still need help?", …)
   <locale>/<category>/<slug>.mdx    one question
+  images/<slug>.webp                screenshots (English UI), used by any locale
 ```
 
 The answer is the Markdown body under the front matter, in the subset above. Pages, bundles, Markdown alternates, and llms.txt are all generated from these files (`services/marketing/src/lib/help-center/`); nothing else holds FAQ text. The site renders answers from the same `RichTextDoc` the app gets, so what you see on the site is what the app shows.
@@ -176,7 +193,7 @@ The answer is the Markdown body under the front matter, in the subset above. Pag
 3. Run `pnpm help:validate`. It fails on unsupported Markdown, unknown categories, duplicate ids or slugs, files in the wrong folder, a missing `order.json` entry, or a malformed `minAppVersion`. `pnpm build` runs the same checks.
 4. Write the answer to stand on its own: someone lands on it from a search engine or an AI assistant. Name the screen path (Settings → Sync), say which platforms it applies to, and set `platforms` when it isn't true on all of iOS, Android and the web.
 
-Edit a question by editing its English file. **Never change an `id`**: the app and analytics key on it. To retire a question, delete its files in every locale and remove it from `order.json`.
+Edit a question by editing its English file. **Never change an `id`**: the app and analytics key on it. To retire a question, delete its files in every locale and remove it from `order.json`. If another answer now covers it, add the retired page's `<category>/<slug>` to that answer's `redirectFrom` so links to it keep working.
 
 ### Translations
 
@@ -195,7 +212,8 @@ Set `minAppVersion: "x.y.z"` (quoted) on a question that only applies from that 
 
 Run from `services/marketing` after `pnpm install` in `services/` ([`services/README.md`](../services/README.md)):
 
-- `pnpm help:validate`: check content and regenerate bundles, `.md` alternates, llms.txt, the sitemap, `robots.txt`, and `_headers` into `public/` (gitignored).
+- `pnpm help:validate`: check content and regenerate bundles, screenshots, `.md` alternates, llms.txt, the sitemap, `robots.txt`, `_headers`, and `_redirects` into `public/` (gitignored).
+- `pnpm help:image <slug> <screenshot.png> [--crop WxH+X+Y]`: save a screenshot as `content/help/images/<slug>.webp` (600 px wide at most, ImageMagick) and print the Markdown line.
 - `pnpm dev`: the site with the Help Center at `/help` on the dev server, regenerated on every content change.
 - `pnpm build && pnpm e2e`: production build plus Playwright tests (pages, device filter, languages, search fallback, bundle contract, headers, llms.txt) against the build served by `wrangler dev`. `E2E_BASE_URL=https://dev.witnesswork.app WW_SITE_ENV=dev pnpm e2e` runs them against the deployed staging site.
-- In the app: `pnpm sync:help` refreshes its offline snapshot from the published manifest (`--from services/marketing/dist/production/client/help/bundle` reads a local build).
+- In the app: `pnpm sync:help` refreshes its offline snapshot from the published manifest (`--from services/marketing/dist/production/client/help/bundle` reads a local build). Each `src/assets/help-center/<locale>.json` holds one JSON string: that locale's bundle (without `url` and `plainText`), raw-deflated and base64url-encoded. Uncompressed, the 19 snapshots would add about 17 MB to the native JS bundle and every OTA update; `unpackSnapshot` (`src/features/updates/lib/helpCenter/snapshot.ts`) inflates one with fflate the first time it's read.

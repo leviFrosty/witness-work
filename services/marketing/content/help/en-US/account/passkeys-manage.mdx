@@ -5,13 +5,28 @@ category: account
 minAppVersion: "1.47.0"
 ---
 
-Every WitnessWork passkey is named "WitnessWork" with a 4-character code, such as WitnessWork 7K4Q. The same code is shown in Settings → Account → Passkeys, so people who share a password manager can tell their passkeys apart. WitnessWork sets the name when the passkey is created, and can't rename it afterward.
+Each WitnessWork passkey is named "WitnessWork" with a 4-character code, such as WitnessWork 7K4Q. The same code shows in **Settings → Account → Passkeys**, so you can match them up.
 
-Settings → Account → Passkeys, in the phone app or on the web, lists each passkey with its password manager (when WitnessWork recognizes it), the device it was added on, when it was added and last used, and marks it:
+## See your passkeys
 
-- **Can unlock your account:** signing in with it in a browser, or on a new phone from version 1.47.0, brings your account key there.
-- **Sign-in only:** it signs you in but can't bring your account key. The browser or new phone then asks you to finish with your other phone or your recovery key. Once you finish there, WitnessWork saves your key for that passkey so it can unlock next time, if the browser or phone and the password manager allow it. In the phone app, you can also tap the passkey and choose Let It Unlock to try again; some password managers can only sign in.
+Open **Settings → Account → Passkeys**. It lists each passkey with the device it was added on, when it was added and when it was last used. Each one is marked:
 
-**To remove one,** open Settings → Account → Passkeys, tap or click the passkey, and choose Remove. Once you confirm, the phone app asks for Face ID, your fingerprint, or your passcode, and WitnessWork on the web asks you to confirm it's you with one of your passkeys, which needs an internet connection (not in the first few minutes after you sign in; if none of your passkeys is on that computer, choose Sign In Again). Removing it from WitnessWork doesn't delete it from your password manager, so delete it there too. In Chrome and other Chromium-based browsers, removing it on the web also asks the browser to forget it; check your password manager anyway. WitnessWork warns you before you remove the last passkey that can unlock, since signing in on a computer then needs your recovery key or another device. Removals show in Settings → Account → Account Activity. When a passkey is added on another of your devices, the bell on Home on this one tells you; tap it to open Passkeys. If you didn't add it, remove it and change your account key: see [What if my phone or computer is lost or stolen?](/help/account/lost-device).
+- **Can unlock your account:** signing in with it brings your account to a new browser or phone.
+- **Sign-in only:** it signs you in, then asks you to finish with your other phone or your recovery key. After that, it may be able to unlock next time.
 
-Before you remove the only way you can sign in, check that you have your recovery key ([What is my recovery key?](/help/account/account-recovery-key)).
+On a phone, tap a **Sign-in only** passkey and choose **Let It Unlock** to try again. Some password managers can only sign in.
+
+## Remove a passkey
+
+1. Open **Settings → Account → Passkeys**.
+2. Tap the passkey.
+3. Choose **Remove**.
+4. Confirm with Face ID, your fingerprint or your passcode. On the web, confirm with one of your passkeys instead.
+
+## Good to know
+
+- Removing it here doesn't delete it from your password manager. Delete it there too.
+- WitnessWork warns you before you remove the last passkey that can unlock your account.
+- You can't rename a passkey.
+- If the bell on Home says a passkey was added and it wasn't you, remove it and change your account key. See [What should I do if my phone or computer is lost or stolen?](/help/account/lost-device).
+- Before you remove your only way in, check that you have your recovery key. See [What is my recovery key, and how do I keep it safe?](/help/account/account-recovery-key).

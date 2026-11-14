@@ -1,4 +1,6 @@
+import { inflateSync, strFromU8 } from 'fflate'
 import links from '@/constants/links'
+import { fromB64u } from '@/lib/bytes'
 import { parseHelpBundle } from '@/features/updates/lib/helpCenter/validate'
 import { DEFAULT_HELP_LOCALE } from '@/features/updates/lib/helpCenter/locale'
 import {
@@ -49,6 +51,19 @@ export function expandSnapshot(
   }
 }
 
+export const unpackSnapshot = (packed: unknown): Snapshot | undefined =>
+  typeof packed === 'string'
+    ? (JSON.parse(strFromU8(inflateSync(fromB64u(packed)))) as Snapshot)
+    : undefined
+
+const unpacked = new Map<HelpLocale, Snapshot | undefined>()
+
+function unpack(locale: HelpLocale) {
+  if (!unpacked.has(locale))
+    unpacked.set(locale, unpackSnapshot(snapshots[locale]?.()))
+  return unpacked.get(locale)
+}
+
 const parsed = new Map<HelpLocale, HelpBundle | null>()
 
 export function readSnapshot(locale: HelpLocale): HelpBundle {
@@ -62,8 +77,8 @@ export const loadSnapshot = (locale: HelpLocale) =>
 
 function readSnapshotFor(locale: HelpLocale): HelpBundle | null {
   if (!parsed.has(locale)) {
-    const snapshot = snapshots[locale]?.() as Snapshot | undefined
-    const english = snapshots[DEFAULT_HELP_LOCALE]() as Snapshot | undefined
+    const snapshot = unpack(locale)
+    const english = unpack(DEFAULT_HELP_LOCALE)
 
     if (!snapshot || !english) return null
     parsed.set(locale, parseHelpBundle(expandSnapshot(snapshot, english)))

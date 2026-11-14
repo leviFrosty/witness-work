@@ -498,6 +498,7 @@ function OverlayMarker({
   anchor,
   centerOffset,
   zIndex,
+  opacity,
   onPress,
   accessibilityLabel,
   children,
@@ -541,6 +542,7 @@ function OverlayMarker({
         left: 0,
         top: 0,
         zIndex: zIndex ?? 0,
+        opacity: opacity ?? 1,
       }}
     >
       {onPress ? (

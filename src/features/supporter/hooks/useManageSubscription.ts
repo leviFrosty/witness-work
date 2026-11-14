@@ -29,7 +29,7 @@ import {
 } from '@/features/supporter/lib/supporterPause'
 
 export type ManageSubscriptionSource = 'paywall' | 'settings'
-export type StoreIntent = 'cancel' | 'pause'
+export type StoreIntent = 'manage' | 'cancel' | 'pause'
 
 export const storePlatform: StorePlatform =
   Platform.OS === 'android' ? 'android' : Platform.OS === 'web' ? 'web' : 'ios'
@@ -262,6 +262,15 @@ const useManageSubscription = (
     }
   }
 
+  const trackCancelTapped = (pauseOffered: boolean, surveyOffered: boolean) => {
+    analytics.capture('supporter_cancel_tapped', {
+      ...eventProperties,
+      state: state.kind,
+      pause_offered: pauseOffered,
+      survey_offered: surveyOffered,
+    })
+  }
+
   const openStore = async (intent: StoreIntent) => {
     analytics.capture('supporter_manage_store_opened', {
       ...eventProperties,
@@ -315,6 +324,7 @@ const useManageSubscription = (
     pausingMonths,
     pause,
     openStore,
+    trackCancelTapped,
   }
 }
 

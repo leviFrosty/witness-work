@@ -90,6 +90,7 @@ from 1.46.0 and earlier don't have it, so break those down by `$os` (`iOS`,
 | `update_required_shown`                            | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                                                   |
 | `help_center_search_completed`                     | Once per session per source and outcome; reach of the search service and of searches that find nothing, not every search.                                                                                                                                    |
 | `settings_search_completed`                        | Once per session per outcome; reach of settings search and of searches that find nothing, not every search.                                                                                                                                                  |
+| `app_info_copied`                                  | Once per session per item; reach of App Info's copy actions, not every copy.                                                                                                                                                                                 |
 | `notification_settings_opened`                     | Once per session; reach of Settings → Notifications. Compare with the reminder `_changed` events to see whether a single page gets more people to turn reminders on.                                                                                         |
 | `mileage_person_filter_used`                       | Once per session; reach of the Mileage screen's person filter on Shared Cars, not every switch.                                                                                                                                                              |
 | `help_center_refreshed`                            | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                                                    |
@@ -747,6 +748,18 @@ whether people use it, and whether it misses the words they type.
 | `settings_search_completed` | A result was opened (`opened`), or a search with no results stayed unchanged for 1.5 seconds (`no_results`). Once per session per outcome. | `outcome: opened \| no_results`. |
 
 Never the query or the setting opened.
+
+## App Info
+
+Settings → About → App Info lists the app, update, system and server versions
+and the account IDs that support asks for. This answers whether people (and
+support) use it to copy those details.
+
+| Event             | When                                                                                    | Properties                                          |
+| ----------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `app_info_copied` | A row or Copy All Details copied its value to the clipboard. Once per session per item. | `item: account_id \| purchases_id \| all \| other`. |
+
+Never the copied value.
 
 ## Notification settings
 

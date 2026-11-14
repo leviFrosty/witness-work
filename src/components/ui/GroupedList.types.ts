@@ -6,6 +6,8 @@ export type GroupedListProps = {
   children: ReactNode
 
   title?: string
+
+  header?: ReactNode
   testID?: string
 }
 

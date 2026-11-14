@@ -1,6 +1,6 @@
 # AGENTS.md
 
-WitnessWork = iOS + Android field-service tracker for Jehovah's Witnesses. It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math.
+WitnessWork = iOS, Android and web field-service tracker for Jehovah's Witnesses. It helps publishers schedule their service time toward their goals, track contacts & appointments, and see progress without mental math.
 
 ## Backend Service
 
@@ -8,22 +8,22 @@ ww-api is the backend api. Find the code at ~/dev/ww-api.
 
 Beta and production app builds release ww-api `main` first (`scripts/release-api.sh`), so land a feature's backend half on ww-api `main` before shipping its app half.
 
-**The server account is the source of truth for who the User is** (ADR 0024, ADR 0027). Every call to ww-api for a user-scoped feature (accounts, backup, handoff, Buddies, Scribe AI, and anything new) goes through the attested session in `src/lib/serverAccount`: it sends `Authorization: Bearer` and lets the session client open, refresh, and reopen sessions. Don't add a feature that identifies the User to ww-api any other way (an install id, the RevenueCat id, an inbox id, or its own signed envelope), and don't attest per request; the session already did. ww-api answers Supporter status from the account: the app links the RevenueCat customer it's logged in as through `src/lib/serverAccount/revenueCatLink.ts` (ADR 0029), and never sends a RevenueCat id to identify the User anywhere else. Wire contract: [`docs/accounts-protocol.md`](./docs/accounts-protocol.md). When ww-api answers 426 `upgrade_required`, or `GET /app/v1/config` says the app is below `minAppVersion`, the app shows Update Required.
+**The server account is the source of truth for who the User is** (ADR 0024, ADR 0027). Every call to ww-api for a user-scoped feature (accounts, backup, handoff, Buddies, Scribe AI, and anything new) goes through the attested session in `src/lib/serverAccount`: it sends `Authorization: Bearer` and lets the session client open, refresh, and reopen sessions. Identify the User to ww-api only through that session (never an install id, the RevenueCat id, an inbox id, or a feature's own signed envelope), and attest once per session, not per request. ww-api answers Supporter status from the account: the app links the RevenueCat customer it's logged in as through `src/lib/serverAccount/revenueCatLink.ts` (ADR 0029). Wire contract: [`docs/accounts-protocol.md`](./docs/accounts-protocol.md). When ww-api answers 426 `upgrade_required`, or `GET /app/v1/config` says the app is below `minAppVersion`, the app shows Update Required.
 
 ## Platforms
 
-iOS and Android are both supported and share the same app flows. Setup and build details are in [`docs/build.md`](./docs/build.md). Run, inspect, and test changes on simulators and emulators only through the `verify-witnesswork` skill (see [Verify your own work](#verify-your-own-work)).
+iOS, Android and the web (`app.witnesswork.app`, React Native Web) run the same app flows from one codebase. Setup and build details are in [`docs/build.md`](./docs/build.md). Run, inspect, and test changes only through the `verify-witnesswork` skill (see [Verify your own work](#verify-your-own-work)).
 
-- **Build for both platforms.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions must work on Android too, or be gated with `Platform.OS` and degrade gracefully. Run it on an Android emulator only when it could behave differently there (see [Verify your own work](#verify-your-own-work)).
-- **No iOS-only APIs without a fallback.** e.g. `ActionSheetIOS`, `react-native-screens`' `FullWindowOverlay`. Prefer the cross-platform wrappers in `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`).
-- **iOS-only features.** iCloud sync/restore, widgets, Live Activities, Siri and Shortcuts, and alternate app icons stay unavailable on Android. Hide their entry points there instead of showing a broken state. Sync and restore run on Android through Google Drive's app data folder in place of iCloud (ADR 0019). Account sessions (and so Scribe AI) use Play Integrity on Android in place of App Attest (ADR 0017). Buddies uses FCM pushes and a Block Store root seed on Android in place of APNs and iCloud Keychain (ADR 0020).
+- **Build for every platform.** Anything that touches native APIs, layout, maps, notifications, purchases, or permissions works on all three, or hides itself where it can't and degrades gracefully.
+- **The web is not iOS** (ADR 0037). `Platform.OS === 'android' ? A : B` hands the web `B`, so lint rejects it (`witnesswork/platform-android-choice`): hide what a browser lacks with `hasCapability()` (`src/lib/platformCapabilities.ts`), or choose with `Platform.select({ ios, android, web })`. Send `devicePlatform()` and `deviceName()` (`src/lib/devicePlatform.ts`) wherever a payload names the device. Haptics are a no-op on the web, and sounds wait for the page's first tap.
+- **Cross-platform wrappers.** Use `@/components/ui/**` (`Switch`, `DateTimePicker`, `FullWindowOverlay`) in place of iOS-only APIs such as `ActionSheetIOS`.
+- **Platform-specific features.** iCloud sync/restore, widgets, Live Activities, Siri and Shortcuts, and alternate app icons are iOS-only; hide their entry points elsewhere. Android uses Google Drive's app data folder for sync and restore (ADR 0019), Play Integrity for account sessions (ADR 0017), and FCM plus a Block Store root seed for Buddies (ADR 0020).
 - **Watch apps.** The Apple Watch app (`targets/watch`, `targets/watch-widgets`) and the Wear OS app (`targets/wear-os`) do the same things, from the same phone-side code (`src/app/watch`, `modules/watch-bridge`). A change to either one updates the parity registry [`docs/watch/features.json`](./docs/watch/features.json) in the same change, and the other watch too or its entry's notes. `pnpm check:watch-parity` enforces it; see [`docs/watch/README.md`](./docs/watch/README.md).
-- **Platform copy.** Don't write "iOS Settings", "iPhone", "App Store", etc. into shared copy; add an `…Android` or `…Web` i18n variant when the wording differs.
-- **The web is not iOS** (ADR 0037). `Platform.OS === 'android' ? A : B` hands the web `B`, so lint rejects it (`witnesswork/platform-android-choice`): hide what a browser lacks with `hasCapability()` (`src/lib/platformCapabilities.ts`), or choose with `Platform.select({ ios, android, web })`. Send `devicePlatform()` and `deviceName()` (`src/lib/devicePlatform.ts`) wherever a payload names the device; never infer `'ios'` from "not Android". Haptics are a no-op on the web, and sounds wait for the page's first tap.
+- **Platform copy.** Shared copy stays platform-neutral; when the wording differs ("iOS Settings", "App Store"), add an `…Android` or `…Web` i18n variant.
 
 ## Verify your own work
 
-Prove a change in the running app before calling it done; don't hand verification back to the user. The [`verify-witnesswork`](./.agents/skills/verify-witnesswork/SKILL.md) skill (`node scripts/verify/ww-verify.mjs`) claims an isolated simulator or emulator, seeds state, drives the UI, fuzzes, and saves evidence to `.verify/artifacts/`. Backend changes use `verify-ww-api` in ww-api.
+Prove a change in the running app before calling it done; don't hand verification back to the user. The [`verify-witnesswork`](./.agents/skills/verify-witnesswork/SKILL.md) skill (`node scripts/verify/ww-verify.mjs`) claims an isolated simulator, emulator or web server, seeds state, drives the UI, fuzzes, and saves evidence to `.verify/artifacts/`. Backend changes use `verify-ww-api` in ww-api.
 
 Every agent's simulators, emulators and native builds share one Mac mini, and every device run costs tokens. So check as much as the change needs, and no more.
 
@@ -33,31 +33,29 @@ Every agent's simulators, emulators and native builds share one Mac mini, and ev
 - **Heavy commands queue.** `pnpm testFinal`, `typecheck`, `lint`, `web:build`, `web:test` and `web` wait for a slot and say why. Let them wait. Exit status 75 means the queue timed out or the user paused verification (`wwv hold`): report the check as unverified.
 - **One iPhone simulator by default.** Most users are on iPhone. Run the development loop (reproduce, fix, re-check) and the proof on one iOS iPhone simulator.
 - **Add a device only where the change could break.** Decide for yourself, and say in the report what you skipped and why. When the user asks for a platform or device, check it.
-  - **Android** when the change has Android-specific code: `Platform.OS` branches, `.android.*` files, Android native modules, `android/`, Gradle, or a native API, permission, notification, purchase, or map behavior implemented separately for Android. It also covers a bug that only shows on Android. Shared JS UI that works on iOS doesn't need an Android pass. The emulator is the costliest device on this Mac.
+  - **Android** when the change has Android-specific code: `Platform.OS` branches, `.android.*` files, Android native modules, `android/`, Gradle, or a native API, permission, notification, purchase, or map behavior implemented separately for Android, or a bug that only shows on Android. The emulator is the costliest device on this Mac.
+  - **Web** when the change has web-specific code (`.web.*` files, `hasCapability`, `Platform.select` web branches) or touches something a browser handles differently.
   - **iPad, iPhone Duo, iPad mini, iPhone SE** when the change reworks a screen's layout or how it adapts to size: columns, splits, sidebars, bars, `useAdaptiveLayout`, `FoldSplit`, `FoldPane`. Check the one or two sizes the change could break. Keep the full sweep for large layout work.
-  - **One appearance.** Verify and capture in whichever appearance the simulator is already in. Don't repeat screens in both light and dark; switch only when the change is a color that differs between them, and then capture just that screen.
+  - **One appearance.** Verify and capture in whichever appearance the simulator is already in; switch only when the change is a color that differs between light and dark, and then capture just that screen.
   - **Rounded containers** when a change touches a card, section, sheet, or control shape or its padding: check the screens that use it for content crowding the corners (see [Rounded containers](#rounded-containers)).
 - **One device at a time.** Run `wwv down` on one device before you bring up the next, unless the feature needs two at once (Buddies, Shared Cars).
-- **Prove the change, not the app.** Don't turn verification into an audit. Note unrelated problems you spot in the report instead of fixing them. After a follow-up that only changes copy, spacing, or a review nit, re-check with unit tests or one screenshot, not a full re-drive.
+- **Prove the change, not the app.** Note unrelated problems you spot in the report instead of fixing them. After a follow-up that only changes copy, spacing, or a review nit, re-check with unit tests or one screenshot, not a full re-drive.
 - **Delegate the driving to a cheaper subagent.** Every tap, snapshot and screenshot re-reads your whole conversation, so driving the app from a long thread is our biggest token cost. Hand the device run to a subagent on the cheapest model your harness offers (for example Claude Haiku). You still decide what to prove and judge the evidence. The skill's [Delegate the drive](./.agents/skills/verify-witnesswork/SKILL.md#delegate-the-drive) says what to hand off, what to keep, and how to brief it.
 - **`wwv down` as soon as the proof is done.** An idle simulator or emulator keeps using CPU for every other agent.
 - **Report evidence:** devices, commands, artifact paths, and what stayed unverified (see the skill's Limits), including devices you chose to skip, and why.
 
 ## Pointer hover (iPad trackpad, mouse, Pencil)
 
-iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and an Android mouse gets hover callbacks but no system effects. The primitives below do nothing where hover isn't supported, so don't gate them yourself. Apply them where people would naturally hover. Follow Apple's [pointer guidance](https://developer.apple.com/design/human-interface-guidelines/pointing-devices).
+iPad users can hover with a trackpad, mouse, or Apple Pencil; iPhone can't, and an Android mouse gets hover callbacks but no system effects. The primitives below do nothing where hover isn't supported, so use them without gating. Apply them where people would naturally hover. Follow Apple's [pointer guidance](https://developer.apple.com/design/human-interface-guidelines/pointing-devices).
 
 - **Already covered:** `Button` picks a pointer effect automatically. Small clear controls highlight, small opaque ones lift, and large surfaces tint. Set `pointerEffect='none'` only when a parent already handles hover. `ContextMenu` content with `onPress` tints on hover; set `hoverRadius` to match its shape, or `pointerEffect='highlight'` for small cells.
-- **Custom pressables** (raw `Pressable`, gesture-driven controls): wrap them in `PointerHover`. Use `effect` for small controls, and `onHoverChange` plus `HoverTint` for rows and cards. Never scale rows or cards.
-- **Icon-only controls** whose meaning isn't obvious get a `PointerTooltip` with the control's name. Leave it out when the label is already visible, and never put instructions in it.
+- **Custom pressables** (raw `Pressable`, gesture-driven controls): wrap them in `PointerHover`. Use `effect` for small controls, and `onHoverChange` plus `HoverTint` for rows and cards; rows and cards tint, never scale.
+- **Icon-only controls** whose meaning isn't obvious get a `PointerTooltip` with the control's name, and nothing more. Skip it when the label is already visible.
 - **Charts and other scrubbed data:** if a value appears on press-and-drag, show the same readout when the pointer hovers there (`Gesture.Hover` `onUpdate`).
-- **A finger hides what's under it.** A readout that follows a touch goes above the whole scrubbed area, or in a fixed spot like the card's header, never beside the touched point. Only a mouse pointer gets a readout next to it (see `ContributionGraph`, `ServiceYearPaceCard`).
+- **A finger hides what's under it.** A readout that follows a touch goes above the whole scrubbed area, or in a fixed spot like the card's header. Only a mouse pointer gets a readout next to it (see `ContributionGraph`, `ServiceYearPaceCard`).
 - **Resize and drag handles:** use `PointerStyleView` from `modules/pointer-style` to show directional arrows next to the pointer.
-- **Don't:**
-  - add decorative effects to non-interactive content;
-  - make hover the only way to reach information or an action (touch has no hover);
-  - build hover-only UI that behaves differently from touch.
-- **Test:** when you add or change hover behavior, with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md). Unit tests can't show whether hover actually works.
+- **Hover only enhances.** Every hover effect sits on an interactive control, and everything it reveals is also reachable by touch, through the same behavior.
+- **Test:** when you add or change hover behavior, with a real pointer on an iPad simulator. See [`docs/ipad-pointer-testing.md`](./docs/ipad-pointer-testing.md).
 
 ## iPhone Duo (foldable)
 
@@ -65,95 +63,82 @@ iPhone Duo has a compact outer display and a regular-width inner one. On both, t
 
 - **Layout by size, never by device.** Use `useAdaptiveLayout` (`isWide`, `hasBottomBar`, `navigationRail`), not `Platform.isPad` or `isTablet`. When the vertical bar is present, tabs become a side rail; pad for the bottom bar only when `hasBottomBar` is true.
 - **Two columns go in `FoldSplit`.** It meets the fold when the device is half-open and springs there; never hand-roll a `flexDirection: 'row'` split.
-- **Nothing sits in the fold.** When the device is half-open, anything that isn't a `FoldSplit` keeps to the leading side of the fold, as system sheets do, so no text or control lands in the crease:
+- **Nothing sits in the fold.** When the device is half-open, anything that isn't a `FoldSplit` keeps to the leading side of the fold, as system sheets do:
   - Dialogs, takeovers, celebrations, toasts and docked forms go in `FoldPane`, which also keeps them clear of the vertical bar. An overlay or sheet that sizes itself by number uses `useWindowFoldPane()`.
   - A single centered column (`width: '100%'`, `maxWidth`, `alignSelf: 'center'`) uses `ContentColumn`, or appends `useFoldColumn(maxWidth)` to its style when it spans the screen. Pass `null` when the layout is a split that meets the fold itself.
   - Stack headers (`Header`) move their title and buttons with the content.
-- **Absolute positioning ignores padding.** Absolutely positioned content ignores its parent's padding, so pad it with insets of its own (`right: insets.right + 16`), not the container's.
+- **Absolute positioning ignores padding.** Pad absolutely positioned content with insets of its own (`right: insets.right + 16`), not the container's.
 - **Controls sit above the content they affect.** In a master–detail split, the screen header goes in the leading column and the detail pane runs to the top (see Contacts, Schedule, Progress Month). A header spans both columns only when both hold the same kind of content (Home, Progress Year).
 - **Side safe areas.** Stack screens are already wrapped in `HorizontalSafeArea`. Hero backgrounds bleed under the bar with `useHorizontalBleed()`, while content stays inset.
 - **Back button.** On a stack screen, use `Header buttonType='back'`. On iPhone Duo the system draws the button in the vertical bar (`createSystemBackStackNavigator`). Custom `onPressLeftIcon` or `leftElement` keep the app's own button.
-- **Test:** when a change reworks layout or how a screen adapts, run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). After large layout work, also check `--ipad`, `--ipad-mini` and `--se` for regressions. After smaller work, check only the size it could break.
+- **Test:** when a change reworks layout or how a screen adapts, run `wwv up --duo` and check it closed, open and half-open (`wwv ad fold …`). After large layout work, also check `--ipad`, `--ipad-mini` and `--se`; after smaller work, only the size it could break.
 
 ## Rounded containers
 
-Cards, sections and sheets use large continuous corners (`inputLayout.sectionRadius`, 26pt), and controls inside them are capsules. Follow Apple's [new design system guidance](https://developer.apple.com/videos/play/wwdc2025/356/): nested shapes are concentric, and content must not look pinched into a corner.
+Cards, sections and sheets use large continuous corners (`inputLayout.sectionRadius`, 26pt), and controls inside them are capsules. Follow Apple's [design system guidance](https://developer.apple.com/videos/play/wwdc2025/356/): nested shapes are concentric, and content never looks pinched into a corner.
 
-- **Concentric radii.** A shape nested in a rounded container takes the container's radius minus the padding between them (26pt container, 12pt padding → 14pt inner radius), or is a capsule. Never give a nested shape a larger radius than its container, or the same radius at a small inset.
-- **Keep content off the corners.** In a 26pt container, text, icons and controls stay at least 16pt from the top and bottom edges and 16pt from the sides. A title or first row needs about 18pt above it. `Card`'s default padding (20pt) and `Section` rows (56pt tall, 12pt vertical padding) already do this; a card that sets `padding: 0` and pads its own children has to as well.
-- **Don't shrink padding to fit.** If content doesn't fit, wrap it, stack it, or move it out. Don't cut the padding back toward the old 10–14pt values.
+- **Concentric radii.** A shape nested in a rounded container takes the container's radius minus the padding between them (26pt container, 12pt padding → 14pt inner radius), or is a capsule.
+- **Keep content off the corners.** In a 26pt container, text, icons and controls stay at least 16pt from every edge, and a title or first row gets about 18pt above it. `Card`'s default padding (20pt) and `Section` rows (56pt tall, 12pt vertical padding) already do this; a card that sets `padding: 0` and pads its own children has to as well.
+- **Keep the padding when content is tight.** Wrap it, stack it, or move it out instead.
 - **Small containers get small radii.** A tile or chip shorter than about 52pt uses `borderRadiusMd` or a capsule, not the section radius.
-- **Check it** on every screen that uses the shape you changed, including a card's first and last rows, headers, and footers. Look at the corners in a screenshot: if a glyph or line of text sits closer to the edge than the curve is deep, it is too tight.
+- **Check it** on every screen that uses the shape you changed, including a card's first and last rows, headers, and footers. In a screenshot, a glyph or line of text sitting closer to the edge than the curve is deep is too tight.
 
 ## Touch targets
 
-Small tap targets are the UX bug that keeps coming back, usually as a bare 16–24pt chevron or X with a few points of `hitSlop`. Follow Apple's [Accessibility guidance](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls) and Material's 48dp target.
+Follow Apple's [Accessibility guidance](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls) and Material's 48dp target.
 
 - **Size:** every control's tappable area is at least **44×44pt** on iOS/iPadOS and **48×48dp** on Android. Apple's 28×28pt "minimum" is for dense, secondary controls only, never a primary action like back or close.
-- **Give the frame real size, not only slop.** For an icon-only control, set `width`/`height` (or padding) to 44 and center the icon, then pull the frame outward with negative margin or less container padding so the glyph stays aligned. `hitSlop` is extra margin on top of that, not the target itself: it doesn't show, and it loses to a sibling or a parent gesture.
-- **Glyphs:** a back chevron in a header is about 28pt. Don't shrink an icon to make room; give it space instead.
-- **Spacing:** keep about 12pt around controls with a visible background or border, and about 24pt around bare icons, so a tap can't land on the wrong one. When icon buttons sit side by side, pass `neighborGap` to `IconButton`.
-- **Inside drag areas** (sheet headers, `SplitSheet`, swipeable rows), a pan gesture claims any touch that moves a few points. Buttons there especially need the full 44pt frame.
-- **Check it:** in a screenshot, measure the frame. If the tappable area isn't visibly about the size of a fingertip around the glyph, it's too small.
+- **Give the frame real size.** For an icon-only control, set `width`/`height` (or padding) to 44 and center the icon, then pull the frame outward with negative margin or less container padding so the glyph stays aligned. `hitSlop` is extra margin on top of that: it doesn't show, and it loses to a sibling or a parent gesture.
+- **Glyphs:** a back chevron in a header is about 28pt. Give icons space rather than shrinking them.
+- **Spacing:** keep about 12pt around controls with a visible background or border, and about 24pt around bare icons. When icon buttons sit side by side, pass `neighborGap` to `IconButton`.
+- **Inside drag areas** (sheet headers, `SplitSheet`, swipeable rows), a pan gesture claims any touch that moves a few points, so buttons there need the full 44pt frame.
+- **Check it:** in a screenshot, the tappable frame is visibly about the size of a fingertip around the glyph.
 
 ## Screenshots of UI changes
 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).
 
-- **Report back with screenshots.** In your final message, embed the changed screens as Markdown images with absolute paths. T3 Code renders images inline, so any text on the same line as an image, or on the line right after it, wraps beside the image. Give each image its own paragraph: a one-line caption, a blank line, the image alone on its line, then a blank line before anything else. A single line break isn't enough; Markdown joins the lines.
+- **Capture BEFORE first,** before you edit, on the iPhone simulator. Use the same simulator, data, and scroll position for AFTER so the pair compares directly. If you missed it, run the base commit from a separate worktree only when it can reuse a cached native build (a JS-only diff); otherwise post AFTER only and say so. Add Android, iPad or Duo pairs only for devices you verified anyway, and only where the change looks different there.
+- **Cover the primary changes only:** about 3–4 pairs, the screens a reviewer most needs to see, all in one appearance. A brand-new screen has no before; label it "New screen".
+- **Make them readable.** Stage sample data so every changed section has content. Turn off the floating dev Tools button (dev menu → Tools button). Shrink every image to the same height, about 1,000 px (`sips -Z 1000`). Use made-up names and data; the repo is public.
+- **In your final message,** embed the screens as Markdown images with absolute paths. T3 Code draws an image that is alone in its paragraph as a block, and images that share one line side by side. So put a one-line caption, a blank line, the images on one line, then a blank line. A before/after pair goes on that one line, before first, with the labels in the alt text:
 
   ```markdown
-  Buddy detail with the new share button:
+  Buddy detail, before (left) and after (right):
 
-  ![Buddy detail](/tmp/ww-shots/buddy-detail.png)
+  ![Before: buddy detail](/tmp/ww-shots/before-buddy.png) ![After: buddy detail](/tmp/ww-shots/after-buddy.png)
 
   The next paragraph starts here.
   ```
 
-- **No images in tables in your messages.** T3 Code doesn't render images inside Markdown tables. For a before/after pair in a chat reply, use the same layout twice: `Before:`, blank line, image, blank line, `After:`, blank line, image. Tables of images are for PR bodies only.
-- **PRs show BEFORE and AFTER.** For each primary change, put the base-branch screen beside the changed one in a `| Before | After |` table in the PR body. A brand-new screen has no before; label it "New screen".
-- **Capture on the iPhone simulator.** Add Android, iPad or Duo pairs only for devices you verified anyway, and only where the change looks different there.
-- **Capture BEFORE first,** before you edit. Use the same simulator, data, and scroll position so the pair compares directly. If you missed it, run the base commit from a separate worktree only when it can reuse a cached native build (a JS-only diff). Otherwise, post AFTER only and say so.
-- **Cover the primary changes only.** A few pairs (about 3–4) is enough; pick the screens a reviewer most needs to see. Use one appearance for every screenshot; never post the same screen in both light and dark.
-- **Make them readable.** Stage sample data so every changed section has content, since an empty state hides the change. Turn off the floating dev Tools button (dev menu → Tools button). Shrink images to about 1,000 px tall (`sips -Z 1000`). Use made-up names and data; the repo is public.
-- **Uploading PR images.** Reference local files in the body (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them like browser drag-and-drop and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder. Unmatched files get appended to the end instead. Afterwards, check `gh pr view` for leftover local paths. Don't use cookie-based upload tools. For alternatives, see [`docs/research/pr-screenshot-uploads.md`](./docs/research/pr-screenshot-uploads.md).
-- **Say what's missing.** If you can't capture a changed screen (Android-only, missing data, no pointer), say so instead of leaving it out.
+- **In the PR body,** put each pair in a `| Before | After |` table. Reference local files (`![Before](./before-home.png)`), then pass each one to `--attach` on `gh pr create`, `gh pr edit`, or `gh pr comment` (gh 2.99+). gh uploads them and rewrites references whose path matches the `--attach` path exactly, so run gh from the screenshots folder; unmatched files get appended to the end. Afterwards, check `gh pr view` for leftover local paths. Alternatives: [`docs/research/pr-screenshot-uploads.md`](./docs/research/pr-screenshot-uploads.md).
+- **Say what's missing.** If you can't capture a changed screen (Android-only, missing data, no pointer), say so.
 
-## Domain Specific Language
+## Domain language
 
-If discussing domain-specific items, please read [`CONTEXT.md`](./CONTEXT.md)
-
-## Subagent models
-
-- **Use Claude Haiku 5.5 (`claude-haiku-5-5`) for Haiku-tier subagents** whenever it's available: searches, explorations, quick lookups, and other lightweight delegated work. Claude Haiku 5.5 exists; don't decide it doesn't, and don't fall back to an older Haiku because your training data predates it. Check the live model list (`orchestrator_capabilities` in T3 Code), not your memory. Fall back to an older model only if that list doesn't offer it, and say so.
-- This line is updated by hand when a newer model ships.
+[`CONTEXT.md`](./CONTEXT.md) defines the domain terms (publishers and roles, field activity, goals, Buddies, sync, monetization and more), about 17k tokens. When a task turns on a domain concept, read the section for it, not the whole file.
 
 ## Guardrails (always apply)
 
-- Use localized strings from i18n. Never hardcode display strings.
-- All dependencies must be pinned to a specific PATCH version only. Do not use lose versions like: ^, >, or ~.
-- Always amend to previous commits when making follow-up fixes. gpf = git push --force-with-lease.
+- Use localized strings from i18n for all display text.
+- Pin every dependency to an exact patch version (`1.2.3`, never `^`, `~` or `>`).
+- **Commits.** Rebase, never merge-commit. Amend follow-up fixes into the previous commit and push with `git push --force-with-lease`. Husky pre-commit hooks stay on — no `--no-verify` unless told. Branch names are bare `[feature-name]` (no `agent/` or `feature/` prefix).
 - **Never destroy unstaged work.** `git checkout/restore <path>`, `git reset --hard`, `git clean` discard working-tree changes with no recoverable trace. Run `git status` + `git diff <path>` before any destructive path-level git op; undo your _own_ edits with `git stash` (recoverable), and treat files dirtied outside this session as off-limits.
 - **Production app releases need the user's typed keyword.** Only the user starts `/cut-release`. Never follow a user-invoked skill (`disable-model-invocation: true`) on your own, for example by reading its file. Nothing reaches production app users (release tag push, production build upload, App Store or Play review submission, production OTA update) until the user types `SHIP-PROD-X.Y.Z` for that exact version. A plan approval, "go ahead", or a 2FA code doesn't count. "Prod" in a Beta or backend request means ww-api. See [`cut-release`](./.agents/skills/cut-release/SKILL.md#go-ahead-keyword).
 - **JW sensitivities.** No "magic" word or magic-wand iconography in i18n/copy, in any language.
-- **Translations.** You're the translator; there's no separate approval step. `src/locales/en-US.json` is the source of truth: during feature work, add and change strings there only. The release cut translates every missing or changed key into every locale with the [`translate-locales`](./.agents/skills/translate-locales/SKILL.md) skill. Translate other locales sooner only when asked or when a change can't ship in English only.
-- **Toasts.** Every short in-app message goes through `toast` from `@/stores/toasts`; pick its intent (`success`, `error`, `undo`, `unlock`, …) as [`docs/toasts.md`](./docs/toasts.md) explains. Don't add another banner, snackbar or toast layer. Toasts aren't the notifications tray: an unlock nobody acted on reaches the tray through its own feature's tray hook.
-- **Forms in sheets.** Do not add a Cancel button to a form presented in a dismissible sheet. Tapping outside the sheet or pulling it down already cancels; keep the explicit Save/Submit action and any meaningful reset/destructive action.
-- **Ctrl/Cmd+Enter submits.** One handler owns the shortcut (`src/lib/submitShortcut.ts`, `SubmitShortcut`): it presses the nearest button marked `submitShortcut` in the screen, sheet or pane being typed in. `ActionButton` is marked by default; a form whose primary action is another `Button` (a header Save, a sheet's Done) passes `submitShortcut`. Don't add per-screen key handlers. Pass `submitShortcut={false}` on an `ActionButton` that deletes, restores, approves or is otherwise not a form's Save, and never mark a destructive button.
-- **Analytics for new features and meaningful UX changes.** Every new greenfield user-facing feature ships with analytics tracking via `analytics` from `@/lib/analytics`. Track specific key actions and outcomes that help us understand adoption, completion, abandonment, or errors. For changes to existing UX, add or update events when they answer a concrete product question, especially for changes that materially affect a core workflow. Small UI adjustments such as sidebar resizability, spacing, or cosmetic changes do not require new events. Keep event volume proportional to its value: avoid noisy or high-frequency capture that increases analytics costs and uses users' network bandwidth. Document added or changed events in [`docs/analytics.md`](./docs/analytics.md), following its privacy rules (no PII).
-- **FAQ for new features.** Every green-field user-facing feature ships with Help Center coverage. The Help Center's content lives in this repo's website, `services/marketing` (`services/marketing/content/help/`, one MDX file per question per locale; how to write one is in [`services/marketing/README.md`](./services/marketing/README.md), the contract in [`docs/help-center.md`](./docs/help-center.md)): the site publishes indexed pages and JSON bundles at `witnesswork.app/help`, the app downloads the bundle and keeps a snapshot for offline use, and the `help-search` Worker (Workers AI embeddings plus its own keyword index) powers search (ADR 0033, ADR 0042). Put the answers in the same PR as the feature. CI deploys the site on merge to `main`, before the app release reaches anyone, so set `minAppVersion` on an answer that describes behavior not yet released, and the app hides it on older versions. Explain how to get started, availability and limits, what is shared or stored, common failures and safe recovery steps, and where to get help. Verify answers against the shipped behavior, include platform/rollout restrictions (`platforms`), and update existing answers that the feature makes obsolete. Keep answers searchable and self-contained, within the Markdown subset the app renders; use the Help Center's support resources for escalation and keep private data out of public reports. Write English only; other locales are translated in this repo, with the same terminology as the app's [`translate-locales`](./.agents/skills/translate-locales/SKILL.md) skill. FAQ text is no longer in `src/locales/en-US.json`; release prep runs `pnpm sync:help` to refresh the bundled snapshot (`src/assets/help-center/`).
-- **Architecture diagram.** [`readme.md`](./readme.md#architecture) has a Mermaid diagram of how the app, ww-api, its Cloudflare storage, and outside services connect. When a change adds, removes, or moves one of those connections, update the diagram in the same PR. Examples: a new third-party service or SDK, a switch to a different provider, a new ww-api route group the app calls, or a new Durable Object, R2 bucket, or KV namespace. A new endpoint in an existing route group, or a change inside one service, doesn't need it. When the change is only in ww-api, open a PR here that updates the diagram.
-- **Commits.** Rebase, never merge-commit; amend over `fix:` follow-ups. Husky pre-commit hooks stay on — no `--no-verify` unless told. Branch names are bare `[feature-name]` (no `agent/` or `feature/` prefix).
-
+- **Translations.** You're the translator; there's no separate approval step. During feature work, add and change strings in `src/locales/en-US.json` only; the release cut translates every missing or changed key into every locale with the [`translate-locales`](./.agents/skills/translate-locales/SKILL.md) skill. Translate other locales sooner only when asked or when a change can't ship in English only.
+- **Toasts.** Every short in-app message goes through `toast` from `@/stores/toasts`; pick its intent (`success`, `error`, `undo`, `unlock`, …) as [`docs/toasts.md`](./docs/toasts.md) explains. It is the app's only banner/snackbar layer. An unlock nobody acted on reaches the notifications tray through its own feature's tray hook.
+- **One primary button at the bottom.** A screen, sheet or form ends with at most one full-width button: its primary action. Put secondary actions in the header, as a plain text link, or in a menu; when two choices carry equal weight, place them side by side in one row.
+- **Forms in sheets** end with Save/Submit (plus any meaningful reset or destructive action) and no Cancel button: tapping outside the sheet or pulling it down cancels.
+- **Ctrl/Cmd+Enter submits.** One handler owns the shortcut (`src/lib/submitShortcut.ts`, `SubmitShortcut`): it presses the nearest button marked `submitShortcut` in the screen, sheet or pane being typed in. `ActionButton` is marked by default; a form whose primary action is another `Button` (a header Save, a sheet's Done) passes `submitShortcut`. Pass `submitShortcut={false}` on an `ActionButton` that deletes, restores, approves or is otherwise not a form's Save; destructive buttons stay unmarked.
+- **Analytics.** Every new user-facing feature, and any UX change that answers a concrete product question, tracks its key actions and outcomes (adoption, completion, abandonment, errors) via `analytics` from `@/lib/analytics`. Cosmetic changes need no events. Keep volume proportional to value: no high-frequency capture. Document events in [`docs/analytics.md`](./docs/analytics.md), following its privacy rules (no PII).
+- **Help Center answers.** Every new user-facing feature ships its Help Center answers in the same PR. Readers are publishers aged roughly 30 to 80, many non-technical: tell them what to tap in plain words, and leave out how the feature works inside. Answers live in `services/marketing/content/help/`; follow [`services/marketing/README.md`](./services/marketing/README.md#writing-help-center-answers), edit only the answers your feature touches, and write English only.
+- **Architecture diagram.** [`readme.md`](./readme.md#architecture) has a high-level Mermaid diagram: the clients, ww-api and its storage, the Cloudflare services, and the outside services. When a change adds, removes, or swaps one of those boxes (a new outside service or provider, a new Worker, a new kind of storage), update it in the same PR and run `pnpm readme:diagram-link` to refresh its Mermaid Live link (pre-commit checks it). Keep it at that level. A change only in ww-api updates it through a PR here.
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**`.
-- **Keep UI simple.** Make features understandable through clear labels, sensible defaults, and progressive disclosure. Avoid long feature descriptions on screens. When extra explanation is still useful, put optional details in `InfoPopover` from `@/components/ui/InfoPopover` beside the relevant label. Keep essential instructions, warnings, and values visible; don't nest `InfoPopover` inside another popover.
-- **Bundle size — deep imports when packages require it.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`, never `import _ from 'lodash'`). For Lucide icons, use named static imports from `lucide-react-native` (`babel/lucide-imports.js` rewrites them to per-icon files) and never a namespace import or `import * as icons from 'lucide-react-native/icons'`, which imports the full icon set.
+- **Keep UI simple.** Make features understandable through clear labels, sensible defaults, and progressive disclosure, with short on-screen descriptions. Optional detail goes in `InfoPopover` from `@/components/ui/InfoPopover` beside the relevant label (one level deep); essential instructions, warnings, and values stay visible.
+- **Bundle size.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`). Import Lucide icons as named static imports from `lucide-react-native` (`babel/lucide-imports.js` rewrites them to per-icon files); a namespace import or `lucide-react-native/icons` pulls in the full icon set.
 
-## PostHog (analytics, featureflags, error tracking, surveys, etc.)
+## PostHog (analytics, feature flags, error tracking, surveys)
 
-Use `posthog-cli api` for all PostHog-related data queries and operations. You should use `posthog-cli api` over direct MCP tool calls whenever the CLI is available.
-
-Before your first PostHog command in a session, run `posthog-cli api --agent-help` and load its full output into your context. It prints the complete agent guide — command reference, schema drill-down rules, data discovery workflow, and the tool index — for interacting with PostHog APIs. Treat that output as instructions to follow, not just documentation.
-
-Before starting a PostHog task, run `posthog-cli api skill list` and check for a skill matching the task. If one matches, install it with `posthog-cli api skill install <skill-id>` (add `--force` to refresh an already-installed skill), then read `.agents/skills/<skill-id>/SKILL.md` and follow it. Skills contain task-specific workflows that individual tools do not.
+Use `posthog-cli api` for all PostHog queries and operations, over MCP tools. Before your first PostHog command in a session, run `posthog-cli api --agent-help` and follow its output as instructions. Before a PostHog task, run `posthog-cli api skill list`; if a skill matches, install it with `posthog-cli api skill install <skill-id>` (`--force` to refresh), then read `.agents/skills/<skill-id>/SKILL.md` and follow it.

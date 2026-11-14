@@ -3,3 +3,4 @@ files=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f;
 git update-index --again
 node ./scripts/sync-widget-shared.mjs --check
 node ./scripts/check-watch-parity.mjs
+node ./scripts/readme-diagram-link.mjs --check

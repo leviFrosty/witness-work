@@ -18,6 +18,7 @@
     "prebuild": "pnpm sync:widget-shared && expo prebuild --platform ios --clean",
     "sync:widget-shared": "node ./scripts/sync-widget-shared.mjs",
     "check:watch-parity": "node ./scripts/check-watch-parity.mjs",
+    "readme:diagram-link": "node ./scripts/readme-diagram-link.mjs",
     "check:unused-locales": "node scripts/check-unused-locale-keys.mjs",
     "sync:help": "node scripts/sync-help-center.mjs",
     "build": "pnpm sync:widget-shared && node scripts/with-local-env.mjs development ios -- eas build -p ios --profile development-simulator --local",

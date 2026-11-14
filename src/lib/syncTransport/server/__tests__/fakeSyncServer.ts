@@ -5,12 +5,32 @@ export type FakeSyncServer = ReturnType<typeof createFakeSyncServer>
 
 type SlotPlatform = 'ios' | 'android' | 'dev' | 'web'
 
+type Change = {
+  sequence: number
+  changeId: string
+  createdAt: number
+  blob: string
+}
+
 type Slot = {
   bytes: Uint8Array
   etag: string
   updatedAt: number
 
   platform: SlotPlatform
+
+  floor: number
+  changedAt: number
+  tail: Change[]
+}
+
+export type FakeLiveSocket = {
+  send: (data: string) => void
+
+  onMessage: ((message: Record<string, unknown>) => void) | null
+  close: () => void
+
+  asked: number[]
 }
 
 type Photo = {
@@ -114,7 +134,41 @@ export function createFakeSyncServer() {
     requestBodies: [] as Array<Record<string, unknown>>,
 
     deletedSlots: [] as string[],
+
+    changes: false,
+
+    snapshotReaders: false,
+
+    tailLimit: 200,
+
+    changePageSize: 500,
+
+    changePuts: [] as number[],
+
+    basePuts: [] as Array<{ slotId: string; covers: number | null }>,
+
+    failChangePuts: null as { code: string; status: number } | null,
   }
+
+  const sockets = new Set<{
+    account: string
+    slotId: string
+    subscribed: boolean
+    live: FakeLiveSocket
+  }>()
+  const deliver = (
+    account: string,
+    exceptSlotId: string | null,
+    message: (socket: { subscribed: boolean }) => Record<string, unknown> | null
+  ) => {
+    for (const socket of [...sockets]) {
+      if (socket.account !== account || socket.slotId === exceptSlotId) continue
+      const body = message(socket)
+      if (body) socket.live.onMessage?.(body)
+    }
+  }
+  const notifyChanged = (account: string, exceptSlotId: string | null) =>
+    deliver(account, exceptSlotId, () => ({ type: 'changed', seq }))
 
   const slotsOf = (account: string) => {
     let slots = accounts.get(account)
@@ -162,6 +216,7 @@ export function createFakeSyncServer() {
         supporter: state.supporters.has(account),
         photos: state.photos,
         requestedAt: requests.get(account) ?? null,
+        changes: state.changes,
       })
     if (op === 'sync/request') {
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -216,9 +271,14 @@ export function createFakeSyncServer() {
         slots.clear()
         photos.clear()
       }
-      return json({ ok: true, seq: ++seq })
+      ++seq
+      notifyChanged(account, null)
+      return json({ ok: true, seq })
     }
-    if (state.failReads && (op === 'sync/list' || op === 'sync/get'))
+    if (
+      state.failReads &&
+      (op === 'sync/list' || op === 'sync/get' || op === 'sync/changes/list')
+    )
       throw new TypeError('Network request failed')
     if (state.failPhotoDeletes && op === 'sync/photos/delete')
       throw new TypeError('Network request failed')
@@ -242,7 +302,10 @@ export function createFakeSyncServer() {
         op: 'delete',
         slotId: headers.get('x-ww-slot-id'),
       })
-      if (deleted) ++seq
+      if (deleted) {
+        ++seq
+        notifyChanged(account, headers.get('x-ww-slot-id'))
+      }
       return json({ ok: true, usage: usageOf(account) })
     }
     if (op === 'sync/photos/usage' && method === 'GET')
@@ -411,28 +474,135 @@ export function createFakeSyncServer() {
         )
           return refuse('precondition_failed', 412)
 
+        const coversHeader = headers.get('x-ww-covers-sequence')
+        const covers = coversHeader === null ? null : Number(coversHeader)
+        if (
+          covers !== null &&
+          (!Number.isSafeInteger(covers) || covers < 0 || reseal !== null)
+        )
+          return refuse('bad_request', 400)
         const updatedAt = reseal
           ? existing!.updatedAt
           : (clock = Math.max(clock + 1, Date.now()))
+        ++seq
+        state.basePuts.push({ slotId, covers })
         slots.set(slotId, {
           bytes,
           etag,
           updatedAt,
           platform: reseal ? existing!.platform : state.platform,
+          floor: reseal
+            ? existing!.floor
+            : covers === null
+              ? seq
+              : Math.max(existing?.floor ?? 0, Math.min(covers, seq)),
+          changedAt: reseal ? existing!.changedAt : updatedAt,
+          tail: reseal
+            ? existing!.tail
+            : covers === null
+              ? []
+              : (existing?.tail ?? []).filter(
+                  (change) => change.sequence > covers
+                ),
         })
         if (!reseal) {
           ended.delete(account)
           endedSlots.delete(putKey)
         }
+        notifyChanged(account, slotId)
         return json({
           ok: true,
           etag,
           size: bytes.length,
           updatedAt,
-          seq: ++seq,
+          seq,
+          floorSequence: slots.get(slotId)!.floor,
         })
       }
+      case 'sync/changes/put': {
+        if (!state.changes) return refuse('changes_disabled', 503)
+        if (state.failChangePuts) {
+          const { code, status } = state.failChangePuts
+          state.failChangePuts = null
+          return refuse(code, status)
+        }
+        const body = JSON.parse(String(init?.body)) as {
+          slotId: string
+          changeId: string
+          blob: string
+        }
+        const slot = slots.get(body.slotId)
+        if (!slot) return refuse('no_slot', 409)
+        const answer = (sequence: number) =>
+          json({
+            ok: true,
+            sequence,
+            tailCount: slot.tail.length,
+            tailBytes: slot.tail.reduce(
+              (sum, change) => sum + Math.floor((change.blob.length * 3) / 4),
+              0
+            ),
+            snapshotReaders: state.snapshotReaders,
+            changedAt: slot.changedAt,
+          })
+        const first = slot.tail.find(
+          (change) => change.changeId === body.changeId
+        )
+        if (first) return answer(first.sequence)
+        const bytes = Math.floor((body.blob.length * 3) / 4)
+        if (bytes % 256 !== 0 || !/^[A-Za-z0-9_-]{22}$/.test(body.changeId))
+          return refuse('bad_request', 400)
+        if (slot.tail.length >= state.tailLimit) return refuse('tail_full', 409)
+        const createdAt = (clock = Math.max(clock + 1, Date.now()))
+        const change = {
+          sequence: ++seq,
+          changeId: body.changeId,
+          createdAt,
+          blob: body.blob,
+        }
+        slot.tail.push(change)
+        slot.changedAt = createdAt
+        state.changePuts.push(bytes)
+        deliver(account, body.slotId, (socket) =>
+          socket.subscribed
+            ? {
+                type: 'change',
+                change: { ...change, slotId: body.slotId, keyEpoch: 0 },
+              }
+            : null
+        )
+        return answer(change.sequence)
+      }
+      case 'sync/changes/reseal': {
+        if (!state.changes) return refuse('changes_disabled', 503)
+        if (state.resealForbidden) return refuse('forbidden', 403)
+        const body = JSON.parse(String(init?.body)) as {
+          sequence: number
+          changeId: string
+          blob: string
+        }
+        for (const slot of slots.values()) {
+          const change = slot.tail.find(
+            (each) =>
+              each.sequence === body.sequence && each.changeId === body.changeId
+          )
+          if (!change) continue
+          change.blob = body.blob
+          return json({ ok: true, sequence: change.sequence })
+        }
+        return refuse('not_found', 404)
+      }
+      case 'sync/changes/list': {
+        if (!state.changes) return refuse('changes_disabled', 503)
+        const body = JSON.parse(String(init?.body)) as {
+          slotId: string
+          afterSequence: number
+        }
+        return json({ ok: true, ...catchUp(account, body) })
+      }
       case 'sync/list':
+        if (headers.get('x-ww-sync-changes') !== '1')
+          state.snapshotReaders = true
         return json({
           ok: true,
           seq,
@@ -460,9 +630,79 @@ export function createFakeSyncServer() {
     return refuse('not_found', 404)
   }
 
+  const catchUp = (
+    account: string,
+    asked: { slotId: string; afterSequence: number }
+  ) => {
+    const slots = slotsOf(account)
+    const all = [...slots]
+      .filter(([slotId]) => slotId !== asked.slotId)
+      .flatMap(([slotId, slot]) =>
+        slot.tail
+          .filter((change) => change.sequence > asked.afterSequence)
+          .map((change) => ({ ...change, slotId, keyEpoch: 0 }))
+      )
+      .sort((a, b) => a.sequence - b.sequence)
+    return {
+      sequence: seq,
+      slots: [...slots].map(([slotId, slot]) => ({
+        slotId,
+        etag: slot.etag,
+        size: slot.bytes.length,
+        updatedAt: slot.updatedAt,
+        platform: slot.platform,
+        floorSequence: slot.floor,
+        changedAt: slot.changedAt,
+      })),
+      changes: all.slice(0, state.changePageSize),
+      more: all.length > state.changePageSize,
+      snapshotReaders: state.snapshotReaders,
+      requestedAt: requests.get(account) ?? null,
+      photos: state.photos,
+    }
+  }
+
+  const openSocket = (account: string, slotId: string): FakeLiveSocket => {
+    const live: FakeLiveSocket = {
+      asked: [],
+      onMessage: null,
+      send(data) {
+        const message = JSON.parse(data) as {
+          type?: string
+          afterSequence?: number
+        }
+        if (message.type !== 'sync' || !sockets.has(entry)) return
+        if (!state.changes) {
+          live.onMessage?.({ type: 'error', error: 'changes_disabled' })
+          return
+        }
+        const afterSequence = message.afterSequence ?? 0
+        live.asked.push(afterSequence)
+        entry.subscribed = true
+        const page = catchUp(account, { slotId, afterSequence })
+        queueMicrotask(() => live.onMessage?.({ type: 'sync', ...page }))
+      },
+      close() {
+        sockets.delete(entry)
+      },
+    }
+    const entry = { account, slotId, subscribed: false, live }
+    sockets.add(entry)
+    return live
+  }
+
   return {
     state,
     fetch: fetchImpl,
+    openSocket,
+
+    hello: (live: FakeLiveSocket) => live.onMessage?.({ type: 'hello', seq }),
+
+    tail: (account: string, slotId: string) =>
+      slotsOf(account).get(slotId)?.tail ?? [],
+
+    floor: (account: string, slotId: string) =>
+      slotsOf(account).get(slotId)?.floor ?? null,
 
     seq: () => seq,
 
@@ -505,13 +745,16 @@ export function createFakeSyncServer() {
 
     seed: (account: string, slotId: string, bytes: Uint8Array) => {
       const updatedAt = (clock = Math.max(clock + 1, Date.now()))
+      seq++
       slotsOf(account).set(slotId, {
         bytes,
         etag: toB64u(sha256(bytes)),
         updatedAt,
         platform: state.platform,
+        floor: seq,
+        changedAt: updatedAt,
+        tail: [],
       })
-      seq++
     },
 
     slotUpdatedAt: (account: string, slotId: string) =>

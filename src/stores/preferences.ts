@@ -528,6 +528,8 @@ export const PREFERENCE_DEFAULTS = {
 
   cloudSyncEntitled: null as boolean | null,
 
+  cloudSyncChanges: null as boolean | null,
+
   cloudSyncPhotos: null as boolean | null,
 
   cloudSyncRequestAnswered: null as number | null,

@@ -72,6 +72,7 @@ import {
   activeSyncTransport as syncTransport,
   addActiveAvailabilityListener,
   addActiveRemoteChangeListener,
+  registeredCloudSyncTransport,
   usesCloudSync,
 } from '@/lib/syncTransport/provider'
 import useContacts from '@/stores/contactsStore'
@@ -179,6 +180,10 @@ import { keyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import { referencedNoteImageIds } from '@/stores/noteImages'
 
 const PUSH_DEBOUNCE_MS = 5000
+
+const CHANGE_PUSH_DEBOUNCE_MS = 300
+const CHANGE_PUSH_MAX_WAIT_MS = 2_000
+const CHANGE_PUSH_INTERVAL_MS = 2_000
 
 const FOREGROUND_CATCH_UP_MS = 30_000
 
@@ -1642,9 +1647,10 @@ async function pushInner(reason: string, ifChanged: boolean): Promise<boolean> {
       preferenceKeys: Object.keys(payload.preferencesStore.values).length,
     })
     const transport = syncTransport()
-    const snapshot = transport.writeConfirmsUpload
-      ? publishedSnapshot(payload)
-      : null
+    const snapshot =
+      transport.writeConfirmsUpload && !transport.skipsUnchangedWrites
+        ? publishedSnapshot(payload)
+        : null
     const published =
       ifChanged && snapshot ? unchangedSince(snapshot, deviceId) : null
     if (published) perf.count('sync:push-unchanged')
@@ -1652,7 +1658,10 @@ async function pushInner(reason: string, ifChanged: boolean): Promise<boolean> {
       ? published.modifiedAt
       : await withTransportTimeout(
           'write',
-          transport.write(filename, json),
+          transport.write(filename, json, {
+            compact: reason !== 'store-change',
+            fold: reason === 'key-change',
+          }),
           transport.writeTimeoutMs
         )
     if (!published)
@@ -1927,18 +1936,66 @@ async function checkUploadInner(): Promise<UploadVerdict | null> {
 const analyticsReason = (issue: 'icloud-full' | 'upload-failed') =>
   issue === 'icloud-full' ? 'icloud_full' : 'other'
 
-const debouncedPush = debounce(
-  () => {
-    pushScheduled = false
+const pushStoreChange = () => {
+  pushScheduled = false
 
-    if (!usePreferences.getState().iCloudSyncPendingPush) {
-      perf.count('sync:push-skipped')
+  if (!usePreferences.getState().iCloudSyncPendingPush) {
+    perf.count('sync:push-skipped')
+    return
+  }
+  void push('store-change', { ifChanged: true })
+}
+
+const debouncedSnapshotPush = debounce(pushStoreChange, PUSH_DEBOUNCE_MS, {
+  leading: false,
+  trailing: true,
+})
+
+let lastChangePushAt = -Infinity
+let changePushTimer: ReturnType<typeof setTimeout> | null = null
+
+const debouncedChangePush = debounce(
+  () => {
+    const wait = lastChangePushAt + CHANGE_PUSH_INTERVAL_MS - Date.now()
+    if (wait <= 0) {
+      lastChangePushAt = Date.now()
+      pushStoreChange()
       return
     }
-    void push('store-change', { ifChanged: true })
+    if (changePushTimer) return
+    changePushTimer = setTimeout(() => {
+      changePushTimer = null
+      lastChangePushAt = Date.now()
+      pushStoreChange()
+    }, wait)
   },
-  PUSH_DEBOUNCE_MS,
-  { leading: false, trailing: true }
+  CHANGE_PUSH_DEBOUNCE_MS,
+  { leading: false, trailing: true, maxWait: CHANGE_PUSH_MAX_WAIT_MS }
+)
+
+const debouncedPush = Object.assign(
+  () =>
+    syncTransport().skipsUnchangedWrites
+      ? debouncedChangePush()
+      : debouncedSnapshotPush(),
+  {
+    flush() {
+      debouncedSnapshotPush.flush()
+      debouncedChangePush.cancel()
+      if (changePushTimer) clearTimeout(changePushTimer)
+      changePushTimer = null
+      if (pushScheduled) {
+        lastChangePushAt = Date.now()
+        pushStoreChange()
+      }
+    },
+    cancel() {
+      debouncedSnapshotPush.cancel()
+      debouncedChangePush.cancel()
+      if (changePushTimer) clearTimeout(changePushTimer)
+      changePushTimer = null
+    },
+  }
 )
 
 function schedulePush() {
@@ -2724,9 +2781,15 @@ export function installiCloudSync(): () => void {
 
     if (pushScheduled) {
       debouncedPush.flush()
+    } else if (canSync() && syncTransport().wantsCompaction?.()) {
+      void push('compact', { ifChanged: true })
     }
   }
   const appStateSub = AppState.addEventListener('change', onAppState)
+
+  registeredCloudSyncTransport()?.setPushRequester?.(() => {
+    if (usesCloudSync() && canSync()) void push('compact', { ifChanged: true })
+  })
 
   const reconnectSub = addReconnectListener(() => {
     resetPushBackoff()
@@ -2820,6 +2883,7 @@ export function installiCloudSync(): () => void {
     resetPushBackoff()
     cancelUploadChecks()
     debouncedPush.cancel()
+    registeredCloudSyncTransport()?.setPushRequester?.(null)
     pushScheduled = false
     lastCatchUpPass = null
     installed = false

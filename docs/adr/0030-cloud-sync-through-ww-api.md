@@ -1,11 +1,13 @@
 ---
 status: accepted
-superseded-by: [0040]
+superseded-by: [0040, 0060]
 ---
 
 # Cloud Sync: end-to-end encrypted, realtime sync through ww-api
 
 > Amended by [ADR 0040](./0040-sync-is-free-and-cloud-sync-carries-photos.md): sync is free for everyone (replacing §6's entitlement) and Cloud Sync carries photos (replacing §9's photo phase).
+>
+> Partly superseded by [ADR 0060](./0060-cloud-sync-sends-record-changes.md): devices send record changes and the snapshot becomes the base (§9's deltas), and the live socket carries those changes (replacing §5's "never data").
 
 ## Context
 

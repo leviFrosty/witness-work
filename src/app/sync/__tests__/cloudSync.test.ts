@@ -16,7 +16,11 @@ const runtime = vi.hoisted(() => ({
     string,
     Map<string, { accountId: string; etag: string; blob: Uint8Array }>
   >,
+
+  changes: {} as Record<string, Map<string, string>>,
 }))
+
+const CHANGES_EVERYWHERE = process.env.WW_SYNC_CHANGES === '1'
 
 vi.mock('react-native', () => ({
   Platform: {
@@ -87,11 +91,14 @@ async function device(
     option = 'cloud',
     account = 'family',
     entitled = true,
+    changes = CHANGES_EVERYWHERE,
   }: {
     os?: 'ios' | 'android' | 'web'
     option?: Option
     account?: string
     entitled?: boolean
+
+    changes?: boolean
   } = {}
 ) {
   vi.resetModules()
@@ -224,7 +231,22 @@ async function device(
   const accountKey = new Uint8Array(32).fill(account.length)
   const accountId = `acct-${account}`.padEnd(22, '0')
   const slots = (runtime.slots[name] ??= new Map())
+  const kept = (runtime.changes[name] ??= new Map())
+  if (changes) server.state.changes = true
   const cloudTransport = createServerTransport({
+    changes: () => changes,
+    changeStore: web
+      ? undefined
+      : {
+          get: (key) => kept.get(key) ?? null,
+          set: (key, value) => {
+            kept.set(key, value)
+          },
+          delete: (key) => {
+            kept.delete(key)
+          },
+          clear: () => kept.clear(),
+        },
     slotStore: web
       ? undefined
       : {
@@ -368,6 +390,7 @@ beforeEach(() => {
   runtime.files = {}
   runtime.mmkv = {}
   runtime.slots = {}
+  runtime.changes = {}
   runtime.appState = 'active'
   runtime.os = 'android'
   cryptoPauseMs = 0
@@ -736,8 +759,12 @@ describe('Switching between Cloud Sync and Google Drive', () => {
     const outcome = await phone.switchSyncOption('platform', 'settings')
     expect(outcome).toEqual({ outcome: 'switched', pending: false })
 
-    expect(server.state.log.filter((op) => op !== 'POST sync/list')).toEqual([
-      'POST sync/put',
+    expect(
+      server.state.log.filter(
+        (op) => op !== 'POST sync/list' && op !== 'POST sync/changes/list'
+      )
+    ).toEqual([
+      CHANGES_EVERYWHERE ? 'POST sync/changes/put' : 'POST sync/put',
       'POST sync/delete',
     ])
 
@@ -2423,17 +2450,20 @@ describe('The web on Cloud Sync', () => {
     server.state.slotPutIntervalMs = 0
   })
 
-  it('doesn’t wait past its budget when the server asks for longer', async () => {
-    const browser = await device('browser', { os: 'web' })
-    server.state.slotPutIntervalMs = 30_000
-    expect(await browser.iCloudSync.push('manual')).toBe(true)
-    browser.usePreferences.setState({ iCloudSyncPendingPush: true })
-    const started = Date.now()
-    await browser.iCloudSync.flushPendingPush('sign-out')
-    expect(Date.now() - started).toBeLessThan(500)
-    expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(true)
-    server.state.slotPutIntervalMs = 0
-  })
+  it.skipIf(CHANGES_EVERYWHERE)(
+    'doesn’t wait past its budget when the server asks for longer',
+    async () => {
+      const browser = await device('browser', { os: 'web' })
+      server.state.slotPutIntervalMs = 30_000
+      expect(await browser.iCloudSync.push('manual')).toBe(true)
+      browser.usePreferences.setState({ iCloudSyncPendingPush: true })
+      const started = Date.now()
+      await browser.iCloudSync.flushPendingPush('sign-out')
+      expect(Date.now() - started).toBeLessThan(500)
+      expect(browser.usePreferences.getState().iCloudSyncPendingPush).toBe(true)
+      server.state.slotPutIntervalMs = 0
+    }
+  )
 
   it('sends an edit made while a push was going out, before signing out', async () => {
     const browser = await device('browser', { os: 'web' })
@@ -2602,36 +2632,36 @@ describe('The web on Cloud Sync', () => {
   })
 })
 
-describe('requests at launch', () => {
-  const relaunch = async (os: 'ios' | 'web') => {
-    const before = await device('returning', { os })
-    expect(await before.iCloudSync.push('manual')).toBe(true)
-    const slotId = before.slotId()
-    const launched = await device('returning', { os })
-    launched.usePreferences.setState({ iCloudDeviceId: slotId })
-    server.state.log.length = 0
-    return launched
+const relaunch = async (os: 'ios' | 'web') => {
+  const before = await device('returning', { os })
+  expect(await before.iCloudSync.push('manual')).toBe(true)
+  const slotId = before.slotId()
+  const launched = await device('returning', { os })
+  launched.usePreferences.setState({ iCloudDeviceId: slotId })
+  server.state.log.length = 0
+  return launched
+}
+const launch = async (
+  launched: Device,
+  afterwards: () => Promise<void> = async () => {}
+) => {
+  const uninstall = launched.installiCloudSync()
+  try {
+    launched.cloudTransport.notifyAvailabilityChange()
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    launched.cloudTransport.notifyAvailabilityChange()
+    await launched.iCloudSync.waitForSyncIdle()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await launched.iCloudSync.waitForSyncIdle()
+    await afterwards()
+  } finally {
+    uninstall()
   }
+}
+
+describe.skipIf(CHANGES_EVERYWHERE)('requests at launch', () => {
   const sync = () =>
     server.state.log.filter((op) => !op.includes('sync/photos'))
-
-  const launch = async (
-    launched: Device,
-    afterwards: () => Promise<void> = async () => {}
-  ) => {
-    const uninstall = launched.installiCloudSync()
-    try {
-      launched.cloudTransport.notifyAvailabilityChange()
-      await new Promise((resolve) => setTimeout(resolve, 5))
-      launched.cloudTransport.notifyAvailabilityChange()
-      await launched.iCloudSync.waitForSyncIdle()
-      await new Promise((resolve) => setTimeout(resolve, 50))
-      await launched.iCloudSync.waitForSyncIdle()
-      await afterwards()
-    } finally {
-      uninstall()
-    }
-  }
 
   it('lists once and uploads once on a phone, without reading its own slot', async () => {
     const phone = await relaunch('ios')
@@ -2914,3 +2944,147 @@ describe('requests at launch', () => {
 })
 
 const filenameOf = (slotId: string) => `witness-work-${slotId}.json`
+
+describe.runIf(CHANGES_EVERYWHERE)('record changes', () => {
+  const ops = () => {
+    const log = server.state.log.filter((op) => !op.includes('sync/photos'))
+    server.state.log.length = 0
+    return log
+  }
+  const dataOf = (state: object) =>
+    Object.fromEntries(
+      Object.entries(state).filter(([, value]) => typeof value !== 'function')
+    )
+  const reopen = async (d: Device) => {
+    const saved = {
+      preferences: dataOf(d.usePreferences.getState()),
+      contacts: dataOf(d.useContacts.getState()),
+      profile: dataOf(d.useProfile.getState()),
+      mileage: dataOf(d.useMileage.getState()),
+    }
+    const reborn = await device(d.name, { os: d.os, account: d.account })
+    reborn.usePreferences.setState(saved.preferences)
+    reborn.useContacts.setState(saved.contacts)
+    reborn.useProfile.setState(saved.profile)
+    reborn.useMileage.setState(saved.mileage)
+    server.state.log.length = 0
+    return reborn
+  }
+
+  it('launches with one catch-up and no upload', async () => {
+    const first = await relaunch('ios')
+    await launch(first)
+    const phone = await reopen(first)
+    await launch(phone)
+    expect(ops()).toEqual(['POST sync/changes/list'])
+    await phone.iCloudSync.catchUp('foreground')
+    expect(ops()).toEqual(['POST sync/changes/list'])
+  })
+
+  it('sends one small change for one edit, and nothing for none', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    phone.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    expect(ops()).toEqual(['POST sync/put'])
+
+    phone.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW),
+        contact('c2', 'Ben Ito', NOW + 1),
+      ] as never,
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    expect(ops()).toEqual(['POST sync/changes/put'])
+    expect(server.state.changePuts).toHaveLength(1)
+    expect(server.state.changePuts[0]).toBeLessThanOrEqual(512)
+
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    expect(ops()).toEqual([])
+  })
+
+  it('merges another device’s edit from the change, and does not send it back', async () => {
+    const tablet = await device('tablet', { os: 'ios' })
+    tablet.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    expect(await tablet.iCloudSync.push('manual')).toBe(true)
+    const phone = await device('phone', { os: 'android' })
+    await sync(phone)
+    expect(phone.contactNames()).toEqual(['Ada Reyes'])
+    ops()
+
+    tablet.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW),
+        contact('c2', 'Ben Ito', NOW + 1),
+      ] as never,
+    })
+    expect(await tablet.iCloudSync.push('manual')).toBe(true)
+    expect(ops()).toEqual(['POST sync/changes/put'])
+
+    await sync(phone)
+    expect(phone.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    expect(ops()).toEqual(['POST sync/changes/list'])
+
+    const later = await reopen(phone)
+    await launch(later)
+    expect(later.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+    expect(ops()).toEqual(['POST sync/changes/list'])
+  })
+
+  it('syncs with a device on a version from before record changes', async () => {
+    const old = await device('old', { os: 'ios', changes: false })
+    old.useContacts.setState({
+      contacts: [contact('c1', 'Ada Reyes', NOW)] as never,
+    })
+    await sync(old)
+    const phone = await device('phone', { os: 'android' })
+    await sync(phone)
+    expect(phone.contactNames()).toEqual(['Ada Reyes'])
+
+    phone.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW),
+        contact('c2', 'Ben Ito', NOW + 1),
+      ] as never,
+    })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    expect(server.tail('family', phone.slotId())).toEqual([])
+    await sync(old)
+    expect(old.contactNames()).toEqual(['Ada Reyes', 'Ben Ito'])
+
+    old.useContacts.setState({
+      contacts: [
+        contact('c1', 'Ada Reyes', NOW),
+        contact('c2', 'Ben Ito', NOW + 1),
+        contact('c3', 'Cy Park', NOW + 2),
+      ] as never,
+    })
+    await sync(old, phone)
+    expect(phone.contactNames()).toEqual(['Ada Reyes', 'Ben Ito', 'Cy Park'])
+  })
+
+  it('sends an edit 300 ms after it, not 5 seconds', async () => {
+    const phone = await device('phone', { os: 'ios' })
+    expect(await phone.iCloudSync.push('manual')).toBe(true)
+    const uninstall = phone.installiCloudSync()
+    try {
+      await phone.iCloudSync.waitForSyncIdle()
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      await phone.iCloudSync.waitForSyncIdle()
+      ops()
+      const edited = Date.now()
+      phone.useContacts
+        .getState()
+        .addContact(contact('c1', 'Ada Reyes', NOW) as never)
+      await vi.waitFor(() =>
+        expect(server.state.changePuts.length).toBeGreaterThan(0)
+      )
+      expect(Date.now() - edited).toBeLessThan(1_500)
+    } finally {
+      uninstall()
+    }
+  })
+})

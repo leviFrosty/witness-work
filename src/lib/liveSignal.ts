@@ -31,18 +31,27 @@ const IMMEDIATE_RECONNECT_MS = 10 * 1000
 
 type LiveMessage = { type: 'hello' | 'changed'; seq: number }
 
-function parseMessage(data: unknown): LiveMessage | 'pong' | null {
-  if (data === 'pong') return 'pong'
+function parseJson(data: unknown): Record<string, unknown> | null {
   if (typeof data !== 'string') return null
   try {
-    const message = JSON.parse(data) as Partial<LiveMessage>
-    if (
-      (message.type === 'hello' || message.type === 'changed') &&
-      typeof message.seq === 'number'
-    )
-      return { type: message.type, seq: message.seq }
-  } catch {}
-  return null
+    const message: unknown = JSON.parse(data)
+    return typeof message === 'object' &&
+      message !== null &&
+      !Array.isArray(message)
+      ? (message as Record<string, unknown>)
+      : null
+  } catch {
+    return null
+  }
+}
+
+function parseMessage(
+  json: Record<string, unknown> | null
+): LiveMessage | null {
+  return (json?.type === 'hello' || json?.type === 'changed') &&
+    typeof json.seq === 'number'
+    ? { type: json.type, seq: json.seq }
+    : null
 }
 
 export type LiveEvent =
@@ -73,6 +82,13 @@ export type LiveSignalDeps = {
   syncedSeq: () => number
 
   onChange: (seq?: number) => void
+
+  onMessage?: (
+    message: Record<string, unknown>,
+    send: (data: string) => void
+  ) => void
+
+  catchesUpOnHello?: () => boolean
 
   verify?: () => Promise<unknown>
   onEvent?: (event: LiveEvent) => void
@@ -196,22 +212,30 @@ export function createLiveSignal(deps: LiveSignalDeps): LiveSignal {
     live.onmessage = (event) => {
       if (stale()) return
       heard = true
-      const message = parseMessage(event.data)
-      if (message === 'pong') {
+      if (event.data === 'pong') {
         if (pongTimer) clearTimeout(pongTimer)
         pongTimer = null
         if (pingSentAt !== null)
           emit({ type: 'pong', rttMs: now() - pingSentAt })
         pingSentAt = null
-      } else if (message?.type === 'hello') {
+        return
+      }
+      const json = parseJson(event.data)
+      const message = parseMessage(json)
+      if (message?.type === 'hello') {
         failures = 0
         const behind = message.seq > deps.syncedSeq()
         emit({ type: 'hello', seq: message.seq, behind })
-        if (behind) changed(message.seq)
+        if (behind && !deps.catchesUpOnHello?.()) changed(message.seq)
       } else if (message?.type === 'changed') {
         emit({ type: 'changed', seq: message.seq })
         changed(null)
       }
+      if (json)
+        deps.onMessage?.(json, (data) => {
+          if (socket !== live) throw new Error('The live socket is closed')
+          live.send(data)
+        })
     }
     live.onerror = () => {}
     live.onclose = (event) => {

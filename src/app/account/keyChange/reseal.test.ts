@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { describe, expect, it, vi } from 'vitest'
-import { toB64u } from '@/lib/bytes'
+import { fromB64u, toB64u } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
 import type { KeyChangeRecord } from '@/lib/accountKey/keyChangeRecord'
 import {
@@ -11,9 +11,13 @@ import {
 } from '@/lib/serverAccount/backupCrypto'
 import {
   getSyncSlot,
+  listSyncChanges,
   listSyncSlots,
+  putSyncChange,
   putSyncSlot,
+  resealSyncChange,
 } from '@/lib/syncTransport/server/syncClient'
+import { openChange, sealChange } from '@/lib/syncTransport/server/changeCrypto'
 import {
   deriveSyncKey,
   openSyncBlob,
@@ -212,6 +216,9 @@ function setup(overrides: Partial<ResealStepDeps> = {}) {
         put: async (slotId, blob, put) => {
           await putSyncSlot(options, slotId, blob, put)
         },
+        changes: async () =>
+          (await listSyncChanges(options, 'key-change-reader', 0)).changes,
+        resealChange: (change) => resealSyncChange(options, change),
       }
     },
     backup: (accountKey) => {
@@ -294,6 +301,77 @@ describe('the re-seal step', () => {
     expect(record().reseal?.syncSlots.sort()).toEqual([OWN, TABLET].sort())
 
     expect(sessionKeys.every((key) => key === K2)).toBe(true)
+  })
+
+  it('re-seals the changes on top of other devices’ slots', async () => {
+    const { server, run } = setup()
+    server.state.changes = true
+    server.seed(BEARER, OWN, sealSync(K1, OWN))
+    server.seed(BEARER, TABLET, sealSync(K1, TABLET))
+    server.seed(BEARER, LAPTOP, sealSync(K1, LAPTOP))
+    const options = optionsFor(server)
+    const ids: Record<string, string> = {}
+    for (const [slotId, key] of [
+      [LAPTOP, K1],
+      [TABLET, K0],
+    ] as const) {
+      const changeId = toB64u(randomBytes(16))
+      ids[slotId] = changeId
+      await putSyncChange(options, {
+        slotId,
+        changeId,
+        blob: sealChange(
+          deriveSyncKey(key),
+          { v: 1, leaves: { from: slotId } },
+          { accountId: ACCOUNT, slotId, changeId },
+          randomBytes(24)
+        ),
+      })
+    }
+
+    await run()
+
+    for (const slotId of [LAPTOP, TABLET]) {
+      const [change] = server.tail(BEARER, slotId)
+      expect(
+        openChange(deriveSyncKey(K2), fromB64u(change.blob), {
+          accountId: ACCOUNT,
+          slotId,
+          changeId: ids[slotId],
+        })
+      ).toEqual({ v: 1, leaves: { from: slotId } })
+    }
+    const before = server.state.log.length
+    await run()
+    expect(
+      server.state.log.slice(before).filter((entry) => entry.includes('reseal'))
+    ).toEqual([])
+  })
+
+  it('leaves the changes once the server refuses re-seals', async () => {
+    const { server, run } = setup()
+    server.state.changes = true
+    server.seed(BEARER, TABLET, sealSync(K1, TABLET))
+    const changeId = toB64u(randomBytes(16))
+    await putSyncChange(optionsFor(server), {
+      slotId: TABLET,
+      changeId,
+      blob: sealChange(
+        deriveSyncKey(K1),
+        { v: 1 },
+        { accountId: ACCOUNT, slotId: TABLET, changeId },
+        randomBytes(24)
+      ),
+    })
+    server.state.resealForbidden = true
+    await expect(run()).resolves.toBeUndefined()
+    expect(() =>
+      openChange(
+        deriveSyncKey(K1),
+        fromB64u(server.tail(BEARER, TABLET)[0].blob),
+        { accountId: ACCOUNT, slotId: TABLET, changeId }
+      )
+    ).not.toThrow()
   })
 
   it('opens a slot an older key sealed through the key history', async () => {

@@ -93,6 +93,7 @@ const CLEARED_MMKV = [
   'pet-secrets',
   'stopwatch',
   'cloud-sync-slots',
+  'cloud-sync-changes',
 ]
 
 const KEPT_MMKV: Record<string, string> = {
@@ -246,6 +247,7 @@ describe('resetLocalData', () => {
         'notes-import-ledger',
         'pet-secrets',
         'cloud-sync-slots',
+        'cloud-sync-changes',
       ])
     )
     expect(native.stopwatchReset).toHaveBeenCalled()

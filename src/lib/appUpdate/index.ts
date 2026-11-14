@@ -23,13 +23,20 @@ export const checkAppConfig = createAppConfigCheck({
   now: Date.now,
 
   onConfig: ({ sync: read }) => {
-    const sync = read ?? { enabled: false, entitlement: 'supporter' as const }
-    const current = usePreferences.getState().cloudSyncConfig
+    const { changes, ...sync } = read ?? {
+      enabled: false,
+      entitlement: 'supporter' as const,
+      changes: false,
+    }
+    const { cloudSyncConfig: current, cloudSyncChanges } =
+      usePreferences.getState()
     if (
-      current?.enabled !== sync?.enabled ||
-      current?.entitlement !== sync?.entitlement
+      current?.enabled !== sync.enabled ||
+      current?.entitlement !== sync.entitlement
     )
       usePreferences.setState({ cloudSyncConfig: sync })
+    if (cloudSyncChanges !== changes)
+      usePreferences.setState({ cloudSyncChanges: changes })
   },
 })
 

@@ -1,7 +1,6 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { concatBytes, toB64u } from '@/lib/bytes'
 import { HttpError } from '@/lib/http/request'
-import type { BearerAccountOptions } from '@/lib/serverAccount/client'
 import {
   BackupOpenError,
   BACKUP_PLAINTEXT_VERSION,
@@ -20,6 +19,17 @@ import {
   sealPhotoMeta,
 } from '@/lib/syncTransport/server/photoCrypto'
 import { isCloudSyncPhotoFilename } from '@/lib/syncTransport/imageNames'
+import type {
+  ServerSyncAccess,
+  SlotStore,
+} from '@/lib/syncTransport/server/serverTypes'
+import {
+  type ChangeStore,
+  createRecordChanges,
+  isChangesDisabled,
+  type LiveSend,
+  type RecordChangeStats,
+} from '@/lib/syncTransport/server/recordChanges'
 import {
   BLOB_TIMEOUT_MS,
   deleteSyncPhotos,
@@ -34,6 +44,7 @@ import {
   putSyncPhoto,
   putSyncSlot,
   SYNC_LIMITS,
+  type SyncCatchUp,
   type SyncPhotoUsage,
   type SyncSlot,
 } from '@/lib/syncTransport/server/syncClient'
@@ -51,17 +62,10 @@ import {
   type TransportSubscription,
 } from '@/lib/syncTransport/types'
 
-export type ServerSyncAccess = {
-  accountId: string
-  syncKey: Uint8Array
-
-  photoKeys: PhotoKeys
-
-  olderSyncKeys?: readonly Uint8Array[]
-
-  olderPhotoKeys?: readonly PhotoKeys[]
-  options: BearerAccountOptions
-}
+export type {
+  ServerSyncAccess,
+  SlotStore,
+} from '@/lib/syncTransport/server/serverTypes'
 
 export type ServerSyncRefusal =
   | 'disabled'
@@ -77,29 +81,20 @@ export type PhotoFiles = {
   write: (path: string, bytes: Uint8Array) => Promise<void>
 }
 
-export type SlotStore = {
-  read: (
-    accountId: string,
-    slotId: string
-  ) => { etag: string; blob: Uint8Array } | null
-  write: (
-    accountId: string,
-    slotId: string,
-    etag: string,
-    blob: Uint8Array
-  ) => void
-  remove: (slotId: string) => void
-
-  prune: (accountId: string, keep: ReadonlySet<string>) => void
-  clear: () => void
-}
-
 export const MAX_STORED_SLOT_BYTES = 2 * 1024 * 1024
 
 export type ServerTransportDeps = {
   access: () => Promise<ServerSyncAccess>
 
   slotStore?: SlotStore
+
+  changeStore?: ChangeStore
+
+  changes?: () => boolean
+
+  onChangesRefused?: () => void
+
+  onCatchUp?: (status: Pick<SyncCatchUp, 'requestedAt' | 'photos'>) => void
 
   isAvailable: () => boolean
 
@@ -224,6 +219,8 @@ export function endedWebSlots(
   )
 }
 
+export type ServerLiveEvent = 'connecting' | 'openFailed' | 'closed' | 'stopped'
+
 export type ServerTransport = SyncTransport & {
   notifyRemoteChange: () => void
 
@@ -232,6 +229,14 @@ export type ServerTransport = SyncTransport & {
   lastSeq: () => number
 
   reset: () => void
+
+  readsChanges: () => boolean
+
+  liveEvent: (event: ServerLiveEvent) => void
+
+  liveMessage: (message: Record<string, unknown>, send: LiveSend) => void
+
+  changeStats: () => RecordChangeStats
 }
 
 export function createServerTransport(
@@ -403,6 +408,42 @@ export function createServerTransport(
   }
   const slotId = () => deps.slotId?.() ?? null
 
+  let pushRequester: (() => void) | null = null
+  let changesRefused = false
+  let usedChanges = false
+  const recordChanges = createRecordChanges({
+    slotStore: deps.slotStore,
+    changeStore: deps.changeStore,
+    access: () => access(),
+    accessId: (current) => `${current.accountId}.${keysFingerprint(current)}`,
+    ownSlotId: slotId,
+    randomBytes: deps.randomBytes,
+    deviceName: deps.deviceName,
+    platform: deps.platform,
+    now: deps.now,
+    onRemoteChange: () => transport.notifyRemoteChange(),
+    requestPush: () => pushRequester?.(),
+    onCatchUp: deps.onCatchUp,
+  })
+  const changesOn = () => {
+    if (deps.changes?.() !== true) {
+      changesRefused = false
+      return false
+    }
+    return !changesRefused
+  }
+  const refusedChanges = (error: unknown) => {
+    if (!isChangesDisabled(error)) return false
+    changesRefused = true
+    deps.onChangesRefused?.()
+    return true
+  }
+  const leaveChanges = () => {
+    if (!usedChanges) return
+    usedChanges = false
+    recordChanges.reset()
+  }
+
   const findUnderOtherName = async (
     current: ServerSyncAccess,
     filename: string,
@@ -428,6 +469,13 @@ export function createServerTransport(
   const transport: ServerTransport = {
     kind: 'cloud',
     writeConfirmsUpload: true,
+    get skipsUnchangedWrites() {
+      return changesOn()
+    },
+    wantsCompaction: () => changesOn() && recordChanges.wantsCompaction(),
+    setPushRequester(request) {
+      pushRequester = request
+    },
     get supportsBinaries() {
       return Boolean(deps.files) && (deps.photoSwitch?.() ?? null) !== null
     },
@@ -447,6 +495,20 @@ export function createServerTransport(
 
     async readFiles(include, options) {
       const current = await access()
+      if (changesOn()) {
+        usedChanges = true
+        try {
+          return await recordChanges.read(current, include, options, {
+            filenameForSlot,
+            newerPlaceholder: NEWER_PLACEHOLDER,
+            readOwnBase: (slotId, etag) =>
+              readSlot(current, { slotId, etag } as SyncSlot),
+          })
+        } catch (error) {
+          if (!refusedChanges(error)) return fail(error)
+        }
+      }
+      leaveChanges()
       let listing: Awaited<ReturnType<typeof listSyncSlots>>
       try {
         listing = await listSyncSlots(current.options)
@@ -475,11 +537,20 @@ export function createServerTransport(
       return { files, pending: [] }
     },
 
-    async write(filename, json) {
+    async write(filename, json, options) {
       const slotId = slotIdForFilename(filename)
       if (!slotId)
         throw new SyncTransportError('unknown', 'not a device snapshot name')
       const current = await access()
+      if (changesOn()) {
+        usedChanges = true
+        try {
+          return await recordChanges.write(current, slotId, json, options)
+        } catch (error) {
+          if (!refusedChanges(error)) return fail(error)
+        }
+      }
+      leaveChanges()
       const blob = sealSyncBlob(
         current.syncKey,
         {
@@ -518,12 +589,24 @@ export function createServerTransport(
       }
       cache.delete(slotId)
       forgetStoredSlot(slotId)
+      recordChanges.forgetSlot(slotId)
     },
 
     async deleteEndedWebSnapshots(merged) {
       const own = slotId()
       if (!own) return []
       const current = await access()
+      if (changesOn()) {
+        try {
+          return await recordChanges.deleteEndedWebSlots(
+            current,
+            merged,
+            filenameForSlot
+          )
+        } catch (error) {
+          return fail(error)
+        }
+      }
       let listing: Awaited<ReturnType<typeof listSyncSlots>>
       try {
         listing = await listSyncSlots(current.options)
@@ -553,6 +636,7 @@ export function createServerTransport(
       }
       cache = new Map()
       forgetStoredSlots()
+      recordChanges.reset()
     },
 
     async writeBinary(filename, sourcePath, phases) {
@@ -800,10 +884,21 @@ export function createServerTransport(
       const event = { available: deps.isAvailable() }
       for (const listener of [...availabilityListeners]) listener(event)
     },
-    lastSeq: () => seq,
+    lastSeq: () => (changesOn() ? recordChanges.cursor() : seq),
+    readsChanges: changesOn,
+    liveEvent(event) {
+      if (event === 'connecting') recordChanges.liveConnecting(true)
+      else recordChanges.liveClosed()
+    },
+    liveMessage(message, send) {
+      if (changesOn()) recordChanges.liveMessage(message, send)
+    },
+    changeStats: () => recordChanges.stats(),
     reset() {
       cache = new Map()
       forgetStoredSlots()
+      recordChanges.reset()
+      usedChanges = false
       photoFilenames = new Map()
       olderKeysByName = new Map()
       listedPhotos = new Map()

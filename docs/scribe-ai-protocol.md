@@ -343,7 +343,7 @@ interface ScribeContextWire {
    */
   days: string[]
   /**
-   * During setup, before the User has picked a role (Pick up where you left off
+   * During setup, before the User has picked a role (Bring in your records
    * can open Scribe AI), it's `not_chosen` with hours and no goal or cap, so
    * time is logged as said.
    */

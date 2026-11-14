@@ -100,6 +100,10 @@ vi.mock('@/lib/dates', () => ({ formatRelative: () => 'just now' }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/app/sync/payload', () => ({}))
+vi.mock('@/app/sync/cloudSyncRestore', () => ({
+  peekCloudSyncRestore: vi.fn(),
+}))
+vi.mock('@/stores/toasts', () => ({ toast: { success: vi.fn() } }))
 vi.mock('@/app/sync/iCloudSync', () => ({
   iCloudSync: {
     peekRemotePayload: vi.fn(),
@@ -151,6 +155,61 @@ afterEach(() => {
   act(() => renderer?.unmount())
   renderer = null
   vi.unstubAllGlobals()
+})
+
+describe('onboarding Cloud Sync restore', () => {
+  it('looks in Cloud Sync, restores, and says the app is ready', async () => {
+    const { default: ICloudRestore } = await import('./iCloudRestore')
+    const { iCloudSync } = await import('@/app/sync/iCloudSync')
+    const { peekCloudSyncRestore } = await import('@/app/sync/cloudSyncRestore')
+    const { toast } = await import('@/stores/toasts')
+    const { analytics } = await import('@/lib/analytics')
+    const remote = {
+      version: 1,
+      deviceId: 'peer',
+      deviceName: 'Pixel',
+      writtenAt: 1,
+      contactStore: { contacts: [], deletedContacts: [] },
+      conversationStore: { conversations: [] },
+      serviceReportStore: {
+        serviceReports: {},
+        dayPlans: [],
+        recurringPlans: [],
+      },
+      preferencesStore: { values: {}, updatedAt: {} },
+    } as never
+    vi.mocked(peekCloudSyncRestore).mockResolvedValue({
+      status: 'found',
+      remote,
+      account: ACCOUNT,
+    })
+    await act(async () => {
+      renderer = create(
+        <ICloudRestore provider='cloud' goBack={() => {}} goNext={() => {}} />
+      )
+    })
+    expect(iCloudSync.peekRemotePayload).not.toHaveBeenCalled()
+    expect(texts()).toContain('iCloudRestoreDescriptionCloud')
+
+    const restore = renderer!.root.find(
+      (node) => (node.type as unknown) === 'ActionButton'
+    )
+    await act(async () => {
+      await restore.props.onPress()
+    })
+    expect(iCloudSync.replaceLocalWithRemote).toHaveBeenCalledWith(remote)
+    expect(analytics.capture).toHaveBeenCalledWith('onboarding_completed', {
+      completion_method: 'cloud_sync',
+    })
+    expect(analytics.capture).toHaveBeenCalledWith(
+      'import_completed',
+      expect.objectContaining({ import_type: 'cloud_sync', mode: 'replace' })
+    )
+    expect(toast.success).toHaveBeenCalledWith(
+      'onboardingCloudSyncReady_title',
+      expect.objectContaining({ message: 'onboardingCloudSyncReady_message' })
+    )
+  })
 })
 
 describe('onboarding iCloud restore', () => {

@@ -22,7 +22,9 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
-import { platformSyncKey as syncKey } from '@/lib/syncCopy'
+import { optionSyncKey } from '@/lib/syncCopy'
+import type { TranslationKey } from '@/lib/locales'
+import { toast } from '@/stores/toasts'
 import {
   hasSyncTransport,
   syncTransport,
@@ -35,11 +37,17 @@ import { SyncPayload } from '@/app/sync/payload'
 import { usePreferences } from '@/stores/preferences'
 import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
-import { usesCloudSync } from '@/lib/syncTransport/provider'
+import {
+  addActiveRemoteChangeListener,
+  usesCloudSync,
+} from '@/lib/syncTransport/provider'
+import { peekCloudSyncRestore } from '@/app/sync/cloudSyncRestore'
 
 interface Props {
   goBack: () => void
   goNext: () => void
+
+  provider?: 'cloud' | 'platform'
 }
 
 type Probe =
@@ -51,7 +59,12 @@ type Probe =
   | { state: 'offline' }
   | { state: 'found'; remote: SyncPayload; account: ICloudAccount }
 
-const importType = () => (usesGoogleDriveSync() ? 'google_drive' : 'icloud')
+const importTypeFor = (provider: 'cloud' | 'platform') =>
+  provider === 'cloud'
+    ? 'cloud_sync'
+    : usesGoogleDriveSync()
+      ? 'google_drive'
+      : 'icloud'
 
 type RestoreMode = 'replace' | 'merge'
 
@@ -70,8 +83,10 @@ const probeFromPeek = (peek: RemotePeek): Probe => {
   }
 }
 
-const ICloudRestore = ({ goBack, goNext }: Props) => {
+const ICloudRestore = ({ goBack, goNext, provider = 'platform' }: Props) => {
   const theme = useTheme()
+  const importType = () => importTypeFor(provider)
+  const syncKey = (key: TranslationKey) => optionSyncKey(key, provider)
   const { set } = usePreferences()
   const [probe, setProbe] = useState<Probe>({ state: 'probing' })
 
@@ -93,13 +108,13 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
 
   useEffect(() => {
     if (usePreferences.getState().syncProvider !== null) return
-    usePreferences.setState({ syncProvider: 'platform' })
+    usePreferences.setState({ syncProvider: provider })
     return () => {
       const prefs = usePreferences.getState()
-      if (prefs.syncProvider === 'platform' && !prefs.iCloudSyncEnabled)
+      if (prefs.syncProvider === provider && !prefs.iCloudSyncEnabled)
         usePreferences.setState({ syncProvider: null })
     }
-  }, [])
+  }, [provider])
 
   useEffect(() => {
     let cancelled = false
@@ -119,11 +134,15 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
           again = false
           next = !hasSyncTransport()
             ? { state: 'unavailable' }
-            : !syncTransport().isAvailable()
-              ? {
-                  state: usesGoogleDriveSync() ? 'needsConnect' : 'unavailable',
-                }
-              : probeFromPeek(await iCloudSync.peekRemotePayload())
+            : provider === 'cloud'
+              ? probeFromPeek(await peekCloudSyncRestore())
+              : !syncTransport().isAvailable()
+                ? {
+                    state: usesGoogleDriveSync()
+                      ? 'needsConnect'
+                      : 'unavailable',
+                  }
+                : probeFromPeek(await iCloudSync.peekRemotePayload())
         } while (again && !cancelled && next.state !== 'found')
         if (cancelled) return
         found = next.state === 'found'
@@ -136,7 +155,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       void run().catch(() => {
         if (!cancelled) setProbe({ state: 'unavailable' })
         analytics.capture('import_failed', {
-          import_type: importType(),
+          import_type: importTypeFor(provider),
           source: 'onboarding',
           stage: 'probe',
           error_code: 'unexpected',
@@ -144,9 +163,13 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       })
     probeRemote()
 
-    const sub = syncTransport().addRemoteChangeListener(() => {
+    const onRemoteChange = () => {
       if (!cancelled && !found) probeRemote()
-    })
+    }
+    const sub =
+      provider === 'cloud'
+        ? addActiveRemoteChangeListener(onRemoteChange)
+        : syncTransport().addRemoteChangeListener(onRemoteChange)
 
     const reconnectSub = addReconnectListener(() => {
       if (!cancelled && !found) probeRemote()
@@ -156,7 +179,7 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       sub.remove()
       reconnectSub.remove()
     }
-  }, [search])
+  }, [search, provider])
 
   useEffect(() => {
     if (probe.state !== 'probing') {
@@ -189,9 +212,10 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
   useEffect(() => {
     analytics.capture('icloud_restore_probe_result', {
       source: 'onboarding',
+      import_type: importTypeFor(provider),
       status: probe.state,
     })
-  }, [probe.state])
+  }, [probe.state, provider])
 
   const handleRestore = () => {
     if (probe.state !== 'found' || restoring) return
@@ -333,8 +357,15 @@ const ICloudRestore = ({ goBack, goNext }: Props) => {
       elapsed_ms: Date.now() - startedAt,
     })
 
-    completeOnboardingFromRestore('icloud_restore')
+    completeOnboardingFromRestore(
+      provider === 'cloud' ? 'cloud_sync' : 'icloud_restore'
+    )
     if (mode === 'replace') enableSync()
+    if (provider === 'cloud')
+      toast.success(i18n.t('onboardingCloudSyncReady_title'), {
+        message: i18n.t('onboardingCloudSyncReady_message'),
+        durationMs: 6000,
+      })
 
     const referencesPhotos = payloadReferencesPhotos(remote)
     if (referencesPhotos && usesCloudSync()) {

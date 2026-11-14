@@ -102,6 +102,10 @@ vi.mock('@/lib/dates', () => ({ formatRelative: () => 'just now' }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
 vi.mock('@/app/sync/payload', () => ({}))
+vi.mock('@/app/sync/cloudSyncRestore', () => ({
+  peekCloudSyncRestore: vi.fn(),
+}))
+vi.mock('@/stores/toasts', () => ({ toast: { success: vi.fn() } }))
 vi.mock('@/app/sync/iCloudSync', () => ({
   iCloudSync: {
     peekRemotePayload: vi.fn(),

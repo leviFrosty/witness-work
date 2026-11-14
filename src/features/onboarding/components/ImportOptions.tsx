@@ -3,10 +3,12 @@ import {
   Cloud as CloudIcon,
   FileInput as FileInputIcon,
   FileText as FileTextIcon,
+  KeyRound as KeyRoundIcon,
   UserRoundKey as UserRoundKeyIcon,
   NotebookPen as NotebookPenIcon,
   ScanQrCode as ScanQrCodeIcon,
 } from 'lucide-react-native'
+import { useState } from 'react'
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import useTheme from '@/contexts/theme'
@@ -22,6 +24,9 @@ import { accountKeyReplaceable } from '@/app/account/accountKey'
 import ImportOptionCard from '@/features/onboarding/components/ImportOptionCard'
 import usePasskeySignInAvailable from '@/features/settings/hooks/usePasskeySignInAvailable'
 import type { RootStackNavigation } from '@/types/rootStack'
+import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
+import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
+import { usePreferences } from '@/stores/preferences'
 
 export type ImportType =
   | 'notes'
@@ -31,11 +36,20 @@ export type ImportType =
   | 'backup_json'
   | 'other_phone'
   | 'passkey'
+  | 'recovery_key'
 
 export type HostedImportType = Extract<
   ImportType,
   'mytime' | 'icloud' | 'backup_json'
 >
+
+export const SIGN_IN_TYPES: ImportType[] = [
+  'passkey',
+  'other_phone',
+  'recovery_key',
+]
+export const RESTORE_TYPES: ImportType[] = ['icloud', 'backup_json']
+export const IMPORT_TYPES: ImportType[] = ['notes', 'paper', 'mytime']
 
 interface Props {
   source: 'onboarding' | 'settings'
@@ -47,6 +61,8 @@ interface Props {
     disabledNoteKey?: TranslationKey
   } | null
   backupRestoring: boolean
+
+  include?: ImportType[]
   onSelect: (importType: HostedImportType) => void
 }
 
@@ -55,7 +71,11 @@ export default function ImportOptions({
   cloud,
   backupRestoring,
   onSelect,
+  include,
 }: Props) {
+  const shows = (importType: ImportType) =>
+    include ? include.includes(importType) : importType !== 'recovery_key'
+  const [recovering, setRecovering] = useState(false)
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const scribe = useScribeAvailability()
@@ -83,6 +103,7 @@ export default function ImportOptions({
     })
     if (importType === 'passkey')
       navigation.navigate('Sign In With Passkey', { entry: source })
+    else if (importType === 'recovery_key') setRecovering(true)
     else if (importType === 'other_phone')
       navigation.navigate('Sign In With QR Code', { entry: source })
     else if (importType === 'notes')
@@ -96,7 +117,7 @@ export default function ImportOptions({
 
   return (
     <View>
-      {passkeySignIn && (
+      {passkeySignIn && shows('passkey') && (
         <ImportOptionCard
           icon={UserRoundKeyIcon}
           color={theme.colors.accent}
@@ -105,7 +126,7 @@ export default function ImportOptions({
           onPress={() => select('passkey')}
         />
       )}
-      {accountKeyReplaceable() && (
+      {accountKeyReplaceable() && shows('other_phone') && (
         <ImportOptionCard
           icon={ScanQrCodeIcon}
           color={theme.colors.accent}
@@ -114,7 +135,16 @@ export default function ImportOptions({
           onPress={() => select('other_phone')}
         />
       )}
-      {scribeShown && (
+      {accountKeyReplaceable() && shows('recovery_key') && (
+        <ImportOptionCard
+          icon={KeyRoundIcon}
+          color={theme.colors.accent}
+          titleKey='onboardingPickUp_recoveryKey'
+          descKey='onboardingPickUp_recoveryKeyDesc'
+          onPress={() => select('recovery_key')}
+        />
+      )}
+      {scribeShown && shows('notes') && (
         <ImportOptionCard
           icon={FileTextIcon}
           color={theme.colors.cyan}
@@ -125,7 +155,7 @@ export default function ImportOptions({
           onPress={() => select('notes')}
         />
       )}
-      {paperAvailable && (
+      {paperAvailable && shows('paper') && (
         <ImportOptionCard
           icon={NotebookPenIcon}
           color={theme.colors.orange}
@@ -136,7 +166,7 @@ export default function ImportOptions({
           onPress={() => select('paper')}
         />
       )}
-      {canReadMytimeDb && (
+      {canReadMytimeDb && shows('mytime') && (
         <ImportOptionCard
           icon={FileInputIcon}
           color={theme.colors.indigo}
@@ -145,7 +175,7 @@ export default function ImportOptions({
           onPress={() => select('mytime')}
         />
       )}
-      {cloud && (
+      {cloud && shows('icloud') && (
         <ImportOptionCard
           icon={CloudIcon}
           color={theme.colors.purple}
@@ -156,16 +186,29 @@ export default function ImportOptions({
           onPress={() => select('icloud')}
         />
       )}
-      <ImportOptionCard
-        icon={ArchiveRestoreIcon}
-        color={theme.colors.teal}
-        titleKey='onboardingPickUp_backup'
-        descKey='onboardingPickUp_backupDesc'
-        disabled={backupRestoring}
-        disabledNoteKey='onboardingPickUp_backupRestoring'
-        onPress={() => select('backup_json')}
-      />
+      {shows('backup_json') && (
+        <ImportOptionCard
+          icon={ArchiveRestoreIcon}
+          color={theme.colors.teal}
+          titleKey='onboardingPickUp_backup'
+          descKey='onboardingPickUp_backupDesc'
+          disabled={backupRestoring}
+          disabledNoteKey='onboardingPickUp_backupRestoring'
+          onPress={() => select('backup_json')}
+        />
+      )}
       {library.host}
+      {shows('recovery_key') && (
+        <UseRecoveryKeySheet
+          open={recovering}
+          onClose={() => setRecovering(false)}
+          onDone={() => setRecovering(false)}
+          onRestored={() => {
+            if (!usePreferences.getState().onboardingComplete)
+              completeOnboardingFromRestore('account_backup')
+          }}
+        />
+      )}
     </View>
   )
 }

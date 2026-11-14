@@ -179,6 +179,7 @@
     "cloudSync",
     "cloudSyncFromWeb",
     "cloudSyncDefault",
+    "cloudSyncNewDevice",
     "cloudSyncPrivacy",
     "cloudSyncSwitch",
     "cloudSyncPhotos",

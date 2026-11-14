@@ -374,6 +374,7 @@ export const analyticsEventNames = [
   'onboarding_step_completed',
   'onboarding_step_skipped',
   'onboarding_tour_closed',
+  'onboarding_welcome_back_viewed',
 
   'paywall_closed',
   'paywall_offerings_empty',

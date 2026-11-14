@@ -53,6 +53,7 @@ sequenceDiagram
 
 ## Conventions
 
+- Agreement first: the app sends nothing to `step`, `transcribe` or `territory-notes` until this device has agreed to the Terms of Use. A new feature that uses Scribe AI asks with `askScribeConsent(navigation)` (`src/features/scribe/components/scribeConsentGate.ts`) before its first call and goes on when it resolves `true`; route entries go through `navigateToScribe`, which does the same. The app's client stops any such call made before agreement (`withAgreement` in `src/features/scribe/lib/defaultClient.ts`), so a missed gate fails closed. `status` and `usage` don't need it.
 - JSON bodies, UTF-8. Unknown fields are ignored by both sides. Unknown SSE event types are ignored by the app.
 - Times on the wire are epoch milliseconds (`*At`) unless the field says ISO. Calendar days are `YYYY-MM-DD` in the User's local calendar; times of day are minutes after local midnight (`0..1439`); durations are whole minutes.
 - Ids: `conversationId` and `turnId` are 26-character ULIDs (`^[0-9A-HJKMNP-TV-Z]{26}$`). `callId` matches `^[A-Za-z0-9_-]{1,64}$`: the server sanitizes the model's call id before streaming it (other characters become `_`, cut to 64; an empty or repeated id in the step becomes `call_<n>_<m>`), and the app echoes it exactly in `tool_result` and `proposal_outcome`.

@@ -164,15 +164,18 @@ export function trackScribeTurnedOnOff(enabled: boolean): void {
   analytics.capture('scribe_setting_changed', { enabled })
 }
 
-export function trackPrivacyViewed(surface: 'settings' | 'first_open'): void {
+export function trackPrivacyViewed(surface: 'settings'): void {
   analytics.capture('scribe_privacy_viewed', { surface })
 }
 
+export type ScribeTermsDismissedVia = 'swipe' | 'backdrop' | 'system'
+
 export function trackTermsResolved(
   surface: 'first_open' | 'settings',
-  outcome: 'accepted' | 'dismissed'
+  outcome: 'accepted' | 'dismissed',
+  via: ScribeTermsDismissedVia | null = null
 ): void {
-  analytics.capture('scribe_terms_resolved', { surface, outcome })
+  analytics.capture('scribe_terms_resolved', { surface, outcome, via })
 }
 
 export function trackMemoryManaged(

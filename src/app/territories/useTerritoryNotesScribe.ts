@@ -6,7 +6,7 @@ import {
   useScribeOffered,
 } from '@/features/scribe'
 import { appLocale } from '@/features/scribe/lib/locale'
-import { scribeConsentPending } from '@/features/scribe/stores/consent'
+import { askScribeConsent } from '@/features/scribe/components/scribeConsentGate'
 import type { NotesAi } from '@/features/territories/lib/scribeNotes'
 import { notesAiMode } from '@/app/territories/notesAiMode'
 
@@ -18,10 +18,8 @@ export default function useTerritoryNotesScribe(): NotesAi {
   return {
     mode: notesAiMode(offered, availability),
     read: async (request, signal) => {
-      if (scribeConsentPending()) {
-        navigation.navigate('ScribeConsent', { mode: 'open' })
-        return { status: 'consent' }
-      }
+      if (!(await askScribeConsent(navigation))) return { status: 'consent' }
+      if (signal.aborted) return { status: 'cancelled' }
       const outcome = await readTerritoryNotesWithScribe(
         { ...request, locale: appLocale() },
         signal

@@ -26,7 +26,7 @@ import {
   fullestWindow,
 } from '@/features/scribe/components/scribeCopy'
 import { trackScribeTurnedOnOff } from '@/features/scribe/analytics'
-import { pendingScribeConsent } from '@/features/scribe/stores/consent'
+import { askScribeConsent } from '@/features/scribe/components/scribeConsentGate'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 const ScribeSection = ({
@@ -53,9 +53,12 @@ const ScribeSection = ({
         icon={MessageSquareTextIcon}
         label={i18n.t('scribe_enabledToggle')}
         value={turnedOn}
-        onValueChange={(value) => {
-          if (value && pendingScribeConsent().terms)
-            return navigation.navigate('ScribeConsent', { mode: 'enable' })
+        onValueChange={async (value) => {
+          if (
+            value &&
+            !(await askScribeConsent(navigation, { surface: 'settings' }))
+          )
+            return
           setPreferences({ scribeAiEnabled: value })
           trackScribeTurnedOnOff(value)
         }}

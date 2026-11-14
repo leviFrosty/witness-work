@@ -18,10 +18,12 @@ import { withAlpha } from '@/lib/color'
 import i18n from '@/lib/locales'
 import { useWindowFoldPane } from '@/components/ui/layout/FoldPane'
 
+export type ScribeSheetDismissal = 'swipe' | 'backdrop' | 'escape'
+
 interface Props {
   height?: number
 
-  onDismissRequest: () => void
+  onDismissRequest: (via: ScribeSheetDismissal) => void
 
   onMinimizeRequest?: () => void
   children: ReactNode
@@ -74,7 +76,8 @@ const ScribeSheetFrame = ({
       if (finished) runOnJS(onMinimizeRequest)()
     })
   }
-  const dismiss = onMinimizeRequest ? minimize : onDismissRequest
+  const dismiss = (via: ScribeSheetDismissal) =>
+    onMinimizeRequest ? minimize() : onDismissRequest(via)
 
   const pan = Gesture.Pan()
     .activeOffsetY(8)
@@ -89,7 +92,7 @@ const ScribeSheetFrame = ({
         return
       }
       drag.value = withSpring(0, { damping: 20, stiffness: 220 })
-      if (pulled) runOnJS(onDismissRequest)()
+      if (pulled) runOnJS(onDismissRequest)('swipe')
     })
 
   const sheetStyle = useAnimatedStyle(() => ({
@@ -111,7 +114,7 @@ const ScribeSheetFrame = ({
           accessibilityLabel={i18n.t(
             onMinimizeRequest ? 'scribe_voiceMinimize' : 'close'
           )}
-          onPress={dismiss}
+          onPress={() => dismiss('backdrop')}
           style={{
             flex: 1,
             backgroundColor: withAlpha(theme.colors.shadow, 0x8c),
@@ -122,7 +125,7 @@ const ScribeSheetFrame = ({
         <Animated.View
           entering={SLIDE_IN}
           accessibilityViewIsModal
-          onAccessibilityEscape={dismiss}
+          onAccessibilityEscape={() => dismiss('escape')}
           style={[
             {
               position: 'absolute',

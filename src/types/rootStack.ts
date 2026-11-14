@@ -41,15 +41,13 @@ export interface ScribeVoiceRouteParams {
   conversationId?: string
 }
 
-export type ScribeConsentRouteParams =
-  | {
-      mode: 'open'
+export type ScribeConsentRouteParams = {
+  surface: 'first_open' | 'settings'
 
-      next?:
-        | { route: 'ScribeConversation'; params: ScribeConversationRouteParams }
-        | { route: 'ScribeVoice'; params: ScribeVoiceRouteParams }
-    }
-  | { mode: 'enable' }
+  next?:
+    | { route: 'ScribeConversation'; params: ScribeConversationRouteParams }
+    | { route: 'ScribeVoice'; params: ScribeVoiceRouteParams }
+}
 
 export type RootStackParamList = {
   Root: undefined

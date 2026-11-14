@@ -1,19 +1,29 @@
-name: Tests
+name: Checks
 
+# Checks only: this workflow never deploys and touches no environment.
+# Every pull request and every push to main runs both jobs, whatever paths
+# changed, because the apps share one codebase.
+#   app      -> the iOS, Android and web app (one shared suite)
+#   website  -> services/: the website, Help Center and its search Worker
+# ww-api has its own checks in its own repo.
 on:
+  pull_request:
   push:
     branches:
       - main
-  # Run on demand against any branch, e.g. an integration branch before it
-  # lands on main: `gh workflow run tests.yml --ref <branch>`.
+  # Run on demand against any branch: `gh workflow run tests.yml --ref <branch>`.
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  lint-and-test:
-    name: Lint, Typecheck & Test
+  app:
+    name: 'App (iOS, Android, web): lint, typecheck, tests'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -48,3 +58,42 @@ jobs:
 
       - name: Check for circular dependencies
         run: pnpm run deps
+
+  website:
+    name: 'Website and Help Center search: lint, typecheck, tests, build'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: services/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

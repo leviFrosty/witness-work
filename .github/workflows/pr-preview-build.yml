@@ -1,4 +1,4 @@
-name: PR Preview Build
+name: App preview build (manual, EAS cloud)
 
 on:
   workflow_dispatch:

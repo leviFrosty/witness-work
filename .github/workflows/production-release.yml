@@ -1,4 +1,8 @@
-name: Production Release
+name: App release tag
+
+# Runs when a v*.*.* tag is pushed. Checks the tagged commit and creates the
+# GitHub Release. It builds nothing and uploads nothing: production builds and
+# store submissions run locally through /cut-release.
 
 on:
   push:
@@ -7,7 +11,7 @@ on:
 
 jobs:
   release:
-    name: Validate & Create GitHub Release
+    name: 'App production: validate tag, create GitHub Release (no build)'
     runs-on: ubuntu-latest
     permissions:
       contents: write

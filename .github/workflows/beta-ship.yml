@@ -1,0 +1,35 @@
+name: Beta ship
+
+# Asks our own Macs to ship the tip of main to every Beta environment: the
+# iOS Beta app, the web beta and the API that Beta calls. Runs on every push to
+# main. This job only sends the request: the ship itself runs in the private
+# leviFrosty/ww-runners repository (scripts/build-beta.sh, on a self-hosted
+# Mac) and reports back as the "Beta ship" status on the commit.
+#
+# The Macs are not attached to this public repository, so no pull request can
+# run code on them. Never touches production.
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  request:
+    name: 'Beta (iOS app, web app, API): request a ship of main'
+    runs-on: ubuntu-latest
+    # Holds the one token that can start the ship; only main can read it. The
+    # token has Actions: write on leviFrosty/ww-runners and nothing else, so it
+    # can start and cancel runs there but cannot change a file.
+    environment: beta-ship
+    steps:
+      - name: Ask the build pool to ship main
+        env:
+          TOKEN: ${{ secrets.WW_RUNNERS_DISPATCH_TOKEN }}
+        run: |
+          curl -fsS -X POST \
+            https://api.github.com/repos/leviFrosty/ww-runners/actions/workflows/beta-ship.yml/dispatches \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -d '{"ref":"main","inputs":{"dry_run":"false"}}'

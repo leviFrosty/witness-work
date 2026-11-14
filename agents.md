@@ -8,6 +8,8 @@ ww-api is the backend api. Find the code at ~/dev/ww-api.
 
 Beta and production app builds release ww-api `main` first (`scripts/release-api.sh`), so land a feature's backend half on ww-api `main` before shipping its app half.
 
+**Beta is the tip of `main`, and it ships itself.** Every push to `main` ships to WitnessWork Beta from one of our own Macs (the **Beta ship** workflow; see the [`release-process`](./.agents/skills/release-process/SKILL.md#beta) skill), and the commit's **Beta ship** status turns green when it is there. Don't run `scripts/build-beta.sh` by hand or offer a Beta build: merge the change, then test it on Beta.
+
 **The server account is the source of truth for who the User is** (ADR 0024, ADR 0027). Every call to ww-api for a user-scoped feature (accounts, backup, handoff, Buddies, Scribe AI, and anything new) goes through the attested session in `src/lib/serverAccount`: it sends `Authorization: Bearer` and lets the session client open, refresh, and reopen sessions. Identify the User to ww-api only through that session (never an install id, the RevenueCat id, an inbox id, or a feature's own signed envelope), and attest once per session, not per request. ww-api answers Supporter status from the account: the app links the RevenueCat customer it's logged in as through `src/lib/serverAccount/revenueCatLink.ts` (ADR 0029). Wire contract: [`docs/accounts-protocol.md`](./docs/accounts-protocol.md). When ww-api answers 426 `upgrade_required`, or `GET /app/v1/config` says the app is below `minAppVersion`, the app shows Update Required.
 
 ## Platforms

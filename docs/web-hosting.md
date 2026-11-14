@@ -257,8 +257,8 @@ pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-a
   building it checks the bundle holds the key. A local `pnpm web:build` or
   `pnpm web:serve` without them still runs, with a warning, and an app that
   can't sell. Beta and production never read the sandbox item.
-- **beta:** goes out with every Beta build (`scripts/build-beta.sh`, see the
-  `beta-build` skill), against production ww-api. It's skipped, with `WEB_RESULT status=skipped`, when the beta profile's Help Center site doesn't answer, since the build would fail. It uses wrangler's own login
+- **beta:** goes out with every Beta ship (`scripts/build-beta.sh`, run for each
+  push to `main` by the Beta ship workflow), against production ww-api. It's skipped, with `WEB_RESULT status=skipped`, when the beta profile's Help Center site doesn't answer, since the build would fail. It uses wrangler's own login
   on this Mac (`wrangler login`), like the other WitnessWork Workers.
 - **production** is a release (ADR 0037 §4): at the cut, with the production
   OTA update, never from CI.

@@ -6830,6 +6830,7 @@
     "privacyConfirm_alsoTerritory": "Data protection mode also turns on Territory privacy mode.",
     "mapPin_description": "Shows where the territory is.",
     "addStreet_first": "Start with the first street on the card.",
+    "addStreet_byHand": "Add a Street by Hand",
     "doNotCallsOnStreet": "Do Not Call on This Street",
     "doNotCalls_passOn": "Pass these on with the card.",
     "doNotCallConfirm_title": "Do not call {{address}}?",

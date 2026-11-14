@@ -12,6 +12,7 @@ export default function TerritoryPill({
   fill = false,
   surface = 'card',
   dense = false,
+  quiet = false,
   accessibilityLabel,
   accessibilityHint,
 }: {
@@ -23,6 +24,7 @@ export default function TerritoryPill({
   fill?: boolean
   surface?: 'card' | 'background'
   dense?: boolean
+  quiet?: boolean
   accessibilityLabel?: string
   accessibilityHint?: string
 }) {
@@ -52,7 +54,9 @@ export default function TerritoryPill({
         <LucideIcon
           icon={icon}
           size={dense ? 16 : 18}
-          color={iconColor ?? theme.colors.accent}
+          color={
+            iconColor ?? (quiet ? theme.colors.textAlt : theme.colors.accent)
+          }
         />
       )}
       <Text
@@ -61,6 +65,7 @@ export default function TerritoryPill({
           fontFamily: theme.fonts.semiBold,
           fontSize: theme.fontSize('md'),
           flexShrink: 1,
+          color: quiet ? theme.colors.textAlt : undefined,
         }}
       >
         {label}

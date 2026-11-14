@@ -138,6 +138,7 @@ export default function TerritoryDetailsScreen({ route, navigation }: Props) {
     !finished &&
     isOutline(territory.outline) &&
     hasCapability('reverseGeocoding')
+  const starting = owner && !finished && territory.streets.length === 0
   const canAddNotes = canAddFromNotes(territory, privacy)
   const returnCaption = caption(
     i18n.t(
@@ -271,6 +272,7 @@ export default function TerritoryDetailsScreen({ route, navigation }: Props) {
                   <TerritoryPill
                     fill
                     dense
+                    quiet={starting}
                     icon={cardOnly ? ImageIcon : MapIcon}
                     label={i18n.t(
                       cardOnly
@@ -291,6 +293,7 @@ export default function TerritoryDetailsScreen({ route, navigation }: Props) {
                   <TerritoryPill
                     fill
                     dense
+                    quiet={starting}
                     icon={NavigationIcon}
                     label={i18n.t('directions')}
                     onPress={() => openTerritoryInMaps(territory, provider)}
@@ -301,6 +304,7 @@ export default function TerritoryDetailsScreen({ route, navigation }: Props) {
                   <TerritoryPill
                     fill
                     dense
+                    quiet={starting}
                     icon={UsersIcon}
                     label={
                       shareCount > 0

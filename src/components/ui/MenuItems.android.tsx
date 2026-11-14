@@ -4,6 +4,7 @@ import {
   DropdownMenuItem,
   HorizontalDivider,
   Icon,
+  Image,
   Spacer,
   Text,
 } from '@expo/ui/jetpack-compose'
@@ -14,7 +15,7 @@ import {
 } from '@expo/ui/jetpack-compose/modifiers'
 import useTheme from '@/contexts/theme'
 import androidMenuIcons from '@/components/ui/androidMenuIcons'
-import { isSubmenu } from '@/components/ui/menuEntries'
+import { isSubmenu, MENU_IMAGE_SIZE } from '@/components/ui/menuEntries'
 import type {
   ContextMenuAction,
   ContextMenuItem,
@@ -41,7 +42,9 @@ export default function MenuItems({
   const iconFor = (systemImage: ContextMenuItem['systemImage']) =>
     systemImage ? androidMenuIcons[systemImage] : undefined
   const shown = submenu ? submenu.actions : groups.flat()
-  const indent = shown.some((entry) => iconFor(entry.systemImage))
+  const indent = shown.some(
+    (entry) => iconFor(entry.systemImage) || ('image' in entry && entry.image)
+  )
 
   const item = (
     key: string,
@@ -49,10 +52,14 @@ export default function MenuItems({
     onClick: () => void,
     {
       systemImage,
+      image,
       destructive,
       checked,
     }: Partial<
-      Pick<ContextMenuAction, 'systemImage' | 'destructive' | 'checked'>
+      Pick<
+        ContextMenuAction,
+        'systemImage' | 'image' | 'destructive' | 'checked'
+      >
     > = {}
   ) => {
     const color = destructive ? theme.colors.error : theme.colors.text
@@ -71,9 +78,14 @@ export default function MenuItems({
         <DropdownMenuItem.Text>
           <Text>{title}</Text>
         </DropdownMenuItem.Text>
-        {icon || indent ? (
+        {image || icon || indent ? (
           <DropdownMenuItem.LeadingIcon>
-            {icon ? (
+            {image ? (
+              <Image
+                source={{ uri: image.uri, scale: image.scale }}
+                modifiers={[size(MENU_IMAGE_SIZE, MENU_IMAGE_SIZE)]}
+              />
+            ) : icon ? (
               <Icon source={icon} size={24} tint={color} />
             ) : (
               <Spacer modifiers={[size(24, 24)]} />

@@ -1,4 +1,4 @@
-import { Button, Divider, Menu, Toggle } from '@expo/ui/swift-ui'
+import { Button, Divider, Image, Label, Menu, Toggle } from '@expo/ui/swift-ui'
 import { Fragment } from 'react'
 import { isSubmenu } from '@/components/ui/menuEntries'
 import type {
@@ -8,7 +8,24 @@ import type {
 
 export default function MenuItems({ groups }: { groups: ContextMenuItem[][] }) {
   const action = (item: ContextMenuAction, key: string) =>
-    item.checked === undefined ? (
+    item.image && item.checked === undefined ? (
+      <Button
+        key={key}
+        role={item.destructive ? 'destructive' : undefined}
+        onPress={() => item.onPress()}
+      >
+        <Label
+          title={item.title}
+          icon={
+            <Image
+              uiImage={item.image.uri}
+              uiImageScale={item.image.scale}
+              renderingMode='original'
+            />
+          }
+        />
+      </Button>
+    ) : item.checked === undefined ? (
       <Button
         key={key}
         label={item.title}

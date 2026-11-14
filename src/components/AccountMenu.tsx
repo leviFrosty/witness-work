@@ -14,6 +14,7 @@ import Avatar from '@/components/ui/Avatar'
 import Text from '@/components/ui/MyText'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import PointerTooltip from '@/components/ui/PointerTooltip'
+import useMenuAvatarImage from '@/components/ui/useMenuAvatarImage'
 import StreakBadge from '@/components/StreakBadge'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
@@ -40,6 +41,7 @@ export default function AccountMenu({
   const openSettings = useOpenSettings(navigation)
   const theme = useTheme()
   const { name, avatar } = useUser()
+  const menuAvatar = useMenuAvatarImage(avatar, name)
   const hideDonateHeart = usePreferences((s) => s.hideDonateHeart)
   const showStreaks = usePreferences((s) => s.showStreaks)
   const streak = shownStreak(useServiceStreak())
@@ -152,6 +154,7 @@ export default function AccountMenu({
                   id: 'profile',
                   title: i18n.t('accountMenu_profile'),
                   systemImage: 'person.crop.circle',
+                  image: menuAvatar ?? undefined,
                   onPress: openProfile,
                 }
               : {

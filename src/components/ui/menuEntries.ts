@@ -6,6 +6,8 @@ import type {
   ContextMenuSubmenu,
 } from '@/components/ui/ContextMenu.types'
 
+export const MENU_IMAGE_SIZE = 24
+
 export const isSubmenu = (item: ContextMenuItem): item is ContextMenuSubmenu =>
   'actions' in item
 

@@ -1,4 +1,3 @@
-import { nextKnownHouse } from '@/features/territories/lib/houseList'
 import type {
   DoorOutcome,
   StreetNumbering,
@@ -23,12 +22,10 @@ export const startNumber = (numbering: StreetNumbering, typed?: number) => {
 }
 
 export const stepNumber = (
-  street: Pick<TerritoryStreet, 'numbering' | 'houses'>,
+  street: Pick<TerritoryStreet, 'numbering'>,
   from: number,
   direction: 1 | -1
-) =>
-  nextKnownHouse(street, from, direction) ??
-  Math.max(1, from + stepFor(street.numbering) * direction)
+) => Math.max(1, from + stepFor(street.numbering) * direction)
 
 export const wholeNumber = (label: string) =>
   /^\d+$/.test(label.trim()) ? Number(label.trim()) : undefined

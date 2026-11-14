@@ -7279,44 +7279,7 @@
         "other": "Added %{count} streets"
       },
       "locationNeeded": "Looking up street names on this device needs your location.",
-      "upNext": "Up Next",
-      "lookingUpHouses": "Looking up house numbers…",
-      "fillExisting": {
-        "one": "House numbers found for 1 street you already have.",
-        "other": "House numbers found for %{count} streets you already have."
-      },
-      "addHouses": {
-        "one": "Add House Numbers to 1 Street",
-        "other": "Add House Numbers to %{count} Streets"
-      },
-      "housesAdded_toast": {
-        "one": "Added house numbers to 1 street",
-        "other": "Added house numbers to %{count} streets"
-      },
-      "action_houses": "Find House Numbers",
-      "action_houses_description": "From the map, where it has them. Also finds streets you haven't added.",
-      "housesMissing": {
-        "none": "The map has no house numbers inside this outline yet. Record doors as usual.",
-        "signedOut": "Sign in to your WitnessWork account to look up house numbers.",
-        "tooLarge": "This outline is too large to look up house numbers. Draw a smaller outline.",
-        "busy": "The house number lookup is busy. Try again in a minute.",
-        "failed": "Couldn't look up house numbers. Check your connection and try again."
-      }
-    },
-    "houseCount": {
-      "one": "%{count} house",
-      "other": "%{count} houses"
-    },
-    "housesVisited": "{{visited}} of {{total}} houses",
-    "houses": {
-      "title": "Houses",
-      "progress": "{{visited}} of {{total}} visited",
-      "hint": "Tap a house to record it.",
-      "attribution": "House numbers © OpenStreetMap contributors",
-      "notVisited": "Not visited",
-      "house_a11y": "{{door}}, {{status}}",
-      "territoryProgress": "{{percent}} of houses visited",
-      "territoryProgress_info": "Counts the streets that have a house list from the map. Streets you number by hand aren't included."
+      "upNext": "Up Next"
     }
   }
 }

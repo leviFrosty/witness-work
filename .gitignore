@@ -116,3 +116,4 @@ services/marketing/public/llms-full.txt
 services/marketing/public/robots.txt
 services/marketing/public/sitemap.xml
 services/marketing/public/_headers
+services/marketing/public/_redirects

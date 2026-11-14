@@ -6,4 +6,17 @@ platforms:
   - android
 ---
 
-Each Android device keeps one copy of your WitnessWork data, plus optional photos, in a hidden app folder in the Google Drive of the account you connected. Only WitnessWork can open that folder: it doesn't appear in the Drive app or website, other apps can't read it, and WitnessWork can't see anything else in your Drive. Your data goes straight between your device and Google and never passes through WitnessWork's servers. Google stores it under your Google Account like your other Drive files; it isn't end-to-end encrypted. WitnessWork keeps only a one-way code for the connected account on the device, not your email. The folder counts against your Google storage. To remove it, turn off sync on every device, then in Google Drive on the web open Settings → Manage apps → WitnessWork → Options → Delete hidden app data. Disconnecting Google Drive in Settings → Sync (Device Sync before version 1.47.0) stops access from that device and leaves the folder for your other devices. To remove WitnessWork's access for every device, remove it under Third-party apps & services in your Google Account. Your JSON backups from Settings → Backup & Restore are separate and stay wherever you save them.
+Your WitnessWork data is kept in a hidden folder in your own Google Drive. Only WitnessWork can open that folder, and it can't see anything else in your Drive. Your data goes straight between your phone and Google, never through WitnessWork's servers.
+
+## Good to know
+
+- The folder doesn't show in the Drive app or website, and other apps can't read it.
+- Google stores it like your other Drive files. It counts against your Google storage.
+- WitnessWork doesn't keep your email address.
+- Your backup files from **Settings → Backup & Restore** are separate. They stay wherever you saved them.
+
+## Stop using Google Drive Sync
+
+- **On one phone:** open **Settings → Sync** and disconnect Google Drive. Your other devices keep using the folder.
+- **On every device:** turn off sync on each one. Then, in Google Drive on the web, open **Settings → Manage apps → WitnessWork → Options → Delete hidden app data**.
+- **Remove access completely:** remove WitnessWork under Third-party apps & services in your Google Account.

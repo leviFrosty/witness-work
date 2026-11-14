@@ -3,12 +3,18 @@ import path from 'node:path'
 import type { Plugin } from 'vite'
 import { generateHelpCenterAssets } from '../lib/help-center/generate.ts'
 import { HELP_CONTENT_DIR } from '../lib/help-center/load.ts'
-import { headersFile, robotsTxt, sitemapXml } from '../lib/site-files.ts'
+import {
+  headersFile,
+  redirectsFile,
+  robotsTxt,
+  sitemapXml,
+} from '../lib/site-files.ts'
 
 export const SITE_FILES = [
   'public/robots.txt',
   'public/sitemap.xml',
   'public/_headers',
+  'public/_redirects',
 ]
 
 export async function generateSiteFiles(root: string = process.cwd()) {
@@ -20,6 +26,7 @@ export async function generateSiteFiles(root: string = process.cwd()) {
   await write('public/robots.txt', robotsTxt())
   await write('public/sitemap.xml', sitemapXml(result.center))
   await write('public/_headers', headersFile())
+  await write('public/_redirects', redirectsFile(result.center))
   return result
 }
 

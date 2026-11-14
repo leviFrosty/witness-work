@@ -23,6 +23,9 @@ import { textDirection } from '@/lib/textDirection'
 
 const BLOCK_GAP = 6
 const ITEM_GAP = 4
+const RELAXED_BLOCK_GAP = 12
+const RELAXED_ITEM_GAP = 8
+const RELAXED_HEADING_SPACE = 8
 const MARKER_WIDTH = 22
 const BULLETS = ['•', '◦', '▪']
 
@@ -33,14 +36,17 @@ type Context = {
   showImages: boolean
   onToggleTask?: (index: number) => void
   onImagePress?: (image: RichTextImageAttrs) => void
+  renderImage?: (image: RichTextImageAttrs) => ReactNode
+  relaxed: boolean
 
   taskIndex: { value: number }
 }
 
-function headingStyle(level: 1 | 2, ctx: Context): TextStyle {
+function headingStyle(level: 1 | 2, ctx: Context, first: boolean): TextStyle {
   return {
     fontFamily: ctx.theme.fonts.bold,
     fontSize: ctx.theme.fontSize(level === 1 ? 'xl' : 'lg'),
+    ...(ctx.relaxed && !first && { marginTop: RELAXED_HEADING_SPACE }),
   }
 }
 
@@ -100,7 +106,7 @@ function renderBlocks(
             style={[
               directionStyle(block.content),
               ctx.base,
-              headingStyle(block.attrs.level, ctx),
+              headingStyle(block.attrs.level, ctx, index === 0 && depth === 0),
             ]}
           >
             <RichTextSpans content={block.content} options={ctx.spans} />
@@ -109,7 +115,10 @@ function renderBlocks(
       case 'bulletList':
       case 'orderedList':
         return (
-          <View key={index} style={{ gap: ITEM_GAP }}>
+          <View
+            key={index}
+            style={{ gap: ctx.relaxed ? RELAXED_ITEM_GAP : ITEM_GAP }}
+          >
             {block.content.map((item, itemIndex) => {
               const against = isAgainstLayout(blocksText(item.content))
               return (
@@ -164,6 +173,8 @@ function renderBlocks(
           </View>
         )
       case 'image':
+        if (ctx.renderImage)
+          return <View key={index}>{ctx.renderImage(block.attrs)}</View>
         return ctx.showImages ? (
           <NoteImage
             key={index}
@@ -259,6 +270,8 @@ const RichTextView = (props: {
   showImages?: boolean
   onToggleTask?: (index: number) => void
   onImagePress?: (image: RichTextImageAttrs) => void
+  renderImage?: (image: RichTextImageAttrs) => ReactNode
+  relaxed?: boolean
 }) => {
   const theme = useTheme()
   const ctx: Context = {
@@ -268,10 +281,12 @@ const RichTextView = (props: {
     showImages: props.showImages ?? true,
     onToggleTask: props.onToggleTask,
     onImagePress: props.onImagePress,
+    renderImage: props.renderImage,
+    relaxed: props.relaxed ?? false,
     taskIndex: { value: -1 },
   }
   return (
-    <View style={{ gap: BLOCK_GAP }}>
+    <View style={{ gap: ctx.relaxed ? RELAXED_BLOCK_GAP : BLOCK_GAP }}>
       {renderBlocks(props.doc.content, ctx, 0)}
     </View>
   )

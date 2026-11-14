@@ -106,3 +106,30 @@ describe('sitemap.xml', () => {
     )
   })
 })
+
+describe('_redirects', () => {
+  test('merged answers send their old pages to the answer that replaced them', async () => {
+    const { redirectsFile, center } = await siteFiles()
+    const lines = redirectsFile(center).trim().split('\n')
+    expect(lines).toContain(
+      '/help/time/carry-over /help/time/time-rollover 301'
+    )
+    expect(lines).toContain(
+      '/help/time/carry-over.md /help/time/time-rollover.md 301'
+    )
+    expect(lines).toContain(
+      '/help/pt-BR/time/carry-over /help/pt-BR/time/time-rollover 301'
+    )
+    expect(lines).toHaveLength(19 * 2)
+  })
+})
+
+describe('screenshots', () => {
+  test('are cached forever and readable from the app', async () => {
+    const { headersFile } = await siteFiles()
+    expect(rule(headersFile(), '/help/images/*').filter(Boolean)).toEqual([
+      'Access-Control-Allow-Origin: *',
+      'Cache-Control: public, max-age=31536000, immutable',
+    ])
+  })
+})

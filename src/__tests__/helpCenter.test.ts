@@ -22,6 +22,7 @@ import {
   parseLegacyHelpBundle,
 } from '@/__tests__/helpers/legacyHelpCenterParser'
 import { helpLocaleFor } from '@/features/updates/lib/helpCenter/locale'
+import { parseRichTextDoc } from '@/lib/richText/parse'
 import {
   RefreshDeps,
   refreshHelpBundle,
@@ -194,6 +195,93 @@ describe('parseHelpBundle', () => {
       type: 'text',
       text: 'tap',
     })
+  })
+})
+
+const SCREENSHOT_SRC =
+  'https://witnesswork.app/help/images/submit-report.e9ec28dcc827.webp'
+
+const withScreenshot = (src = SCREENSHOT_SRC) =>
+  helpBundle({}, [
+    helpEntry('submitReport', 'Does the app submit my report?', 'No.', {
+      doc: {
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'No.' }] },
+          {
+            type: 'image',
+            attrs: {
+              id: 'help-e9ec28dcc827',
+              src,
+              alt: 'The report and its Submit button',
+              width: 600,
+              height: 1155,
+            },
+          },
+        ],
+      },
+    }),
+  ])
+
+describe('Help Center screenshots', () => {
+  it('keeps the address and description of a screenshot on the website', () => {
+    const bundle = parseHelpBundle(JSON.parse(JSON.stringify(withScreenshot())))
+    expect(bundle?.entries[0].doc.content[1]).toEqual({
+      type: 'image',
+      attrs: {
+        id: 'help-e9ec28dcc827',
+        src: SCREENSHOT_SRC,
+        alt: 'The report and its Submit button',
+        width: 600,
+        height: 1155,
+      },
+    })
+  })
+
+  it('keeps staging screenshots too', () => {
+    const src = SCREENSHOT_SRC.replace('//', '//dev.')
+    const bundle = parseHelpBundle(withScreenshot(src))
+    const image = bundle?.entries[0].doc.content[1]
+    expect(image?.type === 'image' && image.attrs.src).toBe(src)
+  })
+
+  it('drops an image address that is not a Help Center screenshot', () => {
+    for (const src of [
+      'https://example.com/help/images/x.e9ec28dcc827.webp',
+      'http://witnesswork.app/help/images/x.e9ec28dcc827.webp',
+      'https://witnesswork.app/help/images/x.webp',
+      'https://witnesswork.app/privacy',
+    ]) {
+      const image = parseHelpBundle(withScreenshot(src))?.entries[0].doc
+        .content[1]
+      expect(image?.type === 'image' && image.attrs.src).toBeUndefined()
+    }
+  })
+
+  it('never keeps a remote address in a note', () => {
+    const doc = withScreenshot().entries[0].doc
+    const note = parseRichTextDoc(JSON.parse(JSON.stringify(doc)))
+    expect(note?.content[1]).toEqual({
+      type: 'image',
+      attrs: { id: 'help-e9ec28dcc827', width: 600, height: 1155 },
+    })
+  })
+
+  it('reaches apps released before screenshots as a note image they hide', () => {
+    const legacy = parseLegacyHelpBundle(
+      JSON.parse(JSON.stringify(withScreenshot()))
+    )
+    expect(legacy?.entries).toHaveLength(1)
+    expect(legacy?.entries[0].doc).toMatchObject({
+      content: [
+        { type: 'paragraph' },
+        {
+          type: 'image',
+          attrs: { id: 'help-e9ec28dcc827', width: 600, height: 1155 },
+        },
+      ],
+    })
+    expect(JSON.stringify(legacy?.entries[0].doc)).not.toContain('https:')
   })
 })
 

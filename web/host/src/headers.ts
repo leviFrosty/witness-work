@@ -62,7 +62,13 @@ export function contentSecurityPolicy(profile: WebProfile): string {
     ['script-src', "'self'", "'wasm-unsafe-eval'"],
 
     ['style-src', "'self'", "'unsafe-inline'"],
-    ['img-src', "'self'", 'data:', 'blob:'],
+    [
+      'img-src',
+      "'self'",
+      'data:',
+      'blob:',
+      new URL(profile.helpManifest).origin,
+    ],
     ['font-src', "'self'", 'data:'],
 
     ['connect-src', "'self'", ...connectOrigins(profile)],

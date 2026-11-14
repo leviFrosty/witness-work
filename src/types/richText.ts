@@ -22,6 +22,8 @@ export type RichTextImageAttrs = {
   width: number
   height: number
   scale?: number
+  src?: string
+  alt?: string
 }
 
 export type RichTextParagraph = {

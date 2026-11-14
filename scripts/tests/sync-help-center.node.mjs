@@ -3,6 +3,7 @@ import { afterEach, test } from 'node:test'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import zlib from 'node:zlib'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 
@@ -93,10 +94,19 @@ function sync(bundleDir, args = []) {
   )
   const snapshot = (locale) =>
     JSON.parse(
-      fs.readFileSync(
-        path.join(cwd, 'src/assets/help-center', `${locale}.json`),
-        'utf8'
-      )
+      zlib
+        .inflateRawSync(
+          Buffer.from(
+            JSON.parse(
+              fs.readFileSync(
+                path.join(cwd, 'src/assets/help-center', `${locale}.json`),
+                'utf8'
+              )
+            ),
+            'base64url'
+          )
+        )
+        .toString('utf8')
     )
   return { result, snapshot }
 }

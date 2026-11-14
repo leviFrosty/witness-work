@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { beforeEach, expect, it, vi } from 'vitest'
+import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
 
 const mocks = vi.hoisted(() => ({
   photos: true,
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   deleteAsync: vi.fn(async (_uri: string, _options?: object) => {}),
 
   failures: new Map<string, string>(),
+  usage: null as UsageSnapshotWire | null,
 }))
 
 vi.mock('@/lib/platformCapabilities', () => ({
@@ -46,6 +48,7 @@ vi.mock('@/features/scribe/lib/defaultClient', async () => {
     if (failure)
       throw new ScribeClientError(failure as 'network', {
         serverCode: failure === 'page_limit' ? 'transcribe_limit' : null,
+        usage: failure === 'limit_reached' ? mocks.usage : null,
       })
     return { text: `text of ${image}`, truncated: false, usage: null }
   }
@@ -97,6 +100,7 @@ beforeEach(async () => {
   vi.clearAllMocks()
   mocks.photos = true
   mocks.failures.clear()
+  mocks.usage = null
   await act(async () => {
     renderer = create(<Harness />)
   })
@@ -239,4 +243,39 @@ it('is unavailable, and reads nothing, where the platform cannot read photos', a
   expect(hook.available).toBe(false)
   expect(await read()).toBeNull()
   expect(mocks.capture).not.toHaveBeenCalled()
+})
+
+it('sends scribe_limit_reached once when a page read hits a full usage window', async () => {
+  mocks.usage = {
+    plan: 'supporter',
+    supporterCheckFailed: false,
+    windows: [
+      { id: 'session', percentUsed: 40, resetsAt: 1_800_000_100_000 },
+      { id: 'weekly', percentUsed: 100, resetsAt: 1_900_000_000_000 },
+    ],
+    limited: true,
+    resetsAt: 1_900_000_000_000,
+    asOf: 1_800_000_000_000,
+  }
+  mocks.failures.set('p2', 'limit_reached')
+  mocks.failures.set('p3', 'limit_reached')
+
+  await read()
+
+  const limits = mocks.capture.mock.calls.filter(
+    ([event]) => event === 'scribe_limit_reached'
+  )
+  expect(limits).toEqual([
+    ['scribe_limit_reached', { plan: 'supporter', window: 'weekly' }],
+  ])
+})
+
+it("doesn't send scribe_limit_reached for the per-page rate limit", async () => {
+  mocks.failures.set('p2', 'page_limit')
+
+  await read()
+
+  expect(
+    mocks.capture.mock.calls.some(([event]) => event === 'scribe_limit_reached')
+  ).toBe(false)
 })

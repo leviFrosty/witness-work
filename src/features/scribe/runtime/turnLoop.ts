@@ -24,7 +24,6 @@ import {
   toScribeClientError,
   toScribeError,
 } from '@/features/scribe/lib/errors'
-import { fullWindow } from '@/features/scribe/lib/usageSnapshot'
 import { RefRegistry } from '@/features/scribe/runtime/refs'
 import {
   buildScribeContext,
@@ -668,10 +667,7 @@ async function driveTurn(
     }
     if (failure.code === 'limit_reached') {
       noteUsage(failure.usage)
-      trackLimitReached({
-        plan: failure.usage?.plan ?? 'free',
-        window: failure.usage ? fullWindow(failure.usage) : null,
-      })
+      trackLimitReached(failure.usage)
       finishTurn(
         conversationId,
         turn,

@@ -20,7 +20,7 @@ import {
   ToolList,
   ToolRow,
   ToolSection,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 
 const INTENTS: ToastIntent[] = [
@@ -111,107 +111,110 @@ export default function ToastTools() {
       info='Shows test toasts. Undo and unlock buttons only show another toast. Replays drop the original callbacks and key, so they never settle tray news or undo anything.'
       summary={`${top} top · ${showing.length - top} bottom`}
     >
-      <ToolSubheading title='Custom' />
-      <ChoiceChips
-        accessibilityLabel='Toast intent'
-        options={INTENTS.map((key) => ({ key, label: key }))}
-        value={intent}
-        onChange={setIntent}
-        style={{ paddingTop: 8 }}
-      />
-      <ChoiceChips
-        accessibilityLabel='Toast duration'
-        options={DURATIONS.map((key) => ({ key, label: key }))}
-        value={duration}
-        onChange={setDuration}
-        style={{ paddingTop: 8 }}
-      />
-      <TextInput
-        value={title}
-        onChangeText={setTitle}
-        placeholder={`Title (default: Test ${intent})`}
-        accessibilityLabel='Toast title'
-        textAlign='start'
-        style={[inputStyle, { marginTop: 8 }]}
-      />
-      <TextInput
-        value={message}
-        onChangeText={setMessage}
-        placeholder='Message (optional)'
-        accessibilityLabel='Toast message'
-        textAlign='start'
-        style={[inputStyle, { marginTop: 8 }]}
-      />
-      <ToolList>
-        <ToolRow
-          label='Show'
-          onPress={() =>
-            showToast(intent, {
-              title: title.trim() || `Test ${intent}`,
-              message: message.trim() || undefined,
-              durationMs:
-                duration === 'default'
-                  ? undefined
-                  : Number.parseInt(duration, 10) * 1000,
-            })
-          }
+      <ToolSubsection title='Custom'>
+        <ChoiceChips
+          accessibilityLabel='Toast intent'
+          options={INTENTS.map((key) => ({ key, label: key }))}
+          value={intent}
+          onChange={setIntent}
+          style={{ paddingTop: 8 }}
         />
-      </ToolList>
+        <ChoiceChips
+          accessibilityLabel='Toast duration'
+          options={DURATIONS.map((key) => ({ key, label: key }))}
+          value={duration}
+          onChange={setDuration}
+          style={{ paddingTop: 8 }}
+        />
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          placeholder={`Title (default: Test ${intent})`}
+          accessibilityLabel='Toast title'
+          textAlign='start'
+          style={[inputStyle, { marginTop: 8 }]}
+        />
+        <TextInput
+          value={message}
+          onChangeText={setMessage}
+          placeholder='Message (optional)'
+          accessibilityLabel='Toast message'
+          textAlign='start'
+          style={[inputStyle, { marginTop: 8 }]}
+        />
+        <ToolList>
+          <ToolRow
+            label='Show'
+            onPress={() =>
+              showToast(intent, {
+                title: title.trim() || `Test ${intent}`,
+                message: message.trim() || undefined,
+                durationMs:
+                  duration === 'default'
+                    ? undefined
+                    : Number.parseInt(duration, 10) * 1000,
+              })
+            }
+          />
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading title='Stacks' />
-      <ToolList>
-        <ToolRow label='3 at the top (news)' onPress={() => burst('news')} />
-        <ToolRow
-          label='3 at the bottom (success)'
-          onPress={() => burst('success')}
-        />
-        <ToolRow label='3 unlocks' onPress={() => burst('unlock')} />
-        <ToolRow
-          label='One of each intent'
-          onPress={() =>
-            INTENTS.forEach((each, i) =>
-              setTimeout(
-                () => showToast(each, { title: `Test ${each}` }),
-                i * 300
+      <ToolSubsection title='Stacks'>
+        <ToolList>
+          <ToolRow label='3 at the top (news)' onPress={() => burst('news')} />
+          <ToolRow
+            label='3 at the bottom (success)'
+            onPress={() => burst('success')}
+          />
+          <ToolRow label='3 unlocks' onPress={() => burst('unlock')} />
+          <ToolRow
+            label='One of each intent'
+            onPress={() =>
+              INTENTS.forEach((each, i) =>
+                setTimeout(
+                  () => showToast(each, { title: `Test ${each}` }),
+                  i * 300
+                )
               )
-            )
-          }
-        />
-        <ToolRow
-          label='Dismiss all'
-          tone='destructive'
-          disabled={showing.length === 0}
-          onPress={() => showing.forEach((t) => toast.dismiss(t.id))}
-        />
-      </ToolList>
+            }
+          />
+          <ToolRow
+            label='Dismiss all'
+            tone='destructive'
+            disabled={showing.length === 0}
+            onPress={() => showing.forEach((t) => toast.dismiss(t.id))}
+          />
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Recent'
         info='The last toasts shown since launch, newest first. Tap one to show it again.'
-      />
-      <ToolList>
-        {recent.length === 0 ? (
-          <ToolRow label='None yet' value='—' />
-        ) : (
-          recent.map((t) => (
-            <ToolRow
-              key={t.id}
-              label={t.title}
-              value={t.intent}
-              onPress={() => replay(t)}
-            />
-          ))
-        )}
-        <ToolRow
-          label='Replay all'
-          disabled={recent.length === 0}
-          onPress={() =>
-            [...recent]
-              .reverse()
-              .forEach((t, i) => setTimeout(() => replay(t), i * 300))
-          }
-        />
-      </ToolList>
+      >
+        <ToolList>
+          {recent.length === 0 ? (
+            <ToolRow label='None yet' value='—' />
+          ) : (
+            recent.map((t) => (
+              <ToolRow
+                key={t.id}
+                label={t.title}
+                value={t.intent}
+                onPress={() => replay(t)}
+              />
+            ))
+          )}
+          <ToolRow
+            label='Replay all'
+            disabled={recent.length === 0}
+            onPress={() =>
+              [...recent]
+                .reverse()
+                .forEach((t, i) => setTimeout(() => replay(t), i * 300))
+            }
+          />
+        </ToolList>
+      </ToolSubsection>
     </ToolSection>
   )
 }

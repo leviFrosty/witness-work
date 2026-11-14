@@ -65,6 +65,39 @@ describe('__WW_DEV__.pet', () => {
     expect(petHarness.state().override).toBeNull()
   })
 
+  it('sets the coins left to spend, on top of what is bought', () => {
+    petHarness.adopt('cat')
+    expect(petHarness.coins(500).override).toMatchObject({ wallet: 500 })
+
+    const pet = usePet.getState().pet!
+    usePet.setState({
+      pet: {
+        ...pet,
+        purchases: [{ item: 'hat:bow', price: 12, on: '2026-10-05' }],
+      },
+    })
+
+    expect(petHarness.coins(500).override).toMatchObject({ wallet: 620 })
+    expect(petHarness.coins(0).override).toMatchObject({ wallet: 120 })
+  })
+
+  it('goes back to the real coins, keeping the other fakes', () => {
+    petHarness.adopt('cat')
+    petHarness.override({ hearts: 2 })
+    petHarness.coins(500)
+    expect(petHarness.coins(null).override).toEqual({
+      hearts: 2,
+      wallet: undefined,
+    })
+  })
+
+  it('rejects coins without a pet, and amounts that are not whole', () => {
+    expect(() => petHarness.coins(100)).toThrow(/No pet/)
+    petHarness.adopt('cat')
+    expect(() => petHarness.coins(-1)).toThrow(/whole number/)
+    expect(() => petHarness.coins(1.5)).toThrow(/whole number/)
+  })
+
   it('sends motions and pats to the card', () => {
     petHarness.play('trick')
     expect(usePetSession.getState().command).toMatchObject({ kind: 'trick' })

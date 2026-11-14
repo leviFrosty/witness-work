@@ -8,7 +8,6 @@ import Text from '@/components/ui/MyText'
 import Select from '@/components/ui/Select'
 import Switch from '@/components/ui/Switch'
 import useTheme from '@/contexts/theme'
-import JsonViewer from '@/features/contacts/components/JsonViewer'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { badgeReactionEmoji } from '@/features/buddies/lib/badgeReactions'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
@@ -58,10 +57,11 @@ import {
 } from '@/app/dev-harness/badges'
 import {
   MONO,
+  ToolJson,
   ToolList,
   ToolRow,
   ToolSection,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 
 let lastEvaluatedAt: number | null = null
@@ -348,272 +348,279 @@ export default function BadgesTools() {
         />
       </ToolList>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Evaluate'
         info='Evaluate now runs what the app runs after your own edit: newly reached badges are stored, levels reached this or last month celebrate full screen, older ones go to the history summary. As if from elsewhere is a change from iCloud Sync or a buddy: new levels skip the celebration and wait on the Home “New badge” card (ADR 0021). Quietly stores everything as history with nothing shown (what seeding uses). The app also evaluates by itself 1.5 s after records change.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Evaluate now'
-          onPress={() =>
-            reportRun(
-              'Evaluated',
-              evaluateBadgesNow({ action: noteUserAction('dev') })
-            )
-          }
-        />
-        <ToolRow
-          label='Evaluate as if from elsewhere'
-          onPress={() =>
-            reportRun('Evaluated from elsewhere', evaluateBadgesNow())
-          }
-        />
-        <ToolRow
-          label='Evaluate quietly'
-          onPress={() =>
-            reportRun('Evaluated quietly', evaluateBadgesNow({ quiet: true }))
-          }
-        />
-        <ToolRow
-          label='Add badge history records'
-          info='Adds one contact visited monthly for 8 months, a time entry in every month since the previous service year began, a weekly plan since 3 months ago and 6 sent reports (dev-badges- ids; re-running changes nothing), then evaluates now.'
-          onPress={() => {
-            applyBadgeHistoryFixture()
-            reportRun(
-              'Badge history added',
-              evaluateBadgesNow({ action: noteUserAction('dev') })
-            )
-          }}
-        />
-      </ToolList>
+      >
+        <ToolList>
+          <ToolRow
+            label='Evaluate now'
+            onPress={() =>
+              reportRun(
+                'Evaluated',
+                evaluateBadgesNow({ action: noteUserAction('dev') })
+              )
+            }
+          />
+          <ToolRow
+            label='Evaluate as if from elsewhere'
+            onPress={() =>
+              reportRun('Evaluated from elsewhere', evaluateBadgesNow())
+            }
+          />
+          <ToolRow
+            label='Evaluate quietly'
+            onPress={() =>
+              reportRun('Evaluated quietly', evaluateBadgesNow({ quiet: true }))
+            }
+          />
+          <ToolRow
+            label='Add badge history records'
+            info='Adds one contact visited monthly for 8 months, a time entry in every month since the previous service year began, a weekly plan since 3 months ago and 6 sent reports (dev-badges- ids; re-running changes nothing), then evaluates now.'
+            onPress={() => {
+              applyBadgeHistoryFixture()
+              reportRun(
+                'Badge history added',
+                evaluateBadgesNow({ action: noteUserAction('dev') })
+              )
+            }}
+          />
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Celebrate'
         info='Pushes badges straight into the session queue the celebration overlay reads, whether or not they’re earned. They wait for their takeover turn but never expire. The history summary is the sheet shown after badges are found in existing records.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Badge'
-          trailing={
-            <Select
-              data={celebrateOptions}
-              value={celebrateKey}
-              onChange={(item) => setCelebrateKey(item.value)}
-              accessibilityLabel='Badge to celebrate'
-              style={{ minWidth: 180 }}
-            />
-          }
-        />
-        <ToolRow
-          label={`Celebrate ${keyTitle(celebrateKey)}`}
-          onPress={() => {
-            const queued = celebrateBadge(celebrateKey)
-            say('Celebration queued', `${queued} in queue`)
-          }}
-        />
-        <ToolRow label='Queue 3 celebrations' onPress={queueThree} />
-        <ToolRow
-          label='Show history summary'
-          onPress={() => {
-            const count = showBadgeHistorySummary(historyRecords || 5)
-            say('History summary requested', `${count} badges`)
-          }}
-        />
-        <ToolRow
-          label='Clear session queue'
-          onPress={() => {
-            useBadgeSession.getState().clearCelebrations()
-            useBadgeSession.getState().clearHistory()
-            say('Session queue cleared')
-          }}
-        />
-        <ToolRow
-          label='Show the tray item again'
-          info='badgeCardDismissed. Forgets which badges the Home “New badge” card has let go of, so it names the newest new badge again. Not synced.'
-          onPress={() => {
-            usePreferences.getState().set({ badgeCardDismissed: [] })
-            say('Tray item reset')
-          }}
-        />
-      </ToolList>
+      >
+        <ToolList>
+          <ToolRow
+            label='Badge'
+            trailing={
+              <Select
+                data={celebrateOptions}
+                value={celebrateKey}
+                onChange={(item) => setCelebrateKey(item.value)}
+                accessibilityLabel='Badge to celebrate'
+                style={{ minWidth: 180 }}
+              />
+            }
+          />
+          <ToolRow
+            label={`Celebrate ${keyTitle(celebrateKey)}`}
+            onPress={() => {
+              const queued = celebrateBadge(celebrateKey)
+              say('Celebration queued', `${queued} in queue`)
+            }}
+          />
+          <ToolRow label='Queue 3 celebrations' onPress={queueThree} />
+          <ToolRow
+            label='Show history summary'
+            onPress={() => {
+              const count = showBadgeHistorySummary(historyRecords || 5)
+              say('History summary requested', `${count} badges`)
+            }}
+          />
+          <ToolRow
+            label='Clear session queue'
+            onPress={() => {
+              useBadgeSession.getState().clearCelebrations()
+              useBadgeSession.getState().clearHistory()
+              say('Session queue cleared')
+            }}
+          />
+          <ToolRow
+            label='Show the tray item again'
+            info='badgeCardDismissed. Forgets which badges the Home “New badge” card has let go of, so it names the newest new badge again. Not synced.'
+            onPress={() => {
+              usePreferences.getState().set({ badgeCardDismissed: [] })
+              say('Tray item reset')
+            }}
+          />
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Earned badges'
         info='Earn every badge stores all of them as history, keeping any already earned. A random set replaces earned badges with a mixed collection where two arrived just now (new dots), plus whatever the records reach, filed quietly. Reset forgets everything; the next evaluation is a first pass again. Re-earn resets, marks the first pass done and evaluates, so levels reached this or last month celebrate.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Earn every badge'
-          onPress={() => say(`${earnEveryBadge()} badges earned`)}
-        />
-        <ToolRow
-          label='Earn a random set'
-          onPress={() => say(`${earnRandomBadges()} badges earned`)}
-        />
-        <ToolRow
-          label='Mark all seen'
-          onPress={() => {
-            usePreferences.getState().markBadgesSeen()
-            say('All badges seen')
-          }}
-        />
-        <ToolRow
-          label='Mark all unseen'
-          onPress={() => {
-            usePreferences.getState().set({ badgesSeenAt: 0 })
-            say('All badges new')
-          }}
-        />
-        <ToolRow
-          label='Reset badges'
-          tone='destructive'
-          onPress={() =>
-            confirmDevAction('Reset badges', () => {
-              resetBadgeState()
-              say('Badges reset', 'The next evaluation is a first pass')
-            })
-          }
-        />
-        <ToolRow
-          label='Reset and re-earn with celebrations'
-          tone='destructive'
-          onPress={() =>
-            confirmDevAction('Reset and re-earn badges', () =>
-              reportRun(
-                'Badges re-earned',
-                reEarnBadgesLive(noteUserAction('dev'))
+      >
+        <ToolList>
+          <ToolRow
+            label='Earn every badge'
+            onPress={() => say(`${earnEveryBadge()} badges earned`)}
+          />
+          <ToolRow
+            label='Earn a random set'
+            onPress={() => say(`${earnRandomBadges()} badges earned`)}
+          />
+          <ToolRow
+            label='Mark all seen'
+            onPress={() => {
+              usePreferences.getState().markBadgesSeen()
+              say('All badges seen')
+            }}
+          />
+          <ToolRow
+            label='Mark all unseen'
+            onPress={() => {
+              usePreferences.getState().set({ badgesSeenAt: 0 })
+              say('All badges new')
+            }}
+          />
+          <ToolRow
+            label='Reset badges'
+            tone='destructive'
+            onPress={() =>
+              confirmDevAction('Reset badges', () => {
+                resetBadgeState()
+                say('Badges reset', 'The next evaluation is a first pass')
+              })
+            }
+          />
+          <ToolRow
+            label='Reset and re-earn with celebrations'
+            tone='destructive'
+            onPress={() =>
+              confirmDevAction('Reset and re-earn badges', () =>
+                reportRun(
+                  'Badges re-earned',
+                  reEarnBadgesLive(noteUserAction('dev'))
+                )
               )
-            )
-          }
-        />
-      </ToolList>
+            }
+          />
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Collections'
         info='S is the highest level stored in earnedBadges; L is what the latest evaluation reaches (red when it’s ahead of S). Count / next threshold counts months (Year Round: service years; Keeping in Touch: months with one person). Run Evaluate if L shows 0 everywhere.'
-      />
-      <ToolList>
-        {BADGE_COLLECTIONS.map((spec) => (
-          <CollectionRow
-            key={spec.id}
-            spec={spec}
-            earned={earnedBadges}
-            progress={evaluation?.collections[spec.id]}
-            ledgerEntries={ledgerFor(spec.id)}
-            seenAt={seenAt}
-          />
-        ))}
-        {ONE_TIME_BADGES.map((badge) => {
-          const record = earnedBadges[badgeKey(badge.id)]
-          const live = evaluation?.oneTime[badge.id]
-          return (
-            <ToolRow
-              key={badge.id}
-              label={badgeName(badge.id)}
-              value={`${record ? describeRecord(record, seenAt) : 'not stored'} · live ${live?.earned ? (live.month ?? 'yes') : 'no'}`}
+      >
+        <ToolList>
+          {BADGE_COLLECTIONS.map((spec) => (
+            <CollectionRow
+              key={spec.id}
+              spec={spec}
+              earned={earnedBadges}
+              progress={evaluation?.collections[spec.id]}
+              ledgerEntries={ledgerFor(spec.id)}
+              seenAt={seenAt}
             />
-          )
-        })}
-      </ToolList>
+          ))}
+          {ONE_TIME_BADGES.map((badge) => {
+            const record = earnedBadges[badgeKey(badge.id)]
+            const live = evaluation?.oneTime[badge.id]
+            return (
+              <ToolRow
+                key={badge.id}
+                label={badgeName(badge.id)}
+                value={`${record ? describeRecord(record, seenAt) : 'not stored'} · live ${live?.earned ? (live.month ?? 'yes') : 'no'}`}
+              />
+            )
+          })}
+        </ToolList>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Buddy Card'
         info='What this device would publish to buddies: each collection’s highest level and every one-time badge, no counts or dates. First Bible Study stays home in data protection mode, and nothing is shared while Show badges or the Badges switch in Buddies Settings is off.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Shared'
-          value={
-            sharing
-              ? `${buddyPayload.length} badges`
-              : `none (${showBadges ? 'Buddies Settings → Badges' : 'Show badges'} off)`
-          }
-        />
-        <ToolRow
-          label='Buddies Settings'
-          info='The Badges sharing switch and Badge Alerts in Buddies Settings.'
-          value={`sharing ${sharesBadges ? 'on' : 'off'} · alerts ${badgeAlerts ? 'on' : 'off'}`}
-        />
-        <ToolRow
-          label='Data protection'
-          value={dataProtectionMode ? 'On' : 'Off'}
-        />
-        <ToolRow
-          label='Simulate a buddy’s new badge'
-          info='Adds a “has a new badge” entry to the Home bell, from the first active buddy (their page lists the badges too) or a made-up Sample Buddy, then opens the bell. The bell lists Buddies entries only once Buddies is set up here. No push is sent.'
-          disabled={!buddiesEnabled || !buddiesStarted}
-          onPress={() => {
-            const { name, badges } = simulateBuddyBadge()
-            say(
-              `${name} has a new badge`,
-              badges
-                .map((badge) => keyTitle(badgeKey(badge.c, badge.l)))
-                .join(', ')
-            )
-            openNotificationsTray()
-          }}
-        />
-        <ToolRow
-          label='Simulate a reaction to my badge'
-          info='Adds a random reaction from the first active buddy to your newest badge: the badge’s full-screen view lists it, and the Home bell shows “reacted to”, then opens the bell. A reaction from the same buddy to the same badge replaces the last one. With no active buddy, a made-up Sample Buddy gets only the bell entry. No push is sent.'
-          disabled={!buddiesEnabled || !buddiesStarted || earnedCount === 0}
-          onPress={() => {
-            const {
-              name,
-              badgeKey: key,
-              emoji,
-              onBadge,
-            } = simulateBuddyReaction()
-            say(
-              `${name} reacted ${badgeReactionEmoji(emoji)}`,
-              `${keyTitle(key)}${onBadge ? '' : ' (bell only: no active buddy)'}`
-            )
-            openNotificationsTray()
-          }}
-        />
-      </ToolList>
-      <View style={{ paddingTop: 8 }}>
-        <JsonViewer
-          label='Buddy Card badges'
-          value={sharing ? buddyPayload : []}
-          count={sharing ? buddyPayload.length : 0}
-        />
-      </View>
+      >
+        <ToolList>
+          <ToolRow
+            label='Shared'
+            value={
+              sharing
+                ? `${buddyPayload.length} badges`
+                : `none (${showBadges ? 'Buddies Settings → Badges' : 'Show badges'} off)`
+            }
+          />
+          <ToolRow
+            label='Buddies Settings'
+            info='The Badges sharing switch and Badge Alerts in Buddies Settings.'
+            value={`sharing ${sharesBadges ? 'on' : 'off'} · alerts ${badgeAlerts ? 'on' : 'off'}`}
+          />
+          <ToolRow
+            label='Data protection'
+            value={dataProtectionMode ? 'On' : 'Off'}
+          />
+          <ToolRow
+            label='Simulate a buddy’s new badge'
+            info='Adds a “has a new badge” entry to the Home bell, from the first active buddy (their page lists the badges too) or a made-up Sample Buddy, then opens the bell. The bell lists Buddies entries only once Buddies is set up here. No push is sent.'
+            disabled={!buddiesEnabled || !buddiesStarted}
+            onPress={() => {
+              const { name, badges } = simulateBuddyBadge()
+              say(
+                `${name} has a new badge`,
+                badges
+                  .map((badge) => keyTitle(badgeKey(badge.c, badge.l)))
+                  .join(', ')
+              )
+              openNotificationsTray()
+            }}
+          />
+          <ToolRow
+            label='Simulate a reaction to my badge'
+            info='Adds a random reaction from the first active buddy to your newest badge: the badge’s full-screen view lists it, and the Home bell shows “reacted to”, then opens the bell. A reaction from the same buddy to the same badge replaces the last one. With no active buddy, a made-up Sample Buddy gets only the bell entry. No push is sent.'
+            disabled={!buddiesEnabled || !buddiesStarted || earnedCount === 0}
+            onPress={() => {
+              const {
+                name,
+                badgeKey: key,
+                emoji,
+                onBadge,
+              } = simulateBuddyReaction()
+              say(
+                `${name} reacted ${badgeReactionEmoji(emoji)}`,
+                `${keyTitle(key)}${onBadge ? '' : ' (bell only: no active buddy)'}`
+              )
+              openNotificationsTray()
+            }}
+          />
+        </ToolList>
+        <View style={{ paddingTop: 8 }}>
+          <ToolJson
+            label='Buddy Card badges'
+            value={sharing ? buddyPayload : []}
+            count={sharing ? buddyPayload.length : 0}
+          />
+        </View>
+      </ToolSubsection>
 
-      <ToolSubheading title='Medallions' />
-      <ToolList>
-        <ToolRow
-          label='Show gallery'
-          info='Every illustration at Bronze, Silver, Gold and Pearl plus locked, and the one-time badges, at 56 pt.'
-          trailing={
-            <Switch
-              accessibilityLabel='Show gallery'
-              value={galleryVisible}
-              onValueChange={setGalleryVisible}
-            />
-          }
-        />
-      </ToolList>
-      {galleryVisible && <BadgeGallery />}
+      <ToolSubsection title='Medallions'>
+        <ToolList>
+          <ToolRow
+            label='Show gallery'
+            info='Every illustration at Bronze, Silver, Gold and Pearl plus locked, and the one-time badges, at 56 pt.'
+            trailing={
+              <Switch
+                accessibilityLabel='Show gallery'
+                value={galleryVisible}
+                onValueChange={setGalleryVisible}
+              />
+            }
+          />
+        </ToolList>
+        {galleryVisible && <BadgeGallery />}
+      </ToolSubsection>
 
-      <ToolSubheading title='Raw state' />
-      <View style={{ gap: 8, paddingTop: 8 }}>
-        <JsonViewer
-          label='earnedBadges'
-          value={earnedBadges}
-          count={records.length}
-        />
-        <JsonViewer
-          label='badgeLedger'
-          value={badgeLedger}
-          count={badgeLedger.length}
-        />
-        <JsonViewer
-          label='Session evaluation'
-          value={evaluation}
-          count={evaluation?.earned.length ?? 0}
-        />
-      </View>
+      <ToolSubsection title='Raw state'>
+        <View style={{ gap: 8, paddingTop: 8 }}>
+          <ToolJson
+            label='earnedBadges'
+            value={earnedBadges}
+            count={records.length}
+          />
+          <ToolJson
+            label='badgeLedger'
+            value={badgeLedger}
+            count={badgeLedger.length}
+          />
+          <ToolJson
+            label='Session evaluation'
+            value={evaluation}
+            count={evaluation?.earned.length ?? 0}
+          />
+        </View>
+      </ToolSubsection>
     </ToolSection>
   )
 }

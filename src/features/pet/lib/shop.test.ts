@@ -9,7 +9,7 @@ import {
   UNLOCK_ORDER,
 } from '@/types/pet'
 import { ROOM_TABS } from '@/features/pet/lib/roomOptions'
-import { FAKE_WALLETS } from '@/features/pet/lib/fakeWallet'
+import { FAKE_WALLET_MAX } from '@/features/pet/lib/fakeWallet'
 import { itemRarity, ITEM_PRICES, priceOf } from '@/features/pet/lib/prices'
 import {
   shopItemState,
@@ -51,7 +51,7 @@ describe('Shop prices', () => {
 
   it('keeps a fake wallet that covers the whole Shop', () => {
     const shop = Object.values(ITEM_PRICES).reduce((sum, p) => sum + p, 0)
-    expect(Math.max(...FAKE_WALLETS)).toBeGreaterThanOrEqual(shop)
+    expect(FAKE_WALLET_MAX).toBeGreaterThanOrEqual(shop)
   })
 
   it('lists hats cheapest first, and only the top five are rare', () => {

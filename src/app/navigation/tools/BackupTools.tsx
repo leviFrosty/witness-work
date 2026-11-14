@@ -21,14 +21,14 @@ import {
 } from '@/app/account/backupRestore'
 import {
   MONO,
+  ToolJson,
   ToolList,
   ToolRow,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 import { BackupError } from '@/lib/serverAccount/backupScheduler'
 import { HttpError } from '@/lib/http/request'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
-import JsonViewer from '@/features/contacts/components/JsonViewer'
 
 const shortId = (value: string | null | undefined) =>
   value ? `${value.slice(0, 6)}…${value.slice(-4)}` : '—'
@@ -159,167 +159,176 @@ export default function BackupTools() {
 
   return (
     <>
-      <ToolSubheading
+      <ToolSubsection
         title='Backup'
         info='The end-to-end encrypted backup: one slot per install at v1/<accountId>/<slotId>, sealed with HKDF(accountKey, "ww-account/v1/backup"). State lives in MMKV `server-account` → `backup`.'
-      />
-      <ToolList>
-        <ToolRow label='Slot id' value={slotShown(state.slotId)} />
-        <ToolRow label='Enabled' value={state.enabled ? 'yes' : 'no'} />
-        <ToolRow
-          label='Running'
-          value={
-            state.uploading ? 'uploading' : state.restoring ? 'restoring' : '—'
-          }
-        />
-        <ToolRow
-          label='Last upload'
-          value={`${when(schedule.lastPutAt)} · ${schedule.lastSize ?? '—'} B`}
-        />
-        <ToolRow
-          label='Last attempt'
-          tone={schedule.lastResult === 'failed' ? 'destructive' : 'default'}
-          value={`${when(schedule.lastAttemptAt)} · ${schedule.lastResult ?? '—'}${schedule.lastError ? ` (${schedule.lastError})` : ''}`}
-        />
-        <ToolRow
-          label='Plaintext hash'
-          info='SHA-256 of the plaintext without its timestamps, with the account and slot. An unchanged hash within a day skips the upload.'
-          value={shortId(schedule.lastHash)}
-        />
-        <ToolRow label='Pending' value={schedule.pending ? 'yes' : 'no'} />
-        <ToolRow
-          label='Failures in a row'
-          value={`${schedule.failures}${schedule.retryAt ? ` · retry ${when(schedule.retryAt)}` : ''}`}
-        />
-        <ToolRow
-          label='Next attempt'
-          value={state.enabled ? when(schedule.nextAttemptAt) : '—'}
-        />
-        <ToolRow
-          label='Restore offered for'
-          value={shortId(state.restoreOfferedFor)}
-        />
-      </ToolList>
-      <ToolList>
-        <ToolRow
-          label={busy === 'Upload now' ? 'Uploading…' : 'Upload now'}
-          info='Skips the debounce and backoff; still waits out the server’s one put a minute.'
-          disabled={!state.enabled || busy !== null}
-          onPress={uploadNow}
-        />
-        <ToolRow
-          label={busy === 'List slots' ? 'Listing…' : 'List server slots'}
-          disabled={busy !== null}
-          onPress={list}
-        />
-        <ToolRow
-          label='Decrypt this slot'
-          disabled={!state.slotId || busy !== null}
-          onPress={() => decrypt(state.slotId ? [state.slotId] : [])}
-        />
-        <ToolRow
-          label='Decrypt every slot'
-          disabled={busy !== null}
-          onPress={() => decrypt()}
-        />
-        <ToolRow
-          label={busy === 'Dry run' ? 'Running…' : 'Restore dry run'}
-          info='Downloads every slot and shows what Replace would leave and what Combine would change, as counts. Writes nothing.'
-          disabled={busy !== null}
-          onPress={runDryRun}
-        />
-        <ToolRow
-          label='Offer restore'
-          info='The real restore prompt, as Settings → Restore from Backup shows it.'
-          disabled={busy !== null}
-          onPress={() =>
-            void offerRestore('tools', { quietWhenNone: false }).then(
-              (result) => say(`Restore: ${result.outcome}`)
-            )
-          }
-        />
-        <ToolRow
-          label='Simulate corrupt download'
-          info='Flips the last byte of the next downloaded slot, so it fails to decrypt and is skipped.'
-          onPress={() => {
-            simulateCorruptDownload()
-            say('The next download is corrupt')
-          }}
-        />
-        <ToolRow
-          label='Reset backup state'
-          tone='destructive'
-          onPress={confirmReset}
-        />
-      </ToolList>
-
-      <ToolSubheading title='Server slots' />
-      <ToolList>
-        {(state.slots ?? []).map((slot) => (
+      >
+        <ToolList>
+          <ToolRow label='Slot id' value={slotShown(state.slotId)} />
+          <ToolRow label='Enabled' value={state.enabled ? 'yes' : 'no'} />
           <ToolRow
-            key={slot.slotId}
-            label={`Delete ${slot.slotId === state.slotId ? 'this' : shortId(slot.slotId)}`}
-            tone='destructive'
-            value={`${slot.size} B · ${when(slot.uploadedAt)}`}
-            disabled={busy !== null}
-            onPress={() => confirmDelete(slot.slotId)}
+            label='Running'
+            value={
+              state.uploading
+                ? 'uploading'
+                : state.restoring
+                  ? 'restoring'
+                  : '—'
+            }
           />
-        ))}
-      </ToolList>
-      <View style={{ paddingTop: 8, gap: 8 }}>
-        <JsonViewer
-          label='Server slots (raw)'
-          value={{
-            listedAt: state.slotsListedAt
-              ? new Date(state.slotsListedAt).toISOString()
-              : null,
-            accountId: slotShown(state.slotsAccountId),
-            slots: state.slots,
-          }}
-        />
-        {inspection && (
-          <>
-            <ToolRow
-              label='Show raw payloads'
-              trailing={
-                <Switch
-                  accessibilityLabel='Show raw payloads'
-                  value={raw}
-                  onValueChange={setRaw}
-                />
-              }
-            />
-            <JsonViewer
-              label='Decrypted slots'
-              value={summarize(inspection, raw)}
-            />
-          </>
-        )}
-        {dryRun !== null && (
-          <JsonViewer label='Restore dry run' value={dryRun} />
-        )}
-      </View>
-
-      <ToolSubheading title='Log' />
-      <View style={{ gap: 2, paddingVertical: 4 }}>
-        {state.log.length === 0 && (
-          <Text style={{ color: theme.colors.textAlt }}>—</Text>
-        )}
-        {state.log.slice(0, 30).map((entry, i) => (
-          <Text
-            key={`${entry.at}-${i}`}
-            selectable
-            style={{
-              fontFamily: MONO,
-              fontSize: theme.fontSize('xs'),
-              color:
-                entry.level === 'warn' ? theme.colors.error : theme.colors.text,
+          <ToolRow
+            label='Last upload'
+            value={`${when(schedule.lastPutAt)} · ${schedule.lastSize ?? '—'} B`}
+          />
+          <ToolRow
+            label='Last attempt'
+            tone={schedule.lastResult === 'failed' ? 'destructive' : 'default'}
+            value={`${when(schedule.lastAttemptAt)} · ${schedule.lastResult ?? '—'}${schedule.lastError ? ` (${schedule.lastError})` : ''}`}
+          />
+          <ToolRow
+            label='Plaintext hash'
+            info='SHA-256 of the plaintext without its timestamps, with the account and slot. An unchanged hash within a day skips the upload.'
+            value={shortId(schedule.lastHash)}
+          />
+          <ToolRow label='Pending' value={schedule.pending ? 'yes' : 'no'} />
+          <ToolRow
+            label='Failures in a row'
+            value={`${schedule.failures}${schedule.retryAt ? ` · retry ${when(schedule.retryAt)}` : ''}`}
+          />
+          <ToolRow
+            label='Next attempt'
+            value={state.enabled ? when(schedule.nextAttemptAt) : '—'}
+          />
+          <ToolRow
+            label='Restore offered for'
+            value={shortId(state.restoreOfferedFor)}
+          />
+        </ToolList>
+        <ToolList>
+          <ToolRow
+            label={busy === 'Upload now' ? 'Uploading…' : 'Upload now'}
+            info='Skips the debounce and backoff; still waits out the server’s one put a minute.'
+            disabled={!state.enabled || busy !== null}
+            onPress={uploadNow}
+          />
+          <ToolRow
+            label={busy === 'List slots' ? 'Listing…' : 'List server slots'}
+            disabled={busy !== null}
+            onPress={list}
+          />
+          <ToolRow
+            label='Decrypt this slot'
+            disabled={!state.slotId || busy !== null}
+            onPress={() => decrypt(state.slotId ? [state.slotId] : [])}
+          />
+          <ToolRow
+            label='Decrypt every slot'
+            disabled={busy !== null}
+            onPress={() => decrypt()}
+          />
+          <ToolRow
+            label={busy === 'Dry run' ? 'Running…' : 'Restore dry run'}
+            info='Downloads every slot and shows what Replace would leave and what Combine would change, as counts. Writes nothing.'
+            disabled={busy !== null}
+            onPress={runDryRun}
+          />
+          <ToolRow
+            label='Offer restore'
+            info='The real restore prompt, as Settings → Restore from Backup shows it.'
+            disabled={busy !== null}
+            onPress={() =>
+              void offerRestore('tools', { quietWhenNone: false }).then(
+                (result) => say(`Restore: ${result.outcome}`)
+              )
+            }
+          />
+          <ToolRow
+            label='Simulate corrupt download'
+            info='Flips the last byte of the next downloaded slot, so it fails to decrypt and is skipped.'
+            onPress={() => {
+              simulateCorruptDownload()
+              say('The next download is corrupt')
             }}
-          >
-            {moment(entry.at).format('MM-DD HH:mm:ss')} {entry.message}
-          </Text>
-        ))}
-      </View>
+          />
+          <ToolRow
+            label='Reset backup state'
+            tone='destructive'
+            onPress={confirmReset}
+          />
+        </ToolList>
+      </ToolSubsection>
+
+      <ToolSubsection title='Server slots'>
+        <ToolList>
+          {(state.slots ?? []).map((slot) => (
+            <ToolRow
+              key={slot.slotId}
+              label={`Delete ${slot.slotId === state.slotId ? 'this' : shortId(slot.slotId)}`}
+              tone='destructive'
+              value={`${slot.size} B · ${when(slot.uploadedAt)}`}
+              disabled={busy !== null}
+              onPress={() => confirmDelete(slot.slotId)}
+            />
+          ))}
+        </ToolList>
+        <View style={{ paddingTop: 8, gap: 8 }}>
+          <ToolJson
+            label='Server slots (raw)'
+            value={{
+              listedAt: state.slotsListedAt
+                ? new Date(state.slotsListedAt).toISOString()
+                : null,
+              accountId: slotShown(state.slotsAccountId),
+              slots: state.slots,
+            }}
+          />
+          {inspection && (
+            <>
+              <ToolRow
+                label='Show raw payloads'
+                trailing={
+                  <Switch
+                    accessibilityLabel='Show raw payloads'
+                    value={raw}
+                    onValueChange={setRaw}
+                  />
+                }
+              />
+              <ToolJson
+                label='Decrypted slots'
+                value={summarize(inspection, raw)}
+              />
+            </>
+          )}
+          {dryRun !== null && (
+            <ToolJson label='Restore dry run' value={dryRun} />
+          )}
+        </View>
+      </ToolSubsection>
+
+      <ToolSubsection title='Log'>
+        <View style={{ gap: 2, paddingVertical: 4 }}>
+          {state.log.length === 0 && (
+            <Text style={{ color: theme.colors.textAlt }}>—</Text>
+          )}
+          {state.log.slice(0, 30).map((entry, i) => (
+            <Text
+              key={`${entry.at}-${i}`}
+              selectable
+              style={{
+                fontFamily: MONO,
+                fontSize: theme.fontSize('xs'),
+                color:
+                  entry.level === 'warn'
+                    ? theme.colors.error
+                    : theme.colors.text,
+              }}
+            >
+              {moment(entry.at).format('MM-DD HH:mm:ss')} {entry.message}
+            </Text>
+          ))}
+        </View>
+      </ToolSubsection>
     </>
   )
 }

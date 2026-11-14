@@ -218,9 +218,6 @@ importers:
       expo-image-picker:
         specifier: 58.0.10
         version: 58.0.10(expo@58.0.16)
-      expo-insights:
-        specifier: 58.0.11
-        version: 58.0.11(expo@58.0.16)
       expo-linking:
         specifier: 58.0.13
         version: 58.0.13(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2)(typescript@6.0.3)
@@ -6228,9 +6225,6 @@ packages:
     peerDependencies:
       expo: '*'
 
-  expo-eas-client@58.0.2:
-    resolution: {integrity: sha512-mhRYnE35MzGxR1Xnl9FAg7/yHaocy4xoVzgsDmS9cbK+1wM6l74/I/73/E4Kr6wChdVZfeS6S+Tv4I1qYbGY2g==}
-
   expo-file-system@58.0.10:
     resolution: {integrity: sha512-n0M7amp/Bv9TAqVfTWq1zGykmQJWiPzDePZIKp8YYKkVvY7N65bo96sMBQlHkhAyW4I1B6MZABnybliy5DXQig==}
     peerDependencies:
@@ -6283,11 +6277,6 @@ packages:
     peerDependenciesMeta:
       react-native-web:
         optional: true
-
-  expo-insights@58.0.11:
-    resolution: {integrity: sha512-aDPgDCCbzuI9rBVshHcuvGtFF2mh9tb8fxmu9gTp0e5uhPW4I7weQA52S5G6K1NR8MIXXU73b9GWACqMaMN0+g==}
-    peerDependencies:
-      expo: '*'
 
   expo-json-utils@58.0.1:
     resolution: {integrity: sha512-jNHNElOUPz2/vW3CbDKRn6tTF6eE9wwVbh/Isnqp5c/CdTcONzFVR3YHN3WQ05PnkmieyEqVfeOusOd1X9FDtQ==}
@@ -17186,8 +17175,6 @@ snapshots:
     dependencies:
       expo: 58.0.16(patch_hash=f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2)(607a222552a809e9fa0ee7e5b0a3d517)
 
-  expo-eas-client@58.0.2: {}
-
   expo-file-system@58.0.10(expo@58.0.16)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)):
     dependencies:
       expo: 58.0.16(patch_hash=f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2)(607a222552a809e9fa0ee7e5b0a3d517)
@@ -17233,11 +17220,6 @@ snapshots:
       sf-symbols-typescript: 2.2.0
     optionalDependencies:
       react-native-web: 0.21.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-
-  expo-insights@58.0.11(expo@58.0.16):
-    dependencies:
-      expo: 58.0.16(patch_hash=f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2)(607a222552a809e9fa0ee7e5b0a3d517)
-      expo-eas-client: 58.0.2
 
   expo-json-utils@58.0.1: {}
 

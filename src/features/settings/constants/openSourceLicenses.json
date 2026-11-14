@@ -3118,12 +3118,6 @@
     "author": "650 Industries, Inc."
   },
   {
-    "name": "expo-insights",
-    "version": "57.0.20",
-    "license": "MIT",
-    "author": "650 Industries, Inc."
-  },
-  {
     "name": "expo-json-utils",
     "version": "57.0.2",
     "license": "MIT",

@@ -1,17 +1,18 @@
 import links from '@/constants/appLinks.json'
 import { CREATE_LINKS_ON_NEW_HOST } from '@/constants/appLinkSwitch'
+import { BUILD_ENVIRONMENT } from '@/constants/buildVariant'
 
 export const LEGACY_APP_LINK_HOST = links.legacyHost
 
 export const APP_LINK_HOST = links.host
 
-export const DEV_APP_LINK_HOST = links.devHost
+export const BETA_APP_LINK_HOST = links.betaHost
 
 export const WEB_APP_HOST = links.webAppHost
 
 export const APP_LINK_HOSTS = [
   APP_LINK_HOST,
-  DEV_APP_LINK_HOST,
+  BETA_APP_LINK_HOST,
   LEGACY_APP_LINK_HOST,
 ] as const
 
@@ -27,11 +28,14 @@ export const LEGACY_CONTACT_PATH_PREFIX = links.legacyContactPathPrefix
 export function appLinkPaths(host: string, kind: AppLinkKind): string[] {
   const name = host.toLowerCase()
   if (name === LEGACY_APP_LINK_HOST) return [LEGACY_PATHS[kind], PATHS[kind]]
-  if (name === APP_LINK_HOST || name === DEV_APP_LINK_HOST) return [PATHS[kind]]
+  if (name === APP_LINK_HOST || name === BETA_APP_LINK_HOST)
+    return [PATHS[kind]]
   return []
 }
 
 export function appLinkBase(kind: AppLinkKind): string {
+  if (BUILD_ENVIRONMENT !== 'production')
+    return `https://${BETA_APP_LINK_HOST}${PATHS[kind]}`
   return CREATE_LINKS_ON_NEW_HOST
     ? `https://${APP_LINK_HOST}${PATHS[kind]}`
     : `https://${LEGACY_APP_LINK_HOST}${LEGACY_PATHS[kind]}`
@@ -107,7 +111,7 @@ function systemHost(url: string): string | null {
 export function isOwnAppLink(url: string): boolean {
   const host = systemHost(url)
   if (host === LEGACY_APP_LINK_HOST) return true
-  if (host !== APP_LINK_HOST && host !== DEV_APP_LINK_HOST) return false
+  if (host !== APP_LINK_HOST && host !== BETA_APP_LINK_HOST) return false
   let pathname: string
   try {
     pathname = new URL(url.trim()).pathname

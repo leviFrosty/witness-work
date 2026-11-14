@@ -235,7 +235,7 @@ describe('isContactShareLink / parseContactShareLink URL matching', () => {
   describe('on the new hosts', () => {
     const NEW_ORIGINS = [
       'https://witnesswork.app',
-      'https://dev.witnesswork.app',
+      'https://beta.witnesswork.app',
     ]
 
     afterEach(() => setLinksOnNewHost(false))

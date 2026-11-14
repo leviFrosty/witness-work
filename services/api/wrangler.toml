@@ -1,0 +1,1416 @@
+name = "ww-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-11-27"
+# `enable_request_signal`: `request.signal` aborts when the client leaves, so a
+# Scribe AI step or page read stops its model call (protocol: Metering).
+compatibility_flags = ["nodejs_compat", "enable_request_signal"]
+workers_dev = false
+preview_urls = false
+# Generate source maps on deploy (and upload them to Cloudflare for mapped
+# stacks in dashboard/tail). Sentry gets its own copy via the package.json
+# `deploy` script: `--outdir dist` + `pnpm run sentry:sourcemaps`. Inheritable
+# key — applies to [env.beta] and [env.dev] too.
+upload_source_maps = true
+
+# Static assets (og-image, apple-touch-icon) served directly by Cloudflare's
+# edge cache. Requests to paths matching files under `./public` are served
+# from the edge; unmatched paths fall through to the worker (default
+# behavior when `main` is set and `not_found_handling` is omitted).
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# The old host stays for good, never redirected: shipped builds call it, and
+# links people already sent point at it (witness-work ADR 0042).
+[[routes]]
+pattern = "ww-proxy.leviwilkerson.com"
+custom_domain = true
+
+[[routes]]
+pattern = "api.witnesswork.app"
+custom_domain = true
+
+# The website apex's link pages and association files (docs/link-pages.md).
+# The site Worker is the apex's Custom Domain and serves everything else. Only
+# full-word paths: the short /c, /c/*, /b and /h stay on the old host. A
+# pattern without `*` matches only that URL with no query string, so the
+# pages end in `*` (`?lang=`, `?fbclid=`); src/linkHosts.ts hands the site
+# anything else they catch. Repeated for beta.witnesswork.app under [env.beta].
+[[routes]]
+pattern = "witnesswork.app/.well-known/apple-app-site-association"
+zone_name = "witnesswork.app"
+
+[[routes]]
+pattern = "witnesswork.app/.well-known/assetlinks.json"
+zone_name = "witnesswork.app"
+
+[[routes]]
+pattern = "witnesswork.app/accounts/handoff*"
+zone_name = "witnesswork.app"
+
+[[routes]]
+pattern = "witnesswork.app/contacts*"
+zone_name = "witnesswork.app"
+
+[[routes]]
+pattern = "witnesswork.app/buddies/invite*"
+zone_name = "witnesswork.app"
+
+# Exposes the deployed Worker version (id/tag/timestamp) to the runtime so
+# /health can report the actual build. NOT inherited by named envs — repeated
+# under [env.beta.version_metadata] and [env.dev.version_metadata] below.
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
+# --- Beta worker ---------------------------------------------------------------
+# A fully separate Worker (`ww-proxy-beta`) for WitnessWork Beta: the TestFlight
+# Beta app (com.leviwilkerson.jwtimebeta) and the web beta
+# (beta.app.witnesswork.app). It always runs the tip of `main`: the API deploy
+# workflow deploys it on every push that touches services/api. Attestation is
+# production grade (TestFlight builds use Apple's production App Attest
+# environment) and there is no dev bypass. Its data is its own: nothing is
+# shared with production.
+# In Wrangler, `vars`, `kv_namespaces`, and `ratelimits` are NOT inherited by a
+# named env, so they're repeated below.
+[env.beta]
+name = "ww-proxy-beta"
+workers_dev = false
+preview_urls = false
+
+# Routes ARE inherited by named envs (unlike vars/kv/ratelimits), so Beta lists
+# its own complete set; otherwise it would take prod's hosts on deploy. The
+# apex routes are Beta's link pages on the Beta website (beta.witnesswork.app,
+# the site's Beta Worker Custom Domain). Patterns as for prod above.
+[[env.beta.routes]]
+pattern = "api-beta.witnesswork.app"
+custom_domain = true
+
+[[env.beta.routes]]
+pattern = "beta.witnesswork.app/.well-known/apple-app-site-association"
+zone_name = "witnesswork.app"
+
+[[env.beta.routes]]
+pattern = "beta.witnesswork.app/.well-known/assetlinks.json"
+zone_name = "witnesswork.app"
+
+[[env.beta.routes]]
+pattern = "beta.witnesswork.app/accounts/handoff*"
+zone_name = "witnesswork.app"
+
+[[env.beta.routes]]
+pattern = "beta.witnesswork.app/contacts*"
+zone_name = "witnesswork.app"
+
+[[env.beta.routes]]
+pattern = "beta.witnesswork.app/buddies/invite*"
+zone_name = "witnesswork.app"
+
+[env.beta.version_metadata]
+binding = "CF_VERSION_METADATA"
+
+[env.beta.triggers]
+crons = ["17 * * * *"]
+
+[env.beta.vars]
+# "Continue on the web" on the contact and Buddies invite pages.
+WEB_APP_ORIGIN = "https://beta.app.witnesswork.app"
+# Named environments do not inherit the production model override.
+NOTES_IMPORT_MODEL = "openai/gpt-6-luna"
+NOTES_IMPORT_REASONING_EFFORT = "low"
+NOTES_IMPORT_PROVIDERS = "azure"
+NOTES_IMPORT_MAX_OUTPUT_TOKENS = "32000"
+# TestFlight builds attest in Apple's production App Attest environment.
+APP_ATTEST_ENVIRONMENT = "production"
+# The WitnessWork Beta app (witness-work app.config.ts, beta variant).
+IOS_BUNDLE_ID = "com.leviwilkerson.jwtimebeta"
+# Deprecated and ignored: Supporter status follows witness-work ADR 0014.
+REVENUECAT_ENTITLEMENT_ID = "Supporter"
+# Runtime-limit env fallbacks. Named environments do not inherit [vars], so all
+# five are explicitly repeated here. KV `notes-import:limits` overrides each
+# field independently for this environment.
+NOTES_IMPORT_FREE_CREDITS = "3"
+NOTES_IMPORT_FREE_CREDITS_SUPPORTER = "-1"
+NOTES_IMPORT_MAX_REFINEMENTS = "5"
+NOTES_IMPORT_MAX_REFINEMENTS_SUPPORTER = "-1"
+NOTES_IMPORT_WINDOW_DAYS = "30"
+# Buddies kill-switch fallback when KV `buddies:enabled` is absent. On in Beta.
+BUDDIES_ENABLED = "true"
+# Buddies photo blobs fallback when KV `buddies:photos` is absent. On in Beta.
+BUDDIES_PHOTOS = "on"
+# Legacy-auth fallback when KV `auth:legacy` is absent (witness-work ADR 0027):
+# "off" refuses pre-session auth with 426 upgrade_required. Off on Beta: every
+# Beta build opens sessions. KV `auth:legacy` = "on" turns it back on here.
+AUTH_LEGACY = "off"
+# Passkeys (witness-work ADR 0038, docs/passkeys-protocol.md): the RP IDs this
+# worker accepts (the first is the default, and the one Android origins pair
+# with), and each RP ID's origins. Checked as pairs, never as two lists.
+# Beta has its own RP ID, so a Beta passkey never shows up when signing in to
+# production. No Android origins: Android has no Beta app (a beta-profile
+# Android build is the production package and calls production).
+PASSKEY_RP_IDS = "beta.app.witnesswork.app"
+PASSKEY_ORIGINS = '''{"beta.app.witnesswork.app":["https://beta.app.witnesswork.app"]}'''
+# Web sign-up (docs/passkeys-protocol.md, "Web sign-up"): the kill switch's
+# fallback when KV `accounts:web-signup` is absent, and the caps. Turnstile has
+# no Beta widget yet, so web sign-up and recovery answer `disabled` here, as in
+# production: create a widget for verify-beta.witnesswork.app, set its site key
+# below and its secret as TURNSTILE_SECRET_KEY, and they turn on.
+WEB_SIGNUP = "on"
+WEB_SIGNUP_PER_IP_DAY = "3"
+WEB_SIGNUP_PER_ASN_HOUR = "30"
+WEB_RECOVERY_PER_IP_DAY = "10"
+# TURNSTILE_SITE_KEY = ""
+TURNSTILE_HOSTNAMES = "verify-beta.witnesswork.app"
+# App-wide minimum version fallback when KV `app:min-version` is absent
+# (GET /app/v1/config). Unset = no floor.
+# APP_MIN_VERSION = "1.42.0"
+# Cloud Sync (witness-work ADR 0030) fallbacks when KV `sync:enabled` /
+# `sync:entitlement` are absent. On in Beta; free for everyone (ADR 0040).
+SYNC_ENABLED = "true"
+SYNC_ENTITLEMENT = "everyone"
+# Record changes (witness-work ADR 0060) fallback when KV `sync:changes` is
+# absent. On in Beta. Only apps that send changes use it.
+SYNC_CHANGES = "true"
+# Shared Spaces (Shared Cars, witness-work ADR 0037) fallback when KV
+# `spaces:enabled` is absent. On in Beta.
+SPACES_ENABLED = "true"
+# Territories' guest links (witness-work ADR 0047): the public guest ops'
+# fallback when KV `spaces:guests` is absent. On in Beta.
+SPACES_GUESTS = "true"
+# The web app's origins (witness-work ADR 0038 §10): CORS and browser live
+# sockets admit exactly these (comma-separated, no wildcards). Named
+# environments don't inherit [vars], so it's set in each.
+WEB_APP_ORIGINS = "https://beta.app.witnesswork.app"
+# Cloud Sync photos' switch fallback when KV `sync:photos` is absent (on).
+# SYNC_PHOTO_LIMIT_BYTES (unset: 2,000,000,000) overrides the per-account photo
+# storage.
+SYNC_PHOTOS = "on"
+# Android (witness-work ADR 0017). Android has no Beta app, so nothing calls
+# these here; they mirror production in case a Play test build is pointed at
+# Beta by hand.
+ANDROID_PACKAGE_NAME = "com.leviwilkerson.jwtime"
+PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER = "53605912655"
+ANDROID_CERT_SHA256_DIGESTS = "TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw"
+# Scribe AI (witness-work docs/scribe-ai-protocol.md) fallbacks when KV
+# `scribe:model` / `scribe:limits` have no value for a field. Named
+# environments don't inherit [vars], so they're repeated here; they mirror the
+# code defaults (src/scribe/config.ts).
+SCRIBE_MODEL = "openai/gpt-6-luna"
+SCRIBE_PROVIDERS = "azure"
+SCRIBE_REASONING_EFFORT = "medium"
+SCRIBE_MAX_OUTPUT_TOKENS = "4096"
+SCRIBE_FREE_MONTHLY = "150000"
+SCRIBE_SUPPORTER_SESSION = "540000"
+SCRIBE_SUPPORTER_WEEKLY = "1550000"
+# The MapKit JS frame's origin that POST /maps/v1/mapkit-tokens names in its
+# tokens (witness-work ADR 0037 §8). Comma-separated; the first is the default.
+MAPKIT_JS_ORIGINS = "https://maps-beta.witnesswork.app"
+# The Overpass API interpreter POST /maps/v1/addresses asks for OpenStreetMap
+# house numbers (src/maps/territoryAddresses.ts). Public; the default if unset.
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+# Anonymous usage events (src/analytics.ts). Off on Beta so test use stays out
+# of the production dashboards (events would carry `environment: production`).
+# POSTHOG_PROJECT_TOKEN = "phc_rTisLfzXzn6yTmrKVKU8dnHNeyd7HNi4Sq6HDhAayt25"
+
+# Separate KV so Beta never shares prod runtime policy or App Attest v1 mirrors.
+[[env.beta.kv_namespaces]]
+binding = "NOTES_KV"
+id = "ec4bcbb940de46748011bcdbb6a48e1c"
+
+# Notes Import streaming DOs (separate Beta namespaces; bindings + migrations are
+# NOT inherited from prod, so they are repeated here — keep in sync).
+[[env.beta.durable_objects.bindings]]
+name = "NOTES_IMPORT_RUN"
+class_name = "NotesImportRun"
+
+[[env.beta.durable_objects.bindings]]
+name = "NOTES_IMPORT_INDEX"
+class_name = "NotesImportIndex"
+
+[[env.beta.durable_objects.bindings]]
+name = "APP_ATTEST_IDENTITY"
+class_name = "AppAttestIdentity"
+
+[[env.beta.durable_objects.bindings]]
+name = "PLAY_INTEGRITY_CHALLENGES"
+class_name = "PlayIntegrityChallenges"
+
+[[env.beta.durable_objects.bindings]]
+name = "BUDDY_INBOX"
+class_name = "BuddyInbox"
+
+[[env.beta.durable_objects.bindings]]
+name = "BUDDY_INVITE"
+class_name = "BuddyInvite"
+
+[[env.beta.durable_objects.bindings]]
+name = "ROUTE_PLANNING_QUOTA"
+class_name = "RoutePlanningQuota"
+
+[[env.beta.durable_objects.bindings]]
+name = "BUDDY_REGISTRATION_QUOTA"
+class_name = "BuddyRegistrationQuota"
+
+[[env.beta.durable_objects.bindings]]
+name = "ACCOUNT_HANDOFF"
+class_name = "AccountHandoff"
+
+[[env.beta.durable_objects.bindings]]
+name = "ACCOUNT_SYNC_INDEX"
+class_name = "AccountSync"
+
+[[env.beta.durable_objects.bindings]]
+name = "SHARED_SPACE"
+class_name = "SharedSpace"
+
+[[env.beta.durable_objects.bindings]]
+name = "SCRIBE_METER"
+class_name = "ScribeMeter"
+
+[[env.beta.durable_objects.bindings]]
+name = "ACCOUNT_RATE_COUNTER"
+class_name = "AccountRateCounter"
+
+# Approving a browser from a phone (docs/passkeys-protocol.md): one channel
+# per QR code, 75 seconds unclaimed, 5 minutes claimed.
+[[env.beta.durable_objects.bindings]]
+name = "ACCOUNT_APPROVAL"
+class_name = "AccountApproval"
+
+# Buddies note photos (encrypted blobs), separate from prod's bucket. Not
+# inherited, like every binding. The Beta deploy creates it and sets its
+# lifecycle rule (scripts/r2-lifecycle.mjs).
+[[env.beta.r2_buckets]]
+binding = "BUDDY_BLOBS"
+bucket_name = "ww-buddy-blobs-beta"
+
+# Account backups (witness-work ADR 0026), separate from prod's bucket.
+# The Beta deploy creates it and sets its 400-day lifecycle rule
+# (scripts/r2-lifecycle.mjs).
+[[env.beta.r2_buckets]]
+binding = "ACCOUNT_BACKUPS"
+bucket_name = "ww-account-backups-beta"
+
+# Cloud Sync snapshots (witness-work ADR 0030), separate from prod's bucket.
+# The Beta deploy creates it and sets its 400-day lifecycle rule
+# (scripts/r2-lifecycle.mjs).
+[[env.beta.r2_buckets]]
+binding = "ACCOUNT_SYNC"
+bucket_name = "ww-account-sync-beta"
+
+# Cloud Sync photos (witness-work ADR 0040), separate from prod's bucket.
+# The Beta deploy creates it with no age rule (scripts/r2-lifecycle.mjs).
+[[env.beta.r2_buckets]]
+binding = "ACCOUNT_PHOTOS"
+bucket_name = "ww-account-photos-beta"
+
+# Anonymous accounts (witness-work ADR 0024): accounts, their status, and which
+# Buddies inboxes they own. Not inherited, like every binding. Migrations come
+# from `pnpm db:generate` (drizzle-kit); apply them before deploying code that
+# needs them (the API deploy workflow does, before the Worker).
+[[env.beta.d1_databases]]
+binding = "ACCOUNTS_DB"
+database_name = "ww-accounts-beta"
+database_id = "99712dcc-ddcb-4bc8-bf64-52244aac7f6c"
+migrations_dir = "migrations/accounts"
+
+[[env.beta.migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotesImportRun", "NotesImportIndex"]
+
+[[env.beta.migrations]]
+tag = "v2"
+new_sqlite_classes = ["AppAttestIdentity"]
+
+[[env.beta.migrations]]
+tag = "v3"
+new_sqlite_classes = ["BuddyInbox", "BuddyInvite"]
+
+[[env.beta.migrations]]
+tag = "v4"
+new_sqlite_classes = ["PlayIntegrityChallenges"]
+
+[[env.beta.migrations]]
+tag = "v5"
+new_sqlite_classes = ["RoutePlanningQuota"]
+
+[[env.beta.migrations]]
+tag = "v6"
+new_sqlite_classes = ["BuddyRegistrationQuota"]
+
+[[env.beta.migrations]]
+tag = "v7"
+new_sqlite_classes = ["AccountHandoff"]
+
+[[env.beta.migrations]]
+tag = "v8"
+new_sqlite_classes = ["AccountSync"]
+
+[[env.beta.migrations]]
+tag = "v9"
+new_sqlite_classes = ["ScribeMeter"]
+
+# Beta is a new Worker, so its list is production's, tag for tag: add a new
+# class at the end of every list (src/durableObjectMigrations.test.ts pins
+# them).
+[[env.beta.migrations]]
+tag = "v10"
+new_sqlite_classes = ["SharedSpace"]
+
+[[env.beta.migrations]]
+tag = "v11"
+new_sqlite_classes = ["AccountRateCounter"]
+
+[[env.beta.migrations]]
+tag = "v12"
+new_sqlite_classes = ["AccountApproval"]
+
+[[env.beta.ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "3001"   # distinct from prod's 1001 and dev's 2001
+
+  [env.beta.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# Buddies per-caller limits (client IP, IPv6 by /64), one per op tier. Sizes
+# and rationale: BUDDIES_ABUSE_LIMITS.edge in src/buddies/limits.ts, which
+# limits.test.ts keeps equal to these (and to prod's and dev's below).
+# Unsigned ops (invite/fetch, invite/claim).
+[[env.beta.ratelimits]]
+name = "BUDDIES_RATE_LIMITER"
+namespace_id = "3002"   # distinct from prod's 1002 and dev's 2002
+
+  [env.beta.ratelimits.simple]
+  limit = 120
+  period = 60
+
+# inbox/register.
+[[env.beta.ratelimits]]
+name = "BUDDIES_REGISTER_LIMITER"
+namespace_id = "3003"   # distinct from prod's 1003 and dev's 2003
+
+  [env.beta.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# inbox/sync and the inbox/live upgrade.
+[[env.beta.ratelimits]]
+name = "BUDDIES_READ_LIMITER"
+namespace_id = "3004"   # distinct from prod's 1004 and dev's 2004
+
+  [env.beta.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Every other signed op.
+[[env.beta.ratelimits]]
+name = "BUDDIES_WRITE_LIMITER"
+namespace_id = "3005"   # distinct from prod's 1005 and dev's 2005
+
+  [env.beta.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# blob/put (photo uploads).
+[[env.beta.ratelimits]]
+name = "BUDDIES_BLOB_PUT_LIMITER"
+namespace_id = "3006"   # distinct from prod's 1006 and dev's 2006
+
+  [env.beta.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# blob/get (photo downloads).
+[[env.beta.ratelimits]]
+name = "BUDDIES_BLOB_GET_LIMITER"
+namespace_id = "3007"   # distinct from prod's 1007 and dev's 2007
+
+  [env.beta.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Shared Spaces' public guest ops (guest/sync, guest/put; witness-work ADR
+# 0047), per network, keyed by an HMAC of the IP. Size:
+# SPACES_LIMITS.guestRequestsPerMinute, which guest.test.ts keeps equal.
+[[env.beta.ratelimits]]
+name = "SPACES_GUEST_LIMITER"
+namespace_id = "3008"   # distinct from prod's 1008 and dev's 2008
+
+  [env.beta.ratelimits.simple]
+  limit = 120
+  period = 60
+
+# Cloudflare Workers Observability — not inherited, so repeated for Beta.
+# Full sampling: Beta traffic is small, and this is where problems show first.
+[env.beta.observability]
+enabled = true
+head_sampling_rate = 1
+
+  [env.beta.observability.logs]
+  enabled = true
+  invocation_logs = true
+
+  [env.beta.observability.traces]
+  enabled = true
+  head_sampling_rate = 1
+
+# --- Development (local only) ---------------------------------------------------
+# Nothing is deployed from this block. It is the config `wrangler dev --env dev`
+# runs locally (`pnpm dev`, and the verify loop in scripts/verify/dev.mjs):
+# development App Attest, the dev bypass, the dev iOS bundle id, localhost
+# origins, and every feature on. All bindings are simulated on disk, so the ids
+# below name no Cloudflare resource.
+[env.dev]
+name = "ww-proxy-dev"
+workers_dev = false
+preview_urls = false
+
+# Routes ARE inherited by named envs, so dev sets its own empty list; otherwise
+# it would take prod's hosts, and `wrangler dev` would answer as one of them.
+routes = []
+
+[env.dev.version_metadata]
+binding = "CF_VERSION_METADATA"
+
+[env.dev.triggers]
+crons = ["17 * * * *"]
+
+[env.dev.vars]
+# "Continue on the web" on the contact and Buddies invite pages.
+WEB_APP_ORIGIN = "http://localhost:8081"
+# Named environments do not inherit the production model override.
+NOTES_IMPORT_MODEL = "openai/gpt-6-luna"
+NOTES_IMPORT_REASONING_EFFORT = "low"
+NOTES_IMPORT_PROVIDERS = "azure"
+NOTES_IMPORT_MAX_OUTPUT_TOKENS = "32000"
+# Explicitly permits development App Attest receipts and the simulator bypass.
+APP_ATTEST_ENVIRONMENT = "development"
+# Dev iOS bundle id (witness-work app.config.ts IS_DEV branch).
+IOS_BUNDLE_ID = "com.leviwilkerson.jwtimedev"
+# Deprecated and ignored: Supporter status follows witness-work ADR 0014.
+REVENUECAT_ENTITLEMENT_ID = "Supporter"
+# Count RevenueCat Billing (web) sandbox subscriptions as Supporter; dev only, never in [vars].
+REVENUECAT_COUNT_WEB_SANDBOX = "true"
+# Runtime-limit env fallbacks. Named environments do not inherit [vars], so all
+# five are explicitly repeated here. KV `notes-import:limits` overrides each
+# field independently for this environment.
+NOTES_IMPORT_FREE_CREDITS = "3"
+NOTES_IMPORT_FREE_CREDITS_SUPPORTER = "-1"
+NOTES_IMPORT_MAX_REFINEMENTS = "5"
+NOTES_IMPORT_MAX_REFINEMENTS_SUPPORTER = "-1"
+NOTES_IMPORT_WINDOW_DAYS = "30"
+# Buddies kill-switch fallback when KV `buddies:enabled` is absent. On in dev.
+BUDDIES_ENABLED = "true"
+# Buddies photo blobs fallback when KV `buddies:photos` is absent. On in dev.
+BUDDIES_PHOTOS = "on"
+# Legacy-auth fallback when KV `auth:legacy` is absent (witness-work ADR 0027):
+# "off" refuses pre-session auth with 426 upgrade_required. Off on dev since the
+# web launch (ADR 0038 §11); KV `auth:legacy` = "on" turns it back on here.
+AUTH_LEGACY = "off"
+# Passkeys (witness-work ADR 0038, docs/passkeys-protocol.md): the RP IDs this
+# worker accepts (the first is the default, and the one Android origins pair
+# with), and each RP ID's origins. Checked as pairs, never as two lists.
+# Android: the Play app-signing key and the upload key of
+# com.leviwilkerson.jwtime, and the debug key of com.leviwilkerson.jwtimedev.
+# A native development build needs a real domain for its passkeys, and nothing
+# is deployed for development, so it borrows Beta's RP ID
+# (beta.app.witnesswork.app, whose association files list the dev app). Its
+# passkeys are still stored only in this local worker.
+PASSKEY_RP_IDS = "beta.app.witnesswork.app,localhost"
+PASSKEY_ORIGINS = '''{"beta.app.witnesswork.app":["https://beta.app.witnesswork.app","android:apk-key-hash:TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw","android:apk-key-hash:xR7_3Ju_a8Are0wxkpALrEJnvW4F9M_FIXflNiOkdes","android:apk-key-hash:-sYXRdwJA3hvue3mKpYrOZ9zSPC7b4mbgzJmdZEDO5w"],"localhost":["http://localhost:8081","http://localhost:8082","http://localhost:19006","http://localhost:4173","http://localhost:5173"]}'''
+# Web sign-up (docs/passkeys-protocol.md, "Web sign-up"): the kill switch's
+# fallback when KV `accounts:web-signup` is absent, and the caps. Turnstile:
+# Cloudflare's always-passing test site key until a dev widget exists; the
+# matching test secret is used when the TURNSTILE_SECRET_KEY secret is unset.
+# TURNSTILE_HOSTNAMES: where a token may be solved, the web app's Turnstile
+# frame (witness-work docs/web-turnstile.md); checked under a real secret only.
+WEB_SIGNUP = "on"
+WEB_SIGNUP_PER_IP_DAY = "3"
+WEB_SIGNUP_PER_ASN_HOUR = "30"
+WEB_RECOVERY_PER_IP_DAY = "10"
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+TURNSTILE_HOSTNAMES = "verify-beta.witnesswork.app"
+# App-wide minimum version fallback when KV `app:min-version` is absent
+# (GET /app/v1/config). Unset = no floor.
+# APP_MIN_VERSION = "1.42.0"
+# Cloud Sync (witness-work ADR 0030) fallbacks when KV `sync:enabled` /
+# `sync:entitlement` are absent. On in dev; free for everyone (ADR 0040).
+SYNC_ENABLED = "true"
+SYNC_ENTITLEMENT = "everyone"
+# Record changes (witness-work ADR 0060) fallback when KV `sync:changes` is
+# absent. On in dev. Only apps that send changes use it.
+SYNC_CHANGES = "true"
+# Shared Spaces (Shared Cars, witness-work ADR 0037) fallback when KV
+# `spaces:enabled` is absent. On in dev.
+SPACES_ENABLED = "true"
+# Territories' guest links (witness-work ADR 0047): the public guest ops'
+# fallback when KV `spaces:guests` is absent. On in dev.
+SPACES_GUESTS = "true"
+# The web app's origins (witness-work ADR 0038 §10): CORS and browser live
+# sockets admit exactly these (comma-separated, no wildcards). Dev serves
+# the local web dev servers (Expo/Metro 8081-8082, Expo web 19006, Vite
+# preview 4173, Vite dev 5173). Named environments don't inherit
+# [vars], so it's set in both.
+WEB_APP_ORIGINS = "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:4173,http://localhost:5173"
+# Cloud Sync photos' switch fallback when KV `sync:photos` is absent (on).
+# SYNC_PHOTO_LIMIT_BYTES (unset: 2,000,000,000) overrides the per-account photo
+# storage; the verify launcher passes it for a tiny limit locally.
+SYNC_PHOTOS = "on"
+# Android Notes Import (witness-work ADR 0017). Stays off until the package,
+# the Cloud project number, and the PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON secret
+# are all set. Dev builds (com.leviwilkerson.jwtimedev) aren't on Play, so test
+# real tokens here with a Play-installed com.leviwilkerson.jwtime build.
+ANDROID_PACKAGE_NAME = "com.leviwilkerson.jwtime"
+PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER = "53605912655"
+ANDROID_CERT_SHA256_DIGESTS = "TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw"
+# Scribe AI (witness-work docs/scribe-ai-protocol.md) fallbacks when KV
+# `scribe:model` / `scribe:limits` have no value for a field. Named
+# environments don't inherit [vars], so they're repeated here; they mirror the
+# code defaults (src/scribe/config.ts).
+SCRIBE_MODEL = "openai/gpt-6-luna"
+SCRIBE_PROVIDERS = "azure"
+SCRIBE_REASONING_EFFORT = "medium"
+SCRIBE_MAX_OUTPUT_TOKENS = "4096"
+SCRIBE_FREE_MONTHLY = "150000"
+SCRIBE_SUPPORTER_SESSION = "540000"
+SCRIBE_SUPPORTER_WEEKLY = "1550000"
+# The MapKit JS frame's origin that POST /maps/v1/mapkit-tokens names in its
+# tokens (witness-work ADR 0037 §8). Comma-separated; the first is the default.
+# Development borrows Beta's frame. A local frame (http://localhost:<port>)
+# belongs in .dev.vars, never here.
+MAPKIT_JS_ORIGINS = "https://maps-beta.witnesswork.app"
+# The Overpass API interpreter POST /maps/v1/addresses asks for OpenStreetMap
+# house numbers (src/maps/territoryAddresses.ts). Public; the default if unset.
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+# Anonymous Notes Import usage events (src/analytics.ts). Off on dev so test
+# runs stay out of the production dashboards; uncomment to check delivery
+# (events carry `environment: development`).
+# POSTHOG_PROJECT_TOKEN = "phc_rTisLfzXzn6yTmrKVKU8dnHNeyd7HNi4Sq6HDhAayt25"
+
+# Simulated on disk locally; the id names no Cloudflare namespace.
+[[env.dev.kv_namespaces]]
+binding = "NOTES_KV"
+id = "9a9f6d4e4ce3441fb8322aadf19d4904"
+
+# Notes Import streaming DOs (separate dev namespaces; bindings + migrations are
+# NOT inherited from prod, so they are repeated here — keep in sync).
+[[env.dev.durable_objects.bindings]]
+name = "NOTES_IMPORT_RUN"
+class_name = "NotesImportRun"
+
+[[env.dev.durable_objects.bindings]]
+name = "NOTES_IMPORT_INDEX"
+class_name = "NotesImportIndex"
+
+[[env.dev.durable_objects.bindings]]
+name = "APP_ATTEST_IDENTITY"
+class_name = "AppAttestIdentity"
+
+[[env.dev.durable_objects.bindings]]
+name = "PLAY_INTEGRITY_CHALLENGES"
+class_name = "PlayIntegrityChallenges"
+
+[[env.dev.durable_objects.bindings]]
+name = "BUDDY_INBOX"
+class_name = "BuddyInbox"
+
+[[env.dev.durable_objects.bindings]]
+name = "BUDDY_INVITE"
+class_name = "BuddyInvite"
+
+[[env.dev.durable_objects.bindings]]
+name = "ROUTE_PLANNING_QUOTA"
+class_name = "RoutePlanningQuota"
+
+[[env.dev.durable_objects.bindings]]
+name = "BUDDY_REGISTRATION_QUOTA"
+class_name = "BuddyRegistrationQuota"
+
+[[env.dev.durable_objects.bindings]]
+name = "ACCOUNT_HANDOFF"
+class_name = "AccountHandoff"
+
+[[env.dev.durable_objects.bindings]]
+name = "ACCOUNT_SYNC_INDEX"
+class_name = "AccountSync"
+
+[[env.dev.durable_objects.bindings]]
+name = "SHARED_SPACE"
+class_name = "SharedSpace"
+
+[[env.dev.durable_objects.bindings]]
+name = "SCRIBE_METER"
+class_name = "ScribeMeter"
+
+[[env.dev.durable_objects.bindings]]
+name = "ACCOUNT_RATE_COUNTER"
+class_name = "AccountRateCounter"
+
+# Approving a browser from a phone (docs/passkeys-protocol.md): one channel
+# per QR code, 75 seconds unclaimed, 5 minutes claimed.
+[[env.dev.durable_objects.bindings]]
+name = "ACCOUNT_APPROVAL"
+class_name = "AccountApproval"
+
+# Buddies note photos (encrypted blobs), separate from prod's bucket. Not
+# inherited, like every binding. Simulated on disk locally.
+[[env.dev.r2_buckets]]
+binding = "BUDDY_BLOBS"
+bucket_name = "ww-buddy-blobs-dev"
+
+# Account backups (witness-work ADR 0026), separate from prod's bucket.
+# Simulated on disk locally.
+[[env.dev.r2_buckets]]
+binding = "ACCOUNT_BACKUPS"
+bucket_name = "ww-account-backups-dev"
+
+# Cloud Sync snapshots (witness-work ADR 0030), separate from prod's bucket.
+# Simulated on disk locally.
+[[env.dev.r2_buckets]]
+binding = "ACCOUNT_SYNC"
+bucket_name = "ww-account-sync-dev"
+
+# Cloud Sync photos (witness-work ADR 0040), separate from prod's bucket.
+# Simulated on disk locally.
+[[env.dev.r2_buckets]]
+binding = "ACCOUNT_PHOTOS"
+bucket_name = "ww-account-photos-dev"
+
+# Anonymous accounts (witness-work ADR 0024): accounts, their status, and which
+# Buddies inboxes they own. Not inherited, like every binding. Migrations come
+# from `pnpm db:generate` (drizzle-kit); apply them before deploying code that
+# needs them: `wrangler d1 migrations apply ww-accounts-dev --env dev --local`
+# (the verify loop does).
+[[env.dev.d1_databases]]
+binding = "ACCOUNTS_DB"
+database_name = "ww-accounts-dev"
+database_id = "1467a58d-1e32-44cb-902c-e26df1827ad0"
+migrations_dir = "migrations/accounts"
+
+[[env.dev.migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotesImportRun", "NotesImportIndex"]
+
+[[env.dev.migrations]]
+tag = "v2"
+new_sqlite_classes = ["AppAttestIdentity"]
+
+[[env.dev.migrations]]
+tag = "v3"
+new_sqlite_classes = ["BuddyInbox", "BuddyInvite"]
+
+[[env.dev.migrations]]
+tag = "v4"
+new_sqlite_classes = ["PlayIntegrityChallenges"]
+
+[[env.dev.migrations]]
+tag = "v5"
+new_sqlite_classes = ["RoutePlanningQuota"]
+
+[[env.dev.migrations]]
+tag = "v6"
+new_sqlite_classes = ["BuddyRegistrationQuota"]
+
+[[env.dev.migrations]]
+tag = "v7"
+new_sqlite_classes = ["AccountHandoff"]
+
+[[env.dev.migrations]]
+tag = "v8"
+new_sqlite_classes = ["AccountSync"]
+
+[[env.dev.migrations]]
+tag = "v9"
+new_sqlite_classes = ["ScribeMeter"]
+
+# From v10 on, dev's tags differ from production's [[migrations]] below. They
+# are what local state on developers' machines already applied; never renumber
+# an applied tag (src/durableObjectMigrations.test.ts pins them). Add a new
+# class at the end of every list.
+[[env.dev.migrations]]
+tag = "v10"
+new_sqlite_classes = ["AccountRateCounter"]
+
+[[env.dev.migrations]]
+tag = "v11"
+new_sqlite_classes = ["AccountApproval"]
+
+[[env.dev.migrations]]
+tag = "v12"
+new_sqlite_classes = ["SharedSpace"]
+
+[[env.dev.ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "2001"   # distinct from prod's 1001
+
+  [env.dev.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# Buddies per-caller limits (client IP, IPv6 by /64), one per op tier. Sizes
+# and rationale: BUDDIES_ABUSE_LIMITS.edge in src/buddies/limits.ts, which
+# limits.test.ts keeps equal to these (and to prod's below).
+# Unsigned ops (invite/fetch, invite/claim).
+[[env.dev.ratelimits]]
+name = "BUDDIES_RATE_LIMITER"
+namespace_id = "2002"   # distinct from prod's 1002
+
+  [env.dev.ratelimits.simple]
+  limit = 120
+  period = 60
+
+# inbox/register.
+[[env.dev.ratelimits]]
+name = "BUDDIES_REGISTER_LIMITER"
+namespace_id = "2003"   # distinct from prod's 1003
+
+  [env.dev.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# inbox/sync and the inbox/live upgrade.
+[[env.dev.ratelimits]]
+name = "BUDDIES_READ_LIMITER"
+namespace_id = "2004"   # distinct from prod's 1004
+
+  [env.dev.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Every other signed op.
+[[env.dev.ratelimits]]
+name = "BUDDIES_WRITE_LIMITER"
+namespace_id = "2005"   # distinct from prod's 1005
+
+  [env.dev.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# blob/put (photo uploads).
+[[env.dev.ratelimits]]
+name = "BUDDIES_BLOB_PUT_LIMITER"
+namespace_id = "2006"   # distinct from prod's 1006
+
+  [env.dev.ratelimits.simple]
+  limit = 60
+  period = 60
+
+# blob/get (photo downloads).
+[[env.dev.ratelimits]]
+name = "BUDDIES_BLOB_GET_LIMITER"
+namespace_id = "2007"   # distinct from prod's 1007
+
+  [env.dev.ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Shared Spaces' public guest ops (guest/sync, guest/put; witness-work ADR
+# 0047), per network, keyed by an HMAC of the IP. Size:
+# SPACES_LIMITS.guestRequestsPerMinute, which guest.test.ts keeps equal.
+[[env.dev.ratelimits]]
+name = "SPACES_GUEST_LIMITER"
+namespace_id = "2008"   # distinct from prod's 1008
+
+  [env.dev.ratelimits.simple]
+  limit = 120
+  period = 60
+
+# Cloudflare Workers Observability — not inherited, so repeated for dev.
+[env.dev.observability]
+enabled = true
+head_sampling_rate = 1
+
+  [env.dev.observability.logs]
+  enabled = true
+  invocation_logs = true
+
+  [env.dev.observability.traces]
+  enabled = true
+  head_sampling_rate = 1
+
+[vars]
+# "Continue on the web" on the contact and Buddies invite pages: unset in
+# production until the web app is live at https://app.witnesswork.app (the
+# launch runbook sets it then); the link is hidden while it's unset. Dev sets
+# it under [env.dev.vars].
+# Explicit production invariant: development attestations and bypasses fail closed.
+APP_ATTEST_ENVIRONMENT = "production"
+# iOS bundle id — part of the App Attest app id (`<APPLE_TEAM_ID>.<IOS_BUNDLE_ID>`).
+IOS_BUNDLE_ID = "com.leviwilkerson.jwtime"
+# Extra bundle ids (comma-separated) also accepted for App Attest — here the
+# internal-TestFlight "WitnessWork Beta" app, which always uses Apple's
+# production App Attest environment. Beta now has its own worker ([env.beta]);
+# this entry stays for Beta builds from before that. Remove it once none are in use. Each key is
+# bound to the bundle id it attested with; its assertions verify only against
+# that id. Pre-binding keys default to IOS_BUNDLE_ID. Not set for [env.dev].
+IOS_ADDITIONAL_BUNDLE_IDS = "com.leviwilkerson.jwtimebeta"
+# Deprecated and ignored: Supporter status follows witness-work ADR 0014.
+REVENUECAT_ENTITLEMENT_ID = "Supporter"
+# Notes Import knobs — all optional; see src/notesImport/config.ts for defaults.
+NOTES_IMPORT_MODEL = "openai/gpt-6-luna"
+NOTES_IMPORT_REASONING_EFFORT = "low"
+NOTES_IMPORT_MAX_OUTPUT_TOKENS = "32000"
+NOTES_IMPORT_PROVIDERS = "azure"   # Western ZDR, priority order (ADR 0008)
+# NOTES_IMPORT_MAX_CHARS = "100000"
+# Runtime-limit env fallbacks. Keep all five explicit here and under
+# [env.dev.vars]; one malformed/missing KV field falls through independently.
+NOTES_IMPORT_FREE_CREDITS = "3"
+NOTES_IMPORT_FREE_CREDITS_SUPPORTER = "-1"
+NOTES_IMPORT_MAX_REFINEMENTS = "5"
+NOTES_IMPORT_MAX_REFINEMENTS_SUPPORTER = "-1"
+NOTES_IMPORT_WINDOW_DAYS = "30"
+# Buddies kill-switch fallback when KV `buddies:enabled` is absent. Off in prod
+# until App Attest lands on inbox/register and invite/* (see AGENTS.md).
+BUDDIES_ENABLED = "false"
+# Buddies photo blobs stay off in prod unless KV `buddies:photos` is "on"
+# (no BUDDIES_PHOTOS fallback here). Not inherited by [env.dev].
+# Legacy-auth fallback when KV `auth:legacy` is absent (witness-work ADR 0027):
+# "off" refuses the pre-session ways of authenticating (account envelopes) with
+# 426 upgrade_required. A failed KV read counts as off (ADR 0038 §11). The web
+# launch runbook writes KV `auth:legacy` = "off" (AGENTS.md). Repeated under
+# [env.dev.vars], where it's "off".
+AUTH_LEGACY = "on"
+# Passkeys (witness-work ADR 0038, docs/passkeys-protocol.md): the RP ID and
+# its origins: the web app, its beta, and the Android app's Play app-signing
+# and upload keys (com.leviwilkerson.jwtime). The RP ID never changes once the
+# first passkey exists. Repeated (with their own) under [env.beta.vars] and [env.dev.vars].
+PASSKEY_RP_IDS = "app.witnesswork.app"
+PASSKEY_ORIGINS = '''{"app.witnesswork.app":["https://app.witnesswork.app","https://beta.app.witnesswork.app","android:apk-key-hash:TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw","android:apk-key-hash:xR7_3Ju_a8Are0wxkpALrEJnvW4F9M_FIXflNiOkdes"]}'''
+# Web sign-up (docs/passkeys-protocol.md, "Web sign-up"): the kill switch's
+# fallback when KV `accounts:web-signup` is absent, and the caps. WEB_SIGNUP
+# is already "on", so sign-up and web recovery open as soon as this worker
+# has the rest of their setup, whichever lands last: the production Turnstile
+# widget's site key and its frame's host below, its secret (`wrangler secret put
+# TURNSTILE_SECRET_KEY`), and the passkey secrets PASSKEY_CHALLENGE_SECRET and
+# ACCOUNT_TICKET_SECRET. To set them up ahead of the launch, put KV
+# `accounts:web-signup` = off first; that holds sign-up, not recovery.
+# Repeated under [env.beta] and [env.dev.vars].
+WEB_SIGNUP = "on"
+WEB_SIGNUP_PER_IP_DAY = "3"
+WEB_SIGNUP_PER_ASN_HOUR = "30"
+WEB_RECOVERY_PER_IP_DAY = "10"
+# TURNSTILE_SITE_KEY = "0x…"
+# TURNSTILE_HOSTNAMES = "verify.witnesswork.app"
+# App-wide minimum version fallback when KV `app:min-version` is absent
+# (GET /app/v1/config). Unset = no floor. Repeated under [env.beta] and [env.dev.vars].
+# APP_MIN_VERSION = "1.42.0"
+# Cloud Sync (witness-work ADR 0030) fallbacks when KV `sync:enabled` /
+# `sync:entitlement` are absent. Off in prod until KV `sync:enabled` turns it
+# on, before the app release that defaults to it. Free for everyone (witness-work
+# ADR 0040); KV `sync:entitlement supporter` is the lever back. Repeated under
+# [env.dev.vars].
+SYNC_ENABLED = "false"
+SYNC_ENTITLEMENT = "everyone"
+# Record changes (witness-work ADR 0060) fallback when KV `sync:changes` is
+# absent. Off in prod until KV `sync:changes` turns it on, after the app
+# release that sends changes. Off, devices publish whole snapshots. Repeated
+# under [env.dev.vars].
+SYNC_CHANGES = "false"
+# Shared Spaces (Shared Cars, witness-work ADR 0037) fallback when KV
+# `spaces:enabled` is absent. Off in prod until KV `spaces:enabled` turns it
+# on, before the app release that shares cars. Repeated under [env.beta] and [env.dev.vars].
+SPACES_ENABLED = "false"
+# Territories' guest links (witness-work ADR 0047): the public guest ops'
+# (`guest/sync`, `guest/put`) fallback when KV `spaces:guests` is absent. Off
+# in prod until the owner turns them on for Beta testing (KV, with
+# `spaces:enabled`). Repeated under [env.beta] and [env.dev.vars].
+SPACES_GUESTS = "false"
+# The web app's origins (witness-work ADR 0038 §10): CORS and browser live
+# sockets admit exactly these (comma-separated, no wildcards; never localhost
+# here). Not inherited by [env.dev], which has its own list.
+WEB_APP_ORIGINS = "https://app.witnesswork.app,https://beta.app.witnesswork.app"
+# Cloud Sync photos' switch fallback when KV `sync:photos` is absent (on).
+# Repeated under [env.beta] and [env.dev.vars].
+SYNC_PHOTOS = "on"
+# Android Notes Import via Play Integrity (witness-work ADR 0017; details in
+# AGENTS.md). Android stays off until the package, the Cloud project number,
+# and the PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON secret are all set; the status
+# endpoint advertises `capabilities.playIntegrity` only then. Not inherited by
+# [env.dev].
+ANDROID_PACKAGE_NAME = "com.leviwilkerson.jwtime"
+PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER = "53605912655"
+# Optional: pin the Play app-signing certificate (base64url SHA-256, as the
+# verdict reports it; comma-separated), and/or change the device requirement
+# (MEETS_DEVICE_INTEGRITY default; BASIC/STRONG need Play Console opt-in).
+ANDROID_CERT_SHA256_DIGESTS = "TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw"
+# PLAY_INTEGRITY_REQUIRED_DEVICE_VERDICT = "MEETS_DEVICE_INTEGRITY"
+# Scribe AI (witness-work docs/scribe-ai-protocol.md) fallbacks when KV
+# `scribe:model` / `scribe:limits` have no value for a field; they mirror the
+# code defaults (src/scribe/config.ts). Every other limit has its own
+# SCRIBE_<SNAKE_CASE> var (AGENTS.md → Scribe AI). Repeated under
+# [env.dev.vars].
+SCRIBE_MODEL = "openai/gpt-6-luna"
+SCRIBE_PROVIDERS = "azure"   # Western ZDR, priority order (ADR 0008)
+SCRIBE_REASONING_EFFORT = "medium"
+SCRIBE_MAX_OUTPUT_TOKENS = "4096"
+SCRIBE_FREE_MONTHLY = "150000"
+SCRIBE_SUPPORTER_SESSION = "540000"
+SCRIBE_SUPPORTER_WEEKLY = "1550000"
+# Anonymous Notes Import usage events (src/analytics.ts, AGENTS.md). The
+# WitnessWork PostHog project's write-only ingestion token, the same one the
+# app ships, so not a secret. Remove to turn server analytics off.
+# POSTHOG_HOST defaults to https://us.i.posthog.com. Not inherited by [env.dev].
+POSTHOG_PROJECT_TOKEN = "phc_rTisLfzXzn6yTmrKVKU8dnHNeyd7HNi4Sq6HDhAayt25"
+# The MapKit JS frame's origin that POST /maps/v1/mapkit-tokens names in its
+# tokens (witness-work ADR 0037 §8). Comma-separated; the first is the default.
+# Production never accepts an http:// origin.
+MAPKIT_JS_ORIGINS = "https://maps.witnesswork.app"
+# The Overpass API interpreter POST /maps/v1/addresses asks for OpenStreetMap
+# house numbers (src/maps/territoryAddresses.ts). Public; the default if unset.
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+# Notes Import metadata store (legacy App Attest compatibility state, runtime
+# policy, and short-lived capabilities). Authoritative App Attest identity state
+# lives in APP_ATTEST_IDENTITY. Usage lives in NOTES_IMPORT_INDEX. Holds NO notes
+# text or model output (ADR 0008). Create with:
+#   wrangler kv namespace create NOTES_KV
+# then paste the printed id below.
+#
+# Runtime allowance policy (read with cacheTtl 60; KV > env vars above > code
+# defaults per field). Fractions are valid for windowDays; allowance values are
+# integer -1 (unlimited), 0 (none), or positive finite:
+#   wrangler kv key put --binding NOTES_KV notes-import:limits '{"importsFree":3,"importsSupporter":-1,"refinementsFree":5,"refinementsSupporter":-1,"windowDays":30}'
+# Add `--env beta` to edit Beta's separate namespace.
+#
+# Manual feature kill-switch (read by GET /notes-import/status). A JSON record
+# mirroring the status response; flip the app's import entry points with no
+# redeploy. Only `available:false` forces OFF — `available:true` (or an absent
+# key) falls through to the provider check below:
+#   wrangler kv key put --binding NOTES_KV notes-import:enabled '{"available":false,"reason":"down for maintenance"}'  # off
+#   wrangler kv key put --binding NOTES_KV notes-import:enabled '{"available":true,"reason":""}'                       # on
+# (add `--env beta` for the Beta worker). The endpoint also auto-disables when no
+# allowlisted ZDR provider is healthy (OpenRouter metadata, no inference cost),
+# cached under `notes-import:provider-health`.
+#
+# Minimum app version (read by GET /notes-import/status as `minAppVersion`,
+# cacheTtl 60; KV > NOTES_IMPORT_MIN_APP_VERSION var > unset). Bump after a
+# deploy that breaks the contract for older app builds; the app compares it to
+# its own app.config.ts version, disables the Notes Import composer when below,
+# and prompts the user to update. The worker does NOT reject requests itself.
+#   wrangler kv key put --binding NOTES_KV notes-import:min-version '{"minVersion":"1.42.0"}'
+#   wrangler kv key delete --binding NOTES_KV notes-import:min-version   # remove the floor
+# (add `--env beta` for the Beta worker).
+#
+# Buddies kill switch (cacheTtl 60): enabled iff the value is "true"; an absent
+# key falls back to BUDDIES_ENABLED. inbox/delete, slot/remove and slot/leave
+# always work. The relay also caches its APNs provider token here
+# (`buddies:apns-token`).
+#   wrangler kv key put --binding NOTES_KV buddies:enabled true    # on
+#   wrangler kv key put --binding NOTES_KV buddies:enabled false   # off
+#   wrangler kv key delete --binding NOTES_KV buddies:enabled      # use the var
+# (add `--env beta` for the Beta worker).
+#
+# Buddies photo blobs (cacheTtl 60; blob/put, blob/get, blob/delete, and
+# `capabilities.photos` on inbox/sync): on iff the value is "on"; an absent key
+# falls back to BUDDIES_PHOTOS (Beta and dev "on", prod unset = off). Needs Buddies on
+# and the BUDDY_BLOBS bucket.
+#   wrangler kv key put --binding NOTES_KV buddies:photos on      # on
+#   wrangler kv key put --binding NOTES_KV buddies:photos off     # off
+#   wrangler kv key delete --binding NOTES_KV buddies:photos      # use the var
+# (add `--env beta` for the Beta worker).
+#
+# App-wide minimum version (GET /app/v1/config, cacheTtl 60; KV >
+# APP_MIN_VERSION var > unset). Below it the app shows Update Required.
+#   wrangler kv key put --binding NOTES_KV app:min-version '{"minVersion":"1.42.0"}'
+#   wrangler kv key delete --binding NOTES_KV app:min-version   # remove the floor
+#
+# Legacy auth switch (cacheTtl 60): "off" refuses every request authenticated
+# the way it was before sessions (account envelopes, account/register) with
+# 426 upgrade_required; an absent key falls back to AUTH_LEGACY, then on. The
+# runbook is AGENTS.md, "Turning off backward compatibility".
+#   wrangler kv key put --binding NOTES_KV auth:legacy off
+#   wrangler kv key delete --binding NOTES_KV auth:legacy        # use the var
+# (add `--env beta` for the Beta worker).
+#
+# Cloud Sync switches (cacheTtl 60; witness-work ADR 0030). `sync:enabled`:
+# "true" (or "on") on, anything else off; absent falls back to SYNC_ENABLED.
+# `sync:entitlement`: "supporter" makes it a Supporter benefit again,
+# "everyone" (or anything else) free; absent falls back to SYNC_ENTITLEMENT,
+# else everyone (ADR 0040). Off refuses sync/put, list, get, live, and setting
+# sync/request with 503 disabled; delete, clearing the request, and GET /sync
+# work.
+#   wrangler kv key put --binding NOTES_KV sync:enabled true          # on
+#   wrangler kv key put --binding NOTES_KV sync:enabled false         # off
+#   wrangler kv key put --binding NOTES_KV sync:entitlement everyone  # free
+#   wrangler kv key put --binding NOTES_KV sync:entitlement supporter # Supporters
+#   wrangler kv key delete --binding NOTES_KV sync:enabled            # use the var
+#   wrangler kv key put --binding NOTES_KV sync:photos off            # photo puts off
+#   wrangler kv key delete --binding NOTES_KV sync:photos             # use SYNC_PHOTOS
+# `sync:changes`: "true" (or "on") lets devices send record changes
+# (witness-work ADR 0060); anything else refuses sync/changes/* and the live
+# socket's catch-up with 503 changes_disabled, and devices publish whole
+# snapshots. Absent falls back to SYNC_CHANGES, else off.
+#   wrangler kv key put --binding NOTES_KV sync:changes true          # on
+#   wrangler kv key put --binding NOTES_KV sync:changes false         # off
+#   wrangler kv key delete --binding NOTES_KV sync:changes            # use the var
+# (add `--env beta` for the Beta worker).
+#
+# Shared Spaces switches (cacheTtl 60; witness-work ADR 0037, Shared Cars).
+# `spaces:enabled`: "true" on, anything else off; absent falls back to
+# SPACES_ENABLED. Off refuses every op and new live sockets with 503 disabled,
+# except leave, member/remove, and delete. `spaces:maxMembers`: members plus
+# open invites a space may hold (1-100; absent or invalid: 10).
+#   wrangler kv key put --binding NOTES_KV spaces:enabled true       # on
+#   wrangler kv key put --binding NOTES_KV spaces:enabled false      # off
+#   wrangler kv key put --binding NOTES_KV spaces:maxMembers 12      # raise the cap
+#   wrangler kv key delete --binding NOTES_KV spaces:enabled         # use the var
+# `spaces:guests` (Territories' guest links, ADR 0047): "true" turns the
+# public guest/sync and guest/put on, anything else off (503 disabled);
+# absent falls back to SPACES_GUESTS. They also need spaces:enabled.
+#   wrangler kv key put --binding NOTES_KV spaces:guests true        # on
+#   wrangler kv key put --binding NOTES_KV spaces:guests false       # pause guest links
+#   wrangler kv key delete --binding NOTES_KV spaces:guests          # use the var
+# (add `--env beta` for the Beta worker).
+#
+# Web sign-up kill switch (cacheTtl 60): "off" refuses web/signup/options and
+# web/signup with 503 disabled (web/recovery isn't affected); "on" opens them;
+# absent falls back to WEB_SIGNUP. A failed read counts as on, since Turnstile
+# and the caps still apply.
+#   wrangler kv key put --binding NOTES_KV accounts:web-signup off   # pause
+#   wrangler kv key delete --binding NOTES_KV accounts:web-signup    # use the var
+# (add `--env beta` for the Beta worker).
+#
+# Route planning kill switch (cacheTtl 60): off iff the value is "false"; an
+# absent key (or a failed read) leaves it on. Per-account limits always apply.
+#   wrangler kv key put --binding NOTES_KV route-planning:enabled false   # off
+#   wrangler kv key delete --binding NOTES_KV route-planning:enabled      # on
+# (add `--env beta` for the Beta worker).
+#
+# Scribe AI switches (cacheTtl 60; AGENTS.md → Scribe AI has the runbook):
+#   scribe:enabled               off: false/off/0/no/disabled or {"available":false}
+#   scribe:disabled-tools        JSON array or comma list of tool names never offered
+#   scribe:protocol-min          integer floor; below it /step is 426
+#   scribe:min-version           {"minVersion":"x.y.z"}; advisory (status)
+#   scribe:limits                JSON, any subset of the limits document
+#   scribe:model                 JSON {model, providers, reasoningEffort, maxOutputTokens, strictTools, fallback}
+#   scribe:provider-health       written by the provider probe
+#   scribe:legacy-notes-import   "on" re-allows /notes-import/*; absent = 426
+#                                (except GET /notes-import/status). Must be "on"
+#                                before a deploy reaches apps without Scribe AI.
+#   wrangler kv key put --binding NOTES_KV scribe:legacy-notes-import on
+# (add `--env beta` for the Beta worker).
+#
+# Also holds the paywall's App Store ratings (`app-store-ratings:state` sweep
+# progress + `app-store-ratings:summary`), refreshed by the cron below. See
+# src/appStoreRatings/ratings.ts.
+[[kv_namespaces]]
+binding = "NOTES_KV"
+id = "92871586e6dc4558a6ad3552ed7ee28c"
+
+# App Store ratings sweep: BATCH_SIZE storefronts per run, resting once a
+# full sweep completes until it is a week old. Repeated under [env.beta] and [env.dev.triggers].
+[triggers]
+crons = ["17 * * * *"]
+
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+# Buddies per-caller limits (client IP, IPv6 by /64), one per op tier. Sizes
+# and rationale: BUDDIES_ABUSE_LIMITS.edge in src/buddies/limits.ts, which
+# limits.test.ts keeps equal to these (and to [env.dev]'s above).
+# Unsigned ops (invite/fetch, invite/claim).
+[[ratelimits]]
+name = "BUDDIES_RATE_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 120
+  period = 60
+
+# inbox/register.
+[[ratelimits]]
+name = "BUDDIES_REGISTER_LIMITER"
+namespace_id = "1003"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+# inbox/sync and the inbox/live upgrade.
+[[ratelimits]]
+name = "BUDDIES_READ_LIMITER"
+namespace_id = "1004"
+
+  [ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Every other signed op.
+[[ratelimits]]
+name = "BUDDIES_WRITE_LIMITER"
+namespace_id = "1005"
+
+  [ratelimits.simple]
+  limit = 600
+  period = 60
+
+# blob/put (photo uploads).
+[[ratelimits]]
+name = "BUDDIES_BLOB_PUT_LIMITER"
+namespace_id = "1006"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+# blob/get (photo downloads).
+[[ratelimits]]
+name = "BUDDIES_BLOB_GET_LIMITER"
+namespace_id = "1007"
+
+  [ratelimits.simple]
+  limit = 600
+  period = 60
+
+# Shared Spaces' public guest ops (guest/sync, guest/put; witness-work ADR
+# 0047): 120 a minute per network (IPv4, or IPv6 /64), keyed by an HMAC of
+# the IP under ACCOUNT_TICKET_SECRET, never the IP. Repeated under [env.beta] and [env.dev].
+[[ratelimits]]
+name = "SPACES_GUEST_LIMITER"
+namespace_id = "1008"
+
+  [ratelimits.simple]
+  limit = 120
+  period = 60
+
+# Anonymous accounts (witness-work ADR 0024). Without this binding, accounts
+# are off: `account/register` answers `disabled` and `inbox/register` ignores
+# account proofs. Apply migrations before deploying code that needs them:
+# `wrangler d1 migrations apply ww-accounts --remote`. Repeated under [env.beta] and [env.dev].
+[[d1_databases]]
+binding = "ACCOUNTS_DB"
+database_name = "ww-accounts"
+database_id = "f11965ab-53e7-4748-bc27-48d9b77c3d8d"
+migrations_dir = "migrations/accounts"
+
+# Buddies note photos: sealed blobs at v1/<inboxId>/<blobId>, written and
+# deleted by the sender's BuddyInbox DO (bookkeeping, expiry, sweeps, wipes).
+# Every deploy runs scripts/r2-lifecycle.mjs first: it creates the bucket if
+# it's missing and sets the lifecycle backstop (v1/ objects deleted 91 days
+# after their last write; blobs live at most 90). Repeated (with its own
+# bucket) under [env.dev] above.
+[[r2_buckets]]
+binding = "BUDDY_BLOBS"
+bucket_name = "ww-buddy-blobs"
+
+# Account backups (witness-work ADR 0026): one end-to-end encrypted object per
+# device slot at v1/<accountId>/<slotId>. Without the binding, backup/* answers
+# `disabled`. Every deploy runs scripts/r2-lifecycle.mjs first: it creates the
+# bucket if it's missing and deletes v1/ objects 400 days after their last
+# upload. Repeated (with their own buckets) under [env.beta] and [env.dev] above.
+[[r2_buckets]]
+binding = "ACCOUNT_BACKUPS"
+bucket_name = "ww-account-backups"
+
+# Cloud Sync (witness-work ADR 0030): one end-to-end encrypted snapshot per
+# device slot at v1/<accountId>/<slotId>; the AccountSync DO holds the
+# metadata. Without the binding, sync/* answers `disabled`. Every deploy runs
+# scripts/r2-lifecycle.mjs first: it creates the bucket if it's missing and
+# deletes v1/ objects 400 days after their last put (the DO's retention
+# deletes sooner). Repeated (with their own buckets) under [env.beta] and [env.dev] above.
+[[r2_buckets]]
+binding = "ACCOUNT_SYNC"
+bucket_name = "ww-account-sync"
+
+# Cloud Sync photos (witness-work ADR 0040 §6): one end-to-end encrypted blob
+# per put at v1/<accountId>/<name>/<putId>, written once; the AccountSync DO
+# holds the rows and purges deleted photos 30 days later. No age rule: it
+# would delete live photos, which are never rewritten. Every deploy runs
+# scripts/r2-lifecycle.mjs first, which creates the bucket and keeps only the
+# multipart-abort rule. Without the binding, photo routes answer
+# `photos_disabled`. Repeated (with their own buckets) under [env.beta] and [env.dev] above.
+[[r2_buckets]]
+binding = "ACCOUNT_PHOTOS"
+bucket_name = "ww-account-photos"
+
+# Notes Import streaming — per-import run DO + per-user cap/index DO, each
+# SQLite-backed (event log / active-import set). See
+# docs/notes-import-streaming-durable-objects.md. Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "NOTES_IMPORT_RUN"
+class_name = "NotesImportRun"
+
+[[durable_objects.bindings]]
+name = "NOTES_IMPORT_INDEX"
+class_name = "NotesImportIndex"
+
+[[durable_objects.bindings]]
+name = "APP_ATTEST_IDENTITY"
+class_name = "AppAttestIdentity"
+
+# Android Play Integrity challenges, one SQLite DO per install uuid. Repeated
+# under [env.dev] above.
+[[durable_objects.bindings]]
+name = "PLAY_INTEGRITY_CHALLENGES"
+class_name = "PlayIntegrityChallenges"
+
+# Buddies relay — one inbox DO per inboxId, one invite DO per inviteId, both
+# SQLite-backed. See docs/buddies-protocol.md. Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "BUDDY_INBOX"
+class_name = "BuddyInbox"
+
+[[durable_objects.bindings]]
+name = "BUDDY_INVITE"
+class_name = "BuddyInvite"
+
+# Route planning — one quota DO per account id (timestamps of its last 24 hours
+# of optimizations only). Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "ROUTE_PLANNING_QUOTA"
+class_name = "RoutePlanningQuota"
+
+# Buddies: signed inbox/register calls per caller (hashed client IP, IPv6 by
+# /64) per hour over the last day, nothing else; deletes itself a day after
+# the newest. Accounts reuse it under their own hashed names (account/register
+# per caller, handoff/open per account). Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "BUDDY_REGISTRATION_QUOTA"
+class_name = "BuddyRegistrationQuota"
+
+# Accounts: Set Up Another Device, one handoff channel per DO (a temporary
+# public key and two sealed blobs, deleted within ten minutes of opening).
+# Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "ACCOUNT_HANDOFF"
+class_name = "AccountHandoff"
+
+# Cloud Sync: one index per account (slot metadata, change seq, put limits,
+# retention alarm, live sockets; never data). Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "ACCOUNT_SYNC_INDEX"
+class_name = "AccountSync"
+
+# Shared Spaces (Shared Cars): one per space (sealed records, members by token
+# hash, wraps, invites, change seq, put limits, retention alarm, live sockets;
+# never an account). Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "SHARED_SPACE"
+class_name = "SharedSpace"
+
+# Scribe AI: one meter per account (usage windows, step keys, open turns,
+# active steps, charges for 31 days, paper pages for 24 hours; never content).
+# Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "SCRIBE_METER"
+class_name = "ScribeMeter"
+
+# Accounts: rolling-window counters, one per hashed name (failed passkey
+# sign-ins per hashed caller IP; counts only, deleted once out of their
+# window). Repeated under [env.beta] and [env.dev] above.
+[[durable_objects.bindings]]
+name = "ACCOUNT_RATE_COUNTER"
+class_name = "AccountRateCounter"
+
+# Approving a browser from a phone (docs/passkeys-protocol.md): one channel
+# per QR code, 75 seconds unclaimed, 5 minutes claimed.
+[[durable_objects.bindings]]
+name = "ACCOUNT_APPROVAL"
+class_name = "AccountApproval"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotesImportRun", "NotesImportIndex"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AppAttestIdentity"]
+# AppAttestIdentity becomes authoritative at this cutover. Never roll production
+# back to a pre-v2/KV-authoritative Worker; ship a forward fix instead.
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["BuddyInbox", "BuddyInvite"]
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["PlayIntegrityChallenges"]
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["RoutePlanningQuota"]
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["BuddyRegistrationQuota"]
+
+[[migrations]]
+tag = "v7"
+new_sqlite_classes = ["AccountHandoff"]
+
+[[migrations]]
+tag = "v8"
+new_sqlite_classes = ["AccountSync"]
+
+[[migrations]]
+tag = "v9"
+new_sqlite_classes = ["ScribeMeter"]
+
+# Production's history (ww-proxy was at v9 before these). SharedSpace (v10)
+# landed on main first and the web launch's AccountRateCounter (v11) and
+# AccountApproval (v12) follow it. If main ships first, production goes v9 to
+# v10, then v10 to v12 when the web launch ships; if the web launch ships
+# first, v9 to v12 in one deploy. [env.dev.migrations] replaces this list for
+# dev, which applied them in another order (above).
+[[migrations]]
+tag = "v10"
+new_sqlite_classes = ["SharedSpace"]
+
+[[migrations]]
+tag = "v11"
+new_sqlite_classes = ["AccountRateCounter"]
+
+[[migrations]]
+tag = "v12"
+new_sqlite_classes = ["AccountApproval"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1 # optional. default = 1.
+logs.persist = true
+
+# Secrets should be set via:
+# wrangler secret put HERE_API_KEY
+# wrangler secret put SENTRY_DSN
+# wrangler secret put OPENROUTER_API_KEY        # OpenRouter key (routed ZDR-only)
+# wrangler secret put REVENUECAT_API_KEY        # RevenueCat REST v1 secret (sk_...)
+# wrangler secret put REVENUECAT_WEBHOOK_AUTHORIZATION [--env beta]  # RevenueCat webhook secret (ADR 0029), per worker
+# NOTES_IMPORT_DEV_BYPASS_TOKEN is local only (.dev.vars), never a Worker secret
+# wrangler secret put ADMIN_API_TOKEN                # dedicated prod reset token
+# wrangler secret put ADMIN_API_TOKEN --env beta     # DIFFERENT Beta admin token
+# Generate each admin token with: openssl rand -base64 32
+# Buddies pushes (APNs token auth); without both, the relay skips pushes:
+# wrangler secret put APNS_KEY_ID [--env beta]          # 10-char key id of the .p8
+# wrangler secret put APNS_PRIVATE_KEY [--env beta]     # .p8 PEM contents: < AuthKey_XXXX.p8
+# Buddies Android pushes (FCM HTTP v1); without it, the relay skips them:
+# jq -c . buddies-fcm-sender.json | wrangler secret put FCM_SERVICE_ACCOUNT_JSON [--env beta]
+# Android Notes Import (ADR 0017): the Play Integrity service-account JSON key:
+# wrangler secret put PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON [--env beta] < play-integrity-key.json
+# Account session access tokens (ADR 0027); without it, /accounts/v1/sessions* is disabled.
+# A different value per worker, at least 32 characters (openssl rand -base64 32):
+# wrangler secret put ACCOUNT_TOKEN_SECRET [--env beta]
+# Rotation: the old value goes to ACCOUNT_TOKEN_SECRET_PREVIOUS first (verify only;
+# refresh tokens issued under it refresh only while it's set, see AGENTS.md).
+# wrangler secret put ACCOUNT_TOKEN_SECRET_PREVIOUS [--env beta]
+# Browser live socket tickets (POST /accounts/v1/live/ticket); without it, browser
+# live sockets are disabled. Its own value per worker, never ACCOUNT_TOKEN_SECRET's:
+# openssl rand -base64 32 | wrangler secret put LIVE_TICKET_SECRET [--env beta]
+# MapKit JS tokens (witness-work ADR 0037 §8; APPLE_TEAM_ID is the issuer); without
+# both, POST /maps/v1/mapkit-tokens answers 503 maps_unconfigured:
+# wrangler secret put MAPKIT_JS_KEY_ID [--env beta]        # 10-char MapKit JS key id
+# wrangler secret put MAPKIT_JS_PRIVATE_KEY [--env beta]   # .p8 PEM contents: < AuthKey_XXXX.p8
+# Passkeys (ADR 0038): the challenge and ticket MAC keys, each its own value per
+# worker, at least 32 characters, never ACCOUNT_TOKEN_SECRET's. Without them the
+# passkey routes and ticket sessions answer `disabled`:
+# openssl rand -base64 32 | wrangler secret put PASSKEY_CHALLENGE_SECRET [--env beta]
+# openssl rand -base64 32 | wrangler secret put ACCOUNT_TICKET_SECRET [--env beta]
+# Web sign-up and recovery (ADR 0038 §5): the Turnstile widget's secret key,
+# from the dashboard (Turnstile → the widget → Settings). Production needs it
+# (and TURNSTILE_SITE_KEY) before web sign-up opens; dev uses Cloudflare's
+# always-passing test secret until its own widget's is set:
+# wrangler secret put TURNSTILE_SECRET_KEY [--env beta]

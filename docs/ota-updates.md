@@ -14,9 +14,11 @@ service. Leave their existing EAS update history intact during the transition.
 URLs and D1 IDs are in `config/ota-environments.json`. Each environment has a
 different client key and RSA public trust anchor. Workers, buckets and databases
 are separate; a test deployment cannot change the production release catalog.
-The services live in ww-api (`src/updates/worker.ts`, `wrangler-updates.json`).
-Land the backend PR first. A backend tag deployment migrates and deploys all
-three update Workers. It does not publish any app bundle.
+The services live in ww-api, at `services/api` (`src/updates/worker.ts`,
+`wrangler-updates.json`). The API deploy workflow (`api-deploy.yml`) migrates
+and deploys the update Workers with the API: the dev and beta channels with
+Beta, on every push to `main` that touches `services/api`, and the production
+channel with a production deploy. It does not publish any app bundle.
 
 ## Client and native builds
 

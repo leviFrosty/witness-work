@@ -5,7 +5,7 @@ import {
 } from '../../../src/lib/turnstileFrame/protocol'
 import { createVerifyController } from './controller'
 
-const APP = 'https://app-dev.witnesswork.app'
+const APP = 'https://beta.app.witnesswork.app'
 const ALLOWED = ['http://localhost:*', 'http://127.0.0.1:*', APP]
 
 function setup() {
@@ -52,8 +52,8 @@ describe('createVerifyController', () => {
     for (const origin of [
       'https://app.witnesswork.app',
       'https://evil.example',
-      'https://app-dev.witnesswork.app.evil.example',
-      'http://app-dev.witnesswork.app',
+      'https://beta.app.witnesswork.app.evil.example',
+      'http://beta.app.witnesswork.app',
       'http://localhost',
       'http://localhost:8790.evil.example',
       'null',

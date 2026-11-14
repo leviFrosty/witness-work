@@ -61,21 +61,21 @@ const assets = {
   },
 } as unknown as Fetcher
 
-const env = (profile = 'dev'): Env => ({
+const env = (profile = 'beta'): Env => ({
   ASSETS: assets,
   WW_WEB_PROFILE: profile,
 })
 
 const call = (path: string, init?: RequestInit, profile?: string) =>
   worker.fetch(
-    new Request(`https://app-dev.witnesswork.app${path}`, init) as never,
+    new Request(`https://beta.app.witnesswork.app${path}`, init) as never,
     env(profile)
   )
 
-const dev = environments.dev as WebProfile
+const beta = environments.beta as WebProfile
 
 function expectSecurityHeaders(response: Response) {
-  for (const [name, value] of Object.entries(securityHeaders(dev)))
+  for (const [name, value] of Object.entries(securityHeaders(beta)))
     expect(response.headers.get(name)).toBe(value)
 }
 
@@ -259,40 +259,35 @@ describe('headers', () => {
       .slice(1)
 
   it('allows each profile only its own ww-api, PostHog, Help Center and maps', () => {
-    expect(directive(policy('dev'), 'connect-src')).toEqual([
+    expect(directive(policy('beta'), 'connect-src')).toEqual([
       "'self'",
-      'https://api-dev.witnesswork.app',
-      'wss://api-dev.witnesswork.app',
+      'https://api-beta.witnesswork.app',
+      'wss://api-beta.witnesswork.app',
       'https://ww-api-r.leviwilkerson.com',
-      'https://dev.witnesswork.app',
-      'https://help-search-dev.witnesswork.app',
+      'https://beta.witnesswork.app',
+      'https://help-search-beta.witnesswork.app',
       'https://api.revenuecat.com',
       'https://e.revenue.cat',
     ])
-    expect(directive(policy('dev'), 'frame-src')).toEqual([
-      'https://maps-dev.witnesswork.app',
-      'https://verify-dev.witnesswork.app',
-    ])
-    expect(directive(policy('local'), 'frame-src')).toEqual([
-      'https://maps-dev.witnesswork.app',
-      'https://verify-dev.witnesswork.app',
-    ])
-    for (const name of ['beta', 'production'] as const) {
-      expect(directive(policy(name), 'connect-src')).toEqual([
-        "'self'",
-        'https://api.witnesswork.app',
-        'wss://api.witnesswork.app',
-        'https://ww-api-r.leviwilkerson.com',
-        'https://witnesswork.app',
-        'https://help-search.witnesswork.app',
-        'https://api.revenuecat.com',
-        'https://e.revenue.cat',
-      ])
+    for (const name of ['beta', 'local'] as const)
       expect(directive(policy(name), 'frame-src')).toEqual([
-        'https://maps.witnesswork.app',
-        'https://verify.witnesswork.app',
+        'https://maps-beta.witnesswork.app',
+        'https://verify-beta.witnesswork.app',
       ])
-    }
+    expect(directive(policy('production'), 'connect-src')).toEqual([
+      "'self'",
+      'https://api.witnesswork.app',
+      'wss://api.witnesswork.app',
+      'https://ww-api-r.leviwilkerson.com',
+      'https://witnesswork.app',
+      'https://help-search.witnesswork.app',
+      'https://api.revenuecat.com',
+      'https://e.revenue.cat',
+    ])
+    expect(directive(policy('production'), 'frame-src')).toEqual([
+      'https://maps.witnesswork.app',
+      'https://verify.witnesswork.app',
+    ])
     expect(directive(policy('local'), 'connect-src')).toContain(
       'ws://localhost:8787'
     )
@@ -310,12 +305,11 @@ describe('headers', () => {
         .flatMap((name2) => directive(policy(name), name2) ?? [])
         .filter((host) => !shared.has(host))
     const production = hosts('production')
-    for (const host of hosts('dev')) {
+    for (const host of hosts('beta')) {
       expect(production).not.toContain(host)
-      expect(host).toMatch(/-dev\.witnesswork\.app$|^https:\/\/dev\./)
+      expect(host).toMatch(/-beta\.witnesswork\.app$|^https:\/\/beta\./)
     }
-    for (const host of production) expect(hosts('dev')).not.toContain(host)
-    expect(hosts('beta')).toEqual(production)
+    for (const host of production) expect(hosts('beta')).not.toContain(host)
 
     for (const name of Object.keys(
       environments
@@ -360,18 +354,20 @@ describe('headers', () => {
   })
 
   it('enforces in every deployed environment', () => {
-    for (const name of ['dev', 'beta', 'production'] as const) {
+    for (const name of ['beta', 'production'] as const) {
       const headers = securityHeaders(environments[name] as WebProfile)
       expect(headers['Content-Security-Policy']).toBe(policy(name))
       expect(headers).not.toHaveProperty('Content-Security-Policy-Report-Only')
     }
-    const reporting = securityHeaders({ ...dev, csp: 'report-only' })
-    expect(reporting['Content-Security-Policy-Report-Only']).toBe(policy('dev'))
+    const reporting = securityHeaders({ ...beta, csp: 'report-only' })
+    expect(reporting['Content-Security-Policy-Report-Only']).toBe(
+      policy('beta')
+    )
     expect(reporting).not.toHaveProperty('Content-Security-Policy')
   })
 
   it('hardens the origin without cross-origin isolation', () => {
-    const headers = securityHeaders(dev)
+    const headers = securityHeaders(beta)
     expect(headers).toMatchObject({
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
       'X-Content-Type-Options': 'nosniff',
@@ -386,10 +382,10 @@ describe('headers', () => {
   })
 
   it('writes the same set into _headers for every asset path', () => {
-    const file = headersFile(dev).split('\n')
+    const file = headersFile(beta).split('\n')
     expect(file[0]).toBe('/*')
     expect(file.slice(1).filter(Boolean)).toEqual([
-      ...Object.entries(securityHeaders(dev)).map(([n, v]) => `  ${n}: ${v}`),
+      ...Object.entries(securityHeaders(beta)).map(([n, v]) => `  ${n}: ${v}`),
       `  Cache-Control: ${HTML_CACHE}`,
     ])
   })
@@ -528,7 +524,7 @@ describe('precompressed files', () => {
 
 describe('CSP reports', () => {
   const report = (body: unknown, type = 'application/csp-report') =>
-    new Request('https://app-dev.witnesswork.app/_csp-report', {
+    new Request('https://beta.app.witnesswork.app/_csp-report', {
       method: 'POST',
       headers: { 'Content-Type': type },
       body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -540,11 +536,11 @@ describe('CSP reports', () => {
       report({
         'csp-report': {
           'document-uri':
-            'https://app-dev.witnesswork.app/accounts/handoff?code=1#secret',
+            'https://beta.app.witnesswork.app/accounts/handoff?code=1#secret',
           'violated-directive': 'connect-src',
           'effective-directive': 'connect-src',
           'blocked-uri': 'https://evil.example/collect?data=private',
-          'source-file': `https://app-dev.witnesswork.app${CHUNK}?v=1`,
+          'source-file': `https://beta.app.witnesswork.app${CHUNK}?v=1`,
           'line-number': 12,
           'column-number': 3,
           'script-sample': 'private note text',
@@ -561,8 +557,8 @@ describe('CSP reports', () => {
       directive: 'connect-src',
       disposition: 'report',
       blocked: 'https://evil.example/collect',
-      document: 'https://app-dev.witnesswork.app/accounts/handoff',
-      source: `https://app-dev.witnesswork.app${CHUNK}`,
+      document: 'https://beta.app.witnesswork.app/accounts/handoff',
+      source: `https://beta.app.witnesswork.app${CHUNK}`,
       line: 12,
       column: 3,
     })
@@ -574,7 +570,7 @@ describe('CSP reports', () => {
       {
         type: 'csp-violation',
         body: {
-          documentURL: 'https://app-dev.witnesswork.app/',
+          documentURL: 'https://beta.app.witnesswork.app/',
           effectiveDirective: 'require-trusted-types-for',
           blockedURL: 'trusted-types-sink',
           sample: 'Element innerHTML|<p>Visit with Ana at 5</p>',
@@ -585,7 +581,7 @@ describe('CSP reports', () => {
       {
         type: 'csp-violation',
         body: {
-          documentURL: 'https://app-dev.witnesswork.app/',
+          documentURL: 'https://beta.app.witnesswork.app/',
           effectiveDirective: 'img-src',
           blockedURL: 'data:image/png;base64,AAAA',
           disposition: 'report',
@@ -609,7 +605,7 @@ describe('CSP reports', () => {
         {
           type: 'csp-violation',
           body: {
-            documentURL: 'https://app-dev.witnesswork.app/',
+            documentURL: 'https://beta.app.witnesswork.app/',
             effectiveDirective: 'script-src-elem',
             blockedURL,
           },
@@ -629,9 +625,9 @@ describe('CSP reports', () => {
     expect(
       parseViolations({
         type: 'csp-violation',
-        url: 'https://app-dev.witnesswork.app/',
+        url: 'https://beta.app.witnesswork.app/',
         body: {
-          documentURL: 'https://app-dev.witnesswork.app/',
+          documentURL: 'https://beta.app.witnesswork.app/',
           effectiveDirective: 'require-trusted-types-for',
           blockedURL: 'trusted-types-sink',
           sample: 'Function|return this',
@@ -660,9 +656,9 @@ describe('CSP reports', () => {
       report(
         [
           one('https://evil.example/'),
-          one('https://app-dev.witnesswork.app.evil.example/'),
+          one('https://beta.app.witnesswork.app.evil.example/'),
           ...Array.from({ length: 50 }, () =>
-            one('https://app-dev.witnesswork.app/')
+            one('https://beta.app.witnesswork.app/')
           ),
         ],
         'application/reports+json'
@@ -677,7 +673,7 @@ describe('CSP reports', () => {
     const big = 'x'.repeat(MAX_REPORT_BYTES + 1)
     expect((await receiveReport(report(big), log)).status).toBe(413)
     const streamed = new Request(
-      'https://app-dev.witnesswork.app/_csp-report',
+      'https://beta.app.witnesswork.app/_csp-report',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/csp-report' },

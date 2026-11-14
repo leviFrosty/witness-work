@@ -39,7 +39,7 @@ describe('invite links', () => {
       'https://ww-proxy.leviwilkerson.com/buddies/invite/',
       'https://witnesswork.app/buddies/invite',
       'https://witnesswork.app/buddies/invite/',
-      'https://dev.witnesswork.app/buddies/invite',
+      'https://beta.witnesswork.app/buddies/invite',
     ]) {
       expect(parseInviteSecret(`Join me! ${base}${fragment} ok`)).toEqual(
         secret
@@ -76,7 +76,7 @@ describe('invite links', () => {
   it('never reads short paths on the new hosts', () => {
     for (const base of [
       'https://witnesswork.app/b',
-      'https://dev.witnesswork.app/b',
+      'https://beta.witnesswork.app/b',
       'https://witnesswork.app/BUDDIES/INVITE',
       'https://app.witnesswork.app/buddies/invite',
       'https://evil.example/buddies/invite',

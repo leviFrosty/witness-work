@@ -7,7 +7,6 @@ import { HELP_BASE, SITE_URL } from './paths.ts'
 export const HELP_IMAGES_DIR = 'content/help/images'
 export const HELP_IMAGES_BASE = `${HELP_BASE}/images`
 
-/** Width and height of a WebP file (lossy, lossless or extended), or null. */
 export function webpSize(
   bytes: Uint8Array
 ): { width: number; height: number } | null {
@@ -39,11 +38,6 @@ export function webpSize(
 
 export type LoadedImage = HelpImage & { file: string; servedPath: string }
 
-/**
- * Reads every screenshot in content/help/images. Each is served at
- * /help/images/<name>.<hash>.webp, so a changed image gets a new URL and can be
- * cached forever.
- */
 export async function loadHelpImages(
   root: string,
   problems: string[]

@@ -12,8 +12,8 @@ describe('redactLink', () => {
     expect(
       redactLink('https://witnesswork.app/buddies/invite#1AbCdEfGhIjKlMnOp')
     ).toBe('https://witnesswork.app/buddies/…#…')
-    expect(redactLink('https://dev.witnesswork.app/contacts#H4sIAAAA')).toBe(
-      'https://dev.witnesswork.app/contacts#…'
+    expect(redactLink('https://beta.witnesswork.app/contacts#H4sIAAAA')).toBe(
+      'https://beta.witnesswork.app/contacts#…'
     )
     expect(
       redactLink('https://witnesswork.app/accounts/handoff?lang=es#1Secret')

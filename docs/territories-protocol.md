@@ -1,6 +1,6 @@
 # Territories protocol v1
 
-The wire contract for shared Territories: how a territory maps onto ww-api's Shared Spaces (`ww-api/src/spaces`), the scoped mode Shared Spaces gains for it, guest links that open in a browser, hand-offs, and the Buddies events that invite people. Design and rationale: [ADR 0046](./adr/0047-shared-territories-are-scoped-record-spaces.md). Everything not restated here works exactly as in the [Shared Cars protocol](./shared-cars-protocol.md): transport, encoding, ids, member values, wraps, the key chain, trusted keys, rekeys, the device keyring, invitations, the roster. Read that first.
+The wire contract for shared Territories: how a territory maps onto ww-api's Shared Spaces (`services/api/src/spaces`), the scoped mode Shared Spaces gains for it, guest links that open in a browser, hand-offs, and the Buddies events that invite people. Design and rationale: [ADR 0046](./adr/0047-shared-territories-are-scoped-record-spaces.md). Everything not restated here works exactly as in the [Shared Cars protocol](./shared-cars-protocol.md): transport, encoding, ids, member values, wraps, the key chain, trusted keys, rekeys, the device keyring, invitations, the roster. Read that first.
 
 The server stays **blind**. It sees opaque scope ids (one per street), record id prefixes, counts, sizes and times. It never sees a territory, a street name, an address, an outcome, a name, or which accounts are on a space.
 
@@ -19,7 +19,7 @@ As in [Shared Cars](./shared-cars-protocol.md#conventions), plus:
 - **Scope id** `S`: `b64u` of the street id's 16 UUID bytes (22 characters). Street ids are RFC 9562 UUIDs; seeding gives a new UUID to any street whose id isn't one.
 - **`linkId`**: `b64u` of 16 random bytes (22 characters).
 - **Guest ops** carry no `Authorization`. They're the only Shared Spaces ops without a session ([Guest ops](#guest-ops)).
-- **Base URLs** are the app's usual ww-api hosts. The Beta app and the Beta web host both use production ww-api (`https://api.witnesswork.app`).
+- **Base URLs** are the app's usual ww-api hosts. The Beta app and the Beta web host both use the Beta ww-api (`https://api-beta.witnesswork.app`).
 
 ## The space
 
@@ -348,7 +348,7 @@ Only sharing with buddies and handing off need Buddies: they travel as Buddies e
    | ----------- | ------------------------------------------------------------------------------------ |
    | production  | `https://app.witnesswork.app/territories/guest#v1.<spaceId>.<linkId>.<b64u(L)>`      |
    | beta        | `https://beta.app.witnesswork.app/territories/guest#v1.<spaceId>.<linkId>.<b64u(L)>` |
-   | development | `https://app-dev.witnesswork.app/territories/guest#v1.<spaceId>.<linkId>.<b64u(L)>`  |
+   | development | `http://localhost:8081/territories/guest#v1.<spaceId>.<linkId>.<b64u(L)>`            |
 
    The QR code holds the same URL. The fragment never reaches a server. The page talks to its own web profile's ww-api, so a link only works on the web host of the app that made it.
 
@@ -484,9 +484,9 @@ What's left are the User's own territories, still unshared. The prototype was on
 
 ## Build plan
 
-Three workstreams, in parallel against this contract. Backend lands on ww-api `main` first; the Beta build releases it (`scripts/release-api.sh`).
+Three workstreams, in parallel against this contract. Backend (`services/api`) lands on `main` with the app half; the API deploy workflow puts it on Beta, and the Beta ship waits for it (`scripts/release-api.sh --env beta`).
 
-### 1. Backend (ww-api, `feat/territory-qr-navigation`)
+### 1. Backend (ww-api, `services/api`)
 
 **Files:** `src/spaces/contracts.ts` (mode, grammar, new ops and parsers, guest limits), `src/spaces/spaceDO.ts` (schema, permissions, filters, new methods), `src/spaces/route.ts` (new member ops, guest routes without bearer), `src/spaces/switches.ts` (`spaces:guests`), `src/spaces/openapi.ts`, new `src/spaces/scoped.test.ts` and `src/spaces/guest.test.ts`, `src/buddies/contracts.ts` (immediate kinds), `wrangler.toml` (the `SPACES_GUESTS` var and a `SPACES_GUEST_LIMITER` rate-limit binding, in both envs), `AGENTS.md` (Shared Spaces section, KV commands).
 
@@ -505,7 +505,7 @@ Three workstreams, in parallel against this contract. Backend lands on ww-api `m
 - Tests cover each cell of the [permission tables](#who-reads-and-writes-which-records), each `handoff/end` effect, a holder's hand-off refused both ways, owner `leave` refused, a guest reading and writing only its streets, `gone` reasons, every limit, and `not_found` being identical for an unknown space, link, or token.
 - Nothing logs or reports a token, link token, verifier, IP, or blob.
 - `pnpm test` and typecheck pass; `verify-ww-api` drives a scoped space and a guest link against the local Worker.
-- Rollout: deployed to prod from `main`; `spaces:enabled` and `spaces:guests` set to `"true"` in production KV when the owner approves Beta testing.
+- Rollout: deployed to production from `main` by the API deploy workflow; `spaces:enabled` and `spaces:guests` set to `"true"` in production KV when the owner approves Beta testing.
 
 ### 2. App (sharing and sync)
 
@@ -530,7 +530,7 @@ Reuse `src/lib/sharedSpaces` (client, crypto, keyring, keyTrust, live, invite se
 **Acceptance:**
 
 - Vitest: vectors, merge rules (same record, same house, do-not-call wins, tombstones, undo), privacy mode both ways, projection, migration, and engine flows against `fakeSpacesServer` with scoped mode added to it.
-- On two iOS simulators against the dev API (`verify-witnesswork`, Buddies staging): share whole and street-only, record live both ways, hand off, onward share by the holder with the giver seeing it, take back, give back, return; a hand-off by the holder never offered. One Android pass for the invitation alert, since Android words it in JS.
+- On two iOS simulators against the local API (`verify-witnesswork`, Buddies staging): share whole and street-only, record live both ways, hand off, onward share by the holder with the giver seeing it, take back, give back, return; a hand-off by the holder never offered. One Android pass for the invitation alert, since Android words it in JS.
 - typecheck, lint, `pnpm testFinal` pass. Screenshots before and after for the share screen, a received territory, and a handed-off street.
 
 ### 3. Guest web page

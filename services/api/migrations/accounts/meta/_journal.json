@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791836804119,
+      "tag": "0000_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792123450382,
+      "tag": "0001_account-sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792127536490,
+      "tag": "0002_account-activity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792299695246,
+      "tag": "0003_revenuecat-customers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793382687325,
+      "tag": "0004_passkeys",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793386455787,
+      "tag": "0005_session-capabilities",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793387862401,
+      "tag": "0006_account-key-change",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793389053484,
+      "tag": "0007_rekey-supporter-lock",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793403814357,
+      "tag": "0008_inbox-successor",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793408603691,
+      "tag": "0009_inbox-first-key-epoch",
+      "breakpoints": true
+    }
+  ]
+}

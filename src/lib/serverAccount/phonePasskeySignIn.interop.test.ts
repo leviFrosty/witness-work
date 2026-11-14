@@ -27,7 +27,7 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const baseUrl = interopRelayUrl!
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 const RP = {
-  rpId: 'app-dev.witnesswork.app',
+  rpId: 'beta.app.witnesswork.app',
   origin: 'android:apk-key-hash:-sYXRdwJA3hvue3mKpYrOZ9zSPC7b4mbgzJmdZEDO5w',
 }
 

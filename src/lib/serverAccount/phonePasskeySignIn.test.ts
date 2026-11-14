@@ -101,7 +101,7 @@ function setup(
     passkeys: {
       challenge: vi.fn(async () => ({
         challengeToken: 'challenge-token',
-        options: { challenge: 'c', rpId: 'app-dev.witnesswork.app' },
+        options: { challenge: 'c', rpId: 'beta.app.witnesswork.app' },
       })),
       get: vi.fn(async () => {
         const output = prf ? prf.slice() : null

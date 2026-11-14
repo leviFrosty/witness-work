@@ -1,6 +1,7 @@
-import { appVariant } from '@/lib/appVariant'
+import { forBuild } from '@/constants/buildVariant'
 
-export const PASSKEY_RP_ID =
-  appVariant === 'development'
-    ? 'app-dev.witnesswork.app'
-    : 'app.witnesswork.app'
+export const PASSKEY_RP_ID = forBuild({
+  development: 'beta.app.witnesswork.app',
+  beta: 'beta.app.witnesswork.app',
+  production: 'app.witnesswork.app',
+})

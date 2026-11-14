@@ -53,7 +53,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `pnpm exec wrangler dev --port ${PORT}${process.env.WW_SITE_ENV === 'dev' ? ' --env dev' : ''}`,
+        command: `pnpm exec wrangler dev --port ${PORT}${process.env.WW_SITE_ENV === 'beta' ? ' --env beta' : ''}`,
         port: PORT,
         reuseExistingServer: !process.env.CI,
       },

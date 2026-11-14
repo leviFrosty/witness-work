@@ -10,8 +10,6 @@ import {
   checkAssociationFiles,
   checkExport,
   environments as profiles,
-  fillRevenueCatWeb,
-  filesContaining,
   listFiles,
   loadWebEnv,
   servedFiles,
@@ -36,9 +34,9 @@ const NOT_UPLOADED = ['*.map', STAMP]
 const dist = path.join(root, 'dist')
 
 const usage = [
-  'Usage: web-host.mjs deploy <dev|beta|production> [--dry-run] [--prebuilt] [--preview]',
-  '       web-host.mjs deploy <dev|beta|production> --well-known-only [--dry-run] [--replace-app]',
-  '       web-host.mjs serve [local|dev|beta|production] [--port 8788] [--ip 0.0.0.0]',
+  'Usage: web-host.mjs deploy <beta|production> [--dry-run] [--prebuilt]',
+  '       web-host.mjs deploy <beta|production> --well-known-only [--dry-run] [--replace-app]',
+  '       web-host.mjs serve [local|beta|production] [--port 8788] [--ip 0.0.0.0]',
 ].join('\n')
 
 const short = (sha) => sha?.slice(0, 9) ?? 'missing'
@@ -68,12 +66,9 @@ export function gitState(cwd = root) {
   }
 }
 
-export function wranglerArgs(
-  target,
-  { preview = false, wellKnownOnly = false, commit } = {}
-) {
+export function wranglerArgs(target, { wellKnownOnly = false, commit } = {}) {
   return [
-    ...(preview ? ['versions', 'upload'] : ['deploy']),
+    'deploy',
     '--config',
     wellKnownOnly ? WELL_KNOWN_CONFIG : WRANGLER_CONFIG,
     '--env',
@@ -143,35 +138,26 @@ export function writeWellKnownBundle(dir, target) {
 export function deployPlan(
   target,
   args,
-  {
-    env = process.env,
-    git,
-    version = packageJson().version,
-    revenueCatProblems = [],
-  } = {}
+  { env = process.env, git, version = packageJson().version } = {}
 ) {
   const profile = profiles[target]
   if (!profile?.worker) throw new Error(usage)
   const options = {
     dryRun: false,
     prebuilt: false,
-    preview: false,
     wellKnownOnly: false,
     replaceApp: false,
   }
   for (const arg of args) {
     if (arg === '--dry-run') options.dryRun = true
     else if (arg === '--prebuilt') options.prebuilt = true
-    else if (arg === '--preview') options.preview = true
     else if (arg === '--well-known-only') options.wellKnownOnly = true
     else if (arg === '--replace-app') options.replaceApp = true
     else throw new Error(`Unknown web deploy argument: ${arg}`)
   }
   if (target === 'production' && !isConfirmed(version, env.WW_RELEASE_CONFIRM))
     throw new Error(refusal(version))
-  if (options.preview && target !== 'dev')
-    throw new Error('Only dev uploads preview versions')
-  if (options.wellKnownOnly && (options.prebuilt || options.preview))
+  if (options.wellKnownOnly && options.prebuilt)
     throw new Error(
       '--well-known-only builds its own bundle and deploys it to the host'
     )
@@ -180,14 +166,6 @@ export function deployPlan(
   const blocked = []
   if (!git.clean)
     blocked.push('Commit all changes first: web deploys ship committed code')
-
-  if (profile.revenueCatWebItem && !options.wellKnownOnly)
-    blocked.push(...revenueCatProblems)
-
-  if (target === 'dev' && !options.preview && git.head !== git.integrationHead)
-    blocked.push(
-      `app-dev serves only the latest ${INTEGRATION_BRANCH}: deploy from a clean checkout of origin/${INTEGRATION_BRANCH} (HEAD ${short(git.head)}, origin ${short(git.integrationHead)})`
-    )
 
   if (options.wellKnownOnly && !git.onMain && !git.onIntegration)
     blocked.push(
@@ -203,7 +181,7 @@ export function deployPlan(
   return {
     target,
     worker: profile.worker,
-    host: options.preview ? 'a preview URL on workers.dev' : profile.host,
+    host: profile.host,
     apiOrigin: profile.apiOrigin,
     csp: profile.csp,
     version,
@@ -354,31 +332,11 @@ function readProductionToken() {
   return token
 }
 
-function revenueCatCheck(target, args) {
-  if (
-    !profiles[target]?.revenueCatWebItem ||
-    args.includes('--well-known-only')
-  )
-    return { problems: [] }
-  try {
-    const { env } = loadWebEnv(root, target)
-    const { problems } = fillRevenueCatWeb(env, target)
-    return { env, problems }
-  } catch (error) {
-    return { problems: [error.message] }
-  }
-}
-
 async function deploy(target, args) {
   let git = gitState()
-  const check = revenueCatCheck(target, args)
-  const revenueCatProblems = check.problems
-  let plan = deployPlan(target, args, { git, revenueCatProblems })
+  let plan = deployPlan(target, args, { git })
 
-  if (
-    !plan.dryRun &&
-    (target === 'dev' || target === 'production' || plan.wellKnownOnly)
-  ) {
+  if (!plan.dryRun && (target === 'production' || plan.wellKnownOnly)) {
     const fetched = spawnSync(
       'git',
       ['fetch', '--quiet', 'origin', INTEGRATION_BRANCH, 'main'],
@@ -387,7 +345,7 @@ async function deploy(target, args) {
     if (fetched.status !== 0)
       throw new Error("Couldn't fetch origin to check what may deploy")
     git = gitState()
-    plan = deployPlan(target, args, { git, revenueCatProblems })
+    plan = deployPlan(target, args, { git })
   }
   if (plan.dryRun && plan.prebuilt)
     try {
@@ -415,14 +373,6 @@ async function deploy(target, args) {
   checkExport(dist, loadWebEnv(root, target).excluded, {
     serviceWorker: true,
   })
-
-  if (check.env) {
-    const key = check.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY
-    if (filesContaining(dist, [key]).length === 0)
-      throw new Error(
-        `The ${target} build doesn't carry the RevenueCat sandbox key; build it again with the values set (docs/web-hosting.md)`
-      )
-  }
   const missing = missingOrigins(dist, target)
   if (missing.length)
     throw new Error(
@@ -434,7 +384,7 @@ async function deploy(target, args) {
   })
   if (status !== 0) throw new Error(`wrangler exited with ${status}`)
   console.log(
-    `WEB_RESULT target=${target} worker=${plan.worker} commit=${short(git.head)} status=${plan.preview ? 'preview' : 'deployed'}`
+    `WEB_RESULT target=${target} worker=${plan.worker} commit=${short(git.head)} status=deployed`
   )
 }
 

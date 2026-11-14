@@ -40,21 +40,25 @@ const APP_LINK_LEGACY_HOST_DATA = [
   { path: appLinks.legacyPaths.handoff },
   ...APP_LINK_FULL_PATHS.map((path) => ({ path })),
 ]
-const APP_LINK_APEX_HOSTS = IS_DEV
-  ? [appLinks.host, appLinks.devHost]
-  : [appLinks.host]
+const DEVELOPER_MODE = IS_DEV ? '?mode=developer' : ''
 const APP_LINK_DOMAINS = [
   `applinks:${appLinks.legacyHost}`,
-  ...APP_LINK_APEX_HOSTS.map((host) =>
-    host === appLinks.devHost
-      ? `applinks:${host}?mode=developer`
-      : `applinks:${host}`
-  ),
+  `applinks:${appLinks.host}`,
+  ...(IS_DEV || IS_BETA
+    ? [`applinks:${appLinks.betaHost}${DEVELOPER_MODE}`]
+    : []),
 ]
+const PASSKEY_DOMAIN =
+  IS_DEV || IS_BETA
+    ? `webcredentials:beta.app.witnesswork.app${DEVELOPER_MODE}`
+    : 'webcredentials:app.witnesswork.app'
 
+const ANDROID_APP_LINK_APEX_HOSTS = IS_DEV
+  ? [appLinks.host, appLinks.betaHost]
+  : [appLinks.host]
 const APP_LINK_INTENT_FILTERS = [
   { host: appLinks.legacyHost, data: APP_LINK_LEGACY_HOST_DATA },
-  ...APP_LINK_APEX_HOSTS.map((host) => ({
+  ...ANDROID_APP_LINK_APEX_HOSTS.map((host) => ({
     host,
     data: APP_LINK_FULL_PATHS.map((path) => ({ path })),
   })),
@@ -194,12 +198,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ],
       },
 
-      associatedDomains: [
-        ...APP_LINK_DOMAINS,
-        IS_DEV
-          ? 'webcredentials:app-dev.witnesswork.app?mode=developer'
-          : 'webcredentials:app.witnesswork.app',
-      ],
+      associatedDomains: [...APP_LINK_DOMAINS, PASSKEY_DOMAIN],
       entitlements: {
         'com.apple.security.application-groups': [`group.${BUNDLE_ID}`],
 

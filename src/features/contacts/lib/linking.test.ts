@@ -74,7 +74,7 @@ describe('prefixes', () => {
       expect.arrayContaining([
         'witnesswork://',
         'https://witnesswork.app',
-        'https://dev.witnesswork.app',
+        'https://beta.witnesswork.app',
         'https://ww-proxy.leviwilkerson.com',
       ])
     )

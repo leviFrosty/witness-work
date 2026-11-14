@@ -22,17 +22,17 @@ describe('site config', () => {
     })
   })
 
-  test('dev is the staging site and never indexed', () => {
-    expect(siteConfig('dev')).toEqual({
-      env: 'dev',
-      origin: 'https://dev.witnesswork.app',
-      helpSearchOrigin: 'https://help-search-dev.witnesswork.app',
+  test('beta is the Beta site and never indexed', () => {
+    expect(siteConfig('beta')).toEqual({
+      env: 'beta',
+      origin: 'https://beta.witnesswork.app',
+      helpSearchOrigin: 'https://help-search-beta.witnesswork.app',
       indexable: false,
     })
   })
 
   test('an unknown environment fails the build', () => {
-    expect(() => siteConfig('staging')).toThrow(/WW_SITE_ENV/)
+    expect(() => siteConfig('dev')).toThrow(/WW_SITE_ENV/)
   })
 })
 

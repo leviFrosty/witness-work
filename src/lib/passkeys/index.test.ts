@@ -27,7 +27,7 @@ const SALT = new TextEncoder().encode('ww-account/v1/passkey-prf')
 const PRF = new Uint8Array(32).fill(9)
 
 const creation: PublicKeyCredentialCreationOptionsJSON = {
-  rp: { id: 'app-dev.witnesswork.app', name: 'WitnessWork' },
+  rp: { id: 'beta.app.witnesswork.app', name: 'WitnessWork' },
   user: {
     id: 'AAEC',
     name: 'WitnessWork KVW7',
@@ -44,7 +44,7 @@ const creation: PublicKeyCredentialCreationOptionsJSON = {
 }
 
 const request: PublicKeyCredentialRequestOptionsJSON = {
-  rpId: 'app-dev.witnesswork.app',
+  rpId: 'beta.app.witnesswork.app',
   challenge: 'Y2hhbGxlbmdl',
   userVerification: 'required',
   allowCredentials: [{ id: 'Y3JlZA', type: 'public-key' }],

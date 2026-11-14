@@ -33,9 +33,56 @@ WitnessWork is available in 19 languages, translated with AI, including Arabic w
 
 Development setup (iOS and Android) and the production build process are documented in [docs/build.md](./docs/build.md). Production builds are intentionally done **locally** (`pnpm run build:prod-auto-submit`) rather than on EAS Build cloud services.
 
+## Environments
+
+There are three. Everything in this repo (the apps, the API, the website) runs in exactly one of them.
+
+|                         | Production                | Beta                                | Development                          |
+| ----------------------- | ------------------------- | ----------------------------------- | ------------------------------------ |
+| What it runs            | The last release          | The tip of `main`, always           | Your checkout                        |
+| Who uses it             | Everyone                  | Testers                             | Whoever is working on the code       |
+| iOS app                 | WitnessWork (App Store)   | WitnessWork Beta (TestFlight)       | A development build                  |
+| Android app             | WitnessWork (Google Play) | None yet                            | A development build                  |
+| Web app                 | `app.witnesswork.app`     | `beta.app.witnesswork.app`          | `localhost:8081`                     |
+| API                     | `api.witnesswork.app`     | `api-beta.witnesswork.app`          | `localhost:8787`                     |
+| Website and Help Center | `witnesswork.app`         | `beta.witnesswork.app`              | `localhost` (`pnpm dev` in services) |
+| Accounts and data       | Real                      | Its own, separate from production   | On your machine                      |
+| How code gets there     | By hand, at a release     | By itself, on every merge to `main` | You run it                           |
+
+### Beta
+
+Beta is the tip of `main`. A merge to `main` starts everything that puts it there, and you do nothing:
+
+- **API deploy** deploys the Beta API when `services/api` changed.
+- **Website deploy** deploys the Beta website and Help Center when `services/` changed.
+- **Beta ship** waits for the Beta API, then ships the iOS Beta app (an over-the-air update when only JavaScript changed, a new TestFlight build otherwise) and deploys the web beta.
+
+The commit's **Beta ship** status on GitHub turns green when that commit is on Beta. Beta has its own accounts and data: nothing you do there touches production, and a production account does not exist there.
+
+Android has no Beta app. A beta-profile Android build is the production app, so it uses production services.
+
+### Production
+
+Nothing reaches production by itself, with one exception: the website. The same merge that deploys the Beta website also deploys `witnesswork.app`.
+
+- **Apps and web app:** the release process (`.agents/skills/release-process/SKILL.md`).
+- **API:** `gh workflow run api-deploy.yml -f environment=production`. A release runs this first, so the API is live before the app that needs it.
+
+### Development
+
+Nothing is deployed for development. A development build talks to an API on your own machine.
+
+1. Start the API. In `services/api`, copy `.dev.vars.example` to `.dev.vars` once, then run `pnpm install` and `pnpm dev`. It listens on `http://localhost:8787`.
+2. Run the app from the repo root: `pnpm ios`, `pnpm android` or `pnpm web`. A development build calls `http://localhost:8787` unless `EXPO_PUBLIC_API_BASE_URL` in `.env` says otherwise. `EXPO_PUBLIC_API_DEV_BYPASS` in `.env` must match `NOTES_IMPORT_DEV_BYPASS_TOKEN` in `.dev.vars`, because a simulator cannot attest.
+3. On a real phone, start the API with `pnpm dev --ip 0.0.0.0` and set `EXPO_PUBLIC_API_BASE_URL` to your Mac's address on the network, for example `http://192.168.1.20:8787`.
+
+A development build borrows three read-only things from Beta, because they have no local copy: the Help Center content, Help Center search, and the map and verification frames the web app embeds.
+
+Setup details are in [docs/build.md](./docs/build.md).
+
 ## Architecture
 
-How the app, its backend [ww-api](https://github.com/leviFrosty/ww-api), and the services they use connect. Arrows point from the caller to what it calls; dashed arrows are pushes and background work.
+How the app, its backend API ([`services/api`](./services/api)), and the services they use connect. Arrows point from the caller to what it calls; dashed arrows are pushes and background work.
 
 [Open the diagram in Mermaid Live](https://mermaid.live/view#pako:eNp9VW1v2zYQ_isH9cuW0EkapGtiDAVkRZ29vFiQ1LpFNCSUdLI4y6RAUva8tv99oKjY0tIW-qI78nl4Lw95X5xM5OiMnaIS26ykUkM8STiAatKlpHUJ3u3Mv4-jh8RZlCgRahR1hdAohAXTHJVaCLlKnL8MCsANgofEeTo66i0Creujo4SzeQTH4PJcCpY_7SELf_ISIjjoEmGLqUHSuj7Z2tWtkKsTWtcHvP8pDt2oo6A6K815isCW5UvUikDEJDMsupSiWZYtcV0KjtDjQZ4nfJB5cOvG7-fh3UPiuLXJ-RT-EGJZISiUG5ah2ocQPEaf7z0bAvMq0eRwLdmmB2lNE4Ta8QwKVqF66sFv_M_RAH6Du6ykjMMpTCqRrSDSQrYENMtEwzWscNdncOPYj2LL4dY1uFqj0nAKQUV3MOMal5LpnWGopdigAgpL5A0blsFQ3blBF8wdrW-YPmRxR2t1dNTfG3yIpt2hwb2CU3jv3bVnNKqEHCu2QTmIM4rnoX8Is03rcIAJ1sJlVlJ1KNLL9njvHxKnLVZRUYk9Bc4s_XY7ojUDIyeUvcopArbG0Y5nBCZNnjM0MimpxBw8KhVJeIxSMi2kXcokSxHcGQEpGo1QV5RzxpcEKsZXvVZeu7H78Ev_fKWFpMu2ddevCVw3kqYVwjz9GzMTS3hO4ObjU-L82lHMY9cmMBUaPtQ51TZ8sUE50iWOKJPQtH41uEXT-bMAFpiapkIplG7LWTUK1rQGynNIhR5lJWYrKCRd9zmiWdy15n-XzXBsMVVMIxzDFKsaPOQaZQ_ru6HXSaG3ARRSmZWGwDZCgTv7cVP9T7Ef3ru3D4kzb7Ri-XcuW_R4e3tnD5rXyEPTkLZA_6IUo5xqOpKokWsmOKxFjlU_xcep_6w_89fqIs8lKoUKjtv2Mr7sA8LuYoe4Qd6gRzUcQ6Qlq9umRk1dC2lSfSFagw66mgRC6alYtudxWu00yxSBoqJLRUA1coO7AS7y7-Pws8VGyLVs70VKsxXyHFBKIQf7F_4k-ugNru2f5rmNG8mVZhV2PTQyIEYD0GrgRSvsawq_j0bvzGNuXG4QgDVnxlz4k--ZnQD7gHns9k0jr4HdSsZ47B-MTr6z6_kZNr5uGFn0YzAdsD2GXhePiaPz2bLYfbPWZ25o327lNHQYYQw9oTe0bXf2vpPRu6-JY968xPnavYptXo-hZ5Ow797BZxFbTEshVgbUVtOsZxVV6hoLyCqGXJtZUY1fpefFeZoSpaVY4fjVeXGFFxckE5WQ41ev0XwDcF1RXQi57uB4hRkWe_jF1ZuzN29_At-2d7UDFwVeZtkejJdvrs6yn4CVphr32Ozs7eUem19dXJ4VP8HiPxolp1UHz8_SojjE_dvbi9f51Q_gRglk4U9IJ2Fbv8OyHdLEDlvyPDGJnXfENo10jdrXr88-I_PYJZ2-iNEp6YRry3XYazRmy3DwtTojVlzEiIAYBZNnLZFnre5LkHCHOGuUa8pyZ-x8SRxd4hoTZ5w4ORa0qXTifHOIQxstzCxzxlo2SBw7G64ZXUq6ts5v_wHnAyjq) to zoom and pan.
 

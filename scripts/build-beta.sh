@@ -3,8 +3,9 @@
 #
 # Publishes a Hot Updater bundle to the `beta` channel when HEAD's native fingerprint
 # matches the latest TestFlight beta build; otherwise builds locally and
-# uploads a new TestFlight build. Releases ww-api first when it has unreleased
-# commits (scripts/release-api.sh), and deploys the web beta
+# uploads a new TestFlight build. Waits first for the Beta API
+# (api-beta.witnesswork.app) to serve main's services/api
+# (scripts/release-api.sh --env beta), and deploys the web beta
 # (beta.app.witnesswork.app). Run for every push to main by the Beta ship
 # workflow, on one of our own Macs (.github/workflows/beta-ship.yml).
 #
@@ -134,8 +135,9 @@ if [ "$MODE" = ota ] && [ "$RUNTIME" != "$LATEST_RUNTIME" ]; then
 fi
 echo "Mode:     $MODE"
 
-# Beta calls the production API, so unreleased backend work ships first.
-API_ARGS=(--branch "$BRANCH")
+# Beta calls the Beta API, which the API deploy workflow deploys from main.
+# Wait for it, so the backend is live before the app that needs it.
+API_ARGS=(--env beta)
 [ "$DRY_RUN" = true ] && API_ARGS+=(--dry-run)
 scripts/release-api.sh "${API_ARGS[@]}"
 
@@ -153,6 +155,13 @@ ship_web() {
   fi
   local flag=
   [ "$DRY_RUN" = true ] && flag=--dry-run
+  # The frames the web beta embeds (maps, Turnstile) ship from the same commit.
+  # Their deploys refuse a checkout that main has already moved past; the next
+  # ship covers that, so a refusal doesn't fail this one.
+  if [ "$DRY_RUN" = false ]; then
+    node scripts/web-maps.mjs deploy beta || echo "WEB_RESULT target=beta frame=maps status=skipped"
+    node scripts/web-verify.mjs deploy beta || echo "WEB_RESULT target=beta frame=verify status=skipped"
+  fi
   if node scripts/web-host.mjs deploy beta ${flag:+"$flag"}; then
     [ "$DRY_RUN" = true ] && echo "WEB_RESULT target=beta status=planned"
     return 0

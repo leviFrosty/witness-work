@@ -105,7 +105,7 @@ describe('guest links', () => {
       `https://beta.app.witnesswork.app/territories/guest#${fragment}`
     )
     expect(guestLinkUrl('development', link)).toBe(
-      `https://app-dev.witnesswork.app/territories/guest#${fragment}`
+      `http://localhost:8081/territories/guest#${fragment}`
     )
     for (const variant of ['production', 'beta', 'development'] as const) {
       const url = guestLinkUrl(variant, link)
@@ -133,6 +133,9 @@ describe('guest links', () => {
       `https://witnesswork.app/territories/guest#${fragment}`,
       `https://app.witnesswork.app/t/guest#${fragment}`,
       `http://app.witnesswork.app/territories/guest#${fragment}`,
+      `http://beta.app.witnesswork.app/territories/guest#${fragment}`,
+      `https://localhost:8081/territories/guest#${fragment}`,
+      `http://localhost:8082/territories/guest#${fragment}`,
       `https://app.witnesswork.app/territories/guest`,
       `https://app.witnesswork.app/territories/guest#v2.${spaceId}.${linkId}.${secret}`,
       `https://app.witnesswork.app/territories/guest#v1.${spaceId}.${linkId}`,

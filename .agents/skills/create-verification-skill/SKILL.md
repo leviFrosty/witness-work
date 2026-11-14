@@ -4,7 +4,7 @@ description: 'Generate a project-local verification skill that drives your app t
 disable-model-invocation: true
 ---
 
-<!-- Vendored from pstack by poteto (https://github.com/backnotprop/pstack, MIT, (c) 2026 Lauren Tan). In this repo the target skills are verify-witnesswork here and verify-ww-api in ~/dev/ww-api. -->
+<!-- Vendored from pstack by poteto (https://github.com/backnotprop/pstack, MIT, (c) 2026 Lauren Tan). In this repo the target skills are verify-witnesswork (the app) and verify-ww-api (`services/api`). -->
 
 # Create a verification skill
 

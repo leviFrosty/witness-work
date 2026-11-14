@@ -5,6 +5,8 @@ superseded-by: [0027]
 
 # Notes Import on Android uses Play Integrity where iOS uses App Attest
 
+> Hosts updated since: ww-api now lives in `services/api` and deploys through the API deploy workflow to Beta and production, with no deployed dev Worker, see [readme.md#environments](../../readme.md#environments).
+
 ## Context
 
 Notes Import (Scribe AI) calls a paid model through ww-api. On iOS the security

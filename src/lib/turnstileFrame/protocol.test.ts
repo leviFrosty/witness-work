@@ -11,12 +11,12 @@ import {
 describe('the frame URL', () => {
   it('carries the site key and the action, and nothing else', () => {
     const url = new URL(
-      frameUrl('https://verify-dev.witnesswork.app', {
+      frameUrl('https://verify-beta.witnesswork.app', {
         siteKey: '0x4AAAAAAAabc_-1',
         action: 'web-signup',
       })
     )
-    expect(url.origin).toBe('https://verify-dev.witnesswork.app')
+    expect(url.origin).toBe('https://verify-beta.witnesswork.app')
     expect(url.pathname).toBe('/')
     expect([...url.searchParams.keys()]).toEqual(['sitekey', 'action'])
     expect(parseFrameParams(url.search)).toEqual({

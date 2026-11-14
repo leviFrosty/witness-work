@@ -7,9 +7,9 @@ export type FrameEnvironment = {
 }
 
 export const FRAME_ENVIRONMENTS: Record<string, FrameEnvironment> = {
-  dev: {
-    worker: 'ww-verify-dev',
-    origin: 'https://verify-dev.witnesswork.app',
+  beta: {
+    worker: 'ww-verify-beta',
+    origin: 'https://verify-beta.witnesswork.app',
   },
   production: { worker: 'ww-verify', origin: 'https://verify.witnesswork.app' },
 }

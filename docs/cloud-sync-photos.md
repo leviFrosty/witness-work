@@ -1,6 +1,6 @@
 # Cloud Sync photos and the Cloud Sync request
 
-The wire contract for photos over Cloud Sync and for the account's "turn on Cloud Sync" request, between the app (`src/lib/syncTransport/server`, `src/app/sync`) and ww-api (`ww-api/src/accounts/sync*`). The decisions are [ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md) §5 and §6; Cloud Sync itself is [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md) and "Sync" in [accounts-protocol.md](./accounts-protocol.md#sync). Buddies' shared photos ([buddies-protocol.md](./buddies-protocol.md#shared-photos)) are the model.
+The wire contract for photos over Cloud Sync and for the account's "turn on Cloud Sync" request, between the app (`src/lib/syncTransport/server`, `src/app/sync`) and ww-api (`services/api/src/accounts/sync*`). The decisions are [ADR 0040](./adr/0040-sync-is-free-and-cloud-sync-carries-photos.md) §5 and §6; Cloud Sync itself is [ADR 0030](./adr/0030-cloud-sync-through-ww-api.md) and "Sync" in [accounts-protocol.md](./accounts-protocol.md#sync). Buddies' shared photos ([buddies-protocol.md](./buddies-protocol.md#shared-photos)) are the model.
 
 Every op here is **Bearer**, with the account session's token. Ids and names travel in bodies and headers, never URLs. Errors use the Buddies error envelope and codes.
 

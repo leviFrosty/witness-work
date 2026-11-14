@@ -34,8 +34,8 @@ describe('robots.txt', () => {
     )
   })
 
-  test('staging disallows everything', async () => {
-    const { robotsTxt } = await siteFiles('dev')
+  test('Beta disallows everything', async () => {
+    const { robotsTxt } = await siteFiles('beta')
     expect(robotsTxt()).toBe('User-agent: *\nDisallow: /\n')
   })
 })
@@ -58,12 +58,12 @@ describe('_headers', () => {
     expect(headersFile()).not.toMatch(/Set-Cookie/i)
   })
 
-  test('staging is noindex on every response', async () => {
-    const { headersFile } = await siteFiles('dev')
+  test('Beta is noindex on every response', async () => {
+    const { headersFile } = await siteFiles('beta')
     const all = rule(headersFile(), '/*')
     expect(all).toContain('X-Robots-Tag: noindex')
     expect(all.find((h) => h.startsWith('Content-Security-Policy:'))).toContain(
-      "connect-src 'self' https://help-search-dev.witnesswork.app;"
+      "connect-src 'self' https://help-search-beta.witnesswork.app;"
     )
   })
 

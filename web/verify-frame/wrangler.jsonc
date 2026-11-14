@@ -1,6 +1,6 @@
 // The Turnstile frame's Worker (docs/web-turnstile.md): static files only, with
 // the headers `scripts/web-verify.mjs` writes into `dist/_headers`. Deploy only
-// through `pnpm web:deploy:verify:<dev|production>`, never `wrangler deploy` by
+// through `pnpm web:deploy:verify:<beta|production>`, never `wrangler deploy` by
 // hand. The top level is for `pnpm web:serve:verify`.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
@@ -15,10 +15,10 @@
   "preview_urls": false,
   "observability": { "enabled": true },
   "env": {
-    "dev": {
-      "name": "ww-verify-dev",
+    "beta": {
+      "name": "ww-verify-beta",
       "routes": [
-        { "pattern": "verify-dev.witnesswork.app", "custom_domain": true },
+        { "pattern": "verify-beta.witnesswork.app", "custom_domain": true },
       ],
       "workers_dev": false,
       "preview_urls": false,

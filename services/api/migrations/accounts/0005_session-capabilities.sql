@@ -1,0 +1,1 @@
+ALTER TABLE `account_sessions` ADD `capabilities` text;

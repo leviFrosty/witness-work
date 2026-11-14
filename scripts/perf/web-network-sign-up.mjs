@@ -24,12 +24,8 @@ if (!url || !profile) {
   )
   process.exit(1)
 }
-if (
-  !/^https?:\/\/(localhost|127\.0\.0\.1|app-dev\.witnesswork\.app)(:|\/|$)/.test(
-    url
-  )
-)
-  throw new Error('Sign-up automation is for local and dev hosts only')
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(url))
+  throw new Error('Sign-up automation is for local hosts only')
 
 const SLOW = Number(process.env.WW_SIGN_UP_TIMEOUT ?? 180_000)
 const context = await chromium.launchPersistentContext(path.resolve(profile), {

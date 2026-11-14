@@ -1,6 +1,3 @@
-// pnpm help:image <slug> <screenshot.png> [--crop WxH+X+Y]
-// Saves a Help Center screenshot as content/help/images/<slug>.webp (600 px
-// wide at most) and prints the Markdown line to paste into the answer.
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
@@ -10,7 +7,7 @@ const args = process.argv.slice(2)
 const cropIndex = args.indexOf('--crop')
 const crop = cropIndex === -1 ? undefined : args.splice(cropIndex, 2)[1]
 const [name, given] = args
-// pnpm runs scripts from the package folder; resolve the path from where it was typed.
+
 const input =
   given && path.resolve(process.env.INIT_CWD ?? process.cwd(), given)
 

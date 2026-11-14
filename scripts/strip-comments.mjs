@@ -14,6 +14,11 @@ if (
 )
   throw new Error('Usage: node scripts/strip-comments.mjs [--write|--check]')
 
+const exemptFolders = [
+  'services/api/',
+  'services/marketing/src/routeTree.gen.ts',
+]
+
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], {
   encoding: 'utf8',
 }).trim()
@@ -29,7 +34,11 @@ const files = [
       }
     )
       .split('\0')
-      .filter((filename) => sourceExtensions.test(filename))
+      .filter(
+        (filename) =>
+          sourceExtensions.test(filename) &&
+          !exemptFolders.some((folder) => filename.startsWith(folder))
+      )
   ),
 ]
 const changes = []

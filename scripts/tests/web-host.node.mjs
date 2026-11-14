@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url'
 import { unstable_readConfig } from 'wrangler'
 import {
   HOLDING_PAGE,
-  INTEGRATION_BRANCH,
   PRODUCTION_TOKEN_ITEM,
   STAMP,
   WELL_KNOWN_CONFIG,
@@ -52,13 +51,8 @@ const integration = {
   tags: [],
 }
 const release = { ...integration, onMain: true, tags: [`v${version}`] }
-const plan = (
-  target,
-  args = ['--dry-run'],
-  env = {},
-  git = integration,
-  revenueCatProblems = []
-) => deployPlan(target, args, { env, git, revenueCatProblems })
+const plan = (target, args = ['--dry-run'], env = {}, git = integration) =>
+  deployPlan(target, args, { env, git })
 
 const fixtures = []
 function fixture() {
@@ -122,54 +116,18 @@ test('production deploys only the tagged release commit on origin/main', () => {
   assert.match(dirty.blocked.join('\n'), /Commit all changes/)
 })
 
-test('dev deploys only a clean checkout of the integration branch head', () => {
-  assert.deepEqual(plan('dev').blocked, [])
-  const dirty = plan('dev', [], {}, { ...integration, clean: false })
-  assert.match(dirty.blocked.join('\n'), /Commit all changes/)
-  for (const git of [
-    { ...integration, head: 'b'.repeat(40) },
-    { ...integration, integrationHead: undefined },
-  ]) {
-    const refused = plan('dev', [], {}, git)
-    assert.equal(refused.blocked.length, 1)
-    assert.match(refused.blocked[0], new RegExp(INTEGRATION_BRANCH))
-  }
-})
-
 test('a deploy builds through web:build, which refreshes the Help Center first', () => {
-  for (const target of ['dev', 'beta', 'production'])
+  for (const target of ['beta', 'production'])
     assert.match(
       plan(target, ['--dry-run'], keyword, release).build,
       new RegExp(`^pnpm run web:build --env ${target}: sync:help, then export$`)
     )
-  assert.match(plan('dev', ['--prebuilt']).build, /as stamped/)
+  assert.match(plan('beta', ['--prebuilt']).build, /as stamped/)
 })
 
 test('the deploy and the build read the same profiles', () => {
   assert.equal(profiles, environments)
-  assert.deepEqual(Object.keys(profiles), [
-    'local',
-    'dev',
-    'beta',
-    'production',
-  ])
-})
-
-test('a dev preview leaves app-dev alone, so any clean branch may upload one', () => {
-  const branch = { ...integration, head: 'b'.repeat(40) }
-  const preview = plan('dev', ['--preview'], {}, branch)
-  assert.deepEqual(preview.blocked, [])
-  assert.deepEqual(preview.command.slice(1, 3), ['versions', 'upload'])
-  assert.match(preview.host, /workers\.dev/)
-  assert.match(
-    plan('dev', ['--preview'], {}, { ...branch, clean: false }).blocked[0],
-    /Commit/
-  )
-  for (const target of ['beta', 'production'])
-    assert.throws(
-      () => plan(target, ['--preview'], keyword, release),
-      /Only dev/
-    )
+  assert.deepEqual(Object.keys(profiles), ['local', 'beta', 'production'])
 })
 
 test('beta needs only committed code, and nothing selects another environment', () => {
@@ -177,11 +135,19 @@ test('beta needs only committed code, and nothing selects another environment', 
     plan('beta', [], {}, { ...integration, head: 'c'.repeat(40) }).blocked,
     []
   )
-  for (const target of [undefined, 'local', 'staging', 'prod', 'development'])
+  for (const target of [
+    undefined,
+    'local',
+    'dev',
+    'staging',
+    'prod',
+    'development',
+  ])
     assert.throws(() => plan(target), /Usage/)
   for (const args of [
     ['--env', 'production'],
     ['--force'],
+    ['--preview'],
     ['--config', 'x'],
     ['--yes'],
   ])
@@ -190,7 +156,7 @@ test('beta needs only committed code, and nothing selects another environment', 
 
 test('each environment deploys its own Worker to its own host', () => {
   const workers = new Set()
-  for (const target of ['dev', 'beta', 'production']) {
+  for (const target of ['beta', 'production']) {
     const result = plan(target, ['--dry-run'], keyword, release)
     assert.deepEqual(result.command.slice(1, 6), [
       'deploy',
@@ -209,7 +175,7 @@ test('each environment deploys its own Worker to its own host', () => {
       { pattern: profiles[target].host, custom_domain: true },
     ])
     assert.equal(config.workers_dev, false)
-    assert.equal(config.preview_urls, target === 'dev')
+    assert.equal(config.preview_urls, false)
     assert.equal(config.vars.WW_WEB_PROFILE, target)
     assert.equal(config.assets.not_found_handling, 'single-page-application')
 
@@ -222,7 +188,7 @@ test('each environment deploys its own Worker to its own host', () => {
     ])
       assert.ok(config.assets.run_worker_first.includes(pattern), pattern)
   }
-  assert.equal(workers.size, 3)
+  assert.equal(workers.size, 2)
   const local = unstable_readConfig({
     config: path.join(root, WRANGLER_CONFIG),
   })
@@ -236,7 +202,7 @@ test('every environment serves the app on the link routes "Continue on the web" 
     new RegExp(
       `^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`
     )
-  for (const target of [undefined, 'dev', 'beta', 'production']) {
+  for (const target of [undefined, 'beta', 'production']) {
     const config = unstable_readConfig({
       config: path.join(root, WRANGLER_CONFIG),
       env: target,
@@ -264,11 +230,9 @@ test('wrangler runs with only the environment’s own credential', () => {
     OP_SERVICE_ACCOUNT_TOKEN: 'ops',
     PATH: '/bin',
   }
-  for (const target of ['dev', 'beta']) {
-    const env = wranglerEnv(target, inherited, 'ignored')
-    assert.equal(env.CLOUDFLARE_API_TOKEN, undefined)
-    assert.equal(env.OP_SERVICE_ACCOUNT_TOKEN, undefined)
-  }
+  const env = wranglerEnv('beta', inherited, 'ignored')
+  assert.equal(env.CLOUDFLARE_API_TOKEN, undefined)
+  assert.equal(env.OP_SERVICE_ACCOUNT_TOKEN, undefined)
   assert.throws(() => wranglerEnv('production', inherited), /token/)
   assert.equal(
     wranglerEnv('production', inherited, ' prod-token\n').CLOUDFLARE_API_TOKEN,
@@ -318,14 +282,17 @@ test('a prebuilt export must be this profile and commit, unchanged since its bui
 
 test('the export gets the profile’s headers and skips source maps', () => {
   const { dir } = exportFixture()
-  prepareAssets(dir, 'dev')
+  prepareAssets(dir, 'beta')
   assert.equal(
     fs.readFileSync(path.join(dir, '_headers'), 'utf8'),
-    headersFile(profiles.dev)
+    headersFile(profiles.beta)
   )
   const ignored = fs.readFileSync(path.join(dir, '.assetsignore'), 'utf8')
   assert.deepEqual(ignored.trim().split('\n'), ['*.map', STAMP])
-  assert.throws(() => prepareAssets(fixture(), 'dev'), /index\.html is missing/)
+  assert.throws(
+    () => prepareAssets(fixture(), 'beta'),
+    /index\.html is missing/
+  )
 })
 
 test('a build must call the ww-api, PostHog and Help Center origins its CSP allows', () => {
@@ -334,25 +301,25 @@ test('a build must call the ww-api, PostHog and Help Center origins its CSP allo
   assert.deepEqual(missingOrigins(dir, 'beta'), [
     profiles.beta.apiOrigin,
     profiles.beta.posthogOrigin,
-    'https://witnesswork.app',
+    'https://beta.witnesswork.app',
     profiles.beta.helpSearchOrigin,
   ])
   write(
     chunk,
     [
-      profiles.dev.apiOrigin,
-      profiles.dev.posthogOrigin,
-      profiles.dev.helpManifest,
-      `${profiles.dev.helpSearchOrigin}/v1/search`,
+      profiles.beta.apiOrigin,
+      profiles.beta.posthogOrigin,
+      profiles.beta.helpManifest,
+      `${profiles.beta.helpSearchOrigin}/v1/search`,
     ]
       .map((url) => `"${url}"`)
       .join(';')
   )
-  assert.deepEqual(missingOrigins(dir, 'dev'), [])
-  assert.deepEqual(missingOrigins(dir, 'beta'), [
-    profiles.beta.apiOrigin,
+  assert.deepEqual(missingOrigins(dir, 'beta'), [])
+  assert.deepEqual(missingOrigins(dir, 'production'), [
+    profiles.production.apiOrigin,
     'https://witnesswork.app',
-    profiles.beta.helpSearchOrigin,
+    profiles.production.helpSearchOrigin,
   ])
 })
 
@@ -389,8 +356,8 @@ const developmentLeaks = (dir) =>
     return text.includes('jwtimedev') || text.includes(DEBUG)
   })
 
-test('production and beta builds never carry the development app or the debug key', () => {
-  for (const target of ['production', 'beta']) {
+test('production never carries the development app or the debug key; beta lends its host to it', () => {
+  for (const target of ['production']) {
     const { dir } = exportFixture()
 
     fs.mkdirSync(path.join(dir, '.well-known'))
@@ -405,19 +372,21 @@ test('production and beta builds never carry the development app or the debug ke
     assert.deepEqual(developmentLeaks(holding), [], target)
   }
   const { dir } = exportFixture()
-  writeAssociationFiles(dir, 'dev')
+  writeAssociationFiles(dir, 'beta')
   assert.deepEqual(developmentLeaks(dir), [AASA, ASSET_LINKS])
+  const holding = fixture()
+  writeWellKnownBundle(holding, 'beta')
+  assert.deepEqual(developmentLeaks(holding), [AASA, ASSET_LINKS])
 })
 
 test('each profile’s association files are valid JSON listing exactly its apps', () => {
-  for (const target of ['production', 'beta']) {
+  const production = associationFiles('production')
+  assert.deepEqual(Object.keys(production), [AASA, ASSET_LINKS])
+  assert.deepEqual(JSON.parse(production[AASA]), RELEASE_AASA)
+  assert.deepEqual(JSON.parse(production[ASSET_LINKS]), RELEASE_ASSET_LINKS)
+  for (const target of ['beta', 'local']) {
     const files = associationFiles(target)
     assert.deepEqual(Object.keys(files), [AASA, ASSET_LINKS])
-    assert.deepEqual(JSON.parse(files[AASA]), RELEASE_AASA, target)
-    assert.deepEqual(JSON.parse(files[ASSET_LINKS]), RELEASE_ASSET_LINKS)
-  }
-  for (const target of ['dev', 'local']) {
-    const files = associationFiles(target)
     assert.deepEqual(JSON.parse(files[AASA]), {
       webcredentials: {
         apps: [
@@ -433,7 +402,7 @@ test('each profile’s association files are valid JSON listing exactly its apps
   }
 })
 
-test('a release profile refuses to list the development app', () => {
+test('the production profile refuses to list the development app', () => {
   const apps = profiles.production.associatedApps
   profiles.production.associatedApps = [...apps, 'development']
   try {
@@ -449,7 +418,7 @@ test('a release profile refuses to list the development app', () => {
 test('a deploy refuses an export without exactly its profile’s association files', () => {
   const { dir, write } = exportFixture()
   assert.throws(() => checkAssociationFiles(dir, 'production'), /apple-app/)
-  writeAssociationFiles(dir, 'dev')
+  writeAssociationFiles(dir, 'beta')
   assert.throws(
     () => checkAssociationFiles(dir, 'production'),
     /production association files/
@@ -461,7 +430,7 @@ test('a deploy refuses an export without exactly its profile’s association fil
 })
 
 test('the holding bundle’s association files are byte-identical to the full build’s', () => {
-  for (const target of ['dev', 'beta', 'production']) {
+  for (const target of ['beta', 'production']) {
     const { dir: full } = exportFixture()
     writeAssociationFiles(full, target)
     const holding = fixture()
@@ -491,7 +460,7 @@ test('the holding page loads nothing, and its headers allow nothing', () => {
     ),
     ['https://apps.apple.com', 'https://play.google.com']
   )
-  for (const target of ['dev', 'beta', 'production']) {
+  for (const target of ['beta', 'production']) {
     const headers = wellKnownBundle(target)._headers
     assert.match(headers, new RegExp(`Content-Security-Policy: ${HOLDING_CSP}`))
     assert.doesNotMatch(headers, /Report-Only|'self'|camera=\(self\)/)
@@ -536,22 +505,13 @@ test('--well-known-only needs no release tag, but a clean, landed commit and the
     assert.match(dirty.blocked.join('\n'), /Commit all changes/)
   }
 
-  assert.match(
-    plan('dev', args, {}, landed).blocked.join('\n'),
-    new RegExp(INTEGRATION_BRANCH)
+  assert.throws(
+    () => plan('beta', ['--well-known-only', '--prebuilt']),
+    /builds its own bundle/
   )
-  assert.deepEqual(
-    plan('dev', args, {}, { ...integration, onIntegration: true }).blocked,
-    []
-  )
-  for (const extra of ['--prebuilt', '--preview'])
-    assert.throws(
-      () => plan('dev', ['--well-known-only', extra]),
-      /builds its own bundle/
-    )
-  assert.throws(() => plan('dev', ['--replace-app']), /goes with/)
+  assert.throws(() => plan('beta', ['--replace-app']), /goes with/)
   assert.equal(
-    plan('dev', [...args, '--replace-app'], {}, integration).replaceApp,
+    plan('beta', [...args, '--replace-app'], {}, landed).replaceApp,
     true
   )
 })
@@ -568,7 +528,7 @@ test('--well-known-only refuses to replace a web app the host already serves', (
 })
 
 test('the well-known-only Workers are the app’s, and 404 anything without a file', () => {
-  for (const target of [undefined, 'dev', 'beta', 'production']) {
+  for (const target of [undefined, 'beta', 'production']) {
     const read = (config) =>
       unstable_readConfig({ config: path.join(root, config), env: target })
     const app = read(WRANGLER_CONFIG)
@@ -590,36 +550,4 @@ test('the well-known-only Workers are the app’s, and 404 anything without a fi
     assert.equal(holding.assets.not_found_handling, 'none')
     assert.deepEqual(holding.assets.run_worker_first, ['/.well-known/*'])
   }
-})
-
-test('a dev deploy refuses without usable RevenueCat sandbox values', () => {
-  const problems = ['no key: set EXPO_PUBLIC_REVENUECAT_WEB_API_KEY']
-  assert.deepEqual(plan('dev').blocked, [])
-  assert.deepEqual(
-    plan('dev', ['--dry-run'], {}, integration, problems).blocked,
-    problems
-  )
-
-  assert.deepEqual(
-    plan('dev', ['--preview'], {}, integration, problems).blocked,
-    problems
-  )
-
-  assert.ok(
-    !plan(
-      'dev',
-      ['--well-known-only'],
-      {},
-      { ...integration, onIntegration: true },
-      problems
-    ).blocked.includes(problems[0])
-  )
-  assert.deepEqual(
-    plan('beta', ['--dry-run'], {}, integration, problems).blocked,
-    []
-  )
-  assert.deepEqual(
-    plan('production', ['--dry-run'], keyword, release, problems).blocked,
-    []
-  )
 })

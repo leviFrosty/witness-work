@@ -908,7 +908,7 @@ describe('real shares still import intact', () => {
       `https://ww-proxy.leviwilkerson.com/c#${payload}`,
       `https://ww-proxy.leviwilkerson.com/c/${payload}`,
       `https://witnesswork.app/contacts#${payload}`,
-      `https://dev.witnesswork.app/contacts#${payload}`,
+      `https://beta.witnesswork.app/contacts#${payload}`,
       `${SCHEME}${payload}`,
     ]) {
       expect((await importContactFromIncomingUrl(url))?.success).toBe(true)

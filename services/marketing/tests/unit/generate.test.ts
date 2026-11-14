@@ -72,18 +72,18 @@ describe('Help Center bundle', () => {
     )
   })
 
-  test('the staging build points everything at dev.witnesswork.app', async () => {
-    const { json, read } = await generate('dev')
+  test('the Beta build points everything at beta.witnesswork.app', async () => {
+    const { json, read } = await generate('beta')
     const manifest = await json<HelpManifest>('help/bundle/manifest.json')
     expect(manifest.locales['ar']!.path).toBe(
-      'https://dev.witnesswork.app/help/bundle/ar.json'
+      'https://beta.witnesswork.app/help/bundle/ar.json'
     )
     const english = await json<HelpBundle>('help/bundle/en-US.json')
     expect(english.entries[0]!.url).toBe(
-      'https://dev.witnesswork.app/help/time/time-rollover'
+      'https://beta.witnesswork.app/help/time/time-rollover'
     )
     expect(await read('llms.txt')).toContain(
-      'https://dev.witnesswork.app/help/time/time-rollover.md'
+      'https://beta.witnesswork.app/help/time/time-rollover.md'
     )
   })
 })
@@ -170,14 +170,14 @@ describe('screenshots', () => {
     expect(served.equals(source)).toBe(true)
   })
 
-  test('staging bundles point at the staging origin', async () => {
-    const { json } = await generate('dev')
+  test('Beta bundles point at the Beta origin', async () => {
+    const { json } = await generate('beta')
     const bundle = await json<HelpBundle>('help/bundle/en-US.json')
     const image = bundle.entries
       .find((e) => e.id === 'timeRollover')!
       .doc.content.find((block) => block.type === 'image')
     expect(image?.type === 'image' && image.attrs.src).toMatch(
-      /^https:\/\/dev\.witnesswork\.app\/help\/images\//
+      /^https:\/\/beta\.witnesswork\.app\/help\/images\//
     )
   })
 })

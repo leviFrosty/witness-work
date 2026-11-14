@@ -1,11 +1,12 @@
 name: Checks
 
 # Checks only: this workflow never deploys and touches no environment.
-# Every pull request and every push to main runs both jobs, whatever paths
-# changed, because the apps share one codebase.
-#   app      -> the iOS, Android and web app (one shared suite)
-#   website  -> services/: the website, Help Center and its search Worker
-# ww-api has its own checks in its own repo.
+# Every pull request and every push to main runs all three jobs.
+#   app      -> the iOS, Android and web app (one shared suite), always
+#   website  -> services/: the website, Help Center and its search Worker, always
+#   api      -> services/api: the API. Its steps run only when services/api
+#               (or this file) changed; otherwise the job passes at once, so
+#               an app-only change never waits on the API's suite.
 on:
   pull_request:
   push:
@@ -97,3 +98,91 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  api:
+    name: 'API: typecheck, tests, end-to-end, fuzz'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      # A pull request compares with its base, a push with the commit before
+      # it. Anything else (a manual run, a first push) runs the suite.
+      - name: Did the API change?
+        id: changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE" HEAD -- . ../../.github/workflows/tests.yml; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "services/api is unchanged: skipping its suite."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup pnpm
+        if: steps.changes.outputs.run == 'true'
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/api/package.json
+
+      - name: Setup Node
+        if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        if: steps.changes.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        if: steps.changes.outputs.run == 'true'
+        run: pnpm typecheck
+
+      - name: Unit tests
+        if: steps.changes.outputs.run == 'true'
+        run: pnpm test
+
+      # `wrangler dev --local` needs no Cloudflare credentials. The launcher
+      # generates synthetic dev-bypass and admin tokens; HERE and OpenRouter
+      # keys are absent, so the end-to-end suite skips the paid paths.
+      - name: Start local worker
+        if: steps.changes.outputs.run == 'true'
+        run: node scripts/verify/dev.mjs up
+
+      - name: Doctor
+        if: steps.changes.outputs.run == 'true'
+        run: node scripts/verify/dev.mjs doctor
+
+      - name: End-to-end tests
+        if: steps.changes.outputs.run == 'true'
+        run: pnpm test:e2e
+
+      - name: Fuzz Buddies relay
+        if: steps.changes.outputs.run == 'true'
+        run: pnpm fuzz:buddies --runs 100 --seed "$GITHUB_RUN_ID"
+
+      - name: Stop local worker
+        if: always() && steps.changes.outputs.run == 'true'
+        run: node scripts/verify/dev.mjs down
+
+      - name: Upload verification evidence
+        if: always() && steps.changes.outputs.run == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: api-verify-evidence
+          path: |
+            services/api/.verify/artifacts/
+            services/api/.verify/wrangler.log
+          if-no-files-found: ignore
+          include-hidden-files: true

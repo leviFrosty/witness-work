@@ -1,38 +1,36 @@
 #!/usr/bin/env bash
-# Release ww-api, the production backend, ahead of an app build.
+# Make sure an API environment serves the API code on main, ahead of an app build.
 #
-# Beta and production app builds both call the production API, so backend
-# changes must be live before the app that needs them ships. When ww-api's
-# origin/main has commits since its latest v* tag, this runs ww-api's tests,
-# bumps package.json, tags the release and pushes main + tag; ww-api's tag
-# workflow deploys the Worker. With nothing new it confirms the latest tag
-# deployed. ww-api's tags are the only state, so rerunning after any failure is
-# safe. Driven by `scripts/build-beta.sh` and the `/cut-release` skill.
+# The API lives in services/api and is deployed by the "API deploy" workflow
+# (.github/workflows/api-deploy.yml):
+#   beta        api-beta.witnesswork.app  deployed by every push to main that
+#               touches services/api. This script waits for that deploy, and
+#               starts one if none is running.
+#   production  api.witnesswork.app       deployed only on request. This script
+#               is that request: it starts the deploy and waits for it.
+# An environment is current when the commit it reports (`versionTag` in
+# /health) contains the last commit on main that touched services/api. The
+# backend must be live before the app that needs it ships, so
+# `scripts/build-beta.sh` runs this with --env beta and the `/cut-release`
+# skill runs it for production. Rerunning after any failure is safe.
 #
-# Usage: scripts/release-api.sh [--branch <name>] [--bump patch|minor|major] [--dry-run]
-#   --branch   Fail if ww-api's branch of this name has commits not on main,
-#              i.e. the app branch's backend half hasn't landed yet.
-#   --bump     Override the inferred bump (minor with any feat commit, else patch).
-#   --dry-run  Report what would ship without releasing or waiting.
-# WW_API_DIR overrides the ww-api checkout (default ~/dev/ww-api). Only its Git
-# data is used; its working tree is never touched.
+# Usage: scripts/release-api.sh [--env beta|production] [--dry-run]
+#   --env      Which API to bring up to date (default production).
+#   --dry-run  Report what would deploy without deploying or waiting.
+# --branch and --bump are accepted and ignored: the API no longer has its own
+# repo, branches or version tags.
 set -euo pipefail
+cd "$(dirname "$0")/.."
 
-API_DIR=${WW_API_DIR:-$HOME/dev/ww-api}
-# The same Worker answers on both hosts: new builds call the first, shipped
-# builds the second (ADR 0042), so both must serve the release.
-HEALTH_URLS=(https://api.witnesswork.app/health https://ww-proxy.leviwilkerson.com/health)
-BRANCH=
-BUMP=
+ENVIRONMENT=production
 DRY_RUN=false
 while [ $# -gt 0 ]; do
   case "$1" in
-    --branch)
-      BRANCH=${2:-}
+    --env)
+      ENVIRONMENT=${2:-}
       shift 2
       ;;
-    --bump)
-      BUMP=${2:-}
+    --branch | --bump)
       shift 2
       ;;
     --dry-run)
@@ -48,172 +46,130 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
-case "$BUMP" in "" | patch | minor | major) ;; *)
-  echo "error: --bump must be patch, minor or major" >&2
-  exit 2
-  ;;
+case "$ENVIRONMENT" in
+  beta)
+    HEALTH_URLS=(https://api-beta.witnesswork.app/health)
+    ;;
+  production)
+    # The same Worker answers on both hosts: new builds call the first, shipped
+    # builds the second (ADR 0042), so both must serve the release.
+    HEALTH_URLS=(https://api.witnesswork.app/health https://ww-proxy.leviwilkerson.com/health)
+    ;;
+  *)
+    echo "error: --env must be beta or production" >&2
+    exit 2
+    ;;
 esac
 
-if ! git -C "$API_DIR" rev-parse --git-dir >/dev/null 2>&1; then
-  echo "error: ww-api checkout not found at $API_DIR (set WW_API_DIR)" >&2
+WORKFLOW=api-deploy.yml
+RUN_TITLE="API deploy ($ENVIRONMENT)"
+REPO=$(git remote get-url origin | sed -E 's#^.*github\.com[:/]##; s#\.git$##')
+
+git fetch --quiet origin main
+MAIN_SHA=$(git rev-parse origin/main)
+API_SHA=$(git log -1 --format=%H origin/main -- services/api)
+if [ -z "$API_SHA" ]; then
+  echo "error: no commit on origin/main touches services/api" >&2
   exit 1
 fi
-API_DIR=$(cd "$API_DIR" && pwd)
-git_api() { git -C "$API_DIR" "$@"; }
-REPO=$(git_api remote get-url origin | sed -E 's#^.*github\.com[:/]##; s#\.git$##')
 
-git_api fetch --quiet --prune --tags origin
-
-# Beta and production share one API, so an app branch can't ship ahead of its
-# backend branch. ww-api branches reuse the app's branch names; `cherry`
-# matches by patch, so rebase-merged commits count as landed.
-if [ -n "$BRANCH" ] && [ "$BRANCH" != main ] && [ "$BRANCH" != HEAD ] &&
-  git_api rev-parse --quiet --verify "refs/remotes/origin/$BRANCH" >/dev/null; then
-  UNMERGED=$(git_api cherry -v origin/main "origin/$BRANCH" | grep '^+' || true)
-  if [ -n "$UNMERGED" ]; then
-    echo "error: ww-api branch $BRANCH has commits that aren't on main:" >&2
-    echo "$UNMERGED" | sed -E 's/^\+ ([0-9a-f]{7})[0-9a-f]* /  \1 /' >&2
-    echo "This app build calls the production API. Land that backend work on ww-api main first," >&2
-    echo "or delete the branch if it already landed in another form." >&2
-    exit 1
-  fi
-fi
-
-MAIN_SHA=$(git_api rev-parse origin/main)
-LAST_TAG=$(git_api describe --tags --abbrev=0 --match 'v[0-9]*' origin/main 2>/dev/null || true)
-if [ -z "$LAST_TAG" ]; then
-  echo "error: no v* release tag on ww-api main" >&2
-  exit 1
-fi
-PENDING=$(git_api log --format=%s "$LAST_TAG..origin/main")
-
-# Prints "id status url createdAt conclusion" for the latest deploy run of $1.
-deploy_run() {
-  gh run list -R "$REPO" --workflow deploy.yml --commit "$1" --limit 1 \
-    --json databaseId,status,url,createdAt,conclusion \
-    --jq '.[] | "\(.databaseId) \(.status) \(.url) \(.createdAt) \(.conclusion)"'
+# Prints one field of a /health answer, or nothing.
+health_field() {
+  curl -fsS --max-time 15 "$1" 2>/dev/null |
+    node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s)[process.argv[1]]||'')}catch{console.log('')}})" "$2" ||
+    true
 }
 
-# Waits for the tag workflow to deploy $1 (release $2), then checks production
-# serves a Worker version at least as new as that run (not a rollback) on every
-# API host.
-confirm_deploy() {
-  local sha=$1 tag=$2 id="" status url created conclusion deployed="" health
+# True when commit $1 is on main and contains the API's last change.
+contains_api() {
+  git cat-file -e "$1^{commit}" 2>/dev/null &&
+    git merge-base --is-ancestor "$1" origin/main &&
+    git merge-base --is-ancestor "$API_SHA" "$1"
+}
+
+DEPLOYED=$(health_field "${HEALTH_URLS[0]}" versionTag)
+if [ -n "$DEPLOYED" ] && contains_api "$DEPLOYED"; then
+  echo "API:      $ENVIRONMENT serves ${DEPLOYED:0:7}, which has the API's last change (${API_SHA:0:7})"
+  echo "API_RESULT status=current env=$ENVIRONMENT sha=${DEPLOYED:0:7}"
+  exit 0
+fi
+
+echo "API:      $ENVIRONMENT serves ${DEPLOYED:-an unknown commit}; main's API is at ${API_SHA:0:7}"
+if [ -n "$DEPLOYED" ] && git cat-file -e "$DEPLOYED^{commit}" 2>/dev/null; then
+  git log --format='  %s' "$DEPLOYED..origin/main" -- services/api
+fi
+if [ "$DRY_RUN" = true ]; then
+  echo "API_RESULT status=pending env=$ENVIRONMENT sha=${API_SHA:0:7}"
+  exit 0
+fi
+
+# Prints "id status conclusion createdAt url" for the newest deploy of this
+# environment that has the API's last change and hasn't failed.
+find_run() {
+  local id sha status conclusion created url
+  while read -r id sha status conclusion created url; do
+    [ -n "$id" ] || continue
+    [ "$status" = completed ] && [ "$conclusion" != success ] && continue
+    contains_api "$sha" || continue
+    echo "$id $status ${conclusion:-none} $created $url"
+    return 0
+  done < <(gh run list -R "$REPO" --workflow "$WORKFLOW" --branch main --limit 30 \
+    --json databaseId,headSha,status,conclusion,createdAt,url,displayTitle \
+    --jq ".[] | select(.displayTitle == \"$RUN_TITLE\") | \"\(.databaseId) \(.headSha) \(.status) \(.conclusion) \(.createdAt) \(.url)\"")
+  return 1
+}
+
+RUN=""
+# A push to main starts the Beta deploy by itself; give it a moment to appear.
+for _ in $(seq 6); do
+  RUN=$(find_run) && break
+  [ "$ENVIRONMENT" = production ] && break
+  sleep 5
+done
+if [ -z "$RUN" ]; then
+  echo "Deploy:   starting $RUN_TITLE at ${MAIN_SHA:0:7}"
+  gh workflow run "$WORKFLOW" -R "$REPO" --ref main -f "environment=$ENVIRONMENT"
   for _ in $(seq 24); do
-    read -r id status url created conclusion <<<"$(deploy_run "$sha")"
-    [ -n "$id" ] && break
+    sleep 5
+    RUN=$(find_run) && break
+  done
+fi
+if [ -z "$RUN" ]; then
+  echo "error: no $RUN_TITLE run appeared for ${API_SHA:0:7}" >&2
+  exit 1
+fi
+
+read -r ID STATUS CONCLUSION CREATED URL <<<"$RUN"
+echo "Deploy:   $URL"
+for _ in $(seq 120); do
+  [ "$STATUS" = completed ] && break
+  sleep 10
+  read -r STATUS CONCLUSION <<<"$(gh run view "$ID" -R "$REPO" --json status,conclusion --jq '"\(.status) \(.conclusion)"')"
+done
+if [ "$STATUS" != completed ]; then
+  echo "error: $RUN_TITLE still $STATUS after 20 minutes: $URL" >&2
+  exit 1
+fi
+if [ "$CONCLUSION" != success ]; then
+  echo "error: $RUN_TITLE finished with '$CONCLUSION': $URL" >&2
+  echo "Retry a transient failure with: gh run rerun $ID -R $REPO --failed" >&2
+  exit 1
+fi
+
+# Every host must serve a Worker version at least as new as that run (not a
+# rollback).
+for health in "${HEALTH_URLS[@]}"; do
+  LIVE=""
+  for _ in $(seq 6); do
+    LIVE=$(health_field "$health" deployedAt)
+    if [ -n "$LIVE" ] &&
+      node -e 'process.exit(Date.parse(process.argv[1]) >= Date.parse(process.argv[2]) ? 0 : 1)' "$LIVE" "$CREATED"; then
+      echo "Live:     Worker version deployed $LIVE (${health%/health})"
+      continue 2
+    fi
     sleep 5
   done
-  if [ -z "$id" ]; then
-    echo "error: no ww-api deploy run found for $tag ($sha)" >&2
-    exit 1
-  fi
-  echo "Deploy:   $url"
-  for _ in $(seq 60); do
-    [ "$status" = completed ] && break
-    sleep 10
-    read -r status conclusion <<<"$(gh run view "$id" -R "$REPO" --json status,conclusion --jq '"\(.status) \(.conclusion)"')"
-  done
-  if [ "$status" != completed ]; then
-    echo "error: $tag deploy still $status after 10 minutes: $url" >&2
-    exit 1
-  fi
-  if [ "$conclusion" != success ]; then
-    echo "error: $tag deploy finished with '$conclusion': $url" >&2
-    echo "Retry a transient failure with: gh run rerun $id -R $REPO --failed" >&2
-    exit 1
-  fi
-  for health in "${HEALTH_URLS[@]}"; do
-    deployed=""
-    for _ in $(seq 6); do
-      deployed=$(curl -fsS --max-time 15 "$health" 2>/dev/null |
-        node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).deployedAt||'')}catch{console.log('')}})" ||
-        true)
-      if [ -n "$deployed" ] &&
-        node -e 'process.exit(Date.parse(process.argv[1]) >= Date.parse(process.argv[2]) ? 0 : 1)' "$deployed" "$created"; then
-        echo "Live:     Worker version deployed $deployed (${health%/health})"
-        continue 2
-      fi
-      sleep 5
-    done
-    echo "error: $health serves a Worker version from ${deployed:-unknown}, older than the $tag deploy ($created). Was it rolled back, or is the host down?" >&2
-    exit 1
-  done
-}
-
-if [ -z "$PENDING" ]; then
-  echo "ww-api:   no commits since $LAST_TAG"
-  if [ "$DRY_RUN" = false ]; then
-    confirm_deploy "$MAIN_SHA" "$LAST_TAG"
-  fi
-  echo "API_RESULT status=current tag=$LAST_TAG sha=${MAIN_SHA:0:7}"
-  exit 0
-fi
-
-if [ -z "$BUMP" ]; then
-  BUMP="patch"
-  if echo "$PENDING" | grep -qE '^feat(\(.+\))?!?:'; then BUMP=minor; fi
-fi
-IFS=. read -r MAJOR MINOR PATCH <<<"${LAST_TAG#v}"
-case "$BUMP" in
-  major) VERSION="$((MAJOR + 1)).0.0" ;;
-  minor) VERSION="$MAJOR.$((MINOR + 1)).0" ;;
-  patch) VERSION="$MAJOR.$MINOR.$((PATCH + 1))" ;;
-esac
-TAG=v$VERSION
-COUNT=$(echo "$PENDING" | wc -l | tr -d ' ')
-
-echo "ww-api:   $COUNT commit(s) since $LAST_TAG → $TAG ($BUMP)"
-echo "$PENDING" | sed 's/^/  /'
-if [ "$DRY_RUN" = true ]; then
-  echo "API_RESULT status=pending tag=$TAG commits=$COUNT"
-  exit 0
-fi
-if git_api ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-  echo "error: $TAG already exists on ww-api's origin but isn't on main; pass --bump to pick another version" >&2
+  echo "error: $health serves a Worker version from ${LIVE:-unknown}, older than the deploy ($CREATED). Was it rolled back, or is the host down?" >&2
   exit 1
-fi
-
-# Release from a throwaway worktree of origin/main next to the checkout.
-mkdir -p "$API_DIR-worktrees"
-WORKTREE=$(mktemp -d "$API_DIR-worktrees/release.XXXXXX")
-LOG=$(mktemp)
-cleanup() {
-  cd "$API_DIR"
-  git_api worktree remove --force "$WORKTREE" 2>/dev/null || rm -rf "$WORKTREE"
-  git_api worktree prune
-  rm -f "$LOG"
-}
-trap cleanup EXIT
-git_api worktree add --quiet --detach "$WORKTREE" "$MAIN_SHA"
-cd "$WORKTREE"
-
-for check in "install --frozen-lockfile" test typecheck; do
-  # shellcheck disable=SC2086
-  if ! pnpm $check >"$LOG" 2>&1; then
-    cat "$LOG" >&2
-    echo "error: pnpm $check failed on ww-api ${MAIN_SHA:0:7}; nothing was released" >&2
-    exit 1
-  fi
 done
-
-node -e '
-  const fs = require("fs")
-  const text = fs.readFileSync("package.json", "utf8")
-  fs.writeFileSync("package.json", text.replace(/"version": "[^"]*"/, `"version": "${process.argv[1]}"`))
-' "$VERSION"
-if ! git diff --quiet package.json; then
-  git add package.json
-  git commit --quiet -m "chore: release $TAG" -m "$(echo "$PENDING" | sed 's/^/- /')"
-fi
-# --force replaces a local tag left by a run that never pushed it.
-git tag --force --annotate "$TAG" --message "Release $VERSION" >/dev/null
-RELEASE_SHA=$(git rev-parse HEAD)
-if ! git push --quiet --atomic origin HEAD:refs/heads/main "refs/tags/$TAG"; then
-  echo "error: push rejected; ww-api main probably moved. Rerun to release its new tip." >&2
-  exit 1
-fi
-echo "Pushed:   $TAG at ${RELEASE_SHA:0:7}"
-
-confirm_deploy "$RELEASE_SHA" "$TAG"
-echo "API_RESULT status=released tag=$TAG sha=${RELEASE_SHA:0:7} commits=$COUNT"
+echo "API_RESULT status=released env=$ENVIRONMENT sha=${API_SHA:0:7}"

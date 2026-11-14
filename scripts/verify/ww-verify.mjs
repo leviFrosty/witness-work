@@ -2080,13 +2080,7 @@ function stopProcessGroup(pid) {
   }
 }
 
-function apiRepo() {
-  return path.resolve(
-    process.env.WW_API_REPO || path.join(os.homedir(), 'dev/ww-api')
-  )
-}
-
-const managedApiDir = () => path.join(`${apiRepo()}-worktrees`, 'ww-verify')
+const managedApiDir = () => path.join(ROOT, 'services/api')
 
 const expandHome = (file) =>
   file.startsWith('~/') ? path.join(os.homedir(), file.slice(2)) : file
@@ -2102,41 +2096,6 @@ const quiet = { stdio: ['ignore', 2, 2] }
 function updateApiCheckout(dir) {
   const worker = readJson(path.join(dir, '.verify/state.json'), null)
   if (pidAlive(worker?.pid)) return
-  const repo = apiRepo()
-  if (!fs.existsSync(path.join(repo, '.git')))
-    fail(
-      `No ww-api repo at ${repo}; clone it there, or set WW_API_REPO (or WW_API_DIR to a checkout)`
-    )
-  const fetched = run('git', ['fetch', '--quiet', 'origin', 'main'], {
-    cwd: repo,
-    check: false,
-  })
-  if (fetched.status !== 0)
-    log(`git fetch of ww-api failed; using the last fetched origin/main`)
-  if (!fs.existsSync(path.join(dir, '.git'))) {
-    log(`creating the ww-api checkout ${dir} at origin/main`)
-    run('git', ['worktree', 'add', '--force', '--detach', dir, 'origin/main'], {
-      cwd: repo,
-      ...quiet,
-    })
-  } else {
-    const head = (ref) =>
-      run('git', ['rev-parse', ref], { cwd: dir }).stdout.trim()
-    if (head('HEAD') !== head('origin/main')) {
-      const moved = run(
-        'git',
-        ['checkout', '--quiet', '--detach', 'origin/main'],
-        {
-          cwd: dir,
-          check: false,
-        }
-      )
-      if (moved.status !== 0)
-        log(
-          `${dir} has local edits, so it stays at ${head('HEAD').slice(0, 7)}: ${moved.stderr.trim()}`
-        )
-    }
-  }
   const stamp = path.join(dir, '.verify/installed')
   const inputs = ['package.json', 'pnpm-lock.yaml']
     .map((f) => fs.readFileSync(path.join(dir, f), 'utf8'))
@@ -2147,7 +2106,7 @@ function updateApiCheckout(dir) {
     fs.existsSync(path.join(dir, 'node_modules/wrangler/bin/wrangler.js'))
   )
     return
-  log(`installing ww-api dependencies in ${dir}`)
+  log(`installing the API's dependencies in ${dir}`)
   run('pnpm', ['install', '--frozen-lockfile'], {
     cwd: dir,
     timeout: 600_000,
@@ -2163,7 +2122,7 @@ function startLocalApi(dir = apiDir()) {
     const script = path.join(dir, 'scripts/verify/dev.mjs')
     if (!fs.existsSync(script))
       fail(
-        `${script} not found; ${dir} must be a ww-api checkout that has the verify-ww-api loop`
+        `${script} not found; ${dir} must be this repo's services/api (or another checkout's)`
       )
 
     const secrets = process.env.WW_API_SECRETS_FROM
@@ -3566,7 +3525,7 @@ const commands = {
                                            --export tests a fresh dist/ instead
   web dev [--env local]                    start that dev server and print its URL
   web down                                 stop it
-  web build [--env dev] [--force]          export dist/ (one at a time on this machine)
+  web build [--env local] [--force]        export dist/ (one at a time on this machine)
   run --class <c> [--wait min] -- <cmd>    queue any heavy command (test, typecheck, lint,
                                            web-build, web-test, web-dev)
   hold [reason] / resume                   pause or resume device and web runs machine-wide

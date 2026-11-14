@@ -26,3 +26,6 @@ src/__tests__/__data__/releases/**/*.json
 services/marketing/content/**
 services/marketing/tests/unit/fixtures/**
 services/marketing/src/routeTree.gen.ts
+
+# The API (services/api) keeps the formatting it had in its own repo for now.
+services/api/**

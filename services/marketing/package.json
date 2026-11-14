@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "pnpm run check:locales && vite build && vite build -c vite.islands.config.ts && node scripts/postbuild.mjs",
-    "build:dev": "WW_SITE_ENV=dev pnpm run build",
+    "build:beta": "WW_SITE_ENV=beta pnpm run build",
     "preview": "wrangler dev --port 8899",
     "test": "vitest run && pnpm run check:locales && pnpm run help:validate",
     "typecheck": "tsc --noEmit",

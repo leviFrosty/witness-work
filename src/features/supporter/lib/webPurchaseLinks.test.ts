@@ -210,7 +210,7 @@ describe('checkoutUrl', () => {
   })
 
   it('refuses a return key outside the known keys', () => {
-    for (const returnKey of ['x&y', 'BETA', 'prod', '', '__proto__']) {
+    for (const returnKey of ['x&y', 'BETA', 'prod', 'local', '', '__proto__']) {
       expect(
         checkoutUrl({
           link: 'abc123',
@@ -222,14 +222,14 @@ describe('checkoutUrl', () => {
     }
   })
 
-  it('adds the local return key', () => {
+  it('adds the beta return key', () => {
     const url = checkoutUrl({
       link: 'abc123',
       appUserId,
       packageId: '$rc_annual',
-      returnKey: 'local',
+      returnKey: 'beta',
     })!
-    expect(new URL(url).searchParams.get('utm_content')).toBe('local')
+    expect(new URL(url).searchParams.get('utm_content')).toBe('beta')
   })
 
   it('encodes whatever else it is given in the query', () => {

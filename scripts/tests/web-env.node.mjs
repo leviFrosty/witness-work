@@ -84,7 +84,7 @@ test("every web profile keeps RevenueCat Billing's key and purchase links", () =
       path.join(root, file),
       `\nEXPO_PUBLIC_REVENUECAT_WEB_API_KEY=rcb_test_key\nEXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS='${links}'\n`
     )
-  for (const profile of ['local', 'dev', 'beta', 'production']) {
+  for (const profile of ['local', 'beta', 'production']) {
     const { env, excluded } = loadWebEnv(root, profile, {
       PATH: process.env.PATH,
     })
@@ -97,7 +97,7 @@ test("every web profile keeps RevenueCat Billing's key and purchase links", () =
 
 test('every web profile drops the dev bypass, store keys, OTA key and Maps key', () => {
   const root = nativeEnvFiles()
-  for (const profile of ['local', 'dev', 'beta', 'production']) {
+  for (const profile of ['local', 'beta', 'production']) {
     const { env, excluded } = loadWebEnv(root, profile, {
       PATH: process.env.PATH,
       EXPO_PUBLIC_API_DEV_BYPASS: 'inherited',
@@ -115,19 +115,22 @@ test('every web profile drops the dev bypass, store keys, OTA key and Maps key',
 
 test('the API comes from the profile; public values from its native variant', () => {
   const root = nativeEnvFiles()
-  const dev = loadWebEnv(root, 'dev', {})
-  assert.equal(
-    dev.env.EXPO_PUBLIC_API_BASE_URL,
-    'https://api-dev.witnesswork.app'
-  )
-  assert.equal(dev.env.POSTHOG_PROJECT_TOKEN, 'phc_dev')
-  assert.equal(dev.host, 'app-dev.witnesswork.app')
+  const local = loadWebEnv(root, 'local', {})
+  assert.equal(local.env.POSTHOG_PROJECT_TOKEN, 'phc_dev')
+  assert.equal(local.host, 'localhost')
   const beta = loadWebEnv(root, 'beta', {})
-  assert.equal(beta.env.EXPO_PUBLIC_API_BASE_URL, 'https://api.witnesswork.app')
+  assert.equal(
+    beta.env.EXPO_PUBLIC_API_BASE_URL,
+    'https://api-beta.witnesswork.app'
+  )
   assert.equal(beta.env.POSTHOG_PROJECT_TOKEN, 'phc_beta')
   assert.equal(beta.host, 'beta.app.witnesswork.app')
   const production = loadWebEnv(root, 'production', {})
   assert.equal(production.env.APP_VARIANT, 'production')
+  assert.equal(
+    production.env.EXPO_PUBLIC_API_BASE_URL,
+    'https://api.witnesswork.app'
+  )
   assert.equal(production.env.POSTHOG_PROJECT_TOKEN, 'phc_production')
   assert.equal(production.host, 'app.witnesswork.app')
 })
@@ -143,6 +146,15 @@ test('local uses .env, or a verification run’s own ww-api', () => {
       WW_VERIFY_API_BASE_URL: 'http://127.0.0.1:8791',
     }).env.EXPO_PUBLIC_API_BASE_URL,
     'http://127.0.0.1:8791'
+  )
+})
+
+test('local falls back to a local ww-api when .env names no API', () => {
+  const root = nativeEnvFiles()
+  fs.writeFileSync(path.join(root, '.env.local'), 'EXPO_PUBLIC_API_BASE_URL=\n')
+  assert.equal(
+    loadWebEnv(root, 'local', {}).env.EXPO_PUBLIC_API_BASE_URL,
+    'http://localhost:8787'
   )
 })
 
@@ -162,33 +174,45 @@ test('every profile names its host, origins and CSP mode; deployed ones a Worker
     assert.match(profile.mapsOrigin, /^https:\/\/maps/)
     assert.match(
       profile.verifyOrigin,
-      /^https:\/\/verify(-dev)?\.witnesswork\.app$/
+      /^https:\/\/verify(-beta)?\.witnesswork\.app$/
     )
     assert.ok(['report-only', 'enforce'].includes(profile.csp), name)
     assert.equal(new URL(profile.apiOrigin).origin, profile.apiOrigin)
     assert.equal(Boolean(profile.worker), name !== 'local', name)
   }
 
-  for (const name of ['beta', 'production'])
-    assert.equal(
-      environments[name].helpManifest,
-      'https://witnesswork.app/help/bundle/manifest.json'
-    )
-  for (const name of ['local', 'dev'])
-    assert.equal(
-      environments[name].helpManifest,
-      'https://dev.witnesswork.app/help/bundle/manifest.json'
-    )
-
-  for (const name of ['beta', 'production'])
-    assert.equal(
-      environments[name].helpSearchOrigin,
-      'https://help-search.witnesswork.app'
-    )
-  for (const name of ['local', 'dev'])
-    assert.equal(
-      environments[name].helpSearchOrigin,
-      'https://help-search-dev.witnesswork.app'
+  assert.deepEqual(Object.keys(environments), ['local', 'beta', 'production'])
+  assert.equal(environments.beta.apiOrigin, 'https://api-beta.witnesswork.app')
+  assert.equal(environments.production.apiOrigin, 'https://api.witnesswork.app')
+  assert.deepEqual(
+    {
+      mapsOrigin: environments.production.mapsOrigin,
+      verifyOrigin: environments.production.verifyOrigin,
+      helpManifest: environments.production.helpManifest,
+      helpSearchOrigin: environments.production.helpSearchOrigin,
+    },
+    {
+      mapsOrigin: 'https://maps.witnesswork.app',
+      verifyOrigin: 'https://verify.witnesswork.app',
+      helpManifest: 'https://witnesswork.app/help/bundle/manifest.json',
+      helpSearchOrigin: 'https://help-search.witnesswork.app',
+    }
+  )
+  for (const name of ['local', 'beta'])
+    assert.deepEqual(
+      {
+        mapsOrigin: environments[name].mapsOrigin,
+        verifyOrigin: environments[name].verifyOrigin,
+        helpManifest: environments[name].helpManifest,
+        helpSearchOrigin: environments[name].helpSearchOrigin,
+      },
+      {
+        mapsOrigin: 'https://maps-beta.witnesswork.app',
+        verifyOrigin: 'https://verify-beta.witnesswork.app',
+        helpManifest: 'https://beta.witnesswork.app/help/bundle/manifest.json',
+        helpSearchOrigin: 'https://help-search-beta.witnesswork.app',
+      },
+      name
     )
 })
 
@@ -217,12 +241,12 @@ test('a failed Help Center refresh fails the build before it exports', () => {
   }
 
   assert.throws(
-    () => runBuildSteps(buildSteps('dev'), run(1)),
+    () => runBuildSteps(buildSteps('local'), run(1)),
     /Couldn't refresh the Help Center snapshot/
   )
   assert.deepEqual(ran, ['sync:help'])
   ran.length = 0
-  runBuildSteps(buildSteps('dev'), run(0))
+  runBuildSteps(buildSteps('local'), run(0))
   assert.deepEqual(ran, ['sync:help', 'export'])
 })
 
@@ -526,7 +550,7 @@ const KEY = 'EXPO_PUBLIC_REVENUECAT_WEB_API_KEY'
 const LINKS = 'EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS'
 const sandboxKey = 'rcb_sb_testkey123'
 const sandboxLinks = '{"Monthly $3.99":"sandbox/abc123"}'
-const item = environments.dev.revenueCatWebItem
+const item = environments.local.revenueCatWebItem
 
 function fakeOp(vault, calls = []) {
   const op = (name, labels) => {
@@ -538,25 +562,25 @@ function fakeOp(vault, calls = []) {
 const noOp = () => assert.fail('op must not be called')
 const vault = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
 
-test('only the dev profile names a 1Password item for its sandbox values', () => {
+test('only the local profile names a 1Password item for its sandbox values', () => {
   assert.equal(item, 'RevenueCat web billing sandbox (Dev project)')
-  for (const name of ['local', 'beta', 'production'])
+  for (const name of ['beta', 'production'])
     assert.equal(environments[name].revenueCatWebItem, undefined, name)
 })
 
 test('RevenueCat values in the env files are used, and 1Password is not asked', () => {
   const env = { [KEY]: sandboxKey, [LINKS]: sandboxLinks }
-  const result = fillRevenueCatWeb(env, 'dev', { op: noOp })
+  const result = fillRevenueCatWeb(env, 'local', { op: noOp })
   assert.deepEqual(result.problems, [])
   assert.deepEqual(result.fromOnePassword, [])
   assert.equal(env[KEY], sandboxKey)
   assert.equal(env[LINKS], sandboxLinks)
 })
 
-test('dev reads what the env files lack from the 1Password item', () => {
+test('local reads what the env files lack from the 1Password item', () => {
   const env = { [KEY]: '', [LINKS]: undefined }
   const op = fakeOp(vault)
-  const result = fillRevenueCatWeb(env, 'dev', { op })
+  const result = fillRevenueCatWeb(env, 'local', { op })
   assert.deepEqual(op.calls, [{ name: item, labels: [KEY, LINKS] }])
   assert.deepEqual(result.fromOnePassword, [KEY, LINKS])
   assert.deepEqual(result.problems, [])
@@ -564,17 +588,17 @@ test('dev reads what the env files lack from the 1Password item', () => {
   assert.equal(env[LINKS], sandboxLinks)
 })
 
-test('dev asks 1Password only for the value the env files lack', () => {
+test('local asks 1Password only for the value the env files lack', () => {
   const env = { [KEY]: sandboxKey, [LINKS]: '  ' }
   const op = fakeOp(vault)
-  const result = fillRevenueCatWeb(env, 'dev', { op })
+  const result = fillRevenueCatWeb(env, 'local', { op })
   assert.deepEqual(op.calls, [{ name: item, labels: [LINKS] }])
   assert.deepEqual(result.fromOnePassword, [LINKS])
   assert.equal(env[LINKS], sandboxLinks)
 })
 
-test('local, beta and production never call op', () => {
-  for (const profile of ['local', 'beta', 'production']) {
+test('beta and production never call op', () => {
+  for (const profile of ['beta', 'production']) {
     const env = {}
     const result = fillRevenueCatWeb(env, profile, { op: noOp })
     assert.deepEqual(result.fromOnePassword, [], profile)
@@ -592,11 +616,11 @@ test('local, beta and production never call op', () => {
   )
 })
 
-test('without the values, dev reports what to set, whether op failed or lacks them', () => {
+test('without the values, local reports what to set, whether op failed or lacks them', () => {
   const failing = () => {
     throw new Error('op exited with 1')
   }
-  const failed = fillRevenueCatWeb({}, 'dev', { op: failing })
+  const failed = fillRevenueCatWeb({}, 'local', { op: failing })
   assert.equal(failed.problems.length, 1)
   assert.match(failed.problems[0], new RegExp(KEY))
   assert.match(failed.problems[0], new RegExp(LINKS))
@@ -606,15 +630,11 @@ test('without the values, dev reports what to set, whether op failed or lacks th
   )
   assert.match(failed.problems[0], /op exited with 1/)
 
-  const empty = fillRevenueCatWeb({}, 'dev', {
+  const empty = fillRevenueCatWeb({}, 'local', {
     op: fakeOp({ [KEY]: sandboxKey, [LINKS]: '' }),
   })
   assert.equal(empty.problems.length, 1)
   assert.match(empty.problems[0], new RegExp(LINKS))
-
-  const local = fillRevenueCatWeb({}, 'local', { op: noOp })
-  assert.equal(local.problems.length, 1)
-  assert.match(local.problems[0], new RegExp(KEY))
 })
 
 test('a key that is not a sandbox key, or links that are not sandbox links, are refused', () => {
@@ -631,7 +651,7 @@ test('a key that is not a sandbox key, or links that are not sandbox links, are 
   assert.deepEqual(problems(sandboxKey, '{"A":"live/x","B":"sandbox/y"}'), [])
 
   const env = { [KEY]: 'rcb_live123', [LINKS]: sandboxLinks }
-  const result = fillRevenueCatWeb(env, 'dev', { op: noOp })
+  const result = fillRevenueCatWeb(env, 'local', { op: noOp })
   assert.match(result.problems[0], /rcb_sb_/)
 
   for (const message of [

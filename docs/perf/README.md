@@ -24,7 +24,7 @@ node scripts/perf/compare.mjs a.json b.json --all --out comparison.md   # every 
 ### Requirements
 
 - **The commit must contain this runner's app-side setup** (`src/app/dev-harness/perfSetup.ts`), so profile commits that include it. The runner refuses others.
-- **A ww-api checkout with `scripts/verify/dev.mjs`** (`--api-dir` or `WW_API_DIR`). By default it's the one `wwv up` uses, `~/dev/ww-api-worktrees/ww-verify` at the latest `origin/main`. The runner starts that isolated worker, or reuses it when it's already up, and leaves it running while a `wwv` lease uses it. `--api-url <url>` relays to an API that's already running instead. Nothing touches production or the user's data.
+- **An API folder with `scripts/verify/dev.mjs`** (`--api-dir` or `WW_API_DIR`). By default it's the one `wwv up` uses, this checkout's `services/api`. The runner starts that isolated worker, or reuses it when it's already up, and leaves it running while a `wwv` lease uses it. `--api-url <url>` relays to an API that's already running instead. Nothing touches production or the user's data.
 - Port `8780` free (`WW_PERF_API_PORT` changes it, and forces a rebuild).
 
 ## What it does

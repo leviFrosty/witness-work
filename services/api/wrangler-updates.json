@@ -1,0 +1,82 @@
+{
+  "name": "ww-updates",
+  "main": "src/updates/worker.ts",
+  "account_id": "f73da039376f712ea9a5637a58baca09",
+  "compatibility_date": "2026-08-13",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "dev": {
+      "name": "ww-updates-dev",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_id": "5ff7125f-f92b-40ef-b829-c2c408b742b7",
+          "database_name": "ww-updates-dev",
+          "migrations_dir": "migrations/updates"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "ww-updates-dev"
+        }
+      ],
+      "vars": {
+        "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
+        "BUCKET_NAME": "ww-updates-dev"
+      }
+    },
+    "beta": {
+      "name": "ww-updates-beta",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_id": "684a53de-2b48-46b7-8bb9-e9f8a12a4ba6",
+          "database_name": "ww-updates-beta",
+          "migrations_dir": "migrations/updates"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "ww-updates-beta"
+        }
+      ],
+      "vars": {
+        "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
+        "BUCKET_NAME": "ww-updates-beta"
+      }
+    },
+    "prod": {
+      "name": "ww-updates-prod",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_id": "eaf373cf-3bf5-4301-b4f5-f321f025e880",
+          "database_name": "ww-updates-prod",
+          "migrations_dir": "migrations/updates"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "ww-updates-prod"
+        }
+      ],
+      "vars": {
+        "ACCOUNT_ID": "f73da039376f712ea9a5637a58baca09",
+        "BUCKET_NAME": "ww-updates-prod"
+      }
+    }
+  },
+  "cache": {
+    "enabled": true
+  }
+}

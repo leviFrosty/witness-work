@@ -447,7 +447,7 @@ describe('Shared Spaces crypto vectors', () => {
       `https://beta.app.witnesswork.app/territories/guest#${fragment}`
     )
     expect(vectors['link.url.development']).toBe(
-      `https://app-dev.witnesswork.app/territories/guest#${fragment}`
+      `http://localhost:8081/territories/guest#${fragment}`
     )
 
     const doorAad = recordAadOf(

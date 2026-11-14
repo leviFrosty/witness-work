@@ -50,7 +50,7 @@ export function headersFile(): string {
     '/llms-full.txt': ['Content-Type: text/plain; charset=utf-8'],
 
     '/assets/*': ['Cache-Control: public, max-age=31536000, immutable'],
-    // Screenshot names carry a content hash, so a changed image gets a new URL.
+
     [`${HELP_IMAGES_BASE}/*`]: [
       'Access-Control-Allow-Origin: *',
       'Cache-Control: public, max-age=31536000, immutable',
@@ -64,11 +64,6 @@ export function headersFile(): string {
     .concat('\n')
 }
 
-/**
- * `_redirects` for Workers Static Assets: each answer merged into another
- * (`redirectFrom`) sends its old page and Markdown alternate, in every locale,
- * to the answer that replaced it.
- */
 export function redirectsFile(center: HelpCenter): string {
   const lines: string[] = []
   for (const question of center.questions) {

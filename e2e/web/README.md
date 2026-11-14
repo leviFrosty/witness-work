@@ -12,7 +12,7 @@ web purchases and needs such a build (`.env.local` with the sandbox key and
 links, `docs/web-purchases.md`); without the key it skips.
 
 ```bash
-pnpm web:build                  # dist/ for the dev profile (--env local|dev|beta|production)
+pnpm web:build                  # dist/ for the local profile (--env local|beta|production)
 pnpm web:test                   # every browser and size
 pnpm web:test --project 'webkit-*'
 WW_WEB_SHOTS=/tmp/shots pnpm web:test   # also save a screenshot of each screen
@@ -41,10 +41,10 @@ fonts load and that Help Center search goes to the profile's own search host.
 With `WW_WEB_CSP=<folder>`, each test also saves its violations there, and
 `node e2e/web/csp-summary.mjs <folder>…` sums them up by browser and size. For
 a container, serve the Worker yourself with
-`pnpm web:serve dev --port <port> --ip 0.0.0.0`.
+`pnpm web:serve local --port <port> --ip 0.0.0.0`.
 
 A few specs sign in for real, against a local ww-api
-(`node scripts/verify/dev.mjs up` in ww-api) and the Expo dev server, which
+(`node scripts/verify/dev.mjs up` in `services/api`) and the Expo dev server, which
 has the dev harness: `purchases.spec.ts`'s "Buy and the settled id" signs up a
 web-only account in Chromium (a virtual authenticator) and signs every project's
 browser in to it. Point `.env.local`'s `EXPO_PUBLIC_API_BASE_URL` at the
@@ -59,7 +59,7 @@ E2E_EXTERNAL=1 E2E_HOST=localhost E2E_PORT=8081 E2E_SELLS_ON_WEB=1 \
 `localhost`, `127.0.0.1` or `::1`; `E2E_SELLS_ON_WEB=1`
 says `.env.local` has RevenueCat Billing's sandbox key, since there's no export
 to check. ww-api caps sign-ups per caller (3 a day), so a run signs up once for
-every project; `node scripts/verify/dev.mjs down --wipe` in ww-api starts over.
+every project; `node scripts/verify/dev.mjs down --wipe` in `services/api` starts over.
 Specs that reach sign-in from a tab opened without an account use
 `test.use({ withoutAccountOnce: true })`, which opens it that way only on the
 tab's first load.
@@ -97,8 +97,9 @@ Install the browsers once for the pinned Playwright version with
 ## Offline, updates and install
 
 `offline.spec.ts` and `install.spec.ts` (docs/web-offline.md) need the web host's
-Worker (`E2E_WORKER=dev`): a service worker has to register under the enforcing
-CSP and Trusted Types. `offline.spec.ts` goes offline with
+Worker (`E2E_WORKER=local`, which reports CSP violations, or `E2E_WORKER=beta`
+with a `--env beta` build, which enforces them): a service worker has to
+register under the app's CSP and Trusted Types. `offline.spec.ts` goes offline with
 `context.setOffline(true)` and reloads from the worker's cache.
 
 Its "second deploy" specs need a second build. They skip unless two folders are
@@ -108,7 +109,7 @@ given: `E2E_PREV_DIST` (a copy of `dist/`) and `E2E_NEXT_DIST` (the next deploy)
 pnpm web:build
 cp -R dist /tmp/ww-prev
 node e2e/web/next-version.mjs dist /tmp/ww-next   # renames every chunk, rebuilds sw.js
-E2E_WORKER=dev E2E_PREV_DIST=/tmp/ww-prev E2E_NEXT_DIST=/tmp/ww-next \
+E2E_WORKER=local E2E_PREV_DIST=/tmp/ww-prev E2E_NEXT_DIST=/tmp/ww-next \
   pnpm web:test --project=chromium-desktop e2e/web/offline.spec.ts
 ```
 

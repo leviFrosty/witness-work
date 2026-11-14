@@ -111,7 +111,7 @@ export function deriveLinkCredentials(linkSecret: Uint8Array): LinkCredentials {
 export const GUEST_LINK_ORIGINS: Record<AppVariant, string> = {
   production: 'https://app.witnesswork.app',
   beta: 'https://beta.app.witnesswork.app',
-  development: 'https://app-dev.witnesswork.app',
+  development: 'http://localhost:8081',
 }
 
 export const GUEST_LINK_PATH = '/territories/guest'
@@ -153,7 +153,7 @@ export function parseGuestLinkFragment(fragment: string): GuestLink | null {
 export function parseGuestLinkUrl(
   url: string
 ): (GuestLink & { variant: AppVariant }) | null {
-  const match = /^(https:\/\/[^/?#]+)([^?#]*)(?:\?[^#]*)?#(.*)$/.exec(
+  const match = /^(https?:\/\/[^/?#]+)([^?#]*)(?:\?[^#]*)?#(.*)$/.exec(
     url.trim()
   )
   if (!match) return null

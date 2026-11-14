@@ -82,18 +82,18 @@ grace period.
 A Stripe sandbox needs its own RevenueCat Billing config, so there are two,
 each in the RevenueCat project its builds and worker already use:
 
-| Build                              | RevenueCat project | Config                          | Stripe                        | Key        |
-| ---------------------------------- | ------------------ | ------------------------------- | ----------------------------- | ---------- |
-| Development (localhost, `app-dev`) | WitnessWork Dev    | `WitnessWork Web (Dev Sandbox)` | A Stripe sandbox, test cards  | `rcb_sb_…` |
-| Beta and production                | WitnessWork        | `WitnessWork Web`               | Our Stripe account, live mode | `rcb_…`    |
+| Build                   | RevenueCat project | Config                          | Stripe                        | Key        |
+| ----------------------- | ------------------ | ------------------------------- | ----------------------------- | ---------- |
+| Development (localhost) | WitnessWork Dev    | `WitnessWork Web (Dev Sandbox)` | A Stripe sandbox, test cards  | `rcb_sb_…` |
+| Beta and production     | WitnessWork        | `WitnessWork Web`               | Our Stripe account, live mode | `rcb_…`    |
 
 - **One project per environment.** A purchase shows on another device, and on
   ww-api, only inside its own RevenueCat project. Development phone builds
-  (Test Store keys) and the development worker use WitnessWork Dev, so the
-  development web config lives there too, and a sandbox web purchase on
-  `app-dev` reaches a development phone and the development worker. Beta and
-  production phones and the production worker use WitnessWork, with the
-  production web config.
+  (Test Store keys) and the local development worker use WitnessWork Dev, so
+  the development web config lives there too, and a sandbox web purchase on
+  localhost reaches a development phone and the local worker. Beta and
+  production phones and the Beta and production workers use WitnessWork, with
+  the production web config.
 
 - **Sandbox only in development.** Only development builds carry the sandbox
   key and links. A RevenueCat Billing sandbox subscription counts toward
@@ -102,13 +102,13 @@ each in the RevenueCat project its builds and worker already use:
   whose App Store and Google Play test purchases still count.
 - **Where a development build gets them.** `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY`
   and `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` come from `.env` or
-  `.env.local`. When either is empty, a `dev` web build or deploy reads it from
+  `.env.local`. When either is empty, a `local` web build reads it from
   the 1Password Agents vault item `RevenueCat web billing sandbox (Dev project)` (the
   `revenueCatWebItem` in `config/web-environments.json`), so a clean checkout
-  doesn't ship a paywall with no key. A `dev` deploy refuses without both, or
-  when the key isn't `rcb_sb_…` or no link is `sandbox/…`; a local build or
-  `web:serve` warns and goes on. Beta and production use their own env files
-  and never read that item. See `docs/web-hosting.md`.
+  doesn't build a paywall with no key. Without both, or when the key isn't
+  `rcb_sb_…` or no link is `sandbox/…`, the build warns and goes on. Beta and
+  production use their own env files and never read that item. See
+  `docs/web-hosting.md`.
 - **Each config mirrors its project's catalog.** The production config has a
   web twin of every store product. The development config has one for each
   product WitnessWork Dev's offerings sell, which are Test Store products with
@@ -157,7 +157,7 @@ shows on the web.
   to buy, while the pull and reconcile run. Only a development tab opened
   without an account (Create an Account, until web sign-up) can be without a
   session; Sign In forgets that choice and reloads into web sign-in.
-  - **Development builds** (localhost and `app-dev`) skip the session and
+  - **Development builds** (localhost) skip the session and
     settled-id checks and buy as the customer the browser is logged in as, so
     sandbox checkout stays testable without an account. Beta and production
     never skip them. On localhost, `?dev_buy_gate=1` keeps both checks, so the
@@ -197,8 +197,8 @@ URL-encoded; package ids can hold spaces (`One Time`).
   it says so, as when there are no offerings.
 
 - **Where checkout returns.** Each config's links return to one host: the
-  sandbox config to `app-dev.witnesswork.app`, the production config to
-  `app.witnesswork.app`. A web app on any other origin adds
+  sandbox config to `http://localhost:8081`, the production config to
+  `app.witnesswork.app`. The web beta, on another origin, adds
   `utm_content=<return key>` to the link, and RevenueCat passes `utm_*`
   parameters through to the redirect (see the return page).
 
@@ -246,9 +246,11 @@ link had.
    entry removes, and analytics counts), before the app mounts. The keys are a
    fixed list in the app, never an origin read from the URL:
    - `beta` → `https://beta.app.witnesswork.app`, in Beta and production
-     builds;
-   - `local` → `http://localhost:8081`, in development builds only. RevenueCat
-     won't redirect to localhost itself.
+     builds.
+
+   Development builds have no key: the sandbox config returns straight to
+   `http://localhost:8081/supporter/thank-you`.
+
 3. **It checks the purchase.** It asks RevenueCat for the customer info again,
    bypassing any copy the SDK keeps, then forces the account link
    (`ensureRevenueCatLinked({ force: true })`). It shows the thank-you screen

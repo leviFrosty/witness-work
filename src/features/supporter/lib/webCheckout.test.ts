@@ -36,7 +36,7 @@ describe('webCheckoutUrl', () => {
   const base = {
     links,
     appUserId: ID,
-    origin: 'https://app-dev.witnesswork.app',
+    origin: 'http://localhost:8081',
     variant: 'development',
   } as const
 
@@ -52,11 +52,12 @@ describe('webCheckoutUrl', () => {
     expect(
       webCheckoutUrl({
         ...base,
-        origin: 'http://localhost:8081',
+        origin: 'https://beta.app.witnesswork.app',
+        variant: 'beta',
         pkg: pkg('One Time $4.99', 'One Time'),
       })
     ).toBe(
-      `https://pay.rev.cat/sandbox/tip499/${ID}?package_id=One%20Time&hide_back_button=true&skip_purchase_success=true&utm_content=local`
+      `https://pay.rev.cat/sandbox/tip499/${ID}?package_id=One%20Time&hide_back_button=true&skip_purchase_success=true&utm_content=beta`
     )
   })
 

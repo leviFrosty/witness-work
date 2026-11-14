@@ -1,4 +1,4 @@
-export type SiteEnv = 'production' | 'dev'
+export type SiteEnv = 'production' | 'beta'
 
 export type SiteConfig = {
   env: SiteEnv
@@ -17,10 +17,10 @@ const CONFIGS: Record<SiteEnv, SiteConfig> = {
     helpSearchOrigin: 'https://help-search.witnesswork.app',
     indexable: true,
   },
-  dev: {
-    env: 'dev',
-    origin: 'https://dev.witnesswork.app',
-    helpSearchOrigin: 'https://help-search-dev.witnesswork.app',
+  beta: {
+    env: 'beta',
+    origin: 'https://beta.witnesswork.app',
+    helpSearchOrigin: 'https://help-search-beta.witnesswork.app',
     indexable: false,
   },
 }
@@ -28,7 +28,7 @@ const CONFIGS: Record<SiteEnv, SiteConfig> = {
 export function siteConfig(env: string | undefined): SiteConfig {
   const config = CONFIGS[(env || 'production') as SiteEnv]
   if (!config) {
-    throw new Error(`WW_SITE_ENV must be production or dev, not "${env}"`)
+    throw new Error(`WW_SITE_ENV must be production or beta, not "${env}"`)
   }
   return config
 }

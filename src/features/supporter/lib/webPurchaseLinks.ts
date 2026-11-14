@@ -6,10 +6,7 @@ const WEB_PURCHASE_LINK = /^(?:sandbox\/)?(?!sandbox$)[A-Za-z0-9_-]+$/
 
 const isSandboxLink = (link: string): boolean => link.startsWith('sandbox/')
 
-const RETURN_KEYS = { beta: true, local: true } satisfies Record<
-  ReturnKey,
-  true
->
+const RETURN_KEYS = { beta: true } satisfies Record<ReturnKey, true>
 
 const CHECKOUT_ORIGIN = 'https://pay.rev.cat'
 

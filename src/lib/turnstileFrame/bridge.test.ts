@@ -8,7 +8,7 @@ import {
   TURNSTILE_FRAME_VERSION,
 } from './protocol'
 
-const ORIGIN = 'https://verify-dev.witnesswork.app'
+const ORIGIN = 'https://verify-beta.witnesswork.app'
 
 function setup() {
   const frame = { postMessage: vi.fn() }
@@ -69,7 +69,7 @@ describe('createTurnstileBridge', () => {
     const { fromFrame, onToken } = setup()
     fromFrame(token(), { origin: 'https://verify.witnesswork.app' })
     fromFrame(token(), { origin: 'https://challenges.cloudflare.com' })
-    fromFrame(token(), { origin: 'https://app-dev.witnesswork.app' })
+    fromFrame(token(), { origin: 'https://beta.app.witnesswork.app' })
     expect(onToken).not.toHaveBeenCalled()
   })
 

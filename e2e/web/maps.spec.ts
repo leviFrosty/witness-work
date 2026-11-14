@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, strings, test } from './fixtures'
+import { expect, profile, strings, test } from './fixtures'
 import {
   answerDirections,
   answerMapKitTokens,
@@ -118,7 +118,7 @@ test.describe('with the test double', () => {
       await expect(pinFor(app, person.name)).toBeVisible()
 
     expect(tokens[0]).toEqual({
-      body: { origin: 'https://maps-dev.witnesswork.app' },
+      body: { origin: profile.mapsOrigin },
       authorization: 'Bearer web-smoke-access-token',
     })
     await shot('maps-pins')

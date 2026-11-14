@@ -51,7 +51,7 @@ Steps:
 
 Simulators and emulators can't scan a real camera. The old phone shows the QR, and the new phone gets its link through `wwv link` (the real `/h` deep-link path) or Tools → Account → Handoff → paste → Sign in with this link.
 
-- Bring up iOS and Android one at a time in the same worktree (`wwv up --platform ios`, then `--platform android`), with `WW_API_DIR=<ww-api checkout>` when the handoff backend isn't on `origin/main` yet. `wwv flag buddies on` on each.
+- Bring up iOS and Android one at a time in the same worktree (`wwv up --platform ios`, then `--platform android`). `wwv flag buddies on` on each.
 - **Old phone.** `wwv nav "Set Up Another Device"` (or Settings → Account → Set Up Another Device). Once the QR shows, `wwv eval '__WW_DEV__.handoff.link()'` returns its link (dev builds only).
 - **New phone.** `wwv link '<that link>' --platform <other>`: the route is `Sign In With QR Code` and it shows "Confirm on your other phone" with a code (`handoff-code`).
   - On iOS, `wwv link` (`simctl openurl`) opens the app only for paths in the production host's `apple-app-site-association`. Until a ww-api with `/h` in it is deployed, the link opens Safari instead; hand the link to the screen with `wwv nav "Sign In With QR Code" '{"entry":"onboarding","link":"<link>"}'` (what `HandoffLinkListener` does) or Tools → Account → Handoff → paste → Sign in with this link. Android's `wwv link` goes through the app's own intent filter either way.
@@ -64,7 +64,7 @@ Simulators and emulators can't scan a real camera. The old phone shows the QR, a
 
 ### Sign In on a Computer (a phone approves a browser)
 
-Needs the `approval/*` ops on the local worker (`WW_API_DIR=<ww-api checkout>` until they're on `origin/main`). Simulators can't scan, and `https://app.witnesswork.app/approve#1…` is never an app link, so a development build hands the code to the screen instead: `wwv eval '__WW_DEV__.approval.scan("<link>")'` opens Sign In on a Computer with it, as its scanner would (the screen ignores a handed-in `link` outside development builds).
+Needs the `approval/*` ops on the local worker. Simulators can't scan, and `https://app.witnesswork.app/approve#1…` is never an app link, so a development build hands the code to the screen instead: `wwv eval '__WW_DEV__.approval.scan("<link>")'` opens Sign In on a Computer with it, as its scanner would (the screen ignores a handed-in `link` outside development builds).
 
 - **Play the browser.** `MODE=approve BUDDIES_RELAY_URL=<api url> pnpm exec vitest run .verify/browser.approval.test.ts` (a gitignored script you write with `createBrowserApproval` from `approvalSession.ts`; `http://localhost:8081` is a local web origin a dev build accepts). It writes the current link to a file, rotates every 60 s like the web, and once the key arrives opens a web session with the ticket (`session/open` signed with the received key, `ticket` in place of `attestation`) and calls `done`.
 - **Claim.** `approval.scan(<link>)`: "Allow this computer to sign in?" with "Chrome on macOS", the place (a local worker knows none: "Location unknown"), and the code (`handoff-code`), which matches the browser's. `wwv eval '__WW_DEV__.approval.state()'` gives `step`, `status`, `code`, and the request log.
@@ -74,7 +74,7 @@ Needs the `approval/*` ops on the local worker (`WW_API_DIR=<ww-api checkout>` u
 
 ### WitnessWork Backup
 
-Needs the backup ops on the local worker (`WW_API_DIR=<ww-api checkout>` until they're on `origin/main`). The upload is debounced 30 s after a data change, and the server takes one put a slot a minute.
+Needs the backup ops on the local worker. The upload is debounced 30 s after a data change, and the server takes one put a slot a minute.
 
 - **Turn it on.** Settings → Account → WitnessWork Backup, or `wwv eval '__WW_DEV__.backup.enable()'`. Scripted: `wwv flow e2e/maestro/account-backup.yaml` (it turns backup off in setup, then on from the switch). `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
 - **The server copy.** `__WW_DEV__.backup.list()`, then `__WW_DEV__.backup.last`: the account's slots. `inspect()` then `last` decrypts every slot to counts; `dryRun()` previews what Combine would add.

@@ -46,19 +46,19 @@ const ORIGINS: Record<Kind, string[]> = {
     `https://${OLD}/c`,
     `https://${OLD}/contacts`,
     'https://witnesswork.app/contacts',
-    'https://dev.witnesswork.app/contacts',
+    'https://beta.witnesswork.app/contacts',
   ],
   buddyInvite: [
     `https://${OLD}/b`,
     `https://${OLD}/buddies/invite`,
     'https://witnesswork.app/buddies/invite',
-    'https://dev.witnesswork.app/buddies/invite',
+    'https://beta.witnesswork.app/buddies/invite',
   ],
   handoff: [
     `https://${OLD}/h`,
     `https://${OLD}/accounts/handoff`,
     'https://witnesswork.app/accounts/handoff',
-    'https://dev.witnesswork.app/accounts/handoff',
+    'https://beta.witnesswork.app/accounts/handoff',
   ],
 }
 
@@ -97,7 +97,7 @@ describe('app link forms', () => {
 
     const rejected: [string, boolean][] = [
       [`https://witnesswork.app${shortPath}#${fragment}`, false],
-      [`https://dev.witnesswork.app${shortPath}#${fragment}`, false],
+      [`https://beta.witnesswork.app${shortPath}#${fragment}`, false],
 
       [`https://witnesswork.app${newPath.toUpperCase()}#${fragment}`, false],
       [`https://witnesswork.app${newPath}x#${fragment}`, false],

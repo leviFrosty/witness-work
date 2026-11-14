@@ -7,7 +7,7 @@ export type FrameEnvironment = {
 }
 
 export const FRAME_ENVIRONMENTS: Record<string, FrameEnvironment> = {
-  dev: { worker: 'ww-maps-dev', origin: 'https://maps-dev.witnesswork.app' },
+  beta: { worker: 'ww-maps-beta', origin: 'https://maps-beta.witnesswork.app' },
   production: { worker: 'ww-maps', origin: 'https://maps.witnesswork.app' },
 }
 

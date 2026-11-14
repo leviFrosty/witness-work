@@ -43,7 +43,7 @@ const HELP = `node scripts/perf/run.mjs [--ref HEAD] [--platform ios|android|bot
   --dwell 20           seconds in the foreground before each cycle
   --name <name>        output name (default perf-<sha12>); writes <out-dir>/<name>.json and .md
   --out-dir .verify/artifacts/perf  where results go (gitignored)
-  --api-dir <dir>      ww-api checkout with scripts/verify/dev.mjs (default $WW_API_DIR, else wwv's own checkout at origin/main)
+  --api-dir <dir>      API folder with scripts/verify/dev.mjs (default $WW_API_DIR, else this checkout's services/api)
   --api-url <url>      relay to an already running ww-api instead
   --build-only         build (and cache) the apps, then stop
   --rebuild            ignore cached builds

@@ -30,8 +30,8 @@ describe('shouldForwardToSystem', () => {
       'https://witnesswork.app/buddies/invite',
       'https://WITNESSWORK.app/contacts#abc',
       'https://witnesswork.app/accounts/handoff#1abc',
-      'https://dev.witnesswork.app/buddies/invite#1AAAAAAAAAAAAAAAAAAAAA',
-      'https://dev.witnesswork.app/contacts#abc',
+      'https://beta.witnesswork.app/buddies/invite#1AAAAAAAAAAAAAAAAAAAAA',
+      'https://beta.witnesswork.app/contacts#abc',
       'witnesswork://shared-good-news',
     ])
       expect(shouldForwardToSystem(url)).toBe(false)

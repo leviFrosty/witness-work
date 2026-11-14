@@ -178,6 +178,6 @@ the banner then hides only through the X.
 
 Unit tests cover the state machine, the reload guard, the stale-chunk check, the
 install decision and the worker's rules. `e2e/web/offline.spec.ts` and
-`install.spec.ts` drive the real thing through the Worker (`E2E_WORKER=dev`);
+`install.spec.ts` drive the real thing through the Worker (`E2E_WORKER=local` or `E2E_WORKER=beta`);
 `e2e/web/README.md` says how to run them, including the update flow, which needs a
 second build (`node e2e/web/next-version.mjs`).

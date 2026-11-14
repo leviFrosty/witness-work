@@ -238,8 +238,8 @@ describe('Help Center screenshots', () => {
     })
   })
 
-  it('keeps staging screenshots too', () => {
-    const src = SCREENSHOT_SRC.replace('//', '//dev.')
+  it('keeps Beta screenshots too', () => {
+    const src = SCREENSHOT_SRC.replace('//', '//beta.')
     const bundle = parseHelpBundle(withScreenshot(src))
     const image = bundle?.entries[0].doc.content[1]
     expect(image?.type === 'image' && image.attrs.src).toBe(src)

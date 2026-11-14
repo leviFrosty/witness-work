@@ -23,7 +23,7 @@ const STAMP = path.join(ROOT, '.verify/web-build.json')
 const DEV_STATE = path.join(ROOT, '.verify/web-dev.json')
 const DEV_LOG = path.join(ROOT, '.verify/web-dev.log')
 const DEV_WORKERS = process.env.WW_VERIFY_WEB_DEV_WORKERS || '4'
-const PROFILES = ['local', 'dev', 'beta', 'production']
+const PROFILES = ['local', 'beta', 'production']
 
 const UNBUNDLED = [
   ':!e2e',
@@ -108,7 +108,7 @@ const readStamp = () => {
 
 function profileOf(args) {
   const at = args.indexOf('--env')
-  const profile = at === -1 ? 'dev' : args[at + 1]
+  const profile = at === -1 ? 'local' : args[at + 1]
   if (!PROFILES.includes(profile))
     throw new Error(`--env must be one of ${PROFILES.join(', ')}`)
   return profile

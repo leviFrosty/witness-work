@@ -5,6 +5,8 @@ supersedes: [0027]
 
 # Passkeys, and accounts on the web
 
+> Hosts updated since: Beta and development builds use the RP ID `beta.app.witnesswork.app`, and `app-dev.witnesswork.app` is gone, see [readme.md#environments](../../readme.md#environments).
+
 ## Context
 
 The server account (ADRs 0024, 0026, 0027) has no sign-in today:

@@ -1,6 +1,6 @@
 // The maps frame's Worker (docs/web-maps.md): static files only, with the
 // headers `scripts/web-maps.mjs` writes into `dist/_headers`. Deploy only
-// through `pnpm web:deploy:maps:<dev|production>`, never `wrangler deploy` by
+// through `pnpm web:deploy:maps:<beta|production>`, never `wrangler deploy` by
 // hand. The top level is for `pnpm web:serve:maps`.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
@@ -15,10 +15,10 @@
   "preview_urls": false,
   "observability": { "enabled": true },
   "env": {
-    "dev": {
-      "name": "ww-maps-dev",
+    "beta": {
+      "name": "ww-maps-beta",
       "routes": [
-        { "pattern": "maps-dev.witnesswork.app", "custom_domain": true },
+        { "pattern": "maps-beta.witnesswork.app", "custom_domain": true },
       ],
       "workers_dev": false,
       "preview_urls": true,

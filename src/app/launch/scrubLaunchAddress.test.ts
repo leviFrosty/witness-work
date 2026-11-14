@@ -118,7 +118,7 @@ describe('scrubLaunchAddress', () => {
 
   it.each([
     ['production', 'http://localhost:8081/?dev_buy_gate=1'],
-    ['development', 'https://app-dev.witnesswork.app/?dev_buy_gate=1'],
+    ['development', 'https://beta.app.witnesswork.app/?dev_buy_gate=1'],
   ] as const)(
     'ignores dev_buy_gate in %s at %s, and removes it',
     (variant, href) => {
@@ -136,7 +136,7 @@ describe('scrubLaunchAddress', () => {
   it.each([
     ['production', 'http://localhost:8081/?dev_country=GB'],
     ['beta', 'http://127.0.0.1:8081/?dev_country=GB'],
-    ['development', 'https://app-dev.witnesswork.app/?dev_country=GB'],
+    ['development', 'https://beta.app.witnesswork.app/?dev_country=GB'],
   ] as const)(
     'ignores dev_country in %s at %s, and removes it',
     (variant, href) => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   APP_LINK_HOST,
   APP_LINK_HOSTS,
-  DEV_APP_LINK_HOST,
+  BETA_APP_LINK_HOST,
   LEGACY_APP_LINK_HOST,
   WEB_APP_HOST,
   appLinkBasePattern,
@@ -14,13 +14,13 @@ import {
 } from '@/constants/appLinks'
 
 describe('app link hosts and paths', () => {
-  it('reads the old host, the apex, and the dev apex', () => {
+  it('reads the old host, the apex, and the Beta apex', () => {
     expect(APP_LINK_HOSTS).toEqual([
       'witnesswork.app',
-      'dev.witnesswork.app',
+      'beta.witnesswork.app',
       'ww-proxy.leviwilkerson.com',
     ])
-    expect([APP_LINK_HOST, DEV_APP_LINK_HOST, LEGACY_APP_LINK_HOST]).toEqual(
+    expect([APP_LINK_HOST, BETA_APP_LINK_HOST, LEGACY_APP_LINK_HOST]).toEqual(
       APP_LINK_HOSTS
     )
     expect(WEB_APP_HOST).toBe('app.witnesswork.app')
@@ -42,7 +42,7 @@ describe('app link hosts and paths', () => {
   })
 
   it('reads only full words on the new hosts', () => {
-    for (const host of [APP_LINK_HOST, DEV_APP_LINK_HOST]) {
+    for (const host of [APP_LINK_HOST, BETA_APP_LINK_HOST]) {
       expect(appLinkPaths(host, 'contact')).toEqual(['/contacts'])
       expect(appLinkPaths(host, 'buddyInvite')).toEqual(['/buddies/invite'])
       expect(appLinkPaths(host, 'handoff')).toEqual(['/accounts/handoff'])
@@ -73,7 +73,7 @@ describe('appLinkBasePattern', () => {
       true
     )
     expect(handoff('https://witnesswork.app/accounts/handoff')).toBe(true)
-    expect(handoff('https://dev.witnesswork.app/accounts/handoff')).toBe(true)
+    expect(handoff('https://beta.witnesswork.app/accounts/handoff')).toBe(true)
   })
 
   it('matches the scheme and host in any case, a trailing slash and a query', () => {
@@ -90,7 +90,7 @@ describe('appLinkBasePattern', () => {
     expect(invite('https://witnesswork.app/BUDDIES/INVITE')).toBe(false)
     expect(invite('https://ww-proxy.leviwilkerson.com/B')).toBe(false)
     expect(invite('https://witnesswork.app/b')).toBe(false)
-    expect(invite('https://dev.witnesswork.app/b')).toBe(false)
+    expect(invite('https://beta.witnesswork.app/b')).toBe(false)
     expect(invite('https://app.witnesswork.app/buddies/invite')).toBe(false)
     expect(invite('https://wwitnesswork.app/buddies/invite')).toBe(false)
     expect(invite('https://witnesswork.appx/buddies/invite')).toBe(false)
@@ -166,8 +166,8 @@ describe('isOwnAppLink', () => {
       'Https://witnesswork.app/buddies/invite/#1AAAA',
       'https://witnesswork.app/accounts/handoff/?lang=es#1abc',
       'https://witnesswork.app/accounts/handoff?lang=es#1abc',
-      'https://dev.witnesswork.app/contacts',
-      'https://dev.witnesswork.app/accounts/handoff#1abc',
+      'https://beta.witnesswork.app/contacts',
+      'https://beta.witnesswork.app/accounts/handoff#1abc',
 
       'https://witnesswork.app/%63ontacts#abc',
     ])

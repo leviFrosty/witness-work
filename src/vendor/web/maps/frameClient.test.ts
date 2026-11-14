@@ -7,7 +7,7 @@ import {
   REQUEST_TIMEOUT_MS,
 } from '@/vendor/web/maps/frameClient'
 
-const ORIGIN = 'https://maps-dev.witnesswork.app'
+const ORIGIN = 'https://maps-beta.witnesswork.app'
 const TOKEN = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJ0ZWFtIn0.c2lnbmF0dXJl'
 const options = {
   colorScheme: 'light',

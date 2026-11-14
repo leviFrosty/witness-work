@@ -39,7 +39,7 @@ export type HelpQuestion = {
   pinned: boolean
   related: number[]
   minAppVersion?: string
-  /** Old `<category>/<slug>` pages, merged into this one, that redirect here. */
+
   redirectFrom: string[]
   translations: Partial<Record<HelpLocale, Translation>>
 }

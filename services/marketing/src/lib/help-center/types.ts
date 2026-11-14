@@ -39,12 +39,6 @@ export type RichTextOrderedList = {
   content: RichTextListItem[]
 }
 
-/**
- * A Help Center screenshot. `id`, `width` and `height` match the app's note
- * image attrs, so app versions from before Help Center images parse the block
- * and skip it (they render answers with images hidden); `src` and `alt` are
- * what newer apps and the site show.
- */
 export type RichTextImage = {
   type: 'image'
   attrs: { id: string; src: string; alt: string; width: number; height: number }

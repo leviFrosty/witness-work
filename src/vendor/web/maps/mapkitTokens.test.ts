@@ -3,7 +3,7 @@ import { HttpError } from '@/lib/http/request'
 import { AccountSessionError } from '@/lib/serverAccount/session'
 import { createMapKitTokens } from '@/vendor/web/maps/mapkitTokens'
 
-const ORIGIN = 'https://maps-dev.witnesswork.app'
+const ORIGIN = 'https://maps-beta.witnesswork.app'
 const TOKEN = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJ0ZWFtIn0.c2lnbmF0dXJl'
 
 const setup = (answer: () => Promise<{ data: unknown }>) => {

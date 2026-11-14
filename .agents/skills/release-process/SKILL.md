@@ -63,7 +63,7 @@ and `../cut-release/recovery.md` for per-platform checkpoints and partial failur
 
 ## Web app
 
-The web app (`app.witnesswork.app`) deploys at the cut, together with ww-api and the production OTA update, because a web deploy is a release (ADR 0037 §4). From the tagged release commit on `main`, with the keyword the user typed:
+The web app (`app.witnesswork.app`) deploys at the cut, together with the production API deploy and the production OTA update, because a web deploy is a release (ADR 0037 §4). From the tagged release commit on `main`, with the keyword the user typed:
 
 ```bash
 export WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z # typed by the user
@@ -75,33 +75,39 @@ It refuses without the keyword for this exact version, outside `origin/main`, or
 
 ## Beta
 
-Beta is the tip of `main`. Every push to `main` starts the **Beta ship** workflow (`beta-ship.yml`), which asks the private `leviFrosty/ww-runners` repository to run `scripts/build-beta.sh --mode auto` on one of our own Macs. The script releases ww-api first (below), then publishes a Hot Updater bundle when native code is unchanged, or builds and uploads a TestFlight build when it changed, then deploys the web beta.
+Beta is the tip of `main`. Every push to `main` starts the **Beta ship** workflow (`beta-ship.yml`), which asks the private `leviFrosty/ww-runners` repository to run `scripts/build-beta.sh --mode auto` on one of our own Macs. The script waits for the Beta API first (below), then publishes a Hot Updater bundle when native code is unchanged, or builds and uploads a TestFlight build when it changed, then deploys the Beta maps and Turnstile frames and the web beta. Beta calls the Beta API (`api-beta.witnesswork.app`), with its own accounts and data, never production's.
 
 - **Where to look:** the commit's **Beta ship** status. Green means that commit is on Beta. A burst of merges ends in one ship of the newest commit.
 - **Don't ship Beta by hand,** and don't offer to. Merge the change; it ships.
 - **A failed ship** opens one T3 Code thread on the Mac that ran it, with the commit, its pull request and the log. One thread per failure streak.
 - **The Macs** are a pool GitHub hands jobs to: the Mac mini always, the MacBook only while it is on power and nobody is using it. They are attached to the private repository, never to this public one.
 
-## Backend first (ww-api)
+## Backend first (the API)
 
-Beta and production builds both call the production ww-api Worker, so a feature's backend half must be deployed before any app build that relies on it. `scripts/release-api.sh` does this; the Beta ship (`scripts/build-beta.sh`) and `/cut-release` run it before building.
+The API is in this repo (`services/api`) and has two deployed environments. The **API deploy** workflow (`api-deploy.yml`) deploys both:
 
-- ww-api's `v*` tags are the release state; no file tracks it. With no commits on ww-api `origin/main` since the latest tag, the script only confirms that tag's deploy run succeeded and production `/health` isn't older.
-- Otherwise it installs, tests and typechecks ww-api in a throwaway worktree (`~/dev/ww-api-worktrees/`), commits `chore: release vX.Y.Z` (package.json only), tags, and pushes ww-api `main` and the tag atomically. Then it waits for ww-api's `deploy.yml` run and checks `/health`. Any `feat:` commit means a minor bump, otherwise patch; `--bump` overrides.
-- `--branch <name>` fails when ww-api's branch of the same name has commits not on its `main`.
-- `--dry-run` reports the pending release. Rerunning after any failure is safe.
+- **Beta** (`api-beta.witnesswork.app`): every push to `main` that touches `services/api`. The Beta app and the web beta call it.
+- **Production** (`api.witnesswork.app`): only on request, from `main`: `gh workflow run api-deploy.yml -f environment=production`.
 
-The backend goes live before store review and stays live for older app versions, so keep its changes backward compatible.
+A feature's backend half must be live before any app build that relies on it. `scripts/release-api.sh` makes sure of that, and both ship paths run it before building:
+
+- The Beta ship (`scripts/build-beta.sh`) runs `scripts/release-api.sh --env beta`: it waits for the Beta deploy of the last commit that touched `services/api`, and starts one if none is running.
+- `/cut-release` runs `scripts/release-api.sh` (production): it starts the production deploy when production is behind `main`'s API, and waits for it.
+- An environment is current when the commit `/health` reports as `versionTag` contains the last commit on `main` that touched `services/api`. There are no API version tags or release commits any more.
+- `--dry-run` reports what would deploy. Rerunning after any failure is safe.
+
+Production's API also serves older app versions and goes live before store review, so keep its changes backward compatible. A server-only fix that production users need is deployed with the `gh workflow run` command above; it does not wait for an app release.
 
 ## Workflows reference
 
-The name in the Actions tab says which product and environment a workflow touches. Only `services.yml` deploys from GitHub's own machines; `beta-ship.yml` asks our Macs to ship Beta.
+The name in the Actions tab says which product and environment a workflow touches. Only `services.yml` and `api-deploy.yml` deploy from GitHub's own machines; `beta-ship.yml` asks our Macs to ship Beta.
 
-| File                     | Shown as                              | Trigger                                                                                  | Does                                                                                                                                                                                |
-| ------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests.yml`              | Checks                                | every pull request, push → `main`, manual (`workflow_dispatch`)                          | two jobs, whatever paths changed: the app (iOS, Android, web: lint/typecheck/test/deps) and `services/` (website + Help Center search Worker: lint/typecheck/test/build); no deploy |
-| `services.yml`           | Website deploy                        | push → `main` touching `services/**`, the workflow, its smoke script or `.nvmrc`; manual | checks and builds `services/`, then: `main` → production (`witnesswork.app`); manual runs → dev (`dev.witnesswork.app`); smoke checks after each deploy                             |
-| `beta-ship.yml`          | Beta ship                             | push → `main`                                                                            | asks the private `leviFrosty/ww-runners` repository to ship the tip of `main` to Beta from one of our Macs (see [Beta](#beta)); deploys nothing itself                              |
-| `production-release.yml` | App release tag                       | tag push `v*.*.*`                                                                        | locale completeness/lint/typecheck/test/deps, GitHub Release (no build/upload)                                                                                                      |
-| `pr-preview-build.yml`   | App preview build (manual, EAS cloud) | manual (`workflow_dispatch`)                                                             | lint/typecheck/test/deps, then EAS iOS preview build                                                                                                                                |
-| `claude.yml`             | Claude Code                           | `@claude` mention on issue/PR comment or review                                          | Claude Code responds inline                                                                                                                                                         |
+| File                     | Shown as                              | Trigger                                                                                                          | Does                                                                                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests.yml`              | Checks                                | every pull request, push → `main`, manual (`workflow_dispatch`)                                                  | three jobs: the app (iOS, Android, web: lint/typecheck/test/deps), the website (`services/`: website + Help Center search Worker: lint/typecheck/test/build), and the API (`services/api`: typecheck/test/end-to-end/fuzz; its steps run only when `services/api` or the workflow changed); no deploy |
+| `api-deploy.yml`         | API deploy                            | push → `main` touching `services/api/**` or the workflow; manual with `environment`                              | deploys the API and the app-update Workers: a push or a manual `beta` run → Beta (`api-beta.witnesswork.app`, with the dev and beta update channels); manual `production` → production (`api.witnesswork.app`, with the prod update channel). GitHub environments `api-beta`, `api-production`        |
+| `services.yml`           | Website deploy                        | push → `main` touching `services/**` (except `services/api`), the workflow, its smoke script or `.nvmrc`; manual | checks and builds `services/`, then: a push → both Beta (`beta.witnesswork.app`) and production (`witnesswork.app`); a manual run on `main` → Beta only; smoke checks after each deploy                                                                                                               |
+| `beta-ship.yml`          | Beta ship                             | push → `main`                                                                                                    | asks the private `leviFrosty/ww-runners` repository to ship the tip of `main` to Beta from one of our Macs (see [Beta](#beta)); deploys nothing itself                                                                                                                                                |
+| `production-release.yml` | App release tag                       | tag push `v*.*.*`                                                                                                | locale completeness/lint/typecheck/test/deps, GitHub Release (no build/upload)                                                                                                                                                                                                                        |
+| `pr-preview-build.yml`   | App preview build (manual, EAS cloud) | manual (`workflow_dispatch`)                                                                                     | lint/typecheck/test/deps, then EAS iOS preview build                                                                                                                                                                                                                                                  |
+| `claude.yml`             | Claude Code                           | `@claude` mention on issue/PR comment or review                                                                  | Claude Code responds inline                                                                                                                                                                                                                                                                           |

@@ -1,0 +1,109 @@
+# Copy this file to .dev.vars and fill in your actual values
+# .dev.vars is used by wrangler for local development and is gitignored
+#
+# It is the whole development environment's secrets: `pnpm dev` runs
+# `wrangler dev --env dev` on http://localhost:8787 with the [env.dev] config in
+# wrangler.toml and every binding simulated on disk. Nothing is deployed for
+# development, and nothing here is ever set on Beta or production (their
+# secrets are set with `wrangler secret put`, see AGENTS.md).
+#
+# To use it from an app development build (com.leviwilkerson.jwtimedev), a
+# simulator, or the local web app, set in the app's env (repo root .env):
+#   EXPO_PUBLIC_API_BASE_URL=http://localhost:8787
+#   EXPO_PUBLIC_API_DEV_BYPASS=<NOTES_IMPORT_DEV_BYPASS_TOKEN below>
+# The app then needs the bypass token and the account, ticket and passkey
+# secrets below; the rest is optional.
+
+# HERE API key from https://developer.here.com/ (autocomplete, geocoding,
+# route planning). Without it those routes fail; everything else works.
+HERE_API_KEY=your_here_api_key_here
+
+# Sentry DSN from https://sentry.io/. Optional locally: leave it out to report
+# nothing.
+# SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+
+# Overpass API interpreter for POST /maps/v1/addresses (OpenStreetMap house
+# numbers). wrangler.toml already sets the public one; override to use a mirror.
+# OVERPASS_URL=https://overpass-api.de/api/interpreter
+
+# Apple Developer Team ID (10-character string) — used by the AASA endpoint
+# for iOS universal links AND as the App Attest app-id prefix. Same value as
+# APPLE_TEAM_ID in the app's own env (the repo root's .env).
+APPLE_TEAM_ID=YOUR_TEAM_ID_HERE
+
+# --- Notes Import ---------------------------------------------------------
+
+# OpenRouter API key. Requests are routed ZDR-only (zero data retention, no
+# training) to the inference host. Create at https://openrouter.ai/keys and
+# enable Zero Data Retention in https://openrouter.ai/settings/privacy.
+OPENROUTER_API_KEY=your_openrouter_key_here
+
+# RevenueCat REST v1 SECRET key (sk_...) for server-side Supporter checks.
+# Project → API keys → Secret keys. NEVER ship this in the app.
+REVENUECAT_API_KEY=sk_your_revenuecat_secret_here
+# Count web (RevenueCat Billing) sandbox subscriptions as Supporter; needs APP_ATTEST_ENVIRONMENT=development.
+REVENUECAT_COUNT_WEB_SANDBOX=true
+
+# Local dev only: lets the iOS simulator (no Secure Enclave), an emulator, and
+# the local web app skip App Attest / Play Integrity by sending header
+# `x-ww-dev-bypass: <this value>`; sessions opened with it are `dev` sessions.
+# The app sends its EXPO_PUBLIC_API_DEV_BYPASS, which must equal this. Never
+# set on Beta or production: they ignore the header and fail loudly if the
+# token exists.
+NOTES_IMPORT_DEV_BYPASS_TOKEN=local-dev-bypass
+
+# Signs account session access tokens (witness-work ADR 0027). At least 32
+# characters; without it, /accounts/v1/sessions* answers `disabled` and the
+# app can't sign in. Local only: the value below works as it is, or generate
+# one with: openssl rand -base64 32
+# The four secrets below must all differ from each other.
+ACCOUNT_TOKEN_SECRET=local-dev-account-token-secret-0123456789abcdef
+
+# Passkeys (witness-work ADR 0038): sign challenge tokens and the tickets a
+# browser opens a web session with. At least 32 characters each, never
+# ACCOUNT_TOKEN_SECRET's value; without either, the passkey routes answer
+# `disabled`. The ticket secret also keys the rate counters' names.
+PASSKEY_CHALLENGE_SECRET=local-dev-passkey-challenge-secret-0123456789abcdef
+ACCOUNT_TICKET_SECRET=local-dev-account-ticket-secret-0123456789abcdef
+
+# Web sign-up and recovery's Turnstile secret. Unset, a development worker
+# uses Cloudflare's always-passing test secret; 2x0000000000000000000000000000000AA
+# fails every token. Beta and production need their widget's real secret.
+# TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+
+# Signs browser live socket tickets (POST /accounts/v1/live/ticket). At least
+# 32 characters and not ACCOUNT_TOKEN_SECRET's value; without it, browser live
+# sockets answer `disabled`. Local only; generate with: openssl rand -base64 32
+LIVE_TICKET_SECRET=local-dev-live-ticket-secret-0123456789abcdef
+
+# Dedicated local admin token (`x-ww-admin-token` on /admin/*). Do not reuse
+# the dev-bypass token.
+ADMIN_API_TOKEN=local-dev-admin-token-0123456789abcdef
+
+# The MapKit JS frame the local web app loads its map in (POST
+# /maps/v1/mapkit-tokens). wrangler.toml names Beta's frame; a local frame
+# belongs here, never there. Also needs MAPKIT_JS_KEY_ID and
+# MAPKIT_JS_PRIVATE_KEY (docs/maps.md).
+# MAPKIT_JS_ORIGINS=https://maps-beta.witnesswork.app,http://localhost:8081
+
+# Optional local fallbacks for the runtime `notes-import:limits` KV document.
+# Allowances: -1 unlimited, 0 none, positive integer finite. Days may be fractional.
+NOTES_IMPORT_FREE_CREDITS=5
+NOTES_IMPORT_FREE_CREDITS_SUPPORTER=-1
+NOTES_IMPORT_MAX_REFINEMENTS=5
+NOTES_IMPORT_MAX_REFINEMENTS_SUPPORTER=-1
+NOTES_IMPORT_WINDOW_DAYS=30
+
+# Optional minimum app version for Notes Import (client-side gate; see AGENTS.md).
+# NOTES_IMPORT_MIN_APP_VERSION=1.42.0
+
+# --- Buddies relay ----------------------------------------------------------
+
+# Kill-switch fallback when KV `buddies:enabled` is absent.
+BUDDIES_ENABLED=true
+
+# APNs token auth (.p8 key). Unset = pushes are skipped. APNs requires
+# HTTP/2, which `wrangler dev` can't speak, so verify real pushes on Beta
+# (TestFlight builds); FCM is plain HTTPS and works locally.
+# APNS_KEY_ID=ABCDE12345
+# APNS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"

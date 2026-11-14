@@ -28,30 +28,30 @@ const release = { ...integration, onMain: true, tags: [`v${version}`] }
 const plan = (target, args = ['--dry-run'], env = {}, git = integration) =>
   deployPlan(target, args, { env, git })
 
-test('dev deploys the integration branch head to ww-maps-dev', () => {
-  const dev = plan('dev')
-  assert.equal(dev.worker, 'ww-maps-dev')
-  assert.equal(dev.host, 'maps-dev.witnesswork.app')
-  assert.deepEqual(dev.blocked, [])
-  assert.deepEqual(dev.command.slice(1, 6), [
+test('beta deploys the integration branch head to ww-maps-beta', () => {
+  const beta = plan('beta')
+  assert.equal(beta.worker, 'ww-maps-beta')
+  assert.equal(beta.host, 'maps-beta.witnesswork.app')
+  assert.deepEqual(beta.blocked, [])
+  assert.deepEqual(beta.command.slice(1, 6), [
     'deploy',
     '--config',
     WRANGLER_CONFIG,
     '--env',
-    'dev',
+    'beta',
   ])
 })
 
-test('dev refuses another commit or a dirty checkout, unless a preview', () => {
+test('beta refuses another commit or a dirty checkout, unless a preview', () => {
   const other = plan(
-    'dev',
+    'beta',
     ['--dry-run'],
     {},
     { ...integration, head: 'c'.repeat(40) }
   )
   assert.match(other.blocked.join('\n'), new RegExp(INTEGRATION_BRANCH))
   const preview = plan(
-    'dev',
+    'beta',
     ['--dry-run', '--preview'],
     {},
     {
@@ -62,7 +62,8 @@ test('dev refuses another commit or a dirty checkout, unless a preview', () => {
   assert.deepEqual(preview.blocked, [])
   assert.equal(preview.command[1], 'versions')
   assert.match(
-    plan('dev', ['--dry-run'], {}, { ...integration, clean: false }).blocked[0],
+    plan('beta', ['--dry-run'], {}, { ...integration, clean: false })
+      .blocked[0],
     /Commit all changes/
   )
 })
@@ -86,30 +87,30 @@ test('production needs the keyword, even for a dry run, and the release commit',
   assert.match(ok.credential, /1Password app/)
   assert.throws(
     () => plan('production', ['--dry-run', '--preview'], keyword, release),
-    /Only dev/
+    /Only beta/
   )
 })
 
 test('refuses unknown targets and arguments', () => {
-  assert.throws(() => plan('beta'), /Usage/)
-  assert.throws(() => plan('dev', ['--force']), /Unknown/)
+  for (const target of ['dev', 'local', 'staging'])
+    assert.throws(() => plan(target), /Usage/)
+  assert.throws(() => plan('beta', ['--force']), /Unknown/)
 })
 
 test('each frame is framed by its own environments only', () => {
-  assert.deepEqual(frameAppOrigins('dev'), [
+  assert.deepEqual(frameAppOrigins('beta'), [
     'http://localhost:*',
     'http://127.0.0.1:*',
-    'https://app-dev.witnesswork.app',
+    'https://beta.app.witnesswork.app',
   ])
   assert.deepEqual(frameAppOrigins('production'), [
-    'https://beta.app.witnesswork.app',
     'https://app.witnesswork.app',
   ])
 })
 
 test('the wrangler config serves files only, on the frame hosts', () => {
   for (const [env, name, host] of [
-    ['dev', 'ww-maps-dev', 'maps-dev.witnesswork.app'],
+    ['beta', 'ww-maps-beta', 'maps-beta.witnesswork.app'],
     ['production', 'ww-maps', 'maps.witnesswork.app'],
   ]) {
     const config = unstable_readConfig({ config: WRANGLER_CONFIG, env })
@@ -126,14 +127,11 @@ test('a build carries its origins and headers, and nothing else', async () => {
     await buildFrame('production', out)
     const script = fs.readFileSync(path.join(out, 'frame.js'), 'utf8')
     assert.ok(script.includes('https://app.witnesswork.app'))
-    assert.ok(!script.includes('app-dev.witnesswork.app'))
+    assert.ok(!script.includes('beta.app.witnesswork.app'))
     assert.ok(!script.includes('"http://localhost:*"'))
     assert.ok(script.includes('mk/6.1.197/mapkit.core.js'))
     const headers = fs.readFileSync(path.join(out, '_headers'), 'utf8')
-    assert.match(
-      headers,
-      /frame-ancestors https:\/\/beta\.app\.witnesswork\.app https:\/\/app\.witnesswork\.app;/
-    )
+    assert.match(headers, /frame-ancestors https:\/\/app\.witnesswork\.app;/)
     assert.deepEqual(fs.readdirSync(out).sort(), [
       '_headers',
       'frame.css',

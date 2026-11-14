@@ -40,19 +40,20 @@ Worker sets no cookies.
 
 ## Origins
 
-| Frame        | Worker        | Host                       | App origins that may frame it                                                 |
-| ------------ | ------------- | -------------------------- | ----------------------------------------------------------------------------- |
-| `dev`        | `ww-maps-dev` | `maps-dev.witnesswork.app` | `https://app-dev.witnesswork.app`, `http://localhost:*`, `http://127.0.0.1:*` |
-| `production` | `ww-maps`     | `maps.witnesswork.app`     | `https://beta.app.witnesswork.app`, `https://app.witnesswork.app`             |
+| Frame        | Worker         | Host                        | App origins that may frame it                                                  |
+| ------------ | -------------- | --------------------------- | ------------------------------------------------------------------------------ |
+| `beta`       | `ww-maps-beta` | `maps-beta.witnesswork.app` | `https://beta.app.witnesswork.app`, `http://localhost:*`, `http://127.0.0.1:*` |
+| `production` | `ww-maps`      | `maps.witnesswork.app`      | `https://app.witnesswork.app`                                                  |
 
 Each app profile in `config/web-environments.json` names its `mapsOrigin`; a
 frame's app origins are every profile that names it (`appOriginsFor` in
 `web/maps-frame/src/headers.ts`). `local` (`localhost`) runs on any port.
 
-**Beta shares production's frame.** The app's four profiles (local, dev, beta,
-production) use two frames: `local` and `dev` frame `maps-dev`, and `beta` and
-`production` both frame `maps.witnesswork.app`, one Worker (`ww-maps`) whose
-`frame-ancestors` lists both app hosts. MapKit JS tokens are signed per frame
+**Local shares Beta's frame.** The app's three profiles (local, beta,
+production) use two frames: `local` and `beta` both frame
+`maps-beta.witnesswork.app`, one Worker (`ww-maps-beta`) whose
+`frame-ancestors` lists the Beta app host and `localhost`, and `production`
+frames `maps.witnesswork.app`. MapKit JS tokens are signed per frame
 origin, so one production frame needs one origin on the key.
 
 - **The app** frames only its profile's `mapsOrigin` (its CSP's `frame-src`),
@@ -66,7 +67,7 @@ origin, so one production frame needs one origin on the key.
   origin, never `*`. Opened on its own, it does nothing.
 - **The app** takes messages only from the frame's own window at the frame's
   exact origin.
-- Dev preview URLs on `workers.dev` aren't app origins, so their map shows
+- Beta preview URLs on `workers.dev` aren't app origins, so their map shows
   unavailable.
 
 ### The frame's headers
@@ -131,7 +132,7 @@ with its coordinate); `pinPress` and `pinDragEnd` by pin id; `projected` and
 1. The map asks ww-api for a token (`POST /maps/v1/mapkit-tokens` with
    `{ origin: <frame origin> }`) through the account session
    (`src/lib/serverAccount`). ww-api signs a 30-minute token for that origin
-   only (ww-api `docs/maps.md`). One token serves every map until it has under
+   only (`services/api/docs/maps.md`). One token serves every map until it has under
    5 minutes left.
 2. Once the frame has loaded, the app posts `init` with it.
 3. The frame gives it to `mapkit.init`'s `authorizationCallback`. When MapKit
@@ -168,15 +169,15 @@ Each reason is counted once a session (`map_unavailable`, `docs/analytics.md`).
 ## Building, serving and deploying
 
 ```bash
-pnpm web:build:maps <dev|production>              # web/maps-frame/dist
-pnpm web:serve:maps [dev|production] [--port 8789] # wrangler dev of it
-pnpm web:deploy:maps:dev [--dry-run] [--preview]
+pnpm web:build:maps <beta|production>              # web/maps-frame/dist
+pnpm web:serve:maps [beta|production] [--port 8789] # wrangler dev of it
+pnpm web:deploy:maps:beta [--dry-run] [--preview]
 WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:maps:production [--dry-run]
 ```
 
 Same gates as the app (`docs/web-hosting.md`): every deploy refuses
-uncommitted files; `dev` deploys only a clean checkout at
-`origin/feat/web-device-sign-in` (`main` once the web launch lands), and
+uncommitted files; `beta` deploys only a clean checkout at `origin/main`
+(the Beta ship does it, `scripts/build-beta.sh`), and
 `--preview` uploads a `workers.dev` version from any clean branch; `production`
 needs the typed `SHIP-PROD-<version>` (dry runs too), the tagged release commit
 on `origin/main`, and the `WitnessWork web deploy (production)` token read
@@ -185,17 +186,17 @@ through the 1Password app. Never `wrangler deploy` by hand.
 `ww-maps` (production) is configured but not deployed yet, and
 `maps.witnesswork.app` has no DNS record yet; see the runbook below.
 
-### First dev deploy
+### First beta deploy
 
-From a clean checkout whose `HEAD` is `origin/feat/web-device-sign-in`:
+From a clean checkout whose `HEAD` is `origin/main`:
 
 ```bash
-pnpm web:deploy:maps:dev --dry-run   # the plan, with anything that refuses it
-pnpm web:deploy:maps:dev
+pnpm web:deploy:maps:beta --dry-run   # the plan, with anything that refuses it
+pnpm web:deploy:maps:beta
 ```
 
-wrangler creates `ww-maps-dev` and its Workers Custom Domain
-`maps-dev.witnesswork.app`; Cloudflare adds the DNS record for it.
+wrangler creates `ww-maps-beta` and its Workers Custom Domain
+`maps-beta.witnesswork.app`; Cloudflare adds the DNS record for it.
 
 ### Production runbook (maps.witnesswork.app)
 
@@ -204,7 +205,7 @@ The owner runs it at the cut of the first release whose web build frames
 build that frames a missing host shows "Map unavailable". Agents never run it.
 
 1. **ww-api.** Production ww-api has a MapKit JS key and signs tokens for
-   `https://maps.witnesswork.app` (ww-api `docs/maps.md`); until then the map
+   `https://maps.witnesswork.app` (`services/api/docs/maps.md`); until then the map
    answers `maps_unconfigured` and shows unavailable, which is safe.
 2. **DNS.** Check that `maps.witnesswork.app` has no record of its own in the
    `witnesswork.app` zone: a Workers Custom Domain refuses a host that already
@@ -219,9 +220,9 @@ build that frames a missing host shows "Map unavailable". Agents never run it.
    this Mac. wrangler creates `ww-maps` and the custom domain, and Cloudflare
    adds its DNS record and certificate.
 6. **Check:** `curl -sI https://maps.witnesswork.app/` shows the frame's CSP
-   with `frame-ancestors https://beta.app.witnesswork.app
-https://app.witnesswork.app`, `Referrer-Policy: no-referrer`, and no
-   `Set-Cookie`. Then open the map in the beta and production apps.
+   with `frame-ancestors https://app.witnesswork.app`,
+   `Referrer-Policy: no-referrer`, and no `Set-Cookie`. Then open the map in
+   the production app.
 7. **Roll back** by deploying the previous release's tag the same way. A frame
    that's down only takes the map away; the rest of the app works.
 

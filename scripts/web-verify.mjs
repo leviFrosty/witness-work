@@ -21,9 +21,9 @@ export const WRANGLER_CONFIG = 'web/verify-frame/wrangler.jsonc'
 const dist = path.join(FRAME_DIR, 'dist')
 
 const usage = [
-  'Usage: web-verify.mjs build <dev|production> [--out <dir>]',
-  '       web-verify.mjs deploy <dev|production> [--dry-run]',
-  '       web-verify.mjs serve [dev|production] [--port 8791]',
+  'Usage: web-verify.mjs build <beta|production> [--out <dir>]',
+  '       web-verify.mjs deploy <beta|production> [--dry-run]',
+  '       web-verify.mjs serve [beta|production] [--port 8791]',
 ].join('\n')
 
 const short = (sha) => sha?.slice(0, 9) ?? 'missing'
@@ -190,7 +190,7 @@ async function deploy(target, args) {
 }
 
 async function serve(args) {
-  const target = args[0]?.startsWith('--') ? 'dev' : (args.shift() ?? 'dev')
+  const target = args[0]?.startsWith('--') ? 'beta' : (args.shift() ?? 'beta')
   let port = '8791'
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--port' && /^\d+$/.test(args[i + 1] ?? ''))

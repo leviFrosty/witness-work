@@ -139,26 +139,26 @@ test('refuses a bundle URL outside the build it reads', () => {
   assert.match(result.stderr, /de-DE/)
 })
 
-test('reads another copy of the site, such as the dev website, by its manifest', () => {
+test('reads another copy of the site, such as the Beta website, by its manifest', () => {
   const manifest = [
     '--manifest',
-    'https://dev.witnesswork.app/help/bundle/manifest.json',
+    'https://beta.witnesswork.app/help/bundle/manifest.json',
   ]
-  const dev = siteBuild(
-    (locale) => `https://dev.witnesswork.app/help/bundle/${locale}.json`
+  const beta = siteBuild(
+    (locale) => `https://beta.witnesswork.app/help/bundle/${locale}.json`
   )
-  const { result, snapshot } = sync(dev, manifest)
+  const { result, snapshot } = sync(beta, manifest)
   assert.equal(result.status, 0, result.stderr)
   assert.equal(snapshot('en-US').locale, 'en-US')
 
   const apex = siteBuild(
     (locale) => `https://witnesswork.app/help/bundle/${locale}.json`
   )
-  assert.match(sync(apex, manifest).result.stderr, /isn't on https:\/\/dev\./)
+  assert.match(sync(apex, manifest).result.stderr, /isn't on https:\/\/beta\./)
   for (const url of [
-    'http://dev.witnesswork.app/help/bundle/manifest.json',
-    'https://dev.witnesswork.app/manifest.json',
+    'http://beta.witnesswork.app/help/bundle/manifest.json',
+    'https://beta.witnesswork.app/manifest.json',
     'not a url',
   ])
-    assert.match(sync(dev, ['--manifest', url]).result.stderr, /--manifest/)
+    assert.match(sync(beta, ['--manifest', url]).result.stderr, /--manifest/)
 })

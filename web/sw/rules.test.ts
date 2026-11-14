@@ -25,7 +25,7 @@ describe('what the service worker never caches', () => {
       'https://witnesswork.app/help/bundle/manifest.json',
 
       'https://maps.witnesswork.app/',
-      'https://maps-dev.witnesswork.app/frame.js',
+      'https://maps-beta.witnesswork.app/frame.js',
       `${ORIGIN}/_csp-report`,
       `${ORIGIN}/.well-known/webauthn`,
       `${ORIGIN}/.well-known/apple-app-site-association`,

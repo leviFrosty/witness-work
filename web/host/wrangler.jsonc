@@ -1,5 +1,5 @@
 // The web app's Worker (docs/web-hosting.md). Deploy only through
-// `pnpm web:deploy:<dev|beta|production>`, never `wrangler deploy` by hand:
+// `pnpm web:deploy:<beta|production>`, never `wrangler deploy` by hand:
 // the script builds the matching profile, writes `_headers` and enforces the
 // release gates. The top level is the local profile for `pnpm web:serve`.
 {
@@ -44,15 +44,6 @@
   "observability": { "enabled": true },
   "vars": { "WW_WEB_PROFILE": "local" },
   "env": {
-    "dev": {
-      "name": "ww-web-dev",
-      "vars": { "WW_WEB_PROFILE": "dev" },
-      "routes": [
-        { "pattern": "app-dev.witnesswork.app", "custom_domain": true },
-      ],
-      "workers_dev": false,
-      "preview_urls": true,
-    },
     "beta": {
       "name": "ww-web-beta",
       "vars": { "WW_WEB_PROFILE": "beta" },

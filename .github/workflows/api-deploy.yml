@@ -1,0 +1,158 @@
+name: API deploy
+
+# Deploys the API (services/api) and the app-update Workers it ships with.
+#   push to main touching services/api          -> Beta: api-beta.witnesswork.app (api-beta)
+#   workflow_dispatch, environment=beta         -> Beta again, from main
+#   workflow_dispatch, environment=production   -> Production: api.witnesswork.app (api-production)
+# Beta always runs the tip of main. Production never deploys by itself: the
+# release process asks for it (scripts/release-api.sh), or you do:
+#   gh workflow run api-deploy.yml -f environment=production
+# Never deploys the app or the website. Pull requests are checked by the Checks
+# workflow (tests.yml), not here.
+run-name: API deploy (${{ inputs.environment || 'beta' }})
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - services/api/**
+      - .github/workflows/api-deploy.yml
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Which API to deploy
+        type: choice
+        options:
+          - beta
+          - production
+        default: beta
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: services/api
+
+jobs:
+  deploy:
+    name: "${{ (inputs.environment || 'beta') == 'production' && 'Production: api.witnesswork.app' || 'Beta: api-beta.witnesswork.app' }}"
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: api-${{ inputs.environment || 'beta' }}
+    concurrency:
+      group: api-${{ inputs.environment || 'beta' }}
+      cancel-in-progress: false
+    env:
+      TARGET: ${{ inputs.environment || 'beta' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          package_json_file: services/api/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and unit tests
+        run: pnpm typecheck && pnpm test
+
+      # Wrangler's own names for each environment. Production is the top-level
+      # config, so it takes no --env flag and its resources have no suffix. The
+      # dev update channel has no API of its own (development is local only),
+      # so its update Worker deploys with Beta.
+      - name: Pick the environment's names
+        run: |
+          if [ "$TARGET" = production ]; then
+            {
+              echo "WRANGLER_ENV="
+              echo "SUFFIX="
+              echo "UPDATE_CHANNELS=prod"
+              echo "HEALTH_URL=https://api.witnesswork.app/health"
+            } >> "$GITHUB_ENV"
+          else
+            {
+              echo "WRANGLER_ENV=--env beta"
+              echo "SUFFIX=-beta"
+              echo "UPDATE_CHANNELS=dev beta"
+              echo "HEALTH_URL=https://api-beta.witnesswork.app/health"
+            } >> "$GITHUB_ENV"
+          fi
+
+      # Each bucket and its lifecycle rules, created or reset on every deploy
+      # (scripts/r2-lifecycle.mjs). The API token needs Workers R2 Storage: Edit.
+      - name: Ensure the storage buckets
+        run: |
+          for bucket in ww-buddy-blobs ww-account-backups ww-account-sync ww-account-photos; do
+            node scripts/r2-lifecycle.mjs "$bucket$SUFFIX"
+          done
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Accounts schema (src/accounts/schema.ts) before the code that needs it.
+      # Already-applied migrations are skipped. The API token needs D1: Edit.
+      - name: Apply accounts database migrations
+        run: pnpm exec wrangler d1 migrations apply "ww-accounts$SUFFIX" $WRANGLER_ENV --remote
+        env:
+          CI: 'true'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy the app-update Workers
+        run: |
+          for channel in $UPDATE_CHANNELS; do
+            pnpm run "updates:migrate:$channel"
+            pnpm run "updates:deploy:$channel"
+          done
+        env:
+          CI: 'true'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # --tag makes /health report this commit as `versionTag`, which
+      # scripts/release-api.sh reads to tell whether an environment is current.
+      # --outdir keeps the bundled Worker and its source map for Sentry below.
+      # Worker secrets are not set here: they stay as `wrangler secret put`
+      # left them (services/api/AGENTS.md).
+      - name: Deploy the API Worker
+        run: |
+          pnpm exec wrangler deploy $WRANGLER_ENV --outdir dist \
+            --tag "$GITHUB_SHA" \
+            --message "$TARGET from ${GITHUB_SHA:0:7}" \
+            --var "APP_VERSION:$(jq -r .version package.json)" \
+            --var "COMMIT_SHA:${GITHUB_SHA:0:7}" \
+            --var "SENTRY_RELEASE:$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Upload source maps to Sentry
+        run: pnpm run sentry:sourcemaps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Check the API answers with this commit
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            tag=$(curl -fsS --max-time 15 "$HEALTH_URL" | jq -r '.versionTag // empty' || true)
+            if [ "$tag" = "$GITHUB_SHA" ]; then
+              echo "$HEALTH_URL serves $GITHUB_SHA"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$HEALTH_URL serves '${tag:-nothing}', not $GITHUB_SHA"
+          exit 1

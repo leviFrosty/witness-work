@@ -4,9 +4,15 @@ const itunesItemId = 6469723047
 const androidPackage = 'com.leviwilkerson.jwtime'
 const githubRepo = 'https://github.com/leviFrosty/witness-work'
 
+const BETA_SITE = 'https://beta.witnesswork.app'
+const BETA_HELP_SEARCH = 'https://help-search-beta.witnesswork.app/v1/search'
+const BETA_MAPS_FRAME = 'https://maps-beta.witnesswork.app'
+const BETA_TURNSTILE_FRAME = 'https://verify-beta.witnesswork.app'
+
 const site = forBuild({
-  development: 'https://dev.witnesswork.app',
-  release: 'https://witnesswork.app',
+  development: BETA_SITE,
+  beta: BETA_SITE,
+  production: 'https://witnesswork.app',
 })
 
 export default {
@@ -30,18 +36,21 @@ export default {
   helpCenterSite: site,
   helpCenterManifest: `${site}/help/bundle/manifest.json`,
   helpCenterSearch: forBuild({
-    development: 'https://help-search-dev.witnesswork.app/v1/search',
-    release: 'https://help-search.witnesswork.app/v1/search',
+    development: BETA_HELP_SEARCH,
+    beta: BETA_HELP_SEARCH,
+    production: 'https://help-search.witnesswork.app/v1/search',
   }),
 
   mapsFrame: forBuild({
-    development: 'https://maps-dev.witnesswork.app',
-    release: 'https://maps.witnesswork.app',
+    development: BETA_MAPS_FRAME,
+    beta: BETA_MAPS_FRAME,
+    production: 'https://maps.witnesswork.app',
   }),
 
   turnstileFrame: forBuild({
-    development: 'https://verify-dev.witnesswork.app',
-    release: 'https://verify.witnesswork.app',
+    development: BETA_TURNSTILE_FRAME,
+    beta: BETA_TURNSTILE_FRAME,
+    production: 'https://verify.witnesswork.app',
   }),
   nwpublisherSubmitReport: 'https://nwpublisher.com/report/',
   openRouterZdr: 'https://openrouter.ai/docs/guides/features/zdr',

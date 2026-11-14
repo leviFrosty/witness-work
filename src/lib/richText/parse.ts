@@ -44,7 +44,7 @@ export const isSafeHref = (value: unknown): value is string =>
 type Budget = { nodes: number; chars: number; remoteImages: boolean }
 
 const HELP_IMAGE_SRC =
-  /^https:\/\/(?:dev\.)?witnesswork\.app\/help\/images\/[a-z0-9-]+\.[0-9a-f]{12}\.webp$/
+  /^https:\/\/(?:beta\.)?witnesswork\.app\/help\/images\/[a-z0-9-]+\.[0-9a-f]{12}\.webp$/
 const MAX_ALT_LENGTH = 300
 
 export type ParseRichTextOptions = {

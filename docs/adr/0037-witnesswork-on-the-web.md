@@ -4,6 +4,8 @@ status: accepted
 
 # WitnessWork on the web
 
+> Hosts updated since: the deployed dev hosts (`app-dev`, `maps-dev`, `verify-dev`) are gone, and the web beta calls the Beta API and its own Beta frames, see [readme.md#environments](../../readme.md#environments).
+
 ## Context
 
 WitnessWork runs on iOS and Android. Users want to use it from a computer, and

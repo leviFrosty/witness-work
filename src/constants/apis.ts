@@ -2,6 +2,10 @@ import { forBuild } from '@/constants/buildVariant'
 
 export const PRODUCTION_API_BASE_URL = 'https://api.witnesswork.app'
 
+export const BETA_API_BASE_URL = 'https://api-beta.witnesswork.app'
+
+export const LOCAL_API_BASE_URL = 'http://localhost:8787'
+
 export const PRODUCTION_API_BASE_URLS: readonly string[] = [
   PRODUCTION_API_BASE_URL,
   'https://ww-proxy.leviwilkerson.com',
@@ -9,8 +13,9 @@ export const PRODUCTION_API_BASE_URLS: readonly string[] = [
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ||
   forBuild({
-    development: 'https://api-dev.witnesswork.app',
-    release: PRODUCTION_API_BASE_URL,
+    development: LOCAL_API_BASE_URL,
+    beta: BETA_API_BASE_URL,
+    production: PRODUCTION_API_BASE_URL,
   })
 
 export default {

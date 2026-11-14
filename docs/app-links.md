@@ -8,7 +8,7 @@ Contact shares, Buddies invites and Set Up Another Device travel as `https` link
 | ---------------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
 | `ww-proxy.leviwilkerson.com` | ww-api: link pages and association files. The old host, kept forever.                       | every build         |
 | `witnesswork.app`            | ww-api on exact-path routes: link pages and association files. The website serves the rest. | release N and later |
-| `dev.witnesswork.app`        | the dev ww-api, the same way. The staging website serves the rest.                          | release N and later |
+| `beta.witnesswork.app`       | the Beta ww-api, the same way. The Beta website serves the rest.                            | release N and later |
 
 `app.witnesswork.app` is the web app and is never an app-link host.
 
@@ -27,7 +27,7 @@ The secret or payload is always in the fragment, which browsers and link preview
 - The old host reads its short paths and the full words: ww-api serves both there, and the old host's AASA already lists both, so iOS hands either to the app.
 - The new hosts use full words only. The parsers reject `/c`, `/b`, `/h` and `/c/<payload>` there.
 - The apex AASA lists exactly those three components, and the Android intent filters match exactly those paths (`path`, not `pathPrefix`; `/c/` is the one prefix, on the old host), so the website's other pages stay in the browser.
-- Every build reads `dev.witnesswork.app` links too. Only development builds claim it, but its fragments are as self-contained as the apex's, so pasting or scanning one is harmless.
+- Every build reads `beta.witnesswork.app` links too. Only iOS Beta builds and development builds claim it, but its fragments are as self-contained as the apex's, so pasting or scanning one is harmless.
 
 ### How a link is matched
 
@@ -42,18 +42,19 @@ The "own link" check (`isOwnAppLink`) reads a URL as the system does, so it cove
 
 ## What each build claims
 
-| Build            | iOS associated domains                                                                                           | Android `autoVerify` hosts                                             |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| development      | `applinks:ww-proxy.leviwilkerson.com`, `applinks:witnesswork.app`, `applinks:dev.witnesswork.app?mode=developer` | `ww-proxy.leviwilkerson.com`, `witnesswork.app`, `dev.witnesswork.app` |
-| beta, production | `applinks:ww-proxy.leviwilkerson.com`, `applinks:witnesswork.app`                                                | `ww-proxy.leviwilkerson.com`, `witnesswork.app`                        |
+| Build       | iOS associated domains                                                                                            | Android `autoVerify` hosts                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| development | `applinks:ww-proxy.leviwilkerson.com`, `applinks:witnesswork.app`, `applinks:beta.witnesswork.app?mode=developer` | `ww-proxy.leviwilkerson.com`, `witnesswork.app`, `beta.witnesswork.app` |
+| beta        | `applinks:ww-proxy.leviwilkerson.com`, `applinks:witnesswork.app`, `applinks:beta.witnesswork.app`                | `ww-proxy.leviwilkerson.com`, `witnesswork.app` (the production app)    |
+| production  | `applinks:ww-proxy.leviwilkerson.com`, `applinks:witnesswork.app`                                                 | `ww-proxy.leviwilkerson.com`, `witnesswork.app`                         |
 
-Each Android host claims the paths it reads from the table above. `?mode=developer` makes a simulator or a device with Associated Domains Development turned on fetch the dev AASA directly instead of through Apple's CDN. Changing a claim is a native change: it needs a new build.
+Each Android host claims the paths it reads from the table above. `?mode=developer` makes a simulator or a device with Associated Domains Development turned on fetch the Beta host's AASA directly instead of through Apple's CDN. Changing a claim is a native change: it needs a new build.
 
 On Android 11 and lower, the app is the default handler only if every `autoVerify` host verifies. A claimed host whose `assetlinks.json` is missing or wrong takes the old host's links out of the app too. Check a device with `adb shell pm get-app-links <package>`; [build.md](./build.md#native-changes) has the emulator commands for development builds.
 
 ## Making links: the switch
 
-`CREATE_LINKS_ON_NEW_HOST` in `src/constants/appLinkSwitch.ts` decides where the app makes new links, through `appLinkBase`, which takes no host of its own. Tests flip it by mocking that module with `src/__tests__/helpers/appLinkSwitch.ts`. While it's `false`, the handoff QR code, Buddies invites and contact shares keep making today's old-host links. Set to `true`, they make `https://witnesswork.app/<full-word path>#…` links. It's a constant, not a remote flag: a link made on the apex must only reach builds that read it.
+`CREATE_LINKS_ON_NEW_HOST` in `src/constants/appLinkSwitch.ts` decides where a production build makes new links, through `appLinkBase`, which takes no host of its own. Tests flip it by mocking that module with `src/__tests__/helpers/appLinkSwitch.ts`. While it's `false`, the handoff QR code, Buddies invites and contact shares keep making today's old-host links. Set to `true`, they make `https://witnesswork.app/<full-word path>#…` links. It's a constant, not a remote flag: a link made on the apex must only reach builds that read it. Beta and development builds ignore the switch: they always make `https://beta.witnesswork.app/<full-word path>#…` links, which the Beta ww-api serves.
 
 ## Rollout
 

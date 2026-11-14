@@ -1,6 +1,6 @@
 # Changing the account key
 
-The wire contract and device flow for Change Account Key, between the app (`src/lib/serverAccount`, `src/app/account/keyChange`) and ww-api (`ww-api/src/accounts`). The decisions are [ADR 0039](./adr/0039-change-the-account-key.md). Sessions, envelopes and error codes are in [accounts-protocol.md](./accounts-protocol.md); passkey wraps and the web step-up are in [passkeys-protocol.md](./passkeys-protocol.md); Cloud Sync photos are in [cloud-sync-photos.md](./cloud-sync-photos.md).
+The wire contract and device flow for Change Account Key, between the app (`src/lib/serverAccount`, `src/app/account/keyChange`) and ww-api (`services/api/src/accounts`). The decisions are [ADR 0039](./adr/0039-change-the-account-key.md). Sessions, envelopes and error codes are in [accounts-protocol.md](./accounts-protocol.md); passkey wraps and the web step-up are in [passkeys-protocol.md](./passkeys-protocol.md); Cloud Sync photos are in [cloud-sync-photos.md](./cloud-sync-photos.md).
 
 A key change keeps the `accountId`. It replaces `account_pub` and raises the account's `keyEpoch`. Supporter links, the activity log, Cloud Sync and backup slots, inbox links and session records stay on the same account.
 

@@ -5,6 +5,8 @@ supersedes: [0033]
 
 # WitnessWork moves to witnesswork.app
 
+> Hosts updated since: the dev hosts (`app-dev`, `api-dev`, `dev`, `help-search-dev`, `maps-dev`, `verify-dev`) are replaced by Beta hosts (`beta.app`, `api-beta`, `beta`, `help-search-beta`, `maps-beta`, `verify-beta`), and development is local only, see [readme.md#environments](../../readme.md#environments).
+
 ## Context
 
 Today WitnessWork is spread across hosts that aren't its own:

@@ -62,8 +62,8 @@ Refs the tools take and return: `c` Contact, `n` pending new Contact, `p` Day Pl
 `src/features/scribe/evals` measures what the real model does with spoken-style messages, through these tools, the context and the turn loop, against a local ww-api with an OpenRouter key:
 
 ```bash
-node ~/dev/ww-api-worktrees/<branch>/scripts/verify/dev.mjs up --secrets-from ~/dev/ww-api/.dev.vars
-SCRIBE_EVAL_WORKER=~/dev/ww-api-worktrees/<branch> TZ=America/Chicago \
+node services/api/scripts/verify/dev.mjs up --secrets-from <main checkout>/services/api/.dev.vars
+SCRIBE_EVAL_WORKER=services/api TZ=America/Chicago \
   pnpm exec vitest run src/features/scribe/evals/scribe.eval.test.ts
 ```
 

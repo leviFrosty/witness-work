@@ -17,7 +17,7 @@ const PRF = new Uint8Array(32).fill(9)
 const bytes = (...values: number[]) => new Uint8Array(values).buffer
 
 const creation: PublicKeyCredentialCreationOptionsJSON = {
-  rp: { id: 'app-dev.witnesswork.app', name: 'WitnessWork' },
+  rp: { id: 'beta.app.witnesswork.app', name: 'WitnessWork' },
   user: {
     id: 'AAEC',
     name: 'WitnessWork KVW7',
@@ -33,7 +33,7 @@ const creation: PublicKeyCredentialCreationOptionsJSON = {
 }
 
 const request: PublicKeyCredentialRequestOptionsJSON = {
-  rpId: 'app-dev.witnesswork.app',
+  rpId: 'beta.app.witnesswork.app',
   challenge: 'Y2hhbGxlbmdl',
   userVerification: 'required',
 }
@@ -71,7 +71,7 @@ const PublicKeyCredential = Object.assign(function PublicKeyCredential() {}, {
 beforeEach(() => {
   vi.stubGlobal('PublicKeyCredential', PublicKeyCredential)
   vi.stubGlobal('navigator', { credentials })
-  vi.stubGlobal('location', { hostname: 'app-dev.witnesswork.app' })
+  vi.stubGlobal('location', { hostname: 'beta.app.witnesswork.app' })
 })
 
 afterEach(() => {

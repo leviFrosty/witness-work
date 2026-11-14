@@ -15,29 +15,27 @@ Worker with Workers Static Assets. There's no server rendering.
   Never run `wrangler deploy` by hand.
 - **Maps frame:** a Worker of its own on each profile's maps origin
   (`web/maps-frame/`, `scripts/web-maps.mjs`), with the same deploy gates;
-  beta shares production's. See `docs/web-maps.md`, which has the production
+  `local` uses beta's. See `docs/web-maps.md`, which has the production
   maps host's runbook.
 - **Turnstile frame:** a Worker of its own on each profile's verify origin
-  (`web/verify-frame/`, `scripts/web-verify.mjs`); beta shares production's.
+  (`web/verify-frame/`, `scripts/web-verify.mjs`); `local` uses beta's.
   See `docs/web-turnstile.md`, which has the production host's runbook.
 
 ## Environments
 
-| Profile      | Worker        | Host                       | ww-api                        | Maps frame                 | Turnstile frame              | Help Center and search                                   | CSP         |
-| ------------ | ------------- | -------------------------- | ----------------------------- | -------------------------- | ---------------------------- | -------------------------------------------------------- | ----------- |
-| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-dev.witnesswork.app` | `verify-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | report-only |
-| `dev`        | `ww-web-dev`  | `app-dev.witnesswork.app`  | `api-dev.witnesswork.app`     | `maps-dev.witnesswork.app` | `verify-dev.witnesswork.app` | `dev.witnesswork.app`, `help-search-dev.witnesswork.app` | enforce     |
-| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api.witnesswork.app`         | `maps.witnesswork.app`     | `verify.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
-| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`     | `verify.witnesswork.app`     | `witnesswork.app`, `help-search.witnesswork.app`         | enforce     |
+| Profile      | Worker        | Host                       | ww-api                        | Maps frame                  | Turnstile frame               | Help Center and search                                     | CSP         |
+| ------------ | ------------- | -------------------------- | ----------------------------- | --------------------------- | ----------------------------- | ---------------------------------------------------------- | ----------- |
+| `local`      | —             | `localhost` (`web:serve`)  | `.env` (`localhost:8787` CSP) | `maps-beta.witnesswork.app` | `verify-beta.witnesswork.app` | `beta.witnesswork.app`, `help-search-beta.witnesswork.app` | report-only |
+| `beta`       | `ww-web-beta` | `beta.app.witnesswork.app` | `api-beta.witnesswork.app`    | `maps-beta.witnesswork.app` | `verify-beta.witnesswork.app` | `beta.witnesswork.app`, `help-search-beta.witnesswork.app` | enforce     |
+| `production` | `ww-web`      | `app.witnesswork.app`      | `api.witnesswork.app`         | `maps.witnesswork.app`      | `verify.witnesswork.app`      | `witnesswork.app`, `help-search.witnesswork.app`           | enforce     |
 
 Every profile sends PostHog events to `ww-api-r.leviwilkerson.com`, PostHog's
 managed proxy, and uses RevenueCat's browser API.
 
 - Each host is a Workers Custom Domain, which creates its own DNS record and
   certificate. `workers_dev` is off everywhere.
-- Only `dev` has preview URLs (`web:deploy:dev --preview`), on `workers.dev`.
-  They're cross-site from the app's hosts, so ww-api's CORS list must include
-  them before they can sign in.
+- No profile has preview URLs. `local` is not deployed: it's this checkout,
+  served on `localhost`.
 
 ## Routing and caching
 
@@ -91,18 +89,18 @@ profile at build time; nothing under `public/` holds them.
   `config/web-environments.json` picks the apps its host lists.
 - **Per profile:**
 
-  | Profile              | `apple-app-site-association` (`webcredentials`) | `assetlinks.json` (`get_login_creds`)                                                |
-  | -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
-  | `production`, `beta` | `jwtime`, `jwtimebeta`                          | `com.leviwilkerson.jwtime`: Play app signing and upload keys                         |
-  | `dev`, `local`       | `jwtime`, `jwtimebeta`, `jwtimedev`             | the same, plus `com.leviwilkerson.jwtimedev`: the debug key and the two release keys |
+  | Profile         | `apple-app-site-association` (`webcredentials`) | `assetlinks.json` (`get_login_creds`)                                                |
+  | --------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+  | `production`    | `jwtime`, `jwtimebeta`                          | `com.leviwilkerson.jwtime`: Play app signing and upload keys                         |
+  | `beta`, `local` | `jwtime`, `jwtimebeta`, `jwtimedev`             | the same, plus `com.leviwilkerson.jwtimedev`: the debug key and the two release keys |
 
-  Beta's files match production's: Beta phone builds use the production RP
-  ID (ADR 0038 §3). No profile has `applinks`: these hosts are never app-link
-  domains (ADR 0042).
+  Beta's files list the development app too: Beta and development phone
+  builds both use Beta's RP ID, `beta.app.witnesswork.app`. No profile has
+  `applinks`: these hosts are never app-link domains (ADR 0042).
 
 - **Build:** `web:build` replaces the export's `.well-known/` with the
   profile's files (`associationFiles` in `scripts/web.mjs`). It refuses a
-  release profile whose files would list the development app or its debug
+  production build whose files would list the development app or its debug
   key, and each deploy refuses an export whose `.well-known/` isn't exactly its
   profile's files.
 
@@ -112,7 +110,7 @@ profile at build time; nothing under `public/` holds them.
 sets them on the responses its code produces, and the deploy writes the same
 set into `dist/_headers` for everything Cloudflare serves directly.
 
-- **CSP**, enforced (`Content-Security-Policy`) in `dev`, `beta` and
+- **CSP**, enforced (`Content-Security-Policy`) in `beta` and
   `production`, report-only in `local`. Every host in it comes from the
   profile, no profile allows another's hosts (`worker.test.ts`), and the
   deploy refuses a build that never calls them, so the app and its CSP can't
@@ -159,8 +157,8 @@ set into `dist/_headers` for everything Cloudflare serves directly.
   sizes. Every test fails on a violation; to sum them up by browser:
 
   ```bash
-  pnpm web:build --env dev
-  E2E_WORKER=dev WW_WEB_CSP=.verify/web-csp pnpm web:test
+  pnpm web:build --env beta
+  E2E_WORKER=beta WW_WEB_CSP=.verify/web-csp pnpm web:test
   node e2e/web/csp-summary.mjs .verify/web-csp
   ```
 
@@ -175,9 +173,8 @@ Each profile's `csp` in `config/web-environments.json` is the switch:
   something Users need in that environment, until the fix ships. It's a PR
   that changes the profile and the test that expects it to enforce
   (`worker.test.ts`), then that environment's deploy.
-- **Who:** for `dev`, whoever is fixing the violation, noting it in the PR.
-  For `beta` and `production`, only the project owner decides; `production`
-  then deploys as a release like any other (`SHIP-PROD-X.Y.Z`).
+- **Who:** for `beta` and `production`, only the project owner decides;
+  `production` then deploys as a release like any other (`SHIP-PROD-X.Y.Z`).
 - **Switch back** in the PR that fixes the violation.
 - **Never loosen the policy instead**, such as with `'unsafe-eval'`, a
   wildcard or a `default` Trusted Types policy. A new host goes into its
@@ -207,11 +204,10 @@ Reporting API bodies, so adding `report-to` later is a header change.
 ## Deploying
 
 ```bash
-pnpm web:serve [local|dev|beta|production]   # wrangler dev of ./dist
-pnpm web:deploy:dev [--dry-run] [--prebuilt] [--preview]
+pnpm web:serve [local|beta|production]   # wrangler dev of ./dist
 pnpm web:deploy:beta [--dry-run] [--prebuilt]
 WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:production [--dry-run] [--prebuilt]
-pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-app]
+pnpm web:deploy:<beta|production> --well-known-only [--dry-run] [--replace-app]
 ```
 
 - **Each deploy:**
@@ -230,35 +226,25 @@ pnpm web:deploy:<dev|beta|production> --well-known-only [--dry-run] [--replace-a
   for the same profile and commit, and no file may have changed since. Only
   the deploy writes the stamp, after its own build.
 - **`--dry-run`** prints the plan and anything that would refuse it, without
-  building or deploying. For `dev` it also resolves the RevenueCat sandbox
-  values (below), which are public bundle values, not credentials, and says
-  what is missing; it never prints them.
+  building or deploying.
 - **Every deploy refuses uncommitted or untracked files**, as OTA updates do.
   The Help Center snapshot a build fetches goes into the export only;
   `web:build` puts `src/assets/help-center/` back as it was afterwards.
-- **dev:** `app-dev` serves only the integration branch's latest commit, so it
-  deploys only from a clean checkout whose `HEAD` is
-  `origin/feat/web-device-sign-in` (`main` once the web launch lands).
-  `--preview` uploads a version to a
-  `workers.dev` preview URL without touching `app-dev`, from any clean
-  branch.
-- **dev's RevenueCat sandbox values.** The paywall needs
+- **The local profile's RevenueCat sandbox values.** The paywall needs
   `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY` and
-  `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`). A dev
-  build or deploy takes them from the env files (`.env`, `.env.local`) and,
-  for whichever is empty, from the 1Password Agents vault item named by
-  `revenueCatWebItem` in `config/web-environments.json`
+  `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`). A
+  `local` build or `pnpm web` takes them from the env files (`.env`,
+  `.env.local`) and, for whichever is empty, from the 1Password Agents vault
+  item named by `revenueCatWebItem` in `config/web-environments.json`
   (`RevenueCat web billing sandbox (Dev project)`, one field per variable, labelled with
-  its name). So a clean checkout deploys the same paywall as one with the
+  its name). So a clean checkout builds the same paywall as one with the
   files, given `op` signed in as the agents' service account or the 1Password
-  app. A dev deploy (`--preview` too) **refuses** when the key or links are
-  still missing, when the key isn't a sandbox key (`rcb_sb_…`), or when the
-  links aren't a JSON object with at least one `sandbox/…` value, and after
-  building it checks the bundle holds the key. A local `pnpm web:build` or
-  `pnpm web:serve` without them still runs, with a warning, and an app that
-  can't sell. Beta and production never read the sandbox item.
+  app. Without them, or when the key isn't a sandbox key (`rcb_sb_…`) or the
+  links aren't a JSON object with at least one `sandbox/…` value, the build
+  still runs, with a warning, and an app that can't sell. Beta and production
+  never read the sandbox item.
 - **beta:** goes out with every Beta ship (`scripts/build-beta.sh`, run for each
-  push to `main` by the Beta ship workflow), against production ww-api. It's skipped, with `WEB_RESULT status=skipped`, when the beta profile's Help Center site doesn't answer, since the build would fail. It uses wrangler's own login
+  push to `main` by the Beta ship workflow), against the Beta ww-api, after the Beta maps and Turnstile frames. It's skipped, with `WEB_RESULT status=skipped`, when the beta profile's Help Center site doesn't answer, since the build would fail. It uses wrangler's own login
   on this Mac (`wrangler login`), like the other WitnessWork Workers.
 - **production** is a release (ADR 0037 §4): at the cut, with the production
   OTA update, never from CI.
@@ -299,13 +285,12 @@ app itself ships only at that release's cut (ADR 0042 §3).
 It **replaces whatever the host serves**, so it's only for a host that doesn't
 serve the web app yet. Before uploading, it fetches the host's `/` and refuses
 if it answers there with anything but the holding page or an error.
-`--replace-app` overrides that, and is for dev only.
+`--replace-app` overrides that.
 
 - **Gates:** a clean tree on a commit that's on `origin/main` or
   `origin/feat/web-device-sign-in`. No release tag is needed. Production still
   needs the `SHIP-PROD-<package.json version>` keyword and its 1Password
-  token approval, as above; `dev` still deploys only the integration
-  branch's head. It can't be combined with `--prebuilt` or `--preview`.
+  token approval, as above. It can't be combined with `--prebuilt`.
 - **Output:** it prints every file it uploads with its size and SHA-256, then
   both association files in full, before it reads a credential or uploads
   (`--dry-run` prints the same plan and stops).

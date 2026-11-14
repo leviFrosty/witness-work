@@ -177,8 +177,8 @@ The web app is this codebase built with react-native-web (ADR 0037).
 
 ```bash
 pnpm web                         # dev server against your local ww-api (.env)
-pnpm web:build                   # static export in dist/, dev profile
-pnpm web:build --env beta        # local | dev | beta | production
+pnpm web:build                   # static export in dist/, local profile
+pnpm web:build --env beta        # local | beta | production
 pnpm web:test                    # browser smoke tests of dist/ (e2e/web/README.md)
 ```
 
@@ -194,13 +194,13 @@ RevenueCat Billing's public key and links from the same files,
 `EXPO_PUBLIC_REVENUECAT_WEB_API_KEY` and
 `EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS` (`docs/web-purchases.md`); for
 development, the sandbox values are in the 1Password Agents item "RevenueCat
-web billing sandbox (Dev project)", which a `dev` web build reads when
+web billing sandbox (Dev project)", which a `local` web build reads when
 `.env.local` lacks them. Without the key the web sells
 nothing.
 
 Every `web:build` runs `pnpm sync:help` first, from its profile's
-`helpManifest` (the dev website for `local` and `dev`, `witnesswork.app` for
-`beta` and `production`), so the bundled Help Center snapshot
+`helpManifest` (the Beta website for `local` and `beta`, `witnesswork.app` for
+`production`), so the bundled Help Center snapshot
 (`src/assets/help-center/`) is current; the committed snapshot can predate the
 web and show nothing offline. Without a connection the build fails rather than
 ship an older snapshot. The fetched snapshot goes into `dist/` only: the
@@ -267,7 +267,7 @@ App Link intent filters cover two hosts ([`app-links.md`](./app-links.md)):
 `ww-proxy.leviwilkerson.com` (contacts `/c#<payload>` and legacy
 `/c/<payload>`, Buddies invites `/b`, handoffs `/h`) and `witnesswork.app`
 (exactly `/contacts`, `/buddies/invite` and `/accounts/handoff`). Development
-builds also claim `dev.witnesswork.app`. Automatic Android App Links
+builds also claim `beta.witnesswork.app`. Automatic Android App Links
 additionally require each host's `/.well-known/assetlinks.json` to list each
 package and signing certificate. On Android 11 and lower, the app becomes the
 default handler only if every `autoVerify` host verifies, so a new host's
@@ -292,7 +292,7 @@ no secrets. Alerts need Google Play services, so use an emulator image with
 Google APIs; the sending key lives in ww-api (`FCM_SERVICE_ACCOUNT_JSON`).
 Development builds don't verify App Links (the debug key isn't in
 `assetlinks.json`), so let the emulator open them, for each host, with
-`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com witnesswork.app dev.witnesswork.app`
+`adb shell pm set-app-links-user-selection --user cur --package com.leviwilkerson.jwtimedev true ww-proxy.leviwilkerson.com witnesswork.app beta.witnesswork.app`
 (check with `adb shell pm get-app-links com.leviwilkerson.jwtimedev`), or
 drive invites with `wwv link`.
 
@@ -494,7 +494,7 @@ and continue only its missing submission.
 
 ## Production build & App Store upload (fully local)
 
-For the complete iOS + Android release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). It runs the iOS build/upload below, immediately builds the Android AAB, then verifies processing and stages/preflights both stores before submitting either for review. Both artifacts use the same release commit and marketing version; any failure before the shared submission gate stops both platforms. Tag pushes run validation and create a GitHub Release; they do not build or upload. Before tagging, `/cut-release` runs `scripts/release-api.sh` so unreleased ww-api commits deploy first.
+For the complete iOS + Android release workflow, invoke `/cut-release` (see `.agents/skills/cut-release/SKILL.md`). It runs the iOS build/upload below, immediately builds the Android AAB, then verifies processing and stages/preflights both stores before submitting either for review. Both artifacts use the same release commit and marketing version; any failure before the shared submission gate stops both platforms. Tag pushes run validation and create a GitHub Release; they do not build or upload. Before tagging, `/cut-release` runs `scripts/release-api.sh` so the production API serves the API code on `main` first.
 
 **We intentionally do not use EAS Build cloud services for production.** Every production build runs on our own hardware via `eas build --local` so we never pay for build credits. The EAS CLI is still used as the local build orchestrator and for `autoIncrement` (fetching the next build number from EAS — free; only cloud builder minutes cost money).
 
@@ -547,7 +547,7 @@ production configuration, run
 `pnpm run build:android:production` builds the production bundle. The existing
 `build` and `build:production` commands target the iOS simulators.
 
-For a local backend, start `pnpm dev` in `~/dev/ww-api` with its Wrangler secrets
+For a local backend, start `pnpm dev` in `services/api` with its Wrangler secrets
 configured (`HERE_API_KEY` is server-side and powers autocomplete/geocoding).
 Keep `EXPO_PUBLIC_API_BASE_URL=http://localhost:8787` in the app development env.
 Boot/connect the Android device before running `android` or `dev:android`; those
@@ -641,7 +641,8 @@ Beta ships itself: every push to `main` starts the **Beta ship** workflow ([`.gi
   background and apply on the next cold launch; Settings → Check for Update can
   download and restart immediately. See [OTA updates](./ota-updates.md).
 
-- **Backend first:** Beta calls the production API, so before either path `scripts/release-api.sh` releases ww-api `main` if it has unreleased commits. It stops if ww-api has an unmerged branch with this branch's name. See the `release-process` skill.
+- **Backend first:** Beta calls the Beta API (`api-beta.witnesswork.app`), so before either path `scripts/release-api.sh --env beta` waits for the Beta deploy of the last commit on `main` that touched `services/api`, and starts one if none is running. See the `release-process` skill.
+- **Web beta last:** after the phone build, the script deploys the Beta maps and Turnstile frames and the web beta ([web hosting](./web-hosting.md#deploying)).
 
 Prerequisites are the same as production builds, plus:
 
@@ -654,5 +655,5 @@ Prerequisites are the same as production builds, plus:
 Beta sells the same catalog as the App Store app, so supporter features can be tested with sandbox purchases in TestFlight:
 
 - **App Store Connect:** the WitnessWork Beta app has its own copy of every subscription and consumable, named `jwtimebeta_<suffix>` because product ids must be unique across the Apple account. Names, group levels, per-territory prices, availability and the pause offers (`supporter_pause_<n>m_<productId>`) match production.
-- **RevenueCat:** the "WitnessWork Beta" App Store app lives in the **production** RevenueCat project, not a separate one. ww-api checks Supporter status against that project, and Beta calls the production API. Each Beta product sits in the same entitlements and offering packages as its production twin. The public SDK key is listed by `rc apps keys app6fbb58486d`.
+- **RevenueCat:** the "WitnessWork Beta" App Store app lives in the **production** RevenueCat project, not a separate one. The Beta API checks Supporter status against that project. Each Beta product sits in the same entitlements and offering packages as its production twin. The public SDK key is listed by `rc apps keys app6fbb58486d`.
 - **Keep them in sync:** after adding products or offerings to production, run `node scripts/sync-beta-catalog.mjs`. It fills in whatever is missing and never edits or deletes. Mirror price changes to existing products by hand.

@@ -1,6 +1,6 @@
 # Scribe AI protocol
 
-The wire contract between the WitnessWork app (`src/features/scribe/lib/scribeClient.ts`) and ww-api (`ww-api/src/scribe/`). Why it's shaped this way: [ADR 0032](./adr/0032-scribe-ai-agent-harness.md). It replaces the Notes Import contract (ww-api's OpenAPI docs, `/notes-import/*`), which ends in a hard cutover ([Legacy cutover](#legacy-cutover)). Operating it (KV switches, the cutover runbook, real-model checks) is in ww-api's `AGENTS.md` → Scribe AI.
+The wire contract between the WitnessWork app (`src/features/scribe/lib/scribeClient.ts`) and ww-api (`services/api/src/scribe/`). Why it's shaped this way: [ADR 0032](./adr/0032-scribe-ai-agent-harness.md). It replaces the Notes Import contract (ww-api's OpenAPI docs, `/notes-import/*`), which ends in a hard cutover ([Legacy cutover](#legacy-cutover)). Operating it (KV switches, the cutover runbook, real-model checks) is in `services/api/AGENTS.md` → Scribe AI.
 
 This document is normative. "Must" is a requirement on whichever side it names; a change to anything here is a change to this file first.
 
@@ -35,7 +35,7 @@ sequenceDiagram
 
 ## Routes
 
-`{BASE}` is the app's `apis` base (`https://api.witnesswork.app`, `https://api-dev.witnesswork.app` in development builds, and `https://ww-proxy.leviwilkerson.com` in builds before ADR 0042; `EXPO_PUBLIC_API_BASE_URL` overrides it).
+`{BASE}` is the app's `apis` base (`https://api.witnesswork.app`, `https://api-beta.witnesswork.app` in Beta builds, `http://localhost:8787` in development builds, and `https://ww-proxy.leviwilkerson.com` in builds before ADR 0042; `EXPO_PUBLIC_API_BASE_URL` overrides it).
 
 | Method | Path                         | Auth   | Purpose                                                       | Rate-limit family                        |
 | ------ | ---------------------------- | ------ | ------------------------------------------------------------- | ---------------------------------------- |
@@ -343,9 +343,9 @@ interface ScribeContextWire {
    */
   days: string[]
   /**
-   * During setup, before the User has picked a role (Bring in your records
-   * can open Scribe AI), it's `not_chosen` with hours and no goal or cap, so
-   * time is logged as said.
+   * During setup, before the User has picked a role (Bring in your records can
+   * open Scribe AI), it's `not_chosen` with hours and no goal or cap, so time
+   * is logged as said.
    */
   publisher: {
     role: string // the Publisher role this month (Role History resolved)
@@ -804,7 +804,7 @@ The dev bypass lifts **usage limits only**. A `dev` session (opened with the dev
 - `GET /notes-import/status` keeps answering unchanged: older app versions read App Attest and Play Integrity capabilities from it to open account sessions. At cutover, set KV `notes-import:min-version` to the first Scribe AI app version so older composers show their own update message instead of a failed import.
 - `on` runs the old handlers unchanged (an escape hatch while the Scribe AI rollout is watched), and so does a failed KV read, so a KV hiccup never sends every older app to Update Required. `POST /admin/notes-import/reset` answers only while the routes are on (404 otherwise). The Notes Import code stays in ww-api, unreachable while off, until the switch is retired in a follow-up.
 - No Import Credit, window, or hash record carries over. Notes Import's index DO data is left to expire.
-- The switch must be `on` before a ww-api deploy with Scribe AI reaches an environment whose apps don't have Scribe AI yet. The cutover itself (store release, `notes-import:min-version`, then the switch off, then a week of watching) is a runbook in ww-api's `AGENTS.md` → Scribe AI → Release and cutover.
+- The switch must be `on` before a ww-api deploy with Scribe AI reaches an environment whose apps don't have Scribe AI yet. The cutover itself (store release, `notes-import:min-version`, then the switch off, then a week of watching) is a runbook in `services/api/AGENTS.md` → Scribe AI → Release and cutover.
 
 ## Logging and privacy
 

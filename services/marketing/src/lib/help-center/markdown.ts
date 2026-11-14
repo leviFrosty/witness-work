@@ -24,15 +24,13 @@ export class AnswerMarkdownError extends Error {}
 const ALLOWED_SUMMARY =
   'paragraphs, # and ## headings, bold, italic, ~~strike~~, links, line breaks, bulleted or numbered lists, and screenshots in their own paragraph'
 
-/** A screenshot in `content/help/images`, as the site serves it. */
 export type HelpImage = {
-  /** The file name answers use: `submit-report.webp`. */
   name: string
-  /** Absolute URL of the served copy, whose name carries a content hash. */
+
   src: string
   width: number
   height: number
-  /** Stable id for the image block: `help-` plus the content hash. */
+
   id: string
 }
 
@@ -251,8 +249,6 @@ export function markdownToDoc(
 ): RichTextDoc {
   const ctx: Context = { siteUrl, images }
   const tree = fromMarkdown(markdown, {
-    // Bold and italic close next to Chinese, Japanese and Korean punctuation
-    // ("**设置：**请"), which plain CommonMark leaves as literal stars.
     extensions: [
       gfmStrikethrough({ singleTilde: false }),
       cjkFriendlyExtension(),
@@ -334,10 +330,6 @@ export function docToPlainText(doc: RichTextDoc): string {
     .trim()
 }
 
-/**
- * The answer's Markdown with each screenshot's file name swapped for the URL
- * the site serves it at, for the `.md` alternates and llms-full.txt.
- */
 export function markdownWithImageUrls(
   markdown: string,
   images: ImageLookup

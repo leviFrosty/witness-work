@@ -1,31 +1,32 @@
 # Passkeys and web accounts protocol
 
-The wire contract for passkeys, web sessions, web sign-up, and approving a browser from a phone, between the WitnessWork app (`src/lib/serverAccount`, `src/lib/passkeys`, `modules/passkeys`) and ww-api (`ww-api/src/accounts`). Why it exists is in [ADR 0038](./adr/0038-passkeys-and-web-accounts.md); the web app is [ADR 0037](./adr/0037-witnesswork-on-the-web.md). Everything here sits on the server account in [`accounts-protocol.md`](./accounts-protocol.md): its keys, its envelopes, its sessions, its error envelope and codes, and its activity log.
+The wire contract for passkeys, web sessions, web sign-up, and approving a browser from a phone, between the WitnessWork app (`src/lib/serverAccount`, `src/lib/passkeys`, `modules/passkeys`) and ww-api (`services/api/src/accounts`). Why it exists is in [ADR 0038](./adr/0038-passkeys-and-web-accounts.md); the web app is [ADR 0037](./adr/0037-witnesswork-on-the-web.md). Everything here sits on the server account in [`accounts-protocol.md`](./accounts-protocol.md): its keys, its envelopes, its sessions, its error envelope and codes, and its activity log.
 
 A passkey is a credential of an existing server account, never an identity of its own. It signs in, and when it supports the WebAuthn PRF extension it also delivers the account key (it _unlocks_). The account key stays the User's one secret; the server never sees it or a PRF output.
 
 ## Relying party
 
-| Worker env | RP ID                     | Web origins for that RP ID                                                                                                   |
-| ---------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| production | `app.witnesswork.app`     | `https://app.witnesswork.app`, `https://beta.app.witnesswork.app`                                                            |
-| dev        | `app-dev.witnesswork.app` | `https://app-dev.witnesswork.app`                                                                                            |
-| dev        | `localhost`               | `http://localhost:8081`, `http://localhost:8082`, `http://localhost:19006`, `http://localhost:4173`, `http://localhost:5173` |
+| Worker env           | RP ID                      | Web origins for that RP ID                                                                                                   |
+| -------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| production           | `app.witnesswork.app`      | `https://app.witnesswork.app`, `https://beta.app.witnesswork.app`                                                            |
+| beta                 | `beta.app.witnesswork.app` | `https://beta.app.witnesswork.app`                                                                                           |
+| dev (a local worker) | `beta.app.witnesswork.app` | `https://beta.app.witnesswork.app`                                                                                           |
+| dev (a local worker) | `localhost`                | `http://localhost:8081`, `http://localhost:8082`, `http://localhost:19006`, `http://localhost:4173`, `http://localhost:5173` |
 
 - **Pairs.** ww-api checks a response's origin and RP ID as a pair from this table, never as two separate lists, and checks the authenticator data's `rpIdHash` against the RP ID its challenge was issued for.
-- **Android origins** (`android:apk-key-hash:<b64u(SHA-256(signing certificate))>`) pair with the env's first RP ID: production the two release keys of `com.leviwilkerson.jwtime` (Play app signing and upload); dev those two and the debug key of `com.leviwilkerson.jwtimedev`. The pairs are vars (`PASSKEY_RP_IDS`, `PASSKEY_ORIGINS`), so a key can be added without code.
+- **Android origins** (`android:apk-key-hash:<b64u(SHA-256(signing certificate))>`) pair with the env's first RP ID: production the two release keys of `com.leviwilkerson.jwtime` (Play app signing and upload); dev those two and the debug key of `com.leviwilkerson.jwtimedev`; Beta none, since Android has no Beta app. The pairs are vars (`PASSKEY_RP_IDS`, `PASSKEY_ORIGINS`), so a key can be added without code.
 - iOS sends `https://<RP ID>` as its origin, like the web.
-- **The key boundary.** Any page on the RP ID or under it can ask for PRF output, so whatever runs there can unwrap account keys. For production that's the web app and its beta (`beta.app.witnesswork.app`), and the Beta iOS app. Nothing else is ever hosted under `app.witnesswork.app`: no other subdomain, no wildcard DNS record, no preview URL. Beta deploys are held to the same bar as beta OTA updates (ADR 0037 §4).
+- **The key boundary.** Any page on the RP ID or under it can ask for PRF output, so whatever runs there can unwrap account keys. For production that's the web app and the web beta's host (`beta.app.witnesswork.app`), which sits under it. The Beta web app, the Beta iOS app and development builds use Beta's own RP ID, `beta.app.witnesswork.app`, so a Beta passkey never shows up when signing in to production. Nothing else is ever hosted under `app.witnesswork.app`: no other subdomain, no wildcard DNS record, no preview URL. Beta deploys are held to the same bar as beta OTA updates (ADR 0037 §4).
 - **The RP ID never changes** once the first passkey exists.
 
 ### Association files
 
 Served by the web app's host with no redirects, `application/json`:
 
-- `/.well-known/apple-app-site-association`: `{ "webcredentials": { "apps": [...] } }` only (the host is never an app-link domain, ADR 0042), listing `Y3KE7B7AHJ.com.leviwilkerson.jwtime` and `….jwtimebeta`, plus `….jwtimedev` on `app-dev`.
-- `/.well-known/assetlinks.json`: `delegate_permission/common.get_login_creds` for `com.leviwilkerson.jwtime` with its two release keys, plus `com.leviwilkerson.jwtimedev` with the debug key on `app-dev`.
+- `/.well-known/apple-app-site-association`: `{ "webcredentials": { "apps": [...] } }` only (the host is never an app-link domain, ADR 0042), listing `Y3KE7B7AHJ.com.leviwilkerson.jwtime` and `….jwtimebeta`, plus `….jwtimedev` on `beta.app.witnesswork.app`.
+- `/.well-known/assetlinks.json`: `delegate_permission/common.get_login_creds` for `com.leviwilkerson.jwtime` with its two release keys, plus `com.leviwilkerson.jwtimedev` with the debug key on `beta.app.witnesswork.app`.
 
-Each web profile generates its own at build time from `config/web-associations.json` (`docs/web-hosting.md#association-files`): `app.witnesswork.app` and `beta.app.witnesswork.app` never list the development app or its debug key. The apps claim `webcredentials:app.witnesswork.app` (production and Beta) and `webcredentials:app-dev.witnesswork.app?mode=developer` (development).
+Each web profile generates its own at build time from `config/web-associations.json` (`docs/web-hosting.md#association-files`): `app.witnesswork.app` never lists the development app or its debug key. The apps claim `webcredentials:app.witnesswork.app` (production), `webcredentials:beta.app.witnesswork.app` (Beta) and `webcredentials:beta.app.witnesswork.app?mode=developer` (development).
 
 ### The user handle and the name
 
@@ -76,7 +77,7 @@ Both are stateless: a payload MAC'd under their own Worker secret (never the acc
 
 ## Routes
 
-`{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-dev.witnesswork.app` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
+`{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-beta.witnesswork.app` in Beta builds, `http://localhost:8787` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
 
 `{BASE}/accounts/v1/…`, with the error envelope and codes of [`accounts-protocol.md`](./accounts-protocol.md#requests). **Bearer** means an access token from a session; **signed** means the account key's self-signed envelope (`{ payload, signature }`, op as named), whose `accountPub` must be the token's account when both are required. **Signed envelopes work once:** every signed op here, and `backup/delete`, records its `nonce` for the envelope's 5 minutes, so the same envelope again is 409 `replay`; a retry signs a new one. **Step-up** means a web session must have passed a [step-up](#step-up-on-the-web) in the last 5 minutes (`step_up_required` otherwise); phone sessions are exempt, since they attested and check Face ID on the device.
 
@@ -149,7 +150,7 @@ A server-checked passkey tap for sensitive actions.
 
 **`POST /passkeys/register/options`**, Bearer: `{ rpId? }` → `{ ok, challengeToken, options, userHandle }`. `options` is `PublicKeyCredentialCreationOptionsJSON` with the account's user handle, the name, and the account's passkeys in `excludeCredentials`. Mints the user handle the first time.
 
-The web sends no `rpId` here or anywhere else, so the RP ID is the one its origin pairs with (`beta.app.witnesswork.app`'s is `app.witnesswork.app`, not its own host); the get that confirms PRF after adding uses the `rp.id` these options name. Phones send their build's RP ID.
+The web sends no `rpId` here or anywhere else, so the RP ID is the one its origin pairs with (on the Beta API, `beta.app.witnesswork.app`'s is its own host); the get that confirms PRF after adding uses the `rp.id` these options name. Phones send their build's RP ID.
 
 **`POST /passkeys`**, Bearer **and** signed (op `passkey/add`), live session, Step-up:
 
@@ -216,7 +217,7 @@ Bearer **and** signed (op `passkey/remove`), Step-up: `{ accountPub, ts, nonce, 
 
 **Controls** (no device integrity on the web, ADR 0038 §5):
 
-- **Turnstile:** managed mode, actions `web-signup` and `web-recovery`. The widget runs in the web app's Turnstile frame on its own origin (`verify.witnesswork.app`, dev `verify-dev.witnesswork.app`), never in the app's page, and the frame posts the app only the token ([`web-turnstile.md`](./web-turnstile.md)). The widget's only hostname is the frame's, and ww-api requires Siteverify to answer it (`TURNSTILE_HOSTNAMES`; Cloudflare's test keys skip the host check). Siteverify gets `remoteip` and an `idempotency_key`. The site key comes from `GET /app/v1/config` (`webSignup.turnstileSiteKey`). The dev and local workers use Cloudflare's test keys unless a dev widget's are set.
+- **Turnstile:** managed mode, actions `web-signup` and `web-recovery`. The widget runs in the web app's Turnstile frame on its own origin (`verify.witnesswork.app`; Beta and development `verify-beta.witnesswork.app`), never in the app's page, and the frame posts the app only the token ([`web-turnstile.md`](./web-turnstile.md)). The widget's only hostname is the frame's, and ww-api requires Siteverify to answer it (`TURNSTILE_HOSTNAMES`; Cloudflare's test keys skip the host check). Siteverify gets `remoteip` and an `idempotency_key`. The site key comes from `GET /app/v1/config` (`webSignup.turnstileSiteKey`). The dev and local workers use Cloudflare's test keys unless a dev widget's are set.
 - **Caps** (a Durable Object): `WEB_SIGNUP_PER_IP_DAY` (default 3) per IP a rolling day, IPv6 by /64, and `WEB_SIGNUP_PER_ASN_HOUR` (default 30) per network (ASN) a rolling hour. Over either is 429 `rate_limited` with `Retry-After`. If the counter can't be reached, `web/signup` is 503 `unavailable` with `Retry-After`. Counts are keyed by an HMAC of the IP or ASN under a secret that rotates daily, never the IP.
 - **Kill switch:** KV `accounts:web-signup`, `on` when absent (then the `WEB_SIGNUP` var). `off` refuses both sign-up routes with 503 `disabled`; a failed KV read counts as `on`, since Turnstile and the caps still apply. `GET /app/v1/config` says `webSignup.enabled`, and the web says sign-up is paused.
 
@@ -232,7 +233,7 @@ The handoff ([accounts-protocol.md](./accounts-protocol.md#handoff-set-up-anothe
 https://app.witnesswork.app/approve#1<b64u(channelId[16] ‖ browserPub[32] ‖ secret[16])>
 ```
 
-- The host is the web app's (`app-dev.witnesswork.app` on dev; a localhost origin from the dev list on a local web build), never an app link. Opened in a browser, `/approve` explains how to scan it from the app.
+- The host is the web app's (`beta.app.witnesswork.app` on Beta; a localhost origin from the dev list on a local web build), never an app link. Opened in a browser, `/approve` explains how to scan it from the app.
 - `browserPub` is the browser's temporary X25519 public key. `secret` is 16 random bytes. The fragment never reaches a server.
 - The phone accepts a code only from its own scanner (Settings → Account → Sign In on a Computer), and only for its env's hosts. Sign In with QR Code's scanner doesn't claim one; it says to scan it from Sign In on a Computer.
 
@@ -319,7 +320,7 @@ A browser can't set headers on a WebSocket, and Cloudflare's request logs record
 
 ## CORS
 
-- **Origins:** each env's exact list of web origins (`WEB_APP_ORIGINS`): production `https://app.witnesswork.app` and `https://beta.app.witnesswork.app`; dev `https://app-dev.witnesswork.app` and the localhost ports above. No wildcards. `Vary: Origin`.
+- **Origins:** each env's exact list of web origins (`WEB_APP_ORIGINS`): production `https://app.witnesswork.app` and `https://beta.app.witnesswork.app`; Beta `https://beta.app.witnesswork.app`; dev the localhost ports above. No wildcards. `Vary: Origin`.
 - **Allowed request headers:** `authorization`, `content-type`, `if-match`, `if-none-match`, `x-ww-*` and `x-buddies-*` except `x-ww-admin-token` (and `x-ww-dev-bypass` on a worker without the dev bypass token, so outside dev), `sentry-trace`, `baggage`.
 - **Exposed response headers:** `ETag`, `Retry-After`, `Date`, `WWW-Authenticate`, `x-ww-updated-at`.
 - Every response to an allowed origin carries them, errors included. No cookies (`Access-Control-Allow-Credentials` is never sent). Preflights (`Access-Control-Max-Age: 7200`) are answered before any rate limit and never count against one.

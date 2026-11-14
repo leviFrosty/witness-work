@@ -10,18 +10,18 @@ only the token.
 
 ## Hosts
 
-| Frame env    | Worker          | Host                         | App origins that may frame it                                                 |
-| ------------ | --------------- | ---------------------------- | ----------------------------------------------------------------------------- |
-| `dev`        | `ww-verify-dev` | `verify-dev.witnesswork.app` | `https://app-dev.witnesswork.app`, `http://localhost:*`, `http://127.0.0.1:*` |
-| `production` | `ww-verify`     | `verify.witnesswork.app`     | `https://beta.app.witnesswork.app`, `https://app.witnesswork.app`             |
+| Frame env    | Worker           | Host                          | App origins that may frame it                                                  |
+| ------------ | ---------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| `beta`       | `ww-verify-beta` | `verify-beta.witnesswork.app` | `https://beta.app.witnesswork.app`, `http://localhost:*`, `http://127.0.0.1:*` |
+| `production` | `ww-verify`      | `verify.witnesswork.app`      | `https://app.witnesswork.app`                                                  |
 
 Each web profile names its frame in `config/web-environments.json`
-(`verifyOrigin`): `local` and `dev` frame `verify-dev`, `beta` and `production`
-frame `verify`. The app's CSP `frame-src` allows that origin and the maps frame,
+(`verifyOrigin`): `local` and `beta` frame `verify-beta`, `production`
+frames `verify`. The app's CSP `frame-src` allows that origin and the maps frame,
 nothing else; `script-src` names no host but its own.
 
 The Turnstile widget's hostnames list only the frame's host. ww-api checks that
-Siteverify answers it (`TURNSTILE_HOSTNAMES`, ww-api `AGENTS.md`), so a token
+Siteverify answers it (`TURNSTILE_HOSTNAMES`, `services/api/AGENTS.md`), so a token
 solved anywhere else fails with `hostname-mismatch`.
 
 ## How it works
@@ -80,35 +80,38 @@ static files only.
 ## Build and deploy
 
 ```bash
-pnpm web:build:verify dev                 # web/verify-frame/dist
-pnpm web:serve:verify dev --port 8791     # wrangler dev over that build
-pnpm web:deploy:verify:dev --dry-run      # the plan, with anything that refuses it
-pnpm web:deploy:verify:dev
+pnpm web:build:verify beta                 # web/verify-frame/dist
+pnpm web:serve:verify beta --port 8791     # wrangler dev over that build
+pnpm web:deploy:verify:beta --dry-run      # the plan, with anything that refuses it
+pnpm web:deploy:verify:beta
 ```
 
-`dev` deploys a clean checkout whose `HEAD` is pushed, so a branch's app half
-can be checked against its frame before it lands. It uses wrangler's own login.
+`beta` deploys a clean checkout whose `HEAD` is pushed, so a branch's app half
+can be checked against its frame before it lands; the Beta ship deploys it
+from `main` (`scripts/build-beta.sh`). It uses wrangler's own login.
 `production` needs the typed `SHIP-PROD-<version>` (dry runs too), the tagged
 release commit on `origin/main`, and the `WitnessWork web deploy (production)`
 token read through the 1Password app. Never `wrangler deploy` by hand.
 
-### Before any beta or production web deploy: prove a real widget on dev
+### Before any production web deploy: prove a real widget on Beta
 
 Cloudflare's test key renders anywhere and ww-api skips the host check for it,
-so dev on the test key proves the plumbing, not the settings below. Before the
-first beta or production web deploy that frames a `verify` host, the owner:
+so a local ww-api on the test key proves the plumbing, not the settings below.
+The Beta API has no widget yet, so web sign-up and recovery answer `disabled`
+there until step 2. Before the first production web deploy that frames a
+`verify` host, the owner:
 
-1. **Creates a real dev widget**: managed mode, hostname
-   `verify-dev.witnesswork.app` only. Keep its keys in 1Password.
-2. **Sets its keys on api-dev**: `TURNSTILE_SITE_KEY` in `[env.dev.vars]`
-   (with `TURNSTILE_HOSTNAMES = "verify-dev.witnesswork.app"`) and the
-   `TURNSTILE_SECRET_KEY` secret (`wrangler secret put … --env dev`), after
-   ww-api's hostname check has deployed there.
+1. **Creates a real Beta widget**: managed mode, hostname
+   `verify-beta.witnesswork.app` only. Keep its keys in 1Password.
+2. **Sets its keys on the Beta API**: `TURNSTILE_SITE_KEY` in `[env.beta.vars]`
+   (with `TURNSTILE_HOSTNAMES = "verify-beta.witnesswork.app"`) and the
+   `TURNSTILE_SECRET_KEY` secret (`wrangler secret put … --env beta`), in
+   `services/api`.
 3. **Passes a check end to end through the frame**: recovery-key sign-in on
-   `app-dev.witnesswork.app` in Chromium, Safari and Firefox, with the token
+   `beta.app.witnesswork.app` in Chromium, Safari and Firefox, with the token
    accepted by ww-api's Siteverify (host and action checked). The frame has no
    report endpoint, so record its CSP violations in the frame itself: in the
-   devtools console with the `verify-dev` frame selected, run
+   devtools console with the `verify-beta` frame selected, run
    `addEventListener('securitypolicyviolation', (e) => console.log(e.effectiveDirective, e.blockedURI))`
    before the widget loads (or reload the frame), and keep what it logs.
    Cloudflare's Web Analytics beacon (`static.cloudflareinsights.com`), which
@@ -130,8 +133,7 @@ first beta or production web deploy that frames a `verify` host, the owner:
 ### Production runbook (verify.witnesswork.app)
 
 The owner runs this at the cut of the first release whose web build frames
-`verify.witnesswork.app`. Agents never run it. Beta frames
-`verify.witnesswork.app` too, so the order is the same for a beta web deploy.
+`verify.witnesswork.app`. Agents never run it.
 A build that frames a missing host, or a ww-api that refuses the frame's
 tokens, fails web sign-up and recovery-key sign-in. In this order:
 
@@ -141,16 +143,16 @@ tokens, fails web sign-up and recovery-key sign-in. In this order:
    - Dry run, then deploy, from the tagged release commit:
      `WW_RELEASE_CONFIRM=SHIP-PROD-X.Y.Z pnpm web:deploy:verify:production`.
    - Check: `curl -sI https://verify.witnesswork.app/` shows the CSP with
-     `frame-ancestors https://beta.app.witnesswork.app https://app.witnesswork.app`
-     and `Referrer-Policy: no-referrer` (or `strict-origin`, if the dev check
+     `frame-ancestors https://app.witnesswork.app`
+     and `Referrer-Policy: no-referrer` (or `strict-origin`, if the Beta check
      above needed it).
 2. **ww-api.** Create the production widget (managed mode, the single hostname
    `verify.witnesswork.app`), then set production's `TURNSTILE_SITE_KEY`,
    `TURNSTILE_HOSTNAMES = "verify.witnesswork.app"`, and the
-   `TURNSTILE_SECRET_KEY` secret (ww-api `AGENTS.md`). Without the hostnames,
+   `TURNSTILE_SECRET_KEY` secret (`services/api/AGENTS.md`). Without the hostnames,
    ww-api keeps web sign-up and recovery off.
-3. **Any beta or production web deploy.** Then sign in with a recovery key on
-   beta.
+3. **The production web deploy.** Then sign in with a recovery key on
+   `app.witnesswork.app`.
 
 **Roll back** the frame by deploying the previous release's tag the same way.
 
@@ -163,8 +165,8 @@ tokens, fails web sign-up and recovery-key sign-in. In this order:
   (`scripts/tests/web-verify.node.mjs`).
 - Cloudflare's always-passing test key (`1x00000000000000000000AA`) renders on
   any host and skips ww-api's host check, so it can't show the hostname check
-  or the settings above. That needs a real widget (see "Before any beta or
-  production web deploy").
+  or the settings above. That needs a real widget (see "Before any production
+  web deploy").
 
 ## Follow-ups
 

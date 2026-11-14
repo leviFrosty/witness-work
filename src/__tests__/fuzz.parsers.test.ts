@@ -26,7 +26,7 @@ const seed = process.env.FC_SEED ? Number(process.env.FC_SEED) : undefined
 const runs = { numRuns: 300, seed }
 
 const shareOrigin = 'https://ww-proxy.leviwilkerson.com'
-const newOrigins = ['https://witnesswork.app', 'https://dev.witnesswork.app']
+const newOrigins = ['https://witnesswork.app', 'https://beta.witnesswork.app']
 
 const linkLike = fc.oneof(
   fc.string({ unit: 'binary' }),

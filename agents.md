@@ -4,9 +4,17 @@ WitnessWork = iOS, Android and web field-service tracker for Jehovah's Witnesses
 
 ## Backend Service
 
-ww-api is the backend api. Find the code at ~/dev/ww-api.
+The backend API is in this repo at [`services/api`](./services/api) (a Cloudflare Worker with its own pnpm workspace; its agent guide is [`services/api/AGENTS.md`](./services/api/AGENTS.md)). A feature's app half and API half go in the same pull request.
 
-Beta and production app builds release ww-api `main` first (`scripts/release-api.sh`), so land a feature's backend half on ww-api `main` before shipping its app half.
+## Environments
+
+There are exactly three, and [`readme.md`](./readme.md#environments) has the full table:
+
+- **Production** is what users have: the store apps, `app.witnesswork.app`, `api.witnesswork.app`. Nothing reaches it by itself.
+- **Beta** is the tip of `main`: the WitnessWork Beta app on TestFlight, `beta.app.witnesswork.app`, and its own API at `api-beta.witnesswork.app` with its own data. Every merge to `main` deploys all of it.
+- **Development** is local only. Nothing is deployed for it: a development build calls the API you run on your machine (`http://localhost:8787`, or the verify loop's own worker).
+
+The API ships before the app that needs it: the Beta ship waits for the Beta API (`scripts/release-api.sh --env beta`), and a production release deploys the production API first (`scripts/release-api.sh`). Keep API changes backward compatible, because production's API serves older app versions.
 
 **Beta is the tip of `main`, and it ships itself.** Every push to `main` ships to WitnessWork Beta from one of our own Macs (the **Beta ship** workflow; see the [`release-process`](./.agents/skills/release-process/SKILL.md#beta) skill), and the commit's **Beta ship** status turns green when it is there. Don't run `scripts/build-beta.sh` by hand or offer a Beta build: merge the change, then test it on Beta.
 

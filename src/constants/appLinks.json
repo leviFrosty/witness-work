@@ -1,7 +1,7 @@
 {
   "legacyHost": "ww-proxy.leviwilkerson.com",
   "host": "witnesswork.app",
-  "devHost": "dev.witnesswork.app",
+  "betaHost": "beta.witnesswork.app",
   "webAppHost": "app.witnesswork.app",
   "paths": {
     "contact": "/contacts",

@@ -6,6 +6,7 @@ import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import {
   applyDevRelease,
+  defaultApiBaseUrl,
   isReleaseRun,
   forwardAndroidBackend,
   loadLocalEnv,
@@ -91,26 +92,44 @@ test('a blank API base resolves to the build variant’s API, as the app does', 
     EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'test_dev',
     EXPO_PUBLIC_API_BASE_URL: '',
   }
-  assert.equal(validateLocalEnv(env, 'ios').hostname, 'api-dev.witnesswork.app')
-  for (const variant of ['beta', 'production'])
-    assert.equal(
-      validateLocalEnv(
-        {
-          ...env,
-          APP_VARIANT: variant,
-          EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'appl',
-        },
-        'ios'
-      ).hostname,
-      'api.witnesswork.app'
-    )
+  assert.equal(validateLocalEnv(env, 'ios').origin, 'http://localhost:8787')
+  const release = (variant, platform) =>
+    validateLocalEnv(
+      {
+        ...env,
+        APP_VARIANT: variant,
+        EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY: 'appl',
+        EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY: 'goog',
+        GOOGLE_MAPS_ANDROID_API_KEY: 'android_maps',
+      },
+      platform
+    ).origin
+  assert.equal(release('beta', 'ios'), 'https://api-beta.witnesswork.app')
+  for (const platform of ['ios', 'android'])
+    assert.equal(release('production', platform), 'https://api.witnesswork.app')
   assert.equal(
     validateLocalEnv(
-      { ...env, EXPO_PUBLIC_API_BASE_URL: 'http://localhost:8787' },
+      { ...env, EXPO_PUBLIC_API_BASE_URL: 'http://127.0.0.1:8791' },
       'ios'
     ).host,
-    'localhost:8787'
+    '127.0.0.1:8791'
   )
+})
+
+test('Android has no Beta app, so its beta build defaults to the production API', () => {
+  assert.equal(
+    defaultApiBaseUrl('beta', 'android'),
+    'https://api.witnesswork.app'
+  )
+  assert.equal(
+    defaultApiBaseUrl('beta', 'ios'),
+    'https://api-beta.witnesswork.app'
+  )
+  for (const platform of ['ios', 'android'])
+    assert.equal(
+      defaultApiBaseUrl('development', platform),
+      'http://localhost:8787'
+    )
 })
 
 test('missing platform keys, placeholder Maps keys and store test keys stop before builds', () => {

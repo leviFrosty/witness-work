@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.leviwilkerson.jwtime",
+      "sha256_cert_fingerprints": [
+        "4C:13:98:34:37:2C:85:5A:6E:A6:19:CF:AF:03:D4:6B:91:14:14:2D:EB:CB:CB:CB:F1:C1:C7:40:55:3E:1C:AC",
+        "C5:1E:FF:DC:9B:BF:6B:C0:2B:7B:4C:31:92:90:0B:AC:42:67:BD:6E:05:F4:CF:C5:21:77:E5:36:23:A4:75:EB"
+      ]
+    }
+  }
+]

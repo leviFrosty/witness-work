@@ -52,8 +52,8 @@ describe('scrubShareLinkUrl', () => {
         'https://witnesswork.app/accounts/handoff?lang=es#[redacted]',
       ],
       [
-        'https://dev.witnesswork.app/contacts#H4sIAAAA',
-        'https://dev.witnesswork.app/contacts#[redacted]',
+        'https://beta.witnesswork.app/contacts#H4sIAAAA',
+        'https://beta.witnesswork.app/contacts#[redacted]',
       ],
       [
         'https://app.witnesswork.app/contacts#H4sIAAAA',
@@ -70,7 +70,7 @@ describe('scrubShareLinkUrl', () => {
   it('drops secrets from percent-encoded links on every host', () => {
     for (const link of [
       'https://witnesswork.app/contacts#H4sISECRET',
-      'https://dev.witnesswork.app/buddies/invite#1SECRET',
+      'https://beta.witnesswork.app/buddies/invite#1SECRET',
       'https://app.witnesswork.app/contacts#H4sISECRET',
       'https://witnesswork.app/accounts/handoff?lang=es#1SECRET',
       'https://ww-proxy.leviwilkerson.com/c#H4sISECRET',
@@ -162,7 +162,7 @@ describe('the web app’s link routes (docs/app-links.md "Without the app")', ()
             $current_url: url,
             $initial_current_url: url,
             $session_entry_url: url,
-            $referrer: `https://dev.witnesswork.app${route}#${fragment}`,
+            $referrer: `https://beta.witnesswork.app${route}#${fragment}`,
             link: `opened ${encodeURIComponent(url)}`,
           })
           expect(JSON.stringify(sent)).not.toContain(fragment)

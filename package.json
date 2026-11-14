@@ -64,16 +64,15 @@
     "update:production": "node scripts/ota.mjs production",
     "test:ota": "node --test scripts/tests/ota.node.mjs",
     "web:serve": "node scripts/web-host.mjs serve",
-    "web:deploy:dev": "node scripts/web-host.mjs deploy dev",
     "web:deploy:beta": "node scripts/web-host.mjs deploy beta",
     "web:deploy:production": "node scripts/web-host.mjs deploy production",
     "web:build:maps": "node scripts/web-maps.mjs build",
     "web:serve:maps": "node scripts/web-maps.mjs serve",
-    "web:deploy:maps:dev": "node scripts/web-maps.mjs deploy dev",
+    "web:deploy:maps:beta": "node scripts/web-maps.mjs deploy beta",
     "web:deploy:maps:production": "node scripts/web-maps.mjs deploy production",
     "web:build:verify": "node scripts/web-verify.mjs build",
     "web:serve:verify": "node scripts/web-verify.mjs serve",
-    "web:deploy:verify:dev": "node scripts/web-verify.mjs deploy dev",
+    "web:deploy:verify:beta": "node scripts/web-verify.mjs deploy beta",
     "web:deploy:verify:production": "node scripts/web-verify.mjs deploy production"
   },
   "dependencies": {

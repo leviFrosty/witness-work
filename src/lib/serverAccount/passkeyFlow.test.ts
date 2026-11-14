@@ -30,7 +30,7 @@ const ACCOUNT_PUB = deriveAccountSigningKey(ACCOUNT_KEY).publicKey
 const ACCOUNT_ID = 'A'.repeat(22)
 const CREDENTIAL = 'Y3JlZA'
 const PRF = new Uint8Array(32).fill(9)
-const RP_ID = 'app-dev.witnesswork.app'
+const RP_ID = 'beta.app.witnesswork.app'
 
 const registration = (prf?: unknown) =>
   JSON.stringify({

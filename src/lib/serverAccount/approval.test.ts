@@ -27,7 +27,8 @@ const random = (length: number) => {
   return Uint8Array.from({ length }, (_, i) => (counter * 31 + i * 7) & 0xff)
 }
 
-const PROD = ['https://app.witnesswork.app', 'https://beta.app.witnesswork.app']
+const PROD = ['https://app.witnesswork.app']
+const BETA = ['https://beta.app.witnesswork.app']
 
 const hkdf = (ikm: Uint8Array, info: string, length: number) =>
   new Uint8Array(
@@ -49,19 +50,37 @@ describe('approval origins', () => {
     }
   )
 
-  it('are the dev web app for the dev API', () => {
-    expect(
-      approvalOriginsFor({
-        apiBaseUrl: 'https://api-dev.witnesswork.app',
-        dev: true,
-      })
-    ).toEqual(['https://app-dev.witnesswork.app', ...APPROVAL_LOCAL_ORIGINS])
+  it.each([
+    'https://api-beta.witnesswork.app',
+    'https://api-beta.witnesswork.app/',
+  ])('are the Beta web app for the Beta API at %s', (apiBaseUrl) => {
+    expect(approvalOriginsFor({ apiBaseUrl, dev: false })).toEqual(BETA)
+    expect(approvalOriginsFor({ apiBaseUrl, dev: true })).toEqual([
+      ...BETA,
+      ...APPROVAL_LOCAL_ORIGINS,
+    ])
   })
 
-  it('are the dev web app for any other API', () => {
+  it('are the local web app for a local or any other API', () => {
+    for (const apiBaseUrl of [
+      'http://localhost:8787',
+      'http://127.0.0.1:8791',
+      'https://staging.example',
+    ])
+      for (const dev of [true, false])
+        expect(approvalOriginsFor({ apiBaseUrl, dev })).toEqual(
+          APPROVAL_LOCAL_ORIGINS
+        )
+  })
+
+  it('keep production and Beta apart, since each has its own accounts', () => {
+    expect(PROD).not.toContain(BETA[0])
     expect(
-      approvalOriginsFor({ apiBaseUrl: 'https://dev.example', dev: false })
-    ).toEqual(['https://app-dev.witnesswork.app'])
+      approvalOriginsFor({
+        apiBaseUrl: 'https://api.witnesswork.app',
+        dev: false,
+      })
+    ).toEqual(PROD)
   })
 
   it('never add the localhost origins for the production API', () => {
@@ -73,10 +92,7 @@ describe('approval origins', () => {
     ).toEqual(PROD)
   })
 
-  it('add the localhost origins in dev builds', () => {
-    expect(
-      approvalOriginsFor({ apiBaseUrl: 'http://localhost:8787', dev: true })
-    ).toEqual(['https://app-dev.witnesswork.app', ...APPROVAL_LOCAL_ORIGINS])
+  it('include the default local web dev server', () => {
     expect(APPROVAL_LOCAL_ORIGINS).toContain('http://localhost:8081')
   })
 })
@@ -118,7 +134,7 @@ describe('approval link', () => {
       'https://app.witnesswork.app.evil.example',
       'https://witnesswork.app',
       'http://app.witnesswork.app',
-      'https://app-dev.witnesswork.app',
+      'https://beta.app.witnesswork.app',
     ])
       expect(parseApprovalLink(buildApprovalLink(offer, origin), PROD)).toEqual(
         { ok: false, problem: 'wrongHost' }

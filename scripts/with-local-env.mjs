@@ -73,10 +73,11 @@ export function loadLocalEnv(root, variant, inherited = process.env) {
   return { env, files }
 }
 
-export function defaultApiBaseUrl(variant) {
-  return variant === 'development'
-    ? 'https://api-dev.witnesswork.app'
-    : 'https://api.witnesswork.app'
+export function defaultApiBaseUrl(variant, platform) {
+  if (variant === 'development') return 'http://localhost:8787'
+  if (variant === 'beta' && platform !== 'android')
+    return 'https://api-beta.witnesswork.app'
+  return 'https://api.witnesswork.app'
 }
 
 export function validateLocalEnv(
@@ -108,7 +109,7 @@ export function validateLocalEnv(
     )
   }
   const api = new URL(
-    env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl(env.APP_VARIANT)
+    env.EXPO_PUBLIC_API_BASE_URL || defaultApiBaseUrl(env.APP_VARIANT, platform)
   )
   if (!['http:', 'https:'].includes(api.protocol))
     throw new Error('EXPO_PUBLIC_API_BASE_URL must be an HTTP(S) URL')

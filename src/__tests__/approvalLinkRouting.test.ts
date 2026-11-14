@@ -2,7 +2,8 @@ import { randomBytes as nodeRandomBytes } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { APP_LINK_HOSTS, isOwnAppLink } from '@/constants/appLinks'
 import {
-  APPROVAL_DEV_ORIGINS,
+  APPROVAL_BETA_ORIGINS,
+  APPROVAL_LOCAL_ORIGINS,
   APPROVAL_PRODUCTION_ORIGINS,
   buildApprovalLink,
   createApprovalOffer,
@@ -14,8 +15,12 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 const random = (length: number) => new Uint8Array(nodeRandomBytes(length))
 
 describe('approval links', () => {
-  const links = [...APPROVAL_PRODUCTION_ORIGINS, ...APPROVAL_DEV_ORIGINS].map(
-    (origin) => buildApprovalLink(createApprovalOffer(random).offer, origin)
+  const links = [
+    ...APPROVAL_PRODUCTION_ORIGINS,
+    ...APPROVAL_BETA_ORIGINS,
+    ...APPROVAL_LOCAL_ORIGINS,
+  ].map((origin) =>
+    buildApprovalLink(createApprovalOffer(random).offer, origin)
   )
 
   it('are on hosts the app never claims', () => {

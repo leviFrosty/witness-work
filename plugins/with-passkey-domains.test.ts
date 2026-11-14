@@ -8,10 +8,11 @@ it('lists the webcredentials hosts without their mode', () => {
   expect(
     webCredentialsDomains([
       'applinks:ww-proxy.leviwilkerson.com',
-      'webcredentials:app-dev.witnesswork.app?mode=developer',
+      'applinks:beta.witnesswork.app?mode=developer',
+      'webcredentials:beta.app.witnesswork.app?mode=developer',
       'webcredentials:app.witnesswork.app',
     ])
-  ).toEqual(['app-dev.witnesswork.app', 'app.witnesswork.app'])
+  ).toEqual(['beta.app.witnesswork.app', 'app.witnesswork.app'])
 })
 
 it('is empty when the app claims none', () => {

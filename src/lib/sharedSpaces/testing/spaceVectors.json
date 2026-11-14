@@ -52,6 +52,6 @@
   "link.key": "544880e00825044e1b8e7824e4c0644d983d4c54d38460122e63b65ffce4559d",
   "link.url.production": "https://app.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
   "link.url.beta": "https://beta.app.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
-  "link.url.development": "https://app-dev.witnesswork.app/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
+  "link.url.development": "http://localhost:8081/territories/guest#v1.EBESExQVFhcYGRobHB0eHw.IiMkJSYnKCkqKywtLi8wMQ.S4C-F-A3IBzPjHN38_1PYFDmcGKPRl913s9EGGg8_v0",
   "link.keysBlob": "ATM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSpu9_Fw4gE25JJAlrMOm9hkQKoLxEX7Srp2oIt460_RuyUPvKKrLZDy-DDPGJvihDHzo9wsGE9yqueesqTxtV0y02XONOffGZAhrzLQcEwkB92FfqB5PTfrqpvWCol2V4sHjAekC0naNg180CZ_9rvttxdrHqRJhyViXXM5vq5fNcf8Sm1y7g2-YiQM"
 }

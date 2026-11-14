@@ -2,26 +2,23 @@ import type { AppVariant } from '@/lib/appVariant'
 
 export type PurchaseTier = 'supporter' | 'tip'
 
-export type ReturnKey = 'beta' | 'local'
+export type ReturnKey = 'beta'
 
 export const PURCHASE_RETURN_PATH = '/supporter/thank-you'
 
 const RETURN_HOSTS: Record<AppVariant, string> = {
-  development: 'https://app-dev.witnesswork.app',
+  development: 'http://localhost:8081',
   beta: 'https://app.witnesswork.app',
   production: 'https://app.witnesswork.app',
 }
 
 const RETURN_KEYS: Record<AppVariant, Partial<Record<ReturnKey, string>>> = {
-  development: { local: 'http://localhost:8081' },
+  development: {},
   beta: { beta: 'https://beta.app.witnesswork.app' },
   production: { beta: 'https://beta.app.witnesswork.app' },
 }
 
-const ALL_RETURN_KEYS: ReadonlySet<string> = new Set<ReturnKey>([
-  'beta',
-  'local',
-])
+const ALL_RETURN_KEYS: ReadonlySet<string> = new Set<ReturnKey>(['beta'])
 
 const ID_PARAMS: ReadonlySet<string> = new Set(['app_user_id', 'redeem_url'])
 

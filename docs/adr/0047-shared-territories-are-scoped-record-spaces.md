@@ -4,6 +4,8 @@ status: accepted
 
 # Shared territories are scoped record spaces, with browser guest links and server-held hand-offs
 
+> Hosts updated since: Beta calls its own Beta API (`api-beta.witnesswork.app`), not production's, and development guest links open on `localhost:8081`, see [readme.md#environments](../../readme.md#environments).
+
 ## Context
 
 Territories (behind the `territories` flag) is an on-device prototype: one

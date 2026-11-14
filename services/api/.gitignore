@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Wrangler
+.dev.vars
+.wrangler/
+wrangler.toml.local
+
+# Environment
+.env
+.env.local
+
+# Build outputs
+dist/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Agents (skills live in .agents/skills; .claude/skills is a symlink to them)
+.claude/*
+!.claude/skills
+
+# Agent verification loop (scripts/verify/dev.mjs): state, logs, evidence
+.verify/

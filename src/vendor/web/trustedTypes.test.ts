@@ -24,7 +24,7 @@ describe('the chunk policy', () => {
     for (const url of [
       `https://evil.example${CHUNK}`,
       `//evil.example${CHUNK}`,
-      `https://app-dev.witnesswork.app${CHUNK}`,
+      `https://beta.app.witnesswork.app${CHUNK}`,
       'data:text/javascript,alert(1)',
       'javascript:alert(1)',
       'blob:https://app.witnesswork.app/0b2c',

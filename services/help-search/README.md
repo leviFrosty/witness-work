@@ -4,10 +4,12 @@ Search API for the [WitnessWork Help Center](../../docs/help-center.md): hybrid 
 
 It moved here from the portfolio repo (`workers/help-search`) with the website (ADR 0042) and behaves the same. Search is Workers AI embeddings plus this Worker's own BM25 keyword index in KV; it doesn't use Cloudflare AI Search, whatever ADR 0033 says.
 
-| Environment | Worker               | Hosts                                                                                          | Indexes                       |
-| ----------- | -------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------- |
-| production  | `ww-help-search`     | `help-search.witnesswork.app`, `help-search.leviwilkerson.com` (kept for shipped app versions) | `https://witnesswork.app`     |
-| `dev`       | `ww-help-search-dev` | `help-search-dev.witnesswork.app`                                                              | `https://dev.witnesswork.app` |
+| Environment | Worker                | Hosts                                                                                          | Indexes                        |
+| ----------- | --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------ |
+| Production  | `ww-help-search`      | `help-search.witnesswork.app`, `help-search.leviwilkerson.com` (kept for shipped app versions) | `https://witnesswork.app`      |
+| Beta        | `ww-help-search-beta` | `help-search-beta.witnesswork.app`                                                             | `https://beta.witnesswork.app` |
+
+Development is local only (`pnpm dev`) and deploys nothing.
 
 - `GET https://help-search.witnesswork.app/v1/search?q=…&locale=…&platform=…&appVersion=…&limit=…` → `{ results: { slug, score }[] }`. `platform` is `ios`, `android` or `web` and keeps only answers for it; the web app sends no `appVersion`, so no version floor applies there.
 - `GET /v1/health`
@@ -43,20 +45,20 @@ pnpm typecheck
 pnpm build                         # wrangler deploy --dry-run (bundles into dist/)
 pnpm dev                           # local Worker (ADMIN_TOKEN in .dev.vars); Workers AI is remote, KV local, so sync first
 
-# CI deploys on merge to main (production), and dev from the web launch's
-# integration branch or a manual run; see ../README.md#deploying. By hand, with a token that can edit Workers, Workers AI and KV:
-pnpm exec wrangler deploy               # production
-pnpm exec wrangler deploy --env dev     # dev
+# CI deploys Production and Beta on every merge to main; see
+# ../README.md#deploying. By hand, with a token that can edit Workers, Workers AI and KV:
+pnpm exec wrangler deploy               # Production
+pnpm exec wrangler deploy --env beta    # Beta
 
-# Sync now (token: 1Password Agents → "ww-help-search admin token", or "… (dev)")
+# Sync now (token: 1Password Agents → "ww-help-search admin token", or "… (dev)" for Beta)
 curl -X POST -H "Authorization: Bearer $TOKEN" https://help-search.witnesswork.app/v1/admin/sync
 
 # Index another build of the site instead of the configured origin
 curl -X POST -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
-  -d '{"origin":"https://dev.witnesswork.app"}' https://help-search.witnesswork.app/v1/admin/sync
+  -d '{"origin":"https://beta.witnesswork.app"}' https://help-search.witnesswork.app/v1/admin/sync
 ```
 
-The admin secret is the Worker secret `ADMIN_TOKEN` (one per environment); rotate with `wrangler secret put ADMIN_TOKEN [--env dev]` and update the 1Password item.
+The admin secret is the Worker secret `ADMIN_TOKEN` (one per environment); rotate with `wrangler secret put ADMIN_TOKEN [--env beta]` and update the 1Password item.
 
 ## Costs
 

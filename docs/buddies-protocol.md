@@ -1,6 +1,6 @@
 # Buddies relay protocol v1 (MVP)
 
-The wire contract between the WitnessWork app (`src/features/buddies`) and the ww-proxy relay (`ww-api/src/buddies`). This file is the source of truth for bytes on the wire. Anything not specified here is an implementation detail of one side.
+The wire contract between the WitnessWork app (`src/features/buddies`) and the ww-proxy relay (`services/api/src/buddies`). This file is the source of truth for bytes on the wire. Anything not specified here is an implementation detail of one side.
 
 The relay is **blind**: it stores ciphertext, random ids, public keys, and push tokens. It never sees names, Plans, or which inboxes belong to which people.
 
@@ -14,7 +14,7 @@ Since the MVP: shared Plans and Follow-up invitations, requests to join, and bad
 
 ## Conventions
 
-- **Base URL:** `{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-dev.witnesswork.app` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
+- **Base URL:** `{BASE}` is the ww-api base URL: `https://api.witnesswork.app` (`https://api-beta.witnesswork.app` in Beta builds, `http://localhost:8787` in development builds). Shipped builds also use `https://ww-proxy.leviwilkerson.com`, the same Worker, which stays up forever (ADR 0042).
 - **Transport:** `POST {BASE}/buddies/v1/{op}` with a JSON body. All ids travel in bodies — **never in URLs** (production persists request URLs in logs). The one exception to POST is the [live signal](#live-signal), a WebSocket whose fields travel in headers.
 - **Binary encoding:** base64url without padding everywhere (`b64u`).
 - **Time:** integer milliseconds since the Unix epoch.

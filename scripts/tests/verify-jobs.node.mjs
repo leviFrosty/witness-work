@@ -309,7 +309,7 @@ test('the web build key follows bundled files only', async () => {
   fs.writeFileSync(path.join(repo, 'readme.md'), 'hi\n')
   git('add', '-A')
   git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'init')
-  const key = (profile = 'dev') =>
+  const key = (profile = 'local') =>
     child(
       sandbox(),
       `const W = await import(${JSON.stringify(WEB)})

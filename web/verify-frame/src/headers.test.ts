@@ -23,8 +23,8 @@ describe('the frame environments', () => {
     expect(
       new Set(Object.values(FRAME_ENVIRONMENTS).map((env) => env.origin))
     ).toEqual(origins)
-    expect(FRAME_ENVIRONMENTS.dev?.origin).toBe(
-      'https://verify-dev.witnesswork.app'
+    expect(FRAME_ENVIRONMENTS.beta?.origin).toBe(
+      'https://verify-beta.witnesswork.app'
     )
     expect(FRAME_ENVIRONMENTS.production?.origin).toBe(
       'https://verify.witnesswork.app'
@@ -32,19 +32,16 @@ describe('the frame environments', () => {
   })
 
   it('let only their own environments’ apps frame them', () => {
-    expect(appOriginsFor(FRAME_ENVIRONMENTS.dev!.origin, environments)).toEqual(
-      [
-        'http://localhost:*',
-        'http://127.0.0.1:*',
-        'https://app-dev.witnesswork.app',
-      ]
-    )
+    expect(
+      appOriginsFor(FRAME_ENVIRONMENTS.beta!.origin, environments)
+    ).toEqual([
+      'http://localhost:*',
+      'http://127.0.0.1:*',
+      'https://beta.app.witnesswork.app',
+    ])
     expect(
       appOriginsFor(FRAME_ENVIRONMENTS.production!.origin, environments)
-    ).toEqual([
-      'https://beta.app.witnesswork.app',
-      'https://app.witnesswork.app',
-    ])
+    ).toEqual(['https://app.witnesswork.app'])
   })
 })
 

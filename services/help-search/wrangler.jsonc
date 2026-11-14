@@ -35,20 +35,23 @@
   // Error and sync logs only: request logs would keep search text.
   "observability": { "enabled": true, "logs": { "invocation_logs": false } },
   "env": {
-    // Indexes the staging site (dev.witnesswork.app), which `pnpm build:dev`
+    // Indexes the Beta site (beta.witnesswork.app), which `pnpm build:beta`
     // in services/marketing builds. Named environments don't inherit vars,
     // bindings, or rate limits, so each is repeated here.
-    "dev": {
-      "name": "ww-help-search-dev",
+    "beta": {
+      "name": "ww-help-search-beta",
       "routes": [
-        { "pattern": "help-search-dev.witnesswork.app", "custom_domain": true },
+        {
+          "pattern": "help-search-beta.witnesswork.app",
+          "custom_domain": true,
+        },
       ],
       "triggers": { "crons": ["*/15 * * * *"] },
       "vars": {
-        "HELP_CENTER_ORIGIN": "https://dev.witnesswork.app",
+        "HELP_CENTER_ORIGIN": "https://beta.witnesswork.app",
       },
       // Secrets: ADMIN_TOKEN. 1Password Agents vault:
-      // "ww-help-search admin token (dev)".
+      // "ww-help-search admin token (dev)" (the item keeps its old name).
       "ai": { "binding": "AI" },
       "kv_namespaces": [
         { "binding": "SYNC_STATE", "id": "c794a46e025d41958e9efcc5a3af6e1f" },

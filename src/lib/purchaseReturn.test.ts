@@ -7,7 +7,6 @@ import {
 } from '@/lib/purchaseReturn'
 
 const PROD = 'https://app.witnesswork.app'
-const DEV = 'https://app-dev.witnesswork.app'
 const BETA = 'https://beta.app.witnesswork.app'
 const LOCAL = 'http://localhost:8081'
 const ID = 'a1B2c3D4e5F6g7H8'
@@ -220,31 +219,35 @@ describe('scrubPurchaseReturn', () => {
       ).toBe(`${BETA}/supporter/thank-you?tier=tip&forwarded=1`)
     })
 
-    it('forwards a local return in a development build', () => {
+    it('returns a development build straight to the local web app', () => {
       expect(
         scrubPurchaseReturn(
-          `${DEV}/supporter/thank-you?tier=tip&utm_content=local`,
-          { variant: 'development', origin: DEV }
-        ).forwardTo
-      ).toBe(`${LOCAL}/supporter/thank-you?tier=tip&forwarded=1`)
+          `${LOCAL}/supporter/thank-you?tier=tip&app_user_id=${ID}`,
+          { variant: 'development', origin: LOCAL }
+        )
+      ).toEqual({
+        url: `${LOCAL}/supporter/thank-you?tier=tip`,
+        appUserId: ID,
+        tier: 'tip',
+        forwardTo: null,
+        forwarded: false,
+      })
     })
 
-    it('never forwards to localhost from a production or beta build', () => {
+    it('has no key that forwards to localhost', () => {
       for (const variant of ['production', 'beta'] as const) {
-        const result = scrubPurchaseReturn(
-          `${PROD}/supporter/thank-you?tier=tip&utm_content=local`,
-          { variant, origin: PROD }
-        )
+        const href = `${PROD}/supporter/thank-you?tier=tip&utm_content=local`
+        const result = scrubPurchaseReturn(href, { variant, origin: PROD })
         expect(result.forwardTo).toBeNull()
-        expect(result.url).toBe(`${PROD}/supporter/thank-you?tier=tip`)
+        expect(result.url).toBe(href)
       }
     })
 
     it('never forwards to beta from a development build', () => {
       expect(
         scrubPurchaseReturn(
-          `${DEV}/supporter/thank-you?tier=tip&utm_content=beta`,
-          { variant: 'development', origin: DEV }
+          `${LOCAL}/supporter/thank-you?tier=tip&utm_content=beta`,
+          { variant: 'development', origin: LOCAL }
         ).forwardTo
       ).toBeNull()
     })
@@ -275,11 +278,13 @@ describe('scrubPurchaseReturn', () => {
 
     it('does not forward when duplicated keys disagree', () => {
       const result = scrubPurchaseReturn(
-        `${DEV}/supporter/thank-you?tier=tip&utm_content=local&utm_content=beta`,
-        { variant: 'development', origin: DEV }
+        `${PROD}/supporter/thank-you?tier=tip&utm_content=other&utm_content=beta`,
+        production
       )
       expect(result.forwardTo).toBeNull()
-      expect(result.url).toBe(`${DEV}/supporter/thank-you?tier=tip`)
+      expect(result.url).toBe(
+        `${PROD}/supporter/thank-you?tier=tip&utm_content=other`
+      )
     })
 
     it('does not forward from another path, but still removes the key', () => {
@@ -353,20 +358,20 @@ describe('returnKeyFor', () => {
   it('needs no key on the config return host', () => {
     expect(returnKeyFor({ origin: PROD, variant: 'production' })).toBeNull()
     expect(returnKeyFor({ origin: PROD, variant: 'beta' })).toBeNull()
-    expect(returnKeyFor({ origin: DEV, variant: 'development' })).toBeNull()
+    expect(returnKeyFor({ origin: LOCAL, variant: 'development' })).toBeNull()
   })
 
   it('names the origin a checkout must come back to', () => {
     expect(returnKeyFor({ origin: BETA, variant: 'beta' })).toBe('beta')
     expect(returnKeyFor({ origin: BETA, variant: 'production' })).toBe('beta')
-    expect(returnKeyFor({ origin: LOCAL, variant: 'development' })).toBe(
-      'local'
-    )
   })
 
   it('has no key for an origin its build cannot return to', () => {
     expect(returnKeyFor({ origin: LOCAL, variant: 'production' })).toBeNull()
     expect(returnKeyFor({ origin: BETA, variant: 'development' })).toBeNull()
+    expect(
+      returnKeyFor({ origin: 'http://localhost:8082', variant: 'development' })
+    ).toBeNull()
     expect(
       returnKeyFor({ origin: 'https://preview.example', variant: 'beta' })
     ).toBeNull()

@@ -63,7 +63,7 @@ export function associationFiles(profile) {
         }))
     ),
   }
-  if (environment.variant !== 'development') {
+  if (environment.variant === 'production') {
     const leaked = developmentOnly().filter((value) =>
       Object.values(files).some((contents) => contents.includes(value))
     )
@@ -142,9 +142,9 @@ export function loadWebEnv(root, profile, inherited = process.env) {
   for (const key of WEB_EXCLUDED_KEYS) env[key] = ''
   for (const key of Object.keys(env))
     if (key.startsWith('POSTHOG_CLI_')) delete env[key]
-  if (!environment.apiFromEnv)
+  if (!environment.apiFromEnv || !env.EXPO_PUBLIC_API_BASE_URL?.trim())
     env.EXPO_PUBLIC_API_BASE_URL = environment.apiOrigin
-  const api = new URL(env.EXPO_PUBLIC_API_BASE_URL || 'invalid:')
+  const api = new URL(env.EXPO_PUBLIC_API_BASE_URL)
   if (!['http:', 'https:'].includes(api.protocol))
     throw new Error('EXPO_PUBLIC_API_BASE_URL must be an HTTP(S) URL')
   Object.assign(env, {
@@ -553,11 +553,10 @@ export function runBuildSteps(steps, run) {
 async function main() {
   const [command, ...args] = process.argv.slice(2)
   const envFlag = args.indexOf('--env')
-  const profile =
-    envFlag === -1 ? (command === 'build' ? 'dev' : 'local') : args[envFlag + 1]
+  const profile = envFlag === -1 ? 'local' : args[envFlag + 1]
   if (!['start', 'build'].includes(command))
     throw new Error(
-      'Usage: node scripts/web.mjs <start|build> [--env local|dev|beta|production] [--port <port>]'
+      'Usage: node scripts/web.mjs <start|build> [--env local|beta|production] [--port <port>]'
     )
   const root = fileURLToPath(new URL('../', import.meta.url))
   const { env, files, excluded, api, host } = loadWebEnv(root, profile)

@@ -23,7 +23,7 @@ const envVariables = z.object({
     .string()
     .optional()
     .describe(
-      'Set by app.config.ts from APP_VARIANT; never set it yourself. Development builds use the dev API, website and Help Center search.'
+      'Set by app.config.ts from APP_VARIANT; never set it yourself. Development builds call a local ww-api and Beta’s website, Help Center search and frames; Beta builds call the Beta hosts (Android has no Beta app, so its beta build calls production).'
     ),
   EXPO_PUBLIC_SILENT: z
     .string()

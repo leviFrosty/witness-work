@@ -8,7 +8,12 @@ import {
   type BrowserContext,
   type Page,
 } from '@playwright/test'
-import { readStoreRow, strings } from './fixtures'
+import {
+  localApiOrigin,
+  profile as webProfile,
+  readStoreRow,
+  strings,
+} from './fixtures'
 
 const enabled = process.env.E2E_API_DEV === '1'
 const en = strings('en-US')
@@ -94,7 +99,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
   baseURL,
 }) => {
   test.setTimeout(8 * 60_000)
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-scribe-api-dev-'))
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-scribe-real-api-'))
   const context = await chromium.launchPersistentContext(profile, {
     baseURL,
     viewport: { width: 390, height: 844 },
@@ -117,7 +122,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
   if (process.env.E2E_API_DEV_LOG === '1')
     context.on('response', (response) => {
       const { origin, pathname } = new URL(response.url())
-      if (origin.includes('api-dev'))
+      if (origin === (localApiOrigin ?? webProfile.apiOrigin))
         console.log(response.status(), response.request().method(), pathname)
     })
   const shots = process.env.WW_WEB_SHOTS
@@ -164,7 +169,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
     await expect(
       page.getByRole('button', { name: en.scribe_speak })
     ).toHaveCount(0)
-    await shot(page, 'scribe-api-dev-empty')
+    await shot(page, 'scribe-real-api-empty')
 
     const step = page.waitForResponse(
       (response) =>
@@ -187,7 +192,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
 
     const card = page.getByRole('checkbox', { name: /Maria Santos/ })
     await expect(card).toBeVisible({ timeout: 120_000 })
-    await shot(page, 'scribe-api-dev-proposal')
+    await shot(page, 'scribe-real-api-proposal')
     await page.getByRole('button', { name: /^Add \d+$/ }).click()
     await expect
       .poll(
@@ -196,7 +201,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
         { timeout: 30_000 }
       )
       .toContain('Maria Santos')
-    await shot(page, 'scribe-api-dev-added')
+    await shot(page, 'scribe-real-api-added')
 
     await page
       .getByRole('button', { name: en.scribe_usageTitle })
@@ -205,7 +210,7 @@ test('gets an account on the web, chats with Scribe AI, and applies a proposed c
     await expect(page.getByText(en.scribe_usagePlanFree)).toBeVisible()
     await expect(page.getByText(/% used/).first()).toBeVisible()
     await expect(page.getByText(en.account_statusUnverified)).toHaveCount(0)
-    await shot(page, 'scribe-api-dev-usage')
+    await shot(page, 'scribe-real-api-usage')
 
     expect(violations, 'CSP violations').toEqual([])
   } finally {

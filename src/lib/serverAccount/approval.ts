@@ -1,6 +1,6 @@
 import { expand, extract, hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
-import { PRODUCTION_API_BASE_URLS } from '@/constants/apis'
+import { BETA_API_BASE_URL, PRODUCTION_API_BASE_URLS } from '@/constants/apis'
 import {
   concatBytes,
   fromB64u,
@@ -20,11 +20,8 @@ import {
   sixDigitCode,
 } from '@/lib/serverAccount/handoff'
 
-export const APPROVAL_PRODUCTION_ORIGINS = [
-  'https://app.witnesswork.app',
-  'https://beta.app.witnesswork.app',
-]
-export const APPROVAL_DEV_ORIGINS = ['https://app-dev.witnesswork.app']
+export const APPROVAL_PRODUCTION_ORIGINS = ['https://app.witnesswork.app']
+export const APPROVAL_BETA_ORIGINS = ['https://beta.app.witnesswork.app']
 
 export const APPROVAL_LOCAL_ORIGINS = [
   'http://localhost:8081',
@@ -49,11 +46,13 @@ export function approvalOriginsFor({
   apiBaseUrl: string
   dev: boolean
 }): string[] {
-  if (PRODUCTION_API_BASE_URLS.includes(originOf(apiBaseUrl)))
+  const api = originOf(apiBaseUrl)
+  if (PRODUCTION_API_BASE_URLS.includes(api))
     return [...APPROVAL_PRODUCTION_ORIGINS]
+  if (api !== BETA_API_BASE_URL) return [...APPROVAL_LOCAL_ORIGINS]
   return dev
-    ? [...APPROVAL_DEV_ORIGINS, ...APPROVAL_LOCAL_ORIGINS]
-    : [...APPROVAL_DEV_ORIGINS]
+    ? [...APPROVAL_BETA_ORIGINS, ...APPROVAL_LOCAL_ORIGINS]
+    : [...APPROVAL_BETA_ORIGINS]
 }
 
 const LINK_VERSION = '1'

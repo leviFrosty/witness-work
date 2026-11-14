@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Smoke test for .github/workflows/services.yml. Needs SITE, SEARCH and
-# EXPECT_NOINDEX ('true' on staging, 'false' on production). Optional:
-# ALLOW_EMPTY_INDEX ('true' on staging only) and LEGACY_SEARCH (the old search
+# EXPECT_NOINDEX ('true' on Beta, 'false' on production). Optional:
+# ALLOW_EMPTY_INDEX ('true' on Beta only) and LEGACY_SEARCH (the old search
 # host, production only). New custom domains can take a minute to get their
 # certificate, so each URL is retried for up to 5 minutes.
 set -euo pipefail
@@ -45,7 +45,7 @@ grep -qiE '<meta name="?robots"? content="?[^">]*noindex' "$BODY" && noindex_met
 if [ "$EXPECT_NOINDEX" = 'true' ]; then
   [ "$noindex_header" = true ] || { echo "::error::$SITE/ is missing X-Robots-Tag: noindex"; exit 1; }
 else
-  # A production build that picked up the dev config would drop out of search.
+  # A production build that picked up the Beta config would drop out of search.
   [ "$noindex_header" = false ] && [ "$noindex_meta" = false ] ||
     { echo "::error::$SITE/ says noindex"; exit 1; }
 fi
@@ -74,7 +74,7 @@ if [ "$status" = 200 ]; then
     { echo "::error::search answered no results"; show_body; exit 1; }
 elif [ "$status" = 503 ] && [ "${ALLOW_EMPTY_INDEX:-}" = 'true' ] &&
   jq -e '.error == "search_unavailable"' "$BODY" >/dev/null; then
-  # Also what a failing index read answers, so only staging accepts it, where
+  # Also what a failing index read answers, so only Beta accepts it, where
   # a brand-new Worker has no index until its first sync (cron every 15
   # minutes, or POST /v1/admin/sync).
   echo "::warning::$SEARCH answered search_unavailable: no index yet, or search is failing"

@@ -1,0 +1,6 @@
+; Non-secret sentry-cli defaults for source map uploads (see package.json
+; `sentry:sourcemaps`). Auth comes from the SENTRY_AUTH_TOKEN env var (local
+; shell or GitHub Actions secret) — never put a token in this file.
+[defaults]
+org=levi-wilkerson
+project=ww-proxy

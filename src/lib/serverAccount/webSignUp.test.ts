@@ -30,7 +30,7 @@ const OTHER_ACCOUNT = 'acct_bbbbbbbbbbbbbbbbbbbbbb'
 const HANDLE = toB64u(random(32))
 const CREDENTIAL = toB64u(random(16))
 const OTHER_CREDENTIAL = toB64u(random(16))
-const RP_ID = 'app-dev.witnesswork.app'
+const RP_ID = 'beta.app.witnesswork.app'
 const PRF = random(32)
 const CHALLENGE = toB64u(random(32))
 

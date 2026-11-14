@@ -1,7 +1,7 @@
 import { getRandomBytes } from 'expo-crypto'
 import apis from '@/constants/apis'
+import { BUILD_ENVIRONMENT } from '@/constants/buildVariant'
 import { analytics } from '@/lib/analytics'
-import { appVariant } from '@/lib/appVariant'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
 import { logger } from '@/lib/logger'
 import { accountSessions, peekAccountKey } from '@/lib/serverAccount'
@@ -126,7 +126,7 @@ export const territoriesEngine = createTerritoryEngine({
   rootSeed: peekAccountKey,
   profile,
   privacy: territoryPrivacy,
-  variant: appVariant,
+  variant: BUILD_ENVIRONMENT,
   randomBytes: getRandomBytes,
   now: Date.now,
   syncNow,

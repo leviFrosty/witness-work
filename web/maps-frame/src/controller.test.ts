@@ -5,7 +5,7 @@ import {
 } from '../../../src/lib/mapsFrame/protocol'
 import { createFrameController, type MapEngine } from './controller'
 
-const APP = 'https://app-dev.witnesswork.app'
+const APP = 'https://beta.app.witnesswork.app'
 const TOKEN = 'eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJ0ZWFtIn0.c2lnbmF0dXJl'
 const options = {
   colorScheme: 'light',
@@ -71,7 +71,7 @@ describe('the frame controller', () => {
   it('ignores messages from other origins, before and after init', () => {
     const frame = setup()
     frame.send(init, 'https://evil.test')
-    frame.send(init, 'https://app-dev.witnesswork.app.evil.test')
+    frame.send(init, 'https://beta.app.witnesswork.app.evil.test')
     frame.send(init, 'null')
     expect(frame.engine.start).not.toHaveBeenCalled()
     frame.send(init)

@@ -553,7 +553,7 @@ const hostGroup = (url, appOrigin) => {
   if (/^help-search/.test(hostname)) return 'Help search'
   if (/^(maps|verify)(-dev)?\./.test(hostname)) return 'Frames (maps, verify)'
   if (/^api(-dev)?\.witnesswork\.app$|ww-proxy/.test(hostname)) return 'ww-api'
-  if (/^(dev\.)?witnesswork\.app$/.test(hostname)) return 'Help Center site'
+  if (/^(beta\.)?witnesswork\.app$/.test(hostname)) return 'Help Center site'
   if (/^(localhost|127\.0\.0\.1)$/.test(hostname)) return 'ww-api'
   return hostname
 }

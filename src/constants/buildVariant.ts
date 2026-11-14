@@ -1,5 +1,17 @@
-export const IS_DEVELOPMENT_BUILD =
-  process.env.EXPO_PUBLIC_APP_VARIANT === 'development'
+import { BETA_BUILD_ENVIRONMENT } from '@/constants/betaBuildEnvironment'
 
-export const forBuild = <T>(values: { development: T; release: T }): T =>
-  IS_DEVELOPMENT_BUILD ? values.development : values.release
+export type BuildEnvironment = 'development' | 'beta' | 'production'
+
+const VARIANT = process.env.EXPO_PUBLIC_APP_VARIANT
+
+export const IS_DEVELOPMENT_BUILD = VARIANT === 'development'
+
+const RELEASE_ENVIRONMENT: BuildEnvironment =
+  VARIANT === 'beta' ? BETA_BUILD_ENVIRONMENT : 'production'
+
+export const BUILD_ENVIRONMENT: BuildEnvironment = IS_DEVELOPMENT_BUILD
+  ? 'development'
+  : RELEASE_ENVIRONMENT
+
+export const forBuild = <T>(values: Record<BuildEnvironment, T>): T =>
+  values[BUILD_ENVIRONMENT]

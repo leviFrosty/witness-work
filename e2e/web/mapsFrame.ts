@@ -34,7 +34,7 @@ async function build(kind: FrameKind): Promise<string> {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), `ww-maps-${kind}-`))
   if (kind === 'real') {
     const { buildFrame } = await import('../../scripts/web-maps.mjs')
-    await buildFrame('dev', out)
+    await buildFrame('beta', out)
     return out
   }
   const { build: bundle } = await import('esbuild')

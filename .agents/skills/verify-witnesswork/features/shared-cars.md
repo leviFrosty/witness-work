@@ -28,7 +28,7 @@ Shared Cars lets up to 10 people keep one car's mileage together, end to end enc
 
 Preconditions:
 
-- Shared Spaces on the local worker. Until the ww-api half is on `main`, run `up` with `WW_API_DIR=<ww-api worktree with Shared Spaces>` on both devices (same checkout). `spaces:enabled` defaults on in dev; `node <ww-api checkout>/scripts/verify/dev.mjs kv put spaces:enabled false` turns it off (every op but leave, remove and delete answers `disabled`).
+- Shared Spaces on the local worker. Run `up` for both devices from the same checkout, so they use one worker. `spaces:enabled` defaults on in dev; `node services/api/scripts/verify/dev.mjs kv put spaces:enabled false` turns it off (every op but leave, remove and delete answers `disabled`).
 - Flags per device: `wwv flag buddies on` and `wwv flag shared-cars on` (`--platform ios|android`). Re-run them after any reload.
 - `wwv doctor` shows `api` as `local … 200`.
 

@@ -212,19 +212,19 @@ describe('isOtherVersion', () => {
 
 describe('isAllowedOrigin', () => {
   const allowed = [
-    'https://app-dev.witnesswork.app',
+    'https://beta.app.witnesswork.app',
     'http://localhost:*',
     'http://127.0.0.1:*',
   ]
 
   it('matches exact origins', () => {
-    expect(isAllowedOrigin('https://app-dev.witnesswork.app', allowed)).toBe(
+    expect(isAllowedOrigin('https://beta.app.witnesswork.app', allowed)).toBe(
       true
     )
     for (const origin of [
-      'https://app-dev.witnesswork.app.evil.test',
-      'https://evil-app-dev.witnesswork.app',
-      'http://app-dev.witnesswork.app',
+      'https://beta.app.witnesswork.app.evil.test',
+      'https://evil-beta.app.witnesswork.app',
+      'http://beta.app.witnesswork.app',
       'https://app.witnesswork.app',
       'null',
       '',

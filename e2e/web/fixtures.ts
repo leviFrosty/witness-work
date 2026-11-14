@@ -28,7 +28,7 @@ export const profile: {
     path.join(__dirname, '../../config/web-environments.json'),
     'utf8'
   )
-)[process.env.E2E_WORKER ?? 'dev']
+)[process.env.E2E_WORKER ?? 'local']
 
 export const localApiOrigin = (() => {
   const origin = process.env.E2E_API_ORIGIN

@@ -23,9 +23,9 @@ export const WRANGLER_CONFIG = 'web/maps-frame/wrangler.jsonc'
 const dist = path.join(FRAME_DIR, 'dist')
 
 const usage = [
-  'Usage: web-maps.mjs build <dev|production> [--out <dir>]',
-  '       web-maps.mjs deploy <dev|production> [--dry-run] [--preview]',
-  '       web-maps.mjs serve [dev|production] [--port 8789]',
+  'Usage: web-maps.mjs build <beta|production> [--out <dir>]',
+  '       web-maps.mjs deploy <beta|production> [--dry-run] [--preview]',
+  '       web-maps.mjs serve [beta|production] [--port 8789]',
 ].join('\n')
 
 const short = (sha) => sha?.slice(0, 9) ?? 'missing'
@@ -86,14 +86,14 @@ export function deployPlan(
   }
   if (target === 'production' && !isConfirmed(version, env.WW_RELEASE_CONFIRM))
     throw new Error(refusal(version))
-  if (options.preview && target !== 'dev')
-    throw new Error('Only dev uploads preview versions')
+  if (options.preview && target !== 'beta')
+    throw new Error('Only beta uploads preview versions')
   const blocked = []
   if (!git.clean)
     blocked.push('Commit all changes first: frame deploys ship committed code')
-  if (target === 'dev' && !options.preview && git.head !== git.integrationHead)
+  if (target === 'beta' && !options.preview && git.head !== git.integrationHead)
     blocked.push(
-      `maps-dev serves only the latest ${INTEGRATION_BRANCH}: deploy from a clean checkout of origin/${INTEGRATION_BRANCH} (HEAD ${short(git.head)}, origin ${short(git.integrationHead)})`
+      `maps-beta serves only the latest ${INTEGRATION_BRANCH}: deploy from a clean checkout of origin/${INTEGRATION_BRANCH} (HEAD ${short(git.head)}, origin ${short(git.integrationHead)})`
     )
   if (target === 'production') {
     if (!git.onMain)
@@ -186,7 +186,7 @@ async function deploy(target, args) {
 }
 
 async function serve(args) {
-  const target = args[0]?.startsWith('--') ? 'dev' : (args.shift() ?? 'dev')
+  const target = args[0]?.startsWith('--') ? 'beta' : (args.shift() ?? 'beta')
   let port = '8789'
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--port' && /^\d+$/.test(args[i + 1] ?? ''))

@@ -1,0 +1,5 @@
+# The API is its own workspace with its own lockfile, like the app at the repo
+# root and the website in services/. Without this file pnpm would climb to
+# services/pnpm-workspace.yaml and install that workspace instead.
+packages:
+  - '.'

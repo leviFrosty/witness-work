@@ -34,7 +34,7 @@ describe('handoff links on the new hosts', () => {
     const fragment = link.slice(HANDOFF_LINK_BASE.length)
     for (const [origin, path] of [
       ['https://witnesswork.app', '/accounts/handoff'],
-      ['https://dev.witnesswork.app', '/accounts/handoff'],
+      ['https://beta.witnesswork.app', '/accounts/handoff'],
       ['https://ww-proxy.leviwilkerson.com', '/accounts/handoff'],
     ])
       for (const text of [
@@ -53,7 +53,7 @@ describe('handoff links on the new hosts', () => {
     const fragment = link.slice(HANDOFF_LINK_BASE.length)
     for (const base of [
       'https://witnesswork.app/h',
-      'https://dev.witnesswork.app/h',
+      'https://beta.witnesswork.app/h',
       'https://witnesswork.app/ACCOUNTS/HANDOFF',
       'https://ww-proxy.leviwilkerson.com/H',
       'https://app.witnesswork.app/accounts/handoff',

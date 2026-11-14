@@ -16,7 +16,8 @@ export type PlatformCapability =
   | 'appLock'
   | 'photoLibrarySave'
   | 'otaUpdates'
-  | 'syncedPhotos'
+  | 'syncedAvatarPhotos'
+  | 'syncedNotePhotos'
   | 'scribeVoice'
   | 'scribePhotos'
   | 'sharedCars'
@@ -43,7 +44,8 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   appLock: ['ios', 'android', 'web'],
   photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
-  syncedPhotos: ['ios', 'android'],
+  syncedAvatarPhotos: ['ios', 'android'],
+  syncedNotePhotos: ['ios', 'android', 'web'],
   scribeVoice: ['ios', 'android'],
   scribePhotos: ['ios', 'android'],
   sharedCars: ['ios', 'android'],

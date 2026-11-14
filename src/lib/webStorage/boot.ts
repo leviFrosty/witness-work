@@ -5,6 +5,7 @@ import {
 import { secureKv as defaultSecureKv } from '@/lib/webStorage/secureKv'
 import type { StoreDatabase } from '@/lib/webStorage/storeDatabase'
 import { claimTab } from '@/lib/webStorage/tabLock'
+import { webPhotos, type WebPhotoStore } from '@/lib/files/webPhotoStore'
 import { webStores } from '@/lib/webStorage/webStores'
 
 const TAKE_OVER_KEY = 'witnesswork-take-over'
@@ -17,6 +18,8 @@ export const SIGNED_OUT_DATA = ''
 
 type Environment = {
   stores: StoreDatabase
+
+  photos: Pick<WebPhotoStore, 'wipe' | 'stopWriting' | 'problems' | 'onProblem'>
   secureKv: Pick<
     typeof defaultSecureKv,
     'clearAll' | 'available' | 'get' | 'set'
@@ -69,12 +72,14 @@ export function createWebStorageBoot(env: Environment) {
 
   async function standDown() {
     await env.stores.stopWriting()
+    await env.photos.stopWriting()
 
     setTimeout(reload)
   }
 
   async function clearAllWebData() {
     await env.stores.wipe()
+    await env.photos.wipe()
     if (env.secureKv.available) await env.secureKv.clearAll()
   }
 
@@ -114,6 +119,7 @@ export function createWebStorageBoot(env: Environment) {
     launch = { activeTab, tookOver: takeOver && activeTab }
     if (!activeTab) {
       await env.stores.stopWriting()
+      await env.photos.stopWriting()
       return launch
     }
 
@@ -157,6 +163,7 @@ export function createWebStorageBoot(env: Environment) {
 
     launch: () => launch,
     stores: env.stores,
+    photos: env.photos,
   }
 }
 
@@ -172,6 +179,7 @@ const sessionStorageOrUndefined = () => {
 
 export const webStorageBoot = createWebStorageBoot({
   stores: webStores,
+  photos: webPhotos,
   secureKv: defaultSecureKv,
   locks: browser ? navigator.locks : undefined,
   storage: browser ? navigator.storage : undefined,

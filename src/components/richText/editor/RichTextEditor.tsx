@@ -27,8 +27,13 @@ import {
   EMPTY_FORMAT_STATE,
   type EditorCommand,
   type EditorFormatState,
+  type EditorImageFile,
+  type EditorImageSource,
   type EditorSetup,
 } from '@/components/richText/editor/editorProtocol'
+import { MAX_PHOTO_BYTES } from '@/lib/files/imageSizing'
+import { UnsupportedImageError } from '@/lib/files/webImages'
+import { toast } from '@/stores/toasts'
 import useTheme from '@/contexts/theme'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { relativeLuminance } from '@/lib/color'
@@ -39,7 +44,7 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 import { richTextImages } from '@/lib/richText/inspect'
-import { MAX_NOTE_IMAGES } from '@/lib/richText/noteImages'
+import { deleteNoteImages, MAX_NOTE_IMAGES } from '@/lib/richText/noteImages'
 import { canAddNotePhotos } from '@/lib/richText/notePhotos'
 import { saveNoteImage } from '@/lib/richText/saveNoteImage'
 import { parseRichTextDoc } from '@/lib/richText/parse'
@@ -64,7 +69,7 @@ const RichTextEditor = (props: {
   characterLimit?: number
   allowImages: boolean
   onChange: (doc: RichTextDoc) => void
-  onPhotoAdded?: (count: number) => void
+  onPhotoAdded?: (count: number, source: 'picker' | EditorImageSource) => void
   onPhotoFailed?: () => void
 
   onLoad?: () => void
@@ -87,6 +92,9 @@ const RichTextEditor = (props: {
   const closeLinkSheet = () =>
     setLinkSheet((sheet) => ({ ...sheet, open: false }))
   const pendingFlush = useRef<(() => void) | null>(null)
+  const imageCount = useRef(0)
+  const addingImages = useRef(0)
+  const imageBatches = useRef<Promise<void>>(Promise.resolve())
 
   const keyboard = useReanimatedKeyboardAnimation()
   const bottomInset = insets.bottom
@@ -186,6 +194,7 @@ const RichTextEditor = (props: {
       characterLimit: props.characterLimit,
       autofocus: true,
       inline: Platform.OS === 'web',
+      takesImageFiles: Platform.OS === 'web',
     }
   }
 
@@ -277,7 +286,71 @@ const RichTextEditor = (props: {
         break
       }
     }
-    if (added) props.onPhotoAdded?.(added)
+    if (added) props.onPhotoAdded?.(added, 'picker')
+  }
+
+  const addImageFiles = async (
+    files: EditorImageFile[],
+    source: EditorImageSource,
+    imagesInNote: number
+  ) => {
+    if (!canAddNotePhotos(props.allowImages)) {
+      toast.error(i18n.t('richText_photosNotAllowed'))
+      return
+    }
+    if (!files.length) {
+      toast.error(i18n.t('photoPicker_unsupported'))
+      return
+    }
+    if (!addingImages.current) imageCount.current = imagesInNote
+    addingImages.current++
+    const batch = imageBatches.current.then(() => saveImageFiles(files, source))
+    imageBatches.current = batch.then(
+      () => undefined,
+      () => undefined
+    )
+    try {
+      await batch
+    } finally {
+      addingImages.current--
+    }
+  }
+
+  const saveImageFiles = async (
+    files: EditorImageFile[],
+    source: EditorImageSource
+  ) => {
+    let added = 0
+    let failure: string | null = null
+    for (const file of files) {
+      if (imageCount.current >= MAX_NOTE_IMAGES) {
+        failure ??= i18n.t('richText_photoLimit', { count: MAX_NOTE_IMAGES })
+        break
+      }
+      try {
+        if (file.size > MAX_PHOTO_BYTES)
+          throw new UnsupportedImageError('tooLarge')
+        const image = await saveNoteImage(file.uri)
+        if (imageCount.current >= MAX_NOTE_IMAGES) {
+          void deleteNoteImages([image.id])
+          failure ??= i18n.t('richText_photoLimit', { count: MAX_NOTE_IMAGES })
+          break
+        }
+        imageCount.current++
+        run({
+          type: 'insertImage',
+          image,
+          src: await editorImageSource(image.id),
+        })
+        added++
+      } catch (error) {
+        logger.error(`Failed to add a ${source} photo to a note`, error)
+        props.onPhotoFailed?.()
+        failure ??= photoFailedMessage(error, 'richText_photoFailed')
+      }
+    }
+    if (failure) toast.error(failure)
+    if (added) props.onPhotoAdded?.(added, source)
   }
 
   return (
@@ -315,9 +388,11 @@ const RichTextEditor = (props: {
           }}
           onChange={onChange}
           onSubmit={async () => submit()}
+          onImageFiles={addImageFiles}
           onImageHandles={excludeFromBackGesture}
           onFormatState={async (state) => {
             if (state.focused && !format.focused) requestKeyboard()
+            if (!addingImages.current) imageCount.current = state.images
             setFormat(state)
           }}
         />

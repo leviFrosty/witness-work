@@ -37,12 +37,18 @@ function notifyStorageProblem(problem: StoreProblem) {
 
 export default function WebStorageNotices() {
   useEffect(() => {
-    const { stores } = webStorageBoot
-    for (const problem of stores.problems()) notifyStorageProblem(problem)
+    const { stores, photos } = webStorageBoot
+    for (const problem of [...stores.problems(), ...photos.problems()])
+      notifyStorageProblem(problem)
     if (webStorageBoot.launch()?.tookOver) {
       analytics.capture('web_tab_taken_over')
     }
-    return stores.onProblem(notifyStorageProblem)
+    const offStores = stores.onProblem(notifyStorageProblem)
+    const offPhotos = photos.onProblem(notifyStorageProblem)
+    return () => {
+      offStores()
+      offPhotos()
+    }
   }, [])
   return null
 }

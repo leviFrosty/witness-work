@@ -8,7 +8,7 @@ import {
 } from '@/lib/syncTransport/imageNames'
 
 const isUnsyncablePhoto = (avatar: ProfileAvatar): boolean =>
-  !hasCapability('syncedPhotos') &&
+  !hasCapability('syncedAvatarPhotos') &&
   avatar.type === 'image' &&
   isInlineImage(avatar.value)
 

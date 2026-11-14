@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createWebStorageBoot } from '@/lib/webStorage/boot'
 import { createSecureKv } from '@/lib/webStorage/secureKv'
 import { createStoreDatabase } from '@/lib/webStorage/storeDatabase'
+import { createWebPhotoStore } from '@/lib/files/webPhotoStore'
 
 let n = 0
 
@@ -16,12 +17,14 @@ function browserProfile() {
     tab(session = new Map<string, string>()) {
       const stores = createStoreDatabase({ indexedDB })
       const secureKv = createSecureKv({ indexedDB })
+      const photos = createWebPhotoStore({ indexedDB })
       const listeners = new Map<string, (() => void)[]>()
       const emit = (event: string) =>
         listeners.get(event)?.forEach((listener) => listener())
       const reload = vi.fn()
       const boot = createWebStorageBoot({
         stores,
+        photos,
         secureKv,
         locks: navigator.locks,
         storage: undefined,
@@ -36,7 +39,7 @@ function browserProfile() {
         isHidden: () => true,
         lockName,
       })
-      return { stores, secureKv, boot, reload, emit, session }
+      return { stores, photos, secureKv, boot, reload, emit, session }
     },
   }
 }
@@ -137,8 +140,13 @@ describe('web storage boot', () => {
     await tab.boot.prepare()
     tab.stores.set('mmkv.default', 'contacts', 'x')
     await tab.secureKv.set('session', { id: 1 })
+    tab.photos.put('photo-1', new Blob(['x']))
+    await tab.photos.settled()
     await tab.boot.clearAllWebData()
 
+    const photos = createWebPhotoStore({ indexedDB: profile.indexedDB })
+    await photos.ready()
+    expect(photos.list()).toEqual([])
     const fresh = createStoreDatabase({ indexedDB: profile.indexedDB })
     await fresh.hydrate()
     expect(fresh.keys('mmkv.default')).toEqual([])

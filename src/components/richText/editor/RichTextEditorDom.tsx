@@ -13,15 +13,21 @@ import Image from '@tiptap/extension-image'
 import { CharacterCount, Placeholder } from '@tiptap/extensions'
 import { Extension, type NodeViewRenderer } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Plugin, PluginKey, Selection } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import {
   NOTE_GUTTER,
   NOTE_MAX_WIDTH,
   type EditorCommand,
   type EditorFormatState,
+  type EditorImageFile,
+  type EditorImageSource,
   type EditorSetup,
 } from '@/components/richText/editor/editorProtocol'
+import {
+  pastedImageFiles,
+  transferHasFiles,
+} from '@/components/richText/editor/pastedImages'
 import { normalizeImageScale, snapImageScale } from '@/lib/richText/imageScale'
 import { textDirection } from '@/lib/textDirection'
 
@@ -39,6 +45,12 @@ type Props = {
   onChange: (doc: Record<string, unknown>) => Promise<void>
   onFormatState: (state: EditorFormatState) => Promise<void>
   onSubmit: () => Promise<void>
+
+  onImageFiles: (
+    files: EditorImageFile[],
+    source: EditorImageSource,
+    imagesInNote: number
+  ) => Promise<void>
 
   onImageHandles: (rects: number[][]) => Promise<void>
 }
@@ -370,10 +382,7 @@ function setImageSource(id: string, src: string) {
 
 function formatState(editor: Editor): EditorFormatState {
   const { from, to, empty } = editor.state.selection
-  let images = 0
-  editor.state.doc.descendants((node) => {
-    if (node.type.name === 'image') images++
-  })
+  const images = countImages(editor.state.doc)
   const can = editor.can()
   return {
     focused: editor.isFocused,
@@ -561,6 +570,32 @@ const send = (call: Promise<void>) => {
   call.catch(() => {})
 }
 
+const MAX_IMAGE_FILES = 20
+
+function countImages(doc: ProseMirrorNode): number {
+  let images = 0
+  doc.descendants((node) => {
+    if (node.type.name === 'image') images++
+  })
+  return images
+}
+
+function sendImageFiles(
+  files: File[],
+  source: EditorImageSource,
+  doc: ProseMirrorNode,
+  deliver: Props['onImageFiles']
+) {
+  const images = files.slice(0, MAX_IMAGE_FILES).map((file) => ({
+    uri: URL.createObjectURL(file),
+    size: file.size,
+  }))
+  const release = () => {
+    for (const image of images) URL.revokeObjectURL(image.uri)
+  }
+  deliver(images, source, countImages(doc)).then(release, release)
+}
+
 const sameState = (a: EditorFormatState | null, b: EditorFormatState) =>
   !!a && JSON.stringify(a) === JSON.stringify(b)
 
@@ -635,6 +670,39 @@ export default function RichTextEditorDom(props: Props) {
           dir: setup?.direction ?? 'ltr',
           autocapitalize: 'sentences',
           spellcheck: 'true',
+        },
+        handlePaste: (view, event) => {
+          if (!setup?.takesImageFiles) return false
+          const files = pastedImageFiles(event.clipboardData)
+          if (!files.length) return false
+          event.preventDefault()
+          sendImageFiles(
+            files,
+            'paste',
+            view.state.doc,
+            bridge.current.onImageFiles
+          )
+          return true
+        },
+        handleDrop: (view, event, _slice, moved) => {
+          if (!setup?.takesImageFiles || moved) return false
+          if (!transferHasFiles(event.dataTransfer)) return false
+          event.preventDefault()
+          const at = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          })
+          if (at) {
+            const $pos = view.state.doc.resolve(at.pos)
+            view.dispatch(view.state.tr.setSelection(Selection.near($pos)))
+          }
+          sendImageFiles(
+            pastedImageFiles(event.dataTransfer),
+            'drop',
+            view.state.doc,
+            bridge.current.onImageFiles
+          )
+          return true
         },
       },
       onCreate: () => {

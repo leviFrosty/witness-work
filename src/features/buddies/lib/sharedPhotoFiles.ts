@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import {
@@ -6,6 +7,7 @@ import {
   noteImageExists,
   noteImagePath,
 } from '@/lib/richText/noteImages'
+import { getWebPhotoBlob, putWebPhoto } from '@/lib/files/webPhotoStore'
 import type { RichTextImageAttrs } from '@/types/richText'
 import { fromB64u, toB64u } from '@/features/buddies/lib/bytes'
 
@@ -26,6 +28,7 @@ export async function readSharedPhoto(
   image: RichTextImageAttrs
 ): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
   if (!(await noteImageExists(image.id))) return null
+  if (Platform.OS === 'web') return readSharedWebPhoto(image.id)
   const resize =
     Math.max(image.width, image.height) > SHARED_SIDE
       ? image.width >= image.height
@@ -48,12 +51,37 @@ export async function readSharedPhoto(
   return null
 }
 
+async function readSharedWebPhoto(
+  id: string
+): Promise<{ bytes: Uint8Array; width: number; height: number } | null> {
+  const source = await getWebPhotoBlob(id)
+  if (!source) return null
+  const { renderJpeg } = await import('@/lib/files/webImages')
+  for (const quality of QUALITIES) {
+    const { blob, width, height } = await renderJpeg(source, {
+      maxSide: SHARED_SIDE,
+      quality,
+    })
+    if (blob.size <= MAX_SHARED_BYTES)
+      return { bytes: new Uint8Array(await blob.arrayBuffer()), width, height }
+  }
+  return null
+}
+
 export const hasSharedPhoto = (localId: string) => noteImageExists(localId)
 
 export async function saveSharedPhoto(
   localId: string,
   bytes: Uint8Array
 ): Promise<void> {
+  if (Platform.OS === 'web') {
+    putWebPhoto(
+      localId,
+      new Blob([bytes.slice().buffer], { type: 'image/jpeg' })
+    )
+    markNoteImagesLocal([localId])
+    return
+  }
   await ensureNoteImageDirectory()
   await FileSystem.writeAsStringAsync(
     noteImagePath(localId),

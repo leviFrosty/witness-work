@@ -71,7 +71,9 @@ async function openNoteEditor(page: Page): Promise<Frame> {
     .click({ timeout: 8000 })
     .catch(() => undefined)
   await page.getByTestId(`visit-card-${VISIT}`).first().click()
-  await expect(page.getByText('You talked with')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: en.visitDetails_title })
+  ).toBeVisible()
   await page.getByRole('button', { name: en.edit }).last().click()
   await page.getByText(NOTE).filter({ visible: true }).last().click()
   await expect(page.locator('[contenteditable="true"]').first()).toBeVisible()

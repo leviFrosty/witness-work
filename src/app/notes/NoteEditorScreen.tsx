@@ -115,10 +115,11 @@ const NoteEditorScreen = ({ route, navigation }: Props) => {
         onChange={session.onChange}
         onSubmit={close}
         onLoad={() => markNoteEditorLoaded(sessionId)}
-        onPhotoAdded={(count) =>
+        onPhotoAdded={(count, source) =>
           analytics.capture('note_photo_added', {
             surface: session.surface,
             count,
+            source,
           })
         }
         onPhotoFailed={() =>

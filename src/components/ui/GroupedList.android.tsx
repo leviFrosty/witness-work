@@ -4,8 +4,12 @@ import {
   Fragment,
   isValidElement,
   use,
+  useEffect,
+  useImperativeHandle,
+  useRef,
   useState,
 } from 'react'
+import { type ReactElement } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Host } from '@expo/ui'
@@ -15,11 +19,16 @@ import {
   DropdownMenuItem,
   HorizontalDivider,
   Icon,
+  IconButton,
   LazyColumn,
   ListItem,
   RNHostView,
   Row,
   Text,
+  TextButton,
+  TextField,
+  type TextFieldRef,
+  useNativeState,
 } from '@expo/ui/jetpack-compose'
 import {
   alpha,
@@ -42,17 +51,25 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Switch from '@/components/ui/Switch'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { isSubmenu, menuGroups } from '@/components/ui/menuEntries'
+import { reorderMenuActions } from '@/components/ui/reorderMenuActions'
+import i18n from '@/lib/locales'
 import type {
   ContextMenuAction,
+  ContextMenuEntries,
   ContextMenuSubmenu,
 } from '@/components/ui/ContextMenu.types'
 import type {
   GroupedListPickerRowProps,
   GroupedListProps,
+  GroupedListReorderSectionProps,
   GroupedListRowProps,
   GroupedListSectionProps,
   GroupedListSwitchRowProps,
+  GroupedListTextFieldRowProps,
 } from '@/components/ui/GroupedList.types'
+import arrowDownwardIcon from '@/assets/compose-icons/arrow_downward.xml'
+import arrowUpwardIcon from '@/assets/compose-icons/arrow_upward.xml'
+import moreVertIcon from '@/assets/compose-icons/more_vert.xml'
 import arrowDropDownIcon from '@/assets/compose-icons/arrow_drop_down.xml'
 import checkIcon from '@/assets/icons/check.xml'
 import chevronRightIcon from '@/assets/compose-icons/chevron_right.xml'
@@ -62,6 +79,10 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 type Position = 'only' | 'first' | 'middle' | 'last'
 
 const RowPosition = createContext<Position>('only')
+
+type Reorder = { index: number; count: number; moveTo: (to: number) => void }
+
+const ReorderRow = createContext<Reorder | null>(null)
 
 const OUTER_RADIUS = 20
 const INNER_RADIUS = 4
@@ -206,6 +227,145 @@ export function GroupedListSection({
   )
 }
 
+export function GroupedListReorderSection<T>({
+  title,
+  footer,
+  data,
+  keyExtractor,
+  onMove,
+  children,
+}: GroupedListReorderSectionProps<T>) {
+  return (
+    <GroupedListSection title={title} footer={footer}>
+      {data.map((item, index) => (
+        <ReorderRow
+          key={keyExtractor(item)}
+          value={{
+            index,
+            count: data.length,
+            moveTo: (to) => onMove(index, to),
+          }}
+        >
+          {children(item, index)}
+        </ReorderRow>
+      ))}
+    </GroupedListSection>
+  )
+}
+
+function ReorderButtons({ reorder }: { reorder: Reorder }) {
+  const { theme } = useRowStyle()
+  const { index, count, moveTo } = reorder
+  const buttons = [
+    {
+      icon: arrowUpwardIcon,
+      label: i18n.t('moveUp'),
+      target: index > 0 ? index - 1 : null,
+    },
+    {
+      icon: arrowDownwardIcon,
+      label: i18n.t('moveDown'),
+      target: index < count - 1 ? index + 1 : null,
+    },
+  ]
+
+  return (
+    <Row verticalAlignment='center'>
+      {buttons.map(({ icon, label, target }) => (
+        <IconButton
+          key={label}
+          enabled={target !== null}
+          modifiers={target === null ? [alpha(0.3)] : undefined}
+          onClick={() => {
+            if (target === null) return
+            Haptics.light()
+            moveTo(target)
+          }}
+        >
+          <Icon
+            source={icon}
+            size={22}
+            contentDescription={label}
+            tint={theme.colors.text}
+          />
+        </IconButton>
+      ))}
+    </Row>
+  )
+}
+
+function LeadingContent({
+  reorder,
+  icon,
+}: {
+  reorder: Reorder | null
+  icon: ReactElement | null
+}) {
+  if (!reorder && !icon) return null
+  return (
+    <ListItem.LeadingContent>
+      <Row verticalAlignment='center' horizontalArrangement={{ spacedBy: 8 }}>
+        {reorder ? <ReorderButtons reorder={reorder} /> : null}
+        {icon}
+      </Row>
+    </ListItem.LeadingContent>
+  )
+}
+
+function RowMenu({
+  label,
+  actions,
+}: {
+  label: string
+  actions?: ContextMenuEntries
+}) {
+  const { theme } = useRowStyle()
+  const [open, setOpen] = useState(false)
+  const entries = menuGroups(actions ?? [])
+    .flat()
+    .filter((entry): entry is ContextMenuAction => !isSubmenu(entry))
+  if (!entries.length) return null
+
+  return (
+    <DropdownMenu
+      expanded={open}
+      onDismissRequest={() => setOpen(false)}
+      color={theme.colors.card}
+    >
+      <DropdownMenu.Trigger>
+        <IconButton onClick={() => setOpen(true)}>
+          <Icon
+            source={moreVertIcon}
+            size={22}
+            contentDescription={label}
+            tint={theme.colors.textAlt}
+          />
+        </IconButton>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Items>
+        {entries.map((entry) => (
+          <DropdownMenuItem
+            key={entry.id}
+            elementColors={{
+              textColor: entry.destructive
+                ? theme.colors.error
+                : theme.colors.text,
+            }}
+            onClick={() => {
+              setOpen(false)
+              entry.onPress()
+            }}
+          >
+            <DropdownMenuItem.Text>
+              <Text>{entry.title}</Text>
+            </DropdownMenuItem.Text>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenu.Items>
+    </DropdownMenu>
+  )
+}
+
 function RowIcon({
   icon,
   color,
@@ -271,6 +431,8 @@ export function GroupedListRow({
   trailing,
   url,
   contextActions,
+  menuActions,
+  menuLabel,
   disabled,
   selected,
   checked,
@@ -282,10 +444,15 @@ export function GroupedListRow({
   const position = use(RowPosition)
   const [menuOpen, setMenuOpen] = useState(false)
   const [submenu, setSubmenu] = useState<ContextMenuSubmenu | null>(null)
+  const reorder = use(ReorderRow)
   const linkActions = useLinkMenuActions({ url, label, onOpen: onPress })
   const groups = disabled
     ? []
-    : menuGroups([...linkActions, ...(contextActions ?? [])])
+    : menuGroups([
+        ...linkActions,
+        ...(contextActions ?? []),
+        reorder ? reorderMenuActions(reorder) : [],
+      ])
 
   const press =
     onPress && !disabled
@@ -339,21 +506,27 @@ export function GroupedListRow({
       )}
     >
       <RowText label={label} sublabel={sublabel} />
-      {icon ? (
-        <ListItem.LeadingContent>
-          <RowIcon
-            icon={icon}
-            color={iconColor ?? theme.colors.textAlt}
-            fill={iconFill}
-          />
-        </ListItem.LeadingContent>
-      ) : null}
-      {trailing || accessoryIcon ? (
+      <LeadingContent
+        reorder={reorder}
+        icon={
+          icon ? (
+            <RowIcon
+              icon={icon}
+              color={iconColor ?? theme.colors.textAlt}
+              fill={iconFill}
+            />
+          ) : null
+        }
+      />
+      {trailing || accessoryIcon || (menuActions && !disabled) ? (
         <ListItem.TrailingContent>
           <Row
             verticalAlignment='center'
             horizontalArrangement={{ spacedBy: 8 }}
           >
+            {disabled ? null : (
+              <RowMenu label={menuLabel ?? label} actions={menuActions} />
+            )}
             {trailing ? (
               <RNHostView matchContents>
                 <View pointerEvents='none'>{trailing}</View>
@@ -457,6 +630,7 @@ export function GroupedListSwitchRow({
   const style = useRowStyle()
   const { theme } = style
   const position = use(RowPosition)
+  const reorder = use(ReorderRow)
 
   return (
     <ListItem colors={style.colors} modifiers={rowModifiers(position)}>
@@ -475,11 +649,12 @@ export function GroupedListSwitchRow({
           ) : null}
         </Row>
       </ListItem.HeadlineContent>
-      {icon ? (
-        <ListItem.LeadingContent>
-          <RowIcon icon={icon} color={theme.colors.textAlt} />
-        </ListItem.LeadingContent>
-      ) : null}
+      <LeadingContent
+        reorder={reorder}
+        icon={
+          icon ? <RowIcon icon={icon} color={theme.colors.textAlt} /> : null
+        }
+      />
       <ListItem.TrailingContent>
         <RNHostView matchContents>
           <View>
@@ -569,5 +744,115 @@ export function GroupedListPickerRow({
         ))}
       </DropdownMenu.Items>
     </DropdownMenu>
+  )
+}
+
+export function GroupedListTextFieldRow({
+  value,
+  onChangeText,
+  onEndEditing,
+  accessibilityLabel,
+  placeholder,
+  maxLength,
+  autoCapitalize = 'words',
+  invalid,
+  sublabel,
+  action,
+  menuActions,
+  menuLabel,
+  ref,
+  testID,
+}: GroupedListTextFieldRowProps) {
+  const style = useRowStyle()
+  const { theme } = style
+  const position = use(RowPosition)
+  const reorder = use(ReorderRow)
+  const text = useNativeState(value)
+  const field = useRef<TextFieldRef>(null)
+  const typed = useRef(value)
+  useEffect(() => {
+    if (value === typed.current) return
+    typed.current = value
+    text.set(value)
+  }, [value, text])
+  useImperativeHandle(ref, () => ({ focus: () => void field.current?.focus() }))
+  const hasMenu = menuGroups(menuActions ?? []).length > 0
+  const clear = 'transparent'
+
+  return (
+    <ListItem colors={style.colors} modifiers={rowModifiers(position)}>
+      <ListItem.HeadlineContent>
+        <TextField
+          ref={field}
+          value={text}
+          singleLine
+          maxLength={maxLength}
+          isError={invalid}
+          textStyle={{ ...style.label, color: theme.colors.text }}
+          keyboardOptions={{
+            capitalization: autoCapitalize,
+            imeAction: 'done',
+          }}
+          keyboardActions={{
+            onDone: () => {
+              if (action) action.onPress()
+              else void field.current?.blur()
+            },
+          }}
+          onValueChange={(next) => {
+            typed.current = next
+            onChangeText(next)
+          }}
+          onFocusChanged={(focused) => {
+            if (!focused) onEndEditing?.()
+          }}
+          colors={{
+            focusedContainerColor: clear,
+            unfocusedContainerColor: clear,
+            errorContainerColor: clear,
+            focusedIndicatorColor: theme.colors.accent,
+            unfocusedIndicatorColor: theme.colors.border,
+            cursorColor: theme.colors.accent,
+          }}
+          modifiers={[fillMaxWidth(), ...(testID ? [testTag(testID)] : [])]}
+        >
+          <TextField.Placeholder>
+            <Text color={theme.colors.textAlt} style={style.label}>
+              {placeholder ?? accessibilityLabel}
+            </Text>
+          </TextField.Placeholder>
+        </TextField>
+      </ListItem.HeadlineContent>
+      {sublabel ? (
+        <ListItem.SupportingContent>
+          <Text color={theme.colors.textAlt} style={style.sublabel}>
+            {sublabel}
+          </Text>
+        </ListItem.SupportingContent>
+      ) : null}
+      <LeadingContent reorder={reorder} icon={null} />
+      {action || hasMenu ? (
+        <ListItem.TrailingContent>
+          <Row verticalAlignment='center'>
+            {action ? (
+              <TextButton
+                onClick={() => {
+                  Haptics.light()
+                  action.onPress()
+                }}
+              >
+                <Text color={theme.colors.accent} style={style.label}>
+                  {action.label}
+                </Text>
+              </TextButton>
+            ) : null}
+            <RowMenu
+              label={menuLabel ?? accessibilityLabel}
+              actions={menuActions}
+            />
+          </Row>
+        </ListItem.TrailingContent>
+      ) : null}
+    </ListItem>
   )
 }

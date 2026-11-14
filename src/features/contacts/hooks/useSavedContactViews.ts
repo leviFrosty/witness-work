@@ -7,7 +7,6 @@ import {
   DEFAULT_CONTACTS_QUERY,
   addSavedView,
   deleteSavedView,
-  moveSavedView,
   orderedSavedViews,
   renameSavedView,
   reorderSavedViews,
@@ -66,11 +65,6 @@ export function useSavedContactViews() {
     if (next !== views) setPreferences({ savedContactViews: next })
   }
 
-  const move = (id: string, direction: -1 | 1) => {
-    const next = moveSavedView(views, id, direction)
-    if (next !== views) setPreferences({ savedContactViews: next })
-  }
-
   const reorder = (ids: string[]) => {
     const next = reorderSavedViews(views, ids)
     if (next !== views) setPreferences({ savedContactViews: next })
@@ -102,7 +96,6 @@ export function useSavedContactViews() {
     saveCurrent,
     updateActive,
     rename,
-    move,
     reorder,
     confirmRemove,
   }

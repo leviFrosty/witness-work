@@ -1,74 +1,26 @@
 import { analytics } from '@/lib/analytics'
 import { useFeatureFlag } from '@/lib/featureFlags'
-import InfoPopover from '@/components/ui/InfoPopover'
-import { View } from 'react-native'
-import Switch from '@/components/ui/Switch'
 import i18n from '@/lib/locales'
-import Section from '@/components/ui/inputs/Section'
-import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
+import {
+  GroupedListReorderSection,
+  GroupedListSection,
+  GroupedListSwitchRow,
+} from '@/components/ui/GroupedList'
 import {
   getEffectiveHomeScreenOrder,
-  HomeScreenElementKey,
   usePreferences,
 } from '@/stores/preferences'
 import usePublisher from '@/hooks/usePublisher'
 import usePet from '@/stores/pet'
-import Text from '@/components/ui/MyText'
-import useTheme from '@/contexts/theme'
-import XView from '@/components/ui/layout/XView'
 import useDevice from '@/hooks/useDevice'
-import ReorderControls from '@/components/ui/ReorderControls'
-import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
-import ContextMenu from '@/components/ui/ContextMenu'
-import { useMemo } from 'react'
 import {
   homeSectionTitle,
   isHomeSectionAvailable,
   isHomeSectionShown,
   setHomeSectionShown,
 } from '@/lib/homeSections'
-import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
-
-const HideDonateHeart = () => {
-  const { hideDonateHeart, set } = usePreferences()
-
-  return (
-    <SettingsSearchTarget id='hideDonateHeart'>
-      <InputRowSwitch
-        label={i18n.t('hideDonateHeart')}
-        value={hideDonateHeart}
-        onValueChange={(value) => {
-          set({ hideDonateHeart: value })
-        }}
-      />
-    </SettingsSearchTarget>
-  )
-}
-
-const HideSupporterNudge = () => {
-  const { hideSupporterNudge, set } = usePreferences()
-  const { entryMode } = usePublisher()
-
-  const lastInSection = entryMode === 'checkbox'
-
-  return (
-    <SettingsSearchTarget id='hideSupporterNudge'>
-      <InputRowSwitch
-        lastInSection={lastInSection}
-        label={i18n.t('hideSupporterNudge')}
-        value={hideSupporterNudge}
-        onValueChange={(value) => {
-          analytics.capture('supporter_nudge_visibility_changed', {
-            hidden: value,
-            source: 'settings',
-          })
-          set({ hideSupporterNudge: value })
-        }}
-      />
-    </SettingsSearchTarget>
-  )
-}
+import { moveVisible } from '@/lib/reorder'
 
 const HomeElements = () => {
   const {
@@ -82,177 +34,83 @@ const HomeElements = () => {
   const { showsTimer, hasAnnualGoal } = usePublisher()
   const buddiesAvailable = useBuddiesEnabled()
   const territoriesAvailable = useFeatureFlag('territories')
-
   const hasPet = usePet((s) => s.pet !== null)
   const { isTablet } = useDevice()
-  const theme = useTheme()
 
-  const effectiveOrder = useMemo(
-    () => getEffectiveHomeScreenOrder(homeScreenElementsOrder),
-    [homeScreenElementsOrder]
-  )
-
-  const visibleKeys = useMemo(
-    () =>
-      effectiveOrder.filter((k) =>
-        isHomeSectionAvailable(k, {
-          isTablet,
-          hasAnnualGoal,
-          showsTimer,
-          mileageTrackingEnabled,
-          buddiesAvailable,
-          territoriesAvailable,
-        })
-      ),
-    [
-      effectiveOrder,
+  const order = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
+  const visibleKeys = order.filter((key) =>
+    isHomeSectionAvailable(key, {
       isTablet,
       hasAnnualGoal,
       showsTimer,
       mileageTrackingEnabled,
       buddiesAvailable,
       territoriesAvailable,
-    ]
+    })
   )
 
-  const labelFor = homeSectionTitle
-
-  const descriptionFor = (key: HomeScreenElementKey): string | null => {
-    if (key === 'approachingConversations')
-      return i18n.t('approachingConversations_description')
-    return null
-  }
-
-  const setVisibility = setHomeSectionShown
-
-  const move = (visibleIdx: number, direction: -1 | 1) => {
-    const target = visibleIdx + direction
-    if (target < 0 || target >= visibleKeys.length) return
-    const a = visibleKeys[visibleIdx]
-    const b = visibleKeys[target]
-    const next = [...effectiveOrder]
-    const ai = next.indexOf(a)
-    const bi = next.indexOf(b)
-    if (ai < 0 || bi < 0) return
-    ;[next[ai], next[bi]] = [next[bi], next[ai]]
-    set({ homeScreenElementsOrder: next })
-  }
-
-  const moveTo = (visibleIdx: number, target: number) => {
-    if (Math.abs(target - visibleIdx) === 1) {
-      move(visibleIdx, target > visibleIdx ? 1 : -1)
-      return
-    }
-    const key = visibleKeys[visibleIdx]
-    const anchor = visibleKeys[target]
-    const next = effectiveOrder.filter((k) => k !== key)
-    const anchorIdx = next.indexOf(anchor)
-    if (!key || anchorIdx < 0) return
-    next.splice(target < visibleIdx ? anchorIdx : anchorIdx + 1, 0, key)
-    set({ homeScreenElementsOrder: next })
-  }
-
   return (
-    <View
-      style={{
-        paddingHorizontal: 12,
-        borderBottomColor: theme.colors.border,
-        borderBottomWidth: 1,
-        paddingVertical: 16,
+    <GroupedListReorderSection
+      title={i18n.t('sectionsVisibility')}
+      footer={i18n.t('sectionsVisibility_description')}
+      data={visibleKeys}
+      keyExtractor={(key) => key}
+      onMove={(from, to) => {
+        const next = moveVisible(order, visibleKeys, from, to)
+        if (next !== order) set({ homeScreenElementsOrder: [...next] })
       }}
     >
-      <View style={{ paddingBottom: 15, gap: 5 }}>
-        <Text style={{ fontFamily: theme.fonts.semiBold }}>
-          {i18n.t('sectionsVisibility')}
-        </Text>
-        <Text
-          style={{
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-          }}
-        >
-          {i18n.t('sectionsVisibility_description')}
-        </Text>
-      </View>
-      <View style={{ gap: 0 }}>
-        {visibleKeys.map((key, idx) => {
-          const isFirst = idx === 0
-          const isLast = idx === visibleKeys.length - 1
-          const isOn = isHomeSectionShown(key, {
+      {(key) => (
+        <GroupedListSwitchRow
+          label={homeSectionTitle(key)}
+          info={
+            key === 'approachingConversations'
+              ? i18n.t('approachingConversations_description')
+              : undefined
+          }
+          value={isHomeSectionShown(key, {
             homeScreenElements,
             petPromptDismissed,
             hasPet,
             routineEnabled,
-          })
-          const description = descriptionFor(key)
-          return (
-            <View
-              key={key}
-              style={{
-                minHeight: 76,
-                paddingVertical: 16,
-                borderBottomWidth: isLast ? 0 : 1,
-                borderBottomColor: theme.colors.border,
-              }}
-            >
-              <XView style={{ justifyContent: 'space-between', gap: 6 }}>
-                <ReorderControls
-                  onMoveUp={isFirst ? undefined : () => move(idx, -1)}
-                  onMoveDown={isLast ? undefined : () => move(idx, 1)}
-                />
-                <View
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  {}
-                  <ContextMenu
-                    style={{ flexShrink: 1 }}
-                    actions={reorderMenuActions({
-                      index: idx,
-                      count: visibleKeys.length,
-                      moveTo: (target) => moveTo(idx, target),
-                      visible: isOn,
-                      setVisible: (value) => setVisibility(key, value),
-                    })}
-                  >
-                    <Text style={{ paddingVertical: 8 }}>{labelFor(key)}</Text>
-                  </ContextMenu>
-                  {description !== null && (
-                    <InfoPopover
-                      title={labelFor(key)}
-                      description={description}
-                      inline
-                    />
-                  )}
-                </View>
-                <Switch
-                  accessibilityLabel={labelFor(key)}
-                  value={isOn}
-                  onValueChange={(value) => setVisibility(key, value)}
-                />
-              </XView>
-            </View>
-          )
-        })}
-      </View>
-    </View>
+          })}
+          onValueChange={(value) => setHomeSectionShown(key, value)}
+        />
+      )}
+    </GroupedListReorderSection>
   )
 }
 
-const HomeScreenPreferencesSection = () => {
+const HomeExtras = () => {
+  const { hideDonateHeart, hideSupporterNudge, set } = usePreferences()
+
   return (
-    <View>
-      <Section>
-        <HomeElements />
-        <HideDonateHeart />
-        <HideSupporterNudge />
-      </Section>
-    </View>
+    <GroupedListSection>
+      <GroupedListSwitchRow
+        label={i18n.t('hideDonateHeart')}
+        value={hideDonateHeart}
+        onValueChange={(value) => set({ hideDonateHeart: value })}
+      />
+      <GroupedListSwitchRow
+        label={i18n.t('hideSupporterNudge')}
+        value={hideSupporterNudge}
+        onValueChange={(value) => {
+          analytics.capture('supporter_nudge_visibility_changed', {
+            hidden: value,
+            source: 'settings',
+          })
+          set({ hideSupporterNudge: value })
+        }}
+      />
+    </GroupedListSection>
   )
 }
+
+const HomeScreenPreferencesSection = () => (
+  <>
+    <HomeElements />
+    <HomeExtras />
+  </>
+)
 
 export default HomeScreenPreferencesSection

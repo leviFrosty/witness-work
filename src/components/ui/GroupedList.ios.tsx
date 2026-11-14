@@ -1,4 +1,10 @@
-import { Fragment, type ReactElement } from 'react'
+import {
+  Fragment,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  type ReactElement,
+} from 'react'
 import { View } from 'react-native'
 import { Host } from '@expo/ui'
 import {
@@ -14,26 +20,36 @@ import {
   Section,
   Spacer,
   Text,
+  TextField,
+  type TextFieldRef,
   Toggle,
+  useNativeState,
   VStack,
 } from '@expo/ui/swift-ui'
 import {
   accessibilityAddTraits,
   accessibilityHidden,
+  accessibilityLabel,
   alignmentGuide,
   background,
+  buttonStyle,
   contentShape,
   disabled as disabledModifier,
+  environment,
   font,
   foregroundStyle,
+  frame,
   labelsHidden,
   listRowBackground,
   listStyle,
   opacity,
   pickerStyle,
   scrollContentBackground,
+  onSubmit,
   shapes,
+  submitLabel,
   tag,
+  textInputAutocapitalization,
   tint as tintModifier,
 } from '@expo/ui/swift-ui/modifiers'
 import useTheme from '@/contexts/theme'
@@ -45,18 +61,23 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { isSubmenu, menuGroups } from '@/components/ui/menuEntries'
 import { postScriptName } from '@/lib/postScriptName'
+import { droppedIndex } from '@/lib/reorder'
 import type {
   ContextMenuAction,
+  ContextMenuEntries,
   ContextMenuItem,
 } from '@/components/ui/ContextMenu.types'
 import type {
   GroupedListPickerRowProps,
   GroupedListProps,
+  GroupedListReorderSectionProps,
   GroupedListRowProps,
   GroupedListSectionProps,
   GroupedListSwitchRowProps,
+  GroupedListTextFieldRowProps,
 } from '@/components/ui/GroupedList.types'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 
 const ICON_GAP = 12
 
@@ -116,6 +137,7 @@ export function GroupedList({
   children,
   title,
   header,
+  editing,
   testID,
 }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
@@ -144,6 +166,7 @@ export function GroupedList({
             listStyle('insetGrouped'),
             scrollContentBackground('hidden'),
             background(theme.colors.background),
+            ...(editing ? [environment('editMode', 'active')] : []),
           ]}
         >
           {title ? (
@@ -208,6 +231,31 @@ export function GroupedListSection({
     >
       {children}
     </Section>
+  )
+}
+
+export function GroupedListReorderSection<T>({
+  title,
+  footer,
+  data,
+  keyExtractor,
+  onMove,
+  children,
+}: GroupedListReorderSectionProps<T>) {
+  return (
+    <GroupedListSection title={title} footer={footer}>
+      <List.ForEach
+        data={data}
+        keyExtractor={keyExtractor}
+        recycling={false}
+        onMove={(sources, destination) => {
+          const move = droppedIndex(sources, destination)
+          if (move) onMove(move.from, move.to)
+        }}
+      >
+        {({ item, index }) => children(item, index)}
+      </List.ForEach>
+    </GroupedListSection>
   )
 }
 
@@ -315,6 +363,37 @@ const menuItems = (groups: ContextMenuItem[][]) =>
     </Fragment>
   ))
 
+function RowMenu({
+  label,
+  actions,
+}: {
+  label: string
+  actions?: ContextMenuEntries
+}) {
+  const theme = useTheme()
+  const groups = menuGroups(actions ?? [])
+  if (!groups.length) return null
+  return (
+    <Menu
+      label={
+        <Image
+          systemName='ellipsis.circle'
+          modifiers={[
+            font({ textStyle: 'body' }),
+            foregroundStyle(theme.colors.textAlt),
+            frame({ width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET }),
+            contentShape(shapes.rectangle()),
+            accessibilityHidden(true),
+          ]}
+        />
+      }
+      modifiers={[buttonStyle('borderless'), accessibilityLabel(label)]}
+    >
+      {menuItems(groups)}
+    </Menu>
+  )
+}
+
 export function GroupedListRow({
   label,
   sublabel,
@@ -326,6 +405,8 @@ export function GroupedListRow({
   trailing,
   url,
   contextActions,
+  menuActions,
+  menuLabel,
   disabled,
   selected,
   checked,
@@ -368,6 +449,9 @@ export function GroupedListRow({
           <View pointerEvents='none'>{trailing}</View>
         </RNHostView>
       ) : null}
+      {disabled ? null : (
+        <RowMenu label={menuLabel ?? label} actions={menuActions} />
+      )}
       {accessory !== 'none' ? (
         <Image
           systemName={
@@ -496,6 +580,104 @@ export function GroupedListPickerRow({
           </Text>
         ))}
       </Picker>
+    </HStack>
+  )
+}
+
+export function GroupedListTextFieldRow({
+  value,
+  onChangeText,
+  onEndEditing,
+  accessibilityLabel: label,
+  placeholder,
+  maxLength,
+  autoCapitalize = 'words',
+  invalid,
+  sublabel,
+  action,
+  menuActions,
+  menuLabel,
+  ref,
+  testID,
+}: GroupedListTextFieldRowProps) {
+  const style = useRowStyle()
+  const { theme } = style
+  const text = useNativeState(value)
+  const field = useRef<TextFieldRef>(null)
+  const typed = useRef(value)
+  useEffect(() => {
+    if (value === typed.current) return
+    typed.current = value
+    text.set(value)
+  }, [value, text])
+  useImperativeHandle(ref, () => ({ focus: () => void field.current?.focus() }))
+
+  return (
+    <HStack
+      spacing={ICON_GAP}
+      modifiers={[listRowBackground(style.rowBackground)]}
+    >
+      <VStack alignment='leading' spacing={2}>
+        <TextField
+          ref={field}
+          testID={testID}
+          text={text}
+          maxLength={maxLength}
+          onTextChange={(next) => {
+            typed.current = next
+            onChangeText(next)
+          }}
+          onFocusChange={(focused) => {
+            if (!focused) onEndEditing?.()
+          }}
+          modifiers={[
+            ...style.label,
+            accessibilityLabel(label),
+            textInputAutocapitalization(autoCapitalize),
+            submitLabel('done'),
+            ...(action ? [onSubmit(action.onPress)] : []),
+          ]}
+        >
+          {placeholder ? (
+            <TextField.Placeholder>
+              <Text
+                modifiers={[
+                  foregroundStyle(
+                    invalid ? theme.colors.error : theme.colors.textAlt
+                  ),
+                ]}
+              >
+                {placeholder}
+              </Text>
+            </TextField.Placeholder>
+          ) : null}
+        </TextField>
+        {sublabel ? <Text modifiers={style.sublabel}>{sublabel}</Text> : null}
+      </VStack>
+      {action ? (
+        <Button
+          onPress={() => {
+            Haptics.light()
+            action.onPress()
+          }}
+          modifiers={[buttonStyle('borderless')]}
+        >
+          <Text
+            modifiers={[
+              font({ family: postScriptName(theme.fonts.semiBold) }),
+              foregroundStyle(theme.colors.accent),
+              frame({
+                minWidth: MIN_TOUCH_TARGET,
+                minHeight: MIN_TOUCH_TARGET,
+              }),
+              contentShape(shapes.rectangle()),
+            ]}
+          >
+            {action.label}
+          </Text>
+        </Button>
+      ) : null}
+      <RowMenu label={menuLabel ?? label} actions={menuActions} />
     </HStack>
   )
 }

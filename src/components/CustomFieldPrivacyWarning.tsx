@@ -4,6 +4,13 @@ import { hasSensitiveCustomFieldText } from '@/lib/sensitiveCustomFields'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 
+export function useCustomFieldPrivacyNote(texts: string[]) {
+  const enabled = usePreferences((state) => state.dataProtectionMode)
+  return enabled && texts.some(hasSensitiveCustomFieldText)
+    ? i18n.t('dataProtectionNoteHint')
+    : undefined
+}
+
 export default function CustomFieldPrivacyWarning({
   texts,
 }: {

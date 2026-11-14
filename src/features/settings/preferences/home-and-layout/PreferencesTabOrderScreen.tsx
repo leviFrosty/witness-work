@@ -1,20 +1,10 @@
-import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
-import Wrapper from '@/components/ui/layout/Wrapper'
+import { GroupedList } from '@/components/ui/GroupedList'
 import TabOrderPreferencesSection from '@/features/settings/preferences/home-and-layout/TabOrderPreferencesSection'
-import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
 
-const PreferencesTabOrderScreen = () => {
-  return (
-    <SettingsInputLayout>
-      <Wrapper insets='bottom'>
-        <SettingsScrollView
-          contentContainerStyle={{ gap: 30, paddingTop: 30, paddingBottom: 30 }}
-        >
-          <TabOrderPreferencesSection />
-        </SettingsScrollView>
-      </Wrapper>
-    </SettingsInputLayout>
-  )
-}
+const PreferencesTabOrderScreen = () => (
+  <GroupedList editing>
+    <TabOrderPreferencesSection />
+  </GroupedList>
+)
 
 export default PreferencesTabOrderScreen

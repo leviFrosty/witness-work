@@ -1,28 +1,36 @@
 import { Bookmark as BookmarkIcon } from 'lucide-react-native'
-import { useEffect, useRef } from 'react'
-import ContentColumn from '@/components/ui/layout/ContentColumn'
-import type { InputRef } from 'tamagui'
+import { useEffect, useRef, useState } from 'react'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import { RootStackParamList } from '@/types/rootStack'
-import Wrapper from '@/components/ui/layout/Wrapper'
-import Section from '@/components/ui/inputs/Section'
-import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import {
+  GroupedList,
+  GroupedListReorderSection,
+  GroupedListTextFieldRow,
+  type GroupedListTextFieldRowRef,
+} from '@/components/ui/GroupedList'
+import { moveItem } from '@/lib/reorder'
 import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { useCustomFieldPrivacyNote } from '@/components/CustomFieldPrivacyWarning'
 import useSavedContactViews from '@/features/contacts/hooks/useSavedContactViews'
-import SavedViewRow from '@/features/contacts/components/SavedViewRow'
+import { contactSortLabel } from '@/features/contacts/lib/contactsQueryLabels'
+import {
+  SAVED_VIEW_NAME_MAX_LENGTH,
+  resolveCustomFieldReferences,
+} from '@/features/contacts/lib/savedViews'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Saved Contact Views'>
 
 const SavedViewsScreen = ({ navigation, route }: Props) => {
   const theme = useTheme()
   const { customFieldDefs } = useContacts()
-  const { views, rename, move, confirmRemove } = useSavedContactViews()
-  const focusRef = useRef<InputRef>(null)
+  const { views, rename, reorder, confirmRemove } = useSavedContactViews()
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const note = useCustomFieldPrivacyNote(Object.values(drafts))
+  const focusRef = useRef<GroupedListTextFieldRowRef>(null)
   const focusId = route.params?.focusId
 
   useEffect(() => {
@@ -32,47 +40,85 @@ const SavedViewsScreen = ({ navigation, route }: Props) => {
     })
   }, [navigation, focusId])
 
+  const commit = (id: string) => {
+    const draft = drafts[id]
+    if (draft !== undefined) rename(id, draft)
+    setDrafts((current) => {
+      const next = { ...current }
+      delete next[id]
+      return next
+    })
+  }
+
   return (
-    <Wrapper insets='bottom'>
-      <KeyboardAwareScrollView>
-        <ContentColumn
-          style={{
-            paddingHorizontal: inputLayout.horizontalPadding,
-            paddingVertical: 24,
-          }}
+    <GroupedList
+      editing
+      header={
+        views.length === 0 ? (
+          <Empty
+            icon={
+              <LucideIcon
+                icon={BookmarkIcon}
+                size={24}
+                color={theme.colors.text}
+              />
+            }
+            title={i18n.t('savedViews_empty_title')}
+            description={i18n.t('savedViews_empty_description')}
+          />
+        ) : undefined
+      }
+    >
+      {views.length > 0 && (
+        <GroupedListReorderSection
+          footer={note}
+          data={views}
+          keyExtractor={(view) => view.id}
+          onMove={(from, to) =>
+            reorder(
+              moveItem(
+                views.map((view) => view.id),
+                from,
+                to
+              )
+            )
+          }
         >
-          {views.length === 0 ? (
-            <Empty
-              icon={
-                <LucideIcon
-                  icon={BookmarkIcon}
-                  size={24}
-                  color={theme.colors.text}
-                />
-              }
-              title={i18n.t('savedViews_empty_title')}
-              description={i18n.t('savedViews_empty_description')}
-            />
-          ) : (
-            <Section>
-              {views.map((view, index) => (
-                <SavedViewRow
-                  key={view.id}
-                  view={view}
-                  first={index === 0}
-                  last={index === views.length - 1}
-                  customFieldDefs={customFieldDefs}
-                  inputRef={view.id === focusId ? focusRef : undefined}
-                  onRename={(name) => rename(view.id, name)}
-                  onMove={(direction) => move(view.id, direction)}
-                  onDelete={() => confirmRemove(view.id)}
-                />
-              ))}
-            </Section>
-          )}
-        </ContentColumn>
-      </KeyboardAwareScrollView>
-    </Wrapper>
+          {(view) => {
+            const query = resolveCustomFieldReferences(view, customFieldDefs)
+            return (
+              <GroupedListTextFieldRow
+                ref={view.id === focusId ? focusRef : undefined}
+                accessibilityLabel={view.name}
+                value={drafts[view.id] ?? view.name}
+                onChangeText={(name) =>
+                  setDrafts((current) => ({ ...current, [view.id]: name }))
+                }
+                onEndEditing={() => commit(view.id)}
+                maxLength={SAVED_VIEW_NAME_MAX_LENGTH}
+                autoCapitalize='sentences'
+                sublabel={i18n.t('savedViews_summary', {
+                  filters: i18n.t('savedViews_filterCount', {
+                    count: query.filters.length,
+                  }),
+                  sort: contactSortLabel(query.sort, customFieldDefs),
+                })}
+                menuLabel={i18n.t('moreActionsFor', { name: view.name })}
+                menuActions={[
+                  {
+                    id: 'delete-view',
+                    title: i18n.t('delete'),
+                    systemImage: 'trash',
+                    destructive: true,
+                    onPress: () => confirmRemove(view.id),
+                  },
+                ]}
+              />
+            )
+          }}
+        </GroupedListReorderSection>
+      )}
+    </GroupedList>
   )
 }
 

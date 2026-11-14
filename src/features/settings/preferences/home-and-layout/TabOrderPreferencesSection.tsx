@@ -1,84 +1,42 @@
-import { View } from 'react-native'
-import Section from '@/components/ui/inputs/Section'
-import Text from '@/components/ui/MyText'
-import ReorderControls from '@/components/ui/ReorderControls'
-import { reorderMenuActions } from '@/features/settings/components/shared/reorderMenuActions'
-import ContextMenu from '@/components/ui/ContextMenu'
-import XView from '@/components/ui/layout/XView'
-import useTheme from '@/contexts/theme'
+import { Platform } from 'react-native'
+import {
+  GroupedListReorderSection,
+  GroupedListRow,
+} from '@/components/ui/GroupedList'
+import { moveVisible } from '@/lib/reorder'
 import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { useFeatureFlag } from '@/lib/featureFlags'
-import {
-  getEffectiveTabOrder,
-  isTabAvailable,
-  moveVisibleTab,
-} from '@/lib/tabOrderPreferences'
+import { getEffectiveTabOrder, isTabAvailable } from '@/lib/tabOrderPreferences'
 import { usePreferences } from '@/stores/preferences'
 
 const TabOrderPreferencesSection = () => {
   const { tabOrder, set } = usePreferences()
   const { showsYearTabs } = usePublisher()
   const territories = useFeatureFlag('territories')
-  const theme = useTheme()
   const order = getEffectiveTabOrder(tabOrder)
 
   const visible = order.filter((key) =>
     isTabAvailable(key, { showsYearTabs, territories })
   )
 
-  const moveTo = (index: number, target: number, source: 'arrows' | 'menu') => {
-    const next = moveVisibleTab(order, visible, index, target)
-    if (next === order) return
-    analytics.capture('tab_order_changed', {
-      order: next.join(','),
-      source,
-    })
-    set({ tabOrder: next })
-  }
-
   return (
-    <Section>
-      <View style={{ paddingHorizontal: 12 }}>
-        {visible.map((key, index) => {
-          const isFirst = index === 0
-          const isLast = index === visible.length - 1
-          return (
-            <XView
-              key={key}
-              style={{
-                minHeight: 76,
-                paddingVertical: 16,
-                gap: 6,
-                borderBottomWidth: isLast ? 0 : 1,
-                borderBottomColor: theme.colors.border,
-              }}
-            >
-              <ReorderControls
-                onMoveUp={
-                  isFirst ? undefined : () => moveTo(index, index - 1, 'arrows')
-                }
-                onMoveDown={
-                  isLast ? undefined : () => moveTo(index, index + 1, 'arrows')
-                }
-              />
-              {}
-              <ContextMenu
-                style={{ flex: 1, minWidth: 0 }}
-                actions={reorderMenuActions({
-                  index,
-                  count: visible.length,
-                  moveTo: (target) => moveTo(index, target, 'menu'),
-                })}
-              >
-                <Text style={{ paddingVertical: 8 }}>{i18n.t(key)}</Text>
-              </ContextMenu>
-            </XView>
-          )
-        })}
-      </View>
-    </Section>
+    <GroupedListReorderSection
+      data={visible}
+      keyExtractor={(key) => key}
+      onMove={(from, to) => {
+        const next = moveVisible(order, visible, from, to)
+        if (next === order) return
+        analytics.capture('tab_order_changed', {
+          order: next.join(','),
+          source: Platform.select({ ios: 'drag', default: 'buttons' }),
+        })
+        set({ tabOrder: [...next] })
+      }}
+    >
+      {(key) => <GroupedListRow label={i18n.t(key)} accessory='none' />}
+    </GroupedListReorderSection>
   )
 }
 

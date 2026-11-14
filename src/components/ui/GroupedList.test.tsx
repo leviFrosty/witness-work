@@ -17,7 +17,10 @@ const { slot, modifier } = vi.hoisted(() => ({
     (...args: unknown[]) => ({ name, args }),
 }))
 
-vi.mock('react-native', () => ({ View: 'View' }))
+vi.mock('react-native', () => ({
+  View: 'View',
+  Platform: { OS: 'ios', select: (o: { default?: unknown }) => o.default },
+}))
 vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
 }))
@@ -31,33 +34,65 @@ vi.mock('@expo/ui/swift-ui', () => ({
   Divider: 'Divider',
   HStack: 'HStack',
   Image: 'Image',
-  List: 'List',
+  List: Object.assign(slot('List'), {
+    ForEach: ({
+      data,
+      keyExtractor,
+      onMove,
+      children,
+    }: {
+      data: unknown[]
+      keyExtractor: (item: unknown) => string
+      onMove: (sources: number[], destination: number) => void
+      children: (info: { item: unknown; index: number }) => React.ReactElement
+    }) =>
+      React.createElement(
+        'ForEach',
+        { onMove },
+        data.map((item, index) =>
+          React.cloneElement(children({ item, index }), {
+            key: keyExtractor(item),
+          })
+        )
+      ),
+  }),
   Menu: 'Menu',
   Picker: 'Picker',
   RNHostView: 'RNHostView',
   Section: 'Section',
   Spacer: 'Spacer',
   Text: 'SwiftText',
+  TextField: Object.assign(slot('TextField'), {
+    Placeholder: slot('Placeholder'),
+  }),
   Toggle: 'Toggle',
+  useNativeState: (value: unknown) => ({ value, set: vi.fn() }),
   VStack: 'VStack',
 }))
 vi.mock('@expo/ui/swift-ui/modifiers', () => ({
   accessibilityAddTraits: modifier('accessibilityAddTraits'),
   accessibilityHidden: modifier('accessibilityHidden'),
+  accessibilityLabel: modifier('accessibilityLabel'),
   alignmentGuide: modifier('alignmentGuide'),
   background: modifier('background'),
+  buttonStyle: modifier('buttonStyle'),
   contentShape: modifier('contentShape'),
   disabled: modifier('disabled'),
+  environment: modifier('environment'),
   font: modifier('font'),
   foregroundStyle: modifier('foregroundStyle'),
+  frame: modifier('frame'),
   labelsHidden: modifier('labelsHidden'),
   listRowBackground: modifier('listRowBackground'),
   listStyle: modifier('listStyle'),
   opacity: modifier('opacity'),
   pickerStyle: modifier('pickerStyle'),
+  onSubmit: modifier('onSubmit'),
   scrollContentBackground: modifier('scrollContentBackground'),
   shapes: { rectangle: () => ({ shape: 'rectangle' }) },
+  submitLabel: modifier('submitLabel'),
   tag: modifier('tag'),
+  textInputAutocapitalization: modifier('textInputAutocapitalization'),
   tint: modifier('tint'),
 }))
 vi.mock('@expo/ui/jetpack-compose', () => ({
@@ -72,6 +107,7 @@ vi.mock('@expo/ui/jetpack-compose', () => ({
   }),
   HorizontalDivider: 'HorizontalDivider',
   Icon: 'ComposeIcon',
+  IconButton: 'IconButton',
   LazyColumn: 'LazyColumn',
   ListItem: Object.assign(slot('ListItem'), {
     HeadlineContent: slot('HeadlineContent'),
@@ -82,6 +118,11 @@ vi.mock('@expo/ui/jetpack-compose', () => ({
   RNHostView: 'RNHostView',
   Row: 'Row',
   Text: 'ComposeText',
+  TextButton: 'TextButton',
+  TextField: Object.assign(slot('ComposeTextField'), {
+    Placeholder: slot('ComposePlaceholder'),
+  }),
+  useNativeState: (value: unknown) => ({ value, set: vi.fn() }),
 }))
 vi.mock('@expo/ui/jetpack-compose/modifiers', () => ({
   alpha: modifier('alpha'),
@@ -103,6 +144,15 @@ vi.mock('@/assets/compose-icons/chevron_right.xml', () => ({
 }))
 vi.mock('@/assets/compose-icons/open_in_new.xml', () => ({
   default: 'openInNew',
+}))
+vi.mock('@/assets/compose-icons/arrow_upward.xml', () => ({
+  default: 'arrowUpward',
+}))
+vi.mock('@/assets/compose-icons/arrow_downward.xml', () => ({
+  default: 'arrowDownward',
+}))
+vi.mock('@/assets/compose-icons/more_vert.xml', () => ({
+  default: 'moreVert',
 }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
@@ -337,6 +387,34 @@ describe('Android grouped list', () => {
   })
 })
 
+describe('Android reorder section', () => {
+  const { GroupedListReorderSection, GroupedListRow } = Android
+
+  it('moves rows with buttons that stop at the ends', async () => {
+    const onMove = vi.fn()
+    await render(
+      <GroupedListReorderSection
+        data={['a', 'b', 'c']}
+        keyExtractor={(key) => key}
+        onMove={onMove}
+      >
+        {(key) => <GroupedListRow label={key} />}
+      </GroupedListReorderSection>
+    )
+    const buttons = findAll('IconButton')
+    expect(buttons.map((button) => button.props.enabled)).toEqual([
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+    ])
+    await act(async () => buttons[3].props.onClick())
+    expect(onMove).toHaveBeenCalledWith(1, 2)
+  })
+})
+
 describe('iOS grouped list', () => {
   const { GroupedList, GroupedListSection, GroupedListRow } = IOS
 
@@ -456,5 +534,36 @@ describe('iOS grouped list', () => {
     expect(named(picker, 'pickerStyle')?.args).toEqual(['menu'])
     picker.props.onSelectionChange('es')
     expect(onChange).toHaveBeenCalledExactlyOnceWith('es')
+  })
+})
+
+describe('iOS reorder section', () => {
+  const { GroupedList, GroupedListReorderSection, GroupedListRow } = IOS
+
+  it('shows drag handles in edit mode and reports where a row lands', async () => {
+    const onMove = vi.fn()
+    await render(
+      <GroupedList editing>
+        <GroupedListReorderSection
+          data={['a', 'b', 'c', 'd']}
+          keyExtractor={(key) => key}
+          onMove={onMove}
+        >
+          {(key) => <GroupedListRow label={key} />}
+        </GroupedListReorderSection>
+      </GroupedList>
+    )
+    expect(named(find('List'), 'environment')?.args).toEqual([
+      'editMode',
+      'active',
+    ])
+    const drop = find('ForEach').props.onMove
+    drop([0], 4)
+    drop([3], 0)
+    drop([1], 2)
+    expect(onMove.mock.calls).toEqual([
+      [0, 3],
+      [3, 0],
+    ])
   })
 })

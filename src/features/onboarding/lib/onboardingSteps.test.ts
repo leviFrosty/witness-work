@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  nextLinearStep,
+  previousLinearStep,
   reachedStep,
   resumeStepIndex,
   type StepShowIfContext,
@@ -30,6 +32,7 @@ const ctx = (
   cloudSyncAvailable: false,
   calendarAvailable: true,
   notificationsAvailable: true,
+  importAvailable: true,
   ...overrides,
 })
 
@@ -44,6 +47,7 @@ describe('visibleOnboardingSteps', () => {
       'publisherType',
       'hoursLogging',
       'dataProtection',
+      'importRecords',
       'buddies',
       'notifications',
       'calendarSync',
@@ -73,9 +77,9 @@ describe('visibleOnboardingSteps', () => {
     expect(
       shown.slice(
         shown.indexOf('dataProtection'),
-        shown.indexOf('dataProtection') + 3
+        shown.indexOf('dataProtection') + 4
       )
-    ).toEqual(['dataProtection', 'cloudSync', 'buddies'])
+    ).toEqual(['dataProtection', 'importRecords', 'cloudSync', 'buddies'])
   })
 
   it('adds tenure, planning, and backfill for a mid-year regular pioneer', () => {
@@ -87,6 +91,7 @@ describe('visibleOnboardingSteps', () => {
       'pioneerDate',
       'planMonth',
       'dataProtection',
+      'importRecords',
       'buddies',
       'notifications',
       'calendarSync',
@@ -177,7 +182,7 @@ describe('retired step ids', () => {
   }
 
   it.each([
-    ['privacyFirst', 'pickUpWhereLeftOff'],
+    ['privacyFirst', 'publisherType'],
     ['intentPicker', 'pioneerDate'],
     ['yourPlanPreview', 'planMonth'],
     ['badges', 'notifications'],
@@ -188,7 +193,7 @@ describe('retired step ids', () => {
   })
 
   it('resumes an early founder note before personalizing, a late one in place', () => {
-    expect(resume('founderNote', ctx('publisher'))).toBe('pickUpWhereLeftOff')
+    expect(resume('founderNote', ctx('publisher'))).toBe('publisherType')
     expect(resume('founderNote', ctx('publisher'), true)).toBe('founderNote')
   })
 
@@ -232,6 +237,30 @@ describe('retired step ids', () => {
     const withoutBuddies = ctx('regularPioneer', { buddiesAvailable: false })
     expect(resume('defaultExportMethod', withoutBuddies)).toBe(
       'onboardingBackfill'
+    )
+  })
+})
+
+describe('the Welcome back branch', () => {
+  const steps = visibleOnboardingSteps(ctx('publisher'))
+  const at = (id: string) => steps.findIndex((s) => s.id === id)
+
+  it('skips Welcome back on the way into setup, and on the way back', () => {
+    expect(steps[nextLinearStep(steps, at('featureTour'))]?.id).toBe(
+      'publisherType'
+    )
+    expect(steps[previousLinearStep(steps, at('publisherType'))]?.id).toBe(
+      'featureTour'
+    )
+  })
+
+  it('leaves Welcome back for the step after the one it was opened from', () => {
+    expect(steps[nextLinearStep(steps, at('hero'))]?.id).toBe('featureTour')
+  })
+
+  it('hides Bring in your records when nothing can be imported', () => {
+    expect(ids(ctx('publisher', { importAvailable: false }))).not.toContain(
+      'importRecords'
     )
   })
 })

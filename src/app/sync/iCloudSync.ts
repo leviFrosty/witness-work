@@ -924,7 +924,7 @@ export async function applySeedEnable(
 
 export function applyPullEnable(
   remote: SyncPayload,
-  source: 'settings' | 'supporter_default' = 'settings'
+  source: 'settings' | 'supporter_default' | 'onboarding_restore' = 'settings'
 ): void {
   replaceLocalWithRemote(remote)
   const wasEnabled = usePreferences.getState().iCloudSyncEnabled

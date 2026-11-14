@@ -16,6 +16,7 @@ export type StepId =
   | 'pioneerDate'
   | 'planMonth'
   | 'dataProtection'
+  | 'importRecords'
   | 'cloudSync'
   | 'buddies'
   | 'passkeys'
@@ -44,6 +45,8 @@ export interface StepShowIfContext {
   calendarAvailable: boolean
 
   notificationsAvailable: boolean
+
+  importAvailable: boolean
 }
 
 export interface StepDef {
@@ -51,13 +54,15 @@ export interface StepDef {
 
   countsTowardProgress: boolean
 
+  branch?: boolean
+
   showIf?: (ctx: StepShowIfContext) => boolean
 }
 
 export const onboardingSteps: StepDef[] = [
   { id: 'hero', countsTowardProgress: false },
   { id: 'featureTour', countsTowardProgress: false },
-  { id: 'pickUpWhereLeftOff', countsTowardProgress: false },
+  { id: 'pickUpWhereLeftOff', countsTowardProgress: false, branch: true },
   { id: 'publisherType', countsTowardProgress: true },
   {
     id: 'hoursLogging',
@@ -78,6 +83,11 @@ export const onboardingSteps: StepDef[] = [
       tracksHours(publisher, logsHours) && publisherHours[publisher] > 0,
   },
   { id: 'dataProtection', countsTowardProgress: true },
+  {
+    id: 'importRecords',
+    countsTowardProgress: true,
+    showIf: ({ importAvailable }) => importAvailable,
+  },
   {
     id: 'cloudSync',
     countsTowardProgress: true,
@@ -139,7 +149,7 @@ const resumeStepId = (
     savedId === 'privacyFirst' ||
     (savedId === 'founderNote' && !hasCompletedProfileSetup)
   ) {
-    return 'pickUpWhereLeftOff'
+    return 'publisherType'
   }
   if (savedId === 'intentPicker') return 'pioneerDate'
   if (savedId === 'yourPlanPreview') {
@@ -186,4 +196,14 @@ export const resumeStepIndex = (
       ? visibleSteps.findIndex((s) => onboardingSteps.indexOf(s) > order)
       : -1
   return next >= 0 ? next : 0
+}
+
+export const nextLinearStep = (steps: StepDef[], from: number): number => {
+  for (let i = from + 1; i < steps.length; i++) if (!steps[i].branch) return i
+  return -1
+}
+
+export const previousLinearStep = (steps: StepDef[], from: number): number => {
+  for (let i = from - 1; i >= 0; i--) if (!steps[i].branch) return i
+  return 0
 }

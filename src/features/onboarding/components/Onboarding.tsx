@@ -22,7 +22,8 @@ import CloudSync, {
 import ProfileSetup from '@/features/onboarding/components/steps/ProfileSetup'
 import { OnboardingKeyboardProvider } from '@/features/onboarding/components/OnboardingFooter'
 import ProfileSetupPioneerDate from '@/features/onboarding/components/steps/ProfileSetupPioneerDate'
-import PickUpWhereLeftOff from '@/features/onboarding/components/steps/PickUpWhereLeftOff'
+import WelcomeBack from '@/features/onboarding/components/steps/WelcomeBack'
+import ImportRecords from '@/features/onboarding/components/steps/ImportRecords'
 import FounderNote from '@/features/onboarding/components/steps/FounderNote'
 import FeatureTour from '@/features/onboarding/components/steps/FeatureTour'
 import PlanMonth from '@/features/onboarding/components/steps/PlanMonth'
@@ -37,6 +38,8 @@ import { hasReportsInCatchUpWindow } from '@/features/service-reports/components
 import { usePreferences } from '@/stores/preferences'
 import useServiceReport from '@/stores/serviceReport'
 import {
+  nextLinearStep,
+  previousLinearStep,
   reachedStep,
   resumeStepIndex,
   type StepId,
@@ -51,6 +54,12 @@ import { completeGuidedOnboarding } from '@/features/onboarding/lib/completeGuid
 import { useProfile } from '@/stores/profile'
 import { analytics } from '@/lib/analytics'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
+import {
+  cloudSyncRestoreWaiting,
+  prefetchCloudSyncRestore,
+} from '@/app/sync/cloudSyncRestore'
+import useImportAvailable from '@/features/onboarding/hooks/useImportAvailable'
 
 interface StepProps {
   goBack: () => void
@@ -64,12 +73,13 @@ interface StepProps {
 const STEP_COMPONENTS: Record<StepId, ComponentType<StepProps>> = {
   hero: StepOne,
   featureTour: FeatureTour,
-  pickUpWhereLeftOff: PickUpWhereLeftOff,
+  pickUpWhereLeftOff: WelcomeBack,
   publisherType: StepTwo,
   hoursLogging: StepHoursLogging,
   pioneerDate: ProfileSetupPioneerDate,
   planMonth: PlanMonth,
   dataProtection: DataProtection,
+  importRecords: ImportRecords,
   cloudSync: CloudSync,
   buddies: Buddies,
   passkeys: SavePasskey,
@@ -97,6 +107,7 @@ const OnBoarding = () => {
   const buddiesAvailable = useOnboardingBuddiesAvailable(
     reachedStep(onboardingStepId, 'buddies', hasCompletedProfileSetup)
   )
+  const importAvailable = useImportAvailable()
   const passkeysAvailable = useOnboardingPasskeysAvailable(
     reachedStep(onboardingStepId, 'passkeys', hasCompletedProfileSetup)
   )
@@ -118,6 +129,7 @@ const OnBoarding = () => {
       calendarAvailable:
         hasCapability('calendarBridge') && calendarBridgeAvailable,
       notificationsAvailable: hasCapability('deviceNotifications'),
+      importAvailable,
     }),
     [
       role,
@@ -128,6 +140,7 @@ const OnBoarding = () => {
       serviceReports,
       buddiesAvailable,
       passkeysAvailable,
+      importAvailable,
       cloudSyncAvailable,
     ]
   )
@@ -181,12 +194,36 @@ const OnBoarding = () => {
     stepViewedAt.current = Date.now()
   }, [stepIndex, visibleSteps, isFocused])
 
+  const branchOrigin = useRef<number | null>(null)
+  const cloudSyncConfigEnabled = usePreferences(
+    (s) => s.cloudSyncConfig?.enabled === true
+  )
+  const currentId = visibleSteps[stepIndex]?.id
+  const welcoming = currentId === 'hero' || currentId === 'featureTour'
+  useEffect(() => {
+    if (welcoming) prefetchCloudSyncRestore()
+  }, [welcoming, cloudSyncConfigEnabled])
+
   const goNext = useCallback(() => {
     const preferences = usePreferences.getState()
+    const step = visibleSteps[stepIndex]
+    const welcomeBack = visibleSteps.findIndex(
+      (s) => s.id === 'pickUpWhereLeftOff'
+    )
+    const redirect =
+      (step?.id === 'hero' || step?.id === 'featureTour') &&
+      welcomeBack >= 0 &&
+      cloudSyncRestoreWaiting()
+    const target = redirect
+      ? welcomeBack
+      : nextLinearStep(
+          visibleSteps,
+          step?.branch ? (branchOrigin.current ?? 0) : stepIndex
+        )
     analytics.capture('onboarding_step_completed', {
-      step_id: visibleSteps[stepIndex]?.id,
+      step_id: step?.id,
       elapsed_ms: Date.now() - stepViewedAt.current,
-      next_step_id: visibleSteps[stepIndex + 1]?.id ?? 'complete',
+      next_step_id: visibleSteps[target]?.id ?? 'complete',
       publisher_role: preferences.role,
       ...(visibleSteps[stepIndex]?.id === 'hoursLogging'
         ? { selected_option: preferences.logsHours ? 'yes' : 'no' }
@@ -209,25 +246,36 @@ const OnBoarding = () => {
           }
         : {}),
     })
-    if (stepIndex >= visibleSteps.length - 1) {
+    if (redirect) {
+      branchOrigin.current = stepIndex
+      setStepIndex(welcomeBack)
+      return
+    }
+    if (target < 0) {
       completeGuidedOnboarding()
       return
     }
-    setStepIndex(stepIndex + 1)
+    if (step?.id === 'featureTour')
+      usePreferences.getState().set(freshSetupPreferences(preferences))
+    setStepIndex(target)
   }, [stepIndex, visibleSteps])
 
   const goBack = useCallback(() => {
-    setStepIndex((idx) => (idx === 0 ? 0 : idx - 1))
-  }, [])
+    setStepIndex((idx) => {
+      if (visibleSteps[idx]?.branch) return branchOrigin.current ?? 0
+      return previousLinearStep(visibleSteps, idx)
+    })
+  }, [visibleSteps])
 
   const goToStep = useCallback(
     (id: StepId) => {
       const target = visibleSteps.findIndex((s) => s.id === id)
       if (target >= 0) {
+        if (visibleSteps[target].branch) branchOrigin.current = stepIndex
         setStepIndex(target)
       }
     },
-    [visibleSteps]
+    [visibleSteps, stepIndex]
   )
 
   const current = visibleSteps[stepIndex]

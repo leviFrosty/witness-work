@@ -1,8 +1,6 @@
-import { usePreferences } from '@/stores/preferences'
 import { useContacts } from '@/stores/contactsStore'
 import { useConversations } from '@/stores/conversationStore'
 import { useServiceReport } from '@/stores/serviceReport'
-import { freshSetupPreferences } from '@/lib/syncPreferencePolicy'
 import { analytics } from '@/lib/analytics'
 import { View } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
@@ -11,7 +9,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import ImportOptions, {
-  type HostedImportType,
+  IMPORT_TYPES,
 } from '@/features/onboarding/components/ImportOptions'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -19,21 +17,12 @@ import ActionButton from '@/components/ui/ActionButton'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import MytimeImport from '@/features/onboarding/components/steps/MytimeImport'
-import ICloudRestore from '@/features/onboarding/components/steps/iCloudRestore'
 import { useScribeAvailability, useScribePaperCapture } from '@/features/scribe'
-import { completeOnboardingFromRestore } from '@/features/settings/lib/completeOnboardingFromRestore'
-import { useBackupImport } from '@/app/sync/useBackupImport'
-import { syncTransport, usesGoogleDriveSync } from '@/lib/syncTransport'
-import { hasSyncTransport } from '@/lib/syncTransport/platform'
-import useCloudSyncSupported from '@/hooks/useCloudSyncSupported'
-import { syncKey } from '@/lib/syncCopy'
 
 interface StepProps {
   goBack: () => void
   goNext: () => void
 }
-
-type Mode = 'choose' | 'mytime' | 'icloud'
 
 const useHasImportedData = (): boolean => {
   const hasContacts = useContacts((s) => s.contacts.length > 0)
@@ -47,50 +36,33 @@ const useHasImportedData = (): boolean => {
   return hasContacts || hasVisits || hasTimeEntries || hasDayPlans
 }
 
-const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
+const ImportRecords = ({ goBack, goNext }: StepProps) => {
   const theme = useTheme()
   const isFocused = useIsFocused()
-  const [mode, setMode] = useState<Mode>('choose')
-  const toChooser = () => {
-    setMode('choose')
-  }
-
-  const cloudSyncSupported = useCloudSyncSupported()
-  const icloudAvailable = usesGoogleDriveSync()
-    ? cloudSyncSupported
-    : syncTransport().isAvailable()
+  const [mytime, setMytime] = useState(false)
   const scribe = useScribeAvailability()
-  const scribeShown = scribe.status !== 'hidden'
   const paper = useScribePaperCapture()
-  const paperAvailable = scribeShown && paper.available
-  const { importing, importBackup, unlockSheet } = useBackupImport({
-    source: 'onboarding',
-  })
+  const paperAvailable = scribe.status !== 'hidden' && paper.available
   const hasImportedData = useHasImportedData()
 
   useEffect(() => {
-    if (!isFocused || mode !== 'choose') return
+    if (!isFocused || mytime) return
     analytics.capture('onboarding_import_options_viewed', {
-      icloud_available: icloudAvailable,
       notes_available: scribe.status === 'available',
       paper_available: paperAvailable,
     })
-  }, [icloudAvailable, scribe.status, paperAvailable, isFocused, mode])
-  const restoreBackup = async () => {
-    if (!(await importBackup())) return
+  }, [scribe.status, paperAvailable, isFocused, mytime])
 
-    completeOnboardingFromRestore('backup_restore')
-  }
-  const selectImport = (importType: HostedImportType) => {
-    if (importType === 'backup_json') void restoreBackup()
-    else setMode(importType)
-  }
-
-  if (mode === 'mytime') {
-    return <MytimeImport goBack={toChooser} goNext={goNext} />
-  }
-  if (mode === 'icloud') {
-    return <ICloudRestore goBack={toChooser} goNext={goNext} />
+  if (mytime) {
+    return (
+      <MytimeImport
+        goBack={() => setMytime(false)}
+        goNext={() => {
+          setMytime(false)
+          goNext()
+        }}
+      />
+    )
   }
 
   return (
@@ -103,7 +75,6 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
       }}
     >
       <OnboardingNav goBack={goBack} />
-      {unlockSheet}
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -118,7 +89,7 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
             accessibilityRole='header'
             style={[styles.stepTitle, { fontFamily: theme.fonts.bold }]}
           >
-            {i18n.t('onboardingPickUp_title')}
+            {i18n.t('onboardingImport_title')}
           </Text>
           <Text
             style={{
@@ -128,64 +99,36 @@ const PickUpWhereLeftOff = ({ goBack, goNext }: StepProps) => {
               lineHeight: 20,
             }}
           >
-            {i18n.t('onboardingPickUp_description')}
+            {i18n.t('onboardingImport_description')}
           </Text>
 
           <ImportOptions
             source='onboarding'
-            cloud={
-              hasSyncTransport()
-                ? {
-                    titleKey: syncKey('onboardingPickUp_icloud'),
-                    descKey: syncKey('onboardingPickUp_icloudDesc'),
-                    disabled: !icloudAvailable,
-                    disabledNoteKey: syncKey(
-                      'onboardingPickUp_icloudUnavailable'
-                    ),
-                  }
-                : null
-            }
-            backupRestoring={importing}
-            onSelect={selectImport}
+            cloud={null}
+            backupRestoring={false}
+            onSelect={(importType) => {
+              if (importType === 'mytime') setMytime(true)
+            }}
+            include={IMPORT_TYPES}
           />
         </View>
       </KeyboardAwareScrollView>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          marginVertical: 16,
-        }}
-      >
-        <View
-          style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }}
-        />
-        <Text style={{ color: theme.colors.textAlt }}>{i18n.t('or')}</Text>
-        <View
-          style={{ flex: 1, height: 1, backgroundColor: theme.colors.border }}
-        />
-      </View>
+      <View style={{ height: 16 }} />
       <ActionButton
         submitShortcut={false}
-        disabled={importing}
         onPress={() => {
           if (!hasImportedData)
             analytics.capture('onboarding_step_skipped', {
-              step_id: 'pickUpWhereLeftOff',
+              step_id: 'importRecords',
             })
-
-          usePreferences
-            .getState()
-            .set(freshSetupPreferences(usePreferences.getState()))
           goNext()
         }}
       >
-        {hasImportedData ? i18n.t('continue') : i18n.t('onboardingPickUp_skip')}
+        {hasImportedData ? i18n.t('continue') : i18n.t('skip')}
       </ActionButton>
     </Wrapper>
   )
 }
 
-export default PickUpWhereLeftOff
+export default ImportRecords

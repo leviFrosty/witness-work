@@ -1,6 +1,6 @@
 # Backup files
 
-Settings → Backup → Create Backup writes `witness-work-backup.json` and hands it to the share sheet. Restore From Backup, Settings → Import Data and onboarding's "Pick up where you left off" read it back (`src/app/sync/useBackupImport.tsx`). WitnessWork never keeps a copy.
+Settings → Backup → Create Backup writes `witness-work-backup.json` and hands it to the share sheet. Restore From Backup, Settings → Import Data and onboarding's Welcome back read it back (`src/app/sync/useBackupImport.tsx`). WitnessWork never keeps a copy.
 
 Since 1.46 the file is locked, and the User picks how:
 

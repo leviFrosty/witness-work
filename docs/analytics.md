@@ -232,13 +232,14 @@ Break down by stable `step_id`, since conditional steps change numeric positions
 Back/jump/button micro-interactions and hero-animation skipping are dropped.
 A skipped step can also complete: completion means advancing, not filling every
 optional field.
-`pickUpWhereLeftOff` sends `onboarding_step_skipped` only from Start fresh.
-Once something has been imported there, the button reads Continue and sends
-just `onboarding_step_completed`. `elapsed_ms` includes background time and time on other screens.
+`pickUpWhereLeftOff` (Welcome back) sends `onboarding_step_skipped` only from
+I'm new here. `importRecords` sends it only from Skip; once something has been
+imported there, the button reads Continue and sends just
+`onboarding_step_completed`. `elapsed_ms` includes background time and time on other screens.
 
 Stable step IDs, in order: `hero`, `featureTour`, `pickUpWhereLeftOff`,
 `publisherType`, `hoursLogging`, `pioneerDate`, `planMonth`, `dataProtection`,
-`cloudSync`, `buddies`, `passkeys`, `notifications`, `calendarSync`, `defaultNav`,
+`importRecords`, `cloudSync`, `buddies`, `passkeys`, `notifications`, `calendarSync`, `defaultNav`,
 `onboardingBackfill`, `profileSetup`, `founderNote`. The flow introduces the app
 before it asks for anything, asks for the name last, and ends on the founder
 note. `intentPicker` and `yourPlanPreview` were retired in October 2026 when
@@ -337,7 +338,7 @@ individual manual checkbox toggles beyond completion are dropped.
 
 ## Imports and backups
 
-Filter by `import_type` (`notes`, `paper`, `mytime`, `icloud`, `google_drive`, `backup_json`, `other_phone`, `passkey`) and `source`. `other_phone` is onboarding's From your other phone, which opens Sign In with QR Code; the handoff events below follow it. `passkey` is Sign in with a passkey; the `passkey_sign_in_*` events follow it. `notes` and `paper` are onboarding choices that open [Scribe AI](#scribe-ai), which sends its own events, not `import_*` ones.
+Filter by `import_type` (`notes`, `paper`, `mytime`, `icloud`, `google_drive`, `cloud_sync`, `backup_json`, `other_phone`, `passkey`, `recovery_key`) and `source`. Onboarding splits restoring from importing. Welcome back (step id `pickUpWhereLeftOff`, reached from "I already use WitnessWork", or from Get started when Cloud Sync has the account's records) restores an existing account: `onboarding_welcome_back_viewed` sends `account_on_device` (the account key is already on the phone) and `icloud_available`. With the account on the phone it checks Cloud Sync: `icloud_restore_probe_result` with `source: welcome_back` and `import_type: cloud_sync` reports `found`, `none`, `incomplete`, `offline`, `unavailable` or `no_account`, and a restore sends `import_completed` with `import_type: cloud_sync` and `mode` `auto` (on its own) or `manual` (Restore & keep in sync), then `onboarding_completed` with `completion_method: cloud_sync`. Without it, the sign-in choices send `import_type_selected` with `passkey`, `other_phone` or `recovery_key`. "I'm new here" sends `onboarding_step_skipped` with `step_id: pickUpWhereLeftOff`. Bring in your records (step id `importRecords`, in setup after Data Protection) imports into a new account: it sends `onboarding_import_options_viewed` (`notes_available`, `paper_available`), and Skip sends `onboarding_step_skipped` with `step_id: importRecords`. `other_phone` is onboarding's From your other phone, which opens Sign In with QR Code; the handoff events below follow it. `passkey` is Sign in with a passkey; the `passkey_sign_in_*` events follow it. `notes` and `paper` are onboarding choices that open [Scribe AI](#scribe-ai), which sends its own events, not `import_*` ones.
 Retain type selection, start, preview readiness, completion, failure, cancellation,
 stop, and undo. Intermediate file selection, commit start, retry/reset clicks,
 preview edits, prompt toggles, and warning openings are dropped.
@@ -1530,7 +1531,7 @@ it's clear how often a phone's passkey unlocks on its own, how often it only
 signs in and the other phone or the recovery key finishes, whether finishing
 lets it unlock next time, and why sign-ins fail. The web's are
 `web_sign_in_*` (below). Each carries `platform: ios | android` and
-`entry: onboarding | settings` (onboarding's "Pick up where you left off" or
+`entry: onboarding | settings` (onboarding's Welcome back or
 Settings → Import Data, or Settings → Account). One per sign-in the User starts.
 
 | Event                       | When                                                                                                                         | Properties                                                                                                                                                                                                                                                                                                                                                                                                               |

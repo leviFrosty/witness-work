@@ -68,7 +68,7 @@ const mileageStoreFiles = [
   'src/app/sharedCars/sharedCarsService.ts',
   'src/lib/backupFile.ts',
   'src/app/dev-harness/**',
-  'src/app/navigation/ToolsScreen.tsx',
+  'src/app/navigation/tools/ToolsSections.tsx',
   'src/**/__tests__/**',
   'src/**/*.test.{ts,tsx}',
 ]

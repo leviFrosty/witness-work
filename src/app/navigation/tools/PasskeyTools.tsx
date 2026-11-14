@@ -6,7 +6,7 @@ import {
   MONO,
   ToolList,
   ToolRow,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 import { toB64u } from '@/lib/bytes'
 import {
@@ -96,44 +96,47 @@ export default function PasskeyTools() {
 
   return (
     <>
-      <ToolSubheading
+      <ToolSubsection
         title='Passkeys'
         info={`modules/passkeys against RP ID ${RP_ID}, with the PRF salt and throwaway options; nothing reaches ww-api. Needs the host to serve its association files.`}
-      />
-      <ToolList>
-        <ToolRow label='Module linked' value={String(passkeysLinked())} />
-        <ToolRow
-          label='Support'
-          value={
-            support ? `passkeys ${support.passkeys} · prf ${support.prf}` : '…'
-          }
-        />
-        <ToolRow
-          label={busy === 'create' ? 'Creating…' : `Create on ${RP_ID}`}
-          disabled={busy !== null}
-          onPress={create}
-        />
-        <ToolRow
-          label={busy === 'signIn' ? 'Signing in…' : `Sign in on ${RP_ID}`}
-          disabled={busy !== null}
-          onPress={signIn}
-        />
-        <ToolRow label='Result' value={outcome?.title ?? '—'} />
-      </ToolList>
-      {outcome ? (
-        <Text
-          selectable
-          testID='passkey-tools-detail'
-          style={{
-            fontFamily: MONO,
-            fontSize: theme.fontSize('xs'),
-            color: theme.colors.textAlt,
-            paddingBottom: 8,
-          }}
-        >
-          {outcome.detail}
-        </Text>
-      ) : null}
+      >
+        <ToolList>
+          <ToolRow label='Module linked' value={String(passkeysLinked())} />
+          <ToolRow
+            label='Support'
+            value={
+              support
+                ? `passkeys ${support.passkeys} · prf ${support.prf}`
+                : '…'
+            }
+          />
+          <ToolRow
+            label={busy === 'create' ? 'Creating…' : `Create on ${RP_ID}`}
+            disabled={busy !== null}
+            onPress={create}
+          />
+          <ToolRow
+            label={busy === 'signIn' ? 'Signing in…' : `Sign in on ${RP_ID}`}
+            disabled={busy !== null}
+            onPress={signIn}
+          />
+          <ToolRow label='Result' value={outcome?.title ?? '—'} />
+        </ToolList>
+        {outcome ? (
+          <Text
+            selectable
+            testID='passkey-tools-detail'
+            style={{
+              fontFamily: MONO,
+              fontSize: theme.fontSize('xs'),
+              color: theme.colors.textAlt,
+              paddingBottom: 8,
+            }}
+          >
+            {outcome.detail}
+          </Text>
+        ) : null}
+      </ToolSubsection>
     </>
   )
 }

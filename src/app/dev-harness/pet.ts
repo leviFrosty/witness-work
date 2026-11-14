@@ -9,7 +9,9 @@ import {
   COINS_PER_DAY,
   COINS_PER_MILESTONE,
   COINS_PER_PLAN_KEPT,
+  spentOn,
 } from '@/features/pet/lib/currency'
+import { storedPurchases } from '@/features/pet/lib/unlocks'
 import { earnedCounts, type EarnedCounts } from '@/features/pet/lib/rewardLines'
 import { petEarningsNow } from '@/features/pet/lib/walletNow'
 import i18n, { type TranslationKey } from '@/lib/locales'
@@ -223,6 +225,16 @@ export const petHarness = {
   clearOverride: () => {
     usePetSession.getState().setDevOverride(null)
     return state()
+  },
+
+  coins: (balance: number | null) => {
+    if (balance === null) return petHarness.override({ wallet: undefined })
+    checkWallet(balance)
+    const { pet } = usePet.getState()
+    if (!pet) throw new Error('No pet: adopt one first')
+    return petHarness.override({
+      wallet: balance + spentOn(storedPurchases(pet)),
+    })
   },
 
   play: (kind: 'entrance' | 'trick' | 'twirl' | 'wake' | 'cheer' | 'coins') => {

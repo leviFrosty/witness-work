@@ -7,7 +7,6 @@ import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import Switch from '@/components/ui/Switch'
 import apis from '@/constants/apis'
 import useNow from '@/hooks/useNow'
-import JsonViewer from '@/features/contacts/components/JsonViewer'
 import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import {
@@ -21,10 +20,11 @@ import { useBuddiesDiagnostics } from '@/features/buddies/stores/buddiesDiagnost
 import { useBuddiesSession } from '@/features/buddies/stores/buddiesSession'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import {
+  ToolJson,
   ToolList,
   ToolRow,
   ToolSection,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 
 const shortId = (value: string | null) =>
@@ -176,115 +176,119 @@ export default function BuddiesTools() {
         <ToolRow label='Availability' value={availability} />
       </ToolList>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Live connection'
         info='While the app is open, Buddies keeps a WebSocket to the relay (inbox/live). The relay sends hello with the inbox seq on connect and changed after every write; the app syncs on each. A ping every 25 s expects a pong within 10 s. Starts once Buddies has an inbox; stops in the background.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Status'
-          value={`${live.status} · ${ago(live.since, now)}`}
-        />
-        <ToolRow
-          label='Hello / changed seq'
-          value={`${live.lastHelloSeq ?? '—'} / ${live.lastChangedSeq ?? '—'}`}
-        />
-        <ToolRow
-          label='Ping round trip'
-          value={live.lastPongRttMs === null ? '—' : `${live.lastPongRttMs} ms`}
-        />
-        <ToolRow
-          label='Last close'
-          value={
-            live.lastClose
-              ? `${live.lastClose.code ?? '?'} ${live.lastClose.reason ?? ''} · ${clock(live.lastClose.at)}`
-              : '—'
-          }
-        />
-        <ToolRow
-          label='Counts'
-          info='Connects / opens / changed signals / syncs the socket asked for / closes / failed opens / pong timeouts, since launch.'
-          value={`${live.counts.connects}/${live.counts.opens}/${live.counts.changes}/${live.counts.syncs}/${live.counts.closes}/${live.counts.failures}/${live.counts.pongTimeouts}`}
-        />
-        <ToolRow
-          label='Ping now'
-          disabled={!controls || live.status !== 'open'}
-          onPress={() => controls?.ping()}
-        />
-        <ToolRow
-          label='Reconnect now'
-          disabled={!controls}
-          onPress={() => controls?.reconnect()}
-        />
-      </ToolList>
-      <View style={{ paddingTop: 8 }}>
-        <JsonViewer
-          label='Live event log'
-          value={readableLog(live)}
-          count={live.log.length}
-        />
-      </View>
+      >
+        <ToolList>
+          <ToolRow
+            label='Status'
+            value={`${live.status} · ${ago(live.since, now)}`}
+          />
+          <ToolRow
+            label='Hello / changed seq'
+            value={`${live.lastHelloSeq ?? '—'} / ${live.lastChangedSeq ?? '—'}`}
+          />
+          <ToolRow
+            label='Ping round trip'
+            value={
+              live.lastPongRttMs === null ? '—' : `${live.lastPongRttMs} ms`
+            }
+          />
+          <ToolRow
+            label='Last close'
+            value={
+              live.lastClose
+                ? `${live.lastClose.code ?? '?'} ${live.lastClose.reason ?? ''} · ${clock(live.lastClose.at)}`
+                : '—'
+            }
+          />
+          <ToolRow
+            label='Counts'
+            info='Connects / opens / changed signals / syncs the socket asked for / closes / failed opens / pong timeouts, since launch.'
+            value={`${live.counts.connects}/${live.counts.opens}/${live.counts.changes}/${live.counts.syncs}/${live.counts.closes}/${live.counts.failures}/${live.counts.pongTimeouts}`}
+          />
+          <ToolRow
+            label='Ping now'
+            disabled={!controls || live.status !== 'open'}
+            onPress={() => controls?.ping()}
+          />
+          <ToolRow
+            label='Reconnect now'
+            disabled={!controls}
+            onPress={() => controls?.reconnect()}
+          />
+        </ToolList>
+        <View style={{ paddingTop: 8 }}>
+          <ToolJson
+            label='Live event log'
+            value={readableLog(live)}
+            count={live.log.length}
+          />
+        </View>
+      </ToolSubsection>
 
-      <ToolSubheading
+      <ToolSubsection
         title='Relay'
         info='Run relay check tests each hop: the Worker’s /health, a signed read of this inbox from its cursor (applies nothing), and a separate live socket’s hello and ping. The running connection is untouched. Copy the debug dump into a bug report; it has no names or content and only shortened ids.'
-      />
-      <ToolList>
-        <ToolRow label='Relay' value={apis.buddies} />
-        <ToolRow label='Inbox' value={shortId(inboxId)} />
-        <ToolRow
-          label='Synced seq · last sync'
-          value={`${syncSeq} · ${clock(lastSyncAt)}`}
-        />
-        <ToolRow
-          label='Sync status'
-          value={
-            syncing > 0
-              ? 'syncing'
-              : relayDisabled
-                ? 'relay disabled'
-                : failure
-                  ? `${failure.reason} · ${clock(failure.at)}`
-                  : 'ok'
-          }
-        />
-        <ToolRow
-          label='Push registered'
-          value={`${clock(pushRegisteredAt)} · ${shortId(deviceId)}`}
-        />
-        {Platform.OS === 'android' && (
+      >
+        <ToolList>
+          <ToolRow label='Relay' value={apis.buddies} />
+          <ToolRow label='Inbox' value={shortId(inboxId)} />
           <ToolRow
-            label='Seed backup'
-            value={BuddiesKeychain.rootSeedBackup() ?? '—'}
+            label='Synced seq · last sync'
+            value={`${syncSeq} · ${clock(lastSyncAt)}`}
           />
-        )}
-        <ToolRow
-          label={relayCheck.running ? 'Checking…' : 'Run relay check'}
-          disabled={!started || relayCheck.running}
-          onPress={() => void runCheck()}
-        />
-        {relayCheck.report?.steps.map((step) => (
           <ToolRow
-            key={step.name}
-            label={stepLabel[step.name]}
-            tone={step.ok || step.skipped ? 'default' : 'destructive'}
-            value={`${step.ok ? '✓' : step.skipped ? '–' : '✗'} ${step.skipped ? '' : `${step.ms} ms · `}${step.detail}`}
+            label='Sync status'
+            value={
+              syncing > 0
+                ? 'syncing'
+                : relayDisabled
+                  ? 'relay disabled'
+                  : failure
+                    ? `${failure.reason} · ${clock(failure.at)}`
+                    : 'ok'
+            }
           />
-        ))}
-        <ToolRow
-          label='Sync now'
-          disabled={!started}
-          onPress={() => void syncNow()}
-        />
-        <ToolRow
-          label='Re-register push'
-          disabled={!started}
-          onPress={() => void reRegisterPush()}
-        />
-      </ToolList>
-      <View style={{ paddingTop: 8 }}>
-        <JsonViewer label='Debug dump' value={debugDump} />
-      </View>
+          <ToolRow
+            label='Push registered'
+            value={`${clock(pushRegisteredAt)} · ${shortId(deviceId)}`}
+          />
+          {Platform.OS === 'android' && (
+            <ToolRow
+              label='Seed backup'
+              value={BuddiesKeychain.rootSeedBackup() ?? '—'}
+            />
+          )}
+          <ToolRow
+            label={relayCheck.running ? 'Checking…' : 'Run relay check'}
+            disabled={!started || relayCheck.running}
+            onPress={() => void runCheck()}
+          />
+          {relayCheck.report?.steps.map((step) => (
+            <ToolRow
+              key={step.name}
+              label={stepLabel[step.name]}
+              tone={step.ok || step.skipped ? 'default' : 'destructive'}
+              value={`${step.ok ? '✓' : step.skipped ? '–' : '✗'} ${step.skipped ? '' : `${step.ms} ms · `}${step.detail}`}
+            />
+          ))}
+          <ToolRow
+            label='Sync now'
+            disabled={!started}
+            onPress={() => void syncNow()}
+          />
+          <ToolRow
+            label='Re-register push'
+            disabled={!started}
+            onPress={() => void reRegisterPush()}
+          />
+        </ToolList>
+        <View style={{ paddingTop: 8 }}>
+          <ToolJson label='Debug dump' value={debugDump} />
+        </View>
+      </ToolSubsection>
     </ToolSection>
   )
 }

@@ -16,7 +16,7 @@ import {
   MONO,
   ToolList,
   ToolRow,
-  ToolSubheading,
+  ToolSubsection,
 } from '@/app/navigation/tools/ToolsUI'
 import {
   formatHandoffCode,
@@ -83,196 +83,197 @@ export default function HandoffTools() {
 
   return (
     <>
-      <ToolSubheading
+      <ToolSubsection
         title='Handoff'
         info='Set Up Another Device: the old phone opens a channel and shows a QR code; the new phone claims it with a sealed hello; both derive the same 6-digit code; the old phone sends the sealed account key; the new phone stores it and calls done. Polls every 1.5 s while a screen shows it. The log has request outcomes and server codes, never keys, secrets, or tokens.'
-      />
-      <ToolList>
-        <ToolRow
-          label='Session'
-          value={
-            snapshot
-              ? `${snapshot.role === 'offer' ? 'old (offer)' : 'new (claim)'} · ${entry ?? '—'}`
-              : 'none yet'
-          }
-        />
-        {snapshot && (
-          <>
-            <ToolRow label='Step' value={snapshot.step} />
-            <ToolRow
-              label='Server status'
-              value={snapshot.status ?? '—'}
-              tone={snapshot.failure ? 'destructive' : 'default'}
-            />
-            {snapshot.failure && (
-              <ToolRow
-                label='Failure'
-                tone='destructive'
-                value={snapshot.failure}
-              />
-            )}
-            <ToolRow
-              label='channelId'
-              info='Dev builds show it whole; others shorten it.'
-              value={channelShown(snapshot.channelId)}
-            />
-            <ToolRow
-              label='Started'
-              value={startedAt ? clock(startedAt) : '—'}
-            />
-            <ToolRow
-              label='Expires'
-              value={
-                snapshot.expiresAt
-                  ? `${moment(snapshot.expiresAt).format('HH:mm:ss')} (${moment(snapshot.expiresAt).fromNow()})`
-                  : '—'
-              }
-            />
-            <ToolRow label='offerPub' value={shortId(snapshot.offerPub)} />
-            <ToolRow label='claimPub' value={shortId(snapshot.claimPub)} />
-            <ToolRow
-              label='Code'
-              value={snapshot.code ? formatHandoffCode(snapshot.code) : '—'}
-            />
-          </>
-        )}
-      </ToolList>
-      {snapshot && snapshot.events.length > 0 && (
-        <View style={{ paddingVertical: 6, gap: 2 }}>
-          {snapshot.events.map((event, index) => (
-            <Text
-              key={index}
-              selectable
-              style={{
-                fontFamily: MONO,
-                fontSize: 11,
-                color:
-                  event.outcome === 'ok'
-                    ? theme.colors.textAlt
-                    : theme.colors.error,
-              }}
-            >
-              {`${clock(event.at)} ${event.op} → ${event.outcome}${event.httpStatus ? ` ${event.httpStatus}` : ''}${event.status ? ` [${event.status}]` : ''}${event.ms !== undefined ? ` ${event.ms}ms` : ''}`}
-            </Text>
-          ))}
-        </View>
-      )}
-      <ToolList>
-        {snapshot && (
-          <>
-            {__DEV__ &&
-              session?.role === 'offer' &&
-              session.state.step === 'waiting' && (
-                <ToolRow
-                  label='Copy QR link (dev)'
-                  info='The link the QR code holds, secret included: paste it into the other phone’s Tools, or open it with `wwv link`. Dev builds only.'
-                  onPress={() => {
-                    const state = session.state
-                    if (state.step !== 'waiting') return
-                    void Clipboard.setStringAsync(state.link).then(() =>
-                      toast.success('QR link copied')
-                    )
-                  }}
-                />
-              )}
-            <ToolRow
-              label='Copy session log'
-              info='JSON of the rows and log above, for a bug report.'
-              onPress={() =>
-                void Clipboard.setStringAsync(dump(snapshot, entry)).then(() =>
-                  toast.success('Session log copied')
-                )
-              }
-            />
-            <ToolRow
-              label='Simulate expiry'
-              info='Ends this session locally as expired, without a request, to check the screen. The server still keeps the channel until its own expiry.'
-              onPress={() => session?.expire()}
-            />
-            <ToolRow
-              label='Simulate cancel (server)'
-              tone='destructive'
-              info='Cancels the channel on the server and keeps this session running, so its next poll (or the other phone’s) sees `cancelled`.'
-              onPress={() =>
-                void (session?.role === 'offer'
-                  ? session.cancelOnServerOnly()
-                  : session?.cancel())
-              }
-            />
-          </>
-        )}
-        <ToolRow
-          label='Show a QR code'
-          info='Opens Set Up Another Device (entry: tools).'
-          onPress={() =>
-            navigation.navigate('Set Up Another Device', { entry: 'tools' })
-          }
-        />
-        <ToolRow
-          label='Open the scanner'
-          info='Opens Sign In with QR Code (entry: tools).'
-          onPress={() =>
-            navigation.navigate('Sign In With QR Code', { entry: 'tools' })
-          }
-        />
-        <ToolRow
-          label={testing ? 'Self-testing…' : 'Run self-test'}
-          info='A whole handoff between two sessions in this app against the configured server, with this device’s account as the old phone: open, claim, status, compare codes, send, receive, done. Changes nothing on the device. Counts toward the 20 opens per account a day.'
-          disabled={testing}
-          onPress={() => void runSelfTest()}
-        />
-      </ToolList>
-      {selfTest && selfTest.length > 0 && (
-        <View style={{ paddingVertical: 6, gap: 2 }}>
-          {selfTest.map((step, index) => (
-            <Text
-              key={index}
-              selectable
-              style={{
-                fontFamily: MONO,
-                fontSize: 11,
-                color: step.ok ? theme.colors.textAlt : theme.colors.error,
-              }}
-            >
-              {`${step.ok ? 'ok  ' : 'FAIL'} ${step.label} · ${step.detail} · ${step.ms}ms`}
-            </Text>
-          ))}
-        </View>
-      )}
-      <View style={{ gap: 6, paddingVertical: 6 }}>
-        <TextInput
-          value={pasted}
-          onChangeText={setPasted}
-          placeholder='Paste a handoff link to parse'
-          autoCapitalize='none'
-          autoCorrect={false}
-          style={{ minHeight: 36, borderColor: theme.colors.border }}
-          testID='handoff-tools-link'
-        />
+      >
         <ToolList>
           <ToolRow
-            label='Parsed'
+            label='Session'
             value={
-              !parsed
-                ? '—'
-                : parsed.ok
-                  ? `ok · channel ${channelShown(parsed.offer.channelId)} · offerPub ${shortId(parsed.offer.offerPub)} · secret ${parsed.offer.secret.length} B`
-                  : parsed.problem
+              snapshot
+                ? `${snapshot.role === 'offer' ? 'old (offer)' : 'new (claim)'} · ${entry ?? '—'}`
+                : 'none yet'
+            }
+          />
+          {snapshot && (
+            <>
+              <ToolRow label='Step' value={snapshot.step} />
+              <ToolRow
+                label='Server status'
+                value={snapshot.status ?? '—'}
+                tone={snapshot.failure ? 'destructive' : 'default'}
+              />
+              {snapshot.failure && (
+                <ToolRow
+                  label='Failure'
+                  tone='destructive'
+                  value={snapshot.failure}
+                />
+              )}
+              <ToolRow
+                label='channelId'
+                info='Dev builds show it whole; others shorten it.'
+                value={channelShown(snapshot.channelId)}
+              />
+              <ToolRow
+                label='Started'
+                value={startedAt ? clock(startedAt) : '—'}
+              />
+              <ToolRow
+                label='Expires'
+                value={
+                  snapshot.expiresAt
+                    ? `${moment(snapshot.expiresAt).format('HH:mm:ss')} (${moment(snapshot.expiresAt).fromNow()})`
+                    : '—'
+                }
+              />
+              <ToolRow label='offerPub' value={shortId(snapshot.offerPub)} />
+              <ToolRow label='claimPub' value={shortId(snapshot.claimPub)} />
+              <ToolRow
+                label='Code'
+                value={snapshot.code ? formatHandoffCode(snapshot.code) : '—'}
+              />
+            </>
+          )}
+        </ToolList>
+        {snapshot && snapshot.events.length > 0 && (
+          <View style={{ paddingVertical: 6, gap: 2 }}>
+            {snapshot.events.map((event, index) => (
+              <Text
+                key={index}
+                selectable
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color:
+                    event.outcome === 'ok'
+                      ? theme.colors.textAlt
+                      : theme.colors.error,
+                }}
+              >
+                {`${clock(event.at)} ${event.op} → ${event.outcome}${event.httpStatus ? ` ${event.httpStatus}` : ''}${event.status ? ` [${event.status}]` : ''}${event.ms !== undefined ? ` ${event.ms}ms` : ''}`}
+              </Text>
+            ))}
+          </View>
+        )}
+        <ToolList>
+          {snapshot && (
+            <>
+              {__DEV__ &&
+                session?.role === 'offer' &&
+                session.state.step === 'waiting' && (
+                  <ToolRow
+                    label='Copy QR link (dev)'
+                    info='The link the QR code holds, secret included: paste it into the other phone’s Tools, or open it with `wwv link`. Dev builds only.'
+                    onPress={() => {
+                      const state = session.state
+                      if (state.step !== 'waiting') return
+                      void Clipboard.setStringAsync(state.link).then(() =>
+                        toast.success('QR link copied')
+                      )
+                    }}
+                  />
+                )}
+              <ToolRow
+                label='Copy session log'
+                info='JSON of the rows and log above, for a bug report.'
+                onPress={() =>
+                  void Clipboard.setStringAsync(dump(snapshot, entry)).then(
+                    () => toast.success('Session log copied')
+                  )
+                }
+              />
+              <ToolRow
+                label='Simulate expiry'
+                info='Ends this session locally as expired, without a request, to check the screen. The server still keeps the channel until its own expiry.'
+                onPress={() => session?.expire()}
+              />
+              <ToolRow
+                label='Simulate cancel (server)'
+                tone='destructive'
+                info='Cancels the channel on the server and keeps this session running, so its next poll (or the other phone’s) sees `cancelled`.'
+                onPress={() =>
+                  void (session?.role === 'offer'
+                    ? session.cancelOnServerOnly()
+                    : session?.cancel())
+                }
+              />
+            </>
+          )}
+          <ToolRow
+            label='Show a QR code'
+            info='Opens Set Up Another Device (entry: tools).'
+            onPress={() =>
+              navigation.navigate('Set Up Another Device', { entry: 'tools' })
             }
           />
           <ToolRow
-            label='Sign in with this link'
-            info='Opens Sign In with QR Code with the pasted link, as if the system camera opened it.'
-            disabled={!parsed?.ok}
+            label='Open the scanner'
+            info='Opens Sign In with QR Code (entry: tools).'
             onPress={() =>
-              navigation.navigate('Sign In With QR Code', {
-                entry: 'tools',
-                link: pasted.trim(),
-              })
+              navigation.navigate('Sign In With QR Code', { entry: 'tools' })
             }
           />
+          <ToolRow
+            label={testing ? 'Self-testing…' : 'Run self-test'}
+            info='A whole handoff between two sessions in this app against the configured server, with this device’s account as the old phone: open, claim, status, compare codes, send, receive, done. Changes nothing on the device. Counts toward the 20 opens per account a day.'
+            disabled={testing}
+            onPress={() => void runSelfTest()}
+          />
         </ToolList>
-      </View>
+        {selfTest && selfTest.length > 0 && (
+          <View style={{ paddingVertical: 6, gap: 2 }}>
+            {selfTest.map((step, index) => (
+              <Text
+                key={index}
+                selectable
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: step.ok ? theme.colors.textAlt : theme.colors.error,
+                }}
+              >
+                {`${step.ok ? 'ok  ' : 'FAIL'} ${step.label} · ${step.detail} · ${step.ms}ms`}
+              </Text>
+            ))}
+          </View>
+        )}
+        <View style={{ gap: 6, paddingVertical: 6 }}>
+          <TextInput
+            value={pasted}
+            onChangeText={setPasted}
+            placeholder='Paste a handoff link to parse'
+            autoCapitalize='none'
+            autoCorrect={false}
+            style={{ minHeight: 36, borderColor: theme.colors.border }}
+            testID='handoff-tools-link'
+          />
+          <ToolList>
+            <ToolRow
+              label='Parsed'
+              value={
+                !parsed
+                  ? '—'
+                  : parsed.ok
+                    ? `ok · channel ${channelShown(parsed.offer.channelId)} · offerPub ${shortId(parsed.offer.offerPub)} · secret ${parsed.offer.secret.length} B`
+                    : parsed.problem
+              }
+            />
+            <ToolRow
+              label='Sign in with this link'
+              info='Opens Sign In with QR Code with the pasted link, as if the system camera opened it.'
+              disabled={!parsed?.ok}
+              onPress={() =>
+                navigation.navigate('Sign In With QR Code', {
+                  entry: 'tools',
+                  link: pasted.trim(),
+                })
+              }
+            />
+          </ToolList>
+        </View>
+      </ToolSubsection>
     </>
   )
 }

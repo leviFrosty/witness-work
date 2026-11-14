@@ -16,6 +16,7 @@ import {
   remoteMessageData,
 } from '@/app/buddies/buddiesPushAlerts'
 import { logger } from '@/lib/logger'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import { buddiesPushData } from '@/lib/notificationData'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
@@ -318,6 +319,9 @@ export default function BuddiesRuntime() {
       reportAlertOutcomes()
       startLive()
     })
+    const refresh = onPullToRefresh(() =>
+      buddiesEngine.sync().catch(logFailure)
+    )
     const background = addBackgroundListener(() => {
       live.stop()
       if (publishTimer) publishNow()
@@ -488,6 +492,7 @@ export default function BuddiesRuntime() {
       live.stop()
       useBuddiesDiagnostics.setState({ controls: null })
       foreground.remove()
+      refresh.remove()
       background.remove()
       session()
       pushToken.remove()

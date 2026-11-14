@@ -5,6 +5,7 @@ import { useTakeoverHold } from '@/hooks/useTakeoverTurn'
 import { analytics } from '@/lib/analytics'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { addReconnectListener } from '@/lib/http/online'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import {
   APP_CONFIG_MIN_INTERVAL_MS,
   checkAppConfig,
@@ -28,9 +29,11 @@ export default function UpdateRequiredGate() {
     })
 
     const reconnect = addReconnectListener(() => void checkAppConfig())
+    const refresh = onPullToRefresh(() => checkAppConfig({ force: true }))
     return () => {
       subscription.remove()
       reconnect.remove()
+      refresh.remove()
     }
   }, [])
 

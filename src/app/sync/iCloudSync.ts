@@ -1,5 +1,6 @@
 import { perf } from '@/lib/perf'
 import { lastForegroundAt } from '@/lib/appLifecycle'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import { foldRemotePayloads } from '@/app/sync/foldRemotePayloads'
 import { subscribeToLocalDataChanges } from '@/app/sync/localChanges'
 import {
@@ -2619,6 +2620,10 @@ export function installiCloudSync(): () => void {
   const focusSub = addWindowFocusListener(() => {
     if (AppState.currentState === 'active') catchUpOnReturn()
   })
+  const refreshSub = onPullToRefresh(async () => {
+    await pullAndMerge('pull-to-refresh')
+    await push('pull-to-refresh')
+  })
 
   const unsubPhotoRoom = onPhotoRoom(() => {
     if (usesCloudSync() && canSync()) startImagePush('foreground')
@@ -2720,6 +2725,7 @@ export function installiCloudSync(): () => void {
     appStateSub.remove()
     foregroundSub.remove()
     focusSub.remove()
+    refreshSub.remove()
     backgroundSub.remove()
     reconnectSub.remove()
     platformSyncTransport().setShouldPoll?.(() => true)

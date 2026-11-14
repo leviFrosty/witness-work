@@ -4,6 +4,7 @@ import {
   addForegroundListener,
 } from '@/lib/appLifecycle'
 import type { LiveSignal } from '@/lib/liveSignal'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import { logger } from '@/lib/logger'
 import { isSpaceError } from '@/lib/sharedSpaces/client'
 import { createSpaceLive } from '@/lib/sharedSpaces/live'
@@ -129,6 +130,9 @@ export function startTerritoriesRuntime({
     retryAdopting()
   })
   const background = addBackgroundListener(stopLive)
+  const refresh = onPullToRefresh(() =>
+    engine.syncAll(automatic).catch(logFailure)
+  )
 
   const spaces = store.subscribe((state, previous) => {
     if (state.memberships !== previous.memberships) onMembershipsChanged?.()
@@ -160,6 +164,7 @@ export function startTerritoriesRuntime({
   return () => {
     foreground.remove()
     background.remove()
+    refresh.remove()
     spaces()
     privacy()
     readiness()

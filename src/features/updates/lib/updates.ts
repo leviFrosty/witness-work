@@ -14,6 +14,7 @@ import i18n, { type TranslationKey } from '@/lib/locales'
 import { errorTracking } from '@/lib/errorTracking'
 import { isConnectivityError } from '@/lib/http/networkError'
 import { isKnownOffline } from '@/lib/http/online'
+import { onPullToRefresh } from '@/lib/pullToRefresh'
 import { RootStackParamList } from '@/types/rootStack'
 
 type UpdateCheckOutcome =
@@ -67,6 +68,7 @@ export function checkForUpdateInBackground(): Promise<void> {
 export function startUpdateChecks() {
   if (!otaEnabled || checksStarted) return
   checksStarted = true
+  onPullToRefresh(() => void checkForUpdateInBackground())
 
   const checkIfDue = () => {
     if (Date.now() - lastBackgroundCheckAt >= CHECK_INTERVAL_MS)

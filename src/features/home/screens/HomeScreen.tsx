@@ -9,7 +9,6 @@ import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
-import { iCloudSync } from '@/app/sync/iCloudSync'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -58,7 +57,7 @@ import usePet from '@/stores/pet'
 import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
 import DidYouKnowTipCard from '@/features/updates/components/DidYouKnowTipCard'
-import { checkForUpdateInBackground } from '@/features/updates/lib/updates'
+import { pullToRefresh } from '@/lib/pullToRefresh'
 import BuddiesHomeSection from '@/features/buddies/components/BuddiesHomeSection'
 import BuddyStreaks from '@/features/buddies/components/BuddyStreaks'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
@@ -88,11 +87,6 @@ import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const SECTION_GAP = 20
 
-const pullThenPush = async () => {
-  await iCloudSync.pullAndMerge('pull-to-refresh')
-  await iCloudSync.push('pull-to-refresh')
-}
-
 export const HomeScreen = ({ header }: { header: ReactNode }) => {
   perf.count('render:Home')
   const theme = useTheme()
@@ -103,7 +97,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const hasTerritories = useHasTerritories()
   const {
     homeChecklistDismissed,
-    iCloudSyncEnabled,
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
@@ -113,7 +106,6 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     useShallow((s) => ({
       routineEnabled: s.routineEnabled,
       homeChecklistDismissed: s.homeChecklistDismissed,
-      iCloudSyncEnabled: s.iCloudSyncEnabled,
       homeScreenElements: s.homeScreenElements,
       homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
@@ -133,8 +125,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
 
   const handleRefresh = () => {
     setRefreshing(true)
-    void checkForUpdateInBackground()
-    return pullThenPush().finally(() => setRefreshing(false))
+    return pullToRefresh().finally(() => setRefreshing(false))
   }
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
@@ -266,7 +257,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           paddingBottom: hasBottomBar ? insets.bottom + 50 : 0,
         }}
         refreshControl={
-          iCloudSyncEnabled && !editing ? (
+          !editing ? (
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}

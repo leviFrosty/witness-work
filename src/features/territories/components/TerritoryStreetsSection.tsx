@@ -2,11 +2,13 @@ import { View } from 'react-native'
 import {
   CircleCheck as CircleCheckIcon,
   HandHelping as HandHelpingIcon,
-  MapPinned as MapPinnedIcon,
   Plus as PlusIcon,
+  Sparkles as SparklesIcon,
 } from 'lucide-react-native'
+import Button from '@/components/ui/Button'
 import type { ContextMenuEntries } from '@/components/ui/ContextMenu'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import Section from '@/components/ui/inputs/Section'
@@ -93,23 +95,119 @@ export default function TerritoryStreetsSection({
       <InputRowButton
         key='suggest'
         testID='territory-suggest-streets'
-        leftIcon={MapPinnedIcon}
+        leftIcon={SparklesIcon}
+        leftIconColor={theme.colors.accent}
         label={i18n.t(
-          streets.length > 0 && missingHouses
+          missingHouses
             ? 'territories.suggest.action_houses'
             : 'territories.suggest.action'
         )}
         sublabel={
-          streets.length === 0
-            ? i18n.t('territories.suggest.action_description')
-            : missingHouses
-              ? i18n.t('territories.suggest.action_houses_description')
-              : undefined
+          missingHouses
+            ? i18n.t('territories.suggest.action_houses_description')
+            : undefined
         }
         onPress={onSuggest}
         lastInSection
       />
     )
+
+  if (streets.length === 0) {
+    const choices = [
+      onSuggest && {
+        testID: 'territory-suggest-streets',
+        icon: SparklesIcon,
+        label: i18n.t('territories.suggest.action'),
+        caption: i18n.t('territories.suggest.action_description'),
+        onPress: onSuggest,
+      },
+      canAdd && {
+        testID: 'territory-add-street',
+        icon: PlusIcon,
+        label: i18n.t(
+          onSuggest ? 'territories.addStreet_byHand' : 'territories.addStreet'
+        ),
+        caption: onSuggest ? undefined : i18n.t('territories.addStreet_first'),
+        onPress: onAdd,
+      },
+    ].filter((choice) => !!choice)
+
+    return (
+      <View style={{ gap: 8 }}>
+        <TerritorySectionTitle>
+          {i18n.t('territories.streets')}
+        </TerritorySectionTitle>
+        <View
+          testID='territory-streets-start'
+          style={{
+            gap: 12,
+            padding: 20,
+            borderRadius: inputLayout.sectionRadius,
+            borderCurve: 'continuous',
+            backgroundColor: theme.colors.card,
+          }}
+        >
+          {choices.map((choice, index) => {
+            const main = index === 0
+            const color = main ? theme.colors.textInverse : theme.colors.text
+            return (
+              <View key={choice.testID} style={{ gap: 8 }}>
+                <Button
+                  testID={choice.testID}
+                  onPress={choice.onPress}
+                  submitShortcut={false}
+                  style={{
+                    minHeight: 52,
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    borderRadius: 26,
+                    backgroundColor: main
+                      ? theme.colors.accent
+                      : theme.colors.background,
+                  }}
+                >
+                  <LucideIcon
+                    icon={choice.icon}
+                    size={18}
+                    color={main ? color : theme.colors.textAlt}
+                    fill={main && onSuggest ? color : undefined}
+                  />
+                  <Text
+                    style={{
+                      flexShrink: 1,
+                      textAlign: 'center',
+                      fontFamily: main
+                        ? theme.fonts.bold
+                        : theme.fonts.semiBold,
+                      fontSize: theme.fontSize(main ? 'lg' : 'md'),
+                      color,
+                    }}
+                  >
+                    {choice.label}
+                  </Text>
+                </Button>
+                {choice.caption && (
+                  <Text
+                    style={{
+                      textAlign: 'center',
+                      color: theme.colors.textAlt,
+                      fontSize: theme.fontSize('sm'),
+                    }}
+                  >
+                    {choice.caption}
+                  </Text>
+                )}
+              </View>
+            )
+          })}
+        </View>
+      </View>
+    )
+  }
 
   const houses = readOnly ? undefined : territoryHouseProgress({ streets })
   const share = houses && progressShare(houses)
@@ -200,11 +298,6 @@ export default function TerritoryStreetsSection({
             testID='territory-add-street'
             leftIcon={PlusIcon}
             label={i18n.t('territories.addStreet')}
-            sublabel={
-              streets.length === 0
-                ? i18n.t('territories.addStreet_first')
-                : undefined
-            }
             onPress={onAdd}
             lastInSection={!onSuggest}
           />

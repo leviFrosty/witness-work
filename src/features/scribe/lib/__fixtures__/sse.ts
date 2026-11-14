@@ -162,15 +162,21 @@ export interface FakeSessions extends ScribeSessions {
 }
 
 export function fakeSessions(
-  options: { tokens?: string[]; fail?: unknown } = {}
+  options: { tokens?: string[]; fail?: unknown; failOnce?: unknown } = {}
 ): FakeSessions {
   const tokens = options.tokens ?? ['token-1', 'token-2']
   let current = 0
+  let failOnce = options.failOnce
   const sessions: FakeSessions = {
     authorizations: [],
     refreshes: 0,
     async withSession<T>(run: (authorization: string) => Promise<T>) {
       if (options.fail !== undefined) throw options.fail
+      if (failOnce !== undefined) {
+        const failure = failOnce
+        failOnce = undefined
+        throw failure
+      }
       const attempt = () => {
         const authorization = `Bearer ${tokens[Math.min(current, tokens.length - 1)]}`
         sessions.authorizations.push(authorization)

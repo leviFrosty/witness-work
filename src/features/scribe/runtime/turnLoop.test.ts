@@ -1145,6 +1145,28 @@ describe('stopping and failures', () => {
     expect(useScribeConversations.getState().hasFinishedTurn).toBe(false)
   })
 
+  it('records where a connection problem stopped the turn', async () => {
+    const fake = fakeClient([
+      () => {
+        throw new ScribeClientError('network', { stage: 'session_timeout' })
+      },
+      () => [start(), failure('model_error')],
+    ])
+    const deps = runtime(fake.client)
+    const id = await send(deps, 'Log an hour')
+    await retryScribeTurn(deps, id)
+
+    expect(events('scribe_turn_finished')).toMatchObject([
+      {
+        outcome: 'error',
+        error_code: 'network',
+        error_stage: 'session_timeout',
+      },
+      { outcome: 'error', error_code: 'model_error' },
+    ])
+    expect(events('scribe_turn_finished')[1]).not.toHaveProperty('error_stage')
+  })
+
   it('retries the failed step as the same turn, keeping the draft', async () => {
     const fake = fakeClient([
       () => [

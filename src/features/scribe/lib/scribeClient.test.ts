@@ -7,6 +7,7 @@ vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 import {
   ACTIVE_CAP_DEFAULT_RETRY_MS,
   createScribeClient,
+  SESSION_RETRY_DELAY_MS,
   frameData,
   parseStatus,
   STEP_DROP_RETRY_DELAYS_MS,
@@ -14,6 +15,7 @@ import {
   type ScribeClientDeps,
 } from '@/features/scribe/lib/scribeClient'
 import { ScribeClientError } from '@/features/scribe/lib/errors'
+import { AccountSessionError } from '@/lib/serverAccount/session'
 import {
   DEFAULT_SCRIBE_LIMITS,
   SCRIBE_PROTOCOL,
@@ -353,6 +355,7 @@ describe('dropped streams', () => {
     const h = harness({ stream: [() => sseResponse([START])] })
     const failure = await stepFailure(h)
     expect(failure.code).toBe('network')
+    expect(failure.stage).toBe('dropped')
     expect(h.stream.calls).toHaveLength(3)
     expect(h.sleeps).toEqual([1_000, 3_000])
   })
@@ -384,6 +387,7 @@ describe('dropped streams', () => {
     const h = harness({ stream: [new TypeError('Network request failed')] })
     const failure = await stepFailure(h)
     expect(failure.code).toBe('network')
+    expect(failure.stage).toBe('no_response')
     expect(h.stream.calls).toHaveLength(1)
   })
 
@@ -442,6 +446,26 @@ describe('dropped streams', () => {
     const { terminal } = await runStep(h)
     expect(terminal).toEqual(DONE)
     expect(h.stream.calls).toHaveLength(2)
+  })
+
+  it('never responded when no attempt got an answer before the watchdog', async () => {
+    const h = harness({
+      idleTimeoutMs: 20,
+      stream: [
+        (request) =>
+          new Promise<Response>((_, reject) => {
+            request.signal?.addEventListener('abort', () =>
+              reject(
+                Object.assign(new Error('aborted'), { name: 'AbortError' })
+              )
+            )
+          }),
+      ],
+    })
+    const failure = await stepFailure(h)
+    expect(failure.code).toBe('network')
+    expect(failure.stage).toBe('no_response')
+    expect(h.stream.calls).toHaveLength(3)
   })
 })
 
@@ -658,6 +682,32 @@ describe('sessions', () => {
     })
     const { terminal } = await runStep(h)
     expect(terminal).toEqual(DONE)
+  })
+
+  it('tries once more when the session could not open, without failing the turn', async () => {
+    const h = harness({
+      stream: [sseResponse([START, DONE])],
+      sessions: fakeSessions({
+        failOnce: new AccountSessionError('offline', { timedOut: true }),
+      }),
+    })
+    const { terminal } = await runStep(h)
+    expect(terminal).toEqual(DONE)
+    expect(h.sleeps).toEqual([SESSION_RETRY_DELAY_MS])
+    expect(h.stream.calls).toHaveLength(1)
+  })
+
+  it('fails at the session stage when the session still can’t open', async () => {
+    const h = harness({
+      sessions: fakeSessions({
+        fail: new AccountSessionError('offline', { timedOut: true }),
+      }),
+    })
+    const failure = await stepFailure(h)
+    expect(failure.code).toBe('network')
+    expect(failure.stage).toBe('session_timeout')
+    expect(h.sleeps).toEqual([SESSION_RETRY_DELAY_MS])
+    expect(h.stream.calls).toHaveLength(0)
   })
 
   it('passes a session failure through as a client error', async () => {

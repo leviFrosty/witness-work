@@ -35,6 +35,8 @@ interface AttestationServerMetadata {
   serverCode?: string
   reason?: string
   action?: string
+
+  timedOut?: boolean
 }
 
 export class AttestationError extends Error {
@@ -44,6 +46,8 @@ export class AttestationError extends Error {
   readonly reason?: string
   readonly action?: string
 
+  readonly timedOut: boolean
+
   constructor(
     code: AttestationErrorCode,
     options: AttestationServerMetadata = {}
@@ -51,6 +55,7 @@ export class AttestationError extends Error {
     super(`Device attestation failed (${code})`)
     this.name = 'AttestationError'
     this.code = code
+    this.timedOut = code === 'network' && options.timedOut === true
     this.status = options.status
     this.serverCode = options.serverCode
     this.reason = options.reason
@@ -671,7 +676,10 @@ const httpAuthError = (
     return new AttestationError('cancelled', options)
   }
   if (error.kind === 'network') {
-    return new AttestationError('network', options)
+    return new AttestationError('network', {
+      ...options,
+      timedOut: error.timedOut,
+    })
   }
   if (
     (error.reason && CHALLENGE_SERVER_REASONS.has(error.reason)) ||

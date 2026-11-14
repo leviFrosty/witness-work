@@ -23,6 +23,7 @@ const runtime = vi.hoisted(() => ({
   capture: null as unknown as ScribeVoiceCapture,
   options: null as unknown as ScribeVoiceCaptureOptions,
   finishedTurn: false,
+  prepareSession: vi.fn(),
   alert: vi.fn(),
   announce: vi.fn(),
   light: vi.fn(),
@@ -98,6 +99,7 @@ vi.mock('@/lib/locales', () => ({
 }))
 vi.mock('@/features/scribe', () => ({
   SCRIBE_VOICE_DISCARD_CONFIRM_MS: 15_000,
+  prepareScribeSession: () => runtime.prepareSession(),
   useScribeHasFinishedTurn: () => runtime.finishedTurn,
   useScribeVoiceCapture: (options: ScribeVoiceCaptureOptions) => {
     runtime.options = options
@@ -196,6 +198,11 @@ describe('ScribeVoiceScreen', () => {
     expect(runtime.capture.start).toHaveBeenCalledTimes(1)
 
     expect(runtime.light).not.toHaveBeenCalled()
+  })
+
+  it('opens the account session while the User speaks', () => {
+    render()
+    expect(runtime.prepareSession).toHaveBeenCalledTimes(1)
   })
 
   it('primes for the microphone, or types instead', () => {

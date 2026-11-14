@@ -238,10 +238,16 @@ function reportSessionEvent(event: AccountSessionEvent) {
     return
   }
 
-  if (event.outcome === 'offline' || event.outcome === 'cancelled') return
+  const timedOut = event.outcome === 'offline' && event.timedOut === true
+  if (
+    (event.outcome === 'offline' && !timedOut) ||
+    event.outcome === 'cancelled'
+  )
+    return
   analytics.capture('account_session_failed', {
-    reason:
-      event.outcome === 'attestation'
+    reason: timedOut
+      ? 'timeout'
+      : event.outcome === 'attestation'
         ? `attestation_${event.attestation ?? 'failed'}`
         : event.outcome,
     server_reason: event.serverReason,

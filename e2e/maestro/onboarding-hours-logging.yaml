@@ -6,7 +6,7 @@ appId: com.leviwilkerson.jwtimedev
 name: Onboarding asks a Kingdom Publisher whether to log hours
 ---
 - extendedWaitUntil:
-    visible: Your field service assistant.
+    visible: Your hours, return visits and plans in one simple place.
     timeout: 60000
 - tapOn: Get Started
 # The feature tour.

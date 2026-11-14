@@ -11,6 +11,7 @@ import {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { isLaunching } from '@/app/launch/launchState'
+import { perf } from '@/lib/perf'
 
 import Haptics from '@/lib/haptics'
 import {
@@ -34,9 +35,11 @@ export type Entrance = 'intro' | 'calm' | 'return'
 
 type Timers = { current: ReturnType<typeof setTimeout>[] }
 
-const SMOOTH_FRAMES = 6
-const SMOOTH_FRAME_MS = 34
-const SMOOTH_TIMEOUT_MS = 1500
+const COVER_FRAMES = 4
+const SWEEP = [0.004, 0.02, 0.08, 0.2, 0.4, 0.6, 0.8, 0.95, 1]
+const SMOOTH_FRAME_MS = 20
+const SMOOTH_FOR_MS = 180
+const REHEARSAL_TIMEOUT_MS = 4000
 
 const schedule = (timers: Timers, ms: number, run: () => void) => {
   timers.current.push(setTimeout(run, ms))
@@ -84,6 +87,7 @@ const useWelcomeChoreography = ({
   const [storyDone, setStoryDone] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [settled, setSettled] = useState(false)
+  const [live, setLive] = useState(entrance !== 'intro')
 
   const collapse = useSharedValue(entrance === 'intro' ? 0 : 1)
 
@@ -104,23 +108,61 @@ const useWelcomeChoreography = ({
 
   const exit = useSharedValue(entrance === 'return' ? 1 : 0)
 
-  const smoothFrames = useSharedValue(0)
-  const settleGate = useFrameCallback(
-    ({ timeSincePreviousFrame, timeSinceFirstFrame }) => {
-      'worklet'
-      if (smoothFrames.value < 0) return
-      const onTime = (timeSincePreviousFrame ?? Infinity) < SMOOTH_FRAME_MS
-      smoothFrames.value = onTime ? smoothFrames.value + 1 : 0
-      if (
-        smoothFrames.value >= SMOOTH_FRAMES ||
-        timeSinceFirstFrame > SMOOTH_TIMEOUT_MS
-      ) {
-        smoothFrames.value = -1
-        scheduleOnRN(setSettled, true)
-      }
-    },
-    false
-  )
+  const veil = useSharedValue(1)
+  const ghost = useSharedValue(0)
+  const rehearsing = useSharedValue(0)
+  const gateStage = useSharedValue(0)
+  const gateFrames = useSharedValue(0)
+  const smoothMs = useSharedValue(0)
+  const rehearsedMs = useSharedValue(0)
+  const settleGate = useFrameCallback(({ timeSincePreviousFrame }) => {
+    'worklet'
+    if (gateStage.value === 2) return
+    gateFrames.value += 1
+    if (gateStage.value === 0) {
+      if (gateFrames.value < COVER_FRAMES) return
+      gateStage.value = 1
+      gateFrames.value = 0
+      splash.value = 0
+      rehearsing.value = 1
+      pulse.value = 0.5
+      burst.value = 1
+      subtitle.value = 1
+      cta.value = 1
+      link.value = 1
+      scheduleOnRN(setLive, true)
+      return
+    }
+    if (gateFrames.value <= SWEEP.length) {
+      const at = SWEEP[gateFrames.value - 1]
+      reveal.value = at
+      orbits.value = at
+      ringEnd.value = at
+      ripple.value = at
+      ghost.value = at
+      return
+    }
+    const dt = timeSincePreviousFrame ?? SMOOTH_FRAME_MS
+    rehearsedMs.value += dt
+    smoothMs.value = dt < SMOOTH_FRAME_MS ? smoothMs.value + dt : 0
+    if (
+      smoothMs.value < SMOOTH_FOR_MS &&
+      rehearsedMs.value < REHEARSAL_TIMEOUT_MS
+    )
+      return
+    gateStage.value = 2
+    rehearsing.value = 0
+    reveal.value = 0
+    orbits.value = 0
+    ringEnd.value = 0
+    ripple.value = 0
+    pulse.value = 0
+    burst.value = 0
+    subtitle.value = 0
+    cta.value = 0
+    link.value = 0
+    scheduleOnRN(setSettled, true)
+  }, false)
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const started = useRef(false)
@@ -132,6 +174,7 @@ const useWelcomeChoreography = ({
 
   useEffect(() => {
     if (!ready || started.current) return
+    perf.mark('welcome:ready')
     if (entrance === 'intro') {
       settleGate.setActive(true)
       return
@@ -147,6 +190,7 @@ const useWelcomeChoreography = ({
       exit.value = withTiming(0, { duration: RETURN_MS, easing: EASE_OUT })
     }
     schedule(timers, 0, () => {
+      perf.mark('welcome:done')
       setHeadline('welcome')
       setIntroDone(true)
     })
@@ -169,11 +213,11 @@ const useWelcomeChoreography = ({
   useEffect(() => {
     if (!settled || started.current) return
     started.current = true
+    perf.mark('welcome:start')
     settleGate.setActive(false)
     const t = INTRO
     const landAt = t.collapseAt + t.collapseFor - 60
 
-    splash.value = withDelay(t.collapseAt, withTiming(0, { duration: 0 }))
     collapse.value = withDelay(
       t.collapseAt,
       withTiming(1, { duration: t.collapseFor, easing: EASE_COLLAPSE })
@@ -216,6 +260,7 @@ const useWelcomeChoreography = ({
     setHeadline('welcome')
     schedule(timers, landAt, () => Haptics.light())
     schedule(timers, t.doneAt, () => {
+      perf.mark('welcome:done')
       setSplashVisible(false)
       setIntroDone(true)
     })
@@ -299,18 +344,23 @@ const useWelcomeChoreography = ({
     }
     burst.value = withTiming(1, { duration: 360, easing: Easing.linear })
     ringEnd.value = withTiming(RING_START, quick)
+    perf.mark('welcome:done')
     setSkipped(true)
     setSplashVisible(false)
     setIntroDone(true)
   }
 
-  const leave = (next: () => void) => {
+  const leave = (next: () => void, into: 'tour' | 'screen' = 'screen') => {
+    if (!started.current) return
     if (cta.value < 0.5) {
       skipIntro()
       return
     }
     if (leaving) return
+    perf.mark('welcome:leave')
     setLeaving(true)
+    veil.value = into === 'tour' ? 0 : 1
+    pulse.value = withTiming(0, { duration: EXIT_MS })
     exit.value = withTiming(1, { duration: EXIT_MS, easing: EASE_IN })
     schedule(timers, EXIT_MS, next)
   }
@@ -331,8 +381,13 @@ const useWelcomeChoreography = ({
       cta,
       link,
       exit,
+      veil,
+      ghost,
+      rehearsing,
     },
     headline,
+
+    live,
 
     firstLineDelay: entrance === 'intro' && !skipped ? INTRO.headlineAt : 0,
     splashVisible,

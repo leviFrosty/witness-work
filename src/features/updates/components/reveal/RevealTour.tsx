@@ -206,6 +206,7 @@ const RevealTour = ({
                 height={height}
                 scrollX={scrollX}
                 active={i === index}
+                near={Math.abs(i - index) === 1}
                 palette={palette}
                 reduceMotion={reduceMotion}
               />

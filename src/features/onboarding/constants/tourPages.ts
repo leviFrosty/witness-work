@@ -1,58 +1,29 @@
 import type { ComponentType } from 'react'
 import {
-  AudioLines as AudioLinesIcon,
   BookUser as BookUserIcon,
   CalendarDays as CalendarDaysIcon,
   CalendarSync as CalendarSyncIcon,
   Car as CarIcon,
-  ChartLine as ChartLineIcon,
   CirclePlus as CirclePlusIcon,
-  Command as CommandIcon,
   HardDriveDownload as HardDriveDownloadIcon,
-  Layers as LayersIcon,
   LayoutGrid as LayoutGridIcon,
-  Map as MapIcon,
   Medal as MedalIcon,
   Moon as MoonIcon,
   Send as SendIcon,
-  ShieldCheck as ShieldCheckIcon,
   Timer as TimerIcon,
   Users as UsersIcon,
   Watch as WatchIcon,
 } from 'lucide-react-native'
 import type { AppIcon } from '@/components/ui/LucideIcon'
-import { PanelsLeadingBottomIcon } from '@/components/ui/DirectionalIcon'
 import type { TranslationKey } from '@/lib/locales'
-import type {
-  RevealColor,
-  RevealMoreItem,
-} from '@/features/updates/constants/updateRevealPages'
+import type { RevealColor } from '@/features/updates/constants/updateRevealPages'
 import type { RevealVisualProps } from '@/features/updates/components/reveal/visuals/kit'
-import ContactsVisual from '@/features/updates/components/reveal/visuals/ContactsVisual'
-import BuddiesVisual from '@/features/updates/components/reveal/visuals/BuddiesVisual'
-import BadgesVisual from '@/features/updates/components/reveal/visuals/BadgesVisual'
-import CalendarVisual from '@/features/updates/components/reveal/visuals/CalendarVisual'
-import {
-  HoursWatch,
-  SiriVisual,
-  TimeVisual,
-} from '@/features/updates/components/reveal/visuals/skiaVisuals'
-import PlanVisual from '@/features/plans/components/plan-visual/PlanVisual'
+import TimeVisual from '@/features/onboarding/components/tour/TimeVisual'
+import VisitsVisual from '@/features/onboarding/components/tour/VisitsVisual'
+import PlanVisual from '@/features/onboarding/components/tour/PlanVisual'
 import ReportVisual from '@/features/onboarding/components/tour/ReportVisual'
-import PrivacyVisual from '@/features/onboarding/components/tour/PrivacyVisual'
 
-export type TourPageId =
-  | 'track'
-  | 'plan'
-  | 'contacts'
-  | 'report'
-  | 'buddies'
-  | 'badges'
-  | 'calendar'
-  | 'watch'
-  | 'siri'
-  | 'privacy'
-  | 'more'
+export type TourPageId = 'track' | 'contacts' | 'plan' | 'report' | 'more'
 
 export interface TourPageSpec {
   id: TourPageId
@@ -61,21 +32,7 @@ export interface TourPageSpec {
   titleKey: TranslationKey
   captionKey: TranslationKey
 
-  androidCaptionKey?: TranslationKey
-
-  noBuddiesCaptionKey?: TranslationKey
-
-  siriPhraseKey?: TranslationKey
-
   Visual?: ComponentType<RevealVisualProps>
-
-  platform?: 'ios' | 'android'
-
-  buddiesOnly?: boolean
-
-  watchOnly?: boolean
-
-  calendarOnly?: boolean
 }
 
 export const TOUR_PAGES: TourPageSpec[] = [
@@ -88,20 +45,20 @@ export const TOUR_PAGES: TourPageSpec[] = [
     Visual: TimeVisual,
   },
   {
+    id: 'contacts',
+    icon: BookUserIcon,
+    color: 'indigo',
+    titleKey: 'onboardingTour_contacts_title',
+    captionKey: 'onboardingTour_contacts_caption',
+    Visual: VisitsVisual,
+  },
+  {
     id: 'plan',
     icon: CalendarDaysIcon,
     color: 'cyan',
     titleKey: 'onboardingTour_plan_title',
     captionKey: 'onboardingTour_plan_caption',
     Visual: PlanVisual,
-  },
-  {
-    id: 'contacts',
-    icon: BookUserIcon,
-    color: 'indigo',
-    titleKey: 'onboardingTour_contacts_title',
-    captionKey: 'onboardingTour_contacts_caption',
-    Visual: ContactsVisual,
   },
   {
     id: 'report',
@@ -112,94 +69,43 @@ export const TOUR_PAGES: TourPageSpec[] = [
     Visual: ReportVisual,
   },
   {
+    id: 'more',
+    icon: CirclePlusIcon,
+    color: 'accent2',
+    titleKey: 'onboardingTour_more_title',
+    captionKey: 'onboardingTour_more_caption',
+  },
+]
+
+export interface TourMoreItem {
+  id: string
+  icon: AppIcon
+  color: RevealColor
+  labelKey: TranslationKey
+  platform?: 'ios' | 'android'
+
+  buddiesOnly?: boolean
+
+  watchOnly?: boolean
+
+  calendarOnly?: boolean
+}
+
+export const TOUR_MORE_LIMIT = 6
+
+export const TOUR_MORE_ITEMS: TourMoreItem[] = [
+  {
     id: 'buddies',
     icon: UsersIcon,
     color: 'info',
-    titleKey: 'onboardingTour_buddies_title',
-    captionKey: 'onboardingTour_buddies_caption',
-    Visual: BuddiesVisual,
+    labelKey: 'buddies_title',
     buddiesOnly: true,
   },
   {
     id: 'badges',
     icon: MedalIcon,
     color: 'warn',
-    titleKey: 'updateReveal_badges_title',
-    captionKey: 'updateReveal_badges_caption',
-    noBuddiesCaptionKey: 'updateReveal_badges_captionNoBuddies',
-    Visual: BadgesVisual,
-  },
-  {
-    id: 'calendar',
-    icon: CalendarSyncIcon,
-    color: 'purple',
-    titleKey: 'updateReveal_calendar_title',
-    captionKey: 'updateReveal_calendar_caption',
-    Visual: CalendarVisual,
-    calendarOnly: true,
-  },
-  {
-    id: 'watch',
-    icon: WatchIcon,
-    color: 'accent',
-    titleKey: 'updateReveal_watch_title',
-    captionKey: 'updateReveal_watch_caption',
-    Visual: HoursWatch,
-    platform: 'ios',
-    watchOnly: true,
-  },
-  {
-    id: 'siri',
-    icon: AudioLinesIcon,
-    color: 'pink',
-    titleKey: 'updateReveal_siri_title',
-    captionKey: 'updateReveal_siri_caption',
-    siriPhraseKey: 'siriShortcutStartTimer',
-    Visual: SiriVisual,
-    platform: 'ios',
-    watchOnly: true,
-  },
-  {
-    id: 'privacy',
-    icon: ShieldCheckIcon,
-    color: 'purple',
-    titleKey: 'privacyFirstTitle',
-    captionKey: 'privacyFirstDesc',
-    Visual: PrivacyVisual,
-  },
-  {
-    id: 'more',
-    icon: CirclePlusIcon,
-    color: 'accent2',
-    titleKey: 'updateReveal_more_title',
-    captionKey: 'onboardingTour_more_caption',
-  },
-]
-
-export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
-  {
-    id: 'map',
-    icon: MapIcon,
-    color: 'purple',
-    labelKey: 'onboardingTour_more_map',
-  },
-  {
-    id: 'mileage',
-    icon: CarIcon,
-    color: 'teal',
-    labelKey: 'onboardingTour_more_mileage',
-  },
-  {
-    id: 'yearPace',
-    icon: ChartLineIcon,
-    color: 'orange',
-    labelKey: 'onboardingTour_more_yearPace',
-  },
-  {
-    id: 'backups',
-    icon: HardDriveDownloadIcon,
-    color: 'cyan',
-    labelKey: 'onboardingTour_more_backups',
+    labelKey: 'badges_title',
   },
   {
     id: 'widgets',
@@ -209,11 +115,31 @@ export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
     platform: 'ios',
   },
   {
-    id: 'lockScreen',
-    icon: TimerIcon,
+    id: 'watch',
+    icon: WatchIcon,
     color: 'pink',
-    labelKey: 'onboardingTour_more_lockScreen',
+    labelKey: 'onboardingTour_more_watch',
     platform: 'ios',
+    watchOnly: true,
+  },
+  {
+    id: 'calendar',
+    icon: CalendarSyncIcon,
+    color: 'purple',
+    labelKey: 'onboardingTour_more_calendar',
+    calendarOnly: true,
+  },
+  {
+    id: 'backups',
+    icon: HardDriveDownloadIcon,
+    color: 'cyan',
+    labelKey: 'onboardingTour_more_backups',
+  },
+  {
+    id: 'mileage',
+    icon: CarIcon,
+    color: 'teal',
+    labelKey: 'onboardingTour_more_mileage',
   },
   {
     id: 'darkMode',
@@ -222,28 +148,20 @@ export const TOUR_MORE_ITEMS: RevealMoreItem[] = [
     labelKey: 'onboardingTour_more_darkMode',
     platform: 'android',
   },
-  {
-    id: 'mapLayers',
-    icon: LayersIcon,
-    color: 'teal',
-    labelKey: 'updateReveal_more_mapLayers',
-    platform: 'android',
-  },
-  {
-    id: 'tablets',
-    icon: PanelsLeadingBottomIcon,
-    color: 'accent3',
-    labelKey: 'onboardingTour_more_tablets',
-    tabletOnly: true,
-  },
-  {
-    id: 'shortcuts',
-    icon: CommandIcon,
-    color: 'accent2',
-    labelKey: 'updateReveal_more_shortcuts',
-    platform: 'ios',
-    tabletOnly: true,
-
-    minIos: 26,
-  },
 ]
+
+export const tourMoreItems = (
+  available: {
+    buddies: boolean
+    watch: boolean
+    calendar: boolean
+  },
+  onPlatform: (platform?: 'ios' | 'android') => boolean
+): TourMoreItem[] =>
+  TOUR_MORE_ITEMS.filter(
+    (item) =>
+      onPlatform(item.platform) &&
+      (!item.buddiesOnly || available.buddies) &&
+      (!item.watchOnly || available.watch) &&
+      (!item.calendarOnly || available.calendar)
+  ).slice(0, TOUR_MORE_LIMIT)

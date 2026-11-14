@@ -43,7 +43,10 @@ high-volume events in the table below. Versions before it still send the old
 events, so the PostHog transformation
 [Drop retired high-volume events](https://us.posthog.com/project/492895/pipeline)
 drops them (and the native iOS SDK's `$rageclick`) at ingestion, where they
-don't count toward the allowance. When you retire another event, add it there
+don't count toward the allowance. The native SDK's rage-click detector is now
+off as well (`patches/@posthog__react-native-plugin@2.5.2.patch`): it walked the
+view hierarchy on the main thread at every tap, about 30 ms on the first one,
+for an event we discard. Carry the patch forward when the plugin is upgraded. When you retire another event, add it there
 too; disable the transformation to ingest them again.
 
 Every event carries `app_platform`: `ios`, `android` or `web` (ADR 0037 §9).
@@ -256,9 +259,12 @@ across these changes by step, not position.
 is whether showing the features first keeps people in setup, and how much of it
 they watch. Leaving it sends `onboarding_tour_closed` with `method` (`finished`
 from the last page, `skipped`, or `back` to the welcome), `pages_viewed`,
-`page_count`, `last_page` (a bounded page id such as `track`, `plan`, `siri` or
-`more`), and `elapsed_ms`. Skip also sends `onboarding_step_skipped`. Individual
-page views are not captured.
+`page_count`, `last_page` (one of the page ids `track`, `contacts`, `plan`,
+`report` or `more`), and `elapsed_ms`. Skip also sends
+`onboarding_step_skipped`. Individual page views are not captured. The tour went
+from up to 11 pages to 5 in November 2026, and `buddies`, `badges`, `calendar`,
+`watch`, `siri` and `privacy` stopped being pages, so `page_count` and
+`pages_viewed` are not comparable across that change.
 
 `hoursLogging` only appears for the Kingdom Publisher, added in October 2026. Its
 question is how many Kingdom Publishers want to log hours when asked up front,

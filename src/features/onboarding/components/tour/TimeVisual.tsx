@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Animated, {
+  DerivedValue,
   useAnimatedReaction,
   useAnimatedStyle,
   useDerivedValue,
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
-import { Canvas, Path, Skia } from '@shopify/react-native-skia'
 import { Check as CheckIcon, Timer as TimerIcon } from 'lucide-react-native'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
@@ -21,6 +21,7 @@ import {
   TapRipple,
   VisualText,
   backOut,
+  pulseWindow,
   seg,
   useRiseStyle,
   useVisualClock,
@@ -31,7 +32,7 @@ import useAppActive from '@/hooks/useAppActive'
 const GOAL_MINUTES = 50 * 60
 const BEFORE_MINUTES = 34 * 60
 
-const SESSION_MINUTES = 84
+const SESSION_MINUTES = 2 * 60
 const AFTER_MINUTES = BEFORE_MINUTES + SESSION_MINUTES
 
 const TIMER = { top: 0, height: 76 }
@@ -40,18 +41,7 @@ const RING = { size: 132, stroke: 14, left: 18 }
 const RING_TOP = (MONTH.height - RING.size) / 2
 const SAVE = { right: 16, width: 74, height: 34 }
 
-const T = { tap: 0.38, fly: [0.44, 0.6], fill: [0.56, 0.74], reset: 0.92 }
-
-const ringPath = (() => {
-  const inset = RING.stroke / 2
-  const bounds = Skia.XYWHRect(
-    inset,
-    inset,
-    RING.size - RING.stroke,
-    RING.size - RING.stroke
-  )
-  return Skia.PathBuilder.Make().addArc(bounds, -90, 359.9).detach()
-})()
+const T = { tap: 0.3, fly: [0.36, 0.5], fill: [0.47, 0.62], reset: 0.9 }
 
 const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
@@ -60,7 +50,7 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     active,
     reduceMotion,
     introMs: 900,
-    loopMs: 5600,
+    loopMs: 6400,
     restAt: 0.8,
   })
 
@@ -82,11 +72,11 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
       if (before !== null && now < before) scheduleOnRN(setSeconds, 0)
     }
   )
-  const elapsed = formatMs(((SESSION_MINUTES - 1) * 60 + 40 + seconds) * 1000)
+  const elapsed = formatMs((SESSION_MINUTES * 60 + seconds) * 1000)
 
   const timerStyle = useRiseStyle(intro, 0, 0.55, 22)
   const monthStyle = useRiseStyle(intro, 0.25, 0.9, 22)
-  const reset = useDerivedValue(() => seg(loop.value, T.reset, 0.98))
+  const reset = useDerivedValue(() => seg(loop.value, T.reset, 0.96))
   const tap = useDerivedValue(() => seg(loop.value, T.tap, T.tap + 0.08))
   const saved = useDerivedValue(
     () => seg(loop.value, T.tap + 0.03, T.tap + 0.08) * (1 - reset.value)
@@ -136,6 +126,11 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   )
   const beforeStyle = useAnimatedStyle(() => ({ opacity: 1 - swap.value }))
   const afterStyle = useAnimatedStyle(() => ({ opacity: swap.value }))
+  const toGoStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: 1 + 0.16 * pulseWindow(fill.value, 0.45, 0.75, 0.75, 1) },
+    ],
+  }))
 
   const todayStyle = useAnimatedStyle(() => ({
     height: 10 + 24 * fill.value,
@@ -170,7 +165,7 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
         >
           <IconTile icon={TimerIcon} color={accent} size={36} />
           <View style={{ flex: 1, gap: 2 }}>
-            <VisualText style={{ fontSize: 11, color: palette.textAlt }}>
+            <VisualText style={{ fontSize: 12, color: palette.textAlt }}>
               {i18n.t('timer')}
             </VisualText>
             <View>
@@ -269,28 +264,7 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
               justifyContent: 'center',
             }}
           >
-            <Canvas
-              style={{
-                position: 'absolute',
-                width: RING.size,
-                height: RING.size,
-              }}
-            >
-              <Path
-                path={ringPath}
-                style='stroke'
-                strokeWidth={RING.stroke}
-                color={palette.ringTrack}
-              />
-              <Path
-                path={ringPath}
-                style='stroke'
-                strokeWidth={RING.stroke}
-                strokeCap='round'
-                color={accent}
-                end={ringEnd}
-              />
-            </Canvas>
+            <Ring progress={ringEnd} color={accent} track={palette.ringTrack} />
             <View style={{ alignItems: 'center' }}>
               <View>
                 <Animated.View style={beforeStyle}>
@@ -314,7 +288,7 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
                   </RingValue>
                 </Animated.View>
               </View>
-              <VisualText style={{ fontSize: 11, color: palette.textAlt }}>
+              <VisualText style={{ fontSize: 12, color: palette.textAlt }}>
                 {i18n.t('hours')}
               </VisualText>
             </View>
@@ -324,36 +298,39 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
               position: 'absolute',
               left: RING.left + RING.size + 18,
               right: 16,
-              top: 26,
+              top: 24,
               bottom: 22,
               justifyContent: 'space-between',
             }}
           >
-            <View style={{ gap: 4 }}>
-              <VisualText style={{ fontSize: 11, color: palette.textAlt }}>
+            <View style={{ gap: 3 }}>
+              <VisualText style={{ fontSize: 12, color: palette.textAlt }}>
                 {month}
               </VisualText>
-              <VisualText style={{ fontSize: 14, color: palette.text }}>
+              <Animated.View
+                style={[{ transformOrigin: 'left center' }, toGoStyle]}
+              >
+                <Animated.View style={beforeStyle}>
+                  <ToGo color={accent}>
+                    {i18n.t('hoursToGoLabel', { value: toGoBefore })}
+                  </ToGo>
+                </Animated.View>
+                <Animated.View
+                  style={[
+                    { position: 'absolute', left: 0, right: 0 },
+                    afterStyle,
+                  ]}
+                >
+                  <ToGo color={accent}>
+                    {i18n.t('hoursToGoLabel', { value: toGoAfter })}
+                  </ToGo>
+                </Animated.View>
+              </Animated.View>
+              <VisualText style={{ fontSize: 13, color: palette.textAlt }}>
                 {i18n.t('goalLabel', {
                   value: formatMinutesCompact(GOAL_MINUTES),
                 })}
               </VisualText>
-              <View>
-                <Animated.View style={beforeStyle}>
-                  <VisualText style={{ fontSize: 12, color: accent }}>
-                    {i18n.t('hoursToGoLabel', {
-                      value: toGoBefore,
-                    })}
-                  </VisualText>
-                </Animated.View>
-                <Animated.View
-                  style={[{ position: 'absolute', left: 0 }, afterStyle]}
-                >
-                  <VisualText style={{ fontSize: 12, color: accent }}>
-                    {i18n.t('hoursToGoLabel', { value: toGoAfter })}
-                  </VisualText>
-                </Animated.View>
-              </View>
             </View>
             <View
               style={{
@@ -418,6 +395,161 @@ const TimeVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
         </VisualText>
       </Animated.View>
     </View>
+  )
+}
+
+const HALF = RING.size / 2
+
+const RingHalf = ({
+  side,
+  color,
+}: {
+  side: 'left' | 'right'
+  color: string
+}) => (
+  <View
+    style={{
+      position: 'absolute',
+      left: side === 'left' ? 0 : HALF,
+      width: HALF,
+      height: RING.size,
+      overflow: 'hidden',
+    }}
+  >
+    <View
+      style={{
+        position: 'absolute',
+        left: side === 'left' ? 0 : -HALF,
+        width: RING.size,
+        height: RING.size,
+        borderRadius: HALF,
+        borderWidth: RING.stroke,
+        borderColor: color,
+      }}
+    />
+  </View>
+)
+
+const RingCap = ({ color }: { color: string }) => (
+  <View
+    style={{
+      position: 'absolute',
+      left: HALF - RING.stroke / 2,
+      top: 0,
+      width: RING.stroke,
+      height: RING.stroke,
+      borderRadius: RING.stroke / 2,
+      backgroundColor: color,
+    }}
+  />
+)
+
+const Ring = ({
+  progress,
+  color,
+  track,
+}: {
+  progress: DerivedValue<number>
+  color: string
+  track: string
+}) => {
+  const sweep = {
+    position: 'absolute',
+    width: RING.size,
+    height: RING.size,
+  } as const
+  const shownStyle = useAnimatedStyle(() => ({
+    opacity: progress.value > 0.002 ? 1 : 0,
+  }))
+  const firstStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${Math.min(progress.value, 0.5) * 360}deg` }],
+  }))
+  const secondStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${(Math.max(progress.value, 0.5) - 0.5) * 360}deg` },
+    ],
+  }))
+  const pastHalfStyle = useAnimatedStyle(() => ({
+    opacity: progress.value > 0.5 ? 1 : 0,
+  }))
+  const endStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${progress.value * 360}deg` }],
+  }))
+  return (
+    <View style={sweep}>
+      <View
+        style={[
+          sweep,
+          { borderRadius: HALF, borderWidth: RING.stroke, borderColor: track },
+        ]}
+      />
+      <Animated.View style={[sweep, shownStyle]}>
+        <View
+          style={{
+            position: 'absolute',
+            left: HALF,
+            width: HALF,
+            height: RING.size,
+            overflow: 'hidden',
+          }}
+        >
+          <Animated.View style={[sweep, { left: -HALF }, firstStyle]}>
+            <RingHalf side='left' color={color} />
+          </Animated.View>
+        </View>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              width: HALF,
+              height: RING.size,
+              overflow: 'hidden',
+            },
+            pastHalfStyle,
+          ]}
+        >
+          <Animated.View style={[sweep, secondStyle]}>
+            <RingHalf side='right' color={color} />
+          </Animated.View>
+        </Animated.View>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              left: HALF - 1,
+              bottom: 0,
+              width: 2,
+              height: RING.stroke,
+              backgroundColor: color,
+            },
+            pastHalfStyle,
+          ]}
+        />
+        <RingCap color={color} />
+        <Animated.View style={[sweep, endStyle]}>
+          <RingCap color={color} />
+        </Animated.View>
+      </Animated.View>
+    </View>
+  )
+}
+
+const ToGo = ({ color, children }: { color: string; children: string }) => {
+  const theme = useTheme()
+  return (
+    <VisualText
+      minimumFontScale={0.7}
+      style={{
+        fontSize: 20,
+        lineHeight: 26,
+        fontFamily: theme.fonts.bold,
+        letterSpacing: tracking(-0.3),
+        color,
+      }}
+    >
+      {children}
+    </VisualText>
   )
 }
 

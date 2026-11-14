@@ -1,11 +1,11 @@
 import { StyleSheet } from 'react-native'
 import {
-  BlurMask,
   Canvas,
   Circle,
   Group,
   LinearGradient,
   Path,
+  RadialGradient,
   RoundedRect,
   Skia,
   rect,
@@ -13,7 +13,6 @@ import {
   vec,
 } from '@shopify/react-native-skia'
 import Animated, {
-  DerivedValue,
   SharedValue,
   clamp,
   interpolateColor,
@@ -34,12 +33,23 @@ import {
   PARALLAX,
 } from '@/features/onboarding/constants/welcome'
 import { Tilt } from '@/features/onboarding/hooks/useWelcomeMotion'
+import { snapCircle } from '@/features/onboarding/lib/snapCircle'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
 const TILE_TOP = '#5CE291'
 const TILE_BOTTOM = '#12A04A'
 
 const WINDOW_RADIUS = 44
+
+const GLOW_REACH = 0.95
+
+const FAINT = 0.012
+
+const SPLASH_NEIGHBOR = (() => {
+  const blue = parseInt(SPLASH_BACKGROUND_COLOR.slice(5, 7), 16)
+  const next = blue < 255 ? blue + 1 : blue - 1
+  return `${SPLASH_BACKGROUND_COLOR.slice(0, 5)}${next.toString(16).padStart(2, '0')}`
+})()
 
 const cardPath = Skia.Path.MakeFromSVGString(BRAND_MARK_CARD_PATH)
 const personPath = Skia.Path.MakeFromSVGString(BRAND_MARK_PERSON_PATH)
@@ -71,7 +81,7 @@ const RippleRing = ({
   const progress = useDerivedValue(() =>
     clamp((ripple.value - lag) / (1 - lag), 0, 1)
   )
-  const r = useDerivedValue(() => from + progress.value * spread)
+  const r = useDerivedValue(() => snapCircle(from + progress.value * spread))
   const opacity = useDerivedValue(() =>
     progress.value > 0 && progress.value < 1 ? (1 - progress.value) * 0.55 : 0
   )
@@ -88,46 +98,35 @@ const RippleRing = ({
   )
 }
 
-interface Props {
+interface TileProps {
   width: number
   height: number
-
-  hub: { x: number; y: number } | null
+  hubX: number
+  hubY: number
   scale: number
-
   splashMarkWidth: number
   palette: WelcomePalette
-
   collapse: SharedValue<number>
+  tileScale: SharedValue<number>
 
-  tileScale: DerivedValue<number>
-
-  ripple: SharedValue<number>
-  tilt: Tilt
-  exit: SharedValue<number>
-
-  reduceMotion: boolean
+  opacity?: SharedValue<number>
 }
 
-const WelcomeCurtain = ({
+const Tile = ({
   width,
   height,
-  hub,
+  hubX,
+  hubY,
   scale,
   splashMarkWidth,
   palette,
   collapse,
   tileScale,
-  ripple,
-  tilt,
-  exit,
-  reduceMotion,
-}: Props) => {
+  opacity,
+}: TileProps) => {
   const tile = HUB_TILE_SIZE * scale
   const tileRadius = HUB_TILE_RADIUS * scale
   const markWidth = HUB_MARK_WIDTH * scale
-  const hubX = hub?.x ?? width / 2
-  const hubY = hub?.y ?? height / 2
 
   const geometry = useDerivedValue(() => {
     const c = collapse.value
@@ -141,7 +140,7 @@ const WelcomeCurtain = ({
       c,
       w,
       h,
-      r: Math.min(r, w / 2, h / 2),
+      r: Math.max(1, Math.min(r, w / 2, h / 2)),
       cx: width / 2 + (hubX - width / 2) * c,
       cy: height / 2 + (hubY - height / 2) * c,
       mark: splashMarkWidth + (markWidth - splashMarkWidth) * c,
@@ -152,19 +151,21 @@ const WelcomeCurtain = ({
     const g = geometry.value
     return rrect(rect(g.cx - g.w / 2, g.cy - g.h / 2, g.w, g.h), g.r, g.r)
   })
-  const glow = useDerivedValue(() => {
-    const g = geometry.value
-    const lift = 8 * scale
-    return rrect(
-      rect(g.cx - g.w / 2, g.cy - g.h / 2 + lift, g.w, g.h),
-      g.r,
-      g.r
+  const glowCenter = useDerivedValue(() =>
+    vec(
+      snapCircle(geometry.value.cx),
+      snapCircle(geometry.value.cy + 8 * scale)
     )
-  })
-  const glowOpacity = useDerivedValue(() =>
-    Math.max(0, (geometry.value.c - 0.75) / 0.25)
   )
-  const bevelOpacity = useDerivedValue(() => Math.pow(geometry.value.c, 4))
+  const glowRadius = useDerivedValue(() =>
+    snapCircle(geometry.value.w * GLOW_REACH)
+  )
+  const glowOpacity = useDerivedValue(() =>
+    Math.max(FAINT, (geometry.value.c - 0.75) / 0.25)
+  )
+  const bevelOpacity = useDerivedValue(() =>
+    Math.max(FAINT, Math.pow(geometry.value.c, 4))
+  )
   const gradientStart = useDerivedValue(() =>
     vec(geometry.value.cx, geometry.value.cy - geometry.value.h / 2)
   )
@@ -178,11 +179,7 @@ const WelcomeCurtain = ({
       [0, 1],
       [SPLASH_BACKGROUND_COLOR, TILE_TOP]
     ),
-    interpolateColor(
-      collapse.value,
-      [0, 1],
-      [SPLASH_BACKGROUND_COLOR, TILE_BOTTOM]
-    ),
+    interpolateColor(collapse.value, [0, 1], [SPLASH_NEIGHBOR, TILE_BOTTOM]),
   ])
   const bounceOrigin = useDerivedValue(() =>
     vec(geometry.value.cx, geometry.value.cy)
@@ -199,6 +196,89 @@ const WelcomeCurtain = ({
     ]
   })
 
+  return (
+    <Group transform={bounce} origin={bounceOrigin} opacity={opacity ?? 1}>
+      <Circle c={glowCenter} r={glowRadius} opacity={glowOpacity}>
+        <RadialGradient
+          c={glowCenter}
+          r={glowRadius}
+          colors={[
+            palette.tileShadow,
+            palette.tileShadow,
+            palette.tileShadowClear,
+          ]}
+          positions={[0, 0.5, 1]}
+        />
+      </Circle>
+      <RoundedRect rect={body}>
+        <LinearGradient start={gradientStart} end={gradientEnd} colors={fill} />
+      </RoundedRect>
+      <RoundedRect
+        rect={body}
+        style='stroke'
+        strokeWidth={1.2}
+        opacity={bevelOpacity}
+      >
+        <LinearGradient
+          start={gradientStart}
+          end={gradientEnd}
+          colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0)']}
+          positions={[0, 0.55]}
+        />
+      </RoundedRect>
+      <Group transform={markTransform}>
+        {cardPath && (
+          <Path path={cardPath} color='#FFFFFF' fillType='evenOdd' />
+        )}
+        {personPath && <Path path={personPath} color='#FFFFFF' />}
+        {linesPath && <Path path={linesPath} color='#FFFFFF' />}
+      </Group>
+    </Group>
+  )
+}
+
+interface Props {
+  width: number
+  height: number
+
+  hub: { x: number; y: number } | null
+  scale: number
+
+  splashMarkWidth: number
+  palette: WelcomePalette
+
+  collapse: SharedValue<number>
+
+  tileScale: SharedValue<number>
+
+  ripple: SharedValue<number>
+
+  rehearsal?: { collapse: SharedValue<number>; on: SharedValue<number> }
+  tilt: Tilt
+  exit: SharedValue<number>
+
+  reduceMotion: boolean
+}
+
+const WelcomeCurtain = ({
+  width,
+  height,
+  hub,
+  scale,
+  splashMarkWidth,
+  palette,
+  collapse,
+  tileScale,
+  ripple,
+  rehearsal,
+  tilt,
+  exit,
+  reduceMotion,
+}: Props) => {
+  const tile = HUB_TILE_SIZE * scale
+  const hubX = snapCircle(hub?.x ?? width / 2)
+  const hubY = snapCircle(hub?.y ?? height / 2)
+
   const layerStyle = useAnimatedStyle(() => {
     const settled = Math.pow(collapse.value, 6)
     return {
@@ -212,6 +292,16 @@ const WelcomeCurtain = ({
   })
 
   const origin = [hubX, hubY, 0]
+  const shared = {
+    width,
+    height,
+    hubX,
+    hubY,
+    scale,
+    splashMarkWidth,
+    palette,
+    tileScale,
+  }
 
   return (
     <Animated.View
@@ -219,6 +309,13 @@ const WelcomeCurtain = ({
       style={[StyleSheet.absoluteFill, { transformOrigin: origin }, layerStyle]}
     >
       <Canvas style={StyleSheet.absoluteFill}>
+        {rehearsal && (
+          <Tile
+            {...shared}
+            collapse={rehearsal.collapse}
+            opacity={rehearsal.on}
+          />
+        )}
         <RippleRing
           cx={hubX}
           cy={hubY}
@@ -239,42 +336,7 @@ const WelcomeCurtain = ({
           color={palette.ripple}
           ripple={ripple}
         />
-        <Group transform={bounce} origin={bounceOrigin}>
-          <RoundedRect
-            rect={glow}
-            color={palette.tileShadow}
-            opacity={glowOpacity}
-          >
-            <BlurMask blur={16 * scale} style='normal' />
-          </RoundedRect>
-          <RoundedRect rect={body}>
-            <LinearGradient
-              start={gradientStart}
-              end={gradientEnd}
-              colors={fill}
-            />
-          </RoundedRect>
-          <RoundedRect
-            rect={body}
-            style='stroke'
-            strokeWidth={1.2}
-            opacity={bevelOpacity}
-          >
-            <LinearGradient
-              start={gradientStart}
-              end={gradientEnd}
-              colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0)']}
-              positions={[0, 0.55]}
-            />
-          </RoundedRect>
-          <Group transform={markTransform}>
-            {cardPath && (
-              <Path path={cardPath} color='#FFFFFF' fillType='evenOdd' />
-            )}
-            {personPath && <Path path={personPath} color='#FFFFFF' />}
-            {linesPath && <Path path={linesPath} color='#FFFFFF' />}
-          </Group>
-        </Group>
+        <Tile {...shared} collapse={collapse} />
       </Canvas>
     </Animated.View>
   )

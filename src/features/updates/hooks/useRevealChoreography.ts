@@ -413,6 +413,8 @@ const useRevealChoreography = ({ entrance, ready }: Options) => {
     headline,
     splashVisible,
 
+    live: entrance !== 'intro' || settled,
+
     skippable: phase === 'intro' && !introDone,
     skipIntro,
     startTour,

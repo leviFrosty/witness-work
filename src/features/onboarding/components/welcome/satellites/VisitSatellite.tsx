@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { Text, View } from 'react-native'
-import { Bell as BellIcon, User as UserIcon } from 'lucide-react-native'
+import { View } from 'react-native'
+import { Bell as BellIcon } from 'lucide-react-native'
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,7 +16,7 @@ import { formatTime } from '@/lib/dates'
 import i18n from '@/lib/locales'
 import SatelliteSurface, {
   SatelliteProps,
-  Skeleton,
+  SatelliteText,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
 
 const VisitSatellite = ({
@@ -27,6 +27,7 @@ const VisitSatellite = ({
 }: SatelliteProps) => {
   const theme = useTheme()
   const color = theme.colors.cyan
+  const name = i18n.t('onboardingTour_sample_name')
   const followUp = moment().add(2, 'days').hour(10).minute(0)
   const ring = useSharedValue(0)
 
@@ -52,67 +53,87 @@ const VisitSatellite = ({
       focus={focus}
       accent={color}
       style={{
-        width: 190,
+        width: 220,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
       }}
     >
-      <View>
-        <View
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: color,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <SatelliteText
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: withAlpha(color, 0x33),
-            alignItems: 'center',
-            justifyContent: 'center',
+            fontSize: 17,
+            fontFamily: theme.fonts.bold,
+            color: '#FFFFFF',
           }}
         >
-          <LucideIcon icon={UserIcon} size={20} color={color} />
-        </View>
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              top: -5,
-              right: -7,
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              borderWidth: 2,
-              borderColor: palette.badgeBorder,
-              backgroundColor: theme.colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-            },
-            bellStyle,
-          ]}
-        >
-          <LucideIcon
-            icon={BellIcon}
-            size={10}
-            color='#FFFFFF'
-            strokeWidth={2.6}
-          />
-        </Animated.View>
+          {Array.from(name)[0] ?? ''}
+        </SatelliteText>
       </View>
-      <View style={{ flex: 1, gap: 8 }}>
-        <Skeleton palette={palette} width='82%' />
-        <Text
-          allowFontScaling={false}
-          numberOfLines={1}
-          style={{
-            fontSize: 12,
-            fontFamily: theme.fonts.medium,
-            color: palette.textAlt,
-          }}
-        >
-          {i18n.t('contactDetails.upNextWhen', {
-            day: followUp.format('ddd'),
-            time: formatTime(followUp),
-          })}
-        </Text>
+      <View style={{ flex: 1, gap: 5 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <SatelliteText
+            style={{
+              flexShrink: 1,
+              fontSize: 15,
+              fontFamily: theme.fonts.bold,
+              color: palette.text,
+            }}
+          >
+            {name}
+          </SatelliteText>
+          <View
+            style={{
+              flexShrink: 1,
+              paddingHorizontal: 7,
+              paddingVertical: 2,
+              borderRadius: 8,
+              backgroundColor: withAlpha(color, 0x2e),
+            }}
+          >
+            <SatelliteText
+              style={{
+                fontSize: 11,
+                fontFamily: theme.fonts.semiBold,
+                color,
+              }}
+            >
+              {i18n.t('defaultNavPreview_contactRole')}
+            </SatelliteText>
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <Animated.View style={bellStyle}>
+            <LucideIcon
+              icon={BellIcon}
+              size={12}
+              color={palette.textAlt}
+              strokeWidth={2.6}
+            />
+          </Animated.View>
+          <SatelliteText
+            style={{
+              flexShrink: 1,
+              fontSize: 12,
+              fontFamily: theme.fonts.semiBold,
+              color: palette.textAlt,
+            }}
+          >
+            {i18n.t('contactDetails.upNextWhen', {
+              day: followUp.format('ddd'),
+              time: formatTime(followUp),
+            })}
+          </SatelliteText>
+        </View>
       </View>
     </SatelliteSurface>
   )

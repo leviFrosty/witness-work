@@ -17,6 +17,7 @@ const launchArg = (name: string): string | undefined => {
 
 const SCENARIO = launchArg('wwPerfScenario') ?? 'busy'
 const SCRUB = launchArg('wwPerfScrub') === '1'
+const WELCOME = launchArg('wwPerfWelcome') === '1'
 
 const SETUP_KEY = 'perfSetupScenario'
 
@@ -61,6 +62,10 @@ async function setUp() {
 
 export function installPerfSetup() {
   setDevFlagOverride('buddies', true)
+  if (WELCOME) {
+    require('@/app/dev-harness/perfWelcome').runPerfWelcome()
+    return
+  }
   const ready = () => mmkvStorage.getString(SETUP_KEY) === SCENARIO
   if (SCRUB) require('@/app/dev-harness/perfScrub').runPerfScrub(ready)
   if (ready()) return

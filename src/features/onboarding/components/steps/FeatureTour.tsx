@@ -10,11 +10,13 @@ import Animated, {
 import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
+import { perf } from '@/lib/perf'
 import i18n from '@/lib/locales'
 import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import { welcomeScene } from '@/features/onboarding/lib/welcomeScene'
 import { WelcomeBackdrop } from '@/features/onboarding/components/welcome/welcomeSkia'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
@@ -33,7 +35,11 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const reduceMotion = useReducedMotion()
   const isFocused = useIsFocused()
   const bleed = useHorizontalBleed()
-  const { time, tilt } = useWelcomeMotion(isFocused && !reduceMotion)
+  const [fromWelcome] = useState(() => welcomeScene.focus)
+  const { time, tilt } = useWelcomeMotion(
+    isFocused && !reduceMotion,
+    fromWelcome ? welcomeScene.time : 0
+  )
   const [size, setSize] = useState<{ width: number; height: number } | null>(
     null
   )
@@ -42,14 +48,18 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const [heldPages, setHeldPages] = useState<RevealPage[] | null>(null)
   const pages = heldPages ?? livePages
 
-  const veil = useSharedValue(1)
-  const scene = useSharedValue(reduceMotion ? 1 : 0)
+  const veil = useSharedValue(fromWelcome ? 0 : 1)
+  const content = useSharedValue(fromWelcome ? 0 : 1)
+  const scene = useSharedValue(reduceMotion || fromWelcome ? 1 : 0)
   const still = useSharedValue(0)
   useEffect(() => {
+    perf.mark('tour:mount')
     veil.value = withTiming(0, { duration: 450, easing: EASE_OUT })
+    content.value = withTiming(1, { duration: 420, easing: EASE_OUT })
     scene.value = withTiming(1, { duration: 1200, easing: EASE_OUT })
-  }, [veil, scene])
+  }, [veil, content, scene])
   const veilStyle = useAnimatedStyle(() => ({ opacity: veil.value }))
+  const contentStyle = useAnimatedStyle(() => ({ opacity: content.value }))
 
   const openedAt = useRef(Date.now())
   const viewed = useRef(new Set<string>())
@@ -94,7 +104,7 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
         <WelcomeBackdrop
           width={size.width}
           height={size.height}
-          hub={{ x: size.width / 2, y: size.height * 0.4 }}
+          hub={fromWelcome ?? { x: size.width / 2, y: size.height * 0.4 }}
           scale={1}
           palette={palette}
           time={time}
@@ -107,12 +117,15 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
           chrome={still}
         />
       )}
-      <View
-        style={{
-          flex: 1,
-          paddingLeft: bleed.left,
-          paddingRight: bleed.right,
-        }}
+      <Animated.View
+        style={[
+          {
+            flex: 1,
+            paddingLeft: bleed.left,
+            paddingRight: bleed.right,
+          },
+          contentStyle,
+        ]}
       >
         <RevealTour
           pages={pages}
@@ -132,7 +145,7 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
           exit={{ label: i18n.t('skip'), onPress: () => close('skipped') }}
           onBackFromStart={() => close('back')}
         />
-      </View>
+      </Animated.View>
       <Animated.View
         pointerEvents='none'
         style={[

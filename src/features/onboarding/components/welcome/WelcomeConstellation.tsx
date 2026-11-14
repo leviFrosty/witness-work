@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import Animated, {
   SharedValue,
   clamp,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -22,18 +23,14 @@ import {
 import { Tilt } from '@/features/onboarding/hooks/useWelcomeMotion'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import { SatelliteProps } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
-import PlanSatellite from '@/features/onboarding/components/welcome/satellites/PlanSatellite'
-import TimerSatellite from '@/features/onboarding/components/welcome/satellites/TimerSatellite'
-import MapSatellite from '@/features/onboarding/components/welcome/satellites/MapSatellite'
+import HoursSatellite from '@/features/onboarding/components/welcome/satellites/HoursSatellite'
 import VisitSatellite from '@/features/onboarding/components/welcome/satellites/VisitSatellite'
-import ReportSatellite from '@/features/onboarding/components/welcome/satellites/ReportSatellite'
+import PlanSatellite from '@/features/onboarding/components/welcome/satellites/PlanSatellite'
 
 const SATELLITE_CONTENT: Record<SatelliteId, ComponentType<SatelliteProps>> = {
-  plan: PlanSatellite,
-  timer: TimerSatellite,
-  map: MapSatellite,
+  hours: HoursSatellite,
   visit: VisitSatellite,
-  report: ReportSatellite,
+  plan: PlanSatellite,
 }
 
 const SLOT = 320
@@ -56,6 +53,7 @@ interface SatelliteSlotProps {
   focused: boolean
   dimmed: boolean
   reduceMotion: boolean
+  warm?: SharedValue<number>
 }
 
 const SatelliteSlot = ({
@@ -69,6 +67,7 @@ const SatelliteSlot = ({
   focused,
   dimmed,
   reduceMotion,
+  warm,
 }: SatelliteSlotProps) => {
   const focus = useSharedValue(0)
   const dim = useSharedValue(0)
@@ -77,6 +76,12 @@ const SatelliteSlot = ({
   useEffect(() => {
     focus.value = withTiming(focused ? 1 : 0, { duration: 450 })
   }, [focused, focus])
+  useAnimatedReaction(
+    () => warm?.value ?? 0,
+    (now, before) => {
+      if (before !== null && now !== before) focus.value = now
+    }
+  )
   useEffect(() => {
     dim.value = withTiming(dimmed ? 1 : 0, { duration: 450 })
   }, [dimmed, dim])
@@ -153,6 +158,8 @@ interface Props {
 
   activePillar: PillarId | null
   reduceMotion: boolean
+
+  warm?: SharedValue<number>
 }
 
 const WelcomeConstellation = ({
@@ -165,6 +172,7 @@ const WelcomeConstellation = ({
   exit,
   activePillar,
   reduceMotion,
+  warm,
 }: Props) => (
   <View
     pointerEvents='none'
@@ -193,6 +201,7 @@ const WelcomeConstellation = ({
         focused={activePillar === spec.pillar}
         dimmed={activePillar !== null && activePillar !== spec.pillar}
         reduceMotion={reduceMotion}
+        warm={warm}
       />
     ))}
   </View>

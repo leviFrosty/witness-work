@@ -42,6 +42,7 @@ patchedDependencies:
   '@expo/dom-webview@58.0.2': 3e6f3e4343f3457522a831b47dfe2fbc42801cc0789671173b76be557398c2df
   '@expo/fingerprint@0.21.5': 9eab047f479dcceec9400b40a752d02f22c7605e2236f11529914798162fb55e
   '@expo/ui@58.0.21': 30ac9ba7f148db069b7127c86fea7c302d9a531f34fe3df15360bd289188b8d7
+  '@posthog/react-native-plugin@2.5.2': ff56b04c6129a7547073f725f9246a048910c1d3dc61c67bd704c4a290cd748d
   '@shopify/flash-list@2.3.2': b2cca005a24678dc4b3738133955867ca9717c8bbfdc26059843b46ec0f86839
   expo-alternate-app-icons: 1c3df9bdf0042d70f3a73c13e3a42bd491662314e2001b311353d8fd36312a34
   expo@58.0.16: f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2
@@ -88,7 +89,7 @@ importers:
         version: 1.52.2
       '@posthog/react-native-plugin':
         specifier: 2.5.2
-        version: 2.5.2(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+        version: 2.5.2(patch_hash=ff56b04c6129a7547073f725f9246a048910c1d3dc61c67bd704c4a290cd748d)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       '@quidone/react-native-wheel-picker':
         specifier: 1.7.2
         version: 1.7.2(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
@@ -295,7 +296,7 @@ importers:
         version: 1.441.2(@types/react@19.3.0)(react@19.3.0)
       posthog-react-native:
         specifier: 4.68.8
-        version: 4.68.8(ce37588f96bbb8f9f2d7f5c631887179)
+        version: 4.68.8(fd6e524b341e892e369ceed017383079)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -12737,7 +12738,7 @@ snapshots:
     dependencies:
       '@posthog/types': 1.418.0
 
-  '@posthog/react-native-plugin@2.5.2(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)':
+  '@posthog/react-native-plugin@2.5.2(patch_hash=ff56b04c6129a7547073f725f9246a048910c1d3dc61c67bd704c4a290cd748d)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)':
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
@@ -19482,12 +19483,12 @@ snapshots:
     transitivePeerDependencies:
       - preact-render-to-string
 
-  posthog-react-native@4.68.8(ce37588f96bbb8f9f2d7f5c631887179):
+  posthog-react-native@4.68.8(fd6e524b341e892e369ceed017383079):
     dependencies:
       '@posthog/core': 1.52.2
       '@posthog/types': 1.416.0
     optionalDependencies:
-      '@posthog/react-native-plugin': 2.5.2(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+      '@posthog/react-native-plugin': 2.5.2(patch_hash=ff56b04c6129a7547073f725f9246a048910c1d3dc61c67bd704c4a290cd748d)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       '@react-native-async-storage/async-storage': 2.2.0(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))
       '@react-navigation/native': 7.5.1(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       expo-application: 58.1.2(expo@58.0.16)

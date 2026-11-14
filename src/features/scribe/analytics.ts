@@ -8,6 +8,8 @@ import type {
   ScribeUndoSource,
   ScribeUsageWindowId,
 } from '@/features/scribe/types'
+import type { UsageSnapshotWire } from '@/features/scribe/lib/wire'
+import { fullWindow } from '@/features/scribe/lib/usageSnapshot'
 import {
   SCRIBE_MEMORY_MAX_CHARS,
   type ScribeMemoryChange,
@@ -93,10 +95,11 @@ export function trackUndo(props: {
   analytics.capture('scribe_undo', props)
 }
 
-export function trackLimitReached(props: {
-  plan: ScribePlan
-  window: ScribeUsageWindowId | null
-}): void {
+export function trackLimitReached(usage: UsageSnapshotWire | null): void {
+  const props: { plan: ScribePlan; window: ScribeUsageWindowId | null } = {
+    plan: usage?.plan ?? 'free',
+    window: usage ? fullWindow(usage) : null,
+  }
   analytics.capture('scribe_limit_reached', props)
 }
 

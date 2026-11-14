@@ -1811,4 +1811,72 @@ export const SCENARIOS: EvalScenario[] = [
       },
     ],
   },
+  {
+    id: 'memory-proactive-routine',
+    group: 'memory',
+    turns: [
+      {
+        text: 'I always go out with the car group Saturday mornings at 9, plan two hours for this Saturday',
+        checks: [
+          write('plans_create', {
+            date: '2026-10-24',
+            minutes: 120,
+            startMinutes: 540,
+          }),
+          onlyWrites('plans_create'),
+          remembers({ old: null, new: /car group/i }),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-cull-routine',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Goes out with "the car group" Saturdays at 9:00\nSays "the build" for the LDC Category',
+        },
+      }),
+    turns: [
+      {
+        text: 'the car group meets Friday evenings now, plan it this Friday at 6 for two hours',
+        checks: [
+          write('plans_create', {
+            date: '2026-10-23',
+            minutes: 120,
+            startMinutes: 1080,
+          }),
+          remembers({ old: /car group/i, new: /friday/i }),
+          noNewNote,
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory-cull-preference',
+    group: 'memory',
+    stores: () =>
+      evalStores({
+        memory: {
+          enabled: true,
+          text: 'Prefers plans at 9:00\nSays "the build" for the LDC Category',
+        },
+      }),
+    turns: [
+      {
+        text: 'plan two hours Saturday, I start at 10 these days',
+        checks: [
+          write('plans_create', {
+            date: '2026-10-24',
+            minutes: 120,
+            startMinutes: 600,
+          }),
+          remembers({ old: /9:00/, new: /10/ }),
+          noNewNote,
+        ],
+      },
+    ],
+  },
 ]

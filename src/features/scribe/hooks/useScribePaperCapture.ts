@@ -25,7 +25,10 @@ import {
 } from '@/features/scribe/lib/paper'
 import { noteScribeFailure } from '@/features/scribe/runtime/status'
 import { noteUsage } from '@/features/scribe/stores/usage'
-import { trackCaptureFinished } from '@/features/scribe/analytics'
+import {
+  trackCaptureFinished,
+  trackLimitReached,
+} from '@/features/scribe/analytics'
 
 const BATCH_STOPPING: ReadonlySet<ScribePaperError> = new Set<ScribePaperError>(
   [
@@ -164,6 +167,8 @@ export function useScribePaperCapture(): ScribePaperCapture {
                 failure.retryAfterMs
               )
                 attempt.retryAt = Date.now() + failure.retryAfterMs
+              if (!attempt.stop && code === 'limit_reached')
+                trackLimitReached(failure.usage)
               attempt.stop ??= code
               noteScribeFailure(failure)
               abort.abort()

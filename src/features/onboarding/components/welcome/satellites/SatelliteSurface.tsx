@@ -1,8 +1,7 @@
 import { PropsWithChildren } from 'react'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native'
 import Animated, {
   SharedValue,
-  interpolateColor,
   useAnimatedStyle,
 } from 'react-native-reanimated'
 import { withAlpha } from '@/lib/color'
@@ -29,6 +28,8 @@ interface Props {
   style?: StyleProp<ViewStyle>
 }
 
+const RADIUS = 20
+
 const SatelliteSurface = ({
   palette,
   focus,
@@ -36,40 +37,44 @@ const SatelliteSurface = ({
   style,
   children,
 }: PropsWithChildren<Props>) => {
-  const focusBorder = withAlpha(accent, 0xb3)
-  const { rest, focus: lit } = palette.surfaceShadowOpacity
-  const rim = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      focus.value,
-      [0, 1],
-      [palette.surfaceBorder, focusBorder]
-    ),
-    shadowColor: interpolateColor(
-      focus.value,
-      [0, 1],
-      [palette.surfaceShadow, accent]
-    ),
-    shadowOpacity: rest + (lit - rest) * focus.value,
-  }))
+  const { rest } = palette.surfaceShadowOpacity
+  const glow = useAnimatedStyle(() => ({ opacity: focus.value }))
 
   return (
-    <Animated.View
+    <View
       style={[
         {
-          backgroundColor: palette.surface,
+          backgroundColor: palette.card,
           borderWidth: 1,
-          borderRadius: 18,
+          borderColor: palette.surfaceBorder,
+          borderRadius: RADIUS,
           borderCurve: 'continuous',
-          padding: 12,
-          shadowOffset: { width: 0, height: 10 },
-          shadowRadius: 22,
+          padding: 14,
+          boxShadow: `0 10px 22px ${withAlpha(palette.surfaceShadow, Math.round(rest * 255))}`,
         },
-        rim,
         style,
       ]}
     >
+      <Animated.View
+        pointerEvents='none'
+        style={[
+          {
+            position: 'absolute',
+            top: -1,
+            left: -1,
+            right: -1,
+            bottom: -1,
+            borderWidth: 1.5,
+            borderColor: withAlpha(accent, 0xcc),
+            borderRadius: RADIUS,
+            borderCurve: 'continuous',
+            boxShadow: `0 6px 22px ${withAlpha(accent, 0x66)}`,
+          },
+          glow,
+        ]}
+      />
       {children}
-    </Animated.View>
+    </View>
   )
 }
 
@@ -97,21 +102,16 @@ export const IconChip = ({
   </View>
 )
 
-export const Skeleton = ({
-  palette,
-  width,
+export const SatelliteText = ({
+  children,
+  style,
 }: {
-  palette: WelcomePalette
-  width: ViewStyle['width']
+  children: string
+  style?: StyleProp<TextStyle>
 }) => (
-  <View
-    style={{
-      height: 8,
-      width,
-      borderRadius: 4,
-      backgroundColor: palette.skeleton,
-    }}
-  />
+  <Text allowFontScaling={false} numberOfLines={1} style={style}>
+    {children}
+  </Text>
 )
 
 export default SatelliteSurface

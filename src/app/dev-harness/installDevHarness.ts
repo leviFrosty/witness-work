@@ -3,7 +3,14 @@ import { perf } from '@/lib/perf'
 import { useDisplayRegions } from '@/stores/displayRegions'
 import { useAppLockSession, useAppLockSettings } from '@/stores/appLock'
 import { CommonActions } from '@react-navigation/native'
-import { Alert, I18nManager, LogBox, type AlertButton } from 'react-native'
+import {
+  Alert,
+  I18nManager,
+  LogBox,
+  Platform,
+  Settings,
+  type AlertButton,
+} from 'react-native'
 import useContacts from '@/stores/contactsStore'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import { useMapFindSkips } from '@/features/map/stores/mapFindSkips'
@@ -270,6 +277,8 @@ function seed(name: string) {
 
 export function installDevHarness() {
   if (!__DEV__) return
+  if (Platform.OS === 'ios' && Settings.get('wwPerfWelcome') === '1')
+    require('@/app/dev-harness/perfWelcome').runPerfWelcome()
   captureErrors()
   trackAlerts()
   restoreFakeGoogleDrive()

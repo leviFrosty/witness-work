@@ -18,7 +18,7 @@ const TILT_GAIN = 4
 export const runsInAppState = (state: AppStateStatus): boolean =>
   state !== 'background'
 
-const useWelcomeMotion = (running: boolean) => {
+const useWelcomeMotion = (running: boolean, startAt = 0) => {
   const [appRuns, setAppRuns] = useState(() =>
     runsInAppState(AppState.currentState)
   )
@@ -29,7 +29,7 @@ const useWelcomeMotion = (running: boolean) => {
     return () => subscription.remove()
   }, [])
 
-  const time = useSharedValue(0)
+  const time = useSharedValue(startAt)
   const tilt: Tilt = useSharedValue({ x: 0, y: 0 })
   const baseline = useSharedValue<{ x: number; y: number } | null>(null)
   const gravity = useAnimatedSensor(SensorType.GRAVITY)

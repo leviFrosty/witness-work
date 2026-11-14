@@ -85,17 +85,18 @@ const UpdateRevealOverlay = ({ source, onClosed }: Props) => {
       )
     : 1
 
-  const { time, tilt } = useWelcomeMotion(!reduceMotion)
   const {
     values,
     phase,
     headline,
     splashVisible,
+    live,
     skippable,
     skipIntro,
     startTour,
     close,
   } = useRevealChoreography({ entrance, ready: root !== null && hub !== null })
+  const { time, tilt } = useWelcomeMotion(!reduceMotion && live)
 
   const [tourPages, setTourPages] = useState<RevealPage[] | null>(null)
   if (phase === 'tour' && !tourPages) setTourPages(livePages)

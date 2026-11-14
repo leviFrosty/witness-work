@@ -10,11 +10,10 @@ import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { withAlpha } from '@/lib/color'
 import { forwardSign, isRtlLayout } from '@/lib/direction'
 import { DISPLAY_FONT_SCALE_CAP } from '@/features/onboarding/constants/welcome'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
-import type WelcomeCtaSheenComponent from '@/features/onboarding/components/welcome/WelcomeCtaSheen'
-import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const RADIUS = 14
 const HEIGHT = 56
@@ -22,6 +21,8 @@ const SHEEN_WIDTH = 72
 
 const SHEEN_EVERY = 4.2
 const SHEEN_FOR = 1.1
+const SHEEN_GRADIENT =
+  'linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.4), rgba(255,255,255,0))'
 
 interface Props {
   label: string
@@ -43,15 +44,18 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
 
   const rtl = isRtlLayout()
   const sign = forwardSign()
-  const sheen = useDerivedValue(() => {
+  const sheenStyle = useAnimatedStyle(() => {
     const x =
       sweep.value < 0
         ? -SHEEN_WIDTH * 2
         : -SHEEN_WIDTH * 1.5 + sweep.value * (width + SHEEN_WIDTH * 3)
-    return [
-      { translateX: rtl ? width - x - SHEEN_WIDTH : x },
-      { skewX: sign * -0.35 },
-    ]
+    return {
+      opacity: sweep.value < 0 ? 0 : 1,
+      transform: [
+        { translateX: rtl ? width - x - SHEEN_WIDTH : x },
+        { skewX: `${sign * -0.35}rad` },
+      ],
+    }
   })
   const arrowStyle = useAnimatedStyle(() => ({
     transform: [
@@ -66,10 +70,10 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
     <View
       style={{
         borderRadius: RADIUS,
-        shadowColor: theme.colors.accent,
-        shadowOpacity: palette.ctaGlowOpacity,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 8 },
+        boxShadow: `0 8px 18px ${withAlpha(
+          theme.colors.accent,
+          Math.round(palette.ctaGlowOpacity * 255)
+        )}`,
       }}
     >
       <Button
@@ -94,11 +98,19 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
         }}
       >
         {width > 0 && !reduceMotion && (
-          <WelcomeCtaSheen
-            width={width}
-            height={HEIGHT}
-            sheenWidth={SHEEN_WIDTH}
-            transform={sheen}
+          <Animated.View
+            pointerEvents='none'
+            style={[
+              {
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: SHEEN_WIDTH,
+                height: HEIGHT,
+                backgroundImage: SHEEN_GRADIENT,
+              },
+              sheenStyle,
+            ]}
           />
         )}
         <Text
@@ -123,10 +135,5 @@ const WelcomeCta = ({ label, onPress, time, palette, reduceMotion }: Props) => {
     </View>
   )
 }
-
-const WelcomeCtaSheen = canvasKitComponent(
-  (): typeof WelcomeCtaSheenComponent =>
-    require('@/features/onboarding/components/welcome/WelcomeCtaSheen').default
-)
 
 export default WelcomeCta

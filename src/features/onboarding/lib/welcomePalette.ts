@@ -17,6 +17,8 @@ export interface WelcomePalette {
   textAlt: string
 
   surface: string
+
+  card: string
   surfaceBorder: string
   surfaceShadow: string
   surfaceShadowOpacity: { rest: number; focus: number }
@@ -33,6 +35,7 @@ export interface WelcomePalette {
   ringHead: string
 
   tileShadow: string
+  tileShadowClear: string
   ripple: string
   ctaGlowOpacity: number
 }
@@ -66,6 +69,7 @@ export const getWelcomePalette = (theme: Theme): WelcomePalette => {
       text: '#F3F7F4',
       textAlt: '#9AA8A0',
       surface: 'rgba(255,255,255,0.07)',
+      card: 'rgba(20,34,27,0.92)',
       surfaceBorder: 'rgba(255,255,255,0.12)',
       surfaceShadow: colors.shadow,
       surfaceShadowOpacity: { rest: 0.4, focus: 0.6 },
@@ -76,6 +80,7 @@ export const getWelcomePalette = (theme: Theme): WelcomePalette => {
       orbitDot: '#FFFFFF',
       ringTrack: 'rgba(255,255,255,0.09)',
       tileShadow: withAlpha(colors.accent, 0x99),
+      tileShadowClear: withAlpha(colors.accent, 0),
       ctaGlowOpacity: 0.45,
     }
   }
@@ -96,6 +101,7 @@ export const getWelcomePalette = (theme: Theme): WelcomePalette => {
     text: '#111A15',
     textAlt: '#5E6B64',
     surface: 'rgba(255,255,255,0.78)',
+    card: 'rgba(255,255,255,0.94)',
     surfaceBorder: 'rgba(255,255,255,0.95)',
     surfaceShadow: '#0B3B22',
     surfaceShadowOpacity: { rest: 0.08, focus: 0.24 },
@@ -106,6 +112,7 @@ export const getWelcomePalette = (theme: Theme): WelcomePalette => {
     orbitDot: colors.accent,
     ringTrack: 'rgba(17,90,52,0.1)',
     tileShadow: 'rgba(8,120,60,0.45)',
+    tileShadowClear: 'rgba(8,120,60,0)',
     ctaGlowOpacity: 0.35,
   }
 }

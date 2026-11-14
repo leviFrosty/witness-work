@@ -69,7 +69,7 @@ function parseFlags(argv) {
 const AXE_FRAMEWORKS = '/opt/homebrew/opt/axe/libexec/Frameworks'
 const TOOL_DIR = path.join(os.homedir(), '.ww-verify', 'tools', 'scrub-touch')
 
-function touchTool() {
+export function touchTool() {
   const source = path.join(ROOT, 'scripts/perf/scrub-touch/main.swift')
   const binary = path.join(TOOL_DIR, 'scrub-touch')
   const stamp = path.join(TOOL_DIR, 'source.sha')
@@ -193,7 +193,7 @@ function framesIn(trace, from, to) {
 
 const round1 = (v) => (v == null ? null : Math.round(v * 10) / 10)
 
-function frameStats(deltas, period) {
+export function frameStats(deltas, period) {
   if (!deltas.length) return null
   const sorted = [...deltas].sort((a, b) => a - b)
   const late = deltas.filter((d) => d > period * 1.5)

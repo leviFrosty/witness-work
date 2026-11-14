@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LayoutChangeEvent, View } from 'react-native'
+import { I18nManager, LayoutChangeEvent, View } from 'react-native'
 import Animated, {
   Easing,
   SharedValue,
@@ -37,6 +37,7 @@ interface WordProps {
   lineHeight: number
   color: string
   reduceMotion: boolean
+  warm?: SharedValue<number>
 }
 
 const Word = ({
@@ -49,9 +50,15 @@ const Word = ({
   lineHeight,
   color,
   reduceMotion,
+  warm,
 }: WordProps) => {
   const theme = useTheme()
   const style = useAnimatedStyle(() => {
+    if (warm && warm.value > 0) {
+      return reduceMotion
+        ? { opacity: 1 }
+        : { opacity: 1, transform: [{ translateY: 0 }] }
+    }
     const a = clamp(
       (enter.value * (WORD_IN_MS + count * WORD_IN_STAGGER) -
         index * WORD_IN_STAGGER) /
@@ -114,6 +121,7 @@ interface LineProps {
   palette: WelcomePalette
   fontSize: number
   reduceMotion: boolean
+  warm?: SharedValue<number>
   onHeight: (height: number) => void
 }
 
@@ -125,6 +133,7 @@ export const HeadlineLine = ({
   palette,
   fontSize,
   reduceMotion,
+  warm,
   onHeight,
 }: LineProps) => {
   const theme = useTheme()
@@ -195,6 +204,7 @@ export const HeadlineLine = ({
               : palette.text
           }
           reduceMotion={reduceMotion}
+          warm={warm}
         />
       ))}
     </View>
@@ -220,7 +230,9 @@ const Segment = ({ state, holdMs, palette }: SegmentProps) => {
         : withTiming(state === 'past' ? 1 : 0, { duration: 250 })
   }, [state, holdMs, fill])
 
-  const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }))
+  const fillStyle = useAnimatedStyle(() => ({
+    transform: [{ scaleX: fill.value }],
+  }))
 
   return (
     <View
@@ -233,7 +245,14 @@ const Segment = ({ state, holdMs, palette }: SegmentProps) => {
       }}
     >
       <Animated.View
-        style={[{ height: '100%', backgroundColor: palette.text }, fillStyle]}
+        style={[
+          {
+            height: '100%',
+            backgroundColor: palette.text,
+            transformOrigin: I18nManager.isRTL ? 'right' : 'left',
+          },
+          fillStyle,
+        ]}
       />
     </View>
   )
@@ -252,6 +271,8 @@ interface Props {
 
   holdMs: number
   reduceMotion: boolean
+
+  warm?: SharedValue<number>
 }
 
 const WelcomeHeadline = ({
@@ -263,6 +284,7 @@ const WelcomeHeadline = ({
   fontSize,
   holdMs,
   reduceMotion,
+  warm,
 }: Props) => {
   const fontSizeOffset = usePreferences((s) => s.fontSizeOffset)
   const [heights, setHeights] = useState<Partial<Record<LineId, number>>>({})
@@ -274,7 +296,9 @@ const WelcomeHeadline = ({
     pagerOpacity.value = withTiming(storyIndex >= 0 ? 1 : 0, { duration: 400 })
   }, [storyIndex, pagerOpacity])
 
-  const pagerStyle = useAnimatedStyle(() => ({ opacity: pagerOpacity.value }))
+  const pagerStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(pagerOpacity.value, warm?.value ?? 0),
+  }))
 
   const tallest = Math.max(
     Math.round((fontSize + fontSizeOffset) * 1.14) * 2,
@@ -312,6 +336,7 @@ const WelcomeHeadline = ({
             palette={palette}
             fontSize={fontSize}
             reduceMotion={reduceMotion}
+            warm={warm}
             onHeight={(height) =>
               setHeights((prev) =>
                 prev[line.id] === height ? prev : { ...prev, [line.id]: height }

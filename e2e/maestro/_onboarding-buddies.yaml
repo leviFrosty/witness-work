@@ -8,7 +8,7 @@ appId: com.leviwilkerson.jwtimedev
 name: Onboarding explains Buddies, and Continue moves on without inviting
 ---
 - extendedWaitUntil:
-    visible: Your field service assistant.
+    visible: Your hours, return visits and plans in one simple place.
     timeout: 60000
 - tapOn: Get Started
 # The feature tour.

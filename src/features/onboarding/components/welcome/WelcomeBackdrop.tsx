@@ -1,13 +1,12 @@
 import { StyleSheet } from 'react-native'
 import {
-  BlurMask,
+  Blend,
   Canvas,
   Circle,
   Fill,
   Group,
-  Path,
+  RadialGradient,
   Shader,
-  Skia,
   SweepGradient,
   vec,
 } from '@shopify/react-native-skia'
@@ -21,8 +20,17 @@ import {
 import { Tilt } from '@/features/onboarding/hooks/useWelcomeMotion'
 import { auroraShader } from '@/features/onboarding/lib/auroraShader'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import { withAlpha } from '@/lib/color'
+import { snapCircle } from '@/features/onboarding/lib/snapCircle'
 
 const COMET_TAIL = 70
+
+const SWEEP_OVERSHOOT = 360 * 1.01
+const SWEEP_EDGE = 0.002
+const sweepStop = (turn: number) => {
+  'worklet'
+  return 0.002 + Math.min(Math.max(turn, 0), 1) * 0.9915
+}
 
 interface OrbitProps {
   cx: number
@@ -39,9 +47,9 @@ interface OrbitProps {
 }
 
 const Orbit = ({
-  cx,
-  cy,
-  r,
+  cx: rawX,
+  cy: rawY,
+  r: rawR,
   from,
   speed,
   palette,
@@ -50,36 +58,50 @@ const Orbit = ({
   reveal,
 }: OrbitProps) => {
   const clockwise = speed > 0
-  const bounds = Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2)
-  const ring = Skia.PathBuilder.Make().addArc(bounds, from, 359.9).detach()
-
-  const tail = Skia.PathBuilder.Make()
-    .addArc(bounds, clockwise ? -COMET_TAIL : 0, COMET_TAIL)
-    .detach()
+  const cx = snapCircle(rawX)
+  const cy = snapCircle(rawY)
+  const r = snapCircle(rawR)
+  const center = vec(cx, cy)
+  const comet = vec(cx + r, cy)
 
   const rotation = useDerivedValue(() => [
     { rotate: (from * Math.PI) / 180 + time.value * speed },
   ])
 
+  const ringOpacity = useDerivedValue(() =>
+    drawn.value > 0 ? reveal.value : 0
+  )
+  const ringStops = useDerivedValue(() => {
+    const at = sweepStop(drawn.value)
+    return [at, at + SWEEP_EDGE]
+  })
   const lightOpacity = useDerivedValue(
     () => Math.max(0, (drawn.value - 0.7) / 0.3) * reveal.value
   )
 
   return (
     <Group>
-      <Path
-        path={ring}
+      <Circle
+        c={center}
+        r={r}
         style='stroke'
         strokeWidth={1}
-        color={palette.orbit}
-        start={0}
-        end={drawn}
-        opacity={reveal}
-      />
-      <Group transform={rotation} origin={vec(cx, cy)} opacity={lightOpacity}>
-        <Path path={tail} style='stroke' strokeWidth={1.5} strokeCap='round'>
+        opacity={ringOpacity}
+      >
+        <SweepGradient
+          c={center}
+          start={0}
+          end={SWEEP_OVERSHOOT}
+          colors={[palette.orbit, 'transparent']}
+          positions={ringStops}
+          origin={center}
+          transform={[{ rotate: (from * Math.PI) / 180 }]}
+        />
+      </Circle>
+      <Group transform={rotation} origin={center} opacity={lightOpacity}>
+        <Circle c={center} r={r} style='stroke' strokeWidth={1.5}>
           <SweepGradient
-            c={vec(cx, cy)}
+            c={center}
             start={clockwise ? 360 - COMET_TAIL : 0}
             end={clockwise ? 360 : COMET_TAIL}
             colors={
@@ -88,17 +110,15 @@ const Orbit = ({
                 : [palette.orbitLight, 'transparent']
             }
           />
-        </Path>
-        <Circle
-          cx={cx + r}
-          cy={cy}
-          r={6}
-          color={palette.orbitLight}
-          opacity={0.5}
-        >
-          <BlurMask blur={5} style='normal' />
         </Circle>
-        <Circle cx={cx + r} cy={cy} r={2.2} color={palette.orbitDot} />
+        <Circle c={comet} r={14} opacity={0.4}>
+          <RadialGradient
+            c={comet}
+            r={14}
+            colors={[palette.orbitLight, withAlpha(palette.orbitLight, 0)]}
+          />
+        </Circle>
+        <Circle c={comet} r={2.25} color={palette.orbitDot} />
       </Group>
     </Group>
   )
@@ -116,58 +136,91 @@ interface RingProps {
 }
 
 const HubRing = ({
-  cx,
-  cy,
-  r,
+  cx: rawX,
+  cy: rawY,
+  r: rawR,
   width,
   start,
   end,
   reveal,
   palette,
 }: RingProps) => {
-  const arc = Skia.PathBuilder.Make()
-    .addArc(Skia.XYWHRect(cx - r, cy - r, r * 2, r * 2), -90, 359.99)
-    .detach()
-  const head = useDerivedValue(() => {
-    const angle = -Math.PI / 2 + end.value * Math.PI * 2
-    return vec(cx + r * Math.cos(angle), cy + r * Math.sin(angle))
+  const cx = snapCircle(rawX)
+  const cy = snapCircle(rawY)
+  const r = snapCircle(rawR)
+  const center = vec(cx, cy)
+  const fromTop = [{ rotate: -Math.PI / 2 }]
+  const cap = snapCircle(width / 2)
+  const glow = snapCircle(width * 1.6 + 10)
+
+  const point = (turn: number) => {
+    'worklet'
+    const angle = -Math.PI / 2 + turn * Math.PI * 2
+    return vec(
+      snapCircle(cx + r * Math.cos(angle)),
+      snapCircle(cy + r * Math.sin(angle))
+    )
+  }
+  const head = useDerivedValue(() => point(end.value))
+  const tail = useDerivedValue(() => point(start.value))
+  const shown = useDerivedValue(() => (end.value - start.value > 0.01 ? 1 : 0))
+  const headOpacity = useDerivedValue(() => shown.value * 0.8)
+  const span = useDerivedValue(() => {
+    const from = sweepStop(start.value)
+    const to = Math.max(from + SWEEP_EDGE * 2, sweepStop(end.value))
+    return [from, from + SWEEP_EDGE, to, to + SWEEP_EDGE]
   })
-  const headOpacity = useDerivedValue(() =>
-    end.value - start.value > 0.01 ? 0.8 : 0
+
+  const colors = (
+    <SweepGradient
+      c={center}
+      colors={palette.ring}
+      origin={center}
+      transform={fromTop}
+    />
   )
 
   return (
     <Group opacity={reveal}>
       <Circle
-        cx={cx}
-        cy={cy}
+        c={center}
         r={r}
         style='stroke'
         strokeWidth={width}
         color={palette.ringTrack}
       />
-      <Path
-        path={arc}
+      <Circle
+        c={center}
+        r={r}
         style='stroke'
         strokeWidth={width}
-        strokeCap='round'
-        start={start}
-        end={end}
+        opacity={shown}
       >
-        <SweepGradient
-          c={vec(cx, cy)}
-          colors={palette.ring}
-          origin={vec(cx, cy)}
-          transform={[{ rotate: -Math.PI / 2 }]}
+        <Blend mode='modulate'>
+          {colors}
+          <SweepGradient
+            c={center}
+            start={0}
+            end={SWEEP_OVERSHOOT}
+            colors={['transparent', '#FFFFFF', '#FFFFFF', 'transparent']}
+            positions={span}
+            origin={center}
+            transform={fromTop}
+          />
+        </Blend>
+      </Circle>
+      <Circle c={tail} r={cap} opacity={shown}>
+        {colors}
+      </Circle>
+      <Circle c={head} r={cap} opacity={shown}>
+        {colors}
+      </Circle>
+      <Circle c={head} r={glow} opacity={headOpacity}>
+        <RadialGradient
+          c={head}
+          r={glow}
+          colors={[palette.ringHead, withAlpha(palette.ringHead, 0)]}
         />
-      </Path>
-      <Circle
-        c={head}
-        r={width * 1.6}
-        color={palette.ringHead}
-        opacity={headOpacity}
-      >
-        <BlurMask blur={6} style='normal' />
       </Circle>
     </Group>
   )

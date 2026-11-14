@@ -59,6 +59,7 @@ patchedDependencies:
   '@expo/dom-webview@58.0.2': patches/@expo__dom-webview@58.0.2.patch
   '@expo/fingerprint@0.21.5': patches/@expo__fingerprint@0.21.5.patch
   '@expo/ui@58.0.21': patches/@expo__ui@58.0.21.patch
+  '@posthog/react-native-plugin@2.5.2': patches/@posthog__react-native-plugin@2.5.2.patch
   '@shopify/flash-list@2.3.2': patches/@shopify__flash-list@2.3.2.patch
   expo-alternate-app-icons: patches/expo-alternate-app-icons.patch
   expo@58.0.16: patches/expo@58.0.16.patch

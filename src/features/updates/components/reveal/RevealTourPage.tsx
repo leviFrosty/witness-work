@@ -31,6 +31,8 @@ const VISUAL_SCALE = { min: 0.62, max: 1.5 }
 
 const VISUAL_INSET = 20
 
+const NEIGHBOR_MOUNT_MS = 700
+
 interface Props {
   page: RevealPage
   index: number
@@ -39,6 +41,8 @@ interface Props {
 
   scrollX: SharedValue<number>
   active: boolean
+
+  near: boolean
   palette: WelcomePalette
   reduceMotion: boolean
 }
@@ -50,6 +54,7 @@ const RevealTourPage = ({
   height,
   scrollX,
   active,
+  near,
   palette,
   reduceMotion,
 }: Props) => {
@@ -57,6 +62,16 @@ const RevealTourPage = ({
   const [stage, setStage] = useState<{ width: number; height: number } | null>(
     null
   )
+  const [visualMounted, setVisualMounted] = useState(active)
+  useEffect(() => {
+    if (visualMounted || !(active || near)) return
+    if (active) {
+      setVisualMounted(true)
+      return
+    }
+    const id = setTimeout(() => setVisualMounted(true), NEIGHBOR_MOUNT_MS)
+    return () => clearTimeout(id)
+  }, [active, near, visualMounted])
   const appear = useSharedValue(reduceMotion ? 1 : 0)
 
   useEffect(() => {
@@ -135,7 +150,7 @@ const RevealTourPage = ({
           )
         }}
       >
-        {stage && (
+        {stage && visualMounted && (
           <Animated.View
             style={[
               { width: VISUAL.width, height: VISUAL.height, direction: 'ltr' },

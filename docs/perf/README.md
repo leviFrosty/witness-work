@@ -107,3 +107,21 @@ node scripts/perf/scrub.mjs compare .verify/artifacts/perf/before.json .verify/a
 - `scripts/perf/js-profile.mjs -- <command>` samples the dev build's JS thread over CDP while a command (such as the scrub tool) runs, to attribute JS time by function. Dev React is slower than Release; use it to find work, and the Release scrub to time it.
 
 Simulators share the Mac's CPU and run at 60 Hz, so compare runs on the same machine, back to back. A physical device needs the same build installed through Xcode; the probe works there too, but the HID finger doesn't.
+
+## First launch: the welcome intro and the tour
+
+`scripts/perf/welcome.mjs` measures what a new user sees: the launch splash, the welcome intro, the tap on Get Started, and the first tour pages. It uses the same Release probe build and device leases as `run.mjs`.
+
+```bash
+node scripts/perf/welcome.mjs --ref <sha> --name welcome-before             # 5 first launches
+node scripts/perf/welcome.mjs --ref <sha> --name welcome-after --video .verify/welcome.mp4
+node scripts/perf/welcome.mjs compare .verify/artifacts/perf/welcome-before.json .verify/artifacts/perf/welcome-after.json
+```
+
+- **Every run is a first launch.** The runner uninstalls and installs the app before each one, so nothing is cached: no compiled shaders, no saved onboarding step.
+- **The app records every frame.** With `-wwPerfWelcome 1`, `src/app/dev-harness/perfWelcome.ts` records each UI-thread display-link frame and each JS-thread `requestAnimationFrame` from the bundle's first line until 26 s after the intro ends. The welcome code leaves `perf.mark`s (`welcome:ready`, `welcome:start`, `welcome:done`, `welcome:leave`, `tour:mount`), and the runner cuts the trace into windows at them: the splash held before the intro, the intro itself, the welcome at rest, Get Started to the first tour page, and the tour's page changes.
+- **The runner taps with raw touches.** Any AXe command, even a tap at a point, switches on the simulator's accessibility setting, and the app answers by loading its accessibility bundles: 40 to 100 ms of main-thread stalls that no user causes. So one extra launch runs first and is left out of the numbers. It finds Get Started and Next through AXe, and the measured launches press those points with the `scrub-touch` HID tool.
+- **`--video`** records one more first launch, with longer pauses, and leaves it out of the numbers.
+- **`--trace`** records a Time Profiler trace of the whole simulator through the unmeasured launch (`.verify/welcome-<name>.trace`). Time Profiler samples running threads only, so a hitch where the main thread waits shows up as another process being busy in that window, for example `MTLCompilerService` compiling a shader. Export it with `xcrun xctrace export --xpath '/trace-toc/run/data/table[@schema="time-profile"]'` and line it up with the run's marks.
+- **`--sample`** runs macOS `sample` on the app for 3 s after the intro of the unmeasured launch (`.verify/welcome-<name>.sample.txt`). It shows blocked threads too, so it names the call that waited.
+- A dev build records the same trace when the simulator has `defaults write com.leviwilkerson.jwtimedev wwPerfWelcome -string 1`; read it with `wwv eval 'globalThis.__wwPerfWelcome'`. Use it to find work, and the Release run to time it.

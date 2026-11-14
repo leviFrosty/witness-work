@@ -30,9 +30,9 @@ import {
 import { formatDisplay } from '@/lib/dates'
 import { formatPlainNumber } from '@/lib/numbers'
 
-const CARD = { top: 6, side: 18, height: 236 }
+const CARD = { top: 0, side: 8, height: 280 }
 
-const T = { tap: 0.34, fly: [0.4, 0.56], confirm: [0.58, 0.7], reset: 0.9 }
+const T = { tap: 0.3, fly: [0.35, 0.49], confirm: [0.5, 0.6], reset: 0.9 }
 
 const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
   const theme = useTheme()
@@ -43,12 +43,12 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
     active,
     reduceMotion,
     introMs: 1100,
-    loopMs: 5200,
+    loopMs: 6000,
     restAt: 0.2,
   })
 
   const cardIn = useRiseStyle(intro, 0, 0.45, 22)
-  const reset = useDerivedValue(() => seg(loop.value, T.reset, 0.98))
+  const reset = useDerivedValue(() => seg(loop.value, T.reset, 0.96))
   const tap = useDerivedValue(() => seg(loop.value, T.tap, T.tap + 0.08))
   const fly = useDerivedValue(
     () => seg(loop.value, T.fly[0], T.fly[1]) * (1 - reset.value)
@@ -100,27 +100,27 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
         ]}
       >
         <Animated.View style={[{ flex: 1 }, flightStyle]}>
-          <Surface palette={palette} style={{ flex: 1, padding: 16 }}>
+          <Surface palette={palette} style={{ flex: 1, padding: 18 }}>
             <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
             >
-              <IconTile icon={FileTextIcon} color={color} size={34} />
+              <IconTile icon={FileTextIcon} color={color} size={40} />
               <View style={{ flex: 1 }}>
                 <VisualText
                   style={{
-                    fontSize: 15,
+                    fontSize: 17,
                     fontFamily: theme.fonts.bold,
                     color: palette.text,
                   }}
                 >
                   {i18n.t('fieldServiceReport')}
                 </VisualText>
-                <VisualText style={{ fontSize: 11, color: palette.textAlt }}>
+                <VisualText style={{ fontSize: 12, color: palette.textAlt }}>
                   {formatDisplay(moment().subtract(1, 'month'), 'MMMM YYYY')}
                 </VisualText>
               </View>
             </View>
-            <View style={{ marginTop: 12 }}>
+            <View style={{ marginTop: 14 }}>
               {rows.map((row, i) => (
                 <Row
                   key={row.id}
@@ -137,8 +137,8 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
               style={[
                 {
                   marginTop: 'auto',
-                  height: 40,
-                  borderRadius: 12,
+                  height: 46,
+                  borderRadius: 14,
                   borderCurve: 'continuous',
                   backgroundColor: accent,
                   flexDirection: 'row',
@@ -149,10 +149,10 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
                 buttonStyle,
               ]}
             >
-              <LucideIcon icon={SendIcon} size={16} color='#FFFFFF' />
+              <LucideIcon icon={SendIcon} size={17} color='#FFFFFF' />
               <VisualText
                 style={{
-                  fontSize: 14,
+                  fontSize: 15,
                   fontFamily: theme.fonts.bold,
                   color: '#FFFFFF',
                 }}
@@ -209,7 +209,7 @@ const ReportVisual = ({ palette, active, reduceMotion }: RevealVisualProps) => {
           </View>
           <VisualText
             style={{
-              fontSize: 18,
+              fontSize: 20,
               fontFamily: theme.fonts.bold,
               color: palette.text,
             }}
@@ -246,20 +246,20 @@ const Row = ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingVertical: 9,
+          paddingVertical: 13,
           borderTopWidth: first ? 0 : 1,
           borderTopColor: palette.ringTrack,
         },
         style,
       ]}
     >
-      <VisualText style={{ fontSize: 13, color: palette.textAlt }}>
+      <VisualText style={{ fontSize: 14, color: palette.textAlt }}>
         {label}
       </VisualText>
       {typeof value === 'string' ? (
         <VisualText
           style={{
-            fontSize: 15,
+            fontSize: 17,
             fontFamily: theme.fonts.bold,
             color: palette.text,
           }}
@@ -276,9 +276,9 @@ const Row = ({
 const CheckDot = ({ color }: { color: string }) => (
   <View
     style={{
-      width: 20,
-      height: 20,
-      borderRadius: 10,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
       backgroundColor: color,
       alignItems: 'center',
       justifyContent: 'center',

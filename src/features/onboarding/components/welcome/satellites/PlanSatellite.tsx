@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { Text, View } from 'react-native'
-import { CalendarDays as CalendarDaysIcon } from 'lucide-react-native'
+import {
+  CalendarDays as CalendarDaysIcon,
+  Check as CheckIcon,
+} from 'lucide-react-native'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,9 +14,12 @@ import Animated, {
 } from 'react-native-reanimated'
 import moment from 'moment'
 import useTheme from '@/contexts/theme'
+import LucideIcon from '@/components/ui/LucideIcon'
+import i18n from '@/lib/locales'
 import SatelliteSurface, {
   IconChip,
   SatelliteProps,
+  SatelliteText,
 } from '@/features/onboarding/components/welcome/satellites/SatelliteSurface'
 import { WelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 
@@ -58,7 +64,7 @@ const Day = ({
       <Text
         allowFontScaling={false}
         style={{
-          fontSize: 10,
+          fontSize: 11,
           fontFamily: today ? theme.fonts.bold : theme.fonts.medium,
           color: today ? palette.text : palette.textAlt,
         }}
@@ -67,9 +73,9 @@ const Day = ({
       </Text>
       <View
         style={{
-          width: 16,
-          height: 16,
-          borderRadius: 8,
+          width: 18,
+          height: 18,
+          borderRadius: 9,
           borderWidth: today ? 1.5 : 0,
           borderColor: theme.colors.accent,
           alignItems: 'center',
@@ -79,9 +85,9 @@ const Day = ({
         <Animated.View
           style={[
             {
-              width: 6,
-              height: 6,
-              borderRadius: 3,
+              width: 8,
+              height: 8,
+              borderRadius: 4,
               backgroundColor: planned ? color : palette.skeleton,
             },
             dotStyle,
@@ -115,29 +121,42 @@ const PlanSatellite = ({
       palette={palette}
       focus={focus}
       accent={color}
-      style={{ width: 172 }}
+      style={{ width: 214 }}
     >
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           marginBottom: 10,
         }}
       >
-        <IconChip icon={CalendarDaysIcon} color={color} size={24} />
-        <Text
-          allowFontScaling={false}
-          numberOfLines={1}
+        <IconChip icon={CalendarDaysIcon} color={color} size={26} />
+        <SatelliteText
           style={{
             flex: 1,
             fontSize: 13,
             fontFamily: theme.fonts.semiBold,
-            color: palette.text,
+            color: palette.textAlt,
           }}
         >
-          {moment().format('MMMM')}
-        </Text>
+          {i18n.t('thisWeek')}
+        </SatelliteText>
+        <LucideIcon
+          icon={CheckIcon}
+          size={13}
+          color={theme.colors.accent}
+          strokeWidth={3}
+        />
+        <SatelliteText
+          style={{
+            fontSize: 13,
+            fontFamily: theme.fonts.bold,
+            color: theme.colors.accent,
+          }}
+        >
+          {i18n.t('scheduleStatus.onTrack')}
+        </SatelliteText>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {days.map((day, index) => (

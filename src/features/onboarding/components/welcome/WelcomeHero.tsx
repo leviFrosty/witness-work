@@ -11,6 +11,7 @@ import { useIsFocused } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useAnimatedStyle,
+  useDerivedValue,
   useReducedMotion,
 } from 'react-native-reanimated'
 import LaunchSplash, { splashMarkWidth } from '@/app/launch/LaunchSplash'
@@ -20,6 +21,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import {
   DISPLAY_FONT_SCALE_CAP,
+  EXIT_MS,
   PILLARS,
   PILLAR_HOLD_MS,
   PillarId,
@@ -30,6 +32,7 @@ import {
 import useWelcomeChoreography from '@/features/onboarding/hooks/useWelcomeChoreography'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
+import { welcomeScene } from '@/features/onboarding/lib/welcomeScene'
 import WelcomeConstellation from '@/features/onboarding/components/welcome/WelcomeConstellation'
 import WelcomeCta from '@/features/onboarding/components/welcome/WelcomeCta'
 import {
@@ -76,10 +79,10 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
       )
     : 1
 
-  const { time, tilt } = useWelcomeMotion(isFocused && !reduceMotion)
   const {
     values,
     headline,
+    live,
     firstLineDelay,
     splashVisible,
     skippable,
@@ -90,6 +93,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
     reduceMotion,
     isFocused,
   })
+  const { time, tilt } = useWelcomeMotion(isFocused && !reduceMotion && live)
   const { exit, subtitle, cta, link, splash } = values
 
   const headlineSize = Math.round(
@@ -130,7 +134,16 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
     opacity: link.value * (1 - exit.value),
   }))
 
-  const veilStyle = useAnimatedStyle(() => ({ opacity: exit.value }))
+  const veilStyle = useAnimatedStyle(() => ({
+    opacity: exit.value * values.veil.value,
+  }))
+  const chrome = useDerivedValue(() => 1 - exit.value)
+  const rehearsal = { collapse: values.ghost, on: values.rehearsing }
+  const startTour = () => {
+    welcomeScene.time = time.value + EXIT_MS / 1000
+    welcomeScene.focus = hub
+    leave(onGetStarted, 'tour')
+  }
   const splashStyle = useAnimatedStyle(() => ({ opacity: splash.value }))
 
   return (
@@ -164,6 +177,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           ringStart={values.ringStart}
           ringEnd={values.ringEnd}
           pulse={values.pulse}
+          chrome={chrome}
         />
       )}
       <View
@@ -211,6 +225,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
               fontSize={headlineSize}
               holdMs={PILLAR_HOLD_MS}
               reduceMotion={reduceMotion}
+              warm={values.rehearsing}
             />
           </Animated.View>
           <Animated.View style={subtitleStyle}>
@@ -229,7 +244,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           <Animated.View style={[{ marginTop: 28 }, ctaStyle]}>
             <WelcomeCta
               label={i18n.t('getStarted')}
-              onPress={() => leave(onGetStarted)}
+              onPress={startTour}
               time={time}
               palette={palette}
               reduceMotion={reduceMotion}
@@ -268,6 +283,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
           exit={exit}
           activePillar={activePillar}
           reduceMotion={reduceMotion}
+          warm={values.rehearsing}
         />
       )}
       <WelcomeCurtain
@@ -280,6 +296,7 @@ const WelcomeHero = ({ onGetStarted, onReturningUser }: Props) => {
         collapse={values.collapse}
         tileScale={values.tileScale}
         ripple={values.ripple}
+        rehearsal={rehearsal}
         tilt={tilt}
         exit={exit}
         reduceMotion={reduceMotion}

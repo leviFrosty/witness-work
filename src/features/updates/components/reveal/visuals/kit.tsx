@@ -141,10 +141,10 @@ export const Surface = ({
         borderColor: palette.surfaceBorder,
         borderRadius: 18,
         borderCurve: 'continuous',
-        shadowColor: palette.surfaceShadow,
-        shadowOpacity: palette.surfaceShadowOpacity.rest,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 8 },
+        boxShadow: `0 8px 18px ${withAlpha(
+          palette.surfaceShadow,
+          Math.round(palette.surfaceShadowOpacity.rest * 255)
+        )}`,
       },
       style,
     ]}

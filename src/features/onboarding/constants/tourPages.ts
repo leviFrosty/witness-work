@@ -37,7 +37,7 @@ import {
   SiriVisual,
   TimeVisual,
 } from '@/features/updates/components/reveal/visuals/skiaVisuals'
-import PlanVisual from '@/features/plans/components/schedule-intro/PlanVisual'
+import PlanVisual from '@/features/plans/components/plan-visual/PlanVisual'
 import ReportVisual from '@/features/onboarding/components/tour/ReportVisual'
 import PrivacyVisual from '@/features/onboarding/components/tour/PrivacyVisual'
 

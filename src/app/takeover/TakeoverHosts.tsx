@@ -5,7 +5,6 @@ import PetUnlockRevealHost from '@/features/pet/components/PetUnlockRevealHost'
 import PlanFinishedCelebrationHost from '@/features/routine/components/PlanFinishedCelebrationHost'
 import type MilestoneRevealOverlayComponent from '@/features/milestones/components/MilestoneRevealOverlay'
 import { useMilestoneRevealStore } from '@/features/milestones/stores/milestoneReveal'
-import ScheduleIntroHost from '@/features/plans/components/schedule-intro/ScheduleIntroHost'
 import StreakCelebration from '@/features/profile/components/StreakCelebration'
 import type WhatsNewSheetComponent from '@/features/updates/components/WhatsNewSheet'
 import type UpdateRevealOverlayComponent from '@/features/updates/components/reveal/UpdateRevealOverlay'
@@ -71,7 +70,6 @@ export default function TakeoverHosts({
           onClose={() => setWhatsNewWanted(false)}
         />
       )}
-      <ScheduleIntroHost />
       <StreakCelebration />
       {}
       {revealSource && (

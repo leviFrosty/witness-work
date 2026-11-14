@@ -108,9 +108,6 @@ const visuals: Record<string, unknown> = {
   '@/features/milestones/components/MilestoneRevealOverlay': {
     default: stubWhenShown('milestone-reveal'),
   },
-  '@/features/plans/components/schedule-intro/ScheduleIntroOverlay': {
-    default: stub('schedule-intro'),
-  },
   '@/features/profile/components/StreakCelebrationOverlay': {
     default: stub('streak-celebration'),
   },
@@ -147,14 +144,12 @@ import { noteUserAction, resetUserActions } from '@/lib/userAction'
 import { useBadgeSession } from '@/stores/badgeSession'
 import { usePreferences } from '@/stores/preferences'
 import { useProfileOverlay } from '@/stores/profileOverlay'
-import { useScheduleIntro } from '@/stores/scheduleIntro'
 import { resetTakeovers, useTakeover } from '@/stores/takeover'
 
 const TAKEOVERS = [
   'update-reveal',
   'whats-new',
   'milestone-reveal',
-  'schedule-intro',
   'streak-celebration',
   'badge-celebration',
   'badges-welcome',
@@ -215,7 +210,6 @@ beforeEach(() => {
   runtime.streak = { kind: 'plans', count: 4, latest: '2026-10-06' }
   useBadgeSession.getState().reset()
   useStreakCelebration.setState({ seen: null, celebrating: null, grewAt: 0 })
-  useScheduleIntro.setState({ source: null })
   useUpdateRevealStore.setState({ source: null })
   useMilestoneRevealStore.setState({ show: false })
   useProfileOverlay.setState({ open: false, away: false, origin: null })
@@ -263,7 +257,6 @@ describe('takeover hosts (ADR 0021)', () => {
     useStreakCelebration.setState({
       celebrating: { count: 10, kind: 'plans' },
     })
-    useScheduleIntro.getState().open('first_visit')
     useBadgeSession.getState().addHistory(3)
     await mount(true)
     expect(onScreen()).toBe('update-reveal')
@@ -275,10 +268,6 @@ describe('takeover hosts (ADR 0021)', () => {
     await advance(600)
     expect(onScreen()).toBeNull()
     await advance(200)
-    expect(onScreen()).toBe('schedule-intro')
-    await act(async () => useScheduleIntro.getState().close())
-    await advance(800)
-
     expect(onScreen()).toBe('streak-celebration')
     await act(async () => props('streak-celebration').onDone())
     await advance(800)

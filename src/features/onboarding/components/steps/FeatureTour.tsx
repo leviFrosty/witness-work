@@ -11,8 +11,6 @@ import { useHorizontalBleed } from '@/components/ui/layout/HorizontalSafeArea'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { usePreferences } from '@/stores/preferences'
-import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 import { EASE_OUT } from '@/features/onboarding/constants/welcome'
 import useWelcomeMotion from '@/features/onboarding/hooks/useWelcomeMotion'
 import useTourPages from '@/features/onboarding/hooks/useTourPages'
@@ -20,11 +18,6 @@ import { getWelcomePalette } from '@/features/onboarding/lib/welcomePalette'
 import { WelcomeBackdrop } from '@/features/onboarding/components/welcome/welcomeSkia'
 import { RevealPage } from '@/features/updates/hooks/useRevealPages'
 import RevealTour from '@/features/updates/components/reveal/RevealTour'
-
-const SCHEDULE_INTRO_PAGES: Partial<Record<string, ScheduleIntroPageId>> = {
-  plan: 'plan',
-  buddies: 'together',
-}
 
 type CloseMethod = 'finished' | 'skipped' | 'back'
 
@@ -40,9 +33,6 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
   const reduceMotion = useReducedMotion()
   const isFocused = useIsFocused()
   const bleed = useHorizontalBleed()
-  const markScheduleIntroCovered = usePreferences(
-    (state) => state.markScheduleIntroCovered
-  )
   const { time, tilt } = useWelcomeMotion(isFocused && !reduceMotion)
   const [size, setSize] = useState<{ width: number; height: number } | null>(
     null
@@ -134,8 +124,6 @@ const FeatureTour = ({ goBack, goNext, buddiesAvailable }: Props) => {
               setHeldPages(pages)
             viewed.current.add(id)
             lastPage.current = id
-            const introPage = SCHEDULE_INTRO_PAGES[id]
-            if (introPage) markScheduleIntroCovered(introPage)
           }}
           finish={{
             label: i18n.t('continue'),

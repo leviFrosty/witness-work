@@ -2,7 +2,6 @@ export const TAKEOVER_KINDS = [
   'update-reveal',
   'milestone-reveal',
   'whats-new',
-  'schedule-intro',
   'streak-celebration',
   'badge-celebration',
   'badges-welcome',

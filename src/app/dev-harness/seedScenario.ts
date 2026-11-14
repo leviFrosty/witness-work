@@ -32,7 +32,6 @@ export function seedScenario(name: string) {
 
     lastRolloverYearMonth: moment().format('YYYY-MM'),
 
-    scheduleIntroSeen: scenario.onboarded,
     submittedReportMonths: scenario.submittedReportMonths,
   })
   if (scenario.onboarded) {

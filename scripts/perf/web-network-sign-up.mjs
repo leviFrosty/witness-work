@@ -183,7 +183,6 @@ try {
               const saved = JSON.parse(get.result)
               Object.assign(saved.state, {
                 onboardingComplete: true,
-                scheduleIntroSeen: true,
               })
               entries.put(JSON.stringify(saved), [
                 'mmkv.default',

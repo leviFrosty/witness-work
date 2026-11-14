@@ -20,7 +20,6 @@ const PRIORITY: Record<TakeoverKind, number> = {
   'update-reveal': 10,
   'milestone-reveal': 11,
   'whats-new': 20,
-  'schedule-intro': 30,
   'streak-celebration': 40,
   'badge-celebration': 41,
   'badges-welcome': 50,
@@ -68,7 +67,7 @@ describe('takeover arbiter', () => {
   })
 
   it('leaves a gap after a release, then grants by priority', () => {
-    let state = request(start, 'intro', 'schedule-intro', 0)
+    let state = request(start, 'intro', 'whats-new', 0)
     state = request(state, 'summary', 'badges-history', 10)
     state = request(state, 'streak', 'streak-celebration', 20)
     state = releaseTakeover(state, 'intro', 1000, config)
@@ -185,7 +184,7 @@ describe('takeover arbiter', () => {
 
   it('withdraws a waiting claim on release', () => {
     let state = request(start, 'busy', 'update-reveal', 0)
-    state = request(state, 'intro', 'schedule-intro', 0)
+    state = request(state, 'intro', 'whats-new', 0)
     state = releaseTakeover(state, 'intro', 10, config)
     expect(state.queue).toEqual([])
     expect(state.active?.id).toBe('busy')

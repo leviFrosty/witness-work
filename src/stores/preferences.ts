@@ -85,7 +85,6 @@ import {
   standingRole,
   type RoleHistory,
 } from '@/lib/roleHistory'
-import type { ScheduleIntroPageId } from '@/stores/scheduleIntro'
 import { PASSKEY_PROMPT_INITIAL } from '@/lib/passkeys/promptRules'
 
 export type { MarkerColors }
@@ -361,9 +360,6 @@ export const PREFERENCE_DEFAULTS = {
 
   rewardSounds: DEFAULT_REWARD_SOUND_SET as RewardSoundSet,
 
-  scheduleIntroSeen: false,
-
-  scheduleIntroCoveredPages: [] as ScheduleIntroPageId[],
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
 
@@ -1504,17 +1500,6 @@ export const usePreferences = create(
             delete next[monthKey]
             return { reportCommentOverrides: next }
           }),
-        markScheduleIntroCovered: (page: ScheduleIntroPageId) =>
-          set(({ scheduleIntroCoveredPages }) =>
-            scheduleIntroCoveredPages.includes(page)
-              ? {}
-              : {
-                  scheduleIntroCoveredPages: [
-                    ...scheduleIntroCoveredPages,
-                    page,
-                  ],
-                }
-          ),
         markTipSeen: (tipId: string) =>
           set(({ seenTipIds }) =>
             seenTipIds.includes(tipId)

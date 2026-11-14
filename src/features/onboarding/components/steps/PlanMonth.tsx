@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import moment from 'moment'
@@ -43,10 +43,8 @@ const PlanMonth = ({ goBack, goNext }: Props) => {
     setHasSeenAvailabilityOnboarding,
     recordAssistantEvent,
     setHasDismissedRecommendationHash,
-    markScheduleIntroCovered,
   } = usePreferences()
 
-  useEffect(() => markScheduleIntroCovered('plan'), [markScheduleIntroCovered])
   const [target] = useState(() => planTargetMonth(new Date()))
 
   const [serviceDays, setServiceDays] = useState<number[]>(() =>

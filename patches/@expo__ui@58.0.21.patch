@@ -72,6 +72,29 @@ index 0decc53cc54b04316c0809b509df3b4a07d984b4..6152158fee3e78c517b6ac303b25affd
  };
  /**
   * Applies semantic properties. Wraps `Modifier.semantics { ... }`.
+diff --git a/build/swift-ui/Image/index.d.ts b/build/swift-ui/Image/index.d.ts
+index f1aeaae3b55fd5cb2d30b952c096b086391575a6..c01977adeff74ab45700ce2d0fb92c4e93a15bc5 100644
+--- a/build/swift-ui/Image/index.d.ts
++++ b/build/swift-ui/Image/index.d.ts
+@@ -17,6 +17,18 @@ export interface ImageProps extends CommonViewModifierProps {
+      * Performs a synchronous read operation that blocks the main thread.
+      */
+     uiImage?: string;
++    /**
++     * The scale of the `uiImage` file's pixels to points, e.g. `3` for an
++     * image drawn at 3x. Defaults to `1`. Menus draw images at their point
++     * size and ignore frame modifiers, so a menu icon needs its scale here.
++     */
++    uiImageScale?: number;
++    /**
++     * How to draw the image: `original` keeps its colors, and `template`
++     * fills it with the foreground color. Menus draw images as templates
++     * unless this is `original`.
++     */
++    renderingMode?: 'original' | 'template';
+     /**
+      * The fixed size of the system image in points. Does not scale with Dynamic
+      * Type. Use the `font` modifier with `textStyle` for that. Ignored when a
 diff --git a/build/universal/Collapsible/types.d.ts b/build/universal/Collapsible/types.d.ts
 index ef4fd921b6190b07784bfea3ed32bbacae3fc02f..0facae71579001ef8ac1cf0f42b974a184f93776 100644
 --- a/build/universal/Collapsible/types.d.ts
@@ -176,6 +199,47 @@ index 24db7b13b0eb4e935cacfdc5b34978d13a290246..801cfc52dd32db0c8cc726432ae535a1
        }
      }
    }
+diff --git a/ios/ImageView.swift b/ios/ImageView.swift
+index 170de73445439a3ba4e5495643ee5f7c3eb332ab..b1c626eef96614e5c2fa81b335c5b2e88c74e627 100644
+--- a/ios/ImageView.swift
++++ b/ios/ImageView.swift
+@@ -5,6 +5,8 @@ import ExpoModulesCore
+ 
+ public final class ImageViewProps: UIBaseViewProps {
+   @Field var uiImage: String?
++  @Field var uiImageScale: Double?
++  @Field var renderingMode: String?
+   @Field var systemName: String?
+   @Field var assetName: String?
+   @Field var variableValue: Double?
+@@ -35,6 +37,14 @@ public struct ImageView: ExpoSwiftUI.View {
+     return nil
+   }
+ 
++  private var uiImageRenderingMode: Image.TemplateRenderingMode? {
++    switch props.renderingMode {
++    case "original": return .original
++    case "template": return .template
++    default: return nil
++    }
++  }
++
+   @ViewBuilder
+   public var body: some View {
+     if let symbolImage {
+@@ -44,8 +54,11 @@ public struct ImageView: ExpoSwiftUI.View {
+     } else if let url = props.uiImage,
+               let url = URL(string: url),
+               let data = try? Data(contentsOf: url),
+-              let uiImage = UIImage(data: data) {
++              let uiImage = UIImage(data: data, scale: CGFloat(props.uiImageScale ?? 1)) {
++      // A menu row draws its icon as a template unless told otherwise, which
++      // turns a photo into a flat silhouette.
+       Image(uiImage: uiImage)
++        .renderingMode(uiImageRenderingMode)
+         .applyImageModifiers(props.modifiers, appContext: props.appContext)
+         .applyOnTapGesture(useTapGesture: props.useTapGesture, eventDispatcher: props.onTap)
+     }
 diff --git a/ios/Modifiers/HostViewContentMarginsMitigation.swift b/ios/Modifiers/HostViewContentMarginsMitigation.swift
 index 9ec58aa55c65873a01156126d7b7b49a93a0bfb8..866061b401249c6b902ca7485555c193f9ba71ed 100644
 --- a/ios/Modifiers/HostViewContentMarginsMitigation.swift
@@ -235,6 +299,29 @@ index 9ab09f9867e129561e1563787a6898425df58b2c..c787fe8de1f7084ecfd705e1f98ecb9a
  };
  
  /**
+diff --git a/src/swift-ui/Image/index.tsx b/src/swift-ui/Image/index.tsx
+index 7d40eae96fce872b58904ff512f48bb049e86ff4..bc2eef27ba90dc51044f8971afa49d12ad5ff1fd 100644
+--- a/src/swift-ui/Image/index.tsx
++++ b/src/swift-ui/Image/index.tsx
+@@ -23,6 +23,18 @@ export interface ImageProps extends CommonViewModifierProps {
+    * Performs a synchronous read operation that blocks the main thread.
+    */
+   uiImage?: string;
++  /**
++   * The scale of the `uiImage` file's pixels to points, e.g. `3` for an
++   * image drawn at 3x. Defaults to `1`. Menus draw images at their point
++   * size and ignore frame modifiers, so a menu icon needs its scale here.
++   */
++  uiImageScale?: number;
++  /**
++   * How to draw the image: `original` keeps its colors, and `template`
++   * fills it with the foreground color. Menus draw images as templates
++   * unless this is `original`.
++   */
++  renderingMode?: 'original' | 'template';
+   /**
+    * The fixed size of the system image in points. Does not scale with Dynamic
+    * Type. Use the `font` modifier with `textStyle` for that. Ignored when a
 diff --git a/src/universal/Collapsible/index.android.tsx b/src/universal/Collapsible/index.android.tsx
 index 5c1e7205b8cee15a4e98d8b07c9481d52ea909b8..28431aebd9cdcba6725d266f4256036561f6ccf1 100644
 --- a/src/universal/Collapsible/index.android.tsx

@@ -7,6 +7,8 @@ import type {
 } from 'react-native'
 import type { ButtonProps } from '@expo/ui/swift-ui'
 
+export type MenuImage = { uri: string; scale: number }
+
 export type ContextMenuAction = {
   id: string
 
@@ -16,6 +18,8 @@ export type ContextMenuAction = {
   destructive?: boolean
 
   systemImage?: ButtonProps['systemImage']
+
+  image?: MenuImage
 
   checked?: boolean
 }

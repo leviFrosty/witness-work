@@ -1,5 +1,6 @@
 import {
   createRng,
+  mix,
   rgbPalette,
   type PixelBuffer,
   type PixelMask,
@@ -265,213 +266,594 @@ const POND = rgbPalette({
   butter: '#f4cf6a',
 })
 
+type Point = readonly [x: number, y: number]
+
+type Patch = readonly [from: number, to: number, side: -1 | 0 | 1, c: number]
+
+interface KoiPath {
+  readonly x: Float32Array
+  readonly z: Float32Array
+  readonly length: number
+}
+
+const POND_TILT = 0.62
+const BODY_SQUASH = 0.82
+const PATH_STEP = 0.5
+const PATH_FINE = 32
+
+function koiPath(points: readonly Point[]): KoiPath {
+  const n = points.length
+  const fx: number[] = []
+  const fz: number[] = []
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = points[i]
+    const [x1, y1] = points[(i + 1) % n]
+    const [x2, y2] = points[(i + 2) % n]
+    const [x3, y3] = points[(i + 3) % n]
+    for (let k = 0; k < PATH_FINE; k++) {
+      const u = k / PATH_FINE
+      const v = 1 - u
+      const b0 = (v * v * v) / 6
+      const b1 = (3 * u * u * u - 6 * u * u + 4) / 6
+      const b2 = (-3 * u * u * u + 3 * u * u + 3 * u + 1) / 6
+      const b3 = (u * u * u) / 6
+      fx.push(b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3)
+      fz.push((b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3) / POND_TILT)
+    }
+  }
+  const m = fx.length
+  const at = new Float64Array(m + 1)
+  for (let i = 0; i < m; i++) {
+    const j = (i + 1) % m
+    at[i + 1] = at[i] + Math.hypot(fx[j] - fx[i], fz[j] - fz[i])
+  }
+  const length = at[m]
+  const count = Math.ceil(length / PATH_STEP)
+  const x = new Float32Array(count)
+  const z = new Float32Array(count)
+  let seg = 0
+  for (let i = 0; i < count; i++) {
+    const s = (i / count) * length
+    while (seg < m - 1 && at[seg + 1] < s) seg++
+    const u = (s - at[seg]) / (at[seg + 1] - at[seg] || 1)
+    const j = (seg + 1) % m
+    x[i] = fx[seg] + (fx[j] - fx[seg]) * u
+    z[i] = fz[seg] + (fz[j] - fz[seg]) * u
+  }
+  return { x, z, length }
+}
+
+const AT = new Float32Array(2)
+
+function pathAt(path: KoiPath, s: number): void {
+  const count = path.x.length
+  const lap = s / path.length
+  const f = (lap - Math.floor(lap)) * count
+  const i = Math.min(count - 1, Math.floor(f))
+  const j = i + 1 === count ? 0 : i + 1
+  const u = f - i
+  AT[0] = path.x[i] + (path.x[j] - path.x[i]) * u
+  AT[1] = path.z[i] + (path.z[j] - path.z[i]) * u
+}
+
 interface Koi {
-  readonly cx: number
-  readonly cy: number
-  readonly ax: number
-  readonly ay: number
-  readonly n: 1 | 2
-  readonly phase: number
-  readonly lapMs: number
-  readonly dir: 1 | -1
+  readonly path: KoiPath
+  readonly start: number
+  readonly speed: number
   readonly size: number
-  readonly coat: readonly number[]
+  readonly seed: number
+  readonly coat: number
+  readonly patches: readonly Patch[]
   readonly fin: number
 }
 
 const KOI: readonly Koi[] = [
   {
-    cx: 36,
-    cy: 82,
-    ax: 30,
-    ay: 11,
-    n: 1,
-    phase: 2.5,
-    lapMs: 17000,
-    dir: 1,
+    path: koiPath([
+      [3, 82],
+      [10, 73],
+      [30, 71],
+      [50, 73],
+      [56, 80],
+      [46, 92],
+      [28, 96],
+      [10, 93],
+    ]),
+    start: 0.14,
+    speed: 8.5,
     size: 1.15,
-    coat: [POND.white, POND.orange, POND.white, POND.orange, POND.white],
+    seed: 0.6,
+    coat: POND.white,
+    patches: [
+      [0.03, 0.2, 0, POND.orange],
+      [0.34, 0.6, 0, POND.orange],
+      [0.74, 0.88, 1, POND.orange],
+    ],
     fin: POND.cream,
   },
   {
-    cx: 118,
-    cy: 81,
-    ax: 46,
-    ay: 12,
-    n: 2,
-    phase: 0.4,
-    lapMs: 26000,
-    dir: 1,
+    path: koiPath([
+      [82, 72],
+      [98, 71],
+      [110, 79],
+      [120, 90],
+      [130, 96],
+      [142, 94],
+      [147, 84],
+      [142, 74],
+      [130, 71],
+      [121, 76],
+      [112, 86],
+      [100, 95],
+      [84, 96],
+      [74, 90],
+      [72, 80],
+    ]),
+    start: 0.2,
+    speed: 9.5,
     size: 1.25,
-    coat: [POND.orange, POND.orange, POND.red, POND.orange, POND.orange],
+    seed: 2.1,
+    coat: POND.orange,
+    patches: [
+      [0.28, 0.52, 0, POND.red],
+      [0.7, 0.84, -1, POND.red],
+    ],
     fin: POND.butter,
   },
   {
-    cx: 92,
-    cy: 71,
-    ax: 82,
-    ay: 4,
-    n: 1,
-    phase: 2.2,
-    lapMs: 34000,
-    dir: -1,
+    path: koiPath([
+      [-28, 71],
+      [30, 70.5],
+      [80, 71.5],
+      [130, 70.5],
+      [180, 71],
+      [206, 71],
+      [210, 77],
+      [180, 77.5],
+      [130, 76.5],
+      [80, 78],
+      [30, 77],
+      [-28, 77],
+      [-32, 74],
+    ]),
+    start: 0.07,
+    speed: 10,
     size: 1.05,
-    coat: [POND.white, POND.white, POND.red, POND.white, POND.white],
+    seed: 4.4,
+    coat: POND.white,
+    patches: [[0.04, 0.24, 0, POND.red]],
     fin: POND.cream,
   },
   {
-    cx: 96,
-    cy: 95,
-    ax: 78,
-    ay: 3,
-    n: 1,
-    phase: 3.9,
-    lapMs: 30000,
-    dir: 1,
+    path: koiPath([
+      [-28, 95.5],
+      [40, 96],
+      [100, 95],
+      [150, 96],
+      [180, 95.5],
+      [206, 95],
+      [210, 89],
+      [180, 84],
+      [150, 83.5],
+      [110, 85],
+      [60, 87],
+      [20, 85],
+      [-28, 87],
+      [-32, 91],
+    ]),
+    start: 0.06,
+    speed: 9,
     size: 1.25,
-    coat: [POND.ink, POND.orange, POND.ink, POND.white, POND.orange],
+    seed: 1.3,
+    coat: POND.white,
+    patches: [
+      [0.1, 0.4, 0, POND.orange],
+      [0.4, 0.56, -1, POND.ink],
+      [0.62, 0.8, 1, POND.ink],
+      [0.8, 0.96, 0, POND.orange],
+    ],
     fin: POND.cream,
   },
   {
-    cx: 150,
-    cy: 86,
-    ax: 22,
-    ay: 10,
-    n: 1,
-    phase: 5.1,
-    lapMs: 15000,
-    dir: -1,
+    path: koiPath([
+      [118, 88],
+      [122, 79],
+      [144, 78.5],
+      [170, 80],
+      [178, 88],
+      [172, 95],
+      [146, 95.5],
+      [124, 95],
+    ]),
+    start: 0.62,
+    speed: 7.5,
     size: 1.05,
-    coat: [POND.butter, POND.butter, POND.white, POND.butter, POND.butter],
+    seed: 5.2,
+    coat: POND.butter,
+    patches: [[0.42, 0.66, 0, POND.white]],
     fin: POND.white,
   },
   {
-    cx: 30,
-    cy: 92,
-    ax: 26,
-    ay: 5,
-    n: 2,
-    phase: 1.3,
-    lapMs: 21000,
-    dir: -1,
+    path: koiPath([
+      [2, 87],
+      [8, 95],
+      [26, 96],
+      [42, 93],
+      [40, 82],
+      [22, 77],
+      [6, 79],
+    ]),
+    start: 0.6,
+    speed: 7,
     size: 0.95,
-    coat: [POND.red, POND.white, POND.white, POND.red, POND.white],
+    seed: 3.3,
+    coat: POND.red,
+    patches: [
+      [0.44, 0.7, 0, POND.white],
+      [0.86, 1, 0, POND.white],
+    ],
     fin: POND.cream,
   },
 ]
 
-const KOI_RADII = [1.5, 2.2, 2.4, 2.1, 1.6, 1.1, 0.7] as const
-const KOI_COAT = [0, 1, 1, 2, 3, 4, 4] as const
+const KOI_RADII = [1.6, 2.2, 2.45, 2.4, 2.2, 1.9, 1.5, 1.15, 0.8] as const
+const KOI_SWAY = [0.16, 0.07, 0.05, 0.12, 0.24, 0.4, 0.6, 0.8, 1] as const
 const KOI_JOINTS = KOI_RADII.length
-const KOI_STEP = 1.7
-const DART_RISE_MS = 320
+const KOI_SEGMENT = 1.5
+const KOI_SWAY_PX = 1.5
+const KOI_WAVE_LAG = 0.55
+const KOI_BEAT_PER_PX = TAU / 8.5
+const GLIDE_MS = 6400
+const GLIDE = 0.3
+const DART_RISE_MS = 300
 const DART_FALL_MS = 2600
-const DART_TURN = 0.55
+const DART_AHEAD_MS = 900
 
 function dart(since: number): number {
   if (since < 0 || since >= DART_RISE_MS + DART_FALL_MS) return 0
-  if (since < DART_RISE_MS) return easeOut(since / DART_RISE_MS)
-  return 1 - (since - DART_RISE_MS) / DART_FALL_MS
+  if (since < DART_RISE_MS) return smooth(since / DART_RISE_MS)
+  return 1 - smooth((since - DART_RISE_MS) / DART_FALL_MS)
 }
 
-const koiAngle = (koi: Koi, tMs: number, since: number): number =>
-  koi.phase + koi.dir * ((tMs / koi.lapMs) * TAU + DART_TURN * dart(since))
+function koiTravel(koi: Koi, tMs: number, since: number): number {
+  const t = tMs + DART_AHEAD_MS * dart(since)
+  const glide =
+    ((GLIDE * GLIDE_MS) / TAU) * Math.sin((t * TAU) / GLIDE_MS + koi.seed)
+  return (koi.speed * (t + glide)) / 1000
+}
 
-const koiX = (koi: Koi, th: number): number => koi.cx + koi.ax * Math.cos(th)
+const CAPS = KOI_JOINTS + 4
+const BODY_CAPS = KOI_JOINTS - 1
+const capAx = new Float32Array(CAPS)
+const capAy = new Float32Array(CAPS)
+const capBx = new Float32Array(CAPS)
+const capBy = new Float32Array(CAPS)
+const capRa = new Float32Array(CAPS)
+const capRb = new Float32Array(CAPS)
+const jointX = new Float32Array(KOI_JOINTS)
+const jointY = new Float32Array(KOI_JOINTS)
+const FIELD = { cap: 0, along: 0 }
 
-const koiY = (koi: Koi, th: number): number =>
-  koi.cy + koi.ay * Math.sin(koi.n * th)
-
-const koiSpeed = (koi: Koi, th: number): number =>
-  Math.hypot(koi.ax * Math.sin(th), koi.ay * koi.n * Math.cos(koi.n * th)) || 1
-
-function stamp(
-  buf: PixelBuffer,
-  open: PixelMask,
-  cx: number,
-  cy: number,
-  r: number,
-  c: number,
-  a: number
+function setCap(
+  i: number,
+  ax: number,
+  ay: number,
+  ra: number,
+  bx: number,
+  by: number,
+  rb: number
 ): void {
-  const x0 = Math.round(cx)
-  const y0 = Math.round(cy)
-  const rr = r * r
-  const reach = Math.ceil(r)
-  for (let dy = -reach; dy <= reach; dy++) {
-    for (let dx = -reach; dx <= reach; dx++) {
-      const v = dy / 0.82
-      if (dx * dx + v * v > rr) continue
-      if (a >= 1) put(buf, open, x0 + dx, y0 + dy, c)
-      else tint(buf, open, x0 + dx, y0 + dy, c, a)
+  capAx[i] = ax
+  capAy[i] = ay
+  capRa[i] = ra
+  capBx[i] = bx
+  capBy[i] = by
+  capRb[i] = rb
+}
+
+function capField(x: number, y: number, from: number, to: number): number {
+  let best = Infinity
+  for (let i = from; i < to; i++) {
+    const ex = capBx[i] - capAx[i]
+    const ey = capBy[i] - capAy[i]
+    const px = x - capAx[i]
+    const py = y - capAy[i]
+    const ee = ex * ex + ey * ey
+    const h = ee > 0 ? clamp01((px * ex + py * ey) / ee) : 0
+    const qx = px - ex * h
+    const qy = py - ey * h
+    const d =
+      Math.sqrt(qx * qx + qy * qy) - (capRa[i] + (capRb[i] - capRa[i]) * h)
+    if (d < best) {
+      best = d
+      FIELD.cap = i
+      FIELD.along = h
+    }
+  }
+  return best
+}
+
+function poseKoi(koi: Koi, tMs: number, since: number): void {
+  const travel = koiTravel(koi, tMs, since)
+  const pace =
+    (travel - koiTravel(koi, tMs - 100, since - 100)) / (koi.speed * 0.1)
+  const effort = Math.max(0.6, Math.min(1.7, 0.5 + 0.5 * pace))
+  const beat = koi.seed + (travel * KOI_BEAT_PER_PX) / koi.size
+  const head = koi.start * koi.path.length + travel
+  const rows = POND_TILT / BODY_SQUASH
+  for (let j = 0; j < KOI_JOINTS; j++) {
+    const s = head - j * KOI_SEGMENT * koi.size
+    pathAt(koi.path, s + 0.75)
+    const ax = AT[0]
+    const ay = AT[1] * rows
+    pathAt(koi.path, s - 0.75)
+    const tx = ax - AT[0]
+    const ty = ay - AT[1] * rows
+    const tl = Math.hypot(tx, ty) || 1
+    pathAt(koi.path, s)
+    const sway =
+      KOI_SWAY_PX *
+      koi.size *
+      effort *
+      KOI_SWAY[j] *
+      Math.sin(beat - j * KOI_WAVE_LAG)
+    jointX[j] = AT[0] - (ty / tl) * sway
+    jointY[j] = AT[1] * rows + (tx / tl) * sway
+  }
+  for (let j = 0; j < BODY_CAPS; j++)
+    setCap(
+      j,
+      jointX[j],
+      jointY[j],
+      KOI_RADII[j] * koi.size,
+      jointX[j + 1],
+      jointY[j + 1],
+      KOI_RADII[j + 1] * koi.size
+    )
+
+  const end = KOI_JOINTS - 1
+  const rx = jointX[end]
+  const ry = jointY[end]
+  const back = Math.atan2(ry - jointY[end - 1], rx - jointX[end - 1])
+  const trail = back - 0.5 * effort * Math.cos(beat - end * KOI_WAVE_LAG)
+  for (let k = 0; k < 2; k++) {
+    const a = trail + (k ? 0.5 : -0.5)
+    const reach = 3.2 * koi.size
+    setCap(
+      BODY_CAPS + k,
+      rx,
+      ry,
+      0.5 * koi.size,
+      rx + Math.cos(a) * reach,
+      ry + Math.sin(a) * reach,
+      0.85 * koi.size
+    )
+  }
+  setCap(
+    BODY_CAPS + 2,
+    rx,
+    ry,
+    0.5 * koi.size,
+    rx + Math.cos(trail) * 2.1 * koi.size,
+    ry + Math.sin(trail) * 2.1 * koi.size,
+    0.8 * koi.size
+  )
+
+  const hx = jointX[1] - jointX[3]
+  const hy = jointY[1] - jointY[3]
+  const hl = Math.hypot(hx, hy) || 1
+  const fx = hx / hl
+  const fy = hy / hl
+  for (let k = 0; k < 2; k++) {
+    const side = k ? 1 : -1
+    const sweep = 0.85 + 0.25 * Math.sin(beat * 0.5 + k * 1.7)
+    const out = Math.cos(sweep) * side
+    const aft = Math.sin(sweep)
+    const root = KOI_RADII[2] * koi.size * 0.7 * side
+    const px = jointX[2] - fy * root
+    const py = jointY[2] + fx * root
+    const reach = 3.2 * koi.size
+    setCap(
+      BODY_CAPS + 3 + k,
+      px,
+      py,
+      0.8 * koi.size,
+      px + (-fy * out - fx * aft) * reach,
+      py + (fx * out - fy * aft) * reach,
+      0.4 * koi.size
+    )
+  }
+}
+
+export const KOI_COUNT = KOI.length
+
+export function koiSpine(index: number, tMs: number, patMs: number): Point[] {
+  poseKoi(KOI[index], tMs, tMs - patMs)
+  return Array.from(jointX, (x, j): Point => [x, jointY[j] * BODY_SQUASH])
+}
+
+const FIELD_W = 48
+const FIELD_H = 36
+const FIELD_PAD = 1.6
+const FAR = 9
+const SHADOW_DX = 1
+const SHADOW_DY = 2
+const FIN_ALPHA = 0.8
+
+interface KoiField {
+  left: number
+  top: number
+  width: number
+  height: number
+  readonly body: Float32Array
+  readonly fin: Float32Array
+  readonly along: Float32Array
+  readonly deep: Float32Array
+  readonly side: Int8Array
+}
+
+const KOI_FIELDS: readonly KoiField[] = KOI.map(() => ({
+  left: 0,
+  top: 0,
+  width: 0,
+  height: 0,
+  body: new Float32Array(FIELD_W * FIELD_H),
+  fin: new Float32Array(FIELD_W * FIELD_H),
+  along: new Float32Array(FIELD_W * FIELD_H),
+  deep: new Float32Array(FIELD_W * FIELD_H),
+  side: new Int8Array(FIELD_W * FIELD_H),
+}))
+
+function fillKoiField(field: KoiField): void {
+  let x0 = Infinity
+  let x1 = -Infinity
+  let y0 = Infinity
+  let y1 = -Infinity
+  for (let i = 0; i < CAPS; i++) {
+    const r = Math.max(capRa[i], capRb[i]) + FIELD_PAD
+    x0 = Math.min(x0, capAx[i] - r, capBx[i] - r)
+    x1 = Math.max(x1, capAx[i] + r, capBx[i] + r)
+    y0 = Math.min(y0, capAy[i] - r, capBy[i] - r)
+    y1 = Math.max(y1, capAy[i] + r, capBy[i] + r)
+  }
+  const left = Math.floor(x0)
+  const top = Math.floor(y0 * BODY_SQUASH)
+  const width = Math.min(FIELD_W, Math.ceil(x1) - left + 1)
+  const height = Math.min(FIELD_H, Math.ceil(y1 * BODY_SQUASH) - top + 1)
+  field.left = left
+  field.top = top
+  field.width = width
+  field.height = height
+  field.body.fill(FAR, 0, width * height)
+  field.fin.fill(FAR, 0, width * height)
+  for (let i = 0; i < CAPS; i++) {
+    const ax = capAx[i]
+    const ay = capAy[i]
+    const ex = capBx[i] - ax
+    const ey = capBy[i] - ay
+    const ra = capRa[i]
+    const grow = capRb[i] - ra
+    const ee = ex * ex + ey * ey
+    const r = Math.max(ra, capRb[i]) + FIELD_PAD
+    const fromX = Math.max(0, Math.floor(Math.min(ax, capBx[i]) - r) - left)
+    const toX = Math.min(
+      width - 1,
+      Math.ceil(Math.max(ax, capBx[i]) + r) - left
+    )
+    const fromY = Math.max(
+      0,
+      Math.floor((Math.min(ay, capBy[i]) - r) * BODY_SQUASH) - top
+    )
+    const toY = Math.min(
+      height - 1,
+      Math.ceil((Math.max(ay, capBy[i]) + r) * BODY_SQUASH) - top
+    )
+    for (let y = fromY; y <= toY; y++) {
+      const py = (y + top) / BODY_SQUASH - ay
+      for (let x = fromX; x <= toX; x++) {
+        const px = x + left - ax
+        const h = ee > 0 ? clamp01((px * ex + py * ey) / ee) : 0
+        const qx = px - ex * h
+        const qy = py - ey * h
+        const radius = ra + grow * h
+        const d = Math.sqrt(qx * qx + qy * qy) - radius
+        const k = y * width + x
+        if (i >= BODY_CAPS) {
+          if (d < field.fin[k]) field.fin[k] = d
+        } else if (d < field.body[k]) {
+          field.body[k] = d
+          field.along[k] = (i + h) / BODY_CAPS
+          field.deep[k] = clamp01(-d / radius)
+          field.side[k] = ex * py - ey * px >= 0 ? 1 : -1
+        }
+      }
     }
   }
 }
 
-const spineX = new Float32Array(KOI_JOINTS + 1)
-const spineY = new Float32Array(KOI_JOINTS + 1)
+function paintKoiShadow(
+  buf: PixelBuffer,
+  open: PixelMask,
+  field: KoiField
+): void {
+  const d = buf.data
+  const r = (POND.shadow >> 16) & 255
+  const g = (POND.shadow >> 8) & 255
+  const b = POND.shadow & 255
+  for (let fy = 0; fy < field.height; fy++) {
+    const y = field.top + fy + SHADOW_DY
+    if (y < FLOOR_TOP || y >= SCENE_H) continue
+    for (let fx = 0; fx < field.width; fx++) {
+      const x = field.left + fx + SHADOW_DX
+      if (x < 0 || x >= SCENE_W) continue
+      const f = fy * field.width + fx
+      const a =
+        0.34 *
+        clamp01(1 - (Math.min(field.body[f], field.fin[f]) + 0.2) / FIELD_PAD)
+      if (a <= 0) continue
+      const p = y * SCENE_W + x
+      if (open.data[p] !== 1) continue
+      const k = p * 4
+      d[k] += (r - d[k]) * a
+      d[k + 1] += (g - d[k + 1]) * a
+      d[k + 2] += (b - d[k + 2]) * a
+    }
+  }
+}
 
-function drawKoiFish(
+function paintKoi(
   buf: PixelBuffer,
   open: PixelMask,
   koi: Koi,
-  tMs: number,
-  since: number
+  field: KoiField
 ): void {
-  let th = koiAngle(koi, tMs, since)
-  const wag = Math.sin(tMs * 0.007 + koi.phase * 3)
-  for (let j = 0; j <= KOI_JOINTS; j++) {
-    spineX[j] = koiX(koi, th)
-    spineY[j] = koiY(koi, th)
-    th -= (koi.dir * KOI_STEP * koi.size) / koiSpeed(koi, th)
+  const d = buf.data
+  for (let fy = 0; fy < field.height; fy++) {
+    const y = field.top + fy
+    if (y < FLOOR_TOP || y >= SCENE_H) continue
+    for (let fx = 0; fx < field.width; fx++) {
+      const x = field.left + fx
+      if (x < 0 || x >= SCENE_W) continue
+      const f = fy * field.width + fx
+      const fin = FIN_ALPHA * clamp01(0.5 - field.fin[f])
+      const body = clamp01(0.5 - field.body[f])
+      if (fin <= 0 && body <= 0) continue
+      const p = y * SCENE_W + x
+      if (open.data[p] !== 1) continue
+      const k = p * 4
+      if (fin > 0) {
+        d[k] += (((koi.fin >> 16) & 255) - d[k]) * fin
+        d[k + 1] += (((koi.fin >> 8) & 255) - d[k + 1]) * fin
+        d[k + 2] += ((koi.fin & 255) - d[k + 2]) * fin
+      }
+      if (body <= 0) continue
+      const at = field.along[f]
+      const side = field.side[f]
+      let c = koi.coat
+      for (const [from, to, on, tone] of koi.patches)
+        if (at >= from && at < to && (on === 0 || on === side)) c = tone
+      const deep = field.deep[f]
+      const flank = 0.3 * (1 - smooth(deep / 0.6))
+      const ridge = at < 0.8 ? 0.2 * smooth((deep - 0.55) / 0.45) : 0
+      let r = (c >> 16) & 255
+      let g = (c >> 8) & 255
+      let b = c & 255
+      r += (((POND.shadow >> 16) & 255) - r) * flank
+      g += (((POND.shadow >> 8) & 255) - g) * flank
+      b += ((POND.shadow & 255) - b) * flank
+      r += (255 - r) * ridge
+      g += (255 - g) * ridge
+      b += (255 - b) * ridge
+      d[k] += (r - d[k]) * body
+      d[k + 1] += (g - d[k + 1]) * body
+      d[k + 2] += (b - d[k + 2]) * body
+    }
   }
-  const hx = spineX[0] - spineX[2]
-  const hy = spineY[0] - spineY[2]
-  const hl = Math.hypot(hx, hy) || 1
-  const nx = -hy / hl
-  const ny = hx / hl
-  const bend = (j: number) => (j >= 4 ? wag * (j - 3) * 0.4 : 0)
-  for (let j = 0; j < KOI_JOINTS; j++)
-    stamp(
-      buf,
-      open,
-      spineX[j] + nx * bend(j) + 1,
-      spineY[j] + ny * bend(j) + 2,
-      KOI_RADII[j] * koi.size + 0.5,
-      POND.shadow,
-      0.5
-    )
-  const reach = KOI_RADII[2] * koi.size + 0.7
-  for (const side of [1, -1]) {
-    const fx = spineX[2] + nx * reach * side - (hx / hl) * 0.8
-    const fy = spineY[2] + ny * reach * side * 0.82 - (hy / hl) * 0.8
-    tint(buf, open, fx, fy, koi.fin, 0.9)
-    tint(buf, open, fx - hx / hl, fy - hy / hl, koi.fin, 0.7)
-  }
-  const tx = spineX[KOI_JOINTS] + nx * bend(KOI_JOINTS)
-  const ty = spineY[KOI_JOINTS] + ny * bend(KOI_JOINTS)
-  for (const side of [1, -1]) {
-    tint(buf, open, tx + nx * side, ty + ny * side, koi.fin, 0.9)
-    tint(
-      buf,
-      open,
-      tx + nx * side * 2 - hx / hl,
-      ty + ny * side * 2 - hy / hl,
-      koi.fin,
-      0.85
-    )
-  }
-  tint(buf, open, tx, ty, koi.fin, 0.9)
-  for (let j = KOI_JOINTS - 1; j >= 0; j--)
-    stamp(
-      buf,
-      open,
-      spineX[j] + nx * bend(j),
-      spineY[j] + ny * bend(j),
-      KOI_RADII[j] * koi.size,
-      koi.coat[KOI_COAT[j]],
-      1
-    )
+}
+
+function koiHead(koi: Koi, tMs: number): void {
+  pathAt(koi.path, koi.start * koi.path.length + koiTravel(koi, tMs, -1))
+  AT[1] *= POND_TILT
 }
 
 const RIPPLE_SPOTS: readonly (readonly [number, number, number, number])[] = [
@@ -495,9 +877,9 @@ const GLINTS: readonly (readonly [number, number, number, number])[] = [
 ]
 
 const PAT_RING_MS = 1500
-const KOI_LEAP_MS = 1500
+const KOI_LEAP_MS = 1700
 const LEAP_START_MS = 140
-const LEAP_FLIGHT_MS = 760
+const LEAP_FLIGHT_MS = 900
 const LEAP_FROM: readonly [number, number] = [24, 96]
 const LEAP_TO: readonly [number, number] = [47, 97]
 const LEAP_RISE = 17
@@ -505,7 +887,13 @@ const LEAP_RISE = 17
 function drawKoi(buf: PixelBuffer, m: RoomMoment, open: PixelMask): void {
   const t = m.tMs
   const pat = sincePat(m)
-  for (const koi of KOI) drawKoiFish(buf, open, koi, t, pat)
+  for (let i = 0; i < KOI.length; i++) {
+    poseKoi(KOI[i], t, pat)
+    fillKoiField(KOI_FIELDS[i])
+    paintKoiShadow(buf, open, KOI_FIELDS[i])
+  }
+  for (let i = 0; i < KOI.length; i++)
+    paintKoi(buf, open, KOI[i], KOI_FIELDS[i])
   for (const [x, y, len, drift] of GLINTS) {
     const gx = (((x + t * drift) % SCENE_W) + SCENE_W) % SCENE_W
     const a = 0.3 + 0.25 * Math.sin(t * 0.0013 + x)
@@ -522,9 +910,9 @@ function drawKoi(buf: PixelBuffer, m: RoomMoment, open: PixelMask): void {
   if (within(pat, PAT_RING_MS)) {
     const p = pat / PAT_RING_MS
     for (const koi of KOI) {
-      const th = koiAngle(koi, m.patMs, -1)
-      const x = koiX(koi, th)
-      const y = koiY(koi, th)
+      koiHead(koi, m.patMs)
+      const x = AT[0]
+      const y = AT[1]
       ring(buf, open, x, y, 2 + p * 11, POND.ripple, 0.8 * (1 - p))
       if (p > 0.25)
         ring(buf, open, x, y, (p - 0.25) * 11, POND.ripple, 0.55 * (1 - p))
@@ -586,37 +974,80 @@ function drawPondLight(
   }
 }
 
-const LEAP_RADII = [1.7, 2.4, 2.3, 1.8, 1.3, 0.8] as const
-const LEAP_STEP = 0.042
-
-function goldStamp(
-  buf: PixelBuffer,
-  subject: PixelMask,
-  cx: number,
-  cy: number,
-  r: number,
-  c: number
-): void {
-  const x0 = Math.round(cx)
-  const y0 = Math.round(cy)
-  const reach = Math.ceil(r)
-  for (let dy = -reach; dy <= reach; dy++) {
-    for (let dx = -reach; dx <= reach; dx++) {
-      if (dx * dx + dy * dy > r * r) continue
-      const x = x0 + dx
-      const y = y0 + dy
-      if (x < 0 || y < 0 || x >= SCENE_W || y >= SCENE_H) continue
-      if (subject.data[y * SCENE_W + x]) continue
-      blend(buf, x, y, c, 1)
-    }
-  }
-}
+const LEAP_RADII = [1.6, 2.3, 2.4, 2, 1.5, 1, 0.7] as const
+const LEAP_FLICK = [0.1, 0.1, 0.2, 0.4, 0.6, 0.8, 1] as const
+const LEAP_JOINTS = LEAP_RADII.length
+const LEAP_SEGMENT = 1.9
+const leapAt = new Float32Array(LEAP_JOINTS)
+const leapCapJoint = new Uint8Array(CAPS)
 
 const leapX = (p: number): number =>
   LEAP_FROM[0] + (LEAP_TO[0] - LEAP_FROM[0]) * p
 
 const leapY = (p: number): number =>
   LEAP_FROM[1] + (LEAP_TO[1] - LEAP_FROM[1]) * p - 4 * LEAP_RISE * p * (1 - p)
+
+const leapSlope = (p: number): number =>
+  LEAP_TO[1] - LEAP_FROM[1] - 4 * LEAP_RISE * (1 - 2 * p)
+
+function poseLeap(flight: number, tMs: number): [body: number, all: number] {
+  const run = LEAP_TO[0] - LEAP_FROM[0]
+  let p = flight
+  for (let j = 0; j < LEAP_JOINTS; j++) {
+    leapAt[j] = p
+    p -= LEAP_SEGMENT / Math.hypot(run, leapSlope(p))
+  }
+  for (let j = 0; j < LEAP_JOINTS; j++) {
+    const u = clamp01(leapAt[j])
+    const slope = leapSlope(u)
+    const tl = Math.hypot(run, slope)
+    const flick =
+      leapAt[j] > 0 && leapAt[j] < 1
+        ? 0.8 * LEAP_FLICK[j] * Math.sin(tMs * 0.019 - j * 0.7)
+        : 0
+    jointX[j] = leapX(u) - (slope / tl) * flick
+    jointY[j] = leapY(u) + (run / tl) * flick
+  }
+  let body = 0
+  for (let j = 0; j < LEAP_JOINTS - 1; j++) {
+    const a = leapAt[j]
+    const b = leapAt[j + 1]
+    if (a <= 0 || b >= 1) continue
+    const span = a - b || 1
+    const ua = a > 1 ? (a - 1) / span : 0
+    const ub = b < 0 ? a / span : 1
+    const taper = LEAP_RADII[j + 1] - LEAP_RADII[j]
+    leapCapJoint[body] = j
+    setCap(
+      body++,
+      jointX[j],
+      jointY[j],
+      LEAP_RADII[j] + taper * ua,
+      jointX[j + 1],
+      jointY[j + 1],
+      LEAP_RADII[j] + taper * ub
+    )
+  }
+  let all = body
+  const end = LEAP_JOINTS - 1
+  if (leapAt[end] > 0 && leapAt[end] < 1) {
+    const back = Math.atan2(
+      jointY[end] - jointY[end - 1],
+      jointX[end] - jointX[end - 1]
+    )
+    for (const spread of [0.55, -0.55])
+      setCap(
+        all++,
+        jointX[end],
+        jointY[end],
+        0.5,
+        jointX[end] + Math.cos(back + spread) * 3,
+        jointY[end] + Math.sin(back + spread) * 3,
+        0.9
+      )
+  }
+  return [body, all]
+}
 
 function drawKoiLeap(
   buf: PixelBuffer,
@@ -626,41 +1057,56 @@ function drawKoiLeap(
   const since = sinceCoins(m)
   if (!within(since, KOI_LEAP_MS)) return
   const flight = (since - LEAP_START_MS) / LEAP_FLIGHT_MS
-  const joints = LEAP_RADII.length
-  if (flight > 0 && flight < 1 + joints * LEAP_STEP) {
-    const tail = flight - joints * LEAP_STEP
-    if (tail > 0 && tail < 1) {
-      const tx = leapX(tail)
-      const ty = leapY(tail)
-      const ax = leapX(tail + 0.02) - tx
-      const ay = leapY(tail + 0.02) - ty
-      const al = Math.hypot(ax, ay) || 1
-      for (const side of [1, -1]) {
-        const fx = tx + (-ay / al) * side * 1.6 - (ax / al) * 0.6
-        const fy = ty + (ax / al) * side * 1.6 - (ay / al) * 0.6
-        goldStamp(buf, subject, fx, fy, 1, POND.goldDark)
-        blend(buf, fx, fy, POND.goldLight, 0.8)
-      }
+  const [body, all] = flight > 0 ? poseLeap(flight, m.tMs) : [0, 0]
+  if (all > 0) {
+    let x0 = SCENE_W
+    let x1 = 0
+    let y0 = SCENE_H
+    let y1 = 0
+    for (let i = 0; i < all; i++) {
+      const r = Math.max(capRa[i], capRb[i]) + 1
+      x0 = Math.min(x0, capAx[i] - r, capBx[i] - r)
+      x1 = Math.max(x1, capAx[i] + r, capBx[i] + r)
+      y0 = Math.min(y0, capAy[i] - r, capBy[i] - r)
+      y1 = Math.max(y1, capAy[i] + r, capBy[i] + r)
     }
-    for (let j = joints - 1; j >= 0; j--) {
-      const p = flight - j * LEAP_STEP
-      if (p <= 0 || p >= 1) continue
-      goldStamp(buf, subject, leapX(p), leapY(p), LEAP_RADII[j], POND.goldDark)
-    }
-    for (let j = joints - 1; j >= 0; j--) {
-      const p = flight - j * LEAP_STEP
-      if (p <= 0 || p >= 1) continue
-      const x = leapX(p)
-      const y = leapY(p)
-      goldStamp(buf, subject, x, y - 0.5, LEAP_RADII[j] - 0.6, POND.gold)
-      if (j === 1 || j === 2) {
-        blend(buf, x, y - 1, POND.goldLight, 1)
-        blend(buf, x - 1, y - 1, POND.goldLight, 0.7)
+    const left = Math.max(0, Math.floor(x0))
+    const right = Math.min(SCENE_W - 1, Math.ceil(x1))
+    const top = Math.max(0, Math.floor(y0))
+    const bottom = Math.min(SCENE_H - 1, Math.ceil(y1))
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left; x <= right; x++) {
+        if (subject.data[y * SCENE_W + x]) continue
+        if (all > body) {
+          const fin = capField(x, y, body, all)
+          blend(buf, x, y, POND.goldDark, clamp01(0.5 - fin))
+          blend(buf, x, y, POND.goldLight, clamp01(0.1 - fin))
+        }
+        if (body === 0) continue
+        const edge = capField(x, y, 0, body)
+        if (edge >= 0.5) continue
+        const i = FIELD.cap
+        const above = capAy[i] + (capBy[i] - capAy[i]) * FIELD.along - y
+        const joint = leapCapJoint[i]
+        blend(buf, x, y, POND.goldDark, clamp01(0.5 - edge))
+        blend(
+          buf,
+          x,
+          y,
+          above < -0.6 ? mix(POND.gold, POND.goldDark, 0.3) : POND.gold,
+          clamp01(-0.2 - edge)
+        )
+        if (above > 0.4 && joint >= 1 && joint <= 3)
+          blend(buf, x, y, POND.goldLight, clamp01(-0.7 - edge))
       }
     }
     if (flight < 1) {
-      const up = leapY(flight + 0.02) < leapY(flight) ? -1 : 1
-      blend(buf, leapX(flight) + 1, leapY(flight) + up * 0.4, POND.eye, 1)
+      const slope = leapSlope(flight)
+      const tl = Math.hypot(LEAP_TO[0] - LEAP_FROM[0], slope)
+      const ex = jointX[0] + ((LEAP_TO[0] - LEAP_FROM[0]) / tl) * 0.5
+      const ey = jointY[0] + (slope / tl) * 0.5 - 0.6
+      if (!subject.data[Math.round(ey) * SCENE_W + Math.round(ex)])
+        blend(buf, ex, ey, POND.eye, 1)
     }
   }
   for (const [at, from, count] of [

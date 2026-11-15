@@ -6648,14 +6648,14 @@
       "today": "Daily",
       "todayDescription": "Check off each day you read.",
       "kind": {
-        "canonical": "Bible in a year",
+        "canonical": "Whole Bible",
         "chronological": "In order of events",
         "custom": "My own plan"
       },
       "description": {
-        "canonical": "Genesis to Revelation in 365 days.",
-        "chronological": "The whole Bible in 365 days, in about the order things happened.",
-        "custom": "Choose which books to read and how much each day."
+        "canonical": "Genesis to Revelation, in a year or at your own pace.",
+        "chronological": "The whole Bible in about the order things happened.",
+        "custom": "Choose which books to read."
       },
       "chronologicalInfo": "Books and chapters are placed in approximate order. Some, like most Psalms, are read together.",
       "startBook": "From",
@@ -6666,6 +6666,7 @@
         "verses": "A few verses"
       },
       "chaptersLabel": "Each day",
+      "yearPace": "3–4 chapters",
       "chaptersPerDay": {
         "one": "{{count}} chapter",
         "other": "{{count}} chapters"

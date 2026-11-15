@@ -20,7 +20,7 @@ import {
   type RoutineHabit,
   type WorshipKind,
 } from '@/types/routine'
-import CustomPlanFields from '@/features/routine/components/CustomPlanFields'
+import PlanFields from '@/features/routine/components/PlanFields'
 import { toggledHabits } from '@/features/routine/components/HabitToggles'
 import {
   MidweekMeetingRow,
@@ -175,12 +175,12 @@ export default function RoutineSetupSheet({
           }}
         />
       ))
-      if (reading.kind === 'custom') {
-        const custom = reading
+      if (reading.kind !== 'today') {
+        const plan = reading
         rows.push((last) => (
-          <Fragment key='customPlan'>
-            <CustomPlanFields
-              choice={custom}
+          <Fragment key='planFields'>
+            <PlanFields
+              choice={plan}
               onChange={setReading}
               indented
               lastInSection={last}

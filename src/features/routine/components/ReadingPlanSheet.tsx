@@ -1,8 +1,10 @@
+import { Check as CheckIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { Alert, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import InfoPopover from '@/components/ui/InfoPopover'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import Sheet from '@/components/ui/Sheet'
@@ -12,7 +14,7 @@ import { localDayKey } from '@/lib/dayKeys'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import useRoutine from '@/stores/routine'
-import CustomPlanFields from '@/features/routine/components/CustomPlanFields'
+import PlanFields from '@/features/routine/components/PlanFields'
 import {
   applyPlanChoice,
   planName,
@@ -144,23 +146,32 @@ export default function ReadingPlanSheet({
               lastInSection={index === options.length - 1}
               onPress={() => setChoice(choiceFor(option.kind, choice))}
             >
-              {option.kind === 'chronological' ? (
-                <InfoPopover
-                  title={option.label}
-                  description={i18n.t('routine.plan.chronologicalInfo')}
-                  inline
-                />
-              ) : undefined}
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+              >
+                {option.kind === 'chronological' && (
+                  <InfoPopover
+                    title={option.label}
+                    description={i18n.t('routine.plan.chronologicalInfo')}
+                    inline
+                  />
+                )}
+                <View style={{ width: 20, alignItems: 'center' }}>
+                  {choice.kind === option.kind && (
+                    <LucideIcon
+                      icon={CheckIcon}
+                      size={20}
+                      color={theme.colors.accent}
+                    />
+                  )}
+                </View>
+              </View>
             </InputRowButton>
           ))}
         </Section>
-        {choice.kind === 'custom' && (
+        {choice.kind !== 'today' && (
           <Section>
-            <CustomPlanFields
-              choice={choice}
-              onChange={setChoice}
-              lastInSection
-            />
+            <PlanFields choice={choice} onChange={setChoice} lastInSection />
           </Section>
         )}
         <ActionButton onPress={confirm} testID='routine-plan-apply'>

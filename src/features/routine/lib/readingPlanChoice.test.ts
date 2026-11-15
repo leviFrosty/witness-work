@@ -59,6 +59,33 @@ describe('reading plan choice', () => {
     expect(resumableRun(runs, choice({ unit: 'verses', count: 4 }))).toBeNull()
   })
 
+  it('tells a whole-Bible plan in a year from one at a chosen amount', () => {
+    const runs = [
+      run({ id: 'year' }),
+      run({ id: 'verses', versesPerDay: 5, startedOn: '2025-01-01' }),
+    ]
+    expect(resumableRun(runs, { kind: 'canonical' })?.id).toBe('year')
+    expect(
+      resumableRun(runs, {
+        kind: 'canonical',
+        amount: { unit: 'verses', count: 5 },
+      })?.id
+    ).toBe('verses')
+    expect(
+      resumableRun(runs, {
+        kind: 'canonical',
+        amount: { unit: 'chapters', count: 3 },
+      })
+    ).toBeNull()
+    expect(choiceOf(run({ kind: 'chronological', chaptersPerDay: 2 }))).toEqual(
+      { kind: 'chronological', amount: { unit: 'chapters', count: 2 } }
+    )
+    expect(choiceOf(run({}))).toEqual({ kind: 'canonical' })
+    expect(
+      choiceDays({ kind: 'canonical', amount: { unit: 'chapters', count: 10 } })
+    ).toBe(119)
+  })
+
   it('reads a run back as a choice and counts its days', () => {
     expect(choiceOf(null)).toEqual({ kind: 'today' })
     expect(

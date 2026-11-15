@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { crop, hashBuffer } from '@/lib/pixelArt'
+import {
+  createBuffer,
+  crop,
+  hashBuffer,
+  isOpaque,
+  opaqueBounds,
+  type PixelBuffer,
+} from '@/lib/pixelArt'
 import { itemReactions } from '@/features/pet/lib/itemReactions'
 import { ROOM_THUMB_VIEWS } from '@/features/pet/lib/roomOptions'
 import { RARE_ROOM_ITEMS, UNCOMMON_ROOM_ITEMS } from '@/types/pet'
@@ -12,6 +19,7 @@ import {
   type ResolvedRoom,
   type SceneInput,
 } from '.'
+import { paintRocker, STUDY_FLOOR_Y } from './room/study'
 
 type LivePart = 'wallPattern' | 'floor' | 'bed' | 'shelf' | 'lamp' | 'study'
 
@@ -121,5 +129,73 @@ describe('uncommon and rare room items', () => {
     expect(drawn(part, option, 1700, over)).toBe(
       drawn(part, option, 1700, over)
     )
+  })
+})
+
+describe('rocking chair', () => {
+  const chair = (tilt: number) => {
+    const buf = createBuffer(96, 96)
+    paintRocker(buf, tilt)
+    return buf
+  }
+  const rows = (buf: PixelBuffer, y: number) => {
+    const xs: number[] = []
+    for (let x = 0; x < buf.width; x++) if (isOpaque(buf, x, y)) xs.push(x)
+    return xs
+  }
+  const middle = (xs: readonly number[]) => (xs[0] + xs[xs.length - 1]) / 2
+  const TILTS = Array.from({ length: 41 }, (_, i) => (i - 20) * 0.005)
+
+  it('keeps its runners on the floor at every tilt', () => {
+    for (const tilt of TILTS) {
+      const [, top, , height] = opaqueBounds(chair(tilt))!
+      expect(top + height).toBe(STUDY_FLOOR_Y)
+    }
+  })
+
+  it('rolls the way it tips, back and runners together', () => {
+    const at = (tilt: number) => {
+      const buf = chair(tilt)
+      const [, top] = opaqueBounds(buf)!
+      return {
+        back: middle(rows(buf, top)),
+        foot: middle(rows(buf, STUDY_FLOOR_Y - 1)),
+      }
+    }
+    const rest = at(0)
+    const forward = at(0.1)
+    const backward = at(-0.1)
+    expect(forward.foot).toBeGreaterThan(rest.foot)
+    expect(forward.back).toBeGreaterThan(rest.back)
+    expect(backward.foot).toBeLessThan(rest.foot)
+    expect(backward.back).toBeLessThan(rest.back)
+  })
+
+  it('has the same number of pixels however far it tips', () => {
+    const count = (buf: PixelBuffer) => {
+      let n = 0
+      for (let y = 0; y < buf.height; y++) n += rows(buf, y).length
+      return n
+    }
+    const rest = count(chair(0))
+    for (const tilt of TILTS)
+      expect(Math.abs(count(chair(tilt)) - rest)).toBeLessThan(rest * 0.05)
+  })
+
+  it('passes through many poses in one rock', () => {
+    const poses = new Set(
+      Array.from({ length: 14 }, (_, i) =>
+        hashBuffer(
+          crop(
+            composeScene(
+              input('study', 'rocker', { lampLevel: 0, pet: null }),
+              1400 + i * 100
+            ),
+            ROOM_THUMB_VIEWS.study
+          )
+        )
+      )
+    )
+    expect(poses.size).toBeGreaterThanOrEqual(8)
   })
 })

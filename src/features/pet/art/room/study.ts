@@ -374,67 +374,106 @@ const ITEMS: Readonly<
   },
 }
 
-const ROCKER_REACH = 28
+const ROCKER_FOOT_X = 35
+const ROCKER_FOOT_Y = STUDY_FLOOR_Y - 1
+const ROCKER_CURVE = 44
 
-export function paintRocker(buf: PixelBuffer, lean: number): void {
-  const put = (x: number, y: number, c: Rgb) =>
-    dot(buf, x + Math.round((lean * (STUDY_FLOOR_Y - y)) / ROCKER_REACH), y, c)
-  const row = (x0: number, x1: number, y: number, c: Rgb) => {
-    for (let x = x0; x < x1; x++) put(x, y, c)
+const nearest = (v: number): number => (v < 0 ? -Math.round(-v) : Math.round(v))
+
+export function paintRocker(buf: PixelBuffer, tilt: number): void {
+  const turn = Math.tan(tilt)
+  const slide = (y: number) => -nearest(turn * (y - ROCKER_FOOT_Y))
+  const drop = (sx: number) => nearest(turn * sx)
+  const dropAt = (x: number, y: number) => drop(x - ROCKER_FOOT_X + slide(y))
+  const at = (sx: number, sy: number, c: Rgb) =>
+    dot(buf, ROCKER_FOOT_X + sx, ROCKER_FOOT_Y + sy, c)
+  const upright = (x: number, y: number, by: number, c: Rgb) =>
+    at(x - ROCKER_FOOT_X + slide(y), y - ROCKER_FOOT_Y + by, c)
+  const level = (x0: number, x1: number, y: number, top: number, c: Rgb) => {
+    for (let x = x0; x < x1; x++) {
+      const sx = x - ROCKER_FOOT_X + slide(top)
+      const inner = Math.min(Math.max(x, x0 + 1), x1 - 2)
+      at(sx, y - ROCKER_FOOT_Y + drop(inner - ROCKER_FOOT_X + slide(top)), c)
+    }
   }
-  const contact = 35 + lean * 2
-  const runner = (x: number) =>
-    STUDY_FLOOR_Y - 1 - Math.round(((x - contact) * (x - contact)) / 44)
-  for (let x = 22; x <= 48; x++) {
-    dot(buf, x, runner(x), C.shelfBack)
-    dot(buf, x, runner(x) - 1, C.woodDark)
-  }
+
+  const touch = (ROCKER_CURVE / 2) * tilt
+  const runner = (sx: number) =>
+    -Math.round(((sx - touch) * (sx - touch)) / ROCKER_CURVE)
   for (const x of [28, 41]) {
-    for (let y = 65; y < runner(x) - 1; y++) {
-      put(x, y, C.woodDark)
-      put(x + 1, y, C.shelfBack)
+    const by = dropAt(x, 68)
+    for (let y = 64; y <= STUDY_FLOOR_Y; y++) {
+      for (const [dx, c] of [
+        [0, C.woodDark],
+        [1, C.shelfBack],
+      ] as const) {
+        const sx = x + dx - ROCKER_FOOT_X + slide(y)
+        const sy = y - ROCKER_FOOT_Y + by
+        if (sy < runner(sx) - 1) at(sx, sy, c)
+      }
     }
   }
-  row(30, 41, 68, C.shelfBack)
-  const post = (y: number) => 23 + Math.round(((y - 49) * 3) / 14)
-  for (let y = 51; y < 63; y++) {
-    const x = post(y)
-    put(x + 6, y, C.shelfBack)
-    put(x + 7, y, C.woodDark)
+  const heel = 22 - ROCKER_FOOT_X + slide(70)
+  for (let sx = heel; sx <= heel + 26; sx++) {
+    at(sx, runner(sx), C.shelfBack)
+    at(sx, runner(sx) - 1, C.woodDark)
+  }
+
+  const back = dropAt(27, 56)
+  const backX = (y: number) => 23 + Math.round(((y - 49) * 3) / 14)
+  for (let y = 51; y < 64; y++) {
+    const x = backX(y)
+    upright(x + 6, y, back, C.shelfBack)
+    upright(x + 7, y, back, C.woodDark)
     if (y < 61) {
-      put(x + 2, y, C.wood)
-      put(x + 4, y, C.wood)
+      upright(x + 2, y, back, C.wood)
+      upright(x + 4, y, back, C.wood)
     }
-    put(x, y, C.woodDark)
-    put(x + 1, y, C.wood)
+    upright(x, y, back, C.woodDark)
+    upright(x + 1, y, back, C.wood)
   }
-  row(post(49), post(49) + 8, 49, C.wood)
-  row(post(50), post(50) + 8, 50, C.woodDark)
-  row(post(61) + 2, post(61) + 6, 61, C.woodDark)
-  row(26, 45, 63, C.wood)
-  row(26, 45, 64, C.shelfBack)
-  row(27, 45, 57, C.wood)
-  row(27, 44, 58, C.shelfBack)
-  for (let y = 59; y < 63; y++) {
-    put(42, y, C.woodDark)
-    put(43, y, C.shelfBack)
+  for (let x = backX(49); x < backX(49) + 8; x++) {
+    at(x - ROCKER_FOOT_X + slide(49), 49 - ROCKER_FOOT_Y + back, C.wood)
+    at(x - ROCKER_FOOT_X + slide(49), 50 - ROCKER_FOOT_Y + back, C.woodDark)
   }
+  for (let x = backX(61) + 2; x < backX(61) + 6; x++)
+    upright(x, 61, back, C.woodDark)
+
+  const arm = dropAt(42, 60)
+  upright(42, 58, arm, C.woodDark)
+  for (let y = 59; y < 64; y++) {
+    upright(42, y, arm, C.woodDark)
+    upright(43, y, arm, C.shelfBack)
+  }
+  level(30, 41, 68, 68, C.shelfBack)
+  level(26, 45, 63, 63, C.wood)
+  level(26, 45, 64, 63, C.shelfBack)
+  level(27, 45, 57, 57, C.wood)
+  level(27, 44, 58, 57, C.shelfBack)
+
   for (let y = 48; y < 57; y++) {
-    const x0 = post(Math.max(49, y)) - 2
+    const x0 = backX(Math.max(49, y)) - 2
     const x1 = x0 + (y < 54 ? 6 : 4)
     for (let x = x0; x < x1; x++) {
       let c = C.plaid
       if (y === 48 || y === 51 || y === 54) c = C.plaidLine
       else if ((x - x0) % 3 === 1) c = C.plaidDark
-      put(x, y, c)
+      upright(x, y, back, c)
     }
   }
-  for (let x = post(57) - 2; x < post(57) + 2; x += 2) put(x, 57, C.plaidLine)
-  row(31, 41, 62, C.cover)
-  for (let y = 59; y < 62; y++) row(32, 40, y, C.paper)
-  for (let y = 59; y < 62; y++) put(36, y, C.paperShade)
-  for (const x of [33, 34, 38]) put(x, 60, C.ink)
-  put(36, 62, C.ribbon)
+  for (let x = backX(57) - 2; x < backX(57) + 2; x += 2)
+    upright(x, 57, back, C.plaidLine)
+
+  const bookX = slide(63) - ROCKER_FOOT_X
+  const bookY = Math.max(drop(31 + bookX), drop(40 + bookX)) - ROCKER_FOOT_Y
+  const book = (x: number, y: number, c: Rgb) => at(x + bookX, y + bookY, c)
+  for (let x = 31; x < 41; x++) book(x, 62, C.cover)
+  for (let y = 59; y < 62; y++) {
+    for (let x = 32; x < 40; x++) book(x, y, C.paper)
+    book(36, y, C.paperShade)
+  }
+  for (const x of [33, 34, 38]) book(x, 60, C.ink)
+  book(36, 62, C.ribbon)
 }
 
 const TYPED = ['## ### ', '### # #', '# ## ##', '## # ##'] as const

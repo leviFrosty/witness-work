@@ -31,10 +31,21 @@ const FX = rgbPalette({
   glass: '#8fe6b0',
 })
 
-const ROCK_MS = 2800
+const ROCK_MS = 1400
+const ROCK_TILT = 0.12
+const ROCK_PUSH_EVERY = 6
+const ROCK_SETTLED = 0.45
+const ROCK_LOSS = -Math.log(ROCK_SETTLED) / (ROCK_PUSH_EVERY - 1)
 
-const rockerLean = (tMs: number): number =>
-  Math.round(2 * Math.sin((tMs / ROCK_MS) * 2 * Math.PI))
+function rockerTilt(tMs: number): number {
+  const rocks = Math.max(0, tMs) / ROCK_MS
+  const since = rocks % ROCK_PUSH_EVERY
+  const swing =
+    since < 1
+      ? ROCK_SETTLED + (1 - ROCK_SETTLED) * since * since * (3 - 2 * since)
+      : Math.exp(-(since - 1) * ROCK_LOSS)
+  return ROCK_TILT * swing * Math.sin(rocks * 2 * Math.PI)
+}
 
 const TYPE_STEP_MS = 200
 const TYPE_STEPS = 7
@@ -227,7 +238,7 @@ function fortFx(buf: PixelBuffer, m: RoomMoment, subject: PixelMask): void {
 export const STUDY_LIVE: RoomLiveSet<StudyId> = {
   rocker: {
     back(buf, m) {
-      paintRocker(buf, rockerLean(m.tMs))
+      paintRocker(buf, rockerTilt(m.tMs))
     },
   },
   typewriter: {

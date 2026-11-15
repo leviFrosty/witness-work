@@ -1,5 +1,6 @@
 import {
   Building as BuildingIcon,
+  MapPin as MapPinIcon,
   Navigation as NavigationIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -10,11 +11,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
+  useReducedMotion,
   withTiming,
   withDelay,
   withSequence,
   withSpring,
   cancelAnimation,
+  type SharedValue,
 } from 'react-native-reanimated'
 import { scheduleOnUI } from 'react-native-worklets'
 import Svg, { Rect, Path, Circle } from 'react-native-svg'
@@ -24,11 +27,14 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import type { DefaultNavigationMapProvider } from '@/stores/preferences'
 import { tracking } from '@/lib/tracking'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import AppIconImage, { mapAppIconSource } from '@/components/AppIconImage'
 import {
   fitAspectRatio,
   type Size,
 } from '@/features/onboarding/lib/fitAspectRatio'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+
+const WITNESSWORK_ICON = require('@/assets/icon.png')
 
 type ProviderKey = 'apple' | 'google' | 'waze'
 
@@ -48,10 +54,12 @@ interface MapTheme {
   routeOutlineWidth: number
   chromeBg: string
   chromeFg: string
+  chromeFgAlt: string
+  chromeBorder: string
   startBg: string
   startFg: string
   destShape: 'circle' | 'teardrop' | 'speech'
-  wordmarkKey: Extract<TranslationKey, 'appleMaps' | 'googleMaps' | 'waze'>
+  nameKey: Extract<TranslationKey, 'appleMaps' | 'googleMaps' | 'waze'>
   wordmarkLetterSpacing: number
 }
 
@@ -65,12 +73,14 @@ const PROVIDER_THEMES: Record<ProviderKey, MapTheme> = {
     routeWidth: 5,
     routeOutline: null,
     routeOutlineWidth: 0,
-    chromeBg: 'rgba(247,247,250,0.95)',
+    chromeBg: 'rgba(247,247,250,0.97)',
     chromeFg: '#1C1C1E',
+    chromeFgAlt: '#6C6C70',
+    chromeBorder: 'rgba(0,0,0,0.08)',
     startBg: '#0A84FF',
     startFg: '#FFFFFF',
     destShape: 'circle',
-    wordmarkKey: 'appleMaps',
+    nameKey: 'appleMaps',
     wordmarkLetterSpacing: -0.4,
   },
   google: {
@@ -86,10 +96,12 @@ const PROVIDER_THEMES: Record<ProviderKey, MapTheme> = {
     routeOutlineWidth: 9,
     chromeBg: '#FFFFFF',
     chromeFg: '#202124',
+    chromeFgAlt: '#5F6368',
+    chromeBorder: 'rgba(0,0,0,0.08)',
     startBg: '#1A73E8',
     startFg: '#FFFFFF',
     destShape: 'teardrop',
-    wordmarkKey: 'googleMaps',
+    nameKey: 'googleMaps',
     wordmarkLetterSpacing: 0,
   },
   waze: {
@@ -102,21 +114,23 @@ const PROVIDER_THEMES: Record<ProviderKey, MapTheme> = {
     routeWidth: 7,
     routeOutline: '#0E1442',
     routeOutlineWidth: 11,
-    chromeBg: '#5D5FEF',
-    chromeFg: '#FFFFFF',
-    startBg: '#FFD93D',
-    startFg: '#1E2150',
+    chromeBg: '#FFFFFF',
+    chromeFg: '#1E2150',
+    chromeFgAlt: '#5B5F8A',
+    chromeBorder: 'rgba(30,33,80,0.12)',
+    startBg: '#33CCFF',
+    startFg: '#0E1442',
     destShape: 'speech',
-    wordmarkKey: 'waze',
+    nameKey: 'waze',
     wordmarkLetterSpacing: 0.4,
   },
 }
 
 const ROAD_THICKNESS = 7
-const ROADS_H = [44, 124, 210]
+const ROADS_H = [76, 140, 196]
 const ROADS_V = [60, 160, 252]
-const PARK = { x: 175, y: 8, width: 60, height: 28 }
-const WATER = { x: 0, y: 252, width: 130, height: 28 }
+const PARK = { x: 172, y: 154, width: 64, height: 30 }
+const WATER = { x: 0, y: 152, width: 48, height: 34 }
 
 const ORIGIN = { x: ROADS_V[0], y: ROADS_H[0] }
 const DEST = { x: ROADS_V[2], y: ROADS_H[2] }
@@ -130,6 +144,19 @@ const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 const PIN_HALF = 12
 const HALL_LABEL_WIDTH = 76
+const LAUNCH_ICON_SIZE = 64
+const CARD_RADIUS = inputLayout.sectionRadius
+
+const T = {
+  contactIn: 0,
+  press: 750,
+  iconIn: 950,
+  launch: 1450,
+  mapIn: 1550,
+  route: 1850,
+  dest: 2450,
+  eta: 2600,
+}
 
 interface Props {
   provider: DefaultNavigationMapProvider
@@ -147,7 +174,7 @@ const NavMapPreview = ({ provider }: Props) => {
       accessible
       accessibilityRole='image'
       accessibilityLabel={i18n.t('defaultNavPreview_accessibilityLabel', {
-        app: i18n.t(PROVIDER_THEMES[key].wordmarkKey),
+        app: i18n.t(PROVIDER_THEMES[key].nameKey),
       })}
     >
       <View
@@ -162,92 +189,126 @@ const NavMapPreview = ({ provider }: Props) => {
   )
 }
 
+const cancelAll = (values: SharedValue<number>[]) => {
+  'worklet'
+  values.forEach((v) => cancelAnimation(v))
+}
+
 const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
   const theme = useTheme()
+  const reduceMotion = useReducedMotion()
   const key: ProviderKey = (provider ?? 'apple') as ProviderKey
   const mt = PROVIDER_THEMES[key]
+  const appName = i18n.t(mt.nameKey)
 
-  const originPin = useSharedValue(1)
-  const hallLabel = useSharedValue(1)
+  const handoff = useSharedValue(0)
   const contactCard = useSharedValue(1)
-  const startPress = useSharedValue(0)
-  const destPin = useSharedValue(1)
+  const directionsPress = useSharedValue(0)
+  const launchIcon = useSharedValue(0)
+  const launchZoom = useSharedValue(0)
+  const mapChrome = useSharedValue(1)
+  const originPin = useSharedValue(1)
   const routeProgress = useSharedValue(1)
+  const destPin = useSharedValue(1)
   const eta = useSharedValue(1)
-  const chromeOpacity = useSharedValue(1)
 
   useEffect(() => {
+    const values = [
+      handoff,
+      contactCard,
+      directionsPress,
+      launchIcon,
+      launchZoom,
+      mapChrome,
+      originPin,
+      routeProgress,
+      destPin,
+      eta,
+    ]
     scheduleOnUI(() => {
       'worklet'
-      cancelAnimation(originPin)
-      cancelAnimation(hallLabel)
-      cancelAnimation(contactCard)
-      cancelAnimation(startPress)
-      cancelAnimation(destPin)
-      cancelAnimation(routeProgress)
-      cancelAnimation(eta)
-      cancelAnimation(chromeOpacity)
+      cancelAll(values)
 
-      chromeOpacity.value = 0
-      originPin.value = 0
-      hallLabel.value = 0
+      if (reduceMotion) {
+        handoff.value = 0
+        launchIcon.value = 0
+        launchZoom.value = 0
+        mapChrome.value = 1
+        originPin.value = 1
+        routeProgress.value = 1
+        destPin.value = 1
+        eta.value = 1
+        return
+      }
+
+      handoff.value = 1
       contactCard.value = 0
-      startPress.value = 0
-      destPin.value = 0
+      directionsPress.value = 0
+      launchIcon.value = 0
+      launchZoom.value = 0
+      mapChrome.value = 0
+      originPin.value = 0
       routeProgress.value = 0
+      destPin.value = 0
       eta.value = 0
 
-      chromeOpacity.value = withTiming(1, {
-        duration: 240,
-        easing: Easing.out(Easing.cubic),
-      })
-      originPin.value = withDelay(
-        120,
-        withSpring(1, { damping: 14, stiffness: 200 })
-      )
-      hallLabel.value = withDelay(220, withTiming(1, { duration: 320 }))
+      const out = Easing.out(Easing.cubic)
       contactCard.value = withDelay(
-        380,
-        withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) })
+        T.contactIn,
+        withTiming(1, { duration: 380, easing: out })
       )
-      startPress.value = withDelay(
-        900,
+      directionsPress.value = withDelay(
+        T.press,
         withSequence(
           withTiming(1, { duration: 110 }),
-          withTiming(0, { duration: 220 })
+          withTiming(0, { duration: 200 })
         )
       )
-      destPin.value = withDelay(
-        1100,
-        withSpring(1, { damping: 12, stiffness: 220 })
+      launchIcon.value = withDelay(
+        T.iconIn,
+        withSpring(1, { damping: 13, stiffness: 210 })
+      )
+      launchZoom.value = withDelay(
+        T.launch,
+        withTiming(1, { duration: 420, easing: Easing.in(Easing.cubic) })
+      )
+      handoff.value = withDelay(
+        T.launch + 120,
+        withTiming(0, { duration: 360, easing: out })
+      )
+      mapChrome.value = withDelay(
+        T.mapIn,
+        withTiming(1, { duration: 360, easing: out })
+      )
+      originPin.value = withDelay(
+        T.mapIn + 120,
+        withSpring(1, { damping: 14, stiffness: 200 })
       )
       routeProgress.value = withDelay(
-        1180,
-        withTiming(1, { duration: 720, easing: Easing.out(Easing.cubic) })
+        T.route,
+        withTiming(1, { duration: 720, easing: out })
       )
-      eta.value = withDelay(1700, withTiming(1, { duration: 320 }))
+      destPin.value = withDelay(
+        T.dest,
+        withSpring(1, { damping: 12, stiffness: 220 })
+      )
+      eta.value = withDelay(T.eta, withTiming(1, { duration: 320 }))
     })
 
-    return () => {
-      cancelAnimation(originPin)
-      cancelAnimation(hallLabel)
-      cancelAnimation(contactCard)
-      cancelAnimation(startPress)
-      cancelAnimation(destPin)
-      cancelAnimation(routeProgress)
-      cancelAnimation(eta)
-      cancelAnimation(chromeOpacity)
-    }
+    return () => cancelAll(values)
   }, [
     key,
-    originPin,
-    hallLabel,
+    reduceMotion,
+    handoff,
     contactCard,
-    startPress,
-    destPin,
+    directionsPress,
+    launchIcon,
+    launchZoom,
+    mapChrome,
+    originPin,
     routeProgress,
+    destPin,
     eta,
-    chromeOpacity,
   ])
 
   const routeAnimatedProps = useAnimatedProps(() => ({
@@ -257,23 +318,41 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
     strokeDashoffset: ROUTE_LENGTH * (1 - routeProgress.value),
   }))
 
+  const mapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + (1 - mapChrome.value) * 0.06 }],
+  }))
+  const handoffStyle = useAnimatedStyle(() => ({
+    opacity: handoff.value,
+  }))
+  const contactStyle = useAnimatedStyle(() => ({
+    opacity: contactCard.value * (1 - launchIcon.value * 0.65),
+    transform: [
+      { translateY: (1 - contactCard.value) * 18 },
+      { scale: 1 - launchIcon.value * 0.04 },
+    ],
+  }))
+  const directionsStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 - directionsPress.value * 0.06 }],
+  }))
+  const launchIconStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(launchIcon.value, 1) * (1 - launchZoom.value),
+    transform: [
+      { scale: 0.35 + launchIcon.value * 0.65 + launchZoom.value * 4 },
+    ],
+  }))
+  const chromeStyle = useAnimatedStyle(() => ({
+    opacity: mapChrome.value,
+  }))
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity: mapChrome.value,
+    transform: [{ translateY: (1 - mapChrome.value) * 16 }],
+  }))
   const originPinStyle = useAnimatedStyle(() => ({
     opacity: originPin.value,
     transform: [
       { scale: 0.4 + originPin.value * 0.6 },
       { translateY: (1 - originPin.value) * -8 },
     ],
-  }))
-  const hallLabelStyle = useAnimatedStyle(() => ({
-    opacity: hallLabel.value,
-    transform: [{ translateY: (1 - hallLabel.value) * -6 }],
-  }))
-  const contactStyle = useAnimatedStyle(() => ({
-    opacity: contactCard.value,
-    transform: [{ translateY: (1 - contactCard.value) * 16 }],
-  }))
-  const startPressStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 - startPress.value * 0.08 }],
   }))
   const destPinStyle = useAnimatedStyle(() => ({
     opacity: destPin.value,
@@ -285,9 +364,6 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
   const etaStyle = useAnimatedStyle(() => ({
     opacity: eta.value,
     transform: [{ scale: 0.85 + eta.value * 0.15 }],
-  }))
-  const chromeStyle = useAnimatedStyle(() => ({
-    opacity: chromeOpacity.value,
   }))
 
   const xPct = (x: number) => `${(x / SVG_WIDTH) * 100}%` as `${number}%`
@@ -302,259 +378,350 @@ const NavMapCard = ({ provider, size }: Props & { size: Size }) => {
           height: size.height,
           borderColor: theme.colors.border,
           shadowColor: theme.colors.shadow,
+          backgroundColor: mt.bg,
         },
       ]}
     >
-      <Svg
-        width='100%'
-        height='100%'
-        viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-        preserveAspectRatio='xMidYMid slice'
-      >
-        <Rect x={0} y={0} width={SVG_WIDTH} height={SVG_HEIGHT} fill={mt.bg} />
-
-        <Rect
-          x={PARK.x}
-          y={PARK.y}
-          width={PARK.width}
-          height={PARK.height}
-          rx={4}
-          fill={mt.park}
-        />
-        {mt.water && (
+      <Animated.View style={[StyleSheet.absoluteFill, mapStyle]}>
+        <Svg
+          width='100%'
+          height='100%'
+          viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+          preserveAspectRatio='xMidYMid slice'
+        >
           <Rect
-            x={WATER.x}
-            y={WATER.y}
-            width={WATER.width}
-            height={WATER.height}
-            fill={mt.water}
-          />
-        )}
-
-        {ROADS_V.map((x) => (
-          <Rect
-            key={`v-${x}`}
-            x={x - ROAD_THICKNESS / 2}
+            x={0}
             y={0}
-            width={ROAD_THICKNESS}
+            width={SVG_WIDTH}
             height={SVG_HEIGHT}
-            fill={mt.road}
+            fill={mt.bg}
           />
-        ))}
-        {ROADS_H.map((y, i) => {
-          const isPrimary = i === 1 && mt.primaryRoad
-          const thickness = isPrimary ? mt.primaryRoadWidth! : ROAD_THICKNESS
-          return (
-            <Rect
-              key={`h-${y}`}
-              x={0}
-              y={y - thickness / 2}
-              width={SVG_WIDTH}
-              height={thickness}
-              fill={isPrimary ? mt.primaryRoad! : mt.road}
-            />
-          )
-        })}
 
-        {mt.routeOutline && (
+          <Rect
+            x={PARK.x}
+            y={PARK.y}
+            width={PARK.width}
+            height={PARK.height}
+            rx={4}
+            fill={mt.park}
+          />
+          {mt.water && (
+            <Rect
+              x={WATER.x}
+              y={WATER.y}
+              width={WATER.width}
+              height={WATER.height}
+              fill={mt.water}
+            />
+          )}
+
+          {ROADS_V.map((x) => (
+            <Rect
+              key={`v-${x}`}
+              x={x - ROAD_THICKNESS / 2}
+              y={0}
+              width={ROAD_THICKNESS}
+              height={SVG_HEIGHT}
+              fill={mt.road}
+            />
+          ))}
+          {ROADS_H.map((y, i) => {
+            const isPrimary = i === 1 && mt.primaryRoad
+            const thickness = isPrimary ? mt.primaryRoadWidth! : ROAD_THICKNESS
+            return (
+              <Rect
+                key={`h-${y}`}
+                x={0}
+                y={y - thickness / 2}
+                width={SVG_WIDTH}
+                height={thickness}
+                fill={isPrimary ? mt.primaryRoad! : mt.road}
+              />
+            )
+          })}
+
+          {mt.routeOutline && (
+            <AnimatedPath
+              d={ROUTE_D}
+              stroke={mt.routeOutline}
+              strokeWidth={mt.routeOutlineWidth}
+              fill='none'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeDasharray={`${ROUTE_LENGTH} ${ROUTE_LENGTH}`}
+              animatedProps={routeOutlineAnimatedProps}
+            />
+          )}
           <AnimatedPath
             d={ROUTE_D}
-            stroke={mt.routeOutline}
-            strokeWidth={mt.routeOutlineWidth}
+            stroke={mt.routeColor}
+            strokeWidth={mt.routeWidth}
             fill='none'
             strokeLinecap='round'
             strokeLinejoin='round'
             strokeDasharray={`${ROUTE_LENGTH} ${ROUTE_LENGTH}`}
-            animatedProps={routeOutlineAnimatedProps}
+            animatedProps={routeAnimatedProps}
           />
-        )}
-        <AnimatedPath
-          d={ROUTE_D}
-          stroke={mt.routeColor}
-          strokeWidth={mt.routeWidth}
-          fill='none'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-          strokeDasharray={`${ROUTE_LENGTH} ${ROUTE_LENGTH}`}
-          animatedProps={routeAnimatedProps}
-        />
 
-        {key === 'waze' &&
-          [90, 145, 200].map((cx) => (
-            <Circle key={cx} cx={cx} cy={ROUTE_MID_Y} r={1.5} fill='#FFFFFF' />
-          ))}
-      </Svg>
+          {key === 'waze' &&
+            [90, 145, 200].map((cx) => (
+              <Circle
+                key={cx}
+                cx={cx}
+                cy={ROUTE_MID_Y}
+                r={1.5}
+                fill='#FFFFFF'
+              />
+            ))}
+        </Svg>
 
-      <View
-        style={[
-          styles.pinAnchor,
-          {
-            left: xPct(ORIGIN.x),
-            top: yPct(ORIGIN.y),
-            marginLeft: -PIN_HALF,
-            marginTop: -PIN_HALF,
-          },
-        ]}
-        pointerEvents='none'
-      >
-        <Animated.View style={originPinStyle}>
-          <View
-            style={[styles.originPin, { backgroundColor: theme.colors.text }]}
+        <View
+          style={[
+            styles.pinAnchor,
+            {
+              left: xPct(ORIGIN.x),
+              top: yPct(ORIGIN.y),
+              marginLeft: -PIN_HALF,
+              marginTop: -PIN_HALF,
+            },
+          ]}
+          pointerEvents='none'
+        >
+          <Animated.View style={originPinStyle}>
+            <View style={[styles.originPin, { backgroundColor: mt.chromeFg }]}>
+              <LucideIcon icon={BuildingIcon} size={11} color={mt.chromeBg} />
+            </View>
+          </Animated.View>
+        </View>
+
+        <View
+          style={[
+            styles.hallLabelAnchor,
+            {
+              left: xPct(ORIGIN.x),
+              top: yPct(ORIGIN.y),
+              marginLeft: PIN_HALF + 4,
+              marginTop: -10,
+            },
+          ]}
+          pointerEvents='none'
+        >
+          <Animated.View
+            style={[
+              styles.hallLabel,
+              { backgroundColor: mt.chromeBg, borderColor: mt.chromeBorder },
+              originPinStyle,
+            ]}
           >
-            <LucideIcon
-              icon={BuildingIcon}
-              size={11}
-              color={theme.colors.card}
-            />
-          </View>
-        </Animated.View>
-      </View>
+            <Text
+              style={{
+                fontSize: 10,
+                fontFamily: theme.fonts.semiBold,
+                color: mt.chromeFg,
+              }}
+              numberOfLines={1}
+            >
+              {i18n.t('defaultNavPreview_origin')}
+            </Text>
+          </Animated.View>
+        </View>
 
-      <View
-        style={[
-          styles.pinAnchor,
-          {
-            left: xPct(DEST.x),
-            top: yPct(DEST.y),
-            marginLeft: -PIN_HALF,
-            marginTop: -PIN_HALF,
-          },
-        ]}
-        pointerEvents='none'
-      >
-        <Animated.View style={destPinStyle}>
-          <DestinationPin shape={mt.destShape} color={mt.routeColor} />
-        </Animated.View>
-      </View>
+        <View
+          style={[
+            styles.pinAnchor,
+            {
+              left: xPct(DEST.x),
+              top: yPct(DEST.y),
+              marginLeft: -PIN_HALF,
+              marginTop: -PIN_HALF,
+            },
+          ]}
+          pointerEvents='none'
+        >
+          <Animated.View style={destPinStyle}>
+            <DestinationPin shape={mt.destShape} color={mt.routeColor} />
+          </Animated.View>
+        </View>
+      </Animated.View>
 
       <Animated.View
-        style={[styles.topBar, { backgroundColor: mt.chromeBg }, chromeStyle]}
+        style={[
+          styles.topBar,
+          { backgroundColor: mt.chromeBg, borderBottomColor: mt.chromeBorder },
+          chromeStyle,
+        ]}
         pointerEvents='none'
       >
+        <AppIconImage source={mapAppIconSource(key)} size={20} />
         <Text
           style={[
-            styles.wordmark,
+            styles.barTitle,
             {
               color: mt.chromeFg,
               letterSpacing: tracking(mt.wordmarkLetterSpacing),
               fontFamily: theme.fonts.bold,
             },
           ]}
+          numberOfLines={1}
         >
-          {i18n.t(mt.wordmarkKey)}
+          {appName}
         </Text>
       </Animated.View>
-
-      <View
-        style={[
-          styles.hallLabelAnchor,
-          {
-            left: xPct(ORIGIN.x),
-            top: yPct(ORIGIN.y - 22),
-            marginLeft: -HALL_LABEL_WIDTH / 2,
-          },
-        ]}
-        pointerEvents='none'
-      >
-        <Animated.View
-          style={[
-            styles.hallLabel,
-            {
-              backgroundColor: theme.colors.card,
-              borderColor: theme.colors.border,
-              shadowColor: theme.colors.shadow,
-            },
-            hallLabelStyle,
-          ]}
-        >
-          <Text
-            style={{
-              fontSize: 10,
-              fontFamily: theme.fonts.semiBold,
-              color: theme.colors.text,
-            }}
-            numberOfLines={1}
-          >
-            {i18n.t('defaultNavPreview_origin')}
-          </Text>
-        </Animated.View>
-      </View>
 
       <Animated.View
         style={[
           styles.bottomSheet,
           {
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-            shadowColor: theme.colors.shadow,
+            backgroundColor: mt.chromeBg,
+            borderColor: mt.chromeBorder,
           },
-          contactStyle,
+          sheetStyle,
         ]}
         pointerEvents='none'
       >
-        <View style={styles.contactRow}>
-          <View
-            style={[styles.contactAvatar, { backgroundColor: mt.routeColor }]}
-          >
-            <Text
-              style={{
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontFamily: theme.fonts.bold,
-              }}
-            >
-              {i18n.t('defaultNavPreview_contactName').slice(0, 1)}
-            </Text>
-          </View>
+        <View style={styles.sheetRow}>
           <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontFamily: theme.fonts.semiBold,
-                color: theme.colors.text,
-              }}
-              numberOfLines={1}
-            >
-              {i18n.t('defaultNavPreview_contactName')}
-              {' · '}
-              {i18n.t('defaultNavPreview_contactAddress')}
-            </Text>
-            <Text style={{ fontSize: 10, color: theme.colors.textAlt }}>
-              {i18n.t('defaultNavPreview_contactRole')}
-            </Text>
-          </View>
-          <Animated.View style={etaStyle}>
             <Text
               style={{
                 fontSize: 13,
                 fontFamily: theme.fonts.bold,
-                color: mt.routeColor,
+                color: mt.chromeFg,
+              }}
+              numberOfLines={1}
+            >
+              {i18n.t('defaultNavPreview_contactAddress')}
+            </Text>
+            <Animated.View style={etaStyle}>
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: theme.fonts.semiBold,
+                  color: mt.chromeFgAlt,
+                }}
+                numberOfLines={1}
+              >
+                {i18n.t('defaultNavPreview_eta')}
+              </Text>
+            </Animated.View>
+          </View>
+          <View style={[styles.startBtn, { backgroundColor: mt.startBg }]}>
+            <LucideIcon icon={NavigationIcon} size={12} color={mt.startFg} />
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: theme.fonts.bold,
+                color: mt.startFg,
               }}
             >
-              {i18n.t('defaultNavPreview_eta')}
+              {i18n.t('defaultNavPreview_start')}
             </Text>
-          </Animated.View>
+          </View>
         </View>
+      </Animated.View>
+
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          styles.handoff,
+          { backgroundColor: theme.colors.background },
+          handoffStyle,
+        ]}
+        pointerEvents='none'
+      >
+        <View style={styles.wwBar}>
+          <AppIconImage source={WITNESSWORK_ICON} size={20} />
+          <Text
+            style={[
+              styles.barTitle,
+              { color: theme.colors.text, fontFamily: theme.fonts.bold },
+            ]}
+            numberOfLines={1}
+          >
+            {i18n.t('witnessWork')}
+          </Text>
+        </View>
+
         <Animated.View
           style={[
-            styles.startBtn,
-            { backgroundColor: mt.startBg },
-            startPressStyle,
+            styles.contactCard,
+            { backgroundColor: theme.colors.card },
+            contactStyle,
           ]}
         >
-          <LucideIcon icon={NavigationIcon} size={11} color={mt.startFg} />
-          <Text
-            style={{
-              fontSize: 12,
-              fontFamily: theme.fonts.bold,
-              color: mt.startFg,
-              letterSpacing: tracking(0.4),
-            }}
+          <View style={styles.contactRow}>
+            <View
+              style={[
+                styles.contactAvatar,
+                { backgroundColor: theme.colors.accentTranslucent },
+              ]}
+            >
+              <Text
+                style={{
+                  color: theme.colors.accent,
+                  fontSize: 15,
+                  fontFamily: theme.fonts.bold,
+                }}
+              >
+                {i18n.t('defaultNavPreview_contactName').slice(0, 1)}
+              </Text>
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: theme.fonts.bold,
+                  color: theme.colors.text,
+                }}
+                numberOfLines={1}
+              >
+                {i18n.t('defaultNavPreview_contactName')}
+              </Text>
+              <View style={styles.addressRow}>
+                <LucideIcon
+                  icon={MapPinIcon}
+                  size={12}
+                  color={theme.colors.textAlt}
+                />
+                <Text
+                  style={{ fontSize: 12, color: theme.colors.textAlt }}
+                  numberOfLines={1}
+                >
+                  {i18n.t('defaultNavPreview_contactAddress')}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <Animated.View
+            style={[
+              styles.directionsBtn,
+              { backgroundColor: theme.colors.accent },
+              directionsStyle,
+            ]}
           >
-            {i18n.t('defaultNavPreview_start')}
-          </Text>
+            <AppIconImage source={mapAppIconSource(key)} size={22} />
+            <Text
+              style={{
+                fontSize: 13,
+                fontFamily: theme.fonts.bold,
+                color: theme.colors.textInverse,
+                flexShrink: 1,
+              }}
+              numberOfLines={1}
+            >
+              {i18n.t('defaultNavPreview_directionsIn', { app: appName })}
+            </Text>
+          </Animated.View>
         </Animated.View>
       </Animated.View>
+
+      <View style={styles.launchAnchor} pointerEvents='none'>
+        <Animated.View style={[styles.launchIcon, launchIconStyle]}>
+          <AppIconImage
+            source={mapAppIconSource(key)}
+            size={LAUNCH_ICON_SIZE}
+          />
+        </Animated.View>
+      </View>
     </View>
   )
 }
@@ -668,7 +835,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   container: {
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
+    borderCurve: 'continuous',
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
@@ -694,63 +862,117 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
-  wordmark: {
+  wwBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+  },
+  barTitle: {
     fontSize: 14,
+    flexShrink: 1,
   },
   hallLabelAnchor: {
     position: 'absolute',
-    width: HALL_LABEL_WIDTH,
-    alignItems: 'center',
+    maxWidth: HALL_LABEL_WIDTH * 1.5,
+    alignItems: 'flex-start',
   },
   hallLabel: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
   bottomSheet: {
     position: 'absolute',
-    bottom: 8,
-    left: 8,
-    right: 8,
-    borderRadius: 12,
+    bottom: 10,
+    left: 10,
+    right: 10,
+    borderRadius: CARD_RADIUS - 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
-    paddingHorizontal: 10,
+    paddingStart: 16,
+    paddingEnd: 8,
     paddingVertical: 8,
-    shadowOpacity: 0.18,
+    shadowColor: '#000',
+    shadowOpacity: 0.16,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  contactRow: {
+  sheetRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 7,
-  },
-  contactAvatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   startBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
-    paddingVertical: 7,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  handoff: {
+    justifyContent: 'space-between',
+  },
+  contactCard: {
+    margin: 10,
+    padding: 14,
+    gap: 12,
+    borderRadius: CARD_RADIUS - 10,
+    borderCurve: 'continuous',
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  contactAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  directionsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+  },
+  launchAnchor: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  launchIcon: {
+    borderRadius: LAUNCH_ICON_SIZE * 0.225,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
   },
 })
 

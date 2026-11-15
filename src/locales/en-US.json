@@ -3788,6 +3788,8 @@
     "fuelPrice": "Fuel Price",
     "fuelPriceWithUnit": "Fuel Price ({{unit}})",
     "fuelPrice_info": "What you pay for this fuel. A new price applies to every car that uses it, from the date you choose.",
+    "carFuelPrice_info": "What you pay for this fuel. Every car that uses it shares this price. To change it later, go to Mileage Settings, then Fuels.",
+    "premadeFuelPrice_description": "An average price for your region. Enter what you pay.",
     "fuelOnSharedCar": "Changes apply to everyone on {{car}}.",
     "pricePer_gallon": "Price per Gallon",
     "pricePer_litre": "Price per Litre",

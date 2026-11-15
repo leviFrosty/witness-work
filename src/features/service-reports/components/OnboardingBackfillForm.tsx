@@ -101,15 +101,14 @@ const CatchUpMonthRow = ({
     borderColor: theme.colors.border,
     color: theme.colors.text,
   }
-  const labelStyle = { color: theme.colors.textAlt, flex: 1 }
+  const labelStyle = { color: theme.colors.textAlt }
   const labelHitSlop = { top: 8, bottom: 8 }
 
   return (
     <View
       style={{
         backgroundColor: theme.colors.card,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        padding: 16,
         borderRadius: theme.numbers.borderRadiusMd,
         gap: 8,
       }}

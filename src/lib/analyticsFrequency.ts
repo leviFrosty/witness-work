@@ -18,6 +18,7 @@ const dailyEvents = new Set([
   'territory_sync_failed',
   'cloud_sync_photos_storage_full',
   'cloud_sync_photo_transfer_failed',
+  'photo_storage_upsell_shown',
 ])
 const weeklyEvents = new Set([
   'app_launch_timed',

@@ -2,6 +2,7 @@ import { Platform } from 'react-native'
 import * as FileSystem from 'expo-file-system/legacy'
 import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
+import { avatarPhotoEncoding, resizeToFit } from '@/lib/photoEncoding'
 import {
   avatarFileContactId,
   isInlineImage,
@@ -82,10 +83,13 @@ async function cropAvatarInBrowser(
   rect: CropRect
 ): Promise<{ path: string; width: number; height: number }> {
   const { renderJpeg, blobToDataUrl } = await import('@/lib/files/webImages')
+  const encoding = avatarPhotoEncoding()
   const { blob, width, height } = await renderJpeg(stripCacheBuster(srcUri), {
     crop: rect,
-    maxSide: WEB_AVATAR_MAX_SIDE,
-    quality: WEB_AVATAR_QUALITY,
+    maxSide: encoding.optimized
+      ? Math.min(WEB_AVATAR_MAX_SIDE, encoding.maxSide ?? WEB_AVATAR_MAX_SIDE)
+      : WEB_AVATAR_MAX_SIDE,
+    quality: encoding.optimized ? encoding.quality : WEB_AVATAR_QUALITY,
   })
   return { path: await blobToDataUrl(blob), width, height }
 }
@@ -113,10 +117,12 @@ export async function cropAndSaveImage(
     width: Math.max(1, Math.min(rect.width, source.width - rect.originX)),
     height: Math.max(1, Math.min(rect.height, source.height - rect.originY)),
   }
+  const { maxSide, quality } = avatarPhotoEncoding()
+  const resize = resizeToFit(safeRect, maxSide)
   const result = await ImageManipulator.manipulateAsync(
     stripCacheBuster(srcUri),
-    [{ crop: safeRect }],
-    { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+    [{ crop: safeRect }, ...(resize ? [{ resize }] : [])],
+    { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
   )
 
   try {

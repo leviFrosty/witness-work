@@ -251,8 +251,16 @@ export const parseIfMatch = (header: string | null): SyncIfMatch | undefined => 
 export const SYNC_PHOTO_LIMITS = {
   /** One photo: an original from a modern phone camera runs to ~10 MiB. */
   blobBytes: 25 * MIB,
-  /** Live photo blobs an account; `SYNC_PHOTO_LIMIT_BYTES` overrides it. */
-  storageBytes: 2_000_000_000,
+  /**
+   * Live photo blobs a free account (witness-work ADR 0062): about 1,000 note
+   * photos or 10,000 contact photos. `SYNC_PHOTO_LIMIT_BYTES` overrides it.
+   */
+  storageBytes: 200_000_000,
+  /**
+   * Live photo blobs a Supporter's account (ADR 0062), the Supporter benefit;
+   * `SYNC_PHOTO_SUPPORTER_LIMIT_BYTES` overrides it.
+   */
+  supporterStorageBytes: 5_000_000_000,
   /** Live photos an account: ~2,000 contacts' and notes' photos, 10 times over. */
   livePhotos: 20_000,
   /**
@@ -260,8 +268,11 @@ export const SYNC_PHOTO_LIMITS = {
    * the largest account fits; a runaway client stops here.
    */
   accountPutsPerDay: 20_000,
-  /** Bytes stored by puts an account a rolling day: twice the storage limit. */
-  accountPutBytesPerDay: 4 * 1_024 * MIB,
+  /**
+   * Bytes stored by puts an account a rolling day: twice the Supporter limit,
+   * so a Supporter's first sync fits in a day.
+   */
+  accountPutBytesPerDay: 10 * 1_024 * MIB,
   /** Gets an account a rolling day: a few devices each downloading every photo. */
   accountGetsPerDay: 50_000,
   /**
@@ -333,14 +344,33 @@ export const SYNC_PHOTO_HEADERS = {
   createdAt: 'x-ww-created-at',
 } as const
 
-/** The account's storage limit: `SYNC_PHOTO_LIMIT_BYTES` when it's a positive integer. */
-export const syncPhotoLimitBytes = (env: {
-  SYNC_PHOTO_LIMIT_BYTES?: string
-}): number => {
-  const value = Number(env.SYNC_PHOTO_LIMIT_BYTES?.trim() || NaN)
-  return Number.isSafeInteger(value) && value > 0
-    ? value
-    : SYNC_PHOTO_LIMITS.storageBytes
+const positiveInteger = (raw: string | undefined): number | null => {
+  const value = Number(raw?.trim() || NaN)
+  return Number.isSafeInteger(value) && value > 0 ? value : null
+}
+
+/**
+ * The account's photo storage limit (witness-work ADR 0062): the Supporter
+ * limit for a Supporter, else the free one. `SYNC_PHOTO_LIMIT_BYTES` and
+ * `SYNC_PHOTO_SUPPORTER_LIMIT_BYTES` override them when positive integers.
+ * The Supporter limit is never below the free one, so an override of the
+ * free limit alone can't make supporting shrink an account's room.
+ */
+export const syncPhotoLimitBytes = (
+  env: {
+    SYNC_PHOTO_LIMIT_BYTES?: string
+    SYNC_PHOTO_SUPPORTER_LIMIT_BYTES?: string
+  },
+  supporter: boolean
+): number => {
+  const free =
+    positiveInteger(env.SYNC_PHOTO_LIMIT_BYTES) ?? SYNC_PHOTO_LIMITS.storageBytes
+  if (!supporter) return free
+  return Math.max(
+    free,
+    positiveInteger(env.SYNC_PHOTO_SUPPORTER_LIMIT_BYTES) ??
+      SYNC_PHOTO_LIMITS.supporterStorageBytes
+  )
 }
 
 /** `usage` in every photo answer. */

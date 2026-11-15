@@ -121,6 +121,7 @@ export function GroupedList({
   children,
   title,
   header,
+  banner,
   testID,
 }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
@@ -169,6 +170,14 @@ export function GroupedList({
                 <View>{header}</View>
               </RNHostView>
             </Row>
+          ) : null}
+          {banner ? (
+            <RNHostView
+              matchContents={{ vertical: true }}
+              modifiers={[fillMaxWidth()]}
+            >
+              <View>{banner}</View>
+            </RNHostView>
           ) : null}
           {children}
         </LazyColumn>

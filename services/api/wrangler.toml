@@ -181,8 +181,8 @@ SPACES_GUESTS = "true"
 # environments don't inherit [vars], so it's set in each.
 WEB_APP_ORIGINS = "https://beta.app.witnesswork.app"
 # Cloud Sync photos' switch fallback when KV `sync:photos` is absent (on).
-# SYNC_PHOTO_LIMIT_BYTES (unset: 2,000,000,000) overrides the per-account photo
-# storage.
+# SYNC_PHOTO_LIMIT_BYTES (unset: 200,000,000) and SYNC_PHOTO_SUPPORTER_LIMIT_BYTES
+# (unset: 5,000,000,000) override the free and Supporter photo storage.
 SYNC_PHOTOS = "on"
 # Android (witness-work ADR 0017). Android has no Beta app, so nothing calls
 # these here; they mirror production in case a Play test build is pointed at
@@ -553,8 +553,9 @@ SPACES_GUESTS = "true"
 # [vars], so it's set in both.
 WEB_APP_ORIGINS = "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:4173,http://localhost:5173"
 # Cloud Sync photos' switch fallback when KV `sync:photos` is absent (on).
-# SYNC_PHOTO_LIMIT_BYTES (unset: 2,000,000,000) overrides the per-account photo
-# storage; the verify launcher passes it for a tiny limit locally.
+# SYNC_PHOTO_LIMIT_BYTES (unset: 200,000,000) and SYNC_PHOTO_SUPPORTER_LIMIT_BYTES
+# (unset: 5,000,000,000) override the free and Supporter photo storage; the
+# verify launcher passes the free one for a tiny limit locally.
 SYNC_PHOTOS = "on"
 # Android Notes Import (witness-work ADR 0017). Stays off until the package,
 # the Cloud project number, and the PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON secret

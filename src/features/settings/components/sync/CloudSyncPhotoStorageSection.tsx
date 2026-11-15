@@ -1,29 +1,37 @@
 import { View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { Image as ImageIcon } from 'lucide-react-native'
+import {
+  Image as ImageIcon,
+  Minimize2 as OptimizeIcon,
+} from 'lucide-react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import { inputLayout, RowSeparator } from '@/components/ui/inputs/InputLayout'
 import Text from '@/components/ui/MyText'
+import Switch from '@/components/ui/Switch'
 import useTheme from '@/contexts/theme'
 import PhotoStorageBar from '@/features/settings/components/sync/PhotoStorageBar'
 import useCloudSyncPhotoStorage from '@/features/settings/hooks/useCloudSyncPhotoStorage'
 import usePhotoStorageBreakdown from '@/features/settings/hooks/usePhotoStorageBreakdown'
+import { analytics } from '@/lib/analytics'
 import { alignText } from '@/lib/direction'
 import { formatBytes } from '@/lib/formatBytes'
 import i18n from '@/lib/locales'
 import type { RootStackNavigation } from '@/types/rootStack'
+import { usePreferences } from '@/stores/preferences'
 
 export default function CloudSyncPhotoStorageSection() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const { shown, usage, full } = useCloudSyncPhotoStorage()
+  const { shown, usage, full, almostFull } = useCloudSyncPhotoStorage()
   const { breakdown } = usePhotoStorageBreakdown(shown)
+  const optimize = usePreferences((state) => state.optimizePhotoStorage)
   if (!shown) return null
 
   const used = breakdown?.used ?? usage?.bytes ?? 0
   const limit = breakdown?.limit || usage?.limit || 0
+  const offerOptimize = almostFull || optimize
 
   return (
     <Section>
@@ -81,6 +89,28 @@ export default function CloudSyncPhotoStorageSection() {
           />
           <RowSeparator />
         </View>
+      )}
+      {offerOptimize && (
+        <InputRowContainer
+          leftIcon={OptimizeIcon}
+          label={i18n.t('optimizePhotoStorage')}
+          description={i18n.t('optimizePhotoStorage_description')}
+          info={i18n.t('optimizePhotoStorage_info')}
+          controlWidth='auto'
+        >
+          <Switch
+            testID='optimize-photo-storage'
+            accessibilityLabel={i18n.t('optimizePhotoStorage')}
+            value={optimize}
+            onValueChange={(enabled) => {
+              usePreferences.getState().set({ optimizePhotoStorage: enabled })
+              analytics.capture('optimize_photo_storage_changed', {
+                enabled,
+                full,
+              })
+            }}
+          />
+        </InputRowContainer>
       )}
       <InputRowButton
         label={i18n.t('photoStorage_manage')}

@@ -367,6 +367,10 @@ export const PREFERENCE_DEFAULTS = {
   monthlyRoutineHasShownInvalidMonthAlert: false,
   hideDonateHeart: false,
 
+  optimizePhotoStorage: false,
+
+  photoStorageUpsellDismissed: null as 'almost_full' | 'full' | null,
+
   supporterNudgeDismissedAt: null as number | null,
 
   hideSupporterNudge: false,

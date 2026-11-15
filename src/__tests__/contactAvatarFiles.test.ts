@@ -18,6 +18,14 @@ vi.mock('expo-image-manipulator', () => ({
 
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
+vi.mock('@/lib/photoEncoding', () => ({
+  avatarPhotoEncoding: () => ({
+    maxSide: null,
+    quality: 0.9,
+    optimized: false,
+  }),
+  resizeToFit: () => null,
+}))
 
 import {
   croppedAvatarFileName,

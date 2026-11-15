@@ -13,6 +13,11 @@ import WholeWordsText from '@/components/ui/WholeWordsText'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { formatNumber } from '@/lib/numbers'
+import { formatBytes } from '@/lib/formatBytes'
+import {
+  FREE_PHOTO_STORAGE_BYTES,
+  SUPPORTER_PHOTO_STORAGE_BYTES,
+} from '@/lib/syncTransport/server/photoUsage'
 import XView from '@/components/ui/layout/XView'
 import Card from '@/components/ui/Card'
 import { useAppStoreRatings } from '@/features/supporter/hooks/useAppStoreRatings'
@@ -24,10 +29,15 @@ const FEATURE_ROWS: ReadonlyArray<{
   androidLabelKey?: TranslationKey
   iosOnly?: boolean
 
-  free: boolean | TranslationKey
-  supporter: boolean | TranslationKey
+  free: boolean | TranslationKey | (() => string)
+  supporter: boolean | TranslationKey | (() => string)
 }> = [
   { labelKey: 'paywallFeatureRoutePlanning', free: false, supporter: true },
+  {
+    labelKey: 'paywallFeaturePhotoStorage',
+    free: () => formatBytes(FREE_PHOTO_STORAGE_BYTES),
+    supporter: () => formatBytes(SUPPORTER_PHOTO_STORAGE_BYTES),
+  },
   { labelKey: 'paywallFeatureAccent', free: false, supporter: true },
   {
     labelKey: 'paywallFeatureAppIcons',
@@ -45,8 +55,14 @@ const FEATURE_ROWS: ReadonlyArray<{
   },
 ]
 
-const resolveCell = (value: boolean | TranslationKey): boolean | string =>
-  typeof value === 'boolean' ? value : i18n.t(value)
+const resolveCell = (
+  value: boolean | TranslationKey | (() => string)
+): boolean | string =>
+  typeof value === 'boolean'
+    ? value
+    : typeof value === 'function'
+      ? value()
+      : i18n.t(value)
 
 const spokenCell = (value: boolean | string) =>
   typeof value === 'string'

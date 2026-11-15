@@ -1,9 +1,12 @@
 ---
 status: accepted
 supersedes: [0030]
+superseded-by: [0062]
 ---
 
 # Sync is free, and Cloud Sync carries photos
+
+> Partly superseded by ADR 0062: photo storage is 200 MB for free accounts and 5 GB for Supporters.
 
 ## Context
 

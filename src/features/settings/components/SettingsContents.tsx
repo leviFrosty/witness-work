@@ -11,6 +11,9 @@ import LabsSection from '@/features/settings/components/sections/Labs'
 import ContactSection from '@/features/settings/components/sections/Contact'
 import AboutSection from '@/features/settings/components/sections/About'
 import SupportSection from '@/features/settings/components/sections/Support'
+import PhotoStorageAlmostFullCard, {
+  usePhotoStorageUpsell,
+} from '@/features/settings/components/sync/PhotoStorageAlmostFullCard'
 import SettingsSearchHeader from '@/features/settings/components/search/SettingsSearchHeader'
 import SettingsSearchResults from '@/features/settings/components/search/SettingsSearchResults'
 import useAvailableSettingsSearchItems from '@/features/settings/hooks/useAvailableSettingsSearchItems'
@@ -49,6 +52,9 @@ export default function SettingsContents({
   const results = searchSettings(query, searchableItems)
   const isSearching = query.trim().length > 0
   const requestTarget = useSettingsSearchTarget((state) => state.request)
+  const photoStorageUpsell = usePhotoStorageUpsell({
+    source: 'settings',
+  }).visible
 
   const hasNoResults = isSearching && results.length === 0
   useEffect(() => {
@@ -105,7 +111,13 @@ export default function SettingsContents({
             onOpen={(item) => openSearchResult(item)}
           />
         ) : (
-          <GroupedList>
+          <GroupedList
+            banner={
+              photoStorageUpsell ? (
+                <PhotoStorageAlmostFullCard source='settings' />
+              ) : null
+            }
+          >
             <PreferencesSection {...sectionProps} />
             <AppSection {...sectionProps} />
             <ScribeSection

@@ -352,10 +352,17 @@ export interface Environment {
   SYNC_CHANGES?: string;
 
   /**
-   * An account's photo storage limit in bytes, when a positive integer; else
-   * 2,000,000,000. For tests and trying the full state on a local worker.
+   * A free account's photo storage limit in bytes, when a positive integer;
+   * else 200,000,000 (witness-work ADR 0062). For tests and trying the full
+   * state on a local worker.
    */
   SYNC_PHOTO_LIMIT_BYTES?: string;
+
+  /**
+   * A Supporter's photo storage limit in bytes, when a positive integer; else
+   * 5,000,000,000 (witness-work ADR 0062). Never below the free limit.
+   */
+  SYNC_PHOTO_SUPPORTER_LIMIT_BYTES?: string;
 
   /**
    * One SQLite DO per account (`idFromName(accountId)`): Cloud Sync's slot

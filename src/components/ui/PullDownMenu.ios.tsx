@@ -12,6 +12,7 @@ import { View, type ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import MenuItems from '@/components/ui/MenuItems.ios'
+import FillFrame from '@/components/ui/PullDownMenuFillFrame'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { menuGroups } from '@/components/ui/menuEntries'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
@@ -55,6 +56,55 @@ export default function PullDownMenu({
     ...(testID ? [accessibilityIdentifier(testID)] : []),
   ]
 
+  const menu = (
+    <PointerHover
+      effect={tint ? 'none' : pointerEffect}
+      onHoverChange={tint ? setHovered : undefined}
+    >
+      {}
+      <Host
+        matchContents
+        colorScheme={colorScheme}
+        ignoreSafeArea='all'
+        style={{
+          borderRadius: hoverRadius,
+          marginHorizontal,
+          marginVertical,
+        }}
+      >
+        <Menu
+          modifiers={a11y}
+          label={
+            <RNHostView matchContents>
+              <View
+                accessibilityElementsHidden
+                style={[
+                  frame,
+                  { borderRadius: hoverRadius },
+                  width !== undefined && { width },
+                ]}
+              >
+                {children ?? (
+                  <LucideIcon
+                    icon={EllipsisIcon}
+                    color={triggerColor ?? theme.colors.textAlt}
+                    size={triggerSize}
+                  />
+                )}
+                <HoverTint
+                  visible={tint && hovered}
+                  borderRadius={hoverRadius}
+                />
+              </View>
+            </RNHostView>
+          }
+        >
+          <MenuItems groups={groups} />
+        </Menu>
+      </Host>
+    </PointerHover>
+  )
+
   return (
     <View
       style={style}
@@ -63,53 +113,15 @@ export default function PullDownMenu({
         fill ? (event) => setWidth(event.nativeEvent.layout.width) : undefined
       }
     >
-      {}
-      <PointerHover
-        effect={tint ? 'none' : pointerEffect}
-        onHoverChange={tint ? setHovered : undefined}
-      >
-        {}
-        <Host
-          matchContents
-          colorScheme={colorScheme}
-          ignoreSafeArea='all'
-          style={{
-            borderRadius: hoverRadius,
-            marginHorizontal,
-            marginVertical,
-          }}
-        >
-          <Menu
-            modifiers={a11y}
-            label={
-              <RNHostView matchContents>
-                <View
-                  accessibilityElementsHidden
-                  style={[
-                    frame,
-                    { borderRadius: hoverRadius },
-                    width !== undefined && { width },
-                  ]}
-                >
-                  {children ?? (
-                    <LucideIcon
-                      icon={EllipsisIcon}
-                      color={triggerColor ?? theme.colors.textAlt}
-                      size={triggerSize}
-                    />
-                  )}
-                  <HoverTint
-                    visible={tint && hovered}
-                    borderRadius={hoverRadius}
-                  />
-                </View>
-              </RNHostView>
-            }
-          >
-            <MenuItems groups={groups} />
-          </Menu>
-        </Host>
-      </PointerHover>
+      {fill ? (
+        <FillFrame
+          measured={width !== undefined}
+          trigger={children}
+          menu={menu}
+        />
+      ) : (
+        menu
+      )}
     </View>
   )
 }

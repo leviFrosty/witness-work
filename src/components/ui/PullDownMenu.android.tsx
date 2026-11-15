@@ -6,6 +6,7 @@ import { Pressable, View, type ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import LucideIcon from '@/components/ui/LucideIcon'
 import MenuItems from '@/components/ui/MenuItems.android'
+import FillFrame from '@/components/ui/PullDownMenuFillFrame'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
 import { menuGroups } from '@/components/ui/menuEntries'
 import { touchTargetFrame } from '@/components/ui/touchTarget'
@@ -53,6 +54,70 @@ export default function PullDownMenu({
     setSubmenu(null)
   }
 
+  const menu = (
+    <Host
+      matchContents
+      colorScheme={colorScheme}
+      style={{ marginHorizontal, marginVertical }}
+    >
+      <DropdownMenu
+        expanded={expanded}
+        onDismissRequest={close}
+        color={theme.colors.card}
+      >
+        <DropdownMenu.Trigger>
+          <RNHostView matchContents>
+            <PointerHover
+              onHoverChange={pointerEffect === 'tint' ? setHovered : undefined}
+            >
+              {}
+              <Pressable
+                onPress={open}
+                accessibilityRole='button'
+                accessibilityLabel={accessibilityLabel}
+                accessibilityHint={accessibilityHint}
+                accessibilityValue={
+                  accessibilityValue === undefined
+                    ? undefined
+                    : { text: accessibilityValue }
+                }
+                accessibilityState={{ expanded }}
+                pointerEvents='box-only'
+                testID={testID}
+                style={({ pressed }) => [
+                  frame,
+                  { borderRadius: hoverRadius },
+                  width !== undefined && { width },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                {children ?? (
+                  <LucideIcon
+                    icon={EllipsisIcon}
+                    color={triggerColor ?? theme.colors.textAlt}
+                    size={triggerSize}
+                  />
+                )}
+                <HoverTint visible={hovered} borderRadius={hoverRadius} />
+              </Pressable>
+            </PointerHover>
+          </RNHostView>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Items>
+          <MenuItems
+            groups={groups}
+            submenu={submenu}
+            onSubmenuChange={setSubmenu}
+            onSelect={(action) => {
+              close()
+              action.onPress()
+            }}
+          />
+        </DropdownMenu.Items>
+      </DropdownMenu>
+    </Host>
+  )
+
   return (
     <View
       style={style}
@@ -62,69 +127,15 @@ export default function PullDownMenu({
           : undefined
       }
     >
-      <Host
-        matchContents
-        colorScheme={colorScheme}
-        style={{ marginHorizontal, marginVertical }}
-      >
-        <DropdownMenu
-          expanded={expanded}
-          onDismissRequest={close}
-          color={theme.colors.card}
-        >
-          <DropdownMenu.Trigger>
-            <RNHostView matchContents>
-              <PointerHover
-                onHoverChange={
-                  pointerEffect === 'tint' ? setHovered : undefined
-                }
-              >
-                {}
-                <Pressable
-                  onPress={open}
-                  accessibilityRole='button'
-                  accessibilityLabel={accessibilityLabel}
-                  accessibilityHint={accessibilityHint}
-                  accessibilityValue={
-                    accessibilityValue === undefined
-                      ? undefined
-                      : { text: accessibilityValue }
-                  }
-                  accessibilityState={{ expanded }}
-                  pointerEvents='box-only'
-                  testID={testID}
-                  style={({ pressed }) => [
-                    frame,
-                    { borderRadius: hoverRadius },
-                    width !== undefined && { width },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                >
-                  {children ?? (
-                    <LucideIcon
-                      icon={EllipsisIcon}
-                      color={triggerColor ?? theme.colors.textAlt}
-                      size={triggerSize}
-                    />
-                  )}
-                  <HoverTint visible={hovered} borderRadius={hoverRadius} />
-                </Pressable>
-              </PointerHover>
-            </RNHostView>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Items>
-            <MenuItems
-              groups={groups}
-              submenu={submenu}
-              onSubmenuChange={setSubmenu}
-              onSelect={(action) => {
-                close()
-                action.onPress()
-              }}
-            />
-          </DropdownMenu.Items>
-        </DropdownMenu>
-      </Host>
+      {fill ? (
+        <FillFrame
+          measured={width !== undefined}
+          trigger={children}
+          menu={menu}
+        />
+      ) : (
+        menu
+      )}
     </View>
   )
 }

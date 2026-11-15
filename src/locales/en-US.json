@@ -6253,6 +6253,9 @@
   "scribe_memoryTitle": "Scribe AI memory",
   "scribe_enabledToggle": "Use Scribe AI",
   "scribe_turnedOffFooter": "Scribe AI is hidden, and nothing is sent to it.",
+  "labs_title": "Labs",
+  "labs_footer": "Try new features before they're finished. They may change or have problems, and you can turn them off at any time.",
+  "labs_enabledCount": "{{enabled}}/{{total}}",
   "scribe_zdrRow": "Zero Data Retention",
   "scribe_zdrLearnMore": "Learn more",
   "scribe_zdrTitle": "Zero Data Retention",
@@ -6653,7 +6656,8 @@
       "appLock": "security face id touch id passcode fingerprint biometrics lock",
       "backup": "export restore import file",
       "importData": "transfer migrate other app",
-      "appInfo": "about version build number account id purchases id device server debug"
+      "appInfo": "about version build number account id purchases id device server debug",
+      "labs": "experimental preview early new features beta"
     }
   },
   "territories": {

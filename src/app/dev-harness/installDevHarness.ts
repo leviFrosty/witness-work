@@ -24,6 +24,7 @@ import useRoutine from '@/stores/routine'
 import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
 import { usePreferences } from '@/stores/preferences'
+import { useLabsStore } from '@/lib/labs'
 import { useEditModeStore } from '@/stores/editMode'
 import { useProfile } from '@/stores/profile'
 import { useProfileOverlay } from '@/stores/profileOverlay'
@@ -484,6 +485,7 @@ export function installDevHarness() {
     },
     stores: {
       preferences: usePreferences,
+      labs: useLabsStore,
       editMode: useEditModeStore,
       profile: useProfile,
       contacts: useContacts,

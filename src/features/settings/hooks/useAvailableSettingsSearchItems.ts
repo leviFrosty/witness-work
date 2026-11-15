@@ -5,6 +5,7 @@ import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import usePublisher from '@/hooks/usePublisher'
 import { useScribeOffered } from '@/hooks/useScribeEnabled'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { labIds } from '@/lib/labs'
 import { usePreferences } from '@/stores/preferences'
 import usePet from '@/stores/pet'
 import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
@@ -37,6 +38,7 @@ export default function useAvailableSettingsSearchItems() {
     pet,
     scribeOffered,
     scribeOn,
+    labs: labIds().length > 0,
     logHoursChoice: isCheckboxMode,
     logHoursGoal: isCheckboxMode && logsHours,
     annualGoal: !isCheckboxMode || (showsTimeEntry && monthlyGoalHours > 0),

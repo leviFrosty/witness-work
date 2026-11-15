@@ -24,6 +24,7 @@ import { addPremadeFuels } from '@/app/sync/premadeFuels'
 import { useAppLockSettings } from '@/stores/appLock'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import { useSidebarPreferences } from '@/stores/sidebar'
+import { useLabsStore } from '@/lib/labs'
 import { useSplitSheetPreferences } from '@/stores/splitSheet'
 import { useTimeCache } from '@/stores/timeCache'
 import { useDevNotifications } from '@/app/notifications/devNotifications'
@@ -86,6 +87,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useStreakCelebration,
   useSplitSheetPreferences,
   useSidebarPreferences,
+  useLabsStore,
   useAppLockSettings,
   useTimeCache,
 

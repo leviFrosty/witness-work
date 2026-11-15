@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { BIBLE_CHAPTER_COUNT } from '@/lib/routine/bible'
+import { versesIn } from '@/lib/routine/bibleVerses'
 import {
   chapterRanges,
+  coversWholeBible,
   planChapters,
+  planMinutesADay,
   planPortion,
   planPortionCount,
+  planPortions,
   planProgress,
+  portionVerses,
 } from '@/lib/routine/readingPlans'
 import type { ReadingPlanRun, RoutineEntry } from '@/types/routine'
 
@@ -44,6 +49,89 @@ describe('reading plans', () => {
     expect(all.map(key)).toEqual(planChapters(plan).map(key))
     expect(planPortion(plan, 0)!.chapters).toHaveLength(3)
     expect(planPortion(plan, 365)).toBeNull()
+  })
+
+  it('has the 31,078 verses of the revised New World Translation', () => {
+    const chapters = planChapters({ kind: 'canonical' })
+    expect(chapters.reduce((sum, c) => sum + versesIn(c), 0)).toBe(31078)
+    expect(versesIn({ book: 18, chapter: 119 })).toBe(176)
+    expect(versesIn({ book: 42, chapter: 8 })).toBe(48)
+  })
+
+  it('reads only the books between From and To', () => {
+    const plan = run({
+      kind: 'custom',
+      startBook: 39,
+      endBook: 42,
+      chaptersPerDay: 3,
+    })
+    const chapters = planChapters(plan)
+    expect(chapters[0]).toEqual({ book: 39, chapter: 1 })
+    expect(chapters.at(-1)).toEqual({ book: 42, chapter: 21 })
+    expect(chapters).toHaveLength(28 + 16 + 24 + 21)
+    expect(planPortionCount(plan)).toBe(Math.ceil(89 / 3))
+    expect(coversWholeBible(plan)).toBe(false)
+  })
+
+  it('splits each chapter into near-even verse portions that stay in it', () => {
+    const plan = run({
+      kind: 'custom',
+      startBook: 30,
+      endBook: 30,
+      versesPerDay: 5,
+    })
+    const portions = planPortions(plan)
+    expect(portions.map((p) => p.verses)).toEqual([
+      { from: 1, to: 4 },
+      { from: 5, to: 8 },
+      { from: 9, to: 12 },
+      { from: 13, to: 16 },
+      { from: 17, to: 21 },
+    ])
+    expect(portions.every((p) => p.chapters.length === 1)).toBe(true)
+  })
+
+  it('reads every verse once in a verse plan, starting John 8 at verse 12', () => {
+    const plan = run({
+      kind: 'custom',
+      startBook: 42,
+      endBook: 42,
+      versesPerDay: 2,
+    })
+    const portions = planPortions(plan)
+    const total = portions.reduce((sum, p) => sum + portionVerses(p), 0)
+    expect(total).toBe(
+      planChapters(plan).reduce((sum, c) => sum + versesIn(c), 0)
+    )
+    expect(
+      portions.find((p) => p.chapters[0].chapter === 8)?.verses?.from
+    ).toBe(12)
+    expect(portions.every((p) => portionVerses(p) <= 2)).toBe(true)
+  })
+
+  it('reads a chapter shorter than the day whole', () => {
+    const plan = run({
+      kind: 'custom',
+      startBook: 18,
+      endBook: 18,
+      versesPerDay: 5,
+    })
+    const psalm117 = planPortions(plan).find(
+      (p) => p.chapters[0].chapter === 117
+    )
+    expect(psalm117?.verses).toBeUndefined()
+  })
+
+  it('estimates the minutes a day takes', () => {
+    expect(planMinutesADay({ kind: 'canonical' })).toBe(12)
+    expect(
+      planMinutesADay({
+        kind: 'custom',
+        startBook: 19,
+        endBook: 19,
+        versesPerDay: 5,
+      })
+    ).toBe(1)
   })
 
   it('starts a custom plan at its book and wraps around to it', () => {

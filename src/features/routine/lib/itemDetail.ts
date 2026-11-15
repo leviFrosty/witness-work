@@ -7,6 +7,7 @@ import {
 } from '@/lib/routine/habits'
 import { portionLabel, weekdayName } from '@/lib/routine/labels'
 import { planPortion, type PlanProgress } from '@/lib/routine/readingPlans'
+import { isLastReading } from '@/features/routine/lib/readingPlanChoice'
 import type {
   ReadingPlanRun,
   RoutineEntry,
@@ -48,7 +49,10 @@ export function itemDetail({
       const read = done ? readToday(plan.run, entries, today) : null
       const portion =
         read !== null ? planPortion(plan.run, read) : plan.progress.next
-      return portion ? portionLabel(portion) : undefined
+      if (!portion) return undefined
+      return !done && isLastReading(plan.progress)
+        ? i18n.t('routine.home.lastReading', { reading: portionLabel(portion) })
+        : portionLabel(portion)
     }
     case 'personalStudy': {
       const goal = settings.personalStudyGoal

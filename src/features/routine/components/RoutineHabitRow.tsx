@@ -75,6 +75,7 @@ export default function RoutineHabitRow({
   onOpen,
   checkLabel,
   trailing,
+  accessory,
   testID,
 }: {
   habit?: RoutineHabit
@@ -88,6 +89,8 @@ export default function RoutineHabitRow({
 
   checkLabel?: string
   trailing?: ReactNode
+
+  accessory?: ReactNode
   testID?: string
 }) {
   const spoken = [caption, label, detail].filter(Boolean).join(', ')
@@ -149,6 +152,9 @@ export default function RoutineHabitRow({
         {labels}
         {trailing}
       </Button>
+      {accessory ? (
+        <View style={{ justifyContent: 'center' }}>{accessory}</View>
+      ) : null}
       <Button
         {...checkbox}
         onPress={onToggle}

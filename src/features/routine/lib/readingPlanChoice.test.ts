@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest'
 import {
   choiceDays,
   choiceOf,
+  DEFAULT_CUSTOM_CHOICE,
+  isLastReading,
   leavingLosesPlace,
   planDay,
   progressOf,
   resumableRun,
+  withBooks,
+  type CustomPlanChoice,
 } from '@/features/routine/lib/readingPlanChoice'
 import type { ReadingPlanRun } from '@/types/routine'
 
@@ -30,29 +34,76 @@ describe('reading plan choice', () => {
     expect(resumableRun(runs, { kind: 'today' })).toBeNull()
   })
 
-  it('resumes a custom plan only with the same book and pace', () => {
+  it('resumes a custom plan only with the same books and pace', () => {
     const runs = [
-      run({ id: 'c', kind: 'custom', startBook: 39, chaptersPerDay: 4 }),
+      run({
+        id: 'c',
+        kind: 'custom',
+        startBook: 39,
+        endBook: 65,
+        chaptersPerDay: 4,
+      }),
     ]
-    expect(
-      resumableRun(runs, { kind: 'custom', startBook: 39, chaptersPerDay: 4 })
-        ?.id
-    ).toBe('c')
-    expect(
-      resumableRun(runs, { kind: 'custom', startBook: 39, chaptersPerDay: 3 })
-    ).toBeNull()
+    const choice = (amount: CustomPlanChoice['amount']): CustomPlanChoice => ({
+      kind: 'custom',
+      startBook: 39,
+      endBook: 65,
+      amount,
+    })
+    expect(resumableRun(runs, choice({ unit: 'chapters', count: 4 }))?.id).toBe(
+      'c'
+    )
+    expect(resumableRun(runs, choice({ unit: 'chapters', count: 3 }))).toBe(
+      null
+    )
+    expect(resumableRun(runs, choice({ unit: 'verses', count: 4 }))).toBeNull()
   })
 
   it('reads a run back as a choice and counts its days', () => {
     expect(choiceOf(null)).toEqual({ kind: 'today' })
     expect(
-      choiceOf(run({ kind: 'custom', startBook: 2, chaptersPerDay: 5 }))
-    ).toEqual({ kind: 'custom', startBook: 2, chaptersPerDay: 5 })
+      choiceOf(
+        run({ kind: 'custom', startBook: 2, endBook: 4, versesPerDay: 5 })
+      )
+    ).toEqual({
+      kind: 'custom',
+      startBook: 2,
+      endBook: 4,
+      amount: { unit: 'verses', count: 5 },
+    })
+    expect(
+      choiceOf(run({ kind: 'custom', startBook: 39, chaptersPerDay: 3 }))
+    ).toMatchObject({ startBook: 39, endBook: 38 })
     expect(choiceDays({ kind: 'canonical' })).toBe(365)
     expect(
-      choiceDays({ kind: 'custom', startBook: 0, chaptersPerDay: 10 })
+      choiceDays({
+        ...DEFAULT_CUSTOM_CHOICE,
+        amount: { unit: 'chapters', count: 10 },
+      })
     ).toBe(119)
     expect(choiceDays({ kind: 'today' })).toBeNull()
+  })
+
+  it('keeps From at or before To', () => {
+    const genesisToRuth = { ...DEFAULT_CUSTOM_CHOICE, endBook: 7 }
+    expect(withBooks(genesisToRuth, { startBook: 10 })).toMatchObject({
+      startBook: 10,
+      endBook: 10,
+    })
+    expect(
+      withBooks({ ...genesisToRuth, startBook: 5 }, { endBook: 2 })
+    ).toMatchObject({ startBook: 2, endBook: 2 })
+  })
+
+  it('says when one reading is left', () => {
+    const plan = run({
+      kind: 'custom',
+      startBook: 30,
+      endBook: 30,
+      chaptersPerDay: 1,
+    })
+    expect(isLastReading(progressOf(plan, [])!)).toBe(true)
+    expect(isLastReading(progressOf(run({}), [])!)).toBe(false)
   })
 
   it('asks before leaving a plan with progress', () => {

@@ -2,7 +2,11 @@ import { create } from 'zustand'
 import { combine, createJSONStorage } from 'zustand/middleware'
 import { isDayKey } from '@/lib/dayKeys'
 import { routineEntryId } from '@/lib/routine/habits'
-import { clampChaptersPerDay } from '@/lib/routine/readingPlans'
+import {
+  clampChaptersPerDay,
+  clampVersesPerDay,
+  planBooks,
+} from '@/lib/routine/readingPlans'
 import { syncTimestamp } from '@/lib/syncClock'
 import { stampPastTombstone } from '@/lib/syncTombstones'
 import { PersistStorage } from '@/stores/mmkv'
@@ -150,7 +154,9 @@ export const useRoutine = create(
       startPlan: (args: {
         kind: ReadingPlanKind
         startBook?: number
+        endBook?: number
         chaptersPerDay?: number
+        versesPerDay?: number
         today: string
       }): string | null => {
         if (!isDayKey(args.today)) return null
@@ -163,8 +169,14 @@ export const useRoutine = create(
               kind: args.kind,
               ...(args.kind === 'custom'
                 ? {
-                    startBook: args.startBook ?? 0,
-                    chaptersPerDay: clampChaptersPerDay(args.chaptersPerDay),
+                    ...planBooks(args),
+                    ...(args.versesPerDay !== undefined
+                      ? { versesPerDay: clampVersesPerDay(args.versesPerDay) }
+                      : {
+                          chaptersPerDay: clampChaptersPerDay(
+                            args.chaptersPerDay
+                          ),
+                        }),
                   }
                 : {}),
               startedOn: args.today,

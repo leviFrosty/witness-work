@@ -12,6 +12,7 @@ import ReadingPlanSheet from '@/features/routine/components/ReadingPlanSheet'
 import { planName } from '@/features/routine/lib/applyPlanChoice'
 import {
   activeRun,
+  liveRun,
   planDay,
   progressOf,
 } from '@/features/routine/lib/readingPlanChoice'
@@ -26,17 +27,15 @@ export default function ReadingModeRow({
   const runId = usePreferences((state) => state.readingPlanRunId)
   const runs = useRoutine((state) => state.readingPlans)
   const entries = useRoutine((state) => state.routineEntries)
-  const run = activeRun(runs, runId)
+  const run = liveRun(activeRun(runs, runId))
   const progress = progressOf(run, entries)
   const value =
     run && progress
-      ? progress.finished
-        ? i18n.t('routine.settings.planFinished', { plan: planName(run.kind) })
-        : i18n.t('routine.settings.planProgress', {
-            plan: planName(run.kind),
-            day: planDay(progress),
-            total: progress.total,
-          })
+      ? i18n.t('routine.settings.planProgress', {
+          plan: planName(run.kind),
+          day: planDay(progress),
+          total: progress.total,
+        })
       : i18n.t('routine.plan.today')
   return (
     <>

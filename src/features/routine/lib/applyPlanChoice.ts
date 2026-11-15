@@ -1,9 +1,11 @@
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { BIBLE_BOOK_COUNT } from '@/lib/routine/bible'
 import { usePreferences } from '@/stores/preferences'
 import useRoutine from '@/stores/routine'
 import type { ReadingPlanKind } from '@/types/routine'
 import {
+  choiceShape,
   resumableRun,
   type PlanChoice,
 } from '@/features/routine/lib/readingPlanChoice'
@@ -26,22 +28,23 @@ export function applyPlanChoice(
     : resumableRun(useRoutine.getState().readingPlans, choice)
   const id =
     existing?.id ??
-    useRoutine.getState().startPlan({
-      kind: choice.kind,
-      ...(choice.kind === 'custom'
-        ? {
-            startBook: choice.startBook,
-            chaptersPerDay: choice.chaptersPerDay,
-          }
-        : {}),
-      today,
-    })
+    useRoutine.getState().startPlan({ ...choiceShape(choice), today })
   if (!id) return
   set({ readingPlanRunId: id })
   analytics.capture('routine_plan_started', {
     kind: choice.kind,
-    chapters_per_day:
-      choice.kind === 'custom' ? choice.chaptersPerDay : undefined,
+    ...(choice.kind === 'custom'
+      ? {
+          chapters_per_day:
+            choice.amount.unit === 'chapters' ? choice.amount.count : undefined,
+          verses_per_day:
+            choice.amount.unit === 'verses' ? choice.amount.count : undefined,
+          books:
+            ((choice.endBook - choice.startBook + BIBLE_BOOK_COUNT) %
+              BIBLE_BOOK_COUNT) +
+            1,
+        }
+      : {}),
     resumed: existing !== null,
   })
 }

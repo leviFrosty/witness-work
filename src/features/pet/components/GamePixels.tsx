@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import {
+  AppState,
   PixelRatio,
   View,
   type LayoutChangeEvent,
@@ -35,6 +36,25 @@ export const gamePixelScale = (): number =>
 
 const images = createLru<SkImage | null>(96)
 
+let canvasEpoch = 0
+const epochListeners = new Set<() => void>()
+let lastAppState = AppState.currentState
+AppState.addEventListener('change', (state) => {
+  const returning = state === 'active' && lastAppState === 'background'
+  lastAppState = state
+  if (!returning) return
+  canvasEpoch += 1
+  epochListeners.forEach((listener) => listener())
+})
+const subscribeEpoch = (listener: () => void) => {
+  epochListeners.add(listener)
+  return () => {
+    epochListeners.delete(listener)
+  }
+}
+const useCanvasEpoch = (): number =>
+  useSyncExternalStore(subscribeEpoch, () => canvasEpoch)
+
 const cachedImage = (key: string, make: () => PixelBuffer): SkImage | null =>
   images.getOrCreate(key, () => bufferToSkImage(make()))
 
@@ -49,13 +69,14 @@ export function GamePixelImage({
   scale?: number
   style?: StyleProp<ViewStyle>
 }) {
+  const epoch = useCanvasEpoch()
   const image = cachedImage(cacheKey, make)
   if (!image) return null
   const width = image.width() * scale
   const height = image.height() * scale
   return (
     <View style={[{ width, height }, style]} pointerEvents='none'>
-      <Canvas style={{ width, height }}>
+      <Canvas key={epoch} style={{ width, height }}>
         <Image
           image={image}
           x={0}
@@ -111,9 +132,11 @@ function Backdrop({
   h: number
   scale: number
 }) {
+  const epoch = useCanvasEpoch()
   if (!image) return null
   return (
     <Canvas
+      key={epoch}
       pointerEvents='none'
       style={{
         position: 'absolute',

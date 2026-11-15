@@ -13,32 +13,25 @@ import { itemRarity } from '@/features/pet/lib/prices'
 import type { RoomChoicePart } from '@/features/pet/lib/roomOptions'
 import type { PetSceneHandle } from '@/features/pet/render/PetSceneView'
 
-export default function ReactionPreviewTray({
-  part,
-  option,
-  itemName,
-  petName,
-  scene,
-  from,
-  column,
-  cardWidth,
-  cardGap,
-  gap,
-  palette,
-}: {
+type ReactionPreviewProps = {
   part: RoomChoicePart
   option: string
   itemName: string
   petName: string
   scene: RefObject<PetSceneHandle | null>
   from: 'shop' | 'room'
-
-  column: number | null
-  cardWidth: number
-  cardGap: number
-  gap: number
   palette: GamePalette
-}) {
+}
+
+export function ReactionPreviewContent({
+  part,
+  option,
+  itemName,
+  petName,
+  scene,
+  from,
+  palette,
+}: ReactionPreviewProps) {
   const theme = useTheme()
   const item = `${part}:${option}`
   const reactions = itemReactions(item)
@@ -47,15 +40,7 @@ export default function ReactionPreviewTray({
   const played = (trigger: 'pat' | 'coins' | 'grow') =>
     analytics.capture('pet_item_preview_played', { item, part, trigger, from })
   return (
-    <GameColorTray
-      rarity={itemRarity(item)}
-      quiet
-      column={column}
-      cardWidth={cardWidth}
-      cardGap={cardGap}
-      gap={gap}
-      palette={palette}
-    >
+    <>
       <Text
         accessibilityRole='header'
         style={{
@@ -126,6 +111,33 @@ export default function ReactionPreviewTray({
           }}
         />
       )}
+    </>
+  )
+}
+
+export default function ReactionPreviewTray({
+  column,
+  cardWidth,
+  cardGap,
+  gap,
+  ...props
+}: ReactionPreviewProps & {
+  column: number | null
+  cardWidth: number
+  cardGap: number
+  gap: number
+}) {
+  return (
+    <GameColorTray
+      rarity={itemRarity(`${props.part}:${props.option}`)}
+      quiet
+      column={column}
+      cardWidth={cardWidth}
+      cardGap={cardGap}
+      gap={gap}
+      palette={props.palette}
+    >
+      <ReactionPreviewContent {...props} />
     </GameColorTray>
   )
 }

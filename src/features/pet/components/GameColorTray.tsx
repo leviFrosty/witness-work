@@ -94,3 +94,15 @@ export default function GameColorTray({
     </View>
   )
 }
+
+export function GameTrayDivider({ palette }: { palette: GamePalette }) {
+  return (
+    <View
+      style={{
+        height: 1,
+        marginVertical: 8,
+        backgroundColor: cssColor(palette.line),
+      }}
+    />
+  )
+}

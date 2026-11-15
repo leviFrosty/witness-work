@@ -29,6 +29,7 @@ export interface InputRowContainerProps {
   invalid?: boolean
   children?: ReactNode
   leftIcon?: AppIcon
+  indented?: boolean
   lastInSection?: boolean
   noHorizontalPadding?: boolean
   label?: string
@@ -73,6 +74,7 @@ const InputRowContainer: React.FC<
   children,
   invalid,
   leftIcon,
+  indented,
   lastInSection,
   noHorizontalPadding,
   label,
@@ -205,7 +207,9 @@ const InputRowContainer: React.FC<
           minHeight: inputLayout.rowMinHeight,
           paddingTop: inputLayout.rowPadding,
           paddingBottom: inputLayout.rowPadding,
-          paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+          paddingLeft:
+            (noHorizontalPadding ? 0 : inputLayout.horizontalPadding) +
+            (indented ? inputLayout.iconSize + inputLayout.labelGap : 0),
           paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
           alignItems: 'center',
           flexGrow: 0,
@@ -276,7 +280,7 @@ const InputRowContainer: React.FC<
         {children}
       </View>
       {onRowPress && <HoverTint visible={hovered} />}
-      {!lastInSection && <RowSeparator hasIcon={!!leftIcon} />}
+      {!lastInSection && <RowSeparator hasIcon={!!leftIcon || indented} />}
     </View>
   )
 

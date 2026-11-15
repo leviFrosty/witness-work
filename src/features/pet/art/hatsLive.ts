@@ -21,7 +21,13 @@ import {
   bigHatCanvas,
   bigHatPoint,
 } from './hatCanvas'
-import { FIG_STAGES, HAT_FRAME_SPECS, TRACK } from './hatFrames'
+import {
+  FIG_STAGES,
+  HAT_FRAME_SPECS,
+  NEST_CHICK_U,
+  TRACK,
+  type ChickFace,
+} from './hatFrames'
 import { PLAIN_HAT_SPECS, type PlainHatId } from './hatsPlain'
 import type { TimeOfDay } from './room/window'
 import { idlePose, petSprite } from './sprite'
@@ -437,15 +443,327 @@ function drawSnail(buf: PixelBuffer, m: HatMoment) {
   blit(buf, sprite, Math.round(d), Math.abs(d) > 4 ? 1 : 0)
 }
 
-const NEST_TURNS = [0, 1, 0, 2, 0, 3] as const
+const NEST_FIRST_VISIT_MS = 8000
+const NEST_CYCLE_MS = 13_000
+
+export const NEST_VISIT = {
+  landMs: 800,
+  begMs: 250,
+  feedMs: 1250,
+  gulpMs: 1650,
+  leaveMs: 2300,
+  endMs: 3200,
+} as const
+
+const CHICK_D = [-6, 0, 6] as const
+const CHICK_FACE = [-1, 0, 1] as const
+
+const PERCH_D = { [-1]: -14, [1]: 13 } as const
+const PERCH_U = 7
+
+const hash01 = (n: number): number => {
+  let x = n | 0
+  x = Math.imul(x ^ (x >>> 16), 0x7feb352d)
+  x = Math.imul(x ^ (x >>> 15), 0x846ca68b)
+  x ^= x >>> 16
+  return (x >>> 0) / 4294967296
+}
+
+const cycleStartMs = (t: number, firstMs: number, cycleMs: number): number =>
+  t < firstMs ? NOT_YET : t - ((t - firstMs) % cycleMs)
+
+function nestVisitMs(t: number, patMs: number): number {
+  const idle = cycleStartMs(t, NEST_FIRST_VISIT_MS, NEST_CYCLE_MS)
+  if (
+    !Number.isFinite(patMs) ||
+    patMs > t ||
+    patMs - cycleStartMs(patMs, NEST_FIRST_VISIT_MS, NEST_CYCLE_MS) <
+      NEST_VISIT.endMs
+  )
+    return idle
+  return idle > patMs && idle - patMs >= NEST_VISIT.endMs ? idle : patMs
+}
+
+type ParentKey = 'up' | 'down' | 'perch' | 'feed'
+
+export interface NestParent {
+  readonly d: number
+  readonly u: number
+  readonly key: ParentKey
+  readonly faceRight: boolean
+  readonly worm: boolean
+}
+
+export interface NestChick {
+  readonly d: number
+  readonly lift: number
+  readonly face: ChickFace
+  readonly open: boolean
+  readonly shut: boolean
+  readonly wings: 'none' | 'up' | 'down'
+}
+
+export interface NestShot {
+  readonly parent: NestParent | null
+  readonly chicks: readonly NestChick[]
+}
+
+const bezier = (a: number, c: number, b: number, k: number) =>
+  (1 - k) * (1 - k) * a + 2 * (1 - k) * k * c + k * k * b
+
+function parentAt(s: number, side: -1 | 1, t: number): NestParent | null {
+  const V = NEST_VISIT
+  const faceRight = side < 0
+  const flap: ParentKey = Math.floor(t / 70) % 2 ? 'up' : 'down'
+  const perchD = PERCH_D[side]
+  if (s < V.landMs) {
+    const k = s / V.landMs
+    const e = 1 - (1 - k) * (1 - k)
+    return {
+      d: bezier(side * 30, side * 17, perchD, e),
+      u: bezier(30, 24, PERCH_U, e),
+      key: k > 0.82 ? 'up' : flap,
+      faceRight,
+      worm: true,
+    }
+  }
+  if (s < V.leaveMs) {
+    const landing = s < V.landMs + 120
+    return {
+      d: perchD,
+      u: PERCH_U + (landing ? -1 : 0),
+      key: s >= V.feedMs && s < V.gulpMs ? 'feed' : 'perch',
+      faceRight,
+      worm: s < V.gulpMs,
+    }
+  }
+  if (s < V.endMs) {
+    const k = (s - V.leaveMs) / (V.endMs - V.leaveMs)
+    const e = k * k
+    return {
+      d: bezier(perchD, side * 2, -side * 32, e),
+      u: bezier(PERCH_U, 24, 36, e),
+      key: flap,
+      faceRight,
+      worm: false,
+    }
+  }
+  return null
+}
+
+export function nestShot(m: HatMoment): NestShot {
+  const t = m.tMs
+  const sincePat = t - m.patMs
+  const jolt = sincePat >= 0 && sincePat < 350
+  if (isDarkTime(m.time)) {
+    const woken = sincePat >= 0 && sincePat < 1800
+    return {
+      parent: null,
+      chicks: CHICK_D.map((d, i) => {
+        const cheep = woken && (Math.floor(sincePat / 220) + i) % 3 === 0
+        return {
+          d,
+          lift: woken
+            ? (jolt ? 2 : 1) + (cheep ? 1 : 0)
+            : Math.sin(t * 0.0011 + i * 2.1) > 0.5
+              ? 0
+              : -1,
+          face: CHICK_FACE[i],
+          open: cheep,
+          shut: !woken,
+          wings: 'none',
+        }
+      }),
+    }
+  }
+  const visit = nestVisitMs(t, m.patRunMs ?? m.patMs)
+  const s = t - visit
+  const side: -1 | 1 = hash01(Math.floor(visit / 100)) < 0.5 ? -1 : 1
+  const parent = parentAt(s, side, t)
+  const fedChick = side < 0 ? 0 : 2
+  const V = NEST_VISIT
+  const begging = parent !== null && s >= V.begMs && s < V.leaveMs + 250
+  return {
+    parent,
+    chicks: CHICK_D.map((d, i) => {
+      if (begging) {
+        const fed = i === fedChick && s >= V.gulpMs
+        if (fed) {
+          const since = s - V.gulpMs
+          return {
+            d: d + (since < 450 ? (Math.floor(since / 75) % 2 ? 1 : -1) : 0),
+            lift: since < 150 ? 1 : 0,
+            face: CHICK_FACE[i],
+            open: false,
+            shut: since >= 450,
+            wings: 'none',
+          }
+        }
+        const reaching = i === fedChick && s >= V.feedMs - 250 && s < V.gulpMs
+        const settling = s >= V.leaveMs
+        const beat = (Math.floor(t / 90) + i) % 2
+        return {
+          d,
+          lift: reaching
+            ? 4
+            : settling
+              ? 1
+              : 2 + beat - (s < V.begMs + 120 ? 1 : 0),
+          face: side,
+          open: !settling,
+          shut: false,
+          wings: settling || reaching ? 'none' : beat ? 'up' : 'down',
+        }
+      }
+      const slot = Math.floor((t + i * 233) / 650)
+      const cheep = hash01(slot * 3 + i) < 0.22 && (t + i * 233) % 650 < 300
+      const glance = Math.floor((t + i * 911) / 2300)
+      const turn = hash01(glance * 5 + i + 101) < 0.3
+      const face: ChickFace = turn
+        ? i === 1
+          ? hash01(glance + 7) < 0.5
+            ? -1
+            : 1
+          : 0
+        : CHICK_FACE[i]
+      const stretch = Math.floor((t + i * 577) / 1700)
+      const flapping =
+        hash01(stretch * 11 + i + 37) < 0.14 && (t + i * 577) % 1700 < 560
+      return {
+        d,
+        lift: flapping
+          ? 2
+          : (cheep ? 1 : 0) +
+            (jolt ? 2 : 0) +
+            (Math.sin(t * 0.0017 + i * 2.4) > 0.6 ? 1 : 0),
+        face,
+        open: cheep || jolt,
+        shut: t > 0 && (t + i * 1300) % 3700 < 130,
+        wings: flapping ? (Math.floor(t / 80) % 2 ? 'up' : 'down') : 'none',
+      }
+    }),
+  }
+}
+
+const PARENT_INK: Readonly<Record<string, number>> = rgbPalette({
+  b: '#7a5236',
+  w: '#553823',
+  B: '#e0703a',
+  e: '#26221e',
+  y: '#e0a43a',
+  k: '#3a2a1c',
+})
+
+const WORM = rgb('#e88a9a')
+
+const PARENT: Readonly<
+  Record<
+    ParentKey,
+    { rows: readonly string[]; foot: number; beak: readonly [number, number] }
+  >
+> = {
+  perch: {
+    rows: [
+      '......bb...',
+      '.....bbbey.',
+      '....bbbBB..',
+      '.wwwwwBBB..',
+      'wwwwwwBBB..',
+      '...bbBBB...',
+      '.....k.k...',
+    ],
+    foot: 6,
+    beak: [9, 1],
+  },
+  feed: {
+    rows: [
+      '...........',
+      '.......bb..',
+      '......bbbey',
+      '.wwwwwbBB..',
+      'wwwwwwBBB..',
+      '...bbBBB...',
+      '.....k.k...',
+    ],
+    foot: 6,
+    beak: [10, 2],
+  },
+  up: {
+    rows: [
+      '...w.......',
+      '...ww......',
+      '...www.bb..',
+      '.wbwwwbbbey',
+      'wwbbbbBBB..',
+      '...bbBBB...',
+    ],
+    foot: 6,
+    beak: [10, 3],
+  },
+  down: {
+    rows: [
+      '.......bb..',
+      '......bbbey',
+      'wwbbbbbBB..',
+      '.bbwwwBBB..',
+      '...wwwBB...',
+      '...ww......',
+      '...w.......',
+    ],
+    foot: 6,
+    beak: [10, 1],
+  },
+}
+
+const PARENT_W = 11
+
+function drawParent(buf: PixelBuffer, p: NestParent) {
+  const art = PARENT[p.key]
+  const [px, py] = bigHatPoint(p.d, p.u).map(Math.round)
+  const col = (i: number) => (p.faceRight ? i : PARENT_W - 1 - i)
+  const x0 = px - col(art.foot)
+  const y0 = py - (art.rows.length - 1)
+  art.rows.forEach((row, j) => {
+    for (let i = 0; i < row.length; i++) {
+      const ch = row[i]
+      if (ch !== '.') setPixel(buf, x0 + col(i), y0 + j, PARENT_INK[ch])
+    }
+  })
+  if (!p.worm) return
+  const bx = x0 + col(art.beak[0])
+  const by = y0 + art.beak[1]
+  setPixel(buf, bx, by + 1, WORM)
+  setPixel(buf, bx + (p.faceRight ? -1 : 1), by + 2, WORM)
+}
+
+const CHICK_WING = rgb('#e8c13f')
+const CHICK_WING_TIP = rgb('#b08a22')
 
 function drawNest(buf: PixelBuffer, m: HatMoment) {
-  const sincePat = m.tMs - m.patMs
-  const key =
-    sincePat >= 0 && sincePat < 1500
-      ? 'fed'
-      : NEST_TURNS[Math.floor(m.tMs / 900) % NEST_TURNS.length]
-  blit(buf, frameOf(`nest/${key}`), 0, 0)
+  const { parent, chicks } = nestShot(m)
+  for (const c of chicks)
+    blit(
+      buf,
+      frameOf(
+        `nest/chick/${c.face}/${c.open ? 'open' : 'shut'}/${c.shut ? 'lid' : 'eye'}`
+      ),
+      c.d,
+      -c.lift
+    )
+  blit(buf, frameOf('nest/bowl'), 0, 0)
+  for (const c of chicks) {
+    if (c.wings === 'none') continue
+    const u = NEST_CHICK_U - 2 + c.lift
+    const tip = c.wings === 'up' ? 1 : -1
+    for (const [base, out] of [
+      [c.d - 3, -1],
+      [c.d + 2, 1],
+    ]) {
+      put(buf, base, u, CHICK_WING)
+      put(buf, base + out, u + tip, CHICK_WING_TIP)
+    }
+  }
+  if (parent) drawParent(buf, parent)
 }
 
 function drawHive(buf: PixelBuffer, m: HatMoment) {

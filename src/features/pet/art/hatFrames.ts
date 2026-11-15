@@ -239,58 +239,77 @@ specs['snail/in'] = {
 const CHICK: Tones = ['#f6d55c', '#d9b43a', '#ffe88a']
 const BEAK = '#e8822e'
 const GAPE = '#b93a2c'
-const CHICKS = [
-  { d: -6.4, u: 8.2, face: -1 },
-  { d: 0, u: 7.6, face: 0 },
-  { d: 6.4, u: 8, face: 1 },
-] as const
-const nest = (open: readonly boolean[], lift: readonly number[]) => ({
-  shapes: [
-    ...CHICKS.map(({ d, u }, i) => ell(d, u + lift[i], 2.6, 2.6, CHICK)),
-    ell(0, 2.8, 10.8, 3.3, ['#8d6a42', '#6d4f2d', '#ad8a5e']),
-  ],
+const CHICK_EYE = '#23201c'
+const CHICK_LID = '#a8841f'
+const TWIG = '#6d4f2d'
+
+export const NEST_CHICK_U = 8
+
+export type ChickFace = -1 | 0 | 1
+
+const chick = (face: ChickFace, open: boolean, shut: boolean) => {
+  const eye = Math.round(NEST_CHICK_U + 1.1)
+  const look = shut ? CHICK_LID : CHICK_EYE
+  const col = (k: number) => Math.round(-0.5 + face * k)
+  return {
+    shapes: [
+      ell(0, NEST_CHICK_U - 3.4, 2.1, 3.2, CHICK, { g: 'chick' }),
+      ell(0, NEST_CHICK_U, 2.6, 2.6, CHICK, { g: 'chick' }),
+    ],
+    feats:
+      face === 0
+        ? [
+            feat(-2, eye, look),
+            feat(1, eye, look),
+            feat(-1, eye - 1, BEAK),
+            feat(0, eye - 1, BEAK),
+            ...(open
+              ? [
+                  feat(-1, eye - 2, GAPE),
+                  feat(0, eye - 2, GAPE),
+                  feat(-1, eye - 3, BEAK),
+                  feat(0, eye - 3, BEAK),
+                ]
+              : []),
+          ]
+        : [
+            feat(col(1.6), eye, look),
+            ...(open
+              ? [
+                  feat(col(3.1), eye, BEAK),
+                  feat(col(4.1), eye + 1, BEAK),
+                  feat(col(3.1), eye - 1, GAPE),
+                  feat(col(3.1), eye - 2, BEAK),
+                  feat(col(4.1), eye - 2, BEAK),
+                ]
+              : [feat(col(3.1), eye - 1, BEAK), feat(col(4.1), eye - 1, BEAK)]),
+          ],
+  }
+}
+for (const face of [-1, 0, 1] as const)
+  for (const open of [false, true])
+    for (const shut of [false, true])
+      specs[
+        `nest/chick/${face}/${open ? 'open' : 'shut'}/${shut ? 'lid' : 'eye'}`
+      ] = chick(face, open, shut)
+
+specs['nest/bowl'] = {
+  shapes: [ell(0, 2.8, 10.8, 3.3, ['#8d6a42', '#6d4f2d', '#ad8a5e'])],
   feats: [
-    ...CHICKS.flatMap(({ d, u, face }, i) => {
-      const eye = Math.round(u + lift[i] + 1.1)
-      if (face === 0)
-        return [
-          feat(-2, eye, '#23201c'),
-          feat(1, eye, '#23201c'),
-          feat(-1, eye - 1, BEAK),
-          feat(0, eye - 1, BEAK),
-          ...(open[i] ? [feat(-1, eye - 2, GAPE), feat(0, eye - 2, GAPE)] : []),
-        ]
-      const col = (k: number) => Math.round(d - 0.5 + face * k)
-      return [
-        feat(col(1.6), eye, '#23201c'),
-        ...(open[i]
-          ? [
-              feat(col(3.1), eye, BEAK),
-              feat(col(4.1), eye + 1, BEAK),
-              feat(col(3.1), eye - 1, GAPE),
-              feat(col(3.1), eye - 2, BEAK),
-              feat(col(4.1), eye - 2, BEAK),
-            ]
-          : [feat(col(3.1), eye - 1, BEAK), feat(col(4.1), eye - 1, BEAK)]),
-      ]
-    }),
     ...[-9, -6, -3, 0, 3, 6].flatMap((d, i) => [
-      feat(d, 4 - (i % 2), '#6d4f2d'),
-      feat(d + 1, 3 - (i % 2), '#6d4f2d'),
+      feat(d, 4 - (i % 2), TWIG),
+      feat(d + 1, 3 - (i % 2), TWIG),
       feat(d + 2, 2 + (i % 2), '#bd9a6c'),
     ]),
-    feat(-12, 5, '#6d4f2d'),
-    feat(-13, 6, '#6d4f2d'),
-    feat(11, 5, '#6d4f2d'),
-    feat(12, 6, '#6d4f2d'),
+    feat(-12, 5, TWIG),
+    feat(-13, 6, TWIG),
+    feat(-14, 6, TWIG),
+    feat(11, 5, TWIG),
+    feat(12, 6, TWIG),
+    feat(13, 6, TWIG),
     feat(12, 3, '#8d6a42'),
   ],
-})
-specs['nest/0'] = nest([false, false, false], [0, 0, 0])
-specs['nest/1'] = nest([false, true, false], [0, 1, 0])
-specs['nest/2'] = nest([true, false, false], [1, 0, 0])
-specs['nest/3'] = nest([false, false, true], [0, 0, 1])
-specs['nest/fed'] = nest([true, true, true], [1, 1, 1])
+}
 
 specs.hive = {
   shapes: [

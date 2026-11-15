@@ -1,7 +1,7 @@
+import { Bell as BellIcon } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
-import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import Sheet from '@/components/ui/Sheet'
@@ -14,21 +14,14 @@ import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
-import PlanFields from '@/features/routine/components/PlanFields'
+import ReadingChoiceRows from '@/features/routine/components/ReadingChoiceRows'
 import RoutineHabitRows, {
   type RoutineFieldValues,
   toggledHabits,
 } from '@/features/routine/components/RoutineHabitRows'
 import RoutineReminderFields from '@/features/routine/components/RoutineReminderFields'
-import {
-  applyPlanChoice,
-  planName,
-} from '@/features/routine/lib/applyPlanChoice'
-import {
-  DEFAULT_CUSTOM_CHOICE,
-  PLAN_KINDS,
-  type PlanChoice,
-} from '@/features/routine/lib/readingPlanChoice'
+import { applyPlanChoice } from '@/features/routine/lib/applyPlanChoice'
+import type { PlanChoice } from '@/features/routine/lib/readingPlanChoice'
 
 const initialValues = (): RoutineFieldValues => {
   const current = usePreferences.getState()
@@ -41,23 +34,6 @@ const initialValues = (): RoutineFieldValues => {
     worshipDay: current.worshipDay,
     personalStudyGoal: current.personalStudyGoal,
   }
-}
-
-function SheetHeading({ text }: { text: string }) {
-  const theme = useTheme()
-  return (
-    <Text
-      accessibilityRole='header'
-      style={{
-        fontFamily: theme.fonts.semiBold,
-        fontSize: theme.fontSize('sm'),
-        color: theme.colors.textAlt,
-        marginBottom: -8,
-      }}
-    >
-      {text}
-    </Text>
-  )
 }
 
 export default function RoutineSetupSheet({
@@ -118,10 +94,7 @@ export default function RoutineSetupSheet({
     onClose()
   }
 
-  const readingOptions = [
-    { label: i18n.t('routine.plan.today'), value: 'today' as const },
-    ...PLAN_KINDS.map((kind) => ({ label: planName(kind), value: kind })),
-  ]
+  const canRemind = hasCapability('deviceNotifications')
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -151,7 +124,6 @@ export default function RoutineSetupSheet({
           </Text>
         </View>
 
-        <SheetHeading text={i18n.t('routine.setup.habits')} />
         <Section>
           <RoutineHabitRows
             values={values}
@@ -165,45 +137,24 @@ export default function RoutineSetupSheet({
               setValues((current) => ({ ...current, ...change }))
             }
             renderReading={(last) => (
-              <>
-                <InputRowSelect
-                  label={i18n.t('routine.settings.readingRow')}
-                  indented
-                  lastInSection={last && reading.kind === 'today'}
-                  selectProps={{
-                    data: readingOptions,
-                    value: reading.kind,
-                    onChange: ({ value }) =>
-                      setReading(
-                        value === 'custom'
-                          ? DEFAULT_CUSTOM_CHOICE
-                          : { kind: value }
-                      ),
-                  }}
-                />
-                {reading.kind !== 'today' && (
-                  <PlanFields
-                    choice={reading}
-                    onChange={setReading}
-                    indented
-                    lastInSection={last}
-                  />
-                )}
-              </>
+              <ReadingChoiceRows
+                choice={reading}
+                onChange={setReading}
+                lastInSection={last}
+              />
             )}
+            lastInSection={!canRemind}
           />
-        </Section>
-
-        {hasCapability('deviceNotifications') && (
-          <Section>
+          {canRemind && (
             <RoutineReminderFields
+              leftIcon={BellIcon}
               enabled={reminders}
               time={reminderTime}
               onEnabledChange={(next) => void turnOnReminders(next)}
               onTimeChange={setReminderTime}
             />
-          </Section>
-        )}
+          )}
+        </Section>
 
         <ActionButton
           onPress={save}

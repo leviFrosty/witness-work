@@ -1,4 +1,7 @@
-import { BookOpenCheck as BookOpenCheckIcon } from 'lucide-react-native'
+import {
+  Bell as BellIcon,
+  BookOpenCheck as BookOpenCheckIcon,
+} from 'lucide-react-native'
 import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Wrapper from '@/components/ui/layout/Wrapper'
@@ -8,11 +11,7 @@ import { hasCapability } from '@/lib/platformCapabilities'
 import i18n from '@/lib/locales'
 import { usePreferences } from '@/stores/preferences'
 import type { RoutineHabit } from '@/types/routine'
-import {
-  MidweekMeetingRow,
-  WeekendMeetingRow,
-} from '@/features/routine/components/MeetingDaysFields'
-import ReadingModeRow from '@/features/routine/components/ReadingModeRow'
+import ReadingPlanRows from '@/features/routine/components/ReadingPlanRows'
 import RoutineHabitRows, {
   type RoutineFieldChange,
   toggledHabits,
@@ -70,8 +69,7 @@ export default function RoutineSettingsScreen() {
     analytics.capture('routine_reminder_toggled', { on })
   }
 
-  const showMidweekDay = !enabled || !habits.includes('midweekPrep')
-  const showWeekendDay = !enabled || !habits.includes('weekendPrep')
+  const canRemind = hasCapability('deviceNotifications')
 
   return (
     <SettingsInputLayout>
@@ -91,7 +89,7 @@ export default function RoutineSettingsScreen() {
             />
           </Group>
           {enabled && (
-            <Group title={i18n.t('routine.setup.habits')}>
+            <Group>
               <RoutineHabitRows
                 values={{
                   habits,
@@ -105,35 +103,17 @@ export default function RoutineSettingsScreen() {
                 onToggleHabit={toggleHabit}
                 onChange={change}
                 renderReading={(last) => (
-                  <ReadingModeRow indented lastInSection={last} />
+                  <ReadingPlanRows lastInSection={last} />
                 )}
+                lastInSection={!canRemind}
               />
-            </Group>
-          )}
-          {enabled && hasCapability('deviceNotifications') && (
-            <Group>
-              <RoutineReminderFields
-                enabled={reminders}
-                time={reminderTime}
-                onEnabledChange={(on) => void toggleReminders(on)}
-                onTimeChange={(time) => set({ routineReminderTime: time })}
-              />
-            </Group>
-          )}
-          {(showMidweekDay || showWeekendDay) && (
-            <Group title={i18n.t('routine.meetings.title')}>
-              {showMidweekDay && (
-                <MidweekMeetingRow
-                  meetingDays={meetingDays}
-                  onChange={(days) => set({ meetingDays: days })}
-                  lastInSection={!showWeekendDay}
-                />
-              )}
-              {showWeekendDay && (
-                <WeekendMeetingRow
-                  meetingDays={meetingDays}
-                  onChange={(days) => set({ meetingDays: days })}
-                  lastInSection
+              {canRemind && (
+                <RoutineReminderFields
+                  leftIcon={BellIcon}
+                  enabled={reminders}
+                  time={reminderTime}
+                  onEnabledChange={(on) => void toggleReminders(on)}
+                  onTimeChange={(time) => set({ routineReminderTime: time })}
                 />
               )}
             </Group>

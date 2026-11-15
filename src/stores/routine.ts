@@ -173,6 +173,43 @@ export const useRoutine = create(
         return id
       },
 
+      changePlan: (
+        id: string,
+        args: {
+          kind: ReadingPlanKind
+          startBook?: number
+          endBook?: number
+          chaptersPerDay?: number
+          versesPerDay?: number
+          today: string
+        }
+      ): boolean => {
+        const run = get().readingPlans.find((plan) => plan.id === id)
+        if (!run || run.finishedOn || !isDayKey(args.today)) return false
+        if (get().routineEntries.some((entry) => entry.run === id)) return false
+        set((state) => ({
+          readingPlans: state.readingPlans.map((plan) => {
+            if (plan.id !== id) return plan
+            const {
+              startBook: _startBook,
+              endBook: _endBook,
+              chaptersPerDay: _chaptersPerDay,
+              versesPerDay: _versesPerDay,
+              ...kept
+            } = plan
+            return {
+              ...kept,
+              kind: args.kind,
+              ...(args.kind === 'custom' ? planBooks(args) : {}),
+              ...amountFields(planAmount(args)),
+              startedOn: args.today,
+              updatedAt: stampFor(state, id, plan.updatedAt),
+            }
+          }),
+        }))
+        return true
+      },
+
       setPlanDates: (
         id: string,
         dates: { startedOn?: string; finishBy?: string | null }

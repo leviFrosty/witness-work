@@ -42,11 +42,13 @@ export default function RoutineHabitRows({
   onToggleHabit,
   onChange,
   renderReading,
+  lastInSection = true,
 }: {
   values: RoutineFieldValues
   onToggleHabit: (habit: RoutineHabit, on: boolean) => void
   onChange: (change: RoutineFieldChange) => void
   renderReading: (lastInSection: boolean) => ReactElement
+  lastInSection?: boolean
 }) {
   const { habits, meetingDays, worshipKind } = values
   const rows: ((last: boolean) => ReactElement)[] = []
@@ -132,5 +134,11 @@ export default function RoutineHabitRows({
         />
       ))
   }
-  return <>{rows.map((row, index) => row(index === rows.length - 1))}</>
+  return (
+    <>
+      {rows.map((row, index) =>
+        row(lastInSection && index === rows.length - 1)
+      )}
+    </>
+  )
 }

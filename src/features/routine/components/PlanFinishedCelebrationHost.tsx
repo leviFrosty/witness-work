@@ -27,10 +27,7 @@ export default function PlanFinishedCelebrationHost() {
       onDone={endPlanCelebration}
       onChoosePlan={() => {
         endPlanCelebration()
-        navigation.navigate('RoutineHabit', {
-          habit: 'bibleReading',
-          choosePlan: true,
-        })
+        navigation.navigate('RoutineSettings')
       }}
     />
   )

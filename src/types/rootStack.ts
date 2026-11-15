@@ -349,7 +349,7 @@ export type RootStackParamList = {
 
   Routine: undefined
 
-  RoutineHabit: { habit: RoutineHabit; choosePlan?: boolean }
+  RoutineHabit: { habit: RoutineHabit }
 
   Badges: { source?: BadgesSource } | undefined
 

@@ -2303,7 +2303,7 @@ const photoUsage = z
     count: z.number().int().meta({ description: "How many live photos." }),
     limit: z.number().int().meta({
       description:
-        "The account’s storage limit in bytes (2,000,000,000 unless `SYNC_PHOTO_LIMIT_BYTES` says otherwise).",
+        "The account’s storage limit in bytes: 200,000,000 for a free account, 5,000,000,000 for a Supporter (unless `SYNC_PHOTO_LIMIT_BYTES` or `SYNC_PHOTO_SUPPORTER_LIMIT_BYTES` says otherwise). While RevenueCat can’t be reached, the Supporter limit.",
     }),
   })
   .meta({ description: "The account’s photo storage." });

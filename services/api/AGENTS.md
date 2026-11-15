@@ -2272,7 +2272,7 @@ iCloud and Google Drive; each device uses exactly one. Code in
     at a time (429 `rate_limited`), a slot exists (409 `no_slot`), 20,000
     live photos (429 `limit`), the storage limit against live usage plus
     other uploads' reservations (429 `storage_full` with `usage`, no
-    `Retry-After`; a put a delete cancelled doesn't count), and 4 GiB stored
+    `Retry-After`; a put a delete cancelled doesn't count), and 10 GiB stored
     a rolling day, then counts the put and reserves the size. Refused puts
     don't count. A rate's `Retry-After` waits for the minute buckets that
     hold enough of it to age out, not just the oldest.
@@ -2307,10 +2307,15 @@ iCloud and Google Drive; each device uses exactly one. Code in
     are `photos_disabled`, never `disabled`, and the status says `photos:
     false`; list, delete and usage read the index and keep working, and the
     rest of Cloud Sync carries on. Delete and usage always work.
-  - **Limits** (`SYNC_PHOTO_LIMITS`): 25 MiB a blob, 2,000,000,000 bytes an
-    account (`SYNC_PHOTO_LIMIT_BYTES` overrides it; locally `node
-    scripts/verify/dev.mjs up --photo-limit-bytes 2000`), 20,000 live photos,
-    20,000 puts and 4 GiB stored and 50,000 gets an account a rolling day. Put
+  - **Limits** (`SYNC_PHOTO_LIMITS`): 25 MiB a blob; storage by plan
+    (witness-work ADR 0062), 200,000,000 bytes a free account and
+    5,000,000,000 a Supporter's (`photoLimitFor` in `sync.ts` reads the
+    cached Supporter status on every photo route and passes the limit to the
+    DO; when the status can't be read, the Supporter limit;
+    `SYNC_PHOTO_LIMIT_BYTES` and `SYNC_PHOTO_SUPPORTER_LIMIT_BYTES` override
+    them; locally `node scripts/verify/dev.mjs up --photo-limit-bytes 2000`
+    sets the free one); 20,000 live photos, 20,000 puts and 10 GiB stored and
+    50,000 gets an account a rolling day. Put
     counts in the Buddies photo-upload edge tier (`blob/put`, 60/min), the
     rest in the read tier. Hits log `buddies: limit hit {op:
     'sync/photos/put', limit}`.

@@ -9,6 +9,8 @@ export type GroupedListProps = {
 
   header?: ReactNode
 
+  banner?: ReactNode
+
   editing?: boolean
   testID?: string
 }

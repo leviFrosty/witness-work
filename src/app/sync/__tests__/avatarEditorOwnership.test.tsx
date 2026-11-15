@@ -67,6 +67,14 @@ vi.mock('expo-image-picker', () => ({
   })),
 }))
 vi.mock('expo-sharing', () => ({ shareAsync: vi.fn() }))
+vi.mock('@/lib/photoEncoding', () => ({
+  avatarPhotoEncoding: () => ({
+    maxSide: null,
+    quality: 0.9,
+    optimized: false,
+  }),
+  resizeToFit: () => null,
+}))
 vi.mock('expo-media-library', () => ({
   requestPermissionsAsync: vi.fn(),
   Asset: { create: vi.fn() },

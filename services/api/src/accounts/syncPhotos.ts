@@ -5,7 +5,7 @@ import { readBlobBody } from '../buddies/envelope'
 import { buddiesErrorResponse } from '../buddies/errorResponse'
 import { readPlainJson } from './auth'
 import { guarded } from './signed'
-import { caller, refuseUnentitled, syncIndex } from './sync'
+import { caller, photoLimitFor, refuseUnentitled, syncIndex } from './sync'
 import {
   SYNC_ETAG_PATTERN,
   SYNC_HEADERS,
@@ -131,7 +131,14 @@ const putPhoto = async (
     return buddiesErrorResponse('bad_request')
 
   const index = syncIndex(c.env, accountId)
-  const begun = await index.beginPhotoPut({ accountId, name, size, sha256, meta })
+  const begun = await index.beginPhotoPut({
+    accountId,
+    name,
+    size,
+    sha256,
+    meta,
+    limit: await photoLimitFor(c.env, accountId),
+  })
   if (!begun.ok)
     return buddiesErrorResponse(begun.error, {
       retryAfterSeconds: begun.retryAfterSeconds,
@@ -168,6 +175,8 @@ const putPhoto = async (
       name,
       reservation,
       exceptSlot: slot,
+      // Read again: a plan can end while the body uploads.
+      limit: await photoLimitFor(c.env, accountId),
     })
     answered = true
     if (!committed.ok)
@@ -213,7 +222,10 @@ const handleList = guarded('sync/photos/list', async (c) => {
   const cursor = body.cursor ?? null
   if (cursor !== null && !isSyncPhotoName(cursor))
     return buddiesErrorResponse('bad_request')
-  const page = await syncIndex(c.env, accountId).listPhotos({ cursor })
+  const page = await syncIndex(c.env, accountId).listPhotos({
+    cursor,
+    limit: await photoLimitFor(c.env, accountId),
+  })
   return c.json({ ok: true, ...page })
 })
 
@@ -282,17 +294,24 @@ const handleDelete = guarded('sync/photos/delete', async (c) => {
     accountId,
     names: all ? null : [...new Set(names as string[])],
     exceptSlot: slot,
+    limit: await photoLimitFor(c.env, accountId),
   })
   return c.json({ ok: true, usage })
 })
 
-/** `GET photos/usage`: the account's live photos' size and number, and its limit. */
+/**
+ * `GET photos/usage`: the account's live photos' size and number, and its
+ * limit, which follows its plan (witness-work ADR 0062).
+ */
 const handleUsage = guarded('sync/photos/usage', async (c) => {
   const off = unavailableHere(c.env, false)
   if (off) return off
   const who = await caller(c, 'read')
   if ('refusal' in who) return who.refusal
-  const usage = await syncIndex(c.env, who.account.accountId).photoUsage()
+  const { accountId } = who.account
+  const usage = await syncIndex(c.env, accountId).photoUsage({
+    limit: await photoLimitFor(c.env, accountId),
+  })
   return c.json({ ok: true, usage })
 })
 

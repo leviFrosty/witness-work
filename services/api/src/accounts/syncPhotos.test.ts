@@ -7,6 +7,7 @@ import { resetSyncEntitlementCache } from './sync'
 import { resetSessionCapabilitiesCache } from './sessionStore'
 import { photoPutReservationMs, SYNC_LIMITS, SYNC_PHOTO_LIMITS } from './syncContracts'
 import { accountSupporterStatus } from './supporter'
+import { RevenueCatError } from '../revenuecat'
 
 vi.mock('cloudflare:workers', () => ({
   DurableObject: class {
@@ -37,7 +38,8 @@ const START = Date.UTC(2026, 9, 19, 12)
 const SECOND = 1_000
 const MINUTE = 60 * SECOND
 const DAY = 24 * 60 * MINUTE
-const LIMIT = 2_000_000_000
+const LIMIT = 200_000_000
+const SUPPORTER_LIMIT = 5_000_000_000
 const app = createAccountsRoutes()
 const supporterStatus = vi.mocked(accountSupporterStatus)
 
@@ -805,7 +807,7 @@ describe('storage limit', () => {
     })
   })
 
-  it('uses 2,000,000,000 bytes unless SYNC_PHOTO_LIMIT_BYTES is a positive integer', async () => {
+  it('uses 200,000,000 bytes unless SYNC_PHOTO_LIMIT_BYTES is a positive integer', async () => {
     const s = await session()
     for (const value of ['', 'abc', '-5', '0', '1.5'] as const) {
       h.env.SYNC_PHOTO_LIMIT_BYTES = value
@@ -813,6 +815,68 @@ describe('storage limit', () => {
     }
     h.env.SYNC_PHOTO_LIMIT_BYTES = '5000000'
     expect((await usage(s)).limit).toBe(5_000_000)
+  })
+
+  describe('Supporter storage (ADR 0062)', () => {
+    const supporting = () =>
+      supporterStatus.mockResolvedValue({
+        supporter: true,
+        expiresAt: null,
+        customers: 1,
+      })
+
+    it('gives a Supporter 5,000,000,000 bytes in every answer', async () => {
+      supporting()
+      const s = await session()
+      expect(await usage(s)).toEqual({ bytes: 0, count: 0, limit: SUPPORTER_LIMIT })
+      const stored = await put(s, await name(), randomBytes(700))
+      expect(stored.body).toMatchObject({ usage: { limit: SUPPORTER_LIMIT } })
+      expect((await list(s)).body).toMatchObject({ usage: { limit: SUPPORTER_LIMIT } })
+      expect((await del(s, { all: true })).body).toMatchObject({
+        usage: { limit: SUPPORTER_LIMIT },
+      })
+    })
+
+    it('stores past the free limit only for a Supporter', async () => {
+      h.env.SYNC_PHOTO_LIMIT_BYTES = '1000'
+      h.env.SYNC_PHOTO_SUPPORTER_LIMIT_BYTES = '3000'
+      const s = await session()
+      await put(s, await name(), randomBytes(800))
+      expect((await put(s, await name(), randomBytes(800))).body).toMatchObject({
+        code: 'storage_full',
+        usage: { bytes: 800, limit: 1000 },
+      })
+      supporting()
+      resetSyncEntitlementCache()
+      const more = await put(s, await name(), randomBytes(800))
+      expect(more.status).toBe(200)
+      expect(more.body).toMatchObject({ usage: { bytes: 1600, limit: 3000 } })
+    })
+
+    it('never gives a Supporter less than the free limit', async () => {
+      supporting()
+      h.env.SYNC_PHOTO_LIMIT_BYTES = '9000000000'
+      h.env.SYNC_PHOTO_SUPPORTER_LIMIT_BYTES = '1000'
+      const s = await session()
+      expect((await usage(s)).limit).toBe(9_000_000_000)
+    })
+
+    it('answers the Supporter limit while RevenueCat is unreachable', async () => {
+      supporterStatus.mockRejectedValue(new RevenueCatError('down'))
+      const s = await session()
+      expect((await usage(s)).limit).toBe(SUPPORTER_LIMIT)
+      expect((await put(s, await name(), randomBytes(700))).status).toBe(200)
+    })
+
+    it('still deletes when the plan read fails', async () => {
+      const s = await session()
+      await put(s, await name(), randomBytes(700))
+      supporterStatus.mockRejectedValue(new Error('d1 down'))
+      resetSyncEntitlementCache()
+      const deleted = await del(s, { all: true })
+      expect(deleted.status).toBe(200)
+      expect(deleted.body).toMatchObject({ usage: { bytes: 0, limit: SUPPORTER_LIMIT } })
+    })
   })
 })
 

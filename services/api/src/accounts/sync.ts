@@ -46,6 +46,7 @@ import {
   parseIfMatch,
   sealedChangeBytes,
   syncObjectKey,
+  syncPhotoLimitBytes,
 } from './syncContracts'
 import type { SyncCaller, SyncChangeFailure } from './syncDO'
 import {
@@ -199,6 +200,27 @@ export const refuseUnentitled = async (
     if (error instanceof RevenueCatError)
       return buddiesErrorResponse('unavailable')
     throw error
+  }
+}
+
+/**
+ * The account's photo storage limit (witness-work ADR 0062): a Supporter's or
+ * a free account's, from the same cached Supporter answer as the entitlement.
+ * When the plan can't be read (RevenueCat or D1 trouble) it's the Supporter
+ * limit, so an outage never tells a Supporter their storage is full and never
+ * fails a delete; at worst a free account stores past its limit until the
+ * outage ends, and keeps those photos.
+ */
+export const photoLimitFor = async (
+  env: Environment,
+  accountId: string
+): Promise<number> => {
+  try {
+    return syncPhotoLimitBytes(env, await cachedSupporter(env, accountId))
+  } catch (error) {
+    if (!(error instanceof RevenueCatError))
+      captureFailure(error, 'sync photo plan read')
+    return syncPhotoLimitBytes(env, true)
   }
 }
 

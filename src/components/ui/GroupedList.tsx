@@ -41,6 +41,7 @@ export function GroupedList({
   children,
   title,
   header,
+  banner,
   testID,
 }: GroupedListProps) {
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
@@ -73,6 +74,7 @@ export function GroupedList({
           </Text>
         ) : null}
         {header ? <View style={{ alignItems: 'center' }}>{header}</View> : null}
+        {banner}
         {children}
       </ScrollView>
     </View>

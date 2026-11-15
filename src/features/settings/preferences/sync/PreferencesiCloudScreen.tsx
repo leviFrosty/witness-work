@@ -35,6 +35,7 @@ import { isKnownOffline, useOnline } from '@/lib/http/online'
 import { connectGoogleDriveFromUser } from '@/app/sync/googleDriveConnect'
 import GoogleDriveAccountSection from '@/features/settings/components/sync/GoogleDriveAccountSection'
 import CloudSyncPhotoStorageSection from '@/features/settings/components/sync/CloudSyncPhotoStorageSection'
+import PhotoStorageAlmostFullCard from '@/features/settings/components/sync/PhotoStorageAlmostFullCard'
 import { ICloudAccount, iCloudSync } from '@/app/sync/iCloudSync'
 import FirstEnableSheet, {
   FirstEnableChoice,
@@ -1016,6 +1017,8 @@ const PreferencesiCloudScreenInner = () => {
             </Text>
           )}
         </Section>
+
+        <PhotoStorageAlmostFullCard source='sync' />
 
         <CloudSyncPhotoStorageSection />
 

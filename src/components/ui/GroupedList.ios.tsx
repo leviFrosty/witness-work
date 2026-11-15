@@ -41,6 +41,7 @@ import {
   frame,
   labelsHidden,
   listRowBackground,
+  listRowInsets,
   listStyle,
   opacity,
   pickerStyle,
@@ -137,6 +138,7 @@ export function GroupedList({
   children,
   title,
   header,
+  banner,
   editing,
   testID,
 }: GroupedListProps) {
@@ -194,6 +196,21 @@ export function GroupedList({
                     <View>{header}</View>
                   </RNHostView>
                   <Spacer />
+                </HStack>
+              }
+            >
+              {null}
+            </Section>
+          ) : null}
+          {banner ? (
+            <Section
+              header={
+                <HStack
+                  modifiers={[listRowInsets({ leading: 0, trailing: 0 })]}
+                >
+                  <RNHostView matchContents={{ vertical: true }}>
+                    <View>{banner}</View>
+                  </RNHostView>
                 </HStack>
               }
             >

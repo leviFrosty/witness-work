@@ -362,6 +362,15 @@ const photoView = (row: SyncPhotoView): SyncPhotoView => ({
 })
 
 /** `?, ?, …` for `count` bindings. */
+/**
+ * The limit the Worker passed (it reads the account's plan; witness-work ADR
+ * 0062), or the free one: a Worker from before plans passes none.
+ */
+const photoLimit = (env: Environment, passed: number | undefined): number =>
+  passed != null && Number.isSafeInteger(passed) && passed > 0
+    ? passed
+    : syncPhotoLimitBytes(env, false)
+
 const placeholders = (count: number): string =>
   Array.from({ length: count }, () => '?').join(', ')
 
@@ -877,9 +886,11 @@ export class AccountSync extends DurableObject<Environment> {
     size: number
     sha256: string
     meta: string
+    /** The account's storage limit; the Worker knows its plan, this doesn't. */
+    limit?: number
   }): Promise<BeginSyncPhotoPut> {
     const now = Date.now()
-    const limit = syncPhotoLimitBytes(this.env)
+    const limit = photoLimit(this.env, args.limit)
     return this.ctx.storage.transactionSync((): BeginSyncPhotoPut => {
       this.#ensure(args.accountId)
       this.#dropExpiredPhotoReservations(now)
@@ -954,9 +965,10 @@ export class AccountSync extends DurableObject<Environment> {
     name: string
     reservation: string
     exceptSlot?: string | null
+    limit?: number
   }): Promise<CommitSyncPhotoPut> {
     const now = Date.now()
-    const limit = syncPhotoLimitBytes(this.env)
+    const limit = photoLimit(this.env, args.limit)
     const result = this.ctx.storage.transactionSync(
       (): CommitSyncPhotoPut & { seq?: number } => {
         this.#ensure(args.accountId)
@@ -1039,12 +1051,12 @@ export class AccountSync extends DurableObject<Environment> {
   }
 
   /** Live photos by name, a page at a time, and the usage. */
-  async listPhotos(args: { cursor: string | null }): Promise<{
+  async listPhotos(args: { cursor: string | null; limit?: number }): Promise<{
     photos: SyncPhotoListed[]
     cursor: string | null
     usage: SyncPhotoUsage
   }> {
-    const limit = syncPhotoLimitBytes(this.env)
+    const limit = photoLimit(this.env, args.limit)
     if (!this.#ready())
       return { photos: [], cursor: null, usage: this.#photoUsage(limit) }
     const page = SYNC_PHOTO_LIMITS.listPage
@@ -1099,8 +1111,9 @@ export class AccountSync extends DurableObject<Environment> {
     accountId: string
     names: string[] | null
     exceptSlot?: string | null
+    limit?: number
   }): Promise<{ usage: SyncPhotoUsage }> {
-    const limit = syncPhotoLimitBytes(this.env)
+    const limit = photoLimit(this.env, args.limit)
     if (!this.#ready()) return { usage: this.#photoUsage(limit) }
     const now = Date.now()
     const seq = this.ctx.storage.transactionSync(() => {
@@ -1114,8 +1127,8 @@ export class AccountSync extends DurableObject<Environment> {
     return { usage: this.#photoUsage(limit) }
   }
 
-  async photoUsage(): Promise<SyncPhotoUsage> {
-    return this.#photoUsage(syncPhotoLimitBytes(this.env))
+  async photoUsage(args?: { limit?: number }): Promise<SyncPhotoUsage> {
+    return this.#photoUsage(photoLimit(this.env, args?.limit))
   }
 
   // --- The Cloud Sync request ---------------------------------------------

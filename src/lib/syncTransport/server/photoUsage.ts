@@ -13,6 +13,9 @@ export const useCloudSyncPhotoUsage = create<PhotoUsageState>(() => ({
   fullAt: null,
 }))
 
+export const FREE_PHOTO_STORAGE_BYTES = 200_000_000
+export const SUPPORTER_PHOTO_STORAGE_BYTES = 5_000_000_000
+
 const roomListeners = new Set<() => void>()
 
 export function recordPhotoUsage(
@@ -24,7 +27,9 @@ export function recordPhotoUsage(
     useCloudSyncPhotoUsage.setState({ usage, fullAt: usage })
     return
   }
-  const freed = fullAt !== null && usage.bytes < fullAt.bytes
+  const freed =
+    fullAt !== null &&
+    (usage.bytes < fullAt.bytes || usage.limit > fullAt.limit)
 
   const stored = fullAt !== null && source === 'put'
   useCloudSyncPhotoUsage.setState({

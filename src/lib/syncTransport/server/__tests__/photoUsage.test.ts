@@ -38,4 +38,14 @@ describe('Cloud Sync photo usage', () => {
     expect(room).not.toHaveBeenCalled()
     stop()
   })
+
+  it('retries when the limit grows, as when the account becomes a Supporter', () => {
+    const room = vi.fn()
+    const stop = onPhotoRoom(room)
+    recordPhotoUsage(at(990), 'full')
+    recordPhotoUsage({ bytes: 990, count: 1, limit: 5_000 }, 'usage')
+    expect(room).toHaveBeenCalledTimes(1)
+    expect(useCloudSyncPhotoUsage.getState().fullAt).toBeNull()
+    stop()
+  })
 })

@@ -3183,7 +3183,7 @@
   "dataProtectionSubtext": "Change this anytime in Settings.",
   "onboardingCloudSync_titleOn": "Cloud Sync is on",
   "onboardingCloudSync_titleOff": "Cloud Sync is off",
-  "onboardingCloudSync_desc": "Your records stay the same on all your devices, on iPhone, Android and the web. They are **end-to-end encrypted**, so only your devices can read them.",
+  "onboardingCloudSync_desc": "Your records sync live across iPhone, Android and the web, and are kept safe in the cloud. If you lose your phone, you can pick up right where you left off. Everything is **end-to-end encrypted**, so only you can read it.",
   "onboardingCloudSync_descOff": "Your records stay only on this device until you turn Cloud Sync on.",
   "onboardingCloudSync_subtext": "Change this anytime in Settings → Sync.",
   "dataProtectionTurnOnTitle": "Turn on data protection mode?",

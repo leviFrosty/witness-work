@@ -92,6 +92,7 @@ const HAT_RISE: Readonly<Record<string, number>> = {
   cuckoo: 19,
   fig: 34,
   carousel: 29,
+  meadow: 20,
   balloon: 38,
 }
 

@@ -10,6 +10,7 @@ import {
   carouselBulbs,
   FISH_JUMP_MS,
   hatRoomDim,
+  MEADOW,
   trainAngle,
   trainSpot,
   type HatMoment,
@@ -44,6 +45,13 @@ const FX = rgbPalette({
   leafGreen: '#6fb24e',
   leafAmber: '#d98f2e',
   sprout: '#b8ec7c',
+  wingA: '#f6c43a',
+  wingB: '#5f9ee0',
+  wingC: '#ef7b9b',
+  body: '#4a3a2a',
+  firefly: '#f6f0a0',
+  bloomA: '#ffffff',
+  bloomB: '#f6d55c',
 })
 
 const FAIR_LIGHTS = rgbPalette({
@@ -416,6 +424,98 @@ function drawNotes(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
   })
 }
 
+const WINGS_OPEN = ['ww.ww', 'wwbww', '.wbw.'] as const
+
+const WINGS_SHUT = ['.w.w.', '.wbw.', '..b..'] as const
+
+const BUTTERFLIES = [
+  { wing: FX.wingA, cx: 34, cy: 30, rx: 30, ry: 14, speed: 0.00042, phase: 0 },
+  {
+    wing: FX.wingB,
+    cx: 120,
+    cy: 40,
+    rx: 34,
+    ry: 16,
+    speed: 0.00036,
+    phase: 2.1,
+  },
+  { wing: FX.wingC, cx: 80, cy: 22, rx: 48, ry: 10, speed: 0.0003, phase: 4.2 },
+] as const
+
+function drawButterflies(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  const sincePat = m.tMs - m.patMs
+  const gather =
+    sincePat >= 0 && sincePat < MEADOW.playMs
+      ? Math.sin((sincePat / MEADOW.playMs) * Math.PI)
+      : 0
+  const [hx, hy] = at(place, 0, 22)
+  BUTTERFLIES.forEach((b, i) => {
+    const a = m.tMs * b.speed + b.phase
+    let x = b.cx + b.rx * Math.sin(a) + 3 * Math.sin(a * 5.3)
+    let y = b.cy + b.ry * Math.sin(a * 1.7) + 2 * Math.sin(a * 7.1)
+    if (gather > 0) {
+      const ring = m.tMs * 0.004 + (i * Math.PI * 2) / 3
+      x += (hx + 9 * Math.cos(ring) - x) * gather
+      y += (hy + 4 * Math.sin(ring) - y) * gather
+    }
+    const open = Math.floor(m.tMs / (gather > 0 ? 90 : 160) + i) % 2 === 0
+    const map = open ? WINGS_OPEN : WINGS_SHUT
+    const left = Math.round(x) - 2
+    const top = Math.round(y) - 1
+    map.forEach((row, j) => {
+      for (let k = 0; k < row.length; k++) {
+        if (row[k] === '.') continue
+        blend(buf, left + k, top + j, row[k] === 'b' ? FX.body : b.wing, 1)
+      }
+    })
+  })
+}
+
+function drawFireflies(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  for (let i = 0; i < 4; i++) {
+    const a = m.tMs * 0.0007 + i * 1.7
+    const [x, y] = at(
+      place,
+      16 * Math.sin(a) * (i % 2 ? 1 : -1),
+      10 + 6 * Math.sin(a * 1.3 + i)
+    )
+    const glow = 0.5 + 0.5 * Math.sin(m.tMs * 0.003 + i * 2)
+    if (glow < 0.25) continue
+    blend(buf, x, y, FX.firefly, glow)
+    for (const [dx, dy] of [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ])
+      blend(buf, x + dx, y + dy, FX.firefly, glow * 0.5)
+  }
+}
+
+const BLOOM_MS = 1600
+
+function drawBloom(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  const since = m.tMs - m.coinsMs
+  if (since < 0 || since >= BLOOM_MS) return
+  const colors =
+    m.season === 'winter'
+      ? [FX.snow, FX.white]
+      : m.season === 'spring'
+        ? [FX.petal, FX.bloomA]
+        : m.season === 'autumn'
+          ? [FX.leafAmber, FX.bloomB]
+          : [FX.bloomA, FX.bloomB]
+  const fade = Math.min(1, (1 - since / BLOOM_MS) * 2)
+  for (let i = 0; i < 10; i++) {
+    const vd = ((i * 7) % 11) / 10 - 0.5
+    const vu = 0.03 + ((i * 5) % 7) * 0.004
+    const u = 6 + vu * since - 0.00003 * since * since
+    const d = vd * 0.03 * since + Math.sin(since * 0.006 + i) * 1.2
+    const [x, y] = at(place, d, u)
+    blend(buf, x, y, colors[i % 2], fade)
+  }
+}
+
 const COIN_HATS: ReadonlySet<BigHatId> = new Set([
   'mailbox',
   'bowl',
@@ -423,6 +523,7 @@ const COIN_HATS: ReadonlySet<BigHatId> = new Set([
   'train',
   'dome',
   'fig',
+  'meadow',
 ])
 
 const COIN_TOSS = { count: 5, staggerMs: 100, flightMs: 900 }
@@ -514,6 +615,11 @@ export function drawHatRoom(
       }
       break
     }
+    case 'meadow':
+      if (isDarkTime(m.time)) drawFireflies(buf, m, place)
+      else if (m.season !== 'winter') drawButterflies(buf, m, place)
+      drawBloom(buf, m, place)
+      break
     case 'cloud':
       drawWeather(buf, m, place)
       break

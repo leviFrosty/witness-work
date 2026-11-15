@@ -32,7 +32,7 @@ import {
 import { PLAIN_HAT_SPECS, type PlainHatId } from './hatsPlain'
 import type { TimeOfDay } from './room/window'
 import { idlePose, petSprite } from './sprite'
-import type { PetSpeciesId } from './types'
+import type { PetFace, PetSpeciesId } from './types'
 
 export interface HatLife {
   readonly growth?: number
@@ -812,17 +812,32 @@ function drawCuckoo(buf: PixelBuffer, m: HatMoment) {
   put(buf, Math.floor(m.tMs / 500) % 2 ? -1 : 1, 0.8, INK.brass)
 }
 
-const minis = createLru<PixelBuffer>(32)
+const minis = createLru<PixelBuffer>(64)
 
-function miniOf(species: PetSpeciesId, coat: string, bob: number): PixelBuffer {
-  return minis.getOrCreate(`${species}|${coat}|${bob}`, () => {
+interface MiniPose {
+  readonly bob: number
+  readonly face?: PetFace
+  readonly blink?: boolean
+  readonly lie?: boolean
+  readonly flip?: boolean
+}
+
+function miniOf(
+  species: PetSpeciesId,
+  coat: string,
+  pose: MiniPose
+): PixelBuffer {
+  const { bob, face = 'happy', blink = false, lie = false, flip = false } = pose
+  const key = [species, coat, bob, face, blink, lie, flip].join('|')
+  return minis.getOrCreate(key, () => {
     const src = petSprite(species, coat, {
       ...idlePose('happy', 1000, 1),
+      face,
       bob,
       tail: 0,
-      blink: false,
-      flip: false,
-      lie: false,
+      blink,
+      flip,
+      lie,
       mouthClosing: false,
     })
     const side = Math.floor(src.width / 2)
@@ -1206,6 +1221,93 @@ function drawCarousel(buf: PixelBuffer, m: HatMoment) {
   blit(buf, outlined(buf), 0, 0)
 }
 
+export const MEADOW = {
+  lion: -5,
+  lamb: 6,
+  ground: 4,
+  playMs: 1800,
+  wakeMs: 6000,
+  coinsMs: 1200,
+} as const
+
+const DOZE_COLOR = rgb('#e4ecff')
+
+const DOZE: readonly string[] = ['xxxx', '..x.', '.x..', 'xxxx']
+
+function drawDoze(buf: PixelBuffer, t: number) {
+  const lifeMs = 2400
+  for (let i = 0; i < 2; i++) {
+    const age = (t + i * (lifeMs / 2)) % lifeMs
+    const [x, y] = bigHatPoint(
+      -3 + age * 0.002 + Math.sin(age * 0.003) * 1.2,
+      19 + age * 0.005
+    )
+    if (age > lifeMs * 0.8 && Math.floor(age / 120) % 2) continue
+    DOZE.forEach((row, j) => {
+      for (let k = 0; k < row.length; k++)
+        if (row[k] === 'x') setPixel(buf, x + k, y + j, DOZE_COLOR)
+    })
+  }
+}
+
+export function meadowAsleep(m: HatMoment): boolean {
+  const sincePat = m.tMs - m.patMs
+  return isDarkTime(m.time) && !(sincePat >= 0 && sincePat < MEADOW.wakeMs)
+}
+
+export function meadowHops(
+  m: HatMoment
+): readonly [lion: number, lamb: number] {
+  const sincePat = m.tMs - m.patMs
+  const sinceCoins = m.tMs - m.coinsMs
+  if (sinceCoins >= 0 && sinceCoins < MEADOW.coinsMs) {
+    const hop = hatHop(sinceCoins) + hatHop(sinceCoins - 600)
+    return [hop, hop]
+  }
+  if (sincePat >= 0 && sincePat < MEADOW.playMs)
+    return [
+      hatHop(sincePat - 300) + hatHop(sincePat - 1100),
+      hatHop(sincePat) + hatHop(sincePat - 700),
+    ]
+  return [0, 0]
+}
+
+const meadowCoat = (m: HatMoment, species: PetSpeciesId) =>
+  m.species === species ? m.coat : 'default'
+
+function drawMeadow(buf: PixelBuffer, m: HatMoment) {
+  const t = m.tMs
+  blit(buf, frameOf(`meadow/${m.season}`), 0, 0)
+  const asleep = meadowAsleep(m)
+  const [lionHop, lambHop] = meadowHops(m)
+  const sincePat = t - m.patMs
+  const sinceCoins = t - m.coinsMs
+  const excited =
+    (sincePat >= 0 && sincePat < MEADOW.playMs) ||
+    (sinceCoins >= 0 && sinceCoins < MEADOW.coinsMs)
+  const nuzzle = !asleep && !excited && t % 7000 > 5600
+  const lion = miniOf('lion', meadowCoat(m, 'lion'), {
+    bob: asleep ? Math.floor(t / 1400) % 2 : Math.floor(t / 560) % 2,
+    face: asleep ? 'nap' : excited ? 'joy' : 'happy',
+    blink: !asleep && t > 0 && t % 3400 < 150,
+  })
+  const lamb = miniOf('lamb', meadowCoat(m, 'lamb'), {
+    bob: asleep ? Math.floor(t / 1400 + 1) % 2 : Math.floor(t / 560 + 1) % 2,
+    face: asleep ? 'nap' : excited || nuzzle ? 'joy' : 'happy',
+    blink: !asleep && t > 0 && (t + 1700) % 3400 < 150,
+    flip: true,
+  })
+  blit(buf, lion, MEADOW.lion, -MEADOW.ground - lionHop)
+  blit(
+    buf,
+    lamb,
+    MEADOW.lamb - (asleep ? 2 : nuzzle ? 1 : 0),
+    -MEADOW.ground - lambHop + (asleep ? 1 : 0)
+  )
+  blit(buf, frameOf(`meadow/${m.season}/front`), 0, 0)
+  if (asleep) drawDoze(buf, t)
+}
+
 const SCOPE = {
   d: 1,
   u: 10,
@@ -1331,7 +1433,7 @@ function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
     case 'mini':
       blit(
         buf,
-        miniOf(m.species, m.coat, Math.floor(t / 560 + 1) % 2),
+        miniOf(m.species, m.coat, { bob: Math.floor(t / 560 + 1) % 2 }),
         0,
         -hatHop(sincePat)
       )
@@ -1356,6 +1458,9 @@ function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
     }
     case 'fig':
       drawFig(buf, m)
+      break
+    case 'meadow':
+      drawMeadow(buf, m)
       break
     default:
       blit(buf, plainHat(hat as PlainHatId), 0, 0)

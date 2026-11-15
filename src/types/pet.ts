@@ -249,9 +249,10 @@ export type LampId = (typeof LAMP_IDS)[number]
 export const RARE_HAT_IDS = [
   'bowl',
   'carousel',
+  'fig',
   'train',
   'dome',
-  'fig',
+  'meadow',
 ] as const
 export type RareHatId = (typeof RARE_HAT_IDS)[number]
 
@@ -475,9 +476,10 @@ export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:balloon',
   'hat:bowl',
   'hat:carousel',
+  'hat:fig',
   'hat:train',
   'hat:dome',
-  'hat:fig',
+  'hat:meadow',
 ]
 
 const itemsOf = <P extends UnlockableRoomPart>(

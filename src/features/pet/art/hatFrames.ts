@@ -778,4 +778,59 @@ export const FIG_STAGES = 6
   }
 })
 
+type MeadowLook = {
+  readonly grass: Tones
+  readonly blade: string
+  readonly flowers: readonly string[]
+}
+const MEADOW_LOOK: Readonly<Record<Season, MeadowLook>> = {
+  spring: {
+    grass: ['#8fd06a', '#6fb24e', '#b0e48a'],
+    blade: '#5aa043',
+    flowers: ['#ffd3e0', '#ffffff', '#c9a8f0', '#ffd3e0'],
+  },
+  summer: {
+    grass: ['#79b356', '#5e9440', '#97cc74'],
+    blade: '#4f8a36',
+    flowers: ['#ffffff', '#f6d55c', '#ffffff', '#f6d55c'],
+  },
+  autumn: {
+    grass: ['#c9b04e', '#a88f32', '#e0c86a'],
+    blade: '#9a7f2a',
+    flowers: ['#e0703a', '#d98f2e', '#c4602a', '#f1b45a'],
+  },
+  winter: {
+    grass: ['#f4f7fb', '#d5dde8', '#ffffff'],
+    blade: '#8aa0a8',
+    flowers: [],
+  },
+}
+const MEADOW_FLOWERS = [
+  [-13, 4],
+  [-10, 5],
+  [12, 5],
+  [14, 3],
+] as const
+const MEADOW_BLADES = [-13, -11, -9, -4, -1, 2, 5, 8, 10, 13] as const
+;(Object.keys(MEADOW_LOOK) as Season[]).forEach((season) => {
+  const look = MEADOW_LOOK[season]
+  specs[`meadow/${season}`] = {
+    shapes: [
+      ell(0, 1.6, 15.2, 2.2, ['#8a6a45', '#6d5230', '#a98a62']),
+      poly(domeOf(0, 1.4, 15, 5.4), look.grass),
+    ],
+    feats: look.flowers.flatMap((c, i) => {
+      const [d, u] = MEADOW_FLOWERS[i]
+      return [feat(d, u, c), feat(d, u - 1, look.blade)]
+    }),
+  }
+  specs[`meadow/${season}/front`] = {
+    shapes: [],
+    feats: MEADOW_BLADES.flatMap((d, i) => [
+      feat(d, 1 + (i % 2), look.blade),
+      feat(d + (i % 3 === 0 ? 1 : 0), 2 + (i % 2), look.grass[0]),
+    ]),
+  }
+})
+
 export const HAT_FRAME_SPECS: Readonly<Record<string, ShapeSpec>> = specs

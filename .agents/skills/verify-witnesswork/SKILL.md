@@ -217,7 +217,7 @@ Proof standards:
 - Capture the action and the resulting state: a settled diff or `wait text`, plus a screenshot. A screenshot alone isn't proof of an interaction.
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
-- Capture in dark mode. Right after `wwv up`, run `wwv ad settings appearance dark` if the device isn't already dark; in a web spec, `test.use({ colorScheme: 'dark' })`. Don't shoot screens in both light and dark. Switch to light (`wwv ad settings appearance light`) only for a color that differs between the two, capture just that screen, then switch back.
+- Capture in dark mode. Right after `wwv up`, run `wwv ad settings appearance dark` if the device isn't already dark; in a web spec, `test.use({ colorScheme: 'dark' })`. Send only dark mode screenshots, even when a change touches colors. Switch to light (`wwv ad settings appearance light`) only when the user explicitly asks about light mode, capture just the screens they asked about, then switch back.
 - When a change touches a card, section, sheet or control shape, or its padding, screenshot every screen that uses it and check the corners: no title, row or control crowding a rounded corner or the top edge (see Rounded containers in `agents.md`).
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
 - Report what you verified, on which devices, the artifact paths, what you couldn't verify, and which devices you skipped on purpose, with the reason.

@@ -105,17 +105,20 @@ fi
 
 # Prints "id status conclusion createdAt url" for the newest deploy of this
 # environment that has the API's last change and hasn't failed.
+# gh gives a run that hasn't finished an empty conclusion. `read` would skip
+# the empty field and shift createdAt and url one place left, so jq writes
+# "none" for it.
 find_run() {
   local id sha status conclusion created url
   while read -r id sha status conclusion created url; do
     [ -n "$id" ] || continue
     [ "$status" = completed ] && [ "$conclusion" != success ] && continue
     contains_api "$sha" || continue
-    echo "$id $status ${conclusion:-none} $created $url"
+    echo "$id $status $conclusion $created $url"
     return 0
   done < <(gh run list -R "$REPO" --workflow "$WORKFLOW" --branch main --limit 30 \
     --json databaseId,headSha,status,conclusion,createdAt,url,displayTitle \
-    --jq ".[] | select(.displayTitle == \"$RUN_TITLE\") | \"\(.databaseId) \(.headSha) \(.status) \(.conclusion) \(.createdAt) \(.url)\"")
+    --jq ".[] | select(.displayTitle == \"$RUN_TITLE\") | \"\(.databaseId) \(.headSha) \(.status) \(if (.conclusion // \"\") == \"\" then \"none\" else .conclusion end) \(.createdAt) \(.url)\"")
   return 1
 }
 

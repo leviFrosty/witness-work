@@ -8,7 +8,10 @@ import {
 } from 'react-native'
 import * as Crypto from 'expo-crypto'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { KeyboardStickyView } from 'react-native-keyboard-controller'
+import {
+  KeyboardStickyView,
+  useKeyboardState,
+} from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   ArrowLeftRight as ArrowLeftRightIcon,
@@ -124,6 +127,9 @@ function StreetScreen({ route, navigation }: Props) {
   )
   const [dockHeight, setDockHeight] = useState(0)
   const [description, setDescription] = useState<string | null>(null)
+  const keyboardHeight = useKeyboardState((state) =>
+    state.isVisible ? state.height : 0
+  )
 
   useEffect(() => {
     if (!street) navigation.popTo('TerritoryDetails', { territoryId })
@@ -179,6 +185,9 @@ function StreetScreen({ route, navigation }: Props) {
   const upNext = nextStreet(territory, street.id)
   const docked = recording && (!worked || typed !== null)
   const access = territoryAccess(territory)
+  const dockInset = docked
+    ? dockHeight + Math.max(0, keyboardHeight - insets.bottom)
+    : 0
 
   const undoable = (shown: Omit<DoorUndo, 'onPress'>) =>
     setUndo({ ...shown, before: street })
@@ -377,7 +386,7 @@ function StreetScreen({ route, navigation }: Props) {
       <ScrollView
         keyboardShouldPersistTaps='handled'
         contentContainerStyle={{ flexGrow: 1 }}
-        scrollIndicatorInsets={{ bottom: docked ? dockHeight : 0 }}
+        scrollIndicatorInsets={{ bottom: dockInset }}
       >
         <Pressable
           accessible={false}
@@ -390,7 +399,7 @@ function StreetScreen({ route, navigation }: Props) {
             style={{
               padding: inputLayout.horizontalPadding,
               paddingBottom:
-                (docked ? dockHeight : recording ? 0 : insets.bottom) + 30,
+                (docked ? dockInset : recording ? 0 : insets.bottom) + 30,
               gap: 20,
             }}
           >

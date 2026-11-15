@@ -284,7 +284,7 @@ const ptBR: LandingMessages = {
     items: [
       {
         title: 'Sem cadastro. Sem anúncios.',
-        body: 'Sua conta é anônima: sem e-mail, sem telefone e sem senha.',
+        body: 'Sua conta é pseudônima: sem e-mail, sem telefone e sem senha.',
       },
       {
         title: 'Guardado no seu dispositivo',

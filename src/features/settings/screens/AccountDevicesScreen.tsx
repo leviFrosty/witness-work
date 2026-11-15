@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RefreshControl, View } from 'react-native'
+import { Platform, RefreshControl, View } from 'react-native'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import {
@@ -19,6 +19,7 @@ import SettingsInputLayout from '@/features/settings/components/shared/SettingsI
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import LoadStatus from '@/features/settings/components/account/activity/LoadStatus'
+import AddDeviceSection from '@/features/settings/components/account/AddDeviceSection'
 import {
   type DeviceKind,
   deviceKind,
@@ -30,6 +31,7 @@ import {
 } from '@/features/settings/components/account/activity/loadState'
 import {
   type AccountActivityContext,
+  AccountNotSetUpError,
   loadAccountDevices,
   signOutAccountDevice,
 } from '@/app/account/accountActivity'
@@ -49,6 +51,8 @@ import { logger } from '@/lib/logger'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 type Loaded = { devices: AccountDevice[]; context: AccountActivityContext }
+
+const isWeb = Platform.OS === 'web'
 
 const ICONS: Record<DeviceKind, AppIcon> = {
   phone: SmartphoneIcon,
@@ -115,6 +119,11 @@ const AccountDevicesScreen = () => {
       })
       .catch((error: unknown) => {
         if (run !== latest.current) return
+        if (error instanceof AccountNotSetUpError) {
+          setLoaded(null)
+          setFailure(null)
+          return
+        }
         logger.warn('[account] listing devices failed', error)
         setFailure(loadFailure(error))
       })
@@ -193,13 +202,42 @@ const AccountDevicesScreen = () => {
     )
 
   const devices = loaded
-    ? [...loaded.devices]
-        .sort((a, b) => Number(b.current) - Number(a.current))
-        .map((device) => ({
-          device,
-          name: deviceTitle(device, loaded.context),
-        }))
+    ? loaded.devices.map((device) => ({
+        device,
+        name: deviceTitle(device, loaded.context),
+        icon: ICONS[deviceKind(device, loaded.context)],
+      }))
     : []
+  const current = devices.filter(({ device }) => device.current)
+  const others = devices.filter(({ device }) => !device.current)
+
+  const row = (
+    { device, name, icon }: (typeof devices)[number],
+    index: number,
+    group: { device: AccountDevice }[]
+  ) => (
+    <InputRowButton
+      key={device.sessionId}
+      leftIcon={icon}
+      label={name}
+      sublabel={[
+        !device.current &&
+          i18n.t('accountDevices_lastActive', {
+            when: formatRelative(device.lastActiveAt),
+          }),
+        signedIn(device, devices, name),
+        device.platform === 'web' &&
+          device.appVersion &&
+          i18n.t('accountDevices_version', {
+            version: device.appVersion,
+          }),
+      ]
+        .filter(Boolean)
+        .join(' · ')}
+      onPress={device.current ? undefined : () => signOut(device, name)}
+      lastInSection={index === group.length - 1}
+    />
+  )
   const showList = loaded != null && failure == null
 
   return (
@@ -218,47 +256,30 @@ const AccountDevicesScreen = () => {
             />
           }
         >
+          {!isWeb && <AddDeviceSection />}
           {showList ? (
-            <View style={{ gap: 5 }}>
-              <SectionTitle
-                text={i18n.t('accountDevices_section')}
-                info={i18n.t('accountDevices_info')}
-                alignWithIcons
-              />
-              <Section>
-                {devices.map(({ device, name }, index) => {
-                  return (
-                    <InputRowButton
-                      key={device.sessionId}
-                      leftIcon={ICONS[deviceKind(device, loaded.context)]}
-                      label={name}
-                      sublabel={[
-                        device.current
-                          ? i18n.t('accountDevices_thisDevice')
-                          : i18n.t('accountDevices_lastActive', {
-                              when: formatRelative(device.lastActiveAt),
-                            }),
-                        signedIn(device, devices, name),
-                        device.platform === 'web' &&
-                          device.appVersion &&
-                          i18n.t('accountDevices_version', {
-                            version: device.appVersion,
-                          }),
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                      onPress={
-                        device.current ? undefined : () => signOut(device, name)
-                      }
-                      lastInSection={index === devices.length - 1}
-                    />
-                  )
-                })}
-              </Section>
-              {devices.some(({ device }) => !device.current) && (
-                <SectionFooter text={i18n.t('accountDevices_footer')} />
+            <>
+              {current.length > 0 && (
+                <View style={{ gap: 5 }}>
+                  <SectionTitle
+                    text={i18n.t('accountDevices_thisDeviceSection')}
+                    alignWithIcons
+                  />
+                  <Section>{current.map(row)}</Section>
+                </View>
               )}
-            </View>
+              {others.length > 0 && (
+                <View style={{ gap: 5 }}>
+                  <SectionTitle
+                    text={i18n.t('accountDevices_section')}
+                    info={i18n.t('accountDevices_info')}
+                    alignWithIcons
+                  />
+                  <Section>{others.map(row)}</Section>
+                  <SectionFooter text={i18n.t('accountDevices_footer')} />
+                </View>
+              )}
+            </>
           ) : (
             <LoadStatus
               loading={loading && loaded == null}

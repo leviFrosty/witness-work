@@ -284,7 +284,7 @@ const bemZM: LandingMessages = {
     items: [
       {
         title: 'Tapali ukulembesha. Tapali amatangazo.',
-        body: 'Akaunti yenu taishibikwa ni nani: tapali email, nambala ya foni, nelyo password.',
+        body: 'Akaunti yenu ishibikwa fye ku nambala: tapali email, nambala ya foni, nelyo password.',
       },
       {
         title: 'Fisungwa pa cibombelo cenu',

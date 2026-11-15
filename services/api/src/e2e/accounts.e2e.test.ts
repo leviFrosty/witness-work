@@ -18,7 +18,7 @@ import {
 } from '../test/e2e'
 
 /**
- * Anonymous accounts: open an attested session (the dev bypass), read the
+ * Pseudonymous accounts: open an attested session (the dev bypass), read the
  * account with GET /account, refresh, and close it; register and read the
  * account back with the legacy account/info, move the key through a handoff
  * channel, and back up to R2, both ways; and the legacy switch refusing the

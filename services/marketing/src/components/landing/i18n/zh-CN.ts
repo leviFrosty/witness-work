@@ -278,7 +278,7 @@ const zhCN: LandingMessages = {
     items: [
       {
         title: '无需注册，没有广告。',
-        body: '你的账户是匿名的：不需要邮箱、手机号码或密码。',
+        body: '你的账户采用假名：不需要邮箱、手机号码或密码。',
       },
       {
         title: '保存在你的设备上',

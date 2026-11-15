@@ -19,10 +19,9 @@ import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import { backUpNow, disableBackup, enableBackup } from '@/app/account/backup'
 import {
   BACKUP_FAILURE_STATUS,
-  backupFailureDetail,
+  BACKUP_FAILURE_DETAIL,
   backupTurnOnFailure,
 } from '@/app/account/backupCopy'
-import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import { formatCalendar } from '@/lib/dates'
 import { formatBytes } from '@/lib/formatBytes'
 import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
@@ -30,11 +29,8 @@ import i18n from '@/lib/locales'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
 
 export default function BackupSection({
-  accountState,
   onChanged,
 }: {
-  accountState: AccountOverview['state']
-
   onChanged: () => void
 }) {
   const theme = useTheme()
@@ -101,7 +97,7 @@ export default function BackupSection({
     enabled && signedOut
       ? 'backup_errorSignedOut'
       : enabled && failed && !uploading
-        ? backupFailureDetail(schedule.lastError!, accountState)
+        ? BACKUP_FAILURE_DETAIL[schedule.lastError!]
         : enabled
           ? 'backup_footerOn'
           : 'backup_footerOff'

@@ -1,11 +1,11 @@
 # Account and recovery key
 
-Settings → Account shows the User's anonymous server account (its number and whether it's active, suspended, not set up, unavailable, offline, or not responding) and its recovery key. Show Recovery Key asks for the device's own authentication when a screen lock is set, then shows the key (`WW1-` and eleven groups of five) with Copy and Share; viewing it creates the account key when there's none. Use a Recovery Key checks a key as it's typed, refuses a typo by its checksum, does nothing for the key the device already has, and replaces the account for a different key, warning first (and running Delete Buddies) when Buddies has data on the device. On iOS the warning also says it reaches the User's other Apple devices.
+Settings → Account opens with a header card (the User's pseudonymous server account number and whether it's active, suspended, not set up, unavailable, offline, or not responding), rows that open Devices, Security and Backup (Backup on phones and tablets only), and a Sign In group (phones and tablets only: Sign In with a Passkey, Sign In with QR Code, Use a Recovery Key). The web adds Sign Out at the bottom. Settings → Account → Security holds the recovery key. Show Recovery Key asks for the device's own authentication when a screen lock is set, then shows the key (`WW1-` and eleven groups of five) with Copy and Share; viewing it creates the account key when there's none. Use a Recovery Key checks a key as it's typed, refuses a typo by its checksum, does nothing for the key the device already has, and replaces the account for a different key, warning first (and running Delete Buddies) when Buddies has data on the device. On iOS the warning also says it reaches the User's other Apple devices.
 
 ## Sub-features
 
-- `account-status` is the Account section: Account Number (selectable, with an info popover) and Status.
-- `recovery-key-show` is Show Recovery Key and its sheet (Copy, Share, the warning and its info popover).
+- `account-status` is the header card on Settings → Account: Account Number (selectable, with an info popover) and Status.
+- `recovery-key-show` is Show Recovery Key (Settings → Account → Security) and its sheet (Copy, Share, the warning and its info popover).
 - `recovery-key-use` is Use a Recovery Key: the entry sheet, its live validation line, the replace confirmation, and the result alert.
 - `account-tools` is Tools → Account: key facts, cached account, `account/info`, Register now, Forget, the inbox link, a recovery key validator, Copy (dev), and Replace with a random key.
 - `handoff-offer` is Set Up Another Device on the phone with the account: the QR code with its countdown and Make a New Code, then "Allow … to sign in?" with the six-digit code, NO / YES side by side at the bottom (`handoff-decline`, `handoff-allow`), and the result.
@@ -20,7 +20,9 @@ Settings → Account shows the User's anonymous server account (its number and w
 ## How to get to it (user POV)
 
 - Settings → Account (the row under Profile), on compact and wide layouts. Hidden on binaries whose Buddies Keychain module is older than version 3.
-- Settings → Account → Devices: Set Up Another Device, Sign In with QR Code, and Sign In on a Computer (phones only; hidden on the web).
+- Settings → Account → Devices: Set Up Another Device and Sign In on a Computer (the Add a Device group; phones only, hidden on the web), then This Device and Other Devices.
+- Settings → Account → Security: Show Recovery Key, Change Account Key, Passkeys, Account Activity.
+- Settings → Account: Sign In with a Passkey, Sign In with QR Code and Use a Recovery Key (phones and tablets only).
 - Onboarding: "I already use WitnessWork" → From your other phone opens Sign In with QR Code.
 - A `https://ww-proxy.leviwilkerson.com/h#1…` link (the QR code's), or the same fragment on `https://witnesswork.app/accounts/handoff`, opens Sign In with QR Code, during onboarding too.
 - Tools → Account.
@@ -34,7 +36,7 @@ Steps:
 
 - **Read the account back.** `wwv eval '__WW_DEV__.account.read()'`, then a moment later `wwv eval '__WW_DEV__.account.last'`: `hasKey`, `accountPub`, `recoveryKey`, `inboxId`, `registeredInboxId`, `accountLinkedInboxId`, `buddies`, and the cached MMKV account.
 - **Open it.** `wwv nav Account`, or Settings → Account. Status settles on Active once the account registered (`account-status`).
-- **Show the key.** Press Show Recovery Key. Simulators and emulators without a screen lock skip authentication; one with a passcode set asks for it, which a flow can't enter. The sheet's key (`recovery-key`) matches `account.last.recoveryKey`. Copy shows "Recovery key copied"; read it with `wwv ad clipboard read` on iOS.
+- **Show the key.** Open Security, then press Show Recovery Key. Simulators and emulators without a screen lock skip authentication; one with a passcode set asks for it, which a flow can't enter. The sheet's key (`recovery-key`) matches `account.last.recoveryKey`. Copy shows "Recovery key copied"; read it with `wwv ad clipboard read` on iOS.
 - **Same key.** Use a Recovery Key, type the key (`wwv ad fill`), Use Key: "Already using this key", and `account.last` is unchanged.
 - **Bad key.** Change one character: the line under the field says "This key has a typo…", and Use Key stays disabled. A `U` says the character doesn't belong.
 - **Different key.** `wwv eval '__WW_DEV__.account.randomRecoveryKey()'` gives a valid key. With Buddies started (and a buddy), Use Key asks "Use this recovery key?", naming the buddies; on iOS it adds the Apple devices line. Confirm: "Recovery key added", `account.last.recoveryKey` is the new key, `registeredInboxId` is null, and the cached account has a new `accountPub`. A paired buddy's roster drops this User on its next sync.
@@ -52,7 +54,7 @@ Steps:
 Simulators and emulators can't scan a real camera. The old phone shows the QR, and the new phone gets its link through `wwv link` (the real `/h` deep-link path) or Tools → Account → Handoff → paste → Sign in with this link.
 
 - Bring up iOS and Android one at a time in the same worktree (`wwv up --platform ios`, then `--platform android`). `wwv flag buddies on` on each.
-- **Old phone.** `wwv nav "Set Up Another Device"` (or Settings → Account → Set Up Another Device). Once the QR shows, `wwv eval '__WW_DEV__.handoff.link()'` returns its link (dev builds only).
+- **Old phone.** `wwv nav "Set Up Another Device"` (or Settings → Account → Devices → Set Up Another Device). Once the QR shows, `wwv eval '__WW_DEV__.handoff.link()'` returns its link (dev builds only).
 - **New phone.** `wwv link '<that link>' --platform <other>`: the route is `Sign In With QR Code` and it shows "Confirm on your other phone" with a code (`handoff-code`).
   - On iOS, `wwv link` (`simctl openurl`) opens the app only for paths in the production host's `apple-app-site-association`. Until a ww-api with `/h` in it is deployed, the link opens Safari instead; hand the link to the screen with `wwv nav "Sign In With QR Code" '{"entry":"onboarding","link":"<link>"}'` (what `HandoffLinkListener` does) or Tools → Account → Handoff → paste → Sign in with this link. Android's `wwv link` goes through the app's own intent filter either way.
 - **Compare.** Within 1.5 s the old phone shows "Allow … to sign in?" with the same code. `wwv eval '__WW_DEV__.handoff.state()'` on each phone gives `role`, `step`, `status`, `code`, and the request log.
@@ -76,7 +78,7 @@ Needs the `approval/*` ops on the local worker. Simulators can't scan, and `http
 
 Needs the backup ops on the local worker. The upload is debounced 30 s after a data change, and the server takes one put a slot a minute.
 
-- **Turn it on.** Settings → Account → WitnessWork Backup, or `wwv eval '__WW_DEV__.backup.enable()'`. Scripted: `wwv flow e2e/maestro/account-backup.yaml` (it turns backup off in setup, then on from the switch). `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
+- **Turn it on.** Settings → Account → Backup → Back Up to WitnessWork, or `wwv eval '__WW_DEV__.backup.enable()'`. Scripted: `wwv flow e2e/maestro/account-backup.yaml` (it turns backup off in setup, then on from the switch). `wwv eval '__WW_DEV__.backup.state()'` gives `enabled`, `slotId`, `schedule` (`lastResult`, `lastSize`, `lastHash`, `pending`, `nextAttemptAt`) and the newest-first `log` (`enabled: uploaded N bytes`).
 - **The server copy.** `__WW_DEV__.backup.list()`, then `__WW_DEV__.backup.last`: the account's slots. `inspect()` then `last` decrypts every slot to counts; `dryRun()` previews what Combine would add.
 - **Restore on another phone.** Hand the account over (above) or Use a Recovery Key with the first phone's key. The offer follows "Signed in" / "Recovery key added". With seeded data it asks Replace / Combine / Not Now; read the store back afterwards (`wwv eval` on the stores, or the screens). `__WW_DEV__.backup.offerRestore()` runs the offer again.
 - **A corrupt slot.** `__WW_DEV__.backup.simulateCorruptDownload()` before the restore: it restores the rest and says one couldn't be read.

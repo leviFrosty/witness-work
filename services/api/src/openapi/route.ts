@@ -48,7 +48,7 @@ export const OPENAPI_TAGS = [
   {
     name: 'Accounts',
     description:
-      'Anonymous accounts: a random id and a public key, nothing else. An attested session (`POST /accounts/v1/sessions`) gives bearer tokens; before sessions, ops were signed like Buddies ops under the `ww-account/v1` context, which still works while the legacy switch is on.',
+      'Pseudonymous accounts: a random id and a public key, nothing else. An attested session (`POST /accounts/v1/sessions`) gives bearer tokens; before sessions, ops were signed like Buddies ops under the `ww-account/v1` context, which still works while the legacy switch is on.',
   },
   {
     name: 'Shared Spaces',

@@ -284,7 +284,7 @@ const frFR: LandingMessages = {
     items: [
       {
         title: 'Sans inscription. Sans publicité.',
-        body: 'Votre compte est anonyme : ni e-mail, ni numéro de téléphone, ni mot de passe.',
+        body: 'Votre compte est pseudonyme : ni e-mail, ni numéro de téléphone, ni mot de passe.',
       },
       {
         title: 'Gardé sur votre appareil',

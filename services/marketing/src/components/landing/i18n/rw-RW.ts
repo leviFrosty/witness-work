@@ -285,7 +285,7 @@ const rwRW: LandingMessages = {
     items: [
       {
         title: 'Nta kwiyandikisha. Nta matangazo.',
-        body: 'Konti yawe ntizwi: nta imeri, nomero ya telefoni cyangwa ijambobanga.',
+        body: 'Konti yawe imenyekana gusa ku nomero: nta imeri, nomero ya telefoni cyangwa ijambobanga.',
       },
       {
         title: 'Bibikwa ku gikoresho cyawe',

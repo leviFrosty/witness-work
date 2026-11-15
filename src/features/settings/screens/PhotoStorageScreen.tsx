@@ -21,7 +21,7 @@ import LoadStatus from '@/features/settings/components/account/activity/LoadStat
 import PhotoStorageBar, {
   PHOTO_STORAGE_LABEL,
   photoStorageColor,
-} from '@/features/settings/components/account/PhotoStorageBar'
+} from '@/features/settings/components/sync/PhotoStorageBar'
 import useCloudSyncPhotoStorage from '@/features/settings/hooks/useCloudSyncPhotoStorage'
 import usePhotoStorageBreakdown from '@/features/settings/hooks/usePhotoStorageBreakdown'
 import {

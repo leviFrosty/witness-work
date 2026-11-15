@@ -207,9 +207,7 @@ describe('useSignInNoticeNotifications', () => {
       description:
         'Signed in on Chrome on macOS with a passkey. Not you? Sign it out and change your account key.',
     })
-    expect(row.actions?.map((action) => action.label)).toEqual([
-      'Signed-In Devices',
-    ])
+    expect(row.actions?.map((action) => action.label)).toEqual(['Devices'])
   })
 
   it('waits 15 minutes between foreground reads; Settings → Account forces one', async () => {

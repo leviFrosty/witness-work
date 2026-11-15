@@ -341,7 +341,7 @@ app.get("/c/:payload", legacyContactLinkDocs, handleLegacyContactLinkRequest);
 // Buddies relay: POST /buddies/v1/{op}, ids only in bodies. Every op is
 // rate-limited per caller inside the handler (src/buddies/limits.ts).
 app.route("/buddies/v1", createBuddiesRoutes());
-// Anonymous accounts (witness-work ADR 0024, 0026, 0027): sessions
+// Pseudonymous accounts (witness-work ADR 0024, 0026, 0027): sessions
 // (`/accounts/v1/sessions`, attested once through /attestation/v1) hand out
 // bearer tokens for `GET /accounts/v1/account` and the `POST
 // /accounts/v1/{op}` handoff and backup ops; ops from before sessions still

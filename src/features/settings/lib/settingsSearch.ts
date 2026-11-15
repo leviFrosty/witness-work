@@ -9,6 +9,9 @@ export type SettingsSearchPage =
       keyof RootStackParamList,
       | 'PreferencesPublisher'
       | 'Account'
+      | 'Account Devices'
+      | 'Account Security'
+      | 'Account Backup'
       | 'PreferencesiCloud'
       | 'PreferencesPersonalization'
       | 'PreferencesNotifications'
@@ -50,6 +53,7 @@ export type SettingsSearchRoute = Exclude<SettingsSearchPage, 'SettingsRoot'>
 export type SettingsSearchRequirement =
   | 'ios'
   | 'account'
+  | 'accountBackup'
   | 'deviceSync'
   | 'calendarSync'
   | 'pet'
@@ -85,6 +89,9 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   SettingsRoot: { title: 'settings' },
   PreferencesPublisher: { title: 'profile' },
   Account: { title: 'account_title' },
+  'Account Devices': { title: 'accountSecurity_devices', parent: 'Account' },
+  'Account Security': { title: 'accountSecurity_section', parent: 'Account' },
+  'Account Backup': { title: 'backup_section', parent: 'Account' },
   PreferencesiCloud: { title: 'syncSettingsTitle' },
   PreferencesNotifications: { title: 'notifications' },
   PreferencesPersonalization: { title: 'personalization' },
@@ -317,6 +324,18 @@ export const SETTINGS_SEARCH_ITEMS = [
   page('Account', {
     keywords: 'settingsSearch.keywords.account',
     requires: ['account'],
+  }),
+  page('Account Devices', {
+    keywords: 'settingsSearch.keywords.accountDevices',
+    requires: ['account'],
+  }),
+  page('Account Security', {
+    keywords: 'settingsSearch.keywords.accountSecurity',
+    requires: ['account'],
+  }),
+  page('Account Backup', {
+    keywords: 'settingsSearch.keywords.accountBackup',
+    requires: ['accountBackup'],
   }),
   page('PreferencesiCloud', {
     keywords: 'settingsSearch.keywords.deviceSync',

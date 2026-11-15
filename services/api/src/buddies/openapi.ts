@@ -392,7 +392,7 @@ export const buddiesOpDocs: Record<BuddiesOp, MiddlewareHandler> = {
     description: paragraphs(
       'Creates the inbox, or refreshes it. Idempotent for the same `ownerPub`; a different key is `conflict`, even after the inbox was deleted or wiped (the relay keeps a hash of the owner key forever).',
       SIGNED_BY.self,
-      'With `account`, the inbox is linked to that anonymous account (written only after the inbox accepted the registration, so the link takes both keys). The answer carries `accountId` once the inbox belongs to an account. Without the accounts database the proof is ignored.',
+      'With `account`, the inbox is linked to that pseudonymous account (written only after the inbox accepted the registration, so the link takes both keys). The answer carries `accountId` once the inbox belongs to an account. Without the accounts database the proof is ignored.',
       `${tierLine('register')} Validly signed registrations also count toward ${count(BUDDIES_ABUSE_LIMITS.registrationsPerDay)} per caller per rolling day.`,
       KILL_SWITCH_OFF,
       'Bearer requests come from an attested session (attestation happens once, when the session opens); legacy requests aren’t attested. A reserved `attest` field is accepted and ignored.'

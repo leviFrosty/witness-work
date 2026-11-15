@@ -1,0 +1,40 @@
+import { View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import { Laptop as LaptopIcon, QrCode as QrCodeIcon } from 'lucide-react-native'
+import Section from '@/components/ui/inputs/Section'
+import InputRowButton from '@/components/ui/inputs/InputRowButton'
+import SectionTitle from '@/features/settings/components/shared/SectionTitle'
+import SectionFooter from '@/features/settings/components/account/SectionFooter'
+import i18n from '@/lib/locales'
+import type { RootStackNavigation } from '@/types/rootStack'
+
+export default function AddDeviceSection() {
+  const navigation = useNavigation<RootStackNavigation>()
+  return (
+    <View style={{ gap: 5 }}>
+      <SectionTitle
+        text={i18n.t('account_addDeviceSection')}
+        info={i18n.t('handoff_sectionInfo')}
+        alignWithIcons
+      />
+      <Section>
+        <InputRowButton
+          leftIcon={QrCodeIcon}
+          label={i18n.t('handoff_setUp')}
+          onPress={() =>
+            navigation.navigate('Set Up Another Device', { entry: 'settings' })
+          }
+        />
+        <InputRowButton
+          leftIcon={LaptopIcon}
+          label={i18n.t('approval_signIn')}
+          onPress={() =>
+            navigation.navigate('Sign In on a Computer', { entry: 'settings' })
+          }
+          lastInSection
+        />
+      </Section>
+      <SectionFooter text={i18n.t('account_addDeviceFooter')} />
+    </View>
+  )
+}

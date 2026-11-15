@@ -285,7 +285,7 @@ const ptPT: LandingMessages = {
     items: [
       {
         title: 'Sem registo. Sem anúncios.',
-        body: 'A sua conta é anónima: sem e-mail, sem número de telefone e sem palavra-passe.',
+        body: 'A sua conta é pseudónima: sem e-mail, sem número de telefone e sem palavra-passe.',
       },
       {
         title: 'Guardado no seu dispositivo',

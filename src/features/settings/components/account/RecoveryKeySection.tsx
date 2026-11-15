@@ -5,13 +5,11 @@ import {
   KeyRound as KeyRoundIcon,
   RotateCcwKey as RotateCcwKeyIcon,
 } from 'lucide-react-native'
-import { LogInIcon } from '@/components/ui/DirectionalIcon'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import RecoveryKeySheet from '@/features/settings/components/account/RecoveryKeySheet'
-import UseRecoveryKeySheet from '@/features/settings/components/account/UseRecoveryKeySheet'
 import { accountKey } from '@/app/account/accountKey'
 import { useKeyChangeStatus } from '@/app/account/keyChange/status'
 import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
@@ -51,7 +49,6 @@ export default function RecoveryKeySection({
   const ownKey = !changing && !signedOut
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null)
   const [showing, setShowing] = useState(false)
-  const [entering, setEntering] = useState(false)
   const [opening, setOpening] = useState(false)
 
   const show = async () => {
@@ -95,7 +92,7 @@ export default function RecoveryKeySection({
     }
   }
 
-  if (isWeb && !ownKey) return null
+  if (!ownKey) return null
 
   return (
     <View style={{ gap: 5 }}>
@@ -107,16 +104,14 @@ export default function RecoveryKeySection({
         alignWithIcons
       />
       <Section>
-        {ownKey && (
-          <InputRowButton
-            leftIcon={KeyRoundIcon}
-            label={i18n.t('account_showRecoveryKey')}
-            onPress={() => void show()}
-            disabled={opening}
-            lastInSection={isWeb && !canChangeKey}
-          />
-        )}
-        {ownKey && canChangeKey && (
+        <InputRowButton
+          leftIcon={KeyRoundIcon}
+          label={i18n.t('account_showRecoveryKey')}
+          onPress={() => void show()}
+          disabled={opening}
+          lastInSection={!canChangeKey}
+        />
+        {canChangeKey && (
           <InputRowButton
             leftIcon={RotateCcwKeyIcon}
             label={i18n.t('accountKeyChange_row')}
@@ -124,14 +119,6 @@ export default function RecoveryKeySection({
             onPress={() =>
               navigation.navigate('Change Account Key', { entry: 'settings' })
             }
-            lastInSection={isWeb}
-          />
-        )}
-        {!isWeb && (
-          <InputRowButton
-            leftIcon={LogInIcon}
-            label={i18n.t('account_useRecoveryKey')}
-            onPress={() => setEntering(true)}
             lastInSection
           />
         )}
@@ -143,13 +130,6 @@ export default function RecoveryKeySection({
         onClose={() => setShowing(false)}
         onClosed={() => setRecoveryKey(null)}
       />
-      {!isWeb && (
-        <UseRecoveryKeySheet
-          open={entering}
-          onClose={() => setEntering(false)}
-          onDone={onAccountChanged}
-        />
-      )}
     </View>
   )
 }

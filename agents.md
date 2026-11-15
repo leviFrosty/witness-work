@@ -111,12 +111,12 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
 - **Capture BEFORE first,** before you edit, on the iPhone simulator. Use the same simulator, data, and scroll position for AFTER so the pair compares directly. If you missed it, run the base commit from a separate worktree only when it can reuse a cached native build (a JS-only diff); otherwise post AFTER only and say so. Add Android, iPad or Duo pairs only for devices you verified anyway, and only where the change looks different there.
 - **Cover the primary changes only:** about 3–4 pairs, the screens a reviewer most needs to see, all in one appearance. A brand-new screen has no before; label it "New screen".
 - **Make them readable.** Stage sample data so every changed section has content. Turn off the floating dev Tools button (dev menu → Tools button). Shrink every image to the same height, about 1,000 px (`sips -Z 1000`). Use made-up names and data; the repo is public.
-- **In your final message,** embed the screens as Markdown images with absolute paths. T3 Code draws an image that is alone in its paragraph as a block, and images that share one line side by side. So put a one-line caption, a blank line, the images on one line, then a blank line. A before/after pair goes on that one line, before first, with the labels in the alt text:
+- **In your final message,** embed the screens as Markdown images with absolute paths. On a phone, T3 Code can't put two images side by side: two images on one line show as one full-width image and a tiny inline glyph. So join each before/after pair into one image first, with `node scripts/screenshot-pair.mjs before.png after.png pair.png` (it sizes both halves to the same height). Then put a one-line caption, a blank line, the paired image alone on its line, then a blank line. The caption names the sides, and the alt text shows under the image:
 
   ```markdown
   Buddy detail, before (left) and after (right):
 
-  ![Before: buddy detail](/tmp/ww-shots/before-buddy.png) ![After: buddy detail](/tmp/ww-shots/after-buddy.png)
+  ![Buddy detail, before and after](/tmp/ww-shots/pair-buddy.png)
 
   The next paragraph starts here.
   ```

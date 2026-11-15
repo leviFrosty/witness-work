@@ -197,6 +197,7 @@ export default function GameItemCard({
   width,
   palette,
   room,
+  unlocked,
   liveNow,
   thumbBase,
   onPress,
@@ -219,6 +220,8 @@ export default function GameItemCard({
   width: number
   palette: GamePalette
   room: PetRoomSettings
+
+  unlocked?: ReadonlySet<string>
   liveNow: ResolvedWindow
   thumbBase: Omit<SceneInput, 'room'>
   onPress: () => void
@@ -246,7 +249,7 @@ export default function GameItemCard({
       references: shapes.references.map(sceneOf),
       style: silhouetteStyle(part),
     }
-  } else input = sceneOf(thumbRoom(room, part, option))
+  } else input = sceneOf(thumbRoom(room, part, option, unlocked))
 
   return (
     <Button

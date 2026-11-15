@@ -231,7 +231,10 @@ export default function PetRoomScreen({
     noteRoomItemPicked(`${part}:${option}`)
     usePet
       .getState()
-      .updateRoom(roomChoicePatch(room, part, option), state.roomDefaults)
+      .updateRoom(
+        roomChoicePatch(room, part, option, unlocked),
+        state.roomDefaults
+      )
     analytics.capture('pet_room_changed', { part, option, from: 'room' })
     if (itemReactions(`${part}:${option}`).length > 0)
       sceneRef.current?.hatPat()
@@ -404,6 +407,7 @@ export default function PetRoomScreen({
           width={cardWidth}
           palette={palette}
           room={room}
+          unlocked={unlocked}
           liveNow={scene.liveNow}
           thumbBase={scene.thumbBase}
           onPress={() => choose(section, option)}

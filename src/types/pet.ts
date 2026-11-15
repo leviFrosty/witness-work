@@ -572,6 +572,7 @@ export interface PetRoomRecord {
   window: RoomWindow
   wallColor: WallColor
   wallPattern: WallPattern
+  wallColors?: Partial<Record<WallPattern, WallColor>>
   floor: FloorId
   bed: BedId
   shelf: ShelfId

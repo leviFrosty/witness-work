@@ -40,6 +40,7 @@ import {
 import { itemReactions } from '@/features/pet/lib/itemReactions'
 import { roomChoicePatch, roomWithChoice } from '@/features/pet/lib/roomOptions'
 import { noteRoomItemPicked } from '@/features/pet/lib/secrets'
+import { patternColor, wallPatch } from '@/features/pet/lib/wallColors'
 import { shortBy, SHOP_TABS, type ShopTab } from '@/features/pet/lib/shop'
 import { storedPrice } from '@/features/pet/lib/currency'
 import {
@@ -57,7 +58,12 @@ import { unlockedPart, unlockTab } from '@/features/pet/lib/unlockNews'
 import PetSceneView, {
   type PetSceneHandle,
 } from '@/features/pet/render/PetSceneView'
-import type { RoomItemId, WallColor } from '@/types/pet'
+import type {
+  PetRoomSettings,
+  RoomItemId,
+  WallColor,
+  WallPattern,
+} from '@/types/pet'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetShop'>
 
@@ -119,23 +125,59 @@ export default function PetShopScreen({ navigation, route }: Props) {
 
   const { state } = scene
   const room = state.room
-  const sections = shopEntries(tab, room, state.unlockedItems, state.wallet)
+  const unlocked = state.unlockedItems
+  const listed = shopEntries(tab, room, unlocked, state.wallet)
+  const patterns =
+    listed.find((section) => section.part === 'wallPattern')?.entries ?? []
+  const patternOf = (item: string | null | undefined) =>
+    patterns.find((entry) => entry.item === item)
+
+  const pattern =
+    patternOf(pickedItem) ??
+    patternOf(lastPattern) ??
+    (pickedItem === null
+      ? patternOf(pickedEntry(listed[0]?.entries ?? [], null)?.item)
+      : undefined) ??
+    patterns.find((entry) => entry.state === 'current')
+  const shownPattern =
+    pattern && pattern.state !== 'secret'
+      ? (pattern.option as WallPattern)
+      : room.wallPattern
+  const patternRoom: PetRoomSettings = {
+    ...room,
+    wallPattern: shownPattern,
+    wallColor: patternColor(room, shownPattern, unlocked),
+  }
+  const patternOwned =
+    shownPattern === room.wallPattern || (!!pattern && isOwned(pattern))
+  const patternColors = (
+    shopEntries(tab, patternRoom, unlocked, state.wallet).find(
+      (section) => section.part === 'wallColor'
+    )?.entries ?? []
+  ).map((entry) =>
+    entry.state === 'current' && !patternOwned
+      ? { ...entry, state: 'owned' as const }
+      : entry
+  )
+  const sections = listed.map((section) =>
+    section.part === 'wallColor'
+      ? { ...section, entries: patternColors }
+      : section
+  )
   const entries = sections.flatMap((section) => section.entries)
 
   const picked = pickedEntry(entries, pickedItem)
-
-  const pattern =
-    picked?.part === 'wallPattern'
-      ? picked
-      : entries.find((entry) => entry.item === lastPattern)
   const colors = sections.find((section) => section.part === 'wallColor')
 
-  let tryOn =
-    picked && picked.state !== 'secret'
-      ? roomWithChoice(room, picked.part, picked.option)
-      : room
-  if (picked?.part === 'wallColor' && pattern && pattern.state !== 'secret')
-    tryOn = roomWithChoice(tryOn, pattern.part, pattern.option)
+  const tryOn =
+    picked?.part === 'wallColor' && picked.state !== 'secret'
+      ? {
+          ...room,
+          ...wallPatch(room, shownPattern, picked.option as WallColor),
+        }
+      : picked && picked.state !== 'secret'
+        ? roomWithChoice(room, picked.part, picked.option, unlocked)
+        : room
   const preview = {
     ...scene.input,
     room: resolveRoom(tryOn, scene.window),
@@ -157,12 +199,14 @@ export default function PetShopScreen({ navigation, route }: Props) {
   }
 
   const putOn = (entry: ShopEntry) => {
-    usePet
-      .getState()
-      .updateRoom(
-        roomChoicePatch(room, entry.part, entry.option),
-        state.roomDefaults
-      )
+    const color = entry.option as WallColor
+    const patch =
+      entry.part !== 'wallColor'
+        ? roomChoicePatch(room, entry.part, entry.option, unlocked)
+        : patternOwned
+          ? wallPatch(room, shownPattern, color)
+          : { wallColors: { ...room.wallColors, [shownPattern]: color } }
+    usePet.getState().updateRoom(patch, state.roomDefaults)
     noteRoomItemPicked(entry.item)
     analytics.capture('pet_room_changed', {
       part: entry.part,
@@ -287,7 +331,9 @@ export default function PetShopScreen({ navigation, route }: Props) {
       style={{ gap: 14 }}
     >
       {}
-      {cardWidth > 0 && !pattern && colorTray(null)}
+      {cardWidth > 0 &&
+        (!pattern || pattern.state === 'secret') &&
+        colorTray(null)}
       {cardWidth > 0 &&
         sections
           .filter((section) => section !== colors)
@@ -301,13 +347,18 @@ export default function PetShopScreen({ navigation, route }: Props) {
                 width={cardWidth}
                 palette={palette}
                 room={room}
+                unlocked={unlocked}
                 liveNow={scene.liveNow}
                 thumbBase={scene.thumbBase}
                 onPress={() => pick(entry)}
               />
             ))
             const at = pattern ? section.entries.indexOf(pattern) : -1
-            const hung = colors && section.part === 'wallPattern' && at >= 0
+            const hung =
+              colors &&
+              section.part === 'wallPattern' &&
+              at >= 0 &&
+              pattern?.state !== 'secret'
             const reacting = reduceMotion
               ? undefined
               : [picked, pattern].find(

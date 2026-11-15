@@ -152,6 +152,14 @@ Swappable parts, each a registry of options (`src/features/pet/art/room/`):
 Each part the Shop sells lists its common options, then two uncommon and two rare ones (below), then
 its secrets.
 
+Each wall pattern keeps its own color (`lib/wallColors.ts`). `wallColor` is the color on the wall
+now, and `wallColors` remembers the color every other pattern last had, so going back to a pattern
+brings its color back. Patterns that picture something (`clouds`, `leaves`, `mountains`, `aurora`
+and the secret `waves`, `meadow`, `honeycomb`) offer only the colors that suit them, best first,
+and each list holds a starter color. A picture pattern put up for the first time takes its first
+owned color; a plain motif keeps the color already on the wall. The colors tray lists only the
+shown pattern's colors, plus the one on the wall if an older room has another.
+
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
 - Prices: every non-starter item and hat but `none` has a Shop price (`ITEM_PRICES` in
@@ -481,8 +489,9 @@ interface PetRecord {
 interface PetRoomRecord {
   id: 'room'
   window: { time: 'live' | TimeOfDay; season: 'live' | Season }
-  wallColor: WallColor
+  wallColor: WallColor // the color of wallPattern; older apps read only this
   wallPattern: WallPattern
+  wallColors?: Partial<Record<WallPattern, WallColor>> // each pattern's last color; absent = none
   floor: FloorId
   bed: BedId
   shelf: ShelfId

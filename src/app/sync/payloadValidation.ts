@@ -271,6 +271,7 @@ const petRoom = record.extend({
   window: z.object({ time: z.string(), season: z.string() }),
   wallColor: z.string(),
   wallPattern: z.string(),
+  wallColors: z.record(z.string()).optional(),
   floor: z.string(),
   bed: z.string(),
   shelf: z.string(),

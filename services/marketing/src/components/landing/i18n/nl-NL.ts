@@ -284,7 +284,7 @@ const nlNL: LandingMessages = {
     items: [
       {
         title: 'Geen account. Geen advertenties.',
-        body: 'Je account is anoniem: geen e-mailadres, telefoonnummer of wachtwoord.',
+        body: 'Je account is pseudoniem: geen e-mailadres, telefoonnummer of wachtwoord.',
       },
       {
         title: 'Op je apparaat bewaard',

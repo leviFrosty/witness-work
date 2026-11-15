@@ -1,5 +1,4 @@
 import { attestationProblemBody } from '@/app/account/attestationCopy'
-import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import type { TranslationKey } from '@/lib/locales'
 import type { BackupFailure } from '@/lib/serverAccount/backupScheduler'
 
@@ -28,22 +27,6 @@ export const BACKUP_FAILURE_DETAIL: Record<BackupFailure, TranslationKey> = {
   verify_later: 'backup_errorVerifyLater',
   update: 'account_updateRequired',
 }
-
-const EXPLAINED_BY_ACCOUNT: Partial<
-  Record<BackupFailure, AccountOverview['state']>
-> = {
-  unverified: 'unverified',
-  verify_later: 'unverified',
-  update: 'updateRequired',
-}
-
-export const backupFailureDetail = (
-  failure: BackupFailure,
-  accountState: AccountOverview['state']
-): TranslationKey | null =>
-  EXPLAINED_BY_ACCOUNT[failure] === accountState
-    ? null
-    : BACKUP_FAILURE_DETAIL[failure]
 
 export const backupTurnOnFailure = (code: BackupFailure): TranslationKey => {
   switch (code) {

@@ -285,7 +285,7 @@ const deDE: LandingMessages = {
     items: [
       {
         title: 'Keine Registrierung. Keine Werbung.',
-        body: 'Ihr Konto ist anonym: keine E-Mail-Adresse, keine Telefonnummer, kein Passwort.',
+        body: 'Ihr Konto ist pseudonym: keine E-Mail-Adresse, keine Telefonnummer, kein Passwort.',
       },
       {
         title: 'Auf Ihrem Gerät gespeichert',

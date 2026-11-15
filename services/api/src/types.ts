@@ -302,7 +302,7 @@ export interface Environment {
 
   /**
    * The accounts database (src/accounts/schema.ts, witness-work ADR 0024):
-   * anonymous accounts, their status, and which Buddies inboxes they own.
+   * pseudonymous accounts, their status, and which Buddies inboxes they own.
    * Without it, accounts are off: `account/register` answers `disabled` and
    * `inbox/register` ignores account proofs.
    */

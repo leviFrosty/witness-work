@@ -284,7 +284,7 @@ const viVN: LandingMessages = {
     items: [
       {
         title: 'Không đăng ký. Không quảng cáo.',
-        body: 'Tài khoản của bạn ẩn danh: không cần email, số điện thoại hay mật khẩu.',
+        body: 'Tài khoản của bạn dùng bí danh: không cần email, số điện thoại hay mật khẩu.',
       },
       {
         title: 'Lưu ngay trên thiết bị',

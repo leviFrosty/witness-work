@@ -284,7 +284,7 @@ const itIT: LandingMessages = {
     items: [
       {
         title: 'Nessuna registrazione. Nessuna pubblicità.',
-        body: 'Il tuo account è anonimo: niente e-mail, numero di telefono o password.',
+        body: 'Il tuo account è pseudonimo: niente e-mail, numero di telefono o password.',
       },
       {
         title: 'Restano sul tuo dispositivo',

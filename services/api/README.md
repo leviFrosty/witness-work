@@ -215,7 +215,7 @@ session (and to delete backups), and call every other accounts route with
 
 ### Accounts and sessions (`/accounts/v1/*`)
 
-Anonymous accounts (a random id and a public key). An app proves it's
+Pseudonymous accounts (a random id and a public key). An app proves it's
 WitnessWork once per session and then calls with short-lived bearer tokens:
 
 - **`POST /accounts/v1/sessions`** opens a session: an envelope self-signed

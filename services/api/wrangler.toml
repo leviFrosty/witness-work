@@ -303,7 +303,7 @@ bucket_name = "ww-account-sync-beta"
 binding = "ACCOUNT_PHOTOS"
 bucket_name = "ww-account-photos-beta"
 
-# Anonymous accounts (witness-work ADR 0024): accounts, their status, and which
+# Pseudonymous accounts (witness-work ADR 0024): accounts, their status, and which
 # Buddies inboxes they own. Not inherited, like every binding. Migrations come
 # from `pnpm db:generate` (drizzle-kit); apply them before deploying code that
 # needs them (the API deploy workflow does, before the Worker).
@@ -676,7 +676,7 @@ bucket_name = "ww-account-sync-dev"
 binding = "ACCOUNT_PHOTOS"
 bucket_name = "ww-account-photos-dev"
 
-# Anonymous accounts (witness-work ADR 0024): accounts, their status, and which
+# Pseudonymous accounts (witness-work ADR 0024): accounts, their status, and which
 # Buddies inboxes they own. Not inherited, like every binding. Migrations come
 # from `pnpm db:generate` (drizzle-kit); apply them before deploying code that
 # needs them: `wrangler d1 migrations apply ww-accounts-dev --env dev --local`
@@ -1178,7 +1178,7 @@ namespace_id = "1008"
   limit = 120
   period = 60
 
-# Anonymous accounts (witness-work ADR 0024). Without this binding, accounts
+# Pseudonymous accounts (witness-work ADR 0024). Without this binding, accounts
 # are off: `account/register` answers `disabled` and `inbox/register` ignores
 # account proofs. Apply migrations before deploying code that needs them:
 # `wrangler d1 migrations apply ww-accounts --remote`. Repeated under [env.beta] and [env.dev].

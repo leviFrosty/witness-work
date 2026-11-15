@@ -26,6 +26,7 @@ const ids = (query: string, items?: readonly SettingsSearchItem[]) =>
 const everything: SettingsSearchAvailability = {
   ios: true,
   account: true,
+  accountBackup: true,
   deviceSync: true,
   calendarSync: true,
   pet: true,

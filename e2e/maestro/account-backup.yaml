@@ -3,9 +3,9 @@
 # turn it off (and drop this device's server copy) first.
 # setup: __WW_DEV__.backup.disable(true)
 # assert: (() => { const b = __WW_DEV__.backup.state(); return b.enabled === true && b.slots.length === 1 && b.schedule.lastResult === 'uploaded' })()
-# assert: __WW_DEV__.state().route.name === 'Account'
+# assert: __WW_DEV__.state().route.name === 'Account Backup'
 appId: com.leviwilkerson.jwtimedev
-name: Open Settings → Account, see the account is active, and turn on WitnessWork Backup, which backs up right away
+name: Open Settings → Account, see the account is active, then open Backup and turn on WitnessWork Backup, which backs up right away
 ---
 - extendedWaitUntil:
     visible: Home
@@ -18,10 +18,14 @@ name: Open Settings → Account, see the account is active, and turn on WitnessW
 - tapOn: Settings
 - assertVisible: Personalization
 - tapOn: Account
-- assertVisible: Account Number
+- assertVisible:
+    id: account-number
 - extendedWaitUntil:
     visible: Active
     timeout: 20000
+- tapOn:
+    id: account-backup
+- assertVisible: Back Up to WitnessWork
 - assertNotVisible: Last Backup
 - tapOn:
     text: Back Up to WitnessWork

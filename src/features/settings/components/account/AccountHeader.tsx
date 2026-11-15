@@ -1,23 +1,23 @@
-import { Platform, useWindowDimensions, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import {
-  Activity as ActivityIcon,
-  Hash as HashIcon,
+  KeyRound as KeyRoundIcon,
   RefreshCw as RefreshCwIcon,
 } from 'lucide-react-native'
 import Section from '@/components/ui/inputs/Section'
 import InputRowButton from '@/components/ui/inputs/InputRowButton'
-import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
+import InfoPopover from '@/components/ui/InfoPopover'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Spinner from '@/components/ui/Spinner'
-import SectionTitle from '@/features/settings/components/shared/SectionTitle'
 import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import type { AccountOverview } from '@/features/settings/hooks/useAccountOverview'
 import { platformKey } from '@/app/account/attestationCopy'
 import useTheme from '@/contexts/theme'
-import { alignText } from '@/lib/direction'
 import i18n, { type TranslationKey } from '@/lib/locales'
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' })
+const AVATAR = 64
+const INFO_BUTTON = 44
 
 const STATUS: Record<AccountOverview['state'], TranslationKey> = {
   checking: 'account_statusChecking',
@@ -44,17 +44,14 @@ const FOOTER: Partial<Record<AccountOverview['state'], TranslationKey>> = {
   unreachable: 'account_footerUnreachable',
 }
 
-export default function AccountStatusSection({
+export default function AccountHeader({
   overview,
   onRetry,
 }: {
   overview: AccountOverview
-
   onRetry?: () => void
 }) {
   const theme = useTheme()
-
-  const numberUnderLabel = useWindowDimensions().fontScale > 1
   const accountId =
     ('accountId' in overview ? overview.accountId : null) ?? null
   const statusColor =
@@ -78,40 +75,69 @@ export default function AccountStatusSection({
 
   return (
     <View style={{ gap: 5 }}>
-      <SectionTitle text={i18n.t('account_title')} alignWithIcons />
       <Section>
-        <InputRowContainer
-          leftIcon={HashIcon}
-          label={i18n.t('account_number')}
-          info={i18n.t('account_numberInfo')}
-          controlWidth={numberUnderLabel ? 'full' : 'auto'}
-          style={{ justifyContent: 'space-between' }}
+        <View
+          style={{
+            alignItems: 'center',
+            gap: 6,
+            paddingTop: 22,
+            paddingBottom: 20,
+            paddingHorizontal: 20,
+          }}
         >
-          <Text
-            selectable
-            testID='account-number'
+          <View
             style={{
-              flexShrink: 1,
-              textAlign: alignText(numberUnderLabel ? 'start' : 'end'),
-              fontFamily: accountId ? MONO : theme.fonts.regular,
-              fontSize: theme.fontSize('sm'),
-              color: theme.colors.textAlt,
+              width: AVATAR,
+              height: AVATAR,
+              borderRadius: AVATAR / 2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.colors.accentTranslucent,
+              marginBottom: 6,
             }}
           >
-            {accountId ?? i18n.t('account_numberNone')}
-          </Text>
-        </InputRowContainer>
-        <InputRowContainer
-          leftIcon={ActivityIcon}
-          label={i18n.t('account_status')}
-          controlWidth='auto'
-          style={{ justifyContent: 'space-between' }}
-          lastInSection={!retry}
-        >
+            <LucideIcon
+              icon={KeyRoundIcon}
+              size={30}
+              color={theme.colors.accent}
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              maxWidth: '100%',
+            }}
+          >
+            <View style={{ width: INFO_BUTTON }} />
+            <Text
+              selectable
+              testID='account-number'
+              accessibilityLabel={`${i18n.t('account_number')}, ${
+                accountId ?? i18n.t('account_numberNone')
+              }`}
+              style={{
+                flexShrink: 1,
+                textAlign: 'center',
+                fontFamily: accountId ? MONO : theme.fonts.semiBold,
+                fontSize: theme.fontSize(accountId ? 'md' : 'lg'),
+                color: theme.colors.text,
+              }}
+            >
+              {accountId ?? i18n.t('account_numberNone')}
+            </Text>
+            <InfoPopover
+              title={i18n.t('account_number')}
+              description={i18n.t('account_numberInfo')}
+              inline
+            />
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {overview.state === 'checking' && <Spinner size='small' />}
             <Text
               testID='account-status'
+              accessibilityLabel={`${i18n.t('account_status')}, ${i18n.t(status)}`}
               style={{
                 fontFamily: theme.fonts.semiBold,
                 color: statusColor,
@@ -120,7 +146,7 @@ export default function AccountStatusSection({
               {i18n.t(status)}
             </Text>
           </View>
-        </InputRowContainer>
+        </View>
         {retry && (
           <InputRowButton
             leftIcon={RefreshCwIcon}

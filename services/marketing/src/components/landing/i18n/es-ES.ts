@@ -284,7 +284,7 @@ const esES: LandingMessages = {
     items: [
       {
         title: 'Sin registro. Sin anuncios.',
-        body: 'Tu cuenta es anónima: sin correo, sin número de teléfono y sin contraseña.',
+        body: 'Tu cuenta es seudónima: sin correo, sin número de teléfono y sin contraseña.',
       },
       {
         title: 'Se quedan en tu dispositivo',

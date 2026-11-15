@@ -246,6 +246,8 @@ export type RootStackParamList = {
     | undefined
 
   'Account Devices': undefined
+  'Account Security': undefined
+  'Account Backup': undefined
   'Account Passkeys': undefined
 
   'Account Activity': undefined

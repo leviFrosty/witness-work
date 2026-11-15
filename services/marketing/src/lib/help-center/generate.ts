@@ -63,7 +63,7 @@ const overview = () => `# WitnessWork
 
 - Platforms: iOS and iPadOS (App Store), Android (Google Play). Companion apps for Apple Watch and Wear OS. Some features, such as iCloud Sync, widgets, Live Activities, and Siri, are iOS-only; Android syncs with Google Drive instead of iCloud.
 - Price: free, with no ads. An optional Supporter subscription funds development and adds extras such as Device Sync and custom accent colors; every core feature stays free.
-- Privacy: records stay on the device by default. Cloud Sync is end-to-end encrypted; iCloud and Google Drive sync use the person's own storage. Some features use an anonymous account with no name, email, or phone number. Details: ${SITE_URL}${PRIVACY_PATH}
+- Privacy: records stay on the device by default. Cloud Sync is end-to-end encrypted; iCloud and Google Drive sync use the person's own storage. Some features use a pseudonymous account with no name, email, or phone number. Details: ${SITE_URL}${PRIVACY_PATH}
 - Languages: 19 (Arabic, Bemba, Chinese Simplified and Traditional, Dutch, English, French, German, Italian, Japanese, Kinyarwanda, Korean, Portuguese Brazil and Portugal, Russian, Spanish, Swahili, Ukrainian, Vietnamese).
 - Support: ${SITE_URL}${HELP_BASE} (Help Center), ${SUPPORT_EMAIL} (private support), ${GITHUB_ISSUES} (bugs and feature requests). All of it: ${SITE_URL}${supportPath('en-US')}
 

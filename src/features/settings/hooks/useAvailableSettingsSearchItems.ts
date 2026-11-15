@@ -33,6 +33,8 @@ export default function useAvailableSettingsSearchItems() {
   const availability: SettingsSearchAvailability = {
     ios: Platform.OS === 'ios',
     account: BuddiesKeychain.isReplaceAvailable() || webAccountShown,
+    accountBackup:
+      Platform.OS !== 'web' && BuddiesKeychain.isReplaceAvailable(),
     deviceSync,
     calendarSync: hasCapability('calendarBridge') && calendarSyncSupported,
     pet,

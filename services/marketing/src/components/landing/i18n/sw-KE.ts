@@ -284,7 +284,7 @@ const swKE: LandingMessages = {
     items: [
       {
         title: 'Bila kujisajili. Bila matangazo.',
-        body: 'Akaunti yako haitambuliki: hakuna barua pepe, nambari ya simu, wala nenosiri.',
+        body: 'Akaunti yako inatambulika kwa nambari tu: hakuna barua pepe, nambari ya simu, wala nenosiri.',
       },
       {
         title: 'Inabaki kwenye kifaa chako',

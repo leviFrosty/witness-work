@@ -1050,7 +1050,7 @@ wrangler kv key put --binding NOTES_KV buddies:photos off
 
 ## Accounts
 
-Anonymous accounts (witness-work ADR 0024, `../../docs/accounts-protocol.md`):
+Pseudonymous accounts (witness-work ADR 0024, `../../docs/accounts-protocol.md`):
 one row per User, with no name, email, or phone number. The server mints a
 random `accountId` and stores only the public key of the account signing key,
 which every device derives from the User's account key. Accounts let us

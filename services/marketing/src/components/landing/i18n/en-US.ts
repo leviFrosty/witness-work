@@ -253,7 +253,7 @@ const enUS = {
     items: [
       {
         title: 'No sign-up. No ads.',
-        body: 'Your account is anonymous: no email, phone number, or password.',
+        body: 'Your account is pseudonymous: no email, phone number, or password.',
       },
       {
         title: 'Kept on your device',

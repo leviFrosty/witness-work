@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import { Pressable, View } from 'react-native'
 import {
   Check as CheckIcon,
@@ -254,12 +255,16 @@ export function ScopedSwitchRow({
   label,
   info,
   description,
+  leftIcon,
+  indented,
   lastInSection,
 }: {
   setting: ScopedSetting<boolean>
   label: string
   info?: string
   description?: string
+  leftIcon?: AppIcon
+  indented?: boolean
   lastInSection?: boolean
 }) {
   return (
@@ -267,6 +272,8 @@ export function ScopedSwitchRow({
       label={label}
       info={info}
       description={description}
+      leftIcon={leftIcon}
+      indented={indented}
       labelTrailing={
         <SettingMarkers setting={setting} label={label} format={onOff} />
       }
@@ -282,12 +289,14 @@ export function ScopedSelectRow<T extends string>({
   label,
   info,
   choices,
+  indented,
   lastInSection,
 }: {
   setting: ScopedSetting<T>
   label: string
   info?: string
   choices: { value: T; label: string }[]
+  indented?: boolean
   lastInSection?: boolean
 }) {
   const format = (value: T) =>
@@ -299,6 +308,7 @@ export function ScopedSelectRow<T extends string>({
       labelTrailing={
         <SettingMarkers setting={setting} label={label} format={format} />
       }
+      indented={indented}
       lastInSection={lastInSection}
       selectProps={{
         data: choices,

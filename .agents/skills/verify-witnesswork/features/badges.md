@@ -29,7 +29,7 @@ Badges celebrate steady habits by counting calendar months, never hours. Nine co
 - Home bell → "From your buddies" → "<Name> reacted 🎉 to <badge>" → your badge full screen with their reaction.
 - The first check on a device with history (an upgrade) → "Your badges are here" → "Take a look" → the profile overlay.
 - Account menu → "Settings" → "Features" → "Streaks & Badges" → "Show badges".
-- Schedule → "Buddies" → Buddies Settings → "Badges" (sharing) and "Badge Alerts".
+- Schedule → "Buddies" → Buddies Settings → "Sharing" → "Badges", and Buddies Settings → "Notifications" → "Badge Alerts".
 - Home bell → "From your buddies" → "<Name> has a new badge" → a reaction chip (Encourage), or the row → that badge full screen ("<Name>'s badge", "New").
 - A fresh install's onboarding tour → "Badges to grow".
 - The update reveal, or Tools → Special updates → "Play now" to replay it → "Badges to grow".

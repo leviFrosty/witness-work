@@ -285,6 +285,8 @@ export type RootStackParamList = {
 
   'Buddies Settings': { inboxId?: string } | undefined
 
+  'Buddies Sharing': { inboxId?: string } | undefined
+
   'Buddies Feedback': { source: 'badge' | 'menu' | 'settings' } | undefined
 
   Mileage: undefined

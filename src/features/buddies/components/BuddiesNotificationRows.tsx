@@ -1,16 +1,19 @@
-import { useNavigation } from '@react-navigation/native'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import useNotifications from '@/hooks/notifications'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
-import type { RootStackNavigation } from '@/types/rootStack'
 import BuddiesAlertRows from '@/features/buddies/components/BuddiesAlertRows'
-import { BuddySettingsScope } from '@/features/buddies/hooks/useBuddySettingsScope'
 import { registerBuddiesPush } from '@/features/buddies/lib/pushRegistration'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
-export default function BuddiesNotificationRows() {
-  const navigation = useNavigation<RootStackNavigation>()
+export default function BuddiesNotificationRows({
+  leftIcon,
+  label = i18n.t('notificationSettings_buddiesAll'),
+}: {
+  leftIcon?: AppIcon
+  label?: string
+}) {
   const enabled = useBuddies((state) => state.notificationsEnabled)
   const notifications = useNotifications()
 
@@ -23,21 +26,16 @@ export default function BuddiesNotificationRows() {
   }
 
   return (
-    <BuddySettingsScope
-      buddy={null}
-      record={() => {}}
-      select={(inboxId) => {
-        if (inboxId) navigation.navigate('Buddies Settings', { inboxId })
-      }}
-    >
+    <>
       <InputRowSwitch
-        label={i18n.t('notificationSettings_buddiesAll')}
+        label={label}
+        leftIcon={leftIcon}
         info={i18n.t('buddies_notificationsInfo')}
         value={enabled}
         onValueChange={(on) => void toggle(on)}
         lastInSection={!enabled}
       />
-      {enabled ? <BuddiesAlertRows /> : null}
-    </BuddySettingsScope>
+      {enabled ? <BuddiesAlertRows indented /> : null}
+    </>
   )
 }

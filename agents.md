@@ -104,6 +104,15 @@ Follow Apple's [Accessibility guidance](https://developer.apple.com/design/human
 - **Inside drag areas** (sheet headers, `SplitSheet`, swipeable rows), a pan gesture claims any touch that moves a few points, so buttons there need the full 44pt frame.
 - **Check it:** in a screenshot, the tappable frame is visibly about the size of a fingertip around the glyph.
 
+## Settings layout
+
+Settings screens, sheets and onboarding steps open with high-level switches; turning one on shows its configuration right under it. The spiritual routine's setup sheet (`RoutineSetupSheet`) and Buddies Settings (`BuddiesSettingsRows`) follow it.
+
+- **One row per area.** Each top-level row is a switch (or a row that opens a screen) with a `leftIcon`, all in one `Section`. Don't give each area its own titled section.
+- **Configuration shows under its switch.** While a switch is on, the rows that configure it follow it in the same section with `indented`, so they line up with its label. When it's off they're hidden, not disabled. Start optional features off and let the switch reveal what to set.
+- **A large group of settings gets its own screen.** When an area has more than a few rows, or rows of its own kind (like everything Buddies share), put it behind one row with a chevron that opens a screen (Buddies Settings → Sharing).
+- **Leaf switches stay plain.** A switch with nothing under it is just a row; it doesn't need an icon unless it's a top-level area.
+
 ## Screenshots of UI changes
 
 Reviewers check UI changes by looking at them. Whenever a change adds or alters something users see, show it. Capture screens as described in [`docs/ios-simulator-testing.md`](./docs/ios-simulator-testing.md#collect-evidence).

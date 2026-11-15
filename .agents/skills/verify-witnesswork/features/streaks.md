@@ -8,7 +8,7 @@ A flame and a count show how consistently the User keeps their plans: planned da
 - `streak-celebration` is the milestone overlay, within 15 s of the User logging the day, as a takeover (one at a time; see badges.md).
 - `streak-reminder` is the "Your Streak Is About to End" reminder: a tray item, plus a local notification at 6 PM on the last day. Features → Streaks & Badges → Streak Reminders turns it off.
 - `streak-profile` is the badge on the Profile card and the overlay's Streak stat ("Plans kept" or "Months in a row").
-- `streak-buddies` covers the badge in the Buddies list and on the buddy's detail card, plus Buddies Settings → Streak.
+- `streak-buddies` covers the badge in the Buddies list and on the buddy's detail card, plus Buddies Settings → Sharing → Streak.
 - `streak-setting`: the "Show streak" switch on Settings → Features → "Streaks & Badges" (`showStreaks`) hides the streak everywhere: the Home chip and the greeting's days in a row, the Profile card, buddies' streaks, celebrations and Streak Reminders (their row too). It stops sharing the streak in Buddy Cards and hides Buddies Settings → Streak.
 
 ## How to get to it (user POV)

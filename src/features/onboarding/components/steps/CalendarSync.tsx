@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { Platform, type TextStyle, View, type ViewStyle } from 'react-native'
 import { openAppSettings } from '@/lib/openAppSettings'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -75,6 +75,21 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
   }, [])
   const recovery = calendarRecovery(error)
 
+  const pillStyle: ViewStyle = {
+    flex: 1,
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
+  const pillText: TextStyle = {
+    fontSize: theme.fontSize('lg'),
+    fontFamily: theme.fonts.bold,
+    textAlign: 'center',
+  }
+
   return (
     <Wrapper
       style={{
@@ -138,35 +153,49 @@ const CalendarSync = ({ goBack, goNext }: Props) => {
           </Button>
         )}
       </View>
-      <View>
-        <ActionButton
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Button
+          accessibilityRole='button'
           disabled={working}
+          style={[
+            pillStyle,
+            { backgroundColor: theme.colors.accentTranslucent },
+          ]}
           onPress={() =>
             connect(recovery === 'try_again' ? recovery : undefined)
           }
         >
-          {i18n.t(
-            recovery === 'try_again'
-              ? 'calendarTryAgain'
-              : 'calendarOnboardingConnect'
-          )}
+          <Text style={[pillText, { color: theme.colors.text }]}>
+            {i18n.t(
+              recovery === 'try_again'
+                ? 'calendarTryAgain'
+                : 'calendarOnboardingConnect'
+            )}
+          </Text>
+        </Button>
+        <ActionButton
+          disabled={working}
+          submitShortcut={false}
+          style={[
+            pillStyle,
+            {
+              backgroundColor: working
+                ? theme.colors.accentAlt
+                : theme.colors.accent,
+            },
+          ]}
+          onPress={() => {
+            analytics.capture('onboarding_step_skipped', {
+              step_id: 'calendarSync',
+            })
+            void skip()
+            goNext()
+          }}
+        >
+          <Text style={[pillText, { color: theme.colors.textInverse }]}>
+            {i18n.t('notNow')}
+          </Text>
         </ActionButton>
-        <View style={{ alignItems: 'center', marginTop: 15 }}>
-          <Button
-            disabled={working}
-            onPress={() => {
-              analytics.capture('onboarding_step_skipped', {
-                step_id: 'calendarSync',
-              })
-              void skip()
-              goNext()
-            }}
-          >
-            <Text style={[styles.navSkip, { color: theme.colors.textAlt }]}>
-              {i18n.t('skip')}
-            </Text>
-          </Button>
-        </View>
       </View>
     </Wrapper>
   )

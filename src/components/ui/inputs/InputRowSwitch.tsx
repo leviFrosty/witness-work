@@ -6,7 +6,7 @@ import InputRowContainer, {
 interface Props
   extends Pick<
     InputRowContainerProps,
-    'labelTrailing' | 'info' | 'lastInSection' | 'leftIcon'
+    'labelTrailing' | 'info' | 'lastInSection' | 'leftIcon' | 'indented'
   > {
   label: string
 

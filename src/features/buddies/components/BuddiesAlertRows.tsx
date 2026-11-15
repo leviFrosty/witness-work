@@ -7,7 +7,9 @@ import {
 } from '@/features/buddies/hooks/useBuddySettingsScope'
 import { buddyDisplayName } from '@/features/buddies/lib/buddyProfile'
 
-export default function BuddiesAlertRows() {
+export default function BuddiesAlertRows({
+  indented,
+}: { indented?: boolean } = {}) {
   const { buddy } = useBuddySettingsScope()
   const joinRequests = useScopedAlert('joinRequests')
   const badgeAlerts = useScopedAlert('badges')
@@ -25,6 +27,7 @@ export default function BuddiesAlertRows() {
               })
             : i18n.t('buddies_askToJoinAlertsInfo')
         }
+        indented={indented}
         lastInSection={!showBadges}
       />
       {showBadges ? (
@@ -32,6 +35,7 @@ export default function BuddiesAlertRows() {
           setting={badgeAlerts}
           label={i18n.t('buddies_badgeAlerts')}
           info={i18n.t('buddies_badgeAlertsInfo')}
+          indented={indented}
           lastInSection
         />
       ) : null}

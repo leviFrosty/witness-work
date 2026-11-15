@@ -584,6 +584,20 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           options={{
+            header: () => (
+              <Header
+                buttonType='back'
+                title={i18n.t('buddies_sharingTitle')}
+              />
+            ),
+          }}
+          name='Buddies Sharing'
+          getComponent={() =>
+            require('@/features/buddies/screens/BuddiesSharingScreen').default
+          }
+        />
+        <RootStack.Screen
+          options={{
             presentation: 'modal',
 
             header: ({ navigation }) => (

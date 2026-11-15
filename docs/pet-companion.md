@@ -497,12 +497,12 @@ interface PetRoomRecord {
   default visible), and `petPromptDismissed: boolean` (syncable). The pet section shows the opt-in
   prompt card while no companion exists and the prompt isn't dismissed.
 - Buddy Card: optional `pet: { species, coat, name? }` field (schema `.optional().catch(undefined)`),
-  shared only when the new `sharing.pet` toggle is on (default on; Buddies Settings → Pet, shown once
+  shared only when the new `sharing.pet` toggle is on (default on; Buddies Settings → Sharing → Pet, shown once
   a companion exists). The `visitor` moment reads it through `usePetVisits` (`src/app/pet/`): the
   pets of active buddies the User goes out with today, as the calendar counts it (their Plans and
   Follow-ups, minus declines), each once, earliest first, minus buddies whose pets the User hid.
   `petVisits` (All Buddies, with each buddy's own override, synced in the roster) is that choice:
-  Pet Settings (the pet's details → Settings), a buddy's Buddies settings → Your Pet, or Hide on a
+  Pet Settings (the pet's details → Settings), a buddy's Buddies settings → Their pets visit mine, or Hide on a
   visiting pet's long-press menu. See `docs/buddies-protocol.md`.
 - The same `pet` also carries `room` (optional, each part optional): the window's `time` and
   `season` and the `wallColor`, `wallPattern`, `floor`, `bed`, `shelf`, `lamp` and `study` the

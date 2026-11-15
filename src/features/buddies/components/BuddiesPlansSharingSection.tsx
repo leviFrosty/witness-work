@@ -1,4 +1,8 @@
 import moment from 'moment'
+import {
+  CalendarClock as CalendarClockIcon,
+  CirclePause as CirclePauseIcon,
+} from 'lucide-react-native'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import { analytics } from '@/lib/analytics'
 import { formatMonthDayCompact } from '@/lib/dates'
@@ -81,6 +85,7 @@ export default function BuddiesPlansSharingSection() {
     <BuddiesSection title={i18n.t('buddies_plansSharingTitle')}>
       <ScopedSwitchRow
         setting={plans}
+        leftIcon={CalendarClockIcon}
         label={i18n.t('buddies_shareMyPlans')}
         info={i18n.t('buddies_shareMyPlansInfo')}
         lastInSection={!plans.value && !!buddy}
@@ -91,11 +96,13 @@ export default function BuddiesPlansSharingSection() {
           label={i18n.t('buddies_planTimes')}
           info={i18n.t('buddies_planTimesInfo')}
           choices={planTimeChoices}
+          indented
           lastInSection={!!buddy}
         />
       )}
       {!buddy && (
         <InputRowSelect
+          leftIcon={CirclePauseIcon}
           label={i18n.t('buddies_pauseSharing')}
           info={i18n.t('buddies_pauseSharingInfo')}
           lastInSection

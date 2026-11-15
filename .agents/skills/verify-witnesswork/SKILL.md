@@ -36,7 +36,7 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 3. The one device to use and the exact `wwv up` line. Another device gets its own brief, after this one is down. Add `--accept-stale-native` only when you know the diff has no native change. Run that `up` and `wwv doctor` yourself before you hand off, because the subagent stops at a failing `doctor`.
 4. Setup (`seed`, `flag`, `nav`), then the user path to drive, with labels or testIDs and the expected result of each step.
 5. The exact `wwv eval` read-backs and the values you expect.
-6. The screens to capture, with `wwv shot <name>`, plus iPad where needed. One appearance only: don't ask for light and dark copies of a screen.
+6. The screens to capture, with `wwv shot <name>`, plus iPad where needed. Dark mode only: don't ask for light copies of a screen. Set the device to dark yourself before you hand off.
 7. "Don't edit files, commit or change git state. Don't go beyond the brief: report anything else you notice instead of chasing it. Leave the device up." (Then you run `wwv down` once you've read the report and need no re-run.)
 
 **The subagent** follows the brief and doesn't improvise around the harness:
@@ -52,6 +52,7 @@ Work in the same worktree, so the subagent uses this worktree's lease, Metro and
 ```bash
 wwv up --platform ios --seed pioneer         # iPhone; add --ipad (or --ipad-mini) for an iPad, --duo for iPhone Duo, --se for the smallest iPhone
 wwv up --platform android --seed pioneer     # headless emulator, same Metro
+wwv ad settings appearance dark              # then switch to dark mode: every check and capture defaults to dark
 ```
 
 Start on the iPhone, and stay there unless the change could break somewhere else. [Scope](#scope) says when to add Android, an iPad, iPhone Duo or iPhone SE.
@@ -216,7 +217,7 @@ Proof standards:
 - Capture the action and the resulting state: a settled diff or `wait text`, plus a screenshot. A screenshot alone isn't proof of an interaction.
 - Read side effects back. After a save, `wwv eval` the store (for example `__WW_DEV__.stores.contacts.getState().contacts.find(c => c.name === "X")`), or reopen the record from a second screen.
 - `wwv errors` must be empty at the end. The Metro log (`.verify/metro.log`) shows warnings and red boxes.
-- Capture in one appearance, the one the device is already in. Don't shoot screens in both light and dark. Switch (`wwv ad settings appearance dark` or `light`) only for a color that differs between the two, and capture just that screen.
+- Capture in dark mode. Right after `wwv up`, run `wwv ad settings appearance dark` if the device isn't already dark; in a web spec, `test.use({ colorScheme: 'dark' })`. Don't shoot screens in both light and dark. Switch to light (`wwv ad settings appearance light`) only for a color that differs between the two, capture just that screen, then switch back.
 - When a change touches a card, section, sheet or control shape, or its padding, screenshot every screen that uses it and check the corners: no title, row or control crowding a rounded corner or the top edge (see Rounded containers in `agents.md`).
 - Run the regular checks too: `pnpm run typecheck`, `pnpm run lint` and `pnpm vitest run` (add `--maxWorkers=2` when memory is tight).
 - Report what you verified, on which devices, the artifact paths, what you couldn't verify, and which devices you skipped on purpose, with the reason.

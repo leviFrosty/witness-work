@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import InputRowContainer from '@/components/ui/inputs/InputRowContainer'
 import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
+import type { AppIcon } from '@/components/ui/LucideIcon'
 import i18n from '@/lib/locales'
 
 const timeOfDay = (minutes: number): Date => {
@@ -17,12 +18,14 @@ const timeOfDay = (minutes: number): Date => {
 
 export default function RoutineReminderFields({
   label,
+  leftIcon,
   enabled,
   time,
   onEnabledChange,
   onTimeChange,
 }: {
   label?: string
+  leftIcon?: AppIcon
   enabled: boolean
   time: number
   onEnabledChange: (enabled: boolean) => void
@@ -33,6 +36,7 @@ export default function RoutineReminderFields({
       <InputRowSwitch
         label={label ?? i18n.t('routine.reminder.label')}
         info={i18n.t('routine.reminder.info')}
+        leftIcon={leftIcon}
         value={enabled}
         onValueChange={onEnabledChange}
         lastInSection={!enabled}
@@ -40,6 +44,7 @@ export default function RoutineReminderFields({
       {enabled && (
         <InputRowContainer
           label={i18n.t('routine.reminder.time')}
+          indented={!!leftIcon}
           lastInSection
         >
           <View style={{ flex: 1, alignItems: 'flex-end' }}>

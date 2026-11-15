@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Card from '@/components/ui/Card'
@@ -10,7 +9,6 @@ import { habitLabel } from '@/lib/routine/labels'
 import type { RootStackParamList } from '@/types/rootStack'
 import { isRoutineHabit, isWeeklyHabit } from '@/types/routine'
 import ReadingPlanBlock from '@/features/routine/components/ReadingPlanBlock'
-import ReadingPlanSheet from '@/features/routine/components/ReadingPlanSheet'
 import RoutineHabitHistory from '@/features/routine/components/RoutineHabitHistory'
 import RoutineHabitRow from '@/features/routine/components/RoutineHabitRow'
 import RoutineOutlineButton from '@/features/routine/components/RoutineOutlineButton'
@@ -27,15 +25,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'RoutineHabit'>
 export default function RoutineHabitScreen({ route, navigation }: Props) {
   const routine = useRoutineToday()
   const { today, settings, entries, plan } = routine
-  const [planSheetOpen, setPlanSheetOpen] = useState(false)
   const habit = route.params?.habit
-  const choosePlan = route.params?.choosePlan
-
-  useEffect(() => {
-    if (!choosePlan) return
-    setPlanSheetOpen(true)
-    navigation.setParams({ choosePlan: undefined })
-  }, [choosePlan, navigation])
 
   if (!isRoutineHabit(habit)) return null
 
@@ -55,7 +45,7 @@ export default function RoutineHabitScreen({ route, navigation }: Props) {
                 today={today}
                 onRead={(portion) => markPortionRead(today, portion)}
                 onUnread={(portion, day) => unmarkPortionRead(day, portion)}
-                onChoosePlan={() => setPlanSheetOpen(true)}
+                onChoosePlan={() => navigation.navigate('RoutineSettings')}
               />
             ) : (
               <View style={{ paddingVertical: 8 }}>
@@ -88,7 +78,7 @@ export default function RoutineHabitScreen({ route, navigation }: Props) {
                   >
                     <RoutineOutlineButton
                       label={i18n.t('routine.screen.startPlan')}
-                      onPress={() => setPlanSheetOpen(true)}
+                      onPress={() => navigation.navigate('RoutineSettings')}
                       testID='routine-start-plan'
                     />
                   </View>
@@ -107,12 +97,6 @@ export default function RoutineHabitScreen({ route, navigation }: Props) {
           />
         </ContentColumn>
       </ScrollView>
-      {reading ? (
-        <ReadingPlanSheet
-          open={planSheetOpen}
-          onClose={() => setPlanSheetOpen(false)}
-        />
-      ) : null}
     </Wrapper>
   )
 }

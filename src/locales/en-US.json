@@ -6614,14 +6614,12 @@
       },
       "studyDays": "Days",
       "worshipDay": "Evening",
-      "anyDay": "Any day",
-      "planProgress": "{{plan}} · Day {{day}} of {{total}}"
+      "anyDay": "Any day"
     },
     "meetings": {
       "title": "Meeting days",
       "midweek": "Midweek meeting",
       "weekend": "Weekend meeting",
-      "notSet": "Not set",
       "prepStart": "Prep starts",
       "midweekPrepStart": "Midweek meeting prep starts",
       "weekendPrepStart": "Weekend meeting prep starts",
@@ -6635,7 +6633,6 @@
     "setup": {
       "title": "Spiritual Routine",
       "subtitle": "Choose what to keep up.",
-      "habits": "Habits",
       "family": "Do you live with family?",
       "petCoins": "Each one earns coins for your pet.",
       "save": "Start"
@@ -6648,18 +6645,11 @@
       "finishBy": "Finish by"
     },
     "plan": {
-      "title": "Bible reading",
       "today": "Daily",
-      "todayDescription": "Check off each day you read.",
       "kind": {
         "canonical": "Whole Bible",
         "chronological": "In order of events",
         "custom": "My own plan"
-      },
-      "description": {
-        "canonical": "Genesis to Revelation, in a year or at your own pace.",
-        "chronological": "The whole Bible in about the order things happened.",
-        "custom": "Choose which books to read."
       },
       "chronologicalInfo": "Books and chapters are placed in approximate order. Some, like most Psalms, are read together.",
       "startBook": "From",
@@ -6696,9 +6686,6 @@
         "one": "About {{count}} year",
         "other": "About {{count}} years"
       },
-      "start": "Start plan",
-      "resume": "Resume plan",
-      "restart": "Read it again",
       "leaveTitle": "Leave this plan?",
       "leaveBody": "You’re on day {{day}}. Your place is kept if you come back to it.",
       "leaveConfirm": "Leave"

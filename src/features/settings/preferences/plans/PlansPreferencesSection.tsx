@@ -9,26 +9,16 @@ import InputRowButton from '@/components/ui/inputs/InputRowButton'
 import IconButton from '@/components/ui/IconButton'
 import { usePreferences } from '@/stores/preferences'
 import AvailabilityOnboardingSheet from '@/components/AvailabilityOnboardingSheet'
-import { useNavigation } from '@react-navigation/native'
-import type { RootStackNavigation } from '@/types/rootStack'
-import { midweekMeetingDay, weekendMeetingDay } from '@/lib/routine/habits'
-import { weekdayName } from '@/features/routine/lib/weekdays'
+import {
+  MidweekMeetingRow,
+  WeekendMeetingRow,
+} from '@/features/routine/components/MeetingDaysFields'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 
 const PlansPreferencesSection = () => {
   const theme = useTheme()
-  const { offDays, meetingDays } = usePreferences()
+  const { offDays, meetingDays, setMeetingDays } = usePreferences()
   const [availabilityOpen, setAvailabilityOpen] = useState(false)
-  const navigation = useNavigation<RootStackNavigation>()
-  const midweek = midweekMeetingDay(meetingDays)
-  const weekend = weekendMeetingDay(meetingDays)
-  const meetingSummary =
-    midweek === null && weekend === null
-      ? i18n.t('routine.meetings.notSet')
-      : [midweek, weekend]
-          .filter((day): day is number => day !== null)
-          .map(weekdayName)
-          .join(' · ')
   const availabilitySummary =
     offDays.length === 0 && meetingDays.length === 0
       ? i18n.t('availability.settingsValueAllAvailable')
@@ -49,20 +39,14 @@ const PlansPreferencesSection = () => {
     <View style={{ gap: 3 }}>
       <Section>
         <SettingsSearchTarget id='meetingDays'>
-          <InputRowButton
-            wrapValue
-            label={i18n.t('routine.meetings.title')}
-            onPress={() => navigation.navigate('RoutineSettings')}
-          >
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              <Text style={{ color: theme.colors.textAlt, flexShrink: 1 }}>
-                {meetingSummary}
-              </Text>
-              <IconButton icon={ChevronForwardIcon} />
-            </View>
-          </InputRowButton>
+          <MidweekMeetingRow
+            meetingDays={meetingDays}
+            onChange={setMeetingDays}
+          />
+          <WeekendMeetingRow
+            meetingDays={meetingDays}
+            onChange={setMeetingDays}
+          />
         </SettingsSearchTarget>
         <SettingsSearchTarget id='availability'>
           <InputRowButton

@@ -248,7 +248,7 @@ shown pattern's colors, plus the one on the wall if an older room has another.
   | ----------------------- | ----- | -------------------------------------------- | --------------------- | -------------------------------- | ----------------------------------- |
   | `shelf:hourglass`       | 620   | Sand runs for 16 s, then it turns over       |                       |                                  |                                     |
   | `shelf:tea`             | 660   | Steam from the pot and both cups             |                       |                                  |                                     |
-  | `study:rocker`          | 700   | The chair rocks                              |                       |                                  |                                     |
+  | `study:rocker`          | 700   | The chair rocks, settles, then swings again  |                       |                                  |                                     |
   | `wallPattern:clouds`    | 720   | Clouds drift across the wall                 | Wall color            |                                  |                                     |
   | `study:typewriter`      | 760   | Carriage steps and returns, paper feeds      |                       |                                  |                                     |
   | `floor:grass`           | 780   | Tufts sway in a breeze                       |                       |                                  |                                     |

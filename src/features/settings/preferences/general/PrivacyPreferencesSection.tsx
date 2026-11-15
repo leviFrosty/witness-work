@@ -21,6 +21,7 @@ import { useReplayOptInRequired } from '@/lib/sessionReplay/replayCountry'
 import { useFeatureFlag } from '@/lib/featureFlags'
 import { useTerritoryPrivacy } from '@/hooks/useTerritoryPrivacy'
 import confirmDestructive from '@/lib/confirmDestructive'
+import confirmDataProtectionOn from '@/lib/confirmDataProtectionOn'
 import {
   clearAllDoorRecords,
   territoriesWithDoorRecords,
@@ -94,8 +95,10 @@ const PrivacyPreferencesSection = () => {
     if (value) {
       const turnOn = () =>
         set({ dataProtectionMode: true, dataProtectionModeSetByUser: true })
-      if (territoryPrivacyMode === null) beforeDoorRecordsGo(turnOn, true)
-      else turnOn()
+      confirmDataProtectionOn(() => {
+        if (territoryPrivacyMode === null) beforeDoorRecordsGo(turnOn, true)
+        else turnOn()
+      })
       return
     }
     Alert.alert(

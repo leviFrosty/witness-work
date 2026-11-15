@@ -15,6 +15,7 @@ import i18n from '@/lib/locales'
 import { syncKey } from '@/lib/syncCopy'
 import { segmentBoldMarkup } from '@/lib/projectedTotalCopy'
 import { isDataProtectionRegion } from '@/lib/dataProtection'
+import confirmDataProtectionOn from '@/lib/confirmDataProtectionOn'
 import { usePreferences } from '@/stores/preferences'
 
 interface Props {
@@ -122,12 +123,15 @@ const DataProtection = ({ goBack, goNext }: Props) => {
               <Switch
                 accessibilityLabel={i18n.t('dataProtectionSwitchLabel')}
                 value={dataProtectionMode}
-                onValueChange={(value) =>
-                  set({
-                    dataProtectionMode: value,
-                    dataProtectionModeSetByUser: true,
-                  })
-                }
+                onValueChange={(value) => {
+                  const apply = () =>
+                    set({
+                      dataProtectionMode: value,
+                      dataProtectionModeSetByUser: true,
+                    })
+                  if (value) confirmDataProtectionOn(apply)
+                  else apply()
+                }}
               />
             </View>
           </Card>

@@ -7,6 +7,7 @@ import useTheme from '@/contexts/theme'
 import PreferencesSection from '@/features/settings/components/sections/Preferences'
 import AppSection from '@/features/settings/components/sections/App'
 import ScribeSection from '@/features/settings/components/sections/Scribe'
+import LabsSection from '@/features/settings/components/sections/Labs'
 import ContactSection from '@/features/settings/components/sections/Contact'
 import AboutSection from '@/features/settings/components/sections/About'
 import SupportSection from '@/features/settings/components/sections/Support'
@@ -111,6 +112,7 @@ export default function SettingsContents({
               {...sectionProps}
               onZeroDataRetention={() => setZeroDataRetentionOpen(true)}
             />
+            <LabsSection {...sectionProps} />
             <SupportSection
               {...sectionProps}
               onManageSubscription={() => setManageSubscriptionOpen(true)}

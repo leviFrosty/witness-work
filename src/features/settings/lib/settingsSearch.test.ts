@@ -31,6 +31,7 @@ const everything: SettingsSearchAvailability = {
   pet: true,
   scribeOffered: true,
   scribeOn: true,
+  labs: true,
   logHoursChoice: true,
   logHoursGoal: true,
   annualGoal: true,

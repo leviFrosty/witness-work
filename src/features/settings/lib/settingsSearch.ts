@@ -23,6 +23,7 @@ export type SettingsSearchPage =
       | 'FAQ'
       | 'Whats New'
       | 'OpenSourceLicenses'
+      | 'Labs'
       | 'AppInfo'
       | 'PreferencesAppearance'
       | 'PreferencesConversation'
@@ -54,6 +55,7 @@ export type SettingsSearchRequirement =
   | 'pet'
   | 'scribeOffered'
   | 'scribeOn'
+  | 'labs'
   | 'logHoursChoice'
   | 'logHoursGoal'
   | 'annualGoal'
@@ -97,6 +99,7 @@ export const SETTINGS_SEARCH_PAGES: Readonly<
   FAQ: { title: 'helpCenter' },
   'Whats New': { title: 'whatsNew' },
   OpenSourceLicenses: { title: 'openSourceLicenses' },
+  Labs: { title: 'labs_title' },
   AppInfo: { title: 'appInfo_title' },
   PreferencesAppearance: { title: 'regionAndFormats' },
   PreferencesConversation: {
@@ -204,6 +207,10 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.scribe',
     requires: ['scribeOffered'],
   },
+  page('Labs', {
+    keywords: 'settingsSearch.keywords.labs',
+    requires: ['labs'],
+  }),
 
   page('PreferencesAppearance', {
     keywords: 'settingsSearch.keywords.regionAndFormats',

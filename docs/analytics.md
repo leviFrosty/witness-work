@@ -755,6 +755,18 @@ whether people use it, and whether it misses the words they type.
 
 Never the query or the setting opened.
 
+## Labs
+
+Settings → Labs lists new features people can turn on before they're
+finished (ADR 0061). This answers which labs people opt into, and which ones
+they turn off again.
+
+| Event         | When                            | Properties                       |
+| ------------- | ------------------------------- | -------------------------------- |
+| `lab_toggled` | Someone flipped a lab's switch. | `lab` (the lab's id), `enabled`. |
+
+Production only, like every event, so Beta's on-by-default labs send nothing.
+
 ## App Info
 
 Settings → About → App Info lists the app, update, system and server versions

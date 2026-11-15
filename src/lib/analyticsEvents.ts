@@ -320,6 +320,7 @@ export const analyticsEventNames = [
   'help_center_refreshed',
   'help_center_search_completed',
   'settings_search_completed',
+  'lab_toggled',
   'app_info_copied',
   'notification_settings_opened',
 

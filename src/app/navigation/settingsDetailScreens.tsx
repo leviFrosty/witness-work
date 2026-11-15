@@ -282,6 +282,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('shareApp_title'),
   },
   {
+    name: 'Labs',
+    getComponent: () =>
+      require('@/features/settings/screens/LabsScreen').default,
+    title: () => i18n.t('labs_title'),
+  },
+  {
     name: 'OpenSourceLicenses',
     getComponent: () =>
       require('@/features/settings/screens/OpenSourceLicensesScreen').default,

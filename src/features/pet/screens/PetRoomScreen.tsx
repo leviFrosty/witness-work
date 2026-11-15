@@ -20,8 +20,12 @@ import type { RootStackParamList } from '@/types/rootStack'
 import { WALL_RGB } from '@/features/pet/art'
 import { cssColor, type GamePalette } from '@/features/pet/art/gameUi'
 import GameColorSwatches from '@/features/pet/components/GameColorSwatches'
-import GameColorTray from '@/features/pet/components/GameColorTray'
-import ReactionPreviewTray from '@/features/pet/components/ReactionPreviewTray'
+import GameColorTray, {
+  GameTrayDivider,
+} from '@/features/pet/components/GameColorTray'
+import ReactionPreviewTray, {
+  ReactionPreviewContent,
+} from '@/features/pet/components/ReactionPreviewTray'
 import { itemReactions } from '@/features/pet/lib/itemReactions'
 import {
   GameButton,
@@ -445,7 +449,7 @@ export default function PetRoomScreen({
   )
 
   const colors = sections.find((section) => section.part === 'wallColor')
-  const colorTray = (column: number) =>
+  const colorTray = (column: number, reaction?: ReactElement) =>
     colors && (
       <GameColorTray
         column={column}
@@ -480,6 +484,8 @@ export default function PetRoomScreen({
               : null
           }
         />
+        {reaction && <GameTrayDivider palette={palette} />}
+        {reaction}
       </GameColorTray>
     )
   const grid = (
@@ -508,12 +514,26 @@ export default function PetRoomScreen({
           .map((section) => {
             const all = cards(section)
             const at = section.owned.indexOf(section.current)
-            const hung =
-              section.part === 'wallPattern' && colorTray(at % columns)
             const reacts =
               at >= 0 &&
               !reduceMotion &&
               itemReactions(`${section.part}:${section.current}`).length > 0
+            const hung =
+              section.part === 'wallPattern' &&
+              colorTray(
+                at % columns,
+                reacts ? (
+                  <ReactionPreviewContent
+                    part={section.part}
+                    option={section.current}
+                    itemName={roomOptionLabel(section.part, section.current)}
+                    petName={scene.name}
+                    scene={sceneRef}
+                    from='room'
+                    palette={palette}
+                  />
+                ) : undefined
+              )
             const split =
               hung || reacts
                 ? (Math.floor(at / columns) + 1) * columns
@@ -523,7 +543,7 @@ export default function PetRoomScreen({
                 {heading(inUseText(section, sections.length))}
                 {cardRows(all.slice(0, split))}
                 {hung}
-                {reacts && (
+                {reacts && !hung && (
                   <ReactionPreviewTray
                     part={section.part}
                     option={section.current}
@@ -531,7 +551,7 @@ export default function PetRoomScreen({
                     petName={scene.name}
                     scene={sceneRef}
                     from='room'
-                    column={hung ? null : at % columns}
+                    column={at % columns}
                     cardWidth={cardWidth}
                     cardGap={CARD_GAP}
                     gap={SECTION_ROW_GAP}

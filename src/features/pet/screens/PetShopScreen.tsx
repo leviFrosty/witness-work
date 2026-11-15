@@ -16,12 +16,16 @@ import { toast } from '@/stores/toasts'
 import type { RootStackParamList } from '@/types/rootStack'
 import { resolveRoom, VIEW_CARD, WALL_RGB } from '@/features/pet/art'
 import { cssColor, gamePalette } from '@/features/pet/art/gameUi'
-import ReactionPreviewTray from '@/features/pet/components/ReactionPreviewTray'
+import ReactionPreviewTray, {
+  ReactionPreviewContent,
+} from '@/features/pet/components/ReactionPreviewTray'
 import ShopBuyPanel from '@/features/pet/components/ShopBuyPanel'
 import ShopHeader from '@/features/pet/components/ShopHeader'
 import ShopItemCard from '@/features/pet/components/ShopItemCard'
 import GameColorSwatches from '@/features/pet/components/GameColorSwatches'
-import GameColorTray from '@/features/pet/components/GameColorTray'
+import GameColorTray, {
+  GameTrayDivider,
+} from '@/features/pet/components/GameColorTray'
 import { itemGridColumns } from '@/features/pet/components/GameItemCard'
 import {
   GameFrame,
@@ -150,7 +154,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
   }
   const patternOwned =
     shownPattern === room.wallPattern || (!!pattern && isOwned(pattern))
-  const patternColors = (
+  const listedColors = (
     shopEntries(tab, patternRoom, unlocked, state.wallet).find(
       (section) => section.part === 'wallColor'
     )?.entries ?? []
@@ -159,6 +163,20 @@ export default function PetShopScreen({ navigation, route }: Props) {
       ? { ...entry, state: 'owned' as const }
       : entry
   )
+  const defaultColor = patternRoom.wallColor
+  const defaultEntry: ShopEntry = listedColors.find(
+    (entry) => entry.option === defaultColor
+  ) ?? {
+    part: 'wallColor',
+    option: defaultColor,
+    item: `wallColor:${defaultColor}`,
+    price: null,
+    state: shownPattern === room.wallPattern ? 'current' : 'owned',
+  }
+  const patternColors = [
+    defaultEntry,
+    ...listedColors.filter((entry) => entry !== defaultEntry),
+  ]
   const sections = listed.map((section) =>
     section.part === 'wallColor'
       ? { ...section, entries: patternColors }
@@ -256,7 +274,11 @@ export default function PetShopScreen({ navigation, route }: Props) {
     </Text>
   )
 
-  const colorTray = (column: number | null) =>
+  const pickDefaultColor = () => {
+    if (pattern && pattern.state !== 'secret') setPickedItem(pattern.item)
+    else pick(defaultEntry)
+  }
+  const colorTray = (column: number | null, reaction?: ReactElement) =>
     colors && (
       <GameColorTray
         column={column}
@@ -275,18 +297,29 @@ export default function PetShopScreen({ navigation, route }: Props) {
               entry.state === 'secret'
                 ? null
                 : WALL_RGB[entry.option as WallColor],
-            label: shopItemLabel(
-              entry,
-              roomOptionLabel(entry.part, entry.option)
-            ),
-            picked: entry.item === picked?.item,
-            owned: isOwned(entry),
+            label:
+              entry === defaultEntry
+                ? i18n.t('pet.shop.defaultColorA11y', {
+                    color: roomOptionLabel(entry.part, entry.option),
+                  })
+                : shopItemLabel(
+                    entry,
+                    roomOptionLabel(entry.part, entry.option)
+                  ),
+            picked:
+              entry === defaultEntry
+                ? picked?.part !== 'wallColor' || picked.item === entry.item
+                : entry.item === picked?.item,
+            owned: entry !== defaultEntry && isOwned(entry),
           }))}
           onPress={(item) => {
+            if (item === defaultEntry.item) return pickDefaultColor()
             const entry = colors.entries.find((e) => e.item === item)
             if (entry) pick(entry)
           }}
         />
+        {reaction && <GameTrayDivider palette={palette} />}
+        {reaction}
       </GameColorTray>
     )
 
@@ -368,6 +401,17 @@ export default function PetShopScreen({ navigation, route }: Props) {
                     section.entries.includes(entry) &&
                     itemReactions(entry.item).length > 0
                 )
+            const reaction = reacting && (
+              <ReactionPreviewContent
+                part={reacting.part}
+                option={reacting.option}
+                itemName={roomOptionLabel(reacting.part, reacting.option)}
+                petName={scene.name}
+                scene={previewRef}
+                from='shop'
+                palette={palette}
+              />
+            )
             const previewAt = reacting ? section.entries.indexOf(reacting) : -1
             const hangsAt = hung ? at : previewAt
             const split =
@@ -389,8 +433,8 @@ export default function PetShopScreen({ navigation, route }: Props) {
               <View key={section.part} style={{ gap: SECTION_ROW_GAP }}>
                 {heading && sectionHeading(heading)}
                 {cardRows(cards.slice(0, split))}
-                {hung && colorTray(at % columns)}
-                {reacting && (
+                {hung && colorTray(at % columns, reaction || undefined)}
+                {reacting && !hung && (
                   <ReactionPreviewTray
                     part={reacting.part}
                     option={reacting.option}
@@ -398,7 +442,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
                     petName={scene.name}
                     scene={previewRef}
                     from='shop'
-                    column={hung ? null : previewAt % columns}
+                    column={previewAt % columns}
                     cardWidth={cardWidth}
                     cardGap={CARD_GAP}
                     gap={SECTION_ROW_GAP}

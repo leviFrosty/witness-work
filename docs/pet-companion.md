@@ -158,7 +158,10 @@ brings its color back. Patterns that picture something (`clouds`, `leaves`, `mou
 and the secret `waves`, `meadow`, `honeycomb`) offer only the colors that suit them, best first,
 and each list holds a starter color. A picture pattern put up for the first time takes its first
 owned color; a plain motif keeps the color already on the wall. The colors tray lists only the
-shown pattern's colors, plus the one on the wall if an older room has another.
+shown pattern's colors, plus the one on the wall if an older room has another. In the Shop, the
+color the shown pattern goes up with takes the first chip, even when it's a starter the Shop
+doesn't sell, and it's picked whenever no other color is, so each new pattern previewed starts on
+it. Tapping it goes back to the pattern itself.
 
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
@@ -235,7 +238,8 @@ shown pattern's colors, plus the one on the wall if an older room has another.
   wall colors tray, but in a plain card frame: the rarity color stays on the card, whose ring points
   down at the tray. It has a button for each event the item reacts to (`itemReactions` in
   `lib/itemReactions.ts`, the Pat and New coins columns here and below; tests hold it to what the art
-  does). Under a wall pattern it sits below the colors tray, with no ring of its own. "New coins"
+  does). Under a wall pattern that has colors, it goes inside the colors tray, under a divider,
+  so the two read as one group. "New coins"
   replays on every press (`hatCoins`, with no gap between reactions as earned coins have).
   Reduce Motion leaves the tray out, since everything stays still under it.
   Visitors wear their hats, moving but with no effect on the room.

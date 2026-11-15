@@ -5768,6 +5768,7 @@
       "needMoreA11y": "You need {{price}} more for {{item}}",
       "wearing": "Wearing",
       "inRoom": "In room",
+      "defaultColorA11y": "{{color}}, default",
       "owned": "Owned",
       "allOwned": "You own all of these",
       "rare": "Rare",

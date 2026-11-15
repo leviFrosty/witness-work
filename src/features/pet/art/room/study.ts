@@ -9,6 +9,8 @@ import {
 } from '@/lib/pixelArt'
 import { STUDY_IDS, type StudyId } from '@/types/pet'
 
+import { fortShadow, paintFort } from './fort'
+
 export { STUDY_IDS }
 export type { StudyId }
 
@@ -62,16 +64,6 @@ const C = rgbPalette({
   shadeLight: '#4fa57c',
   shadeDark: '#1f5a41',
   bulb: '#ffe7a0',
-  quilt: '#6a8fb3',
-  quiltLight: '#8fb0cf',
-  quiltDark: '#4a6c8f',
-  quiltFold: '#587a9e',
-  lining: '#c9dcec',
-  liningShade: '#a3bcd3',
-  inside: '#e9b662',
-  insideMid: '#cf9247',
-  insideDeep: '#8f5a2c',
-  peg: '#d9b77a',
 })
 
 export const STUDY_SHIFT_X = 4
@@ -368,9 +360,8 @@ const ITEMS: Readonly<
     dot(buf, 45, 57, C.brass)
   },
   fort(buf) {
-    shadow(buf, 13, 52)
-    paintFortShell(buf)
-    paintFortOpening(buf, 0)
+    fortShadow(buf)
+    paintFort((x, y, c) => plot(buf, x, y, c))
   },
 }
 
@@ -485,95 +476,6 @@ export function paintLampdeskPage(buf: PixelBuffer, step: number): void {
   const [x, height] = turn
   rect(buf, [x, 59 - height, x + 1, 59], C.paper)
   dot(buf, x + (step < 2 ? 1 : -1), 59 - height + 1, C.paperShade)
-}
-
-const FORT_MID = 33
-
-const fortTop = (x: number): number => {
-  if (x < 17) return 50 + (17 - x) * 2
-  if (x > 48) return 50 + (x - 48) * 2
-  if (x <= 20 || x >= 45) return 50
-  const a = (x - 32.5) / 12.5
-  return 51 + Math.round(3 * (1 - a * a))
-}
-
-const fortHem = (x: number): number =>
-  x >= 25 && x <= 42 ? STUDY_FLOOR_Y : STUDY_FLOOR_Y - 2 + ((x >> 1) & 1)
-
-function paintFortShell(buf: PixelBuffer): void {
-  rect(buf, [18, 70, 20, 74], C.woodDark)
-  rect(buf, [46, 70, 48, 74], C.woodDark)
-  for (let x = 14; x <= 51; x++) {
-    const top = fortTop(x)
-    const hem = fortHem(x)
-    for (let y = top; y < hem; y++) {
-      const drop = y - top
-      let c = C.quilt
-      if (drop === 0) c = C.quiltLight
-      else if (drop % 6 === 3) c = C.plaidLine
-      else if (drop % 6 === 4) c = C.quiltLight
-      if (x === 14 || x === 51 || x === 24 || x === 43) c = C.quiltFold
-      if (y === hem - 1) c = C.quiltDark
-      dot(buf, x, y, c)
-    }
-  }
-  for (let x = 14; x <= 26; x++) {
-    const top = fortTop(x)
-    const end = 65 - Math.round((x - 14) * 0.75)
-    for (let y = top; y < end; y++) {
-      const drop = y - top
-      let c = C.plaid
-      if (drop === 0 || y === end - 1) c = C.plaidLine
-      else if (drop % 4 === 2) c = C.plaidDark
-      else if ((x - 14) % 4 === 1) c = C.plaidDark
-      dot(buf, x, y, c)
-    }
-  }
-  for (const x of [27, 39]) {
-    dot(buf, x, fortTop(x) - 1, C.peg)
-    dot(buf, x, fortTop(x), C.peg)
-    dot(buf, x, fortTop(x) + 1, C.woodDark)
-  }
-}
-
-export const FORT_GLOW: readonly [number, number] = [FORT_MID, 68]
-
-export const FORT_APEX = 60
-
-export function fortOpening(
-  lift: number,
-  y: number
-): readonly [left: number, right: number, flap: number] {
-  const drop = y - FORT_APEX
-  const left = FORT_MID - Math.min(5, Math.ceil(drop * 0.6))
-  const right =
-    FORT_MID + Math.min(5 + lift, Math.ceil(drop * (0.6 + 0.15 * lift)))
-  const flap = y > STUDY_FLOOR_Y - 1 - lift * 3 ? 0 : 1 + Math.floor(drop / 5)
-  return [left, right, flap]
-}
-
-export function paintFortOpening(buf: PixelBuffer, lift: number): void {
-  for (let y = FORT_APEX; y < STUDY_FLOOR_Y; y++) {
-    const [left, right, flap] = fortOpening(lift, y)
-    const reach = lift > 0 && flap === 0 ? right + 3 : right
-    for (let x = left; x <= reach; x++) {
-      const d = Math.hypot(x - FORT_MID, (y - 68) * 0.9)
-      dot(buf, x, y, d < 3.2 ? C.inside : d < 6.2 ? C.insideMid : C.insideDeep)
-    }
-    dot(buf, left - 1, y, C.lining)
-    for (let i = 1; i <= flap; i++)
-      dot(buf, right + i, y, i === flap && flap > 1 ? C.liningShade : C.lining)
-    if (flap > 0) dot(buf, right + flap + 1, y, C.quiltDark)
-  }
-  rect(buf, [28, 71, 35, 74], C.pillow)
-  rect(buf, [29, 70, 34, 71], C.pillow)
-  rect(buf, [28, 73, 35, 74], C.pillowShade)
-  rect(buf, [34, 72, 39, 74], C.cover)
-  rect(buf, [34, 71, 39, 73], C.paper)
-  dot(buf, 36, 71, C.paperShade)
-  dot(buf, 36, 72, C.paperShade)
-  dot(buf, 35, 72, C.ink)
-  dot(buf, 38, 72, C.ink)
 }
 
 export function drawStudy(buf: PixelBuffer, study: StudyId | undefined): void {

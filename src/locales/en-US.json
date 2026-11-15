@@ -6594,10 +6594,7 @@
     "settings": {
       "enabled": "Spiritual Routine",
       "enabledInfo": "Check off Bible reading, study and meeting prep each day. Turning it off keeps your history.",
-      "habitsTitle": "Habits",
-      "readingTitle": "Bible reading",
       "readingRow": "Reading",
-      "studyTitle": "Personal study",
       "studyGoal": "Goal",
       "studyGoalPerWeek": "Times a week",
       "studyGoalDays": "Set days",
@@ -6606,11 +6603,8 @@
         "other": "{{count}} times a week"
       },
       "studyDays": "Days",
-      "worshipTitle": "Worship evening",
-      "worshipKind": "Kind",
       "worshipDay": "Evening",
       "anyDay": "Any day",
-      "reminderTitle": "Reminder",
       "planProgress": "{{plan}} · Day {{day}} of {{total}}"
     },
     "meetings": {

@@ -18,8 +18,10 @@ import {
 } from '@/features/routine/lib/readingPlanChoice'
 
 export default function ReadingModeRow({
+  indented,
   lastInSection = true,
 }: {
+  indented?: boolean
   lastInSection?: boolean
 }) {
   const theme = useTheme()
@@ -42,6 +44,7 @@ export default function ReadingModeRow({
       <InputRowButton
         label={i18n.t('routine.settings.readingRow')}
         wrapValue
+        indented={indented}
         lastInSection={lastInSection}
         onPress={() => setOpen(true)}
       >

@@ -9,16 +9,19 @@ const TIMES = [1, 2, 3, 4, 5, 6, 7]
 export default function PersonalStudyGoalFields({
   goal,
   onChange,
+  indented,
   lastInSection,
 }: {
   goal: PersonalStudyGoal
   onChange: (goal: PersonalStudyGoal) => void
+  indented?: boolean
   lastInSection?: boolean
 }) {
   return (
     <>
       <InputRowSelect
         label={i18n.t('routine.settings.studyGoal')}
+        indented={indented}
         selectProps={{
           data: [
             {
@@ -44,6 +47,7 @@ export default function PersonalStudyGoalFields({
       {goal.kind === 'perWeek' ? (
         <InputRowSelect
           label={i18n.t('routine.settings.studyGoalPerWeek')}
+          indented={indented}
           lastInSection={lastInSection}
           selectProps={{
             data: TIMES.map((count) => ({
@@ -59,6 +63,7 @@ export default function PersonalStudyGoalFields({
         <InputRowContainer
           label={i18n.t('routine.settings.studyDays')}
           controlWidth='full'
+          indented={indented}
           lastInSection={lastInSection}
           style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}
         >

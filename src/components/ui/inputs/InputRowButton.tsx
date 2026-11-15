@@ -46,6 +46,7 @@ interface Props {
   checked?: boolean
 
   wrapValue?: boolean
+  indented?: boolean
   style?: ViewStyle
   testID?: string
 }
@@ -63,6 +64,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   selected,
   checked,
   wrapValue,
+  indented,
   style,
   leftIcon,
   leftIconColor,
@@ -99,7 +101,9 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
     borderBottomWidth: 0,
     paddingBottom: 10,
     paddingTop: 10,
-    paddingLeft: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
+    paddingLeft:
+      (noHorizontalPadding ? 0 : inputLayout.horizontalPadding) +
+      (indented ? inputLayout.iconSize + inputLayout.labelGap : 0),
     paddingRight: noHorizontalPadding ? 0 : inputLayout.horizontalPadding,
     minHeight: inputLayout.rowMinHeight,
     alignItems: 'center',
@@ -159,7 +163,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
       >
         {children}
       </View>
-      {!lastInSection && <RowSeparator hasIcon={!!leftIcon} />}
+      {!lastInSection && <RowSeparator hasIcon={!!leftIcon || indented} />}
     </>
   )
 

@@ -10,6 +10,7 @@ import type { FloorId } from '@/types/pet'
 import { blend, isDarkTime, showStrength } from '../fx'
 import { SCENE_H, SCENE_W } from '../layout'
 import { FLOOR_TOP, LAWN_FLOWERS } from './floor'
+import { drawForestLife, hash01, wander } from './forestLife'
 import {
   sinceCoins,
   sincePat,
@@ -1138,16 +1139,15 @@ const FLY = rgbPalette({
 })
 
 interface Firefly {
+  readonly seed: number
   readonly cx: number
   readonly low: number
   readonly high: number
-  readonly ax: number
-  readonly ay: number
-  readonly wx: number
-  readonly wy: number
-  readonly px: number
-  readonly py: number
-  readonly blink: number
+  readonly roam: number
+  readonly driftMs: number
+  readonly flashMs: number
+  readonly flashOffset: number
+  readonly tone: number
   readonly behind: boolean
   readonly early: boolean
 }
@@ -1157,24 +1157,47 @@ const FIREFLIES: readonly Firefly[] = (() => {
   const out: Firefly[] = []
   const count = 18
   for (let i = 0; i < count; i++) {
-    const cx = 8 + ((i * 53) % 164) + r() * 6
     out.push({
-      cx,
+      seed: 1 + i * 131,
+      cx: 8 + ((i * 53) % 164) + r() * 6,
       low: 66 + r() * 30,
       high: 10 + r() * 46,
-      ax: 5 + r() * 9,
-      ay: 2 + r() * 4,
-      wx: 0.00045 + r() * 0.0005,
-      wy: 0.0007 + r() * 0.0007,
-      px: r() * TAU,
-      py: r() * TAU,
-      blink: r() * TAU,
+      roam: 14 + r() * 18,
+      driftMs: 6000 + r() * 6000,
+      flashMs: 1700 + r() * 2600,
+      flashOffset: r() * 5000,
+      tone: r(),
       behind: i % 3 === 0,
       early: i % 3 === 1,
     })
   }
   return out
 })()
+
+const FLASH_RISE_MS = 140
+const FLASH_FADE_MS = 340
+
+const flashCurve = (dt: number): number =>
+  dt < 0
+    ? 0
+    : dt < FLASH_RISE_MS
+      ? dt / FLASH_RISE_MS
+      : Math.exp(-(dt - FLASH_RISE_MS) / FLASH_FADE_MS)
+
+function flashOf(fly: Firefly, t: number): number {
+  const clock = t + fly.flashOffset
+  const beat = Math.floor(clock / fly.flashMs)
+  let lit = 0
+  for (let b = beat - 1; b <= beat; b++) {
+    if (hash01(fly.seed, b) < 0.15) continue
+    const at = b * fly.flashMs + hash01(fly.seed + 7, b) * fly.flashMs * 0.6
+    const peak = 0.65 + 0.35 * hash01(fly.seed + 11, b)
+    lit = Math.max(lit, peak * flashCurve(clock - at))
+    if (hash01(fly.seed + 13, b) < 0.25)
+      lit = Math.max(lit, peak * 0.85 * flashCurve(clock - at - 420))
+  }
+  return lit
+}
 
 const SWIRL_MS = 2600
 const SWIRL_AT: readonly [number, number] = [68, 62]
@@ -1205,10 +1228,18 @@ function drawFireflies(
   const count = FIREFLIES.length
   for (let i = 0; i < count; i++) {
     const fly = FIREFLIES[i]
+    const blink = flashOf(fly, t)
     const lift = fly.early ? 0.35 + 0.65 * show : show
     const cy = fly.low + (fly.high - fly.low) * lift
-    let x = fly.cx + fly.ax * Math.sin(t * fly.wx + fly.px)
-    let y = cy + fly.ay * Math.sin(t * fly.wy + fly.py)
+    let x =
+      fly.cx +
+      fly.roam * wander(t / fly.driftMs, fly.seed) +
+      2.5 * wander(t / 900, fly.seed + 1)
+    let y =
+      cy +
+      (4 + 6 * lift) * wander(t / (fly.driftMs * 0.8), fly.seed + 2) +
+      1.5 * wander(t / 700, fly.seed + 3) -
+      1.5 * blink
     if (pull > 0) {
       const dx = (x - SWIRL_AT[0]) * (1 - 0.45 * pull)
       const dy = (y - SWIRL_AT[1]) * (1 - 0.45 * pull)
@@ -1227,14 +1258,18 @@ function drawFireflies(
     const iy = Math.round(y)
     if (ix < 1 || iy < 5 || ix >= SCENE_W - 1 || iy >= SCENE_H - 1) continue
     if (fly.behind && subject.data[iy * SCENE_W + ix]) continue
-    const pulse = 0.5 + 0.5 * Math.sin(t * 0.0031 + fly.blink)
     const glowing = Math.max(show, gather, fly.early ? 0.25 : 0)
-    const lit = Math.max(pulse * pulse, flash, gather * 0.8)
+    const lit = Math.max(blink, flash, gather * 0.8, pull * 0.7)
     const gold = gather > 0.02
-    const core = gold ? FLY.goldCore : glowing > 0.3 ? FLY.core : FLY.day
-    const halo = gold ? FLY.gold : FLY.halo
-    blend(buf, ix, iy, core, 0.45 + 0.55 * Math.max(lit, glowing * 0.5))
-    const a = glowing * (0.18 + 0.5 * lit)
+    const core = gold
+      ? FLY.goldCore
+      : glowing > 0.3
+        ? mix(FLY.core, FLY.goldCore, fly.tone * 0.5)
+        : FLY.day
+    const halo = gold ? FLY.gold : mix(FLY.halo, FLY.gold, fly.tone * 0.35)
+    const rest = 0.55 - 0.25 * glowing
+    blend(buf, ix, iy, core, rest + (1 - rest) * lit)
+    const a = glowing * (0.1 + 0.58 * lit)
     if (a <= 0.02) continue
     blend(buf, ix - 1, iy, halo, a)
     blend(buf, ix + 1, iy, halo, a)
@@ -1266,6 +1301,7 @@ export const FLOOR_LIVE: RoomLiveSet<FloorId> = {
     },
   },
   forest: {
+    back: drawForestLife,
     fx: drawFireflies,
     dim: (m) => (isDarkTime(m.time) ? 0.35 : 0.6 * forestShow(m)),
   },

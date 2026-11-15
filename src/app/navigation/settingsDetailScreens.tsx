@@ -184,6 +184,12 @@ export const settingsDetailScreens: SettingsDetailScreen[] = [
     title: () => i18n.t('accountKeyChange_row'),
   },
   {
+    name: 'Photo Storage',
+    getComponent: () =>
+      require('@/features/settings/screens/PhotoStorageScreen').default,
+    title: () => i18n.t('cloudSyncPhotoStorage'),
+  },
+  {
     name: 'Account Devices',
     getComponent: () =>
       require('@/features/settings/screens/AccountDevicesScreen').default,

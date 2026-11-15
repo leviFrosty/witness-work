@@ -87,6 +87,8 @@ export const analyticsEventNames = [
   'account_backup_failed',
   'account_device_signed_out',
   'account_devices_viewed',
+  'photo_storage_viewed',
+  'photo_storage_cleaned',
   'account_id_adopted',
   'account_key_change_completed',
   'account_key_change_discarded',

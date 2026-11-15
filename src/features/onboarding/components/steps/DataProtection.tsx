@@ -135,16 +135,6 @@ const DataProtection = ({ goBack, goNext }: Props) => {
               />
             </View>
           </Card>
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              marginTop: 10,
-              lineHeight: 16,
-            }}
-          >
-            {i18n.t('dataProtectionSubtext')}
-          </Text>
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>

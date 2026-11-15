@@ -164,6 +164,7 @@ Reviewers check UI changes by looking at them. Whenever a change adds or alters 
 - **React Compiler** (beta) is on — no manual `useMemo`/`useCallback` unless benchmarked.
 - **Styling** via Tamagui + RN StyleSheet through `ThemeProvider`; prefer tokens. Reuse `@/components/**`.
 - **Keep UI simple.** Make features understandable through clear labels, sensible defaults, and progressive disclosure, with short on-screen descriptions. Optional detail goes in `InfoPopover` from `@/components/ui/InfoPopover` beside the relevant label (one level deep); essential instructions, warnings, and values stay visible.
+- **Don't say a choice can be changed later.** Everything in the app can be changed, so "You can change this anytime in Settings" and its variants ("turn it on later", "Change these anytime in …") only add words. Leave them out of copy, footers, info popovers, and toasts. Say how to undo something only when the choice is especially committal: it costs money, shares the user's data with someone, or looks like it deletes something.
 - **Bundle size.** Metro doesn't tree-shake barrel files. Import lodash per-method (`import round from 'lodash/round'`). Import Lucide icons as named static imports from `lucide-react-native` (`babel/lucide-imports.js` rewrites them to per-icon files); a namespace import or `lucide-react-native/icons` pulls in the full icon set.
 
 ## PostHog (analytics, feature flags, error tracking, surveys)

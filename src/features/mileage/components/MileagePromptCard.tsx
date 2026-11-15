@@ -35,9 +35,7 @@ export default function MileagePromptCard() {
       navigation.navigate('MileageVehicleForm', { source: 'home_prompt' })
       return
     }
-    toast.info(i18n.t('mileage.promptDeclined'), {
-      message: i18n.t('mileage.promptDeclined_description'),
-    })
+    toast.info(i18n.t('mileage.promptDeclined'))
   }
 
   const buttonStyle = {

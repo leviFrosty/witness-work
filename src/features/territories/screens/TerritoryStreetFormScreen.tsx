@@ -143,7 +143,6 @@ export default function TerritoryStreetFormScreen({
             <Section>
               <InputRowSelect
                 label={i18n.t('territories.numbering')}
-                info={i18n.t('territories.numbering_info')}
                 description={i18n.t(`territories.numberingHelp.${numbering}`)}
                 selectProps={{
                   data: NUMBERINGS.map((value) => ({

@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   allDone,
   canLogOn,
+  DEFAULT_PREP_LEAD_DAYS,
+  MAX_PREP_LEAD_DAYS,
   midweekMeetingDay,
   routineEntryId,
   todayItems,
+  validPrepLeadDays,
   weekdayOf,
   weekendMeetingDay,
   type RoutineSettings,
@@ -27,6 +30,8 @@ const entry = (
 const settings = (patch: Partial<RoutineSettings> = {}): RoutineSettings => ({
   habits: ROUTINE_HABITS,
   meetingDays: [3, 0],
+  midweekPrepLeadDays: 2,
+  weekendPrepLeadDays: 2,
   personalStudyGoal: { kind: 'perWeek', times: 1 },
   worshipDay: 1,
   ...patch,
@@ -69,6 +74,68 @@ describe('routine habits', () => {
     )
     expect(habitsOf(todayItems(settings(), [], '2026-11-07'))).toContain(
       'weekendPrep'
+    )
+  })
+
+  it('starts prep on the day the User picks before each meeting', () => {
+    const onlyMeetingDay = settings({
+      midweekPrepLeadDays: 0,
+      weekendPrepLeadDays: 0,
+    })
+    expect(
+      habitsOf(todayItems(onlyMeetingDay, [], '2026-11-03'))
+    ).not.toContain('midweekPrep')
+    expect(habitsOf(todayItems(onlyMeetingDay, [], '2026-11-04'))).toContain(
+      'midweekPrep'
+    )
+    expect(
+      habitsOf(todayItems(onlyMeetingDay, [], '2026-11-07'))
+    ).not.toContain('weekendPrep')
+
+    const fourDays = settings({ weekendPrepLeadDays: 4 })
+    expect(habitsOf(todayItems(fourDays, [], '2026-11-04'))).toContain(
+      'weekendPrep'
+    )
+    expect(habitsOf(todayItems(fourDays, [], '2026-11-03'))).not.toContain(
+      'weekendPrep'
+    )
+  })
+
+  it('keeps a separate start day for each meeting', () => {
+    const split = settings({ midweekPrepLeadDays: 0, weekendPrepLeadDays: 6 })
+    expect(habitsOf(todayItems(split, [], '2026-11-03'))).toEqual(
+      expect.arrayContaining(['weekendPrep'])
+    )
+    expect(habitsOf(todayItems(split, [], '2026-11-03'))).not.toContain(
+      'midweekPrep'
+    )
+    expect(habitsOf(todayItems(split, [], '2026-11-04'))).toEqual(
+      expect.arrayContaining(['midweekPrep', 'weekendPrep'])
+    )
+  })
+
+  it('never starts prep before the Monday of its week', () => {
+    const allWeek = settings({
+      midweekPrepLeadDays: MAX_PREP_LEAD_DAYS,
+      weekendPrepLeadDays: MAX_PREP_LEAD_DAYS,
+    })
+    expect(habitsOf(todayItems(allWeek, [], '2026-11-02'))).toContain(
+      'weekendPrep'
+    )
+    expect(habitsOf(todayItems(allWeek, [], '2026-11-08'))).not.toContain(
+      'midweekPrep'
+    )
+  })
+
+  it('falls back to two days for a lead time out of range', () => {
+    expect(validPrepLeadDays(7)).toBe(DEFAULT_PREP_LEAD_DAYS)
+    expect(validPrepLeadDays(-1)).toBe(DEFAULT_PREP_LEAD_DAYS)
+    expect(validPrepLeadDays(1.5)).toBe(DEFAULT_PREP_LEAD_DAYS)
+    expect(validPrepLeadDays(undefined)).toBe(DEFAULT_PREP_LEAD_DAYS)
+    expect(validPrepLeadDays(0)).toBe(0)
+    const broken = settings({ midweekPrepLeadDays: 99 })
+    expect(habitsOf(todayItems(broken, [], '2026-11-02'))).toContain(
+      'midweekPrep'
     )
   })
 

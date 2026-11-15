@@ -72,6 +72,7 @@ const Select = <T,>({
       accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
       accessibilityValue={selectedLabel ?? placeholder ?? ''}
       hoverRadius={theme.numbers.borderRadiusMd}
+      fill={!plain}
       onSelect={(id) => {
         const item = items.find((i) => String(i.value) === id)
         if (item) onChange(item as unknown as T)

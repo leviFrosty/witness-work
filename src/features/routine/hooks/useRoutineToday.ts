@@ -18,6 +18,8 @@ export default function useRoutineToday() {
     useShallow((s) => ({
       habits: s.routineHabits,
       meetingDays: s.meetingDays,
+      midweekPrepLeadDays: s.midweekPrepLeadDays,
+      weekendPrepLeadDays: s.weekendPrepLeadDays,
       personalStudyGoal: s.personalStudyGoal,
       worshipDay: s.worshipDay,
       worshipKind: s.worshipKind,
@@ -30,6 +32,8 @@ export default function useRoutineToday() {
   const settings: RoutineSettings = {
     habits: prefs.habits,
     meetingDays: prefs.meetingDays,
+    midweekPrepLeadDays: prefs.midweekPrepLeadDays,
+    weekendPrepLeadDays: prefs.weekendPrepLeadDays,
     personalStudyGoal: prefs.personalStudyGoal,
     worshipDay: prefs.worshipDay,
   }

@@ -16,6 +16,8 @@ import type { ReadingPlanRun, RoutineEntry } from '@/types/routine'
 const settings: RoutineSettings = {
   habits: ['bibleReading', 'personalStudy', 'midweekPrep', 'worship'],
   meetingDays: [3, 0],
+  midweekPrepLeadDays: 2,
+  weekendPrepLeadDays: 2,
   personalStudyGoal: { kind: 'perWeek', times: 2 },
   worshipDay: null,
 }

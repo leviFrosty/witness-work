@@ -17,6 +17,7 @@ export interface SelectMenuProps {
   accessibilityValue: string
 
   hoverRadius?: number
+  fill?: boolean
   children: ReactElement
 }
 
@@ -26,11 +27,12 @@ export default function SelectMenu({
   accessibilityLabel,
   accessibilityValue,
   hoverRadius,
+  fill = true,
   children,
 }: SelectMenuProps) {
   return (
     <PullDownMenu
-      fill
+      fill={fill}
       actions={items.map((item) => ({
         id: item.id,
         title: item.label,

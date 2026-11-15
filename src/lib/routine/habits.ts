@@ -30,11 +30,28 @@ export const meetingDaysFrom = (
     .filter((day): day is number => day !== null)
     .sort((a, b) => a - b)
 
-export const PREP_LEAD_DAYS = 2
+export const DEFAULT_PREP_LEAD_DAYS = 2
+
+export const MAX_PREP_LEAD_DAYS = 6
+
+export const PREP_LEAD_DAY_OPTIONS = Array.from(
+  { length: MAX_PREP_LEAD_DAYS + 1 },
+  (_, days) => days
+)
+
+export const validPrepLeadDays = (days: unknown): number =>
+  typeof days === 'number' &&
+  Number.isInteger(days) &&
+  days >= 0 &&
+  days <= MAX_PREP_LEAD_DAYS
+    ? days
+    : DEFAULT_PREP_LEAD_DAYS
 
 export type RoutineSettings = {
   habits: readonly RoutineHabit[]
   meetingDays: readonly number[]
+  midweekPrepLeadDays: number
+  weekendPrepLeadDays: number
   personalStudyGoal: PersonalStudyGoal
   worshipDay: number | null
 }
@@ -73,11 +90,15 @@ export function studiesThisWeek(
   return count
 }
 
-function prepShows(meetingDay: number | null, day: string): boolean {
+function prepShows(
+  meetingDay: number | null,
+  leadDays: number,
+  day: string
+): boolean {
   if (meetingDay === null) return true
   const today = offsetInWeek(weekdayOf(day))
   const meeting = offsetInWeek(meetingDay)
-  return today >= meeting - PREP_LEAD_DAYS && today <= meeting
+  return today >= meeting - validPrepLeadDays(leadDays) && today <= meeting
 }
 
 function worshipShows(worshipDay: number | null, day: string): boolean {
@@ -122,12 +143,17 @@ export function todayItems(
     const shows =
       habit === 'worship'
         ? worshipShows(settings.worshipDay, day)
-        : prepShows(
-            habit === 'midweekPrep'
-              ? midweekMeetingDay(settings.meetingDays)
-              : weekendMeetingDay(settings.meetingDays),
-            day
-          )
+        : habit === 'midweekPrep'
+          ? prepShows(
+              midweekMeetingDay(settings.meetingDays),
+              settings.midweekPrepLeadDays,
+              day
+            )
+          : prepShows(
+              weekendMeetingDay(settings.meetingDays),
+              settings.weekendPrepLeadDays,
+              day
+            )
     if (shows) items.push({ habit, done: false, doneEarlier: false })
   }
   return items

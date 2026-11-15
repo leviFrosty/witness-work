@@ -260,11 +260,7 @@ export default function PetShopScreen({ navigation, route }: Props) {
       <PetSceneView
         ref={previewRef}
         input={preview}
-        viewport={
-          wide
-            ? VIEW_CARD
-            : shopPreviewView(tab, picked?.option, scene.input.hatLife?.growth)
-        }
+        viewport={wide ? VIEW_CARD : shopPreviewView(tab, picked?.option)}
         accessibilityLabel={
           picked && picked.state !== 'secret'
             ? i18n.t('pet.shop.previewA11y', {

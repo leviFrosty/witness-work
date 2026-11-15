@@ -155,16 +155,9 @@ const PREVIEW_TOP: Record<ShopTab, number> = {
   study: 30,
 }
 
-export const shopPreviewView = (
-  tab: ShopTab,
-  option?: string,
-  growth?: number
-): Viewport => [
+export const shopPreviewView = (tab: ShopTab, option?: string): Viewport => [
   12,
-  Math.min(
-    PREVIEW_TOP[tab],
-    (tab === 'hat' && hatTopRow(option, growth)) || 100
-  ),
+  Math.min(PREVIEW_TOP[tab], (tab === 'hat' && hatTopRow(option)) || 100),
   156,
   56,
 ]

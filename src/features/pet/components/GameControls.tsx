@@ -12,6 +12,7 @@ import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
 import { formatNumber } from '@/lib/numbers'
 import {
+  cssColor,
   gameIcon,
   type GameIconName,
   type GamePalette,
@@ -96,7 +97,7 @@ export function GameButton({
 }: {
   label: string
   onPress?: () => void
-  kind?: 'primary' | 'soft'
+  kind?: 'primary' | 'soft' | 'rare'
 
   submitShortcut?: boolean
 
@@ -146,7 +147,15 @@ export function GameButton({
       style={style}
     >
       <GameFrame
-        kind={off ? 'buttonOff' : kind === 'primary' ? 'button' : 'buttonSoft'}
+        kind={
+          off
+            ? 'buttonOff'
+            : kind === 'primary'
+              ? 'button'
+              : kind === 'rare'
+                ? 'buttonRare'
+                : 'buttonSoft'
+        }
         palette={palette}
         style={{
           minHeight: Math.max(20 * scale, MIN_TOUCH_TARGET),
@@ -158,7 +167,12 @@ export function GameButton({
           opacity: loading ? 0.7 : 1,
         }}
       >
-        {icon && <GameIcon name={icon} color={ink} />}
+        {icon && (
+          <GameIcon
+            name={icon}
+            color={kind === 'rare' && !off ? cssColor(palette.rare) : ink}
+          />
+        )}
         {text(label)}
         {coin && <CoinIcon />}
         {amount !== undefined && (

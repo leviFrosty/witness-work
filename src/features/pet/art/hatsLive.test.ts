@@ -4,9 +4,20 @@ import { hashBuffer, opaqueBounds, pixelAt } from '@/lib/pixelArt'
 import { itemReactions } from '@/features/pet/lib/itemReactions'
 import { BIG_HAT_IDS, RARE_HAT_IDS, UNCOMMON_HAT_IDS } from '@/types/pet'
 
-import { BIG_HAT_BRIM_ROW, BIG_HAT_CX, BIG_HAT_W } from './hatCanvas'
+import {
+  BIG_HAT_BRIM_ROW,
+  BIG_HAT_CX,
+  BIG_HAT_W,
+  bigHatPoint,
+} from './hatCanvas'
 import { COIN_TOSS_MS } from './hatRoomFx'
-import { telescopeAngle, trainAngle, trainSpot } from './hatsLive'
+import {
+  bigHatFrame,
+  frogShot,
+  telescopeAngle,
+  trainAngle,
+  trainSpot,
+} from './hatsLive'
 import {
   composeScene,
   DEMO_SIGN_DATA,
@@ -314,5 +325,93 @@ describe('the big hats', () => {
         drawn('train', 40_000)
       )
     })
+  })
+})
+
+describe('the frog', () => {
+  const at = (tMs: number, patMs = -Infinity) => ({
+    tMs,
+    species: 'lion' as const,
+    coat: 'default' as const,
+    season: 'summer' as const,
+    time: 'day' as const,
+    growth: 5,
+    wentOut: true,
+    patMs,
+    coinsMs: -Infinity,
+    clockMs: null,
+  })
+  const FLY = 0x26221e
+  const flyShows = (tMs: number, patMs?: number) => {
+    const fly = frogShot(at(tMs, patMs)).fly
+    if (!fly) return false
+    const [x, y] = bigHatPoint(fly.d, fly.u).map(Math.round)
+    return pixelAt(bigHatFrame('frog', at(tMs, patMs)), x, y) === FLY
+  }
+  const reach = (tMs: number, patMs?: number) => {
+    const { fly, tongue } = frogShot(at(tMs, patMs))
+    return Math.hypot(fly!.d - tongue!.d, fly!.u - tongue!.u)
+  }
+
+  it('keeps the fly out in a still picture, with no tongue', () => {
+    expect(frogShot(at(0)).tongue).toBeNull()
+    expect(flyShows(0)).toBe(true)
+  })
+
+  it('snatches the fly on a pat, wherever it is', () => {
+    for (const pat of [29_000, 30_000, 40_500]) {
+      expect(flyShows(pat - 10)).toBe(true)
+      expect(frogShot(at(pat - 10)).tongue).toBeNull()
+      expect(frogShot(at(pat, pat)).tongue).not.toBeNull()
+      expect(reach(pat + 110, pat)).toBeLessThan(0.5)
+      expect(frogShot(at(pat + 200, pat)).fly?.caught).toBe(true)
+      for (const after of [300, 1000, 1900]) {
+        expect(frogShot(at(pat + after, pat)).fly).toBeNull()
+        expect(frogShot(at(pat + after, pat)).tongue).toBeNull()
+      }
+      expect(flyShows(pat + 3500, pat)).toBe(true)
+    }
+  })
+
+  it('lets a second pat hop without eating a fly that is not back yet', () => {
+    const first = 30_000
+    const again = first + 1000
+    const run = { ...at(again + 50, again), patRunMs: first }
+    expect(frogShot(run).fly).toBeNull()
+    expect(frogShot(run).tongue).toBeNull()
+    expect(
+      frogShot({ ...at(first + 3500, again), patRunMs: first }).fly
+    ).not.toBeNull()
+  })
+
+  it('brings a new fly out from behind the frog', () => {
+    const pat = 30_000
+    const start = frogShot(at(pat + 2010, pat)).fly!
+    expect(Math.abs(start.d)).toBeLessThan(5)
+    expect(flyShows(pat + 2010, pat)).toBe(false)
+    expect(flyShows(pat + 3200, pat)).toBe(true)
+    const out = [2000, 2300, 2600, 2900, 3200].map(
+      (dt) => frogShot(at(pat + dt, pat)).fly!.d
+    )
+    expect(out).toEqual([...out].sort((a, b) => a - b))
+  })
+
+  it('eats and brings back the fly the same way when nobody pats', () => {
+    for (const cycle of [0, 9000, 18_000]) {
+      const snatch = cycle + 7600
+      expect(flyShows(snatch - 10)).toBe(true)
+      expect(reach(snatch + 110)).toBeLessThan(0.5)
+      expect(frogShot(at(snatch + 1000)).fly).toBeNull()
+      expect(flyShows(snatch + 2010)).toBe(false)
+      expect(flyShows(snatch + 3300)).toBe(true)
+    }
+  })
+
+  it('only hops on a pat while the fly is gone, and keeps a pat fly out', () => {
+    expect(frogShot(at(8200, 8000)).tongue).toBeNull()
+    expect(frogShot(at(8200, 8000))).toEqual(frogShot(at(8200)))
+    expect(frogShot(at(34_650, 33_000)).tongue).toBeNull()
+    expect(flyShows(34_650, 33_000)).toBe(false)
+    expect(flyShows(36_300, 33_000)).toBe(true)
   })
 })

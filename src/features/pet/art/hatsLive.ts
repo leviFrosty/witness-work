@@ -4,6 +4,7 @@ import {
   createLru,
   flipH,
   rasterize,
+  rgb,
   rgbPalette,
   setPixel,
   type PixelBuffer,
@@ -41,7 +42,9 @@ export interface HatMoment {
   readonly growth: number
   readonly wentOut: boolean
   readonly patMs: number
+  readonly patRunMs?: number
   readonly coinsMs: number
+  readonly growMs?: number
   readonly clockMs: number | null
 }
 
@@ -269,11 +272,14 @@ export const FISH_JUMP_MS = 1400
 function drawBowl(buf: PixelBuffer, m: HatMoment) {
   const t = m.tMs
   const sincePat = t - m.patMs
+  const jump = t - m.coinsMs
+  const landed = jump - FISH_JUMP_MS
   const slosh =
-    sincePat >= 0 && sincePat < 1200 ? 1 + (Math.floor(t / 200) % 2) : 0
+    (sincePat >= 0 && sincePat < 1200) || (landed >= 0 && landed < 800)
+      ? 1 + (Math.floor(t / 200) % 2)
+      : 0
   blit(buf, frameOf(`bowl/${slosh}`), 0, 0)
   const speed = sincePat >= 0 && sincePat < 1000 ? 0.006 : 0.0014
-  const jump = t - m.coinsMs
   if (jump >= 0 && jump < FISH_JUMP_MS) {
     const p = jump / FISH_JUMP_MS
     drawFish(
@@ -309,24 +315,110 @@ function drawBowl(buf: PixelBuffer, m: HatMoment) {
 
 const FROG_CYCLE_MS = 9000
 
+const FROG_SNATCH_AT_MS = 7600
+
+const TONGUE_OUT_MS = 110
+const TONGUE_MS = 300
+
+const FLY_BACK_MS = 2000
+const FLY_OUT_MS = 3200
+
+const FROG_MOUTH = [1, 6.1] as const
+
+const FLY_HIDE = [3, 6] as const
+
+const TONGUE = rgb('#ef7b9b')
+
+const flyPath = (t: number): readonly [number, number] => [
+  14 + 3 * Math.sin(t * 0.005),
+  8 + 3 * Math.sin(t * 0.0083),
+]
+
+const idleSnatchMs = (t: number): number =>
+  t < FROG_SNATCH_AT_MS
+    ? NOT_YET
+    : t - ((t - FROG_SNATCH_AT_MS) % FROG_CYCLE_MS)
+
+function frogSnatchMs(t: number, patMs: number): number {
+  const idle = idleSnatchMs(t)
+  if (
+    !Number.isFinite(patMs) ||
+    patMs > t ||
+    patMs - idleSnatchMs(patMs) < FLY_OUT_MS
+  )
+    return idle
+  return idle > patMs && idle - patMs >= FLY_OUT_MS ? idle : patMs
+}
+
+const lerp = (a: number, b: number, k: number) => a + (b - a) * k
+
+export interface FrogShot {
+  readonly fly: { d: number; u: number; caught: boolean } | null
+  readonly tongue: { d: number; u: number } | null
+}
+
+export function frogShot(m: HatMoment): FrogShot {
+  const t = m.tMs
+  const since = t - frogSnatchMs(t, m.patRunMs ?? m.patMs)
+  const mouthU = FROG_MOUTH[1] + hatHop(t - m.patMs)
+  const [d, u] = flyPath(t)
+  if (since < TONGUE_OUT_MS) {
+    const k = since / TONGUE_OUT_MS
+    return {
+      fly: { d, u, caught: false },
+      tongue: { d: lerp(FROG_MOUTH[0], d, k), u: lerp(mouthU, u, k) },
+    }
+  }
+  if (since < TONGUE_MS) {
+    const [cd, cu] = flyPath(t - since + TONGUE_OUT_MS)
+    const k = (since - TONGUE_OUT_MS) / (TONGUE_MS - TONGUE_OUT_MS)
+    const tip = { d: lerp(cd, FROG_MOUTH[0], k), u: lerp(cu, mouthU, k) }
+    return { fly: k < 0.8 ? { ...tip, caught: true } : null, tongue: tip }
+  }
+  if (since < FLY_BACK_MS) return { fly: null, tongue: null }
+  if (since < FLY_OUT_MS) {
+    const k = (since - FLY_BACK_MS) / (FLY_OUT_MS - FLY_BACK_MS)
+    const e = k * k * (3 - 2 * k)
+    return {
+      fly: {
+        d: lerp(FLY_HIDE[0], d, e),
+        u: lerp(FLY_HIDE[1], u, e),
+        caught: false,
+      },
+      tongue: null,
+    }
+  }
+  return { fly: { d, u, caught: false }, tongue: null }
+}
+
+function drawFly(buf: PixelBuffer, d: number, u: number, t: number) {
+  put(buf, d, u, INK.dark)
+  if (Math.floor(t / 100) % 2) put(buf, d, u + 1, INK.wing)
+}
+
 function drawFrog(buf: PixelBuffer, m: HatMoment) {
   const t = m.tMs
-  const cycle = t % FROG_CYCLE_MS
-  const key =
-    cycle > 7600 && cycle < 7900
-      ? 'tongue'
-      : t % 3100 < 160 && t > 0
-        ? 'blink'
-        : Math.floor(t / 800) % 2
-          ? 'throat'
-          : 'idle'
-  blit(buf, frameOf(`frog/${key}`), 0, -hatHop(t - m.patMs))
-  if (cycle < 7800) {
-    const d = 14 + 3 * Math.sin(t * 0.005)
-    const u = 8 + 3 * Math.sin(t * 0.0083)
-    put(buf, d, u, INK.dark)
-    if (Math.floor(t / 100) % 2) put(buf, d, u + 1, INK.wing)
+  const { fly, tongue } = frogShot(m)
+  if (fly && !tongue) drawFly(buf, fly.d, fly.u, t)
+  const key = tongue
+    ? 'tongue'
+    : t % 3100 < 160 && t > 0
+      ? 'blink'
+      : Math.floor(t / 800) % 2
+        ? 'throat'
+        : 'idle'
+  const hop = hatHop(t - m.patMs)
+  blit(buf, frameOf(`frog/${key}`), 0, -hop)
+  if (!tongue) return
+  const [md, mu] = [FROG_MOUTH[0], FROG_MOUTH[1] + hop]
+  const steps = Math.ceil(
+    Math.max(Math.abs(tongue.d - md), Math.abs(tongue.u - mu))
+  )
+  for (let i = 0; i <= steps; i++) {
+    const k = steps ? i / steps : 1
+    put(buf, lerp(md, tongue.d, k), lerp(mu, tongue.u, k), TONGUE)
   }
+  if (fly) drawFly(buf, fly.d, fly.u, fly.caught ? 0 : t)
 }
 
 const SNAIL_CROSSING_MS = 60_000

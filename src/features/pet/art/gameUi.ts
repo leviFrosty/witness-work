@@ -171,6 +171,7 @@ export type GameFrameKind =
   | 'button'
   | 'buttonOff'
   | 'buttonSoft'
+  | 'buttonRare'
   | 'pill'
   | 'preview'
   | 'tab'
@@ -193,6 +194,7 @@ export const GAME_FRAME_INSET: Record<GameFrameKind, number> = {
   button: 2,
   buttonOff: 2,
   buttonSoft: 2,
+  buttonRare: 2,
   pill: 0,
   preview: 2,
   tab: 0,
@@ -252,6 +254,9 @@ export function gameFrame(
       break
     case 'buttonSoft':
       drawBox(b, 0, 0, w, h, [p.cardEdge, [p.card, p.pill]], p.pill, 2)
+      break
+    case 'buttonRare':
+      drawBox(b, 0, 0, w, h, [p.rare, [p.card, p.pill]], p.pill, 2)
       break
     case 'pill':
       drawBox(b, 0, 0, w, h, [], p.pill, 2)
@@ -600,6 +605,18 @@ const BUTTON_ICONS = {
     '.#.##...#.',
     '.#.##...#.',
     '.#.##...#.',
+    '##########',
+  ],
+  sprout: [
+    '.##....##.',
+    '####..####',
+    '.###..###.',
+    '...#..#...',
+    '....##....',
+    '....##....',
+    '....##....',
+    '..######..',
+    '.########.',
     '##########',
   ],
   play: [

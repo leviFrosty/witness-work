@@ -14,6 +14,8 @@ import { COIN_TOSS_MS } from './hatRoomFx'
 import {
   bigHatFrame,
   frogShot,
+  NEST_VISIT,
+  nestShot,
   telescopeAngle,
   trainAngle,
   trainSpot,
@@ -413,5 +415,91 @@ describe('the frog', () => {
     expect(frogShot(at(34_650, 33_000)).tongue).toBeNull()
     expect(flyShows(34_650, 33_000)).toBe(false)
     expect(flyShows(36_300, 33_000)).toBe(true)
+  })
+})
+
+describe('the nest', () => {
+  const at = (
+    tMs: number,
+    patMs = -Infinity,
+    over: { patRunMs?: number; time?: 'day' | 'night' } = {}
+  ) => ({
+    tMs,
+    species: 'lion' as const,
+    coat: 'default' as const,
+    season: 'summer' as const,
+    time: 'day' as const,
+    growth: 5,
+    wentOut: true,
+    patMs,
+    coinsMs: -Infinity,
+    clockMs: null,
+    ...over,
+  })
+
+  it('keeps the parent away and the chicks quiet in a still picture', () => {
+    const still = nestShot(at(0))
+    expect(still.parent).toBeNull()
+    expect(still.chicks.some((c) => c.shut)).toBe(false)
+  })
+
+  it('brings a worm on a pat and feeds the chick nearest the parent', () => {
+    const sides = new Set<number>()
+    for (const pat of [
+      30_000, 30_100, 30_200, 30_300, 30_400, 30_500, 41_000,
+    ]) {
+      expect(nestShot(at(pat - 10)).parent).toBeNull()
+      const landed = nestShot(at(pat + NEST_VISIT.landMs + 200, pat))
+      expect(landed.parent?.worm).toBe(true)
+      expect(landed.chicks.every((c) => c.open && c.lift >= 1)).toBe(true)
+      const side = Math.sign(landed.parent!.d)
+      sides.add(side)
+      expect(landed.chicks.every((c) => c.face === side)).toBe(true)
+      const near = side < 0 ? 0 : 2
+      const feeding = nestShot(at(pat + NEST_VISIT.feedMs + 100, pat))
+      expect(feeding.parent?.key).toBe('feed')
+      const others = feeding.chicks.filter((_, i) => i !== near)
+      for (const other of others)
+        expect(feeding.chicks[near].lift).toBeGreaterThan(other.lift)
+      const fed = nestShot(at(pat + NEST_VISIT.gulpMs + 600, pat))
+      expect(fed.parent?.worm).toBe(false)
+      expect(fed.chicks[near].open).toBe(false)
+      expect(nestShot(at(pat + NEST_VISIT.endMs, pat)).parent).toBeNull()
+    }
+    expect(sides).toEqual(new Set([-1, 1]))
+  })
+
+  it('has the parent drop by now and then when nobody pats', () => {
+    const visits = (from: number, to: number) => {
+      let n = 0
+      for (let t = from; t < to; t += 100) if (nestShot(at(t)).parent) n++
+      return n
+    }
+    expect(visits(0, 7000)).toBe(0)
+    expect(visits(7000, 40_000)).toBeGreaterThan(0)
+  })
+
+  it('finishes a visit when the pet is patted again during it', () => {
+    const first = 30_000
+    const again = first + 1000
+    const run = nestShot(at(again + 50, again, { patRunMs: first }))
+    expect(run.parent).toEqual(nestShot(at(again + 50, first)).parent)
+    expect(run.chicks.every((c) => c.lift >= 1)).toBe(true)
+  })
+
+  it('lets the chicks sleep at night, and wakes them for a pat', () => {
+    for (const t of [0, 9000, 21_500]) {
+      const night = nestShot(at(t, -Infinity, { time: 'night' }))
+      expect(night.parent).toBeNull()
+      expect(night.chicks.every((c) => c.shut && !c.open)).toBe(true)
+    }
+    const woken = nestShot(at(30_200, 30_000, { time: 'night' }))
+    expect(woken.parent).toBeNull()
+    expect(woken.chicks.every((c) => !c.shut && c.lift > 0)).toBe(true)
+    expect(
+      nestShot(at(32_500, 30_000, { time: 'night' })).chicks.every(
+        (c) => c.shut
+      )
+    ).toBe(true)
   })
 })

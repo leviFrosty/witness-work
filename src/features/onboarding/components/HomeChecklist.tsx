@@ -36,6 +36,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import DismissableCard from '@/components/DismissableCard'
 import ContextMenu from '@/components/ui/ContextMenu'
 import PointerHover from '@/components/ui/PointerHover'
+import { hideHomeSection } from '@/lib/homeSections'
 import { getMonthsReports, isCountableEntry } from '@/lib/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
 import { useShallow } from 'zustand/react/shallow'
@@ -221,7 +222,7 @@ const HomeChecklist = () => {
 
   const handleDismiss = () => {
     analytics.capture('onboarding_checklist_dismissed', { all_done: allDone })
-    setPref({ homeChecklistDismissed: true })
+    hideHomeSection('checklist')
   }
 
   const viewed = useRef(false)

@@ -223,6 +223,7 @@ export type AppIconVariant =
   | 'Seasonal'
 
 export type HomeScreenElementKey =
+  | 'checklist'
   | 'approachingConversations'
   | 'territories'
   | 'together'
@@ -237,6 +238,7 @@ export type HomeScreenElementKey =
   | 'didYouKnow'
 
 export const DEFAULT_HOME_SCREEN_ELEMENTS_ORDER: HomeScreenElementKey[] = [
+  'checklist',
   'approachingConversations',
   'together',
   'tabletServiceYearSummary',
@@ -269,7 +271,7 @@ export function getEffectiveHomeScreenOrder(
     }
   }
   DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.forEach((k, i) => {
-    if (seen.has(k)) return
+    if (seen.has(k) || k === 'checklist') return
     const previous = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER[i - 1]
     const last = i === DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.length - 1
     const at = previous && !last ? out.indexOf(previous) : -1
@@ -277,6 +279,7 @@ export function getEffectiveHomeScreenOrder(
     else out.splice(at + 1, 0, k)
     seen.add(k)
   })
+  if (!seen.has('checklist')) out.unshift('checklist')
   return out
 }
 

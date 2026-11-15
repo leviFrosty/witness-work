@@ -1,6 +1,7 @@
 import {
   BookOpenCheck as BookOpenCheckIcon,
   CalendarDays as CalendarDaysIcon,
+  CircleCheck as CircleCheckIcon,
   Car as CarIcon,
   FileText as FileTextIcon,
   Flag as FlagIcon,
@@ -20,6 +21,7 @@ import { homeSectionTitle } from '@/lib/homeSections'
 import type { HomeScreenElementKey } from '@/stores/preferences'
 
 const ICONS: Record<HomeScreenElementKey, AppIcon> = {
+  checklist: CircleCheckIcon,
   approachingConversations: MessagesSquareIcon,
   territories: MapIcon,
   together: UsersIcon,

@@ -17,6 +17,7 @@ export default function useAvailableHomeSections({
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
   const {
+    homeChecklistDismissed,
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
@@ -25,6 +26,7 @@ export default function useAvailableHomeSections({
   } = usePreferences(
     useShallow((s) => ({
       routineEnabled: s.routineEnabled,
+      homeChecklistDismissed: s.homeChecklistDismissed,
       homeScreenElements: s.homeScreenElements,
       homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
@@ -50,6 +52,7 @@ export default function useAvailableHomeSections({
       (key) =>
         !isHomeSectionShown(key, {
           homeScreenElements,
+          homeChecklistDismissed,
           petPromptDismissed,
           hasPet,
           routineEnabled,

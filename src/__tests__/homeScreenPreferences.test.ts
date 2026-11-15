@@ -40,7 +40,16 @@ describe('Home screen preferences', () => {
     expect(
       result.filter((k) => k === 'serviceReport' || k === 'thisWeek')
     ).toEqual(['serviceReport', 'thisWeek'])
-    expect(result[0]).toBe('serviceReport')
+    expect(result[1]).toBe('serviceReport')
+  })
+
+  it('puts the Get started checklist on top of an order saved before it was a section', () => {
+    const stored = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
+      (k) => k !== 'checklist'
+    ).reverse()
+    const result = getEffectiveHomeScreenOrder(stored)
+
+    expect(result).toEqual(['checklist', ...stored])
   })
 
   it('places a new section after its default predecessor', () => {
@@ -83,6 +92,7 @@ describe('Home screen preferences', () => {
 
   it('puts Quick Actions directly above This Week by default', () => {
     expect(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER).toEqual([
+      'checklist',
       'approachingConversations',
       'together',
       'tabletServiceYearSummary',
@@ -113,7 +123,7 @@ describe('Home screen preferences', () => {
   it('appends missing sections in default order', () => {
     const result = getEffectiveHomeScreenOrder(['thisWeek'])
 
-    expect(result[0]).toBe('thisWeek')
+    expect(result.slice(0, 2)).toEqual(['checklist', 'thisWeek'])
     expect(result).toHaveLength(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.length)
     expect(result).toEqual(
       expect.arrayContaining(DEFAULT_HOME_SCREEN_ELEMENTS_ORDER)

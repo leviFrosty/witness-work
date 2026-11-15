@@ -431,7 +431,7 @@ The territories store keeps the same records with their stamps in its persisted 
 - **A deleted territory (`h` tombstoned) or street (`s.<id>` tombstoned) is deleted for good.** No later version brings it back, and its children are dropped from the ledger, keeping only the one tombstone. A deleted street's do-not-calls move to `d.<id>` (with `streetId`), so a do-not-call recorded on another device while the street was being deleted isn't lost. A territory a device keeps when its space ends (`removeSpace`'s `keep`) isn't kept if it was deleted elsewhere.
 - **Two records for one house** fold as in a space ([Merge rules](#merge-rules), rule 3); the next restamp writes the fold.
 - **A missing slice is not a deletion.** 1.46.0 and earlier don't know `territoryStore` (their schema drops it) and write snapshots without it; a merge with such a payload changes nothing, and a restore (Replace, or a backup file) without it keeps this device's territories. Every device writes only its own snapshot, so an older one can't remove another's. The merge is commutative, associative and idempotent; `personalSync.test.ts` checks convergence over random edits and sync orders.
-- **The `territories` flag doesn't gate any of it.** A device with the flag off merges, stores and writes territories like any other record, so turning the flag off and on again loses nothing.
+- **No app flag gates any of it.** Every device merges, stores and writes territories like any other record. (Before 1.47.0 the `territories` flag hid the feature; a device with it off still kept and synced territories, so nothing was lost.)
 
 ### Shared and unshared
 

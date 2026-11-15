@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { useUpdateRequired } from '@/lib/appUpdate/updateRequired'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { logger } from '@/lib/logger'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { accountSessions, onAccountChange } from '@/lib/serverAccount'
@@ -23,8 +22,7 @@ const registerPush = () =>
   )
 
 export default function TerritoriesRuntime() {
-  const enabled =
-    useFeatureFlag('territories') && hasCapability('territorySharing')
+  const enabled = hasCapability('territorySharing')
   const buddies = useBuddiesSession((state) => state.running)
 
   useEffect(() => {

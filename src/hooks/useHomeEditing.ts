@@ -2,7 +2,6 @@ import useDevice from '@/hooks/useDevice'
 import useEditMode from '@/hooks/useEditMode'
 import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { isHomeSectionAvailable, isHomeSectionOn } from '@/lib/homeSections'
 import {
   getEffectiveHomeScreenOrder,
@@ -35,7 +34,6 @@ export default function useHomeEditing({
 }: { lifecycle?: boolean; buddiesAvailable?: boolean } = {}) {
   const { isTablet } = useDevice()
   const { hasAnnualGoal, showsTimer } = usePublisher()
-  const territoriesAvailable = useFeatureFlag('territories')
 
   const isOnScreen = (key: HomeScreenElementKey) =>
     isHomeSectionAvailable(key, {
@@ -44,7 +42,6 @@ export default function useHomeEditing({
       showsTimer,
       mileageTrackingEnabled: usePreferences.getState().mileageTrackingEnabled,
       buddiesAvailable,
-      territoriesAvailable,
     })
 
   return useEditMode<HomeEditSource>('home', {

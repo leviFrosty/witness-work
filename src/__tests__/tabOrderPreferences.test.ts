@@ -44,26 +44,16 @@ describe('getEffectiveTabOrder', () => {
 })
 
 describe('isTabAvailable', () => {
-  const all = { showsYearTabs: true, territories: true }
+  const all = { showsYearTabs: true }
 
-  it('shows Territories only while the feature is on', () => {
+  it('always shows Territories', () => {
     expect(isTabAvailable('Territories', all)).toBe(true)
-    expect(isTabAvailable('Territories', { ...all, territories: false })).toBe(
-      false
-    )
   })
 
   it('shows Progress only for roles with year tabs', () => {
     expect(isTabAvailable('Progress', { ...all, showsYearTabs: false })).toBe(
       false
     )
-  })
-
-  it('leaves the original tabs alone when Territories is off', () => {
-    const off = { showsYearTabs: true, territories: false }
-    expect(
-      getEffectiveTabOrder(undefined).filter((key) => isTabAvailable(key, off))
-    ).toEqual(FOUR)
   })
 })
 

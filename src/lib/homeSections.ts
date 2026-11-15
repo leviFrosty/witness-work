@@ -46,8 +46,6 @@ export type HomeSectionCapabilities = {
   mileageTrackingEnabled: boolean | undefined
 
   buddiesAvailable: boolean
-
-  territoriesAvailable?: boolean
 }
 
 export const isHomeSectionAvailable = (
@@ -58,14 +56,12 @@ export const isHomeSectionAvailable = (
     showsTimer,
     mileageTrackingEnabled,
     buddiesAvailable,
-    territoriesAvailable = false,
   }: HomeSectionCapabilities
 ) => {
   if (key === 'tabletServiceYearSummary') return isTablet && hasAnnualGoal
   if (key === 'timer') return showsTimer
   if (key === 'mileage') return mileageTrackingEnabled !== false
   if (key === 'together') return buddiesAvailable
-  if (key === 'territories') return territoriesAvailable
   return true
 }
 

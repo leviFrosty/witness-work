@@ -36,7 +36,6 @@ import {
   isTabAvailable,
   type TabOrderKey,
 } from '@/lib/tabOrderPreferences'
-import { useFeatureFlag } from '@/lib/featureFlags'
 
 type LaunchDecision = {
   action: RevealAction
@@ -141,9 +140,8 @@ const HomeTabStack = () => {
     (s) => s.arbiter.active?.kind === 'update-reveal'
   )
   const { showsYearTabs } = usePublisher()
-  const territories = useFeatureFlag('territories')
   const tabOrder = getEffectiveTabOrder(storedTabOrder).filter((name) =>
-    isTabAvailable(name, { showsYearTabs, territories })
+    isTabAvailable(name, { showsYearTabs })
   )
 
   const [launch] = useState(decideLaunch)

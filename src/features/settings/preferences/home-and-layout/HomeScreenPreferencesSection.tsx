@@ -1,5 +1,4 @@
 import { analytics } from '@/lib/analytics'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import i18n from '@/lib/locales'
 import {
   GroupedListReorderSection,
@@ -34,7 +33,6 @@ const HomeElements = () => {
   } = usePreferences()
   const { showsTimer, hasAnnualGoal } = usePublisher()
   const buddiesAvailable = useBuddiesEnabled()
-  const territoriesAvailable = useFeatureFlag('territories')
   const hasPet = usePet((s) => s.pet !== null)
   const { isTablet } = useDevice()
 
@@ -46,7 +44,6 @@ const HomeElements = () => {
       showsTimer,
       mileageTrackingEnabled,
       buddiesAvailable,
-      territoriesAvailable,
     })
   )
 

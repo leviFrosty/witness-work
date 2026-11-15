@@ -1,7 +1,6 @@
 import { useShallow } from 'zustand/react/shallow'
 import useDevice from '@/hooks/useDevice'
 import usePublisher from '@/hooks/usePublisher'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { isHomeSectionAvailable, isHomeSectionShown } from '@/lib/homeSections'
 import usePet from '@/stores/pet'
 import {
@@ -34,7 +33,6 @@ export default function useAvailableHomeSections({
     }))
   )
   const hasPet = usePet((s) => s.pet !== null)
-  const territoriesAvailable = useFeatureFlag('territories')
   const available = getEffectiveHomeScreenOrder(homeScreenElementsOrder).filter(
     (key) =>
       isHomeSectionAvailable(key, {
@@ -43,7 +41,6 @@ export default function useAvailableHomeSections({
         showsTimer,
         mileageTrackingEnabled,
         buddiesAvailable,
-        territoriesAvailable,
       })
   )
   return {

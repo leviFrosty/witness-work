@@ -15,7 +15,6 @@ import { usePreferences } from '@/stores/preferences'
 import { useMileageView } from '@/stores/mileageView'
 import useTheme from '@/contexts/theme'
 import i18n, { TranslationKey } from '@/lib/locales'
-import { useFeatureFlag } from '@/lib/featureFlags'
 
 import Button from '@/components/ui/Button'
 import IconButton from '@/components/ui/IconButton'
@@ -48,7 +47,6 @@ export default function QuickActionMenu({
   const hasActiveCar = useMileageView((view) =>
     view.vehicles.some((v) => !v.archived)
   )
-  const territories = useFeatureFlag('territories')
   const handleQuickAction = (action: QuickActionOption) => {
     onAction()
     switch (action) {
@@ -115,13 +113,11 @@ export default function QuickActionMenu({
           onPress={() => handleQuickAction('logTrip')}
         />
       )}
-      {territories && (
-        <ActionButton
-          text='territories.workTerritory'
-          icon={MapIcon}
-          onPress={() => handleQuickAction('territories')}
-        />
-      )}
+      <ActionButton
+        text='territories.workTerritory'
+        icon={MapIcon}
+        onPress={() => handleQuickAction('territories')}
+      />
     </View>
   )
 }

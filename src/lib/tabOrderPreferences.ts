@@ -15,15 +15,13 @@ export const DEFAULT_TAB_ORDER: TabOrderKey[] = [
 
 export type TabAvailability = {
   showsYearTabs: boolean
-  territories: boolean
 }
 
 export function isTabAvailable(
   key: TabOrderKey,
-  { showsYearTabs, territories }: TabAvailability
+  { showsYearTabs }: TabAvailability
 ): boolean {
   if (key === 'Progress') return showsYearTabs
-  if (key === 'Territories') return territories
   return true
 }
 

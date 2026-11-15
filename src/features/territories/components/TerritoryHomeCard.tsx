@@ -9,7 +9,6 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useLocalDay from '@/hooks/useLocalDay'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import i18n from '@/lib/locales'
 import {
   streetSummary,
@@ -30,14 +29,13 @@ import type { RootStackNavigation } from '@/types/rootStack'
 const SHOWN = 3
 
 export const useHasTerritories = () => {
-  const enabled = useFeatureFlag('territories')
   const checkedOut = useTerritories((state) =>
     state.territories.some(
       (territory) =>
         territory.finishedAt === undefined && isReceivedLive(territory)
     )
   )
-  return enabled && checkedOut
+  return checkedOut
 }
 
 export default function TerritoryHomeCard() {

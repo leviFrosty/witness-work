@@ -18,7 +18,6 @@ import useTheme from '@/contexts/theme'
 import SettingsSearchTarget from '@/features/settings/components/search/SettingsSearchTarget'
 import { analytics } from '@/lib/analytics'
 import { useReplayOptInRequired } from '@/lib/sessionReplay/replayCountry'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { useTerritoryPrivacy } from '@/hooks/useTerritoryPrivacy'
 import confirmDestructive from '@/lib/confirmDestructive'
 import confirmDataProtectionOn from '@/lib/confirmDataProtectionOn'
@@ -37,7 +36,6 @@ const PrivacyPreferencesSection = () => {
     set,
   } = usePreferences()
 
-  const territoriesEnabled = useFeatureFlag('territories')
   const territoryPrivacy = useTerritoryPrivacy()
 
   const askReplayOptIn =
@@ -73,7 +71,7 @@ const PrivacyPreferencesSection = () => {
   }
 
   const beforeDoorRecordsGo = (apply: () => void, alsoTerritory = false) => {
-    const count = territoriesEnabled ? territoriesWithDoorRecords() : 0
+    const count = territoriesWithDoorRecords()
     if (count === 0) return apply()
     confirmDestructive({
       title: i18n.t('territories.privacyConfirm_title'),
@@ -130,7 +128,6 @@ const PrivacyPreferencesSection = () => {
               label={i18n.t('dataProtectionSwitchLabel')}
               info={i18n.t(syncKey('dataProtectionInfoDesc'))}
               controlWidth='auto'
-              lastInSection={!dataProtectionMode && !territoriesEnabled}
               style={{ justifyContent: 'space-between' }}
             >
               <Switch
@@ -140,27 +137,23 @@ const PrivacyPreferencesSection = () => {
               />
             </InputRowContainer>
           </SettingsSearchTarget>
-          {territoriesEnabled && (
-            <InputRowSwitch
-              leftIcon={MapIcon}
-              label={i18n.t('territories.privacySwitch')}
-              description={i18n.t(
-                territoryPrivacyMode === null && dataProtectionMode
-                  ? 'territories.privacySwitch_following'
-                  : 'territories.privacySwitch_description'
-              )}
-              info={i18n.t('territories.privacySwitch_info')}
-              value={territoryPrivacy}
-              onValueChange={(value) =>
-                value
-                  ? beforeDoorRecordsGo(() =>
-                      set({ territoryPrivacyMode: true })
-                    )
-                  : set({ territoryPrivacyMode: false })
-              }
-              lastInSection={!dataProtectionMode}
-            />
-          )}
+          <InputRowSwitch
+            leftIcon={MapIcon}
+            label={i18n.t('territories.privacySwitch')}
+            description={i18n.t(
+              territoryPrivacyMode === null && dataProtectionMode
+                ? 'territories.privacySwitch_following'
+                : 'territories.privacySwitch_description'
+            )}
+            info={i18n.t('territories.privacySwitch_info')}
+            value={territoryPrivacy}
+            onValueChange={(value) =>
+              value
+                ? beforeDoorRecordsGo(() => set({ territoryPrivacyMode: true }))
+                : set({ territoryPrivacyMode: false })
+            }
+            lastInSection={!dataProtectionMode}
+          />
           {dataProtectionMode && (
             <SettingsSearchTarget id='deleteHouseholderData'>
               <InputRowButton

@@ -1,6 +1,5 @@
 import { useNavigation } from '@react-navigation/native'
 import useNow from '@/hooks/useNow'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { hasCapability } from '@/lib/platformCapabilities'
 import type { NotificationItem } from '@/types/notifications'
 import type { RootStackNavigation } from '@/types/rootStack'
@@ -30,8 +29,7 @@ export function territoryInviteAnswer(
 
 export default function useTerritoryNotifications(): NotificationItem[] {
   const navigation = useNavigation<RootStackNavigation>()
-  const enabled =
-    useFeatureFlag('territories') && hasCapability('territorySharing')
+  const enabled = hasCapability('territorySharing')
   const buddiesEnabled = useBuddiesEnabled()
   const started = useBuddies((state) => state.registeredInboxId !== null)
   const queue = useBuddies((state) => state.notifications)

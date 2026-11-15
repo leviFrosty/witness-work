@@ -89,14 +89,8 @@ describe('Home sections', () => {
     ).toBe(false)
   })
 
-  it('offers Territories only while the feature is on', () => {
-    expect(isHomeSectionAvailable('territories', phone)).toBe(false)
-    expect(
-      isHomeSectionAvailable('territories', {
-        ...phone,
-        territoriesAvailable: true,
-      })
-    ).toBe(true)
+  it('always offers Territories', () => {
+    expect(isHomeSectionAvailable('territories', phone)).toBe(true)
   })
 
   it('puts Territories after follow-ups in an order saved before it existed', () => {

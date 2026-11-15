@@ -943,8 +943,7 @@ screen tracking (`ShareApp`) shows how often the code is opened from Settings.
 ## Navigation preferences
 
 Users can reorder the Home, Contacts, Progress, Schedule, and Territories tabs
-in Preferences → Tab Order; Home remains the launch tab. Territories is a tab
-only while the `territories` flag is on. `tab_order_changed` measures adoption
+in Preferences → Tab Order; Home remains the launch tab. `tab_order_changed` measures adoption
 of this preference with `order` (comma-separated bounded route names, including
 Progress and Territories even when hidden) and `source` (`drag` on iOS, `buttons` on Android and the web). Generic menu and
 navigation interactions remain removed.
@@ -1384,7 +1383,7 @@ invitation details.
 
 ### Shared Territories
 
-Shared Territories (ADR 0047, behind the `territories` flag) answers whether
+Shared Territories (ADR 0047) answers whether
 people share territories, how (the whole territory or some streets, with buddies
 or with a guest link), whether the buddies they invite join, and whether
 hand-offs get used. `territory_shared` is sent each time the User shares with

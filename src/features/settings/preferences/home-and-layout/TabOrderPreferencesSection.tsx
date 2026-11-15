@@ -7,19 +7,15 @@ import { moveVisible } from '@/lib/reorder'
 import usePublisher from '@/hooks/usePublisher'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
-import { useFeatureFlag } from '@/lib/featureFlags'
 import { getEffectiveTabOrder, isTabAvailable } from '@/lib/tabOrderPreferences'
 import { usePreferences } from '@/stores/preferences'
 
 const TabOrderPreferencesSection = () => {
   const { tabOrder, set } = usePreferences()
   const { showsYearTabs } = usePublisher()
-  const territories = useFeatureFlag('territories')
   const order = getEffectiveTabOrder(tabOrder)
 
-  const visible = order.filter((key) =>
-    isTabAvailable(key, { showsYearTabs, territories })
-  )
+  const visible = order.filter((key) => isTabAvailable(key, { showsYearTabs }))
 
   return (
     <GroupedListReorderSection

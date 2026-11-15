@@ -83,6 +83,7 @@ export default function PetSettingsScreen({ navigation }: Props) {
           label={i18n.t('pet.settings.showOnHome')}
           value={isHomeSectionShown('pet', {
             homeScreenElements,
+            homeChecklistDismissed: false,
             petPromptDismissed,
             hasPet,
           })}

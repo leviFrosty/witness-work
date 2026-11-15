@@ -15,12 +15,17 @@ export type HomeEditSource = 'menu' | 'background' | 'footer'
 type Layout = { order: HomeScreenElementKey[]; hidden: HomeScreenElementKey[] }
 
 const currentLayout = (): Layout => {
-  const { homeScreenElementsOrder, homeScreenElements } =
-    usePreferences.getState()
+  const {
+    homeChecklistDismissed,
+    homeScreenElementsOrder,
+    homeScreenElements,
+  } = usePreferences.getState()
   const order = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
   return {
     order,
-    hidden: order.filter((key) => !isHomeSectionOn(key, homeScreenElements)),
+    hidden: order.filter(
+      (key) => !isHomeSectionOn(key, homeScreenElements, homeChecklistDismissed)
+    ),
   }
 }
 

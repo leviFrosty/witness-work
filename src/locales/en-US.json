@@ -4953,6 +4953,7 @@
     "removed": "{{section}} hidden",
     "emptySection": "Shows up when there's something to show",
     "description": {
+      "checklist": "A few first steps to get to know WitnessWork",
       "approachingConversations": "Today's follow-ups, to log as you go",
       "territories": "The territories you have checked out",
       "together": "Plans and follow-ups with your buddies, and invitations to answer",

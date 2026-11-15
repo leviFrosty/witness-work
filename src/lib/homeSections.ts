@@ -10,6 +10,8 @@ import { toast } from '@/stores/toasts'
 
 export const homeSectionTitle = (key: HomeScreenElementKey): string => {
   switch (key) {
+    case 'checklist':
+      return i18n.t('homeChecklistHeader')
     case 'approachingConversations':
       return i18n.t('approachingConversations')
     case 'territories':
@@ -83,24 +85,30 @@ export const moveHomeSection = (
 
 export const isHomeSectionOn = (
   key: HomeScreenElementKey,
-  homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
-) => homeScreenElements[key] ?? PREFERENCE_DEFAULTS.homeScreenElements[key]
+  homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>,
+  homeChecklistDismissed: boolean
+) =>
+  key === 'checklist'
+    ? !homeChecklistDismissed
+    : (homeScreenElements[key] ?? PREFERENCE_DEFAULTS.homeScreenElements[key])
 
 export const isHomeSectionShown = (
   key: HomeScreenElementKey,
   {
     homeScreenElements,
+    homeChecklistDismissed,
     petPromptDismissed,
     hasPet,
     routineEnabled,
   }: {
     homeScreenElements: Partial<Record<HomeScreenElementKey, boolean>>
+    homeChecklistDismissed: boolean
     petPromptDismissed: boolean
     hasPet: boolean
     routineEnabled?: boolean
   }
 ) =>
-  isHomeSectionOn(key, homeScreenElements) &&
+  isHomeSectionOn(key, homeScreenElements, homeChecklistDismissed) &&
   !(key === 'pet' && !hasPet && petPromptDismissed) &&
   !(key === 'routine' && routineEnabled === false)
 
@@ -109,6 +117,10 @@ export const setHomeSectionShown = (
   shown: boolean
 ) => {
   const { homeScreenElements, routineEnabled, set } = usePreferences.getState()
+  if (key === 'checklist') {
+    set({ homeChecklistDismissed: !shown })
+    return
+  }
   const offerAgain = key === 'pet' && shown && usePet.getState().pet === null
   const inviteRoutine = key === 'routine' && shown && routineEnabled === false
   set({

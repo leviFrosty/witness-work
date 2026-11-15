@@ -24,6 +24,7 @@ import { moveVisible } from '@/lib/reorder'
 
 const HomeElements = () => {
   const {
+    homeChecklistDismissed,
     homeScreenElements,
     homeScreenElementsOrder,
     mileageTrackingEnabled,
@@ -70,6 +71,7 @@ const HomeElements = () => {
           }
           value={isHomeSectionShown(key, {
             homeScreenElements,
+            homeChecklistDismissed,
             petPromptDismissed,
             hasPet,
             routineEnabled,

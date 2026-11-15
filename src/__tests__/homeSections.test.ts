@@ -101,7 +101,7 @@ describe('Home sections', () => {
 
   it('puts Territories after follow-ups in an order saved before it existed', () => {
     const saved = DEFAULT_HOME_SCREEN_ELEMENTS_ORDER.filter(
-      (key) => key !== 'territories'
+      (key) => key !== 'territories' && key !== 'checklist'
     ).reverse()
     const order = getEffectiveHomeScreenOrder(saved)
     expect(order.indexOf('territories')).toBe(
@@ -146,7 +146,7 @@ describe('Home sections', () => {
   })
 
   it('saves a drag to the stored order', () => {
-    moveHomeSectionTo('didYouKnow', 'approachingConversations')
+    moveHomeSectionTo('didYouKnow', 'checklist')
     expect(
       getEffectiveHomeScreenOrder(
         usePreferences.getState().homeScreenElementsOrder
@@ -176,6 +176,42 @@ describe('Home sections', () => {
     ])
   })
 
+  describe('Get started checklist', () => {
+    const shown = () =>
+      isHomeSectionShown('checklist', {
+        ...usePreferences.getState(),
+        hasPet: false,
+      })
+
+    it('shows until the User hides it', () => {
+      expect(shown()).toBe(true)
+      usePreferences.setState({ homeChecklistDismissed: true })
+      expect(shown()).toBe(false)
+    })
+
+    it('hides with an Undo through the checklist flag', () => {
+      hideHomeSection('checklist')
+      expect(usePreferences.getState().homeChecklistDismissed).toBe(true)
+      expect(usePreferences.getState().homeScreenElements).not.toHaveProperty(
+        'checklist'
+      )
+      useToasts.getState().toasts[0]?.action?.onPress()
+      expect(usePreferences.getState().homeChecklistDismissed).toBe(false)
+    })
+
+    it('comes back at the top when added again', () => {
+      usePreferences.setState({ homeChecklistDismissed: true })
+      moveHomeSectionTo('checklist', 'territories')
+      showHomeSection('checklist')
+      expect(shown()).toBe(true)
+      expect(
+        getEffectiveHomeScreenOrder(
+          usePreferences.getState().homeScreenElementsOrder
+        )[0]
+      ).toBe('checklist')
+    })
+  })
+
   describe('Together', () => {
     const shown = (
       homeScreenElements: Partial<
@@ -184,6 +220,7 @@ describe('Home sections', () => {
     ) =>
       isHomeSectionShown('together', {
         homeScreenElements,
+        homeChecklistDismissed: false,
         petPromptDismissed: false,
         hasPet: false,
       })
@@ -192,7 +229,9 @@ describe('Home sections', () => {
       expect(shown()).toBe(false)
 
       expect(shown({ serviceReport: true })).toBe(false)
-      expect(isHomeSectionOn('timer', { serviceReport: true })).toBe(true)
+      expect(isHomeSectionOn('timer', { serviceReport: true }, false)).toBe(
+        true
+      )
     })
 
     it('shows at the top once added', () => {

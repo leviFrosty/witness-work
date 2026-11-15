@@ -313,14 +313,12 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
               isDidYouKnowLast && homeScreenElements.didYouKnow !== false
             }
           >
-            {!homeChecklistDismissed && (
-              <ReorderableItem id='checklist' locked gap={SECTION_GAP}>
-                <HomeChecklist />
-              </ReorderableItem>
-            )}
             {effectiveOrder.map((key: HomeScreenElementKey) => {
               const section = (() => {
                 switch (key) {
+                  case 'checklist':
+                    if (homeChecklistDismissed) return null
+                    return <HomeChecklist key={key} />
                   case 'approachingConversations':
                     if (!homeScreenElements.approachingConversations)
                       return null
@@ -333,14 +331,22 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                   case 'territories':
                     if (
                       !hasTerritories ||
-                      !isHomeSectionOn('territories', homeScreenElements)
+                      !isHomeSectionOn(
+                        'territories',
+                        homeScreenElements,
+                        homeChecklistDismissed
+                      )
                     )
                       return null
                     return <TerritoryHomeCard key={key} />
                   case 'together':
                     if (
                       !buddiesAvailable ||
-                      !isHomeSectionOn('together', homeScreenElements)
+                      !isHomeSectionOn(
+                        'together',
+                        homeScreenElements,
+                        homeChecklistDismissed
+                      )
                     )
                       return null
                     return <BuddiesHomeSection key={key} />

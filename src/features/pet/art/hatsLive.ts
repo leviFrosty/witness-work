@@ -10,7 +10,7 @@ import {
   type PixelBuffer,
   type ShapeSpec,
 } from '@/lib/pixelArt'
-import type { BigHatId, Season } from '@/types/pet'
+import { PET_SPECIES_IDS, type BigHatId, type Season } from '@/types/pet'
 
 import { isDarkTime, SHOW_MS, showStrength } from './fx'
 import {
@@ -25,6 +25,7 @@ import {
   FIG_STAGES,
   HAT_FRAME_SPECS,
   NEST_CHICK_U,
+  RIDE,
   TRACK,
   type ChickFace,
 } from './hatFrames'
@@ -73,7 +74,7 @@ const isStaticHat = (hat: BigHatId): hat is PlainHatId =>
   Object.hasOwn(PLAIN_HAT_SPECS, hat)
 
 export function hatRoomDim(hat: BigHatId, m: HatMoment): number {
-  if (hat !== 'lighthouse' && hat !== 'dome') return 0
+  if (hat !== 'dome' && hat !== 'carousel') return 0
   return showStrength(m)
 }
 
@@ -937,6 +938,274 @@ function drawFig(buf: PixelBuffer, m: HatMoment) {
   }
 }
 
+const wrap = (v: number, n: number) => ((v % n) + n) % n
+
+const CAROUSEL_SPIN_MS = 2400
+
+export function carouselAngle(tMs: number, patMs: number): number {
+  const since = tMs - patMs
+  const spin =
+    since >= 0 && since < CAROUSEL_SPIN_MS
+      ? (1 - Math.cos((since / CAROUSEL_SPIN_MS) * Math.PI)) * 2 * Math.PI
+      : 0
+  return Math.PI / 2 + 0.2 + tMs * 0.0007 + spin
+}
+
+type Rider = {
+  readonly map: readonly string[]
+  readonly ink: Readonly<Record<string, number>>
+}
+
+const RIDERS: Readonly<Record<PetSpeciesId, Rider>> = {
+  lion: {
+    map: [
+      '........',
+      '...aaa..',
+      '..aabkb.',
+      'a.aabbbk',
+      'abbrrbb.',
+      '.bbbbbs.',
+      '.s....s.',
+    ],
+    ink: rgbPalette({
+      b: '#e8b04a',
+      s: '#c98a2e',
+      a: '#a0522d',
+      k: '#26221e',
+    }),
+  },
+  dog: {
+    map: [
+      '........',
+      '....bbb.',
+      '...abkbb',
+      'b..abbbk',
+      'bbbrrbb.',
+      '.bbbbbs.',
+      '.s....s.',
+    ],
+    ink: rgbPalette({
+      b: '#c8874a',
+      s: '#a86a34',
+      a: '#7a4a28',
+      k: '#26221e',
+    }),
+  },
+  cat: {
+    map: [
+      '....b.b.',
+      '....bbb.',
+      'b...bkbb',
+      'b..bbbbp',
+      '.bbrrbb.',
+      '.bsbsbs.',
+      '.s....s.',
+    ],
+    ink: rgbPalette({
+      b: '#e89a52',
+      s: '#c4763a',
+      p: '#f4a6b8',
+      k: '#26221e',
+    }),
+  },
+  donkey: {
+    map: [
+      '....a.a.',
+      '....a.a.',
+      '...bbkb.',
+      'b..bbbww',
+      'bbbrrb..',
+      '.bbbbbs.',
+      '.s....s.',
+    ],
+    ink: rgbPalette({
+      b: '#9a948c',
+      s: '#7a746c',
+      a: '#5e5850',
+      w: '#e9e1d0',
+      k: '#26221e',
+    }),
+  },
+  lamb: {
+    map: [
+      '........',
+      '....sss.',
+      '...sbfff',
+      's..bbfff',
+      'sbbrrbb.',
+      '.bbbbbs.',
+      '.f....f.',
+    ],
+    ink: rgbPalette({
+      b: '#fbf6ea',
+      s: '#cfc4ae',
+      f: '#3a332c',
+    }),
+  },
+}
+
+const FAIR = rgbPalette({
+  pole: '#f6d55c',
+  poleDark: '#c98a16',
+  rim: '#d6ae2c',
+  bulbOff: '#b08a3a',
+  bulb: '#fff2b8',
+  pennant: '#3fb6a8',
+  pennantDark: '#2a8a80',
+})
+
+const SADDLES = rgbPalette({ a: '#e0464f', b: '#3fb6a8', c: '#f47fb0' })
+
+const CREAM = ['#fbf6ea', '#ddd3c0']
+
+const STRIPES = [
+  ['#e0464f', '#b93039'],
+  ['#3fb6a8', '#2a8a80'],
+  ['#f6d55c', '#d6ae2c'],
+  ['#f47fb0', '#c95a8a'],
+  ['#8f7ae6', '#6a58bf'],
+  ['#7cc45a', '#5a9a3e'],
+]
+  .flatMap((color) => [CREAM, color])
+  .map(([c, dark]) => [rgb(c), rgb(dark)] as const)
+
+const BULB_TINTS = ['#fff2b8', '#ffd3e0', '#c6f3ec', '#ffe08a'].map(rgb)
+
+export const ROOF = { rim: 16, apex: 25, rx: 14.4 } as const
+
+const STRIPE_ARC = Math.PI / 6
+
+function drawRider(
+  buf: PixelBuffer,
+  rider: Rider,
+  saddle: number,
+  x: number,
+  y: number,
+  flip: boolean
+) {
+  const { map, ink } = rider
+  map.forEach((row, j) => {
+    for (let i = 0; i < row.length; i++) {
+      const ch = row[flip ? row.length - 1 - i : i]
+      if (ch === '.') continue
+      setPixel(
+        buf,
+        x - 4 + i,
+        y - map.length + 1 + j,
+        ch === 'r' ? saddle : ink[ch]
+      )
+    }
+  })
+}
+
+function drawCanopy(buf: PixelBuffer, angle: number) {
+  for (let u: number = RIDE.roof; u <= ROOF.apex; u++) {
+    const w =
+      u <= ROOF.rim
+        ? ROOF.rx
+        : ROOF.rx * Math.pow((ROOF.apex - u) / (ROOF.apex - ROOF.rim), 1.2)
+    const reach = Math.round(w)
+    for (let d = -reach; d <= reach; d++) {
+      const theta = Math.acos(Math.max(-1, Math.min(1, d / Math.max(w, 0.5))))
+      const along = wrap(theta - angle, 2 * Math.PI) / STRIPE_ARC
+      if (u === RIDE.roof) {
+        const middle = along - Math.floor(along)
+        if (middle < 0.25 || middle > 0.75) continue
+      }
+      const [c, dark] = STRIPES[Math.floor(along) % STRIPES.length]
+      put(
+        buf,
+        d,
+        u,
+        u === ROOF.rim ? FAIR.rim : Math.abs(d) > w * 0.78 ? dark : c
+      )
+    }
+  }
+}
+
+export interface CarouselBulb {
+  readonly d: number
+  readonly u: number
+  readonly c: number
+  readonly lit: boolean
+}
+
+const BULBS = 12
+
+export function carouselBulbs(m: HatMoment): CarouselBulb[] {
+  const angle = carouselAngle(m.tMs, m.patMs)
+  const show = hatRoomDim('carousel', m) > 0.25
+  const sinceCoins = m.tMs - m.coinsMs
+  const flashing = sinceCoins >= 0 && sinceCoins < 1600
+  const step = Math.floor(m.tMs / (show ? 140 : 700))
+  const out: CarouselBulb[] = []
+  for (let k = 0; k < BULBS; k++) {
+    const at = angle + (k * 2 * Math.PI) / BULBS
+    if (Math.sin(at) < 0.1) continue
+    const lit =
+      flashing || (show ? wrap(k - step, 3) === 0 : wrap(k + step, 2) === 0)
+    out.push({
+      d: Math.round(ROOF.rx * Math.cos(at)),
+      u: ROOF.rim,
+      c: flashing
+        ? BULB_TINTS[wrap(k + Math.floor(sinceCoins / 120), BULB_TINTS.length)]
+        : show
+          ? BULB_TINTS[k % BULB_TINTS.length]
+          : FAIR.bulb,
+      lit,
+    })
+  }
+  return out
+}
+
+function drawCarousel(buf: PixelBuffer, m: HatMoment) {
+  blit(buf, frameOf('carousel/base'), 0, 0)
+  const angle = carouselAngle(m.tMs, m.patMs)
+  const lead = Math.max(0, PET_SPECIES_IDS.indexOf(m.species))
+  const saddles = [SADDLES.a, SADDLES.b, SADDLES.c]
+  const riders = saddles.map((saddle, k) => {
+    const at = angle + (k * 2 * Math.PI) / 3
+    const near = Math.sin(at)
+    const base = RIDE.u - RIDE.ry * near
+    return {
+      rider: RIDERS[PET_SPECIES_IDS[(lead + k) % PET_SPECIES_IDS.length]],
+      saddle,
+      d: Math.round(RIDE.rx * Math.cos(at)),
+      base,
+      lift: Math.round(1.4 * Math.sin(2 * at + k)),
+      near,
+    }
+  })
+  const place = (r: (typeof riders)[number]) => {
+    for (let u = Math.round(r.base); u < RIDE.roof; u++)
+      put(buf, r.d, u, u % 3 === 0 ? FAIR.poleDark : FAIR.pole)
+    const [x, y] = bigHatPoint(r.d, r.base + 2 + r.lift)
+    drawRider(buf, r.rider, r.saddle, Math.round(x), Math.round(y), r.near > 0)
+  }
+  riders
+    .filter((r) => r.near <= 0)
+    .sort((a, b) => a.near - b.near)
+    .forEach(place)
+  blit(buf, frameOf('carousel/column'), 0, 0)
+  riders
+    .filter((r) => r.near > 0)
+    .sort((a, b) => a.near - b.near)
+    .forEach(place)
+  drawCanopy(buf, angle)
+  for (const bulb of carouselBulbs(m))
+    put(buf, bulb.d, bulb.u, bulb.lit ? bulb.c : FAIR.bulbOff)
+  for (let u = ROOF.apex + 1; u <= ROOF.apex + 4; u++)
+    put(buf, 0, u, FAIR.poleDark)
+  put(buf, 0, ROOF.apex + 1, FAIR.pole)
+  put(buf, -1, ROOF.apex + 1, FAIR.pole)
+  const flutter = Math.floor(m.tMs / 260) % 2
+  put(buf, 1, ROOF.apex + 4, FAIR.pennant)
+  put(buf, 2, ROOF.apex + 4 - flutter, FAIR.pennant)
+  put(buf, 1, ROOF.apex + 3, FAIR.pennantDark)
+  put(buf, 3, ROOF.apex + 3 - flutter, FAIR.pennant)
+  blit(buf, outlined(buf), 0, 0)
+}
+
 const SCOPE = {
   d: 1,
   u: 10,
@@ -1073,8 +1342,8 @@ function drawInto(buf: PixelBuffer, hat: BigHatId, m: HatMoment) {
     case 'bowl':
       drawBowl(buf, m)
       break
-    case 'lighthouse':
-      blit(buf, frameOf(`lighthouse/${Math.floor(t / 160) % 8}`), 0, 0)
+    case 'carousel':
+      drawCarousel(buf, m)
       break
     case 'train':
       drawTrain(buf, m)

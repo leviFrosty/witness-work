@@ -13,6 +13,7 @@ import {
 import { COIN_TOSS_MS } from './hatRoomFx'
 import {
   bigHatFrame,
+  carouselAngle,
   frogShot,
   NEST_VISIT,
   nestShot,
@@ -63,7 +64,7 @@ const MOVING = [
   'mini',
   'balloon',
   'bowl',
-  'lighthouse',
+  'carousel',
   'train',
   'dome',
   'fig',
@@ -103,10 +104,10 @@ describe('the big hats', () => {
   })
 
   it('reacts to a pat and to new coins', () => {
-    for (const hat of ['propeller', 'bowl', 'train', 'lighthouse'] as const) {
+    for (const hat of ['propeller', 'bowl', 'train', 'dome'] as const) {
       expect(drawn(hat, 1000, { hatPatMs: 900 })).not.toBe(drawn(hat, 1000))
     }
-    for (const hat of ['bowl', 'lighthouse', 'fig'] as const) {
+    for (const hat of ['bowl', 'dome', 'fig'] as const) {
       expect(drawn(hat, 1000, { hatCoinsMs: 900 })).not.toBe(drawn(hat, 1000))
     }
   })
@@ -238,6 +239,45 @@ describe('the big hats', () => {
       expect(trainSpot(at - behind).near).toBeGreaterThan(0.3)
   })
 
+  it('puts a pet like yours out in front of the carousel', () => {
+    const lead = carouselAngle(0, -Infinity)
+    expect(Math.sin(lead)).toBeGreaterThan(0.9)
+    const rest = (species: (typeof PET_SPECIES_IDS)[number]) =>
+      hashBuffer(
+        bigHatFrame('carousel', {
+          tMs: 0,
+          species,
+          coat: 'default',
+          season: 'summer',
+          time: 'day',
+          growth: 0,
+          wentOut: false,
+          patMs: -Infinity,
+          coinsMs: -Infinity,
+          clockMs: null,
+        })
+      )
+    expect(new Set(PET_SPECIES_IDS.map(rest)).size).toBe(PET_SPECIES_IDS.length)
+  })
+
+  it('wheels the carousel lights round the walls only for its show', () => {
+    const wallChanged = (over: Partial<SceneInput>, room = {}) => {
+      const a = composeScene(input('none', over, room), 5000).data
+      const b = composeScene(input('carousel', over, room), 5000).data
+      let changed = 0
+      for (let y = 0; y < 40; y++)
+        for (let x = 130; x < 180; x++) {
+          const i = (y * 180 + x) * 4
+          if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2])
+            changed++
+        }
+      return changed
+    }
+    expect(wallChanged({})).toBe(0)
+    expect(wallChanged({ hatPatMs: 4000 })).toBeGreaterThan(50)
+    expect(wallChanged({}, { time: 'night' })).toBeGreaterThan(50)
+  })
+
   it('rests the snail on the middle of the head', () => {
     const [x, , width] = opaqueBounds(hatSprite('snail')!)!
     expect(Math.abs(x + width / 2 - BIG_HAT_CX)).toBeLessThanOrEqual(1)
@@ -262,7 +302,7 @@ describe('the big hats', () => {
       drawn('none', 0, { visitors: [{ ...visitor, hat: 'cap' }] })
     ).not.toBe(plain)
     expect(
-      drawn('none', 0, { visitors: [{ ...visitor, hat: 'lighthouse' }] })
+      drawn('none', 0, { visitors: [{ ...visitor, hat: 'train' }] })
     ).not.toBe(plain)
     expect(
       drawn('none', 0, {
@@ -312,7 +352,6 @@ describe('the big hats', () => {
 
     it('dims the room for a moment on new coins, so stars show by day', () => {
       expect(pixelsChanged('dome', 'hatCoinsMs')).toBeGreaterThan(1000)
-      expect(pixelsChanged('lighthouse', 'hatCoinsMs')).toBeGreaterThan(1000)
       const after = 40_000
       expect(drawn('dome', after, { hatCoinsMs: 30_000 })).toBe(
         drawn('dome', after)

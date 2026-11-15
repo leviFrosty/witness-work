@@ -494,88 +494,6 @@ specs['bowl/0'] = bowlBody(15, 15)
 specs['bowl/1'] = bowlBody(15.8, 14.2)
 specs['bowl/2'] = bowlBody(14.2, 15.8)
 
-const tower = [
-  poly(
-    [
-      [-10.6, 0],
-      [-9.8, 2],
-      [-7.4, 3.6],
-      [-5.6, 2.6],
-      [-4.2, 3.8],
-      [4.4, 3.8],
-      [6, 2.4],
-      [8, 3.4],
-      [10, 1.6],
-      [10.6, 0],
-    ],
-    ['#8b8f94', '#6a6e74', '#aeb2b6']
-  ),
-  poly(
-    [
-      [-5.8, 2],
-      [5.8, 2],
-      [3.6, 18],
-      [-3.6, 18],
-    ],
-    ['#fbf6ea', '#dcd3c0', '#ffffff'],
-    { k: 't' }
-  ),
-  box(-5.6, 17.8, 5.6, 19.2, ['#2d3a4a', '#1e2733', '#47566a']),
-  box(-3, 19.2, 3, 23.4, ['#fff2b8'], { k: 'l' }),
-  poly(
-    [
-      [-3.9, 23.2],
-      [3.9, 23.2],
-      [0, 27],
-    ],
-    ['#c0453f', '#97302d', '#e06a5f']
-  ),
-  ell(0, 27.4, 0.8, 0.8, ['#f6d55c']),
-  box(-1.1, 2, 1.1, 5.4, ['#3a4a5a'], { no: true }),
-]
-const towerBands = [6, 12.4].map((u) =>
-  paint(
-    [
-      [-7, u],
-      [7, u],
-      [7, u + 3.2],
-      [-7, u + 3.2],
-    ],
-    ['#d9423f', '#ad2f2d', '#ef6c66'],
-    ['t']
-  )
-)
-;[-2, -1, 0, 1, 2, 1, 0, -1].forEach((d, i) => {
-  specs[`lighthouse/${i}`] = {
-    shapes: tower,
-    paints: [
-      ...towerBands,
-      paint(
-        [
-          [d - 1.2, 19],
-          [d + 1.2, 19],
-          [d + 1.2, 24],
-          [d - 1.2, 24],
-        ],
-        ['#ffc92e'],
-        ['l']
-      ),
-    ],
-    feats: [
-      feat(0, 10.6, '#3a4a5a'),
-      feat(-3, 20, '#2d3a4a'),
-      feat(3, 20, '#2d3a4a'),
-      feat(-10, 1, '#ffffff'),
-      feat(-9, 1, '#cfe6f2'),
-      feat(-7, 1, '#ffffff'),
-      feat(7, 1, '#ffffff'),
-      feat(8, 1, '#cfe6f2'),
-      feat(-8, 2, '#5a5e64'),
-      feat(7, 2, '#5a5e64'),
-    ],
-  }
-})
-
 const GRASS: Tones = ['#79b356', '#5e9440', '#97cc74']
 export const TRACK = { rx: 11.4, ry: 4.2, u: 4.8 } as const
 const TIE = '#6b4a2c'
@@ -657,6 +575,25 @@ const domeOfShow = (lit: boolean): ShapeSpec => {
 }
 specs['dome/closed'] = domeOfShow(false)
 specs['dome/open'] = domeOfShow(true)
+
+const GILT: Tones = ['#f6d55c', '#d6ae2c', '#fff0a8']
+export const RIDE = { rx: 9.4, ry: 2.2, u: 4.2, roof: 14 } as const
+specs['carousel/base'] = {
+  shapes: [
+    ell(0, 2.6, 14.4, 3.8, ['#c0453f', '#97302d', '#e06a5f']),
+    ell(0, 3.6, 13.6, 3.2, ['#e9d3a6', '#cdb487', '#f6e7c4'], { no: true }),
+  ],
+  feats: [-12, -8, -4, 0, 4, 8, 12].map((d) =>
+    feat(d, Math.abs(d) > 10 ? 1.6 : 0.4, '#f6d55c')
+  ),
+}
+specs['carousel/column'] = {
+  shapes: [
+    box(-2.4, 3.4, 2.4, RIDE.roof, GILT),
+    box(-1.2, 5, 1.2, 12.4, ['#8fc4f2', '#5e8fbf', '#d7ecff'], { no: true }),
+  ],
+  feats: [feat(0, 8, '#ffffff'), feat(-1, 10, '#ffffff')],
+}
 
 type FigLook = {
   leaf: Tones

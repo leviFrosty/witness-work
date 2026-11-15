@@ -1,11 +1,13 @@
 import { rgbPalette, type PixelBuffer, type PixelMask } from '@/lib/pixelArt'
 import type { BigHatId } from '@/types/pet'
 
-import { blend, darken, isDarkTime, square } from './fx'
+import { blend, darken, glow, isDarkTime, square } from './fx'
 import { bigHatPoint } from './hatCanvas'
 import {
   BIRD_AWAY_MS,
   birdPerch,
+  carouselAngle,
+  carouselBulbs,
   FISH_JUMP_MS,
   hatRoomDim,
   trainAngle,
@@ -22,9 +24,6 @@ export type HatFxPlace = {
 }
 
 const FX = rgbPalette({
-  beam: '#fff0ae',
-  glow: '#fff6cf',
-  gull: '#fbf6ea',
   star: '#e4ecff',
   starWarm: '#ffe7b0',
   white: '#ffffff',
@@ -46,6 +45,19 @@ const FX = rgbPalette({
   leafAmber: '#d98f2e',
   sprout: '#b8ec7c',
 })
+
+const FAIR_LIGHTS = rgbPalette({
+  red: '#ff6b6b',
+  teal: '#4fd1c5',
+  gold: '#ffd45c',
+  pink: '#ff8fc7',
+  violet: '#a78bfa',
+  green: '#8fe388',
+})
+
+const SPOT_COLORS = Object.values(FAIR_LIGHTS)
+
+const NOTE_COLORS = rgbPalette({ a: '#c95a8a', b: '#2a8a80', c: '#b93039' })
 
 const at = (place: HatFxPlace, d: number, u: number): [number, number] => {
   const [x, y] = bigHatPoint(place.flip ? -d : d, u)
@@ -213,57 +225,6 @@ function drawStars(
   })
 }
 
-function drawBeam(
-  buf: PixelBuffer,
-  m: HatMoment,
-  place: HatFxPlace,
-  dim: number
-) {
-  const [lx, ly] = at(place, 0, 21.5)
-  const turn = m.tMs * 0.0011
-  const cos = Math.cos(turn)
-  const front = Math.sin(turn) > 0
-  const strength = (0.05 + 0.3 * dim) * (front ? 1 : 0.55)
-  if (Math.abs(cos) > 0.08) {
-    const reach = 170 * Math.abs(cos)
-    const dir = cos >= 0 ? 1 : -1
-    for (let i = 2; i < reach; i++) {
-      const half = Math.round(1.5 + i * 0.15)
-      const centre = Math.round(ly + i * 0.2)
-      const a = strength * (1 - i / 190)
-      for (let y = centre - half; y < centre + half; y++)
-        blend(buf, lx + dir * i, y, FX.beam, a)
-    }
-  }
-  const sincePat = m.tMs - m.patMs
-  const sinceCoins = m.tMs - m.coinsMs
-  const flash = Math.max(
-    front && Math.abs(cos) < 0.12 ? 0.5 : 0,
-    sincePat >= 0 && sincePat < 700 && Math.floor(sincePat / 200) % 2 === 0
-      ? 1
-      : 0,
-    sinceCoins >= 0 && sinceCoins < 220 ? 1 : 0
-  )
-  if (flash > 0) {
-    const a = (0.08 + 0.2 * dim) * flash
-    for (let y = 0; y < SCENE_H; y++)
-      for (let x = 0; x < SCENE_W; x++) blend(buf, x, y, FX.glow, a)
-  }
-  square(buf, lx - 2, ly - 2, 5, FX.glow, 0.35 + 0.4 * dim)
-  if (dim < 0.5) {
-    const a = 1 - dim * 2
-    ;[0, 2.2].forEach((phase, i) => {
-      const th = m.tMs * 0.0009 + phase
-      const x = lx + 22 * Math.cos(th)
-      const y = ly - 6 + 7 * Math.sin(th)
-      const flap = Math.floor(m.tMs / 180 + i) % 2
-      blend(buf, x - 1, y - flap, FX.gull, a)
-      blend(buf, x, y, FX.gull, a)
-      blend(buf, x + 1, y - flap, FX.gull, a)
-    })
-  }
-}
-
 function drawPuffs(
   buf: PixelBuffer,
   tMs: number,
@@ -378,10 +339,87 @@ function drawWeather(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
   }
 }
 
+const SPOTS_PER_ROW = 8
+
+const SPOT_R = 4.5
+
+function drawFairLights(
+  buf: PixelBuffer,
+  m: HatMoment,
+  place: HatFxPlace,
+  dim: number,
+  subject: PixelMask
+) {
+  const sinceCoins = m.tMs - m.coinsMs
+  const boost = sinceCoins >= 0 && sinceCoins < 1600 ? 1.5 : 1
+  for (const bulb of carouselBulbs(m)) {
+    if (!bulb.lit) continue
+    const [x, y] = at(place, bulb.d, bulb.u)
+    glow(buf, x, y, 3, bulb.c, (0.15 + 0.45 * dim) * boost)
+  }
+  if (dim <= 0.02) return
+  const span = SCENE_W + 24
+  const slide = carouselAngle(m.tMs, m.patMs) * 24 * (place.flip ? -1 : 1)
+  for (let row = 0; row < 2; row++) {
+    for (let k = 0; k < SPOTS_PER_ROW; k++) {
+      const cx =
+        wrapTo(slide + ((k + row / 2) * span) / SPOTS_PER_ROW, span) - 12
+      const cy = (row ? 34 : 15) + 3 * Math.sin(cx * 0.045 + row * 2)
+      const c = SPOT_COLORS[(k + row * 3) % SPOT_COLORS.length]
+      const strength = Math.min(1, 0.55 * dim * boost)
+      for (let y = Math.floor(cy - SPOT_R); y <= cy + SPOT_R; y++) {
+        if (y < 0 || y >= FLOOR_TOP) continue
+        for (let x = Math.floor(cx - SPOT_R); x <= cx + SPOT_R; x++) {
+          if (x < 0 || x >= SCENE_W || subject.data[y * SCENE_W + x]) continue
+          const r = Math.hypot(x - cx, (y - cy) * 1.2) / SPOT_R
+          if (r < 1) blend(buf, x, y, c, strength * (1 - r * r))
+        }
+      }
+    }
+  }
+}
+
+const wrapTo = (v: number, n: number) => ((v % n) + n) % n
+
+const NOTE = [
+  [1, 0],
+  [2, 0],
+  [1, 1],
+  [3, 1],
+  [1, 2],
+  [0, 3],
+  [1, 3],
+  [0, 4],
+  [1, 4],
+] as const
+
+const NOTE_MS = 1700
+
+const NOTE_STAGGER_MS = 300
+
+function drawNotes(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  const since = m.tMs - m.patMs
+  const colors = [NOTE_COLORS.a, NOTE_COLORS.b, NOTE_COLORS.c]
+  colors.forEach((c, i) => {
+    const age = since - i * NOTE_STAGGER_MS
+    if (age < 0 || age >= NOTE_MS) return
+    const p = age / NOTE_MS
+    const side = i === 1 ? -1 : 1
+    const [x0, y0] = at(
+      place,
+      side * (11 + p * 10) + Math.sin(age * 0.008 + i) * 1.5,
+      18 + i * 2 + p * 16
+    )
+    const a = Math.min(1, (1 - p) * 3)
+    for (const [dx, dy] of NOTE)
+      blend(buf, Math.round(x0) + dx, Math.round(y0) + dy, c, a)
+  })
+}
+
 const COIN_HATS: ReadonlySet<BigHatId> = new Set([
   'mailbox',
   'bowl',
-  'lighthouse',
+  'carousel',
   'train',
   'dome',
   'fig',
@@ -433,11 +471,12 @@ export function drawHatRoom(
       drawWaterLight(buf, m, subject)
       drawFishSplash(buf, m, place)
       break
-    case 'lighthouse':
-      drawBeam(buf, m, place, dim)
-      break
     case 'dome':
       if (dim > 0.02) drawStars(buf, m, dim, subject)
+      break
+    case 'carousel':
+      drawFairLights(buf, m, place, dim, subject)
+      drawNotes(buf, m, place)
       break
     case 'cottage':
       if (isDarkTime(m.time)) {

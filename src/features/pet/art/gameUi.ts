@@ -31,6 +31,7 @@ export type GamePalette = {
   fiber: Rgb
   card: Rgb
   cardEdge: Rgb
+  fieldEdge: Rgb
   line: Rgb
   wood: Rgb
   woodLight: Rgb
@@ -59,6 +60,7 @@ const LIGHT = rgbPalette({
   fiber: '#f4eee2',
   card: '#fffdf8',
   cardEdge: '#dccbad',
+  fieldEdge: '#958877',
   line: '#e8dfcf',
   wood: '#e6cfa6',
   woodLight: '#f3e3c6',
@@ -76,6 +78,7 @@ const DARK = rgbPalette({
   fiber: '#1b1916',
   card: '#221f1b',
   cardEdge: '#3a342d',
+  fieldEdge: '#73685b',
   line: '#2d2924',
   wood: '#6b5236',
   woodLight: '#86674a',
@@ -295,7 +298,7 @@ export function gameFrame(
       )
       break
     case 'field':
-      drawBox(b, 0, 0, w, h, [p.cardEdge, p.card], p.card, 1)
+      drawBox(b, 0, 0, w, h, [p.fieldEdge, p.card], p.card, 1)
       break
     case 'fieldFocused':
       drawBox(b, 0, 0, w, h, [p.accent, p.accent], p.card, 1)

@@ -160,11 +160,23 @@ export type ReadingUnit = 'chapters' | 'verses'
 export type PlanAmount = { unit: ReadingUnit; count: number }
 
 export const planAmount = (
-  run: Pick<ReadingPlanRun, 'chaptersPerDay' | 'versesPerDay'>
-): PlanAmount =>
-  run.versesPerDay !== undefined
-    ? { unit: 'verses', count: clampVersesPerDay(run.versesPerDay) }
-    : { unit: 'chapters', count: clampChaptersPerDay(run.chaptersPerDay) }
+  run: Pick<ReadingPlanRun, 'kind' | 'chaptersPerDay' | 'versesPerDay'>
+): PlanAmount | null => {
+  if (run.versesPerDay !== undefined)
+    return { unit: 'verses', count: clampVersesPerDay(run.versesPerDay) }
+  if (run.chaptersPerDay !== undefined || run.kind === 'custom')
+    return { unit: 'chapters', count: clampChaptersPerDay(run.chaptersPerDay) }
+  return null
+}
+
+export const amountFields = (
+  amount: PlanAmount | null
+): Pick<ReadingPlanRun, 'chaptersPerDay' | 'versesPerDay'> =>
+  !amount
+    ? {}
+    : amount.unit === 'verses'
+      ? { versesPerDay: amount.count }
+      : { chaptersPerDay: amount.count }
 
 export type PlanShape = Pick<
   ReadingPlanRun,
@@ -172,10 +184,11 @@ export type PlanShape = Pick<
 >
 
 const shapeKey = (run: PlanShape): string => {
-  if (run.kind !== 'custom') return run.kind
+  const amount = planAmount(run)
+  const pace = amount ? `${amount.count}${amount.unit}` : 'year'
+  if (run.kind !== 'custom') return `${run.kind}:${pace}`
   const { startBook, endBook } = planBooks(run)
-  const { unit, count } = planAmount(run)
-  return `custom:${startBook}-${endBook}:${count}${unit}`
+  return `custom:${startBook}-${endBook}:${pace}`
 }
 
 export function planChapters(
@@ -225,7 +238,8 @@ function versePortions(chapters: readonly Chapter[], perDay: number) {
 
 function buildPortions(run: PlanShape): Portion[] {
   const chapters = planChapters(run)
-  if (run.kind !== 'custom') {
+  const amount = planAmount(run)
+  if (!amount) {
     const count = Math.min(PLAN_DAYS_IN_A_YEAR, chapters.length)
     return Array.from({ length: count }, (_, index) => ({
       index,
@@ -235,7 +249,7 @@ function buildPortions(run: PlanShape): Portion[] {
       ),
     }))
   }
-  const { unit, count } = planAmount(run)
+  const { unit, count } = amount
   if (unit === 'verses')
     return versePortions(chapters, count).map((portion, index) => ({
       index,
@@ -276,7 +290,7 @@ export const portionVerses = (
     ? portion.verses.to - portion.verses.from + 1
     : portion.chapters.reduce((sum, chapter) => sum + versesIn(chapter), 0)
 
-const VERSES_PER_MINUTE = 7
+const VERSES_PER_MINUTE = 3.5
 
 export function planMinutesADay(run: PlanShape): number {
   const portions = planPortions(run)

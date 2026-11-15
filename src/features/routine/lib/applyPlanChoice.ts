@@ -33,18 +33,16 @@ export function applyPlanChoice(
   set({ readingPlanRunId: id })
   analytics.capture('routine_plan_started', {
     kind: choice.kind,
-    ...(choice.kind === 'custom'
-      ? {
-          chapters_per_day:
-            choice.amount.unit === 'chapters' ? choice.amount.count : undefined,
-          verses_per_day:
-            choice.amount.unit === 'verses' ? choice.amount.count : undefined,
-          books:
-            ((choice.endBook - choice.startBook + BIBLE_BOOK_COUNT) %
-              BIBLE_BOOK_COUNT) +
-            1,
-        }
-      : {}),
+    chapters_per_day:
+      choice.amount?.unit === 'chapters' ? choice.amount.count : undefined,
+    verses_per_day:
+      choice.amount?.unit === 'verses' ? choice.amount.count : undefined,
+    books:
+      choice.kind === 'custom'
+        ? ((choice.endBook - choice.startBook + BIBLE_BOOK_COUNT) %
+            BIBLE_BOOK_COUNT) +
+          1
+        : undefined,
     resumed: existing !== null,
   })
 }

@@ -1,5 +1,6 @@
 import { BIBLE_BOOK_COUNT } from '@/lib/routine/bible'
 import {
+  amountFields,
   DEFAULT_CHAPTERS_PER_DAY,
   DEFAULT_VERSES_PER_DAY,
   planAmount,
@@ -24,11 +25,14 @@ export type CustomPlanChoice = {
   amount: PlanAmount
 }
 
-export type PlanChoice =
-  | { kind: 'today' }
-  | { kind: 'canonical' }
-  | { kind: 'chronological' }
-  | CustomPlanChoice
+export type WholeBibleChoice = {
+  kind: 'canonical' | 'chronological'
+  amount?: PlanAmount
+}
+
+export type PlanChoice = { kind: 'today' } | WholeBibleChoice | CustomPlanChoice
+
+export type ReadingPlanChoice = Exclude<PlanChoice, { kind: 'today' }>
 
 export type ReadingChoiceKind = PlanChoice['kind']
 
@@ -63,33 +67,34 @@ export function withBooks(
   return choice
 }
 
-export const choiceShape = (
-  choice: Exclude<PlanChoice, { kind: 'today' }>
-): PlanShape =>
-  choice.kind === 'custom'
-    ? {
-        kind: 'custom',
-        startBook: choice.startBook,
-        endBook: choice.endBook,
-        ...(choice.amount.unit === 'verses'
-          ? { versesPerDay: choice.amount.count }
-          : { chaptersPerDay: choice.amount.count }),
-      }
-    : { kind: choice.kind }
+export const choiceAmount = (choice: ReadingPlanChoice): PlanAmount | null =>
+  choice.amount ?? null
+
+export const choiceShape = (choice: ReadingPlanChoice): PlanShape => ({
+  kind: choice.kind,
+  ...(choice.kind === 'custom'
+    ? { startBook: choice.startBook, endBook: choice.endBook }
+    : {}),
+  ...amountFields(choiceAmount(choice)),
+})
 
 export const sameConfig = (
   run: ReadingPlanRun,
   choice: PlanChoice
 ): boolean => {
   if (choice.kind === 'today' || run.kind !== choice.kind) return false
-  if (choice.kind !== 'custom') return true
-  const books = planBooks(run)
   const amount = planAmount(run)
+  const chosen = choiceAmount(choice)
+  const samePace =
+    amount === null || chosen === null
+      ? amount === chosen
+      : amount.unit === chosen.unit && amount.count === chosen.count
+  if (choice.kind !== 'custom') return samePace
+  const books = planBooks(run)
   return (
+    samePace &&
     books.startBook === choice.startBook &&
-    books.endBook === choice.endBook &&
-    amount.unit === choice.amount.unit &&
-    amount.count === choice.amount.count
+    books.endBook === choice.endBook
   )
 }
 
@@ -116,9 +121,14 @@ export const liveRun = (run: ReadingPlanRun | null): ReadingPlanRun | null =>
 
 export function choiceOf(run: ReadingPlanRun | null): PlanChoice {
   if (!run) return { kind: 'today' }
+  const amount = planAmount(run)
   if (run.kind === 'custom')
-    return { kind: 'custom', ...planBooks(run), amount: planAmount(run) }
-  return { kind: run.kind }
+    return {
+      kind: 'custom',
+      ...planBooks(run),
+      amount: amount ?? defaultAmount('chapters'),
+    }
+  return amount ? { kind: run.kind, amount } : { kind: run.kind }
 }
 
 export const choiceDays = (choice: PlanChoice): number | null =>

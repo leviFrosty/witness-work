@@ -123,15 +123,27 @@ describe('reading plans', () => {
   })
 
   it('estimates the minutes a day takes', () => {
-    expect(planMinutesADay({ kind: 'canonical' })).toBe(12)
+    expect(planMinutesADay({ kind: 'canonical' })).toBe(24)
     expect(
       planMinutesADay({
         kind: 'custom',
         startBook: 19,
         endBook: 19,
-        versesPerDay: 5,
+        versesPerDay: 7,
       })
-    ).toBe(1)
+    ).toBe(2)
+  })
+
+  it('reads a whole-Bible plan at a chosen amount', () => {
+    expect(planPortionCount({ kind: 'canonical', chaptersPerDay: 4 })).toBe(
+      Math.ceil(1189 / 4)
+    )
+    const chronological = planPortions({
+      kind: 'chronological',
+      versesPerDay: 5,
+    })
+    expect(chronological[0].verses?.from).toBe(1)
+    expect(chronological.every((p) => portionVerses(p) <= 5)).toBe(true)
   })
 
   it('starts a custom plan at its book and wraps around to it', () => {

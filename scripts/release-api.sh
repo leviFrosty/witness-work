@@ -65,7 +65,14 @@ WORKFLOW=api-deploy.yml
 RUN_TITLE="API deploy ($ENVIRONMENT)"
 REPO=$(git remote get-url origin | sed -E 's#^.*github\.com[:/]##; s#\.git$##')
 
-git fetch --quiet origin main
+# The Beta ship checks out main with depth 1. In a shallow clone the oldest
+# commit looks like it adds every file, so main's tip would pass for the API's
+# last change and every ship would redeploy the API. Fetch the full history.
+if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+  git fetch --quiet --unshallow origin main
+else
+  git fetch --quiet origin main
+fi
 MAIN_SHA=$(git rev-parse origin/main)
 API_SHA=$(git log -1 --format=%H origin/main -- services/api)
 if [ -z "$API_SHA" ]; then
@@ -104,18 +111,20 @@ if [ "$DRY_RUN" = true ]; then
 fi
 
 # Prints "id status conclusion createdAt url" for the newest deploy of this
-# environment that has the API's last change and hasn't failed.
+# environment that has the API's last change and hasn't failed. A run that
+# hasn't finished has an empty conclusion; it prints as "none", because `read`
+# merges the spaces around an empty field and would shift createdAt and url.
 find_run() {
   local id sha status conclusion created url
   while read -r id sha status conclusion created url; do
     [ -n "$id" ] || continue
     [ "$status" = completed ] && [ "$conclusion" != success ] && continue
     contains_api "$sha" || continue
-    echo "$id $status ${conclusion:-none} $created $url"
+    echo "$id $status $conclusion $created $url"
     return 0
   done < <(gh run list -R "$REPO" --workflow "$WORKFLOW" --branch main --limit 30 \
     --json databaseId,headSha,status,conclusion,createdAt,url,displayTitle \
-    --jq ".[] | select(.displayTitle == \"$RUN_TITLE\") | \"\(.databaseId) \(.headSha) \(.status) \(.conclusion) \(.createdAt) \(.url)\"")
+    --jq ".[] | select(.displayTitle == \"$RUN_TITLE\") | \"\(.databaseId) \(.headSha) \(.status) \(.conclusion | if . == \"\" or . == null then \"none\" else . end) \(.createdAt) \(.url)\"")
   return 1
 }
 

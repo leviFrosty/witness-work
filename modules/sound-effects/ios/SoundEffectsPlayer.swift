@@ -8,9 +8,9 @@ import QuartzCore
  * and starts 50–100 ms late, later still when re-triggered mid-sound.
  *
  * Every voice runs through a varispeed unit, so a faster rate raises the pitch
- * with it, like a tape. The engine stops, and lets the session go so other
- * apps' audio can resume, a few seconds after the last sound. It leaves the
- * session's category alone, so sounds follow the silent switch as before.
+ * with it, like a tape. A few seconds after the last sound the engine is
+ * thrown away and the session let go, so other apps' audio can resume. It
+ * leaves the session's category alone, so sounds follow the silent switch.
  *
  * Thread-safe: all state lives on `queue`.
  */
@@ -147,10 +147,14 @@ final class SoundEffectsPlayer {
     queue.asyncAfter(deadline: .now() + seconds + Self.idleSeconds, execute: work)
   }
 
-  /// Stops the engine and lets the session go, so other apps' audio resumes.
+  /// Throws the engine away and lets the session go, so other apps' audio
+  /// resumes. An engine restarted after its session was deactivated keeps
+  /// the mute it had when the silent switch was on, even once the switch is
+  /// off, until it's rewired; a fresh engine on the next play hears the
+  /// switch as it is now.
   private func pause() {
     guard let engine, engine.isRunning else { return }
-    engine.stop()
+    teardown()
     let session = AVAudioSession.sharedInstance()
     // A recording owns the session; leave it active.
     guard session.category != .record, session.category != .playAndRecord else { return }

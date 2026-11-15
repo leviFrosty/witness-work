@@ -17,6 +17,9 @@ import {
   frogShot,
   NEST_VISIT,
   nestShot,
+  MEADOW,
+  meadowAsleep,
+  meadowHops,
   telescopeAngle,
   trainAngle,
   trainSpot,
@@ -26,6 +29,7 @@ import {
   DEMO_SIGN_DATA,
   hatSprite,
   PET_SPECIES_IDS,
+  SPECIES,
   type ResolvedRoom,
   type SceneInput,
 } from '.'
@@ -68,6 +72,7 @@ const MOVING = [
   'train',
   'dome',
   'fig',
+  'meadow',
 ] as const
 
 const drawn = (hat: ResolvedRoom['hat'], at: number, over = {}, room = {}) =>
@@ -107,7 +112,7 @@ describe('the big hats', () => {
     for (const hat of ['propeller', 'bowl', 'train', 'dome'] as const) {
       expect(drawn(hat, 1000, { hatPatMs: 900 })).not.toBe(drawn(hat, 1000))
     }
-    for (const hat of ['bowl', 'dome', 'fig'] as const) {
+    for (const hat of ['bowl', 'dome', 'fig', 'meadow'] as const) {
       expect(drawn(hat, 1000, { hatCoinsMs: 900 })).not.toBe(drawn(hat, 1000))
     }
   })
@@ -540,5 +545,67 @@ describe('the nest', () => {
         (c) => c.shut
       )
     ).toBe(true)
+  })
+})
+
+describe('the lion and lamb', () => {
+  const at = (tMs: number, over = {}) => ({
+    tMs,
+    species: 'dog' as const,
+    coat: 'gold' as const,
+    season: 'summer' as const,
+    time: 'day' as const,
+    growth: 5,
+    wentOut: true,
+    patMs: -Infinity,
+    coinsMs: -Infinity,
+    clockMs: null,
+    ...over,
+  })
+
+  it('stays awake by day and falls asleep after dusk', () => {
+    expect(meadowAsleep(at(1000))).toBe(false)
+    expect(meadowAsleep(at(1000, { time: 'dusk' }))).toBe(true)
+    expect(meadowAsleep(at(1000, { time: 'night' }))).toBe(true)
+  })
+
+  it('wakes for a while when patted at night, then dozes off again', () => {
+    const night = { time: 'night' as const, patMs: 5000 }
+    expect(meadowAsleep(at(5000 + MEADOW.wakeMs - 1, night))).toBe(false)
+    expect(meadowAsleep(at(5000 + MEADOW.wakeMs, night))).toBe(true)
+  })
+
+  it('plays on a pat, the lamb first, and both hop for new coins', () => {
+    expect(meadowHops(at(1000))).toEqual([0, 0])
+    expect(meadowHops(at(5160, { patMs: 5000 }))).toEqual([0, 4])
+    expect(meadowHops(at(5460, { patMs: 5000 }))[0]).toBeGreaterThan(0)
+    expect(meadowHops(at(5000 + MEADOW.playMs, { patMs: 5000 }))).toEqual([
+      0, 0,
+    ])
+    const [lion, lamb] = meadowHops(at(5160, { coinsMs: 5000 }))
+    expect(lion).toBeGreaterThan(0)
+    expect(lion).toBe(lamb)
+  })
+
+  it('draws a pet that is a lion or lamb in its own coat', () => {
+    const lambs = SPECIES.lamb.coatIds.map((coat) =>
+      hashBuffer(bigHatFrame('meadow', at(0, { species: 'lamb', coat })))
+    )
+    expect(new Set(lambs).size).toBe(lambs.length)
+  })
+
+  it('fills the room with butterflies by day, but not after dusk or in winter', () => {
+    const WINGS = new Set([0xf6c43a, 0x5f9ee0, 0xef7b9b])
+    const wings = (room: Partial<ResolvedRoom>) => {
+      const { data } = composeScene(input('meadow', {}, room), 2000)
+      let count = 0
+      for (let i = 0; i < data.length; i += 4)
+        if (WINGS.has((data[i] << 16) | (data[i + 1] << 8) | data[i + 2]))
+          count++
+      return count
+    }
+    expect(wings({})).toBeGreaterThan(6)
+    expect(wings({ time: 'night' })).toBe(0)
+    expect(wings({ season: 'winter' })).toBe(0)
   })
 })

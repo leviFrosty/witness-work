@@ -5610,6 +5610,7 @@
           "train": "Model railway",
           "dome": "Planetarium",
           "fig": "Little fig tree",
+          "meadow": "Lion and lamb",
           "duck": "Rubber duck",
           "teapot": "Teapot",
           "sailboat": "Sailboat",
@@ -5781,7 +5782,8 @@
           "cuckoo": "Shows your real time and calls on the hour.",
           "carousel": "After dusk, colored lights wheel around the room by themselves.",
           "dome": "After dusk, stars fill the room by themselves.",
-          "fig": "Starts as a sprout and grows with your days out. A pat shakes a fig loose once the tree is grown, but not in winter."
+          "fig": "Starts as a sprout and grows with your days out. A pat shakes a fig loose once the tree is grown, but not in winter.",
+          "meadow": "They play when you pat them, and fall asleep after dusk. A pat wakes them for a little while."
         },
         "wallPattern": {
           "mountains": "The sky follows the time in your window.",

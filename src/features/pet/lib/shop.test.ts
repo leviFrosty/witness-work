@@ -40,12 +40,12 @@ describe('Shop prices', () => {
       expect(price).toBeLessThanOrEqual(3200)
       expect(price % 10).toBe(0)
     }
-    expect(priceOf('hat:fig')).toBe(Math.max(...prices))
+    expect(priceOf('hat:meadow')).toBe(Math.max(...prices))
     expect(priceOf('study:armchair')).toBe(360)
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
 
     expect(prices.reduce((sum, price) => sum + price, 0)).toBe(
-      34820 + 6240 + 23430
+      34820 + 6240 + 25230
     )
   })
 
@@ -54,12 +54,12 @@ describe('Shop prices', () => {
     expect(FAKE_WALLET_MAX).toBeGreaterThanOrEqual(shop)
   })
 
-  it('lists hats cheapest first, and only the top five are rare', () => {
+  it('lists hats cheapest first, and only the top six are rare', () => {
     const hats = HAT_UNLOCK_ORDER.map((item) => priceOf(item)!)
     expect(hats).toEqual([...hats].sort((a, b) => a - b))
     const rare = (item: string) => itemRarity(item) === 'rare'
-    expect(HAT_UNLOCK_ORDER.filter(rare)).toEqual(HAT_UNLOCK_ORDER.slice(-5))
-    expect(priceOf(HAT_UNLOCK_ORDER.at(-5)!)).toBe(1200)
+    expect(HAT_UNLOCK_ORDER.filter(rare)).toEqual(HAT_UNLOCK_ORDER.slice(-6))
+    expect(priceOf(HAT_UNLOCK_ORDER.at(-6)!)).toBe(1200)
     expect(itemRarity('hat:tophat')).toBe('common')
     expect(itemRarity('floor:tile')).toBe('common')
   })
@@ -68,7 +68,7 @@ describe('Shop prices', () => {
     const uncommon = HAT_UNLOCK_ORDER.filter(
       (item) => itemRarity(item) === 'uncommon'
     )
-    expect(uncommon).toEqual(HAT_UNLOCK_ORDER.slice(-16, -5))
+    expect(uncommon).toEqual(HAT_UNLOCK_ORDER.slice(-17, -6))
     expect(uncommon[0]).toBe('hat:propeller')
     expect(uncommon.at(-1)).toBe('hat:balloon')
   })

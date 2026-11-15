@@ -31,6 +31,7 @@ const NOTED_ITEMS: ReadonlySet<string> = new Set([
   'hat:carousel',
   'hat:dome',
   'hat:fig',
+  'hat:meadow',
   'wallPattern:mountains',
   'wallPattern:aurora',
   'floor:forest',

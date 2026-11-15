@@ -158,7 +158,7 @@ its secrets.
   `lib/prices.ts`), in the ×10 units of ADR 0057: room items and the first 12 hats 100–360 coins,
   rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27 big hats (ADR 0044) fill in from 110
   to 3,200: six cheap ones in the gaps (110–380), silly ones that don't move (400–560), ones with one
-  moving part (620–1,100) and five rare ones (1,200–3,200). Uncommon and rare room items (ADR 0045)
+  moving part (620–1,100) and six rare ones (1,200–3,200). Uncommon and rare room items (ADR 0045)
   cost what hats of their tier do: uncommon 620–1,000, rare 1,300–2,800, dearer the more an item
   does. A purchase keeps what it cost, so prices can be retuned. Starters are free; secrets are
   found, never sold.
@@ -200,6 +200,7 @@ its secrets.
   | `train` (rare)    | Train loops the hill, steam            |                                         | One fast lap              | Wagon heaps up |
   | `dome` (rare)     | Telescope turns; stars after dusk      | Dusk or night: dims room                | Swings; runs by day       | Shooting stars |
   | `fig` (rare)      | Falling leaves, a bird                 | Days out since bought, season           | A fig drops, bird flies   | New leaves     |
+  | `meadow` (rare)   | Lion and lamb; butterflies by day      | Dusk or night: asleep; season           | They play; wakes them     | Both hop       |
 
   The room shows run for `SHOW_MS` (14 s) by day after a pat and dim it with an overlay; the lamp
   itself keeps following the hearts. `fig` grows through six stages at 0, 3, 8, 16, 30 and 50 days out
@@ -207,6 +208,9 @@ its secrets.
   room for 2 seconds by day under `carousel` and `dome`, so their lights and shooting stars show.
   The carousel's lead rider is the pet's own species, out in front in a still picture
   (`carouselAngle`); its bulbs (`carouselBulbs`) chase round the canopy during its show.
+  The lion and lamb (`meadow`) are pet sprites shrunk like `mini`, in the pet's own coat when it is a
+  lion or lamb. They sleep after dusk (`meadowAsleep`) with fireflies around them, and a pat wakes
+  them for 6 seconds. New coins also burst flowers over them.
   The planetarium's telescope (`telescopeAngle`) scans slowly all day, swings across the sky once on a
   pat, and follows the shooting stars on new coins.
   Every hat that reacts to new coins also tosses five gold coins over itself (`drawCoinToss`,

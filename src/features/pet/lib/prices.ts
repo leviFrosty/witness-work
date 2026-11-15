@@ -89,9 +89,10 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'hat:balloon': 1100,
   'hat:bowl': 1200,
   'hat:carousel': 1600,
+  'hat:fig': 1800,
   'hat:train': 2000,
   'hat:dome': 2600,
-  'hat:fig': 3200,
+  'hat:meadow': 3200,
 }
 
 export const priceOf = (item: string): number | null =>

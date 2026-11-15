@@ -1,18 +1,12 @@
-import {
-  Apple as AppleIcon,
-  MapPinned as MapPinnedIcon,
-  Navigation as NavigationIcon,
-} from 'lucide-react-native'
-import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
-import { View, Pressable, Platform } from 'react-native'
+import { Check as CheckIcon } from 'lucide-react-native'
+import LucideIcon from '@/components/ui/LucideIcon'
+import { View, Platform, StyleSheet } from 'react-native'
 import { resolveNavigationMapProvider } from '@/lib/navigationMapProvider'
 import i18n from '@/lib/locales'
-import {
-  usePreferences,
-  type DefaultNavigationMapProvider,
-} from '@/stores/preferences'
+import { usePreferences } from '@/stores/preferences'
 import ActionButton from '@/components/ui/ActionButton'
-import PointerTooltip from '@/components/ui/PointerTooltip'
+import Button from '@/components/ui/Button'
+import AppIconImage, { mapAppIconSource } from '@/components/AppIconImage'
 import Text from '@/components/ui/MyText'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
@@ -25,14 +19,9 @@ interface Props {
   goNext: () => void
 }
 
-const PROVIDER_ICON: Record<
-  Exclude<DefaultNavigationMapProvider, null>,
-  AppIcon
-> = {
-  apple: AppleIcon,
-  google: MapPinnedIcon,
-  waze: NavigationIcon,
-}
+const TILE_ICON_SIZE = 52
+const TILE_PADDING = 14
+const TILE_RADIUS = 26
 
 const StepDefaultNav = ({ goNext, goBack }: Props) => {
   const { defaultNavigationMapProvider: savedProvider, set } = usePreferences()
@@ -85,43 +74,71 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
 
         <NavMapPreview provider={defaultNavigationMapProvider} />
 
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View
+          style={{ flexDirection: 'row', gap: 10 }}
+          accessibilityRole='radiogroup'
+        >
           {navigationSelectionOptions.map((opt) => {
             if (!opt.value) return null
             const isSelected = opt.value === defaultNavigationMapProvider
-            const icon = PROVIDER_ICON[opt.value]
             return (
-              <PointerTooltip
+              <Button
                 key={opt.value}
-                label={opt.label}
-                style={{ flex: 1, borderRadius: 999 }}
-              >
-                <Pressable
-                  onPress={() =>
-                    set({ defaultNavigationMapProvider: opt.value })
-                  }
-                  accessibilityRole='button'
-                  accessibilityLabel={opt.label}
-                  accessibilityState={{ selected: isSelected }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingVertical: 12,
-                    paddingHorizontal: 8,
-                    borderRadius: 999,
-                    borderWidth: 2,
+                onPress={() => set({ defaultNavigationMapProvider: opt.value })}
+                accessibilityRole='radio'
+                accessibilityLabel={opt.label}
+                accessibilityState={{ selected: isSelected }}
+                style={[
+                  styles.tile,
+                  {
                     borderColor: isSelected
                       ? theme.colors.accent
                       : theme.colors.border,
                     backgroundColor: isSelected
                       ? theme.colors.accentTranslucent
                       : theme.colors.card,
+                  },
+                ]}
+              >
+                <View>
+                  <AppIconImage
+                    source={mapAppIconSource(opt.value)}
+                    size={TILE_ICON_SIZE}
+                  />
+                  {isSelected && (
+                    <View
+                      style={[
+                        styles.check,
+                        {
+                          backgroundColor: theme.colors.accent,
+                          borderColor: theme.colors.card,
+                        },
+                      ]}
+                    >
+                      <LucideIcon
+                        icon={CheckIcon}
+                        size={12}
+                        strokeWidth={3}
+                        color={theme.colors.textInverse}
+                      />
+                    </View>
+                  )}
+                </View>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontFamily: isSelected
+                      ? theme.fonts.bold
+                      : theme.fonts.semiBold,
+                    color: theme.colors.text,
                   }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
-                  <LucideIcon icon={icon} size={18} color={theme.colors.text} />
-                </Pressable>
-              </PointerTooltip>
+                  {opt.label}
+                </Text>
+              </Button>
             )
           })}
         </View>
@@ -133,5 +150,30 @@ const StepDefaultNav = ({ goNext, goBack }: Props) => {
     </Wrapper>
   )
 }
+
+const styles = StyleSheet.create({
+  tile: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: TILE_PADDING,
+    paddingBottom: 12,
+    paddingHorizontal: 8,
+    borderRadius: TILE_RADIUS,
+    borderCurve: 'continuous',
+    borderWidth: 2,
+  },
+  check: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
 
 export default StepDefaultNav

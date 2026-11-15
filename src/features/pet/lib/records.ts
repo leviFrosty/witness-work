@@ -10,6 +10,8 @@ import {
   type PetRoomRecord,
   type PetRoomSettings,
   type RoomWindow,
+  type WallColor,
+  type WallPattern,
 } from '@/types/pet'
 import type { PublisherCapabilities } from '@/lib/publisherCapabilities'
 
@@ -59,6 +61,21 @@ const pick = <T extends string>(
     ? (value as T)
     : fallback
 
+const isOption = (options: readonly string[], value: unknown) =>
+  typeof value === 'string' && options.includes(value)
+
+function readWallColors(
+  stored: unknown
+): Partial<Record<WallPattern, WallColor>> | undefined {
+  if (!stored || typeof stored !== 'object') return undefined
+  const kept = Object.entries(stored).filter(
+    ([pattern, color]) =>
+      isOption(ROOM_PART_OPTIONS.wallPattern, pattern) &&
+      isOption(ROOM_PART_OPTIONS.wallColor, color)
+  )
+  return kept.length > 0 ? Object.fromEntries(kept) : undefined
+}
+
 export function readRoom(
   room: PetRoomRecord | null,
   defaults: PetRoomSettings
@@ -76,6 +93,7 @@ export function readRoom(
       defaults.window.season
     ),
   }
+  const wallColors = readWallColors(room.wallColors)
   return {
     window,
     wallColor: pick(
@@ -88,6 +106,7 @@ export function readRoom(
       room.wallPattern,
       defaults.wallPattern
     ),
+    ...(wallColors ? { wallColors } : {}),
     floor: pick(ROOM_PART_OPTIONS.floor, room.floor, defaults.floor),
     bed: pick(ROOM_PART_OPTIONS.bed, room.bed, defaults.bed),
     shelf: pick(ROOM_PART_OPTIONS.shelf, room.shelf, defaults.shelf),

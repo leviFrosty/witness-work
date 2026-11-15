@@ -15,6 +15,7 @@ export default function ShopItemCard({
   width,
   palette,
   room,
+  unlocked,
   liveNow,
   thumbBase,
   onPress,
@@ -25,6 +26,7 @@ export default function ShopItemCard({
   width: number
   palette: GamePalette
   room: PetRoomSettings
+  unlocked: ReadonlySet<string>
   liveNow: ResolvedWindow
   thumbBase: Omit<SceneInput, 'room'>
   onPress: () => void
@@ -67,6 +69,7 @@ export default function ShopItemCard({
       width={width}
       palette={palette}
       room={room}
+      unlocked={unlocked}
       liveNow={liveNow}
       thumbBase={thumbBase}
       onPress={onPress}

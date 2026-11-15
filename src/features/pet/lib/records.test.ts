@@ -58,4 +58,27 @@ describe('readRoom', () => {
       }).hat
     ).toBe('none')
   })
+
+  it('keeps each pattern’s known color and drops the rest', () => {
+    expect(readRoom(stored, DEFAULT_ROOM)).not.toHaveProperty('wallColors')
+    expect(
+      readRoom(
+        {
+          ...stored,
+          wallColors: {
+            aurora: 'indigo',
+            clouds: 'neon',
+            spirals: 'sky',
+          },
+        } as unknown as PetRoomRecord,
+        DEFAULT_ROOM
+      ).wallColors
+    ).toEqual({ aurora: 'indigo' })
+    expect(
+      readRoom(
+        { ...stored, wallColors: 'indigo' } as unknown as PetRoomRecord,
+        DEFAULT_ROOM
+      )
+    ).not.toHaveProperty('wallColors')
+  })
 })

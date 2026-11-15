@@ -42,7 +42,12 @@ export default function PetUnlockArt({
           ...scene.thumbBase,
           pet: thumbShowsPet(part) ? scene.thumbBase.pet : null,
           room: resolveRoom(
-            thumbRoom(scene.state.room, part, option),
+            thumbRoom(
+              scene.state.room,
+              part,
+              option,
+              scene.state.unlockedItems
+            ),
             scene.liveNow
           ),
         }}

@@ -177,7 +177,7 @@ describe('Decorate Room options', () => {
 
     const wall = silhouetteRooms(night, 'wallPattern', 'waves').references
     expect(wall.map((ref) => [ref.wallColor, ref.wallPattern])).toEqual([
-      ['sand', 'plain'],
+      ['cream', 'plain'],
       ['sky', 'waves'],
     ])
     expect(

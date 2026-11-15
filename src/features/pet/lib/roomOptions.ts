@@ -4,10 +4,18 @@ import type {
   RoomWindow,
   TimeOfDay,
   Season,
+  WallColor,
+  WallPattern,
 } from '@/types/pet'
 import { ROOM_PARTS, type SilhouetteStyle } from '@/features/pet/art'
 import { isSecretItem } from '@/features/pet/lib/secretUnlocks'
 import { isRoomOptionUnlocked } from '@/features/pet/lib/unlocks'
+import {
+  fitsPattern,
+  patternColor,
+  wallColorsFor,
+  wallPatch,
+} from '@/features/pet/lib/wallColors'
 
 export const ROOM_TABS = [
   'hat',
@@ -48,9 +56,21 @@ const section = (part: RoomChoicePart): RoomChoiceSection => ({
 export const isLiveWindow = (window: RoomWindow): boolean =>
   window.time === 'live' && window.season === 'live'
 
+const wallColorSection = (
+  room: Pick<PetRoomSettings, 'wallColor' | 'wallPattern'>
+): RoomChoiceSection => {
+  const colors = wallColorsFor(room.wallPattern)
+  return {
+    part: 'wallColor',
+    options: colors.includes(room.wallColor)
+      ? colors
+      : [...colors, room.wallColor],
+  }
+}
+
 export function roomTabSections(
   tab: RoomTab,
-  room: Pick<PetRoomSettings, 'window'>
+  room: Pick<PetRoomSettings, 'window' | 'wallColor' | 'wallPattern'>
 ): RoomChoiceSection[] {
   switch (tab) {
     case 'window':
@@ -58,7 +78,7 @@ export function roomTabSections(
         ? []
         : [section('windowTime'), section('windowSeason')]
     case 'wall':
-      return [section('wallPattern'), section('wallColor')]
+      return [section('wallPattern'), wallColorSection(room)]
     default:
       return [section(tab)]
   }
@@ -76,7 +96,8 @@ export function selectedRoomOption(
 export function roomChoicePatch(
   room: PetRoomSettings,
   part: RoomChoicePart,
-  option: string
+  option: string,
+  unlocked?: ReadonlySet<string>
 ): Partial<PetRoomSettings> {
   if (part === 'windowTime')
     return {
@@ -86,21 +107,36 @@ export function roomChoicePatch(
     return {
       window: { ...room.window, season: option as RoomWindow['season'] },
     }
+  if (part === 'wallPattern') {
+    const pattern = option as WallPattern
+    return wallPatch(room, pattern, patternColor(room, pattern, unlocked))
+  }
+  if (part === 'wallColor')
+    return wallPatch(room, room.wallPattern, option as WallColor)
   return { [part]: option } as Partial<PetRoomSettings>
 }
 
 export const roomWithChoice = (
   room: PetRoomSettings,
   part: RoomChoicePart,
-  option: string
-): PetRoomSettings => ({ ...room, ...roomChoicePatch(room, part, option) })
+  option: string,
+  unlocked?: ReadonlySet<string>
+): PetRoomSettings => ({
+  ...room,
+  ...roomChoicePatch(room, part, option, unlocked),
+})
 
 export function thumbRoom(
   room: PetRoomSettings,
   part: RoomChoicePart,
-  option: string
+  option: string,
+  unlocked?: ReadonlySet<string>
 ): PetRoomSettings {
-  const picked = roomWithChoice(room, part, option)
+  const shown =
+    part === 'wallColor' && !fitsPattern(room.wallPattern, option as WallColor)
+      ? { ...room, wallPattern: 'plain' as const }
+      : room
+  const picked = roomWithChoice(shown, part, option, unlocked)
   if (part === 'windowTime') return picked
   return { ...picked, window: { ...picked.window, time: 'day' } }
 }

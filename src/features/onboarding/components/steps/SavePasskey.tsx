@@ -1,14 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
-import { UserRoundKey as UserRoundKeyIcon } from 'lucide-react-native'
+import {
+  UserRoundCheck as UserRoundCheckIcon,
+  UserRoundKey as UserRoundKeyIcon,
+} from 'lucide-react-native'
 import { styles } from '@/features/onboarding/components/Onboarding.styles'
 import OnboardingNav from '@/features/onboarding/components/OnboardingNav'
 import OnboardingFooter, {
   STEP_BOTTOM_PADDING,
 } from '@/features/onboarding/components/OnboardingFooter'
 import OnboardingScrollView from '@/features/onboarding/components/OnboardingScrollView'
-import { addPasskeyWithToasts } from '@/features/settings/components/account/passkeys/passkeyActions'
-import { readPasskeyOffer } from '@/app/account/passkeyOffer'
+import {
+  addPasskeyWithToasts,
+  letUnlockWithToasts,
+  removeWithConfirm,
+} from '@/features/settings/components/account/passkeys/passkeyActions'
+import PasskeyRow from '@/features/settings/components/account/passkeys/PasskeyRow'
+import SectionFooter from '@/features/settings/components/account/SectionFooter'
+import { type LoadedPasskeys, loadPasskeys } from '@/app/account/passkeys'
 import {
   backOffPasskeyPrompt,
   stopPasskeyPrompt,
@@ -18,48 +27,89 @@ import Button from '@/components/ui/Button'
 import InfoPopover from '@/components/ui/InfoPopover'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import Section from '@/components/ui/inputs/Section'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
+import { logger } from '@/lib/logger'
+import type { Passkey } from '@/lib/serverAccount/passkeyClient'
 
 interface Props {
   goBack: () => void
   goNext: () => void
-
-  resumed?: boolean
 }
 
-const SavePasskey = ({ goBack, goNext, resumed = false }: Props) => {
+let remembered: LoadedPasskeys | null = null
+
+export const forgetRememberedPasskeys = () => {
+  remembered = null
+}
+
+const SavePasskey = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
-  const [adding, setAdding] = useState(false)
+  const [loaded, setLoaded] = useState<LoadedPasskeys | null>(remembered)
+  const [busy, setBusy] = useState(false)
+  const mounted = useRef(true)
+
+  const reload = async () => {
+    try {
+      const next = await loadPasskeys()
+      remembered = next
+      if (next.passkeys.length > 0) stopPasskeyPrompt()
+      if (mounted.current) setLoaded(next)
+    } catch (error) {
+      logger.debug('[passkeys] onboarding list failed', error)
+    }
+  }
 
   useEffect(() => {
-    if (!resumed) return
-    let live = true
-    void readPasskeyOffer().then((offer) => {
-      if (!live || offer !== 'has_passkey') return
-      stopPasskeyPrompt()
-      goNext()
-    })
+    mounted.current = true
+    void reload()
     return () => {
-      live = false
+      mounted.current = false
     }
-  }, [resumed, goNext])
+  }, [])
+
+  const passkeys = loaded?.passkeys ?? []
+  const added = loaded != null && passkeys.length > 0
+
+  const run = async (action: () => Promise<boolean>) => {
+    if (busy) return false
+    setBusy(true)
+    try {
+      return await action()
+    } finally {
+      if (mounted.current) setBusy(false)
+    }
+  }
 
   const add = async () => {
-    if (adding) return
-    setAdding(true)
-    const added = await addPasskeyWithToasts({
-      count: 0,
-      support: null,
-      source: 'onboarding',
-    })
-    setAdding(false)
-
-    if (added) goNext()
+    const saved = await run(() =>
+      addPasskeyWithToasts({
+        count: passkeys.length,
+        support: null,
+        source: 'onboarding',
+      })
+    )
+    if (!saved) return
+    void reload()
+    goNext()
   }
+
+  const change = (action: () => Promise<unknown>) =>
+    void run(async () => {
+      await action()
+      await reload()
+      return true
+    })
+
+  const remove = (passkey: Passkey) =>
+    change(() => removeWithConfirm(passkey, passkeys))
+
+  const letUnlock = (passkey: Passkey) =>
+    change(() => letUnlockWithToasts(passkey))
 
   const notNow = () => {
     backOffPasskeyPrompt()
@@ -104,7 +154,7 @@ const SavePasskey = ({ goBack, goNext, resumed = false }: Props) => {
             }}
           >
             <LucideIcon
-              icon={UserRoundKeyIcon}
+              icon={added ? UserRoundCheckIcon : UserRoundKeyIcon}
               size={40}
               color={theme.colors.accent}
             />
@@ -113,7 +163,9 @@ const SavePasskey = ({ goBack, goNext, resumed = false }: Props) => {
             accessibilityRole='header'
             style={[styles.stepTitle, { fontFamily: theme.fonts.bold }]}
           >
-            {i18n.t('onboardingPasskey_title')}
+            {i18n.t(
+              added ? 'onboardingPasskey_addedTitle' : 'onboardingPasskey_title'
+            )}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text
@@ -122,43 +174,82 @@ const SavePasskey = ({ goBack, goNext, resumed = false }: Props) => {
                 { color: theme.colors.textAlt, flexShrink: 1 },
               ]}
             >
-              {i18n.t('onboardingPasskey_desc')}
+              {i18n.t(
+                added ? 'onboardingPasskey_addedDesc' : 'onboardingPasskey_desc'
+              )}
             </Text>
             <InfoPopover
               title={i18n.t('onboardingPasskey_infoTitle')}
               description={i18n.t('onboardingPasskey_infoDesc')}
             />
           </View>
+          {added && (
+            <View style={{ marginTop: 24, gap: 5 }}>
+              <Section>
+                {passkeys.map((passkey, index) => (
+                  <PasskeyRow
+                    key={passkey.credentialId}
+                    passkey={passkey}
+                    name={loaded.name}
+                    readLabel={loaded.readLabel}
+                    disabled={busy}
+                    lastInSection={index === passkeys.length - 1}
+                    onLetUnlock={() => letUnlock(passkey)}
+                    onRemove={() => remove(passkey)}
+                  />
+                ))}
+              </Section>
+              <SectionFooter text={i18n.t('onboardingPasskey_addedHint')} />
+            </View>
+          )}
         </ContentColumn>
       </OnboardingScrollView>
       {}
       <OnboardingFooter style={{ gap: 10 }}>
         <ContentColumn style={{ gap: 10 }}>
-          <ActionButton disabled={adding} onPress={() => void add()}>
-            <View
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              {adding && <ActivityIndicator color={theme.colors.textInverse} />}
+          {added ? (
+            <ActionButton disabled={busy} onPress={goNext}>
               <Text style={[buttonText, { color: theme.colors.textInverse }]}>
-                {i18n.t('passkeys_add')}
+                {i18n.t('continue')}
               </Text>
-            </View>
-          </ActionButton>
-          <Button
-            variant='outline'
-            disabled={adding}
-            style={{
-              borderRadius: theme.numbers.borderRadiusSm,
-              paddingVertical: 11,
-              paddingHorizontal: 24,
-              justifyContent: 'center',
-            }}
-            onPress={notNow}
-          >
-            <Text style={[buttonText, { color: theme.colors.text }]}>
-              {i18n.t('notNow')}
-            </Text>
-          </Button>
+            </ActionButton>
+          ) : (
+            <>
+              <ActionButton disabled={busy} onPress={() => void add()}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {busy && (
+                    <ActivityIndicator color={theme.colors.textInverse} />
+                  )}
+                  <Text
+                    style={[buttonText, { color: theme.colors.textInverse }]}
+                  >
+                    {i18n.t('passkeys_add')}
+                  </Text>
+                </View>
+              </ActionButton>
+              <Button
+                variant='outline'
+                disabled={busy}
+                style={{
+                  borderRadius: theme.numbers.borderRadiusSm,
+                  paddingVertical: 11,
+                  paddingHorizontal: 24,
+                  justifyContent: 'center',
+                }}
+                onPress={notNow}
+              >
+                <Text style={[buttonText, { color: theme.colors.text }]}>
+                  {i18n.t('notNow')}
+                </Text>
+              </Button>
+            </>
+          )}
         </ContentColumn>
       </OnboardingFooter>
     </Wrapper>

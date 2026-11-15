@@ -4,7 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const runtime = vi.hoisted(() => ({
   added: true,
-  offer: 'offer' as 'offer' | 'has_passkey' | 'unavailable',
+  removed: true,
+  listFails: false,
+  passkeys: [] as { credentialId: string; canUnlock: boolean }[],
 }))
 
 vi.mock('react-native', async () => {
@@ -19,7 +21,10 @@ vi.mock('react-native', async () => {
     View: host('View'),
   }
 })
-vi.mock('lucide-react-native', () => ({ UserRoundKey: 'UserRoundKey' }))
+vi.mock('lucide-react-native', () => ({
+  UserRoundCheck: 'UserRoundCheck',
+  UserRoundKey: 'UserRoundKey',
+}))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
     colors: {},
@@ -30,6 +35,7 @@ vi.mock('@/contexts/theme', () => ({
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/lib/logger', () => ({ logger: { debug: vi.fn() } }))
 vi.mock('@/features/onboarding/components/Onboarding.styles', () => ({
   styles: {},
 }))
@@ -98,8 +104,35 @@ vi.mock('@/components/ui/layout/Wrapper', async () => {
       ReactModule.createElement('Wrapper', null, children),
   }
 })
-vi.mock('@/app/account/passkeyOffer', () => ({
-  readPasskeyOffer: vi.fn(async () => runtime.offer),
+vi.mock('@/components/ui/inputs/Section', async () => {
+  const ReactModule = await import('react')
+  return {
+    default: ({ children }: { children?: ReactNode }) =>
+      ReactModule.createElement('Section', null, children),
+  }
+})
+vi.mock('@/features/settings/components/account/SectionFooter', () => ({
+  default: () => null,
+}))
+vi.mock(
+  '@/features/settings/components/account/passkeys/PasskeyRow',
+  async () => {
+    const ReactModule = await import('react')
+    return {
+      default: (props: object) =>
+        ReactModule.createElement('PasskeyRow', props),
+    }
+  }
+)
+vi.mock('@/app/account/passkeys', () => ({
+  loadPasskeys: vi.fn(async () => {
+    if (runtime.listFails) throw new Error('offline')
+    return {
+      passkeys: [...runtime.passkeys],
+      name: 'WitnessWork ABCD',
+      readLabel: () => null,
+    }
+  }),
 }))
 vi.mock('@/app/account/passkeyPrompt', () => ({
   backOffPasskeyPrompt: vi.fn(),
@@ -107,27 +140,48 @@ vi.mock('@/app/account/passkeyPrompt', () => ({
 }))
 vi.mock(
   '@/features/settings/components/account/passkeys/passkeyActions',
-  () => ({ addPasskeyWithToasts: vi.fn(async () => runtime.added) })
+  () => ({
+    addPasskeyWithToasts: vi.fn(async () => {
+      if (runtime.added)
+        runtime.passkeys.push({ credentialId: 'new', canUnlock: true })
+      return runtime.added
+    }),
+    letUnlockWithToasts: vi.fn(async () => {}),
+    removeWithConfirm: vi.fn(async (passkey: { credentialId: string }) => {
+      if (!runtime.removed) return false
+      runtime.passkeys = runtime.passkeys.filter(
+        (p) => p.credentialId !== passkey.credentialId
+      )
+      return true
+    }),
+  })
 )
 
-import { readPasskeyOffer } from '@/app/account/passkeyOffer'
+import { loadPasskeys } from '@/app/account/passkeys'
 import {
   backOffPasskeyPrompt,
   stopPasskeyPrompt,
 } from '@/app/account/passkeyPrompt'
-import SavePasskey from '@/features/onboarding/components/steps/SavePasskey'
-import { addPasskeyWithToasts } from '@/features/settings/components/account/passkeys/passkeyActions'
+import SavePasskey, {
+  forgetRememberedPasskeys,
+} from '@/features/onboarding/components/steps/SavePasskey'
+import {
+  addPasskeyWithToasts,
+  removeWithConfirm,
+} from '@/features/settings/components/account/passkeys/passkeyActions'
 import { analytics } from '@/lib/analytics'
 
 const goNext = vi.fn()
 const goBack = vi.fn()
 let renderer: ReactTestRenderer | null = null
-const render = async (resumed = false) => {
+const render = async () => {
   await act(async () => {
-    renderer = create(
-      <SavePasskey goBack={goBack} goNext={goNext} resumed={resumed} />
-    )
+    renderer = create(<SavePasskey goBack={goBack} goNext={goNext} />)
   })
+}
+const unmount = () => {
+  act(() => renderer?.unmount())
+  renderer = null
 }
 const press = async (type: 'ActionButton' | 'Button') =>
   act(async () =>
@@ -135,16 +189,24 @@ const press = async (type: 'ActionButton' | 'Button') =>
       .find((node) => (node.type as unknown) === type)
       .props.onPress()
   )
+const texts = () =>
+  renderer!.root
+    .findAll((node) => (node.type as unknown) === 'Text')
+    .flatMap((node) => node.props.children as unknown)
+const rows = () =>
+  renderer!.root.findAll((node) => (node.type as unknown) === 'PasskeyRow')
+const hasButton = (type: 'ActionButton' | 'Button') =>
+  renderer!.root.findAll((node) => (node.type as unknown) === type).length > 0
 
 beforeEach(() => {
   vi.clearAllMocks()
+  forgetRememberedPasskeys()
   runtime.added = true
-  runtime.offer = 'offer'
+  runtime.removed = true
+  runtime.listFails = false
+  runtime.passkeys = []
 })
-afterEach(() => {
-  act(() => renderer?.unmount())
-  renderer = null
-})
+afterEach(unmount)
 
 describe('SavePasskey', () => {
   it('moves on once a passkey was added, without a second stop or event', async () => {
@@ -156,8 +218,6 @@ describe('SavePasskey', () => {
       source: 'onboarding',
     })
     expect(goNext).toHaveBeenCalledTimes(1)
-
-    expect(stopPasskeyPrompt).not.toHaveBeenCalled()
     expect(analytics.capture).not.toHaveBeenCalled()
   })
 
@@ -181,30 +241,78 @@ describe('SavePasskey', () => {
     expect(goNext).toHaveBeenCalledTimes(1)
   })
 
-  it('doesn’t ask the account on a first visit', async () => {
+  it('offers to add on a first visit, when the account has none', async () => {
     await render()
-    expect(readPasskeyOffer).not.toHaveBeenCalled()
+    expect(loadPasskeys).toHaveBeenCalledTimes(1)
+    expect(texts()).toContain('onboardingPasskey_title')
+    expect(hasButton('Button')).toBe(true)
+    expect(stopPasskeyPrompt).not.toHaveBeenCalled()
   })
 
-  describe('after a relaunch on the step', () => {
-    it('moves on, for good, when the account now has a passkey', async () => {
-      runtime.offer = 'has_passkey'
-      await render(true)
-      expect(stopPasskeyPrompt).toHaveBeenCalledTimes(1)
+  it('still offers to add when the account can’t be read', async () => {
+    runtime.listFails = true
+    await render()
+    expect(texts()).toContain('onboardingPasskey_title')
+    expect(goNext).not.toHaveBeenCalled()
+  })
+
+  describe('coming back after adding one', () => {
+    const addThenReturn = async () => {
+      await render()
+      await press('ActionButton')
+      unmount()
+      vi.clearAllMocks()
+      await render()
+    }
+
+    it('shows the passkey with Continue, not a second add', async () => {
+      await addThenReturn()
+      expect(texts()).toContain('onboardingPasskey_addedTitle')
+      expect(rows()).toHaveLength(1)
+      expect(hasButton('Button')).toBe(false)
+
+      await press('ActionButton')
+      expect(addPasskeyWithToasts).not.toHaveBeenCalled()
       expect(goNext).toHaveBeenCalledTimes(1)
     })
 
-    it('stays when the account still has none', async () => {
-      await render(true)
-      expect(readPasskeyOffer).toHaveBeenCalledTimes(1)
+    it('shows it from the first frame, before the account answers', async () => {
+      await render()
+      await press('ActionButton')
+      unmount()
+      vi.mocked(loadPasskeys).mockImplementationOnce(
+        () => new Promise(() => {})
+      )
+      await render()
+      expect(texts()).toContain('onboardingPasskey_addedTitle')
+    })
+
+    it('goes back to the add screen once the passkey is removed', async () => {
+      await addThenReturn()
+      await act(async () => rows()[0].props.onRemove())
+      expect(removeWithConfirm).toHaveBeenCalledWith(
+        expect.objectContaining({ credentialId: 'new' }),
+        [expect.objectContaining({ credentialId: 'new' })]
+      )
+      expect(texts()).toContain('onboardingPasskey_title')
+      expect(rows()).toHaveLength(0)
       expect(goNext).not.toHaveBeenCalled()
     })
 
-    it('stays when the account can’t be read', async () => {
-      runtime.offer = 'unavailable'
-      await render(true)
-      expect(goNext).not.toHaveBeenCalled()
-      expect(stopPasskeyPrompt).not.toHaveBeenCalled()
+    it('keeps the passkey when the remove is cancelled', async () => {
+      runtime.removed = false
+      await addThenReturn()
+      await act(async () => rows()[0].props.onRemove())
+      expect(texts()).toContain('onboardingPasskey_addedTitle')
+      expect(rows()).toHaveLength(1)
     })
+  })
+
+  it('shows the passkey, and stops the prompt, after a relaunch that closed before moving on', async () => {
+    runtime.passkeys = [{ credentialId: 'earlier', canUnlock: true }]
+    await render()
+    expect(texts()).toContain('onboardingPasskey_addedTitle')
+    expect(stopPasskeyPrompt).toHaveBeenCalledTimes(1)
+    expect(goNext).not.toHaveBeenCalled()
   })
 })

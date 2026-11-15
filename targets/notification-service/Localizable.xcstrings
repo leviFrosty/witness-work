@@ -2267,20 +2267,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "شارك {{name}} سيارة معك"
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} aabana namwe motoka"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} hat ein Fahrzeug mit Ihnen geteilt"
           }
         },
         "en" : {
@@ -2291,92 +2291,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} compartió un coche contigo"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} a partagé une voiture avec vous"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} ha condiviso un’auto con te"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}}が車を共有しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}}님이 자동차를 공유했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} heeft een auto met je gedeeld"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} compartilhou um carro com você"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} partilhou um carro consigo"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} поделился(-ась) с вами машиной"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} yagusangije imodoka"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} ameshiriki gari nawe"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} ділиться з вами автомобілем"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} đã chia sẻ xe với bạn"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} 与你共用了一辆车"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} shared a car with you"
+            "state" : "translated",
+            "value" : "{{name}} 與你共用了一輛車"
           }
         }
       }
@@ -2386,20 +2386,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "انضم {{name}} إلى سيارة مشتركة"
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} aingila pa motoka ya kwabana"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} ist einem gemeinsamen Fahrzeug beigetreten"
           }
         },
         "en" : {
@@ -2410,92 +2410,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} se unió a un coche compartido"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} a rejoint une voiture partagée"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} si è unito a un’auto condivisa"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}}が共有の車に参加しました"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}}님이 공유 차량에 참여했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} is toegetreden tot een gedeelde auto"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} entrou em um carro compartilhado"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} aderiu a um carro partilhado"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} присоединился(-ась) к общей машине"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} yinjiye mu modoka dusangiye"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} amejiunga na gari la pamoja"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} долучається до спільного автомобіля"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} đã tham gia một xe dùng chung"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} 加入了一辆共用车辆"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} joined a shared car"
+            "state" : "translated",
+            "value" : "{{name}} 加入了一輛共用車輛"
           }
         }
       }
@@ -3933,20 +3933,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "طلب {{name}} إعادة الاتصال"
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} alefwaya ukubwelela ukwikatana"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} möchte sich wieder verbinden"
           }
         },
         "en" : {
@@ -3957,92 +3957,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} pidió reconectarse"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} demande à se reconnecter"
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} ha chiesto di riconnettersi"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}}さんが再接続を求めています"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} 님이 재연결을 요청했습니다"
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} vroeg om opnieuw te verbinden"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} pediu para se reconectar"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} pediu para voltar a ligar-se"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} просит подключиться заново"
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} yasabye kongera kwihuza"
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} ameomba muunganishe tena"
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} просить підключитися знову"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} yêu cầu kết nối lại"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} 请求重新连接"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "{{name}} asked to reconnect"
+            "state" : "translated",
+            "value" : "{{name}} 要求重新連線"
           }
         }
       }
@@ -4290,20 +4290,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "افتح «المسافة المقطوعة» للانضمام."
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Isuleni Amakilomita pa kwingilapo."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Öffnen Sie Fahrstrecke, um beizutreten."
           }
         },
         "en" : {
@@ -4314,92 +4314,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Abre Kilometraje para unirte."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Ouvrez Kilométrage pour la rejoindre."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Apri Chilometraggio per unirti."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "走行距離を開いて参加してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "주행 거리를 열어 참여하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Open Kilometers om toe te treden."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Abra a Quilometragem para entrar."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Abra a Quilometragem para aderir."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Откройте «Пробег», чтобы присоединиться."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Fungura Ibirometero kugira ngo winjiremo."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Fungua Umbali ili ujiunge."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Відкрийте «Пробіг», щоб приєднатися."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "Mở Quãng đường để tham gia."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "打开“里程”即可加入。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to join."
+            "state" : "translated",
+            "value" : "打開里程即可加入。"
           }
         }
       }
@@ -4409,20 +4409,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "افتح «المسافة المقطوعة» لرؤيتها."
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Isuleni Amakilomita pa kuimona."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Öffnen Sie Fahrstrecke, um es zu sehen."
           }
         },
         "en" : {
@@ -4433,92 +4433,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Abre Kilometraje para verlo."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Ouvrez Kilométrage pour la voir."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Apri Chilometraggio per vederla."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "走行距離を開いて確認してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "주행 거리를 열어 확인하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Open Kilometers om het te zien."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Abra a Quilometragem para ver."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Abra a Quilometragem para o ver."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Откройте «Пробег», чтобы посмотреть."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Fungura Ibirometero uyirebe."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Fungua Umbali ili ulione."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Відкрийте «Пробіг», щоб побачити."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "Mở Quãng đường để xem."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "打开“里程”查看。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open Mileage to see it."
+            "state" : "translated",
+            "value" : "打開里程即可查看。"
           }
         }
       }
@@ -4766,20 +4766,20 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "غيّر مفتاح حسابه. أعد الاتصال لتبقيا رفيقين."
           }
         },
         "bem" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Bacinjile icisokoshi ca akaunti yabo. Bwelelenipo ukwikatana pa kuti mutwalilile ukuba abanandi."
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Der Kontoschlüssel wurde geändert. Verbinden Sie sich erneut, um Buddys zu bleiben."
           }
         },
         "en" : {
@@ -4790,92 +4790,92 @@
         },
         "es" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Cambió la clave de su cuenta. Reconéctate para seguir siendo compañeros."
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Sa clé de compte a changé. Reconnectez-vous pour rester compagnons."
           }
         },
         "it" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Ha cambiato la chiave del suo account. Riconnettiti per restare compagni."
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "アカウントキーが変更されました。バディでい続けるには再接続してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "상대가 계정 키를 변경했습니다. 버디 관계를 유지하려면 다시 연결하세요."
           }
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Je buddy heeft de accountsleutel gewijzigd. Verbind opnieuw om buddy’s te blijven."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Ele mudou a chave da conta. Reconecte-se para continuarem como companheiros."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Alterou a chave da conta. Volte a ligar-se para continuarem companheiros."
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Он сменил ключ своего аккаунта. Подключитесь заново, чтобы остаться напарниками."
           }
         },
         "rw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Yahinduye urufunguzo rwa konti ye. Ongera wihuze kugira ngo mukomeze kuba bagenzi."
           }
         },
         "sw" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Amebadilisha ufunguo wa akaunti yake. Unganisha tena ili mbaki wenzi."
           }
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Він змінив ключ свого облікового запису. Підключіться знову, щоб залишитися напарниками."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "Họ đã đổi khóa tài khoản. Hãy kết nối lại để tiếp tục là bạn đồng hành."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "对方更换了账户密钥。重新连接，即可继续做同伴。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "They changed their account key. Reconnect to stay buddies."
+            "state" : "translated",
+            "value" : "他們更換了帳號金鑰。請重新連線，以繼續當夥伴。"
           }
         }
       }

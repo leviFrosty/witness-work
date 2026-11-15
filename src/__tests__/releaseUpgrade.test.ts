@@ -784,7 +784,7 @@ function expectTerritories(app: App, release: string, source: Source) {
   })
 }
 
-function expectBuddies(app: App) {
+function expectBuddies(app: App, release: string) {
   const state = app.buddies.getState()
   const { noor, pip, invite, removed } = BUDDIES
   expect(state.onboardingComplete).toBe(true)
@@ -808,7 +808,7 @@ function expectBuddies(app: App) {
     sources: { showOnCalendar: 'buddy' },
   })
   expect(buddySettings(state.sharing, gotPip).settings.showOnCalendar).toBe(
-    true
+    !since(release, '1.47.0')
   )
   expect(buddyAlertSettings(state, noor.inboxId)).toMatchObject({
     settings: { joinRequests: false },
@@ -965,7 +965,7 @@ async function expectDeviceSettings(app: App, release: string) {
     expect(app['plan-cache'].getState().dailyMinutes).toMatchObject(
       DAILY_MINUTES
     )
-    expectBuddies(app)
+    expectBuddies(app, release)
     await expectNotesImports()
   }
   if (since(release, '1.45.0')) {
@@ -1116,8 +1116,10 @@ describe.each(RELEASES)('upgrading from %s', (release) => {
     expectScenario(app, release, 'storage')
   })
 
-  it('reads as an install from before sync was free', () => {
-    expect(app.preferences.getState().installedBeforeFreeSync).toBe(true)
+  it('reads as an install from before sync was free only before 1.47.0', () => {
+    expect(app.preferences.getState().installedBeforeFreeSync).toBe(
+      !since(release, '1.47.0')
+    )
     expect(app.preferences.getState()).not.toHaveProperty(
       'iCloudSyncPausedForLapse'
     )

@@ -106,7 +106,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     name: APP_NAME,
     developmentClient: {},
     slug: 'jw-time',
-    version: '1.46.0',
+    version: '1.47.0',
     owner: 'levi_frosty',
     scheme: 'witnesswork',
     orientation: 'portrait',

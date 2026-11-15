@@ -97,10 +97,16 @@ import useMileage from '@/stores/mileage'
 import useSharedCars from '@/stores/sharedCars'
 import { getMileageView } from '@/stores/mileageView'
 import { sharedCar } from '@/lib/mileage/testing/sharedCars'
+import {
+  PREMADE_FUEL_PRICE_FROM,
+  PREMADE_FUEL_STAMP,
+  premadeFuelId,
+  premadeFuelPriceId,
+} from '@/lib/mileage/premadeFuels'
 import MileageVehicleFormScreen, {
   type CarPeopleSlot,
 } from '@/features/mileage/screens/MileageVehicleFormScreen'
-import type { Fuel, Vehicle, VehicleSetup } from '@/types/mileage'
+import type { Fuel, FuelPrice, Vehicle, VehicleSetup } from '@/types/mileage'
 
 const NOW = new Date(2026, 9, 29, 9).getTime()
 const TODAY = '2026-10-29'
@@ -521,5 +527,131 @@ describe('what the form shows of sharing', () => {
     renderPeople.mockClear()
     render(undefined, renderPeople)
     expect(renderPeople).not.toHaveBeenCalled()
+  })
+})
+
+describe('the fuel’s price, when adding a car', () => {
+  const gasoline = premadeFuelId('gasoline')
+  const premadePrice: FuelPrice = {
+    id: premadeFuelPriceId('gasoline'),
+    fuelId: gasoline,
+    effectiveFrom: PREMADE_FUEL_PRICE_FROM,
+    pricePerGallon: 3.864,
+    updatedAt: PREMADE_FUEL_STAMP,
+  }
+  const premade = () =>
+    useMileage.setState({
+      fuels: [
+        { id: gasoline, name: 'Gasoline', createdAt: 1, updatedAt: 1 },
+        { id: 'ev', name: 'Electric', unit: 'kWh', createdAt: 1 },
+      ],
+      fuelPrices: [premadePrice],
+    })
+  const row = (tree: ReactTestRenderer, label: string) =>
+    tree.root.findAll(
+      (node) =>
+        node.type === ('TextInputRow' as never) && node.props.label === label
+    )[0]?.props
+
+  it('shows the premade price as an estimate the User can change', () => {
+    premade()
+    const tree = render(undefined)
+    expect(select(tree).value).toBe(gasoline)
+    expect(input(tree, 'Price per Gallon').value).toBe('3.864')
+    expect(row(tree, 'Price per Gallon').description).toBe(
+      'An average price for your region. Enter what you pay.'
+    )
+
+    act(() => input(tree, 'Price per Gallon').onChangeText('3.2'))
+    expect(row(tree, 'Price per Gallon').description).toBeUndefined()
+  })
+
+  it('replaces the premade estimate with the User’s price, from the start', () => {
+    premade()
+    const tree = render(undefined)
+    act(() => input(tree, 'Name').onChangeText('Mazda'))
+    act(() => input(tree, 'Price per Gallon').onChangeText('3.2'))
+    save(tree)
+
+    const prices = useMileage.getState().fuelPrices
+    expect(prices).toEqual([
+      expect.objectContaining({
+        id: premadePrice.id,
+        fuelId: gasoline,
+        effectiveFrom: PREMADE_FUEL_PRICE_FROM,
+        pricePerGallon: 3.2,
+      }),
+    ])
+    expect(prices[0].updatedAt).toBeGreaterThan(PREMADE_FUEL_STAMP)
+  })
+
+  it('starts a new price today for a fuel the User priced', () => {
+    useMileage.setState({
+      fuels: [fuel('gas')],
+      fuelPrices: [
+        {
+          id: 'march',
+          fuelId: 'gas',
+          effectiveFrom: '2026-03-01',
+          pricePerGallon: 3.5,
+          updatedAt: 100,
+        },
+      ],
+    })
+    const tree = render(undefined)
+    expect(row(tree, 'Price per Gallon').description).toBeUndefined()
+    act(() => input(tree, 'Name').onChangeText('Mazda'))
+    act(() => input(tree, 'Price per Gallon').onChangeText('3.9'))
+    save(tree)
+
+    expect(useMileage.getState().fuelPrices).toEqual([
+      expect.objectContaining({ id: 'march', pricePerGallon: 3.5 }),
+      expect.objectContaining({
+        fuelId: 'gas',
+        effectiveFrom: TODAY,
+        pricePerGallon: 3.9,
+      }),
+    ])
+  })
+
+  it('leaves the price alone when the User doesn’t change it', () => {
+    premade()
+    const tree = render(undefined)
+    act(() => input(tree, 'Name').onChangeText('Mazda'))
+    save(tree)
+
+    expect(useMileage.getState().fuelPrices).toEqual([premadePrice])
+  })
+
+  it('prices Electric per kWh', () => {
+    premade()
+    const tree = render(undefined)
+    act(() => select(tree).onChange({ value: 'ev' }))
+    expect(row(tree, 'Price per Gallon')).toBeUndefined()
+    expect(input(tree, 'Price per kWh').value).toBe('')
+    act(() => input(tree, 'Name').onChangeText('Leaf'))
+    act(() => input(tree, 'Price per kWh').onChangeText('0.15'))
+    save(tree)
+
+    expect(useMileage.getState().fuelPrices).toContainEqual(
+      expect.objectContaining({
+        fuelId: 'ev',
+        effectiveFrom: TODAY,
+        pricePerGallon: 0.15,
+      })
+    )
+  })
+
+  it('shows no price for None', () => {
+    premade()
+    const tree = render(undefined)
+    act(() => select(tree).onChange({ value: '__none__' }))
+    expect(row(tree, 'Price per Gallon')).toBeUndefined()
+  })
+
+  it('leaves an existing car’s fuel prices to the fuel’s own form', () => {
+    ownCar()
+    const tree = render('civic')
+    expect(row(tree, 'Price per Gallon')).toBeUndefined()
   })
 })

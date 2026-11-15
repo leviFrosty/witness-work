@@ -34,14 +34,18 @@ import {
   type HistoryChangeMode,
 } from '@/lib/mileage/calc'
 import { fuelsForVehicle } from '@/lib/mileage/view'
-import { premadeFuelKey } from '@/lib/mileage/premadeFuels'
+import {
+  isUntouchedPremadeFuelRecord,
+  premadeFuelKey,
+} from '@/lib/mileage/premadeFuels'
 import {
   displayToPricePerGallon,
   economyToMpg,
   formatEditableNumber,
-  fuelVolumeUnit,
+  fuelPriceUnit,
   mpgToEconomy,
   parseDecimal,
+  pricePerGallonToDisplay,
 } from '@/lib/mileage/units'
 import useMileageFormatter from '@/features/mileage/hooks/useMileageFormatter'
 import useMileageIndex from '@/features/mileage/hooks/useMileageIndex'
@@ -98,7 +102,10 @@ export default function MileageVehicleFormScreen({
   const [pickedFuel, setFuel] = useState<string | null>(null)
   const [typedEconomy, setEconomy] = useState<string | null>(null)
   const [newFuelName, setNewFuelName] = useState('')
-  const [newFuelPrice, setNewFuelPrice] = useState('')
+  const [typedPrice, setPrice] = useState<{
+    fuel: string
+    value: string
+  } | null>(null)
   const name = typedName ?? existing?.name ?? ''
 
   const fuel =
@@ -111,6 +118,28 @@ export default function MileageVehicleFormScreen({
         ? currentFuel
         : (fuels[0]?.id ?? NEW_FUEL)
   const fuelUnit = unitOf(fuel)
+
+  const priceHistory =
+    fuel === NO_FUEL || fuel === NEW_FUEL
+      ? []
+      : (index.pricesByFuel.get(fuel) ?? [])
+  const currentPrice = effectiveEntry(priceHistory, today)
+  const savedPrice = currentPrice
+    ? formatEditableNumber(
+        pricePerGallonToDisplay(
+          currentPrice.pricePerGallon,
+          format.economyUnit,
+          fuelUnit
+        ),
+        3
+      )
+    : ''
+  const price = typedPrice?.fuel === fuel ? typedPrice.value : savedPrice
+  const priceValue = parseDecimal(price)
+  const priceChanged = price !== savedPrice && priceValue !== undefined
+  const showPrice = fuel === NEW_FUEL || (!existing && fuel !== NO_FUEL)
+  const premadePrice =
+    currentPrice !== undefined && isUntouchedPremadeFuelRecord(currentPrice)
   const savedEconomy =
     current?.milesPerGallon === undefined || unitOf(current.fuelId) !== fuelUnit
       ? ''
@@ -168,14 +197,32 @@ export default function MileageVehicleFormScreen({
         { id: fuelId, name: newFuelName.trim(), createdAt: Date.now() },
         { vehicleId }
       )
-      const price = parseDecimal(newFuelPrice)
-      if (price !== undefined)
+      if (priceValue !== undefined)
         saveFuelPrice({
           id: Crypto.randomUUID(),
           fuelId,
           effectiveFrom: today,
-          pricePerGallon: displayToPricePerGallon(price, format.economyUnit),
+          pricePerGallon: displayToPricePerGallon(
+            priceValue,
+            format.economyUnit
+          ),
         })
+    }
+    const editedPrice = showPrice && !!fuelId && !creatingFuel && priceChanged
+    if (editedPrice && fuelId && priceValue !== undefined) {
+      const { target, effectiveFrom } = premadePrice
+        ? { target: currentPrice, effectiveFrom: currentPrice.effectiveFrom }
+        : resolveHistoryWrite(priceHistory, 'starting', today, today)
+      saveFuelPrice({
+        id: target?.id ?? Crypto.randomUUID(),
+        fuelId,
+        effectiveFrom,
+        pricePerGallon: displayToPricePerGallon(
+          priceValue,
+          format.economyUnit,
+          fuelUnit
+        ),
+      })
     }
     const milesPerGallon =
       economyValue !== undefined
@@ -211,6 +258,7 @@ export default function MileageVehicleFormScreen({
         has_fuel: !!fuelId,
         has_fuel_economy: milesPerGallon !== undefined,
         created_fuel: creatingFuel,
+        edited_fuel_price: editedPrice,
         premade_fuel: premadeFuelKey(fuels.find((f) => f.id === fuelId)),
         setup_change: askHowToApply ? changeMode : undefined,
         source: route.params?.source,
@@ -323,7 +371,7 @@ export default function MileageVehicleFormScreen({
               <InputRowSelect
                 label={i18n.t('mileage.fuel')}
                 info={i18n.t('mileage.carFuel_info')}
-                lastInSection={fuel !== NEW_FUEL}
+                lastInSection={!showPrice}
                 selectProps={{
                   data: fuelOptions,
                   value: fuel,
@@ -332,31 +380,36 @@ export default function MileageVehicleFormScreen({
                 }}
               />
               {fuel === NEW_FUEL && (
-                <>
-                  <TextInputRow
-                    label={i18n.t('mileage.fuelName')}
-                    textInputProps={{
-                      value: newFuelName,
-                      onChangeText: setNewFuelName,
-                      placeholder: i18n.t('mileage.fuelNamePlaceholder'),
-                      maxLength: 60,
-                    }}
-                  />
-                  <TextInputRow
-                    label={i18n.t(
-                      `mileage.pricePer_${fuelVolumeUnit(format.economyUnit)}`
-                    )}
-                    info={i18n.t('mileage.fuelPrice_info')}
-                    lastInSection
-                    textInputProps={{
-                      value: newFuelPrice,
-                      onChangeText: setNewFuelPrice,
-                      inputMode: 'decimal',
-                      placeholder: i18n.t('mileage.optional'),
-                      maxLength: 8,
-                    }}
-                  />
-                </>
+                <TextInputRow
+                  label={i18n.t('mileage.fuelName')}
+                  textInputProps={{
+                    value: newFuelName,
+                    onChangeText: setNewFuelName,
+                    placeholder: i18n.t('mileage.fuelNamePlaceholder'),
+                    maxLength: 60,
+                  }}
+                />
+              )}
+              {showPrice && (
+                <TextInputRow
+                  label={i18n.t(
+                    `mileage.pricePer_${fuelPriceUnit(format.economyUnit, fuelUnit)}`
+                  )}
+                  info={i18n.t('mileage.carFuelPrice_info')}
+                  description={
+                    premadePrice && typedPrice?.fuel !== fuel
+                      ? i18n.t('mileage.premadeFuelPrice_description')
+                      : undefined
+                  }
+                  lastInSection
+                  textInputProps={{
+                    value: price,
+                    onChangeText: (value) => setPrice({ fuel, value }),
+                    inputMode: 'decimal',
+                    placeholder: i18n.t('mileage.optional'),
+                    maxLength: 8,
+                  }}
+                />
               )}
             </Section>
             <Section>

@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { crop, hashBuffer } from '@/lib/pixelArt'
 
 import { ENTRANCES, TWIRL, WAKE } from '../motion'
-import { createScenePlayer, DEMO_SIGN_DATA, type PlayerInput } from '.'
+import {
+  createScenePlayer,
+  DEMO_SIGN_DATA,
+  FULL_GROWTH,
+  GROW_MS,
+  GROW_STEP_MS,
+  type PlayerInput,
+} from '.'
 
 const INPUT: PlayerInput = {
   room: {
@@ -116,6 +123,62 @@ describe('scene player', () => {
     const once = at(() => {})
     expect(at((p) => p.coinsEarned(2000))).toBe(once)
     expect(at((p) => p.hatCoins(2000))).not.toBe(once)
+  })
+
+  it('plays the fig growing from a sprout, then shows its real growth again', () => {
+    const fig: PlayerInput = {
+      ...INPUT,
+      room: { ...INPUT.room, hat: 'fig' },
+      hatLife: { growth: 2, wentOut: true },
+    }
+    const growing = createScenePlayer()
+    const still = createScenePlayer()
+    const drawn = (tMs: number, growth?: number) => [
+      hashBuffer(growing.frame(fig, tMs).buffer),
+      hashBuffer(
+        still.frame(
+          growth === undefined ? fig : { ...fig, hatLife: { growth } },
+          tMs
+        ).buffer
+      ),
+    ]
+    growing.hatGrow(1000)
+    expect(growing.isBusy()).toBe(true)
+
+    const [sprout, stage0] = drawn(1000, 0)
+    expect(sprout).toBe(stage0)
+    const [stepped, stage1] = drawn(1000 + GROW_STEP_MS + 100, 1)
+    expect(stepped).not.toBe(stage1)
+    const [tree, full] = drawn(1000 + GROW_MS - 100, FULL_GROWTH)
+    expect(tree).toBe(full)
+    expect(tree).not.toBe(sprout)
+
+    const [after, real] = drawn(1000 + GROW_MS)
+    expect(after).toBe(real)
+    expect(growing.isBusy()).toBe(false)
+  })
+
+  it('grows a fig in the Shop that has no growth yet, back to a full tree', () => {
+    const fig: PlayerInput = { ...INPUT, room: { ...INPUT.room, hat: 'fig' } }
+    const p = createScenePlayer()
+    const q = createScenePlayer()
+    p.hatGrow(0)
+    const sprout = hashBuffer(p.frame(fig, 0).buffer)
+    expect(sprout).not.toBe(hashBuffer(q.frame(fig, 0).buffer))
+    p.frame(fig, GROW_MS)
+    expect(hashBuffer(p.frame(fig, GROW_MS + 100).buffer)).toBe(
+      hashBuffer(q.frame(fig, GROW_MS + 100).buffer)
+    )
+  })
+
+  it('ignores the grow preview under Reduce Motion', () => {
+    const p = createScenePlayer({ reduceMotion: true })
+    p.hatGrow(0)
+    expect(p.isBusy()).toBe(false)
+    const moving = createScenePlayer()
+    moving.hatGrow(0)
+    moving.setReduceMotion(true)
+    expect(moving.isBusy()).toBe(false)
   })
 
   it('cheers with a happy sound, but not mid-motion', () => {

@@ -26,6 +26,7 @@ import {
   type SceneInput,
   type ScenePet,
 } from './scene'
+import { FULL_GROWTH } from './hatsLive'
 import { MOUTH_CLOSING_MS, mouthOpen } from './sprite'
 import type { PetMoment, PetMood, PetSpeciesId } from './types'
 
@@ -40,7 +41,14 @@ export interface PlayerPet {
 
 export type PlayerInput = Omit<
   SceneInput,
-  'pet' | 'particles' | 'reduceMotion' | 'hatPatMs' | 'hatCoinsMs' | 'clockMs'
+  | 'pet'
+  | 'particles'
+  | 'reduceMotion'
+  | 'hatPatMs'
+  | 'hatPatRunMs'
+  | 'hatCoinsMs'
+  | 'hatGrowMs'
+  | 'clockMs'
 > & {
   readonly pet: PlayerPet | null
 }
@@ -62,6 +70,11 @@ export type PatResult = 'pat' | 'wake' | 'busy'
 const PAT_JOY_MS = 1500
 const SQUISH_MS = 160
 const COINS_REACTION_GAP_MS = 2500
+const HAT_PAT_RUN_MS = 3200
+
+export const GROW_STEP_MS = 800
+export const GROW_HOLD_MS = 1500
+export const GROW_MS = FULL_GROWTH * GROW_STEP_MS + GROW_HOLD_MS
 
 export interface ScenePlayer {
   playEntrance(species: PetSpeciesId, tMs: number): void
@@ -79,6 +92,8 @@ export interface ScenePlayer {
   hatPat(tMs: number): void
 
   hatCoins(tMs: number): void
+
+  hatGrow(tMs: number): void
 
   pat(tMs: number, mood: PetMood, opts?: { readonly rub?: boolean }): PatResult
 
@@ -106,7 +121,9 @@ export function createScenePlayer(
   let patUntilMs = 0
   let squishUntilMs = 0
   let hatPatMs = -Infinity
+  let hatPatRunMs = -Infinity
   let hatCoinsMs = -Infinity
+  let growStartMs: number | null = null
   let pendingSay: PetMoment | null = null
   let reduceMotion = opts.reduceMotion ?? false
 
@@ -156,27 +173,44 @@ export function createScenePlayer(
     },
     hatPat(tMs) {
       hatPatMs = tMs
+      if (tMs - hatPatRunMs >= HAT_PAT_RUN_MS) hatPatRunMs = tMs
     },
     hatCoins(tMs) {
       hatCoinsMs = tMs
+    },
+    hatGrow(tMs) {
+      if (!reduceMotion) growStartMs = tMs
     },
     pat(tMs, mood, o = {}) {
       if (playing) return 'busy'
       if (mood === 'dead' || mood === 'nap') return 'wake'
       patUntilMs = tMs + PAT_JOY_MS
       hatPatMs = tMs
+      if (tMs - hatPatRunMs >= HAT_PAT_RUN_MS) hatPatRunMs = tMs
       if (!o.rub) squishUntilMs = tMs + SQUISH_MS
       particles = emitPatHeart(particles, tMs)
       pendingSay = 'pat'
       return 'pat'
     },
     isBusy() {
-      return playing !== null
+      return playing !== null || growStartMs !== null
     },
     setReduceMotion(on) {
       reduceMotion = on
+      if (on) growStartMs = null
     },
-    frame(input, tMs, out) {
+    frame(given, tMs, out) {
+      let input = given
+      let hatGrowMs = -Infinity
+      if (growStartMs !== null) {
+        const since = tMs - growStartMs
+        if (since >= GROW_MS) growStartMs = null
+        else if (since >= 0) {
+          const growth = Math.min(FULL_GROWTH, Math.floor(since / GROW_STEP_MS))
+          input = { ...given, hatLife: { ...given.hatLife, growth } }
+          if (growth > 0) hatGrowMs = growStartMs + growth * GROW_STEP_MS
+        }
+      }
       let say = pendingSay
       pendingSay = null
       let ended: MotionKind | null = null
@@ -237,7 +271,9 @@ export function createScenePlayer(
           particles,
           reduceMotion,
           hatPatMs,
+          hatPatRunMs,
           hatCoinsMs,
+          hatGrowMs,
           clockMs: Date.now(),
         },
         tMs,
@@ -262,7 +298,9 @@ export function createScenePlayer(
       patUntilMs = 0
       squishUntilMs = 0
       hatPatMs = -Infinity
+      hatPatRunMs = -Infinity
       hatCoinsMs = -Infinity
+      growStartMs = null
       pendingSay = null
       mouthWasOpen = false
       mouthClosedAtMs = -Infinity

@@ -121,7 +121,11 @@ export interface SceneInput {
 
   readonly hatPatMs?: number
 
+  readonly hatPatRunMs?: number
+
   readonly hatCoinsMs?: number
+
+  readonly hatGrowMs?: number
 
   readonly clockMs?: number | null
 }
@@ -200,7 +204,11 @@ function hatMomentOf(
     growth: input.hatLife?.growth ?? FULL_GROWTH,
     wentOut: input.hatLife?.wentOut ?? true,
     patMs: reduceMotion ? -Infinity : (input.hatPatMs ?? -Infinity),
+    patRunMs: reduceMotion
+      ? -Infinity
+      : (input.hatPatRunMs ?? input.hatPatMs ?? -Infinity),
     coinsMs: reduceMotion ? -Infinity : (input.hatCoinsMs ?? -Infinity),
+    growMs: reduceMotion ? -Infinity : (input.hatGrowMs ?? -Infinity),
     clockMs: input.clockMs ?? null,
   }
 }

@@ -43,7 +43,8 @@ export default function ReactionPreviewTray({
   const item = `${part}:${option}`
   const reactions = itemReactions(item)
   const note = itemNoteOf(part, option)
-  const played = (trigger: 'pat' | 'coins') =>
+  const grows = item === 'hat:fig'
+  const played = (trigger: 'pat' | 'coins' | 'grow') =>
     analytics.capture('pet_item_preview_played', { item, part, trigger, from })
   return (
     <GameColorTray
@@ -109,6 +110,22 @@ export default function ReactionPreviewTray({
           />
         )}
       </View>
+      {grows && (
+        <GameButton
+          kind='rare'
+          icon='sprout'
+          label={i18n.t('pet.shop.reactionPreview.grow')}
+          accessibilityLabel={i18n.t('pet.shop.reactionPreview.growA11y', {
+            item: itemName,
+          })}
+          palette={palette}
+          style={{ marginTop: 4 }}
+          onPress={() => {
+            scene.current?.hatGrow()
+            played('grow')
+          }}
+        />
+      )}
     </GameColorTray>
   )
 }

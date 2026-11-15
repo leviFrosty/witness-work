@@ -12,7 +12,7 @@ import {
   trainSpot,
   type HatMoment,
 } from './hatsLive'
-import { SCENE_H, SCENE_W } from './layout'
+import { PET_X, SCENE_H, SCENE_W, SPRITE_SIZE } from './layout'
 import { FLOOR_TOP } from './room/floor'
 
 export type HatFxPlace = {
@@ -30,6 +30,7 @@ const FX = rgbPalette({
   white: '#ffffff',
   water: '#c6ecff',
   splash: '#a8dcf5',
+  drop: '#3f94c8',
   smoke: '#d9d3c7',
   steam: '#eee9dd',
   window: '#ffd45c',
@@ -103,6 +104,49 @@ const STARS = (() => {
   return out
 })()
 
+const WATER_U = 15
+
+const LANDING_D = 5
+
+const SPLASH_MS = 800
+
+const SPLASH_GRAVITY = 0.00012
+
+const SPLASH_DROPS = [
+  [-0.012, 0.06],
+  [-0.008, 0.07],
+  [-0.004, 0.074],
+  [0, 0.068],
+  [0.004, 0.073],
+  [0.008, 0.066],
+  [0.012, 0.056],
+  [-0.016, 0.044],
+  [0.016, 0.046],
+  [-0.002, 0.05],
+] as const
+
+function drawFishSplash(buf: PixelBuffer, m: HatMoment, place: HatFxPlace) {
+  const age = m.tMs - m.coinsMs - FISH_JUMP_MS
+  if (age < 0 || age >= SPLASH_MS) return
+  const fade = Math.min(1, (1 - age / SPLASH_MS) * 2)
+  for (const [vd, vu] of SPLASH_DROPS) {
+    const u = WATER_U + vu * age - SPLASH_GRAVITY * age * age
+    if (u < WATER_U) continue
+    const [x, y] = at(place, LANDING_D + vd * age, u)
+    blend(buf, x, y, FX.white, fade)
+    blend(buf, x, y + 1, FX.drop, fade)
+  }
+  const reach = 1.5 + (age / SPLASH_MS) * 6
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 3; i++) {
+      const d = LANDING_D + side * (reach - i)
+      if (Math.abs(d) > 9) continue
+      const [x, y] = at(place, d, WATER_U)
+      blend(buf, x, y, FX.white, fade * (1 - i * 0.3))
+    }
+  }
+}
+
 const METEORS = [
   [150, 18],
   [120, 14],
@@ -111,14 +155,15 @@ const METEORS = [
 
 const METEOR_MS = 700
 
+const SKY_CENTRE = [PET_X + SPRITE_SIZE / 2, 43] as const
+
 function drawStars(
   buf: PixelBuffer,
   m: HatMoment,
-  place: HatFxPlace,
   dim: number,
   subject: PixelMask
 ) {
-  const [cx, cy] = at(place, 0, 15)
+  const [cx, cy] = SKY_CENTRE
   const turn = Math.sin(m.tMs * 0.00011) * 0.3
   const onWall = (x: number, y: number) => {
     const ix = Math.round(x)
@@ -384,28 +429,15 @@ export function drawHatRoom(
   const dark = Math.max(dim, roomDim)
   if (dark > 0) darken(buf, dark)
   switch (hat) {
-    case 'bowl': {
+    case 'bowl':
       drawWaterLight(buf, m, subject)
-      const jump = m.tMs - m.coinsMs
-      if (jump >= FISH_JUMP_MS * 0.8 && jump < FISH_JUMP_MS + 500) {
-        const age = jump - FISH_JUMP_MS * 0.8
-        const [x, y] = at(place, 2, 20)
-        for (let i = -3; i <= 3; i++)
-          blend(
-            buf,
-            x + i * age * 0.012,
-            y - age * 0.02 + 0.00012 * age * age,
-            FX.splash,
-            1 - age / 780
-          )
-      }
+      drawFishSplash(buf, m, place)
       break
-    }
     case 'lighthouse':
       drawBeam(buf, m, place, dim)
       break
     case 'dome':
-      if (dim > 0.02) drawStars(buf, m, place, dim, subject)
+      if (dim > 0.02) drawStars(buf, m, dim, subject)
       break
     case 'cottage':
       if (isDarkTime(m.time)) {
@@ -427,11 +459,11 @@ export function drawHatRoom(
         return at(place, d + (near > 0 ? -2.5 : 2.5), u + 9)
       })
       break
-    case 'fig':
+    case 'fig': {
       drawFallingLeaves(buf, m, place)
       drawFigDrop(buf, m, place)
-      if (m.tMs - m.coinsMs >= 0 && m.tMs - m.coinsMs < 900) {
-        const age = m.tMs - m.coinsMs
+      const age = m.tMs - Math.max(m.coinsMs, m.growMs ?? -Infinity)
+      if (age >= 0 && age < 900) {
         for (let i = 0; i < 8; i++) {
           const [x, y] = at(
             place,
@@ -442,6 +474,7 @@ export function drawHatRoom(
         }
       }
       break
+    }
     case 'cloud':
       drawWeather(buf, m, place)
       break

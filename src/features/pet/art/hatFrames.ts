@@ -160,13 +160,8 @@ specs['frog/blink'] = {
   ],
 }
 specs['frog/tongue'] = {
-  shapes: [
-    ...frogBody(2.5),
-    ...frogEyes,
-    box(1, 5.4, 16, 6.4, ['#ef7b9b'], { no: true }),
-    ell(16.4, 6, 1.4, 1.2, ['#ef7b9b'], { no: true }),
-  ],
-  feats: [...PUPILS, ...FROG_MOUTH.slice(0, 4)],
+  shapes: [...frogBody(2.5), ...frogEyes],
+  feats: [...[-4, -3, 6, 5].map((d) => feat(d, 9.4, '#23201c')), ...FROG_MOUTH],
 }
 
 const cottage = (glass: string) => [

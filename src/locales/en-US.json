@@ -5765,7 +5765,9 @@
         "pat": "Pat",
         "coins": "New coins",
         "patA11y": "Show how {{item}} reacts when you pat {{name}}",
-        "coinsA11y": "Show how {{item}} reacts to new coins"
+        "coinsA11y": "Show how {{item}} reacts to new coins",
+        "grow": "Watch it grow",
+        "growA11y": "Show how {{item}} grows from a sprout to a full tree"
       },
       "itemNote": {
         "hat": {

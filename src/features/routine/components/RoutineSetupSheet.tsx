@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { Fragment, type ReactElement, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
+import InputRowSwitch from '@/components/ui/inputs/InputRowSwitch'
 import Section from '@/components/ui/inputs/Section'
 import Text from '@/components/ui/MyText'
 import Sheet from '@/components/ui/Sheet'
@@ -11,6 +12,7 @@ import useToday from '@/hooks/useToday'
 import { analytics } from '@/lib/analytics'
 import { localDayKey } from '@/lib/dayKeys'
 import i18n from '@/lib/locales'
+import { habitName } from '@/lib/routine/habitNames'
 import { DEFAULT_CHAPTERS_PER_DAY } from '@/lib/routine/readingPlans'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
@@ -20,12 +22,14 @@ import {
   type WorshipKind,
 } from '@/types/routine'
 import CustomPlanFields from '@/features/routine/components/CustomPlanFields'
-import HabitToggles, {
-  toggledHabits,
-} from '@/features/routine/components/HabitToggles'
-import MeetingDaysFields from '@/features/routine/components/MeetingDaysFields'
+import { toggledHabits } from '@/features/routine/components/HabitToggles'
+import {
+  MidweekMeetingRow,
+  WeekendMeetingRow,
+} from '@/features/routine/components/MeetingDaysFields'
 import RoutineReminderFields from '@/features/routine/components/RoutineReminderFields'
 import WorshipFields from '@/features/routine/components/WorshipFields'
+import { HABIT_ICONS } from '@/features/routine/lib/habitIcons'
 import {
   applyPlanChoice,
   planName,
@@ -64,7 +68,7 @@ export default function RoutineSetupSheet({
   const hasPet = usePet((state) => state.pet !== null)
   const notifications = useNotifications()
 
-  const [habits, setHabits] = useState<RoutineHabit[]>([...ROUTINE_HABITS])
+  const [habits, setHabits] = useState<RoutineHabit[]>([])
   const [reading, setReading] = useState<PlanChoice>({ kind: 'today' })
   const [meetingDays, setMeetingDays] = useState<number[]>(
     () => usePreferences.getState().meetingDays
@@ -83,7 +87,7 @@ export default function RoutineSetupSheet({
   useEffect(() => {
     if (!open) return
     const current = usePreferences.getState()
-    setHabits([...ROUTINE_HABITS])
+    setHabits([])
     setReading({ kind: 'today' })
     setMeetingDays(current.meetingDays)
     setWorshipKind(current.worshipKind)
@@ -122,8 +126,106 @@ export default function RoutineSetupSheet({
     { label: i18n.t('routine.plan.today'), value: 'today' as const },
     ...PLAN_KINDS.map((kind) => ({ label: planName(kind), value: kind })),
   ]
-  const prepares =
-    habits.includes('midweekPrep') || habits.includes('weekendPrep')
+
+  const rows: ((last: boolean) => ReactElement)[] = []
+  for (const habit of ROUTINE_HABITS) {
+    const on = habits.includes(habit)
+    rows.push((last) => (
+      <InputRowSwitch
+        key={habit}
+        label={habitName(habit, worshipKind)}
+        leftIcon={HABIT_ICONS[habit]}
+        value={on}
+        onValueChange={(next) => setHabits(toggledHabits(habits, habit, next))}
+        lastInSection={last}
+      />
+    ))
+    if (!on) continue
+    if (habit === 'bibleReading') {
+      rows.push((last) => (
+        <InputRowSelect
+          key='reading'
+          label={i18n.t('routine.settings.readingRow')}
+          indented
+          lastInSection={last}
+          selectProps={{
+            data: readingOptions,
+            value: reading.kind,
+            onChange: ({ value }) =>
+              setReading(
+                value === 'custom'
+                  ? {
+                      kind: 'custom',
+                      startBook: 0,
+                      chaptersPerDay: DEFAULT_CHAPTERS_PER_DAY,
+                    }
+                  : { kind: value }
+              ),
+          }}
+        />
+      ))
+      if (reading.kind === 'custom') {
+        const custom = reading
+        rows.push((last) => (
+          <Fragment key='customPlan'>
+            <CustomPlanFields
+              startBook={custom.startBook}
+              chaptersPerDay={custom.chaptersPerDay}
+              onChange={(next) => setReading({ kind: 'custom', ...next })}
+              indented
+              lastInSection={last}
+            />
+          </Fragment>
+        ))
+      }
+    }
+    if (habit === 'midweekPrep')
+      rows.push((last) => (
+        <MidweekMeetingRow
+          key='midweekMeeting'
+          meetingDays={meetingDays}
+          onChange={setMeetingDays}
+          indented
+          lastInSection={last}
+        />
+      ))
+    if (habit === 'weekendPrep')
+      rows.push((last) => (
+        <WeekendMeetingRow
+          key='weekendMeeting'
+          meetingDays={meetingDays}
+          onChange={setMeetingDays}
+          indented
+          lastInSection={last}
+        />
+      ))
+    if (habit === 'worship')
+      rows.push((last) => (
+        <Fragment key='worshipFields'>
+          <InputRowSelect
+            label={i18n.t('routine.setup.family')}
+            indented
+            selectProps={{
+              data: [
+                { label: i18n.t('yes'), value: 'family' as const },
+                { label: i18n.t('no'), value: 'personal' as const },
+              ],
+              value: worshipKind,
+              onChange: ({ value }) => setWorshipKind(value),
+            }}
+          />
+          <WorshipFields
+            kind={worshipKind}
+            day={worshipDay}
+            onKindChange={setWorshipKind}
+            onDayChange={setWorshipDay}
+            showKind={false}
+            indented
+            lastInSection={last}
+          />
+        </Fragment>
+      ))
+  }
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -155,88 +257,8 @@ export default function RoutineSetupSheet({
 
         <SheetHeading text={i18n.t('routine.setup.habits')} />
         <Section>
-          <HabitToggles
-            habits={habits}
-            worshipKind={worshipKind}
-            onToggle={(habit, on) =>
-              setHabits(toggledHabits(habits, habit, on))
-            }
-          />
+          {rows.map((row, index) => row(index === rows.length - 1))}
         </Section>
-
-        {habits.includes('bibleReading') && (
-          <>
-            <SheetHeading text={i18n.t('routine.plan.title')} />
-            <Section>
-              <InputRowSelect
-                label={i18n.t('routine.settings.readingRow')}
-                lastInSection={reading.kind !== 'custom'}
-                selectProps={{
-                  data: readingOptions,
-                  value: reading.kind,
-                  onChange: ({ value }) =>
-                    setReading(
-                      value === 'custom'
-                        ? {
-                            kind: 'custom',
-                            startBook: 0,
-                            chaptersPerDay: DEFAULT_CHAPTERS_PER_DAY,
-                          }
-                        : { kind: value }
-                    ),
-                }}
-              />
-              {reading.kind === 'custom' && (
-                <CustomPlanFields
-                  startBook={reading.startBook}
-                  chaptersPerDay={reading.chaptersPerDay}
-                  onChange={(next) => setReading({ kind: 'custom', ...next })}
-                  lastInSection
-                />
-              )}
-            </Section>
-          </>
-        )}
-
-        {prepares && (
-          <>
-            <SheetHeading text={i18n.t('routine.meetings.title')} />
-            <Section>
-              <MeetingDaysFields
-                meetingDays={meetingDays}
-                onChange={setMeetingDays}
-                lastInSection
-              />
-            </Section>
-          </>
-        )}
-
-        {habits.includes('worship') && (
-          <>
-            <SheetHeading text={i18n.t('routine.settings.worshipTitle')} />
-            <Section>
-              <InputRowSelect
-                label={i18n.t('routine.setup.family')}
-                selectProps={{
-                  data: [
-                    { label: i18n.t('yes'), value: 'family' as const },
-                    { label: i18n.t('no'), value: 'personal' as const },
-                  ],
-                  value: worshipKind,
-                  onChange: ({ value }) => setWorshipKind(value),
-                }}
-              />
-              <WorshipFields
-                kind={worshipKind}
-                day={worshipDay}
-                onKindChange={setWorshipKind}
-                onDayChange={setWorshipDay}
-                showKind={false}
-                lastInSection
-              />
-            </Section>
-          </>
-        )}
 
         <Section>
           <RoutineReminderFields

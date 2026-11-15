@@ -14,6 +14,7 @@ export default function WorshipFields({
   onKindChange,
   onDayChange,
   showKind = true,
+  indented,
   lastInSection,
 }: {
   kind: WorshipKind
@@ -21,12 +22,14 @@ export default function WorshipFields({
   onKindChange: (kind: WorshipKind) => void
   onDayChange: (day: number | null) => void
   showKind?: boolean
+  indented?: boolean
   lastInSection?: boolean
 }) {
   return (
     <>
       {showKind && (
         <InputRowSelect
+          indented={indented}
           label={i18n.t('routine.settings.worshipKind')}
           selectProps={{
             data: (['family', 'personal'] as const).map((value) => ({
@@ -39,6 +42,7 @@ export default function WorshipFields({
         />
       )}
       <InputRowSelect
+        indented={indented}
         label={i18n.t('routine.settings.worshipDay')}
         lastInSection={lastInSection}
         selectProps={{

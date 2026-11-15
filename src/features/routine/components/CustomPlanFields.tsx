@@ -16,17 +16,20 @@ export default function CustomPlanFields({
   startBook,
   chaptersPerDay,
   onChange,
+  indented,
   lastInSection,
 }: {
   startBook: number
   chaptersPerDay: number
   onChange: (next: { startBook: number; chaptersPerDay: number }) => void
+  indented?: boolean
   lastInSection?: boolean
 }) {
   const days = choiceDays({ kind: 'custom', startBook, chaptersPerDay }) ?? 0
   return (
     <>
       <InputRowSelect
+        indented={indented}
         label={i18n.t('routine.plan.startBook')}
         selectProps={{
           data: BIBLE_BOOKS.map(([id], book) => ({
@@ -39,6 +42,7 @@ export default function CustomPlanFields({
         }}
       />
       <InputRowSelect
+        indented={indented}
         label={i18n.t('routine.plan.chaptersLabel')}
         description={i18n.t('routine.plan.days', { count: days })}
         lastInSection={lastInSection}

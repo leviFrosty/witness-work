@@ -3,6 +3,8 @@ import type { ReadingPlanKind } from '@/types/routine'
 
 export type PlanCelebration = {
   kind: ReadingPlanKind
+
+  wholeBible: boolean
   days: number
   coins: number | null
 }

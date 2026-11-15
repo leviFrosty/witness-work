@@ -45,7 +45,11 @@ export interface ReadingPlanRun {
 
   startBook?: number
 
+  endBook?: number
+
   chaptersPerDay?: number
+
+  versesPerDay?: number
   startedOn: string
 
   finishBy?: string

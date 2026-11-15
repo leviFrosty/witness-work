@@ -6459,6 +6459,8 @@
       },
       "range": "{{book}} {{from}}–{{to}}",
       "chapter": "{{book}} {{chapter}}",
+      "verse": "{{book}} {{chapter}}:{{verse}}",
+      "verses": "{{book}} {{chapter}}:{{from}}–{{to}}",
       "join": "{{first}}; {{rest}}"
     },
     "reminder": {
@@ -6487,7 +6489,9 @@
       "settings": "Routine settings",
       "checkHint": "Checks it off for today",
       "uncheckHint": "Unchecks it for today",
-      "openHint": "Shows details"
+      "openHint": "Shows details",
+      "lastReading": "{{reading}} · Last reading",
+      "openInJwLibrary": "Read {{reading}} in JW Library"
     },
     "screen": {
       "daysThisMonth": {
@@ -6507,6 +6511,8 @@
       "planDayNumber": "Day {{day}}",
       "todaysReading": "Today’s reading",
       "readToday": "Read today",
+      "openInJwLibrary": "Read in JW Library",
+      "lastReading": "This is the last reading. After it, your Bible reading goes back to Daily.",
       "upNext": "Next",
       "thisWeek": "This week",
       "history": "History",
@@ -6532,6 +6538,9 @@
     },
     "celebration": {
       "title": "You read the whole Bible",
+      "titlePlan": "You finished your reading plan",
+      "backToDaily": "Your Bible reading is back to Daily. Start another plan any time.",
+      "choosePlan": "Choose another plan",
       "caption": {
         "one": "Finished in {{count}} day",
         "other": "Finished in {{count}} days"
@@ -6559,8 +6568,7 @@
       "worshipDay": "Evening",
       "anyDay": "Any day",
       "reminderTitle": "Reminder",
-      "planProgress": "{{plan}} · Day {{day}} of {{total}}",
-      "planFinished": "{{plan}} · Finished"
+      "planProgress": "{{plan}} · Day {{day}} of {{total}}"
     },
     "meetings": {
       "title": "Meeting days",
@@ -6586,7 +6594,7 @@
     },
     "plan": {
       "title": "Bible reading",
-      "today": "Read today",
+      "today": "Daily",
       "todayDescription": "Check off each day you read.",
       "kind": {
         "canonical": "Bible in a year",
@@ -6596,18 +6604,41 @@
       "description": {
         "canonical": "Genesis to Revelation in 365 days.",
         "chronological": "The whole Bible in 365 days, in about the order things happened.",
-        "custom": "Choose where to start and how much to read."
+        "custom": "Choose which books to read and how much each day."
       },
       "chronologicalInfo": "Books and chapters are placed in approximate order. Some, like most Psalms, are read together.",
-      "startBook": "Start at",
+      "startBook": "From",
+      "endBook": "To",
+      "unitLabel": "Read",
+      "unit": {
+        "chapters": "Whole chapters",
+        "verses": "A few verses"
+      },
       "chaptersLabel": "Each day",
       "chaptersPerDay": {
         "one": "{{count}} chapter",
         "other": "{{count}} chapters"
       },
+      "versesPerDay": {
+        "one": "{{count}} verse",
+        "other": "{{count}} verses"
+      },
+      "summary": "{{time}} · {{length}}",
+      "minutesADay": {
+        "one": "About {{count}} minute a day",
+        "other": "About {{count}} minutes a day"
+      },
       "days": {
         "one": "{{count}} day",
         "other": "{{count}} days"
+      },
+      "months": {
+        "one": "About {{count}} month",
+        "other": "About {{count}} months"
+      },
+      "years": {
+        "one": "About {{count}} year",
+        "other": "About {{count}} years"
       },
       "start": "Start plan",
       "resume": "Resume plan",

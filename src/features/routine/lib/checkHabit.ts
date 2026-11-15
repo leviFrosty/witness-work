@@ -8,7 +8,7 @@ import i18n from '@/lib/locales'
 import { PLAN_FINISHED_COINS } from '@/lib/routine/coins'
 import { routineEntryId } from '@/lib/routine/habits'
 import { habitLabel } from '@/lib/routine/labels'
-import { planProgress } from '@/lib/routine/readingPlans'
+import { coversWholeBible, planProgress } from '@/lib/routine/readingPlans'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import useRoutine, { type CheckOptions } from '@/stores/routine'
@@ -38,6 +38,7 @@ function finishIfDone(run: ReadingPlanRun, today: string): boolean {
   })
   celebratePlan({
     kind: run.kind,
+    wholeBible: coversWholeBible(run),
     days,
     coins: usePet.getState().pet ? PLAN_FINISHED_COINS : null,
   })

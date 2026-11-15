@@ -19,8 +19,26 @@ export function chaptersLabel(chapters: readonly Chapter[]): string {
   )
 }
 
-export const portionLabel = (portion: Pick<Portion, 'chapters'>): string =>
-  chaptersLabel(portion.chapters)
+export function portionLabel(
+  portion: Pick<Portion, 'chapters' | 'verses'>
+): string {
+  const [chapter] = portion.chapters
+  if (!portion.verses || !chapter) return chaptersLabel(portion.chapters)
+  const { from, to } = portion.verses
+  const book = bookName(chapter.book)
+  return from === to
+    ? i18n.t('routine.bible.verse', {
+        book,
+        chapter: chapter.chapter,
+        verse: from,
+      })
+    : i18n.t('routine.bible.verses', {
+        book,
+        chapter: chapter.chapter,
+        from,
+        to,
+      })
+}
 
 export const habitLabel = (
   habit: RoutineHabit,

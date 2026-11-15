@@ -10,7 +10,6 @@ import useTheme from '@/contexts/theme'
 import useToday from '@/hooks/useToday'
 import { localDayKey } from '@/lib/dayKeys'
 import i18n from '@/lib/locales'
-import { DEFAULT_CHAPTERS_PER_DAY } from '@/lib/routine/readingPlans'
 import { usePreferences } from '@/stores/preferences'
 import useRoutine from '@/stores/routine'
 import CustomPlanFields from '@/features/routine/components/CustomPlanFields'
@@ -21,7 +20,9 @@ import {
 import {
   activeRun,
   choiceOf,
+  DEFAULT_CUSTOM_CHOICE,
   leavingLosesPlace,
+  liveRun,
   PLAN_KINDS,
   planDay,
   progressOf,
@@ -37,11 +38,7 @@ const choiceFor = (
   kind === 'custom'
     ? current.kind === 'custom'
       ? current
-      : {
-          kind: 'custom',
-          startBook: 0,
-          chaptersPerDay: DEFAULT_CHAPTERS_PER_DAY,
-        }
+      : DEFAULT_CUSTOM_CHOICE
     : { kind }
 
 export default function ReadingPlanSheet({
@@ -56,18 +53,23 @@ export default function ReadingPlanSheet({
   const runId = usePreferences((state) => state.readingPlanRunId)
   const runs = useRoutine((state) => state.readingPlans)
   const entries = useRoutine((state) => state.routineEntries)
-  const run = activeRun(runs, runId)
+  const finishedRun = activeRun(runs, runId)
+  const run = liveRun(finishedRun)
   const progress = progressOf(run, entries)
   const [choice, setChoice] = useState<PlanChoice>(choiceOf(run))
 
   useEffect(() => {
-    if (open) setChoice(choiceOf(activeRun(runs, runId)))
+    if (open) setChoice(choiceOf(liveRun(activeRun(runs, runId))))
   }, [open, runs, runId])
 
   const isCurrent = run ? sameConfig(run, choice) : choice.kind === 'today'
-  const restart = isCurrent && !!progress?.finished
+  const restart =
+    !run && !!finishedRun?.finishedOn && sameConfig(finishedRun, choice)
   const resumes =
-    !isCurrent && choice.kind !== 'today' && !!resumableRun(runs, choice)
+    !isCurrent &&
+    !restart &&
+    choice.kind !== 'today' &&
+    !!resumableRun(runs, choice)
   const action = restart
     ? i18n.t('routine.plan.restart')
     : isCurrent || choice.kind === 'today'
@@ -124,15 +126,11 @@ export default function ReadingPlanSheet({
           </Text>
           {run && progress && (
             <Text style={{ color: theme.colors.textAlt }}>
-              {progress.finished
-                ? i18n.t('routine.settings.planFinished', {
-                    plan: planName(run.kind),
-                  })
-                : i18n.t('routine.settings.planProgress', {
-                    plan: planName(run.kind),
-                    day: planDay(progress),
-                    total: progress.total,
-                  })}
+              {i18n.t('routine.settings.planProgress', {
+                plan: planName(run.kind),
+                day: planDay(progress),
+                total: progress.total,
+              })}
             </Text>
           )}
         </View>
@@ -159,9 +157,8 @@ export default function ReadingPlanSheet({
         {choice.kind === 'custom' && (
           <Section>
             <CustomPlanFields
-              startBook={choice.startBook}
-              chaptersPerDay={choice.chaptersPerDay}
-              onChange={(next) => setChoice({ kind: 'custom', ...next })}
+              choice={choice}
+              onChange={setChoice}
               lastInSection
             />
           </Section>

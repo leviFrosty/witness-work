@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { View } from 'react-native'
 import {
   ChevronDown as ChevronDownIcon,
@@ -19,6 +19,7 @@ import RoutineHabitRow from '@/features/routine/components/RoutineHabitRow'
 import RoutineOutlineButton from '@/features/routine/components/RoutineOutlineButton'
 import type { ActivePlan } from '@/features/routine/hooks/useRoutineToday'
 import { planName } from '@/features/routine/lib/applyPlanChoice'
+import { openReading } from '@/features/routine/lib/openReading'
 import {
   planAgenda,
   planCompleted,
@@ -27,6 +28,7 @@ import {
 } from '@/features/routine/lib/planAgenda'
 import { planPace } from '@/features/routine/lib/planPace'
 import { paceLabel, planDateLabel } from '@/features/routine/lib/planPaceLabel'
+import { isLastReading } from '@/features/routine/lib/readingPlanChoice'
 
 const COMPLETED_PAGE = 20
 
@@ -135,14 +137,31 @@ export default function ReadingPlanBlock({
       </Button>
       <View style={{ paddingBottom: 8 }}>
         {rows.map((row) => (
-          <RoutineHabitRow
-            key={row.portion.index}
-            testID={`routine-portion-${row.portion.index}`}
-            caption={caption(row, readToday)}
-            label={portionLabel(row.portion)}
-            done={false}
-            onToggle={() => onRead(row.portion.index)}
-          />
+          <Fragment key={row.portion.index}>
+            <RoutineHabitRow
+              testID={`routine-portion-${row.portion.index}`}
+              caption={caption(row, readToday)}
+              label={portionLabel(row.portion)}
+              done={false}
+              onToggle={() => onRead(row.portion.index)}
+            />
+            {row.isNext ? (
+              <View
+                style={{ paddingHorizontal: 20, paddingBottom: 12, gap: 12 }}
+              >
+                {isLastReading(progress) ? (
+                  <Text style={small} testID='routine-plan-last-reading'>
+                    {i18n.t('routine.screen.lastReading')}
+                  </Text>
+                ) : null}
+                <RoutineOutlineButton
+                  label={i18n.t('routine.screen.openInJwLibrary')}
+                  onPress={() => openReading(row.portion, 'plan')}
+                  testID='routine-open-reading'
+                />
+              </View>
+            ) : null}
+          </Fragment>
         ))}
         {completed.length > 0 ? (
           <Button

@@ -18,12 +18,19 @@ const GOLD = '#FACC15'
 export default function PlanFinishedCelebration({
   celebration,
   onDone,
+  onChoosePlan,
 }: {
   celebration: PlanCelebration
   onDone: () => void
+  onChoosePlan: () => void
 }) {
   const theme = useTheme()
-  const title = i18n.t('routine.celebration.title')
+  const title = i18n.t(
+    celebration.wholeBible
+      ? 'routine.celebration.title'
+      : 'routine.celebration.titlePlan'
+  )
+  const next = i18n.t('routine.celebration.backToDaily')
   const caption = i18n.t('routine.celebration.caption', {
     count: celebration.days,
   })
@@ -39,9 +46,9 @@ export default function PlanFinishedCelebration({
   useEffect(() => {
     void Haptics.success().catch(() => {})
     AccessibilityInfo.announceForAccessibility(
-      [title, caption, coins].filter(Boolean).join('. ')
+      [title, caption, coins, next].filter(Boolean).join('. ')
     )
-  }, [title, caption, coins])
+  }, [title, caption, coins, next])
 
   return (
     <FullWindowOverlay open onClose={onDone}>
@@ -87,6 +94,11 @@ export default function PlanFinishedCelebration({
               </Text>
             </Animated.View>
           ) : null}
+          <Animated.View entering={FadeInDown.delay(780)}>
+            <Text style={[styles.next, { fontFamily: theme.fonts.medium }]}>
+              {next}
+            </Text>
+          </Animated.View>
           <Animated.View entering={FadeInDown.delay(860)} style={styles.done}>
             <Button
               accessibilityRole='button'
@@ -109,6 +121,27 @@ export default function PlanFinishedCelebration({
                 }}
               >
                 {i18n.t('routine.celebration.done')}
+              </Text>
+            </Button>
+            <Button
+              accessibilityRole='button'
+              onPress={onChoosePlan}
+              testID='routine-celebration-choose-plan'
+              style={{
+                minHeight: MIN_TOUCH_TARGET,
+                marginTop: 8,
+                paddingHorizontal: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: theme.fonts.semiBold,
+                  color: 'rgba(255, 255, 255, 0.82)',
+                }}
+              >
+                {i18n.t('routine.celebration.choosePlan')}
               </Text>
             </Button>
           </Animated.View>
@@ -140,7 +173,16 @@ const styles = StyleSheet.create({
     fontSize: 17,
     textAlign: 'center',
   },
+  next: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginTop: 12,
+    maxWidth: 320,
+  },
   done: {
     marginTop: 24,
+    alignItems: 'center',
   },
 })

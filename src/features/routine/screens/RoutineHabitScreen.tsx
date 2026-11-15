@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import Card from '@/components/ui/Card'
@@ -24,11 +24,19 @@ import { itemDetail } from '@/features/routine/lib/itemDetail'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoutineHabit'>
 
-export default function RoutineHabitScreen({ route }: Props) {
+export default function RoutineHabitScreen({ route, navigation }: Props) {
   const routine = useRoutineToday()
   const { today, settings, entries, plan } = routine
   const [planSheetOpen, setPlanSheetOpen] = useState(false)
   const habit = route.params?.habit
+  const choosePlan = route.params?.choosePlan
+
+  useEffect(() => {
+    if (!choosePlan) return
+    setPlanSheetOpen(true)
+    navigation.setParams({ choosePlan: undefined })
+  }, [choosePlan, navigation])
+
   if (!isRoutineHabit(habit)) return null
 
   const label = habitLabel(habit, routine.worshipKind)

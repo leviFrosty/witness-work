@@ -13,7 +13,6 @@ import { analytics } from '@/lib/analytics'
 import { localDayKey } from '@/lib/dayKeys'
 import i18n from '@/lib/locales'
 import { habitName } from '@/lib/routine/habitNames'
-import { DEFAULT_CHAPTERS_PER_DAY } from '@/lib/routine/readingPlans'
 import usePet from '@/stores/pet'
 import { usePreferences } from '@/stores/preferences'
 import {
@@ -35,6 +34,7 @@ import {
   planName,
 } from '@/features/routine/lib/applyPlanChoice'
 import {
+  DEFAULT_CUSTOM_CHOICE,
   PLAN_KINDS,
   type PlanChoice,
 } from '@/features/routine/lib/readingPlanChoice'
@@ -153,13 +153,7 @@ export default function RoutineSetupSheet({
             value: reading.kind,
             onChange: ({ value }) =>
               setReading(
-                value === 'custom'
-                  ? {
-                      kind: 'custom',
-                      startBook: 0,
-                      chaptersPerDay: DEFAULT_CHAPTERS_PER_DAY,
-                    }
-                  : { kind: value }
+                value === 'custom' ? DEFAULT_CUSTOM_CHOICE : { kind: value }
               ),
           }}
         />
@@ -169,9 +163,8 @@ export default function RoutineSetupSheet({
         rows.push((last) => (
           <Fragment key='customPlan'>
             <CustomPlanFields
-              startBook={custom.startBook}
-              chaptersPerDay={custom.chaptersPerDay}
-              onChange={(next) => setReading({ kind: 'custom', ...next })}
+              choice={custom}
+              onChange={setReading}
               indented
               lastInSection={last}
             />

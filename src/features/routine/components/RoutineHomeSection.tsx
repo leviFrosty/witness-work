@@ -17,6 +17,7 @@ import i18n from '@/lib/locales'
 import { allDone } from '@/lib/routine/habits'
 import { habitLabel } from '@/lib/routine/labels'
 import type { RootStackNavigation } from '@/types/rootStack'
+import ReadingLinkButton from '@/features/routine/components/ReadingLinkButton'
 import RoutineHabitRow from '@/features/routine/components/RoutineHabitRow'
 import useRoutineToday from '@/features/routine/hooks/useRoutineToday'
 import { toggleHabit } from '@/features/routine/lib/checkHabit'
@@ -175,6 +176,16 @@ export default function RoutineHomeSection() {
                 plan: routine.plan,
               })}
               done={done}
+              accessory={
+                habit === 'bibleReading' &&
+                !done &&
+                routine.plan?.progress.next ? (
+                  <ReadingLinkButton
+                    portion={routine.plan.progress.next}
+                    testID='routine-home-open-reading'
+                  />
+                ) : undefined
+              }
               onOpen={() => openHabit(navigation, habit, 'home')}
               onToggle={() => toggleHabit({ habit, day: today, today, done })}
             />

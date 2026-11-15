@@ -259,7 +259,9 @@ const routineEntry = record.extend({
 const readingPlan = record.extend({
   kind: z.enum(READING_PLAN_KINDS),
   startBook: z.number().int().nonnegative().optional(),
+  endBook: z.number().int().nonnegative().optional(),
   chaptersPerDay: z.number().int().positive().optional(),
+  versesPerDay: z.number().int().positive().optional(),
   startedOn: dateKey,
   finishBy: dateKey.optional(),
   finishedOn: dateKey.optional(),

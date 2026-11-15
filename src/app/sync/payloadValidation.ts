@@ -648,6 +648,8 @@ const preferenceShapes = z
     lastRolloverYearMonth: z.string().nullable().optional(),
     offDays: z.array(z.number().int().min(0).max(6)).optional(),
     meetingDays: z.array(z.number().int().min(0).max(6)).optional(),
+    midweekPrepLeadDays: z.number().int().min(0).max(6).optional(),
+    weekendPrepLeadDays: z.number().int().min(0).max(6).optional(),
     homeChecklistManualCompletions: z.array(z.string()).optional(),
     homeChecklistAllDoneCelebrated: z.boolean().optional(),
     celebratedTiers: z.record(z.array(z.string())).optional(),

@@ -16,6 +16,8 @@ const prefs = (
   routineReminderTime: 19 * 60,
   routineHabits: ['bibleReading'],
   meetingDays: [3, 0],
+  midweekPrepLeadDays: 2,
+  weekendPrepLeadDays: 2,
   personalStudyGoal: { kind: 'perWeek', times: 1 },
   worshipDay: null,
   ...patch,
@@ -62,6 +64,19 @@ describe('routine reminders', () => {
     const days = routineReminderDates(sources, NOW).map(({ day }) => day)
     expect(days).not.toContain('2026-11-05')
     expect(days).toContain('2026-11-06')
+  })
+
+  it('reminds about meeting prep from the start day the User picks', () => {
+    const prepDays = (midweekPrepLeadDays: number) =>
+      routineReminderDates(
+        routineReminderSources(
+          [],
+          prefs({ routineHabits: ['midweekPrep'], midweekPrepLeadDays })
+        )!,
+        new Date(2026, 10, 2, 9).getTime()
+      ).map(({ day }) => day)
+    expect(prepDays(0)).toEqual(['2026-11-04'])
+    expect(prepDays(2)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04'])
   })
 
   it('lists only the open habits in the scheduled notification', () => {

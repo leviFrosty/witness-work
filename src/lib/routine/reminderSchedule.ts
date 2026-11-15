@@ -22,6 +22,8 @@ export type RoutineReminderPreferences = {
   routineReminderTime: number
   routineHabits: readonly RoutineHabit[]
   meetingDays: readonly number[]
+  midweekPrepLeadDays: number
+  weekendPrepLeadDays: number
   personalStudyGoal: PersonalStudyGoal
   worshipDay: number | null
 }
@@ -39,6 +41,8 @@ export function routineReminderSources(
     settings: {
       habits: prefs.routineHabits,
       meetingDays: prefs.meetingDays,
+      midweekPrepLeadDays: prefs.midweekPrepLeadDays,
+      weekendPrepLeadDays: prefs.weekendPrepLeadDays,
       personalStudyGoal: prefs.personalStudyGoal,
       worshipDay: prefs.worshipDay,
     },

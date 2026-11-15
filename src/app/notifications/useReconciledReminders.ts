@@ -442,6 +442,8 @@ export function useReconciledReminders(ready: boolean | undefined) {
         state.routineReminderTime !== previous.routineReminderTime ||
         state.routineHabits !== previous.routineHabits ||
         state.meetingDays !== previous.meetingDays ||
+        state.midweekPrepLeadDays !== previous.midweekPrepLeadDays ||
+        state.weekendPrepLeadDays !== previous.weekendPrepLeadDays ||
         state.personalStudyGoal !== previous.personalStudyGoal ||
         state.worshipDay !== previous.worshipDay ||
         state.worshipKind !== previous.worshipKind ||

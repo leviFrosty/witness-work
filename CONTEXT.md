@@ -458,7 +458,7 @@ The User's opt-in daily check-off of personal spiritual activities beside their 
 _Avoid_: "habit tracker", "habits" as the feature name, "streak" (Routine has none), "score", "magic".
 
 **Routine Habit**:
-One thing the User checks off in **Spiritual Routine**: Bible reading (each day), personal study (any day; by default once a week, or a number of times a week, or chosen weekdays; every session counts, one a day), midweek meeting prep and weekend meeting prep (once each in a Monday–Sunday week, shown on Home from two days before that **Meeting Day** through it, or all week when no Meeting Days are set), and family worship (once a week, on a chosen evening or any day; called personal worship evening for a User who isn't with family). A daily reminder at a chosen time lists what's still open; it's off by default and skips days with nothing left.
+One thing the User checks off in **Spiritual Routine**: Bible reading (each day), personal study (any day; by default once a week, or a number of times a week, or chosen weekdays; every session counts, one a day), midweek meeting prep and weekend meeting prep (once each in a Monday–Sunday week, shown on Home from a number of days before that **Meeting Day** through it, chosen separately for each meeting (two by default, never before that week's Monday), or all week when no Meeting Days are set), and family worship (once a week, on a chosen evening or any day; called personal worship evening for a User who isn't with family). A daily reminder at a chosen time lists what's still open; it's off by default and skips days with nothing left.
 _Avoid_: "task", "chore", "goal" (that's the monthly hours **Goal**).
 
 **Reading Plan**:

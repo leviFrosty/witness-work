@@ -37,6 +37,7 @@ export const analyticsEventNames = [
   'routine_disabled',
   'routine_plan_finished',
   'routine_prompt_dismissed',
+  'routine_prep_start_changed',
   'service_history_saved',
   'session_replay_opt_in_changed',
   'service_report_export_dismissed',

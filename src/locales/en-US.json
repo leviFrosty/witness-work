@@ -6616,8 +6616,16 @@
       "title": "Meeting days",
       "midweek": "Midweek meeting",
       "weekend": "Weekend meeting",
-      "info": "Meeting prep shows up from two days before each meeting.",
-      "notSet": "Not set"
+      "notSet": "Not set",
+      "prepStart": "Prep starts",
+      "midweekPrepStart": "Midweek meeting prep starts",
+      "weekendPrepStart": "Weekend meeting prep starts",
+      "prepStartInfo": "Meeting prep shows on your Routine card from this day through the meeting. It starts no earlier than the Monday of that week.",
+      "meetingDay": "Meeting day",
+      "daysBefore": {
+        "one": "{{count}} day before",
+        "other": "{{count}} days before"
+      }
     },
     "setup": {
       "title": "Spiritual Routine",

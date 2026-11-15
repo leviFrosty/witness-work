@@ -24,6 +24,7 @@ import CustomPlanFields from '@/features/routine/components/CustomPlanFields'
 import { toggledHabits } from '@/features/routine/components/HabitToggles'
 import {
   MidweekMeetingRow,
+  PrepStartRow,
   WeekendMeetingRow,
 } from '@/features/routine/components/MeetingDaysFields'
 import RoutineReminderFields from '@/features/routine/components/RoutineReminderFields'
@@ -73,6 +74,12 @@ export default function RoutineSetupSheet({
   const [meetingDays, setMeetingDays] = useState<number[]>(
     () => usePreferences.getState().meetingDays
   )
+  const [midweekPrepLeadDays, setMidweekPrepLeadDays] = useState(
+    () => usePreferences.getState().midweekPrepLeadDays
+  )
+  const [weekendPrepLeadDays, setWeekendPrepLeadDays] = useState(
+    () => usePreferences.getState().weekendPrepLeadDays
+  )
   const [worshipKind, setWorshipKind] = useState<WorshipKind>(
     () => usePreferences.getState().worshipKind
   )
@@ -90,6 +97,8 @@ export default function RoutineSetupSheet({
     setHabits([])
     setReading({ kind: 'today' })
     setMeetingDays(current.meetingDays)
+    setMidweekPrepLeadDays(current.midweekPrepLeadDays)
+    setWeekendPrepLeadDays(current.weekendPrepLeadDays)
     setWorshipKind(current.worshipKind)
     setWorshipDay(current.worshipDay)
     setReminders(false)
@@ -108,6 +117,8 @@ export default function RoutineSetupSheet({
       routineEnabled: true,
       routineHabits: habits,
       meetingDays,
+      midweekPrepLeadDays,
+      weekendPrepLeadDays,
       worshipKind,
       worshipDay,
       routineReminders: reminders,
@@ -117,6 +128,12 @@ export default function RoutineSetupSheet({
     analytics.capture('routine_enabled', {
       habits: habits.join(','),
       from: 'invite',
+      ...(habits.includes('midweekPrep') && {
+        midweek_prep_days_before: midweekPrepLeadDays,
+      }),
+      ...(habits.includes('weekendPrep') && {
+        weekend_prep_days_before: weekendPrepLeadDays,
+      }),
     })
     if (reminders) analytics.capture('routine_reminder_toggled', { on: true })
     onClose()
@@ -173,25 +190,47 @@ export default function RoutineSetupSheet({
       }
     }
     if (habit === 'midweekPrep')
-      rows.push((last) => (
-        <MidweekMeetingRow
-          key='midweekMeeting'
-          meetingDays={meetingDays}
-          onChange={setMeetingDays}
-          indented
-          lastInSection={last}
-        />
-      ))
+      rows.push(
+        () => (
+          <MidweekMeetingRow
+            key='midweekMeeting'
+            meetingDays={meetingDays}
+            onChange={setMeetingDays}
+            indented
+          />
+        ),
+        (last) => (
+          <PrepStartRow
+            key='midweekPrepStart'
+            meeting='midweek'
+            value={midweekPrepLeadDays}
+            onChange={setMidweekPrepLeadDays}
+            indented
+            lastInSection={last}
+          />
+        )
+      )
     if (habit === 'weekendPrep')
-      rows.push((last) => (
-        <WeekendMeetingRow
-          key='weekendMeeting'
-          meetingDays={meetingDays}
-          onChange={setMeetingDays}
-          indented
-          lastInSection={last}
-        />
-      ))
+      rows.push(
+        () => (
+          <WeekendMeetingRow
+            key='weekendMeeting'
+            meetingDays={meetingDays}
+            onChange={setMeetingDays}
+            indented
+          />
+        ),
+        (last) => (
+          <PrepStartRow
+            key='weekendPrepStart'
+            meeting='weekend'
+            value={weekendPrepLeadDays}
+            onChange={setWeekendPrepLeadDays}
+            indented
+            lastInSection={last}
+          />
+        )
+      )
     if (habit === 'worship')
       rows.push((last) => (
         <Fragment key='worshipFields'>

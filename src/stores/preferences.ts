@@ -53,6 +53,7 @@ import { DEFAULT_STALENESS_BREAKPOINTS } from '@/constants/staleness'
 import { STALENESS_DISPLAY_ORDER } from '@/lib/contactStaleness'
 import { DEFAULT_UNLOGGED_DAY_REMINDER_TIME } from '@/lib/unloggedDayReminders'
 import { DEFAULT_ROUTINE_REMINDER_TIME } from '@/lib/routine/reminders'
+import { DEFAULT_PREP_LEAD_DAYS } from '@/lib/routine/habits'
 import {
   DEFAULT_PERSONAL_STUDY_GOAL,
   DEFAULT_ROUTINE_HABITS,
@@ -707,6 +708,10 @@ export const PREFERENCE_DEFAULTS = {
   worshipDay: null as number | null,
 
   worshipKind: 'family' as WorshipKind,
+
+  midweekPrepLeadDays: DEFAULT_PREP_LEAD_DAYS,
+
+  weekendPrepLeadDays: DEFAULT_PREP_LEAD_DAYS,
 
   routineReminders: false,
 

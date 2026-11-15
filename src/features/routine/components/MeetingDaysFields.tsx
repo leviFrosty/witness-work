@@ -3,6 +3,8 @@ import i18n from '@/lib/locales'
 import {
   meetingDaysFrom,
   midweekMeetingDay,
+  PREP_LEAD_DAY_OPTIONS,
+  validPrepLeadDays,
   weekendMeetingDay,
 } from '@/lib/routine/habits'
 import {
@@ -16,7 +18,6 @@ import {
 type MeetingDayRowProps = {
   meetingDays: readonly number[]
   onChange: (days: number[]) => void
-  info?: boolean
   indented?: boolean
   lastInSection?: boolean
 }
@@ -24,7 +25,6 @@ type MeetingDayRowProps = {
 export function MidweekMeetingRow({
   meetingDays,
   onChange,
-  info = true,
   indented,
   lastInSection,
 }: MeetingDayRowProps) {
@@ -32,7 +32,6 @@ export function MidweekMeetingRow({
   return (
     <InputRowSelect
       label={i18n.t('routine.meetings.midweek')}
-      info={info ? i18n.t('routine.meetings.info') : undefined}
       indented={indented}
       lastInSection={lastInSection}
       selectProps={{
@@ -48,7 +47,6 @@ export function MidweekMeetingRow({
 export function WeekendMeetingRow({
   meetingDays,
   onChange,
-  info = true,
   indented,
   lastInSection,
 }: MeetingDayRowProps) {
@@ -56,7 +54,6 @@ export function WeekendMeetingRow({
   return (
     <InputRowSelect
       label={i18n.t('routine.meetings.weekend')}
-      info={info ? i18n.t('routine.meetings.info') : undefined}
       indented={indented}
       lastInSection={lastInSection}
       selectProps={{
@@ -69,24 +66,82 @@ export function WeekendMeetingRow({
   )
 }
 
+export const prepStartLabel = (days: number): string =>
+  days === 0
+    ? i18n.t('routine.meetings.meetingDay')
+    : i18n.t('routine.meetings.daysBefore', { count: days })
+
+export type Meeting = 'midweek' | 'weekend'
+
+type PrepStartRowProps = {
+  meeting: Meeting
+  value: number
+  onChange: (days: number) => void
+  indented?: boolean
+  lastInSection?: boolean
+}
+
+export function PrepStartRow({
+  meeting,
+  value,
+  onChange,
+  indented,
+  lastInSection,
+}: PrepStartRowProps) {
+  return (
+    <InputRowSelect
+      label={i18n.t('routine.meetings.prepStart')}
+      info={i18n.t('routine.meetings.prepStartInfo')}
+      indented={indented}
+      lastInSection={lastInSection}
+      selectProps={{
+        data: PREP_LEAD_DAY_OPTIONS.map((days) => ({
+          label: prepStartLabel(days),
+          value: days,
+        })),
+        value: validPrepLeadDays(value),
+        onChange: ({ value: days }) => onChange(days),
+        accessibilityLabel: i18n.t(
+          meeting === 'midweek'
+            ? 'routine.meetings.midweekPrepStart'
+            : 'routine.meetings.weekendPrepStart'
+        ),
+      }}
+    />
+  )
+}
+
+type PrepStart = Pick<PrepStartRowProps, 'value' | 'onChange'>
+
 export default function MeetingDaysFields({
   meetingDays,
   onChange,
+  midweekPrep,
+  weekendPrep,
   lastInSection,
 }: {
   meetingDays: readonly number[]
   onChange: (days: number[]) => void
+  midweekPrep?: PrepStart
+  weekendPrep?: PrepStart
   lastInSection?: boolean
 }) {
   return (
     <>
       <MidweekMeetingRow meetingDays={meetingDays} onChange={onChange} />
+      {midweekPrep && <PrepStartRow meeting='midweek' {...midweekPrep} />}
       <WeekendMeetingRow
         meetingDays={meetingDays}
         onChange={onChange}
-        info={false}
-        lastInSection={lastInSection}
+        lastInSection={lastInSection && !weekendPrep}
       />
+      {weekendPrep && (
+        <PrepStartRow
+          meeting='weekend'
+          {...weekendPrep}
+          lastInSection={lastInSection}
+        />
+      )}
     </>
   )
 }

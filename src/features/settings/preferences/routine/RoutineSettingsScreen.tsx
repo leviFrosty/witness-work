@@ -12,7 +12,9 @@ import type { RoutineHabit } from '@/types/routine'
 import HabitToggles, {
   toggledHabits,
 } from '@/features/routine/components/HabitToggles'
-import MeetingDaysFields from '@/features/routine/components/MeetingDaysFields'
+import MeetingDaysFields, {
+  type Meeting,
+} from '@/features/routine/components/MeetingDaysFields'
 import PersonalStudyGoalFields from '@/features/routine/components/PersonalStudyGoalFields'
 import ReadingModeRow from '@/features/routine/components/ReadingModeRow'
 import WorshipFields from '@/features/routine/components/WorshipFields'
@@ -26,6 +28,8 @@ export default function RoutineSettingsScreen() {
   const enabled = usePreferences((s) => s.routineEnabled === true)
   const habits = usePreferences((s) => s.routineHabits)
   const meetingDays = usePreferences((s) => s.meetingDays)
+  const midweekPrepLeadDays = usePreferences((s) => s.midweekPrepLeadDays)
+  const weekendPrepLeadDays = usePreferences((s) => s.weekendPrepLeadDays)
   const studyGoal = usePreferences((s) => s.personalStudyGoal)
   const worshipKind = usePreferences((s) => s.worshipKind)
   const worshipDay = usePreferences((s) => s.worshipDay)
@@ -52,6 +56,18 @@ export default function RoutineSettingsScreen() {
 
   const prepares =
     habits.includes('midweekPrep') || habits.includes('weekendPrep')
+
+  const changePrepStart = (meeting: Meeting, days: number) => {
+    set(
+      meeting === 'midweek'
+        ? { midweekPrepLeadDays: days }
+        : { weekendPrepLeadDays: days }
+    )
+    analytics.capture('routine_prep_start_changed', {
+      meeting,
+      days_before: days,
+    })
+  }
 
   return (
     <SettingsInputLayout>
@@ -127,6 +143,22 @@ export default function RoutineSettingsScreen() {
               <MeetingDaysFields
                 meetingDays={meetingDays}
                 onChange={setMeetingDays}
+                midweekPrep={
+                  enabled && habits.includes('midweekPrep')
+                    ? {
+                        value: midweekPrepLeadDays,
+                        onChange: (days) => changePrepStart('midweek', days),
+                      }
+                    : undefined
+                }
+                weekendPrep={
+                  enabled && habits.includes('weekendPrep')
+                    ? {
+                        value: weekendPrepLeadDays,
+                        onChange: (days) => changePrepStart('weekend', days),
+                      }
+                    : undefined
+                }
                 lastInSection
               />
             </Group>

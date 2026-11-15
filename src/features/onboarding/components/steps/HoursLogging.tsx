@@ -184,16 +184,6 @@ const StepHoursLogging = ({ goBack, goNext }: Props) => {
                 )
               })}
             </View>
-            <Text
-              style={{
-                fontSize: theme.fontSize('sm'),
-                color: theme.colors.textAlt,
-                marginTop: 12,
-                paddingHorizontal: 4,
-              }}
-            >
-              {i18n.t('hoursLoggingQuestion.changeLater')}
-            </Text>
           </View>
         </OnboardingScrollView>
         <OnboardingFooter>

@@ -135,16 +135,6 @@ const CloudSync = ({ goBack, goNext }: Props) => {
               testID='onboarding-cloud-sync-switch'
             />
           </Card>
-          <Text
-            style={{
-              fontSize: 12,
-              color: theme.colors.textAlt,
-              marginTop: 10,
-              lineHeight: 16,
-            }}
-          >
-            {i18n.t('onboardingCloudSync_subtext')}
-          </Text>
         </View>
       </KeyboardAwareScrollView>
       <ActionButton onPress={goNext}>{i18n.t('continue')}</ActionButton>

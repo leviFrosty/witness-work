@@ -73,7 +73,6 @@ export default function BuddiesSharingSection({
                 : 'buddies_onboardingProfileTitle'
             )
       }
-      footer={withoutProfile ? i18n.t('buddies_sharingChangeLater') : undefined}
     >
       {profileRow && (
         <BuddyListRow

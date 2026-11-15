@@ -110,38 +110,3 @@ export function PrepStartRow({
     />
   )
 }
-
-type PrepStart = Pick<PrepStartRowProps, 'value' | 'onChange'>
-
-export default function MeetingDaysFields({
-  meetingDays,
-  onChange,
-  midweekPrep,
-  weekendPrep,
-  lastInSection,
-}: {
-  meetingDays: readonly number[]
-  onChange: (days: number[]) => void
-  midweekPrep?: PrepStart
-  weekendPrep?: PrepStart
-  lastInSection?: boolean
-}) {
-  return (
-    <>
-      <MidweekMeetingRow meetingDays={meetingDays} onChange={onChange} />
-      {midweekPrep && <PrepStartRow meeting='midweek' {...midweekPrep} />}
-      <WeekendMeetingRow
-        meetingDays={meetingDays}
-        onChange={onChange}
-        lastInSection={lastInSection && !weekendPrep}
-      />
-      {weekendPrep && (
-        <PrepStartRow
-          meeting='weekend'
-          {...weekendPrep}
-          lastInSection={lastInSection}
-        />
-      )}
-    </>
-  )
-}

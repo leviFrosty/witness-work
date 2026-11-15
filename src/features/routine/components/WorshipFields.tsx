@@ -1,6 +1,5 @@
 import InputRowSelect from '@/components/ui/inputs/InputRowSelect'
 import i18n from '@/lib/locales'
-import { habitName } from '@/lib/routine/habitNames'
 import type { WorshipKind } from '@/types/routine'
 import {
   anyDayOptions,
@@ -13,7 +12,6 @@ export default function WorshipFields({
   day,
   onKindChange,
   onDayChange,
-  showKind = true,
   indented,
   lastInSection,
 }: {
@@ -21,26 +19,23 @@ export default function WorshipFields({
   day: number | null
   onKindChange: (kind: WorshipKind) => void
   onDayChange: (day: number | null) => void
-  showKind?: boolean
   indented?: boolean
   lastInSection?: boolean
 }) {
   return (
     <>
-      {showKind && (
-        <InputRowSelect
-          indented={indented}
-          label={i18n.t('routine.settings.worshipKind')}
-          selectProps={{
-            data: (['family', 'personal'] as const).map((value) => ({
-              label: habitName('worship', value),
-              value,
-            })),
-            value: kind,
-            onChange: ({ value }) => onKindChange(value),
-          }}
-        />
-      )}
+      <InputRowSelect
+        indented={indented}
+        label={i18n.t('routine.setup.family')}
+        selectProps={{
+          data: [
+            { label: i18n.t('yes'), value: 'family' as const },
+            { label: i18n.t('no'), value: 'personal' as const },
+          ],
+          value: kind,
+          onChange: ({ value }) => onKindChange(value),
+        }}
+      />
       <InputRowSelect
         indented={indented}
         label={i18n.t('routine.settings.worshipDay')}

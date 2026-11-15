@@ -88,7 +88,7 @@ export const ITEM_PRICES: Readonly<Partial<Record<RoomItemId, number>>> = {
   'hat:mini': 1000,
   'hat:balloon': 1100,
   'hat:bowl': 1200,
-  'hat:lighthouse': 1600,
+  'hat:carousel': 1600,
   'hat:train': 2000,
   'hat:dome': 2600,
   'hat:fig': 3200,

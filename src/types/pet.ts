@@ -248,7 +248,7 @@ export type LampId = (typeof LAMP_IDS)[number]
 
 export const RARE_HAT_IDS = [
   'bowl',
-  'lighthouse',
+  'carousel',
   'train',
   'dome',
   'fig',
@@ -474,7 +474,7 @@ export const HAT_UNLOCK_ORDER: readonly RoomItemId[] = [
   'hat:mini',
   'hat:balloon',
   'hat:bowl',
-  'hat:lighthouse',
+  'hat:carousel',
   'hat:train',
   'hat:dome',
   'hat:fig',

@@ -182,29 +182,31 @@ its secrets.
   `applyLighting`, so its light glows in a dark room; `subject` keeps stars and water light behind
   the pet.
 
-  | Hat                 | Moves                                  | Reads                         | Pat                      | New coins      |
-  | ------------------- | -------------------------------------- | ----------------------------- | ------------------------ | -------------- |
-  | `propeller`         | Blades                                 |                               | Lifts off                |                |
-  | `snail`             | Crosses the head in a minute           |                               | Hides in its shell       |                |
-  | `mailbox`           |                                        | A day out today: flag up      | Letter pokes out         | Flag snaps up  |
-  | `nest`              | Chicks take turns                      |                               | All beaks open           |                |
-  | `frog`              | Blinks, breathes, catches a fly        |                               | Hops                     |                |
-  | `hive`              | Bees                                   |                               | Bees speed up            |                |
-  | `cottage`           | Smoke                                  | Dusk or night: lit            |                          |                |
-  | `cloud`             | Rain, drifting                         | Winter: snow                  | Rains harder             |                |
-  | `cuckoo`            | Hands, pendulum                        | The real time                 | Calls                    |                |
-  | `mini`              | Bobs out of step                       | The pet's species, coat       | Hops                     |                |
-  | `balloon`           | Sways on its string                    |                               | A tug on the string      |                |
-  | `bowl` (rare)       | Fish, bubbles, water light on the wall |                               | Sloshes, fish dart       | A fish leaps   |
-  | `lighthouse` (rare) | Lamp, gulls; a beam after dusk         | Dusk or night: dims room      | Two flashes, runs by day | One flash      |
-  | `train` (rare)      | Train loops the hill, steam            |                               | One fast lap             | Wagon heaps up |
-  | `dome` (rare)       | Telescope turns; stars after dusk      | Dusk or night: dims room      | Swings; runs by day      | Shooting stars |
-  | `fig` (rare)        | Falling leaves, a bird                 | Days out since bought, season | A fig drops, bird flies  | New leaves     |
+  | Hat               | Moves                                  | Reads                                   | Pat                       | New coins      |
+  | ----------------- | -------------------------------------- | --------------------------------------- | ------------------------- | -------------- |
+  | `propeller`       | Blades                                 |                                         | Lifts off                 |                |
+  | `snail`           | Crosses the head in a minute           |                                         | Hides in its shell        |                |
+  | `mailbox`         |                                        | A day out today: flag up                | Letter pokes out          | Flag snaps up  |
+  | `nest`            | Chicks take turns                      |                                         | All beaks open            |                |
+  | `frog`            | Blinks, breathes, catches a fly        |                                         | Hops                      |                |
+  | `hive`            | Bees                                   |                                         | Bees speed up             |                |
+  | `cottage`         | Smoke                                  | Dusk or night: lit                      |                           |                |
+  | `cloud`           | Rain, drifting                         | Winter: snow                            | Rains harder              |                |
+  | `cuckoo`          | Hands, pendulum                        | The real time                           | Calls                     |                |
+  | `mini`            | Bobs out of step                       | The pet's species, coat                 | Hops                      |                |
+  | `balloon`         | Sways on its string                    |                                         | A tug on the string       |                |
+  | `bowl` (rare)     | Fish, bubbles, water light on the wall |                                         | Sloshes, fish dart        | A fish leaps   |
+  | `carousel` (rare) | Turns, riders bob, bulbs twinkle       | Pet's species; dusk or night: dims room | Spins, notes; runs by day | Bulbs flash    |
+  | `train` (rare)    | Train loops the hill, steam            |                                         | One fast lap              | Wagon heaps up |
+  | `dome` (rare)     | Telescope turns; stars after dusk      | Dusk or night: dims room                | Swings; runs by day       | Shooting stars |
+  | `fig` (rare)      | Falling leaves, a bird                 | Days out since bought, season           | A fig drops, bird flies   | New leaves     |
 
   The room shows run for `SHOW_MS` (14 s) by day after a pat and dim it with an overlay; the lamp
   itself keeps following the hearts. `fig` grows through six stages at 0, 3, 8, 16, 30 and 50 days out
   since its purchase (`lib/hatLife.ts`); one not bought yet shows grown in the Shop. New coins dim the
-  room for 2 seconds by day under `lighthouse` and `dome`, so their flash and shooting stars show.
+  room for 2 seconds by day under `carousel` and `dome`, so their lights and shooting stars show.
+  The carousel's lead rider is the pet's own species, out in front in a still picture
+  (`carouselAngle`); its bulbs (`carouselBulbs`) chase round the canopy during its show.
   The planetarium's telescope (`telescopeAngle`) scans slowly all day, swings across the sky once on a
   pat, and follows the shooting stars on new coins.
   Every hat that reacts to new coins also tosses five gold coins over itself (`drawCoinToss`,

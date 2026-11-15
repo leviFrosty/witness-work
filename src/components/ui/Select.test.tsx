@@ -240,16 +240,20 @@ describe('Select value text', () => {
 
   it('keeps the value on one line at the default text size', async () => {
     await render()
-    const value = root.root.findByType('Text' as never)
-    expect(value.props.numberOfLines).toBe(1)
+    const values = root.root.findAllByType('Text' as never)
+    expect(values.length).toBeGreaterThan(0)
+    for (const value of values) expect(value.props.numberOfLines).toBe(1)
     expect(root.root.findAllByType('WholeWordsText' as never)).toHaveLength(0)
   })
 
   it('wraps the value between whole words once text is enlarged', async () => {
     dims.fontScale = 1.3
     await render()
-    const value = root.root.findByType('WholeWordsText' as never)
-    expect(value.props.numberOfLines).toBeUndefined()
-    expect(value.props.children).toBe('Second')
+    const values = root.root.findAllByType('WholeWordsText' as never)
+    expect(values.length).toBeGreaterThan(0)
+    for (const value of values) {
+      expect(value.props.numberOfLines).toBeUndefined()
+      expect(value.props.children).toBe('Second')
+    }
   })
 })

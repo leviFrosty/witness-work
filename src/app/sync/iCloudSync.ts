@@ -2897,6 +2897,42 @@ export function clearCloudPhotos(): Promise<void> {
   })
 }
 
+export function deleteCloudPhotosNotInUse(
+  filenames: Iterable<string>
+): Promise<number> {
+  const wanted = new Set(filenames)
+  return serializeImages(async () => {
+    if (!transportHoldsPhotos() || wanted.size === 0) return 0
+    const { all } = currentPhotoReferences()
+    const deleted: string[] = []
+    let freed = 0
+    for (const { filename, size } of await withTransportTimeout(
+      'photo list',
+      syncTransport().listBinaryFiles()
+    )) {
+      if (!wanted.has(filename) || all.has(filename)) continue
+      try {
+        await withTransportTimeout(
+          'photo delete',
+          syncTransport().deleteBinaryFile(filename)
+        )
+      } catch (e) {
+        if (syncTransportErrorCode(e) !== 'not-found') throw e
+      }
+      deleted.push(filename)
+      freed += size ?? 0
+    }
+    if (deleted.length === 0) return 0
+    const next: ImageSyncBookkeeping = {
+      ...(usePreferences.getState().iCloudImageSync ?? {}),
+    }
+    for (const filename of deleted) delete next[filename]
+    setPrefsIfChanged({ iCloudImageSync: next })
+    logger.log(`${tag()} photo storage cleanup`, { deleted: deleted.length })
+    return freed
+  })
+}
+
 export async function disableImageSync(): Promise<void> {
   setPrefsIfChanged({ iCloudSyncIncludeImages: false })
 }
@@ -2949,6 +2985,7 @@ export const iCloudSync = {
   enableImageSync,
   disableImageSync,
   clearCloudPhotos,
+  deleteCloudPhotosNotInUse,
   checkUpload,
   removeSyncDevice,
   pushImagesIfEnabled: () => pushImagesIfEnabled('foreground'),

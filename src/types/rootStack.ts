@@ -250,6 +250,8 @@ export type RootStackParamList = {
 
   'Account Activity': undefined
 
+  'Photo Storage': undefined
+
   'Sign In With Passkey': { entry?: 'settings' | 'onboarding' } | undefined
   'Sign In With QR Code':
     | { entry?: 'settings' | 'onboarding' | 'link' | 'tools'; link?: string }

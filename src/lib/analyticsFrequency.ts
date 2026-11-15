@@ -42,6 +42,7 @@ const sessionEvents = new Set([
   'recovery_key_viewed',
   'account_activity_viewed',
   'account_devices_viewed',
+  'photo_storage_viewed',
   'update_required_shown',
   'web_update_prompted',
   'web_install_banner_shown',

@@ -88,6 +88,7 @@ from 1.46.0 and earlier don't have it, so break those down by `$os` (`iOS`,
 | `web_update_prompted`                              | Once per session; how many tabs fall behind, not how often the prompt returns after being closed.                                                                                                                                                            |
 | `web_install_banner_shown`                         | Once per session; reach of the Install App banner, not every reload.                                                                                                                                                                                         |
 | `cloud_sync_photos_storage_full`                   | Once per UTC day per device; how many devices meet a full account's photo storage, not how many photos fail.                                                                                                                                                 |
+| `photo_storage_viewed`                             | Once per session; reach of the Photo Storage screen, not every visit.                                                                                                                                                                                        |
 | `cloud_sync_photo_transfer_failed`                 | Once per UTC day, `source` and `reason`; which photo failures affect people, not how often a phone retries.                                                                                                                                                  |
 | `device_storage_full`                              | Once per UTC day; how many devices run out of storage, not how often writes fail.                                                                                                                                                                            |
 | `update_required_shown`                            | Once per session and source; reach of Update Required, not every return to the foreground.                                                                                                                                                                   |
@@ -1520,6 +1521,19 @@ whether signing a device out works.
 | `account_device_signed_out` | The User confirmed Sign Out on another device.                    | `outcome: ok \| failed`, `platform: ios \| android \| web \| dev \| unknown` (the signed-out device's).  |
 
 Never session ids, device names or labels, entry contents, or the account id.
+
+#### Photo storage
+
+These answer whether people open Photo Storage (Settings → Account → Manage
+Storage), how full their Cloud Sync photo storage is when they do, and which
+clean-up actions they use.
+
+| Event                   | When                                                            | Properties                                                                                                                  |
+| ----------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `photo_storage_viewed`  | Photo Storage showed the account's breakdown. Once per session. | `percent_used` (rounded to the nearest 10), `has_unused` and `has_recently_deleted` (whether those clean-ups were offered). |
+| `photo_storage_cleaned` | The User confirmed a clean-up action and it finished or failed. | `action: unused \| recentlyDeleted \| all`, `outcome: done \| failed`.                                                      |
+
+Never file names, photo counts, sizes, or which records held a photo.
 
 #### Sign-in notices
 

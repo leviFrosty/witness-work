@@ -19,6 +19,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
 import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
+import { MAX_BUDDIES } from '@/features/buddies/lib/state'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
 const STEPS = ['intro', 'profile'] as const
@@ -155,7 +156,7 @@ export default function BuddiesOnboarding({
                 {i18n.t('buddies_onboardingWelcomeTitle')}
               </WholeWordsText>
               <Text style={lead}>
-                {i18n.t('buddies_onboardingWelcomeBody')}
+                {i18n.t('buddies_onboardingWelcomeBody', { max: MAX_BUDDIES })}
               </Text>
             </View>
             <View style={{ gap: 20 }}>

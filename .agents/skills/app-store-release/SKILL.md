@@ -34,6 +34,8 @@ EAS/Xcode has already pushed the build.
 
    **Plain "bug fixes" release** where the previous version already has the desired "What's New": drop `--exclude-fields whatsNew` so the existing translations copy over, and skip step 3 entirely.
 
+   **Draft with a refreshed listing.** If `asc versions list` shows a draft (`PREPARE_FOR_SUBMISSION`) version, reuse it. If its version string differs from this release's, change it first: `asc versions update --version-id <DRAFT_ID> --version <THIS_VERSION>`. Then compare its en-US description with the previous version's. If they differ, the draft holds a refreshed store listing, so add `description` to `--exclude-fields` (for example `--exclude-fields whatsNew,description`). Otherwise `--copy-metadata-from` puts the old description back in every locale. Screenshots aren't copied, so the draft's stay.
+
 3. **Set "What's New" per locale** (version localizations, `--version` = the **version ID**):
    `asc localizations update --version <VERSION_ID> --locale en-US --whats-new "…"`
 

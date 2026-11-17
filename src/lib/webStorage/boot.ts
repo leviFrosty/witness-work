@@ -45,7 +45,7 @@ export type WebStorageLaunch = {
 }
 
 export function createWebStorageBoot(env: Environment) {
-  let status: Promise<StorageStatus | undefined> = Promise.resolve(undefined)
+  let status: Promise<StorageStatus | undefined> | undefined
   let launch: WebStorageLaunch | undefined
 
   const session = <T>(
@@ -129,7 +129,6 @@ export function createWebStorageBoot(env: Environment) {
     const flush = () => void env.stores.flush()
     env.on('document', 'visibilitychange', () => env.isHidden() && flush())
     env.on('window', 'pagehide', flush)
-    status = requestPersistentStorage(env.storage)
     return launch
   }
 
@@ -159,7 +158,11 @@ export function createWebStorageBoot(env: Environment) {
 
     hasLocalData: () => env.stores.hasEntries(),
 
-    storageStatus: () => status,
+    requestPersistence() {
+      if (launch?.activeTab) status ??= requestPersistentStorage(env.storage)
+    },
+
+    storageStatus: () => status ?? Promise.resolve(undefined),
 
     launch: () => launch,
     stores: env.stores,

@@ -797,4 +797,20 @@ test.describe('a touch screen', () => {
     await app.getByTestId('notifications-bell').tap()
     await expect(app.getByTestId('hover-tint')).toHaveCount(0)
   })
+
+  test('holding a ContextMenu selects no text', async ({ app }) => {
+    const label = app.getByText('Service Report', { exact: true }).first()
+    await expect(label).toBeVisible()
+    const style = await label.evaluate((node) => {
+      const css = getComputedStyle(node) as CSSStyleDeclaration & {
+        webkitTouchCallout?: string
+      }
+      return {
+        select: css.userSelect || css.webkitUserSelect,
+        callout: css.webkitTouchCallout,
+      }
+    })
+    expect(style.select).toBe('none')
+    if (style.callout !== undefined) expect(style.callout).toBe('none')
+  })
 })

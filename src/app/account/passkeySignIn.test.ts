@@ -119,6 +119,35 @@ describe('signInWithPhonePasskey', () => {
     })
   })
 
+  it("in Settings, hands back a passkey of this phone's own account as is", async () => {
+    const already = { status: 'alreadyHere', unlocks: true, prf: true }
+    fake.signIn.mockResolvedValue(already)
+    await expect(
+      signInWithPhonePasskey({
+        entry: 'settings',
+        confirmReplace: async () => true,
+        buddiesEnabled: true,
+      })
+    ).resolves.toEqual(already)
+    expect(fake.joinBuddiesHere).not.toHaveBeenCalled()
+    expect(fake.offerRestore).not.toHaveBeenCalled()
+  })
+
+  it("in onboarding, carries on with this phone's own account", async () => {
+    fake.signIn.mockResolvedValue({
+      status: 'alreadyHere',
+      unlocks: false,
+      prf: false,
+    })
+    await expect(run()).resolves.toEqual({
+      status: 'done',
+      buddiesStarted: true,
+      restore: { outcome: 'synced', combine: false },
+      rejoined: false,
+    })
+    expect(fake.offerRestore).toHaveBeenCalledWith('passkey')
+  })
+
   it.each([
     { status: 'cantUnlock', reason: 'noWraps', prf: true },
     { status: 'declined' },
@@ -163,6 +192,7 @@ describe('signInWithPhonePasskey', () => {
       serverReason: 'signature',
     })
     fake.onEvent?.({ type: 'wrap', outcome: 'saved' })
+    fake.onEvent?.({ type: 'alreadyHere', unlocks: true, prf: true })
     const base = { platform: 'android', entry: 'onboarding' }
     expect(fake.capture.mock.calls).toEqual([
       ['passkey_sign_in_started', base],
@@ -175,6 +205,7 @@ describe('signInWithPhonePasskey', () => {
         { ...base, reason: 'passkey_failed', server_reason: 'signature' },
       ],
       ['passkey_sign_in_wrap', { ...base, outcome: 'saved' }],
+      ['passkey_sign_in_already_here', { ...base, unlocks: true, prf: true }],
     ])
   })
 })

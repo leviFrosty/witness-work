@@ -1,12 +1,14 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
+import { Platform, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import {
+  Cloud as CloudIcon,
   CloudUpload as CloudUploadIcon,
   ShieldCheck as ShieldCheckIcon,
   Smartphone as SmartphoneIcon,
 } from 'lucide-react-native'
 import { checkSignInNotices } from '@/app/account/signInNoticesRuntime'
+import { currentSyncOption } from '@/app/sync/syncOption'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import Text from '@/components/ui/MyText'
 import Section from '@/components/ui/inputs/Section'
@@ -14,14 +16,18 @@ import AccountNavRow from '@/features/settings/components/account/AccountNavRow'
 import useTheme from '@/contexts/theme'
 import SettingsScrollView from '@/features/settings/components/shared/SettingsScrollView'
 import SettingsInputLayout from '@/features/settings/components/shared/SettingsInputLayout'
+import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import AccountHeader from '@/features/settings/components/account/AccountHeader'
 import SignInSection from '@/features/settings/components/account/SignInSection'
 import WebSignOutSection from '@/features/settings/components/account/WebSignOutSection'
 import KeyChangeSection from '@/features/settings/components/account/keyChange/KeyChangeSection'
 import useAccountOverview from '@/features/settings/hooks/useAccountOverview'
+import useDeviceSyncAvailable from '@/features/settings/hooks/useDeviceSyncAvailable'
 import { useKeyChangedElsewhere } from '@/lib/accountKey/keyChangedElsewhere'
 import i18n from '@/lib/locales'
 import { useBackupState } from '@/lib/serverAccount/backupStore'
+import { platformSyncKey } from '@/lib/syncCopy'
+import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 
 const isWeb = Platform.OS === 'web'
@@ -29,6 +35,7 @@ const isWeb = Platform.OS === 'web'
 const AccountScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
   const { overview, refresh } = useAccountOverview()
+  const syncAvailable = useDeviceSyncAvailable()
 
   useEffect(() => {
     void checkSignInNotices({ force: true })
@@ -45,36 +52,69 @@ const AccountScreen = () => {
             overview={overview}
             onRetry={() => void refresh({ retry: true })}
           />
-          <Section>
-            <AccountNavRow
-              icon={SmartphoneIcon}
-              label={i18n.t('accountSecurity_devices')}
-              onPress={() => navigation.navigate('Account Devices')}
-              testID='account-devices'
-            />
-            <AccountNavRow
-              icon={ShieldCheckIcon}
-              label={i18n.t('accountSecurity_section')}
-              onPress={() => navigation.navigate('Account Security')}
-              testID='account-security'
-              lastInSection={isWeb}
-            />
-            {!isWeb && (
+          <View style={{ gap: 5 }}>
+            <Section>
               <AccountNavRow
-                icon={CloudUploadIcon}
-                label={i18n.t('backup_section')}
-                value={<BackupValue />}
-                onPress={() => navigation.navigate('Account Backup')}
-                testID='account-backup'
-                lastInSection
+                icon={SmartphoneIcon}
+                label={i18n.t('accountSecurity_devices')}
+                onPress={() => navigation.navigate('Account Devices')}
+                testID='account-devices'
               />
+              <AccountNavRow
+                icon={ShieldCheckIcon}
+                label={i18n.t('accountSecurity_section')}
+                onPress={() => navigation.navigate('Account Security')}
+                testID='account-security'
+                lastInSection={isWeb && !syncAvailable}
+              />
+              {syncAvailable && (
+                <AccountNavRow
+                  icon={CloudIcon}
+                  label={i18n.t('syncSettingsTitle')}
+                  value={<SyncValue />}
+                  onPress={() => navigation.navigate('PreferencesiCloud')}
+                  testID='account-sync'
+                  lastInSection={isWeb}
+                />
+              )}
+              {!isWeb && (
+                <AccountNavRow
+                  icon={CloudUploadIcon}
+                  label={i18n.t('backup_section')}
+                  value={<BackupValue />}
+                  onPress={() => navigation.navigate('Account Backup')}
+                  testID='account-backup'
+                  lastInSection
+                />
+              )}
+            </Section>
+            {syncAvailable && !isWeb && (
+              <SectionFooter text={i18n.t('account_syncAndBackupFooter')} />
             )}
-          </Section>
+          </View>
           {!isWeb && <SignInSection onAccountChanged={() => void refresh()} />}
           {isWeb && <WebSignOutSection />}
         </SettingsScrollView>
       </Wrapper>
     </SettingsInputLayout>
+  )
+}
+
+function SyncValue() {
+  const theme = useTheme()
+  usePreferences((state) => state.iCloudSyncEnabled)
+  usePreferences((state) => state.syncProvider)
+  const option = currentSyncOption()
+  return (
+    <Text testID='account-sync-value' style={{ color: theme.colors.textAlt }}>
+      {i18n.t(
+        option === 'off'
+          ? 'syncOption_off'
+          : option === 'cloud'
+            ? 'cloudSync'
+            : platformSyncKey('syncOption_platformLabel')
+      )}
+    </Text>
   )
 }
 

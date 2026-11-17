@@ -267,18 +267,26 @@ describe('the replace-key warning', () => {
     expect(deps.account.replace).not.toHaveBeenCalled()
   })
 
-  it("doesn't ask when this phone already has the passkey's key", async () => {
-    const { flow, deps } = setup({
+  it("adopts nothing when this phone already has the passkey's key", async () => {
+    const { flow, deps, events, zeroed } = setup({
       wraps: [wrapOf(PRF)],
       current: KEY.slice(),
     })
-    deps.account.replace.mockResolvedValueOnce({ outcome: 'unchanged' })
     await expect(flow.signIn()).resolves.toEqual({
-      status: 'unlocked',
-      replaced: 'unchanged',
-      rejoined: false,
+      status: 'alreadyHere',
+      unlocks: true,
+      prf: true,
     })
     expect(deps.confirmReplace).not.toHaveBeenCalled()
+    expect(deps.account.openDetached).not.toHaveBeenCalled()
+    expect(deps.account.replace).not.toHaveBeenCalled()
+    expect(deps.wrapServer).not.toHaveBeenCalled()
+    expect(zeroed()).toBe(true)
+    expect(events.at(-1)).toEqual({
+      type: 'alreadyHere',
+      unlocks: true,
+      prf: true,
+    })
   })
 
   it("doesn't ask on a phone with no key yet", async () => {
@@ -346,6 +354,67 @@ describe('a passkey that signs in but can’t unlock', () => {
       { type: 'started' },
       { type: 'succeeded', unlocked: true },
     ])
+  })
+
+  it('lets it unlock from the key this phone already has', async () => {
+    const { flow, deps, saved, given } = setup({
+      wraps: [],
+      current: KEY.slice(),
+    })
+    await expect(flow.signIn()).resolves.toEqual({
+      status: 'alreadyHere',
+      unlocks: true,
+      prf: true,
+    })
+    expect(deps.account.openDetached).not.toHaveBeenCalled()
+    expect(deps.account.replace).not.toHaveBeenCalled()
+    expect(flow.pending()).toBeNull()
+    expect(saved).toHaveLength(1)
+    expect(
+      unwrapAccountKey({
+        prfOutput: PRF,
+        accountId: ACCOUNT,
+        credentialId: CREDENTIAL,
+        keyEpoch: 0,
+        wrap: saved[0].wrap,
+      })
+    ).toEqual(KEY)
+    expect(given[0].every((byte) => byte === 0)).toBe(true)
+  })
+
+  it("on this phone's account, says so when the wrap can't be saved", async () => {
+    const { flow, deps } = setup({ wraps: [], current: KEY.slice() })
+    deps.wrapServer.mockReturnValueOnce({
+      account: vi.fn(async () => ({
+        accountId: ACCOUNT,
+        accountPub: PUB,
+        keyEpoch: 0,
+      })),
+      wrap: vi.fn(async () => {
+        throw new HttpError('offline')
+      }),
+    })
+    await expect(flow.signIn()).resolves.toEqual({
+      status: 'alreadyHere',
+      unlocks: false,
+      prf: true,
+    })
+    expect(flow.pending()).toBeNull()
+  })
+
+  it("on this phone's account without PRF output, saves no wrap", async () => {
+    const { flow, deps } = setup({ wraps: [], prf: null, current: KEY.slice() })
+    await expect(flow.signIn()).resolves.toEqual({
+      status: 'alreadyHere',
+      unlocks: false,
+      prf: false,
+    })
+    expect(deps.wrapServer).not.toHaveBeenCalled()
+  })
+
+  it("still waits for the key on a phone with another account's key", async () => {
+    const { flow } = setup({ wraps: [], current: OTHER_KEY })
+    await expect(flow.signIn()).resolves.toMatchObject({ status: 'cantUnlock' })
   })
 
   it('says so when no wrap opens under this PRF output', async () => {

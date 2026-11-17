@@ -5,7 +5,10 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native'
-import { CircleAlert as CircleAlertIcon } from 'lucide-react-native'
+import {
+  CircleAlert as CircleAlertIcon,
+  CircleCheckBig as CircleCheckIcon,
+} from 'lucide-react-native'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import { platformKey } from '@/app/account/attestationCopy'
@@ -126,6 +129,28 @@ const SignInWithPasskeyScreen = () => {
             via='passkey'
             onboarding={entry === 'onboarding'}
             onDone={() => navigation.goBack()}
+          />
+        )
+      case 'alreadyHere':
+        return (
+          <HandoffStatus
+            icon={CircleCheckIcon}
+            tone='success'
+            title={i18n.t('passkeySignIn_alreadyTitle')}
+            body={i18n.t('passkeySignIn_alreadyBody')}
+            detail={i18n.t(
+              outcome.unlocks
+                ? 'passkeys_addedCanUnlockMessage'
+                : outcome.prf
+                  ? 'passkeySignIn_alreadyNotSaved'
+                  : 'passkeys_whyNoPrf'
+            )}
+            primary={{
+              label: i18n.t('done'),
+              onPress: () => navigation.goBack(),
+              testID: 'passkey-sign-in-already-done',
+            }}
+            testID='passkey-sign-in-already'
           />
         )
       case 'cantUnlock':

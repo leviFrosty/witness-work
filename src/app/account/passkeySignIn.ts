@@ -80,6 +80,12 @@ function capture(event: PhonePasskeySignInEvent) {
         ...base,
         outcome: event.outcome,
       })
+    case 'alreadyHere':
+      return analytics.capture('passkey_sign_in_already_here', {
+        ...base,
+        unlocks: event.unlocks,
+        prf: event.prf,
+      })
   }
 }
 
@@ -174,7 +180,11 @@ export async function signInWithPhonePasskey(options: {
     expiry = setTimeout(forgetPasskeySignIn, PENDING_MS)
     return result
   }
-  if (result.status !== 'unlocked') return result
+  if (result.status === 'alreadyHere' && options.entry === 'settings')
+    return result
+  if (result.status !== 'unlocked' && result.status !== 'alreadyHere')
+    return result
+  const rejoined = result.status === 'unlocked' && result.rejoined
   const buddiesStarted = options.buddiesEnabled
     ? await joinBuddiesHere('passkey').catch((error: unknown) => {
         logger.warn('[passkeys] starting Buddies failed', error)
@@ -183,14 +193,14 @@ export async function signInWithPhonePasskey(options: {
     : false
 
   let restore: RestoreOutcome = { outcome: 'skipped' }
-  if (!result.rejoined)
+  if (!rejoined)
     try {
       restore = await offerRestore('passkey')
     } catch (error) {
       logger.warn('[passkeys] offering the backup failed', error)
       restore = { outcome: 'failed', reason: 'server' }
     }
-  return { status: 'done', buddiesStarted, restore, rejoined: result.rejoined }
+  return { status: 'done', buddiesStarted, restore, rejoined }
 }
 
 export async function passkeyKeyArrived(

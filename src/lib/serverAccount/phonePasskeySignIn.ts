@@ -53,6 +53,7 @@ export type PhonePasskeySignInResult =
       rejoined: boolean
     }
   | { status: 'cantUnlock'; reason: PasskeyUnlockProblem; prf: boolean }
+  | { status: 'alreadyHere'; unlocks: boolean; prf: boolean }
   | { status: 'declined' }
   | { status: 'cancelled' }
   | {
@@ -88,6 +89,7 @@ export type PhonePasskeySignInEvent =
       serverReason?: PasskeyFailedReason
     }
   | { type: 'wrap'; outcome: PendingWrapOutcome }
+  | { type: 'alreadyHere'; unlocks: boolean; prf: boolean }
 
 export type PhonePasskeySignInStep =
   | 'challenge'
@@ -253,6 +255,8 @@ export function createPhonePasskeySignIn(deps: PhonePasskeySignInDeps) {
         reason: result.reason,
         prf: result.prf,
       })
+    else if (result.status === 'alreadyHere')
+      emit({ type: 'alreadyHere', unlocks: result.unlocks, prf: result.prf })
     else if (result.status === 'failed')
       emit({
         type: 'failed',
@@ -346,6 +350,32 @@ export function createPhonePasskeySignIn(deps: PhonePasskeySignInDeps) {
         keyEpoch: signIn.keyEpoch,
         wraps: signIn.wraps,
       })
+      const current = await deps.account.current()
+      if (
+        current &&
+        deriveAccountSigningKey(current).publicKey === signIn.accountPub
+      ) {
+        forget()
+        const hasPrf = prf !== null
+        if (unlock.ok)
+          return { status: 'alreadyHere', unlocks: true, prf: hasPrf }
+        const saved = prf
+          ? await savePasskeyWrapWith(
+              {
+                server: deps.wrapServer(current),
+                accountKey: current,
+                randomBytes: deps.randomBytes,
+              },
+              signIn.credentialId,
+              prf
+            ).catch(() => 'not_saved' as const)
+          : null
+        return {
+          status: 'alreadyHere',
+          unlocks: saved === 'saved',
+          prf: hasPrf,
+        }
+      }
       if (!unlock.ok) {
         forget()
         pending = {

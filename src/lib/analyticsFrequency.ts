@@ -29,6 +29,8 @@ const sessionEvents = new Set([
   'pet_room_changed',
   'timer_action_completed',
   'buddies_opened',
+  'buddies_device_join_failed',
+  'buddies_restoring_shown',
   'badges_opened',
   'buddy_badges_opened',
   'buddy_pet_room_viewed',

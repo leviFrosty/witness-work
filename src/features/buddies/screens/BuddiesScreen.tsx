@@ -25,6 +25,7 @@ import { RootStackNavigation } from '@/types/rootStack'
 import BuddiesAlphaBadge from '@/features/buddies/components/BuddiesAlphaBadge'
 import BuddiesList from '@/features/buddies/components/BuddiesList'
 import BuddiesNotificationsCard from '@/features/buddies/components/BuddiesNotificationsCard'
+import BuddiesOnTheirWay from '@/features/buddies/components/BuddiesOnTheirWay'
 import BuddiesOnboarding from '@/features/buddies/components/BuddiesOnboarding'
 import BuddiesPausedNotice from '@/features/buddies/components/BuddiesPausedNotice'
 import BuddiesSyncNotice from '@/features/buddies/components/BuddiesSyncNotice'
@@ -42,10 +43,13 @@ import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 export default function BuddiesScreen({
   profileEditor,
   asTab = false,
+  onTheirWay = 'no',
 }: {
   profileEditor: (nameInvalid: boolean) => ReactNode
 
   asTab?: boolean
+
+  onTheirWay?: 'checking' | 'onTheirWay' | 'no'
 }) {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
@@ -134,12 +138,17 @@ export default function BuddiesScreen({
   )
 
   if (needsOnboarding) {
-    const onboarding = (
-      <BuddiesOnboarding
-        profileEditor={profileEditor}
-        onDone={() => useBuddies.setState({ onboardingComplete: true })}
-      />
-    )
+    const onboarding =
+      onTheirWay === 'no' ? (
+        <BuddiesOnboarding
+          profileEditor={profileEditor}
+          onDone={() => useBuddies.setState({ onboardingComplete: true })}
+        />
+      ) : (
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <BuddiesOnTheirWay checking={onTheirWay === 'checking'} />
+        </View>
+      )
     if (!rootHeader) return onboarding
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>

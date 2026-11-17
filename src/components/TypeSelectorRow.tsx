@@ -184,6 +184,7 @@ const TypeSelectorRow = ({
         style={style}
         lastInSection={!hasDetails && lastInSection}
         justifyContent='space-between'
+        controlWidth={plain ? 'auto' : 'compact'}
       >
         <Select
           variant={plain ? 'plain' : 'field'}

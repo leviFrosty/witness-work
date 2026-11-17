@@ -43,17 +43,19 @@ export default function useAvailableHomeSections({
         buddiesAvailable,
       })
   )
+  const hidden = available.filter(
+    (key) =>
+      !isHomeSectionShown(key, {
+        homeScreenElements,
+        homeChecklistDismissed,
+        petPromptDismissed,
+        hasPet,
+        routineEnabled,
+      })
+  )
   return {
     available,
-    hidden: available.filter(
-      (key) =>
-        !isHomeSectionShown(key, {
-          homeScreenElements,
-          homeChecklistDismissed,
-          petPromptDismissed,
-          hasPet,
-          routineEnabled,
-        })
-    ),
+    hidden,
+    shown: available.filter((key) => !hidden.includes(key)),
   }
 }

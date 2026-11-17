@@ -6,7 +6,7 @@ import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
 import useTabReselect from '@/hooks/useTabReselect'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
-import { ReactNode, useState } from 'react'
+import { ReactElement, ReactNode, useState } from 'react'
 import ApproachingConversations from '@/features/visits/components/ApproachingConversations'
 import { Pressable, RefreshControl, View } from 'react-native'
 import ServiceReportSection from '@/features/service-reports/components/ServiceReportSection'
@@ -30,11 +30,7 @@ import HomeSectionMenu from '@/components/HomeSectionMenu'
 import MilestoneAdjustSheet from '@/features/progress/components/MilestoneAdjustSheet'
 import { useNavigation } from '@react-navigation/native'
 import usePublisher from '@/hooks/usePublisher'
-import {
-  getEffectiveHomeScreenOrder,
-  HomeScreenElementKey,
-  usePreferences,
-} from '@/stores/preferences'
+import { HomeScreenElementKey, usePreferences } from '@/stores/preferences'
 import { TimerSection } from '@/features/service-reports/components/TimerSection'
 import UpgradeLegacyTimeReportsSheet from '@/features/service-reports/components/UpgradeLegacyTimeReportsSheet'
 import HomeGreeting from '@/features/profile/components/HomeGreeting'
@@ -43,16 +39,13 @@ import HomeChecklist from '@/features/onboarding/components/HomeChecklist'
 import TodayRouteAction from '@/features/route-planning/components/TodayRouteAction'
 import TodayRouteEntry from '@/features/route-planning/components/TodayRouteEntry'
 import MileagePromptCard from '@/features/mileage/components/MileagePromptCard'
-import TerritoryHomeCard, {
-  useHasTerritories,
-} from '@/features/territories/components/TerritoryHomeCard'
+import TerritoryHomeCard from '@/features/territories/components/TerritoryHomeCard'
 import RoutineHomeSection from '@/features/routine/components/RoutineHomeSection'
 import RoutinePromptCard from '@/features/routine/components/RoutinePromptCard'
 import MileageHomeSection from '@/features/mileage/components/MileageHomeSection'
 import type PetPromptCardComponent from '@/features/pet/components/PetPromptCard'
 import type PetHomeSectionComponent from '@/features/pet/components/PetHomeSection'
 import type ScribeQuickActionsCardComponent from '@/features/scribe/components/ScribeQuickActionsCard'
-import { petHomeSlot } from '@/features/pet/lib/homeSlot'
 import usePet from '@/stores/pet'
 import { hidePetVisits } from '@/app/pet/hidePetVisits'
 import usePetVisits from '@/app/pet/usePetVisits'
@@ -77,7 +70,6 @@ import useHomeEditing from '@/hooks/useHomeEditing'
 import {
   hideHomeSection,
   homeSectionTitle,
-  isHomeSectionOn,
   moveHomeSectionTo,
   showHomeSection,
 } from '@/lib/homeSections'
@@ -94,22 +86,10 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
 
   const foldColumn = useFoldColumn(isWide ? null : 720)
-  const hasTerritories = useHasTerritories()
-  const {
-    homeChecklistDismissed,
-    homeScreenElements,
-    homeScreenElementsOrder,
-    mileageTrackingEnabled,
-    petPromptDismissed,
-    routineEnabled,
-  } = usePreferences(
+  const { mileageTrackingEnabled, routineEnabled } = usePreferences(
     useShallow((s) => ({
       routineEnabled: s.routineEnabled,
-      homeChecklistDismissed: s.homeChecklistDismissed,
-      homeScreenElements: s.homeScreenElements,
-      homeScreenElementsOrder: s.homeScreenElementsOrder,
       mileageTrackingEnabled: s.mileageTrackingEnabled,
-      petPromptDismissed: s.petPromptDismissed,
     }))
   )
   const hasPet = usePet((s) => s.pet !== null)
@@ -128,11 +108,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     return pullToRefresh().finally(() => setRefreshing(false))
   }
   const { isTablet } = useDevice()
-  const { hasAnnualGoal, showsTimer } = usePublisher()
-  const effectiveOrder = getEffectiveHomeScreenOrder(homeScreenElementsOrder)
-
-  const isDidYouKnowLast =
-    effectiveOrder[effectiveOrder.length - 1] === 'didYouKnow'
+  const { hasAnnualGoal } = usePublisher()
   const navigation = useNavigation<HomeTabStackNavigation>()
 
   const today = moment(useLocalDay(), 'YYYY-MM-DD')
@@ -169,9 +145,82 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
     obscuredBottom: hasBottomBar ? insets.bottom + TAB_BAR_HEIGHT : 0,
   })
   const sections = useAvailableHomeSections({ buddiesAvailable })
-  const shownSections = sections.available.filter(
-    (key) => !sections.hidden.includes(key)
-  )
+  const shownSections = sections.shown
+
+  const sectionContent: Record<HomeScreenElementKey, () => ReactElement> = {
+    checklist: () => <HomeChecklist />,
+    approachingConversations: () => (
+      <ApproachingConversations headerAction={<TodayRouteAction />} />
+    ),
+    territories: () => <TerritoryHomeCard />,
+    together: () => <BuddiesHomeSection />,
+    tabletServiceYearSummary: () => (
+      <View style={{ gap: 10 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontFamily: theme.fonts.semiBold,
+            marginLeft: 5,
+          }}
+        >
+          {i18n.t('serviceYearSummary')}
+        </Text>
+        <ReorderableItemBox>
+          <HomeSectionMenu
+            onPress={viewServiceYear}
+            accessibilityLabel={i18n.t('viewYear')}
+            hoverRadius={theme.numbers.borderRadiusLg}
+            actions={[
+              {
+                id: 'view_year',
+                title: i18n.t('viewYear'),
+                systemImage: 'chart.line.uptrend.xyaxis',
+                onPress: viewServiceYear,
+              },
+              {
+                id: 'adjust_milestones',
+                title: i18n.t('adjustMilestonesEllipsis'),
+                systemImage: 'flag',
+                onPress: () => setMilestoneSheetOpen(true),
+              },
+            ]}
+          >
+            <YearMilestoneCard year={serviceYear + 1} />
+          </HomeSectionMenu>
+        </ReorderableItemBox>
+      </View>
+    ),
+    serviceReport: () => <ServiceReportSection />,
+    mileage: () =>
+      mileageTrackingEnabled === undefined ? (
+        <MileagePromptCard />
+      ) : (
+        <MileageHomeSection />
+      ),
+    pet: () =>
+      hasPet ? (
+        <PetHomeSection visits={petVisits} onHideVisit={hidePetVisits} />
+      ) : (
+        <PetPromptCard />
+      ),
+    routine: () =>
+      routineEnabled === undefined ? (
+        <RoutinePromptCard />
+      ) : (
+        <RoutineHomeSection />
+      ),
+    quickActions: () => <QuickActionsCard />,
+    thisWeek: () => (
+      <WeekStripTeaser
+        month={currentMonth}
+        year={currentYear}
+        monthsReports={currentMonthsReports}
+        onSelectDay={(date) => setSelectedDateSheet({ open: true, date })}
+      />
+    ),
+    timer: () => <TimerSection />,
+    didYouKnow: () => <DidYouKnowTipCard />,
+  }
 
   const bars = useHideBarsOnScroll({
     enabled: !editing,
@@ -309,158 +358,9 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
           <AdaptiveColumns
             wide={isWide}
             sectionRef={(key) => anchor.anchorRef(key, 'home')}
-            bottomAnchorLast={
-              isDidYouKnowLast && homeScreenElements.didYouKnow !== false
-            }
+            bottomAnchorLast={shownSections.at(-1) === 'didYouKnow'}
           >
-            {effectiveOrder.map((key: HomeScreenElementKey) => {
-              const section = (() => {
-                switch (key) {
-                  case 'checklist':
-                    if (homeChecklistDismissed) return null
-                    return <HomeChecklist key={key} />
-                  case 'approachingConversations':
-                    if (!homeScreenElements.approachingConversations)
-                      return null
-                    return (
-                      <ApproachingConversations
-                        key={key}
-                        headerAction={<TodayRouteAction />}
-                      />
-                    )
-                  case 'territories':
-                    if (
-                      !hasTerritories ||
-                      !isHomeSectionOn(
-                        'territories',
-                        homeScreenElements,
-                        homeChecklistDismissed
-                      )
-                    )
-                      return null
-                    return <TerritoryHomeCard key={key} />
-                  case 'together':
-                    if (
-                      !buddiesAvailable ||
-                      !isHomeSectionOn(
-                        'together',
-                        homeScreenElements,
-                        homeChecklistDismissed
-                      )
-                    )
-                      return null
-                    return <BuddiesHomeSection key={key} />
-                  case 'tabletServiceYearSummary':
-                    if (
-                      !isTablet ||
-                      !hasAnnualGoal ||
-                      !homeScreenElements.tabletServiceYearSummary
-                    ) {
-                      return null
-                    }
-                    return (
-                      <View key={key} style={{ gap: 10 }}>
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontFamily: theme.fonts.semiBold,
-                            marginLeft: 5,
-                          }}
-                        >
-                          {i18n.t('serviceYearSummary')}
-                        </Text>
-                        {}
-                        <ReorderableItemBox>
-                          <HomeSectionMenu
-                            onPress={viewServiceYear}
-                            accessibilityLabel={i18n.t('viewYear')}
-                            hoverRadius={theme.numbers.borderRadiusLg}
-                            actions={[
-                              {
-                                id: 'view_year',
-                                title: i18n.t('viewYear'),
-                                systemImage: 'chart.line.uptrend.xyaxis',
-                                onPress: viewServiceYear,
-                              },
-                              {
-                                id: 'adjust_milestones',
-                                title: i18n.t('adjustMilestonesEllipsis'),
-                                systemImage: 'flag',
-                                onPress: () => setMilestoneSheetOpen(true),
-                              },
-                            ]}
-                          >
-                            <YearMilestoneCard year={serviceYear + 1} />
-                          </HomeSectionMenu>
-                        </ReorderableItemBox>
-                      </View>
-                    )
-                  case 'serviceReport':
-                    if (!homeScreenElements.serviceReport) return null
-                    return <ServiceReportSection key={key} />
-                  case 'mileage':
-                    if (
-                      mileageTrackingEnabled === false ||
-                      homeScreenElements.mileage === false
-                    )
-                      return null
-                    if (mileageTrackingEnabled === undefined)
-                      return <MileagePromptCard key={key} />
-                    return <MileageHomeSection key={key} />
-                  case 'pet': {
-                    const slot = petHomeSlot({
-                      hasPet,
-                      promptDismissed: petPromptDismissed,
-                      visible: homeScreenElements.pet !== false,
-                    })
-                    if (slot === 'prompt') return <PetPromptCard key={key} />
-                    if (slot === 'section')
-                      return (
-                        <PetHomeSection
-                          key={key}
-                          visits={petVisits}
-                          onHideVisit={hidePetVisits}
-                        />
-                      )
-                    return null
-                  }
-                  case 'routine':
-                    if (
-                      routineEnabled === false ||
-                      homeScreenElements.routine === false
-                    )
-                      return null
-                    if (routineEnabled === undefined)
-                      return <RoutinePromptCard key={key} />
-                    return <RoutineHomeSection key={key} />
-                  case 'quickActions':
-                    if (homeScreenElements.quickActions === false) return null
-                    return <QuickActionsCard key={key} />
-                  case 'thisWeek':
-                    if (homeScreenElements.thisWeek === false) return null
-
-                    return (
-                      <WeekStripTeaser
-                        key={key}
-                        month={currentMonth}
-                        year={currentYear}
-                        monthsReports={currentMonthsReports}
-                        onSelectDay={(date) =>
-                          setSelectedDateSheet({ open: true, date })
-                        }
-                      />
-                    )
-                  case 'timer':
-                    if (!showsTimer || !homeScreenElements.timer) return null
-                    return <TimerSection key={key} />
-                  case 'didYouKnow':
-                    if (homeScreenElements.didYouKnow === false) return null
-                    return <DidYouKnowTipCard key={key} />
-                  default:
-                    return null
-                }
-              })()
-              if (!section) return null
+            {shownSections.map((key) => {
               const title = homeSectionTitle(key)
 
               const at = shownSections.indexOf(key)
@@ -498,7 +398,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
                     <HomeEmptySectionPlaceholder title={title} />
                   }
                 >
-                  {section}
+                  {sectionContent[key]()}
                 </ReorderableItem>
               )
             })}

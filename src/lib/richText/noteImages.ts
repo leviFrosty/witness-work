@@ -86,7 +86,7 @@ export async function listNoteImageFiles(): Promise<
 > {
   if (Platform.OS === 'web') {
     await webPhotosReady()
-    return listWebPhotos()
+    return listWebPhotos().filter((photo) => isImageId(photo.id))
   }
   const directory = noteImageDirectory()
   const info = await FileSystem.getInfoAsync(directory)

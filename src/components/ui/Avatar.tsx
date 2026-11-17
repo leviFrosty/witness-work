@@ -25,12 +25,13 @@ import FullWindowOverlay from '@/components/ui/FullWindowOverlay'
 import { ProfileAvatar } from '@/types/avatar'
 import { useAvatarGroupSize } from '@/components/ui/AvatarGroup'
 import { leftForPhysicalX } from '@/lib/direction'
+import { useAvatarImageUri } from '@/hooks/useAvatarImageUri'
 
 export function isRenderableImageValue(value: string): boolean {
   if (!value) return false
   if (value.startsWith('icloud://')) return false
 
-  if (Platform.OS === 'web') return /^(data|blob|https?):/i.test(value)
+  if (Platform.OS === 'web') return /^(data|blob|https?|webphoto):/i.test(value)
   return true
 }
 
@@ -69,10 +70,13 @@ const Avatar = ({
   const [anchor, setAnchor] = useState<AnchorRect | null>(null)
   const [open, setOpen] = useState(false)
 
+  const imageUri = useAvatarImageUri(
+    avatar.type === 'image' ? avatar.value : ''
+  )
   const [imageFailed, setImageFailed] = useState(false)
   useEffect(() => {
     setImageFailed(false)
-  }, [avatar.type, avatar.value])
+  }, [avatar.type, avatar.value, imageUri])
 
   const [fullImage, setFullImage] = useState<{
     for: string
@@ -136,11 +140,12 @@ const Avatar = ({
     if (
       avatar.type === 'image' &&
       isRenderableImageValue(avatar.value) &&
+      imageUri &&
       !imageFailed
     ) {
       return (
         <Image
-          source={{ uri: avatar.value }}
+          source={{ uri: imageUri }}
           style={{
             width: size,
             height: size,

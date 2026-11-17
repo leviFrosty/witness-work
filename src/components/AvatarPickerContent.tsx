@@ -31,6 +31,7 @@ import ContactAvatarCropEditor from '@/components/ContactAvatarCropEditor'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { avatarDirectory } from '@/lib/avatarPhotoFiles'
 import { photoFailedMessage } from '@/lib/photoLibrary/photoFailedMessage'
 
 export type AvatarMetaCapture = {
@@ -279,7 +280,7 @@ const AvatarPickerContent = ({
       setPendingPick({
         revision,
         sourceUri: asset.uri,
-        destPath: '',
+        destPath: `${avatarDirectory()}${revisionImageFileName(imageFileName, revision)}`,
         sourceWidth: asset.width,
         sourceHeight: asset.height,
         fileSize: asset.fileSize,

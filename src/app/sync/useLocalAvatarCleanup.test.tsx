@@ -3,6 +3,8 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Contact } from '@/types/contact'
 import type { ProfileAvatar } from '@/types/avatar'
+const platform = vi.hoisted(() => ({ OS: 'ios' as string }))
+vi.mock('react-native', () => ({ Platform: platform }))
 vi.mock('@/stores/contactsStore', async () => ({
   default: (await import('zustand')).create(() => ({
     contacts: [] as Contact[],
@@ -26,6 +28,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import useContacts from '@/stores/contactsStore'
 import { useProfile } from '@/stores/profile'
 import { useLocalAvatarCleanup } from './useLocalAvatarCleanup'
+import { webPhotos } from '@/lib/files/webPhotoStore'
 const contact = (id = 'c'): Contact => ({
   id,
   name: 'Contact',
@@ -38,6 +41,7 @@ const Harness = () => {
 }
 let renderer: ReactTestRenderer | undefined
 beforeEach(() => {
+  platform.OS = 'ios'
   vi.clearAllMocks()
   useContacts.setState({ contacts: [contact()], deletedContacts: [] })
   useProfile.setState({ avatar: { type: 'none', value: '' } })
@@ -340,4 +344,48 @@ it('rechecks original ownership after an earlier local deletion awaited IO', asy
     'file:///Docs/contact-c-avatar-original-a.jpg',
     expect.anything()
   )
+})
+
+it('removes a replaced photo and an erased contact’s photos from the browser’s photo store', async () => {
+  platform.OS = 'web'
+  vi.stubGlobal('URL', {
+    createObjectURL: () => 'blob:x',
+    revokeObjectURL: () => {},
+  })
+  const photo = () => new Blob([new Uint8Array([1])], { type: 'image/jpeg' })
+  webPhotos.put('avatars/profile-avatar-synced-old.jpg', photo())
+  webPhotos.put('avatars/profile-avatar-picked-new.jpg', photo())
+  webPhotos.put('avatars/contact-gone-avatar-synced-r1.jpg', photo())
+  webPhotos.put('note-photo-0001', photo())
+  useContacts.setState({
+    contacts: [],
+    deletedContacts: [
+      { ...contact('gone'), redacted: true, avatar: undefined },
+    ],
+  })
+  useProfile.setState({
+    avatar: {
+      type: 'image',
+      value: 'webphoto:avatars/profile-avatar-synced-old.jpg?t=1',
+      revision: 'old',
+    },
+  })
+  await act(async () => {
+    renderer = create(<Harness />)
+  })
+  await act(async () => {
+    useProfile.setState({
+      avatar: {
+        type: 'image',
+        value: 'webphoto:avatars/profile-avatar-picked-new.jpg?t=2',
+        revision: 'new',
+      },
+    })
+  })
+  expect(webPhotos.list().map((photo) => photo.id)).toEqual([
+    'avatars/profile-avatar-picked-new.jpg',
+    'note-photo-0001',
+  ])
+  expect(FileSystem.deleteAsync).not.toHaveBeenCalled()
+  vi.unstubAllGlobals()
 })

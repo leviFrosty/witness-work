@@ -450,19 +450,16 @@ it('releases an uncommitted re-crop source on cancellation', async () => {
 it.each([
   ['ios', true],
   ['android', true],
-  ['web', false],
-])(
-  'offers Choose Photo on %s: %s (the web has no photo sync)',
-  async (platform, offered) => {
-    runtime.platform = platform
-    await act(async () => {
-      renderer = create(<PickerHarness />)
-    })
-    const labels = renderer!.root
-      .findAllByType(Text)
-      .map((text) => text.props.children)
-    expect(labels.includes('choosePhoto')).toBe(offered)
+  ['web', true],
+])('offers Choose Photo on %s: %s', async (platform, offered) => {
+  runtime.platform = platform
+  await act(async () => {
+    renderer = create(<PickerHarness />)
+  })
+  const labels = renderer!.root
+    .findAllByType(Text)
+    .map((text) => text.props.children)
+  expect(labels.includes('choosePhoto')).toBe(offered)
 
-    expect(labels).toContain('remove')
-  }
-)
+  expect(labels).toContain('remove')
+})

@@ -69,6 +69,8 @@ type Fixtures = {
 
   signedIn: boolean
 
+  accountKey: Uint8Array | null
+
   withoutAccountOnce: boolean
 
   app: Page
@@ -145,6 +147,7 @@ export const test = base.extend<Fixtures>({
       withoutAccountOnce,
       tolerateErrors,
       signedIn,
+      accountKey,
     },
     provide,
     testInfo
@@ -223,7 +226,7 @@ export const test = base.extend<Fixtures>({
     if (signedIn) {
       await answerSessionRefresh(page.context(), profile.apiOrigin)
       await openBlankOnOrigin(page)
-      await seedSession(page)
+      await seedSession(page, accountKey ?? undefined)
     }
     await provide(page)
     if (cspFolder) {
@@ -248,6 +251,7 @@ export const test = base.extend<Fixtures>({
   seed: [{}, { option: true }],
   storeState: [{}, { option: true }],
   signedIn: [false, { option: true }],
+  accountKey: [null, { option: true }],
   withoutAccountOnce: [false, { option: true }],
   app: async ({ page, language, preferences, seed, storeState }, provide) => {
     const seeding = await page.context().newPage()

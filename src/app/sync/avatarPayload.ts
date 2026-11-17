@@ -1,6 +1,6 @@
 import { Contact } from '@/types/contact'
 import { ProfileAvatar } from '@/types/avatar'
-import { hasCapability } from '@/lib/platformCapabilities'
+import { Platform } from 'react-native'
 import { isInlineImage } from '@/lib/avatarFilePolicy'
 import {
   markerForContact,
@@ -8,7 +8,7 @@ import {
 } from '@/lib/syncTransport/imageNames'
 
 const isUnsyncablePhoto = (avatar: ProfileAvatar): boolean =>
-  !hasCapability('syncedAvatarPhotos') &&
+  Platform.OS === 'web' &&
   avatar.type === 'image' &&
   isInlineImage(avatar.value)
 

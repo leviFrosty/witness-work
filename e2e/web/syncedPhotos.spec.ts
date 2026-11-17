@@ -131,7 +131,7 @@ const storedContact = async (page: Page) => {
 test.describe('photos the browser does not hold', () => {
   test.use({ preferences: { badgesWelcome: 'done' }, signedIn: true })
 
-  test('the avatar menus offer emoji but no photo to choose', async ({
+  test('the avatar menus offer emoji and a photo to choose', async ({
     app,
     shot,
   }) => {
@@ -141,20 +141,20 @@ test.describe('photos the browser does not hold', () => {
       await app.getByText('Profile', { exact: true }).first().click()
     await picture.click()
     await expect(app.getByText('🌱').first()).toBeVisible()
-    await expect(app.getByText(en.choosePhoto)).toHaveCount(0)
+    await expect(app.getByText(en.choosePhoto).first()).toBeVisible()
     await shot('avatar-menu-profile')
   })
 
-  test('adding a contact offers no photo to choose', async ({ app, shot }) => {
+  test('adding a contact offers a photo to choose', async ({ app, shot }) => {
     await app.getByRole('button', { name: en.addContact }).first().click()
     await app.getByPlaceholder(en.name_placeholder).fill('Maria Santos')
     await app.getByRole('button', { name: en.profilePicture }).last().click()
     await expect(app.getByText('🌱').first()).toBeVisible()
-    await expect(app.getByText(en.choosePhoto)).toHaveCount(0)
+    await expect(app.getByText(en.choosePhoto).first()).toBeVisible()
     await shot('avatar-menu-contact')
   })
 
-  test("a phone's contact photo shows initials, and editing the contact keeps its reference", async ({
+  test("a phone's contact photo shows initials until it downloads, and editing the contact keeps its reference", async ({
     app,
     shot,
   }) => {
@@ -169,7 +169,6 @@ test.describe('photos the browser does not hold', () => {
     await shot('contact-detail-phone-photo')
 
     await app.getByTestId('contact-details-edit').last().click()
-    await expect(app.getByText(en.choosePhoto)).toHaveCount(0)
     await app.getByTestId('contact-name-input').fill('Daniel O. Okafor')
     await shot('contact-editor-phone-photo')
     await app.getByRole('button', { name: en.save }).first().click()

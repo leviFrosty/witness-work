@@ -45,6 +45,7 @@ import {
 import { addReconnectListener, isKnownOffline } from '@/lib/http/online'
 import * as FileSystem from 'expo-file-system/legacy'
 import { webPhotoModifiedAt } from '@/lib/syncTransport/server/photoFiles'
+import { avatarDirectory, deleteAvatarFile } from '@/lib/avatarPhotoFiles'
 import debounce from 'lodash/debounce'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { cloudSyncOnly, hasSyncEngine } from '@/lib/syncTransport/platform'
@@ -1085,7 +1086,7 @@ function serializeImages<T>(work: () => Promise<T>): Promise<T> {
   )
   return result
 }
-const DOCUMENT_DIR = FileSystem.documentDirectory ?? ''
+const DOCUMENT_DIR = avatarDirectory()
 
 let imagePushJob: Promise<void> | null = null
 let queuedImagePush: {
@@ -1438,7 +1439,7 @@ async function pullImagesInner(oneShot = false): Promise<void> {
       })
       for (const path of obsolete) {
         if (deletedPaths.has(path)) continue
-        await FileSystem.deleteAsync(path, { idempotent: true })
+        await deleteAvatarFile(path)
         deletedPaths.add(path)
       }
     }

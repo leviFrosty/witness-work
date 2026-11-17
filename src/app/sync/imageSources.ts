@@ -5,7 +5,7 @@ import {
   parseContactMarker,
   isProfileMarker,
 } from '@/lib/syncTransport/imageNames'
-import { isManagedAvatarPath } from '@/lib/avatarFilePolicy'
+import { isAvatarFileValue, isManagedAvatarPath } from '@/lib/avatarFilePolicy'
 
 export function localAvatarPathForContact(
   documentDirectory: string,
@@ -33,7 +33,7 @@ export function collectLocalAvatarSources(args: {
 
   for (const c of args.contacts) {
     if (c.avatar?.type !== 'image') continue
-    if (!c.avatar.value.startsWith('file://')) continue
+    if (!isAvatarFileValue(c.avatar.value)) continue
     const localPath = stripCacheBuster(c.avatar.value)
     if (!isManagedAvatarPath(localPath, args.documentDirectory)) continue
     sources.push({
@@ -45,7 +45,7 @@ export function collectLocalAvatarSources(args: {
   }
 
   const profile = args.profileAvatar
-  if (profile?.type === 'image' && profile.value.startsWith('file://')) {
+  if (profile?.type === 'image' && isAvatarFileValue(profile.value)) {
     const localPath = stripCacheBuster(profile.value)
     if (isManagedAvatarPath(localPath, args.documentDirectory)) {
       sources.push({
@@ -70,7 +70,7 @@ export function collectExpectedMarkerSources(args: {
   for (const c of args.contacts) {
     if (c.avatar?.type !== 'image') continue
     if (
-      c.avatar.value.startsWith('file://') &&
+      isAvatarFileValue(c.avatar.value) &&
       !isManagedAvatarPath(
         stripCacheBuster(c.avatar.value),
         args.documentDirectory
@@ -78,7 +78,7 @@ export function collectExpectedMarkerSources(args: {
     )
       continue
     const markerId = parseContactMarker(c.avatar.value)
-    if (markerId == null && !c.avatar.value.startsWith('file://')) continue
+    if (markerId == null && !isAvatarFileValue(c.avatar.value)) continue
     sources.push({
       kind: 'contact',
       id: c.id,
@@ -89,7 +89,7 @@ export function collectExpectedMarkerSources(args: {
         '.jpg',
         `-synced${c.avatar.revision ? `-${c.avatar.revision}` : ''}.jpg`
       ),
-      fallbackPath: c.avatar.value.startsWith('file://')
+      fallbackPath: isAvatarFileValue(c.avatar.value)
         ? stripCacheBuster(c.avatar.value)
         : !c.avatar.revision
           ? localAvatarPathForContact(args.documentDirectory, c.id)
@@ -104,7 +104,7 @@ export function collectExpectedMarkerSources(args: {
   if (
     profile?.type === 'image' &&
     (isProfileMarker(profile.value) ||
-      (profile.value.startsWith('file://') &&
+      (isAvatarFileValue(profile.value) &&
         isManagedAvatarPath(profile.value, args.documentDirectory)))
   ) {
     sources.push({
@@ -113,7 +113,7 @@ export function collectExpectedMarkerSources(args: {
         '.jpg',
         `-synced${profile.revision ? `-${profile.revision}` : ''}.jpg`
       ),
-      fallbackPath: profile.value.startsWith('file://')
+      fallbackPath: isAvatarFileValue(profile.value)
         ? stripCacheBuster(profile.value)
         : !profile.revision
           ? localAvatarPathForProfile(args.documentDirectory)

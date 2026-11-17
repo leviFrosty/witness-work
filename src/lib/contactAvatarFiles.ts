@@ -4,6 +4,12 @@ import * as ImageManipulator from 'expo-image-manipulator'
 import { logger } from '@/lib/logger'
 import { avatarPhotoEncoding, resizeToFit } from '@/lib/photoEncoding'
 import {
+  avatarDirectory,
+  deleteAvatarFile,
+  listAvatarFiles,
+} from '@/lib/avatarPhotoFiles'
+import { putWebPhoto, webPhotoPathId } from '@/lib/files/webPhotoStore'
+import {
   avatarFileContactId,
   isInlineImage,
   isManagedAvatarPath,
@@ -44,14 +50,14 @@ export function croppedAvatarPath(
   contactId: string,
   revision?: string
 ): string {
-  return `${FileSystem.documentDirectory}${croppedAvatarFileName(contactId, revision)}`
+  return `${avatarDirectory()}${croppedAvatarFileName(contactId, revision)}`
 }
 
 export function originalAvatarPath(
   contactId: string,
   revision?: string
 ): string {
-  return `${FileSystem.documentDirectory}${originalAvatarFileName(contactId, revision)}`
+  return `${avatarDirectory()}${originalAvatarFileName(contactId, revision)}`
 }
 
 export function stripCacheBuster(uri: string): string {
@@ -80,6 +86,7 @@ const WEB_AVATAR_QUALITY = 0.85
 
 async function cropAvatarInBrowser(
   srcUri: string,
+  destPath: string,
   rect: CropRect
 ): Promise<{ path: string; width: number; height: number }> {
   const { renderJpeg, blobToDataUrl } = await import('@/lib/files/webImages')
@@ -91,7 +98,11 @@ async function cropAvatarInBrowser(
       : WEB_AVATAR_MAX_SIDE,
     quality: encoding.optimized ? encoding.quality : WEB_AVATAR_QUALITY,
   })
-  return { path: await blobToDataUrl(blob), width, height }
+  const id = webPhotoPathId(destPath)
+  if (id === undefined)
+    return { path: await blobToDataUrl(blob), width, height }
+  putWebPhoto(id, blob)
+  return { path: destPath, width, height }
 }
 
 export interface CropRect {
@@ -110,7 +121,7 @@ export async function cropAndSaveImage(
   rect: CropRect,
   source: { width: number; height: number }
 ): Promise<{ path: string; width: number; height: number }> {
-  if (Platform.OS === 'web') return cropAvatarInBrowser(srcUri, rect)
+  if (Platform.OS === 'web') return cropAvatarInBrowser(srcUri, destPath, rect)
   const safeRect: CropRect = {
     originX: Math.max(0, Math.min(rect.originX, source.width - 1)),
     originY: Math.max(0, Math.min(rect.originY, source.height - 1)),
@@ -165,26 +176,24 @@ export function defaultCenteredSquareCrop(source: {
 }
 
 export async function deleteAvatarFiles(contactId: string): Promise<void> {
-  if (!FileSystem.documentDirectory) return
+  const directory = avatarDirectory()
+  if (!directory) return
   const paths = new Set([
     croppedAvatarPath(contactId),
     originalAvatarPath(contactId),
   ])
   try {
-    const files = await FileSystem.readDirectoryAsync(
-      FileSystem.documentDirectory
-    )
-    for (const file of files) {
+    for (const file of await listAvatarFiles()) {
       if (avatarFileContactId(file) === contactId)
-        paths.add(`${FileSystem.documentDirectory}${file}`)
+        paths.add(`${directory}${file}`)
     }
   } catch (error) {
     logger.warn('Failed to enumerate avatar revisions', error)
   }
   for (const path of paths) {
-    if (!isManagedAvatarPath(path, FileSystem.documentDirectory)) continue
+    if (!isManagedAvatarPath(path, directory)) continue
     try {
-      await FileSystem.deleteAsync(path, { idempotent: true })
+      await deleteAvatarFile(path)
     } catch (e) {
       logger.warn('Failed to delete avatar file', path, e)
     }

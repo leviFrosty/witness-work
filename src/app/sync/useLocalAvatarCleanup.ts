@@ -1,5 +1,9 @@
 import { useEffect } from 'react'
-import * as FileSystem from 'expo-file-system/legacy'
+import {
+  avatarDirectory,
+  deleteAvatarFile,
+  listAvatarFiles,
+} from '@/lib/avatarPhotoFiles'
 import useContacts from '@/stores/contactsStore'
 import { useProfile } from '@/stores/profile'
 import { errorTracking } from '@/lib/errorTracking'
@@ -22,7 +26,7 @@ const ownedContacts = (state: {
 ]
 
 const originalPath = (filename: string, avatar: ProfileAvatar) =>
-  `${FileSystem.documentDirectory}${originalSiblingFileName(filename, avatar.revision)}`
+  `${avatarDirectory()}${originalSiblingFileName(filename, avatar.revision)}`
 
 const contactPaths = (contact: Contact) =>
   contact.avatar?.type === 'image'
@@ -34,7 +38,8 @@ const contactPaths = (contact: Contact) =>
 
 export function useLocalAvatarCleanup(ready: boolean | undefined) {
   useEffect(() => {
-    if (!ready || !FileSystem.documentDirectory) return
+    const directory = avatarDirectory()
+    if (!ready || !directory) return
     const remove = async (paths: string[]) => {
       for (const path of paths) {
         const current = new Set(
@@ -51,13 +56,9 @@ export function useLocalAvatarCleanup(ready: boolean | undefined) {
               : []),
           ].map(pathWithoutQuery)
         )
-        if (
-          !isManagedAvatarPath(path, FileSystem.documentDirectory!) ||
-          current.has(path)
-        )
-          continue
+        if (!isManagedAvatarPath(path, directory) || current.has(path)) continue
         try {
-          await FileSystem.deleteAsync(path, { idempotent: true })
+          await deleteAvatarFile(path)
         } catch (error) {
           errorTracking.captureException(error, { localAvatars: 'remove' })
         }
@@ -66,16 +67,14 @@ export function useLocalAvatarCleanup(ready: boolean | undefined) {
     const scanErasedOwners = async (ids: Set<string>) => {
       if (ids.size === 0) return
       try {
-        const files = await FileSystem.readDirectoryAsync(
-          FileSystem.documentDirectory!
-        )
+        const files = await listAvatarFiles()
         await remove(
           files
             .filter((file) => {
               const owner = avatarFileContactId(file)
               return !!owner && ids.has(owner)
             })
-            .map((file) => `${FileSystem.documentDirectory}${file}`)
+            .map((file) => `${directory}${file}`)
         )
       } catch (error) {
         errorTracking.captureException(error, { localAvatars: 'scan' })

@@ -1,5 +1,6 @@
 import { type ReactElement, useEffect, useRef } from 'react'
 import { GestureDetector, type GestureType } from 'react-native-gesture-handler'
+import { REORDER_TOUCH_ACTION } from '@/components/ui/reorderable/ReorderableContainer'
 
 export default function LiftDetector({
   gesture,
@@ -16,7 +17,9 @@ export default function LiftDetector({
   })
   useEffect(() => () => latest.current?.(), [])
   return gesture ? (
-    <GestureDetector gesture={gesture}>{children}</GestureDetector>
+    <GestureDetector gesture={gesture} touchAction={REORDER_TOUCH_ACTION}>
+      {children}
+    </GestureDetector>
   ) : (
     children
   )

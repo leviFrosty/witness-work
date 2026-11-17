@@ -88,7 +88,7 @@ import {
   Users,
   X,
 } from 'lucide-react-native'
-import { UndoIcon } from '@/components/ui/DirectionalIcon'
+import { LogOutIcon, UndoIcon } from '@/components/ui/DirectionalIcon'
 import type { AppIcon } from '@/components/ui/LucideIcon'
 
 const webMenuIcons: Partial<Record<string, AppIcon>> = {
@@ -168,6 +168,7 @@ const webMenuIcons: Partial<Record<string, AppIcon>> = {
   qrcode: QrCode,
   'qrcode.viewfinder': ScanQrCode,
   'questionmark.circle': CircleQuestionMark,
+  'rectangle.portrait.and.arrow.right': LogOutIcon,
   safari: Compass,
   'square.and.arrow.down': Download,
   'square.and.arrow.up': Share,

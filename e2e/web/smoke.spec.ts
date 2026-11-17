@@ -62,6 +62,34 @@ test('Help Center opens offline from its bundled snapshot', async ({
   await shot('help-center')
 })
 
+test('Sign Out from the account menu', async ({ app, shot }) => {
+  const en = strings('en-US')
+  await app.getByTestId('sidebar-account').click()
+  const signOut = app.getByRole('menuitem', { name: en.webSignOut_button })
+  await expect(signOut).toBeVisible()
+  await shot('account-menu')
+
+  app.once('dialog', (dialog) => void dialog.dismiss())
+  await signOut.click()
+  await expect(app.getByTestId('sidebar-account')).toBeVisible()
+
+  await app.getByTestId('sidebar-account').click()
+  const asked = new Promise<string>((resolve) =>
+    app.once('dialog', (dialog) => {
+      resolve(dialog.message())
+      void dialog.accept()
+    })
+  )
+  const closed = app.waitForRequest(
+    (request) =>
+      request.method() === 'DELETE' &&
+      request.url().endsWith('/accounts/v1/sessions/current')
+  )
+  await signOut.click()
+  expect(await asked).toContain(en.webSignOut_confirmTitle)
+  await closed
+})
+
 test('a signed-out browser opens on the sign-in screen', async ({
   browser,
   baseURL,

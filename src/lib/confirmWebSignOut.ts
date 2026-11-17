@@ -3,10 +3,17 @@ import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { webAccount } from '@/lib/serverAccount'
 
+export type WebSignOutSource = 'settings' | 'account_menu' | 'app_lock'
+
 export function confirmWebSignOut({
+  source,
   onStarted,
   onFailed,
-}: { onStarted?: () => void; onFailed?: () => void } = {}) {
+}: {
+  source: WebSignOutSource
+  onStarted?: () => void
+  onFailed?: () => void
+}) {
   const account = webAccount
   if (!account) return
   Alert.alert(
@@ -19,7 +26,7 @@ export function confirmWebSignOut({
         style: 'destructive',
         onPress: () => {
           onStarted?.()
-          analytics.capture('web_signed_out')
+          analytics.capture('web_signed_out', { source })
           void account.signOut().catch(() => onFailed?.())
         },
       },

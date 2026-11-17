@@ -12,7 +12,10 @@ vi.mock('lucide-react-native', async () => {
     .filter(Boolean)
   return Object.fromEntries(names.map((name) => [name, name]))
 })
-vi.mock('@/components/ui/DirectionalIcon', () => ({ UndoIcon: 'UndoIcon' }))
+vi.mock('@/components/ui/DirectionalIcon', () => ({
+  LogOutIcon: 'LogOutIcon',
+  UndoIcon: 'UndoIcon',
+}))
 
 import webMenuIcons from '@/components/ui/web/webMenuIcons'
 

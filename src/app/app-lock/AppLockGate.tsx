@@ -17,7 +17,7 @@ import {
   unlockWebAppLock,
   wasAskedAtLaunch,
 } from '@/app/app-lock/unlock'
-import { confirmWebSignOut } from '@/app/web-sign-in/confirmWebSignOut'
+import { confirmWebSignOut } from '@/lib/confirmWebSignOut'
 import { setFirstScreenCovered } from '@/app/launch/useAfterLaunch'
 import { setAppSwitcherHidden } from '../../../modules/app-switcher-privacy'
 
@@ -108,6 +108,7 @@ function DeviceAppLockGate() {
           }
           onSignOut={() =>
             confirmWebSignOut({
+              source: 'app_lock',
               onStarted: () => setUnlockProblem(null),
               onFailed: () => setUnlockProblem(i18n.t('webSignOut_failed')),
             })

@@ -8,7 +8,7 @@ import SectionFooter from '@/features/settings/components/account/SectionFooter'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { webAccount } from '@/lib/serverAccount'
-import { confirmWebSignOut } from '@/app/web-sign-in/confirmWebSignOut'
+import { confirmWebSignOut } from '@/lib/confirmWebSignOut'
 
 export default function WebSignOutSection() {
   const theme = useTheme()
@@ -17,6 +17,7 @@ export default function WebSignOutSection() {
 
   const confirm = () =>
     confirmWebSignOut({
+      source: 'settings',
       onStarted: () => setSigningOut(true),
       onFailed: () => setSigningOut(false),
     })

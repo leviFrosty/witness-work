@@ -101,7 +101,6 @@ export function Field({ className }: { className?: string }) {
   )
 }
 
-/** WitnessWork on the web: the first way in, ahead of the store badges. */
 export function WebAppLink({
   label,
   size = 'md',
@@ -129,7 +128,6 @@ export function WebAppLink({
   )
 }
 
-/** The store badges under a web app button, with a line saying what they are. */
 export function DownloadAlso({
   locale,
   labels,

@@ -43,7 +43,12 @@ import { supportsWebHover } from '@/lib/pointerHover'
 import { refreshCurrentLocation } from '@/lib/currentLocation'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
 import { BARS_TRANSITION_MS } from '@/components/ui/ScrollAwayHeader'
-import { isRtlLayout } from '@/lib/direction'
+import { alignText, isRtlLayout } from '@/lib/direction'
+import {
+  TabIcon,
+  TabLabel,
+  TabSelectionBackground,
+} from '@/components/ui/TabBarSelection'
 import { NAVIGATION_RAIL_MIN_WIDTH } from '@/lib/sidebarLayout'
 
 const CAPSULE_HEIGHT = 52
@@ -170,8 +175,12 @@ const TabBar = ({
       }
     })()
 
-    const color =
-      isFocused && !isSettings ? theme.colors.text : theme.colors.textAlt
+    const colorFor = (focused: boolean) =>
+      focused && !isSettings ? theme.colors.text : theme.colors.textAlt
+    const iconColorFor = (focused: boolean) =>
+      (hasSidebar && !isSettings) || (rail && focused)
+        ? theme.colors.accent
+        : colorFor(focused)
 
     const itemRadius = rail
       ? RAIL_ITEM_SIZE / 2
@@ -231,28 +240,28 @@ const TabBar = ({
               minHeight: hasSidebar ? 50 : undefined,
               borderRadius: itemRadius,
               borderCurve: 'continuous',
-              backgroundColor:
-                (hasSidebar || rail) && isFocused && !isSettings
-                  ? theme.colors.accentTranslucent
-                  : 'transparent',
               opacity: pressed ? 0.6 : 1,
             })}
           >
+            {(hasSidebar || rail) && (
+              <TabSelectionBackground
+                selected={isFocused && !isSettings}
+                color={theme.colors.accentTranslucent}
+                borderRadius={itemRadius}
+              />
+            )}
             <HoverTint
               visible={hoveredTab === route.key}
               borderRadius={itemRadius}
               borderCurve='continuous'
             />
             <View>
-              <IconButton
-                iconStyle={{
-                  color:
-                    (hasSidebar && !isSettings) || (rail && isFocused)
-                      ? theme.colors.accent
-                      : color,
-                }}
+              <TabIcon
                 icon={icon}
                 size={hasSidebar || rail ? 22 : 18}
+                color={iconColorFor(false)}
+                selectedColor={iconColorFor(true)}
+                selected={isFocused}
               />
               {options.tabBarBadge !== undefined && (
                 <View
@@ -283,25 +292,24 @@ const TabBar = ({
               }}
             >
               {!sidebarCompact && !rail && (
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.85}
+                <TabLabel
+                  label={i18n.t(labelKey)}
+                  selected={isFocused}
+                  look={{
+                    color: colorFor(false),
+                    fontFamily: theme.fonts.regular,
+                  }}
+                  selectedLook={{
+                    color: colorFor(true),
+                    fontFamily: theme.fonts.semiBold,
+                  }}
+                  fontSize={theme.fontSize(hasSidebar ? 'md' : 'xs')}
+                  textAlign={hasSidebar ? alignText('start') : 'center'}
                   maxFontSizeMultiplier={
                     hasSidebar ? undefined : CAPSULE_LABEL_FONT_SCALE_CAP
                   }
-                  style={{
-                    color,
-                    flexShrink: 1,
-                    flex: hasSidebar ? 1 : undefined,
-                    fontSize: theme.fontSize(hasSidebar ? 'md' : 'xs'),
-                    fontFamily: isFocused
-                      ? theme.fonts.semiBold
-                      : theme.fonts.regular,
-                  }}
-                >
-                  {i18n.t(labelKey)}
-                </Text>
+                  fill={hasSidebar}
+                />
               )}
               {shortcut && (
                 <Text

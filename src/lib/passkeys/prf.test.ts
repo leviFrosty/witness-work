@@ -99,6 +99,20 @@ describe('prfFirst', () => {
     expect(prfFirst({ results: { first: view } })).toEqual(OUTPUT)
   })
 
+  it('takes a plain array of bytes, as 1Password in a browser gives', () => {
+    expect(prfFirst({ results: { first: Array.from(OUTPUT) } })).toEqual(OUTPUT)
+  })
+
+  it("is null for an array that isn't 32 bytes", () => {
+    for (const first of [
+      Array.from(new Uint8Array(31)),
+      [...Array.from(new Uint8Array(31)), 256],
+      [...Array.from(new Uint8Array(31)), 1.5],
+      [...Array.from(new Uint8Array(31)), '1'],
+    ])
+      expect(prfFirst({ results: { first } })).toBeNull()
+  })
+
   it('is null when absent, empty, malformed or not 32 bytes', () => {
     for (const prf of [
       { results: { first: 'AQL_' } },

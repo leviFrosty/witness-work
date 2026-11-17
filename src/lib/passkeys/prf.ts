@@ -54,6 +54,11 @@ export function prfFirst(prf: unknown): Uint8Array | null {
     bytes = new Uint8Array(
       first.buffer.slice(first.byteOffset, first.byteOffset + first.byteLength)
     )
+  } else if (
+    Array.isArray(first) &&
+    first.every((byte) => Number.isInteger(byte) && byte >= 0 && byte <= 255)
+  ) {
+    bytes = Uint8Array.from(first as number[])
   }
   return bytes?.length === PRF_OUTPUT_BYTES ? bytes : null
 }

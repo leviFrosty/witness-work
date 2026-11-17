@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "你最新的更改尚未保存。请释放此设备上的空间，并保持此标签页打开。",
   "webStorage_writeFailed": "无法保存你最新的更改",
   "webStorage_writeFailedMessage": "WitnessWork 正在重试，请保持此标签页打开。",
-  "webOffline_banner": "你已离线。重新连接后即可同步更改，在此之前更改会保存在此设备上。",
+  "webOffline_banner": "已离线。更改已保存。",
   "webUpdate_title": "有可用更新",
   "webUpdate_message": "准备好后请重新加载。你已保存的记录不受影响。",
   "webUpdate_reload": "重新加载",

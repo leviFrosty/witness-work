@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Ihre letzten Änderungen sind noch nicht gespeichert. Schaffen Sie Speicherplatz auf diesem Gerät und lassen Sie diesen Tab geöffnet.",
   "webStorage_writeFailed": "Ihre letzten Änderungen konnten nicht gespeichert werden",
   "webStorage_writeFailedMessage": "Lassen Sie diesen Tab geöffnet, während WitnessWork es erneut versucht.",
-  "webOffline_banner": "Sie sind offline. Verbinden Sie sich erneut, um Ihre Änderungen zu synchronisieren. Bis dahin sind sie auf diesem Gerät gespeichert.",
+  "webOffline_banner": "Offline. Änderungen sind gespeichert.",
   "webUpdate_title": "Update verfügbar",
   "webUpdate_message": "Laden Sie neu, wenn Sie bereit sind. Ihre gespeicherten Daten sind nicht betroffen.",
   "webUpdate_reload": "Neu laden",

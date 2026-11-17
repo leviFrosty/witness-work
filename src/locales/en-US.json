@@ -536,7 +536,7 @@
   "webStorage_fullMessage": "Your latest changes aren't saved yet. Free up space on this device and keep this tab open.",
   "webStorage_writeFailed": "Couldn't save your latest changes",
   "webStorage_writeFailedMessage": "Keep this tab open while WitnessWork tries again.",
-  "webOffline_banner": "You're offline. Reconnect to sync your changes. They're saved on this device until then.",
+  "webOffline_banner": "You're offline. Changes are saved.",
   "webUpdate_title": "Update available",
   "webUpdate_message": "Reload when you're ready. Your saved records aren't affected.",
   "webUpdate_reload": "Reload",

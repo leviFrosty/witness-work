@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "최근 변경 사항이 아직 저장되지 않았습니다. 이 기기의 공간을 확보하고 이 탭을 열어 두세요.",
   "webStorage_writeFailed": "최근 변경 사항을 저장하지 못했습니다",
   "webStorage_writeFailedMessage": "WitnessWork가 다시 시도하는 동안 이 탭을 열어 두세요.",
-  "webOffline_banner": "오프라인입니다. 다시 연결하면 변경 사항이 동기화됩니다. 그때까지는 이 기기에 저장됩니다.",
+  "webOffline_banner": "오프라인입니다. 변경 사항은 저장되었습니다.",
   "webUpdate_title": "업데이트가 있습니다",
   "webUpdate_message": "준비되면 새로고침하세요. 저장된 기록에는 영향이 없습니다.",
   "webUpdate_reload": "새로고침",

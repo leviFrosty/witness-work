@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "你最新的變更尚未儲存。請在此裝置上釋出空間，並保持此分頁開啟。",
   "webStorage_writeFailed": "無法儲存你最新的變更",
   "webStorage_writeFailedMessage": "WitnessWork 正在重試，請保持此分頁開啟。",
-  "webOffline_banner": "你目前離線。重新連線後即可同步變更，在那之前變更會儲存在此裝置上。",
+  "webOffline_banner": "已離線。變更已儲存。",
   "webUpdate_title": "有可用的更新",
   "webUpdate_message": "準備好時請重新載入。你儲存的記錄不會受到影響。",
   "webUpdate_reload": "重新載入",

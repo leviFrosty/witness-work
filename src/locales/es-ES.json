@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Tus últimos cambios aún no están guardados. Libera espacio en este dispositivo y mantén abierta esta pestaña.",
   "webStorage_writeFailed": "No se pudieron guardar tus últimos cambios",
   "webStorage_writeFailedMessage": "Mantén abierta esta pestaña mientras WitnessWork lo intenta de nuevo.",
-  "webOffline_banner": "Sin conexión. Vuelve a conectarte para sincronizar tus cambios. Mientras tanto, se guardan en este dispositivo.",
+  "webOffline_banner": "Sin conexión. Cambios guardados.",
   "webUpdate_title": "Actualización disponible",
   "webUpdate_message": "Recarga cuando quieras. Tus registros guardados no se verán afectados.",
   "webUpdate_reload": "Recargar",

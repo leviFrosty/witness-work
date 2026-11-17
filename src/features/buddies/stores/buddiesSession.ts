@@ -8,13 +8,10 @@ export const useBuddiesSession = create<
   BuddySyncStatus & {
     sending: number
 
-    flagConfirmed: boolean
-
     running: boolean
   }
 >()(() => ({
   ...initialBuddySyncStatus,
   sending: 0,
-  flagConfirmed: false,
   running: false,
 }))

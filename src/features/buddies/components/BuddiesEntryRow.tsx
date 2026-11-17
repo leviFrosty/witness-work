@@ -1,9 +1,4 @@
-import {
-  ActivityIndicator,
-  type StyleProp,
-  View,
-  type ViewStyle,
-} from 'react-native'
+import { type StyleProp, View, type ViewStyle } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import moment from 'moment'
 import { Users as UsersIcon } from 'lucide-react-native'
@@ -51,7 +46,6 @@ export default function BuddiesEntryRow({
 
   if (availability === 'hidden') return null
   const disabled = availability === 'disabled'
-  const loading = availability === 'loading'
   const active = buddies.filter((buddy) => buddy.status === 'active')
   const next = together.find((item) => item.status !== 'declined')
   const summary =
@@ -85,7 +79,7 @@ export default function BuddiesEntryRow({
   return (
     <Button
       onPress={open}
-      disabled={disabled || loading}
+      disabled={disabled}
       accessibilityRole='button'
       accessibilityLabel={
         disabled
@@ -166,15 +160,11 @@ export default function BuddiesEntryRow({
           }}
         />
       ) : null}
-      {loading ? (
-        <ActivityIndicator size='small' color={theme.colors.textAlt} />
-      ) : (
-        <LucideIcon
-          icon={ChevronForwardIcon}
-          size={14}
-          color={theme.colors.textAlt}
-        />
-      )}
+      <LucideIcon
+        icon={ChevronForwardIcon}
+        size={14}
+        color={theme.colors.textAlt}
+      />
     </Button>
   )
 }

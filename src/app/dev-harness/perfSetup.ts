@@ -1,7 +1,6 @@
 import { Platform, Settings } from 'react-native'
 import { mmkvStorage } from '@/stores/mmkv'
 import { usePreferences } from '@/stores/preferences'
-import { setDevFlagOverride } from '@/lib/featureFlags'
 import { registerForPushNotificationsAsync } from '@/lib/notifications'
 import { reportPerf } from '@/lib/perfProbe'
 import { navigationRef } from '@/features/contacts/lib/linking'
@@ -61,7 +60,6 @@ async function setUp() {
 }
 
 export function installPerfSetup() {
-  setDevFlagOverride('buddies', true)
   if (WELCOME) {
     require('@/app/dev-harness/perfWelcome').runPerfWelcome()
     return

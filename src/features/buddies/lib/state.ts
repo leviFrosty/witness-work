@@ -1090,10 +1090,6 @@ export type BuddiesState = {
 
   seenCarEvents: Record<string, number>
 
-  devOverride: boolean
-
-  flagLastKnown: boolean | null
-
   avatarThumbnail: { source: string; data: string } | null
 }
 
@@ -1165,8 +1161,6 @@ export const initialBuddiesState: BuddiesState = {
   carInvites: {},
   carEvents: {},
   seenCarEvents: {},
-  devOverride: false,
-  flagLastKnown: null,
   avatarThumbnail: null,
 }
 

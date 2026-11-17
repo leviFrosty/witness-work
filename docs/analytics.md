@@ -294,8 +294,8 @@ Users opt out. `onboarding_step_completed` carries `selected_option`: `on` or
 `cloud_sync_default_outcome` follows; with `on`, compare against that event's
 outcomes after onboarding.
 
-`buddies` only appears where Buddies is available (iOS builds with the Keychain
-module and the `buddies` flag on). Its question is whether introducing Buddies
+`buddies` only appears where Buddies is available (builds with the Keychain
+module, or a signed-in browser). Its question is whether introducing Buddies
 during setup leads people to invite a buddy, and what gets in the way. The
 name comes at the end of setup, so a buddy invite without one first asks for it
 on the step and reports `name_required` only if the invite still fails. Its

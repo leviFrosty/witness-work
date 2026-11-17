@@ -53,7 +53,7 @@ Steps:
 
 Simulators and emulators can't scan a real camera. The old phone shows the QR, and the new phone gets its link through `wwv link` (the real `/h` deep-link path) or Tools → Account → Handoff → paste → Sign in with this link.
 
-- Bring up iOS and Android one at a time in the same worktree (`wwv up --platform ios`, then `--platform android`). `wwv flag buddies on` on each.
+- Bring up iOS and Android one at a time in the same worktree (`wwv up --platform ios`, then `--platform android`).
 - **Old phone.** `wwv nav "Set Up Another Device"` (or Settings → Account → Devices → Set Up Another Device). Once the QR shows, `wwv eval '__WW_DEV__.handoff.link()'` returns its link (dev builds only).
 - **New phone.** `wwv link '<that link>' --platform <other>`: the route is `Sign In With QR Code` and it shows "Confirm on your other phone" with a code (`handoff-code`).
   - On iOS, `wwv link` (`simctl openurl`) opens the app only for paths in the production host's `apple-app-site-association`. Until a ww-api with `/h` in it is deployed, the link opens Safari instead; hand the link to the screen with `wwv nav "Sign In With QR Code" '{"entry":"onboarding","link":"<link>"}'` (what `HandoffLinkListener` does) or Tools → Account → Handoff → paste → Sign in with this link. Android's `wwv link` goes through the app's own intent filter either way.

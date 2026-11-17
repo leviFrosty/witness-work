@@ -15,11 +15,7 @@ import { usePreferences } from '@/stores/preferences'
 import { addForegroundListener } from '@/lib/appLifecycle'
 import { getOnline, useOnline } from '@/lib/http/online'
 
-export type FeatureFlag =
-  | 'buddies'
-  | 'announcement'
-  | 'scribe-ai'
-  | 'shared-cars'
+export type FeatureFlag = 'announcement' | 'scribe-ai' | 'shared-cars'
 type FlagValues = Partial<Record<FeatureFlag, boolean | string>>
 type FlagPayloads = Partial<Record<FeatureFlag, JsonType>>
 

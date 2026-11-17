@@ -10,7 +10,7 @@ The Schedule tab shows a month calendar of planned versus actual time. Users cre
 - `plans-create` lets the user tap a future day, or use Quick Action → "Create Plan", to add a plan. The form shows the date at the top, then the duration control Add Time uses (− and +, the big number, preset amounts), then the details (Start time, Title, Location, Note, Invite Buddies, Notify Me, End Date for recurring plans, Type). A dock at the bottom keeps One Time / Recurring and Save.
 - `plans-recurring` sets a weekly recurrence, with overrides for single days.
 - `plans-deep-link` opens `witnesswork://day` (the empty Plan Day, from the widget "+").
-- `plans-buddies` marks plans buddies joined, and lets the user ask to join (flagged; see buddies.md).
+- `plans-buddies` marks plans buddies joined, and lets the user ask to join (see buddies.md).
 
 ## How to get to it (user POV)
 

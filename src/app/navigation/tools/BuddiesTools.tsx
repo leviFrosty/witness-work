@@ -4,7 +4,6 @@ import { UsersRound as UsersRoundIcon } from 'lucide-react-native'
 import moment from 'moment'
 import { toast } from '@/stores/toasts'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
-import Switch from '@/components/ui/Switch'
 import apis from '@/constants/apis'
 import useNow from '@/hooks/useNow'
 import useBuddiesAvailability from '@/features/buddies/hooks/useBuddiesAvailability'
@@ -54,14 +53,12 @@ const readableLog = (live: LiveDiagnostics) =>
 
 export default function BuddiesTools() {
   const { now } = useNow()
-  const devOverride = useBuddies((state) => state.devOverride)
   const inboxId = useBuddies((state) => state.registeredInboxId)
   const syncSeq = useBuddies((state) => state.syncSeq)
   const lastSyncAt = useBuddies((state) => state.lastSyncAt)
   const pushRegisteredAt = useBuddies((state) => state.pushRegisteredAt)
   const deviceId = useBuddies((state) => state.deviceId)
   const notificationsEnabled = useBuddies((state) => state.notificationsEnabled)
-  const flagLastKnown = useBuddies((state) => state.flagLastKnown)
   const buddyStatuses = useBuddies((state) =>
     state.buddies.map((buddy) => buddy.status).join(',')
   )
@@ -124,7 +121,6 @@ export default function BuddiesTools() {
     at: new Date(now).toISOString(),
     relay: apis.buddies,
     availability,
-    flagLastKnown,
     inbox: shortId(inboxId),
     syncSeq,
     lastSyncAt: lastSyncAt ? new Date(lastSyncAt).toISOString() : null,
@@ -152,20 +148,6 @@ export default function BuddiesTools() {
       summary={started ? `live ${live.status}` : 'not started'}
     >
       <ToolList>
-        {__DEV__ && (
-          <ToolRow
-            label='Show without the remote flag'
-            trailing={
-              <Switch
-                accessibilityLabel='Show without the remote flag'
-                value={devOverride}
-                onValueChange={(value) => {
-                  useBuddies.setState({ devOverride: value })
-                }}
-              />
-            }
-          />
-        )}
         <ToolRow
           label='Reset Buddies onboarding'
           onPress={() => {

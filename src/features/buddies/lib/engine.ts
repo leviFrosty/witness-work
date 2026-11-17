@@ -5898,8 +5898,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     coolDownUntil = 0
 
     const {
-      devOverride,
-      flagLastKnown,
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,
@@ -5913,8 +5911,6 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       refusedInboxIds,
 
       avatarThumbnail,
-      devOverride,
-      flagLastKnown,
       onboardingComplete,
       notificationsEnabled,
       joinRequestNotifications,

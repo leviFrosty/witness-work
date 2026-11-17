@@ -27,7 +27,6 @@ Buddies lets two publishers connect through an end-to-end encrypted relay (ww-ap
 Preconditions:
 
 - A local relay, which `wwv up` always starts. Run `wwv up --platform ios` and `wwv up --platform android`. Both devices share one Metro and one isolated ww-api (this checkout's `services/api`).
-- Flag on for each device: `wwv flag buddies on --platform ios` and `wwv flag buddies on --platform android`.
 - `wwv seed pioneer` on each device.
 - `wwv doctor` shows the `api` check as `local … 200`.
 
@@ -71,12 +70,10 @@ While the app is in the foreground, Buddies keeps a WebSocket to the relay (`inb
 
 - A worktree holds only one iOS device (`--ipad` hands back the iPhone). For a second person, use the Android emulator, or pair the app with a headless engine against the local relay; [streaks.md](./streaks.md) has the recipe.
 
-- The flag override only applies to dev builds and survives remote flag refreshes. `wwv flag buddies clear` restores the remote value.
 - Buddies needs the Keychain native module (Keystore and Block Store on Android). On a binary without it, the feature stays hidden even with the flag on.
 - APNs pushes are skipped locally, because `wrangler dev` can't reach APNs. Refresh by reopening the screen, or replay the push (Named alerts, above). Android alerts work locally with the FCM key (above).
 - The relay's rate limit is 30 requests per minute per IP. Avoid tight loops.
-- For screens that only read Buddies state (Plan Details, the bell), seed made-up buddies, `shareReplies`, `joinRequests`, and `incomingShares` through `__WW_DEV__.stores.buddies.setState(...)` instead of pairing devices. Set `registeredInboxId` (the bell lists Buddies items only once it's set) and a future `lastSyncAt`, or the bell shows "Couldn't check for new Buddies activity" after its sync to that made-up inbox fails. Re-run `wwv flag buddies on` after a reload; the override doesn't survive one.
+- For screens that only read Buddies state (Plan Details, the bell), seed made-up buddies, `shareReplies`, `joinRequests`, and `incomingShares` through `__WW_DEV__.stores.buddies.setState(...)` instead of pairing devices. Set `registeredInboxId` (the bell lists Buddies items only once it's set) and a future `lastSyncAt`, or the bell shows "Couldn't check for new Buddies activity" after its sync to that made-up inbox fails.
 - Universal links and App Links always point at the production host. Drive invites with `wwv link`, which the app parses locally, rather than a browser.
 - Enter Invite Link uses `Alert.prompt` on iOS and reads the clipboard on Android (there's no prompt there). Android 16 emulators have no clipboard shell command (`wwv ad clipboard write` refuses), so stand in for "copied from Messages" through the app: `wwv eval "globalThis.expo.modules.ExpoClipboard.setStringAsync('Join me: <link>', {})"` (the options argument is required), then tap Enter Invite Link.
-- A link opened while the `buddies` flag override is off (it doesn't survive `up` relaunching the app) waits in `BuddyInviteListener`; `wwv flag buddies on` releases it.
 - After opening any `ww-proxy.leviwilkerson.com` or `witnesswork.app` link on Android, check the app didn't re-open it: `adb logcat -c`, open the link, then `adb logcat -d | grep -cE 'START u0 \{act=android.intent.action.VIEW dat=https://(ww-proxy|witnesswork|dev\.witnesswork)'` must be 1. Handing an own link to `Linking.openURL` loops on Android, where the app owns the host.

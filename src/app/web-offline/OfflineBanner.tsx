@@ -5,14 +5,20 @@ import useTheme from '@/contexts/theme'
 import { useOnline } from '@/lib/http/online'
 import i18n from '@/lib/locales'
 import { offlineBannerShows } from '@/lib/webOffline/offlineState'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '@/stores/preferences'
 
-export default function OfflineBanner() {
-  const theme = useTheme()
+export function useOfflineBannerShows() {
   const online = useOnline()
   const syncIssue = usePreferences((s) => s.iCloudSyncIssue)
   const syncErrorCode = usePreferences((s) => s.iCloudSyncErrorCode)
-  if (!offlineBannerShows({ online, syncIssue, syncErrorCode })) return null
+  return offlineBannerShows({ online, syncIssue, syncErrorCode })
+}
+
+export default function OfflineBanner() {
+  const theme = useTheme()
+  const insets = useSafeAreaInsets()
+  if (!useOfflineBannerShows()) return null
   return (
     <View
       accessibilityRole='alert'
@@ -20,6 +26,7 @@ export default function OfflineBanner() {
       style={[
         styles.banner,
         {
+          paddingTop: insets.top + PADDING_VERTICAL,
           backgroundColor: theme.colors.card,
           borderBottomColor: theme.colors.border,
         },
@@ -33,13 +40,15 @@ export default function OfflineBanner() {
   )
 }
 
+const PADDING_VERTICAL = 10
+
 const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingBottom: PADDING_VERTICAL,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
 })

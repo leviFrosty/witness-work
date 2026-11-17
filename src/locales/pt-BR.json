@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Suas últimas alterações ainda não foram salvas. Libere espaço neste dispositivo e mantenha esta aba aberta.",
   "webStorage_writeFailed": "Não foi possível salvar suas últimas alterações",
   "webStorage_writeFailedMessage": "Mantenha esta aba aberta enquanto o WitnessWork tenta de novo.",
-  "webOffline_banner": "Você está offline. Reconecte-se para sincronizar suas alterações. Até lá, elas ficam salvas neste dispositivo.",
+  "webOffline_banner": "Você está offline. Alterações salvas.",
   "webUpdate_title": "Atualização disponível",
   "webUpdate_message": "Recarregue quando quiser. Seus registros salvos não são afetados.",
   "webUpdate_reload": "Recarregar",

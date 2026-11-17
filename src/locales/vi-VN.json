@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Các thay đổi mới nhất của bạn chưa được lưu. Hãy giải phóng dung lượng trên thiết bị này và giữ thẻ này mở.",
   "webStorage_writeFailed": "Không thể lưu các thay đổi mới nhất của bạn",
   "webStorage_writeFailedMessage": "Hãy giữ thẻ này mở trong lúc WitnessWork thử lại.",
-  "webOffline_banner": "Bạn đang ngoại tuyến. Hãy kết nối lại để đồng bộ các thay đổi. Cho đến lúc đó, chúng được lưu trên thiết bị này.",
+  "webOffline_banner": "Ngoại tuyến. Đã lưu thay đổi.",
   "webUpdate_title": "Có bản cập nhật",
   "webUpdate_message": "Hãy tải lại khi bạn sẵn sàng. Các bản ghi đã lưu của bạn không bị ảnh hưởng.",
   "webUpdate_reload": "Tải lại",

@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Je laatste wijzigingen zijn nog niet opgeslagen. Maak ruimte vrij op dit apparaat en laat dit tabblad open.",
   "webStorage_writeFailed": "Je laatste wijzigingen konden niet worden opgeslagen",
   "webStorage_writeFailedMessage": "Laat dit tabblad open terwijl WitnessWork het opnieuw probeert.",
-  "webOffline_banner": "Je bent offline. Maak opnieuw verbinding om je wijzigingen te synchroniseren. Tot dan zijn ze op dit apparaat opgeslagen.",
+  "webOffline_banner": "Je bent offline. Wijzigingen opgeslagen.",
   "webUpdate_title": "Update beschikbaar",
   "webUpdate_message": "Laad opnieuw als je klaar bent. Je opgeslagen gegevens blijven behouden.",
   "webUpdate_reload": "Opnieuw laden",

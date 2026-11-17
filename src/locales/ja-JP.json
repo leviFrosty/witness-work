@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "最新の変更はまだ保存されていません。このデバイスの空き容量を増やし、このタブを開いたままにしてください。",
   "webStorage_writeFailed": "最新の変更を保存できませんでした",
   "webStorage_writeFailedMessage": "WitnessWorkが再試行するあいだ、このタブを開いたままにしてください。",
-  "webOffline_banner": "オフラインです。接続し直すと変更が同期されます。それまでは、このデバイスに保存されています。",
+  "webOffline_banner": "オフラインです。変更は保存されています。",
   "webUpdate_title": "アップデートがあります",
   "webUpdate_message": "準備ができたら再読み込みしてください。保存した記録には影響しません。",
   "webUpdate_reload": "再読み込み",

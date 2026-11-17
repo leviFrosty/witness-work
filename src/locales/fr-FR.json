@@ -527,7 +527,7 @@
   "webStorage_fullMessage": "Vos dernières modifications ne sont pas encore enregistrées. Libérez de l’espace sur cet appareil et gardez cet onglet ouvert.",
   "webStorage_writeFailed": "Impossible d’enregistrer vos dernières modifications",
   "webStorage_writeFailedMessage": "Gardez cet onglet ouvert pendant que WitnessWork réessaie.",
-  "webOffline_banner": "Vous êtes hors ligne. Reconnectez-vous pour synchroniser vos modifications. Elles sont enregistrées sur cet appareil en attendant.",
+  "webOffline_banner": "Hors ligne. Modifications enregistrées.",
   "webUpdate_title": "Mise à jour disponible",
   "webUpdate_message": "Rechargez quand vous êtes prêt. Vos données enregistrées ne sont pas touchées.",
   "webUpdate_reload": "Recharger",

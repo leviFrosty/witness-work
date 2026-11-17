@@ -515,7 +515,7 @@
   "webStorage_fullMessage": "As suas alterações mais recentes ainda não foram guardadas. Liberte espaço neste dispositivo e mantenha este separador aberto.",
   "webStorage_writeFailed": "Não foi possível guardar as suas últimas alterações",
   "webStorage_writeFailedMessage": "Mantenha este separador aberto enquanto o WitnessWork tenta novamente.",
-  "webOffline_banner": "Está sem ligação. Volte a ligar-se para sincronizar as suas alterações. Até lá, ficam guardadas neste dispositivo.",
+  "webOffline_banner": "Sem ligação. Alterações guardadas.",
   "webUpdate_title": "Atualização disponível",
   "webUpdate_message": "Recarregue quando estiver pronto. Os seus registos guardados não são afetados.",
   "webUpdate_reload": "Recarregar",

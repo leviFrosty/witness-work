@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   openSettings: vi.fn(),
   searchPlaces: vi.fn(async (): Promise<unknown[]> => []),
   resolvePlace: vi.fn(),
+  preferences: { placeSearchLocationAsked: false } as Record<string, unknown>,
   slot: (name: string) => (props: React.PropsWithChildren) =>
     React.createElement(name, props),
 }))
@@ -43,6 +44,15 @@ vi.mock('@/lib/placeSearch', () => ({
 }))
 vi.mock('@/lib/errorTracking', () => ({
   errorTracking: { captureException: vi.fn() },
+}))
+vi.mock('@/stores/preferences', () => ({
+  usePreferences: {
+    getState: () => ({
+      ...mocks.preferences,
+      set: (patch: Record<string, unknown>) =>
+        Object.assign(mocks.preferences, patch),
+    }),
+  },
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/contexts/theme', () => ({
@@ -106,6 +116,7 @@ const locationButton = () =>
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.status = 'granted'
+  mocks.preferences.placeSearchLocationAsked = false
 })
 
 afterEach(async () => {
@@ -121,13 +132,34 @@ describe('PlaceSearchInput location status', () => {
     expect(locationButton()).toBeUndefined()
   })
 
-  it('asks for location only when the button is tapped', async () => {
+  it('asks for location when the button is tapped', async () => {
     mocks.status = 'undetermined'
     await render('1 Example Way')
     expect(mocks.requestLocation).not.toHaveBeenCalled()
 
     await act(async () => locationButton()!.props.onPress())
     expect(mocks.requestLocation).toHaveBeenCalledOnce()
+  })
+
+  it('asks for location once, the first time the search is focused', async () => {
+    mocks.status = 'undetermined'
+    await render()
+    expect(mocks.requestLocation).not.toHaveBeenCalled()
+
+    await act(async () => field().props.onFocus())
+    expect(mocks.requestLocation).toHaveBeenCalledOnce()
+    expect(mocks.preferences.placeSearchLocationAsked).toBe(true)
+
+    await act(async () => field().props.onFocus())
+    expect(mocks.requestLocation).toHaveBeenCalledOnce()
+  })
+
+  it('does not ask on focus once location was answered', async () => {
+    mocks.status = 'denied'
+    await render()
+    await act(async () => field().props.onFocus())
+    expect(mocks.requestLocation).not.toHaveBeenCalled()
+    expect(mocks.preferences.placeSearchLocationAsked).toBe(false)
   })
 
   it('opens Settings once location was declined', async () => {

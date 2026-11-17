@@ -84,6 +84,7 @@ export const NON_SYNCABLE_PREFERENCE_KEYS = new Set<string>([
   'badgesSeenAt',
   'badgesWelcome',
   'badgeCardDismissed',
+  'placeSearchLocationAsked',
 ])
 
 export const NON_SYNCABLE_PROFILE_KEYS = new Set(['profileUpdatedAt'])

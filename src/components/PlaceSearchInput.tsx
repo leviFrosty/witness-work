@@ -19,6 +19,7 @@ import useTheme from '@/contexts/theme'
 import useLocation from '@/hooks/useLocation'
 import i18n from '@/lib/locales'
 import { addForegroundListener } from '@/lib/appLifecycle'
+import { usePreferences } from '@/stores/preferences'
 import { errorTracking } from '@/lib/errorTracking'
 import { classifyNetworkError } from '@/lib/http/networkError'
 import {
@@ -272,6 +273,18 @@ export default function PlaceSearchInput({
     }
   }
 
+  const focus = () => {
+    onFocus?.()
+    const { placeSearchLocationAsked, set } = usePreferences.getState()
+    if (
+      placeSearchLocationAsked ||
+      status !== Location.PermissionStatus.UNDETERMINED
+    )
+      return
+    set({ placeSearchLocationAsked: true })
+    void requestLocation()
+  }
+
   const changeQuery = (text: string) => {
     if (picked) {
       pickRun.current++
@@ -311,7 +324,7 @@ export default function PlaceSearchInput({
           }}
           value={picked ? suggestionLabel(picked) : query}
           onChangeText={changeQuery}
-          onFocus={onFocus}
+          onFocus={focus}
           onBlur={onBlur}
           placeholder={placeholder}
           placeholderTextColor={theme.colors.textAlt}

@@ -10,9 +10,12 @@ import {
   Users as UsersIcon,
   Wrench as WrenchIcon,
 } from 'lucide-react-native'
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import {
+  BottomTabBarHeightCallbackContext,
+  BottomTabBarProps,
+} from '@react-navigation/bottom-tabs'
 import { BlurView } from '@/components/ui/BlurView'
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -108,6 +111,12 @@ const TabBar = ({
 
   const hidden = useTabBarHidden()
   const reduceMotion = useReducedMotion()
+
+  const reportHeight = useContext(BottomTabBarHeightCallbackContext)
+  const barHeight = insets.bottom + CAPSULE_HEIGHT
+  useEffect(() => {
+    reportHeight?.(barHeight)
+  }, [reportHeight, barHeight])
 
   const liveSidebarWidth = useSharedValue(sidebarWidth)
   const sidebarWidthStyle = useAnimatedStyle(() => ({

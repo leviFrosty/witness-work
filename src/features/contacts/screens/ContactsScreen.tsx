@@ -641,7 +641,7 @@ const ContactsScreen = ({
         borderStartWidth: 1,
         borderStartColor: theme.colors.border,
         marginRight: 16,
-        marginBottom: hasBottomBar ? TAB_BAR_HEIGHT : 0,
+        marginBottom: hasBottomBar ? bottomChrome : 0,
         overflow: 'hidden',
         borderRadius: theme.numbers.borderRadiusLg,
       }}

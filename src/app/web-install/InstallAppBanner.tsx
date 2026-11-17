@@ -17,16 +17,9 @@ import {
   promptInstall,
   useInstallPromptState,
 } from '@/lib/webInstall/installPrompt'
+import { isStandalone } from '@/lib/webInstall/standalone'
 
 const APP_ICON = require('@/assets/icon.png')
-
-function isStandalone(): boolean {
-  const nav = navigator as Navigator & { standalone?: boolean }
-  return (
-    window.matchMedia?.('(display-mode: standalone)').matches === true ||
-    nav.standalone === true
-  )
-}
 
 export default function InstallAppBanner() {
   const theme = useTheme()

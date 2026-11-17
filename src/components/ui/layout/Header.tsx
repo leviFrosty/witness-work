@@ -13,10 +13,8 @@ import useTheme from '@/contexts/theme'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
 import useUnbrokenWords from '@/hooks/useUnbrokenWords'
 import Text from '@/components/ui/MyText'
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import SafeAreaProvider from '@/components/ui/layout/SafeAreaProvider'
 import { isRtlLayout } from '@/lib/direction'
 import { transparentToScreenReaders } from '@/lib/screenReader'
 import { useNavigation } from '@react-navigation/native'

@@ -1,6 +1,6 @@
 import '../../../env'
 import '@/lib/locales'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import SafeAreaProvider from '@/components/ui/layout/SafeAreaProvider'
 import ThemeProvider from '@/providers/ThemeProvider'
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import OpenInAnotherTabScreen from '@/app/launch/OpenInAnotherTabScreen'

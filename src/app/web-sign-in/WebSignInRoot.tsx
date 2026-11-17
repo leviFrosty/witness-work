@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { useColorScheme } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import SafeAreaProvider from '@/components/ui/layout/SafeAreaProvider'
 import { TamaguiProvider } from 'tamagui'
 import tamaguiConfig from '../../../tamagui.config'
 import ToastHost from '@/components/toast/ToastHost'

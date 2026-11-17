@@ -3,9 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!-- viewport-fit=cover makes iOS report the home indicator's and the
+         notch's space through env(safe-area-inset-*), which is where
+         react-native-safe-area-context reads insets on the web. Without it
+         they're 0, and the tab bar sits on the home indicator in the
+         installed app. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
     />
     <title>%WEB_TITLE%</title>
     <!-- Installing the web app (ADR 0037 §7): the manifest, and Safari's own

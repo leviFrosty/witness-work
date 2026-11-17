@@ -1,5 +1,4 @@
 import { AppState, Platform } from 'react-native'
-import Purchases from 'react-native-purchases'
 import { MMKV } from 'react-native-mmkv'
 import apis from '@/constants/apis'
 import { errorTracking } from '@/lib/errorTracking'
@@ -132,6 +131,7 @@ export const revenueCatLink = createRevenueCatLink({
     return accountId
   },
   appUserId: async () => {
+    const { default: Purchases } = await import('react-native-purchases')
     if (!(await Purchases.isConfigured())) return null
     const appUserId = await Purchases.getAppUserID()
 

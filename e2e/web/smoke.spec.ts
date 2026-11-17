@@ -73,6 +73,10 @@ test('a signed-out browser opens on the sign-in screen', async ({
     (route) => route.fulfill({ status: 503 })
   )
   const page = await context.newPage()
+  const appScripts: string[] = []
+  page.on('request', (request) => {
+    if (/UnlockedApp/.test(request.url())) appScripts.push(request.url())
+  })
   const en = strings('en-US')
   await page.goto('/')
   await expect(page.getByText(en.webSignIn_title)).toBeVisible()
@@ -82,6 +86,11 @@ test('a signed-out browser opens on the sign-in screen', async ({
     en.webSignIn_recoveryKey,
   ])
     await expect(page.getByRole('button', { name: label })).toBeVisible()
+  await page.waitForTimeout(1_000)
+  expect(appScripts, 'the app loads before anyone signs in').toEqual([])
+
+  await page.getByRole('button', { name: en.webSignIn_recoveryKey }).click()
+  await expect.poll(() => appScripts.length).toBeGreaterThan(0)
   await context.close()
 })
 

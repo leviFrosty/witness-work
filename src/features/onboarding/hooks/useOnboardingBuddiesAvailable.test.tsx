@@ -50,9 +50,7 @@ describe('useOnboardingBuddiesAvailable', () => {
     expect(await render(false)).toBe(false)
   })
 
-  it('counts loading and a relay that is off as available', async () => {
-    runtime.availability = 'loading'
-    expect(await render(false)).toBe(true)
+  it('counts a relay that is off as available', async () => {
     runtime.availability = 'disabled'
     expect(await render(false)).toBe(true)
   })

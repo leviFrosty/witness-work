@@ -7,7 +7,7 @@
 # the made-up car away. Being offline is simulated (`__WW_DEV__.network`) for
 # two short stretches, and set back first in case an earlier run stopped in
 # one. Two people on two devices: features/shared-cars.md.
-# setup: (() => { __WW_DEV__.network.offline(false); __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true, mileageTrackingEnabled: true }); __WW_DEV__.setFlag('buddies', true); __WW_DEV__.setFlag('shared-cars', true); return true })()
+# setup: (() => { __WW_DEV__.network.offline(false); __WW_DEV__.stores.preferences.setState({ homeChecklistDismissed: true, petPromptDismissed: true, mileageTrackingEnabled: true }); __WW_DEV__.__WW_DEV__.setFlag('shared-cars', true); return true })()
 # setup: (() => { const d = new Date(); const today = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); const mileage = __WW_DEV__.stores.mileage.getState(); mileage.saveVehicle({ id: 'verify-civic', name: 'Civic', createdAt: 1 }); mileage.saveTrip({ id: 'verify-civic-trip', vehicleId: 'verify-civic', date: today, distanceMiles: 12, createdAt: 1 }); __WW_DEV__.sharedCars.addLocalCar({ name: 'Family Minivan', people: ['Ana Pereira'], trips: [{ by: 'Ana Pereira', distanceMiles: 30, note: 'Territory 12' }, { by: 'me', distanceMiles: 20 }] }); __WW_DEV__.navigate('Mileage'); return true })()
 # assert: __WW_DEV__.stores.buddies.getState().registeredInboxId === null
 # assert: (() => { const cars = Object.values(__WW_DEV__.stores.sharedCars.getState().cars); return cars.length === 1 && cars[0].vehicles[0].name === 'Family Minivan' && cars[0].trips.length === 2 && cars[0].vehicles[0].archived !== true })()
@@ -86,5 +86,4 @@ name: Filter Mileage by person, see who logged and edited a trip and when change
 # The flag overrides last until a reload, so the flows after this one get the
 # remote values back.
 - evalScript: >-
-    (() => { __WW_DEV__.setFlag('shared-cars', undefined);
-    __WW_DEV__.setFlag('buddies', undefined); return true })()
+    (() => { __WW_DEV__.setFlag('shared-cars', undefined); return true })()

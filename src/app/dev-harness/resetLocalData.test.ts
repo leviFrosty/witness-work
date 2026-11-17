@@ -173,8 +173,6 @@ describe('resetLocalData', () => {
     useBuddies.setState({
       buddies: [{ inboxId: 'inbox-1' } as never],
       registeredInboxId: 'inbox-me',
-      devOverride: true,
-      flagLastKnown: true,
     })
     resetLocalData()
     expect(useBuddies.getState()).toEqual(initialBuddiesState)

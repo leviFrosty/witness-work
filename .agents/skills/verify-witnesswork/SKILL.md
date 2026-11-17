@@ -93,7 +93,7 @@ Checks: free disk, Metro served from this worktree, API `/health`, the device le
 
 ```bash
 wwv seed pioneer            # fresh | onboarded | publisher | pioneer | busy | badges | stress
-wwv flag buddies on         # buddies | scribe-ai; on | off | clear
+wwv flag scribe-ai on        # scribe-ai | shared-cars; on | off | clear
 wwv eval '__WW_DEV__.setSupporter(true)'
 wwv nav "Contact Details" '{"id":"verify-contact-0"}'
 wwv link 'witnesswork://add-time'   # real deep-link path; accepts the iOS "Open in" prompt

@@ -1,6 +1,5 @@
 # seed: fresh
-# Buddies on. Before running: `wwv flag buddies on --platform <ios|android>`,
-# from a screen other than onboarding (`wwv seed onboarded` first): seeding
+# Before running, go to a screen other than onboarding (`wwv seed onboarded` first): seeding
 # `fresh` over onboarding that's already showing keeps its old step. The
 # leading underscore keeps it out of the default `wwv flow` run.
 # assert: __WW_DEV__.stores.preferences.getState().onboardingStepId === 'notifications'

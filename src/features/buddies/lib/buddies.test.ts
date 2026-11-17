@@ -2584,7 +2584,7 @@ describe('shared Plans and Follow-ups', () => {
       anna.inboxId
     )
 
-    anna.store.setState({ notificationsEnabled: false, devOverride: true })
+    anna.store.setState({ notificationsEnabled: false })
     await anna.engine.deleteEverything()
     expect(anna.store.getState()).toMatchObject({
       incomingShares: {},
@@ -2592,7 +2592,6 @@ describe('shared Plans and Follow-ups', () => {
       shareReplies: {},
       notifications: [],
       notificationsEnabled: false,
-      devOverride: true,
       onboardingComplete: true,
     })
 

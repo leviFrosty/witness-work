@@ -3026,7 +3026,7 @@ const commands = {
     const [name, value] = positional
     const parsed = value === 'on' ? true : value === 'off' ? false : undefined
     if (!name || !['on', 'off', 'clear'].includes(value))
-      fail('Usage: ww-verify flag <buddies|scribe-ai> <on|off|clear>')
+      fail('Usage: ww-verify flag <scribe-ai|shared-cars> <on|off|clear>')
     await cdpEval(
       state,
       currentPlatform(state, flags),
@@ -3508,7 +3508,7 @@ const commands = {
   doctor                                   read-only health check (exit 1 on failure)
   seed <fresh|onboarded|publisher|pioneer|busy|badges|stress>
   eval '<js expression>'                   run JS in the app, print JSON
-  flag <buddies|scribe-ai> <on|off|clear>
+  flag <scribe-ai|shared-cars> <on|off|clear>
   nav "<Route Name>" ['{"json":"params"}']
   link <url>                               open a deep link (accepts the iOS prompt)
   ad <agent-device args...>                agent-device with this run's session

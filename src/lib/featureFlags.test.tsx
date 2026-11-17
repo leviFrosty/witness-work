@@ -106,7 +106,7 @@ beforeEach(async () => {
   policy.setAnalyticsEventsAllowed(true)
   policy.setAnalyticsProduction(true)
   mocks.reload.mockImplementation(async () => {
-    const values = { announcement: true, buddies: false }
+    const values = { announcement: true, 'shared-cars': false }
     publish(values)
     return values
   })
@@ -154,7 +154,7 @@ it('does not report exposure just for loading all flags', async () => {
 
 it('records an announcement at its reader, not a rollout gate, preserving multivariate values and boolean gating', async () => {
   mocks.reload.mockImplementation(async () => {
-    const values = { announcement: 'variant-b', buddies: false }
+    const values = { announcement: 'variant-b', 'shared-cars': false }
     publish(values)
     return values
   })
@@ -163,7 +163,7 @@ it('records an announcement at its reader, not a rollout gate, preserving multiv
   function Reader() {
     useInitializeFeatureFlags()
     const value = useFeatureFlagValue('announcement')
-    const enabled = useFeatureFlag('buddies')
+    const enabled = useFeatureFlag('shared-cars')
     return <output data-value={value} data-enabled={enabled} />
   }
   await act(async () => {
@@ -320,8 +320,8 @@ describe('useFeatureFlagsStatus', () => {
       () =>
         new Promise((resolve) => {
           finish = () => {
-            publish({ buddies: true })
-            resolve({ buddies: true })
+            publish({ 'shared-cars': true })
+            resolve({ 'shared-cars': true })
           }
         })
     )
@@ -369,7 +369,7 @@ describe('useFeatureFlagsStatus', () => {
       mocks.preferences!.setState({ analyticsEnabled: false })
     })
     expect(shownStatus()).toBe('loading')
-    await act(async () => publish({ buddies: false }))
+    await act(async () => publish({ 'shared-cars': false }))
     expect(shownStatus()).toBe('loaded')
   })
 })
@@ -470,7 +470,7 @@ describe('default-on flags', () => {
       return (
         <output
           data-scribe={useFeatureFlag('scribe-ai')}
-          data-buddies={useFeatureFlag('buddies')}
+          data-cars={useFeatureFlag('shared-cars')}
         />
       )
     }
@@ -479,14 +479,14 @@ describe('default-on flags', () => {
     })
     return Enabled
   }
-  const shown = (prop: 'data-scribe' | 'data-buddies') =>
+  const shown = (prop: 'data-scribe' | 'data-cars') =>
     root!.root.findByType('output').props[prop]
 
   it('is on while loading, while other flags stay closed', async () => {
     mocks.reload.mockImplementation(() => new Promise(() => undefined))
     await mountEnabled()
     expect(shown('data-scribe')).toBe(true)
-    expect(shown('data-buddies')).toBe(false)
+    expect(shown('data-cars')).toBe(false)
   })
 
   it('is on offline', async () => {
@@ -505,7 +505,7 @@ describe('default-on flags', () => {
     mocks.reload.mockRejectedValue(new Error('offline'))
     await mountEnabled()
     expect(shown('data-scribe')).toBe(true)
-    expect(shown('data-buddies')).toBe(false)
+    expect(shown('data-cars')).toBe(false)
   })
 
   it('is on when a load leaves it out, or answers true', async () => {
@@ -517,17 +517,17 @@ describe('default-on flags', () => {
 
   it('is off only when a response for this identity says false', async () => {
     mocks.reload.mockImplementation(async () => {
-      publish({ 'scribe-ai': false, buddies: true })
+      publish({ 'scribe-ai': false, 'shared-cars': true })
       return mocks.cached
     })
     const Enabled = await mountEnabled()
     expect(shown('data-scribe')).toBe(false)
-    expect(shown('data-buddies')).toBe(true)
+    expect(shown('data-cars')).toBe(true)
 
     mocks.distinctId = 'installation-two'
     await act(async () => root!.update(<Enabled />))
     expect(shown('data-scribe')).toBe(true)
-    expect(shown('data-buddies')).toBe(false)
+    expect(shown('data-cars')).toBe(false)
   })
 
   it('follows a dev override off', async () => {

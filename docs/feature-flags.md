@@ -34,12 +34,11 @@ Scribe AI replaced Notes Import, so the app no longer reads the `notes-import`
 and `notes-import-android` flags; archive them in PostHog once no supported app
 version reads them.
 
-Buddies uses the `buddies` flag (create it in PostHog before rollout; it starts
-off). `useBuddiesEnabled()` also requires a binary that ships the
-`buddies-keychain` native module, and dev builds can force it on from Tools →
-Buddies. The flag gates the Settings row, invite-link handling, calendar
-overlays, and the background runtime. The relay enforces its own kill switch
-(`buddies:enabled`); see `docs/buddies-protocol.md`.
+Buddies no longer reads a flag: it's on wherever the device has an account
+key (`useBuddiesEnabled()`), so a browser blocking PostHog still gets it. Keep
+the `buddies` flag in PostHog on at 100% until no supported app version reads
+it, because older versions hide Buddies when it's off. The relay enforces its
+own kill switch (`buddies:enabled`); see `docs/buddies-protocol.md`.
 
 Shared Cars uses the `shared-cars` flag (create it in PostHog before rollout;
 it starts off). It gates the background runtime (`SharedCarsRuntime`), which

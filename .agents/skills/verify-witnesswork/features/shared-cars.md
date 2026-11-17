@@ -29,7 +29,7 @@ Shared Cars lets up to 10 people keep one car's mileage together, end to end enc
 Preconditions:
 
 - Shared Spaces on the local worker. Run `up` for both devices from the same checkout, so they use one worker. `spaces:enabled` defaults on in dev; `node services/api/scripts/verify/dev.mjs kv put spaces:enabled false` turns it off (every op but leave, remove and delete answers `disabled`).
-- Flags per device: `wwv flag buddies on` and `wwv flag shared-cars on` (`--platform ios|android`). Re-run them after any reload.
+- Flags per device: `wwv flag shared-cars on` (`--platform ios|android`). Re-run it after any reload.
 - `wwv doctor` shows `api` as `local … 200`.
 
 One device, no backend (People, the filter, Logged By, Edited By, the notice, no Delete):
@@ -54,7 +54,7 @@ Two devices (iOS and Android, paired as buddies):
 - `addLocalCar` cars never sync. Starting Buddies (inviting someone, or the onboarding step) starts the Shared Cars runtime, which ends them with a "You're no longer on…" toast and a copy in the User's cars. Re-seed instead.
 - With the `shared-cars` flag off (or Buddies unavailable) and a Shared Car still on the device, the car is still the User's data, so everything that describes it stays: it lists with its people count, its trips say who logged and edited them (rows, Trip Details, share text, report, CSV), the person filter works, and the trip form keeps its note rules. Nothing new is shared: no Share Car…, Invite Buddy…, Remove, Cancel Invitation, or pull to refresh, and nothing syncs. The way off stays open: the car's People lists everyone, with Leave Car… on the User's row (and Stop Sharing… for the owner), and Delete All Mileage Data still leaves every car; the server takes `leave` and `delete` even while its own switch is off. Mileage and the car's form show the "Shared cars aren't available right now" notice meanwhile. One of the User's own cars shows no People section.
 - `__WW_DEV__.network.offline(true)` lasts until `offline(false)` or a relaunch, so a flow that stops while offline leaves the next flows offline: the shared-cars flow sets it back in its setup, and `wwv eval '__WW_DEV__.network.offline(false)'` does it by hand.
-- The flag overrides don't survive a reload or `wwv up`. The flow clears them at its end; if it fails partway, `wwv flag buddies clear` and `wwv flag shared-cars clear`.
+- The flag override doesn't survive a reload or `wwv up`. The flow clears it at its end; if it fails partway, `wwv flag shared-cars clear`.
 - Local alerts: APNs can't reach a simulator from `wrangler dev`, so the invitation reaches iOS on its next Buddies sync (reopen the bell, or `__WW_DEV__.buddiesEngine.sync()`). Android gets FCM with the key ([buddies.md](./buddies.md)).
 - Leases hold one iOS device per worktree. For two people on iOS, use the headless member.
 - The relay and the Spaces worker rate-limit per IP; avoid tight sync loops.

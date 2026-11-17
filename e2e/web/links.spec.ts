@@ -15,8 +15,6 @@ import { announceSignIn, corsFor, forgetSession, seedSession } from './session'
 test.use({
   serviceWorkers: 'block',
   signedIn: true,
-
-  storeState: { buddies: { flagLastKnown: true } },
 })
 
 test.beforeEach(async ({ context }) => {

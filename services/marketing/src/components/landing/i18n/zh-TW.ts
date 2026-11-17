@@ -4,7 +4,7 @@ const zhTW: LandingMessages = {
   meta: {
     title: 'WitnessWork：為耶和華見證人設計的傳道App',
     description:
-      '記錄時數、規劃整個月、記住每一次續訪，貼心提醒幫你穩步前進。免費、注重隱私，支援19種語言，適用於iPhone、iPad、Apple Watch和Android。',
+      '記錄時數、規劃整個月、記住每一次續訪，貼心提醒幫你穩步前進。免費、注重隱私，支援19種語言，適用於iPhone、iPad、Apple Watch、Android和網頁版。',
   },
   nav: {
     home: 'WitnessWork 首頁',
@@ -12,7 +12,6 @@ const zhTW: LandingMessages = {
     devices: '裝置',
     privacy: '隱私權',
     help: '幫助中心',
-    getApp: '取得 App',
     menu: '選單',
     language: '語言',
     skip: '跳到主要內容',
@@ -21,6 +20,12 @@ const zhTW: LandingMessages = {
   store: {
     appStore: '在 App Store 下載',
     googlePlay: '在 Google Play 取得',
+  },
+  web: {
+    open: '在瀏覽器中開啟',
+    openShort: '在瀏覽器中開啟',
+    or: '或下載 App',
+    computer: '用電腦嗎？在瀏覽器中開啟 WitnessWork。',
   },
   hero: {
     title: '為傳道而設計。',
@@ -346,7 +351,7 @@ const zhTW: LandingMessages = {
   },
   cta: {
     title: '傳道安排，穩步向前。',
-    body: '免費下載 WitnessWork，支援 iPhone、iPad、Apple Watch 和 Android。',
+    body: '在瀏覽器中免費使用 WitnessWork，或下載 iPhone、iPad、Apple Watch 和 Android 版。',
     qr: '掃描下載',
   },
   footer: {

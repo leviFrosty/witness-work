@@ -5,7 +5,7 @@ const swKE: LandingMessages = {
     title:
       'WitnessWork: programu ya huduma ya shambani kwa Mashahidi wa Yehova',
     description:
-      'Rekodi muda wako, panga mwezi wako na ukumbuke kila ziara ya kurudia, kwa vikumbusho vya upole vinavyokusaidia kuendelea vizuri. Bila malipo, yenye faragha na katika lugha 19 kwenye iPhone, iPad, Apple Watch na Android.',
+      'Rekodi muda wako, panga mwezi wako na ukumbuke kila ziara ya kurudia, kwa vikumbusho vya upole vinavyokusaidia kuendelea vizuri. Bila malipo, yenye faragha na katika lugha 19 kwenye iPhone, iPad, Apple Watch, Android na wavuti.',
   },
   nav: {
     home: 'Ukurasa wa mwanzo wa WitnessWork',
@@ -13,7 +13,6 @@ const swKE: LandingMessages = {
     devices: 'Vifaa',
     privacy: 'Faragha',
     help: 'Kituo cha Msaada',
-    getApp: 'Pakua programu',
     menu: 'Menyu',
     language: 'Lugha',
     skip: 'Ruka hadi maudhui',
@@ -22,6 +21,12 @@ const swKE: LandingMessages = {
   store: {
     appStore: 'Pakua kwenye App Store',
     googlePlay: 'Ipate kwenye Google Play',
+  },
+  web: {
+    open: 'Fungua kwenye kivinjari',
+    openShort: 'Toleo la wavuti',
+    or: 'Au pakua programu',
+    computer: 'Uko kwenye kompyuta? Fungua WitnessWork kwenye kivinjari.',
   },
   hero: {
     title: 'Imeundwa kwa ajili ya huduma.',
@@ -352,7 +357,7 @@ const swKE: LandingMessages = {
   },
   cta: {
     title: 'Huduma yako, hatua kwa hatua.',
-    body: 'Pakua WitnessWork bila malipo kwa iPhone, iPad, Apple Watch, na Android.',
+    body: 'Tumia WitnessWork bila malipo kwenye kivinjari, au ipakue kwa iPhone, iPad, Apple Watch, na Android.',
     qr: 'Changanua ili kupakua',
   },
   footer: {

@@ -5,7 +5,7 @@ const rwRW: LandingMessages = {
     title:
       'WitnessWork: porogaramu y’umurimo wo kubwiriza w’Abahamya ba Yehova',
     description:
-      'Andika igihe cyawe, utegure ukwezi kwawe kandi wibuke buri gusubira gusura, ufashijwe n’inyibutsa zoroheje zigufasha gukomeza neza. Ni ubuntu, yubaha ibanga ryawe kandi iboneka mu ndimi 19 kuri iPhone, iPad, Apple Watch na Android.',
+      'Andika igihe cyawe, utegure ukwezi kwawe kandi wibuke buri gusubira gusura, ufashijwe n’inyibutsa zoroheje zigufasha gukomeza neza. Ni ubuntu, yubaha ibanga ryawe kandi iboneka mu ndimi 19 kuri iPhone, iPad, Apple Watch, Android no muri mushakisha.',
   },
   nav: {
     home: 'Ahabanza ha WitnessWork',
@@ -13,7 +13,6 @@ const rwRW: LandingMessages = {
     devices: 'Ibikoresho',
     privacy: 'Ibanga',
     help: "Ikigo cy'Ubufasha",
-    getApp: 'Fata porogaramu',
     menu: 'Menu',
     language: 'Ururimi',
     skip: 'Simbukira ku bikubiyemo',
@@ -22,6 +21,12 @@ const rwRW: LandingMessages = {
   store: {
     appStore: 'Yikure muri App Store',
     googlePlay: 'Iboneke kuri Google Play',
+  },
+  web: {
+    open: 'Fungura muri mushakisha',
+    openShort: 'Kuri murandasi',
+    or: 'Cyangwa wikurire porogaramu',
+    computer: 'Uri kuri mudasobwa? Fungura WitnessWork muri mushakisha.',
   },
   hero: {
     title: 'Yagenewe umurimo wawe.',
@@ -353,7 +358,7 @@ const rwRW: LandingMessages = {
   },
   cta: {
     title: 'Umurimo wawe ugenda neza.',
-    body: 'Yikurire WitnessWork ku buntu kuri iPhone, iPad, Apple Watch na Android.',
+    body: 'Koresha WitnessWork ku buntu muri mushakisha, cyangwa uyikurire kuri iPhone, iPad, Apple Watch na Android.',
     qr: 'Sikana kugira ngo uyikure',
   },
   footer: {

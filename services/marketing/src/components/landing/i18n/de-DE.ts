@@ -4,7 +4,7 @@ const deDE: LandingMessages = {
   meta: {
     title: 'WitnessWork: die Predigtdienst-App für Jehovas Zeugen',
     description:
-      'Erfassen Sie Ihre Zeit, planen Sie Ihren Monat und behalten Sie jeden Rückbesuch im Blick. Sanfte Erinnerungen helfen Ihnen, auf Kurs zu bleiben. Kostenlos, privat und in 19 Sprachen auf iPhone, iPad, Apple Watch und Android.',
+      'Erfassen Sie Ihre Zeit, planen Sie Ihren Monat und behalten Sie jeden Rückbesuch im Blick. Sanfte Erinnerungen helfen Ihnen, auf Kurs zu bleiben. Kostenlos, privat und in 19 Sprachen auf iPhone, iPad, Apple Watch, Android und im Web.',
   },
   nav: {
     home: 'WitnessWork Startseite',
@@ -12,7 +12,6 @@ const deDE: LandingMessages = {
     devices: 'Geräte',
     privacy: 'Datenschutz',
     help: 'Hilfezentrum',
-    getApp: 'App laden',
     menu: 'Menü',
     language: 'Sprache',
     skip: 'Zum Inhalt springen',
@@ -21,6 +20,12 @@ const deDE: LandingMessages = {
   store: {
     appStore: 'Laden im App Store',
     googlePlay: 'Jetzt bei Google Play',
+  },
+  web: {
+    open: 'Im Browser öffnen',
+    openShort: 'Web-App öffnen',
+    or: 'Oder die App laden',
+    computer: 'Am Computer? Öffnen Sie WitnessWork im Browser.',
   },
   hero: {
     title: 'Für Ihren Predigtdienst gemacht.',
@@ -353,7 +358,7 @@ const deDE: LandingMessages = {
   },
   cta: {
     title: 'Ihr Predigtdienst auf Kurs.',
-    body: 'Laden Sie WitnessWork kostenlos für iPhone, iPad, Apple Watch und Android.',
+    body: 'Nutzen Sie WitnessWork kostenlos im Browser oder laden Sie die App für iPhone, iPad, Apple Watch und Android.',
     qr: 'Zum Laden scannen',
   },
   footer: {

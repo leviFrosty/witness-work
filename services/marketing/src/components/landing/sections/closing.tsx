@@ -26,7 +26,14 @@ import {
   type LandingLocale,
   type LandingMessages,
 } from '../i18n'
-import { Field, PauseToggle, Reveal, SectionHeading, StoreBadges } from '../ui'
+import {
+  DownloadAlso,
+  Field,
+  PauseToggle,
+  Reveal,
+  SectionHeading,
+  WebAppLink,
+} from '../ui'
 
 export function Languages({
   locale,
@@ -275,8 +282,11 @@ export function Cta({
         <Reveal as='p' className='ww-lead mt-6 max-w-xl' delay={140}>
           {t.cta.body}
         </Reveal>
-        <Reveal delay={200} className='mt-10 flex items-center gap-8'>
-          <StoreBadges locale={locale} labels={t.store} size='lg' />
+        <Reveal delay={200} className='mt-10'>
+          <WebAppLink label={t.web.open} size='lg' />
+        </Reveal>
+        <Reveal delay={240} className='mt-8 flex items-center gap-8'>
+          <DownloadAlso locale={locale} labels={t.store} or={t.web.or} />
           <figure className='ww-qr hidden lg:flex'>
             <img
               src='/images/get-qr.svg'
@@ -288,7 +298,7 @@ export function Cta({
             <figcaption>{t.cta.qr}</figcaption>
           </figure>
         </Reveal>
-        <Reveal as='p' className='ww-note mt-6' delay={240}>
+        <Reveal as='p' className='ww-note mt-6' delay={280}>
           {t.hero.note}
         </Reveal>
       </div>

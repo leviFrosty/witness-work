@@ -201,6 +201,11 @@
 .ww-btn-primary:hover {
   background: #2be06c;
 }
+.ww-btn-lg {
+  min-height: 3.15rem;
+  padding: 0 1.6rem;
+  font-size: 1.0625rem;
+}
 .ww-btn-ghost {
   color: var(--ww-ink);
   background: rgb(255 255 255 / 0.06);

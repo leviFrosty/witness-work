@@ -4,7 +4,7 @@ const ptBR: LandingMessages = {
   meta: {
     title: 'WitnessWork: o app de serviço de campo para Testemunhas de Jeová',
     description:
-      'Registre seu tempo, planeje o mês e lembre de cada revisita, com lembretes discretos para manter o ritmo. Grátis, privado e em 19 idiomas no iPhone, iPad, Apple Watch e Android.',
+      'Registre seu tempo, planeje o mês e lembre de cada revisita, com lembretes discretos para manter o ritmo. Grátis, privado e em 19 idiomas no iPhone, iPad, Apple Watch, Android e na web.',
   },
   nav: {
     home: 'Página inicial do WitnessWork',
@@ -12,7 +12,6 @@ const ptBR: LandingMessages = {
     devices: 'Dispositivos',
     privacy: 'Privacidade',
     help: 'Centro de Ajuda',
-    getApp: 'Baixar o app',
     menu: 'Menu',
     language: 'Idioma',
     skip: 'Ir para o conteúdo',
@@ -21,6 +20,12 @@ const ptBR: LandingMessages = {
   store: {
     appStore: 'Baixe na App Store',
     googlePlay: 'Disponível no Google Play',
+  },
+  web: {
+    open: 'Abrir no navegador',
+    openShort: 'Versão web',
+    or: 'Ou baixe o app',
+    computer: 'No computador? Abra o WitnessWork no navegador.',
   },
   hero: {
     title: 'Feito para o ministério.',
@@ -352,7 +357,7 @@ const ptBR: LandingMessages = {
   },
   cta: {
     title: 'Seu ministério, no rumo certo.',
-    body: 'Baixe o WitnessWork grátis para iPhone, iPad, Apple Watch e Android.',
+    body: 'Use o WitnessWork grátis no navegador ou baixe o app para iPhone, iPad, Apple Watch e Android.',
     qr: 'Escaneie para baixar',
   },
   footer: {

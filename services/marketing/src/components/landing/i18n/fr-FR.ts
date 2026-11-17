@@ -4,7 +4,7 @@ const frFR: LandingMessages = {
   meta: {
     title: 'WitnessWork : l’app de prédication pour les Témoins de Jéhovah',
     description:
-      'Notez votre temps, planifiez votre mois et n’oubliez aucune nouvelle visite, avec des rappels discrets pour garder le cap. Gratuite, confidentielle et en 19 langues sur iPhone, iPad, Apple Watch et Android.',
+      'Notez votre temps, planifiez votre mois et n’oubliez aucune nouvelle visite, avec des rappels discrets pour garder le cap. Gratuite, confidentielle et en 19 langues sur iPhone, iPad, Apple Watch, Android et le Web.',
   },
   nav: {
     home: 'Accueil WitnessWork',
@@ -12,7 +12,6 @@ const frFR: LandingMessages = {
     devices: 'Appareils',
     privacy: 'Confidentialité',
     help: 'Centre d’aide',
-    getApp: 'Obtenir l’app',
     menu: 'Menu',
     language: 'Langue',
     skip: 'Aller au contenu',
@@ -21,6 +20,12 @@ const frFR: LandingMessages = {
   store: {
     appStore: 'Télécharger dans l’App Store',
     googlePlay: 'Disponible sur Google Play',
+  },
+  web: {
+    open: 'Ouvrir dans le navigateur',
+    openShort: 'Version web',
+    or: 'Ou téléchargez l’app',
+    computer: 'Sur un ordinateur ? Ouvrez WitnessWork dans votre navigateur.',
   },
   hero: {
     title: 'Pensée pour la prédication.',
@@ -352,7 +357,7 @@ const frFR: LandingMessages = {
   },
   cta: {
     title: 'Votre ministère garde le cap.',
-    body: 'Téléchargez WitnessWork gratuitement pour iPhone, iPad, Apple Watch et Android.',
+    body: 'Utilisez WitnessWork gratuitement dans votre navigateur, ou téléchargez-la pour iPhone, iPad, Apple Watch et Android.',
     qr: 'Scannez pour télécharger',
   },
   footer: {

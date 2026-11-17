@@ -1,5 +1,5 @@
 import enUS from '@/components/landing/i18n/en-US'
-import { StoreBadges } from '@/components/landing/ui'
+import { DownloadAlso, WebAppLink } from '@/components/landing/ui'
 import { GET_PATH } from '@/lib/paths'
 import { SITE } from '@/lib/site'
 import { PageMeta } from './page-meta'
@@ -28,7 +28,8 @@ export default function GetWitnessWork() {
         />
         <h1 className='ww-h2 text-[2.6rem]'>WitnessWork</h1>
         <p className='ww-lead'>{enUS.cta.body}</p>
-        <StoreBadges locale='en-US' labels={enUS.store} size='lg' />
+        <WebAppLink label={enUS.web.open} size='lg' />
+        <DownloadAlso locale='en-US' labels={enUS.store} or={enUS.web.or} />
         <a href='/' className='text-sm text-[var(--ww-mint)] hover:underline'>
           witnesswork.app
         </a>

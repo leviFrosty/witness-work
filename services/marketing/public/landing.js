@@ -564,23 +564,6 @@
     })
   }
 
-  var ua = navigator.userAgent || ''
-  var apple =
-    /iPhone|iPad|iPod/.test(ua) ||
-    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
-  var android = /Android/.test(ua)
-
-  function armGet(link) {
-    var store = document.querySelector(
-      apple
-        ? '#download a[href*="apps.apple.com"]'
-        : '#download a[href*="play.google.com"]'
-    )
-    var href = store && store.getAttribute('href')
-    if (href) link.setAttribute('href', href)
-    return function () {}
-  }
-
   document.addEventListener('click', function (event) {
     var target = event.target
     document
@@ -638,7 +621,6 @@
       ['[data-ww-field]', 'field', armField],
       ['[data-ww-typing]', 'typing', armTyping],
     ]
-    if (apple || android) kinds.push(['[data-ww-get]', 'get', armGet])
     kinds.forEach(function (kind) {
       document.querySelectorAll(kind[0]).forEach(function (el) {
         arm(el, kind[1], kind[2])

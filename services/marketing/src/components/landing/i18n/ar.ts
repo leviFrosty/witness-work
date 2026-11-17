@@ -4,7 +4,7 @@ const ar: LandingMessages = {
   meta: {
     title: 'WitnessWork: تطبيق خدمة الحقل لشهود يهوه',
     description:
-      'سجّل وقتك، وخطّط لشهرك، وتذكّر كل زيارة مكررة، مع تذكيرات لطيفة تساعدك على البقاء على المسار. مجاني ويحترم خصوصيتك، ومتوفر بـ١٩ لغة على iPhone وiPad وApple Watch وAndroid.',
+      'سجّل وقتك، وخطّط لشهرك، وتذكّر كل زيارة مكررة، مع تذكيرات لطيفة تساعدك على البقاء على المسار. مجاني ويحترم خصوصيتك، ومتوفر بـ١٩ لغة على iPhone وiPad وApple Watch وAndroid والويب.',
   },
   nav: {
     home: 'الصفحة الرئيسية لـ WitnessWork',
@@ -12,7 +12,6 @@ const ar: LandingMessages = {
     devices: 'الأجهزة',
     privacy: 'الخصوصية',
     help: 'مركز المساعدة',
-    getApp: 'نزّل التطبيق',
     menu: 'القائمة',
     language: 'اللغة',
     skip: 'تخطَّ إلى المحتوى',
@@ -21,6 +20,12 @@ const ar: LandingMessages = {
   store: {
     appStore: 'نزّل من App Store',
     googlePlay: 'احصل عليه من Google Play',
+  },
+  web: {
+    open: 'افتحه في المتصفح',
+    openShort: 'افتح في المتصفح',
+    or: 'أو نزّل التطبيق',
+    computer: 'تستخدم حاسوبًا؟ افتح WitnessWork في المتصفح.',
   },
   hero: {
     title: 'صُمّم لخدمتك.',
@@ -350,7 +355,7 @@ const ar: LandingMessages = {
   },
   cta: {
     title: 'خدمتك على المسار.',
-    body: 'نزّل WitnessWork مجانًا لأجهزة iPhone وiPad وApple Watch وAndroid.',
+    body: 'استخدم WitnessWork مجانًا في المتصفح، أو نزّله لأجهزة iPhone وiPad وApple Watch وAndroid.',
     qr: 'امسح الرمز للتنزيل',
   },
   footer: {

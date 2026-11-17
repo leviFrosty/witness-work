@@ -4,7 +4,7 @@ const jaJP: LandingMessages = {
   meta: {
     title: 'WitnessWork：エホバの証人のための野外奉仕アプリ',
     description:
-      '時間の記録、月の計画、再訪問の管理をひとつに。さりげないリマインダーが、着実な歩みをサポートします。無料でプライバシーも安心。iPhone、iPad、Apple Watch、Androidで19言語に対応。',
+      '時間の記録、月の計画、再訪問の管理をひとつに。さりげないリマインダーが、着実な歩みをサポートします。無料でプライバシーも安心。iPhone、iPad、Apple Watch、Android、Webで19言語に対応。',
   },
   nav: {
     home: 'WitnessWorkのホーム',
@@ -12,7 +12,6 @@ const jaJP: LandingMessages = {
     devices: 'デバイス',
     privacy: 'プライバシー',
     help: 'ヘルプセンター',
-    getApp: 'アプリを入手',
     menu: 'メニュー',
     language: '言語',
     skip: '本文へスキップ',
@@ -21,6 +20,12 @@ const jaJP: LandingMessages = {
   store: {
     appStore: 'App Storeでダウンロード',
     googlePlay: 'Google Playで手に入れよう',
+  },
+  web: {
+    open: 'ブラウザで開く',
+    openShort: 'ブラウザで開く',
+    or: 'またはアプリをダウンロード',
+    computer: 'パソコンなら、ブラウザでWitnessWorkを開けます。',
   },
   hero: {
     title: '宣教のために。',
@@ -349,7 +354,7 @@ const jaJP: LandingMessages = {
   },
   cta: {
     title: '宣教を、着実に。',
-    body: 'WitnessWorkは、iPhone、iPad、Apple Watch、Android向けに無料でダウンロードできます。',
+    body: 'WitnessWorkはブラウザで無料で使えます。iPhone、iPad、Apple Watch、Android向けのアプリもダウンロードできます。',
     qr: 'スキャンしてダウンロード',
   },
   footer: {

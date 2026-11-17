@@ -1,5 +1,6 @@
-import { Pause, Play } from 'lucide-react'
+import { ArrowRight, Pause, Play } from 'lucide-react'
 import type { CSSProperties, ElementType, ReactNode } from 'react'
+import { WEB_APP } from '@/lib/links'
 import { cn } from '@/lib/utils'
 import type { LandingLocale } from './i18n'
 import { storeBadges, storeLinks } from './store'
@@ -96,6 +97,54 @@ export function Field({ className }: { className?: string }) {
     >
       {}
       <canvas className='ww-field-silk' suppressHydrationWarning />
+    </div>
+  )
+}
+
+/** WitnessWork on the web: the first way in, ahead of the store badges. */
+export function WebAppLink({
+  label,
+  size = 'md',
+  variant = 'primary',
+  className,
+}: {
+  label: string
+  size?: 'md' | 'lg'
+  variant?: 'primary' | 'ghost'
+  className?: string
+}) {
+  return (
+    <a
+      href={WEB_APP}
+      className={cn(
+        'ww-btn',
+        variant === 'primary' ? 'ww-btn-primary' : 'ww-btn-ghost',
+        size === 'lg' && 'ww-btn-lg',
+        className
+      )}
+    >
+      {label}
+      <ArrowRight className='size-4 rtl:-scale-x-100' aria-hidden />
+    </a>
+  )
+}
+
+/** The store badges under a web app button, with a line saying what they are. */
+export function DownloadAlso({
+  locale,
+  labels,
+  or,
+  className,
+}: {
+  locale: LandingLocale
+  labels: { appStore: string; googlePlay: string }
+  or: string
+  className?: string
+}) {
+  return (
+    <div className={cn('flex flex-col items-center gap-3', className)}>
+      <p className='ww-note'>{or}</p>
+      <StoreBadges locale={locale} labels={labels} />
     </div>
   )
 }

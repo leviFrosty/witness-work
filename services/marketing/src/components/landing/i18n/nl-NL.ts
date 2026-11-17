@@ -4,7 +4,7 @@ const nlNL: LandingMessages = {
   meta: {
     title: 'WitnessWork: de velddienstapp voor Jehovah’s Getuigen',
     description:
-      'Houd je tijd bij, plan je maand en onthoud elk terugbezoek, met subtiele herinneringen die je op koers houden. Gratis, privé en in 19 talen op iPhone, iPad, Apple Watch en Android.',
+      'Houd je tijd bij, plan je maand en onthoud elk terugbezoek, met subtiele herinneringen die je op koers houden. Gratis, privé en in 19 talen op iPhone, iPad, Apple Watch, Android en het web.',
   },
   nav: {
     home: 'WitnessWork-startpagina',
@@ -12,7 +12,6 @@ const nlNL: LandingMessages = {
     devices: 'Apparaten',
     privacy: 'Privacy',
     help: 'Helpcentrum',
-    getApp: 'Download de app',
     menu: 'Menu',
     language: 'Taal',
     skip: 'Ga naar de inhoud',
@@ -21,6 +20,12 @@ const nlNL: LandingMessages = {
   store: {
     appStore: 'Download in de App Store',
     googlePlay: 'Ontdek het op Google Play',
+  },
+  web: {
+    open: 'Open in je browser',
+    openShort: 'Open in browser',
+    or: 'Of download de app',
+    computer: 'Op een computer? Open WitnessWork in je browser.',
   },
   hero: {
     title: 'Gemaakt voor de velddienst.',
@@ -352,7 +357,7 @@ const nlNL: LandingMessages = {
   },
   cta: {
     title: 'Je velddienst op koers.',
-    body: 'Download WitnessWork gratis voor iPhone, iPad, Apple Watch en Android.',
+    body: 'Gebruik WitnessWork gratis in je browser, of download de app voor iPhone, iPad, Apple Watch en Android.',
     qr: 'Scan om te downloaden',
   },
   footer: {

@@ -36,6 +36,7 @@ import { UnsupportedImageError } from '@/lib/files/webImages'
 import { toast } from '@/stores/toasts'
 import useTheme from '@/contexts/theme'
 import useLibraryImagePicker from '@/hooks/useLibraryImagePicker'
+import useWebKeyboardInset from '@/hooks/useWebKeyboardInset'
 import { relativeLuminance } from '@/lib/color'
 import { registerSubmitAction } from '@/lib/submitShortcut'
 import { pickWebImages } from '@/lib/files/pickWebImages'
@@ -97,7 +98,8 @@ const RichTextEditor = (props: {
   const imageBatches = useRef<Promise<void>>(Promise.resolve())
 
   const keyboard = useReanimatedKeyboardAnimation()
-  const bottomInset = insets.bottom
+  const webKeyboardInset = useWebKeyboardInset()
+  const bottomInset = Math.max(insets.bottom, webKeyboardInset)
   const toolbarLift = useAnimatedStyle(() => ({
     paddingBottom: Math.max(-keyboard.height.value, bottomInset),
   }))
@@ -403,7 +405,7 @@ const RichTextEditor = (props: {
         <RichTextToolbar
           format={format}
           run={run}
-          keyboardVisible={keyboardVisible}
+          keyboardVisible={keyboardVisible || webKeyboardInset > 0}
           onDismissKeyboard={() => run({ type: 'blur' })}
           onLink={() =>
             setLinkSheet({

@@ -109,9 +109,12 @@ describe('wrangler.toml environments', () => {
     expect(toml).not.toMatch(/^\s*NOTES_IMPORT_DEV_BYPASS_TOKEN\s*=/m)
   })
 
-  it('gives Beta a real Turnstile widget that only its own frame host can solve', () => {
+  it('gives Beta and production real Turnstile widgets that only their own frame host can solve', () => {
     expect(vars('beta', 'TURNSTILE_SITE_KEY')).toMatch(/^0x[\w-]+$/)
     expect(vars('beta', 'TURNSTILE_HOSTNAMES')).toBe('verify-beta.witnesswork.app')
+    expect(vars('production', 'TURNSTILE_SITE_KEY')).toMatch(/^0x[\w-]+$/)
+    expect(vars('production', 'TURNSTILE_SITE_KEY')).not.toBe(vars('beta', 'TURNSTILE_SITE_KEY'))
+    expect(vars('production', 'TURNSTILE_HOSTNAMES')).toBe('verify.witnesswork.app')
   })
 
   it('turns the feature fallbacks on in Beta and locally, with legacy auth off', () => {

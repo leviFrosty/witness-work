@@ -33,6 +33,8 @@ const claim = (event: Event) => {
 
 const SWALLOW_PRESS_MS = 700
 
+const longPressCss = `@media (any-pointer: coarse){[data-ww-long-press],[data-ww-long-press] *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}[data-ww-long-press] :is(input,textarea,[contenteditable],[contenteditable] *){-webkit-user-select:text;user-select:text}}`
+
 type Point = { x: number; y: number }
 
 export default function ContextMenu({
@@ -143,6 +145,7 @@ export default function ContextMenu({
       {createElement(
         'div',
         {
+          'data-ww-long-press': enabled || undefined,
           style: { display: 'contents' },
           onContextMenu: listeners.onContextMenu,
           onKeyDown: listeners.onKeyDown,
@@ -151,6 +154,11 @@ export default function ContextMenu({
           onTouchMove: listeners.onTouchMove,
           onTouchCancel: listeners.onTouchCancel,
         },
+        enabled && (
+          <style href='ww-long-press' precedence='ww'>
+            {longPressCss}
+          </style>
+        ),
         <PointerHover onHoverChange={onPress ? setHovered : undefined}>
           {trigger as ReactElement}
         </PointerHover>

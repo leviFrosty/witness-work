@@ -68,6 +68,8 @@ const PUBLISH_DEBOUNCE_MS = 30 * 1000
 
 const SUSPENDED_CHECK_MS = 60 * 1000
 
+const JOIN_RETRY_MS = [5_000, 15_000, 30_000, 60_000]
+
 const logFailure = (error: unknown) =>
   logger.warn('[buddies] background', error)
 
@@ -167,13 +169,25 @@ export default function BuddiesRuntime() {
     if (!enabled || started) return
     const join = () => void joinBuddiesHere().catch(logFailure)
     join()
+    let retry: ReturnType<typeof setTimeout> | null = null
+    const retryLater = (attempt: number) => {
+      const delay = JOIN_RETRY_MS[attempt]
+      if (delay === undefined) return
+      retry = setTimeout(() => {
+        join()
+        retryLater(attempt + 1)
+      }, delay)
+    }
+    retryLater(0)
     const foreground =
       Platform.OS === 'ios' ? addForegroundListener(join) : null
     const sync = usePreferences.subscribe((state, previous) => {
       if (
         (state.iCloudSyncEnabled && !previous.iCloudSyncEnabled) ||
         (state.lastiCloudPulledAt !== null &&
-          previous.lastiCloudPulledAt === null)
+          previous.lastiCloudPulledAt === null) ||
+        (state.cloudSyncEntitled === true &&
+          previous.cloudSyncEntitled !== true)
       )
         join()
     })
@@ -181,6 +195,7 @@ export default function BuddiesRuntime() {
       if (state.isSupporter && !previous.isSupporter) join()
     })
     return () => {
+      if (retry) clearTimeout(retry)
       foreground?.remove()
       sync()
       supporter()

@@ -1265,10 +1265,17 @@ without setting it up, and whether it arrives with their buddies. It's sent
 once per device, when Buddies starts there from the key the User already has,
 or from the key a handoff or a passkey sign-in just brought (`via: handoff`,
 `via: passkey`).
+`buddies_device_join_failed` answers how often that start fails, and why, so a
+slow or failed start after a reinstall shows up instead of only in device logs.
+`buddies_restoring_shown` counts how often someone opens Buddies while it's
+still bringing their buddies back, the gap where the screen would otherwise
+look empty.
 
-| Event                   | When                                                                                                                                                           | Properties                                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `buddies_device_joined` | Buddies started by itself on a device with iCloud Sync (or Drive) on, or right after Set Up Another Device or Sign In with a Passkey brought the account here. | `buddies`: how many buddies it restored (0–5); `via: sync \| handoff \| passkey`. No names, relay ids, or dates. |
+| Event                        | When                                                                                                                                                           | Properties                                                                                                                                                                |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buddies_device_joined`      | Buddies started by itself on a device with iCloud Sync (or Drive) on, or right after Set Up Another Device or Sign In with a Passkey brought the account here. | `buddies`: how many buddies it restored (0–5); `via: sync \| handoff \| passkey`. No names, relay ids, or dates.                                                          |
+| `buddies_device_join_failed` | That start failed before this device read its buddies. At most once per reason per session.                                                                    | `via` as above; `reason`: the sync failure (`offline`, `rate_limited`, …); `registered`: whether this device had already registered, so the next sync finishes the start. |
+| `buddies_restoring_shown`    | Buddies opened while this device was still bringing back the User's buddies, so it showed "Bringing back your buddies" instead of the intro. Once per session. | None.                                                                                                                                                                     |
 
 ### Invitations not sent
 

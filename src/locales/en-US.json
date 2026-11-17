@@ -1470,6 +1470,8 @@
   "buddies_timeOfDayAfternoon": "Afternoon",
   "buddies_timeOfDayEvening": "Evening",
   "buddies_onboardingWelcomeTitle": "WitnessWork Buddies",
+  "buddies_onTheirWayTitle": "Bringing back your buddies",
+  "buddies_onTheirWayBody": "They'll appear here in a moment. Keep WitnessWork open.",
   "buddies_onboardingWelcomeBody": "Pair with up to {{max}} friends you go out in service with, and see each other's planned days right on your calendar.",
   "buddies_onboardingEncryptedTitle": "End-to-end encrypted",
   "buddies_onboardingEncryptedBody": "Everything you share is encrypted on your phone. Only you and the buddies you choose can read it — not even WitnessWork can.",

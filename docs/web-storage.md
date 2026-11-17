@@ -55,9 +55,10 @@ The User is told once per page load and kind, by `WebStorageNotices` through
   reload clears it for real.
 - **A newer version** (`versionchange`): the tab sends what's waiting, closes
   its connection and reloads.
-- **Persistence:** once storage is up, the boot calls `navigator.storage.persist()`
-  if it isn't persistent yet (Chromium and Safari decide silently; Firefox asks
-  once) and reads `estimate()`. Problem breadcrumbs carry both.
+- **Persistence:** once the signed-in app loads (never on the sign-in page),
+  the active tab calls `navigator.storage.persist()` if storage isn't
+  persistent yet (Chromium and Safari decide silently; Firefox asks) and reads
+  `estimate()`. Problem breadcrumbs carry both.
 - **Safari's 7-day wipe** of a site in a browser tab (Home Screen web apps are
   exempt) leaves an empty database, which boots as a fresh install. The User
   signs in again (ADR 0037 §6).

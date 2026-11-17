@@ -38,6 +38,7 @@ function notifyStorageProblem(problem: StoreProblem) {
 export default function WebStorageNotices() {
   useEffect(() => {
     const { stores, photos } = webStorageBoot
+    webStorageBoot.requestPersistence()
     for (const problem of [...stores.problems(), ...photos.problems()])
       notifyStorageProblem(problem)
     if (webStorageBoot.launch()?.tookOver) {

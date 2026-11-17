@@ -14,7 +14,10 @@ function browserProfile() {
   return {
     indexedDB,
 
-    tab(session = new Map<string, string>()) {
+    tab(
+      session = new Map<string, string>(),
+      storage: StorageManager | undefined = undefined
+    ) {
       const stores = createStoreDatabase({ indexedDB })
       const secureKv = createSecureKv({ indexedDB })
       const photos = createWebPhotoStore({ indexedDB })
@@ -27,7 +30,7 @@ function browserProfile() {
         photos,
         secureKv,
         locks: navigator.locks,
-        storage: undefined,
+        storage,
         session: {
           getItem: (k) => session.get(k) ?? null,
           setItem: (k, v) => void session.set(k, v),
@@ -232,5 +235,36 @@ describe('web storage boot', () => {
     await owned.secureKv.set('data-owner', 'acct-a')
     await owned.boot.prepare()
     expect(await owned.secureKv.get('data-owner')).toBe('acct-a')
+  })
+
+  it('asks for persistent storage only when the signed-in app asks, once, and only in the active tab', async () => {
+    const storage = () =>
+      ({
+        persisted: vi.fn(async () => false),
+        persist: vi.fn(async () => false),
+        estimate: vi.fn(async () => ({ usage: 1, quota: 2 })),
+      }) as unknown as StorageManager
+    const profile = browserProfile()
+    const activeStorage = storage()
+    const active = profile.tab(undefined, activeStorage)
+    await active.boot.prepare()
+    expect(activeStorage.persist).not.toHaveBeenCalled()
+    expect(await active.boot.storageStatus()).toBeUndefined()
+
+    active.boot.requestPersistence()
+    active.boot.requestPersistence()
+    expect(await active.boot.storageStatus()).toEqual({
+      persisted: false,
+      usage: 1,
+      quota: 2,
+    })
+    expect(activeStorage.persist).toHaveBeenCalledTimes(1)
+
+    const readOnlyStorage = storage()
+    const readOnly = profile.tab(undefined, readOnlyStorage)
+    await readOnly.boot.prepare()
+    readOnly.boot.requestPersistence()
+    expect(readOnlyStorage.persisted).not.toHaveBeenCalled()
+    expect(readOnlyStorage.persist).not.toHaveBeenCalled()
   })
 })

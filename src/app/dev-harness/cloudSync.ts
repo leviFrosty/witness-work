@@ -198,6 +198,8 @@ export const cloudSyncHarness = {
 
   photoPass: () => tracked(() => iCloudSync.pushImagesIfEnabled()),
 
+  photoPull: () => tracked(() => iCloudSync.pullImagesIfEnabled()),
+
   photos: () => tracked(() => cloudSyncTransport.listBinaryFiles()),
 
   photoUsage: () => tracked(() => refreshCloudSyncPhotoUsage()),

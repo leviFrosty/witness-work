@@ -1030,7 +1030,7 @@ describe('Photos over Cloud Sync', () => {
       expect(server.photoBytes('family', name)![0]).toBe(1)
   })
 
-  describe('with a browser on the account (note photos only)', () => {
+  describe('with a browser on the account', () => {
     const phoneWithPhotos = async () => {
       const iphone = await device('iphone', { os: 'ios' })
       iphone.files.set(picked('c1', 'r1'), new Uint8Array([1, 1, 1]))
@@ -1050,7 +1050,7 @@ describe('Photos over Cloud Sync', () => {
       return iphone
     }
 
-    it('downloads the note photo and leaves contact and profile photos alone', async () => {
+    it('downloads the note, contact and profile photos into the browser', async () => {
       const iphone = await phoneWithPhotos()
       const stored = server.photoNames('family')
       expect(stored).toHaveLength(3)
@@ -1066,24 +1066,88 @@ describe('Photos over Cloud Sync', () => {
       })
 
       expect(await web.webPhotoBytes('photo-0001')).toEqual([2, 2])
-      expect(web.webPhotos.list().map((photo) => photo.id)).toEqual([
-        'photo-0001',
-      ])
+      expect(
+        await web.webPhotoBytes('avatars/contact-c1-avatar-synced-r1.jpg')
+      ).toEqual([1, 1, 1])
+      expect(
+        await web.webPhotoBytes('avatars/profile-avatar-synced-p1.jpg')
+      ).toEqual([3])
       expect(
         server.state.log.filter((op) => op === 'POST sync/photos/get')
-      ).toHaveLength(1)
+      ).toHaveLength(3)
       expect(
         server.state.log.filter((op) => /photos\/(put|delete)/.test(op))
       ).toEqual([])
 
       expect(web.contactNames()).toEqual(['Ada'])
-      expect(web.useContacts.getState().contacts[0].avatar).toMatchObject({
-        type: 'image',
-        revision: 'r1',
-      })
+      const avatar = web.useContacts.getState().contacts[0].avatar!
+      expect(avatar).toMatchObject({ type: 'image', revision: 'r1' })
+      expect(avatar.value.split('?')[0]).toBe(
+        'webphoto:avatars/contact-c1-avatar-synced-r1.jpg'
+      )
+      const profile = web.useProfile.getState().avatar
+      expect(profile).toMatchObject({ type: 'image', revision: 'p1' })
+      expect(profile.value.split('?')[0]).toBe(
+        'webphoto:avatars/profile-avatar-synced-p1.jpg'
+      )
       expect([...web.files.keys()]).toEqual([])
       expect(server.photoNames('family')).toEqual(stored)
-      expect(iphone.name).toBe('iphone')
+
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      expect(iphone.useProfile.getState().avatar.value.split('?')[0]).toBe(
+        `${DOCS}profile-avatar-picked-p1.jpg`
+      )
+    })
+
+    it('sends a profile and contact photo chosen in the browser to the phone', async () => {
+      const iphone = await phoneWithPhotos()
+      const web = await device('browser', { os: 'web' })
+      await running(web, async () => {
+        await web.iCloudSync.pullAndMerge('manual')
+        await web.iCloudSync.imageWorkSettled()
+        web.webPhotos.put(
+          'avatars/profile-avatar-picked-p2.jpg',
+          new Blob([new Uint8Array([4, 4])])
+        )
+        web.webPhotos.put(
+          'avatars/contact-c1-avatar-picked-r2.jpg',
+          new Blob([new Uint8Array([5, 5])])
+        )
+        web.useProfile.getState().setAvatar({
+          type: 'image',
+          value: 'webphoto:avatars/profile-avatar-picked-p2.jpg?t=1',
+          revision: 'p2',
+        })
+        web.useContacts.getState().updateContact({
+          id: 'c1',
+          avatar: {
+            type: 'image',
+            value: 'webphoto:avatars/contact-c1-avatar-picked-r2.jpg?t=1',
+            revision: 'r2',
+          },
+        })
+        await publish(web)
+      })
+      expect(
+        web.usePreferences.getState().iCloudImageSync?.[
+          'witness-work-img-profile--p2.jpg'
+        ]
+      ).toMatchObject({ uploadedMtime: expect.any(Number) })
+
+      await iphone.iCloudSync.pullAndMerge('manual')
+      await iphone.iCloudSync.imageWorkSettled()
+      const profile = iphone.useProfile.getState().avatar
+      expect(profile).toMatchObject({ type: 'image', revision: 'p2' })
+      expect(profile.value.split('?')[0]).toBe(
+        `${DOCS}profile-avatar-synced-p2.jpg`
+      )
+      expect([
+        ...iphone.files.get(`${DOCS}profile-avatar-synced-p2.jpg`)!,
+      ]).toEqual([4, 4])
+      const avatar = iphone.useContacts.getState().contacts[0].avatar!
+      expect(avatar).toMatchObject({ type: 'image', revision: 'r2' })
+      expect([...iphone.files.get(avatar.value.split('?')[0])!]).toEqual([5, 5])
     })
 
     it('sends a note photo added in the browser to the phone', async () => {

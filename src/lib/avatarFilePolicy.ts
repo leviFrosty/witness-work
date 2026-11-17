@@ -1,8 +1,13 @@
+import { webPhotoPathId } from '@/lib/files/webPhotoStore'
+
 export const isInlineImage = (uri: string): boolean =>
   /^(data|blob):/i.test(uri)
 
+export const isAvatarFileValue = (value: string): boolean =>
+  value.startsWith('file://') || webPhotoPathId(value) !== undefined
+
 export const isLocalAvatarValue = (value: string | undefined): boolean =>
-  value !== undefined && (value.startsWith('file://') || isInlineImage(value))
+  value !== undefined && (isAvatarFileValue(value) || isInlineImage(value))
 
 type AvatarLike = { type?: string; value?: string; revision?: string }
 

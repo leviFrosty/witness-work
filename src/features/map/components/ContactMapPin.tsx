@@ -7,6 +7,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useMarkerRedraw from '@/hooks/useMarkerRedraw'
+import { useAvatarImageUri } from '@/hooks/useAvatarImageUri'
 import { getReadableTextColor } from '@/lib/color'
 import {
   CONTACT_PIN_DISC as DISC,
@@ -59,10 +60,12 @@ export default function ContactMapPin({
   onDragEnd?: (event: MarkerDragStartEndEvent) => void
 }) {
   const theme = useTheme()
-  const image =
+  const imageUri = useAvatarImageUri(
     avatar?.type === 'image' && isRenderableImageValue(avatar.value)
       ? avatar.value
-      : null
+      : ''
+  )
+  const image = imageUri || null
   const emoji = avatar?.type === 'emoji' && avatar.value ? avatar.value : null
 
   const showAvatar = !!(image || emoji) && !group

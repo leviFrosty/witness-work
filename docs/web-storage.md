@@ -217,8 +217,9 @@ runs on the web like on a phone on Cloud Sync, with its own slot:
   visible, so other devices' changes arrive within seconds.
 - **Photos.** Note photos move both ways and are kept in a database of their
   own, `witnesswork-photos` (`docs/web-files.md`, "Note photos in the
-  browser"). Avatars keep their references in the payload, but their bytes
-  don't move on the web yet: photos from phones show as initials.
+  browser"). Contact and profile photos are kept in the same database under
+  `avatars/` and move both ways too (`docs/web-files.md`, "Avatar photos in the
+  browser").
 - **Signing out** sends a push still waiting first (`webAccount.beforeSignOut`,
   at most 5 s, waiting out the put limit's `Retry-After` when it fits), and
   never deletes the browser's slot. The server deletes a slot 30 days after

@@ -110,7 +110,7 @@ describe('payload.sanitizeProfileAvatar', () => {
   })
 })
 
-describe('on the web, which has no photo sync', () => {
+describe('on the web', () => {
   beforeEach(() => {
     platform.OS = 'web'
   })
@@ -150,6 +150,31 @@ describe('on the web, which has no photo sync', () => {
         { includeImages: true }
       )
     ).toEqual({ type: 'none', value: '' })
+  })
+
+  it('refers to a photo the browser keeps in its photo store', () => {
+    expect(
+      sanitizeProfileAvatar(
+        {
+          type: 'image',
+          value: 'webphoto:avatars/profile-avatar-picked-p1.jpg?t=1',
+          revision: 'p1',
+        },
+        { includeImages: true }
+      )
+    ).toEqual({ type: 'image', value: 'icloud://profile', revision: 'p1' })
+    const c = makeContact({
+      avatar: {
+        type: 'image',
+        value: 'webphoto:avatars/contact-contact-1-avatar-synced-r1.jpg?t=1',
+        revision: 'r1',
+      },
+    })
+    expect(sanitizeContactAvatar(c, { includeImages: true }).avatar).toEqual({
+      type: 'image',
+      value: 'icloud://contact-contact-1',
+      revision: 'r1',
+    })
   })
 
   it('keeps the profile reference a phone made', () => {

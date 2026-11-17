@@ -22,8 +22,10 @@ const accountPub = (accountKey: Uint8Array) =>
     )
   )
 
-export async function seedSession(page: Page) {
-  const accountKey = new Uint8Array(randomBytes(32))
+export async function seedSession(
+  page: Page,
+  accountKey: Uint8Array = new Uint8Array(randomBytes(32))
+) {
   const session = JSON.stringify({
     v: 1,
     accountPub: accountPub(accountKey),

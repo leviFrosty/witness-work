@@ -20,6 +20,7 @@ import {
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { downloadAvatar, shareAvatar } from '@/lib/files/webAvatar'
+import { useAvatarImageUri } from '@/hooks/useAvatarImageUri'
 import useContacts from '@/stores/contactsStore'
 import type { Contact } from '@/types/contact'
 import { useAvatarDraftFiles } from '@/hooks/useAvatarDraftFiles'
@@ -58,14 +59,15 @@ export default function useContactAvatarActions(
   }, [enabled, contact.id, contact.avatar?.value, contact.avatar?.revision])
 
   const displayedUri = contact.avatar?.value
+  const shownUri = useAvatarImageUri(displayedUri ?? '')
 
   const editableSource = hasOriginal
     ? {
         uri: originalAvatarPath(contact.id, contact.avatar?.revision),
         isOriginal: true,
       }
-    : displayedUri
-      ? { uri: stripCacheBuster(displayedUri), isOriginal: false }
+    : shownUri
+      ? { uri: stripCacheBuster(shownUri), isOriginal: false }
       : null
 
   const ensureEditableDims = async (): Promise<Dims | null> => {

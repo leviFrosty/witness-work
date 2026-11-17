@@ -40,7 +40,11 @@ describe('hasCapability', () => {
   })
 
   it('hides every feature with no web equivalent on the web', () => {
-    expect(on('web')).toEqual(['appLock', 'syncedNotePhotos'])
+    expect(on('web')).toEqual([
+      'appLock',
+      'syncedAvatarPhotos',
+      'syncedNotePhotos',
+    ])
   })
 
   it('gives iOS its Apple-only features and Android its Google ones', () => {

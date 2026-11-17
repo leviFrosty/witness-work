@@ -44,7 +44,7 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   appLock: ['ios', 'android', 'web'],
   photoLibrarySave: ['ios', 'android'],
   otaUpdates: ['ios', 'android'],
-  syncedAvatarPhotos: ['ios', 'android'],
+  syncedAvatarPhotos: ['ios', 'android', 'web'],
   syncedNotePhotos: ['ios', 'android', 'web'],
   scribeVoice: ['ios', 'android'],
   scribePhotos: ['ios', 'android'],

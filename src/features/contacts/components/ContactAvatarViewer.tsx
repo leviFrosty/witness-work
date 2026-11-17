@@ -42,6 +42,7 @@ import { formatPlainNumber } from '@/lib/numbers'
 import { Contact } from '@/types/contact'
 import useContactAvatarActions from '@/features/contacts/hooks/useContactAvatarActions'
 import { alignText } from '@/lib/direction'
+import { useAvatarImageUri } from '@/hooks/useAvatarImageUri'
 
 interface Props {
   visible: boolean
@@ -194,7 +195,7 @@ const ContactAvatarViewer = ({ visible, contact, onClose }: Props) => {
     ],
   }))
 
-  const displayedUri = contact.avatar?.value
+  const displayedUri = useAvatarImageUri(contact.avatar?.value ?? '')
 
   if (!displayedUri) return null
 

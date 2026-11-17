@@ -25,22 +25,19 @@ works on them in the page.
   photo is at most 1024 px on its long side (quality 0.85) and a note photo at
   most 2048 px (`NOTE_IMAGE_MAX_SIDE`). Images over 120 megapixels or 50 MiB and files that aren't
   images are refused with `photoPicker_unsupported` / `photoPicker_tooLarge`.
-- **Note photos sync; avatars don't yet.** Two capabilities
-  (`src/lib/platformCapabilities.ts`): `syncedNotePhotos` is on for the web,
-  `syncedAvatarPhotos` is phones only. So a note's photo button shows on the
-  web and the Cloud Sync photo pass runs there for note photos
-  (`photosTravel()`), while the avatar picker's Choose Photo (contacts and
-  profile) stays hidden and the avatar passes and avatar cleanup don't run
-  (`avatarPhotosTravel()` in `iCloudSync.ts`).
-- **Avatars from a phone show initials.** A contact or profile avatar whose
-  value is an `icloud://` marker shows initials (`isRenderableImageValue`). The
-  record keeps its reference and revision, so editing the contact on the web
-  publishes the phone's photo reference unchanged, and the phones keep the
-  photo.
+- **Note and avatar photos sync.** `syncedNotePhotos` and `syncedAvatarPhotos`
+  (`src/lib/platformCapabilities.ts`) are both on for the web, so the note
+  photo button and the avatar picker's Choose Photo (contacts and profile)
+  show there, and the Cloud Sync photo pass moves note, contact and profile
+  photos (`photosTravel()`, `avatarPhotosTravel()` in `iCloudSync.ts`).
+- **Avatars live in the photo store too** (see "Avatar photos in the browser"
+  below). An avatar from a phone shows initials until its bytes download. The
+  record keeps its reference and revision meanwhile, so editing the contact on
+  the web publishes the phone's photo reference unchanged.
 - **Never a reference to nothing.** If an avatar's value is a `data:` or `blob:`
-  URL (a photo only this page holds), the sync payload carries no photo for it
-  (`sanitizeContactAvatar`, `sanitizeProfileAvatar`) rather than a reference
-  no phone can fetch.
+  URL (a photo the photo pass can't upload), the web's sync payload carries no
+  photo for it (`sanitizeContactAvatar`, `sanitizeProfileAvatar`) rather than a
+  reference no phone can fetch.
 - **Limited-photo-library UI** is hidden on the web; there is no such state.
 
 ### Note photos in the browser
@@ -113,14 +110,26 @@ setup; phones are unchanged).
   A dropped file that isn't an image is refused the same way, and never opens
   in the tab.
 
-### Seam for avatar photos
+### Avatar photos in the browser
 
-Avatars still use a `data:` URL on the web. To sync them: keep them in a store
-like `webPhotoStore`, give them a path the avatar passes can read and write
-(`imageSources.ts` works on `file://` paths in the documents folder), resolve
-that path to an object URL where avatars render, and turn `syncedAvatarPhotos`
-on for the web. The same capability lifts the guard in `avatarPayload.ts` that
-sends a `data:` or `blob:` avatar as no photo.
+Contact and profile photos use the same `webPhotoStore`, under ids that start
+with `avatars/`. `avatarDirectory()` ([`avatarPhotoFiles.ts`](../src/lib/avatarPhotoFiles.ts))
+is `webphoto:avatars/` on the web and the documents folder on a phone, so an
+avatar's value has the same file names on both (`profile-avatar-picked-<rev>.jpg`,
+`contact-<id>-avatar-synced-<rev>.jpg`) and the avatar passes in
+`imageSources.ts` and `iCloudSync.ts` run unchanged.
+
+- **Chosen in the browser:** the crop is drawn in a canvas and saved to the
+  store at the picker's path (`cropAndSaveImage`), and the avatar's value is
+  that `webphoto:` path. The publish uploads it as a phone does.
+- **From a phone:** the photo pass downloads it to `…-synced-<rev>.jpg` and
+  points the avatar at it (`applyDownloadedAvatars`).
+- **Shown through an object URL:** `useAvatarImageUri` resolves a `webphoto:`
+  value to the store's object URL and re-renders when the bytes load. `Avatar`,
+  the contact photo viewer and editor, and map pins use it.
+- **Cleanup** (`useLocalAvatarCleanup`, `deleteAvatarFiles`) deletes replaced
+  and erased avatars from the store, as on a phone. The note photo sweep lists
+  only note photo ids, so it never takes an avatar.
 
 ## Exporting
 

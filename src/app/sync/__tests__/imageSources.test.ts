@@ -207,6 +207,86 @@ describe('collectExpectedMarkerSources', () => {
   })
 })
 
+describe('in the browser’s photo store', () => {
+  const directory = 'webphoto:avatars/'
+
+  it('uploads the profile and contact photos chosen in the browser', () => {
+    const sources = collectLocalAvatarSources({
+      contacts: [
+        makeContact({
+          id: 'abc',
+          avatar: {
+            type: 'image',
+            value: 'webphoto:avatars/contact-abc-avatar-picked-r2.jpg?t=1',
+            revision: 'r2',
+          },
+        }),
+        makeContact({
+          id: 'note',
+          avatar: { type: 'image', value: 'webphoto:photo-0001' },
+        }),
+      ],
+      profileAvatar: {
+        type: 'image',
+        value: 'webphoto:avatars/profile-avatar-picked-p2.jpg?t=1',
+        revision: 'p2',
+      },
+      documentDirectory: directory,
+    })
+    expect(sources).toEqual([
+      {
+        kind: 'contact',
+        id: 'abc',
+        localPath: 'webphoto:avatars/contact-abc-avatar-picked-r2.jpg',
+        revision: 'r2',
+      },
+      {
+        kind: 'profile',
+        localPath: 'webphoto:avatars/profile-avatar-picked-p2.jpg',
+        revision: 'p2',
+      },
+    ])
+  })
+
+  it('downloads a phone’s profile photo next to the browser’s own', () => {
+    const sources = collectExpectedMarkerSources({
+      contacts: [],
+      profileAvatar: {
+        type: 'image',
+        value: 'icloud://profile',
+        revision: 'p1',
+      },
+      profileUpdatedAt: 5,
+      documentDirectory: directory,
+    })
+    expect(sources).toEqual([
+      {
+        kind: 'profile',
+        localPath: 'webphoto:avatars/profile-avatar-synced-p1.jpg',
+        expectedValue: 'icloud://profile',
+        expectedUpdatedAt: 5,
+        revision: 'p1',
+      },
+    ])
+  })
+
+  it('keeps checking a photo the browser already holds', () => {
+    const [source] = collectExpectedMarkerSources({
+      contacts: [],
+      profileAvatar: {
+        type: 'image',
+        value: 'webphoto:avatars/profile-avatar-picked-p2.jpg?t=1',
+        revision: 'p2',
+      },
+      documentDirectory: directory,
+    })
+    expect(source).toMatchObject({
+      kind: 'profile',
+      fallbackPath: 'webphoto:avatars/profile-avatar-picked-p2.jpg',
+    })
+  })
+})
+
 describe('applyDownloadedAvatars', () => {
   it('rewrites contact avatar.value for each downloaded contact', () => {
     const contacts: Contact[] = [

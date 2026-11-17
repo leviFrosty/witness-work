@@ -5,7 +5,7 @@ const ukUA: LandingMessages = {
     title:
       'WitnessWork: застосунок для проповідницького служіння Свідків Єгови',
     description:
-      'Записуйте час, плануйте місяць і пам’ятайте про кожні повторні відвідини. Делікатні нагадування допоможуть тримати курс. Безкоштовно, конфіденційно й 19 мовами на iPhone, iPad, Apple Watch та Android.',
+      'Записуйте час, плануйте місяць і пам’ятайте про кожні повторні відвідини. Делікатні нагадування допоможуть тримати курс. Безкоштовно, конфіденційно й 19 мовами на iPhone, iPad, Apple Watch, Android та в браузері.',
   },
   nav: {
     home: 'WitnessWork — головна',
@@ -13,7 +13,6 @@ const ukUA: LandingMessages = {
     devices: 'Пристрої',
     privacy: 'Конфіденційність',
     help: 'Центр допомоги',
-    getApp: 'Завантажити',
     menu: 'Меню',
     language: 'Мова',
     skip: 'Перейти до вмісту',
@@ -22,6 +21,12 @@ const ukUA: LandingMessages = {
   store: {
     appStore: 'Завантажте в App Store',
     googlePlay: 'Доступно в Google Play',
+  },
+  web: {
+    open: 'Відкрити в браузері',
+    openShort: 'Вебверсія',
+    or: 'Або завантажте застосунок',
+    computer: 'За комп’ютером? Відкрийте WitnessWork у браузері.',
   },
   hero: {
     title: 'Створено для служіння.',
@@ -352,7 +357,7 @@ const ukUA: LandingMessages = {
   },
   cta: {
     title: 'Ваше служіння — правильним курсом.',
-    body: 'Завантажте WitnessWork безкоштовно для iPhone, iPad, Apple Watch та Android.',
+    body: 'Користуйтеся WitnessWork безкоштовно в браузері або завантажте застосунок для iPhone, iPad, Apple Watch та Android.',
     qr: 'Відскануйте, щоб завантажити',
   },
   footer: {

@@ -2,7 +2,7 @@ const enUS = {
   meta: {
     title: "WitnessWork: the field service app for Jehovah's Witnesses",
     description:
-      'Track your time, plan your month, and remember every return visit, with gentle nudges that keep you on track. Free, private, and in 19 languages on iPhone, iPad, Apple Watch, and Android.',
+      'Track your time, plan your month, and remember every return visit, with gentle nudges that keep you on track. Free, private, and in 19 languages on iPhone, iPad, Apple Watch, Android, and the web.',
   },
   nav: {
     home: 'WitnessWork home',
@@ -10,7 +10,6 @@ const enUS = {
     devices: 'Devices',
     privacy: 'Privacy',
     help: 'Help Center',
-    getApp: 'Get the app',
     menu: 'Menu',
     language: 'Language',
     skip: 'Skip to content',
@@ -19,6 +18,12 @@ const enUS = {
   store: {
     appStore: 'Download on the App Store',
     googlePlay: 'Get it on Google Play',
+  },
+  web: {
+    open: 'Open in your browser',
+    openShort: 'Open in browser',
+    or: 'Or download the app',
+    computer: 'On a computer? Open WitnessWork in your browser.',
   },
   hero: {
     title: 'Made for the ministry.',
@@ -321,7 +326,7 @@ const enUS = {
   },
   cta: {
     title: 'Your ministry, on track.',
-    body: 'Download WitnessWork free for iPhone, iPad, Apple Watch, and Android.',
+    body: 'Use WitnessWork free in your browser, or download it for iPhone, iPad, Apple Watch, and Android.',
     qr: 'Scan to download',
   },
   footer: {

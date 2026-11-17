@@ -5,6 +5,7 @@ import {
   type HelpLocale,
 } from '@/lib/help-center/locales'
 import { helpPageUrl } from '@/lib/help-center/paths'
+import { WEB_APP } from '@/lib/links'
 import { landingPath, type LandingLocale, type LandingMessages } from '../i18n'
 
 type LanguageProps = {
@@ -161,13 +162,8 @@ export function LandingNav({
             primary
             className='max-sm:hidden'
           />
-          <a
-            href={at('#download')}
-            data-ww-get=''
-            suppressHydrationWarning
-            className='ww-btn ww-btn-primary ww-nav-cta'
-          >
-            {t.nav.getApp}
+          <a href={WEB_APP} className='ww-btn ww-btn-primary ww-nav-cta'>
+            {t.web.openShort}
           </a>
           <details className='relative lg:hidden' data-ww-close=''>
             <summary

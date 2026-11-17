@@ -5,6 +5,7 @@ import {
   HELP_LOCALES,
   localeDirection,
 } from '../../src/lib/help-center/locales.ts'
+import { WEB_APP } from '../../src/lib/links.ts'
 import { landingPath, supportPath } from '../../src/lib/paths.ts'
 import { SITE } from '../../src/lib/site.ts'
 
@@ -118,6 +119,21 @@ test('a landing page opened at #support moves on to the support page', async ({
   expect(path()).toBe('/privacy#support')
 })
 
+test('the hero opens the web app first and still offers both stores', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const hero = page.locator('.ww-hero')
+  const links = hero.locator('a[href]')
+  await expect(links.first()).toHaveAttribute('href', WEB_APP)
+  await expect(links.first()).toHaveText(enUS.web.open)
+  await expect(hero.locator('a[href*="apps.apple.com"]')).toBeVisible()
+  await expect(hero.locator('a[href*="play.google.com"]')).toBeVisible()
+  await expect(
+    page.locator('#download a[href="' + WEB_APP + '"]')
+  ).toBeVisible()
+})
+
 test('support page in Arabic, right to left', async ({ page }) => {
   await page.goto('/ar/support')
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
@@ -125,7 +141,7 @@ test('support page in Arabic, right to left', async ({ page }) => {
   await expect(page.locator('main a[href="/help/ar"]')).toBeVisible()
 })
 
-test("/get shows both stores on a computer and isn't indexed @desktop", async ({
+test("/get shows the web app and both stores on a computer and isn't indexed @desktop", async ({
   page,
 }) => {
   await page.goto('/get')
@@ -133,6 +149,7 @@ test("/get shows both stores on a computer and isn't indexed @desktop", async ({
     'content',
     'noindex'
   )
+  await expect(page.locator(`a[href="${WEB_APP}"]`)).toBeVisible()
   await expect(page.locator('a[href*="apps.apple.com"]')).toBeVisible()
   await expect(page.locator('a[href*="play.google.com"]')).toBeVisible()
 })

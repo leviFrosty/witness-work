@@ -5,7 +5,7 @@ const bemZM: LandingMessages = {
     title:
       'WitnessWork: icibombelo ca mulimo wa kushimikila ca Nte sha kwa Yehova',
     description:
-      'Lembeni amaawala yenu, pangeni umweshi wenu, no kukumbuka bonse mwabwekeshapo, ne fibukisho fya kumwafwa ukwenda bwino. Iyobweka, isunga ifyenu mu nkama, kabili ilipo mu ndimi 19 pa iPhone, iPad, Apple Watch na Android.',
+      'Lembeni amaawala yenu, pangeni umweshi wenu, no kukumbuka bonse mwabwekeshapo, ne fibukisho fya kumwafwa ukwenda bwino. Iyobweka, isunga ifyenu mu nkama, kabili ilipo mu ndimi 19 pa iPhone, iPad, Apple Watch, Android na mu browser.',
   },
   nav: {
     home: 'WitnessWork Home',
@@ -13,7 +13,6 @@ const bemZM: LandingMessages = {
     devices: 'Ifibombelo',
     privacy: 'Ifyasuma',
     help: 'Afwilisha pakati',
-    getApp: 'Tolani icibombelo',
     menu: 'Menu',
     language: 'Ululimi',
     skip: 'Pitani ku fyalembwa',
@@ -22,6 +21,12 @@ const bemZM: LandingMessages = {
   store: {
     appStore: 'Tolani pa App Store',
     googlePlay: 'Tolani pa Google Play',
+  },
+  web: {
+    open: 'Isuleni mu browser',
+    openShort: 'Mu browser',
+    or: 'Nelyo tolani icibombelo',
+    computer: 'Muli pa kompyuta? Isuleni WitnessWork mu browser.',
   },
   hero: {
     title: 'Yapangilwa umulimo wenu.',
@@ -352,7 +357,7 @@ const bemZM: LandingMessages = {
   },
   cta: {
     title: 'Umulimo wenu, mu nshila.',
-    body: 'Tolani WitnessWork pa bwebwe pa iPhone, iPad, Apple Watch, na Android.',
+    body: 'Bomfyeni WitnessWork pa bwebwe mu browser, nelyo itoleni pa iPhone, iPad, Apple Watch, na Android.',
     qr: 'Sikeneni ukutola',
   },
   footer: {

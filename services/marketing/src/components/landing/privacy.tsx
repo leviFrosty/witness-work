@@ -1,5 +1,6 @@
 import { PolicyPage } from '@/components/landing/policy-page'
 import { PRIVACY_PATH } from '@/lib/paths'
+import { WEB_APP } from '@/lib/links'
 
 const sections = [
   {
@@ -42,22 +43,26 @@ const sections = [
     title: 'On the web',
     body: (
       <p>
-        WitnessWork on the web (app.witnesswork.app) keeps your data, account
-        key, and session in your browser's storage until you sign out, or until
-        the server ends the session for security reasons. The account key and
-        session are encrypted with a browser key that cannot be exported.
-        Signing out erases them and your data from that browser. Anyone who can
-        use this browser profile can open WitnessWork in it; on a shared
-        computer, sign out when you're done, or turn on App Lock. Safari may
-        erase a site's storage after 7 days without a visit, unless you added it
-        to your Home Screen on iPhone; changes not yet synced are then lost. Web
-        sign-up, and signing in with a recovery key on the web, use Cloudflare
-        Turnstile to block automated abuse; Cloudflare processes your IP address
-        and browser information for that check. It runs in a separate page on
-        verify.witnesswork.app, which passes back only the check's result. Maps
-        on the web use Apple MapKit JS in a separate page on
-        maps.witnesswork.app. It receives only coordinates and pin styles, never
-        names or notes. Apple processes map requests and connection data.
+        WitnessWork on the web (
+        <a href={WEB_APP} className='ww-link'>
+          app.witnesswork.app
+        </a>
+        ) keeps your data, account key, and session in your browser's storage
+        until you sign out, or until the server ends the session for security
+        reasons. The account key and session are encrypted with a browser key
+        that cannot be exported. Signing out erases them and your data from that
+        browser. Anyone who can use this browser profile can open WitnessWork in
+        it; on a shared computer, sign out when you're done, or turn on App
+        Lock. Safari may erase a site's storage after 7 days without a visit,
+        unless you added it to your Home Screen on iPhone; changes not yet
+        synced are then lost. Web sign-up, and signing in with a recovery key on
+        the web, use Cloudflare Turnstile to block automated abuse; Cloudflare
+        processes your IP address and browser information for that check. It
+        runs in a separate page on verify.witnesswork.app, which passes back
+        only the check's result. Maps on the web use Apple MapKit JS in a
+        separate page on maps.witnesswork.app. It receives only coordinates and
+        pin styles, never names or notes. Apple processes map requests and
+        connection data.
       </p>
     ),
   },

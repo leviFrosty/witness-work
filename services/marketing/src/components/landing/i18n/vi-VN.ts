@@ -4,7 +4,7 @@ const viVN: LandingMessages = {
   meta: {
     title: 'WitnessWork: ứng dụng thánh chức cho Nhân Chứng Giê-hô-va',
     description:
-      'Ghi giờ, lên kế hoạch cho cả tháng và nhớ mọi lần thăm lại, với lời nhắc nhẹ nhàng giúp bạn đi đúng hướng. Miễn phí, riêng tư và có 19 ngôn ngữ trên iPhone, iPad, Apple Watch và Android.',
+      'Ghi giờ, lên kế hoạch cho cả tháng và nhớ mọi lần thăm lại, với lời nhắc nhẹ nhàng giúp bạn đi đúng hướng. Miễn phí, riêng tư và có 19 ngôn ngữ trên iPhone, iPad, Apple Watch, Android và web.',
   },
   nav: {
     home: 'Trang chủ WitnessWork',
@@ -12,7 +12,6 @@ const viVN: LandingMessages = {
     devices: 'Thiết bị',
     privacy: 'Quyền riêng tư',
     help: 'Trung tâm trợ giúp',
-    getApp: 'Tải ứng dụng',
     menu: 'Menu',
     language: 'Ngôn ngữ',
     skip: 'Chuyển đến nội dung',
@@ -21,6 +20,12 @@ const viVN: LandingMessages = {
   store: {
     appStore: 'Tải xuống từ App Store',
     googlePlay: 'Tải trên Google Play',
+  },
+  web: {
+    open: 'Mở trong trình duyệt',
+    openShort: 'Bản web',
+    or: 'Hoặc tải ứng dụng',
+    computer: 'Dùng máy tính? Mở WitnessWork trong trình duyệt.',
   },
   hero: {
     title: 'Dành riêng cho thánh chức.',
@@ -352,7 +357,7 @@ const viVN: LandingMessages = {
   },
   cta: {
     title: 'Thánh chức của bạn, đúng hướng.',
-    body: 'Tải WitnessWork miễn phí cho iPhone, iPad, Apple Watch và Android.',
+    body: 'Dùng WitnessWork miễn phí trong trình duyệt, hoặc tải ứng dụng cho iPhone, iPad, Apple Watch và Android.',
     qr: 'Quét để tải xuống',
   },
   footer: {

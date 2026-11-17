@@ -4,7 +4,7 @@ const itIT: LandingMessages = {
   meta: {
     title: 'WitnessWork: l’app per il ministero dei Testimoni di Geova',
     description:
-      'Registra il tuo tempo, pianifica il mese e ricorda ogni visita ulteriore, con promemoria discreti che ti aiutano a mantenere il ritmo. Gratis, riservata e in 19 lingue su iPhone, iPad, Apple Watch e Android.',
+      'Registra il tuo tempo, pianifica il mese e ricorda ogni visita ulteriore, con promemoria discreti che ti aiutano a mantenere il ritmo. Gratis, riservata e in 19 lingue su iPhone, iPad, Apple Watch, Android e sul web.',
   },
   nav: {
     home: 'Home di WitnessWork',
@@ -12,7 +12,6 @@ const itIT: LandingMessages = {
     devices: 'Dispositivi',
     privacy: 'Privacy',
     help: 'Centro di Assistenza',
-    getApp: 'Scarica l’app',
     menu: 'Menu',
     language: 'Lingua',
     skip: 'Vai al contenuto',
@@ -21,6 +20,12 @@ const itIT: LandingMessages = {
   store: {
     appStore: 'Scarica dall’App Store',
     googlePlay: 'Disponibile su Google Play',
+  },
+  web: {
+    open: 'Apri nel browser',
+    openShort: 'Versione web',
+    or: 'Oppure scarica l’app',
+    computer: 'Sei al computer? Apri WitnessWork nel browser.',
   },
   hero: {
     title: 'Pensata per il ministero.',
@@ -352,7 +357,7 @@ const itIT: LandingMessages = {
   },
   cta: {
     title: 'Il tuo ministero, sulla buona strada.',
-    body: 'Scarica WitnessWork gratis per iPhone, iPad, Apple Watch e Android.',
+    body: 'Usa WitnessWork gratis nel browser, oppure scaricala per iPhone, iPad, Apple Watch e Android.',
     qr: 'Scansiona per scaricare',
   },
   footer: {

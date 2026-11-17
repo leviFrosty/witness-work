@@ -4,7 +4,7 @@ const koKR: LandingMessages = {
   meta: {
     title: 'WitnessWork: 여호와의 증인을 위한 야외 봉사 앱',
     description:
-      '시간을 기록하고, 한 달을 계획하고, 모든 재방문을 기억하세요. 부담 없는 알림이 꾸준히 나아가도록 도와줘요. 무료로, 개인 정보를 지키면서, iPhone, iPad, Apple Watch, Android에서 19개 언어로 이용하세요.',
+      '시간을 기록하고, 한 달을 계획하고, 모든 재방문을 기억하세요. 부담 없는 알림이 꾸준히 나아가도록 도와줘요. 무료로, 개인 정보를 지키면서, iPhone, iPad, Apple Watch, Android, 웹에서 19개 언어로 이용하세요.',
   },
   nav: {
     home: 'WitnessWork 홈',
@@ -12,7 +12,6 @@ const koKR: LandingMessages = {
     devices: '기기',
     privacy: '개인정보 보호',
     help: '도움말 센터',
-    getApp: '앱 받기',
     menu: '메뉴',
     language: '언어',
     skip: '본문으로 건너뛰기',
@@ -21,6 +20,12 @@ const koKR: LandingMessages = {
   store: {
     appStore: 'App Store에서 다운로드',
     googlePlay: 'Google Play에서 다운로드',
+  },
+  web: {
+    open: '브라우저에서 열기',
+    openShort: '브라우저에서 열기',
+    or: '또는 앱 다운로드',
+    computer: '컴퓨터에서는 브라우저로 WitnessWork를 여세요.',
   },
   hero: {
     title: '봉사를 위해 만들었어요.',
@@ -348,7 +353,7 @@ const koKR: LandingMessages = {
   },
   cta: {
     title: '봉사를, 꾸준히 순조롭게.',
-    body: 'iPhone, iPad, Apple Watch, Android용 WitnessWork를 무료로 다운로드하세요.',
+    body: '브라우저에서 WitnessWork를 무료로 사용하거나, iPhone, iPad, Apple Watch, Android용 앱을 다운로드하세요.',
     qr: '스캔해서 다운로드',
   },
   footer: {

@@ -12,7 +12,7 @@ import {
 import type { CSSProperties } from 'react'
 import { Phone } from '../devices'
 import type { LandingLocale, LandingMessages } from '../i18n'
-import { Field, Reveal, StoreBadges, Stars } from '../ui'
+import { DownloadAlso, Field, Reveal, Stars, WebAppLink } from '../ui'
 
 type Tile = {
   Icon: LucideIcon
@@ -148,8 +148,12 @@ export function Hero({
           >
             {t.hero.body}
           </Reveal>
-          <Reveal delay={320} className='mt-8 sm:mt-9'>
-            <StoreBadges locale={locale} labels={t.store} size='lg' />
+          <Reveal
+            delay={320}
+            className='mt-8 flex flex-col items-center gap-6 sm:mt-9'
+          >
+            <WebAppLink label={t.web.open} size='lg' />
+            <DownloadAlso locale={locale} labels={t.store} or={t.web.or} />
           </Reveal>
           <Reveal delay={400} className='ww-hero-meta'>
             <p className='ww-note'>{t.hero.note}</p>

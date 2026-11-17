@@ -1,5 +1,6 @@
 import { entryFor } from '@/lib/help-center/load'
 import { DEFAULT_LOCALE, localeDirection } from '@/lib/help-center/locales'
+import { WEB_APP } from '@/lib/links'
 import { absoluteUrl } from '@/lib/paths'
 import { content } from '@/server/content'
 import {
@@ -24,6 +25,7 @@ import { storeLinks } from './store'
 
 const FAQ_IDS = [
   'stillFree',
+  'webApp',
   'android',
   'appleWatch',
   'cloudSync',
@@ -54,7 +56,8 @@ export default function Landing({ locale }: { locale: LandingLocale }) {
     url: canonical,
     image: OG_IMAGE,
     applicationCategory: 'LifestyleApplication',
-    operatingSystem: 'iOS, iPadOS, watchOS, Android, Wear OS',
+    operatingSystem: 'iOS, iPadOS, watchOS, Android, Wear OS, Web',
+    installUrl: WEB_APP,
     inLanguage: locale,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     downloadUrl: [stores.appStore, stores.googlePlay],

@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Phone, Tablet, Watch } from '../devices'
 import type { LandingMessages } from '../i18n'
-import { Reveal, SectionHeading } from '../ui'
+import { Reveal, SectionHeading, WebAppLink } from '../ui'
 
 type DeviceKey = keyof LandingMessages['devices']['tabs']
 
@@ -101,6 +101,9 @@ export function DevicesSection({ t }: { t: LandingMessages }) {
             </Panel>
           </div>
         </div>
+        <Reveal className='mt-12 flex justify-center'>
+          <WebAppLink label={t.web.computer} variant='ghost' />
+        </Reveal>
       </div>
     </section>
   )

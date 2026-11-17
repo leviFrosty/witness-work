@@ -4,7 +4,7 @@ const esES: LandingMessages = {
   meta: {
     title: 'WitnessWork: la app de predicación para los testigos de Jehová',
     description:
-      'Registra tu tiempo, planifica tu mes y recuerda cada revisita, con recordatorios discretos que te ayudan a seguir tu ritmo. Gratis, privada y en 19 idiomas en iPhone, iPad, Apple Watch y Android.',
+      'Registra tu tiempo, planifica tu mes y recuerda cada revisita, con recordatorios discretos que te ayudan a seguir tu ritmo. Gratis, privada y en 19 idiomas en iPhone, iPad, Apple Watch, Android y la web.',
   },
   nav: {
     home: 'Inicio de WitnessWork',
@@ -12,7 +12,6 @@ const esES: LandingMessages = {
     devices: 'Dispositivos',
     privacy: 'Privacidad',
     help: 'Centro de Ayuda',
-    getApp: 'Descargar la app',
     menu: 'Menú',
     language: 'Idioma',
     skip: 'Saltar al contenido',
@@ -21,6 +20,12 @@ const esES: LandingMessages = {
   store: {
     appStore: 'Descárgala en el App Store',
     googlePlay: 'Disponible en Google Play',
+  },
+  web: {
+    open: 'Abrir en el navegador',
+    openShort: 'Versión web',
+    or: 'O descarga la app',
+    computer: '¿En un ordenador? Abre WitnessWork en tu navegador.',
   },
   hero: {
     title: 'Hecha para predicar.',
@@ -352,7 +357,7 @@ const esES: LandingMessages = {
   },
   cta: {
     title: 'Tu predicación, bien encaminada.',
-    body: 'Descarga WitnessWork gratis para iPhone, iPad, Apple Watch y Android.',
+    body: 'Usa WitnessWork gratis en tu navegador o descárgala para iPhone, iPad, Apple Watch y Android.',
     qr: 'Escanea para descargar',
   },
   footer: {

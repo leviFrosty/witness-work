@@ -2,7 +2,7 @@ import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { concatBytes, fromB64u, toB64u, utf8 } from '@/lib/bytes'
-import { PRF_SALT } from '@/lib/passkeys/prf'
+import { PRF_SALT, prfFirst } from '@/lib/passkeys/prf'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
 export const PASSKEY_PRF_SALT = PRF_SALT
@@ -152,16 +152,7 @@ type WithExtensions = { clientExtensionResults?: unknown }
 export function prfOutputOf(response: WithExtensions): Uint8Array | null {
   const prf = (response.clientExtensionResults as { prf?: unknown } | undefined)
     ?.prf as { results?: { first?: unknown } } | undefined
-  const first = prf?.results?.first
-  let output: Uint8Array | null = null
-  try {
-    if (typeof first === 'string') output = fromB64u(first)
-    else if (first instanceof Uint8Array) output = first
-    else if (first instanceof ArrayBuffer) output = new Uint8Array(first)
-  } catch {
-    return null
-  }
-  return output?.length === KEY_BYTES ? output : null
+  return prfFirst(prf)
 }
 
 export function withoutPrfResults<T extends WithExtensions>(response: T): T {

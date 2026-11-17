@@ -28,16 +28,6 @@ import type { RootStackNavigation } from '@/types/rootStack'
 
 const SHOWN = 3
 
-export const useHasTerritories = () => {
-  const checkedOut = useTerritories((state) =>
-    state.territories.some(
-      (territory) =>
-        territory.finishedAt === undefined && isReceivedLive(territory)
-    )
-  )
-  return checkedOut
-}
-
 export default function TerritoryHomeCard() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
@@ -72,6 +62,7 @@ export default function TerritoryHomeCard() {
       ]
     return [null, territoryProgressText(territory)]
   }
+  if (active.length === 0) return null
   const openAll = () =>
     navigation.navigate('Root', { screen: 'Territories' } as never)
   const row = {

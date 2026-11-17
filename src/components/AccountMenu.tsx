@@ -19,6 +19,8 @@ import StreakBadge from '@/components/StreakBadge'
 import { RootStackNavigation } from '@/types/rootStack'
 import { HomeTabStackNavigation } from '@/types/homeStack'
 import { whenIdle } from '@/lib/whenIdle'
+import { webAccount } from '@/lib/serverAccount'
+import { confirmWebSignOut } from '@/lib/confirmWebSignOut'
 
 export const ROOT_HEADER_AVATAR_SIZE = 34
 const SIDEBAR_AVATAR_SIZE = 32
@@ -184,6 +186,15 @@ export default function AccountMenu({
               title: i18n.t('helpCenter'),
               systemImage: 'questionmark.circle',
               onPress: () => navigation.navigate('FAQ'),
+            },
+          ],
+          [
+            webAccount && {
+              id: 'sign_out',
+              title: i18n.t('webSignOut_button'),
+              systemImage: 'rectangle.portrait.and.arrow.right',
+              destructive: true,
+              onPress: () => confirmWebSignOut({ source: 'account_menu' }),
             },
           ],
         ]}

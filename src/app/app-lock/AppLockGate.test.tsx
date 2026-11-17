@@ -41,7 +41,7 @@ vi.mock('@/lib/webAppLockRuntime', () => ({
   turnOffWebAppLock: vi.fn(),
 }))
 vi.mock('@/stores/toasts', () => ({ toast: { error: vi.fn() } }))
-vi.mock('@/app/web-sign-in/confirmWebSignOut', () => ({
+vi.mock('@/lib/confirmWebSignOut', () => ({
   confirmWebSignOut: vi.fn(),
 }))
 vi.mock('@/lib/appLock', () => ({

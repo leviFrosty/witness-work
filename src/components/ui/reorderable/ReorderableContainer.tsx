@@ -1,5 +1,11 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
-import { Pressable, type StyleProp, View, type ViewStyle } from 'react-native'
+import {
+  Platform,
+  Pressable,
+  type StyleProp,
+  View,
+  type ViewStyle,
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { scheduleOnRN } from 'react-native-worklets'
 import Animated, {
@@ -22,6 +28,10 @@ import { MIN_TOUCH_TARGET } from '@/components/ui/touchTarget'
 import type { ReorderScroller } from '@/components/ui/reorderable/useReorderScroller'
 
 export const LIFT_DELAY_MS = 350
+
+export const REORDER_TOUCH_ACTION = 'pan-y'
+
+const TAP_MAX_DIST = 10
 
 const AUTOSCROLL_EDGE = 90
 
@@ -420,6 +430,7 @@ export default function ReorderableContainer<Id extends string>({
   const tap = Gesture.Tap()
     .enabled(editing && !!onBackgroundPress)
     .maxDuration(300)
+    .maxDistance(TAP_MAX_DIST)
     .onTouchesDown((e, manager) => {
       const touch = e.allTouches[0]
       if (
@@ -433,6 +444,17 @@ export default function ReorderableContainer<Id extends string>({
     .onEnd((_e, success) => {
       if (success) scheduleOnRN(pressBackground)
     })
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    const node = containerRef.current as unknown as HTMLElement | null
+    if (!node) return
+    const hold = (event: TouchEvent) => {
+      if (drag.current && event.cancelable) event.preventDefault()
+    }
+    node.addEventListener('touchmove', hold, { passive: false })
+    return () => node.removeEventListener('touchmove', hold)
+  }, [])
 
   const dragged = draggedId ? entries.current.get(draggedId) : undefined
 
@@ -525,7 +547,10 @@ export default function ReorderableContainer<Id extends string>({
         },
       }}
     >
-      <GestureDetector gesture={Gesture.Race(pan, tap)}>
+      <GestureDetector
+        gesture={Gesture.Race(pan, tap)}
+        touchAction={REORDER_TOUCH_ACTION}
+      >
         <View
           ref={containerRef}
           collapsable={false}

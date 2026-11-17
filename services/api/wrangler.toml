@@ -877,20 +877,17 @@ AUTH_LEGACY = "on"
 PASSKEY_RP_IDS = "app.witnesswork.app"
 PASSKEY_ORIGINS = '''{"app.witnesswork.app":["https://app.witnesswork.app","https://beta.app.witnesswork.app","android:apk-key-hash:TBOYNDcshVpuphnPrwPUa5EUFC3ry8vL8cHHQFU-HKw","android:apk-key-hash:xR7_3Ju_a8Are0wxkpALrEJnvW4F9M_FIXflNiOkdes"]}'''
 # Web sign-up (docs/passkeys-protocol.md, "Web sign-up"): the kill switch's
-# fallback when KV `accounts:web-signup` is absent, and the caps. WEB_SIGNUP
-# is already "on", so sign-up and web recovery open as soon as this worker
-# has the rest of their setup, whichever lands last: the production Turnstile
-# widget's site key and its frame's host below, its secret (`wrangler secret put
-# TURNSTILE_SECRET_KEY`), and the passkey secrets PASSKEY_CHALLENGE_SECRET and
-# ACCOUNT_TICKET_SECRET. To set them up ahead of the launch, put KV
-# `accounts:web-signup` = off first; that holds sign-up, not recovery.
+# fallback when KV `accounts:web-signup` is absent, and the caps. Turnstile:
+# the production widget's site key, and its frame's host (the widget's only
+# hostname); its secret is TURNSTILE_SECRET_KEY. Sign-up also needs the
+# passkey secrets PASSKEY_CHALLENGE_SECRET and ACCOUNT_TICKET_SECRET.
 # Repeated under [env.beta] and [env.dev.vars].
 WEB_SIGNUP = "on"
 WEB_SIGNUP_PER_IP_DAY = "3"
 WEB_SIGNUP_PER_ASN_HOUR = "30"
 WEB_RECOVERY_PER_IP_DAY = "10"
-# TURNSTILE_SITE_KEY = "0x4AAAAAAGEsqHBEv6YrIy20"
-# TURNSTILE_HOSTNAMES = "verify.witnesswork.app"
+TURNSTILE_SITE_KEY = "0x4AAAAAAGEsqHBEv6YrIy20"
+TURNSTILE_HOSTNAMES = "verify.witnesswork.app"
 # App-wide minimum version fallback when KV `app:min-version` is absent
 # (GET /app/v1/config). Unset = no floor. Repeated under [env.beta] and [env.dev.vars].
 # APP_MIN_VERSION = "1.42.0"

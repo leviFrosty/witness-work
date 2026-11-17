@@ -150,15 +150,14 @@ AUTH_LEGACY = "off"
 PASSKEY_RP_IDS = "beta.app.witnesswork.app"
 PASSKEY_ORIGINS = '''{"beta.app.witnesswork.app":["https://beta.app.witnesswork.app"]}'''
 # Web sign-up (docs/passkeys-protocol.md, "Web sign-up"): the kill switch's
-# fallback when KV `accounts:web-signup` is absent, and the caps. Turnstile has
-# no Beta widget yet, so web sign-up and recovery answer `disabled` here, as in
-# production: create a widget for verify-beta.witnesswork.app, set its site key
-# below and its secret as TURNSTILE_SECRET_KEY, and they turn on.
+# fallback when KV `accounts:web-signup` is absent, and the caps. Turnstile:
+# the Beta widget's site key (its only hostname is verify-beta.witnesswork.app);
+# its secret is TURNSTILE_SECRET_KEY.
 WEB_SIGNUP = "on"
 WEB_SIGNUP_PER_IP_DAY = "3"
 WEB_SIGNUP_PER_ASN_HOUR = "30"
 WEB_RECOVERY_PER_IP_DAY = "10"
-# TURNSTILE_SITE_KEY = ""
+TURNSTILE_SITE_KEY = "0x4AAAAAAGEspzlzg1QS2ijv"
 TURNSTILE_HOSTNAMES = "verify-beta.witnesswork.app"
 # App-wide minimum version fallback when KV `app:min-version` is absent
 # (GET /app/v1/config). Unset = no floor.
@@ -890,7 +889,7 @@ WEB_SIGNUP = "on"
 WEB_SIGNUP_PER_IP_DAY = "3"
 WEB_SIGNUP_PER_ASN_HOUR = "30"
 WEB_RECOVERY_PER_IP_DAY = "10"
-# TURNSTILE_SITE_KEY = "0x…"
+# TURNSTILE_SITE_KEY = "0x4AAAAAAGEsqHBEv6YrIy20"
 # TURNSTILE_HOSTNAMES = "verify.witnesswork.app"
 # App-wide minimum version fallback when KV `app:min-version` is absent
 # (GET /app/v1/config). Unset = no floor. Repeated under [env.beta] and [env.dev.vars].

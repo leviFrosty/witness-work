@@ -109,8 +109,8 @@ describe('wrangler.toml environments', () => {
     expect(toml).not.toMatch(/^\s*NOTES_IMPORT_DEV_BYPASS_TOKEN\s*=/m)
   })
 
-  it('has no Turnstile widget on Beta yet, so web sign-up answers disabled there', () => {
-    expect(vars('beta', 'TURNSTILE_SITE_KEY')).toBeUndefined()
+  it('gives Beta a real Turnstile widget that only its own frame host can solve', () => {
+    expect(vars('beta', 'TURNSTILE_SITE_KEY')).toMatch(/^0x[\w-]+$/)
     expect(vars('beta', 'TURNSTILE_HOSTNAMES')).toBe('verify-beta.witnesswork.app')
   })
 

@@ -97,9 +97,7 @@ token read through the 1Password app. Never `wrangler deploy` by hand.
 
 Cloudflare's test key renders anywhere and ww-api skips the host check for it,
 so a local ww-api on the test key proves the plumbing, not the settings below.
-The Beta API has no widget yet, so web sign-up and recovery answer `disabled`
-there until step 2. Before the first production web deploy that frames a
-`verify` host, the owner:
+Before the first production web deploy that frames a `verify` host, the owner:
 
 1. **Creates a real Beta widget**: managed mode, hostname
    `verify-beta.witnesswork.app` only. Keep its keys in 1Password.

@@ -10,17 +10,6 @@ export function beforeAppLoads(loadApp: () => void) {
 
   void storage
     .then(() => require('@/lib/locales').translationsLoaded())
-    .then(() => {
-      const { _i18n } = require('@/lib/locales')
-      const {
-        helpLocaleFor,
-      } = require('@/features/updates/lib/helpCenter/locale')
-      const {
-        loadSnapshot,
-      } = require('@/features/updates/lib/helpCenter/snapshot')
-
-      return loadSnapshot(helpLocaleFor(_i18n.locale)).catch(() => {})
-    })
     .then(() => storage)
     .then(async (launch) => {
       await webLinks.start(window, launch)

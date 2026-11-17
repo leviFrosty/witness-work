@@ -15,6 +15,10 @@ import { reloadPage } from '@/lib/serverAccount/webTabs'
 import { toast } from '@/stores/toasts'
 import InlineNotice from '@/components/ui/InlineNotice'
 import LaunchSplash from '@/app/launch/LaunchSplash'
+import {
+  preloadUnlockedApp,
+  preloadUnlockedAppOnInteraction,
+} from '@/app/launch/UnlockedAppLoader'
 import ApprovedBy from '@/app/web-sign-in/components/ApprovedBy'
 import CloudSyncStep from '@/app/web-sign-in/components/CloudSyncStep'
 import RecoveryKeyGate from '@/app/web-sign-in/components/RecoveryKeyGate'
@@ -66,6 +70,15 @@ export default function WebSignInGate({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (accountState.status === 'signedIn') webSignInLater.clear()
+  }, [accountState.status])
+
+  useEffect(() => {
+    if (accountState.status === 'loading') return
+    if (accountState.status === 'signedIn') {
+      preloadUnlockedApp()
+      return
+    }
+    return preloadUnlockedAppOnInteraction()
   }, [accountState.status])
 
   const storageWait =

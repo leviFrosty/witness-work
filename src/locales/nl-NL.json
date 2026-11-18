@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Dat is niet de passkey die je zojuist hebt gemaakt. Probeer het opnieuw en kies die.",
   "webSignUp_problemNotCreated": "Je account is niet aangemaakt. Begin opnieuw.",
   "webSignUp_keyStuck": "De opslag van deze browser reageert niet, dus WitnessWork kan nog niet openen.",
+  "webAppLoadFailed_title": "WitnessWork is niet volledig geladen",
+  "webAppLoadFailed_message": "Controleer je internetverbinding en probeer het opnieuw.",
   "webSignUp_recoveryTitle": "Bewaar je herstelsleutel",
   "webSignUp_recoveryBody": "Als je je passkey kwijtraakt, is deze sleutel de enige manier om weer in je account te komen. Bewaar hem voordat je verdergaat.",
   "webSignUp_recoverySignInOnly": "Met je passkey kun je inloggen, maar je account kan er niet alleen mee worden ontgrendeld. Op een andere computer heb je ook deze herstelsleutel of je telefoon nodig.",

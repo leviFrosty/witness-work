@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Urwo si urufunguzo rwo kwinjira umaze gukora. Ongera ugerageze maze uhitemo urwo.",
   "webSignUp_problemNotCreated": "Konti yawe ntiyafunguwe. Ongera utangire.",
   "webSignUp_keyStuck": "Ububiko bw'iyi mushakisha ntibusubiza, bityo WitnessWork ntirashobora gufunguka.",
+  "webAppLoadFailed_title": "WitnessWork ntiyarangije gufunguka",
+  "webAppLoadFailed_message": "Reba interineti yawe, hanyuma wongere ugerageze.",
   "webSignUp_recoveryTitle": "Bika urufunguzo rwawe rwo kugarura",
   "webSignUp_recoveryBody": "Nubura urufunguzo rwawe rwo kwinjira, uru rufunguzo ni bwo buryo bwonyine bwo gusubira muri konti yawe. Rubike mbere yo gukomeza.",
   "webSignUp_recoverySignInOnly": "Urufunguzo rwawe rwo kwinjira rushobora kukwinjiza, ariko ntirushobora gufungura konti yawe rwonyine. Ku yindi mudasobwa, uzakenera kandi uru rufunguzo rwo kugarura cyangwa telefoni yawe.",

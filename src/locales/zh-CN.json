@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "这不是你刚创建的通行密钥。请重试并选择那一个。",
   "webSignUp_problemNotCreated": "你的账户没有创建。请重新开始。",
   "webSignUp_keyStuck": "这个浏览器的存储没有响应，WitnessWork 暂时无法打开。",
+  "webAppLoadFailed_title": "WitnessWork 未能完成加载",
+  "webAppLoadFailed_message": "请检查你的网络连接，然后重试。",
   "webSignUp_recoveryTitle": "保存你的恢复密钥",
   "webSignUp_recoveryBody": "如果你丢失了通行密钥，这个密钥是重新进入账户的唯一办法。请先保存好，再继续。",
   "webSignUp_recoverySignInOnly": "你的通行密钥可以让你登录，但无法单独解锁你的账户。在另一台电脑上，你还需要这个恢复密钥或你的手机。",

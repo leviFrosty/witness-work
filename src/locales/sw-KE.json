@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Huo si ufunguo wa siri uliotengeneza sasa hivi. Jaribu tena na uchague huo.",
   "webSignUp_problemNotCreated": "Akaunti yako haikufunguliwa. Anza upya.",
   "webSignUp_keyStuck": "Hifadhi ya kivinjari hiki haijibu, kwa hiyo WitnessWork haiwezi kufunguka bado.",
+  "webAppLoadFailed_title": "WitnessWork haikumaliza kupakia",
+  "webAppLoadFailed_message": "Angalia muunganisho wako wa intaneti, kisha ujaribu tena.",
   "webSignUp_recoveryTitle": "Hifadhi Ufunguo Wako wa Kurejesha",
   "webSignUp_recoveryBody": "Ukipoteza ufunguo wako wa siri, ufunguo huu ndio njia pekee ya kurudi kwenye akaunti yako. Uhifadhi kabla ya kuendelea.",
   "webSignUp_recoverySignInOnly": "Ufunguo wako wa siri unaweza kukuingiza, lakini hauwezi kufungua akaunti yako wenyewe. Kwenye kompyuta nyingine, utahitaji pia ufunguo huu wa kurejesha au simu yako.",

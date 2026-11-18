@@ -6573,6 +6573,8 @@
   "webSignUp_problemWrongPasskey": "ليس هذا مفتاح المرور الذي أنشأته للتو. حاول مرة أخرى واختر ذلك المفتاح.",
   "webSignUp_problemNotCreated": "لم يُنشأ حسابك. ابدأ من جديد.",
   "webSignUp_keyStuck": "تخزين هذا المتصفح لا يستجيب، لذا لا يستطيع WitnessWork الفتح بعد.",
+  "webAppLoadFailed_title": "لم يكتمل تحميل WitnessWork",
+  "webAppLoadFailed_message": "تحقق من اتصالك بالإنترنت، ثم حاول مرة أخرى.",
   "webSignUp_recoveryTitle": "احفظ مفتاح الاسترداد",
   "webSignUp_recoveryBody": "إذا فقدت مفتاح المرور، فهذا المفتاح هو الطريقة الوحيدة للعودة إلى حسابك. احفظه قبل أن تتابع.",
   "webSignUp_recoverySignInOnly": "يستطيع مفتاح المرور تسجيل دخولك، لكنه لا يستطيع فتح قفل حسابك وحده. على كمبيوتر آخر، ستحتاج أيضًا إلى مفتاح الاسترداد هذا أو إلى هاتفك.",

@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Ico te cisokoshi ca kwingilamo ico mwapanga nomba line. Eseni nakabili no kusala ico.",
   "webSignUp_problemNotCreated": "Akaunti yenu taipangilwe. Tendekeni nakabili.",
   "webSignUp_keyStuck": "Icisungilo ca browser iyi tacileasuka, eico WitnessWork teti iisuke pali nomba.",
+  "webAppLoadFailed_title": "Ukwisula kwa WitnessWork tekwapwa",
+  "webAppLoadFailed_message": "Moneni ukutantika kwenu ku intaneti, elyo mwesheko nakabili.",
   "webSignUp_recoveryTitle": "Sungeni Icisokoshi Cenu ica Kubwesha",
   "webSignUp_recoveryBody": "Nga mwalufya icisokoshi cenu ica kwingilamo, icisokoshi ici e nshila fye imo iya kubwelela mu akaunti yenu. Cisungeni ilyo tamulatwalilila.",
   "webSignUp_recoverySignInOnly": "Icisokoshi cenu ica kwingilamo kuti camwingisha, lelo teti cisule akaunti yenu cine cine. Pa kompyuta imbi, mukakabila na cisokoshi ca kubwesha ici nelyo foni yenu.",

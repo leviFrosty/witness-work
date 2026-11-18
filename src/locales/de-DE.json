@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Das ist nicht der soeben erstellte Passkey. Versuchen Sie es erneut und wählen Sie diesen.",
   "webSignUp_problemNotCreated": "Ihr Konto wurde nicht erstellt. Beginnen Sie von vorn.",
   "webSignUp_keyStuck": "Der Speicher dieses Browsers antwortet nicht, daher kann WitnessWork noch nicht geöffnet werden.",
+  "webAppLoadFailed_title": "WitnessWork wurde nicht vollständig geladen",
+  "webAppLoadFailed_message": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es dann erneut.",
   "webSignUp_recoveryTitle": "Wiederherstellungsschlüssel speichern",
   "webSignUp_recoveryBody": "Wenn Sie Ihren Passkey verlieren, ist dieser Schlüssel der einzige Weg zurück in Ihr Konto. Speichern Sie ihn, bevor Sie fortfahren.",
   "webSignUp_recoverySignInOnly": "Mit Ihrem Passkey können Sie sich anmelden, aber er entsperrt Ihr Konto nicht allein. Auf einem anderen Computer brauchen Sie zusätzlich diesen Wiederherstellungsschlüssel oder Ihr Telefon.",

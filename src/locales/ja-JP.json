@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "それは作成したばかりのパスキーではありません。もう一度、そのパスキーを選んでください。",
   "webSignUp_problemNotCreated": "アカウントが作成されませんでした。もう一度やり直してください。",
   "webSignUp_keyStuck": "このブラウザのストレージが応答しないため、WitnessWorkをまだ開けません。",
+  "webAppLoadFailed_title": "WitnessWorkの読み込みが完了しませんでした",
+  "webAppLoadFailed_message": "インターネット接続を確認して、もう一度お試しください。",
   "webSignUp_recoveryTitle": "復旧キーを保存する",
   "webSignUp_recoveryBody": "パスキーをなくした場合、このキーがアカウントに戻る唯一の方法です。続ける前に保存してください。",
   "webSignUp_recoverySignInOnly": "パスキーでサインインはできますが、それだけではアカウントのロックを解除できません。別のコンピュータでは、この復旧キーかお使いのスマートフォンも必要です。",

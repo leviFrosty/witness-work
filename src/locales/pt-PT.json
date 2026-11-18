@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Essa não é a chave de acesso que acabou de criar. Tente novamente e escolha essa.",
   "webSignUp_problemNotCreated": "A sua conta não foi criada. Comece de novo.",
   "webSignUp_keyStuck": "O armazenamento deste navegador não está a responder, por isso o WitnessWork ainda não consegue abrir.",
+  "webAppLoadFailed_title": "O WitnessWork não terminou de carregar",
+  "webAppLoadFailed_message": "Verifique a ligação à internet e tente novamente.",
   "webSignUp_recoveryTitle": "Guarde a Sua Chave de Recuperação",
   "webSignUp_recoveryBody": "Se perder a sua chave de acesso, esta chave é a única forma de voltar à sua conta. Guarde-a antes de continuar.",
   "webSignUp_recoverySignInOnly": "A sua chave de acesso permite-lhe iniciar sessão, mas sozinha não desbloqueia a sua conta. Noutro computador, também vai precisar desta chave de recuperação ou do seu telemóvel.",

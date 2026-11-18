@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "방금 만든 패스키가 아닙니다. 다시 시도하여 그 패스키를 선택하세요.",
   "webSignUp_problemNotCreated": "계정이 만들어지지 않았습니다. 처음부터 다시 시작하세요.",
   "webSignUp_keyStuck": "이 브라우저의 저장소가 응답하지 않아 아직 WitnessWork를 열 수 없습니다.",
+  "webAppLoadFailed_title": "WitnessWork를 끝까지 불러오지 못했습니다",
+  "webAppLoadFailed_message": "인터넷 연결을 확인한 다음 다시 시도하세요.",
   "webSignUp_recoveryTitle": "복구 키 저장하기",
   "webSignUp_recoveryBody": "패스키를 잃어버리면 이 키만이 계정으로 돌아가는 유일한 방법입니다. 계속하기 전에 저장하세요.",
   "webSignUp_recoverySignInOnly": "패스키로 로그인할 수는 있지만, 패스키만으로는 계정을 열 수 없습니다. 다른 컴퓨터에서는 이 복구 키나 휴대폰도 필요합니다.",

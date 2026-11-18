@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "那不是你剛建立的通行密鑰。請再試一次，並選擇那一個。",
   "webSignUp_problemNotCreated": "你的帳號沒有建立。請重新開始。",
   "webSignUp_keyStuck": "這個瀏覽器的儲存空間沒有回應，所以 WitnessWork 暫時無法開啟。",
+  "webAppLoadFailed_title": "WitnessWork 未能完成載入",
+  "webAppLoadFailed_message": "請檢查你的網際網路連線，然後再試一次。",
   "webSignUp_recoveryTitle": "儲存你的復原金鑰",
   "webSignUp_recoveryBody": "如果你遺失了通行密鑰，這把金鑰就是回到帳號的唯一方法。請先儲存好再繼續。",
   "webSignUp_recoverySignInOnly": "你的通行密鑰可以讓你登入，但無法單靠它解鎖你的帳號。在另一台電腦上，你還需要這把復原金鑰或你的手機。",

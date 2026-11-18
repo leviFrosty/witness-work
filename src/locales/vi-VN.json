@@ -5997,6 +5997,8 @@
   "webSignUp_problemWrongPasskey": "Đó không phải khóa truy cập bạn vừa tạo. Hãy thử lại và chọn khóa đó.",
   "webSignUp_problemNotCreated": "Tài khoản của bạn chưa được tạo. Hãy bắt đầu lại.",
   "webSignUp_keyStuck": "Bộ nhớ của trình duyệt này không phản hồi nên WitnessWork chưa thể mở.",
+  "webAppLoadFailed_title": "WitnessWork chưa tải xong",
+  "webAppLoadFailed_message": "Hãy kiểm tra kết nối internet, rồi thử lại.",
   "webSignUp_recoveryTitle": "Lưu khóa khôi phục của bạn",
   "webSignUp_recoveryBody": "Nếu bạn mất khóa truy cập, khóa này là cách duy nhất để vào lại tài khoản. Hãy lưu nó trước khi tiếp tục.",
   "webSignUp_recoverySignInOnly": "Khóa truy cập của bạn có thể giúp bạn đăng nhập, nhưng tự nó không thể mở khóa tài khoản. Trên máy tính khác, bạn cũng cần khóa khôi phục này hoặc điện thoại của bạn.",

@@ -11,6 +11,8 @@ const FADE = web
     } as ViewStyle)
   : undefined
 
+const MARK = web ? ({ dataSet: { wwHoverTint: '' } } as object) : undefined
+
 export default function HoverTint({
   visible,
   borderRadius,
@@ -34,6 +36,7 @@ export default function HoverTint({
     <View
       pointerEvents='none'
       testID={visible ? 'hover-tint' : undefined}
+      {...MARK}
       style={[
         StyleSheet.absoluteFill,
         {

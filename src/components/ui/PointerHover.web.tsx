@@ -16,11 +16,14 @@ type Props = {
   enabled?: boolean
 }
 
+const OWN_TINT =
+  ':not(:has(>[data-ww-hover-tint])):not(:has(:hover>[data-ww-hover-tint]))'
+
 const css = `
 @media (hover:hover) and (pointer:fine){
 div[data-ww-pointer]>*{transition:box-shadow .12s ease-out}
-div[data-ww-pointer=highlight]>:hover{box-shadow:0 0 0 6px rgba(128,128,128,.2)}
-div[data-ww-pointer=lift]>:hover{box-shadow:0 2px 6px rgba(0,0,0,.22)}
+div[data-ww-pointer=highlight]>:hover${OWN_TINT}{box-shadow:0 0 0 6px rgba(128,128,128,.2)}
+div[data-ww-pointer=lift]>:hover${OWN_TINT}{box-shadow:0 2px 6px rgba(0,0,0,.22)}
 }
 `
 

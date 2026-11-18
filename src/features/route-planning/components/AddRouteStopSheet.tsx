@@ -647,6 +647,10 @@ function SavedPlaceChip({
           accessibilityLabel={i18n.t('routeBuilder_setSavedPlace', {
             place: label,
           })}
+          style={{
+            borderRadius: theme.numbers.borderRadiusMd,
+            borderCurve: 'continuous',
+          }}
         >
           {chip}
         </Button>

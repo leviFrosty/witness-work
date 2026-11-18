@@ -2,10 +2,16 @@ import ActionButton from '@/components/ui/ActionButton'
 import Card from '@/components/ui/Card'
 import Text from '@/components/ui/MyText'
 import i18n from '@/lib/locales'
+import { hasCapability } from '@/lib/platformCapabilities'
 import useNotificationPermission from '@/features/buddies/hooks/useNotificationPermission'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 export default function BuddiesNotificationsCard() {
+  if (!hasCapability('deviceNotifications')) return null
+  return <NotificationsOffCard />
+}
+
+function NotificationsOffCard() {
   const { granted, needsSettings, turnOn } = useNotificationPermission()
   const enabled = useBuddies((state) => state.notificationsEnabled)
   const waiting = useBuddies(

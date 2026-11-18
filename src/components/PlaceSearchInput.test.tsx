@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   status: 'granted' as string | null,
   requestLocation: vi.fn(),
   openSettings: vi.fn(),
+  appSettings: true,
   searchPlaces: vi.fn(async (): Promise<unknown[]> => []),
   resolvePlace: vi.fn(),
   preferences: { placeSearchLocationAsked: false } as Record<string, unknown>,
@@ -26,6 +27,10 @@ vi.mock('expo-location', () => ({
     DENIED: 'denied',
     UNDETERMINED: 'undetermined',
   },
+}))
+vi.mock('@/lib/platformCapabilities', () => ({
+  hasCapability: (capability: string) =>
+    capability === 'appSettings' ? mocks.appSettings : true,
 }))
 vi.mock('lucide-react-native', () => ({ LocateFixed: 'LocateFixed' }))
 vi.mock('@/hooks/useLocation', () => ({
@@ -116,6 +121,7 @@ const locationButton = () =>
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.status = 'granted'
+  mocks.appSettings = true
   mocks.preferences.placeSearchLocationAsked = false
 })
 
@@ -171,6 +177,16 @@ describe('PlaceSearchInput location status', () => {
     await act(async () => button.props.onPress())
     expect(mocks.openSettings).toHaveBeenCalledOnce()
     expect(mocks.requestLocation).not.toHaveBeenCalled()
+  })
+
+  it('says how to allow a blocked site in a browser, which has no Settings to open', async () => {
+    mocks.status = 'denied'
+    mocks.appSettings = false
+    await render()
+    expect(locationButton()).toBeUndefined()
+    expect(root.root.findByType('InfoPopover' as never).props.description).toBe(
+      'locationNotice.blockedWeb'
+    )
   })
 })
 

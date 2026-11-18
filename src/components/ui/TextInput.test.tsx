@@ -21,7 +21,13 @@ vi.mock('tamagui', () => ({ Input: 'Input', TextArea: 'TextArea' }))
 vi.mock('@/lib/tracking', () => ({ tracking: (value: unknown) => value }))
 vi.mock('@/contexts/theme', () => ({
   default: () => ({
-    colors: { textAlt: 'gray', border: 'silver', error: 'red' },
+    colors: {
+      textAlt: 'gray',
+      border: 'silver',
+      error: 'red',
+      background: 'black',
+      backgroundLighter: 'charcoal',
+    },
     numbers: { borderRadiusMd: 10 },
     fonts: { regular: 'Regular' },
     fontSize: () => 16,
@@ -154,6 +160,45 @@ describe('TextInput validation outline', () => {
       expect(input().props.borderWidth).toBe(0)
     }
   )
+})
+
+describe('TextInput surface', () => {
+  const area = () => root.root.findByType('TextArea' as never)
+
+  it('fills with the screen background inside a section', async () => {
+    await render({ multiline: true })
+
+    expect(area().props.backgroundColor).toBe('black')
+    expect(flatten(area().props.style).borderRadius).toBe(16)
+  })
+
+  it('stands out from the screen as a rounded area of its own', async () => {
+    await render({ multiline: true, surface: 'screen' })
+
+    expect(area().props.backgroundColor).toBe('charcoal')
+    expect(area().props.borderRadius).toBe(26)
+    expect(flatten(area().props.style)).toMatchObject({
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+    })
+  })
+
+  it('keeps a one-line field a capsule on the screen', async () => {
+    await render({ surface: 'screen' })
+
+    expect(input().props.backgroundColor).toBe('charcoal')
+    expect(input().props.borderRadius).toBe(999)
+  })
+
+  it("keeps a caller's fill", async () => {
+    await render({
+      multiline: true,
+      surface: 'screen',
+      style: { backgroundColor: 'transparent' },
+    })
+
+    expect(area().props.backgroundColor).toBe('transparent')
+  })
 })
 
 describe('TextInput focus', () => {

@@ -103,6 +103,7 @@ export default function RecoveryKeySignIn({
         <TextInput
           autoFocus
           multiline
+          surface='screen'
           value={value}
           onChangeText={setValue}
           placeholder={i18n.t('account_enterPlaceholder')}

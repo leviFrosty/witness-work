@@ -109,6 +109,7 @@ const ScribeMemoryScreen = () => {
         </View>
         <TextInput
           multiline
+          surface='screen'
           value={text}
           onChangeText={(value) => setScribeMemoryText(value)}
           onFocus={() => {

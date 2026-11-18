@@ -29,6 +29,7 @@ import DisplayRegionsView from '../../../../modules/display-regions'
 import { useSystemBackButton } from '@/components/ui/layout/SystemBackButton'
 import { useLocalFoldPane } from '@/components/ui/layout/FoldPane'
 import { submitHeader } from '@/components/ui/submitScope'
+import { useIsPanelRoot } from '@/components/ui/layout/stackPanel'
 
 type Props = {
   backgroundColor?: string
@@ -87,6 +88,7 @@ const HeaderContent = ({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const navigation = useNavigation<RootStackNavigation>()
+  const closesPanel = useIsPanelRoot() && buttonType === 'back'
 
   const [controls, setControls] = useState(NO_WINDOW_CONTROLS)
 
@@ -137,7 +139,7 @@ const HeaderContent = ({
     if (buttonType === 'settings') {
       return MenuIcon
     }
-    if (buttonType === 'exit') {
+    if (buttonType === 'exit' || closesPanel) {
       return XIcon
     }
     if (buttonType === 'back') {
@@ -148,7 +150,7 @@ const HeaderContent = ({
   }
 
   const buttonLabel = (): string | undefined => {
-    if (buttonType === 'exit') {
+    if (buttonType === 'exit' || closesPanel) {
       return i18n.t('close')
     }
     if (buttonType === 'back') {

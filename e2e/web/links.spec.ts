@@ -341,7 +341,7 @@ test.describe('a Buddies invite link', () => {
     await app.goto(`/buddies/invite#${fragment}`)
     await expect(app.getByText(en.buddies_inviteUnavailable)).toBeVisible()
     await expect(
-      app.getByText(en.buddies_title, { exact: true }).filter({ visible: true })
+      app.getByRole('heading', { name: en.buddies_title, exact: true })
     ).toBeVisible()
     expect(lookups).toHaveLength(1)
 

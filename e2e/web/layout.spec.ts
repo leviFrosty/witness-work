@@ -10,6 +10,8 @@ const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) < 768
 
 const MIN = 44
 
+const LEAVE_FORM = /^(Go Back|Close)$/
+
 async function expectTarget(page: Page, name: string | RegExp, exact = true) {
   const control = page
     .getByRole('button', { name, exact: typeof name === 'string' && exact })
@@ -217,7 +219,7 @@ test('Add Contact and the visit form have a header with fingertip controls', asy
   shot,
 }) => {
   await addContact(app, 'Alex Moreno')
-  await expectTarget(app, 'Go Back')
+  await expectTarget(app, LEAVE_FORM)
   await expectTarget(app, 'Save')
 
   const save = (await app.getByRole('button', { name: 'Save' }).boundingBox())!
@@ -328,7 +330,7 @@ test('base controls are a fingertip big', async ({ app }) => {
   await app.getByRole('button', { name: 'Quick Action' }).click()
   await app.getByText('Create Plan', { exact: true }).click()
   await menuGone(app)
-  await expectTarget(app, 'Go Back')
+  await expectTarget(app, LEAVE_FORM)
 })
 
 test('a Switch is a fingertip big and toggles from its frame', async ({

@@ -38,6 +38,8 @@ const skiaScreens = {
 
 const RootStack = createSystemBackStackNavigator<RootStackParamList>()
 
+const webPanel = Platform.select({ web: { presentation: 'modal' as const } })
+
 const petLargeScreenOptions = () =>
   petOpensAsSheet()
     ? {
@@ -63,6 +65,15 @@ const RootStackComponent = () => {
 
   return (
     <RootStack.Navigator
+      screenOptions={
+        Platform.OS === 'web'
+          ? {
+              headerStyle: { backgroundColor: theme.colors.background },
+              headerTintColor: theme.colors.text,
+              headerShadowVisible: false,
+            }
+          : undefined
+      }
       screenLayout={({ route, options, children }) =>
         route.name === 'Root' || route.name === 'BadgeView' ? (
           children
@@ -132,17 +143,20 @@ const RootStackComponent = () => {
         />
         <RootStack.Screen
           name='Contact Form'
+          options={webPanel}
           getComponent={() =>
             require('@/features/contacts/screens/ContactFormScreen').default
           }
         />
         <RootStack.Screen
           name='Visit Form'
+          options={webPanel}
           getComponent={() => require('@/app/visits/VisitFormRoute').default}
         />
         <RootStack.Screen
           name='Add Time'
           options={{
+            ...webPanel,
             header: () => (
               <Header noInsets buttonType='back' title={i18n.t('addTime')} />
             ),
@@ -615,7 +629,7 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          options={{ header: () => null }}
+          options={{ ...webPanel, header: () => null }}
           name='TerritoryForm'
           getComponent={() =>
             require('@/features/territories/screens/TerritoryFormScreen')
@@ -639,7 +653,7 @@ const RootStackComponent = () => {
           }
         />
         <RootStack.Screen
-          options={{ header: () => null }}
+          options={{ ...webPanel, header: () => null }}
           name='TerritoryStreetForm'
           getComponent={() =>
             require('@/features/territories/screens/TerritoryStreetFormScreen')

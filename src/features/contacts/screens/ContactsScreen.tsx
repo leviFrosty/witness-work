@@ -720,7 +720,11 @@ const ContactsScreen = ({
                   : i18n.t('contacts_screen_title')
             }
             actions={headerActions}
-            contentStyle={[{ maxWidth: isWide ? 1200 : 720 }, foldColumn]}
+            contentStyle={
+              showsMap
+                ? foldColumn
+                : [{ maxWidth: isWide ? 1200 : 720 }, foldColumn]
+            }
           >
             {showsMap && viewToggle && !togglesInHeader && (
               <FoldSplit

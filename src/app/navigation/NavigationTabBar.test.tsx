@@ -182,3 +182,19 @@ it('keeps shortcuts working with a hidden sidebar without recording a hint revea
   runtime.shortcut?.({ input: '3' })
   expect(props.navigation.navigate).toHaveBeenCalledWith('Contacts', undefined)
 })
+
+it.each([true, false])(
+  'shows the Map item only with a sidebar (sidebar: %s)',
+  async (sidebar) => {
+    runtime.sidebar = sidebar
+    const props = makeProps(['Home', 'Contacts', 'Map', 'Schedule'])
+    await mount({ ...props, state: { ...props.state, index: 3 } })
+    const { state } = renderer!.root.findByType(TabBar).props
+    expect(state.routes.map((route: { name: string }) => route.name)).toEqual(
+      sidebar
+        ? ['Home', 'Contacts', 'Map', 'Schedule']
+        : ['Home', 'Contacts', 'Schedule']
+    )
+    expect(state.routes[state.index].name).toBe('Schedule')
+  }
+)

@@ -8,6 +8,7 @@ import type {
   Region,
 } from '../../../src/lib/mapsFrame/protocol'
 import type { EngineStart, MapEngine } from './controller'
+import { rectFitting, regionFor } from '../../../src/lib/mapsFrame/projection'
 
 export const MAPKIT_URL =
   'https://cdn.apple-mapkit.com/mk/6.1.197/mapkit.core.js'
@@ -224,25 +225,11 @@ export function createMapKitEngine(element: HTMLElement): MapEngine {
       )
     },
     fit(coordinates, edges, animated) {
-      if (!map || coordinates.length === 0) return
-      const latitudes = coordinates.map((c) => c.latitude)
-      const longitudes = coordinates.map((c) => c.longitude)
-      const north = Math.max(...latitudes)
-      const south = Math.min(...latitudes)
-      const east = Math.max(...longitudes)
-      const west = Math.min(...longitudes)
-      const previous = map.padding
-      map.padding = padding(mapkit, edges)
-      map.setRegionAnimated(
-        new mapkit.BoundingRegion(
-          north,
-          east,
-          south,
-          west
-        ).toCoordinateRegion(),
-        animated
-      )
-      map.padding = previous
+      if (!map) return
+      const { width, height } = box()
+      const rect = rectFitting(coordinates, { width, height }, edges)
+      if (!rect) return
+      map.setRegionAnimated(coordinateRegion(mapkit, regionFor(rect)), animated)
     },
     setPins(next) {
       if (!map) return

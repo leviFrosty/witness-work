@@ -461,18 +461,25 @@ describe('refused writes', () => {
 })
 
 describe('returning and privacy', () => {
-  it('returning deletes the space and leaves everyone a copy without door records', async () => {
+  it('returning deletes the space, keeps the owner’s door records, and leaves everyone else a copy without them', async () => {
     await shareWith(anna, joe)
     const spaceId = anna.territory().shared!.spaceId
+    const doors = anna
+      .territory()
+      .streets.flatMap((s) => s.doors.map((door) => door.id))
+    expect(doors.length).toBeGreaterThan(0)
     await anna.engine.returnTerritory('territory-1')
     expect(server.isDeleted(spaceId)).toBe(true)
     const returned = anna.territory()
     expect(returned.shared).toBeUndefined()
     expect(returned.finishedAt).toBeDefined()
-    expect(returned.streets.every((s) => s.doors.length === 0)).toBe(true)
+    expect(
+      returned.streets.flatMap((s) => s.doors.map((door) => door.id))
+    ).toEqual(doors)
     await joe.engine.syncAll()
     const copy = joe.territory(endedCopyId(spaceId))
     expect(copy.received?.endedAt).toBeDefined()
+    expect(copy.streets.every((s) => s.doors.length === 0)).toBe(true)
     expect(copy.doNotCalls.length).toBeGreaterThan(0)
   })
 

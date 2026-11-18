@@ -398,16 +398,13 @@ describe('two devices on one account', () => {
     const a = device([territory()])
     const b = device()
     pull(b, a)
-    editTerritory(a, TERRITORY, (t) =>
-      finishTerritory(t, T0 + 1000, formatAddress)
-    )
+    editTerritory(a, TERRITORY, (t) => finishTerritory(t, T0 + 1000))
     pull(b, a)
     expect(b.personal[0].finishedAt).toBe(T0 + 1000)
-    expect(b.personal[0].streets.every((s) => s.doors.length === 0)).toBe(true)
-    expect(b.personal[0].doNotCalls.map((d) => d.address).sort()).toEqual([
-      '1 Somewhere Else',
-      '9 Elm Street',
-    ])
+    expect(b.personal[0].streets).toEqual(a.personal[0].streets)
+    expect(
+      b.personal[0].streets.flatMap((s) => s.doors).length
+    ).toBeGreaterThan(0)
   })
 })
 
@@ -448,9 +445,9 @@ describe('shared territories', () => {
     edit(b, () => [])
     settle([a, b])
     a.held.delete(TERRITORY)
-    edit(a, () => [finishTerritory(territory(), clock + 5, formatAddress)])
+    edit(a, () => [finishTerritory(territory(), clock + 5)])
     b.held.delete(TERRITORY)
-    edit(b, () => [finishTerritory(territory(), clock + 9, formatAddress)])
+    edit(b, () => [finishTerritory(territory(), clock + 9)])
     settle([a, b])
     expect(views(a)).toEqual(views(b))
     expect(a.personal).toHaveLength(1)
@@ -468,7 +465,7 @@ describe('shared territories', () => {
     edit(b, () => [])
     settle([a, b])
     a.held.delete(TERRITORY)
-    edit(a, () => [finishTerritory(territory(), clock + 5, formatAddress)])
+    edit(a, () => [finishTerritory(territory(), clock + 5)])
     settle([a, b])
     expect(a.personal).toHaveLength(1)
     expect(isMarked(a.ledger[TERRITORY])).toBe(false)
@@ -488,7 +485,7 @@ describe('shared territories', () => {
     edit(a, () => [])
     expect(isDeleted(a.ledger[TERRITORY])).toBe(true)
     b.held.delete(TERRITORY)
-    edit(b, () => [finishTerritory(territory(), clock + 9, formatAddress)])
+    edit(b, () => [finishTerritory(territory(), clock + 9)])
     settle([a, b])
     expect(a.personal).toEqual([])
     expect(b.personal).toEqual([])
@@ -524,7 +521,7 @@ describe('shared territories', () => {
     expect(b.personal).toEqual([])
 
     a.held.delete(TERRITORY)
-    edit(a, () => [finishTerritory(territory(), clock + 5, formatAddress)])
+    edit(a, () => [finishTerritory(territory(), clock + 5)])
     expect(a.ledger[TERRITORY]?.records[HEADER]?.data.space).toBeUndefined()
     pull(b, a)
     expect(markedSpaces(b.ledger)).toEqual([])
@@ -672,9 +669,7 @@ function run(devices: Device[], op: Op) {
       return onFirst((t) => ({ ...t, name: op.name }))
     case 'finish':
       return onFirst((t) =>
-        op.on
-          ? finishTerritory(t, clock, formatAddress)
-          : { ...t, finishedAt: undefined }
+        op.on ? finishTerritory(t, clock) : { ...t, finishedAt: undefined }
       )
     case 'addStreet':
       return onFirst((t) => ({

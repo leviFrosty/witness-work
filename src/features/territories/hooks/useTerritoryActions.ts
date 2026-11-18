@@ -13,8 +13,8 @@ import {
   updateStreet,
   workingStreets,
 } from '@/features/territories/lib/doors'
-import { formatDoorAddress } from '@/features/territories/lib/territoryTitle'
 import { useTerritories } from '@/features/territories/stores/territories'
+import { formatDoorAddress } from '@/features/territories/lib/territoryTitle'
 import type { Territory } from '@/features/territories/types/territory'
 
 export default function useTerritoryActions() {
@@ -50,9 +50,7 @@ export default function useTerritoryActions() {
           })
           return
         }
-        update(territory.id, (current) =>
-          finishTerritory(current, Date.now(), formatDoorAddress)
-        )
+        update(territory.id, (current) => finishTerritory(current, Date.now()))
         toast.success(i18n.t('territories.finished_toast'))
       },
     })
@@ -71,7 +69,9 @@ export default function useTerritoryActions() {
       description: i18n.t('territories.checkOutAgain_description'),
       confirmLabel: i18n.t('territories.checkOutAgain'),
       onConfirm: () => {
-        update(territory.id, (current) => checkOutAgain(current, Date.now()))
+        update(territory.id, (current) =>
+          checkOutAgain(current, Date.now(), formatDoorAddress)
+        )
         toast.success(i18n.t('territories.checkedOutAgain_toast'))
       },
     })

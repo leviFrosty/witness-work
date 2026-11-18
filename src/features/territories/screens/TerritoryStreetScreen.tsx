@@ -551,33 +551,43 @@ function StreetScreen({ route, navigation }: Props) {
                                     : formatDoorAddress(street, door),
                               })
                             }
-                            onPlacePin={() =>
-                              navigation.navigate('TerritoryDoorPin', {
-                                territoryId,
-                                streetId,
-                                doorId: door.id,
-                              })
+                            onPlacePin={
+                              finished
+                                ? undefined
+                                : () =>
+                                    navigation.navigate('TerritoryDoorPin', {
+                                      territoryId,
+                                      streetId,
+                                      doorId: door.id,
+                                    })
                             }
-                            onRemove={() => {
-                              show(null)
-                              setOpenId(null)
-                              forgetDoorVisits([door.id])
-                              change((current) => removeDoor(current, door.id))
-                              undoable({
-                                icon: Trash2Icon,
-                                color: theme.colors.error,
-                                text: doorTitle(street, door.label),
-                                label: i18n.t('territories.doorRemoved', {
-                                  door: doorTitle(street, door.label),
-                                }),
-                              })
-                            }}
+                            onRemove={
+                              finished
+                                ? undefined
+                                : () => {
+                                    show(null)
+                                    setOpenId(null)
+                                    forgetDoorVisits([door.id])
+                                    change((current) =>
+                                      removeDoor(current, door.id)
+                                    )
+                                    undoable({
+                                      icon: Trash2Icon,
+                                      color: theme.colors.error,
+                                      text: doorTitle(street, door.label),
+                                      label: i18n.t('territories.doorRemoved', {
+                                        door: doorTitle(street, door.label),
+                                      }),
+                                    })
+                                  }
+                            }
                           />
                         ))}
                         {notesShown && notesRow}
                       </Section>
                     )}
                     {!handedOff &&
+                      !finished &&
                       hint(
                         i18n.t(
                           unnumbered

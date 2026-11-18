@@ -6847,10 +6847,10 @@
     "saveDoNotCall": "Save Do Not Call",
     "removeDoNotCall_title": "Remove this do-not-call?",
     "finish": "Return Territory",
-    "finish_caption": "Tap when you hand the card back. Deletes house-by-house records and keeps do-not-calls.",
+    "finish_caption": "Tap when you hand the card back. House-by-house records and do-not-calls are kept.",
     "finish_captionPrivacy": "Tap when you hand the card back. Do-not-calls are kept.",
     "finish_title": "Return this territory?",
-    "finish_description": "House-by-house records will be deleted. Do-not-calls are kept with their address or map pin and the date.",
+    "finish_description": "The territory moves to Returned. Its house-by-house records and do-not-calls are kept.",
     "finish_descriptionPrivacy": "The territory moves to Returned. Do-not-calls are kept.",
     "finish_unworked": {
       "one": "%{count} street isn't marked worked.",
@@ -6896,7 +6896,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Insights",
-      "info": "When people answered at the doors recorded in your territories, by day and hour, including doors recorded by anyone you share a territory with. After a territory is returned, its counts stay on this device, without any addresses.",
+      "info": "When people answered at the doors recorded in your territories, by day and hour, including doors recorded by anyone you share a territory with. After a territory is deleted, its counts stay on this device, without any addresses.",
       "territoryInfo": "When people answered in this territory, by day and hour, including doors recorded by anyone you share it with.",
       "weighting": "Recent months count most. Older visits still count, and visits from this time last year count extra, since daylight and weather were alike.",
       "leansOnPast": "Mostly from visits more than 3 months ago.",

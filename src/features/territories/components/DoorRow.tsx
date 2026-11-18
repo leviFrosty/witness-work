@@ -109,13 +109,16 @@ export default function DoorRow({
     .filter(Boolean)
     .join(' · ')
   const detail = `${outcome} · ${rest}`
+  const hasActions =
+    (door.outcome === 'spoke' && !!onAddContact) || !!onPlacePin || !!onRemove
+  const expanded = open && hasActions
 
   return (
     <View
       style={{
         backgroundColor: fresh
           ? theme.colors.accentTranslucent
-          : open || current
+          : expanded || current
             ? theme.colors.backgroundLighter
             : undefined,
       }}
@@ -124,9 +127,15 @@ export default function DoorRow({
         <Button
           noTransform
           onPress={onToggle}
+          disabled={!plain && !hasActions}
           accessibilityLabel={`${title}, ${detail}`}
-          accessibilityHint={i18n.t('territories.doorRow_hint')}
-          accessibilityState={{ selected: current, expanded: open }}
+          accessibilityHint={
+            plain || hasActions ? i18n.t('territories.doorRow_hint') : undefined
+          }
+          accessibilityState={{
+            selected: current,
+            expanded: plain || !hasActions ? undefined : open,
+          }}
           testID={`door-row-${door.label}`}
           style={{
             flexDirection: 'row',
@@ -182,20 +191,22 @@ export default function DoorRow({
               {` · ${rest}`}
             </Text>
           </View>
-          <LucideIcon
-            icon={
-              plain
-                ? ChevronForwardIcon
-                : open
-                  ? ChevronUpIcon
-                  : ChevronDownIcon
-            }
-            size={18}
-            color={theme.colors.textAlt}
-          />
+          {(plain || hasActions) && (
+            <LucideIcon
+              icon={
+                plain
+                  ? ChevronForwardIcon
+                  : open
+                    ? ChevronUpIcon
+                    : ChevronDownIcon
+              }
+              size={18}
+              color={theme.colors.textAlt}
+            />
+          )}
         </Button>
       </View>
-      {open && (
+      {expanded && (
         <View
           style={{
             flexDirection: 'row',

@@ -342,22 +342,18 @@ export const hasDoorRecords = (territory: Territory) =>
 
 export const finishTerritory = (
   territory: Territory,
-  at: number,
-  formatAddress: FormatDoorAddress
-): Territory => {
-  const cleared = clearDoorRecords(territory, formatAddress)
-  return {
-    ...cleared,
-    finishedAt: at,
-    streets: cleared.streets.map((street) => ({
-      ...street,
-      handoff: undefined,
-    })),
-    shares: cleared.shares?.map((share) =>
-      share.endedAt === undefined ? { ...share, endedAt: at } : share
-    ),
-  }
-}
+  at: number
+): Territory => ({
+  ...territory,
+  finishedAt: at,
+  streets: territory.streets.map((street) => ({
+    ...street,
+    handoff: undefined,
+  })),
+  shares: territory.shares?.map((share) =>
+    share.endedAt === undefined ? { ...share, endedAt: at } : share
+  ),
+})
 
 export const sharesWithOthers = (territory: Territory): boolean =>
   territory.streets.some((street) => street.handoff !== undefined) ||
@@ -368,20 +364,26 @@ export const reopenTerritory = (territory: Territory): Territory => ({
   finishedAt: undefined,
 })
 
-export const checkOutAgain = (territory: Territory, at: number): Territory => ({
-  ...territory,
-  checkedOutAt: at,
-  returnBy: undefined,
-  finishedAt: undefined,
-  streets: territory.streets.map((street) => ({
-    ...street,
-    doors: [],
-    next: startNumber(street.numbering, street.first),
-    workedAt: undefined,
-    workedBy: undefined,
-    handoff: undefined,
-  })),
-})
+export const checkOutAgain = (
+  territory: Territory,
+  at: number,
+  formatAddress: FormatDoorAddress
+): Territory => {
+  const cleared = clearDoorRecords(territory, formatAddress)
+  return {
+    ...cleared,
+    checkedOutAt: at,
+    returnBy: undefined,
+    finishedAt: undefined,
+    streets: cleared.streets.map((street) => ({
+      ...street,
+      next: startNumber(street.numbering, street.first),
+      workedAt: undefined,
+      workedBy: undefined,
+      handoff: undefined,
+    })),
+  }
+}
 
 const sameAddress = (left: string, right: string) =>
   left.trim().toLowerCase() === right.trim().toLowerCase()

@@ -107,6 +107,13 @@ describe('wrangler.toml environments', () => {
     }
     // The bypass token is a secret of the local worker only (.dev.vars).
     expect(toml).not.toMatch(/^\s*NOTES_IMPORT_DEV_BYPASS_TOKEN\s*=/m)
+    // The Turnstile QA bypass is Beta's alone, and its token is a secret.
+    expect(perEnv((env) => vars(env, 'TURNSTILE_QA_BYPASS'))).toEqual({
+      production: undefined,
+      beta: 'on',
+      dev: undefined,
+    })
+    expect(toml).not.toMatch(/^\s*TURNSTILE_QA_BYPASS_TOKEN\s*=/m)
   })
 
   it('gives Beta and production real Turnstile widgets that only their own frame host can solve', () => {

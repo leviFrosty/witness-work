@@ -159,6 +159,9 @@ WEB_SIGNUP_PER_ASN_HOUR = "30"
 WEB_RECOVERY_PER_IP_DAY = "10"
 TURNSTILE_SITE_KEY = "0x4AAAAAAGEspzlzg1QS2ijv"
 TURNSTILE_HOSTNAMES = "verify-beta.witnesswork.app"
+# Automated QA: the TURNSTILE_QA_BYPASS_TOKEN secret passes as a Turnstile
+# token (src/accounts/turnstile.ts). Beta only; never set it in [vars].
+TURNSTILE_QA_BYPASS = "on"
 # App-wide minimum version fallback when KV `app:min-version` is absent
 # (GET /app/v1/config). Unset = no floor.
 # APP_MIN_VERSION = "1.42.0"
@@ -1411,3 +1414,6 @@ logs.persist = true
 # (and TURNSTILE_SITE_KEY) before web sign-up opens; dev uses Cloudflare's
 # always-passing test secret until its own widget's is set:
 # wrangler secret put TURNSTILE_SECRET_KEY [--env beta]
+# Automated QA on Beta only (TURNSTILE_QA_BYPASS = "on" in [env.beta.vars]);
+# copy in 1Password's Agents vault, "ww-api Turnstile QA bypass token (beta)":
+# echo "wwqa_$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=')" | wrangler secret put TURNSTILE_QA_BYPASS_TOKEN --env beta

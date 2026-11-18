@@ -1801,6 +1801,17 @@ wrangler secret put TURNSTILE_SECRET_KEY --env beta  # paste the widget's secret
 wrangler secret put TURNSTILE_SECRET_KEY             # production (the owner)
 ```
 
+**QA bypass (Beta only):** with `TURNSTILE_QA_BYPASS = "on"` (only in
+`[env.beta.vars]`), the secret `TURNSTILE_QA_BYPASS_TOKEN` passes as a
+`turnstileToken` for sign-up and recovery without Siteverify, so automated QA
+can use the live Beta web app (`verifyTurnstile`; the witness-work
+`verify-witnesswork` skill, "Live Beta"). It rides in the body, never a header,
+because Workers Logs record request headers. Caps and the kill switch still
+apply. Production has no switch, so the token does nothing there even if set
+(`src/environments.test.ts` pins it). The copy is in the Agents vault, "ww-api
+Turnstile QA bypass token (beta)". Rotate: put a new value in the vault, then
+`wrangler secret put TURNSTILE_QA_BYPASS_TOKEN --env beta`.
+
 The verify launcher sets synthetic ones; `src/e2e/passkeys.e2e.test.ts`
 drives the routes with a software authenticator (`src/test/webauthn.ts`), and
 `src/e2e/webSignup.e2e.test.ts` signs up and recovers against the real

@@ -3,12 +3,16 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import ContactRow from '@/features/contacts/components/ContactRow'
 import ContactsScreen from '@/features/contacts/screens/ContactsScreen'
 import MapScreen from '@/features/map/screens/MapScreen'
-import type { MapContactRowRenderer } from '@/features/map/components/MapContactInspector'
+import type {
+  MapContactDetailRenderer,
+  MapContactRowRenderer,
+} from '@/features/map/components/MapContactInspector'
 import type { MapRouteActions } from '@/features/map/types/map'
 import useDayRouteStopCount from '@/features/route-planning/hooks/useDayRouteStopCount'
 import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 import useToday from '@/hooks/useToday'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
+import MapContactDetailPane from './MapContactDetailPane'
 import type { Contact } from '@/types/contact'
 
 import { usePreferences } from '@/stores/preferences'
@@ -18,6 +22,10 @@ type Props = BottomTabScreenProps<HomeTabStackParamList, 'Contacts'>
 
 const renderMapContactRow: MapContactRowRenderer = (props) => (
   <ContactRow {...props} showsDisclosure={false} showOpenInMenu />
+)
+
+const renderMapContactDetail: MapContactDetailRenderer = (props) => (
+  <MapContactDetailPane {...props} />
 )
 
 function useMapRouteActions(): MapRouteActions {
@@ -42,6 +50,7 @@ export function ContactsMap(props: {
     <MapScreen
       {...props}
       renderContactRow={renderMapContactRow}
+      renderContactDetail={renderMapContactDetail}
       routeActions={routeActions}
     />
   )

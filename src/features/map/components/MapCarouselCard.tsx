@@ -18,6 +18,8 @@ import useOpenContact from '@/hooks/useOpenContact'
 import { useNavigation } from '@react-navigation/native'
 import { addressToString, coordinateAsString, navigateTo } from '@/lib/address'
 import Avatar from '@/components/ui/Avatar'
+import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
+import LucideIcon from '@/components/ui/LucideIcon'
 import { parsePhoneNumber } from 'awesome-phonenumber'
 import { getLocales } from 'expo-localization'
 import { handleCall } from '@/lib/phone'
@@ -28,11 +30,16 @@ import { ContactMarker } from '@/features/map/types/map'
 import MapCard from '@/features/map/components/MapCard'
 import useCopyText from '@/features/map/hooks/useCopyText'
 import { contactMapQuery, mapLinks } from '@/lib/mapLinks'
+import { MAP_CARD_OPEN_TEST_ID } from '@/features/map/lib/mapTestIds'
 
 interface Props {
   contact: ContactMarker
   index: ConversationIndex
+
+  onOpen?: () => void
 }
+
+const OPEN_INSET = 6
 
 const withSecondaryItems = (
   entries: ContextMenuEntries,
@@ -43,7 +50,7 @@ const withSecondaryItems = (
   return [first, [...second, ...items], ...rest]
 }
 
-const MapCarouselCard = ({ contact, index }: Props) => {
+const MapCarouselCard = ({ contact, index, onOpen }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
   const openContact = useOpenContact()
@@ -107,7 +114,13 @@ const MapCarouselCard = ({ contact, index }: Props) => {
     <MapCard fill={false}>
       <ContextMenu
         actions={actions}
-        onPress={() => openContact({ id: contact.id })}
+        onPress={onOpen ?? (() => openContact({ id: contact.id }))}
+        accessibilityLabel={i18n.t('map_openContactDetails', {
+          name: contact.name,
+        })}
+        hoverRadius={theme.numbers.borderRadiusLg - OPEN_INSET}
+        style={{ margin: -OPEN_INSET }}
+        testID={MAP_CARD_OPEN_TEST_ID}
         preview={
           <ContactPreview
             contact={contact}
@@ -115,7 +128,7 @@ const MapCarouselCard = ({ contact, index }: Props) => {
           />
         }
       >
-        <View style={{ gap: 4 }}>
+        <View style={{ gap: 4, padding: OPEN_INSET }}>
           <View
             style={{
               flexDirection: 'row',
@@ -135,11 +148,16 @@ const MapCarouselCard = ({ contact, index }: Props) => {
               style={{
                 fontSize: theme.fontSize('lg'),
                 fontFamily: theme.fonts.bold,
-                flexShrink: 1,
+                flex: 1,
               }}
             >
               {contact.name}
             </Text>
+            <LucideIcon
+              icon={ChevronForwardIcon}
+              size={20}
+              color={theme.colors.textAlt}
+            />
           </View>
           <View
             style={{

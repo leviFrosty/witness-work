@@ -12,10 +12,13 @@ import { parsePhoneNumber } from 'awesome-phonenumber'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ActionButton from '@/components/ui/ActionButton'
 import Button from '@/components/ui/Button'
+import { ChevronBackwardIcon } from '@/components/ui/DirectionalIcon'
 import Empty from '@/components/ui/Empty'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import WholeWordsText from '@/components/ui/WholeWordsText'
+import IconButton from '@/components/ui/IconButton'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import Header from '@/components/ui/layout/Header'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import XView from '@/components/ui/layout/XView'
@@ -78,6 +81,8 @@ const VISIT_CARD_OVERLAP = 46
 
 const NAME_SCROLLED_AWAY = 64
 
+const BACK_GLYPH = 22
+
 const LOG_BAR_BUTTON = MIN_TOUCH_TARGET
 const LOG_BAR_PADDING = 10
 
@@ -93,6 +98,8 @@ type Props = {
   navigation: ContactDetailsNavigation
   embedded?: boolean
 
+  back?: { label: string; onPress: () => void }
+
   scrollY?: number
 
   onScrollY?: (y: number) => void
@@ -103,6 +110,7 @@ const ContactDetailsContent = ({
   highlightedVisitId,
   navigation,
   embedded = false,
+  back,
   scrollY,
   onScrollY,
 }: Props) => {
@@ -351,7 +359,10 @@ const ContactDetailsContent = ({
   } as const
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View
+      onAccessibilityEscape={back?.onPress}
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+    >
       {embedded && (
         <WindowControlsInsetView
           onInsetsChange={setControls}
@@ -370,6 +381,26 @@ const ContactDetailsContent = ({
               paddingEnd: 16 + controls.end,
             }}
           >
+            {back && (
+              <View
+                style={{
+                  marginStart: -(MIN_TOUCH_TARGET - BACK_GLYPH) / 2,
+                  marginEnd: -8,
+                }}
+              >
+                <PointerTooltip label={back.label} effect='none'>
+                  <IconButton
+                    icon={ChevronBackwardIcon}
+                    size={BACK_GLYPH}
+                    color={heroForeground}
+                    accessibilityLabel={back.label}
+                    testID='contact-details-back'
+                    frame
+                    onPress={back.onPress}
+                  />
+                </PointerTooltip>
+              </View>
+            )}
             <Text
               numberOfLines={1}
               accessibilityElementsHidden={!nameScrolledAway}

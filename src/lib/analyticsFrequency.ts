@@ -37,6 +37,7 @@ const sessionEvents = new Set([
   'contacts_filter_added',
   'contacts_staleness_chip_applied',
   'map_group_opened',
+  'map_contact_details_opened',
   'map_unavailable',
   'contacts_suggested_contact_opened',
   'icloud_restore_probe_result',

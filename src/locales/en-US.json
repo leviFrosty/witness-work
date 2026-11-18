@@ -716,6 +716,8 @@
   "map_showContactCards": "Show contact cards",
   "map_hideContactList": "Hide contact list",
   "map_showContactList": "Show contact list",
+  "map_openContactDetails": "Open details for {{name}}",
+  "map_backToContactList": "Back to contact list",
   "map_noSearchResults": "No matches",
   "map_noSearchResults_description": "No mapped contacts match this search.",
   "map_noFilterResults_description": "No mapped contacts match these filters. Tap All, or clear filters in Sort & Filter.",

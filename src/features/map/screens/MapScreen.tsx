@@ -72,6 +72,7 @@ import { buildContactsFuse, searchContactsFuzzy } from '@/lib/contactsSearch'
 import { requestOrOfferLocationSettings } from '@/lib/locationPermission'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import MapContactInspector, {
+  type MapContactDetailRenderer,
   type MapContactRowRenderer,
 } from '@/features/map/components/MapContactInspector'
 import CreateContactCard from '@/features/map/components/CreateContactCard'
@@ -126,6 +127,7 @@ const STOW_TIMING = { duration: 280, easing: Easing.inOut(Easing.ease) }
 
 interface FullMapViewProps {
   renderContactRow: MapContactRowRenderer
+  renderContactDetail?: MapContactDetailRenderer
 
   contactMarkers: ContactMarker[]
 
@@ -163,6 +165,7 @@ const FullMapView = ({
   activeContactCount,
   conversationIndex,
   renderContactRow,
+  renderContactDetail,
   topInset,
   onExplore,
   onExploreEnd,
@@ -1215,6 +1218,7 @@ const FullMapView = ({
             >
               <MapContactInspector
                 renderContactRow={renderContactRow}
+                renderContactDetail={renderContactDetail}
                 contacts={visibleContactMarkers}
                 activeId={activeContactId}
                 revealRequest={inspectorRevealRequest}
@@ -1468,6 +1472,7 @@ function withDroppedContacts(
 const MapScreen = ({
   contacts,
   renderContactRow,
+  renderContactDetail,
   topInset = 0,
   onExplore,
   onExploreEnd,
@@ -1475,6 +1480,8 @@ const MapScreen = ({
 }: {
   contacts: Contact[]
   renderContactRow: MapContactRowRenderer
+
+  renderContactDetail?: MapContactDetailRenderer
 
   topInset?: number
 
@@ -1528,6 +1535,7 @@ const MapScreen = ({
     <Wrapper insets='none' style={{ flexGrow: 1, position: 'relative' }}>
       <FullMapView
         renderContactRow={renderContactRow}
+        renderContactDetail={renderContactDetail}
         contactMarkers={contactMarkers}
         hasMappedContacts={hasMappedContacts}
         activeContactCount={activeContacts.length}

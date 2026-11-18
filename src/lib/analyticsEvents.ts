@@ -15,6 +15,7 @@ export const analyticsEventNames = [
   'log_visit_location_answered',
   'map_find_contacts_result',
   'map_card_detail_changed',
+  'map_contact_details_opened',
   'map_group_opened',
   'map_unavailable',
   'month_report_reminder_changed',

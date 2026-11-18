@@ -11,10 +11,26 @@ import ScribeQuickActionRow from '@/features/scribe/components/ScribeQuickAction
 import { errorTracking } from '@/lib/errorTracking'
 import * as SystemMenu from '../../../modules/system-menu'
 
-export default function NavigationTabBar(props: BottomTabBarProps) {
+const withoutMapTab = (props: BottomTabBarProps): BottomTabBarProps => {
+  const { state } = props
+  if (!state.routes.some((route) => route.name === 'Map')) return props
+  const focusedKey = state.routes[state.index]?.key
+  const routes = state.routes.filter((route) => route.name !== 'Map')
+  return {
+    ...props,
+    state: {
+      ...state,
+      routes,
+      index: routes.findIndex((route) => route.key === focusedKey),
+    },
+  }
+}
+
+export default function NavigationTabBar(barProps: BottomTabBarProps) {
   const [commandPressed, setCommandPressed] = useState(false)
   const isFocused = useIsFocused()
   const { hasSidebar, sidebarVisible } = useAdaptiveLayout()
+  const props = hasSidebar ? barProps : withoutMapTab(barProps)
   const navigationVisible = !hasSidebar || sidebarVisible
   const shortcuts = props.state.routes.map((route, index) => ({
     route,

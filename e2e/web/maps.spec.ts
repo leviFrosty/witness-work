@@ -157,6 +157,26 @@ test.describe('with the test double', () => {
     await expect(app.getByTestId('contacts-view-map')).toHaveCount(0)
   })
 
+  test('stays on the map when the window gets too narrow for the sidebar', async ({
+    app,
+  }) => {
+    await answerMapKitTokens(app.context(), 200)
+    await openMap(app)
+    await app.setViewportSize({ width: 800, height: 900 })
+
+    await expect(app.getByTestId('contacts-view-map')).toBeVisible()
+    await expect(
+      app.getByRole('heading', { name: 'Contacts', exact: true })
+    ).toBeVisible()
+    await expect((await mapsFrame(app)).locator('#map')).toBeVisible()
+    await expect(
+      app.getByRole('button', { name: 'Map', exact: true })
+    ).toHaveCount(1)
+
+    await app.setViewportSize({ width: 1280, height: 900 })
+    await expect(app.getByTestId('contacts-view-map')).toHaveCount(0)
+  })
+
   test("opens a Contact's card from their pin", async ({ app, shot }) => {
     await answerMapKitTokens(app.context(), 200)
     await openMap(app)

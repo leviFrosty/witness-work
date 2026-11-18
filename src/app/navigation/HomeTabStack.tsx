@@ -218,7 +218,7 @@ const HomeTabStack = () => {
       >
         {}
         {tabOrder.flatMap((name) =>
-          name === 'Contacts' && hasSidebar
+          name === 'Contacts'
             ? [
                 renderTabScreen(name),
                 <Tab.Screen

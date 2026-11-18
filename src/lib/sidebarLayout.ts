@@ -15,8 +15,20 @@ export const clampSidebarWidth = (width: number) => {
 
 export const NAVIGATION_RAIL_MIN_WIDTH = 64
 
+export const SIDEBAR_INSET = 12
+export const SIDEBAR_PADDING = 12
+export const SIDEBAR_CONTROL_OFFSET = SIDEBAR_INSET + SIDEBAR_PADDING
+export const SIDEBAR_TOGGLE_SIZE = 44
+
+export const CONTENT_MAX_WIDTH = 1200
+
+const GUTTER_TOGGLE_MIN_WIDTH =
+  SIDEBAR_CONTROL_OFFSET + SIDEBAR_TOGGLE_SIZE + SIDEBAR_INSET
+
 export type AdaptiveLayoutEnvironment = {
   verticalBarEdge?: 'left' | 'right' | null
+
+  gutterWindowControls?: number
 }
 
 export function getAdaptiveLayout(
@@ -24,7 +36,10 @@ export function getAdaptiveLayout(
   fontScale: number,
   preferredSidebarWidth: number,
   sidebarHidden: boolean,
-  { verticalBarEdge = null }: AdaptiveLayoutEnvironment = {}
+  {
+    verticalBarEdge = null,
+    gutterWindowControls = 0,
+  }: AdaptiveLayoutEnvironment = {}
 ) {
   const hasSidebar = width >= 1000 && fontScale <= 1.3
   const sidebarVisible = hasSidebar && !sidebarHidden
@@ -36,6 +51,12 @@ export function getAdaptiveLayout(
   const contentWidth =
     width - sidebarWidth - (navigationRail ? NAVIGATION_RAIL_MIN_WIDTH : 0)
 
+  const sidebarToggleInGutter =
+    hasSidebar &&
+    !sidebarVisible &&
+    (contentWidth - CONTENT_MAX_WIDTH) / 2 >=
+      GUTTER_TOGGLE_MIN_WIDTH + gutterWindowControls
+
   return {
     hasSidebar,
     sidebarVisible,
@@ -46,6 +67,9 @@ export function getAdaptiveLayout(
     hasBottomBar: !hasSidebar && !navigationRail,
     contentWidth,
     isWide: contentWidth >= 760 && fontScale <= 1.3,
-    contentMaxWidth: 1200,
+    contentMaxWidth: CONTENT_MAX_WIDTH,
+
+    sidebarToggleInGutter,
+    sidebarToggleStart: SIDEBAR_CONTROL_OFFSET + gutterWindowControls,
   }
 }

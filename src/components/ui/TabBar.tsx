@@ -53,7 +53,11 @@ import {
   TabLabel,
   TabSelectionBackground,
 } from '@/components/ui/TabBarSelection'
-import { NAVIGATION_RAIL_MIN_WIDTH } from '@/lib/sidebarLayout'
+import {
+  NAVIGATION_RAIL_MIN_WIDTH,
+  SIDEBAR_INSET,
+  SIDEBAR_PADDING,
+} from '@/lib/sidebarLayout'
 
 const CAPSULE_HEIGHT = 52
 const RAIL_ITEM_SIZE = 48
@@ -61,9 +65,7 @@ const RAIL_PADDING = 4
 const HORIZONTAL_MARGIN = 12
 const PILL_GAP = 8
 const ACCESSORY_MIN_WIDTH = 60
-const SIDEBAR_INSET = 12
 const SIDEBAR_RADIUS = 28
-const SIDEBAR_PADDING = 12
 const SIDEBAR_CONTROL_RADIUS = SIDEBAR_RADIUS - SIDEBAR_PADDING
 
 const HIDDEN_OVERSHOOT = 24

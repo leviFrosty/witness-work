@@ -98,6 +98,36 @@ describe('adaptive sidebar layout', () => {
   })
 
   it.each([
+    [2200, true, true],
+    [1360, true, true],
+    [1359, true, false],
+    [1280, true, false],
+    [2200, false, false],
+    [800, true, false],
+  ])(
+    'at window %s with the sidebar hidden: %s, shows the toggle in the gutter: %s',
+    (width, hidden, inGutter) => {
+      expect(
+        getAdaptiveLayout(width, 1, 240, hidden).sidebarToggleInGutter
+      ).toBe(inGutter)
+    }
+  )
+
+  it('counts iPadOS window controls against the gutter', () => {
+    expect(getAdaptiveLayout(1376, 1, 240, true)).toMatchObject({
+      sidebarToggleInGutter: true,
+      sidebarToggleStart: 24,
+    })
+    expect(
+      getAdaptiveLayout(1376, 1, 240, true, { gutterWindowControls: 70 })
+        .sidebarToggleInGutter
+    ).toBe(false)
+    expect(
+      getAdaptiveLayout(2200, 1, 240, true, { gutterWindowControls: 70 })
+    ).toMatchObject({ sidebarToggleInGutter: true, sidebarToggleStart: 94 })
+  })
+
+  it.each([
     [-200, SIDEBAR_MIN_WIDTH],
     [2000, SIDEBAR_MAX_WIDTH],
     [NaN, SIDEBAR_DEFAULT_WIDTH],

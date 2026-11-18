@@ -447,11 +447,11 @@ describe('clearing door records', () => {
     ])
   })
 
-  it('does the same when the territory is finished', () => {
-    const finished = finishTerritory(worked, 99, address)
+  it('keeps every house-by-house record when the territory is returned', () => {
+    const finished = finishTerritory(worked, 99)
     expect(finished.finishedAt).toBe(99)
-    expect(finished.streets[0]?.doors).toEqual([])
-    expect(finished.doNotCalls).toHaveLength(1)
+    expect(finished.streets[0]?.doors).toEqual(worked.streets[0]?.doors)
+    expect(finished.doNotCalls).toEqual(worked.doNotCalls)
     const reopened = reopenTerritory(finished)
     expect(reopened.finishedAt).toBeUndefined()
   })
@@ -475,7 +475,7 @@ describe('clearing door records', () => {
       ],
     }
     expect(sharesWithOthers(shared)).toBe(true)
-    const finished = finishTerritory(shared, 99, address)
+    const finished = finishTerritory(shared, 99)
     expect(finished.streets.every((s) => s.handoff === undefined)).toBe(true)
     expect(finished.shares?.map((share) => share.endedAt)).toEqual([99, 5])
     expect(sharesWithOthers(finished)).toBe(false)
@@ -489,10 +489,9 @@ describe('clearing door records', () => {
         returnBy: 50,
         streets: worked.streets.map((s) => ({ ...s, workedAt: 30 })),
       },
-      99,
-      address
+      99
     )
-    const again = checkOutAgain(finished, 500)
+    const again = checkOutAgain(finished, 500, address)
     expect(again.checkedOutAt).toBe(500)
     expect(again.returnBy).toBeUndefined()
     expect(again.finishedAt).toBeUndefined()
@@ -500,11 +499,14 @@ describe('clearing door records', () => {
     expect(
       checkOutAgain(
         territory({ streets: [street({ first: 100, next: 140 })] }),
-        500
+        500,
+        address
       ).streets[0]?.next
     ).toBe(100)
     expect(again.streets[0]?.workedAt).toBeUndefined()
-    expect(again.doNotCalls).toHaveLength(1)
+    expect(again.doNotCalls).toEqual([
+      expect.objectContaining({ id: 'b', address: '4 Oak Street' }),
+    ])
   })
 })
 
@@ -674,7 +676,8 @@ describe('handed-off streets', () => {
       territory({
         streets: [street({ handoff, workedAt: 2, workedBy: 'p1' })],
       }),
-      10
+      10,
+      address
     )
     expect(again.streets[0]).toMatchObject({
       handoff: undefined,

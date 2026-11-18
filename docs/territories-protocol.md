@@ -379,12 +379,12 @@ Only sharing with buddies and handing off need Buddies: they travel as Buddies e
 
 ### Returning a territory
 
-The owner's device syncs (pull and push), then runs `delete`. That ends every share, link, and hand-off. The returned territory goes back to the personal store, with its door records cleared as `returnTerritory` does today. Every other device gets `gone`.
+The owner's device syncs (pull and push), then runs `delete`. That ends every share, link, and hand-off. The returned territory goes back to the personal store, marked returned (`finishedAt`), with its door records kept. Every other device gets `gone`.
 
 ### Leaving, removal, rekey
 
 - **A member leaves:** `leave`, retried until it lands. Their received territory goes away.
-- **Removed, taken back, or returned** (`gone`, or their last street taken back): the received territory stays, read-only and marked ended, with its door records cleared as on return (worked and do-not-calls kept), until the User removes it.
+- **Removed, taken back, or returned** (`gone`, or their last street taken back): the received territory stays, read-only and marked ended, with its door records cleared (worked and do-not-calls kept), until the User removes it.
 - **Rekey:** Shared Cars' rule, by the owner. Afterwards each link creator's devices update their `g.` records.
 - **Delete My Buddies Data** first deletes every space the User owns (keeping each territory personal) and leaves every other one.
 

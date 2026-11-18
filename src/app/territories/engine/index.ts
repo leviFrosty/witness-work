@@ -808,11 +808,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     if (view && space) {
       const owner = myRole(space) === 'owner'
       if (owner && (reason === 'returned' || reason === 'gone'))
-        keep = finishTerritory(
-          personalCopy(view),
-          deps.now(),
-          formatDoorAddress
-        )
+        keep = finishTerritory(personalCopy(view), deps.now())
       else if (!owner && reason === 'gone' && view.received)
         keep = {
           ...clearDoorRecords(personalCopy(view), formatDoorAddress),

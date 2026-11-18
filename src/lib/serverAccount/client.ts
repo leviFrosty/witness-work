@@ -159,6 +159,7 @@ export type BearerAccountOp =
   | 'passkeys/challenge'
   | 'passkeys/assert'
   | 'passkeys/register/options'
+  | 'passkeys/rename'
   | 'approval/claim'
   | 'approval/status'
   | 'approval/send'

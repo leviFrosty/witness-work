@@ -11,6 +11,9 @@ import {
   loadFailure,
 } from '@/features/settings/components/account/activity/loadState'
 import PasskeyListSection from '@/features/settings/components/account/passkeys/PasskeyListSection'
+import RenamePasskeySheet, {
+  type RenamingPasskey,
+} from '@/features/settings/components/account/passkeys/RenamePasskeySheet'
 import {
   addPasskeyWithToasts,
   letUnlockWithToasts,
@@ -37,6 +40,7 @@ const AccountPasskeysScreen = () => {
   const [support, setSupport] = useState<PasskeySupport | null>(null)
 
   const [busy, setBusy] = useState(false)
+  const [renaming, setRenaming] = useState<RenamingPasskey | null>(null)
   const focused = useIsFocused()
   const latest = useRef(0)
 
@@ -126,6 +130,12 @@ const AccountPasskeysScreen = () => {
                   : (passkey: Passkey) =>
                       void act(() => letUnlockWithToasts(passkey))
               }
+              onRename={(passkey: Passkey) =>
+                setRenaming({
+                  credentialId: passkey.credentialId,
+                  name: loaded.readName(passkey.credentialId, passkey.name),
+                })
+              }
               onRemove={(passkey: Passkey) =>
                 void act(() => removeWithConfirm(passkey, passkeys))
               }
@@ -144,6 +154,14 @@ const AccountPasskeysScreen = () => {
             />
           )}
         </SettingsScrollView>
+        <RenamePasskeySheet
+          passkey={renaming}
+          accountName={loaded?.name ?? null}
+          onClosed={(renamed) => {
+            setRenaming(null)
+            if (renamed) refresh()
+          }}
+        />
       </Wrapper>
     </SettingsInputLayout>
   )

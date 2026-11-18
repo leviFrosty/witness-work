@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "パスキーは、スマートフォンやパスワードマネージャが保管する、同じアカウントへのもう一つの入り口です。必須ではありません。",
   "onboardingPasskey_addedTitle": "パスキーを追加しました",
   "onboardingPasskey_addedDesc": "パソコンからアカウントにサインインできるようになりました。",
-  "onboardingPasskey_addedHint": "パスキーを替えるには、そのパスキーをタップして削除してください。そのあと、新しいパスキーを追加できます。",
   "handoff_sectionInfo": "新しいスマートフォンでこの端末のコードをスキャンし、両方に同じ6桁の数字が表示されていることを確認します。iPhoneとAndroidの間でも使え、両方のスマートフォンにインターネット接続が必要です。アカウントはエンドツーエンドで暗号化されて送られるため、サーバは内容を読めません。",
   "handoff_setUp": "別の端末を設定",
   "handoff_signIn": "QRコードでサインイン",

@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Una passkey è un altro modo per entrare nello stesso account, conservata dal telefono o dal gestore di password. Non è obbligatoria.",
   "onboardingPasskey_addedTitle": "Passkey aggiunta",
   "onboardingPasskey_addedDesc": "Ora puoi accedere al tuo account da un computer.",
-  "onboardingPasskey_addedHint": "Per sostituire la passkey, toccala e rimuovila. Poi potrai aggiungerne una nuova.",
   "handoff_sectionInfo": "Il tuo nuovo telefono inquadra un codice su questo, e controlli che entrambi mostrino lo stesso numero di sei cifre. Funziona tra iPhone e Android ed entrambi i telefoni hanno bisogno di internet. Il tuo account viaggia cifrato end-to-end, quindi il server non può leggerlo.",
   "handoff_setUp": "Configura un altro dispositivo",
   "handoff_signIn": "Accedi con codice QR",

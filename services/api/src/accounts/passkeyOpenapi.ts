@@ -286,11 +286,37 @@ ${readTier}`,
             label: b64u('The sealed label the creating device sent').optional(),
             aaguid: z.string().optional().meta({ description: 'For a provider name; display only.' }),
             backedUp: z.boolean().meta({ description: 'The latest BS flag.' }),
+            name: b64u('The sealed name the User gave it; absent until renamed').optional(),
           })
         ),
       })
     ),
     ...unauthorized,
+    ...rateLimited,
+    ...internal,
+    ...passkeysOff,
+  },
+})
+
+export const passkeyRenameDocs = describeRoute({
+  tags: ['Passkeys'],
+  summary: 'Rename a passkey',
+  description: `Bearer, live session. Sets the passkey’s \`name\`, which the devices seal under the account key (stored opaque, answered by \`GET /passkeys\`), or clears it with \`null\`. No envelope or step-up, and not logged: a name changes nothing about what the passkey can do. Repeating it is \`ok\`.
+
+${readTier}`,
+  security: bearerOnly,
+  requestBody: jsonBody(
+    z.object({
+      credentialId,
+      name: b64u('The sealed name, at most 512 characters').nullable(),
+    })
+  ),
+  responses: {
+    200: okOnly,
+    400: errorResponse('Malformed JSON, credential id, or name.', ['bad_request']),
+    ...unauthorized,
+    404: errorResponse('No such credential on this account.', ['not_found']),
+    413: errorResponse('`name` over 512 characters.', ['too_large']),
     ...rateLimited,
     ...internal,
     ...passkeysOff,

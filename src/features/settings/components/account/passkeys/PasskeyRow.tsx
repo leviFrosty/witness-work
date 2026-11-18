@@ -37,27 +37,32 @@ function details(passkey: Passkey, readLabel: DeviceLabelReader): string {
 export default function PasskeyRow({
   passkey,
   name,
+  customName = null,
   readLabel,
   disabled,
   lastInSection,
   onLetUnlock,
+  onRename,
   onRemove,
 }: {
   passkey: Passkey
 
   name: string | null
+
+  customName?: string | null
   readLabel: DeviceLabelReader
   disabled: boolean
   lastInSection: boolean
 
   onLetUnlock?: () => void
+  onRename?: () => void
   onRemove: () => void
 }) {
   const theme = useTheme()
   const status = i18n.t(
     passkey.canUnlock ? 'passkeys_canUnlock' : 'passkeys_signInOnly'
   )
-  const title = name ?? i18n.t('accountSecurity_passkeys')
+  const title = customName ?? name ?? i18n.t('accountSecurity_passkeys')
   const sublabel = details(passkey, readLabel)
 
   return (
@@ -69,6 +74,12 @@ export default function PasskeyRow({
       fill
       testID={`passkey-row-${passkey.credentialId}`}
       actions={[
+        onRename && {
+          id: 'rename',
+          title: i18n.t('passkeys_rename'),
+          systemImage: 'pencil',
+          onPress: onRename,
+        },
         !passkey.canUnlock &&
           onLetUnlock && {
             id: 'let-unlock',

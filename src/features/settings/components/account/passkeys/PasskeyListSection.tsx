@@ -18,6 +18,7 @@ export default function PasskeyListSection({
   busy,
   onAdd,
   onLetUnlock,
+  onRename,
   onRemove,
 }: {
   loaded: LoadedPasskeys
@@ -26,10 +27,11 @@ export default function PasskeyListSection({
   onAdd: () => void
 
   onLetUnlock?: (passkey: Passkey) => void
+  onRename: (passkey: Passkey) => void
   onRemove: (passkey: Passkey) => void
 }) {
   const theme = useTheme()
-  const { passkeys, name, readLabel } = loaded
+  const { passkeys, name, readLabel, readName } = loaded
   const empty = passkeys.length === 0
 
   return (
@@ -59,10 +61,12 @@ export default function PasskeyListSection({
               key={passkey.credentialId}
               passkey={passkey}
               name={name}
+              customName={readName(passkey.credentialId, passkey.name)}
               readLabel={readLabel}
               disabled={busy}
               lastInSection={!canAdd && index === passkeys.length - 1}
               onLetUnlock={onLetUnlock && (() => onLetUnlock(passkey))}
+              onRename={() => onRename(passkey)}
               onRemove={() => onRemove(passkey)}
             />
           ))}

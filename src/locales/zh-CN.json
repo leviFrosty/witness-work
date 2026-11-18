@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "通行密钥是进入同一个账户的另一种方式，由你的手机或密码管理器保管。你不是必须使用它。",
   "onboardingPasskey_addedTitle": "已添加通行密钥",
   "onboardingPasskey_addedDesc": "现在你可以在电脑上登录你的账户了。",
-  "onboardingPasskey_addedHint": "要更换通行密钥，请轻点它并将其移除，然后就可以添加新的了。",
   "handoff_sectionInfo": "你的新手机扫描这部手机上的二维码，然后你核对两部手机显示的六位数字是否相同。iPhone 和 Android 之间也可以使用，且两部手机都需要联网。你的账户在传输时经过端到端加密，服务器无法读取。",
   "handoff_setUp": "设置另一台设备",
   "handoff_signIn": "使用二维码登录",

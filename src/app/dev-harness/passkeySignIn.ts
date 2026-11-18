@@ -134,9 +134,10 @@ export const passkeySignInHarness = {
       return {
         accountPub: key ? deriveAccountSigningKey(key).publicKey : null,
         passkeys:
-          list?.passkeys.map(({ credentialId, canUnlock }) => ({
+          list?.passkeys.map(({ credentialId, canUnlock, name }) => ({
             credentialId,
             canUnlock,
+            name: list.readName(credentialId, name),
           })) ?? null,
       }
     }),

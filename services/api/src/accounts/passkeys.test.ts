@@ -892,6 +892,46 @@ describe('wraps', () => {
   })
 })
 
+describe('renaming a passkey', () => {
+  const sealedName = () => b64u(randomBytes(64))
+
+  it('stores the sealed name opaque, lists it, and clears it with null', async () => {
+    const { session, passkey } = await accountWithPasskey()
+    expect((await client.list(session)).body.passkeys[0]).not.toHaveProperty('name')
+    const name = sealedName()
+    const body = { credentialId: passkey.credentialId, name }
+    expect((await client.rename(session, body)).body).toEqual({ ok: true })
+    expect((await client.rename(session, body)).body).toEqual({ ok: true })
+    expect((await client.list(session)).body.passkeys[0].name).toBe(name)
+    expect((await client.rename(session, { ...body, name: null })).body).toEqual({ ok: true })
+    expect((await client.list(session)).body.passkeys[0]).not.toHaveProperty('name')
+    // Not a security event.
+    expect((await activity(session.accessToken)).map((e) => e.kind)).not.toContain('passkey.renamed')
+  })
+
+  it('never renames another account’s passkey, or one that’s gone', async () => {
+    const { session } = await accountWithPasskey()
+    const other = await accountWithPasskey()
+    const refused = await client.rename(session, { credentialId: other.passkey.credentialId, name: sealedName() })
+    expect(refused.status).toBe(404)
+    expect(refused.body.code).toBe('not_found')
+    expect((await client.list(other.session)).body.passkeys[0]).not.toHaveProperty('name')
+    expect((await client.rename(session, { credentialId: b64u(randomBytes(16)), name: sealedName() })).status).toBe(404)
+  })
+
+  it('refuses malformed and oversized names, and a signed-out session', async () => {
+    const { session, passkey } = await accountWithPasskey()
+    const { credentialId } = passkey
+    for (const bad of [{ credentialId }, { credentialId, name: '' }, { credentialId, name: 'not b64u!' }, { credentialId, name: 3 }, { name: sealedName() }])
+      expect((await client.rename(session, bad)).status).toBe(400)
+    const big = await client.rename(session, { credentialId, name: 'A'.repeat(513) })
+    expect(big.status).toBe(413)
+    expect(big.body.code).toBe('too_large')
+    expect((await send('DELETE', '/sessions/current', undefined, authorization(session.accessToken))).status).toBe(200)
+    expect((await client.rename(session, { credentialId, name: sealedName() })).status).toBe(401)
+  })
+})
+
 describe('removing a passkey', () => {
   it('deletes it and its wraps, idempotently, logging passkey.removed once', async () => {
     const { session, passkey } = await accountWithPasskey({ extra: { wrapId: randomId(), wrap: fakeWrap() } })

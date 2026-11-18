@@ -186,6 +186,7 @@ export const analyticsEventNames = [
   'passkey_prompt_shown',
   'passkey_prompt_tapped',
   'passkey_removed',
+  'passkey_renamed',
   'passkey_sign_in_already_here',
   'passkey_sign_in_failed',
   'passkey_sign_in_started',

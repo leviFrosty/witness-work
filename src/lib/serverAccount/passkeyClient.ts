@@ -78,6 +78,8 @@ export type Passkey = {
 
   aaguid?: string
   backedUp: boolean
+
+  name?: string
 }
 
 export type PasskeyList = { userHandle?: string; passkeys: Passkey[] }
@@ -307,6 +309,7 @@ export async function listPasskeys(
       label,
       aaguid,
       backedUp,
+      name,
     } = value
     if (
       !isString(credentialId) ||
@@ -326,12 +329,24 @@ export async function listPasskeys(
       ...(isString(label) && { label }),
       ...(isString(aaguid) && { aaguid }),
       backedUp,
+      ...(isString(name) && { name }),
     }
   })
   return {
     ...(isString(data.userHandle) && { userHandle: data.userHandle }),
     passkeys,
   }
+}
+
+export async function renamePasskey(
+  args: { credentialId: string; name: string | null },
+  options: BearerAccountOptions
+): Promise<void> {
+  okOnly(
+    await sendBearerAccountJson('passkeys/rename', args, options, {
+      idempotent: true,
+    })
+  )
 }
 
 export async function removePasskey(

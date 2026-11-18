@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "패스키는 휴대폰이나 비밀번호 관리자에 보관되는, 같은 계정으로 들어가는 또 다른 방법입니다. 꼭 필요하지는 않습니다.",
   "onboardingPasskey_addedTitle": "패스키가 추가되었습니다",
   "onboardingPasskey_addedDesc": "이제 컴퓨터에서 계정에 로그인할 수 있습니다.",
-  "onboardingPasskey_addedHint": "패스키를 교체하려면 패스키를 탭해 삭제하세요. 그런 다음 새 패스키를 추가할 수 있습니다.",
   "handoff_sectionInfo": "새 휴대폰이 이 휴대폰의 코드를 스캔하고, 두 휴대폰에 같은 여섯 자리 숫자가 표시되는지 확인합니다. iPhone과 Android 사이에서도 작동하며 두 휴대폰 모두 인터넷이 필요합니다. 계정은 종단 간 암호화되어 전달되므로 서버는 내용을 읽을 수 없습니다.",
   "handoff_setUp": "다른 기기 설정",
   "handoff_signIn": "QR 코드로 로그인",

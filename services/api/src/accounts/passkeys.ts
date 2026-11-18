@@ -5,7 +5,7 @@ import { bytesToBase64Url } from '../crypto'
 import { isPlainObject } from '../buddies/contracts'
 import { buddiesErrorResponse } from '../buddies/errorResponse'
 import { buddiesCallerKey } from '../buddies/limits'
-import { passkeyResponseTooLarge } from './contracts'
+import { parsePasskeyName, passkeyResponseTooLarge } from './contracts'
 import { authenticateAccount, readPlainJson, type AccountAuth } from './auth'
 import { guarded, refuseAtEdge, signedForToken } from './signed'
 import { accountsDb, changes, type AccountsDb } from './store'
@@ -39,6 +39,7 @@ import {
   findWrap,
   hasPasskey,
   passkeyInsert,
+  passkeyRename,
   passkeyUserName,
   unlockingCredentials,
   usedTokenInsert,
@@ -68,7 +69,8 @@ import {
  *   the credential's wraps, and a `passkey` ticket for a browser's session;
  *   a step-up records `stepUpAt` on the session.
  * - `POST /passkeys/register/options`, `POST /passkeys` (add, step-up),
- *   `POST /passkeys/wrap`, `GET /passkeys`, `POST /passkeys/remove` (step-up).
+ *   `POST /passkeys/wrap`, `GET /passkeys`, `POST /passkeys/rename`,
+ *   `POST /passkeys/remove` (step-up).
  *
  * Every route answers `disabled` without the accounts database, a token
  * secret, the RP config, or the challenge and ticket secrets. Each counts
@@ -629,8 +631,38 @@ const handleList = guarded('passkeys/list', async (c) => {
       ...(row.label != null ? { label: row.label } : {}),
       ...(row.aaguid != null ? { aaguid: row.aaguid } : {}),
       backedUp: row.backedUp,
+      ...(row.name != null ? { name: row.name } : {}),
     })),
   })
+})
+
+/**
+ * `POST /passkeys/rename`: Bearer, live session. `{ credentialId, name }`
+ * sets the passkey's sealed name, or clears it with `name: null`.
+ *
+ * Bearer only, with no envelope or step-up: a name changes nothing about
+ * what the passkey can do, and the devices seal it under the account key,
+ * so a leaked token can write only a name no device can read (which reads as
+ * no name). Not logged in the activity log for the same reason.
+ */
+const handleRename = guarded('passkeys/rename', async (c) => {
+  const setup = await ready(c)
+  if ('refusal' in setup) return setup.refusal
+  const limited = await refuseAtEdge(c, 'inbox/sync')
+  if (limited) return limited
+  const auth = await authenticateAccount(c, { requireLiveSession: true })
+  if (!auth.ok) return auth.response
+  const body = await readPlainJson(c)
+  if (!isPlainObject(body)) return buddiesErrorResponse('bad_request')
+  const credentialId = parseCredentialId(body.credentialId)
+  const name = parsePasskeyName(body.name)
+  if (name === 'too_large') return buddiesErrorResponse('too_large')
+  if (!credentialId || name === undefined) return buddiesErrorResponse('bad_request')
+  const { db } = setup
+  const renamed = await passkeyRename(db, credentialId, auth.account.accountId, name)
+  return changes(renamed) === 1
+    ? c.json({ ok: true })
+    : buddiesErrorResponse('not_found')
 })
 
 /**
@@ -683,5 +715,6 @@ export const passkeyHandlers = {
   add: handleAdd,
   wrap: handleWrap,
   list: handleList,
+  rename: handleRename,
   remove: handleRemove,
 }

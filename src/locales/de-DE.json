@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Ein Passkey ist ein weiterer Weg in dasselbe Konto, aufbewahrt von Ihrem Smartphone oder Passwortmanager. Sie brauchen keinen.",
   "onboardingPasskey_addedTitle": "Passkey hinzugefügt",
   "onboardingPasskey_addedDesc": "Sie können sich jetzt auf einem Computer bei Ihrem Konto anmelden.",
-  "onboardingPasskey_addedHint": "Um Ihren Passkey zu ersetzen, tippen Sie darauf und entfernen Sie ihn. Danach können Sie einen neuen hinzufügen.",
   "handoff_sectionInfo": "Ihr neues Smartphone scannt einen Code auf diesem, und Sie prüfen, ob beide dieselbe sechsstellige Zahl zeigen. Das funktioniert zwischen iPhone und Android, und beide Smartphones benötigen Internet. Ihr Konto wird Ende-zu-Ende-verschlüsselt übertragen, sodass der Server es nicht lesen kann.",
   "handoff_setUp": "Weiteres Gerät einrichten",
   "handoff_signIn": "Mit QR-Code anmelden",

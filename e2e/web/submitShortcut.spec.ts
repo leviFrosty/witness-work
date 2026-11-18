@@ -112,6 +112,10 @@ test('a header Save button takes the shortcut', async ({ app }) => {
 test('in the note editor it closes the editor, keeps the text and leaves the form open', async ({
   app,
 }) => {
+  test.skip(
+    (app.viewportSize()?.width ?? 0) >= 760,
+    'a wide window types the note in the form, where the shortcut saves the form (layout.spec.ts)'
+  )
   await openVisitForm(app)
   await app.getByRole('button', { name: 'Save' }).click()
   await app.getByRole('button', { name: 'Note' }).first().click()

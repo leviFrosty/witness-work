@@ -2,6 +2,10 @@ export const NOTE_MAX_WIDTH = 720
 
 export const NOTE_GUTTER = 16
 
+export const EMBEDDED_NOTE_MIN_HEIGHT = 96
+
+export const EMBEDDED_NOTE_MAX_HEIGHT = 320
+
 export type EditorMark = 'bold' | 'italic' | 'underline' | 'strike'
 export type EditorBlock = 'paragraph' | 'heading1' | 'heading2'
 export type EditorList = 'bulletList' | 'orderedList' | 'taskList'
@@ -95,6 +99,7 @@ export type EditorSetup = {
   inline: boolean
 
   takesImageFiles: boolean
+  embedded: boolean
 }
 
 export type EditorImageSource = 'paste' | 'drop'

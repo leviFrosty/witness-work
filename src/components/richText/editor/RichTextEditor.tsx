@@ -54,6 +54,7 @@ import type { RichTextDoc } from '@/types/richText'
 
 export type RichTextEditorRef = {
   flush: (done: () => void) => void
+  focus: () => void
 }
 
 const FLUSH_TIMEOUT_MS = 500
@@ -76,6 +77,10 @@ const RichTextEditor = (props: {
   onLoad?: () => void
 
   onSubmit?: () => void
+
+  embedded?: boolean
+  onFocusChange?: (focused: boolean) => void
+  testID?: string
 }) => {
   const theme = useTheme()
   const library = useLibraryImagePicker('note')
@@ -167,6 +172,7 @@ const RichTextEditor = (props: {
       pendingFlush.current = finish
       run({ type: 'flush' })
     },
+    focus: () => run({ type: 'focus' }),
   }))
 
   const getSetup = async (): Promise<EditorSetup> => {
@@ -194,9 +200,10 @@ const RichTextEditor = (props: {
       label: props.label,
       photoMissing: i18n.t('richText_photoMissing'),
       characterLimit: props.characterLimit,
-      autofocus: true,
+      autofocus: !props.embedded,
       inline: Platform.OS === 'web',
       takesImageFiles: Platform.OS === 'web',
+      embedded: !!props.embedded,
     }
   }
 
@@ -355,72 +362,75 @@ const RichTextEditor = (props: {
     if (added) props.onPhotoAdded?.(added, source)
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={{ flex: 1 }}>
-        <RichTextEditorDom
-          ref={dom}
-          dom={{
-            useExpoDOMWebView: Platform.OS !== 'ios',
-            keyboardDisplayRequiresUserAction: false,
-            hideKeyboardAccessoryView: true,
-            contentInsetAdjustmentBehavior: 'never',
-            automaticallyAdjustContentInsets: false,
-            allowsLinkPreview: false,
-            ...(Platform.OS === 'ios' && {
-              dataDetectorTypes: NO_DATA_DETECTORS,
-            }),
-            overScrollMode: 'never',
-            setSupportMultipleWindows: false,
+  const editor = (
+    <RichTextEditorDom
+      ref={dom}
+      dom={{
+        useExpoDOMWebView: Platform.OS !== 'ios',
+        keyboardDisplayRequiresUserAction: false,
+        hideKeyboardAccessoryView: true,
+        contentInsetAdjustmentBehavior: 'never',
+        automaticallyAdjustContentInsets: false,
+        allowsLinkPreview: false,
+        ...(Platform.OS === 'ios' && {
+          dataDetectorTypes: NO_DATA_DETECTORS,
+        }),
+        overScrollMode: 'never',
+        setSupportMultipleWindows: false,
 
-            onShouldStartLoadWithRequest: (request) =>
-              !request.isTopFrame ||
-              !/^https?:/i.test(request.url) ||
-              /^https?:\/\/(?:localhost|127\.0\.0\.1|10\.0\.2\.2|[\d.]+):\d+\//.test(
-                request.url
-              ),
-            style: { flex: 1, backgroundColor: theme.colors.background },
-            containerStyle: { flex: 1 },
-          }}
-          getSetup={getSetup}
-          onReady={async () => {
-            requestKeyboard()
-            run({ type: 'focus', at: 'end' })
-            props.onLoad?.()
-          }}
-          onChange={onChange}
-          onSubmit={async () => submit()}
-          onImageFiles={addImageFiles}
-          onImageHandles={excludeFromBackGesture}
-          onFormatState={async (state) => {
-            if (state.focused && !format.focused) requestKeyboard()
-            if (!addingImages.current) imageCount.current = state.images
-            setFormat(state)
-          }}
-        />
-      </View>
-      <Animated.View
-        style={[{ backgroundColor: theme.colors.card }, toolbarLift]}
-      >
-        <RichTextToolbar
-          format={format}
-          run={run}
-          keyboardVisible={keyboardVisible || webKeyboardInset > 0}
-          onDismissKeyboard={() => run({ type: 'blur' })}
-          onLink={() =>
-            setLinkSheet({
-              open: true,
-              href: format.link,
-              selection: format.selection,
-            })
-          }
-          onAddPhoto={
-            canAddNotePhotos(props.allowImages)
-              ? (source) => void addPhoto(source)
-              : undefined
-          }
-        />
-      </Animated.View>
+        onShouldStartLoadWithRequest: (request) =>
+          !request.isTopFrame ||
+          !/^https?:/i.test(request.url) ||
+          /^https?:\/\/(?:localhost|127\.0\.0\.1|10\.0\.2\.2|[\d.]+):\d+\//.test(
+            request.url
+          ),
+        style: { flex: 1, backgroundColor: theme.colors.background },
+        containerStyle: { flex: 1 },
+      }}
+      getSetup={getSetup}
+      onReady={async () => {
+        if (!props.embedded) {
+          requestKeyboard()
+          run({ type: 'focus', at: 'end' })
+        }
+        props.onLoad?.()
+      }}
+      onChange={onChange}
+      onSubmit={async () => submit()}
+      onImageFiles={addImageFiles}
+      onImageHandles={excludeFromBackGesture}
+      onFormatState={async (state) => {
+        if (state.focused && !format.focused) requestKeyboard()
+        if (state.focused !== format.focused)
+          props.onFocusChange?.(state.focused)
+        if (!addingImages.current) imageCount.current = state.images
+        setFormat(state)
+      }}
+    />
+  )
+  const toolbar = (
+    <RichTextToolbar
+      format={format}
+      run={run}
+      embedded={props.embedded}
+      keyboardVisible={keyboardVisible || webKeyboardInset > 0}
+      onDismissKeyboard={() => run({ type: 'blur' })}
+      onLink={() =>
+        setLinkSheet({
+          open: true,
+          href: format.link,
+          selection: format.selection,
+        })
+      }
+      onAddPhoto={
+        canAddNotePhotos(props.allowImages)
+          ? (source) => void addPhoto(source)
+          : undefined
+      }
+    />
+  )
+  const overlays = (
+    <>
       <LinkSheet
         open={linkSheet.open}
         currentHref={linkSheet.href}
@@ -439,6 +449,40 @@ const RichTextEditor = (props: {
         }}
       />
       {library.host}
+    </>
+  )
+
+  if (props.embedded) {
+    return (
+      <View
+        testID={props.testID}
+        style={{
+          borderRadius: theme.numbers.borderRadiusMd,
+          borderCurve: 'continuous',
+          borderWidth: 1,
+          borderColor: format.focused
+            ? theme.colors.accent
+            : theme.colors.border,
+          backgroundColor: theme.colors.background,
+          overflow: 'hidden',
+        }}
+      >
+        {toolbar}
+        <View>{editor}</View>
+        {overlays}
+      </View>
+    )
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ flex: 1 }}>{editor}</View>
+      <Animated.View
+        style={[{ backgroundColor: theme.colors.card }, toolbarLift]}
+      >
+        {toolbar}
+      </Animated.View>
+      {overlays}
     </View>
   )
 }

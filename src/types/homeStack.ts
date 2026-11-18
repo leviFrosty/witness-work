@@ -5,7 +5,15 @@ export type ContactsView = 'list' | 'map'
 export type HomeTabStackParamList = {
   Home: undefined
 
-  Contacts: { view?: ContactsView; focusSearch?: boolean } | undefined
+  Contacts:
+    | {
+        view?: ContactsView
+        focusSearch?: boolean
+
+        contactId?: string
+        highlightedVisitId?: string
+      }
+    | undefined
   Map: undefined
   Tools: undefined
   Progress:

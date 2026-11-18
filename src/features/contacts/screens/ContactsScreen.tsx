@@ -133,6 +133,9 @@ const ContactsScreen = ({
   focusSearch,
   onSearchFocused,
   view,
+  selectedContactId: selectedId,
+  highlightedVisitId,
+  onSelectContact,
 }: {
   view?: ContactsView
   renderMap: (props: {
@@ -143,11 +146,14 @@ const ContactsScreen = ({
   }) => ReactNode
   focusSearch?: boolean
   onSearchFocused?: () => void
+
+  selectedContactId?: string
+  highlightedVisitId?: string
+  onSelectContact?: (id: string) => void
 }) => {
   const theme = useTheme()
   const { isWide, hasBottomBar, hasSidebar } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
-  const [selectedId, setSelectedId] = useState<string>()
   const insets = useSafeAreaInsets()
   const { height: windowHeight, fontScale } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
@@ -255,13 +261,17 @@ const ContactsScreen = ({
   })
 
   const selectedContact =
-    listContacts.find((contact) => contact.id === selectedId) ?? listContacts[0]
+    listContacts.find((contact) => contact.id === selectedId) ??
+    activeContacts.find((contact) => contact.id === selectedId) ??
+    listContacts[0]
 
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: false })
   }, [search, contactsFilters, contactSort, contactSortDirection])
 
   const pickedInPane = useRef(false)
+
+  const revealedId = useRef<string | undefined>(undefined)
 
   const paneScroll = useRef<{ id: string; y: number } | null>(null)
 
@@ -294,7 +304,10 @@ const ContactsScreen = ({
 
     if (changed && isWide && !showsMap && !selectedId) {
       const reading = readingContactId()
-      if (reading) setSelectedId(reading)
+      if (reading) {
+        revealedId.current = reading
+        onSelectContact?.(reading)
+      }
     }
     if (!collapsed || !picked || !pickedContact || showsMap) return
     const index = contactItemIndex(contactsList.items, pickedContact.id)
@@ -316,7 +329,24 @@ const ContactsScreen = ({
     showsMap,
     isFocused,
     navigation,
+    onSelectContact,
   ])
+
+  const split = isWide && !showsMap
+  useEffect(() => {
+    if (!split || !selectedId || revealedId.current === selectedId) return
+    const index = contactItemIndex(contactsList.items, selectedId)
+    if (index < 0) return
+    revealedId.current = selectedId
+    const frame = requestAnimationFrame(() =>
+      listRef.current?.scrollToIndex({
+        index,
+        animated: false,
+        viewPosition: 0.3,
+      })
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [split, selectedId, contactsList.items])
 
   const expandHeader = () => {
     if (!mapExplored) return
@@ -456,15 +486,7 @@ const ContactsScreen = ({
           }}
           color={theme.colors.accent}
           onPress={() => {
-            const id = Crypto.randomUUID()
-            if (isWide && !showsMap) {
-              setSelectedId(id)
-              pickedInPane.current = true
-            }
-            navigation.navigate('Contact Form', {
-              id,
-              returnToContacts: isWide && !showsMap,
-            })
+            navigation.navigate('Contact Form', { id: Crypto.randomUUID() })
           }}
         />
       </PointerTooltip>
@@ -593,13 +615,14 @@ const ContactsScreen = ({
                     nearby_shown: contactsList.showsNearby,
                   })
                 }
-                setSelectedId(contact.id)
                 paneScroll.current = null
-                if (isWide) pickedInPane.current = true
-                if (!isWide)
-                  navigation.navigate('Contact Details', {
-                    id: contact.id,
-                  })
+                if (!isWide) {
+                  navigation.navigate('Contact Details', { id: contact.id })
+                  return
+                }
+                revealedId.current = contact.id
+                pickedInPane.current = true
+                onSelectContact?.(contact.id)
               }}
             />
           )
@@ -678,6 +701,7 @@ const ContactsScreen = ({
         <ContactDetailsContent
           key={selectedContact.id}
           id={selectedContact.id}
+          highlightedVisitId={highlightedVisitId}
           navigation={navigation}
           embedded
           onScrollY={(y) => {
@@ -767,7 +791,6 @@ const ContactsScreen = ({
     </GestureDetector>
   )
 
-  const split = isWide && !showsMap
   if (!showsMap)
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>

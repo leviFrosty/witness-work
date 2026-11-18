@@ -25,6 +25,7 @@ export type PlatformCapability =
   | 'camera'
   | 'reverseGeocoding'
   | 'appSettings'
+  | 'inlineNoteEditor'
 
 type OS = typeof Platform.OS
 
@@ -53,6 +54,7 @@ const capabilities: Record<PlatformCapability, readonly OS[]> = {
   camera: ['ios', 'android'],
   reverseGeocoding: ['ios', 'android'],
   appSettings: ['ios', 'android'],
+  inlineNoteEditor: ['web'],
 }
 
 export function hasCapability(capability: PlatformCapability): boolean {

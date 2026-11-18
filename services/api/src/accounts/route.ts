@@ -37,6 +37,7 @@ import {
   passkeyListDocs,
   passkeyRegisterOptionsDocs,
   passkeyRemoveDocs,
+  passkeyRenameDocs,
   passkeyWrapDocs,
 } from './passkeyOpenapi'
 import {
@@ -266,6 +267,7 @@ export const createAccountsRoutes = () => {
   routes.post('/passkeys', passkeyAddDocs, passkeyHandlers.add)
   routes.post('/passkeys/wrap', passkeyWrapDocs, passkeyHandlers.wrap)
   routes.get('/passkeys', passkeyListDocs, passkeyHandlers.list)
+  routes.post('/passkeys/rename', passkeyRenameDocs, passkeyHandlers.rename)
   routes.post('/passkeys/remove', passkeyRemoveDocs, passkeyHandlers.remove)
   // Accounts on the web: sign-up behind Turnstile and caps, and a recovery
   // key's ticket.

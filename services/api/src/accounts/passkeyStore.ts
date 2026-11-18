@@ -157,10 +157,28 @@ export const passkeyInsert = (db: AccountsDb, passkey: NewPasskey, now: number) 
         ${passkey.counter},
         ${passkey.transports ? JSON.stringify(passkey.transports) : null},
         ${passkey.deviceType}, ${passkey.backedUp ? 1 : 0}, ${passkey.aaguid},
-        ${passkey.rpId}, ${passkey.createdPlatform}, ${passkey.label}, ${now}, NULL
+        ${passkey.rpId}, ${passkey.createdPlatform}, ${passkey.label}, ${now}, NULL,
+        NULL
       WHERE (SELECT COUNT(*) FROM passkeys WHERE account_id = ${passkey.accountId})
         < ${ACCOUNT_LIMITS.passkeysPerAccount}`
   )
+
+/**
+ * Sets (or, with null, clears) the sealed name of the account's credential.
+ * Writes nothing for another account's credential or none; check `changes`.
+ */
+export const passkeyRename = (
+  db: AccountsDb,
+  credentialId: string,
+  accountId: string,
+  name: string | null
+) =>
+  db
+    .update(passkeys)
+    .set({ name })
+    .where(
+      and(eq(passkeys.credentialId, credentialId), eq(passkeys.accountId, accountId))
+    )
 
 /** Whether the account has this credential (a condition for a batch's statements). */
 export const hasPasskey = (credentialId: string, accountId: string) =>

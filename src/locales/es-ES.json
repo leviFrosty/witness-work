@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Una llave de acceso es otra forma de entrar en tu misma cuenta, guardada por tu teléfono o tu gestor de contraseñas. No es necesario tener una.",
   "onboardingPasskey_addedTitle": "Llave de acceso añadida",
   "onboardingPasskey_addedDesc": "Ya puedes iniciar sesión en tu cuenta desde un ordenador.",
-  "onboardingPasskey_addedHint": "Para sustituir tu llave de acceso, tócala y quítala. Después podrás añadir una nueva.",
   "handoff_sectionInfo": "Tu teléfono nuevo escanea un código en este, y compruebas que ambos muestran el mismo número de seis dígitos. Funciona entre iPhone y Android, y ambos teléfonos necesitan internet. Tu cuenta viaja cifrada de extremo a extremo, así que el servidor no puede leerla.",
   "handoff_setUp": "Configurar otro dispositivo",
   "handoff_signIn": "Iniciar sesión con código QR",

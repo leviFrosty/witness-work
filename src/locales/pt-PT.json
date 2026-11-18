@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Uma chave de acesso é outra forma de entrar na mesma conta, guardada pelo seu telemóvel ou gestor de palavras-passe. Não precisa de ter uma.",
   "onboardingPasskey_addedTitle": "Chave de acesso adicionada",
   "onboardingPasskey_addedDesc": "Já pode iniciar sessão na sua conta num computador.",
-  "onboardingPasskey_addedHint": "Para substituir a sua chave de acesso, toque nela e remova-a. Depois pode adicionar uma nova.",
   "handoff_sectionInfo": "O seu telemóvel novo lê um código neste, e você confirma que ambos mostram o mesmo número de seis dígitos. Funciona entre iPhone e Android, e ambos os telemóveis precisam de internet. A sua conta viaja cifrada de ponta a ponta, por isso o servidor não a consegue ler.",
   "handoff_setUp": "Configurar outro dispositivo",
   "handoff_signIn": "Iniciar sessão com código QR",

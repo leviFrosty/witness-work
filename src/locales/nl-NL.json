@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Een passkey is een andere weg naar hetzelfde account, bewaard door je telefoon of wachtwoordmanager. Je hebt er geen nodig.",
   "onboardingPasskey_addedTitle": "Passkey toegevoegd",
   "onboardingPasskey_addedDesc": "Je kunt je nu op een computer aanmelden bij je account.",
-  "onboardingPasskey_addedHint": "Om je passkey te vervangen, tik je erop en verwijder je hem. Daarna kun je een nieuwe toevoegen.",
   "handoff_sectionInfo": "Je nieuwe telefoon scant een code op deze telefoon en jij controleert of beide hetzelfde zescijferige getal tonen. Het werkt tussen iPhone en Android en beide telefoons hebben internet nodig. Je account reist end-to-end versleuteld mee, dus de server kan het niet lezen.",
   "handoff_setUp": "Ander apparaat instellen",
   "handoff_signIn": "Aanmelden met QR-code",

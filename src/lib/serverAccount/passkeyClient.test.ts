@@ -12,6 +12,7 @@ import {
   passkeyFailureFor,
   passkeyRegistrationOptions,
   removePasskey,
+  renamePasskey,
   savePasskeyWrap,
   startPasskeySignIn,
   startPasskeyStepUp,
@@ -327,6 +328,12 @@ describe('retrying a lost answer', () => {
     expect(seen).toHaveLength(2)
   })
 
+  it('renames a passkey again', async () => {
+    const { seen, bearer } = flaky()
+    await renamePasskey({ credentialId: 'cred', name: null }, bearer)
+    expect(seen).toHaveLength(2)
+  })
+
   it('lists the passkeys again', async () => {
     const { seen, bearer } = flaky()
     expect(await listPasskeys(bearer)).toEqual({ passkeys: [] })
@@ -358,6 +365,7 @@ describe('listing and removing passkeys', () => {
             label: 'sealed',
             aaguid: 'fbfc3007-154e-4ecc-8c0b-6e020557d7bd',
             backedUp: true,
+            name: 'sealed-name',
           },
           {
             credentialId: 'b',
@@ -383,6 +391,7 @@ describe('listing and removing passkeys', () => {
         label: 'sealed',
         aaguid: 'fbfc3007-154e-4ecc-8c0b-6e020557d7bd',
         backedUp: true,
+        name: 'sealed-name',
       },
       {
         credentialId: 'b',
@@ -390,6 +399,33 @@ describe('listing and removing passkeys', () => {
         createdAt: 3,
         createdPlatform: 'unknown',
         backedUp: false,
+      },
+    ])
+  })
+
+  it('renames a passkey, and clears its name with null', async () => {
+    const { seen, bearer } = fakeFetch(() => json(200, { ok: true }))
+    await renamePasskey({ credentialId: 'a', name: 'sealed-name' }, bearer)
+    await renamePasskey({ credentialId: 'a', name: null }, bearer)
+    expect(
+      seen.map(({ method, url, headers, body }) => ({
+        method,
+        url,
+        auth: headers.Authorization ?? headers.authorization,
+        body,
+      }))
+    ).toEqual([
+      {
+        method: 'POST',
+        url: 'https://api.test/accounts/v1/passkeys/rename',
+        auth: 'Bearer access',
+        body: { credentialId: 'a', name: 'sealed-name' },
+      },
+      {
+        method: 'POST',
+        url: 'https://api.test/accounts/v1/passkeys/rename',
+        auth: 'Bearer access',
+        body: { credentialId: 'a', name: null },
       },
     ])
   })

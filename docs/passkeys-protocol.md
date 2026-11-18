@@ -182,16 +182,25 @@ Bearer **and** signed (op `passkey/wrap`): `{ accountPub, ts, nonce, credentialI
 
 Bearer → `{ ok, userHandle?, passkeys: [Passkey] }`, newest first. `userHandle` is absent until the account has one.
 
-| Field             | What                                                       |
-| ----------------- | ---------------------------------------------------------- |
-| `credentialId`    | `b64u`                                                     |
-| `canUnlock`       | Whether it has at least one wrap for the current key epoch |
-| `createdAt`       | Epoch ms                                                   |
-| `lastUsedAt`?     | Its last verified assertion, epoch ms                      |
-| `createdPlatform` | `ios`, `android`, `web`, or `dev`                          |
-| `label`?          | The sealed label the creating device sent                  |
-| `aaguid`?         | For a provider name ("iCloud Keychain"); display only      |
-| `backedUp`        | The latest BS flag                                         |
+| Field             | What                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| `credentialId`    | `b64u`                                                                                 |
+| `canUnlock`       | Whether it has at least one wrap for the current key epoch                             |
+| `createdAt`       | Epoch ms                                                                               |
+| `lastUsedAt`?     | Its last verified assertion, epoch ms                                                  |
+| `createdPlatform` | `ios`, `android`, `web`, or `dev`                                                      |
+| `label`?          | The sealed label the creating device sent                                              |
+| `aaguid`?         | For a provider name ("iCloud Keychain"); display only                                  |
+| `backedUp`        | The latest BS flag                                                                     |
+| `name`?           | The sealed name the User gave it ([Renaming](#renaming-a-passkey-post-passkeysrename)) |
+
+### Renaming a passkey: `POST /passkeys/rename`
+
+Bearer, live session: `{ credentialId, name }` → `{ ok }`. `name` is sealed (at most 512 characters, `too_large`), or `null` to clear it. Another account's credential, or none, is `not_found`. Repeating it is `ok`. No envelope or step-up, and not logged: a name changes nothing about what the passkey can do, and a leaked token can write only a name no device can open.
+
+- **The name** is UTF-8, trimmed, runs of whitespace made one space, at most 64 code points; blank is `null`. It's sealed like a device label, under the device-label key, with AAD `"ww-account/v1/passkey-name\n" ‖ accountPub ‖ "\n" ‖ credentialId`, so the server can't move it to another passkey or account, and it never opens as a label.
+- **Reading:** a name no key opens reads as none, and the passkey shows the account's name (`WitnessWork <tag>`). After a key change, devices open older names with the key history's device-label keys, as they do labels.
+- It's a name in WitnessWork only. The password manager keeps the name it saved the passkey under.
 
 ### Removing a passkey: `POST /passkeys/remove`
 

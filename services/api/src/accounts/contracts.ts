@@ -99,6 +99,8 @@ export const ACCOUNT_LIMITS = {
   wrapsPerCredential: 4,
   /** A passkey's sealed label, b64u characters. */
   passkeyLabelChars: 512,
+  /** A passkey's sealed name, b64u characters (`too_large`). */
+  passkeyNameChars: 512,
   /** A serialized WebAuthn response, characters (`too_large`). */
   passkeyResponseChars: 16 * 1_024,
   /** A Turnstile token, characters (Cloudflare's cap); longer is `bad_request`. */
@@ -395,6 +397,19 @@ const optionalSealed = (
 ): string | null | undefined => {
   if (value === undefined || value === null) return null
   return sealed(value, maxChars) ?? undefined
+}
+
+/**
+ * `passkeys/rename`'s `name`: a sealed name (b64u), or null to clear it.
+ * Undefined when malformed; `too_large` past `passkeyNameChars`.
+ */
+export const parsePasskeyName = (
+  value: unknown
+): string | null | 'too_large' | undefined => {
+  if (value === null) return null
+  if (typeof value === 'string' && value.length > ACCOUNT_LIMITS.passkeyNameChars)
+    return 'too_large'
+  return sealed(value, ACCOUNT_LIMITS.passkeyNameChars) ?? undefined
 }
 
 type Fields = Record<string, unknown>

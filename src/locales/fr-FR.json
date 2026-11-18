@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "Une clé d’accès est une autre façon d’accéder à votre même compte, conservée par votre téléphone ou votre gestionnaire de mots de passe. Vous n’en avez pas besoin.",
   "onboardingPasskey_addedTitle": "Clé d’accès ajoutée",
   "onboardingPasskey_addedDesc": "Vous pouvez maintenant vous connecter à votre compte sur un ordinateur.",
-  "onboardingPasskey_addedHint": "Pour remplacer votre clé d’accès, touchez-la et supprimez-la. Vous pourrez ensuite en ajouter une nouvelle.",
   "handoff_sectionInfo": "Votre nouveau téléphone scanne un code sur celui-ci, et vous vérifiez que les deux affichent le même nombre à six chiffres. Cela fonctionne entre iPhone et Android, et les deux téléphones ont besoin d’Internet. Votre compte voyage chiffré de bout en bout, donc le serveur ne peut pas le lire.",
   "handoff_setUp": "Configurer un autre appareil",
   "handoff_signIn": "Se connecter avec un code QR",

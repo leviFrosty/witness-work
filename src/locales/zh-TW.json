@@ -4764,7 +4764,6 @@
   "onboardingPasskey_infoDesc": "通行密鑰是進入同一個帳號的另一種方式，由你的手機或密碼管理工具保管。你不一定需要設定。",
   "onboardingPasskey_addedTitle": "通行密鑰已新增",
   "onboardingPasskey_addedDesc": "你現在可以在電腦上登入你的帳號了。",
-  "onboardingPasskey_addedHint": "若要更換通行密鑰，請點一下它並移除，然後就能新增新的。",
   "handoff_sectionInfo": "你的新手機會掃描這支手機上的代碼，然後你要確認兩支手機顯示的六位數字相同。iPhone 和 Android 之間也能使用，而且兩支手機都需要連上網際網路。你的帳號會以端對端加密傳送，因此伺服器無法讀取。",
   "handoff_setUp": "設定另一部裝置",
   "handoff_signIn": "用 QR 碼登入",

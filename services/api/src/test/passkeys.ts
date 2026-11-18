@@ -266,6 +266,10 @@ export class PasskeyClient {
     )
   }
 
+  async rename(session: SessionLike, body: unknown) {
+    return this.send('POST', '/passkeys/rename', body, authorization(session.accessToken))
+  }
+
   async remove(session: SessionLike, credentialId: string) {
     return this.send(
       'POST',

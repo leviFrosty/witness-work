@@ -443,6 +443,12 @@ export const passkeys = sqliteTable(
     createdAt: createdAt(),
     /** Its last verified assertion. */
     lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }),
+    /**
+     * The name the User gave it, sealed by their devices (witness-work
+     * `docs/passkeys-protocol.md`, Renaming); stored opaque. Null until
+     * renamed.
+     */
+    name: text('name'),
   },
   (t) => [index('passkeys_account_idx').on(t.accountId, t.createdAt)]
 )

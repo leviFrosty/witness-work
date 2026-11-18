@@ -6,7 +6,7 @@ const runtime = vi.hoisted(() => ({
   added: true,
   removed: true,
   listFails: false,
-  passkeys: [] as { credentialId: string; canUnlock: boolean }[],
+  passkeys: [] as { credentialId: string; canUnlock: boolean; name?: string }[],
 }))
 
 vi.mock('react-native', async () => {
@@ -111,9 +111,6 @@ vi.mock('@/components/ui/inputs/Section', async () => {
       ReactModule.createElement('Section', null, children),
   }
 })
-vi.mock('@/features/settings/components/account/SectionFooter', () => ({
-  default: () => null,
-}))
 vi.mock(
   '@/features/settings/components/account/passkeys/PasskeyRow',
   async () => {
@@ -124,6 +121,16 @@ vi.mock(
     }
   }
 )
+vi.mock(
+  '@/features/settings/components/account/passkeys/RenamePasskeySheet',
+  async () => {
+    const ReactModule = await import('react')
+    return {
+      default: (props: object) =>
+        ReactModule.createElement('RenamePasskeySheet', props),
+    }
+  }
+)
 vi.mock('@/app/account/passkeys', () => ({
   loadPasskeys: vi.fn(async () => {
     if (runtime.listFails) throw new Error('offline')
@@ -131,6 +138,8 @@ vi.mock('@/app/account/passkeys', () => ({
       passkeys: [...runtime.passkeys],
       name: 'WitnessWork ABCD',
       readLabel: () => null,
+      readName: (credentialId: string, sealed?: string) =>
+        sealed ? `${credentialId}:${sealed}` : null,
     }
   }),
 }))
@@ -297,6 +306,40 @@ describe('SavePasskey', () => {
       expect(texts()).toContain('onboardingPasskey_title')
       expect(rows()).toHaveLength(0)
       expect(goNext).not.toHaveBeenCalled()
+    })
+
+    it('renames the passkey, then shows the new name', async () => {
+      await addThenReturn()
+      const sheet = () =>
+        renderer!.root.find(
+          (node) => (node.type as unknown) === 'RenamePasskeySheet'
+        )
+      expect(sheet().props.passkey).toBeNull()
+      expect(rows()[0].props.customName).toBeNull()
+      await act(async () => rows()[0].props.onRename())
+      expect(sheet().props).toMatchObject({
+        passkey: { credentialId: 'new', name: null },
+        accountName: 'WitnessWork ABCD',
+      })
+
+      runtime.passkeys[0].name = 'sealed'
+      vi.mocked(loadPasskeys).mockClear()
+      await act(async () => sheet().props.onClosed(true))
+      expect(loadPasskeys).toHaveBeenCalledTimes(1)
+      expect(sheet().props.passkey).toBeNull()
+      expect(rows()[0].props.customName).toBe('new:sealed')
+    })
+
+    it('leaves the list alone when the rename sheet is dismissed', async () => {
+      await addThenReturn()
+      await act(async () => rows()[0].props.onRename())
+      vi.mocked(loadPasskeys).mockClear()
+      await act(async () =>
+        renderer!.root
+          .find((node) => (node.type as unknown) === 'RenamePasskeySheet')
+          .props.onClosed(false)
+      )
+      expect(loadPasskeys).not.toHaveBeenCalled()
     })
 
     it('keeps the passkey when the remove is cancelled', async () => {

@@ -16,7 +16,9 @@ import {
   removeWithConfirm,
 } from '@/features/settings/components/account/passkeys/passkeyActions'
 import PasskeyRow from '@/features/settings/components/account/passkeys/PasskeyRow'
-import SectionFooter from '@/features/settings/components/account/SectionFooter'
+import RenamePasskeySheet, {
+  type RenamingPasskey,
+} from '@/features/settings/components/account/passkeys/RenamePasskeySheet'
 import { type LoadedPasskeys, loadPasskeys } from '@/app/account/passkeys'
 import {
   backOffPasskeyPrompt,
@@ -51,6 +53,7 @@ const SavePasskey = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
   const [loaded, setLoaded] = useState<LoadedPasskeys | null>(remembered)
   const [busy, setBusy] = useState(false)
+  const [renaming, setRenaming] = useState<RenamingPasskey | null>(null)
   const mounted = useRef(true)
 
   const reload = async () => {
@@ -110,6 +113,14 @@ const SavePasskey = ({ goBack, goNext }: Props) => {
 
   const letUnlock = (passkey: Passkey) =>
     change(() => letUnlockWithToasts(passkey))
+
+  const rename = (passkey: Passkey) => {
+    if (busy || !loaded) return
+    setRenaming({
+      credentialId: passkey.credentialId,
+      name: loaded.readName(passkey.credentialId, passkey.name),
+    })
+  }
 
   const notNow = () => {
     backOffPasskeyPrompt()
@@ -191,15 +202,19 @@ const SavePasskey = ({ goBack, goNext }: Props) => {
                     key={passkey.credentialId}
                     passkey={passkey}
                     name={loaded.name}
+                    customName={loaded.readName(
+                      passkey.credentialId,
+                      passkey.name
+                    )}
                     readLabel={loaded.readLabel}
                     disabled={busy}
                     lastInSection={index === passkeys.length - 1}
                     onLetUnlock={() => letUnlock(passkey)}
+                    onRename={() => rename(passkey)}
                     onRemove={() => remove(passkey)}
                   />
                 ))}
               </Section>
-              <SectionFooter text={i18n.t('onboardingPasskey_addedHint')} />
             </View>
           )}
         </ContentColumn>
@@ -252,6 +267,14 @@ const SavePasskey = ({ goBack, goNext }: Props) => {
           )}
         </ContentColumn>
       </OnboardingFooter>
+      <RenamePasskeySheet
+        passkey={renaming}
+        accountName={loaded?.name ?? null}
+        onClosed={(renamed) => {
+          setRenaming(null)
+          if (renamed) void reload()
+        }}
+      />
     </Wrapper>
   )
 }

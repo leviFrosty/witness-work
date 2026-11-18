@@ -17,12 +17,20 @@ import {
 } from '@/lib/passkeys'
 import { PASSKEY_RP_ID } from '@/lib/passkeys/rpId'
 import { signalRemovedPasskey } from '@/lib/passkeys/signalUnknown'
-import { bearerOptions } from '@/lib/serverAccount'
+import {
+  bearerOptions,
+  keyHistoryCache,
+  serverAccount,
+} from '@/lib/serverAccount'
 import {
   createDeviceLabelReader,
   type DeviceLabelReader,
 } from '@/lib/serverAccount/activityLabels'
-import { listPasskeys, type Passkey } from '@/lib/serverAccount/passkeyClient'
+import {
+  listPasskeys,
+  type Passkey,
+  renamePasskey,
+} from '@/lib/serverAccount/passkeyClient'
 import {
   addPasskeyFlow,
   letPasskeyUnlockFlow,
@@ -33,6 +41,12 @@ import {
   type PasskeyUnlockResult,
   removePasskeyFlow,
 } from '@/lib/serverAccount/passkeyFlow'
+import {
+  createPasskeyNameReader,
+  normalizePasskeyName,
+  type PasskeyNameReader,
+  sealPasskeyName,
+} from '@/lib/serverAccount/passkeyName'
 import { passkeyName } from '@/lib/serverAccount/passkeys'
 import {
   accountPasskeyDeps,
@@ -141,17 +155,43 @@ export type LoadedPasskeys = {
 
   name: string | null
   readLabel: DeviceLabelReader
+  readName: PasskeyNameReader
 }
 
 export async function loadPasskeys(): Promise<LoadedPasskeys> {
   const key = await requireKey()
-  const list = await listPasskeys(bearerOptions(key))
+  const accountId = serverAccount.cached(key)?.accountId
+  const [list, history] = await Promise.all([
+    listPasskeys(bearerOptions(key)),
+    accountId
+      ? keyHistoryCache.read(accountId).catch(() => null)
+      : Promise.resolve(null),
+  ])
   keepListedWebLockPasskeys(list.passkeys.map((p) => p.credentialId))
   return {
     passkeys: list.passkeys,
     name: list.userHandle ? passkeyName(list.userHandle) : null,
-    readLabel: createDeviceLabelReader(key),
+    readLabel: createDeviceLabelReader(key, history),
+    readName: createPasskeyNameReader(key, history),
   }
+}
+
+export async function renameAccountPasskey(
+  credentialId: string,
+  name: string
+): Promise<void> {
+  const key = await requireKey()
+  const normalized = normalizePasskeyName(name)
+  await renamePasskey(
+    {
+      credentialId,
+      name: normalized
+        ? sealPasskeyName(key, credentialId, normalized, getRandomBytes(12))
+        : null,
+    },
+    bearerOptions(key)
+  )
+  analytics.capture('passkey_renamed', { cleared: !normalized })
 }
 
 export const accountPasskeySupport = (): Promise<PasskeySupport> =>

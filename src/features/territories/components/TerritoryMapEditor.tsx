@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Button from '@/components/ui/Button'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import FoldSplit from '@/components/ui/layout/FoldSplit'
 import Header from '@/components/ui/layout/Header'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
 import Text from '@/components/ui/MyText'
@@ -42,17 +43,21 @@ export default function TerritoryMapEditor({
   )
 }
 
+const SIDEBAR_WIDTH = 340
+
 export function TerritoryMapEditorFrame({
   title,
   onClose,
   onDone,
   testID,
+  sidebar,
   children,
 }: {
   title: string
   onClose: () => void
   onDone: () => void
   testID: string
+  sidebar?: ReactNode
   children: ReactNode
 }) {
   const theme = useTheme()
@@ -67,6 +72,7 @@ export function TerritoryMapEditorFrame({
         rightElement={
           <Button
             onPress={onDone}
+            submitShortcut
             testID={`${testID}-done`}
             style={{
               position: 'absolute',
@@ -86,30 +92,45 @@ export function TerritoryMapEditorFrame({
           </Button>
         }
       />
-      <View
-        style={[
-          {
-            flex: 1,
-            width: '100%',
-            maxWidth: inputLayout.contentMaxWidth,
-            alignSelf: 'center',
-            padding: inputLayout.horizontalPadding,
-            paddingBottom: insets.bottom + 12,
-          },
-          column,
-        ]}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: theme.colors.card,
-            borderRadius: inputLayout.sectionRadius,
-            borderCurve: 'continuous',
+      {sidebar ? (
+        <FoldSplit
+          leadingWidth={SIDEBAR_WIDTH}
+          gap={0}
+          style={{ flex: 1 }}
+          leadingStyle={{
+            borderEndWidth: 1,
+            borderEndColor: theme.colors.border,
+            paddingBottom: insets.bottom,
           }}
+          leading={sidebar}
+          trailing={children}
+        />
+      ) : (
+        <View
+          style={[
+            {
+              flex: 1,
+              width: '100%',
+              maxWidth: inputLayout.contentMaxWidth,
+              alignSelf: 'center',
+              padding: inputLayout.horizontalPadding,
+              paddingBottom: insets.bottom + 12,
+            },
+            column,
+          ]}
         >
-          {children}
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: theme.colors.card,
+              borderRadius: inputLayout.sectionRadius,
+              borderCurve: 'continuous',
+            }}
+          >
+            {children}
+          </View>
         </View>
-      </View>
+      )}
     </View>
   )
 }

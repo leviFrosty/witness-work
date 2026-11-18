@@ -14,6 +14,7 @@ import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
 import { redactLink } from '@/lib/redactLink'
 import { useIsTakingOver, useTakeoverHold } from '@/hooks/useTakeoverTurn'
+import { openContactDetails, useContactsSplit } from '@/hooks/useOpenContact'
 import { usePreferences } from '@/stores/preferences'
 
 export default function ContactImportListener() {
@@ -22,6 +23,7 @@ export default function ContactImportListener() {
   const [pendingUrls, setPendingUrls] = useState<string[]>([])
   const onboarded = usePreferences((s) => s.onboardingComplete)
   const takingOver = useIsTakingOver()
+  const split = useContactsSplit()
   useTakeoverHold('contact-import', pendingUrls.length > 0)
 
   useEffect(() => {
@@ -107,9 +109,11 @@ export default function ContactImportListener() {
                     toast.success(title, { message }),
                   navigate: (contactId) => {
                     if (navigationRef.isReady()) {
-                      navigationRef.navigate('Contact Details', {
-                        id: contactId,
-                      })
+                      openContactDetails(
+                        navigationRef,
+                        { id: contactId },
+                        { split }
+                      )
                     }
                   },
                 }
@@ -130,7 +134,7 @@ export default function ContactImportListener() {
     }
 
     void handle(url)
-  }, [pendingUrls, onboarded, takingOver])
+  }, [pendingUrls, onboarded, takingOver, split])
 
   return null
 }

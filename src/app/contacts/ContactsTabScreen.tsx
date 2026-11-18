@@ -69,6 +69,11 @@ export default function ContactsTabScreen({ route, navigation }: Props) {
       view={hasSidebar ? 'list' : undefined}
       focusSearch={route.params?.focusSearch}
       onSearchFocused={() => navigation.setParams({ focusSearch: undefined })}
+      selectedContactId={route.params?.contactId}
+      highlightedVisitId={route.params?.highlightedVisitId}
+      onSelectContact={(contactId) =>
+        navigation.setParams({ contactId, highlightedVisitId: undefined })
+      }
       renderMap={(props) => <ContactsMap {...props} />}
     />
   )

@@ -24,6 +24,7 @@ import {
   processCompleteImport,
   ImportHandlerCallbacks,
 } from '@/features/contacts/lib/contactImport'
+import useOpenContact from '@/hooks/useOpenContact'
 import useContacts from '@/stores/contactsStore'
 import useConversations from '@/stores/conversationStore'
 import { toast } from '@/stores/toasts'
@@ -32,6 +33,7 @@ import AppPreferencesSection from '@/features/settings/preferences/general/AppPr
 
 const MoreScreen = () => {
   const navigation = useNavigation<RootStackNavigation>()
+  const openContact = useOpenContact()
   const { set } = usePreferences()
   const {
     contacts,
@@ -69,9 +71,7 @@ const MoreScreen = () => {
     showToast: (title: string, message: string) => {
       toast.success(title, { message })
     },
-    navigate: (contactId: string) => {
-      navigation.navigate('Contact Details', { id: contactId })
-    },
+    navigate: (contactId: string) => openContact({ id: contactId }),
   }
 
   const handleImportContact = async () => {

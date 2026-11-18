@@ -39,6 +39,7 @@ import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import useOpenContact from '@/hooks/useOpenContact'
 import { useReloadState } from '@/lib/reloadRestore'
 import { contactDraftForChanges } from '@/features/contacts/lib/contactDraft'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
@@ -50,6 +51,7 @@ const GEOCODE_NAV_TIMEOUT_MS = 4000
 const ContactFormScreen = ({ route, navigation }: Props) => {
   const foldColumn = useFoldColumn(680)
   const theme = useTheme()
+  const openContact = useOpenContact()
   const { addContact, contacts, updateContact, customFieldDefs } = useContacts()
   const {
     incrementGeocodeApiCallCount,
@@ -562,9 +564,10 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                     return
                   }
                   if (editMode) {
-                    navigation.replace('Contact Details', {
-                      id: (params as { id: string }).id,
-                    })
+                    openContact(
+                      { id: (params as { id: string }).id },
+                      'replace'
+                    )
                     return
                   }
                   navigation.replace('Visit Form', {
@@ -600,6 +603,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     route.params.logVisit,
     fetching,
     navigation,
+    openContact,
     submit,
     theme.colors.text,
     theme.colors.textInverse,

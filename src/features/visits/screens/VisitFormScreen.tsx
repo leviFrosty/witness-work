@@ -59,6 +59,7 @@ import confirmDestructive from '@/lib/confirmDestructive'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import useOpenContact from '@/hooks/useOpenContact'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import { hasCapability } from '@/lib/platformCapabilities'
@@ -165,6 +166,7 @@ const VisitFormScreen = ({
 }: Props) => {
   const foldColumn = useFoldColumn(680)
   const theme = useTheme()
+  const openContact = useOpenContact()
   const insets = useSafeAreaInsets()
   const {
     calledGoecodeApiTimes,
@@ -452,9 +454,7 @@ const VisitFormScreen = ({
                 onPress={() =>
                   params.returnToContacts
                     ? navigation.goBack()
-                    : navigation.replace('Contact Details', {
-                        id: params.contactId!,
-                      })
+                    : openContact({ id: params.contactId! }, 'replace')
                 }
               >
                 <Text style={{ color: theme.colors.text, fontSize: 16 }}>
@@ -515,9 +515,7 @@ const VisitFormScreen = ({
                   } else if (isEditing) {
                     navigation.pop()
                   } else if (params.contactId) {
-                    navigation.replace('Contact Details', {
-                      id: params.contactId,
-                    })
+                    openContact({ id: params.contactId }, 'replace')
                   } else {
                     navigation.popToTop()
                   }
@@ -553,6 +551,7 @@ const VisitFormScreen = ({
     isEditing,
     lastTimeRequestedAReview,
     navigation,
+    openContact,
     params,
     submit,
     theme.colors.text,

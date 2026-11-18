@@ -14,6 +14,7 @@ import ContextMenu, {
 } from '@/components/ui/ContextMenu'
 import ContactPreview from '@/components/ContactPreview'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
+import useOpenContact from '@/hooks/useOpenContact'
 import { useNavigation } from '@react-navigation/native'
 import { addressToString, coordinateAsString, navigateTo } from '@/lib/address'
 import Avatar from '@/components/ui/Avatar'
@@ -45,6 +46,7 @@ const withSecondaryItems = (
 const MapCarouselCard = ({ contact, index }: Props) => {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const openContact = useOpenContact()
   const locales = getLocales()
   const defaultNavigationMapProvider = usePreferences(
     (s) => s.defaultNavigationMapProvider
@@ -105,9 +107,7 @@ const MapCarouselCard = ({ contact, index }: Props) => {
     <MapCard fill={false}>
       <ContextMenu
         actions={actions}
-        onPress={() =>
-          navigation.navigate('Contact Details', { id: contact.id })
-        }
+        onPress={() => openContact({ id: contact.id })}
         preview={
           <ContactPreview
             contact={contact}

@@ -5,6 +5,7 @@ import DetailsLayout from '@/components/ui/layout/DetailsLayout'
 import { useContactActionColor } from '@/hooks/useContactActionColor'
 import useDismissFollowUp from '@/hooks/useDismissFollowUp'
 import useLogNotAtHome from '@/hooks/useLogNotAtHome'
+import useOpenContact from '@/hooks/useOpenContact'
 import useVisitMenuActions from '@/hooks/useVisitMenuActions'
 import { followUpAnswer } from '@/lib/conversations'
 import i18n from '@/lib/locales'
@@ -43,6 +44,7 @@ export default function VisitDetails({
   renderFollowUpBuddies?: FollowUpDetailsBuddiesSlot
 }) {
   const navigation = useNavigation<RootStackNavigation>()
+  const openContactDetails = useOpenContact()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const conversations = useConversations((s) => s.conversations)
   const actionColor = useContactActionColor(contact)
@@ -73,10 +75,12 @@ export default function VisitDetails({
       (opener.params as { id?: string } | undefined)?.id === contact.id
     )
       return
-    navigation.push('Contact Details', {
-      id: contact.id,
-      highlightedVisitId: visit.id,
-    })
+    setTimeout(() =>
+      openContactDetails(
+        { id: contact.id, highlightedVisitId: visit.id },
+        'push'
+      )
+    )
   }
 
   const logVisit = () =>

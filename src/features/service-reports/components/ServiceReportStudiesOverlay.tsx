@@ -28,6 +28,7 @@ import {
 import i18n from '@/lib/locales'
 import useContacts from '@/stores/contactsStore'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
+import useOpenContact from '@/hooks/useOpenContact'
 import useLocalDay from '@/hooks/useLocalDay'
 import { useContactStalenessColor } from '@/hooks/useContactStalenessColor'
 import { formatRelative } from '@/lib/dates'
@@ -101,7 +102,7 @@ const StudyContactRow = ({
 
 const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
   const theme = useTheme()
-  const navigation = useNavigation<RootStackNavigation>()
+  const openContactDetails = useOpenContact()
   const contacts = useContacts((state) => state.contacts)
   const conversations = useConversations((state) => state.conversations)
 
@@ -131,9 +132,7 @@ const StudiesInsightContent = ({ onClose }: { onClose: () => void }) => {
     setTimeout(navigate, 150)
   }
   const openContact = (contact: Contact) =>
-    navigateAfterClose(() =>
-      navigation.navigate('Contact Details', { id: contact.id })
-    )
+    navigateAfterClose(() => openContactDetails({ id: contact.id }))
 
   return (
     <>

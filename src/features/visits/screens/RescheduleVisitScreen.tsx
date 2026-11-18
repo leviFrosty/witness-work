@@ -24,6 +24,7 @@ import ContextMenu from '@/components/ui/ContextMenu'
 import ContactPreview from '@/components/ContactPreview'
 import useContactMenuActions from '@/hooks/useContactMenuActions'
 import useDismissFollowUp from '@/hooks/useDismissFollowUp'
+import useOpenContact from '@/hooks/useOpenContact'
 
 import useTheme from '@/contexts/theme'
 import useContacts from '@/stores/contactsStore'
@@ -250,6 +251,7 @@ const QuickDateChips = ({
 }
 
 const RescheduleVisitScreen = ({ route, navigation }: Props) => {
+  const openContact = useOpenContact()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { visitId, contactId } = route.params
@@ -356,13 +358,9 @@ const RescheduleVisitScreen = ({ route, navigation }: Props) => {
     })
   }, [contact, conversation?.id, dismiss, navigation])
 
-  const openContactDetails = useCallback(() => {
-    if (!contact) return
-    ;(navigation as unknown as RootStackNavigation).navigate(
-      'Contact Details',
-      { id: contact.id }
-    )
-  }, [contact, navigation])
+  const openContactDetails = () => {
+    if (contact) openContact({ id: contact.id })
+  }
 
   if (!conversation || !contact) {
     return (

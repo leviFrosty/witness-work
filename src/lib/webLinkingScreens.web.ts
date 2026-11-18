@@ -20,9 +20,9 @@ export const webTabScreens = {
     parse: { month: Number, year: Number },
   },
   Contacts: {
-    path: 'contacts',
+    path: 'contacts/:contactId?',
     alias: ['Contacts'],
-    stringify: { focusSearch: leftOut },
+    stringify: { focusSearch: leftOut, highlightedVisitId: leftOut },
   },
   Map: { path: 'map', alias: ['Map'] },
   Progress: {

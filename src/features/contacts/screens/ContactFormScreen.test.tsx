@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   dataProtectionMode: false,
   setOptions: vi.fn(),
   replace: vi.fn(),
+  openContact: vi.fn(),
   goBack: vi.fn(),
   contacts: [] as Contact[],
   customFieldDefs: [],
@@ -64,6 +65,9 @@ vi.mock('@/stores/geocodeRetry', () => ({
   },
 }))
 vi.mock('@/lib/analytics', () => ({ analytics: { capture: vi.fn() } }))
+vi.mock('@/hooks/useOpenContact', () => ({
+  default: () => mocks.openContact,
+}))
 vi.mock('@/hooks/useDiscardChangesGuard', () => ({ default: () => () => {} }))
 vi.mock('@/lib/http/online', () => ({
   isDeviceOffline: (kind: string) => kind === 'offline',

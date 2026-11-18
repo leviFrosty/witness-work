@@ -31,6 +31,7 @@ import useContacts from '@/stores/contactsStore'
 import { usePreferences } from '@/stores/preferences'
 import type { RootStackNavigation } from '@/types/rootStack'
 import useDismissFollowUp from '@/hooks/useDismissFollowUp'
+import useOpenContact from '@/hooks/useOpenContact'
 
 type Props = {
   item: FollowUpCardItem
@@ -41,6 +42,7 @@ type Props = {
 export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const openContactDetails = useOpenContact()
   const dismissFollowUp = useDismissFollowUp()
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const defaultNavigationMapProvider = usePreferences(
@@ -70,7 +72,7 @@ export default function FollowUpCardEntry({ item, width, onNotAtHome }: Props) {
   const openVisit = () =>
     navigation.navigate('Visit Details', { visitId: visit.id })
   const openContact = () =>
-    navigation.navigate('Contact Details', {
+    openContactDetails({
       id: contact.id,
       highlightedVisitId: answeredBy?.id ?? visit.id,
     })

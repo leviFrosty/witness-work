@@ -11,6 +11,7 @@ import useDismissContact, {
   dismissOptionLabel,
   useDismissDurations,
 } from '@/hooks/useDismissContact'
+import useOpenContact from '@/hooks/useOpenContact'
 import useRemoveContacts from '@/hooks/useRemoveContacts'
 import { addressToString, navigateTo } from '@/lib/address'
 import { isContactDismissed } from '@/lib/dismissedContacts'
@@ -94,6 +95,7 @@ export default function useContactMenuActions(
   options: ContactMenuOptions = {}
 ): ContextMenuEntries {
   const navigation = useNavigation<RootStackNavigation>()
+  const openContact = useOpenContact()
   const toggleFavoriteContact = useContacts((s) => s.toggleFavoriteContact)
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const defaultNavigationMapProvider = usePreferences(
@@ -168,8 +170,7 @@ export default function useContactMenuActions(
         id: 'open',
         title: i18n.t('openContact'),
         systemImage: 'person.crop.circle',
-        onPress: () =>
-          navigation.navigate('Contact Details', { id: contact.id }),
+        onPress: () => openContact({ id: contact.id }),
       },
       {
         id: contact.isFavorite ? 'unfavorite' : 'favorite',

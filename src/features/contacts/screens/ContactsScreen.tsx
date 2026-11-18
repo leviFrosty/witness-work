@@ -143,7 +143,7 @@ const ContactsScreen = ({
   onSearchFocused?: () => void
 }) => {
   const theme = useTheme()
-  const { isWide, hasBottomBar } = useAdaptiveLayout()
+  const { isWide, hasBottomBar, hasSidebar } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
   const [selectedId, setSelectedId] = useState<string>()
   const insets = useSafeAreaInsets()
@@ -326,7 +326,7 @@ const ContactsScreen = ({
     else listRef.current?.scrollToOffset({ offset: 0, animated: true })
   })
 
-  const headerCollapsed = mapExplored
+  const headerCollapsed = mapExplored && !isWide && !hasSidebar
   const headerSwipeDown = Gesture.Pan()
     .runOnJS(true)
     .enabled(headerCollapsed)

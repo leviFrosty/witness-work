@@ -7,7 +7,7 @@ const OWN_FOCUS =
 export default function WebFocusStyles() {
   const theme = useTheme()
   return createPortal(
-    <style data-ww-focus=''>{`:focus-visible${OWN_FOCUS}{outline:2px solid ${theme.colors.text}!important;outline-offset:2px!important}:is(input,textarea):focus-visible{outline-offset:0!important;border-radius:4px}`}</style>,
+    <style data-ww-focus=''>{`:focus-visible${OWN_FOCUS}{outline:2px solid ${theme.colors.text}!important;outline-offset:2px!important}:is(input,textarea):focus-visible{outline-offset:0!important}input[role=switch]{border-radius:9999px}input[role=switch]:focus-visible{outline-offset:2px!important}`}</style>,
     document.head
   )
 }

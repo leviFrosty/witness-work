@@ -88,6 +88,40 @@ export const hoverToneFor = (
     : { color: '#FFFFFF', opacity: large ? 0.08 : 0.12 }
 }
 
+const MIN_HIGHLIGHT_RADIUS = 10
+
+const numeric = (value: unknown) =>
+  typeof value === 'number' ? value : undefined
+
+export const hoverShape = (
+  surface: ViewStyle,
+  effect: PointerEffect | 'tint',
+  web: boolean
+): {
+  control: number | undefined
+  tint: ViewStyle['borderRadius']
+} => {
+  const radius = numeric(surface.borderRadius)
+  const border = numeric(surface.borderWidth) ?? 0
+  const shapeless =
+    !border &&
+    (surface.backgroundColor === undefined ||
+      surface.backgroundColor === 'transparent')
+  const control =
+    web &&
+    effect === 'highlight' &&
+    shapeless &&
+    (radius ?? 0) < MIN_HIGHLIGHT_RADIUS
+      ? MIN_HIGHLIGHT_RADIUS
+      : undefined
+  const outer = control ?? radius
+  return {
+    control,
+    tint:
+      outer === undefined ? surface.borderRadius : Math.max(0, outer - border),
+  }
+}
+
 const LAYOUT_KEYS = [
   'flexDirection',
   'alignItems',
@@ -181,6 +215,7 @@ const useButtonPointer = (
   const tone = drawn
     ? hoverToneFor(surfaceStyle.backgroundColor, effect === 'tint')
     : null
+  const shape = hoverShape(surfaceStyle, effect, drawn)
   return {
     wrap: (pressable: ReactElement) => (
       <PointerHover
@@ -197,16 +232,15 @@ const useButtonPointer = (
         }
         color={tone?.color}
         opacity={tone?.opacity}
-        borderRadius={
-          effect === 'highlight' && drawn
-            ? Math.max(Number(surfaceStyle.borderRadius) || 0, 10)
-            : surfaceStyle.borderRadius
-        }
+        borderRadius={shape.tint}
         borderCurve={surfaceStyle.borderCurve}
         strong={drawn && effect === 'highlight'}
       />
     ),
-    style: drawn && effect === 'lift' && hovered ? WEB_LIFT_STYLE : undefined,
+    style: [
+      shape.control !== undefined && { borderRadius: shape.control },
+      drawn && effect === 'lift' && hovered && WEB_LIFT_STYLE,
+    ],
     onLayout: (event: LayoutChangeEvent) => {
       onLayoutProp?.(event)
       const { width, height } = event.nativeEvent.layout

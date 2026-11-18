@@ -48,7 +48,7 @@ vi.mock('@/components/ui/PointerHover', () => ({
   HoverTint: slot('HoverTint'),
 }))
 
-import Button, { type ButtonProps } from '@/components/ui/Button'
+import Button, { type ButtonProps, hoverShape } from '@/components/ui/Button'
 
 let root: ReactTestRenderer
 
@@ -226,5 +226,51 @@ describe('Button loading', () => {
     expect(root.root.findAllByType('ActivityIndicator' as never)).toHaveLength(
       0
     )
+  })
+})
+
+describe('hoverShape', () => {
+  it('keeps the tint concentric inside a border', () => {
+    expect(
+      hoverShape({ borderRadius: 8, borderWidth: 1 }, 'highlight', true)
+    ).toEqual({ control: undefined, tint: 7 })
+  })
+
+  it('rounds a shapeless web control and its tint together', () => {
+    expect(hoverShape({}, 'highlight', true)).toEqual({
+      control: 10,
+      tint: 10,
+    })
+    expect(hoverShape({ borderRadius: 4 }, 'highlight', true)).toEqual({
+      control: 10,
+      tint: 10,
+    })
+  })
+
+  it('leaves a filled or already round control its own radius', () => {
+    expect(
+      hoverShape(
+        { borderRadius: 4, backgroundColor: '#1BD15D33' },
+        'highlight',
+        true
+      )
+    ).toEqual({ control: undefined, tint: 4 })
+    expect(hoverShape({ borderRadius: 22 }, 'highlight', true)).toEqual({
+      control: undefined,
+      tint: 22,
+    })
+  })
+
+  it('only reshapes the control on the web', () => {
+    expect(hoverShape({}, 'highlight', false)).toEqual({
+      control: undefined,
+      tint: undefined,
+    })
+    expect(
+      hoverShape({ borderRadius: 999, borderWidth: 1 }, 'tint', false)
+    ).toEqual({
+      control: undefined,
+      tint: 998,
+    })
   })
 })

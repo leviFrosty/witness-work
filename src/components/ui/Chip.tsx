@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react'
-import { View } from 'react-native'
+import { View, type ViewStyle } from 'react-native'
 import useTheme from '@/contexts/theme'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
@@ -37,21 +37,21 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
   const theme = useTheme()
   const color = toneColor(tone, theme)
 
+  const shape: ViewStyle = {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  }
+
   const content = (
-    <View
-      style={{
-        flexShrink: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 999,
-        borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-      }}
-    >
+    <>
       {icon ? (
         <Text
           accessibilityElementsHidden
@@ -76,17 +76,17 @@ const Chip: React.FC<PropsWithChildren<ChipProps>> = ({
       >
         {label}
       </Text>
-    </View>
+    </>
   )
 
   if (onPress) {
     return (
-      <Button onPress={onPress} noTransform>
+      <Button onPress={onPress} noTransform style={shape}>
         {content}
       </Button>
     )
   }
-  return content
+  return <View style={shape}>{content}</View>
 }
 
 export default Chip

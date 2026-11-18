@@ -20,6 +20,7 @@ export interface TextInputProps
     'placeholderTextColor' | 'selectionColor' | 'textAlign'
   > {
   textAlign?: FlowAlign | 'center'
+  surface?: 'section' | 'screen'
   invalid?: boolean
   error?: string
   errors?: Errors
@@ -109,9 +110,12 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
     letterSpacing,
     textAlign,
     textAlignVertical,
+    surface = 'section',
     ...rest
   } = props
   const theme = useTheme()
+  const onScreen = surface === 'screen'
+  const isArea = onScreen && !!rest.multiline
 
   const Component = (rest.multiline ? TextArea : Input) as typeof Input
   const flowAlign = toFlow(
@@ -124,12 +128,18 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
       minHeight: inputLayout.controlMinHeight,
       borderWidth: 0,
       borderStyle: 'solid',
-      borderRadius: rest.multiline ? inputLayout.controlRadius : 999,
+      borderRadius: isArea
+        ? inputLayout.sectionRadius
+        : rest.multiline
+          ? inputLayout.controlRadius
+          : 999,
       borderCurve: 'continuous',
       borderColor: error || invalid ? theme.colors.error : theme.colors.border,
-      backgroundColor: theme.colors.background,
+      backgroundColor: onScreen
+        ? theme.colors.backgroundLighter
+        : theme.colors.background,
       paddingHorizontal: inputLayout.controlPadding,
-      paddingVertical: 10,
+      paddingVertical: isArea ? inputLayout.controlPadding : 10,
       fontFamily: theme.fonts.regular,
       fontSize: theme.fontSize('md'),
       color: theme.colors.text,

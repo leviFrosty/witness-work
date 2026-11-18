@@ -36,6 +36,8 @@ function daysFromNow(days: number) {
   }
 }
 
+const LEAVE_FORM = /^(Go Back|Close)$/
+
 async function openCreatePlan(page: Page) {
   await page.getByRole('button', { name: 'Quick Action' }).click()
   await page.getByText('Create Plan', { exact: true }).click()
@@ -364,7 +366,7 @@ test.describe('sheets', () => {
 
 test('Tab walks a form with a visible focus ring', async ({ app, shot }) => {
   await openCreatePlan(app)
-  await app.getByRole('button', { name: 'Go Back' }).focus()
+  await app.getByRole('button', { name: LEAVE_FORM }).focus()
   let stops = 0
   for (let press = 0; press < 8; press++) {
     await app.keyboard.press('Tab')
@@ -739,7 +741,7 @@ test.describe('icon buttons', () => {
     expect(box.height).toBeGreaterThanOrEqual(44)
 
     await openCreatePlan(app)
-    const back = await sizeOf(app.getByRole('button', { name: 'Go Back' }))
+    const back = await sizeOf(app.getByRole('button', { name: LEAVE_FORM }))
     expect(back.width).toBeGreaterThanOrEqual(44)
     expect(back.height).toBeGreaterThanOrEqual(44)
   })

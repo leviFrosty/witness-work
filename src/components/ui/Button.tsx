@@ -35,6 +35,7 @@ import PointerHover, {
 } from '@/components/ui/PointerHover'
 import { supportsPointerEffects, supportsWebHover } from '@/lib/pointerHover'
 import useSubmitAction from '@/hooks/useSubmitAction'
+import { relativeLuminance } from '@/lib/color'
 
 export interface ButtonProps extends PressableProps {
   onPress?: (event: GestureResponderEvent) => void
@@ -75,6 +76,17 @@ const isOpaque = (color: unknown) =>
   color !== 'transparent' &&
   !/^rgba|^hsla/.test(color) &&
   !/^#([0-9a-f]{4}|[0-9a-f]{8})$/i.test(color)
+
+export const hoverToneFor = (
+  color: unknown,
+  large: boolean
+): { color: string; opacity: number } | null => {
+  if (typeof color !== 'string' || !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color))
+    return null
+  return relativeLuminance(color) > 0.3
+    ? { color: '#000000', opacity: large ? 0.14 : 0.16 }
+    : { color: '#FFFFFF', opacity: large ? 0.08 : 0.12 }
+}
 
 const LAYOUT_KEYS = [
   'flexDirection',
@@ -166,6 +178,9 @@ const useButtonPointer = (
 
   const drawn = supportsWebHover
   const tracksHover = drawn ? true : effect === 'tint'
+  const tone = drawn
+    ? hoverToneFor(surfaceStyle.backgroundColor, effect === 'tint')
+    : null
   return {
     wrap: (pressable: ReactElement) => (
       <PointerHover
@@ -177,7 +192,11 @@ const useButtonPointer = (
     ),
     overlay: (
       <HoverTint
-        visible={hovered && (drawn ? effect !== 'lift' : effect === 'tint')}
+        visible={
+          hovered && (drawn ? effect !== 'lift' || !!tone : effect === 'tint')
+        }
+        color={tone?.color}
+        opacity={tone?.opacity}
         borderRadius={
           effect === 'highlight' && drawn
             ? Math.max(Number(surfaceStyle.borderRadius) || 0, 10)

@@ -206,6 +206,28 @@ export default function WebLayer({
   }, [open, anchor, at])
 
   const ready = placed !== null
+
+  const enter = useEffectEvent(() => {
+    const layer = layerRef.current
+    if (!layer || !anchor || typeof layer.animate !== 'function') return
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const from = at
+      ? new DOMRect(at.x, at.y, 1, 1)
+      : anchor.getBoundingClientRect()
+    const below =
+      layer.getBoundingClientRect().top >= from.top + from.height / 2
+    layer.animate(
+      [
+        { opacity: 0, transform: `translateY(${below ? -4 : 4}px)` },
+        { opacity: 1, transform: 'none' },
+      ],
+      { duration: 140, easing: 'cubic-bezier(.2,.9,.3,1)' }
+    )
+  })
+  useLayoutEffect(() => {
+    if (open && ready) enter()
+  }, [open, ready])
+
   useLayoutEffect(() => {
     const layer = layerRef.current
     if (!open || !ready || !layer || layer.contains(document.activeElement))
@@ -266,7 +288,7 @@ export default function WebLayer({
         backgroundColor: theme.colors.card,
         border: `1px solid ${theme.colors.border}`,
         borderRadius: theme.numbers.borderRadiusMd,
-        boxShadow: `0 4px 16px ${theme.colors.shadow}26`,
+        boxShadow: `0 8px 28px ${theme.colors.shadow}33`,
         ...style,
       }}
     >

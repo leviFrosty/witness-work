@@ -12,13 +12,13 @@ import {
   useNavigationBuilder,
 } from '@react-navigation/native'
 import {
-  NativeStackView,
   type NativeStackNavigationEventMap,
   type NativeStackNavigationOptions,
   type NativeStackNavigatorProps,
   type NativeStackTypeBag,
 } from '@react-navigation/native-stack'
 import useTheme from '@/contexts/theme'
+import StackView from '@/app/navigation/StackView'
 import { SystemBackButtonContext } from '@/components/ui/layout/SystemBackButton'
 import { useDisplayRegions } from '@/stores/displayRegions'
 
@@ -142,7 +142,7 @@ function SystemBackStackNavigator({
 
   return (
     <NavigationContent>
-      <NativeStackView
+      <StackView
         {...rest}
         state={state}
         navigation={navigation}

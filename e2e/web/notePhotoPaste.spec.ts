@@ -111,6 +111,11 @@ async function openNoteEditor(page: Page) {
     page.getByRole('heading', { name: en.visitDetails_title })
   ).toBeVisible()
   await page.getByRole('button', { name: en.edit }).last().click()
+  await expect(
+    page
+      .getByText(en.editConversation, { exact: true })
+      .filter({ visible: true })
+  ).toBeVisible()
   await page.getByText(NOTE).filter({ visible: true }).last().click()
   await expect(page.locator('.ProseMirror')).toBeVisible()
   await page.locator('.ProseMirror').click()

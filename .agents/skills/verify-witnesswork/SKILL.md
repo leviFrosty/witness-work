@@ -254,6 +254,19 @@ wwv web test --export e2e/web/offline.spec.ts   # against a fresh production exp
 - **Servers are pooled.** At most `WW_VERIFY_MAX_WEB_DEV` run at once. One that no `wwv web` command has used for `WW_VERIFY_WEB_DEV_IDLE_MIN` minutes is stopped, or after `WW_VERIFY_WEB_DEV_CONTENDED_IDLE_MIN` when another worktree is waiting for a slot; the next `wwv web test` starts it again. Run `wwv web down` as soon as the proof is done.
 - **Waiting is normal.** A queued command prints its place and the reason, then runs. Leave it waiting; a second copy only joins the back of the queue. Exit status 75 means it gave up or verification is on hold: report the check as unverified rather than running `expo` or `playwright` by hand.
 
+### Live Beta (beta.app.witnesswork.app)
+
+Use the live Beta web app only when the check needs Beta itself: a deploy, Beta's ww-api, or the real frames. Everything else uses the dev server above.
+
+Sign-up and recovery-key sign-in need a Cloudflare Turnstile check, which stops automated browsers. Beta's ww-api takes a QA bypass token in its place (`services/api/src/accounts/turnstile.ts`). Production never takes it.
+
+1. Read the token into an environment variable. Never print it: `export WW_QA_TURNSTILE=$(op item get "ww-api Turnstile QA bypass token (beta)" --vault Agents --fields credential --reveal)`.
+2. In the spec, before the app opens the security check, call `bypassTurnstile(page.context(), process.env.WW_QA_TURNSTILE!)` from `e2e/web/turnstileQa.ts`. It serves a stand-in for `verify-beta.witnesswork.app` that hands the app the token, and the app sends it to ww-api as `turnstileToken`.
+3. For a passkey, add a CDP virtual authenticator (`WebAuthn.addVirtualAuthenticator` with `ctap2`, `internal`, `hasResidentKey`, `hasUserVerification`, `isUserVerified`, `automaticPresenceSimulation` and `hasPrf`).
+4. Sign in to the shared QA account with its recovery key, from the Agents vault item `WitnessWork Beta QA account (web)`. Sign up a new account only when the check needs one: sign-up caps are still 3 a day per IP.
+
+Use made-up data only. Beta's data is separate from production's, but other agents share the QA account.
+
 ## Concurrency and resources
 
 Many worktrees share one Mac. All of them coordinate through `~/.ww-verify`.

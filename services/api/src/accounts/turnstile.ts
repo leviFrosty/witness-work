@@ -1,4 +1,5 @@
 import type { Environment } from '../types'
+import { timingSafeEqual } from '../crypto'
 import { isTurnstileToken } from './contracts'
 
 /**
@@ -17,6 +18,13 @@ import { isTurnstileToken } from './contracts'
  * does, so a test secret set there passes nothing). A development worker without
  * `TURNSTILE_SECRET_KEY` uses the always-passing test secret; production
  * without it has web sign-up and recovery off.
+ *
+ * QA bypass: on a worker with `TURNSTILE_QA_BYPASS = "on"` (Beta only), the
+ * secret `TURNSTILE_QA_BYPASS_TOKEN` passes as a token for either action
+ * without asking Siteverify, so automated QA can sign up and recover on the
+ * web. It travels as the request body's `turnstileToken`, never in a header,
+ * because Workers Logs record every request header. Caps, the kill switch and
+ * everything after the check still apply.
  *
  * Privacy: never log the token, the secret, or the IP.
  */
@@ -40,7 +48,35 @@ export type TurnstileEnv = Pick<
   | 'TURNSTILE_SITE_KEY'
   | 'TURNSTILE_HOSTNAMES'
   | 'APP_ATTEST_ENVIRONMENT'
+  | 'TURNSTILE_QA_BYPASS'
+  | 'TURNSTILE_QA_BYPASS_TOKEN'
 >
+
+const QA_BYPASS_MIN_LENGTH = 32
+
+let warnedQaBypass = false
+
+/**
+ * The QA bypass token, or null when this worker doesn't take one: the switch
+ * isn't `on`, or the token is missing or shorter than 32 characters. A token
+ * set without the switch (production) is ignored, with one warning per isolate.
+ */
+export const turnstileQaBypassToken = (env: TurnstileEnv): string | null => {
+  const token = env.TURNSTILE_QA_BYPASS_TOKEN?.trim() || null
+  if (!token) return null
+  const usable = env.TURNSTILE_QA_BYPASS === 'on' && token.length >= QA_BYPASS_MIN_LENGTH
+  if (!usable && !warnedQaBypass) {
+    warnedQaBypass = true
+    console.warn(
+      'accounts: ignoring TURNSTILE_QA_BYPASS_TOKEN (TURNSTILE_QA_BYPASS is not on, or the token is under 32 characters)'
+    )
+  }
+  return usable ? token : null
+}
+
+export const resetTurnstileWarnings = (): void => {
+  warnedQaBypass = false
+}
 
 const isDevelopment = (env: TurnstileEnv) =>
   env.APP_ATTEST_ENVIRONMENT === 'development'
@@ -129,6 +165,11 @@ export const verifyTurnstile = async (
   // The routes refuse a token over 2,048 characters as `bad_request` first.
   if (!isTurnstileToken(input.token))
     return { ok: false, reason: 'invalid-input-response' }
+  const qaToken = turnstileQaBypassToken(env)
+  if (qaToken && timingSafeEqual(input.token, qaToken)) {
+    console.info('accounts: Turnstile QA bypass', { action: input.action })
+    return { ok: true }
+  }
   const body: Record<string, string> = {
     secret,
     response: input.token,

@@ -476,6 +476,19 @@ export interface Environment {
   TURNSTILE_SECRET_KEY?: string;
 
   /**
+   * `on` lets `TURNSTILE_QA_BYPASS_TOKEN` stand in for a Turnstile token, so
+   * automated QA can sign up and sign in on the web. Beta's `[env.beta.vars]`
+   * only; production never sets it, so the token does nothing there.
+   */
+  TURNSTILE_QA_BYPASS?: string;
+
+  /**
+   * The QA bypass token (at least 32 characters). Secret, Beta only; a copy
+   * is in 1Password's Agents vault ("ww-api Turnstile QA bypass token (beta)").
+   */
+  TURNSTILE_QA_BYPASS_TOKEN?: string;
+
+  /**
    * Rolling-window counters for the accounts routes (passkey sign-in failures
    * per IP; web sign-up and recovery caps in one `web-caps` instance), one
    * SQLite DO per hashed name (`src/accounts/rateCounterDO.ts`).

@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   TURNSTILE_TEST_SECRET,
   TURNSTILE_TEST_SITE_KEY,
+  resetTurnstileWarnings,
   turnstileConfigured,
   turnstileHosts,
+  verifyTurnstile,
   type TurnstileEnv,
 } from './turnstile'
 
@@ -12,7 +14,11 @@ const production = (vars: Partial<TurnstileEnv>): TurnstileEnv => ({
   ...vars,
 })
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  resetTurnstileWarnings()
+})
 
 describe('turnstileHosts', () => {
   it('trims, lowercases and skips empty entries', () => {
@@ -77,5 +83,60 @@ describe('turnstileConfigured', () => {
         production({ TURNSTILE_SITE_KEY: TURNSTILE_TEST_SITE_KEY, TURNSTILE_SECRET_KEY: TURNSTILE_TEST_SECRET })
       )
     ).toBe(false)
+  })
+})
+
+describe('the QA bypass', () => {
+  const QA = 'wwqa_0123456789abcdefghijklmnopqrstuvwxyzABCDEF'
+  const beta = (vars: Partial<TurnstileEnv> = {}) =>
+    production({
+      TURNSTILE_SECRET_KEY: 'real-secret',
+      TURNSTILE_SITE_KEY: '0xBeta',
+      TURNSTILE_HOSTNAMES: 'verify-beta.witnesswork.app',
+      TURNSTILE_QA_BYPASS: 'on',
+      TURNSTILE_QA_BYPASS_TOKEN: QA,
+      ...vars,
+    })
+  const siteverify = () => {
+    const fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ success: false, 'error-codes': ['invalid-input-response'] }))
+    )
+    vi.stubGlobal('fetch', fetch)
+    return fetch
+  }
+  const verify = (env: TurnstileEnv, token: string) =>
+    verifyTurnstile(env, { token, action: 'web-signup', remoteip: null })
+
+  it('passes the token without asking Siteverify where the switch is on', async () => {
+    const fetch = siteverify()
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+    expect(await verify(beta(), QA)).toEqual({ ok: true })
+    expect(await verifyTurnstile(beta(), { token: QA, action: 'web-recovery', remoteip: null })).toEqual({ ok: true })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('sends any other token to Siteverify as usual', async () => {
+    const fetch = siteverify()
+    expect(await verify(beta(), `${QA}x`)).toEqual({ ok: false, reason: 'invalid-input-response' })
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does nothing without the switch, as on production, and says so once', async () => {
+    const fetch = siteverify()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    for (const env of [beta({ TURNSTILE_QA_BYPASS: undefined }), beta({ TURNSTILE_QA_BYPASS: 'true' })])
+      expect(await verify(env, QA)).toEqual({ ok: false, reason: 'invalid-input-response' })
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores a token shorter than 32 characters', async () => {
+    siteverify()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const short = 'wwqa_short'
+    expect(await verify(beta({ TURNSTILE_QA_BYPASS_TOKEN: short }), short)).toEqual({
+      ok: false,
+      reason: 'invalid-input-response',
+    })
   })
 })

@@ -1,7 +1,6 @@
 import LaunchSplash from '@/app/launch/LaunchSplash'
 import { useLayoutDirectionReload } from '@/app/launch/layoutDirection'
 import { useRef } from 'react'
-import { NavigationContainer } from '@react-navigation/native'
 import SafeAreaProvider from '@/components/ui/layout/SafeAreaProvider'
 import { Platform, useColorScheme } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -16,6 +15,7 @@ import SurveyProvider from '@/providers/SurveyProvider'
 import AnimationViewProvider from '@/providers/AnimationViewProvider'
 import ConfettiProvider from '@/providers/ConfettiProvider'
 import RootStackComponent from '@/app/navigation/RootStack'
+import AppNavigationContainer from '@/app/navigation/AppNavigationContainer'
 import WebBannersLayout from '@/app/web-banners/WebBannersLayout'
 import WebOfflineRuntime from '@/app/web-offline/WebOfflineRuntime'
 import SystemBars from '@/app/components/SystemBars'
@@ -138,7 +138,7 @@ export default function UnlockedApp() {
                   preserveEdgeToEdge
                 >
                   <WebBannersLayout>
-                    <NavigationContainer
+                    <AppNavigationContainer
                       key={devRemountKey}
                       ref={navigationRef}
                       linking={linking}
@@ -210,7 +210,7 @@ export default function UnlockedApp() {
                           </AnimationViewProvider>
                         </ConfettiProvider>
                       </TamaguiProvider>
-                    </NavigationContainer>
+                    </AppNavigationContainer>
                   </WebBannersLayout>
                 </KeyboardProvider>
               </PopoverTouchShield>

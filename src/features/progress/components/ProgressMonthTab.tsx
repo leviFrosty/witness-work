@@ -30,6 +30,7 @@ import ProgressCardPressable from '@/features/progress/components/cards/Progress
 import { PROGRESS_CARDS } from '@/features/progress/components/cards/progressCardRegistry'
 import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrame, pageLayout } from '@/components/ui/layout/pageLayout'
 
 interface ProgressMonthTabProps {
   month: number
@@ -75,7 +76,7 @@ const ProgressMonthTab = ({
   header,
 }: ProgressMonthTabProps) => {
   const insets = useSafeAreaInsets()
-  const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide, hasBottomBar } = useAdaptiveLayout()
   const serviceReports = useServiceReport((s) => s.serviceReports)
   const cards = useProgressCards(month, year)
 
@@ -256,13 +257,8 @@ const ProgressMonthTab = ({
     >
       {}
       <FoldSplit
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: daysBeside ? contentMaxWidth : undefined,
-          alignSelf: 'center',
-        }}
-        paddingHorizontal={daysBeside ? 24 : 0}
+        style={[{ flex: 1 }, daysBeside ? pageFrame : null]}
+        paddingHorizontal={daysBeside ? pageLayout.inset : 0}
         gap={24}
         leadingFraction={0.44}
         leading={

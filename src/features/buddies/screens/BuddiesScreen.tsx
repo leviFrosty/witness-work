@@ -39,6 +39,10 @@ import { refreshBuddyAvatarThumbnail } from '@/features/buddies/lib/buddyProfile
 import { syncReadInbox } from '@/features/buddies/lib/syncStatus'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import PageColumn, {
+  usePageColumnFrame,
+} from '@/components/ui/layout/PageColumn'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 
 export default function BuddiesScreen({
   profileEditor,
@@ -60,6 +64,9 @@ export default function BuddiesScreen({
   const syncStatus = useBuddiesSyncStatus()
   const { invite, inviting } = useInviteAction()
   const foldColumn = useFoldColumn(720)
+  const { isWide } = useAdaptiveLayout()
+  const pageFrame = usePageColumnFrame()
+  const wideTab = asTab && isWide
 
   useLiveBuddiesSync()
 
@@ -110,6 +117,7 @@ export default function BuddiesScreen({
   const rootHeader = asTab ? (
     <RootHeader
       title={i18n.t('buddies_title')}
+      contentStyle={wideTab ? pageFrame : undefined}
       actions={
         needsOnboarding ? null : (
           <PointerTooltip label={i18n.t('buddies_showCode')} effect='none'>
@@ -141,6 +149,7 @@ export default function BuddiesScreen({
     const onboarding =
       onTheirWay === 'no' ? (
         <BuddiesOnboarding
+          pageColumn={wideTab}
           profileEditor={profileEditor}
           onDone={() => useBuddies.setState({ onboardingComplete: true })}
         />
@@ -169,23 +178,104 @@ export default function BuddiesScreen({
     borderColor: theme.colors.accent,
   }
 
+  const content = (
+    <>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
+        <BuddiesAlphaBadge />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <PullDownMenu
+            accessibilityLabel={i18n.t('moreActions')}
+            actions={[
+              [
+                {
+                  id: 'feedback',
+                  title: i18n.t('buddies_sendFeedback'),
+                  systemImage: 'bubble.left.and.bubble.right',
+                  onPress: () =>
+                    navigation.navigate('Buddies Feedback', {
+                      source: 'menu',
+                    }),
+                },
+                {
+                  id: 'settings',
+                  title: i18n.t('buddies_settingsTitle'),
+                  systemImage: 'gearshape',
+                  onPress: () => navigation.navigate('Buddies Settings'),
+                },
+              ],
+            ]}
+          >
+            <View style={headerButton}>
+              <LucideIcon
+                icon={EllipsisIcon}
+                size={theme.fontSize('lg')}
+                color={theme.colors.accent}
+              />
+            </View>
+          </PullDownMenu>
+          {inviting ? (
+            <View style={headerButton}>
+              <ActivityIndicator
+                color={theme.colors.accent}
+                accessibilityLabel={i18n.t('buddies_creatingInvite')}
+              />
+            </View>
+          ) : (
+            <IconButton
+              icon={PlusIcon}
+              size='lg'
+              style={headerButton}
+              color={theme.colors.accent}
+              accessibilityLabel={i18n.t('buddies_inviteA11y')}
+              onPress={invite}
+            />
+          )}
+        </View>
+      </View>
+      <BuddiesSyncNotice
+        notice={syncStatus.notice}
+        syncing={syncStatus.syncing}
+        onRetry={syncStatus.retry}
+      />
+      <BuddiesPausedNotice />
+      <EnterInviteLink />
+      <BuddiesList
+        onInvite={invite}
+        inviting={inviting}
+        loading={syncStatus.firstLoad}
+      />
+      {hasInbox && <BuddiesNotificationsCard />}
+    </>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {rootHeader}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[
-          {
-            gap: 24,
-            paddingTop: 8,
-            paddingHorizontal: 15,
-            paddingBottom: insets.bottom + 40,
-            width: '100%',
-            maxWidth: 720,
-            alignSelf: 'center',
-          },
-          foldColumn,
-        ]}
+        contentContainerStyle={
+          wideTab
+            ? { paddingTop: 8, paddingBottom: insets.bottom + 40 }
+            : [
+                {
+                  gap: 24,
+                  paddingTop: 8,
+                  paddingHorizontal: 15,
+                  paddingBottom: insets.bottom + 40,
+                  width: '100%',
+                  maxWidth: 720,
+                  alignSelf: 'center',
+                },
+                foldColumn,
+              ]
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -194,78 +284,11 @@ export default function BuddiesScreen({
           />
         }
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-          }}
-        >
-          <BuddiesAlphaBadge />
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <PullDownMenu
-              accessibilityLabel={i18n.t('moreActions')}
-              actions={[
-                [
-                  {
-                    id: 'feedback',
-                    title: i18n.t('buddies_sendFeedback'),
-                    systemImage: 'bubble.left.and.bubble.right',
-                    onPress: () =>
-                      navigation.navigate('Buddies Feedback', {
-                        source: 'menu',
-                      }),
-                  },
-                  {
-                    id: 'settings',
-                    title: i18n.t('buddies_settingsTitle'),
-                    systemImage: 'gearshape',
-                    onPress: () => navigation.navigate('Buddies Settings'),
-                  },
-                ],
-              ]}
-            >
-              <View style={headerButton}>
-                <LucideIcon
-                  icon={EllipsisIcon}
-                  size={theme.fontSize('lg')}
-                  color={theme.colors.accent}
-                />
-              </View>
-            </PullDownMenu>
-            {inviting ? (
-              <View style={headerButton}>
-                <ActivityIndicator
-                  color={theme.colors.accent}
-                  accessibilityLabel={i18n.t('buddies_creatingInvite')}
-                />
-              </View>
-            ) : (
-              <IconButton
-                icon={PlusIcon}
-                size='lg'
-                style={headerButton}
-                color={theme.colors.accent}
-                accessibilityLabel={i18n.t('buddies_inviteA11y')}
-                onPress={invite}
-              />
-            )}
-          </View>
-        </View>
-        <BuddiesSyncNotice
-          notice={syncStatus.notice}
-          syncing={syncStatus.syncing}
-          onRetry={syncStatus.retry}
-        />
-        <BuddiesPausedNotice />
-        <EnterInviteLink />
-        <BuddiesList
-          onInvite={invite}
-          inviting={inviting}
-          loading={syncStatus.firstLoad}
-        />
-        {hasInbox && <BuddiesNotificationsCard />}
+        {wideTab ? (
+          <PageColumn style={{ gap: 24 }}>{content}</PageColumn>
+        ) : (
+          content
+        )}
       </ScrollView>
     </View>
   )

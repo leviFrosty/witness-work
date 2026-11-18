@@ -47,6 +47,7 @@ import useScheduleCalendar, {
 } from '@/features/plans/hooks/useScheduleCalendar'
 import useScheduleDayIndex from '@/features/plans/hooks/useScheduleDayIndex'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrame, pageLayout } from '@/components/ui/layout/pageLayout'
 
 type Props = BottomTabScreenProps<HomeTabStackParamList, 'Schedule'>
 
@@ -250,13 +251,8 @@ const ScheduleScreen = ({ route, navigation }: Props) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {}
       <FoldSplit
-        style={{
-          flex: 1,
-          width: '100%',
-          maxWidth: isWide ? 1200 : undefined,
-          alignSelf: 'center',
-        }}
-        paddingHorizontal={isWide ? 15 : 0}
+        style={[{ flex: 1 }, isWide ? pageFrame : null]}
+        paddingHorizontal={isWide ? pageLayout.inset : 0}
         gap={20}
         leadingFraction={0.58}
         leading={

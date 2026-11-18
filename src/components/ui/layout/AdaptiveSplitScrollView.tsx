@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrameInset } from '@/components/ui/layout/pageLayout'
 import useScrollAnchor from '@/hooks/useScrollAnchor'
 import type { RevealAboveSheet } from '@/hooks/useRevealAboveSheet'
 import type { HideBarsScrollProps } from '@/hooks/useHideBarsOnScroll'
@@ -47,7 +48,7 @@ export default function AdaptiveSplitScrollView({
   scrollBars,
   leadingReorder,
 }: Props) {
-  const { isWide: wide, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide: wide } = useAdaptiveLayout()
   const isWide = wide && trailing != null
   const reorder = leadingReorder?.scroller.props
   const singleRef = useRef<KeyboardAwareScrollView>(null)
@@ -150,16 +151,7 @@ export default function AdaptiveSplitScrollView({
   const trailingScroll = anchor.scroll('trailing', trailingRef, trailingFrame)
 
   return (
-    <View
-      style={{
-        flex: 1,
-        width: '100%',
-        maxWidth: contentMaxWidth,
-        alignSelf: 'center',
-        paddingHorizontal: 24,
-        paddingTop,
-      }}
-    >
+    <View style={[pageFrameInset, { flex: 1, paddingTop }]}>
       {header && <View style={{ paddingBottom: gap }}>{header}</View>}
       <FoldSplit
         style={{ flex: 1, minHeight: 0 }}

@@ -8,6 +8,7 @@ import type { MapRouteActions } from '@/features/map/types/map'
 import useDayRouteStopCount from '@/features/route-planning/hooks/useDayRouteStopCount'
 import useOpenRouteBuilder from '@/hooks/useOpenRouteBuilder'
 import useToday from '@/hooks/useToday'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import type { Contact } from '@/types/contact'
 
 import { usePreferences } from '@/stores/preferences'
@@ -30,7 +31,7 @@ function useMapRouteActions(): MapRouteActions {
   }
 }
 
-function ContactsMap(props: {
+export function ContactsMap(props: {
   contacts: Contact[]
   topInset: number
   onExplore: () => void
@@ -48,18 +49,24 @@ function ContactsMap(props: {
 
 export default function ContactsTabScreen({ route, navigation }: Props) {
   const requestedView = route.params?.view
+  const { hasSidebar } = useAdaptiveLayout()
 
   useEffect(() => {
     if (!requestedView) return
+    navigation.setParams({ view: undefined })
+    if (hasSidebar) {
+      if (requestedView === 'map') navigation.navigate('Map')
+      return
+    }
     const { contactsView, set } = usePreferences.getState()
     if (requestedView !== contactsView) {
       set({ contactsView: requestedView })
     }
-    navigation.setParams({ view: undefined })
-  }, [navigation, requestedView])
+  }, [hasSidebar, navigation, requestedView])
 
   return (
     <ContactsScreen
+      view={hasSidebar ? 'list' : undefined}
       focusSearch={route.params?.focusSearch}
       onSearchFocused={() => navigation.setParams({ focusSearch: undefined })}
       renderMap={(props) => <ContactsMap {...props} />}

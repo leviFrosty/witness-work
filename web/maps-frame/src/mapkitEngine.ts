@@ -140,7 +140,7 @@ export function createMapKitEngine(element: HTMLElement): MapEngine {
         isRotationEnabled: false,
         showsCompass: mapkit.FeatureVisibility.Hidden,
         showsMapTypeControl: false,
-        showsZoomControl: options.interactive,
+        showsZoomControl: false,
         showsUserLocationControl: false,
         showsPointsOfInterest: options.showsPointsOfInterest,
         isScrollEnabled: options.interactive,

@@ -96,7 +96,7 @@ export function frameHeaders(appOrigins: string[]): Record<string, string> {
     'Permissions-Policy': DENIED_FEATURES.map((name) => `${name}=()`).join(
       ', '
     ),
-    'Cache-Control': 'public, max-age=0, must-revalidate',
+    'Cache-Control': 'public, max-age=0, must-revalidate, no-transform',
   }
 }
 

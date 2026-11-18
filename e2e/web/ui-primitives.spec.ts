@@ -547,17 +547,6 @@ test('a segmented choice says which is chosen', async ({ app }) => {
   await expect(recurring).toHaveAttribute('aria-pressed', 'true')
   await expect(once).toHaveAttribute('aria-pressed', 'false')
   expect((await sizeOf(once)).height).toBeGreaterThanOrEqual(44)
-
-  await app.getByRole('button', { name: 'Go Back' }).click()
-  await app.getByRole('button', { name: 'Contacts', exact: true }).click()
-  await expect(app.getByRole('button', { name: 'List' })).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  )
-  await expect(app.getByRole('button', { name: 'Map' })).toHaveAttribute(
-    'aria-pressed',
-    'false'
-  )
 })
 
 test('picker buttons are touch sized', async ({ app }) => {

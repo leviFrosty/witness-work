@@ -64,4 +64,9 @@ describe('the frame CSP', () => {
     expect(Object.keys(headers)).not.toContain('Set-Cookie')
     expect(Object.keys(headers)).not.toContain('X-Frame-Options')
   })
+
+  it("keeps Cloudflare's analytics beacon out of the page", () => {
+    const headers = frameHeaders(['https://app.witnesswork.app'])
+    expect(headers['Cache-Control']).toContain('no-transform')
+  })
 })

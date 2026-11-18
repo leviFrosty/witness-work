@@ -170,7 +170,12 @@ const FullMapView = ({
 }: FullMapViewProps) => {
   const navigation = useNavigation<HomeTabStackNavigation>()
   const { height: windowHeight } = useWindowDimensions()
-  const { isWide, hasBottomBar, contentWidth: width } = useAdaptiveLayout()
+  const {
+    isWide,
+    hasBottomBar,
+    hasSidebar,
+    contentWidth: width,
+  } = useAdaptiveLayout()
 
   const [height, setHeight] = useState(windowHeight)
 
@@ -822,7 +827,8 @@ const FullMapView = ({
           <MapEmptyState
             activeContactCount={activeContactCount}
             onReviewContacts={() => {
-              setPreferences({ contactsView: 'list' })
+              if (hasSidebar) navigation.navigate('Contacts')
+              else setPreferences({ contactsView: 'list' })
             }}
             onAddContact={addContact}
           />

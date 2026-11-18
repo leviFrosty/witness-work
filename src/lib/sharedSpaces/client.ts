@@ -30,7 +30,7 @@ export type SpaceErrorCode =
   | 'unverified'
   | 'unknown'
 
-export type SpaceGoneReason = 'ended' | 'expired'
+export type SpaceGoneReason = 'ended' | 'expired' | 'deleted'
 
 export class SpaceError extends Error {
   constructor(
@@ -60,8 +60,13 @@ export function isSpaceError(
 function goneReason(error: unknown): SpaceGoneReason | null {
   if (!(error instanceof HttpError) || error.serverCode !== 'gone') return null
   const reason = (error.body as { reason?: unknown } | null)?.reason
-  return reason === 'ended' || reason === 'expired' ? reason : null
+  return reason === 'ended' || reason === 'expired' || reason === 'deleted'
+    ? reason
+    : null
 }
+
+export const isSpaceDeleted = (error: unknown) =>
+  isSpaceError(error, 'gone') && error.reason === 'deleted'
 
 export function spaceErrorFrom(error: unknown): SpaceError {
   if (error instanceof SpaceError) return error

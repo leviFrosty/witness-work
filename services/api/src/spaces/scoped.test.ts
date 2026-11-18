@@ -604,6 +604,23 @@ describe('hand-offs', () => {
   })
 })
 
+describe('a deleted territory', () => {
+  it('tells a holder the space was deleted, and a removed holder only gone', async () => {
+    const owner = await territory()
+    const [S, T] = [scopeId(), scopeId()]
+    const kept = await joined(owner, { scopes: [S], handoff: true })
+    const taken = await joined(owner, { scopes: [T], handoff: true })
+    expect((await owner.send('handoff/end', { ...owner.fields, scopeId: T })).status).toBe(200)
+    expect((await taken.sync()).body).toEqual(spacesError('gone'))
+    expect((await owner.deleteSpace()).status).toBe(200)
+    expect(await kept.sync()).toMatchObject({
+      status: 410,
+      body: { ...spacesError('gone'), reason: 'deleted' },
+    })
+    expect((await taken.sync()).body).toEqual({ ...spacesError('gone'), reason: 'deleted' })
+  })
+})
+
 describe('handoff/end', () => {
   /**
    * H holds S and T (a hand-off invite, then `handoff/create`); Q1 has S,

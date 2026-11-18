@@ -36,7 +36,10 @@ export type TerritoryOutcome =
   | { type: 'link_created'; streets: number; days: number }
   | { type: 'link_ended' }
   | { type: 'link_lifetime_changed'; days: number }
-  | { type: 'handoff'; action: 'handed' | 'taken_back' | 'given_back' }
+  | {
+      type: 'handoff'
+      action: 'handed' | 'taken_back' | 'given_back' | 'kept'
+    }
   | { type: 'ended'; reason: TerritoryEnding }
   | { type: 'sync_failed'; reason: TerritorySyncFailure }
 
@@ -66,6 +69,8 @@ export type TerritoryEnded = {
   spaceId: string
   title: string
   reason: TerritoryEnding
+
+  keptStreets: number
 }
 
 export type TerritoryEngineDeps = {

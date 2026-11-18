@@ -1,8 +1,11 @@
 ---
 status: accepted
+superseded-by: [0064]
 ---
 
 # Shared territories are scoped record spaces, with browser guest links and server-held hand-offs
+
+> Partly superseded by ADR 0064: returning a territory no longer ends a hand-off. The holder keeps the street as a territory of their own.
 
 > Hosts updated since: Beta calls its own Beta API (`api-beta.witnesswork.app`), not production's, and development guest links open on `localhost:8081`, see [readme.md#environments](../../readme.md#environments).
 

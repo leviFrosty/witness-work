@@ -262,7 +262,7 @@ A wrong token never burns a link: it's 32 random bytes, and burning would let an
 
 ### Errors
 
-No new codes. `gone` gains an optional `reason` (`"ended"` or `"expired"`) on guest ops. The Shared Cars table applies otherwise, with the new refusals listed above.
+No new codes. `gone` gains an optional `reason`: `"ended"` or `"expired"` on guest ops, and `"deleted"` on a member op when the whole space was deleted (a member who left or was removed from a space that still exists gets `gone` with no reason). The Shared Cars table applies otherwise, with the new refusals listed above.
 
 ### Limits
 
@@ -379,12 +379,14 @@ Only sharing with buddies and handing off need Buddies: they travel as Buddies e
 
 ### Returning a territory
 
-The owner's device syncs (pull and push), then runs `delete`. That ends every share, link, and hand-off. The returned territory goes back to the personal store, marked returned (`finishedAt`), with its door records kept. Every other device gets `gone`.
+The owner's device syncs (pull and push), then runs `delete`. That ends every share, link, and hand-off. The returned territory goes back to the personal store, marked returned (`finishedAt`), with its door records kept. Every other device gets `gone` with `reason: "deleted"`. Deleting a shared territory runs the same steps first.
+
+A holder's streets stay with the holder ([ADR 0064](./adr/0064-handed-off-streets-stay-with-the-holder.md)). When a holder's device gets `gone` with `reason: "deleted"`, it copies the streets it holds, with their doors and do-not-calls, into a new personal territory: checked out, not returned, id `uuidFromHash(SHA-256("ww-territories/v1/kept|" + spaceId))`. Every one of the holder's devices makes the same id, so personal sync merges them, and a device that already has it leaves it alone. Nothing goes back to the owner: their returned territory has the doors recorded up to the `delete`.
 
 ### Leaving, removal, rekey
 
 - **A member leaves:** `leave`, retried until it lands. Their received territory goes away.
-- **Removed, taken back, or returned** (`gone`, or their last street taken back): the received territory stays, read-only and marked ended, with its door records cleared (worked and do-not-calls kept), until the User removes it.
+- **Removed, taken back, or returned** (`gone`, or their last street taken back): the received territory stays, read-only and marked ended, with its door records cleared (worked and do-not-calls kept), until the User removes it. On a return (`reason: "deleted"`), the streets they hold leave the ended copy and become their own territory, as [above](#returning-a-territory); a holder with nothing else gets no ended copy.
 - **Rekey:** Shared Cars' rule, by the owner. Afterwards each link creator's devices update their `g.` records.
 - **Delete My Buddies Data** first deletes every space the User owns (keeping each territory personal) and leaves every other one.
 
@@ -452,7 +454,7 @@ A device with territory privacy mode (or data protection mode) on keeps no door 
 
 ### Limits
 
-A door record is about 360 bytes of JSON; a territory of 40 streets and 5,000 doors with locations and descriptions is about 1.8 MB, against 20 MiB a Cloud Sync snapshot and 20 MiB a Backup. Tombstones are kept like every sync tombstone: returning or checking out a territory again tombstones each of its doors (about 70 bytes each), so a territory worked many times grows by that each round. A deleted territory or street shrinks to one tombstone.
+A door record is about 360 bytes of JSON; a territory of 40 streets and 5,000 doors with locations and descriptions is about 1.8 MB, against 20 MiB a Cloud Sync snapshot and 20 MiB a Backup. Tombstones are kept like every sync tombstone: checking out a territory again tombstones each of its doors (about 70 bytes each), so a territory worked many times grows by that each round. A deleted territory or street shrinks to one tombstone.
 
 ## Migration from the prototype
 

@@ -96,7 +96,7 @@ const DEFAULT_REASONS: Partial<Record<SpacesErrorCode, string>> = {
   unauthorized:
     'The access token is missing, expired, or invalid (`WWW-Authenticate: Bearer error="invalid_token"`). Refresh once and resend.',
   forbidden: 'Your member token is wrong.',
-  gone: 'The space was deleted, or you aren’t on it (you left or were removed). Make your personal copy and drop the space.',
+  gone: 'The space was deleted, or you aren’t on it (you left or were removed). When the space was deleted, the body adds `reason: "deleted"`. Make your personal copy and drop the space.',
   disabled:
     'Shared Spaces is off (KV `spaces:enabled`, then the `SPACES_ENABLED` var), or this worker has no account sessions. `Retry-After: 60`.',
 }

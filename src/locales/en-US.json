@@ -7334,8 +7334,13 @@
         "one": "1 street",
         "other": "%{count} streets"
       },
-      "finishEndsSharing": "Sharing stops for everyone, guest links end, and handed-off streets come back to you.",
+      "finishEndsSharing": "Sharing stops for everyone and guest links end. Anyone you handed a street to keeps it to finish.",
       "ended_toast": "{{title}} is no longer shared with you",
+      "keptStreets_toast": "{{title}} was returned",
+      "keptStreets_message": {
+        "one": "The street handed to you is now in your territories, so you can finish it.",
+        "other": "The streets handed to you are now in your territories, so you can finish them."
+      },
       "notShared_toast": "Some changes to {{title}} weren't shared. That street was handed off meanwhile.",
       "offline_toast": "Couldn't reach WitnessWork. Check your connection and try again.",
       "needsBuddies_toast": "Sharing with buddies needs Buddies on this device.",

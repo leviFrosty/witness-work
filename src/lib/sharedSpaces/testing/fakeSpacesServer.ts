@@ -401,6 +401,8 @@ export function createFakeSpacesServer({
       typeof token !== 'string'
     )
       return fail(400, 'bad_request')
+    if (deleted.has(spaceId))
+      return fail(410, 'gone', undefined, { reason: 'deleted' })
     const space = spaces.get(spaceId)
     const member = space?.members.get(memberId)
     if (!space || !member) return fail(410, 'gone')

@@ -263,7 +263,8 @@ Sign-up and recovery-key sign-in need a Cloudflare Turnstile check, which stops 
 1. Read the token into an environment variable. Never print it: `export WW_QA_TURNSTILE=$(op item get "ww-api Turnstile QA bypass token (beta)" --vault Agents --fields credential --reveal)`.
 2. In the spec, before the app opens the security check, call `bypassTurnstile(page.context(), process.env.WW_QA_TURNSTILE!)` from `e2e/web/turnstileQa.ts`. It serves a stand-in for `verify-beta.witnesswork.app` that hands the app the token, and the app sends it to ww-api as `turnstileToken`.
 3. For a passkey, add a CDP virtual authenticator (`WebAuthn.addVirtualAuthenticator` with `ctap2`, `internal`, `hasResidentKey`, `hasUserVerification`, `isUserVerified`, `automaticPresenceSimulation` and `hasPrf`).
-4. Sign in to the shared QA account with its recovery key, from the Agents vault item `WitnessWork Beta QA account (web)`. Sign up a new account only when the check needs one: sign-up caps are still 3 a day per IP.
+4. Sign in to the shared QA account with its recovery key. Its `password` field holds the key: `export WW_QA_RECOVERY_KEY=$(op item get "WitnessWork Beta QA account (web)" --vault Agents --fields password --reveal)`. Open `https://beta.app.witnesswork.app`, tap `web-sign-in-recovery`, fill `web-sign-in-recovery-input`, wait for `web-sign-in-recovery-submit` to be enabled, and tap it. The app opens on Home.
+5. Sign up a new account only when the check needs one, because sign-up caps are still 3 a day per IP. Tap **Create an Account**, wait for `web-sign-up-create` to be enabled, and tap it. On the recovery key screen, `web-sign-up-recovery-copy` copies the key (grant `clipboard-read`), and `web-sign-up-recovery-saved` continues.
 
 Use made-up data only. Beta's data is separate from production's, but other agents share the QA account.
 

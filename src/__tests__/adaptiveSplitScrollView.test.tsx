@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const layout = vi.hoisted(() => ({ isWide: true }))
 vi.mock('@/hooks/useAdaptiveLayout', () => ({
-  default: () => ({ isWide: layout.isWide, contentMaxWidth: 1200 }),
+  default: () => ({ isWide: layout.isWide }),
 }))
 vi.mock('@react-navigation/native', () => ({ useIsFocused: () => true }))
 vi.mock('react-native', () => ({

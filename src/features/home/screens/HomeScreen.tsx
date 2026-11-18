@@ -75,6 +75,7 @@ import {
 } from '@/lib/homeSections'
 import useAvailableHomeSections from '@/hooks/useAvailableHomeSections'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrameInset } from '@/components/ui/layout/pageLayout'
 import { canvasKitComponent } from '@/lib/canvasKit/canvasKitComponent'
 
 const SECTION_GAP = 20
@@ -83,7 +84,7 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
   perf.count('render:Home')
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { isWide, hasBottomBar, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide, hasBottomBar } = useAdaptiveLayout()
 
   const foldColumn = useFoldColumn(isWide ? null : 720)
   const { mileageTrackingEnabled, routineEnabled } = usePreferences(
@@ -287,11 +288,15 @@ export const HomeScreen = ({ header }: { header: ReactNode }) => {
         }}
         scrollEnabled={!dragging}
         contentContainerStyle={{
-          paddingHorizontal: isWide ? 24 : 15,
+          ...(isWide
+            ? pageFrameInset
+            : {
+                paddingHorizontal: 15,
+                width: '100%',
+                maxWidth: 720,
+                alignSelf: 'center',
+              }),
           paddingTop: headerHeight + 15,
-          width: '100%',
-          maxWidth: isWide ? contentMaxWidth : 720,
-          alignSelf: 'center',
 
           flexGrow: 1,
           ...foldColumn,

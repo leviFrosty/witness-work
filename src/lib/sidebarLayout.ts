@@ -67,8 +67,6 @@ export function getAdaptiveLayout(
     hasBottomBar: !hasSidebar && !navigationRail,
     contentWidth,
     isWide: contentWidth >= 760 && fontScale <= 1.3,
-    contentMaxWidth: CONTENT_MAX_WIDTH,
-
     sidebarToggleInGutter,
     sidebarToggleStart: SIDEBAR_CONTROL_OFFSET + gutterWindowControls,
   }

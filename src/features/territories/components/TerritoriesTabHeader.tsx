@@ -5,6 +5,8 @@ import PointerTooltip from '@/components/ui/PointerTooltip'
 import ScrollAwayHeader from '@/components/ui/ScrollAwayHeader'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { usePageColumnFrame } from '@/components/ui/layout/PageColumn'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
@@ -16,14 +18,20 @@ export default function TerritoriesTabHeader({
   onAdd: () => void
 }) {
   const theme = useTheme()
+  const { isWide } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(inputLayout.contentMaxWidth)
+  const pageFrame = usePageColumnFrame()
   const label = i18n.t('territories.add')
 
   return (
     <ScrollAwayHeader hidden={hidden}>
       <RootHeader
         title={i18n.t('territories.title')}
-        contentStyle={[{ maxWidth: inputLayout.contentMaxWidth }, foldColumn]}
+        contentStyle={
+          isWide
+            ? pageFrame
+            : [{ maxWidth: inputLayout.contentMaxWidth }, foldColumn]
+        }
         actions={
           <PointerTooltip label={label} effect='none'>
             <IconButton

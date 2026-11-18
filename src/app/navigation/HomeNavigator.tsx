@@ -23,19 +23,15 @@ import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import { useUpdateRevealStore } from '@/features/updates/stores/updateReveal'
 import useBuddiesEnabled from '@/features/buddies/hooks/useBuddiesEnabled'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrameInset } from '@/components/ui/layout/pageLayout'
 
 const Stack = createNativeStackNavigator()
 
 const HomeNavigator = () => {
   const set = usePreferences((s) => s.set)
   const theme = useTheme()
-  const {
-    isWide,
-    contentMaxWidth,
-    hasSidebar,
-    sidebarVisible,
-    navigationRail,
-  } = useAdaptiveLayout()
+  const { isWide, hasSidebar, sidebarVisible, navigationRail } =
+    useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
 
   const showsSettings = !(hasSidebar && sidebarVisible) && !navigationRail
@@ -61,10 +57,7 @@ const HomeNavigator = () => {
       <RootHeader
         title={i18n.t('Home')}
         onLongPressTitle={onLongPressTitle}
-        contentStyle={[
-          { maxWidth: isWide ? contentMaxWidth : 720 },
-          foldColumn,
-        ]}
+        contentStyle={isWide ? pageFrameInset : [{ maxWidth: 720 }, foldColumn]}
         actions={
           homeEditing.editing ? (
             <>

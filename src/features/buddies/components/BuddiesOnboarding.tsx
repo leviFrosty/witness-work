@@ -21,6 +21,7 @@ import { useProfile } from '@/stores/profile'
 import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
 import { MAX_BUDDIES } from '@/features/buddies/lib/state'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import PageColumn from '@/components/ui/layout/PageColumn'
 
 const STEPS = ['intro', 'profile'] as const
 
@@ -59,10 +60,13 @@ function Feature({
 export default function BuddiesOnboarding({
   onDone,
   profileEditor,
+  pageColumn = false,
 }: {
   onDone: () => void
 
   profileEditor: (nameInvalid: boolean) => ReactNode
+
+  pageColumn?: boolean
 }) {
   const foldColumn = useFoldColumn(560)
   const theme = useTheme()
@@ -82,15 +86,141 @@ export default function BuddiesOnboarding({
   }
   const lead = { color: theme.colors.textAlt, lineHeight: 22 }
 
+  const screen = {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    paddingTop: 8,
+    paddingBottom: insets.bottom + 16,
+  }
+
+  const topBar = (
+    <>
+      {step > 0 ? (
+        <IconButton
+          icon={ChevronBackwardIcon}
+          size='lg'
+          onPress={() => setStep((index) => index - 1)}
+          accessibilityLabel={i18n.t('goBack')}
+        />
+      ) : (
+        <View />
+      )}
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {STEPS.map((key, index) => (
+          <View
+            key={key}
+            style={{
+              width: index === step ? 18 : 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor:
+                index === step ? theme.colors.accent : theme.colors.border,
+            }}
+          />
+        ))}
+      </View>
+      <View style={{ width: 40 }} />
+    </>
+  )
+
+  const stepContent = (
+    <>
+      {current === 'intro' && (
+        <>
+          <View style={{ gap: 10 }}>
+            <LucideIcon
+              icon={UsersIcon}
+              size={44}
+              color={theme.colors.accent}
+            />
+            <WholeWordsText style={title}>
+              {i18n.t('buddies_onboardingWelcomeTitle')}
+            </WholeWordsText>
+            <Text style={lead}>
+              {i18n.t('buddies_onboardingWelcomeBody', { max: MAX_BUDDIES })}
+            </Text>
+          </View>
+          <View style={{ gap: 20 }}>
+            <Feature
+              icon={CalendarHeartIcon}
+              title={i18n.t('buddies_onboardingSharedTitle')}
+              body={i18n.t('buddies_invitePlansLine')}
+            />
+            <Feature
+              icon={LockIcon}
+              title={i18n.t('buddies_onboardingEncryptedTitle')}
+              body={i18n.t('buddies_onboardingEncryptedBody')}
+            />
+            <Feature
+              icon={ShieldCheckIcon}
+              title={i18n.t('buddies_onboardingControlTitle')}
+              body={i18n.t('buddies_onboardingControlBody')}
+            />
+          </View>
+        </>
+      )}
+      {current === 'profile' && (
+        <>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <WholeWordsText style={title}>
+              {i18n.t('buddies_onboardingProfileTitle')}
+            </WholeWordsText>
+            <InfoPopover
+              title={i18n.t('buddies_onboardingProfileTitle')}
+              description={i18n.t('buddies_onboardingProfileInfo')}
+            />
+          </View>
+          {profileEditor(validation.invalid('name'))}
+          <BuddiesSharingSection withoutProfile />
+        </>
+      )}
+    </>
+  )
+
+  const actions = (
+    <>
+      {current === 'profile' && !hasName && (
+        <Text style={{ color: theme.colors.textAlt, textAlign: 'center' }}>
+          {i18n.t('buddies_nameRequired')}
+        </Text>
+      )}
+      <ActionButton
+        onPress={() => {
+          if (step !== STEPS.length - 1) next()
+          else if (validation.validate()) onDone()
+        }}
+      >
+        {step === STEPS.length - 1 ? i18n.t('getStarted') : i18n.t('continue')}
+      </ActionButton>
+    </>
+  )
+
+  if (pageColumn)
+    return (
+      <View style={screen}>
+        <PageColumn
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            minHeight: 40,
+          }}
+        >
+          {topBar}
+        </PageColumn>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingVertical: 20 }}
+          keyboardShouldPersistTaps='handled'
+        >
+          <PageColumn style={{ gap: 24 }}>{stepContent}</PageColumn>
+        </ScrollView>
+        <PageColumn style={{ gap: 12, paddingTop: 8 }}>{actions}</PageColumn>
+      </View>
+    )
+
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        paddingTop: 8,
-        paddingBottom: insets.bottom + 16,
-      }}
-    >
+    <View style={screen}>
       <View
         style={[
           {
@@ -104,31 +234,7 @@ export default function BuddiesOnboarding({
           foldColumn,
         ]}
       >
-        {step > 0 ? (
-          <IconButton
-            icon={ChevronBackwardIcon}
-            size='lg'
-            onPress={() => setStep((index) => index - 1)}
-            accessibilityLabel={i18n.t('goBack')}
-          />
-        ) : (
-          <View />
-        )}
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {STEPS.map((key, index) => (
-            <View
-              key={key}
-              style={{
-                width: index === step ? 18 : 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor:
-                  index === step ? theme.colors.accent : theme.colors.border,
-              }}
-            />
-          ))}
-        </View>
-        <View style={{ width: 40 }} />
+        {topBar}
       </View>
       <ScrollView
         style={{ flex: 1 }}
@@ -144,55 +250,7 @@ export default function BuddiesOnboarding({
         ]}
         keyboardShouldPersistTaps='handled'
       >
-        {current === 'intro' && (
-          <>
-            <View style={{ gap: 10 }}>
-              <LucideIcon
-                icon={UsersIcon}
-                size={44}
-                color={theme.colors.accent}
-              />
-              <WholeWordsText style={title}>
-                {i18n.t('buddies_onboardingWelcomeTitle')}
-              </WholeWordsText>
-              <Text style={lead}>
-                {i18n.t('buddies_onboardingWelcomeBody', { max: MAX_BUDDIES })}
-              </Text>
-            </View>
-            <View style={{ gap: 20 }}>
-              <Feature
-                icon={CalendarHeartIcon}
-                title={i18n.t('buddies_onboardingSharedTitle')}
-                body={i18n.t('buddies_invitePlansLine')}
-              />
-              <Feature
-                icon={LockIcon}
-                title={i18n.t('buddies_onboardingEncryptedTitle')}
-                body={i18n.t('buddies_onboardingEncryptedBody')}
-              />
-              <Feature
-                icon={ShieldCheckIcon}
-                title={i18n.t('buddies_onboardingControlTitle')}
-                body={i18n.t('buddies_onboardingControlBody')}
-              />
-            </View>
-          </>
-        )}
-        {current === 'profile' && (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <WholeWordsText style={title}>
-                {i18n.t('buddies_onboardingProfileTitle')}
-              </WholeWordsText>
-              <InfoPopover
-                title={i18n.t('buddies_onboardingProfileTitle')}
-                description={i18n.t('buddies_onboardingProfileInfo')}
-              />
-            </View>
-            {profileEditor(validation.invalid('name'))}
-            <BuddiesSharingSection withoutProfile />
-          </>
-        )}
+        {stepContent}
       </ScrollView>
       <View
         style={[
@@ -207,21 +265,7 @@ export default function BuddiesOnboarding({
           foldColumn,
         ]}
       >
-        {current === 'profile' && !hasName && (
-          <Text style={{ color: theme.colors.textAlt, textAlign: 'center' }}>
-            {i18n.t('buddies_nameRequired')}
-          </Text>
-        )}
-        <ActionButton
-          onPress={() => {
-            if (step !== STEPS.length - 1) next()
-            else if (validation.validate()) onDone()
-          }}
-        >
-          {step === STEPS.length - 1
-            ? i18n.t('getStarted')
-            : i18n.t('continue')}
-        </ActionButton>
+        {actions}
       </View>
     </View>
   )

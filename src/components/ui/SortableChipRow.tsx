@@ -29,6 +29,8 @@ import {
 
 const GAP = 8
 
+export const CHIP_ROW_INSET = 12
+
 const HOLD_MS = 200
 
 const MENU_MS = 450
@@ -209,7 +211,7 @@ export default function SortableChipRow<T>({
         }}
         style={{ flexGrow: 0 }}
         contentContainerStyle={{
-          paddingHorizontal: 12,
+          paddingHorizontal: CHIP_ROW_INSET,
           gap: GAP,
           alignItems: 'center',
         }}

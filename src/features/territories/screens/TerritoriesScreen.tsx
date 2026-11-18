@@ -18,6 +18,8 @@ import SortSummary from '@/components/sortFilter/SortSummary'
 import Section from '@/components/ui/inputs/Section'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
+import PageColumn from '@/components/ui/layout/PageColumn'
+import { CHIP_ROW_INSET } from '@/components/ui/SortableChipRow'
 import useTheme from '@/contexts/theme'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useHideBarsOnScroll from '@/hooks/useHideBarsOnScroll'
@@ -45,7 +47,8 @@ import type { RootStackNavigation } from '@/types/rootStack'
 export default function TerritoriesScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
-  const { hasBottomBar } = useAdaptiveLayout()
+  const { hasBottomBar, isWide } = useAdaptiveLayout()
+  const Column = isWide ? PageColumn : ContentColumn
   const tabBarHeight = useBottomTabBarHeight()
   const bars = useHideBarsOnScroll()
   const navigation = useNavigation<RootStackNavigation>()
@@ -105,9 +108,10 @@ export default function TerritoriesScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <TerritoriesTabHeader hidden={bars.hidden} onAdd={add} />
       <ScrollView {...bars.scrollProps}>
-        <ContentColumn
+        <Column
           style={{
-            padding: inputLayout.horizontalPadding,
+            paddingVertical: inputLayout.horizontalPadding,
+            paddingHorizontal: isWide ? 0 : inputLayout.horizontalPadding,
             paddingBottom: (hasBottomBar ? tabBarHeight : insets.bottom) + 40,
             gap: 24,
           }}
@@ -135,7 +139,9 @@ export default function TerritoriesScreen() {
           {territories.length > 0 && (
             <View
               style={{
-                marginHorizontal: -inputLayout.horizontalPadding,
+                marginHorizontal: isWide
+                  ? -CHIP_ROW_INSET
+                  : -inputLayout.horizontalPadding,
                 gap: 10,
               }}
             >
@@ -201,7 +207,7 @@ export default function TerritoriesScreen() {
               <Section>{rows(finished)}</Section>
             </TerritoryReturnedGroup>
           )}
-        </ContentColumn>
+        </Column>
       </ScrollView>
     </View>
   )

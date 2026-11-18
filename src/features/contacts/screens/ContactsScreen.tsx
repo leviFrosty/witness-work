@@ -85,8 +85,10 @@ import {
 } from '@/features/contacts/lib/suggestedContactsList'
 import { alignInput } from '@/lib/direction'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrame, pageLayout } from '@/components/ui/layout/pageLayout'
 
 const LIST_COLUMN_WIDTH = 390
+const LIST_INSET = 12
 
 const ContactsSearchInput = ({
   ref,
@@ -480,7 +482,7 @@ const ContactsScreen = ({
             flexDirection: stacksViewToggle ? 'column' : 'row',
             alignItems: 'stretch',
             gap: stacksViewToggle ? 10 : 8,
-            paddingHorizontal: 12,
+            paddingHorizontal: LIST_INSET,
           }}
         >
           <View
@@ -542,7 +544,7 @@ const ContactsScreen = ({
             <SortSummary
               label={sortLabel}
               direction={contactSortDirection}
-              style={{ paddingTop: 10, paddingHorizontal: 12 }}
+              style={{ paddingTop: 10, paddingHorizontal: LIST_INSET }}
             />
           </Collapse>
         )}
@@ -643,7 +645,7 @@ const ContactsScreen = ({
         drawDistance={flashListDrawDistance}
         {...bars.scrollProps}
         contentContainerStyle={{
-          paddingHorizontal: 12,
+          paddingHorizontal: LIST_INSET,
           paddingBottom:
             bottomChrome +
             16 +
@@ -666,7 +668,7 @@ const ContactsScreen = ({
         flex: 1,
         borderStartWidth: 1,
         borderStartColor: theme.colors.border,
-        marginRight: 16,
+        marginEnd: LIST_INSET,
         marginBottom: hasBottomBar ? bottomChrome : 0,
         overflow: 'hidden',
         borderRadius: theme.numbers.borderRadiusLg,
@@ -723,7 +725,9 @@ const ContactsScreen = ({
             contentStyle={
               showsMap
                 ? foldColumn
-                : [{ maxWidth: isWide ? 1200 : 720 }, foldColumn]
+                : isWide
+                  ? { paddingHorizontal: LIST_INSET }
+                  : [{ maxWidth: 720 }, foldColumn]
             }
           >
             {showsMap && viewToggle && !togglesInHeader && (
@@ -769,12 +773,8 @@ const ContactsScreen = ({
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         {}
         <FoldSplit
-          style={{
-            flex: 1,
-            width: '100%',
-            maxWidth: split ? 1200 : undefined,
-            alignSelf: 'center',
-          }}
+          style={[{ flex: 1 }, split ? pageFrame : null]}
+          paddingHorizontal={split ? pageLayout.inset - LIST_INSET : 0}
           gap={0}
           leadingWidth={split ? LIST_COLUMN_WIDTH : undefined}
           leading={

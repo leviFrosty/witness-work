@@ -45,6 +45,7 @@ import useProgressCardEditing from '@/features/progress/hooks/useProgressCardEdi
 import type { ProgressCardDestination } from '@/features/progress/components/cards/progressCardRegistry'
 import { formatDisplay } from '@/lib/dates'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
+import { pageFrameInset } from '@/components/ui/layout/pageLayout'
 
 type Props = NativeStackScreenProps<HomeTabStackParamList, 'Progress'>
 
@@ -53,7 +54,7 @@ export type ProgressTab = 'month' | 'year' | 'allTime'
 const ProgressScreen = ({ route, navigation }: Props) => {
   const theme = useTheme()
   useRolloverPrompt()
-  const { isWide, contentMaxWidth } = useAdaptiveLayout()
+  const { isWide } = useAdaptiveLayout()
   const foldColumn = useFoldColumn(isWide ? null : 720)
   const rootNavigation = useNavigation<RootStackNavigation>()
   const now = moment()
@@ -164,13 +165,9 @@ const ProgressScreen = ({ route, navigation }: Props) => {
           contentStyle={
             inColumn
               ? { paddingHorizontal: 0 }
-              : [
-                  {
-                    maxWidth: isWide ? contentMaxWidth : 720,
-                    paddingHorizontal: isWide ? 24 : 15,
-                  },
-                  foldColumn,
-                ]
+              : isWide
+                ? pageFrameInset
+                : [{ maxWidth: 720, paddingHorizontal: 15 }, foldColumn]
           }
           actions={
             cardEditing.editing ? (
@@ -205,14 +202,16 @@ const ProgressScreen = ({ route, navigation }: Props) => {
       </ScrollAwayHeader>
       <View
         style={{
+          width: '100%',
+          alignSelf: 'center',
+          ...(inColumn
+            ? { paddingHorizontal: 0 }
+            : isWide
+              ? pageFrameInset
+              : { paddingHorizontal: 15, maxWidth: 720, ...foldColumn }),
           paddingTop: isWide ? 9 : 0,
           paddingBottom: isWide ? 15 : 6,
-          paddingHorizontal: inColumn ? 0 : isWide ? 24 : 15,
-          width: '100%',
-          maxWidth: inColumn ? undefined : isWide ? contentMaxWidth : 720,
-          alignSelf: 'center',
           gap: 6,
-          ...(inColumn ? null : foldColumn),
         }}
       >
         <SegmentedControl<ProgressTab>

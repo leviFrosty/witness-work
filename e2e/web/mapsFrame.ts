@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -120,6 +121,60 @@ export async function answerMapKitTokens(
     })
   })
   return requests
+}
+
+export const realMapKitKey = () =>
+  process.env.WW_MAPKIT_JS_KEY?.trim()
+    .replace(/^"|"$/g, '')
+    .replace(/\\n/g, '\n')
+
+const MAPKIT_TEAM_ID = 'Y3KE7B7AHJ'
+const MAPKIT_KEY_ID = '664HX2R9RW'
+
+const base64Url = (value: Buffer | string) =>
+  Buffer.from(value).toString('base64url')
+
+function signMapKitToken(key: string) {
+  const now = Math.floor(Date.now() / 1000)
+  const input = [
+    { alg: 'ES256', kid: MAPKIT_KEY_ID, typ: 'JWT' },
+    {
+      iss: MAPKIT_TEAM_ID,
+      iat: now,
+      exp: now + 30 * 60,
+      origin: profile.mapsOrigin,
+      scope: 'mapkit_js',
+    },
+  ]
+    .map((part) => base64Url(JSON.stringify(part)))
+    .join('.')
+  const signature = crypto.sign('sha256', Buffer.from(input), {
+    key,
+    dsaEncoding: 'ieee-p1363',
+  })
+  return `${input}.${base64Url(signature)}`
+}
+
+export async function useRealMapKit(context: BrowserContext, key: string) {
+  await context.route(
+    (url) => /(^|\.)apple-mapkit\.com$|(^|\.)apple\.com$/.test(url.host),
+    (route) => route.continue()
+  )
+  await context.route(`${profile.apiOrigin}/maps/v1/mapkit-tokens`, (route) => {
+    if (route.request().method() === 'OPTIONS')
+      return route.fulfill({ status: 204, headers: cors })
+    return route.fulfill({
+      status: 200,
+      headers: cors,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ok: true,
+        token: signMapKitToken(key),
+        origin: profile.mapsOrigin,
+        expiresAt: Date.now() + 30 * 60_000,
+      }),
+    })
+  })
 }
 
 export async function mapsFrame(page: Page): Promise<Frame> {

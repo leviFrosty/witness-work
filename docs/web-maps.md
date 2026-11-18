@@ -124,6 +124,11 @@ with its coordinate); `pinPress` and `pinDragEnd` by pin id; `projected` and
   (`project`, correlated by id, 5 s timeout), so `useMapProjection` and
   `mapPinLayout` work from MapKit's own answer. The overlay places pins and
   cards every frame from the `region` event's rect, without a round trip.
+- **Padding.** MapKit's `region` and `visibleMapRect` cover only the area
+  inside the map's padding (the Contacts panel, the header). The `region`
+  event's `rect` covers the whole frame, so the frame widens MapKit's rect by
+  the padding (`viewRect`), and `fit` hands MapKit the padded part of the rect
+  it fits (`paddedRect`).
 - **Versions.** The frame deploys apart from the app. A message for another
   version gets `error` `version`, and the app shows the map as unavailable. A
   change one side can't ignore bumps `v`; the frame then answers both versions
@@ -248,8 +253,13 @@ both, check the map with a real token, and deploy the frame.
   map with the same projection, pins as dots and lines as SVG. It's built by
   the spec and never deployed. The unavailable state runs against the real
   frame. Neither reaches Apple.
-- MapKit itself needs the owner's key: until ww-api has it, only the double
-  shows a map.
+- The double can't show how MapKit itself behaves (the pins drifted on the
+  real map while the double's tests passed). `maps.spec.ts`'s "with real
+  MapKit" tests run the real frame against Apple, signing tokens with ww-api's
+  MapKit JS key, and check every pin against MapKit's own projection. They
+  skip without the key:
+  `WW_MAPKIT_JS_KEY="$(op item get 'MapKit JS key (ww-api)' --vault Agents --fields credential --reveal)" wwv web test e2e/web/maps.spec.ts -g "real MapKit"`.
+  Run them after any change to the frame, the overlay or the projection.
 
 ## Reusing the pattern
 

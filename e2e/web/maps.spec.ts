@@ -6,8 +6,10 @@ import {
   answerPlaceSearch,
   mapsFrame,
   mapsFrames,
+  realMapKitKey,
   receivedByFrame,
   serveMapsFrame,
+  useRealMapKit,
 } from './mapsFrame'
 
 const en = strings('en-US')
@@ -386,6 +388,114 @@ test.describe('Route Planning with the test double', () => {
       ).toBeVisible()
       await shot('maps-route-place')
     })
+  })
+})
+
+test.describe('with real MapKit', () => {
+  const key = realMapKitKey()
+  test.skip(!key, 'needs WW_MAPKIT_JS_KEY (docs/web-maps.md#testing)')
+
+  test.beforeEach(async ({ page }) => {
+    await serveMapsFrame(page.context(), 'real')
+    await useRealMapKit(page.context(), key!)
+  })
+
+  type MapKitPage = {
+    mapkit: {
+      maps: {
+        padding: { top: number; right: number; left: number }
+        convertCoordinateToPointOnPage(coordinate: unknown): {
+          x: number
+          y: number
+        }
+      }[]
+      Coordinate: new (latitude: number, longitude: number) => unknown
+    }
+  }
+
+  const mapkitView = async (app: Page) =>
+    (await mapsFrame(app)).evaluate(
+      (coordinates) => {
+        const { mapkit } = window as unknown as MapKitPage
+        const map = mapkit.maps[0]!
+        return {
+          padding: map.padding,
+          points: coordinates.map((coordinate) => {
+            const point = map.convertCoordinateToPointOnPage(
+              new mapkit.Coordinate(coordinate.latitude, coordinate.longitude)
+            )
+            return { x: point.x, y: point.y }
+          }),
+        }
+      },
+      people.map((person) => person.coordinate)
+    )
+
+  const expectPinsOnMapKit = async (app: Page) => {
+    const frame = (await app.locator('iframe').boundingBox())!
+    await expect
+      .poll(async () => {
+        const { points } = await mapkitView(app)
+        let worst = 0
+        for (const [index, person] of people.entries()) {
+          const pin = pinFor(app, person.name)
+          if (!(await pin.isVisible())) continue
+          const box = (await pin.boundingBox())!
+          worst = Math.max(
+            worst,
+            Math.abs(box.x + box.width / 2 - frame.x - points[index]!.x),
+            Math.abs(box.y + box.height / 2 - frame.y - points[index]!.y)
+          )
+        }
+        return worst
+      })
+      .toBeLessThan(1.5)
+  }
+
+  test('keeps pins on their coordinates as the map zooms and pans', async ({
+    app,
+    shot,
+  }) => {
+    await app.getByRole('button', { name: 'Map', exact: true }).click()
+    const frame = await mapsFrame(app)
+    await expect
+      .poll(
+        () =>
+          frame.evaluate(() => {
+            try {
+              return !!(window as unknown as MapKitPage).mapkit.maps[0]
+            } catch {
+              return false
+            }
+          }),
+        { timeout: 30_000 }
+      )
+      .toBe(true)
+    for (const person of people)
+      await expect(pinFor(app, person.name)).toBeVisible()
+    await expectPinsOnMapKit(app)
+
+    const box = (await app.locator('iframe').boundingBox())!
+    const { padding, points } = await mapkitView(app)
+    for (const point of points) {
+      expect(point.x).toBeGreaterThan(padding.left + 60)
+      expect(point.x).toBeLessThan(box.width - padding.right - 60)
+      expect(point.y).toBeGreaterThan(padding.top + 36)
+    }
+    await shot('maps-real-pins')
+
+    const at = { x: box.x + box.width * 0.35, y: box.y + box.height / 2 }
+    await app.mouse.move(at.x, at.y)
+    await app.mouse.wheel(0, -300)
+    await expectPinsOnMapKit(app)
+
+    await app.mouse.down()
+    await app.mouse.move(at.x + 80, at.y - 60, { steps: 10 })
+    await app.mouse.up()
+    await expectPinsOnMapKit(app)
+
+    await app.mouse.wheel(0, 600)
+    await expectPinsOnMapKit(app)
   })
 })
 

@@ -8,7 +8,12 @@ import type {
   Region,
 } from '../../../src/lib/mapsFrame/protocol'
 import type { EngineStart, MapEngine } from './controller'
-import { rectFitting, regionFor } from '../../../src/lib/mapsFrame/projection'
+import {
+  paddedRect,
+  rectFitting,
+  regionFor,
+  viewRect,
+} from '../../../src/lib/mapsFrame/projection'
 
 export const MAPKIT_URL =
   'https://cdn.apple-mapkit.com/mk/6.1.197/mapkit.core.js'
@@ -72,10 +77,25 @@ export function createMapKitEngine(element: HTMLElement): MapEngine {
 
   const box = () => element.getBoundingClientRect()
 
+  const mapPadding = (): EdgePadding => {
+    const { top, right, bottom, left } = map.padding
+    return { top, right, bottom, left }
+  }
+
   const regionMessage = (phase: 'start' | 'change' | 'end'): FrameMessage => {
     const { center, span } = map.region
-    const rect = map.visibleMapRect
+    const visible = map.visibleMapRect
     const { width, height } = box()
+    const rect = viewRect(
+      {
+        x: visible.origin.x,
+        y: visible.origin.y,
+        width: visible.size.width,
+        height: visible.size.height,
+      },
+      { width, height },
+      mapPadding()
+    )
     return {
       type: 'region',
       phase,
@@ -85,12 +105,7 @@ export function createMapKitEngine(element: HTMLElement): MapEngine {
         latitudeDelta: span.latitudeDelta,
         longitudeDelta: span.longitudeDelta,
       },
-      rect: {
-        x: rect.origin.x,
-        y: rect.origin.y,
-        width: rect.size.width,
-        height: rect.size.height,
-      },
+      rect,
       size: { width, height },
       byUser,
     }
@@ -227,9 +242,16 @@ export function createMapKitEngine(element: HTMLElement): MapEngine {
     fit(coordinates, edges, animated) {
       if (!map) return
       const { width, height } = box()
-      const rect = rectFitting(coordinates, { width, height }, edges)
+      const size = { width, height }
+      const rect = rectFitting(coordinates, size, edges)
       if (!rect) return
-      map.setRegionAnimated(coordinateRegion(mapkit, regionFor(rect)), animated)
+      map.setRegionAnimated(
+        coordinateRegion(
+          mapkit,
+          regionFor(paddedRect(rect, size, mapPadding()))
+        ),
+        animated
+      )
     },
     setPins(next) {
       if (!map) return

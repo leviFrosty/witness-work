@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   coordinateFor,
   fromWorld,
+  paddedRect,
   pointFor,
   rectFitting,
   rectFor,
   regionFor,
   toWorld,
+  viewRect,
 } from '@/lib/mapsFrame/projection'
 
 const size = { width: 400, height: 300 }
@@ -109,5 +111,48 @@ describe('fitting coordinates', () => {
 
   it('has nothing to fit without coordinates', () => {
     expect(rectFitting([], size, padding)).toBeNull()
+  })
+})
+
+describe('a padded MapKit view', () => {
+  const mapkit = {
+    size: { width: 1040, height: 900 },
+    padding: { top: 102, right: 392, bottom: 0, left: 0 },
+    visibleMapRect: {
+      x: 0.26524030341880345,
+      y: 0.3817745638616576,
+      width: 0.00006277777777774493,
+      height: 0.00007730967078185256,
+    },
+    pins: [
+      { latitude: 39.1012, longitude: -84.5121, x: 39.9, y: 542 },
+      { latitude: 39.1048, longitude: -84.5047, x: 252.1, y: 409 },
+      { latitude: 39.0981, longitude: -84.5008, x: 363.9, y: 656.6 },
+    ],
+  }
+
+  it('places pins where MapKit draws their coordinates', () => {
+    const rect = viewRect(mapkit.visibleMapRect, mapkit.size, mapkit.padding)
+    for (const pin of mapkit.pins) {
+      const point = pointFor(pin, rect, mapkit.size)
+      expect(Math.abs(point.x - pin.x)).toBeLessThan(0.5)
+      expect(Math.abs(point.y - pin.y)).toBeLessThan(0.5)
+    }
+  })
+
+  it('keeps the padded area where MapKit puts it', () => {
+    const rect = viewRect(mapkit.visibleMapRect, mapkit.size, mapkit.padding)
+    const back = paddedRect(rect, mapkit.size, mapkit.padding)
+    close(back.x, mapkit.visibleMapRect.x, 12)
+    close(back.y, mapkit.visibleMapRect.y, 12)
+    close(back.width, mapkit.visibleMapRect.width, 12)
+    close(back.height, mapkit.visibleMapRect.height, 12)
+  })
+
+  it('ignores padding that leaves no room', () => {
+    const rect = { x: 0.2, y: 0.3, width: 0.01, height: 0.01 }
+    const padding = { top: 0, right: 600, bottom: 0, left: 600 }
+    expect(viewRect(rect, mapkit.size, padding)).toEqual(rect)
+    expect(paddedRect(rect, mapkit.size, padding)).toEqual(rect)
   })
 })

@@ -93,6 +93,45 @@ export function rectFor(region: Region, size: Size): WorldRect {
   }
 }
 
+const innerSize = (size: Size, padding: EdgePadding) => ({
+  width: size.width - padding.left - padding.right,
+  height: size.height - padding.top - padding.bottom,
+})
+
+export function viewRect(
+  padded: WorldRect,
+  size: Size,
+  padding: EdgePadding
+): WorldRect {
+  const inner = innerSize(size, padding)
+  if (inner.width <= 0 || inner.height <= 0) return padded
+  const scaleX = padded.width / inner.width
+  const scaleY = padded.height / inner.height
+  return {
+    x: padded.x - padding.left * scaleX,
+    y: padded.y - padding.top * scaleY,
+    width: size.width * scaleX,
+    height: size.height * scaleY,
+  }
+}
+
+export function paddedRect(
+  view: WorldRect,
+  size: Size,
+  padding: EdgePadding
+): WorldRect {
+  const inner = innerSize(size, padding)
+  if (inner.width <= 0 || inner.height <= 0) return view
+  const scaleX = view.width / size.width
+  const scaleY = view.height / size.height
+  return {
+    x: view.x + padding.left * scaleX,
+    y: view.y + padding.top * scaleY,
+    width: inner.width * scaleX,
+    height: inner.height * scaleY,
+  }
+}
+
 export function rectFitting(
   coordinates: LatLng[],
   size: Size,

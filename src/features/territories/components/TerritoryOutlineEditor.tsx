@@ -19,10 +19,12 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import Spinner from '@/components/ui/Spinner'
 import useTheme from '@/contexts/theme'
+import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import useLocationAccess from '@/hooks/useLocationAccess'
 import Haptics from '@/lib/haptics'
 import i18n from '@/lib/locales'
 import { checkLocationAccess } from '@/lib/locationPermission'
+import { isApplePlatform } from '@/lib/submitShortcut'
 import { usePreferences } from '@/stores/preferences'
 import { TerritoryMapEditorFrame } from '@/features/territories/components/TerritoryMapEditor'
 import TerritoryOutlineDragLayer, {
@@ -56,6 +58,18 @@ const GRAB = 32
 const CLOSEST = 0.004
 const HANDOFF_DELAY = 120
 const HANDOFF_FADE = 120
+
+type Shortcut = { apple: string; other: string }
+
+const SHORTCUTS = {
+  undo: { apple: '⌘Z', other: 'Ctrl+Z' },
+  delete: { apple: '⌫', other: 'Del' },
+} satisfies Record<string, Shortcut>
+
+const typingIn = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable ||
+    ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 
 const onScreen = (
   corners: readonly Coordinate[],
@@ -96,6 +110,7 @@ export default function TerritoryOutlineEditor({
   onDone: (outline: Coordinate[]) => void
 }) {
   const theme = useTheme()
+  const { isWide } = useAdaptiveLayout()
   const colorScheme = usePreferences((state) => state.colorScheme)
   const [draft, setDraft] = useState<Coordinate[]>(() => [...outline])
   const [selected, setSelected] = useState<number | null>(null)
@@ -105,6 +120,7 @@ export default function TerritoryOutlineEditor({
   const [noticeHidden, setNoticeHidden] = useState(false)
   const [start] = useState(() => [...outline, ...(pin ? [pin] : [])])
   const mapRef = useRef<MapView>(null)
+  const mapArea = useRef<View>(null)
   const view = useRef<{ region: MapRegion | null; size: MapSize | null }>({
     region: null,
     size: null,
@@ -160,7 +176,16 @@ export default function TerritoryOutlineEditor({
     else if (selected !== null && selected > index) setSelected(selected - 1)
   }
 
+  const reclaimKeys = () => {
+    if (Platform.OS !== 'web') return
+    if (!(document.activeElement instanceof HTMLIFrameElement)) return
+    ;(mapArea.current as unknown as HTMLElement | null)?.focus({
+      preventScroll: true,
+    })
+  }
+
   const select = (index: number) => {
+    reclaimKeys()
     if (index === selected) return
     Haptics.light()
     setSelected(index)
@@ -185,6 +210,61 @@ export default function TerritoryOutlineEditor({
       withTiming(0, { duration: HANDOFF_FADE })
     )
   }
+
+  const undo = () => {
+    if (count > 0) remove(tapped.at(-1) ?? count - 1)
+  }
+
+  const deleteSelected = () => {
+    if (selected !== null) remove(selected)
+  }
+
+  const clear = () => {
+    setDraft([])
+    setTapped([])
+    setSelected(null)
+  }
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return
+    const apple = isApplePlatform(navigator.platform)
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing) return
+      if (typingIn(event.target)) return
+      const mod = apple
+        ? event.metaKey && !event.ctrlKey
+        : event.ctrlKey && !event.metaKey
+      if (
+        mod &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === 'z'
+      ) {
+        event.preventDefault()
+        undo()
+      } else if (
+        !mod &&
+        !event.altKey &&
+        (event.key === 'Backspace' || event.key === 'Delete') &&
+        selected !== null
+      ) {
+        event.preventDefault()
+        deleteSelected()
+      }
+    }
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || selected === null) return
+      if (typingIn(event.target)) return
+      event.stopPropagation()
+      setSelected(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp, true)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp, true)
+    }
+  })
 
   const pan = Gesture.Pan()
     .enabled(corner !== undefined)
@@ -231,7 +311,16 @@ export default function TerritoryOutlineEditor({
         ? i18n.t('territories.map.outlineHint')
         : count < MIN_OUTLINE_CORNERS
           ? i18n.t('territories.map.outlineNeedMore')
-          : i18n.t('territories.map.outlineEditHint', { count })
+          : isWide
+            ? i18n.t('territories.map.outlineEditHintShort')
+            : i18n.t('territories.map.outlineEditHint', { count })
+
+  const shortcutLabel = (shortcut: Shortcut | undefined) =>
+    shortcut && isWide && Platform.OS === 'web'
+      ? isApplePlatform(navigator.platform)
+        ? shortcut.apple
+        : shortcut.other
+      : undefined
 
   const action = (
     icon: AppIcon,
@@ -239,30 +328,241 @@ export default function TerritoryOutlineEditor({
     onPress: () => void,
     testID: string,
     enabled: boolean,
-    color = theme.colors.text
-  ) => (
-    <Button
-      variant='outline'
-      disabled={!enabled}
-      onPress={onPress}
-      testID={testID}
+    {
+      color = theme.colors.text,
+      shortcut,
+    }: { color?: string; shortcut?: Shortcut } = {}
+  ) => {
+    const keys = shortcutLabel(shortcut)
+    return (
+      <Button
+        key={testID}
+        variant='outline'
+        disabled={!enabled}
+        onPress={onPress}
+        testID={testID}
+        style={{
+          flexGrow: 1,
+          flexBasis: 'auto',
+          minHeight: 44,
+          paddingVertical: 10,
+          paddingHorizontal: isWide ? 16 : 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: isWide ? 'flex-start' : 'center',
+          gap: isWide ? 10 : 6,
+          borderRadius: 22,
+          opacity: enabled ? 1 : 0.5,
+        }}
+      >
+        <LucideIcon icon={icon} size={16} color={color} />
+        <Text
+          style={{
+            fontFamily: theme.fonts.semiBold,
+            color,
+            flexShrink: 1,
+            flexGrow: isWide ? 1 : 0,
+          }}
+        >
+          {label}
+        </Text>
+        {keys && (
+          <Text
+            accessibilityElementsHidden
+            importantForAccessibility='no'
+            style={{ color: theme.colors.textAlt, fontSize: 13 }}
+          >
+            {keys}
+          </Text>
+        )}
+      </Button>
+    )
+  }
+
+  const actions = [
+    action(
+      UndoIcon,
+      i18n.t('territories.map.undoCorner'),
+      undo,
+      'territory-outline-undo',
+      count > 0,
+      { shortcut: SHORTCUTS.undo }
+    ),
+    action(
+      XIcon,
+      i18n.t('territories.map.deleteCorner'),
+      deleteSelected,
+      'territory-outline-delete-corner',
+      corner !== undefined,
+      { shortcut: SHORTCUTS.delete }
+    ),
+    action(
+      TrashIcon,
+      i18n.t('territories.map.clearOutline'),
+      clear,
+      'territory-outline-clear',
+      count > 0,
+      { color: theme.colors.error }
+    ),
+  ]
+
+  const notice = location.notice && !noticeHidden && location.access && (
+    <LocationNotice
+      access={location.access}
+      fix={location.fix}
+      onFix={location.runFix}
+      onDismiss={() => setNoticeHidden(true)}
+      testID='territory-outline-location-notice'
+      style={
+        isWide ? { paddingStart: 4 } : { paddingStart: 4, marginVertical: -6 }
+      }
+    />
+  )
+
+  const statusText = (
+    <Text
+      testID='territory-outline-status'
+      accessibilityLiveRegion='polite'
+      numberOfLines={isWide ? undefined : 2}
       style={{
-        flexGrow: 1,
-        flexBasis: 'auto',
-        minHeight: 44,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-        borderRadius: 22,
-        opacity: enabled ? 1 : 0.5,
+        color: theme.colors.textAlt,
+        paddingHorizontal: 4,
+        minHeight: 40,
       }}
     >
-      <LucideIcon icon={icon} size={16} color={color} />
-      <Text style={{ fontFamily: theme.fonts.semiBold, color }}>{label}</Text>
-    </Button>
+      {status}
+    </Text>
+  )
+
+  const map = (
+    <GestureDetector gesture={pan}>
+      <View
+        ref={mapArea}
+        tabIndex={-1}
+        onLayout={(event) => {
+          const { width, height } = event.nativeEvent.layout
+          view.current.size = { width, height }
+          placeCorners(draft)
+        }}
+        style={{
+          flex: 1,
+          minHeight: 240,
+          borderRadius: isWide ? 0 : inputLayout.sectionRadius - INSET,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+          backgroundColor: theme.colors.backgroundLighter,
+        }}
+      >
+        {region === undefined ? (
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Spinner />
+          </View>
+        ) : (
+          <MapView
+            ref={mapRef}
+            testID='territory-outline-map'
+            userInterfaceStyle={colorScheme ? colorScheme : undefined}
+            style={{ flex: 1 }}
+            initialRegion={region ?? undefined}
+            showsUserLocation={location.granted}
+            showsPointsOfInterests={false}
+            toolbarEnabled={false}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            scrollEnabled={Platform.select({
+              web: true,
+              default: corner === undefined,
+            })}
+            zoomEnabled={!dragging}
+            onMapReady={() => void measureRegion()}
+            onRegionChange={(next) => {
+              view.current.region = next
+              placeCorners(draft)
+            }}
+            onRegionChangeComplete={(next) => {
+              view.current.region = next
+              placeCorners(draft)
+            }}
+            onPress={(event) => {
+              reclaimKeys()
+              const { action, coordinate, position } = event.nativeEvent
+              if (action === 'marker-press') return
+              const { region: shown, size } = view.current
+              const measured = shown && size && position
+              const near = measured
+                ? cornerAt(position, draft, shown, size, TARGET / 2)
+                : undefined
+              if (near !== undefined) return select(near)
+              if (selected !== null) return setSelected(null)
+              const edge = measured
+                ? edgeAt(position, draft, shown, size, TARGET / 2)
+                : undefined
+              const { latitude, longitude } = coordinate
+              add(edge ?? count, { latitude, longitude })
+            }}
+          >
+            {dragging ? null : isOutline(draft) ? (
+              <TerritoryOutlineShape
+                outline={draft}
+                color={theme.colors.accent}
+              />
+            ) : (
+              count === 2 && (
+                <Polyline
+                  coordinates={draft}
+                  strokeColor={theme.colors.accent}
+                  strokeWidth={3}
+                />
+              )
+            )}
+            {draft.map((point, index) => {
+              const chosen = index === selected
+              return (
+                <Marker
+                  key={`corner-${index}-${chosen}`}
+                  identifier={`territory-corner-${index}`}
+                  testID={`territory-corner-${index}`}
+                  coordinate={point}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  zIndex={chosen ? 2 : 1}
+                  opacity={chosen && dragging ? 0 : 1}
+                  tracksViewChanges={false}
+                  onPress={() => select(index)}
+                >
+                  <View
+                    style={{
+                      width: chosen ? SELECTED : CORNER,
+                      height: chosen ? SELECTED : CORNER,
+                      borderRadius: (chosen ? SELECTED : CORNER) / 2,
+                      borderWidth: chosen ? 6 : 2,
+                      borderColor: chosen
+                        ? theme.colors.accent
+                        : theme.colors.card,
+                      backgroundColor: chosen
+                        ? theme.colors.card
+                        : theme.colors.accent,
+                    }}
+                  />
+                </Marker>
+              )
+            })}
+          </MapView>
+        )}
+        <TerritoryOutlineDragLayer
+          points={points}
+          held={held}
+          shown={shown}
+          color={theme.colors.accent}
+          ring={theme.colors.card}
+        />
+      </View>
+    </GestureDetector>
   )
 
   return (
@@ -271,186 +571,42 @@ export default function TerritoryOutlineEditor({
       onClose={onClose}
       onDone={() => onDone(draft)}
       testID='territory-outline-editor'
-    >
-      <View style={{ flex: 1, padding: INSET, gap: 12 }}>
-        <GestureDetector gesture={pan}>
-          <View
-            onLayout={(event) => {
-              const { width, height } = event.nativeEvent.layout
-              view.current.size = { width, height }
-              placeCorners(draft)
-            }}
-            style={{
-              flex: 1,
-              minHeight: 240,
-              borderRadius: inputLayout.sectionRadius - INSET,
-              borderCurve: 'continuous',
-              overflow: 'hidden',
-              backgroundColor: theme.colors.backgroundLighter,
-            }}
-          >
-            {region === undefined ? (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Spinner />
-              </View>
-            ) : (
-              <MapView
-                ref={mapRef}
-                testID='territory-outline-map'
-                userInterfaceStyle={colorScheme ? colorScheme : undefined}
-                style={{ flex: 1 }}
-                initialRegion={region ?? undefined}
-                showsUserLocation={location.granted}
-                showsPointsOfInterests={false}
-                toolbarEnabled={false}
-                rotateEnabled={false}
-                pitchEnabled={false}
-                scrollEnabled={Platform.select({
-                  web: true,
-                  default: corner === undefined,
-                })}
-                zoomEnabled={!dragging}
-                onMapReady={() => void measureRegion()}
-                onRegionChange={(next) => {
-                  view.current.region = next
-                  placeCorners(draft)
-                }}
-                onRegionChangeComplete={(next) => {
-                  view.current.region = next
-                  placeCorners(draft)
-                }}
-                onPress={(event) => {
-                  const { action, coordinate, position } = event.nativeEvent
-                  if (action === 'marker-press') return
-                  const { region: shown, size } = view.current
-                  const measured = shown && size && position
-                  const near = measured
-                    ? cornerAt(position, draft, shown, size, TARGET / 2)
-                    : undefined
-                  if (near !== undefined) return select(near)
-                  if (selected !== null) return setSelected(null)
-                  const edge = measured
-                    ? edgeAt(position, draft, shown, size, TARGET / 2)
-                    : undefined
-                  const { latitude, longitude } = coordinate
-                  add(edge ?? count, { latitude, longitude })
-                }}
-              >
-                {dragging ? null : isOutline(draft) ? (
-                  <TerritoryOutlineShape
-                    outline={draft}
-                    color={theme.colors.accent}
-                  />
-                ) : (
-                  count === 2 && (
-                    <Polyline
-                      coordinates={draft}
-                      strokeColor={theme.colors.accent}
-                      strokeWidth={3}
-                    />
-                  )
-                )}
-                {draft.map((point, index) => {
-                  const chosen = index === selected
-                  return (
-                    <Marker
-                      key={`corner-${index}-${chosen}`}
-                      identifier={`territory-corner-${index}`}
-                      testID={`territory-corner-${index}`}
-                      coordinate={point}
-                      anchor={{ x: 0.5, y: 0.5 }}
-                      zIndex={chosen ? 2 : 1}
-                      opacity={chosen && dragging ? 0 : 1}
-                      tracksViewChanges={false}
-                      onPress={() => select(index)}
-                    >
-                      <View
-                        style={{
-                          width: chosen ? SELECTED : CORNER,
-                          height: chosen ? SELECTED : CORNER,
-                          borderRadius: (chosen ? SELECTED : CORNER) / 2,
-                          borderWidth: chosen ? 6 : 2,
-                          borderColor: chosen
-                            ? theme.colors.accent
-                            : theme.colors.card,
-                          backgroundColor: chosen
-                            ? theme.colors.card
-                            : theme.colors.accent,
-                        }}
-                      />
-                    </Marker>
-                  )
-                })}
-              </MapView>
-            )}
-            <TerritoryOutlineDragLayer
-              points={points}
-              held={held}
-              shown={shown}
-              color={theme.colors.accent}
-              ring={theme.colors.card}
-            />
+      sidebar={
+        isWide && (
+          <View style={{ flex: 1, padding: 20, gap: 20 }}>
+            <View style={{ gap: 4 }}>
+              {count > 0 && (
+                <Text
+                  testID='territory-outline-count'
+                  style={{
+                    fontFamily: theme.fonts.semiBold,
+                    fontSize: 20,
+                    paddingHorizontal: 4,
+                  }}
+                >
+                  {i18n.t('territories.map.cornerCount', { count })}
+                </Text>
+              )}
+              {statusText}
+            </View>
+            {notice}
+            <View style={{ gap: 10 }}>{actions}</View>
           </View>
-        </GestureDetector>
-        {location.notice && !noticeHidden && location.access && (
-          <LocationNotice
-            access={location.access}
-            fix={location.fix}
-            onFix={location.runFix}
-            onDismiss={() => setNoticeHidden(true)}
-            testID='territory-outline-location-notice'
-            style={{ paddingStart: 4, marginVertical: -6 }}
-          />
-        )}
-        <Text
-          testID='territory-outline-status'
-          accessibilityLiveRegion='polite'
-          numberOfLines={2}
-          style={{
-            color: theme.colors.textAlt,
-            paddingHorizontal: 4,
-            minHeight: 40,
-          }}
-        >
-          {status}
-        </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-          {action(
-            UndoIcon,
-            i18n.t('territories.map.undoCorner'),
-            () => remove(tapped.at(-1) ?? count - 1),
-            'territory-outline-undo',
-            count > 0
-          )}
-          {action(
-            XIcon,
-            i18n.t('territories.map.deleteCorner'),
-            () => {
-              if (selected !== null) remove(selected)
-            },
-            'territory-outline-delete-corner',
-            corner !== undefined
-          )}
-          {action(
-            TrashIcon,
-            i18n.t('territories.map.clearOutline'),
-            () => {
-              setDraft([])
-              setTapped([])
-              setSelected(null)
-            },
-            'territory-outline-clear',
-            count > 0,
-            theme.colors.error
-          )}
+        )
+      }
+    >
+      {isWide ? (
+        map
+      ) : (
+        <View style={{ flex: 1, padding: INSET, gap: 12 }}>
+          {map}
+          {notice}
+          {statusText}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            {actions}
+          </View>
         </View>
-      </View>
+      )}
     </TerritoryMapEditorFrame>
   )
 }

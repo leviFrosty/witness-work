@@ -7113,6 +7113,7 @@
         "one": "%{count} corner. Tap a corner to move or delete it.",
         "other": "%{count} corners. Tap a corner to move or delete it."
       },
+      "outlineEditHintShort": "Tap a corner to move or delete it.",
       "cornerSelected": "Drag the corner to move it. Tap the map to let go of it.",
       "deleteCorner": "Delete Corner",
       "cardPhotoRow": "Photo of the Card",

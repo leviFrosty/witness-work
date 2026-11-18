@@ -8,6 +8,7 @@ import {
 } from 'react-native'
 import * as Location from 'expo-location'
 import { openAppSettings } from '@/lib/openAppSettings'
+import { hasCapability } from '@/lib/platformCapabilities'
 import Text from '@/components/ui/MyText'
 import Empty from '@/components/ui/Empty'
 import MyTextInput from '@/components/ui/TextInput'
@@ -65,6 +66,17 @@ const LocationStatusControl = ({
   }
 
   const denied = status === Location.PermissionStatus.DENIED
+
+  if (denied && !hasCapability('appSettings')) {
+    return (
+      <InfoPopover
+        title={i18n.t('searchAddress')}
+        description={i18n.t('locationNotice.blockedWeb')}
+        centered
+      />
+    )
+  }
+
   const label = denied
     ? i18n.t('locationOff_openSettings')
     : i18n.t('enableLocationForNearbyResults')

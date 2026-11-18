@@ -796,6 +796,28 @@ describe('Exploring the map', () => {
   })
 })
 
+describe('Tablet contact list', () => {
+  const inspector = () =>
+    root.root.find((node) => String(node.type) === 'MapContactInspector')
+  const showButton = () =>
+    root.root.findAllByProps({ accessibilityLabel: 'map_showContactList' })
+
+  it('hides from its own header and comes back from the map corner', async () => {
+    mocks.isWide = true
+    await act(async () => root.update(screen()))
+    expect(inspector().props.onHide).toBeTypeOf('function')
+    expect(showButton()).toHaveLength(0)
+
+    await act(async () => inspector().props.onHide())
+    expect(inspector().parent?.props.pointerEvents).toBe('none')
+    expect(showButton().length).toBeGreaterThan(0)
+
+    await act(async () => showButton()[0].props.onPress())
+    expect(inspector().parent?.props.pointerEvents).toBe('box-none')
+    expect(showButton()).toHaveLength(0)
+  })
+})
+
 describe('Stowed cards handle', () => {
   const stowed = () =>
     root.root.findByType(Carousel).parent!.props.pointerEvents === 'none'

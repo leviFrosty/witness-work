@@ -83,6 +83,8 @@ origin, so one production frame needs one origin on the key.
   `object-src 'none'`.
 - `Referrer-Policy: no-referrer`, `nosniff`, HSTS, `Cross-Origin-Resource-Policy:
 same-origin`, and a `Permissions-Policy` that turns off every powerful feature.
+- `Cache-Control: no-transform`, so Cloudflare doesn't inject the zone's Web
+  Analytics beacon, which the CSP would block on every load.
 - No cookies: the Worker serves files only.
 - Not set, on purpose: Trusted Types, since MapKit JS writes its own markup,
   and `Cross-Origin-Opener-Policy`, since the frame never opens or is opened by

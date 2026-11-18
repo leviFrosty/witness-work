@@ -126,7 +126,7 @@ async function interact(
   ms: number,
   done: () => boolean = () => false
 ) {
-  const tabs = ['Schedule', 'Contacts', 'Home', 'Contacts']
+  const tabs = ['Schedule', 'Map', 'Home', 'Contacts']
   const end = Date.now() + ms
   for (let i = 0; Date.now() < end && !done(); i++) {
     const target = tab(app, tabs[i % tabs.length]!)
@@ -181,7 +181,7 @@ test.describe('a sampled session outside the opt-in regions', () => {
     ingest,
     app,
   }) => {
-    await tab(app, 'Contacts').click()
+    await tab(app, 'Map').click()
     await mapsFrame(app)
     for (const person of people)
       await expect(
@@ -196,7 +196,7 @@ test.describe('a sampled session outside the opt-in regions', () => {
     await expect
       .poll(
         async () => {
-          await tab(app, 'Contacts').click()
+          await tab(app, 'Map').click()
           onScreen = await app.locator('body').innerText()
           return addresses.some((address) => onScreen.includes(address))
         },
@@ -213,7 +213,7 @@ test.describe('a sampled session outside the opt-in regions', () => {
     await expect(title).toHaveValue(TYPED)
     await app.waitForTimeout(1_500)
     await app.goBack()
-    await tab(app, 'Contacts').click()
+    await tab(app, 'Map').click()
     await expect(app.locator('iframe').first()).toBeAttached()
 
     await app.waitForTimeout(8_000)

@@ -125,7 +125,9 @@ const ContactsScreen = ({
   renderMap,
   focusSearch,
   onSearchFocused,
+  view,
 }: {
+  view?: ContactsView
   renderMap: (props: {
     topInset: number
     onExplore: () => void
@@ -142,7 +144,8 @@ const ContactsScreen = ({
   const insets = useSafeAreaInsets()
   const { height: windowHeight, fontScale } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
-  const contactsView = usePreferences((s) => s.contactsView)
+  const preferredView = usePreferences((s) => s.contactsView)
+  const contactsView = view ?? preferredView
   const hasCompletedMapOnboarding = usePreferences(
     (s) => s.hasCompletedMapOnboarding
   )
@@ -166,10 +169,10 @@ const ContactsScreen = ({
     }, [showsMap])
   )
 
-  const changeView = (view: ContactsView) => {
-    if (view === contactsView) return
+  const changeView = (next: ContactsView) => {
+    if (next === contactsView) return
 
-    setPreferences({ contactsView: view })
+    setPreferences({ contactsView: next })
   }
 
   const contacts = useContacts((s) => s.contacts)
@@ -434,7 +437,7 @@ const ContactsScreen = ({
   )
 
   const stacksViewToggle = fontScale > 1.3
-  const viewToggle = (
+  const viewToggle = view ? null : (
     <ContactsViewToggle
       value={contactsView}
       onChange={changeView}
@@ -689,12 +692,14 @@ const ContactsScreen = ({
             title={
               selection.selecting
                 ? i18n.t('selectedCount', { count: selection.ids.length })
-                : i18n.t('contacts_screen_title')
+                : view === 'map'
+                  ? i18n.t('Map')
+                  : i18n.t('contacts_screen_title')
             }
             actions={headerActions}
             contentStyle={[{ maxWidth: isWide ? 1200 : 720 }, foldColumn]}
           >
-            {showsMap && (
+            {showsMap && viewToggle && (
               <FoldSplit
                 gap={0}
                 leadingWidth={isWide ? LIST_COLUMN_WIDTH : undefined}

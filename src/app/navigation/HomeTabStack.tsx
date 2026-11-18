@@ -217,7 +217,20 @@ const HomeTabStack = () => {
         )}
       >
         {}
-        {tabOrder.map(renderTabScreen)}
+        {tabOrder.flatMap((name) =>
+          name === 'Contacts' && hasSidebar
+            ? [
+                renderTabScreen(name),
+                <Tab.Screen
+                  key='Map'
+                  name='Map'
+                  getComponent={() =>
+                    require('@/app/contacts/MapTabScreen').default
+                  }
+                />,
+              ]
+            : [renderTabScreen(name)]
+        )}
         {hasSidebar && buddiesEnabled && (
           <Tab.Screen
             name='Buddies'

@@ -6,6 +6,7 @@ export type HomeTabStackParamList = {
   Home: undefined
 
   Contacts: { view?: ContactsView; focusSearch?: boolean } | undefined
+  Map: undefined
   Tools: undefined
   Progress:
     | {

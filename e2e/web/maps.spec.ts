@@ -89,7 +89,7 @@ const expectNothingSensitive = (received: unknown[]) => {
 }
 
 async function openMap(app: Page) {
-  await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+  await app.getByRole('button', { name: 'Map', exact: true }).click()
   const frame = await mapsFrame(app)
   await expect(frame.locator('#map')).toBeVisible()
   return frame
@@ -143,6 +143,20 @@ test.describe('with the test double', () => {
     await expect.poll(spread).toBeLessThan(wide * 0.6)
   })
 
+  test('is its own sidebar item, and Contacts is the list', async ({ app }) => {
+    await answerMapKitTokens(app.context(), 200)
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await expect(app.getByTestId('contacts-search')).toBeVisible()
+    await expect(app.getByTestId('contacts-view-map')).toHaveCount(0)
+    await expect(app.locator('iframe')).toHaveCount(0)
+
+    await openMap(app)
+    await expect(
+      app.getByRole('heading', { name: 'Map', exact: true })
+    ).toBeVisible()
+    await expect(app.getByTestId('contacts-view-map')).toHaveCount(0)
+  })
+
   test("opens a Contact's card from their pin", async ({ app, shot }) => {
     await answerMapKitTokens(app.context(), 200)
     await openMap(app)
@@ -155,7 +169,7 @@ test.describe('with the test double', () => {
   test('comes back by itself once the browser is online', async ({ app }) => {
     await answerMapKitTokens(app.context(), 200)
     await app.context().setOffline(true)
-    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await app.getByRole('button', { name: 'Map', exact: true }).click()
 
     await expect(
       app
@@ -306,7 +320,10 @@ test.describe('Route Planning with the test double', () => {
     await answerDirections(app.context())
     await openRoute(app)
     await app.getByText(en.routeBuilder_addStop, { exact: true }).click()
-    await app.getByText(en.routeBuilder_map, { exact: true }).click()
+    await app
+      .getByRole('dialog')
+      .getByText(en.routeBuilder_map, { exact: true })
+      .click()
 
     await expect.poll(() => mapsFrames(app).length).toBe(2)
     const picker = mapsFrames(app).at(-1)!
@@ -366,7 +383,7 @@ test.describe('without a map', () => {
       if (request.url().includes('apple')) apple.push(request.url())
     })
     await answerMapKitTokens(app.context(), 503)
-    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await app.getByRole('button', { name: 'Map', exact: true }).click()
     await expect(app.getByText(en.map_unavailableTitle)).toBeVisible()
     await expect(app.getByText(en.map_unavailableNotReady)).toBeVisible()
 
@@ -375,7 +392,7 @@ test.describe('without a map', () => {
     ).toHaveCount(0)
 
     await expect(app.getByText(people[0]!.name).first()).toBeVisible()
-    await app.getByRole('button', { name: 'List', exact: true }).click()
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
     await expect(app.getByText(people[2]!.name).first()).toBeVisible()
     await app.getByRole('button', { name: 'Map', exact: true }).click()
     await expect(app.getByText(en.map_unavailableTitle)).toBeVisible()

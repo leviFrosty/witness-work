@@ -7,7 +7,7 @@ import {
   createFakeSpacesServer,
   type FakeSpacesServer,
 } from '@/lib/sharedSpaces/testing/fakeSpacesServer'
-import { endedCopyId } from '@/app/territories/engine'
+import { endedCopyId, keptStreetsId } from '@/app/territories/engine'
 import {
   doorId,
   ELM,
@@ -417,6 +417,9 @@ describe('hand-offs', () => {
     await joe.engine.syncAll()
     const spaceId = anna.territory().shared!.spaceId
     expect(joe.territory(endedCopyId(spaceId)).received?.endedAt).toBeDefined()
+    expect(joe.territories().some((t) => t.id === keptStreetsId(spaceId))).toBe(
+      false
+    )
   })
 
   it('taking a street back from someone with other streets drops it from their device', async () => {
@@ -457,6 +460,79 @@ describe('refused writes', () => {
     await joe.engine.syncAll()
     expect(joe.territory().streets.find((s) => s.id === ELM)?.doors).toEqual([])
     expect(joe.refused).toHaveLength(1)
+  })
+})
+
+describe('returning a territory with handed-off streets', () => {
+  const labels = (territory: { streets: { doors: { label: string }[] }[] }) =>
+    territory.streets.flatMap((s) => s.doors.map((d) => d.label)).sort()
+
+  it('the holder keeps their street as a territory of their own, with its records', async () => {
+    const result = await anna.engine.handOff('territory-1', OAK, joe.buddy)
+    if (result.kind !== 'invite') throw new Error('expected an invite')
+    await joe.engine.joinTerritory(result.invite)
+    record(joe, OAK, '3', doorId(3))
+    await joe.engine.syncAll()
+    const spaceId = anna.territory().shared!.spaceId
+    await anna.engine.returnTerritory('territory-1')
+    expect(labels(anna.territory())).toEqual(['1', '3'])
+    expect(anna.territory().streets[0]?.handoff).toBeUndefined()
+
+    record(joe, OAK, '5', doorId(5))
+    await joe.engine.syncAll()
+    const own = joe.territory(keptStreetsId(spaceId))
+    expect(own).toMatchObject({ number: '12', name: 'North Hill' })
+    expect(own.received).toBeUndefined()
+    expect(own.shared).toBeUndefined()
+    expect(own.finishedAt).toBeUndefined()
+    expect(own.streets.map((s) => s.id)).toEqual([OAK])
+    expect(labels(own)).toEqual(['1', '3', '5'])
+    expect(joe.territories()).toHaveLength(1)
+    expect(joe.outcomes).toContainEqual({ type: 'handoff', action: 'kept' })
+  })
+
+  it('a member who also holds a street keeps it, and an ended copy of the rest', async () => {
+    await shareWith(anna, joe)
+    await anna.engine.handOff('territory-1', OAK, joe.buddy)
+    await joe.engine.syncAll()
+    const spaceId = anna.territory().shared!.spaceId
+    await anna.engine.returnTerritory('territory-1')
+    await joe.engine.syncAll()
+    const own = joe.territory(keptStreetsId(spaceId))
+    expect(own.streets.map((s) => s.id)).toEqual([OAK])
+    expect(own.doNotCalls).toEqual([])
+    const ended = joe.territory(endedCopyId(spaceId))
+    expect(ended.received?.endedAt).toBeDefined()
+    expect(ended.streets.map((s) => s.id)).toEqual([ELM])
+    expect(ended.streets[0]?.doors).toEqual([])
+    expect(ended.doNotCalls.map((d) => d.address).sort()).toEqual([
+      '1 Far Away',
+      '5 Elm Street',
+    ])
+  })
+
+  it('keeps the holder’s own copy when another of their devices made it first', async () => {
+    const result = await anna.engine.handOff('territory-1', OAK, joe.buddy)
+    if (result.kind !== 'invite') throw new Error('expected an invite')
+    await joe.engine.joinTerritory(result.invite)
+    const spaceId = anna.territory().shared!.spaceId
+    const synced = {
+      ...joe.territory(),
+      id: keptStreetsId(spaceId),
+      name: 'Worked on my other phone',
+      received: undefined,
+      shared: undefined,
+    }
+    joe.store.getState().save(synced)
+    await anna.engine.returnTerritory('territory-1')
+    await joe.engine.syncAll()
+    expect(joe.territory(keptStreetsId(spaceId)).name).toBe(
+      'Worked on my other phone'
+    )
+    expect(joe.outcomes).not.toContainEqual({
+      type: 'handoff',
+      action: 'kept',
+    })
   })
 })
 

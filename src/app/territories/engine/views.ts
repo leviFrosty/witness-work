@@ -15,6 +15,42 @@ export const viewOfSpace = (store: TerritoriesStore, spaceId: string) =>
 export const territoryById = (store: TerritoriesStore, territoryId: string) =>
   store.getState().territories.find((t) => t.id === territoryId)
 
+export function heldStreetsCopy(
+  territory: Territory,
+  streetIds: readonly string[],
+  { id, at }: { id: string; at: number }
+): Territory {
+  const held = new Set(streetIds)
+  const copy = personalCopy(territory)
+  return {
+    ...copy,
+    id,
+    checkedOutAt: at,
+    createdAt: at,
+    returnBy: undefined,
+    finishedAt: undefined,
+    streets: copy.streets.filter((street) => held.has(street.id)),
+    doNotCalls: copy.doNotCalls.filter(
+      (entry) => entry.streetId !== undefined && held.has(entry.streetId)
+    ),
+  }
+}
+
+export function withoutStreets(
+  territory: Territory,
+  streetIds: readonly string[]
+): Territory {
+  if (streetIds.length === 0) return territory
+  const gone = new Set(streetIds)
+  return {
+    ...territory,
+    streets: territory.streets.filter((street) => !gone.has(street.id)),
+    doNotCalls: territory.doNotCalls.filter(
+      (entry) => entry.streetId === undefined || !gone.has(entry.streetId)
+    ),
+  }
+}
+
 export function personalCopy(territory: Territory): Territory {
   const {
     shared: _shared,

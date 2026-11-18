@@ -1814,9 +1814,12 @@ export class SharedSpace extends DurableObject<Environment> {
   /**
    * The space, for a member whose token hash matches: `gone` when the space
    * doesn't exist (deleted, or never made) or the member isn't on it,
-   * `forbidden` for a member's wrong token.
+   * `forbidden` for a member's wrong token. A deleted space's `gone` says
+   * `reason: "deleted"`, so a territory's hand-off holder can tell the owner
+   * ending the whole territory from being removed (witness-work ADR 0064).
    */
   #authenticate(auth: MemberAuth): SpacesResult<SpaceRow> {
+    if (this.#deleted()) return goneBecause('deleted')
     const space = this.#space()
     if (!space || space.spaceId !== auth.spaceId) return fail('gone')
     const member = this.#member(auth.memberId)

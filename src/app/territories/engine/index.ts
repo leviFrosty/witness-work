@@ -1,6 +1,10 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { fromB64u, toB64u, utf8 } from '@/lib/bytes'
-import { isSpaceError, SPACE_LIMITS } from '@/lib/sharedSpaces/client'
+import {
+  isSpaceDeleted,
+  isSpaceError,
+  SPACE_LIMITS,
+} from '@/lib/sharedSpaces/client'
 import {
   joinVerifier,
   memberTag,
@@ -49,10 +53,12 @@ import {
   type TerritorySyncOutcome,
 } from '@/app/territories/engine/types'
 import {
+  heldStreetsCopy,
   personalCopy,
   plainTitle,
   territoryById,
   viewOfSpace,
+  withoutStreets,
 } from '@/app/territories/engine/views'
 import {
   clearDoorRecords,
@@ -60,6 +66,7 @@ import {
 } from '@/features/territories/lib/doors'
 import { diffTerritory } from '@/features/territories/lib/shared/diff'
 import { myRole } from '@/features/territories/lib/shared/projection'
+import { heldStreetIds } from '@/features/territories/lib/sharing'
 import { emptySpace } from '@/features/territories/lib/shared/space'
 import { formatDoorAddress } from '@/features/territories/lib/territoryTitle'
 import { withPending } from '@/features/territories/stores/territories'
@@ -87,11 +94,15 @@ export const scopeOf = (streetId: string) =>
 export const endedCopyId = (spaceId: string) =>
   uuidFromHash(sha256(utf8(`ww-territories/v1/ended|${spaceId}`)))
 
+export const keptStreetsId = (spaceId: string) =>
+  uuidFromHash(sha256(utf8(`ww-territories/v1/kept|${spaceId}`)))
+
 export function createTerritoryEngine(deps: TerritoryEngineDeps) {
   const ctx = createEngineContext(deps)
   const { client, store, keyring } = ctx
   const hooks: SyncHooks = {
-    endLocally: (spaceId, reason) => endLocally(spaceId, reason),
+    endLocally: (spaceId, reason, spaceDeleted) =>
+      endLocally(spaceId, reason, spaceDeleted),
     reissueInvites: (spaceId, member) => reissueInvites(spaceId, member),
   }
   const keys: TerritoryKeys = createKeys(ctx, (spaceId, member) =>
@@ -801,20 +812,40 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     )
   }
 
-  function endLocally(spaceId: string, reason: TerritoryEnding) {
+  function endLocally(
+    spaceId: string,
+    reason: TerritoryEnding,
+    spaceDeleted = false
+  ) {
     const space = ctx.space(spaceId)
     const view = viewOfSpace(store, spaceId)
-    let keep: Territory | undefined
+    const keep: Territory[] = []
+    let keptStreets = 0
     if (view && space) {
       const owner = myRole(space) === 'owner'
       if (owner && (reason === 'returned' || reason === 'gone'))
-        keep = finishTerritory(personalCopy(view), deps.now())
-      else if (!owner && reason === 'gone' && view.received)
-        keep = {
-          ...clearDoorRecords(personalCopy(view), formatDoorAddress),
-          id: endedCopyId(spaceId),
-          received: { ...view.received, endedAt: deps.now() },
+        keep.push(finishTerritory(personalCopy(view), deps.now()))
+      else if (!owner && reason === 'gone') {
+        const held = spaceDeleted ? heldStreetIds(view) : []
+        keptStreets = held.length
+        const keptId = keptStreetsId(spaceId)
+        if (held.length > 0 && !territoryById(store, keptId)) {
+          keep.push(
+            heldStreetsCopy(view, held, {
+              id: keptId,
+              at: view.received?.at || deps.now(),
+            })
+          )
+          deps.onOutcome?.({ type: 'handoff', action: 'kept' })
         }
+        const rest = withoutStreets(view, held)
+        if (view.received && (held.length === 0 || rest.streets.length > 0))
+          keep.push({
+            ...clearDoorRecords(personalCopy(rest), formatDoorAddress),
+            id: endedCopyId(spaceId),
+            received: { ...view.received, endedAt: deps.now() },
+          })
+      }
     }
     store.getState().removeSpace(spaceId, keep)
     store
@@ -832,7 +863,12 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     ctx.forgetMember(spaceId)
     if (view) {
       deps.onOutcome?.({ type: 'ended', reason })
-      deps.onEnded?.({ spaceId, title: plainTitle(view), reason })
+      deps.onEnded?.({
+        spaceId,
+        title: plainTitle(view),
+        reason,
+        keptStreets,
+      })
     }
   }
 
@@ -885,7 +921,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
     } catch (error) {
       ctx.rethrowReset(error)
       if (isSpaceError(error, 'gone')) {
-        endLocally(spaceId, 'gone')
+        endLocally(spaceId, 'gone', isSpaceDeleted(error))
         return false
       }
       ctx.report(error, 'end')
@@ -1180,7 +1216,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
       } catch (error) {
         ctx.rethrowReset(error)
         if (isSpaceError(error, 'gone')) {
-          endLocally(spaceId, 'gone')
+          endLocally(spaceId, 'gone', isSpaceDeleted(error))
           return {}
         }
         ctx.report(error, 'sync')
@@ -1201,7 +1237,7 @@ export function createTerritoryEngine(deps: TerritoryEngineDeps) {
         await client.endHandoff(ctx.auth(member), scopeId, ctx.call())
       } catch (error) {
         if (isSpaceError(error, 'gone')) {
-          endLocally(spaceId, 'gone')
+          endLocally(spaceId, 'gone', isSpaceDeleted(error))
           return {}
         }
         throw error

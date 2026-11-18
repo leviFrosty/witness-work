@@ -48,7 +48,7 @@ export type TerritoriesState = {
     spaceId: string,
     change: (space: TerritorySpace) => TerritorySpace
   ) => void
-  removeSpace: (spaceId: string, keep?: Territory) => void
+  removeSpace: (spaceId: string, keep?: readonly Territory[]) => void
   setHouseRecords: (spaceId: string, on: boolean) => void
   reproject: () => void
   saveSeeding: (seeding: TerritorySeeding) => void
@@ -292,18 +292,18 @@ export const territoriesState: StateCreator<TerritoriesState> = (set) => {
         const next = change(space)
         return next === space ? state : withSpace(state, next)
       }),
-    removeSpace: (spaceId, keep) =>
+    removeSpace: (spaceId, keep = []) =>
       set((state) => {
         if (!state.spaces[spaceId]) return state
-        const kept = keep && !isDeleted(state.ledger[keep.id]) ? keep : null
+        const kept = keep.filter((t) => !isDeleted(state.ledger[t.id]))
+        const keepIds = new Set(keep.map((t) => t.id))
         const at = state.territories.findIndex(
           (t) => t.shared?.spaceId === spaceId
         )
         const territories = state.territories.filter(
-          (t) => t.shared?.spaceId !== spaceId && t.id !== keep?.id
+          (t) => t.shared?.spaceId !== spaceId && !keepIds.has(t.id)
         )
-        if (kept)
-          territories.splice(at === -1 ? territories.length : at, 0, kept)
+        territories.splice(at === -1 ? territories.length : at, 0, ...kept)
         return { spaces: without(state.spaces, spaceId), territories }
       }),
     setHouseRecords: (spaceId, on) =>

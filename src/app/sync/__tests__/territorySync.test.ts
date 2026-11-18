@@ -266,7 +266,7 @@ describe('territories in the sync payload', () => {
     useTerritories.getState().save(card())
     useTerritories.getState().remove(uuid(1))
     useTerritories.getState().saveSpace(ownSpace(T0 + 1))
-    useTerritories.getState().removeSpace('space-1', card())
+    useTerritories.getState().removeSpace('space-1', [card()])
     expect(useTerritories.getState().territories).toEqual([])
   })
 })

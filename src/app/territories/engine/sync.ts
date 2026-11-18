@@ -1,5 +1,6 @@
 import { toB64u } from '@/lib/bytes'
 import {
+  isSpaceDeleted,
   isSpaceError,
   putRecordBytes,
   SPACE_LIMITS,
@@ -66,7 +67,7 @@ const problemOf = (error: unknown): UnreadSpaceRecord['problem'] =>
 export type TerritorySync = ReturnType<typeof createSync>
 
 export type SyncHooks = {
-  endLocally: (spaceId: string, reason: 'gone') => void
+  endLocally: (spaceId: string, reason: 'gone', spaceDeleted: boolean) => void
   reissueInvites: (spaceId: string, member: SpaceMemberKeys) => Promise<void>
 }
 
@@ -799,7 +800,7 @@ export function createSync(
       return 'synced'
     } catch (error) {
       if (isSpaceError(error, 'gone')) {
-        hooks().endLocally(spaceId, 'gone')
+        hooks().endLocally(spaceId, 'gone', isSpaceDeleted(error))
         return 'ended'
       }
       throw error

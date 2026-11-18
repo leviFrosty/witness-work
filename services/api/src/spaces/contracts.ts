@@ -253,15 +253,20 @@ export const SPACES_ERROR_STATUS = {
 
 export type SpacesErrorCode = keyof typeof SPACES_ERROR_STATUS
 
-/** Why a guest link is `gone`: ended (by someone, or with its space), or past `expiresAt`. */
-export type SpacesGoneReason = 'ended' | 'expired'
+/**
+ * Why a request is `gone`. A guest link: ended (by someone, or with its
+ * space), or past `expiresAt`. A member op: `deleted` when the whole space
+ * was deleted; plain `gone` (no reason) when the space still exists but the
+ * caller isn't on it.
+ */
+export type SpacesGoneReason = 'ended' | 'expired' | 'deleted'
 
 /** A refusal; time-bound limits say how long to wait (`Retry-After`). */
 export type SpacesFailure = {
   ok: false
   error: SpacesErrorCode
   retryAfterSeconds?: number
-  /** Only on a guest op's `gone`. */
+  /** Only on `gone`: a guest op's, or a member op's on a deleted space. */
   reason?: SpacesGoneReason
 }
 
@@ -285,7 +290,7 @@ export const goneBecause = (reason: SpacesGoneReason): SpacesFailure => ({
 
 /**
  * A refusal in the shared envelope, as Buddies and accounts send theirs. A
- * guest op's `gone` adds `reason`.
+ * guest op's `gone`, or a member op's on a deleted space, adds `reason`.
  */
 export const spacesErrorResponse = (
   error: SpacesErrorCode,

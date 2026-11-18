@@ -83,9 +83,21 @@ export const territoriesFailureName = (error: unknown) =>
       ? error.name
       : 'unknown'
 
-function announceEnded({ title, reason }: TerritoryEnded) {
-  if (reason === 'gone')
-    toast.info(i18n.t('territories.share.ended_toast', { title }))
+function announceEnded({
+  spaceId,
+  title,
+  reason,
+  keptStreets,
+}: TerritoryEnded) {
+  if (reason !== 'gone') return
+  if (keptStreets > 0)
+    toast.news(i18n.t('territories.share.keptStreets_toast', { title }), {
+      key: `territory-ended:${spaceId}`,
+      message: i18n.t('territories.share.keptStreets_message', {
+        count: keptStreets,
+      }),
+    })
+  else toast.info(i18n.t('territories.share.ended_toast', { title }))
 }
 
 const spacesClient = createSpacesClient({

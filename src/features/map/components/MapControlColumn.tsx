@@ -1,10 +1,6 @@
 import { View } from 'react-native'
 import { Expand as ExpandIcon, Info as InfoIcon } from 'lucide-react-native'
 import Button from '@/components/ui/Button'
-import {
-  PanelTrailingCloseIcon,
-  PanelTrailingOpenIcon,
-} from '@/components/ui/DirectionalIcon'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Popover from '@/components/ui/Popover'
 import PointerTooltip from '@/components/ui/PointerTooltip'
@@ -30,7 +26,6 @@ export type MapControlsLayout = {
 export default function MapControlColumn({
   top,
   onFit,
-  stow,
   mapLayer,
   onChangeLayer,
   onLayout,
@@ -38,17 +33,12 @@ export default function MapControlColumn({
   top: number
 
   onFit: (() => void) | null
-
-  stow: { stowed: boolean; onToggle: () => void } | null
   mapLayer: MapLayer
   onChangeLayer: (layer: MapLayer) => void
   onLayout: (layout: MapControlsLayout) => void
 }) {
   const theme = useTheme()
   const controlStyle = mapControlStyle(theme.colors.card)
-  const stowLabel = i18n.t(
-    stow?.stowed ? 'map_showContactCards' : 'map_hideContactCards'
-  )
 
   return (
     <View
@@ -76,25 +66,6 @@ export default function MapControlColumn({
           >
             <LucideIcon
               icon={ExpandIcon}
-              size={theme.fontSize('sm')}
-              style={{ color: theme.colors.text }}
-            />
-          </Button>
-        </PointerTooltip>
-      )}
-      {}
-      {stow && (
-        <PointerTooltip label={stowLabel} {...MAP_CONTROL_TOOLTIP}>
-          <Button
-            accessibilityLabel={stowLabel}
-            variant='glass'
-            onPress={stow.onToggle}
-            style={controlStyle}
-          >
-            <LucideIcon
-              icon={
-                stow.stowed ? PanelTrailingOpenIcon : PanelTrailingCloseIcon
-              }
               size={theme.fontSize('sm')}
               style={{ color: theme.colors.text }}
             />

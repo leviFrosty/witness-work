@@ -1,8 +1,12 @@
 import { View } from 'react-native'
 import { FlashList, FlashListRef } from '@shopify/flash-list'
 import { ReactElement, useEffect, useRef, useState } from 'react'
+import Button from '@/components/ui/Button'
+import { PanelTrailingCloseIcon } from '@/components/ui/DirectionalIcon'
+import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
 import PointerHover from '@/components/ui/PointerHover'
+import PointerTooltip from '@/components/ui/PointerTooltip'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { logger } from '@/lib/logger'
@@ -26,6 +30,8 @@ interface Props {
   onSelect: (id: string) => void
 
   onHoverContact?: (id: string, hovered: boolean) => void
+
+  onHide?: () => void
 }
 
 export default function MapContactInspector({
@@ -36,6 +42,7 @@ export default function MapContactInspector({
   onSelect,
   onHoverContact,
   renderContactRow,
+  onHide,
 }: Props) {
   const theme = useTheme()
   const listRef = useRef<FlashListRef<ContactMarker>>(null)
@@ -91,12 +98,15 @@ export default function MapContactInspector({
       <View
         style={{
           padding: 16,
+          paddingEnd: onHide ? 8 : 16,
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 8,
         }}
       >
         <Text
           style={{
+            flex: 1,
             fontFamily: theme.fonts.bold,
             fontSize: theme.fontSize('lg'),
           }}
@@ -104,6 +114,30 @@ export default function MapContactInspector({
           {i18n.t('contacts_screen_title')}
         </Text>
         <Text style={{ color: theme.colors.textAlt }}>{contacts.length}</Text>
+        {onHide && (
+          <PointerTooltip label={i18n.t('map_hideContactList')}>
+            <Button
+              accessibilityLabel={i18n.t('map_hideContactList')}
+              onPress={onHide}
+              style={{
+                width: 44,
+                height: 44,
+                marginVertical: -12,
+                borderRadius: 22,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 0,
+                paddingVertical: 0,
+              }}
+            >
+              <LucideIcon
+                icon={PanelTrailingCloseIcon}
+                size={theme.fontSize('md')}
+                style={{ color: theme.colors.textAlt }}
+              />
+            </Button>
+          </PointerTooltip>
+        )}
       </View>
       <FlashList
         ref={listRef}

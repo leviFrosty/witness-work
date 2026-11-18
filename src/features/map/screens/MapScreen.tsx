@@ -4,6 +4,7 @@ import {
   Search as SearchIcon,
 } from 'lucide-react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
+import { PanelTrailingOpenIcon } from '@/components/ui/DirectionalIcon'
 import useGlassColorScheme from '@/hooks/useGlassColorScheme'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import MapView, { LatLng, Marker } from 'react-native-maps'
@@ -640,6 +641,11 @@ const FullMapView = ({
   const SEARCH_SPRING_OPEN = { damping: 18, stiffness: 180, mass: 0.9 }
   const SEARCH_SPRING_CLOSE = { damping: 22, stiffness: 200, mass: 0.9 }
 
+  const canStowList =
+    isWide &&
+    visibleContactMarkers.length >= 1 &&
+    !mapContactCreation.coordinate
+
   const toggleCardsStowed = () => {
     const stowed = !cardsStowed
 
@@ -1215,6 +1221,7 @@ const FullMapView = ({
                 index={conversationIndex}
                 onSelect={handlePinPress}
                 onHoverContact={pinHover.linkContact}
+                onHide={canStowList ? toggleCardsStowed : undefined}
               />
             </Animated.View>
           ) : (
@@ -1346,24 +1353,43 @@ const FullMapView = ({
           <MapControlColumn
             top={topInset + (hasMappedContacts ? 64 : 8)}
             onFit={visibleContactMarkers.length >= 1 ? fitToMarkers : null}
-            stow={
-              isWide &&
-              visibleContactMarkers.length >= 1 &&
-              !mapContactCreation.coordinate
-                ? { stowed: cardsStowed, onToggle: () => toggleCardsStowed() }
-                : null
-            }
             mapLayer={mapLayer}
             onChangeLayer={(mapLayer) => setPreferences({ mapLayer })}
             onLayout={setControlsLayout}
           />
+          {canStowList && cardsStowed && (
+            <View
+              style={{ position: 'absolute', top: topInset + 8, right: 16 }}
+            >
+              <PointerTooltip
+                label={i18n.t('map_showContactList')}
+                {...MAP_CONTROL_TOOLTIP}
+                placement='left'
+              >
+                <Button
+                  accessibilityLabel={i18n.t('map_showContactList')}
+                  variant='glass'
+                  onPress={toggleCardsStowed}
+                  style={mapControlStyle(theme.colors.card)}
+                >
+                  <LucideIcon
+                    icon={PanelTrailingOpenIcon}
+                    size={theme.fontSize('sm')}
+                    style={{ color: theme.colors.text }}
+                  />
+                </Button>
+              </PointerTooltip>
+            </View>
+          )}
           <MapTopChips
             top={topInset + 8}
             start={72}
             end={
               isWide && hasMappedContacts && !cardsStowed
                 ? inspectorWidth + 48
-                : 16
+                : canStowList && cardsStowed
+                  ? 16 + 44 + 8
+                  : 16
             }
             searchExpanded={searchExpanded}
             onFound={() => setFitRequest((request) => request + 1)}

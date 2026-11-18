@@ -37,6 +37,9 @@ import { usePreferences } from '@/stores/preferences'
 import i18n, { TranslationKey } from '@/lib/locales'
 import { analytics } from '@/lib/analytics'
 import RootHeader from '@/components/RootHeader'
+import TitleFitProbe, {
+  type TitleFit,
+} from '@/features/contacts/components/TitleFitProbe'
 import { ContactsView } from '@/types/homeStack'
 import Collapse from '@/components/ui/Collapse'
 import Empty from '@/components/ui/Empty'
@@ -121,6 +124,8 @@ const ContactsSearchInput = ({
   )
 }
 
+const HEADER_ACTION_GAP = 24
+
 const ContactsScreen = ({
   renderMap,
   focusSearch,
@@ -145,6 +150,17 @@ const ContactsScreen = ({
   const { height: windowHeight, fontScale } = useWindowDimensions()
   const navigation = useNavigation<RootStackNavigation>()
   const preferredView = usePreferences((s) => s.contactsView)
+  const [titleFit, setTitleFit] = useState<TitleFit>()
+  const [toggleWidth, setToggleWidth] = useState<number>()
+  const [toggleFitsHeader, setToggleFitsHeader] = useState(true)
+  useEffect(() => {
+    if (!titleFit || toggleWidth === undefined) return
+    setToggleFitsHeader((inHeader) =>
+      inHeader
+        ? titleFit.room >= titleFit.needs
+        : titleFit.room - (toggleWidth + HEADER_ACTION_GAP) >= titleFit.needs
+    )
+  }, [titleFit, toggleWidth])
   const contactsView = view ?? preferredView
   const hasCompletedMapOnboarding = usePreferences(
     (s) => s.hasCompletedMapOnboarding
@@ -378,6 +394,22 @@ const ContactsScreen = ({
   ]
 
   const hasMoreActions = moreActions.flat().some(Boolean)
+  const stacksViewToggle = fontScale > 1.3
+  const viewToggle = view ? null : (
+    <View
+      onLayout={(e) => setToggleWidth(e.nativeEvent.layout.width)}
+      style={stacksViewToggle ? { alignSelf: 'stretch' } : undefined}
+    >
+      <ContactsViewToggle
+        value={contactsView}
+        onChange={changeView}
+        disabled={selection.selecting}
+        style={stacksViewToggle ? { alignSelf: 'stretch' } : undefined}
+      />
+    </View>
+  )
+
+  const togglesInHeader = showsMap && !stacksViewToggle && toggleFitsHeader
   const headerActions = selection.selecting ? (
     <>
       <SelectionTextButton
@@ -391,7 +423,8 @@ const ContactsScreen = ({
       />
     </>
   ) : (
-    <>
+    <TitleFitProbe onFit={setTitleFit}>
+      {togglesInHeader && viewToggle}
       {hasMoreActions && (
         <PointerTooltip label={i18n.t('moreActions')} effect='none'>
           <PullDownMenu
@@ -433,17 +466,7 @@ const ContactsScreen = ({
           }}
         />
       </PointerTooltip>
-    </>
-  )
-
-  const stacksViewToggle = fontScale > 1.3
-  const viewToggle = view ? null : (
-    <ContactsViewToggle
-      value={contactsView}
-      onChange={changeView}
-      disabled={selection.selecting}
-      style={stacksViewToggle ? { alignSelf: 'stretch' } : undefined}
-    />
+    </TitleFitProbe>
   )
 
   const rowState = [selection.selected, isWide, selectedContact?.id] as const
@@ -699,7 +722,7 @@ const ContactsScreen = ({
             actions={headerActions}
             contentStyle={[{ maxWidth: isWide ? 1200 : 720 }, foldColumn]}
           >
-            {showsMap && viewToggle && (
+            {showsMap && viewToggle && !togglesInHeader && (
               <FoldSplit
                 gap={0}
                 leadingWidth={isWide ? LIST_COLUMN_WIDTH : undefined}

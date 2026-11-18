@@ -94,6 +94,7 @@ const CLEARED_MMKV = [
   'stopwatch',
   'cloud-sync-slots',
   'cloud-sync-changes',
+  'reload-restore',
 ]
 
 const KEPT_MMKV: Record<string, string> = {

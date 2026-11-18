@@ -163,3 +163,10 @@ describe('links on a cold start', () => {
     expect(listener).toHaveBeenCalledWith('witnesswork://day')
   })
 })
+
+describe('tab addresses on native', () => {
+  it("leave a shared contact's link to the contact import, not the Contacts tab", async () => {
+    const { getStateFromPath } = await import('@react-navigation/core')
+    expect(getStateFromPath('/contacts', linking.config)).toBeUndefined()
+  })
+})

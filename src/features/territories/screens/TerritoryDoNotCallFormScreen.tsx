@@ -36,6 +36,7 @@ import {
   useTerritory,
 } from '@/features/territories/stores/territories'
 import type { RootStackParamList } from '@/types/rootStack'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TerritoryDoNotCall'>
 
@@ -69,9 +70,15 @@ export default function TerritoryDoNotCallFormScreen({
       )
     : undefined
   const initial = territory && entry && doNotCallField(territory, entry)
-  const [text, setText] = useState(initial?.text ?? '')
-  const [date, setDate] = useState(new Date(entry?.at ?? Date.now()))
-  const [coordinate, setCoordinate] = useState(entry?.coordinate)
+  const [text, setText] = useReloadState('text', initial?.text ?? '')
+  const [date, setDate] = useReloadState(
+    'date',
+    new Date(entry?.at ?? Date.now())
+  )
+  const [coordinate, setCoordinate] = useReloadState(
+    'coordinate',
+    entry?.coordinate
+  )
   const [placing, setPlacing] = useState(false)
 
   const field = initial?.field ?? 'address'

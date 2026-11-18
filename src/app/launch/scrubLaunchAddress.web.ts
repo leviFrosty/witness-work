@@ -58,9 +58,10 @@ export function scrubAddress(
   const devLocal = variant === 'development' && LOCAL_HOSTS.has(hostname)
 
   const link = scrubbed.forwardTo ? null : readWebLinkAddress(buyGate.url)
+  const isContactsTab = link?.kind === 'contact' && link.link === null
   return {
     forwardTo: scrubbed.forwardTo,
-    url: link ? `${origin}/` : buyGate.url,
+    url: link && !isContactsTab ? `${origin}/` : buyGate.url,
     appUserId: scrubbed.forwardTo ? null : scrubbed.appUserId,
     forwarded: scrubbed.forwarded,
     devCountry: devLocal ? country.value : null,

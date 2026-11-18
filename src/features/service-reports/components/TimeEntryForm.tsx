@@ -78,6 +78,7 @@ import { canonicalJson } from '@/lib/canonicalJson'
 import type { Category } from '@/types/category'
 import usePublisher from '@/hooks/usePublisher'
 import { timeSavedProgress } from '@/features/service-reports/lib/timeSavedProgress'
+import { useReloadState } from '@/lib/reloadRestore'
 
 export type TimeEntryPrefill = {
   date?: Date
@@ -95,6 +96,8 @@ export type TimeEntryDraft = {
 
 type Props = TimeEntryPrefill & {
   existingReport?: TimeEntry
+
+  restoreOnReload?: boolean
 
   source: 'time_entry_form' | 'day_sheet'
 
@@ -163,6 +166,7 @@ const snapshot = (draft: FormDraft) =>
   canonicalJson({ entry: withNote(draft.entry), selectedValue: draft.type })
 
 const TimeEntryForm = (props: Props) => {
+  const restoreOnReload = props.restoreOnReload ?? false
   const formAtTop = useFormAtTopOnWeb()
   const theme = useTheme()
   const cardStyle = useCardStyle()
@@ -188,20 +192,35 @@ const TimeEntryForm = (props: Props) => {
     dayPlans,
     recurringPlans,
   } = useServiceReport()
-  const [editing, setEditing] = useState(props.existingReport)
+  const [editing, setEditing] = useReloadState(
+    restoreOnReload ? 'editing' : null,
+    props.existingReport
+  )
   const existingServiceReport = getReport(serviceReports, editing)
   const editingInPlace = !props.existingReport && !!existingServiceReport
 
-  const [initial] = useState(() =>
+  const [initial] = useReloadState(restoreOnReload ? 'initial' : null, () =>
     draftFor(existingServiceReport?.report, props, categories)
   )
-  const [selectedValue, setSelectedValue] = useState<string>(initial.type)
+  const [selectedValue, setSelectedValue] = useReloadState<string>(
+    restoreOnReload ? 'selectedValue' : null,
+    initial.type
+  )
 
   const [durationInput, setDurationInput] = useState<DurationInputMethod>()
   const [dateInput, setDateInput] = useState<DateInputMethod>()
-  const [serviceReport, setServiceReport] = useState<TimeEntry>(initial.entry)
-  const [baseline, setBaseline] = useState(() => snapshot(initial))
-  const [parked, setParked] = useState<ParkedDraft>()
+  const [serviceReport, setServiceReport] = useReloadState<TimeEntry>(
+    restoreOnReload ? 'serviceReport' : null,
+    initial.entry
+  )
+  const [baseline, setBaseline] = useReloadState(
+    restoreOnReload ? 'baseline' : null,
+    () => snapshot(initial)
+  )
+  const [parked, setParked] = useReloadState<ParkedDraft | undefined>(
+    restoreOnReload ? 'parked' : null,
+    undefined
+  )
   const validation = useFormValidation(
     {
       duration: serviceReport.hours * 60 + serviceReport.minutes <= 0,

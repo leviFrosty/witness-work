@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import * as Crypto from 'expo-crypto'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { View } from 'react-native'
@@ -30,6 +30,7 @@ import {
 } from '@/features/territories/stores/territories'
 import type { StreetNumbering } from '@/features/territories/types/territory'
 import type { RootStackParamList } from '@/types/rootStack'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TerritoryStreetForm'>
 
@@ -53,13 +54,23 @@ export default function TerritoryStreetFormScreen({
     if (gone) navigation.goBack()
   }, [gone, navigation])
 
-  const [name, setName] = useState(existing?.name ?? '')
-  const [numbering, setNumbering] = useState<StreetNumbering>(
+  const [name, setName] = useReloadState('name', existing?.name ?? '')
+  const [numbering, setNumbering] = useReloadState<StreetNumbering>(
+    'numbering',
     existing?.numbering ?? 'both'
   )
-  const [next, setNext] = useState(existing ? String(existing.next) : '1')
-  const [descending, setDescending] = useState(existing?.descending ?? false)
-  const [pinChoice, setPinChoice] = useState(existing?.saveLocations)
+  const [next, setNext] = useReloadState(
+    'next',
+    existing ? String(existing.next) : '1'
+  )
+  const [descending, setDescending] = useReloadState(
+    'descending',
+    existing?.descending ?? false
+  )
+  const [pinChoice, setPinChoice] = useReloadState(
+    'pinChoice',
+    existing?.saveLocations
+  )
   const pinDoors = savesDoorLocations({ numbering, saveLocations: pinChoice })
 
   const validation = useFormValidation(

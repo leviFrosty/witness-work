@@ -1,5 +1,4 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { useState } from 'react'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -46,6 +45,7 @@ import HistoryList from '@/features/mileage/components/HistoryList'
 import { fuelCarName } from '@/features/mileage/lib/fuelLabel'
 import type { RootStackParamList } from '@/types/rootStack'
 import type { FuelUnit } from '@/types/mileage'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageFuelForm'>
 
@@ -63,7 +63,10 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
   const history = existing ? (index.pricesByFuel.get(existing.id) ?? []) : []
   const today = toDateKey(new Date())
   const current = effectiveEntry(history, today)
-  const [pickedUnit, setUnit] = useState<FuelUnit | undefined>()
+  const [pickedUnit, setUnit] = useReloadState<FuelUnit | undefined>(
+    'pickedUnit',
+    undefined
+  )
   const unit = existing ? existing.unit : pickedUnit
   const toInput = (pricePerGallon?: number) =>
     pricePerGallon === undefined
@@ -73,10 +76,18 @@ export default function MileageFuelFormScreen({ route, navigation }: Props) {
           3
         )
 
-  const [name, setName] = useState(existing?.name ?? '')
-  const [price, setPrice] = useState(() => toInput(current?.pricePerGallon))
-  const [changeMode, setChangeMode] = useState<HistoryChangeMode>('starting')
-  const [changeDate, setChangeDate] = useState(() => new Date())
+  const [name, setName] = useReloadState('name', existing?.name ?? '')
+  const [price, setPrice] = useReloadState('price', () =>
+    toInput(current?.pricePerGallon)
+  )
+  const [changeMode, setChangeMode] = useReloadState<HistoryChangeMode>(
+    'changeMode',
+    'starting'
+  )
+  const [changeDate, setChangeDate] = useReloadState(
+    'changeDate',
+    () => new Date()
+  )
 
   const priceValue = parseDecimal(price)
   const priceChanged = price !== toInput(current?.pricePerGallon)

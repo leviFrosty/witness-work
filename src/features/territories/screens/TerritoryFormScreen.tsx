@@ -54,6 +54,7 @@ import {
 } from '@/features/territories/stores/territories'
 import type { Coordinate } from '@/types/contact'
 import type { RootStackParamList } from '@/types/rootStack'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TerritoryForm'>
 
@@ -79,21 +80,27 @@ function TerritoryForm({ route, navigation }: Props) {
     if (gone) navigation.popTo('Root', { screen: 'Territories' } as never)
   }, [gone, navigation])
 
-  const [number, setNumber] = useState(existing?.number ?? '')
-  const [name, setName] = useState(existing?.name ?? '')
-  const [link, setLink] = useState(existing?.link ?? '')
-  const [pin, setPin] = useState<Pin | undefined>(
+  const [number, setNumber] = useReloadState('number', existing?.number ?? '')
+  const [name, setName] = useReloadState('name', existing?.name ?? '')
+  const [link, setLink] = useReloadState('link', existing?.link ?? '')
+  const [pin, setPin] = useReloadState<Pin | undefined>(
+    'pin',
     existing?.coordinate && {
       coordinate: existing.coordinate,
       source: 'manual',
     }
   )
   const [photo, setPhoto] = useState(existing?.photo)
-  const [outline, setOutline] = useState<Coordinate[]>(existing?.outline ?? [])
-  const [checkedOut, setCheckedOut] = useState(
+  const [outline, setOutline] = useReloadState<Coordinate[]>(
+    'outline',
+    existing?.outline ?? []
+  )
+  const [checkedOut, setCheckedOut] = useReloadState(
+    'checkedOut',
     () => new Date(existing?.checkedOutAt ?? Date.now())
   )
-  const [due, setDue] = useState<Date | undefined>(
+  const [due, setDue] = useReloadState<Date | undefined>(
+    'due',
     existing?.returnBy === undefined ? undefined : new Date(existing.returnBy)
   )
   const [editor, setEditor] = useState<MapEditor | null>(null)

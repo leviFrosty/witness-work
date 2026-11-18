@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import moment from 'moment'
 import useServiceReport from '@/stores/serviceReport'
 import { TimeEntry } from '@/types/timeEntry'
@@ -12,6 +12,7 @@ import { RootStackNavigation, RootStackParamList } from '@/types/rootStack'
 import TimeEntryForm from '@/features/service-reports/components/TimeEntryForm'
 import { resetStopwatchSession } from '@/features/service-reports/hooks/useStopWatch'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type AddTimeScreenProps = NativeStackScreenProps<RootStackParamList, 'Add Time'>
 
@@ -21,10 +22,11 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
   const existingReport: TimeEntry | undefined = route.params?.existingReport
     ? JSON.parse(route.params.existingReport)
     : undefined
-  const [editing, setEditing] = useState(
+  const [editing, setEditing] = useReloadState(
+    'editing',
     () => !!getReport(serviceReports, existingReport)
   )
-  const [changed, setChanged] = useState(false)
+  const [changed, setChanged] = useReloadState('changed', false)
   const allowLeave = useDiscardChangesGuard(changed)
 
   useEffect(() => {
@@ -43,6 +45,7 @@ const AddTimeScreen = ({ route }: AddTimeScreenProps) => {
     <Wrapper insets='none' style={{ flex: 1 }}>
       <TimeEntryForm
         existingReport={existingReport}
+        restoreOnReload
         date={
           route.params?.date ? moment(route.params.date).toDate() : undefined
         }

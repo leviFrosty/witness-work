@@ -1,5 +1,5 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -53,6 +53,7 @@ import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
 import type { RootStackParamList } from '@/types/rootStack'
 import type { MileageEntryMode, Trip } from '@/types/mileage'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MileageTripForm'>
 
@@ -79,11 +80,12 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
       ? ''
       : formatEditableNumber(milesToDistance(miles, unit), 1)
 
-  const [date, setDate] = useState(() =>
+  const [date, setDate] = useReloadState('date', () =>
     existing ? fromDateKey(existing.date).toDate() : new Date()
   )
 
-  const [chosenVehicleId, setVehicleId] = useState(
+  const [chosenVehicleId, setVehicleId] = useReloadState(
+    'chosenVehicleId',
     () =>
       template?.vehicleId ??
       defaultVehicleId(
@@ -95,15 +97,18 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
   const vehicleId = vehicles.some((v) => v.id === chosenVehicleId)
     ? chosenVehicleId
     : undefined
-  const [mode, setMode] = useState<MileageEntryMode>(() =>
+  const [mode, setMode] = useReloadState<MileageEntryMode>('mode', () =>
     template
       ? template.odometerEndMiles !== undefined
         ? 'odometer'
         : 'distance'
       : mileageEntryMode
   )
-  const [roundTrip, setRoundTrip] = useState(template?.roundTrip ?? false)
-  const [distance, setDistance] = useState(() =>
+  const [roundTrip, setRoundTrip] = useReloadState(
+    'roundTrip',
+    template?.roundTrip ?? false
+  )
+  const [distance, setDistance] = useReloadState('distance', () =>
     template && template.odometerEndMiles === undefined
       ? toInput(
           template.roundTrip
@@ -113,15 +118,17 @@ export default function MileageTripFormScreen({ route, navigation }: Props) {
       : ''
   )
 
-  const [odometerStart, setOdometerStart] = useState<string | null>(() =>
-    existing?.odometerStartMiles !== undefined
-      ? toInput(existing.odometerStartMiles)
-      : null
+  const [odometerStart, setOdometerStart] = useReloadState<string | null>(
+    'odometerStart',
+    () =>
+      existing?.odometerStartMiles !== undefined
+        ? toInput(existing.odometerStartMiles)
+        : null
   )
-  const [odometerEnd, setOdometerEnd] = useState(() =>
+  const [odometerEnd, setOdometerEnd] = useReloadState('odometerEnd', () =>
     toInput(existing?.odometerEndMiles)
   )
-  const [note, setNote] = useState<NoteFields>({
+  const [note, setNote] = useReloadState<NoteFields>('note', {
     note: template?.note,
     noteDoc: template?.noteDoc,
   })

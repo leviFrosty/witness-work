@@ -1,5 +1,5 @@
 import useFormValidation from '@/hooks/useFormValidation'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import ContentColumn from '@/components/ui/layout/ContentColumn'
 import { Alert, type AlertButton, View } from 'react-native'
 import * as Crypto from 'expo-crypto'
@@ -54,6 +54,7 @@ import HistoryList from '@/features/mileage/components/HistoryList'
 import SharedCarsNotice from '@/features/mileage/components/SharedCarsNotice'
 import { carRemoval } from '@/features/mileage/lib/carRemoval'
 import type { RootStackParamList } from '@/types/rootStack'
+import { useReloadState } from '@/lib/reloadRestore'
 
 export type CarPeopleSlot = (props: { vehicleId: string }) => ReactNode
 
@@ -98,14 +99,20 @@ export default function MileageVehicleFormScreen({
       ? current.fuelId
       : NO_FUEL
 
-  const [typedName, setName] = useState<string | null>(null)
-  const [pickedFuel, setFuel] = useState<string | null>(null)
-  const [typedEconomy, setEconomy] = useState<string | null>(null)
-  const [newFuelName, setNewFuelName] = useState('')
-  const [typedPrice, setPrice] = useState<{
+  const [typedName, setName] = useReloadState<string | null>('typedName', null)
+  const [pickedFuel, setFuel] = useReloadState<string | null>(
+    'pickedFuel',
+    null
+  )
+  const [typedEconomy, setEconomy] = useReloadState<string | null>(
+    'typedEconomy',
+    null
+  )
+  const [newFuelName, setNewFuelName] = useReloadState('newFuelName', '')
+  const [typedPrice, setPrice] = useReloadState<{
     fuel: string
     value: string
-  } | null>(null)
+  } | null>('typedPrice', null)
   const name = typedName ?? existing?.name ?? ''
 
   const fuel =
@@ -148,8 +155,14 @@ export default function MileageVehicleFormScreen({
           1
         )
   const economy = typedEconomy ?? savedEconomy
-  const [changeMode, setChangeMode] = useState<HistoryChangeMode>('starting')
-  const [changeDate, setChangeDate] = useState(() => new Date())
+  const [changeMode, setChangeMode] = useReloadState<HistoryChangeMode>(
+    'changeMode',
+    'starting'
+  )
+  const [changeDate, setChangeDate] = useReloadState(
+    'changeDate',
+    () => new Date()
+  )
 
   const economyValue = parseDecimal(economy)
   const setupChanged = fuel !== currentFuel || economy !== savedEconomy

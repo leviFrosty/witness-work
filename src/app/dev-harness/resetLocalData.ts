@@ -52,6 +52,7 @@ import { useSavedRoutes } from '@/features/route-planning/stores/savedRoutes'
 import { useTerritories } from '@/features/territories/stores/territories'
 import { useTerritoriesView } from '@/features/territories/stores/territoriesView'
 import { useTerritoryVisits } from '@/features/territories/stores/territoryVisits'
+import { forgetReloadRestore } from '@/lib/reloadRestore'
 
 type ResettableStore = {
   getInitialState: () => unknown
@@ -128,6 +129,7 @@ export function resetLocalData() {
 
   forgetDeviceInviteSecrets()
   void Stopwatch.reset()
+  forgetReloadRestore()
 
   rebasePublishedPhotos()
 }

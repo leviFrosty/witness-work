@@ -59,7 +59,11 @@ import { useCalendarSync } from '@/app/calendar/useCalendarSync'
 import { useICloudSync } from '@/app/sync/useICloudSync'
 import { useAccountBackup } from '@/app/account/useAccountBackup'
 import { useAppFonts } from '@/app/useAppFonts'
-import { linking, navigationRef } from '@/features/contacts/lib/linking'
+import {
+  linking,
+  navigationRef,
+  rememberNavigationState,
+} from '@/features/contacts/lib/linking'
 import { stopRecordingLaunchLinks } from '@/lib/launchLinks'
 import { analytics } from '@/lib/analytics'
 import { PointerTooltipLayer } from '@/components/ui/PointerTooltip'
@@ -140,6 +144,9 @@ export default function UnlockedApp() {
                       linking={linking}
                       fallback={<LaunchSplash />}
                       onReady={() => {
+                        rememberNavigationState(
+                          navigationRef.current?.getRootState()
+                        )
                         stopRecordingLaunchLinks()
                         markLaunched()
                         reportLaunch()
@@ -149,7 +156,8 @@ export default function UnlockedApp() {
                         routeNameRef.current = initialScreen
                         if (initialScreen) analytics.screen(initialScreen)
                       }}
-                      onStateChange={() => {
+                      onStateChange={(state) => {
+                        rememberNavigationState(state)
                         const previousScreen = routeNameRef.current
                         const currentScreen =
                           navigationRef.current?.getCurrentRoute()?.name

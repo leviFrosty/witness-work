@@ -39,6 +39,7 @@ import { isRetryableGeocodeFailure } from '@/lib/geocodeRetry'
 import { useGeocodeRetry } from '@/stores/geocodeRetry'
 import useDiscardChangesGuard from '@/hooks/useDiscardChangesGuard'
 import useDraftChanged from '@/hooks/useDraftChanged'
+import { useReloadState } from '@/lib/reloadRestore'
 import { contactDraftForChanges } from '@/features/contacts/lib/contactDraft'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 
@@ -109,7 +110,8 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
         country: '',
       }
 
-  const [contact, setContact] = useState<Contact>(
+  const [contact, setContact] = useReloadState<Contact>(
+    'contact',
     contactToUpdate || {
       id: route.params.id,
       createdAt: new Date(),

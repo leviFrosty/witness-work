@@ -9,7 +9,7 @@ test('Home', async ({ app, shot }) => {
 
 test('Contacts', async ({ app, shot }) => {
   await app.getByRole('button', { name: 'Contacts', exact: true }).click()
-  await expect(app).toHaveURL(/\/Contacts$/)
+  await expect(app).toHaveURL(/\/contacts$/)
   await expect(app.getByRole('button', { name: 'Sort & Filter' })).toBeVisible()
   await shot('contacts')
 })

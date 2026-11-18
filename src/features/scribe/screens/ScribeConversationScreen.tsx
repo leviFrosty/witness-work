@@ -33,6 +33,7 @@ import ScribeComposer from '@/features/scribe/components/ScribeComposer'
 import ScribeTimeline from '@/features/scribe/components/ScribeTimeline'
 import ScribeVoiceSheet from '@/features/scribe/components/ScribeVoiceSheet'
 import type { RenderSupporterCta } from '@/features/scribe/components/ScribeStateCards'
+import { useReloadState } from '@/lib/reloadRestore'
 
 const sentSubmitIds = new Set<string>()
 
@@ -58,8 +59,11 @@ const Conversation = ({
   const { usage } = useScribeUsage()
   const photo = useScribePhotoCapture()
   const paper = useScribePaperCapture()
-  const [draft, setDraft] = useState('')
-  const [draftSource, setDraftSource] = useState<ScribeInputSource>('keyboard')
+  const [draft, setDraft] = useReloadState('draft', '')
+  const [draftSource, setDraftSource] = useReloadState<ScribeInputSource>(
+    'draftSource',
+    'keyboard'
+  )
 
   const [voice, setVoice] = useState<'conversation' | 'say_a_change' | null>(
     null
@@ -98,7 +102,7 @@ const Conversation = ({
       setDraftSource('paper')
       forgoScribeResume()
     })
-  }, [paperPages, navigation, paper])
+  }, [paperPages, navigation, paper, setDraft, setDraftSource])
 
   const draftText = params.draftText
   useEffect(() => {
@@ -112,7 +116,7 @@ const Conversation = ({
 
     const timer = setTimeout(() => inputRef.current?.focus(), 450)
     return () => clearTimeout(timer)
-  }, [draftText, navigation])
+  }, [draftText, navigation, setDraft, setDraftSource])
 
   const focusComposer = params.focusComposer
   useEffect(() => {

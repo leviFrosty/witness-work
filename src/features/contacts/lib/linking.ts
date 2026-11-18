@@ -1,11 +1,15 @@
 import {
   LinkingOptions,
+  NavigationState,
   createNavigationContainerRef,
+  getPathFromState,
+  getStateFromPath,
 } from '@react-navigation/native'
 import * as Linking from 'expo-linking'
 import { APP_LINK_HOSTS } from '@/constants/appLinks'
 import { launchURL, linkSinceLaunch } from '@/lib/launchLinks'
-import { webLinkingScreens } from '@/lib/webLinkingScreens'
+import { rememberNavigation, restoredNavigation } from '@/lib/reloadRestore'
+import { webLinkingScreens, webTabScreens } from '@/lib/webLinkingScreens'
 import { usePreferences } from '@/stores/preferences'
 import { afterTakeovers } from '@/stores/takeover'
 import { RootStackParamList } from '@/types/rootStack'
@@ -31,6 +35,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
           Home: 'home',
 
           Schedule: 'schedule/:date?',
+          ...webTabScreens,
         },
       },
 
@@ -43,6 +48,9 @@ export const linking: LinkingOptions<RootStackParamList> = {
       ...webLinkingScreens,
     },
   },
+
+  getStateFromPath: (path, options) =>
+    restoredNavigation(path) ?? getStateFromPath(path, options),
 
   async getInitialURL() {
     const url = await launchURL('navigation')
@@ -80,6 +88,10 @@ export const linking: LinkingOptions<RootStackParamList> = {
       subscription.remove()
     }
   },
+}
+
+export function rememberNavigationState(state: NavigationState | undefined) {
+  rememberNavigation(state, state && getPathFromState(state, linking.config))
 }
 
 function afterOnboarding(run: () => void): () => void {

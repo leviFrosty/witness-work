@@ -189,6 +189,13 @@ describe('links the web app opens (docs/app-links.md "Without the app")', () => 
     expect(pendingWebLink.current()).toBeNull()
   })
 
+  it('keeps /contacts without a fragment, the Contacts tab a reload comes back to', () => {
+    const { window, history } = page('https://app.witnesswork.app/contacts')
+    scrubLaunchAddress(window, 'production')
+    expect(history.replaceState).not.toHaveBeenCalled()
+    expect(pendingWebLink.current()).toBeNull()
+  })
+
   it('leaves other fragments alone', () => {
     const { window, history } = page('https://app.witnesswork.app/home#top')
     scrubLaunchAddress(window, 'production')

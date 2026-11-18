@@ -11,7 +11,7 @@ import { Modal, Pressable, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import useServiceReport from '@/stores/serviceReport'
 import * as Crypto from 'expo-crypto'
-import { Ref, useEffect, useImperativeHandle, useState } from 'react'
+import { Ref, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { toast } from '@/stores/toasts'
 import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
@@ -92,6 +92,7 @@ import { useFormattedMinutes } from '@/lib/minutes'
 import { richTextImages } from '@/lib/richText/inspect'
 import { getNoteDoc, hasNote, noteFields } from '@/lib/richText/notes'
 import type { NoteFields } from '@/types/richText'
+import { useReloadState } from '@/lib/reloadRestore'
 
 type NotifyMeOffset = {
   amount: number
@@ -466,8 +467,9 @@ const PlanDayForm = ({
   const planMinutes = usePreferences((s) => s.planMinutes)
   const newPlanMinutes = isEditMode ? 0 : (prefill?.minutes ?? planMinutes)
 
-  const [oneTime, setOneTime] = useState(initialOneTime)
-  const [date, setDate] = useState(
+  const [oneTime, setOneTime] = useReloadState('oneTime', initialOneTime)
+  const [date, setDate] = useReloadState(
+    'date',
     existingDayPlan
       ? combineDateAndStartTime(
           existingDayPlan.date,
@@ -480,38 +482,47 @@ const PlanDayForm = ({
           )
         : combineDateAndStartTime(defaultStoredDate, prefillStartTime)
   )
-  const [endDate, setEndDate] = useState<Date | null>(initialEndDate)
-  const [willEnd, setWillEnd] = useState(!!initialEndDate)
-  const [hours, setHours] = useState(
+  const [endDate, setEndDate] = useReloadState<Date | null>(
+    'endDate',
+    initialEndDate
+  )
+  const [willEnd, setWillEnd] = useReloadState('willEnd', !!initialEndDate)
+  const [hours, setHours] = useReloadState(
+    'hours',
     existingDayPlan
       ? Math.floor(existingDayPlan.minutes / 60)
       : recurringPlanData
         ? Math.floor(recurringPlanData.minutes / 60)
         : Math.floor(newPlanMinutes / 60)
   )
-  const [minutes, setMinutes] = useState(
+  const [minutes, setMinutes] = useReloadState(
+    'minutes',
     existingDayPlan
       ? existingDayPlan.minutes % 60
       : recurringPlanData
         ? recurringPlanData.minutes % 60
         : newPlanMinutes % 60
   )
-  const [interval, setInterval] = useState<number>(
+  const [interval, setInterval] = useReloadState<number>(
+    'interval',
     existingRecurringPlan?.recurrence.interval ??
       prefillRecurrence?.interval ??
       1
   )
-  const [frequency, setFrequency] = useState<RecurringPlanFrequencies>(
+  const [frequency, setFrequency] = useReloadState<RecurringPlanFrequencies>(
+    'frequency',
     existingRecurringPlan?.recurrence.frequency ??
       prefillRecurrence?.frequency ??
       RecurringPlanFrequencies.WEEKLY
   )
-  const [weekday, setWeekday] = useState(
+  const [weekday, setWeekday] = useReloadState(
+    'weekday',
     existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekday ??
       prefillRecurrence?.weekday ??
       0
   )
-  const [weekOfMonth, setWeekOfMonth] = useState(
+  const [weekOfMonth, setWeekOfMonth] = useReloadState(
+    'weekOfMonth',
     existingRecurringPlan?.recurrence.monthlyByWeekdayConfig?.weekOfMonth ??
       prefillRecurrence?.weekOfMonth ??
       1
@@ -532,7 +543,10 @@ const PlanDayForm = ({
     }
     return STANDARD_TYPE_VALUE
   }
-  const [typeValue, setTypeValue] = useState<string>(resolveInitialTypeValue)
+  const [typeValue, setTypeValue] = useReloadState<string>(
+    'typeValue',
+    resolveInitialTypeValue
+  )
 
   const handleTypeChange = ({ value }: TypeSelection) => {
     setTypeValue(value)
@@ -605,23 +619,26 @@ const PlanDayForm = ({
     const source = existingDayPlan ?? recurringPlanData ?? prefill
     return source ? { note: source.note, noteDoc: source.noteDoc } : {}
   }
-  const [note, setNote] = useState<NoteFields>(initialNote)
+  const [note, setNote] = useReloadState<NoteFields>('note', initialNote)
 
   const savedNote = noteFields(getNoteDoc(note))
-  const [title, setTitle] = useState(
+  const [title, setTitle] = useReloadState(
+    'title',
     existingDayPlan?.title ??
       existingRecurringPlan?.title ??
       prefill?.title ??
       ''
   )
-  const [location, setLocation] = useState<PlanLocation | undefined>(
+  const [location, setLocation] = useReloadState<PlanLocation | undefined>(
+    'location',
     existingDayPlan?.location ??
       existingRecurringPlan?.location ??
       prefill?.location
   )
   const initialInvitedBuddies =
     existingDayPlan?.buddies ?? prefill?.buddies ?? []
-  const [invitedBuddies, setInvitedBuddies] = useState<string[]>(
+  const [invitedBuddies, setInvitedBuddies] = useReloadState<string[]>(
+    'invitedBuddies',
     initialInvitedBuddies
   )
 
@@ -664,7 +681,7 @@ const PlanDayForm = ({
       ? !!recurringPlanData?.anytime
       : (prefill?.anytime ??
         (prefill?.startTime ? false : planTimeMode === 'hours'))
-  const [anytime, setAnytime] = useState(initialAnytime)
+  const [anytime, setAnytime] = useReloadState('anytime', initialAnytime)
   const { allowed: notificationsAllowed, turnOn: turnOnNotifications } =
     useNotifications()
 
@@ -694,8 +711,12 @@ const PlanDayForm = ({
     : existingRecurringPlan
       ? !!existingRecurringPlan.notifyMe
       : (prefill?.notifyMe ?? planAlwaysNotify)
-  const [notifyMe, setNotifyMe] = useState<boolean>(initialNotifyMe)
-  const [notifyMeOffset, setNotifyMeOffset] = useState<NotifyMeOffset>(
+  const [notifyMe, setNotifyMe] = useReloadState<boolean>(
+    'notifyMe',
+    initialNotifyMe
+  )
+  const [notifyMeOffset, setNotifyMeOffset] = useReloadState<NotifyMeOffset>(
+    'notifyMeOffset',
     initialNotifyOffset()
   )
 
@@ -736,8 +757,11 @@ const PlanDayForm = ({
   const theme = useTheme()
 
   const editingContext = `${params.existingDayPlanId || 'new'}-${params.existingRecurringPlanId || 'new'}-${params.recurringPlanDate || params.date}-${params.recurring ? 'recurring' : ''}-${JSON.stringify(prefill ?? null)}`
+  const filledFor = useRef(editingContext)
 
   useEffect(() => {
+    if (filledFor.current === editingContext) return
+    filledFor.current = editingContext
     setOneTime(initialOneTime)
     setAnytime(initialAnytime)
     setDate(

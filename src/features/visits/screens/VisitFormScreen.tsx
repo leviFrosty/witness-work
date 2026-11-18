@@ -10,7 +10,7 @@ import Switch from '@/components/ui/Switch'
 import Text from '@/components/ui/MyText'
 import * as Crypto from 'expo-crypto'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Header from '@/components/ui/layout/Header'
 import { webTextTargetFrame } from '@/components/ui/touchTarget'
 import useTheme from '@/contexts/theme'
@@ -62,6 +62,7 @@ import useDraftChanged from '@/hooks/useDraftChanged'
 import { newVisitIsBibleStudy, plannedFollowUpTopic } from '@/lib/conversations'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { useReloadState } from '@/lib/reloadRestore'
 
 export type FollowUpBuddiesSlot = (props: {
   visitId: string
@@ -209,7 +210,8 @@ const VisitFormScreen = ({
     }
   }
 
-  const [notifyMeOffset, setNotifyMeOffset] = useState<MomentOffset>(
+  const [notifyMeOffset, setNotifyMeOffset] = useReloadState<MomentOffset>(
+    'notifyMeOffset',
     initialNotifyMeOffset()
   )
 
@@ -235,7 +237,8 @@ const VisitFormScreen = ({
       .toDate()
   }
 
-  const [bibleStudyPrefilled] = useState(
+  const [bibleStudyPrefilled] = useReloadState(
+    'bibleStudyPrefilled',
     () =>
       !conversationToUpdate &&
       newVisitIsBibleStudy({
@@ -305,14 +308,17 @@ const VisitFormScreen = ({
     }
   }
 
-  const [conversation, setConversation] = useState<Visit>(
+  const [conversation, setConversation] = useReloadState<Visit>(
+    'conversation',
     getConversationDefaultValue()
   )
 
-  const [followUpEnabled, setFollowUpEnabled] = useState<boolean>(() =>
-    conversationToUpdate
-      ? !!conversationToUpdate.followUp || !!params.planFollowUp
-      : !params.notAtHome
+  const [followUpEnabled, setFollowUpEnabled] = useReloadState<boolean>(
+    'followUpEnabled',
+    () =>
+      conversationToUpdate
+        ? !!conversationToUpdate.followUp || !!params.planFollowUp
+        : !params.notAtHome
   )
 
   const dismissFollowUp = useDismissFollowUp()

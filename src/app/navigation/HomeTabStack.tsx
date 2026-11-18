@@ -29,6 +29,7 @@ import {
 } from '@/features/updates/lib/evaluateRevealOnLaunch'
 import useAdaptiveLayout from '@/hooks/useAdaptiveLayout'
 import HorizontalSafeArea from '@/components/ui/layout/HorizontalSafeArea'
+import { SidebarGutterToggle } from '@/components/ui/SidebarToggle'
 import { canvasKitScreen } from '@/lib/canvasKit/canvasKitScreen'
 import { isRtlLayout } from '@/lib/direction'
 import {
@@ -207,7 +208,8 @@ const HomeTabStack = () => {
               revealShown ? 'no-hide-descendants' : 'auto'
             }
           >
-            {children}
+            <SidebarGutterToggle />
+            <View style={{ flex: 1, zIndex: 0 }}>{children}</View>
           </View>
         )}
         screenLayout={({ children }) => (

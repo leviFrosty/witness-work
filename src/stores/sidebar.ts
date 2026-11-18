@@ -35,3 +35,11 @@ export const useSidebarResize = create<{
   compact: null,
   preview: (compact) => set({ compact }),
 }))
+
+export const useSidebarGutter = create<{
+  windowControls: number
+  setWindowControls: (start: number) => void
+}>((set) => ({
+  windowControls: 0,
+  setWindowControls: (windowControls) => set({ windowControls }),
+}))

@@ -1,6 +1,10 @@
 import { useWindowDimensions } from 'react-native'
 import { getAdaptiveLayout } from '@/lib/sidebarLayout'
-import { useSidebarPreferences, useSidebarResize } from '@/stores/sidebar'
+import {
+  useSidebarGutter,
+  useSidebarPreferences,
+  useSidebarResize,
+} from '@/stores/sidebar'
 import { useDisplayRegions } from '@/stores/displayRegions'
 
 export default function useAdaptiveLayout({ liveResize = false } = {}) {
@@ -11,8 +15,10 @@ export default function useAdaptiveLayout({ liveResize = false } = {}) {
   const verticalBarEdge = useDisplayRegions(
     (s) => s.regions?.verticalBarEdge ?? null
   )
+  const gutterWindowControls = useSidebarGutter((s) => s.windowControls)
   const layout = getAdaptiveLayout(width, fontScale, savedWidth, hidden, {
     verticalBarEdge,
+    gutterWindowControls,
   })
 
   return dragCompact === null

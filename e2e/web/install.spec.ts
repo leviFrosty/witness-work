@@ -90,6 +90,54 @@ test.describe('an Android phone', () => {
   })
 })
 
+test.describe('an Android phone that isn’t signed in', () => {
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'Chromium is the browser that offers the install prompt'
+  )
+
+  test('offers install on the sign-in screen, and not on the steps after it', async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({
+      userAgent: ANDROID_UA,
+      viewport: { width: 412, height: 915 },
+      isMobile: true,
+      hasTouch: true,
+    })
+    const host = new URL(baseURL!).host
+    await context.route(
+      (url) => url.host !== host,
+      (route) => route.fulfill({ status: 503 })
+    )
+    const app = await context.newPage()
+    await app.goto('/')
+    await expect(app.getByText(text.webSignIn_title)).toBeVisible()
+    await offerInstall(app)
+    await expect(banner(app)).toBeVisible()
+    const directory = process.env.WW_WEB_SHOTS
+    if (directory)
+      await app.screenshot({ path: `${directory}/install-banner-sign-in.png` })
+
+    await app.getByText(text.webSignIn_recoveryKey, { exact: true }).click()
+    await expect(app.getByTestId('web-sign-in-back')).toBeVisible()
+    await expect(banner(app)).toBeHidden()
+    await app.getByTestId('web-sign-in-back').click()
+    await expect(banner(app)).toBeVisible()
+
+    await app.getByTestId('install-app').click()
+    await expect
+      .poll(() =>
+        app.evaluate(
+          () => (window as unknown as { __prompted?: number }).__prompted
+        )
+      )
+      .toBe(1)
+    await context.close()
+  })
+})
+
 test.describe('an iPhone', () => {
   test.use({ userAgent: IPHONE_UA })
   test.skip(

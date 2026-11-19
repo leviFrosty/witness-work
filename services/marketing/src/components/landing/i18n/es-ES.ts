@@ -26,6 +26,7 @@ const esES: LandingMessages = {
     openShort: 'Versión web',
     or: 'O descarga la app',
     computer: '¿En un ordenador? Abre WitnessWork en tu navegador.',
+    android: '¿Android en Estados Unidos? Instala la versión web.',
   },
   hero: {
     title: 'Hecha para predicar.',

@@ -27,6 +27,7 @@ const ptPT: LandingMessages = {
     openShort: 'Versão Web',
     or: 'Ou descarregue a aplicação',
     computer: 'Num computador? Abra o WitnessWork no navegador.',
+    android: 'Android nos Estados Unidos? Instale a versão Web.',
   },
   hero: {
     title: 'Feita para o ministério.',

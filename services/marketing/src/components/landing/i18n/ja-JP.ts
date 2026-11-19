@@ -26,6 +26,8 @@ const jaJP: LandingMessages = {
     openShort: 'ブラウザで開く',
     or: 'またはアプリをダウンロード',
     computer: 'パソコンなら、ブラウザでWitnessWorkを開けます。',
+    android:
+      '米国でAndroidをお使いですか？Webアプリをインストールしてください。',
   },
   hero: {
     title: '宣教のために。',

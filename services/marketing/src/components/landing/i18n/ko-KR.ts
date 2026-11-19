@@ -26,6 +26,7 @@ const koKR: LandingMessages = {
     openShort: '브라우저에서 열기',
     or: '또는 앱 다운로드',
     computer: '컴퓨터에서는 브라우저로 WitnessWork를 여세요.',
+    android: '미국에서 Android를 사용하시나요? 웹 앱을 설치하세요.',
   },
   hero: {
     title: '봉사를 위해 만들었어요.',

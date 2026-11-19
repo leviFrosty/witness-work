@@ -27,6 +27,7 @@ const ukUA: LandingMessages = {
     openShort: 'Вебверсія',
     or: 'Або завантажте застосунок',
     computer: 'За комп’ютером? Відкрийте WitnessWork у браузері.',
+    android: 'Android у США? Установіть вебверсію.',
   },
   hero: {
     title: 'Створено для служіння.',

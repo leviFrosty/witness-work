@@ -26,6 +26,7 @@ const nlNL: LandingMessages = {
     openShort: 'Open in browser',
     or: 'Of download de app',
     computer: 'Op een computer? Open WitnessWork in je browser.',
+    android: 'Android in de Verenigde Staten? Installeer de web-app.',
   },
   hero: {
     title: 'Gemaakt voor de velddienst.',

@@ -26,6 +26,7 @@ const itIT: LandingMessages = {
     openShort: 'Versione web',
     or: 'Oppure scarica l’app',
     computer: 'Sei al computer? Apri WitnessWork nel browser.',
+    android: 'Android negli Stati Uniti? Installa la versione web.',
   },
   hero: {
     title: 'Pensata per il ministero.',

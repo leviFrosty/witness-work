@@ -26,6 +26,7 @@ const zhCN: LandingMessages = {
     openShort: '在浏览器中打开',
     or: '或下载应用',
     computer: '在用电脑？在浏览器中打开 WitnessWork。',
+    android: '在美国使用 Android？请安装网页版应用。',
   },
   hero: {
     title: '为传道而设计。',

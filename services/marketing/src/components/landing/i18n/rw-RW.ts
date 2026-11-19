@@ -27,6 +27,8 @@ const rwRW: LandingMessages = {
     openShort: 'Kuri murandasi',
     or: 'Cyangwa wikurire porogaramu',
     computer: 'Uri kuri mudasobwa? Fungura WitnessWork muri mushakisha.',
+    android:
+      'Ukoresha Android muri Leta Zunze Ubumwe za Amerika? Shyiraho porogaramu yo kuri murandasi.',
   },
   hero: {
     title: 'Yagenewe umurimo wawe.',

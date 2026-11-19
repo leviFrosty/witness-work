@@ -26,6 +26,7 @@ const deDE: LandingMessages = {
     openShort: 'Web-App öffnen',
     or: 'Oder die App laden',
     computer: 'Am Computer? Öffnen Sie WitnessWork im Browser.',
+    android: 'Android in den USA? Installieren Sie die Web-App.',
   },
   hero: {
     title: 'Für Ihren Predigtdienst gemacht.',

@@ -27,6 +27,7 @@ const swKE: LandingMessages = {
     openShort: 'Toleo la wavuti',
     or: 'Au pakua programu',
     computer: 'Uko kwenye kompyuta? Fungua WitnessWork kwenye kivinjari.',
+    android: 'Unatumia Android nchini Marekani? Sakinisha toleo la wavuti.',
   },
   hero: {
     title: 'Imeundwa kwa ajili ya huduma.',

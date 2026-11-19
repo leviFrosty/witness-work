@@ -26,6 +26,7 @@ const ar: LandingMessages = {
     openShort: 'افتح في المتصفح',
     or: 'أو نزّل التطبيق',
     computer: 'تستخدم حاسوبًا؟ افتح WitnessWork في المتصفح.',
+    android: 'تستخدم Android في الولايات المتحدة؟ ثبّت تطبيق الويب.',
   },
   hero: {
     title: 'صُمّم لخدمتك.',

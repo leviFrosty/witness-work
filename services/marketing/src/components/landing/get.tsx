@@ -29,7 +29,12 @@ export default function GetWitnessWork() {
         <h1 className='ww-h2 text-[2.6rem]'>WitnessWork</h1>
         <p className='ww-lead'>{enUS.cta.body}</p>
         <WebAppLink label={enUS.web.open} size='lg' />
-        <DownloadAlso locale='en-US' labels={enUS.store} or={enUS.web.or} />
+        <DownloadAlso
+          locale='en-US'
+          labels={enUS.store}
+          or={enUS.web.or}
+          android={enUS.web.android}
+        />
         <a href='/' className='text-sm text-[var(--ww-mint)] hover:underline'>
           witnesswork.app
         </a>

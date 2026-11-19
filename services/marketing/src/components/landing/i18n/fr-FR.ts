@@ -26,6 +26,7 @@ const frFR: LandingMessages = {
     openShort: 'Version web',
     or: 'Ou téléchargez l’app',
     computer: 'Sur un ordinateur ? Ouvrez WitnessWork dans votre navigateur.',
+    android: 'Android aux États-Unis ? Installez la version web.',
   },
   hero: {
     title: 'Pensée pour la prédication.',

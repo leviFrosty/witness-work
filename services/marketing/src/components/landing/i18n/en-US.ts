@@ -24,6 +24,7 @@ const enUS = {
     openShort: 'Open in browser',
     or: 'Or download the app',
     computer: 'On a computer? Open WitnessWork in your browser.',
+    android: 'Android in the United States? Install the web app.',
   },
   hero: {
     title: 'Made for the ministry.',

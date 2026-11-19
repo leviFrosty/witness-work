@@ -1,5 +1,6 @@
 import { ArrowRight, Pause, Play } from 'lucide-react'
 import type { CSSProperties, ElementType, ReactNode } from 'react'
+import { helpPageUrl } from '@/lib/help-center/paths'
 import { WEB_APP } from '@/lib/links'
 import { cn } from '@/lib/utils'
 import type { LandingLocale } from './i18n'
@@ -132,17 +133,25 @@ export function DownloadAlso({
   locale,
   labels,
   or,
+  android,
   className,
 }: {
   locale: LandingLocale
   labels: { appStore: string; googlePlay: string }
   or: string
+  android: string
   className?: string
 }) {
   return (
     <div className={cn('flex flex-col items-center gap-3', className)}>
       <p className='ww-note'>{or}</p>
       <StoreBadges locale={locale} labels={labels} />
+      <a
+        href={helpPageUrl(locale, 'general', 'android-web-app')}
+        className='ww-note underline decoration-from-font underline-offset-4 hover:text-[var(--ww-mint)]'
+      >
+        {android}
+      </a>
     </div>
   )
 }

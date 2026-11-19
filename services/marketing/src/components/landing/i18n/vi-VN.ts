@@ -26,6 +26,7 @@ const viVN: LandingMessages = {
     openShort: 'Bản web',
     or: 'Hoặc tải ứng dụng',
     computer: 'Dùng máy tính? Mở WitnessWork trong trình duyệt.',
+    android: 'Dùng Android ở Hoa Kỳ? Hãy cài bản web.',
   },
   hero: {
     title: 'Dành riêng cho thánh chức.',

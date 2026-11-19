@@ -286,7 +286,12 @@ export function Cta({
           <WebAppLink label={t.web.open} size='lg' />
         </Reveal>
         <Reveal delay={240} className='mt-8 flex items-center gap-8'>
-          <DownloadAlso locale={locale} labels={t.store} or={t.web.or} />
+          <DownloadAlso
+            locale={locale}
+            labels={t.store}
+            or={t.web.or}
+            android={t.web.android}
+          />
           <figure className='ww-qr hidden lg:flex'>
             <img
               src='/images/get-qr.svg'

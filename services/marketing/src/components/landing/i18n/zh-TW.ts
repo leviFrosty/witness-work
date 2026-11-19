@@ -26,6 +26,7 @@ const zhTW: LandingMessages = {
     openShort: '在瀏覽器中開啟',
     or: '或下載 App',
     computer: '用電腦嗎？在瀏覽器中開啟 WitnessWork。',
+    android: '在美國使用 Android 嗎？請安裝網頁版 App。',
   },
   hero: {
     title: '為傳道而設計。',

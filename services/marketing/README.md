@@ -105,16 +105,16 @@ redirectFrom: [time/hourglass-setup] # optional: old answer pages that now land 
 
 ### Formatting you can use
 
-Paragraphs, `##` headings, **bold**, _italic_, links, numbered and bulleted lists (one level of nesting at most), and one screenshot per answer. No tables, code, quotes or HTML; the check fails on them. Links are `https:`, `mailto:`, or a path on this site (`/help/time/submit-report`). To point at another answer, link it by its path rather than quoting its title.
+Paragraphs, `##` headings, **bold**, _italic_, links, numbered and bulleted lists (one level of nesting at most), and one screenshot per answer (a step-by-step tutorial may show one per step; see [Screenshots](#screenshots)). No tables, code, quotes or HTML; the check fails on them. Links are `https:`, `mailto:`, or a path on this site (`/help/time/submit-report`). To point at another answer, link it by its path rather than quoting its title.
 
 Screen paths use arrows and bold: **Settings → Sync**. Buttons and switches are bold, exactly as the app labels them.
 
 ### Screenshots
 
-Add one when pointing at a specific screen or button makes the steps easier to follow, typically a screen that's hard to find or a button that's easy to miss. Most answers don't need one. The text must still make sense without it: older app versions and screen readers don't show it.
+Add one when pointing at a specific screen or button makes the steps easier to follow, typically a screen that's hard to find or a button that's easy to miss. Most answers don't need one. A tutorial that walks through a task outside WitnessWork, such as installing the web app from the browser, may show a screenshot under each step that needs one. In a tutorial's screenshots, draw a red box around what the step taps, and say so once above the steps. The text must still make sense without it: older app versions and screen readers don't show it.
 
 1. Capture the screen on the iPhone simulator with the [`verify-witnesswork`](../../.agents/skills/verify-witnesswork/SKILL.md) skill (`wwv shot <name>`), in light appearance, with made-up names and data and the dev Tools button turned off. A cheap subagent can do the driving.
-2. From `services/marketing`, run `pnpm help:image <slug> <screenshot.png>`. It resizes the capture, saves it as `content/help/images/<slug>.webp`, and prints the Markdown line. Add `--crop WxH+X+Y` (ImageMagick geometry, in the capture's pixels) to keep only part of the screen.
+2. From `services/marketing`, run `pnpm help:image <slug> <screenshot.png>`. It resizes the capture, saves it as `content/help/images/<slug>.webp`, and prints the Markdown line. Add `--crop WxH+X+Y` (ImageMagick geometry, in the capture's pixels) to keep only part of the screen, and `--step N` for a tutorial's step screenshots (`<slug>-N.webp`).
 3. Paste the line on its own, under the step it shows: `![Field Service Report with the Submit button](submit-report.webp)`. The text in brackets describes the screen for screen readers; write it as a short caption.
 
 To update a screenshot, run the same command again; the file name stays the same. Images are committed with the answer. The site serves them under `/help/images/`, the app keeps each one it has shown for offline use, and release prep bundles them all into the app with the rest of the Help Center.

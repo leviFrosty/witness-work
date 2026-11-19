@@ -27,6 +27,7 @@ const bemZM: LandingMessages = {
     openShort: 'Mu browser',
     or: 'Nelyo tolani icibombelo',
     computer: 'Muli pa kompyuta? Isuleni WitnessWork mu browser.',
+    android: 'Mulebomfya Android mu United States? Ingisheni web app.',
   },
   hero: {
     title: 'Yapangilwa umulimo wenu.',

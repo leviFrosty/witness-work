@@ -27,6 +27,7 @@ const ruRU: LandingMessages = {
     openShort: 'Веб-версия',
     or: 'Или скачайте приложение',
     computer: 'За компьютером? Откройте WitnessWork в браузере.',
+    android: 'Android в США? Установите веб-версию.',
   },
   hero: {
     title: 'Создано для служения.',

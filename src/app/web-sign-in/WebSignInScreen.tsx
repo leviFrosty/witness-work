@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { StyleSheet, View } from 'react-native'
 import type { BrowserApproval } from '@/lib/serverAccount/approvalSession'
 import type { WebSignIn, WebSignInState } from '@/lib/serverAccount/webSignIn'
 import type { WebSignUp, WebSignUpState } from '@/lib/serverAccount/webSignUp'
+import InstallAppBanner from '@/app/web-install/InstallAppBanner'
 import PhoneSignIn from '@/app/web-sign-in/components/PhoneSignIn'
 import RecoveryKeyGate from '@/app/web-sign-in/components/RecoveryKeyGate'
 import RecoveryKeySignIn from '@/app/web-sign-in/components/RecoveryKeySignIn'
@@ -161,27 +163,32 @@ export default function WebSignInScreen({
       )
     default:
       return (
-        <SignInChoices
-          state={state}
-          ended={notice ?? endedText(ended, changedAt)}
-          keptData={keptData}
-          onPasskey={() => void flow.signInWithPasskey()}
-          onPhone={startPhone}
-          onRecoveryKey={() => {
-            flow.clearProblem()
-            setPage({ name: 'recovery' })
-          }}
-          onCreateAccount={
-            canSignUp
-              ? () => {
-                  flow.clearProblem()
-                  signUp.clearProblem()
-                  setPage({ name: 'signUp' })
-                }
-              : undefined
-          }
-          onBack={onLeave}
-        />
+        <View style={styles.fill}>
+          <InstallAppBanner />
+          <SignInChoices
+            state={state}
+            ended={notice ?? endedText(ended, changedAt)}
+            keptData={keptData}
+            onPasskey={() => void flow.signInWithPasskey()}
+            onPhone={startPhone}
+            onRecoveryKey={() => {
+              flow.clearProblem()
+              setPage({ name: 'recovery' })
+            }}
+            onCreateAccount={
+              canSignUp
+                ? () => {
+                    flow.clearProblem()
+                    signUp.clearProblem()
+                    setPage({ name: 'signUp' })
+                  }
+                : undefined
+            }
+            onBack={onLeave}
+          />
+        </View>
       )
   }
 }
+
+const styles = StyleSheet.create({ fill: { flex: 1 } })

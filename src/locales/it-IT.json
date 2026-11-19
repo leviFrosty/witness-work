@@ -705,6 +705,10 @@
   "map_findContacts_result": "Trovati {{found}} su {{total}} sulla mappa",
   "map_hideContactCards": "Nascondi le schede dei contatti",
   "map_showContactCards": "Mostra le schede dei contatti",
+  "map_hideContactList": "Nascondi l’elenco dei contatti",
+  "map_showContactList": "Mostra l’elenco dei contatti",
+  "map_openContactDetails": "Apri i dettagli di {{name}}",
+  "map_backToContactList": "Torna all’elenco dei contatti",
   "map_noSearchResults": "Nessuna corrispondenza",
   "map_noSearchResults_description": "Nessun contatto mappato corrisponde a questa ricerca.",
   "map_noFilterResults_description": "Nessun contatto sulla mappa corrisponde a questi filtri. Tocca Tutti, oppure cancella i filtri in Ordina e filtra.",
@@ -1201,6 +1205,12 @@
       "c8": "Il tuo animaletto ha 27 nuovi cappelli e nuovi oggetti per la stanza, alcuni rari. Apri la pagina di un compagno per vedere la stanza del suo animaletto.",
       "c9": "Scopri cosa occupa lo spazio per le foto e liberane. I sostenitori ora ricevono 5 GB, come ringraziamento.",
       "c10": "Le risposte del Centro assistenza sono più facili da leggere, con passaggi e schermate."
+    },
+    "1480": {
+      "c1": "Dai alle tue passkey nomi che riconosci facilmente.",
+      "c2": "Restituendo un territorio si conservano i suoi registri casa per casa, e chi aveva ricevuto una via da te può tenerla.",
+      "c3": "Sul web e sugli schermi più grandi, modifica le note direttamente con la barra di formattazione in alto e apri contatti e moduli in pannelli laterali.",
+      "c4": "Su Android, installa la web app direttamente dalla schermata di accesso."
     }
   },
   "installed": "Installato",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Aggiunta %{date}",
   "passkeys_lastUsed": "Ultimo uso %{when}",
   "passkeys_letItUnlock": "Consenti lo sblocco",
+  "passkeys_rename": "Rinomina",
+  "passkeys_renameTitle": "Rinomina passkey",
+  "passkeys_renameDescription": "Questo nome compare solo in WitnessWork. Il tuo gestore di password continua a mostrarla come %{name}.",
+  "passkeys_renameDescriptionNoName": "Questo nome compare solo in WitnessWork.",
+  "passkeys_nameLabel": "Nome della passkey",
+  "passkeys_namePlaceholder": "Ad esempio, Portatile del lavoro",
   "passkeys_unlockPrompt": "Cambia le tue passkey",
   "passkeys_loadFailed": "Impossibile caricare le tue passkey.",
   "passkeys_offline": "Connettiti a internet per vedere le tue passkey.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Salva non visitare",
     "removeDoNotCall_title": "Rimuovere questo non visitare?",
     "finish": "Restituisci territorio",
-    "finish_caption": "Tocca quando riconsegni la scheda. Elimina i registri casa per casa e mantiene i non visitare.",
+    "finish_caption": "Tocca quando riconsegni la scheda. I registri casa per casa e i non visitare vengono conservati.",
     "finish_captionPrivacy": "Tocca quando riconsegni la scheda. I non visitare vengono mantenuti.",
     "finish_title": "Restituire questo territorio?",
-    "finish_description": "I registri casa per casa verranno eliminati. I non visitare vengono mantenuti con il loro indirizzo o pin sulla mappa e la data.",
+    "finish_description": "Il territorio passa a Restituito. I suoi registri casa per casa e i non visitare vengono conservati.",
     "finish_descriptionPrivacy": "Il territorio passa a Restituiti. I non visitare vengono mantenuti.",
     "finish_unworked": {
       "one": "%{count} via non è segnata come lavorata.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Approfondimenti",
-      "info": "Quando le persone hanno risposto alle porte registrate nei tuoi territori, per giorno e ora, comprese le porte registrate da chiunque condivida un territorio con te. Dopo la restituzione di un territorio, i suoi conteggi restano su questo dispositivo, senza alcun indirizzo.",
+      "info": "Quando le persone hanno risposto alle porte registrate nei tuoi territori, per giorno e ora, comprese le porte registrate da chi condivide un territorio con te. Dopo l’eliminazione di un territorio, i suoi conteggi restano su questo dispositivo, senza indirizzi.",
       "territoryInfo": "Quando le persone hanno risposto in questo territorio, per giorno e ora, comprese le porte registrate da chiunque lo condivida con te.",
       "weighting": "I mesi recenti contano di più. Le visite più vecchie contano comunque, e quelle di questo periodo dell’anno scorso contano di più, perché luce e meteo erano simili.",
       "leansOnPast": "Per lo più da visite di oltre 3 mesi fa.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} angolo. Tocca un angolo per spostarlo o eliminarlo.",
         "other": "%{count} angoli. Tocca un angolo per spostarlo o eliminarlo."
       },
+      "outlineEditHintShort": "Tocca un angolo per spostarlo o eliminarlo.",
       "cornerSelected": "Trascina l’angolo per spostarlo. Tocca la mappa per rilasciarlo.",
       "deleteCorner": "Elimina angolo",
       "cardPhotoRow": "Foto della scheda",
@@ -7323,8 +7340,13 @@
         "one": "1 via",
         "other": "%{count} vie"
       },
-      "finishEndsSharing": "La condivisione termina per tutti, i link per ospiti scadono e le vie affidate tornano a te.",
+      "finishEndsSharing": "La condivisione termina per tutti e i link per gli ospiti cessano. Chi ha ricevuto da te una via la tiene per completarla.",
       "ended_toast": "{{title}} non è più condiviso con te",
+      "keptStreets_toast": "{{title}} è stato restituito",
+      "keptStreets_message": {
+        "one": "La via che ti è stata affidata ora è tra i tuoi territori, così puoi completarla.",
+        "other": "Le vie che ti sono state affidate ora sono tra i tuoi territori, così puoi completarle."
+      },
       "notShared_toast": "Alcune modifiche a {{title}} non sono state condivise. Nel frattempo quella via è stata affidata.",
       "offline_toast": "Impossibile raggiungere WitnessWork. Controlla la connessione e riprova.",
       "needsBuddies_toast": "Per condividere con i compagni serve Compagni su questo dispositivo.",

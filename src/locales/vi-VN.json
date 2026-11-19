@@ -705,6 +705,10 @@
   "map_findContacts_result": "Đã tìm thấy {{found}}/{{total}} trên bản đồ",
   "map_hideContactCards": "Ẩn thẻ liên hệ",
   "map_showContactCards": "Hiện thẻ liên hệ",
+  "map_hideContactList": "Ẩn danh sách liên hệ",
+  "map_showContactList": "Hiện danh sách liên hệ",
+  "map_openContactDetails": "Mở chi tiết của {{name}}",
+  "map_backToContactList": "Quay lại danh sách liên hệ",
   "map_noSearchResults": "Không trùng khớp",
   "map_noSearchResults_description": "Không có địa chỉ liên hệ nào được ánh xạ khớp với tìm kiếm này.",
   "map_noFilterResults_description": "Không có liên hệ nào trên bản đồ khớp với các bộ lọc này. Chạm Tất cả, hoặc xóa bộ lọc trong Sắp xếp & Lọc.",
@@ -1201,6 +1205,12 @@
       "c8": "Thú cưng của bạn có thêm 27 chiếc mũ mới và đồ dùng trong phòng mới, trong đó có vài món hiếm. Mở trang của một bạn đồng hành để xem phòng của thú cưng họ.",
       "c9": "Xem thứ gì đang dùng dung lượng lưu trữ ảnh của bạn và giải phóng dung lượng. Người ủng hộ giờ được 5 GB, như một lời cảm ơn.",
       "c10": "Các câu trả lời trong Trung tâm trợ giúp dễ đọc hơn, có các bước và ảnh chụp màn hình."
+    },
+    "1480": {
+      "c1": "Đặt cho khóa truy cập những cái tên bạn dễ nhận ra.",
+      "c2": "Khi trả khu vực, ghi chép từng nhà vẫn được giữ, và người bạn đã giao đường cho có thể giữ lại đường đó.",
+      "c3": "Trên web và màn hình lớn, bạn có thể sửa ghi chú ngay tại chỗ với thanh định dạng ở trên cùng, và mở liên hệ cũng như biểu mẫu trong khung bên cạnh.",
+      "c4": "Trên Android, cài ứng dụng web ngay từ màn hình đăng nhập."
     }
   },
   "installed": "Cài đặt",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Đã thêm %{date}",
   "passkeys_lastUsed": "Dùng lần cuối %{when}",
   "passkeys_letItUnlock": "Cho phép mở khóa",
+  "passkeys_rename": "Đổi tên",
+  "passkeys_renameTitle": "Đổi tên khóa truy cập",
+  "passkeys_renameDescription": "Tên này chỉ hiện trong WitnessWork. Trình quản lý mật khẩu của bạn vẫn liệt kê khóa này là %{name}.",
+  "passkeys_renameDescriptionNoName": "Tên này chỉ hiện trong WitnessWork.",
+  "passkeys_nameLabel": "Tên khóa truy cập",
+  "passkeys_namePlaceholder": "Ví dụ: Laptop công việc",
   "passkeys_unlockPrompt": "Thay đổi khóa truy cập của bạn",
   "passkeys_loadFailed": "Không tải được các khóa truy cập của bạn.",
   "passkeys_offline": "Hãy kết nối internet để xem các khóa truy cập của bạn.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Lưu nhà không ghé thăm",
     "removeDoNotCall_title": "Xóa nhà không ghé thăm này?",
     "finish": "Trả khu vực",
-    "finish_caption": "Chạm khi bạn trả lại thẻ. Xóa ghi chép từng nhà và giữ các nhà không ghé thăm.",
+    "finish_caption": "Chạm khi bạn trả lại thẻ. Ghi chép từng nhà và các nhà không ghé thăm được giữ lại.",
     "finish_captionPrivacy": "Chạm khi bạn trả lại thẻ. Các nhà không ghé thăm được giữ lại.",
     "finish_title": "Trả khu vực này?",
-    "finish_description": "Ghi chép từng nhà sẽ bị xóa. Các nhà không ghé thăm được giữ lại cùng địa chỉ hoặc ghim bản đồ và ngày.",
+    "finish_description": "Khu vực sẽ chuyển sang mục Đã trả. Ghi chép từng nhà và các nhà không ghé thăm được giữ lại.",
     "finish_descriptionPrivacy": "Khu vực chuyển sang Đã trả. Các nhà không ghé thăm được giữ lại.",
     "finish_unworked": {
       "one": "%{count} đường chưa được đánh dấu đã rao giảng.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Thống kê",
-      "info": "Thời điểm mọi người ra mở cửa tại các nhà đã ghi trong khu vực của bạn, theo ngày và giờ, kể cả các nhà do người cùng chia sẻ khu vực với bạn ghi. Sau khi trả khu vực, số liệu vẫn được giữ trên thiết bị này, không kèm địa chỉ.",
+      "info": "Thời điểm mọi người ra mở cửa tại các nhà đã ghi trong khu vực của bạn, theo ngày và giờ, kể cả các nhà do người cùng chia sẻ khu vực với bạn ghi. Sau khi khu vực bị xóa, số liệu vẫn được giữ trên thiết bị này, không kèm địa chỉ.",
       "territoryInfo": "Thời điểm mọi người ra mở cửa trong khu vực này, theo ngày và giờ, kể cả các nhà do người cùng chia sẻ khu vực với bạn ghi.",
       "weighting": "Những tháng gần đây được tính nhiều nhất. Các lần thăm cũ hơn vẫn được tính, và các lần thăm cùng thời điểm năm ngoái được tính thêm vì ánh sáng ban ngày và thời tiết tương tự.",
       "leansOnPast": "Chủ yếu từ các lần thăm cách đây hơn 3 tháng.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} góc. Chạm vào một góc để di chuyển hoặc xóa.",
         "other": "%{count} góc. Chạm vào một góc để di chuyển hoặc xóa."
       },
+      "outlineEditHintShort": "Chạm vào một góc để di chuyển hoặc xóa góc đó.",
       "cornerSelected": "Kéo góc để di chuyển. Chạm vào bản đồ để thả.",
       "deleteCorner": "Xóa góc",
       "cardPhotoRow": "Ảnh của thẻ",
@@ -7323,8 +7340,13 @@
         "one": "1 đường",
         "other": "%{count} đường"
       },
-      "finishEndsSharing": "Việc chia sẻ dừng với mọi người, các liên kết khách kết thúc, và những đường đã giao sẽ quay về với bạn.",
+      "finishEndsSharing": "Việc chia sẻ dừng với mọi người và các liên kết khách kết thúc. Người bạn đã giao đường cho vẫn giữ đường đó để làm cho xong.",
       "ended_toast": "{{title}} không còn được chia sẻ với bạn",
+      "keptStreets_toast": "Đã trả {{title}}",
+      "keptStreets_message": {
+        "one": "Con đường được giao cho bạn giờ nằm trong các khu vực của bạn, nên bạn có thể làm cho xong.",
+        "other": "Các con đường được giao cho bạn giờ nằm trong các khu vực của bạn, nên bạn có thể làm cho xong."
+      },
       "notShared_toast": "Một số thay đổi ở {{title}} chưa được chia sẻ. Đường đó đã được giao đi trong lúc này.",
       "offline_toast": "Không kết nối được WitnessWork. Hãy kiểm tra kết nối và thử lại.",
       "needsBuddies_toast": "Chia sẻ với bạn đồng hành cần bật Bạn đồng hành trên thiết bị này.",

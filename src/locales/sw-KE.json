@@ -705,6 +705,10 @@
   "map_findContacts_result": "Zimepatikana {{found}} kati ya {{total}} kwenye ramani",
   "map_hideContactCards": "Ficha kadi za anwani",
   "map_showContactCards": "Onyesha kadi za anwani",
+  "map_hideContactList": "Ficha orodha ya anwani",
+  "map_showContactList": "Onyesha orodha ya anwani",
+  "map_openContactDetails": "Fungua maelezo ya {{name}}",
+  "map_backToContactList": "Rudi kwenye orodha ya anwani",
   "map_noSearchResults": "Hakuna mechi",
   "map_noSearchResults_description": "Hakuna anwani zilizopangwa zinazolingana na utafutaji huu.",
   "map_noFilterResults_description": "Hakuna anwani zilizo kwenye ramani zinazolingana na vichujio hivi. Gusa Zote, au futa vichujio katika Panga na Chuja.",
@@ -1201,6 +1205,12 @@
       "c8": "Kipenzi chako kina kofia 27 mpya na vitu vipya vya chumba, na baadhi ni adimu. Fungua ukurasa wa mwenzi ili uone chumba cha kipenzi chake.",
       "c9": "Ona kinachotumia hifadhi yako ya picha na uongeze nafasi. Wafadhili sasa wanapata GB 5, kama shukrani.",
       "c10": "Majibu ya Kituo cha Msaada ni rahisi zaidi kusoma, yakiwa na hatua na picha za skrini."
+    },
+    "1480": {
+      "c1": "Zipe funguo zako za siri majina utakayoyatambua kwa urahisi.",
+      "c2": "Kurudisha eneo huhifadhi rekodi za nyumba kwa nyumba, na yeyote uliyemkabidhi mtaa anaweza kuendelea nao.",
+      "c3": "Kwenye wavuti na skrini kubwa, hariri maandishi ya madokezo papo hapo ukitumia upau wa uumbizaji juu, na ufungue anwani na fomu kama paneli za pembeni.",
+      "c4": "Kwenye Android, sakinisha programu ya wavuti moja kwa moja kutoka skrini ya kuingia."
     }
   },
   "installed": "Imesakinishwa",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Uliongezwa %{date}",
   "passkeys_lastUsed": "Ulitumika mara ya mwisho %{when}",
   "passkeys_letItUnlock": "Uruhusu Kufungua",
+  "passkeys_rename": "Badilisha Jina",
+  "passkeys_renameTitle": "Badilisha Jina la Ufunguo wa Siri",
+  "passkeys_renameDescription": "Jina hili linaonekana tu kwenye WitnessWork. Kidhibiti chako cha manenosiri bado kinauorodhesha kama %{name}.",
+  "passkeys_renameDescriptionNoName": "Jina hili linaonekana tu kwenye WitnessWork.",
+  "passkeys_nameLabel": "Jina la ufunguo wa siri",
+  "passkeys_namePlaceholder": "Kama vile Kompyuta ya Kazini",
   "passkeys_unlockPrompt": "Badilisha funguo zako za siri",
   "passkeys_loadFailed": "Haikuweza kupakia funguo zako za siri.",
   "passkeys_offline": "Unganisha kwenye intaneti ili kuona funguo zako za siri.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Hifadhi Usitembelee",
     "removeDoNotCall_title": "Ondoa ombi hili la kutotembelewa?",
     "finish": "Rudisha Eneo",
-    "finish_caption": "Gusa unaporudisha kadi. Hufuta rekodi za nyumba kwa nyumba na huhifadhi maombi ya kutotembelewa.",
+    "finish_caption": "Gusa unaporudisha kadi. Rekodi za nyumba kwa nyumba na maombi ya kutotembelewa huhifadhiwa.",
     "finish_captionPrivacy": "Gusa unaporudisha kadi. Maombi ya kutotembelewa huhifadhiwa.",
     "finish_title": "Rudisha eneo hili?",
-    "finish_description": "Rekodi za nyumba kwa nyumba zitafutwa. Maombi ya kutotembelewa huhifadhiwa pamoja na anwani au pini ya ramani na tarehe.",
+    "finish_description": "Eneo huhamia kwenye «Limerudishwa». Rekodi zake za nyumba kwa nyumba na maombi ya kutotembelewa huhifadhiwa.",
     "finish_descriptionPrivacy": "Eneo litahamia Yaliyorudishwa. Maombi ya kutotembelewa huhifadhiwa.",
     "finish_unworked": {
       "one": "Mtaa %{count} haujawekwa alama kuwa umefanyiwa kazi.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Maarifa",
-      "info": "Wakati watu walipojibu kwenye milango iliyorekodiwa katika maeneo yako, kwa siku na saa, pamoja na milango iliyorekodiwa na yeyote unayeshiriki naye eneo. Baada ya eneo kurudishwa, hesabu zake hubaki kwenye kifaa hiki, bila anwani zozote.",
+      "info": "Wakati watu walipojibu kwenye milango iliyorekodiwa katika maeneo yako, kwa siku na saa, pamoja na milango iliyorekodiwa na yeyote unayeshiriki naye eneo. Baada ya eneo kufutwa, hesabu zake hubaki kwenye kifaa hiki, bila anwani zozote.",
       "territoryInfo": "Wakati watu walipojibu katika eneo hili, kwa siku na saa, pamoja na milango iliyorekodiwa na yeyote unayeshiriki naye eneo hili.",
       "weighting": "Miezi ya karibuni ina uzito zaidi. Ziara za zamani bado zinahesabiwa, na ziara za wakati kama huu mwaka uliopita zina uzito wa ziada, kwa kuwa mwanga wa mchana na hali ya hewa vilifanana.",
       "leansOnPast": "Hasa kutokana na ziara za zaidi ya miezi 3 iliyopita.",
@@ -7110,6 +7126,7 @@
         "one": "Kona %{count}. Gusa kona ili kuisogeza au kuifuta.",
         "other": "Kona %{count}. Gusa kona ili kuisogeza au kuifuta."
       },
+      "outlineEditHintShort": "Gusa kona ili kuihamisha au kuifuta.",
       "cornerSelected": "Buruta kona ili kuisogeza. Gusa ramani ili kuiachilia.",
       "deleteCorner": "Futa Kona",
       "cardPhotoRow": "Picha ya Kadi",
@@ -7323,8 +7340,13 @@
         "one": "mtaa 1",
         "other": "mitaa %{count}"
       },
-      "finishEndsSharing": "Kushiriki kunakoma kwa kila mtu, viungo vya wageni vinaisha, na mitaa uliyokabidhi inarudi kwako.",
+      "finishEndsSharing": "Kushiriki kunakoma kwa kila mtu na viungo vya wageni vinaisha. Yeyote uliyemkabidhi mtaa anaendelea nao ili auhitimishe.",
       "ended_toast": "{{title}} haishirikiwi nawe tena",
+      "keptStreets_toast": "{{title}} imerudishwa",
+      "keptStreets_message": {
+        "one": "Mtaa uliokabidhiwa sasa uko kwenye maeneo yako, kwa hivyo unaweza kuumaliza.",
+        "other": "Mitaa uliyokabidhiwa sasa iko kwenye maeneo yako, kwa hivyo unaweza kuimaliza."
+      },
       "notShared_toast": "Baadhi ya mabadiliko kwenye {{title}} hayakushirikiwa. Mtaa huo ulikabidhiwa wakati huo.",
       "offline_toast": "Imeshindwa kufikia WitnessWork. Kagua muunganisho wako kisha ujaribu tena.",
       "needsBuddies_toast": "Kushiriki na wenzi kunahitaji Wenzi kwenye kifaa hiki.",

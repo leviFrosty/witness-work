@@ -1046,6 +1046,12 @@
       "c8": "Cinyama cenu cakwata amakofya 27 ayapya ne fintu ifipya fya mu ng'anda, kabili fimo tafisangwa bwangu. Isuleni ipeji ya munandi pa kumona ing'anda ya cinyama cakwe.",
       "c9": "Moneni ifibomfya ukusunga ifikope fyenu kabili fumyeni ifintu pa kukwata incende. Abatungilila nomba bakwata 5 GB, ukulanga ukutasha kwesu.",
       "c10": "Ifyasuko fya mu Help Center fyanguka ukubelenga, ne fyakucita ne fikope fya cilangililo."
+    },
+    "1480": {
+      "c1": "Pesheni ifisokoshi fyenu fya kwingilamo amashina yamwingashiba bwino.",
+      "c2": "Ukubwesha icifulo kusunga ifyalembwa fya ng'anda ku ng'anda, kabili uo mwapeela umusebo kuti aulekelesha.",
+      "c3": "Pa web na pa screen ishikalamba, cinjeni ifyalembwa fye pene ukubomfya bar ya kupanga ifyalembwa pa mulu, kabili ingulweni abantu ba kulanshanya na mafomu mu fiputulwa fya mbali.",
+      "c4": "Pa Android, ikanyeni web app ukufuma fye pa screen ya kwingilamo."
     }
   },
   "installed": "Installed",
@@ -2097,6 +2103,10 @@
   "map_findContacts_result": "Kwasangwa {{found}} pa {{total}} pa mapu",
   "map_hideContactCards": "Fisa makadi ya bantu ba kulanshanya",
   "map_showContactCards": "Langa makadi ya bantu ba kulanshanya",
+  "map_hideContactList": "Fisheni lisiti lya bantu ba kulanshanya",
+  "map_showContactList": "Langeni lisiti lya bantu ba kulanshanya",
+  "map_openContactDetails": "Ingulweni ifyakuma {{name}}",
+  "map_backToContactList": "Bwelelani ku lisiti lya bantu ba kulanshanya",
   "map_noSearchResults": "Tapali ifyasangwa",
   "map_noSearchResults_description": "Takuli abantu ba kutandalila pa mapu abalingana na fintu mulefwaya.",
   "map_noFilterResults_description": "Tapali bantu ba kulanshanya aba pa mapu abalingana na ifi fisonto. Tinikeni Fyonse, nelyo fumyeni ifisonto mu Sala & Sefya.",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Calundwa %{date}",
   "passkeys_lastUsed": "Cabomfiwe pa kulekelesha %{when}",
   "passkeys_letItUnlock": "Lekeni Ciisule",
+  "passkeys_rename": "Cinjeni Ishina",
+  "passkeys_renameTitle": "Cinjeni Ishina lya Cisokoshi ca Kwingilamo",
+  "passkeys_renameDescription": "Ishina ili lilalangwa fye mu WitnessWork. Password manager yenu ichili ilaliita ati %{name}.",
+  "passkeys_renameDescriptionNoName": "Ishina ili lilalangwa fye mu WitnessWork.",
+  "passkeys_nameLabel": "Ishina lya cisokoshi ca kwingilamo",
+  "passkeys_namePlaceholder": "Nga Laptop ya ku Mulimo",
   "passkeys_unlockPrompt": "Cinjeni ifisokoshi fyenu fya kwingilamo",
   "passkeys_loadFailed": "Twafilwa ukwisula ifisokoshi fyenu fya kwingilamo.",
   "passkeys_offline": "Ingileni pa intaneti pa kumona ifisokoshi fyenu fya kwingilamo.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Sungeni Mwitandalila",
     "removeDoNotCall_title": "Fumyeni iyi ng'anda ya Mwitandalila?",
     "finish": "Bwesheni Icifulo",
-    "finish_caption": "Tinikeni ilyo mwabwesha ikadi. Ifyalembwa fya ng'anda ku ng'anda fikafumishiwa, ne ng'anda sha Mwitandalila fikasungwa.",
+    "finish_caption": "Tinikeni ilyo mulebwesha ikadi. Ifyalembwa fya ng'anda ku ng'anda na ng'anda sha Mwitandalila fikasungwa.",
     "finish_captionPrivacy": "Tinikeni ilyo mwabwesha ikadi. Ing'anda sha Mwitandalila shikasungwa.",
     "finish_title": "Bwesheni icifulo ici?",
-    "finish_description": "Ifyalembwa fya ng'anda ku ng'anda fikafumishiwa. Ing'anda sha Mwitandalila shikasungwa pamo ne adresi nelyo pin ya pa mapu ne nshiku.",
+    "finish_description": "Icifulo cikaya ku Fyabweshiwa. Ifyalembwa fyaco fya ng'anda ku ng'anda na ng'anda sha Mwitandalila fikasungwa.",
     "finish_descriptionPrivacy": "Icifulo cikaya ku Fyabweshiwa. Ing'anda sha Mwitandalila shikasungwa.",
     "finish_unworked": {
       "one": "Umusebo %{count} tawalembwa ukuti mwashimikilemo.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Ifyasangwa",
-      "info": "Inshita abantu baasukile pa fibi ifyo mwalemba mu fifulo fyenu, ukulingana ne bushiku ne awala, ukusanshako ne fibi ifyalembwa na bonse abo mwabana na bo icifulo. Icifulo nga cabweshiwa, ifyo capendwa fishala pali iyi foni, ukwabula adresi nangu imo.",
+      "info": "Inshita abantu baleisukila pa mimwangu iyalembwa mu fifulo fyenu, ukulingana ne nshiku na maawala, pamo ne mimwangu iyalembwa na bonse mulesha nabo icifulo. Ilyo icifulo cafumishiwa, ifyabalwa fyaco fikashala pa foni iyi, ukwabula ama adresi.",
       "territoryInfo": "Inshita abantu baasukile muli cino cifulo, ukulingana ne bushiku ne awala, ukusanshako ne fibi ifyalembwa na bonse abo mwabana na bo.",
       "weighting": "Imyeshi ya nomba line e ipendwa sana. Ukutandalila kwa kale kulapendwa, kabili ukutandalila kwa pali iyi nshita umwaka wapita kulapendwa sana, pantu ulubuto ne nshita fyali cimo cine.",
       "leansOnPast": "Ifingi fyafuma ku kutandalila ukwacila pa myeshi 3 iyapita.",
@@ -7110,6 +7126,7 @@
         "one": "Kona %{count}. Tinikeni pa kona pa kuisuntinkanya nelyo pa kuifumya.",
         "other": "Amakona %{count}. Tinikeni pa kona pa kuisuntinkanya nelyo pa kuifumya."
       },
+      "outlineEditHintShort": "Tinikeni pa kona pa kuisuntinkanya nelyo pa kuifumya.",
       "cornerSelected": "Kokoleni kona pa kuisuntinkanya. Tinikeni pa mapu pa kuileka.",
       "deleteCorner": "Fumyeni Kona",
       "cardPhotoRow": "Icikope ca Kadi",
@@ -7323,8 +7340,13 @@
         "one": "umusebo 1",
         "other": "imisebo %{count}"
       },
-      "finishEndsSharing": "Ukwakanya kukaleka kuli bonse, ama link ya beni yakapwa, kabili imisebo mwapeele ikabwela kuli imwe.",
+      "finishEndsSharing": "Ukuabana kukapwa kuli bonse, kabili ama link ya beni yakapwa. Uo mwapeela umusebo akausunga pa kuupwishisha.",
       "ended_toast": "{{title}} tacicili ica kwakanya na imwe",
+      "keptStreets_toast": "{{title}} cabweshiwa",
+      "keptStreets_message": {
+        "one": "Umusebo mwapeelwa nomba uli mu fifulo fyenu, ico kuti mwaupwisha.",
+        "other": "Imisebo mwapeelwa nomba ili mu fifulo fyenu, ico kuti mwaipwisha."
+      },
       "notShared_toast": "Ifyo mwalulwile fimo pa {{title}} tafyaakanyiwe. Uyo musebo wapeelwe umbi ilyo line.",
       "offline_toast": "Tatwafikile kuli WitnessWork. Moneni ukutantika kwenu ku intaneti elyo mwesheko nakabili.",
       "needsBuddies_toast": "Ukwakanya na banandi kulefwaya Buddies pa cibombelo ici.",

@@ -705,6 +705,10 @@
   "map_findContacts_result": "{{found}} van {{total}} op de kaart gevonden",
   "map_hideContactCards": "Contactkaarten verbergen",
   "map_showContactCards": "Contactkaarten tonen",
+  "map_hideContactList": "Contactenlijst verbergen",
+  "map_showContactList": "Contactenlijst tonen",
+  "map_openContactDetails": "Details van {{name}} openen",
+  "map_backToContactList": "Terug naar contactenlijst",
   "map_noSearchResults": "Geen wedstrijden",
   "map_noSearchResults_description": "Geen enkele gekoppelde contacten komen overeen met deze zoekopdracht.",
   "map_noFilterResults_description": "Geen contacten op de kaart komen overeen met deze filters. Tik op Alle, of wis de filters in Sorteren & filteren.",
@@ -1201,6 +1205,12 @@
       "c8": "Je huisdier heeft 27 nieuwe hoedjes en nieuwe items voor de kamer, en sommige zijn zeldzaam. Open de pagina van een buddy om de kamer van zijn of haar huisdier te zien.",
       "c9": "Zie wat je fotoopslag gebruikt en maak ruimte vrij. Supporters krijgen nu 5 GB, als bedankje.",
       "c10": "Antwoorden in het Helpcentrum zijn makkelijker te lezen, met stappen en schermafbeeldingen."
+    },
+    "1480": {
+      "c1": "Geef je passkeys namen die je herkent.",
+      "c2": "Als je een gebied inlevert, blijven de huis-aan-huisgegevens bewaard en kan iedereen aan wie je een straat hebt overgedragen die houden.",
+      "c3": "Op het web en op grotere schermen bewerk je notities ter plekke met de opmaakbalk bovenaan, en open je contacten en formulieren als zijpanelen.",
+      "c4": "Op Android installeer je de webapp rechtstreeks vanaf het inlogscherm."
     }
   },
   "installed": "Geïnstalleerd",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Toegevoegd %{date}",
   "passkeys_lastUsed": "Laatst gebruikt %{when}",
   "passkeys_letItUnlock": "Laten ontgrendelen",
+  "passkeys_rename": "Naam wijzigen",
+  "passkeys_renameTitle": "Passkey een andere naam geven",
+  "passkeys_renameDescription": "Deze naam is alleen zichtbaar in WitnessWork. In je wachtwoordbeheerder staat hij nog steeds als %{name}.",
+  "passkeys_renameDescriptionNoName": "Deze naam is alleen zichtbaar in WitnessWork.",
+  "passkeys_nameLabel": "Naam van passkey",
+  "passkeys_namePlaceholder": "Bijvoorbeeld Werklaptop",
   "passkeys_unlockPrompt": "Wijzig je passkeys",
   "passkeys_loadFailed": "Je passkeys konden niet worden geladen.",
   "passkeys_offline": "Maak verbinding met internet om je passkeys te zien.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Niet-bezoeken-adres opslaan",
     "removeDoNotCall_title": "Dit niet-bezoeken-adres verwijderen?",
     "finish": "Gebied inleveren",
-    "finish_caption": "Tik hierop als je de kaart inlevert. Verwijdert de huis-aan-huisgegevens en bewaart de niet-bezoeken-adressen.",
+    "finish_caption": "Tik hierop als je de kaart inlevert. De huis-aan-huisgegevens en de niet-bezoeken-adressen blijven bewaard.",
     "finish_captionPrivacy": "Tik hierop als je de kaart inlevert. De niet-bezoeken-adressen blijven bewaard.",
     "finish_title": "Dit gebied inleveren?",
-    "finish_description": "De huis-aan-huisgegevens worden verwijderd. De niet-bezoeken-adressen blijven bewaard met hun adres of kaartpin en de datum.",
+    "finish_description": "Het gebied gaat naar Ingeleverd. De huis-aan-huisgegevens en de niet-bezoeken-adressen blijven bewaard.",
     "finish_descriptionPrivacy": "Het gebied gaat naar Ingeleverd. De niet-bezoeken-adressen blijven bewaard.",
     "finish_unworked": {
       "one": "%{count} straat is niet als bewerkt gemarkeerd.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}} {{date}}",
     "insights": {
       "title": "Inzichten",
-      "info": "Wanneer mensen opendeden bij de deuren die in je gebieden zijn geregistreerd, per dag en uur, inclusief deuren die zijn geregistreerd door iedereen met wie je een gebied deelt. Nadat een gebied is ingeleverd, blijven de aantallen op dit apparaat bewaard, zonder adressen.",
+      "info": "Wanneer mensen opendeden bij de deuren die in je gebieden zijn geregistreerd, per dag en uur, inclusief deuren die zijn geregistreerd door iedereen met wie je een gebied deelt. Nadat een gebied is verwijderd, blijven de aantallen op dit apparaat bewaard, zonder adressen.",
       "territoryInfo": "Wanneer mensen opendeden in dit gebied, per dag en uur, inclusief deuren die zijn geregistreerd door iedereen met wie je het deelt.",
       "weighting": "Recente maanden tellen het zwaarst mee. Oudere bezoeken tellen ook mee, en bezoeken van deze tijd vorig jaar tellen extra mee, omdat daglicht en weer toen vergelijkbaar waren.",
       "leansOnPast": "Vooral gebaseerd op bezoeken van meer dan 3 maanden geleden.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} hoek. Tik op een hoek om hem te verplaatsen of te verwijderen.",
         "other": "%{count} hoeken. Tik op een hoek om hem te verplaatsen of te verwijderen."
       },
+      "outlineEditHintShort": "Tik op een hoek om die te verplaatsen of te verwijderen.",
       "cornerSelected": "Sleep de hoek om hem te verplaatsen. Tik op de kaart om hem los te laten.",
       "deleteCorner": "Hoek verwijderen",
       "cardPhotoRow": "Foto van de kaart",
@@ -7323,8 +7340,13 @@
         "one": "1 straat",
         "other": "%{count} straten"
       },
-      "finishEndsSharing": "Het delen stopt voor iedereen, gastlinks verlopen en overgedragen straten komen bij jou terug.",
+      "finishEndsSharing": "Het delen stopt voor iedereen en gastlinks verlopen. Iedereen aan wie je een straat hebt overgedragen, houdt die om af te maken.",
       "ended_toast": "{{title}} wordt niet meer met jou gedeeld",
+      "keptStreets_toast": "{{title}} is ingeleverd",
+      "keptStreets_message": {
+        "one": "De straat die aan je is overgedragen, staat nu bij je gebieden, zodat je hem kunt afmaken.",
+        "other": "De straten die aan je zijn overgedragen, staan nu bij je gebieden, zodat je ze kunt afmaken."
+      },
       "notShared_toast": "Sommige wijzigingen in {{title}} zijn niet gedeeld. Die straat is intussen overgedragen.",
       "offline_toast": "Kon WitnessWork niet bereiken. Controleer je verbinding en probeer het opnieuw.",
       "needsBuddies_toast": "Delen met buddy's vereist Buddies op dit apparaat.",

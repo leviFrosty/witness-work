@@ -705,6 +705,10 @@
   "map_findContacts_result": "Habonetse {{found}} muri {{total}} ku ikarita",
   "map_hideContactCards": "Hisha amakarita y'abantu",
   "map_showContactCards": "Erekana amakarita y'abantu",
+  "map_hideContactList": "Hisha urutonde rw'abantu",
+  "map_showContactList": "Erekana urutonde rw'abantu",
+  "map_openContactDetails": "Fungura amakuru ya {{name}}",
+  "map_backToContactList": "Subira ku rutonde rw'abantu",
   "map_noSearchResults": "Nta mikino",
   "map_noSearchResults_description": "No mapped contacts match this search.",
   "map_noFilterResults_description": "Nta bantu bari ku ikarita bahuje n'ibyo wahisemo. Kanda Bose, cyangwa ukureho ayo mahitamo muri Tondeka & Shungura.",
@@ -1201,6 +1205,12 @@
       "c8": "Itungo ryawe rifite ingofero nshya 27 n'ibintu bishya byo mu cyumba, bimwe muri byo ntibikunze kuboneka. Fungura paji ya mugenzi wawe urebe icyumba cy'itungo rye.",
       "c9": "Reba ibitwara ububiko bw'amafoto yawe kandi ubohore umwanya. Abaterankunga ubu babona GB 5, mu rwego rwo kubashimira.",
       "c10": "Ibisubizo byo mu Kigo cy'Ubufasha biroroshye gusoma, bifite intambwe n'amafoto ya ekara."
+    },
+    "1480": {
+      "c1": "Tanga amazina ushobora kumenya ku mfunguzo zawe zo kwinjira.",
+      "c2": "Gusubiza ifasi bituma inyandiko z'inzu ku nzu zigumaho, kandi uwo wahaye umuhanda ashobora kuwukomezanya.",
+      "c3": "Kuri interineti no ku ma ekara manini, hindura inoti aho ziri ukoresheje umurongo w'imiterere hejuru, kandi ufungure abantu n'impapuro mu bice byo ku ruhande.",
+      "c4": "Kuri Android, shyiraho porogaramu ya interineti uyikuye ku ekara ryo kwinjira."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Rwongewe %{date}",
   "passkeys_lastUsed": "Ruheruka gukoreshwa %{when}",
   "passkeys_letItUnlock": "Rwemerere gufungura",
+  "passkeys_rename": "Hindura izina",
+  "passkeys_renameTitle": "Hindura izina ry'urufunguzo rwo kwinjira",
+  "passkeys_renameDescription": "Iri zina rigaragara muri WitnessWork gusa. Porogaramu ibika amajambobanga yawe iracyarwandika nka %{name}.",
+  "passkeys_renameDescriptionNoName": "Iri zina rigaragara muri WitnessWork gusa.",
+  "passkeys_nameLabel": "Izina ry'urufunguzo rwo kwinjira",
+  "passkeys_namePlaceholder": "Urugero: Mudasobwa y'akazi",
   "passkeys_unlockPrompt": "Hindura imfunguzo zawe zo kwinjira",
   "passkeys_loadFailed": "Ntibyashobotse kuzana imfunguzo zawe zo kwinjira.",
   "passkeys_offline": "Jya kuri interineti kugira ngo urebe imfunguzo zawe zo kwinjira.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Bika utifuza gusurwa",
     "removeDoNotCall_title": "Ukure uyu mu batifuza gusurwa?",
     "finish": "Subiza ifasi",
-    "finish_caption": "Kanda iyo usubije ikarita. Bisiba inyandiko z'inzu ku nzu, abatifuza gusurwa bakagumaho.",
+    "finish_caption": "Kanda iyo usubije ikarita. Inyandiko z'inzu ku nzu n'abatifuza gusurwa bagumaho.",
     "finish_captionPrivacy": "Kanda iyo usubije ikarita. Abatifuza gusurwa baragumaho.",
     "finish_title": "Usubize iyi fasi?",
-    "finish_description": "Inyandiko z'inzu ku nzu zizasibwa. Abatifuza gusurwa bagumaho hamwe n'aderesi yabo cyangwa ikimenyetso cyo ku ikarita n'itariki.",
+    "finish_description": "Ifasi ijya muri «Yagaruwe». Inyandiko zayo z'inzu ku nzu n'abatifuza gusurwa bagumaho.",
     "finish_descriptionPrivacy": "Ifasi ijya mu zasubijwe. Abatifuza gusurwa baragumaho.",
     "finish_unworked": {
       "one": "Umuhanda %{count} ntiwashyizwe mu yabwirijwemo.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Isesengura",
-      "info": "Igihe abantu bitabaga ku nzugi zanditswe mu mafasi yawe, ukurikije umunsi n'isaha, harimo inzugi zanditswe n'uwo ari we wese musangiye ifasi. Iyo ifasi imaze gusubizwa, imibare yayo iguma kuri iki gikoresho, nta aderesi n'imwe.",
+      "info": "Igihe abantu bitabaga ku nzugi zanditswe mu mafasi yawe, ukurikije umunsi n'isaha, harimo inzugi zanditswe n'uwo ari we wese musangiye ifasi. Iyo ifasi imaze gusibwa, imibare yayo iguma kuri iki gikoresho, nta aderesi n'imwe.",
       "territoryInfo": "Igihe abantu bitabaga muri iyi fasi, ukurikije umunsi n'isaha, harimo inzugi zanditswe n'uwo ari we wese muyisangiye.",
       "weighting": "Amezi ya vuba ni yo afite agaciro kanini. Gusura kwa kera na kwo kurabarwa, kandi gusura kwo muri iki gihe umwaka ushize kubarwa kurushaho, kuko urumuri n'ikirere byari bimeze kimwe.",
       "leansOnPast": "Ahanini bishingiye ku gusura kwabaye mbere y'amezi 3.",
@@ -7110,6 +7126,7 @@
         "one": "Inguni %{count}. Kanda inguni kugira ngo uyimure cyangwa uyisibe.",
         "other": "Inguni %{count}. Kanda inguni kugira ngo uyimure cyangwa uyisibe."
       },
+      "outlineEditHintShort": "Kanda ku nguni kugira ngo uyimure cyangwa uyisibe.",
       "cornerSelected": "Kurura inguni kugira ngo uyimure. Kanda ku ikarita kugira ngo uyirekure.",
       "deleteCorner": "Siba inguni",
       "cardPhotoRow": "Ifoto y'ikarita y'ifasi",
@@ -7323,8 +7340,13 @@
         "one": "Umuhanda 1",
         "other": "Imihanda %{count}"
       },
-      "finishEndsSharing": "Gusangiza birahagarara kuri bose, amahuza y'abashyitsi akarangira, kandi imihanda watanze ikakugarukira.",
+      "finishEndsSharing": "Gusangiza birahagarara kuri bose, amahuza y'abashyitsi akarangira. Uwo wahaye umuhanda arawugumana kugira ngo awurangize.",
       "ended_toast": "Ntukisangijwe {{title}}",
+      "keptStreets_toast": "{{title}} yasubijwe",
+      "keptStreets_message": {
+        "one": "Umuhanda wahawe ubu uri mu mafasi yawe, bityo ushobora kuwurangiza.",
+        "other": "Imihanda wahawe ubu iri mu mafasi yawe, bityo ushobora kuyirangiza."
+      },
       "notShared_toast": "Zimwe mu mpinduka kuri {{title}} ntizasangijwe. Uwo muhanda watanzwe hagati aho.",
       "offline_toast": "Ntibishoboye kugera kuri WitnessWork. Reba interineti yawe, hanyuma wongere ugerageze.",
       "needsBuddies_toast": "Gusangiza bagenzi bawe bisaba Buddies kuri iki gikoresho.",

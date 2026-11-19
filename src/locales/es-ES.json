@@ -705,6 +705,10 @@
   "map_findContacts_result": "Se encontraron {{found}} de {{total}} en el mapa",
   "map_hideContactCards": "Ocultar tarjetas de contactos",
   "map_showContactCards": "Mostrar tarjetas de contactos",
+  "map_hideContactList": "Ocultar lista de contactos",
+  "map_showContactList": "Mostrar lista de contactos",
+  "map_openContactDetails": "Abrir detalles de {{name}}",
+  "map_backToContactList": "Volver a la lista de contactos",
   "map_noSearchResults": "Sin partidos",
   "map_noSearchResults_description": "Ningún contacto mapeado coincide con esta búsqueda.",
   "map_noFilterResults_description": "Ningún contacto del mapa coincide con estos filtros. Toca Todos o quita los filtros en Ordenar & Filtrar.",
@@ -1201,6 +1205,12 @@
       "c8": "Tu mascota tiene 27 sombreros nuevos y objetos nuevos para su habitación, y algunos son poco comunes. Abre la página de un compañero para ver la habitación de su mascota.",
       "c9": "Mira qué ocupa tu almacenamiento de fotos y libera espacio. Los Colaboradores ahora tienen 5 GB, como agradecimiento.",
       "c10": "Las respuestas del Centro de ayuda son más fáciles de leer, con pasos y capturas de pantalla."
+    },
+    "1480": {
+      "c1": "Ponles a tus llaves de acceso nombres que reconozcas.",
+      "c2": "Al devolver un territorio se conservan sus registros casa por casa, y quien tenía una calle que le entregaste puede quedársela.",
+      "c3": "En la web y en pantallas grandes, edita las notas directamente con la barra de formato en la parte superior y abre contactos y formularios en paneles laterales.",
+      "c4": "En Android, instala la aplicación web directamente desde la pantalla de inicio de sesión."
     }
   },
   "installed": "Instalado",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Añadida el %{date}",
   "passkeys_lastUsed": "Último uso: %{when}",
   "passkeys_letItUnlock": "Permitir desbloquear",
+  "passkeys_rename": "Renombrar",
+  "passkeys_renameTitle": "Renombrar llave de acceso",
+  "passkeys_renameDescription": "Este nombre solo se muestra en WitnessWork. Tu gestor de contraseñas la sigue mostrando como %{name}.",
+  "passkeys_renameDescriptionNoName": "Este nombre solo se muestra en WitnessWork.",
+  "passkeys_nameLabel": "Nombre de la llave de acceso",
+  "passkeys_namePlaceholder": "Por ejemplo, Portátil del trabajo",
   "passkeys_unlockPrompt": "Cambiar tus llaves de acceso",
   "passkeys_loadFailed": "No se pudieron cargar tus llaves de acceso.",
   "passkeys_offline": "Conéctate a internet para ver tus llaves de acceso.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Guardar No visitar",
     "removeDoNotCall_title": "¿Quitar este No visitar?",
     "finish": "Devolver territorio",
-    "finish_caption": "Toca cuando entregues la tarjeta. Elimina los registros casa por casa y conserva los No visitar.",
+    "finish_caption": "Toca cuando devuelvas la tarjeta. Se conservan los registros casa por casa y los No visitar.",
     "finish_captionPrivacy": "Toca cuando entregues la tarjeta. Los No visitar se conservan.",
     "finish_title": "¿Devolver este territorio?",
-    "finish_description": "Se eliminarán los registros casa por casa. Los No visitar se conservan con su dirección o chincheta del mapa y la fecha.",
+    "finish_description": "El territorio pasa a Devuelto. Se conservan sus registros casa por casa y sus No visitar.",
     "finish_descriptionPrivacy": "El territorio pasa a Devuelto. Los No visitar se conservan.",
     "finish_unworked": {
       "one": "%{count} calle no está marcada como trabajada.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Resumen",
-      "info": "Cuándo contestó la gente en las puertas registradas en tus territorios, por día y hora, incluidas las puertas registradas por cualquiera con quien compartas un territorio. Cuando se devuelve un territorio, sus recuentos se quedan en este dispositivo, sin direcciones.",
+      "info": "Cuándo respondió la gente en las puertas registradas en tus territorios, por día y hora, incluidas las puertas registradas por quienes comparten un territorio contigo. Cuando se elimina un territorio, sus recuentos permanecen en este dispositivo, sin direcciones.",
       "territoryInfo": "Cuándo contestó la gente en este territorio, por día y hora, incluidas las puertas registradas por cualquiera con quien lo compartas.",
       "weighting": "Los meses recientes cuentan más. Las visitas más antiguas también cuentan, y las de esta misma época del año pasado cuentan extra, porque la luz del día y el clima eran parecidos.",
       "leansOnPast": "Sobre todo por visitas de hace más de 3 meses.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} esquina. Toca una esquina para moverla o eliminarla.",
         "other": "%{count} esquinas. Toca una esquina para moverla o eliminarla."
       },
+      "outlineEditHintShort": "Toca una esquina para moverla o eliminarla.",
       "cornerSelected": "Arrastra la esquina para moverla. Toca el mapa para soltarla.",
       "deleteCorner": "Eliminar esquina",
       "cardPhotoRow": "Foto de la tarjeta",
@@ -7323,8 +7340,13 @@
         "one": "1 calle",
         "other": "%{count} calles"
       },
-      "finishEndsSharing": "Se deja de compartir con todos, los enlaces para invitados terminan y las calles entregadas vuelven a ti.",
+      "finishEndsSharing": "Se deja de compartir con todos y los enlaces de invitado terminan. Quien tenga una calle que le entregaste se la queda para terminarla.",
       "ended_toast": "{{title}} ya no se comparte contigo",
+      "keptStreets_toast": "Se devolvió {{title}}",
+      "keptStreets_message": {
+        "one": "La calle que te entregaron ya está en tus territorios, así que puedes terminarla.",
+        "other": "Las calles que te entregaron ya están en tus territorios, así que puedes terminarlas."
+      },
       "notShared_toast": "Algunos cambios en {{title}} no se compartieron. Entretanto, esa calle fue entregada.",
       "offline_toast": "No se pudo conectar con WitnessWork. Revisa tu conexión e inténtalo de nuevo.",
       "needsBuddies_toast": "Para compartir con compañeros hay que tener Compañeros activado en este dispositivo.",

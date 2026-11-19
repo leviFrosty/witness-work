@@ -705,6 +705,10 @@
   "map_findContacts_result": "{{found}} von {{total}} auf der Karte gefunden",
   "map_hideContactCards": "Kontaktkarten ausblenden",
   "map_showContactCards": "Kontaktkarten einblenden",
+  "map_hideContactList": "Kontaktliste ausblenden",
+  "map_showContactList": "Kontaktliste einblenden",
+  "map_openContactDetails": "Details zu {{name}} öffnen",
+  "map_backToContactList": "Zurück zur Kontaktliste",
   "map_noSearchResults": "Keine Matches",
   "map_noSearchResults_description": "Keine zugeordneten Kontakte passen zu dieser Suche.",
   "map_noFilterResults_description": "Keine Kontakte auf der Karte entsprechen diesen Filtern. Tippen Sie auf „Alle“ oder löschen Sie die Filter unter „Sortieren & Filtern“.",
@@ -1201,6 +1205,12 @@
       "c8": "Ihr Haustier hat 27 neue Hüte und neue Gegenstände für sein Zimmer, einige davon selten. Öffnen Sie die Seite eines Buddys, um das Zimmer seines Haustiers zu sehen.",
       "c9": "Sehen Sie, was Ihren Fotospeicher belegt, und schaffen Sie Platz. Unterstützer bekommen jetzt 5 GB als Dankeschön.",
       "c10": "Die Antworten im Hilfe-Center sind leichter zu lesen, mit Schritten und Screenshots."
+    },
+    "1480": {
+      "c1": "Geben Sie Ihren Passkeys Namen, die Sie leicht wiedererkennen.",
+      "c2": "Beim Zurückgeben eines Gebiets bleiben die Haus-für-Haus-Einträge erhalten, und wem Sie eine Straße übergeben haben, kann sie behalten.",
+      "c3": "Im Web und auf größeren Bildschirmen bearbeiten Sie Notizen direkt mit der Formatierungsleiste oben und öffnen Kontakte und Formulare als Seitenfenster.",
+      "c4": "Auf Android installieren Sie die Web-App direkt auf dem Anmeldebildschirm."
     }
   },
   "installed": "Eingerichtet",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Hinzugefügt am %{date}",
   "passkeys_lastUsed": "Zuletzt verwendet %{when}",
   "passkeys_letItUnlock": "Entsperren erlauben",
+  "passkeys_rename": "Umbenennen",
+  "passkeys_renameTitle": "Passkey umbenennen",
+  "passkeys_renameDescription": "Dieser Name wird nur in WitnessWork angezeigt. In Ihrem Passwortmanager steht er weiterhin als %{name}.",
+  "passkeys_renameDescriptionNoName": "Dieser Name wird nur in WitnessWork angezeigt.",
+  "passkeys_nameLabel": "Passkey-Name",
+  "passkeys_namePlaceholder": "Zum Beispiel Arbeitslaptop",
   "passkeys_unlockPrompt": "Ihre Passkeys ändern",
   "passkeys_loadFailed": "Ihre Passkeys konnten nicht geladen werden.",
   "passkeys_offline": "Verbinden Sie sich mit dem Internet, um Ihre Passkeys zu sehen.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Nicht besuchen speichern",
     "removeDoNotCall_title": "Diesen Nicht-besuchen-Eintrag entfernen?",
     "finish": "Gebiet zurückgeben",
-    "finish_caption": "Tippen Sie, wenn Sie die Karte abgeben. Löscht Haus-für-Haus-Einträge und behält Nicht-besuchen-Einträge.",
+    "finish_caption": "Tippen Sie, wenn Sie die Karte abgeben. Haus-für-Haus-Einträge und Nicht-besuchen-Einträge bleiben erhalten.",
     "finish_captionPrivacy": "Tippen Sie, wenn Sie die Karte abgeben. Nicht-besuchen-Einträge bleiben erhalten.",
     "finish_title": "Dieses Gebiet zurückgeben?",
-    "finish_description": "Haus-für-Haus-Einträge werden gelöscht. Nicht-besuchen-Einträge bleiben mit Adresse oder Kartenpin und Datum erhalten.",
+    "finish_description": "Das Gebiet wird zu „Zurückgegeben“. Seine Haus-für-Haus-Einträge und Nicht-besuchen-Einträge bleiben erhalten.",
     "finish_descriptionPrivacy": "Das Gebiet wird zu „Zurückgegeben“ verschoben. Nicht-besuchen-Einträge bleiben erhalten.",
     "finish_unworked": {
       "one": "%{count} Straße ist nicht als bearbeitet markiert.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Einblicke",
-      "info": "Wann Leute an den erfassten Türen Ihrer Gebiete geöffnet haben, nach Tag und Uhrzeit, einschließlich Türen, die jemand erfasst hat, mit dem Sie ein Gebiet teilen. Nach der Rückgabe eines Gebiets bleiben seine Zahlen ohne Adressen auf diesem Gerät.",
+      "info": "Wann Leute an den erfassten Türen Ihrer Gebiete geöffnet haben, nach Tag und Uhrzeit, einschließlich Türen, die jemand erfasst hat, mit dem Sie ein Gebiet teilen. Nach dem Löschen eines Gebiets bleiben seine Zahlen ohne Adressen auf diesem Gerät.",
       "territoryInfo": "Wann Leute in diesem Gebiet geöffnet haben, nach Tag und Uhrzeit, einschließlich Türen, die jemand erfasst hat, mit dem Sie es teilen.",
       "weighting": "Die letzten Monate zählen am meisten. Ältere Besuche zählen weiter, und Besuche vom selben Zeitraum des Vorjahres zählen extra, da Tageslicht und Wetter ähnlich waren.",
       "leansOnPast": "Größtenteils von Besuchen, die über 3 Monate zurückliegen.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} Ecke. Tippen Sie auf eine Ecke, um sie zu verschieben oder zu löschen.",
         "other": "%{count} Ecken. Tippen Sie auf eine Ecke, um sie zu verschieben oder zu löschen."
       },
+      "outlineEditHintShort": "Tippen Sie auf eine Ecke, um sie zu verschieben oder zu löschen.",
       "cornerSelected": "Ziehen Sie die Ecke, um sie zu verschieben. Tippen Sie auf die Karte, um sie loszulassen.",
       "deleteCorner": "Ecke löschen",
       "cardPhotoRow": "Foto der Gebietskarte",
@@ -7323,8 +7340,13 @@
         "one": "1 Straße",
         "other": "%{count} Straßen"
       },
-      "finishEndsSharing": "Das Teilen endet für alle, Gastlinks werden beendet und übergebene Straßen kommen zu Ihnen zurück.",
+      "finishEndsSharing": "Das Teilen endet für alle und Gastlinks werden beendet. Wem Sie eine Straße übergeben haben, behält sie, um sie abzuschließen.",
       "ended_toast": "{{title}} wird nicht mehr mit Ihnen geteilt",
+      "keptStreets_toast": "{{title}} wurde zurückgegeben",
+      "keptStreets_message": {
+        "one": "Die Straße, die man Ihnen übergeben hat, ist jetzt in Ihren Gebieten, sodass Sie sie abschließen können.",
+        "other": "Die Straßen, die man Ihnen übergeben hat, sind jetzt in Ihren Gebieten, sodass Sie sie abschließen können."
+      },
       "notShared_toast": "Einige Änderungen an {{title}} wurden nicht geteilt. Diese Straße wurde in der Zwischenzeit übergeben.",
       "offline_toast": "WitnessWork ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       "needsBuddies_toast": "Zum Teilen mit Buddys muss Buddys auf diesem Gerät eingerichtet sein.",

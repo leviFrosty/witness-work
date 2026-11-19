@@ -705,6 +705,10 @@
   "map_findContacts_result": "{{found}} sur {{total}} trouvés sur la carte",
   "map_hideContactCards": "Masquer les fiches de contact",
   "map_showContactCards": "Afficher les fiches de contact",
+  "map_hideContactList": "Masquer la liste des contacts",
+  "map_showContactList": "Afficher la liste des contacts",
+  "map_openContactDetails": "Ouvrir les détails de {{name}}",
+  "map_backToContactList": "Retour à la liste des contacts",
   "map_noSearchResults": "Pas de matchs",
   "map_noSearchResults_description": "Aucun contact cartographié ne correspond à cette recherche.",
   "map_noFilterResults_description": "Aucun contact sur la carte ne correspond à ces filtres. Touchez Tous, ou effacez les filtres dans Trier et filtrer.",
@@ -1201,6 +1205,12 @@
       "c8": "Votre animal a 27 nouveaux chapeaux et de nouveaux objets pour sa chambre, dont certains sont rares. Ouvrez la page d’un compagnon pour voir la chambre de son animal.",
       "c9": "Voyez ce qui utilise votre stockage de photos et libérez de la place. Les supporters bénéficient désormais de 5 Go, en remerciement.",
       "c10": "Les réponses du Centre d’aide sont plus faciles à lire, avec des étapes et des captures d’écran."
+    },
+    "1480": {
+      "c1": "Donnez à vos clés d’accès des noms faciles à reconnaître.",
+      "c2": "Rendre un territoire conserve ses relevés maison par maison, et la personne à qui vous aviez confié une rue peut la garder.",
+      "c3": "Sur le web et les grands écrans, modifiez les notes directement avec la barre de mise en forme en haut, et ouvrez les contacts et les formulaires dans des panneaux latéraux.",
+      "c4": "Sur Android, installez l’application web directement depuis l’écran de connexion."
     }
   },
   "installed": "installée",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Ajoutée %{date}",
   "passkeys_lastUsed": "Dernière utilisation %{when}",
   "passkeys_letItUnlock": "Autoriser le déverrouillage",
+  "passkeys_rename": "Renommer",
+  "passkeys_renameTitle": "Renommer la clé d’accès",
+  "passkeys_renameDescription": "Ce nom n’apparaît que dans WitnessWork. Votre gestionnaire de mots de passe l’affiche toujours sous le nom %{name}.",
+  "passkeys_renameDescriptionNoName": "Ce nom n’apparaît que dans WitnessWork.",
+  "passkeys_nameLabel": "Nom de la clé d’accès",
+  "passkeys_namePlaceholder": "Par exemple, Ordinateur du travail",
   "passkeys_unlockPrompt": "Modifier vos clés d’accès",
   "passkeys_loadFailed": "Impossible de charger vos clés d’accès.",
   "passkeys_offline": "Connectez-vous à Internet pour voir vos clés d’accès.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Enregistrer le « ne pas visiter »",
     "removeDoNotCall_title": "Retirer ce « ne pas visiter » ?",
     "finish": "Rendre le territoire",
-    "finish_caption": "Touchez quand vous rendez la carte. Supprime les relevés maison par maison et garde les « ne pas visiter ».",
+    "finish_caption": "Touchez quand vous rendez la carte. Les relevés maison par maison et les « ne pas visiter » sont conservés.",
     "finish_captionPrivacy": "Touchez quand vous rendez la carte. Les « ne pas visiter » sont conservés.",
     "finish_title": "Rendre ce territoire ?",
-    "finish_description": "Les relevés maison par maison seront supprimés. Les « ne pas visiter » sont conservés avec leur adresse ou leur épingle et la date.",
+    "finish_description": "Le territoire passe dans Rendus. Ses relevés maison par maison et ses « ne pas visiter » sont conservés.",
     "finish_descriptionPrivacy": "Le territoire passe dans Rendus. Les « ne pas visiter » sont conservés.",
     "finish_unworked": {
       "one": "%{count} rue n’est pas marquée comme faite.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}} {{date}}",
     "insights": {
       "title": "Statistiques",
-      "info": "Les moments où l’on a répondu aux portes notées dans vos territoires, par jour et par heure, y compris les portes notées par toute personne avec qui vous partagez un territoire. Une fois un territoire rendu, ses totaux restent sur cet appareil, sans aucune adresse.",
+      "info": "Quand les gens ont répondu aux portes enregistrées dans vos territoires, par jour et par heure, y compris les portes enregistrées par les personnes avec qui vous partagez un territoire. Une fois un territoire supprimé, ses chiffres restent sur cet appareil, sans aucune adresse.",
       "territoryInfo": "Les moments où l’on a répondu dans ce territoire, par jour et par heure, y compris les portes notées par toute personne avec qui vous le partagez.",
       "weighting": "Les mois récents comptent le plus. Les visites plus anciennes comptent aussi, et celles d’il y a un an à la même période comptent davantage, car la lumière du jour et la météo étaient semblables.",
       "leansOnPast": "Surtout d’après des visites de plus de 3 mois.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} angle. Touchez un angle pour le déplacer ou le supprimer.",
         "other": "%{count} angles. Touchez un angle pour le déplacer ou le supprimer."
       },
+      "outlineEditHintShort": "Touchez un angle pour le déplacer ou le supprimer.",
       "cornerSelected": "Faites glisser l’angle pour le déplacer. Touchez la carte pour le relâcher.",
       "deleteCorner": "Supprimer l’angle",
       "cardPhotoRow": "Photo de la fiche",
@@ -7323,8 +7340,13 @@
         "one": "%{count} rue",
         "other": "%{count} rues"
       },
-      "finishEndsSharing": "Le partage s’arrête pour tout le monde, les liens invités expirent et les rues confiées reviennent chez vous.",
+      "finishEndsSharing": "Le partage s’arrête pour tout le monde et les liens invités prennent fin. Quiconque à qui vous avez confié une rue la garde pour la terminer.",
       "ended_toast": "{{title}} n’est plus partagé avec vous",
+      "keptStreets_toast": "{{title}} a été rendu",
+      "keptStreets_message": {
+        "one": "La rue qui vous a été confiée figure maintenant dans vos territoires, vous pouvez donc la terminer.",
+        "other": "Les rues qui vous ont été confiées figurent maintenant dans vos territoires, vous pouvez donc les terminer."
+      },
       "notShared_toast": "Certaines modifications de {{title}} n’ont pas été partagées. Cette rue a été confiée entre-temps.",
       "offline_toast": "Impossible de joindre WitnessWork. Vérifiez votre connexion et réessayez.",
       "needsBuddies_toast": "Le partage avec des compagnons nécessite Compagnons sur cet appareil.",

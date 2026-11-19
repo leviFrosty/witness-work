@@ -1046,6 +1046,12 @@
       "c8": "A sua mascote tem 27 chapéus novos e novos itens para o quarto, e alguns são raros. Abra a página de um companheiro para ver o quarto da mascote dele.",
       "c9": "Veja o que ocupa o seu armazenamento de fotografias e liberte espaço. Os Apoiantes passam a ter 5 GB, como agradecimento.",
       "c10": "As respostas do Centro de Ajuda ficaram mais fáceis de ler, com passos e capturas de ecrã."
+    },
+    "1480": {
+      "c1": "Dê às suas chaves de acesso nomes que reconheça.",
+      "c2": "Ao devolver um território, os registos casa a casa são mantidos, e quem recebeu uma rua sua pode continuar com ela.",
+      "c3": "Na web e em ecrãs maiores, edite notas no próprio local com a barra de formatação no topo e abra contactos e formulários em painéis laterais.",
+      "c4": "No Android, instale a aplicação web diretamente a partir do ecrã de início de sessão."
     }
   },
   "installed": "Instalado",
@@ -2097,6 +2103,10 @@
   "map_findContacts_result": "{{found}} de {{total}} encontrados no mapa",
   "map_hideContactCards": "Ocultar cartões de contactos",
   "map_showContactCards": "Mostrar cartões de contactos",
+  "map_hideContactList": "Ocultar lista de contactos",
+  "map_showContactList": "Mostrar lista de contactos",
+  "map_openContactDetails": "Abrir detalhes de {{name}}",
+  "map_backToContactList": "Voltar à lista de contactos",
   "map_noSearchResults": "Sem correspondências",
   "map_noSearchResults_description": "Nenhum contacto no mapa corresponde a esta pesquisa.",
   "map_noFilterResults_description": "Nenhum contacto no mapa corresponde a estes filtros. Toque em Todos ou limpe os filtros em Ordenar e filtrar.",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "Adicionada em %{date}",
   "passkeys_lastUsed": "Última utilização %{when}",
   "passkeys_letItUnlock": "Permitir desbloquear",
+  "passkeys_rename": "Mudar o nome",
+  "passkeys_renameTitle": "Mudar o nome da chave de acesso",
+  "passkeys_renameDescription": "Este nome só aparece no WitnessWork. O seu gestor de palavras-passe continua a listá-la como %{name}.",
+  "passkeys_renameDescriptionNoName": "Este nome só aparece no WitnessWork.",
+  "passkeys_nameLabel": "Nome da chave de acesso",
+  "passkeys_namePlaceholder": "Por exemplo, Portátil do trabalho",
   "passkeys_unlockPrompt": "Altere as suas chaves de acesso",
   "passkeys_loadFailed": "Não foi possível carregar as suas chaves de acesso.",
   "passkeys_offline": "Ligue-se à internet para ver as suas chaves de acesso.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "Guardar Não Visitar",
     "removeDoNotCall_title": "Remover este não visitar?",
     "finish": "Devolver Território",
-    "finish_caption": "Toque quando entregar o cartão. Elimina os registos casa a casa e mantém os não visitar.",
+    "finish_caption": "Toque quando entregar o cartão. Os registos casa a casa e os não visitar são mantidos.",
     "finish_captionPrivacy": "Toque quando entregar o cartão. Os não visitar são mantidos.",
     "finish_title": "Devolver este território?",
-    "finish_description": "Os registos casa a casa serão eliminados. Os não visitar são mantidos com a morada ou o marcador no mapa e a data.",
+    "finish_description": "O território passa para «Devolvido». Os registos casa a casa e os não visitar são mantidos.",
     "finish_descriptionPrivacy": "O território passa para Devolvido. Os não visitar são mantidos.",
     "finish_unworked": {
       "one": "%{count} rua não está marcada como trabalhada.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{weekday}}, {{date}}",
     "insights": {
       "title": "Análises",
-      "info": "Quando as pessoas atenderam nas portas registadas nos seus territórios, por dia e hora, incluindo as portas registadas por quem partilha um território consigo. Depois de um território ser devolvido, as suas contagens ficam neste dispositivo, sem quaisquer moradas.",
+      "info": "Quando as pessoas atenderam nas portas registadas nos seus territórios, por dia e hora, incluindo as portas registadas por quem partilha um território consigo. Depois de um território ser eliminado, as suas contagens ficam neste dispositivo, sem quaisquer moradas.",
       "territoryInfo": "Quando as pessoas atenderam neste território, por dia e hora, incluindo as portas registadas por quem o partilha consigo.",
       "weighting": "Os meses recentes pesam mais. As visitas mais antigas também contam, e as desta altura do ano passado contam a dobrar, porque a luz do dia e o tempo eram semelhantes.",
       "leansOnPast": "Sobretudo de visitas com mais de 3 meses.",
@@ -7110,6 +7126,7 @@
         "one": "%{count} canto. Toque num canto para o mover ou eliminar.",
         "other": "%{count} cantos. Toque num canto para o mover ou eliminar."
       },
+      "outlineEditHintShort": "Toque num canto para o mover ou eliminar.",
       "cornerSelected": "Arraste o canto para o mover. Toque no mapa para o largar.",
       "deleteCorner": "Eliminar Canto",
       "cardPhotoRow": "Fotografia do Cartão",
@@ -7323,8 +7340,13 @@
         "one": "1 rua",
         "other": "%{count} ruas"
       },
-      "finishEndsSharing": "A partilha termina para todos, as ligações de convidado terminam e as ruas entregues voltam para si.",
+      "finishEndsSharing": "A partilha termina para todos e as ligações de convidado terminam. Quem recebeu uma rua sua continua com ela para a terminar.",
       "ended_toast": "{{title}} já não é partilhado consigo",
+      "keptStreets_toast": "{{title}} foi devolvido",
+      "keptStreets_message": {
+        "one": "A rua que lhe passaram está agora nos seus territórios, por isso pode terminá-la.",
+        "other": "As ruas que lhe passaram estão agora nos seus territórios, por isso pode terminá-las."
+      },
       "notShared_toast": "Algumas alterações a {{title}} não foram partilhadas. Entretanto, essa rua foi entregue.",
       "offline_toast": "Não foi possível contactar o WitnessWork. Verifique a ligação e tente novamente.",
       "needsBuddies_toast": "Partilhar com companheiros exige Companheiros neste dispositivo.",

@@ -705,6 +705,10 @@
   "map_findContacts_result": "已在地圖上找到 {{total}} 位中的 {{found}} 位",
   "map_hideContactCards": "隱藏聯絡人卡片",
   "map_showContactCards": "顯示聯絡人卡片",
+  "map_hideContactList": "隱藏聯絡人列表",
+  "map_showContactList": "顯示聯絡人列表",
+  "map_openContactDetails": "開啟 {{name}} 的詳細資料",
+  "map_backToContactList": "返回聯絡人列表",
   "map_noSearchResults": "沒有配對",
   "map_noSearchResults_description": "沒有任何地圖上的聯絡人與此搜尋相符。",
   "map_noFilterResults_description": "沒有符合這些篩選條件的已標示聯絡人。請點按「全部」，或在「排序與篩選」中清除篩選條件。",
@@ -1201,6 +1205,12 @@
       "c8": "你的寵物多了 27 頂新帽子和新的房間擺設，還有一些是稀有款。開啟夥伴的頁面，就能看到他們寵物的房間。",
       "c9": "查看是什麼佔用了你的相片儲存空間，並釋出空間。為了感謝支持者，現在可以獲得 5 GB。",
       "c10": "說明中心的解答更容易閱讀了，附有步驟和螢幕截圖。"
+    },
+    "1480": {
+      "c1": "為你的通行密鑰取個容易辨認的名稱。",
+      "c2": "歸還傳道區域時會保留逐戶記錄，你轉交過街道的人可以繼續保留那條街道。",
+      "c3": "在網頁版和大螢幕上，可用頂端的格式列就地編輯筆記，並在側邊面板中開啟聯絡人和表單。",
+      "c4": "在 Android 上，可直接從登入畫面安裝網頁應用程式。"
     }
   },
   "installed": "已安装",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "於 %{date} 新增",
   "passkeys_lastUsed": "上次使用 %{when}",
   "passkeys_letItUnlock": "允許解鎖",
+  "passkeys_rename": "重新命名",
+  "passkeys_renameTitle": "重新命名通行密鑰",
+  "passkeys_renameDescription": "這個名稱只會顯示在 WitnessWork 中。你的密碼管理工具中仍會顯示為 %{name}。",
+  "passkeys_renameDescriptionNoName": "這個名稱只會顯示在 WitnessWork 中。",
+  "passkeys_nameLabel": "通行密鑰名稱",
+  "passkeys_namePlaceholder": "例如：工作電腦",
   "passkeys_unlockPrompt": "變更你的通行密鑰",
   "passkeys_loadFailed": "無法載入你的通行密鑰。",
   "passkeys_offline": "請連上網際網路以查看你的通行密鑰。",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "儲存請勿探訪",
     "removeDoNotCall_title": "要移除這筆請勿探訪嗎？",
     "finish": "歸還傳道區域",
-    "finish_caption": "交還卡片時點一下。逐戶記錄會被刪除，請勿探訪會保留。",
+    "finish_caption": "交還卡片時點一下。逐戶記錄和請勿探訪都會保留。",
     "finish_captionPrivacy": "交還卡片時點一下。請勿探訪會保留。",
     "finish_title": "要歸還這個傳道區域嗎？",
-    "finish_description": "逐戶記錄將被刪除。請勿探訪會連同地址或地圖圖釘和日期一起保留。",
+    "finish_description": "傳道區域會移到「已歸還」。它的逐戶記錄和請勿探訪都會保留。",
     "finish_descriptionPrivacy": "這個傳道區域會移到「已歸還」。請勿探訪會保留。",
     "finish_unworked": {
       "one": "有 %{count} 條街道還沒標記為完成。",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{date}}（{{weekday}}）",
     "insights": {
       "title": "統計分析",
-      "info": "你的傳道區域中，各戶有人應門的時間，依星期和時段統計，包括與你共用傳道區域的人所記錄的各戶。傳道區域歸還後，統計數字會留在這部裝置上，但不含任何地址。",
+      "info": "你的傳道區域中，各戶有人應門的時間，依星期和時段統計，包括與你共用傳道區域的人所記錄的各戶。傳道區域刪除後，統計數字會留在這部裝置上，但不含任何地址。",
       "territoryInfo": "這個傳道區域中有人應門的時間，依星期和時段統計，包括與你共用的人所記錄的各戶。",
       "weighting": "最近幾個月的比重最高。較早的探訪仍會計入，去年同一時期的探訪會額外加重，因為日照和天氣相近。",
       "leansOnPast": "主要根據 3 個月前的探訪。",
@@ -7110,6 +7126,7 @@
         "one": "%{count} 個角。點一個角即可移動或刪除。",
         "other": "%{count} 個角。點一個角即可移動或刪除。"
       },
+      "outlineEditHintShort": "點一下某個角點即可移動或刪除。",
       "cornerSelected": "拖曳這個角即可移動。點一下地圖即可放開。",
       "deleteCorner": "刪除這個角",
       "cardPhotoRow": "卡片相片",
@@ -7323,8 +7340,13 @@
         "one": "1 條街道",
         "other": "%{count} 條街道"
       },
-      "finishEndsSharing": "所有人的分享都會停止，訪客連結會失效，已轉交的街道會回到你手上。",
+      "finishEndsSharing": "所有人的分享都會停止，訪客連結會失效。你轉交過街道的人會繼續保留那條街道，以便完成傳道。",
       "ended_toast": "{{title}} 已不再與你分享",
+      "keptStreets_toast": "{{title}}已歸還",
+      "keptStreets_message": {
+        "one": "轉交給你的街道現在已在你的傳道區域中，你可以繼續完成。",
+        "other": "轉交給你的街道現在已在你的傳道區域中，你可以繼續完成。"
+      },
       "notShared_toast": "對 {{title}} 的部分變更未分享出去，因為該街道在這段期間已轉交。",
       "offline_toast": "無法連線到 WitnessWork。請檢查網路連線後再試一次。",
       "needsBuddies_toast": "與夥伴分享需要在此裝置上使用「夥伴」。",

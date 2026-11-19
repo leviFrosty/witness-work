@@ -705,6 +705,10 @@
   "map_findContacts_result": "{{total}}件中{{found}}件が地図で見つかりました",
   "map_hideContactCards": "連絡先カードを隠す",
   "map_showContactCards": "連絡先カードを表示",
+  "map_hideContactList": "連絡先一覧を隠す",
+  "map_showContactList": "連絡先一覧を表示",
+  "map_openContactDetails": "{{name}}の詳細を開く",
+  "map_backToContactList": "連絡先一覧に戻る",
   "map_noSearchResults": "一致なし",
   "map_noSearchResults_description": "この検索に一致する地図上の連絡先はありません。",
   "map_noFilterResults_description": "これらの絞り込み条件に一致する、地図上の連絡先はありません。「すべて」をタップするか、「並べ替え＆絞り込み」で条件を解除してください。",
@@ -1201,6 +1205,12 @@
       "c8": "ペットの帽子が27種類増え、部屋のアイテムも新しくなりました。レアなものもあります。バディのページを開くと、そのペットの部屋を見られます。",
       "c9": "写真ストレージを何が使っているかを確認して、空き容量を増やせます。サポーターには感謝の気持ちとして、5 GBをご用意しました。",
       "c10": "ヘルプセンターの回答が、手順とスクリーンショット付きで読みやすくなりました。"
+    },
+    "1480": {
+      "c1": "パスキーに、わかりやすい名前を付けられるようになりました。",
+      "c2": "区域を返却しても家ごとの記録は残り、通りを引き継いだ人はそのまま続けられます。",
+      "c3": "ウェブや大きい画面では、上の書式バーでメモをその場で編集でき、連絡先やフォームをサイドパネルで開けます。",
+      "c4": "Androidでは、サインイン画面からウェブアプリを直接インストールできます。"
     }
   },
   "installed": "インストール済み",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "%{date}に追加",
   "passkeys_lastUsed": "最終使用 %{when}",
   "passkeys_letItUnlock": "ロック解除を許可",
+  "passkeys_rename": "名前を変更",
+  "passkeys_renameTitle": "パスキーの名前を変更",
+  "passkeys_renameDescription": "この名前はWitnessWork内にのみ表示されます。パスワードマネージャには、引き続き%{name}と表示されます。",
+  "passkeys_renameDescriptionNoName": "この名前はWitnessWork内にのみ表示されます。",
+  "passkeys_nameLabel": "パスキー名",
+  "passkeys_namePlaceholder": "例: 仕事用ノートPC",
   "passkeys_unlockPrompt": "パスキーを変更",
   "passkeys_loadFailed": "パスキーを読み込めませんでした。",
   "passkeys_offline": "パスキーを表示するには、インターネットに接続してください。",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "訪問お断りを保存",
     "removeDoNotCall_title": "この訪問お断りを削除しますか?",
     "finish": "区域を返却",
-    "finish_caption": "カードを返すときにタップします。家ごとの記録は削除され、訪問お断りの家は残ります。",
+    "finish_caption": "カードを返すときにタップします。家ごとの記録と訪問お断りの家は残ります。",
     "finish_captionPrivacy": "カードを返すときにタップします。訪問お断りの家は残ります。",
     "finish_title": "この区域を返却しますか?",
-    "finish_description": "家ごとの記録は削除されます。訪問お断りの家は、住所または地図のピンと日付とともに残ります。",
+    "finish_description": "区域は「返却済み」に移ります。家ごとの記録と訪問お断りの家は残ります。",
     "finish_descriptionPrivacy": "区域は返却済みに移ります。訪問お断りの家は残ります。",
     "finish_unworked": {
       "one": "奉仕済みにしていない通りが%{count}本あります。",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{date}}({{weekday}})",
     "insights": {
       "title": "インサイト",
-      "info": "区域で記録した家の、曜日と時間帯ごとの在宅状況です。区域を共有している人が記録した家も含まれます。区域を返却した後も、集計は住所なしでこのデバイスに残ります。",
+      "info": "区域で記録した家の、曜日と時間帯ごとの在宅状況です。区域を共有している人が記録した家も含まれます。区域を削除した後も、集計は住所なしでこのデバイスに残ります。",
       "territoryInfo": "この区域での、曜日と時間帯ごとの在宅状況です。区域を共有している人が記録した家も含まれます。",
       "weighting": "最近の月ほど重く扱われます。古い訪問も反映され、昨年の同じ時期の訪問は日の長さや天候が似ているため、さらに重く扱われます。",
       "leansOnPast": "主に3か月以上前の訪問に基づいています。",
@@ -7110,6 +7126,7 @@
         "one": "角%{count}つ。角をタップすると、移動や削除ができます。",
         "other": "角%{count}つ。角をタップすると、移動や削除ができます。"
       },
+      "outlineEditHintShort": "角をタップすると、移動または削除できます。",
       "cornerSelected": "角をドラッグして移動します。地図をタップすると選択が解除されます。",
       "deleteCorner": "角を削除",
       "cardPhotoRow": "カードの写真",
@@ -7323,8 +7340,13 @@
         "one": "1本の通り",
         "other": "%{count}本の通り"
       },
-      "finishEndsSharing": "全員への共有が停止し、ゲストリンクは終了し、引き継いだ通りは手元に戻ります。",
+      "finishEndsSharing": "全員への共有が停止し、ゲストリンクは終了します。通りを引き継いだ人は、最後まで続けられます。",
       "ended_toast": "{{title}}はもう共有されていません",
+      "keptStreets_toast": "{{title}}が返却されました",
+      "keptStreets_message": {
+        "one": "引き継いだ通りが自分の区域に入ったので、最後まで続けられます。",
+        "other": "引き継いだ通りが自分の区域に入ったので、最後まで続けられます。"
+      },
       "notShared_toast": "{{title}}の一部の変更は共有されませんでした。その通りが途中で引き継がれたためです。",
       "offline_toast": "WitnessWorkに接続できませんでした。接続を確認して、もう一度お試しください。",
       "needsBuddies_toast": "バディとの共有には、このデバイスでバディを設定する必要があります。",

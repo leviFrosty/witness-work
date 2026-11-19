@@ -705,6 +705,10 @@
   "map_findContacts_result": "지도에서 {{total}}명 중 {{found}}명을 찾았습니다",
   "map_hideContactCards": "연락처 카드 숨기기",
   "map_showContactCards": "연락처 카드 표시",
+  "map_hideContactList": "연락처 목록 숨기기",
+  "map_showContactList": "연락처 목록 보기",
+  "map_openContactDetails": "{{name}} 상세 정보 열기",
+  "map_backToContactList": "연락처 목록으로 돌아가기",
   "map_noSearchResults": "일치하는 사람이 없어",
   "map_noSearchResults_description": "이 검색과 일치하는 지도 연락처는 없습니다.",
   "map_noFilterResults_description": "이 필터에 맞는 지도 연락처가 없습니다. 전체를 탭하거나, 정렬 및 필터에서 필터를 지우세요.",
@@ -1201,6 +1205,12 @@
       "c8": "반려동물에게 새 모자 27종과 새 방 아이템이 생겼고, 일부는 희귀합니다. 버디의 페이지를 열어 그 반려동물의 방을 구경해 보세요.",
       "c9": "무엇이 사진 저장 공간을 차지하는지 확인하고 공간을 확보하세요. 감사의 마음을 담아 서포터는 이제 5GB를 받습니다.",
       "c10": "도움말 센터의 답변이 단계별 설명과 스크린샷으로 더 읽기 쉬워졌습니다."
+    },
+    "1480": {
+      "c1": "패스키에 알아보기 쉬운 이름을 붙일 수 있습니다.",
+      "c2": "구역을 반납해도 집별 기록이 유지되며, 거리를 넘겨받은 사람은 계속 봉사할 수 있습니다.",
+      "c3": "웹과 큰 화면에서는 상단 서식 바로 메모를 바로 편집하고, 연락처와 양식을 사이드 패널로 열 수 있습니다.",
+      "c4": "Android에서는 로그인 화면에서 바로 웹 앱을 설치할 수 있습니다."
     }
   },
   "installed": "설치됨",
@@ -4661,6 +4671,12 @@
   "passkeys_added": "%{date}에 추가됨",
   "passkeys_lastUsed": "마지막 사용 %{when}",
   "passkeys_letItUnlock": "잠금 해제 허용",
+  "passkeys_rename": "이름 변경",
+  "passkeys_renameTitle": "패스키 이름 변경",
+  "passkeys_renameDescription": "이 이름은 WitnessWork에서만 표시됩니다. 비밀번호 관리자에는 계속 %{name}(으)로 표시됩니다.",
+  "passkeys_renameDescriptionNoName": "이 이름은 WitnessWork에서만 표시됩니다.",
+  "passkeys_nameLabel": "패스키 이름",
+  "passkeys_namePlaceholder": "예: 업무용 노트북",
   "passkeys_unlockPrompt": "패스키 변경",
   "passkeys_loadFailed": "패스키를 불러올 수 없습니다.",
   "passkeys_offline": "패스키를 보려면 인터넷에 연결하세요.",
@@ -6839,10 +6855,10 @@
     "saveDoNotCall": "방문 사절 저장",
     "removeDoNotCall_title": "이 방문 사절을 제거할까요?",
     "finish": "구역 반납",
-    "finish_caption": "구역 카드를 돌려줄 때 탭하세요. 집별 기록은 삭제되고 방문 사절은 유지됩니다.",
+    "finish_caption": "구역 카드를 돌려줄 때 탭하세요. 집별 기록과 방문 사절은 유지됩니다.",
     "finish_captionPrivacy": "구역 카드를 돌려줄 때 탭하세요. 방문 사절은 유지됩니다.",
     "finish_title": "이 구역을 반납할까요?",
-    "finish_description": "집별 기록이 삭제됩니다. 방문 사절은 주소 또는 지도 핀과 날짜와 함께 유지됩니다.",
+    "finish_description": "구역이 '반납함'으로 이동합니다. 집별 기록과 방문 사절은 유지됩니다.",
     "finish_descriptionPrivacy": "구역이 반납함으로 이동합니다. 방문 사절은 유지됩니다.",
     "finish_unworked": {
       "one": "%{count}개 거리가 봉사함으로 표시되지 않았습니다.",
@@ -6888,7 +6904,7 @@
     "weekdayDate": "{{date}} ({{weekday}})",
     "insights": {
       "title": "인사이트",
-      "info": "내 구역에서 기록한 집들에서 사람들이 응답한 때를 요일과 시간별로 보여 줍니다. 구역을 함께 쓰는 사람이 기록한 집도 포함됩니다. 구역을 반납한 뒤에도 집계는 주소 없이 이 기기에 남습니다.",
+      "info": "내 구역에서 기록한 집들에서 사람들이 응답한 때를 요일과 시간별로 보여 줍니다. 구역을 함께 쓰는 사람이 기록한 집도 포함됩니다. 구역을 삭제한 뒤에도 집계는 주소 없이 이 기기에 남습니다.",
       "territoryInfo": "이 구역에서 사람들이 응답한 때를 요일과 시간별로 보여 줍니다. 함께 쓰는 사람이 기록한 집도 포함됩니다.",
       "weighting": "최근 몇 달의 기록이 가장 크게 반영됩니다. 이전 방문도 반영되며, 작년 이맘때의 방문은 일조 시간과 날씨가 비슷하므로 더 크게 반영됩니다.",
       "leansOnPast": "대부분 3개월 넘게 지난 방문을 바탕으로 합니다.",
@@ -7110,6 +7126,7 @@
         "one": "모서리 %{count}개. 모서리를 탭하면 옮기거나 삭제할 수 있습니다.",
         "other": "모서리 %{count}개. 모서리를 탭하면 옮기거나 삭제할 수 있습니다."
       },
+      "outlineEditHintShort": "모서리를 탭하면 이동하거나 삭제할 수 있습니다.",
       "cornerSelected": "모서리를 끌어 옮기세요. 지도를 탭하면 놓습니다.",
       "deleteCorner": "모서리 삭제",
       "cardPhotoRow": "카드 사진",
@@ -7323,8 +7340,13 @@
         "one": "거리 1개",
         "other": "거리 %{count}개"
       },
-      "finishEndsSharing": "모든 사람에 대한 공유가 중지되고, 게스트 링크가 종료되며, 넘긴 거리는 내게 돌아옵니다.",
+      "finishEndsSharing": "모든 사람에 대한 공유가 중지되고 게스트 링크가 종료됩니다. 거리를 넘겨받은 사람은 계속 봉사할 수 있습니다.",
       "ended_toast": "{{title}}이(가) 더 이상 나와 공유되지 않습니다",
+      "keptStreets_toast": "{{title}}이(가) 반납되었습니다",
+      "keptStreets_message": {
+        "one": "넘겨받은 거리가 이제 내 구역에 들어 있으므로 끝까지 봉사할 수 있습니다.",
+        "other": "넘겨받은 거리가 이제 내 구역에 들어 있으므로 끝까지 봉사할 수 있습니다."
+      },
       "notShared_toast": "{{title}}의 일부 변경 사항이 공유되지 않았습니다. 그 사이 해당 거리가 넘겨졌습니다.",
       "offline_toast": "WitnessWork에 연결할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
       "needsBuddies_toast": "버디와 공유하려면 이 기기에서 버디를 사용해야 합니다.",

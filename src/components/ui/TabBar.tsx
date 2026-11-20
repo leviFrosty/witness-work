@@ -72,6 +72,8 @@ const HIDDEN_OVERSHOOT = 24
 
 const CAPSULE_LABEL_FONT_SCALE_CAP = 1.3
 
+const BAR_BACKING_ALPHA = 'cc'
+
 export const TAB_BAR_HEIGHT = CAPSULE_HEIGHT
 
 const liquidGlass = isLiquidGlassAvailable()
@@ -373,6 +375,7 @@ const TabBar = ({
     <GlassView
       key='main'
       glassEffectStyle='regular'
+      tintColor={theme.colors.card + BAR_BACKING_ALPHA}
       colorScheme={glassColorScheme}
       style={pillShape}
     >
@@ -381,7 +384,10 @@ const TabBar = ({
   ) : (
     <View
       key='main'
-      style={[pillShape, { backgroundColor: theme.colors.card + 'cc' }]}
+      style={[
+        pillShape,
+        { backgroundColor: theme.colors.card + BAR_BACKING_ALPHA },
+      ]}
     >
       <BlurView
         tint={isDark ? 'dark' : 'light'}
@@ -694,7 +700,10 @@ const TabBar = ({
             </GlassView>
           ) : (
             <View
-              style={[railShape, { backgroundColor: theme.colors.card + 'cc' }]}
+              style={[
+                railShape,
+                { backgroundColor: theme.colors.card + BAR_BACKING_ALPHA },
+              ]}
             >
               <BlurView
                 tint={isDark ? 'dark' : 'light'}

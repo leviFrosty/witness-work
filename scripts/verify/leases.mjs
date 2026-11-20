@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { simslimBin } from './simslim.mjs'
 
 const env = process.env
 
@@ -14,6 +15,9 @@ const num = (name, fallback, small = fallback) => {
   POLICY[name] = fromEnv ? 'env' : 'auto'
   return fromEnv ? value : SMALL ? small : fallback
 }
+
+const SLIM_SIMULATORS = process.platform === 'darwin' && Boolean(simslimBin())
+POLICY.WW_VERIFY_SIMSLIM = env.WW_VERIFY_SIMSLIM ? 'env' : 'auto'
 
 export const HOME = env.WW_VERIFY_HOME || path.join(os.homedir(), '.ww-verify')
 export const LOCK_DIR = path.join(HOME, 'locks')
@@ -49,7 +53,7 @@ export const CONFIG = {
   settleSec: num('WW_VERIFY_SETTLE_SEC', 60),
 
   est: {
-    ios: num('WW_VERIFY_EST_IOS_GB', 3.4),
+    ios: num('WW_VERIFY_EST_IOS_GB', SLIM_SIMULATORS ? 1.8 : 3.4),
     android: num('WW_VERIFY_EST_ANDROID_GB', 3.2),
     metro: num('WW_VERIFY_EST_METRO_GB', 0.6),
     'build-ios': num('WW_VERIFY_EST_IOS_BUILD_GB', 6),

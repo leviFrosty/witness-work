@@ -1,0 +1,6 @@
+{
+  "name": "witnesswork",
+  "description": "WW Verify simulators: everything WitnessWork's verify flows don't use is off",
+  "except": ["pim", "photos"],
+  "keep": ["com.apple.apsd", "com.apple.swcd"]
+}

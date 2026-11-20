@@ -59,6 +59,18 @@ import {
   setHold,
 } from './jobs.mjs'
 import { webBuild, webDev, webDown, webTest } from './web-pool.mjs'
+import {
+  INSTALL as SIMSLIM_INSTALL,
+  PROFILE as SIMSLIM_PROFILE,
+  bootSlim,
+  enableLive,
+  expandServices,
+  matchesProfile,
+  parseServices,
+  simslimBin,
+  slimLive,
+  unknownServices,
+} from './simslim.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(
   /\/$/,
@@ -378,10 +390,12 @@ function shutdownDevice(device, { keepDevice = false } = {}) {
     if (!sim || !/^WW Verify /.test(sim.name)) return
     killIosRunner(device.id)
     if (keepDevice) {
-      if (sim.state === 'Booted')
+      if (sim.state === 'Booted') {
         run('xcrun', ['simctl', 'terminate', device.id, BUNDLE_ID], {
           check: false,
         })
+        restoreSimslim(device)
+      }
       return
     }
     if (sim.state !== 'Shutdown')
@@ -1205,10 +1219,15 @@ function bootIos(device) {
   if (!simState(device.id))
     fail(`Simulator ${device.name} (${device.id}) no longer exists`)
 
+  const slim = simslimBin()
   const state = waitSimLeaves(device.id, ['Shutting Down'])
   if (state !== 'Booted') {
-    log(`booting ${device.name}`)
-    run('xcrun', ['simctl', 'boot', device.id], { check: false })
+    log(`booting ${device.name}${slim ? ' slim' : ''}`)
+    const booted = slim && bootSlim(slim, device.id)
+    if (booted && !booted.ok)
+      log(`simslim could not boot it slim; booting stock\n${booted.output}`)
+    if (!booted?.ok)
+      run('xcrun', ['simctl', 'boot', device.id], { check: false })
   }
   run('xcrun', ['simctl', 'bootstatus', device.id, '-b'], {
     timeout: 300_000,
@@ -1223,6 +1242,32 @@ function bootIos(device) {
       timeout: 300_000,
     })
   }
+  if (slim) applySimslim(slim, device, device.services ?? [])
+}
+
+function applySimslim(bin, device, services) {
+  if (!matchesProfile(bin, device.id)) {
+    log(`slimming ${device.name} to ${path.relative(ROOT, SIMSLIM_PROFILE)}`)
+    const slimmed = slimLive(bin, device.id)
+    if (!slimmed.ok)
+      log(
+        `simslim could not slim ${device.name}; it runs stock\n${slimmed.output}`
+      )
+  }
+  if (!services.length) return
+  const ids = expandServices(bin, services)
+  log(`turning on ${ids.join(', ')} on ${device.name}`)
+  const enabled = enableLive(bin, device.id, ids)
+  if (!enabled.ok)
+    fail(`simslim enable ${ids.join(',')} failed: ${enabled.output}`)
+}
+
+function restoreSimslim(device) {
+  const bin = simslimBin()
+  if (!bin || matchesProfile(bin, device.id)) return
+  const slimmed = slimLive(bin, device.id)
+  if (!slimmed.ok)
+    log(`simslim could not re-slim ${device.name}\n${slimmed.output}`)
 }
 
 const posterStore = (udid) =>
@@ -2657,6 +2702,20 @@ const commands = {
       fail('--platform must be ios or android')
     if (flags.api && !['local', 'env'].includes(flags.api))
       fail('--api must be local or env')
+    let services
+    try {
+      services = parseServices(flags.services)
+    } catch (error) {
+      fail(error.message)
+    }
+    if (services.length && platform !== 'ios')
+      fail('--services only applies to iOS simulators')
+    const slim = services.length ? simslimBin() : null
+    const unknown = slim ? unknownServices(slim, services) : []
+    if (unknown.length)
+      fail(
+        `--services: unknown ${unknown.join(', ')}; use a category or launchd label from simslim profiles, or all`
+      )
     const hold = !ignoresHold() && readHold()
     if (hold) fail(holdMessage(hold, 'the device run'))
     const disk = freeDiskGb()
@@ -2736,6 +2795,7 @@ const commands = {
       if (claim.warm) log(`reusing warm ${claim.lease.deviceName}`)
       startHeartbeat()
       device = leaseDevice(claim.lease)
+      if (platform === 'ios') device.services = services
       state.devices = { ...state.devices, [platform]: device }
       writeState(state)
 
@@ -2924,6 +2984,25 @@ const commands = {
             ? `${axe} (reads the screen where agent-device can't)`
             : `missing; ${AXE_MISSING.split(': ')[1]}${isIpadKind(device.kind) ? ' (needed to drive an iPad)' : ''}`,
           !isIpadKind(device.kind)
+        )
+        const slim = simslimBin()
+        const services = device.services ?? []
+        const slimmed = slim && matchesProfile(slim, device.id)
+        check(
+          'ios:slim',
+          Boolean(slimmed),
+          !slim
+            ? process.env.WW_VERIFY_SIMSLIM === '0'
+              ? 'off (WW_VERIFY_SIMSLIM=0); the simulator runs every background service'
+              : `simslim missing, so the simulator runs every background service: ${SIMSLIM_INSTALL}`
+            : slimmed
+              ? path.relative(ROOT, SIMSLIM_PROFILE)
+              : services.includes('all')
+                ? 'every background service on for this run (--services all)'
+                : services.length
+                  ? `slim, plus ${services.join(', ')} (--services)`
+                  : 'not slimmed to the profile; run ww-verify up',
+          !slim || services.length > 0
         )
         const covered = splashCovers(state, platform)
         check(
@@ -3390,6 +3469,7 @@ const commands = {
       WW_VERIFY_WARM: CONFIG.warm,
       WW_VERIFY_WARM_HOURS: CONFIG.warmHours,
       WW_VERIFY_WARM_MIN: CONFIG.warmMin,
+      WW_VERIFY_SIMSLIM: simslimBin() ?? 'off (simulators boot stock)',
       WW_VERIFY_EST_IOS_GB: CONFIG.est.ios,
       WW_VERIFY_EST_ANDROID_GB: CONFIG.est.android,
       WW_VERIFY_EST_METRO_GB: CONFIG.est.metro,
@@ -3501,7 +3581,7 @@ const commands = {
   async help() {
     console.log(`ww-verify <command> [--platform ios|android]
 
-  up [--platform ios|android] [--ipad|--ipad-mini|--duo|--se] [--api local|env] [--seed <scenario>]
+  up [--platform ios|android] [--ipad|--ipad-mini|--duo|--se] [--api local|env] [--seed <scenario>] [--services widgets,store,…|all]
      [--rebuild] [--accept-stale-native] [--wait 30] [--keep-build-dirs]
                                            lease a device, start the local API and
                                            Metro, install, launch

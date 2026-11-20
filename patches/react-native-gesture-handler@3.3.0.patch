@@ -2,7 +2,7 @@ diff --git a/apple/Handlers/RNHoverHandler.m b/apple/Handlers/RNHoverHandler.m
 index b193768ebc033270d6308056aa8bc35301d69946..b3fe9d5ddf4ba40332dc6fabf6e0e30bc5773aa5 100644
 --- a/apple/Handlers/RNHoverHandler.m
 +++ b/apple/Handlers/RNHoverHandler.m
-@@ -60,13 +60,23 @@ - (void)reset
+@@ -60,13 +60,23 @@ typedef NS_ENUM(NSInteger, RNGestureHandlerHoverEffect) {
  - (UIPointerStyle *)pointerInteraction:(UIPointerInteraction *)interaction styleForRegion:(UIPointerRegion *)region
  {
    if (interaction.view != nil && _hoverEffect != RNGestureHandlerHoverEffectNone) {
@@ -28,3 +28,49 @@ index b193768ebc033270d6308056aa8bc35301d69946..b3fe9d5ddf4ba40332dc6fabf6e0e30b
      }
  
      return [UIPointerStyle styleWithEffect:effect shape:nil];
+diff --git a/lib/module/web/handlers/GestureHandler.js b/lib/module/web/handlers/GestureHandler.js
+index 36f8b9040f4c0458d583222532b4c8dbad90dc21..ca5cacee37cb4e36256d0277250c64c1a4cbbc48 100644
+--- a/lib/module/web/handlers/GestureHandler.js
++++ b/lib/module/web/handlers/GestureHandler.js
+@@ -606,10 +606,16 @@ export default class GestureHandler {
+     return enabled !== prevEnabled;
+   }
+   setGestureConfig(config) {
++    const touchAction = config.touchAction ?? this._touchAction;
++    const userSelect = config.userSelect ?? this._userSelect;
++    const enableContextMenu = config.enableContextMenu ?? this._enableContextMenu;
+     this.resetConfig();
+     this.updateGestureConfig({
+       ...config,
+-      enabled: config.enabled ?? true
++      enabled: config.enabled ?? true,
++      touchAction,
++      userSelect,
++      enableContextMenu
+     });
+   }
+   updateGestureConfig(config) {
+diff --git a/src/web/handlers/GestureHandler.ts b/src/web/handlers/GestureHandler.ts
+index 9292b0420d2c057a127de039a44343ce4e24febc..4020fce67f8cb32fa8791ecb32fc2df429d5ee49 100644
+--- a/src/web/handlers/GestureHandler.ts
++++ b/src/web/handlers/GestureHandler.ts
+@@ -789,8 +789,18 @@ export default abstract class GestureHandler implements IGestureHandler {
+   }
+ 
+   public setGestureConfig(config: Config) {
++    const touchAction = config.touchAction ?? this._touchAction;
++    const userSelect = config.userSelect ?? this._userSelect;
++    const enableContextMenu =
++      config.enableContextMenu ?? this._enableContextMenu;
+     this.resetConfig();
+-    this.updateGestureConfig({ ...config, enabled: config.enabled ?? true });
++    this.updateGestureConfig({
++      ...config,
++      enabled: config.enabled ?? true,
++      touchAction,
++      userSelect,
++      enableContextMenu,
++    });
+   }
+ 
+   public updateGestureConfig(config: Partial<Config>): void {

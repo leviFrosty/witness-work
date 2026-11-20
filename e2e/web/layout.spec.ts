@@ -107,6 +107,145 @@ test('Home scrolls by a touch swipe', async ({ app, browserName }) => {
   expect(box.y + box.height).toBeLessThanOrEqual(size.height)
 })
 
+test("What's New scrolls by a touch swipe", async ({ app, browserName }) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright has no touch swipe elsewhere'
+  )
+  await app.getByRole('button', { name: 'Settings', exact: true }).click()
+  await app
+    .getByRole('button', { name: "What's New", exact: true })
+    .first()
+    .click()
+  const release = app.getByText('1.6.0', { exact: true })
+  await expect(release).toHaveCount(1)
+  const before = (await release.boundingBox())!
+  const size = app.viewportSize()!
+  const cdp = await app.context().newCDPSession(app)
+  await cdp.send('Input.synthesizeScrollGesture', {
+    x: Math.round(size.width * 0.75),
+    y: Math.round(size.height * 0.7),
+    yDistance: -500,
+    gestureSourceType: 'touch',
+    speed: 1200,
+  })
+  await expect
+    .poll(async () => before.y - (await release.boundingBox())!.y)
+    .toBeGreaterThan(200)
+})
+
+type TimeEntry = { id: string; date: string }
+
+type Harness = {
+  __WW_DEV__: {
+    seed: (scenario: string) => unknown
+    state: () => { ready: boolean }
+    navigate: (name: string, params?: object) => unknown
+    stores: {
+      serviceReports: {
+        getState: () => {
+          serviceReports: Record<string, Record<string, TimeEntry[]>>
+          addServiceReports: (entries: TimeEntry[]) => void
+        }
+      }
+    }
+  }
+}
+
+async function seedBusy(page: Page) {
+  await page.evaluate(() =>
+    (globalThis as unknown as Harness).__WW_DEV__.seed('busy')
+  )
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (globalThis as unknown as Harness).__WW_DEV__.state().ready
+      )
+    )
+    .toBe(true)
+}
+
+async function swipeUpFrom(page: Page, x: number, y: number) {
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Input.synthesizeScrollGesture', {
+    x: Math.round(x),
+    y: Math.round(y),
+    yDistance: -300,
+    gestureSourceType: 'touch',
+    speed: 1200,
+  })
+}
+
+test('a list of swipeable rows scrolls by a touch swipe that starts on a row', async ({
+  app,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright has no touch swipe elsewhere'
+  )
+  test.skip(!isPhone(app), 'the list fills a phone')
+  await seedBusy(app)
+  await app.evaluate(() =>
+    (globalThis as unknown as Harness).__WW_DEV__.navigate('Root', {
+      screen: 'Contacts',
+    })
+  )
+  const row = app.getByText('Bruno Okafor', { exact: true }).first()
+  await expect(row).toBeVisible()
+  const before = (await row.boundingBox())!
+  await swipeUpFrom(app, before.x + 40, before.y + 10)
+  await expect
+    .poll(async () => before.y - (await row.boundingBox())!.y)
+    .toBeGreaterThan(150)
+})
+
+test("a day's sheet scrolls by a touch swipe on its time reports", async ({
+  app,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright has no touch swipe elsewhere'
+  )
+  test.skip(!isPhone(app), 'a phone shows the day in a sheet')
+  await seedBusy(app)
+  const day = await app.evaluate(() => {
+    const reports = (
+      globalThis as unknown as Harness
+    ).__WW_DEV__.stores.serviceReports.getState()
+    const [entry] = Object.values(reports.serviceReports).flatMap((months) =>
+      Object.values(months).flat()
+    )
+    const date = new Date(Date.now() - 2 * 86_400_000)
+    date.setHours(9, 0, 0, 0)
+    reports.addServiceReports(
+      Array.from({ length: 12 }, (_, i) => ({
+        ...entry,
+        id: `swipe-entry-${i}`,
+        date: new Date(date.getTime() + i * 60_000).toISOString(),
+      }))
+    )
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  })
+  await app.evaluate(
+    (date) =>
+      (globalThis as unknown as Harness).__WW_DEV__.navigate('Root', {
+        screen: 'Schedule',
+        params: { date },
+      }),
+    day
+  )
+  const heading = app.getByText('Time Reports', { exact: true }).first()
+  await expect(heading).toBeVisible()
+  const before = (await heading.boundingBox())!
+  await swipeUpFrom(app, before.x + 100, before.y + 150)
+  await expect
+    .poll(async () => before.y - (await heading.boundingBox())!.y)
+    .toBeGreaterThan(150)
+})
+
 for (const page of [
   { name: 'Profile', row: null, last: 'Advanced' },
   {

@@ -74,7 +74,7 @@ export default function InsightsBars({
       testID={testID}
       style={{ gap: 6 }}
     >
-      <GestureDetector gesture={gesture}>
+      <GestureDetector gesture={gesture} touchAction='pan-y'>
         <View
           onLayout={onLayout}
           style={{

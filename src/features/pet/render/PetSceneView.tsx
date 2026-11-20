@@ -426,7 +426,7 @@ export default function PetSceneView({
 
   return (
     <PointerHover onHoverChange={setHovered}>
-      <GestureDetector gesture={Gesture.Race(pan, tap)}>
+      <GestureDetector gesture={Gesture.Race(pan, tap)} touchAction='pan-y'>
         <View collapsable={false} style={{ padding: touchInset }}>
           <View
             ref={frameRef}

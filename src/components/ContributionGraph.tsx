@@ -401,7 +401,7 @@ const ContributionGraph = ({
               ) : null
             )}
           </View>
-          <GestureDetector gesture={gesture}>
+          <GestureDetector gesture={gesture} touchAction='pan-y'>
             <View style={{ position: 'relative' }}>
               <CellGrid grid={grid} cell={cell} colorByLevel={colorByLevel} />
               <Animated.View

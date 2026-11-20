@@ -224,6 +224,7 @@ const ServiceYearPaceChart = ({
               pan: { activateAfterLongPress: SCRUB_LONG_PRESS_MS },
             }}
             customGestures={hoverGesture as ComposedGesture | undefined}
+            gestureHandlerConfig={{ touchAction: 'pan-y' }}
             actionsRef={chartActions}
           >
             {({ points, chartBounds, yScale: chartYScale }) => (

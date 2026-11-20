@@ -71,7 +71,7 @@ const PlanDaySlider = ({
   const hours = Math.floor(maxMinutes / 60)
 
   return (
-    <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
+    <GestureDetector gesture={Gesture.Exclusive(pan, tap)} touchAction='pan-y'>
       <View
         accessible
         accessibilityRole='adjustable'

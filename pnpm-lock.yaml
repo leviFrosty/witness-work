@@ -47,7 +47,7 @@ patchedDependencies:
   expo-alternate-app-icons: 1c3df9bdf0042d70f3a73c13e3a42bd491662314e2001b311353d8fd36312a34
   expo@58.0.16: f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2
   hot-updater@1.0.2: 8656764273e9d8d923e5ce62da81d1327f356443a3b1e5d740570f16d8a215ad
-  react-native-gesture-handler@3.3.0: e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441
+  react-native-gesture-handler@3.3.0: df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1
   react-native-maps@1.29.11: f6f06270853cf76378ada487a14a7517bb41b4b10034b64d31a583a4f5126f77
 
 importers:
@@ -311,7 +311,7 @@ importers:
         version: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
       react-native-gesture-handler:
         specifier: 3.3.0
-        version: 3.3.0(patch_hash=e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+        version: 3.3.0(patch_hash=df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-international-phone-number:
         specifier: 0.8.7
         version: 0.8.7(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
@@ -338,7 +338,7 @@ importers:
         version: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-reanimated-carousel:
         specifier: 5.1.1
-        version: 5.1.1(6f4b5c2d8341afa397a3fdae1f0c3bfe)
+        version: 5.1.1(13f45a75d9e447a9cbc1556b8b6741e1)
       react-native-safe-area-context:
         specifier: 5.10.1
         version: 5.10.1(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
@@ -359,7 +359,7 @@ importers:
         version: 0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2)
       reanimated-color-picker:
         specifier: 4.2.0
-        version: 4.2.0(6c090cfbffb6ee8ee3219f0902c6dc95)
+        version: 4.2.0(e9907fe63703dfdbe9c8bdda12b21c17)
       semver:
         specifier: 7.8.5
         version: 7.8.5
@@ -371,7 +371,7 @@ importers:
         version: 2.4.2(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       victory-native:
         specifier: 42.0.1
-        version: 42.0.1(9af04cd9c5b72a0db9cc980f49681757)
+        version: 42.0.1(1b3d65197e3b2995dae19ee69fccb7fe)
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -19746,7 +19746,7 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
 
-  react-native-gesture-handler@3.3.0(patch_hash=e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0):
+  react-native-gesture-handler@3.3.0(patch_hash=df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0):
     dependencies:
       '@types/react-test-renderer': 19.1.0
       invariant: 2.2.4
@@ -19812,11 +19812,11 @@ snapshots:
       react-native-svg: 15.16.0(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       text-encoding: 0.7.0
 
-  react-native-reanimated-carousel@5.1.1(6f4b5c2d8341afa397a3fdae1f0c3bfe):
+  react-native-reanimated-carousel@5.1.1(13f45a75d9e447a9cbc1556b8b6741e1):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
-      react-native-gesture-handler: 3.3.0(patch_hash=e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+      react-native-gesture-handler: 3.3.0(patch_hash=df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-reanimated: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-worklets: 0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2)
 
@@ -19976,11 +19976,11 @@ snapshots:
 
   readdirp@5.1.1: {}
 
-  reanimated-color-picker@4.2.0(6c090cfbffb6ee8ee3219f0902c6dc95):
+  reanimated-color-picker@4.2.0(e9907fe63703dfdbe9c8bdda12b21c17):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
-      react-native-gesture-handler: 3.3.0(patch_hash=e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+      react-native-gesture-handler: 3.3.0(patch_hash=df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-reanimated: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
     optionalDependencies:
       expo: 58.0.16(patch_hash=f26b0a144c5cf684b463ea0db624b14624ad832e281824c31b7c3af37c59aac2)(607a222552a809e9fa0ee7e5b0a3d517)
@@ -21132,7 +21132,7 @@ snapshots:
 
   verkit@0.4.0: {}
 
-  victory-native@42.0.1(9af04cd9c5b72a0db9cc980f49681757):
+  victory-native@42.0.1(1b3d65197e3b2995dae19ee69fccb7fe):
     dependencies:
       '@shopify/react-native-skia': 2.14.0(3dc5c87b7ed4438e7f2e1177c4cb9a0f)
       d3-scale: 4.0.2
@@ -21142,7 +21142,7 @@ snapshots:
       react: 19.3.0
       react-fast-compare: 3.2.2
       react-native: 0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
-      react-native-gesture-handler: 3.3.0(patch_hash=e9dc4dc3a46e48b214447392977277e60e65291b06073c8f99ba111f71336441)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
+      react-native-gesture-handler: 3.3.0(patch_hash=df7c1521f8c852da0e80eb486e992ee1b2d2da90b6c95d5928aae9a5ec3a87f1)(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
       react-native-reanimated: 4.7.1(react-native-worklets@0.13.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)(supports-color@10.2.2))(react-native@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.88.0(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(react@19.3.0)
     transitivePeerDependencies:
       - '@types/react'

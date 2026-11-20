@@ -132,7 +132,7 @@ export default function InsightsMatrix({
                 </View>
               ))}
             </View>
-            <GestureDetector gesture={gesture}>
+            <GestureDetector gesture={gesture} touchAction='pan-y'>
               <View style={{ gap: GAP }}>
                 {days.map((day) => (
                   <View key={day} style={{ flexDirection: 'row', gap: GAP }}>

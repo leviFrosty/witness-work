@@ -12,7 +12,6 @@ import usePublisher from '@/hooks/usePublisher'
 import moment from 'moment'
 import { dayPlansOnLocalDay } from '@/lib/dayPlansByDay'
 import { isStoredDateOnLocalDay } from '@/lib/normalizeDate'
-import { FlashList } from '@shopify/flash-list'
 import { TimeEntry, DayPlan } from '@/types/timeEntry'
 import TimeReportRow from '@/features/service-reports/components/TimeReportRow'
 import Empty from '@/components/ui/Empty'
@@ -294,47 +293,42 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             />
           </DayFormCard>
         ) : (
-          <View style={{ flex: 1, minHeight: 10 }}>
-            <FlashList
-              scrollEnabled={false}
-              data={
-                thisDaysReports
-                  ? thisDaysReports.sort((a, b) =>
-                      moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
-                    )
-                  : undefined
-              }
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              renderItem={({ item }) => (
-                <TimeReportRow
-                  report={item}
-                  onPress={() => onTimeReportPress?.(item)}
-                  onNavigate={onNavigate}
-                />
-              )}
-              ListEmptyComponent={
-                <Empty
-                  dashedOutline
-                  icon={
-                    <LucideIcon
-                      icon={ClockIcon}
-                      size={24}
-                      color={theme.colors.text}
+          <View style={{ flex: 1, minHeight: 10, gap: 10 }}>
+            {hasTimeReports ? (
+              [...thisDaysReports]
+                .sort((a, b) =>
+                  moment(a.date).unix() < moment(b.date).unix() ? 1 : -1
+                )
+                .map((item) => (
+                  <TimeReportRow
+                    key={item.id}
+                    report={item}
+                    onPress={() => onTimeReportPress?.(item)}
+                    onNavigate={onNavigate}
+                  />
+                ))
+            ) : (
+              <Empty
+                dashedOutline
+                icon={
+                  <LucideIcon
+                    icon={ClockIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                }
+                title={i18n.t('noReportsThisDay')}
+                action={
+                  onAddTime ? (
+                    <EmptyActionButton
+                      label={i18n.t('addTime')}
+                      onPress={onAddTime}
+                      testID='day-add-time'
                     />
-                  }
-                  title={i18n.t('noReportsThisDay')}
-                  action={
-                    onAddTime ? (
-                      <EmptyActionButton
-                        label={i18n.t('addTime')}
-                        onPress={onAddTime}
-                        testID='day-add-time'
-                      />
-                    ) : undefined
-                  }
-                />
-              }
-            />
+                  ) : undefined
+                }
+              />
+            )}
           </View>
         )}
       </View>
@@ -396,13 +390,11 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
             })}
           </DayFormCard>
         ) : (
-          <View style={{ flex: 1, minHeight: 10 }}>
-            <FlashList
-              scrollEnabled={false}
-              data={planItems}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              renderItem={({ item }) => (
+          <View style={{ flex: 1, minHeight: 10, gap: 10 }}>
+            {hasPlans ? (
+              planItems.map((item) => (
                 <PlanRow
+                  key={`${item.type}-${item.plan.id}`}
                   item={item}
                   onNavigate={onNavigate}
                   onLogTime={onLogTime}
@@ -414,29 +406,28 @@ const DayHistoryView: React.FC<DayHistoryViewProps> = ({
                       : undefined
                   }
                 />
-              )}
-              ListEmptyComponent={
-                <Empty
-                  dashedOutline
-                  icon={
-                    <LucideIcon
-                      icon={CalendarDaysIcon}
-                      size={24}
-                      color={theme.colors.text}
+              ))
+            ) : (
+              <Empty
+                dashedOutline
+                icon={
+                  <LucideIcon
+                    icon={CalendarDaysIcon}
+                    size={24}
+                    color={theme.colors.text}
+                  />
+                }
+                title={i18n.t('noPlansThisDay')}
+                action={
+                  onPlanDay ? (
+                    <EmptyActionButton
+                      label={i18n.t('planDay')}
+                      onPress={onPlanDay}
                     />
-                  }
-                  title={i18n.t('noPlansThisDay')}
-                  action={
-                    onPlanDay ? (
-                      <EmptyActionButton
-                        label={i18n.t('planDay')}
-                        onPress={onPlanDay}
-                      />
-                    ) : undefined
-                  }
-                />
-              }
-            />
+                  ) : undefined
+                }
+              />
+            )}
           </View>
         )}
       </View>

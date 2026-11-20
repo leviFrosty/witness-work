@@ -7,11 +7,10 @@ import i18n, { TranslationKey } from '@/lib/locales'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import IconButton from '@/components/ui/IconButton'
-import { useMemo } from 'react'
+import { Fragment, useMemo } from 'react'
 import { releaseNotes } from '@/features/updates/constants/releaseNotes'
 import moment from 'moment'
 import { formatRelative } from '@/lib/dates'
-import { FlashList } from '@shopify/flash-list'
 import Divider from '@/components/ui/Divider'
 import Button from '@/components/ui/Button'
 import { useNavigation } from '@react-navigation/native'
@@ -54,11 +53,10 @@ export const WhatsNewContent = ({
 
   return (
     <View style={{ flexGrow: 1, minHeight: 10 }}>
-      <FlashList
-        scrollEnabled={false}
-        data={notes}
-        renderItem={({ item }) => (
-          <View style={{ gap: 10, minHeight: 5 }} key={item.date.toString()}>
+      {notes.map((item, index) => (
+        <Fragment key={item.version}>
+          {index > 0 && <Divider marginVertical={25} />}
+          <View style={{ gap: 10, minHeight: 5 }}>
             {showTourCard && semver.eq(item.version, UPDATE_REVEAL_VERSION) && (
               <UpdateTourCard />
             )}
@@ -160,9 +158,8 @@ export const WhatsNewContent = ({
               )
             })}
           </View>
-        )}
-        ItemSeparatorComponent={() => <Divider marginVertical={25} />}
-      />
+        </Fragment>
+      ))}
     </View>
   )
 }

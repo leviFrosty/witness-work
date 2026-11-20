@@ -34,6 +34,7 @@ function sandbox(env = {}) {
 
       WW_VERIFY_MEMORY_LEVEL: '100',
       WW_VERIFY_SETTLE_SEC: '0',
+      WW_VERIFY_SIMSLIM: '0',
       ...env,
     },
     worktree(name) {
@@ -396,7 +397,7 @@ test('machines with 16 GB or less get the small policy; env vars win', async () 
       'return { config: L.CONFIG, policy: L.POLICY, ram: L.RAM_GB }'
     )
   }
-  const small = await policy({ WW_VERIFY_RAM_GB: '16' })
+  const small = await policy({ WW_VERIFY_RAM_GB: '16', WW_VERIFY_SIMSLIM: '0' })
   assert.deepEqual(
     {
       budget: small.config.budgetGb,
@@ -408,14 +409,26 @@ test('machines with 16 GB or less get the small policy; env vars win', async () 
     },
     { budget: 16, ios: 2, android: 2, builds: 1, estIos: 3.4, idle: 15 }
   )
-  assert.ok(Object.values(small.policy).every((from) => from === 'auto'))
-  const big = await policy({ WW_VERIFY_RAM_GB: '64' })
+  assert.ok(
+    Object.entries(small.policy).every(
+      ([name, from]) => name === 'WW_VERIFY_SIMSLIM' || from === 'auto'
+    )
+  )
+  const big = await policy({ WW_VERIFY_RAM_GB: '64', WW_VERIFY_SIMSLIM: '0' })
   assert.deepEqual(
     [big.config.budgetGb, big.config.max.android, big.config.idleMin],
     [45, 2, 30]
   )
   assert.equal(big.config.max.ios, 2)
   assert.equal(big.config.est.ios, 3.4)
+  if (process.platform === 'darwin') {
+    const slim = await policy({
+      WW_VERIFY_RAM_GB: '16',
+      WW_VERIFY_SIMSLIM: process.execPath,
+    })
+    assert.equal(slim.config.est.ios, 1.8)
+    assert.equal(slim.policy.WW_VERIFY_SIMSLIM, 'env')
+  }
   const overridden = await policy({
     WW_VERIFY_RAM_GB: '16',
     WW_VERIFY_MAX_ANDROID: '2',

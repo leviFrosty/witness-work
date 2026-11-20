@@ -57,7 +57,7 @@
     "check:env:ios": "node scripts/with-local-env.mjs development ios --check",
     "test:local-env": "node --test scripts/tests/local-env.node.mjs",
     "test:web-env": "node --test scripts/tests/web-env.node.mjs",
-    "test:verify": "node --test scripts/tests/verify-locks.node.mjs scripts/tests/verify-jobs.node.mjs scripts/tests/verify-ax.node.mjs",
+    "test:verify": "node --test scripts/tests/verify-locks.node.mjs scripts/tests/verify-jobs.node.mjs scripts/tests/verify-ax.node.mjs scripts/tests/verify-simslim.node.mjs",
     "test:perf": "node --test scripts/tests/perf.node.mjs",
     "update:dev": "node scripts/ota.mjs development",
     "update:beta": "node scripts/ota.mjs beta",

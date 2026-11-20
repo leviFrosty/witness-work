@@ -63,7 +63,7 @@ What `up` does, in order:
 2. Resolves the native app before it leases anything. It computes the native fingerprint (`@expo/fingerprint`) and uses the matching build in `~/.ww-verify/builds`. Otherwise it waits for a build slot, then builds the dev client without a device: a clean dev prebuild, then `xcodebuild` (newest installed Xcode, DerivedData in `.verify/DerivedData`) or `gradlew :app:assembleDebug`. It caches the result and deletes `.verify/DerivedData` or `android/app/build` (`--keep-build-dirs` keeps them). A worktree waiting to build holds no device: if it held one, `up` hands it back first and leases again after the build.
 3. Leases a `WW Verify iPhone N`, `WW Verify iPad N`, or `ww-verify-N` device, queueing if the pool is full (see [Concurrency and resources](#concurrency-and-resources)). It takes a warm device first (already booted, so no boot), preferring one that already runs this build (so no install).
 4. Starts (or reuses) the local ww-api (see **The backend** below), then Metro on the port reserved with the lease, from 8090 to 8129.
-5. Boots the device unless it's warm, then installs the cached build unless the device already runs exactly that binary.
+5. Boots the device unless it's warm, slim on iOS (see [Slim simulators](#slim-simulators)), then installs the cached build unless the device already runs exactly that binary.
 6. Launches the app against this Metro and waits until `__WW_DEV__` answers.
 
 If `up` fails or is interrupted, it hands back the lease it took and stops the Metro it started, then says what to do next.
@@ -79,13 +79,23 @@ It's ready when `up` prints its JSON summary. A first build for a new native fin
 - `--ipad` needs [AXe](https://github.com/cameroncooke/AXe) (`brew install cameroncooke/axe/axe`) to read the screen; see [iPad](#ipad). `doctor` checks for it.
 - `up` ends by checking a screenshot for the native splash. If it still covers the app after `hide()`, `up` relaunches once, then fails.
 
+### Slim simulators
+
+`up` boots every `WW Verify` simulator with [simslim](https://github.com/MobAI-App/simslim), which turns off the background services our flows never use (`scripts/verify/simslim-profile.json`). On the 16 GB Mac mini a simulator running the app takes about 1.75 GB instead of 3.5 GB, a cold `up` takes about 24 s instead of 31 to 38 s, and a boot no longer keeps 8 to 10 cores busy for half a minute. The flows behave the same either way.
+
+- **Still on:** Contacts and Calendar, Photos, push registration (`apsd`), and universal links and passkey domains (`swcd`).
+- **Off:** widgets, wallpaper and Live Activities, Siri and Shortcuts, iCloud, StoreKit and the App Store, Spotlight, Wallet, Health, and the rest that `simslim profiles` lists. A feature that needs one of them acts as if the service were missing: `areLiveActivitiesEnabled()` is `false`, Spotlight finds nothing.
+- **To check a feature that needs one,** turn it on for this run: `wwv up --services widgets` (categories or launchd labels from `simslim profiles`, comma-separated; `all` turns on every one). It takes about 2 seconds and no reboot. The next `up` without `--services`, and `down`, slim the device again.
+- **Setting up a new Mac:** `brew install mobai-app/tap/simslim`. That's all. Nothing is set per simulator: `up` slims each simulator when it boots it, including ones it creates and ones that were erased, and `doctor` reports it as `ios:slim`. Without simslim, simulators boot stock (the old behavior) and `doctor` warns. `WW_VERIFY_SIMSLIM=0` boots them stock on purpose; `WW_VERIFY_SIMSLIM=<path>` names the binary.
+- simslim keeps each simulator's setting in its launchd overrides on the Mac (`/private/var/tmp/com.apple.CoreSimulator.SimDevice.<udid>/disabled.plist`); `simslim off <udid>` restores a simulator to stock. Don't run `simslim watch`: it slims every simulator on the Mac, not only the pool's.
+
 ## Doctor
 
 ```bash
 wwv doctor            # exit 1 if anything is off
 ```
 
-Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, the bundle calling the run's API (`api-base`), and on iOS AXe plus a screen the splash doesn't cover (`ios:screen`). A `warn` line doesn't fail doctor: with `--api env`, the shared API being down is fine for UI-only checks. Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`. A failing `api` check is a harness problem to fix, not a limit to report: rerun `wwv up` (it restarts an unhealthy worker), and read the worker's log at `<ww-api checkout>/.verify/wrangler.log`.
+Checks: free disk, Metro served from this worktree, API `/health`, the device lease (held by this worktree and not expired), booted, app installed, native fingerprint match (the binary on the device must also hash the same as the cached build `up` installed), JS runtime reachable with zero captured errors, the bundle calling the run's API (`api-base`), and on iOS AXe, the simulator slimmed to the profile (`ios:slim`), plus a screen the splash doesn't cover (`ios:screen`). A `warn` line doesn't fail doctor: with `--api env`, the shared API being down is fine for UI-only checks. Run it before the first drive, after any surprising result, and before reporting. Don't drive an instance that fails doctor. Fix it, or `wwv down` then `wwv up`. A failing `api` check is a harness problem to fix, not a limit to report: rerun `wwv up` (it restarts an unhealthy worker), and read the worker's log at `<ww-api checkout>/.verify/wrangler.log`.
 
 ## Drive
 
@@ -309,11 +319,11 @@ Defaults depend on the machine's RAM; env vars always win, and `wwv status` prin
 | `WW_VERIFY_MEMORY_BUDGET_GB`                                   | all of RAM            | 70% of RAM            |
 | `WW_VERIFY_MIN_FREE_PCT`, `WW_VERIFY_MIN_FREE_PCT_BUILD`       | 25, 35                | 25, 35                |
 | `WW_VERIFY_SETTLE_SEC`                                         | 60                    | 60                    |
-| `WW_VERIFY_EST_{IOS,ANDROID,METRO,IOS_BUILD,ANDROID_BUILD}_GB` | 3.4, 3.2, 0.6, 6, 6.5 | 3.4, 3.2, 0.6, 6, 6.5 |
+| `WW_VERIFY_EST_{IOS,ANDROID,METRO,IOS_BUILD,ANDROID_BUILD}_GB` | 1.8, 3.2, 0.6, 6, 6.5 | 1.8, 3.2, 0.6, 6, 6.5 |
 | `WW_VERIFY_METRO_WORKERS`, `WW_VERIFY_GRADLE_WORKERS`          | 2, 2                  | 2, 2                  |
 | `WW_VERIFY_HOME`                                               | `~/.ww-verify`        | `~/.ww-verify`        |
 
-The estimates are measured memory footprints on a 16 GB Mac Mini: a simulator about 3.4 GB and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. A footprint counts compressed memory at full size, though. Once it settles, an idle simulator running the app costs only about 1 GB of real memory, about 6 points of `kern.memorystatus_level`; booting and launching costs about 12 points for a minute. So a 16 GB machine budgets all 16 GB. That fits two iPhones and two emulators (about 15.6 GB with four Metros), or two devices plus a build, and the live check stops new boots and builds when real memory runs short. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
+The estimates are measured memory footprints on a 16 GB Mac Mini: a slim simulator about 1.8 GB (3.4 GB stock, the default when simslim isn't installed) and an emulator about 3.2 GB, each plus its worktree's Metro (0.5 to 0.6 GB); an iOS build peaks near 6 GB and an Android build near 6.5 GB. A footprint counts compressed memory at full size, though. Once it settles, a stock simulator running the app costs about 1.2 GB of real memory, about 7 points of `kern.memorystatus_level`, and booting and launching costs about 14 points for a minute; a slim one costs about 1 to 2 points throughout. So a 16 GB machine budgets all 16 GB. That fits two iPhones and two emulators (about 12.4 GB with four Metros, 15.6 GB with stock simulators), or two devices plus a build, and the live check stops new boots and builds when real memory runs short. A build waits until the devices it needs room from are handed back; that can't deadlock, because a worktree waiting to build holds no device.
 
 The budget covers only devices, Metros and builds. The rest of the 16 GB is spoken for: macOS and the simulator services take about 3.5 GB, T3 about 1 GB, a local ww-api about 0.45 GB, each agent CLI about 0.3 GB, and `tsgo` typechecks spike about 1.5 GB each. Keep typechecks of many worktrees from overlapping. The live check adapts to that load. If boots still push the machine into swap, raise `WW_VERIFY_MIN_FREE_PCT` rather than lowering the caps.
 
@@ -358,7 +368,7 @@ These are not automatable here. Report them as unverified instead of guessing:
 - Real purchases; use `setSupporter` for supporter UI.
 - iCloud sync across devices.
 - Google's real account picker and consent screen for Google Drive Sync (needs a Google Account on the device and an OAuth client); sync itself runs against the fake Drive in [`features/cloud-sync.md`](features/cloud-sync.md).
-- Widgets, Live Activities and the Watch app beyond screenshots.
+- Widgets, Live Activities and the Watch app beyond screenshots. Screenshots of widgets and Live Activities need `wwv up --services widgets`.
 - APNs push delivery. Android Buddies alerts (FCM) do work against a local relay that has the FCM key; see [`features/buddies.md`](features/buddies.md).
 - Play Integrity.
 - System passkey sheets through `wwv ad`: every `wwv ad` command reopens the app first, which dismisses a passkey sheet (iOS reports `AuthorizationError 1001`, a cancel). The sheets themselves work on the simulator (Passwords is the provider, PRF included). While one is up, tap with `axe tap -x <x> -y <y> --udid <id>`, look with `xcrun simctl io <id> screenshot`, and pass Face ID with `xcrun simctl spawn <id> notifyutil -p com.apple.BiometricKit_Sim.pearl.match` (enroll once: `notifyutil -s com.apple.BiometricKit.enrollmentChanged 1` then `-p` it). Without a sheet, `__WW_DEV__.passkeySignIn` stands in.

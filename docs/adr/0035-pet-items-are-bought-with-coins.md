@@ -1,12 +1,13 @@
 ---
 status: accepted
 supersedes: [0054]
-superseded-by: [0057]
+superseded-by: [0057, 0066]
 ---
 
 # Pet items are bought with coins
 
 > Partly superseded by [ADR 0057](./0057-spiritual-routine-and-coin-scale.md): every coin amount and price is ten times the scale.
+> Partly superseded by [ADR 0066](./0066-shop-prices-cut-and-paid-difference-given-back.md): a purchase costs the lower of what was paid and today's price.
 
 ## Context
 

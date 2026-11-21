@@ -5741,6 +5741,11 @@
       "trayHat": "New hat: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
     },
+    "priceDrop": {
+      "title": "{{name}} spotted a price drop!",
+      "description": "Everything in the Shop costs less now. You got {{coins}} back for what you already bought.",
+      "shop": "Go to Shop"
+    },
     "visitor": {
       "line": "Visiting with {{name}}!",
       "viewPlan": "View Plan",

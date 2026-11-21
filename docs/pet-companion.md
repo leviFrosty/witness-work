@@ -166,13 +166,15 @@ it. Tapping it goes back to the pattern itself.
 - "Live" window: time of day from the device clock (night < 6, dawn < 9, day < 17, dusk < 20, night),
   season from the date and hemisphere (southern-hemisphere region codes flip the season).
 - Prices: every non-starter item and hat but `none` has a Shop price (`ITEM_PRICES` in
-  `lib/prices.ts`), in the ×10 units of ADR 0057: room items and the first 12 hats 100–360 coins,
-  rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27 big hats (ADR 0044) fill in from 110
-  to 3,200: six cheap ones in the gaps (110–380), silly ones that don't move (400–560), ones with one
-  moving part (620–1,100) and six rare ones (1,200–3,200). Uncommon and rare room items (ADR 0045)
-  cost what hats of their tier do: uncommon 620–1,000, rare 1,300–2,800, dearer the more an item
-  does. A purchase keeps what it cost, so prices can be retuned. Starters are free; secrets are
-  found, never sold.
+  `lib/prices.ts`), in the ×10 units of ADR 0057 and cut to about a third in ADR 0066: room items
+  and the first 12 hats 30–110 coins, rising along `UNLOCK_ORDER` and `HAT_UNLOCK_ORDER`. The 27
+  big hats (ADR 0044) fill in from 30 to 960: six cheap ones in the gaps (30–110), silly ones that
+  don't move (120–170), ones with one moving part (190–330) and six rare ones (360–960). Uncommon
+  and rare room items (ADR 0045) cost what hats of their tier do: uncommon 190–300, rare 390–840,
+  dearer the more an item does. A purchase stores what it cost and is charged the lower of that
+  and today's price, so a price cut gives the difference back and a raise only affects new
+  purchases; the people owed coins hear about a cut once, in the notification tray (`PRICE_CUT`).
+  Starters are free; secrets are found, never sold.
 - Hats: the pet wears one (or none). Bought hats are stored with the room items (`hat:bow`, …).
 
   A hat sits on the head (`art/hats.ts`: a 24 × 20 picture whose brim row 17 lands on the species'

@@ -22,6 +22,7 @@ import useBuddyNotifications, {
   useBuddyTraySyncStatus,
 } from '@/features/buddies/hooks/useBuddyNotifications'
 import NotificationsTray from '@/features/notifications/components/NotificationsTray'
+import usePetPriceDropNotification from '@/features/pet/hooks/usePetPriceDropNotification'
 import usePetUnlockNotifications from '@/features/pet/hooks/usePetUnlockNotifications'
 import useTerritoryInsightsNotification from '@/features/territories/hooks/useTerritoryInsightsNotification'
 import useNow from '@/hooks/useNow'
@@ -59,6 +60,7 @@ export default function NotificationsBell() {
     ...useMissedFollowUpNotifications(now),
     ...useBadgeNotifications(now),
     ...usePetUnlockNotifications(),
+    usePetPriceDropNotification(),
     ...useBuddyNotifications(),
     ...useSharedCarNotifications(),
     ...useTerritoryNotifications(),

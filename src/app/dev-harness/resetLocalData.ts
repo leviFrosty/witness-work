@@ -42,6 +42,7 @@ import { useScribeConsent } from '@/features/scribe/stores/consent'
 import { useScribeUsageStore } from '@/features/scribe/stores/usage'
 import { useNotificationsTray } from '@/features/notifications/stores/notificationsTray'
 import { useSignInNotices } from '@/app/account/signInNoticesStore'
+import { usePetPriceDrop } from '@/features/pet/stores/petPriceDrop'
 import { usePetSeen } from '@/features/pet/stores/petSeen'
 import { useRoutineDayLog } from '@/features/routine/stores/routineDayLog'
 import { usePetUnlockNews } from '@/features/pet/stores/petUnlockNews'
@@ -83,6 +84,7 @@ export const RESET_STORES: readonly ResettableStore[] = [
   useSignInNotices,
   usePetUnlockNews,
   usePetSeen,
+  usePetPriceDrop,
   useRoutineDayLog,
   useDevNotifications,
   useStreakCelebration,

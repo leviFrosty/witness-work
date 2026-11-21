@@ -33,19 +33,19 @@ describe('Shop prices', () => {
     )
   })
 
-  it('asks 100 to 3,200 coins, whole in the old units, rare hats on top', () => {
+  it('asks 30 to 960 coins, whole in the old units, rare hats on top', () => {
     const prices = Object.values(ITEM_PRICES)
     for (const price of prices) {
-      expect(price).toBeGreaterThanOrEqual(100)
-      expect(price).toBeLessThanOrEqual(3200)
+      expect(price).toBeGreaterThanOrEqual(30)
+      expect(price).toBeLessThanOrEqual(960)
       expect(price % 10).toBe(0)
     }
     expect(priceOf('hat:meadow')).toBe(Math.max(...prices))
-    expect(priceOf('study:armchair')).toBe(360)
+    expect(priceOf('study:armchair')).toBe(110)
     expect(priceOf('floor:tile')).toBeGreaterThan(priceOf('floor:brick')!)
 
     expect(prices.reduce((sum, price) => sum + price, 0)).toBe(
-      34820 + 6240 + 25230
+      9680 + 1880 + 8350
     )
   })
 
@@ -59,7 +59,7 @@ describe('Shop prices', () => {
     expect(hats).toEqual([...hats].sort((a, b) => a - b))
     const rare = (item: string) => itemRarity(item) === 'rare'
     expect(HAT_UNLOCK_ORDER.filter(rare)).toEqual(HAT_UNLOCK_ORDER.slice(-6))
-    expect(priceOf(HAT_UNLOCK_ORDER.at(-6)!)).toBe(1200)
+    expect(priceOf(HAT_UNLOCK_ORDER.at(-6)!)).toBe(360)
     expect(itemRarity('hat:tophat')).toBe('common')
     expect(itemRarity('floor:tile')).toBe('common')
   })
@@ -76,7 +76,7 @@ describe('Shop prices', () => {
   it('sells the study corner, with nothing in it to start', () => {
     expect(STARTER_ROOM_ITEMS).toContain('study:none')
     expect(STUDY_UNLOCK_ORDER.map(priceOf)).toEqual([
-      100, 120, 160, 200, 240, 300, 360, 700, 760, 1400, 1900,
+      30, 40, 50, 60, 70, 90, 110, 210, 230, 420, 570,
     ])
   })
 
@@ -126,7 +126,7 @@ describe('Shop prices', () => {
   })
 
   it('tells current, owned, for sale, short and secret apart', () => {
-    const wallet = 120
+    const wallet = 35
     const state = (item: string, owned = false, current = false) =>
       shopItemState({ item, owned, current, wallet })
     expect(state('hat:bow', true, true)).toBe('current')

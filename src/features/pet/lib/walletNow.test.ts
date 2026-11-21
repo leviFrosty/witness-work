@@ -124,7 +124,7 @@ describe('petEarningsNow', () => {
     usePet.setState({
       pet: {
         ...PET,
-        purchases: [{ item: 'hat:cap', price: 12, on: '2026-10-08' }],
+        purchases: [{ item: 'hat:cap', price: 4, on: '2026-10-08' }],
       },
     })
     useServiceReport.setState({ serviceReports: october(7, 8, 9) })
@@ -132,6 +132,6 @@ describe('petEarningsNow', () => {
     useServiceReport.setState({
       serviceReports: october(...Array.from({ length: 14 }, (_, i) => i + 7)),
     })
-    expect(petEarningsNow()?.wallet).toBe(20)
+    expect(petEarningsNow()?.wallet).toBe(100)
   })
 })

@@ -15,6 +15,9 @@ const tray = vi.hoisted(() => {
 vi.mock('@/features/badges/hooks/useBadgeNotifications', () => ({
   default: () => [],
 }))
+vi.mock('@/features/pet/hooks/usePetPriceDropNotification', () => ({
+  default: () => null,
+}))
 vi.mock('@/features/pet/hooks/usePetUnlockNotifications', () => ({
   default: () => [],
 }))

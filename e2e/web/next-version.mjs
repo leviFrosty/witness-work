@@ -12,6 +12,12 @@ const HASHED = /^(.+?)-([0-9a-f]{32})\.js$/
 
 fs.rmSync(target, { recursive: true, force: true })
 fs.cpSync(source, target, { recursive: true })
+for (const entry of fs.readdirSync(target, {
+  recursive: true,
+  withFileTypes: true,
+}))
+  if (entry.isFile() && entry.name.endsWith('.br'))
+    fs.rmSync(path.join(entry.parentPath, entry.name))
 const folder = path.join(target, '_expo/static/js/web')
 const renamed = new Map()
 for (const file of fs.readdirSync(folder)) {

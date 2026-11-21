@@ -1,10 +1,9 @@
 import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
 import {
-  addRoute,
   cleanupOutdatedCaches,
-  matchPrecache,
-  precache,
+  PrecacheController,
+  PrecacheRoute,
 } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies'
@@ -12,7 +11,6 @@ import { partialResponse } from '../host/src/range'
 import {
   GUEST_CACHE,
   KEEP_FILES,
-  NAVIGATION_TIMEOUT_MS,
   ON_DEMAND_CACHE_PREFIX,
   SHELL_URL,
   guestFilesToKeep,
@@ -23,8 +21,8 @@ import {
   isNeverCached,
   isOnDemandFile,
   isStorableFile,
-  isUsableNavigation,
 } from './rules'
+import { createPrecacheGate, START_PRECACHE } from './precacheGate'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null } | string>
@@ -115,39 +113,36 @@ function guestWorker() {
 }
 
 function appWorker() {
+  const precache = new PrecacheController()
+  precache.addToCacheList(self.__WB_MANIFEST)
+
+  const gate = createPrecacheGate((run, ms) => setTimeout(run, ms))
+  self.addEventListener('message', (event) => {
+    if (event.data?.type === START_PRECACHE) gate.open()
+  })
+  self.addEventListener('install', (event) => {
+    event.waitUntil(gate.opened().then(() => precache.install(event)))
+  })
+  self.addEventListener('activate', precache.activate)
+
   registerRoute(
     ({ request, url }) =>
       request.mode === 'navigate' && !isNeverCached(url, self.location.origin),
-    async ({ request }) => {
-      try {
-        const response = await Promise.race([
-          fetch(request),
-          new Promise<never>((_, reject) =>
-            setTimeout(
-              () => reject(new Error('navigation timed out')),
-              NAVIGATION_TIMEOUT_MS
-            )
-          ),
-        ])
-        if (isUsableNavigation(response)) return response
-      } catch {}
-      return (await matchPrecache(SHELL_URL)) ?? Response.error()
-    }
+    async ({ request }) =>
+      (await precache.matchPrecache(SHELL_URL)) ?? fetch(request)
   )
-
-  precache(self.__WB_MANIFEST)
 
   registerRoute(
     ({ request, url }) =>
       request.headers.has('Range') && !isNeverCached(url, self.location.origin),
     async ({ request }) => {
-      const cached = await matchPrecache(request.url)
+      const cached = await precache.matchPrecache(request.url)
       return cached
         ? partialResponse(request.headers.get('Range') ?? '', cached)
         : fetch(request)
     }
   )
-  addRoute()
+  registerRoute(new PrecacheRoute(precache))
   cleanupOutdatedCaches()
 
   registerRoute(

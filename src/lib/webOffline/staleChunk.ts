@@ -1,4 +1,5 @@
 import { allowReload, RELOAD_GUARD_KEY } from '@/lib/webOffline/reloadGuard'
+import { reloadIntoNewestVersion } from '@/lib/webOffline/newestVersion'
 
 export type StaleChunkEnv = {
   probe: (url: string) => Promise<number | null>
@@ -63,7 +64,7 @@ export async function onChunkLoadFailed(url: string): Promise<void> {
         }
       },
       isOffline: () => navigator.onLine === false,
-      reload: () => window.location.reload(),
+      reload: () => void reloadIntoNewestVersion(),
 
       onReload: () =>
         require('@/lib/analytics').analytics.capture('web_stale_chunk_reload'),

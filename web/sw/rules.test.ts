@@ -7,7 +7,6 @@ import {
   isNeverCached,
   isOnDemandFile,
   isStorableFile,
-  isUsableNavigation,
 } from './rules'
 
 const ORIGIN = 'https://app.witnesswork.app'
@@ -72,12 +71,6 @@ describe('what the service worker never caches', () => {
     )
     expect(isStorableFile(response(404, 'text/plain'))).toBe(false)
     expect(isStorableFile(response(206))).toBe(false)
-  })
-
-  it('shows a page unless the server failed', () => {
-    expect(isUsableNavigation(response(200))).toBe(true)
-    expect(isUsableNavigation(response(404))).toBe(true)
-    expect(isUsableNavigation(response(503))).toBe(false)
   })
 })
 

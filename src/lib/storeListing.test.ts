@@ -69,11 +69,11 @@ describe('openAppUpdate', () => {
     )
   })
 
-  it('reloads the page on the web, which has no store listing', () => {
+  it('reloads the page on the web, which has no store listing', async () => {
     mocks.os = 'web'
     const reload = vi.fn()
     vi.stubGlobal('window', { location: { reload } })
-    void openAppUpdate()
+    await openAppUpdate()
     expect(reload).toHaveBeenCalledOnce()
     expect(mocks.openURL).not.toHaveBeenCalled()
     vi.unstubAllGlobals()

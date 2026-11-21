@@ -1,4 +1,7 @@
-import { Globe as GlobeIcon } from 'lucide-react-native'
+import {
+  Globe as GlobeIcon,
+  Hourglass as HourglassIcon,
+} from 'lucide-react-native'
 import { useState, type ComponentType } from 'react'
 import { Pressable, View, type PressableProps } from 'react-native'
 import LucideIcon from '@/components/ui/LucideIcon'
@@ -52,8 +55,28 @@ function StoreLink({ label, url }: { label: string; url: string }) {
   )
 }
 
-export default function WebRegionNotice() {
+export type WebSalesNoticeReason = 'region' | 'comingSoon'
+
+const COPY = {
+  region: {
+    icon: GlobeIcon,
+    title: 'paywallRegionTitleWeb',
+    body: 'paywallRegionBodyWeb',
+  },
+  comingSoon: {
+    icon: HourglassIcon,
+    title: 'paywallComingSoonTitleWeb',
+    body: 'paywallComingSoonBodyWeb',
+  },
+} as const
+
+export default function WebSalesNotice({
+  reason,
+}: {
+  reason: WebSalesNoticeReason
+}) {
   const theme = useTheme()
+  const copy = COPY[reason]
   const stores = [
     {
       label: i18n.t('paywallRegionAppStoreWeb'),
@@ -73,7 +96,7 @@ export default function WebRegionNotice() {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <LucideIcon icon={GlobeIcon} size={18} color={theme.colors.text} />
+        <LucideIcon icon={copy.icon} size={18} color={theme.colors.text} />
         <Text
           accessibilityRole='header'
           style={{
@@ -83,7 +106,7 @@ export default function WebRegionNotice() {
             color: theme.colors.text,
           }}
         >
-          {i18n.t('paywallRegionTitleWeb')}
+          {i18n.t(copy.title)}
         </Text>
       </View>
       <Text
@@ -93,7 +116,7 @@ export default function WebRegionNotice() {
           lineHeight: 20,
         }}
       >
-        {i18n.t('paywallRegionBodyWeb')}
+        {i18n.t(copy.body)}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         {stores.map(({ label, url }) => (

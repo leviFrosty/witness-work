@@ -60,6 +60,8 @@ export const readWebCheckoutRecord = (): WebCheckoutRecord | null => {
 export const clearWebCheckoutRecord = () => store().delete(RECORD_KEY)
 
 export type WebCheckout = {
+  setUp: boolean
+
   region: 'loading' | 'allowed' | 'blocked'
 
   sells: (offeringIdentifier: string) => boolean

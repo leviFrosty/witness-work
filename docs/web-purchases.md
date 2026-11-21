@@ -115,6 +115,16 @@ each in the RevenueCat project its builds and worker already use:
   their own prices. Every twin is attached to the same entitlement and package
   as its store product.
 
+### A build without RevenueCat Billing
+
+A Beta or production build made before RevenueCat Billing is set up has no
+`EXPO_PUBLIC_REVENUECAT_WEB_API_KEY`, or no Web Purchase Links. Its paywall
+doesn't fail to load prices: it keeps the benefits and, in place of prices and
+Buy, says buying on the web is coming soon and points to the app stores, like
+the region notice. It needs nothing else: the paywall sells once a build
+carries both values. Supporter status comes from ww-api meanwhile (see
+[Supporter status and managing on the web](#supporter-status-and-managing-on-the-web)).
+
 ## Which RevenueCat customer the web uses
 
 The web is the **account's** RevenueCat customer: the app user id kept in the
@@ -406,7 +416,8 @@ adds:
 - the checkout opening, with the tier, billing, product and price;
 - the return, with the tier, and whether customer info confirmed it, was still
   pending, or came back to another customer;
-- the EU and UK notice being shown.
+- the EU and UK notice being shown;
+- the coming-soon notice being shown, in a build without RevenueCat Billing.
 
 Events never carry the app user id, the link, or the buyer's email.
 [`analytics.md`](./analytics.md) lists them under "Paywall and Supporter".

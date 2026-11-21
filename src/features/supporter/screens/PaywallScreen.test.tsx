@@ -18,12 +18,14 @@ const runtime = vi.hoisted(() => {
     captureException: vi.fn(),
 
     revenueCatIsOwn: true,
+    customerUnavailable: false,
     logIn: vi.fn(),
     toastError: vi.fn(),
     foreground: new Set<() => void>(),
     reconnect: new Set<() => void>(),
     beforeRemove: undefined as (() => void) | undefined,
     webCheckout: null as null | {
+      setUp: boolean
       region: 'loading' | 'allowed' | 'blocked'
       sells: ReturnType<typeof vi.fn>
       waitingFor: 'session' | 'settled_id' | null
@@ -86,7 +88,12 @@ vi.mock('react-native-purchases', () => ({
 }))
 vi.mock('@/hooks/useCustomer', () => ({
   default: () => ({
-    ready: true,
+    get ready() {
+      return !runtime.customerUnavailable
+    },
+    get unavailable() {
+      return runtime.customerUnavailable
+    },
     customer: null,
     hasPurchasedBefore: false,
     revalidate: runtime.revalidate,
@@ -161,8 +168,8 @@ vi.mock('@/features/supporter/components/PaywallOptions', () => ({
 vi.mock('@/features/supporter/hooks/useWebCheckout', () => ({
   default: () => runtime.webCheckout,
 }))
-vi.mock('@/features/supporter/components/WebRegionNotice', () => ({
-  default: 'WebRegionNotice',
+vi.mock('@/features/supporter/components/WebSalesNotice', () => ({
+  default: 'WebSalesNotice',
 }))
 vi.mock('@/lib/revenueCatBrowser', () => ({
   invalidateCustomerInfoCache: vi.fn(async () => {}),
@@ -222,6 +229,7 @@ beforeEach(() => {
   runtime.beforeRemove = undefined
   runtime.webCheckout = null
   runtime.revenueCatIsOwn = true
+  runtime.customerUnavailable = false
   runtime.logIn.mockResolvedValue({
     customerInfo: { entitlements: { active: {} } },
   })
@@ -456,6 +464,7 @@ describe('on the web', () => {
   const web = (region: 'loading' | 'allowed' | 'blocked' = 'allowed') => {
     runtime.platform = 'web'
     runtime.webCheckout = {
+      setUp: true,
       region,
       sells: vi.fn(() => true),
       waitingFor: null,
@@ -583,8 +592,10 @@ describe('on the web', () => {
     runtime.getOfferings.mockRejectedValueOnce(new Error('network error'))
     await render()
     expect(
-      renderer!.root.findAllByType('WebRegionNotice' as never)
-    ).toHaveLength(1)
+      renderer!.root
+        .findAllByType('WebSalesNotice' as never)
+        .map((notice) => notice.props.reason)
+    ).toEqual(['region'])
     expect(footer()).toHaveLength(0)
     expect(renderer!.root.findAllByType('PriceOption' as never)).toHaveLength(0)
     expect(renderer!.root.findAllByType('FounderLetter' as never)).toHaveLength(
@@ -599,12 +610,54 @@ describe('on the web', () => {
     })
   })
 
-  it('shows no region notice on a phone', async () => {
+  it('says web purchases are coming, not an error, when RevenueCat Billing isn’t set up', async () => {
+    web().setUp = false
+    runtime.customerUnavailable = true
     await render()
     expect(
-      renderer!.root.findAllByType('WebRegionNotice' as never)
+      renderer!.root
+        .findAllByType('WebSalesNotice' as never)
+        .map((notice) => notice.props.reason)
+    ).toEqual(['comingSoon'])
+    expect(renderer!.root.findAllByType('Empty' as never)).toHaveLength(0)
+    expect(footer()).toHaveLength(0)
+    expect(renderer!.root.findAllByType('PriceOption' as never)).toHaveLength(0)
+    expect(
+      renderer!.root.findAllByType('ComparisonChart' as never)
+    ).toHaveLength(1)
+    expect(events('supporter_web_coming_soon_viewed')[0][1]).toEqual({
+      source: 'feature_gate',
+      ...attribution,
+    })
+    expect(events('supporter_web_region_notice_viewed')).toHaveLength(0)
+  })
+
+  it('says web purchases are coming, not the region notice, in a blocked region too', async () => {
+    web('blocked').setUp = false
+    runtime.customerUnavailable = true
+    await render()
+    expect(
+      renderer!.root
+        .findAllByType('WebSalesNotice' as never)
+        .map((notice) => notice.props.reason)
+    ).toEqual(['comingSoon'])
+  })
+
+  it('shows no web notice on a phone', async () => {
+    await render()
+    expect(
+      renderer!.root.findAllByType('WebSalesNotice' as never)
     ).toHaveLength(0)
     expect(events('supporter_web_region_notice_viewed')).toHaveLength(0)
+    expect(events('supporter_web_coming_soon_viewed')).toHaveLength(0)
+  })
+
+  it('keeps the generic error on a phone whose purchases are unavailable', async () => {
+    runtime.customerUnavailable = true
+    await render()
+    expect(renderer!.root.findByType('Empty' as never).props.description).toBe(
+      'purchasesUnavailable'
+    )
   })
 })
 

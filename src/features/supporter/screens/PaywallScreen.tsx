@@ -82,7 +82,9 @@ import PaywallPurchaseFooter, {
 import { analytics } from '@/lib/analytics'
 import { invalidateCustomerInfoCache } from '@/lib/revenueCatBrowser'
 import useWebCheckout from '@/features/supporter/hooks/useWebCheckout'
-import WebRegionNotice from '@/features/supporter/components/WebRegionNotice'
+import WebSalesNotice, {
+  type WebSalesNoticeReason,
+} from '@/features/supporter/components/WebSalesNotice'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import FoldSplit from '@/components/ui/layout/FoldSplit'
 
@@ -138,7 +140,13 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
   } = useCustomer()
 
   const webCheckout = useWebCheckout()
-  const regionBlocked = webCheckout?.region === 'blocked'
+  const webNotice: WebSalesNoticeReason | null = !webCheckout
+    ? null
+    : !webCheckout.setUp
+      ? 'comingSoon'
+      : webCheckout.region === 'blocked'
+        ? 'region'
+        : null
 
   const noOfferingsKey = webCheckout
     ? 'thereAreNoOfferingsWeb'
@@ -158,12 +166,14 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
   }, [source, feature, gateAttribution, initialTier])
 
   useEffect(() => {
-    if (!regionBlocked) return
-    analytics.capture('supporter_web_region_notice_viewed', {
-      source,
-      ...gateAttribution,
-    })
-  }, [regionBlocked, source, gateAttribution])
+    if (!webNotice) return
+    analytics.capture(
+      webNotice === 'comingSoon'
+        ? 'supporter_web_coming_soon_viewed'
+        : 'supporter_web_region_notice_viewed',
+      { source, ...gateAttribution }
+    )
+  }, [webNotice, source, gateAttribution])
 
   useEffect(
     () =>
@@ -673,7 +683,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     !missingOfferings &&
     allOfferings.every((offering) => offering.availablePackages.length === 0)
   if (
-    !regionBlocked &&
+    !webNotice &&
     (!currentOfferings || missingOfferings || nothingForSale || awaitingRegion)
   ) {
     const empty =
@@ -792,7 +802,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
     <View style={{ gap: 16 }}>
       <FounderLetter spacious={isWide} />
       {Platform.OS === 'ios' && <SocialProofRow />}
-      {(tier === 'supporter' || regionBlocked) && (
+      {(tier === 'supporter' || webNotice) && (
         <View
           onLayout={(event) =>
             handleTierSectionLayout('supporter', event.nativeEvent.layout.y)
@@ -803,7 +813,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       )}
     </View>
   )
-  const regionNotice = (
+  const storesNotice = webNotice && (
     <View style={{ gap: 14 }}>
       {isWide && (
         <Text
@@ -815,13 +825,13 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
           {i18n.t('becomeSupporter')}
         </Text>
       )}
-      <WebRegionNotice />
+      <WebSalesNotice reason={webNotice} />
       <Divider />
       <PaywallLegalFooter onRestore={handleRestore} showRestore={false} />
     </View>
   )
-  const pricing = regionBlocked ? (
-    regionNotice
+  const pricing = storesNotice ? (
+    storesNotice
   ) : (
     <View
       style={{ gap: 14 }}
@@ -966,7 +976,7 @@ const PaywallScreen = ({ scribeAi = false }: { scribeAi?: boolean }) => {
       )}
     </View>
   )
-  const purchaseFooter = regionBlocked ? null : (
+  const purchaseFooter = webNotice ? null : (
     <PaywallPurchaseFooter
       selected={
         !!selectedPackage &&

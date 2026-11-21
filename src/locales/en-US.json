@@ -2477,6 +2477,8 @@
   "paywallTitle": "Support WitnessWork",
   "paywallRegionTitleWeb": "Not available where you are yet",
   "paywallRegionBodyWeb": "Buying on the web isn't available where you are yet. To become a Supporter or leave a Tip, use the WitnessWork app from the App Store or Google Play.",
+  "paywallComingSoonTitleWeb": "Coming soon to the web",
+  "paywallComingSoonBodyWeb": "You can't become a Supporter or leave a Tip in the browser yet. Until then, use the WitnessWork app from the App Store or Google Play. Supporter status follows your account, so it shows here too.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{rating}} average from {{ratings}} ratings",

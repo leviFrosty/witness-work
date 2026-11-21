@@ -16,6 +16,9 @@ const links = parseWebPurchaseLinks(
   process.env.EXPO_PUBLIC_REVENUECAT_WEB_PURCHASE_LINKS
 )
 
+const setUp =
+  !!process.env.EXPO_PUBLIC_REVENUECAT_WEB_API_KEY?.trim() && links.size > 0
+
 const SAVE_TIMEOUT_MS = 1_000
 
 export default function useWebCheckout(): WebCheckout {
@@ -29,7 +32,7 @@ export default function useWebCheckout(): WebCheckout {
         : 'blocked'
 
   const urlFor = (pkg: Parameters<WebCheckout['canBuy']>[0]) =>
-    region === 'allowed'
+    setUp && region === 'allowed'
       ? webCheckoutUrl({
           pkg,
           links,
@@ -40,6 +43,7 @@ export default function useWebCheckout(): WebCheckout {
       : null
 
   return {
+    setUp,
     region,
     sells: (offeringIdentifier) => links.has(offeringIdentifier),
     waitingFor,

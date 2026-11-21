@@ -589,8 +589,9 @@ uploads on a simulator, prebuild and run a Release build without that profile:
 
 Before a release:
 
-- Install `posthog-cli` (minimum 0.16.0; the EAS post-install hook installs pinned
-  version 0.18.1 automatically in build jobs).
+- Install `posthog-cli` (minimum 0.16.0). The EAS post-install hook installs pinned
+  version 0.18.1 when no `posthog-cli` is on `PATH`, and otherwise uses the one
+  already installed (such as Homebrew's on the Macs that ship Beta).
 - Set `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID` and `POSTHOG_CLI_HOST` in
   `.env.production`. Use a personal key with **error tracking write** and
   **organization read** scopes. The CLI host is `https://us.posthog.com` or

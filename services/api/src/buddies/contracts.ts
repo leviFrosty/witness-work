@@ -42,8 +42,8 @@ export const BUDDIES_UNSIGNED_OPS = ['invite/fetch', 'invite/claim'] as const
  */
 export const BUDDIES_LIVE_OP = 'inbox/live'
 /**
- * Request headers that carry a signed envelope's `payload` and `signature`
- * when the body can't: the live upgrade (no body) and `blob/put` (raw bytes).
+ * Request headers that carry a signed envelope's `payload` and `signature` when
+ * the body can't: the live upgrade (no body) and `blob/put` (raw bytes).
  */
 export const BUDDIES_ENVELOPE_HEADERS = {
   payload: 'x-buddies-payload',
@@ -57,26 +57,26 @@ export const LEGACY_BUDDIES_ENVELOPE_HEADERS = {
 /** Request headers that carry the live upgrade's `payload` and `signature`. */
 export const BUDDIES_LIVE_HEADERS = BUDDIES_ENVELOPE_HEADERS
 /**
- * The account a bearer `inbox/live` upgrade's token named, set by the Worker
- * on the request it hands the inbox DO. Never read from a client: the Worker
+ * The account a bearer `inbox/live` upgrade's token named, set by the Worker on
+ * the request it hands the inbox DO. Never read from a client: the Worker
  * deletes any copy a client sends before forwarding.
  */
 export const BUDDIES_LIVE_ACCOUNT_HEADER = 'x-buddies-session-account'
 /**
- * A browser `inbox/live` socket's token expiry (epoch ms), set by the Worker
- * on the request it hands the inbox DO, which closes the socket then. Never
- * read from a client: the Worker deletes any copy before forwarding, so a
- * native socket never has one.
+ * A browser `inbox/live` socket's token expiry (epoch ms), set by the Worker on
+ * the request it hands the inbox DO, which closes the socket then. Never read
+ * from a client: the Worker deletes any copy before forwarding, so a native
+ * socket never has one.
  */
 export const BUDDIES_LIVE_EXPIRES_HEADER = 'x-buddies-session-expires-at'
 
 /**
- * Names the part of the app that sent a request. The iOS Notification
- * Service Extension sends `BUDDIES_NOTIFICATION_SERVICE_CLIENT` on its
- * owner-signed `inbox/sync`: it can't hold the session's rotating refresh
- * token, so it signs with the owner key even after the legacy switch is off,
- * and that one legacy request stays served for an inbox with a confirmed
- * account link. Ignored on every other request.
+ * Names the part of the app that sent a request. The iOS Notification Service
+ * Extension sends `BUDDIES_NOTIFICATION_SERVICE_CLIENT` on its owner-signed
+ * `inbox/sync`: it can't hold the session's rotating refresh token, so it signs
+ * with the owner key even after the legacy switch is off, and that one legacy
+ * request stays served for an inbox with a confirmed account link. Ignored on
+ * every other request.
  */
 export const BUDDIES_CLIENT_HEADER = 'x-buddies-client'
 export const BUDDIES_NOTIFICATION_SERVICE_CLIENT = 'notification-service'
@@ -86,16 +86,15 @@ export const BUDDIES_NOTIFICATION_SERVICE_CLIENT = 'notification-service'
  * owner-signed like an owner op, but its body is the raw sealed bytes, so the
  * envelope rides in `BUDDIES_ENVELOPE_HEADERS`. `blob/get` is unsigned (the
  * read token is the capability) and answers with raw bytes. Neither is in
- * `BUDDIES_OPS`: both have their own routes. `blob/delete` is an ordinary
- * owner op.
+ * `BUDDIES_OPS`: both have their own routes. `blob/delete` is an ordinary owner
+ * op.
  */
 export const BUDDIES_BLOB_PUT_OP = 'blob/put'
 export const BUDDIES_BLOB_GET_OP = 'blob/get'
 /**
- * `POST inbox/successor`: which inbox replaced another after its account's
- * key changed (witness-work ADR 0039 §5). A bearer read by any account, with
- * its own route: it is neither signed nor an owner op, so not in
- * `BUDDIES_OPS`.
+ * `POST inbox/successor`: which inbox replaced another after its account's key
+ * changed (witness-work ADR 0039 §5). A bearer read by any account, with its
+ * own route: it is neither signed nor an owner op, so not in `BUDDIES_OPS`.
  */
 export const BUDDIES_SUCCESSOR_OP = 'inbox/successor'
 /** Ops that also need the photos switch (`buddies:photos`) on. */
@@ -137,8 +136,8 @@ export type BuddiesSigningOp =
   | BuddiesLiveOp
   | BuddiesBlobPutOp
 /**
- * Every op with a route, each counted against a per-caller edge tier. Most
- * are signed (owner, writer, self-signed); `invite/fetch`, `invite/claim`,
+ * Every op with a route, each counted against a per-caller edge tier. Most are
+ * signed (owner, writer, self-signed); `invite/fetch`, `invite/claim`,
  * `blob/get`, and `inbox/successor` aren't, so their payloads have no `ts` or
  * `nonce` (`UNSIGNED_PAYLOAD_OPS`).
  */
@@ -168,13 +167,13 @@ export const BUDDIES_ALWAYS_ALLOWED_OPS: ReadonlySet<BuddiesOp> = new Set([
 ])
 
 /**
- * Ops that reach someone else's inbox, refused with 403 `suspended` on a
- * bearer request from a suspended account: the Worker checks the token's
- * account status (cached 30 seconds per isolate), so no inbox learns which
- * account holds which slot. Leaving (`slot/leave`) and reads stay open. The
- * account's own inbox refuses its owner ops by its copy of the status, and
- * `inbox/register` checks the database. A legacy request carries no account,
- * so its writer ops can't be refused.
+ * Ops that reach someone else's inbox, refused with 403 `suspended` on a bearer
+ * request from a suspended account: the Worker checks the token's account
+ * status (cached 30 seconds per isolate), so no inbox learns which account
+ * holds which slot. Leaving (`slot/leave`) and reads stay open. The account's
+ * own inbox refuses its owner ops by its copy of the status, and
+ * `inbox/register` checks the database. A legacy request carries no account, so
+ * its writer ops can't be refused.
  */
 export const BUDDIES_SUSPENDED_REFUSED_OPS: ReadonlySet<BuddiesRouteOp> =
   new Set(['card/put', 'event/put', 'invite/claim'])
@@ -191,12 +190,12 @@ export const BUDDIES_ERROR_STATUS = {
   rate_limited: 429,
   disabled: 503,
   /**
-   * `inbox/live` without a WebSocket upgrade, and any request authenticated
-   * the way it was before sessions (no `Authorization` header) once the
-   * legacy switch (`auth:legacy`) is off, but the Notification Service
-   * Extension's `inbox/sync` for an inbox with a confirmed account link
-   * (`BUDDIES_CLIENT_HEADER`). Never carries `Retry-After`: updating the app
-   * is the fix.
+   * `inbox/live` without a WebSocket upgrade, and any request authenticated the
+   * way it was before sessions (no `Authorization` header) once the legacy
+   * switch (`auth:legacy`) is off, but the Notification Service Extension's
+   * `inbox/sync` for an inbox with a confirmed account link
+   * (`BUDDIES_CLIENT_HEADER`). Never carries `Retry-After`: updating the app is
+   * the fix.
    */
   upgrade_required: 426,
   /** A `blob/put` body (declared or streamed) over `blobBytes`. */
@@ -219,29 +218,29 @@ export const BUDDIES_ERROR_STATUS = {
   unknown_account: 404,
   /**
    * A handoff channel another account opened, a `backup/delete` signed by
-   * another account than the bearer token's, a bearer Buddies owner request
-   * for an inbox linked to another account, a bearer `inbox/register`
-   * whose `account` proof names another account than the token's, or an
-   * `inbox/delete` naming a `successor` without a bearer token of the
-   * account the inbox is linked to.
+   * another account than the bearer token's, a bearer Buddies owner request for
+   * an inbox linked to another account, a bearer `inbox/register` whose
+   * `account` proof names another account than the token's, or an
+   * `inbox/delete` naming a `successor` without a bearer token of the account
+   * the inbox is linked to.
    */
   forbidden: 403,
   /**
-   * A bearer Buddies owner request for an inbox with no confirmed account
-   * link: registered before accounts, or its linking registration failed
-   * part-way. The app links it with `inbox/register` and retries.
+   * A bearer Buddies owner request for an inbox with no confirmed account link:
+   * registered before accounts, or its linking registration failed part-way.
+   * The app links it with `inbox/register` and retries.
    */
   not_linked: 409,
   /**
-   * A missing, expired, or invalid access token, or an ended session's
-   * refresh token. Sent with `WWW-Authenticate: Bearer error="invalid_token"`.
+   * A missing, expired, or invalid access token, or an ended session's refresh
+   * token. Sent with `WWW-Authenticate: Bearer error="invalid_token"`.
    */
   unauthorized: 401,
   /** Opening a session refused the attestation (`reason` says why). */
   attestation_failed: 403,
   /**
-   * An outside service the request needs couldn't be reached (RevenueCat,
-   * for Supporter status). Always with `Retry-After`.
+   * An outside service the request needs couldn't be reached (RevenueCat, for
+   * Supporter status). Always with `Retry-After`.
    */
   unavailable: 503,
   /**
@@ -266,13 +265,13 @@ export const BUDDIES_ERROR_STATUS = {
    */
   no_slot: 409,
   /**
-   * The record changes switch is off (`sync:changes`, witness-work ADR
-   * 0060): the device publishes whole snapshots.
+   * The record changes switch is off (`sync:changes`, witness-work ADR 0060):
+   * the device publishes whole snapshots.
    */
   changes_disabled: 503,
   /**
-   * A `sync/changes/put` for a slot whose tail is full: the device writes
-   * its base (`sync/put` with `x-ww-covers-sequence`), then sends again.
+   * A `sync/changes/put` for a slot whose tail is full: the device writes its
+   * base (`sync/put` with `x-ww-covers-sequence`), then sends again.
    */
   tail_full: 409,
   /**
@@ -280,7 +279,10 @@ export const BUDDIES_ERROR_STATUS = {
    * `docs/passkeys-protocol.md`); `reason` says which check failed.
    */
   passkey_failed: 403,
-  /** A web session's ticket that's malformed, expired, used, or for another account. */
+  /**
+   * A web session's ticket that's malformed, expired, used, or for another
+   * account.
+   */
   ticket_invalid: 403,
   /** Turnstile's Siteverify refused the token; `reason` is its first error code. */
   turnstile_failed: 403,
@@ -325,14 +327,23 @@ const KIB = 1_024
 
 /** Caps, windows, and retention from the contract's "Limits and retention". */
 export const BUDDIES_LIMITS = {
-  /** `slot/add` and `invite/create` fail with `limit` at this many slots + open invites. */
+  /**
+   * `slot/add` and `invite/create` fail with `limit` at this many slots + open
+   * invites.
+   */
   slotsPlusOpenInvites: 50,
   /**
    * As many as the spots: after an account key change the app invites every
    * buddy back to its new inbox at once (witness-work ADR 0039 §5). The app
-   * holds the invites a User makes by hand to 5 itself.
+   * holds the invites a User makes by hand to `handMadeOpenInvites` itself.
    */
   openInvites: 50,
+  /**
+   * Not enforced here: the open invites the app lets a User make by hand. `GET
+   * /app/v1/config` publishes it with `slotsPlusOpenInvites`, so the app
+   * enforces and shows both without its own copy of either.
+   */
+  handMadeOpenInvites: 5,
   /** Twice the spots, so a key change's reconnect invites fit in one day. */
   inviteCreations: 100,
   inviteCreationWindowMs: DAY_MS,
@@ -361,8 +372,8 @@ export const BUDDIES_LIMITS = {
   claimBytes: 4 * KIB,
   templateChars: 200,
   /**
-   * Not in the contract: bounds per-device template storage. The app
-   * registers 14 fixed kinds plus one `join.request.<tag>` per buddy (50).
+   * Not in the contract: bounds per-device template storage. The app registers
+   * 14 fixed kinds plus one `join.request.<tag>` per buddy (50).
    */
   templates: 96,
   kindChars: 40,
@@ -370,8 +381,8 @@ export const BUDDIES_LIMITS = {
   requestBytes: 256 * KIB,
   /**
    * Not in the contract: `inbox/sync` stops adding events once their blobs pass
-   * this many characters and returns `seq` as the cursor it reached, so the next
-   * sync continues from there. Real inboxes never get close.
+   * this many characters and returns `seq` as the cursor it reached, so the
+   * next sync continues from there. Real inboxes never get close.
    */
   syncEventChars: 4 * 1_024 * KIB,
   /** A photo blob's sealed bytes (`blob/put` body). */
@@ -379,8 +390,8 @@ export const BUDDIES_LIMITS = {
   /**
    * `blob/put` `expiresAt ≤ now + this`. A Plan 8 weeks out keeps its photo
    * until a month after it ends; the app uploads photos for later Plans again
-   * as their date nears. The R2 lifecycle rule deletes objects a day past
-   * this (`scripts/r2-lifecycle.mjs`).
+   * as their date nears. The R2 lifecycle rule deletes objects a day past this
+   * (`scripts/r2-lifecycle.mjs`).
    */
   maxBlobLifetimeMs: 90 * DAY_MS,
   /** Blob ids per `blob/delete`. */
@@ -391,9 +402,9 @@ export const BUDDIES_LIMITS = {
  * Kinds that invite someone or answer them (confirm a pairing, reply to a
  * share, invite to a Plan, a Follow-up, or a shared car, ask to join) alert
  * right away instead of waiting out the 60 s push spacing, but still count
- * toward the daily cap. Updates and cancellations keep the spacing, and so
- * does `car.reply` (the shared-cars protocol makes only `car.invite`
- * immediate) and `territory.reply`. `invite.claimed` is a relay event outside the slot budget
+ * toward the daily cap. Updates and cancellations keep the spacing, and so does
+ * `car.reply` (the shared-cars protocol makes only `car.invite` immediate) and
+ * `territory.reply`. `invite.claimed` is a relay event outside the slot budget
  * altogether.
  */
 export const BUDDIES_IMMEDIATE_PUSH_KINDS: ReadonlySet<string> = new Set([
@@ -415,9 +426,9 @@ export const isImmediatePushKind = (kind: string): boolean =>
   kind.startsWith(BUDDIES_IMMEDIATE_PUSH_PREFIX)
 
 /**
- * Buddies' social news (a new badge, a reaction to one of the User's) is
- * quiet: delivered without sound or lighting the screen. Budget and spacing
- * are as for any other kind.
+ * Buddies' social news (a new badge, a reaction to one of the User's) is quiet:
+ * delivered without sound or lighting the screen. Budget and spacing are as for
+ * any other kind.
  */
 export const BUDDIES_PASSIVE_PUSH_KINDS: ReadonlySet<string> = new Set([
   'badge.new',
@@ -491,7 +502,10 @@ export const decodeB64u = (value: string): Uint8Array | null => {
 export const decodedLength = (value: string): number =>
   Math.floor((value.length * 3) / 4)
 
-/** A non-empty, valid unpadded base64url string; its decoded size is the caller's to check. */
+/**
+ * A non-empty, valid unpadded base64url string; its decoded size is the
+ * caller's to check.
+ */
 export const isB64u = (value: unknown): value is string =>
   typeof value === 'string' &&
   value.length > 0 &&
@@ -641,8 +655,8 @@ export interface EventPutPayload extends SlotPayload {
 
 export interface InboxDeletePayload extends InboxFields {
   /**
-   * The inbox that replaces this one after a key change: bearer requests
-   * only (ADR 0039 §5).
+   * The inbox that replaces this one after a key change: bearer requests only
+   * (ADR 0039 §5).
    */
   successor?: string
 }
@@ -707,15 +721,17 @@ export interface BuddiesPayloads {
 
 type Fields = Record<string, unknown>
 
-/** A bundle id as Apple allows them; the inbox checks it's one this worker serves. */
+/**
+ * A bundle id as Apple allows them; the inbox checks it's one this worker
+ * serves.
+ */
 const BUNDLE_ID_PATTERN = /^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/
 const MAX_BUNDLE_ID_CHARS = 155
 
 /**
  * `pushService` picks the fields: APNs (also when absent, as builds before
- * Android sent it) takes `apnsToken`, `apnsEnvironment`, and `apnsTopic?`;
- * FCM takes `fcmToken` and `appAlerts?`. The other service's fields are
- * ignored.
+ * Android sent it) takes `apnsToken`, `apnsEnvironment`, and `apnsTopic?`; FCM
+ * takes `fcmToken` and `appAlerts?`. The other service's fields are ignored.
  */
 const pushAddress = (p: Fields): PushAddress | null => {
   const service = p.pushService === undefined ? 'apns' : p.pushService
@@ -783,10 +799,15 @@ const withBlob = <T extends object>(
 }
 
 /** An op's fields without `ts` and `nonce` (unsigned ops have none anyway). */
-export type BuddiesFields<K extends BuddiesRouteOp> = Unsigned<BuddiesPayloads[K]>
+export type BuddiesFields<K extends BuddiesRouteOp> = Unsigned<
+  BuddiesPayloads[K]
+>
 
 type FieldParsers = {
-  [K in BuddiesRouteOp]: (payload: Fields, now: number) => BuddiesFields<K> | null
+  [K in BuddiesRouteOp]: (
+    payload: Fields,
+    now: number
+  ) => BuddiesFields<K> | null
 }
 
 type PayloadParsers = {
@@ -799,10 +820,10 @@ type PayloadParsers = {
 /**
  * Validates an op's fields and returns only the contract's (unknown fields,
  * including the reserved `attest`, `ts`, and `nonce`, are dropped). Keys and
- * the claim verifier come back canonically encoded. Null means
- * `bad_request`. A bearer request's plain JSON body (or `x-buddies-payload`)
- * goes through these alone; a signed payload through
- * `BUDDIES_PAYLOAD_PARSERS`, which also takes its `ts` and `nonce`.
+ * the claim verifier come back canonically encoded. Null means `bad_request`. A
+ * bearer request's plain JSON body (or `x-buddies-payload`) goes through these
+ * alone; a signed payload through `BUDDIES_PAYLOAD_PARSERS`, which also takes
+ * its `ts` and `nonce`.
  */
 export const BUDDIES_FIELD_PARSERS: FieldParsers = {
   'inbox/register': (p) => {
@@ -929,8 +950,8 @@ const UNSIGNED_PAYLOAD_OPS: ReadonlySet<BuddiesRouteOp> = new Set([
 
 /**
  * Validates a decoded envelope payload for one op: its fields
- * (`BUDDIES_FIELD_PARSERS`), plus `ts` and `nonce` for every signed op.
- * Null means `bad_request`.
+ * (`BUDDIES_FIELD_PARSERS`), plus `ts` and `nonce` for every signed op. Null
+ * means `bad_request`.
  */
 export const BUDDIES_PAYLOAD_PARSERS = Object.fromEntries(
   (Object.keys(BUDDIES_FIELD_PARSERS) as BuddiesRouteOp[]).map((op) => [
@@ -939,7 +960,9 @@ export const BUDDIES_PAYLOAD_PARSERS = Object.fromEntries(
       const fields = BUDDIES_FIELD_PARSERS[op](p, now)
       if (!fields || UNSIGNED_PAYLOAD_OPS.has(op)) return fields
       const ts = timestamp(p.ts)
-      return ts != null && isId(p.nonce) ? { ...fields, ts, nonce: p.nonce } : null
+      return ts != null && isId(p.nonce)
+        ? { ...fields, ts, nonce: p.nonce }
+        : null
     },
   ])
 ) as PayloadParsers
@@ -948,7 +971,10 @@ export const BUDDIES_PAYLOAD_PARSERS = Object.fromEntries(
 
 /** The authenticated parts of a signed request, forwarded to the inbox DO. */
 export interface SignedCall {
-  /** Decoded bytes of the envelope's `payload`, exactly as the client signed them. */
+  /**
+   * Decoded bytes of the envelope's `payload`, exactly as the client signed
+   * them.
+   */
   payloadBytes: Uint8Array
   signature: Uint8Array
 }
@@ -956,10 +982,10 @@ export interface SignedCall {
 export type Signed<T> = T & SignedCall
 
 /**
- * An owner request authorized by an account session instead of the owner
- * key (a bearer request): the Worker verified the access token, and the
- * inbox DO compares `accountId` with the account the inbox is linked to.
- * No `ts` or `nonce`: the token, not a signature, authenticates it.
+ * An owner request authorized by an account session instead of the owner key (a
+ * bearer request): the Worker verified the access token, and the inbox DO
+ * compares `accountId` with the account the inbox is linked to. No `ts` or
+ * `nonce`: the token, not a signature, authenticates it.
  */
 export type AccountCall<T> = Unsigned<T> & { accountId: string }
 

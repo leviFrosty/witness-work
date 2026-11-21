@@ -6,7 +6,7 @@ import {
 } from '@/features/buddies/lib/engine'
 import { isRelayError } from '@/features/buddies/lib/relay'
 import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
-import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
+import { currentBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import type { BuddySyncFailureReason } from '@/features/buddies/lib/syncStatus'
 
 export function buddiesErrorMessage(error: unknown): string {
@@ -21,9 +21,13 @@ export function buddiesErrorMessage(error: unknown): string {
       case 'alreadyBuddies':
         return i18n.t('buddies_inviteAlreadyBuddies')
       case 'limit':
-        return i18n.t('buddies_limitReached', { max: MAX_BUDDIES })
+        return i18n.t('buddies_limitReached', {
+          max: currentBuddyLimits().maxBuddies,
+        })
       case 'openInvites':
-        return i18n.t('buddies_openInvitesLimit', { max: MAX_OPEN_INVITES })
+        return i18n.t('buddies_openInvitesLimit', {
+          max: currentBuddyLimits().maxOpenInvites,
+        })
       case 'nameRequired':
         return i18n.t('buddies_nameRequired')
       case 'reconnectUnverified':
@@ -63,7 +67,9 @@ export function buddiesErrorMessage(error: unknown): string {
   if (isRelayError(error, 'rate_limited'))
     return i18n.t('buddies_errorRateLimited')
   if (isRelayError(error, 'limit'))
-    return i18n.t('buddies_limitReached', { max: MAX_BUDDIES })
+    return i18n.t('buddies_limitReached', {
+      max: currentBuddyLimits().maxBuddies,
+    })
   return i18n.t('buddies_errorGeneric')
 }
 

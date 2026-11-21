@@ -1,3 +1,4 @@
+import { currentBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import { Platform } from 'react-native'
 import * as BuddiesKeychain from '../../../../modules/buddies-keychain'
 import { devicePlatform } from '@/lib/devicePlatform'
@@ -193,6 +194,7 @@ const engine = createBuddiesEngine({
   randomBytes,
 
   now: Date.now,
+  limits: currentBuddyLimits,
   getRootSeed: async () => fromB64u(await deviceAccountKey.getOrCreate()),
 
   deleteRootSeed: async () => {

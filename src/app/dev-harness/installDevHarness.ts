@@ -18,6 +18,7 @@ import { useHelpCenterStore } from '@/features/updates/stores/helpCenter'
 import useConversations from '@/stores/conversationStore'
 import useServiceReport from '@/stores/serviceReport'
 import useMileage from '@/stores/mileage'
+import { useServerBuddyLimits } from '@/stores/serverBuddyLimits'
 import useSharedCars from '@/stores/sharedCars'
 import usePet from '@/stores/pet'
 import useRoutine from '@/stores/routine'
@@ -486,6 +487,7 @@ export function installDevHarness() {
     stores: {
       preferences: usePreferences,
       labs: useLabsStore,
+      serverBuddyLimits: useServerBuddyLimits,
       editMode: useEditModeStore,
       profile: useProfile,
       contacts: useContacts,

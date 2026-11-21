@@ -10,13 +10,15 @@ import {
   buildInviteLink,
   parseInviteSecret,
 } from '@/features/buddies/lib/inviteLink'
-import { MAX_BUDDIES, occupiedBuddySpots } from '@/features/buddies/lib/state'
+import { occupiedBuddySpots } from '@/features/buddies/lib/state'
+import { useBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 export default function EnterInviteLink() {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
-  const full = useBuddies((state) => occupiedBuddySpots(state) >= MAX_BUDDIES)
+  const { maxBuddies } = useBuddyLimits()
+  const full = useBuddies((state) => occupiedBuddySpots(state) >= maxBuddies)
   if (full) return null
 
   const open = (link: string) => navigation.navigate('Buddy Invite', { link })

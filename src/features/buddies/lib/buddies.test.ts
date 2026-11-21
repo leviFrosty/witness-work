@@ -1,3 +1,4 @@
+import { DEFAULT_BUDDY_LIMITS } from '@/features/buddies/lib/limits'
 import { describe, expect, it, vi } from 'vitest'
 import { fromB64u, fromUtf8, toB64u, utf8 } from '@/features/buddies/lib/bytes'
 import { open, seal, sha256 } from '@/features/buddies/lib/crypto'
@@ -38,7 +39,6 @@ import {
   MAX_ANSWER_MARKS,
   MAX_BUDDIES,
   MAX_NOTIFICATION_MARKS,
-  MAX_OPEN_INVITES,
   MAX_NOTIFICATIONS,
   MAX_REMOVED_BUDDIES,
   mergeAnswerMarks,
@@ -752,6 +752,8 @@ describe('buddies pairing', () => {
 
   it('caps open invites at five, and buddies plus pending invites at fifty', async () => {
     expect(MAX_BUDDIES).toBe(50)
+    const MAX_OPEN_INVITES = DEFAULT_BUDDY_LIMITS.maxOpenInvites
+    expect(MAX_OPEN_INVITES).toBe(5)
     const { user } = setup()
     const mom = user('Mom')
     for (let index = 0; index < MAX_OPEN_INVITES; index++)
@@ -775,6 +777,23 @@ describe('buddies pairing', () => {
         })
       ),
     })
+    await expect(mom.engine.createInvite()).rejects.toEqual(
+      new BuddyInviteError('limit')
+    )
+  })
+
+  it('follows the caps ww-api publishes', async () => {
+    const limits = { maxBuddies: 3, maxOpenInvites: 2 }
+    const { user } = setup()
+    const mom = user('Mom', undefined, undefined, { limits: () => limits })
+    await mom.engine.createInvite()
+    await mom.engine.createInvite()
+    await expect(mom.engine.createInvite()).rejects.toEqual(
+      new BuddyInviteError('openInvites')
+    )
+
+    limits.maxOpenInvites = 3
+    await mom.engine.createInvite()
     await expect(mom.engine.createInvite()).rejects.toEqual(
       new BuddyInviteError('limit')
     )

@@ -4401,7 +4401,7 @@
   },
   "onboardingBuddies_nameHint": "Add your name so your buddy knows who's inviting them.",
   "onboardingBuddies_title": "Plan together with Buddies",
-  "onboardingBuddies_description": "Pair with up to five people you go out in service with. See each other's planned days and times on your calendar, invite them to a Plan or Follow-up, or ask to join theirs.",
+  "onboardingBuddies_description": "Pair with up to {{max}} people you go out in service with. See each other's planned days and times on your calendar, invite them to a Plan or Follow-up, or ask to join theirs.",
   "onboardingBuddies_private": "End-to-end encrypted. Your hours and reports stay private.",
   "onboardingBuddies_private_info": "Buddies see your name and the days you plan to go out. Your photo, pioneer status, and start times are shared unless you turn them off in Buddies Settings, where you can also pause sharing. Your hours, reports, goals, contacts, and notes stay private. Inviting a buddy to a Plan or Follow-up shares the details shown in it. Nothing is shared until you both confirm, and only you and your buddies can read it.",
   "onboardingBuddies_later": "Invite buddies anytime from **Schedule → Buddies**.",

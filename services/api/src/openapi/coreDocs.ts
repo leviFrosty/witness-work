@@ -56,7 +56,7 @@ export const appConfigDocs = describeRoute({
   tags: ['Service'],
   summary: 'App configuration',
   description:
-    'What the app reads at launch and when it returns to the foreground. Below `minAppVersion` it shows a blocking Update Required screen with a store link. From KV `app:min-version` (`{"minVersion":"1.42.0"}`), then the `APP_MIN_VERSION` var (the KV read is edge-cached for 60 seconds; the response is `no-store`). Also Cloud Sync’s switches (`sync`), web sign-up’s (`webSignup`), and the caller’s coarse location (`country`, `regionCode`) for the app’s sales-region check. Query `capabilities` (comma-separated, for example `sync-everyone`): what the app does, as on session open. No authentication.',
+    'What the app reads at launch and when it returns to the foreground. Below `minAppVersion` it shows a blocking Update Required screen with a store link. From KV `app:min-version` (`{"minVersion":"1.42.0"}`), then the `APP_MIN_VERSION` var (the KV read is edge-cached for 60 seconds; the response is `no-store`). Also Cloud Sync’s switches (`sync`), web sign-up’s (`webSignup`), Buddies’ caps (`buddies`), and the caller’s coarse location (`country`, `regionCode`) for the app’s sales-region check. Query `capabilities` (comma-separated, for example `sync-everyone`): what the app does, as on session open. No authentication.',
   responses: {
     200: jsonResponse(
       'The configuration.',
@@ -96,7 +96,26 @@ export const appConfigDocs = describeRoute({
                 'The Turnstile site key for the web’s sign-up and recovery widgets (Cloudflare’s test key on development workers without one). Present even while sign-up is off, since recovery uses it too; null without Turnstile.',
             }),
           })
-          .meta({ description: 'Web sign-up’s switch and Turnstile site key.' }),
+          .meta({
+            description: 'Web sign-up’s switch and Turnstile site key.',
+          }),
+        buddies: z
+          .object({
+            maxBuddies: z.number().int().positive().meta({
+              description:
+                'Spots per User: buddies and pending invites together. The relay refuses `slot/add` and `invite/create` past it (`limit`).',
+              example: 50,
+            }),
+            maxOpenInvites: z.number().int().positive().meta({
+              description:
+                'Invites a User can have waiting at once from Invite a Buddy. The app enforces it; the relay allows more for an account key change’s reconnect invites.',
+              example: 5,
+            }),
+          })
+          .meta({
+            description:
+              'Buddies’ caps (witness-work ADR 0046), which the app enforces and shows in its copy. An app never goes above the most its own build can store.',
+          }),
         country: z
           .string()
           .regex(/^[A-Z]{2}$/)

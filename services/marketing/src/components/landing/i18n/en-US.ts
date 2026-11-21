@@ -142,7 +142,7 @@ const enUS = {
   buddies: {
     eyebrow: 'Buddies',
     title: 'Go out together.',
-    body: "Connect with up to five friends you go out with. See each other's planned days, **invite them to yours**, and know who's going, end-to-end encrypted on iPhone and Android.",
+    body: "Connect with up to 50 friends you go out with. See each other's planned days, **invite them to yours**, and know who's going, end-to-end encrypted on iPhone and Android.",
     alt: "Anna Brooks's buddy page, with the days you're both going out in the next two weeks.",
   },
   route: {

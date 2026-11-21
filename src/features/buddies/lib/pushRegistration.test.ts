@@ -48,6 +48,7 @@ const {
   setChannel: vi.fn(async () => null),
 }))
 
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('react-native', () => ({ Platform: platform }))
 vi.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4, LOW: 2 },

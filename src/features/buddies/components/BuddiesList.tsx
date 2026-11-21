@@ -14,7 +14,8 @@ import BuddyRequestRow from '@/features/buddies/components/BuddyRequestRow'
 import BuddyRow from '@/features/buddies/components/BuddyRow'
 import PendingInviteRow from '@/features/buddies/components/PendingInviteRow'
 import ReconnectRequestRow from '@/features/buddies/components/ReconnectRequestRow'
-import { MAX_BUDDIES, pendingReconnects } from '@/features/buddies/lib/state'
+import { pendingReconnects } from '@/features/buddies/lib/state'
+import { useBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 export default function BuddiesList({
@@ -30,6 +31,7 @@ export default function BuddiesList({
 }) {
   const theme = useTheme()
   const navigation = useNavigation<RootStackNavigation>()
+  const { maxBuddies } = useBuddyLimits()
   const incomingClaims = useBuddies((state) => state.incomingClaims)
   const buddies = useBuddies((state) => state.buddies)
   const outgoingInvites = useBuddies((state) => state.outgoingInvites)
@@ -125,7 +127,7 @@ export default function BuddiesList({
         <BuddiesSection
           title={i18n.t('buddies_buddiesSection', {
             count: active.length,
-            max: MAX_BUDDIES,
+            max: maxBuddies,
           })}
         >
           {active.map((buddy, index) => (

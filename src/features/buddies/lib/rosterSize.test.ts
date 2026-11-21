@@ -1,3 +1,4 @@
+import { DEFAULT_BUDDY_LIMITS } from '@/features/buddies/lib/limits'
 import { describe, expect, it, vi } from 'vitest'
 import { fromB64u, fromUtf8, toB64u } from '@/features/buddies/lib/bytes'
 import { open } from '@/features/buddies/lib/crypto'
@@ -8,7 +9,6 @@ import {
   MAX_ANSWER_MARKS,
   MAX_BUDDIES,
   MAX_NOTIFICATION_MARKS,
-  MAX_OPEN_INVITES,
   MAX_REMOVED_BUDDIES,
   MAX_ROSTER_PLAINTEXT_BYTES,
 } from '@/features/buddies/lib/state'
@@ -66,12 +66,15 @@ describe('the roster at the buddy limit', () => {
       closedInviteIds: Object.fromEntries(
         Array.from({ length: 20 * 7 }, () => [id(), later])
       ),
-      outgoingInvites: Array.from({ length: MAX_OPEN_INVITES }, () => ({
-        inviteId: id(),
-        secret: id(),
-        createdAt: now,
-        expiresAt: later,
-      })),
+      outgoingInvites: Array.from(
+        { length: DEFAULT_BUDDY_LIMITS.maxOpenInvites },
+        () => ({
+          inviteId: id(),
+          secret: id(),
+          createdAt: now,
+          expiresAt: later,
+        })
+      ),
       answerMarks: Object.fromEntries(
         Array.from({ length: MAX_ANSWER_MARKS }, () => [
           pairKey(),

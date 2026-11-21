@@ -73,12 +73,12 @@ describe('__WW_DEV__.pet', () => {
     usePet.setState({
       pet: {
         ...pet,
-        purchases: [{ item: 'hat:bow', price: 12, on: '2026-10-05' }],
+        purchases: [{ item: 'hat:bow', price: 3, on: '2026-10-05' }],
       },
     })
 
-    expect(petHarness.coins(500).override).toMatchObject({ wallet: 620 })
-    expect(petHarness.coins(0).override).toMatchObject({ wallet: 120 })
+    expect(petHarness.coins(500).override).toMatchObject({ wallet: 530 })
+    expect(petHarness.coins(0).override).toMatchObject({ wallet: 30 })
   })
 
   it('goes back to the real coins, keeping the other fakes', () => {

@@ -26,6 +26,7 @@ export type NotificationKind =
   | 'announcement'
   | 'badge'
   | 'pet_unlock'
+  | 'pet_price_drop'
   | 'dev_test'
 
 export type NotificationTone = 'accent' | 'warn' | 'error' | 'supporter'

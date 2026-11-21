@@ -1,8 +1,11 @@
 ---
 status: accepted
+superseded-by: [0066]
 ---
 
 # Big hats, and rare hats that change the room
+
+> Partly superseded by [ADR 0066](./0066-shop-prices-cut-and-paid-difference-given-back.md): every price is about a third of the one here.
 
 ## Context
 

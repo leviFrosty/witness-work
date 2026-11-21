@@ -8,6 +8,7 @@ import {
   coinsOf,
   petDaysOut,
   petEarned,
+  refundOn,
   SHARED_MONTH_COINS,
   spentOn,
   storedPrice,
@@ -176,23 +177,50 @@ describe('petEarned', () => {
 })
 
 describe('the wallet', () => {
+  const bought = [
+    { item: 'hat:bow', price: 10, on: '2026-10-01' },
+    { item: 'hat:cap', price: 12, on: '2026-10-02' },
+    { item: 'hat:tophat', price: 36, on: '2026-10-03' },
+  ]
+  const unchanged = (item: string) =>
+    ({ 'hat:bow': 100, 'hat:cap': 120, 'hat:tophat': 360 })[item] ?? null
+
   it('adds up what purchases cost', () => {
     expect(spentOn(undefined)).toBe(0)
-    expect(
-      spentOn([
-        { item: 'hat:bow', price: 10, on: '2026-10-01' },
-        { item: 'hat:cap', price: 12, on: '2026-10-02' },
-        { item: 'hat:tophat', price: 36, on: '2026-10-03' },
-      ])
-    ).toBe(580)
+    expect(spentOn(bought, unchanged)).toBe(580)
+    expect(refundOn(bought, unchanged)).toBe(0)
   })
 
   it('stores a price in the units purchases have always used', () => {
     expect(storedPrice(100)).toBe(10)
     expect(storedPrice(360)).toBe(36)
     expect(
-      spentOn([{ item: 'hat:bow', price: storedPrice(100), on: '2026-10-01' }])
-    ).toBe(100)
+      spentOn([{ item: 'hat:bow', price: storedPrice(30), on: '2026-10-01' }])
+    ).toBe(30)
+  })
+
+  it('gives back what a lowered price no longer asks', () => {
+    const cut = (item: string) =>
+      ({ 'hat:bow': 30, 'hat:cap': 120, 'hat:tophat': 110 })[item] ?? null
+    expect(spentOn(bought, cut)).toBe(30 + 120 + 110)
+    expect(refundOn(bought, cut)).toBe(70 + 250)
+  })
+
+  it('never charges more when a price goes up', () => {
+    const raised = (item: string) => (unchanged(item) ?? 0) * 2
+    expect(spentOn(bought, raised)).toBe(580)
+    expect(refundOn(bought, raised)).toBe(0)
+  })
+
+  it('charges what was paid for an item this build does not sell', () => {
+    const later = [{ item: 'hat:future', price: 50, on: '2026-12-01' }]
+    expect(spentOn(later)).toBe(500)
+    expect(refundOn(later)).toBe(0)
+  })
+
+  it('gives back the November 2026 price cut on today’s prices', () => {
+    expect(spentOn(bought)).toBe(30 + 40 + 110)
+    expect(refundOn(bought)).toBe(580 - 180)
   })
 
   it('leaves earned minus spent, never below 0', () => {

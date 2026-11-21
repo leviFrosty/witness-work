@@ -241,13 +241,13 @@ describe('usePetLife wallet', () => {
     usePet.setState({
       pet: {
         ...PET,
-        purchases: [{ item: 'hat:bow', price: 10, on: '2026-10-05' }],
+        purchases: [{ item: 'hat:bow', price: 3, on: '2026-10-05' }],
       },
     })
     mount()
     expect(latest?.earned).toBe(210)
     expect(latest?.earnings).toMatchObject({ daysOut: 21, plansKept: 0 })
-    expect(latest?.wallet).toBe(110)
+    expect(latest?.wallet).toBe(180)
     expect(latest?.unlockedItems.has('hat:bow')).toBe(true)
   })
 

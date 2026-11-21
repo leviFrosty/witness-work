@@ -8,6 +8,7 @@ import {
   recordDayKey,
 } from '@/features/pet/lib/dayKeys'
 import type { HeartsPace } from '@/features/pet/lib/life'
+import { priceOf } from '@/features/pet/lib/prices'
 import {
   NO_ROUTINE_EARNINGS,
   routineCoinsOf,
@@ -121,10 +122,31 @@ export const coinsOf = (earned: Earned): number =>
 export const storedPrice = (price: number): number =>
   Math.round(price / COIN_SCALE)
 
-export function spentOn(purchases: readonly PetPurchase[] | undefined): number {
+type PriceNow = (item: string) => number | null
+
+const paidFor = ({ price }: PetPurchase): number => price * COIN_SCALE
+
+const chargedFor = (purchase: PetPurchase, priceNow: PriceNow): number =>
+  Math.min(paidFor(purchase), priceNow(purchase.item) ?? Infinity)
+
+export function spentOn(
+  purchases: readonly PetPurchase[] | undefined,
+  priceNow: PriceNow = priceOf
+): number {
   let spent = 0
-  for (const { price } of purchases ?? []) spent += price
-  return spent * COIN_SCALE
+  for (const purchase of purchases ?? [])
+    spent += chargedFor(purchase, priceNow)
+  return spent
+}
+
+export function refundOn(
+  purchases: readonly PetPurchase[] | undefined,
+  priceNow: PriceNow = priceOf
+): number {
+  let refund = 0
+  for (const purchase of purchases ?? [])
+    refund += paidFor(purchase) - chargedFor(purchase, priceNow)
+  return refund
 }
 
 export const walletOf = (earned: number, spent: number): number =>

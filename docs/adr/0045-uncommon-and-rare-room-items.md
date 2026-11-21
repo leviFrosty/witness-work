@@ -1,8 +1,11 @@
 ---
 status: accepted
+superseded-by: [0066]
 ---
 
 # Uncommon and rare room items
+
+> Partly superseded by [ADR 0066](./0066-shop-prices-cut-and-paid-difference-given-back.md): every price is about a third of the one here.
 
 ## Context
 

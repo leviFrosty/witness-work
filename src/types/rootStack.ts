@@ -337,7 +337,9 @@ export type RootStackParamList = {
 
   PetRoom: { focus?: string } | undefined
 
-  PetShop: { focus?: string; from?: 'room' | 'more' | 'menu' } | undefined
+  PetShop:
+    | { focus?: string; from?: 'room' | 'more' | 'menu' | 'price_drop' }
+    | undefined
 
   PetRename: undefined
 

@@ -1,7 +1,7 @@
 # seed: pioneer
 # A pet with coins to spend, its details open.
-# setup: (() => { __WW_DEV__.pet.release(); __WW_DEV__.pet.adopt('dog', 'gold', 'Biscuit'); __WW_DEV__.pet.override({ wallet: 40 }); __WW_DEV__.pet.seenNow(); __WW_DEV__.navigate('PetRoom'); return true })()
-# assert: __WW_DEV__.pet.state().unlocks.purchases.some((bought) => bought.item === 'hat:cap' && bought.price === 12)
+# setup: (() => { __WW_DEV__.pet.release(); __WW_DEV__.pet.adopt('dog', 'gold', 'Biscuit'); __WW_DEV__.pet.override({ wallet: 50 }); __WW_DEV__.pet.seenNow(); __WW_DEV__.navigate('PetRoom'); return true })()
+# assert: __WW_DEV__.pet.state().unlocks.purchases.some((bought) => bought.item === 'hat:cap' && bought.price === 4)
 # assert: __WW_DEV__.pet.state().room.hat === 'cap'
 appId: com.leviwilkerson.jwtimedev
 name: Buy a hat in the Shop, then find it worn in the pet's room
@@ -16,8 +16,8 @@ name: Buy a hat in the Shop, then find it worn in the pet's room
     text: Shop
     traits: button
 - assertVisible: Buy
-- tapOn: Cap, 12 coins
-- tapOn: Buy Cap for 12 coins
+- tapOn: Cap, 40 coins
+- tapOn: Buy Cap for 40 coins
 - assertVisible: Cap bought
 # Owned now: stamped, and off, so it can't be picked again.
 - assertVisible:

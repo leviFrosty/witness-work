@@ -1,9 +1,12 @@
 ---
 status: accepted
 supersedes: [0035]
+superseded-by: [0066]
 ---
 
 # Spiritual Routine, and coins at ten times the scale
+
+> Partly superseded by [ADR 0066](./0066-shop-prices-cut-and-paid-difference-given-back.md): every Shop price is about a third of the one here.
 
 ## Context
 

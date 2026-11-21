@@ -21,6 +21,7 @@ import useMileage from '@/stores/mileage'
 import { useServerBuddyLimits } from '@/stores/serverBuddyLimits'
 import useSharedCars from '@/stores/sharedCars'
 import usePet from '@/stores/pet'
+import { usePetPriceDrop } from '@/features/pet/stores/petPriceDrop'
 import useRoutine from '@/stores/routine'
 import { useRewardStack } from '@/stores/rewardStack'
 import useCategories from '@/stores/categories'
@@ -510,6 +511,7 @@ export function installDevHarness() {
       territoryVisits: useTerritoryVisits,
 
       pet: usePet,
+      petPriceDrop: usePetPriceDrop,
       routine: useRoutine,
 
       rewardStack: useRewardStack,

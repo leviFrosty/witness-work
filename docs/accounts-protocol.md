@@ -375,7 +375,7 @@ Every op is **Bearer**. Ids travel in bodies and headers, never URLs.
 - A suspended account keeps syncing.
 - `disabled` (503) also when the worker has no sync bucket or accounts database.
 
-`GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`. It also carries web sign-up's `webSignup` and the caller's coarse location, `country` and `regionCode` (see [Updates and the legacy switch](#updates-and-the-legacy-switch)).
+`GET /app/v1/config` carries the switches for devices without a session: `sync: { enabled, entitlement }`. It also carries web sign-up's `webSignup`, Buddies' caps `buddies: { maxBuddies, maxOpenInvites }` (the app enforces and shows them, never above what its build can store), and the caller's coarse location, `country` and `regionCode` (see [Updates and the legacy switch](#updates-and-the-legacy-switch)).
 
 `entitlement: everyone` applies only to a session whose capabilities include `sync-everyone`, and to a config request with `?capabilities=sync-everyone` (see [Capabilities](#capabilities)). Anyone else is answered as if the entitlement were `supporter`, everywhere above.
 

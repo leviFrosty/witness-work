@@ -23,8 +23,6 @@ import { hasSharedEventEnded } from '@/features/buddies/lib/shareTiming'
 export { MAX_BUDDIES } from '@/features/buddies/lib/schemas'
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
-export const MAX_OPEN_INVITES = 5
-
 export type BuddyProfile = {
   name: string
   avatar?: BuddyAvatar

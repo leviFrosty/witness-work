@@ -9,6 +9,7 @@ function passthrough({ children }: { children?: ReactNode }) {
   return createElement('view', null, children)
 }
 
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('react-native', () => ({
   View: passthrough,
   ActivityIndicator: () => null,

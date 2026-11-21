@@ -24,7 +24,7 @@ import {
 import { BuddyInviteError } from '@/features/buddies/lib/engine'
 import { isRelayConnectivityError } from '@/features/buddies/lib/relay'
 import { startFallbackPoll } from '@/features/buddies/lib/autoSync'
-import { MAX_BUDDIES, MAX_OPEN_INVITES } from '@/features/buddies/lib/state'
+import { useBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 import { formatRelative } from '@/lib/dates'
 
@@ -86,6 +86,7 @@ export default function BuddyCodePanel({
   const theme = useTheme()
 
   const largeText = useAccessibilityTextSize()
+  const limits = useBuddyLimits()
   const [code, setCode] = useState<CodeState>({ state: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const outgoingInvites = useBuddies((state) => state.outgoingInvites)
@@ -144,9 +145,11 @@ export default function BuddyCodePanel({
       <Card style={{ gap: 12 }}>
         <Text>
           {code.state === 'full'
-            ? i18n.t('buddies_codeFull', { max: MAX_BUDDIES })
+            ? i18n.t('buddies_codeFull', { max: limits.maxBuddies })
             : code.state === 'openInvites'
-              ? i18n.t('buddies_openInvitesLimit', { max: MAX_OPEN_INVITES })
+              ? i18n.t('buddies_openInvitesLimit', {
+                  max: limits.maxOpenInvites,
+                })
               : code.message}
         </Text>
         {code.state === 'error' && code.retryable && (

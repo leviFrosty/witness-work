@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   onboarded: true,
   keyChangeStage: null as string | null,
 }))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('react-native', () => ({ ScrollView: 'ScrollView', View: 'View' }))
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ goBack: mocks.goBack }),

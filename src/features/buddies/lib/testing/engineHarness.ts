@@ -154,6 +154,7 @@ export function setup({
       | 'territories'
       | 'inviteSecrets'
       | 'paused'
+      | 'limits'
     > = {}
   ) {
     const store = memoryStore({})

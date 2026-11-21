@@ -186,6 +186,42 @@ describe('fetchAppConfig', () => {
     })
   })
 
+  it("reads Buddies' caps, and skips caps that aren't counts", async () => {
+    const read = (buddies: unknown) =>
+      fetchAppConfig(
+        'https://api.test/app/v1/config',
+        answer({ ok: true, buddies }) as unknown as typeof fetch
+      ).then((config) => config.buddies)
+    await expect(read({ maxBuddies: 50, maxOpenInvites: 5 })).resolves.toEqual({
+      maxBuddies: 50,
+      maxOpenInvites: 5,
+    })
+    for (const buddies of [
+      null,
+      { maxBuddies: 50 },
+      { maxBuddies: 0, maxOpenInvites: 5 },
+      { maxBuddies: 50, maxOpenInvites: 2.5 },
+      { maxBuddies: '50', maxOpenInvites: 5 },
+    ])
+      await expect(read(buddies)).resolves.toBeUndefined()
+  })
+
+  it('passes Buddies’ caps on to the app', async () => {
+    const onConfig = vi.fn()
+    const buddies = { maxBuddies: 20, maxOpenInvites: 3 }
+    await createAppConfigCheck({
+      fetchConfig: async () => ({ minAppVersion: null, buddies }),
+      currentVersion: () => '1.40.0',
+      now: () => 0,
+      onConfig,
+    })()
+    expect(onConfig).toHaveBeenCalledWith({
+      minAppVersion: null,
+      sync: null,
+      buddies,
+    })
+  })
+
   it("reads the visitor's country and region", async () => {
     const read = (body: Record<string, unknown>) =>
       fetchAppConfig(

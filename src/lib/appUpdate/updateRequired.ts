@@ -43,6 +43,11 @@ export type AppWebSignupConfig = {
   turnstileSiteKey: string | null
 }
 
+export type AppBuddiesConfig = {
+  maxBuddies: number
+  maxOpenInvites: number
+}
+
 export type AppConfig = {
   minAppVersion: string | null
 
@@ -50,8 +55,13 @@ export type AppConfig = {
 
   webSignup?: AppWebSignupConfig
 
+  buddies?: AppBuddiesConfig
+
   location?: VisitorLocation
 }
+
+const isPositiveInteger = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && (value as number) > 0
 
 export async function fetchAppConfig(
   url: string,
@@ -66,6 +76,7 @@ export async function fetchAppConfig(
       changes?: unknown
     } | null
     webSignup?: { enabled?: unknown; turnstileSiteKey?: unknown } | null
+    buddies?: { maxBuddies?: unknown; maxOpenInvites?: unknown } | null
     country?: unknown
     regionCode?: unknown
   } | null>({
@@ -75,7 +86,8 @@ export async function fetchAppConfig(
   })
   if (response.data?.ok !== true)
     throw new HttpError('server', response.status, 'unexpected_response')
-  const { minAppVersion, sync, webSignup, country, regionCode } = response.data
+  const { minAppVersion, sync, webSignup, buddies, country, regionCode } =
+    response.data
   return {
     minAppVersion: typeof minAppVersion === 'string' ? minAppVersion : null,
     sync:
@@ -96,6 +108,14 @@ export async function fetchAppConfig(
             webSignup.turnstileSiteKey
               ? webSignup.turnstileSiteKey
               : null,
+        },
+      }),
+    ...(buddies &&
+      isPositiveInteger(buddies.maxBuddies) &&
+      isPositiveInteger(buddies.maxOpenInvites) && {
+        buddies: {
+          maxBuddies: buddies.maxBuddies,
+          maxOpenInvites: buddies.maxOpenInvites,
         },
       }),
     ...('country' in response.data && {
@@ -124,8 +144,8 @@ export function createAppConfigCheck(deps: {
     lastAt = deps.now()
     pending = deps
       .fetchConfig()
-      .then(({ minAppVersion, sync = null }) => {
-        deps.onConfig?.({ minAppVersion, sync })
+      .then(({ minAppVersion, sync = null, buddies }) => {
+        deps.onConfig?.({ minAppVersion, sync, ...(buddies && { buddies }) })
         const required = useUpdateRequired.getState().required
         if (required?.source === 'server') return
         const below = belowMinVersion(deps.currentVersion(), minAppVersion)

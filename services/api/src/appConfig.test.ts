@@ -30,7 +30,9 @@ afterEach(() => {
 describe('GET /app/v1/config', () => {
   it('serves the minimum version uncached, without authentication', async () => {
     const response = await app.fetch(
-      new Request('https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'),
+      new Request(
+        'https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'
+      ),
       await env('{"minVersion":"1.42.0"}')
     )
     expect(response.status).toBe(200)
@@ -40,6 +42,7 @@ describe('GET /app/v1/config', () => {
       minAppVersion: '1.42.0',
       sync: { enabled: false, changes: false, entitlement: 'everyone' },
       webSignup: { enabled: false, turnstileSiteKey: null },
+      buddies: { maxBuddies: 50, maxOpenInvites: 5 },
       country: null,
       regionCode: null,
     })
@@ -47,13 +50,16 @@ describe('GET /app/v1/config', () => {
 
   it('leaves minAppVersion out without a floor', async () => {
     const response = await app.fetch(
-      new Request('https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'),
+      new Request(
+        'https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'
+      ),
       await env()
     )
     expect(await response.json()).toEqual({
       ok: true,
       sync: { enabled: false, changes: false, entitlement: 'everyone' },
       webSignup: { enabled: false, turnstileSiteKey: null },
+      buddies: { maxBuddies: 50, maxOpenInvites: 5 },
       country: null,
       regionCode: null,
     })
@@ -68,7 +74,9 @@ describe('GET /app/v1/config', () => {
       for (const [key, value] of Object.entries(kv))
         await base.NOTES_KV.put(key, value)
       const response = await app.fetch(
-        new Request('https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'),
+        new Request(
+          'https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'
+        ),
         { ...base, ...overrides } as unknown as Environment
       )
       return ((await response.json()) as { sync: unknown }).sync
@@ -94,7 +102,10 @@ describe('GET /app/v1/config', () => {
       )
     ).toEqual({ enabled: false, changes: false, entitlement: 'everyone' })
     expect(
-      await config({ ...bound, SYNC_ENTITLEMENT: 'everyone' }, { 'sync:enabled': 'on' })
+      await config(
+        { ...bound, SYNC_ENTITLEMENT: 'everyone' },
+        { 'sync:enabled': 'on' }
+      )
     ).toEqual({ enabled: true, changes: false, entitlement: 'everyone' })
     // Without the bucket there's no Cloud Sync to offer.
     expect(await config({ SYNC_ENABLED: 'true' })).toEqual({
@@ -105,23 +116,48 @@ describe('GET /app/v1/config', () => {
   })
 
   it("keeps everyone from apps that don't send the capability", async () => {
-    const base = { ...(await env()), ACCOUNT_SYNC: {}, ACCOUNTS_DB: {}, SYNC_ENABLED: 'true' }
+    const base = {
+      ...(await env()),
+      ACCOUNT_SYNC: {},
+      ACCOUNTS_DB: {},
+      SYNC_ENABLED: 'true',
+    }
     const sync = async (query: string) =>
       (
         (await (
           await app.fetch(
-            new Request(`https://ww-proxy.leviwilkerson.com/app/v1/config${query}`),
+            new Request(
+              `https://ww-proxy.leviwilkerson.com/app/v1/config${query}`
+            ),
             base as unknown as Environment
           )
         ).json()) as { sync: unknown }
       ).sync
     // An app that never sends `sync-everyone` must not turn Cloud Sync on by
     // itself for a device that never chose (ADR 0040 §2), at any version.
-    expect(await sync('')).toEqual({ enabled: true, changes: false, entitlement: 'supporter' })
-    expect(await sync('?appVersion=1.47.0')).toEqual({ enabled: true, changes: false, entitlement: 'supporter' })
-    expect(await sync('?capabilities=sync-later')).toEqual({ enabled: true, changes: false, entitlement: 'supporter' })
-    expect(await sync('?capabilities=sync-everyone')).toEqual({ enabled: true, changes: false, entitlement: 'everyone' })
-    expect(await sync('?capabilities=sync-later&capabilities=sync-everyone')).toEqual({
+    expect(await sync('')).toEqual({
+      enabled: true,
+      changes: false,
+      entitlement: 'supporter',
+    })
+    expect(await sync('?appVersion=1.47.0')).toEqual({
+      enabled: true,
+      changes: false,
+      entitlement: 'supporter',
+    })
+    expect(await sync('?capabilities=sync-later')).toEqual({
+      enabled: true,
+      changes: false,
+      entitlement: 'supporter',
+    })
+    expect(await sync('?capabilities=sync-everyone')).toEqual({
+      enabled: true,
+      changes: false,
+      entitlement: 'everyone',
+    })
+    expect(
+      await sync('?capabilities=sync-later&capabilities=sync-everyone')
+    ).toEqual({
       enabled: true,
       changes: false,
       entitlement: 'everyone',
@@ -142,7 +178,9 @@ describe('GET /app/v1/config', () => {
       for (const [key, value] of Object.entries(kv))
         await base.NOTES_KV.put(key, value)
       const response = await app.fetch(
-        new Request('https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'),
+        new Request(
+          'https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone'
+        ),
         { ...base, ...overrides } as unknown as Environment
       )
       return ((await response.json()) as { webSignup: unknown }).webSignup
@@ -156,16 +194,25 @@ describe('GET /app/v1/config', () => {
     }
     const devKey = '1x00000000000000000000AA'
     // A development worker falls back to Cloudflare's test keys.
-    expect(await webSignup({ ...ready, APP_ATTEST_ENVIRONMENT: 'development' })).toEqual({
+    expect(
+      await webSignup({ ...ready, APP_ATTEST_ENVIRONMENT: 'development' })
+    ).toEqual({
       enabled: true,
       turnstileSiteKey: devKey,
     })
     const production = { ...ready, APP_ATTEST_ENVIRONMENT: 'production' }
-    expect(await webSignup(production)).toEqual({ enabled: false, turnstileSiteKey: null })
+    expect(await webSignup(production)).toEqual({
+      enabled: false,
+      turnstileSiteKey: null,
+    })
     // A site key and secret without the frame's hostname would fail every
     // token, so sign-up stays off.
     expect(
-      await webSignup({ ...production, TURNSTILE_SITE_KEY: '0x4AAAAAAAexample', TURNSTILE_SECRET_KEY: 'secret' })
+      await webSignup({
+        ...production,
+        TURNSTILE_SITE_KEY: '0x4AAAAAAAexample',
+        TURNSTILE_SECRET_KEY: 'secret',
+      })
     ).toEqual({ enabled: false, turnstileSiteKey: '0x4AAAAAAAexample' })
     const configured = {
       ...production,
@@ -178,7 +225,9 @@ describe('GET /app/v1/config', () => {
       turnstileSiteKey: '0x4AAAAAAAexample',
     })
     // Paused: the site key stays, since web recovery uses it too.
-    expect(await webSignup(configured, { 'accounts:web-signup': 'off' })).toEqual({
+    expect(
+      await webSignup(configured, { 'accounts:web-signup': 'off' })
+    ).toEqual({
       enabled: false,
       turnstileSiteKey: '0x4AAAAAAAexample',
     })
@@ -194,7 +243,9 @@ describe('GET /app/v1/config', () => {
 
   it("says the caller's country and region from request.cf", async () => {
     const location = async (cf?: unknown) => {
-      const request = new Request('https://ww-proxy.leviwilkerson.com/app/v1/config')
+      const request = new Request(
+        'https://ww-proxy.leviwilkerson.com/app/v1/config'
+      )
       if (cf !== undefined) Object.defineProperty(request, 'cf', { value: cf })
       const response = await app.fetch(request, await env())
       expect(response.status).toBe(200)
@@ -202,7 +253,9 @@ describe('GET /app/v1/config', () => {
       const body = (await response.json()) as Record<string, unknown>
       return { country: body.country, regionCode: body.regionCode }
     }
-    expect(await location({ country: 'CA', regionCode: 'MB', city: 'Winnipeg' })).toEqual({
+    expect(
+      await location({ country: 'CA', regionCode: 'MB', city: 'Winnipeg' })
+    ).toEqual({
       country: 'CA',
       regionCode: 'MB',
     })
@@ -231,7 +284,10 @@ describe('GET /app/v1/config', () => {
         country: 'CA',
         regionCode: null,
       })
-    expect(await location({ country: 'CA' })).toEqual({ country: 'CA', regionCode: null })
+    expect(await location({ country: 'CA' })).toEqual({
+      country: 'CA',
+      regionCode: null,
+    })
   })
 
   it('counts against its own per-IP bucket', async () => {
@@ -246,9 +302,12 @@ describe('GET /app/v1/config', () => {
       },
     } as unknown as Environment
     const response = await app.fetch(
-      new Request('https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone', {
-        headers: { 'cf-connecting-ip': '198.51.100.9' },
-      }),
+      new Request(
+        'https://ww-proxy.leviwilkerson.com/app/v1/config?capabilities=sync-everyone',
+        {
+          headers: { 'cf-connecting-ip': '198.51.100.9' },
+        }
+      ),
       environment
     )
     expect(response.status).toBe(429)
@@ -259,11 +318,19 @@ describe('GET /app/v1/config', () => {
 describe('resolveAppMinVersion', () => {
   it('reads KV, then APP_MIN_VERSION, ignoring invalid values', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    expect(await resolveAppMinVersion(await env('{"minVersion":"2.0.1"}', '1.0.0'))).toBe('2.0.1')
-    expect(await resolveAppMinVersion(await env(undefined, ' 1.5.0 '))).toBe('1.5.0')
-    expect(await resolveAppMinVersion(await env('{"minVersion":"v2"}', '1.5.0'))).toBe('1.5.0')
+    expect(
+      await resolveAppMinVersion(await env('{"minVersion":"2.0.1"}', '1.0.0'))
+    ).toBe('2.0.1')
+    expect(await resolveAppMinVersion(await env(undefined, ' 1.5.0 '))).toBe(
+      '1.5.0'
+    )
+    expect(
+      await resolveAppMinVersion(await env('{"minVersion":"v2"}', '1.5.0'))
+    ).toBe('1.5.0')
     expect(await resolveAppMinVersion(await env('', '1.5.0'))).toBe('1.5.0')
-    expect(await resolveAppMinVersion(await env(undefined, 'latest'))).toBeNull()
+    expect(
+      await resolveAppMinVersion(await env(undefined, 'latest'))
+    ).toBeNull()
     expect(await resolveAppMinVersion(await env())).toBeNull()
     expect(warn).toHaveBeenCalledWith('app: min-version KV value is invalid')
     expect(warn).toHaveBeenCalledWith('APP_MIN_VERSION is invalid')

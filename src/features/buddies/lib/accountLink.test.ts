@@ -4,6 +4,7 @@ import { RelayError } from '@/features/buddies/lib/relay'
 import { pair, setup } from '@/features/buddies/lib/testing/engineHarness'
 import { deriveAccountSigningKey } from '@/lib/serverAccount/keys'
 
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 vi.mock('@/lib/logger', () => import('@/__tests__/mocks/logger'))
 vi.mock('@/lib/locales', () => ({
   default: { t: (key: string) => key },

@@ -19,7 +19,7 @@ import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import { useProfile } from '@/stores/profile'
 import BuddiesSharingSection from '@/features/buddies/components/BuddiesSharingSection'
-import { MAX_BUDDIES } from '@/features/buddies/lib/state'
+import { useBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import { useFoldColumn } from '@/components/ui/layout/FoldPane'
 import PageColumn from '@/components/ui/layout/PageColumn'
 
@@ -72,6 +72,7 @@ export default function BuddiesOnboarding({
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const profileName = useProfile((state) => state.name.trim())
+  const { maxBuddies } = useBuddyLimits()
 
   const hasName = profileName.length > 0
   const [step, setStep] = useState(0)
@@ -137,7 +138,7 @@ export default function BuddiesOnboarding({
               {i18n.t('buddies_onboardingWelcomeTitle')}
             </WholeWordsText>
             <Text style={lead}>
-              {i18n.t('buddies_onboardingWelcomeBody', { max: MAX_BUDDIES })}
+              {i18n.t('buddies_onboardingWelcomeBody', { max: maxBuddies })}
             </Text>
           </View>
           <View style={{ gap: 20 }}>

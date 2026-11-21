@@ -133,8 +133,6 @@ import {
   MAX_RECONNECT_INVITES,
   MAX_REFUSED_INBOXES,
   INVITE_TTL_MS,
-  MAX_BUDDIES,
-  MAX_OPEN_INVITES,
   MAX_ROSTER_PLAINTEXT_BYTES,
   mergeAnswerMarks,
   mergeNotificationMarks,
@@ -163,6 +161,10 @@ import {
   receivedInviteSecretId,
   sentInviteSecretId,
 } from '@/features/buddies/lib/state'
+import {
+  type BuddyLimits,
+  DEFAULT_BUDDY_LIMITS,
+} from '@/features/buddies/lib/limits'
 import {
   LEGACY_SHARE_RETENTION_MS,
   shareEventExpiry,
@@ -372,6 +374,8 @@ export type BuddiesEngineDeps = {
   store: Store
   randomBytes: (length: number) => Uint8Array
   now: () => number
+
+  limits?: () => BuddyLimits
 
   getRootSeed: () => Promise<Uint8Array>
   deleteRootSeed: () => Promise<void>
@@ -792,6 +796,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   const inviteSecrets =
     deps.inviteSecrets ?? createInviteSecretStore(memoryInviteSecretStorage())
   const store = releasingInviteSecrets(deps.store, inviteSecrets)
+  const limits = deps.limits ?? (() => DEFAULT_BUDDY_LIMITS)
 
   inviteSecrets.retain(() => neededInviteSecrets(store.getState()))
   let cachedIdentity: { seed: string; identity: BuddyIdentity } | null = null
@@ -1335,7 +1340,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
 
   async function createInvite(): Promise<string> {
     requireName()
-    if (occupiedBuddySpots(store.getState()) >= MAX_BUDDIES)
+    if (occupiedBuddySpots(store.getState()) >= limits().maxBuddies)
       throw new BuddyInviteError('limit')
     const me = await ensureInbox()
 
@@ -1345,7 +1350,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       return buildInviteLink(fromB64u(unsure.secret))
     }
 
-    if (store.getState().outgoingInvites.length >= MAX_OPEN_INVITES)
+    if (store.getState().outgoingInvites.length >= limits().maxOpenInvites)
       throw new BuddyInviteError('openInvites')
     const secret = deps.randomBytes(16)
     const invite = deriveInvite(secret)
@@ -1383,7 +1388,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
       if (!isRelayError(error, 'limit')) throw error
 
       throw new BuddyInviteError(
-        occupiedBuddySpots(store.getState()) >= MAX_BUDDIES
+        occupiedBuddySpots(store.getState()) >= limits().maxBuddies
           ? 'limit'
           : 'openInvites'
       )
@@ -1459,7 +1464,7 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
     if (state.buddies.some((buddy) => buddy.inboxId === card.inboxId))
       throw new BuddyInviteError('alreadyBuddies')
     if (fetched.status !== 'open') throw new BuddyInviteError('unavailable')
-    if (occupiedBuddySpots(state) >= MAX_BUDDIES)
+    if (occupiedBuddySpots(state) >= limits().maxBuddies)
       throw new BuddyInviteError('limit')
     return { secret, invite, card, expiresAt: fetched.expiresAt }
   }

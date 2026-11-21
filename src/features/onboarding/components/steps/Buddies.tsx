@@ -17,6 +17,7 @@ import {
   buddiesErrorMessage,
   buddiesFailureReason,
 } from '@/features/buddies/lib/buddiesErrors'
+import { useBuddyLimits } from '@/features/buddies/lib/currentBuddyLimits'
 import {
   shareInviteLink,
   startBuddiesInvite,
@@ -89,6 +90,7 @@ const Note = ({
 
 const Buddies = ({ goBack, goNext }: Props) => {
   const theme = useTheme()
+  const { maxBuddies } = useBuddyLimits()
   const [working, setWorking] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -203,7 +205,7 @@ const Buddies = ({ goBack, goNext }: Props) => {
           {i18n.t('onboardingBuddies_title')}
         </Text>
         <Text style={[styles.description, { color: theme.colors.textAlt }]}>
-          {i18n.t('onboardingBuddies_description')}
+          {i18n.t('onboardingBuddies_description', { max: maxBuddies })}
         </Text>
         <View style={{ gap: 10, marginTop: 16 }}>
           <Note

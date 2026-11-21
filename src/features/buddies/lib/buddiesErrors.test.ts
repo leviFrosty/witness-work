@@ -10,6 +10,7 @@ import {
 } from '@/features/buddies/lib/engine'
 import { RelayError } from '@/features/buddies/lib/relay'
 import { KeyChangeUnfinishedError } from '@/lib/accountKey/accountKey'
+import { useServerBuddyLimits } from '@/stores/serverBuddyLimits'
 
 const t = vi.hoisted(() => vi.fn((key: string, _options?: object) => key))
 vi.mock('@/lib/locales', () => ({ default: { t } }))
@@ -20,6 +21,7 @@ const platform = vi.hoisted(() => ({
   },
 }))
 vi.mock('react-native', () => ({ Platform: platform }))
+vi.mock('@/stores/mmkv', () => import('@/__tests__/mocks/mmkv'))
 
 describe('Buddies errors', () => {
   it('reads a timeout as a connection problem', () => {
@@ -65,6 +67,19 @@ describe('Buddies errors', () => {
     expect(buddiesErrorMessage(new BuddyInviteError('openInvites'))).toBe(
       'buddies_openInvitesLimit'
     )
+  })
+
+  it('names the caps ww-api publishes', () => {
+    useServerBuddyLimits.setState({
+      limits: { maxBuddies: 20, maxOpenInvites: 3 },
+    })
+    buddiesErrorMessage(new BuddyInviteError('limit'))
+    expect(t.mock.lastCall).toEqual(['buddies_limitReached', { max: 20 }])
+    buddiesErrorMessage(new BuddyInviteError('openInvites'))
+    expect(t.mock.lastCall).toEqual(['buddies_openInvitesLimit', { max: 3 }])
+    buddiesErrorMessage(new RelayError('limit', 409))
+    expect(t.mock.lastCall).toEqual(['buddies_limitReached', { max: 20 }])
+    useServerBuddyLimits.setState({ limits: null })
   })
 
   it('offers Try Again only when trying again can help', () => {

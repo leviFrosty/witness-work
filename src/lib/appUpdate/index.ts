@@ -1,6 +1,7 @@
 import Constants from 'expo-constants'
 import apis from '@/constants/apis'
 import { usePreferences } from '@/stores/preferences'
+import { setServerBuddyLimits } from '@/stores/serverBuddyLimits'
 import { readLaunchAppConfig } from '@/lib/appUpdate/launchConfig'
 import {
   createAppConfigCheck,
@@ -22,7 +23,8 @@ export const checkAppConfig = createAppConfigCheck({
   currentVersion: appVersion,
   now: Date.now,
 
-  onConfig: ({ sync: read }) => {
+  onConfig: ({ sync: read, buddies }) => {
+    if (buddies) setServerBuddyLimits(buddies)
     const { changes, ...sync } = read ?? {
       enabled: false,
       entitlement: 'supporter' as const,
@@ -51,6 +53,7 @@ export {
   useUpdateRequired,
 } from '@/lib/appUpdate/updateRequired'
 export type {
+  AppBuddiesConfig,
   AppWebSignupConfig,
   UpdateRequired,
   UpdateRequiredSource,

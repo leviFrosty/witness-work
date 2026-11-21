@@ -7,12 +7,13 @@ import {
 } from './accounts/syncSwitch'
 import { webSignupAvailable } from './accounts/webSignup'
 import { turnstileSiteKey } from './accounts/turnstile'
+import { BUDDIES_LIMITS } from './buddies/contracts'
 
 /**
  * `GET /app/v1/config` (witness-work ADR 0027, `docs/accounts-protocol.md`,
  * "Updates and the legacy switch"): what every app version from sessions on
- * reads at launch and on returning to the foreground. Below `minAppVersion`
- * the app shows a blocking Update Required screen with a store link. It's the
+ * reads at launch and on returning to the foreground. Below `minAppVersion` the
+ * app shows a blocking Update Required screen with a store link. It's the
  * app-wide successor to Notes Import's own `notes-import:min-version`.
  *
  * No authentication; the worker never rejects a request for its version.
@@ -23,10 +24,10 @@ const CACHE_TTL_SECONDS = 60
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/
 
 /**
- * The app's minimum version (`major.minor.patch`), or null without a floor:
- * KV `app:min-version` (`{"minVersion":"1.42.0"}`), else the
- * `APP_MIN_VERSION` var. Invalid values are logged and ignored; the KV read
- * is edge-cached for 60 seconds.
+ * The app's minimum version (`major.minor.patch`), or null without a floor: KV
+ * `app:min-version` (`{"minVersion":"1.42.0"}`), else the `APP_MIN_VERSION`
+ * var. Invalid values are logged and ignored; the KV read is edge-cached for 60
+ * seconds.
  */
 export const resolveAppMinVersion = async (
   env: Pick<Environment, 'APP_MIN_VERSION'> & {
@@ -67,36 +68,50 @@ const normalizedCode = (value: unknown, pattern: RegExp): string | null => {
 /**
  * The caller's coarse location from `request.cf`, for the app's sales-region
  * check (witness-work ADR 0041 §3): `country` (ISO 3166-1 alpha-2) and
- * `regionCode` (the ISO 3166-2 subdivision without its country prefix, `MB`
- * for Manitoba). Null when unknown, Tor, or malformed; `regionCode` is null
+ * `regionCode` (the ISO 3166-2 subdivision without its country prefix, `MB` for
+ * Manitoba). Null when unknown, Tor, or malformed; `regionCode` is null
  * whenever `country` is. Never stored or logged.
  */
 export const requestRegion = (
   request: Request
 ): { country: string | null; regionCode: string | null } => {
   const raw = (request as { cf?: unknown }).cf
-  const cf = raw != null && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const cf =
+    raw != null && typeof raw === 'object'
+      ? (raw as Record<string, unknown>)
+      : {}
   const country = normalizedCode(cf.country, COUNTRY_PATTERN)
-  if (country == null || NO_COUNTRY.has(country)) return { country: null, regionCode: null }
+  if (country == null || NO_COUNTRY.has(country))
+    return { country: null, regionCode: null }
   return { country, regionCode: normalizedCode(cf.regionCode, REGION_PATTERN) }
 }
 
 /**
  * Also carries Cloud Sync's switches (witness-work ADR 0030), so a device
- * without a session knows whether opening one would get it Cloud Sync:
- * `sync: { enabled, entitlement }`. `enabled` is false on a worker without
- * the sync bucket or the accounts database. `entitlement` is `everyone` only
- * for a request whose `?capabilities=` (comma-separated) has `sync-everyone`.
+ * without a session knows whether opening one would get it Cloud Sync: `sync: {
+ * enabled, entitlement }`. `enabled` is false on a worker without the sync
+ * bucket or the accounts database. `entitlement` is `everyone` only for a
+ * request whose `?capabilities=` (comma-separated) has `sync-everyone`.
  *
- * And web sign-up's (witness-work `docs/passkeys-protocol.md`, "Web
- * sign-up"): `webSignup: { enabled, turnstileSiteKey }`. `enabled` is the
- * kill switch, false on a worker without what sign-up needs. The site key is
- * there whenever Turnstile is set up, even with sign-up off, since recovery
- * on the web uses it too; null otherwise.
+ * And web sign-up's (witness-work `docs/passkeys-protocol.md`, "Web sign-up"):
+ * `webSignup: { enabled, turnstileSiteKey }`. `enabled` is the kill switch,
+ * false on a worker without what sign-up needs. The site key is there whenever
+ * Turnstile is set up, even with sign-up off, since recovery on the web uses it
+ * too; null otherwise.
  *
  * And the caller's `country` and `regionCode` (`requestRegion`), always
  * present, null when unknown.
+ *
+ * And Buddies' caps (witness-work ADR 0046), `buddies: { maxBuddies,
+ * maxOpenInvites }`: the spots the relay allows (buddies plus pending invites)
+ * and the invites the app lets a User make by hand. The app enforces and shows
+ * these, so a change here reaches every app without a release.
  */
+export const appBuddiesConfig = () => ({
+  maxBuddies: BUDDIES_LIMITS.slotsPlusOpenInvites,
+  maxOpenInvites: BUDDIES_LIMITS.handMadeOpenInvites,
+})
+
 export const handleAppConfigRequest = async (c: AppContext) => {
   const [minAppVersion, switches, webSignupEnabled, changesOn] =
     await Promise.all([
@@ -124,10 +139,19 @@ export const handleAppConfigRequest = async (c: AppContext) => {
     turnstileSiteKey: turnstileSiteKey(c.env),
   }
   const { country, regionCode } = requestRegion(c.req.raw)
+  const buddies = appBuddiesConfig()
   return c.json(
     minAppVersion
-      ? { ok: true, minAppVersion, sync, webSignup, country, regionCode }
-      : { ok: true, sync, webSignup, country, regionCode },
+      ? {
+          ok: true,
+          minAppVersion,
+          sync,
+          webSignup,
+          buddies,
+          country,
+          regionCode,
+        }
+      : { ok: true, sync, webSignup, buddies, country, regionCode },
     200,
     { 'Cache-Control': 'no-store' }
   )

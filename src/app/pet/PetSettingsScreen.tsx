@@ -24,6 +24,7 @@ import {
 import useGamePalette from '@/features/pet/hooks/useGamePalette'
 import usePetSheetInsets from '@/features/pet/hooks/usePetSheetInsets'
 import { coatName, speciesName } from '@/features/pet/lib/names'
+import PetSpriteTile from '@/features/pet/render/PetSpriteTile'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PetSettings'>
 
@@ -74,6 +75,9 @@ export default function PetSettingsScreen({ navigation }: Props) {
         <GameRow
           label={i18n.t('pet.details.change')}
           value={look}
+          preview={
+            <PetSpriteTile species={pet.species} coat={pet.coat} size={36} />
+          }
           onPress={() => navigation.navigate('PetPicker', { mode: 'change' })}
           palette={palette}
         />

@@ -4,8 +4,6 @@ export const SHELL_URL = '/index.html'
 
 export const WORKER_URL = '/sw.js'
 
-export const NAVIGATION_TIMEOUT_MS = 4000
-
 export function isNeverCached(url: URL, origin: string): boolean {
   if (url.origin !== origin) return true
   const { pathname } = url
@@ -38,10 +36,6 @@ export function isStorableFile(response: {
   return !(response.headers.get('Content-Type') ?? '')
     .toLowerCase()
     .startsWith('text/html')
-}
-
-export function isUsableNavigation(response: { status: number }): boolean {
-  return response.status < 500
 }
 
 export const GUEST_SCOPE_PATH = '/territories/guest'

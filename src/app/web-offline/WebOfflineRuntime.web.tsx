@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
+import { useAfterLaunch } from '@/app/launch/useAfterLaunch'
 import { analytics } from '@/lib/analytics'
 import { addWindowFocusListener } from '@/lib/appLifecycle'
 import { logger } from '@/lib/logger'
@@ -13,6 +14,7 @@ import { createUpdateController } from '@/lib/webOffline/updateFlow'
 import { toast } from '@/stores/toasts'
 
 const PROMPT_MS = 20_000
+const PRECACHE_AFTER_LAUNCH_MS = 10_000
 const CHUNK_PATH = '/_expo/static/js/web/'
 
 function keepLoadedChunks() {
@@ -23,10 +25,21 @@ function keepLoadedChunks() {
   }
 }
 
+type RegisteredWorker = Awaited<ReturnType<typeof registerWorker>>
+
 function ServiceWorkerUpdates() {
+  const registered = useRef<RegisteredWorker | null>(null)
+  const settled = useAfterLaunch(PRECACHE_AFTER_LAUNCH_MS)
+  const settledRef = useRef(settled)
+
+  useEffect(() => {
+    settledRef.current = settled
+    if (settled) registered.current?.allowPrecache()
+  }, [settled])
+
   useEffect(() => {
     if (__DEV__ || !('serviceWorker' in navigator)) return
-    let worker: Awaited<ReturnType<typeof registerWorker>> | null = null
+    let worker: RegisteredWorker | null = null
     let kept = false
     const keep = () => {
       if (kept || !navigator.serviceWorker.controller) return
@@ -71,8 +84,10 @@ function ServiceWorkerUpdates() {
       },
       onControlled: keep,
     })
-      .then((registered) => {
-        worker = registered
+      .then((result) => {
+        worker = result
+        registered.current = result
+        if (settledRef.current) result.allowPrecache()
       })
       .catch((error) => logger.warn('[webOffline] no service worker', error))
     const appState = AppState.addEventListener('change', (state) => {

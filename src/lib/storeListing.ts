@@ -3,6 +3,7 @@ import links from '@/constants/links'
 import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
+import { reloadIntoNewestVersion } from '@/lib/webOffline/newestVersion'
 
 export const openStoreListing = (options?: {
   review?: boolean
@@ -30,6 +31,5 @@ export const openStoreListing = (options?: {
 
 export const openAppUpdate = (options?: { title?: string }) => {
   if (hasCapability('storeListings')) return openStoreListing(options)
-  window.location.reload()
-  return Promise.resolve()
+  return reloadIntoNewestVersion()
 }

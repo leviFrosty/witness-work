@@ -181,29 +181,42 @@ function deploy(directory: string) {
   fs.cpSync(directory, served, { recursive: true, force: true })
 }
 
-async function waitUntilServed(page: Page, directory: string) {
-  const entry = /src="(\/_expo\/static\/js\/web\/index-[0-9a-f]+\.js)"/.exec(
+const entryChunk = (directory: string) =>
+  /src="(\/_expo\/static\/js\/web\/index-[0-9a-f]+\.js)"/.exec(
     fs.readFileSync(path.join(directory, 'index.html'), 'utf8')
   )![1]
+
+async function waitUntilServed(page: Page, directory: string) {
+  const entry = entryChunk(directory)
   const worker = fs.readFileSync(path.join(directory, 'sw.js'), 'utf8')
   const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8')
   const chunks = fs.readdirSync(path.join(directory, '_expo/static/js/web'))
-  await expect
-    .poll(
-      async () => [
+  const served = async () => {
+    const chunksServed = async () => {
+      for (let start = 0; start < chunks.length; start += 50) {
+        const responses = await Promise.all(
+          chunks
+            .slice(start, start + 50)
+            .map((chunk) => page.request.head(CHUNK_URL(chunk)))
+        )
+        if (!responses.every((response) => response.ok())) return false
+      }
+      return true
+    }
+    try {
+      return [
         (await page.request.get('/sw.js')).ok() &&
           (await (await page.request.get('/sw.js')).text()) === worker,
         (await page.request.get(entry)).ok(),
-
-        (
-          await Promise.all(
-            chunks.map((chunk) => page.request.head(`${CHUNK_URL(chunk)}`))
-          )
-        ).every((response) => response.ok()),
+        await chunksServed(),
         (await (await page.request.get('/index.html')).text()) === html,
-      ],
-      { timeout: 30_000 }
-    )
+      ]
+    } catch {
+      return null
+    }
+  }
+  await expect
+    .poll(served, { timeout: 60_000 })
     .toEqual([true, true, true, true])
 }
 
@@ -220,6 +233,39 @@ test.describe('a second deploy', () => {
     if (!previous) return
     deploy(previous)
     await waitUntilServed(page, previous)
+  })
+
+  test('opens the version it has after a deploy, and downloads the next one after launch', async ({
+    app,
+    context,
+  }) => {
+    await waitForOfflineReady(app)
+    deploy(next!)
+    await waitUntilServed(app, next!)
+    const nextEntry = entryChunk(next!)
+    const nextEntryFetched: number[] = []
+    context.on('request', (request) => {
+      if (new URL(request.url()).pathname === nextEntry)
+        nextEntryFetched.push(Date.now())
+    })
+
+    await app.reload()
+    await expect(
+      app.getByRole('button', { name: text.quickAction })
+    ).toBeVisible()
+    const opened = Date.now()
+    expect(
+      await app.evaluate(
+        () => (window as unknown as { __wwVersion?: string }).__wwVersion
+      )
+    ).toBeUndefined()
+    expect(nextEntryFetched).toEqual([])
+
+    await expect(app.getByText(text.webUpdate_title)).toBeVisible({
+      timeout: 90_000,
+    })
+    expect(nextEntryFetched.length).toBeGreaterThan(0)
+    expect(nextEntryFetched[0] - opened).toBeGreaterThan(5_000)
   })
 
   test('offers the update, and Reload takes it once', async ({ app, shot }) => {

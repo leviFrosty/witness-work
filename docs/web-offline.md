@@ -30,13 +30,13 @@ it with `updateViaCache: 'none'`, so every update check is fresh.
 
 ### What it caches
 
-| Request                                                                        | Strategy                                                                 |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `index.html`, the entry and on-demand chunks, English, fonts, images, `*.wasm` | **Precache**, versioned by the build.                                    |
-| Navigations (`/`, any app route)                                               | **Network first**, 4 s; the precached shell when offline, slow or a 5xx. |
-| Chunks that aren't precached (other languages, the session replay recorder)    | **Cache first** once loaded, 120 entries, purged on quota errors.        |
-| ww-api, PostHog, the Help Center, RevenueCat, any other origin                 | **Never** cached; the worker doesn't touch them.                         |
-| `/_csp-report`, `/.well-known/*`, `/sw.js`                                     | **Never** cached.                                                        |
+| Request                                                                        | Strategy                                                               |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `index.html`, the entry and on-demand chunks, English, fonts, images, `*.wasm` | **Precache**, versioned by the build.                                  |
+| Navigations (`/`, any app route)                                               | **The precached shell**, at once; the network only if it isn't cached. |
+| Chunks that aren't precached (other languages, the session replay recorder)    | **Cache first** once loaded, 120 entries, purged on quota errors.      |
+| ww-api, PostHog, the Help Center, RevenueCat, any other origin                 | **Never** cached; the worker doesn't touch them.                       |
+| `/_csp-report`, `/.well-known/*`, `/sw.js`                                     | **Never** cached.                                                      |
 
 ### The guest page
 
@@ -85,9 +85,28 @@ precached.
 
 ## Updates
 
+The app always opens the version its worker holds (ADR 0065). A navigation
+gets that worker's precached `index.html`, whose chunks are in the same
+precache, so a launch reads nothing from the network, even right after a deploy
+and on a slow connection. A new version reaches the User only through a new
+worker, downloaded in the background.
+
 A new deploy changes `sw.js`, so the browser installs a new worker beside the
 running one, on the next navigation and when the page asks (a tab coming back
-to the front, and every hour: `createUpdateChecks`). The new worker **waits**.
+to the front, and every hour: `createUpdateChecks`).
+
+- **The download waits for the launch.** The new worker's `install` holds its
+  precache (about 16 MB) behind a gate (`web/sw/precacheGate.ts`). The page
+  opens it with `START_PRECACHE` 10 s after launch (`useAfterLaunch`, in
+  `WebOfflineRuntime`), so the launch's own requests (sync, Buddies, the
+  account) have the connection to themselves. It sends it to the worker that's
+  installing then, and to every later one at once. A worker no page opens the
+  gate for (the tab closed, or the app is locked) starts on its own after 60 s.
+  The first visit's worker waits the same way.
+- **Then it waits for Reload.** Once downloaded, the new worker **waits**.
+  Closing every tab of the app (or the installed app) lets it take over, so the
+  next launch opens the new version, again from the device.
+
 `src/lib/webOffline/updateFlow.ts` is the state machine:
 
 `idle → waiting → prompted → activating → reloading`
@@ -108,13 +127,25 @@ to the front, and every hour: `createUpdateChecks`). The new worker **waits**.
 The old version's lazy chunks stay in the cache until they age out, so a tab that
 hasn't updated can still load them.
 
+#### Reloads that need the new version
+
+A plain reload opens the worker's own version again. Two reloads must reach the
+new one, so they go through `reloadIntoNewestVersion`
+(`src/lib/webOffline/newestVersion.ts`): the stale-chunk reload below, and
+**Reload WitnessWork** on Update Required (`openAppUpdate`). It has the newest
+worker take over first (`takeNewestWorker`): it opens an installing worker's
+gate, asks the server for one if none is on the way, sends `SKIP_WAITING`, and
+waits for `controllerchange`, up to 20 s. Then it reloads, even if no newer
+worker came, so the button never does nothing.
+
 ### Stale tabs
 
 A tab left open across a deploy can ask for a hashed file the new version no
 longer has. The Worker answers a real 404 for it
 (`docs/web-hosting.md`). `fetchThenEval.ts` then calls `onChunkLoadFailed`
 (`src/lib/webOffline/staleChunk.ts`): it asks the server again with a `HEAD`
-request, and **reloads the tab once** if the answer is 404/410. It never reloads
+request, and **reloads the tab once**, onto the newest version, if the answer is
+404/410. It never reloads
 offline or when the server doesn't answer, and `reloadGuard.ts` allows one reload
 per build within ten minutes (`sessionStorage` key `ww.staleChunkReload`), so a
 reload that doesn't fix it can't loop.
@@ -177,7 +208,8 @@ the banner then hides only through the X.
 ## Testing
 
 Unit tests cover the state machine, the reload guard, the stale-chunk check, the
-install decision and the worker's rules. `e2e/web/offline.spec.ts` and
+install decision, the precache gate, taking the newest worker and the worker's
+rules. `e2e/web/offline.spec.ts` and
 `install.spec.ts` drive the real thing through the Worker (`E2E_WORKER=local` or `E2E_WORKER=beta`);
 `e2e/web/README.md` says how to run them, including the update flow, which needs a
 second build (`node e2e/web/next-version.mjs`).

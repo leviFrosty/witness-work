@@ -1211,6 +1211,9 @@
       "c2": "Kurudisha eneo huhifadhi rekodi za nyumba kwa nyumba, na yeyote uliyemkabidhi mtaa anaweza kuendelea nao.",
       "c3": "Kwenye wavuti na skrini kubwa, hariri maandishi ya madokezo papo hapo ukitumia upau wa uumbizaji juu, na ufungue anwani na fomu kama paneli za pembeni.",
       "c4": "Kwenye Android, sakinisha programu ya wavuti moja kwa moja kutoka skrini ya kuingia."
+    },
+    "1490": {
+      "c1": "Kila kitu kwenye Duka la kipenzi chako sasa kinagharimu theluthi moja ya bei ya awali, na unarudishiwa sarafu kwa ulivyokwisha kununua."
     }
   },
   "installed": "Imesakinishwa",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Saidia WitnessWork",
   "paywallRegionTitleWeb": "Bado haipatikani mahali ulipo",
   "paywallRegionBodyWeb": "Kununua kwenye wavuti bado hakupatikani mahali ulipo. Ili kuwa Mfadhili au kutoa Bahashishi, tumia programu ya WitnessWork kutoka App Store au Google Play.",
+  "paywallComingSoonTitleWeb": "Inakuja kwenye wavuti hivi karibuni",
+  "paywallComingSoonBodyWeb": "Bado huwezi kuwa Mfadhili au kutoa bahashishi kwenye kivinjari. Hadi wakati huo, tumia programu ya WitnessWork kutoka App Store au Google Play. Hali ya Mfadhili inafuata akaunti yako, kwa hiyo inaonekana hapa pia.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Wastani wa {{rating}} kutoka tathmini {{ratings}}",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Ongeza jina lako ili mwenzi wako ajue anayemwalika ni nani.",
   "onboardingBuddies_title": "Pangeni pamoja na Wenzi",
-  "onboardingBuddies_description": "Ungana na hadi watu watano unaoenda nao kuhubiri. Onaneni siku na nyakati zilizopangwa kwenye kalenda yako, waalike kwenye Mpango au Ufuatiliaji, au omba kujiunga na wao.",
+  "onboardingBuddies_description": "Ungana na hadi watu {{max}} unaoenda nao kuhubiri. Onaneni siku na nyakati zilizopangwa kwenye kalenda yako, waalike kwenye Mpango au Ufuatiliaji, au omba kujiunga na wao.",
   "onboardingBuddies_private": "Imesimbwa kwa njia fiche kutoka mwanzo hadi mwisho. Saa na ripoti zako hubaki faragha.",
   "onboardingBuddies_private_info": "Wenzi huona jina lako na siku unazopanga kutoka. Picha yako, hali ya upainia, na nyakati za kuanza hushirikishwa isipokuwa ukizizima katika Mipangilio ya Wenzi, ambapo unaweza pia kusitisha kushiriki. Saa, ripoti, malengo, anwani, na vidokezo vyako hubaki vya faragha. Kumwalika mwenzi kwenye Mpango au Ufuatiliaji hushiriki maelezo yaliyoonyeshwa ndani yake. Hakuna kinachoshirikiwa hadi nyote wawili mthibitishe, na ni wewe tu na wenzi wako mnaoweza kukisoma.",
   "onboardingBuddies_later": "Alika wenzi wakati wowote kutoka **Ratiba → Wenzi**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Pamba Chumba",
       "trayHat": "Kofia mpya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} ameona bei zimeshuka!",
+      "description": "Kila kitu kwenye Duka sasa ni rahisi zaidi. Umerudishiwa {{coins}} kwa ulivyokwisha kununua.",
+      "shop": "Nenda Dukani"
     },
     "visitor": {
       "line": "Natembelea pamoja na {{name}}!",

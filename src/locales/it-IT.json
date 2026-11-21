@@ -1211,6 +1211,9 @@
       "c2": "Restituendo un territorio si conservano i suoi registri casa per casa, e chi aveva ricevuto una via da te può tenerla.",
       "c3": "Sul web e sugli schermi più grandi, modifica le note direttamente con la barra di formattazione in alto e apri contatti e moduli in pannelli laterali.",
       "c4": "Su Android, installa la web app direttamente dalla schermata di accesso."
+    },
+    "1490": {
+      "c1": "Ora tutto nel Negozio del tuo animaletto costa un terzo di prima, e ricevi indietro monete per quello che hai già comprato."
     }
   },
   "installed": "Installato",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Sostieni WitnessWork",
   "paywallRegionTitleWeb": "Non ancora disponibile dove ti trovi",
   "paywallRegionBodyWeb": "L’acquisto sul web non è ancora disponibile dove ti trovi. Per diventare Sostenitore o lasciare una mancia, usa l’app WitnessWork dall’App Store o da Google Play.",
+  "paywallComingSoonTitleWeb": "Presto anche sul web",
+  "paywallComingSoonBodyWeb": "Dal browser non puoi ancora diventare Sostenitore né lasciare una mancia. Nel frattempo usa l’app WitnessWork dall’App Store o da Google Play. Lo stato di Sostenitore è legato al tuo account, quindi lo vedi anche qui.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Media di {{rating}} su {{ratings}} valutazioni",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Aggiungi il tuo nome, così il tuo compagno saprà chi lo sta invitando.",
   "onboardingBuddies_title": "Pianificate insieme con Compagni",
-  "onboardingBuddies_description": "Collegati con fino a cinque persone con cui esci in servizio. Vedi i giorni e gli orari pianificati l’uno dell’altro sul tuo calendario, invitale a un Piano o a un Follow-up, oppure chiedi di unirti al loro.",
+  "onboardingBuddies_description": "Collegati con fino a {{max}} persone con cui esci in servizio. Vedi i giorni e gli orari pianificati l’uno dell’altro sul tuo calendario, invitale a un Piano o a un Follow-up, oppure chiedi di unirti al loro.",
   "onboardingBuddies_private": "Cifratura end-to-end. Le tue ore e i tuoi rapporti restano privati.",
   "onboardingBuddies_private_info": "I compagni vedono il tuo nome e i giorni in cui pianifichi di uscire. La tua foto, il servizio da pioniere e gli orari di inizio vengono condivisi a meno che tu non li disattivi nelle Impostazioni Compagni, dove puoi anche sospendere la condivisione. Le tue ore, i rapporti, gli obiettivi, i contatti e le note restano privati. Invitare un compagno a un Piano o a un Follow-up condivide i dettagli mostrati. Non viene condiviso nulla finché non confermate entrambi, e solo tu e i tuoi compagni potete leggerlo.",
   "onboardingBuddies_later": "Invita i compagni quando vuoi da **Programma → Compagni**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Decora la stanza",
       "trayHat": "Nuovo cappello: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} ha notato un calo dei prezzi!",
+      "description": "Ora nel Negozio costa tutto meno. Hai ricevuto indietro {{coins}} per quello che avevi già comprato.",
+      "shop": "Vai al Negozio"
     },
     "visitor": {
       "line": "In visita con {{name}}!",

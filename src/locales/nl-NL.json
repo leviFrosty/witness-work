@@ -1211,6 +1211,9 @@
       "c2": "Als je een gebied inlevert, blijven de huis-aan-huisgegevens bewaard en kan iedereen aan wie je een straat hebt overgedragen die houden.",
       "c3": "Op het web en op grotere schermen bewerk je notities ter plekke met de opmaakbalk bovenaan, en open je contacten en formulieren als zijpanelen.",
       "c4": "Op Android installeer je de webapp rechtstreeks vanaf het inlogscherm."
+    },
+    "1490": {
+      "c1": "Alles in de Winkel van je huisdier kost nu een derde van wat het kostte, en je krijgt munten terug voor wat je al hebt gekocht."
     }
   },
   "installed": "Geïnstalleerd",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Steun WitnessWork",
   "paywallRegionTitleWeb": "Nog niet beschikbaar waar je bent",
   "paywallRegionBodyWeb": "Kopen op het web is nog niet beschikbaar waar je bent. Gebruik de WitnessWork-app uit de App Store of Google Play om Supporter te worden of een Tip achter te laten.",
+  "paywallComingSoonTitleWeb": "Binnenkort op het web",
+  "paywallComingSoonBodyWeb": "Je kunt in de browser nog geen Supporter worden of een fooi geven. Gebruik tot die tijd de WitnessWork-app uit de App Store of Google Play. Je Supporter-status hoort bij je account, dus je ziet hem hier ook.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{rating}} gemiddeld uit {{ratings}} beoordelingen",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Voeg je naam toe zodat je buddy weet wie hem of haar uitnodigt.",
   "onboardingBuddies_title": "Plan samen met Buddies",
-  "onboardingBuddies_description": "Koppel tot vijf mensen met wie je samen in de velddienst gaat. Zie elkaars geplande dagen en tijden in je agenda, nodig ze uit voor een plan of vervolgbezoek, of vraag om met het hunne mee te gaan.",
+  "onboardingBuddies_description": "Koppel tot {{max}} mensen met wie je samen in de velddienst gaat. Zie elkaars geplande dagen en tijden in je agenda, nodig ze uit voor een plan of vervolgbezoek, of vraag om met het hunne mee te gaan.",
   "onboardingBuddies_private": "End-to-end versleuteld. Je uren en verslagen blijven privé.",
   "onboardingBuddies_private_info": "Buddy’s zien je naam en de dagen waarop je van plan bent op pad te gaan. Je foto, pionierstatus en starttijden worden gedeeld, tenzij je dat uitzet in de Buddies-instellingen, waar je het delen ook kunt pauzeren. Je uren, verslagen, doelen, contacten en notities blijven privé. Als je een buddy uitnodigt voor een Plan of Vervolgbezoek, worden de details daarvan gedeeld. Er wordt niets gedeeld totdat jullie allebei bevestigen, en alleen jij en je buddy’s kunnen het lezen.",
   "onboardingBuddies_later": "Nodig op elk moment buddy's uit via **Schema → Buddies**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Kamer inrichten",
       "trayHat": "Nieuw hoedje: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} zag een prijsverlaging!",
+      "description": "Alles in de Winkel is nu goedkoper. Je kreeg {{coins}} terug voor wat je al had gekocht.",
+      "shop": "Naar de Winkel"
     },
     "visitor": {
       "line": "Op bezoek met {{name}}!",

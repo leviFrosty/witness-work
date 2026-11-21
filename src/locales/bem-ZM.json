@@ -1052,6 +1052,9 @@
       "c2": "Ukubwesha icifulo kusunga ifyalembwa fya ng'anda ku ng'anda, kabili uo mwapeela umusebo kuti aulekelesha.",
       "c3": "Pa web na pa screen ishikalamba, cinjeni ifyalembwa fye pene ukubomfya bar ya kupanga ifyalembwa pa mulu, kabili ingulweni abantu ba kulanshanya na mafomu mu fiputulwa fya mbali.",
       "c4": "Pa Android, ikanyeni web app ukufuma fye pa screen ya kwingilamo."
+    },
+    "1490": {
+      "c1": "Fyonse ifili mu Isitolo lya cinyama cenu nomba fishitwa ku ciputulwa ca citatu ica mutengo wa kale, kabili mwalabweselwa indalama pa fyo mwaliishitile kale."
     }
   },
   "installed": "Installed",
@@ -2848,6 +2851,8 @@
   "paywallTitle": "ukwafwilisha WitnessWork",
   "paywallRegionTitleWeb": "Tacilaba uko muli",
   "paywallRegionBodyWeb": "Ukushita pa web tacilaba uko muli. Pa kuba uutungilila nelyo ukupeela Icabupe, bomfyeni app ya WitnessWork ukufuma ku App Store nelyo Google Play.",
+  "paywallComingSoonTitleWeb": "Cileisa nomba line pa web",
+  "paywallComingSoonBodyWeb": "Tamulakwanisha ukuba Supporter nelyo ukupeela Icabupe mu browser. Ukufika ilyo, bomfeni WitnessWork app ukufuma ku App Store nelyo Google Play. Ukuba Supporter kwakonka akaunti yenu, eico kulemoneka na kuno.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{rating}} pa kati ukufuma pa kupela {{ratings}}",
@@ -4386,7 +4391,7 @@
   },
   "onboardingBuddies_nameHint": "Lundeni ishina lyenu pa kuti munyina wenu ashibe uwamwita.",
   "onboardingBuddies_title": "Pangeni pamo na Buddies",
-  "onboardingBuddies_description": "Tantikeni ne bantu ukufika pa batanu aba mwingaya nabo mu mulimo. Moneni inshiku ne nshita shapangwa ishabo pa kalenda yenu, mubaite ku Bupange nelyo Ukukonkapo, nelyo mupempe ukuiba pa bwabo.",
+  "onboardingBuddies_description": "Tantikeni ne bantu ukufika pa {{max}} aba mwingaya nabo mu mulimo. Moneni inshiku ne nshita shapangwa ishabo pa kalenda yenu, mubaite ku Bupange nelyo Ukukonkapo, nelyo mupempe ukuiba pa bwabo.",
   "onboardingBuddies_private": "Cingililwa ukufuma ku ntendekelo ukufika ku mpela. Amaawala yenu ne malipoti fisala fya cinkama.",
   "onboardingBuddies_private_info": "Banyina bamona ishina lyenu ne nshiku mupanga ukuya mu mulimo. Icikope cenu, umusango wa painiya, ne nshita sha kutendeka fisabankanishiwa nga tamwafishimya mu Ifyo Mwasala fya Buddies, uko na kuti mwaleka ukusabankanya. Amaawala yenu, amalipoti, ico mwapanga, abantu ba kulanshanya, na malembo fisala fya cinkama. Ukwita munyina ku Bupange nelyo ku Kukonkapo kusabankanya ifyebo ifilangwa muli ko. Tapali icasabankanishiwa ukufika mwe bonse mwashininkisha, kabili imwe fye na banyina benu mwingabelenga.",
   "onboardingBuddies_later": "Itaneni banyina inshita iili yonse ukufuma pa **Ukupanga → Buddies**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Kwafyeni Ing'anda",
       "trayHat": "Ikofyo ipya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} amona ukuti imitengo yapona!",
+      "description": "Fyonse mu Isitolo nomba fyanguka. Mwabweselwa {{coins}} pa fyo mwaliishitile kale.",
+      "shop": "Yeni ku Isitolo"
     },
     "visitor": {
       "line": "Ndetandalila na {{name}}!",

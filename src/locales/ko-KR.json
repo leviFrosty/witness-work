@@ -1211,6 +1211,9 @@
       "c2": "구역을 반납해도 집별 기록이 유지되며, 거리를 넘겨받은 사람은 계속 봉사할 수 있습니다.",
       "c3": "웹과 큰 화면에서는 상단 서식 바로 메모를 바로 편집하고, 연락처와 양식을 사이드 패널로 열 수 있습니다.",
       "c4": "Android에서는 로그인 화면에서 바로 웹 앱을 설치할 수 있습니다."
+    },
+    "1490": {
+      "c1": "이제 반려동물 상점의 모든 아이템이 원래 가격의 3분의 1이며, 이미 구입한 아이템에 대해서는 코인을 돌려받습니다."
     }
   },
   "installed": "설치됨",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "WitnessWork 후원하기",
   "paywallRegionTitleWeb": "아직 해당 지역에서는 이용할 수 없습니다",
   "paywallRegionBodyWeb": "웹에서의 구매는 아직 해당 지역에서 이용할 수 없습니다. 서포터가 되거나 팁을 보내려면 App Store 또는 Google Play의 WitnessWork 앱을 사용하세요.",
+  "paywallComingSoonTitleWeb": "웹 버전 곧 지원",
+  "paywallComingSoonBodyWeb": "아직 브라우저에서는 서포터가 되거나 팁을 남길 수 없습니다. 그때까지는 App Store 또는 Google Play의 WitnessWork 앱을 사용하세요. 서포터 상태는 계정에 연결되어 있어 여기에도 표시됩니다.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "평점 {{ratings}}개, 평균 {{rating}}",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "버디가 누가 초대하는지 알 수 있도록 이름을 추가하세요.",
   "onboardingBuddies_title": "버디와 함께 계획하세요",
-  "onboardingBuddies_description": "함께 봉사에 나가는 사람을 최대 다섯 명까지 연결하세요. 캘린더에서 서로 계획한 날과 시간을 확인하고, 계획이나 다음 방문에 초대하거나, 상대의 계획에 참여를 요청하세요.",
+  "onboardingBuddies_description": "함께 봉사에 나가는 사람을 최대 {{max}}명까지 연결하세요. 캘린더에서 서로 계획한 날과 시간을 확인하고, 계획이나 다음 방문에 초대하거나, 상대의 계획에 참여를 요청하세요.",
   "onboardingBuddies_private": "종단 간 암호화. 시간과 보고는 비공개로 유지됩니다.",
   "onboardingBuddies_private_info": "버디는 내 이름과 봉사에 나갈 계획인 날을 볼 수 있습니다. 사진, 파이오니아 상태, 시작 시간은 버디 설정에서 끄지 않는 한 공유되며, 거기서 공유를 일시 중지할 수도 있습니다. 시간, 보고, 목표, 연락처, 메모는 비공개로 유지됩니다. 버디를 계획이나 다음 방문에 초대하면 그 안에 표시된 세부 정보가 공유됩니다. 두 사람이 모두 확인하기 전에는 아무것도 공유되지 않으며, 나와 버디만 읽을 수 있습니다.",
   "onboardingBuddies_later": "**일정 → 버디**에서 언제든 버디를 초대하세요.",
@@ -5738,6 +5743,11 @@
       "decorate": "방 꾸미기",
       "trayHat": "새 모자: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}}이(가) 가격 인하를 발견했어요!",
+      "description": "이제 상점의 모든 아이템이 더 저렴해졌어요. 이미 구입한 아이템에 대해 {{coins}}을(를) 돌려받았어요.",
+      "shop": "상점으로 가기"
     },
     "visitor": {
       "line": "{{name}} 님과 함께 왔어요!",

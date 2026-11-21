@@ -1211,6 +1211,9 @@
       "c2": "Khi trả khu vực, ghi chép từng nhà vẫn được giữ, và người bạn đã giao đường cho có thể giữ lại đường đó.",
       "c3": "Trên web và màn hình lớn, bạn có thể sửa ghi chú ngay tại chỗ với thanh định dạng ở trên cùng, và mở liên hệ cũng như biểu mẫu trong khung bên cạnh.",
       "c4": "Trên Android, cài ứng dụng web ngay từ màn hình đăng nhập."
+    },
+    "1490": {
+      "c1": "Mọi thứ trong Cửa hàng của thú cưng giờ chỉ còn một phần ba giá cũ, và bạn được hoàn lại xu cho những gì đã mua."
     }
   },
   "installed": "Cài đặt",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Ủng hộ WitnessWork",
   "paywallRegionTitleWeb": "Chưa có ở nơi bạn ở",
   "paywallRegionBodyWeb": "Mua hàng trên web chưa có ở nơi bạn ở. Để trở thành Người ủng hộ hoặc gửi tiền boa, hãy dùng ứng dụng WitnessWork từ App Store hoặc Google Play.",
+  "paywallComingSoonTitleWeb": "Sắp có trên web",
+  "paywallComingSoonBodyWeb": "Bạn chưa thể trở thành Người ủng hộ hoặc gửi tiền boa trên trình duyệt. Trong lúc chờ, hãy dùng ứng dụng WitnessWork từ App Store hoặc Google Play. Trạng thái Người ủng hộ đi theo tài khoản của bạn nên cũng hiện ở đây.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Trung bình {{rating}} từ {{ratings}} lượt đánh giá",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Hãy thêm tên của bạn để bạn đồng hành biết ai đang mời họ.",
   "onboardingBuddies_title": "Cùng lên kế hoạch với Bạn đồng hành",
-  "onboardingBuddies_description": "Kết nối với tối đa năm người mà bạn cùng đi rao giảng. Xem các ngày và giờ đã lên kế hoạch của nhau trên lịch của bạn, mời họ vào một Kế hoạch hoặc Lần thăm lại, hoặc xin tham gia của họ.",
+  "onboardingBuddies_description": "Kết nối với tối đa {{max}} người mà bạn cùng đi rao giảng. Xem các ngày và giờ đã lên kế hoạch của nhau trên lịch của bạn, mời họ vào một Kế hoạch hoặc Lần thăm lại, hoặc xin tham gia của họ.",
   "onboardingBuddies_private": "Mã hóa đầu cuối. Số giờ và báo cáo của bạn luôn riêng tư.",
   "onboardingBuddies_private_info": "Bạn đồng hành thấy tên của bạn và những ngày bạn dự định đi rao giảng. Ảnh, trạng thái tiên phong và giờ bắt đầu của bạn sẽ được chia sẻ trừ khi bạn tắt trong Cài đặt Bạn đồng hành, nơi bạn cũng có thể tạm dừng chia sẻ. Số giờ, báo cáo, mục tiêu, liên hệ và ghi chú của bạn luôn được giữ riêng tư. Mời một bạn đồng hành vào Kế hoạch hoặc Lần thăm lại sẽ chia sẻ các chi tiết hiển thị trong đó. Không có gì được chia sẻ cho đến khi cả hai cùng xác nhận, và chỉ bạn cùng các bạn đồng hành của bạn mới đọc được.",
   "onboardingBuddies_later": "Mời bạn đồng hành bất cứ lúc nào từ **Lịch trình → Bạn đồng hành**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Trang trí phòng",
       "trayHat": "Mũ mới: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} phát hiện giảm giá!",
+      "description": "Mọi thứ trong Cửa hàng giờ rẻ hơn. Bạn đã được hoàn lại {{coins}} cho những gì đã mua.",
+      "shop": "Đến Cửa hàng"
     },
     "visitor": {
       "line": "Đến thăm cùng {{name}}!",

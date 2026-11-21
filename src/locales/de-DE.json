@@ -1211,6 +1211,9 @@
       "c2": "Beim Zurückgeben eines Gebiets bleiben die Haus-für-Haus-Einträge erhalten, und wem Sie eine Straße übergeben haben, kann sie behalten.",
       "c3": "Im Web und auf größeren Bildschirmen bearbeiten Sie Notizen direkt mit der Formatierungsleiste oben und öffnen Kontakte und Formulare als Seitenfenster.",
       "c4": "Auf Android installieren Sie die Web-App direkt auf dem Anmeldebildschirm."
+    },
+    "1490": {
+      "c1": "Alles im Shop Ihres Haustiers kostet jetzt nur noch ein Drittel, und für bereits Gekauftes bekommen Sie Münzen zurück."
     }
   },
   "installed": "Eingerichtet",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "WitnessWork unterstützen",
   "paywallRegionTitleWeb": "Bei Ihnen noch nicht verfügbar",
   "paywallRegionBodyWeb": "Der Kauf im Web ist bei Ihnen noch nicht verfügbar. Um Unterstützer zu werden oder ein Trinkgeld zu geben, nutzen Sie die WitnessWork-App aus dem App Store oder von Google Play.",
+  "paywallComingSoonTitleWeb": "Bald auch im Web",
+  "paywallComingSoonBodyWeb": "Im Browser können Sie noch nicht Unterstützer werden oder Trinkgeld geben. Bis dahin nutzen Sie die WitnessWork-App aus dem App Store oder von Google Play. Der Unterstützer-Status gehört zu Ihrem Konto und wird daher auch hier angezeigt.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Durchschnitt von {{rating}} aus {{ratings}} Bewertungen",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Fügen Sie Ihren Namen hinzu, damit Ihr Buddy weiß, wer ihn einlädt.",
   "onboardingBuddies_title": "Gemeinsam planen mit Buddies",
-  "onboardingBuddies_description": "Verbinden Sie sich mit bis zu fünf Personen, mit denen Sie in den Dienst gehen. Sehen Sie gegenseitig Ihre geplanten Tage und Zeiten im Kalender, laden Sie sie zu einem Plan oder Folgebesuch ein oder bitten Sie darum, an deren Plan teilzunehmen.",
+  "onboardingBuddies_description": "Verbinden Sie sich mit bis zu {{max}} Personen, mit denen Sie in den Dienst gehen. Sehen Sie gegenseitig Ihre geplanten Tage und Zeiten im Kalender, laden Sie sie zu einem Plan oder Folgebesuch ein oder bitten Sie darum, an deren Plan teilzunehmen.",
   "onboardingBuddies_private": "Ende-zu-Ende-verschlüsselt. Ihre Stunden und Berichte bleiben privat.",
   "onboardingBuddies_private_info": "Buddies sehen Ihren Namen und die Tage, an denen Sie in den Dienst gehen wollen. Ihr Foto, Pionierstatus und die Startzeiten werden geteilt, sofern Sie das nicht in den Buddies-Einstellungen ausschalten, wo Sie das Teilen auch pausieren können. Ihre Stunden, Berichte, Ziele, Kontakte und Notizen bleiben privat. Wenn Sie einen Buddy zu einem Plan oder Folgebesuch einladen, werden die darin gezeigten Angaben geteilt. Nichts wird geteilt, bis Sie beide bestätigen, und nur Sie und Ihre Buddies können es lesen.",
   "onboardingBuddies_later": "Laden Sie Buddies jederzeit über **Zeitplan → Buddies** ein.",
@@ -5738,6 +5743,11 @@
       "decorate": "Zimmer dekorieren",
       "trayHat": "Neuer Hut: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} hat eine Preissenkung entdeckt!",
+      "description": "Im Shop ist jetzt alles günstiger. Für bereits Gekauftes haben Sie {{coins}} zurückbekommen.",
+      "shop": "Zum Shop"
     },
     "visitor": {
       "line": "Zu Besuch mit {{name}}!",

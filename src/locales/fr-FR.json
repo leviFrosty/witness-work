@@ -1211,6 +1211,9 @@
       "c2": "Rendre un territoire conserve ses relevés maison par maison, et la personne à qui vous aviez confié une rue peut la garder.",
       "c3": "Sur le web et les grands écrans, modifiez les notes directement avec la barre de mise en forme en haut, et ouvrez les contacts et les formulaires dans des panneaux latéraux.",
       "c4": "Sur Android, installez l’application web directement depuis l’écran de connexion."
+    },
+    "1490": {
+      "c1": "Tout dans la Boutique de votre animal coûte désormais trois fois moins cher, et vous récupérez des pièces pour ce que vous avez déjà acheté."
     }
   },
   "installed": "installée",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Soutenir WitnessWork",
   "paywallRegionTitleWeb": "Pas encore disponible là où vous êtes",
   "paywallRegionBodyWeb": "L’achat sur le web n’est pas encore disponible là où vous êtes. Pour devenir supporter ou laisser un pourboire, utilisez l’app WitnessWork depuis l’App Store ou Google Play.",
+  "paywallComingSoonTitleWeb": "Bientôt sur le web",
+  "paywallComingSoonBodyWeb": "Vous ne pouvez pas encore devenir Supporter ni laisser un pourboire depuis le navigateur. En attendant, utilisez l’app WitnessWork de l’App Store ou de Google Play. Le statut de Supporter est lié à votre compte : il s’affiche donc aussi ici.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Moyenne de {{rating}} sur {{ratings}} notes",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Ajoutez votre nom pour que votre compagnon sache qui l’invite.",
   "onboardingBuddies_title": "Planifiez ensemble avec Compagnons",
-  "onboardingBuddies_description": "Associez-vous à jusqu’à cinq personnes avec qui vous allez en prédication. Voyez les jours et heures planifiés de chacun dans votre calendrier, invitez-les à un plan ou à un suivi, ou demandez à vous joindre au leur.",
+  "onboardingBuddies_description": "Associez-vous à jusqu’à {{max}} personnes avec qui vous allez en prédication. Voyez les jours et heures planifiés de chacun dans votre calendrier, invitez-les à un plan ou à un suivi, ou demandez à vous joindre au leur.",
   "onboardingBuddies_private": "Chiffrement de bout en bout. Vos heures et vos rapports restent privés.",
   "onboardingBuddies_private_info": "Vos compagnons voient votre nom et les jours où vous prévoyez de sortir. Votre photo, votre statut de pionnier et vos heures de début sont partagés, sauf si vous les désactivez dans les paramètres de Compagnons, où vous pouvez aussi suspendre le partage. Vos heures, rapports, objectifs, contacts et notes restent privés. Inviter un compagnon à un plan ou à un suivi partage les détails qui y figurent. Rien n’est partagé tant que vous n’avez pas confirmé tous les deux, et seuls vous et vos compagnons pouvez le lire.",
   "onboardingBuddies_later": "Invitez des compagnons à tout moment depuis **Calendrier → Compagnons**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Décorer la chambre",
       "trayHat": "Nouveau chapeau : {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} a repéré une baisse de prix !",
+      "description": "Tout coûte moins cher dans la Boutique. Vous avez récupéré {{coins}} pour ce que vous aviez déjà acheté.",
+      "shop": "Aller à la Boutique"
     },
     "visitor": {
       "line": "En visite avec {{name}} !",

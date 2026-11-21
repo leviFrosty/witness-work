@@ -1211,6 +1211,9 @@
       "c2": "Ao devolver um território, os registros casa por casa são mantidos, e quem recebeu uma rua sua pode continuar com ela.",
       "c3": "Na web e em telas maiores, edite anotações no próprio lugar com a barra de formatação no topo e abra contatos e formulários em painéis laterais.",
       "c4": "No Android, instale o app web direto da tela de login."
+    },
+    "1490": {
+      "c1": "Tudo na Loja do seu mascote agora custa um terço do que custava, e você recebe moedas de volta pelo que já comprou."
     }
   },
   "installed": "Instalado",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Apoie o WitnessWork",
   "paywallRegionTitleWeb": "Ainda não disponível onde você está",
   "paywallRegionBodyWeb": "Comprar pela web ainda não está disponível onde você está. Para se tornar um Apoiador ou deixar uma gorjeta, use o app WitnessWork da App Store ou do Google Play.",
+  "paywallComingSoonTitleWeb": "Em breve na web",
+  "paywallComingSoonBodyWeb": "Ainda não dá para virar Apoiador nem deixar uma gorjeta pelo navegador. Até lá, use o app WitnessWork da App Store ou do Google Play. O status de Apoiador fica na sua conta, então também aparece aqui.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Média de {{rating}} em {{ratings}} avaliações",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Adicione seu nome para que seu companheiro saiba quem o está convidando.",
   "onboardingBuddies_title": "Planejem juntos com o Buddies",
-  "onboardingBuddies_description": "Forme dupla com até cinco pessoas com quem você sai em serviço. Veja os dias e horários planejados um do outro no seu calendário, convide-as para um plano ou acompanhamento ou peça para participar do delas.",
+  "onboardingBuddies_description": "Forme dupla com até {{max}} pessoas com quem você sai em serviço. Veja os dias e horários planejados um do outro no seu calendário, convide-as para um plano ou acompanhamento ou peça para participar do delas.",
   "onboardingBuddies_private": "Criptografia de ponta a ponta. Suas horas e relatórios continuam privados.",
   "onboardingBuddies_private_info": "Os companheiros veem seu nome e os dias em que você planeja sair. Sua foto, situação de pioneiro e horários de início são compartilhados, a menos que você os desative em Configurações de Buddies, onde também é possível pausar o compartilhamento. Suas horas, relatórios, alvos, contatos e notas continuam privados. Convidar um companheiro para um plano ou acompanhamento compartilha os detalhes mostrados nele. Nada é compartilhado até que os dois confirmem, e só você e seus companheiros podem ler.",
   "onboardingBuddies_later": "Convide companheiros quando quiser em **Agenda → Buddies**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Decorar quarto",
       "trayHat": "Novo chapéu: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} viu uma baixa de preços!",
+      "description": "Tudo na Loja está mais barato agora. Você recebeu {{coins}} de volta pelo que já tinha comprado.",
+      "shop": "Ir para a Loja"
     },
     "visitor": {
       "line": "Visitando com {{name}}!",

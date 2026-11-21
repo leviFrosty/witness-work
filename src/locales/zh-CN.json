@@ -1211,6 +1211,9 @@
       "c2": "归还传道区域时会保留逐户记录，你移交过街道的人可以继续保留那条街道。",
       "c3": "在网页版和大屏幕上，可用顶部的格式栏就地编辑笔记，并在侧边面板中打开联系人和表单。",
       "c4": "在 Android 上，可直接从登录屏幕安装网页应用。"
+    },
+    "1490": {
+      "c1": "宠物商店里的所有物品现在只要原价的三分之一，已购买的物品会以金币退还差价。"
     }
   },
   "installed": "已安装",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "支持 WitnessWork",
   "paywallRegionTitleWeb": "你所在的地区暂时还不能使用",
   "paywallRegionBodyWeb": "你所在的地区暂时还不能在网页上购买。若要成为支持者或打赏，请使用来自 App Store 或 Google Play 的 WitnessWork 应用。",
+  "paywallComingSoonTitleWeb": "网页版即将推出",
+  "paywallComingSoonBodyWeb": "目前还不能在浏览器中成为支持者或打赏。在此之前，请使用 App Store 或 Google Play 上的 WitnessWork 应用。支持者身份跟随你的账户，所以这里也会显示。",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{ratings}} 个评分，平均 {{rating}}",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "添加你的姓名，让同伴知道是谁在邀请他们。",
   "onboardingBuddies_title": "与同伴一起制定计划",
-  "onboardingBuddies_description": "最多可与五位一起外出传道的人结成搭档。在你的日历上查看彼此计划的日期和时间，邀请他们参加某个计划或跟进，或请求加入他们的计划。",
+  "onboardingBuddies_description": "最多可与 {{max}} 位一起外出传道的人结成搭档。在你的日历上查看彼此计划的日期和时间，邀请他们参加某个计划或跟进，或请求加入他们的计划。",
   "onboardingBuddies_private": "端到端加密。你的时数和报告保持私密。",
   "onboardingBuddies_private_info": "同伴会看到你的姓名和你计划外出的日期。除非你在“同伴设置”中关闭，否则你的照片、先驱身份和开始时间也会被分享，你也可以在那里暂停分享。你的时数、报告、目标、联系人和笔记保持私密。邀请同伴参加某个计划或跟进，会分享其中显示的详细信息。在你们双方确认之前，不会分享任何内容，而且只有你和你的同伴能够读取。",
   "onboardingBuddies_later": "随时可以在 **日程 → 同伴** 中邀请同伴。",
@@ -5738,6 +5743,11 @@
       "decorate": "装饰小屋",
       "trayHat": "新帽子：{{hat}}",
       "trayRoomDescription": "{{where}}。{{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}}发现降价了！",
+      "description": "商店里的物品现在都更便宜了。你已购买的物品退还了 {{coins}}。",
+      "shop": "去商店"
     },
     "visitor": {
       "line": "和{{name}}一起来玩！",

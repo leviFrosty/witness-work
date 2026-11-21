@@ -1211,6 +1211,9 @@
       "c2": "Gusubiza ifasi bituma inyandiko z'inzu ku nzu zigumaho, kandi uwo wahaye umuhanda ashobora kuwukomezanya.",
       "c3": "Kuri interineti no ku ma ekara manini, hindura inoti aho ziri ukoresheje umurongo w'imiterere hejuru, kandi ufungure abantu n'impapuro mu bice byo ku ruhande.",
       "c4": "Kuri Android, shyiraho porogaramu ya interineti uyikuye ku ekara ryo kwinjira."
+    },
+    "1490": {
+      "c1": "Ibintu byose biri mu Iduka ry'itungo ryawe ubu bigura kimwe cya gatatu cy'igiciro cya mbere, kandi usubizwa ibiceri by'ibyo wari waraguze."
     }
   },
   "installed": "Yagiye mu gikoresho cyawe",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Shyigikira WitnessWork",
   "paywallRegionTitleWeb": "Ntibiraboneka aho uri",
   "paywallRegionBodyWeb": "Kugurira kuri web ntikuraboneka aho uri. Kugira ngo ube umuterankunga cyangwa utange Inkunga, koresha porogaramu ya WitnessWork yo kuri App Store cyangwa Google Play.",
+  "paywallComingSoonTitleWeb": "Biraza vuba kuri interineti",
+  "paywallComingSoonBodyWeb": "Ntushobora kuba Umufasha cyangwa gutanga Inkunga ukoresheje mushakisha. Kugeza icyo gihe, koresha porogaramu ya WitnessWork yo kuri App Store cyangwa Google Play. Kuba Umufasha bijyana na konti yawe, ni yo mpamvu bigaragara hano na ho.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Impuzandengo ni {{rating}} ku manota {{ratings}}",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Ongeraho izina ryawe kugira ngo mugenzi wawe amenye uwo ari we umutumiye.",
   "onboardingBuddies_title": "Mutegurire hamwe muri Buddies",
-  "onboardingBuddies_description": "Huza n'abantu bagera kuri batanu mujyana kubwiriza. Mubone iminsi n'amasaha bya buri wese kuri kalendari yanyu, mutumirane muri Gahunda cyangwa Gusubirayo, cyangwa musabe kwifatanya muri ibyabo.",
+  "onboardingBuddies_description": "Huza n'abantu bagera kuri {{max}} mujyana kubwiriza. Mubone iminsi n'amasaha bya buri wese kuri kalendari yanyu, mutumirane muri Gahunda cyangwa Gusubirayo, cyangwa musabe kwifatanya muri ibyabo.",
   "onboardingBuddies_private": "Birinzwe n'ibanga kuva ku ikorwa kugeza ku isomwa. Amasaha na raporo byawe bigumaho ari ibanga.",
   "onboardingBuddies_private_info": "Bagenzi bawe babona izina ryawe n'iminsi uteganya kujya kubwiriza. Ifoto yawe, ubupayiniya n'amasaha yo gutangira bisangizwa keretse ubizimije muri Igenamiterere rya Buddies, aho ushobora no guhagarika gusangiza. Amasaha yawe, raporo, intego, abantu n'inyandiko bigumana ibanga. Gutumira mugenzi muri Gahunda cyangwa Gusubirayo bisangiza amakuru yerekanwa muri byo. Nta kintu gisangizwa kugeza mwembi mubyemeje, kandi wowe na bagenzi bawe gusa ni mwe mushobora kubisoma.",
   "onboardingBuddies_later": "Tumira bagenzi igihe icyo ari cyo cyose uhereye kuri **Ingengabihe → Buddies**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Rimbisha icyumba",
       "trayHat": "Ingofero nshya: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} yabonye ko ibiciro byagabanutse!",
+      "description": "Ibintu byose mu Iduka ubu bihendutse. Wasubijwe {{coins}} by'ibyo wari waraguze.",
+      "shop": "Jya mu Iduka"
     },
     "visitor": {
       "line": "Nsuye ndi kumwe na {{name}}!",

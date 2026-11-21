@@ -1211,6 +1211,9 @@
       "c2": "区域を返却しても家ごとの記録は残り、通りを引き継いだ人はそのまま続けられます。",
       "c3": "ウェブや大きい画面では、上の書式バーでメモをその場で編集でき、連絡先やフォームをサイドパネルで開けます。",
       "c4": "Androidでは、サインイン画面からウェブアプリを直接インストールできます。"
+    },
+    "1490": {
+      "c1": "ペットのショップのアイテムがすべて3分の1の価格になりました。購入済みのアイテムの差額はコインで戻ってきます。"
     }
   },
   "installed": "インストール済み",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "WitnessWorkをサポート",
   "paywallRegionTitleWeb": "お住まいの地域ではまだ利用できません",
   "paywallRegionBodyWeb": "お住まいの地域では、Webでの購入はまだ利用できません。サポーターになるかチップを贈るには、App StoreまたはGoogle PlayのWitnessWorkアプリをお使いください。",
+  "paywallComingSoonTitleWeb": "Web版にも近日対応",
+  "paywallComingSoonBodyWeb": "ブラウザーからはまだサポーターになったりチップを贈ったりできません。それまでは、App StoreまたはGoogle PlayのWitnessWorkアプリをご利用ください。サポーターのステータスはアカウントに紐づいているので、ここにも表示されます。",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{ratings}}件の評価で平均{{rating}}",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "バディが誰からの招待かわかるよう、お名前を追加してください。",
   "onboardingBuddies_title": "バディと一緒に計画",
-  "onboardingBuddies_description": "いつも一緒に奉仕に出る最大5人とペアになれます。お互いの予定日と時間をカレンダーで確認したり、プランやフォローアップに招待したり、相手のプランへの参加をリクエストしたりできます。",
+  "onboardingBuddies_description": "いつも一緒に奉仕に出る最大{{max}}人とペアになれます。お互いの予定日と時間をカレンダーで確認したり、プランやフォローアップに招待したり、相手のプランへの参加をリクエストしたりできます。",
   "onboardingBuddies_private": "エンドツーエンドで暗号化。時間と報告は非公開のままです。",
   "onboardingBuddies_private_info": "バディには、あなたの名前と出かける予定の日が表示されます。写真、開拓者の区分、開始時刻は、バディ設定でオフにしない限り共有されます。バディ設定では共有の一時停止もできます。時間、報告、目標、連絡先、メモは非公開のままです。バディをプランやフォローアップに招待すると、そこに表示される詳細が共有されます。双方が確認するまで何も共有されず、読めるのはあなたとバディだけです。",
   "onboardingBuddies_later": "バディは、**スケジュール → バディ**からいつでも招待できます。",
@@ -5738,6 +5743,11 @@
       "decorate": "部屋を飾る",
       "trayHat": "新しい帽子:{{hat}}",
       "trayRoomDescription": "{{where}}。{{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}}が値下げを見つけました！",
+      "description": "ショップのアイテムがすべて値下がりしました。購入済みのアイテムの差額として{{coins}}が戻ってきました。",
+      "shop": "ショップへ"
     },
     "visitor": {
       "line": "{{name}}さんと一緒に来ました!",

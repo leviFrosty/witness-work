@@ -1211,6 +1211,9 @@
       "c2": "Al devolver un territorio se conservan sus registros casa por casa, y quien tenía una calle que le entregaste puede quedársela.",
       "c3": "En la web y en pantallas grandes, edita las notas directamente con la barra de formato en la parte superior y abre contactos y formularios en paneles laterales.",
       "c4": "En Android, instala la aplicación web directamente desde la pantalla de inicio de sesión."
+    },
+    "1490": {
+      "c1": "Todo en la Tienda de tu mascota cuesta ahora un tercio de lo que costaba, y recibes monedas de vuelta por lo que ya compraste."
     }
   },
   "installed": "Instalado",
@@ -2458,6 +2461,8 @@
   "paywallTitle": "Apoya a WitnessWork",
   "paywallRegionTitleWeb": "Aún no disponible donde estás",
   "paywallRegionBodyWeb": "Comprar en la web aún no está disponible donde estás. Para hacerte Colaborador o dejar una propina, usa la app WitnessWork desde la App Store o Google Play.",
+  "paywallComingSoonTitleWeb": "Pronto en la web",
+  "paywallComingSoonBodyWeb": "Todavía no puedes hacerte Colaborador ni dejar una propina desde el navegador. Mientras tanto, usa la app WitnessWork del App Store o de Google Play. La condición de Colaborador va con tu cuenta, así que también aparece aquí.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "{{rating}} de media según {{ratings}} valoraciones",
@@ -4378,7 +4383,7 @@
   },
   "onboardingBuddies_nameHint": "Añade tu nombre para que tu compañero sepa quién lo invita.",
   "onboardingBuddies_title": "Planifiquemos juntos con Compañeros",
-  "onboardingBuddies_description": "Vincúlate con hasta cinco personas con las que sales a predicar. Mira los días y horas planificados de cada uno en tu calendario, invítalos a un plan o a un seguimiento, o pide unirte al suyo.",
+  "onboardingBuddies_description": "Vincúlate con hasta {{max}} personas con las que sales a predicar. Mira los días y horas planificados de cada uno en tu calendario, invítalos a un plan o a un seguimiento, o pide unirte al suyo.",
   "onboardingBuddies_private": "Cifrado de extremo a extremo. Tus horas e informes siguen siendo privados.",
   "onboardingBuddies_private_info": "Tus compañeros ven tu nombre y los días en que planeas salir. Tu foto, tipo de precursorado y horas de inicio se comparten a menos que lo desactives en los ajustes de Compañeros, donde también puedes pausar el uso compartido. Tus horas, informes, metas, contactos y notas siguen siendo privados. Invitar a un compañero a un plan o a un seguimiento comparte los datos que se muestran en él. No se comparte nada hasta que los dos lo confirméis, y solo tú y tus compañeros podéis leerlo.",
   "onboardingBuddies_later": "Invita a compañeros cuando quieras desde **Cronograma → Compañeros**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Decorar habitación",
       "trayHat": "Sombrero nuevo: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "¡{{name}} encontró una rebaja!",
+      "description": "Ahora todo en la Tienda cuesta menos. Recibiste {{coins}} de vuelta por lo que ya compraste.",
+      "shop": "Ir a la Tienda"
     },
     "visitor": {
       "line": "¡De visita con {{name}}!",

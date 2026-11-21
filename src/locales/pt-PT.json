@@ -1052,6 +1052,9 @@
       "c2": "Ao devolver um território, os registos casa a casa são mantidos, e quem recebeu uma rua sua pode continuar com ela.",
       "c3": "Na web e em ecrãs maiores, edite notas no próprio local com a barra de formatação no topo e abra contactos e formulários em painéis laterais.",
       "c4": "No Android, instale a aplicação web diretamente a partir do ecrã de início de sessão."
+    },
+    "1490": {
+      "c1": "Tudo na Loja da sua mascote custa agora um terço do que custava, e recebe moedas de volta pelo que já comprou."
     }
   },
   "installed": "Instalado",
@@ -2848,6 +2851,8 @@
   "paywallTitle": "Apoiar o WitnessWork",
   "paywallRegionTitleWeb": "Ainda não está disponível onde se encontra",
   "paywallRegionBodyWeb": "A compra na web ainda não está disponível onde se encontra. Para se tornar Apoiante ou deixar uma Gorjeta, use a aplicação WitnessWork da App Store ou do Google Play.",
+  "paywallComingSoonTitleWeb": "Brevemente na web",
+  "paywallComingSoonBodyWeb": "Ainda não é possível tornar-se Apoiante nem deixar uma gorjeta no navegador. Até lá, use a app WitnessWork da App Store ou do Google Play. O estado de Apoiante está associado à sua conta, por isso também aparece aqui.",
   "paywallRegionAppStoreWeb": "App Store",
   "paywallRegionPlayStoreWeb": "Google Play",
   "paywallSocialProofRatingAverage": "Média de {{rating}} em {{ratings}} avaliações",
@@ -4386,7 +4391,7 @@
   },
   "onboardingBuddies_nameHint": "Adicione o seu nome para que o seu companheiro saiba quem o está a convidar.",
   "onboardingBuddies_title": "Planeiem em conjunto com os Companheiros",
-  "onboardingBuddies_description": "Associe-se a até cinco pessoas com quem vai ao serviço. Veja os dias e as horas planeados uns dos outros no calendário, convide-as para um plano ou Acompanhamento, ou peça para participar no delas.",
+  "onboardingBuddies_description": "Associe-se a até {{max}} pessoas com quem vai ao serviço. Veja os dias e as horas planeados uns dos outros no calendário, convide-as para um plano ou Acompanhamento, ou peça para participar no delas.",
   "onboardingBuddies_private": "Cifrado de ponta a ponta. As suas horas e relatórios permanecem privados.",
   "onboardingBuddies_private_info": "Os companheiros veem o seu nome e os dias em que planeia sair. A sua fotografia, estado de pioneiro e horas de início são partilhados, a menos que os desative nas Definições de Companheiros, onde também pode pausar a partilha. As suas horas, relatórios, objetivos, contactos e notas permanecem privados. Convidar um companheiro para um Plano ou Acompanhamento partilha os detalhes nele apresentados. Nada é partilhado até ambos confirmarem, e só o utilizador e os seus companheiros o podem ler.",
   "onboardingBuddies_later": "Convide companheiros em qualquer altura em **Programação → Companheiros**.",
@@ -5738,6 +5743,11 @@
       "decorate": "Decorar quarto",
       "trayHat": "Novo chapéu: {{hat}}",
       "trayRoomDescription": "{{where}}. {{detail}}"
+    },
+    "priceDrop": {
+      "title": "{{name}} viu uma descida de preços!",
+      "description": "Tudo na Loja está agora mais barato. Recebeu {{coins}} de volta pelo que já tinha comprado.",
+      "shop": "Ir para a Loja"
     },
     "visitor": {
       "line": "De visita com {{name}}!",

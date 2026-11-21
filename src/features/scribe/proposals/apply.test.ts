@@ -1060,7 +1060,7 @@ describe('Add, Dismiss and Undo from a conversation', () => {
     const before = records()
     const { proposal, contactRef } = stage()
     addScribeProposal(proposal.id, { now: NOW, newId })
-    expect(undoScribeProposalNow(proposal.id, 'toast')).toEqual({
+    expect(undoScribeProposalNow(proposal.id, 'toast', NOW.getTime())).toEqual({
       status: 'undone',
       kept: 0,
     })
@@ -1085,9 +1085,9 @@ describe('Add, Dismiss and Undo from a conversation', () => {
       target: 'scribe',
       result: 'undone',
     })
-    expect(undoScribeProposalNow(proposal.id, 'history').status).toBe(
-      'nothing_to_undo'
-    )
+    expect(
+      undoScribeProposalNow(proposal.id, 'history', NOW.getTime()).status
+    ).toBe('nothing_to_undo')
   })
 
   it('points an added contact card at its Contact and Visit, while they last', () => {
@@ -1113,7 +1113,7 @@ describe('Add, Dismiss and Undo from a conversation', () => {
     expect(
       toScribeProposal(proposal, readScribeStores()).cards.map((c) => c.target)
     ).toEqual([null, null])
-    undoScribeProposalNow(proposal.id, 'conversation')
+    undoScribeProposalNow(proposal.id, 'conversation', NOW.getTime())
     expect(view().cards.map((card) => card.target)).toEqual([null, null])
   })
 
@@ -1132,7 +1132,9 @@ describe('Add, Dismiss and Undo from a conversation', () => {
         )!
       )
 
-    expect(undoScribeProposalNow(proposal.id, 'conversation')).toEqual({
+    expect(
+      undoScribeProposalNow(proposal.id, 'conversation', NOW.getTime())
+    ).toEqual({
       status: 'undone',
       kept: 0,
     })
@@ -1158,7 +1160,9 @@ describe('Add, Dismiss and Undo from a conversation', () => {
       date: NOW,
     } as never)
 
-    expect(undoScribeProposalNow(proposal.id, 'conversation')).toEqual({
+    expect(
+      undoScribeProposalNow(proposal.id, 'conversation', NOW.getTime())
+    ).toEqual({
       status: 'partially_undone',
       kept: 1,
     })
@@ -1195,7 +1199,9 @@ describe('Add, Dismiss and Undo from a conversation', () => {
       .getState()
       .updateContact({ id: contactId, phone: '555-0123', updatedAt: 1 })
 
-    expect(undoScribeProposalNow(proposal.id, 'conversation')).toEqual({
+    expect(
+      undoScribeProposalNow(proposal.id, 'conversation', NOW.getTime())
+    ).toEqual({
       status: 'partially_undone',
       kept: 1,
     })

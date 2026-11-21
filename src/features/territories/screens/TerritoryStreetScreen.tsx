@@ -31,6 +31,7 @@ import ContentColumn from '@/components/ui/layout/ContentColumn'
 import Header from '@/components/ui/layout/Header'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { analytics } from '@/lib/analytics'
 import confirmDestructive from '@/lib/confirmDestructive'
 import { formatDate } from '@/lib/dates'
 import Haptics from '@/lib/haptics'
@@ -204,6 +205,7 @@ function StreetScreen({ route, navigation }: Props) {
         description: described?.trim() || undefined,
       })
     )
+    analytics.capture('territory_door_recorded', { access })
     show(null)
     setOpenId(null)
     setDescription(null)

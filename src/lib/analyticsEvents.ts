@@ -208,6 +208,8 @@ export const analyticsEventNames = [
   'shared_car_shared',
   'shared_car_sync_failed',
 
+  'territory_created',
+  'territory_door_recorded',
   'territory_shared',
   'territory_invite_answered',
   'territory_link_created',

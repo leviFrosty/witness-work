@@ -43,6 +43,17 @@ describe('analytics frequency', () => {
     expect(allow('Application Became Active')).toBe(true)
   })
 
+  it('counts a day of recording doors once, whatever territory it was in', async () => {
+    const { allowAnalyticsFrequency: allow } = await import(
+      './analyticsFrequency'
+    )
+    expect(allow('territory_door_recorded', { access: 'owner' })).toBe(true)
+    expect(allow('territory_door_recorded', { access: 'owner' })).toBe(false)
+    expect(allow('territory_door_recorded', { access: 'member' })).toBe(false)
+    vi.setSystemTime(new Date('2026-10-05T00:00:00Z'))
+    expect(allow('territory_door_recorded', { access: 'member' })).toBe(true)
+  })
+
   it('keeps the first nudge variant on each surface, without counting rerenders', async () => {
     const { allowAnalyticsFrequency: allow } = await import(
       './analyticsFrequency'

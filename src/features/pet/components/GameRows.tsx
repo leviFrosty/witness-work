@@ -120,6 +120,7 @@ export function GameRow({
   label,
   description,
   value,
+  preview,
   icon = 'forward',
   onPress,
   palette,
@@ -129,6 +130,7 @@ export function GameRow({
   description?: string
 
   value?: string
+  preview?: ReactNode
   icon?: GameIconName
   onPress: () => void
   palette: GamePalette
@@ -148,19 +150,20 @@ export function GameRow({
       <View style={{ flex: 1 }}>
         <RowText label={label} description={description} palette={palette} />
       </View>
-      {value ? (
-        <Text
-          numberOfLines={1}
-          style={{
-            flexShrink: 1,
-            maxWidth: '50%',
-            fontSize: theme.fontSize('md'),
-            color: palette.inkAlt,
-          }}
-        >
-          {value}
-        </Text>
-      ) : null}
+      {preview ??
+        (value ? (
+          <Text
+            numberOfLines={1}
+            style={{
+              flexShrink: 1,
+              maxWidth: '50%',
+              fontSize: theme.fontSize('md'),
+              color: palette.inkAlt,
+            }}
+          >
+            {value}
+          </Text>
+        ) : null)}
       <GameIcon
         name={icon}
         color={icon === 'forward' ? palette.inkAlt : palette.ink}

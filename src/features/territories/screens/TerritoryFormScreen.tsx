@@ -20,6 +20,7 @@ import KeyboardAwareScrollView from '@/components/ui/layout/KeyboardAwareScrollV
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
 import useFormValidation from '@/hooks/useFormValidation'
+import { analytics } from '@/lib/analytics'
 import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { toast } from '@/stores/toasts'
@@ -169,8 +170,16 @@ function TerritoryForm({ route, navigation }: Props) {
       doNotCalls: existing?.doNotCalls ?? [],
       createdAt: existing?.createdAt ?? now,
     })
-    if (existing) navigation.goBack()
-    else navigation.replace('TerritoryDetails', { territoryId: id })
+    if (existing) return navigation.goBack()
+    analytics.capture('territory_created', {
+      location: pin?.source ?? 'none',
+      outline: isOutline(outline),
+      link: link.trim() !== '',
+      photo: photo !== undefined,
+      name: name.trim() !== '',
+      return_by: due !== undefined,
+    })
+    navigation.replace('TerritoryDetails', { territoryId: id })
   }
 
   const requestDelete = () =>

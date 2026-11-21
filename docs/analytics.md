@@ -102,6 +102,7 @@ from 1.46.0 and earlier don't have it, so break those down by `$os` (`iOS`,
 | `help_center_refreshed`                            | Once per UTC day per outcome and reason; whether new Help Center content reaches devices, not every open.                                                                                                                                                    |
 | `shared_car_sync_failed`                           | Once per UTC day and reason; which Shared Car failures reach people, not how often a phone retries.                                                                                                                                                          |
 | `territory_sync_failed`                            | Once per UTC day and reason; which shared territory failures reach people, not how often a phone retries.                                                                                                                                                    |
+| `territory_door_recorded`                          | Once per UTC day; how many people record doors each day, not how many doors.                                                                                                                                                                                 |
 | Supporter gate, purchase, and core outcome events  | Every meaningful occurrence; placement visits and `gate_flow_id` attribution remain intact.                                                                                                                                                                  |
 | `$feature_flag_called`                             | Only for flags whose reach is a product question (`exposureReportedFlags` in `analyticsEvents.ts`; today `announcement`), once per UTC day and flag/value. Rollout gates such as `buddies` send nothing; add an experiment's flag to the list while it runs. |
 
@@ -1416,6 +1417,8 @@ they added any, with `points` (how many outline points the geocoder answered),
 
 | Event                               | When                                                                                                        | Properties                                                                                                                                                                  |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `territory_created`                 | The User saved a new territory from Add Territory.                                                          | `location: none \| link \| manual`, `outline`, `link`, `photo`, `name`, `return_by` (booleans: which optional fields were filled).                                          |
+| `territory_door_recorded`           | The User recorded a door on a street. Once per UTC day.                                                     | `access: owner \| member \| assigned` (of the first door that day).                                                                                                         |
 | `territory_shared`                  | The User shared a territory with buddies.                                                                   | `scope: whole \| streets`, `people` (count).                                                                                                                                |
 | `territory_invite_answered`         | The User answered a buddy's invitation to a territory.                                                      | `answer: joined \| declined`, `handoff` (boolean).                                                                                                                          |
 | `territory_link_created`            | The User made a guest link.                                                                                 | `streets` (count), `days` (how long the link lasts).                                                                                                                        |
@@ -1437,6 +1440,13 @@ they added any, with `points` (how many outline points the geocoder answered),
 `territories_view_changed` answers whether people sort or filter the Territories
 list, and by what. It's sent once per change, from the filter chips or the Sort & Filter sheet,
 with the sort, direction and filters now in effect. The choice stays on the device.
+
+`territory_created` and `territory_door_recorded` answer how many people adopt
+Territories: how many create one, which of the form's optional fields they fill
+in (`location` says whether the map pin came from a pasted link or was placed by
+hand), and how many people record doors on a given day. Doors recorded by a
+guest are counted by `territory_guest_first_record`, and doors added from paper
+notes by `territory_notes_added`.
 
 Territory Insights events answer how many people record enough doors to see
 insights, whether the tray notification or the card on the Territories tab

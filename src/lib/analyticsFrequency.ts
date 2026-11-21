@@ -16,6 +16,7 @@ const dailyEvents = new Set([
   'help_center_refreshed',
   'shared_car_sync_failed',
   'territory_sync_failed',
+  'territory_door_recorded',
   'cloud_sync_photos_storage_full',
   'cloud_sync_photo_transfer_failed',
   'photo_storage_upsell_shown',

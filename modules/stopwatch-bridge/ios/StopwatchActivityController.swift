@@ -16,7 +16,7 @@ public enum StopwatchActivityController {
 
     if let existing = currentActivity() {
       await existing.update(
-        ActivityContent(state: state, staleDate: nil)
+        ActivityContent(state: state, staleDate: state.hoursFieldDate())
       )
       return existing.id
     }
@@ -24,7 +24,7 @@ public enum StopwatchActivityController {
     do {
       let activity = try Activity.request(
         attributes: StopwatchAttributes(),
-        content: ActivityContent(state: state, staleDate: nil),
+        content: ActivityContent(state: state, staleDate: state.hoursFieldDate()),
         pushType: nil
       )
       return activity.id
@@ -38,7 +38,7 @@ public enum StopwatchActivityController {
     // consistent and may briefly hold more than one entry after a rapid
     // request/update sequence. Updating every entry keeps the UI in sync
     // even if iOS transiently held a stale handle.
-    let content = ActivityContent(state: state, staleDate: nil)
+    let content = ActivityContent(state: state, staleDate: state.hoursFieldDate())
     for activity in Activity<StopwatchAttributes>.activities {
       await activity.update(content)
     }

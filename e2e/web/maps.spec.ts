@@ -81,6 +81,7 @@ test.use({
   preferences: {
     contactsView: 'map',
     hasCompletedMapOnboarding: true,
+    mapLocationPromptSeen: true,
     showBadges: false,
   },
 })
@@ -530,5 +531,151 @@ test.describe('without a map', () => {
     expect(apple).toEqual([])
     await expect(app.locator('iframe')).toHaveCount(0)
     await shot('maps-unavailable')
+  })
+})
+
+test.describe('location explanation modal and web permission persistence', () => {
+  test.use({
+    colorScheme: 'dark',
+    preferences: {
+      contactsView: 'map',
+      hasCompletedMapOnboarding: true,
+      mapLocationPromptSeen: false,
+      placeSearchLocationAsked: false,
+      showBadges: false,
+    },
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await serveMapsFrame(page.context(), 'double')
+    await answerMapKitTokens(page.context(), 200)
+    await page.addInitScript(() => {
+      const counts = { watch: 0, current: 0 }
+      ;(window as unknown as { __geoCounts: typeof counts }).__geoCounts =
+        counts
+      Object.defineProperty(navigator, 'permissions', {
+        configurable: true,
+        value: {
+          query: async () => ({
+            state: 'prompt',
+            addEventListener() {},
+            removeEventListener() {},
+          }),
+        },
+      })
+      const pos = () => ({
+        coords: {
+          latitude: 39.1012,
+          longitude: -84.5121,
+          altitude: null,
+          accuracy: 15,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: Date.now(),
+      })
+      Object.defineProperty(navigator, 'geolocation', {
+        configurable: true,
+        value: {
+          watchPosition(success: PositionCallback) {
+            counts.watch += 1
+            setTimeout(() => success(pos() as GeolocationPosition), 10)
+            return counts.watch
+          },
+          getCurrentPosition(success: PositionCallback) {
+            counts.current += 1
+            setTimeout(() => success(pos() as GeolocationPosition), 10)
+          },
+          clearWatch() {},
+        },
+      })
+    })
+  })
+
+  test('presents the quick location explanation card modal on first map open and remembers dismissal', async ({
+    app,
+    shot,
+  }) => {
+    await openMap(app)
+    const dialog = app.getByTestId('map-location-prompt')
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(en.mapLocation_title)).toBeVisible()
+    await expect(dialog.getByText(en.mapLocation_subtitle)).toBeVisible()
+    await shot('map-location-prompt')
+
+    await dialog.getByTestId('map-location-prompt-dismiss').click()
+    await expect(dialog).toBeHidden()
+
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await openMap(app)
+    await expect(app.getByTestId('map-location-prompt')).toHaveCount(0)
+  })
+
+  test('persists granted location across map, contact address input, and returning to map even when permissions.query stays prompt', async ({
+    app,
+  }) => {
+    await openMap(app)
+    const dialog = app.getByTestId('map-location-prompt')
+    await expect(dialog).toBeVisible()
+    await dialog.getByTestId('map-location-prompt-dismiss').click()
+    await expect(dialog).toBeHidden()
+
+    await app
+      .getByRole('button', { name: en.map_centerOnMyLocation, exact: true })
+      .click()
+
+    await expect
+      .poll(() =>
+        app.evaluate(
+          () =>
+            (
+              window as unknown as {
+                __geoCounts: { watch: number; current: number }
+              }
+            ).__geoCounts
+        )
+      )
+      .toEqual({ watch: 1, current: 0 })
+
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    await app.getByRole('button', { name: en.edit, exact: true }).click()
+
+    const addressInput = app.getByRole('textbox', {
+      name: en.enterAddress,
+    })
+    await expect(addressInput).toBeVisible()
+    await expect(
+      app.getByRole('button', { name: `About ${en.searchAddress}` })
+    ).toBeVisible()
+    await addressInput.click()
+    await app.waitForTimeout(200)
+
+    expect(
+      await app.evaluate(
+        () =>
+          (
+            window as unknown as {
+              __geoCounts: { watch: number; current: number }
+            }
+          ).__geoCounts
+      )
+    ).toEqual({ watch: 1, current: 0 })
+
+    await app.getByRole('button', { name: en.save, exact: true }).click()
+    await expect(addressInput).toBeHidden()
+    await openMap(app)
+    await app.waitForTimeout(200)
+
+    expect(
+      await app.evaluate(
+        () =>
+          (
+            window as unknown as {
+              __geoCounts: { watch: number; current: number }
+            }
+          ).__geoCounts
+      )
+    ).toEqual({ watch: 1, current: 0 })
   })
 })

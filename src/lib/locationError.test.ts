@@ -51,6 +51,21 @@ describe('isLocationOffError', () => {
     expect(isLocationOffError({ message })).toBe(true)
     expect(isLocationOffError(message)).toBe(true)
   })
+
+  it('recognizes browser GeolocationPositionError codes', () => {
+    expect(
+      isLocationOffError({ code: 1, message: 'User denied Geolocation' })
+    ).toBe(true)
+    expect(
+      isLocationTemporarilyUnavailableError({
+        code: 2,
+        message: 'Position unavailable',
+      })
+    ).toBe(true)
+    expect(
+      isLocationTemporarilyUnavailableError({ code: 3, message: 'Timeout' })
+    ).toBe(true)
+  })
 })
 
 describe('isExpectedLocationError', () => {

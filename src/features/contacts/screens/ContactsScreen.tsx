@@ -170,9 +170,6 @@ const ContactsScreen = ({
     )
   }, [titleFit, toggleWidth])
   const contactsView = view ?? preferredView
-  const hasCompletedMapOnboarding = usePreferences(
-    (s) => s.hasCompletedMapOnboarding
-  )
   const setPreferences = usePreferences((s) => s.set)
   const showsMap = contactsView === 'map'
   const [headerHeight, setHeaderHeight] = useState(0)
@@ -247,8 +244,7 @@ const ContactsScreen = ({
   const savedViews = useSavedContactViews()
   const showsSavedViews = savedViews.views.length > 0
 
-  const showsMapFilters =
-    showsMap && hasCompletedMapOnboarding && mappedContacts.length > 0
+  const showsMapFilters = showsMap && mappedContacts.length > 0
 
   const selection = useListSelection(listContacts.map((contact) => contact.id))
   const selectedContacts = listContacts.filter((contact) =>

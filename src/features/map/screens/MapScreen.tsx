@@ -50,7 +50,7 @@ import Empty from '@/components/ui/Empty'
 import MapEmptyState from '@/features/map/components/MapEmptyState'
 import i18n from '@/lib/locales'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import MapOnboarding from '@/features/map/components/MapOnboarding'
+import MapLocationPromptModal from '@/features/map/components/MapLocationPromptModal'
 import { TAB_BAR_HEIGHT } from '@/components/ui/TabBar'
 import useDevice from '@/hooks/useDevice'
 import useAppActive from '@/hooks/useAppActive'
@@ -191,12 +191,14 @@ const FullMapView = ({
     colorScheme,
     mapLayer,
     mapCardDetail,
+    mapLocationPromptSeen,
     set: setPreferences,
   } = usePreferences(
     useShallow((s) => ({
       colorScheme: s.colorScheme,
       mapLayer: s.mapLayer,
       mapCardDetail: s.mapCardDetail,
+      mapLocationPromptSeen: s.mapLocationPromptSeen,
       set: s.set,
     }))
   )
@@ -217,6 +219,7 @@ const FullMapView = ({
   const carouselRef = useRef<CarouselRef>(null)
   const { isTablet } = useDevice()
   const [locationPermission, setLocationPermission] = useState(false)
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false)
 
   const isFocused = useIsFocused()
   const appActive = useAppActive()
@@ -486,15 +489,40 @@ const FullMapView = ({
   }, [hasMapLayout, isMapReady, isMapLoaded, visibleContactMarkers])
 
   useEffect(() => {
-    const getLocation = async () => {
-      const { granted } = await Location.getForegroundPermissionsAsync()
-      if (granted) {
+    if (!isFocused || !appActive) return
+    let active = true
+    const syncLocationPermission = async () => {
+      const permission = await Location.getForegroundPermissionsAsync()
+      if (!active) return
+      if (permission.granted) {
         setLocationPermission(true)
+        if (!mapLocationPromptSeen) {
+          setPreferences({
+            mapLocationPromptSeen: true,
+            hasCompletedMapOnboarding: true,
+          })
+        }
+        return
+      }
+      if (mapLocationPromptSeen) return
+      if (
+        permission.status === Location.PermissionStatus.UNDETERMINED &&
+        permission.canAskAgain
+      ) {
+        setShowLocationPrompt(true)
+      } else {
+        setPreferences({
+          mapLocationPromptSeen: true,
+          hasCompletedMapOnboarding: true,
+        })
       }
     }
 
-    getLocation()
-  }, [])
+    void syncLocationPermission()
+    return () => {
+      active = false
+    }
+  }, [isFocused, appActive, mapLocationPromptSeen, setPreferences])
 
   const stopTrackingUser = useCallback(() => {
     trackingRequestRef.current += 1
@@ -523,7 +551,13 @@ const FullMapView = ({
     const isCancelled = () => request !== trackingRequestRef.current
     let granted = locationPermission
     if (!granted) {
+      setShowLocationPrompt(false)
       granted = await requestOrOfferLocationSettings()
+      setPreferences({
+        mapLocationPromptSeen: true,
+        hasCompletedMapOnboarding: true,
+        placeSearchLocationAsked: true,
+      })
       if (granted) setLocationPermission(true)
     }
     if (!granted || isCancelled()) return
@@ -593,7 +627,7 @@ const FullMapView = ({
     }
 
     setIsTrackingUser(true)
-  }, [locationPermission])
+  }, [locationPermission, setPreferences])
 
   const toggleLocationTracking = () => {
     if (isTrackingUser) {
@@ -1451,6 +1485,14 @@ const FullMapView = ({
               </Button>
             </PointerTooltip>
           </Animated.View>
+          <MapLocationPromptModal
+            open={showLocationPrompt && isFocused}
+            onDismiss={() => setShowLocationPrompt(false)}
+            onResult={(granted) => {
+              setShowLocationPrompt(false)
+              if (granted) setLocationPermission(true)
+            }}
+          />
         </MapImageryContext.Provider>
       </GlassColorSchemeOverrideContext.Provider>
     </ThemeContext.Provider>
@@ -1493,12 +1535,7 @@ const MapScreen = ({
 }) => {
   const allContacts = useContacts((s) => s.contacts)
   const conversations = useConversations((s) => s.conversations)
-  const { hasCompletedMapOnboarding, stalenessBreakpoints } = usePreferences(
-    useShallow((s) => ({
-      hasCompletedMapOnboarding: s.hasCompletedMapOnboarding,
-      stalenessBreakpoints: s.stalenessBreakpoints,
-    }))
-  )
+  const stalenessBreakpoints = usePreferences((s) => s.stalenessBreakpoints)
   const colors = useMarkerColors()
 
   const [droppedIds, setDroppedIds] = useState<string[]>([])
@@ -1522,14 +1559,6 @@ const MapScreen = ({
       ...c,
       pinColor: stalenessToColor(conversationIndex.stalenessFor(c.id), colors),
     }))
-
-  if (!hasCompletedMapOnboarding) {
-    return (
-      <Wrapper insets='none' style={{ flex: 1, paddingTop: topInset }}>
-        <MapOnboarding />
-      </Wrapper>
-    )
-  }
 
   return (
     <Wrapper insets='none' style={{ flexGrow: 1, position: 'relative' }}>

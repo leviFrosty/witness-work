@@ -8,9 +8,17 @@ const messageOf = (error: unknown): string => {
   return typeof message === 'string' ? message : ''
 }
 
+const codeOf = (error: unknown): number | null => {
+  if (!error || typeof error !== 'object') return null
+  const code = (error as { code?: unknown }).code
+  return typeof code === 'number' ? code : null
+}
+
 export const isLocationTemporarilyUnavailableError = (
   error: unknown
 ): boolean => {
+  const code = codeOf(error)
+  if (code === 2 || code === 3) return true
   const message = messageOf(error)
   return (
     /kCLErrorDomain(?:\s+Code=|\s+error\s+)0\b/i.test(message) ||
@@ -20,6 +28,7 @@ export const isLocationTemporarilyUnavailableError = (
 }
 
 export const isLocationOffError = (error: unknown): boolean => {
+  if (codeOf(error) === 1) return true
   const message = messageOf(error)
   return (
     /kCLErrorDomain(?:\s+Code=|\s+error\s+)1\b/i.test(message) ||

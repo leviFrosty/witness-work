@@ -315,6 +315,7 @@ export const PREFERENCE_DEFAULTS = {
 
   mapCardDetail: 'nextVisit' as MapCardDetail,
   hasCompletedMapOnboarding: false,
+  mapLocationPromptSeen: false,
 
   placeSearchLocationAsked: false,
   calledGoecodeApiTimes: 0,

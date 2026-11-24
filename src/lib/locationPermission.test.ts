@@ -6,15 +6,18 @@ const mocks = vi.hoisted(() => ({
   services: vi.fn(),
   alert: vi.fn(),
   openSettings: vi.fn(),
+  os: 'ios',
 }))
 
 vi.mock('react-native', () => ({
   Alert: { alert: mocks.alert },
   Linking: { openSettings: mocks.openSettings },
   Platform: {
-    OS: 'ios',
+    get OS() {
+      return mocks.os
+    },
     select: (choices: Record<string, unknown>) =>
-      'ios' in choices ? choices.ios : choices.default,
+      mocks.os in choices ? choices[mocks.os] : choices.default,
   },
 }))
 vi.mock('expo-location', () => ({
@@ -42,6 +45,7 @@ type Button = { text: string; onPress?: () => void }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.os = 'ios'
 })
 
 describe('requestOrOfferLocationSettings', () => {
@@ -80,6 +84,17 @@ describe('requestOrOfferLocationSettings', () => {
     ])
     buttons[1].onPress?.()
     expect(mocks.openSettings).toHaveBeenCalledOnce()
+  })
+
+  it('shows browser site-settings guidance without a dead Settings button on the web', async () => {
+    mocks.os = 'web'
+    mocks.get.mockResolvedValue({ granted: false, canAskAgain: false })
+    await expect(requestOrOfferLocationSettings()).resolves.toBe(false)
+    expect(mocks.request).not.toHaveBeenCalled()
+    expect(mocks.alert).toHaveBeenCalledExactlyOnceWith(
+      'locationSharingDisabled',
+      'locationNotice.blockedWeb'
+    )
   })
 })
 

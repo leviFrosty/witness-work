@@ -104,6 +104,7 @@ const preferences = {
   showBadges: false,
   contactsView: 'map',
   hasCompletedMapOnboarding: true,
+  mapLocationPromptSeen: true,
 }
 
 test.use({

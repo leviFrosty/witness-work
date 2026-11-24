@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   platform: 'ios',
   listeners: new Map<string, Set<() => void>>(),
   locationGranted: true,
+  locationStatus: 'granted' as 'granted' | 'denied' | 'undetermined',
+  locationCanAskAgain: true,
   navigate: vi.fn(),
   addListener: vi.fn(),
   updateContact: vi.fn(),
@@ -197,8 +199,19 @@ vi.mock('@/components/ui/Avatar', () => ({
 vi.mock('expo-crypto', () => ({ randomUUID: () => 'new-contact' }))
 vi.mock('expo-location', () => ({
   Accuracy: { BestForNavigation: 6 },
+  PermissionStatus: {
+    GRANTED: 'granted',
+    DENIED: 'denied',
+    UNDETERMINED: 'undetermined',
+  },
   getForegroundPermissionsAsync: async () => ({
     granted: mocks.locationGranted,
+    status: mocks.locationGranted
+      ? 'granted'
+      : mocks.locationStatus === 'granted'
+        ? 'undetermined'
+        : mocks.locationStatus,
+    canAskAgain: mocks.locationCanAskAgain,
   }),
   getLastKnownPositionAsync: async () => null,
   watchPositionAsync: mocks.watchPositionAsync,
@@ -248,6 +261,7 @@ vi.mock('@/stores/preferences', async () => {
   const { create } = await import('zustand')
   const usePreferences = create<Record<string, unknown>>((set) => ({
     hasCompletedMapOnboarding: true,
+    mapLocationPromptSeen: true,
     mapLayer: 'standard',
     set: (partial: Record<string, unknown>) => set(partial),
   }))
@@ -337,8 +351,8 @@ vi.mock('@/features/map/components/MapContactInspector', () => ({
 vi.mock('@/features/map/components/MapColorKey', () => ({
   default: 'MapColorKey',
 }))
-vi.mock('@/features/map/components/MapOnboarding', () => ({
-  default: 'MapOnboarding',
+vi.mock('@/features/map/components/MapLocationPromptModal', () => ({
+  default: 'MapLocationPromptModal',
 }))
 vi.mock('@/features/map/components/MapFindContacts', () => ({
   default: 'MapFindContacts',
@@ -387,6 +401,8 @@ beforeEach(async () => {
   mocks.appStateListeners.clear()
   mocks.watchPositionAsync.mockResolvedValue({ remove: mocks.removeWatch })
   mocks.locationGranted = true
+  mocks.locationStatus = 'granted'
+  mocks.locationCanAskAgain = true
   mocks.isWide = false
   mocks.platform = 'ios'
   setContacts([
@@ -396,7 +412,10 @@ beforeEach(async () => {
       coordinate: { latitude: 41, longitude: -73 },
     },
   ])
-  usePreferences.setState({ mapLayer: 'standard' })
+  usePreferences.setState({
+    mapLayer: 'standard',
+    mapLocationPromptSeen: true,
+  })
   mocks.addListener.mockImplementation((event, listener) => {
     const listeners = mocks.listeners.get(event) ?? new Set()
     listeners.add(listener)
@@ -996,5 +1015,45 @@ describe('Dragging a contact pin', () => {
       coordinate: { latitude: 41, longitude: -73 },
       userDraggedCoordinate: true,
     })
+  })
+})
+
+describe('First-open location explanation modal', () => {
+  const prompt = () => root.root.findByType('MapLocationPromptModal' as never)
+
+  it('presents the modal on first open when location permission is undetermined', async () => {
+    mocks.locationGranted = false
+    mocks.locationStatus = 'undetermined'
+    mocks.locationCanAskAgain = true
+    usePreferences.setState({ mapLocationPromptSeen: false })
+    await act(async () => root.unmount())
+    await act(async () => {
+      root = create(screen())
+    })
+    expect(prompt().props.open).toBe(true)
+
+    await act(async () => prompt().props.onResult(true))
+    expect(prompt().props.open).toBe(false)
+    expect(root.root.findByType(MapView).props.showsUserLocation).toBe(true)
+  })
+
+  it('skips the modal when location was already granted or denied', async () => {
+    mocks.locationGranted = false
+    mocks.locationStatus = 'denied'
+    mocks.locationCanAskAgain = false
+    usePreferences.setState({ mapLocationPromptSeen: false })
+    await act(async () => root.unmount())
+    await act(async () => {
+      root = create(screen())
+    })
+    expect(prompt().props.open).toBe(false)
+    expect(usePreferences.getState().mapLocationPromptSeen).toBe(true)
+  })
+
+  it('keeps mapLocationPromptSeen local to each device', async () => {
+    const { NON_SYNCABLE_PREFERENCE_KEYS } = await import(
+      '@/lib/syncPreferencePolicy'
+    )
+    expect(NON_SYNCABLE_PREFERENCE_KEYS.has('mapLocationPromptSeen')).toBe(true)
   })
 })

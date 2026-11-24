@@ -5,17 +5,22 @@ import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 
 export const offerLocationSettings = () =>
-  Alert.alert(
-    i18n.t('locationSharingDisabled'),
-    i18n.t('locationSettings_description'),
-    [
-      { text: i18n.t('cancel'), style: 'cancel' },
-      {
-        text: i18n.t('locationDisabled_callToAction'),
-        onPress: () => void openAppSettings(),
-      },
-    ]
-  )
+  hasCapability('appSettings')
+    ? Alert.alert(
+        i18n.t('locationSharingDisabled'),
+        i18n.t('locationSettings_description'),
+        [
+          { text: i18n.t('cancel'), style: 'cancel' },
+          {
+            text: i18n.t('locationDisabled_callToAction'),
+            onPress: () => void openAppSettings(),
+          },
+        ]
+      )
+    : Alert.alert(
+        i18n.t('locationSharingDisabled'),
+        i18n.t('locationNotice.blockedWeb')
+      )
 
 export async function requestOrOfferLocationSettings(): Promise<boolean> {
   const current = await Location.getForegroundPermissionsAsync()

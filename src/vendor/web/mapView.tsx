@@ -41,6 +41,7 @@ import { coordinateFor, pointFor } from '@/lib/mapsFrame/projection'
 import { accountSessions } from '@/lib/serverAccount'
 import apis from '@/constants/apis'
 import { toHexColor } from '@/vendor/web/maps/color'
+import { observeUserLocation } from '@/vendor/web/location'
 import {
   createFrameClient,
   type FrameClient,
@@ -299,39 +300,10 @@ const MapView = forwardRef<unknown, WebMapViewProps>(
 
     const showsUser = !!props.showsUserLocation && status.state === 'ready'
     useEffect(() => {
-      if (!showsUser || !navigator.geolocation) return
-      let watch: number | null = null
-      let cancelled = false
-      let permission: PermissionStatus | null = null
-      const follow = () => {
-        if (cancelled || watch !== null) return
-        if (permission && permission.state !== 'granted') return
-        watch = navigator.geolocation.watchPosition(
-          ({ coords }) =>
-            clientRef.current?.setUserLocation({
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-            }),
-          () => clientRef.current?.setUserLocation(null),
-          { enableHighAccuracy: true, maximumAge: 60_000 }
-        )
-      }
-      void (async () => {
-        permission =
-          (await navigator.permissions
-            ?.query({ name: 'geolocation' })
-            .catch(() => null)) ?? null
-        if (cancelled) return
-
-        permission?.addEventListener('change', follow)
-        follow()
-      })()
-      return () => {
-        cancelled = true
-        permission?.removeEventListener('change', follow)
-        if (watch !== null) navigator.geolocation.clearWatch(watch)
-        clientRef.current?.setUserLocation(null)
-      }
+      if (!showsUser) return
+      return observeUserLocation((location) =>
+        clientRef.current?.setUserLocation(location)
+      )
     }, [showsUser])
 
     useImperativeHandle(ref, () => {

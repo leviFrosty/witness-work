@@ -17,6 +17,7 @@ import IsSupporter from '@/components/IsSupporter'
 import Card from '@/components/ui/Card'
 import LucideIcon from '@/components/ui/LucideIcon'
 import PointerHover from '@/components/ui/PointerHover'
+import { webFocus, webFocusVisual } from '@/components/ui/webFocus'
 import Text from '@/components/ui/MyText'
 import MyTextInput from '@/components/ui/TextInput'
 import useTheme from '@/contexts/theme'
@@ -69,6 +70,7 @@ const BackgroundEditButton = ({
       style={{ alignSelf: 'center' }}
       renderTrigger={({ onPress, expanded }) => (
         <Pressable
+          {...webFocus('proxy')}
           onPress={onPress}
           accessibilityRole='button'
           accessibilityLabel={i18n.t('contactHeroBackgroundColor')}
@@ -78,6 +80,7 @@ const BackgroundEditButton = ({
           {}
           <PointerHover effect='highlight'>
             <View
+              {...webFocusVisual}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -237,6 +240,7 @@ const ContactIdentityCard = ({
                   return (
                     <Pressable
                       key={key}
+                      {...webFocus('proxy')}
                       accessibilityRole='button'
                       accessibilityLabel={i18n.t(`gender_${key}`)}
                       accessibilityState={{ selected }}
@@ -255,6 +259,7 @@ const ContactIdentityCard = ({
                     >
                       <PointerHover effect='highlight'>
                         <View
+                          {...webFocusVisual}
                           style={{
                             width: 30,
                             height: 30,

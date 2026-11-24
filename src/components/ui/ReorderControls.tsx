@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import LucideIcon from '@/components/ui/LucideIcon'
 import { MIN_TOUCH_TARGET, touchTargetFrame } from '@/components/ui/touchTarget'
+import { webFocus, webFocusVisual } from '@/components/ui/webFocus'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 
@@ -30,6 +31,7 @@ export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {
       ].map(({ icon, onPress, label }) => (
         <Button
           key={label}
+          {...webFocus('proxy')}
           noTransform={!onPress}
           disabled={!onPress}
           onPress={onPress}
@@ -41,6 +43,7 @@ export default function ReorderControls({ onMoveUp, onMoveDown }: Props) {
           }}
         >
           <View
+            {...webFocusVisual}
             style={{
               width: BUTTON_SIZE,
               height: BUTTON_SIZE,

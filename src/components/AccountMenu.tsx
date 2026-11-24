@@ -147,7 +147,7 @@ export default function AccountMenu({
         }
         fill={showsName}
         pointerEffect={inSidebar ? 'tint' : undefined}
-        hoverRadius={inSidebar ? 16 : undefined}
+        hoverRadius={inSidebar ? 16 : 999}
         testID={inSidebar ? 'sidebar-account' : 'account-menu'}
         actions={[
           [

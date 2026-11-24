@@ -70,7 +70,6 @@ function useFieldStyle(inline: boolean): CSSProperties {
     color: theme.colors.text,
     colorScheme: scheme,
     font: `${theme.fontSize(inline ? 'lg' : 'md')}px ${theme.fonts.regular}, system-ui, sans-serif`,
-    outlineOffset: 2,
   }
 }
 

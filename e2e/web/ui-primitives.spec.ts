@@ -805,3 +805,146 @@ test.describe('a touch screen', () => {
     if (style.callout !== undefined) expect(style.callout).toBe('none')
   })
 })
+
+test.describe('focus rings', () => {
+  test.use({ seed: { contacts: [menuContact] } })
+
+  const focusByKeyboard = async (page: Page, locator: Locator) => {
+    await locator.scrollIntoViewIfNeeded()
+    await page.keyboard.press('Tab')
+    await locator.focus()
+  }
+
+  const readRing = (locator: Locator) =>
+    locator.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: Number.parseFloat(style.outlineWidth),
+        outlineOffset: Number.parseFloat(style.outlineOffset),
+        borderTopLeftRadius: Number.parseFloat(style.borderTopLeftRadius),
+        borderTopRightRadius: Number.parseFloat(style.borderTopRightRadius),
+        borderBottomLeftRadius: Number.parseFloat(style.borderBottomLeftRadius),
+        borderBottomRightRadius: Number.parseFloat(
+          style.borderBottomRightRadius
+        ),
+        paddingLeft: Number.parseFloat(style.paddingLeft),
+        paddingRight: Number.parseFloat(style.paddingRight),
+      }
+    })
+
+  test('Contact Form controls match focus ring shapes with zero clipping', async ({
+    app,
+  }) => {
+    await app.getByRole('button', { name: 'Add Contact' }).first().click()
+    await expect(app.getByTestId('contact-name-input')).toBeVisible()
+
+    const avatar = app.getByRole('button', { name: 'Profile Picture' })
+    await focusByKeyboard(app, avatar)
+    expect((await readRing(avatar)).outlineStyle).toBe('none')
+    const avatarVisual = avatar.locator('[data-ww-focus-visual]').first()
+    const avatarRing = await readRing(avatarVisual)
+    expect(avatarRing.outlineStyle).toBe('solid')
+    expect(avatarRing.outlineWidth).toBeGreaterThanOrEqual(2)
+    expect(avatarRing.borderTopLeftRadius).toBeGreaterThanOrEqual(32)
+
+    const male = app.getByRole('button', { name: 'Male', exact: true })
+    await focusByKeyboard(app, male)
+    expect((await sizeOf(male)).width).toBeGreaterThanOrEqual(44)
+    expect((await sizeOf(male)).height).toBeGreaterThanOrEqual(44)
+    expect((await readRing(male)).outlineStyle).toBe('none')
+    const maleRing = await readRing(
+      male.locator('[data-ww-focus-visual]').first()
+    )
+    expect(maleRing.outlineStyle).toBe('solid')
+    expect(maleRing.borderTopLeftRadius).toBe(15)
+
+    const bg = app.getByRole('button', { name: 'Background', exact: true })
+    await focusByKeyboard(app, bg)
+    expect((await readRing(bg)).outlineStyle).toBe('none')
+    const bgRing = await readRing(bg.locator('[data-ww-focus-visual]').first())
+    expect(bgRing.outlineStyle).toBe('solid')
+    expect(bgRing.borderTopLeftRadius).toBe(15)
+
+    const pinInfo = app.getByRole('button', {
+      name: 'About Pin on Map',
+      exact: true,
+    })
+    await focusByKeyboard(app, pinInfo)
+    expect((await sizeOf(pinInfo)).width).toBeGreaterThanOrEqual(44)
+    expect((await readRing(pinInfo)).outlineStyle).toBe('none')
+    const infoRing = await readRing(
+      pinInfo.locator('[data-ww-focus-visual]').first()
+    )
+    expect(infoRing.outlineStyle).toBe('solid')
+    expect(infoRing.borderTopLeftRadius).toBeGreaterThanOrEqual(12)
+
+    const phoneInput = app.locator('input[inputmode="numeric"]').first()
+    await focusByKeyboard(app, phoneInput)
+    const phoneRing = await readRing(phoneInput)
+    expect(phoneRing.outlineStyle).toBe('solid')
+    expect(phoneRing.outlineOffset).toBe(-2)
+    expect(phoneRing.borderTopRightRadius).toBe(22)
+    expect(phoneRing.borderBottomRightRadius).toBe(22)
+    expect(phoneRing.borderTopLeftRadius).toBe(0)
+
+    await app.keyboard.press('Shift+Tab')
+    const flagRing = await app.evaluate(() => {
+      const style = getComputedStyle(document.activeElement!)
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineOffset: Number.parseFloat(style.outlineOffset),
+        borderTopLeftRadius: Number.parseFloat(style.borderTopLeftRadius),
+        borderBottomLeftRadius: Number.parseFloat(style.borderBottomLeftRadius),
+        borderTopRightRadius: Number.parseFloat(style.borderTopRightRadius),
+      }
+    })
+    expect(flagRing.outlineStyle).toBe('solid')
+    expect(flagRing.outlineOffset).toBe(-2)
+    expect(flagRing.borderTopLeftRadius).toBe(22)
+    expect(flagRing.borderBottomLeftRadius).toBe(22)
+    expect(flagRing.borderTopRightRadius).toBe(0)
+
+    const save = app.getByRole('button', { name: 'Save', exact: true })
+    await focusByKeyboard(app, save)
+    const saveRing = await readRing(save)
+    expect(saveRing.outlineStyle).toBe('solid')
+    expect(saveRing.outlineOffset).toBe(-2)
+    expect(saveRing.borderTopLeftRadius).toBe(10)
+    expect(saveRing.paddingLeft).toBe(10)
+    expect(saveRing.paddingRight).toBe(10)
+  })
+
+  test('Section rows and borderless form inputs render unclipped rings', async ({
+    app,
+  }) => {
+    await openCreatePlan(app)
+
+    const startRow = app.getByTestId('plan-start-row')
+    await focusByKeyboard(app, startRow)
+    const rowRing = await readRing(startRow)
+    expect(rowRing.outlineStyle).toBe('solid')
+    expect(rowRing.outlineOffset).toBe(-2)
+    expect(rowRing.borderTopLeftRadius).toBe(26)
+    expect(rowRing.borderTopRightRadius).toBe(26)
+
+    const titleInput = app.getByRole('textbox', { name: 'Title' })
+    await focusByKeyboard(app, titleInput)
+    const titleRing = await readRing(titleInput)
+    expect(titleRing.outlineStyle).toBe('solid')
+    expect(titleRing.outlineOffset).toBe(0)
+    expect(titleRing.borderTopLeftRadius).toBe(8)
+    expect(titleRing.paddingLeft).toBe(8)
+  })
+
+  test('PullDownMenu icon trigger has circular focus radius', async ({
+    app,
+  }) => {
+    await app.getByRole('button', { name: 'Contacts', exact: true }).click()
+    const more = app.getByRole('button', { name: 'More actions' }).first()
+    await focusByKeyboard(app, more)
+    const moreRing = await readRing(more)
+    expect(moreRing.outlineStyle).toBe('solid')
+    expect(moreRing.borderTopLeftRadius).toBe(999)
+  })
+})

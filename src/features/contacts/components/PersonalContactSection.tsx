@@ -15,11 +15,13 @@ import { parsePhoneNumber, PhoneNumberPossibility } from 'awesome-phonenumber'
 import Button from '@/components/ui/Button'
 import { Contact } from '@/types/contact'
 import {
+  Platform,
   TextInput,
   useColorScheme,
   useWindowDimensions,
   View,
 } from 'react-native'
+import { webFocusPhone } from '@/components/ui/webFocus'
 import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import { type Ref, useImperativeHandle, useMemo, useRef } from 'react'
 import * as Localization from 'expo-localization'
@@ -154,7 +156,20 @@ export default function PersonalContactSection({
         >
           {i18n.t('information')}
         </Text>
-        <Button onPress={openCustomFieldManager}>
+        <Button
+          onPress={openCustomFieldManager}
+          style={
+            Platform.OS === 'web'
+              ? {
+                  paddingHorizontal: 6,
+                  paddingVertical: 4,
+                  marginHorizontal: -6,
+                  marginVertical: -4,
+                  borderRadius: theme.numbers.borderRadiusSm,
+                }
+              : undefined
+          }
+        >
           <Text
             style={{
               fontSize: 12,
@@ -174,79 +189,88 @@ export default function PersonalContactSection({
               return (
                 <InputRowContainer key={field.id} lastInSection={last}>
                   <View style={{ flex: 1 }}>
-                    <PhoneInput
-                      hitSlop={{ top: 15, bottom: 15 }}
-                      value={contact.phone || ''}
-                      defaultValue={defaultValue}
-                      onChangePhoneNumber={(phone: string) => setPhone(phone)}
-                      defaultCountry={locales[0].regionCode as ICountryCca2}
-                      selectedCountry={country}
-                      placeholder={i18n.t('phone_placeholder')}
-                      placeholderTextColor={theme.colors.textAlt}
-                      popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
-                      onChangeSelectedCountry={handleCountryChange}
-                      theme={phoneTheme}
-                      inputMode='numeric'
-                      clearButtonMode='while-editing'
-                      multiline={wrapPhone}
-                      {...keyboardProps(index)}
-                      customCaret={<IconButton icon={ChevronDownIcon} />}
-                      phoneInputStyles={{
-                        container: {
-                          borderWidth: 0,
-                          borderRadius: 22,
-                          backgroundColor: theme.colors.background,
-                          minHeight: 44,
-                          overflow: 'hidden',
-                          ...(wrapPhone && { height: 'auto', minHeight: 48 }),
-                        },
-                        flagContainer: {
-                          backgroundColor: theme.colors.card,
-                          borderRadius: 0,
-                          paddingHorizontal: 12,
-                          minWidth: 88,
-                          ...(wrapPhone && {
-                            height: 'auto',
-                            alignSelf: 'stretch',
-                          }),
-                        },
-                        input: {
-                          fontSize: theme.fontSize('lg'),
+                    <View {...webFocusPhone}>
+                      <PhoneInput
+                        hitSlop={{ top: 15, bottom: 15 }}
+                        value={contact.phone || ''}
+                        defaultValue={defaultValue}
+                        onChangePhoneNumber={(phone: string) => setPhone(phone)}
+                        defaultCountry={locales[0].regionCode as ICountryCca2}
+                        selectedCountry={country}
+                        placeholder={i18n.t('phone_placeholder')}
+                        placeholderTextColor={theme.colors.textAlt}
+                        popularCountries={['US', 'KR', 'BR', 'JP', 'MX', 'CA']}
+                        onChangeSelectedCountry={handleCountryChange}
+                        theme={phoneTheme}
+                        inputMode='numeric'
+                        clearButtonMode='while-editing'
+                        multiline={wrapPhone}
+                        {...keyboardProps(index)}
+                        customCaret={<IconButton icon={ChevronDownIcon} />}
+                        phoneInputStyles={{
+                          container: {
+                            borderWidth: 0,
+                            borderRadius: 22,
+                            backgroundColor: theme.colors.background,
+                            minHeight: 44,
+                            overflow: 'hidden',
+                            ...(wrapPhone && { height: 'auto', minHeight: 48 }),
+                          },
+                          flagContainer: {
+                            backgroundColor: theme.colors.card,
+                            borderTopStartRadius: 22,
+                            borderBottomStartRadius: 22,
+                            borderTopEndRadius: 0,
+                            borderBottomEndRadius: 0,
+                            paddingHorizontal: 12,
+                            minWidth: 88,
+                            ...(wrapPhone && {
+                              height: 'auto',
+                              alignSelf: 'stretch',
+                            }),
+                          },
+                          input: {
+                            fontSize: theme.fontSize('lg'),
+                            borderTopStartRadius: 0,
+                            borderBottomStartRadius: 0,
+                            borderTopEndRadius: 22,
+                            borderBottomEndRadius: 22,
 
-                          textAlign: alignInput('start'),
-                          direction: 'ltr',
-                          paddingHorizontal: 10,
-                          color: theme.colors.text,
-                        },
-                        callingCode: {
-                          direction: 'ltr',
-                          fontSize: theme.fontSize('md'),
-                          color: theme.colors.text,
-                        },
-                        divider: {
-                          backgroundColor: theme.colors.border,
-                        },
-                        caret: {
-                          fontSize: theme.fontSize('sm'),
-                          color: theme.colors.textAlt,
-                        },
-                      }}
-                      modalStyles={{
-                        modal: {
-                          backgroundColor: theme.colors.background,
-                        },
-                        searchInput: {
-                          borderColor: theme.colors.border,
-                        },
-                        countryButton: {
-                          borderColor: theme.colors.border,
-                          backgroundColor: theme.colors.card,
-                          shadowColor: theme.colors.shadow,
-                          shadowOffset: { height: 1, width: 0 },
-                          shadowOpacity: theme.numbers.shadowOpacity,
-                        },
-                      }}
-                    />
+                            textAlign: alignInput('start'),
+                            direction: 'ltr',
+                            paddingHorizontal: 10,
+                            color: theme.colors.text,
+                          },
+                          callingCode: {
+                            direction: 'ltr',
+                            fontSize: theme.fontSize('md'),
+                            color: theme.colors.text,
+                          },
+                          divider: {
+                            backgroundColor: theme.colors.border,
+                          },
+                          caret: {
+                            fontSize: theme.fontSize('sm'),
+                            color: theme.colors.textAlt,
+                          },
+                        }}
+                        modalStyles={{
+                          modal: {
+                            backgroundColor: theme.colors.background,
+                          },
+                          searchInput: {
+                            borderColor: theme.colors.border,
+                          },
+                          countryButton: {
+                            borderColor: theme.colors.border,
+                            backgroundColor: theme.colors.card,
+                            shadowColor: theme.colors.shadow,
+                            shadowOffset: { height: 1, width: 0 },
+                            shadowOpacity: theme.numbers.shadowOpacity,
+                          },
+                        }}
+                      />
+                    </View>
                     {placeholder.current.length > 0 && !formatted.possible && (
                       <Text
                         style={{

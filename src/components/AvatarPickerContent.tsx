@@ -100,6 +100,7 @@ const EMOJI_CELL = 36
 const EMOJI_GAP = 2
 const SWATCH_SIZE = 24
 const SWATCH_GAP = 8
+const SWATCH_RING_PAD = 5
 
 const BACKGROUND_SWATCH_COUNT = ACCENT_PRESETS.length + 1
 export const BACKGROUND_SWATCHES_WIDTH =
@@ -140,11 +141,15 @@ export const BackgroundSwatches = ({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0, height: SWATCH_SIZE }}
+        style={{
+          flexGrow: 0,
+          height: SWATCH_SIZE + SWATCH_RING_PAD * 2,
+          margin: -SWATCH_RING_PAD,
+        }}
         contentContainerStyle={{
           alignItems: 'center',
           gap: SWATCH_GAP,
-          paddingVertical: 0,
+          padding: SWATCH_RING_PAD,
         }}
       >
         <PointerHover effect='lift'>

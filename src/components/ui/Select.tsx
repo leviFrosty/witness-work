@@ -6,6 +6,7 @@ import LucideIcon from '@/components/ui/LucideIcon'
 import {
   Platform,
   StyleProp,
+  StyleSheet,
   useWindowDimensions,
   View,
   ViewStyle,
@@ -66,12 +67,20 @@ const Select = <T,>({
     systemImage: item.systemImage,
   }))
 
+  const customRadius = StyleSheet.flatten(style)?.borderRadius
+  const hoverRadius =
+    typeof customRadius === 'number'
+      ? customRadius
+      : plain
+        ? theme.numbers.borderRadiusSm
+        : 999
+
   return (
     <SelectMenu
       items={menuItems}
       accessibilityLabel={accessibilityLabel ?? selectedLabel ?? placeholder}
       accessibilityValue={selectedLabel ?? placeholder ?? ''}
-      hoverRadius={theme.numbers.borderRadiusMd}
+      hoverRadius={hoverRadius}
       fill={!plain}
       onSelect={(id) => {
         const item = items.find((i) => String(i.value) === id)
@@ -84,6 +93,10 @@ const Select = <T,>({
             ? {
                 minHeight: 44,
                 marginVertical: -6,
+                ...(Platform.OS === 'web' && {
+                  paddingHorizontal: 8,
+                  marginRight: -8,
+                }),
                 paddingVertical: enlarged ? 8 : undefined,
                 gap: 6,
                 flexDirection: 'row',

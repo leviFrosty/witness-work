@@ -1,5 +1,5 @@
 import { ReactNode, RefObject } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import {
   ChevronDown as ChevronDownIcon,
   ChevronUp as ChevronUpIcon,
@@ -9,6 +9,7 @@ import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import Button from '@/components/ui/Button'
 import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import { webFocus, webFocusNotBottom } from '@/components/ui/webFocus'
 import useTheme from '@/contexts/theme'
 import { alignText } from '@/lib/direction'
 
@@ -21,8 +22,10 @@ export const formRowInputStyle = {
   flex: 1,
   minWidth: 0,
   borderWidth: 0,
+  borderRadius: 8,
   backgroundColor: 'transparent',
-  paddingHorizontal: 0,
+  paddingHorizontal: Platform.OS === 'web' ? 8 : 0,
+  ...(Platform.OS === 'web' && { marginHorizontal: -8 }),
 }
 
 const FormRow = (props: {
@@ -88,6 +91,8 @@ const FormRow = (props: {
       {props.onPress ? (
         <Button
           noTransform
+          {...webFocus('row')}
+          {...(props.expanded ? webFocusNotBottom : undefined)}
           onPress={props.onPress}
           accessibilityRole='button'
           accessibilityLabel={props.accessibilityLabel}

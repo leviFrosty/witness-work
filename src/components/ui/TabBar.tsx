@@ -43,6 +43,7 @@ import SidebarToggle from '@/components/ui/SidebarToggle'
 import SidebarResizeHandle from '@/components/ui/SidebarResizeHandle'
 import PointerTooltip from '@/components/ui/PointerTooltip'
 import PointerHover, { HoverTint } from '@/components/ui/PointerHover'
+import { webFocus } from '@/components/ui/webFocus'
 import { supportsWebHover } from '@/lib/pointerHover'
 import { refreshCurrentLocation } from '@/lib/currentLocation'
 import { useTabBarHidden } from '@/stores/tabBarVisibility'
@@ -202,7 +203,7 @@ const TabBar = ({
       ? RAIL_ITEM_SIZE / 2
       : hasSidebar
         ? SIDEBAR_CONTROL_RADIUS
-        : theme.numbers.borderRadiusMd
+        : (CAPSULE_HEIGHT - 8) / 2
 
     return (
       <PointerTooltip
@@ -231,6 +232,7 @@ const TabBar = ({
           }
         >
           <Pressable
+            {...(!hasSidebar ? webFocus('inset') : undefined)}
             accessibilityRole='button'
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={
@@ -409,6 +411,7 @@ const TabBar = ({
   const plusButton = (
     <Button
       noTransform
+      {...webFocus('inset')}
       onPress={() => {
         setSheetOpen(true)
       }}
@@ -420,6 +423,7 @@ const TabBar = ({
         justifyContent: 'center',
         gap: 2,
         paddingHorizontal: 10,
+        borderRadius: CAPSULE_HEIGHT / 2,
         backgroundColor: 'transparent',
       }}
     >
@@ -728,6 +732,7 @@ const TabBar = ({
               style={{
                 width: RAIL_ITEM_SIZE,
                 height: RAIL_ITEM_SIZE,
+                borderRadius: RAIL_ITEM_SIZE / 2,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

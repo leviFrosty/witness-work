@@ -123,6 +123,20 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   )
   const inputAlign = flowAlign === 'center' ? 'center' : alignInput(flowAlign)
 
+  const flatStyle = StyleSheet.flatten(style) as
+    | (TextStyle & { backgroundColor?: string; borderRadius?: number })
+    | undefined
+  const callerProps = rest as InputProps & {
+    backgroundColor?: string
+    borderColor?: string
+    borderRadius?: number
+    borderWidth?: number
+    borderStyle?: 'solid' | 'dotted' | 'dashed'
+  }
+  const transparentBackground =
+    (callerProps.backgroundColor ?? flatStyle?.backgroundColor) ===
+    'transparent'
+
   const resolvedStyle = StyleSheet.flatten([
     {
       minHeight: inputLayout.controlMinHeight,
@@ -132,7 +146,9 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
         ? inputLayout.sectionRadius
         : rest.multiline
           ? inputLayout.controlRadius
-          : 999,
+          : transparentBackground
+            ? theme.numbers.borderRadiusSm
+            : 999,
       borderCurve: 'continuous',
       borderColor: error || invalid ? theme.colors.error : theme.colors.border,
       backgroundColor: onScreen
@@ -168,13 +184,6 @@ const TextInput = forwardRef<InputRef, TextInputProps>((props, ref) => {
   resolvedStyle.fontFamily ??= theme.fonts.regular
   if (Platform.OS === 'web')
     toWebSpacing(resolvedStyle as unknown as Record<string, unknown>)
-  const callerProps = rest as InputProps & {
-    backgroundColor?: string
-    borderColor?: string
-    borderRadius?: number
-    borderWidth?: number
-    borderStyle?: 'solid' | 'dotted' | 'dashed'
-  }
   const borderWidth =
     error || invalid
       ? 1

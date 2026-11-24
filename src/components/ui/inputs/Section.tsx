@@ -18,6 +18,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets'
 import useTheme from '@/contexts/theme'
 import { inputLayout } from '@/components/ui/inputs/InputLayout'
+import { webFocusSection } from '@/components/ui/webFocus'
 
 type Props = ViewProps & {
   animateRows?: boolean
@@ -179,6 +180,7 @@ const Section: React.FC<PropsWithChildren<Props>> = ({
 
   return (
     <View
+      {...webFocusSection}
       style={[
         {
           borderColor: theme.colors.border,

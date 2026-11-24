@@ -28,7 +28,7 @@ vi.mock('@/contexts/theme', () => ({
       background: 'black',
       backgroundLighter: 'charcoal',
     },
-    numbers: { borderRadiusMd: 10 },
+    numbers: { borderRadiusSm: 8, borderRadiusMd: 10 },
     fonts: { regular: 'Regular' },
     fontSize: () => 16,
   }),
@@ -188,6 +188,13 @@ describe('TextInput surface', () => {
 
     expect(input().props.backgroundColor).toBe('charcoal')
     expect(input().props.borderRadius).toBe(999)
+  })
+
+  it('uses a subtle radius instead of a capsule for transparent borderless inputs', async () => {
+    await render({ style: { backgroundColor: 'transparent' } })
+
+    expect(input().props.backgroundColor).toBe('transparent')
+    expect(input().props.borderRadius).toBe(8)
   })
 
   it("keeps a caller's fill", async () => {

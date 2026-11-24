@@ -4,10 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const platform = vi.hoisted(() => ({ android: false }))
 const dims = vi.hoisted(() => ({ fontScale: 1 }))
-const { slot } = vi.hoisted(() => ({
-  slot: (name: string) => (props: React.PropsWithChildren) =>
-    React.createElement(name, props),
-}))
+const { slot, flatten } = vi.hoisted(() => {
+  const flatten = (style: unknown): Record<string, unknown> =>
+    Array.isArray(style)
+      ? Object.assign({}, ...style.map(flatten))
+      : ((style as Record<string, unknown>) ?? {})
+  return {
+    flatten,
+    slot: (name: string) => (props: React.PropsWithChildren) =>
+      React.createElement(name, props),
+  }
+})
 
 vi.mock('react-native', () => ({
   Platform: {
@@ -15,6 +22,7 @@ vi.mock('react-native', () => ({
     select: (spec: Record<string, unknown>) => spec.ios ?? spec.default,
   },
   Pressable: 'Pressable',
+  StyleSheet: { flatten },
   View: 'View',
   useWindowDimensions: () => dims,
 }))
@@ -83,7 +91,7 @@ vi.mock('@/contexts/theme', () => ({
       textAlt: '#666',
       error: '#f00',
     },
-    numbers: { borderRadiusMd: 8 },
+    numbers: { borderRadiusSm: 8, borderRadiusMd: 8 },
     fontSize: () => 16,
   }),
 }))

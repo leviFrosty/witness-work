@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom'
 import type { View } from 'react-native'
 import useTheme from '@/contexts/theme'
 import { isRtlLayout } from '@/lib/direction'
+import FocusGuard from '@/components/ui/web/FocusGuard'
 import { FOCUSABLE } from '@/components/ui/web/focusTrap'
 import {
   type OverlayPlacement,
@@ -243,57 +244,51 @@ export default function WebLayer({
     if (event.key !== 'Tab') return
     if (!trapFocus) {
       onClose('tab')
-      return
-    }
-    const layer = layerRef.current
-    if (!layer) return
-    const items = [...layer.querySelectorAll<HTMLElement>(FOCUSABLE)]
-    const first = items[0]
-    const last = items.at(-1)
-    if (!first || !last) {
-      event.preventDefault()
-      return
-    }
-    const active = document.activeElement
-    if (event.shiftKey && (active === first || active === layer)) {
-      event.preventDefault()
-      last.focus()
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault()
-      first.focus()
     }
   }
 
   return createPortal(
-    <div
-      ref={layerRef}
-      role={role}
-      aria-label={label}
-      tabIndex={-1}
-      onKeyDown={onKeyDown}
-      onPointerDownCapture={(event) => pressesInside.add(event.nativeEvent)}
-      style={{
-        position: 'fixed',
-        zIndex: Z_INDEX,
-        boxSizing: 'border-box',
-        left: placed?.left ?? 0,
-        top: placed?.top ?? 0,
+    <>
+      <FocusGuard
+        edge='start'
+        active={trapFocus && open && ready}
+        containerRef={layerRef}
+      />
+      <div
+        ref={layerRef}
+        role={role}
+        aria-label={label}
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        onPointerDownCapture={(event) => pressesInside.add(event.nativeEvent)}
+        style={{
+          position: 'fixed',
+          zIndex: Z_INDEX,
+          boxSizing: 'border-box',
+          left: placed?.left ?? 0,
+          top: placed?.top ?? 0,
 
-        visibility: placed ? 'visible' : 'hidden',
-        maxHeight: placed ? placed.maxHeight : undefined,
-        minWidth,
-        overflowY: 'auto',
-        outline: 'none',
-        color: theme.colors.text,
-        backgroundColor: theme.colors.card,
-        border: `1px solid ${theme.colors.border}`,
-        borderRadius: theme.numbers.borderRadiusMd,
-        boxShadow: `0 8px 28px ${theme.colors.shadow}33`,
-        ...style,
-      }}
-    >
-      {children}
-    </div>,
+          visibility: placed ? 'visible' : 'hidden',
+          maxHeight: placed ? placed.maxHeight : undefined,
+          minWidth,
+          overflowY: 'auto',
+          outline: 'none',
+          color: theme.colors.text,
+          backgroundColor: theme.colors.card,
+          border: `1px solid ${theme.colors.border}`,
+          borderRadius: theme.numbers.borderRadiusMd,
+          boxShadow: `0 8px 28px ${theme.colors.shadow}33`,
+          ...style,
+        }}
+      >
+        {children}
+      </div>
+      <FocusGuard
+        edge='end'
+        active={trapFocus && open && ready}
+        containerRef={layerRef}
+      />
+    </>,
     container
   )
 }

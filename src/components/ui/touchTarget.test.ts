@@ -48,3 +48,28 @@ describe('touchTargetFrame', () => {
     })
   })
 })
+
+describe('webTextTargetFrame', () => {
+  it('centers text with balanced horizontal padding and matching negative edge margin on web', async () => {
+    const { webTextTargetFrame } = await load('web')
+    expect(webTextTargetFrame('end')).toMatchObject({
+      minWidth: 44,
+      minHeight: 44,
+      paddingHorizontal: 10,
+      marginRight: -10,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    })
+    expect(webTextTargetFrame('start')).toMatchObject({
+      paddingHorizontal: 10,
+      marginLeft: -10,
+      alignItems: 'center',
+    })
+  })
+
+  it('returns an empty style on native platforms', async () => {
+    const { webTextTargetFrame } = await load('ios')
+    expect(webTextTargetFrame('end')).toEqual({})
+  })
+})

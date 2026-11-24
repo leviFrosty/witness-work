@@ -8,6 +8,7 @@ import AvatarPickerContent, {
   AvatarMetaCapture,
 } from '@/components/AvatarPickerContent'
 import Popover from '@/components/ui/Popover'
+import { webFocus, webFocusVisual } from '@/components/ui/webFocus'
 import i18n from '@/lib/locales'
 
 interface Props {
@@ -61,13 +62,17 @@ const AvatarPickerPopover = ({
       style={{ margin: -EDIT_BADGE_OVERHANG }}
       renderTrigger={({ onPress }) => (
         <Pressable
+          {...webFocus('proxy')}
           accessibilityLabel={accessibilityLabel ?? i18n.t('profilePicture')}
           accessibilityRole='button'
           onPress={onPress}
           hitSlop={8}
           style={{ padding: EDIT_BADGE_OVERHANG }}
         >
-          <View>
+          <View
+            {...webFocusVisual}
+            style={{ width: size, height: size, borderRadius: size / 2 }}
+          >
             <Avatar
               avatar={value}
               name={(name ?? '').trim()}

@@ -24,6 +24,7 @@ import MyTextInput from '@/components/ui/TextInput'
 import PullDownMenu from '@/components/ui/PullDownMenu'
 import ReorderControls from '@/components/ui/ReorderControls'
 import { submitScope } from '@/components/ui/submitScope'
+import { webFocusRowSplit } from '@/components/ui/webFocus'
 import type {
   GroupedListPickerRowProps,
   GroupedListProps,
@@ -141,6 +142,7 @@ export function GroupedListReorderSection<T>({
         return (
           <View
             key={keyExtractor(item)}
+            {...webFocusRowSplit}
             style={{ flexDirection: 'row', alignItems: 'center' }}
           >
             <View style={{ paddingStart: inputLayout.horizontalPadding - 4 }}>

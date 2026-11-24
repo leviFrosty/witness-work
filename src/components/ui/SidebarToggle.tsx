@@ -39,6 +39,7 @@ function ToggleButton({
         style={{
           width: SIDEBAR_TOGGLE_SIZE,
           height: SIDEBAR_TOGGLE_SIZE,
+          borderRadius: SIDEBAR_TOGGLE_SIZE / 2,
           alignItems: 'center',
           justifyContent: 'center',
         }}

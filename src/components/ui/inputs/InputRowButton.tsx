@@ -12,6 +12,7 @@ import useLinkMenuActions from '@/hooks/useLinkMenuActions'
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
+import { webFocus } from '@/components/ui/webFocus'
 
 interface Props {
   children?: ReactNode
@@ -85,6 +86,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   const withMenu = (row: React.ReactElement) => (
     <ContextMenu
       accessibilityLabel={label}
+      focusMode='row'
       onPress={() => {
         Haptics.light()
         onPress?.()
@@ -177,6 +179,7 @@ const InputRowButton: React.FC<PropsWithChildren<Props>> = ({
   return (
     <Button
       noTransform
+      {...webFocus('row')}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityState={
         onPress

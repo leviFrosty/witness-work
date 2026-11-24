@@ -21,8 +21,11 @@ export const webTextTargetFrame = (
     ? {
         minWidth: MIN_TOUCH_TARGET,
         minHeight: MIN_TOUCH_TARGET,
+        paddingHorizontal: 10,
+        ...(side === 'end' ? { marginRight: -10 } : { marginLeft: -10 }),
+        borderRadius: 10,
         justifyContent: 'center',
-        alignItems: side === 'end' ? 'flex-end' : 'flex-start',
+        alignItems: 'center',
       }
     : {}
 

@@ -7,7 +7,8 @@ import {
 } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 import useTheme from '@/contexts/theme'
-import { trapTab } from '@/components/ui/web/focusTrap'
+import FocusGuard from '@/components/ui/web/FocusGuard'
+import { focusLast } from '@/components/ui/web/focusTrap'
 import { useSheetName } from '@/components/ui/web/sheetName'
 import type { NativeSheetProps } from '@/components/ui/Sheet.types'
 import {
@@ -47,6 +48,7 @@ export default function DialogSheet({
   const theme = useTheme()
   const { height: viewport } = useWindowDimensions()
   const ref = useRef<HTMLDialogElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const pressedBackdrop = useRef(false)
   const [state, setState] = useState<'open' | 'closed'>(
@@ -87,7 +89,16 @@ export default function DialogSheet({
         event.preventDefault()
         dismiss()
       }}
-      onKeyDown={(event) => trapTab(event)}
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Tab' &&
+          event.shiftKey &&
+          document.activeElement === event.currentTarget
+        ) {
+          event.preventDefault()
+          if (contentRef.current) focusLast(contentRef.current, ref.current)
+        }
+      }}
       onPointerDown={(event) => {
         pressedBackdrop.current = event.target === event.currentTarget
       }}
@@ -111,16 +122,30 @@ export default function DialogSheet({
       <style href='ww-dialog-sheet' precedence='ww'>
         {css}
       </style>
-      <View
-        style={{
-          flexShrink: 1,
-          flexGrow: fixedHeight ? 1 : 0,
-          minHeight: 0,
-          paddingBottom: 12,
-        }}
-      >
-        {children}
-      </View>
+      <FocusGuard
+        edge='start'
+        active={open}
+        containerRef={contentRef}
+        fallbackRef={ref}
+      />
+      <div ref={contentRef} style={{ display: 'contents' }}>
+        <View
+          style={{
+            flexShrink: 1,
+            flexGrow: fixedHeight ? 1 : 0,
+            minHeight: 0,
+            paddingBottom: 12,
+          }}
+        >
+          {children}
+        </View>
+      </div>
+      <FocusGuard
+        edge='end'
+        active={open}
+        containerRef={contentRef}
+        fallbackRef={ref}
+      />
     </dialog>
   )
 }

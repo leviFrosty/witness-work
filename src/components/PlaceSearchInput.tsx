@@ -2,10 +2,12 @@ import { LocateFixed as LocateFixedIcon } from 'lucide-react-native'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Platform,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
+import { webFocus } from '@/components/ui/webFocus'
 import * as Location from 'expo-location'
 import { openAppSettings } from '@/lib/openAppSettings'
 import { hasCapability } from '@/lib/platformCapabilities'
@@ -91,6 +93,7 @@ const LocationStatusControl = ({
         style={{
           width: 44,
           height: 44,
+          borderRadius: 22,
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -110,19 +113,23 @@ const suggestionLabel = (suggestion: PlaceSuggestion) =>
 
 const SuggestionRow = ({
   suggestion,
+  isFirst,
   isLast,
   onPress,
 }: {
   suggestion: PlaceSuggestion
+  isFirst: boolean
   isLast: boolean
   onPress: () => void
 }) => {
   const theme = useTheme()
   const [hovered, setHovered] = useState(false)
+  const listRadius = theme.numbers.borderRadiusMd
 
   return (
     <PointerHover onHoverChange={setHovered}>
       <TouchableOpacity
+        {...webFocus('inset')}
         accessibilityRole='button'
         accessibilityLabel={suggestionLabel(suggestion)}
         onPress={onPress}
@@ -133,6 +140,10 @@ const SuggestionRow = ({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
+          borderTopStartRadius: isFirst ? listRadius : 0,
+          borderTopEndRadius: isFirst ? listRadius : 0,
+          borderBottomStartRadius: isLast ? listRadius : 0,
+          borderBottomEndRadius: isLast ? listRadius : 0,
           borderBottomWidth: isLast ? 0 : 1,
           borderBottomColor: theme.colors.border,
         }}
@@ -330,8 +341,10 @@ export default function PlaceSearchInput({
             minWidth: 0,
             ...(borderless && {
               borderWidth: 0,
+              borderRadius: theme.numbers.borderRadiusSm,
               backgroundColor: 'transparent',
-              paddingHorizontal: 0,
+              paddingHorizontal: Platform.OS === 'web' ? 8 : 0,
+              ...(Platform.OS === 'web' && { marginLeft: -8 }),
             }),
           }}
           value={picked ? suggestionLabel(picked) : query}
@@ -377,6 +390,7 @@ export default function PlaceSearchInput({
             <SuggestionRow
               key={suggestion.id}
               suggestion={suggestion}
+              isFirst={index === 0}
               isLast={index === suggestions.length - 1}
               onPress={() => select(suggestion)}
             />

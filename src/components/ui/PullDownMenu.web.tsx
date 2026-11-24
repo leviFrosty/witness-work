@@ -35,6 +35,7 @@ export default function PullDownMenu({
   if (!groups.length) return null
 
   const frame: ViewStyle = children ? {} : touchTargetFrame(triggerSize)
+  const radius = hoverRadius ?? (children ? undefined : 999)
 
   return (
     <View style={[fill && { alignSelf: 'stretch' }, style]}>
@@ -59,7 +60,7 @@ export default function PullDownMenu({
           testID={testID}
           style={({ pressed }) => [
             frame,
-            { borderRadius: hoverRadius },
+            { borderRadius: radius },
             pressed && { opacity: 0.7 },
           ]}
         >
@@ -72,7 +73,7 @@ export default function PullDownMenu({
           )}
           <HoverTint
             visible={hovered && pointerEffect !== 'none'}
-            borderRadius={hoverRadius ?? (children ? undefined : 999)}
+            borderRadius={radius}
           />
         </Pressable>
       </PointerHover>

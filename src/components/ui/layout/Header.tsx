@@ -30,6 +30,7 @@ import { useSystemBackButton } from '@/components/ui/layout/SystemBackButton'
 import { useLocalFoldPane } from '@/components/ui/layout/FoldPane'
 import { submitHeader } from '@/components/ui/submitScope'
 import { useIsPanelRoot } from '@/components/ui/layout/stackPanel'
+import { webFocusHeader } from '@/components/ui/webFocus'
 
 type Props = {
   backgroundColor?: string
@@ -176,6 +177,7 @@ const HeaderContent = ({
         onRegionsChange={onRegionsChange}
       />
       <WindowControlsInsetView
+        {...webFocusHeader}
         onInsetsChange={setControls}
         style={{
           position: 'relative',

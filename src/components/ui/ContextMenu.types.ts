@@ -6,6 +6,7 @@ import type {
   ViewStyle,
 } from 'react-native'
 import type { ButtonProps } from '@expo/ui/swift-ui'
+import type { WebFocusMode } from '@/components/ui/webFocus'
 
 export type MenuImage = { uri: string; scale: number }
 
@@ -65,6 +66,8 @@ export type ContextMenuProps = {
   pointerEffect?: 'tint' | 'highlight' | 'lift' | 'none'
 
   hoverRadius?: number
+
+  focusMode?: WebFocusMode
 
   fitContent?: boolean
 

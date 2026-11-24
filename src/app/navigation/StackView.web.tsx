@@ -15,6 +15,7 @@ import useResolvedScheme from '@/components/ui/web/useResolvedScheme'
 import { isRtlLayout } from '@/lib/direction'
 import { stackLayers, type StackLayer } from '@/app/navigation/stackLayers'
 import { StackPanelContext } from '@/components/ui/layout/stackPanel'
+import FocusGuard from '@/components/ui/web/FocusGuard'
 
 type Props = ComponentProps<typeof NativeStackView>
 type State = Props['state']
@@ -22,6 +23,15 @@ type Route = State['routes'][number]
 type Descriptors = Props['descriptors']
 type Layer = StackLayer<Route>
 type Leaving = Layer & { descriptors: Descriptors }
+
+const MODAL_PRESENTATIONS = new Set([
+  'modal',
+  'formSheet',
+  'pageSheet',
+  'fullScreenModal',
+  'transparentModal',
+  'containedTransparentModal',
+])
 
 const PANEL_MIN_WIDTH = 768
 const PANEL_MAX_WIDTH = 840
@@ -122,36 +132,45 @@ export default function StackView({
     from: Descriptors,
     isTop: boolean,
     closing: boolean
-  ) => (
-    <LayerView
-      key={layer.key}
-      kind={layer.kind}
-      visible={layer.visible || closing}
-      interactive={isTop && !closing}
-      closing={closing}
-      animateIn={mounted.current}
-      topKey={layer.routes.at(-1)!.key}
-      depth={layer.routes.length}
-      animation={from[layer.routes.at(-1)!.key]?.options.animation}
-      onDismiss={() => dismiss(layer)}
-    >
-      <StackPanelContext.Provider
-        value={layer.kind === 'panel' ? layer.key : null}
+  ) => {
+    const rootPresentation = from[layer.routes[0]!.key]?.options.presentation
+    const trapFocus =
+      layer.kind === 'panel' ||
+      layer.kind === 'overlay' ||
+      (rootPresentation !== undefined &&
+        MODAL_PRESENTATIONS.has(rootPresentation))
+    return (
+      <LayerView
+        key={layer.key}
+        kind={layer.kind}
+        visible={layer.visible || closing}
+        interactive={isTop && !closing}
+        closing={closing}
+        trapFocus={trapFocus}
+        animateIn={mounted.current}
+        topKey={layer.routes.at(-1)!.key}
+        depth={layer.routes.length}
+        animation={from[layer.routes.at(-1)!.key]?.options.animation}
+        onDismiss={() => dismiss(layer)}
       >
-        <NativeStackView
-          state={{
-            ...state,
-            routes: layer.routes,
-            index: layer.routes.length - 1,
-            preloadedRoutes: layer === layers[0] ? state.preloadedRoutes : [],
-          }}
-          navigation={navigation}
-          descriptors={from}
-          describe={describe}
-        />
-      </StackPanelContext.Provider>
-    </LayerView>
-  )
+        <StackPanelContext.Provider
+          value={layer.kind === 'panel' ? layer.key : null}
+        >
+          <NativeStackView
+            state={{
+              ...state,
+              routes: layer.routes,
+              index: layer.routes.length - 1,
+              preloadedRoutes: layer === layers[0] ? state.preloadedRoutes : [],
+            }}
+            navigation={navigation}
+            descriptors={from}
+            describe={describe}
+          />
+        </StackPanelContext.Provider>
+      </LayerView>
+    )
+  }
 
   return createElement(
     'div',
@@ -172,6 +191,7 @@ function LayerView({
   visible,
   interactive,
   closing,
+  trapFocus,
   animateIn,
   topKey,
   depth,
@@ -183,6 +203,7 @@ function LayerView({
   visible: boolean
   interactive: boolean
   closing: boolean
+  trapFocus: boolean
   animateIn: boolean
   topKey: string
   depth: number
@@ -197,15 +218,15 @@ function LayerView({
   const pressedBackdrop = useRef(false)
   const panel = kind === 'panel'
   const still = animation === 'none'
-  const opening = useRef({ animateIn, panel, kind, still })
+  const opening = useRef({ animateIn, panel, trapFocus, kind, still })
 
   useLayoutEffect(() => {
     if (layer.current) layer.current.inert = !interactive
   }, [interactive])
 
   useEffect(() => {
-    const { panel, animateIn } = opening.current
-    if (!panel || !animateIn) return
+    const { trapFocus: shouldTrap, animateIn } = opening.current
+    if (!shouldTrap || !animateIn) return
     const opener = document.activeElement
 
     let tries = 0
@@ -324,11 +345,17 @@ function LayerView({
           WebkitBackdropFilter: 'blur(6px)',
         },
       }),
+    trapFocus &&
+      createElement(FocusGuard, {
+        edge: 'start',
+        active: interactive,
+        containerRef: frame,
+      }),
     createElement(
       'div',
       {
         ref: frame,
-        tabIndex: panel ? -1 : undefined,
+        tabIndex: trapFocus ? -1 : undefined,
         'data-submit-scope': panel ? '' : undefined,
         style: panel
           ? {
@@ -351,9 +378,16 @@ function LayerView({
               inset: 0,
               display: 'flex',
               flexDirection: 'column',
+              outline: trapFocus ? 'none' : undefined,
             },
       },
       children
-    )
+    ),
+    trapFocus &&
+      createElement(FocusGuard, {
+        edge: 'end',
+        active: interactive,
+        containerRef: frame,
+      })
   )
 }

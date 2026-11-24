@@ -11,6 +11,7 @@ import { isRtlLayout } from '@/lib/direction'
 import { menuGroups } from '@/components/ui/menuEntries'
 import WebLayer, { useAnchor } from '@/components/ui/web/WebLayer'
 import WebMenu from '@/components/ui/web/WebMenu'
+import { webFocus } from '@/components/ui/webFocus'
 import type { ContextMenuProps } from '@/components/ui/ContextMenu.types'
 
 export type {
@@ -47,6 +48,7 @@ export default function ContextMenu({
   disabled = false,
   pointerEffect = 'tint',
   hoverRadius,
+  focusMode,
   onOpenChange,
   style,
   testID,
@@ -113,6 +115,7 @@ export default function ContextMenu({
   const trigger: ReactNode = onPress ? (
     <Pressable
       ref={contentRef}
+      {...(focusMode ? webFocus(focusMode) : undefined)}
       onPress={() => {
         if (Date.now() >= swallowUntil.current) onPress()
       }}

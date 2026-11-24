@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Image, Linking, StyleSheet, View } from 'react-native'
+import { Image, StyleSheet, View } from 'react-native'
 import ActionButton from '@/components/ui/ActionButton'
 import IconButton from '@/components/ui/IconButton'
 import Text from '@/components/ui/MyText'
@@ -7,6 +7,7 @@ import { X } from 'lucide-react-native'
 import { ANDROID_INSTALL_TARGET } from '@/constants/webInstall'
 import useTheme from '@/contexts/theme'
 import { analytics } from '@/lib/analytics'
+import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import {
   dismissInstallBanner,
@@ -44,7 +45,7 @@ export default function InstallAppBanner() {
 
   const install = async () => {
     if (ANDROID_INSTALL_TARGET.source === 'play') {
-      void Linking.openURL(ANDROID_INSTALL_TARGET.url)
+      void openURL(ANDROID_INSTALL_TARGET.url)
       return
     }
 

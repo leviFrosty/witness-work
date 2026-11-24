@@ -26,6 +26,11 @@ const isInIfCondition = (node) => {
   return false
 }
 
+export const linkingOpenUrlMessage =
+  'Use openURL() from @/lib/links instead of Linking.openURL(), which navigates the current tab on the web.'
+
+const LINKING_SOURCES = new Set(['expo-linking', 'react-native'])
+
 export default {
   rules: {
     'platform-android-choice': {
@@ -45,6 +50,56 @@ export default {
             context.report({ node, message: platformMessage })
         },
       }),
+    },
+    'no-direct-linking-open-url': {
+      meta: { type: 'problem', schema: [] },
+      create: (context) => {
+        const linkingBindings = new Set()
+        return {
+          ImportDeclaration(node) {
+            const source = node.source?.value
+            if (!LINKING_SOURCES.has(source)) return
+            for (const specifier of node.specifiers) {
+              if (
+                source === 'expo-linking' &&
+                specifier.type === 'ImportSpecifier' &&
+                specifier.imported?.name === 'openURL'
+              ) {
+                context.report({
+                  node: specifier,
+                  message: linkingOpenUrlMessage,
+                })
+              }
+              if (
+                source === 'expo-linking' &&
+                specifier.type === 'ImportNamespaceSpecifier'
+              ) {
+                linkingBindings.add(specifier.local.name)
+              }
+              if (
+                source === 'react-native' &&
+                specifier.type === 'ImportSpecifier' &&
+                specifier.imported?.name === 'Linking'
+              ) {
+                linkingBindings.add(specifier.local.name)
+              }
+            }
+          },
+          CallExpression(node) {
+            const callee = node.callee
+            if (
+              callee?.type === 'MemberExpression' &&
+              !callee.computed &&
+              callee.object.type === 'Identifier' &&
+              linkingBindings.has(callee.object.name) &&
+              callee.property.type === 'Identifier' &&
+              callee.property.name === 'openURL'
+            ) {
+              context.report({ node, message: linkingOpenUrlMessage })
+            }
+          },
+        }
+      },
     },
   },
 }

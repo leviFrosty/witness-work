@@ -502,6 +502,16 @@ export default tseslint.config(
     rules: { 'witnesswork/platform-android-choice': 'error' },
   },
   {
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      'src/lib/openExternalUrl.ts',
+      'src/__tests__/**',
+      'src/**/*.test.{ts,tsx}',
+    ],
+    plugins: { witnesswork: witnessworkPlugin },
+    rules: { 'witnesswork/no-direct-linking-open-url': 'error' },
+  },
+  {
     files: ['src/**/*.{js,jsx,ts,tsx}', 'App.tsx', 'env.ts'],
     languageOptions: {
       globals: {

@@ -1,7 +1,7 @@
-import * as Linking from 'expo-linking'
 import { Alert, AlertButton } from 'react-native'
 import { errorTracking } from '@/lib/errorTracking'
 import i18n from '@/lib/locales'
+import { openExternalUrl } from '@/lib/openExternalUrl'
 
 export const linkOrigin = (url: string) => {
   const match = /^([a-z][a-z\d+.-]*:)(?:\/\/(?:[^/?#@]*@)?([^/?#]*))?/i.exec(
@@ -24,12 +24,12 @@ export const openURL = async (
   }
 ): Promise<boolean> => {
   try {
-    await Linking.openURL(url)
+    await openExternalUrl(url)
     return true
   } catch {}
   if (options?.fallbackUrl) {
     try {
-      await Linking.openURL(options.fallbackUrl)
+      await openExternalUrl(options.fallbackUrl)
       return true
     } catch {}
   }

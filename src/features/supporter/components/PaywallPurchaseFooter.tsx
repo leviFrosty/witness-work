@@ -1,7 +1,8 @@
-import { Linking, View } from 'react-native'
+import { View } from 'react-native'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
 import useTheme from '@/contexts/theme'
+import { openURL } from '@/lib/links'
 import i18n from '@/lib/locales'
 import links from '@/constants/links'
 import SupporterCtaButton from '@/features/supporter/components/SupporterCtaButton'
@@ -144,7 +145,7 @@ export function PaywallLegalFooter({
       )}
       <Button
         onPress={() => {
-          Linking.openURL(links.termsOfUse)
+          void openURL(links.termsOfUse)
         }}
         style={{ minHeight: 44, justifyContent: 'center' }}
       >
@@ -160,7 +161,7 @@ export function PaywallLegalFooter({
       </Button>
       <Button
         onPress={() => {
-          Linking.openURL(links.privacyPolicy)
+          void openURL(links.privacyPolicy)
         }}
         style={{ minHeight: 44, justifyContent: 'center' }}
       >

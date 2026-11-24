@@ -5,7 +5,8 @@ import { payloadReferencesPhotos } from '@/app/sync/photoReferences'
 import { analytics } from '@/lib/analytics'
 import InfoPopover from '@/components/ui/InfoPopover'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Linking, View } from 'react-native'
+import { ActivityIndicator, Alert, View } from 'react-native'
+import { openURL } from '@/lib/links'
 import { X as XIcon } from 'lucide-react-native'
 import { ChevronForwardIcon } from '@/components/ui/DirectionalIcon'
 import { useNavigation } from '@react-navigation/native'
@@ -796,7 +797,7 @@ const PreferencesiCloudScreenInner = () => {
   }
 
   const handleOpenADP = () => {
-    void Linking.openURL(
+    void openURL(
       'https://support.apple.com/guide/security/advanced-data-protection-for-icloud-sec973254c5f/web'
     )
   }

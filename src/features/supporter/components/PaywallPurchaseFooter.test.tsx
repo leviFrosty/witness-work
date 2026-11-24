@@ -1,10 +1,12 @@
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const openURL = vi.hoisted(() => vi.fn())
+
 vi.mock('react-native', () => ({
-  Linking: { openURL: vi.fn() },
   View: 'View',
 }))
+vi.mock('@/lib/links', () => ({ openURL }))
 vi.mock('@/components/ui/Button', () => ({ default: 'Button' }))
 vi.mock('@/components/ui/MyText', () => ({ default: 'Text' }))
 vi.mock('@/features/supporter/components/SupporterCtaButton', () => ({
@@ -18,9 +20,16 @@ vi.mock('@/contexts/theme', () => ({
   }),
 }))
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
-vi.mock('@/constants/links', () => ({ default: {} }))
+vi.mock('@/constants/links', () => ({
+  default: {
+    termsOfUse: 'https://witnesswork.app/terms',
+    privacyPolicy: 'https://witnesswork.app/privacy',
+  },
+}))
 
-import PaywallPurchaseFooter from '@/features/supporter/components/PaywallPurchaseFooter'
+import PaywallPurchaseFooter, {
+  PaywallLegalFooter,
+} from '@/features/supporter/components/PaywallPurchaseFooter'
 
 let renderer: ReactTestRenderer | undefined
 const render = (props: Partial<Parameters<typeof PaywallPurchaseFooter>[0]>) =>
@@ -78,5 +87,24 @@ describe('PaywallPurchaseFooter', () => {
     render({ selected: true, onSignIn: vi.fn() })
     expect(texts()).toContain('paywallCtaReassuranceSupporter')
     expect(signIn()).toHaveLength(0)
+  })
+})
+
+describe('PaywallLegalFooter', () => {
+  it('opens Terms of Use and Privacy Policy through openURL', () => {
+    openURL.mockReset()
+    act(() => {
+      renderer = create(
+        <PaywallLegalFooter onRestore={vi.fn()} showRestore={false} />
+      )
+    })
+    const buttons = renderer!.root.findAllByType('Button' as never)
+    act(() => buttons[0].props.onPress())
+    act(() => buttons[1].props.onPress())
+    expect(openURL).toHaveBeenNthCalledWith(1, 'https://witnesswork.app/terms')
+    expect(openURL).toHaveBeenNthCalledWith(
+      2,
+      'https://witnesswork.app/privacy'
+    )
   })
 })

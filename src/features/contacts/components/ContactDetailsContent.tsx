@@ -293,7 +293,7 @@ const ContactDetailsContent = ({
     : undefined
   const email = contact.email
     ? () =>
-        openURL(`mailTo:${contact.email}`, {
+        openURL(`mailto:${contact.email}`, {
           alert: { description: i18n.t('failedToOpenMailApplication') },
         })
     : undefined

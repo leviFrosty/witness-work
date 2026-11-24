@@ -51,3 +51,35 @@ describe('witnesswork/platform-android-choice', () => {
     }
   )
 })
+
+describe('witnesswork/no-direct-linking-open-url', () => {
+  tester.run(
+    'no-direct-linking-open-url',
+    plugin.rules['no-direct-linking-open-url'] as Rule.RuleModule,
+    {
+      valid: [
+        "import { openURL } from '@/lib/links'; openURL('https://example.com')",
+        "import * as Linking from 'expo-linking'; Linking.parse('https://example.com')",
+        "import { Linking } from 'react-native'; Linking.openSettings()",
+      ],
+      invalid: [
+        {
+          code: "import * as Linking from 'expo-linking'; Linking.openURL('https://example.com')",
+          errors: 1,
+        },
+        {
+          code: "import { openURL } from 'expo-linking'; openURL('https://example.com')",
+          errors: 1,
+        },
+        {
+          code: "import { Linking } from 'react-native'; Linking.openURL('https://example.com')",
+          errors: 1,
+        },
+        {
+          code: "import { Linking as RNLinking } from 'react-native'; RNLinking.openURL('https://example.com')",
+          errors: 1,
+        },
+      ],
+    }
+  )
+})

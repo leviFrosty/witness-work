@@ -24,6 +24,7 @@ const webStubs = [
   { request: 'lottie-react-native', stub: 'lottieView.tsx' },
   { request: 'react-native-maps', stub: 'mapView.tsx' },
   { request: 'expo-notifications', stub: 'notifications.ts' },
+  { request: 'expo-location', stub: 'location.ts' },
 
   { request: 'expo/internal/async-require-module', stub: 'asyncRequire.ts' },
 ]

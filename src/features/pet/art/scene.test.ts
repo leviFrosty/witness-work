@@ -20,6 +20,14 @@ import {
   type ResolvedRoom,
   type SceneInput,
 } from '.'
+import {
+  HAT_ANCHOR_Y,
+  HAT_EARS_THROUGH,
+  hatEarsThrough,
+  hatOrigin,
+  hatSprite,
+} from './hats'
+import { petSprite } from './sprite'
 import { SCENE_HASHES } from './testing/hashes'
 import { SCENES } from './testing/scenes'
 
@@ -169,6 +177,85 @@ describe('composeScene', () => {
     expect(hashBuffer(composeScene({ ...dead, room: topHat.room }, 0))).toBe(
       hashBuffer(composeScene(dead, 0))
     )
+  })
+
+  it('draws donkey ears through wearable hats, but behind perched objects like the rubber duck', () => {
+    const donkeyPet = {
+      species: 'donkey' as const,
+      coat: 'default',
+      mood: 'happy' as const,
+      seed: 1000,
+    }
+    const dayRoom: ResolvedRoom = { ...ROOM, time: 'day' }
+    const dayInput: SceneInput = {
+      ...INPUT,
+      room: dayRoom,
+      lampLevel: 0,
+      pet: donkeyPet,
+    }
+    const frame = petFrame(donkeyPet, 0)
+    const [earL, earR] = HAT_EARS_THROUGH.donkey!
+    const lastRow = HAT_ANCHOR_Y.donkey + frame.sprite.bob - 2
+
+    const bare = composeScene(dayInput, 0)
+    const body = petSprite('donkey', 'default', frame.sprite)
+
+    const duckScene = composeScene(
+      { ...dayInput, room: { ...dayRoom, hat: 'duck' } },
+      0
+    )
+    const duck = hatSprite('duck')!
+    const [dx, dy] = hatOrigin('donkey', frame.origin, frame.sprite.bob, 'duck')
+    let overlapChecked = 0
+    for (let y = 0; y <= lastRow; y++) {
+      for (let x = 0; x < 32; x++) {
+        if (x > earL && x < earR) continue
+        const earPixel = pixelAt(body, x, y)
+        if (earPixel === null) continue
+        const hx = frame.origin[0] + x - dx
+        const hy = frame.origin[1] + y - dy
+        if (hx < 0 || hy < 0 || hx >= duck.width || hy >= duck.height) continue
+        const hatPixel = pixelAt(duck, hx, hy)
+        if (hatPixel === null || hatPixel === earPixel) continue
+        const sx = frame.origin[0] + x
+        const sy = frame.origin[1] + y
+        expect(pixelAt(duckScene, sx, sy)).not.toBe(pixelAt(bare, sx, sy))
+        overlapChecked++
+      }
+    }
+    expect(overlapChecked).toBeGreaterThan(10)
+
+    const capScene = composeScene(
+      { ...dayInput, room: { ...dayRoom, hat: 'cap' } },
+      0
+    )
+    const cap = hatSprite('cap')!
+    const [cx, cy] = hatOrigin('donkey', frame.origin, frame.sprite.bob, 'cap')
+    let earPixelsThrough = 0
+    for (let y = 0; y <= lastRow; y++) {
+      for (let x = 0; x < 32; x++) {
+        if (x > earL && x < earR) continue
+        if (pixelAt(body, x, y) === null) continue
+        const hx = frame.origin[0] + x - cx
+        const hy = frame.origin[1] + y - cy
+        if (hx < 0 || hy < 0 || hx >= cap.width || hy >= cap.height) continue
+        if (pixelAt(cap, hx, hy) === null) continue
+        const sx = frame.origin[0] + x
+        const sy = frame.origin[1] + y
+        expect(pixelAt(capScene, sx, sy)).toBe(pixelAt(bare, sx, sy))
+        earPixelsThrough++
+      }
+    }
+    expect(earPixelsThrough).toBeGreaterThan(0)
+
+    expect(hatEarsThrough('cap')).toBe(true)
+    expect(hatEarsThrough('nonla')).toBe(true)
+    expect(hatEarsThrough('propeller')).toBe(true)
+    expect(hatEarsThrough('duck')).toBe(false)
+    expect(hatEarsThrough('teapot')).toBe(false)
+    expect(hatEarsThrough('sailboat')).toBe(false)
+    expect(hatEarsThrough('meadow')).toBe(false)
+    expect(hatEarsThrough('none')).toBe(false)
   })
 
   it('boxes the pet, taller in a hat', () => {

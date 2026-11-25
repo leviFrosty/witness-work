@@ -434,10 +434,23 @@ const TALL_SPECS: Readonly<
 
 const BIG_HATS: ReadonlySet<string> = new Set(BIG_HAT_IDS)
 
+const EARS_THROUGH_BIG_HATS: ReadonlySet<string> = new Set<BigHatId>([
+  'acorn',
+  'leaf',
+  'toque',
+  'propeller',
+  'umbrella',
+])
+
 export const isBigHat = (hat: string): hat is BigHatId => BIG_HATS.has(hat)
 
 const isShortHat = (hat: string): hat is ShortHatId =>
   Object.hasOwn(SHORT_SPECS, hat)
+
+export const hatEarsThrough = (hat: string): boolean =>
+  isShortHat(hat) ||
+  Object.hasOwn(WORLD_HAT_SPECS, hat) ||
+  EARS_THROUGH_BIG_HATS.has(hat)
 
 function drawHat(hat: Exclude<HatId, 'none' | BigHatId>): PixelBuffer {
   if (!isShortHat(hat))

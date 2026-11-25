@@ -25,6 +25,7 @@ import type { BigHatId } from '@/types/pet'
 import {
   HAT_ANCHOR_Y,
   HAT_EARS_THROUGH,
+  hatEarsThrough,
   hatFrame,
   hatOrigin,
   hatSprite,
@@ -286,6 +287,7 @@ function drawPet(
   blit(buf, shown, worn.at[0], worn.at[1])
   maskOpaque(subject, shown, worn.at[0], worn.at[1])
   const ears = HAT_EARS_THROUGH[pet.species]
+  if (!ears || !hatEarsThrough(hat)) return
   if (!ears) return
 
   const lastRow = HAT_ANCHOR_Y[pet.species] + frame.sprite.bob - 2

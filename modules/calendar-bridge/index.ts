@@ -46,6 +46,7 @@ export type CalendarSnapshot = {
   entries: CalendarEntry[]
 
   removed: string[]
+  includeDetails: boolean
 }
 
 interface CalendarBridgeNative {

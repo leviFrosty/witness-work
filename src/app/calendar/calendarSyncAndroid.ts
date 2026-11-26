@@ -112,12 +112,7 @@ export async function publishCalendar() {
     includeDetails: settings.includeDetails,
   })
   const now = Date.now()
-  const { writes, deletes } = planAndroidPublish({
-    events,
-    snapshot,
-    includeDetails: settings.includeDetails,
-    now,
-  })
+  const { writes, deletes } = planAndroidPublish({ events, snapshot, now })
   if (writes.length || deletes.length)
     await bridge.apply(calendarId, writes, deletes)
 

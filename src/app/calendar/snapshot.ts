@@ -65,5 +65,6 @@ export function buildCalendarSnapshot({
     deletedContactIds,
     entries,
     removed: [...removed].filter((key) => published.has(key)),
+    includeDetails,
   }
 }

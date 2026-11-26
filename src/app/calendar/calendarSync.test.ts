@@ -14,10 +14,11 @@ const bridge = vi.hoisted(() => ({
   configure: vi.fn(),
 }))
 const device = vi.hoisted(() => ({
-  deviceName: 'This iPhone' as string | null,
+  deviceName: 'Jane’s iPhone' as string | null,
   modelName: 'iPhone 16 Pro' as string | null,
 }))
 const supporter = vi.hoisted(() => ({ isSupporter: true }))
+const preferences = vi.hoisted(() => ({ dataProtectionMode: false }))
 const data = vi.hoisted(() => ({
   contacts: [] as { id: string; name: string }[],
   conversations: [] as unknown[],
@@ -89,6 +90,7 @@ vi.mock('@/stores/preferences', () => ({
     getState: () => ({
       iCloudSyncEnabled: true,
       returnVisitNotificationOffset: null,
+      dataProtectionMode: preferences.dataProtectionMode,
     }),
   },
 }))
@@ -103,7 +105,6 @@ import {
   calendarDestinations,
   connectCalendar,
   createCalendar,
-  deviceLabel,
   quickConnectCalendar,
   reconnectSharedCalendar,
   setSharedOptions,
@@ -141,9 +142,10 @@ describe('calendar publishing orchestration', () => {
     bridge.publish.mockResolvedValue(0)
     bridge.removePublished.mockResolvedValue(undefined)
     supporter.isSupporter = true
+    preferences.dataProtectionMode = false
     data.contacts = []
     data.conversations = []
-    device.deviceName = 'This iPhone'
+    device.deviceName = 'Jane’s iPhone'
     useCalendarSync.setState({
       enabled: true,
       registered: true,
@@ -178,18 +180,19 @@ describe('calendar publishing orchestration', () => {
     await pending
     expect(bridge.publish).toHaveBeenCalledWith(
       'this-device',
-      'This iPhone',
+      'iPhone 16 Pro',
       'calendar',
       {
         title: 'calendarFollowUpTitle',
         deletedContactIds: [],
         entries: [],
         removed: [],
+        includeDetails: false,
       },
       false,
       'configuration-1'
     )
-    expect(bridge.publish.mock.calls[0][1]).toBe('This iPhone')
+    expect(bridge.publish.mock.calls[0][1]).toBe('iPhone 16 Pro')
     expect(useCalendarSync.getState().lastSyncedAt).toBeTypeOf('number')
   })
   it('does not publish or clean up from a cached primary after ownership changes', async () => {
@@ -246,6 +249,31 @@ describe('calendar publishing orchestration', () => {
     await publishCalendar({ pull: false })
     expect(bridge.publish.mock.calls[0][3].entries).toHaveLength(3)
     expect(useCalendarSync.getState().upcomingCount).toBe(2)
+  })
+  it('leaves contact details out in Data Protection Mode', async () => {
+    bridge.registerDevice.mockResolvedValue({ ...owned, includeDetails: true })
+    data.contacts = [{ id: 'contact', name: 'Name' }]
+    data.conversations = [
+      {
+        id: 'visit',
+        contact: { id: 'contact' },
+        date: new Date(),
+        followUp: { date: new Date(Date.now() + 86_400_000), notifyMe: false },
+      },
+    ]
+    await publishCalendar({ pull: false })
+    expect(bridge.publish.mock.calls[0][3]).toMatchObject({
+      includeDetails: true,
+      entries: [{ title: 'calendarFollowUpTitle: Name' }],
+    })
+
+    preferences.dataProtectionMode = true
+    noteCalendarChanged()
+    await publishCalendar({ pull: false })
+    expect(bridge.publish.mock.calls[1][3]).toMatchObject({
+      includeDetails: false,
+      entries: [{ title: 'calendarFollowUpTitle', location: '' }],
+    })
   })
   it('gives each event the same alert as its in-app reminder', async () => {
     data.contacts = [{ id: 'contact', name: 'Name' }]
@@ -316,12 +344,12 @@ describe('calendar publishing orchestration', () => {
     await connectCalendar(calendar)
     expect(bridge.selectPrimary).toHaveBeenCalledWith(
       'this-device',
-      'This iPhone',
+      'iPhone 16 Pro',
       'this-device'
     )
     expect(bridge.setDestination).toHaveBeenCalledWith(
       'this-device',
-      'This iPhone',
+      'iPhone 16 Pro',
       'calendar',
       'WitnessWork',
       'iCloud',
@@ -631,11 +659,12 @@ describe('calendar publishing orchestration', () => {
     )
   })
 
-  it('labels devices by model when iOS hides the device name', () => {
-    device.deviceName = 'iPhone'
-    expect(deviceLabel()).toBe('iPhone 16 Pro')
-    device.deviceName = 'Levi’s iPhone'
-    expect(deviceLabel()).toBe('Levi’s iPhone')
+  it('labels this device by model, never by the name the user gave it', async () => {
+    await refreshPublishing()
+    expect(bridge.registerDevice).toHaveBeenCalledWith(
+      'this-device',
+      'iPhone 16 Pro'
+    )
   })
   it('does not continue setup when calendar permission is denied', async () => {
     bridge.requestAccess.mockResolvedValueOnce(false)

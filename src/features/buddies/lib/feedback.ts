@@ -2,19 +2,13 @@ import { Platform } from 'react-native'
 import * as Application from 'expo-application'
 import * as Device from 'expo-device'
 import { getLocales } from 'expo-localization'
-import { gzipSync, strToU8 } from 'fflate'
 import type { PostHog, Survey } from 'posthog-react-native'
-import { createBackupFile } from '@/lib/backupFile'
 import { toB64u } from '@/features/buddies/lib/bytes'
 import { randomBytes } from '@/features/buddies/lib/random'
 import type { BuddiesState } from '@/features/buddies/lib/state'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
 
 export const BUDDIES_FEEDBACK_SURVEY_ID = '01a0f037-23cd-0000-e818-63a4821064d8'
-
-const PART_LENGTH = 500_000
-
-const MAX_PARTS = 20
 
 export function createFeedbackId(): string {
   return toB64u(randomBytes(16))
@@ -56,45 +50,18 @@ export function buddiesDiagnostics(state: BuddiesState) {
   }
 }
 
-export function encodeAttachment(value: unknown): string[] | null {
-  const encoded = toB64u(gzipSync(strToU8(JSON.stringify(value))))
-  const parts: string[] = []
-  for (let start = 0; start < encoded.length; start += PART_LENGTH) {
-    parts.push(encoded.slice(start, start + PART_LENGTH))
-  }
-  return parts.length > MAX_PARTS ? null : parts
-}
-
 export async function sendFeedbackAttachments(
   client: PostHog,
   survey: Survey,
   feedbackId: string
 ) {
-  const parts = encodeAttachment(createBackupFile())
-  const base = {
+  client.capture('survey attachment', {
     $survey_id: survey.id,
     $survey_name: survey.name,
     feedback_id: feedbackId,
-  }
-  client.capture('survey attachment', {
-    ...base,
     kind: 'diagnostics',
     ...deviceMetadata(),
     ...buddiesDiagnostics(useBuddies.getState()),
-    backup_parts: parts?.length ?? 0,
-    backup_omitted: parts ? null : 'too_large',
   })
   await client.flush()
-
-  for (const [index, data] of (parts ?? []).entries()) {
-    client.capture('survey attachment', {
-      ...base,
-      kind: 'backup',
-      encoding: 'gzip+base64url',
-      part: index + 1,
-      parts: parts!.length,
-      data,
-    })
-    await client.flush()
-  }
 }

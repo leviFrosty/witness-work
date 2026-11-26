@@ -33,6 +33,7 @@ const PrivacyPreferencesSection = () => {
     territoryPrivacyMode,
     analyticsEnabled,
     sessionReplayOptIn,
+    crashReportsEnabled,
     set,
   } = usePreferences()
 
@@ -174,7 +175,6 @@ const PrivacyPreferencesSection = () => {
             info={i18n.t('anonymousAnalyticsDesc')}
             value={analyticsEnabled}
             onValueChange={(value) => set({ analyticsEnabled: value })}
-            lastInSection={!askReplayOptIn}
           />
         </SettingsSearchTarget>
         {askReplayOptIn && (
@@ -188,9 +188,17 @@ const PrivacyPreferencesSection = () => {
                 enabled: value,
               })
             }}
-            lastInSection
           />
         )}
+        <SettingsSearchTarget id='crashReports'>
+          <InputRowSwitch
+            label={i18n.t('crashReports')}
+            info={i18n.t('crashReportsDesc')}
+            value={crashReportsEnabled}
+            onValueChange={(value) => set({ crashReportsEnabled: value })}
+            lastInSection
+          />
+        </SettingsSearchTarget>
       </Section>
     </View>
   )

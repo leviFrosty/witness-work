@@ -52,6 +52,27 @@ export function scrubShareLinkProperties<T>(
   )
 }
 
+const URL_QUERY = /\?(?=[^\s"'<>#]*=)[^\s"'<>#]*/g
+
+export function scrubDiagnosticText(value: string): string {
+  return scrubShareLinkUrl(value).replace(URL_QUERY, '?[redacted]')
+}
+
+function scrubDiagnosticValue(value: unknown): unknown {
+  if (typeof value === 'string') return scrubDiagnosticText(value)
+  if (Array.isArray(value)) return value.map(scrubDiagnosticValue)
+  if (value !== null && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [
+        key,
+        scrubDiagnosticValue(nested),
+      ])
+    )
+  return value
+}
+
+const NESTED_EXCEPTION_PROPERTIES = ['$exception_list', '$exception_steps']
+
 export function scrubAnalyticsEventProperties<T>(
   event: string,
   properties: Record<string, T> = {}
@@ -61,5 +82,9 @@ export function scrubAnalyticsEventProperties<T>(
   )
 
   if (event === 'Application Opened') delete scrubbed.url
+  if (event === '$exception')
+    for (const key of NESTED_EXCEPTION_PROPERTIES)
+      if (key in scrubbed)
+        scrubbed[key] = scrubDiagnosticValue(scrubbed[key]) as T
   return scrubbed
 }

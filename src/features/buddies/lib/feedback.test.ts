@@ -1,10 +1,7 @@
-import { gunzipSync } from 'node:zlib'
 import { describe, expect, it, vi } from 'vitest'
-import { fromB64u } from '@/features/buddies/lib/bytes'
 import { initialBuddiesState } from '@/features/buddies/lib/state'
 import {
   buddiesDiagnostics,
-  encodeAttachment,
   sendFeedbackAttachments,
 } from '@/features/buddies/lib/feedback'
 
@@ -25,32 +22,9 @@ vi.mock('expo-localization', () => ({
 vi.mock('expo-crypto', () => ({
   getRandomBytes: (length: number) => new Uint8Array(length),
 }))
-vi.mock('@/lib/backupFile', () => ({
-  createBackupFile: () => ({ contactStore: { contacts: [{ name: 'Ann' }] } }),
-}))
 vi.mock('@/features/buddies/stores/buddiesStore', async () => {
   const { initialBuddiesState } = await import('@/features/buddies/lib/state')
   return { useBuddies: { getState: () => initialBuddiesState } }
-})
-
-const decode = (parts: string[]) =>
-  JSON.parse(gunzipSync(fromB64u(parts.join(''))).toString())
-
-describe('encodeAttachment', () => {
-  it('round-trips through gzip and base64url', () => {
-    const value = { contacts: [{ name: 'Ann', notes: 'ünïcode ✓' }] }
-    expect(decode(encodeAttachment(value)!)).toEqual(value)
-  })
-
-  it('splits large payloads into event-sized parts', () => {
-    const noise = Array.from({ length: 200_000 }, (_, i) =>
-      ((i * 2654435761) >>> 0).toString(36)
-    ).join('')
-    const parts = encodeAttachment({ noise })!
-    expect(parts.length).toBeGreaterThan(1)
-    for (const part of parts) expect(part.length).toBeLessThanOrEqual(500_000)
-    expect(decode(parts)).toEqual({ noise })
-  })
 })
 
 describe('buddiesDiagnostics', () => {
@@ -68,7 +42,7 @@ describe('buddiesDiagnostics', () => {
 })
 
 describe('sendFeedbackAttachments', () => {
-  it('sends diagnostics then the backup, tagged with the feedback id', async () => {
+  it('sends only diagnostics, tagged with the feedback id', async () => {
     const capture = vi.fn()
     const client = { capture, flush: vi.fn(async () => {}) }
     await sendFeedbackAttachments(
@@ -76,22 +50,18 @@ describe('sendFeedbackAttachments', () => {
       { id: 'survey', name: 'Buddies' } as never,
       'fb1'
     )
-    expect(capture.mock.calls.map(([event]) => event)).toEqual([
-      'survey attachment',
-      'survey attachment',
-    ])
-    const [[, diagnostics], [, backup]] = capture.mock.calls
+    expect(capture).toHaveBeenCalledOnce()
+    const [[event, diagnostics]] = capture.mock.calls
+    expect(event).toBe('survey attachment')
     expect(diagnostics).toMatchObject({
       $survey_id: 'survey',
       feedback_id: 'fb1',
       kind: 'diagnostics',
       platform: 'ios',
       app_version: '1.0.0',
-      backup_parts: 1,
+      buddies_count: 0,
     })
-    expect(backup).toMatchObject({ kind: 'backup', part: 1, parts: 1 })
-    expect(decode([backup.data])).toEqual({
-      contactStore: { contacts: [{ name: 'Ann' }] },
-    })
+    expect(Object.keys(diagnostics)).not.toContain('data')
+    expect(client.flush).toHaveBeenCalledOnce()
   })
 })

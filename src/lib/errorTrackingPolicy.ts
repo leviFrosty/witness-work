@@ -4,6 +4,16 @@ import { PurchasesError } from '@/lib/purchasesError'
 
 export const errorTrackingEnabled = typeof __DEV__ === 'undefined' || !__DEV__
 
+let crashReports = true
+
+export function setCrashReportsAllowed(value: boolean): void {
+  crashReports = value
+}
+
+export function crashReportsAllowed(): boolean {
+  return errorTrackingEnabled && crashReports
+}
+
 type JsonValue =
   | string
   | number

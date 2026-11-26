@@ -92,7 +92,7 @@ describe('analytics boundary', () => {
     await import('./analytics')
     const options = mocks.construct.mock.calls[0][1] as Record<string, unknown>
     expect(options.personProfiles).toBe('never')
-    expect(options.disableGeoip).toBeUndefined()
+    expect(options.disableGeoip).toBe(true)
   })
 
   it('drops usage events, but not crash or survey events, when analytics are off', async () => {
@@ -144,6 +144,7 @@ describe('analytics boundary', () => {
       app_variant: 'development',
       development_mode: false,
       app_platform: 'ios',
+      $geoip_disable: true,
       count: 0,
     })
   })

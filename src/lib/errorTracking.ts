@@ -1,6 +1,7 @@
 import { posthogClient as client } from '@/lib/posthogClient'
 import { analytics } from '@/lib/analytics'
 import {
+  crashReportsAllowed,
   diagnosticProperties,
   errorTrackingEnabled,
   isStorageFullError,
@@ -32,7 +33,7 @@ function report(original: unknown, properties?: ErrorProperties): void {
   const error = toCodedError(toPurchasesError(original))
 
   if (isStorageFullError(error)) analytics.capture('device_storage_full')
-  else if (!shouldIgnoreError(error))
+  else if (crashReportsAllowed() && !shouldIgnoreError(error))
     client?.captureException(error, exceptionProperties(properties))
 }
 
@@ -54,7 +55,7 @@ export const errorTracking = {
   },
   addBreadcrumb({ category, message, level, data }: Breadcrumb): void {
     safely(() => {
-      if (!errorTrackingEnabled) return
+      if (!crashReportsAllowed()) return
       client?.addExceptionStep(message ?? category ?? 'App action', {
         ...diagnosticProperties(data),
         ...(category === undefined ? {} : { category }),

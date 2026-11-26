@@ -355,6 +355,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: 'dataProtection',
     title: 'dataProtectionSwitchLabel',
     page: 'PreferencesPrivacy',
+    keywords: 'settingsSearch.keywords.dataProtection',
   },
   {
     id: 'deleteHouseholderData',

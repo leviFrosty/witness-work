@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createBuffer, hashBuffer, pixelAt } from '@/lib/pixelArt'
+import { HAT_IDS } from '@/types/pet'
 
 import { ENTRANCES, TRICKS } from '../motion'
 import {
@@ -249,13 +250,52 @@ describe('composeScene', () => {
     expect(earPixelsThrough).toBeGreaterThan(0)
 
     expect(hatEarsThrough('cap')).toBe(true)
-    expect(hatEarsThrough('nonla')).toBe(true)
-    expect(hatEarsThrough('propeller')).toBe(true)
+    expect(hatEarsThrough('straw')).toBe(true)
+    expect(hatEarsThrough('hardhat')).toBe(false)
+    expect(hatEarsThrough('bow')).toBe(false)
+    expect(hatEarsThrough('nonla')).toBe(false)
+    expect(hatEarsThrough('toque')).toBe(false)
     expect(hatEarsThrough('duck')).toBe(false)
     expect(hatEarsThrough('teapot')).toBe(false)
     expect(hatEarsThrough('sailboat')).toBe(false)
     expect(hatEarsThrough('meadow')).toBe(false)
     expect(hatEarsThrough('none')).toBe(false)
+  })
+
+  it('only draws donkey ears through hats they visibly poke out of, never painted onto a hat that hides them', () => {
+    const pet = { species: 'donkey' as const, coat: 'default', seed: 1000 }
+    const frame = petFrame({ ...pet, mood: 'happy' }, 0)
+    const body = petSprite('donkey', 'default', frame.sprite)
+    const [earL, earR] = HAT_EARS_THROUGH.donkey!
+    const lastRow = HAT_ANCHOR_Y.donkey + frame.sprite.bob - 2
+    const through = HAT_IDS.filter(hatEarsThrough)
+    expect(through.length).toBeGreaterThan(0)
+    for (const hat of through) {
+      const sprite = hatSprite(hat)!
+      const [hx, hy] = hatOrigin('donkey', frame.origin, frame.sprite.bob, hat)
+      for (const [x0, x1] of [
+        [0, earL],
+        [earR, 31],
+      ]) {
+        let ear = 0
+        let clear = 0
+        for (let y = 0; y <= lastRow; y++) {
+          for (let x = x0; x <= x1; x++) {
+            if (pixelAt(body, x, y) === null) continue
+            ear++
+            const px = frame.origin[0] + x - hx
+            const py = frame.origin[1] + y - hy
+            const inside =
+              px >= 0 && py >= 0 && px < sprite.width && py < sprite.height
+            if (!inside || pixelAt(sprite, px, py) === null) clear++
+          }
+        }
+        expect({ hat, visible: clear / ear >= 0.25 }).toEqual({
+          hat,
+          visible: true,
+        })
+      }
+    }
   })
 
   it('boxes the pet, taller in a hat', () => {

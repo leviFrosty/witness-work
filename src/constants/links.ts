@@ -34,6 +34,7 @@ export default {
   termsOfUse: `${site}/terms`,
   helpCenterSite: site,
   helpCenterManifest: `${site}/help/bundle/manifest.json`,
+  handwritingFonts: `${site}/fonts/handwriting`,
   helpCenterSearch: forBuild({
     development: BETA_HELP_SEARCH,
     beta: BETA_HELP_SEARCH,

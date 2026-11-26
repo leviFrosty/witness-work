@@ -56,6 +56,9 @@ importers:
       '@bacons/apple-targets':
         specifier: 5.0.0
         version: 5.0.0(expo@58.0.16)(supports-color@10.2.2)(typescript@6.0.3)
+      '@expo-google-fonts/aref-ruqaa':
+        specifier: 0.4.1
+        version: 0.4.1
       '@expo-google-fonts/inter':
         specifier: 0.2.3
         version: 0.2.3
@@ -1665,6 +1668,9 @@ packages:
   '@eslint/plugin-kit@0.7.2':
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@expo-google-fonts/aref-ruqaa@0.4.1':
+    resolution: {integrity: sha512-LiFV81WxeFsgJ5Nc8admfW+HEpMLr8Q2k9QZ6L40O3+W2vXxJLH/Bka3UaQLP/GWRUQ/YsotaVKnAMYLE6Mkmw==}
 
   '@expo-google-fonts/inter@0.2.3':
     resolution: {integrity: sha512-iHK9FI+dnE45X5c2Z5hSFwNH4zUWethizpbv3XUn0FIGw5jwvzriENz0a6wCdkI4/d+1QkurnHo5XHti7TbNJA==}
@@ -11569,6 +11575,8 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
+
+  '@expo-google-fonts/aref-ruqaa@0.4.1': {}
 
   '@expo-google-fonts/inter@0.2.3': {}
 

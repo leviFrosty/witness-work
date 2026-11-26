@@ -4,7 +4,9 @@ import { buddiesPushData } from '@/lib/notificationData'
 
 export function isBuddiesNews(notification: Notifications.Notification) {
   const push = buddiesPushData(notification)
-  return push !== null && isBuddiesNewsKind(push.kind)
+  return (
+    push !== null && (push.passive === true || isBuddiesNewsKind(push.kind))
+  )
 }
 
 export function foregroundPresentation(

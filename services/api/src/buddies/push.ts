@@ -44,24 +44,33 @@ export const FCM_DATA_LIMIT = 4000
 
 type ApnsTarget = Extract<PushTarget, { service: 'apns' }>
 type FcmTarget = Extract<PushTarget, { service: 'fcm' }>
-type Alert = Pick<PushTarget, 'title' | 'body'>
+type Alert = Pick<PushTarget, 'title' | 'body' | 'kindSealed'>
 
 const utf8Length = (text: string) => new TextEncoder().encode(text).length
 
 /**
- * The `ww` marker: the event's kind and `seq`, plus the still-sealed event when
- * `inline`. The app opens the event to name the sender, and fetches it by
- * `seq` when it didn't fit.
+ * The `ww` marker. A device that registered `kindSealed` gets only the event's
+ * `seq`, plus `passive` for badge news (APNs sees that as the interruption
+ * level anyway): it fetches the event by `seq` and learns its kind there, so
+ * Apple and Google never see what kind of activity it was. Any other device
+ * gets the kind too, and the still-sealed event when `inline`; it opens the
+ * event to name the sender, and fetches it by `seq` when it didn't fit.
  */
-const marker = (job: PushJob, inline: boolean) => ({
-  kind: job.kind,
-  seq: job.seq,
-  ...(inline ? { eventId: job.event.eventId, blob: job.event.blob } : {}),
-})
+const marker = (job: PushJob, target: Alert, inline: boolean) =>
+  target.kindSealed
+    ? {
+        seq: job.seq,
+        ...(BUDDIES_PASSIVE_PUSH_KINDS.has(job.kind) ? { passive: true } : {}),
+      }
+    : {
+        kind: job.kind,
+        seq: job.seq,
+        ...(inline ? { eventId: job.event.eventId, blob: job.event.blob } : {}),
+      }
 
 /**
  * The exact alert payload from the contract. The alert text is the device's
- * generic template, with sound unless the kind is passive (badge news); `mutable-content` lets the app's Notification Service
+ * neutral fallback text (older builds registered one per kind), with sound unless the kind is passive (badge news); `mutable-content` lets the app's Notification Service
  * Extension replace it with a named alert from the sealed event, and an app
  * without one shows the template. `content-available` also lets iOS wake the
  * app to sync before it's opened; the push stays an `alert` (apns-push-type)
@@ -78,7 +87,7 @@ export const buildBuddiesPayload = (job: PushJob, target: Alert) => {
       'content-available': 1,
       'mutable-content': 1,
     },
-    ww: marker(job, inline),
+    ww: marker(job, target, inline),
   })
   const full = build(true)
   return utf8Length(JSON.stringify(full)) <= APNS_PAYLOAD_LIMIT
@@ -101,7 +110,7 @@ export const buildBuddiesFcmMessage = (
   target: Alert & Pick<FcmTarget, 'appAlerts'>
 ) => {
   const build = (inline: boolean): Record<string, string> => {
-    const body = JSON.stringify({ ww: marker(job, inline) })
+    const body = JSON.stringify({ ww: marker(job, target, inline) })
     return target.appAlerts
       ? { fallbackTitle: target.title, fallbackBody: target.body, body }
       : {

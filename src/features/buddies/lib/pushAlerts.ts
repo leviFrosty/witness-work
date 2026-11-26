@@ -32,9 +32,11 @@ import {
 import type { SharedBadge } from '@/types/badges'
 
 export type BuddiesPushMarker = {
-  kind: string
+  kind?: string
 
   seq?: number
+
+  passive?: true
 
   eventId?: string
   blob?: string
@@ -50,16 +52,21 @@ function record(value: unknown): Record<string, unknown> | undefined {
 
 export function parsePushMarker(value: unknown): BuddiesPushMarker | null {
   const marker = record(value)
-  if (!marker || typeof marker.kind !== 'string') return null
-  const { kind, seq, eventId, blob } = marker
+  if (!marker) return null
+  const { kind, seq, passive, eventId, blob } = marker
+  const known = typeof kind === 'string'
+  const counted = typeof seq === 'number' && Number.isSafeInteger(seq)
+  if (!known && !counted) return null
   const inline =
+    known &&
     typeof eventId === 'string' &&
     RELAY_ID_PATTERN.test(eventId) &&
     typeof blob === 'string' &&
     B64U.test(blob)
   return {
-    kind,
-    ...(typeof seq === 'number' && Number.isSafeInteger(seq) ? { seq } : {}),
+    ...(known ? { kind } : {}),
+    ...(counted ? { seq } : {}),
+    ...(passive === true ? { passive } : {}),
     ...(inline ? { eventId, blob } : {}),
   }
 }
@@ -168,6 +175,8 @@ export type BuddyAlertOutcome =
   | { alert: BuddyAlert }
   | { quiet: true }
   | { failed: BuddyAlertFailure }
+
+export type DescribedPush = BuddyAlertOutcome & { kind?: string }
 
 export type SealedEvent = {
   eventId: string

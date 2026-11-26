@@ -58,6 +58,19 @@ describe("buddies' news in the foreground (ADR 0021)", () => {
     }
   )
 
+  it('keeps badge news quiet when the push names no kind, only passive', () => {
+    const sealed = (ww: Record<string, unknown>) =>
+      ({
+        request: {
+          identifier: 's',
+          content: { data: {} },
+          trigger: { type: 'push', payload: { ww } },
+        },
+      }) as unknown as Notifications.Notification
+    expect(isBuddiesNews(sealed({ seq: 4, passive: true }))).toBe(true)
+    expect(isBuddiesNews(sealed({ seq: 4 }))).toBe(false)
+  })
+
   it('still shows logistics and reminders as banners', () => {
     for (const notification of [
       push('pair.confirmed'),

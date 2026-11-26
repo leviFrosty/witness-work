@@ -9,7 +9,7 @@ import {
   isBuddiesNewsKind,
   pushMarkerOf,
   type BuddiesPushMarker,
-  type BuddyAlertOutcome,
+  type DescribedPush,
 } from '@/features/buddies/lib/pushAlerts'
 import { buddyAlertText } from '@/features/buddies/lib/pushAlertText'
 import {
@@ -89,7 +89,7 @@ export async function postBuddiesAlert(
   if (Platform.OS !== 'android') return
   const push = androidBuddiesPush(data)
   if (!push || push.shownBySystem) return
-  let outcome: BuddyAlertOutcome | { failed: 'error' }
+  let outcome: DescribedPush | { failed: 'error' }
   try {
     outcome = await withTimeout(
       (describeSignal) =>
@@ -106,9 +106,11 @@ export async function postBuddiesAlert(
   const content =
     'alert' in outcome ? buddyAlertText(outcome.alert) : push.fallback
   if (!content) return
-  const { kind, seq, eventId } = push.marker
-
-  const news = isBuddiesNewsKind(kind)
+  const { seq, eventId, passive } = push.marker
+  const kind =
+    ('kind' in outcome ? outcome.kind : undefined) ?? push.marker.kind
+  const news =
+    passive === true || (kind !== undefined && isBuddiesNewsKind(kind))
   await (news ? ensureBuddiesNewsChannel() : ensureBuddiesChannel())
   await Notifications.scheduleNotificationAsync({
     identifier: `buddies-${seq ?? eventId ?? Date.now()}`,
@@ -116,7 +118,13 @@ export async function postBuddiesAlert(
       title: content.title,
       ...(content.body ? { body: content.body } : {}),
 
-      data: { ww: { kind, ...(seq === undefined ? {} : { seq }) } },
+      data: {
+        ww: {
+          ...(kind === undefined ? {} : { kind }),
+          ...(seq === undefined ? {} : { seq }),
+          ...(news ? { passive: true } : {}),
+        },
+      },
     },
     trigger: { channelId: news ? BUDDIES_NEWS_CHANNEL_ID : BUDDIES_CHANNEL_ID },
   })

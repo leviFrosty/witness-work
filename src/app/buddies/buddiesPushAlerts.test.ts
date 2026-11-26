@@ -126,7 +126,54 @@ describe('postBuddiesAlert', () => {
     expect(schedule).toHaveBeenCalledWith(
       expect.objectContaining({
         content: expect.objectContaining({
-          data: { ww: { kind: 'badge.new', seq: 12 } },
+          data: { ww: { kind: 'badge.new', seq: 12, passive: true } },
+        }),
+        trigger: { channelId: 'buddies_news' },
+      })
+    )
+  })
+
+  it('takes the kind from the event when the push names none', async () => {
+    describePush.mockResolvedValue({
+      alert: { type: 'badge', name: 'Levi' },
+      kind: 'badge.new',
+    })
+    await postBuddiesAlert(
+      data({
+        fallbackTitle: 'WitnessWork',
+        fallbackBody: 'You have a new update',
+        body: JSON.stringify({ ww: { seq: 12, passive: true } }),
+      })
+    )
+    expect(describePush).toHaveBeenCalledWith(
+      { seq: 12, passive: true },
+      expect.anything()
+    )
+    expect(schedule).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          data: { ww: { kind: 'badge.new', seq: 12, passive: true } },
+        }),
+        trigger: { channelId: 'buddies_news' },
+      })
+    )
+  })
+
+  it('posts the neutral fallback quietly for badge news it could not read', async () => {
+    describePush.mockResolvedValue({ failed: 'noEvent' })
+    await postBuddiesAlert(
+      data({
+        fallbackTitle: 'WitnessWork',
+        fallbackBody: 'You have a new update',
+        body: JSON.stringify({ ww: { seq: 12, passive: true } }),
+      })
+    )
+    expect(schedule).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          title: 'WitnessWork',
+          body: 'You have a new update',
+          data: { ww: { seq: 12, passive: true } },
         }),
         trigger: { channelId: 'buddies_news' },
       })

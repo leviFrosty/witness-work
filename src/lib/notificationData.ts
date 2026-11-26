@@ -24,6 +24,8 @@ export type BuddiesPushData = {
   kind: string
 
   seq?: number
+
+  passive?: true
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -46,7 +48,11 @@ export function buddiesPushData(
     typeof marker.seq === 'number' && Number.isSafeInteger(marker.seq)
       ? marker.seq
       : undefined
-  return seq === undefined ? { kind } : { kind, seq }
+  return {
+    kind,
+    ...(seq === undefined ? {} : { seq }),
+    ...(marker.passive === true ? { passive: true } : {}),
+  }
 }
 
 export function reminderData(

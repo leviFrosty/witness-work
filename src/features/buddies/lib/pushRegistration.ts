@@ -7,72 +7,20 @@ import i18n from '@/lib/locales'
 import { hasCapability } from '@/lib/platformCapabilities'
 import { useSharedCarsSession } from '@/stores/sharedCarsSession'
 import { useTerritoriesSession } from '@/stores/territoriesSession'
-import type {
-  BadgePushKind,
-  BuddyPushKind,
-  CarPushKind,
-  JoinRequestPushKind,
-  TerritoryPushKind,
+import {
+  BUDDY_PUSH_KINDS,
+  CAR_PUSH_KINDS,
+  TERRITORY_PUSH_KINDS,
+  type BadgePushKind,
+  type BuddyPushKind,
+  type CarPushKind,
+  type JoinRequestPushKind,
+  type TerritoryPushKind,
 } from '@/features/buddies/lib/engine'
 import type { PushAddress, PushTemplate } from '@/features/buddies/lib/relay'
 import { buddiesFailureReason } from '@/features/buddies/lib/buddiesErrors'
 import { buddiesEngine } from '@/features/buddies/lib/buddiesService'
 import { useBuddies } from '@/features/buddies/stores/buddiesStore'
-
-const pushTemplates = (): Record<BuddyPushKind, PushTemplate> => ({
-  'invite.claimed': {
-    title: i18n.t('buddies_pushInviteClaimedTitle'),
-    body: i18n.t('buddies_pushInviteClaimedBody'),
-  },
-  'pair.confirmed': {
-    title: i18n.t('buddies_pushPairConfirmedTitle'),
-    body: i18n.t('buddies_pushPairConfirmedBody'),
-  },
-  'plan.invite': {
-    title: i18n.t('buddies_pushPlanInviteTitle'),
-    body: i18n.t('buddies_pushPlanInviteBody'),
-  },
-  'plan.update': {
-    title: i18n.t('buddies_pushPlanUpdateTitle'),
-    body: i18n.t('buddies_pushPlanUpdateBody'),
-  },
-  'plan.cancel': {
-    title: i18n.t('buddies_pushPlanCancelTitle'),
-    body: i18n.t('buddies_pushPlanCancelBody'),
-  },
-  'followup.invite': {
-    title: i18n.t('buddies_pushFollowUpInviteTitle'),
-    body: i18n.t('buddies_pushFollowUpInviteBody'),
-  },
-  'followup.update': {
-    title: i18n.t('buddies_pushFollowUpUpdateTitle'),
-    body: i18n.t('buddies_pushFollowUpUpdateBody'),
-  },
-  'followup.cancel': {
-    title: i18n.t('buddies_pushFollowUpCancelTitle'),
-    body: i18n.t('buddies_pushFollowUpCancelBody'),
-  },
-  'share.reply': {
-    title: i18n.t('buddies_pushShareReplyTitle'),
-    body: i18n.t('buddies_pushShareReplyBody'),
-  },
-  'pair.reconnect': {
-    title: i18n.t('buddies_pushReconnectTitle'),
-    body: i18n.t('buddies_pushReconnectBody'),
-  },
-})
-
-const joinRequestTemplates = async (): Promise<
-  Record<JoinRequestPushKind, PushTemplate>
-> => {
-  const template = {
-    title: i18n.t('buddies_pushJoinRequestTitle'),
-    body: i18n.t('buddies_pushJoinRequestBody'),
-  }
-  return Object.fromEntries(
-    (await buddiesEngine.joinRequestPushKinds()).map((kind) => [kind, template])
-  ) as Record<JoinRequestPushKind, PushTemplate>
-}
 
 export const BUDDIES_CHANNEL_ID = 'buddies'
 
@@ -122,65 +70,36 @@ async function pushAddress(): Promise<PushAddress> {
   }
 }
 
-const badgeTemplates = (): Partial<Record<BadgePushKind, PushTemplate>> => {
-  const templates: Record<BadgePushKind, PushTemplate> = {
-    'badge.new': {
-      title: i18n.t('buddies_pushBadgeTitle'),
-      body: i18n.t('buddies_pushBadgeBody'),
-    },
-    'badge.reaction': {
-      title: i18n.t('buddies_pushBadgeReactionTitle'),
-      body: i18n.t('buddies_pushBadgeBody'),
-    },
-  }
-  return Object.fromEntries(
-    buddiesEngine.badgePushKinds().map((kind) => [kind, templates[kind]])
-  )
+async function pushKinds(): Promise<PushKind[]> {
+  return [
+    ...BUDDY_PUSH_KINDS,
+    ...(await buddiesEngine.joinRequestPushKinds()),
+    ...buddiesEngine.badgePushKinds(),
+    ...(useSharedCarsSession.getState().running ? CAR_PUSH_KINDS : []),
+    ...(useTerritoriesSession.getState().running ? TERRITORY_PUSH_KINDS : []),
+  ]
 }
 
-const carTemplates = (): Partial<Record<CarPushKind, PushTemplate>> =>
-  useSharedCarsSession.getState().running
-    ? {
-        'car.invite': {
-          title: i18n.t('buddies_pushCarInviteTitle'),
-          body: i18n.t('buddies_pushCarInviteBody'),
-        },
-        'car.reply': {
-          title: i18n.t('buddies_pushCarJoinedTitle'),
-          body: i18n.t('buddies_pushCarJoinedBody'),
-        },
-      }
-    : {}
-
-const territoryTemplates = (): Partial<
-  Record<TerritoryPushKind, PushTemplate>
-> =>
-  useTerritoriesSession.getState().running
-    ? {
-        'territory.invite': {
-          title: i18n.t('buddies_pushTerritoryInviteTitle'),
-          body: i18n.t('buddies_pushTerritoryBody'),
-        },
-        'territory.reply': {
-          title: i18n.t('buddies_pushTerritoryJoinedTitle'),
-          body: i18n.t('buddies_pushTerritoryBody'),
-        },
-        'territory.handoff': {
-          title: i18n.t('buddies_pushTerritoryHandoffTitle'),
-          body: i18n.t('buddies_pushTerritoryBody'),
-        },
-      }
-    : {}
-
-export const buddiesPushTemplates = async () => ({
-  ...pushTemplates(),
-  ...(await joinRequestTemplates()),
-  ...badgeTemplates(),
-  ...carTemplates(),
-  ...territoryTemplates(),
-})
+export const buddiesPushTemplates = async (): Promise<
+  Record<PushKind, PushTemplate>
+> => {
+  const template: PushTemplate = {
+    title: i18n.t('buddies_pushFallbackTitle'),
+    body: i18n.t('buddies_pushFallbackBody'),
+  }
+  return Object.fromEntries(
+    (await pushKinds()).map((kind) => [kind, template])
+  ) as Record<PushKind, PushTemplate>
+}
 
 let registration: Promise<void> = Promise.resolve()
+
+type PushKind =
+  | BuddyPushKind
+  | JoinRequestPushKind
+  | BadgePushKind
+  | CarPushKind
+  | TerritoryPushKind
 
 const REGISTRATION_TIMEOUT_MS = 30 * 1000
 
@@ -221,6 +140,7 @@ async function register(signal: AbortSignal) {
     const outcome = await buddiesEngine.registerPush(
       {
         ...(await pushAddress()),
+        kindSealed: true,
         templates: notificationsEnabled ? await buddiesPushTemplates() : {},
       },
       { signal }

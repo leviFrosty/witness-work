@@ -74,7 +74,7 @@ import {
 import {
   type BuddiesPushMarker,
   type BuddyAlertContext,
-  type BuddyAlertOutcome,
+  type DescribedPush,
   describeBuddyEvent,
   type SealedEvent,
   shareWhen,
@@ -5748,14 +5748,16 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
   async function describePush(
     marker: BuddiesPushMarker,
     call?: RelayCallOptions
-  ): Promise<BuddyAlertOutcome> {
+  ): Promise<DescribedPush> {
     if (store.getState().registeredInboxId === null)
       return { failed: 'noContext' }
     const me = await identity()
     const context = alertContext()
     if (!context) return { failed: 'noContext' }
     let event: SealedEvent | undefined =
-      marker.eventId !== undefined && marker.blob !== undefined
+      marker.kind !== undefined &&
+      marker.eventId !== undefined &&
+      marker.blob !== undefined
         ? { eventId: marker.eventId, kind: marker.kind, blob: marker.blob }
         : undefined
     const seq = marker.seq
@@ -5771,11 +5773,14 @@ export function createBuddiesEngine(deps: BuddiesEngineDeps) {
         event = events.find((candidate) => candidate.seq === seq)
       }
     }
-    return event ? describeBuddyEvent(context, event) : { failed: 'noEvent' }
+    return event
+      ? { ...describeBuddyEvent(context, event), kind: event.kind }
+      : { failed: 'noEvent' }
   }
 
   async function registerPush(
     device: PushAddress & {
+      kindSealed?: true
       templates: Partial<
         Record<BuddyPushKind | BadgePushKind | CarPushKind, PushTemplate>
       > &

@@ -15,6 +15,11 @@ import { MAX_BUDDIES } from '@/features/buddies/lib/state'
 
 const RELAY_MAX_TEMPLATES = 96
 
+const NEUTRAL = {
+  title: 'buddies_pushFallbackTitle',
+  body: 'buddies_pushFallbackBody',
+}
+
 const {
   registerPush,
   joinKinds,
@@ -32,6 +37,7 @@ const {
       pushService?: string
       fcmToken?: string
       appAlerts?: boolean
+      kindSealed?: boolean
       templates: Record<string, unknown>
     }) => 'registered'
   ),
@@ -95,7 +101,7 @@ describe('registerBuddiesPush', () => {
     useSharedCarsSession.setState({ running: false })
   })
 
-  it('registers a localized template for every Buddies push kind', async () => {
+  it('registers the same neutral text for every Buddies push kind, and kindSealed', async () => {
     await registerBuddiesPush()
     const { templates, apnsEnvironment } = registerPush.mock.calls[0][0]
     expect(apnsEnvironment).toBe('sandbox')
@@ -112,10 +118,8 @@ describe('registerBuddiesPush', () => {
     )
 
     for (const template of Object.values(templates))
-      expect(template).toEqual({
-        title: expect.stringMatching(/^buddies_push/),
-        body: expect.stringMatching(/^buddies_push/),
-      })
+      expect(template).toEqual(NEUTRAL)
+    expect(registerPush.mock.calls[0][0].kindSealed).toBe(true)
   })
 
   it('stays within the relay’s templates with every buddy and every kind', async () => {
@@ -159,11 +163,8 @@ describe('registerBuddiesPush', () => {
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
     expect(templates).toMatchObject({
-      'join.request.aaaaaaaaaaaa': {
-        title: 'buddies_pushJoinRequestTitle',
-        body: 'buddies_pushJoinRequestBody',
-      },
-      'join.request.bbbbbbbbbbbb': { title: 'buddies_pushJoinRequestTitle' },
+      'join.request.aaaaaaaaaaaa': NEUTRAL,
+      'join.request.bbbbbbbbbbbb': NEUTRAL,
     })
 
     joinKinds.current = []
@@ -196,7 +197,7 @@ describe('registerBuddiesPush', () => {
     expect(Object.keys(templates)).toHaveLength(19)
   })
 
-  it('registers generic, name-free templates for shared cars only while Shared Cars runs', async () => {
+  it('registers shared car kinds only while Shared Cars runs', async () => {
     await registerBuddiesPush()
     for (const kind of CAR_PUSH_KINDS)
       expect(registerPush.mock.calls[0][0].templates).not.toHaveProperty(kind)
@@ -204,15 +205,8 @@ describe('registerBuddiesPush', () => {
     useSharedCarsSession.setState({ running: true })
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[1][0]
-    expect(templates['car.invite']).toEqual({
-      title: 'buddies_pushCarInviteTitle',
-      body: 'buddies_pushCarInviteBody',
-    })
-
-    expect(templates['car.reply']).toEqual({
-      title: 'buddies_pushCarJoinedTitle',
-      body: 'buddies_pushCarJoinedBody',
-    })
+    expect(templates['car.invite']).toEqual(NEUTRAL)
+    expect(templates['car.reply']).toEqual(NEUTRAL)
 
     expect(templates).not.toHaveProperty('car.cancel')
 
@@ -221,17 +215,11 @@ describe('registerBuddiesPush', () => {
     expect(registerPush.mock.calls[2][0].templates).toEqual({})
   })
 
-  it('registers generic, name-free templates for new badges and reactions only while badge alerts are on', async () => {
+  it('registers new badges and reactions only while badge alerts are on', async () => {
     await registerBuddiesPush()
     const { templates } = registerPush.mock.calls[0][0]
-    expect(templates[BADGE_PUSH_KIND]).toEqual({
-      title: 'buddies_pushBadgeTitle',
-      body: 'buddies_pushBadgeBody',
-    })
-    expect(templates[BADGE_REACTION_PUSH_KIND]).toEqual({
-      title: 'buddies_pushBadgeReactionTitle',
-      body: 'buddies_pushBadgeBody',
-    })
+    expect(templates[BADGE_PUSH_KIND]).toEqual(NEUTRAL)
+    expect(templates[BADGE_REACTION_PUSH_KIND]).toEqual(NEUTRAL)
 
     badgeKinds.current = []
     await registerBuddiesPush()
@@ -300,6 +288,7 @@ describe('registerBuddiesPush', () => {
       pushService: 'fcm',
       fcmToken: 'token',
       appAlerts: true,
+      kindSealed: true,
     })
     expect(device).not.toHaveProperty('apnsToken')
     expect(device).not.toHaveProperty('apnsTopic')

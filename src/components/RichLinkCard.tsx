@@ -3,7 +3,8 @@ import { ActivityIndicator, Platform, Share, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as Clipboard from 'expo-clipboard'
 import { toast } from '@/stores/toasts'
-import { Link as LinkIcon } from 'lucide-react-native'
+import { ImageDown, Link as LinkIcon } from 'lucide-react-native'
+import { ActionChip } from '@/components/ui/ActionChip'
 import Text from '@/components/ui/MyText'
 import ContextMenu, {
   type ContextMenuEntries,
@@ -91,7 +92,7 @@ interface Props {
 
 const RichLinkCard = ({ url, interactive = true }: Props) => {
   const theme = useTheme()
-  const { preview, loading } = useLinkPreview(url)
+  const { preview, loading, needsConsent, load, image } = useLinkPreview(url)
   const { open, menu } = useLinkActions()
   const [imageFailed, setImageFailed] = useState<string | null>(null)
   const showSpinner = useDelayedFlag(loading, SPINNER_DELAY_MS)
@@ -99,14 +100,13 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
   const hostname = getHostname(url)
   const title = preview?.title || hostname
   const siteName = preview?.siteName
-  const subtitle =
-    siteName && siteName.toLowerCase() !== hostname
+  const subtitle = needsConsent
+    ? url.replace(/^https?:\/\//i, '')
+    : siteName && siteName.toLowerCase() !== hostname
       ? `${siteName} · ${hostname}`
       : hostname
-  const imageUrl =
-    preview?.imageUrl && imageFailed !== preview.imageUrl
-      ? preview.imageUrl
-      : undefined
+  const imageSource =
+    image && imageFailed !== preview?.imageUrl ? image : undefined
 
   const card = (
     <View
@@ -133,14 +133,14 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
           overflow: 'hidden',
         }}
       >
-        {imageUrl ? (
+        {imageSource ? (
           <Image
-            source={{ uri: imageUrl }}
+            source={imageSource}
             style={{ width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE }}
             contentFit='cover'
             transition={150}
             accessibilityIgnoresInvertColors
-            onError={() => setImageFailed(imageUrl)}
+            onError={() => setImageFailed(preview?.imageUrl ?? null)}
           />
         ) : showSpinner ? (
           <ActivityIndicator
@@ -172,14 +172,30 @@ const RichLinkCard = ({ url, interactive = true }: Props) => {
           {subtitle}
         </Text>
       </View>
+      {needsConsent && (
+        <ActionChip
+          icon={ImageDown}
+          label={i18n.t('richLink_loadPreview')}
+          onPress={load}
+          surface={theme.colors.background}
+          testID='rich-link-load-preview'
+        />
+      )}
     </View>
   )
 
   if (!interactive) return card
 
+  const loadPreviewAction = needsConsent && {
+    id: 'load_preview',
+    title: i18n.t('richLink_loadPreview'),
+    systemImage: 'photo' as const,
+    onPress: load,
+  }
+
   return (
     <ContextMenu
-      actions={menu(url)}
+      actions={[loadPreviewAction, ...menu(url)]}
       onPress={() => open(url)}
       accessibilityLabel={title}
       hoverRadius={theme.numbers.borderRadiusMd}

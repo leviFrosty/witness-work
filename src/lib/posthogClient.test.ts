@@ -277,7 +277,7 @@ describe('PostHog consent with persisted SDK state', () => {
     ).toBe(false)
   })
 
-  it('preserves survey history and the SDK default retained properties on reset', async () => {
+  it('preserves survey history and app-version metadata on reset', async () => {
     const sdk = await start()
     const { analytics } = await import('./analytics')
     const retained = {
@@ -285,17 +285,41 @@ describe('PostHog consent with persisted SDK state', () => {
       [P.SurveyLastSeenDate]: '2026-09-22T00:00:00.000Z',
       [P.InstalledAppBuild]: '1',
       [P.InstalledAppVersion]: '1.0.0',
-      [P.DeviceId]: 'device-id',
       [P.Surveys]: [{ id: 'survey' }],
       [P.RemoteConfig]: { surveys: true },
     }
     for (const [key, value] of Object.entries(retained))
       sdk.setPersistedProperty(key as P, value)
+    sdk.setPersistedProperty(P.DeviceId, 'device-id')
     const previousId = sdk.getDistinctId()
     analytics.reset()
     expect(sdk.getDistinctId()).not.toBe(previousId)
+    expect(sdk.getPersistedProperty(P.DeviceId)).not.toBe('device-id')
     for (const [key, value] of Object.entries(retained))
       expect(sdk.getPersistedProperty(key as P)).toEqual(value)
+  })
+
+  it('sends no flag request after an opt-out with an id from before it', async () => {
+    seed({
+      [P.AnonymousId]: 'before-opt-out',
+      [P.DeviceId]: 'device-before-opt-out',
+    })
+    const sdk = await start()
+    await sdk.reloadFeatureFlagsAsync()
+    const flagBodies = () =>
+      mocks.fetch.mock.calls
+        .filter(([url]) => String(url).includes('/flags'))
+        .map(([, options]) => String(options.body))
+    expect(flagBodies().join()).toContain('device-before-opt-out')
+    mocks.fetch.mockClear()
+    const { setAnalyticsEventsAllowed } = await import('./analyticsPolicy')
+    setAnalyticsEventsAllowed(false)
+    const { analytics } = await import('./analytics')
+    analytics.reset()
+    await sdk.reloadFeatureFlagsAsync()
+    expect(flagBodies().length).toBeGreaterThan(0)
+    expect(flagBodies().join()).not.toContain('device-before-opt-out')
+    expect(flagBodies().join()).not.toContain('before-opt-out')
   })
 
   it('keeps an anonymous installation identity stable on subsequent launches', async () => {
@@ -592,6 +616,70 @@ describe('PostHog volume and privacy policy', () => {
       ).toBe(true)
     }
   )
+})
+
+it('asks PostHog not to look up a location for every event, queued ones included', async () => {
+  seed({
+    [P.AnonymousId]: 'anonymous-installation',
+    [P.Queue]: [
+      {
+        message: {
+          event: 'survey sent',
+          distinct_id: 'anonymous-installation',
+          properties: { $geoip_disable: false },
+        },
+      },
+    ],
+  })
+  const sdk = await start()
+  sdk.capture('$exception', { $exception_list: [{ type: 'Error' }] })
+  sdk.capture('contact_created')
+  await sdk.flush()
+  const sent = sentEvents()
+  expect(sent.length).toBeGreaterThanOrEqual(2)
+  for (const event of sent) expect(event.properties.$geoip_disable).toBe(true)
+})
+
+describe('Share Anonymous Crash Reports', () => {
+  const exceptions = () =>
+    sentEvents().filter(
+      (event: { event: string }) => event.event === '$exception'
+    )
+
+  it('drops exceptions as soon as it is turned off, and sends them again once on', async () => {
+    const sdk = await start()
+    const { setCrashReportsAllowed } = await import('./errorTrackingPolicy')
+    setCrashReportsAllowed(false)
+    sdk.capture('$exception', { $exception_list: [{ value: 'off' }] })
+    sdk.capture('survey sent')
+    await sdk.flush()
+    expect(exceptions()).toEqual([])
+    expect(
+      sentEvents().map((event: { event: string }) => event.event)
+    ).toContain('survey sent')
+    setCrashReportsAllowed(true)
+    sdk.capture('$exception', { $exception_list: [{ value: 'on' }] })
+    await sdk.flush()
+    expect(exceptions()).toHaveLength(1)
+  })
+
+  it('starts with the saved choice, and with crash reports on when nothing is saved', async () => {
+    mocks.frequency.set(
+      'preferences',
+      JSON.stringify({ state: { crashReportsEnabled: false }, version: 18 })
+    )
+    await start()
+    const policy = await import('./errorTrackingPolicy')
+    expect(policy.crashReportsAllowed()).toBe(false)
+
+    await client?.shutdown()
+    vi.resetModules()
+    mocks.frequency.delete('preferences')
+    await start()
+    expect((await import('./errorTrackingPolicy')).crashReportsAllowed()).toBe(
+      true
+    )
+  })
 })
 
 it('sends the app variant with flag requests so flags can target Beta', async () => {

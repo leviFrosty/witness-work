@@ -4,10 +4,13 @@ import type PostHog from 'posthog-react-native'
 import { AnonymousPostHog } from '@/lib/anonymousPostHog'
 import { logger } from '@/lib/logger'
 import {
+  crashReportsAllowed,
   errorTrackingEnabled,
   getErrorContext,
+  setCrashReportsAllowed,
   shouldIgnoreExceptionProperties,
 } from '@/lib/errorTrackingPolicy'
+import { crashReportsEnabledAtLaunch } from '@/lib/crashReportsAtLaunch'
 import { scrubAnalyticsEventProperties } from '@/lib/shareLinkScrub'
 import {
   analyticsEventAllowed,
@@ -37,6 +40,7 @@ function createClient(): PostHog | null {
     })
     return null
   }
+  setCrashReportsAllowed(crashReportsEnabledAtLaunch())
   try {
     const client = new AnonymousPostHog(projectToken, {
       host,
@@ -55,7 +59,7 @@ function createClient(): PostHog | null {
           unhandledRejections: errorTrackingEnabled,
 
           console: false,
-          nativeCrashes: errorTrackingEnabled,
+          nativeCrashes: crashReportsAllowed(),
         },
       },
       before_send: (event) => {
@@ -69,13 +73,15 @@ function createClient(): PostHog | null {
         const isException = event.event === '$exception'
         if (
           isException &&
-          (!errorTrackingEnabled ||
+          (!crashReportsAllowed() ||
             shouldIgnoreExceptionProperties(event.properties ?? {}))
         ) {
           logger.debug('[Analytics] Skipping $exception', {
-            reason: errorTrackingEnabled
-              ? 'ignored exception'
-              : 'error tracking disabled in development',
+            reason: !errorTrackingEnabled
+              ? 'error tracking disabled in development'
+              : crashReportsAllowed()
+                ? 'ignored exception'
+                : 'crash reports turned off',
           })
           return null
         }
@@ -90,6 +96,7 @@ function createClient(): PostHog | null {
             development_mode: typeof __DEV__ !== 'undefined' && __DEV__,
 
             app_platform: Platform.OS,
+            $geoip_disable: true,
           }),
         }
       },

@@ -92,6 +92,13 @@ describe('replayBeforeSend', () => {
     expect(send(snapshot())?.properties).toMatchObject({ app_platform: 'web' })
   })
 
+  it('asks PostHog not to look up a location', () => {
+    const send = replayBeforeSend(() => true, {})
+    expect(send(snapshot({ $geoip_disable: false }))?.properties).toMatchObject(
+      { $geoip_disable: true }
+    )
+  })
+
   it('drops a snapshot the moment the gate closes', () => {
     let open = true
     const send = replayBeforeSend(() => open, {})

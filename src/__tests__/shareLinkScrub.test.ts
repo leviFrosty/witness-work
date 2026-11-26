@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import webEnvironments from '../../config/web-environments.json'
 import {
   scrubAnalyticsEventProperties,
+  scrubDiagnosticText,
   scrubShareLinkProperties,
   scrubShareLinkUrl,
 } from '@/lib/shareLinkScrub'
@@ -143,6 +144,91 @@ describe('scrubShareLinkProperties', () => {
       version: '1.43.0',
       count: 2,
     })
+  })
+})
+
+describe('scrubDiagnosticText', () => {
+  it('drops query values from request URLs, keeping the path', () => {
+    expect(
+      scrubDiagnosticText(
+        'fetch failed: https://api.witnesswork.app/geocode?q=12%20Main%20St&limit=1 (500)'
+      )
+    ).toBe('fetch failed: https://api.witnesswork.app/geocode?[redacted] (500)')
+    expect(
+      scrubDiagnosticText('/places/v1/search?q=Main&at=40.71,-74.00')
+    ).toBe('/places/v1/search?[redacted]')
+  })
+
+  it('still drops share links, and leaves a plain question alone', () => {
+    expect(
+      scrubDiagnosticText('opened https://witnesswork.app/contacts#H4sIAAAA')
+    ).toBe('opened https://witnesswork.app/contacts#[redacted]')
+    expect(scrubDiagnosticText('Why did this fail?')).toBe('Why did this fail?')
+  })
+})
+
+describe('scrubAnalyticsEventProperties for exceptions', () => {
+  const url = 'https://api.witnesswork.app/places/v1/search?q=Main%20St&at=1,2'
+  const share = 'https://witnesswork.app/contacts#H4sIAAAA'
+
+  it('scrubs messages, values, frames and steps at any depth', () => {
+    const sent = scrubAnalyticsEventProperties('$exception', {
+      $exception_list: [
+        {
+          type: 'TypeError',
+          value: `Network request failed: ${url}`,
+          mechanism: { handled: false },
+          stacktrace: {
+            frames: [{ filename: 'index.bundle', lineno: 4, vars: { url } }],
+          },
+        },
+      ],
+      $exception_steps: [
+        { $message: 'Opened link', data: { link: share, count: 3 } },
+      ],
+      $exception_level: 'error',
+    })
+    const text = JSON.stringify(sent)
+    expect(text).not.toContain('Main')
+    expect(text).not.toContain('at=1,2')
+    expect(text).not.toContain('H4sIAAAA')
+    expect(sent.$exception_list).toEqual([
+      {
+        type: 'TypeError',
+        value:
+          'Network request failed: https://api.witnesswork.app/places/v1/search?[redacted]',
+        mechanism: { handled: false },
+        stacktrace: {
+          frames: [
+            {
+              filename: 'index.bundle',
+              lineno: 4,
+              vars: {
+                url: 'https://api.witnesswork.app/places/v1/search?[redacted]',
+              },
+            },
+          ],
+        },
+      },
+    ])
+    expect(sent.$exception_steps).toEqual([
+      {
+        $message: 'Opened link',
+        data: {
+          link: 'https://witnesswork.app/contacts#[redacted]',
+          count: 3,
+        },
+      },
+    ])
+    expect(sent.$exception_level).toBe('error')
+  })
+
+  it('leaves the same keys alone on other events', () => {
+    const steps = [{ $message: url }]
+    expect(
+      scrubAnalyticsEventProperties('survey sent', { $exception_steps: steps })
+        .$exception_steps
+    ).toBe(steps)
   })
 })
 

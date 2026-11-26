@@ -294,6 +294,7 @@ test.describe('a sampled session outside the opt-in regions', () => {
       expect(properties).toMatchObject({
         app_platform: 'web',
         app_variant: 'development',
+        $geoip_disable: true,
       })
       for (const value of Object.values(properties))
         if (typeof value === 'string' && /^https?:/.test(value))

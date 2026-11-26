@@ -29,8 +29,9 @@ measure changes to the app's core recorded service activity.
 
 Usage requires `appVariant: production`, development mode off, and hydrated
 analytics consent. Beta, development, and missing/unknown variants do not ingest
-usage, including restored queues. Feature flag requests, surveys, and crash
-reporting retain their independent behavior. This is enforced in `before_send`,
+usage, including restored queues. Feature flag requests and surveys retain
+their independent behavior, and crash reporting has its own switch (see
+[Error tracking](#error-tracking)). This is enforced in `before_send`,
 queue restoration, and every delivery/retry attempt. SDK `$set`, `$identify`,
 `Application Updated`, `Application Opened`, `Application Backgrounded`, and other unregistered
 automatic events are discarded. Touch/text autocapture stays off. Session replay
@@ -137,8 +138,14 @@ HERE and stores neither (see the Help Center's route planning privacy answer).
 The provider uses `personProfiles: never`; the adapter has no `identify`, and
 account/RevenueCat IDs are never usage identities. The SDK's random on-device
 identifier supports sessions and stable rollouts. Do not add identify/alias/group
-or person updates; put bounded breakdowns on the outcome event instead. GeoIP
-remains available; disclose country-level location in the privacy policy.
+or person updates; put bounded breakdowns on the outcome event instead.
+
+No event gets a location. The app's client is created with `disableGeoip`, and
+`before_send` and every delivered batch (queues saved by older versions
+included) set `$geoip_disable: true`, so PostHog adds no country, city or
+coordinates. The web replay client sets it on each `$snapshot` too; posthog-js
+has no client setting for it (its `ip` option does nothing). The project also
+discards client IP data.
 
 On upgrade, `AnonymousPostHog.setupBootstrap` clears legacy identified state
 before startup requests, rotates linked identifiers, and drops that legacy queue,
@@ -155,10 +162,11 @@ checkout URLs to their origin.
 `analyticsConsent.ts` publishes the preference at module load, after hydration,
 and on changes into the store-free policy module; the gate starts closed.
 Withdrawal synchronously resets the random identifier and prunes pending usage;
-a rapid off/on cannot revive it on a network retry. Survey history and normal
-retained SDK properties survive. The separate SDK `DeviceId` remains for flag
-requests/native integrations; it is not the usage-event identity. Flag requests
-remain outside the usage switch. An HTTP request already underway cannot be recalled. The switch lives in Settings under Misc and is explained in onboarding.
+a rapid off/on cannot revive it on a network retry. Survey history and
+app-version metadata survive. The SDK's `DeviceId` is reset too: flag requests
+send it as `$device_id`, so keeping it would link the requests before an opt-out
+to those after (the next one is taken from the new anonymous id). Flag requests
+remain outside the usage switch. An HTTP request already underway cannot be recalled. The switch lives in Settings → Privacy and is explained in onboarding.
 Keep copy accurate: structural analytics exist, and intentional survey text or
 opt-in diagnostic attachments are exceptions described below.
 
@@ -1344,23 +1352,16 @@ feedback screen views, survey starts, abandonment, and successful attachment
 bookkeeping are no longer separate usage events. Explicit responses and
 attachments still use the survey contract below.
 
-**Opt-in diagnostics are the one place app data leaves the device through
-PostHog.** Off by default; only when the user turns on Include Diagnostics _and_
-submits the survey, the app sends `survey attachment` events (a `survey `
-event, so they pass with usage analytics off, like the response itself). They
-share a random `feedback_id` with the `survey sent` response, which gets it as a
-session-only property:
-
-- `kind: diagnostics` — platform, OS, device model, app version/build, locale,
-  time zone, and Buddies _counts_ (never buddies' names, cards, shares, relay ids,
-  or keys — that data is other people's and end-to-end encrypted).
-- `kind: backup` — the same JSON backup Settings exports, gzipped and base64url
-  encoded across `part`/`parts` events of ≤500KB each (PostHog drops events over
-  1MB). Rebuild it with
-  `node --env-file=.env scripts/buddies-feedback-backup.mjs <feedback_id>`.
-
-Backups hold Contacts, Notes, and ministry records: open them only to debug that
-report, and delete local copies afterwards.
+**Opt-in diagnostics.** Off by default; only when the user turns on Include
+Diagnostics _and_ submits the survey, the app sends one `survey attachment`
+event (a `survey ` event, so it passes with usage analytics off, like the
+response itself). It shares a random `feedback_id` with the `survey sent`
+response, which gets it as a session-only property, and has `kind:
+diagnostics`: platform, OS, device model, app version/build, locale, time zone,
+and Buddies _counts_. It never sends buddies' names, cards, shares, relay ids,
+or keys, because that data is other people's and end-to-end encrypted. It never carries the
+User's own records: no backup, Contacts, Notes or ministry records. Earlier
+versions also attached a full backup as `kind: backup` events.
 
 ### Shared Cars
 
@@ -1909,6 +1910,26 @@ errorTracking.addBreadcrumb({
 })
 ```
 
+**Share Anonymous Crash Reports** (`crashReportsEnabled`, default on, per
+device, not synced) is the User's switch in Settings → Privacy, beside and
+independent of the usage switch. Data Protection Mode doesn't change it: both
+send only anonymous data. `crashReportsConsent.ts` publishes it into
+`errorTrackingPolicy` (`crashReportsAllowed()`), and while it's off the app
+sends no `$exception` events (`before_send` and `errorTracking` both check it)
+and records no exception steps, from the moment it changes. A launch that can't
+read the saved choice (storage still locked) sends none. Native crashes are
+captured and sent by the native SDK, never through `before_send`, and it reads
+`nativeCrashes` only when it starts, so `posthogClient` reads the saved choice
+from MMKV at launch (`crashReportsAtLaunch.ts`) and native capture follows a
+change from the next launch. `device_storage_full` is usage and follows the
+usage switch.
+
+Exception events are scrubbed before they leave: every string in
+`$exception_list` (messages, values, stack frames) and `$exception_steps`
+(breadcrumbs), at any depth, loses share-link payloads and the values of any URL
+query, since a failed request's URL can carry an address (`?q=…`) or a map
+position (`&at=…`).
+
 `setContext` supplies app-level metadata for JavaScript diagnostics. Native
 crashes retain the native SDK's app/device metadata and mirrored breadcrumbs;
 the React Native SDK does not mirror custom JavaScript context to native reports.
@@ -1984,9 +2005,13 @@ of its own.
 Hot Updater Insights sends operational launch, downloaded-bundle, rollback and
 failure reports to the matching self-hosted Cloudflare update Worker. Reports
 use the SDK's random installation ID and update/platform/channel compatibility
-metadata; no account identity is assigned and no contact names, notes, addresses
-or service records are sent. Development clients and performance probes do not
-run the Insights plugin. These reports diagnose delivery and native rollback;
+metadata; no account identity is assigned (the app never calls
+`insights.setUser`) and no contact names, notes, addresses or service records
+are sent. The update server stores no IP. Insights follows the anonymous
+analytics switch: `anonymousInsights()` (`src/lib/hotUpdaterInsights.ts`) wraps
+the plugin's hooks, so with usage analytics off it creates and sends no report.
+Update checks and downloads don't go through those hooks and are unaffected.
+Development clients and performance probes do not run the Insights plugin. These reports diagnose delivery and native rollback;
 they are separate from PostHog product events and do not add a per-tap event.
 
 Error context now uses `updateChannel` and `updateBundleId`, replacing

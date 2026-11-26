@@ -1,8 +1,9 @@
-import { HotUpdater, insights } from '@hot-updater/react-native'
+import { HotUpdater } from '@hot-updater/react-native'
 import Constants from 'expo-constants'
 import { DevSettings, Platform } from 'react-native'
 import { errorTracking } from '@/lib/errorTracking'
 import { isConnectivityError } from '@/lib/http/networkError'
+import { anonymousInsights } from '@/lib/hotUpdaterInsights'
 
 const config = Constants.expoConfig?.extra?.hotUpdater
 export const otaEnabled = !__DEV__ && process.env.EXPO_PUBLIC_PERF_PROBE !== '1'
@@ -18,7 +19,7 @@ export const launchRead = new Promise<void>((resolve) => {
 export const hotUpdater = HotUpdater.init({
   baseURL: config.baseURL,
   requestHeaders: { 'x-api-key': config.apiKey ?? '' },
-  plugins: otaEnabled ? [insights()] : [],
+  plugins: otaEnabled ? [anonymousInsights()] : [],
 
   onNotifyAppReady: () => markLaunchRead(),
   onError: (error) => {

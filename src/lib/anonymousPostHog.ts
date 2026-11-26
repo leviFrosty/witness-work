@@ -17,6 +17,13 @@ const appVersion = [P.InstalledAppBuild, P.InstalledAppVersion]
 export class AnonymousPostHog extends PostHog {
   private consentRevision = 0
 
+  constructor(
+    projectToken: string,
+    options?: ConstructorParameters<typeof PostHog>[1]
+  ) {
+    super(projectToken, { ...options, disableGeoip: true })
+  }
+
   protected override setupBootstrap(
     options?: Partial<PostHogCoreOptions>
   ): void {
@@ -63,7 +70,7 @@ export class AnonymousPostHog extends PostHog {
     this.wrap(() => {
       this.discardPendingUsage()
 
-      super.reset([...appVersion, P.DeviceId, ...surveyHistory])
+      super.reset([...appVersion, ...surveyHistory])
     })
   }
 
@@ -87,14 +94,17 @@ export class AnonymousPostHog extends PostHog {
           await super.sendBatch(
             allowed.map((message) => ({
               ...message,
-              properties: scrubAnalyticsEventProperties(
-                message.event,
-                message.properties &&
-                  typeof message.properties === 'object' &&
-                  !Array.isArray(message.properties)
-                  ? message.properties
-                  : {}
-              ),
+              properties: {
+                ...scrubAnalyticsEventProperties(
+                  message.event,
+                  message.properties &&
+                    typeof message.properties === 'object' &&
+                    !Array.isArray(message.properties)
+                    ? message.properties
+                    : {}
+                ),
+                $geoip_disable: true,
+              },
             })),
             { ...retryOptions, retryCount: 0 },
             route

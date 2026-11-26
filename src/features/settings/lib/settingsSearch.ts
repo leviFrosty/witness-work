@@ -369,6 +369,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     page: 'PreferencesPrivacy',
     keywords: 'settingsSearch.keywords.analytics',
   },
+  {
+    id: 'crashReports',
+    title: 'crashReports',
+    page: 'PreferencesPrivacy',
+    keywords: 'settingsSearch.keywords.crashReports',
+  },
 
   page('PreferencesNotifications', {
     keywords: 'settingsSearch.keywords.notifications',

@@ -42,6 +42,7 @@ export const replayBeforeSend =
     const properties: Record<string, unknown> = {
       ...event.properties,
       ...added,
+      $geoip_disable: true,
     }
     for (const name of URL_PROPERTIES) {
       if (typeof properties[name] === 'string')

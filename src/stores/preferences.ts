@@ -394,6 +394,8 @@ export const PREFERENCE_DEFAULTS = {
   analyticsEnabled: true,
 
   sessionReplayOptIn: false,
+
+  crashReportsEnabled: true,
   remindMeAboutBackups: true,
   backupNotificationFrequencyAsDays: 120,
   userSpecifiedHasAnnualGoal: 'default' as boolean | 'default',

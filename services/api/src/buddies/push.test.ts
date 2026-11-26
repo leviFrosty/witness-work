@@ -51,6 +51,7 @@ const target = (overrides: Partial<ApnsTarget> = {}): ApnsTarget => ({
   apnsTopic: null,
   title: 'Buddy request',
   body: 'Someone accepted your invite',
+  kindSealed: false,
   ...overrides,
 })
 
@@ -61,6 +62,7 @@ const androidTarget = (overrides: Partial<FcmTarget> = {}): FcmTarget => ({
   title: 'Buddy request',
   body: 'Someone accepted your invite',
   appAlerts: true,
+  kindSealed: false,
   ...overrides,
 })
 
@@ -425,7 +427,7 @@ describe('deliverPushJob on Android (FCM)', () => {
 
 describe('passive kinds', () => {
   it("delivers buddies' badge news quietly, and everything else with sound", () => {
-    const alert = { title: 'Badge', body: 'News' }
+    const alert = { title: 'Badge', body: 'News', kindSealed: false }
     for (const kind of ['badge.new', 'badge.reaction']) {
       const { aps } = buildBuddiesPayload(job([], { kind }), alert)
       expect(aps).toMatchObject({
@@ -438,6 +440,86 @@ describe('passive kinds', () => {
     const { aps } = buildBuddiesPayload(job([], { kind: 'plan.invite' }), alert)
     expect(aps).toMatchObject({ sound: 'default' })
     expect(aps).not.toHaveProperty('interruption-level')
+  })
+})
+
+describe('devices that registered kindSealed', () => {
+  // The neutral text current builds register for every kind.
+  const NEUTRAL = {
+    title: 'WitnessWork',
+    body: 'You have a new update',
+    kindSealed: true,
+  }
+  const KINDS = [
+    'invite.claimed',
+    'pair.confirmed',
+    'plan.invite',
+    'followup.cancel',
+    'share.reply',
+    'join.request.0123456789ab',
+    'car.invite',
+    'territory.handoff',
+  ]
+
+  it('get only the seq and the neutral text over APNs, whatever the kind', () => {
+    for (const kind of KINDS) {
+      const payload = buildBuddiesPayload(job([], { kind }), NEUTRAL)
+      expect(payload).toEqual({
+        aps: {
+          alert: { title: 'WitnessWork', body: 'You have a new update' },
+          sound: 'default',
+          'thread-id': 'buddies',
+          'content-available': 1,
+          'mutable-content': 1,
+        },
+        ww: { seq: 7 },
+      })
+      const sent = JSON.stringify(payload)
+      expect(sent).not.toContain(kind)
+      expect(sent).not.toContain(EVENT.eventId)
+    }
+  })
+
+  it('get only the seq and the neutral fallback over FCM, whatever the kind', () => {
+    for (const kind of KINDS) {
+      const { data } = buildBuddiesFcmMessage(job([], { kind }), {
+        ...NEUTRAL,
+        appAlerts: true,
+      })
+      expect(data).toEqual({
+        fallbackTitle: 'WitnessWork',
+        fallbackBody: 'You have a new update',
+        body: JSON.stringify({ ww: { seq: 7 } }),
+      })
+      expect(JSON.stringify(data)).not.toContain(kind)
+    }
+  })
+
+  it('still hear badge news quietly, marked passive', () => {
+    for (const kind of ['badge.new', 'badge.reaction']) {
+      const payload = buildBuddiesPayload(job([], { kind }), NEUTRAL)
+      expect(payload.ww).toEqual({ seq: 7, passive: true })
+      expect(payload.aps).toMatchObject({ 'interruption-level': 'passive' })
+      expect(payload.aps).not.toHaveProperty('sound')
+      const { data } = buildBuddiesFcmMessage(job([], { kind }), {
+        ...NEUTRAL,
+        appAlerts: true,
+      })
+      expect(JSON.parse(data.body)).toEqual({ ww: { seq: 7, passive: true } })
+    }
+  })
+
+  it('leave other devices on the same job with the kind and the inline event', async () => {
+    const { env, requests, deps } = await setup()
+    const sealed = target({ ...NEUTRAL })
+    const older = target({ kindSealed: false })
+    await deliverPushJob(env, job([sealed, older], { kind: 'plan.invite' }), deps)
+    const ww = (token: string) =>
+      JSON.parse(
+        String(requests.find((request) => request.url.endsWith(token))!.init.body)
+      ).ww
+    expect(ww(sealed.token)).toEqual({ seq: 7 })
+    expect(ww(older.token)).toEqual({ kind: 'plan.invite', seq: 7, ...EVENT })
   })
 })
 
@@ -461,6 +543,7 @@ describe('the sealed event in the push', () => {
     const alert = {
       title: 'Nueva invitación',
       body: 'Un compañero te invitó.',
+      kindSealed: false,
     }
     const payload = (blob: string) =>
       buildBuddiesPayload(
@@ -488,17 +571,24 @@ describe('the sealed event in the push', () => {
     const short = buildBuddiesPayload(job([], { event: { ...EVENT, blob } }), {
       title: 'a',
       body: 'b',
+      kindSealed: false,
     })
     const long = buildBuddiesPayload(job([], { event: { ...EVENT, blob } }), {
       title: '招待'.repeat(40),
       body: '招待'.repeat(40),
+      kindSealed: false,
     })
     expect(short.ww).toHaveProperty('blob')
     expect(long.ww).not.toHaveProperty('blob')
   })
 
   it('rides an FCM message only while its data stays within the limit', () => {
-    const alert = { title: 'Hola', body: 'Cuerpo', appAlerts: true }
+    const alert = {
+      title: 'Hola',
+      body: 'Cuerpo',
+      appAlerts: true,
+      kindSealed: false,
+    }
     const message = (blob: string) =>
       buildBuddiesFcmMessage(
         job([], { event: { eventId: EVENT.eventId, blob } }),

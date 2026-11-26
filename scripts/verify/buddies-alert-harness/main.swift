@@ -18,7 +18,9 @@ let request = UNNotificationRequest(identifier: "harness", content: content, tri
 let service = NotificationService()
 let done = DispatchSemaphore(value: 0)
 service.didReceive(request) { result in
-  let out = ["title": result.title, "body": result.body]
+  // `kind` is what the extension learned from the event and added to the marker.
+  let kind = (result.userInfo["ww"] as? [String: Any])?["kind"] as? String
+  let out = ["title": result.title, "body": result.body, "kind": kind ?? ""]
   print(String(data: try! JSONSerialization.data(withJSONObject: out), encoding: .utf8)!)
   done.signal()
 }

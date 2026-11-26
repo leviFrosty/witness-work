@@ -2,13 +2,14 @@ import Foundation
 import Security
 import UserNotifications
 
-/// Names Buddies alerts. The relay sends each device its own generic template
-/// ("A buddy invited you to a Plan"), because it must never see a name; the
-/// push also carries the event it's about, still sealed (or its `seq`, when the
-/// event didn't fit). This extension opens it with the keys the app keeps in a
-/// shared Keychain item and rewrites the alert: "Anna invited you to a Plan",
-/// "Sat, Oct 10 · 10:00 AM". Anything else, or anything that goes wrong, keeps
-/// the alert exactly as it arrived.
+/// Names Buddies alerts. The relay sends each device the neutral text it
+/// registered ("You have a new update"), because it must never see a name and
+/// Apple must never learn what happened; the push carries only the event's
+/// `seq`. This extension fetches the event, opens it with the keys the app
+/// keeps in a shared Keychain item, and rewrites the alert: "Anna invited you
+/// to a Plan", "Sat, Oct 10 · 10:00 AM". Anything else, or anything that goes
+/// wrong, keeps the alert as it arrived. Pushes to builds before `kindSealed`
+/// also carried the kind and, when it fit, the sealed event; those still work.
 final class NotificationService: UNNotificationServiceExtension {
   private let lock = NSLock()
   private var contentHandler: ((UNNotificationContent) -> Void)?
@@ -52,19 +53,19 @@ final class NotificationService: UNNotificationServiceExtension {
   }
 }
 
-/// The push's `ww` marker (docs/buddies-protocol.md, "APNs (iOS)").
+/// The push's `ww` marker (docs/buddies-protocol.md, "APNs (iOS)"): `seq`, and
+/// from relays serving builds before `kindSealed`, the kind and inline event.
 struct PushMarker {
-  let kind: String
+  let kind: String?
   let seq: Int?
   let eventId: String?
   let blob: String?
 
   init?(userInfo: [AnyHashable: Any]) {
-    guard let ww = userInfo["ww"] as? [String: Any], let kind = ww["kind"] as? String else {
-      return nil
-    }
-    self.kind = kind
+    guard let ww = userInfo["ww"] as? [String: Any] else { return nil }
+    kind = ww["kind"] as? String
     seq = (ww["seq"] as? NSNumber)?.intValue
+    guard kind != nil || seq != nil else { return nil }
     eventId = ww["eventId"] as? String
     blob = ww["blob"] as? String
   }
@@ -78,8 +79,9 @@ enum NamedAlert {
   ) async -> (UNNotificationContent, String) {
     guard let context = AlertContextStore.load() else { return (original, "fallback.noContext") }
     var event: SealedEvent?
-    if let eventId = marker.eventId, let blob = marker.blob {
-      event = SealedEvent(eventId: eventId, kind: marker.kind, blob: blob, slotId: nil)
+    // The seal doesn't name the kind, so an inline event is of use only with it.
+    if let kind = marker.kind, let eventId = marker.eventId, let blob = marker.blob {
+      event = SealedEvent(eventId: eventId, kind: kind, blob: blob, slotId: nil)
     } else if let seq = marker.seq, seq > 0 {
       do {
         event = try await InboxFetch.event(
@@ -93,17 +95,18 @@ enum NamedAlert {
       }
     }
     guard let event else { return (original, "fallback.noEvent") }
+    let known = withKind(original, event.kind)
     switch describe(context: context, event: event) {
     case .quiet:
       // Muted here; an extension without the filtering entitlement can't drop
       // an alert, so it keeps the template.
-      return (original, "quiet")
+      return (known, "quiet")
     case .failed(let reason):
-      return (original, "fallback.\(reason)")
+      return (known, "fallback.\(reason)")
     case .alert(let alert):
       guard let display = context.display,
-        let content = original.mutableCopy() as? UNMutableNotificationContent
-      else { return (original, "fallback.noContext") }
+        let content = known.mutableCopy() as? UNMutableNotificationContent
+      else { return (known, "fallback.noContext") }
       let text = AlertWording(
         string: Localized.strings(language: display.language),
         language: display.language,
@@ -114,6 +117,21 @@ enum NamedAlert {
       content.body = text.body ?? ""
       return (content, "named")
     }
+  }
+
+  /// The alert with the event's kind added to its `ww` marker, so the app can
+  /// route a tap and present badge news quietly. It never leaves the device.
+  private static func withKind(_ original: UNNotificationContent, _ kind: String)
+    -> UNNotificationContent
+  {
+    guard var ww = original.userInfo["ww"] as? [String: Any], ww["kind"] == nil,
+      let content = original.mutableCopy() as? UNMutableNotificationContent
+    else { return original }
+    ww["kind"] = kind
+    var userInfo = content.userInfo
+    userInfo["ww"] = ww
+    content.userInfo = userInfo
+    return content
   }
 }
 

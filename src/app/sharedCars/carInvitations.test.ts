@@ -239,6 +239,7 @@ describe('sharing a car with a buddy', () => {
     expect(pushed).toHaveLength(1)
     await expect(joe.engine.describePush(pushed[0].marker)).resolves.toEqual({
       alert: { type: 'carInvite', name: 'Anna' },
+      kind: 'car.invite',
     })
 
     await joe.engine.sync()
@@ -265,6 +266,7 @@ describe('sharing a car with a buddy', () => {
     )
     await expect(anna.engine.describePush(replies[0].marker)).resolves.toEqual({
       alert: { type: 'carJoined', name: 'Joe' },
+      kind: 'car.reply',
     })
     await anna.engine.sync()
     expect(carEntries(anna)).toEqual([

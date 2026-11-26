@@ -612,6 +612,96 @@ describe('events and pushes', () => {
     ).toEqual([{ appAlerts: 0 }])
   })
 
+  it('names no kind to a device that registered kindSealed, on either service', async () => {
+    const owner = await Owner.create(h)
+    const neutral = { title: 'WitnessWork', body: 'You have a new update' }
+    const templates = { 'plan.invite': neutral }
+    const iphone = hexToken(32)
+    const android = fcmToken()
+    const older = hexToken(32)
+    await owner.registerDevice(randomId(), templates, iphone, 'sandbox', {
+      kindSealed: true,
+    })
+    await owner.send('device/register', {
+      deviceId: randomId(),
+      pushService: 'fcm',
+      fcmToken: android,
+      appAlerts: true,
+      kindSealed: true,
+      templates,
+    })
+    await owner.registerDevice(randomId(), templates, older)
+    const buddy = await owner.addWriter()
+    const { body } = await buddy.putEvent({ kind: 'plan.invite', push: true })
+    await h.flush()
+
+    const apns = (token: string) =>
+      h.pushes.find((p) => p.url.endsWith(token))!.body as {
+        aps: { alert: unknown }
+        ww: Record<string, unknown>
+      }
+    expect(apns(iphone).aps.alert).toEqual(neutral)
+    expect(apns(iphone).ww).toEqual({ seq: (body as { seq: number }).seq })
+    expect(apns(older).ww).toMatchObject({ kind: 'plan.invite' })
+    const fcm = h.pushes.find(
+      (p) => (p.body as { message?: { token: string } }).message?.token === android
+    )!.body as { message: { data: Record<string, string> } }
+    expect(fcm.message.data).toMatchObject({
+      fallbackTitle: neutral.title,
+      fallbackBody: neutral.body,
+    })
+    expect(fcm.message.data.body).not.toContain('plan.invite')
+
+    expect(
+      (
+        await owner.registerDevice(randomId(), templates, hexToken(32), 'sandbox', {
+          kindSealed: 'yes',
+        })
+      ).status
+    ).toBe(400)
+  })
+
+  it('adds the kindSealed column to inboxes from before it', async () => {
+    const owner = await Owner.create(h)
+    const storage = h.inboxes.storage(owner.inboxId)
+    const sql = storage.state.storage.sql
+    const token = hexToken(32)
+    sql.exec('DROP TABLE push_device')
+    sql.exec(
+      `CREATE TABLE push_device (
+         device_id        TEXT PRIMARY KEY,
+         service          TEXT NOT NULL,
+         token            TEXT NOT NULL,
+         apns_environment TEXT,
+         apns_topic       TEXT,
+         templates        TEXT NOT NULL,
+         created_at       INTEGER NOT NULL,
+         updated_at       INTEGER NOT NULL,
+         app_alerts       INTEGER NOT NULL DEFAULT 0
+       )`
+    )
+    sql.exec(
+      "INSERT INTO push_device VALUES (?, 'apns', ?, 'sandbox', NULL, ?, ?, ?, 0)",
+      randomId(),
+      token,
+      JSON.stringify({ 'pair.confirmed': { title: 'T', body: 'B' } }),
+      START,
+      START
+    )
+    h.inboxes.restart(owner.inboxId)
+
+    const buddy = await owner.addWriter()
+    await buddy.putEvent({ kind: 'pair.confirmed', push: true })
+    await h.flush()
+
+    expect((h.pushes[0].body as { ww: unknown }).ww).toMatchObject({
+      kind: 'pair.confirmed',
+    })
+    expect(
+      storage.query('SELECT kind_sealed AS kindSealed FROM push_device')
+    ).toEqual([{ kindSealed: 0 }])
+  })
+
   it('drops an Android device FCM reports as unregistered', async () => {
     const owner = await Owner.create(h)
     const stale = fcmToken()
@@ -1644,6 +1734,32 @@ describe('retention', () => {
     advance(DAY_MS)
     await h.inboxes.fireAlarm(owner.inboxId)
     expect(storage.query('SELECT COUNT(*) AS n FROM event')).toEqual([{ n: 0 }])
+  })
+
+  it('deletes a push device 60 days after it last registered', async () => {
+    const owner = await Owner.create(h)
+    const storage = h.inboxes.storage(owner.inboxId)
+    const kept = randomId()
+    await owner.registerDevice(randomId())
+    await owner.registerDevice(kept)
+    expect(storage.alarm()).toBe(START + 60 * DAY_MS)
+
+    // One device registers again, as the app does at least daily while it runs.
+    advance(30 * DAY_MS)
+    await owner.registerDevice(kept, undefined, hexToken(32))
+    advance(30 * DAY_MS)
+    await h.inboxes.fireAlarm(owner.inboxId)
+    expect(
+      storage.query('SELECT device_id AS deviceId FROM push_device')
+    ).toEqual([{ deviceId: kept }])
+    expect(storage.alarm()).toBe(START + 90 * DAY_MS)
+
+    advance(30 * DAY_MS)
+    await h.inboxes.fireAlarm(owner.inboxId)
+    expect(storage.query('SELECT COUNT(*) AS n FROM push_device')).toEqual([
+      { n: 0 },
+    ])
+    expect(storage.alarm()).toBe(START + 210 * DAY_MS)
   })
 
   it('wipes an inbox 180 days after the last owner op, ignoring buddy writes', async () => {

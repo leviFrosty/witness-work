@@ -989,11 +989,19 @@ Links. Clients are iOS and Android
   5xx, and a rejected token). `src/buddies/push.ts` builds both payloads,
   routes each device to its service, and deletes devices either reports as
   unregistered. Other features should build on `sendApnsNotifications` and
-  `sendFcmNotifications`, not on the Buddies layer. Every alert's `ww`
-  marker carries the event's `seq` and, when it fits (APNs 4 KB, FCM 4,000
+  `sendFcmNotifications`, not on the Buddies layer. Apple and Google read
+  everything in a push but the sealed event, so a push says as little as it
+  can. A device registered with `kindSealed: true` (current builds) gets a
+  `ww` marker of only the event's `seq` (plus `passive: true` for badge news):
+  no kind, no inline event; the app fetches the event by `seq` and learns the
+  kind there (`push_device.kind_sealed`, added in place). Any other device's
+  marker carries the kind and `seq` and, when it fits (APNs 4 KB, FCM 4,000
   bytes of data), the still-sealed event (`eventId`, `blob`), so the app can
-  name the sender without the relay seeing a name. APNs alerts carry the
-  device's generic template with `mutable-content: 1` (the app's Notification
+  name the sender without the relay seeing a name. Current builds register
+  the same neutral text for every kind ("WitnessWork" / "You have a new
+  update"); older ones a generic text per kind. The relay still knows the
+  kind, for the passive level and the push budget. APNs alerts carry the
+  device's template with `mutable-content: 1` (the app's Notification
   Service Extension rewrites it) and `content-available: 1` so iOS can wake
   the app to sync; badge news (`BUDDIES_PASSIVE_PUSH_KINDS`) is passive, with
   no sound. FCM messages are data-only and high priority. A device registered with
@@ -1003,7 +1011,12 @@ Links. Clients are iOS and Android
   the alert; any other device gets `title`/`message`, which expo-notifications
   shows, so the relay can ship ahead of the app (`push_device.app_alerts`,
   added in place to older inboxes). Invitations and answers (`isImmediatePushKind` in `contracts.ts`)
-  skip the 60 s per-slot spacing but still count toward the daily cap.
+  skip the 60 s per-slot spacing but still count toward the daily cap. The
+  inbox alarm deletes a `push_device` row 60 days after its last
+  registration (`deviceRetentionMs`, by `updated_at`): every build with
+  Buddies (1.44.0 on) registers again at least daily while it runs, so only
+  devices whose app hasn't opened in two months age out, and opening it
+  registers them again.
 - **Live socket**: `GET /buddies/v1/inbox/live` upgrades to a WebSocket. The
   owner-signed envelope (op `inbox/live`) rides in the `x-buddies-payload`
   and `x-buddies-signature` headers. The inbox DO accepts it with the Hibernation API

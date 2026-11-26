@@ -104,6 +104,7 @@ type DeviceRow = {
   apnsEnvironment: string | null
   apnsTopic: string | null
   appAlerts: number
+  kindSealed: number
   templates: string
 }
 
@@ -248,7 +249,9 @@ const SCHEMA = [
      seq       INTEGER NOT NULL
    )`,
   // `service` is `apns` or `fcm`; the `apns_*` columns are null for FCM.
-  // `app_alerts` (FCM): the app posts named alerts itself.
+  // `app_alerts` (FCM): the app posts named alerts itself. `kind_sealed`: the
+  // push names no kind (`PushTarget.kindSealed`). `updated_at` is the last
+  // registration; `#prune` deletes devices `deviceRetentionMs` past it.
   `CREATE TABLE IF NOT EXISTS push_device (
      device_id        TEXT PRIMARY KEY,
      service          TEXT NOT NULL,
@@ -258,7 +261,8 @@ const SCHEMA = [
      templates        TEXT NOT NULL,
      created_at       INTEGER NOT NULL,
      updated_at       INTEGER NOT NULL,
-     app_alerts       INTEGER NOT NULL DEFAULT 0
+     app_alerts       INTEGER NOT NULL DEFAULT 0,
+     kind_sealed      INTEGER NOT NULL DEFAULT 0
    )`,
   'CREATE INDEX IF NOT EXISTS push_device_by_token ON push_device (service, token)',
   // Open-invite bookkeeping for the caps; rows leave with the invite.
@@ -509,6 +513,15 @@ export class BuddyInbox extends DurableObject<Environment> {
   async registerDevice(
     call: OwnerCall<DeviceRegisterPayload>
   ): Promise<BuddiesResult<Empty>> {
+    const result = await this.#registerDevice(call)
+    // The device's expiry may come before every other deadline.
+    if (result.ok) await this.#ensureAlarm(Date.now())
+    return result
+  }
+
+  async #registerDevice(
+    call: OwnerCall<DeviceRegisterPayload>
+  ): Promise<BuddiesResult<Empty>> {
     const { push } = call
     // Only topics this worker can sign for; absent means `IOS_BUNDLE_ID`.
     if (
@@ -529,14 +542,15 @@ export class BuddyInbox extends DurableObject<Environment> {
         call.deviceId
       )
       this.#sql.exec(
-        `INSERT INTO push_device (device_id, service, token, apns_environment, apns_topic, app_alerts, templates, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO push_device (device_id, service, token, apns_environment, apns_topic, app_alerts, kind_sealed, templates, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (device_id) DO UPDATE SET
            service = excluded.service,
            token = excluded.token,
            apns_environment = excluded.apns_environment,
            apns_topic = excluded.apns_topic,
            app_alerts = excluded.app_alerts,
+           kind_sealed = excluded.kind_sealed,
            templates = excluded.templates,
            updated_at = excluded.updated_at`,
         call.deviceId,
@@ -545,6 +559,7 @@ export class BuddyInbox extends DurableObject<Environment> {
         push.service === 'apns' ? push.apnsEnvironment : null,
         push.service === 'apns' ? push.apnsTopic : null,
         push.service === 'fcm' && push.appAlerts ? 1 : 0,
+        call.kindSealed ? 1 : 0,
         JSON.stringify(call.templates),
         now,
         now
@@ -1274,7 +1289,8 @@ export class BuddyInbox extends DurableObject<Environment> {
   }
 
   /**
-   * Retention: events at 30 days, blobs at their `expiresAt`, the weekly
+   * Retention: events at 30 days, push devices 60 days after their last
+   * registration, blobs at their `expiresAt`, the weekly
    * blob sweep, invite bookkeeping, and the 180-day wipe. Also closes
    * browser sockets whose token expired (their expiries are deadlines too).
    */
@@ -1509,6 +1525,11 @@ export class BuddyInbox extends DurableObject<Environment> {
       if (!this.#hasColumn('push_device', 'app_alerts')) {
         this.#sql.exec(
           'ALTER TABLE push_device ADD COLUMN app_alerts INTEGER NOT NULL DEFAULT 0'
+        )
+      }
+      if (!this.#hasColumn('push_device', 'kind_sealed')) {
+        this.#sql.exec(
+          'ALTER TABLE push_device ADD COLUMN kind_sealed INTEGER NOT NULL DEFAULT 0'
         )
       }
       if (!this.#hasColumn('slot', 'sealed')) {
@@ -1942,7 +1963,7 @@ export class BuddyInbox extends DurableObject<Environment> {
       .exec<DeviceRow>(
         `SELECT device_id AS deviceId, service, token,
                 apns_environment AS apnsEnvironment, apns_topic AS apnsTopic,
-                app_alerts AS appAlerts, templates
+                app_alerts AS appAlerts, kind_sealed AS kindSealed, templates
          FROM push_device ORDER BY created_at, device_id`
       )
       .toArray()
@@ -1961,7 +1982,13 @@ export class BuddyInbox extends DurableObject<Environment> {
       if (typeof title !== 'string' || typeof body !== 'string') continue
       const address = pushAddressOf(row)
       if (!address) continue
-      targets.push({ ...address, deviceId: row.deviceId, title, body })
+      targets.push({
+        ...address,
+        deviceId: row.deviceId,
+        title,
+        body,
+        kindSealed: row.kindSealed === 1,
+      })
     }
     return targets
   }
@@ -2161,6 +2188,12 @@ export class BuddyInbox extends DurableObject<Environment> {
       'DELETE FROM slot_push WHERE at <= ?',
       now - LIMITS.pushWindowMs
     )
+    // A push token not registered again for two months is likely dead or
+    // abandoned; stop handing it to APNs or FCM.
+    this.#sql.exec(
+      'DELETE FROM push_device WHERE updated_at <= ?',
+      now - LIMITS.deviceRetentionMs
+    )
     this.#sql.exec(
       'DELETE FROM nonce WHERE seen_at < ?',
       now - LIMITS.nonceRetentionMs
@@ -2204,6 +2237,13 @@ export class BuddyInbox extends DurableObject<Environment> {
       }>('SELECT MIN(expires_at) AS nextInvite FROM invite')
       .one()
     if (nextInvite != null) deadlines.push(nextInvite + LIMITS.inviteGraceMs)
+    const { oldestDevice } = this.#sql
+      .exec<{
+        oldestDevice: number | null
+      }>('SELECT MIN(updated_at) AS oldestDevice FROM push_device')
+      .one()
+    if (oldestDevice != null)
+      deadlines.push(oldestDevice + LIMITS.deviceRetentionMs)
     if (this.#count('SELECT COUNT(*) AS n FROM pending_invite_delete')) {
       deadlines.push(now + INVITE_DELETE_RETRY_MS)
     }

@@ -354,6 +354,13 @@ export const BUDDIES_LIMITS = {
   /** Immediate kinds skip it; `pushesPerSlot` still applies to them. */
   pushSpacingMs: MINUTE_MS,
   devices: 10,
+  /**
+   * Not in the contract: a push device not registered again for this long is
+   * deleted. Every app build with Buddies (1.44.0 on) registers again at least
+   * daily while it runs, so only devices whose app hasn't opened in two months
+   * age out; opening it registers them again.
+   */
+  deviceRetentionMs: 60 * DAY_MS,
   /** Open `inbox/live` sockets per inbox; past it the oldest is replaced. */
   liveSockets: 10,
   badClaims: 5,
@@ -472,6 +479,12 @@ export type PushTarget = PushAddress & {
   deviceId: string
   title: string
   body: string
+  /**
+   * The device learns each alert's kind from the event it fetches by `seq`,
+   * so its push names no kind (and carries no inline event) for APNs or FCM
+   * to read.
+   */
+  kindSealed: boolean
 }
 
 /** What a Durable Object asks the Worker to push. Never logged. */
@@ -613,6 +626,8 @@ export interface DeviceRegisterPayload extends InboxFields {
   deviceId: string
   push: PushAddress
   templates: Record<string, PushTemplate>
+  /** `kindSealed: true` (optional; builds before it send none). */
+  kindSealed: boolean
 }
 
 export interface DeviceUnregisterPayload extends InboxFields {
@@ -858,11 +873,14 @@ export const BUDDIES_FIELD_PARSERS: FieldParsers = {
     const parsedTemplates = templates(p.templates)
     const push = pushAddress(p)
     if (!base || !isId(p.deviceId) || !parsedTemplates || !push) return null
+    if (p.kindSealed !== undefined && typeof p.kindSealed !== 'boolean')
+      return null
     return {
       ...base,
       deviceId: p.deviceId,
       push,
       templates: parsedTemplates,
+      kindSealed: p.kindSealed === true,
     }
   },
   'device/unregister': (p) => {

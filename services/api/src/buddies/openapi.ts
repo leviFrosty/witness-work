@@ -518,7 +518,7 @@ export const buddiesOpDocs: Record<BuddiesOp, MiddlewareHandler> = {
   'device/register': describeOp({
     summary: 'Register a device for pushes',
     description: paragraphs(
-      `Upserts a push device by \`deviceId\`. At most ${BUDDIES_LIMITS.devices} per inbox; past that the least recently registered is evicted. One device per token: a token another \`deviceId\` holds moves here. Apps re-register about daily, which bumps eviction order.`,
+      `Upserts a push device by \`deviceId\`. At most ${BUDDIES_LIMITS.devices} per inbox; past that the least recently registered is evicted. One device per token: a token another \`deviceId\` holds moves here. Apps re-register about daily, which bumps eviction order; a device not registered for ${BUDDIES_LIMITS.deviceRetentionMs / 86_400_000} days is deleted.`,
       '`pushService` picks the fields: APNs (iOS; also when absent) takes `apnsToken`, `apnsEnvironment`, and `apnsTopic`; FCM (Android) takes `fcmToken` and `appAlerts`. The other service’s fields are ignored.',
       SIGNED_BY.owner,
       tierLine('write'),
@@ -555,6 +555,10 @@ export const buddiesOpDocs: Record<BuddiesOp, MiddlewareHandler> = {
         appAlerts: z.boolean().optional().meta({
           description:
             'FCM only: the app posts its own named alerts, so the template is sent as fallback text expo-notifications doesn’t show.',
+        }),
+        kindSealed: z.boolean().optional().meta({
+          description:
+            'The device fetches each alert’s event by `seq` and learns its kind there, so the push carries only `seq` (and `passive` for badge news): no kind and no inline event.',
         }),
         templates: z
           .record(z.string(), z.object({ title: z.string(), body: z.string() }))

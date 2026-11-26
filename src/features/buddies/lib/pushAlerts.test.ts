@@ -36,7 +36,10 @@ const lastMarker = (env: Env, user: User): BuddiesPushMarker => {
 
 async function alertFor(env: Env, user: User, marker = lastMarker(env, user)) {
   const outcome = await user.engine.describePush(marker)
-  return 'alert' in outcome ? buddyAlertText(outcome.alert) : outcome
+  if ('alert' in outcome) return buddyAlertText(outcome.alert)
+  return 'quiet' in outcome
+    ? { quiet: outcome.quiet }
+    : { failed: outcome.failed }
 }
 
 const saturday = {
@@ -271,6 +274,20 @@ describe('named Buddies alerts', () => {
     })
   })
 
+  it('names an alert whose push carries only its seq, and says its kind', async () => {
+    const { env, levi, anna } = await duo()
+    levi.setShares([planSpec([anna.inboxId])])
+    await levi.engine.publishShares()
+    const { seq } = lastMarker(env, anna)
+
+    const outcome = await anna.engine.describePush({ seq })
+    expect(outcome.kind).toBe('plan.invite')
+    expect('alert' in outcome && buddyAlertText(outcome.alert)).toEqual({
+      title: 'Levi invited you to a Plan',
+      body: 'Sat, Sep 26 · 10:00 AM',
+    })
+  })
+
   it('keeps the template when the event is missing, foreign, or tampered with', async () => {
     const { env, levi, anna } = await duo()
     levi.setShares([planSpec([anna.inboxId])])
@@ -279,18 +296,19 @@ describe('named Buddies alerts', () => {
 
     expect(await levi.engine.describePush(marker)).toEqual({
       failed: 'unknownSender',
+      kind: 'plan.invite',
     })
     const bytes = fromB64u(marker.blob!)
     bytes[bytes.length - 1] ^= 1
     expect(
       await anna.engine.describePush({ ...marker, blob: toB64u(bytes) })
-    ).toEqual({ failed: 'unknownSender' })
+    ).toEqual({ failed: 'unknownSender', kind: 'plan.invite' })
     expect(
       await anna.engine.describePush({ kind: marker.kind, seq: 9_999 })
     ).toEqual({ failed: 'noEvent' })
     expect(
       await anna.engine.describePush({ ...marker, kind: 'plan.joined' })
-    ).toEqual({ failed: 'unknownKind' })
+    ).toEqual({ failed: 'unknownKind', kind: 'plan.joined' })
 
     const stranger = env.user('Stranger')
     expect(await stranger.engine.describePush(marker)).toEqual({
@@ -311,7 +329,7 @@ describe('Buddies push markers', () => {
     expect(pushMarkerOf(undefined)).toBeNull()
   })
 
-  it('drops what it cannot use, keeping the kind', () => {
+  it('drops what it cannot use, keeping the kind or seq', () => {
     expect(parsePushMarker({ kind: 'plan.invite' })).toEqual({
       kind: 'plan.invite',
     })
@@ -321,7 +339,15 @@ describe('Buddies push markers', () => {
     expect(parsePushMarker({ kind: 'k', eventId, blob: 'not b64u!' })).toEqual({
       kind: 'k',
     })
-    expect(parsePushMarker({ seq: 1 })).toBeNull()
+    expect(parsePushMarker({ seq: 1 })).toEqual({ seq: 1 })
+    expect(parsePushMarker({ seq: 1, passive: true })).toEqual({
+      seq: 1,
+      passive: true,
+    })
+    expect(parsePushMarker({ seq: 1, eventId, blob: 'AQAB' })).toEqual({
+      seq: 1,
+    })
+    expect(parsePushMarker({ passive: true })).toBeNull()
     expect(parsePushMarker('ww')).toBeNull()
   })
 })

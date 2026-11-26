@@ -437,6 +437,7 @@ export function createRelayClient(deps: RelayDeps) {
       auth: OwnerAuth,
       device: PushAddress & {
         deviceId: string
+        kindSealed?: true
         templates: Record<string, PushTemplate>
       },
       call?: RelayCallOptions

@@ -22,7 +22,8 @@ let prepared: unknown = null
 export function prepareBuddiesPush({
   seq,
   inline = true,
-}: { seq?: number; inline?: boolean } = {}) {
+  kindSealed = true,
+}: { seq?: number; inline?: boolean; kindSealed?: boolean } = {}) {
   prepared = 'pending'
   void (async () => {
     try {
@@ -61,22 +62,27 @@ export function prepareBuddiesPush({
       const templates: Record<string, { title: string; body: string }> =
         await buddiesPushTemplates()
       const template = templates[event.kind] ?? { title: event.kind, body: '' }
+      const passive = isBuddiesNewsKind(event.kind)
       const build = (withEvent: boolean) => ({
         'Simulator Target Bundle': Application.applicationId,
         aps: {
           alert: { title: template.title, body: template.body },
-          ...(isBuddiesNewsKind(event.kind)
+          ...(passive
             ? { 'interruption-level': 'passive' }
             : { sound: 'default' }),
           'thread-id': 'buddies',
           'content-available': 1,
           'mutable-content': 1,
         },
-        ww: {
-          kind: event.kind,
-          seq: event.seq,
-          ...(withEvent ? { eventId: event.eventId, blob: event.blob } : {}),
-        },
+        ww: kindSealed
+          ? { seq: event.seq, ...(passive ? { passive: true } : {}) }
+          : {
+              kind: event.kind,
+              seq: event.seq,
+              ...(withEvent
+                ? { eventId: event.eventId, blob: event.blob }
+                : {}),
+            },
       })
       const full = build(true)
       prepared =

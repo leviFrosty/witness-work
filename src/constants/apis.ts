@@ -23,6 +23,7 @@ export default {
   autocomplete: `${BASE_URL}/autocomplete`,
 
   placesSearch: `${BASE_URL}/places/v1/search`,
+  reverseGeocode: `${BASE_URL}/places/v1/reverse-geocode`,
 
   mapkitTokens: `${BASE_URL}/maps/v1/mapkit-tokens`,
 

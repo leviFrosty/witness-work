@@ -7,7 +7,7 @@ import LucideIcon, { type AppIcon } from '@/components/ui/LucideIcon'
 import { TextInput, TouchableOpacity, View } from 'react-native'
 import { Address, Contact, Coordinate } from '@/types/contact'
 import useTheme from '@/contexts/theme'
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import Text from '@/components/ui/MyText'
 import i18n, { TranslationKey } from '@/lib/locales'
 import Button from '@/components/ui/Button'
@@ -17,6 +17,7 @@ import TextInputRow from '@/components/ui/inputs/TextInputRow'
 import PinLocation from '@/features/contacts/components/PinLocation'
 import PlaceSearchInput from '@/components/PlaceSearchInput'
 import { addressToString } from '@/lib/address'
+import { hasAddressContent } from '@/lib/reverseGeocode'
 import type { ResolvedPlace } from '@/lib/placeSearch'
 import { usePreferences } from '@/stores/preferences'
 import useAccessibilityTextSize from '@/hooks/useAccessibilityTextSize'
@@ -98,6 +99,8 @@ export default function AddressSection({
   onPlacePicked,
   searchInput,
   onSubmitLastField,
+  initialManual = false,
+  pinAddressVersion = 0,
 }: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
@@ -127,6 +130,8 @@ export default function AddressSection({
   searchInput: React.RefObject<TextInput | null>
 
   onSubmitLastField?: () => void
+  initialManual?: boolean
+  pinAddressVersion?: number
 }) {
   const theme = useTheme()
 
@@ -134,11 +139,21 @@ export default function AddressSection({
 
   const dataProtectionMode = usePreferences((s) => s.dataProtectionMode)
   const [query, setQuery] = useState(addressToString(contact.address))
-  const [isResult, setIsResult] = useState(!!contact.address)
+  const [isResult, setIsResult] = useState(hasAddressContent(contact.address))
   const [mode, setMode] = useState<Mode>(
-    dataProtectionMode ? 'manual' : 'search'
+    dataProtectionMode || initialManual ? 'manual' : 'search'
   )
   const [hasCleared, setHasCleared] = useState(false)
+
+  const syncPinAddress = useEffectEvent(() => {
+    setQuery(addressToString(contact.address))
+    setIsResult(hasAddressContent(contact.address))
+    setMode('manual')
+  })
+
+  useEffect(() => {
+    if (pinAddressVersion > 0) syncPinAddress()
+  }, [pinAddressVersion])
   const keysSameAsPrefill = (): (keyof Address)[] => {
     if (!contact.address || !prefill.address) {
       return []
@@ -404,7 +419,15 @@ export default function AddressSection({
             borderColor: theme.colors.border,
           }}
         />
-        <PinLocation setContact={setContact} contact={contact} />
+        <PinLocation
+          setContact={setContact}
+          contact={contact}
+          onAddressFilled={(address) => {
+            setQuery(addressToString(address))
+            setIsResult(hasAddressContent(address))
+            setMode('manual')
+          }}
+        />
       </Section>
       {prefill.enabled && !!keysSameAsPrefill().length && !hasCleared && (
         <View

@@ -18,6 +18,10 @@ import {
 } from './mapkitToken'
 import { parsePlaceSearchQuery, searchPlaces } from './placeSearch'
 import {
+  parseReverseGeocodeQuery,
+  reverseGeocode,
+} from './reverseGeocode'
+import {
   fetchTerritoryAddresses,
   isAreaTooLarge,
   normalizeOutline,
@@ -27,6 +31,7 @@ import {
 import {
   mapKitTokenDocs,
   placeSearchDocs,
+  reverseGeocodeDocs,
   territoryAddressesDocs,
 } from './openapi'
 
@@ -347,6 +352,39 @@ export const createPlacesRoutes = (
         Sentry.captureMessage('HERE Discover request failed', {
           level: 'warning',
           fingerprint: ['here-discover-failed'],
+          tags: { 'here_api.status': result.status ?? 'network' },
+        })
+        return apiError(HTTP_STATUS.BAD_GATEWAY, 'upstream_error')
+    }
+  })
+
+  routes.get('/reverse-geocode', reverseGeocodeDocs, async (ctx) => {
+    const parsed = parseReverseGeocodeQuery(new URL(ctx.req.url).searchParams)
+    if (!parsed.ok)
+      return apiError(HTTP_STATUS.BAD_REQUEST, 'bad_request', {
+        extras: { field: parsed.field },
+      })
+
+    const result = await reverseGeocode(
+      parsed.query,
+      ctx.env.HERE_API_KEY,
+      deps.fetch
+    )
+    switch (result.kind) {
+      case 'ok':
+        return ctx.json({ ok: true, address: result.address }, 200, {
+          'Cache-Control': 'no-store',
+        })
+      case 'bad_request':
+        return apiError(HTTP_STATUS.BAD_REQUEST, 'bad_request')
+      case 'rate_limited':
+        return apiError(HTTP_STATUS.TOO_MANY_REQUESTS, 'rate_limited', {
+          retryAfter: result.retryAfterSeconds ?? HERE_RETRY_AFTER_SECONDS,
+        })
+      case 'upstream_error':
+        Sentry.captureMessage('HERE Reverse Geocode request failed', {
+          level: 'warning',
+          fingerprint: ['here-revgeocode-failed'],
           tags: { 'here_api.status': result.status ?? 'network' },
         })
         return apiError(HTTP_STATUS.BAD_GATEWAY, 'upstream_error')

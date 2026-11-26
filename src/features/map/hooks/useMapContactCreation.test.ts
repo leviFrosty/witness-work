@@ -11,12 +11,38 @@ const mocks = vi.hoisted(() => ({
   haptic: vi.fn(),
   onContactCreated: vi.fn(),
   contacts: [] as Contact[],
+  autoLookupPinAddress: true,
+  dataProtectionMode: false,
+  setPreferences: vi.fn(),
+  reverseGeocode: vi.fn<() => Promise<unknown>>(async () => null),
 }))
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => mocks }))
 vi.mock('expo-crypto', () => ({ randomUUID: mocks.uuid }))
 vi.mock('@/lib/haptics', () => ({ default: { light: mocks.haptic } }))
 vi.mock('@/stores/contactsStore', () => ({
   default: { getState: () => ({ contacts: mocks.contacts }) },
+}))
+vi.mock('@/stores/preferences', () => ({
+  usePreferences: (
+    selector: (s: {
+      autoLookupPinAddress: boolean
+      dataProtectionMode: boolean
+      set: (patch: { autoLookupPinAddress?: boolean }) => void
+    }) => unknown
+  ) =>
+    selector({
+      autoLookupPinAddress: mocks.autoLookupPinAddress,
+      dataProtectionMode: mocks.dataProtectionMode,
+      set: (patch) => {
+        mocks.setPreferences(patch)
+        if (typeof patch.autoLookupPinAddress === 'boolean') {
+          mocks.autoLookupPinAddress = patch.autoLookupPinAddress
+        }
+      },
+    }),
+}))
+vi.mock('@/lib/reverseGeocode', () => ({
+  reverseGeocodeCoordinate: mocks.reverseGeocode,
 }))
 
 let state: ReturnType<typeof useMapContactCreation>
@@ -36,6 +62,9 @@ function Consumer() {
 beforeEach(async () => {
   vi.clearAllMocks()
   mocks.contacts = []
+  mocks.autoLookupPinAddress = true
+  mocks.dataProtectionMode = false
+  mocks.reverseGeocode.mockResolvedValue(null)
   mocks.uuid.mockReturnValue('new-contact')
   mocks.addListener.mockImplementation((event, listener) => {
     if (event === 'blur') blur = listener
@@ -187,5 +216,58 @@ describe('creating a contact from the map', () => {
       latitude: 0,
       longitude: 0,
     })
+  })
+
+  it('reverse geocodes a dropped pin and passes initialAddress when creating a contact', async () => {
+    const resolved = {
+      address: {
+        line1: '12 Rue de la Paix',
+        city: 'Paris',
+        zip: '75002',
+        country: 'France',
+      },
+      formattedAddress: '12 Rue de la Paix, 75002 Paris, France',
+    }
+    mocks.reverseGeocode.mockResolvedValueOnce(resolved)
+    const point = { latitude: 48.86914, longitude: 2.33118 }
+    await act(async () => state.dropPin(point))
+    expect(state.addressLookup.status).toBe('resolved')
+    expect(state.addressLookup.result).toEqual(resolved)
+
+    await act(async () => state.createContact())
+    expect(mocks.navigate).toHaveBeenCalledExactlyOnceWith('Contact Form', {
+      id: 'new-contact',
+      initialCoordinate: point,
+      initialAddress: resolved.address,
+    })
+  })
+
+  it('skips reverse geocoding and persists opt-out when disabled on the fly', async () => {
+    const point = { latitude: -23.553, longitude: -46.652 }
+    await act(async () => state.addressLookup.setEnabled(false))
+    expect(mocks.setPreferences).toHaveBeenCalledExactlyOnceWith({
+      autoLookupPinAddress: false,
+    })
+    await act(async () => root.update(createElement(Consumer)))
+    await act(async () => state.dropPin(point))
+    expect(mocks.reverseGeocode).not.toHaveBeenCalled()
+    expect(state.addressLookup.enabled).toBe(false)
+
+    await act(async () => state.createContact())
+    expect(mocks.navigate).toHaveBeenCalledExactlyOnceWith('Contact Form', {
+      id: 'new-contact',
+      initialCoordinate: point,
+    })
+  })
+
+  it('disables reverse geocoding and hides toggle in data protection mode', async () => {
+    mocks.dataProtectionMode = true
+    await act(async () => root.update(createElement(Consumer)))
+    await act(async () =>
+      state.dropPin({ latitude: 48.86914, longitude: 2.33118 })
+    )
+    expect(mocks.reverseGeocode).not.toHaveBeenCalled()
+    expect(state.addressLookup.enabled).toBe(false)
+    expect(state.addressLookup.canToggle).toBe(false)
   })
 })

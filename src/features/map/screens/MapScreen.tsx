@@ -287,6 +287,7 @@ const FullMapView = ({
 
   const [openGroupIds, setOpenGroupIds] = useState<string[] | null>(null)
   const [floatingCardHeight, setFloatingCardHeight] = useState(0)
+  const [createCardHeight, setCreateCardHeight] = useState(0)
 
   const [cardHeights, setCardHeights] = useState<Record<string, number>>({})
 
@@ -908,7 +909,7 @@ const FullMapView = ({
   })
 
   const locationButtonBottom = mapContactCreation.coordinate
-    ? mapCardBottom + CARD_HEIGHT + 8
+    ? mapCardBottom + (createCardHeight || CARD_HEIGHT) + 8
     : showsFloatingCard
       ? floatingCardBottom + floatingCardHeight + 8
       : visibleContactMarkers.length > 0
@@ -1118,6 +1119,7 @@ const FullMapView = ({
 
           {mapContactCreation.coordinate ? (
             <Animated.View
+              onLayout={(e) => setCreateCardHeight(e.nativeEvent.layout.height)}
               style={{
                 position: 'absolute',
                 bottom: isWide ? bottomOverlayInset + 28 : mapCardBottom,
@@ -1126,7 +1128,7 @@ const FullMapView = ({
                 left: isWide ? undefined : 0,
                 right: isWide ? 16 : undefined,
                 width: isWide ? inspectorWidth : width,
-                height: isWide ? undefined : CARD_HEIGHT,
+                minHeight: isWide ? undefined : CARD_HEIGHT,
 
                 transform: isWide
                   ? undefined
@@ -1135,8 +1137,9 @@ const FullMapView = ({
               }}
             >
               <CreateContactCard
-                fill={!isWide}
+                fill={false}
                 coordinate={mapContactCreation.coordinate}
+                addressLookup={mapContactCreation.addressLookup}
                 onCreate={mapContactCreation.createContact}
                 onCancel={mapContactCreation.cancel}
               />

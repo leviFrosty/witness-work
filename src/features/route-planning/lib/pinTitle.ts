@@ -1,18 +1,14 @@
-import * as Location from 'expo-location'
+import { reverseGeocodeCoordinate } from '@/lib/reverseGeocode'
+import { usePreferences } from '@/stores/preferences'
 import type { Coordinate } from '@/types/contact'
 
 export async function pinTitle(
   coordinate: Coordinate
 ): Promise<string | undefined> {
-  try {
-    const [place] = await Location.reverseGeocodeAsync(coordinate)
-    if (!place) return undefined
-    const street = [place.streetNumber, place.street].filter(Boolean).join(' ')
-
-    const name = place.name !== place.postalCode ? place.name : undefined
-    const town = [place.city, place.region].filter(Boolean).join(', ')
-    return street || name || town || undefined
-  } catch {
-    return undefined
-  }
+  if (usePreferences.getState().dataProtectionMode) return undefined
+  const resolved = await reverseGeocodeCoordinate(coordinate)
+  if (!resolved) return undefined
+  const { address } = resolved
+  const town = [address.city, address.state].filter(Boolean).join(', ')
+  return address.line1 || town || resolved.formattedAddress || undefined
 }

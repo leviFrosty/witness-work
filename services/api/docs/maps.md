@@ -11,6 +11,7 @@ notes. ww-api serves three things for it:
 | --- | --- | --- |
 | `POST /maps/v1/mapkit-tokens` | Bearer | A 30-minute MapKit JS token for the frame |
 | `GET /places/v1/search` | None (per-IP) | Points of interest and addresses near a coordinate (HERE Discover) |
+| `GET /places/v1/reverse-geocode` | None (per-IP) | Nearest postal address for a coordinate (HERE Reverse Geocode) |
 | `POST /route-planning/directions` | Bearer | Driving legs with road shapes (HERE Routing); unchanged, already shipped for Android |
 
 Code: `src/maps/` (`route.ts` handlers, `mapkitToken.ts` signing and config,

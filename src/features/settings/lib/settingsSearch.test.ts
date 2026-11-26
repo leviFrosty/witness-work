@@ -42,6 +42,7 @@ const everything: SettingsSearchAvailability = {
   routineOn: true,
   buddies: true,
   dataProtection: true,
+  addressLookup: true,
   deviceNotifications: true,
   haptics: true,
   otaUpdates: true,

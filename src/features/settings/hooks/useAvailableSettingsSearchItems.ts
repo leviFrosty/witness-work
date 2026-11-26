@@ -50,6 +50,7 @@ export default function useAvailableSettingsSearchItems() {
     routineOn,
     buddies,
     dataProtection,
+    addressLookup: !dataProtection,
     deviceNotifications: hasCapability('deviceNotifications'),
     haptics: hasCapability('haptics'),
     otaUpdates: hasCapability('otaUpdates'),

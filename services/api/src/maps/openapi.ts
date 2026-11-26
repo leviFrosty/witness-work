@@ -9,6 +9,7 @@ import {
 import {
   MAPS_LIMITS,
   PLACE_SEARCH_LIMITS,
+  REVERSE_GEOCODE_LIMITS,
   TERRITORY_ADDRESS_LIMITS,
 } from './config'
 
@@ -182,6 +183,55 @@ The parameters keep HERE’s and \`/autocomplete\`’s names (\`q\`, \`at\`, \`l
           field: z.enum(['q', 'at', 'limit', 'lang']).optional(),
         })
         .meta({ id: 'PlaceSearchError' })
+    ),
+    429: errorResponse(
+      'Too many requests from this IP in the last minute (`Retry-After: 60`), or HERE is limiting the worker (`Retry-After` from HERE, else 60).',
+      ['rate_limited']
+    ),
+    502: errorResponse(
+      'HERE was unreachable, timed out, refused the worker’s key, or answered with something unreadable.',
+      ['upstream_error']
+    ),
+  },
+})
+
+export const reverseGeocodeDocs = describeRoute({
+  tags: ['Places'],
+  summary: 'Reverse geocode a coordinate to a postal address',
+  description: `Nearest postal address for a coordinate \`at\`, from [HERE Reverse Geocode](https://www.here.com/docs/bundle/geocoding-and-search-api-developer-guide/page/topics/endpoint-reverse-geocode-brief.html) (one HERE transaction per request). Used by the web app (and as a fallback where a device has no native geocoder) when placing a pin on a map.
+
+Only \`at\` and optional \`lang\` are read (every other parameter is ignored), \`at\` reaches HERE rounded to ${REVERSE_GEOCODE_LIMITS.atDecimals} decimals (~1 m), and only the nearest postal address parts are returned.
+
+Public, with no session, and counted in the same per-IP \`places\` bucket as \`/geocode\`, \`/autocomplete\`, and \`/places/v1/search\`. Nothing found is 200 with \`address: null\`. \`Cache-Control: no-store\`.`,
+  parameters: [
+    {
+      name: 'at',
+      in: 'query',
+      required: true,
+      schema: { type: 'string', example: '48.85661,2.35222' },
+      description: '`<latitude>,<longitude>` to reverse geocode.',
+    },
+    {
+      name: 'lang',
+      in: 'query',
+      required: false,
+      schema: { type: 'string', example: 'en-US' },
+      description: 'BCP 47 language for the returned address.',
+    },
+  ],
+  responses: {
+    200: jsonResponse(
+      'The nearest postal address, or `null` when none exists. `Cache-Control: no-store`.',
+      z.object({ ok: z.literal(true), address: placeAddress.nullable() })
+    ),
+    400: errorResponse(
+      'A missing or invalid parameter (`field` names it: `at` or `lang`), or HERE refused the query.',
+      ['bad_request'],
+      apiErrorSchema
+        .extend({
+          field: z.enum(['at', 'lang']).optional(),
+        })
+        .meta({ id: 'ReverseGeocodeError' })
     ),
     429: errorResponse(
       'Too many requests from this IP in the last minute (`Retry-After: 60`), or HERE is limiting the worker (`Retry-After` from HERE, else 60).',

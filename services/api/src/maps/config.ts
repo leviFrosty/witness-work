@@ -34,6 +34,16 @@ export const PLACE_SEARCH_LIMITS = {
   hereTimeoutMs: 8_000,
 } as const
 
+export const REVERSE_GEOCODE_LIMITS = {
+  /**
+   * Decimals of `at` sent to HERE: 5 is about 1 m, accurate enough to resolve
+   * an individual building without mixing neighboring house numbers.
+   */
+  atDecimals: 5,
+  /** Revgeocode answers in well under a second. */
+  hereTimeoutMs: 8_000,
+} as const
+
 export const TERRITORY_ADDRESS_LIMITS = {
   /** 200 points at about 45 bytes each, with room for whitespace. */
   maxBodyBytes: 16 * 1024,

@@ -16,7 +16,11 @@ const themes = Object.fromEntries(
   )
 ) as Pick<V3Themes, UsedThemeName>
 
-const tamaguiConfig = createTamagui({ ...config, themes })
+const tamaguiConfig = createTamagui({
+  ...config,
+  themes,
+  selectionStyles: undefined,
+})
 
 type Conf = typeof tamaguiConfig
 

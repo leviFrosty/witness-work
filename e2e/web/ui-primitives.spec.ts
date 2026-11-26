@@ -285,6 +285,24 @@ test('a tooltip shows when the keyboard focuses an icon-only control', async ({
     .toBeGreaterThan(before)
 })
 
+test.describe('selected text', () => {
+  test.use({ colorScheme: 'dark' })
+
+  test('is highlighted in the accent color', async ({ app }) => {
+    const heading = app.getByRole('heading', { name: 'Home' }).first()
+    await expect(heading).toBeVisible()
+    const background = await heading.evaluate((el) => {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const selection = window.getSelection()!
+      selection.removeAllRanges()
+      selection.addRange(range)
+      return getComputedStyle(el, '::selection').backgroundColor
+    })
+    expect(background).toBe('color(srgb 0.105882 0.819608 0.364706 / 0.45)')
+  })
+})
+
 test('Log Visit can be closed', async ({ app }) => {
   await app.getByRole('button', { name: 'Quick Action' }).click()
   await app.getByText('Log Visit', { exact: true }).click()

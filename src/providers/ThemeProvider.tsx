@@ -11,6 +11,7 @@ import { mix, withAlpha } from '@/lib/color'
 import useBoldTextFonts from '@/hooks/useBoldTextFonts'
 import { increaseContrast } from '@/lib/increaseContrast'
 import useIncreaseContrastEnabled from '@/hooks/useIncreaseContrastEnabled'
+import WebSelectionStyles from '@/components/ui/WebSelectionStyles'
 
 interface Props {}
 
@@ -77,6 +78,7 @@ const ThemeProvider: React.FC<PropsWithChildren<Props>> = ({ children }) => {
 
   return (
     <ThemeContext.Provider value={themeWithOverrides}>
+      <WebSelectionStyles />
       {children}
     </ThemeContext.Provider>
   )

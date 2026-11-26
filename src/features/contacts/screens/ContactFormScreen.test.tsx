@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   updatePrefillAddress: vi.fn(),
   clearPrefillAddress: vi.fn(),
   dataProtectionMode: false,
+  autoLookupPinAddress: true,
+  reverseGeocode: vi.fn<() => Promise<unknown>>(async () => null),
   setOptions: vi.fn(),
   replace: vi.fn(),
   openContact: vi.fn(),
@@ -56,9 +58,17 @@ vi.mock('@/stores/preferences', () => ({
     updatePrefillAddress: mocks.updatePrefillAddress,
     clearPrefillAddress: mocks.clearPrefillAddress,
     dataProtectionMode: mocks.dataProtectionMode,
+    autoLookupPinAddress: mocks.autoLookupPinAddress,
   }),
 }))
 vi.mock('@/lib/address', () => ({ fetchCoordinateFromAddress: mocks.geocode }))
+vi.mock('@/lib/reverseGeocode', () => ({
+  hasAddressContent: (address?: Record<string, string>) =>
+    Boolean(
+      address && Object.values(address).some((value) => Boolean(value?.trim()))
+    ),
+  reverseGeocodeCoordinate: mocks.reverseGeocode,
+}))
 vi.mock('@/stores/geocodeRetry', () => ({
   useGeocodeRetry: {
     getState: () => ({ enqueue: mocks.enqueueGeocodeRetry }),
@@ -137,6 +147,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.contacts = []
   mocks.dataProtectionMode = false
+  mocks.autoLookupPinAddress = true
+  mocks.reverseGeocode.mockResolvedValue(null)
 })
 
 afterEach(async () => {
@@ -342,5 +354,89 @@ describe('Contact Form map coordinates', () => {
     })
     expect(addressProps().contact).toEqual(existing)
     expect(addressProps().prefill.enabled).toBe(false)
+  })
+
+  it('prefills address fields in manual mode from initialAddress and allows editing without re-geocoding', async () => {
+    const point = { latitude: 48.86914, longitude: 2.33118 }
+    const initialAddress = {
+      line1: '12 Rue de la Paix',
+      city: 'Paris',
+      zip: '75002',
+      country: 'France',
+    }
+    await mount({
+      id: 'new-contact',
+      initialCoordinate: point,
+      initialAddress,
+    })
+    expect(addressProps().initialManual).toBe(true)
+    expect(addressProps().contact.address).toMatchObject(initialAddress)
+    expect(mocks.reverseGeocode).not.toHaveBeenCalled()
+
+    await act(async () => {
+      root.root.findByType(ContactIdentityCard).props.onNameChange('Marie')
+    })
+    await act(async () => {
+      addressProps().setLine1('14 Rue de la Paix')
+    })
+    await save()
+    expect(mocks.geocode).not.toHaveBeenCalled()
+    expect(mocks.addContact).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        coordinate: point,
+        userDraggedCoordinate: true,
+        address: expect.objectContaining({
+          line1: '14 Rue de la Paix',
+          city: 'Paris',
+          zip: '75002',
+        }),
+      })
+    )
+  })
+
+  it('fills address asynchronously when initialCoordinate arrives before lookup completes', async () => {
+    const point = { latitude: 48.86914, longitude: 2.33118 }
+    mocks.reverseGeocode.mockResolvedValueOnce({
+      address: { line1: '12 Rue de la Paix', city: 'Paris', zip: '75002' },
+      formattedAddress: '12 Rue de la Paix, 75002 Paris',
+    })
+    await mount({ id: 'new-contact', initialCoordinate: point })
+    expect(addressProps().contact.address).toMatchObject({
+      line1: '12 Rue de la Paix',
+      city: 'Paris',
+      zip: '75002',
+    })
+    expect(addressProps().pinAddressVersion).toBe(1)
+  })
+
+  it('does not ask to override coordinate when editing a contact and placing a new pin with its address', async () => {
+    const existing: Contact = {
+      id: 'existing',
+      name: 'Existing',
+      createdAt: new Date(),
+      address: { line1: 'Old St 1', city: 'Paris' },
+      coordinate: { latitude: 48.85, longitude: 2.35 },
+      userDraggedCoordinate: true,
+    }
+    mocks.contacts = [existing]
+    await mount({ id: 'existing', edit: true })
+    const movedPoint = { latitude: 48.86914, longitude: 2.33118 }
+    await act(async () => {
+      addressProps().setContact((current) => ({
+        ...current,
+        coordinate: movedPoint,
+        userDraggedCoordinate: true,
+        address: { line1: '12 Rue de la Paix', city: 'Paris', zip: '75002' },
+      }))
+    })
+    await save()
+    expect(mocks.alert).not.toHaveBeenCalled()
+    expect(mocks.geocode).not.toHaveBeenCalled()
+    expect(mocks.updateContact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'existing',
+        coordinate: movedPoint,
+      })
+    )
   })
 })

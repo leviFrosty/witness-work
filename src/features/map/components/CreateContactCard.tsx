@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { AccessibilityInfo, Platform, View } from 'react-native'
+import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native'
 import {
   MapPin as MapPinIcon,
   Route as RouteIcon,
@@ -10,15 +10,17 @@ import Button from '@/components/ui/Button'
 import { findNodeHandle } from '@/lib/findNodeHandle'
 import LucideIcon from '@/components/ui/LucideIcon'
 import Text from '@/components/ui/MyText'
+import Switch from '@/components/ui/Switch'
 import useTheme from '@/contexts/theme'
 import ContextMenu, {
   type ContextMenuEntries,
 } from '@/components/ui/ContextMenu'
 import MapCard from '@/features/map/components/MapCard'
 import useCopyText from '@/features/map/hooks/useCopyText'
+import type { PinAddressLookup } from '@/features/map/hooks/useMapContactCreation'
 import { formatCoordinate, mapLinks } from '@/lib/mapLinks'
 import { navigateTo } from '@/lib/address'
-
+import { formatPinAddressParts } from '@/lib/reverseGeocode'
 import i18n from '@/lib/locales'
 import { shareUrl } from '@/lib/share'
 import { usePreferences } from '@/stores/preferences'
@@ -27,11 +29,13 @@ import { ltrIsolate } from '@/lib/direction'
 
 export default function CreateContactCard({
   coordinate,
+  addressLookup,
   onCreate,
   onCancel,
-  fill = true,
+  fill = false,
 }: {
   coordinate: Coordinate
+  addressLookup?: PinAddressLookup
   onCreate: () => void
   onCancel: () => void
   fill?: boolean
@@ -50,6 +54,24 @@ export default function CreateContactCard({
   }, [])
 
   const links = mapLinks(formatCoordinate(coordinate))
+  const resolved = addressLookup?.enabled ? addressLookup.result : null
+  const addressParts = resolved ? formatPinAddressParts(resolved.address) : null
+  const coordinatesText = ltrIsolate(
+    i18n.t('pinCoordinates', {
+      latitude: coordinate.latitude.toFixed(5),
+      longitude: coordinate.longitude.toFixed(5),
+    })
+  )
+
+  const title = addressParts?.primary || i18n.t('map_droppedPin')
+  const subtitle = addressParts
+    ? addressParts.secondary || coordinatesText
+    : addressLookup?.enabled && addressLookup.status === 'loading'
+      ? `${coordinatesText} · ${i18n.t('map_lookingUpAddress')}`
+      : addressLookup?.enabled && addressLookup.status === 'empty'
+        ? `${coordinatesText} · ${i18n.t('map_noAddressFound')}`
+        : coordinatesText
+
   const pin: Contact = {
     id: '',
     name: '',
@@ -76,6 +98,16 @@ export default function CreateContactCard({
         systemImage: 'arrow.triangle.turn.up.right.diamond',
         onPress: navigate,
       },
+      ...(resolved
+        ? [
+            {
+              id: 'copy_address',
+              title: i18n.t('copyAddress'),
+              systemImage: 'doc.on.doc' as const,
+              onPress: () => void copyText(resolved.formattedAddress),
+            },
+          ]
+        : []),
       {
         id: 'copy_coordinates',
         title: i18n.t('copyCoordinates'),
@@ -86,17 +118,34 @@ export default function CreateContactCard({
         id: 'share',
         title: i18n.t('shareLocationEllipsis'),
         systemImage: 'square.and.arrow.up',
-
         onPress: () =>
           void shareUrl(Platform.OS === 'ios' ? links.apple : links.google),
       },
     ],
+    ...(addressLookup?.canToggle
+      ? [
+          [
+            {
+              id: 'toggle_address_lookup',
+              title: i18n.t(
+                addressLookup.enabled
+                  ? 'map_turnOffAddressLookup'
+                  : 'map_turnOnAddressLookup'
+              ),
+              systemImage: addressLookup.enabled
+                ? ('mappin.slash' as const)
+                : ('mappin.and.ellipse' as const),
+              onPress: () => addressLookup.setEnabled(!addressLookup.enabled),
+            },
+          ],
+        ]
+      : []),
   ]
 
   return (
     <MapCard fill={fill} onAccessibilityEscape={onCancel}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View ref={focusRef} style={{ flex: 1 }}>
+        <View ref={focusRef} style={{ flex: 1, minWidth: 0 }}>
           <ContextMenu actions={actions}>
             <View style={{ gap: 4 }}>
               <View
@@ -131,21 +180,17 @@ export default function CreateContactCard({
                     flexShrink: 1,
                   }}
                 >
-                  {i18n.t('map_droppedPin')}
+                  {title}
                 </Text>
               </View>
               <Text
+                numberOfLines={2}
                 style={{
                   color: theme.colors.textAlt,
                   fontSize: theme.fontSize('sm'),
                 }}
               >
-                {ltrIsolate(
-                  i18n.t('pinCoordinates', {
-                    latitude: coordinate.latitude.toFixed(5),
-                    longitude: coordinate.longitude.toFixed(5),
-                  })
-                )}
+                {subtitle}
               </Text>
             </View>
           </ContextMenu>
@@ -212,15 +257,12 @@ export default function CreateContactCard({
             {i18n.t('map_createContact')}
           </Text>
         </Button>
-        {}
         <Button
           noTransform
           hitSlop={0}
           accessibilityRole='button'
           variant='outline'
-          onPress={() => {
-            navigate()
-          }}
+          onPress={navigate}
           style={{
             paddingHorizontal: 12,
             paddingVertical: 0,
@@ -244,6 +286,38 @@ export default function CreateContactCard({
           </Text>
         </Button>
       </View>
+      {addressLookup?.canToggle && (
+        <View
+          style={{
+            marginTop: 8,
+            paddingTop: 6,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: theme.colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            minHeight: 44,
+            gap: 12,
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            style={{
+              flex: 1,
+              fontSize: theme.fontSize('sm'),
+              color: theme.colors.textAlt,
+            }}
+          >
+            {i18n.t('map_autoLookupPinAddress')}
+          </Text>
+          <Switch
+            testID='map-pin-auto-lookup-switch'
+            accessibilityLabel={i18n.t('map_autoLookupPinAddress')}
+            value={addressLookup.enabled}
+            onValueChange={addressLookup.setEnabled}
+          />
+        </View>
+      )}
     </MapCard>
   )
 }

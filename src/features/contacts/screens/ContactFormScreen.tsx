@@ -13,6 +13,10 @@ import i18n from '@/lib/locales'
 import Wrapper from '@/components/ui/layout/Wrapper'
 import * as Localization from 'expo-localization'
 import { fetchCoordinateFromAddress } from '@/lib/address'
+import {
+  hasAddressContent,
+  reverseGeocodeCoordinate,
+} from '@/lib/reverseGeocode'
 import Loader from '@/components/ui/Loader'
 import isEqual from 'lodash/isEqual'
 import { canonicalJson } from '@/lib/canonicalJson'
@@ -61,6 +65,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     defaultPhoneRegionCode,
     setDefaultPhoneRegionCode,
     dataProtectionMode,
+    autoLookupPinAddress = true,
     contactInformationOrder,
     showContactPhone,
     showContactEmail,
@@ -101,16 +106,34 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
           enabled: false,
         } as const)
 
-  const newContactAddress: Address = prefill.enabled
-    ? prefill.address
-    : {
-        line1: route.params.initialAddressLine ?? '',
+  const hasInitialPinAddress =
+    !editMode && hasAddressContent(route.params.initialAddress)
+
+  const newContactAddress: Address = hasInitialPinAddress
+    ? {
+        line1: '',
         line2: '',
         city: '',
         state: '',
         zip: '',
         country: '',
+        ...route.params.initialAddress,
       }
+    : prefill.enabled
+      ? prefill.address
+      : {
+          line1: route.params.initialAddressLine ?? '',
+          line2: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: '',
+        }
+
+  const [pinAddressVersion, setPinAddressVersion] = useState(0)
+  const addressEditedByUser = useRef(
+    hasInitialPinAddress || Boolean(route.params.initialAddressLine)
+  )
 
   const [contact, setContact] = useReloadState<Contact>(
     'contact',
@@ -179,6 +202,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
   }
 
   const setLine1 = (line1: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -188,6 +212,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }
   const setLine2 = (line2: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -197,6 +222,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }
   const setCity = (city: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -206,6 +232,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }
   const setState = (state: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -215,6 +242,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }
   const setZip = (zip: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -224,6 +252,7 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     })
   }
   const setCountry = (country: string) => {
+    addressEditedByUser.current = true
     setContact({
       ...contact,
       address: {
@@ -432,14 +461,81 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
     [contactToUpdate, persistThenGeocode, updateContact]
   )
 
+  const initialPinLatitude = route.params.initialCoordinate?.latitude
+  const initialPinLongitude = route.params.initialCoordinate?.longitude
+  const initialAddressLine = route.params.initialAddressLine
+
+  useEffect(() => {
+    if (
+      editMode ||
+      dataProtectionMode ||
+      !autoLookupPinAddress ||
+      hasInitialPinAddress ||
+      initialAddressLine ||
+      initialPinLatitude === undefined ||
+      initialPinLongitude === undefined
+    ) {
+      return
+    }
+    const controller = new AbortController()
+    let active = true
+    void reverseGeocodeCoordinate(
+      { latitude: initialPinLatitude, longitude: initialPinLongitude },
+      { signal: controller.signal }
+    ).then((resolved) => {
+      if (
+        !active ||
+        controller.signal.aborted ||
+        addressEditedByUser.current ||
+        !resolved
+      ) {
+        return
+      }
+      setContact((current) => {
+        if (hasAddressContent(current.address)) return current
+        return {
+          ...current,
+          address: {
+            line1: '',
+            line2: '',
+            city: '',
+            state: '',
+            zip: '',
+            country: '',
+            ...resolved.address,
+          },
+        }
+      })
+      setPinAddressVersion((version) => version + 1)
+    })
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [
+    autoLookupPinAddress,
+    dataProtectionMode,
+    editMode,
+    hasInitialPinAddress,
+    initialAddressLine,
+    initialPinLatitude,
+    initialPinLongitude,
+    setContact,
+  ])
+
   const handleUpdateContact = useCallback(
     async (resolve: (value: unknown) => void) => {
       const newContact = { ...contact }
       const addressChanged = !isEqual(contactToUpdate?.address, contact.address)
+      const coordinateChanged = !isEqual(
+        contactToUpdate?.coordinate,
+        contact.coordinate
+      )
       if (
         !dataProtectionMode &&
         contact.userDraggedCoordinate &&
-        addressChanged
+        addressChanged &&
+        !coordinateChanged
       ) {
         await askUserToUpdateCoordinatesAutomatically(newContact, resolve)
         return
@@ -458,7 +554,8 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
                 )
               : value
           ),
-        addressChanged || !contact.coordinate,
+        !newContact.userDraggedCoordinate &&
+          (addressChanged || !contact.coordinate),
         resolve
       )
     },
@@ -676,9 +773,12 @@ const ContactFormScreen = ({ route, navigation }: Props) => {
             zipInput={zipInput}
             prefill={prefill}
             onPlacePicked={(address, coordinate) => {
+              addressEditedByUser.current = true
               pickedPlace.current = coordinate ? { address, coordinate } : null
             }}
             searchInput={searchInput}
+            initialManual={hasInitialPinAddress}
+            pinAddressVersion={pinAddressVersion}
             onSubmitLastField={
               hasInfoKeyboardField
                 ? () => infoSection.current?.focusFirst()

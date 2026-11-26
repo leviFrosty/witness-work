@@ -1,5 +1,5 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { Coordinate } from '@/types/contact'
+import { Address, Coordinate } from '@/types/contact'
 import type moment from 'moment'
 import type {
   BuddyShareRef,
@@ -82,6 +82,8 @@ export type RootStackParamList = {
     edit?: boolean
     returnToContacts?: boolean
     initialCoordinate?: Coordinate
+
+    initialAddress?: Address
 
     initialAddressLine?: string
 

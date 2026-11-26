@@ -69,6 +69,7 @@ export type SettingsSearchRequirement =
   | 'routineOn'
   | 'buddies'
   | 'dataProtection'
+  | 'addressLookup'
   | 'deviceNotifications'
   | 'haptics'
   | 'otaUpdates'
@@ -516,6 +517,13 @@ export const SETTINGS_SEARCH_ITEMS = [
     keywords: 'settingsSearch.keywords.navigation',
   }),
   page('PreferencesMap', { keywords: 'settingsSearch.keywords.map' }),
+  {
+    id: 'autoLookupPinAddress',
+    title: 'map_autoLookupPinAddress',
+    page: 'PreferencesMap',
+    keywords: 'settingsSearch.keywords.map',
+    requires: ['addressLookup'],
+  },
   page('PreferencesCustomFields', {
     keywords: 'settingsSearch.keywords.customFields',
   }),

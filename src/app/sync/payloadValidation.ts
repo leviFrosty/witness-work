@@ -610,6 +610,7 @@ const preferenceShapes = z
     dateOrder: z.string().optional(),
     mapKeyColors: z.record(z.string()).optional(),
     mapCardDetail: z.string().optional(),
+    autoLookupPinAddress: z.boolean().optional(),
     hasDismissedRecommendationHash: z.string().optional(),
     monthlyGoalOverrides: z
       .record(z.number().finite().nonnegative())

@@ -314,6 +314,8 @@ export const PREFERENCE_DEFAULTS = {
   mapLayer: 'standard' as MapLayer,
 
   mapCardDetail: 'nextVisit' as MapCardDetail,
+
+  autoLookupPinAddress: true,
   hasCompletedMapOnboarding: false,
   mapLocationPromptSeen: false,
 

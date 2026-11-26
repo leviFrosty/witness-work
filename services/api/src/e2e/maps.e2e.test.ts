@@ -117,6 +117,32 @@ describe('GET /places/v1/search', () => {
   })
 })
 
+describe('GET /places/v1/reverse-geocode', () => {
+  it('refuses a missing or invalid location before HERE', async () => {
+    const noAt = await http('GET', '/places/v1/reverse-geocode')
+    expect(noAt.status).toBe(400)
+    expect(noAt.body).toMatchObject({ code: 'bad_request', field: 'at' })
+    const badLang = await http(
+      'GET',
+      '/places/v1/reverse-geocode?at=39.1,-84.5&lang=bad_lang'
+    )
+    expect(badLang.status).toBe(400)
+    expect(badLang.body).toMatchObject({ code: 'bad_request', field: 'lang' })
+  })
+
+  const enabled =
+    configured('HERE_API_KEY') && !process.env.WW_API_E2E_SKIP_HERE
+  it.skipIf(!enabled)('resolves a coordinate to a postal address', async () => {
+    const res = await http(
+      'GET',
+      '/places/v1/reverse-geocode?at=39.10229,-84.51264'
+    )
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+    expect(typeof res.body.address?.label).toBe('string')
+  })
+})
+
 describe('POST /maps/v1/addresses', () => {
   /** A small block at Alamo Square, San Francisco: OSM maps its houses. */
   const ALAMO_SQUARE = [

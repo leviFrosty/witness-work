@@ -1,5 +1,6 @@
 export const HERE_API = {
   GEOCODE_URL: 'https://geocode.search.hereapi.com/v1/geocode',
+  REVGEOCODE_URL: 'https://revgeocode.search.hereapi.com/v1/revgeocode',
   AUTOCOMPLETE_URL: 'https://autocomplete.search.hereapi.com/v1/autocomplete',
   DISCOVER_URL: 'https://discover.search.hereapi.com/v1/discover',
   WAYPOINTS_SEQUENCE_URL: 'https://wps.hereapi.com/v8/findsequence2',

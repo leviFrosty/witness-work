@@ -1,15 +1,29 @@
 import React from 'react'
 import { act, create } from 'react-test-renderer'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Contact } from '@/types/contact'
 
-vi.mock('react-native', () => ({ View: 'View' }))
+const mocks = vi.hoisted(() => ({
+  autoLookupPinAddress: true,
+  dataProtectionMode: false,
+  setPreferences: vi.fn(),
+  reverseGeocode: vi.fn<() => Promise<unknown>>(async () => null),
+}))
+
+vi.mock('react-native', () => ({
+  View: 'View',
+  StyleSheet: { hairlineWidth: 1 },
+}))
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}))
 vi.mock('lucide-react-native', () => ({ X: 'X' }))
 vi.mock('react-native-maps', () => ({ default: 'MapView', Marker: 'Marker' }))
 vi.mock('@/components/ui/Sheet', () => ({
   default: ({ open, children }: React.PropsWithChildren<{ open: boolean }>) =>
     open ? React.createElement('Sheet', null, children) : null,
 }))
+vi.mock('@/components/ui/Switch', () => ({ default: 'Switch' }))
 vi.mock('@/stores/toasts', () => ({
   toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
@@ -20,7 +34,27 @@ vi.mock('@/contexts/theme', () => ({
   default: () => ({ colors: {}, fonts: {}, numbers: {}, fontSize: () => 16 }),
 }))
 vi.mock('@/stores/contactsStore', () => ({ default: () => ({ contacts: [] }) }))
-vi.mock('@/stores/preferences', () => ({ usePreferences: () => ({}) }))
+vi.mock('@/stores/preferences', () => ({
+  usePreferences: () => ({
+    autoLookupPinAddress: mocks.autoLookupPinAddress,
+    dataProtectionMode: mocks.dataProtectionMode,
+    set: (patch: { autoLookupPinAddress?: boolean }) => {
+      mocks.setPreferences(patch)
+      if (typeof patch.autoLookupPinAddress === 'boolean') {
+        mocks.autoLookupPinAddress = patch.autoLookupPinAddress
+      }
+    },
+  }),
+}))
+vi.mock('@/lib/reverseGeocode', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/reverseGeocode')>(
+    '@/lib/reverseGeocode'
+  )
+  return {
+    ...actual,
+    reverseGeocodeCoordinate: mocks.reverseGeocode,
+  }
+})
 vi.mock('@/lib/locales', () => ({ default: { t: (key: string) => key } }))
 vi.mock('@/components/ui/Card', () => ({ default: 'Card' }))
 vi.mock('@/components/ui/Spinner', () => ({ default: 'Spinner' }))
@@ -49,6 +83,13 @@ import Button from '@/components/ui/Button'
 import { Marker } from 'react-native-maps'
 
 let root: ReturnType<typeof create>
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mocks.autoLookupPinAddress = true
+  mocks.dataProtectionMode = false
+  mocks.reverseGeocode.mockResolvedValue(null)
+})
 
 afterEach(async () => {
   await act(async () => root.unmount())
@@ -90,5 +131,136 @@ describe('manual pin without location permission', () => {
       userDraggedCoordinate: undefined,
     })
     expect(root.root.findAllByType(Marker)).toHaveLength(0)
+  })
+
+  it('auto-fills an empty contact address from the pin on save and notifies the parent', async () => {
+    const resolved = {
+      address: {
+        line1: '625 Sutter St',
+        city: 'San Francisco',
+        state: 'CA',
+        zip: '94102',
+        country: 'United States',
+      },
+      formattedAddress: '625 Sutter St, San Francisco, CA 94102, United States',
+    }
+    mocks.reverseGeocode.mockResolvedValueOnce(resolved)
+    const coordinate = { latitude: 37.7892, longitude: -122.41076 }
+    const contact: Contact = {
+      id: 'new',
+      name: '',
+      createdAt: new Date(),
+      coordinate,
+      userDraggedCoordinate: true,
+    }
+    const setContact = vi.fn()
+    const onAddressFilled = vi.fn()
+    await act(async () => {
+      root = create(
+        <PinLocation
+          contact={contact}
+          setContact={setContact}
+          onAddressFilled={onAddressFilled}
+        />
+      )
+    })
+    const press = (label: string) =>
+      act(async () => {
+        root.root
+          .findAllByType(Button)
+          .find((button) => button.props.children.props.children === label)!
+          .props.onPress()
+      })
+
+    await press('edit')
+    await press('save')
+
+    expect(setContact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coordinate,
+        userDraggedCoordinate: true,
+        address: expect.objectContaining(resolved.address),
+      })
+    )
+    expect(onAddressFilled).toHaveBeenCalledWith(
+      expect.objectContaining(resolved.address)
+    )
+  })
+
+  it('keeps an existing address untouched unless Update address is turned on', async () => {
+    const resolved = {
+      address: { line1: 'New St 5', city: 'Berlin', zip: '10115' },
+      formattedAddress: 'New St 5, 10115 Berlin',
+    }
+    mocks.reverseGeocode.mockResolvedValue(resolved)
+    const coordinate = { latitude: 52.52, longitude: 13.405 }
+    const existingAddress = { line1: 'Custom Apt 4B', city: 'Berlin' }
+    const contact: Contact = {
+      id: 'existing',
+      name: 'Alex',
+      createdAt: new Date(),
+      address: existingAddress,
+      coordinate,
+      userDraggedCoordinate: true,
+    }
+    const setContact = vi.fn()
+    await act(async () => {
+      root = create(<PinLocation contact={contact} setContact={setContact} />)
+    })
+    const press = (label: string) =>
+      act(async () => {
+        root.root
+          .findAllByType(Button)
+          .find((button) => button.props.children.props.children === label)!
+          .props.onPress()
+      })
+
+    await press('edit')
+    await press('save')
+    expect(setContact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: existingAddress,
+      })
+    )
+
+    setContact.mockClear()
+    await press('edit')
+    const replaceSwitch = root.root.findByProps({
+      testID: 'pin-location-replace-address-switch',
+    })
+    await act(async () => replaceSwitch.props.onValueChange(true))
+    await press('save')
+    expect(setContact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: expect.objectContaining(resolved.address),
+      })
+    )
+  })
+
+  it('persists disabling autoLookupPinAddress on the fly inside the sheet', async () => {
+    const contact: Contact = {
+      id: 'new',
+      name: '',
+      createdAt: new Date(),
+      coordinate: { latitude: -23.553, longitude: -46.652 },
+      userDraggedCoordinate: true,
+    }
+    const setContact = vi.fn()
+    await act(async () => {
+      root = create(<PinLocation contact={contact} setContact={setContact} />)
+    })
+    await act(async () => {
+      root.root
+        .findAllByType(Button)
+        .find((button) => button.props.children.props.children === 'edit')!
+        .props.onPress()
+    })
+    const toggle = root.root.findByProps({
+      testID: 'pin-location-auto-lookup-switch',
+    })
+    await act(async () => toggle.props.onValueChange(false))
+    expect(mocks.setPreferences).toHaveBeenCalledExactlyOnceWith({
+      autoLookupPinAddress: false,
+    })
   })
 })

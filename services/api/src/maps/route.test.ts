@@ -451,3 +451,129 @@ describe('GET /places/v1/search', () => {
     })
   })
 })
+
+const reverseGeocode = (query: string) =>
+  requestJson(
+    app as never,
+    h.env,
+    'GET',
+    `/places/v1/reverse-geocode?${query}`
+  ) as Promise<{
+    status: number
+    headers: Headers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    body: any
+  }>
+
+describe('GET /places/v1/reverse-geocode', () => {
+  it('asks HERE Reverse Geocode with only its own parameters and shapes the address', async () => {
+    here.mockResolvedValueOnce(
+      Response.json({
+        items: [
+          {
+            title: '12 Rue de la Paix, 75002 Paris, France',
+            id: 'here:af:streetsection:paris-1',
+            resultType: 'houseNumber',
+            address: {
+              label: '12 Rue de la Paix, 75002 Paris, France',
+              countryCode: 'FRA',
+              countryName: 'France',
+              state: 'Île-de-France',
+              city: 'Paris',
+              district: '2e Arrondissement',
+              street: 'Rue de la Paix',
+              postalCode: '75002',
+              houseNumber: '12',
+            },
+            position: { lat: 48.86914, lng: 2.33118 },
+          },
+        ],
+      })
+    )
+    const response = await reverseGeocode(
+      'at=48.869141234,2.331181234&lang=fr-FR&apiKey=mine&limit=10'
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.body).toEqual({
+      ok: true,
+      address: {
+        label: '12 Rue de la Paix, 75002 Paris, France',
+        houseNumber: '12',
+        street: 'Rue de la Paix',
+        district: '2e Arrondissement',
+        city: 'Paris',
+        state: 'Île-de-France',
+        postalCode: '75002',
+        countryCode: 'FRA',
+        countryName: 'France',
+      },
+    })
+    const url = new URL(here.mock.calls[0]![0] as string)
+    expect(`${url.origin}${url.pathname}`).toBe(
+      'https://revgeocode.search.hereapi.com/v1/revgeocode'
+    )
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      at: '48.86914,2.33118',
+      limit: '1',
+      lang: 'fr-FR',
+      apiKey: 'here-key',
+    })
+  })
+
+  it('answers address: null when HERE finds nothing', async () => {
+    here.mockResolvedValueOnce(Response.json({ items: [] }))
+    const response = await reverseGeocode('at=0,0')
+    expect(response.status).toBe(200)
+    expect(response.body).toEqual({ ok: true, address: null })
+  })
+
+  it('refuses invalid coordinates or lang without asking HERE', async () => {
+    for (const [query, field] of [
+      ['', 'at'],
+      ['at=91,0', 'at'],
+      ['at=0,181', 'at'],
+      ['at=NaN,0', 'at'],
+      ['at=48.8;2.3', 'at'],
+      ['at=48.8,2.3&lang=en_US;x', 'lang'],
+      ['at=48.8,2.3&lang=', 'lang'],
+    ] as const) {
+      const response = await reverseGeocode(query)
+      expect(response.status, query).toBe(400)
+      expect(response.body).toMatchObject({ code: 'bad_request', field })
+    }
+    expect(here).not.toHaveBeenCalled()
+  })
+
+  it('maps HERE failures onto the shared envelope', async () => {
+    here.mockResolvedValueOnce(
+      new Response('{"title":"Too Many Requests"}', {
+        status: 429,
+        headers: { 'Retry-After': '5' },
+      })
+    )
+    const limited = await reverseGeocode('at=48.8,2.3')
+    expect(limited.status).toBe(429)
+    expect(limited.body.code).toBe('rate_limited')
+    expect(limited.headers.get('retry-after')).toBe('5')
+
+    here.mockResolvedValueOnce(new Response('error code: 522', { status: 522 }))
+    const outage = await reverseGeocode('at=48.8,2.3')
+    expect(outage.status).toBe(502)
+    expect(outage.body.code).toBe('upstream_error')
+
+    here.mockRejectedValueOnce(new Error('timeout'))
+    expect((await reverseGeocode('at=48.8,2.3')).status).toBe(502)
+
+    here.mockResolvedValueOnce(
+      Response.json({ title: 'Bad at' }, { status: 400 })
+    )
+    const refused = await reverseGeocode('at=48.8,2.3')
+    expect(refused.status).toBe(400)
+    expect(refused.body).toEqual({
+      ok: false,
+      error: 'bad_request',
+      code: 'bad_request',
+    })
+  })
+})

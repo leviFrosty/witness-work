@@ -1,12 +1,15 @@
 import { Check as CheckIcon } from 'lucide-react-native'
+import { useShallow } from 'zustand/react/shallow'
 import LucideIcon from '@/components/ui/LucideIcon'
 import {
   GroupedList,
   GroupedListRow,
   GroupedListSection,
+  GroupedListSwitchRow,
 } from '@/components/ui/GroupedList'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
+import { usePreferences } from '@/stores/preferences'
 import type { MapCardDetail } from '@/types/map'
 import useMapCardDetail from '@/features/map/hooks/useMapCardDetail'
 import { CARD_DETAIL_CHOICES } from '@/features/map/lib/contactPins'
@@ -14,6 +17,13 @@ import { CARD_DETAIL_CHOICES } from '@/features/map/lib/contactPins'
 const PreferencesMapScreen = () => {
   const theme = useTheme()
   const { detail: current, fields, choose } = useMapCardDetail('settings')
+  const { autoLookupPinAddress, dataProtectionMode, set } = usePreferences(
+    useShallow((s) => ({
+      autoLookupPinAddress: s.autoLookupPinAddress,
+      dataProtectionMode: s.dataProtectionMode,
+      set: s.set,
+    }))
+  )
 
   const check = (value: MapCardDetail) =>
     value === current ? (
@@ -22,6 +32,19 @@ const PreferencesMapScreen = () => {
 
   return (
     <GroupedList>
+      {!dataProtectionMode && (
+        <GroupedListSection
+          title={i18n.t('map_droppedPins')}
+          footer={i18n.t('map_autoLookupPinAddress_info')}
+        >
+          <GroupedListSwitchRow
+            testID='map-auto-lookup-pin-address'
+            label={i18n.t('map_autoLookupPinAddress')}
+            value={autoLookupPinAddress}
+            onValueChange={(value) => set({ autoLookupPinAddress: value })}
+          />
+        </GroupedListSection>
+      )}
       <GroupedListSection
         title={i18n.t('map_cardDetail')}
         footer={i18n.t('map_cardDetail_info')}

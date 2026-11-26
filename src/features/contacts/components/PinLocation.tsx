@@ -2,27 +2,39 @@ import { X as XIcon } from 'lucide-react-native'
 import PinPickerMap from '@/components/PinPickerMap'
 import Card from '@/components/ui/Card'
 import Sheet from '@/components/ui/Sheet'
+import Switch from '@/components/ui/Switch'
+import { inputLayout } from '@/components/ui/inputs/InputLayout'
 import { Region } from 'react-native-maps'
 import { toast } from '@/stores/toasts'
-import { Contact, Coordinate } from '@/types/contact'
+import { Address, Contact, Coordinate } from '@/types/contact'
 import { useMemo, useState } from 'react'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@/contexts/theme'
 import i18n from '@/lib/locales'
 import XView from '@/components/ui/layout/XView'
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/MyText'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import IconButton from '@/components/ui/IconButton'
 import InfoPopover from '@/components/ui/InfoPopover'
+import useReverseGeocodePin from '@/hooks/useReverseGeocodePin'
+import { hasAddressContent } from '@/lib/reverseGeocode'
 import useContacts from '@/stores/contactsStore'
+import { usePreferences } from '@/stores/preferences'
 import { ltrIsolate } from '@/lib/direction'
 
 export default function PinLocation(props: {
   contact: Contact
   setContact: (value: React.SetStateAction<Contact>) => void
+  onAddressFilled?: (address: Address) => void
 }) {
-  const { contact, setContact } = props
+  const { contact, setContact, onAddressFilled } = props
   const { contacts } = useContacts()
+  const preferences = usePreferences()
+  const autoLookupPinAddress = preferences.autoLookupPinAddress ?? true
+  const dataProtectionMode = preferences.dataProtectionMode ?? false
+  const setPreferences = preferences.set
+  const insets = useSafeAreaInsets()
   const [open, setOpen] = useState(false)
   const initialRegion: Region | undefined = contact.coordinate
     ? {
@@ -36,10 +48,49 @@ export default function PinLocation(props: {
   const [coordinate, setCoordinate] = useState<Coordinate | undefined>(
     contact.coordinate
   )
+  const [replaceExistingAddress, setReplaceExistingAddress] = useState(false)
   const theme = useTheme()
 
+  const hasExistingAddress = hasAddressContent(contact.address)
+  const lookupEnabled = open && !dataProtectionMode && autoLookupPinAddress
+  const lookup = useReverseGeocodePin({
+    coordinate,
+    enabled: lookupEnabled,
+  })
+
+  function openSheet() {
+    setCoordinate(contact.coordinate)
+    setReplaceExistingAddress(false)
+    setOpen(true)
+  }
+
   function handleSave() {
-    setContact({ ...contact, coordinate, userDraggedCoordinate: !!coordinate })
+    const resolvedAddress =
+      coordinate &&
+      !dataProtectionMode &&
+      autoLookupPinAddress &&
+      lookup.result?.address &&
+      (!hasExistingAddress || replaceExistingAddress)
+        ? {
+            line1: '',
+            line2: '',
+            city: '',
+            state: '',
+            zip: '',
+            country: '',
+            ...lookup.result.address,
+          }
+        : undefined
+
+    setContact({
+      ...contact,
+      coordinate,
+      userDraggedCoordinate: !!coordinate,
+      ...(resolvedAddress ? { address: resolvedAddress } : {}),
+    })
+    if (resolvedAddress) {
+      onAddressFilled?.(resolvedAddress)
+    }
     toast.success(i18n.t('coordinateSaved'))
     setOpen(false)
   }
@@ -61,6 +112,28 @@ export default function PinLocation(props: {
       ),
     [contact.id, contacts]
   )
+
+  const sheetPreviewText = coordinate
+    ? lookupEnabled && lookup.result
+      ? lookup.result.formattedAddress
+      : lookupEnabled && lookup.status === 'loading'
+        ? i18n.t('map_lookingUpAddress')
+        : lookupEnabled && lookup.status === 'empty'
+          ? i18n.t('map_noAddressFound')
+          : ltrIsolate(
+              i18n.t('pinCoordinates', {
+                latitude: coordinate.latitude.toFixed(5),
+                longitude: coordinate.longitude.toFixed(5),
+              })
+            )
+    : null
+
+  const showAutoFillToggle = !dataProtectionMode && !hasExistingAddress
+  const showReplaceToggle =
+    !dataProtectionMode &&
+    hasExistingAddress &&
+    autoLookupPinAddress &&
+    Boolean(coordinate && lookup.result?.address)
 
   return (
     <>
@@ -136,7 +209,7 @@ export default function PinLocation(props: {
               </Button>
             )}
             <Button
-              onPress={() => setOpen(true)}
+              onPress={openSheet}
               variant='outline'
               style={{
                 minHeight: 44,
@@ -182,7 +255,10 @@ export default function PinLocation(props: {
         >
           <PinPickerMap
             coordinate={coordinate}
-            onChange={setCoordinate}
+            onChange={(next) => {
+              setCoordinate(next)
+              setReplaceExistingAddress(false)
+            }}
             onRegionChange={setRegion}
             otherPins={otherContacts}
             pinId={contact.id}
@@ -192,50 +268,144 @@ export default function PinLocation(props: {
               position: 'absolute',
               bottom: 0,
               width: '100%',
-              padding: 5,
+              paddingHorizontal: 12,
+              paddingBottom: Math.max(insets.bottom, 12),
             }}
           >
             <Card
               style={{
-                flexDirection: 'row',
-                gap: 5,
-                borderRadius: theme.numbers.borderRadiusMd,
-                paddingVertical: 10,
-                paddingHorizontal: 10,
+                gap: 10,
+                borderRadius: inputLayout.sectionRadius,
+                padding: 14,
               }}
             >
-              <Button
-                noTransform
-                variant='outline'
-                style={{
-                  justifyContent: 'center',
-                  flex: 1,
-                  paddingVertical: 10,
-                }}
-                onPress={handleAddOrRemove}
-              >
-                <Text>{i18n.t(coordinate ? 'remove' : 'add')}</Text>
-              </Button>
-              <Button
-                noTransform
-                variant='solid'
-                style={{
-                  justifyContent: 'center',
-                  flex: 1,
-                  backgroundColor: theme.colors.accent,
-                  paddingVertical: 10,
-                }}
-                onPress={handleSave}
-              >
-                <Text
+              {sheetPreviewText && (
+                <View style={{ paddingHorizontal: 4, gap: 2 }}>
+                  <Text
+                    testID='pin-location-address-preview'
+                    numberOfLines={2}
+                    style={{
+                      fontFamily:
+                        lookupEnabled && lookup.result
+                          ? theme.fonts.medium
+                          : theme.fonts.regular,
+                      fontSize: theme.fontSize('sm'),
+                      color:
+                        lookupEnabled && lookup.result
+                          ? theme.colors.text
+                          : theme.colors.textAlt,
+                    }}
+                  >
+                    {sheetPreviewText}
+                  </Text>
+                </View>
+              )}
+              {showAutoFillToggle && (
+                <View
                   style={{
-                    fontFamily: theme.fonts.semiBold,
-                    color: theme.colors.textInverse,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: 44,
+                    paddingHorizontal: 4,
+                    gap: 12,
+                    borderTopWidth: sheetPreviewText
+                      ? StyleSheet.hairlineWidth
+                      : 0,
+                    borderTopColor: theme.colors.border,
+                    paddingTop: sheetPreviewText ? 8 : 0,
                   }}
                 >
-                  {i18n.t('save')}
-                </Text>
-              </Button>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {i18n.t('map_autoLookupPinAddress')}
+                  </Text>
+                  <Switch
+                    testID='pin-location-auto-lookup-switch'
+                    accessibilityLabel={i18n.t('map_autoLookupPinAddress')}
+                    value={autoLookupPinAddress}
+                    onValueChange={(value) =>
+                      setPreferences?.({ autoLookupPinAddress: value })
+                    }
+                  />
+                </View>
+              )}
+              {showReplaceToggle && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    minHeight: 44,
+                    paddingHorizontal: 4,
+                    gap: 12,
+                    borderTopWidth: StyleSheet.hairlineWidth,
+                    borderTopColor: theme.colors.border,
+                    paddingTop: 8,
+                  }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontSize: theme.fontSize('sm'),
+                      color: theme.colors.textAlt,
+                    }}
+                  >
+                    {i18n.t('map_replaceExistingAddress')}
+                  </Text>
+                  <Switch
+                    testID='pin-location-replace-address-switch'
+                    accessibilityLabel={i18n.t('map_replaceExistingAddress')}
+                    value={replaceExistingAddress}
+                    onValueChange={setReplaceExistingAddress}
+                  />
+                </View>
+              )}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Button
+                  noTransform
+                  variant='outline'
+                  style={{
+                    justifyContent: 'center',
+                    flex: 1,
+                    minHeight: 44,
+                    paddingVertical: 10,
+                    borderRadius: 999,
+                  }}
+                  onPress={handleAddOrRemove}
+                >
+                  <Text>{i18n.t(coordinate ? 'remove' : 'add')}</Text>
+                </Button>
+                <Button
+                  noTransform
+                  variant='solid'
+                  style={{
+                    justifyContent: 'center',
+                    flex: 1,
+                    minHeight: 44,
+                    backgroundColor: theme.colors.accent,
+                    paddingVertical: 10,
+                    borderRadius: 999,
+                  }}
+                  onPress={handleSave}
+                >
+                  <Text
+                    style={{
+                      fontFamily: theme.fonts.semiBold,
+                      color: theme.colors.textInverse,
+                    }}
+                  >
+                    {i18n.t('save')}
+                  </Text>
+                </Button>
+              </View>
             </Card>
           </View>
         </View>

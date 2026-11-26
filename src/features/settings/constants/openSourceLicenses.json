@@ -1990,12 +1990,6 @@
   },
   {
     "name": "agent-base",
-    "version": "6.0.2",
-    "license": "MIT",
-    "author": "Nathan Rajlich"
-  },
-  {
-    "name": "agent-base",
     "version": "7.1.4",
     "license": "MIT",
     "author": "Nathan Rajlich"
@@ -2104,12 +2098,6 @@
     "version": "7.8.0",
     "license": "MIT",
     "author": "Gustaf Räntilä"
-  },
-  {
-    "name": "axios",
-    "version": "1.20.0",
-    "license": "MIT",
-    "author": "Matt Zabriskie"
   },
   {
     "name": "babel-plugin-polyfill-corejs2",
@@ -3347,12 +3335,6 @@
     "license": "MIT"
   },
   {
-    "name": "follow-redirects",
-    "version": "1.16.1",
-    "license": "MIT",
-    "author": "Ruben Verborgh"
-  },
-  {
     "name": "fontfaceobserver",
     "version": "2.3.0",
     "license": "BSD-2-Clause",
@@ -3547,12 +3529,6 @@
     "version": "2.0.1",
     "license": "MIT",
     "author": "Jonathan Ong"
-  },
-  {
-    "name": "https-proxy-agent",
-    "version": "5.0.1",
-    "license": "MIT",
-    "author": "Nathan Rajlich"
   },
   {
     "name": "https-proxy-agent",
@@ -4522,12 +4498,6 @@
     "name": "prosemirror-view",
     "version": "1.42.6",
     "license": "MIT"
-  },
-  {
-    "name": "proxy-from-env",
-    "version": "2.1.0",
-    "license": "MIT",
-    "author": "Rob Wu"
   },
   {
     "name": "qrcode",

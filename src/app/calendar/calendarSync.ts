@@ -1,5 +1,4 @@
 import { Platform } from 'react-native'
-import * as Device from 'expo-device'
 import {
   calendarBridge,
   type CalendarDestination,
@@ -23,20 +22,13 @@ import { analytics } from '@/lib/analytics'
 import { perf } from '@/lib/perf'
 import { canonicalJson } from '@/lib/canonicalJson'
 import { contentHash } from '@/lib/contentHash'
-
-const GENERIC_DEVICE_NAMES = ['iPhone', 'iPad', 'iPod touch']
-
-export function deviceLabel() {
-  const name = Device.deviceName
-  if (name && !GENERIC_DEVICE_NAMES.includes(name)) return name
-  return Device.modelName ?? name ?? i18n.t('iCloudThisDevice')
-}
+import { deviceName } from '@/lib/devicePlatform'
 
 function identity() {
   const id = getOrCreate()
   if (!id) throw new Error('CALENDAR_BINARY_REQUIRED')
   useCalendarPublishing.setState({ deviceId: id })
-  return { id, name: deviceLabel() }
+  return { id, name: deviceName() }
 }
 
 function calendarErrorCode(error: unknown) {

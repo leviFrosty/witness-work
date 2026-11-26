@@ -81,6 +81,7 @@ vi.mock('@/stores/preferences', async () => ({
       amount: number
       unit: string
     } | null,
+    dataProtectionMode: false,
   })),
 }))
 vi.mock('@/stores/calendarSync', async () => {
@@ -178,6 +179,10 @@ beforeEach(() => {
     optedOut: false,
   })
   useCalendarPublishing.setState({ state: state(), deviceId: 'this-device' })
+  usePreferences.setState({
+    returnVisitNotificationOffset: null,
+    dataProtectionMode: false,
+  })
 })
 afterEach(() => {
   act(() => renderer?.unmount())
@@ -420,6 +425,17 @@ describe('foreground calendar maintenance', () => {
     })
     await advance(1500)
     expect(publishing.publish).toHaveBeenCalledTimes(2)
+  })
+
+  it('republishes when Data Protection Mode changes', async () => {
+    await mount()
+    await advance(1500)
+    publishing.publish.mockClear()
+    await act(async () => {
+      usePreferences.setState({ dataProtectionMode: true })
+    })
+    await advance(1500)
+    expect(publishing.publish).toHaveBeenCalledTimes(1)
   })
 
   it('cancels retries and removes subscriptions after unmount', async () => {

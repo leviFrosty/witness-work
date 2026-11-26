@@ -203,9 +203,11 @@ final class CalendarEvents {
     }
     if !removeAll {
       // Partial app-data replication cannot delete an event, but it must not
-      // leave old contact details behind after the shared privacy setting is
-      // turned off. Redact even events whose Visit/Contact is absent locally.
-      if state.includeDetails != true {
+      // leave old contact details behind once details are off (the shared
+      // setting, or Data Protection Mode on this device). Redact even events
+      // whose Visit/Contact is absent locally.
+      let details = snapshot.showsDetails(state)
+      if !details {
         for event in retained where event.title != snapshot.title || !(event.location ?? "").isEmpty {
           guard apply else { return nil }
           event.title = snapshot.title
@@ -235,8 +237,8 @@ final class CalendarEvents {
         guard let url = parts?.url else { throw CalendarFailure("CALENDAR_INVALID_URL") }
         let start = Date(timeIntervalSince1970: item.start / 1000)
         let end = Date(timeIntervalSince1970: item.end / 1000)
-        let title = state.includeDetails == true ? item.title : snapshot.title
-        let location = state.includeDetails == true ? item.location : ""
+        let title = details ? item.title : snapshot.title
+        let location = details ? item.location : ""
         if event.title != title || event.startDate != start || event.endDate != end ||
           event.url != url || (event.location ?? "") != location || event.isAllDay {
           guard apply else { return nil }

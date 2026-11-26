@@ -43,19 +43,13 @@ const snapshot = (
   deletedContactIds: [],
   entries: [],
   removed: [],
+  includeDetails: false,
   ...overrides,
 })
 const plan = (
   events: AndroidCalendarEvent[],
-  overrides: Partial<CalendarSnapshot> = {},
-  includeDetails = false
-) =>
-  planAndroidPublish({
-    events,
-    snapshot: snapshot(overrides),
-    includeDetails,
-    now: NOW,
-  })
+  overrides: Partial<CalendarSnapshot> = {}
+) => planAndroidPublish({ events, snapshot: snapshot(overrides), now: NOW })
 
 describe('Android event marker', () => {
   it('round-trips the Follow-up key and contact', () => {
@@ -270,7 +264,7 @@ describe('planAndroidPublish', () => {
         resetAlert: false,
       },
     ])
-    expect(plan([event(detailed)], {}, true).writes).toEqual([])
+    expect(plan([event(detailed)], { includeDetails: true }).writes).toEqual([])
   })
 
   it('ignores events without a WitnessWork link', () => {

@@ -66,12 +66,10 @@ function rank(a: AndroidCalendarEvent, b: AndroidCalendarEvent) {
 export function planAndroidPublish({
   events,
   snapshot,
-  includeDetails,
   now,
 }: {
   events: AndroidCalendarEvent[]
   snapshot: CalendarSnapshot
-  includeDetails: boolean
   now: number
 }) {
   const deletedContacts = new Set(snapshot.deletedContactIds)
@@ -105,7 +103,7 @@ export function planAndroidPublish({
       )
         writes.push({ ...write, id: kept.id })
     } else if (
-      !includeDetails &&
+      !snapshot.includeDetails &&
       (kept.title !== snapshot.title || kept.location !== '')
     ) {
       writes.push({

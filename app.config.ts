@@ -247,6 +247,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       './plugins/with-wear-os',
       ['./plugins/with-android-locale-config', { locales: APP_LANGUAGES }],
       './plugins/with-android-text-input-direction',
+      './plugins/with-android-fcm-on-demand',
       './plugins/with-passkey-domains',
       './plugins/with-posthog-symbols-last',
       [

@@ -47,7 +47,7 @@ export function currentCalendarSnapshot({
     })),
     deletedContactIds: contacts.deletedContacts.map((contact) => contact.id),
     publishedKeys,
-    includeDetails,
+    includeDetails: includeDetails && !preferences.dataProtectionMode,
     alertMinutes,
     title: i18n.t('calendarFollowUpTitle'),
   })

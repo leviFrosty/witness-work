@@ -69,6 +69,7 @@ describe('calendar projection', () => {
       deletedContactIds: [],
       entries: [],
       removed: ['visit-1'],
+      includeDetails: false,
     })
   })
   it('removes deleted visits, removed follow-ups, and deleted contacts', () => {
@@ -87,6 +88,7 @@ describe('calendar projection', () => {
         deletedContactIds: value.deletedContactIds,
         entries: [],
         removed: ['visit-1'],
+        includeDetails: false,
       })
   })
   it('does not infer deletion from missing data', () => {
@@ -95,6 +97,7 @@ describe('calendar projection', () => {
       deletedContactIds: [],
       entries: [],
       removed: [],
+      includeDetails: false,
     })
   })
   it('publishes every open follow-up, ignoring per-follow-up choices from older builds', () => {
@@ -180,6 +183,7 @@ describe('calendar projection', () => {
       deletedContactIds: [],
       entries: [],
       removed: [],
+      includeDetails: false,
     })
   })
   it('only sends removals for published follow-ups', () => {

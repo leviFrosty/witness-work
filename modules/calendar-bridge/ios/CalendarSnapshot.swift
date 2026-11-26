@@ -30,6 +30,15 @@ struct CalendarSnapshot: Codable {
   var entries: [CalendarEntry]
   var removed: [String]
   var deletedContactIds: [String]
+  /// False when this device withholds contact details even though the shared
+  /// setting includes them (Data Protection Mode). Absent from JS bundles that
+  /// predate it, where the shared setting alone decides.
+  var includeDetails: Bool?
+
+  /// Whether events carry the contact's name and address.
+  func showsDetails(_ state: CalendarPublishingState) -> Bool {
+    state.includeDetails == true && includeDetails != false
+  }
 
   /// Missing future events from another device can still be downloading. Past,
   /// explicitly removed appointments don't block reconciliation. Locally seen

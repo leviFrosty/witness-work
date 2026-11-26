@@ -58,6 +58,7 @@ export function useCalendarSync(ready: boolean | undefined) {
         useCalendarSettings.getState().enabled,
 
         usePreferences.getState().returnVisitNotificationOffset,
+        usePreferences.getState().dataProtectionMode,
       ])
     const run = () => {
       if (stopped || running || AppState.currentState !== 'active') return
@@ -160,7 +161,8 @@ export function useCalendarSync(ready: boolean | undefined) {
         usePreferences.subscribe((state, previous) => {
           if (
             state.returnVisitNotificationOffset !==
-            previous.returnVisitNotificationOffset
+              previous.returnVisitNotificationOffset ||
+            state.dataProtectionMode !== previous.dataProtectionMode
           )
             onDataChange()
         }),
